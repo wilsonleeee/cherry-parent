@@ -1,0 +1,72 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sqlMap PUBLIC "-//iBATIS.com//DTD SQL Map 2.0//EN" "http://ibatis.apache.org/dtd/sql-map-2.dtd">
+<sqlMap namespace="BINOLBSCHA04">
+	
+	<sql id="addChannelKey">
+		BIN_OrganizationInfoID,
+	    BIN_BrandInfoID,
+	    ChannelName,
+		<isNotEmpty property="channelNameForeign">
+			ChannelNameForeign,
+		</isNotEmpty>
+		<isNotEmpty property="status">
+			Status,
+		</isNotEmpty>
+		<isNotEmpty property="joinDate">
+			JoinDate,
+		</isNotEmpty>
+	    <include refid="BINOLCMINC99.insertKeySql" />
+	</sql>
+	<sql id="addChannelValue">
+		#organizationInfoId#,
+		#brandInfoId#,
+		#channelName#,
+		<isNotEmpty property="channelNameForeign">
+			#channelNameForeign#,
+		</isNotEmpty>
+		<isNotEmpty property="status">
+			#status#,
+		</isNotEmpty>
+		<isNotEmpty property="joinDate">
+			#joinDate#,
+		</isNotEmpty>
+		<include refid="BINOLCMINC99.insertValueSql" />
+	</sql>
+	
+ 	<!-- 渠道添加，并返回自增ID -->
+	<insert id="addChannel" parameterClass="java.util.HashMap">
+		<selectKey resultClass="java.lang.Integer" type="post" keyProperty="BIN_ChannelID" >     
+		    <![CDATA[
+				Insert INTO Basis.BIN_Channel
+				(
+		    ]]>
+				<include refid="BINOLBSCHA04.addChannelKey" />
+			<![CDATA[						
+				)					
+				VALUES					
+				(
+			]]>
+				<include refid="BINOLBSCHA04.addChannelValue" />		
+			<![CDATA[							
+				)		
+				select SCOPE_IDENTITY() as value			
+	    	]]> 
+		</selectKey>
+	  </insert>
+  
+   <!-- 判断渠道名称是否已经存在 -->
+	<select id="getCount" parameterClass="java.util.HashMap" resultClass="java.lang.String">
+		<![CDATA[
+		SELECT COUNT(1) FROM(
+			SELECT
+				BIN_BrandInfoID,
+		        ChannelName
+			FROM
+				Basis.BIN_Channel
+			WHERE
+				BIN_BrandInfoID=#brandInfoId# AND
+				ChannelName=#channelName#
+				)a
+		]]>
+    </select>
+</sqlMap>

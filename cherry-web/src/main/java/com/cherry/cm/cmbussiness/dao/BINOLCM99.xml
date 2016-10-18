@@ -1,0 +1,3102 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sqlMap PUBLIC "-//iBATIS.com//DTD SQL Map 2.0//EN" "http://ibatis.apache.org/dtd/sql-map-2.dtd">
+<sqlMap namespace="BINOLCM99">
+	 <!-- 插入报表打印记录表  -->
+	<insert id="insertPrintLog" parameterClass="java.util.HashMap">
+        <![CDATA[
+        INSERT INTO Basis.BIN_PrintLog(
+			BIN_OrganizationInfoID,
+			BIN_BrandInfoID,
+			BillNo,
+			EmployeeID,
+			Time,
+			CreateTime,
+			CreatedBy,
+			CreatePGM,
+			UpdateTime,
+			UpdatedBy,
+			UpdatePGM,
+			ModifyCount
+		)VALUES(
+			#organizationInfoId#,
+			#brandInfoId#,
+			#billNo#,
+			#employeeId#,
+			#printTime#,
+			#createTime#,
+			#createdBy#,
+			#createPGM#,
+			#updateTime#,
+			#updatedBy#,
+			#updatePGM#,
+			0
+		)
+    	]]>
+	</insert>
+	<!--================================= 产品 =========================================-->
+	<!-- 产品发货单详细表头数据 -->
+	<select id="getBINOLSTSFH05Map" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+		<![CDATA[
+			SELECT
+               	A.DeliverNoIF AS billNo,
+               	A.Comments AS comments,
+              	A.Date AS date,
+               	A.DeliverType AS type,
+				C.DepotCode AS depotCode,
+				A.BIN_LogicInventoryInfoID AS lgcInventoryId,
+				ISNULL(A.TotalQuantity,0) AS totalQuantity,
+            	ISNULL(A.TotalAmount,0) AS totalAmount,
+            	CNT.CounterAddress AS receiveDepartAddress,
+		]]>
+		<dynamic>
+            <isNotEmpty property="language">
+                <isEqual property="language" compareValue="en_US">
+                    <![CDATA[
+                       	C.DepotNameEN AS depotName,
+                        D.InventoryNameEN AS lgcInventoryName,
+						E.NameForeign AS departName,
+						G.NameForeign AS sendDepartName,
+						F.EmployeeNameForeign AS creator,
+						H.BrandNameForeign brandName
+                    ]]>
+                </isEqual>
+                <isEqual property="language" compareValue="zh_CN">
+                    <![CDATA[
+                        C.DepotNameCN AS depotName,
+                    	D.InventoryNameCN AS lgcInventoryName,
+                    	E.DepartName AS departName,
+						G.DepartName AS sendDepartName,
+                    	F.EmployeeName AS creator,
+						H.BrandNameChinese brandName
+                    ]]>
+                </isEqual>
+            </isNotEmpty>
+            <isEmpty property="language">
+                <![CDATA[
+                    C.DepotNameCN AS depotName,
+                    D.InventoryNameCN AS lgcInventoryName,
+                    E.DepartName AS departName,
+					G.DepartName AS sendDepartName,
+                    F.EmployeeName AS creator,
+					H.BrandNameChinese brandName
+                ]]>
+            </isEmpty>
+        </dynamic>
+		<![CDATA[
+        FROM
+            Inventory.BIN_ProductDeliver A
+			LEFT JOIN Basis.BIN_DepotInfo C
+			ON (A.BIN_DepotInfoID = C.BIN_DepotInfoID)
+			LEFT JOIN Basis.BIN_LogicInventory D
+			ON (A.BIN_LogicInventoryInfoID = D.BIN_LogicInventoryInfoID)
+			LEFT JOIN Basis.BIN_Organization E
+			ON (A.BIN_OrganizationIDReceive = E.BIN_OrganizationID)
+			LEFT JOIN Basis.BIN_Employee F
+			ON A.BIN_EmployeeID = F.BIN_EmployeeID
+			LEFT JOIN Basis.BIN_Organization G															
+			ON (A.BIN_OrganizationID = G.BIN_OrganizationID)
+			LEFT JOIN Basis.BIN_BrandInfo H WITH(NOLOCK)
+			ON(A.BIN_BrandInfoID=H.BIN_BrandInfoID AND A.BIN_OrganizationInfoID=H.BIN_OrganizationInfoID)
+			LEFT JOIN Basis.BIN_CounterInfo CNT
+			ON A.BIN_OrganizationIDReceive = CNT.BIN_OrganizationID
+		WHERE
+			A.BIN_ProductDeliverID = #billId#
+		]]>
+	</select>
+	<!-- 产品发货单详细清单List数据 -->
+	<select id="getBINOLSTSFH05List" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+		<![CDATA[
+		SELECT
+	        ISNULL(A.Quantity,0) AS quantity,
+	        ISNULL(CONVERT(Decimal(16,2),A.Price),0) AS price,
+	        ISNULL(CONVERT(Decimal(16,2),A.Price),0) * ISNULL(A.Quantity,0) AS amount,
+	        A.Comments AS comments,
+	        C.UnitCode AS unitCode,
+			B.BarCode AS barCode,
+			C.NameForeign AS nameForeign,
+    	]]>
+       	<dynamic>
+            <isNotEmpty property="language">
+                <isEqual property="language" compareValue="en_US">
+                    C.NameForeign AS nameTotal,
+                    G.PackageNameForeign AS packageName
+                </isEqual>
+                <isEqual property="language" compareValue="zh_CN">
+                    C.NameTotal AS nameTotal,
+                    G.PackageName AS packageName
+                </isEqual>
+            </isNotEmpty>
+            <isEmpty property="language">
+                C.NameTotal AS nameTotal,
+                G.PackageName AS packageName
+            </isEmpty>
+        </dynamic>
+       	<![CDATA[
+        FROM
+        	Inventory.BIN_ProductDeliverDetail A
+			LEFT JOIN Basis.BIN_ProductVendor B
+			ON A.BIN_ProductVendorID = B.BIN_ProductVendorID
+			LEFT JOIN Basis.BIN_Product C
+			ON B.BIN_ProductID = C.BIN_ProductID
+			LEFT JOIN Basis.BIN_ProductVendorPackage F
+			ON (A.BIN_ProductVendorPackageID = F.BIN_ProductVendorPackageID)
+			LEFT JOIN Basis.BIN_PackageType G
+			ON (F.BIN_PackageTypeID = G.BIN_PackageTypeID)	
+		WHERE
+			A.BIN_ProductDeliverID = #billId#
+		]]>
+		<isNotEmpty property="detailOrderBy">
+            <isEqual property="detailOrderBy" compareValue="DetailNo">
+                ORDER BY A.DetailNo
+            </isEqual>
+            <isEqual property="detailOrderBy" compareValue="UnitCode">
+                ORDER BY C.UnitCode
+            </isEqual>
+            <isEqual property="detailOrderBy" compareValue="BarCode">
+                ORDER BY B.BarCode
+            </isEqual>
+        </isNotEmpty>
+        <isEmpty property="detailOrderBy">
+            ORDER BY A.DetailNo
+        </isEmpty>	
+	</select>
+	<!-- 产品报损单详细表头数据 -->
+	<select id="getBINOLSTBIL06Map" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+	  <![CDATA[    
+		    SELECT		
+			    DISTINCT			
+				A.BillNoIF AS billNo,
+				A.RelevanceNo,
+				A.TotalQuantity,
+				A.TotalAmount,
+				A.BIN_EmployeeIDAudit,
+				A.Comments,
+				A.OperateDate,
+	  ]]>
+        <dynamic>
+            <isNotEmpty property="language">
+                <isEqual property="language" compareValue="en_US">
+                	<![CDATA[
+	                   C.EmployeeNameForeign AS EmployeeName,
+	                   D.EmployeeNameForeign AS AuditName,
+					   F.DepotNameEN AS depotname,
+					   H.NameForeign AS departName
+					]]>
+                </isEqual>
+                <isEqual property="language" compareValue="zh_CN">
+                	<![CDATA[	                 
+	                    C.EmployeeName,
+	                    D.EmployeeName as AuditName,
+						F.DepotNameCN as depotname,
+						H.DepartName AS departName
+					]]>
+                </isEqual>
+            </isNotEmpty>
+            <isEmpty property="language">
+            	<![CDATA[
+	               C.EmployeeName,
+	               D.EmployeeName as AuditName,
+				   F.DepotNameCN as depotname,
+				   H.DepartName AS departName
+				]]>
+            </isEmpty>
+        </dynamic>
+        <![CDATA[
+			FROM 
+				Inventory.BIN_OutboundFree A 
+				LEFT JOIN  [Basis].[BIN_Organization] B on A.BIN_OrganizationID = B.BIN_OrganizationID
+				LEFT JOIN [Basis].[BIN_Employee] C on A.BIN_EmployeeID = C.BIN_EmployeeID
+				LEFT JOIN [Basis].[BIN_Employee] D on A.BIN_EmployeeIDAudit = D.BIN_EmployeeID
+				LEFT JOIN Inventory.BIN_OutboundFreeDetail E on A.BIN_OutboundFreeID=E.BIN_OutboundFreeID
+				LEFT JOIN Basis.BIN_DepotInfo F on E.BIN_DepotInfoID = F.BIN_DepotInfoID
+				LEFT JOIN Basis.BIN_Organization H on A.BIN_OrganizationID = H.BIN_OrganizationID
+			WHERE 
+			    A.BIN_OutboundFreeID =#billId#			
+		]]>		
+	</select>
+	<!-- 产品报损单详细清单List数据 -->
+	<select id="getBINOLSTBIL06List" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+		<![CDATA[
+		SELECT
+	        ISNULL(A.Quantity,0) AS quantity,
+	        ISNULL(CONVERT(Decimal(16,2),A.Price),0) AS price,
+			ISNULL(CONVERT(Decimal(16,2),A.Price),0) * ISNULL(A.Quantity,0) AS amount,
+	        A.Comments AS comments,
+	        C.UnitCode AS unitCode,
+			B.BarCode AS barCode,
+    	]]>
+       	<dynamic>
+            <isNotEmpty property="language">
+                <isEqual property="language" compareValue="en_US">
+                    C.NameForeign AS nameTotal,
+					G.PackageNameForeign AS packageName
+                </isEqual>
+                <isEqual property="language" compareValue="zh_CN">
+                    C.NameTotal AS nameTotal,
+					G.PackageName AS packageName
+                </isEqual>
+            </isNotEmpty>
+            <isEmpty property="language">
+                C.NameTotal AS nameTotal,
+				G.PackageName AS packageName
+            </isEmpty>
+        </dynamic>
+       	<![CDATA[
+        FROM
+        	Inventory.BIN_OutboundFreeDetail A
+			JOIN Basis.BIN_ProductVendor B
+			ON A.BIN_ProductVendorID = B.BIN_ProductVendorID
+			JOIN Basis.BIN_Product C
+			ON B.BIN_ProductID = C.BIN_ProductID
+			LEFT JOIN Basis.BIN_ProductVendorPackage F
+			ON (A.BIN_ProductVendorPackageID = F.BIN_ProductVendorPackageID)
+			LEFT JOIN Basis.BIN_PackageType G
+			ON (F.BIN_PackageTypeID = G.BIN_PackageTypeID)
+		WHERE
+			A.BIN_OutboundFreeID = #billId#
+		]]>			
+	</select>
+	<!-- 产品报表订货详细表头数据 -->
+	<select id="getBINOLSTSFH03Map" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+	  <![CDATA[    
+		    SELECT		
+			    A.OrderNoIF AS billNo,
+                A.RelevanceNo,
+				A.AuditDate AS auditDate,
+				ISNULL(A.TotalQuantity,0) AS TotalQuantity,
+                ISNULL(A.TotalAmount,0) AS TotalAmount,
+                A.Comments,
+                A.Date AS orderDate,
+            	CNT.CounterAddress AS orderDepartAddress,	
+	  ]]>
+        <dynamic>
+            <isNotEmpty property="language">
+                <isEqual property="language" compareValue="en_US">
+                	<![CDATA[
+						B.NameForeign AS departName,
+						C.EmployeeNameForeign AS employeeName,
+					    D.EmployeeNameForeign AS employeeNameAudit,
+					    E.DepartName AS acceptdepart,
+		                F.DepotNameEN AS acceptdepot,
+						H.DepotNameEN AS depotName
+					
+				
+					]]>
+                </isEqual>
+                <isEqual property="language" compareValue="zh_CN">
+                	<![CDATA[	                 
+	                    B.DepartName AS departName,
+						C.EmployeeName AS employeeName,
+					    D.EmployeeName AS employeeNameAudit,
+					    E.DepartName AS acceptdepart,
+		                F.DepotNameCN AS acceptdepot,
+						H.DepotNameCN AS depotName
+					]]>
+                </isEqual>
+            </isNotEmpty>
+            <isEmpty property="language">
+            	<![CDATA[
+		                B.DepartName AS departName,
+						C.EmployeeName AS employeeName,
+					    D.EmployeeName AS employeeNameAudit,
+					    E.DepartName AS acceptdepart,
+		                F.DepotNameCN AS acceptdepot,
+						H.DepotNameCN AS depotName
+				]]>
+            </isEmpty>
+        </dynamic>
+        <![CDATA[
+		FROM
+			Inventory.BIN_ProductOrder A
+            LEFT JOIN Basis.BIN_Organization B
+            ON A.BIN_OrganizationID = B.BIN_OrganizationID
+            LEFT JOIN Basis.BIN_Employee C
+            ON A.BIN_EmployeeID = C.BIN_EmployeeID
+			LEFT JOIN Basis.BIN_Employee D
+			ON A.BIN_EmployeeIDAudit = D.BIN_EmployeeID
+			LEFT JOIN Basis.BIN_Organization E
+			ON A.BIN_OrganizationIDAccept = E.BIN_OrganizationID
+			LEFT JOIN Basis.BIN_DepotInfo F
+			ON A.BIN_InventoryInfoIDAccept = F.BIN_DepotInfoID
+			LEFT JOIN Basis.BIN_DepotInfo H
+			ON A.BIN_InventoryInfoID = H.BIN_DepotInfoID
+			LEFT JOIN Basis.BIN_CounterInfo CNT
+			ON A.BIN_OrganizationID = CNT.BIN_OrganizationID
+            WHERE  
+				A.BIN_ProductOrderID =#billId#
+		]]>
+	</select>
+	<!-- 产品订货单详细清单List数据 -->
+	<select id="getBINOLSTSFH03List" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+		<![CDATA[
+		SELECT
+	        ISNULL(A.Quantity,0) AS quantity,
+	        ISNULL(CONVERT(Decimal(16,2),A.Price),0) AS price,
+			ISNULL(CONVERT(Decimal(16,2),A.Price),0) * ISNULL(A.Quantity,0) AS amount,
+			ISNULL(A.SuggestedQuantity,0) AS SuggestedQuantity,
+			C.NameForeign AS nameForeign,
+        ]]>
+        <![CDATA[
+                CASE WHEN (1=1
+        ]]>
+        <isNotEmpty property="maxPercent">
+            <![CDATA[
+                    AND ISNULL(A.SuggestedQuantity,0)*#maxPercent#/100.0>=ISNULL(A.Quantity,0)
+            ]]>
+        </isNotEmpty>
+        <isNotEmpty property="minPercent">
+            <![CDATA[
+                    AND ISNULL(A.SuggestedQuantity,0)*#minPercent#/100.0<=ISNULL(A.Quantity,0)
+            ]]>
+        </isNotEmpty>
+        <![CDATA[
+                )
+                THEN
+                    '$normalQuantityText$'
+                ELSE
+                    '$abnormalQuantityText$'
+                END AS abnormalColumn,
+        ]]>
+        <![CDATA[
+	        A.Comments AS comments,
+	        C.UnitCode AS unitCode,
+			B.BarCode AS barCode,
+    	]]>
+       	<dynamic>
+            <isNotEmpty property="language">
+                <isEqual property="language" compareValue="en_US">
+                    C.NameForeign AS nameTotal,
+					G.PackageNameForeign AS packageName
+                </isEqual>
+                <isEqual property="language" compareValue="zh_CN">
+                    C.NameTotal AS nameTotal,
+					G.PackageName AS packageName
+                </isEqual>
+            </isNotEmpty>
+            <isEmpty property="language">
+                C.NameTotal AS nameTotal,
+				G.PackageName AS packageName
+            </isEmpty>
+        </dynamic>
+       	<![CDATA[
+        FROM
+        	Inventory.BIN_ProductOrderDetail A
+			JOIN Basis.BIN_ProductVendor B
+			ON A.BIN_ProductVendorID = B.BIN_ProductVendorID
+			JOIN Basis.BIN_Product C
+			ON B.BIN_ProductID = C.BIN_ProductID
+			LEFT JOIN Basis.BIN_ProductVendorPackage F
+			ON (A.BIN_ProductVendorPackageID = F.BIN_ProductVendorPackageID)
+			LEFT JOIN Basis.BIN_PackageType G
+			ON (F.BIN_PackageTypeID = G.BIN_PackageTypeID)
+		WHERE
+			A.BIN_ProductOrderID = #billId#
+		]]>
+        <isNotEmpty property="detailOrderBy">
+            <isEqual property="detailOrderBy" compareValue="DetailNo">
+                ORDER BY A.DetailNo
+            </isEqual>
+            <isEqual property="detailOrderBy" compareValue="UnitCode">
+                ORDER BY C.UnitCode
+            </isEqual>
+            <isEqual property="detailOrderBy" compareValue="BarCode">
+                ORDER BY B.BarCode
+            </isEqual>
+        </isNotEmpty>
+        <isEmpty property="detailOrderBy">
+            ORDER BY A.DetailNo
+        </isEmpty>
+	</select>
+	<!-- 产品入库单详细表头数据 -->
+	<select id="getBINOLSTBIL02Map" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+		<![CDATA[
+		SELECT
+        	DISTINCT
+			A.BillNoIF AS billNo,
+			A.Comments AS comments,
+			A.InDepotDate AS date,
+			ISNULL(A.TotalQuantity,0) AS totalQuantity,
+            ISNULL(A.TotalAmount,0) AS totalAmount,
+		]]>
+		<dynamic>
+            <isNotEmpty property="language">
+                <isEqual property="language" compareValue="en_US">
+                    <![CDATA[
+                       	C.NameEN AS departName,
+						D.NameForeign AS indepartName,
+						E.EmployeeNameForeign AS auditor,
+						F.EmployeeNameForeign AS creator,
+						G.DepotNameEN AS depotName
+                    ]]>
+                </isEqual>
+                <isEqual property="language" compareValue="zh_CN">
+                    <![CDATA[
+                       	C.NameCN AS departName,
+						D.DepartName AS indepartName,
+						E.EmployeeName AS auditor,
+						F.EmployeeName AS creator,
+						G.DepotNameCN AS depotName
+                    ]]>
+                </isEqual>
+            </isNotEmpty>
+            <isEmpty property="language">
+                <![CDATA[
+                    C.NameCN AS departName,
+					D.DepartName AS indepartName,
+					E.EmployeeName AS auditor,
+					F.EmployeeName AS creator,
+					G.DepotNameCN AS depotName
+                ]]>
+            </isEmpty>
+        </dynamic>
+		<![CDATA[
+        FROM
+            Inventory.BIN_ProductInDepot A
+			JOIN Inventory.BIN_ProductInDepotDetail B
+			ON(A.BIN_ProductInDepotID = B.BIN_ProductInDepotID)
+			LEFT JOIN Basis.BIN_BussinessPartner C
+			ON(A.BIN_BussinessPartnerID = C.BIN_BussinessPartnerID)
+			LEFT JOIN Basis.BIN_Organization D
+            ON A.BIN_OrganizationID = D.BIN_OrganizationID
+			LEFT JOIN Basis.BIN_Employee E
+			ON(A.BIN_EmployeeIDAudit = E.BIN_EmployeeID)
+			LEFT JOIN Basis.BIN_Employee F
+			ON(A.BIN_EmployeeID = F.BIN_EmployeeID)
+			LEFT JOIN Basis.BIN_DepotInfo G
+			ON(B.BIN_InventoryInfoID = G.BIN_DepotInfoID)									
+		WHERE
+			A.BIN_ProductInDepotID = #billId#
+		]]>
+	</select>
+	<!--产品入库单详细清单List数据 -->
+	<select id="getBINOLSTBIL02List" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+		<![CDATA[
+		SELECT
+            ISNULL(A.PreQuantity,0) AS preQuantity,
+	       	ISNULL(A.Quantity,0) AS quantity,
+            ISNULL(CONVERT(Decimal(16,2),A.ReferencePrice),0) AS referencePrice,
+	        ISNULL(CONVERT(Decimal(16,2),A.Price),0) AS price,
+			ISNULL(CONVERT(Decimal(16,2),A.Price),0) * ISNULL(A.Quantity,0) AS amount,
+	        A.Comments AS comments,
+	        C.UnitCode AS unitCode,
+			B.BarCode AS barCode,
+    	]]>
+       	<dynamic>
+            <isNotEmpty property="language">
+                <isEqual property="language" compareValue="en_US">
+                    C.NameForeign AS nameTotal,
+                    G.PackageNameForeign AS packageName
+                </isEqual>
+                <isEqual property="language" compareValue="zh_CN">
+                    C.NameTotal AS nameTotal,
+                    G.PackageName AS packageName
+                </isEqual>
+            </isNotEmpty>
+            <isEmpty property="language">
+                C.NameTotal AS nameTotal,
+                G.PackageName AS packageName
+            </isEmpty>
+        </dynamic>
+       	<![CDATA[
+        FROM
+        	Inventory.BIN_ProductInDepotDetail A
+			LEFT JOIN Basis.BIN_ProductVendor B
+			ON A.BIN_ProductVendorID = B.BIN_ProductVendorID
+			LEFT JOIN Basis.BIN_Product C
+			ON B.BIN_ProductID = C.BIN_ProductID
+			LEFT JOIN Basis.BIN_ProductVendorPackage F
+			ON (A.BIN_ProductVendorPackageID = F.BIN_ProductVendorPackageID)
+			LEFT JOIN Basis.BIN_PackageType G
+			ON (F.BIN_PackageTypeID = G.BIN_PackageTypeID)
+		WHERE
+			A.BIN_ProductInDepotID = #billId#
+		]]>			
+	</select>
+	<!-- 产品退库单详细表头数据 -->
+	<select id="getBINOLSTBIL12Map" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+		<![CDATA[
+		SELECT
+		    DISTINCT
+			A.ReturnNoIF AS billNo,
+			A.Reason AS comments,
+			A.ReturnDate AS date,
+			ISNULL(A.TotalQuantity,0) AS totalQuantity,
+            ISNULL(A.TotalAmount,0) AS totalAmount,
+			]]>
+			<isNotEmpty property="language">
+                <isEqual property="language" compareValue="en_US">
+                	<![CDATA[
+	                   	C.NameForeign AS departName,
+						D.DepotNameEN AS depotName,
+						E.EmployeeNameForeign AS creator,
+						F.EmployeeNameForeign AS auditor
+					]]>
+                </isEqual>
+                <isEqual property="language" compareValue="zh_CN">
+                	<![CDATA[	                   
+	                    C.DepartName AS departName,
+						D.DepotNameCN AS depotName,
+						E.EmployeeName AS creator,
+						F.EmployeeName AS auditor
+					]]>
+                </isEqual>
+            </isNotEmpty>
+            <isEmpty property="language">
+            	<![CDATA[
+	                C.DepartName AS departName,
+					D.DepotNameCN AS depotName,
+					E.EmployeeName AS creator,
+					F.EmployeeName AS auditor
+				]]>
+            </isEmpty>
+		<![CDATA[
+		FROM
+			Inventory.BIN_ProductReturn A
+			JOIN Inventory.BIN_ProductReturnDetail B
+			ON(A.BIN_ProductReturnID = B.BIN_ProductReturnID)
+			LEFT JOIN Basis.BIN_Organization C
+			ON (A.BIN_OrganizationIDReceive = C.BIN_OrganizationID)
+			LEFT JOIN Basis.BIN_DepotInfo D
+			ON (B.BIN_InventoryInfoID = D.BIN_DepotInfoID)
+			LEFT JOIN Basis.BIN_Employee E
+			ON (A.BIN_EmployeeID = E.BIN_EmployeeID)
+			LEFT JOIN Basis.BIN_Employee F
+			ON (A.BIN_EmployeeIDAudit = F.BIN_EmployeeID)
+		WHERE
+			A.BIN_ProductReturnID = #billId#
+		]]>
+	</select>
+	<!-- 产品退库单详细清单List数据 -->
+	<select id="getBINOLSTBIL12List" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+		<![CDATA[
+		SELECT
+	        ISNULL(A.Quantity,0) AS quantity,
+	        ISNULL(CONVERT(Decimal(16,2),A.Price),0) AS price,
+			ISNULL(CONVERT(Decimal(16,2),A.Price),0) * ISNULL(A.Quantity,0) AS amount,
+	        A.Reason AS comments,
+	        C.UnitCode AS unitCode,
+			B.BarCode AS barCode,
+    	]]>
+       	<dynamic>
+            <isNotEmpty property="language">
+                <isEqual property="language" compareValue="en_US">
+                    C.NameForeign AS nameTotal,
+                    G.PackageNameForeign AS packageName
+                </isEqual>
+                <isEqual property="language" compareValue="zh_CN">
+                    C.NameTotal AS nameTotal,
+                    G.PackageName AS packageName
+                </isEqual>
+            </isNotEmpty>
+            <isEmpty property="language">
+                C.NameTotal AS nameTotal,
+                G.PackageName AS packageName
+            </isEmpty>
+        </dynamic>
+       	<![CDATA[
+        FROM
+        	Inventory.BIN_ProductReturnDetail A
+			LEFT JOIN Basis.BIN_ProductVendor B
+			ON A.BIN_ProductVendorID = B.BIN_ProductVendorID
+			LEFT JOIN Basis.BIN_Product C
+			ON B.BIN_ProductID = C.BIN_ProductID
+			LEFT JOIN Basis.BIN_ProductVendorPackage F
+			ON (A.BIN_ProductVendorPackageID = F.BIN_ProductVendorPackageID)
+			LEFT JOIN Basis.BIN_PackageType G
+			ON (F.BIN_PackageTypeID = G.BIN_PackageTypeID)
+		WHERE
+			A.BIN_ProductReturnID = #billId#
+		]]>			
+	</select>
+	
+	<!-- 产品退库申请单详细表头数据 -->
+	<select id="getBINOLSTBIL14Map" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+		<![CDATA[
+		SELECT
+		    DISTINCT
+			A.BillNoIF AS billNo,
+			A.Reason AS comments,
+			A.Comment AS comment,
+			A.TradeDate AS date,
+			ISNULL(A.TotalQuantity,0) AS totalQuantity,
+            ISNULL(A.TotalAmount,0) AS totalAmount,
+			]]>
+        <dynamic>
+            <isNotEmpty property="language">
+                <isEqual property="language" compareValue="en_US">
+                    <![CDATA[
+                        B.NameForeign AS departName,
+                        F.DepotNameEN AS depotName,
+                        G.InventoryNameEN AS logicInventoryName,
+                        E.NameForeign AS departNameReceive,
+                        H.DepotNameEN AS depotNameReceive,
+                        I.InventoryNameEN AS logicInventoryNameReceive,
+                        C.EmployeeNameForeign AS creator,
+                        D.EmployeeNameForeign AS auditor
+                    ]]>
+                </isEqual>
+                <isEqual property="language" compareValue="zh_CN">
+                    <![CDATA[
+                        B.DepartName AS departName,
+	                    F.DepotNameCN AS depotName,
+	                    G.InventoryNameCN AS logicInventoryName,
+	                    E.DepartName AS departNameReceive,
+	                    H.DepotNameCN AS depotNameReceive,
+	                    I.InventoryNameCN AS logicInventoryNameReceive,
+	                    C.EmployeeName AS creator,
+	                    D.EmployeeName AS auditor
+                    ]]>
+                </isEqual>
+            </isNotEmpty>
+            <isEmpty property="language">
+                <![CDATA[
+                    B.DepartName AS departName,
+                    F.DepotNameCN AS depotName,
+                    G.InventoryNameCN AS logicInventoryName,
+                    E.DepartName AS departNameReceive,
+                    H.DepotNameCN AS depotNameReceive,
+                    I.InventoryNameCN AS logicInventoryNameReceive,
+                    C.EmployeeName AS creator,
+                    D.EmployeeName AS auditor
+                ]]>
+            </isEmpty>
+        </dynamic>
+        <![CDATA[
+            FROM
+                Inventory.BIN_ProReturnRequest A
+                LEFT JOIN Basis.BIN_Organization B
+                ON A.BIN_OrganizationID = B.BIN_OrganizationID
+                LEFT JOIN Basis.BIN_Employee C
+                ON A.BIN_EmployeeID = C.BIN_EmployeeID
+                LEFT JOIN Basis.BIN_Employee D
+                ON A.BIN_EmployeeIDAudit = D.BIN_EmployeeID
+                LEFT JOIN Basis.BIN_Organization E
+                ON A.BIN_OrganizationIDReceive = E.BIN_OrganizationID
+                LEFT JOIN Basis.BIN_DepotInfo F
+                ON A.BIN_InventoryInfoID = F.BIN_DepotInfoID
+                LEFT JOIN Basis.BIN_LogicInventory G
+                ON A.BIN_LogicInventoryInfoID = G.BIN_LogicInventoryInfoID
+                LEFT JOIN Basis.BIN_DepotInfo H
+                ON A.BIN_InventoryInfoIDReceive = H.BIN_DepotInfoID
+                LEFT JOIN Basis.BIN_LogicInventory I
+                ON A.BIN_LogicInventoryInfoIDReceive = I.BIN_LogicInventoryInfoID
+            WHERE
+				A.BIN_ProReturnRequestID = #billId#
+		]]>
+	</select>
+	<!-- 产品退库申请单详细清单List数据 -->
+	<select id="getBINOLSTBIL14List" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+		<![CDATA[
+		SELECT
+	        ISNULL(A.Quantity,0) AS quantity,
+	        ISNULL(CONVERT(Decimal(16,2),A.Price),0) AS price,
+			ISNULL(CONVERT(Decimal(16,2),A.Price),0) * ISNULL(A.Quantity,0) AS amount,
+	        A.Reason AS comments,
+	        C.UnitCode AS unitCode,
+			B.BarCode AS barCode,
+    	]]>
+       	<dynamic>
+            <isNotEmpty property="language">
+                <isEqual property="language" compareValue="en_US">
+                    C.NameForeign AS nameTotal,
+                    G.PackageNameForeign AS packageName
+                </isEqual>
+                <isEqual property="language" compareValue="zh_CN">
+                    C.NameTotal AS nameTotal,
+                    G.PackageName AS packageName
+                </isEqual>
+            </isNotEmpty>
+            <isEmpty property="language">
+                C.NameTotal AS nameTotal,
+                G.PackageName AS packageName
+            </isEmpty>
+        </dynamic>
+       	<![CDATA[
+        FROM
+        	Inventory.BIN_ProReturnReqDetail A
+			LEFT JOIN Basis.BIN_ProductVendor B
+			ON A.BIN_ProductVendorID = B.BIN_ProductVendorID
+			LEFT JOIN Basis.BIN_Product C
+			ON B.BIN_ProductID = C.BIN_ProductID
+			LEFT JOIN Basis.BIN_ProductVendorPackage F
+			ON (A.BIN_ProductVendorPackageID = F.BIN_ProductVendorPackageID)
+			LEFT JOIN Basis.BIN_PackageType G
+			ON (F.BIN_PackageTypeID = G.BIN_PackageTypeID)
+		WHERE
+			A.BIN_ProReturnRequestID = #billId#
+		]]>
+        <isNotEmpty property="detailOrderBy">
+            <isEqual property="detailOrderBy" compareValue="DetailNo">
+                ORDER BY A.DetailNo
+            </isEqual>
+            <isEqual property="detailOrderBy" compareValue="UnitCode">
+                ORDER BY C.UnitCode
+            </isEqual>
+            <isEqual property="detailOrderBy" compareValue="BarCode">
+                ORDER BY B.BarCode
+            </isEqual>
+        </isNotEmpty>
+        <isEmpty property="detailOrderBy">
+            ORDER BY A.DetailNo
+        </isEmpty>
+	</select>
+	
+	<!-- 产品盘点申请报表Map打印SQL -->
+	<select id="getBINOLSTBIL16Map" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+			<![CDATA[
+			SELECT		
+			  	DISTINCT																			
+				A.StockTakingNoIF AS billNo,
+				A.RelevanceNo,
+				A.VerifiedFlag,																													
+				A.Date,
+				A.Comments,
+				C.DepartCode,
+				D.EmployeeCode,
+				G.LogicInventoryCode,	
+				E.EmployeeCode AS AuditCode,												
+				F.DepotCode,
+				A.BIN_OrganizationID,
+				A.WorkFlowID,
+				CONVERT(VARCHAR(30),A.UpdateTime,121) AS UpdateTime,
+				A.ModifyCount,
+				A.IsBatch
+			]]>
+		<dynamic>
+		<isNotEmpty property="language">
+			<isEqual property="language" compareValue="en_US">
+			,C.NameForeign AS DepartName										
+			,F.DepotNameEN AS InventoryName
+			,D.EmployeeNameForeign AS EmployeeName
+			,G.InventoryNameEN AS LogicInventoryName
+			,E.EmployeeNameForeign AS AuditName
+			</isEqual>
+			<isEqual property="language" compareValue="zh_CN">	
+			,C.DepartName
+			,F.DepotNameCN AS InventoryName
+			,D.EmployeeName AS EmployeeName
+			,G.InventoryNameCN AS LogicInventoryName
+			,E.EmployeeName AS AuditName
+			</isEqual>								
+		</isNotEmpty>
+		<isEmpty property="language">
+			,C.DepartName
+			,F.DepotNameCN AS InventoryName
+			,D.EmployeeName AS EmployeeName
+			,G.InventoryNameCN AS LogicInventoryName
+			,E.EmployeeName AS AuditName
+		</isEmpty>
+		</dynamic>
+		 <![CDATA[															
+			FROM																					
+				Inventory.BIN_ProStocktakeRequest A WITH(NOLOCK) 
+				JOIN Inventory.BIN_ProStocktakeRequestDetail B WITH(NOLOCK)
+				ON(A.BIN_ProStocktakeRequestID= B.BIN_ProStocktakeRequestID) 
+				LEFT JOIN Basis.BIN_Organization C WITH(NOLOCK)
+				ON A.BIN_OrganizationID = C.BIN_OrganizationID  
+				LEFT JOIN Basis.BIN_Employee D WITH(NOLOCK)                        
+				ON (A.BIN_EmployeeID = D.BIN_EmployeeID)				
+				LEFT JOIN Basis.BIN_Employee E WITH(NOLOCK)    
+				ON(A.BIN_EmployeeIDAudit = E.BIN_EmployeeID)                                              
+				LEFT JOIN Basis.BIN_DepotInfo F WITH(NOLOCK)
+				ON(B.BIN_InventoryInfoID = F.BIN_DepotInfoID)    
+				LEFT JOIN Basis.BIN_LogicInventory G WITH(NOLOCK)
+				ON(B.BIN_LogicInventoryInfoID = G.BIN_LogicInventoryInfoID)
+			WHERE
+				A.BIN_ProStocktakeRequestID = #billId#
+		]]>
+	</select>
+	<!-- 产品吊牌Map打印SQL -->
+	<select id="getBINOLPTJCS44Map" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+			<![CDATA[
+			SELECT 
+				ISNULL(pt.NameTotal,'') As nameTotal,
+				ISNULL(pv.BarCode,'') As barCode,
+				ISNULL(pt.Spec,'') As spec,
+				ISNULL(CONVERT(Decimal(16,2),pp.SalePrice),0) As salePrice,
+				ISNULL(CONVERT(Decimal(16,2),pp.MemPrice),0) As memPrice
+			From 
+				Basis.BIN_Product pt WITH(NOLOCK)
+			LEFT JOIN
+				Basis.BIN_ProductPrice pp WITH(NOLOCK)
+			ON
+				(pt.BIN_ProductID=pp.BIN_ProductID)
+			LEFT JOIN
+				Basis.BIN_ProductVendor pv WITH(NOLOCK)
+			ON
+				(pt.BIN_ProductID=pv.BIN_ProductID)
+			WHERE
+				pt.BIN_OrganizationInfoID = #organizationInfoId# AND
+				pt.BIN_BrandInfoID = #brandInfoId# AND
+				pv.BIN_ProductID = #billId#
+		]]>
+	</select>
+
+	
+	<select id="getBINOLPTJCS44List" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+	<![CDATA[
+			SELECT 
+				ISNULL(pt.NameTotal,'') As nameTotal,
+				ISNULL(pv.BarCode,'') As barCode,
+				ISNULL(pt.Spec,'') As spec,
+				ISNULL(CONVERT(Decimal(16,2),pp.SalePrice),0) As salePrice,
+				ISNULL(CONVERT(Decimal(16,2),pp.MemPrice),0) As memPrice
+			From 
+				Basis.BIN_Product pt WITH(NOLOCK)
+			LEFT JOIN
+				Basis.BIN_ProductPrice pp WITH(NOLOCK)
+			ON
+				(pt.BIN_ProductID=pp.BIN_ProductID)
+			LEFT JOIN
+				Basis.BIN_ProductVendor pv WITH(NOLOCK)
+			ON
+				(pt.BIN_ProductID=pv.BIN_ProductID)
+			WHERE
+				pt.BIN_OrganizationInfoID = #organizationInfoId# AND
+				pt.BIN_BrandInfoID = #brandInfoId# AND
+				pv.BIN_ProductID = #billId#
+		]]>
+	</select>
+	
+	<select id="getProductList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+	<![CDATA[
+			SELECT 
+				ISNULL(pt.NameTotal,'') As nameTotal,
+				ISNULL(pv.BarCode,'') As barCode,
+				ISNULL(pt.Spec,'') As spec,
+				ISNULL(CONVERT(Decimal(16,2),pp.SalePrice),0) As salePrice,
+				ISNULL(CONVERT(Decimal(16,2),pp.MemPrice),0) As memprice
+			From 
+				Basis.BIN_Product pt WITH(NOLOCK)
+			LEFT JOIN
+				Basis.BIN_ProductPrice pp WITH(NOLOCK)
+			ON
+				(pt.BIN_ProductID=pp.BIN_ProductID)
+			LEFT JOIN
+				Basis.BIN_ProductVendor pv WITH(NOLOCK)
+			ON
+				(pt.BIN_ProductID=pv.BIN_ProductID)
+			WHERE
+				pt.BIN_OrganizationInfoID = #organizationInfoId# AND
+				pt.BIN_BrandInfoID = #brandInfoId# AND
+				]]>
+				<![CDATA[
+				pv.BIN_ProductID IN 
+				]]>
+				<iterate property="billId" open="(" close=")" conjunction=",">
+					#billId[]#
+				</iterate>
+	</select>
+	
+	<!-- 取得柜台方案对应的方案中的产品信息 -->
+	<sql id="getPrtByCntSolu">
+		<![CDATA[
+			SELECT 
+				P.BIN_ProductID,P.NameTotal,PPSD.SoluProductName,P.UnitCode,P.ValidFlag,B.BarCode,P.Spec,
+				B.BIN_ProductVendorID,P.StandardCost,PPSD.SalePrice,PPSD.MemPrice,PPSD.PlatinumPrice
+			FROM 
+				Basis.BIN_PrtSoluDepartRelation PSDR
+				JOIN Basis.BIN_ProductPriceSolution PPS 
+					ON (PPS.BIN_ProductPriceSolutionID = PSDR.BIN_SolutionId 
+						AND PPS.ValidFlag = '1' AND PPS.StartDate <= #businessDate# AND PPS.EndDate >= #businessDate# 
+					)
+				JOIN Basis.BIN_ProductPriceSolutionDetail PPSD 
+					ON (PPSD.BIN_ProductPriceSolutionID = PPS.BIN_ProductPriceSolutionID 
+						AND PPSD.ValidFlag = '1'
+					)
+				JOIN Basis.BIN_Product P ON P.BIN_ProductID = PPSD.BIN_ProductID 
+				JOIN Basis.BIN_ProductVendor B ON P.BIN_ProductID = B.BIN_ProductID 
+			WHERE 
+				PSDR.BIN_OrganizationInfoID = #organizationInfoId# AND 
+				PSDR.BIN_BrandInfoID = #brandInfoId# AND 
+				PSDR.DepartCode = #counterCode# AND 
+				P.BIN_ProductID IN  
+		]]>
+		<iterate property="billId" open="(" close=")" conjunction=",">
+			#billId[]#
+		</iterate>
+	</sql>
+	
+	<!-- 检查柜台是否有分配可用的方案  -->
+	<select id="chkCntSoluData" parameterClass="java.util.HashMap" resultClass="java.util.HashMap"> 
+	 <![CDATA[
+		SELECT 1
+		FROM 
+			Basis.BIN_PrtSoluDepartRelation PSDR 
+			JOIN Basis.BIN_ProductPriceSolution PPS ON PPS.BIN_ProductPriceSolutionID = PSDR.BIN_SolutionId
+		WHERE
+			PSDR.DepartCode = #counterCode# AND 
+			PPS.ValidFlag = '1' AND 
+			PSDR.ValidFlag = '1' AND 
+			PPS.StartDate <= #businessDate# AND 
+			PPS.EndDate >= #businessDate# 
+	 ]]>
+	</select>
+	
+	<!--根据输入字符串模糊查询柜台对应的产品信息-->
+	<select id="getCntProductList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+	<![CDATA[
+		SELECT 
+			A.UnitCode AS unitCode,
+			A.BarCode AS barCode,
+			A.Spec As spec,
+			A.BIN_ProductID AS productId,
+			A.BIN_ProductVendorID AS productVendorId,
+			ISNULL(CONVERT(Decimal(16,2),A.StandardCost),0) AS standardCost,
+			]]>
+			<!-- 颖通模式价格从产品价格表取  -->
+			<isEqual property="soluAddModeConf" compareValue="2">
+				ISNULL(CONVERT(Decimal(16,2),C.TagPrice),0) AS salePrice,
+	            ISNULL(CONVERT(Decimal(16,2),C.MemPrice),0) AS memPrice,
+	            ISNULL(CONVERT(Decimal(16,2),C.PlatinumPrice),0) AS platinumPrice,
+			</isEqual>
+			<isEqual property="soluAddModeConf" compareValue="3">
+				ISNULL(CONVERT(Decimal(16,2),C.TagPrice),0) AS salePrice,
+	            ISNULL(CONVERT(Decimal(16,2),C.MemPrice),0) AS memPrice, 
+	            ISNULL(CONVERT(Decimal(16,2),C.PlatinumPrice),0) AS platinumPrice,
+			</isEqual>
+			<!-- 标准模式价格从方案明细中取得  -->
+			<isEqual property="soluAddModeConf" compareValue="1">
+				ISNULL(CONVERT(Decimal(16,2),A.SalePrice),0) AS salePrice,
+	            ISNULL(CONVERT(Decimal(16,2),A.MemPrice),0) AS memPrice,
+	            ISNULL(CONVERT(Decimal(16,2),A.PlatinumPrice),0) AS platinumPrice,
+			</isEqual>
+			<![CDATA[
+			A.SoluProductName AS soluProductName,
+			]]>
+			<dynamic>
+				<isNotEmpty property="language">
+					<isEqual property="language" compareValue="zh_CN">										
+						A.NameTotal AS nameTotal
+					</isEqual>
+					<isEqual property="language" compareValue="en_US">										
+						A.NameForeign AS nameTotal
+					</isEqual>
+				</isNotEmpty>
+				<isEmpty property="language">
+						A.NameTotal AS nameTotal
+				</isEmpty>
+			</dynamic>
+		<![CDATA[
+		FROM (
+		]]>
+				<!-- 柜台产品使用模式 1:严格校验  -->
+				<isEqual property="cntPrtModeConf" compareValue="1">
+					<!-- 取得柜台方案对应的方案中的产品信息 -->
+					<include refid="getPrtByCntSolu"/>
+				</isEqual>
+				<!-- 柜台产品使用模式 2:补充校验 -->
+				<isEqual property="cntPrtModeConf" compareValue="2">
+					<!-- 取得柜台方案对应的方案中的产品信息 -->
+					<include refid="getPrtByCntSolu"/>
+					<![CDATA[
+					UNION 
+					SELECT 
+						A2.*,
+					]]>
+					<!-- 标准模式价格从方案明细中取得:因为是补充，所以只能从标准产品价格表中取得   -->
+					<![CDATA[
+						PP.TagPrice AS SalePrice,PP.MemPrice,PP.PlatinumPrice
+					FROM(
+						SELECT 
+							P.BIN_ProductID,P.NameTotal,P.NameTotal AS SoluProductName,P.UnitCode,
+							P.ValidFlag,PV.BarCode,P.Spec,PV.BIN_ProductVendorID,P.StandardCost 
+						FROM 
+							Basis.BIN_Product P 
+							JOIN Basis.BIN_ProductVendor PV ON PV.BIN_ProductID = P.BIN_ProductID 
+						WHERE 
+							P.BIN_OrganizationInfoID = #organizationInfoId# AND 
+							P.BIN_BrandInfoID = #brandInfoId# AND
+							]]> 
+							<isNotEmpty property="originalBrand">
+							 <![CDATA[P.OriginalBrand=#originalBrand# AND]]>
+							</isNotEmpty>
+							<![CDATA[
+							NOT EXISTS(
+							SELECT 1 FROM (
+							]]>
+							<include refid="getPrtByCntSolu"/>
+							<![CDATA[
+							)  A3 WHERE A3.BIN_ProductID = P.BIN_ProductID 
+						) 
+						AND P.BIN_ProductID IN 
+					]]>
+					<iterate property="billId" open="(" close=")" conjunction=",">
+						#billId[]#
+					</iterate>
+					<![CDATA[
+					) A2
+					]]>
+					<!-- 标准模式价格从方案明细中取得:因为是补充，所以只能从标准产品价格表中取得   -->
+		            <![CDATA[
+		            LEFT JOIN Basis.BIN_ProductPrice PP 
+			            ON (A2.BIN_ProductID = PP.BIN_ProductID 
+			            AND A2.ValidFlag = PP.ValidFlag 
+			            AND PP.Type = '2' 
+			            AND PP.EndDate >= #businessDate# 
+			            AND PP.StartDate <= #businessDate#)
+		            ]]>
+				</isEqual>
+			<![CDATA[
+			) A 
+			]]>
+			<!-- 颖通模式价格从产品价格表取  -->
+			<isEqual property="soluAddModeConf" compareValue="2">
+            <![CDATA[
+            LEFT JOIN Basis.BIN_ProductPrice C 
+	            ON (A.BIN_ProductID = C.BIN_ProductID 
+	            AND A.ValidFlag = C.ValidFlag 
+	            AND C.Type = '2' 
+	            AND C.EndDate >= #businessDate# 
+	            AND C.StartDate <= #businessDate#)
+            ]]>
+			</isEqual>
+			<!-- 颖通模式价格从产品价格表取  -->
+			<isEqual property="soluAddModeConf" compareValue="3">
+            <![CDATA[
+            LEFT JOIN Basis.BIN_ProductPrice C 
+	            ON (A.BIN_ProductID = C.BIN_ProductID 
+	            AND A.ValidFlag = C.ValidFlag 
+	            AND C.Type = '2' 
+	            AND C.EndDate >= #businessDate# 
+	            AND C.StartDate <= #businessDate#)
+            ]]>
+			</isEqual>
+	</select>
+	
+	<!--根据输入字符串查询产品信息-->
+	<select id="getProductInfoList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+        <![CDATA[
+		SELECT 
+			A.UnitCode AS unitCode,
+			B.BarCode AS barCode,
+			A.Spec As spec,
+			A.BIN_ProductID AS productId,
+			B.BIN_ProductVendorID AS productVendorId,
+			ISNULL(CONVERT(Decimal(16,2),C.SalePrice),0) AS salePrice,
+            ISNULL(CONVERT(Decimal(16,2),C.MemPrice),0) AS memPrice,
+            ISNULL(CONVERT(Decimal(16,2),C.PlatinumPrice),0) AS platinumPrice,
+            ISNULL(CONVERT(Decimal(16,2),A.StandardCost),0) AS standardCost,
+            ISNULL(CONVERT(Decimal(16,2),A.OrderPrice),0) AS orderPrice,
+        ]]>
+			<dynamic>
+				<isNotEmpty property="language">
+					<isEqual property="language" compareValue="zh_CN">										
+						A.NameTotal AS nameTotal,
+						A.NameTotal AS soluProductName 
+					</isEqual>
+					<isEqual property="language" compareValue="en_US">										
+						A.NameForeign AS nameTotal,
+						A.NameForeign AS soluProductName
+					</isEqual>
+				</isNotEmpty>
+				<isEmpty property="language">
+						A.NameTotal AS nameTotal,
+						A.NameTotal AS soluProductName
+				</isEmpty>
+			</dynamic>
+        <![CDATA[
+		FROM
+			Basis.BIN_Product A
+			INNER JOIN Basis.BIN_ProductVendor B ON A.BIN_ProductID = B.BIN_ProductID 
+            LEFT JOIN Basis.BIN_ProductPrice C ON A.BIN_ProductID = C.BIN_ProductID AND A.ValidFlag = C.ValidFlag AND C.Type = '2' AND C.EndDate >= #businessDate# AND C.StartDate <= #businessDate# 
+		WHERE
+			A.BIN_OrganizationInfoID = #organizationInfoId# 
+			AND A.BIN_BrandInfoID = #brandInfoId# 
+		]]>
+		<isNotEmpty property="billId">
+			<![CDATA[AND A.BIN_ProductID IN ]]>
+			<iterate property="billId" open="(" close=")" conjunction=",">
+				#billId[]#
+			</iterate>
+		</isNotEmpty>
+		<isNotEmpty property="originalBrand">
+		 <![CDATA[AND A.OriginalBrand=#originalBrand#]]>
+		</isNotEmpty>
+	</select>
+	
+	<!-- 产品盘点申请报表List打印SQL -->
+	<select id="getBINOLSTBIL16List" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+		<![CDATA[
+            SELECT
+                ISNULL(A.BookQuantity,0) AS Quantity,
+                ISNULL(CONVERT(Decimal(16,2),A.Price),0) AS Price,
+                ISNULL(A.GainQuantity,0) AS GainQuantity,
+                A.HandleType,
+                (ISNULL(A.BookQuantity,0) + ISNULL(A.GainQuantity,0)) AS RealQuantity,
+                ISNULL(CONVERT(Decimal(16,2),A.Price),0) * ISNULL(A.GainQuantity,0) AS DetailAmount,
+                A.Comments AS comments,
+                B.BarCode,
+                C.UnitCode,
+                E.BatchNo
+        ]]>
+        <dynamic>
+        <isNotEmpty property="language">
+            <isEqual property="language" compareValue="en_US">
+                ,C.NameForeign AS NameTotal
+                ,D.PackageNameForeign AS PackageName
+            </isEqual>
+            <isEqual property="language" compareValue="zh_CN">
+                ,C.NameTotal
+                ,D.PackageName
+            </isEqual>
+        </isNotEmpty>
+        <isEmpty property="language">
+                ,C.NameTotal
+                ,D.PackageName
+        </isEmpty>
+        </dynamic>
+        <![CDATA[
+            FROM
+                Inventory.BIN_ProStocktakeRequestDetail A
+                LEFT JOIN Basis.BIN_ProductBatch E
+                ON A.BIN_ProductBatchID = E.BIN_ProductBatchID,
+                Basis.BIN_ProductVendor B,
+                Basis.BIN_Product C
+                LEFT JOIN Basis.BIN_PackageType D
+                ON (C.ModuleCode = D.BIN_PackageTypeID)
+            WHERE
+                A.BIN_ProStocktakeRequestID = #billId# AND
+                A.ValidFlag = '1' AND
+                A.BIN_ProductVendorID = B.BIN_ProductVendorID AND
+                B.BIN_ProductID = C.BIN_ProductID
+        ]]>
+	</select>
+	
+	<!-- 产品调拨申请报表Map打印SQL -->
+	<select id="getBINOLSTBIL18Map" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+			<![CDATA[
+			SELECT
+				A.AllocationNoIF AS billNo,
+				A.Date AS date,
+				A.Comments AS comments,
+				A.TotalQuantity AS totalQuantity,
+				A.TotalAmount AS totalAmount
+			]]>
+		<dynamic>
+		<isNotEmpty property="language">
+			<isEqual property="language" compareValue="en_US">
+				,C.NameForeign AS departName
+				,D.NameForeign AS departNameOut
+				,G.DepotNameEN AS inventoryName
+				,H.InventoryNameEN AS logicInventoryName
+				,E.EmployeeNameForeign AS creator
+				,F.EmployeeName AS auditor
+			</isEqual>
+			<isEqual property="language" compareValue="zh_CN">	
+				,C.DepartName AS departName
+				,D.DepartName AS departNameOut
+				,G.DepotNameCN AS inventoryName
+				,H.InventoryNameCN AS logicInventoryName
+				,E.EmployeeName AS creator
+				,F.EmployeeName AS auditor
+			</isEqual>								
+		</isNotEmpty>
+		<isEmpty property="language">
+			,C.DepartName AS departName
+			,D.DepartName AS departNameOut
+			,G.DepotNameCN AS inventoryName
+			,H.InventoryNameCN AS logicInventoryName
+			,E.EmployeeName AS creator
+			,F.EmployeeName AS auditor
+		</isEmpty>
+		</dynamic>
+		 <![CDATA[															
+			FROM
+				Inventory.BIN_ProductAllocation A WITH(NOLOCK)
+				JOIN Inventory.BIN_ProductAllocationDetail B WITH(NOLOCK)
+					ON(A.BIN_ProductAllocationID = B.BIN_ProductAllocationID)
+				LEFT JOIN Basis.BIN_Organization C WITH(NOLOCK)
+					ON A.BIN_OrganizationIDIn = C.BIN_OrganizationID
+				LEFT JOIN Basis.BIN_Organization D WITH(NOLOCK)
+					ON(A.BIN_OrganizationIDOut = D.BIN_OrganizationID)
+				LEFT JOIN Basis.BIN_Employee E WITH(NOLOCK)                        
+					ON (A.BIN_EmployeeID = E.BIN_EmployeeID)				
+				LEFT JOIN Basis.BIN_Employee F WITH(NOLOCK)    
+					ON(A.BIN_EmployeeIDAudit = F.BIN_EmployeeID)                                              
+				LEFT JOIN Basis.BIN_DepotInfo G WITH(NOLOCK)
+					ON(B.BIN_InventoryInfoID = G.BIN_DepotInfoID)    
+				LEFT JOIN Basis.BIN_LogicInventory H WITH(NOLOCK)
+					ON(B.BIN_LogicInventoryInfoID = H.BIN_LogicInventoryInfoID)
+			WHERE
+				A.BIN_ProductAllocationID = #billId#
+		]]>
+	</select>
+	<!-- 产品调拨申请报表List打印SQL -->
+	<select id="getBINOLSTBIL18List" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+		<![CDATA[
+            SELECT
+                ISNULL(A.Quantity,0) AS quantity,
+		        ISNULL(CONVERT(Decimal(16,2),A.Price),0) AS price,
+				ISNULL(CONVERT(Decimal(16,2),A.Price),0) * ISNULL(A.Quantity,0) AS amount,
+		        A.Comments AS comments,
+		        C.UnitCode AS unitCode,
+				B.BarCode AS barCode
+        ]]>
+        <dynamic>
+        <isNotEmpty property="language">
+            <isEqual property="language" compareValue="en_US">
+                ,C.NameForeign AS nameTotal
+                ,G.PackageNameForeign AS packageName
+            </isEqual>
+            <isEqual property="language" compareValue="zh_CN">
+                ,C.NameTotal AS nameTotal
+                ,G.PackageName AS packageName
+            </isEqual>
+        </isNotEmpty>
+        <isEmpty property="language">
+                ,C.NameTotal AS nameTotal
+                ,G.PackageName AS packageName
+        </isEmpty>
+        </dynamic>
+        <![CDATA[
+            FROM
+                Inventory.BIN_ProductAllocationDetail A WITH(NOLOCK)
+				LEFT JOIN Basis.BIN_ProductVendor B WITH(NOLOCK)
+					ON A.BIN_ProductVendorID = B.BIN_ProductVendorID
+				LEFT JOIN Basis.BIN_Product C WITH(NOLOCK)
+					ON B.BIN_ProductID = C.BIN_ProductID
+				LEFT JOIN Basis.BIN_ProductVendorPackage F WITH(NOLOCK)
+					ON (A.BIN_ProductVendorPackageID = F.BIN_ProductVendorPackageID)
+				LEFT JOIN Basis.BIN_PackageType G WITH(NOLOCK)
+					ON (F.BIN_PackageTypeID = G.BIN_PackageTypeID)
+            WHERE
+                A.BIN_ProductAllocationID = #billId#
+        ]]>
+	</select>
+	
+	<!-- 库存记录详细表头数据 -->
+	<select id="getBINOLPTRPS12Map" parameterClass="java.util.HashMap" resultClass="java.util.HashMap" remapResults="true">
+		<include refid="BINOLPTRPS12.getProProductSQL" />
+	</select>
+	<!-- 库存记录详细清单List数据 -->
+	<select id="getBINOLPTRPS12List" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+		<include refid="BINOLCMINC99.getInventoryList" />
+		<include refid="BINOLPTRPS12.getProStockDetailsSQL" />
+	</select>
+	<!-- 实时库存记录详细表头数据 -->
+	<select id="getBINOLPTRPS38Map" parameterClass="java.util.HashMap" resultClass="java.util.HashMap" remapResults="true">
+		<include refid="BINOLPTRPS38.getProProductSQL" />
+	</select>
+	<!-- 实时库存记录详细清单List数据 -->
+	<select id="getBINOLPTRPS38List" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+		<include refid="BINOLCMINC99.getInventoryList" />
+		<include refid="BINOLPTRPS38.ProStockDetailSQL" />
+	</select>
+	<!-- 产品盘点报表Map打印SQL -->
+	<select id="getBINOLSTBIL10Map" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+			<![CDATA[
+			SELECT		
+			  DISTINCT																			
+				A.StockTakingNoIF AS billNo,
+				A.RelevanceNo,
+				A.VerifiedFlag,																		
+				A.Type,												
+				A.Date,
+				A.Comments,
+				B.DepartCode,
+				E.EmployeeCode,
+				F.LogicInventoryCode,	
+				G.EmployeeCode AS AuditCode,												
+				D.DepotCode,
+				A.BIN_OrganizationID,
+				A.WorkFlowID,
+				CONVERT(VARCHAR(30),A.UpdateTime,121) AS UpdateTime,
+				A.ModifyCount,
+				A.IsBatch
+			]]>
+		<dynamic>
+		<isNotEmpty property="language">
+			<isEqual property="language" compareValue="en_US">
+			,B.NameForeign AS DepartName										
+			,D.DepotNameEN AS InventoryName
+			,E.EmployeeNameForeign AS EmployeeName
+			,F.InventoryNameEN AS LogicInventoryName
+			,G.EmployeeNameForeign AS AuditName
+			</isEqual>
+			<isEqual property="language" compareValue="zh_CN">	
+			,B.DepartName							
+			,D.DepotNameCN AS InventoryName
+			,E.EmployeeName AS EmployeeName
+			,F.InventoryNameCN AS LogicInventoryName
+			,G.EmployeeName AS AuditName
+			</isEqual>								
+		</isNotEmpty>
+		<isEmpty property="language">
+			,B.DepartName
+			,D.DepotNameCN AS InventoryName
+			,E.EmployeeName AS EmployeeName
+			,F.InventoryNameCN AS LogicInventoryName
+			,G.EmployeeName AS AuditName
+		</isEmpty>
+		</dynamic>
+		 <![CDATA[															
+			FROM																					
+				Inventory.BIN_ProductStockTaking A      
+				LEFT JOIN Basis.BIN_Employee E                         
+				ON (A.BIN_EmployeeID = E.BIN_EmployeeID)				
+				LEFT JOIN Basis.BIN_Employee G      
+				ON(A.BIN_EmployeeIDAudit = G.BIN_EmployeeID)                      
+				left join Basis.BIN_Organization B on A.BIN_OrganizationID = B.BIN_OrganizationID
+				LEFT JOIN Inventory.BIN_ProductTakingDetail C     
+				ON(A.BIN_ProductStockTakingID= C.BIN_ProductTakingID AND	
+				C.ValidFlag = '1')                                      
+				left join Basis.BIN_DepotInfo D on C.BIN_InventoryInfoID = D.BIN_DepotInfoID    
+				left join Basis.BIN_LogicInventory F on C.BIN_LogicInventoryInfoID = F.BIN_LogicInventoryInfoID
+			WHERE
+				A.BIN_ProductStockTakingID = #billId#
+		]]>
+	</select>
+	<!-- 产品盘点报表List打印SQL -->
+	<select id="getBINOLSTBIL10List" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+		<![CDATA[
+			SELECT																					
+				ISNULL(A.Quantity,0) AS Quantity,
+				ISNULL(CONVERT(Decimal(16,2),A.Price),0) AS Price,
+				ISNULL(A.GainQuantity,0) AS GainQuantity,
+				A.HandleType,
+				(ISNULL(A.Quantity,0) + ISNULL(A.GainQuantity,0)) AS RealQuantity,
+				ISNULL(CONVERT(Decimal(16,2),A.Price),0) * ISNULL(A.GainQuantity,0) AS DetailAmount,
+				A.Comments AS comments,
+				B.BarCode,
+				C.UnitCode,
+				E.BatchNo
+			]]>
+		<dynamic>
+		<isNotEmpty property="language">
+			<isEqual property="language" compareValue="en_US">
+				,C.NameForeign AS NameTotal
+				,D.PackageNameForeign AS packageName 
+			</isEqual>
+			<isEqual property="language" compareValue="zh_CN">	
+				,C.NameTotal
+				,D.PackageName AS packageName
+			</isEqual>								
+		</isNotEmpty>
+		<isEmpty property="language">
+				,C.NameTotal
+				,D.PackageName AS packageName
+		</isEmpty>
+		</dynamic>
+		<![CDATA[
+			FROM																						
+				Inventory.BIN_ProductTakingDetail A
+                LEFT JOIN Basis.BIN_ProductBatch E
+                ON A.BIN_ProductBatchID = E.BIN_ProductBatchID,
+				Basis.BIN_ProductVendor B,		
+				Basis.BIN_Product C 
+				LEFT JOIN Basis.BIN_PackageType D
+				ON (C.ModuleCode = D.BIN_PackageTypeID)																			
+			WHERE																						
+				A.BIN_ProductTakingID = #billId# AND																			
+				A.ValidFlag = '1' AND
+				A.BIN_ProductVendorID = B.BIN_ProductVendorID AND																					
+				B.BIN_ProductID = C.BIN_ProductID AND
+				C.IsStock = '1'
+		]]>
+		<dynamic>
+				<isNotEmpty property="profitKbn">	
+					<isEqual property="profitKbn" compareValue="0">											
+							ORDER BY A.GainQuantity DESC
+					</isEqual>	
+					<isEqual property="profitKbn" compareValue="1">											
+							ORDER BY A.GainQuantity ASC
+					</isEqual>									
+				</isNotEmpty>
+				<isEmpty property="profitKbn">
+					<isNotEmpty property="detailOrderBy">
+		            	<isEqual property="detailOrderBy" compareValue="0">
+		            		ORDER BY
+								C.UnitCode  ASC
+		            	</isEqual>
+		            	<isEqual property="detailOrderBy" compareValue="1">
+		            		ORDER BY
+								B.BarCode  ASC
+		            	</isEqual>
+		            </isNotEmpty>
+				</isEmpty>
+		</dynamic>
+	</select>
+	<!-- 取得指定ID的移库单的概要信息 -->
+	 <select id="getBINOLSTBIL08Map" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+     	<![CDATA[
+			SELECT
+				DISTINCT				
+				A.BillNoIF as billNo,
+				A.TotalQuantity as totalQuantity,
+				A.TotalAmount as totalAmount,
+				A.Comments as comments,
+				A.OperateDate as operateDate,
+		]]>
+        <dynamic>
+       		<isEmpty property="language">
+            	<![CDATA[  
+				   B.NameForeign AS departName, 
+	               C.EmployeeName as employee,
+	               D.EmployeeName as auditEmployee,
+	               F.InventoryNameCN as fromLogicInventoryName,
+	               G.InventoryNameCN as toLogicInventoryName,
+				   H.DepotNameCN AS depotName
+				]]>
+            </isEmpty>
+            <isNotEmpty property="language">
+                <isEqual property="language" compareValue="en_US">
+                	<![CDATA[
+					   B.DepartName AS departName,
+	                   C.EmployeeNameForeign as employee,
+	                   D.EmployeeNameForeign as auditEmployee,
+	                   F.InventoryNameEN as fromLogicInventoryName,
+	                   G.InventoryNameEN as toLogicInventoryName,
+					   H.DepotNameEN AS depotName
+					]]>
+                </isEqual>
+                <isEqual property="language" compareValue="zh_CN">
+                	<![CDATA[  
+						B.DepartName AS departName,
+	                    C.EmployeeName as employee,
+	                    D.EmployeeName as auditEmployee,
+	                    F.InventoryNameCN as fromLogicInventoryName,
+	                    G.InventoryNameCN as toLogicInventoryName,
+						H.DepotNameCN AS depotName
+					]]>
+                </isEqual>
+            </isNotEmpty>
+        </dynamic>
+        <![CDATA[
+			FROM 
+				Inventory.BIN_ProductShift A 
+				LEFT JOIN [Basis].[BIN_Employee] C on A.BIN_EmployeeID = C.BIN_EmployeeID
+				LEFT JOIN Basis.BIN_Organization B ON A.BIN_OrganizationID = B.BIN_OrganizationID
+				LEFT JOIN [Basis].[BIN_Employee] D on A.BIN_EmployeeIDAudit = D.BIN_EmployeeID
+				LEFT JOIN Inventory.BIN_ProductShiftDetail E on A.BIN_ProductShiftID=E.BIN_ProductShiftID
+				LEFT JOIN [Basis].[BIN_LogicInventory] F on E.FromLogicInventoryInfoID = F.BIN_LogicInventoryInfoID
+				LEFT JOIN [Basis].[BIN_LogicInventory] G on E.ToLogicInventoryInfoID = G.BIN_LogicInventoryInfoID
+				LEFT JOIN Basis.BIN_DepotInfo H on E.FromDepotInfoID  = H.BIN_DepotInfoID    
+			WHERE 
+			    A.BIN_ProductShiftID =#billId#			
+		]]>					
+     </select>
+     
+     <!-- 取得指定ID的移库单的明细信息 -->
+	 <select id="getBINOLSTBIL08List" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+     	<![CDATA[
+			SELECT 
+				ISNULL(A.Quantity,0) AS quantity,
+	            ISNULL(CONVERT(Decimal(16,2),A.Price),0) AS price,
+				ISNULL(CONVERT(Decimal(16,2),A.Price),0) * ISNULL(A.Quantity,0) AS amount,
+				A.Comments as comments,
+				C.UnitCode as unitCode,
+				B.BarCode AS barCode,
+		]]>
+        <dynamic>
+            <isNotEmpty property="language">
+                <isEqual property="language" compareValue="en_US">
+                	<![CDATA[
+	                   C.NameForeign as nameTotal,
+					   G.PackageNameForeign AS packageName
+					]]>
+                </isEqual>
+                <isEqual property="language" compareValue="zh_CN">
+                	<![CDATA[
+	                    C.NameTotal as nameTotal,
+						G.PackageName AS packageName
+					]]>
+                </isEqual>
+            </isNotEmpty>
+            <isEmpty property="language">
+            	<![CDATA[
+	              C.NameTotal as nameTotal,
+				  G.PackageName AS packageName
+				]]>
+            </isEmpty>
+        </dynamic>
+        <![CDATA[
+			FROM 
+				Inventory.BIN_ProductShiftDetail A 
+				left join  [Basis].[BIN_ProductVendor] B on A.BIN_ProductVendorID = B.BIN_ProductVendorID
+				left join [Basis].[BIN_Product] C on B.BIN_ProductID = C.BIN_ProductID
+				LEFT JOIN Basis.BIN_ProductVendorPackage F
+				ON (A.BIN_ProductVendorPackageID = F.BIN_ProductVendorPackageID)
+				LEFT JOIN Basis.BIN_PackageType G
+				ON (F.BIN_PackageTypeID = G.BIN_PackageTypeID)
+			WHERE 
+			    A.BIN_ProductShiftID =#billId#
+			ORDER BY A.DetailNo
+		]]>					
+     </select>
+     
+     <!-- 取得指定ID的后台销售单的概要信息 -->
+	 <select id="getBINOLSTSFH16Map" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+     	<![CDATA[
+            SELECT
+                A.CustomerType AS customerType,
+                A.BillType AS billType,
+                A.SaleType AS saleType,
+                A.BillCode AS billNo,
+                A.BillCodeRelevance AS billNoRelevance,
+                A.Settlement AS settlement,
+                A.Currency AS currency,
+                A.SaleDate AS saleDate,
+                A.ExpectFinishDate AS deliverDate,
+                A.ContactPerson AS contactPerson,
+                A.DeliverAddress AS deliverAddress,
+                B.Address AS saleAddress,
+                A.Comments AS comments,
+                B.DepartCode AS departCode,
+                F.DepotCode AS depotCode,
+                G.LogicInventoryCode AS logicInventoryCode,
+                H.DepotCode AS acceptDepotCode,
+                I.LogicInventoryCode AS acceptLogicInventoryCode,
+                C.EmployeeCode AS saleEmployeeCode,
+                D.EmployeeCode AS creatorCode,
+                CASE
+                    WHEN A.CustomerType = '1' THEN E1.DepartCode
+                    WHEN A.CustomerType = '2' THEN E2.Code
+                    WHEN A.CustomerType = '3' THEN E3.EmployeeCode
+                END AS customerCode,
+                convert(int,A.TotalQuantity) AS totalQuantity,
+                convert(decimal(16,2),A.OriginalAmount) AS originalAmount,
+                convert(decimal(16,2),A.PayAmount) AS payAmount,
+        ]]>
+        <dynamic>
+            <isNotEmpty property="language">
+                <isEqual property="language" compareValue="en_US">
+                    <![CDATA[
+                        '('+B.DepartCode+')'+B.NameForeign AS departCodeName,
+                        B.NameForeign AS departName,
+                        '('+F.DepotCode+')'+F.DepotNameEN AS depotCodeName,
+                        F.DepotNameEN AS depotName,
+                        '('+G.LogicInventoryCode+')'+G.InventoryNameEN AS logicInventoryName,
+                        G.InventoryNameEN AS logicInventoryNameOnly,
+                        '('+H.DepotCode+')'+H.DepotNameEN AS acceptDepotCodeName,
+                        H.DepotNameEN AS acceptDepotName,
+                        '('+I.LogicInventoryCode+')'+I.InventoryNameEN AS acceptLogicInventoryName,
+                        I.InventoryNameEN AS acceptLogicInventoryNameOnly,
+                        '('+C.EmployeeCode+')' + C.EmployeeNameForeign AS saleEmployeeName,
+                        C.EmployeeNameForeign AS saleEmployeeNameOnly,
+                        '('+D.EmployeeCode+')' + D.EmployeeNameForeign AS creator,
+                        D.EmployeeNameForeign AS creatorName,
+                        CASE
+                            WHEN A.CustomerType = '1' THEN '('+E1.DepartCode+')'+E1.NameForeign
+                            WHEN A.CustomerType = '2' THEN '('+E2.Code+')'+E2.NameEN
+                            WHEN A.CustomerType = '3' THEN '('+E3.EmployeeCode+')'+E3.EmployeeNameForeign
+                        END AS customerCodeName,
+                        CASE
+                            WHEN A.CustomerType = '1' THEN E1.NameForeign
+                            WHEN A.CustomerType = '2' THEN E2.NameEN
+                            WHEN A.CustomerType = '3' THEN E3.EmployeeNameForeign
+                        END AS customerName,
+						J.BrandNameForeign brandName
+                    ]]>
+                </isEqual>
+                <isEqual property="language" compareValue="zh_CN">
+                    <![CDATA[
+                        '('+B.DepartCode+')'+B.DepartName AS departCodeName,
+	                    B.DepartName AS departName,
+	                    '('+F.DepotCode+')'+F.DepotNameCN AS depotCodeName,
+	                    F.DepotNameCN AS depotName,
+	                    '('+G.LogicInventoryCode+')'+G.InventoryNameCN AS logicInventoryName,
+	                    G.InventoryNameCN AS logicInventoryNameOnly,
+	                    '('+H.DepotCode+')'+H.DepotNameCN AS acceptDepotCodeName,
+	                    H.DepotNameCN AS acceptDepotName,
+	                    '('+I.LogicInventoryCode+')'+I.InventoryNameCN AS acceptLogicInventoryName,
+	                    I.InventoryNameCN AS acceptLogicInventoryNameOnly,
+	                    '('+C.EmployeeCode+')' + C.EmployeeName AS saleEmployeeName,
+	                    C.EmployeeName AS saleEmployeeNameOnly,
+	                    '('+D.EmployeeCode+')' + D.EmployeeName AS creator,
+	                    D.EmployeeName AS creatorName,
+	                    CASE
+	                        WHEN A.CustomerType = '1' THEN '('+E1.DepartCode+')'+E1.DepartName
+	                        WHEN A.CustomerType = '2' THEN '('+E2.Code+')'+E2.NameCN
+	                        WHEN A.CustomerType = '3' THEN '('+E3.EmployeeCode+')'+E3.EmployeeName
+	                    END AS customerCodeName,
+	                    CASE
+	                        WHEN A.CustomerType = '1' THEN E1.DepartName
+	                        WHEN A.CustomerType = '2' THEN E2.NameCN
+	                        WHEN A.CustomerType = '3' THEN E3.EmployeeName
+	                    END AS customerName,
+						J.BrandNameChinese brandName
+                    ]]>
+                </isEqual>
+            </isNotEmpty>
+            <isEmpty property="language">
+                <![CDATA[
+                    '('+B.DepartCode+')'+B.DepartName AS departCodeName,
+                    B.DepartName AS departName,
+                    '('+F.DepotCode+')'+F.DepotNameCN AS depotCodeName,
+                    F.DepotNameCN AS depotName,
+                    '('+G.LogicInventoryCode+')'+G.InventoryNameCN AS logicInventoryName,
+                    G.InventoryNameCN AS logicInventoryNameOnly,
+                    '('+H.DepotCode+')'+H.DepotNameCN AS acceptDepotCodeName,
+                    H.DepotNameCN AS acceptDepotName,
+                    '('+I.LogicInventoryCode+')'+I.InventoryNameCN AS acceptLogicInventoryName,
+                    I.InventoryNameCN AS acceptLogicInventoryNameOnly,
+                    '('+C.EmployeeCode+')' + C.EmployeeName AS saleEmployeeName,
+                    C.EmployeeName AS saleEmployeeNameOnly,
+                    '('+D.EmployeeCode+')' + D.EmployeeName AS creator,
+                    D.EmployeeName AS creatorName,
+                    CASE
+                        WHEN A.CustomerType = '1' THEN '('+E1.DepartCode+')'+E1.DepartName
+                        WHEN A.CustomerType = '2' THEN '('+E2.Code+')'+E2.NameCN
+                        WHEN A.CustomerType = '3' THEN '('+E3.EmployeeCode+')'+E3.EmployeeName
+                    END AS customerCodeName,
+                    CASE
+                        WHEN A.CustomerType = '1' THEN E1.DepartName
+                        WHEN A.CustomerType = '2' THEN E2.NameCN
+                        WHEN A.CustomerType = '3' THEN E3.EmployeeName
+                    END AS customerName,
+					J.BrandNameChinese brandName
+                ]]>
+            </isEmpty>
+        </dynamic>
+        <![CDATA[
+            FROM
+                Sale.BIN_BackstageSale A WITH(NOLOCK)
+                LEFT JOIN Basis.BIN_Organization B WITH(NOLOCK)
+                ON A.BIN_OrganizationID = B.BIN_OrganizationID
+                LEFT JOIN Basis.BIN_Employee C WITH(NOLOCK)
+                ON A.SaleEmployee = C.BIN_EmployeeID
+                LEFT JOIN Basis.BIN_Employee D WITH(NOLOCK)
+                ON A.BillTicketEmployee = D.BIN_EmployeeID
+                LEFT JOIN Basis.BIN_Organization E1 WITH(NOLOCK)
+                ON A.CustomerID = E1.BIN_OrganizationID
+                LEFT JOIN Basis.BIN_BussinessPartner E2 WITH(NOLOCK)
+                ON A.CustomerID = E2.BIN_BussinessPartnerID
+                LEFT JOIN Basis.BIN_Employee E3 WITH(NOLOCK)
+                ON A.CustomerID = E3.BIN_EmployeeID
+                LEFT JOIN Basis.BIN_DepotInfo F WITH(NOLOCK)
+                ON A.BIN_InventoryInfoID = F.BIN_DepotInfoID
+                LEFT JOIN Basis.BIN_LogicInventory G WITH(NOLOCK)
+                ON A.BIN_LogicInventoryInfoID = G.BIN_LogicInventoryInfoID
+                LEFT JOIN Basis.BIN_DepotInfo H WITH(NOLOCK)
+                ON A.BIN_InventoryInfoIDAccept = H.BIN_DepotInfoID
+                LEFT JOIN Basis.BIN_LogicInventory I WITH(NOLOCK)
+                ON A.BIN_LogicInventoryInfoIDAccept = I.BIN_LogicInventoryInfoID
+                LEFT JOIN Basis.BIN_BrandInfo J WITH(NOLOCK)
+				ON(A.BIN_BrandInfoID=J.BIN_BrandInfoID AND A.BIN_OrganizationInfoID=J.BIN_OrganizationInfoID)
+            WHERE
+                A.BIN_BackstageSaleID = #billId#
+        ]]>
+     </select>
+     
+     <!-- 取得指定ID的后台销售单的明细信息 -->
+	 <select id="getBINOLSTSFH16List" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+     	<![CDATA[
+            SELECT
+                FLOOR(ISNULL(A.Quantity,0)) AS quantity,
+                CONVERT(Decimal(16,2),ISNULL(A.Price,0)) AS price,
+                CONVERT(Decimal(16,2),ISNULL(A.PricePay,0)) AS pricePay,
+                CONVERT(Decimal(16,2),ISNULL(A.PayAmount,0) + ISNULL(A.DiscountAmount,0)) AS amount,
+                CONVERT(Decimal(16,2),ISNULL(A.PayAmount,0)) AS payAmount,
+                A.Comment AS comments,
+                B.BarCode AS barCode,
+                C.UnitCode AS unitCode,
+            ]]>
+            <dynamic>
+                <isNotEmpty property="language">
+                    <isEqual property="language" compareValue="en_US">
+                        <![CDATA[
+                            C.NameForeign AS nameTotal,
+					   		ISNULL(E.PackageNameForeign,'') AS packageName
+                        ]]>
+                    </isEqual>
+                    <isEqual property="language" compareValue="zh_CN">
+                        <![CDATA[
+                            C.NameTotal AS nameTotal,
+					   		ISNULL(E.PackageName,'') AS packageName
+                        ]]>
+                    </isEqual>
+                </isNotEmpty>
+                <isEmpty property="language">
+                    <![CDATA[
+                        C.NameTotal AS nameTotal,
+					   	ISNULL(E.PackageName,'') AS packageName
+                    ]]>
+                </isEmpty>
+            </dynamic>
+            <![CDATA[
+            FROM
+                Sale.BIN_BackstageSaleDetail A WITH(NOLOCK)
+            LEFT JOIN Basis.BIN_ProductVendor B WITH(NOLOCK)
+            ON A.BIN_ProductVendorID = B.BIN_ProductVendorID
+            LEFT JOIN Basis.BIN_Product C WITH(NOLOCK)
+            ON B.BIN_ProductID = C.BIN_ProductID
+            LEFT JOIN Basis.BIN_ProductVendorPackage D WITH(NOLOCK)
+			ON (B.BIN_ProductVendorID = D.BIN_ProductVendorID)
+			LEFT JOIN Basis.BIN_PackageType E WITH(NOLOCK)
+			ON (D.BIN_PackageTypeID = E.BIN_PackageTypeID)
+        ]]>
+        <![CDATA[
+            WHERE
+                A.BIN_BackstageSaleID = #billId#
+        ]]>
+     </select>
+	<!--================================= 促销品 =========================================-->
+		
+	<!-- 促销品发货单详细表头数据 -->
+	<select id="getBINOLSSPRM28Map" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+		<![CDATA[
+		SELECT
+        	DISTINCT
+			A.DeliverReceiveNoIF AS billNo,														
+            A.Reason AS comments,																	
+			A.DeliverDate AS date,
+			A.DeliverType AS type,
+			C.DepotCode AS depotCode,
+			B.BIN_LogicInventoryInfoID AS lgcInventoryId,
+			ISNULL(A.TotalQuantity,0) AS totalQuantity,
+            ISNULL(A.TotalAmount,0) AS totalAmount,
+		]]>
+		<dynamic>
+            <isNotEmpty property="language">
+                <isEqual property="language" compareValue="en_US">
+                    <![CDATA[
+                       	C.DepotNameEN AS depotName,
+                        D.InventoryNameEN AS lgcInventoryName,
+						E.NameForeign AS departName,
+						G.NameForeign AS sendDepartName,
+						F.EmployeeNameForeign AS creator
+                    ]]>
+                </isEqual>
+                <isEqual property="language" compareValue="zh_CN">
+                    <![CDATA[
+                       	C.DepotNameCN AS depotName,
+                    	D.InventoryNameCN AS lgcInventoryName,
+                    	E.DepartName AS departName,
+						G.DepartName AS sendDepartName,
+                    	F.EmployeeName AS creator
+                    ]]>
+                </isEqual>
+            </isNotEmpty>
+            <isEmpty property="language">
+                <![CDATA[
+                    C.DepotNameCN AS depotName,
+                    D.InventoryNameCN AS lgcInventoryName,
+                    E.DepartName AS departName,
+					G.DepartName AS sendDepartName,
+                    F.EmployeeName AS creator
+                ]]>
+            </isEmpty>
+        </dynamic>
+		<![CDATA[
+        FROM
+            Inventory.BIN_PromotionDeliver A WITH(NOLOCK)
+			JOIN Inventory.BIN_PromotionDeliverDetail B WITH(NOLOCK)
+			ON (A.BIN_PromotionDeliverID = B.BIN_PromotionDeliverID	AND B.ValidFlag = '1')
+			LEFT JOIN Basis.BIN_DepotInfo C WITH(NOLOCK)
+			ON (B.BIN_InventoryInfoID = C.BIN_DepotInfoID)
+			LEFT JOIN Basis.BIN_LogicInventory D WITH(NOLOCK)
+			ON (B.BIN_LogicInventoryInfoID = D.BIN_LogicInventoryInfoID)
+			LEFT JOIN Basis.BIN_Organization E WITH(NOLOCK)
+			ON (A.BIN_OrganizationIDReceive = E.BIN_OrganizationID)
+			LEFT JOIN Basis.BIN_Employee F WITH(NOLOCK)
+			ON (A.BIN_EmployeeID = F.BIN_EmployeeID)
+			LEFT JOIN Basis.BIN_Organization G WITH(NOLOCK)														
+			ON (A.BIN_OrganizationID = G.BIN_OrganizationID)		
+		WHERE
+			A.BIN_PromotionDeliverID = #billId#
+		]]>
+	</select>
+	<!-- 促销品发货单详细清单List数据 -->
+	<select id="getBINOLSSPRM28List" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+		<![CDATA[
+		SELECT
+	        ISNULL(A.Quantity,0) AS quantity,
+	        ISNULL(CONVERT(Decimal(16,2),A.Price),0) AS price,
+			ISNULL(CONVERT(Decimal(16,2),A.Price),0) * ISNULL(A.Quantity,0) AS amount,
+	        A.Reason AS comments,
+	        C.UnitCode AS unitCode,
+			B.BarCode AS barCode,
+    	]]>
+       	<dynamic>
+            <isNotEmpty property="language">
+                <isEqual property="language" compareValue="en_US">
+                    C.NameForeign AS nameTotal,
+                    G.PackageNameForeign AS packageName
+                </isEqual>
+                <isEqual property="language" compareValue="zh_CN">
+                    C.NameTotal AS nameTotal,
+                    G.PackageName AS packageName
+                </isEqual>
+            </isNotEmpty>
+            <isEmpty property="language">
+                C.NameTotal AS nameTotal,
+                G.PackageName AS packageName
+            </isEmpty>
+        </dynamic>
+       	<![CDATA[
+        FROM
+        	Inventory.BIN_PromotionDeliverDetail A
+			LEFT JOIN Basis.BIN_PromotionProductVendor B
+			ON (A.BIN_PromotionProductVendorID = B.BIN_PromotionProductVendorID)
+			LEFT JOIN Basis.BIN_PromotionProduct C
+			ON (B.BIN_PromotionProductID = C.BIN_PromotionProductID)
+			LEFT JOIN Basis.BIN_ProductVendorPackage F
+			ON (A.BIN_ProductVendorPackageID = F.BIN_ProductVendorPackageID)
+			LEFT JOIN Basis.BIN_PackageType G
+			ON (F.BIN_PackageTypeID = G.BIN_PackageTypeID)	
+		WHERE
+			A.BIN_PromotionDeliverID = #billId#
+		]]>			
+	</select>
+	<!-- 促销品收货单详细表头数据 -->
+	<select id="getBINOLSSPRM44Map" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+		<![CDATA[
+		SELECT
+        	DISTINCT
+			A.DeliverReceiveNoIF AS billNo,																														
+			A.DeliverDate AS date,
+			A.DeliverType AS type,
+			C.DepotCode AS depotCode,
+			B.BIN_LogicInventoryInfoID AS lgcInventoryId,
+			ISNULL(A.TotalQuantity,0) AS totalQuantity,
+            ISNULL(A.TotalAmount,0) AS totalAmount,
+		]]>
+		<dynamic>
+            <isNotEmpty property="language">
+                <isEqual property="language" compareValue="en_US">
+                    <![CDATA[
+                       	C.DepotNameEN AS depotName,
+                        D.InventoryNameEN AS lgcInventoryName,
+						E.NameForeign AS departName,
+						G.NameForeign AS sendDepartName,
+						F.EmployeeNameForeign AS creator
+                    ]]>
+                </isEqual>
+                <isEqual property="language" compareValue="zh_CN">
+                    <![CDATA[
+                       	C.DepotNameCN AS depotName,
+                    	D.InventoryNameCN AS lgcInventoryName,
+                    	E.DepartName AS departName,
+						G.DepartName AS sendDepartName,
+                    	F.EmployeeName AS creator
+                    ]]>
+                </isEqual>
+            </isNotEmpty>
+            <isEmpty property="language">
+                <![CDATA[
+                    C.DepotNameCN AS depotName,
+                    D.InventoryNameCN AS lgcInventoryName,
+                    E.DepartName AS departName,
+					G.DepartName AS sendDepartName,
+                    F.EmployeeName AS creator
+                ]]>
+            </isEmpty>
+        </dynamic>
+		<![CDATA[
+        FROM
+            Inventory.BIN_PromotionDeliver A
+			JOIN Inventory.BIN_PromotionDeliverDetail B
+			ON (A.BIN_PromotionDeliverID = B.BIN_PromotionDeliverID	AND B.ValidFlag = '1')
+			LEFT JOIN Basis.BIN_DepotInfo C
+			ON (B.BIN_InventoryInfoID = C.BIN_DepotInfoID)
+			LEFT JOIN Basis.BIN_LogicInventory D
+			ON (B.BIN_LogicInventoryInfoID = D.BIN_LogicInventoryInfoID)
+			LEFT JOIN Basis.BIN_Organization E
+			ON (A.BIN_OrganizationIDReceive = E.BIN_OrganizationID)
+			LEFT JOIN Basis.BIN_Employee F
+			ON (A.BIN_EmployeeID = F.BIN_EmployeeID)
+			LEFT JOIN Basis.BIN_Organization G															
+			ON (A.BIN_OrganizationID = G.BIN_OrganizationID)		
+		WHERE
+			A.BIN_PromotionDeliverID = #billId#
+			ORDER BY lgcInventoryId
+		]]>
+	</select>
+	<!-- 促销品收货单详细清单List数据 -->
+	<select id="getBINOLSSPRM44List" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+		<![CDATA[
+		SELECT
+	        ISNULL(A.Quantity,0) AS quantity,
+	        ISNULL(CONVERT(Decimal(16,2),A.Price),0) AS price,
+			ISNULL(CONVERT(Decimal(16,2),A.Price),0) * ISNULL(A.Quantity,0) AS amount,
+	        A.Reason AS comments,
+	        C.UnitCode AS unitCode,
+			B.BarCode AS barCode,
+    	]]>
+       	<dynamic>
+            <isNotEmpty property="language">
+                <isEqual property="language" compareValue="en_US">
+                    C.NameForeign AS nameTotal,
+                    G.PackageNameForeign AS packageName
+                </isEqual>
+                <isEqual property="language" compareValue="zh_CN">
+                    C.NameTotal AS nameTotal,
+                    G.PackageName AS packageName
+                </isEqual>
+            </isNotEmpty>
+            <isEmpty property="language">
+                C.NameTotal AS nameTotal,
+                G.PackageName AS packageName
+            </isEmpty>
+        </dynamic>
+       	<![CDATA[
+        FROM
+        	Inventory.BIN_PromotionDeliverDetail A
+			LEFT JOIN Basis.BIN_PromotionProductVendor B
+			ON (A.BIN_PromotionProductVendorID = B.BIN_PromotionProductVendorID)
+			LEFT JOIN Basis.BIN_PromotionProduct C
+			ON (B.BIN_PromotionProductID = C.BIN_PromotionProductID)
+			LEFT JOIN Basis.BIN_ProductVendorPackage F
+			ON (A.BIN_ProductVendorPackageID = F.BIN_ProductVendorPackageID)
+			LEFT JOIN Basis.BIN_PackageType G
+			ON (F.BIN_PackageTypeID = G.BIN_PackageTypeID)	
+		WHERE
+			A.BIN_PromotionDeliverID = #billId#
+		]]>			
+	</select>
+	<!-- 库存记录详细表头数据 -->
+	<select id="getBINOLSSPRM32Map" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+		<include refid="BINOLSSPRM32.getPrmProductSQL" />
+	</select>
+	<!-- 库存记录详细清单List数据 -->
+	<select id="getBINOLSSPRM32List" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+		<include refid="BINOLCMINC99.getInventoryList" />
+		<include refid="BINOLSSPRM32.getPrmStockSQLS" />
+	</select>
+	<!-- 促销品退库单表头数据  -->
+	<select id="getBINOLSSPRM42Map" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+		<![CDATA[
+		SELECT
+			DISTINCT
+			A.ReturnNoIF AS billNo,
+			A.ReturnDate AS date,
+			A.Reason AS comments,
+			ISNULL(A.TotalQuantity,0) AS totalQuantity,
+            ISNULL(A.TotalAmount,0) AS totalAmount,
+		]]>
+		<dynamic>
+			<isNotEmpty property="language">
+				<isEqual property="language" compareValue="en_US">
+					C.NameForeign AS departName,
+					D.DepotNameEN AS depotName,
+					E.EmployeeNameForeign AS creator
+				</isEqual>
+				<isEqual property="language" compareValue="zh_CN">	
+					C.DepartName AS departName,
+					D.DepotNameCN AS depotName,
+					E.EmployeeName AS creator
+				</isEqual>								
+			</isNotEmpty>
+			<isEmpty property="language">
+				C.DepartName AS departName,
+				D.DepotNameCN AS depotName,
+				E.EmployeeName AS creator
+			</isEmpty>
+		</dynamic>
+		<![CDATA[
+		FROM
+			Inventory.BIN_PromotionReturn A
+			JOIN Inventory.BIN_PromotionReturnDetail B
+			ON(A.BIN_PromotionReturnID = B.BIN_PromotionReturnID)
+			LEFT JOIN Basis.BIN_Organization C
+			ON (A.BIN_OrganizationIDReceive = C.BIN_OrganizationID)
+			LEFT JOIN Basis.BIN_DepotInfo D
+			ON (B.BIN_InventoryInfoID = D.BIN_DepotInfoID)
+			LEFT JOIN Basis.BIN_Employee E
+			ON (A.BIN_EmployeeID = E.BIN_EmployeeID)
+		WHERE
+			A.BIN_PromotionReturnID=#billId#
+		]]>
+	</select>	
+	<!-- 促销品退库详细清单List数据  -->
+    <select id="getBINOLSSPRM42List" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+    	<![CDATA[
+		SELECT													
+			ISNULL(A.Quantity,0) AS quantity,
+	        ISNULL(CONVERT(Decimal(16,2),A.Price),0) AS price,
+			ISNULL(CONVERT(Decimal(16,2),A.Price),0) * ISNULL(A.Quantity,0) AS amount,
+	        A.Reason AS comments,
+	        C.UnitCode AS unitCode,
+			B.BarCode AS barCode,
+		]]>
+		<dynamic>
+			<isNotEmpty property="language">
+				<isEqual property="language" compareValue="en_US">
+					C.NameForeign AS nameTotal,
+					G.PackageNameForeign AS packageName
+				</isEqual>
+				<isEqual property="language" compareValue="zh_CN">	
+					C.NameTotal AS nameTotal,
+					G.PackageName AS packageName
+				</isEqual>								
+			</isNotEmpty>
+			<isEmpty property="language">
+				C.NameTotal AS nameTotal,
+				G.PackageName AS packageName
+			</isEmpty>
+		</dynamic>
+		<![CDATA[
+		FROM		
+			Inventory.BIN_PromotionReturnDetail A
+			JOIN Basis.BIN_PromotionProductVendor B
+			ON(A.BIN_PromotionProductVendorID = B.BIN_PromotionProductVendorID)
+			JOIN Basis.BIN_PromotionProduct C
+			ON(B.BIN_PromotionProductID = C.BIN_PromotionProductID)
+			LEFT JOIN Basis.BIN_ProductVendorPackage F
+			ON(A.BIN_ProductVendorPackageID = F.BIN_ProductVendorPackageID)
+			LEFT JOIN Basis.BIN_PackageType G
+			ON(F.BIN_PackageTypeID = G.BIN_PackageTypeID)
+		WHERE
+			A.BIN_PromotionReturnID=#billId#
+		]]>								
+    </select>
+
+    <!-- 促销品盘点报表Map打印SQL -->
+    <select id="getBINOLSSPRM26Map" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+       	<![CDATA[
+			SELECT
+			 DISTINCT		
+				A.StockTakingNoIF AS billNo,																			
+				A.RelevanceNo,											
+				A.VerifiedFlag,																		
+				A.Type,												
+				A.StockTakingDate,
+				A.Reason AS reason,
+				E.EmployeeName																	
+			]]>
+		<dynamic>
+		<isNotEmpty property="language">
+			<isEqual property="language" compareValue="en_US">
+			,B.NameForeign AS DepartName										
+			,D.DepotNameEN AS InventoryName
+			</isEqual>
+			<isEqual property="language" compareValue="zh_CN">	
+			,B.DepartName AS DepartName						
+			,D.DepotNameCN AS InventoryName
+			</isEqual>								
+		</isNotEmpty>
+		<isEmpty property="language">
+			,B.DepartName AS DepartName
+			,D.DepotNameCN AS InventoryName
+		</isEmpty>
+		</dynamic>
+		 <![CDATA[															
+			FROM																					
+				Inventory.BIN_PromotionStockTaking A	
+				LEFT JOIN Inventory.BIN_PromotionTakingDetail C
+				ON (A.BIN_PromotionStockTakingID = C.BIN_PromotionStockTakingID AND	
+					C.ValidFlag = '1' )
+				LEFT JOIN Basis.BIN_Employee E																				
+				ON (A.BIN_EmployeeID = E.BIN_EmployeeID)																	
+				LEFT JOIN Basis.BIN_Organization B
+				ON (A.BIN_OrganizationID = B.BIN_OrganizationID)
+				LEFT JOIN Basis.BIN_DepotInfo D																																					
+				ON (C.BIN_InventoryInfoID = D.BIN_DepotInfoID)
+			WHERE
+				A.BIN_PromotionStockTakingID = #billId#
+		]]>
+    </select>
+
+    <!-- 促销品盘点报表List打印SQL -->
+    <select id="getBINOLSSPRM26List" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+            <![CDATA[
+            SELECT
+			ISNULL(A.Quantity,0) AS Quantity,
+			ISNULL(CONVERT(Decimal(16,2),A.Price),0) AS Price,
+			ISNULL(A.GainQuantity,0) AS GainQuantity,
+			A.Reason AS comments,
+			A.HandleType,
+			(ISNULL(A.Quantity,0) + ISNULL(A.GainQuantity,0)) AS RealQuantity,
+			ISNULL(CONVERT(Decimal(16,2),A.Price),0) * ISNULL(A.GainQuantity,0) AS DetailAmount,
+			B.BarCode,
+			C.UnitCode
+            ]]>
+        <dynamic>
+        <isNotEmpty property="language">
+            <isEqual property="language" compareValue="en_US">
+                ,C.NameForeign AS NameTotal
+                ,D.PackageNameForeign AS packageName
+                ,E.PrimaryCategoryNameForeign as PrimaryCategoryName
+				,E.SecondryCategoryNameForeign as SecondCategoryName
+				,E.SmallCategoryNameForeign as SmallCategoryName
+            </isEqual>
+            <isEqual property="language" compareValue="zh_CN">
+                ,C.NameTotal
+                ,D.PackageName AS packageName
+                ,E.PrimaryCategoryNameChinese as PrimaryCategoryName
+				,E.SecondryCategoryNameChinese as SecondCategoryName
+				,E.SmallCategoryNameChinese as SmallCategoryName
+            </isEqual>
+        </isNotEmpty>
+        <isEmpty property="language">
+                ,C.NameTotal
+                ,D.PackageName AS packageName
+                ,E.PrimaryCategoryNameChinese as PrimaryCategoryName
+				,E.SecondryCategoryNameChinese as SecondCategoryName
+				,E.SmallCategoryNameChinese as SmallCategoryName
+        </isEmpty>
+        </dynamic>
+        <![CDATA[
+            FROM
+                Inventory.BIN_PromotionTakingDetail A
+                LEFT JOIN Basis.BIN_PromotionProductVendor B
+                LEFT JOIN Basis.BIN_PromotionProduct C
+                ON(B.BIN_PromotionProductID = C.BIN_PromotionProductID)
+                LEFT JOIN Basis.BIN_PackageType D
+                ON (C.ModuleCode = D.BIN_PackageTypeID)
+            	ON (A.BIN_PromotionProductVendorID = B.BIN_PromotionProductVendorID)
+            	LEFT JOIN Basis.BIN_PromotionPrtType E WITH (NOLOCK)
+            	ON (C.BIN_PromotionPrtTypeID = E.BIN_PromotionPrtTypeID)
+            WHERE
+                A.BIN_PromotionStockTakingID = #billId# AND
+                A.ValidFlag = '1' AND
+                C.IsStock = '1'
+         ]]>
+         <dynamic>
+				<isNotEmpty property="profitKbn">	
+					<isEqual property="profitKbn" compareValue="0">											
+							ORDER BY A.GainQuantity DESC
+					</isEqual>	
+					<isEqual property="profitKbn" compareValue="1">											
+							ORDER BY A.GainQuantity ASC
+					</isEqual>									
+				</isNotEmpty>
+				<isEmpty property="profitKbn">
+					<isNotEmpty property="detailOrderBy">
+		            	<isEqual property="detailOrderBy" compareValue="0">
+		            		ORDER BY
+								C.UnitCode  ASC
+		            	</isEqual>
+		            	<isEqual property="detailOrderBy" compareValue="1">
+		            		ORDER BY
+								B.BarCode  ASC
+		            	</isEqual>
+		            </isNotEmpty>
+				</isEmpty>
+		</dynamic>  
+    </select>
+
+    <!-- 促销品调拨报表Map打印SQL -->
+    <select id="getBINOLSSPRM30Map" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+        <![CDATA[
+        SELECT
+            A.AllocationNoIF AS billNo,
+            ISNULL(A.TotalQuantity,0) AS totalQuantity,
+            ISNULL(A.TotalAmount,0) AS totalAmount,
+            A.AllocationDate AS date,
+            A.Reason AS comments,
+            E.DepartCode AS sendDepartCode,
+            F.DepartCode AS receiveDepartCode,
+        ]]>
+        <dynamic>
+            <isNotEmpty property="language">
+                <isEqual property="language" compareValue="en_US">
+                    E.NameForeign AS sendDepart,
+                    F.NameForeign AS receiveDepart,
+                    G.EmployeeNameForeign AS employeeName
+                </isEqual>
+                <isEqual property="language" compareValue="zh_CN">
+                    E.DepartName AS sendDepart,
+                    F.DepartName AS receiveDepart,
+                    G.EmployeeName AS employeeName
+                </isEqual>
+            </isNotEmpty>
+            <isEmpty property="language">
+                E.DepartName AS sendDepart,
+                F.DepartName AS receiveDepart,
+                G.EmployeeName AS employeeName
+            </isEmpty>
+        </dynamic>
+        <![CDATA[
+            FROM
+                Inventory.BIN_PromotionAllocation A
+                LEFT JOIN Basis.BIN_Organization E
+                ON (A.BIN_OrganizationID = E.BIN_OrganizationID)
+                LEFT JOIN Basis.BIN_Organization F
+                ON (A.BIN_OrganizationIDAccept = F.BIN_OrganizationID)
+                LEFT JOIN Basis.BIN_Employee G
+                ON (A.BIN_EmployeeID = G.BIN_EmployeeID)
+            WHERE
+                A.BIN_PromotionAllocationID = #billId#
+        ]]>
+    </select>
+
+    <!-- 促销品调拨报表List打印SQL -->
+    <select id="getBINOLSSPRM30List" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+        <![CDATA[
+        SELECT
+            C.UnitCode AS unitCode,
+            ISNULL(A.Price,0) AS price,
+            ISNULL(A.Quantity,0) AS quantity,
+			ISNULL(CONVERT(Decimal(16,2),A.Price),0) * ISNULL(A.Quantity,0) AS amount,
+            A.Reason AS comments,
+			B.BarCode AS barCode,
+        ]]>
+        <dynamic>
+            <isNotEmpty property="language">
+                <isEqual property="language" compareValue="en_US">
+                    C.NameForeign AS nameTotal,
+                    F.PackageNameForeign AS packageName
+                </isEqual>
+                <isEqual property="language" compareValue="zh_CN">
+                    C.NameTotal AS nameTotal,
+                    F.PackageName AS packageName
+                </isEqual>
+            </isNotEmpty>
+            <isEmpty property="language">
+                C.NameTotal AS nameTotal,
+                F.PackageName AS packageName
+            </isEmpty>
+        </dynamic>
+        <![CDATA[
+            FROM
+                Inventory.BIN_PromotionAllocationDetail A
+                JOIN Basis.BIN_PromotionProductVendor B
+                ON(A.BIN_PromotionProductVendorID = B.BIN_PromotionProductVendorID)
+                JOIN Basis.BIN_PromotionProduct C
+                ON(B.BIN_PromotionProductID = C.BIN_PromotionProductID)
+                LEFT JOIN Basis.BIN_ProductVendorPackage D
+                ON(A.BIN_ProductVendorPackageID = D.BIN_ProductVendorPackageID)
+                LEFT JOIN Basis.BIN_PackageType F
+                ON(D.BIN_PackageTypeID = F.BIN_PackageTypeID)
+            WHERE
+                A.BIN_PromotionAllocationID = #billId#
+        ]]>
+    </select>
+    
+    <!--================================= WebPos相关单据头数据  =====================================-->
+    
+    <!-- 销售单头数据 -->
+    <select id="getBINOLWPSAL07Map1" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+    	<!-- 销售与补打小票需要统计销售与退货的明细后得到准确的支付金额 -->
+		<![CDATA[
+			WITH c AS
+	    		(
+	    		SELECT 
+	    			BillCode,BIN_BrandInfoID,BIN_OrganizationInfoID 
+	    		FROM 
+	    			Sale.BIN_WebPosSaleRecord where BIN_SaleId=#billId#
+    		)
+			SELECT 
+				ISNULL(#printType#,'0') AS printType,
+				ts.BIN_SaleId as saleId,
+				BIF.BrandCode AS brandCode,
+				ts.BillCode as billNo,
+				CONVERT(nvarchar(10),businessDate,120)+' '+CONVERT(nvarchar(8),SaleTime,114) as saleTime,
+				ts.MemberCode as memberCode,
+				tm.Name as memberName,
+				tm.MemberLevel as memberLevel,
+				ts.CustomerType as customerType,
+				ts.BaCode as baCode,
+				ta.quantity AS quantity,
+				ta.originalAmount AS originalAmount,
+				ta.payAmount AS payAmount,
+				convert(decimal(16,1),ISNULL(ts.TotalDiscountRate,100.0)) as totalDiscountRate,
+				ISNULL(ts.RoundingAmount,0.00) as roundingAmount,
+				ts.Costpoint as costPoint,
+				ts.Costpoint_Amount as costPointAmount,
+				CNT.CounterAddress AS counterAddress,
+				CNT.CounterTelephone AS counterPhone,
+				CNT.CounterCode AS counterCode,
+				Y.PayType AS payType,
+				case when Y.PayAmount<0 THEN -1*Y.PayAmount ELSE Y.PayAmount END  AS payTypeAmount,
+            	BIF.BrandNameChinese AS brandName,
+            	tb.BaName as baName,
+                CNT.CounterNameIF AS counterName,
+                MPT.TotalPoint as totalPoint
+			FROM 
+				Sale.BIN_WebPosSaleRecord as ts with(nolock) 
+				LEFT JOIN Basis.BIN_BaInfo as tb with(nolock) on ts.BaCode = tb.BaCode 
+				LEFT JOIN Members.BIN_MemberInfo as tm with(nolock) on ts.BIN_MemberInfoID = tm.BIN_MemberInfoID 
+				LEFT JOIN Members.BIN_MemberPoint MPT on (tm.BIN_MemberInfoID = MPT.BIN_MemberInfoID)
+				LEFT JOIN Basis.BIN_CounterInfo CNT on(ts.CounterCode=CNT.CounterCode)
+				LEFT JOIN Basis.BIN_BrandInfo BIF ON(ts.BIN_BrandInfoID=BIF.BIN_BrandInfoID)
+				LEFT JOIN (
+					SELECT 
+						PPD.RelevantCode,
+						PPD.PayType,
+						SUM(ISNULL(PPD.PayAmount,0)) as PayAmount
+					FROM
+						Sale.BIN_WebPosPayDetail PPD WITH(NOLOCK)
+					WHERE PPD.ValidFlag='1' 
+						AND EXISTS(
+							SELECT
+								1
+							FROM c AS cc
+							WHERE PPD.RelevantCode = cc.BillCode
+						)
+					GROUP BY
+						PPD.RelevantCode,
+						PPD.PayType
+					) Y
+				ON(ts.BillCode=Y.RelevantCode)
+				INNER JOIN (
+					SELECT 
+						IJ.RelevantCode as relevantCode,
+						sum(isnull(IJ.TotalQuantity,0)*isnull(IJ.ComputeSign,1)) as quantity,
+						sum(isnull(IJ.OriginalAmount,0)*isnull(IJ.ComputeSign,1)) as originalAmount,
+						sum(isnull(IJ.TotalAmount,0)*isnull(IJ.ComputeSign,1)) as payAmount 
+					FROM 
+						Sale.BIN_WebPosSaleRecord IJ with(nolock) 
+					WHERE 
+						IJ.ValidFlag = '1' 
+						AND EXISTS (
+							SELECT
+								1
+							FROM c AS cc
+							WHERE IJ.RelevantCode = cc.BillCode AND IJ.BIN_BrandInfoID = cc.BIN_BrandInfoID AND IJ.BIN_OrganizationInfoID = cc.BIN_OrganizationInfoID)
+						GROUP BY IJ.RelevantCode
+					) AS ta
+				ON ta.relevantCode = ts.BillCode
+				WHERE 
+					ts.ValidFlag = '1' AND 
+					ts.BIN_SaleId = #billId# AND
+					ts.SaleType in ('NS','PN')
+				]]>
+    </select>
+    
+    <!-- 销售单头数据 -->
+    <select id="getBINOLWPSAL07Map2" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+		<!-- 退货时只显示退货的数据，无需要像销售一样去对销售与退货的数据进行统计 -->
+			<![CDATA[
+			SELECT 
+				ISNULL(#printType#,'0') AS printType,
+				ts.BIN_SaleId as saleId,
+				BIF.BrandCode AS brandCode,
+				ts.BillCode as billNo,
+				CONVERT(varchar, ts.SaleTime, 120) as saleTime,
+				ts.MemberCode as memberCode,
+				tm.Name as memberName,
+				tm.MemberLevel as memberLevel,
+				ts.CustomerType as customerType,
+				ts.BaCode as baCode,
+				ts.TotalQuantity AS quantity,
+				ts.OriginalAmount AS originalAmount,
+				ts.TotalAmount AS payAmount,
+				convert(decimal(16,1),ISNULL(ts.TotalDiscountRate,100.0)) as totalDiscountRate,
+				ISNULL(ts.RoundingAmount,0.00) as roundingAmount,
+				ts.Costpoint as costPoint,
+				ts.Costpoint_Amount as costPointAmount,
+				CNT.CounterAddress AS counterAddress,
+				CNT.CounterTelephone AS counterPhone,
+				CNT.CounterCode AS counterCode,
+				Y.PayType AS payType,
+				case when Y.PayAmount<0 THEN -1*Y.PayAmount ELSE Y.PayAmount END  AS payTypeAmount,
+            	BIF.BrandNameChinese AS brandName,
+            	tb.BaName as baName,
+                CNT.CounterNameIF AS counterName
+			FROM 
+				Sale.BIN_WebPosSaleRecord as ts with(nolock) 
+				LEFT JOIN Basis.BIN_BaInfo as tb with(nolock) on ts.BaCode = tb.BaCode 
+				LEFT JOIN Members.BIN_MemberInfo as tm with(nolock) on ts.BIN_MemberInfoID = tm.BIN_MemberInfoID 
+				LEFT JOIN Basis.BIN_CounterInfo CNT on(ts.CounterCode=CNT.CounterCode)
+				LEFT JOIN Basis.BIN_BrandInfo BIF ON(ts.BIN_BrandInfoID=BIF.BIN_BrandInfoID)
+				LEFT JOIN Sale.BIN_WebPosPayDetail Y WITH(NOLOCK)
+				ON(ts.BIN_SaleId=Y.BIN_SaleId)
+			WHERE 
+				ts.ValidFlag = '1' AND 
+				ts.BIN_SaleId = #billId# AND
+				ts.SaleType in ('SR','PS')
+			]]>
+    </select>
+    
+    <!--============================ WebPos相关单据打印记录列表SQL  ================================-->
+    <!-- 销售单打印记录列表SQL -->
+    <select id="getBINOLWPSAL07List" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+    	<![CDATA[
+    	WITH c AS
+    		(
+    		SELECT 
+    			BillCode,BIN_BrandInfoID,BIN_OrganizationInfoID 
+    		FROM 
+    			Sale.BIN_WebPosSaleRecord where BIN_SaleId=#billId#
+    		)
+		]]>
+		<!-- 退货时只显示退货的数据 -->
+		<isEqual property="printType" compareValue="2">
+			<![CDATA[
+			SELECT 
+				ts.RowNumber,
+				'NS' as saleType,
+				ts.BIN_SaleDetailId as saleDetailId,
+				ts.BIN_SaleId as saleId,
+				ts.BillCode as billCode,
+				ts.RelevantCode as relevantCode,
+				ts.CouponOrderId as orderId,
+				ts.CouponCode as couponCode,
+				ts.IsStock as isStock,
+				ts.ActivityCode as activityCode,
+				ts.CounterActCode as counterActCode,
+				ts.BIN_ProductVendorID as productVendorId,
+				ts.UnitCode as unitCode,
+				ts.BarCode as barCode,
+				ts.ProductName as productName,
+				ts.Price as price,
+				ts.MemberPrice as memberPrice,
+				ts.Quantity AS quantity,
+				convert(decimal(16,1),ts.DiscountRate) AS discountRate,
+				ts.RealPrice as realPrice,
+				ts.amount AS amount,
+				ts.originalAmount AS originalAmount,
+				ts.DiscountId as discountId,
+				ts.SaleType as saleType 
+			FROM 
+				Sale.BIN_WebPosSaleDetail as ts with(nolock)
+			WHERE 
+				ts.ValidFlag = '1' AND 
+				ts.BIN_ProductVendorID <> '-9999' 
+				AND EXISTS(
+					SELECT 
+						1 
+					from 
+						c as cc 
+					where 
+						ts.BillCode=cc.BillCode 
+						AND ts.BIN_BrandInfoID=cc.BIN_BrandInfoID 
+						AND ts.BIN_OrganizationInfoID=cc.BIN_OrganizationInfoID
+				)
+		]]>
+		</isEqual>
+		<isNotEqual property="printType" compareValue="2">
+		<![CDATA[
+			SELECT 
+				ts.RowNumber,
+				'NS' as saleType,
+				ts.BIN_SaleDetailId as saleDetailId,
+				ts.BIN_SaleId as saleId,
+				ts.BillCode as billCode,
+				ts.RelevantCode as relevantCode,
+				ts.CouponOrderId as orderId,
+				ts.CouponCode as couponCode,
+				ts.IsStock as isStock,
+				ts.ActivityCode as activityCode,
+				ts.CounterActCode as counterActCode,
+				ts.BIN_ProductVendorID as productVendorId,
+				ts.UnitCode as unitCode,
+				ts.BarCode as barCode,
+				ts.ProductName as productName,
+				ts.Price as price,
+				ts.MemberPrice as memberPrice,
+				CASE WHEN #printType#='2' THEN -1*tb.Quantity ELSE tb.Quantity END AS quantity,
+				convert(decimal(16,1),ts.DiscountRate) AS discountRate,
+				ts.RealPrice as realPrice,
+				CASE WHEN #printType#='2' THEN -1*tb.amount ELSE tb.amount END AS amount,
+				CASE WHEN #printType#='2' THEN -1*tb.originalAmount ELSE tb.originalAmount END AS originalAmount,
+				ts.DiscountId as discountId,
+				ts.SaleType as saleType 
+			FROM 
+				Sale.BIN_WebPosSaleDetail as ts with(nolock) 
+				INNER JOIN (
+					SELECT 
+						IJ.RelevantCode as relevantCode,
+						IJ.BIN_ProductVendorID as productVendorId,
+						IJ.BarCode as barCode,
+						sum(isnull(IJ.Quantity,0)*isnull(IJ.ComputeSign,1)) as quantity,
+						sum(isnull(IJ.Amount,0)*isnull(IJ.ComputeSign,1)) as amount,
+						sum(isnull(IJ.OriginalAmount,0)*isnull(IJ.ComputeSign,1)) as originalAmount 
+					FROM 
+						Sale.BIN_WebPosSaleDetail IJ with(nolock) 
+					WHERE 
+						IJ.ValidFlag = '1'
+						AND EXISTS(
+							SELECT 
+								1 
+							FROM 
+								c as cc 
+							WHERE 
+								IJ.RelevantCode=cc.BillCode 
+								AND IJ.BIN_BrandInfoID=cc.BIN_BrandInfoID 
+								AND IJ.BIN_OrganizationInfoID=cc.BIN_OrganizationInfoID
+							)
+					GROUP BY 
+						IJ.RelevantCode,
+						IJ.BIN_ProductVendorID,
+						IJ.BarCode  
+				) as tb on ts.BillCode = tb.relevantCode and ts.BIN_ProductVendorID = tb.productVendorId and ts.BarCode = tb.BarCode 
+			WHERE 
+				ts.ValidFlag = '1' AND 
+				ts.BIN_ProductVendorID <> '-9999' 
+				AND EXISTS(
+					SELECT 
+						1 
+					from 
+						c as cc 
+					where 
+						ts.BillCode=cc.BillCode 
+						AND ts.BIN_BrandInfoID=cc.BIN_BrandInfoID 
+						AND ts.BIN_OrganizationInfoID=cc.BIN_OrganizationInfoID
+				)
+		]]>
+		</isNotEqual>
+		<![CDATA[
+			UNION 
+			SELECT 
+				ts.RowNumber,
+				'NS' as saleType,
+				ts.BIN_SaleDetailId as saleDetailId,
+				ts.BIN_SaleId as saleId,
+				ts.BillCode as billCode,
+				ts.RelevantCode as relevantCode,
+				ts.CouponOrderId as orderId,
+				ts.CouponCode as couponCode,
+				ts.IsStock as isStock,
+				ts.ActivityCode as activityCode,
+				ts.CounterActCode as counterActCode,
+				ts.BIN_ProductVendorID as productVendorId,
+				ts.UnitCode as unitCode,
+				ts.BarCode as barCode,
+				ts.ProductName as productName,
+				ts.Price as price,
+				ts.MemberPrice as memberPrice,
+				CASE WHEN #printType#='2' THEN -1*ts.Quantity ELSE ts.Quantity END AS quantity,
+				convert(decimal(16,1),ts.DiscountRate) as discountRate,
+				ts.RealPrice as realPrice,
+				CASE WHEN #printType#='2' THEN -1*tb.Amount ELSE tb.Amount END AS amount,
+				CASE WHEN #printType#='2' THEN -1*ts.OriginalAmount ELSE ts.OriginalAmount END AS originalAmount,
+				ts.DiscountId as discountId,
+				ts.SaleType as saleType
+			FROM 
+				Sale.BIN_WebPosSaleDetail as ts with(nolock)
+		]]>
+		<!-- 退货时只显示退货的数据 -->
+		<isEqual property="printType" compareValue="2">
+		<![CDATA[
+				INNER JOIN (
+					SELECT 
+						IJ.BillCode as BillCode,
+						IJ.DiscountId as discountId,
+						sum(isnull(IJ.Amount,0)*isnull(IJ.ComputeSign,1)) as amount
+					FROM 
+						Sale.BIN_WebPosSaleDetail IJ with(nolock) 
+					WHERE 
+						IJ.ValidFlag = '1' 
+						AND EXISTS(
+							SELECT 
+								1 
+							from 
+								c as cc 
+							where 
+								IJ.BillCode=cc.BillCode 
+								AND IJ.BIN_BrandInfoID=cc.BIN_BrandInfoID 
+								AND IJ.BIN_OrganizationInfoID=cc.BIN_OrganizationInfoID
+							) AND 
+						DiscountId in ('DXJE','ZDZK','ZDQL') 
+					GROUP BY 
+						IJ.BillCode,
+						IJ.DiscountId 
+				) as tb on ts.BillCode = tb.BillCode and ts.DiscountId = tb.discountId and tb.amount != 0 
+			WHERE 
+				ts.ValidFlag = '1'
+				AND EXISTS(
+					SELECT 
+						1 
+					from 
+						c as cc 
+					where 
+						ts.BillCode=cc.BillCode 
+						AND ts.BIN_BrandInfoID=cc.BIN_BrandInfoID 
+						AND ts.BIN_OrganizationInfoID=cc.BIN_OrganizationInfoID
+					) AND 
+				ts.DiscountId in ('DXJE','ZDZK','ZDQL') 
+			ORDER BY RowNumber
+		]]>
+		</isEqual>
+		<isNotEqual property="printType" compareValue="2">
+		<![CDATA[
+			INNER JOIN (
+					SELECT 
+						IJ.RelevantCode as relevantCode,
+						IJ.DiscountId as discountId,
+						sum(isnull(IJ.Amount,0)*isnull(IJ.ComputeSign,1)) as amount
+					FROM 
+						Sale.BIN_WebPosSaleDetail IJ with(nolock) 
+					WHERE 
+						IJ.ValidFlag = '1' 
+						AND EXISTS(
+							SELECT 
+								1 
+							from 
+								c as cc 
+							where 
+								IJ.RelevantCode=cc.BillCode 
+								AND IJ.BIN_BrandInfoID=cc.BIN_BrandInfoID 
+								AND IJ.BIN_OrganizationInfoID=cc.BIN_OrganizationInfoID
+							) AND 
+						DiscountId in ('DXJE','ZDZK','ZDQL') 
+					GROUP BY 
+						IJ.RelevantCode,
+						IJ.DiscountId 
+				) as tb on ts.BillCode = tb.relevantCode and ts.DiscountId = tb.discountId and tb.amount != 0 
+			WHERE 
+				ts.ValidFlag = '1'
+				AND EXISTS(
+					SELECT 
+						1 
+					from 
+						c as cc 
+					where 
+						ts.BillCode=cc.BillCode 
+						AND ts.BIN_BrandInfoID=cc.BIN_BrandInfoID 
+						AND ts.BIN_OrganizationInfoID=cc.BIN_OrganizationInfoID
+					) AND 
+				ts.DiscountId in ('DXJE','ZDZK','ZDQL') 
+			ORDER BY RowNumber
+		]]>
+		</isNotEqual>
+    </select>
+    
+    
+	<!--======================================= 报表打印记录列表SQL ==============================-->
+	<!-- 促销品发货报表打印记录SQL -->
+	<select id="getBINOLSSPRM28LogList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+	<![CDATA[
+		SELECT
+			CONVERT(varchar(30),B.Time,120) AS printTime,
+			'(' + C.EmployeeCode + ')'+C.EmployeeName AS employeeName
+		FROM
+			Inventory.BIN_PromotionDeliver A
+			join Basis.BIN_PrintLog B
+			ON(A.BIN_BrandInfoID = B.BIN_BrandInfoID and A.DeliverReceiveNoIF = B.BillNo)
+			LEFT JOIN Basis.BIN_Employee C
+			ON(B.EmployeeID = C.BIN_EmployeeID)
+		WHERE
+			A.BIN_PromotionDeliverID = #billId#
+		ORDER BY 
+			B.Time DESC	
+	]]>
+	</select>
+	<!-- 促销品收货报表打印记录SQL -->
+	<select id="getBINOLSSPRM44LogList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+	<![CDATA[
+		SELECT
+			CONVERT(varchar(30),B.Time,120) AS printTime,
+			'(' + C.EmployeeCode + ')'+C.EmployeeName AS employeeName
+		FROM
+			Inventory.BIN_PromotionDeliver A
+			join Basis.BIN_PrintLog B
+			ON(A.BIN_BrandInfoID = B.BIN_BrandInfoID and A.DeliverReceiveNoIF = B.BillNo)
+			LEFT JOIN Basis.BIN_Employee C
+			ON(B.EmployeeID = C.BIN_EmployeeID)
+		WHERE
+			A.BIN_PromotionDeliverID = #billId#
+		ORDER BY 
+			B.Time DESC	
+	]]>
+	</select>
+	<!-- 产品发货报表打印记录SQL -->
+	<select id="getBINOLSTSFH05LogList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+	<![CDATA[
+		SELECT 
+			CONVERT(varchar(30),B.Time,120) AS printTime,
+			'(' + C.EmployeeCode + ')'+C.EmployeeName AS employeeName
+		FROM
+			Inventory.BIN_ProductDeliver A
+			JOIN Basis.BIN_PrintLog B
+			ON(A.BIN_BrandInfoID = B.BIN_BrandInfoID and A.DeliverNoIF = B.BillNo)
+			LEFT JOIN Basis.BIN_Employee C
+			ON(B.EmployeeID = C.BIN_EmployeeID)
+		WHERE
+			A.BIN_ProductDeliverID = #billId#
+		ORDER BY 
+			B.Time DESC	
+	]]>
+	</select>
+	<!-- 促销品盘点报表打印记录SQL -->
+	<select id="getBINOLSSPRM26LogList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+	<![CDATA[
+		SELECT 
+			CONVERT(varchar(30),B.Time,120) AS printTime,
+			'(' + C.EmployeeCode + ')'+C.EmployeeName AS employeeName
+		FROM
+			Inventory.BIN_PromotionStockTaking  A
+			JOIN Basis.BIN_PrintLog B
+			ON(A.BIN_BrandInfoID = B.BIN_BrandInfoID and A.StockTakingNoIF = B.BillNo)
+			LEFT JOIN Basis.BIN_Employee C
+			ON(B.EmployeeID = C.BIN_EmployeeID)
+		WHERE
+			A.BIN_PromotionStockTakingID = #billId#
+		ORDER BY 
+			B.Time DESC	
+	]]>
+	</select>
+	<!-- 促销品调拨报表打印记录SQL -->
+	<select id="getBINOLSSPRM30LogList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+	<![CDATA[
+		SELECT 
+			CONVERT(varchar(30),B.Time,120) AS printTime,
+			'(' + C.EmployeeCode + ')'+C.EmployeeName AS employeeName
+		FROM
+			Inventory.BIN_PromotionAllocation  A
+			JOIN Basis.BIN_PrintLog B
+			ON(A.BIN_BrandInfoID = B.BIN_BrandInfoID and A.AllocationNoIF = B.BillNo)
+			LEFT JOIN Basis.BIN_Employee C
+			ON(B.EmployeeID = C.BIN_EmployeeID)
+		WHERE
+			A.BIN_PromotionAllocationID = #billId#
+		ORDER BY 
+			B.Time DESC	
+	]]>
+	</select>
+	<!-- 促销品退库报表打印记录SQL -->
+	<select id="getBINOLSSPRM42LogList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+	<![CDATA[
+		SELECT 
+			CONVERT(varchar(30),B.Time,120) AS printTime,
+			'(' + C.EmployeeCode + ')'+C.EmployeeName AS employeeName
+		FROM
+			Inventory.BIN_PromotionReturn  A
+			JOIN Basis.BIN_PrintLog B
+			ON(A.BIN_BrandInfoID = B.BIN_BrandInfoID and A.ReturnNoIF = B.BillNo)
+			LEFT JOIN Basis.BIN_Employee C
+			ON(B.EmployeeID = C.BIN_EmployeeID)
+		WHERE
+			A.BIN_PromotionReturnID = #billId#
+		ORDER BY 
+			B.Time DESC	
+	]]>
+	</select>
+	<!-- 产品订货报表打印记录SQL -->
+	<select id="getBINOLSTSFH03LogList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+	<![CDATA[
+		SELECT 
+			CONVERT(varchar(30),B.Time,120) AS printTime,
+			'(' + C.EmployeeCode + ')'+C.EmployeeName AS employeeName
+		FROM
+			Inventory.BIN_ProductOrder  A
+			JOIN Basis.BIN_PrintLog B
+			ON(A.BIN_BrandInfoID = B.BIN_BrandInfoID and A.OrderNoIF = B.BillNo)
+			LEFT JOIN Basis.BIN_Employee C
+			ON(B.EmployeeID = C.BIN_EmployeeID)
+		WHERE
+			A.BIN_ProductOrderID = #billId#
+		ORDER BY 
+			B.Time DESC	
+	]]>
+	</select>
+	<!-- 产品订货报表打印记录SQL -->
+	<select id="getBINOLSTBIL02LogList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+	<![CDATA[
+		SELECT 
+			CONVERT(varchar(30),B.Time,120) AS printTime,
+			'(' + C.EmployeeCode + ')'+C.EmployeeName AS employeeName
+		FROM
+			Inventory.BIN_ProductInDepot  A
+			JOIN Basis.BIN_PrintLog B
+			ON(A.BIN_BrandInfoID = B.BIN_BrandInfoID and A.BillNoIF = B.BillNo)
+			LEFT JOIN Basis.BIN_Employee C
+			ON(B.EmployeeID = C.BIN_EmployeeID)
+		WHERE
+			A.BIN_ProductInDepotID = #billId#
+		ORDER BY 
+			B.Time DESC	
+	]]>
+	</select>
+	<!-- 产品退库报表打印记录SQL -->
+	<select id="getBINOLSTBIL12LogList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+	<![CDATA[
+		SELECT 
+			CONVERT(varchar(30),B.Time,120) AS printTime,
+			'(' + C.EmployeeCode + ')'+C.EmployeeName AS employeeName
+		FROM
+			Inventory.BIN_ProductReturn  A
+			JOIN Basis.BIN_PrintLog B
+			ON(A.BIN_BrandInfoID = B.BIN_BrandInfoID and A.ReturnNoIF = B.BillNo)
+			LEFT JOIN Basis.BIN_Employee C
+			ON(B.EmployeeID = C.BIN_EmployeeID)
+		WHERE
+			A.BIN_ProductReturnID = #billId#
+		ORDER BY 
+			B.Time DESC	
+	]]>
+	</select>
+	<!-- 产品报损报表打印记录SQL -->
+	<select id="getBINOLSTBIL06LogList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+	<![CDATA[
+		SELECT 
+			CONVERT(varchar(30),B.Time,120) AS printTime,
+			'(' + C.EmployeeCode + ')'+C.EmployeeName AS employeeName
+		FROM
+			Inventory.BIN_OutboundFree  A
+			JOIN Basis.BIN_PrintLog B
+			ON(A.BIN_BrandInfoID = B.BIN_BrandInfoID and A.BillNoIF = B.BillNo)
+			LEFT JOIN Basis.BIN_Employee C
+			ON(B.EmployeeID = C.BIN_EmployeeID)
+		WHERE
+			A.BIN_OutboundFreeID = #billId#
+		ORDER BY 
+			B.Time DESC	
+	]]>
+	</select>
+	<!-- 产品盘点报表打印记录SQL -->
+	<select id="getBINOLSTBIL10LogList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+	<![CDATA[
+		SELECT 
+			CONVERT(varchar(30),B.Time,120) AS printTime,
+			'(' + C.EmployeeCode + ')'+C.EmployeeName AS employeeName
+		FROM
+			Inventory.BIN_ProductStockTaking  A
+			JOIN Basis.BIN_PrintLog B
+			ON(A.BIN_BrandInfoID = B.BIN_BrandInfoID and A.StockTakingNoIF = B.BillNo)
+			LEFT JOIN Basis.BIN_Employee C
+			ON(B.EmployeeID = C.BIN_EmployeeID)
+		WHERE
+			A.BIN_ProductStockTakingID = #billId#
+		ORDER BY 
+			B.Time DESC	
+	]]>
+	</select>
+	<!-- 产品移库报表打印记录SQL -->
+	<select id="getBINOLSTBIL08LogList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+	<![CDATA[
+		SELECT 
+			CONVERT(varchar(30),B.Time,120) AS printTime,
+			'(' + C.EmployeeCode + ')'+C.EmployeeName AS employeeName
+		FROM
+			 Inventory.BIN_ProductShift  A
+			JOIN Basis.BIN_PrintLog B
+			ON(A.BIN_BrandInfoID = B.BIN_BrandInfoID and A.BillNoIF = B.BillNo)
+			LEFT JOIN Basis.BIN_Employee C
+			ON(B.EmployeeID = C.BIN_EmployeeID)
+		WHERE
+			A.BIN_ProductShiftID = #billId#
+		ORDER BY 
+			B.Time DESC	
+	]]>
+	</select>
+		<!-- 产品收货单详细表头数据 -->
+	<select id="getBINOLPTRPS03Map" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+		<![CDATA[
+		SELECT
+        	DISTINCT
+			A.ReceiveNoIF AS billNo,																														
+			A.ReceiveDate AS date,
+			A.Comments AS comments,
+			C.DepotCode AS depotCode,
+			B.BIN_LogicInventoryInfoID AS lgcInventoryId,
+			ISNULL(A.TotalQuantity,0) AS totalQuantity,
+            ISNULL(A.TotalAmount,0) AS totalAmount,
+		]]>
+		<dynamic>
+            <isNotEmpty property="language">
+                <isEqual property="language" compareValue="en_US">
+                    <![CDATA[
+                       	C.DepotNameEN AS depotName,
+                        D.InventoryNameEN AS lgcInventoryName,
+						E.NameForeign AS departName,
+						G.NameForeign AS sendDepartName,
+						F.EmployeeNameForeign AS creator
+                    ]]>
+                </isEqual>
+                <isEqual property="language" compareValue="zh_CN">
+                    <![CDATA[
+                       	C.DepotNameCN AS depotName,
+                    	D.InventoryNameCN AS lgcInventoryName,
+                    	E.DepartName AS departName,
+						G.DepartName AS sendDepartName,
+                    	F.EmployeeName AS creator
+                    ]]>
+                </isEqual>
+            </isNotEmpty>
+            <isEmpty property="language">
+                <![CDATA[
+                    C.DepotNameCN AS depotName,
+                    D.InventoryNameCN AS lgcInventoryName,
+                    E.DepartName AS departName,
+					G.DepartName AS sendDepartName,
+                    F.EmployeeName AS creator
+                ]]>
+            </isEmpty>
+        </dynamic>
+		<![CDATA[
+            FROM
+            Inventory.BIN_ProductReceive A
+			JOIN Inventory.BIN_ProductReceiveDetail B
+			ON (A.BIN_ProductReceiveID = B.BIN_ProductReceiveID	AND B.ValidFlag = '1')
+			LEFT JOIN Basis.BIN_DepotInfo C
+			ON (B.BIN_InventoryInfoID = C.BIN_DepotInfoID)
+			LEFT JOIN Basis.BIN_LogicInventory D
+			ON (B.BIN_LogicInventoryInfoID = D.BIN_LogicInventoryInfoID)
+			LEFT JOIN Basis.BIN_Organization E
+			ON (A.BIN_OrganizationIDReceive = E.BIN_OrganizationID)
+			LEFT JOIN Basis.BIN_Employee F
+			ON (A.BIN_EmployeeID = F.BIN_EmployeeID)
+			LEFT JOIN Basis.BIN_Organization G															
+			ON (A.BIN_OrganizationID = G.BIN_OrganizationID)		
+		WHERE
+			A.BIN_ProductReceiveID = #billId#
+			ORDER BY lgcInventoryId
+		]]>
+	</select>
+	<!-- 产品收货单详细清单List数据 -->
+	<select id="getBINOLPTRPS03List" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+		<![CDATA[
+	SELECT
+	        ISNULL(A.Quantity,0) AS quantity,
+	        ISNULL(CONVERT(Decimal(16,2),A.Price),0) AS price,
+			ISNULL(CONVERT(Decimal(16,2),A.Price),0) * ISNULL(A.Quantity,0) AS amount,
+	        A.Comments AS comments,
+	        C.UnitCode AS unitCode,
+			B.BarCode AS barCode,
+    	]]>
+       	<dynamic>
+            <isNotEmpty property="language">
+                <isEqual property="language" compareValue="en_US">
+                    C.NameForeign AS nameTotal,
+                    G.PackageNameForeign AS packageName
+                </isEqual>
+                <isEqual property="language" compareValue="zh_CN">
+                    C.NameTotal AS nameTotal,
+                    G.PackageName AS packageName
+                </isEqual>
+            </isNotEmpty>
+            <isEmpty property="language">
+                C.NameTotal AS nameTotal,
+                G.PackageName AS packageName
+            </isEmpty>
+        </dynamic>
+       	<![CDATA[
+         FROM
+        	Inventory.BIN_ProductReceiveDetail A
+			LEFT JOIN Basis.BIN_ProductVendor B
+			ON (A.BIN_ProductVendorID = B.BIN_ProductVendorID)
+			LEFT JOIN Basis.BIN_Product C
+			ON (B.BIN_ProductID = C.BIN_ProductID)
+			LEFT JOIN Basis.BIN_ProductVendorPackage F
+			ON (A.BIN_ProductVendorPackageID = F.BIN_ProductVendorPackageID)
+			LEFT JOIN Basis.BIN_PackageType G
+			ON (F.BIN_PackageTypeID = G.BIN_PackageTypeID)	
+		WHERE
+			A.BIN_ProductReceiveID = #billId#
+		]]>			
+	</select>
+		<!-- 产品收货报表打印记录SQL -->
+	<select id="getBINOLPTRPS03LogList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+	<![CDATA[
+		SELECT
+			CONVERT(varchar(30),B.Time,120) AS printTime,
+			'(' + C.EmployeeCode + ')'+C.EmployeeName AS employeeName
+		FROM			
+			Inventory.BIN_ProductReceive A
+			join Basis.BIN_PrintLog B
+			ON(A.BIN_BrandInfoID = B.BIN_BrandInfoID and A.ReceiveNoIF = B.BillNo)
+			LEFT JOIN Basis.BIN_Employee C
+			ON(B.EmployeeID = C.BIN_EmployeeID)
+		WHERE
+			A.BIN_ProductReceiveID = #billId#
+		ORDER BY 
+			B.Time DESC	
+	]]>
+	</select>
+	<!-- 促销品入库单详细表头数据 -->
+	<select id="getBINOLSSPRM65Map" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+		<![CDATA[
+		SELECT
+        	DISTINCT
+			A.BillNoIF AS billNo,
+			A.Comments AS comments,
+			A.InDepotDate AS date,
+			ISNULL(A.TotalQuantity,0) AS totalQuantity,
+            ISNULL(A.TotalAmount,0) AS totalAmount,
+		]]>
+		<dynamic>
+            <isNotEmpty property="language">
+                <isEqual property="language" compareValue="en_US">
+                    <![CDATA[
+                       	C.NameEN AS departName,
+						D.NameForeign AS indepartName,
+						E.EmployeeNameForeign AS auditor,
+						F.EmployeeNameForeign AS creator,
+						G.DepotNameEN AS depotName
+                    ]]>
+                </isEqual>
+                <isEqual property="language" compareValue="zh_CN">
+                    <![CDATA[
+                       	C.NameCN AS departName,
+						D.DepartName AS indepartName,
+						E.EmployeeName AS auditor,
+						F.EmployeeName AS creator,
+						G.DepotNameCN AS depotName
+                    ]]>
+                </isEqual>
+            </isNotEmpty>
+            <isEmpty property="language">
+                <![CDATA[
+                    C.NameCN AS departName,
+					D.DepartName AS indepartName,
+					E.EmployeeName AS auditor,
+					F.EmployeeName AS creator,
+					G.DepotNameCN AS depotName
+                ]]>
+            </isEmpty>
+        </dynamic>
+		<![CDATA[
+        FROM
+            Inventory.BIN_PrmInDepot A
+			JOIN Inventory.BIN_PrmInDepotDetail B
+			ON(A.BIN_PrmInDepotID = B.BIN_PrmInDepotID)
+			LEFT JOIN Basis.BIN_BussinessPartner C
+			ON(A.BIN_BussinessPartnerID = C.BIN_BussinessPartnerID)
+			LEFT JOIN Basis.BIN_Organization D
+            ON A.BIN_OrganizationID = D.BIN_OrganizationID
+			LEFT JOIN Basis.BIN_Employee E
+			ON(A.BIN_EmployeeIDAudit = E.BIN_EmployeeID)
+			LEFT JOIN Basis.BIN_Employee F
+			ON(A.BIN_EmployeeID = F.BIN_EmployeeID)
+			LEFT JOIN Basis.BIN_DepotInfo G
+			ON(B.BIN_InventoryInfoID = G.BIN_DepotInfoID)									
+		WHERE
+			A.BIN_PrmInDepotID = #billId#
+		]]>
+	</select>
+	<!--促销品入库单详细清单List数据 -->
+	<select id="getBINOLSSPRM65List" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+		<![CDATA[
+		SELECT
+	       	ISNULL(A.Quantity,0) AS quantity,
+	        ISNULL(CONVERT(Decimal(16,2),A.Price),0) AS price,
+			ISNULL(CONVERT(Decimal(16,2),A.Price),0) * ISNULL(A.Quantity,0) AS amount,
+	        A.Comments AS comments,
+	        C.UnitCode AS unitCode,
+			B.BarCode AS barCode,
+    	]]>
+       	<dynamic>
+            <isNotEmpty property="language">
+                <isEqual property="language" compareValue="en_US">
+                    C.NameForeign AS nameTotal
+                </isEqual>
+                <isEqual property="language" compareValue="zh_CN">
+                    C.NameTotal AS nameTotal
+                </isEqual>
+            </isNotEmpty>
+            <isEmpty property="language">
+                C.NameTotal AS nameTotal
+            </isEmpty>
+        </dynamic>
+       	<![CDATA[
+        FROM
+        	Inventory.BIN_PrmInDepotDetail A
+			LEFT JOIN Basis.BIN_PromotionProductVendor B
+			ON A.BIN_PromotionProductVendorID = B.BIN_PromotionProductVendorID
+			LEFT JOIN Basis.BIN_PromotionProduct C
+			ON B.BIN_PromotionProductID = C.BIN_PromotionProductID
+
+		WHERE
+			A.BIN_PrmInDepotID = #billId#
+		]]>			
+	</select>
+	
+	<!-- 产品唯一码明细 -->
+	<select id="getBINOLPTUNQ01_1List" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+		SELECT	
+			A.PointUniqueCode AS pointUniqueCode,
+			A.RelUniqueCode AS relUniqueCode,
+			A.BoxCode AS boxCode 
+		FROM
+			Basis.BIN_PrtUniqueCodeDetail A
+		WHERE 
+			BIN_PrtUniqueCodeBatchID = #prtUniqueCodeID#
+	</select>
+	<!-- 产品唯一码明细 -->
+	<select id="getBINOLPTUNQ01_2List" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+		SELECT	
+			A.PointUniqueCode AS pointUniqueCode,
+			A.RelUniqueCode AS relUniqueCode,
+			A.BoxCode AS boxCode 
+		FROM
+			Basis.BIN_PrtUniqueCodeDetail A
+		WHERE 
+			BIN_PrtUniqueCodeBatchID = #prtUniqueCodeID#
+	</select>
+	
+</sqlMap>

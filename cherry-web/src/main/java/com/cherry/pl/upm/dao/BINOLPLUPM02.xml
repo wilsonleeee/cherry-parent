@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sqlMap PUBLIC "-//iBATIS.com//DTD SQL Map 2.0//EN" "http://ibatis.apache.org/dtd/sql-map-2.dtd">
+<sqlMap namespace="BINOLPLUPM02">
+
+	<!-- 插入用户信息  -->
+	<insert id="insertUser" parameterClass="java.util.HashMap">	
+		<selectKey resultClass="java.lang.Integer" type="post" keyProperty="BIN_UserID" >
+		<![CDATA[
+		INSERT INTO Privilege.BIN_User
+                   (BIN_OrganizationInfoID,
+				    BIN_EmployeeID,
+                    LonginName,
+                    PassWord,				
+		]]>	
+			<include refid="BINOLCMINC99.insertKeySql" />									
+		<![CDATA[								
+		)VALUES									
+				 (#organizationInfoId#,
+				  #employeeId#,
+				  #loginName#,
+				  #passWord#,				
+		]]>
+		     <include refid="BINOLCMINC99.insertValueSql" />
+		<![CDATA[
+		)
+		select SCOPE_IDENTITY() as value
+		]]>
+	    </selectKey>
+	</insert> 
+	
+	<!-- 取得密码安全配置信息  -->
+	<select id="getPassWordConfig" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+	   <![CDATA[
+		SELECT	
+		         A.BIN_PasswordConfigID AS passwordConfigId,
+				 A.Complexity AS complexity,
+				 A.Length AS minLength,
+				 A.MaxLength AS maxLength,
+				 A.IsEncryption AS isEncryption
+	    ]]>
+		<![CDATA[
+		  FROM		
+				   Privilege.BIN_PasswordConfig A
+		  WHERE 
+		  		   A.BIN_OrganizationInfoID = #organizationInfoId# AND
+		           A.BIN_BrandInfoID = #brandInfoId# AND
+				   A.ValidFlag = '1'
+				   
+		]]> 
+	</select>
+	<!-- 验证是否存在同样的登入账号 -->
+	<select id="getLoginNameCheck" parameterClass="java.util.HashMap" resultClass="java.lang.String">
+		<![CDATA[
+			SELECT 
+				LonginName
+        	FROM 
+        		Privilege.BIN_User
+            WHERE
+				LonginName = #loginName#	
+		]]>
+    </select>
+</sqlMap>

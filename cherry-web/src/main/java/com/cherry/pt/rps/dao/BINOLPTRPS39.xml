@@ -1,0 +1,602 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sqlMap PUBLIC "-//iBATIS.com//DTD SQL Map 2.0//EN" "http://ibatis.apache.org/dtd/sql-map-2.dtd">
+<sqlMap namespace="BINOLPTRPS39">
+	<!-- 反向催单查询 -->
+    <sql id="queryRemind01">
+    	<![CDATA[
+    		SELECT 
+    			A.BIN_ReminderID,
+    			A.BIN_ReminderNo,
+    			A.BIN_OrganizationInfoID,
+    			A.BIN_BrandInfoID,
+    			A.Reminder_Type,
+    			A.Receive_Date,
+    			A.Reminder_Count,
+    			A.Fst_ReminderTime,
+    			A.Snd_ReminderTime,
+    			B.CounterCode,
+    			A.Receive_Quantity,
+    			C.EmployeeCode,
+    			C.MobilePhone,
+    			C.Email,
+    			A.Trade_Date,
+    			A.Comment,
+    			DATEDIFF (DAY, A.Receive_Date, A.Trade_Date) AS delayDate,
+    			A.Status,
+    			A.BIN_CargoType,
+    			A.ExpressBillCode,
+    			A.Handle_Date,
+    			A.DeliverNo,
+    			B.BIN_OrganizationID
+    		]]>
+    		<dynamic>
+				<isNotEmpty property="language">
+					<isEqual property="language" compareValue="en_US">
+						,'(' + B.CounterCode + ') '+B.NameForeign AS ReceiveCntName
+						,'(' + C.EmployeeCode + ') '+C.EmployeeNameForeign AS EmployeeName
+					</isEqual>
+					<isEqual property="language" compareValue="zh_CN">
+						,'(' + B.CounterCode + ') '+B.CounterNameIf AS ReceiveCntName
+						,'(' + C.EmployeeCode + ') '+C.EmployeeName AS EmployeeName
+					</isEqual>
+				</isNotEmpty>
+				<isEmpty property="language">
+					,'(' + B.CounterCode + ') '+B.CounterNameIf AS ReceiveCntName
+					,'(' + C.EmployeeCode + ') '+C.EmployeeName AS EmployeeName
+				</isEmpty>
+			</dynamic>
+    		<![CDATA[
+    		FROM
+    			 Inventory.BIN_Reminder A
+				 LEFT JOIN Basis.BIN_CounterInfo B ON A.BIN_CounterInfoID = B.BIN_CounterInfoID
+			     LEFT JOIN Basis.BIN_Employee C ON A.BIN_EmployeeID = C.BIN_EmployeeID
+			WHERE
+				A.ValidFlag = '1'
+			AND A.BIN_OrganizationInfoID = #organizationInfoId#
+			AND A.BIN_BrandInfoID = #brandInfoId#
+    	]]>
+    	<dynamic>
+    		<isNotEmpty prepend="AND" property="startDate">
+    			<![CDATA[A.Receive_Date >= #startDate#]]>
+    		</isNotEmpty>
+    		<isNotEmpty prepend="AND" property="endDate">
+    			<![CDATA[A.Receive_Date <= #endDate#]]>
+    		</isNotEmpty>
+    		<isNotEmpty prepend="AND" property="reminderNo">
+    			A.BIN_ReminderNo LIKE '%' + #reminderNo# + '%'
+    		</isNotEmpty>
+    		<isNotEmpty prepend="AND" property="status">
+    			A.Status = #status#
+    		</isNotEmpty>
+    		<isNotEmpty prepend="AND" property="delayDate">
+    			<![CDATA[DATEDIFF (DAY, A.Receive_Date,  A.Trade_Date) >= #delayDate# ]]>  
+    		</isNotEmpty>
+    		<isNotEmpty prepend="AND" property="reminderCount">
+    			A.Reminder_Count = #reminderCount#
+    		</isNotEmpty>
+    		<isNotEmpty prepend="AND" property="remindType">
+    			A.Reminder_Type = #remindType#
+    		</isNotEmpty>
+    		<isNotEmpty prepend="AND" property="cargoType">
+    			A.BIN_CargoType = #cargoType#
+    		</isNotEmpty>
+    		<![CDATA[
+    		AND EXISTS (
+	    	]]>
+	    	<include refid="BINOLCMINC99.getDepartList"/>
+	    	<![CDATA[
+	    		AND B.BIN_OrganizationID = A99.BIN_OrganizationID
+	    		)
+	    	]]>
+    	</dynamic>
+    </sql>
+    
+    <!-- 取得催单单据数量 -->
+    <select id="getReminderCount" parameterClass="java.util.HashMap" resultClass="java.lang.Integer">
+    	<![CDATA[
+			SELECT COUNT(*) AS count FROM (
+    	]]>
+		<include refid="BINOLPTRPS39.queryRemind01"/>
+		<![CDATA[
+			)SORT_T1	
+    	]]>
+    </select>
+    
+    <!-- 取得催单单据List -->
+    <select id="getReminderList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+    	<include refid="BINOLCMINC99.pageheader" />
+    	<include refid="BINOLPTRPS39.queryRemind01"/>
+	    <include refid="BINOLCMINC99.pagefooter" />
+    </select>
+    
+    <!-- 查询excel导出List -->
+    <select id="getReminderListExcel" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+		<include refid="BINOLPTRPS39.queryRemind01"/>
+    </select>
+    
+    <!-- 查询BAS信息 -->
+    <select id="getBASInfo" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+    	<![CDATA[
+    		SELECT 
+    			C.BIN_EmployeeID,
+    			D.EmployeeName,
+    			D.MobilePhone,
+    			D.Email
+    	]]>
+   		<dynamic>
+			<isNotEmpty property="language">
+				<isEqual property="language" compareValue="en_US">
+					,'(' + B.CounterCode + ') '+B.NameForeign AS ReceiveCntName
+				</isEqual>
+				<isEqual property="language" compareValue="zh_CN">
+					,'(' + B.CounterCode + ') '+B.CounterNameIf AS ReceiveCntName
+				</isEqual>
+			</isNotEmpty>
+			<isEmpty property="language">
+				,'(' + B.CounterCode + ') '+B.CounterNameIf AS ReceiveCntName
+			</isEmpty>
+		</dynamic>
+    	<![CDATA[
+    			
+    		FROM 
+    			Inventory.BIN_Reminder A
+    			LEFT JOIN Basis.BIN_CounterInfo B on A.BIN_CounterInfoID = B.BIN_CounterInfoID
+    			LEFT JOIN Privilege.BIN_EmployeeDepart C on B.BIN_OrganizationID = C.BIN_OrganizationID
+    			LEFT JOIN Basis.BIN_Employee D on C.BIN_EmployeeID = D.BIN_EmployeeID
+    		WHERE 
+    				A.BIN_BrandInfoID = #brandInfoId#
+    			AND A.BIN_OrganizationInfoID = #organizationInfoId#
+    			AND A.BIN_ReminderID = #reminderId#
+    			AND C.DepartType = '4'
+    			AND C.ManageType = '1'
+    	]]>
+    </select>
+    
+    <!-- 更新催单次数 -->
+    <update id="updateReminderCount" parameterClass="java.util.HashMap">
+	    <![CDATA[
+	    	UPDATE 
+	    		Inventory.BIN_Reminder
+	    	SET 
+	    		Reminder_Count = #reminderCount#,
+	    ]]>
+	    <dynamic>
+	    	<isNotEmpty property="Fst_ReminderTime">
+	    		Fst_ReminderTime = #Fst_ReminderTime#,
+	    	</isNotEmpty>
+	    	<isNotEmpty property="Snd_ReminderTime">
+	    		Snd_ReminderTime = #Snd_ReminderTime#,
+	    	</isNotEmpty>
+	    </dynamic>
+	    <include refid="BINOLCMINC99.updateSql"/>
+	    <![CDATA[
+	    	WHERE 
+	    		BIN_ReminderID = #reminderId#
+	    ]]>
+    </update>
+    
+    <!-- 查询产品发货单 -->
+    <sql id="queryRemind02">
+    	<![CDATA[
+    		SELECT DISTINCT
+    			A.BIN_ProductDeliverID AS productDeliverId,
+		        A.DeliverNo, 
+		        A.DeliverNoIF,
+		        A.RelevanceNo,
+		        A.DeliverType, 
+		        A.BIN_DepotInfoID, 
+		        A.BIN_OrganizationIDReceive,
+		        A.BIN_EmployeeID, 
+		        DATEDIFF (DAY, A.Date, GETDATE()) AS DelayDate,
+		        CASE TradeStatus WHEN '12' THEN DATEDIFF(Day,A.Date,GETDATE()) ELSE 0 END AS DateRange,
+	         	A.Date AS DeliverDate,
+		        A.BIN_EmployeeIDAudit, 
+		        A.TotalQuantity,
+		        A.TotalAmount,
+		        A.VerifiedFlag, 
+		        A.TradeStatus, 
+		        A.Comments,
+		        A.AuditDate,
+		        A.PlanArriveDate,
+		        A.WorkFlowID
+		]]>
+   		<dynamic>
+			<isNotEmpty property="language">
+				<isEqual property="language" compareValue="en_US">
+					,'(' + B.DepartCode + ') '+B.NameForeign AS DeliverDeptName
+					,'(' + C.DepartCode + ') '+C.NameForeign AS ReceiveDepName
+					,'(' + G.DepotCode + ') '+G.DepotNameEN AS DepotName
+					,'(' + F.LogicInventoryCode + ') '+F.InventoryNameEN AS LogicDepotName
+					, D.EmployeeNameForeign AS EmployeeName
+					, E.EmployeeNameForeign AS AuditName
+				</isEqual>
+				<isEqual property="language" compareValue="zh_CN">
+					,'(' + B.DepartCode + ') '+B.DepartName AS DeliverDepName
+					,'(' + C.DepartCode + ') '+C.DepartName AS ReceiveDepName
+					,'(' + G.DepotCode + ') '+G.DepotNameCN AS DepotName
+					,'(' + F.LogicInventoryCode + ') '+F.InventoryNameCN AS LogicDepotName
+					, D.EmployeeName AS EmployeeName
+					, E.EmployeeName AS AuditName
+				</isEqual>
+			</isNotEmpty>
+			<isEmpty property="language">
+				,'(' + B.DepartCode + ') '+B.DepartName AS DeliverDepName
+				,'(' + C.DepartCode + ') '+C.DepartName AS ReceiveDepName
+				,'(' + G.DepotCode + ') '+G.DepotNameCN AS DepotName
+				,'(' + F.LogicInventoryCode + ') '+F.InventoryNameCN AS LogicDepotName
+				, D.EmployeeName AS EmployeeName
+				, E.EmployeeName AS AuditName
+			</isEmpty>
+		</dynamic>
+   		<![CDATA[
+  		FROM 
+  			Inventory.BIN_ProductDeliver A 
+  			LEFT JOIN Basis.BIN_Organization B ON A.BIN_OrganizationID = B.BIN_OrganizationID
+  			LEFT JOIN Basis.BIN_Organization C ON A.BIN_OrganizationIDReceive = C.BIN_OrganizationID
+ 			LEFT JOIN Basis.BIN_Employee D ON A.BIN_EmployeeID = D.BIN_EmployeeID
+ 			LEFT JOIN Basis.BIN_Employee E ON A.BIN_EmployeeIDAudit = E.BIN_EmployeeID
+ 			LEFT JOIN Basis.BIN_LogicInventory F ON A.BIN_LogicInventoryInfoID = F.BIN_LogicInventoryInfoID
+ 			LEFT JOIN Basis.BIN_DepotInfo G ON A.BIN_DepotInfoID = G.BIN_DepotInfoID
+  			JOIN Inventory.BIN_ProductDeliverDetail H ON(A.BIN_ProductDeliverID = H.BIN_ProductDeliverID AND H.ValidFlag = '1')
+  			LEFT JOIN Basis.BIN_ProductVendor I
+				 JOIN Basis.BIN_Product J ON(J.BIN_ProductID = I.BIN_ProductID)
+		    ON(I.BIN_ProductVendorID = H.BIN_ProductVendorID)
+  		WHERE   			
+  			A.ValidFlag = '1'
+    	]]>
+    	<dynamic>
+    		<isNotEmpty prepend="AND" property="reminderNo">
+    			<![CDATA[A.DeliverNoIF LIKE '%' + #reminderNo# + '%']]>
+    		</isNotEmpty>
+    		<isNotEmpty prepend="AND" property="startDate">
+				<![CDATA[A.Date >= #startDate#]]>    		
+    		</isNotEmpty>
+    		<isNotEmpty prepend="AND" property="endDate">
+    			<![CDATA[A.Date <= #endDate#]]>
+    		</isNotEmpty>
+    		<isNotEmpty prepend="AND" property="delayDate">
+    			<![CDATA[DATEDIFF (DAY, A.Date, #currentDate#) >= #delayDate# ]]>  
+    		</isNotEmpty>
+    		<isNotEmpty property="departInOutFlag">
+    			<!-- 发货部门 -->
+    			<isEqual property="departInOutFlag" compareValue="outOrgan">
+    				<![CDATA[AND EXISTS (]]>
+    				<include refid="BINOLCMINC99.getDepartList"/>
+    				<![CDATA[
+		                AND A.BIN_OrganizationID = A99.BIN_OrganizationID
+		                )
+		            ]]>
+    			</isEqual>
+    			<isEqual property="departInOutFlag" compareValue="inOrgan">
+    				<![CDATA[ AND EXISTS (]]>
+    				<include refid="BINOLCMINC99.getDepartList"/>
+    				<![CDATA[
+    					AND A.BIN_OrganizationIDReceive = A99.BIN_OrganizationID
+    					)
+    				]]>
+    			</isEqual>
+    		</isNotEmpty>
+    		<isNotEmpty prepend="AND" property="verifiedFlag">
+    			<![CDATA[A.VerifiedFlag = #verifiedFlag#]]>
+    		</isNotEmpty>
+    		<isNotEmpty prepend="AND" property="tradeStatus">
+    			<![CDATA[A.TradeStatus = #tradeStatus#]]>
+    		</isNotEmpty>
+    	</dynamic>
+    </sql>
+    
+    
+    <sql id="queryRemind03">
+    	<![CDATA[
+  			SELECT 
+  				DISTINCT
+  				X.BIN_PromotionDeliverID AS deliverId,
+				X.DeliverReceiveNo AS DeliverNo,
+				X.DeliverReceiveNoIF AS DeliverNoIF,
+				X.RelevanceNo,
+				X.DeliverType,
+				X.BIN_OrganizationID,
+				X.BIN_OrganizationIDReceive,
+				X.TotalQuantity,
+				X.TotalAmount,
+				X.DeliverDate,
+				DATEDIFF(DAY, X.DeliverDate, GETDATE()) AS DelayDate,
+				X.VerifiedFlag,
+				X.StockInFlag,
+				X.Reason AS Comments
+		]]>
+		<dynamic>
+			<isNotEmpty property="language">
+				<isEqual property="language" compareValue="en_US">
+					,'(' + Y.DepartCode + ') '+Y.NameForeign AS DeliverDeptName
+					,'(' + Z.DepartCode + ') '+Z.NameForeign AS ReceiveDepName
+				</isEqual>
+				<isEqual property="language" compareValue="zh_CN">
+					,'(' + Y.DepartCode + ') '+Y.DepartName AS DeliverDepName
+					,'(' + Z.DepartCode + ') '+Z.DepartName AS ReceiveDepName
+				</isEqual>
+			</isNotEmpty>
+			<isEmpty property="language">
+				,'(' + Y.DepartCode + ') '+Y.DepartName AS DeliverDepName
+				,'(' + Z.DepartCode + ') '+Z.DepartName AS ReceiveDepName
+			</isEmpty>
+		</dynamic>
+		<![CDATA[
+			FROM 
+				Inventory.BIN_PromotionDeliver X
+				LEFT JOIN Basis.BIN_Organization Y ON X.BIN_OrganizationID = Y.BIN_OrganizationID
+				LEFT JOIN Basis.BIN_Organization Z ON X.BIN_OrganizationIDReceive = Z.BIN_OrganizationID
+			WHERE 
+				X.ValidFlag = '1'
+			AND X.TradeType = '1'
+    	]]>
+    	<dynamic>
+    		<isNotEmpty prepend="AND" property="reminderNo">
+    			<![CDATA[X.DeliverReceiveNo LIKE '%' + #reminderNo# + '%']]>
+    		</isNotEmpty>
+    		<isNotEmpty prepend="AND" property="startDate">
+				<![CDATA[X.DeliverDate >= #startDate#]]>    		
+    		</isNotEmpty>
+    		<isNotEmpty prepend="AND" property="endDate">
+    			<![CDATA[X.DeliverDate <= #endDate#]]>
+    		</isNotEmpty>
+    		<isNotEmpty prepend="AND" property="delayDate">
+    			<![CDATA[DATEDIFF (DAY, X.DeliverDate, #currentDate#) >= #delayDate# ]]>  
+    		</isNotEmpty>
+    		<isNotEmpty property="departInOutFlag">
+    			<!-- 发货部门 -->
+    			<isEqual property="departInOutFlag" compareValue="outOrgan">
+    				<![CDATA[AND EXISTS (]]>
+    				<include refid="BINOLCMINC99.getDepartList"/>
+    				<![CDATA[
+		                AND X.BIN_OrganizationID = A99.BIN_OrganizationID
+		                )
+		            ]]>
+    			</isEqual>
+    			<isEqual property="departInOutFlag" compareValue="inOrgan">
+    				<![CDATA[ AND EXISTS (]]>
+    				<include refid="BINOLCMINC99.getDepartList"/>
+    				<![CDATA[
+    					AND X.BIN_OrganizationIDReceive = A99.BIN_OrganizationID
+    					)
+    				]]>
+    			</isEqual>
+    		</isNotEmpty>
+    		<isNotEmpty prepend="AND" property="verifiedFlag">
+    			<![CDATA[X.VerifiedFlag = #verifiedFlag#]]>
+    		</isNotEmpty>
+    		<isNotEmpty prepend="AND" property="tradeStatus">
+    			<![CDATA[X.TradeStatus = #tradeStatus#]]>
+    		</isNotEmpty>
+    		<isNotEmpty prepend="AND" property="stockInFlag">											
+				<![CDATA[X.StockInFlag = #stockInFlag#]]>		
+			</isNotEmpty>
+    	</dynamic>
+    </sql>
+    
+    <!-- 取得发货单数量 -->
+    <select id="getDeliverCount" parameterClass="java.util.HashMap" resultClass="java.lang.Integer">
+    	<dynamic>
+	    	<isEqual property="cargoType" compareValue="N">
+		    	<![CDATA[
+					SELECT COUNT(*) AS count FROM (
+		    	]]>
+				<include refid="BINOLPTRPS39.queryRemind02"/> 
+				<![CDATA[
+					)SORT_T1	
+		    	]]>
+			</isEqual>
+			<isEqual property="cargoType" compareValue="P">
+		    	<![CDATA[
+					SELECT COUNT(*) AS count FROM (
+		    	]]>
+				<include refid="BINOLPTRPS39.queryRemind03"/> 
+				<![CDATA[
+					)SORT_T1	
+		    	]]>
+			</isEqual>
+    	</dynamic>
+    </select>
+    
+    <!-- 取得产品发货单List -->
+    <select id="getDeliverList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+		<include refid="BINOLCMINC99.pageheader"/>
+		<include refid="BINOLPTRPS39.queryRemind02"/>
+	    <include refid="BINOLCMINC99.pagefooter" />
+    </select>
+    
+     <!-- 取得促销品发货单List -->
+    <select id="getPrmDeliverList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+		<include refid="BINOLCMINC99.pageheader"/>
+		<include refid="BINOLPTRPS39.queryRemind03"/>
+	    <include refid="BINOLCMINC99.pagefooter" />
+    </select>
+    
+    <!-- 取得发货单Excel导出List -->
+    <select id="getDeliverListExcel" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+   		<include refid="BINOLPTRPS39.queryRemind02"/>
+    </select>
+    
+    <!-- 取得发货单Excel导出List -->
+    <select id="getPrmDeliverListExcel" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+   		<include refid="BINOLPTRPS39.queryRemind03"/>
+    </select>
+    
+    <!-- 取得产品发货单号 -->
+    <select id="getProductDeliverNo" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+    	<![CDATA[
+		    SELECT 
+		    	DeliverNo AS deliverNo
+		    FROM 
+		    	Inventory.BIN_ProductDeliver 
+		    WHERE 
+		    	BIN_ProductDeliverID = #billId#
+			AND BIN_OrganizationInfoID = #organizationInfoId#
+	  		AND BIN_BrandInfoID = #brandInfoId#
+	  		AND ValidFlag = '1'
+    	]]>
+    </select>
+    
+    <!-- 取得促销品发货单号 -->
+    <select id="getPromotionDeliverNo" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+    	<![CDATA[
+		   SELECT 
+		    	DeliverReceiveNo AS deliverNo
+		    FROM 
+		    	Inventory.BIN_PromotionDeliver 
+		    WHERE 
+				BIN_OrganizationInfoID = #organizationInfoId#
+	  		AND BIN_BrandInfoID = #brandInfoId#
+	  		AND ValidFlag = '1' 	
+  		]]>
+  		<isNotEmpty prepend="AND" property="log">
+			<![CDATA[BIN_PromotionInventoryLogID = #billId#]]>
+  		</isNotEmpty>
+  		<isEmpty prepend="AND" property="log">
+  			<![CDATA[BIN_PromotionDeliverID = #billId#]]>
+  		</isEmpty>
+    </select>
+    
+    <!-- 将发货单号写入催单表中 -->
+    <update id="updateReminder" parameterClass="java.util.HashMap">
+    	<![CDATA[
+    		UPDATE 
+    			Inventory.BIN_Reminder
+    		SET 
+    			Status = #status#,
+    			DeliverNo = #deliverNo#,
+    			Handle_Date = #handleDate#,
+    	]]>
+    	<include refid="BINOLCMINC99.updateSql"/>
+    	<![CDATA[
+    		WHERE
+    			BIN_ReminderID = #reminderId#
+    		AND BIN_OrganizationInfoID = #organizationInfoId#
+    		AND BIN_BrandInfoID = #brandInfoId#
+    		AND ValidFlag = '1'
+    	]]>
+    </update>
+    
+    <select id="getMsgTemplate" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+	    <![CDATA[
+				SELECT 
+					tt.BIN_TemplateID AS templateId,
+					tt.TemplateCode AS templateCode,
+					tt.TemplateName AS templateName,
+					tt.TemplateUse AS templateUse,
+					tt.Type AS type,
+					tt.CustomerType AS customerType,
+					tt.Contents AS contents,
+					tt.ValidFlag AS status 
+				FROM
+					Communication.BIN_MessageTemplate as tt 
+			]]>
+				<isNotEmpty property="privilegeFlag">
+				<isEqual property="privilegeFlag" compareValue="1">			
+				<![CDATA[			
+					Inner join (]]><include refid="BINOLCMINC99.departPrivilegeSql" /><![CDATA[) A99 
+					on tt.BIN_OrganizationID = A99.BIN_OrganizationID
+				]]>
+				</isEqual>
+				</isNotEmpty>
+			<![CDATA[
+				Where 
+					tt.BIN_BrandInfoID = #brandInfoId# AND 
+					tt.BIN_OrganizationInfoID = #organizationInfoId# AND 
+					tt.TYPE = #templateType# 
+			]]>
+			<dynamic>
+				<!-- 参数中存在模板名称查询条件时  -->
+				<isNotEmpty prepend="AND" property="templateName" >
+					tt.TemplateName LIKE '%' + #templateName# + '%' 
+				</isNotEmpty>
+				<!-- 参数中存在模板用途查询条件时  -->
+				<isNotEmpty prepend="AND" property="templateUse" >
+					tt.TemplateUse = #templateUse# 
+				</isNotEmpty>
+				<!-- 参数中存在适用客户类型查询条件时  -->
+				<isNotEmpty prepend="AND" property="customerType" >
+					tt.CustomerType = #customerType# 
+				</isNotEmpty>
+				<!-- 参数中存在模板状态查询条件时  -->
+				<isNotEmpty prepend="AND" property="status" >
+					tt.ValidFlag = #status# 
+				</isNotEmpty>
+			</dynamic>
+    </select>
+    
+    <select id="verifyDeliverNo" parameterClass="java.util.HashMap" resultClass="java.lang.Integer">
+    	<dynamic>
+    		<isEqual property="cargoType" compareValue="N">
+    		<![CDATA[
+				SELECT COUNT(*) AS count FROM (
+					SELECT DeliverNo
+					FROM Inventory.BIN_ProductDeliver
+					WHERE
+						BIN_OrganizationInfoID = #organizationInfoId#
+					AND BIN_BrandInfoID = #brandInfoId#
+					AND DeliverNo = #deliverNo#
+					AND BIN_OrganizationIDReceive = #remInOrganizationId#
+					AND ValidFlag = '1'
+				)SORT_T1	
+	    	]]>
+    		</isEqual>
+    		
+    		<isEqual property="cargoType" compareValue="P">
+    		<![CDATA[
+				SELECT COUNT(*) AS count FROM (
+	    			SELECT 
+						DeliverReceiveNo
+					FROM Inventory.BIN_PromotionDeliver
+					WHERE 
+						BIN_OrganizationInfoID = #organizationInfoId#
+					AND BIN_BrandInfoID = #brandInfoId#
+					AND DeliverReceiveNo = #deliverNo#
+					AND BIN_OrganizationIDReceive = #remInOrganizationId#
+					AND ValidFlag = '1'
+				)SORT_T1	
+	    	]]>
+    		</isEqual>
+    	</dynamic>
+    </select>
+    
+    <select id="verifyReminderNo" parameterClass="java.util.HashMap" resultClass="java.lang.Integer">
+    	<![CDATA[
+			SELECT COUNT(*) AS count FROM (
+				SELECT 
+					BIN_ReminderID
+				FROM 
+					Inventory.BIN_Reminder 
+				WHERE
+					BIN_OrganizationInfoID = #organizationInfoId#
+				AND BIN_BrandInfoID = #brandInfoId#
+				AND BIN_CargoType = #cargoType#
+				AND ValidFlag = '1'
+				AND DeliverNo = #deliverNo#
+			)SORT_T1	
+    	]]>
+    </select>
+   
+   
+	<select id="getMobilePhoneList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+		<![CDATA[
+			SELECT 
+				DISTINCT
+				D.MobilePhone AS mobilePhone
+			FROM 
+				Inventory.BIN_Reminder A 
+			LEFT JOIN Basis.BIN_CounterInfo B ON A.BIN_CounterInfoID = B.BIN_CounterInfoID AND A.BIN_BrandInfoID = B.BIN_BrandInfoID AND A.BIN_OrganizationInfoID = B.BIN_OrganizationInfoID
+			LEFT JOIN Basis.BIN_Organization C ON B.ResellerDepartID = C.BIN_OrganizationID AND C.Type = '3' AND A.BIN_BrandInfoID = C.BIN_BrandInfoID AND A.BIN_OrganizationInfoID = C.BIN_OrganizationInfoID
+			LEFT JOIN BASIS.BIN_Employee D ON C.BIN_OrganizationID = D.BIN_OrganizationID AND A.BIN_BrandInfoID = D.BIN_BrandInfoID AND A.BIN_OrganizationInfoID = D.BIN_OrganizationInfoID
+			LEFT JOIN Privilege.BIN_PositionCategory E ON D.BIN_PositionCategoryID = E.BIN_PositionCategoryID  AND A.BIN_BrandInfoID = E.BIN_BrandInfoID AND A.BIN_OrganizationInfoID = E.BIN_OrganizationInfoID
+			WHERE 
+				A.BIN_BrandInfoID = #brandInfoId#
+			AND A.BIN_OrganizationInfoID = #organizationInfoId#
+			AND A.BIN_ReminderID = #reminderId#
+			AND A.BIN_CargoType = 'N'
+			AND A.ValidFlag = '1'
+			AND E.CategoryCode = '21'			
+		]]>
+	</select>
+
+</sqlMap>

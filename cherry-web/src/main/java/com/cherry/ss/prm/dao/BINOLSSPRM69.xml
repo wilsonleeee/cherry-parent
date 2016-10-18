@@ -1,0 +1,247 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sqlMap PUBLIC "-//iBATIS.com//DTD SQL Map 2.0//EN" "http://ibatis.apache.org/dtd/sql-map-2.dtd">
+<sqlMap namespace="BINOLSSPRM69">
+	<!-- 促销规则一览 -->
+	<select id="getPrmRuleList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+	<![CDATA[
+	SELECT
+		B.BIN_PromotionActivityID as activityId,
+		A.RuleCode AS ruleCode,
+		A.RuleCodeShort AS ruleCodeShort,
+		A.RuleName AS ruleName,
+		A.Level AS level,
+		isnull(A.EnableContinue,'1') AS enContinue,
+		A.RuleType AS ruleType
+	FROM
+		Promotion.BIN_PromotionRule A
+		JOIN Promotion.BIN_PromotionActivity B
+		ON(A.BIN_BrandInfoID = B.BIN_BrandInfoID
+			AND A.RuleCode = B.ActivityCode
+			AND B.ValidFlag = '1')
+	WHERE
+		A.BIN_BrandInfoID = #brandInfoId#
+		and (B.TemplateFlag IS NULL OR B.TemplateFlag='0' OR B.TemplateFlag ='')
+		AND A.endTime >= #sysTime#
+		AND A.ValidFlag = '1'
+	ORDER BY
+		A.RuleType DESC,A.Level DESC,B.CreateTime
+	]]>
+	</select>
+	
+	<!-- 促销规则查询SQL -->
+	<sql id="queryPrmRule">
+	<![CDATA[
+	SELECT
+		A.RuleCode AS code,
+		A.RuleName AS name
+	FROM
+		Promotion.BIN_PromotionRule A
+	WHERE
+		A.BIN_BrandInfoID = #brandInfoId#
+		AND A.endTime >= #sysTime#
+		AND A.ValidFlag = '1'		
+	]]>
+		<isNotEmpty property="searchText" prepend="AND">
+			(A.RuleCode like '%' + #searchText# + '%' OR A.RuleName like '%' + #searchText# + '%')
+		</isNotEmpty>
+	</sql>
+	
+	<!-- 查询促销规则总数 -->
+	<select id="getPrmRuleCount" parameterClass="java.util.HashMap" resultClass="java.lang.Integer">
+    	<![CDATA[
+			SELECT	COUNT(SORT_T1.code) AS count FROM (
+		]]>	
+		<include refid="BINOLSSPRM69.queryPrmRule" />
+		<![CDATA[	
+			)SORT_T1
+		]]>		
+	</select>	
+	
+	<!-- 分页查询促销规则 -->
+	<select id="getPrmRulePageList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+		<include refid="BINOLCMINC99.pageheader" />
+		<include refid="BINOLSSPRM69.queryPrmRule" />
+		<include refid="BINOLCMINC99.pagefooter" />
+	</select>
+	
+	<!-- 更新促销规则-->
+	<update id="updatePrmRule" parameterClass="java.util.HashMap">
+		<![CDATA[
+		UPDATE
+			Promotion.BIN_PromotionRule
+		SET
+			Level = #level#,
+			EnableContinue = #enContinue#,
+		]]>
+		<include refid="BINOLCMINC99.updateSql" />
+		<![CDATA[
+		WHERE
+			RuleCode = #ruleCode#
+		]]>
+	</update>
+	
+	<!-- 促销规则排他关系分组SQL文 -->
+	<sql id="queryPrmRuleRelationGroup">
+		<![CDATA[
+		select 
+			A.GroupNo as groupNo,
+			A.GroupName as groupName,
+			A.Comments as comments,
+			A.ValidFlag as validFlag
+		from 
+			Promotion.BIN_PromotionRuleRelationGroup A 
+		where
+			A.BIN_BrandInfoID = #brandInfoId#
+			and A.BIN_OrganizationInfoID = #organizationInfoId#
+		]]>
+		<isNotEmpty property="groupNo">
+			and A.GroupNo = #groupNo#
+		</isNotEmpty>
+		<isNotEmpty property="validFlag">
+			and A.ValidFlag = #validFlag#
+		</isNotEmpty>
+	</sql>
+	
+	<!-- 促销规则排他关系分组一览 -->
+	<select  id="getPrmRuleRelationGroupList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+		<include refid="BINOLSSPRM69.queryPrmRuleRelationGroup"/>
+	</select>
+	
+	<!-- 根据ID查询促销规则排他关系分组 -->
+	<select  id="getPrmRuleRelationGroup" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+		<include refid="BINOLSSPRM69.queryPrmRuleRelationGroup"/>
+	</select>
+	
+	<!-- 促销规则排他关系一览 -->
+	<select  id="getPrmRuleRelationList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+		<![CDATA[
+		select 
+			A.RelationTypeA as relationTypeA,
+			A.RelationValueA as relationValueA,
+			nameA = case relationTypeA   when '1' then A.RelationValueA when '2' then B.RuleName end,
+			A.RelationTypeB as relationTypeB,
+			A.RelationValueB as relationValueB,
+			nameB = case relationTypeB   when '1' then A.RelationValueB when '2' then C.RuleName end,
+			A.ValidFlag as validFlag
+		from 
+			Promotion.BIN_PromotionRuleRelation A
+			left join Promotion.BIN_PromotionRule B on A.RelationValueA = B.RuleCode and B.ValidFlag = '1'
+			left join Promotion.BIN_PromotionRule C on A.RelationValueB = C.RuleCode and C.ValidFlag = '1'
+		where
+			A.BIN_BrandInfoID = #brandInfoId#
+			and A.BIN_OrganizationInfoID = #organizationInfoId#
+			and A.ValidFlag = '1'
+			and A.GroupNo = #groupNo#
+		order by A.RelationTypeA, A.RelationValueA, A.RelationTypeB, A.RelationValueB
+		]]>
+	</select>
+	
+	<!-- 添加排他关系分组 -->
+	<insert id="insertPrmRuleRelationGroup" parameterClass="java.util.HashMap">
+		<selectKey resultClass="java.lang.Integer" type="post"
+			keyProperty="GroupNo">    
+		<![CDATA[
+		insert into Promotion.BIN_PromotionRuleRelationGroup(
+			BIN_OrganizationInfoID,
+			BIN_BrandInfoID,
+			GroupName,
+			Comments,
+			CreateTime,
+			UpdateTime,
+			CreatedBy,
+			CreatePGM,
+			UpdatedBy,
+			UpdatePGM,
+			ValidFlag,
+			ModifyCount
+		)
+		values(
+			#organizationInfoId#,
+			#brandInfoId#,
+			#groupName#,
+			#comments#,
+			GETDATE(),
+			GETDATE(),
+			#createdBy#,
+			#createPGM#,
+			#updatedBy#,
+			#updatePGM#,
+			'0',
+			'0'
+		)
+		SELECT SCOPE_IDENTITY() AS value
+		]]>
+		</selectKey>
+	</insert>
+	
+	<!-- 添加排他关系 -->
+	<insert id="insertPrmRuleRelation" parameterClass="java.util.HashMap">
+		<![CDATA[
+		insert into Promotion.BIN_PromotionRuleRelation(
+			BIN_OrganizationInfoID,
+			BIN_BrandInfoID,
+			GroupNo,
+			RelationTypeA,
+			RelationValueA,
+			RelationTypeB,
+			RelationValueB,
+		]]>
+		<include refid="BINOLCMINC99.insertKeySql" />
+		<![CDATA[
+		)
+		values(
+			#organizationInfoId#,
+			#brandInfoId#,
+			#groupNo#,
+			#relationTypeA#,
+			#relationValueA#,
+			#relationTypeB#,
+			#relationValueB#,
+		]]>
+		<include refid="BINOLCMINC99.insertValueSql" />
+		<![CDATA[
+		)
+		]]>
+	</insert>
+	
+	<!-- 更新促销规则排他关系分组 -->
+	<update id="updatePrmRuleRelationGroup" parameterClass="java.util.HashMap">
+		<![CDATA[
+		update 
+			Promotion.BIN_PromotionRuleRelationGroup
+		set 
+			GroupName = #groupName#,
+			Comments = #comments#,
+		]]>
+		<include refid="BINOLCMINC99.updateSql" />
+		<![CDATA[
+		where 
+			GroupNo = #groupNo#
+		]]>
+	</update>
+	
+	<!-- 停用启用促销规则分组 -->
+	<update id="disOrEnablePrmRuleRelationGroup" parameterClass="java.util.HashMap">
+		<![CDATA[
+		update 
+			Promotion.BIN_PromotionRuleRelationGroup
+		set 
+			ValidFlag = #validFlag#,
+		]]>
+		<include refid="BINOLCMINC99.updateSql" />
+		<![CDATA[
+		where 
+			GroupNo = #groupNo#
+		]]>
+	</update>
+	
+	<!-- 更新促销规则排他关系分组 -->
+	<delete id="delPrmRuleRelation" parameterClass="java.util.HashMap">
+		<![CDATA[
+		delete from 
+			Promotion.BIN_PromotionRuleRelation
+		where
+			GroupNo = #groupNo#
+		]]>
+	</delete>
+</sqlMap>

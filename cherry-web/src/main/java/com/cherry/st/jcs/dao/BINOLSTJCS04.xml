@@ -1,0 +1,248 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE sqlMap PUBLIC "-//iBATIS.com//DTD SQL Map 2.0//EN" "http://ibatis.apache.org/dtd/sql-map-2.dtd">
+<sqlMap namespace = "BINOLSTJCS04">
+	
+	<sql id="getInventorySql">
+		SELECT
+			A.IDENTITYID AS identityId,
+			A.BIN_InventoryInfoID AS inventoryInfoId,
+			A.InventoryCode AS inventoryCode,
+			A.DefaultFlag AS defaultFlag,
+			A.Comments AS comments,
+			A.BIN_OrganizationID AS organizationId,
+			B.BrandCode AS brandCode,
+			C.DepartCode AS departCode,
+			C.TestType AS departTestType,
+			D.TestType AS depotTestType,
+			<dynamic>
+				<isNotEmpty property = "language">
+					<isEqual property="language" compareValue="en_US">
+						A.InventoryNameEN AS inventoryName,
+						B.BrandNameForeign AS brandName,
+						C.NameForeign AS departName
+					</isEqual>
+					<isEqual property="language" compareValue="zh_CN">
+						A.InventoryNameCN AS inventoryName,
+						B.BrandNameChinese AS brandName,
+						C.DepartName AS departName
+					</isEqual>
+				</isNotEmpty>
+				<isEmpty property = "language">
+					A.InventoryNameCN AS inventoryName,
+					B.BrandNameChinese AS brandName,
+					C.DepartName AS departName
+				</isEmpty>
+			</dynamic>
+		FROM
+			Basis.BIN_InventoryInfo A
+			JOIN Basis.BIN_BrandInfo B
+			ON(A.BIN_BrandInfoID = B.BIN_BrandInfoID
+			AND B.ValidFlag = 1)
+			JOIN Basis.BIN_Organization C
+			ON(A.BIN_OrganizationID = C.BIN_OrganizationID
+			AND C.ValidFlag = 1)
+			JOIN Basis.BIN_DepotInfo D
+			ON(A.BIN_InventoryInfoID = D.BIN_DepotInfoID
+			AND D.DepotType = '01'
+			AND D.ValidFlag = 1)
+		WHERE
+			A.ValidFlag = 1
+			AND A.BIN_OrganizationInfoID = #organizationInfoId#
+			<dynamic>
+				<isNotEmpty prepend = "AND" property="brandInfoId">
+					A.BIN_BrandInfoID = #brandInfoId#
+				</isNotEmpty>
+				<isNotEmpty prepend = "AND" property="inventoryCode">
+					<![CDATA[A.InventoryCode LIKE '%' + #inventoryCode# + '%']]>
+				</isNotEmpty>
+				<isNotEmpty prepend = "AND" property="departCode">
+					<![CDATA[C.DepartCode LIKE '%' + #departCode# + '%']]>
+				</isNotEmpty>
+				<isNotEmpty prepend = "AND" property="inventoryName">
+					<isNotEmpty property="language">
+						<isEqual property = "language" compareValue="en_US">
+							<![CDATA[A.InventoryNameEN LIKE '%' + #inventoryName# + '%']]>
+						</isEqual>
+						<isEqual property = "language" compareValue="zh_CN">
+							<![CDATA[A.InventoryNameCN LIKE '%' + #inventoryName# + '%']]>
+						</isEqual>
+					</isNotEmpty>
+					<isEmpty property="language">
+						<![CDATA[A.InventoryNameCN LIKE '%' + #inventoryName# + '%']]>
+					</isEmpty>
+				</isNotEmpty>
+				<isNotEmpty prepend = "AND" property="departName">
+					<isNotEmpty property="language">
+						<isEqual property = "language" compareValue="en_US">
+							<![CDATA[C.NameForeign LIKE '%' + #departName# + '%']]>
+						</isEqual>
+						<isEqual property = "language" compareValue="zh_CN">
+							<![CDATA[C.DepartName LIKE '%' + #departName# + '%']]>
+						</isEqual>
+					</isNotEmpty>
+					<isEmpty property="language">
+						<![CDATA[C.DepartName LIKE '%' + #departName# + '%']]>
+					</isEmpty>
+				</isNotEmpty>
+			</dynamic> 
+	</sql>
+	
+	<!--取得仓库部门关系List-->
+	<select id="getInventoryList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+		<include refid="BINOLCMINC99.pageheader" />
+        <include refid="BINOLSTJCS04.getInventorySql" />
+        <include refid="BINOLCMINC99.pagefooter" />
+	</select>
+	
+	<!--取得仓库部门关系总数-->
+	<select id = "getInventoryCount" parameterClass="java.util.HashMap" resultClass="java.lang.Integer">
+		<![CDATA[
+            SELECT COUNT(SORT_T1.inventoryInfoId) AS count FROM (
+        ]]>
+        <include refid="BINOLSTJCS04.getInventorySql" />
+        <![CDATA[
+            )SORT_T1
+        ]]>
+	</select>
+	
+	<!--取得非柜台实体仓库List-->
+	<select id="getDepotInfoList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+		SELECT
+			BIN_DepotInfoID AS inventoryInfoId,
+			DepotCode AS inventoryCode,
+			TestType AS testType,
+			<dynamic>
+				<isNotEmpty property="language">
+						<isEqual property = "language" compareValue="en_US">
+							DepotNameEN AS inventoryName
+						</isEqual>
+						<isEqual property = "language" compareValue="zh_CN">
+							DepotNameCN AS inventoryName
+						</isEqual>
+					</isNotEmpty>
+					<isEmpty property="language">
+						DepotNameCN AS inventoryName
+					</isEmpty>
+			</dynamic>
+		FROM
+			Basis.BIN_DepotInfo
+		WHERE
+			BIN_OrganizationInfoID = #organizationInfoId#
+			AND DepotType = '01'
+			AND ValidFlag = 1
+			<isNotEmpty prepend = "AND" property="inventoryInfoId">
+				BIN_DepotInfoID = #inventoryInfoId#
+			</isNotEmpty>
+	</select>
+	
+	<!--取得非柜台部门-->
+	<select id="getDepartList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+		SELECT
+			[Level] AS level,
+			[Path] AS path,
+			'('+[DepartCode]+')'+[DepartName] AS name,
+			BIN_OrganizationID AS id,
+			TestType AS testType
+		FROM
+			[Basis].[BIN_Organization] 
+		WHERE
+			[Type] NOT IN ('4')
+			AND [BIN_OrganizationInfoID] = #organizationInfoId# 
+			AND [BIN_BrandInfoID] = #brandInfoId#
+			ORDER BY [Path]
+	</select>
+	
+	<!--往仓库部门关系表中写数据-->
+	<insert id="insertToInventoryInfo" parameterClass="java.util.HashMap">
+		INSERT INTO
+			Basis.BIN_InventoryInfo
+			(
+				BIN_InventoryInfoID,
+				InventoryCode,
+			<dynamic>
+				<isNotEmpty property="language">
+						<isEqual property = "language" compareValue="en_US">
+							InventoryNameEN,
+						</isEqual>
+						<isEqual property = "language" compareValue="zh_CN">
+							InventoryNameCN,
+						</isEqual>
+				</isNotEmpty>
+				<isEmpty property="language">
+						InventoryNameCN,
+				</isEmpty>
+			</dynamic>
+				BIN_OrganizationInfoID,
+				BIN_BrandInfoID,
+				BIN_OrganizationID,
+				DefaultFlag,
+				Comments,
+				<include refid="BINOLCMINC99.insertKeySql" />
+			)
+		VALUES
+			(
+				#inventoryInfoId#,
+				#inventoryCode#,
+				#inventoryName#,
+				#organizationInfoId#,
+				#brandInfoId#,
+				#organizationId#,
+				#defaultFlag#,
+				#comments#,
+				<include refid="BINOLCMINC99.insertValueSql" />
+			)
+	</insert>
+	
+	<!--判断仓库部门关系是否已经存在-->
+	<select id="isDepartExist" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+		SELECT
+			A.IDENTITYID AS identityId,
+			A.BIN_InventoryInfoID AS inventoryInfoId,
+			A.InventoryCode AS inventoryCode,
+			A.DefaultFlag AS defaultFlag
+		FROM
+			Basis.BIN_InventoryInfo A
+		WHERE
+			A.ValidFlag = 1
+			AND A.BIN_OrganizationInfoID = #organizationInfoId#
+			AND A.BIN_InventoryInfoID = #inventoryInfoId#
+			AND A.BIN_OrganizationID = #organizationId#
+			AND A.BIN_BrandInfoID = #brandInfoId#
+	</select>
+	
+	<!--根据部门仓库关系ID删除数据-->
+	<delete id="deleteInvDepRelation" parameterClass="java.util.HashMap">
+		DELETE FROM
+			Basis.BIN_InventoryInfo
+		WHERE
+			IDENTITYID = #identityId#
+	</delete>
+	
+	<!--根据部门仓库关系ID更新数据-->
+	<update id="updateInventoryInfo" parameterClass="java.util.HashMap">
+		UPDATE
+			Basis.BIN_InventoryInfo
+		SET
+			BIN_InventoryInfoID = #inventoryInfoId#,
+			InventoryCode = #inventoryCode#,
+			<dynamic>
+				<isNotEmpty property="language">
+						<isEqual property = "language" compareValue="en_US">
+							InventoryNameEN = #inventoryName#,
+						</isEqual>
+						<isEqual property = "language" compareValue="zh_CN">
+							InventoryNameCN = #inventoryName#,
+						</isEqual>
+				</isNotEmpty>
+				<isEmpty property="language">
+						InventoryNameCN = #inventoryName#,
+				</isEmpty>
+			</dynamic>
+			BIN_OrganizationID = #organizationId#,
+			DefaultFlag = #defaultFlag#,
+			Comments = #comments#,
+			<include refid="BINOLCMINC99.updateSql" />
+		WHERE
+			IDENTITYID = #identityId#
+	</update>
+</sqlMap>

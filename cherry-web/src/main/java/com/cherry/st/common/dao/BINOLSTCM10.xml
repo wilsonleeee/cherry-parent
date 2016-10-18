@@ -1,0 +1,338 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sqlMap PUBLIC "-//iBATIS.com//DTD SQL Map 2.0//EN" "http://ibatis.apache.org/dtd/sql-map-2.dtd">
+<sqlMap namespace="BINOLSTCM10">
+	<sql id="getDepartInfo">
+		<![CDATA[
+		SELECT
+			distinct
+			A.BIN_OrganizationID AS organizationId,     
+			A.DepartCode AS departCode,     
+			A.Type AS type ,
+		]]>
+		<dynamic>
+	        <isNotEmpty property="inventoryInfoID">
+	            '' AS inventoryInfoID,
+	        </isNotEmpty>
+	        <isEmpty property="inventoryInfoID">
+	            B.BIN_InventoryInfoID AS inventoryInfoID,
+	        </isEmpty>
+			<isNotEmpty property="language">
+					<isEqual property = "language" compareValue="en_US">
+						A.NameForeign AS departName 
+					</isEqual>
+					<isEqual property = "language" compareValue="zh_CN">
+						A.DepartName AS departName
+					</isEqual>
+			</isNotEmpty>
+			<isEmpty property="language">
+					A.DepartName AS departName
+			</isEmpty>
+		</dynamic>
+		<![CDATA[
+		FROM
+			Basis.BIN_Organization A
+			JOIN (]]><include refid="BINOLCMINC99.departPrivilegeSql" /><![CDATA[) A99 
+			ON(A.BIN_OrganizationID=A99.BIN_OrganizationID)
+			left join Basis.BIN_CounterInfo E on(A.BIN_OrganizationID = E.BIN_OrganizationID),
+			Basis.BIN_InventoryInfo B
+		WHERE
+		]]>
+		<dynamic>
+            <isNotEmpty property="inventoryInfoID">
+                <iterate property="inventoryInfoID" open="(" close=")" conjunction="OR">
+                    B.BIN_InventoryInfoID = #inventoryInfoID[]#
+                </iterate>
+                <![CDATA[ AND ]]>
+            </isNotEmpty>
+		</dynamic>
+		<![CDATA[
+			A.BIN_OrganizationID = B.BIN_OrganizationID
+			AND (A.TestType = #TestType# OR E.CounterKind = #TestType#)
+			AND A.ValidFlag = '1'
+			AND B.ValidFlag = '1'
+			AND A.BIN_OrganizationID <> #BIN_OrganizationID#
+		]]>
+		<dynamic>
+			<isNotEmpty prepend="AND" property="inputString">
+				<![CDATA[
+					(A.NameForeign like '%' + #inputString# + '%'
+					OR A.DepartName like '%' + #inputString# + '%'
+					OR A.DepartCode like '%' + #inputString# + '%'
+				)
+				]]>
+			</isNotEmpty>
+		</dynamic>
+	</sql>
+	
+	
+	<!--根据仓库ID取得与之关联的所有部门的上级部门(带权限或者不带权限),带有测试部门和正式部门控制-->
+	<sql id="getSuperordinateDepartByDepotId">
+		<![CDATA[
+		WITH E AS(
+			SELECT
+				A.BIN_OrganizationID AS organizationID,
+				A.NodeID AS nodeID,
+				A.DepartName AS departName,
+				A.DepartCode AS departCode,
+				A.Type AS type ,
+				F.TestType
+			FROM
+				Basis.BIN_Organization	A
+				JOIN Basis.BIN_InventoryInfo B
+				ON(A.BIN_OrganizationID = B.BIN_OrganizationID
+				AND A.ValidFlag = '1'
+				AND B.BIN_InventoryInfoID = #DepotID#)
+				JOIN Basis.BIN_DepotInfo F
+				ON(F.BIN_DepotInfoID = B.BIN_InventoryInfoID)
+			UNION ALL
+			SELECT
+				C.BIN_OrganizationID,
+				C.NodeID,
+				C.DepartName,
+				C.DepartCode,
+				C.Type AS type ,
+				C.TestType
+			FROM
+				Basis.BIN_Organization C
+				JOIN E
+				ON(C.NodeId = E.NodeId.GetAncestor(1)
+				AND C.TestType = E.TestType)
+		)
+		SELECT
+			distinct
+			E.nodeID,
+			E.departName,
+			E.organizationID AS organizationId,
+			E.TestType,
+			E.departCode,
+			E.Type AS type
+		FROM
+			E
+		]]>	
+		<dynamic>
+			<isNotEmpty property="BIN_UserID">	
+			<![CDATA[
+				JOIN (]]><include refid="BINOLCMINC99.departPrivilegeSql" /><![CDATA[) A99
+				ON E.organizationID = A99.BIN_OrganizationID
+			]]>
+			</isNotEmpty>
+		</dynamic>
+	</sql>
+	
+	<!--根据仓库ID取得与其关联的所有部门的下级部门(带有权限或不带权限),带有测试部门和正式部门控制-->
+	<sql id="getChildordinateDepartByDepotId">
+		<![CDATA[
+			SELECT
+				distinct
+				B.BIN_OrganizationID AS organizationId,
+				B.NodeID AS nodeID,
+				B.DepartName AS departName,
+				B.DepartCode AS departCode,
+				B.Type AS type ,
+				B.TestType
+			FROM
+				Basis.BIN_Organization B
+				JOIN (]]><include refid="BINOLCMINC99.departPrivilegeSql" /><![CDATA[) A99 
+				ON(B.BIN_OrganizationID=A99.BIN_OrganizationID)
+			WHERE
+				B.TestType = #TestType#
+				AND B.ValidFlag = '1'
+				AND B.Type in
+		]]>
+			<dynamic>
+				<iterate property="Type" open="(" close=")" conjunction=",">
+					<![CDATA[#Type[]#]]>
+				</iterate>
+			</dynamic>
+			<dynamic>
+				<isNotEmpty prepend="AND" property="inputString">
+					<![CDATA[
+					(B.NameForeign like '%' + #inputString# + '%'
+						OR B.DepartName like '%' + #inputString# + '%'
+						OR B.DepartCode like '%' + #inputString# + '%'
+					)
+					]]>
+				</isNotEmpty>
+			</dynamic>
+	</sql>
+	
+	<!--根据仓库ID取得对应的部门,带权限,按仓库业务区域大小关系设定-->
+	<select id="getDepartInfoList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+		<include refid="BINOLCMINC99.pageheader" />
+		<include refid="BINOLSTCM10.getDepartInfo" />
+        <isNotEmpty property="inventoryInfoID">
+            <include refid="BINOLCMINC99.pagefooter" />
+		</isNotEmpty>
+		<isEmpty property="inventoryInfoID">
+            <![CDATA[)SORT_T1)SORT_T2]]>
+		</isEmpty>
+	</select>
+	
+	<!--根据仓库ID取得对应的部门总数,带权限,按仓库业务区域大小关系设定-->
+	<select id="getDepartInfoCount" parameterClass="java.util.HashMap" resultClass="java.lang.Integer">
+		<![CDATA[
+			SELECT	COUNT(SORT_T1.organizationId) AS count FROM (
+		]]>	
+		<include refid="BINOLSTCM10.getDepartInfo" />	
+		<![CDATA[	
+			)SORT_T1
+		]]>	
+	</select>
+	
+	<!--根据仓库ID取得与之关联的所有部门的上级部门(带权限或者不带权限)List,带有测试部门和正式部门控制-->
+	<select id="getSupDepartList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+		<![CDATA[
+		WITH E AS(
+			SELECT
+				A.BIN_OrganizationID AS organizationID,
+				A.NodeID AS nodeID,
+				A.DepartName AS departName,
+				A.DepartCode AS departCode,
+				A.Type AS type ,
+				A.ValidFlag,
+				F.TestType
+			FROM
+				Basis.BIN_Organization	A
+				JOIN Basis.BIN_InventoryInfo B
+				ON(A.BIN_OrganizationID = B.BIN_OrganizationID
+				AND A.ValidFlag = '1'
+				AND B.BIN_InventoryInfoID = #DepotID#)
+				JOIN Basis.BIN_DepotInfo F
+				ON(F.BIN_DepotInfoID = B.BIN_InventoryInfoID)
+			UNION ALL
+			SELECT
+				C.BIN_OrganizationID,
+				C.NodeID,
+				C.DepartName,
+				C.DepartCode,
+				C.Type AS type,
+				C.ValidFlag,
+				C.TestType
+			FROM
+				Basis.BIN_Organization C
+				JOIN E
+				ON(C.NodeId = E.NodeId.GetAncestor(1)
+				AND C.TestType = E.TestType)
+		)
+		]]><include refid="BINOLCMINC99.pageheader" /><![CDATA[
+		SELECT
+			distinct
+			E.nodeID,
+			E.departName,
+			E.organizationID AS organizationId,
+			E.TestType,
+			E.departCode,
+			E.Type AS type
+		FROM
+			E
+		]]>	
+		<dynamic>
+			<isNotEmpty property="BIN_UserID">	
+			<![CDATA[
+				JOIN (]]><include refid="BINOLCMINC99.departPrivilegeSql" /><![CDATA[) A99
+				ON E.organizationID = A99.BIN_OrganizationID
+			]]>
+			</isNotEmpty>
+		</dynamic>
+		<![CDATA[WHERE
+			E.organizationID <> #BIN_OrganizationID#
+			AND E.ValidFlag = '1'	
+		]]>
+		<include refid="BINOLCMINC99.pagefooter" />
+	</select>
+	
+	<!--根据仓库ID取得与之关联的所有部门的上级部门(带权限或者不带权限)总数,带有测试部门和正式部门控制-->
+	<select id="getSupDeparCount" parameterClass="java.util.HashMap" resultClass="java.lang.Integer">
+		<![CDATA[
+		WITH E AS(
+			SELECT
+				A.BIN_OrganizationID AS organizationID,
+				A.NodeID AS nodeID,
+				A.DepartName AS departName,
+				A.DepartCode AS departCode,
+				A.Type AS type,
+				A.ValidFlag,
+				F.TestType
+			FROM
+				Basis.BIN_Organization	A
+				JOIN Basis.BIN_InventoryInfo B
+				ON(A.BIN_OrganizationID = B.BIN_OrganizationID
+				AND A.ValidFlag = '1'
+				AND B.BIN_InventoryInfoID = #DepotID#)
+				JOIN Basis.BIN_DepotInfo F
+				ON(F.BIN_DepotInfoID = B.BIN_InventoryInfoID)
+			UNION ALL
+			SELECT
+				C.BIN_OrganizationID,
+				C.NodeID,
+				C.DepartName,
+				C.DepartCode,
+				C.Type AS type,
+				C.ValidFlag,
+				C.TestType
+			FROM
+				Basis.BIN_Organization C
+				JOIN E
+				ON(C.NodeId = E.NodeId.GetAncestor(1)
+				AND C.TestType = E.TestType)
+		)
+		SELECT	COUNT(SORT_T1.organizationId) AS count FROM (
+		SELECT
+			distinct
+			E.nodeID,
+			E.departName,
+			E.organizationID AS organizationId,
+			E.TestType,
+			E.departCode,
+			E.Type AS type
+		FROM
+			E
+		]]>	
+		<dynamic>
+			<isNotEmpty property="BIN_UserID">	
+			<![CDATA[
+				JOIN (]]><include refid="BINOLCMINC99.departPrivilegeSql" /><![CDATA[) A99
+				ON E.organizationID = A99.BIN_OrganizationID
+			]]>
+			</isNotEmpty>
+		</dynamic>
+		<![CDATA[
+		WHERE
+			E.organizationID <> #BIN_OrganizationID#	
+			AND E.ValidFlag = '1'
+			)SORT_T1
+		]]>	
+	</select>
+	
+	<!--根据仓库ID取得与其关联的所有部门的下级部门(带有权限或不带权限)List,带有测试部门和正式部门控制-->
+	<select id="getChilDepartList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+		<include refid="BINOLCMINC99.pageheader" />
+		<include refid="BINOLSTCM10.getChildordinateDepartByDepotId" />
+		<include refid="BINOLCMINC99.pagefooter" />
+	</select>
+	
+	<!--根据仓库ID取得与其关联的所有部门的下级部门(带有权限或不带权限)总数,带有测试部门和正式部门控制-->
+	<select id="getChildDepartCount" parameterClass="java.util.HashMap" resultClass="java.lang.Integer">
+		<![CDATA[
+			SELECT	COUNT(SORT_T1.organizationId) AS count FROM (
+		]]>	
+		<include refid="BINOLSTCM10.getChildordinateDepartByDepotId" />	
+		<![CDATA[	
+			)SORT_T1
+		]]>	
+	</select>
+	
+	<!--根据部门ID取得其对应的部门类型-->
+	<select id="getDepartTypeByID" parameterClass="java.lang.Integer" resultClass="java.util.HashMap">
+		<![CDATA[
+			SELECT
+				[Type],
+				[TestType]
+			FROM
+				Basis.BIN_Organization
+			WHERE
+				BIN_OrganizationID = #BIN_OrganizationID#
+		]]>
+	</select>
+	
+</sqlMap>

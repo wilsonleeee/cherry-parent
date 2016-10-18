@@ -1,0 +1,500 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sqlMap PUBLIC "-//iBATIS.com//DTD SQL Map 2.0//EN" "http://ibatis.apache.org/dtd/sql-map-2.dtd">
+<sqlMap namespace="BINOLBSEMP02">
+	<!-- 员工信息查询sql文  -->
+	<select id="getEmployeeInfo" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+	 	<![CDATA[
+			SELECT
+				A.BIN_EmployeeID AS employeeId,
+				A.BIN_OrganizationInfoID AS organizationInfoId,
+				A.BIN_BrandInfoID AS brandInfoId,
+				C.BrandCode AS brandCode,
+				A.EmployeeCode AS employeeCode,
+				A.EmployeeName AS employeeName,	
+				A.EmployeeNameForeign AS employeeNameForeign,
+				A.IdentityCard AS identityCard,
+				A.Phone AS phone,
+				A.MobilePhone AS mobilePhone,
+				A.Email AS email,
+				A.Academic AS academic,
+				A.BirthDay AS birthDay,
+				A.Gender AS gender,
+				A.MaritalStatus AS maritalStatus,
+				convert(varchar(30),A.UpdateTime,121) AS modifyTime,
+				A.ModifyCount AS modifyCount,
+				A.BIN_OrganizationID AS organizationId,
+				A.BIN_PositionCategoryID AS positionCategoryId,
+				A.Path AS empPath,
+				A.NodeID.GetAncestor(1).ToString() AS higher,
+				A.ValidFlag AS empValidFlag,
+				E.CategoryCode AS categoryCode,
+				M.LonginName AS longinName,	
+				M.PassWord AS passWord,	
+				M.BIFlag AS biFlag,
+				M.BIN_UserID AS userId,
+				M.ValidFlag AS validFlag,
+				D.DepartCode AS departCode,
+				E.CategoryCode AS categoryCode,
+		]]>
+		<dynamic>
+			<isNotEmpty property="language">
+				<isEqual property="language" compareValue="en_US">
+					B.OrgNameForeign AS orgName,
+					C.BrandNameForeign AS brandName,
+					D.NameForeign AS departName,
+					E.CategoryNameForeign AS categoryName	
+				</isEqual>
+				<isEqual property="language" compareValue="zh_CN">								
+					B.OrgNameChinese AS orgName,								
+					C.BrandNameChinese AS brandName,
+					D.DepartName AS departName,
+					E.CategoryName AS categoryName
+				</isEqual>								
+			</isNotEmpty>
+			<isEmpty property="language">							
+				B.OrgNameChinese AS orgName,								
+				C.BrandNameChinese AS brandName,
+				D.DepartName AS departName,
+				E.CategoryName AS categoryName
+			</isEmpty>
+		</dynamic>		
+		<![CDATA[													
+			FROM
+				Basis.BIN_Employee A
+				LEFT JOIN Basis.BIN_OrganizationInfo B
+				ON(A.BIN_OrganizationInfoID = B.BIN_OrganizationInfoID AND B.ValidFlag = '1')
+				LEFT JOIN Basis.BIN_BrandInfo C
+				ON(A.BIN_BrandInfoID = C.BIN_BrandInfoID AND C.ValidFlag = '1')
+				LEFT JOIN Basis.BIN_Organization D
+				ON (A.BIN_OrganizationID = D.BIN_OrganizationID AND D.ValidFlag = '1')	
+				LEFT JOIN Privilege.BIN_PositionCategory E
+				ON (A.BIN_PositionCategoryID = E.BIN_PositionCategoryID AND E.ValidFlag = '1')
+				LEFT JOIN Privilege.BIN_User M
+				ON(A.BIN_EmployeeID = M.BIN_EmployeeID)
+		]]>
+		<dynamic prepend="WHERE">
+			<isNotEmpty property="employeeId">
+				A.BIN_EmployeeID = #employeeId#
+			</isNotEmpty>
+			<isNotEmpty property="employeeCode">
+				A.EmployeeCode = #employeeCode#
+			</isNotEmpty>
+		</dynamic>		
+	</select>
+	<!-- 取得员工地址List  -->
+    <select id="getEmpAddressList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+       	<![CDATA[	
+			SELECT
+				A.BIN_AddressInfoID AS addressInfoId,
+				A.DefaultFlag AS defaultFlag,
+				B.AddressLine1 AS address,
+				B.ZipCode AS zipCode,
+				C.BIN_RegionID AS cityId,
+				D.BIN_RegionID AS provinceId,
+		]]>
+		<dynamic>
+			<isNotEmpty property="language">
+				<isEqual property="language" compareValue="en_US">
+					C.RegionNameForeign AS cityName,
+					D.RegionNameForeign AS provinceName
+				</isEqual>
+				<isEqual property="language" compareValue="zh_CN">	
+					C.RegionNameChinese AS cityName,
+					D.RegionNameChinese AS provinceName
+				</isEqual>								
+			</isNotEmpty>
+			<isEmpty property="language">
+				C.RegionNameChinese AS cityName,
+				D.RegionNameChinese AS provinceName
+			</isEmpty>
+		</dynamic>
+		<![CDATA[											
+			FROM
+				Basis.BIN_EmployeeAddress A
+				JOIN Basis.BIN_AddressInfo B
+				ON(A.BIN_AddressInfoID = B.BIN_AddressInfoID
+					AND B.ValidFlag='1')
+				LEFT JOIN Basis.BIN_StandardRegion C
+				ON(B.StandardCity = C.BIN_RegionID
+					AND C.ValidFlag = '1')
+				LEFT JOIN Basis.BIN_StandardRegion D
+				ON(B.StandardProvince = D.BIN_RegionID 
+					AND D.ValidFlag = '1')
+			WHERE												
+				A.BIN_EmployeeID = #employeeId# AND
+				A.ValidFlag = '1'
+			ORDER BY
+				A.DefaultFlag DESC
+		]]>
+    </select>
+	<!-- 取得员工入离职List -->
+    <select id="getEmpQuitList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+		<![CDATA[ 
+			SELECT
+				BIN_EmployeeQuitID AS employeeQuitId,
+				CommencementDate AS comDate,
+				DepartureDate AS depDate,
+				DepartureReason AS depReason
+			FROM
+				Basis.BIN_EmployeeQuit				
+			WHERE												
+				BIN_EmployeeID = #employeeId# AND
+				ValidFlag = '1' 	
+		]]>
+    </select>
+	<!-- 取得员工部门、岗位信息List -->
+    <select id="getPostDistList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+		<![CDATA[ 
+			SELECT
+				A.BIN_PostDistributionID AS postDisId,
+				C.BIN_OrganizationID AS departId,
+				B.BIN_PositionID AS positionId,
+		]]>
+		<dynamic>
+			<isNotEmpty property="language">
+				<isEqual property="language" compareValue="en_US">
+					C.NameForeign  AS departName,	
+					B.PositionNameForeign AS positionName
+				</isEqual>
+				<isEqual property="language" compareValue="zh_CN">	
+					C.DepartName AS departName,											
+					B.PositionName AS positionName
+				</isEqual>								
+			</isNotEmpty>
+			<isEmpty property="language">
+				C.DepartName AS departName,											
+				B.PositionName AS positionName
+			</isEmpty>
+		</dynamic>		
+		<![CDATA[
+			FROM												
+				Basis.BIN_PostDistribution A,	
+				Basis.BIN_Position B,	
+				Basis.BIN_Organization C	
+			WHERE		
+				A.BIN_EmployeeID = #employeeId# AND
+				A.ValidFlag = '1' AND	
+				A.BIN_PositionID = B.BIN_PositionID AND	
+				B.ValidFlag = '1' AND 	
+				B.BIN_OrganizationID = C.BIN_OrganizationID AND	
+				C.ValidFlag = '1'
+		]]>
+    </select>
+	<!-- 取得直属上级 -->
+    <select id="getSupervisor" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+		<![CDATA[ 
+			SELECT 
+				BIN_EmployeeID,
+		]]>
+		<dynamic>
+			<isNotEmpty property="language">
+				<isEqual property="language" compareValue="en_US">
+					EmployeeNameForeign AS employeeName
+				</isEqual>
+				<isEqual property="language" compareValue="zh_CN">	
+					EmployeeName AS employeeName
+				</isEqual>								
+			</isNotEmpty>
+			<isEmpty property="language">
+				EmployeeName AS employeeName
+			</isEmpty>
+		</dynamic>		
+		<![CDATA[
+		FROM
+			Basis.BIN_Employee
+		WHERE
+			Path=#higher#
+		]]>
+    </select>
+	<!-- 取得直属下级List -->
+    <select id="getJuniorList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+		<![CDATA[ 
+			SELECT 
+				B.BIN_EmployeeID,
+		]]>
+		<dynamic>
+			<isNotEmpty property="language">
+				<isEqual property="language" compareValue="en_US">
+					B.EmployeeNameForeign AS employeeName
+				</isEqual>
+				<isEqual property="language" compareValue="zh_CN">	
+					B.EmployeeName AS employeeName
+				</isEqual>								
+			</isNotEmpty>
+			<isEmpty property="language">
+				B.EmployeeName AS employeeName
+			</isEmpty>
+		</dynamic>		
+		<![CDATA[
+		FROM
+			Basis.BIN_Employee A,
+			Basis.BIN_Employee B
+		WHERE
+			A.BIN_EmployeeID = #employeeId# AND
+			B.NodeID.GetAncestor(1)=A.NodeID
+		]]>
+    </select>
+    
+    <!-- 取得管辖部门List -->
+    <select id="getEmployeeDepartList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+		<![CDATA[ 
+			SELECT 
+				A.BIN_OrganizationID AS organizationId,		
+				A.DepartType AS departType,
+				A.ManageType AS manageType,	
+				B.DepartCode AS departCode,
+				B.ValidFlag AS validFlag,
+		]]>
+		<dynamic>
+			<isNotEmpty property="language">
+				<isEqual property="language" compareValue="en_US">
+					B.NameForeign AS departName
+				</isEqual>
+				<isEqual property="language" compareValue="zh_CN">	
+					B.DepartName AS departName
+				</isEqual>								
+			</isNotEmpty>
+			<isEmpty property="language">
+				B.DepartName AS departName
+			</isEmpty>
+		</dynamic>		
+		<![CDATA[
+		FROM
+			Privilege.BIN_EmployeeDepart A,
+			Basis.BIN_Organization B
+		WHERE
+			A.BIN_OrganizationID = B.BIN_OrganizationID AND
+			A.BIN_EmployeeID = #employeeId# AND
+			A.ValidFlag = '1'
+		]]>
+    </select>
+    
+    <!-- 取得关注用户List -->
+    <select id="getLikeEmployeeList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+		<![CDATA[ 
+			SELECT 
+				A.BIN_LikeEmployeeID AS	likeEmployeeId,		
+		]]>
+		<dynamic>
+			<isNotEmpty property="language">
+				<isEqual property="language" compareValue="en_US">
+					B.EmployeeNameForeign AS employeeName,
+					C.NameForeign AS departName,
+					D.CategoryNameForeign AS categoryName	
+				</isEqual>
+				<isEqual property="language" compareValue="zh_CN">	
+					B.EmployeeName AS employeeName,
+					C.DepartName AS departName,
+					D.CategoryName AS categoryName
+				</isEqual>								
+			</isNotEmpty>
+			<isEmpty property="language">
+				B.EmployeeName AS employeeName,
+					C.DepartName AS departName,
+					D.CategoryName AS categoryName
+			</isEmpty>
+		</dynamic>		
+		<![CDATA[
+		FROM
+			Privilege.BIN_LikeEmployee A JOIN
+			(Basis.BIN_Employee B 
+			LEFT JOIN Basis.BIN_Organization C
+			ON (B.BIN_OrganizationID = C.BIN_OrganizationID AND C.ValidFlag = '1')	
+			LEFT JOIN Privilege.BIN_PositionCategory D
+			ON (B.BIN_PositionCategoryID = D.BIN_PositionCategoryID AND D.ValidFlag = '1')) ON
+			A.BIN_LikeEmployeeID = B.BIN_EmployeeID
+		WHERE
+			A.BIN_EmployeeID = #employeeId# AND
+			A.ValidFlag = '1' AND
+			B.ValidFlag = '1'
+		]]>
+    </select>
+
+    <!-- BAS考勤信息查询sql文  -->
+	<sql id="attendanceInfoQuery">
+        <![CDATA[
+            SELECT
+                A.BIN_BASAttendanceID AS basAttendanceId,
+                A.UdiskSN AS udiskSN,
+                A.ArriveTime AS arriveTime,
+                A.LeaveTime AS leaveTime,
+                B.EmployeeName AS employeeName,
+                
+		]]>
+        <dynamic>
+            <isNotEmpty property="language">
+                <isEqual property="language" compareValue="en_US">
+                    '('+C.DepartCode+')'+C.NameForeign AS departName
+                </isEqual>
+                <isEqual property="language" compareValue="zh_CN">                              
+                    '('+C.DepartCode+')'+C.DepartName AS departName
+                </isEqual>                              
+            </isNotEmpty>
+            <isEmpty property="language">                           
+                '('+C.DepartCode+')'+C.DepartName AS departName
+            </isEmpty>
+        </dynamic>
+        <![CDATA[
+            FROM
+                Monitor.BIN_BASAttendance A
+                LEFT JOIN Basis.BIN_Employee B ON A.BIN_EmployeeID = B.BIN_EmployeeID
+                LEFT JOIN Basis.BIN_Organization C ON A.BIN_OrganizationID = C.BIN_OrganizationID
+            WHERE
+                A.ValidFlag = '1'
+                AND A.BIN_EmployeeID=#employeeId#
+        ]]>
+	</sql>
+		
+    <!-- 取得BAS考勤信息查询总数  -->
+    <select id="getBASAttendanceCount" parameterClass="java.util.HashMap" resultClass="java.lang.Integer">
+        <![CDATA[
+            SELECT COUNT(SORT_T1.basAttendanceId) AS count FROM (
+        ]]>
+        <include refid="BINOLBSEMP02.attendanceInfoQuery" />
+        <![CDATA[
+            )SORT_T1
+        ]]>
+    </select>
+
+    <!-- 取得BAS考勤信息List  -->
+    <select id="getBASAttendanceList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+        <include refid="BINOLCMINC99.pageheader" />
+        <include refid="BINOLBSEMP02.attendanceInfoQuery" />
+        <include refid="BINOLCMINC99.pagefooter" />
+    </select>
+    
+    <sql id="DepartPrivilegeQuery">
+    	<![CDATA[
+	    	SELECT DISTINCT
+				A.BIN_OrganizationID AS organizationId,
+				A.DepartCode AS departCode,
+				A.DepartName AS departName,
+				A.Type AS type,
+				A99.PrivilegeFlag AS privilegeFlag
+			FROM 
+				Basis.BIN_Organization A 
+				JOIN (]]><include refid="BINOLCMINC99.departPLJoinSql" /><![CDATA[) A99 
+				ON A.BIN_OrganizationID=A99.BIN_OrganizationID			
+			WHERE	
+		]]>		
+			<isNotEmpty property="departCode">
+				A.DepartCode like '%'+#departCode#+'%' AND
+			</isNotEmpty>
+			<isNotEmpty property="departName">
+				(A.DepartName like '%'+#departName#+'%' OR
+				A.NameForeign like '%'+#departName#+'%') AND
+			</isNotEmpty>
+		<![CDATA[	
+				A.ValidFlag = '1'
+		]]>		
+    </sql>
+    
+    <!-- 取得部门权限总数  -->
+    <select id="getDepartPrivilegeCount" parameterClass="java.util.HashMap" resultClass="java.lang.Integer">
+        <![CDATA[
+            SELECT COUNT(SORT_T1.organizationId) AS count FROM (
+        ]]>
+        <include refid="BINOLBSEMP02.DepartPrivilegeQuery" />
+        <![CDATA[
+            )SORT_T1
+        ]]>
+    </select>
+
+    <!-- 取得部门权限List  -->
+    <select id="getDepartPrivilegeList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+        <include refid="BINOLCMINC99.pageheader" />
+        <include refid="BINOLBSEMP02.DepartPrivilegeQuery" />
+        <include refid="BINOLCMINC99.pagefooter" />
+    </select>
+    
+    <sql id="EmployeePrivilegeQuery">
+    	<![CDATA[
+	    	SELECT DISTINCT
+				A.BIN_EmployeeID AS employeeId,
+				A.EmployeeCode AS employeeCode,
+				A.EmployeeName AS employeeName,	
+				C.CategoryName AS categoryName,
+				D.DepartName AS departName,
+				B.PrivilegeFlag AS privilegeFlag
+			FROM 
+				Basis.BIN_Employee A 
+				JOIN (]]><include refid="BINOLCMINC99.employeePLJoinSql" /><![CDATA[) B 
+				ON A.BIN_EmployeeID=B.BIN_SubEmployeeID
+				LEFT JOIN Privilege.BIN_PositionCategory C
+				ON (A.BIN_PositionCategoryID = C.BIN_PositionCategoryID AND C.ValidFlag = '1')		
+				LEFT JOIN Basis.BIN_Organization D
+				ON (A.BIN_OrganizationID = D.BIN_OrganizationID AND D.ValidFlag = '1')		
+			WHERE	
+		]]>		
+			<isNotEmpty property="departCode">
+				A.EmployeeCode like '%'+#departCode#+'%' AND
+			</isNotEmpty>
+			<isNotEmpty property="departName">
+				(A.EmployeeName like '%'+#departName#+'%' OR
+				A.EmployeeNameForeign like '%'+#departName#+'%') AND
+			</isNotEmpty>
+		<![CDATA[	
+				A.ValidFlag = '1'
+		]]>		
+    </sql>
+    
+    <!-- 取得人员权限总数  -->
+    <select id="getEmployeePrivilegeCount" parameterClass="java.util.HashMap" resultClass="java.lang.Integer">
+        <![CDATA[
+            SELECT COUNT(SORT_T1.employeeId) AS count FROM (
+        ]]>
+        <include refid="BINOLBSEMP02.EmployeePrivilegeQuery" />
+        <![CDATA[
+            )SORT_T1
+        ]]>
+    </select>
+
+    <!-- 取得人员权限List  -->
+    <select id="getEmployeePrivilegeList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+        <include refid="BINOLCMINC99.pageheader" />
+        <include refid="BINOLBSEMP02.EmployeePrivilegeQuery" />
+        <include refid="BINOLCMINC99.pagefooter" />
+    </select>
+    
+    <!-- 取得被关注用户List -->
+    <select id="getBeLikedEmployeeList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+		<![CDATA[ 
+			SELECT 
+				B.BIN_EmployeeID AS	employeeId,		
+		]]>
+		<dynamic>
+			<isNotEmpty property="language">
+				<isEqual property="language" compareValue="en_US">
+					B.EmployeeNameForeign AS employeeName,
+					C.NameForeign AS departName,
+					D.CategoryNameForeign AS categoryName	
+				</isEqual>
+				<isEqual property="language" compareValue="zh_CN">	
+					B.EmployeeName AS employeeName,
+					C.DepartName AS departName,
+					D.CategoryName AS categoryName
+				</isEqual>								
+			</isNotEmpty>
+			<isEmpty property="language">
+				B.EmployeeName AS employeeName,
+					C.DepartName AS departName,
+					D.CategoryName AS categoryName
+			</isEmpty>
+		</dynamic>		
+		<![CDATA[
+		FROM
+			Privilege.BIN_LikeEmployee A JOIN
+			(Basis.BIN_Employee B 
+			LEFT JOIN Basis.BIN_Organization C
+			ON (B.BIN_OrganizationID = C.BIN_OrganizationID AND C.ValidFlag = '1')	
+			LEFT JOIN Privilege.BIN_PositionCategory D
+			ON (B.BIN_PositionCategoryID = D.BIN_PositionCategoryID AND D.ValidFlag = '1')) ON
+			A.BIN_EmployeeID = B.BIN_EmployeeID
+		WHERE
+			A.BIN_LikeEmployeeID = #employeeId# AND
+			A.ValidFlag = '1' AND
+			B.ValidFlag = '1'
+		]]>
+    </select>
+
+</sqlMap>

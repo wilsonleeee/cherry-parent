@@ -1,0 +1,93 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sqlMap PUBLIC "-//iBATIS.com//DTD SQL Map 2.0//EN" "http://ibatis.apache.org/dtd/sql-map-2.dtd">
+<sqlMap namespace="BINBEMQMES06">
+	<!-- 查询竞争对手ID-->
+	<select id="selRivalID" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+		select
+		     M.BIN_RivalID AS rivalID
+        from
+		     Monitor.BIN_Rival M
+        where 
+		     M.BIN_OrganizationInfoID = #organizationInfoID# AND
+		     M.BIN_BrandInfoID = #brandInfoID# AND
+		     M.RivalNameCN = #rivalNameCN# AND
+			 M.ValidFlag = '1'
+	</select>
+	
+	<!-- 插入竞争对手表 -->
+    <insert id="addRival" parameterClass="java.util.HashMap">
+    	<selectKey resultClass="java.lang.Integer" type="post" keyProperty="BIN_RivalID" >    
+		    <![CDATA[
+    	INSERT INTO Monitor.BIN_Rival
+    	(
+    		BIN_OrganizationInfoID,													
+			BIN_BrandInfoID,													
+			RivalNameCN,
+			]]>
+												
+			
+			<include refid="BINOLCMINC99.insertKeySql" />		
+			<![CDATA[																									
+    	)
+    	VALUES
+    	(
+    		#organizationInfoID#,
+    		#brandInfoID#,
+    		#rivalNameCN#,
+			]]>
+			
+
+			
+			<include refid="BINOLCMINC99.insertValueSql" />		
+			<![CDATA[
+    	)
+			  	select SCOPE_IDENTITY() as value     
+			]]> 
+	    </selectKey>   
+    </insert>
+	
+		<!-- 插入竞争对手日销售表 -->
+    <insert id="addRivalDaySale" parameterClass="java.util.HashMap">
+    <![CDATA[
+    	INSERT INTO Monitor.BIN_RivalDaySale
+    	(
+    		BIN_OrganizationInfoID,													
+			BIN_BrandInfoID,													
+			BIN_OrganizationID,
+			BIN_RivalID,
+			SaleDate,
+			SaleMoney,
+			SaleQuantity,
+			UploadTime,
+			]]>								
+			<include refid="BINOLCMINC99.insertKeySql" />		
+			<![CDATA[																									
+    	)
+    	VALUES
+    	(
+    		#organizationInfoID#,
+    		#brandInfoID#,
+    		#organizationID#,
+    		#rivalID#,
+    		#saleDate#,
+    		#saleMoney#,
+    		#saleQuantity#,
+    		#uploadTime#,
+			]]>
+			<include refid="BINOLCMINC99.insertValueSql" />		
+			<![CDATA[
+    	)
+    ]]>		
+    </insert>
+	
+	<!-- 删除已存在的竞争对手日销售信息 -->
+	<delete id="delOldRivalDaySale" parameterClass="java.util.HashMap">
+	<![CDATA[
+		DELETE FROM
+			Monitor.BIN_RivalDaySale
+		WHERE
+			BIN_RivalID = #rivalID# AND
+			SaleDate = #saleDate# 
+	]]>
+	</delete>
+</sqlMap>

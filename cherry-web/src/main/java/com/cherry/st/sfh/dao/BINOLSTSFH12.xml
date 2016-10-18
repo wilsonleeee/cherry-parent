@@ -1,0 +1,630 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sqlMap PUBLIC "-//iBATIS.com//DTD SQL Map 2.0//EN" "http://ibatis.apache.org/dtd/sql-map-2.dtd">
+<sqlMap namespace="BINOLSTSFH12">
+	<sql id="importBatchQuery">
+		<![CDATA[
+			SELECT 
+				A.BIN_ImportBatchID AS importBatchId,
+				A.ImportBatchCode AS importBatchCode,
+				A.Type AS type,
+				A.ImportDate AS importDate,
+				A.Comments AS comments,
+				A.ValidFlag AS validFlag,
+				B.EmployeeName AS employeeName,
+				B.EmployeeCode AS employeeCode
+			FROM 
+				Inventory.BIN_ImportBatch A WITH(NOLOCK)
+				LEFT JOIN Basis.BIN_Employee B WITH(NOLOCK)
+				ON(A.BIN_EmployeeID = B.BIN_EmployeeID)
+		]]>
+		<isNotEmpty property="privilegeFlag">
+			<isEqual property="privilegeFlag" compareValue="1">			
+				<![CDATA[		
+					JOIN (]]><include refid="BINOLCMINC99.employeePrivilegeSql" /><![CDATA[) A99 
+					ON A.BIN_EmployeeID=A99.BIN_SubEmployeeID
+				]]>
+			</isEqual>
+		</isNotEmpty>
+		<![CDATA[
+			WHERE 
+				A.BIN_OrganizationInfoID = #organizationInfoId#
+				AND A.BIN_BrandInfoID = #brandInfoId#
+		]]>
+			<isNotEmpty prepend="and" property="importBatchId">
+				<![CDATA[A.BIN_ImportBatchID = #importBatchId#]]>
+			</isNotEmpty>
+			<isNotEmpty prepend="and" property="importBatchCode">
+				<![CDATA[A.ImportBatchCode like '%' + #importBatchCode# + '%']]>
+			</isNotEmpty>
+			<isNotEmpty prepend="and" property="type">
+				<![CDATA[A.Type = #type#]]>
+			</isNotEmpty>
+			<isNotEmpty prepend="and" property="importStartTime">
+				<![CDATA[A.ImportDate >= #importStartTime#]]>
+			</isNotEmpty>
+			<isNotEmpty prepend="and" property="importEndTime">
+				<![CDATA[A.ImportDate <= #importEndTime#]]>
+			</isNotEmpty>
+			<isNotEmpty prepend="and" property="validFlag">
+				<![CDATA[A.ValidFlag = #validFlag#]]>
+			</isNotEmpty>
+			<!-- 用于校验指定批次号是否存在 -->
+			<isNotEmpty prepend="and" property="importBatchCodeR">
+				<![CDATA[A.ImportBatchCode = #importBatchCodeR#]]>
+			</isNotEmpty>
+	</sql>
+	
+	<!-- 查询发货单Excel导入批次总数 -->
+	<select id="getImportBatchCount" parameterClass="java.util.HashMap" resultClass="java.lang.Integer">
+    	<![CDATA[
+			SELECT	COUNT(SORT_T1.importBatchId) AS count FROM (
+		]]>	
+		<include refid="BINOLSTSFH12.importBatchQuery" />
+		<![CDATA[	
+			)SORT_T1
+		]]>		
+	</select>	
+	
+	<!-- 查询发货单Excel导入批次信息 -->
+	<select id="getImportBatchList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+		<include refid="BINOLCMINC99.pageheader" />
+		<include refid="BINOLSTSFH12.importBatchQuery" />
+		<include refid="BINOLCMINC99.pagefooter" />
+	</select>
+	
+	<!-- 判断是否为重复数据 -->
+	<select id="getRepeatData" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+		<![CDATA[
+		SELECT 
+			1
+		FROM	
+			Inventory.BIN_ProductDeliverExcel A WITH(NOLOCK)
+			LEFT JOIN Inventory.BIN_ProductDeliverExcelDetail B WITH(NOLOCK) 
+			ON(A.BIN_ProductDeliverExcelID = B.BIN_ProductDeliverExcelID)
+			LEFT JOIN Inventory.BIN_ProductDeliver C WITH(NOLOCK)
+			ON(A.BillNo = C.DeliverNo)
+		WHERE 
+			A.BIN_BrandInfoID = #brandInfoId#
+			AND A.BIN_OrganizationInfoID = #organizationInfoId#
+			AND A.ValidFlag = '1'
+			AND A.ImportResult = '1'
+			AND B.UnitCode = #unitCode#
+			AND B.Quantity = #quantity#
+		]]>
+		<isNotEmpty prepend="and" property="departCodeFrom">
+			A.DepartCodeFrom = #departCodeFrom#
+		</isNotEmpty>
+		<isNotEmpty prepend="and" property="departCodeTo">
+			A.DepartCodeTo = #departCodeTo#
+		</isNotEmpty>
+		<!-- 在没有关联订货单时看发货类型才有意义 -->
+		<isEmpty property="relevanceNo">
+			<isNotEmpty prepend="and" property="deliverType">
+				C.DeliverType = #deliverType#
+			</isNotEmpty>
+		</isEmpty>
+		<isNotEmpty prepend="and" property="relevanceNo">
+			A.RelevanceNo = #relevanceNo#
+		</isNotEmpty>
+		<isNotEmpty prepend="and" property="barCode">
+			B.BarCode = #barCode#
+		</isNotEmpty>
+	</select>
+	
+	<!-- 插入导入批次表 -->
+	<insert id="insertImportBatch" parameterClass="java.util.HashMap">
+		<selectKey resultClass="java.lang.Integer" type="post" keyProperty="BIN_ImportBatchID" >    
+		<![CDATA[
+		INSERT INTO Inventory.BIN_ImportBatch(
+			BIN_OrganizationInfoID,
+			BIN_BrandInfoID,
+			ImportBatchCode,
+			ImportBatchCodeIF,
+			Type,
+			ImportDate,
+			BIN_EmployeeID,
+			Comments,
+			ValidFlag,
+			CreateTime,
+			UpdateTime,
+			CreatedBy,
+			CreatePGM,
+			UpdatedBy,
+			UpdatePGM,
+			ModifyCount
+		)VALUES(
+			#BIN_OrganizationInfoID#,
+			#BIN_BrandInfoID#,
+			#ImportBatchCode#,
+			#ImportBatchCodeIF#,
+			#Type#,
+			#ImportDate#,
+			#BIN_EmployeeID#,
+			#Comments#,
+			1,
+			GETDATE(),
+			GETDATE(),
+			#CreatedBy#,
+			#CreatePGM#,
+			#UpdatedBy#,
+			#UpdatePGM#,
+			0 
+		)
+		SELECT SCOPE_IDENTITY() AS value
+		]]> 
+		</selectKey> 
+	</insert>
+	
+	<!-- 查询部门信息 -->
+	<select id="getOrgByCode" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+		<![CDATA[
+		SELECT 
+			A.BIN_BrandInfoID AS BIN_BrandInfoID,
+			A.BIN_OrganizationID AS BIN_OrganizationID,
+			A.DepartCode AS DepartCode,
+			A.DepartName AS DepartName,
+			A.Type AS Type
+		FROM
+			Basis.BIN_Organization A WITH(NOLOCK)
+		]]>
+		<isEqual property="privilegeFlg" compareValue="1">
+				<![CDATA[			
+				JOIN (]]><include refid="BINOLCMINC99.departPrivilegeSql" /><![CDATA[) A99 
+				ON A.BIN_OrganizationID=A99.BIN_OrganizationID
+				]]>
+			</isEqual>
+		<![CDATA[
+		WHERE
+			A.DepartCode=#DepartCode# 
+			AND A.BIN_OrganizationInfoID = #BIN_OrganizationInfoID#
+			AND A.BIN_BrandInfoID = #BIN_BrandInfoID#
+			AND A.ValidFlag='1'
+			AND A.Type <> 'Z'
+		]]>
+		<isNotEmpty property="departType">
+			<![CDATA[AND A.Type <> #departType#]]>
+		</isNotEmpty>
+	</select>
+	
+	<!-- 查询逻辑仓库信息 -->
+	<select id="getLogicInventoryByName" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+		<![CDATA[
+			SELECT 
+				TOP(1)
+				A.BIN_LogicInventoryInfoID AS BIN_LogicInventoryInfoID,
+				A.InventoryNameCN AS LogicInventoryName
+			FROM 
+				Basis.BIN_LogicInventory A WITH(NOLOCK)
+			WHERE 
+				(A.InventoryNameCN = #InventoryName# OR  A.InventoryNameEN = #InventoryName# )
+				AND A.BIN_BrandInfoID = #BIN_BrandInfoID#
+				AND A.BIN_OrganizationInfoID = #BIN_OrganizationInfoID#
+				AND A.ValidFlag = '1'
+		]]>
+			<isNotEmpty prepend="and" property="Type">
+				A.Type=#Type#
+			</isNotEmpty>
+	</select>
+	
+	<!-- 查询产品的信息 -->
+	<select id="getPrtInfoByUnitCode"  parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+		<![CDATA[
+		SELECT 
+			A.BIN_ProductID AS BIN_ProductID,
+			A.NameTotal AS NameTotal,
+			B.BarCode AS BarCode,
+			B.BIN_ProductVendorID AS BIN_ProductVendorID
+		FROM 
+			Basis.BIN_Product A WITH(NOLOCK)
+			left join Basis.BIN_ProductVendor B WITH(NOLOCK) 
+			ON(A.BIN_ProductID = B.BIN_ProductID)
+		WHERE
+			A.ValidFlag ='1' 
+			AND B.ValidFlag = '1'
+			AND A.UnitCode = #UnitCode#
+			AND A.BIN_OrganizationInfoID = #BIN_OrganizationInfoID#
+			AND A.BIN_BrandInfoID = #BIN_BrandInfoID#
+		]]>
+	</select>	
+	
+	<!-- 查询产品的价格 -->
+	<select id="getPrtPrice"  parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+		<![CDATA[
+		SELECT 
+			 A.BIN_ProductID AS BIN_ProductID,
+			 A.SalePrice AS SalePrice,
+			 A.MemPrice AS MemPrice,
+			 B.StandardCost,
+			 B.OrderPrice,
+			 A.StartDate AS StartDate,
+			 A.EndDate AS EndDate,
+			 A.ValidFlag AS ValidFlag
+		FROM 
+			Basis.BIN_ProductPrice A WITH(NOLOCK)
+			RIGHT JOIN Basis.BIN_Product B WITH(NOLOCK)
+			ON(A.BIN_ProductID=B.BIN_ProductID)
+		WHERE 
+			A.BIN_ProductID=#BIN_ProductID#
+			AND A.Type = '2'
+			AND A.ValidFlag='1'
+		ORDER BY A.StartDate
+		]]>
+	</select>
+	
+	<!-- 往发货Excel导入主表添加数据key -->
+	<sql id="insertPrtDeliverExcelKey">
+		<dynamic>
+			<isNotEmpty property="DeliverNo">
+	        	BillNo,
+	        </isNotEmpty>
+			<isNotEmpty property="DeliverNoIF">
+	        	BillNoIF,
+	        </isNotEmpty>
+			<isNotEmpty property="BIN_OrganizationID">
+	        	BIN_OrganizationIDFrom,
+	        </isNotEmpty>
+			<isNotEmpty property="ImportDepartCodeFrom">
+	        	DepartCodeFrom,
+	        </isNotEmpty>
+			<isNotEmpty property="ImportDepartNameFrom">
+	        	DepartNameFrom,
+	        </isNotEmpty>
+			<isNotEmpty property="BIN_InventoryInfoID">
+	        	BIN_InventoryInfoID,
+	        </isNotEmpty>
+			<isNotEmpty property="BIN_LogicInventoryInfoID">
+	        	BIN_LogicInventoryInfoID,
+	        </isNotEmpty>
+			<isNotEmpty property="LogicInventoryName">
+	        	LogicInventoryName,
+	        </isNotEmpty>
+	        <isNotEmpty property="BIN_OrganizationIDReceive">
+	        	BIN_OrganizationIDTo,
+	        </isNotEmpty>
+	        <isNotEmpty property="ImportDepartCodeTo">
+	        	DepartCodeTo,
+	        </isNotEmpty>
+			<isNotEmpty property="ImportDepartNameTo">
+	        	DepartNameTo,
+	        </isNotEmpty>
+			<isNotEmpty property="BIN_EmployeeID">
+	        	BIN_EmployeeID,
+	        </isNotEmpty>
+			<isNotEmpty property="TotalQuantity">
+	        	TotalQuantity,
+	        </isNotEmpty>
+			<isNotEmpty property="TotalAmount">
+	        	TotalAmount,
+	        </isNotEmpty>
+			<isNotEmpty property="Comments">
+	        	Comments,
+	        </isNotEmpty>
+			<isNotEmpty property="ImportDate">
+	        	ImportDate,
+	        </isNotEmpty>
+			<isNotEmpty property="ImportResult">
+	        	ImportResult,
+	        </isNotEmpty>
+			<isNotEmpty property="WorkFlowID">
+	        	WorkFlowID,
+	        </isNotEmpty>
+            <isNotEmpty property="PlanArriveDate">
+                PlanArriveDate,
+            </isNotEmpty>
+            <isNotEmpty property="relevanceNo">
+                RelevanceNo,
+            </isNotEmpty>
+		</dynamic>
+	</sql>
+	
+	<!-- 往发货Excel导入主表添加数据value -->
+	<sql id="insertPrtDeliverExcelValue">
+		<dynamic>
+			<isNotEmpty property="DeliverNo">
+	        	#DeliverNo#,
+	        </isNotEmpty>
+			<isNotEmpty property="DeliverNoIF">
+	        	#DeliverNoIF#,
+	        </isNotEmpty>
+			<isNotEmpty property="BIN_OrganizationID">
+	        	#BIN_OrganizationID#,
+	        </isNotEmpty>
+			<isNotEmpty property="ImportDepartCodeFrom">
+	        	#ImportDepartCodeFrom#,
+	        </isNotEmpty>
+			<isNotEmpty property="ImportDepartNameFrom">
+	        	#ImportDepartNameFrom#,
+	        </isNotEmpty>
+			<isNotEmpty property="BIN_InventoryInfoID">
+	        	#BIN_InventoryInfoID#,
+	        </isNotEmpty>
+			<isNotEmpty property="BIN_LogicInventoryInfoID">
+	        	#BIN_LogicInventoryInfoID#,
+	        </isNotEmpty>
+			<isNotEmpty property="LogicInventoryName">
+	        	#LogicInventoryName#,
+	        </isNotEmpty>
+	        <isNotEmpty property="BIN_OrganizationIDReceive">
+	        	#BIN_OrganizationIDReceive#,
+	        </isNotEmpty>
+	        <isNotEmpty property="ImportDepartCodeTo">
+	        	#ImportDepartCodeTo#,
+	        </isNotEmpty>
+			<isNotEmpty property="ImportDepartNameTo">
+	        	#ImportDepartNameTo#,
+	        </isNotEmpty>
+			<isNotEmpty property="BIN_EmployeeID">
+	        	#BIN_EmployeeID#,
+	        </isNotEmpty>
+			<isNotEmpty property="TotalQuantity">
+	        	#TotalQuantity#,
+	        </isNotEmpty>
+			<isNotEmpty property="TotalAmount">
+	        	#TotalAmount#,
+	        </isNotEmpty>
+			<isNotEmpty property="Comments">
+	        	#Comments#,
+	        </isNotEmpty>
+			<isNotEmpty property="ImportDate">
+	        	#ImportDate#,
+	        </isNotEmpty>
+			<isNotEmpty property="ImportResult">
+	        	#ImportResult#,
+	        </isNotEmpty>
+			<isNotEmpty property="WorkFlowID">
+	        	#WorkFlowID#,
+	        </isNotEmpty>
+            <isNotEmpty property="PlanArriveDate">
+                #PlanArriveDate#,
+            </isNotEmpty>
+            <isNotEmpty property="relevanceNo">
+                #relevanceNo#,
+            </isNotEmpty>
+		</dynamic>
+	</sql>
+	
+	<!-- 往发货Excel导入主表中添加数据 -->
+	<insert id="insertPrtDeliverExcel" parameterClass="java.util.HashMap">
+		<selectKey resultClass="java.lang.Integer" type="post" keyProperty="BIN_ProductDeliverExcelID" >      
+	    <![CDATA[
+		INSERT INTO Inventory.BIN_ProductDeliverExcel(
+		        BIN_OrganizationInfoID,
+		        BIN_BrandInfoID,
+		        BIN_ImportBatchID,
+		        ImportBatch,
+		]]>
+				<include refid="BINOLSTSFH12.insertPrtDeliverExcelKey" />
+		 <![CDATA[
+				CreateTime,
+				UpdateTime,
+				CreatedBy,
+				CreatePGM,
+				UpdatedBy,
+				UpdatePGM,
+				ValidFlag,
+				ModifyCount
+		 )
+		VALUES
+			(
+				#BIN_OrganizationInfoID#,
+				#BIN_BrandInfoID#,
+				#BIN_ImportBatchID#,
+				#ImportBatchCode#,
+		]]>
+				<include refid="BINOLSTSFH12.insertPrtDeliverExcelValue" />
+				<![CDATA[
+				GETDATE(),
+				GETDATE(),
+				#CreatedBy#,
+				#CreatePGM#,
+				#UpdatedBy#,
+				#UpdatePGM#,
+				'1',
+				0
+			)
+			  	SELECT SCOPE_IDENTITY() AS value
+			]]> 
+	   </selectKey> 
+	</insert>
+	
+	<!-- 往发货Excel导入明细表中添加数据 -->
+	<insert id="insertPrtDeliverDetailExcel" parameterClass="java.util.HashMap">
+	    <![CDATA[
+		INSERT INTO Inventory.BIN_ProductDeliverExcelDetail(
+				BIN_ProductDeliverExcelID,
+		]]>
+		<dynamic>
+			<isNotEmpty property="BIN_ProductVendorID">
+				BIN_ProductVendorID,
+			</isNotEmpty>
+			<isNotEmpty property="ImportUnitCode">
+				UnitCode,
+			</isNotEmpty>
+			<isNotEmpty property="BarCode">
+				BarCode,
+			</isNotEmpty>
+			<isNotEmpty property="ImportNameTotal">
+				NameTotal,
+			</isNotEmpty>
+			<isNotEmpty property="Quantity">
+				Quantity,
+			</isNotEmpty>
+			<isNotEmpty property="Price">
+				Price,
+			</isNotEmpty>
+            <isNotEmpty property="ReferencePrice">
+                ReferencePrice,
+            </isNotEmpty>
+			<isNotEmpty property="ErrorMsg">
+				ErrorMsg,
+			</isNotEmpty>
+			<isNotEmpty property="erpCode">
+                ErpCode,
+            </isNotEmpty>
+		</dynamic>
+	   <![CDATA[
+				CreateTime,
+				UpdateTime,
+				CreatedBy,
+				CreatePGM,
+				UpdatedBy,
+				UpdatePGM,
+				ValidFlag,
+				ModifyCount
+		 )
+		VALUES
+			(
+			#BIN_ProductDeliverExcelID#,
+		]]>
+		<dynamic>
+			<isNotEmpty property="BIN_ProductVendorID">
+				#BIN_ProductVendorID#,
+			</isNotEmpty>
+			<isNotEmpty property="ImportUnitCode">
+				#ImportUnitCode#,
+			</isNotEmpty>
+			<isNotEmpty property="BarCode">
+				#BarCode#,
+			</isNotEmpty>
+			<isNotEmpty property="ImportNameTotal">
+				#ImportNameTotal#,
+			</isNotEmpty>
+			<isNotEmpty property="Quantity">
+				#Quantity#,
+			</isNotEmpty>
+			<isNotEmpty property="Price">
+				#Price#,
+			</isNotEmpty>
+            <isNotEmpty property="ReferencePrice">
+                #ReferencePrice#,
+            </isNotEmpty>
+			<isNotEmpty property="ErrorMsg">
+				#ErrorMsg#,
+			</isNotEmpty>
+			<isNotEmpty property="erpCode">
+                #erpCode#,
+            </isNotEmpty>
+		</dynamic>
+		<![CDATA[
+				GETDATE(),
+				GETDATE(),
+				#CreatedBy#,
+				#CreatePGM#,
+				#UpdatedBy#,
+				#UpdatePGM#,
+				'1',
+				0
+			)
+		]]> 
+	</insert>
+	
+	<!--根据仓库ID取得与其关联的所有部门的下级部门(带有权限或不带权限),带有测试部门和正式部门控制-->
+	<sql id="getChildordinateDepartByDepotId">
+		<![CDATA[
+			SELECT
+				distinct
+				B.BIN_OrganizationID AS organizationId,
+				B.NodeID AS nodeID,
+				B.DepartName AS departName,
+				B.DepartCode AS departCode,
+				B.Type AS type,
+				B.TestType
+			FROM
+				Basis.BIN_Organization B
+				JOIN (]]><include refid="BINOLCMINC99.departPrivilegeSql" /><![CDATA[) A99 
+				ON(B.BIN_OrganizationID=A99.BIN_OrganizationID)
+			WHERE
+				B.TestType = #TestType#
+				AND B.ValidFlag = '1'
+				AND B.Type in
+		]]>
+			<dynamic>
+				<iterate property="Type" open="(" close=")" conjunction=",">
+					<![CDATA[#Type[]#]]>
+				</iterate>
+			</dynamic>
+			<dynamic>
+				<isNotEmpty prepend="AND" property="BIN_OrganizationIDReceive">
+					<![CDATA[
+					B.BIN_OrganizationID = #BIN_OrganizationIDReceive#
+					]]>
+				</isNotEmpty>
+			</dynamic>
+	</sql>
+	<!--根据仓库ID判断与其关联的所有部门的下级部门是否存在指定的收货部门(带有权限或不带权限)总数,带有测试部门和正式部门控制-->
+	<select id="getChildDepartCount" parameterClass="java.util.HashMap" resultClass="java.lang.Integer">
+		<![CDATA[
+			SELECT	COUNT(SORT_T1.organizationId) AS count FROM (
+		]]>	
+		<include refid="BINOLSTSFH12.getChildordinateDepartByDepotId" />	
+		<![CDATA[	
+			)SORT_T1
+		]]>	
+	</select>
+	
+	<sql id="getDepartInfo">
+		<![CDATA[
+		SELECT
+			distinct
+			A.BIN_OrganizationID AS organizationId,     
+			A.DepartCode AS departCode,     
+			A.Type AS type ,
+			B.BIN_InventoryInfoID AS inventoryInfoID,
+		]]>
+		<dynamic>
+			<isNotEmpty property="language">
+					<isEqual property = "language" compareValue="en_US">
+						A.NameForeign AS departName 
+					</isEqual>
+					<isEqual property = "language" compareValue="zh_CN">
+						A.DepartName AS departName
+					</isEqual>
+			</isNotEmpty>
+			<isEmpty property="language">
+					A.DepartName AS departName
+			</isEmpty>
+		</dynamic>
+		<![CDATA[
+		FROM
+			Basis.BIN_Organization A
+			JOIN (]]><include refid="BINOLCMINC99.departPrivilegeSql" /><![CDATA[) A99 
+			ON(A.BIN_OrganizationID=A99.BIN_OrganizationID)
+			left join Basis.BIN_CounterInfo E on(A.BIN_OrganizationID = E.BIN_OrganizationID),
+			Basis.BIN_InventoryInfo B
+		WHERE
+		]]>
+		<dynamic>
+            <isNotEmpty property="inventoryInfoID">
+            	<![CDATA[B.BIN_InventoryInfoID IN]]>
+                <iterate property="inventoryInfoID" open="(" close=")" conjunction=",">
+                     #inventoryInfoID[]#
+                </iterate>
+                <![CDATA[ AND ]]>
+            </isNotEmpty>
+		</dynamic>
+		<![CDATA[
+			A.BIN_OrganizationID = B.BIN_OrganizationID
+			AND (A.TestType = #TestType# OR E.CounterKind = #TestType#)
+			AND B.ValidFlag = '1'
+			AND A.BIN_OrganizationID <> #BIN_OrganizationID#
+		]]>
+		<dynamic>
+			<isNotEmpty prepend="AND" property="BIN_OrganizationIDReceive">
+				<![CDATA[
+					A.BIN_OrganizationID = #BIN_OrganizationIDReceive#
+				]]>
+			</isNotEmpty>
+		</dynamic>
+	</sql>
+	
+	<!--根据仓库ID判断指定的收货部门是否存在,带权限,按仓库业务区域大小关系设定-->
+	<select id="getDepartInfoCount" parameterClass="java.util.HashMap" resultClass="java.lang.Integer">
+		<![CDATA[
+			SELECT	COUNT(SORT_T1.organizationId) AS count FROM (
+		]]>	
+		<include refid="BINOLSTSFH12.getDepartInfo" />	
+		<![CDATA[	
+			)SORT_T1
+		]]>	
+	</select>
+</sqlMap>

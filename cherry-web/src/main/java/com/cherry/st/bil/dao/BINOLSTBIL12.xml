@@ -1,0 +1,228 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sqlMap PUBLIC "-//iBATIS.com//DTD SQL Map 2.0//EN" "http://ibatis.apache.org/dtd/sql-map-2.dtd">
+<sqlMap namespace="BINOLSTBIL12">
+    <!--删除【产品退库单据表】伦理删除-->
+    <update id="deleteProductReturnLogic" parameterClass="java.util.HashMap">
+        <![CDATA[
+            UPDATE
+                Inventory.BIN_ProductReturn
+            SET
+                ValidFlag = '0',
+                UpdateTime = GETDATE(),
+                UpdatedBy = #UpdatedBy#,
+                UpdatePGM = #UpdatePGM#,
+                ModifyCount = ModifyCount+1
+            WHERE
+                BIN_ProductReturnID = #BIN_ProductReturnID#
+                and ValidFlag = '1'
+                and UpdateTime = #UpdateTime#
+                and ModifyCount = #ModifyCount#
+        ]]>
+    </update>
+    
+    <!--删除【产品退库单据明细表】 伦理删除-->
+    <update id="deleteProductReturnDetailLogic" parameterClass="java.util.HashMap">
+        <![CDATA[
+            UPDATE
+                Inventory.BIN_ProductReturnDetail
+            SET
+                ValidFlag ='0',
+                UpdateTime=GETDATE(),
+                UpdatedBy=#UpdatedBy#,
+                UpdatePGM=#UpdatePGM#,
+                ModifyCount=ModifyCount+1
+            WHERE
+                BIN_ProductReturnID = #BIN_ProductReturnID#
+                and ValidFlag ='1'
+        ]]>
+    </update>
+    
+    <!--删除【产品退库单据明细表】 -->
+    <update id="deleteProductReturnDetail" parameterClass="java.util.HashMap">
+        <![CDATA[
+            DELETE FROM
+                Inventory.BIN_ProductReturnDetail
+            WHERE
+                BIN_ProductReturnID = #BIN_ProductReturnID#
+        ]]>
+    </update>
+	
+	<!--取得实体仓库的所属部门-->
+    <select id="getOrganIdByDepotInfoID" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+    <![CDATA[
+        SELECT
+            BIN_OrganizationID
+        FROM
+            Basis.BIN_DepotInfo
+        WHERE
+            BIN_DepotInfoID = #depotInfoId#
+			AND ValidFlag = '1'
+    ]]>
+    </select>
+    
+    <!--取得退库单的仓库信息-->
+    <select id="getRRInventoryInfo" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+        <![CDATA[
+            SELECT
+                A.ReturnNo,
+                A.ReturnNoIF,
+                B.BIN_InventoryInfoID,
+                B.BIN_LogicInventoryInfoID,
+        ]]>
+        <isNotEmpty property="language">
+            <isEqual property="language" compareValue="en_US">
+                <![CDATA[
+                    C.DepotNameEN AS DepotName,
+                    '('+C.DepotCode+')'+C.DepotNameEN AS DepotCodeName,
+                    D.InventoryNameEN AS LogicInventoryName,
+                    '('+D.LogicInventoryCode+')'+D.InventoryNameEN AS LogicInventoryCodeName
+                ]]>
+            </isEqual>
+            <isEqual property="language" compareValue="zh_CN">
+                <![CDATA[                      
+                    C.DepotNameCN AS DepotName,
+                    '('+C.DepotCode+')'+C.DepotNameCN AS DepotCodeName,
+                    D.InventoryNameCN AS LogicInventoryName,
+                    '('+D.LogicInventoryCode+')'+D.InventoryNameCN AS LogicInventoryCodeName
+                ]]>
+            </isEqual>
+        </isNotEmpty>
+        <isEmpty property="language">
+            <![CDATA[
+                C.DepotNameCN AS DepotName,
+                '('+C.DepotCode+')'+C.DepotNameCN AS DepotCodeName,
+                D.InventoryNameCN AS LogicInventoryName,
+                '('+D.LogicInventoryCode+')'+D.InventoryNameCN AS LogicInventoryCodeName
+            ]]>
+        </isEmpty>
+        <![CDATA[
+            FROM
+                Inventory.BIN_ProductReturn A
+            JOIN Inventory.BIN_ProductReturnDetail B
+            ON A.BIN_ProductReturnID = B.BIN_ProductReturnID
+            LEFT JOIN Basis.BIN_DepotInfo C
+            ON(B.BIN_InventoryInfoID = C.BIN_DepotInfoID)
+            LEFT JOIN Basis.BIN_LogicInventory D
+            ON(B.BIN_LogicInventoryInfoID = D.BIN_LogicInventoryInfoID)
+            WHERE
+                (A.ReturnNoIF = #ReturnNoIF# OR A.ReturnNo = #ReturnNoIF#)
+                AND A.ValidFlag = '1'
+                AND B.ValidFlag = '1'
+        ]]>
+    </select>
+    
+    <!--取得关联退库单的仓库信息-->
+    <select id="getARInventoryInfo" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+	    <![CDATA[
+	        SELECT
+                A.ReturnNo,
+                A.ReturnNoIF,
+	            B.BIN_InventoryInfoID,
+	            B.BIN_LogicInventoryInfoID,
+	    ]]>
+        <isNotEmpty property="language">
+            <isEqual property="language" compareValue="en_US">
+                <![CDATA[
+                    C.DepotNameEN AS DepotName,
+                    '('+C.DepotCode+')'+C.DepotNameEN AS DepotCodeName,
+                    D.InventoryNameEN AS LogicInventoryName,
+                    '('+D.LogicInventoryCode+')'+D.InventoryNameEN AS LogicInventoryCodeName
+                ]]>
+            </isEqual>
+            <isEqual property="language" compareValue="zh_CN">
+                <![CDATA[                      
+                    C.DepotNameCN AS DepotName,
+                    '('+C.DepotCode+')'+C.DepotNameCN AS DepotCodeName,
+                    D.InventoryNameCN AS LogicInventoryName,
+                    '('+D.LogicInventoryCode+')'+D.InventoryNameCN AS LogicInventoryCodeName
+                ]]>
+            </isEqual>
+        </isNotEmpty>
+        <isEmpty property="language">
+            <![CDATA[
+                C.DepotNameCN AS DepotName,
+                '('+C.DepotCode+')'+C.DepotNameCN AS DepotCodeName,
+                D.InventoryNameCN AS LogicInventoryName,
+                '('+D.LogicInventoryCode+')'+D.InventoryNameCN AS LogicInventoryCodeName
+            ]]>
+        </isEmpty>
+	    <![CDATA[
+	        FROM
+	            Inventory.BIN_ProductReturn A
+	        JOIN Inventory.BIN_ProductReturnDetail B
+	        ON A.BIN_ProductReturnID = B.BIN_ProductReturnID
+	        LEFT JOIN Basis.BIN_DepotInfo C
+	        ON(B.BIN_InventoryInfoID = C.BIN_DepotInfoID)
+	        LEFT JOIN Basis.BIN_LogicInventory D
+	        ON(B.BIN_LogicInventoryInfoID = D.BIN_LogicInventoryInfoID)
+	        WHERE
+                (A.RelevanceNo = #ReturnNoIF# OR A.RelevanceNo = #ReturnNo#)
+	            AND A.ValidFlag = '1'
+	            AND B.ValidFlag = '1'
+	    ]]>
+    </select>
+    
+    <!--取得入出库明细单的仓库信息-->
+    <select id="getIOInventoryInfo" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+        <![CDATA[
+            SELECT
+                B.BIN_InventoryInfoID,
+                B.BIN_LogicInventoryInfoID,
+        ]]>
+        <isNotEmpty property="language">
+            <isEqual property="language" compareValue="en_US">
+                <![CDATA[
+                    C.DepotNameEN AS DepotName,
+                    '('+C.DepotCode+')'+C.DepotNameEN AS DepotCodeName,
+                    D.InventoryNameEN AS LogicInventoryName,
+                    '('+D.LogicInventoryCode+')'+D.InventoryNameEN AS LogicInventoryCodeName
+                ]]>
+            </isEqual>
+            <isEqual property="language" compareValue="zh_CN">
+                <![CDATA[                      
+                    C.DepotNameCN AS DepotName,
+                    '('+C.DepotCode+')'+C.DepotNameCN AS DepotCodeName,
+                    D.InventoryNameCN AS LogicInventoryName,
+                    '('+D.LogicInventoryCode+')'+D.InventoryNameCN AS LogicInventoryCodeName
+                ]]>
+            </isEqual>
+        </isNotEmpty>
+        <isEmpty property="language">
+            <![CDATA[
+                C.DepotNameCN AS DepotName,
+                '('+C.DepotCode+')'+C.DepotNameCN AS DepotCodeName,
+                D.InventoryNameCN AS LogicInventoryName,
+                '('+D.LogicInventoryCode+')'+D.InventoryNameCN AS LogicInventoryCodeName
+            ]]>
+        </isEmpty>
+        <![CDATA[
+            FROM
+                Inventory.BIN_ProductInOut A WITH(NOLOCK)
+            JOIN Inventory.BIN_ProductInOutDetail B WITH(NOLOCK)
+            ON A.BIN_ProductInOutID = B.BIN_ProductInOutID
+            LEFT JOIN Basis.BIN_DepotInfo C
+            ON(B.BIN_InventoryInfoID = C.BIN_DepotInfoID)
+            LEFT JOIN Basis.BIN_LogicInventory D
+            ON(B.BIN_LogicInventoryInfoID = D.BIN_LogicInventoryInfoID)
+            WHERE
+                A.RelevanceNo = #ReturnNoIF#
+                AND A.TradeType = #TradeType#
+                AND A.ValidFlag = '1'
+                AND B.ValidFlag = '1'
+        ]]>
+    </select>
+    
+    <!--取得ReturnNoIF-->
+    <select id="getReturnNoIF" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+        <![CDATA[
+            SELECT
+                A.ReturnNoIF
+            FROM
+                Inventory.BIN_ProductReturn A
+            WHERE
+                A.ReturnNo = #ReturnNoIF#
+                AND A.TradeType = #TradeType#
+                AND A.ValidFlag = '1'
+        ]]>
+    </select>
+</sqlMap>

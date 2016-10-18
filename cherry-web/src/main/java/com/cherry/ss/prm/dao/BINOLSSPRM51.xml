@@ -1,0 +1,144 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sqlMap PUBLIC "-//iBATIS.com//DTD SQL Map 2.0//EN" "http://ibatis.apache.org/dtd/sql-map-2.dtd">
+<sqlMap namespace="BINOLSSPRM51">
+	<!-- 取得未收货的发货单概要信息-->
+	<select id="getDeliverDataList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+        <![CDATA[
+			SELECT 	
+				'-999' as TaskInstanceID,											
+				A.BIN_PromotionDeliverID,
+				A.DeliverReceiveNo,
+				A.DeliverReceiveNoIF,
+				A.BIN_OrganizationID,
+				A.BIN_EmployeeID,
+				A.TotalQuantity,
+				A.DeliverDate,
+				convert(varchar(30),A.UpdateTime,121) AS UpdateTime,
+				A.ModifyCount
+		]]>
+		<dynamic>
+		<isNotEmpty property="language">
+			<isEqual property="language" compareValue="en_US">										
+			,B.NameForeign AS DepartName
+			,C.EmployeeNameForeign AS EmployeeName
+			</isEqual>
+			<isEqual property="language" compareValue="zh_CN">										
+			,B.DepartName AS DepartName
+			,C.EmployeeName AS EmployeeName
+			</isEqual>								
+		</isNotEmpty>
+		<isEmpty property="language">
+			,B.DepartName AS DepartName
+			,C.EmployeeName AS EmployeeName
+		</isEmpty>
+		</dynamic>
+		 <![CDATA[												
+			FROM 
+				Inventory.BIN_PromotionDeliver A,
+				Basis.BIN_Organization B ,
+				Basis.BIN_Employee C
+			WHERE
+					A.BIN_OrganizationID = B.BIN_OrganizationID
+				and A.BIN_EmployeeID = C.BIN_EmployeeID
+				and A.ValidFlag='1'				
+				and A.VerifiedFlag =#VerifiedFlag#
+				and A.StockInFlag =#StockInFlag#
+				and A.TradeType=#TradeType#
+				and A.BIN_OrganizationIDReceive=#BIN_OrganizationIDReceive#
+		]]>
+    </select>
+	<!-- 取得未收货的发货单概要信息  工作流使用-->
+	<select id="getDeliverDataListJbpm" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+        <![CDATA[
+			SELECT 
+				#TaskInstanceID# as TaskInstanceID,													
+				A.BIN_PromotionDeliverID,
+				A.DeliverReceiveNo,
+				A.DeliverReceiveNoIF,
+				A.BIN_OrganizationID,
+				A.BIN_EmployeeID,
+				A.TotalQuantity,
+				A.DeliverDate,
+				convert(varchar(30),A.UpdateTime,121) AS UpdateTime,
+				A.ModifyCount
+		]]>
+		<dynamic>
+		<isNotEmpty property="language">
+			<isEqual property="language" compareValue="en_US">										
+			,B.NameForeign AS DepartName
+			,C.EmployeeNameForeign AS EmployeeName
+			</isEqual>
+			<isEqual property="language" compareValue="zh_CN">										
+			,B.DepartName AS DepartName
+			,C.EmployeeName AS EmployeeName
+			</isEqual>								
+		</isNotEmpty>
+		<isEmpty property="language">
+			,B.DepartName AS DepartName
+			,C.EmployeeName AS EmployeeName
+		</isEmpty>
+		</dynamic>
+		 <![CDATA[												
+			FROM 
+				Inventory.BIN_PromotionDeliver A,
+				Basis.BIN_Organization B ,
+				Basis.BIN_Employee C
+			WHERE
+					A.BIN_OrganizationID = B.BIN_OrganizationID
+				and A.BIN_EmployeeID = C.BIN_EmployeeID
+				and A.ValidFlag='1'				
+				and A.VerifiedFlag =#VerifiedFlag#
+				and A.StockInFlag =#StockInFlag#
+				and A.TradeType=#TradeType#
+				and A.BIN_PromotionDeliverID=#BIN_PromotionDeliverID#
+		]]>
+    </select>
+    <!-- 取得发货单明细数据-->
+    <select id="getDeliverDataDetailList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+        <![CDATA[
+			SELECT 
+				#TaskInstanceID# as TaskInstanceID,	
+				A.BIN_PromotionProductVendorID,
+				A.DetailNo,
+				A.Quantity,
+				A.Price,
+				A.BIN_ProductVendorPackageID,
+				B.BarCode,
+				D.BIN_PromotionDeliverID,
+				D.BIN_OrganizationID,
+				D.DeliverReceiveNo,
+				D.DeliverReceiveNoIF,
+				convert(varchar(30),D.UpdateTime,121) AS UpdateTime,
+				D.ModifyCount,
+				D.StockInFlag,
+				C.UnitCode
+		]]>
+		<dynamic>
+		<isNotEmpty property="language">
+			<isEqual property="language" compareValue="en_US">										
+			,C.NameForeign AS NameTotal
+			</isEqual>
+			<isEqual property="language" compareValue="zh_CN">										
+			,C.NameTotal AS NameTotal
+			</isEqual>								
+		</isNotEmpty>
+		<isEmpty property="language">
+			,C.NameTotal AS NameTotal
+		</isEmpty>
+		</dynamic>
+		 <![CDATA[		
+			FROM 
+				Inventory.BIN_PromotionDeliver D,
+				Inventory.BIN_PromotionDeliverDetail A,
+				Basis.BIN_PromotionProductVendor B,
+				Basis.BIN_PromotionProduct C
+			WHERE
+				 A.BIN_PromotionProductVendorID = B.BIN_PromotionProductVendorID
+				and B.BIN_PromotionProductID = C.BIN_PromotionProductID
+				and D.BIN_PromotionDeliverID =A.BIN_PromotionDeliverID
+				and A.ValidFlag='1'
+				and A.BIN_PromotionDeliverID =#BIN_PromotionDeliverID# 		
+			ORDER BY D.BIN_PromotionDeliverID,A.DetailNo ASC
+		]]>
+    </select>
+</sqlMap>

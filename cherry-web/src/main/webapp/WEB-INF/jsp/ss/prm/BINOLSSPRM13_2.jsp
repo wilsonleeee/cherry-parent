@@ -1,0 +1,64 @@
+<%@ page language="java" contentType="text/html; charset=utf-8" pageEncoding="utf-8"%>
+<%@ taglib prefix="s" uri="/struts-tags" %>
+<script>
+	var BINOLSSPRM13_js_i18n ={};
+	BINOLSSPRM13_js_i18n.buyProducts = '<s:text name="buyProducts"/>';
+	BINOLSSPRM13_js_i18n.expenseAmount = '<s:text name="expenseAmount"/>';
+	BINOLSSPRM13_js_i18n.lessThan = '<s:text name="lessThan"/>';
+	BINOLSSPRM13_js_i18n.yuan = '<s:text name="yuan"/>';
+	BINOLSSPRM13_js_i18n.conditionOr = '<s:text name="conditionOr"/>';
+	BINOLSSPRM13_js_i18n.conditionAnd = '<s:text name="conditionAnd"/>';
+	BINOLSSPRM13_js_i18n.presents = '<s:text name="presents"/>';
+	BINOLSSPRM13_js_i18n.prmProductCount = '<s:text name="prmProductCount"/>';
+	BINOLSSPRM13_js_i18n.amountRegards = '<s:text name="amountRegards"/>';
+	BINOLSSPRM13_js_i18n.amountDecrease = '<s:text name="amountDecrease"/>';
+	BINOLSSPRM13_js_i18n.amountIncrease = '<s:text name="amountIncrease"/>';
+	BINOLSSPRM13_js_i18n.productInfo = '<s:text name="productInfo"/>';
+	BINOLSSPRM13_js_i18n.addPrmActiveGrp = '<s:text name="addPrmActiveGrp"/>';
+	BINOLSSPRM13_js_i18n.activeTime = '<s:text name="activeTime"/>';
+	BINOLSSPRM13_js_i18n.activeLocation = '<s:text name="activeLocation"/>';
+	BINOLSSPRM13_js_i18n.timeLocatin = '<s:text name="timeLocatin"/>';
+	BINOLSSPRM13_js_i18n.startTime = '<s:text name="startTime"/>';
+	BINOLSSPRM13_js_i18n.endTime = '<s:text name="endTime"/>';
+	BINOLSSPRM13_js_i18n.byRegin = '<s:text name="byRegin"/>';
+	BINOLSSPRM13_js_i18n.byReginAndCounter = '<s:text name="byReginAndCounter"/>';
+	BINOLSSPRM13_js_i18n.byChannel = '<s:text name="byChannel"/>';
+	BINOLSSPRM13_js_i18n.byChannelAndCounter = '<s:text name="byChannelAndCounter"/>';
+	BINOLSSPRM13_js_i18n.allCounter = '<s:text name="allCounter"/>';
+	BINOLSSPRM13_js_i18n.byImport = '<s:text name="byImport"/>';
+	BINOLSSPRM13_js_i18n.actLocationType = '<s:text name="actLocationType"/>';
+	BINOLSSPRM13_js_i18n.locationType = '<s:text name="locationType"/>'
+	BINOLSSPRM13_js_i18n.prmLocation = '<s:text name="prmLocation"/>';
+	BINOLSSPRM13_js_i18n.notPrmLocation = '<s:text name="notPrmLocation"/>';
+	BINOLSSPRM13_js_i18n.position = '<s:text name="position"/>';
+	BINOLSSPRM13_js_i18n.global_page_search = '<s:text name="global.page.search"/>';
+	BINOLSSPRM13_js_i18n.counter = '<s:text name="counter"/>';
+	BINOLSSPRM13_js_i18n.channel = '<s:text name="channel"/>';
+	BINOLSSPRM13_js_i18n.city = '<s:text name="city"/>';
+	BINOLSSPRM13_js_i18n.ok = '<s:text name="global.page.ok"/>';
+	BINOLSSPRM13_js_i18n.cancle = '<s:text name="global.page.cancle"/>';
+	BINOLSSPRM13_js_i18n.lessThan = '<s:text name="lessThan"/>';
+	BINOLSSPRM13_js_i18n.lessThanOrEquel = '<s:text name="lessThanOrEquel"/>';
+	BINOLSSPRM13_js_i18n.equel = '<s:text name="equel"/>';
+	BINOLSSPRM13_js_i18n.notEquel = '<s:text name="notEquel"/>';
+	BINOLSSPRM13_js_i18n.moreThenOrEquel = '<s:text name="moreThenOrEquel"/>';
+	BINOLSSPRM13_js_i18n.moreThen = '<s:text name="moreThen"/>';
+	BINOLSSPRM13_js_i18n.removeLocatin = '<s:text name="removeLocatin"/>';
+	BINOLSSPRM13_js_i18n.stopActiveTitle = '<s:text name="stopActiveTitle"/>';
+	BINOLSSPRM13_js_i18n.startTimeSuf = '<s:text name="startTimeSuf"/>';
+	BINOLSSPRM13_js_i18n.endTimeSuf = '<s:text name="endTimeSuf"/>';
+	BINOLSSPRM13_js_i18n.del = '<s:text name="global.page.delete"/>';
+	BINOLSSPRM13_js_i18n.tip1 = '<s:text name="tip1"/>';
+	BINOLSSPRM13_js_i18n.tip2 = '<s:text name="tip2"/>';
+	BINOLSSPRM13_js_i18n.tip3 = '<s:text name="tip3"/>';
+	BINOLSSPRM13_js_i18n.browse = '<s:text name="global.page.browse"/>';
+	BINOLSSPRM13_js_i18n.upload = '<s:text name="global.page.upload"/>';
+	BINOLSSPRM13_js_i18n.empty_err = '<s:text name="empty_err"/>';
+	BINOLSSPRM13_js_i18n.stopActiveMsg= '<s:text name="stopActiveMsg"/>';
+	BINOLSSPRM13_js_i18n.delActiveMsg= '<s:text name="delActiveMsg"/>';
+	BINOLSSPRM13_js_i18n.publicActiveTitle = '<s:text name="stopActiveTitle"/>';
+	BINOLSSPRM13_js_i18n.publicActiveMsg = '<s:text name="publicActiveMsg"/>';
+	BINOLSSPRM13_js_i18n.checkActiveMsg = '<s:text name="checkActiveMsg"/>';
+	BINOLSSPRM13_js_i18n.byFaction = '<s:text name="byFaction"/>';
+	BINOLSSPRM13_js_i18n.byFactionCnt = '<s:text name="byFactionCnt"/>';
+</script>

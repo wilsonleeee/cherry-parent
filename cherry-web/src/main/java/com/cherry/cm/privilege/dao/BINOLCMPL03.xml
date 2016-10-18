@@ -1,0 +1,194 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sqlMap PUBLIC "-//iBATIS.com//DTD SQL Map 2.0//EN" "http://ibatis.apache.org/dtd/sql-map-2.dtd">
+<sqlMap namespace="BINOLCMPL03">
+    
+    <!-- 查询柜台主管 -->
+    <select id="getCounterHeader" parameterClass="java.util.HashMap" resultClass="java.lang.String">
+		<![CDATA[
+			SELECT
+				A.BIN_EmployeeID
+			FROM 
+				Privilege.BIN_EmployeeDepart A
+			WHERE
+				A.BIN_OrganizationID = #organizationId# AND
+				A.ManageType = '1'
+		]]>
+    </select>
+    
+    <!-- 删除柜台主管 -->
+	<delete id="deleteCounterHeader" parameterClass="java.util.HashMap">
+		<![CDATA[
+			DELETE FROM 
+				Privilege.BIN_EmployeeDepart
+			WHERE
+				ManageType = '1' AND
+				BIN_OrganizationID = #organizationId#
+		]]>	
+	</delete>
+	
+	<!-- 添加柜台主管  -->
+	<insert id="insertCounterHeader" parameterClass="java.util.HashMap">	
+		<![CDATA[
+	    	INSERT INTO Privilege.BIN_EmployeeDepart (			
+				BIN_EmployeeID,		
+				BIN_OrganizationID,		
+				DepartType,
+				ManageType,	
+		]]>
+			<include refid="BINOLCMINC99.insertKeySql" />									
+		<![CDATA[								
+			)VALUES (
+				#employeeId#,		
+				#organizationId#,		
+				#departType#,
+				#manageType#,
+		]]>
+			<include refid="BINOLCMINC99.insertValueSql" />
+		<![CDATA[ ) ]]>
+	</insert>
+	
+	<!-- 查询需要更新部门数据权限的员工 -->
+    <select id="getEmployeeList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+		<isNotEmpty property="employeeList">
+		<![CDATA[
+			(SELECT DISTINCT
+				B.BIN_EmployeeID AS employeeId,
+				X.BIN_UserID AS userId,				
+				Y.Type AS type,
+				Z.BIN_PositionCategoryID AS positionCategoryId				
+			FROM 
+				Basis.BIN_Employee A,
+				Basis.BIN_Employee B
+				LEFT JOIN Privilege.BIN_User X ON B.BIN_EmployeeID = X.BIN_EmployeeID
+				LEFT JOIN Basis.BIN_Organization Y ON B.BIN_OrganizationID = Y.BIN_OrganizationID
+				LEFT JOIN Privilege.BIN_PositionCategory Z ON B.BIN_PositionCategoryID = Z.BIN_PositionCategoryID
+			WHERE
+				A.NodeID.IsDescendantOf(B.NodeID) = 1 AND
+				A.BIN_EmployeeID IN
+		]]>		
+			<iterate property="employeeList" open="(" close=")" conjunction=","> 
+				#employeeList[]#
+			</iterate>
+		<![CDATA[)		
+			UNION	
+			(SELECT DISTINCT
+				D.BIN_EmployeeID AS employeeId,
+				X.BIN_UserID AS userId,				
+				Y.Type AS type,
+				Z.BIN_PositionCategoryID AS positionCategoryId
+			FROM 
+				Basis.BIN_Employee A,
+				Basis.BIN_Employee B,
+				Privilege.BIN_LikeEmployee C,
+				Basis.BIN_Employee D
+				LEFT JOIN Privilege.BIN_User X ON D.BIN_EmployeeID = X.BIN_EmployeeID
+				LEFT JOIN Basis.BIN_Organization Y ON D.BIN_OrganizationID = Y.BIN_OrganizationID
+				LEFT JOIN Privilege.BIN_PositionCategory Z ON D.BIN_PositionCategoryID = Z.BIN_PositionCategoryID
+			WHERE
+				B.NodeID.IsDescendantOf(A.NodeID) = 1 AND
+				B.BIN_EmployeeID IN
+		]]>		
+			<iterate property="employeeList" open="(" close=")" conjunction=","> 
+				#employeeList[]#
+			</iterate>
+		<![CDATA[
+				AND 
+				A.BIN_EmployeeID = C.BIN_LikeEmployeeID AND
+				C.BIN_EmployeeID = D.BIN_EmployeeID)
+		]]>
+		<isNotEmpty property="likeBAList">
+		<![CDATA[
+			UNION(
+			SELECT DISTINCT
+				B.BIN_EmployeeID AS employeeId,
+				X.BIN_UserID AS userId,				
+				Y.Type AS type,
+				Z.BIN_PositionCategoryID AS positionCategoryId				
+			FROM
+				Basis.BIN_Employee B
+				LEFT JOIN Privilege.BIN_User X ON B.BIN_EmployeeID = X.BIN_EmployeeID
+				LEFT JOIN Basis.BIN_Organization Y ON B.BIN_OrganizationID = Y.BIN_OrganizationID
+				LEFT JOIN Privilege.BIN_PositionCategory Z ON B.BIN_PositionCategoryID = Z.BIN_PositionCategoryID
+			WHERE
+				B.BIN_EmployeeID IN
+		]]>	
+			<iterate property="likeBAList" open="(" close=")" conjunction=","> 
+				#likeBAList[]#
+			</iterate>
+		<![CDATA[)]]>		
+		</isNotEmpty>	
+		</isNotEmpty>	
+		<isEmpty property="employeeList">
+		<isNotEmpty property="likeBAList">
+		<![CDATA[
+			SELECT DISTINCT
+				B.BIN_EmployeeID AS employeeId,
+				X.BIN_UserID AS userId,				
+				Y.Type AS type,
+				Z.BIN_PositionCategoryID AS positionCategoryId				
+			FROM
+				Basis.BIN_Employee B
+				LEFT JOIN Privilege.BIN_User X ON B.BIN_EmployeeID = X.BIN_EmployeeID
+				LEFT JOIN Basis.BIN_Organization Y ON B.BIN_OrganizationID = Y.BIN_OrganizationID
+				LEFT JOIN Privilege.BIN_PositionCategory Z ON B.BIN_PositionCategoryID = Z.BIN_PositionCategoryID
+			WHERE
+				B.BIN_EmployeeID IN
+		]]>	
+			<iterate property="likeBAList" open="(" close=")" conjunction=","> 
+				#likeBAList[]#
+			</iterate>
+			
+		</isNotEmpty>	
+		</isEmpty>	
+    </select>
+    
+    <!-- 删除指定柜台的所有部门权限 -->
+	<delete id="deleteCounterPrivilege" parameterClass="java.util.HashMap">
+		<![CDATA[
+			DELETE FROM 
+				Privilege.BIN_DepartPrivilege
+			WHERE
+				BIN_OrganizationID = #organizationId#
+		]]>	
+	</delete>
+    
+    <!-- 查询部门结构变化引起部门权限变化的人员 -->
+    <select id="getEmployeeListByOrg" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+		<![CDATA[
+			SELECT DISTINCT
+				B.BIN_EmployeeID AS employeeId,
+				X.BIN_UserID AS userId,				
+				Y.Type AS type	
+			FROM 
+				Privilege.BIN_DepartPrivilege A
+				JOIN Basis.BIN_Employee B ON A.BIN_EmployeeID = B.BIN_EmployeeID
+				LEFT JOIN Privilege.BIN_User X ON B.BIN_EmployeeID = X.BIN_EmployeeID
+				LEFT JOIN Basis.BIN_Organization Y ON B.BIN_OrganizationID = Y.BIN_OrganizationID
+			WHERE
+				A.BIN_OrganizationID IN
+		]]>	
+			<iterate property="higherOrgList" open="(" close=")" conjunction=","> 
+				#higherOrgList[]#
+			</iterate>	
+    </select>
+    
+    <!-- 查询原柜台上级和新柜台上级的所有上级部门 -->
+    <select id="getHigherOrgList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+		<![CDATA[
+			SELECT DISTINCT
+				A.BIN_OrganizationID AS organizationId,
+				A.NodeID AS nodeId,
+				A.Type AS type
+			FROM 
+				Basis.BIN_Organization A,
+				Basis.BIN_Organization B
+			WHERE
+				B.NodeID.IsDescendantOf(A.NodeID) = 1 AND
+				B.BIN_OrganizationID IN
+		]]>	
+			<iterate property="higherOrgList" open="(" close=")" conjunction=","> 
+				#higherOrgList[]#
+			</iterate>	
+    </select>
+	
+</sqlMap>

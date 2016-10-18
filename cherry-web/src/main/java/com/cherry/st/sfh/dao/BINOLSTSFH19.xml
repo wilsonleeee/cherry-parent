@@ -1,0 +1,550 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sqlMap PUBLIC "-//iBATIS.com//DTD SQL Map 2.0//EN" "http://ibatis.apache.org/dtd/sql-map-2.dtd">
+<sqlMap namespace="BINOLSTSFH19">
+	<sql id="importBatchQuery">
+		<![CDATA[
+			SELECT 
+				A.BIN_ImportBatchID AS importBatchId,
+				A.ImportBatchCode AS importBatchCode,
+				A.Type AS type,
+				A.ImportDate AS importDate,
+				A.Comments AS comments,
+				A.ValidFlag AS validFlag,
+				B.EmployeeCode AS employeeCode,
+		]]>
+		<dynamic>
+			<isNotEmpty property="language">
+				<isEqual property="language" compareValue="en_US">
+					<![CDATA[
+						CASE ISNULL(B.EmployeeCode,'') WHEN '' THEN B.EmployeeNameForeign ELSE '('+B.EmployeeCode+')'+B.EmployeeNameForeign END AS employee,
+						B.EmployeeNameForeign  AS employeeName
+					]]>
+				</isEqual>
+				<isEqual property="language" compareValue="zh_CN">
+					<![CDATA[
+						CASE ISNULL(B.EmployeeCode,'') WHEN '' THEN B.EmployeeName ELSE '('+B.EmployeeCode+')'+B.EmployeeName END AS employee,
+						B.EmployeeName AS employeeName
+					]]>
+				</isEqual>
+			</isNotEmpty>
+			<isEmpty property="language">
+				<![CDATA[
+					CASE ISNULL(B.EmployeeCode,'') WHEN '' THEN B.EmployeeName ELSE '('+B.EmployeeCode+')'+B.EmployeeName END AS employee,
+					B.EmployeeName AS employeeName
+				]]>
+			</isEmpty>
+		</dynamic>
+		<![CDATA[		
+			FROM 
+				Sale.BIN_ImportBatch A WITH(NOLOCK)
+				LEFT JOIN Basis.BIN_Employee B WITH(NOLOCK)
+				ON(A.BIN_EmployeeID = B.BIN_EmployeeID)
+			WHERE 
+				A.BIN_OrganizationInfoID = #organizationInfoId#
+				AND A.BIN_BrandInfoID = #brandInfoId#
+		]]>
+			<isNotEmpty prepend="AND" property="importBatchId">
+				<![CDATA[A.BIN_ImportBatchID = #importBatchId#]]>
+			</isNotEmpty>
+			<isNotEmpty prepend="AND" property="importBatchCode">
+				<![CDATA[A.ImportBatchCode like '%' + #importBatchCode# + '%']]>
+			</isNotEmpty>
+			<isNotEmpty prepend="AND" property="type">
+				<![CDATA[A.Type = #type#]]>
+			</isNotEmpty>
+			<isNotEmpty prepend="AND" property="importStartDate">
+				<![CDATA[A.ImportDate >= #importStartDate#]]>
+			</isNotEmpty>
+			<isNotEmpty prepend="AND" property="importEndDate">
+				<![CDATA[A.ImportDate <= #importEndDate#]]>
+			</isNotEmpty>
+			<isNotEmpty prepend="AND" property="validFlag">
+				<![CDATA[A.ValidFlag = #validFlag#]]>
+			</isNotEmpty>
+			<isNotEmpty prepend="AND" property="importBatchCodeR">
+				<![CDATA[A.ImportBatchCode = #importBatchCodeR#]]>
+			</isNotEmpty>
+	</sql>
+	
+	<!-- 查询订货单Excel导入批次总数 -->
+	<select id="getImportBatchCount" parameterClass="java.util.HashMap" resultClass="java.lang.Integer">
+    	<![CDATA[
+			SELECT	COUNT(SORT_T1.importBatchId) AS count FROM (
+		]]>	
+		<include refid="BINOLSTSFH19.importBatchQuery" />
+		<![CDATA[	
+			)SORT_T1
+		]]>		
+	</select>	
+	
+	<!-- 查询订货单Excel导入批次信息 -->
+	<select id="getImportBatchList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+		<include refid="BINOLCMINC99.pageheader" />
+		<include refid="BINOLSTSFH19.importBatchQuery" />
+		<include refid="BINOLCMINC99.pagefooter" />
+	</select>
+	
+	<!-- 判断是否为重复数据 -->
+	<select id="getRepeatData" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+		<![CDATA[
+		SELECT 
+			1
+		FROM	
+			Sale.BIN_BackstageSaleExcel A WITH(NOLOCK)
+			LEFT JOIN Sale.BIN_BackstageSaleExcelDetail B WITH(NOLOCK) 
+			ON(A.BIN_BackstageSaleExcelID = B.BIN_BackstageSaleExcelID)
+		WHERE 
+			A.BIN_BrandInfoID = #brandInfoId#
+			AND A.BIN_OrganizationInfoID = #organizationInfoId#
+			AND A.DepartCodeSale = #departCodeSale#
+			AND A.SaleDate = #saleDate#
+			AND A.BillType = #saleBillType#
+			AND A.CustomerType = #customerType#
+			AND A.DepartCodeCustomer = #departCodeCustomer#
+			AND A.Settlement = #settlement#
+			AND A.Currency = #currency#
+			AND A.ValidFlag = '1'
+			AND A.ImportResult = '1'
+			AND B.UnitCode = #unitCode#
+			AND B.Quantity = #quantity#
+		]]>
+		<isNotEmpty prepend="and" property="barCode">
+			B.BarCode = #barCode#
+		</isNotEmpty>
+		<isNotEmpty prepend="and" property="depotNameSale">
+			A.DepotNameSale = #depotNameSale#
+		</isNotEmpty>
+		<isNotEmpty prepend="and" property="logicInventoryNameSale">
+			A.LogicInventoryNameSale = #logicInventoryNameSale#
+		</isNotEmpty>
+		<isNotEmpty prepend="and" property="depotNameCustomer">
+			A.DepotNameCustomer = #depotNameCustomer#
+		</isNotEmpty>
+		<isNotEmpty prepend="and" property="logicInventoryNameCustomer">
+			A.LogicInventoryNameCustomer = #logicInventoryNameCustomer#
+		</isNotEmpty>
+		<isNotEmpty prepend="and" property="expectFinishDate">
+			A.ExpectFinishDate = #expectFinishDate#
+		</isNotEmpty>
+		<isNotEmpty prepend="and" property="contactPerson">
+			A.ContactPerson = #contactPerson#
+		</isNotEmpty>
+		<isNotEmpty prepend="and" property="deliverAddress">
+			A.DeliverAddress = #deliverAddress#
+		</isNotEmpty>
+	</select>
+	
+	<!-- 插入导入批次表 -->
+	<insert id="insertImportBatch" parameterClass="java.util.HashMap">
+		<selectKey resultClass="java.lang.Integer" type="post" keyProperty="BIN_ImportBatchID" >    
+		<![CDATA[
+			INSERT INTO Sale.BIN_ImportBatch(
+				BIN_OrganizationInfoID,
+				BIN_BrandInfoID,
+				ImportBatchCode,
+				ImportBatchCodeIF,
+				Type,
+				ImportDate,
+				BIN_EmployeeID,
+				Comments,
+		]]>
+		<include refid="BINOLCMINC99.insertKeySql" />
+		<![CDATA[
+			)VALUES(
+				#organizationInfoId#,
+				#brandInfoId#,
+				#importBatchCode#,
+				#importBatchCodeIF#,
+				#Type#,
+				#importDate#,
+				#BIN_EmployeeID#,
+				#comments#,
+		]]>
+		<include refid="BINOLCMINC99.insertValueSql" />
+		<![CDATA[
+			)
+			SELECT SCOPE_IDENTITY() AS value
+		]]> 
+		</selectKey> 
+	</insert>
+	
+	<!--根据部门CODE或者往来单位CODE取得部门或者单位信息-->
+	<select id="getOrgInfoByCode" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+		<isEmpty property="outOrgFlag">
+			<![CDATA[
+				SELECT
+					A.BIN_OrganizationID AS organizationId,
+					A.DepartCode AS departCode
+				FROM    
+					[Basis].[BIN_Organization] A
+			]]>
+			<isNotEmpty property="privilegeFlag">
+				<isEqual property="privilegeFlag" compareValue="1">		
+					<![CDATA[			
+						JOIN (]]><include refid="BINOLCMINC99.departPrivilegeSql" /><![CDATA[) A99 
+						ON A.BIN_OrganizationID=A99.BIN_OrganizationID 
+					]]>
+				</isEqual>
+			</isNotEmpty>
+			<![CDATA[
+				WHERE       
+					A.ValidFlag = '1' AND
+					A.Type <> '4' AND
+					A.BIN_OrganizationInfoID = #organizationInfoId#   
+					AND A.BIN_BrandInfoID = #brandInfoId#
+			]]>	
+			<isNotEmpty property="departCode" prepend="AND">
+				<![CDATA[A.DepartCode = #departCode#]]>
+			</isNotEmpty>
+		</isEmpty>
+
+		<isNotEmpty property="outOrgFlag">
+			<![CDATA[
+				SELECT
+					BIN_BussinessPartnerID AS organizationId,
+					Code AS departCode
+				FROM
+					Basis.BIN_BussinessPartner
+				WHERE
+					BIN_OrganizationInfoID = #organizationInfoId#
+					AND BIN_BrandInfoID = #brandInfoId#
+					AND ValidFlag = '1'
+			]]>
+			<isNotEmpty property="departCode" prepend="AND">
+				<![CDATA[Code = #departCode#]]>
+			</isNotEmpty>
+		</isNotEmpty>
+	</select>
+	
+   	<!-- 查询产品的信息 -->
+	<select id="getPrtInfoByUnitCode"  parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+		<![CDATA[
+		SELECT 
+			A.BIN_ProductID AS productId,
+			A.NameTotal AS productName,
+			B.BarCode AS barCode,
+			B.BIN_ProductVendorID AS productVendorId
+		FROM 
+			Basis.BIN_Product A WITH(NOLOCK)
+			LEFT JOIN Basis.BIN_ProductVendor B WITH(NOLOCK) 
+			ON(A.BIN_ProductID = B.BIN_ProductID)
+		WHERE
+			A.ValidFlag ='1' 
+			AND B.ValidFlag = '1'
+			AND A.UnitCode = #unitCode#
+			AND A.BIN_OrganizationInfoID = #organizationInfoId#
+			AND A.BIN_BrandInfoID = #brandInfoId#
+		]]>
+	</select>	
+	
+	<!-- 查询产品的价格 -->
+	<select id="getPrtPrice"  parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+		<![CDATA[
+		SELECT 
+			 A.BIN_ProductID AS BIN_ProductID,
+			 A.SalePrice AS SalePrice,
+			 A.StartDate AS StartDate,
+			 A.EndDate AS EndDate,
+			 A.ValidFlag AS ValidFlag
+		FROM 
+			Basis.BIN_ProductPrice A WITH(NOLOCK)
+		WHERE 
+			A.BIN_ProductID=#BIN_ProductID#
+			AND A.ValidFlag='1'
+			AND A.Type = '2'
+		ORDER BY StartDate
+		]]>
+	</select>
+	
+	<!-- 往后台销售Excel导入主表添加数据key -->
+	<sql id="insertBackstageSaleExcelKey">
+		<dynamic>
+			<isNotEmpty property="billNo">
+	        	BillNo,
+	        </isNotEmpty>
+			<isNotEmpty property="billNoIF">
+	        	BillNoIF,
+	        </isNotEmpty>
+			<isNotEmpty property="BIN_OrganizationIDSale">
+	        	BIN_OrganizationIDSale,
+	        </isNotEmpty>
+			<isNotEmpty property="departCodeSale">
+	        	DepartCodeSale,
+	        </isNotEmpty>
+			<isNotEmpty property="departNameSale">
+	        	DepartNameSale,
+	        </isNotEmpty>
+			<isNotEmpty property="BIN_InventoryInfoID">
+	        	BIN_InventoryInfoID,
+	        </isNotEmpty>
+			<isNotEmpty property="BIN_LogicInventoryInfoID">
+	        	BIN_LogicInventoryInfoID,
+	        </isNotEmpty>
+			<isNotEmpty property="depotNameSale">
+	        	DepotNameSale,
+	        </isNotEmpty>
+	        <isNotEmpty property="logicInventoryNameSale">
+	        	LogicInventoryNameSale,
+	        </isNotEmpty>
+	        <isNotEmpty property="saleDate">
+	        	SaleDate,
+	        </isNotEmpty>
+	        <isNotEmpty property="saleBillType">
+	        	BillType,
+	        </isNotEmpty>
+	        <isNotEmpty property="customerType">
+	        	CustomerType,
+	        </isNotEmpty>
+			<isNotEmpty property="CustomerID">
+	        	CustomerID,
+	        </isNotEmpty>
+			<isNotEmpty property="departCodeCustomer">
+	        	DepartCodeCustomer,
+	        </isNotEmpty>
+			<isNotEmpty property="departNameCustomer">
+	        	DepartNameCustomer,
+	        </isNotEmpty>
+			<isNotEmpty property="BIN_InventoryInfoIDCustomer">
+	        	BIN_InventoryInfoIDCustomer,
+	        </isNotEmpty>
+			<isNotEmpty property="BIN_LogicInventoryInfoIDCustomer">
+	        	BIN_LogicInventoryInfoIDCustomer,
+	        </isNotEmpty>
+			<isNotEmpty property="depotNameCustomer">
+	        	DepotNameCustomer,
+	        </isNotEmpty>
+			<isNotEmpty property="logicInventoryNameCustomer">
+	        	LogicInventoryNameCustomer,
+	        </isNotEmpty>
+			<isNotEmpty property="expectFinishDate">
+	        	ExpectFinishDate,
+	        </isNotEmpty>
+	        <isNotEmpty property="contactPerson">
+	        	ContactPerson,
+	        </isNotEmpty>
+			<isNotEmpty property="deliverAddress">
+	        	DeliverAddress,
+	        </isNotEmpty>
+			<isNotEmpty property="settlement">
+	        	Settlement,
+	        </isNotEmpty>
+			<isNotEmpty property="currency">
+	        	Currency,
+	        </isNotEmpty>
+	        <isNotEmpty property="BIN_EmployeeID">
+	        	BIN_EmployeeID,
+	        </isNotEmpty>
+			<isNotEmpty property="totalQuantity">
+	        	TotalQuantity,
+	        </isNotEmpty>
+			<isNotEmpty property="totalAmount">
+	        	TotalAmount,
+	        </isNotEmpty>
+			<isNotEmpty property="comments">
+	        	Comments,
+	        </isNotEmpty>
+			<isNotEmpty property="importDate">
+	        	ImportDate,
+	        </isNotEmpty>
+			<isNotEmpty property="importResult">
+	        	ImportResult,
+	        </isNotEmpty>
+			<isNotEmpty property="WorkFlowID">
+	        	WorkFlowID,
+	        </isNotEmpty>
+		</dynamic>
+	</sql>
+	
+	<!-- 往订货Excel导入主表添加数据value -->
+	<sql id="insertBackstageSaleExcelValue">
+		<dynamic>
+			<isNotEmpty property="billNo">
+	        	#billNo#,
+	        </isNotEmpty>
+			<isNotEmpty property="billNoIF">
+	        	#billNoIF#,
+	        </isNotEmpty>
+			<isNotEmpty property="BIN_OrganizationIDSale">
+	        	#BIN_OrganizationIDSale#,
+	        </isNotEmpty>
+			<isNotEmpty property="departCodeSale">
+	        	#departCodeSale#,
+	        </isNotEmpty>
+			<isNotEmpty property="departNameSale">
+	        	#departNameSale#,
+	        </isNotEmpty>
+			<isNotEmpty property="BIN_InventoryInfoID">
+	        	#BIN_InventoryInfoID#,
+	        </isNotEmpty>
+			<isNotEmpty property="BIN_LogicInventoryInfoID">
+	        	#BIN_LogicInventoryInfoID#,
+	        </isNotEmpty>
+			<isNotEmpty property="depotNameSale">
+	        	#depotNameSale#,
+	        </isNotEmpty>
+	        <isNotEmpty property="logicInventoryNameSale">
+	        	#logicInventoryNameSale#,
+	        </isNotEmpty>
+	        <isNotEmpty property="saleDate">
+	        	#saleDate#,
+	        </isNotEmpty>
+	        <isNotEmpty property="saleBillType">
+	        	#saleBillType#,
+	        </isNotEmpty>
+	        <isNotEmpty property="customerType">
+	        	#customerType#,
+	        </isNotEmpty>
+			<isNotEmpty property="CustomerID">
+	        	#CustomerID#,
+	        </isNotEmpty>
+			<isNotEmpty property="departCodeCustomer">
+	        	#departCodeCustomer#,
+	        </isNotEmpty>
+			<isNotEmpty property="departNameCustomer">
+	        	#departNameCustomer#,
+	        </isNotEmpty>
+			<isNotEmpty property="BIN_InventoryInfoIDCustomer">
+	        	#BIN_InventoryInfoIDCustomer#,
+	        </isNotEmpty>
+			<isNotEmpty property="BIN_LogicInventoryInfoIDCustomer">
+	        	#BIN_LogicInventoryInfoIDCustomer#,
+	        </isNotEmpty>
+			<isNotEmpty property="depotNameCustomer">
+	        	#depotNameCustomer#,
+	        </isNotEmpty>
+			<isNotEmpty property="logicInventoryNameCustomer">
+	        	#logicInventoryNameCustomer#,
+	        </isNotEmpty>
+			<isNotEmpty property="expectFinishDate">
+	        	#expectFinishDate#,
+	        </isNotEmpty>
+	        <isNotEmpty property="contactPerson">
+	        	#contactPerson#,
+	        </isNotEmpty>
+			<isNotEmpty property="deliverAddress">
+	        	#deliverAddress#,
+	        </isNotEmpty>
+			<isNotEmpty property="settlement">
+	        	#settlement#,
+	        </isNotEmpty>
+			<isNotEmpty property="currency">
+	        	#currency#,
+	        </isNotEmpty>
+	        <isNotEmpty property="BIN_EmployeeID">
+	        	#BIN_EmployeeID#,
+	        </isNotEmpty>
+			<isNotEmpty property="totalQuantity">
+	        	#totalQuantity#,
+	        </isNotEmpty>
+			<isNotEmpty property="totalAmount">
+	        	#totalAmount#,
+	        </isNotEmpty>
+			<isNotEmpty property="comments">
+	        	#comments#,
+	        </isNotEmpty>
+			<isNotEmpty property="importDate">
+	        	#importDate#,
+	        </isNotEmpty>
+			<isNotEmpty property="importResult">
+	        	#importResult#,
+	        </isNotEmpty>
+			<isNotEmpty property="WorkFlowID">
+	        	#WorkFlowID#,
+	        </isNotEmpty>
+		</dynamic>
+	</sql>
+	
+	<!-- 往后台销售Excel导入主表中添加数据 -->
+	<insert id="insertBackstageSaleExcel" parameterClass="java.util.HashMap">
+		<selectKey resultClass="java.lang.Integer" type="post" keyProperty="BIN_BackstageSaleExcelID" >      
+	    <![CDATA[
+		INSERT INTO Sale.BIN_BackstageSaleExcel(
+		        BIN_OrganizationInfoID,
+		        BIN_BrandInfoID,
+		        BIN_ImportBatchID,
+		        ImportBatch,
+		]]>
+				<include refid="BINOLSTSFH19.insertBackstageSaleExcelKey" />
+		 		<include refid="BINOLCMINC99.insertKeySql" />
+		 <![CDATA[
+		 )VALUES(
+				#organizationInfoId#,
+				#brandInfoId#,
+				#importBatchId#,
+				#importBatch#,
+		]]>
+				<include refid="BINOLSTSFH19.insertBackstageSaleExcelValue" />
+				<include refid="BINOLCMINC99.insertValueSql" />
+				<![CDATA[
+			)
+			  	SELECT SCOPE_IDENTITY() AS value
+			]]> 
+	   </selectKey> 
+	</insert>
+	
+	
+	<!-- 往订货Excel导入明细表中添加数据 -->
+	<insert id="insertBackstageSaleExcelDetail" parameterClass="java.util.HashMap">
+	    <![CDATA[
+		INSERT INTO Sale.BIN_BackstageSaleExcelDetail(
+				BIN_BackstageSaleExcelID,
+		]]>
+		<dynamic>
+			<isNotEmpty property="productVendorId">
+				BIN_ProductVendorID,
+			</isNotEmpty>
+			<isNotEmpty property="unitCode">
+				UnitCode,
+			</isNotEmpty>
+			<isNotEmpty property="importBarCode">
+				<![CDATA[Barcode,]]>
+			</isNotEmpty>
+			<isNotEmpty property="importProductName">
+				NameTotal,
+			</isNotEmpty>
+			<isNotEmpty property="quantity">
+				Quantity,
+			</isNotEmpty>
+			<isNotEmpty property="price">
+				Price,
+			</isNotEmpty>
+			<isNotEmpty property="ErrorMsg">
+				ErrorMsg,
+			</isNotEmpty>
+		</dynamic>
+		<include refid="BINOLCMINC99.insertKeySql" />
+	   <![CDATA[
+		 )
+		VALUES
+			(
+			#BIN_BackstageSaleExcelID#,
+		]]>
+		<dynamic>
+			<isNotEmpty property="productVendorId">
+				#productVendorId#,
+			</isNotEmpty>
+			<isNotEmpty property="unitCode">
+				#unitCode#,
+			</isNotEmpty>
+			<isNotEmpty property="importBarCode">
+				<![CDATA[#importBarCode#,]]>
+			</isNotEmpty>
+			<isNotEmpty property="importProductName">
+				#importProductName#,
+			</isNotEmpty>
+			<isNotEmpty property="quantity">
+				#quantity#,
+			</isNotEmpty>
+			<isNotEmpty property="price">
+				#price#,
+			</isNotEmpty>
+			<isNotEmpty property="ErrorMsg">
+				#ErrorMsg#,
+			</isNotEmpty>
+		</dynamic>
+		<include refid="BINOLCMINC99.insertValueSql" />
+		<![CDATA[
+			)
+		]]> 
+	</insert>	
+</sqlMap>

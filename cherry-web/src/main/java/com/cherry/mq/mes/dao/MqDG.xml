@@ -1,0 +1,206 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sqlMap PUBLIC "-//iBATIS.com//DTD SQL Map 2.0//EN" "http://ibatis.apache.org/dtd/sql-map-2.dtd">
+<sqlMap namespace="MqDG">
+
+	<!-- 根据单号取得预付单信息 -->
+	<select id ="getPrePayBillByNo" parameterClass="java.util.HashMap" resultClass ="java.util.HashMap">
+		<![CDATA[
+			SELECT 
+				A.BIN_SaleRecordID,
+				CONVERT(int,ISNULL(A.Quantity,0)) AS orginalQuantity
+			FROM
+				Sale.BIN_SaleRecord A
+			WHERE
+				A.ValidFlag = '1' AND
+				A.BillCode = #tradeNoIF#
+		]]>	
+	</select>													
+	
+	<!-- 根据单据号取得提货单主表信息 -->
+	<select id ="getPickupBillByNo" parameterClass="java.util.HashMap" resultClass ="java.util.HashMap">
+		SELECT
+			BIN_PickupBillMainID
+			,PickupBillNo
+			,RelevanceNo
+			,Relevance_OrginalNo
+			,BIN_SaleRecordID
+			,BIN_OrganizationID
+			,CounterCode
+			,BIN_EmployeeID
+			,EmployeeCode
+			,ConsumerType
+			,BIN_MemberInfoID
+			,MemberCode
+			,MemberLevel
+			,PickupDate
+			,PickupTime
+			,PickupQuantity
+			,TransactionType
+			,Comments															
+		FROM																
+			Sale.BIN_PickupBillMain A														
+		WHERE																
+			A.ValidFlag = '1' AND
+			A.PickupBillNo = #tradeNoIF#													
+	</select>
+	
+	<!-- 根据提货主单ID取得提货单明细 -->
+	<select id ="getPickupBillDetailByID" parameterClass="java.util.HashMap" resultClass ="java.util.HashMap">
+		SELECT
+			BIN_PickupBillMainID,
+			BIN_ProductVendorID as productId,
+			BIN_ProductVendorID as productVendorID,
+			BIN_ProductVendorID as promotionProductVendorID,
+			UnitCode as unitcode,
+			BarCode as barcode,
+			DetailNo as detailNo,
+			InventoryTypeCode as logicInventoryCode,
+			Price as tagPrice,
+			Quantity as quantity,
+			DetailType as detailType,
+			CASE WHEN DetailType='N' THEN '0' ELSE '1' END AS isPromotionFlag														
+		FROM																
+			Sale.BIN_PickupBillDetail A														
+		WHERE																
+			A.ValidFlag = '1' AND
+			A.BIN_PickupBillMainID = #pickupBillMainID#													
+	</select>
+	
+	<!-- 插入提货主表数据 -->
+	<insert id="insertPickupBillMain" parameterClass="java.util.HashMap">	
+		<selectKey resultClass="java.lang.Integer" type="post" keyProperty="BIN_PickupBillMainID" >
+		<![CDATA[
+			INSERT INTO Sale.BIN_PickupBillMain(
+				BIN_OrganizationInfoID,
+				BIN_BrandInfoID,
+				PickupBillNo,
+				RelevanceNo,
+				Relevance_OrginalNo,
+				BIN_SaleRecordID,
+				BIN_OrganizationID,
+				CounterCode,
+				BIN_EmployeeID,
+				EmployeeCode,
+				ConsumerType,
+				BIN_MemberInfoID,
+				MemberCode,
+				MemberLevel,
+				PickupDate,
+				PickupTime,
+				PickupQuantity,
+				ComputeSign,
+				TransactionType,
+				Comments,
+				SynchFlag,		
+		]]>
+		<include refid="BINOLCMINC99.insertKeySql" />									
+		<![CDATA[								
+			)VALUES(
+				#BIN_OrganizationInfoID#,
+				#BIN_BrandInfoID#,
+				#PickupBillNo#,
+				#RelevanceNo#,
+				#Relevance_OrginalNo#,
+				#BIN_SaleRecordID#,
+				#BIN_OrganizationID#,
+				#CounterCode#,
+				#BIN_EmployeeID#,
+				#EmployeeCode#,
+				#ConsumerType#,
+				#BIN_MemberInfoID#,
+				#MemberCode#,
+				#MemberLevel#,
+				#PickupDate#,
+				#PickupTime#,
+				#PickupQuantity#,
+				#ComputeSign#,
+				#TransactionType#,
+				#Comments#,
+				#SynchFlag#,
+		]]>
+		<include refid="BINOLCMINC99.insertValueSql" />
+		<![CDATA[ 
+			) 
+			select SCOPE_IDENTITY() as value
+		]]>
+	    </selectKey>
+	</insert> 
+	
+	<!-- 插入提货明细表数据 -->
+	<insert id="insertPickupBillDetail" parameterClass="java.util.HashMap">	
+		<![CDATA[
+			INSERT INTO Sale.BIN_PickupBillDetail(
+				BIN_PickupBillMainID,
+				BIN_ProductVendorID,
+				UnitCode,
+				BarCode,
+				DetailNo,
+				InventoryTypeCode,
+		]]>
+		<isNotEmpty property="tagPrice">
+		<![CDATA[Price,]]>
+		</isNotEmpty>
+		<![CDATA[
+				Quantity,
+				DetailType,
+				Reason,		
+		]]>
+		<include refid="BINOLCMINC99.insertKeySql" />									
+		<![CDATA[								
+			)VALUES(
+				#pickupBillMainID#,
+				#productId#,
+				#unitcode#,
+				#barcode#,
+				#detailNo#,
+				#logicInventoryCode#,
+		]]>
+		<isNotEmpty property="tagPrice">
+			<![CDATA[#tagPrice#,]]>
+		</isNotEmpty>
+		<![CDATA[
+				#quantity#,
+				#detailType#,
+				#reason#,
+		]]>
+		<include refid="BINOLCMINC99.insertValueSql" />
+		<![CDATA[)]]>
+	</insert>
+	
+	<!--更新原始预定单主信息-->
+	<update id="updateOriginalNSBillInfo" parameterClass="java.util.HashMap">
+	<![CDATA[
+		UPDATE 
+			Sale.BIN_SaleRecord
+ 		SET 
+    		PickupQuantity = ISNULL(PickupQuantity,0)+#quantity#,
+    		PickupStatus = (CASE WHEN ISNULL(PickupQuantity,0) + #quantity# >= ISNULL(Quantity,0) THEN '0'
+    						WHEN ISNULL(PickupQuantity,0) + #quantity# = 0 THEN '9' 
+    						ELSE '3' END),
+	]]> 	
+	<isNotEmpty property="pickupDate">
+		<![CDATA[PickupDate = #pickupDate#,]]>
+	</isNotEmpty> 		
+	<include refid="BINOLCMINC99.updateSql" />
+	<![CDATA[
+		WHERE 
+	 		BIN_SaleRecordID = #BIN_SaleRecordID#
+		]]>
+	</update>
+	
+	<!--更新原始预定单的明细信息-->
+	<update id="updateOriginalNSBillDetailInfo" parameterClass="java.util.HashMap">
+	<![CDATA[
+		UPDATE 
+			Sale.BIN_SaleRecordDetail
+ 		SET 
+    		PickupQuantity = ISNULL(PickupQuantity,0)+#quantity#,
+	]]> 	
+	<include refid="BINOLCMINC99.updateSql" />
+	<![CDATA[
+		WHERE 
+	 		BIN_SaleRecordID = #BIN_SaleRecordID# AND
+	 		BIN_ProductVendorID = #productId#
+		]]>
+	</update>
+</sqlMap>

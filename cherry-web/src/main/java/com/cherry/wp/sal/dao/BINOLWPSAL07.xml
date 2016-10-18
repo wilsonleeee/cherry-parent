@@ -1,0 +1,1169 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sqlMap PUBLIC "-//iBATIS.com//DTD SQL Map 2.0//EN" "http://ibatis.apache.org/dtd/sql-map-2.dtd">
+<sqlMap namespace="BINOLWPSAL07">
+	<!-- 单据查询Sql  -->
+	<sql id="saleBillQuery">
+		<![CDATA[
+			SELECT 
+				ts.BIN_SaleId as saleId,
+				ts.BillCode as billCode,
+				ts.BusinessDate as businessDate,
+				CONVERT(varchar(20), ts.SaleTime, 8) as businessTime,
+				ts.MemberCode as memberCode,
+				tm.Name as memberName,
+				tm.MemberLevel as memberLevel,
+				ts.CustomerType as customerType,
+				ts.BaCode as baCode,
+				tb.EmployeeName as baName,
+				ts.SaleType as saleType,
+				ta.totalQuantity as quantity,
+				ta.originalAmount as originalAmount,
+				ta.payAmount as payAmount,
+				ts.RoundingAmount as roundingAmount,
+				ts.Costpoint as costPoint,
+				ts.Costpoint_Amount as costPointAmount 
+			FROM 
+				Sale.BIN_WebPosSaleRecord as ts with(nolock) 
+				LEFT JOIN Basis.BIN_Employee as tb with(nolock) on ts.BaCode = tb.EmployeeCode 
+				LEFT JOIN Members.BIN_MemberInfo as tm with(nolock) on ts.BIN_MemberInfoID = tm.BIN_MemberInfoID 
+				INNER JOIN (
+					SELECT 
+						RelevantCode as relevantCode,
+						sum(isnull(TotalQuantity,0)*isnull(ComputeSign,1)) as totalQuantity,
+						sum(isnull(OriginalAmount,0)*isnull(ComputeSign,1)) as originalAmount,
+						sum(isnull(TotalAmount,0)*isnull(ComputeSign,1)) as payAmount 
+					FROM 
+						Sale.BIN_WebPosSaleRecord with(nolock) 
+					WHERE 
+						ValidFlag = '1' AND 
+						BIN_OrganizationInfoID = #organizationInfoId# AND 
+						BIN_BrandInfoID = #brandInfoId# AND 
+						CounterCode = #counterCode# 
+			]]>
+				<dynamic>
+					<isNotEmpty prepend="AND" property="billCode" >
+						RelevantCode = #billCode#
+					</isNotEmpty>
+					<isNotEmpty prepend="AND" property="baCode" >
+						BaCode = #baCode#
+					</isNotEmpty>
+					<isNotEmpty prepend="AND" property="memberInfoId" >
+						BIN_MemberInfoID = #memberInfoId#
+					</isNotEmpty>
+				</dynamic>
+			<![CDATA[
+					GROUP BY 
+						RelevantCode 
+				) as ta on ta.relevantCode = ts.BillCode 
+			WHERE 
+				ts.ValidFlag = '1' AND 
+				ts.SaleType in ('NS','PN') AND 
+				ts.BIN_OrganizationInfoID = #organizationInfoId# AND 
+				ts.BIN_BrandInfoID = #brandInfoId# AND 
+				ts.CounterCode = #counterCode# 
+		]]>
+		<dynamic>
+			<isNotEmpty prepend="AND" property="saleDateStart" >
+			<![CDATA[
+				ts.BusinessDate >= #saleDateStart#
+			]]>
+			</isNotEmpty>
+			<isNotEmpty prepend="AND" property="saleDateEnd" >
+			<![CDATA[
+				ts.BusinessDate <= #saleDateEnd#
+			]]>
+			</isNotEmpty>
+			<isNotEmpty prepend="AND" property="billCode" >
+				ts.BillCode = #billCode#
+			</isNotEmpty>
+			<isNotEmpty prepend="AND" property="baCode" >
+				ts.BaCode = #baCode#
+			</isNotEmpty>
+			<isNotEmpty prepend="AND" property="memberInfoId" >
+				ts.BIN_MemberInfoID = #memberInfoId#
+			</isNotEmpty>
+			<isNotEmpty prepend="AND" property="memberSearchStr" >
+				(ts.MemberCode = #memberSearchStr# or tm.MobilePhone = #memberSearchStr#)
+			</isNotEmpty>
+		</dynamic>
+	</sql>
+	
+	<!-- 获取单据数量  -->
+    <select id="getFinishedBillsCount" parameterClass="java.util.HashMap" resultClass="java.lang.Integer">
+    	<![CDATA[
+			SELECT	COUNT(SORT_T1.saleId) AS count FROM (
+		]]>	
+		<include refid="BINOLWPSAL07.saleBillQuery" />	
+		<![CDATA[	
+			)SORT_T1
+		]]>
+    </select>
+	
+	<!-- 获取单据List -->
+    <select id="getFinishedBillList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+       	<include refid="BINOLCMINC99.pageheader" />
+		<include refid="BINOLWPSAL07.saleBillQuery" />
+		<include refid="BINOLCMINC99.pagefooter" />
+    </select>
+    
+    <!-- 获取退货单据Map -->
+    <select id="getFinishedBillMap" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+    	<![CDATA[
+				SELECT TOP(1)
+					ts.BIN_SaleId as saleId,
+					ts.BillCode as billCode,
+					ts.BusinessDate as businessDate,
+					CONVERT(varchar(20), ts.SaleTime, 8) as businessTime,
+					ts.MemberCode as memberCode,
+					tm.Name as memberName,
+					tm.MemberLevel as memberLevel,
+					ts.CustomerType as customerType,
+					ts.BaCode as baCode,
+					tb.EmployeeName as baName,
+					ts.SaleType as saleType,
+					ta.totalQuantity as quantity,
+					ta.originalAmount as originalAmount,
+					ta.payAmount as payAmount,
+					ts.RoundingAmount as roundingAmount,
+					ts.Costpoint as costPoint,
+					ts.Costpoint_Amount as costPointAmount 
+				FROM 
+					Sale.BIN_WebPosSaleRecord as ts with(nolock) 
+					LEFT JOIN Basis.BIN_Employee as tb with(nolock) on ts.BaCode = tb.EmployeeCode 
+					LEFT JOIN Members.BIN_MemberInfo as tm with(nolock) on ts.BIN_MemberInfoID = tm.BIN_MemberInfoID 
+					INNER JOIN (
+						SELECT 
+							RelevantCode as relevantCode,
+							sum(isnull(TotalQuantity,0)*isnull(ComputeSign,1)) as totalQuantity,
+							sum(isnull(OriginalAmount,0)*isnull(ComputeSign,1)) as originalAmount,
+							sum(isnull(TotalAmount,0)*isnull(ComputeSign,1)) as payAmount 
+						FROM 
+							Sale.BIN_WebPosSaleRecord with(nolock) 
+						WHERE 
+							ValidFlag = '1' AND 
+							BIN_OrganizationInfoID = #organizationInfoId# AND 
+							BIN_BrandInfoID = #brandInfoId# AND 
+							CounterCode = #counterCode# AND 
+							RelevantCode = #billCode# 
+						GROUP BY 
+							RelevantCode 
+					) as ta on ta.relevantCode = ts.BillCode 
+				WHERE 
+					ts.ValidFlag = '1' AND 
+					ts.SaleType in ('NS','PN') AND 
+					ts.BIN_OrganizationInfoID = #organizationInfoId# AND 
+					ts.BIN_BrandInfoID = #brandInfoId# AND 
+					ts.CounterCode = #counterCode# AND
+					ts.BillCode = #billCode#
+				]]>
+    </select>
+    
+    <!-- 退货单据查询Sql  -->
+	<sql id="returnHistoryBillQuery">
+		<![CDATA[
+			SELECT 
+				ts.BIN_SaleId as saleId,
+				ts.BillCode as billCode,
+				ts.RelevantCode as relevantCode,
+				ts.BusinessDate as saleTime,
+				ts.MemberCode as memberCode,
+				tm.Name as memberName,
+				tm.MemberLevel as memberLevel,
+				ts.CustomerType as customerType,
+				ts.BaCode as baCode,
+				tb.BaName as baName,
+				ts.SaleType as saleType,
+				ts.totalQuantity as quantity,
+				ts.originalAmount as originalAmount,
+				ts.TotalAmount as payAmount,
+				ts.RoundingAmount as roundingAmount,
+				ts.Costpoint as costPoint,
+				ts.Costpoint_Amount as costPointAmount 
+			FROM 
+				Sale.BIN_WebPosSaleRecord as ts with(nolock) 
+				LEFT JOIN Basis.BIN_BaInfo as tb with(nolock) on ts.BaCode = tb.BaCode 
+				LEFT JOIN Members.BIN_MemberInfo as tm with(nolock) on ts.BIN_MemberInfoID = tm.BIN_MemberInfoID 
+			WHERE 
+				ts.ValidFlag = '1' AND 
+				ts.SaleType in ('SR','PS') AND 
+				ts.BIN_OrganizationInfoID = #organizationInfoId# AND 
+				ts.BIN_BrandInfoID = #brandInfoId# AND 
+				ts.BIN_UserID = #userId# AND 
+				ts.CounterCode = #counterCode# 
+		]]>
+		<dynamic>
+			<isNotEmpty prepend="AND" property="saleDateStart" >
+			<![CDATA[
+				ts.BusinessDate >= #saleDateStart#
+			]]>
+			</isNotEmpty>
+			<isNotEmpty prepend="AND" property="saleDateEnd" >
+			<![CDATA[
+				ts.BusinessDate <= #saleDateEnd#
+			]]>
+			</isNotEmpty>
+			<isNotEmpty prepend="AND" property="billCode" >
+				(ts.BillCode = #billCode# or ts.RelevantCode = #billCode#)
+			</isNotEmpty>
+			<isNotEmpty prepend="AND" property="baCode" >
+				ts.BaCode = #baCode#
+			</isNotEmpty>
+			<isNotEmpty prepend="AND" property="memberInfoId" >
+				ts.BIN_MemberInfoID = #memberInfoId#
+			</isNotEmpty>
+			<isNotEmpty prepend="AND" property="memberSearchStr" >
+				(ts.MemberCode = #memberSearchStr# or tm.MobilePhone = #memberSearchStr#)
+			</isNotEmpty>
+		</dynamic>
+	</sql>
+	
+	<!-- 获取退货单据数量  -->
+    <select id="getReturnHistoryBillCount" parameterClass="java.util.HashMap" resultClass="java.lang.Integer">
+    	<![CDATA[
+			SELECT	COUNT(SORT_T1.saleId) AS count FROM (
+		]]>	
+		<include refid="BINOLWPSAL07.returnHistoryBillQuery" />	
+		<![CDATA[	
+			)SORT_T1
+		]]>
+    </select>
+	
+	<!-- 获取退货单据List -->
+    <select id="getReturnHistoryBillList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+       	<include refid="BINOLCMINC99.pageheader" />
+		<include refid="BINOLWPSAL07.returnHistoryBillQuery" />
+		<include refid="BINOLCMINC99.pagefooter" />
+    </select>
+    
+    <!-- 根据单据号获取单据明细List -->
+    <select id="getBillDetailListByCode" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+    	<![CDATA[
+    		SELECT 
+				ts.RowNumber,
+				'NS' as saleType,
+				ts.BIN_SaleDetailId as saleDetailId,
+				ts.BIN_SaleId as saleId,
+				ts.BillCode as billCode,
+				ts.RelevantCode as relevantCode,
+				ts.CouponOrderId as orderId,
+				ts.CouponCode as couponCode,
+				ts.IsStock as isStock,
+				ts.ActivityCode as activityCode,
+				ts.CounterActCode as counterActCode,
+				ts.BIN_ProductVendorID as productVendorId,
+				ts.UnitCode as unitCode,
+				ts.BarCode as barCode,
+				ts.ProductName as productName,
+				ts.Price as price,
+				ts.MemberPrice as memberPrice,
+				ts.PlatinumPrice as platinumPrice,
+				tb.Quantity as quantity,
+				ts.DiscountRate as discountRate,
+				ts.RealPrice as realPrice,
+				tb.Amount as amount,
+				tb.OriginalAmount as originalAmount,
+				ts.DiscountId as activityTypeCode,
+				ts.SaleType as proType,
+				wr.MQState as MQState
+			FROM 
+				Sale.BIN_WebPosSaleDetail as ts with(nolock) 
+				INNER JOIN (
+					SELECT 
+						wd.RowNumber as rowNumber,
+						wd.RelevantCode as relevantCode,
+						wd.BIN_ProductVendorID as productVendorId,
+						wd.BarCode as barCode,
+						wd.RealPrice as realprice,
+						sum(isnull(wd.Quantity,0)*isnull(wd.ComputeSign,1)) as quantity,
+						sum(isnull(wd.Amount,0)*isnull(wd.ComputeSign,1)) as amount,
+						sum(isnull(wd.originalAmount,0)*isnull(wd.ComputeSign,1)) as originalAmount 
+					FROM 
+						Sale.BIN_WebPosSaleDetail as wd with(nolock) 
+					WHERE 
+						wd.ValidFlag = '1' AND 
+						wd.BIN_OrganizationInfoID = #organizationInfoId# AND 
+						wd.BIN_BrandInfoID = #brandInfoId# AND 
+						wd.RelevantCode = #billCode# 
+					GROUP BY 
+						wd.RelevantCode,
+						wd.BIN_ProductVendorID,
+						wd.BarCode,
+						wd.RealPrice,
+						wd.RowNumber
+				) as tb ON ts.BillCode = tb.relevantCode and ts.BIN_ProductVendorID = tb.productVendorId and ts.BarCode = tb.BarCode and ts.realprice = tb.realprice and tb.quantity > 0 and ts.RowNumber = tb.rowNumber
+			LEFT JOIN 
+				Sale.BIN_WebPosSaleRecord as wr with(nolock) 
+			ON  
+				wr.ValidFlag = '1' AND 
+				wr.BIN_OrganizationInfoID = #organizationInfoId# AND 
+				wr.BIN_BrandInfoID = #brandInfoId# AND 
+				wr.RelevantCode = #billCode# 
+			WHERE 
+				ts.ValidFlag = '1' AND 
+				ts.BIN_OrganizationInfoID = #organizationInfoId# AND 
+				ts.BIN_BrandInfoID = #brandInfoId# AND 
+				ts.BillCode = #billCode# 
+			UNION 
+			SELECT 
+				ts.RowNumber,
+				'NS' as saleType,
+				ts.BIN_SaleDetailId as saleDetailId,
+				ts.BIN_SaleId as saleId,
+				ts.BillCode as billCode,
+				ts.RelevantCode as relevantCode,
+				ts.CouponOrderId as orderId,
+				ts.CouponCode as couponCode,
+				ts.IsStock as isStock,
+				ts.ActivityCode as activityCode,
+				ts.CounterActCode as counterActCode,
+				ts.BIN_ProductVendorID as productVendorId,
+				ts.UnitCode as unitCode,
+				ts.BarCode as barCode,
+				ts.ProductName as productName,
+				ts.Price as price,
+				ts.MemberPrice as memberPrice,
+				ts.PlatinumPrice as platinumPrice,
+				ts.Quantity as quantity,
+				ts.DiscountRate as discountRate,
+				ts.RealPrice as realPrice,
+				tb.Amount as amount,
+				ts.OriginalAmount as originalAmount,
+				ts.DiscountId as activityTypeCode,
+				ts.SaleType as proType,
+				wr.MQState as MQState
+			FROM 
+				Sale.BIN_WebPosSaleDetail as ts with(nolock) 
+				INNER JOIN (
+					SELECT 
+						wd.RowNumber as rowNumber,
+						wd.RelevantCode as relevantCode,
+						wd.DiscountId as discountId,
+						sum(isnull(wd.Amount,0)*isnull(wd.ComputeSign,1)) as amount
+					FROM 
+						Sale.BIN_WebPosSaleDetail as wd with(nolock) 
+					WHERE 
+						wd.ValidFlag = '1' AND 
+						wd.BIN_OrganizationInfoID = #organizationInfoId# AND 
+						wd.BIN_BrandInfoID = #brandInfoId# AND 
+						wd.RelevantCode = #billCode# AND 
+						wd.DiscountId in ('DXJE','ZDZK','ZDQL') 
+					GROUP BY 
+						wd.RelevantCode,
+						DiscountId,
+						wd.RowNumber
+				) as tb on ts.BillCode = tb.relevantCode and ts.DiscountId = tb.discountId and tb.amount != 0 and ts.RowNumber = tb.rowNumber
+				LEFT JOIN 
+					Sale.BIN_WebPosSaleRecord as wr with(nolock) 
+				ON  
+					wr.ValidFlag = '1' AND 
+					wr.BIN_OrganizationInfoID = #organizationInfoId# AND 
+					wr.BIN_BrandInfoID = #brandInfoId# AND 
+					wr.RelevantCode = #billCode# 
+			WHERE 
+				ts.ValidFlag = '1' AND 
+				ts.BIN_OrganizationInfoID = #organizationInfoId# AND 
+				ts.BIN_BrandInfoID = #brandInfoId# AND 
+				ts.BillCode = #billCode# AND 
+				ts.DiscountId in ('DXJE','ZDZK','ZDQL') 
+		]]>
+    </select>
+    <!-- 根据单据号获取单据退货明细List -->
+    <select id="getReturnDetailListByCode" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+    	<![CDATA[
+	    	SELECT 
+				ROW_NUMBER() OVER(ORDER BY max(ts.BIN_SaleDetailId)) as RowNumber,
+				'SR' as saleType,
+				max(ts.BIN_SaleDetailId) as saleDetailId,
+				max(ts.BIN_SaleId) as saleId,
+				max(ts.BillCode) as billCode,
+				ts.RelevantCode as relevantCode,
+				max(ts.CouponOrderId) as orderId,
+				max(ts.CouponCode) as couponCode,
+				ts.IsStock as isStock,
+				ts.ActivityCode as activityCode,
+				ts.CounterActCode as counterActCode,
+				ts.BIN_ProductVendorID as productVendorId,
+				ts.UnitCode as unitCode,
+				ts.BarCode as barCode,
+				ts.ProductName as productName,
+				min(ts.Price) as price,
+				min(ts.MemberPrice) as memberPrice,
+				min(ts.platinumPrice) as platinumPrice,
+				sum(isnull(ts.Quantity,0)) as quantity,
+				min(ts.DiscountRate) as discountRate,
+				ts.RealPrice as realPrice,
+				sum(isnull(ts.Amount,0)) as amount,
+				sum(isnull(ts.OriginalAmount,0)) as originalAmount,
+				ts.DiscountId as activityTypeCode,
+				ts.SaleType as proType 
+			FROM 
+				Sale.BIN_WebPosSaleDetail as ts with(nolock) 
+			WHERE 
+				ts.ValidFlag = '1' AND 
+				ts.ComputeSign < 0 AND 
+				ts.BIN_OrganizationInfoID = #organizationInfoId# AND 
+				ts.BIN_BrandInfoID = #brandInfoId# AND 
+				ts.RelevantCode = #billCode# 
+			GROUP BY 
+				ts.RelevantCode,
+				ts.IsStock,
+				ts.ActivityCode,
+				ts.CounterActCode,
+				ts.BIN_ProductVendorID,
+				ts.UnitCode,
+				ts.BarCode,
+				ts.ProductName,
+				ts.RealPrice,
+				ts.DiscountId,
+				ts.SaleType
+		]]>
+		<isEqual property="merge" compareValue="N">
+			,ts.RowNumber
+		</isEqual>
+    </select>
+    
+    <!-- 根据单据号获取储值卡未退服务List -->
+    <select id="getBillDetailSavings" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+    	<![CDATA[
+	    	SELECT
+	    		#billDetailShowType# as billDetailShowType,
+	    		'NS' as saleType,
+	    		c1.RelevantCode as relevantCode,
+	    		c1.ServiceType,
+	    		c1.ServiceQuantity-ISNULL(c2.ServiceQuantity,0) AS ServiceQuantity,
+	    		c1.CardCode
+	    	FROM
+	    		(SELECT 
+	    			RelevantCode,
+	    			ServiceType,
+	    			ServiceQuantity,
+	    			CardCode 
+	    		FROM 
+	    			Members.BIN_CardTransaction  WITH(NOLOCK)
+	    		WHERE 
+	    			BillCode=#billCode#)c1
+	    	LEFT JOIN
+	    		(SELECT 
+	    			ServiceType,
+	    			sum(ServiceQuantity)AS ServiceQuantity 
+	    		FROM 
+	    			Members.BIN_CardTransaction WITH(NOLOCK)
+	    		WHERE 
+	    			RelevantCode=#billCode# AND
+	    			BillCode!=RelevantCode
+	    		GROUP BY 
+	    			ServiceType)c2
+			ON
+				c1.ServiceType=c2.ServiceType 
+			WHERE
+				c1.ServiceQuantity-ISNULL(c2.ServiceQuantity,0)>0
+		]]>
+    </select>
+    
+    <!-- 根据单据号获取储值卡已退服务List -->
+    <select id="getReturnBillDetailSavings" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+    	<![CDATA[
+	    	SELECT 
+	    		#billDetailShowType# as billDetailShowType,
+	    		'SR' as saleType,
+				SUM(ServiceQuantity) as ServiceQuantity,
+				ServiceType,
+				RelevantCode as relevantCode 
+			FROM
+				Members.BIN_CardTransaction
+			WHERE 
+				RelevantCode = #billCode# and 
+				ComputeSign=1 and 
+				ServiceQuantity is not null
+			GROUP BY 
+				ServiceType,
+				relevantCode
+		]]>
+    </select>
+    
+    <!-- 根据单据号获取支付方式List -->
+    <select id="paymentTypeList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+    	<![CDATA[
+			SELECT 
+				t2.*,case when t1.PayType =t2.PayType then   t1.payAmount else 0 end as payAmount
+			FROM(
+				SELECT
+					relevantCode,
+					payType,
+					payAmount
+				FROM
+					Sale.BIN_WebPosPayDetail WITH(NOLOCK)
+				WHERE
+					relevantCode=#billCode# AND
+					PayAmount>0)t1 
+			full JOIN(
+				SELECT
+				relevantCode,
+				payType,
+				SUM(PayAmount) as payAmount2
+				FROM
+					Sale.BIN_WebPosPayDetail WITH(NOLOCK)
+				WHERE
+					relevantCode=#billCode# AND
+					PayAmount<0
+				GROUP BY
+					PayType,
+					relevantCode)t2
+			ON
+				t1.relevantCode=t2.relevantCode and t1.PayType = t2.PayType 
+				
+             where
+				t2.RelevantCode is not null
+				
+			union
+					SELECT
+					relevantCode,
+					payType,
+					0,
+					payAmount
+					
+				FROM
+					Sale.BIN_WebPosPayDetail s WITH(NOLOCK)
+				WHERE
+					relevantCode=#billCode# AND
+					PayAmount>0
+			and  not exists(select 1 from Sale.BIN_WebPosPayDetail ss where ss.RelevantCode = s.RelevantCode and ss.PayType =s.PayType  AND
+					PayAmount<0 )		
+		]]>
+    </select>
+    <!-- 根据单据号获取退货单据明细List -->
+    <select id="getSrBillDetailByCode" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+    	<![CDATA[
+	    	SELECT 
+	    		ROW_NUMBER() OVER(ORDER BY ts.BIN_SaleDetailId) as RowNumber,
+	    		'SR' as saleType,
+				ts.BIN_SaleDetailId as saleDetailId,
+				ts.BIN_SaleId as saleId,
+				ts.BillCode as billCode,
+				ts.RelevantCode as relevantCode,
+				ts.CouponOrderId as orderId,
+				ts.CouponCode as couponCode,
+				ts.IsStock as isStock,
+				ts.ActivityCode as activityCode,
+				ts.CounterActCode as counterActCode,
+				ts.BIN_ProductVendorID as productVendorId,
+				ts.UnitCode as unitCode,
+				ts.BarCode as barCode,
+				ts.ProductName as productName,
+				ts.Price as price,
+				ts.MemberPrice as memberPrice,
+				ts.PlatinumPrice as platinumPrice,
+				ts.Quantity as quantity,
+				ts.DiscountRate as discountRate,
+				ts.RealPrice as realPrice,
+				ts.Amount as amount,
+				ts.OriginalAmount as originalAmount,
+				ts.DiscountId as activityTypeCode,
+				ts.SaleType as proType 
+			FROM 
+				Sale.BIN_WebPosSaleDetail as ts with(nolock) 
+			WHERE 
+				ts.ValidFlag = '1' AND 
+				ts.ComputeSign < 0 AND 
+				ts.BIN_OrganizationInfoID = #organizationInfoId# AND 
+				ts.BIN_BrandInfoID = #brandInfoId# AND 
+				(ts.BillCode = #billCode# or ts.RelevantCode = #billCode#)
+			ORDER BY 
+				ts.RowNumber 
+		]]>
+    </select>
+    
+    <sql id="insertSrBillSql">
+    	<![CDATA[
+    		INSERT INTO Sale.BIN_WebPosSaleRecord (
+				BIN_OrganizationInfoID,
+				BIN_BrandInfoID,
+				BIN_UserID,
+				BIN_EmployeeID,
+				CounterCode,
+				BaCode,
+				SaleTime,
+				MachineCode,
+				BillCode,
+				RelevantCode,
+				SaleType,
+				TicketType,
+				CustomerType,
+				BusinessDate,
+				BIN_MemberInfoID,
+				MemberCode,
+				TotalQuantity,
+				ComputeSign,
+				TotalAmount,
+				OriginalAmount,
+				TotalDiscountRate,
+				RoundingAmount,
+				Costpoint,
+				Costpoint_Amount,
+				BillCount,
+				SaleSRtype,
+				BillState,
+				DataState,
+				MQState,
+				DataSource,
+				ValidFlag,
+				CreateTime,
+				CreatedBy,
+				CreatePGM,
+				UpdateTime,
+				UpdatedBy,
+				UpdatePGM,
+				ModifyCount 
+			)SELECT 
+				#organizationInfoId# as organizationInfoId,
+				#brandInfoId# as brandInfoId,
+				#userId# as userId,
+				#employeeId# as employeeId,
+				#counterCode# as counterCode,
+				ts.BaCode as baCode,
+				#saleTime# saleTime,
+				#machineCode# as machineCode,
+				#srBillCode# as billCode,
+				ts.RelevantCode as relevantCode,
+				#saleType# as saleType,
+				#ticketType# as ticketType,
+				ts.CustomerType as customerType,
+				#businessDate# as businessDate,
+				ts.BIN_MemberInfoID as memberInfoId,
+				ts.MemberCode as memberCode,
+				tb.totalQuantity as totalQuantity,
+				-1 as computeSign,
+				tb.totalAmount as totalAmount,
+				tb.originalAmount as originalAmount,
+				ts.TotalDiscountRate as totalDiscountRate,
+				tb.RoundingAmount as roundingAmount,
+				tb.Costpoint as costPoint,
+				tb.costpointAmount as costPointAmount,
+				#billCount# as billCount,
+				#saleSRtype# as saleSRtype,
+				#billState# as billState,
+				#dataState# as dataState,
+				'1' as MQState,
+				#dataSource# as dataSource,
+				'1' as validFlag,
+				GETDATE() as createTime,
+				#userId# as createdBy,
+				#createPGM# as createPGM,
+				GETDATE() as updateTime,
+				#userId# as updatedBy,
+				#updatePGM# as updatePGM,
+				0 as modifyCount 
+			FROM 
+				Sale.BIN_WebPosSaleRecord as ts with(nolock) 
+				INNER JOIN (
+					SELECT 
+						RelevantCode as relevantCode,
+						sum(isnull(TotalQuantity,0)*isnull(ComputeSign,1)) as totalQuantity,
+						sum(isnull(OriginalAmount,0)*isnull(ComputeSign,1)) as originalAmount,
+						sum(isnull(TotalAmount,0)*isnull(ComputeSign,1)) as totalAmount,
+						sum(isnull(RoundingAmount,0)) as roundingAmount,
+						sum(isnull(Costpoint,0)) as costpoint,
+						sum(isnull(costpoint_Amount,0)) as costpointAmount 
+					FROM 
+						Sale.BIN_WebPosSaleRecord with(nolock) 
+					WHERE 
+						ValidFlag = '1' AND 
+						BIN_OrganizationInfoID = #organizationInfoId# AND 
+						BIN_BrandInfoID = #brandInfoId# AND 
+						RelevantCode = #billCode# 
+					GROUP BY 
+						RelevantCode 
+				) as tb on tb.relevantCode = ts.BillCode and tb.totalQuantity > 0 
+			WHERE 
+				ts.ValidFlag = '1' AND 
+				ts.SaleType in ('NS','PN') AND 
+				ts.DataState != 1 AND 
+				ts.BIN_OrganizationInfoID = #organizationInfoId# AND 
+				ts.BIN_BrandInfoID = #brandInfoId# AND 
+				ts.BillCode = #billCode# 
+    	]]>
+    </sql>
+    <insert id="insertSrBill" parameterClass="java.util.HashMap">
+    	<selectKey resultClass="java.lang.Integer" type="post" keyProperty="BIN_SaleId" >
+            <include refid="BINOLWPSAL07.insertSrBillSql" />
+            <![CDATA[SELECT SCOPE_IDENTITY() AS value]]>
+        </selectKey>
+    </insert>
+    
+    <insert id="insertSrBillDetail" parameterClass="java.util.HashMap">
+    	<![CDATA[
+    		INSERT INTO Sale.BIN_WebPosSaleDetail (
+				BIN_OrganizationInfoID,
+				BIN_BrandInfoID,
+				BIN_SaleId,
+				BillCode,
+				RelevantCode,
+				CouponOrderId,
+				CouponCode,
+				IsStock,
+				ActivityCode,
+				CounterActCode,
+				RowNumber,
+				BIN_ProductVendorID,
+				UnitCode,
+				BarCode,
+				ProductName,
+				Price,
+				MemberPrice,
+				PlatinumPrice,
+				Quantity,
+				ComputeSign,
+				DiscountRate,
+				RealPrice,
+				Amount,
+				OriginalAmount,
+				DiscountId,
+				SaleType,
+				ValidFlag,
+				CreateTime,
+				CreatedBy,
+				CreatePGM,
+				UpdateTime,
+				UpdatedBy,
+				UpdatePGM,
+				ModifyCount 
+			)SELECT 
+				#organizationInfoId# as organizationInfoId,
+				#brandInfoId# as brandInfoId,
+				#saleId# as saleId,
+				#srBillCode# as billCode,
+				td.RelevantCode as relevantCode,
+				td.CouponOrderId as couponOrderId,
+				td.CouponCode as couponCode,
+				td.IsStock as isStock,
+				td.ActivityCode as activityCode,
+				td.CounterActCode as counterActCode,
+				td.RowNumber as rowNumber,
+				td.BIN_ProductVendorID as productVendorId,
+				td.UnitCode as unitCode,
+				td.BarCode as barCode,
+				td.ProductName as productName,
+				td.Price as price,
+				td.MemberPrice as memberPrice,
+				td.PlatinumPrice as platinumPrice,
+				tb.quantity as quantity,
+				-1 as computeSign,
+				td.DiscountRate as discountRate,
+				td.RealPrice as realPrice,
+				tb.amount as amount,
+				tb.originalAmount as originalAmount,
+				td.DiscountId as discountId,
+				td.SaleType as saleType,
+				'1' as validFlag,
+				GETDATE() as createTime,
+				#userId# as createdBy,
+				#createPGM# as createPGM,
+				GETDATE() as updateTime,
+				#userId# as updatedBy,
+				#updatePGM# as updatePGM,
+				0 as modifyCount 
+			FROM 
+				Sale.BIN_WebPosSaleDetail as td with(nolock) 
+				INNER JOIN (
+					SELECT 
+						RelevantCode as relevantCode,
+						BIN_ProductVendorID as productVendorId,
+						BarCode as barCode,
+						RealPrice as realprice,
+						sum(isnull(Quantity,0)*isnull(ComputeSign,1)) as quantity,
+						sum(isnull(Amount,0)*isnull(ComputeSign,1)) as amount,
+						sum(isnull(originalAmount,0)*isnull(ComputeSign,1)) as originalAmount 
+					FROM 
+						Sale.BIN_WebPosSaleDetail with(nolock) 
+					WHERE 
+						ValidFlag = '1' AND 
+						BIN_OrganizationInfoID = #organizationInfoId# AND 
+						BIN_BrandInfoID = #brandInfoId# AND 
+						RelevantCode = #billCode# 
+					GROUP BY 
+						RelevantCode,
+						BIN_ProductVendorID,
+						BarCode,
+						RealPrice 
+						]]>
+					<isNotEmpty prepend="," property="merge">
+						RowNumber
+					</isNotEmpty>
+						<![CDATA[
+				) as tb on td.BillCode = tb.relevantCode and td.BIN_ProductVendorID = tb.productVendorId and td.BarCode = tb.BarCode and td.realprice = tb.realprice and tb.quantity > 0 
+			WHERE 
+				td.ValidFlag = '1' AND 
+				td.BIN_OrganizationInfoID = #organizationInfoId# AND 
+				td.BIN_BrandInfoID = #brandInfoId# AND 
+				td.BillCode = #billCode# 
+			UNION 
+			SELECT 
+				#organizationInfoId# as organizationInfoId,
+				#brandInfoId# as brandInfoId,
+				#saleId# as saleId,
+				#srBillCode# as billCode,
+				td.RelevantCode as relevantCode,
+				td.CouponOrderId as couponOrderId,
+				td.CouponCode as couponCode,
+				td.IsStock as isStock,
+				td.ActivityCode as activityCode,
+				td.CounterActCode as counterActCode,
+				td.RowNumber as rowNumber,
+				td.BIN_ProductVendorID as productVendorId,
+				td.UnitCode as unitCode,
+				td.BarCode as barCode,
+				td.ProductName as productName,
+				td.Price as price,
+				td.MemberPrice as memberPrice,
+				td.PlatinumPrice as platinumPrice,
+				td.quantity as quantity,
+				-1 as computeSign,
+				td.DiscountRate as discountRate,
+				td.RealPrice as realPrice,
+				tb.amount as amount,
+				td.originalAmount as originalAmount,
+				td.DiscountId as discountId,
+				td.SaleType as saleType,
+				'1' as validFlag,
+				GETDATE() as createTime,
+				#userId# as createdBy,
+				#createPGM# as createPGM,
+				GETDATE() as updateTime,
+				#userId# as updatedBy,
+				#updatePGM# as updatePGM,
+				0 as modifyCount 
+			FROM 
+				Sale.BIN_WebPosSaleDetail as td with(nolock) 
+				INNER JOIN (
+					SELECT 
+						RelevantCode as relevantCode,
+						DiscountId as discountId,
+						sum(isnull(Amount,0)*isnull(ComputeSign,1)) as amount
+					FROM 
+						Sale.BIN_WebPosSaleDetail with(nolock) 
+					WHERE 
+						ValidFlag = '1' AND 
+						BIN_OrganizationInfoID = #organizationInfoId# AND 
+						BIN_BrandInfoID = #brandInfoId# AND 
+						RelevantCode = #billCode# AND 
+						DiscountId in ('DXJE','ZDZK','ZDQL') 
+					GROUP BY 
+						RelevantCode,
+						DiscountId 
+						]]>
+					<isNotEmpty prepend="," property="merge">
+						RowNumber
+					</isNotEmpty>
+						<![CDATA[
+				) as tb on td.BillCode = tb.relevantCode and td.DiscountId = tb.discountId and tb.amount != 0 
+			WHERE 
+				td.ValidFlag = '1' AND 
+				td.BIN_OrganizationInfoID = #organizationInfoId# AND 
+				td.BIN_BrandInfoID = #brandInfoId# AND 
+				td.BillCode = #billCode#  AND 
+				td.DiscountId in ('DXJE','ZDZK','ZDQL') 
+    	]]>
+    </insert>
+    
+    
+    <insert id="insertSrPayment" parameterClass="java.util.HashMap">
+    	<![CDATA[
+    		INSERT INTO Sale.BIN_WebPosPayDetail (
+				BIN_SaleId,
+				BillCode,
+				RelevantCode,
+				PayType,
+				PayAmount,
+				Currency,
+				SerialNumber,
+				ValidFlag,
+				CreateTime,
+				CreatedBy,
+				CreatePGM,
+				UpdateTime,
+				UpdatedBy,
+				UpdatePGM,
+				ModifyCount 
+			)SELECT 
+				#saleId# as saleId,
+				#srBillCode# as billCode,
+				RelevantCode,
+				PayType,
+				-PayAmount,
+				Currency,
+				SerialNumber,
+				'1' as validFlag,
+				GETDATE() as createTime,
+				#userId# as createdBy,
+				#createPGM# as createPGM,
+				GETDATE() as updateTime,
+				#userId# as updatedBy,
+				#updatePGM# as updatePGM,
+				0 as modifyCount 
+			FROM 
+				Sale.BIN_WebPosPayDetail as td with(nolock) 
+			WHERE 
+				td.ValidFlag = '1' AND 
+				td.BillCode = #billCode# 
+    	]]>
+    </insert>
+    
+    <!-- 更新单据信息 -->
+	<update id="updateSaleBillInfo" parameterClass="java.util.HashMap">
+		<![CDATA[
+			UPDATE 
+				Sale.BIN_WebPosSaleRecord 
+			SET 
+				BillCount = 0,
+				DataState = #dataState#,
+		]]>
+			<include refid="BINOLCMINC99.updateSql" />
+		<![CDATA[
+			WHERE 
+				ValidFlag = '1' AND 
+				SaleType in ('NS','PN') AND 
+				DataState != 1 AND 
+				BIN_OrganizationInfoID = #organizationInfoId# AND 
+		  		BIN_BrandInfoID = #brandInfoId# AND 
+		  		BillCode = #billCode# 
+		]]>
+    </update>
+    
+    <!--插入主单据-->
+	<sql id="saveSrBillSql">
+        <![CDATA[
+            INSERT INTO Sale.BIN_WebPosSaleRecord(
+				BIN_OrganizationInfoID,
+				BIN_BrandInfoID,
+				BIN_UserID,
+				BIN_EmployeeID,
+				CounterCode,
+				BaCode,
+				SaleTime,
+				MachineCode,
+				BillCode,
+				RelevantCode,
+				SaleType,
+				TicketType,
+				CustomerType,
+				BusinessDate,
+				BIN_MemberInfoID,
+				MemberCode,
+		]]>
+        <dynamic>
+        	<isNotEmpty property="totalQuantity">
+                <![CDATA[TotalQuantity,]]>
+            </isNotEmpty>
+            <isNotEmpty property="computeSign">
+                <![CDATA[ComputeSign,]]>
+            </isNotEmpty>
+            <isNotEmpty property="totalAmount">
+                <![CDATA[TotalAmount,]]>
+            </isNotEmpty>
+            <isNotEmpty property="originalAmount">
+                <![CDATA[OriginalAmount,]]>
+            </isNotEmpty>
+            <isNotEmpty property="totalDiscountRate">
+                <![CDATA[TotalDiscountRate,]]>
+            </isNotEmpty>
+            <isNotEmpty property="roundingAmount">
+                <![CDATA[RoundingAmount,]]>
+            </isNotEmpty>
+		</dynamic>
+        <![CDATA[
+        		BillCount,
+				SaleSRtype,
+				BillState,
+				DataState,
+				MQState,
+				DataSource,
+				ValidFlag,
+				CreateTime,
+				CreatedBy,
+				CreatePGM,
+				UpdateTime,
+				UpdatedBy,
+				UpdatePGM,
+				ModifyCount 
+			)SELECT 
+				#organizationInfoId# as organizationInfoId,
+				#brandInfoId# as brandInfoId,
+				#userId# as userId,
+				#employeeId# as employeeId,
+				#counterCode# as counterCode,
+				ts.BaCode as baCode,
+				#saleTime# saleTime,
+				#machineCode# as machineCode,
+				#srBillCode# as billCode,
+				ts.RelevantCode as relevantCode,
+				#saleType# as saleType,
+				#ticketType# as ticketType,
+				ts.CustomerType as customerType,
+				#businessDate# as businessDate,
+				ts.BIN_MemberInfoID as memberInfoId,
+				ts.MemberCode as memberCode,
+		]]>
+        <dynamic>
+        	<isNotEmpty property="totalQuantity">
+                <![CDATA[#totalQuantity# as totalQuantity,]]>
+            </isNotEmpty>
+            <isNotEmpty property="computeSign">
+                <![CDATA[#computeSign# as computeSign,]]>
+            </isNotEmpty>
+            <isNotEmpty property="totalAmount">
+                <![CDATA[#totalAmount# as totalAmount,]]>
+            </isNotEmpty>
+            <isNotEmpty property="originalAmount">
+                <![CDATA[#originalAmount# as originalAmount,]]>
+            </isNotEmpty>
+            <isNotEmpty property="totalDiscountRate">
+                <![CDATA[#totalDiscountRate# as totalDiscountRate,]]>
+            </isNotEmpty>
+            <isNotEmpty property="roundingAmount">
+                <![CDATA[#roundingAmount# as roundingAmount,]]>
+            </isNotEmpty>
+		</dynamic>
+        <![CDATA[
+				#billCount# as billCount,
+				#saleSRtype# as saleSRtype,
+				#billState# as billState,
+				#dataState# as dataState,
+				'1' as MQState,
+				#dataSource# as dataSource,
+				'1' as validFlag,
+				GETDATE() as createTime,
+				#userId# as createdBy,
+				#createPGM# as createPGM,
+				GETDATE() as updateTime,
+				#userId# as updatedBy,
+				#updatePGM# as updatePGM,
+				0 as modifyCount 
+			FROM 
+				Sale.BIN_WebPosSaleRecord as ts with(nolock) 
+			WHERE 
+				ts.ValidFlag = '1' AND 
+				ts.SaleType in ('NS','PN') AND 
+				ts.DataState != 1 AND 
+				ts.BIN_OrganizationInfoID = #organizationInfoId# AND 
+				ts.BIN_BrandInfoID = #brandInfoId# AND 
+				ts.BillCode = #billCode# 
+        ]]>
+	</sql>
+    <insert id="saveBillSrRecord" parameterClass="java.util.HashMap">
+        <selectKey resultClass="java.lang.Integer" type="post" keyProperty="BIN_SaleId" >
+            <include refid="BINOLWPSAL07.saveSrBillSql" />
+            <![CDATA[SELECT SCOPE_IDENTITY() AS value]]>
+        </selectKey>
+    </insert>
+    
+    <!-- 新增明细记录  -->
+	<insert id="saveBillSrDetail" parameterClass="java.util.HashMap">
+        <![CDATA[
+			INSERT INTO Sale.BIN_WebPosSaleDetail(
+				BIN_OrganizationInfoID,
+				BIN_BrandInfoID,
+				BIN_SaleId,
+				BillCode,
+				RelevantCode,
+				CouponOrderId,
+				CouponCode,
+				IsStock,
+				ActivityCode,
+				CounterActCode,
+				RowNumber,
+				BIN_ProductVendorID,
+				UnitCode,
+				BarCode,
+				ProductName,
+		]]>
+        <dynamic>
+        	<isNotEmpty property="price">
+                <![CDATA[Price,]]>
+            </isNotEmpty>
+            <isNotEmpty property="memberPrice">
+                <![CDATA[MemberPrice,]]>
+            </isNotEmpty>
+            <isNotEmpty property="platinumPrice">
+                <![CDATA[PlatinumPrice,]]>
+            </isNotEmpty>
+            <isNotEmpty property="quantity">
+                <![CDATA[Quantity,]]>
+            </isNotEmpty>
+            <isNotEmpty property="computeSign">
+                <![CDATA[ComputeSign,]]>
+            </isNotEmpty>
+            <isNotEmpty property="discountRate">
+                <![CDATA[DiscountRate,]]>
+            </isNotEmpty>
+            <isNotEmpty property="realPrice">
+                <![CDATA[RealPrice,]]>
+            </isNotEmpty>
+            <isNotEmpty property="amount">
+                <![CDATA[Amount,]]>
+            </isNotEmpty>
+            <isNotEmpty property="originalAmount">
+                <![CDATA[OriginalAmount,]]>
+            </isNotEmpty>
+		</dynamic>
+        <![CDATA[
+				DiscountId,
+				SaleType,
+		]]>	
+			<include refid="BINOLCMINC99.insertKeySql" />
+		<![CDATA[
+			)VALUES(
+	            #organizationInfoId#,
+				#brandInfoId#,
+				#saleId#,
+				#billCode#,
+				#relevantCode#,
+				#orderId#,
+				#couponCode#,
+				#isStock#,
+				#activityCode#,
+				#counterActCode#,
+				#rowNumber#,
+				#productVendorID#,
+				#unitCode#,
+				#barCode#,
+				#productName#,
+		]]>
+        <dynamic>
+        	<isNotEmpty property="price">
+                <![CDATA[#price#,]]>
+            </isNotEmpty>
+            <isNotEmpty property="memberPrice">
+                <![CDATA[#memberPrice#,]]>
+            </isNotEmpty>
+            <isNotEmpty property="platinumPrice">
+                <![CDATA[#platinumPrice#,]]>
+            </isNotEmpty>
+            <isNotEmpty property="quantity">
+                <![CDATA[#quantity#,]]>
+            </isNotEmpty>
+            <isNotEmpty property="computeSign">
+                <![CDATA[#computeSign#,]]>
+            </isNotEmpty>
+            <isNotEmpty property="discountRate">
+                <![CDATA[#discountRate#,]]>
+            </isNotEmpty>
+            <isNotEmpty property="realPrice">
+                <![CDATA[#realPrice#,]]>
+            </isNotEmpty>
+            <isNotEmpty property="amount">
+                <![CDATA[#amount#,]]>
+            </isNotEmpty>
+            <isNotEmpty property="originalAmount">
+                <![CDATA[#originalAmount#,]]>
+            </isNotEmpty>
+		</dynamic>
+        <![CDATA[
+				#discountId#,
+				#saleType#,
+		]]>
+			<include refid="BINOLCMINC99.insertValueSql" />
+		<![CDATA[
+			)
+		]]>
+    </insert>
+</sqlMap>

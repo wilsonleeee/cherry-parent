@@ -1,0 +1,321 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sqlMap PUBLIC "-//iBATIS.com//DTD SQL Map 2.0//EN" "http://ibatis.apache.org/dtd/sql-map-2.dtd">
+<sqlMap namespace="BINOLPTRPS27">
+	<!-- 统计数据查询SQL文 -->
+	<sql id="querySQL">
+		<![CDATA[
+			select 
+				'('+A.DepartCode+')'+A.DepartName as departName,
+				A.Type as departType,
+				B.StatisticDate,
+				B.weekday,
+		]]>
+				<iterate property="bussinessParamter" conjunction=","> 
+			 	isnull([$bussinessParamter[]$],'-') as [$bussinessParamter[]$]
+				</iterate>
+		<![CDATA[
+			from
+				(
+					select T2.* from (
+						select 
+							ParameterData as organizationId
+						from
+							Inventory.BIN_InventoryOperationParam WITH(NOLOCK)
+						where ParameterType = 'DP'
+						union
+						select 
+							BIN_OrganizationID as organizationId
+						from
+							Basis.BIN_Organization WITH(NOLOCK)
+						where Type in('4','6')
+					)T1 left join Basis.BIN_Organization T2 on T1.organizationId = T2.BIN_OrganizationID
+				) A
+				join(
+					select 
+						T1.BIN_OrganizationID,
+						T1.StatisticDate,
+						datename(weekday, T1.StatisticDate) as weekday,
+						'StatisticData' =
+						 case
+							when T1.StatisticType ='BASM' then MAX(T3.EmployeeName)
+							when T1.StatisticType ='DSEM' then MAX(T3.EmployeeName)
+							else cast(sum(cast(T1.StatisticData as float)) as nvarchar) 
+						 end,
+						T1.StatisticType+isnull(T2.Type,'') as oType 
+					from 
+						Inventory.BIN_InventoryOperationStatistic T1 WITH(NOLOCK)
+						left join Basis.BIN_Organization T2 WITH(NOLOCK) on T1.BIN_OrganizationIDOperate = cast(T2.BIN_OrganizationID as nvarchar)
+						left join Basis.BIN_Employee T3 WITH(NOLOCK) on T1.StatisticData = CAST(T3.BIN_EmployeeID as nvarchar)
+					group by 
+						T1.BIN_OrganizationID,
+						T1.StatisticDate,
+						T1.StatisticType,
+						T2.Type
+					) T
+					pivot(
+						max(StatisticData) for oType in(
+			]]>
+			 				<iterate property="bussinessParamter" conjunction=","> 
+			 					[$bussinessParamter[]$]
+							</iterate>
+		<![CDATA[
+						)
+					)B on A.BIN_OrganizationID = B.BIN_OrganizationID 	
+			where 
+				A.BIN_OrganizationInfoID = #organizationInfoId#
+				and A.BIN_BrandInfoID = #brandInfoId#
+				and EXISTS (
+		]]>
+			<include refid="BINOLCMINC99.getDepartList" />
+			<![CDATA[AND A.BIN_OrganizationID = A99.BIN_OrganizationID)]]>
+			<isNotEmpty prepend="and" property="startTime">
+				<![CDATA[ B.StatisticDate >= #startTime# ]]>
+			</isNotEmpty>
+			<isNotEmpty prepend="and" property="endTime">
+				<![CDATA[ B.StatisticDate <= #endTime# ]]>
+			</isNotEmpty>
+	</sql>
+	
+	<!-- 取得统计List -->
+	<select id="getInventoryOperationStatisticList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap" remapResults="true">
+		<include refid="BINOLCMINC99.pageheader" />
+		<include refid="BINOLPTRPS27.querySQL"/>
+		<include refid="BINOLCMINC99.pagefooter" />
+	</select>
+	
+	<!-- 取得统计总数 -->
+	<select id="getInventoryOperationStatisticCount" parameterClass="java.util.HashMap" resultClass="java.lang.Integer">
+    	<![CDATA[
+			SELECT	COUNT(SORT_T1.DepartName) AS count FROM (
+		]]>	
+		<include refid="BINOLPTRPS27.querySQL"/>
+		<![CDATA[	
+			)SORT_T1
+		]]>										
+    </select>
+    
+    <!-- 取得统计的参数 -->
+    <select id="getInventoryOperationParameter" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+    	<![CDATA[
+    	select 
+			A.BIN_InventoryOperationParamID as inventoryOperationParamId,
+			A.ParameterData as parameterData
+		from 
+			Inventory.BIN_InventoryOperationParam A
+		where 
+			A.BIN_OrganizationInfoID = #organizationInfoId#
+			and A.BIN_BrandInfoID = #brandInfoId#
+			and A.ParameterType = #parameterType#
+		]]>
+    </select>
+    
+ 
+    <!-- 添加部门参数 -->
+    <insert id="insertInventoryOperationParameter" parameterClass="java.util.HashMap">
+    	<selectKey resultClass="java.lang.Integer" type="post" keyProperty="BIN_InventoryOperationParamID" >      
+	    	<![CDATA[
+	    	insert into Inventory.BIN_InventoryOperationParam(
+		    	BIN_OrganizationInfoID,
+		    	BIN_BrandInfoID,
+		    	ParameterType,
+		    	ParameterData,
+				CreateTime,
+				UpdateTime,
+				CreatedBy,
+				CreatePGM,
+				UpdatedBy,
+				UpdatePGM,
+				ValidFlag,
+				ModifyCount
+			)
+			values(
+				#organizationInfoId#,
+				#brandInfoId#,
+				#parameterType#,
+				#parameterData#,
+				GETDATE(),
+				GETDATE(),
+				#createdBy#,
+				#createPGM#,
+				#updatedBy#,
+				#updatePGM#,
+				'1',
+				0
+			)
+			]]> 
+			SELECT SCOPE_IDENTITY() AS value
+	   </selectKey> 
+    </insert>
+    
+    <!-- 删除统计的参数 -->
+    <delete id="delInventoryOperationParameter" parameterClass="java.util.HashMap">
+    	delete from Inventory.BIN_InventoryOperationParam 
+    	where
+    		BIN_OrganizationInfoID = #organizationInfoId#
+			and BIN_BrandInfoID = #brandInfoId# 	
+    		and ParameterType = #parameterType#
+    		<isNotNull property="inventoryOperationParamId" prepend="AND">
+    			BIN_InventoryOperationParamID = #inventoryOperationParamId#
+    		</isNotNull>
+    </delete>
+    
+    <!-- 获取部门List -->
+     <select id="getDepartList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+	     select 
+			A.BIN_OrganizationID as departId,
+			'('+A.DepartCode+')'+A.DepartName  as departCodeName,
+			A.DepartName as departName,
+			A.Type as departType
+		from 
+			Basis.BIN_Organization A
+		where
+			A.BIN_OrganizationInfoID = #organizationInfoId#
+			and A.BIN_BrandInfoID = #brandInfoId#
+			and A.Type not in('4','6','Z')
+			and A.ValidFlag = '1'
+		order by A.Type
+     </select>
+    
+    <!-- 查询调度信息 --> 
+	<select id="getSchedules"  parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+		<![CDATA[
+			select 
+				A.BIN_SchedulesID as schedulesId,
+				A.RunTime as runTime,
+				A.TaskCode as taskCode,
+				A.LastRunTime as lastRunTime,
+				A.ValidFlag as validFlag
+			from 
+				Communication.BIN_Schedules A	
+			where 
+				A.BIN_OrganizationInfoID = #organizationInfoId#
+				and A.BIN_BrandInfoID = #brandInfoId#
+				and A.TaskType = 'IS'
+		]]>
+	</select>
+    
+    <!-- 更新调度信息 -->
+    <update id="updateSchedules" parameterClass="java.util.HashMap">
+	     <![CDATA[ 
+	    	update 
+	    		Communication.BIN_Schedules
+	    	set 
+	    		LoadFlag = 0,
+	    		RunTime = #runTime#,
+	    		TaskCode = #taskCode#,
+	    		ValidFlag = #validFlag#,
+	    ]]>
+	    	<include refid="BINOLCMINC99.updateSql" />
+	    <![CDATA[ 
+	    	where 
+	    		BIN_OrganizationInfoID = #organizationInfoId#
+				and BIN_BrandInfoID = #brandInfoId#
+				and TaskType = 'IS'
+	    ]]>
+    </update> 
+    
+    <!-- 增加调度信息  -->
+	<insert id="insertSchedules" parameterClass="java.util.HashMap">
+	<selectKey resultClass="java.lang.Integer" type="post" keyProperty="BIN_SchedulesID" >    
+        <![CDATA[ 
+		INSERT INTO Communication.BIN_Schedules
+		           (BIN_OrganizationInfoID,
+		            BIN_BrandInfoID,
+		            RunTime,
+		            TaskCode,
+		            TaskType,
+		            AllowRepeat,
+		            Status,
+		            LoadFlag,
+		            RunCount,
+		]]>	
+		    <include refid="BINOLCMINC99.insertKeySql" />
+		<![CDATA[
+        )VALUES
+		           (#organizationInfoId#,
+		            #brandInfoId#,
+		            #runTime#,
+		            #taskCode#,
+		            #taskType#,
+		            #allowRepeat#,
+		            #status#,
+		            #loadFlag#,
+		            #runCount#,
+       ]]>
+	        <include refid="BINOLCMINC99.insertValueSql" />
+		<![CDATA[
+		)
+		SELECT SCOPE_IDENTITY() AS value
+		]]>
+	</selectKey>
+    </insert>
+    
+    <!-- 查询业务参数 -->
+    <select id="getBussnissParameter" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+    	<![CDATA[
+    	select 
+			A.BIN_InventoryOperationParamID as inventoryOperationParamId,
+			A.ParameterData as parameterData,
+			A.ParameterName as parameterName,
+			A.ParameterParent as parameterParent,
+			A.ParameterType as parameterType,
+			A.ParameterSortNo as parameterSortNo,
+			A.ValidFlag as validFlag,
+			case ValidFlag when '0' then 'false' when '1' then 'true' end as isChecked
+		from 
+			Inventory.BIN_InventoryOperationParam A
+		where 
+			A.BIN_OrganizationInfoID = #organizationInfoId#
+			and A.BIN_BrandInfoID = #brandInfoId#
+			and A.ParameterType = 'BT'
+		]]>
+			<isNotEmpty prepend="AND" property="parameterParent">
+				A.ParameterParent = #parameterParent#
+			</isNotEmpty>
+			<isNotEmpty prepend="AND" property="isRoot">
+				A.ParameterParent = A.ParameterData
+			</isNotEmpty>
+			<isEmpty prepend="AND" property="isRoot">
+				A.ParameterParent != A.ParameterData
+			</isEmpty>
+			<isNotEmpty prepend="AND" property="validFlag">
+				A.ValidFlag = #validFlag#
+			</isNotEmpty>
+		order by A.ParameterSortNo
+    </select>
+    
+    <!-- 更新业务参数 -->
+    <update id="updateBussnissParameter" parameterClass="java.util.HashMap">
+    	<![CDATA[
+    	update 
+			Inventory.BIN_InventoryOperationParam 
+		set 
+			ValidFlag = #validFlag#,
+		]]>
+			<include refid="BINOLCMINC99.updateSql" />
+		<![CDATA[
+		where
+			BIN_OrganizationInfoID = #organizationInfoId#
+			and BIN_BrandInfoID = #brandInfoId#
+			and ParameterType = 'BT'
+		]]>
+			<isNotEmpty prepend="AND" property="inventoryOperationParamId">
+				BIN_InventoryOperationParamID = #inventoryOperationParamId#
+			</isNotEmpty>
+    </update>
+    
+    <!-- 最后一次统计的数据日期 -->
+    <select id="getLastStatisticDate" parameterClass="java.util.HashMap" resultClass="java.lang.String">
+    	<![CDATA[
+    		select 
+    			top(1) 
+    			StatisticDate 
+    		from 
+    			Inventory.BIN_InventoryOperationStatistic 
+    		where 
+				BIN_OrganizationInfoID = #organizationInfoId#
+				and BIN_BrandInfoID  = #brandInfoId#
+    		order by StatisticDate desc
+    	]]>
+    </select>
+</sqlMap>

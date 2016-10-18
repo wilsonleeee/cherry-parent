@@ -1,0 +1,317 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sqlMap PUBLIC "-//iBATIS.com//DTD SQL Map 2.0//EN" "http://ibatis.apache.org/dtd/sql-map-2.dtd">
+<sqlMap namespace="BINOLSTSFH15">
+	<!-- 销售单据查询Sql  -->
+	<sql id="saleOrdersDetailQuery">
+		<![CDATA[
+			SELECT 
+				DISTINCT
+				tb.BIN_BackstageSaleID as saleId,
+				tb.BillCode as saleOrderNo,
+				tb.ImportBatch AS importBatch,
+				(CASE
+			        WHEN tb.CustomerType = '1' THEN '('+tbs1.DepartCode+')'+tbs1.DepartName
+			        WHEN tb.CustomerType = '2' THEN '('+tbs2.Code+')'+tbs2.NameCN
+			        WHEN tb.CustomerType = '3' THEN '('+tbs3.EmployeeCode+')'+tbs3.EmployeeName
+			    END) AS customerName,
+				tb.ContactPerson as contactPerson,
+				tb.DeliverAddress as deliverAddress,
+				tb.CustomerType as customerType,
+				tb.BillType as billType,
+				tg.DepartName as saleOrganization,
+				te1.EmployeeName as saleEmployee,
+				tb.TotalQuantity as totalQuantity,
+				tb.OriginalAmount as originalAmount,
+			    Convert(decimal(16,2),ISNULL(tb.DiscountRate,1)*100) as discountRate,
+				tb.DiscountAmount as discountAmount,
+				tb.PayAmount as payAmount,
+				tb.ExpectFinishDate as expectFinishDate,
+				tb.SaleDate as saleDate,
+				CONVERT(varchar(50),tb.SaleTime,120) as saleTime,
+				CONVERT(varchar(50),tb.BillTicketTime,120) as billTicketTime,
+				te2.EmployeeName as employeeName,
+				tb.BillState as billState,
+				tb.SaleType AS saleType
+			FROM 
+				Sale.BIN_BackstageSale as tb 
+				LEFT JOIN Basis.BIN_Organization tg ON tb.BIN_OrganizationID = tg.BIN_OrganizationID 
+				LEFT JOIN Basis.BIN_Employee te1 on tb.SaleEmployee = te1.BIN_EmployeeID 
+				LEFT JOIN Basis.BIN_Employee te2 on tb.BillTicketEmployee = te2.BIN_EmployeeID 
+				LEFT JOIN Basis.BIN_Organization tbs1 ON tb.CustomerID = tbs1.BIN_OrganizationID 
+				LEFT JOIN Basis.BIN_BussinessPartner as tbs2 ON tb.CustomerID = tbs2.BIN_BussinessPartnerID
+			    LEFT JOIN Basis.BIN_Employee as tbs3 ON tb.CustomerID = tbs3.BIN_EmployeeID
+			WHERE 
+				tb.ValidFlag = 1 AND 
+				tb.BIN_BrandInfoID = #brandInfoId# AND 
+				tb.BIN_OrganizationInfoID = #organizationInfoId# 
+		]]>
+		<dynamic>
+            <![CDATA[AND EXISTS (]]>
+            <include refid="BINOLCMINC99.getDepartList" />
+            <![CDATA[AND tb.BIN_OrganizationID = A99.BIN_OrganizationID)]]>
+			<!-- 参数中存在销售单据号条件时  -->
+			<isNotEmpty prepend="AND" property="saleOrderNo" >
+				<![CDATA[tb.BillCode LIKE '%' + #saleOrderNo# +  '%']]>
+			</isNotEmpty>
+			<!-- 参数中存在客户部门ID条件时  -->
+			<isNotEmpty prepend="AND" property="customerOrganizationId" >
+				tb.CustomerID = #customerOrganizationId# 
+			</isNotEmpty>
+			<!-- 参数中存在销售部门ID条件时  -->
+			<isNotEmpty prepend="AND" property="organizationId" >
+				tb.BIN_OrganizationID = #organizationId# 
+			</isNotEmpty>
+			<!-- 参数中存在销售日期（起始）条件时  -->
+			<isNotEmpty prepend="AND" property="startDate">
+				<![CDATA[ tb.SaleDate >= #startDate#]]>
+			</isNotEmpty>
+			<!-- 参数中存在销售日期（截止）条件时  -->
+			<isNotEmpty prepend="AND" property="endDate">
+				<![CDATA[ tb.SaleDate < #endDate#]]>
+			</isNotEmpty>
+			<!-- 参数中存在单据状态条件时  -->
+			<isNotEmpty prepend="AND" property="billState" >
+				tb.BillState = #billState# 
+			</isNotEmpty>
+			<!-- 参数中存在导入批次条件时  -->
+			<isNotEmpty prepend="AND" property="importBatch" >
+				tb.ImportBatch LIKE '%' + #importBatch# + '%'
+			</isNotEmpty>
+			<!-- 参数中存在客户类型条件时  -->
+			<isNotEmpty prepend="AND" property="customerType" >
+				tb.CustomerType = #customerType# 
+			</isNotEmpty>
+            <isNotEmpty prepend="AND" property="depotId">
+                <![CDATA[tb.BIN_InventoryInfoID = #depotId#]]>
+            </isNotEmpty>
+		</dynamic>
+	</sql>
+	
+	<!-- 获取销售单据数量  -->
+    <select id="getSaleOrdersCount" parameterClass="java.util.HashMap" resultClass="java.lang.Integer">
+    	<![CDATA[
+			SELECT	COUNT(SORT_T1.saleId) AS count FROM (
+		]]>	
+		<include refid="BINOLSTSFH15.saleOrdersDetailQuery" />	
+		<![CDATA[	
+			)SORT_T1
+		]]>
+    </select>
+	
+	<!-- 获取销售单据List -->
+    <select id="getSaleOrdersList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+       	<include refid="BINOLCMINC99.pageheader" />
+		<include refid="BINOLSTSFH15.saleOrdersDetailQuery" />
+		<include refid="BINOLCMINC99.pagefooter" />
+    </select>
+	
+    <!-- 外接连产品分类用于查询产品对应的大中小分类 -->
+    <sql id="joinCateSql">
+        <![CDATA[
+            LEFT JOIN (
+                    SELECT
+                        pc.BIN_ProductID,
+                        pcv.PropValueChinese,
+                        pcv.PropValueForeign
+                    FROM
+                        Basis.BIN_PrtCategory pc,
+                        Basis.BIN_PrtCatProperty pcp,
+                        Basis.BIN_PrtCatPropValue pcv
+                    WHERE
+                        pc.BIN_PrtCatPropValueID = pcv.BIN_PrtCatPropValueID AND
+                        pcv.BIN_PrtCatPropertyID = pcp.BIN_PrtCatPropertyID AND
+                        pcp.TeminalFlag = '1' AND
+                        pc.ValidFlag = '1' AND
+                        pcv.ValidFlag = '1' AND
+                        pcp.ValidFlag = '1'
+                ) PC1 ON (PC1.BIN_ProductID = P.BIN_ProductID)
+            LEFT JOIN (
+                SELECT
+                    pc.BIN_ProductID,
+                    pcv.PropValueChinese,
+                    pcv.PropValueForeign
+                FROM
+                    Basis.BIN_PrtCategory pc,
+                    Basis.BIN_PrtCatProperty pcp,
+                    Basis.BIN_PrtCatPropValue pcv
+                WHERE
+                    pc.BIN_PrtCatPropValueID = pcv.BIN_PrtCatPropValueID AND
+                    pcv.BIN_PrtCatPropertyID = pcp.BIN_PrtCatPropertyID AND
+                    pcp.TeminalFlag = '2' AND
+                    pc.ValidFlag = '1' AND
+                    pcv.ValidFlag = '1' AND
+                    pcp.ValidFlag = '1'
+            ) PC2 ON (PC2.BIN_ProductID = P.BIN_ProductID)
+            LEFT JOIN (
+                SELECT
+                    pc.BIN_ProductID,
+                    pcv.PropValueChinese,
+                    pcv.PropValueForeign
+                FROM
+                    Basis.BIN_PrtCategory pc,
+                    Basis.BIN_PrtCatProperty pcp,
+                    Basis.BIN_PrtCatPropValue pcv
+                WHERE
+                    pc.BIN_PrtCatPropValueID = pcv.BIN_PrtCatPropValueID AND
+                    pcv.BIN_PrtCatPropertyID = pcp.BIN_PrtCatPropertyID AND
+                    pcp.TeminalFlag = '3' AND
+                    pc.ValidFlag = '1' AND
+                    pcv.ValidFlag = '1' AND
+                    pcp.ValidFlag = '1'
+            ) PC3 ON (PC3.BIN_ProductID = P.BIN_ProductID)
+            ]]>
+    </sql>
+	
+    <!-- 销售明细单据查询Sql  -->
+    <sql id="saleDetailQuery">
+        <![CDATA[
+            SELECT
+                BSD.BIN_BackstageSaleDetailID AS backstageSaleDetailID,
+                BS.SaleDate AS saleDate,
+                BS.BillCode as billCode,
+                BS.ImportBatch AS importBatch,
+                BS.BillType AS billType,
+                P.UnitCode AS unitCode,
+                PV.BarCode AS barCode,
+                ISNULL(BSD.Price,0)  AS price,
+                FLOOR(ISNULL(BSD.Quantity,0)) AS quantity,
+                Convert(decimal(16,2),ISNULL(BSD.DiscountRate,1)*100) AS discountRate,
+                Convert(decimal(16,2),ISNULL(BSD.Price,0) * FLOOR(ISNULL(BSD.Quantity,0))) AS saleAmount,
+                Convert(decimal(16,2),ISNULL(BSD.Price,0) * FLOOR(ISNULL(BSD.Quantity,0))) - ISNULL(BSD.PricePay,0) * FLOOR(ISNULL(BSD.Quantity,0)) AS saleSpread,
+                ISNULL(BSD.PricePay,0) * FLOOR(ISNULL(BSD.Quantity,0)) AS payAmount,
+                P.Mode AS prtMode,
+                (CASE
+                    WHEN BS.CustomerType = '1' THEN '('+C1.DepartCode+')'+C1.DepartName
+                    WHEN BS.CustomerType = '2' THEN '('+C2.Code+')'+C2.NameCN
+                    WHEN BS.CustomerType = '3' THEN '('+C3.EmployeeCode+')'+C3.EmployeeName
+                END) AS customerName,
+                ISNULL(BSD.PricePay,0) * FLOOR(ISNULL(BSD.Quantity,0)) * Convert(decimal(16,6),#IMSParam#) AS IMS,
+        ]]>
+            <dynamic>
+                <isNotEmpty property="language">
+                    <isEqual property="language" compareValue="en_US">
+                        <![CDATA[
+                            P.NameForeign AS prtName,
+                            '('+D.DepotCode+')'+D.DepotNameEN AS depotCodeName,
+                            '('+E.LogicInventoryCode+')'+E.InventoryNameEN AS logicInventoryCodeName,
+                            PC1.PropValueForeign AS primaryCategoryBig,
+                            PC3.PropValueForeign AS primaryCategoryMedium,
+                            PC2.PropValueForeign AS primaryCategorySmall
+                        ]]>
+                    </isEqual>
+                    <isEqual property="language" compareValue="zh_CN">
+                        <![CDATA[
+                            P.NameTotal AS prtName,
+                            '('+D.DepotCode+')'+D.DepotNameCN AS depotCodeName,
+                            '('+E.LogicInventoryCode+')'+E.InventoryNameCN AS logicInventoryCodeName,
+                            PC1.PropValueChinese AS primaryCategoryBig,
+                            PC3.PropValueChinese AS primaryCategoryMedium,
+                            PC2.PropValueChinese AS primaryCategorySmall
+                        ]]>
+                    </isEqual>
+                </isNotEmpty>
+                <isEmpty property="language">
+                    <![CDATA[
+                        P.NameTotal AS prtName,
+                        '('+D.DepotCode+')'+D.DepotNameCN AS depotCodeName,
+                        '('+E.LogicInventoryCode+')'+E.InventoryNameCN AS logicInventoryCodeName,
+                        PC1.PropValueChinese AS primaryCategoryBig,
+                        PC3.PropValueChinese AS primaryCategoryMedium,
+                        PC2.PropValueChinese AS primaryCategorySmall
+                    ]]>
+                </isEmpty>
+            </dynamic>
+        <![CDATA[
+            FROM 
+                Sale.BIN_BackstageSale AS BS
+                JOIN Sale.BIN_BackstageSaleDetail AS BSD ON BS.BIN_BackstageSaleID = bsd.BIN_BackstageSaleID
+                LEFT JOIN Basis.BIN_Organization AS C1 ON bs.CustomerID = C1.BIN_OrganizationID 
+                LEFT JOIN Basis.BIN_BussinessPartner AS C2 ON bs.CustomerID = C2.BIN_BussinessPartnerID
+                LEFT JOIN Basis.BIN_Employee AS C3 ON bs.CustomerID = C3.BIN_EmployeeID
+                LEFT JOIN Basis.BIN_ProductVendor PV ON BSD.BIN_ProductVendorID = PV.BIN_ProductVendorID
+                LEFT JOIN Basis.BIN_Product P ON PV.BIN_ProductID = P.BIN_ProductID
+                LEFT JOIN Basis.BIN_DepotInfo D ON BSD.BIN_InventoryInfoID = D.BIN_DepotInfoID
+                LEFT JOIN Basis.BIN_LogicInventory E ON BSD.BIN_LogicInventoryInfoID = E.BIN_LogicInventoryInfoID
+        ]]>
+        <include refid="BINOLSTSFH15.joinCateSql"/>
+        <![CDATA[
+            WHERE
+                BS.ValidFlag = 1
+                AND BS.BIN_BrandInfoID = #brandInfoId#
+                AND BS.BIN_OrganizationInfoID = #organizationInfoId# 
+        ]]>
+        <dynamic>
+             <![CDATA[AND EXISTS (]]>
+            <include refid="BINOLCMINC99.getDepartList" />
+            <![CDATA[AND BS.BIN_OrganizationID = A99.BIN_OrganizationID)]]>
+            <!-- 参数中存在销售单据号条件时  -->
+            <isNotEmpty prepend="AND" property="saleOrderNo" >
+                <![CDATA[BS.BillCode LIKE '%' + #saleOrderNo# +  '%']]>
+            </isNotEmpty>
+            <!-- 参数中存在客户部门ID条件时  -->
+            <isNotEmpty prepend="AND" property="customerOrganizationId" >
+                <![CDATA[BS.CustomerID = #customerOrganizationId#]]>
+            </isNotEmpty>
+            <!-- 参数中存在销售部门ID条件时  -->
+            <isNotEmpty prepend="AND" property="organizationId" >
+                <![CDATA[BS.BIN_OrganizationID = #organizationId#]]>
+            </isNotEmpty>
+            <!-- 参数中存在销售日期（起始）条件时  -->
+            <isNotEmpty prepend="AND" property="startDate">
+                <![CDATA[BS.SaleDate >= #startDate#]]>
+            </isNotEmpty>
+            <!-- 参数中存在销售日期（截止）条件时  -->
+            <isNotEmpty prepend="AND" property="endDate">
+                <![CDATA[BS.SaleDate < #endDate#]]>
+            </isNotEmpty>
+            <!-- 参数中存在单据状态条件时  -->
+            <isNotEmpty prepend="AND" property="billState" >
+                <![CDATA[BS.BillState = #billState#]]>
+            </isNotEmpty>
+            <!-- 参数中存在导入批次条件时  -->
+			<isNotEmpty prepend="AND" property="importBatch" >
+				BS.ImportBatch  LIKE '%' + #importBatch# + '%'
+			</isNotEmpty>
+            <!-- 参数中存在客户类型条件时  -->
+            <isNotEmpty prepend="AND" property="customerType" >
+                <![CDATA[BS.CustomerType = #customerType#]]>
+            </isNotEmpty>
+            <isNotEmpty prepend="AND" property="depotId">
+                <![CDATA[BS.BIN_InventoryInfoID = #depotId#]]>
+            </isNotEmpty>
+        </dynamic>
+    </sql>
+	
+    <!-- 获取销售明细单据数量  -->
+    <select id="getSaleDetailCount" parameterClass="java.util.HashMap" resultClass="java.lang.Integer">
+        <![CDATA[
+            SELECT  COUNT(SORT_T1.backstageSaleDetailID) AS count FROM (
+        ]]>
+        <include refid="BINOLSTSFH15.saleDetailQuery" />
+        <![CDATA[
+            )SORT_T1
+        ]]>
+    </select>
+	
+    <!-- 获取销售明细单据List -->
+    <select id="getSaleDetailList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+        <include refid="BINOLCMINC99.pageheader" />
+        <include refid="BINOLSTSFH15.saleDetailQuery" />
+        <include refid="BINOLCMINC99.pagefooter" />
+    </select>
+    
+    <!-- 总数量总金额 -->
+    <select id="getSumInfo" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+        <![CDATA[
+        SELECT
+            ISNULL(SUM(CONVERT(bigint, CASE WHEN (T.saleType = 'NS' OR T.saleType = 'PX') THEN T.totalQuantity ELSE (0-T.totalQuantity) END)),0) AS sumQuantity,
+            ISNULL(SUM(CASE WHEN (T.saleType = 'NS' OR T.saleType = 'PX') THEN T.payAmount ELSE (0-T.payAmount) END),0) AS sumAmount
+        FROM
+            (   
+    ]]>
+    <include refid="BINOLSTSFH15.saleOrdersDetailQuery" /> 
+    <![CDATA[ 
+            ) T
+    ]]>
+    </select>
+</sqlMap>

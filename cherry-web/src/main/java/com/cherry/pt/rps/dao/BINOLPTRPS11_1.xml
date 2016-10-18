@@ -1,0 +1,1833 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sqlMap PUBLIC "-//iBATIS.com//DTD SQL Map 2.0//EN" "http://ibatis.apache.org/dtd/sql-map-2.dtd">
+<sqlMap namespace="BINOLPTRPS11_1">
+
+	<!-- 链接产品分类用于查询分类信息相对应的产品ID -->
+	<sql id="getProductIdSql">
+	  <isNotEmpty property="bigCateInfo">
+		<![CDATA[
+   			JOIN(
+					SELECT DISTINCT PC.BIN_ProductID
+					FROM Basis.BIN_Product P WITH (NOLOCK)
+					JOIN Basis.BIN_PrtCategory PC WITH (NOLOCK)
+						ON PC.BIN_ProductID = P.BIN_ProductID
+					JOIN Basis.BIN_PrtCatPropValue PCPV WITH (NOLOCK)
+						ON PCPV.BIN_PrtCatPropValueID = PC.BIN_PrtCatPropValueID
+					JOIN Basis.BIN_PrtCatProperty PCP WITH (NOLOCK)
+						ON PCP.BIN_PrtCatPropertyID = PCPV.BIN_PrtCatPropertyID
+					JOIN (
+							  select S.prtCatPropValueID  from
+							  (select convert( xml,'<root><v>' +replace( #bigCateInfo# ,',' ,'</v><v>')+ '</v></root>') AS prtCateID ) Resolve
+								outer apply
+							  (select prtCatPropValueID=Q.v.value('.' ,'nvarchar(100)') from resolve.prtCateID.nodes('/root/v')Q (v)) S 
+						 )
+						   PRT ON PRT.prtCatPropValueID = PC.BIN_PrtCatPropValueID
+					WHERE P.BIN_OrganizationInfoID = #organizationInfoId# 
+					AND P.BIN_BrandInfoID = #brandInfoId#
+					AND P.ValidFlag = 1
+					AND PCP.TeminalFlag = '1'
+			 	 ) AS R ON R.BIN_ProductID=T0.BIN_ProductID
+		 	 ]]>
+		</isNotEmpty>
+		<isNotEmpty property="mediumCateInfo">
+		<![CDATA[
+		 	JOIN(
+					SELECT DISTINCT PC.BIN_ProductID
+					FROM Basis.BIN_Product P WITH (NOLOCK)
+					JOIN Basis.BIN_PrtCategory PC WITH (NOLOCK)
+						ON PC.BIN_ProductID = P.BIN_ProductID
+					JOIN Basis.BIN_PrtCatPropValue PCPV WITH (NOLOCK)
+						ON PCPV.BIN_PrtCatPropValueID = PC.BIN_PrtCatPropValueID
+					JOIN Basis.BIN_PrtCatProperty PCP WITH (NOLOCK)
+						ON PCP.BIN_PrtCatPropertyID = PCPV.BIN_PrtCatPropertyID
+					JOIN (
+						  	  select S.prtCatPropValueID from
+							  (select convert( xml,'<root><v>' +replace( #mediumCateInfo# ,',' ,'</v><v>')+ '</v></root>') AS prtCateID ) Resolve
+								outer apply
+							  (select prtCatPropValueID=Q.v.value('.' ,'nvarchar(100)') from resolve.prtCateID.nodes('/root/v')Q (v)) S
+						)
+						  PRT ON PRT.prtCatPropValueID = PC.BIN_PrtCatPropValueID
+					WHERE P.BIN_OrganizationInfoID = #organizationInfoId# 
+					AND P.BIN_BrandInfoID = #brandInfoId#
+					AND P.ValidFlag = 1
+					AND PCP.TeminalFlag = '3'
+				) AS Q ON Q.BIN_ProductID=T0.BIN_ProductID
+			]]>
+		</isNotEmpty>
+		<isNotEmpty property="samllCateInfo">
+		<![CDATA[
+			JOIN(
+					SELECT	DISTINCT PC.BIN_ProductID
+					FROM Basis.BIN_Product P WITH (NOLOCK)
+					JOIN Basis.BIN_PrtCategory PC WITH (NOLOCK)
+						ON PC.BIN_ProductID = P.BIN_ProductID
+					JOIN Basis.BIN_PrtCatPropValue PCPV WITH (NOLOCK)
+						ON PCPV.BIN_PrtCatPropValueID = PC.BIN_PrtCatPropValueID
+					JOIN Basis.BIN_PrtCatProperty PCP WITH (NOLOCK)
+						ON PCP.BIN_PrtCatPropertyID = PCPV.BIN_PrtCatPropertyID
+					JOIN (
+							  select S.prtCatPropValueID  from
+							  (select convert( xml,'<root><v>' +replace( #samllCateInfo# ,',' ,'</v><v>')+ '</v></root>') AS prtCateID ) Resolve
+								outer apply
+							  (select prtCatPropValueID=Q.v.value('.' ,'nvarchar(100)') from resolve.prtCateID.nodes('/root/v')Q (v)) S 
+						  )
+						    PRT ON PRT.prtCatPropValueID = PC.BIN_PrtCatPropValueID
+					WHERE P.BIN_OrganizationInfoID = #organizationInfoId#
+					AND P.BIN_BrandInfoID = #brandInfoId#
+					AND P.ValidFlag = 1
+					AND PCP.TeminalFlag = '2'
+				) AS W ON W.BIN_ProductID=T0.BIN_ProductID
+   			]]>
+   		</isNotEmpty>
+	</sql>
+	
+	<!-- 取得产品历史库存数量SQL -->
+	<sql id="ProStockhistorySQL">
+		<![CDATA[
+		SELECT
+			H.BIN_InventoryInfoID,
+			H.BIN_LogicInventoryInfoID,
+			B.BIN_ProductID,
+			B.BarCode,
+			C.UnitCode,
+			C.ModuleCode,
+			C.SaleUnit,
+			C.Spec,
+			C.OriginalBrand,
+			C.NameTotal,
+			ISNULL(H.Quantity,0) AS hQuantity,
+			0 AS hDinQuantity,
+			0 AS hDoutQuantity,
+			0 AS hinQuantity,		
+			0 AS houtQuantity,		
+			0 AS inQuantity1,
+			0 AS inQuantity2,		
+			0 AS inQuantity3,		
+			0 AS inQuantity4,		
+			0 AS inQuantity5,		
+			0 AS inQuantity6,
+			0 AS inQuantity7,		
+			0 AS outQuantity1,		
+			0 AS outQuantity2,		
+			0 AS outQuantity3,		
+			0 AS outQuantity4,		
+			0 AS outQuantity5,		
+			0 AS outQuantity6,
+			0 AS outQuantity7,
+			0 AS outQuantity8,
+			0 AS outQuantity9,
+			0 AS outQuantity10
+		FROM
+			Inventory.BIN_ProStockHistory H
+			JOIN Basis.BIN_ProductVendor B
+			ON(H.BIN_ProductVendorID = B.BIN_ProductVendorID
+				AND B.ValidFlag = #validFlag#)
+			JOIN Basis.BIN_Product C
+			ON(B.BIN_ProductID = C.BIN_ProductID)
+		WHERE
+			H.CutOfDate = CONVERT(date,#cutOfDate#)
+			AND H.ValidFlag = '1'
+		]]>
+		<isNotEmpty prepend="AND" property="prtVendorId">	
+			H.BIN_ProductVendorID = #prtVendorId#
+		</isNotEmpty>
+		<isNotEmpty prepend="AND" property="depotId">	
+			H.BIN_InventoryInfoID = #depotId#
+		</isNotEmpty>
+		<isNotEmpty property="lgcInventoryId" prepend="AND">
+			H.BIN_LogicInventoryInfoID = #lgcInventoryId#
+		</isNotEmpty>
+		<isEmpty property="prtVendorId">
+			<isNotEmpty prepend="AND" property="nameTotal" >
+				C.NameTotal like '%' + #nameTotal# + '%'
+			</isNotEmpty>
+		</isEmpty>
+	</sql>
+	<!-- 月度库存历史到集结日点延迟上传数据（入库）  -->
+	<sql id="ProStockhDinSQL">
+		<![CDATA[
+		SELECT
+			A1.BIN_InventoryInfoID,
+			A1.BIN_LogicInventoryInfoID,
+			B.BIN_ProductID,
+			B.BarCode,
+			C.UnitCode,
+			C.ModuleCode,
+			C.SaleUnit,
+			C.Spec,
+			C.OriginalBrand,
+			C.NameTotal,
+			0 AS hQuantity,	
+			ISNULL(A1.Quantity,0) AS hDinQuantity,
+			0 AS hDoutQuantity,		
+			0 AS hinQuantity,		
+			0 AS houtQuantity,		
+			0 AS inQuantity1,		
+			0 AS inQuantity2,		
+			0 AS inQuantity3,		
+			0 AS inQuantity4,		
+			0 AS inQuantity5,
+			0 AS inQuantity6,
+			0 AS inQuantity7,		
+			0 AS outQuantity1,		
+			0 AS outQuantity2,		
+			0 AS outQuantity3,		
+			0 AS outQuantity4,		
+			0 AS outQuantity5,		
+			0 AS outQuantity6,
+			0 AS outQuantity7,
+			0 AS outQuantity8,
+			0 AS outQuantity9,
+			0 AS outQuantity10		
+		FROM
+			Inventory.BIN_ProductInOut H WITH(NOLOCK)
+			JOIN Inventory.BIN_ProductInOutDetail A1 WITH(NOLOCK)
+			ON(H.BIN_ProductInOutID = A1.BIN_ProductInOutID
+				AND A1.StockType = '0'
+				AND A1.ValidFlag = '1')
+			JOIN Basis.BIN_ProductVendor B
+			ON(A1.BIN_ProductVendorID = B.BIN_ProductVendorID
+				AND B.ValidFlag = #validFlag#)
+			JOIN Basis.BIN_Product C
+			ON(B.BIN_ProductID = C.BIN_ProductID)
+		WHERE
+			H.StockInOutDate <= CONVERT(date,#cutOfDate#)
+			AND H.ValidFlag = '1'
+			AND H.CloseFlag = '0'
+		]]>
+		<isNotEmpty prepend="AND" property="prtVendorId">	
+			A1.BIN_ProductVendorID = #prtVendorId#
+		</isNotEmpty>
+		<isNotEmpty prepend="AND" property="depotId">	
+			A1.BIN_InventoryInfoID = #depotId#
+		</isNotEmpty>
+		<isNotEmpty property="lgcInventoryId" prepend="AND">
+			A1.BIN_LogicInventoryInfoID = #lgcInventoryId#
+		</isNotEmpty>
+		<isEmpty property="prtVendorId">
+			<isNotEmpty prepend="AND" property="nameTotal" >
+				C.NameTotal like '%' + #nameTotal# + '%'
+			</isNotEmpty>
+		</isEmpty>
+	</sql>
+	<!-- 月度库存历史到集结日点延迟上传数据（出库）  -->
+	<sql id="ProStockhDoutSQL">
+		<![CDATA[
+		SELECT
+			A1.BIN_InventoryInfoID,
+			A1.BIN_LogicInventoryInfoID,
+			B.BIN_ProductID,
+			B.BarCode,
+			C.UnitCode,
+			C.ModuleCode,
+			C.SaleUnit,
+			C.Spec,
+			C.OriginalBrand,
+			C.NameTotal,
+			0 AS hQuantity,	
+			0 AS hDinQuantity,
+			ISNULL(A1.Quantity,0) AS hDoutQuantity,		
+			0 AS hinQuantity,		
+			0 AS houtQuantity,		
+			0 AS inQuantity1,		
+			0 AS inQuantity2,		
+			0 AS inQuantity3,		
+			0 AS inQuantity4,		
+			0 AS inQuantity5,
+			0 AS inQuantity6,
+			0 AS inQuantity7,		
+			0 AS outQuantity1,		
+			0 AS outQuantity2,		
+			0 AS outQuantity3,		
+			0 AS outQuantity4,		
+			0 AS outQuantity5,		
+			0 AS outQuantity6,
+			0 AS outQuantity7,
+			0 AS outQuantity8,
+			0 AS outQuantity9,
+			0 AS outQuantity10		
+		FROM
+			Inventory.BIN_ProductInOut H WITH(NOLOCK)		
+			JOIN Inventory.BIN_ProductInOutDetail A1 WITH(NOLOCK)	
+			ON(H.BIN_ProductInOutID = A1.BIN_ProductInOutID
+				AND A1.StockType = '1'
+				AND A1.ValidFlag = '1')
+			JOIN Basis.BIN_ProductVendor B
+			ON(A1.BIN_ProductVendorID = B.BIN_ProductVendorID
+				AND B.ValidFlag = #validFlag#)
+			JOIN Basis.BIN_Product C
+			ON(B.BIN_ProductID = C.BIN_ProductID)
+		WHERE
+			H.StockInOutDate <= CONVERT(date,#cutOfDate#)
+			AND H.ValidFlag = '1'
+			AND H.CloseFlag = '0'
+		]]>
+		<isNotEmpty prepend="AND" property="prtVendorId">	
+			A1.BIN_ProductVendorID = #prtVendorId#
+		</isNotEmpty>
+		<isNotEmpty prepend="AND" property="depotId">	
+			A1.BIN_InventoryInfoID = #depotId#
+		</isNotEmpty>
+		<isNotEmpty property="lgcInventoryId" prepend="AND">
+			A1.BIN_LogicInventoryInfoID = #lgcInventoryId#
+		</isNotEmpty>
+		<isEmpty property="prtVendorId">
+			<isNotEmpty prepend="AND" property="nameTotal" >
+				C.NameTotal like '%' + #nameTotal# + '%'
+			</isNotEmpty>
+		</isEmpty>
+	</sql>
+	<!-- 取得产品历史库存到集结点的收入变化SQL -->
+	<sql id="ProStockhinSQL">
+		<![CDATA[
+		SELECT
+			A1.BIN_InventoryInfoID,
+			A1.BIN_LogicInventoryInfoID,
+			B.BIN_ProductID,
+			B.BarCode,
+			C.UnitCode,
+			C.ModuleCode,
+			C.SaleUnit,
+			C.Spec,
+			C.OriginalBrand,
+			C.NameTotal,
+			0 AS hQuantity,
+			0 AS hDinQuantity,
+			0 AS hDoutQuantity,	
+			ISNULL(A1.Quantity,0) AS hinQuantity,		
+			0 AS houtQuantity,		
+			0 AS inQuantity1,		
+			0 AS inQuantity2,		
+			0 AS inQuantity3,		
+			0 AS inQuantity4,		
+			0 AS inQuantity5,
+			0 AS inQuantity6,
+			0 AS inQuantity7,		
+			0 AS outQuantity1,		
+			0 AS outQuantity2,		
+			0 AS outQuantity3,		
+			0 AS outQuantity4,		
+			0 AS outQuantity5,		
+			0 AS outQuantity6,
+			0 AS outQuantity7,
+			0 AS outQuantity8,
+			0 AS outQuantity9,
+			0 AS outQuantity10		
+		FROM
+			Inventory.BIN_ProductInOut H WITH(NOLOCK)		
+			JOIN Inventory.BIN_ProductInOutDetail A1 WITH(NOLOCK)	
+			ON(H.BIN_ProductInOutID = A1.BIN_ProductInOutID
+				AND A1.StockType = '0'
+				AND A1.ValidFlag = '1')
+			JOIN Basis.BIN_ProductVendor B
+			ON(A1.BIN_ProductVendorID = B.BIN_ProductVendorID
+				AND B.ValidFlag = #validFlag#)
+			JOIN Basis.BIN_Product C
+			ON(B.BIN_ProductID = C.BIN_ProductID)
+		WHERE
+			H.StockInOutDate > CONVERT(date,#date1#)
+			AND H.StockInOutDate <= CONVERT(date,#date2#)
+			AND H.ValidFlag = '1'
+		]]>
+		<isNotEmpty prepend="AND" property="prtVendorId">	
+			A1.BIN_ProductVendorID = #prtVendorId#
+		</isNotEmpty>
+		<isNotEmpty prepend="AND" property="depotId">	
+			A1.BIN_InventoryInfoID = #depotId#
+		</isNotEmpty>
+		<isNotEmpty property="lgcInventoryId" prepend="AND">
+			A1.BIN_LogicInventoryInfoID = #lgcInventoryId#
+		</isNotEmpty>
+		<isEmpty property="prtVendorId">
+			<isNotEmpty prepend="AND" property="nameTotal" >
+				C.NameTotal like '%' + #nameTotal# + '%'
+			</isNotEmpty>
+		</isEmpty>
+	</sql>
+	<!-- 取得产品历史库存到集结点的发出变化SQL -->
+	<sql id="ProStockhoutSQL">
+	 	<![CDATA[
+		SELECT			
+			A1.BIN_InventoryInfoID,
+			A1.BIN_LogicInventoryInfoID,
+			B.BIN_ProductID,
+			B.BarCode,
+			C.UnitCode,
+			C.ModuleCode,
+			C.SaleUnit,
+			C.Spec,
+			C.OriginalBrand,
+			C.NameTotal,
+			0 AS hQuantity,	
+			0 AS hDinQuantity,
+			0 AS hDoutQuantity,	
+			0 AS hinQuantity,		
+			ISNULL(A1.Quantity,0) AS houtQuantity,		
+			0 AS inQuantity1,		
+			0 AS inQuantity2,		
+			0 AS inQuantity3,		
+			0 AS inQuantity4,		
+			0 AS inQuantity5,		
+			0 AS inQuantity6,
+			0 AS inQuantity7,		
+			0 AS outQuantity1,		
+			0 AS outQuantity2,		
+			0 AS outQuantity3,		
+			0 AS outQuantity4,		
+			0 AS outQuantity5,		
+			0 AS outQuantity6,
+			0 AS outQuantity7,
+			0 AS outQuantity8,
+			0 AS outQuantity9,
+			0 AS outQuantity10		
+		FROM			
+			Inventory.BIN_ProductInOut H WITH(NOLOCK)		
+			JOIN Inventory.BIN_ProductInOutDetail A1 WITH(NOLOCK)	
+			ON(H.BIN_ProductInOutID = A1.BIN_ProductInOutID
+				AND A1.StockType = '1'
+				AND A1.ValidFlag = '1')
+			JOIN Basis.BIN_ProductVendor B
+			ON(A1.BIN_ProductVendorID = B.BIN_ProductVendorID
+				AND B.ValidFlag = #validFlag#)
+			JOIN Basis.BIN_Product C
+			ON(B.BIN_ProductID = C.BIN_ProductID)
+		WHERE
+			H.StockInOutDate > CONVERT(date,#date1#)
+			AND H.StockInOutDate <= CONVERT(date,#date2#)
+			AND H.ValidFlag = '1'		
+	 	]]>
+	 	<isNotEmpty prepend="AND" property="prtVendorId">	
+			A1.BIN_ProductVendorID = #prtVendorId#
+		</isNotEmpty>
+		<isNotEmpty prepend="AND" property="depotId">	
+			A1.BIN_InventoryInfoID = #depotId#
+		</isNotEmpty>
+		<isNotEmpty property="lgcInventoryId" prepend="AND">
+			A1.BIN_LogicInventoryInfoID = #lgcInventoryId#
+		</isNotEmpty>
+		<isEmpty property="prtVendorId">
+			<isNotEmpty prepend="AND" property="nameTotal" >
+				C.NameTotal like '%' + #nameTotal# + '%'
+			</isNotEmpty>
+		</isEmpty>
+	</sql>
+	<!-- 取得产品本期仓库发货变化SQL -->
+	<sql id="ProStockout1SQL">
+		<![CDATA[
+		SELECT			
+			A1.BIN_InventoryInfoID,
+			A1.BIN_LogicInventoryInfoID,
+			B.BIN_ProductID,
+			B.BarCode,
+			C.UnitCode,
+			C.ModuleCode,
+			C.SaleUnit,
+			C.Spec,
+			C.OriginalBrand,
+			C.NameTotal,
+			0 AS hQuantity,
+			0 AS hDinQuantity,
+			0 AS hDoutQuantity,	
+			0 AS hinQuantity,		
+			0 AS houtQuantity,		
+			0 AS inQuantity1,		
+			0 AS inQuantity2,		
+			0 AS inQuantity3,		
+			0 AS inQuantity4,		
+			0 AS inQuantity5,		
+			0 AS inQuantity6,
+			0 AS inQuantity7,		
+			CASE WHEN A1.StockType = '0' THEN (-1)*ISNULL(A1.Quantity,0) ELSE ISNULL(A1.Quantity,0) END AS outQuantity1,		
+			0 AS outQuantity2,		
+			0 AS outQuantity3,		
+			0 AS outQuantity4,		
+			0 AS outQuantity5,		
+			0 AS outQuantity6,
+			0 AS outQuantity7,
+			0 AS outQuantity8,
+			0 AS outQuantity9,
+			0 AS outQuantity10		
+		FROM
+			Inventory.BIN_ProductInOut H WITH(NOLOCK)		
+			JOIN Inventory.BIN_ProductInOutDetail A1 WITH(NOLOCK)	
+			ON(H.BIN_ProductInOutID = A1.BIN_ProductInOutID
+				AND A1.ValidFlag = '1')
+			JOIN Basis.BIN_ProductVendor B
+			ON(A1.BIN_ProductVendorID = B.BIN_ProductVendorID
+				AND B.ValidFlag = #validFlag#)
+			JOIN Basis.BIN_Product C
+			ON(B.BIN_ProductID = C.BIN_ProductID)
+		WHERE
+			H.StockInOutDate >= CONVERT(date,#startDate#)
+			AND H.StockInOutDate <= CONVERT(date,#endDate#)
+			AND H.TradeType = 'SD'
+			AND H.ValidFlag = '1'		
+		]]>
+		<isNotEmpty prepend="AND" property="prtVendorId">	
+			A1.BIN_ProductVendorID = #prtVendorId#
+		</isNotEmpty>
+		<isNotEmpty prepend="AND" property="depotId">	
+			A1.BIN_InventoryInfoID = #depotId#
+		</isNotEmpty>
+		<isNotEmpty property="lgcInventoryId" prepend="AND">
+			A1.BIN_LogicInventoryInfoID = #lgcInventoryId#
+		</isNotEmpty>
+		<isEmpty property="prtVendorId">
+			<isNotEmpty prepend="AND" property="nameTotal" >
+				C.NameTotal like '%' + #nameTotal# + '%'
+			</isNotEmpty>
+		</isEmpty>
+	</sql>
+	<!-- 取得产品本期仓库退库变化SQL -->
+	<sql id="ProStockout2SQL">
+		<![CDATA[
+		SELECT			
+			A1.BIN_InventoryInfoID,
+			A1.BIN_LogicInventoryInfoID,
+			B.BIN_ProductID,
+			B.BarCode,
+			C.UnitCode,
+			C.ModuleCode,
+			C.SaleUnit,
+			C.Spec,
+			C.OriginalBrand,
+			C.NameTotal,
+			0 AS hQuantity,
+			0 AS hDinQuantity,
+			0 AS hDoutQuantity,
+			0 AS hinQuantity,		
+			0 AS houtQuantity,		
+			0 AS inQuantity1,		
+			0 AS inQuantity2,		
+			0 AS inQuantity3,		
+			0 AS inQuantity4,		
+			0 AS inQuantity5,		
+			0 AS inQuantity6,
+			0 AS inQuantity7,		
+			0 AS outQuantity1,		
+			CASE WHEN A1.StockType = '0' THEN (-1)*ISNULL(A1.Quantity,0) ELSE ISNULL(A1.Quantity,0) END AS outQuantity2,		
+			0 AS outQuantity3,		
+			0 AS outQuantity4,		
+			0 AS outQuantity5,		
+			0 AS outQuantity6,
+			0 AS outQuantity7,
+			0 AS outQuantity8,
+			0 AS outQuantity9,
+			0 AS outQuantity10		
+		FROM
+			Inventory.BIN_ProductInOut H WITH(NOLOCK)		
+			JOIN Inventory.BIN_ProductInOutDetail A1 WITH(NOLOCK)	
+			ON(H.BIN_ProductInOutID = A1.BIN_ProductInOutID
+				AND A1.ValidFlag = '1')
+			JOIN Basis.BIN_ProductVendor B
+			ON(A1.BIN_ProductVendorID = B.BIN_ProductVendorID
+				AND B.ValidFlag = #validFlag#)
+			JOIN Basis.BIN_Product C
+			ON(B.BIN_ProductID = C.BIN_ProductID)
+		WHERE			
+			H.StockInOutDate >= CONVERT(date,#startDate#)	
+			AND H.StockInOutDate <= CONVERT(date,#endDate#)
+			AND H.TradeType = 'RR'
+			AND H.ValidFlag = '1'		
+		]]>
+		<isNotEmpty prepend="AND" property="prtVendorId">	
+			A1.BIN_ProductVendorID = #prtVendorId#
+		</isNotEmpty>
+		<isNotEmpty prepend="AND" property="depotId">	
+			A1.BIN_InventoryInfoID = #depotId#
+		</isNotEmpty>
+		<isNotEmpty property="lgcInventoryId" prepend="AND">
+			A1.BIN_LogicInventoryInfoID = #lgcInventoryId#
+		</isNotEmpty>
+		<isEmpty property="prtVendorId">
+			<isNotEmpty prepend="AND" property="nameTotal" >
+				C.NameTotal like '%' + #nameTotal# + '%'
+			</isNotEmpty>
+		</isEmpty>
+	</sql>
+	<!-- 取得产品本期调出变化SQL -->
+	<sql id="ProStockout3SQL">
+		<![CDATA[
+		SELECT			
+			A1.BIN_InventoryInfoID,
+			A1.BIN_LogicInventoryInfoID,
+			B.BIN_ProductID,
+			B.BarCode,
+			C.UnitCode,
+			C.ModuleCode,
+			C.SaleUnit,
+			C.Spec,
+			C.OriginalBrand,
+			C.NameTotal,
+			0 AS hQuantity,
+			0 AS hDinQuantity,
+			0 AS hDoutQuantity,
+			0 AS hinQuantity,		
+			0 AS houtQuantity,		
+			0 AS inQuantity1,		
+			0 AS inQuantity2,		
+			0 AS inQuantity3,		
+			0 AS inQuantity4,		
+			0 AS inQuantity5,		
+			0 AS inQuantity6,
+			0 AS inQuantity7,		
+			0 AS outQuantity1,		
+			0 AS outQuantity2,		
+			CASE WHEN A1.StockType = '0' THEN (-1)*ISNULL(A1.Quantity,0) ELSE ISNULL(A1.Quantity,0) END AS outQuantity3,		
+			0 AS outQuantity4,		
+			0 AS outQuantity5,		
+			0 AS outQuantity6,
+			0 AS outQuantity7,
+			0 AS outQuantity8,
+			0 AS outQuantity9,
+			0 AS outQuantity10		
+		FROM			
+			Inventory.BIN_ProductInOut H WITH(NOLOCK)		
+			JOIN Inventory.BIN_ProductInOutDetail A1 WITH(NOLOCK)	
+			ON(H.BIN_ProductInOutID = A1.BIN_ProductInOutID
+				AND A1.ValidFlag = '1')
+			JOIN Basis.BIN_ProductVendor B
+			ON(A1.BIN_ProductVendorID = B.BIN_ProductVendorID
+				AND B.ValidFlag = #validFlag#)
+			JOIN Basis.BIN_Product C
+			ON(B.BIN_ProductID = C.BIN_ProductID)
+		WHERE			
+			H.StockInOutDate >= CONVERT(date,#startDate#)	
+			AND H.StockInOutDate <= CONVERT(date,#endDate#)	
+			AND H.TradeType = 'LG'
+			AND H.ValidFlag = '1'		
+		]]>
+		<isNotEmpty prepend="AND" property="prtVendorId">	
+			A1.BIN_ProductVendorID = #prtVendorId#
+		</isNotEmpty>
+		<isNotEmpty prepend="AND" property="depotId">	
+			A1.BIN_InventoryInfoID = #depotId#
+		</isNotEmpty>
+		<isNotEmpty property="lgcInventoryId" prepend="AND">
+			A1.BIN_LogicInventoryInfoID = #lgcInventoryId#
+		</isNotEmpty>
+		<isEmpty property="prtVendorId">
+			<isNotEmpty prepend="AND" property="nameTotal" >
+				C.NameTotal like '%' + #nameTotal# + '%'
+			</isNotEmpty>
+		</isEmpty>
+	</sql>
+	<!-- 取得产品本期自由出库变化SQL -->
+	<sql id="ProStockout4SQL">
+		<![CDATA[
+		SELECT			
+			A1.BIN_InventoryInfoID,
+			A1.BIN_LogicInventoryInfoID,
+			B.BIN_ProductID,
+			B.BarCode,
+			C.UnitCode,
+			C.ModuleCode,
+			C.SaleUnit,
+			C.Spec,
+			C.OriginalBrand,
+			C.NameTotal,
+			0 AS hQuantity,
+			0 AS hDinQuantity,
+			0 AS hDoutQuantity,		
+			0 AS hinQuantity,		
+			0 AS houtQuantity,		
+			0 AS inQuantity1,		
+			0 AS inQuantity2,		
+			0 AS inQuantity3,		
+			0 AS inQuantity4,		
+			0 AS inQuantity5,		
+			0 AS inQuantity6,
+			0 AS inQuantity7,		
+			0 AS outQuantity1,		
+			0 AS outQuantity2,		
+			0 AS outQuantity3,		
+			CASE WHEN A1.StockType = '0' THEN (-1)*ISNULL(A1.Quantity,0) ELSE ISNULL(A1.Quantity,0) END AS outQuantity4,		
+			0 AS outQuantity5,		
+			0 AS outQuantity6,
+			0 AS outQuantity7,
+			0 AS outQuantity8,
+			0 AS outQuantity9,
+			0 AS outQuantity10		
+		FROM
+			Inventory.BIN_ProductInOut H WITH(NOLOCK)		
+			JOIN Inventory.BIN_ProductInOutDetail A1 WITH(NOLOCK)	
+			ON(H.BIN_ProductInOutID = A1.BIN_ProductInOutID	
+				AND A1.ValidFlag = '1')
+			JOIN Basis.BIN_ProductVendor B
+			ON(A1.BIN_ProductVendorID = B.BIN_ProductVendorID
+				AND B.ValidFlag = #validFlag#)
+			JOIN Basis.BIN_Product C
+			ON(B.BIN_ProductID = C.BIN_ProductID)
+		WHERE			
+			H.StockInOutDate >= CONVERT(date,#startDate#)	
+			AND H.StockInOutDate <= CONVERT(date,#endDate#)	
+			AND H.TradeType = 'OT'
+			AND H.ValidFlag = '1'		
+		]]>
+		<isNotEmpty prepend="AND" property="prtVendorId">	
+			A1.BIN_ProductVendorID = #prtVendorId#
+		</isNotEmpty>
+		<isNotEmpty prepend="AND" property="depotId">	
+			A1.BIN_InventoryInfoID = #depotId#
+		</isNotEmpty>
+		<isNotEmpty property="lgcInventoryId" prepend="AND">
+			A1.BIN_LogicInventoryInfoID = #lgcInventoryId#
+		</isNotEmpty>
+		<isEmpty property="prtVendorId">
+			<isNotEmpty prepend="AND" property="nameTotal" >
+				C.NameTotal like '%' + #nameTotal# + '%'
+			</isNotEmpty>
+		</isEmpty>
+	</sql>
+	<!-- 取得产品本期盘亏变化SQL -->
+	<sql id="ProStockout5SQL">
+		<![CDATA[
+		SELECT			
+			A1.BIN_InventoryInfoID,
+			A1.BIN_LogicInventoryInfoID,
+			B.BIN_ProductID,
+			B.BarCode,
+			C.UnitCode,
+			C.ModuleCode,
+			C.SaleUnit,
+			C.Spec,
+			C.OriginalBrand,
+			C.NameTotal,
+			0 AS hQuantity,
+			0 AS hDinQuantity,
+			0 AS hDoutQuantity,		
+			0 AS hinQuantity,		
+			0 AS houtQuantity,		
+			0 AS inQuantity1,		
+			0 AS inQuantity2,		
+			0 AS inQuantity3,		
+			0 AS inQuantity4,		
+			0 AS inQuantity5,		
+			0 AS inQuantity6,
+			0 AS inQuantity7,		
+			0 AS outQuantity1,		
+			0 AS outQuantity2,		
+			0 AS outQuantity3,		
+			0 AS outQuantity4,		
+			ISNULL(A1.Quantity,0) AS outQuantity5,		
+			0 AS outQuantity6,
+			0 AS outQuantity7,
+			0 AS outQuantity8,
+			0 AS outQuantity9,
+			0 AS outQuantity10		
+		FROM			
+			Inventory.BIN_ProductInOut H WITH(NOLOCK)		
+			JOIN Inventory.BIN_ProductInOutDetail A1 WITH(NOLOCK)	
+			ON(H.BIN_ProductInOutID = A1.BIN_ProductInOutID
+				AND A1.StockType = '1'
+				AND A1.ValidFlag = '1')
+			JOIN Basis.BIN_ProductVendor B
+			ON(A1.BIN_ProductVendorID = B.BIN_ProductVendorID
+				AND B.ValidFlag = #validFlag#)
+			JOIN Basis.BIN_Product C
+			ON(B.BIN_ProductID = C.BIN_ProductID)
+		WHERE			
+			H.StockInOutDate >= CONVERT(date,#startDate#)	
+			AND H.StockInOutDate <= CONVERT(date,#endDate#)	
+			AND H.TradeType = 'CA'
+			AND H.ValidFlag = '1'		
+		]]>
+		<isNotEmpty prepend="AND" property="prtVendorId">	
+			A1.BIN_ProductVendorID = #prtVendorId#
+		</isNotEmpty>
+		<isNotEmpty prepend="AND" property="depotId">	
+			A1.BIN_InventoryInfoID = #depotId#
+		</isNotEmpty>
+		<isNotEmpty property="lgcInventoryId" prepend="AND">
+			A1.BIN_LogicInventoryInfoID = #lgcInventoryId#
+		</isNotEmpty>
+		<isEmpty property="prtVendorId">
+			<isNotEmpty prepend="AND" property="nameTotal" >
+				C.NameTotal like '%' + #nameTotal# + '%'
+			</isNotEmpty>
+		</isEmpty>
+	</sql>
+	<!-- 取得产品本期销售出库变化SQL -->
+	<sql id="ProStockout6SQL">
+		<![CDATA[
+		SELECT			
+			A1.BIN_InventoryInfoID,
+			A1.BIN_LogicInventoryInfoID,
+			B.BIN_ProductID,
+			B.BarCode,
+			C.UnitCode,
+			C.ModuleCode,
+			C.SaleUnit,
+			C.Spec,
+			C.OriginalBrand,
+			C.NameTotal,
+			0 AS hQuantity,
+			0 AS hDinQuantity,
+			0 AS hDoutQuantity,	
+			0 AS hinQuantity,		
+			0 AS houtQuantity,		
+			0 AS inQuantity1,		
+			0 AS inQuantity2,		
+			0 AS inQuantity3,		
+			0 AS inQuantity4,		
+			0 AS inQuantity5,		
+			0 AS inQuantity6,
+			0 AS inQuantity7,		
+			0 AS outQuantity1,		
+			0 AS outQuantity2,		
+			0 AS outQuantity3,		
+			0 AS outQuantity4,		
+			0 AS outQuantity5,		
+			ISNULL(A1.Quantity,0) AS outQuantity6,
+			0 AS outQuantity7,
+			0 AS outQuantity8,
+			0 AS outQuantity9,
+			0 AS outQuantity10		
+		FROM			
+			Inventory.BIN_ProductInOut H WITH(NOLOCK)		
+			JOIN Inventory.BIN_ProductInOutDetail A1 WITH(NOLOCK)	
+			ON(H.BIN_ProductInOutID = A1.BIN_ProductInOutID
+				AND A1.StockType = '1'
+				AND A1.ValidFlag = '1')	
+			JOIN Basis.BIN_ProductVendor B
+			ON(A1.BIN_ProductVendorID = B.BIN_ProductVendorID
+				AND B.ValidFlag = #validFlag#)
+			JOIN Basis.BIN_Product C
+			ON(B.BIN_ProductID = C.BIN_ProductID)
+		WHERE			
+			H.StockInOutDate >= CONVERT(date,#startDate#)	
+			AND H.StockInOutDate <= CONVERT(date,#endDate#)	
+			AND (H.TradeType = 'SR' OR H.TradeType = 'NS')
+			AND H.ValidFlag = '1'		
+		]]>
+		<isNotEmpty prepend="AND" property="prtVendorId">	
+			A1.BIN_ProductVendorID = #prtVendorId#
+		</isNotEmpty>
+		<isNotEmpty prepend="AND" property="depotId">	
+			A1.BIN_InventoryInfoID = #depotId#
+		</isNotEmpty>
+		<isNotEmpty property="lgcInventoryId" prepend="AND">
+			A1.BIN_LogicInventoryInfoID = #lgcInventoryId#
+		</isNotEmpty>
+		<isEmpty property="prtVendorId">
+			<isNotEmpty prepend="AND" property="nameTotal" >
+				C.NameTotal like '%' + #nameTotal# + '%'
+			</isNotEmpty>
+		</isEmpty>
+	</sql>
+	<!-- 取得产品本期移出变化SQL -->
+	<sql id="ProStockout7SQL">
+		<![CDATA[
+		SELECT			
+			A1.BIN_InventoryInfoID,
+			A1.BIN_LogicInventoryInfoID,
+			B.BIN_ProductID,
+			B.BarCode,
+			C.UnitCode,
+			C.ModuleCode,
+			C.SaleUnit,
+			C.Spec,
+			C.OriginalBrand,
+			C.NameTotal,
+			0 AS hQuantity,
+			0 AS hDinQuantity,
+			0 AS hDoutQuantity,		
+			0 AS hinQuantity,		
+			0 AS houtQuantity,		
+			0 AS inQuantity1,		
+			0 AS inQuantity2,		
+			0 AS inQuantity3,		
+			0 AS inQuantity4,		
+			0 AS inQuantity5,		
+			0 AS inQuantity6,
+			0 AS inQuantity7,		
+			0 AS outQuantity1,		
+			0 AS outQuantity2,		
+			0 AS outQuantity3,		
+			0 AS outQuantity4,		
+			0 AS outQuantity5,		
+			0 AS outQuantity6,
+			ISNULL(A1.Quantity,0) AS outQuantity7,
+			0 AS outQuantity8,
+			0 AS outQuantity9,
+			0 AS outQuantity10		
+		FROM			
+			Inventory.BIN_ProductInOut H WITH(NOLOCK)		
+			JOIN Inventory.BIN_ProductInOutDetail A1 WITH(NOLOCK)	
+			ON(H.BIN_ProductInOutID = A1.BIN_ProductInOutID
+				AND A1.StockType = '1'
+				AND A1.ValidFlag = '1')
+			JOIN Basis.BIN_ProductVendor B
+			ON(A1.BIN_ProductVendorID = B.BIN_ProductVendorID
+				AND B.ValidFlag = #validFlag#)
+			JOIN Basis.BIN_Product C
+			ON(B.BIN_ProductID = C.BIN_ProductID)
+		WHERE			
+			H.StockInOutDate >= CONVERT(date,#startDate#)	
+			AND H.StockInOutDate <= CONVERT(date,#endDate#)	
+			AND H.TradeType = 'MV'
+			AND H.ValidFlag = '1'		
+		]]>
+		<isNotEmpty prepend="AND" property="prtVendorId">	
+			A1.BIN_ProductVendorID = #prtVendorId#
+		</isNotEmpty>
+		<isNotEmpty prepend="AND" property="depotId">	
+			A1.BIN_InventoryInfoID = #depotId#
+		</isNotEmpty>
+		<isNotEmpty property="lgcInventoryId" prepend="AND">
+			A1.BIN_LogicInventoryInfoID = #lgcInventoryId#
+		</isNotEmpty>
+		<isEmpty property="prtVendorId">
+			<isNotEmpty prepend="AND" property="nameTotal" >
+				C.NameTotal like '%' + #nameTotal# + '%'
+			</isNotEmpty>
+		</isEmpty>
+	</sql>
+	<!-- 取得产品本期报损变化SQL -->
+	<sql id="ProStockout8SQL">
+		<![CDATA[
+		SELECT			
+			A1.BIN_InventoryInfoID,
+			A1.BIN_LogicInventoryInfoID,
+			B.BIN_ProductID,
+			B.BarCode,
+			C.UnitCode,
+			C.ModuleCode,
+			C.SaleUnit,
+			C.Spec,
+			C.OriginalBrand,
+			C.NameTotal,
+			0 AS hQuantity,
+			0 AS hDinQuantity,
+			0 AS hDoutQuantity,	
+			0 AS hinQuantity,		
+			0 AS houtQuantity,		
+			0 AS inQuantity1,		
+			0 AS inQuantity2,		
+			0 AS inQuantity3,		
+			0 AS inQuantity4,		
+			0 AS inQuantity5,		
+			0 AS inQuantity6,
+			0 AS inQuantity7,		
+			0 AS outQuantity1,		
+			0 AS outQuantity2,		
+			0 AS outQuantity3,		
+			0 AS outQuantity4,		
+			0 AS outQuantity5,		
+			0 AS outQuantity6,
+			0 AS outQuantity7,
+			CASE WHEN A1.StockType = '0' THEN (-1)*ISNULL(A1.Quantity,0) ELSE ISNULL(A1.Quantity,0) END AS outQuantity8,
+			0 AS outQuantity9,
+			0 AS outQuantity10		
+		FROM			
+			Inventory.BIN_ProductInOut H WITH(NOLOCK)		
+			JOIN Inventory.BIN_ProductInOutDetail A1 WITH(NOLOCK)	
+			ON(H.BIN_ProductInOutID = A1.BIN_ProductInOutID
+				AND A1.ValidFlag = '1')
+			JOIN Basis.BIN_ProductVendor B
+			ON(A1.BIN_ProductVendorID = B.BIN_ProductVendorID
+				AND B.ValidFlag = #validFlag#)
+			JOIN Basis.BIN_Product C
+			ON(B.BIN_ProductID = C.BIN_ProductID)
+		WHERE			
+			H.StockInOutDate >= CONVERT(date,#startDate#)	
+			AND H.StockInOutDate <= CONVERT(date,#endDate#)	
+			AND H.TradeType = 'LS'
+			AND H.ValidFlag = '1'		
+		]]>
+		<isNotEmpty prepend="AND" property="prtVendorId">	
+			A1.BIN_ProductVendorID = #prtVendorId#
+		</isNotEmpty>
+		<isNotEmpty prepend="AND" property="depotId">	
+			A1.BIN_InventoryInfoID = #depotId#
+		</isNotEmpty>
+		<isNotEmpty property="lgcInventoryId" prepend="AND">
+			A1.BIN_LogicInventoryInfoID = #lgcInventoryId#
+		</isNotEmpty>
+		<isEmpty property="prtVendorId">
+			<isNotEmpty prepend="AND" property="nameTotal" >
+				C.NameTotal like '%' + #nameTotal# + '%'
+			</isNotEmpty>
+		</isEmpty>
+	</sql>
+	<!-- 取得产品本期礼品领用变化SQL -->
+	<sql id="ProStockout9SQL">
+		<![CDATA[
+		SELECT			
+			A1.BIN_InventoryInfoID,
+			A1.BIN_LogicInventoryInfoID,
+			B.BIN_ProductID,
+			B.BarCode,
+			C.UnitCode,
+			C.ModuleCode,
+			C.SaleUnit,
+			C.Spec,
+			C.OriginalBrand,
+			C.NameTotal,
+			0 AS hQuantity,	
+			0 AS hDinQuantity,
+			0 AS hDoutQuantity,	
+			0 AS hinQuantity,		
+			0 AS houtQuantity,		
+			0 AS inQuantity1,		
+			0 AS inQuantity2,		
+			0 AS inQuantity3,		
+			0 AS inQuantity4,		
+			0 AS inQuantity5,		
+			0 AS inQuantity6,
+			0 AS inQuantity7,		
+			0 AS outQuantity1,		
+			0 AS outQuantity2,		
+			0 AS outQuantity3,		
+			0 AS outQuantity4,		
+			0 AS outQuantity5,		
+			0 AS outQuantity6,
+			0 AS outQuantity7,
+			0 AS outQuantity8,
+			CASE WHEN A1.StockType = '0' THEN (-1)*ISNULL(A1.Quantity,0) ELSE ISNULL(A1.Quantity,0) END AS outQuantity9,
+			0 AS outQuantity10	
+		FROM			
+			Inventory.BIN_ProductInOut H WITH(NOLOCK)		
+			JOIN Inventory.BIN_ProductInOutDetail A1 WITH(NOLOCK)	
+			ON(H.BIN_ProductInOutID = A1.BIN_ProductInOutID
+				AND A1.ValidFlag = '1')
+			JOIN Basis.BIN_ProductVendor B
+			ON(A1.BIN_ProductVendorID = B.BIN_ProductVendorID
+				AND B.ValidFlag = #validFlag#)
+			JOIN Basis.BIN_Product C
+			ON(B.BIN_ProductID = C.BIN_ProductID)
+		WHERE			
+			H.StockInOutDate >= CONVERT(date,#startDate#)	
+			AND H.StockInOutDate <= CONVERT(date,#endDate#)	
+			AND H.TradeType = 'SP'
+			AND H.ValidFlag = '1'
+		]]>
+		<isNotEmpty prepend="AND" property="prtVendorId">	
+			A1.BIN_ProductVendorID = #prtVendorId#
+		</isNotEmpty>
+		<isNotEmpty prepend="AND" property="depotId">	
+			A1.BIN_InventoryInfoID = #depotId#
+		</isNotEmpty>
+		<isNotEmpty property="lgcInventoryId" prepend="AND">
+			A1.BIN_LogicInventoryInfoID = #lgcInventoryId#
+		</isNotEmpty>
+		<isEmpty property="prtVendorId">
+			<isNotEmpty prepend="AND" property="nameTotal" >
+				C.NameTotal like '%' + #nameTotal# + '%'
+			</isNotEmpty>
+		</isEmpty>
+	</sql>
+	<!-- 取得产品本期积分兑换变化SQL -->
+	<sql id="ProStockout10SQL">
+		<![CDATA[
+		SELECT			
+			A1.BIN_InventoryInfoID,
+			A1.BIN_LogicInventoryInfoID,
+			B.BIN_ProductID,
+			B.BarCode,
+			C.UnitCode,
+			C.ModuleCode,
+			C.SaleUnit,
+			C.Spec,
+			C.OriginalBrand,
+			C.NameTotal,
+			0 AS hQuantity,	
+			0 AS hDinQuantity,
+			0 AS hDoutQuantity,	
+			0 AS hinQuantity,		
+			0 AS houtQuantity,		
+			0 AS inQuantity1,		
+			0 AS inQuantity2,		
+			0 AS inQuantity3,		
+			0 AS inQuantity4,		
+			0 AS inQuantity5,		
+			0 AS inQuantity6,
+			0 AS inQuantity7,		
+			0 AS outQuantity1,		
+			0 AS outQuantity2,		
+			0 AS outQuantity3,		
+			0 AS outQuantity4,		
+			0 AS outQuantity5,		
+			0 AS outQuantity6,
+			0 AS outQuantity7,
+			0 AS outQuantity8,
+			0 AS outQuantity9,
+			CASE WHEN A1.StockType = '0' THEN (-1)*ISNULL(A1.Quantity,0) ELSE ISNULL(A1.Quantity,0) END AS outQuantity10	
+		FROM			
+			Inventory.BIN_ProductInOut H WITH(NOLOCK)		
+			JOIN Inventory.BIN_ProductInOutDetail A1 WITH(NOLOCK)	
+			ON(H.BIN_ProductInOutID = A1.BIN_ProductInOutID
+				AND A1.ValidFlag = '1')
+			JOIN Basis.BIN_ProductVendor B
+			ON(A1.BIN_ProductVendorID = B.BIN_ProductVendorID
+				AND B.ValidFlag = #validFlag#)
+			JOIN Basis.BIN_Product C
+			ON(B.BIN_ProductID = C.BIN_ProductID)
+		WHERE			
+			H.StockInOutDate >= CONVERT(date,#startDate#)	
+			AND H.StockInOutDate <= CONVERT(date,#endDate#)	
+			AND H.TradeType = 'PX'
+			AND H.ValidFlag = '1'
+		]]>
+		<isNotEmpty prepend="AND" property="prtVendorId">	
+			A1.BIN_ProductVendorID = #prtVendorId#
+		</isNotEmpty>
+		<isNotEmpty prepend="AND" property="depotId">	
+			A1.BIN_InventoryInfoID = #depotId#
+		</isNotEmpty>
+		<isNotEmpty property="lgcInventoryId" prepend="AND">
+			A1.BIN_LogicInventoryInfoID = #lgcInventoryId#
+		</isNotEmpty>
+		<isEmpty property="prtVendorId">
+			<isNotEmpty prepend="AND" property="nameTotal" >
+				C.NameTotal like '%' + #nameTotal# + '%'
+			</isNotEmpty>
+		</isEmpty>
+	</sql>
+	<!-- 取得产品本期仓库收货变化SQL -->
+	<sql id="ProStockin1SQL">
+		<![CDATA[
+		SELECT			
+			A1.BIN_InventoryInfoID,
+			A1.BIN_LogicInventoryInfoID,
+			B.BIN_ProductID,
+			B.BarCode,
+			C.UnitCode,
+			C.ModuleCode,
+			C.SaleUnit,
+			C.Spec,
+			C.OriginalBrand,
+			C.NameTotal,
+			0 AS hQuantity,	
+			0 AS hDinQuantity,
+			0 AS hDoutQuantity,	
+			0 AS hinQuantity,		
+			0 AS houtQuantity,		
+			CASE WHEN A1.StockType = '1' THEN (-1)*ISNULL(A1.Quantity,0) ELSE ISNULL(A1.Quantity,0) END AS inQuantity1,		
+			0 AS inQuantity2,		
+			0 AS inQuantity3,		
+			0 AS inQuantity4,		
+			0 AS inQuantity5,		
+			0 AS inQuantity6,
+			0 AS inQuantity7,		
+			0 AS outQuantity1,		
+			0 AS outQuantity2,		
+			0 AS outQuantity3,		
+			0 AS outQuantity4,		
+			0 AS outQuantity5,		
+			0 AS outQuantity6,
+			0 AS outQuantity7,
+			0 AS outQuantity8,
+			0 AS outQuantity9,
+			0 AS outQuantity10		
+		FROM			
+			Inventory.BIN_ProductInOut H WITH(NOLOCK)		
+			JOIN Inventory.BIN_ProductInOutDetail A1 WITH(NOLOCK)	
+			ON(H.BIN_ProductInOutID = A1.BIN_ProductInOutID
+				AND A1.ValidFlag = '1')
+			JOIN Basis.BIN_ProductVendor B
+			ON(A1.BIN_ProductVendorID = B.BIN_ProductVendorID
+				AND B.ValidFlag = #validFlag#)
+			JOIN Basis.BIN_Product C
+			ON(B.BIN_ProductID = C.BIN_ProductID)
+		WHERE			
+			H.StockInOutDate >= CONVERT(date,#startDate#)	
+			AND H.StockInOutDate <= CONVERT(date,#endDate#)	
+			AND H.TradeType = 'RD'
+			AND H.ValidFlag = '1'		
+		]]>
+		<isNotEmpty prepend="AND" property="prtVendorId">	
+			A1.BIN_ProductVendorID = #prtVendorId#
+		</isNotEmpty>
+		<isNotEmpty prepend="AND" property="depotId">	
+			A1.BIN_InventoryInfoID = #depotId#
+		</isNotEmpty>
+		<isNotEmpty property="lgcInventoryId" prepend="AND">
+			A1.BIN_LogicInventoryInfoID = #lgcInventoryId#
+		</isNotEmpty>
+		<isEmpty property="prtVendorId">
+			<isNotEmpty prepend="AND" property="nameTotal" >
+				C.NameTotal like '%' + #nameTotal# + '%'
+			</isNotEmpty>
+		</isEmpty>
+	</sql>
+	<!-- 取得产品本期接受退库变化SQL -->
+	<sql id="ProStockin2SQL">
+		<![CDATA[
+		SELECT			
+			A1.BIN_InventoryInfoID,
+			A1.BIN_LogicInventoryInfoID,
+			B.BIN_ProductID,
+			B.BarCode,
+			C.UnitCode,
+			C.ModuleCode,
+			C.SaleUnit,
+			C.Spec,
+			C.OriginalBrand,
+			C.NameTotal,
+			0 AS hQuantity,
+			0 AS hDinQuantity,
+			0 AS hDoutQuantity,		
+			0 AS hinQuantity,		
+			0 AS houtQuantity,		
+			0 AS inQuantity1,		
+			CASE WHEN A1.StockType = '1' THEN (-1)*ISNULL(A1.Quantity,0) ELSE ISNULL(A1.Quantity,0) END AS inQuantity2,		
+			0 AS inQuantity3,		
+			0 AS inQuantity4,		
+			0 AS inQuantity5,		
+			0 AS inQuantity6,
+			0 AS inQuantity7,		
+			0 AS outQuantity1,		
+			0 AS outQuantity2,		
+			0 AS outQuantity3,		
+			0 AS outQuantity4,		
+			0 AS outQuantity5,		
+			0 AS outQuantity6,
+			0 AS outQuantity7,
+			0 AS outQuantity8,
+			0 AS outQuantity9,
+			0 AS outQuantity10		
+		FROM			
+			Inventory.BIN_ProductInOut H WITH(NOLOCK)		
+			JOIN Inventory.BIN_ProductInOutDetail A1 WITH(NOLOCK)	
+			ON(H.BIN_ProductInOutID = A1.BIN_ProductInOutID
+				AND A1.ValidFlag = '1')
+			JOIN Basis.BIN_ProductVendor B
+			ON(A1.BIN_ProductVendorID = B.BIN_ProductVendorID
+				AND B.ValidFlag = #validFlag#)
+			JOIN Basis.BIN_Product C
+			ON(B.BIN_ProductID = C.BIN_ProductID)
+		WHERE			
+			H.StockInOutDate >= CONVERT(date,#startDate#)	
+			AND H.StockInOutDate <= CONVERT(date,#endDate#)	
+			AND H.TradeType = 'AR'
+			AND H.ValidFlag = '1'		
+		]]>
+		<isNotEmpty prepend="AND" property="prtVendorId">	
+			A1.BIN_ProductVendorID = #prtVendorId#
+		</isNotEmpty>
+		<isNotEmpty prepend="AND" property="depotId">	
+			A1.BIN_InventoryInfoID = #depotId#
+		</isNotEmpty>
+		<isNotEmpty property="lgcInventoryId" prepend="AND">
+			A1.BIN_LogicInventoryInfoID = #lgcInventoryId#
+		</isNotEmpty>
+		<isEmpty property="prtVendorId">
+			<isNotEmpty prepend="AND" property="nameTotal" >
+				C.NameTotal like '%' + #nameTotal# + '%'
+			</isNotEmpty>
+		</isEmpty>
+	</sql>
+	<!-- 取得产品本期调入变化SQL -->
+	<sql id="ProStockin3SQL">
+		<![CDATA[
+		SELECT			
+			A1.BIN_InventoryInfoID,
+			A1.BIN_LogicInventoryInfoID,
+			B.BIN_ProductID,
+			B.BarCode,
+			C.UnitCode,
+			C.ModuleCode,
+			C.SaleUnit,
+			C.Spec,
+			C.OriginalBrand,
+			C.NameTotal,
+			0 AS hQuantity,
+			0 AS hDinQuantity,
+			0 AS hDoutQuantity,		
+			0 AS hinQuantity,		
+			0 AS houtQuantity,		
+			0 AS inQuantity1,		
+			0 AS inQuantity2,		
+			CASE WHEN A1.StockType = '1' THEN (-1)*ISNULL(A1.Quantity,0) ELSE ISNULL(A1.Quantity,0) END AS inQuantity3,		
+			0 AS inQuantity4,		
+			0 AS inQuantity5,		
+			0 AS inQuantity6,
+			0 AS inQuantity7,		
+			0 AS outQuantity1,		
+			0 AS outQuantity2,		
+			0 AS outQuantity3,		
+			0 AS outQuantity4,		
+			0 AS outQuantity5,		
+			0 AS outQuantity6,
+			0 AS outQuantity7,
+			0 AS outQuantity8,
+			0 AS outQuantity9,
+			0 AS outQuantity10		
+		FROM			
+			Inventory.BIN_ProductInOut H WITH(NOLOCK)		
+			JOIN Inventory.BIN_ProductInOutDetail A1 WITH(NOLOCK)	
+			ON(H.BIN_ProductInOutID = A1.BIN_ProductInOutID
+				AND A1.ValidFlag = '1')
+			JOIN Basis.BIN_ProductVendor B
+			ON(A1.BIN_ProductVendorID = B.BIN_ProductVendorID
+				AND B.ValidFlag = #validFlag#)
+			JOIN Basis.BIN_Product C
+			ON(B.BIN_ProductID = C.BIN_ProductID)
+		WHERE			
+			H.StockInOutDate >= CONVERT(date,#startDate#)	
+			AND H.StockInOutDate <= CONVERT(date,#endDate#)	
+			AND H.TradeType = 'BG'
+			AND H.ValidFlag = '1'		
+		]]>
+		<isNotEmpty prepend="AND" property="prtVendorId">	
+			A1.BIN_ProductVendorID = #prtVendorId#
+		</isNotEmpty>
+		<isNotEmpty prepend="AND" property="depotId">	
+			A1.BIN_InventoryInfoID = #depotId#
+		</isNotEmpty>
+		<isNotEmpty property="lgcInventoryId" prepend="AND">
+			A1.BIN_LogicInventoryInfoID = #lgcInventoryId#
+		</isNotEmpty>
+		<isEmpty property="prtVendorId">
+			<isNotEmpty prepend="AND" property="nameTotal" >
+				C.NameTotal like '%' + #nameTotal# + '%'
+			</isNotEmpty>
+		</isEmpty>
+	</sql>
+	<!-- 取得产品本期自由入库变化SQL -->
+	<sql id="ProStockin4SQL">
+		<![CDATA[
+		SELECT			
+			A1.BIN_InventoryInfoID,
+			A1.BIN_LogicInventoryInfoID,
+			B.BIN_ProductID,
+			B.BarCode,
+			C.UnitCode,
+			C.ModuleCode,
+			C.SaleUnit,
+			C.Spec,
+			C.OriginalBrand,
+			C.NameTotal,
+			0 AS hQuantity,	
+			0 AS hDinQuantity,
+			0 AS hDoutQuantity,	
+			0 AS hinQuantity,		
+			0 AS houtQuantity,		
+			0 AS inQuantity1,		
+			0 AS inQuantity2,		
+			0 AS inQuantity3,		
+			CASE WHEN A1.StockType = '1' THEN (-1)*ISNULL(A1.Quantity,0) ELSE ISNULL(A1.Quantity,0) END AS inQuantity4,		
+			0 AS inQuantity5,		
+			0 AS inQuantity6,
+			0 AS inQuantity7,		
+			0 AS outQuantity1,		
+			0 AS outQuantity2,		
+			0 AS outQuantity3,		
+			0 AS outQuantity4,		
+			0 AS outQuantity5,		
+			0 AS outQuantity6,
+			0 AS outQuantity7,
+			0 AS outQuantity8,
+			0 AS outQuantity9,
+			0 AS outQuantity10		
+		FROM			
+			Inventory.BIN_ProductInOut H WITH(NOLOCK)		
+			JOIN Inventory.BIN_ProductInOutDetail A1 WITH(NOLOCK)	
+			ON(H.BIN_ProductInOutID = A1.BIN_ProductInOutID
+				AND A1.ValidFlag = '1')
+			JOIN Basis.BIN_ProductVendor B
+			ON(A1.BIN_ProductVendorID = B.BIN_ProductVendorID
+				AND B.ValidFlag = #validFlag#)
+			JOIN Basis.BIN_Product C
+			ON(B.BIN_ProductID = C.BIN_ProductID)
+		WHERE
+			H.StockInOutDate >= CONVERT(date,#startDate#)	
+			AND H.StockInOutDate <= CONVERT(date,#endDate#)	
+			AND H.TradeType = 'GR'
+			AND H.ValidFlag = '1'	
+		]]>
+		<isNotEmpty prepend="AND" property="prtVendorId">	
+			A1.BIN_ProductVendorID = #prtVendorId#
+		</isNotEmpty>
+		<isNotEmpty prepend="AND" property="depotId">	
+			A1.BIN_InventoryInfoID = #depotId#
+		</isNotEmpty>
+		<isNotEmpty property="lgcInventoryId" prepend="AND">
+			A1.BIN_LogicInventoryInfoID = #lgcInventoryId#
+		</isNotEmpty>
+		<isEmpty property="prtVendorId">
+			<isNotEmpty prepend="AND" property="nameTotal" >
+				C.NameTotal like '%' + #nameTotal# + '%'
+			</isNotEmpty>
+		</isEmpty>
+	</sql>
+	<!-- 取得产品本期盘盈变化SQL -->
+	<sql id="ProStockin5SQL">
+		<![CDATA[
+		SELECT			
+			A1.BIN_InventoryInfoID,
+			A1.BIN_LogicInventoryInfoID,
+			B.BIN_ProductID,
+			B.BarCode,
+			C.UnitCode,
+			C.ModuleCode,
+			C.SaleUnit,
+			C.Spec,
+			C.OriginalBrand,
+			C.NameTotal,
+			0 AS hQuantity,	
+			0 AS hDinQuantity,
+			0 AS hDoutQuantity,	
+			0 AS hinQuantity,		
+			0 AS houtQuantity,		
+			0 AS inQuantity1,		
+			0 AS inQuantity2,		
+			0 AS inQuantity3,		
+			0 AS inQuantity4,		
+			ISNULL(A1.Quantity,0) AS inQuantity5,		
+			0 AS inQuantity6,
+			0 AS inQuantity7,		
+			0 AS outQuantity1,		
+			0 AS outQuantity2,		
+			0 AS outQuantity3,		
+			0 AS outQuantity4,		
+			0 AS outQuantity5,		
+			0 AS outQuantity6,
+			0 AS outQuantity7,
+			0 AS outQuantity8,
+			0 AS outQuantity9,
+			0 AS outQuantity10		
+		FROM			
+			Inventory.BIN_ProductInOut H WITH(NOLOCK)		
+			JOIN Inventory.BIN_ProductInOutDetail A1 WITH(NOLOCK)	
+			ON(H.BIN_ProductInOutID = A1.BIN_ProductInOutID
+				AND A1.StockType = '0'
+				AND A1.ValidFlag = '1')
+			JOIN Basis.BIN_ProductVendor B
+			ON(A1.BIN_ProductVendorID = B.BIN_ProductVendorID
+				AND B.ValidFlag = #validFlag#)
+			JOIN Basis.BIN_Product C
+			ON(B.BIN_ProductID = C.BIN_ProductID)
+		WHERE			
+			H.StockInOutDate >= CONVERT(date,#startDate#)	
+			AND H.StockInOutDate <= CONVERT(date,#endDate#)	
+			AND H.TradeType = 'CA'
+			AND H.ValidFlag = '1'		
+		]]>
+		<isNotEmpty prepend="AND" property="prtVendorId">	
+			A1.BIN_ProductVendorID = #prtVendorId#
+		</isNotEmpty>
+		<isNotEmpty prepend="AND" property="depotId">	
+			A1.BIN_InventoryInfoID = #depotId#
+		</isNotEmpty>
+		<isNotEmpty property="lgcInventoryId" prepend="AND">
+			A1.BIN_LogicInventoryInfoID = #lgcInventoryId#
+		</isNotEmpty>
+		<isEmpty property="prtVendorId">
+			<isNotEmpty prepend="AND" property="nameTotal" >
+				C.NameTotal like '%' + #nameTotal# + '%'
+			</isNotEmpty>
+		</isEmpty>
+	</sql>
+	<!-- 取得产品本期销售入库变化SQL -->
+	<sql id="ProStockin6SQL">
+		<![CDATA[
+		SELECT			
+			A1.BIN_InventoryInfoID,
+			A1.BIN_LogicInventoryInfoID,
+			B.BIN_ProductID,
+			B.BarCode,
+			C.UnitCode,
+			C.ModuleCode,
+			C.SaleUnit,
+			C.Spec,
+			C.OriginalBrand,
+			C.NameTotal,
+			0 AS hQuantity,
+			0 AS hDinQuantity,
+			0 AS hDoutQuantity,		
+			0 AS hinQuantity,		
+			0 AS houtQuantity,		
+			0 AS inQuantity1,		
+			0 AS inQuantity2,		
+			0 AS inQuantity3,		
+			0 AS inQuantity4,		
+			0 AS inQuantity5,		
+			ISNULL(A1.Quantity,0) AS inQuantity6,
+			0 AS inQuantity7,	
+			0 AS outQuantity1,		
+			0 AS outQuantity2,		
+			0 AS outQuantity3,		
+			0 AS outQuantity4,		
+			0 AS outQuantity5,		
+			0 AS outQuantity6,
+			0 AS outQuantity7,
+			0 AS outQuantity8,
+			0 AS outQuantity9,
+			0 AS outQuantity10	
+		FROM			
+			Inventory.BIN_ProductInOut H WITH(NOLOCK)		
+			JOIN Inventory.BIN_ProductInOutDetail A1 WITH(NOLOCK)	
+			ON(H.BIN_ProductInOutID = A1.BIN_ProductInOutID
+				AND A1.StockType = '0'
+				AND A1.ValidFlag = '1')
+			JOIN Basis.BIN_ProductVendor B
+			ON(A1.BIN_ProductVendorID = B.BIN_ProductVendorID
+				AND B.ValidFlag = #validFlag#)
+			JOIN Basis.BIN_Product C
+			ON(B.BIN_ProductID = C.BIN_ProductID)
+		WHERE			
+			H.StockInOutDate >= CONVERT(date,#startDate#)	
+			AND H.StockInOutDate <= CONVERT(date,#endDate#)
+			AND (H.TradeType = 'SR' OR H.TradeType = 'NS')
+			AND H.ValidFlag = '1'		
+		]]>
+		<isNotEmpty prepend="AND" property="prtVendorId">	
+			A1.BIN_ProductVendorID = #prtVendorId#
+		</isNotEmpty>
+		<isNotEmpty prepend="AND" property="depotId">	
+			A1.BIN_InventoryInfoID = #depotId#
+		</isNotEmpty>
+		<isNotEmpty property="lgcInventoryId" prepend="AND">
+			A1.BIN_LogicInventoryInfoID = #lgcInventoryId#
+		</isNotEmpty>
+		<isEmpty property="prtVendorId">
+			<isNotEmpty prepend="AND" property="nameTotal" >
+				C.NameTotal like '%' + #nameTotal# + '%'
+			</isNotEmpty>
+		</isEmpty>
+	</sql>
+	<!-- 取得产品本期销移入变化SQL -->
+	<sql id="ProStockin7SQL">
+		<![CDATA[
+		SELECT			
+			A1.BIN_InventoryInfoID,
+			A1.BIN_LogicInventoryInfoID,
+			B.BIN_ProductID,
+			B.BarCode AS barCode,
+			C.UnitCode AS unitCode,
+			C.ModuleCode,
+			C.SaleUnit,
+			C.Spec,
+			C.OriginalBrand,
+			C.NameTotal AS nameTotal,
+			0 AS hQuantity,
+			0 AS hDinQuantity,
+			0 AS hDoutQuantity,		
+			0 AS hinQuantity,		
+			0 AS houtQuantity,		
+			0 AS inQuantity1,		
+			0 AS inQuantity2,		
+			0 AS inQuantity3,		
+			0 AS inQuantity4,		
+			0 AS inQuantity5,		
+			0 AS inQuantity6,
+			ISNULL(A1.Quantity,0) AS inQuantity7,	
+			0 AS outQuantity1,		
+			0 AS outQuantity2,		
+			0 AS outQuantity3,		
+			0 AS outQuantity4,		
+			0 AS outQuantity5,		
+			0 AS outQuantity6,
+			0 AS outQuantity7,
+			0 AS outQuantity8,
+			0 AS outQuantity9,
+			0 AS outQuantity10		
+		FROM			
+			Inventory.BIN_ProductInOut H WITH(NOLOCK)		
+			JOIN Inventory.BIN_ProductInOutDetail A1 WITH(NOLOCK)
+			ON(H.BIN_ProductInOutID = A1.BIN_ProductInOutID
+				AND A1.StockType = '0'
+				AND A1.ValidFlag = '1')
+			JOIN Basis.BIN_ProductVendor B
+			ON(A1.BIN_ProductVendorID = B.BIN_ProductVendorID
+				AND B.ValidFlag = #validFlag#)
+			JOIN Basis.BIN_Product C
+			ON(B.BIN_ProductID = C.BIN_ProductID)
+		WHERE			
+			H.StockInOutDate >= CONVERT(date,#startDate#)	
+			AND H.StockInOutDate <= CONVERT(date,#endDate#)	
+			AND H.TradeType = 'MV'
+			AND H.ValidFlag = '1'		
+		]]>
+		<isNotEmpty prepend="AND" property="prtVendorId">	
+			A1.BIN_ProductVendorID = #prtVendorId#
+		</isNotEmpty>
+		<isNotEmpty prepend="AND" property="depotId">	
+			A1.BIN_InventoryInfoID = #depotId#
+		</isNotEmpty>
+		<isNotEmpty property="lgcInventoryId" prepend="AND">
+			A1.BIN_LogicInventoryInfoID = #lgcInventoryId#
+		</isNotEmpty>
+		<isEmpty property="prtVendorId">
+			<isNotEmpty prepend="AND" property="nameTotal" >
+				C.NameTotal like '%' + #nameTotal# + '%'
+			</isNotEmpty>
+		</isEmpty>
+	</sql>
+	<!-- 取得库存记录详细  -->
+    <sql id="sumPrtStock">
+    	<![CDATA[SELECT
+    		T0.BIN_InventoryInfoID,
+			T0.BIN_LogicInventoryInfoID,
+			T0.BIN_ProductID,
+			T0.BarCode AS barCode,
+			T0.UnitCode AS unitCode,
+			T0.ModuleCode AS moduleCode,
+			T0.SaleUnit AS saleUnit,
+			T0.Spec AS spec,
+			T0.OriginalBrand AS originalBrand,
+			T0.NameTotal AS nameTotal,
+			SUM(CONVERT(BIGINT,T0.inQuantity1)) AS inQuantity1,
+			SUM(CONVERT(BIGINT,T0.inQuantity2)) AS inQuantity2,
+			SUM(CONVERT(BIGINT,T0.inQuantity3)) AS inQuantity3,
+			SUM(CONVERT(BIGINT,T0.inQuantity4)) AS inQuantity4,
+			SUM(CONVERT(BIGINT,T0.inQuantity5)) AS inQuantity5,
+			SUM(CONVERT(BIGINT,T0.inQuantity6)) AS inQuantity6,
+			SUM(CONVERT(BIGINT,T0.inQuantity7)) AS inQuantity7,
+			SUM(CONVERT(BIGINT,T0.outQuantity1)) AS outQuantity1,
+			SUM(CONVERT(BIGINT,T0.outQuantity2)) AS outQuantity2,
+			SUM(CONVERT(BIGINT,T0.outQuantity3)) AS outQuantity3,
+			SUM(CONVERT(BIGINT,T0.outQuantity4)) AS outQuantity4,
+			SUM(CONVERT(BIGINT,T0.outQuantity5)) AS outQuantity5,
+			SUM(CONVERT(BIGINT,T0.outQuantity6)) AS outQuantity6,
+			SUM(CONVERT(BIGINT,T0.outQuantity7)) AS outQuantity7,
+			SUM(CONVERT(BIGINT,T0.outQuantity8)) AS outQuantity8,
+			SUM(CONVERT(BIGINT,T0.outQuantity9)) AS outQuantity9,
+			SUM(CONVERT(BIGINT,T0.outQuantity10)) AS outQuantity10,
+		]]>	
+		<isNotEmpty property="flagB" >
+		<![CDATA[		
+			SUM(CONVERT(BIGINT,T0.hQuantity) + (CONVERT(BIGINT,T0.hDinQuantity) - CONVERT(BIGINT,T0.hDoutQuantity)) 
+			+ (CONVERT(BIGINT,T0.hinQuantity)-CONVERT(BIGINT,T0.houtQuantity)) * #flag#) AS endQuantity,
+			SUM(CONVERT(BIGINT,T0.hQuantity) + (CONVERT(BIGINT,T0.hDinQuantity) - CONVERT(BIGINT,T0.hDoutQuantity)) 
+			+ (CONVERT(BIGINT,T0.hinQuantity)-CONVERT(BIGINT,T0.houtQuantity)) * #flag#
+				-(CONVERT(BIGINT,T0.inQuantity1)+CONVERT(BIGINT,T0.inQuantity2)+CONVERT(BIGINT,T0.inQuantity3)+CONVERT(BIGINT,T0.inQuantity4)
+					+CONVERT(BIGINT,T0.inQuantity5)+CONVERT(BIGINT,T0.inQuantity6)+CONVERT(BIGINT,T0.inQuantity7)
+					-CONVERT(BIGINT,T0.outQuantity1)-CONVERT(BIGINT,T0.outQuantity2)-CONVERT(BIGINT,T0.outQuantity3)
+					-CONVERT(BIGINT,T0.outQuantity4)-CONVERT(BIGINT,T0.outQuantity5)-CONVERT(BIGINT,T0.outQuantity6)
+					-CONVERT(BIGINT,T0.outQuantity7)-CONVERT(BIGINT,T0.outQuantity8)-CONVERT(BIGINT,T0.outQuantity9)-CONVERT(BIGINT,T0.outQuantity10))
+			) AS startQuantity
+		]]>		
+		</isNotEmpty>
+		<isEmpty property="flagB" >
+		<![CDATA[		
+			SUM(CONVERT(BIGINT,T0.hQuantity) + (CONVERT(BIGINT,T0.hDinQuantity) - CONVERT(BIGINT,T0.hDoutQuantity)) 
+			+ (CONVERT(BIGINT,T0.hinQuantity)-CONVERT(BIGINT,T0.houtQuantity)) * #flag#) AS startQuantity,
+			SUM(CONVERT(BIGINT,T0.hQuantity) + (CONVERT(BIGINT,T0.hDinQuantity) - CONVERT(BIGINT,T0.hDoutQuantity)) 
+			+ (CONVERT(BIGINT,T0.hinQuantity)-CONVERT(BIGINT,T0.houtQuantity)) * #flag#
+				+(CONVERT(BIGINT,T0.inQuantity1)+CONVERT(BIGINT,T0.inQuantity2)+CONVERT(BIGINT,T0.inQuantity3)+CONVERT(BIGINT,T0.inQuantity4)
+					+CONVERT(BIGINT,T0.inQuantity5)+CONVERT(BIGINT,T0.inQuantity6)+CONVERT(BIGINT,T0.inQuantity7)
+					-CONVERT(BIGINT,T0.outQuantity1)-CONVERT(BIGINT,T0.outQuantity2)-CONVERT(BIGINT,T0.outQuantity3)
+					-CONVERT(BIGINT,T0.outQuantity4)-CONVERT(BIGINT,T0.outQuantity5)-CONVERT(BIGINT,T0.outQuantity6)
+					-CONVERT(BIGINT,T0.outQuantity7)-CONVERT(BIGINT,T0.outQuantity8)-CONVERT(BIGINT,T0.outQuantity9)-CONVERT(BIGINT,T0.outQuantity10))
+			) AS endQuantity
+		]]>		
+		</isEmpty>
+		<![CDATA[ FROM ( ]]>
+		<include refid="BINOLPTRPS11_1.ProStockhistorySQL" />
+		<![CDATA[ UNION ALL ]]>
+		<include refid="BINOLPTRPS11_1.ProStockhDinSQL" />
+		<![CDATA[ UNION ALL ]]>
+		<include refid="BINOLPTRPS11_1.ProStockhDoutSQL" />
+		<![CDATA[ UNION ALL ]]>
+		<include refid="BINOLPTRPS11_1.ProStockhinSQL" />
+		<![CDATA[ UNION ALL ]]>
+		<include refid="BINOLPTRPS11_1.ProStockhoutSQL" />
+		<![CDATA[ UNION ALL ]]>
+		<include refid="BINOLPTRPS11_1.ProStockin1SQL" />
+		<![CDATA[ UNION ALL ]]>
+		<include refid="BINOLPTRPS11_1.ProStockin2SQL" />
+		<![CDATA[ UNION ALL ]]>
+		<include refid="BINOLPTRPS11_1.ProStockin3SQL" />
+		<![CDATA[ UNION ALL ]]>
+		<include refid="BINOLPTRPS11_1.ProStockin4SQL" />
+		<![CDATA[ UNION ALL ]]>
+		<include refid="BINOLPTRPS11_1.ProStockin5SQL" />
+		<![CDATA[ UNION ALL ]]>
+		<include refid="BINOLPTRPS11_1.ProStockin6SQL" />
+		<![CDATA[ UNION ALL ]]>
+		<include refid="BINOLPTRPS11_1.ProStockin7SQL" />
+		<![CDATA[ UNION ALL ]]>
+		<include refid="BINOLPTRPS11_1.ProStockout1SQL" />
+		<![CDATA[ UNION ALL ]]>
+		<include refid="BINOLPTRPS11_1.ProStockout2SQL" />
+		<![CDATA[ UNION ALL ]]>
+		<include refid="BINOLPTRPS11_1.ProStockout3SQL" />
+		<![CDATA[ UNION ALL ]]>
+		<include refid="BINOLPTRPS11_1.ProStockout4SQL" />
+		<![CDATA[ UNION ALL ]]>
+		<include refid="BINOLPTRPS11_1.ProStockout5SQL" />
+		<![CDATA[ UNION ALL ]]>
+		<include refid="BINOLPTRPS11_1.ProStockout6SQL" />
+		<![CDATA[ UNION ALL ]]>
+		<include refid="BINOLPTRPS11_1.ProStockout7SQL" />
+		<![CDATA[ UNION ALL ]]>
+		<include refid="BINOLPTRPS11_1.ProStockout8SQL" />
+		<![CDATA[ UNION ALL ]]>
+		<include refid="BINOLPTRPS11_1.ProStockout9SQL" />
+		<![CDATA[ UNION ALL ]]>
+		<include refid="BINOLPTRPS11_1.ProStockout10SQL" />
+		<![CDATA[  ) T0
+				JOIN T99 ON(T0.BIN_InventoryInfoID = T99.BIN_InventoryInfoID)
+		]]>
+		<!-- 大中小分类条件 -->
+		<include refid="BINOLPTRPS11_1.getProductIdSql"/>
+		<![CDATA[
+			GROUP BY
+				T0.BIN_InventoryInfoID,
+			    T0.BIN_LogicInventoryInfoID,
+			    T0.BIN_ProductID,
+			    T0.BarCode,
+				T0.UnitCode,
+				T0.ModuleCode,
+				T0.SaleUnit,
+				T0.Spec,
+				T0.OriginalBrand,
+				T0.NameTotal
+		]]>						
+    </sql>
+    <!-- 部门促销品库存SQL -->
+    <sql id="getDeptStockSQLS">
+    <![CDATA[
+   		SELECT
+   			O.BIN_RegionID AS regionId,
+			O.BIN_CityID AS cityId,
+   			O.DepartCode AS departCode,
+   			ISNULL(Convert(decimal(16,2),P.SalePrice),0) AS price,
+            ISNULL(T1.startQuantity * ISNULL(Convert(decimal(16,2),P.SalePrice),0),0) AS startAmount,
+            ISNULL(T1.endQuantity * ISNULL(Convert(decimal(16,2),P.SalePrice),0),0) AS endAmount,
+   		]]>
+		<dynamic>
+			<isNotEmpty property="language">
+				<isEqual property="language" compareValue="en_US">
+					R1.RegionNameForeign AS regionName,
+					R2.RegionNameForeign AS cityName,
+					O.NameForeign AS departName,
+					A1.DepotNameEN AS inventoryName,
+					A2.InventoryNameEN AS lgcInventoryName,
+					PB.PropValueForeign AS classifyBig,
+					PM.PropValueForeign AS classifyMid,
+					PS.PropValueForeign AS classifySmall,
+				</isEqual>
+				<isEqual property="language" compareValue="zh_CN">
+					R1.RegionNameChinese AS regionName,
+					R2.RegionNameChinese AS cityName,
+					O.DepartName AS departName,
+					A1.DepotNameCN AS inventoryName,
+					A2.InventoryNameCN AS lgcInventoryName,
+					PB.PropValueChinese AS classifyBig,
+					PM.PropValueChinese AS classifyMid,
+					PS.PropValueChinese AS classifySmall,
+				</isEqual>								
+			</isNotEmpty>
+			<isEmpty property="language">
+				R1.RegionNameChinese AS regionName,
+				R2.RegionNameChinese AS cityName,
+				O.DepartName AS departName,
+				A1.DepotNameCN AS inventoryName,
+				A2.InventoryNameCN AS lgcInventoryName,
+				PB.PropValueChinese AS classifyBig,
+				PM.PropValueChinese AS classifyMid,
+				PS.PropValueChinese AS classifySmall,
+			</isEmpty>
+		</dynamic>
+		<![CDATA[T1.* FROM(]]>
+    	<include refid="BINOLPTRPS11_1.sumPrtStock" />
+		<![CDATA[
+			) T1
+			JOIN Basis.BIN_DepotInfo A1	
+			ON(T1.BIN_InventoryInfoID = A1.BIN_DepotInfoID)
+			LEFT JOIN Basis.BIN_LogicInventory A2
+			ON(T1.BIN_LogicInventoryInfoID = A2.BIN_LogicInventoryInfoID)
+			LEFT JOIN Basis.BIN_Organization O
+			ON(A1.BIN_OrganizationID = O.BIN_OrganizationID)
+			LEFT JOIN Basis.BIN_Region R1
+			ON(O.BIN_RegionID = R1.BIN_RegionID
+				AND R1.ValidFlag = '1')
+			LEFT JOIN Basis.BIN_Region R2
+			ON(O.BIN_CityID = R2.BIN_RegionID
+				AND R2.ValidFlag = '1')
+		    LEFT JOIN Basis.BIN_ProductPrice P
+		    ON (T1.BIN_ProductID = P.BIN_ProductID AND P.Type = '2' AND #businessDate# BETWEEN P.StartDate AND P.EndDate AND P.ValidFlag = '1')
+		    LEFT JOIN (
+   				SELECT
+   					pc.BIN_ProductID,
+   					pcv.PropValueChinese,
+   					pcv.PropValueForeign
+   				FROM
+   					Basis.BIN_PrtCategory pc
+   					JOIN Basis.BIN_PrtCatPropValue pcv
+   					ON(pc.BIN_PrtCatPropValueID = pcv.BIN_PrtCatPropValueID AND pcv.ValidFlag = '1')
+   					JOIN Basis.BIN_PrtCatProperty pcp
+   					ON(pcv.BIN_PrtCatPropertyID = pcp.BIN_PrtCatPropertyID AND pcp.ValidFlag = '1')
+   				WHERE
+   					pcp.TeminalFlag = '1' AND 
+   					pcp.BIN_OrganizationInfoID = #organizationInfoId#  AND
+    				pcp.BIN_BrandInfoID = #brandInfoId# AND 
+					pc.ValidFlag = '1'
+   			) PB ON (T1.BIN_ProductID = PB.BIN_ProductID)
+   			LEFT JOIN (
+   				SELECT
+   					pc.BIN_ProductID,
+   					pcv.PropValueChinese,
+   					pcv.PropValueForeign
+   				FROM
+   					Basis.BIN_PrtCategory pc
+   					JOIN Basis.BIN_PrtCatPropValue pcv
+   					ON(pc.BIN_PrtCatPropValueID = pcv.BIN_PrtCatPropValueID AND pcv.ValidFlag = '1')
+   					JOIN Basis.BIN_PrtCatProperty pcp
+   					ON(pcv.BIN_PrtCatPropertyID = pcp.BIN_PrtCatPropertyID AND pcp.ValidFlag = '1')
+   				WHERE
+   					pcp.TeminalFlag = '3' AND 
+   					pcp.BIN_OrganizationInfoID = #organizationInfoId#  AND
+    				pcp.BIN_BrandInfoID = #brandInfoId# AND 
+					pc.ValidFlag = '1'
+   			) PM ON (T1.BIN_ProductID = PM.BIN_ProductID)
+   			LEFT JOIN (
+   				SELECT
+   					pc.BIN_ProductID,
+   					pcv.PropValueChinese,
+   					pcv.PropValueForeign
+   				FROM
+   					Basis.BIN_PrtCategory pc
+   					JOIN Basis.BIN_PrtCatPropValue pcv
+   					ON(pc.BIN_PrtCatPropValueID = pcv.BIN_PrtCatPropValueID AND pcv.ValidFlag = '1')
+   					JOIN Basis.BIN_PrtCatProperty pcp
+   					ON(pcv.BIN_PrtCatPropertyID = pcp.BIN_PrtCatPropertyID AND pcp.ValidFlag = '1')
+   				WHERE
+   					pcp.TeminalFlag = '2' AND 
+   					pcp.BIN_OrganizationInfoID = #organizationInfoId#  AND
+    				pcp.BIN_BrandInfoID = #brandInfoId# AND 
+					pc.ValidFlag = '1'
+   			) PS ON (T1.BIN_ProductID = PS.BIN_ProductID)
+   			WHERE 
+   				EXISTS (
+   					SELECT 1
+   					FROM
+   						Basis.BIN_Product BPT WITH(NOLOCK)
+   					WHERE
+   						T1.BIN_ProductID = BPT.BIN_ProductID
+   						AND BPT.IsStock='1'
+   				)
+		]]>
+		<dynamic>
+			<isNotEmpty property="originalBrand" prepend="AND">
+				T1.originalBrand = #originalBrand#
+			</isNotEmpty>
+		</dynamic>
+    </sql>
+     <!-- 取得部门产品库存List  -->
+    <select id="getDeptStock" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+    	<include refid="BINOLCMINC99.getInventoryList" />
+    	<include refid="BINOLCMINC99.pageheader" />
+    	<include refid="BINOLPTRPS11_1.getDeptStockSQLS" />
+		<include refid="BINOLCMINC99.pagefooter" />
+    </select>
+    <sql id="deptStockCountSQL">
+    	
+    </sql>
+    <!-- 取得部门产品库存List总数 -->
+	<select id="getDeptStockCount" parameterClass="java.util.HashMap" resultClass="java.lang.Integer" remapResults="true">
+		
+		<include refid="BINOLCMINC99.getInventoryList" />
+		<![CDATA[
+			SELECT COUNT(1) AS count FROM (
+		]]>	
+    	<include refid="BINOLPTRPS11_1.getDeptStockSQLS" />
+		<![CDATA[	
+			) SORT_T1
+		]]>	
+    </select>
+</sqlMap>

@@ -1,0 +1,158 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sqlMap PUBLIC "-//iBATIS.com//DTD SQL Map 2.0//EN" "http://ibatis.apache.org/dtd/sql-map-2.dtd">
+<sqlMap namespace="BINOLPLUPM01">
+	<!-- 用户信息查询sql  -->
+	<sql id="userQuery">
+		<![CDATA[
+		  SELECT
+		         DISTINCT	
+				 A.BIN_UserID AS userId,
+				 A.BIN_OrganizationInfoID AS organizationInfoId,	
+		         A.BIN_EmployeeID AS employeeId,	
+				 A.LonginName AS loginName,
+				 A.PassWord AS passWord,												
+		         A.PasswordChangeFlag AS passwordChangeFlag,
+				 A.ValidFlag AS validFlag,
+				 convert(varchar(30),A.UpdateTime,121) AS modifyTime,
+                 A.ModifyCount AS modifyCount,
+				 B.EmployeeCode AS employeeCode,
+				 B.BIN_BrandInfoID AS brandInfoId
+	    ]]>
+		<dynamic>
+		<isNotEmpty property="language">
+			<isEqual property="language" compareValue="en_US">
+			,B.EmployeeNameForeign AS employeeName
+			</isEqual>
+			<isEqual property="language" compareValue="zh_CN">	
+			,B.EmployeeName AS employeeName
+			</isEqual>								
+		</isNotEmpty>
+		<isEmpty property="language">
+			,B.EmployeeName AS employeeName
+		</isEmpty>
+		</dynamic>
+		<![CDATA[
+		  FROM															
+		           Privilege.BIN_User A
+				   LEFT JOIN Basis.BIN_Employee B
+				   ON(A.BIN_OrganizationInfoID = B.BIN_OrganizationInfoID AND 
+				   A.BIN_EmployeeID = B.BIN_EmployeeID AND
+				   B.ValidFlag = '1')
+		  WHERE 
+				   B.BIN_OrganizationInfoID = #organizationInfoId#
+		]]>
+		<dynamic>
+			<isEmpty prepend="AND" property="validFlag" >
+				A.ValidFlag = '1'
+			</isEmpty>
+			<isNotEmpty prepend="AND" property="brandInfoId">												
+				B.BIN_BrandInfoID = #brandInfoId#
+			</isNotEmpty>
+			
+			<isNotEmpty prepend="AND" property="loginName" >
+				A.LonginName LIKE '%' + #loginName# + '%'
+			</isNotEmpty>
+			
+			<isNotEmpty prepend="AND" property="employeeCode">
+				B.EmployeeCode LIKE '%' + #employeeCode# + '%'
+			</isNotEmpty>
+			
+			<isNotEmpty prepend="AND" property="employeeName">
+				(B.EmployeeName LIKE '%' + #employeeName# + '%' OR
+				 B.EmployeeNameForeign LIKE '%' + #employeeName# + '%')
+			</isNotEmpty>
+		</dynamic>
+	</sql>
+	
+	<!-- 取得用户总数  -->
+    <select id="getUserCount" parameterClass="java.util.HashMap" resultClass="java.lang.Integer">
+    	<![CDATA[
+			SELECT	COUNT(SORT_T1.userId) AS count FROM (
+		]]>	
+		<include refid="BINOLPLUPM01.userQuery" />	
+		<![CDATA[	
+			)SORT_T1
+		]]>										
+    </select>
+	
+	<!-- 取得用户信息List -->
+    <select id="getUserList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+       	<include refid="BINOLCMINC99.pageheader" />
+		<include refid="BINOLPLUPM01.userQuery" />
+		<include refid="BINOLCMINC99.pagefooter" />
+    </select>
+	
+	<!-- 伦理删除用户信息  -->
+	<update id="inValidUser" parameterClass="java.util.HashMap">
+		
+		<![CDATA[
+	      UPDATE
+	               Privilege.BIN_User
+		  SET     
+		           ValidFlag = #validFlag#,													
+		           						
+		]]>	
+			<include refid="BINOLCMINC99.updateSql" />									
+		<![CDATA[								
+		  WHERE		
+		          BIN_UserID = #userId# AND
+				  UpdateTime = #modifyTime# AND								
+				  ModifyCount = #modifyCount#
+		]]>
+		   
+	</update>
+		   
+	<!-- 取得用户信息  -->
+	<select id="getUser" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+	   <![CDATA[
+		SELECT
+				 A.BIN_UserID AS userId,	
+				 A.BIN_OrganizationInfoID,
+		         A.BIN_EmployeeID AS employeeId,	
+				 A.LonginName AS loginName,
+				 A.PassWord AS passWord,
+				 convert(varchar(30),A.UpdateTime,121) AS modifyTime,
+                 A.ModifyCount AS modifyCount,
+				 B.BIN_BrandInfoID AS brandInfoId,
+				 B.EmployeeCode AS employeeCode,
+				 D.Complexity AS complexity,
+				 D.IsEncryption AS isEncryption
+	    ]]>
+		<dynamic>
+		<isNotEmpty property="language">
+			<isEqual property="language" compareValue="en_US">
+			,B.EmployeeNameForeign AS employeeName
+			,C.BrandNameForeign AS brandName
+			</isEqual>
+			<isEqual property="language" compareValue="zh_CN">	
+			,B.EmployeeName AS employeeName
+			,C.BrandNameChinese AS brandName
+			</isEqual>								
+		</isNotEmpty>
+		<isEmpty property="language">
+			,B.EmployeeName AS employeeName
+			,C.BrandNameChinese AS brandName
+		</isEmpty>
+		</dynamic>
+		<![CDATA[
+		  FROM															
+		           Privilege.BIN_User A
+				   LEFT JOIN Basis.BIN_Employee B
+				     LEFT JOIN Basis.BIN_BrandInfo C 
+                     ON(B.BIN_OrganizationInfoID = C.BIN_OrganizationInfoID AND  
+                     B.BIN_BrandInfoID = C.BIN_BrandInfoID AND 
+                     C.ValidFlag = '1' ) 
+                     JOIN Privilege.BIN_PasswordConfig D 
+                     ON(D.BIN_OrganizationInfoID = B.BIN_OrganizationInfoID AND 
+                     D.BIN_BrandInfoID = B.BIN_BrandInfoID AND 
+                     D.ValidFlag = '1') 
+                  ON(A.BIN_OrganizationInfoID = B.BIN_OrganizationInfoID AND
+				  A.BIN_EmployeeID = B.BIN_EmployeeID AND 
+                  B.ValidFlag = '1')
+				   
+		  WHERE 
+		           A.BIN_UserID = #userId#   
+		]]>
+	</select>
+	
+</sqlMap>

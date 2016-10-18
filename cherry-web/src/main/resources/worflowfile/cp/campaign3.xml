@@ -1,0 +1,371 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE workflow PUBLIC "-//OpenSymphony Group//DTD OSWorkflow 2.8//EN" "http://www.opensymphony.com/osworkflow/workflow_2_8.dtd">
+<workflow>
+	<!-- 模板名称 -->
+	<meta name="templateName">cp/point/template_point01</meta>
+	<!-- 模板自定义方法 bean -->
+	<meta name="templateInitBean">pointTemplateInit</meta>
+	<!-- 模板创建规则 bean -->
+	<meta name="ruleFileBean">pointCreateRule</meta>
+	<!-- 详细画面pageId -->
+	<meta name="detailPageId">P00000000008</meta>
+	<!-- 页面导航 -->
+	<meta name="navigation">cp.step004,cp.step005,cp.step003</meta>
+	<initial-actions>
+		<action id="1" name="Start Workflow">
+			<pre-functions>
+				<function type="beanshell">
+					<arg name="script">
+				<![CDATA[
+				         
+				]]>
+					</arg>
+				</function>
+				<function type="class">
+					<arg name="class.name">com.opensymphony.workflow.util.Caller</arg>
+				</function>
+			</pre-functions>
+			<results>
+				<!-- 活动范围-->
+				<unconditional-result old-status="Finished"
+					status="Init" step="10">
+				</unconditional-result>
+			</results>
+		</action>
+	</initial-actions>
+	<common-actions>
+		<!-- 活动范围 -->
+		<action id="22" name="编辑时初期显示  活动范围">
+			<results>
+				<unconditional-result old-status="Finished"
+					status="BackInit" step="10">
+				</unconditional-result>
+			</results>
+		</action>
+		<!-- 活动奖励 -->
+		<action id="32" name="编辑时初期显示  活动奖励">
+			<results>
+				<unconditional-result old-status="Finished"
+					status="BackInit" step="20">
+				</unconditional-result>
+			</results>
+		</action>
+	</common-actions>
+	<steps>
+		<step id="10" name="活动范围">
+			<!-- 下一步 按钮对应的action的ID -->
+			<meta name="nextAction">11</meta>
+			<!-- 上一步按钮对应的action的ID  -->
+			<meta name="backAction">12</meta>
+			<!-- 草稿保存对应的action的ID   -->
+			<meta name="saveAction">13</meta>
+			<!-- 草稿保存后初期显示的动作   -->
+			<meta name="editInitAction">22</meta>
+			<!-- 页面ID -->
+			<meta name="pageId">P00000000006</meta>
+			<!-- 当前所在导航条的位置  -->
+			<meta name="onStep">0</meta>
+			<!-- 页面上显示的按钮  -->
+			<meta name="pageButtons">BTN_BACK01,BTN_DRAFTSAVE01,BTN_NEXT01</meta>
+			<actions>
+				<!-- 编辑时初期显示  等级和有效期 -->
+				<common-action id="22"/>
+				<!-- 编辑时初期显示  入会规则设定 -->
+				<common-action id="32"/>
+				<action id="19" name="初期显示" auto="true">
+					<restrict-to>
+						<conditions type="AND">
+							<condition type="class">
+								<arg name="status">Init</arg>
+								<arg name="class.name">com.opensymphony.workflow.util.StatusCondition</arg>
+							</condition>
+						</conditions>
+					</restrict-to>
+					<pre-functions>
+			            <function type="spring">
+							<arg name="bean.name">binolcpcom02FN</arg>
+							<arg name="method">init</arg>
+						</function>
+		          	</pre-functions>
+					<results>
+					<unconditional-result old-status="Finished"
+							status="Underway" step="10">
+					</unconditional-result>
+					</results>
+				</action>
+				<action id="18" name="后退显示" auto="true">
+					<restrict-to>
+						<conditions type="AND">
+							<condition type="class">
+								<arg name="status">BackInit</arg>
+								<arg name="class.name">com.opensymphony.workflow.util.StatusCondition</arg>
+							</condition>
+						</conditions>
+					</restrict-to>
+					<pre-functions>
+			            <function type="spring">
+								<arg name="bean.name">binolcpcom02FN</arg>
+								<arg name="method">backInit</arg>
+						</function>
+		          	</pre-functions>
+					<results>
+					<unconditional-result old-status="Finished"
+							status="Underway" step="10">
+					</unconditional-result>
+					</results>
+				</action>
+				
+				<action id="11" name="下一步">
+					<results>
+						<!-- 验证成功，跳转入会规则设定 -->
+						<result old-status="Finished" status="Init" step="20">
+							<conditions type="AND">
+								<condition type="class">
+									<arg name="class.name">com.cherry.cp.common.condition.ParamsValidateCondition</arg>
+									<arg name="validate_class">com.cherry.cp.point.validate.PointValidate</arg>
+								</condition>
+							</conditions>
+						</result>
+						<!-- 验证失败，返回本页 -->
+						<unconditional-result old-status="Finished"
+							status="BackInit" step="10">
+						</unconditional-result>
+					</results>
+					
+				</action>
+				<!-- 活动基本信息 -->
+				<action id="12" name="上一步">
+					<results>
+						<unconditional-result old-status="Finished"
+							status="BackInit" step="800">
+						</unconditional-result>
+					</results>
+				</action>
+				<!-- 存草稿 -->
+				<action id="13" name="存草稿">
+					<results>
+						<!-- 验证成功，保存数据 -->
+						<result old-status="Finished" status="SaveSuccess" step="10">
+							<conditions type="AND">
+								<condition type="class">
+									<arg name="class.name">com.cherry.cp.common.condition.ParamsValidateCondition</arg>
+									<arg name="validate_class">com.cherry.cp.point.validate.PointValidate</arg>
+								</condition>
+							</conditions>
+							<post-functions>
+					            <function type="spring">
+									<arg name="bean.name">binolcpcom02FN</arg>
+									<arg name="method">save</arg>
+								</function>
+				          	</post-functions>
+						</result>
+						<!-- 验证失败，返回本页 -->
+						<unconditional-result old-status="Finished"
+							status="SaveError" step="10">
+						</unconditional-result>
+					</results>
+				</action>
+			</actions>
+		</step>
+		<step id="20" name="活动奖励">
+			<!-- 下一步 按钮对应的action的ID -->
+			<meta name="nextAction">21</meta>
+			<!-- 上一步 按钮对应的action的ID -->
+			<meta name="backAction">22</meta>
+			<!-- 草稿保存对应的action的ID   -->
+			<meta name="saveAction">23</meta>
+			<!-- 草稿保存后初期显示的动作   -->
+			<meta name="editInitAction">32</meta>
+			<!-- 页面ID -->
+			<meta name="pageId">P00000000007</meta>
+			<!-- 当前所在导航条的位置  -->
+			<meta name="onStep">1</meta>
+			<!-- 页面上显示的按钮  -->
+			<meta name="pageButtons">BTN_BACK01,BTN_DRAFTSAVE01,BTN_NEXT02</meta>
+			<actions>
+				<!-- 编辑时初期显示 入会规则设定 -->
+				<common-action id="32"/>
+				<!-- 活动基本信息 -->
+				<common-action id="22"/>
+				<action id="29" name="初期显示" auto="true">
+					<restrict-to>
+						<conditions type="AND">
+							<condition type="class">
+								<arg name="status">Init</arg>
+								<arg name="class.name">com.opensymphony.workflow.util.StatusCondition</arg>
+							</condition>
+						</conditions>
+					</restrict-to>
+					<pre-functions>
+			            <function type="spring">
+							<arg name="bean.name">binolcpcom02FN</arg>
+							<arg name="method">init</arg>
+						</function>
+		          	</pre-functions>
+					<results>
+					<unconditional-result old-status="Finished"
+							status="Underway" step="20">
+					</unconditional-result>
+					</results>
+				</action>
+				<action id="28" name="后退显示" auto="true">
+					<restrict-to>
+						<conditions type="AND">
+							<condition type="class">
+								<arg name="status">BackInit</arg>
+								<arg name="class.name">com.opensymphony.workflow.util.StatusCondition</arg>
+							</condition>
+						</conditions>
+					</restrict-to>
+					<pre-functions>
+			            <function type="spring">
+								<arg name="bean.name">binolcpcom02FN</arg>
+								<arg name="method">backInit</arg>
+						</function>
+		          	</pre-functions>
+					<results>
+					<unconditional-result old-status="Finished"
+							status="Underway" step="20">
+					</unconditional-result>
+					</results>
+				</action>
+				
+				<action id="21" name="下一步">
+					<results>
+						<result old-status="Finished" status="Init" step="30">
+							<conditions type="AND">
+								<condition type="class">
+									<arg name="class.name">com.cherry.cp.common.condition.ParamsValidateCondition</arg>
+									<arg name="validate_class">com.cherry.cp.point.validate.PointValidate</arg>
+								</condition>
+							</conditions>
+						</result>
+						<!-- 等级和有效期 -->
+						<unconditional-result old-status="Finished"
+							status="BackInit" step="20">
+						</unconditional-result>
+					</results>
+				</action>
+				<!-- 存草稿 -->
+				<action id="23" name="存草稿">
+					<results>
+						<result old-status="Finished" status="SaveSuccess" step="20">
+							<conditions type="AND">
+								<condition type="class">
+									<arg name="class.name">com.cherry.cp.common.condition.ParamsValidateCondition</arg>
+									<arg name="validate_class">com.cherry.cp.point.validate.PointValidate</arg>
+								</condition>
+							</conditions>
+							<post-functions>
+					            <function type="spring">
+									<arg name="bean.name">binolcpcom02FN</arg>
+									<arg name="method">save</arg>
+								</function>
+				          	</post-functions>
+						</result>
+						<!-- 入会规则设定 -->
+						<unconditional-result old-status="Finished"
+							status="SaveError" step="20">
+						</unconditional-result>
+					</results>
+				</action>
+			</actions>
+		</step>
+		<step id="30" name="预览和确认">
+			<!-- 下一步 按钮对应的action的ID -->
+			<meta name="nextAction">31</meta>
+			<!-- 上一步 按钮对应的action的ID -->
+			<meta name="backAction">32</meta>
+			<!-- 页面ID -->
+			<meta name="pageId">P00000000008</meta>
+			<!-- 当前所在导航条的位置  -->
+			<meta name="onStep">2</meta>
+			<!-- 页面上显示的按钮  -->
+			<meta name="pageButtons">BTN_BACK01,BTN_RULETEST01,BTN_SAVE01</meta>
+			<!-- 跳至优先级页面  -->
+			<meta name="priorityPageFlag">1</meta>
+			<actions>
+				<!-- 活动基本信息 -->
+				<common-action id="22"/>
+				<!-- 入会规则设定  -->
+				<common-action id="32"/>
+				<action id="39" name="初期显示" auto="true">
+					<restrict-to>
+						<conditions type="AND">
+							<condition type="class">
+								<arg name="status">Init</arg>
+								<arg name="class.name">com.opensymphony.workflow.util.StatusCondition</arg>
+							</condition>
+						</conditions>
+					</restrict-to>
+					<pre-functions>
+			            <function type="spring">
+							<arg name="bean.name">binolcpcom02FN</arg>
+							<arg name="method">confirmInit</arg>
+						</function>
+		          	</pre-functions>
+					<results>
+					<unconditional-result old-status="Finished"
+							status="Underway" step="30">
+					</unconditional-result>
+					</results>
+				</action>
+				<action id="31" name="保存">
+					<results>
+						<!-- 积分规则确认 -->
+						<unconditional-result old-status="Finished"
+							status="Underway" step="999">
+								<post-functions>
+						            <function type="spring">
+										<arg name="bean.name">binolcpcom02FN</arg>
+										<arg name="method">save</arg>
+									</function>
+					          	</post-functions>
+						</unconditional-result>
+					</results>
+				</action>
+			</actions>
+		</step>
+		<step id="800" name="首页">
+			<actions>
+				<!-- 编辑时初期显示 入会规则设定 -->
+				<common-action id="32"/>
+				<!-- 活动基本信息 -->
+				<common-action id="22"/>
+				<action id="801" name="后退显示" auto="true">
+					<restrict-to>
+						<conditions type="AND">
+							<condition type="class">
+								<arg name="status">BackInit</arg>
+								<arg name="class.name">com.opensymphony.workflow.util.StatusCondition</arg>
+							</condition>
+						</conditions>
+					</restrict-to>
+					<pre-functions>
+			            <function type="spring">
+								<arg name="bean.name">binolcpcom02FN</arg>
+								<arg name="method">backTop</arg>
+								<arg name="nextAction">802</arg>
+						</function>
+		          	</pre-functions>
+					<results>
+					<unconditional-result old-status="Finished"
+							status="Underway" step="800">
+					</unconditional-result>
+					</results>
+				</action>
+				<action id="802" name="下一步">
+					<results>
+						<!-- 活动对象 -->
+						<unconditional-result old-status="Finished"
+							status="Init" step="10">
+						</unconditional-result>
+					</results>
+				</action>
+			</actions>
+		</step>
+		<step id="999" name="Flow over">
+		</step>
+	</steps>
+</workflow>
+

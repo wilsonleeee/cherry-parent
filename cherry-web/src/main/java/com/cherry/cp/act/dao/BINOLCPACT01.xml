@@ -1,0 +1,220 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sqlMap PUBLIC "-//iBATIS.com//DTD SQL Map 2.0//EN" "http://ibatis.apache.org/dtd/sql-map-2.dtd">
+<sqlMap namespace="BINOLCPACT01">
+	 <!--会员主题活动  -->
+	<sql id="MainQuery">
+	<![CDATA[															
+	SELECT																		
+		A.BIN_CampaignID AS campId,
+		A.CampaignCode AS campaignCode,
+		A.CampaignName AS campName,																		
+		A.CampaignType AS campType,														
+		A.State AS campState,														
+		A.SaveStatus AS saveStatus,														
+		A.IdentifyCode AS identifyCode,														
+		A.CampaignFromDate AS startDate,														
+		A.CampaignToDate AS endDate,														
+		A.CampaignOrderFromDate AS campOrderFromDate,														
+		A.CampaignOrderToDate AS campOrderToDate,
+		CASE A.CampaignSetBy WHEN 0 THEN 'BATCH' ELSE C.EmployeeName END AS employeeName,
+		B.ValidFlag AS empValidFlag,
+		A.CampaignSetBy AS createUserId,  
+		A.ValidFlag AS validFlag,
+		A.ManageGift AS manageGift,
+		CASE when A.RuleDetail IS null THEN 0 ELSE 1 END AS editFlag,
+		CASE A.ValidFlag WHEN '0' THEN CONVERT(varchar(30), A.UpdateTime, 20) ELSE '' END AS updateTime
+	FROM															
+		Campaign.BIN_Campaign A	 WITH(NOLOCK) 
+		LEFT JOIN Privilege.BIN_User B	WITH(NOLOCK) 													
+		ON(A.CampaignSetBy = B.BIN_UserID)
+		LEFT JOIN Basis.BIN_Employee C  WITH(NOLOCK)
+		ON(B.BIN_EmployeeID = C.BIN_EmployeeID)
+	WHERE															
+		A.BIN_BrandInfoID = #brandInfoId#	
+		AND A.CampaignTypeFlag = 1
+	]]>															
+	<isNotEmpty property="validFlag" prepend="AND">															
+	<![CDATA[A.ValidFlag = #validFlag#]]>															
+	</isNotEmpty>													
+	<isNotEmpty property="campCode" prepend="AND">															
+	<![CDATA[A.CampaignCode = #campCode#]]>															
+	</isNotEmpty>															
+	<isNotEmpty property="campType" prepend="AND">															
+	<![CDATA[A.CampaignType = #campType#]]>															
+	</isNotEmpty>															
+	<isNotEmpty property="campState" prepend="AND">															
+	<![CDATA[A.State = #campState#]]>															
+	</isNotEmpty>															
+	<isNotEmpty property="saveStatus" prepend="AND">															
+	<![CDATA[A.SaveStatus = #saveStatus#]]>															
+	</isNotEmpty>	
+	</sql>
+	<!-- 会员主题活动List  -->
+	<select id="getMainList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+	   <include refid="BINOLCMINC99.pageheader" />
+	   <include refid="BINOLCPACT01.MainQuery" />
+	   <include refid="BINOLCMINC99.pagefooter" />
+	</select>
+	
+	<!-- 会员主题活动Count-->
+    <select id="getMainCount" parameterClass="java.util.HashMap" resultClass="java.lang.Integer">
+        <![CDATA[
+            SELECT  COUNT(SORT_T1.campId) AS count FROM (
+        ]]>
+        <include refid="BINOLCPACT01.MainQuery" />
+        <![CDATA[
+            )SORT_T1
+        ]]>
+    </select>
+	
+	<!-- 会员活动  -->
+	<sql id="SubQuery">
+	<![CDATA[
+	SELECT																					
+		B.CampaignName AS campName,																				
+		B.SaveStatus AS saveStatus,																				
+		B.BIN_CampaignID AS campId,																				
+		B.CampaignType AS campType,																				
+		A.SubCampaignName AS subCampName,	
+		A.SubCampaignCode AS subCampaignCode,
+		A.SubCampaignType AS subcampType,																			
+		A.State AS subCampState,	
+		A.ValidFlag AS validFlag,																			
+		T.*	
+	]]>		
+  <![CDATA[																		
+	FROM																					
+		Campaign.BIN_CampaignRule A	WITH(NOLOCK)																			
+		JOIN Campaign.BIN_Campaign B WITH(NOLOCK)																				
+		ON(A.BIN_CampaignID = B.BIN_CampaignID)																				
+		LEFT JOIN (																				
+		SELECT																										
+			C.BIN_CampaignRuleID AS subCampId,																							
+			MAX(CASE WHEN D.PropertyName = 'baseProp_rese_time' THEN convert(DATE,C.BasePropValue1,120) END) AS reseStartDate,         
+			MAX(CASE WHEN D.PropertyName = 'baseProp_rese_time' THEN convert(DATE,C.BasePropValue2,120) END) AS reseEndDate,
+			MAX(CASE WHEN D.PropertyName = 'baseProp_obtain_time' THEN convert(DATE,C.BasePropValue1,120) END) AS obtainStartDate,     
+			MAX(CASE WHEN D.PropertyName = 'baseProp_obtain_time' THEN convert(DATE,C.BasePropValue2,120) END) AS obtainEndDate
+		FROM																										
+			Campaign.BIN_CamRuleCondition C	WITH(NOLOCK)																								
+			JOIN Campaign.BIN_CampaignBaseProp D WITH(NOLOCK)																									
+			ON(C.BIN_CampaignBasePropID = D.BIN_CampaignBasePropID)																									
+		WHERE																										
+			C.PropFlag = '0'																									
+			AND C.ValidFlag = '1'																									
+			GROUP BY																										
+			C.BIN_CampaignRuleID															
+		) T																				
+		ON  (A.BIN_CampaignRuleID = T.subCampId)																							
+		WHERE																					
+			B.BIN_BrandInfoID = #brandInfoId#
+			AND B.CampaignTypeFlag = '1'																			
+	 ]]>	
+	<isNotEmpty property="validFlag" prepend="AND">															
+	<![CDATA[A.ValidFlag = #validFlag#]]>															
+	</isNotEmpty>																				
+	<isNotEmpty property="subcampCode" prepend="AND">																				
+	<![CDATA[A.SubCampaignCode = #subcampCode#]]>																				
+	</isNotEmpty>
+	<isNotEmpty property="campState" prepend="AND">																				
+	<![CDATA[A.State = #campState#]]>																				
+	</isNotEmpty>																				
+	<isNotEmpty property="campType" prepend="AND">																				
+	<![CDATA[B.CampaignType = #campType#]]>																				
+	</isNotEmpty>
+	<isNotEmpty property="subcampType" prepend="AND">																				
+	<![CDATA[A.SubCampaignType = #subcampType#]]>																				
+	</isNotEmpty>
+	</sql>
+	<!-- 会员活动List  -->
+	<select id="getSubList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+	   <include refid="BINOLCMINC99.pageheader" />
+	   <include refid="BINOLCPACT01.SubQuery" />
+	   <include refid="BINOLCMINC99.pagefooter" />
+	</select>
+	
+	<!-- 会员活动Count  -->
+    <select id="getSubCount" parameterClass="java.util.HashMap" resultClass="java.lang.Integer">
+        <![CDATA[
+            SELECT  COUNT(SORT_T1.campId) AS count FROM (
+        ]]>
+        <include refid="BINOLCPACT01.SubQuery" />
+        <![CDATA[
+            )SORT_T1
+        ]]>
+    </select>
+    
+	<!--根据输入字符串模糊查询会员活动名称-->
+	<select id="getCampName" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+		<![CDATA[
+			SELECT
+				BIN_CampaignID AS id,
+				CampaignCode AS code,
+				CampaignName AS name
+			FROM 
+				Campaign.BIN_Campaign
+			WHERE
+				BIN_OrganizationInfoID = #organizationInfoId#
+				AND BIN_BrandInfoID = #brandInfoId#
+				AND CampaignTypeFlag = '1'	
+		]]>
+		<isNotEmpty property="campInfoStr" prepend="AND">
+			(
+			<![CDATA[CampaignName like '%'+ #campInfoStr# +'%']]>
+			<![CDATA[OR CampaignCode like '%'+ #campInfoStr# +'%']]>
+			)
+		</isNotEmpty>
+	</select>
+	<!--根据输入字符串模糊查询会员活动名称-->
+	<select id="getSubCampName" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+		<![CDATA[
+			SELECT 
+				BIN_CampaignID AS id,	
+				SubCampaignCode AS code,	 
+				SubCampaignName  AS name
+			FROM 
+				Campaign.BIN_CampaignRule
+		    WHERE
+				SubCampaignName is not null
+				and SubCampaignCode is not null
+		]]>
+		<isNotEmpty property="subCampInfoStr" prepend="AND">
+			(
+			<![CDATA[ SubCampaignName like '%'+ #subCampInfoStr# +'%']]>
+			<![CDATA[OR SubCampaignCode like '%'+ #subCampInfoStr# +'%']]>
+			)
+		</isNotEmpty>
+	</select>
+	 <!-- 伦理删除会员主题活动 -->
+ 	  <update id="stopCampaign" parameterClass="java.util.HashMap">
+ 	  <![CDATA[
+ 	 	UPDATE
+ 	 		Campaign.BIN_Campaign 
+ 	 	SET
+ 	 		ValidFlag = #validFlag#,
+ 	 		State = CASE WHEN #validFlag# = '1' THEN 0 ELSE 2 END,
+ 	 		]]>
+				<include refid="BINOLCMINC99.updateSql" />		
+			<![CDATA[	
+ 	 	WHERE
+ 	 		BIN_CampaignID = #campaignId#
+ 	 ]]>
+ 	 </update>
+ 	 <!-- 伦理删除会员活动 -->
+ 	  <update id="stopSubCampaign" parameterClass="java.util.HashMap">
+ 	  <![CDATA[
+ 	 	UPDATE
+ 	 		Campaign.BIN_CampaignRule
+ 	 	SET
+ 	 		ValidFlag = #validFlag#,
+ 	 		State = CASE WHEN #validFlag# = '1' THEN 0 ELSE 2 END,
+ 	 		]]>
+			<include refid="BINOLCMINC99.updateSql" />		
+		<![CDATA[WHERE]]>
+	 	 <isNotEmpty property="subCampaignId">																				
+		<![CDATA[BIN_CampaignRuleID = #subCampaignId#]]>																				
+		</isNotEmpty>
+		 <isNotEmpty property="campaignId">																				
+		<![CDATA[BIN_CampaignID = #campaignId#]]>																				
+		</isNotEmpty>
+ 	 </update>
+</sqlMap>

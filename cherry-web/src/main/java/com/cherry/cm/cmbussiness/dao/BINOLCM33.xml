@@ -1,0 +1,3118 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sqlMap PUBLIC "-//iBATIS.com//DTD SQL Map 2.0//EN" "http://ibatis.apache.org/dtd/sql-map-2.dtd">
+<sqlMap namespace="BINOLCM33">
+
+	<!-- 取得会员搜索条件SQL -->
+    <sql id="SearchRequestQuery">
+    	<![CDATA[
+			SELECT
+				BIN_SearchRequestID AS searchRequestId,
+				RequestName AS requestName,
+				Description AS description,
+				ReqContent AS reqContent
+			FROM
+				Campaign.BIN_SearchRequest
+			WHERE
+				Authorname = #userId# AND
+				ValidFlag = '1'
+		]]>
+			<isNotEmpty prepend="AND" property="FILTER_VALUE">
+				(RequestName like '%'+#FILTER_VALUE#+'%' OR 
+				Description like '%'+#FILTER_VALUE#+'%')
+			</isNotEmpty>
+    </sql>
+    
+     <!-- 会员查询SQL -->
+    <sql id="MemberInfoClubSql">
+    	<isNotEmpty property="selectors">
+    		SELECT
+    			A.BIN_MemberInfoID AS memId,
+    			A.Version AS versionDb,
+    			CASE WHEN B.MemCode IS NULL THEN '0' ELSE '1' END AS status
+    		<iterate property="selectors">
+    			<isEqual property="selectors[]" compareValue="memName" prepend=",">
+					A.Name AS memName
+				</isEqual>
+				<isEqual property="selectors[]" compareValue="nickname" prepend=",">
+					A.Nickname AS nickname
+				</isEqual>
+				<isEqual property="selectors[]" compareValue="telephone" prepend=",">
+					A.Telephone AS telephone
+				</isEqual>
+				<isEqual property="selectors[]" compareValue="mobilePhone" prepend=",">
+					A.MobilePhone AS mobilePhone
+				</isEqual>
+				<isEqual property="selectors[]" compareValue="email" prepend=",">
+					A.Email AS email
+				</isEqual>
+				<isEqual property="selectors[]" compareValue="tencentQQ" prepend=",">
+					A.TencentQQ AS tencentQQ
+				</isEqual>
+				<isEqual property="selectors[]" compareValue="creditRating" prepend=",">
+					A.CreditRating AS creditRating
+				</isEqual>
+				<isEqual property="selectors[]" compareValue="gender" prepend=",">
+					A.Gender AS gender
+				</isEqual>
+				<isEqual property="selectors[]" compareValue="birthYear" prepend=",">
+					A.BirthYear AS birthYear
+				</isEqual>
+				<isEqual property="selectors[]" compareValue="birthMonth" prepend=",">
+					SUBSTRING(A.BirthDay,1,2) AS birthMonth
+				</isEqual>
+				<isEqual property="selectors[]" compareValue="birthDay" prepend=",">
+					SUBSTRING(A.BirthDay,3,2) AS birthDay
+				</isEqual>
+				<isEqual property="selectors[]" compareValue="joinDate" prepend=",">
+					CONVERT(varchar(10),A.JoinDate,120) AS joinDate
+				</isEqual>
+				<isEqual property="selectors[]" compareValue="levelAdjustDay" prepend=",">
+					CONVERT(varchar(20),A.LevelAdjustDay,120) AS levelAdjustDay
+				</isEqual>
+				<isEqual property="selectors[]" compareValue="blogId" prepend=",">
+					A.BlogId AS blogId
+				</isEqual>
+				<isEqual property="selectors[]" compareValue="messageId" prepend=",">
+					A.MessageId AS messageId
+				</isEqual>
+				<isEqual property="selectors[]" compareValue="memo1" prepend=",">
+					A.Memo1 AS memo1
+				</isEqual>
+				<isEqual property="selectors[]" compareValue="memo2" prepend=",">
+					A.Memo2 AS memo2
+				</isEqual>
+				<isEqual property="selectors[]" compareValue="memCode" prepend=",">
+					B.MemCode AS memCode
+				</isEqual>
+		<isNotEmpty property="memberClubId">
+				<isEqual property="selectors[]" compareValue="clubCounterCode" prepend=",">
+					CE.BIN_OrganizationID AS clubOrganizationId,
+					CE.DepartCode AS clubCounterCode
+				</isEqual>
+				<isEqual property="selectors[]" compareValue="clubCounterName" prepend=",">
+					CE.DepartName AS clubCounterName
+				</isEqual>
+				<isEqual property="selectors[]" compareValue="clubEmployeeCode" prepend=",">
+					CP.EmployeeCode AS clubEmployeeCode
+				</isEqual>
+				<isEqual property="selectors[]" compareValue="clubEmployeeName" prepend=",">
+					CP.EmployeeName AS clubEmployeeName
+				</isEqual>
+				<isEqual property="selectors[]" compareValue="clubJoinTime" prepend=",">
+					CONVERT(VARCHAR, CL.JoinTime, 23) AS clubJoinTime
+				</isEqual>
+				<isEqual property="selectors[]" compareValue="receiveMsgFlg" prepend=",">
+					CL.IsReceiveMsg AS receiveMsgFlg
+				</isEqual>
+				<isEqual property="selectors[]" compareValue="levelName" prepend=",">
+					C.LevelName AS levelName
+				</isEqual>
+				<isEqual property="selectors[]" compareValue="totalPoint" prepend=",">
+					D.TotalPoint AS totalPoint
+				</isEqual>
+				<isEqual property="selectors[]" compareValue="changablePoint" prepend=",">
+					D.ChangablePoint AS changablePoint
+				</isEqual>
+				<isEqual property="selectors[]" compareValue="curDisablePoint" prepend=",">
+					D.CurDisablePoint AS curDisablePoint
+				</isEqual>
+		</isNotEmpty>
+		<isEmpty property="memberClubId">
+				<isEqual property="selectors[]" compareValue="clubCounterCode" prepend=",">
+					null AS clubOrganizationId,
+					null AS clubCounterCode
+				</isEqual>
+				<isEqual property="selectors[]" compareValue="clubCounterName" prepend=",">
+					null AS clubCounterName
+				</isEqual>
+				<isEqual property="selectors[]" compareValue="clubEmployeeCode" prepend=",">
+					null AS clubEmployeeCode
+				</isEqual>
+				<isEqual property="selectors[]" compareValue="clubEmployeeName" prepend=",">
+					null AS clubEmployeeName
+				</isEqual>
+				<isEqual property="selectors[]" compareValue="clubJoinTime" prepend=",">
+					null AS clubJoinTime
+				</isEqual>
+				<isEqual property="selectors[]" compareValue="receiveMsgFlg" prepend=",">
+					null AS receiveMsgFlg
+				</isEqual>
+				<isEqual property="selectors[]" compareValue="levelName" prepend=",">
+					null AS levelName
+				</isEqual>
+				<isEqual property="selectors[]" compareValue="totalPoint" prepend=",">
+					null AS totalPoint
+				</isEqual>
+				<isEqual property="selectors[]" compareValue="changablePoint" prepend=",">
+					null AS changablePoint
+				</isEqual>
+				<isEqual property="selectors[]" compareValue="curDisablePoint" prepend=",">
+					null AS curDisablePoint
+				</isEqual>
+		</isEmpty>
+				<isEqual property="selectors[]" compareValue="counterCode" prepend=",">
+					E.BIN_OrganizationID AS organizationId,
+					E.DepartCode AS counterCode
+				</isEqual>
+				<isEqual property="selectors[]" compareValue="counterName" prepend=",">
+					E.DepartName AS counterName
+				</isEqual>
+				<isEqual property="selectors[]" compareValue="employeeCode" prepend=",">
+					P.EmployeeCode AS employeeCode
+				</isEqual>
+				<isEqual property="selectors[]" compareValue="employeeName" prepend=",">
+					P.EmployeeName AS employeeName
+				</isEqual>
+				<isEqual property="selectors[]" compareValue="lastSaleDate" prepend=",">
+					CONVERT(varchar(30),F.LastSaleDate,120) AS lastSaleDate
+				</isEqual>
+				<isEqual property="selectors[]" compareValue="province" prepend=",">
+					N.StandardProvince AS province
+				</isEqual>
+				<isEqual property="selectors[]" compareValue="city" prepend=",">
+					N.StandardCity AS city
+				</isEqual>
+				<isEqual property="selectors[]" compareValue="address" prepend=",">
+					N.AddressLine1 AS address
+				</isEqual>
+				<isEqual property="selectors[]" compareValue="zip" prepend=",">
+					N.ZipCode AS zip
+				</isEqual>
+				<isEqual property="selectors[]" compareValue="firstSaleCounterCode" prepend=",">
+					G.DepartCode AS firstSaleCounterCode
+				</isEqual>
+				<isEqual property="selectors[]" compareValue="firstSaleCounterName" prepend=",">
+					G.DepartName AS firstSaleCounterName
+				</isEqual>
+				<isEqual property="selectors[]" compareValue="firstSaleDate" prepend=",">
+					CONVERT(varchar(30),F.FirstSaleDate,120) AS firstSaleDate
+				</isEqual>
+				<isEqual property="selectors[]" compareValue="saleBillCode" prepend=",">
+					Z1.BillCode AS firstBillCode,
+					Z2.BillCode AS lastBillCode
+				</isEqual>
+				<isEqual property="selectors[]" compareValue="skinType" prepend=",">
+					F.SkinType AS skinType
+				</isEqual>
+    		</iterate>
+    	</isNotEmpty>
+    	<isEmpty property="selectors">
+    	<![CDATA[
+    		SELECT
+				A.BIN_MemberInfoID AS memId,
+				A.Name AS memName,
+				A.Nickname AS nickname,
+				A.TencentQQ AS tencentQQ,
+				A.CreditRating AS creditRating,
+				A.Telephone AS telephone,
+				A.MobilePhone AS mobilePhone,
+				A.Email AS email,
+				A.Gender AS gender,
+				A.BirthYear AS birthYear,
+				SUBSTRING(A.BirthDay,1,2) AS birthMonth,
+				SUBSTRING(A.BirthDay,3,2) AS birthDay,
+				CONVERT(varchar(10),A.JoinDate,120) AS joinDate,
+				CONVERT(varchar(20),A.LevelAdjustDay,120) AS levelAdjustDay,
+				A.BlogId AS blogId,
+				A.MessageId AS messageId,
+				A.Memo1 AS memo1,
+				A.Memo2 AS memo2,
+				B.MemCode AS memCode,
+		]]>
+		<isNotEmpty property="memberClubId">
+				CE.BIN_OrganizationID AS clubOrganizationId,
+				CE.DepartCode AS clubCounterCode,
+				CE.DepartName AS clubCounterName,
+				CONVERT(VARCHAR, CL.JoinTime, 23) AS clubJoinTime,
+				CL.IsReceiveMsg AS receiveMsgFlg,
+				C.LevelName AS levelName,
+				D.TotalPoint AS totalPoint,
+				D.ChangablePoint AS changablePoint,
+				D.CurDisablePoint AS curDisablePoint,
+		</isNotEmpty>
+		<isEmpty property="memberClubId">
+				null AS clubOrganizationId,
+				null AS clubCounterCode,
+				null AS clubCounterName,
+				null AS clubJoinTime,
+				null AS receiveMsgFlg,
+				null AS levelName,
+				null AS totalPoint,
+				null AS changablePoint,
+				null AS curDisablePoint,
+		</isEmpty>
+		<![CDATA[
+				E.BIN_OrganizationID AS organizationId,
+				E.DepartCode AS counterCode,
+				E.DepartName AS counterName,
+				CONVERT(varchar(30),F.LastSaleDate,120) AS lastSaleDate,
+				CASE WHEN B.MemCode IS NULL THEN '0' ELSE '1' END AS status,
+				A.Version AS versionDb,
+				CONVERT(varchar(30),F.FirstSaleDate,120) AS firstSaleDate,
+				G.DepartCode AS firstSaleCounterCode,
+				G.DepartName AS firstSaleCounterName,
+				F.SkinType AS skinType
+		]]>
+		</isEmpty>
+		<![CDATA[		
+			FROM
+				Members.BIN_MemberInfo A WITH(NOLOCK)
+		]]>
+			<isNotEmpty property="memCode">
+				JOIN (SELECT
+					X.BIN_MemberInfoID
+				FROM
+					Members.BIN_MemberInfo X WITH(NOLOCK)
+					JOIN Members.BIN_MemCardInfo Y WITH(NOLOCK) ON X.BIN_MemberInfoID = Y.BIN_MemberInfoID
+				WHERE
+					Y.MemCode = #memCode#) H ON A.BIN_MemberInfoID = H.BIN_MemberInfoID
+			</isNotEmpty>
+			<isNotEmpty property="memberClubId">
+				<isNotEmpty property="privilegeFlag">
+					<isEqual property="privilegeFlag" compareValue="1">			
+						<![CDATA[
+						JOIN Members.BIN_MemClubLevel CL WITH(NOLOCK) ON A.BIN_MemberInfoID = CL.BIN_MemberInfoID AND CL.BIN_MemberClubID = #memberClubId#
+						JOIN (]]><include refid="BINOLCMINC99.departPrivilegeSql" />
+						<![CDATA[) A99 ON CL.BIN_OrganizationID=A99.BIN_OrganizationID]]>
+					</isEqual>
+					<isNotEqual property="privilegeFlag" compareValue="1">	
+					<![CDATA[LEFT JOIN Members.BIN_MemClubLevel CL WITH(NOLOCK) ON A.BIN_MemberInfoID = CL.BIN_MemberInfoID AND CL.BIN_MemberClubID = #memberClubId#]]>
+					</isNotEqual>
+				</isNotEmpty>
+				<isEmpty property="privilegeFlag">
+				<![CDATA[LEFT JOIN Members.BIN_MemClubLevel CL WITH(NOLOCK) ON A.BIN_MemberInfoID = CL.BIN_MemberInfoID AND CL.BIN_MemberClubID = #memberClubId#]]>
+				</isEmpty>
+				<![CDATA[
+				LEFT JOIN Members.BIN_MemberLevel C WITH(NOLOCK) ON CL.MemberLevel = C.BIN_MemberLevelID
+				LEFT JOIN Members.BIN_MemberPoint D WITH(NOLOCK) ON A.BIN_MemberInfoID = D.BIN_MemberInfoID AND D.BIN_MemberClubID = #memberClubId#
+				LEFT JOIN Basis.BIN_Organization CE WITH(NOLOCK) ON CL.BIN_OrganizationID = CE.BIN_OrganizationID
+				LEFT JOIN Basis.BIN_Employee CP WITH(NOLOCK) ON CL.BIN_EmployeeID = CP.BIN_EmployeeID
+				]]>
+			</isNotEmpty>
+		<![CDATA[		
+				LEFT JOIN Members.BIN_MemCardInfo B WITH(NOLOCK) ON A.BIN_MemberInfoID = B.BIN_MemberInfoID AND B.validFlag = '1' AND B.CardValidFlag = '1'
+		]]>
+		<![CDATA[
+				LEFT JOIN Basis.BIN_Organization E WITH(NOLOCK) ON A.BIN_OrganizationID = E.BIN_OrganizationID
+				LEFT JOIN Members.BIN_MemberExtInfo F WITH(NOLOCK) ON A.BIN_MemberInfoID = F.BIN_MemberInfoID
+				LEFT JOIN Basis.BIN_Organization G WITH(NOLOCK) ON F.FirstSaleCounter = G.BIN_OrganizationID
+		]]>
+			<isNotEmpty property="memAddressShow">
+				LEFT JOIN Members.BIN_MemberAddress M WITH(NOLOCK) 
+					JOIN Basis.BIN_AddressInfo N WITH(NOLOCK) ON M.BIN_AddressInfoID = N.BIN_AddressInfoID AND N.validFlag = '1'
+				ON A.BIN_MemberInfoID = M.BIN_MemberInfoID AND M.validFlag = '1'
+			</isNotEmpty>
+			<isNotEmpty property="employeeShow">
+				LEFT JOIN Basis.BIN_Employee P WITH(NOLOCK) ON A.BIN_EmployeeID = P.BIN_EmployeeID
+			</isNotEmpty>
+			<isNotEmpty property="notSaleCountTerm">
+				<![CDATA[LEFT JOIN (]]><include refid="BINOLCM33.NotSaleCountTermSql" />
+				<![CDATA[) Q ON A.BIN_MemberInfoID = Q.BIN_MemberInfoID]]>
+			</isNotEmpty>
+			<isNotEmpty property="saleCountTerm">
+				<isEqual property="saleCountTerm" compareValue="1">
+				<![CDATA[LEFT JOIN (]]><include refid="BINOLCM33.SaleCountTermSql" />
+				<![CDATA[) L ON A.BIN_MemberInfoID = L.BIN_MemberInfoID]]>
+				</isEqual>
+				<isEqual property="saleCountTerm" compareValue="2">
+				<![CDATA[JOIN (]]><include refid="BINOLCM33.SaleCountTermSql" />
+				<![CDATA[) L ON A.BIN_MemberInfoID = L.BIN_MemberInfoID]]>
+				</isEqual>
+			</isNotEmpty>
+			<isNotEmpty property="saleAmountTerm">
+				<isEqual property="saleAmountTerm" compareValue="1">
+				<![CDATA[LEFT JOIN (]]><include refid="BINOLCM33.SaleAmountTermSql" />
+				<![CDATA[) O ON A.BIN_MemberInfoID = O.BIN_MemberInfoID]]>
+				</isEqual>
+				<isEqual property="saleAmountTerm" compareValue="2">
+				<![CDATA[LEFT JOIN (]]><include refid="BINOLCM33.SaleAmountTermSql" />
+				<![CDATA[) O ON A.BIN_MemberInfoID = O.BIN_MemberInfoID]]>
+				</isEqual>
+			</isNotEmpty>
+			<isNotEmpty property="saleBillCodeShow">
+				LEFT JOIN Sale.BIN_SaleRecord Z1 WITH(NOLOCK) ON A.BIN_MemberInfoID = Z1.BIN_MemberInfoID AND Z1.SaleTime = F.FirstSaleDate
+				LEFT JOIN Sale.BIN_SaleRecord Z2 WITH(NOLOCK) ON A.BIN_MemberInfoID = Z2.BIN_MemberInfoID AND Z2.SaleTime = F.LastSaleDate
+			</isNotEmpty>
+		<![CDATA[
+			WHERE
+				A.BIN_OrganizationInfoID = #organizationInfoId#
+		]]>
+			<isNotEmpty prepend="AND" property="brandInfoId">
+				A.BIN_BrandInfoID = #brandInfoId#
+			</isNotEmpty>
+			<isNotEmpty prepend="AND" property="memberInfoId">
+				A.BIN_MemberInfoID = #memberInfoId#
+			</isNotEmpty>
+			<isNotEmpty property="memberClubId">
+				<![CDATA[AND CL.BIN_MemberClubID = #memberClubId#]]>
+				<isNotEmpty prepend="AND" property="memLevel">
+					CL.MemberLevel IN
+					<iterate property="memLevel" open="(" close=")" conjunction=","> 
+						#memLevel[]#
+					</iterate>
+				</isNotEmpty>
+				<isNotEmpty property="referFlag">
+				<isEqual property="referFlag" compareValue="1" prepend="AND">
+					<isNotEmpty property="referredMemCode">
+						CL.BIN_MemberInfoID IN 
+							(SELECT 
+								A.ReferrerID 
+							FROM 
+								Members.BIN_MemClubLevel A WITH(NOLOCK)
+								JOIN Members.BIN_MemCardInfo B WITH(NOLOCK) ON A.BIN_MemberInfoID = B.BIN_MemberInfoID
+							WHERE 
+								B.MemCode = #referredMemCode#)
+					</isNotEmpty>
+					<isEmpty property="referredMemCode">
+						EXISTS (SELECT 1 FROM Members.BIN_MemClubLevel memInfo WITH(NOLOCK) WHERE memInfo.ReferrerID = CL.BIN_MemberInfoID)
+					</isEmpty>
+				</isEqual>
+				<isEqual property="referFlag" compareValue="2" prepend="AND">
+					<isNotEmpty property="referrerMemCode">
+						CL.ReferrerID IN 
+							(SELECT 
+								A.BIN_MemberInfoID 
+							FROM 
+								Members.BIN_MemClubLevel A WITH(NOLOCK)
+								JOIN Members.BIN_MemCardInfo B WITH(NOLOCK) ON A.BIN_MemberInfoID = B.BIN_MemberInfoID 
+							WHERE 
+								B.MemCode = #referrerMemCode#)
+					</isNotEmpty>
+					<isEmpty property="referrerMemCode">
+						<![CDATA[(CL.ReferrerID IS NOT NULL OR CL.ReferrerID <> '')]]>
+					</isEmpty>
+				</isEqual>
+			</isNotEmpty>
+				<isNotEmpty prepend="AND" property="isReceiveMsg">
+					<![CDATA[ CL.IsReceiveMsg = #isReceiveMsg# ]]>
+				</isNotEmpty>
+				<isNotEmpty prepend="AND" property="clubJoinTimeStart">
+					<![CDATA[ CL.JoinTime >= #clubJoinTimeStart# ]]>
+				</isNotEmpty>	
+				<isNotEmpty prepend="AND" property="clubJoinTimeEnd">
+					<![CDATA[ CL.JoinTime <= #clubJoinTimeEnd# ]]>
+				</isNotEmpty>
+				<isNotEmpty prepend="AND" property="clubEmployeeIdQ">
+					CL.BIN_EmployeeID = #clubEmployeeIdQ#
+				</isNotEmpty>
+				<isNotEmpty property="clubModeFlag" prepend="AND">
+				<isEqual property="clubExclusiveFlag" compareValue="1">
+					EXISTS (<include refid="BINOLCM33.ClubCounterTermSql" /> AND CL.BIN_OrganizationID = orgTable9.BIN_OrganizationID)
+				</isEqual>
+				<isEqual property="clubExclusiveFlag" compareValue="2">
+					NOT EXISTS (<include refid="BINOLCM33.ClubCounterTermSql" /> AND CL.BIN_OrganizationID = orgTable9.BIN_OrganizationID)
+				</isEqual>	
+				</isNotEmpty>
+				<isNotEmpty prepend="AND" property="memberPointStart">
+				ISNULL(D.TotalPoint,0) >= #memberPointStart#
+				</isNotEmpty>
+				<isNotEmpty prepend="AND" property="memberPointEnd">
+					<![CDATA[ISNULL(D.TotalPoint,0) <= #memberPointEnd#]]>
+				</isNotEmpty>
+				<isNotEmpty prepend="AND" property="changablePointStart">
+					ISNULL(D.ChangablePoint,0) >= #changablePointStart#
+				</isNotEmpty>
+				<isNotEmpty prepend="AND" property="changablePointEnd">
+					<![CDATA[ISNULL(D.ChangablePoint,0) <= #changablePointEnd#]]>
+				</isNotEmpty>
+				<isNotEmpty prepend="AND" property="curDealDateStart">
+				CONVERT(VARCHAR(30), D.CurDealDate, 23) >= #curDealDateStart#
+				</isNotEmpty>
+				<isNotEmpty prepend="AND" property="curDealDateEnd">
+					<![CDATA[CONVERT(VARCHAR(30), D.CurDealDate, 23) <= #curDealDateEnd#]]>
+				</isNotEmpty>
+			</isNotEmpty>
+			<isEmpty property="memberClubId">
+				<isNotEmpty property="privilegeFlag">
+					<isEqual prepend="AND" property="privilegeFlag" compareValue="1">			
+						<![CDATA[
+						EXISTS ( 
+							SELECT 1
+							FROM 
+							Members.BIN_MemClubLevel CLLE WITH(NOLOCK)
+							JOIN (]]><include refid="BINOLCMINC99.departPrivilegeSql" />
+						<![CDATA[) A99 ON CLLE.BIN_OrganizationID=A99.BIN_OrganizationID 
+							WHERE A.BIN_MemberInfoID = CLLE.BIN_MemberInfoID
+						)]]>
+					</isEqual>
+				</isNotEmpty>
+			</isEmpty>
+			<isNotEmpty prepend="AND" property="memType">
+				A.MemType IN
+				<iterate property="memType" open="(" close=")" conjunction=","> 
+					#memType[]#
+				</iterate>
+			</isNotEmpty>
+			<isNotEmpty prepend="AND" property="name">
+				A.Name LIKE '%'+#name#+'%'
+			</isNotEmpty>
+			<isNotEmpty prepend="AND" property="nickname">
+				A.Nickname LIKE '%'+#nickname#+'%'
+			</isNotEmpty>
+			<isNotEmpty prepend="AND" property="tencentQQ">
+				A.TencentQQ LIKE '%'+#tencentQQ#+'%'
+			</isNotEmpty>
+			<isNotEmpty prepend="AND" property="creditRating">
+				A.CreditRating = #creditRating#
+			</isNotEmpty>
+			<isNotEmpty prepend="AND" property="nickname">
+				A.Nickname LIKE '%'+#nickname#+'%'
+			</isNotEmpty>
+			<isNotEmpty prepend="AND" property="tencentQQ">
+				A.TencentQQ LIKE '%'+#tencentQQ#+'%'
+			</isNotEmpty>
+			<isNotEmpty prepend="AND" property="creditRating">
+				A.CreditRating = #creditRating#
+			</isNotEmpty>
+			<isNotEmpty prepend="AND" property="mobilePhone">
+				A.MobilePhone = #mobilePhone#
+			</isNotEmpty>
+			<isNotEmpty prepend="AND" property="mebSex">
+				A.Gender IN
+				<iterate property="mebSex" open="(" close=")" conjunction=","> 
+					#mebSex[]#
+				</iterate>
+			</isNotEmpty>
+			<isNotEmpty prepend="AND" property="curMonthJoinDate">
+				<![CDATA[ A.JoinDate < #curMonthJoinDate# ]]>	
+			</isNotEmpty>
+			<isNotEmpty prepend="AND" property="curDayJoinDate">
+				<![CDATA[ A.JoinDate < #curDayJoinDate# ]]>	
+			</isNotEmpty>
+			
+			<isNotEmpty property="birthDayStart">
+				<isNotEmpty prepend="AND" property="birthDayEnd">
+					<isGreaterThan property="birthDayStart" compareProperty="birthDayEnd">
+						<![CDATA[(A.BirthDay >= #birthDayStart# OR A.BirthDay <= #birthDayEnd#)]]>
+					</isGreaterThan>
+					<isLessEqual property="birthDayStart" compareProperty="birthDayEnd">
+						<![CDATA[(A.BirthDay >= #birthDayStart# AND A.BirthDay <= #birthDayEnd#)]]>
+					</isLessEqual>
+				</isNotEmpty>
+				<isEmpty prepend="AND" property="birthDayEnd">
+					A.BirthDay >= #birthDayStart#
+				</isEmpty>
+			</isNotEmpty>
+			<isEmpty property="birthDayStart">
+				<isNotEmpty prepend="AND" property="birthDayEnd">
+					<![CDATA[A.BirthDay <= #birthDayEnd#]]>
+				</isNotEmpty>
+			</isEmpty>
+			
+			<isNotEmpty prepend="AND" property="birthDayMoreStart">
+				A.BirthDay >= #birthDayMoreStart#
+			</isNotEmpty>
+			<isNotEmpty prepend="AND" property="birthDayMoreEnd">
+				<![CDATA[A.BirthDay <= #birthDayMoreEnd#]]>
+			</isNotEmpty>
+			
+			<isNotEmpty prepend="AND" property="birthYearStart">
+				<![CDATA[ A.BirthYear >= #birthYearStart# ]]>	
+			</isNotEmpty>
+			<isNotEmpty prepend="AND" property="birthYearEnd">
+				<![CDATA[ A.BirthYear <= #birthYearEnd# ]]>	
+			</isNotEmpty>
+			
+			<isNotEqual property="joinDateSaleDateRel" compareValue="2">
+				<isNotEmpty prepend="AND" property="joinDateStart">
+					<![CDATA[ A.JoinDate >= #joinDateStart# ]]>
+				</isNotEmpty>	
+				<isNotEmpty prepend="AND" property="joinDateEnd">
+					<![CDATA[ A.JoinDate <= #joinDateEnd# ]]>
+				</isNotEmpty>
+				<isNotEmpty property="saleCountTerm">
+				<isNotEmpty prepend="AND" property="saleCountStart">	
+		    		ISNULL(L.saleCount,0) >= #saleCountStart#
+		    	</isNotEmpty>
+		    	<isNotEmpty prepend="AND" property="saleCountEnd">	
+		    		<![CDATA[ISNULL(L.saleCount,0) <= #saleCountEnd#]]>
+		    	</isNotEmpty>
+				</isNotEmpty>
+			</isNotEqual>
+			<isEqual property="joinDateSaleDateRel" compareValue="2">
+				<isNotEmpty property="joinDateTerm">
+					<isNotEmpty prepend="AND" property="saleCountTerm">
+						(<isNotEmpty property="joinDateStart">
+						<isNotEmpty property="joinDateEnd">
+							<![CDATA[ (A.JoinDate >= #joinDateStart# AND A.JoinDate <= #joinDateEnd#) ]]>
+						</isNotEmpty>
+						<isEmpty property="joinDateEnd">
+							<![CDATA[ (A.JoinDate >= #joinDateStart#) ]]>
+						</isEmpty>
+						</isNotEmpty>	
+						<isEmpty property="joinDateStart">
+						<isNotEmpty property="joinDateEnd">
+							<![CDATA[ (A.JoinDate <= #joinDateEnd#) ]]>
+						</isNotEmpty>
+						</isEmpty>
+						OR
+						<isNotEmpty property="saleCountStart">	
+				    	<isNotEmpty property="saleCountEnd">	
+				    		<![CDATA[ (ISNULL(L.saleCount,0) >= #saleCountStart# AND ISNULL(L.saleCount,0) <= #saleCountEnd#) ]]>
+				    	</isNotEmpty>
+				    	<isEmpty property="saleCountEnd">	
+				    		<![CDATA[ (ISNULL(L.saleCount,0) >= #saleCountStart#) ]]>
+				    	</isEmpty>
+				    	</isNotEmpty>
+				    	<isEmpty property="saleCountStart">	
+				    	<isNotEmpty property="saleCountEnd">	
+				    		<![CDATA[ (ISNULL(L.saleCount,0) <= #saleCountEnd#) ]]>
+				    	</isNotEmpty>
+				    	</isEmpty>)
+					</isNotEmpty>
+					<isEmpty property="saleCountTerm">
+						<isNotEmpty prepend="AND" property="joinDateStart">
+							<![CDATA[ A.JoinDate >= #joinDateStart# ]]>
+						</isNotEmpty>	
+						<isNotEmpty prepend="AND" property="joinDateEnd">
+							<![CDATA[ A.JoinDate <= #joinDateEnd# ]]>
+						</isNotEmpty>
+					</isEmpty>
+				</isNotEmpty>
+				<isEmpty property="joinDateTerm">
+					<isNotEmpty property="saleCountTerm">
+						<isNotEmpty prepend="AND" property="saleCountStart">	
+				    		ISNULL(L.saleCount,0) >= #saleCountStart#
+				    	</isNotEmpty>
+				    	<isNotEmpty prepend="AND" property="saleCountEnd">	
+				    		<![CDATA[ISNULL(L.saleCount,0) <= #saleCountEnd#]]>
+				    	</isNotEmpty>
+					</isNotEmpty>
+				</isEmpty>
+			</isEqual>
+			<isNotEmpty property="modeFlag" prepend="AND">
+			<isEqual property="exclusiveFlag" compareValue="1">
+				EXISTS (<include refid="BINOLCM33.CounterTermSql" /> AND A.BIN_OrganizationID = orgTable.BIN_OrganizationID)
+			</isEqual>
+			<isEqual property="exclusiveFlag" compareValue="2">
+				NOT EXISTS (<include refid="BINOLCM33.CounterTermSql" /> AND A.BIN_OrganizationID = orgTable.BIN_OrganizationID)
+			</isEqual>	
+			</isNotEmpty>
+			<isNotEmpty prepend="AND" property="addrNotEmpty">
+				EXISTS (SELECT 1 FROM Members.BIN_MemberAddress G WITH(NOLOCK) JOIN Basis.BIN_AddressInfo I WITH(NOLOCK) 
+				ON G.BIN_AddressInfoID = I.BIN_AddressInfoID WHERE I.AddressLine1 IS NOT NULL AND I.AddressLine1 != '' AND
+				A.BIN_MemberInfoID = G.BIN_MemberInfoID)
+			</isNotEmpty>
+			<isNotEmpty prepend="AND" property="telNotEmpty">
+				A.MobilePhone IS NOT NULL AND A.MobilePhone != ''
+			</isNotEmpty>
+			<isNotEmpty prepend="AND" property="emailNotEmpty">
+				A.Email IS NOT NULL AND A.Email != ''
+			</isNotEmpty>
+			<isNotEmpty prepend="AND" property="telCheck">
+				A.TelCheck = '1'
+			</isNotEmpty>
+			<isNotEmpty prepend="AND" property="validFlag">
+				B.MemCode IS NULL
+			</isNotEmpty>
+			<isEmpty prepend="AND" property="validFlag">
+				B.CardValidFlag = '1' AND
+				A.validFlag = '1'
+			</isEmpty>
+			<isNotEmpty prepend="AND" property="memInfoRegFlg">
+				A.MemInfoRegFlg = '1'
+			</isNotEmpty>
+			<isEmpty prepend="AND" property="memInfoRegFlg">
+				A.MemInfoRegFlg = '0'
+			</isEmpty>
+			<isNotEmpty prepend="AND" property="saleTerm">
+				<isEqual property="relation" compareValue="1">
+					<isNotEmpty property="buyPrtVendorId">
+						<iterate property="buyPrtVendorId" open="(" close=")" conjunction="AND"> 
+							EXISTS (<include refid="BINOLCM33.SaleTermAndSql" /> AND A.BIN_MemberInfoID = M.BIN_MemberInfoID)
+						</iterate>
+					</isNotEmpty>
+					<isNotEmpty property="buyCateValId">
+						<iterate property="buyCateValId" open="(" close=")" conjunction="AND"> 
+							EXISTS (<include refid="BINOLCM33.SaleTermAndSql" /> AND A.BIN_MemberInfoID = M.BIN_MemberInfoID)
+						</iterate>
+					</isNotEmpty>
+				</isEqual>
+				<isNotEqual property="relation" compareValue="1">
+					EXISTS (<include refid="BINOLCM33.SaleTermSql" /> AND A.BIN_MemberInfoID = M.BIN_MemberInfoID)
+				</isNotEqual>
+			</isNotEmpty>
+			<isNotEmpty prepend="AND" property="notSaleTerm">
+				<isEqual property="notRelation" compareValue="1">
+					<isNotEmpty property="notPrtVendorId">
+						<iterate property="notPrtVendorId" open="(" close=")" conjunction="OR"> 
+							NOT EXISTS (<include refid="BINOLCM33.NotSaleTermOrSql" /> AND A.BIN_MemberInfoID = N.BIN_MemberInfoID)
+						</iterate>
+					</isNotEmpty>
+					<isNotEmpty property="notCateValId">
+						<iterate property="notCateValId" open="(" close=")" conjunction="OR"> 
+							NOT EXISTS (<include refid="BINOLCM33.NotSaleTermOrSql" /> AND A.BIN_MemberInfoID = N.BIN_MemberInfoID)
+						</iterate>
+					</isNotEmpty>
+				</isEqual>
+				<isNotEqual property="notRelation" compareValue="1">
+					NOT EXISTS (<include refid="BINOLCM33.NotSaleTermSql" /> AND A.BIN_MemberInfoID = N.BIN_MemberInfoID)
+				</isNotEqual>
+			</isNotEmpty>
+			<isNotEmpty property="saleAmountTerm">
+			<isNotEmpty prepend="AND" property="payAmountStart">	
+	    		ISNULL(O.amount,0) >= #payAmountStart#
+	    	</isNotEmpty>
+	    	<isNotEmpty prepend="AND" property="payAmountEnd">	
+	    		<![CDATA[ISNULL(O.amount,0) <= #payAmountEnd#]]>
+	    	</isNotEmpty>
+	    	<isNotEmpty prepend="AND" property="payQuantityStart">
+				ISNULL(O.quantity,0) >= #payQuantityStart#
+			</isNotEmpty>
+			<isNotEmpty prepend="AND" property="payQuantityEnd">
+				<![CDATA[ISNULL(O.quantity,0) <= #payQuantityEnd#]]>
+			</isNotEmpty>
+			</isNotEmpty>
+			<isNotEmpty prepend="AND" property="notSaleCountTerm">
+				<![CDATA[ISNULL(Q.saleCount,0) <= 0]]>
+			</isNotEmpty>
+			<isNotEmpty prepend="AND" property="propertyInfoList">
+				EXISTS (SELECT 1 FROM (<include refid="BINOLCM33.ExtendPropertySql" />) PropertyInfo WHERE A.BIN_MemberInfoID = PropertyInfo.BIN_MemberInfoID)
+			</isNotEmpty>
+			<isEmpty property="testTypeIgnore">
+				<isNotEmpty prepend="AND" property="testType">
+					A.TestType = '0'
+				</isNotEmpty>
+				<isEmpty prepend="AND" property="testType">
+					<![CDATA[(A.TestType = '1' OR A.TestType IS NULL)]]>
+				</isEmpty>
+			</isEmpty>
+			<isNotEmpty prepend="AND" property="campaignTerm">
+				<isNotEmpty property="campaignMode">
+					<isEqual property="campaignMode" compareValue="0">
+						<isNotEmpty property="campaignState">
+							EXISTS (SELECT 1 FROM (<include refid="BINOLCM33.CampaignStateTermSql" />) campaign WHERE A.BIN_MemberInfoID = campaign.BIN_MemberInfoID)
+						</isNotEmpty>
+						<isEmpty property="campaignState">
+							EXISTS (SELECT 1 FROM (<include refid="BINOLCM33.CampaignTermSql" />) campaign WHERE A.BIN_MemberInfoID = campaign.BIN_MemberInfoID)
+						</isEmpty>
+					</isEqual>
+					<isEqual property="campaignMode" compareValue="1">
+						EXISTS (SELECT 1 FROM (<include refid="BINOLCM33.CampaignTermSql" />) campaign WHERE A.BIN_MemberInfoID = campaign.BIN_MemberInfoID)
+					</isEqual>
+				</isNotEmpty>
+				<isEmpty property="campaignMode">
+					<isNotEmpty property="campaignState">
+						EXISTS (SELECT 1 FROM (<include refid="BINOLCM33.CampaignStateTermSql" />) campaign WHERE A.BIN_MemberInfoID = campaign.BIN_MemberInfoID)
+					</isNotEmpty>
+					<isEmpty property="campaignState">
+						EXISTS (SELECT 1 FROM (<include refid="BINOLCM33.CampaignTermSql" />) campaign WHERE A.BIN_MemberInfoID = campaign.BIN_MemberInfoID)
+					</isEmpty>
+				</isEmpty>
+			</isNotEmpty>
+			<isNotEmpty prepend="AND" property="couNotEmpty">
+				A.BIN_OrganizationID IS NOT NULL
+			</isNotEmpty>
+			<isNotEmpty property="levelAdjustDayTerm">
+				<isNotEmpty prepend="AND" property="levelChangeType">
+					A.LevelChangeType = #levelChangeType#
+				</isNotEmpty>
+				<isNotEmpty prepend="AND" property="levelAdjustDayStart">
+					A.LevelAdjustDay >= #levelAdjustDayStart#
+				</isNotEmpty>
+				<isNotEmpty prepend="AND" property="levelAdjustDayEnd">
+					<![CDATA[A.LevelAdjustDay <= #levelAdjustDayEnd#]]>
+				</isNotEmpty>
+			</isNotEmpty>
+			<isNotEmpty prepend="AND" property="employeeIdQ">
+				A.BIN_EmployeeID = #employeeIdQ#
+			</isNotEmpty>
+			<isNotEmpty prepend="AND" property="activeChannel">
+				<isEqual property="activeChannel" compareValue="Other">
+					(A.ActiveChannel IS NULL OR A.ActiveChannel = '')
+				</isEqual>
+				<isNotEqual property="activeChannel" compareValue="Other">
+					A.ActiveChannel = #activeChannel#
+				</isNotEqual>
+			</isNotEmpty>
+			<isNotEmpty prepend="AND" property="bindWeChat">
+				<isEqual property="bindWeChat" compareValue="1">
+					A.MessageId IS NOT NULL AND A.MessageId != ''
+				</isEqual>
+				<isEqual property="bindWeChat" compareValue="2">
+					(A.MessageId IS NULL OR A.MessageId = '')
+				</isEqual>
+			</isNotEmpty>
+			<isNotEmpty prepend="AND" property="messageId">
+				A.MessageId = #messageId#
+			</isNotEmpty>
+			<isNotEmpty prepend="AND" property="channelCode">
+				A.ChannelCode = #channelCode#
+			</isNotEmpty>
+			<isNotEmpty prepend="AND" property="wechatBindTimeStart">
+				CONVERT(VARCHAR(30), A.WechatBindTime, 23) >= #wechatBindTimeStart#
+			</isNotEmpty>
+			<isNotEmpty prepend="AND" property="wechatBindTimeEnd">
+				<![CDATA[CONVERT(VARCHAR(30), A.WechatBindTime, 23) <= #wechatBindTimeEnd#]]>
+			</isNotEmpty>
+			<isNotEmpty prepend="AND" property="lastSaleDateStart">
+				F.LastSaleDate >= #lastSaleDateStart#
+			</isNotEmpty>
+			<isNotEmpty prepend="AND" property="lastSaleDateEnd">
+				<![CDATA[F.LastSaleDate <= #lastSaleDateEnd#]]>
+			</isNotEmpty>
+			<isNotEmpty prepend="AND" property="campaignCodeNot">
+				<![CDATA[
+					NOT EXISTS(SELECT 1 FROM Campaign.BIN_CampaignOrder T WITH(NOLOCK) 
+						WHERE
+							T.CampaignCode = #campaignCodeNot# AND 
+							T.BIN_OrganizationInfoID = #organizationInfoId# AND
+							T.BIN_BrandInfoID = #brandInfoId# AND
+							A.BIN_MemberInfoID = T.BIN_MemberInfoID
+				]]>
+				<isNotEmpty property="optYear" prepend="AND">
+					<![CDATA[T.OptYear = #optYear#]]>
+				</isNotEmpty>
+				<isNotEmpty property="optMonth" prepend="AND">
+					<![CDATA[T.OptMonth = #optMonth#]]>
+					</isNotEmpty>
+				<isNotEmpty property="optDay" prepend="AND">
+					<![CDATA[T.OptDay = #optDay#]]>
+				</isNotEmpty>
+				<![CDATA[)]]>
+			</isNotEmpty>
+			<isNotEmpty prepend="AND" property="firstSaleDayFlag">
+				<![CDATA[F.FirstSaleDate is not null]]>
+			</isNotEmpty>
+			<isNotEmpty prepend="AND" property="notSaleDaysTemp">
+				<![CDATA[
+					 NOT EXISTS(
+						SELECT 1
+						FROM
+							Sale.BIN_SaleRecord x WITH(NOLOCK)
+							join Members.BIN_MemberExtInfo y WITH(NOLOCK) on x.BIN_MemberInfoID = y.BIN_MemberInfoID
+						WHERE
+							x.SaleDate <= convert(varchar(30),dateadd(day,#notSaleDaysTemp#,y.FirstSaleDate),23) AND
+							x.SaleTime <> y.FirstSaleDate AND 
+							x.SaleType <> 'SR' AND
+							x.Amount > 0 AND
+							A.BIN_MemberInfoID = x.BIN_MemberInfoID
+					)
+				]]>
+				<isNotEmpty prepend="AND" property="notSaleSysDate">
+				<![CDATA[
+					 convert(date,F.FirstSaleDate) <= dateadd(day,#notSaleDaysNeg#,#notSaleSysDate#)
+				]]>
+				</isNotEmpty>
+			</isNotEmpty>
+			<isNotEmpty prepend="AND" property="firstStartDay">
+			<![CDATA[
+				F.FirstSaleDate >= #firstStartDay#
+			]]>
+			</isNotEmpty>
+			<isNotEmpty prepend="AND" property="firstEndDay">
+			<![CDATA[
+				convert(date,F.FirstSaleDate) <= #firstEndDay#
+			]]>
+			</isNotEmpty>
+			<isNotEmpty prepend="AND" property="notSaleLastTime">
+				F.LastSaleDate is not null AND convert(date, F.LastSaleDate) = #notSaleLastTime#
+			</isNotEmpty>
+			<isNotEmpty prepend="AND" property="visitPlanId">
+			<![CDATA[
+				NOT EXISTS(SELECT 1 FROM Members.BIN_VisitTask T WITH(NOLOCK) 
+					WHERE
+						T.BIN_VisitPlanID = #visitPlanId# AND 
+			]]>	
+					<isNotEmpty property="visitTaskTime">
+						T.VisitTaskTime = #visitTaskTime# AND
+					</isNotEmpty>
+			<![CDATA[		
+						A.BIN_MemberInfoID = T.BIN_MemberID)
+			]]>
+			</isNotEmpty>
+    </sql>
+    
+    
+    <!-- 取得会员搜索条件记录数 -->
+    <select id="getSearchRequestCount" parameterClass="java.util.HashMap" resultClass="java.lang.Integer">
+    	<![CDATA[
+			SELECT	COUNT(1) AS count FROM (
+		]]>	
+		<include refid="BINOLCM33.SearchRequestQuery" />	
+		<![CDATA[	
+			)SORT_T1
+		]]>										
+    </select>
+	
+	<!-- 取得会员搜索条件List -->
+    <select id="getSearchRequestList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+       	<include refid="BINOLCMINC99.pageheader" />
+		<include refid="BINOLCM33.SearchRequestQuery" />
+		<include refid="BINOLCMINC99.pagefooter" />
+    </select>
+    
+    <!-- 添加会员搜索条件 -->
+    <insert id="addSearchRequest" parameterClass="java.util.HashMap">
+    	<![CDATA[
+    		INSERT INTO Campaign.BIN_SearchRequest		
+			(					
+				RequestName,				
+				Authorname,				
+				Description,				
+				ReqContent,
+		]]>
+				<include refid="BINOLCMINC99.insertKeySql" />		
+		<![CDATA[						
+			)					
+			VALUES					
+			(					
+				#requestName#,				
+				#userId#,				
+				#description#,				
+				#reqContent#,
+		]]>
+				<include refid="BINOLCMINC99.insertValueSql" />		
+		<![CDATA[							
+			)	
+    	]]>
+    </insert>
+    
+    <!-- 删除会员搜索条件 -->
+	<delete id="deleteSearchRequest" parameterClass="java.util.HashMap">
+		<![CDATA[
+			DELETE FROM Campaign.BIN_SearchRequest
+			WHERE		
+				BIN_SearchRequestID = #searchRequestId#	
+		]]>
+	</delete>
+	
+	<!-- 查询会员等级信息List -->
+    <select id="getMemberLevelInfoList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">	
+		<![CDATA[
+			SELECT
+				A.BIN_MemberLevelID AS memberLevelId,
+				A.LevelName AS levelName
+			FROM	
+				Members.BIN_MemberLevel A
+			WHERE
+				A.BIN_OrganizationInfoID = #organizationInfoId# AND
+				A.ValidFlag = '1'
+		]]>	
+			<isNotEmpty prepend="AND" property="brandInfoId">	
+				A.BIN_BrandInfoID = #brandInfoId#
+			</isNotEmpty>
+			<isNotEmpty prepend="AND" property="memberClubId">	
+				A.BIN_MemberClubID = #memberClubId#
+			</isNotEmpty>
+    </select>
+    
+    <!-- 查询会员俱乐部信息 -->
+    <select id="getMemberClubInfo" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">	
+		<![CDATA[
+			SELECT
+				ClubCode AS clubCode,
+				ClubName AS clubName
+			FROM	
+				Members.BIN_MemberClub
+			WHERE	
+		]]>		BIN_MemberClubID = #memberClubId#
+    </select>
+    
+    <!-- 查询产品信息List -->
+    <select id="getProInfoList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">	
+		<![CDATA[
+			SELECT
+				A.BIN_ProductVendorID AS prtVendorId,
+				A.BarCode AS barCode,
+				B.UnitCode AS unitCode,
+				B.NameTotal AS nameTotal
+			FROM	
+				Basis.BIN_ProductVendor A
+				JOIN Basis.BIN_Product B ON A.BIN_ProductID = B.BIN_ProductID
+			WHERE
+				A.BIN_ProductVendorID IN 
+		]]>	
+			<iterate property="prtVendorId" open="(" close=")" conjunction=","> 
+				#prtVendorId[]#
+			</iterate>
+    </select>
+    
+    <!-- 查询产品分类信息List -->
+    <select id="getProTypeInfoList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">	
+		<![CDATA[
+			SELECT
+				A.BIN_PrtCatPropValueID AS cateValId,
+				A.PropValueCherry AS cateVal,
+				A.PropValueChinese AS cateValName
+			FROM	
+				Basis.BIN_PrtCatPropValue A
+			WHERE
+				A.BIN_PrtCatPropValueID IN 
+		]]>	
+			<iterate property="cateValId" open="(" close=")" conjunction=","> 
+				#cateValId[]#
+			</iterate>
+    </select>
+    
+    <!-- 根据会员卡号查询会员ID -->
+	<select id="getMemberInfoId" parameterClass="java.util.HashMap" resultClass="java.lang.String">
+		<![CDATA[
+			SELECT
+				A.BIN_MemberInfoID AS memberInfoId
+			FROM
+				Members.BIN_MemberInfo A WITH(NOLOCK)
+				JOIN Members.BIN_MemCardInfo B WITH(NOLOCK) ON A.BIN_MemberInfoID = B.BIN_MemberInfoID AND B.ValidFlag = '1'
+			WHERE
+				B.MemCode = #memCode# AND
+				A.BIN_OrganizationInfoID = #organizationInfoId#
+		]]>	
+			<isNotEmpty prepend="AND" property="brandInfoId">	
+				A.BIN_BrandInfoID = #brandInfoId#
+			</isNotEmpty>
+    </select>
+    
+    <!-- 会员扩展属性查询SQL -->
+    <sql id="ExtendPropertySql">
+		<iterate property="propertyInfoList" conjunction="INTERSECT" close=")" open="("> 
+			SELECT 
+				A.BIN_MemberInfoID
+			FROM 
+				Monitor.BIN_PaperAnswer A WITH(NOLOCK) JOIN Monitor.BIN_PaperAnswerDetail B WITH(NOLOCK) ON A.BIN_PaperAnswerID = B.BIN_PaperAnswerID
+			WHERE	
+				B.BIN_PaperQuestionID = #propertyInfoList[].extendPropertyId# AND
+				<isEqual property="propertyInfoList[].propertyType" compareValue="2">
+					<iterate property="propertyInfoList[].propertyValues" conjunction="OR" close=")" open="("> 
+						SUBSTRING(B.Answer,CONVERT(INT,#propertyInfoList[].propertyValues[]#),1)='1'
+					</iterate>
+				</isEqual>
+				<isNotEqual property="propertyInfoList[].propertyType" compareValue="2">
+					<iterate property="propertyInfoList[].propertyValues" conjunction="OR" close=")" open="("> 
+						B.Answer=#propertyInfoList[].propertyValues[]#
+					</iterate>
+				</isNotEqual>
+		</iterate>
+    </sql>
+    
+    <!-- 未购买查询SQL -->
+    <sql id="NotSaleCountTermSql">
+    <![CDATA[
+	    SELECT
+			A.BIN_MemberInfoID,
+			COUNT(1) AS saleCount
+		FROM 
+			Sale.BIN_SaleRecord A WITH(NOLOCK)
+		WHERE
+	]]>		
+		<isNotEmpty property="notSaleTimeStart">
+			A.SaleDate >= #notSaleTimeStart# AND
+		</isNotEmpty>
+		<isNotEmpty property="notSaleTimeEnd">
+			<![CDATA[A.SaleDate <= #notSaleTimeEnd# AND]]>
+		</isNotEmpty>
+		<isNotEmpty property="brandInfoId">
+			A.BIN_BrandInfoID = #brandInfoId# AND
+		</isNotEmpty>
+	<![CDATA[
+			A.BIN_OrganizationInfoID = #organizationInfoId# AND
+			A.SaleType <> 'SR' AND
+			A.Amount > 0
+		GROUP BY
+			A.BIN_MemberInfoID	
+    ]]>
+    </sql>
+    
+    <!-- 购买子品牌查询SQL -->
+    <sql id="SaleSubBrandSql">
+    	<![CDATA[
+	    	SELECT
+				1
+			FROM
+				Sale.BIN_SaleRecord BM WITH(NOLOCK)
+				JOIN Sale.BIN_SaleRecordDetail BX WITH(NOLOCK) ON BM.BIN_SaleRecordID = BX.BIN_SaleRecordID
+				JOIN Basis.BIN_Product BP WITH(NOLOCK)
+				ON BX.UnitCode = BP.UnitCode
+			WHERE 
+				BP.OriginalBrand = #saleSubBrand# AND
+				A.BIN_MemberInfoID = BM.BIN_MemberInfoID AND
+				BM.SaleType <> 'SR'
+		]]>
+		<isNotEmpty property="saleTimeStart">
+		 	AND BM.SaleDate >= #saleTimeStart#
+		</isNotEmpty>
+		<isNotEmpty property="saleTimeEnd">
+			<![CDATA[AND BM.SaleDate <= #saleTimeEnd#]]>
+		</isNotEmpty>
+		<isNotEmpty property="saleCounterId">
+			AND BM.BIN_OrganizationID = #saleCounterId#
+		</isNotEmpty>
+		<isNotEmpty property="saleModeFlag">
+			AND EXISTS (<include refid="BINOLCM33.SaleCounterTermSql" /> AND BM.BIN_OrganizationID = orgTable.BIN_OrganizationID) 
+		</isNotEmpty>
+		<isNotEmpty property="brandInfoId">
+		   AND	BM.BIN_BrandInfoID = #brandInfoId# 
+		</isNotEmpty>
+    </sql>
+    
+    <!-- 购买次数查询SQL -->
+    <sql id="SaleCountTermSql">
+    <![CDATA[
+	    SELECT
+			A.BIN_MemberInfoID,
+			COUNT(1) AS saleCount
+		FROM 
+			Sale.BIN_SaleRecord A WITH(NOLOCK)
+		WHERE
+	]]>		
+		<isNotEmpty property="saleTimeStart">
+			A.SaleDate >= #saleTimeStart# AND
+		</isNotEmpty>
+		<isNotEmpty property="saleTimeEnd">
+			<![CDATA[A.SaleDate <= #saleTimeEnd# AND]]>
+		</isNotEmpty>
+		<isNotEmpty property="saleCounterId">
+			A.BIN_OrganizationID = #saleCounterId# AND
+		</isNotEmpty>
+		<isNotEmpty property="saleModeFlag">
+			EXISTS (<include refid="BINOLCM33.SaleCounterTermSql" /> AND A.BIN_OrganizationID = orgTable.BIN_OrganizationID) AND
+		</isNotEmpty>
+		<isNotEmpty property="brandInfoId">
+			A.BIN_BrandInfoID = #brandInfoId# AND
+		</isNotEmpty>
+	<![CDATA[
+			A.BIN_OrganizationInfoID = #organizationInfoId# AND
+			A.SaleType <> 'SR' AND
+			A.Amount > 0
+		GROUP BY
+			A.BIN_MemberInfoID
+    ]]>
+    </sql>
+    
+    <!-- 购买金额查询SQL -->
+    <sql id="SaleAmountTermSql">
+    <![CDATA[
+	    SELECT
+			A.BIN_MemberInfoID,
+			SUM(CASE WHEN A.SaleType = 'SR' THEN -A.Amount ELSE A.Amount END) AS amount,
+			SUM(CASE WHEN A.SaleType = 'SR' THEN -A.Quantity ELSE A.Quantity END) AS quantity
+		FROM 
+			Sale.BIN_SaleRecord A WITH(NOLOCK)
+		WHERE
+	]]>		
+		<isNotEmpty property="saleTimeStart">
+			A.SaleDate >= #saleTimeStart# AND
+		</isNotEmpty>
+		<isNotEmpty property="saleTimeEnd">
+			<![CDATA[A.SaleDate <= #saleTimeEnd# AND]]>
+		</isNotEmpty>
+		<isNotEmpty property="saleCounterId">
+			A.BIN_OrganizationID = #saleCounterId# AND
+		</isNotEmpty>
+		<isNotEmpty property="saleModeFlag">
+			EXISTS (<include refid="BINOLCM33.SaleCounterTermSql" /> AND A.BIN_OrganizationID = orgTable.BIN_OrganizationID) AND
+		</isNotEmpty>
+		<isNotEmpty property="brandInfoId">
+			A.BIN_BrandInfoID = #brandInfoId# AND
+		</isNotEmpty>
+	<![CDATA[
+			A.BIN_OrganizationInfoID = #organizationInfoId#
+		GROUP BY
+			A.BIN_MemberInfoID
+    ]]>
+    </sql>
+    
+    <!-- 购买产品查询SQL -->
+    <sql id="SaleTermSql">
+    <![CDATA[
+	    SELECT
+			1
+		FROM 
+			Sale.BIN_SaleRecord M WITH(NOLOCK)
+			JOIN Sale.BIN_SaleRecordDetail X WITH(NOLOCK) ON M.BIN_SaleRecordID = X.BIN_SaleRecordID
+	]]>	
+			<isNotEmpty property="buyCateValId">	
+				LEFT JOIN Basis.BIN_ProductVendor Y WITH(NOLOCK) ON X.BIN_ProductVendorID = Y.BIN_ProductVendorID AND X.SaleType = 'N'
+				LEFT JOIN Basis.BIN_PrtCategory Z WITH(NOLOCK) ON Y.BIN_ProductID = Z.BIN_ProductID
+			</isNotEmpty>
+	<![CDATA[		
+		WHERE
+	]]>		
+		<isNotEmpty property="saleTimeStart">
+			M.SaleDate >= #saleTimeStart# AND
+		</isNotEmpty>
+		<isNotEmpty property="saleTimeEnd">
+			<![CDATA[M.SaleDate <= #saleTimeEnd# AND]]>
+		</isNotEmpty>
+		<isNotEmpty property="saleCounterId">
+			M.BIN_OrganizationID = #saleCounterId# AND
+		</isNotEmpty>
+		<isNotEmpty property="saleModeFlag">
+			EXISTS (<include refid="BINOLCM33.SaleCounterTermSql" /> AND M.BIN_OrganizationID = orgTable.BIN_OrganizationID) AND
+		</isNotEmpty>
+		<isNotEmpty property="brandInfoId">
+			M.BIN_BrandInfoID = #brandInfoId# AND
+		</isNotEmpty>
+	<![CDATA[
+			M.BIN_OrganizationInfoID = #organizationInfoId# AND
+			X.SaleType = 'N' AND
+	]]>	
+		<isNotEmpty property="buyPrtVendorId">
+			<iterate property="buyPrtVendorId" open="(" close=")" conjunction="OR"> 
+				X.BIN_ProductVendorID = #buyPrtVendorId[]#
+			</iterate>
+		</isNotEmpty>
+		<isNotEmpty property="buyCateValId">
+			<iterate property="buyCateValId" open="(" close=")" conjunction="OR"> 
+				Z.BIN_PrtCatPropValueID = #buyCateValId[]#
+			</iterate>
+		</isNotEmpty>
+    </sql>
+    
+    <!-- 购买产品查询SQL(AND关系) -->
+    <sql id="SaleTermAndSql">
+    <![CDATA[
+	    SELECT
+			1
+		FROM 
+			Sale.BIN_SaleRecord M WITH(NOLOCK)
+			JOIN Sale.BIN_SaleRecordDetail X WITH(NOLOCK) ON M.BIN_SaleRecordID = X.BIN_SaleRecordID
+	]]>	
+			<isNotEmpty property="buyCateValId">	
+				LEFT JOIN Basis.BIN_ProductVendor Y WITH(NOLOCK) ON X.BIN_ProductVendorID = Y.BIN_ProductVendorID AND X.SaleType = 'N'
+				LEFT JOIN Basis.BIN_PrtCategory Z WITH(NOLOCK) ON Y.BIN_ProductID = Z.BIN_ProductID
+			</isNotEmpty>
+	<![CDATA[		
+		WHERE
+	]]>		
+		<isNotEmpty property="saleTimeStart">
+			M.SaleDate >= #saleTimeStart# AND
+		</isNotEmpty>
+		<isNotEmpty property="saleTimeEnd">
+			<![CDATA[M.SaleDate <= #saleTimeEnd# AND]]>
+		</isNotEmpty>
+		<isNotEmpty property="saleCounterId">
+			M.BIN_OrganizationID = #saleCounterId# AND
+		</isNotEmpty>
+		<isNotEmpty property="saleModeFlag">
+			EXISTS (<include refid="BINOLCM33.SaleCounterTermSql" /> AND M.BIN_OrganizationID = orgTable.BIN_OrganizationID) AND
+		</isNotEmpty>
+		<isNotEmpty property="brandInfoId">
+			M.BIN_BrandInfoID = #brandInfoId# AND
+		</isNotEmpty>
+	<![CDATA[
+			M.BIN_OrganizationInfoID = #organizationInfoId# AND
+			X.SaleType = 'N' AND
+	]]>	
+		<isNotEmpty property="buyPrtVendorId">
+			X.BIN_ProductVendorID = #buyPrtVendorId[]#
+		</isNotEmpty>
+		<isNotEmpty property="buyCateValId">
+			Z.BIN_PrtCatPropValueID = #buyCateValId[]#
+		</isNotEmpty>
+    </sql>
+    
+    <!-- 未购买产品查询SQL -->
+    <sql id="NotSaleTermSql">
+    <![CDATA[
+	    SELECT
+			1
+		FROM 
+			Sale.BIN_SaleRecord N WITH(NOLOCK)
+			JOIN Sale.BIN_SaleRecordDetail X WITH(NOLOCK) ON N.BIN_SaleRecordID = X.BIN_SaleRecordID
+	]]>	
+			<isNotEmpty property="notCateValId">	
+				LEFT JOIN Basis.BIN_ProductVendor Y WITH(NOLOCK) ON X.BIN_ProductVendorID = Y.BIN_ProductVendorID AND X.SaleType = 'N'
+				LEFT JOIN Basis.BIN_PrtCategory Z WITH(NOLOCK) ON Y.BIN_ProductID = Z.BIN_ProductID
+			</isNotEmpty>
+	<![CDATA[				
+		WHERE
+	]]>		
+		<isNotEmpty property="saleTimeStart">
+			N.SaleDate >= #saleTimeStart# AND
+		</isNotEmpty>
+		<isNotEmpty property="saleTimeEnd">
+			<![CDATA[N.SaleDate <= #saleTimeEnd# AND]]>
+		</isNotEmpty>
+		<isNotEmpty property="saleCounterId">
+			N.BIN_OrganizationID = #saleCounterId# AND
+		</isNotEmpty>
+		<isNotEmpty property="saleModeFlag">
+			EXISTS (<include refid="BINOLCM33.SaleCounterTermSql" /> AND N.BIN_OrganizationID = orgTable.BIN_OrganizationID) AND
+		</isNotEmpty>
+		<isNotEmpty property="brandInfoId">
+			N.BIN_BrandInfoID = #brandInfoId# AND
+		</isNotEmpty>
+	<![CDATA[
+			N.BIN_OrganizationInfoID = #organizationInfoId# AND
+			X.SaleType = 'N' AND
+	]]>				
+		<isNotEmpty property="notPrtVendorId">
+			<iterate property="notPrtVendorId" open="(" close=")" conjunction="OR"> 
+				X.BIN_ProductVendorID = #notPrtVendorId[]#
+			</iterate>
+		</isNotEmpty>
+		<isNotEmpty property="notCateValId">
+			<iterate property="notCateValId" open="(" close=")" conjunction="OR"> 
+				Z.BIN_PrtCatPropValueID = #notCateValId[]#
+			</iterate>
+		</isNotEmpty>
+    </sql>
+    
+    <!-- 未购买产品查询SQL(AND关系) -->
+    <sql id="NotSaleTermOrSql">
+    <![CDATA[
+	    SELECT
+			1
+		FROM 
+			Sale.BIN_SaleRecord N WITH(NOLOCK)
+			JOIN Sale.BIN_SaleRecordDetail X WITH(NOLOCK) ON N.BIN_SaleRecordID = X.BIN_SaleRecordID
+	]]>	
+			<isNotEmpty property="notCateValId">	
+				LEFT JOIN Basis.BIN_ProductVendor Y WITH(NOLOCK) ON X.BIN_ProductVendorID = Y.BIN_ProductVendorID AND X.SaleType = 'N'
+				LEFT JOIN Basis.BIN_PrtCategory Z WITH(NOLOCK) ON Y.BIN_ProductID = Z.BIN_ProductID
+			</isNotEmpty>
+	<![CDATA[				
+		WHERE
+	]]>		
+		<isNotEmpty property="saleTimeStart">
+			N.SaleDate >= #saleTimeStart# AND
+		</isNotEmpty>
+		<isNotEmpty property="saleTimeEnd">
+			<![CDATA[N.SaleDate <= #saleTimeEnd# AND]]>
+		</isNotEmpty>
+		<isNotEmpty property="saleCounterId">
+			N.BIN_OrganizationID = #saleCounterId# AND
+		</isNotEmpty>
+		<isNotEmpty property="saleModeFlag">
+			EXISTS (<include refid="BINOLCM33.SaleCounterTermSql" /> AND N.BIN_OrganizationID = orgTable.BIN_OrganizationID) AND
+		</isNotEmpty>
+		<isNotEmpty property="brandInfoId">
+			N.BIN_BrandInfoID = #brandInfoId# AND
+		</isNotEmpty>
+	<![CDATA[
+			N.BIN_OrganizationInfoID = #organizationInfoId# AND
+			X.SaleType = 'N' AND
+	]]>				
+		<isNotEmpty property="notPrtVendorId">
+			X.BIN_ProductVendorID = #notPrtVendorId[]#
+		</isNotEmpty>
+		<isNotEmpty property="notCateValId">
+			Z.BIN_PrtCatPropValueID = #notCateValId[]#
+		</isNotEmpty>
+    </sql>
+    
+    <!-- 购买柜台查询SQL -->
+    <sql id="SaleCounterTermSql">
+    <![CDATA[	
+    	SELECT 
+    		1
+    	FROM
+    		Basis.BIN_Organization orgTable WITH(NOLOCK) 
+    ]]>	
+    	<isEqual property="saleModeFlag" compareValue="2">
+    		JOIN Basis.BIN_CounterInfo couTable WITH(NOLOCK) 
+    		ON orgTable.BIN_OrganizationID = couTable.BIN_OrganizationID
+    	</isEqual>
+    	<isEqual property="saleModeFlag" compareValue="3">
+    		JOIN Basis.BIN_Organization orgTable2 WITH(NOLOCK)
+    		ON orgTable.NodeID.IsDescendantOf(orgTable2.NodeID) = 1
+    	</isEqual>
+    	<isEqual property="saleModeFlag" compareValue="4">
+    	<![CDATA[
+    		JOIN Basis.BIN_CounterInfo couTable WITH(NOLOCK) 
+    		ON orgTable.BIN_OrganizationID = couTable.BIN_OrganizationID AND
+    		couTable.BelongFaction IS NOT NULL AND couTable.BelongFaction <> ''
+    		 ]]>
+    	</isEqual>
+    	<isEqual property="saleModeFlag" compareValue="5">
+    	 <![CDATA[
+    		JOIN Basis.BIN_CounterInfo couTable WITH(NOLOCK) 
+    		ON orgTable.BIN_OrganizationID = couTable.BIN_OrganizationID AND
+    		couTable.BelongFaction IS NOT NULL AND couTable.BelongFaction <> ''
+    		  ]]>
+    	</isEqual>
+    <![CDATA[			
+    	WHERE
+    ]]>	
+   		<isEqual property="saleModeFlag" compareValue="1">
+			<isNotEmpty property="saleRegionId">
+				(orgTable.BIN_RegionID IN
+				<iterate property="saleRegionId" open="(" close=")" conjunction=","> 
+					#saleRegionId[]#
+				</iterate>
+				<isNotEmpty property="saleProvinceId" prepend="OR">
+					orgTable.BIN_ProvinceID IN
+					<iterate property="saleProvinceId" open="(" close=")" conjunction=","> 
+						#saleProvinceId[]#
+					</iterate>
+				</isNotEmpty>
+				<isNotEmpty property="saleCityId" prepend="OR">
+					orgTable.BIN_CityID IN
+					<iterate property="saleCityId" open="(" close=")" conjunction=","> 
+						#saleCityId[]#
+					</iterate>
+				</isNotEmpty>
+				<isNotEmpty property="saleMemCounterId" prepend="OR">
+					orgTable.BIN_OrganizationID IN
+					<iterate property="saleMemCounterId" open="(" close=")" conjunction=","> 
+						#saleMemCounterId[]#
+					</iterate>
+				</isNotEmpty>)
+			</isNotEmpty>
+			<isEmpty property="saleRegionId">
+				<isNotEmpty property="saleProvinceId">
+					(orgTable.BIN_ProvinceID IN
+					<iterate property="saleProvinceId" open="(" close=")" conjunction=","> 
+						#saleProvinceId[]#
+					</iterate>
+					<isNotEmpty property="saleCityId" prepend="OR">
+						orgTable.BIN_CityID IN
+						<iterate property="saleCityId" open="(" close=")" conjunction=","> 
+							#saleCityId[]#
+						</iterate>
+					</isNotEmpty>
+					<isNotEmpty property="saleMemCounterId" prepend="OR">
+						orgTable.BIN_OrganizationID IN
+						<iterate property="saleMemCounterId" open="(" close=")" conjunction=","> 
+							#saleMemCounterId[]#
+						</iterate>
+					</isNotEmpty>)
+				</isNotEmpty>
+				<isEmpty property="saleProvinceId">
+					<isNotEmpty property="saleCityId">
+						(orgTable.BIN_CityID IN
+						<iterate property="saleCityId" open="(" close=")" conjunction=","> 
+							#saleCityId[]#
+						</iterate>
+						<isNotEmpty property="saleMemCounterId" prepend="OR">
+							orgTable.BIN_OrganizationID IN
+							<iterate property="saleMemCounterId" open="(" close=")" conjunction=","> 
+								#saleMemCounterId[]#
+							</iterate>
+						</isNotEmpty>)
+					</isNotEmpty>
+					<isEmpty property="saleCityId">
+						<isNotEmpty property="saleMemCounterId">
+							orgTable.BIN_OrganizationID IN
+							<iterate property="saleMemCounterId" open="(" close=")" conjunction=","> 
+								#saleMemCounterId[]#
+							</iterate>
+						</isNotEmpty>
+					</isEmpty>
+				</isEmpty>
+			</isEmpty>
+		</isEqual>
+		
+		<isEqual property="saleModeFlag" compareValue="2">
+			<isNotEmpty property="saleChannelId">
+				<isNotEmpty property="saleChannelRegionId">
+					orgTable.BIN_RegionID = #saleChannelRegionId# AND
+				</isNotEmpty>
+				(couTable.BIN_ChannelID IN 
+				<iterate property="saleChannelId" open="(" close=")" conjunction=","> 
+					#saleChannelId[]#
+				</iterate>
+				<isNotEmpty property="saleMemCounterId" prepend="OR">
+					orgTable.BIN_OrganizationID IN
+					<iterate property="saleMemCounterId" open="(" close=")" conjunction=","> 
+						#saleMemCounterId[]#
+					</iterate>
+				</isNotEmpty>)
+			</isNotEmpty>
+			<isEmpty property="saleChannelId">
+				<isNotEmpty property="saleMemCounterId">
+					orgTable.BIN_OrganizationID IN
+					<iterate property="saleMemCounterId" open="(" close=")" conjunction=","> 
+						#saleMemCounterId[]#
+					</iterate>
+				</isNotEmpty>
+			</isEmpty>
+		</isEqual>
+		
+		<isEqual property="saleModeFlag" compareValue="3">
+			orgTable2.BIN_OrganizationID IN
+			<iterate property="saleMemCounterId" open="(" close=")" conjunction=","> 
+				#saleMemCounterId[]#
+			</iterate>
+			AND orgTable.Type = '4'
+		</isEqual>
+		<isEqual property="saleModeFlag" compareValue="4">
+			<isNotEmpty property="saleBelongId">
+			couTable.BelongFaction IN
+			<iterate property="saleBelongId" open="(" close=")" conjunction=","> 
+				#saleBelongId[]#
+			</iterate>
+			</isNotEmpty>
+		</isEqual>
+		<isEqual property="saleModeFlag" compareValue="5">
+			<isNotEmpty property="saleBelongId">
+				<isEmpty property="saleMemCounterId">
+				couTable.BelongFaction IN
+				<iterate property="saleBelongId" open="(" close=")" conjunction=","> 
+					#saleBelongId[]#
+				</iterate>
+				</isEmpty>
+				<isNotEmpty property="saleMemCounterId">
+					(couTable.BelongFaction IN
+				<iterate property="saleBelongId" open="(" close=")" conjunction=","> 
+					#saleBelongId[]#
+				</iterate>
+				OR orgTable.BIN_OrganizationID IN
+					<iterate property="saleMemCounterId" open="(" close=")" conjunction=","> 
+						#saleMemCounterId[]#
+					</iterate>)
+				</isNotEmpty>
+			</isNotEmpty>
+			<isEmpty property="saleBelongId">
+				<isNotEmpty property="saleMemCounterId">
+					orgTable.BIN_OrganizationID IN
+					<iterate property="saleMemCounterId" open="(" close=")" conjunction=","> 
+						#saleMemCounterId[]#
+					</iterate>
+				</isNotEmpty>
+			</isEmpty>
+		</isEqual>
+		<isNotEmpty property="saleCouValidFlag" prepend="AND">
+			orgTable.validFlag = #saleCouValidFlag#
+		</isNotEmpty>
+		<isEmpty property="saleCouValidFlag" prepend="AND">
+			orgTable.validFlag = '1'
+		</isEmpty>
+    </sql>
+    
+    <!-- 发卡柜台查询SQL -->
+    <sql id="CounterTermSql">
+    <![CDATA[	
+    	SELECT 
+    		1
+    	FROM
+    		Basis.BIN_Organization orgTable WITH(NOLOCK) 
+    ]]>	
+    	<isEqual property="modeFlag" compareValue="2">
+    		JOIN Basis.BIN_CounterInfo couTable WITH(NOLOCK) 
+    		ON orgTable.BIN_OrganizationID = couTable.BIN_OrganizationID
+    	</isEqual>
+    	<isEqual property="modeFlag" compareValue="3">
+    		JOIN Basis.BIN_Organization orgTable2 WITH(NOLOCK)
+    		ON orgTable.NodeID.IsDescendantOf(orgTable2.NodeID) = 1
+    	</isEqual>
+    	<isEqual property="modeFlag" compareValue="4">
+    	<![CDATA[
+    		JOIN Basis.BIN_CounterInfo couTable WITH(NOLOCK) 
+    		ON orgTable.BIN_OrganizationID = couTable.BIN_OrganizationID AND
+    		couTable.BelongFaction IS NOT NULL AND couTable.BelongFaction <> ''
+    		 ]]>
+    	</isEqual>
+    	<isEqual property="modeFlag" compareValue="5">
+    	 <![CDATA[
+    		JOIN Basis.BIN_CounterInfo couTable WITH(NOLOCK) 
+    		ON orgTable.BIN_OrganizationID = couTable.BIN_OrganizationID AND
+    		couTable.BelongFaction IS NOT NULL AND couTable.BelongFaction <> ''
+    		  ]]>
+    	</isEqual>
+    <![CDATA[			
+    	WHERE
+    ]]>	
+   		<isEqual property="modeFlag" compareValue="1">
+			<isNotEmpty property="regionId">
+				(orgTable.BIN_RegionID IN
+				<iterate property="regionId" open="(" close=")" conjunction=","> 
+					#regionId[]#
+				</iterate>
+				<isNotEmpty property="provinceId" prepend="OR">
+					orgTable.BIN_ProvinceID IN
+					<iterate property="provinceId" open="(" close=")" conjunction=","> 
+						#provinceId[]#
+					</iterate>
+				</isNotEmpty>
+				<isNotEmpty property="cityId" prepend="OR">
+					orgTable.BIN_CityID IN
+					<iterate property="cityId" open="(" close=")" conjunction=","> 
+						#cityId[]#
+					</iterate>
+				</isNotEmpty>
+				<isNotEmpty property="memCounterId" prepend="OR">
+					orgTable.BIN_OrganizationID IN
+					<iterate property="memCounterId" open="(" close=")" conjunction=","> 
+						#memCounterId[]#
+					</iterate>
+				</isNotEmpty>)
+			</isNotEmpty>
+			<isEmpty property="regionId">
+				<isNotEmpty property="provinceId">
+					(orgTable.BIN_ProvinceID IN
+					<iterate property="provinceId" open="(" close=")" conjunction=","> 
+						#provinceId[]#
+					</iterate>
+					<isNotEmpty property="cityId" prepend="OR">
+						orgTable.BIN_CityID IN
+						<iterate property="cityId" open="(" close=")" conjunction=","> 
+							#cityId[]#
+						</iterate>
+					</isNotEmpty>
+					<isNotEmpty property="memCounterId" prepend="OR">
+						orgTable.BIN_OrganizationID IN
+						<iterate property="memCounterId" open="(" close=")" conjunction=","> 
+							#memCounterId[]#
+						</iterate>
+					</isNotEmpty>)
+				</isNotEmpty>
+				<isEmpty property="provinceId">
+					<isNotEmpty property="cityId">
+						(orgTable.BIN_CityID IN
+						<iterate property="cityId" open="(" close=")" conjunction=","> 
+							#cityId[]#
+						</iterate>
+						<isNotEmpty property="memCounterId" prepend="OR">
+							orgTable.BIN_OrganizationID IN
+							<iterate property="memCounterId" open="(" close=")" conjunction=","> 
+								#memCounterId[]#
+							</iterate>
+						</isNotEmpty>)
+					</isNotEmpty>
+					<isEmpty property="cityId">
+						<isNotEmpty property="memCounterId">
+							orgTable.BIN_OrganizationID IN
+							<iterate property="memCounterId" open="(" close=")" conjunction=","> 
+								#memCounterId[]#
+							</iterate>
+						</isNotEmpty>
+					</isEmpty>
+				</isEmpty>
+			</isEmpty>
+		</isEqual>
+		
+		<isEqual property="modeFlag" compareValue="2">
+			<isNotEmpty property="channelId">
+				<isNotEmpty property="channelRegionId">
+					orgTable.BIN_RegionID = #channelRegionId# AND
+				</isNotEmpty>
+				(couTable.BIN_ChannelID IN 
+				<iterate property="channelId" open="(" close=")" conjunction=","> 
+					#channelId[]#
+				</iterate>
+				<isNotEmpty property="memCounterId" prepend="OR">
+					orgTable.BIN_OrganizationID IN
+					<iterate property="memCounterId" open="(" close=")" conjunction=","> 
+						#memCounterId[]#
+					</iterate>
+				</isNotEmpty>)
+			</isNotEmpty>
+			<isEmpty property="channelId">
+				<isNotEmpty property="memCounterId">
+					orgTable.BIN_OrganizationID IN
+					<iterate property="memCounterId" open="(" close=")" conjunction=","> 
+						#memCounterId[]#
+					</iterate>
+				</isNotEmpty>
+			</isEmpty>
+		</isEqual>
+		
+		<isEqual property="modeFlag" compareValue="3">
+			orgTable2.BIN_OrganizationID IN
+			<iterate property="memCounterId" open="(" close=")" conjunction=","> 
+				#memCounterId[]#
+			</iterate>
+			AND orgTable.Type = '4'
+		</isEqual>
+		
+		<isEqual property="modeFlag" compareValue="4">
+			<isNotEmpty property="belongId">
+			couTable.BelongFaction IN
+			<iterate property="belongId" open="(" close=")" conjunction=","> 
+				#belongId[]#
+			</iterate>
+			</isNotEmpty>
+		</isEqual>
+		<isEqual property="modeFlag" compareValue="5">
+			<isNotEmpty property="belongId">
+				<isEmpty property="memCounterId">
+				couTable.BelongFaction IN
+				<iterate property="belongId" open="(" close=")" conjunction=","> 
+					#belongId[]#
+				</iterate>
+				</isEmpty>
+				<isNotEmpty property="memCounterId">
+					(couTable.BelongFaction IN
+				<iterate property="belongId" open="(" close=")" conjunction=","> 
+					#belongId[]#
+				</iterate>
+				OR orgTable.BIN_OrganizationID IN
+					<iterate property="memCounterId" open="(" close=")" conjunction=","> 
+						#memCounterId[]#
+					</iterate>)
+				</isNotEmpty>
+			</isNotEmpty>
+			<isEmpty property="belongId">
+				<isNotEmpty property="memCounterId">
+					orgTable.BIN_OrganizationID IN
+					<iterate property="memCounterId" open="(" close=")" conjunction=","> 
+						#memCounterId[]#
+					</iterate>
+				</isNotEmpty>
+			</isEmpty>
+		</isEqual>
+		
+		<isNotEmpty property="couValidFlag" prepend="AND">
+			orgTable.validFlag = #couValidFlag#
+		</isNotEmpty>
+		<isEmpty property="couValidFlag" prepend="AND">
+			orgTable.validFlag = '1'
+		</isEmpty>
+    </sql>
+    
+    
+    <!-- 俱乐部发卡柜台查询SQL -->
+    <sql id="ClubCounterTermSql">
+    <![CDATA[	
+    	SELECT 
+    		1
+    	FROM
+    		Basis.BIN_Organization orgTable9 WITH(NOLOCK) 
+    ]]>	
+    	<isEqual property="clubModeFlag" compareValue="2">
+    		JOIN Basis.BIN_CounterInfo couTable WITH(NOLOCK) 
+    		ON orgTable9.BIN_OrganizationID = couTable.BIN_OrganizationID
+    	</isEqual>
+    	<isEqual property="clubModeFlag" compareValue="3">
+    		JOIN Basis.BIN_Organization orgTable10 WITH(NOLOCK)
+    		ON orgTable9.NodeID.IsDescendantOf(orgTable10.NodeID) = 1
+    	</isEqual>
+    	<isEqual property="clubModeFlag" compareValue="4">
+    	<![CDATA[
+    		JOIN Basis.BIN_CounterInfo couTable WITH(NOLOCK) 
+    		ON orgTable9.BIN_OrganizationID = couTable.BIN_OrganizationID AND
+    		couTable.BelongFaction IS NOT NULL AND couTable.BelongFaction <> ''
+    		 ]]>
+    	</isEqual>
+    	<isEqual property="clubModeFlag" compareValue="5">
+    	 <![CDATA[
+    		JOIN Basis.BIN_CounterInfo couTable WITH(NOLOCK) 
+    		ON orgTable9.BIN_OrganizationID = couTable.BIN_OrganizationID AND
+    		couTable.BelongFaction IS NOT NULL AND couTable.BelongFaction <> ''
+    		  ]]>
+    	</isEqual>
+    <![CDATA[			
+    	WHERE
+    ]]>	
+   		<isEqual property="clubModeFlag" compareValue="1">
+			<isNotEmpty property="clubRegionId">
+				(orgTable9.BIN_RegionID IN
+				<iterate property="clubRegionId" open="(" close=")" conjunction=","> 
+					#clubRegionId[]#
+				</iterate>
+				<isNotEmpty property="clubProvinceId" prepend="OR">
+					orgTable9.BIN_ProvinceID IN
+					<iterate property="clubProvinceId" open="(" close=")" conjunction=","> 
+						#clubProvinceId[]#
+					</iterate>
+				</isNotEmpty>
+				<isNotEmpty property="clubCityId" prepend="OR">
+					orgTable9.BIN_CityID IN
+					<iterate property="clubCityId" open="(" close=")" conjunction=","> 
+						#clubCityId[]#
+					</iterate>
+				</isNotEmpty>
+				<isNotEmpty property="clubMemCounterId" prepend="OR">
+					orgTable9.BIN_OrganizationID IN
+					<iterate property="clubMemCounterId" open="(" close=")" conjunction=","> 
+						#clubMemCounterId[]#
+					</iterate>
+				</isNotEmpty>)
+			</isNotEmpty>
+			<isEmpty property="clubRegionId">
+				<isNotEmpty property="clubProvinceId">
+					(orgTable9.BIN_ProvinceID IN
+					<iterate property="clubProvinceId" open="(" close=")" conjunction=","> 
+						#clubProvinceId[]#
+					</iterate>
+					<isNotEmpty property="clubCityId" prepend="OR">
+						orgTable9.BIN_CityID IN
+						<iterate property="clubCityId" open="(" close=")" conjunction=","> 
+							#clubCityId[]#
+						</iterate>
+					</isNotEmpty>
+					<isNotEmpty property="clubMemCounterId" prepend="OR">
+						orgTable9.BIN_OrganizationID IN
+						<iterate property="clubMemCounterId" open="(" close=")" conjunction=","> 
+							#clubMemCounterId[]#
+						</iterate>
+					</isNotEmpty>)
+				</isNotEmpty>
+				<isEmpty property="clubProvinceId">
+					<isNotEmpty property="clubCityId">
+						(orgTable9.BIN_CityID IN
+						<iterate property="clubCityId" open="(" close=")" conjunction=","> 
+							#clubCityId[]#
+						</iterate>
+						<isNotEmpty property="clubMemCounterId" prepend="OR">
+							orgTable9.BIN_OrganizationID IN
+							<iterate property="clubMemCounterId" open="(" close=")" conjunction=","> 
+								#clubMemCounterId[]#
+							</iterate>
+						</isNotEmpty>)
+					</isNotEmpty>
+					<isEmpty property="clubCityId">
+						<isNotEmpty property="clubMemCounterId">
+							orgTable9.BIN_OrganizationID IN
+							<iterate property="clubMemCounterId" open="(" close=")" conjunction=","> 
+								#clubMemCounterId[]#
+							</iterate>
+						</isNotEmpty>
+					</isEmpty>
+				</isEmpty>
+			</isEmpty>
+		</isEqual>
+		
+		<isEqual property="clubModeFlag" compareValue="2">
+			<isNotEmpty property="clubChannelId">
+				<isNotEmpty property="clubChannelRegionId">
+					orgTable9.BIN_RegionID = #clubChannelRegionId# AND
+				</isNotEmpty>
+				(couTable.BIN_ChannelID IN 
+				<iterate property="clubChannelId" open="(" close=")" conjunction=","> 
+					#clubChannelId[]#
+				</iterate>
+				<isNotEmpty property="clubMemCounterId" prepend="OR">
+					orgTable9.BIN_OrganizationID IN
+					<iterate property="clubMemCounterId" open="(" close=")" conjunction=","> 
+						#clubMemCounterId[]#
+					</iterate>
+				</isNotEmpty>)
+			</isNotEmpty>
+			<isEmpty property="clubChannelId">
+				<isNotEmpty property="clubMemCounterId">
+					orgTable9.BIN_OrganizationID IN
+					<iterate property="clubMemCounterId" open="(" close=")" conjunction=","> 
+						#clubMemCounterId[]#
+					</iterate>
+				</isNotEmpty>
+			</isEmpty>
+		</isEqual>
+		
+		<isEqual property="clubModeFlag" compareValue="3">
+			orgTable92.BIN_OrganizationID IN
+			<iterate property="clubMemCounterId" open="(" close=")" conjunction=","> 
+				#clubMemCounterId[]#
+			</iterate>
+			AND orgTable9.Type = '4'
+		</isEqual>
+		
+		<isEqual property="clubModeFlag" compareValue="4">
+			<isNotEmpty property="clubBelongId">
+			couTable.BelongFaction IN
+			<iterate property="clubBelongId" open="(" close=")" conjunction=","> 
+				#clubBelongId[]#
+			</iterate>
+			</isNotEmpty>
+		</isEqual>
+		<isEqual property="clubModeFlag" compareValue="5">
+			<isNotEmpty property="clubBelongId">
+				<isEmpty property="clubMemCounterId">
+				couTable.BelongFaction IN
+				<iterate property="clubBelongId" open="(" close=")" conjunction=","> 
+					#clubBelongId[]#
+				</iterate>
+				</isEmpty>
+				<isNotEmpty property="clubMemCounterId">
+					(couTable.BelongFaction IN
+				<iterate property="clubBelongId" open="(" close=")" conjunction=","> 
+					#clubBelongId[]#
+				</iterate>
+				OR orgTable9.BIN_OrganizationID IN
+					<iterate property="clubMemCounterId" open="(" close=")" conjunction=","> 
+						#clubMemCounterId[]#
+					</iterate>)
+				</isNotEmpty>
+			</isNotEmpty>
+			<isEmpty property="clubBelongId">
+				<isNotEmpty property="clubMemCounterId">
+					orgTable9.BIN_OrganizationID IN
+					<iterate property="clubMemCounterId" open="(" close=")" conjunction=","> 
+						#clubMemCounterId[]#
+					</iterate>
+				</isNotEmpty>
+			</isEmpty>
+		</isEqual>
+		
+		<isNotEmpty property="clubCouValidFlag" prepend="AND">
+			orgTable9.validFlag = #clubCouValidFlag#
+		</isNotEmpty>
+		<isEmpty property="clubCouValidFlag" prepend="AND">
+			orgTable9.validFlag = '1'
+		</isEmpty>
+    </sql>
+    
+    <!-- 会员已参加活动查询SQL -->
+    <sql id="CampaignTermSql">
+    <![CDATA[
+    	SELECT 
+			A.BIN_MemberInfoID
+		FROM
+			Campaign.BIN_CampaignHistory A WITH(NOLOCK)
+		WHERE	
+	]]>		
+		<isNotEmpty property="campaignCode">
+		<isNotEmpty property="campaignMode">
+			<isEqual property="campaignMode" compareValue="0">
+				A.CampaignCode = #campaignCode# AND
+			</isEqual>
+			<isEqual property="campaignMode" compareValue="1">
+				A.MainCode = #campaignCode# AND
+			</isEqual>
+		</isNotEmpty>
+		<isEmpty property="campaignMode">
+			A.CampaignCode = #campaignCode# AND
+		</isEmpty>
+		</isNotEmpty>
+		<isNotEmpty property="participateTimeStart">
+			CONVERT(VARCHAR(30), A.ParticipateTime, 23) >= #participateTimeStart# AND
+		</isNotEmpty>
+		<isNotEmpty property="participateTimeEnd">
+			<![CDATA[CONVERT(VARCHAR(30), A.ParticipateTime, 23) <= #participateTimeEnd# AND]]>
+		</isNotEmpty>
+		<isNotEmpty property="campaignCounterId">
+			A.BIN_OrganizationID = #campaignCounterId# AND
+		</isNotEmpty>
+		<isNotEmpty property="brandCode">
+			A.BrandCode = #brandCode# AND
+		</isNotEmpty>
+	<![CDATA[
+			A.OrgCode = #orgCode# AND
+			A.State = 'OK'
+		UNION	
+		SELECT 
+			A.BIN_MemberInfoID
+		FROM
+			Campaign.BIN_CampaignHistory A WITH(NOLOCK)
+			LEFT JOIN Campaign.BIN_Campaign B WITH(NOLOCK) ON A.CampaignCode = B.CampaignCode
+		WHERE	
+    ]]>
+    	<isNotEmpty property="campaignCode">
+		<isNotEmpty property="campaignMode">
+			<isEqual property="campaignMode" compareValue="0">
+				A.CampaignCode = #campaignCode# AND
+			</isEqual>
+			<isEqual property="campaignMode" compareValue="1">
+				A.MainCode = #campaignCode# AND
+			</isEqual>
+		</isNotEmpty>
+		<isEmpty property="campaignMode">
+			A.CampaignCode = #campaignCode# AND
+		</isEmpty>
+		</isNotEmpty>
+		<isNotEmpty property="participateTimeStart">
+			CONVERT(VARCHAR(30), A.ParticipateTime, 23) >= #participateTimeStart# AND
+		</isNotEmpty>
+		<isNotEmpty property="participateTimeEnd">
+			<![CDATA[CONVERT(VARCHAR(30), A.ParticipateTime, 23) <= #participateTimeEnd# AND]]>
+		</isNotEmpty>
+		<isNotEmpty property="campaignCounterId">
+			A.BIN_OrganizationID = #campaignCounterId# AND
+		</isNotEmpty>
+		<isNotEmpty property="brandCode">
+			A.BrandCode = #brandCode# AND
+		</isNotEmpty>
+	<![CDATA[
+			A.OrgCode = #orgCode# AND
+			B.CampaignOrderToDate IS NOT NULL AND
+			NOT EXISTS (]]>	<include refid="BINOLCM33.NotCampaignTermSql" /><![CDATA[ AND A.TradeNoIF = notCampaign.TradeNoIF)
+	]]>		
+    </sql>
+    
+    <!-- 会员取消或者过期未领的活动查询SQL -->
+    <sql id="NotCampaignTermSql">
+    <![CDATA[
+	    SELECT 
+			1
+		FROM
+			Campaign.BIN_CampaignHistory notCampaign WITH(NOLOCK)
+		WHERE	
+	]]>		
+		<isNotEmpty property="campaignCode">
+		<isNotEmpty property="campaignMode">
+			<isEqual property="campaignMode" compareValue="0">
+				notCampaign.CampaignCode = #campaignCode# AND
+			</isEqual>
+			<isEqual property="campaignMode" compareValue="1">
+				notCampaign.MainCode = #campaignCode# AND
+			</isEqual>
+		</isNotEmpty>
+		<isEmpty property="campaignMode">
+			notCampaign.CampaignCode = #campaignCode# AND
+		</isEmpty>
+		</isNotEmpty>
+		<isNotEmpty property="brandCode">
+			notCampaign.BrandCode = #brandCode# AND
+		</isNotEmpty>
+	<![CDATA[
+			notCampaign.OrgCode = #orgCode# AND
+			notCampaign.State IN ('CA','NG')
+    ]]>
+    </sql>
+    
+    <!-- 会员参加活动查询SQL（带活动状态） -->
+    <sql id="CampaignStateTermSql">
+    <![CDATA[
+    	SELECT 
+			A.BIN_MemberInfoID
+		FROM
+			Campaign.BIN_CampaignOrder A WITH(NOLOCK)
+			LEFT JOIN Basis.BIN_Organization B WITH(NOLOCK) ON A.CounterGot = B.DepartCode
+		WHERE	
+	]]>		
+		<isNotEmpty property="campaignCode">
+			A.CampaignCode = #campaignCode# AND
+		</isNotEmpty>
+		<isNotEmpty property="participateTimeStart">
+			CONVERT(VARCHAR(30), A.CampaignOrderTime, 23) >= #participateTimeStart# AND
+		</isNotEmpty>
+		<isNotEmpty property="participateTimeEnd">
+			<![CDATA[CONVERT(VARCHAR(30), A.CampaignOrderTime, 23) <= #participateTimeEnd# AND]]>
+		</isNotEmpty>
+		<isNotEmpty property="campaignCounterId">
+			B.BIN_OrganizationID = #campaignCounterId# AND
+		</isNotEmpty>
+		<isNotEmpty property="campaignState">
+			A.State IN
+			<iterate property="campaignState" open="(" close=")" conjunction=","> 
+				#campaignState[]#
+			</iterate> AND
+		</isNotEmpty>
+		<isNotEmpty property="brandInfoId">
+			A.BIN_BrandInfoID = #brandInfoId# AND
+		</isNotEmpty>
+	<![CDATA[
+			A.BIN_OrganizationInfoID = #organizationInfoId#
+	]]>			
+    </sql>
+    
+    <!-- 会员查询SQL -->
+    <sql id="MemberInfoSql">
+    	<isNotEmpty property="selectors">
+    		SELECT
+    			A.BIN_MemberInfoID AS memId,
+    			A.Version AS versionDb,
+    			CASE WHEN B.MemCode IS NULL THEN '0' ELSE '1' END AS status
+    		<iterate property="selectors">
+    			<isEqual property="selectors[]" compareValue="memName" prepend=",">
+					A.Name AS memName
+				</isEqual>
+				<isEqual property="selectors[]" compareValue="nickname" prepend=",">
+					A.Nickname AS nickname
+				</isEqual>
+				<isEqual property="selectors[]" compareValue="telephone" prepend=",">
+					A.Telephone AS telephone
+				</isEqual>
+				<isEqual property="selectors[]" compareValue="mobilePhone" prepend=",">
+					A.MobilePhone AS mobilePhone
+				</isEqual>
+				<isEqual property="selectors[]" compareValue="email" prepend=",">
+					A.Email AS email
+				</isEqual>
+				<isEqual property="selectors[]" compareValue="tencentQQ" prepend=",">
+					A.TencentQQ AS tencentQQ
+				</isEqual>
+				<isEqual property="selectors[]" compareValue="creditRating" prepend=",">
+					A.CreditRating AS creditRating
+				</isEqual>
+				<isEqual property="selectors[]" compareValue="gender" prepend=",">
+					A.Gender AS gender
+				</isEqual>
+				<isEqual property="selectors[]" compareValue="birthYear" prepend=",">
+					A.BirthYear AS birthYear
+				</isEqual>
+				<isEqual property="selectors[]" compareValue="birthMonth" prepend=",">
+					SUBSTRING(A.BirthDay,1,2) AS birthMonth
+				</isEqual>
+				<isEqual property="selectors[]" compareValue="birthDay" prepend=",">
+					SUBSTRING(A.BirthDay,3,2) AS birthDay
+				</isEqual>
+				<isEqual property="selectors[]" compareValue="joinDate" prepend=",">
+					CONVERT(varchar(10),A.JoinDate,120) AS joinDate
+				</isEqual>
+				<isEqual property="selectors[]" compareValue="levelAdjustDay" prepend=",">
+					CONVERT(varchar(20),A.LevelAdjustDay,120) AS levelAdjustDay
+				</isEqual>
+				<isEqual property="selectors[]" compareValue="receiveMsgFlg" prepend=",">
+					A.IsReceiveMsg AS receiveMsgFlg
+				</isEqual>
+				<isEqual property="selectors[]" compareValue="blogId" prepend=",">
+					A.BlogId AS blogId
+				</isEqual>
+				<isEqual property="selectors[]" compareValue="messageId" prepend=",">
+					A.MessageId AS messageId
+				</isEqual>
+				<isEqual property="selectors[]" compareValue="memo1" prepend=",">
+					A.Memo1 AS memo1
+				</isEqual>
+				<isEqual property="selectors[]" compareValue="memo2" prepend=",">
+					A.Memo2 AS memo2
+				</isEqual>
+				<isEqual property="selectors[]" compareValue="memCode" prepend=",">
+					B.MemCode AS memCode
+				</isEqual>
+				<isEqual property="selectors[]" compareValue="levelName" prepend=",">
+					C.LevelName AS levelName
+				</isEqual>
+				<isEqual property="selectors[]" compareValue="totalPoint" prepend=",">
+					D.TotalPoint AS totalPoint
+				</isEqual>
+				<isEqual property="selectors[]" compareValue="changablePoint" prepend=",">
+					D.ChangablePoint AS changablePoint
+				</isEqual>
+				<isEqual property="selectors[]" compareValue="curDisablePoint" prepend=",">
+					D.CurDisablePoint AS curDisablePoint
+				</isEqual>
+				<isEqual property="selectors[]" compareValue="counterCode" prepend=",">
+					E.BIN_OrganizationID AS organizationId,
+					E.DepartCode AS counterCode
+				</isEqual>
+				<isEqual property="selectors[]" compareValue="counterName" prepend=",">
+					E.DepartName AS counterName
+				</isEqual>
+				<isEqual property="selectors[]" compareValue="employeeCode" prepend=",">
+					P.EmployeeCode AS employeeCode
+				</isEqual>
+				<isEqual property="selectors[]" compareValue="employeeName" prepend=",">
+					P.EmployeeName AS employeeName
+				</isEqual>
+				<isEqual property="selectors[]" compareValue="lastSaleDate" prepend=",">
+					CONVERT(varchar(30),F.LastSaleDate,120) AS lastSaleDate
+				</isEqual>
+				<isEqual property="selectors[]" compareValue="province" prepend=",">
+					N.StandardProvince AS province
+				</isEqual>
+				<isEqual property="selectors[]" compareValue="city" prepend=",">
+					N.StandardCity AS city
+				</isEqual>
+				<isEqual property="selectors[]" compareValue="address" prepend=",">
+					N.AddressLine1 AS address
+				</isEqual>
+				<isEqual property="selectors[]" compareValue="zip" prepend=",">
+					N.ZipCode AS zip
+				</isEqual>
+				<isEqual property="selectors[]" compareValue="firstSaleCounterCode" prepend=",">
+					G.DepartCode AS firstSaleCounterCode
+				</isEqual>
+				<isEqual property="selectors[]" compareValue="firstSaleCounterName" prepend=",">
+					G.DepartName AS firstSaleCounterName
+				</isEqual>
+				<isEqual property="selectors[]" compareValue="lastSaleCounterCode" prepend=",">
+					J.DepartCode AS lastSaleCounterCode
+				</isEqual>
+				<isEqual property="selectors[]" compareValue="lastSaleCounterName" prepend=",">
+					J.DepartName AS lastSaleCounterName
+				</isEqual>
+				<isEqual property="selectors[]" compareValue="firstSaleDate" prepend=",">
+					CONVERT(varchar(30),F.FirstSaleDate,120) AS firstSaleDate
+				</isEqual>
+				<isEqual property="selectors[]" compareValue="saleBillCode" prepend=",">
+					Z1.BillCode AS firstBillCode,
+					Z2.BillCode AS lastBillCode
+				</isEqual>
+				<isEqual property="selectors[]" compareValue="skinType" prepend=",">
+					F.SkinType AS skinType
+				</isEqual>
+				<isEqual property="selectors[]" compareValue="referrerCode">
+					<isNotEmpty property="referrerShow">
+						,RC.MemCode AS referrerCode
+					</isNotEmpty>
+				</isEqual>
+    		</iterate>
+    	</isNotEmpty>
+    	<isEmpty property="selectors">
+    	<![CDATA[
+    		SELECT
+				A.BIN_MemberInfoID AS memId,
+				A.Name AS memName,
+				A.Nickname AS nickname,
+				A.TencentQQ AS tencentQQ,
+				A.CreditRating AS creditRating,
+				A.Telephone AS telephone,
+				A.MobilePhone AS mobilePhone,
+				A.Email AS email,
+				A.Gender AS gender,
+				A.BirthYear AS birthYear,
+				SUBSTRING(A.BirthDay,1,2) AS birthMonth,
+				SUBSTRING(A.BirthDay,3,2) AS birthDay,
+				CONVERT(varchar(10),A.JoinDate,120) AS joinDate,
+				CONVERT(varchar(20),A.LevelAdjustDay,120) AS levelAdjustDay,
+				A.IsReceiveMsg AS receiveMsgFlg,
+				A.BlogId AS blogId,
+				A.MessageId AS messageId,
+				A.Memo1 AS memo1,
+				A.Memo2 AS memo2,
+				B.MemCode AS memCode,
+				C.LevelName AS levelName,
+				D.TotalPoint AS totalPoint,
+				D.ChangablePoint AS changablePoint,
+				D.CurDisablePoint AS curDisablePoint,
+				E.BIN_OrganizationID AS organizationId,
+				E.DepartCode AS counterCode,
+				E.DepartName AS counterName,
+				CONVERT(varchar(30),F.LastSaleDate,120) AS lastSaleDate,
+				CASE WHEN B.MemCode IS NULL THEN '0' ELSE '1' END AS status,
+				A.Version AS versionDb,
+				CONVERT(varchar(30),F.FirstSaleDate,120) AS firstSaleDate,
+				G.DepartCode AS firstSaleCounterCode,
+				G.DepartName AS firstSaleCounterName,
+				J.DepartCode AS lastSaleCounterCode,
+				J.DepartName AS lastSaleCounterName,
+				F.SkinType AS skinType
+		]]>
+		</isEmpty>
+		<![CDATA[		
+			FROM
+				Members.BIN_MemberInfo A WITH(NOLOCK)
+		]]>
+			<isNotEmpty property="memCode">
+				JOIN (SELECT
+					X.BIN_MemberInfoID
+				FROM
+					Members.BIN_MemberInfo X WITH(NOLOCK)
+					JOIN Members.BIN_MemCardInfo Y WITH(NOLOCK) ON X.BIN_MemberInfoID = Y.BIN_MemberInfoID
+				WHERE
+					Y.MemCode = #memCode#) H ON A.BIN_MemberInfoID = H.BIN_MemberInfoID
+			</isNotEmpty>
+			<isNotEmpty property="privilegeFlag">
+			<isEqual property="privilegeFlag" compareValue="1">			
+				<![CDATA[JOIN (]]><include refid="BINOLCMINC99.departPrivilegeSql" />
+				<![CDATA[) A99 ON A.BIN_OrganizationID=A99.BIN_OrganizationID]]>
+			</isEqual>
+			</isNotEmpty>
+		<![CDATA[		
+				LEFT JOIN Members.BIN_MemCardInfo B WITH(NOLOCK) ON A.BIN_MemberInfoID = B.BIN_MemberInfoID AND B.validFlag = '1' AND B.CardValidFlag = '1'
+				LEFT JOIN Members.BIN_MemberLevel C WITH(NOLOCK) ON A.MemberLevel = C.BIN_MemberLevelID
+				LEFT JOIN Members.BIN_MemberPoint D WITH(NOLOCK) ON A.BIN_MemberInfoID = D.BIN_MemberInfoID
+				LEFT JOIN Basis.BIN_Organization E WITH(NOLOCK) ON A.BIN_OrganizationID = E.BIN_OrganizationID
+				LEFT JOIN Members.BIN_MemberExtInfo F WITH(NOLOCK) ON A.BIN_MemberInfoID = F.BIN_MemberInfoID
+				LEFT JOIN Basis.BIN_Organization G WITH(NOLOCK) ON F.FirstSaleCounter = G.BIN_OrganizationID
+				LEFT JOIN Basis.BIN_Organization J WITH(NOLOCK) ON F.LastSaleCounter = J.BIN_OrganizationID
+		]]>
+			<isNotEmpty property="referrerShow">
+				LEFT JOIN Members.BIN_MemberInfo RM WITH(NOLOCK) ON A.ReferrerID = RM.BIN_MemberInfoID
+				LEFT JOIN Members.BIN_MemCardInfo RC WITH(NOLOCK) ON RM.BIN_MemberInfoID = RC.BIN_MemberInfoID AND RC.CardValidFlag = '1'
+			</isNotEmpty>
+			<isNotEmpty property="memAddressShow">
+				LEFT JOIN Members.BIN_MemberAddress M WITH(NOLOCK) 
+					JOIN Basis.BIN_AddressInfo N WITH(NOLOCK) ON M.BIN_AddressInfoID = N.BIN_AddressInfoID AND N.validFlag = '1'
+				ON A.BIN_MemberInfoID = M.BIN_MemberInfoID AND M.validFlag = '1'
+			</isNotEmpty>
+			<isNotEmpty property="employeeShow">
+				LEFT JOIN Basis.BIN_Employee P WITH(NOLOCK) ON A.BIN_EmployeeID = P.BIN_EmployeeID
+			</isNotEmpty>
+			<isNotEmpty property="notSaleCountTerm">
+				<![CDATA[LEFT JOIN (]]><include refid="BINOLCM33.NotSaleCountTermSql" />
+				<![CDATA[) Q ON A.BIN_MemberInfoID = Q.BIN_MemberInfoID]]>
+			</isNotEmpty>
+			<isNotEmpty property="saleCountTerm">
+				<isEqual property="saleCountTerm" compareValue="1">
+				<![CDATA[LEFT JOIN (]]><include refid="BINOLCM33.SaleCountTermSql" />
+				<![CDATA[) L ON A.BIN_MemberInfoID = L.BIN_MemberInfoID]]>
+				</isEqual>
+				<isEqual property="saleCountTerm" compareValue="2">
+				<![CDATA[JOIN (]]><include refid="BINOLCM33.SaleCountTermSql" />
+				<![CDATA[) L ON A.BIN_MemberInfoID = L.BIN_MemberInfoID]]>
+				</isEqual>
+			</isNotEmpty>
+			<isNotEmpty property="saleAmountTerm">
+				<isEqual property="saleAmountTerm" compareValue="1">
+				<![CDATA[LEFT JOIN (]]><include refid="BINOLCM33.SaleAmountTermSql" />
+				<![CDATA[) O ON A.BIN_MemberInfoID = O.BIN_MemberInfoID]]>
+				</isEqual>
+				<isEqual property="saleAmountTerm" compareValue="2">
+				<![CDATA[JOIN (]]><include refid="BINOLCM33.SaleAmountTermSql" />
+				<![CDATA[) O ON A.BIN_MemberInfoID = O.BIN_MemberInfoID]]>
+				</isEqual>
+			</isNotEmpty>
+			<isNotEmpty property="saleBillCodeShow">
+				LEFT JOIN Sale.BIN_SaleRecord Z1 WITH(NOLOCK) ON A.BIN_MemberInfoID = Z1.BIN_MemberInfoID AND Z1.SaleTime = F.FirstSaleDate
+				LEFT JOIN Sale.BIN_SaleRecord Z2 WITH(NOLOCK) ON A.BIN_MemberInfoID = Z2.BIN_MemberInfoID AND Z2.SaleTime = F.LastSaleDate
+			</isNotEmpty>
+			<isNotEmpty property="memTag">
+				<isEqual property="memTag" compareValue="1">
+				LEFT JOIN Members.BIN_MemberFlag MF WITH(NOLOCK) ON(A.BIN_MemberInfoID = MF.BIN_MemberInfoID)
+				</isEqual>
+			</isNotEmpty>
+		<![CDATA[
+			WHERE
+				A.BIN_OrganizationInfoID = #organizationInfoId#
+		]]>
+			<isNotEmpty prepend="AND" property="visitPlanId">
+				A.BIN_OrganizationID IS NOT NULL
+			</isNotEmpty>
+			<isNotEmpty prepend="AND" property="brandInfoId">
+				A.BIN_BrandInfoID = #brandInfoId#
+			</isNotEmpty>
+			<isNotEmpty prepend="AND" property="memberInfoId">
+				A.BIN_MemberInfoID = #memberInfoId#
+			</isNotEmpty>
+			<isNotEmpty prepend="AND" property="memType">
+				A.MemType IN
+				<iterate property="memType" open="(" close=")" conjunction=","> 
+					#memType[]#
+				</iterate>
+			</isNotEmpty>
+			<isNotEmpty prepend="AND" property="memLevel">
+				A.MemberLevel IN
+				<iterate property="memLevel" open="(" close=")" conjunction=","> 
+					#memLevel[]#
+				</iterate>
+			</isNotEmpty>
+			<isNotEmpty prepend="AND" property="name">
+				A.Name LIKE '%'+#name#+'%'
+			</isNotEmpty>
+			<isNotEmpty prepend="AND" property="nickname">
+				A.Nickname LIKE '%'+#nickname#+'%'
+			</isNotEmpty>
+			<isNotEmpty prepend="AND" property="tencentQQ">
+				A.TencentQQ LIKE '%'+#tencentQQ#+'%'
+			</isNotEmpty>
+			<isNotEmpty prepend="AND" property="creditRating">
+				A.CreditRating = #creditRating#
+			</isNotEmpty>
+			<isNotEmpty prepend="AND" property="nickname">
+				A.Nickname LIKE '%'+#nickname#+'%'
+			</isNotEmpty>
+			<isNotEmpty prepend="AND" property="tencentQQ">
+				A.TencentQQ LIKE '%'+#tencentQQ#+'%'
+			</isNotEmpty>
+			<isNotEmpty prepend="AND" property="creditRating">
+				A.CreditRating = #creditRating#
+			</isNotEmpty>
+			<isNotEmpty prepend="AND" property="mobilePhone">
+				A.MobilePhone = #mobilePhone#
+			</isNotEmpty>
+			<isNotEmpty prepend="AND" property="mebSex">
+				A.Gender IN
+				<iterate property="mebSex" open="(" close=")" conjunction=","> 
+					#mebSex[]#
+				</iterate>
+			</isNotEmpty>
+			<isNotEmpty prepend="AND" property="curMonthJoinDate">
+				<![CDATA[ A.JoinDate < #curMonthJoinDate# ]]>	
+			</isNotEmpty>
+			<isNotEmpty prepend="AND" property="curDayJoinDate">
+				<![CDATA[ A.JoinDate < #curDayJoinDate# ]]>	
+			</isNotEmpty>
+			
+			<isNotEmpty property="birthDayStart">
+				<isNotEmpty prepend="AND" property="birthDayEnd">
+					<isGreaterThan property="birthDayStart" compareProperty="birthDayEnd">
+						<![CDATA[(A.BirthDay >= #birthDayStart# OR A.BirthDay <= #birthDayEnd#)]]>
+					</isGreaterThan>
+					<isLessEqual property="birthDayStart" compareProperty="birthDayEnd">
+						<![CDATA[(A.BirthDay >= #birthDayStart# AND A.BirthDay <= #birthDayEnd#)]]>
+					</isLessEqual>
+				</isNotEmpty>
+				<isEmpty prepend="AND" property="birthDayEnd">
+					A.BirthDay >= #birthDayStart#
+				</isEmpty>
+			</isNotEmpty>
+			<isEmpty property="birthDayStart">
+				<isNotEmpty prepend="AND" property="birthDayEnd">
+					<![CDATA[A.BirthDay <= #birthDayEnd#]]>
+				</isNotEmpty>
+			</isEmpty>
+			
+			<isNotEmpty prepend="AND" property="birthDayMoreStart">
+				A.BirthDay >= #birthDayMoreStart#
+			</isNotEmpty>
+			<isNotEmpty prepend="AND" property="birthDayMoreEnd">
+				<![CDATA[A.BirthDay <= #birthDayMoreEnd#]]>
+			</isNotEmpty>
+			
+			<isNotEmpty prepend="AND" property="birthYearStart">
+				<![CDATA[ A.BirthYear >= #birthYearStart# ]]>	
+			</isNotEmpty>
+			<isNotEmpty prepend="AND" property="birthYearEnd">
+				<![CDATA[ A.BirthYear <= #birthYearEnd# ]]>	
+			</isNotEmpty>
+			
+			<isNotEqual property="joinDateSaleDateRel" compareValue="2">
+				<isNotEmpty prepend="AND" property="joinDateStart">
+					<![CDATA[ A.JoinDate >= #joinDateStart# ]]>
+				</isNotEmpty>	
+				<isNotEmpty prepend="AND" property="joinDateEnd">
+					<![CDATA[ A.JoinDate <= #joinDateEnd# ]]>
+				</isNotEmpty>
+				<isNotEmpty property="saleCountTerm">
+				<isNotEmpty prepend="AND" property="saleCountStart">	
+		    		ISNULL(L.saleCount,0) >= #saleCountStart#
+		    	</isNotEmpty>
+		    	<isNotEmpty prepend="AND" property="saleCountEnd">	
+		    		<![CDATA[ISNULL(L.saleCount,0) <= #saleCountEnd#]]>
+		    	</isNotEmpty>
+				</isNotEmpty>
+			</isNotEqual>
+			<isEqual property="joinDateSaleDateRel" compareValue="2">
+				<isNotEmpty property="joinDateTerm">
+					<isNotEmpty prepend="AND" property="saleCountTerm">
+						(<isNotEmpty property="joinDateStart">
+						<isNotEmpty property="joinDateEnd">
+							<![CDATA[ (A.JoinDate >= #joinDateStart# AND A.JoinDate <= #joinDateEnd#) ]]>
+						</isNotEmpty>
+						<isEmpty property="joinDateEnd">
+							<![CDATA[ (A.JoinDate >= #joinDateStart#) ]]>
+						</isEmpty>
+						</isNotEmpty>	
+						<isEmpty property="joinDateStart">
+						<isNotEmpty property="joinDateEnd">
+							<![CDATA[ (A.JoinDate <= #joinDateEnd#) ]]>
+						</isNotEmpty>
+						</isEmpty>
+						OR
+						<isNotEmpty property="saleCountStart">	
+				    	<isNotEmpty property="saleCountEnd">	
+				    		<![CDATA[ (ISNULL(L.saleCount,0) >= #saleCountStart# AND ISNULL(L.saleCount,0) <= #saleCountEnd#) ]]>
+				    	</isNotEmpty>
+				    	<isEmpty property="saleCountEnd">	
+				    		<![CDATA[ (ISNULL(L.saleCount,0) >= #saleCountStart#) ]]>
+				    	</isEmpty>
+				    	</isNotEmpty>
+				    	<isEmpty property="saleCountStart">	
+				    	<isNotEmpty property="saleCountEnd">	
+				    		<![CDATA[ (ISNULL(L.saleCount,0) <= #saleCountEnd#) ]]>
+				    	</isNotEmpty>
+				    	</isEmpty>)
+					</isNotEmpty>
+					<isEmpty property="saleCountTerm">
+						<isNotEmpty prepend="AND" property="joinDateStart">
+							<![CDATA[ A.JoinDate >= #joinDateStart# ]]>
+						</isNotEmpty>	
+						<isNotEmpty prepend="AND" property="joinDateEnd">
+							<![CDATA[ A.JoinDate <= #joinDateEnd# ]]>
+						</isNotEmpty>
+					</isEmpty>
+				</isNotEmpty>
+				<isEmpty property="joinDateTerm">
+					<isNotEmpty property="saleCountTerm">
+						<isNotEmpty prepend="AND" property="saleCountStart">	
+				    		ISNULL(L.saleCount,0) >= #saleCountStart#
+				    	</isNotEmpty>
+				    	<isNotEmpty prepend="AND" property="saleCountEnd">	
+				    		<![CDATA[ISNULL(L.saleCount,0) <= #saleCountEnd#]]>
+				    	</isNotEmpty>
+					</isNotEmpty>
+				</isEmpty>
+			</isEqual>
+			
+			<isNotEmpty property="modeFlag" prepend="AND">
+			<isEqual property="exclusiveFlag" compareValue="1">
+				EXISTS (<include refid="BINOLCM33.CounterTermSql" /> AND A.BIN_OrganizationID = orgTable.BIN_OrganizationID)
+			</isEqual>
+			<isEqual property="exclusiveFlag" compareValue="2">
+				NOT EXISTS (<include refid="BINOLCM33.CounterTermSql" /> AND A.BIN_OrganizationID = orgTable.BIN_OrganizationID)
+			</isEqual>	
+			</isNotEmpty>
+			
+			<isNotEmpty prepend="AND" property="memberPointStart">
+				ISNULL(D.TotalPoint,0) >= #memberPointStart#
+			</isNotEmpty>
+			<isNotEmpty prepend="AND" property="memberPointEnd">
+				<![CDATA[ISNULL(D.TotalPoint,0) <= #memberPointEnd#]]>
+			</isNotEmpty>
+			<isNotEmpty prepend="AND" property="changablePointStart">
+				ISNULL(D.ChangablePoint,0) >= #changablePointStart#
+			</isNotEmpty>
+			<isNotEmpty prepend="AND" property="changablePointEnd">
+				<![CDATA[ISNULL(D.ChangablePoint,0) <= #changablePointEnd#]]>
+			</isNotEmpty>
+			
+			<isNotEmpty prepend="AND" property="addrNotEmpty">
+				EXISTS (SELECT 1 FROM Members.BIN_MemberAddress G WITH(NOLOCK) JOIN Basis.BIN_AddressInfo I WITH(NOLOCK) 
+				ON G.BIN_AddressInfoID = I.BIN_AddressInfoID WHERE I.AddressLine1 IS NOT NULL AND I.AddressLine1 != '' AND
+				A.BIN_MemberInfoID = G.BIN_MemberInfoID)
+			</isNotEmpty>
+			<isNotEmpty property="saleSubBrand" prepend="AND">
+				EXISTS (
+				<include refid="BINOLCM33.SaleSubBrandSql"/>
+				)
+			</isNotEmpty>
+			<isNotEmpty prepend="AND" property="telNotEmpty">
+				A.MobilePhone IS NOT NULL AND A.MobilePhone != ''
+			</isNotEmpty>
+			<isNotEmpty prepend="AND" property="emailNotEmpty">
+				A.Email IS NOT NULL AND A.Email != ''
+			</isNotEmpty>
+			<isNotEmpty prepend="AND" property="telCheck">
+				A.TelCheck = '1'
+			</isNotEmpty>
+			<isNotEmpty prepend="AND" property="validFlag">
+				B.MemCode IS NULL
+			</isNotEmpty>
+			<isEmpty prepend="AND" property="validFlag">
+				B.CardValidFlag = '1' AND
+				A.validFlag = '1'
+			</isEmpty>
+			<isNotEmpty prepend="AND" property="memInfoRegFlg">
+				A.MemInfoRegFlg = '1'
+			</isNotEmpty>
+			<isEmpty prepend="AND" property="memInfoRegFlg">
+				A.MemInfoRegFlg = '0'
+			</isEmpty>
+			<isNotEmpty prepend="AND" property="saleTerm">
+				<isEqual property="relation" compareValue="1">
+					<isNotEmpty property="buyPrtVendorId">
+						<iterate property="buyPrtVendorId" open="(" close=")" conjunction="AND"> 
+							EXISTS (<include refid="BINOLCM33.SaleTermAndSql" /> AND A.BIN_MemberInfoID = M.BIN_MemberInfoID)
+						</iterate>
+					</isNotEmpty>
+					<isNotEmpty property="buyCateValId">
+						<iterate property="buyCateValId" open="(" close=")" conjunction="AND"> 
+							EXISTS (<include refid="BINOLCM33.SaleTermAndSql" /> AND A.BIN_MemberInfoID = M.BIN_MemberInfoID)
+						</iterate>
+					</isNotEmpty>
+				</isEqual>
+				<isNotEqual property="relation" compareValue="1">
+					EXISTS (<include refid="BINOLCM33.SaleTermSql" /> AND A.BIN_MemberInfoID = M.BIN_MemberInfoID)
+				</isNotEqual>
+			</isNotEmpty>
+			<isNotEmpty prepend="AND" property="notSaleTerm">
+				<isEqual property="notRelation" compareValue="1">
+					<isNotEmpty property="notPrtVendorId">
+						<iterate property="notPrtVendorId" open="(" close=")" conjunction="OR"> 
+							NOT EXISTS (<include refid="BINOLCM33.NotSaleTermOrSql" /> AND A.BIN_MemberInfoID = N.BIN_MemberInfoID)
+						</iterate>
+					</isNotEmpty>
+					<isNotEmpty property="notCateValId">
+						<iterate property="notCateValId" open="(" close=")" conjunction="OR"> 
+							NOT EXISTS (<include refid="BINOLCM33.NotSaleTermOrSql" /> AND A.BIN_MemberInfoID = N.BIN_MemberInfoID)
+						</iterate>
+					</isNotEmpty>
+				</isEqual>
+				<isNotEqual property="notRelation" compareValue="1">
+					NOT EXISTS (<include refid="BINOLCM33.NotSaleTermSql" /> AND A.BIN_MemberInfoID = N.BIN_MemberInfoID)
+				</isNotEqual>
+			</isNotEmpty>
+			<isNotEmpty property="saleAmountTerm">
+			<isNotEmpty prepend="AND" property="payAmountStart">	
+	    		ISNULL(O.amount,0) >= #payAmountStart#
+	    	</isNotEmpty>
+	    	<isNotEmpty prepend="AND" property="payAmountEnd">	
+	    		<![CDATA[ISNULL(O.amount,0) <= #payAmountEnd#]]>
+	    	</isNotEmpty>
+	    	<isNotEmpty prepend="AND" property="payQuantityStart">
+				ISNULL(O.quantity,0) >= #payQuantityStart#
+			</isNotEmpty>
+			<isNotEmpty prepend="AND" property="payQuantityEnd">
+				<![CDATA[ISNULL(O.quantity,0) <= #payQuantityEnd#]]>
+			</isNotEmpty>
+			</isNotEmpty>
+			<isNotEmpty prepend="AND" property="notSaleCountTerm">
+				<![CDATA[ISNULL(Q.saleCount,0) <= 0]]>
+			</isNotEmpty>
+			<isNotEmpty prepend="AND" property="propertyInfoList">
+				EXISTS (SELECT 1 FROM (<include refid="BINOLCM33.ExtendPropertySql" />) PropertyInfo WHERE A.BIN_MemberInfoID = PropertyInfo.BIN_MemberInfoID)
+			</isNotEmpty>
+			<isEmpty property="testTypeIgnore">
+				<isNotEmpty prepend="AND" property="testType">
+					A.TestType = '0'
+				</isNotEmpty>
+				<isEmpty prepend="AND" property="testType">
+					<![CDATA[(A.TestType = '1' OR A.TestType IS NULL)]]>
+				</isEmpty>
+			</isEmpty>
+			<isNotEmpty prepend="AND" property="curDealDateStart">
+				CONVERT(VARCHAR(30), D.CurDealDate, 23) >= #curDealDateStart#
+			</isNotEmpty>
+			<isNotEmpty prepend="AND" property="curDealDateEnd">
+				<![CDATA[CONVERT(VARCHAR(30), D.CurDealDate, 23) <= #curDealDateEnd#]]>
+			</isNotEmpty>
+			<isNotEmpty property="referFlag">
+				<isEqual property="referFlag" compareValue="1" prepend="AND">
+					<isNotEmpty property="referredMemCode">
+						A.BIN_MemberInfoID IN 
+							(SELECT 
+								A.ReferrerID 
+							FROM 
+								Members.BIN_MemberInfo A 
+								JOIN Members.BIN_MemCardInfo B ON A.BIN_MemberInfoID = B.BIN_MemberInfoID
+							WHERE 
+								B.MemCode = #referredMemCode#)
+					</isNotEmpty>
+					<isEmpty property="referredMemCode">
+						EXISTS (SELECT 1 FROM Members.BIN_MemberInfo memInfo WHERE memInfo.ReferrerID = A.BIN_MemberInfoID)
+					</isEmpty>
+				</isEqual>
+				<isEqual property="referFlag" compareValue="2" prepend="AND">
+					<isNotEmpty property="referrerMemCode">
+						A.ReferrerID IN 
+							(SELECT 
+								A.BIN_MemberInfoID 
+							FROM 
+								Members.BIN_MemberInfo A 
+								JOIN Members.BIN_MemCardInfo B ON A.BIN_MemberInfoID = B.BIN_MemberInfoID 
+							WHERE 
+								B.MemCode = #referrerMemCode#)
+					</isNotEmpty>
+					<isEmpty property="referrerMemCode">
+						<![CDATA[(A.ReferrerID IS NOT NULL OR A.ReferrerID <> '')]]>
+					</isEmpty>
+				</isEqual>
+			</isNotEmpty>
+			<isNotEmpty prepend="AND" property="campaignTerm">
+				<isNotEmpty property="campaignMode">
+					<isEqual property="campaignMode" compareValue="0">
+						<isNotEmpty property="campaignState">
+							EXISTS (SELECT 1 FROM (<include refid="BINOLCM33.CampaignStateTermSql" />) campaign WHERE A.BIN_MemberInfoID = campaign.BIN_MemberInfoID)
+						</isNotEmpty>
+						<isEmpty property="campaignState">
+							EXISTS (SELECT 1 FROM (<include refid="BINOLCM33.CampaignTermSql" />) campaign WHERE A.BIN_MemberInfoID = campaign.BIN_MemberInfoID)
+						</isEmpty>
+					</isEqual>
+					<isEqual property="campaignMode" compareValue="1">
+						EXISTS (SELECT 1 FROM (<include refid="BINOLCM33.CampaignTermSql" />) campaign WHERE A.BIN_MemberInfoID = campaign.BIN_MemberInfoID)
+					</isEqual>
+				</isNotEmpty>
+				<isEmpty property="campaignMode">
+					<isNotEmpty property="campaignState">
+						EXISTS (SELECT 1 FROM (<include refid="BINOLCM33.CampaignStateTermSql" />) campaign WHERE A.BIN_MemberInfoID = campaign.BIN_MemberInfoID)
+					</isNotEmpty>
+					<isEmpty property="campaignState">
+						EXISTS (SELECT 1 FROM (<include refid="BINOLCM33.CampaignTermSql" />) campaign WHERE A.BIN_MemberInfoID = campaign.BIN_MemberInfoID)
+					</isEmpty>
+				</isEmpty>
+			</isNotEmpty>
+			<isNotEmpty prepend="AND" property="couNotEmpty">
+				A.BIN_OrganizationID IS NOT NULL
+			</isNotEmpty>
+			<isNotEmpty property="levelAdjustDayTerm">
+				<isNotEmpty prepend="AND" property="levelChangeType">
+					A.LevelChangeType = #levelChangeType#
+				</isNotEmpty>
+				<isNotEmpty prepend="AND" property="levelAdjustDayStart">
+					A.LevelAdjustDay >= #levelAdjustDayStart#
+				</isNotEmpty>
+				<isNotEmpty prepend="AND" property="levelAdjustDayEnd">
+					<![CDATA[A.LevelAdjustDay <= #levelAdjustDayEnd#]]>
+				</isNotEmpty>
+			</isNotEmpty>
+			<isNotEmpty prepend="AND" property="employeeIdQ">
+				A.BIN_EmployeeID = #employeeIdQ#
+			</isNotEmpty>
+			<isNotEmpty prepend="AND" property="activeChannel">
+				<isEqual property="activeChannel" compareValue="Other">
+					(A.ActiveChannel IS NULL OR A.ActiveChannel = '')
+				</isEqual>
+				<isNotEqual property="activeChannel" compareValue="Other">
+					A.ActiveChannel = #activeChannel#
+				</isNotEqual>
+			</isNotEmpty>
+			<isNotEmpty prepend="AND" property="bindWeChat">
+				<isEqual property="bindWeChat" compareValue="1">
+					A.MessageId IS NOT NULL AND A.MessageId != ''
+				</isEqual>
+				<isEqual property="bindWeChat" compareValue="2">
+					(A.MessageId IS NULL OR A.MessageId = '')
+				</isEqual>
+			</isNotEmpty>
+			<isNotEmpty prepend="AND" property="messageId">
+				A.MessageId = #messageId#
+			</isNotEmpty>
+			<isNotEmpty prepend="AND" property="channelCode">
+				A.ChannelCode = #channelCode#
+			</isNotEmpty>
+			<isNotEmpty prepend="AND" property="wechatBindTimeStart">
+				CONVERT(VARCHAR(30), A.WechatBindTime, 23) >= #wechatBindTimeStart#
+			</isNotEmpty>
+			<isNotEmpty prepend="AND" property="wechatBindTimeEnd">
+				<![CDATA[CONVERT(VARCHAR(30), A.WechatBindTime, 23) <= #wechatBindTimeEnd#]]>
+			</isNotEmpty>
+			<isNotEmpty prepend="AND" property="lastSaleDateStart">
+				F.LastSaleDate >= #lastSaleDateStart#
+			</isNotEmpty>
+			<isNotEmpty prepend="AND" property="lastSaleDateEnd">
+				<![CDATA[F.LastSaleDate <= #lastSaleDateEnd#]]>
+			</isNotEmpty>
+			<isNotEmpty prepend="AND" property="campaignCodeNot">
+				<![CDATA[
+					NOT EXISTS(SELECT 1 FROM Campaign.BIN_CampaignOrder T WITH(NOLOCK) 
+						WHERE
+							T.CampaignCode = #campaignCodeNot# AND 
+							T.BIN_OrganizationInfoID = #organizationInfoId# AND
+							T.BIN_BrandInfoID = #brandInfoId# AND
+							A.BIN_MemberInfoID = T.BIN_MemberInfoID
+				]]>
+				<isNotEmpty property="optYear" prepend="AND">
+					<![CDATA[T.OptYear = #optYear#]]>
+				</isNotEmpty>
+				<isNotEmpty property="optMonth" prepend="AND">
+					<![CDATA[T.OptMonth = #optMonth#]]>
+					</isNotEmpty>
+				<isNotEmpty property="optDay" prepend="AND">
+					<![CDATA[T.OptDay = #optDay#]]>
+				</isNotEmpty>
+				<![CDATA[)]]>
+			</isNotEmpty>
+			<isNotEmpty prepend="AND" property="firstSaleDayFlag">
+				<![CDATA[F.FirstSaleDate is not null]]>
+			</isNotEmpty>
+			<isNotEmpty prepend="AND" property="notSaleDaysTemp">
+				<![CDATA[
+					 NOT EXISTS(
+						SELECT 1
+						FROM
+							Sale.BIN_SaleRecord x WITH(NOLOCK)
+							join Members.BIN_MemberExtInfo y WITH(NOLOCK) on x.BIN_MemberInfoID = y.BIN_MemberInfoID
+						WHERE
+							x.SaleDate <= convert(varchar(30),dateadd(day,#notSaleDaysTemp#,y.FirstSaleDate),23) AND
+							x.SaleTime <> y.FirstSaleDate AND 
+							x.SaleType <> 'SR' AND
+							x.Amount > 0 AND
+							A.BIN_MemberInfoID = x.BIN_MemberInfoID
+					)
+				]]>
+				<isNotEmpty prepend="AND" property="notSaleSysDate">
+					<![CDATA[
+						 convert(date,F.FirstSaleDate) <= dateadd(day,#notSaleDaysNeg#,#notSaleSysDate#)
+					]]>
+				</isNotEmpty>
+			</isNotEmpty>
+			<isNotEmpty prepend="AND" property="firstStartDay">
+			<![CDATA[
+				F.FirstSaleDate >= #firstStartDay#
+			]]>
+			</isNotEmpty>
+			<isNotEmpty prepend="AND" property="firstEndDay">
+			<![CDATA[
+				convert(date,F.FirstSaleDate) <= #firstEndDay#
+			]]>
+			</isNotEmpty>
+			<isNotEmpty prepend="AND" property="notSaleLastTime">
+				F.LastSaleDate is not null AND convert(date, F.LastSaleDate) = #notSaleLastTime#
+			</isNotEmpty>
+			<isNotEmpty prepend="AND" property="visitPlanId">
+			<![CDATA[
+				NOT EXISTS(SELECT 1 FROM Members.BIN_VisitTask T WITH(NOLOCK) 
+					WHERE
+						T.BIN_VisitPlanID = #visitPlanId# AND 
+			]]>	
+					<isNotEmpty property="visitTaskTime">
+						T.VisitTaskTime = #visitTaskTime# AND
+					</isNotEmpty>
+			<![CDATA[		
+						A.BIN_MemberInfoID = T.BIN_MemberID)
+			]]>
+			</isNotEmpty>
+			<isNotEmpty property="memTag">
+				<isEqual property="memTag" compareValue="1">
+					<isNotEmpty prepend="AND" property="isNewMember">
+						<![CDATA[MF.Flag_IsNewMember = #isNewMember#]]>
+					</isNotEmpty>
+					<isNotEmpty prepend="AND" property="flagBuyCount">
+						<![CDATA[MF.Flag_BuyCount = #flagBuyCount#]]>
+					</isNotEmpty>
+					<isNotEmpty prepend="AND" property="isActivityMember">
+						<![CDATA[MF.Flag_IsActivityMember = #isActivityMember#]]>
+					</isNotEmpty>
+					<isNotEmpty prepend="AND" property="actiCountStart">
+						<![CDATA[ISNULL(MF.Flag_ActivityCount,0) >= #actiCountStart#]]>
+					</isNotEmpty>
+					<isNotEmpty prepend="AND" property="actiCountEnd">
+						<![CDATA[ISNULL(MF.Flag_ActivityCount,0) <= #actiCountEnd#]]>
+					</isNotEmpty>
+					<isNotEmpty prepend="AND" property="favActiType">
+						<![CDATA[MF.Flag_FavoriteActivityType = #favActiType#]]>
+					</isNotEmpty>
+					<isNotEmpty prepend="AND" property="unBuyInterval">
+						<![CDATA[MF.Flag_UnBuyInterval > #unBuyIntervalStart#]]>
+						<isNotEmpty prepend="AND" property="unBuyIntervalEnd">
+							<![CDATA[MF.Flag_UnBuyInterval <= #unBuyIntervalEnd#]]>
+						</isNotEmpty>
+					</isNotEmpty>
+					<isNotEmpty prepend="AND" property="mostCateBClassList">
+					<![CDATA[EXISTS (SELECT 1 FROM Members.BIN_MemberFlag_MostBuyBclass MFB  WITH(NOLOCK)
+						WHERE A.BIN_MemberInfoID = MFB.BIN_MemberInfoID AND ]]>
+						<iterate property="mostCateBClassList" open="(" close=")" conjunction="OR"> 
+							MFB.Flag_MostBuyBclass = #mostCateBClassList[].cateValName# 
+						</iterate>
+						<![CDATA[)]]>
+					</isNotEmpty>
+					<isNotEmpty prepend="AND" property="mostCateMClassList">
+					<![CDATA[EXISTS (SELECT 1 FROM Members.BIN_MemberFlag_MostBuyMclass MFM  WITH(NOLOCK)
+						WHERE A.BIN_MemberInfoID = MFM.BIN_MemberInfoID AND ]]>
+						<iterate property="mostCateMClassList" open="(" close=")" conjunction="OR"> 
+							MFM.Flag_MostBuyMclass = #mostCateMClassList[].cateValName# 
+						</iterate>
+						<![CDATA[)]]>
+					</isNotEmpty>
+					<isNotEmpty prepend="AND" property="mostPrtList">
+					<![CDATA[EXISTS (SELECT 1 FROM Members.BIN_MemberFlag_MostBuyProduct MFP  WITH(NOLOCK)
+						WHERE A.BIN_MemberInfoID = MFP.BIN_MemberInfoID AND ]]>
+						<iterate property="mostPrtList" open="(" close=")" conjunction="OR"> 
+							MFP.Flag_MostBuyBarCode = #mostPrtList[].barCode# AND
+							MFP.Flag_MostBuyUnitCode = #mostPrtList[].unitCode#
+						</iterate>
+						<![CDATA[)]]>
+					</isNotEmpty>
+					<isNotEmpty prepend="AND" property="pctStart">
+						<![CDATA[ISNULL(MF.Flag_PCT,0) >= #pctStart#]]>
+					</isNotEmpty>
+					<isNotEmpty prepend="AND" property="pctEnd">
+						<![CDATA[ISNULL(MF.Flag_PCT,0) <= #pctEnd#]]>
+					</isNotEmpty>
+				</isEqual>
+			</isNotEmpty>
+    </sql>
+    
+    
+    <!-- 查询会员总数 -->
+	<select id="getMemberInfoCount" parameterClass="java.util.HashMap" resultClass="java.lang.Integer" remapResults="true">
+		<![CDATA[
+			SELECT COUNT(1) AS count FROM (
+		]]>	
+		<include refid="BINOLCM33.MemberInfoSql" />
+		<![CDATA[	
+			) SORT_T1
+		]]>	
+    </select>
+    
+    <!-- 查询会员 -->
+	<select id="getMemberInfoList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap" remapResults="true">
+		<include refid="BINOLCMINC99.pageheader" />
+		<include refid="BINOLCM33.MemberInfoSql" />
+		<include refid="BINOLCMINC99.pagefooter" />
+    </select>
+    
+    <!-- 查询会员总数 -->
+	<select id="getMemberInfoClubCount" parameterClass="java.util.HashMap" resultClass="java.lang.Integer" remapResults="true">
+		<![CDATA[
+			SELECT COUNT(1) AS count FROM (
+		]]>	
+		<include refid="BINOLCM33.MemberInfoClubSql" />
+		<![CDATA[	
+			) SORT_T1
+		]]>	
+    </select>
+    
+    <!-- 查询会员 -->
+	<select id="getMemberInfoClubList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap" remapResults="true">
+		<include refid="BINOLCMINC99.pageheader" />
+		<include refid="BINOLCM33.MemberInfoClubSql" />
+		<include refid="BINOLCMINC99.pagefooter" />
+    </select>
+    
+    <!-- 查询区域信息List -->
+    <select id="getRegionList" parameterClass="java.util.HashMap" resultClass="java.lang.String">	
+		<![CDATA[
+			SELECT
+				A.RegionNameChinese
+			FROM	
+				Basis.BIN_Region A
+			WHERE
+				A.BIN_RegionID IN 
+		]]>	
+			<iterate property="regionIdList" open="(" close=")" conjunction=","> 
+				#regionIdList[]#
+			</iterate>
+    </select>
+    
+    <!-- 查询渠道信息List -->
+    <select id="getChannelList" parameterClass="java.util.HashMap" resultClass="java.lang.String">	
+		<![CDATA[
+			SELECT
+				A.ChannelName
+			FROM	
+				Basis.BIN_Channel A
+			WHERE
+				A.BIN_ChannelID IN 
+		]]>	
+			<iterate property="channelIdList" open="(" close=")" conjunction=","> 
+				#channelIdList[]#
+			</iterate>
+    </select>
+    
+    <!-- 查询柜台信息List -->
+    <select id="getOrganizationList" parameterClass="java.util.HashMap" resultClass="java.lang.String">	
+		<![CDATA[
+			SELECT
+				A.DepartName
+			FROM	
+				Basis.BIN_Organization A
+			WHERE
+				A.BIN_OrganizationID IN 
+		]]>	
+			<iterate property="organizationIdList" open="(" close=")" conjunction=","> 
+				#organizationIdList[]#
+			</iterate>
+    </select>
+    
+    <!-- 查询会员活动名称 -->
+    <select id="getMemCampaignName" parameterClass="java.util.HashMap" resultClass="java.lang.String">	
+		<![CDATA[
+			SELECT 
+				CampaignName AS campaignName
+			FROM
+				Campaign.BIN_Campaign
+			WHERE
+				CampaignCode = #campaignCode# AND
+	       		BIN_OrganizationInfoID = #organizationInfoId#
+		]]>
+			<isNotEmpty property="brandInfoId" prepend="AND">
+				BIN_BrandInfoID = #brandInfoId#
+			</isNotEmpty>
+    </select>
+    
+    <!-- 查询促销活动名称 -->
+    <select id="getPrmCampaignName" parameterClass="java.util.HashMap" resultClass="java.lang.String">	
+		<![CDATA[	
+			SELECT
+				B.ActivityName AS campaignName
+			FROM
+				Promotion.BIN_PromotionActGrp A
+				JOIN Promotion.BIN_PromotionActivity B ON A.BIN_PromotionActGrpID = B.BIN_PromotionActGrpID
+			WHERE
+				B.ActivityCode = #campaignCode# AND
+				A.BIN_OrganizationInfoID = #organizationInfoId#
+				and (B.TemplateFlag IS NULL OR B.TemplateFlag='0' OR B.TemplateFlag ='')
+		]]>
+			<isNotEmpty property="brandInfoId" prepend="AND">
+				A.BIN_BrandInfoID = #brandInfoId#
+			</isNotEmpty>		
+    </select>
+    
+    <!-- 查询发卡BA姓名 -->
+    <select id="getEmployeeName" parameterClass="java.util.HashMap" resultClass="java.lang.String">	
+		<![CDATA[	
+			SELECT
+				A.EmployeeName AS employeeName
+			FROM
+				Basis.BIN_Employee A
+			WHERE
+				A.BIN_EmployeeID = #employeeId#
+		]]>	
+    </select>
+    
+    <!-- 取得所有区域信息List -->
+	<select id="getAllRegionList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+		<![CDATA[
+    		SELECT
+    			BIN_RegionID AS id,
+    			RegionNameChinese AS name
+			FROM
+				Basis.BIN_StandardRegion	
+		]]>		
+    </select>
+    
+    <!-- 查询会员问卷问题信息 -->
+	<select id="getPaperQuestionList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+		<![CDATA[
+			SELECT
+	      		B.BIN_PaperQuestionID AS id,
+	      		B.QuestionItem AS name,
+	      		B.OptionA AS optionA,
+	      		B.OptionB AS optionB,
+	      		B.OptionC AS optionC,
+	      		B.OptionD AS optionD,
+	      		B.OptionE AS optionE,
+	      		B.OptionF AS optionF,
+	      		B.OptionG AS optionG,
+	      		B.OptionH AS optionH,
+	      		B.OptionI AS optionI,
+	      		B.OptionJ AS optionJ,
+	      		B.OptionK AS optionK,
+	      		B.OptionL AS optionL,
+	      		B.OptionM AS optionM,
+	      		B.OptionN AS optionN,
+	      		B.OptionO AS optionO,
+	      		B.OptionP AS optionP,
+	      		B.OptionQ AS optionQ,
+	      		B.OptionR AS optionR,
+	      		B.OptionS AS optionS,
+	      		B.OptionT AS optionT
+			FROM
+				Monitor.BIN_PaperQuestion B
+			WHERE
+				B.BIN_PaperQuestionID IN
+		]]>
+			<iterate property="propertyInfoList" open="(" close=")" conjunction=",">
+				#propertyInfoList[].extendPropertyId#
+			</iterate>	
+    </select>
+    
+    <!-- 查询会员销售信息 -->
+    <sql id="QueryMemSale">
+    	<![CDATA[
+			SELECT
+				A.BIN_SaleRecordID AS saleRecordId,
+				A.BIN_MemberInfoID AS memberId,
+				A.MemberCode AS memberCode,
+				A.BillCode AS billCode,
+				A.SaleType AS saleType,
+				A.Quantity AS quantity,
+				A.Amount AS amount,
+				A.Discount AS discount,
+				CONVERT(varchar(30),A.SaleTime,120) AS saleTime,
+				A.Comments AS comments,
+				B.DepartName AS departName,
+				B.DepartCode AS departCode
+			FROM
+				Sale.BIN_SaleRecord A WITH(NOLOCK)	
+				LEFT JOIN Basis.BIN_Organization B WITH(NOLOCK) ON A.BIN_OrganizationID = B.BIN_OrganizationID	
+			WHERE
+				EXISTS (SELECT 1 FROM (]]><include refid="BINOLCM33.MemberInfoSql" /><![CDATA[) memTable WHERE A.BIN_MemberInfoID = memTable.memId)
+		]]>
+			<isEqual property="isSaleFlag" compareValue="0">
+				<isNotEmpty property="notSaleTimeStart" prepend="AND">
+					A.SaleDate >= #notSaleTimeStart#
+				</isNotEmpty>
+				<isNotEmpty property="notSaleTimeEnd" prepend="AND">
+					<![CDATA[A.SaleDate <= #notSaleTimeEnd#]]>
+				</isNotEmpty>
+			</isEqual>
+			<isNotEqual property="isSaleFlag" compareValue="0">
+				<isNotEmpty property="saleTimeStart" prepend="AND">
+					A.SaleDate >= #saleTimeStart#
+				</isNotEmpty>
+				<isNotEmpty property="saleTimeEnd" prepend="AND">
+					<![CDATA[A.SaleDate <= #saleTimeEnd#]]>
+				</isNotEmpty>
+				<isNotEmpty property="saleCounterId" prepend="AND">
+					A.BIN_OrganizationID = #saleCounterId#
+				</isNotEmpty>
+				<isNotEmpty property="saleModeFlag" prepend="AND">
+					EXISTS (<include refid="BINOLCM33.SaleCounterTermSql" /> AND A.BIN_OrganizationID = orgTable.BIN_OrganizationID)
+				</isNotEmpty>
+				<isNotEmpty prepend="AND" property="saleTerm">
+					<isEqual property="relation" compareValue="1">
+						<isNotEmpty property="buyPrtVendorId">
+							<iterate property="buyPrtVendorId" open="(" close=")" conjunction="AND"> 
+								EXISTS (<include refid="BINOLCM33.SaleTermAndSql" /> AND A.BIN_SaleRecordID = M.BIN_SaleRecordID)
+							</iterate>
+						</isNotEmpty>
+						<isNotEmpty property="buyCateValId">
+							<iterate property="buyCateValId" open="(" close=")" conjunction="AND"> 
+								EXISTS (<include refid="BINOLCM33.SaleTermAndSql" /> AND A.BIN_SaleRecordID = M.BIN_SaleRecordID)
+							</iterate>
+						</isNotEmpty>
+					</isEqual>
+					<isNotEqual property="relation" compareValue="1">
+						EXISTS (<include refid="BINOLCM33.SaleTermSql" /> AND A.BIN_SaleRecordID = M.BIN_SaleRecordID)
+					</isNotEqual>
+				</isNotEmpty>
+			</isNotEqual>
+    </sql>
+    
+    <!-- 统计会员销售信息 -->
+	<select id="getMemSaleCount" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+		<![CDATA[
+			SELECT
+				COUNT(T.saleRecordId) AS count,
+				SUM(CASE WHEN T.saleType = 'SR' THEN -ISNULL(T.amount,0) ELSE ISNULL(T.amount,0) END) AS amount,
+				SUM(CASE WHEN T.saleType = 'SR' THEN -ISNULL(T.quantity,0) ELSE ISNULL(T.quantity,0) END) AS quantity
+			FROM (
+		]]>	
+			<include refid="BINOLCM33.QueryMemSale" />
+		<![CDATA[	
+			) T
+		]]>	
+    </select>
+    
+    <!-- 查询会员销售信息 -->
+	<select id="getMemSaleList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+		<include refid="BINOLCMINC99.pageheader" />
+		<include refid="BINOLCM33.QueryMemSale" />
+		<include refid="BINOLCMINC99.pagefooter" />
+    </select>
+    
+    <!-- 查询会员销售信息 -->
+    <sql id="QueryMemSaleClub">
+    	<![CDATA[
+			SELECT
+				A.BIN_SaleRecordID AS saleRecordId,
+				A.BIN_MemberInfoID AS memberId,
+				A.MemberCode AS memberCode,
+				A.BillCode AS billCode,
+				A.SaleType AS saleType,
+				A.Quantity AS quantity,
+				A.Amount AS amount,
+				A.Discount AS discount,
+				CONVERT(varchar(30),A.SaleTime,120) AS saleTime,
+				A.Comments AS comments,
+				B.DepartName AS departName,
+				B.DepartCode AS departCode
+			FROM
+				Sale.BIN_SaleRecord A WITH(NOLOCK)	
+		]]>
+		<![CDATA[
+				LEFT JOIN Basis.BIN_Organization B WITH(NOLOCK) ON A.BIN_OrganizationID = B.BIN_OrganizationID	
+			WHERE
+				EXISTS (SELECT 1 FROM (]]><include refid="BINOLCM33.MemberInfoClubSql" /><![CDATA[) memTable WHERE A.BIN_MemberInfoID = memTable.memId)
+		]]>
+		<isNotEmpty property="privilegeFlag">
+			<isEqual prepend="AND" property="privilegeFlag" compareValue="1">			
+				<![CDATA[
+					EXISTS ( 
+						SELECT 1
+						FROM 
+						Members.BIN_MemberClub CLBC WITH(NOLOCK)
+						JOIN Members.BIN_MemClubCounter CLCC WITH(NOLOCK)
+						ON (CLBC.ClubCode = CLCC.ClubCode) JOIN
+						Basis.BIN_Organization ClOT WITH(NOLOCK)
+						ON (CLCC.CounterCode = ClOT.DepartCode)
+						JOIN (]]><include refid="BINOLCMINC99.departPrivilegeSql" />
+					<![CDATA[) A99 ON ClOT.BIN_OrganizationID=A99.BIN_OrganizationID 
+						WHERE A.BIN_MemberClubID = CLBC.BIN_MemberClubID
+					)]]>
+			</isEqual>
+		</isNotEmpty>
+			<isNotEmpty property="memberClubId" prepend="AND">
+				A.BIN_MemberClubID = #memberClubId#
+			</isNotEmpty>
+			<isEqual property="isSaleFlag" compareValue="0">
+				<isNotEmpty property="notSaleTimeStart" prepend="AND">
+					A.SaleDate >= #notSaleTimeStart#
+				</isNotEmpty>
+				<isNotEmpty property="notSaleTimeEnd" prepend="AND">
+					<![CDATA[A.SaleDate <= #notSaleTimeEnd#]]>
+				</isNotEmpty>
+			</isEqual>
+			<isNotEqual property="isSaleFlag" compareValue="0">
+				<isNotEmpty property="saleTimeStart" prepend="AND">
+					A.SaleDate >= #saleTimeStart#
+				</isNotEmpty>
+				<isNotEmpty property="saleTimeEnd" prepend="AND">
+					<![CDATA[A.SaleDate <= #saleTimeEnd#]]>
+				</isNotEmpty>
+				<isNotEmpty property="saleCounterId" prepend="AND">
+					A.BIN_OrganizationID = #saleCounterId#
+				</isNotEmpty>
+				<isNotEmpty property="saleModeFlag" prepend="AND">
+					EXISTS (<include refid="BINOLCM33.SaleCounterTermSql" /> AND A.BIN_OrganizationID = orgTable.BIN_OrganizationID)
+				</isNotEmpty>
+				<isNotEmpty prepend="AND" property="saleTerm">
+					<isEqual property="relation" compareValue="1">
+						<isNotEmpty property="buyPrtVendorId">
+							<iterate property="buyPrtVendorId" open="(" close=")" conjunction="AND"> 
+								EXISTS (<include refid="BINOLCM33.SaleTermAndSql" /> AND A.BIN_SaleRecordID = M.BIN_SaleRecordID)
+							</iterate>
+						</isNotEmpty>
+						<isNotEmpty property="buyCateValId">
+							<iterate property="buyCateValId" open="(" close=")" conjunction="AND"> 
+								EXISTS (<include refid="BINOLCM33.SaleTermAndSql" /> AND A.BIN_SaleRecordID = M.BIN_SaleRecordID)
+							</iterate>
+						</isNotEmpty>
+					</isEqual>
+					<isNotEqual property="relation" compareValue="1">
+						EXISTS (<include refid="BINOLCM33.SaleTermSql" /> AND A.BIN_SaleRecordID = M.BIN_SaleRecordID)
+					</isNotEqual>
+				</isNotEmpty>
+			</isNotEqual>
+    </sql>
+    
+    <!-- 统计会员销售信息 -->
+	<select id="getMemSaleClubCount" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+		<![CDATA[
+			SELECT
+				COUNT(T.saleRecordId) AS count,
+				SUM(CASE WHEN T.saleType = 'SR' THEN -ISNULL(T.amount,0) ELSE ISNULL(T.amount,0) END) AS amount,
+				SUM(CASE WHEN T.saleType = 'SR' THEN -ISNULL(T.quantity,0) ELSE ISNULL(T.quantity,0) END) AS quantity
+			FROM (
+		]]>	
+			<include refid="BINOLCM33.QueryMemSaleClub" />
+		<![CDATA[	
+			) T
+		]]>	
+    </select>
+    
+    <!-- 查询会员销售信息 -->
+	<select id="getMemSaleClubList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+		<include refid="BINOLCMINC99.pageheader" />
+		<include refid="BINOLCM33.QueryMemSaleClub" />
+		<include refid="BINOLCMINC99.pagefooter" />
+    </select>
+    
+    
+</sqlMap>

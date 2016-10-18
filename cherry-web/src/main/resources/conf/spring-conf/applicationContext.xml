@@ -1,0 +1,450 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<beans xmlns="http://www.springframework.org/schema/beans" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xmlns:context="http://www.springframework.org/schema/context" xmlns:p="http://www.springframework.org/schema/p"
+	xmlns:aop="http://www.springframework.org/schema/aop" xmlns:tx="http://www.springframework.org/schema/tx" xmlns:util="http://www.springframework.org/schema/util"
+	xmlns:cache="http://www.springframework.org/schema/cache" xmlns:mongo="http://www.springframework.org/schema/data/mongo"
+	xsi:schemaLocation="http://www.springframework.org/schema/beans 
+	http://www.springframework.org/schema/beans/spring-beans-3.1.xsd
+	http://www.springframework.org/schema/context 
+	http://www.springframework.org/schema/context/spring-context-3.1.xsd 
+	http://www.springframework.org/schema/aop 
+	http://www.springframework.org/schema/aop/spring-aop-3.1.xsd 
+	http://www.springframework.org/schema/tx 
+	http://www.springframework.org/schema/tx/spring-tx-3.1.xsd
+	http://www.springframework.org/schema/util http://www.springframework.org/schema/util/spring-util-3.1.xsd
+	http://www.springframework.org/schema/cache http://www.springframework.org/schema/cache/spring-cache.xsd
+	http://www.springframework.org/schema/data/mongo
+	http://www.springframework.org/schema/data/mongo/spring-mongo-1.1.xsd"
+	default-autowire="byName">
+
+	<!-- 动态数据源定义文件 -->
+	<import resource="classpath:conf/spring-conf/beans-define/beans-ds.xml" />
+
+	<!-- spring 注入注解支持 -->
+	<context:annotation-config />
+
+	<!-- 支持JavaConfig的配置，用以实现XML配置和JavaConfig的混合配置START <bean class="com.cherry.cm.mongo.config.CherrySpringMongoConfig"/> -->
+	<!-- 一定要加上 JavaConfig bean post-processor <bean class="org.springframework.config.java.process.ConfigurationPostProcessor"/> -->
+	<!-- <bean id="exceptionTranslator" class="org.springframework.dao.annotation.PersistenceExceptionTranslationPostProcessor"/> -->
+	<!-- 定义repository -->
+	<!-- 改用注解方式 <mongo:repositories base-package="com.cherry.cm.mongo.repositories" /> -->
+	<!-- 支持JavaConfig的配置，用以实现XML配置和JavaConfig的混合配置END -->
+
+	<!-- 对web包中的所有类进行扫描，以完成Bean创建和自动依赖注入的功能 -->
+	<context:component-scan base-package="com" />
+
+	<!-- spring aop支持 -->
+	<aop:aspectj-autoproxy proxy-target-class="false" />
+	<!-- aop:aspectj-autoproxy proxy-target-class="true"/ -->
+	<!-- ====================================AOP 配置Start=========================== -->
+	<bean id="sqlInject" class="com.cherry.cm.aop.SqlInjectAop" />
+	<aop:config>
+		<aop:pointcut id="manPointcut"
+			expression="execution(* com.cherry.*.*.service.*.*(..)) and !execution(* com.cherry.mo.buy.service.BINOLMOBUY01_Service.*(..))" />
+		<aop:aspect id="beforeExample" ref="sqlInject">
+			<aop:before pointcut-ref="manPointcut" method="before" />
+		</aop:aspect>
+	</aop:config>
+
+	<!-- 缓存管理配置 开始 -->
+	<!-- 允许用注解设置缓存,并采用自定义的cachekey生成器 -->
+	<cache:annotation-driven proxy-target-class="true" key-generator="cherrykeyGenerator" />
+	<!-- Ehcache library setup -->
+	<bean id="ehcache" class="org.springframework.cache.ehcache.EhCacheManagerFactoryBean" p:config-location="classpath:conf/ehcache-conf/ehcache.xml" />
+	<!-- 采用Ehcache实现 -->
+	<bean id="cacheManager" class="org.springframework.cache.ehcache.EhCacheCacheManager" p:cache-manager-ref="ehcache" />
+	<!-- 自定义Cachekey生成器 -->
+	<bean id="cherrykeyGenerator" class="com.cherry.cm.cache.CherryCacheKeyGenerator" />
+	<!-- 缓存管理配置 结束 -->
+
+	<!-- 事务管理配置 开始 -->
+	<tx:advice id="txAdvice" transaction-manager="txManager">
+		<tx:attributes>
+			<!-- 当抛出Exception时事务回滚 -->
+			<tx:method name="*" rollback-for="Exception" />
+		</tx:attributes>
+	</tx:advice>
+	<tx:advice id="txAdvicePropNew" transaction-manager="txManager">
+		<tx:attributes>
+			<!-- 当抛出Exception时事务回滚 -->
+			<tx:method name="getTicketNumber" rollback-for="Exception" propagation="REQUIRES_NEW" />
+			<tx:method name="getTicketNumberList" rollback-for="Exception" propagation="REQUIRES_NEW" />
+			<tx:method name="getSequenceId" rollback-for="Exception" propagation="REQUIRES_NEW" />
+			<tx:method name="getCurrentSequenceId" rollback-for="Exception" propagation="REQUIRES_NEW" />
+		</tx:attributes>
+	</tx:advice>
+	<!-- 模块包下的bl带tran开头的方法都会回滚事务 -->
+	<aop:config>
+		<aop:pointcut id="tranOperation" expression="execution(* com.cherry.*.*.bl.*.tran*(..))" />
+		<aop:pointcut id="tranOperationPropNew"
+			expression="execution(* com.cherry.cm.cmbussiness.bl.BINOLCM03_BL.getTicketNumber*(..))
+					or execution(* com.cherry.cm.cmbussiness.bl.BINOLCM15_BL.getSequenceId(..))
+					or execution(* com.cherry.cm.cmbussiness.bl.BINOLCM15_BL.getCurrentSequenceId(..))" />
+		<aop:advisor advice-ref="txAdvice" pointcut-ref="tranOperation" />
+		<aop:advisor advice-ref="txAdvicePropNew" pointcut-ref="tranOperationPropNew" />
+	</aop:config>
+
+	<bean id="txManager" class="org.springframework.jdbc.datasource.DataSourceTransactionManager">
+		<property name="dataSource" ref="dataSource" />
+	</bean>
+	
+	<!-- 老后台数据库 事务管理配置 开始 -->
+	<tx:advice id="txAdvice_oldConfig" transaction-manager="txManager_oldConfig">
+		<tx:attributes>
+			<!-- 当抛出Exception时事务回滚 -->
+			<tx:method name="*" rollback-for="Exception"/>
+		</tx:attributes>
+	</tx:advice>
+
+	<!-- 模块包下的bl带tran开头的方法都会回滚事务 -->
+	<aop:config>
+		<aop:pointcut id="tranOperation_oldConfig" expression="execution(* com.cherry.*.*.bl.*.tran*(..))" />
+		<aop:advisor advice-ref="txAdvice_oldConfig" pointcut-ref="tranOperation_oldConfig" />
+	</aop:config>
+
+	<bean id="txManager_oldConfig" class="org.springframework.jdbc.datasource.DataSourceTransactionManager">
+		<property name="dataSource" ref="dataSourceOldConfig" />
+	</bean>
+	
+	<!-- 第三方接口数据库 事务管理配置 开始 -->
+	<tx:advice id="txAdvice_tpif" transaction-manager="txManager_tpif">
+		<tx:attributes>
+			<!-- 当抛出Exception时事务回滚 -->
+			<tx:method name="*" rollback-for="Exception" />
+		</tx:attributes>
+	</tx:advice>
+
+	<!-- 模块包下的bl带tran开头的方法都会回滚事务 -->
+	<aop:config>
+		<aop:pointcut id="tranOperation_tpif" expression="execution(* com.cherry.*.*.bl.*.tran*(..))  or execution(* com.cherry.*.*.*.bl.*.tran*(..)) " />
+		<aop:advisor advice-ref="txAdvice_tpif" pointcut-ref="tranOperation_tpif" />
+	</aop:config>
+
+	<bean id="txManager_tpif" class="org.springframework.jdbc.datasource.DataSourceTransactionManager">
+		<property name="dataSource" ref="tpifDataSource" />
+	</bean>
+
+	<!-- ====================================ibatis 配置Start=========================== -->
+	<!--配置一个数据源,根据上面 propertyConfig指定的location去找数据库连接的配置信息 -->
+	<bean id="propertyConfigurer" class="org.springframework.beans.factory.config.PropertyPlaceholderConfigurer">
+		<property name="locations">
+			<list>
+				<value>classpath:conf/properties/proxool-jdbc.properties</value>
+			</list>
+		</property>
+	</bean>
+
+	<!-- 新后台品牌数据库动态数据源 -->
+	<bean id="dataSource" class="com.cherry.cm.core.CustomerRoutingDataSource">
+		<property name="targetDataSources">
+			<map key-type="java.lang.String">
+				<entry key="LOGIN" value-ref="dataSourceCherryConfig" />
+				<entry key="CherryBrandDB" value-ref="dataSourceCherryBrand" />
+			</map>
+		</property>
+		<property name="defaultTargetDataSource" ref="dataSourceCherryConfig" />
+	</bean>
+	
+	<!-- 第三方接口数据库动态数据源 -->
+	<bean id="tpifDataSource" class="com.cherry.cm.core.CustomerTpifRoutingDataSource">
+		<property name="targetDataSources">
+			<map key-type="java.lang.String">
+				<entry key="TpifBrandDB" value-ref="dataSourceTpifBrand" />
+			</map>
+		</property>
+		<property name="defaultTargetDataSource" ref="dataSourceTpifBrand" />
+	</bean>
+
+	<!--根据 dataSource和configLocation创建一个SqlMapClient -->
+	<bean id="sqlMapClient" class="com.cherry.monitor.CatSqlMapClientFactoryBean">
+		<property name="configLocations">
+			<list>
+				<value>classpath:conf/ibatis-conf/sql-map-config.xml</value>
+				<!-- OSworkflow配置 -->
+				<value>classpath:com/opensymphony/workflow/spi/ibatis/OSIbatisConfig.xml</value>
+			</list>
+		</property>
+	</bean>
+
+	<!-- ====================================ActiveMQ 配置 =========================== -->
+	<!-- 配置JMS连接工厂 -->
+	<bean id="JmsConnectionFactory" class="com.cherry.cm.core.DecryptionMQConnectionFactory">
+		<property name="brokerURL" value="1ef6680810b111f8adf30e8fd5ec190de2eff8e2048808a84e2ac70443726295" />
+		<property name="userName" value="86a761159e6d0e3e" />
+		<property name="password" value="be0e743f27265ed1307b157310210a84" />
+	</bean>
+	
+	<bean id="JmsTemplate" class="org.springframework.jms.core.JmsTemplate">
+		<property name="connectionFactory">
+			<!-- Spring Caching pool -->
+			<bean class="org.springframework.jms.connection.CachingConnectionFactory">
+				<property name="targetConnectionFactory" ref="JmsConnectionFactory" />
+				<property name="cacheConsumers" value="false" />
+				<property name="sessionCacheSize" value="100" />
+				<property name="reconnectOnException" value="true" />
+			</bean>
+		</property>
+		<property name="defaultDestination" ref="cherryToPosMsgQueue" />
+	</bean>
+
+	<!-- 发送消息的目的地（队列,新后台 ->witpos） -->
+	<bean id="cherryToPosMsgQueue" class="org.apache.activemq.command.ActiveMQQueue">
+		<!-- 设置消息队列的名字 -->
+		<constructor-arg index="0" value="cherryToPosMsgQueue" />
+	</bean>
+
+	<!-- 发送消息的目的地（队列,witpos ->新后台） -->
+	<bean id="posToCherryMsgQueue" class="org.apache.activemq.command.ActiveMQQueue">
+		<!-- 设置消息队列的名字 -->
+		<constructor-arg index="0" value="posToCherryMsgQueue" />
+	</bean>
+	
+	<!-- 发送消息的目的地（队列,witpos ->新后台(纯JSON格式MQ)） -->
+	<bean id="posToCherryMsgQueueJSON" class="org.apache.activemq.command.ActiveMQQueue">
+		<!-- 设置消息队列的名字 -->
+		<constructor-arg index="0" value="posToCherryMsgQueueJSON" />
+	</bean>
+
+	<!-- 发送消息的目的地（实时推送的消息） -->
+	<bean id="cherry4PubMsgQueue" class="org.apache.activemq.command.ActiveMQQueue">
+		<!-- 设置消息队列的名字 -->
+		<constructor-arg index="0" value="cherry4PubMsgQueue" />
+	</bean>
+
+	<!-- 发送消息的目的地（规则处理） -->
+	<bean id="cherryRuleMsgQueue" class="org.apache.activemq.command.ActiveMQQueue">
+		<!-- 设置消息队列的名字 -->
+		<constructor-arg index="0" value="cherryRuleMsgQueue" />
+	</bean>
+
+	<!-- 发送消息的目的地（刷新索引） -->
+	<bean id="cherryIRMsgQueue" class="org.apache.activemq.command.ActiveMQQueue">
+		<!-- 设置消息队列的名字 -->
+		<constructor-arg index="0" value="cherryIRMsgQueue" />
+	</bean>
+	<!-- 发送消息的目的地（积分维护消息处理） -->
+	<bean id="cherryPointMsgQueue" class="org.apache.activemq.command.ActiveMQQueue">
+		<!-- 设置消息队列的名字 -->
+		<constructor-arg index="0" value="cherryPointMsgQueue" />
+	</bean>
+
+    <!-- 发送消息的目的地（监控类 队列,witpos ->新后台） -->
+    <bean id="POS2CherryMonitorQue" class="org.apache.activemq.command.ActiveMQQueue">
+        <!-- 设置消息队列的名字 -->
+        <constructor-arg index="0" value="POS2CherryMonitorQue" />
+    </bean>
+    
+    <!-- 实时业务结果反馈（监控类 队列,witpos ->新后台） -->
+    <bean id="POS2CherryNoticeQue" class="org.apache.activemq.command.ActiveMQQueue">
+        <!-- 设置消息队列的名字 -->
+        <constructor-arg index="0" value="POS2CherryNoticeQue" />
+    </bean>
+    
+    <!-- 发送微信模板消息队列 -->
+    <bean id="cherryToWeChatMsgQueue" class="org.apache.activemq.command.ActiveMQQueue">
+        <!-- 设置消息队列的名字 -->
+        <constructor-arg index="0" value="cherryToWeChatMsgQueue" />
+    </bean>
+
+	<!-- 正式发布的时候或者DEBUG消息监听的时候请把下面所有监听器注释打开 -->
+	<!-- 业务消息的MQ监听 -->
+	<bean id="listenerContainer" class="org.springframework.jms.listener.DefaultMessageListenerContainer">
+		<property name="concurrentConsumers" value="1" />
+		<property name="idleConsumerLimit" value="1" />
+		<property name="connectionFactory" ref="JmsConnectionFactory" />
+		<property name="destination" ref="posToCherryMsgQueue" />
+		<property name="messageListener" ref="messageListener" />
+	</bean>
+
+	<!-- 业务消息的MQ监听器 -->
+	<bean id="messageListener" class="org.springframework.jms.listener.adapter.MessageListenerAdapter">
+		<constructor-arg>
+			<bean class="com.cherry.mq.mes.common.CherryMessageReceiverImpl" />
+		</constructor-arg>
+		<property name="defaultListenerMethod" value="handleMessage" />
+	</bean>
+	
+	<!-- 业务消息的MQ监听(纯JSON格式MQ) -->
+	<bean id="jsonMqMessagelistenerContainer" class="org.springframework.jms.listener.DefaultMessageListenerContainer">
+		<property name="concurrentConsumers" value="1" />
+		<property name="idleConsumerLimit" value="1" />
+		<property name="connectionFactory" ref="JmsConnectionFactory" />
+		<property name="destination" ref="posToCherryMsgQueueJSON" />
+		<property name="messageListener" ref="jsonMqMessageListener" />
+	</bean>
+
+	<!-- 业务消息的MQ监听器(纯JSON格式MQ) -->
+	<bean id="jsonMqMessageListener" class="org.springframework.jms.listener.adapter.MessageListenerAdapter">
+		<constructor-arg>
+			<bean class="com.cherry.mq.mes.common.CherryMqMsgReceiverImpl" />
+		</constructor-arg>
+		<property name="defaultListenerMethod" value="handleMessage" />
+	</bean>
+
+	<!-- 实时推送消息的MQ监听 -->
+	<bean id="cherry4PubMsglistenerContainer" class="org.springframework.jms.listener.DefaultMessageListenerContainer">
+		<property name="concurrentConsumers" value="1" />
+		<property name="connectionFactory" ref="JmsConnectionFactory" />
+		<property name="destination" ref="cherry4PubMsgQueue" />
+		<property name="messageListener" ref="cherry4PubMsgListener" />
+	</bean>
+
+	<!-- 实时推送消息的MQ监听器 -->
+	<bean id="cherry4PubMsgListener" class="org.springframework.jms.listener.adapter.MessageListenerAdapter">
+		<constructor-arg>
+			<bean class="com.cherry.mq.mes.atmosphere.JQueryPubSubListener" />
+		</constructor-arg>
+		<property name="defaultListenerMethod" value="handle4PubMessage" />
+	</bean>
+
+	<!-- 规则处理消息的MQ监听 -->
+	<bean id="cherryRuleMsglistenerContainer" class="org.springframework.jms.listener.DefaultMessageListenerContainer">
+		<property name="concurrentConsumers" value="1" />
+		<property name="connectionFactory" ref="JmsConnectionFactory" />
+		<property name="destination" ref="cherryRuleMsgQueue" />
+		<property name="messageListener" ref="cherryRuleMsgListener" />
+	</bean>
+
+	<!-- 规则处理消息的MQ监听器 -->
+	<bean id="cherryRuleMsgListener" class="org.springframework.jms.listener.adapter.MessageListenerAdapter">
+		<constructor-arg>
+			<bean class="com.cherry.mq.mes.common.CherryMessageReceiverImpl" />
+		</constructor-arg>
+		<property name="defaultListenerMethod" value="receiveMessage" />
+	</bean>
+
+	<!-- 刷新索引消息的MQ监听 -->
+	<bean id="cherryIRMsglistenerContainer" class="org.springframework.jms.listener.DefaultMessageListenerContainer">
+		<property name="concurrentConsumers" value="1" />
+		<property name="connectionFactory" ref="JmsConnectionFactory" />
+		<property name="destination" ref="cherryIRMsgQueue" />
+		<property name="messageListener" ref="cherryIRMsglistener" />
+	</bean>
+
+	<!-- 刷新索引消息的MQ监听器 -->
+	<bean id="cherryIRMsglistener" class="org.springframework.jms.listener.adapter.MessageListenerAdapter">
+		<constructor-arg>
+			<bean class="com.cherry.mq.mes.common.CherryMessageReceiverImpl" />
+		</constructor-arg>
+		<property name="defaultListenerMethod" value="receiveMessage" />
+	</bean>
+
+	<!-- 会员积分维护消息的MQ监听 -->
+	<bean id="cherryPointMsgListenerContainer" class="org.springframework.jms.listener.DefaultMessageListenerContainer">
+		<property name="concurrentConsumers" value="1" />
+		<property name="connectionFactory" ref="JmsConnectionFactory" />
+		<property name="destination" ref="cherryPointMsgQueue" />
+		<property name="messageListener" ref="cherryPointMsgListener" />
+	</bean>
+
+	<!-- 会员积分维护消息的MQ监听器 -->
+	<bean id="cherryPointMsgListener" class="org.springframework.jms.listener.adapter.MessageListenerAdapter">
+		<constructor-arg>
+			<bean class="com.cherry.mq.mes.common.CherryMessageReceiverImpl" />
+		</constructor-arg>
+		<property name="defaultListenerMethod" value="receiveMessage" />
+	</bean>
+	
+    <!-- 监控类消息的MQ监听 -->
+    <bean id="monitorContainer" class="org.springframework.jms.listener.DefaultMessageListenerContainer">
+        <property name="concurrentConsumers" value="1" />
+        <property name="connectionFactory" ref="JmsConnectionFactory" />
+        <property name="destination" ref="POS2CherryMonitorQue" />
+        <property name="messageListener" ref="monitorListener" />
+    </bean>
+
+    <!-- 监控类消息的MQ监听器 -->
+    <bean id="monitorListener" class="org.springframework.jms.listener.adapter.MessageListenerAdapter">
+        <constructor-arg>
+            <bean class="com.cherry.mq.mes.common.CherryMessageReceiverImpl" />
+        </constructor-arg>
+        <property name="defaultListenerMethod" value="handleMonitorMessage" />
+    </bean>
+	
+	<!-- 实时业务结果反馈-->
+	<bean id="POS2CherryNoticeContainer" class="org.springframework.jms.listener.DefaultMessageListenerContainer">
+		<property name="concurrentConsumers" value="1" />
+		<property name="connectionFactory" ref="JmsConnectionFactory" />
+		<property name="destination" ref="POS2CherryNoticeQue" />
+		<property name="messageListener" ref="POS2CherryNoticeListener" />
+	</bean>
+
+	<!-- 实时业务结果反馈 -->
+	<bean id="POS2CherryNoticeListener" class="org.springframework.jms.listener.adapter.MessageListenerAdapter">
+		<constructor-arg>
+			<bean class="com.cherry.mq.mes.common.CherryMessageReceiverImpl" />
+		</constructor-arg>
+		<property name="defaultListenerMethod" value="handleNoticeMessage" />
+	</bean>
+	
+	<!-- 发送微信模板消息-->
+	<bean id="cherryToWeChatContainer" class="org.springframework.jms.listener.DefaultMessageListenerContainer">
+		<property name="concurrentConsumers" value="1" />
+		<property name="connectionFactory" ref="JmsConnectionFactory" />
+		<property name="destination" ref="cherryToWeChatMsgQueue" />
+		<property name="messageListener" ref="cherryToWeChatListener" />
+	</bean>
+
+	<!-- 发送微信模板消息 -->
+	<bean id="cherryToWeChatListener" class="org.springframework.jms.listener.adapter.MessageListenerAdapter">
+		<constructor-arg>
+			<bean class="com.cherry.mq.mes.common.CherryMessageReceiverImpl" />
+		</constructor-arg>
+		<property name="defaultListenerMethod" value="receiveMessage" />
+	</bean>
+	
+	<!-- OSworkflow配置 -->
+	<!-- <bean id="sqlMapClientOS" class="org.springframework.orm.ibatis.SqlMapClientFactoryBean"> <property name="configLocation"> 
+		<value>classpath:com/opensymphony/workflow/spi/ibatis/OSIbatisConfig.xml</value> </property> <property name="dataSource"> 
+		<ref bean="dataSource"/> </property> </bean> -->
+	<bean id="innerJdbcTemplate" class="org.springframework.jdbc.core.JdbcTemplate">
+		<property name="dataSource">
+			<ref bean="dataSource" />
+		</property>
+	</bean>
+
+	<bean id="binolcm30IF" class="com.cherry.cm.core.CherryFileStore"></bean>
+
+	<bean id="workflowFactory" class="com.opensymphony.workflow.loader.CherryWorkflowFactory" init-method="initDone">
+		<property name="cherryFileStore">
+			<ref bean="binolcm30IF" />
+		</property>
+		<property name="reload">
+			<value>true</value>
+		</property>
+	</bean>
+
+	<bean id="ibatisworkflowStore" class="com.opensymphony.workflow.spi.ibatis.IBatisWorkflowStore">
+		<property name="sqlMapClient">
+			<ref bean="sqlMapClient" />
+		</property>
+		<property name="innerJdbcTemplate">
+			<ref bean="innerJdbcTemplate" />
+		</property>
+	</bean>
+
+	<bean id="osworkflowConfiguration" class="com.opensymphony.workflow.config.SpringConfiguration">
+		<property name="store">
+			<ref local="ibatisworkflowStore" />
+		</property>
+		<property name="factory">
+			<ref local="workflowFactory" />
+		</property>
+	</bean>
+	<bean id="workflowTypeResolver" class="com.opensymphony.workflow.util.SpringTypeResolver">
+		<!-- Here you can inject custom resolver for business logic <property name="conditions"> <map> <entry key="beanshell"> 
+			<value>mypackage.MyBeanShellCustomCondition</value></entry> </map> </property> -->
+	</bean>
+
+	<bean id="workflow" class="com.opensymphony.workflow.basic.BasicWorkflow" scope="prototype">
+		<constructor-arg>
+			<value>test</value>
+		</constructor-arg>
+		<property name="configuration">
+			<ref local="osworkflowConfiguration" />
+		</property>
+		<property name="resolver">
+			<ref local="workflowTypeResolver" />
+		</property>
+	</bean>
+</beans>

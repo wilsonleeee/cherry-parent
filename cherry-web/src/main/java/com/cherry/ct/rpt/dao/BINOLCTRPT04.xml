@@ -1,0 +1,107 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sqlMap PUBLIC "-//iBATIS.com//DTD SQL Map 2.0//EN" "http://ibatis.apache.org/dtd/sql-map-2.dtd">
+<sqlMap namespace="BINOLCTRPT04">
+	<!-- 沟通事件运行记录查询sql  -->
+	<sql id="errorMsgDetailQuery">
+		<![CDATA[
+			SELECT 
+				ts.BIN_ErrorMessageId as errorMessageId,
+				ts.CustomerSysID as memberInfoId,
+				tb.MemCode as memCode,
+				tm.Name as memName,
+				ts.ReceiverCode as mobilephone,
+				ts.Message as message,
+				ts.SendTime as sendTime,
+				ts.CommType as commType,
+				ts.ErrorType as errorType,
+				ts.ErrorText as errorText
+			FROM 
+				Communication.BIN_ErrorMessageLog as ts with(nolock) 
+				Left join Members.BIN_MemberInfo as tm with(nolock) on cast(ts.CustomerSysID as bigint)=tm.BIN_MemberInfoID 
+				Left join Members.BIN_MemCardInfo as tb with(nolock) on cast(ts.CustomerSysID as bigint)=tb.BIN_MemberInfoID and tb.CardValidFlag=1 
+				Inner join (
+					select tpl.BIN_OrganizationID,Bin_PlanCode,PlanName from Communication.BIN_Communicationplan as tpl with(nolock) 
+					]]>
+						<isNotEmpty property="privilegeFlag">
+						<isEqual property="privilegeFlag" compareValue="1">			
+						<![CDATA[			
+							inner join (]]><include refid="BINOLCMINC99.departPrivilegeSql" /><![CDATA[) A99 
+							on tpl.BIN_OrganizationID = A99.BIN_OrganizationID
+						]]>
+						</isEqual>
+						</isNotEmpty>
+					<![CDATA[
+					union 
+					select null as BIN_OrganizationID,EventTypeId as Bin_PlanCode,null as PlanName from Communication.BIN_CommEventSet with(nolock)
+					union 
+					select null as BIN_OrganizationID,'9' as Bin_PlanCode,null as PlanName 
+					union 
+					select null as BIN_OrganizationID,'10' as Bin_PlanCode,null as PlanName 
+					union 
+					select null as BIN_OrganizationID,'14' as Bin_PlanCode,null as PlanName 
+					union 
+					select null as BIN_OrganizationID,'99' as Bin_PlanCode,null as PlanName 
+					union 
+					select null as BIN_OrganizationID,'100' as Bin_PlanCode,null as PlanName 
+				) as tp on ts.Bin_PlanCode = tp.Bin_PlanCode 
+			WHERE
+				ISNUMERIC(ts.CustomerSysID) = 1 
+		]]>
+		<dynamic>
+			<!-- 参数中存在批次号查询条件时  -->
+			<isNotEmpty prepend="AND" property="batchId" >
+				ts.BatchID = #batchId# 
+			</isNotEmpty>
+			<!-- 参数中存在沟通编号查询条件时  -->
+			<isNotEmpty prepend="AND" property="communicationCode" >
+				ts.BIN_CommunicationCode = #communicationCode# 
+			</isNotEmpty>
+			<!-- 参数中存在客户手机号查询条件时  -->
+			<isNotEmpty prepend="AND" property="mobilePhone" >
+				ts.ReceiverCode = #mobilePhone# 
+			</isNotEmpty>
+			<!-- 参数中存在会员卡号查询条件时  -->
+			<isNotEmpty prepend="AND" property="memCode" >
+				tb.MemCode = #memCode# 
+			</isNotEmpty>
+			<!-- 参数中存在沟通类型查询条件时  -->
+			<isNotEmpty prepend="AND" property="commType" >
+				ts.CommType = #commType# 
+			</isNotEmpty>
+			<!-- 参数中存在异常信息类型查询条件时  -->
+			<isNotEmpty prepend="AND" property="errorType" >
+				ts.ErrorType = #errorType# 
+			</isNotEmpty>
+			<!-- 参数中存在发送信息开始时间时  -->
+			<isNotEmpty prepend="AND" property="sendBeginDate" >
+				<![CDATA[
+					ts.SendTime >= #sendBeginDate# 
+				]]>
+			</isNotEmpty>
+			<!-- 参数中存在发送信息截止时间时  -->
+			<isNotEmpty prepend="AND" property="sendEndDate" >
+				<![CDATA[
+					ts.SendTime <= #sendEndDate# 
+				]]>
+			</isNotEmpty>
+		</dynamic>
+	</sql>
+	
+	<!-- 获取沟通事件运行记录总数  -->
+    <select id="getErrorMsgDetailCount" parameterClass="java.util.HashMap" resultClass="java.lang.Integer">
+    	<![CDATA[
+			SELECT	COUNT(SORT_T1.errorMessageId) AS count FROM (
+		]]>	
+		<include refid="BINOLCTRPT04.errorMsgDetailQuery" />	
+		<![CDATA[	
+			)SORT_T1
+		]]>
+    </select>
+	
+	<!-- 获取沟通计划运行记录List -->
+    <select id="getErrorMsgDetailList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+       	<include refid="BINOLCMINC99.pageheader" />
+		<include refid="BINOLCTRPT04.errorMsgDetailQuery" />
+		<include refid="BINOLCMINC99.pagefooter" />
+    </select>
+</sqlMap>

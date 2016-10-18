@@ -1,0 +1,764 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sqlMap PUBLIC "-//iBATIS.com//DTD SQL Map 2.0//EN" "http://ibatis.apache.org/dtd/sql-map-2.dtd">
+<sqlMap namespace="BINOLBSEMP04">
+	<!-- 验证用户代码是否唯一  -->
+    <select id="getEmployeeId" parameterClass="java.util.HashMap" resultClass="java.lang.String">
+    	<![CDATA[
+			SELECT	
+				A.BIN_EmployeeID AS employeeId 
+			FROM 
+				Basis.BIN_Employee A
+			WHERE
+				A.BIN_OrganizationInfoID = #organizationInfoId#
+				AND A.BIN_BrandInfoID = #brandInfoId#
+				AND A.EmployeeCode = #employeeCode#
+		]]>										
+    </select>
+    
+	<!-- 插入员工信息表  -->
+	<insert id="insertEmployee" parameterClass="java.util.HashMap">	
+		<selectKey resultClass="java.lang.Integer" type="post" keyProperty="BIN_EmployeeID" >
+		<![CDATA[
+	    INSERT INTO Basis.BIN_Employee (
+	   		BIN_OrganizationInfoID,				
+			BIN_BrandInfoID,
+			BIN_OrganizationID,
+			BIN_PositionCategoryID,	
+			NodeID,		
+			EmployeeCode,			
+			EmployeeName,
+			EmployeeNameForeign,			
+			IdentityCard,			
+			Phone,			
+			MobilePhone,			
+			Email,			
+			Academic,			
+			BirthDay,
+			Gender,			
+			MaritalStatus,	
+		]]>
+		<include refid="BINOLCMINC99.insertKeySql" />									
+		<![CDATA[								
+		)VALUES (
+			#organizationInfoId#,
+			#brandInfoId#,		
+			#departId#,
+			#positionCategoryId#,		
+			#newNodeId#,	
+			#employeeCode#,			
+			#employeeName#,	
+			#employeeNameForeign#,		
+			#identityCard#,			
+			#phone#,			
+			#mobilePhone#,			
+			#email#,			
+			#academic#,	
+			CONVERT(Date,#birthDay#),
+			#gender#,
+			#maritalStatus#,
+		]]>
+		<include refid="BINOLCMINC99.insertValueSql" />
+		<![CDATA[ 
+			) 
+			select SCOPE_IDENTITY() as value
+		]]>
+	    </selectKey>
+	</insert>
+	
+	<!-- 插入营业员信息 -->
+	<insert id="insertBaInfo" parameterClass="java.util.HashMap">
+		<![CDATA[
+			INSERT INTO	
+				Basis.BIN_BaInfo
+				(
+					BIN_OrganizationInfoID,
+					BIN_BrandInfoID,
+					BIN_EmployeeID,
+					BIN_OrganizationID,
+					BaCode,
+					BaName,
+					BaType,
+		]]>
+				<isNotEmpty property="baNameForeign">
+					BaNameForeign,
+				</isNotEmpty>
+				<isNotEmpty property="identityCard">
+					IdentityCard,
+				</isNotEmpty>
+				<isNotEmpty property="phone">
+					Phone,
+				</isNotEmpty>
+				<isNotEmpty property="mobilePhone">
+					MobilePhone,
+				</isNotEmpty>
+				<isNotEmpty property="email">
+					Email,
+				</isNotEmpty>
+				<isNotEmpty property="address">
+					Address,
+				</isNotEmpty>
+				<isNotEmpty property="academic">
+					Academic,
+				</isNotEmpty>
+				<isNotEmpty property="birthDay">
+					BirthDay,
+				</isNotEmpty>
+				<isNotEmpty property="gender">
+					Gender,
+				</isNotEmpty>
+				<isNotEmpty property="maritalStatus">
+					MaritalStatus,
+				</isNotEmpty>
+				<isNotEmpty property="originFlag">
+					OriginFlag,
+				</isNotEmpty>
+			<include refid="BINOLCMINC99.insertKeySql" />		
+		<![CDATA[
+				)VALUES
+				(		
+					#organizationInfoId#,
+					#brandInfoId#,
+					#employeeId#,
+					#departId#,
+					#bacode#,
+					#baname#,
+					'1',
+		]]>
+				<isNotEmpty property="baNameForeign">
+					#baNameForeign#,
+				</isNotEmpty>
+				<isNotEmpty property="identityCard">
+					#identityCard#,
+				</isNotEmpty>
+				<isNotEmpty property="phone">
+					#phone#,
+				</isNotEmpty>
+				<isNotEmpty property="mobilePhone">
+					#mobilePhone#,
+				</isNotEmpty>
+				<isNotEmpty property="email">
+					#email#,
+				</isNotEmpty>
+				<isNotEmpty property="address">
+					#address#,
+				</isNotEmpty>
+				<isNotEmpty property="academic">
+					#academic#,
+				</isNotEmpty>
+				<isNotEmpty property="birthDay">
+					#birthDay#,
+				</isNotEmpty>
+				<isNotEmpty property="gender">
+					#gender#,
+				</isNotEmpty>
+				<isNotEmpty property="maritalStatus">
+					#maritalStatus#,
+				</isNotEmpty>
+				<isNotEmpty property="originFlag">
+					#originFlag#,
+				</isNotEmpty>
+			<include refid="BINOLCMINC99.insertValueSql" />		
+		<![CDATA[
+				)
+    	]]>   				
+    </insert>
+	
+	<!--删除无效的营业员数据 -->
+	<update id="delInvalidBaInfo" parameterClass="java.util.HashMap">
+		<![CDATA[
+			UPDATE	
+				Basis.BIN_BaInfo
+			SET	
+				ValidFlag = '0',
+		]]>
+			<include refid="BINOLCMINC99.updateSql" />		
+		<![CDATA[				
+			WHERE					
+				BIN_BaInfoID  = #baInfoId# AND
+				ValidFlag='1'		
+		]]>
+    </update>
+	
+	<!--更新营业员信息表 -->
+	<update id="updateBaInfo" parameterClass="java.util.HashMap">
+		<![CDATA[
+			UPDATE				
+				Basis.BIN_BaInfo			
+			SET				
+				BaCode = #bacode#,
+				BaName = #baname#,
+				BIN_OrganizationID = #departId#,
+		]]>
+				<isNotEmpty property="baNameForeign">
+					BaNameForeign = #baNameForeign#,
+				</isNotEmpty>
+				<isEmpty property="baNameForeign">
+					BaNameForeign = null,
+				</isEmpty>
+				<isNotEmpty property="identityCard">
+					IdentityCard = #identityCard#,
+				</isNotEmpty>
+				<isEmpty property="identityCard">
+					IdentityCard = null,
+				</isEmpty>
+				<isNotEmpty property="phone">
+					Phone = #phone#,
+				</isNotEmpty>
+				<isEmpty property="phone">
+					Phone = null,
+				</isEmpty>
+				<isNotEmpty property="mobilePhone">
+					MobilePhone = #mobilePhone#,
+				</isNotEmpty>
+				<isEmpty property="mobilePhone">
+					MobilePhone = null,
+				</isEmpty>
+				<isNotEmpty property="email">
+					Email = #email#,
+				</isNotEmpty>
+				<isEmpty property="email">
+					Email = null,
+				</isEmpty>
+				<isNotEmpty property="address">
+					Address = #address#,
+				</isNotEmpty>
+				<isEmpty property="address">
+					Address = null,
+				</isEmpty>
+				<isNotEmpty property="academic">
+					Academic = #academic#,
+				</isNotEmpty>
+				<isEmpty property="academic">
+					Academic = null,
+				</isEmpty>
+				<isNotEmpty property="birthDay">
+					BirthDay = #birthDay#,
+				</isNotEmpty>
+				<isEmpty property="birthDay">
+					BirthDay = null,
+				</isEmpty>
+				<isNotEmpty property="gender">
+					Gender = #gender#,
+				</isNotEmpty>
+				<isEmpty property="gender">
+					Gender = null,
+				</isEmpty>
+				<isNotEmpty property="maritalStatus">
+					MaritalStatus = #maritalStatus#,
+				</isNotEmpty>
+				<isEmpty property="maritalStatus">
+					MaritalStatus = null,
+				</isEmpty>
+				<isNotEmpty property="originFlag">
+					OriginFlag = #originFlag#,
+				</isNotEmpty>
+				<isEmpty property="originFlag">
+					OriginFlag = '0',
+				</isEmpty>
+			<include refid="BINOLCMINC99.updateSql" />		
+		<![CDATA[				
+			WHERE					
+				BIN_BaInfoID = #baInfoId#
+		]]>
+    </update>
+	
+	<!--查询营业员信息 -->
+	<select id="getBaInfo" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+		<![CDATA[
+			SELECT 						
+				A.BIN_BaInfoID AS baInfoId,
+				A.BIN_EmployeeID AS employeeId,
+				B.NodeID.GetAncestor(1).ToString() AS higher	
+			FROM						
+				Basis.BIN_BaInfo A
+				JOIN Basis.BIN_Employee B ON A.BIN_EmployeeID = B.BIN_EmployeeID			
+			WHERE						
+				A.BIN_OrganizationInfoID = #organizationInfoId# AND
+				A.BIN_BrandInfoID = #brandInfoId# AND
+				A.BaCode = #bacode#
+		]]>
+    </select>
+	
+	<!-- 插入地址信息表  -->
+	<insert id="insertAddrInfo" parameterClass="java.util.HashMap">	
+		<selectKey resultClass="java.lang.Integer" type="post" keyProperty="BIN_AddressInfoID" >
+		<![CDATA[
+	    INSERT INTO BASIS.BIN_AddressInfo (									
+			AddressLine1,								
+			StandardCity,								
+			StandardProvince,								
+			ZipCode,	
+		]]>
+		<include refid="BINOLCMINC99.insertKeySql" />									
+		<![CDATA[								
+		)VALUES (
+			#address#,								
+			#cityId#,								
+			#provinceId#,								
+			#zipCode#,
+		]]>
+		<include refid="BINOLCMINC99.insertValueSql" />
+		<![CDATA[ 
+			) 
+			select SCOPE_IDENTITY() as value
+		]]>
+	    </selectKey>
+	</insert>
+	
+	<!-- 插入员工地址表  -->
+	<insert id="insertEmpAddress" parameterClass="java.util.HashMap">	
+		<![CDATA[
+	   INSERT INTO BASIS.BIN_EmployeeAddress (			
+			BIN_EmployeeID,		
+			BIN_AddressInfoID,		
+			DefaultFlag,	
+		]]>
+		<include refid="BINOLCMINC99.insertKeySql" />									
+		<![CDATA[								
+		)VALUES (
+			#employeeId#,		
+			#addressInfoId#,		
+			#defaultFlag#,
+		]]>
+		<include refid="BINOLCMINC99.insertValueSql" />
+		<![CDATA[ ) ]]>
+	</insert>
+	
+	<!-- 插入员工入退职信息表  -->
+	<insert id="insertEmpQuit" parameterClass="java.util.HashMap">	
+		<![CDATA[
+	    INSERT INTO Basis.BIN_EmployeeQuit(			
+			BIN_EmployeeID,		
+			CommencementDate,
+			DepartureDate,
+			DepartureReason,
+		]]>
+		<include refid="BINOLCMINC99.insertKeySql" />									
+		<![CDATA[								
+		)VALUES (
+			#employeeId#,		
+			CONVERT(Date,#commtDate#),								
+			CONVERT(Date,#depDate#),									
+			#depReason#,
+		]]>
+		<include refid="BINOLCMINC99.insertValueSql" />
+		<![CDATA[ ) ]]>
+	</insert>
+	
+	<!-- 取得岗位类别信息 -->
+	<resultMap id="BINOLBSEMP04.PositionCategory" class="java.util.HashMap">
+		<result property="positionCategoryId" column="BIN_PositionCategoryID"/>
+		<result property="categoryCode" column="CategoryCode"/>
+		<result property="categoryName" column="CategoryName"/>
+	</resultMap>
+	<select id="getPositionCategoryList" parameterClass="java.util.HashMap" resultMap="BINOLBSEMP04.PositionCategory">
+		<![CDATA[
+			SELECT 
+				BIN_PositionCategoryID,
+				CategoryCode,
+		]]>	
+		<isNotEmpty property="language">
+			<isEqual property="language" compareValue="en_US">										
+				CategoryNameForeign AS CategoryName
+			</isEqual>
+			<isEqual property="language" compareValue="zh_CN">										
+				CategoryName AS CategoryName
+			</isEqual>								
+		</isNotEmpty>
+		<isEmpty property="language">
+			CategoryName AS CategoryName
+		</isEmpty>
+		<![CDATA[
+			FROM 
+				Privilege.BIN_PositionCategory
+			WHERE
+				BIN_OrganizationInfoID = #organizationInfoId# AND
+				ValidFlag = '1'
+				
+		]]>
+		<dynamic>
+			<isNotEmpty prepend="AND" property="maintainBa">
+				<isEqual property="maintainBa" compareValue="false">
+					<![CDATA[CategoryCode <> '01']]>
+				</isEqual>
+			</isNotEmpty>
+			<isEmpty prepend="AND" property="maintainBa">
+				<![CDATA[CategoryCode <> '01']]>
+			</isEmpty>
+			<isNotEmpty prepend="AND" property="brandInfoId">
+				BIN_BrandInfoID=#brandInfoId#
+			</isNotEmpty>
+		</dynamic>	
+		<![CDATA[
+			ORDER BY CategoryCode
+		]]>
+    </select>
+	
+	<!--根据岗位ID取得岗位信息-->
+	<select id="getPositionCategoryInfo" parameterClass="java.util.HashMap" resultMap="BINOLBSEMP04.PositionCategory">
+		<![CDATA[
+			SELECT 
+				BIN_PositionCategoryID,
+				CategoryCode,
+		]]>	
+		<isNotEmpty property="language">
+			<isEqual property="language" compareValue="en_US">										
+				CategoryNameForeign AS CategoryName
+			</isEqual>
+			<isEqual property="language" compareValue="zh_CN">										
+				CategoryName AS CategoryName
+			</isEqual>								
+		</isNotEmpty>
+		<isEmpty property="language">
+			CategoryName AS CategoryName
+		</isEmpty>
+		<![CDATA[
+			FROM 
+				Privilege.BIN_PositionCategory
+			WHERE
+				BIN_PositionCategoryID = #positionCategoryId#
+		]]>
+	</select>
+    
+    <!-- 插入用户信息  -->
+	<insert id="insertUser" parameterClass="java.util.HashMap">	
+		<![CDATA[
+		INSERT INTO Privilege.BIN_User
+                   (BIN_OrganizationInfoID,
+				    BIN_EmployeeID,
+                    LonginName,
+                    LonginPhone,
+                    LonginEmail,
+                    PassWord,
+                    BIFlag,				
+                    InformDate,
+                    ExpireDate,
+		]]>	
+			<include refid="BINOLCMINC99.insertKeySql" />									
+		<![CDATA[								
+		)VALUES									
+				 (#organizationInfoId#,
+				  #employeeId#,
+				  #longinName#,
+				  #longinPhone#,
+				  #longinEmail#,
+				  #passWord#,		
+				  #biFlag#,		
+                  #informDate#,
+                  #expireDate#, 
+		]]>
+		     <include refid="BINOLCMINC99.insertValueSql" />
+		<![CDATA[
+		)
+		]]>
+	</insert> 
+	
+	<!-- 插入用户信息(配置表)  -->
+	<insert id="insertUserConf" parameterClass="java.util.HashMap">	
+		<![CDATA[
+		INSERT INTO dbo.BIN_LoginConfig
+                   (LonginName,
+				    DataBaseName,		
+		]]>	
+			<include refid="BINOLCMINC99.insertKeySql" />									
+		<![CDATA[								
+		)VALUES									
+				 (#longinName#,
+				  #dataBaseName#,			
+		]]>
+		     <include refid="BINOLCMINC99.insertValueSql" />
+		<![CDATA[
+		)
+		]]>
+	</insert> 
+    
+    <!-- 取得新节点 -->
+	<select id="getNewEmpNodeId" parameterClass="java.util.HashMap" resultClass="java.lang.String">
+		<![CDATA[
+			SELECT 
+				CONVERT(hierarchyid,#path#).GetDescendant(max(NodeID), NULL).ToString() AS newNodeId
+        	FROM 
+        		Basis.BIN_Employee
+            WHERE 
+            	NodeID.GetAncestor(1)=#path#
+		]]>
+    </select>
+    
+    <!-- 部门结果Map -->
+	<resultMap id="BINOLBSEMP04.Organization" class="java.util.HashMap">
+		<result property="departId" column="BIN_OrganizationID"/>
+		<result property="departName" column="DepartName"/>
+	</resultMap>
+    <!-- 取得部门List-->
+	<select id="getOrgList" parameterClass="java.util.HashMap" resultMap="BINOLBSEMP04.Organization">
+		<![CDATA[
+			SELECT 													
+				BIN_OrganizationID
+		]]>
+		<dynamic>
+			<isNotEmpty property="language">
+				<isEqual property="language" compareValue="en_US">										
+				,'('+DepartCode+')'+NameForeign AS DepartName
+				</isEqual>
+				<isEqual property="language" compareValue="zh_CN">										
+				,'('+DepartCode+')'+DepartName AS DepartName
+				</isEqual>								
+			</isNotEmpty>
+			<isEmpty property="language">
+				,'('+DepartCode+')'+DepartName AS DepartName
+			</isEmpty>
+		</dynamic>
+		<![CDATA[											
+			FROM
+				Basis.BIN_Organization
+			WHERE
+				BIN_OrganizationInfoID = #organizationInfoId# AND
+				ValidFlag = '1' AND
+				Type <> '4'
+		]]>
+		<dynamic>
+			<isNotEmpty prepend="AND" property="brandInfoId">												
+				BIN_BrandInfoID = #brandInfoId#
+			</isNotEmpty>
+		</dynamic>
+		<![CDATA[	
+			ORDER BY Type
+		]]>
+	</select>
+	
+    <!-- 根据部门ID取得部门信息-->
+	<select id="getDepartInfo" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+		<![CDATA[
+			SELECT 													
+				Path AS path,
+				Type AS type								
+			FROM
+				Basis.BIN_Organization
+			WHERE
+				BIN_OrganizationID=#departId#
+		]]>
+	</select>
+	
+	<!-- 插入员工管辖部门对应表  -->
+	<insert id="insertEmployeeDepart" parameterClass="java.util.HashMap">	
+		<![CDATA[
+	   INSERT INTO Privilege.BIN_EmployeeDepart (			
+			BIN_EmployeeID,		
+			BIN_OrganizationID,		
+			DepartType,
+			ManageType,	
+		]]>
+		<include refid="BINOLCMINC99.insertKeySql" />									
+		<![CDATA[								
+		)VALUES (
+			#employeeId#,		
+			#organizationId#,		
+			#departType#,
+			#manageType#,
+		]]>
+		<include refid="BINOLCMINC99.insertValueSql" />
+		<![CDATA[ ) ]]>
+	</insert>
+	
+	<!-- 删除员工管辖部门对应关系  -->
+	<delete id="delEmployeeDepart" parameterClass="java.util.HashMap">
+		<![CDATA[
+		DELETE FROM
+			Privilege.BIN_EmployeeDepart
+		WHERE
+			ManageType = '1' AND
+			BIN_OrganizationID IN
+		]]>
+		<iterate property="organizationIdList" open="(" close=")" conjunction=","> 
+			 #organizationIdList[].organizationId#
+		</iterate>
+	</delete>
+	<!-- 查询管辖组织结构的人 -->
+	<select id="getEmployeeDepart" parameterClass="java.util.HashMap" resultClass="java.lang.String">
+		SELECT 
+			BIN_EmployeeID
+		FROM 
+			Privilege.BIN_EmployeeDepart
+		WHERE
+			ManageType = '1' AND
+			BIN_OrganizationID = #organizationId#
+	</select>
+	
+	<!-- 插入关注员工表  -->
+	<insert id="insertLikeEmployee" parameterClass="java.util.HashMap">	
+		<![CDATA[
+	   INSERT INTO Privilege.BIN_LikeEmployee (			
+			BIN_EmployeeID,		
+			BIN_LikeEmployeeID,		
+		]]>
+		<include refid="BINOLCMINC99.insertKeySql" />									
+		<![CDATA[								
+		)VALUES (
+			#employeeId#,		
+			#likeEmployeeId#,		
+		]]>
+		<include refid="BINOLCMINC99.insertValueSql" />
+		<![CDATA[ ) ]]>
+	</insert>
+	
+	<!-- 验证登录帐号是否唯一  -->
+    <select id="getUserIdByLgName" parameterClass="java.util.HashMap" resultClass="java.lang.String">
+    	<![CDATA[
+			SELECT	
+				BIN_UserID
+			FROM 
+				Privilege.BIN_User
+			WHERE
+				LonginName = #longinName#
+		]]>										
+    </select>
+    
+    <!-- 验证手机是否唯一  -->
+    <select id="getEmployeeIdByMobile" parameterClass="java.util.HashMap" resultClass="java.lang.String">
+    	<![CDATA[
+			SELECT	
+				BIN_EmployeeID
+			FROM 
+				Basis.BIN_Employee
+			WHERE				
+				BIN_OrganizationInfoID = #organizationInfoId# AND
+				BIN_BrandInfoID = #brandInfoId#  AND
+				MobilePhone = #mobilePhone#
+		]]>		
+			<isNotEmpty property="employeeID">
+			    AND BIN_EmployeeID != #employeeID#
+			</isNotEmpty>									
+    </select>
+    
+    <!-- 验证邮箱是否唯一  -->
+    <select id="getEmployeeIdByEmail" parameterClass="java.util.HashMap" resultClass="java.lang.String">
+    	<![CDATA[
+			SELECT	
+				BIN_EmployeeID
+			FROM 
+				Basis.BIN_Employee
+			WHERE
+				Email = #email#
+		]]>										
+    </select>
+    
+    <!-- 取得密码安全配置信息  -->
+	<select id="getPassWordConfig" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+	<![CDATA[
+		SELECT	
+			A.BIN_PasswordConfigID AS passwordConfigId,
+			A.Complexity AS complexity,
+			A.Length AS minLength,
+			A.MaxLength AS maxLength,
+			A.IsEncryption AS isEncryption
+		FROM		
+			Privilege.BIN_PasswordConfig A
+	  	WHERE 
+	  		A.BIN_OrganizationInfoID = #organizationInfoId# AND
+			A.BIN_BrandInfoID = #brandInfoId# AND
+			A.ValidFlag = '1'   
+	]]> 
+	</select>
+	
+	<!-- 取得需要变更上级部门的柜台List  -->
+	<select id="getMoveCounterList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+	<![CDATA[
+		SELECT	
+			A.BIN_OrganizationID AS organizationId,
+			A.Path AS departPath
+		FROM		
+			Basis.BIN_Organization A
+			LEFT JOIN Basis.BIN_Organization B ON A.NodeID.GetAncestor(1) = B.NodeID
+	  	WHERE 
+	  		(B.BIN_OrganizationID IS NULL OR B.BIN_OrganizationID <> #departId#) AND
+			A.Type = '4' AND
+			A.BIN_OrganizationID IN
+	]]>	
+		<iterate property="organizationIdList" open="(" close=")" conjunction=","> 
+			#organizationIdList[].organizationId#
+		</iterate>	
+	</select>
+	
+	<!-- 取得原管辖的柜台信息List  -->
+	<select id="getOldfollowCouList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+	<![CDATA[
+		SELECT	
+			A.BIN_OrganizationID AS organizationId,
+			A.Path AS departPath
+		FROM		
+			Basis.BIN_Organization A
+	  	WHERE 
+			A.BIN_OrganizationID IN
+	]]>	
+		<iterate property="oldfollowDepart" open="(" close=")" conjunction=","> 
+			#oldfollowDepart[]#
+		</iterate>	
+	</select>
+	
+	<!-- 取得用户密码  -->
+	<select id="getUserPassWord" parameterClass="java.util.HashMap" resultClass="java.lang.String">
+		<![CDATA[ 
+			SELECT 
+				A.PassWord
+			FROM
+				Privilege.BIN_User A
+			WHERE 
+				A.BIN_UserID = #userId# AND
+				A.ValidFlag = '1' 
+		]]>
+	</select>
+	
+	<!-- 取得品牌code -->
+	<select id="getBrandCode" parameterClass="java.util.HashMap" resultClass="java.lang.String" >
+		<![CDATA[
+			SELECT
+				BrandCode AS brandCode															
+			FROM
+				Basis.BIN_BrandInfo
+			WHERE
+				BIN_BrandInfoID = #brandInfoId# AND
+				ValidFlag='1'
+		]]>
+    </select>
+    
+    <!-- 根据员工节点取得员工所属部门节点 -->
+	<select id="getOrgPathByEmpPath" parameterClass="java.util.HashMap" resultClass="java.lang.String" >
+		<![CDATA[
+			SELECT
+				B.Path														
+			FROM
+				Basis.BIN_Employee A
+				LEFT JOIN Basis.BIN_Organization B ON A.BIN_OrganizationID = B.BIN_OrganizationID
+			WHERE
+				A.Path = #higher#
+		]]>
+    </select>
+    
+    <!-- 验证登录帐号是否唯一  -->
+    <select id="getLoginConfigByLgName" parameterClass="java.util.HashMap" resultClass="java.lang.String">
+    	<![CDATA[
+			SELECT	
+				LonginName
+			FROM 
+				dbo.BIN_LoginConfig
+			WHERE
+				LonginName = #longinName#
+		]]>										
+    </select>
+    
+    
+     <!-- 验证身份证是否唯一  -->
+    <select id="validateIdentityCard" parameterClass="java.util.HashMap" resultClass="String">
+			SELECT	
+				EmployeeCode AS employeeCode
+			FROM 
+				Basis.BIN_Employee
+			WHERE
+				BIN_OrganizationInfoID = #organizationInfoId# AND
+				BIN_BrandInfoID = #brandInfoId#  AND
+				IdentityCard = #identityCard#
+				<isNotEmpty property="employeeID">
+				    AND BIN_EmployeeID != #employeeID#
+				</isNotEmpty>				
+    </select>
+</sqlMap>

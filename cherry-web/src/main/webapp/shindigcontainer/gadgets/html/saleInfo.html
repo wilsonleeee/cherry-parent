@@ -1,0 +1,424 @@
+<!doctype html>
+<html>
+<head>
+	<meta charset="utf-8">
+	<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+	<script type="text/javascript" src="../../../js/lib/jquery-1.7.1.min.js"></script>
+	<script type="text/javascript" src="../../../js/lib/excanvas.min.js"></script>
+	<script type="text/javascript" src="../../../js/lib/jquery.flot.min.js"></script>
+	<script type="text/javascript" src="../../../js/lib/jquery.flot.pie.min.js"></script>
+	<script type="text/javascript" src="../../../js/lib/jquery.flot.stack.min.js"></script>
+	<script type="text/javascript" src="../../../js/lib/jquery.atmosphere.js"></script>
+	<script type="text/javascript" src="../../../js/common/cherryOpenSocial.js"></script>
+	<script type="text/javascript" src="../../../js/common/commonAjax.js"></script>
+	
+    <style type="text/css">
+    	#saleContent {
+    		padding: 2px 10px 10px 10px;
+    		font-size: 14px;
+    	}
+    	.section-header {
+    		padding: 5px 0px 5px 0px;
+    		font-weight: bold;
+    	}
+    	.section-content {
+    		border-top: 1px solid #E5E5E5;
+    	}
+    	a {
+	  		color: #3366FF;
+    		text-decoration: none;
+	  	}
+	  	a:hover {
+	  		color: #FF6D06;
+    		text-decoration: underline;
+	  	}
+    	#saleCountInfo .section-content {
+    		border-top: medium none menu;
+    	}
+    	#saleCountInfo {
+    		margin: 0 0 10px 0;
+    	}
+    	#saleCountInfo #amount {
+    		margin: 0 0 3px 0;
+    	}
+    	#saleCountInfo .number {
+    		color:red;
+    		margin:0 3px 0 0;
+    	}
+    	#saleCountInfo #salePieChart {
+    		width:100%;
+    		clear: both;
+    	}
+    	#saleCountInfo #salePieChartType {
+    		float:left;
+    		margin: 0 0 5px 0;
+    	}
+    	#saleCountInfo #salePieChartType ul {
+    		list-style:none;
+    		margin: 0;
+	    	padding: 0;
+    	}
+    	#saleCountInfo #salePieChartType li {
+    		border: 1px solid #CCCCCC;
+    		cursor: pointer;
+		    float: left;
+		    margin: 0 3px 0 0;
+		    padding: 2px 3px;
+		    font-size: 13px;
+    	}
+    	
+    	#saleCountInfo #salePieChartType li.selected {
+    		background: none repeat scroll 0 0 #FFFCC2;
+		    border: 1px solid #FAD163;
+   			color: #3366FF;
+    	}
+    	
+	  	#saleInfo ul {
+	    	list-style:none;
+	    	margin: 0 0 10px 0;
+	    	padding: 0;
+	  	}
+	  	#saleInfo ul li {
+	    	padding: 10px 0 5px 0;
+	    	border-bottom: 1px solid #E5E5E5;
+	  	}
+	  	#saleInfo ul li:hover {
+	    	background-color: #FFFEDD;
+	  	}
+	  	#waiting {
+	  		height:200px;
+	  	}
+	  	#waiting div {
+	  		background-image: url("/Cherry/css/common/blueprint/images/loading.gif");
+		    background-position: 20px center;
+		    background-repeat: no-repeat;
+		    height: 50px;
+		    width: 50px;
+		    left: 40%;
+		    top: 20%;
+		    position: absolute;
+		    z-index: 100;
+	  	}
+	</style>
+</head>
+<body>	
+	<div id="waiting"><div></div></div>
+	<div id="saleContent" style="display:none">
+      <div class="section" id="saleCountInfo">
+	      <div class="section-header">
+	      	<div id="amount"><label></label><span class="number"></span><span class="unit"></span></div>
+	      	<div id="quantity"><label></label><span class="number"></span><span class="unit"></span></div>
+	      </div>
+	      <div class="section-content">
+	        <div id="salePieChartType" style="display: none;">
+	          <ul>
+	            <li onclick="changePlotPieType(this,0);return false;" class="selected" id="amountProportion"></li>
+	            <li onclick="changePlotPieType(this,1);return false;" id="quantityProportion"></li>
+	          </ul>
+	        </div>
+	        <div id="salePieChart"></div>
+	      </div>
+      </div>
+      
+      <div class="section" id="saleInfo">
+	      <div class="section-content">
+	        <ul></ul>
+	      </div>
+      </div>
+    </div>
+    
+    <script type='text/javascript'>
+	
+	var baseUrl = window.parent.getBaseUrl();
+	var gadgetPrefs = window.parent.getGadgetPrefs();
+	var TotalAmount = 0;
+	var TotalQuantity = 0;
+	var memAmount = 0;
+	var notMemAmount = 0;
+	var memQuantity = 0;
+	var notMemQuantity = 0;
+	var plotPieType = 0;
+	var curDate = "";
+	
+	function formatNumber(s, n) {
+		if(s == null || s == undefined || s === "") {
+			return "";
+		}
+		n = n > 0 && n <= 20 ? n : 2;
+		s = parseFloat((s + "").replace(/[^\d\.-]/g, "")).toFixed(n) + "";
+		var l = s.split(".")[0].split("").reverse(),
+		r = s.split(".")[1];
+		t = "";
+		for(i = 0; i < l.length; i ++ ) {
+			t += l[i] + ((i + 1) % 3 == 0 && (i + 1) != l.length ? "," : "");
+		}
+		t = t.replace(/,-/g, '-');
+		if(parseInt(r, 10) == 0) {
+			return t.split("").reverse().join("");
+		} else {
+			return t.split("").reverse().join("") + "." + r;
+		}
+	}
+	
+	function accAdd(arg1, arg2) {
+	    var r1,r2,m;
+	    try{r1=arg1.toString().split(".")[1].length}catch(e){r1=0}
+	    try{r2=arg2.toString().split(".")[1].length}catch(e){r2=0}
+	    m=Math.pow(10,Math.max(r1,r2))
+	    return (arg1*m+arg2*m)/m
+	}
+	
+	function getContext(dataObj) {
+		var context = "";
+		var temp = "";
+		var params = [];
+		var userName = dataObj.UserPost + '<a href="'+baseUrl+'/basis/BINOLBSEMP02_init?employeeCode='+dataObj.UserCode+'" onclick="window.parent.openWin(this);return false;">'+dataObj.UserName+'</a>';
+		var counterName = (dataObj.DeptCode ? '<a href="'+baseUrl+'/basis/BINOLBSCNT02_init?counterCode='+dataObj.DeptCode+'" onclick="window.parent.openWin(this);return false;">'+dataObj.DeptName+'</a>' : '<a href="#">'+gadgetPrefs.getMsg("unKnownCouName")+'</a>');
+		var member = (dataObj.memberType == '1' ? gadgetPrefs.getMsg("member")+(dataObj.TradeEntityName ? '（<a href="'+baseUrl+'/mb/BINOLMBMBM10_init?memCode='+dataObj.TradeEntityCode+'" onclick="window.parent.openWin(this,{width:window.screen.width-10,height:window.screen.height-35});return false;">'+dataObj.TradeEntityName+'</a>）' : '') : '');
+		var busType = "";
+		if("NS" == dataObj.saleType) {
+			busType = gadgetPrefs.getMsg("ns");
+		} else if("SR" == dataObj.saleType) {
+			busType = gadgetPrefs.getMsg("sr");
+		} else if("PX" == dataObj.saleType) {
+			busType = gadgetPrefs.getMsg("px");
+		}
+		var business = '<a href="'+baseUrl+'/pt/BINOLPTRPS14_init?billCode='+dataObj.TradeNoIF+'" onclick="window.parent.openWin(this);return false;">'+busType+'</a>';
+		var amount = formatNumber(dataObj.TotalAmount,2);
+		var quantity = formatNumber(dataObj.TotalQuantity,2);
+		if("NS" == dataObj.saleType) {
+			temp = gadgetPrefs.getMsg("SALE_NS");
+			params.push(userName);
+			params.push(counterName);
+			params.push(member);
+			params.push(business);
+			params.push(amount);
+			params.push(quantity);
+		} else if("SR" == dataObj.saleType) {
+			temp = gadgetPrefs.getMsg("SALE_SR");
+			params.push(userName);
+			params.push(counterName);
+			params.push(member);
+			params.push(business);
+			params.push(amount);
+			params.push(quantity);
+		} else if("PX" == dataObj.saleType) {
+			temp = gadgetPrefs.getMsg("SALE_PX");
+			params.push(userName);
+			params.push(counterName);
+			params.push(member);
+			params.push(business);
+			params.push(amount);
+			params.push(quantity);
+		}
+		context = parsingTemplate(temp, params);
+		if(context) {
+			context = '<li>' + context + '<br/><span style="color:#999999;">'+dataObj.OccurTime+'</span></li>';
+		}
+		return context;
+	}
+	
+	function plotPieInit() {
+		var data = [];
+		var memObject = {};
+		var notMemObject = {};
+		var unit = "";
+		var digit = 2;
+		memObject.label = gadgetPrefs.getMsg("memSale");
+		notMemObject.label = gadgetPrefs.getMsg("unMemSale");
+		if(plotPieType == '0') {
+			if(memAmount == 0 && notMemAmount == 0) {
+				$("#salePieChartType").hide();
+				$("#salePieChart").empty();
+				$("#salePieChart").css("height","0");
+				return;
+			}
+			memObject.data = memAmount;
+			notMemObject.data = notMemAmount;
+			digit = 2;
+			unit = gadgetPrefs.getMsg("yuan");
+		} else if(plotPieType == '1') {
+			if(memQuantity == 0 && notMemQuantity == 0) {
+				$("#salePieChartType").hide();
+				$("#salePieChart").empty();
+				$("#salePieChart").css("height","0");
+				return;
+			}
+			memObject.data = memQuantity;
+			notMemObject.data = notMemQuantity;
+			digit = 2;
+			unit = gadgetPrefs.getMsg("salePart");
+		}
+		data.push(memObject);
+		data.push(notMemObject);
+		
+		$("#salePieChartType").show();
+		$("#salePieChart").css({ "width": "300px", "height": "240px" });
+		$.plot($("#salePieChart"), data,
+		{
+	        colors:["#75A11B", "#F2AA08", "#cb4b4b", "#4da74d", "#9440ed"],
+	        series: {
+	            pie: {
+	                show: true,
+	                radius: 1,
+	                label: {
+	                    show: true,
+	                    radius: 2/4,
+	                    formatter: function(label, series){
+	                        return '<div style="font-size:8pt;text-align:center;padding:2px;color:white;">'+label+'<br/>'+formatNumber(series.data.toString().split(",")[1],digit)+unit+'<br/>'+Math.round(series.percent)+'%</div>';
+	                    }
+	                }
+	            }
+	        },
+	        legend: {
+	            show: false
+	        }
+		});
+	}
+	
+	function changePlotPieType(object, type) {
+		$(object).addClass("selected");
+		$(object).siblings().removeClass("selected");
+		if(type == 0) {
+			plotPieType = 0;
+		} else {
+			plotPieType = 1;
+		}
+		plotPieInit();
+	}
+	
+	function setSaleCountInfo(param, flag) {
+		var amount = param.TotalAmount ? param.TotalAmount : 0;
+		var quantity = param.TotalQuantity ? param.TotalQuantity : 0;
+		if(flag) {
+			TotalAmount = amount;
+			TotalQuantity = quantity;
+			memAmount = param.memCount.amount ? param.memCount.amount : 0;
+			memQuantity = param.memCount.quantity ? param.memCount.quantity : 0;
+			notMemAmount = param.notMemCount.amount ? param.notMemCount.amount : 0;
+			notMemQuantity = param.notMemCount.quantity ? param.notMemCount.quantity : 0;
+		} else {
+			if(param.saleType == 'SR') {
+				amount = -amount;
+				quantity = -quantity;
+			}
+			TotalAmount = accAdd(TotalAmount,amount);
+			TotalQuantity = accAdd(TotalQuantity,quantity);
+			if(param.memberType == '1') {
+				memAmount = accAdd(memAmount,amount);
+				memQuantity = accAdd(memQuantity,quantity);
+			} else {
+				notMemAmount = accAdd(notMemAmount,amount);
+				notMemQuantity = accAdd(notMemQuantity,quantity);
+			}
+		}
+		var $amount = $("#saleCountInfo #amount").find('.number');
+		var $quantity = $("#saleCountInfo #quantity").find('.number');
+		$amount.html(formatNumber(TotalAmount,2));
+		$quantity.html(formatNumber(TotalQuantity,2));
+	}
+	
+	function subscribeResponse(data) {
+		if(data.indexOf('<!-- EOD -->') > -1) {
+			return false;
+		}
+		var dataObj = eval('('+data+')');
+		var context = getContext(dataObj);
+		if(!context) {
+			return false;
+		}
+		var $li = $('#saleInfo').find('li');
+		if($li.length > 0) {
+			$li.first().before(context);
+           	if($li.length >= 10) {
+           		$li.last().remove();
+           	}
+       	} else {
+       		$("#saleInfo").find("ul").html(context);
+       	}
+       	var curTime = dataObj.OccurTime;
+       	var counterKind = dataObj.CounterKind ? dataObj.CounterKind : "0";
+       	if(curTime && curTime.length > 10 && curTime.substring(0,10) == curDate && counterKind == "0") {
+       		setSaleCountInfo(dataObj,false);
+       		plotPieInit();
+       	}
+       	adjustHeight();
+        $li = $('#saleInfo').find('li');
+		$li.first().hide().slideDown('5000');
+	}
+	
+	function render(data) {
+		$("#waiting").hide();
+		$("#saleContent").show();
+		var $ul = $("#saleInfo").find("ul");
+		$ul.empty();
+		data = eval('('+data+')');
+		if(data.saleInfoMes) {
+			for(var i = 0; i < data.saleInfoMes.length; i++) {
+				var dataObj = data.saleInfoMes[i];
+				var context = getContext(dataObj);
+				if(context) {
+					$ul.append(context);
+				}
+			}
+		}
+		$ul.next().remove();
+		if(data.pageNo) {
+			$ul.after('<span><a href="#" onclick="fetchSaleInfo({pageNo:\''+data.pageNo+'\'},false);return false;">'+gadgetPrefs.getMsg("moreButton")+'</a></span>');
+		}
+		curDate = data.sysDate;
+		setSaleCountInfo(data.saleCountInfo,true);
+		plotPieInit();
+		adjustHeight();
+	    subscribeRequest(baseUrl + '/pubsub/saleInfo', subscribeResponse);
+	}
+	
+	function renderMore(data) {
+		data = eval('('+data+')');
+		var $ul = $("#saleInfo").find("ul");
+		if(data.saleInfoMes) {
+			for(var i = 0; i < data.saleInfoMes.length; i++) {
+				var dataObj = data.saleInfoMes[i];
+				var context = getContext(dataObj);
+				if(context) {
+					$ul.append(context);
+				}
+			}
+		}
+		$ul.next().remove();
+		if(data.pageNo) {
+			$ul.after('<span><a href="#" onclick="fetchSaleInfo({pageNo:\''+data.pageNo+'\'}, false);return false;">'+gadgetPrefs.getMsg("moreButton")+'</a></span>');
+		}
+		adjustHeight();
+	}
+	
+	function fetchSaleInfo(param, flag) {
+	   	var url = baseUrl + "/gd/saleInfo";
+	   	param.userInfo = window.parent.getUserInfo();
+	   	if(flag) {
+	   		ajaxRequest(url, {"data":JSON.stringify(param)}, render);
+	   	} else {
+	   		ajaxRequest(url, {"data":JSON.stringify(param)}, renderMore);
+	   	}
+	}
+	
+	function init() {
+		$("#waiting").show();
+		$("#saleContent").hide();
+		$("#saleCountInfo #amount").find('label').html(gadgetPrefs.getMsg("totalAmount")+"：");
+		$("#saleCountInfo #quantity").find('label').html(gadgetPrefs.getMsg("totalQuantity")+"：");
+		$("#saleCountInfo #amount").find('.unit').html(gadgetPrefs.getMsg("yuan"));
+		$("#saleCountInfo #quantity").find('.unit').html(gadgetPrefs.getMsg("salePart"));
+		$("#amountProportion").html(gadgetPrefs.getMsg("amountProportion"));
+		$("#quantityProportion").html(gadgetPrefs.getMsg("quantityProportion"));
+		fetchSaleInfo({pageNo:'1'}, true);
+	}
+	
+	$(function(){
+		init();
+	});
+	
+	</script>
+</body>
+</html>    
+	

@@ -1,0 +1,319 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sqlMap PUBLIC "-//iBATIS.com//DTD SQL Map 2.0//EN" "http://ibatis.apache.org/dtd/sql-map-2.dtd">
+<sqlMap namespace="BINOLWOSET01">	
+	<sql id="queryBAInfo">
+		<![CDATA[
+			SELECT
+				A.BIN_EmployeeID AS employeeId,
+				B.EmployeeCode AS employeeCode,
+				B.EmployeeName AS employeeName,
+				B.IdentityCard AS identityCard,
+				B.MobilePhone AS mobilePhone
+			FROM
+				Basis.BIN_EmployeeCounter A
+				LEFT JOIN Basis.BIN_Employee B ON A.BIN_EmployeeID = B.BIN_EmployeeID
+			WHERE
+				A.BIN_OrganizationID = #organizationId# AND
+				A.ValidFlag='1'
+		]]>
+			<isNotEmpty prepend="AND" property="employeeCodeQ">
+				B.EmployeeCode like '%' + #employeeCodeQ# + '%'
+			</isNotEmpty>
+			<isNotEmpty prepend="AND" property="employeeNameQ">
+				B.EmployeeName like '%' + #employeeNameQ# + '%'
+			</isNotEmpty>	
+			<isNotEmpty prepend="AND" property="identityCardQ">
+				B.IdentityCard like '%' + #identityCardQ# + '%'
+			</isNotEmpty>
+			<isNotEmpty prepend="AND" property="mobilePhoneQ">
+				B.MobilePhone like '%' + #mobilePhoneQ# + '%'
+			</isNotEmpty>
+	</sql>
+	
+	<!-- 查询BA数量  -->
+    <select id="getBAInfoCount" parameterClass="java.util.HashMap" resultClass="java.lang.Integer">
+    	<![CDATA[
+			SELECT COUNT(1) AS count FROM (
+		]]>	
+		<include refid="BINOLWOSET01.queryBAInfo" />	
+		<![CDATA[	
+			)SORT_T1
+		]]>
+    </select>
+	
+	<!-- 查询BA信息List -->
+    <select id="getBAInfoList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+       	<include refid="BINOLCMINC99.pageheader" />
+		<include refid="BINOLWOSET01.queryBAInfo" />
+		<include refid="BINOLCMINC99.pagefooter" />
+    </select>
+    
+    <!-- 查询BA是否存在  -->
+    <select id="getEmployeeId" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+    	<![CDATA[
+			SELECT Top 1	
+				A.BIN_EmployeeID AS employeeId,
+				A.EmployeeCode AS employeeCode,
+				A.EmployeeName AS employeeName,
+				A.IdentityCard AS identityCard,
+				A.MobilePhone AS mobilePhone
+			FROM 
+				Basis.BIN_Employee A
+			WHERE
+				A.ValidFlag = 1 AND 
+				A.BIN_OrganizationInfoID = #organizationInfoId# AND
+				A.BIN_BrandInfoID = #brandInfoId#
+		]]>
+			<isNotEmpty property="employeeCode" prepend="AND">
+				A.EmployeeCode = #employeeCode#
+			</isNotEmpty>	
+			<isNotEmpty property="identityCard" prepend="AND">
+				A.IdentityCard = #identityCard#
+			</isNotEmpty>	
+			<isNotEmpty property="mobilePhone" prepend="AND">
+				A.MobilePhone = #mobilePhone#
+			</isNotEmpty>																		
+    </select>
+    
+	<!-- 插入员工信息  -->
+	<insert id="insertEmployee" parameterClass="java.util.HashMap">	
+		<selectKey resultClass="java.lang.Integer" type="post" keyProperty="BIN_EmployeeID" >
+		<![CDATA[
+	    INSERT INTO Basis.BIN_Employee (
+	   		BIN_OrganizationInfoID,				
+			BIN_BrandInfoID,
+			BIN_OrganizationID,
+			BIN_PositionCategoryID,	
+			NodeID,		
+			EmployeeCode,			
+			EmployeeName,
+			IdentityCard,
+			MobilePhone,
+		]]>
+		<include refid="BINOLCMINC99.insertKeySql" />									
+		<![CDATA[								
+		)VALUES (
+			#organizationInfoId#,
+			#brandInfoId#,		
+			#organizationId#,
+			#positionCategoryId#,		
+			#newNodeId#,	
+			#employeeCode#,			
+			#employeeName#,	
+			#identityCard#,	
+			#mobilePhone#,	
+		]]>
+		<include refid="BINOLCMINC99.insertValueSql" />
+		<![CDATA[ 
+			) 
+			select SCOPE_IDENTITY() as value
+		]]>
+	    </selectKey>
+	</insert>
+	
+	<!-- 插入BA信息 -->
+	<insert id="insertBaInfo" parameterClass="java.util.HashMap">
+		<![CDATA[
+			INSERT INTO	
+				Basis.BIN_BaInfo
+				(
+					BIN_OrganizationInfoID,
+					BIN_BrandInfoID,
+					BIN_EmployeeID,
+					BIN_OrganizationID,
+					BaCode,
+					BaName,
+					BaType,
+					IdentityCard,
+					MobilePhone,
+		]]>
+			<include refid="BINOLCMINC99.insertKeySql" />		
+		<![CDATA[
+				)VALUES
+				(		
+					#organizationInfoId#,
+					#brandInfoId#,
+					#employeeId#,
+					#organizationId#,
+					#employeeCode#,
+					#employeeName#,
+					'1',
+					#identityCard#,	
+					#mobilePhone#,	
+		]]>
+			<include refid="BINOLCMINC99.insertValueSql" />		
+		<![CDATA[
+				)
+    	]]>   				
+    </insert>
+    
+    <!-- 插入员工柜台关系 -->
+	<insert id="insertEmpCou" parameterClass="java.util.HashMap">
+		<![CDATA[
+			INSERT INTO	
+				Basis.BIN_EmployeeCounter
+				(
+					BIN_EmployeeID,
+					BIN_OrganizationID,
+		]]>
+			<include refid="BINOLCMINC99.insertKeySql" />		
+		<![CDATA[
+				)VALUES
+				(		
+					#employeeId#,
+					#organizationId#,
+		]]>
+			<include refid="BINOLCMINC99.insertValueSql" />		
+		<![CDATA[
+				)
+    	]]>   				
+    </insert>
+    
+    <!-- 更新员工信息  -->
+	<update id="updEmpInfo" parameterClass="java.util.HashMap">
+		<![CDATA[
+		UPDATE
+			Basis.BIN_Employee
+		SET
+			EmployeeName = #employeeName#,	
+			IdentityCard = #identityCard#,	
+			MobilePhone = #mobilePhone#,		
+		]]>
+		<include refid="BINOLCMINC99.updateSql" />
+		<![CDATA[
+		WHERE
+			BIN_EmployeeID = #employeeId#
+		]]>
+	</update>
+	
+	<!-- 更新BA信息  -->
+	<update id="updBAInfo" parameterClass="java.util.HashMap">
+		<![CDATA[
+		UPDATE
+			Basis.BIN_BaInfo
+		SET
+			BaName = #employeeName#,
+			IdentityCard = #identityCard#,	
+			MobilePhone = #mobilePhone#,				
+		]]>
+		<include refid="BINOLCMINC99.updateSql" />
+		<![CDATA[
+		WHERE
+			BIN_EmployeeID = #employeeId#
+		]]>
+	</update>
+    
+    <!-- 删除员工柜台关系  -->
+	<delete id="delEmpCou" parameterClass="java.util.HashMap">
+		<![CDATA[
+		DELETE FROM
+			Basis.BIN_EmployeeCounter
+		WHERE
+			BIN_OrganizationID = #organizationId# AND
+			BIN_EmployeeID = #employeeId#
+		]]>
+	</delete>
+	
+	<!-- 验证员工柜台关系是否存在  -->
+    <select id="getEmpCouInfo" parameterClass="java.util.HashMap" resultClass="java.lang.Integer">
+    	<![CDATA[
+			SELECT	
+				A.BIN_EmployeeID AS employeeId 
+			FROM 
+				Basis.BIN_EmployeeCounter A
+			WHERE
+				A.BIN_OrganizationID = #organizationId# AND
+				A.BIN_EmployeeID = #employeeId#
+		]]>										
+    </select>
+    
+    <!-- 取得新节点 -->
+	<select id="getNewEmpNodeId" parameterClass="java.util.HashMap" resultClass="java.lang.String">
+		<![CDATA[
+			SELECT 
+				CONVERT(hierarchyid,#path#).GetDescendant(max(NodeID), NULL).ToString() AS newNodeId
+        	FROM 
+        		Basis.BIN_Employee
+            WHERE 
+            	NodeID.GetAncestor(1)=#path#
+		]]>
+    </select>
+    
+    <!-- 根据岗位代码取得岗位ID -->
+	<select id="getPosIdByCode" parameterClass="java.util.HashMap" resultClass="java.lang.Integer">
+		<![CDATA[
+			SELECT 
+				A.BIN_PositionCategoryID AS positionCategoryId
+			FROM 
+				Privilege.BIN_PositionCategory A
+			WHERE
+				A.CategoryCode = #categoryCode# AND
+				A.BIN_OrganizationInfoID = #organizationInfoId# AND
+				A.BIN_BrandInfoID = #brandInfoId#
+		]]>
+	</select>
+	
+	<!-- 取得员工信息  -->
+    <select id="getEmployeeInfo" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+    	<![CDATA[
+			SELECT Top 1	
+				A.BIN_EmployeeID AS employeeId,
+				A.EmployeeCode AS employeeCode,
+				A.EmployeeName AS employeeName,
+				A.IdentityCard AS identityCard,
+				A.MobilePhone AS mobilePhone
+			FROM 
+				Basis.BIN_Employee A
+			WHERE
+				A.BIN_EmployeeID = #employeeId#
+		]]>										
+    </select>
+    
+    <!-- 查询当前柜台在新后台的所有BA信息  -->
+    <select id="getBaListByOrganizationId" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+    	<![CDATA[
+			SELECT
+				BIN_EmployeeID as employeeId,
+				BIN_OrganizationID as organizationId,
+				ValidFlag as validFlag 
+			FROM 
+				basis.BIN_BaInfo 
+			WHERE
+				BIN_OrganizationInfoID=#organizationInfoId# AND
+				BIN_BrandInfoID=#brandInfoId# AND 
+				BIN_OrganizationID=#organizationId#
+		]]>
+    </select>
+    
+    
+    
+    <!-- 插入Ba数据（BA同步操作） -->
+    <insert id="synaBa" parameterClass="java.util.HashMap">
+    	MERGE Basis.BIN_EmployeeCounter AS BK
+    		USING(
+    			SELECT
+    				#organizationId# AS organizationId,
+					#employeeId# AS employeeID
+    		) AS SRC
+    		ON(
+    			BK.BIN_OrganizationID=SRC.organizationId AND
+				BK.BIN_EmployeeID=SRC.employeeID 
+    		)
+    		WHEN MATCHED THEN	
+	    		UPDATE SET	
+					ValidFlag = #validFlag#,
+					<include refid="BINOLCMINC99.updateSql" />
+			WHEN NOT MATCHED THEN 
+			INSERT(
+					BIN_OrganizationID,
+					BIN_EmployeeID,
+			<include refid="BINOLCMINC99.insertKeySql" />
+				)
+				VALUES
+				(
+					#organizationId#,
+					#employeeId#,
+			<include refid="BINOLCMINC99.insertValueSql" />
+				);
+	</insert>
+</sqlMap>

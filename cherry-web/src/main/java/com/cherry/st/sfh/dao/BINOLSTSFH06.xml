@@ -1,0 +1,200 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sqlMap PUBLIC "-//iBATIS.com//DTD SQL Map 2.0//EN" "http://ibatis.apache.org/dtd/sql-map-2.dtd">
+<sqlMap namespace="BINOLSTSFH06">
+    <!--根据品牌ID获取品牌CODE-->
+	<select id="getBrandCode" parameterClass="java.lang.Integer" resultClass="java.lang.String">
+		<![CDATA[
+		SELECT
+			BrandCode
+		FROM
+			Basis.BIN_BrandInfo
+		WHERE
+			BIN_BrandInfoID = #brandInfoID#
+		]]>
+	</select>
+	
+	<!--查询产品批次库存表数据（根据产品厂商ID，实体仓库ID，逻辑仓库ID，出库数量，排序方式  查询）  -->
+	<select id="getProNewBatchStockList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+		select * from cherry_base_getProductBatchInOut(#productVendorId#,#depotInfoId#,#BIN_LogicInventoryInfoID#,#quantity#,#sort#)<!-- get_ProductBatchInOut 为自定义函数，只取满足条件的满足条件的数据条数 -->
+				
+	</select>
+	
+	<select id="getDepart" parameterClass="java.util.HashMap" resultClass="java.lang.String">
+        <![CDATA[
+            SELECT
+               '('+DepartCode+')'+DepartName
+            FROM
+                Basis.BIN_Organization
+            WHERE
+                BIN_OrganizationID=#BIN_OrganizationID#
+        ]]>
+    </select>
+	  <!--取得所有有效产品-->
+	<select id="searchProductList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+        <![CDATA[
+            SELECT 
+                A.BIN_ProductVendorID,
+                A.BarCode,    
+                E.UnitCode,
+                ISNULL(CONVERT(Decimal(16,2),E.StandardCost),0) AS StandardCost,
+                ISNULL(CONVERT(Decimal(16,2),E.OrderPrice),0) AS OrderPrice,
+                ISNULL(CONVERT(Decimal(16,2),C.SalePrice),0) AS SalePrice,
+                ISNULL(CONVERT(Decimal(16,2),C.MemPrice),0) AS MemPrice
+        ]]>
+        <dynamic>
+            <isNotEmpty property="language">
+                <isEqual property="language" compareValue="zh_CN">
+                    <![CDATA[,E.NameTotal as prodcutName]]>
+                </isEqual>
+                <isEqual property="language" compareValue="en_US">
+                    <![CDATA[,E.NameForeign as prodcutName]]>
+                </isEqual>
+            </isNotEmpty>
+            <isEmpty property="language">
+                <![CDATA[,E.NameTotal as prodcutName]]>
+            </isEmpty>
+        </dynamic>
+        <![CDATA[
+            FROM
+                Basis.BIN_ProductVendor A
+                LEFT JOIN Basis.BIN_ProductPrice C
+                ON A.BIN_ProductID = C.BIN_ProductID
+                AND C.Type = '2'
+                AND C.ValidFlag='1'
+                AND GetDate() BETWEEN C.StartDate AND C.EndDate,
+                Basis.BIN_Product E   
+            WHERE
+				E.BIN_BrandInfoID=#brandInfoId#
+				AND E.BIN_OrganizationInfoID=#organizationInfoId#
+				AND A.BIN_ProductID =E.BIN_ProductID
+                AND A.ValidFlag = '1'
+				AND E.ValidFlag = '1'
+		ORDER BY 
+				E.UnitCode ASC
+        ]]>
+    </select>
+    
+    <!-- 取订货参数表(全局) -->
+    <select id="getOrderParameterGlobal" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+        <![CDATA[
+            SELECT
+                SaleDaysOfMonth,
+                DaysOfProduct
+            FROM
+                Inventory.BIN_OrderParameterGlobal
+            WHERE
+                BIN_OrganizationInfoID = #BIN_OrganizationInfoID#
+                AND BIN_BrandInfoID = #BIN_BrandInfoID#
+                AND ValidFlag = '1'
+        ]]>
+    </select>
+    
+    <!-- LotionSPA杭州瑞合 建议发货单List  -->
+    <select id="searchSuggetstList_LSRH" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+        <![CDATA[
+            WITH T0 AS
+            (
+                SELECT DISTINCT SRD0.BIN_ProductVendorID
+                FROM Sale.BIN_SaleRecord SR0 WITH (NOLOCK)
+                JOIN Sale.BIN_SaleRecordDetail SRD0 WITH (NOLOCK) ON SR0.BIN_SaleRecordID = SRD0.BIN_SaleRecordID
+                WHERE SR0.BIN_OrganizationInfoID = #BIN_OrganizationInfoID#
+                    AND SR0.BIN_BrandInfoID = #BIN_BrandInfoID#
+                    AND SR0.BIN_OrganizationID = #BIN_OrganizationID#
+                    AND DATEDIFF(DAY, SR0.SaleTime, GetDate()) <= #DaysOfProduct#
+                    AND DATEDIFF(DAY, SR0.SaleTime, GetDate()) >= 0
+                    AND SRD0.BIN_ProductVendorID IS NOT NULL
+            )
+            SELECT DISTINCT T2.BIN_ProductVendorID
+                ,T2.UnitCode
+                ,T2.BarCode
+                ,T2.prodcutName
+                ,ISNULL(ceiling(T2.SumSaleQuantity / #SaleDays# * #BasicDailySalesFactor# / 100 * #SaleDaysOfMonth# * ISNULL(T2.GrowthFactor, 100) / 100 * ISNULL(T2.RegulateFactor, 100) / 100 - ISNULL(T2.StockQuantity,0)),0) AS Quantity
+                ,ISNULL(CONVERT(Decimal(16,2),T2.SalePrice),0) AS SalePrice
+                ,ISNULL(ceiling(T2.SumSaleQuantity / #SaleDays# * #BasicDailySalesFactor# / 100 * #SaleDaysOfMonth# * ISNULL(T2.GrowthFactor, 100) / 100 * ISNULL(T2.RegulateFactor, 100) / 100 - ISNULL(T2.StockQuantity,0)),0) * ISNULL(CONVERT(Decimal(16,2),T2.SalePrice),0) AS Amount
+                ,ISNULL(CONVERT(Decimal(16,2),T2.MemPrice),0) AS MemPrice
+                ,ISNULL(ceiling(T2.SumSaleQuantity / #SaleDays# * #BasicDailySalesFactor# / 100 * #SaleDaysOfMonth# * ISNULL(T2.GrowthFactor, 100) / 100 * ISNULL(T2.RegulateFactor, 100) / 100 - ISNULL(T2.StockQuantity,0)),0) * ISNULL(CONVERT(Decimal(16,2),T2.MemPrice),0) AS MemAmount
+            	,ISNULL(CONVERT(decimal(16, 2), T2.StandardCost), 0) AS StandardCost
+            	,ISNULL(ceiling(T2.SumSaleQuantity / #SaleDays# * #BasicDailySalesFactor# / 100 * #SaleDaysOfMonth# * ISNULL(T2.GrowthFactor, 100) / 100 * ISNULL(T2.RegulateFactor, 100) / 100 - ISNULL(T2.StockQuantity,0)),0) * ISNULL(CONVERT(Decimal(16,2),T2.StandardCost),0) AS StandardCostAmount
+            	,ISNULL(CONVERT(decimal(16, 2), T2.OrderPrice), 0) AS OrderPrice
+            	,ISNULL(ceiling(T2.SumSaleQuantity / #SaleDays# * #BasicDailySalesFactor# / 100 * #SaleDaysOfMonth# * ISNULL(T2.GrowthFactor, 100) / 100 * ISNULL(T2.RegulateFactor, 100) / 100 - ISNULL(T2.StockQuantity,0)),0) * ISNULL(CONVERT(Decimal(16,2),T2.OrderPrice),0) AS OrderAmount
+            FROM (
+                SELECT T1.BIN_ProductVendorID
+                    ,T1.SumSaleQuantity
+                    ,PRO.UnitCode
+                    ,PV.BarCode
+        ]]>
+        <dynamic>
+            <isNotEmpty property="language">
+                <isEqual property="language" compareValue="zh_CN">
+                    <![CDATA[,PRO.NameTotal AS prodcutName]]>
+                </isEqual>
+                <isEqual property="language" compareValue="en_US">
+                    <![CDATA[,PRO.NameForeign AS prodcutName]]>
+                </isEqual>
+            </isNotEmpty>
+            <isEmpty property="language">
+                <![CDATA[,PRO.NameTotal AS prodcutName]]>
+            </isEmpty>
+        </dynamic>
+        <![CDATA[
+                    ,ISNULL(PS.Quantity, 0) AS StockQuantity
+                    ,ISNULL(PP.SalePrice, 0) AS SalePrice
+                    ,ISNULL(PP.MemPrice, 0) AS MemPrice
+                    ,ISNULL(PRO.StandardCost,0) as StandardCost
+					,ISNULL(PRO.OrderPrice,0) as OrderPrice
+                    ,CPOP.GrowthFactor
+                    ,CPOP.RegulateFactor
+                    ,T1.BIN_OrganizationID
+                FROM (
+                    SELECT
+                        TT0.BIN_ProductVendorID
+                        ,#BIN_OrganizationID# AS BIN_OrganizationID
+                        ,SUM(TT0.SumSaleQuantity) AS SumSaleQuantity
+                    FROM (
+                        SELECT SRD.BIN_ProductVendorID
+                            ,ISNULL(SUM(
+                                    CASE
+                                        WHEN SR.SaleType = 'SR'
+                                            THEN - SRD.Quantity
+                                        ELSE SRD.Quantity
+                                        END
+                                    ),0) AS SumSaleQuantity
+                        FROM Sale.BIN_SaleRecord SR WITH (NOLOCK)
+                        JOIN Sale.BIN_SaleRecordDetail SRD WITH (NOLOCK) ON SR.BIN_SaleRecordID = SRD.BIN_SaleRecordID
+                        WHERE EXISTS (
+                                SELECT 1 FROM T0
+                                WHERE SRD.BIN_ProductVendorID = T0.BIN_ProductVendorID
+                                    AND SRD.SaleType = 'N'
+                                )
+                            AND SR.BIN_OrganizationInfoID = #BIN_OrganizationInfoID#
+                            AND SR.BIN_BrandInfoID = #BIN_BrandInfoID#
+                            AND BIN_OrganizationID = #BIN_OrganizationID#
+                            AND DATEDIFF(DAY, SR.SaleTime, GetDate()) <= #SaleDays#
+                            AND DATEDIFF(DAY, SR.SaleTime, GetDate()) >= 0
+                        GROUP BY SRD.BIN_ProductVendorID,SR.BIN_OrganizationID
+                        UNION
+                            SELECT T0.BIN_ProductVendorID
+                                ,0 AS SumSaleQuantity
+                            FROM T0
+                        )TT0
+                    GROUP BY BIN_ProductVendorID
+                    ) T1
+                JOIN Basis.BIN_ProductVendor PV ON T1.BIN_ProductVendorID = PV.BIN_ProductVendorID
+                    AND PV.ValidFlag = '1'
+                JOIN Basis.BIN_Product PRO ON PV.BIN_ProductID = PRO.BIN_ProductID
+                    AND PRO.ValidFlag = '1'
+                LEFT JOIN Basis.BIN_Organization ORG ON T1.BIN_OrganizationID = ORG.BIN_OrganizationID
+                LEFT JOIN Basis.BIN_ProductPrice PP ON PRO.BIN_ProductID = PP.BIN_ProductID
+                    AND PP.EndDate >= #BusinessDate#
+                    AND PP.StartDate <= #BusinessDate#
+                    AND PP.Type = '2'
+                    /*AND PP.DepartCode = ORG.DepartCode*/
+                LEFT JOIN Inventory.BIN_ProductStock PS ON T1.BIN_ProductVendorID = PS.BIN_ProductVendorID
+                    AND PS.BIN_InventoryInfoID = #BIN_InventoryInfoID#
+                    AND PS.BIN_LogicInventoryInfoID = #BIN_LogicInventoryInfoID#
+                LEFT JOIN Inventory.BIN_CounterPrtOrParameter CPOP ON PV.BIN_ProductVendorID = CPOP.BIN_ProductVendorID
+                    AND CPOP.BIN_OrganizationID = #BIN_OrganizationID#
+                ) T2
+        ]]>
+    </select>
+</sqlMap>

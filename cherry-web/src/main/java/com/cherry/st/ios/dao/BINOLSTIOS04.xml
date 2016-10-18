@@ -1,0 +1,202 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sqlMap PUBLIC "-//iBATIS.com//DTD SQL Map 2.0//EN" "http://ibatis.apache.org/dtd/sql-map-2.dtd">
+<sqlMap namespace="BINOLSTIOS04">
+    <!--根据批次号取批次ID-->
+	<select id="getProductBatchID" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+	<![CDATA[
+        SELECT BIN_ProductBatchID FROM Basis.BIN_ProductBatch WHERE BatchNo = #BatchNo# AND ValidFlag = '1'
+	]]>
+	</select>
+	
+	<!--取得类别属性List-->
+	<select id="getPrtCatPropertyList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+        <![CDATA[
+            SELECT
+                BIN_PrtCatPropertyID AS propId,
+                PropertyNameChinese AS propNameCN,
+                PropertyNameForeign AS propNameEN,
+                TeminalFlag AS teminalFlag,
+                ViewSeq AS viewSeq
+            FROM
+                Basis.BIN_PrtCatProperty
+            WHERE
+                BIN_OrganizationInfoID = #organizationInfoId#
+                AND BIN_BrandInfoID = #brandInfoId#
+                AND ValidFlag = '1'
+            ORDER BY
+                ViewSeq
+	    ]]>
+    </select>
+	
+    <!--取第几级分类List-->
+    <select id="getPrtCatPropValueList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+        <![CDATA[
+            SELECT
+                BIN_PrtCatPropValueID,
+				PropValue,
+				PropValueChinese,
+				PropValueForeign
+			FROM
+                Basis.BIN_PrtCatPropValue
+			WHERE
+                BIN_PrtCatPropertyID = #prtCatPropertyId#
+				AND ValidFlag = '1'
+        ]]>
+    </select>
+	
+	<!--取得产品列表（按批次盘点）-->
+	<select id="getProductByBatchList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+        <![CDATA[
+            SELECT 
+                A.BIN_ProductVendorID,
+                A.BarCode,    
+                E.UnitCode,    
+                ISNULL(C.SalePrice,0) AS SalePrice
+        ]]>
+        <dynamic>
+            <isNotEmpty property="language">
+                <isEqual property="language" compareValue="zh_CN">
+                    <![CDATA[,E.NameTotal as prodcutName]]>
+                </isEqual>
+                <isEqual property="language" compareValue="en_US">
+                    <![CDATA[,E.NameForeign as prodcutName]]>
+                </isEqual>
+            </isNotEmpty>
+            <isEmpty property="language">
+                <![CDATA[,E.NameTotal as prodcutName]]>
+            </isEmpty>
+        </dynamic>
+        <![CDATA[
+            FROM
+                Basis.BIN_ProductVendor A
+                LEFT JOIN Basis.BIN_ProductPrice C
+                ON A.BIN_ProductID = C.BIN_ProductID
+                	AND C.Type = '2'
+                    AND C.ValidFlag='1'
+                    AND GetDate() BETWEEN C.StartDate AND C.EndDate,
+                Basis.BIN_Product E   
+            WHERE
+                A.BIN_ProductID =E.BIN_ProductID
+                AND A.ValidFlag = '1'
+				AND E.ValidFlag = '1'
+        ]]>
+        <dynamic>
+            <isNotEmpty property="prtCatPropValueIDArr">
+                <![CDATA[
+                    AND EXISTS(
+                        SELECT 1 FROM(
+							SELECT
+								BIN_ProductID
+							FROM
+								Basis.BIN_PrtCategory F
+	                        WHERE
+	                            F.BIN_PrtCatPropValueID IN
+                ]]> 
+                <iterate conjunction="," open="(" close=")" property="prtCatPropValueIDArr">  
+                    <![CDATA[#prtCatPropValueIDArr[]#]]>
+                </iterate>
+                <![CDATA[           
+                            AND F.ValidFlag = '1'
+							GROUP BY F.BIN_ProductID
+							HAVING COUNT(1) >=#CategoryCount#
+                    	)CP
+						WHERE
+							E.BIN_ProductID = CP.BIN_ProductID
+					)
+                ]]>
+            </isNotEmpty>
+            <isNotEmpty property="prtOrderBy">
+            	<isEqual property="prtOrderBy" compareValue="0">
+            		ORDER BY
+						E.UnitCode  ASC
+            	</isEqual>
+            	<isEqual property="prtOrderBy" compareValue="1">
+            		ORDER BY
+						A.BarCode  ASC
+            	</isEqual>
+            </isNotEmpty>
+        </dynamic>
+    </select>
+	
+	<!--取得产品库存列表（非批次盘点）-->
+	<select id="getProductStockList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+        <![CDATA[
+            SELECT 
+	            A.BIN_ProductVendorID,
+	            ISNULL(D.Quantity,0) AS Quantity,   
+	            A.BarCode,    
+	            E.UnitCode,    
+	            ISNULL(C.SalePrice,0) AS SalePrice
+        ]]>
+		<dynamic>
+			<isNotEmpty property="language">
+		        <isEqual property="language" compareValue="zh_CN">
+		            <![CDATA[,E.NameTotal as prodcutName]]>
+		        </isEqual>
+		        <isEqual property="language" compareValue="en_US">
+		            <![CDATA[,E.NameForeign as prodcutName]]>
+		        </isEqual>
+			</isNotEmpty>
+			<isEmpty property="language">
+				<![CDATA[,E.NameTotal as prodcutName]]>
+			</isEmpty>
+        </dynamic>
+        <![CDATA[
+            FROM
+                Basis.BIN_ProductVendor A
+                LEFT JOIN Basis.BIN_ProductPrice C
+                ON A.BIN_ProductID = C.BIN_ProductID
+                	AND C.Type = '2'
+                    AND C.ValidFlag='1'
+                    AND GetDate() BETWEEN C.StartDate AND C.EndDate
+                LEFT JOIN Inventory.BIN_ProductStock D
+                    ON A.BIN_ProductVendorID=D.BIN_ProductVendorID
+	                AND D.BIN_InventoryInfoID = #BIN_InventoryInfoID#
+		]]>
+		<isNotEmpty property="BIN_LogicInventoryInfoID">
+			<![CDATA[AND D.BIN_LogicInventoryInfoID=#BIN_LogicInventoryInfoID#]]>
+		</isNotEmpty>
+		<![CDATA[
+                ,Basis.BIN_Product E   
+            WHERE
+                A.BIN_ProductID =E.BIN_ProductID
+                AND A.ValidFlag = '1'
+				AND E.ValidFlag = '1'
+        ]]>
+        <dynamic>
+            <isNotEmpty property="prtCatPropValueIDArr">
+				<![CDATA[
+		            AND EXISTS(
+                        SELECT 1 FROM(
+							SELECT
+								BIN_ProductID
+							FROM Basis.BIN_PrtCategory F
+							WHERE
+			                    F.BIN_PrtCatPropValueID IN
+				]]>	
+				<iterate conjunction="," open="(" close=")" property="prtCatPropValueIDArr">  
+		            <![CDATA[#prtCatPropValueIDArr[]#]]>
+		        </iterate>
+				<![CDATA[			
+							AND F.ValidFlag = '1'
+							GROUP BY F.BIN_ProductID
+							HAVING COUNT(1) >=#CategoryCount#
+						)CP
+						WHERE
+							E.BIN_ProductID = CP.BIN_ProductID
+					)
+				]]>
+			</isNotEmpty>
+			<isNotEmpty property="prtOrderBy">
+            	<isEqual property="prtOrderBy" compareValue="0">
+            		ORDER BY
+						E.UnitCode  ASC
+            	</isEqual>
+            	<isEqual property="prtOrderBy" compareValue="1">
+            		ORDER BY
+						A.BarCode  ASC
+            	</isEqual>
+            </isNotEmpty>
+		</dynamic>
+    </select>
+</sqlMap>

@@ -1,0 +1,88 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sqlMap PUBLIC "-//iBATIS.com//DTD SQL Map 2.0//EN" "http://ibatis.apache.org/dtd/sql-map-2.dtd">
+<sqlMap namespace="BINBEMQMES09">
+	<!-- 更新机器信息 -->
+	<update id="updateMachInfo" parameterClass="java.util.HashMap">
+	<![CDATA[
+		UPDATE 	
+			Monitor.BIN_MachineInfo
+		SET
+		]]>
+		<isNotEmpty property="softWareVersion" >
+			SoftWareVersion = #softWareVersion#,
+	    </isNotEmpty>
+		<isNotEmpty property="capacity" >
+            Capacity = #capacity#,
+		</isNotEmpty>
+        <isNotEmpty property="lastStartTime" >
+            LastStartTime = #lastStartTime#,
+        </isNotEmpty>
+			<include refid="BINOLCMINC99.updateSql" />
+			<![CDATA[
+		WHERE
+			MachineCodeOld = #machineCode# AND
+			ValidFlag = '1'
+	]]>
+	</update>
+	
+    <!-- 更新机器号对照表 -->
+    <update id="updateMachineCodeCollate" parameterClass="java.util.HashMap">
+        <![CDATA[
+	        UPDATE  
+	            Monitor.BIN_MachineCodeCollate
+	        SET
+	            BIN_CounterInfoID = #BIN_CounterInfoID#,
+        ]]>
+        <include refid="BINOLCMINC99.updateSql" />
+        <![CDATA[
+            WHERE
+                BIN_OrganizationInfoID = #organizationInfoID#
+                AND BIN_BrandInfoID = #brandInfoID#
+                AND MachineCodeOld = #machineCode#
+                AND ValidFlag = '1'
+        ]]>
+    </update>
+    
+    <!-- 更新柜台产品订货参数表 -->
+    <update id="updateCounterPrtOrParameter" parameterClass="java.util.HashMap">
+	    <![CDATA[
+	        UPDATE
+                Inventory.BIN_CounterPrtOrParameter
+	        SET
+                ExhibitQuantity = #ExhibitQuantity#,
+	    ]]>
+        <include refid="BINOLCMINC99.updateSql" />
+        <![CDATA[
+            WHERE
+                BIN_OrganizationInfoID = #BIN_OrganizationInfoID#
+                AND BIN_BrandInfoID = #BIN_BrandInfoID#
+                AND BIN_OrganizationID = #BIN_OrganizationID#
+                AND BIN_ProductVendorID = #BIN_ProductVendorID#
+        ]]>
+    </update>
+
+    <!-- 插入柜台产品订货参数表 -->
+    <insert id="insertCounterPrtOrParameter" parameterClass="java.util.HashMap">
+        <![CDATA[
+            INSERT INTO Inventory.BIN_CounterPrtOrParameter(
+                BIN_OrganizationInfoID,
+                BIN_BrandInfoID,
+                BIN_OrganizationID,
+                BIN_ProductVendorID,
+                ExhibitQuantity,
+        ]]>
+        <include refid="BINOLCMINC99.insertKeySql" />
+        <![CDATA[
+            )
+            VALUES
+            (
+                #BIN_OrganizationInfoID#,
+                #BIN_BrandInfoID#,
+                #BIN_OrganizationID#,
+                #BIN_ProductVendorID#,
+                #ExhibitQuantity#,
+        ]]>   
+        <include refid="BINOLCMINC99.insertValueSql" /> 
+        <![CDATA[ )]]>
+    </insert>
+</sqlMap>

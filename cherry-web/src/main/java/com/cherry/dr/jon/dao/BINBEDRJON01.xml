@@ -1,0 +1,150 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sqlMap PUBLIC "-//iBATIS.com//DTD SQL Map 2.0//EN" "http://ibatis.apache.org/dtd/sql-map-2.dtd">
+<sqlMap namespace="BINBEDRJON01">
+
+	<!--更新会员信息表 -->
+	<update id="updateMemberInfo" parameterClass="com.cherry.dr.cmbussiness.dto.core.CampBaseDTO">
+		<![CDATA[
+			UPDATE
+				Members.BIN_MemberInfo
+			SET		
+				MemberLevel = #curLevelId#,
+				GrantMemberLevel = #grantMemberLevel#,
+				LevelStatus = #levelStatus#,
+				LevelChangeType = #changeType#,
+				LevelAdjustDay = CONVERT(DATETIME, #ticketDate#, 121),
+				FirstBillID = #billId#,
+		]]>
+			<isNotEmpty property="jnDateKbn">
+				<isEqual property="jnDateKbn" compareValue="1">
+				<![CDATA[JoinDate = case when (JoinDate IS NULL or MemInfoRegFlg = 1) then CONVERT(DATE, #ticketDate#, 121) else JoinDate end,]]>
+				</isEqual>
+				<isEqual property="jnDateKbn" compareValue="2">
+				<![CDATA[JoinDate = CONVERT(DATE, #ticketDate#, 121),]]>
+				</isEqual>
+			</isNotEmpty>
+			<isEmpty property="jnDateKbn">
+					<![CDATA[JoinDate = case when (JoinDate IS NULL or MemInfoRegFlg = 1) then CONVERT(DATE, #ticketDate#, 121) else JoinDate end,]]>
+			</isEmpty>
+			<isNotEmpty property="levelStartDate">
+					<![CDATA[LevelStartDate = CONVERT(DATETIME, #levelStartDate#, 121),]]>
+			</isNotEmpty>
+			<isEmpty property="levelStartDate">
+					<![CDATA[LevelStartDate = null,]]>
+			</isEmpty>
+			<isNotEmpty property="levelEndDate">
+					<![CDATA[LevelEndDate = CONVERT(DATETIME, #levelEndDate#, 121),]]>
+			</isNotEmpty>
+			<isEmpty property="levelEndDate">
+					<![CDATA[levelEndDate = null,]]>
+			</isEmpty>
+			<include refid="BINBEDRCOM01.updateSql" />	
+		<![CDATA[				
+			WHERE					
+				BIN_MemberInfoID = #memberInfoId#
+		]]>
+    </update>
+    
+    <!--更新会员信息表 -->
+	<update id="updateMemberInfoClub" parameterClass="com.cherry.dr.cmbussiness.dto.core.CampBaseDTO">
+		<![CDATA[
+			UPDATE
+				Members.BIN_MemberInfo
+			SET
+		]]>
+			<isNotEmpty property="jnDateKbn">
+				<isEqual property="jnDateKbn" compareValue="1">
+				<![CDATA[JoinDate = case when (JoinDate IS NULL or MemInfoRegFlg = 1) then CONVERT(DATE, #ticketDate#, 121) else JoinDate end,]]>
+				</isEqual>
+				<isEqual property="jnDateKbn" compareValue="2">
+				<![CDATA[JoinDate = CONVERT(DATE, #ticketDate#, 121),]]>
+				</isEqual>
+			</isNotEmpty>
+			<isEmpty property="jnDateKbn">
+					<![CDATA[JoinDate = case when (JoinDate IS NULL or MemInfoRegFlg = 1) then CONVERT(DATE, #ticketDate#, 121) else JoinDate end,]]>
+			</isEmpty>
+			<include refid="BINBEDRCOM01.updateSql" />	
+		<![CDATA[				
+			WHERE					
+				BIN_MemberInfoID = #memberInfoId#
+		]]>
+    </update>
+    
+    <!-- 插入会员等级信息表(俱乐部)  -->
+	<insert id="addMemClubLevel" parameterClass="com.cherry.dr.cmbussiness.dto.core.CampBaseDTO">
+		<![CDATA[
+		INSERT INTO Members.BIN_MemClubLevel(
+			BIN_MemberInfoID,
+			BIN_MemberClubID,
+			MemberLevel,
+			GrantMemberLevel,
+			LevelChangeType,
+			LevelAdjustDay,
+			FirstBillID,
+			LevelStatus,
+			LevelStartDate,
+			LevelEndDate,
+		]]>
+			<include refid="BINBEDRCOM01.insertKeySql" />									
+		<![CDATA[	
+		)VALUES(
+			#memberInfoId#,
+			#memberClubId#,
+			#curLevelId#,
+			#grantMemberLevel#,
+			#changeType#,
+			CONVERT(DATETIME, #ticketDate#, 121),
+			#billId#,
+			#levelStatus#,
+		]]>
+		<isNotEmpty property="levelStartDate">
+					<![CDATA[CONVERT(DATETIME, #levelStartDate#, 121),]]>
+			</isNotEmpty>
+			<isEmpty property="levelStartDate">
+					<![CDATA[null,]]>
+			</isEmpty>
+			<isNotEmpty property="levelEndDate">
+					<![CDATA[CONVERT(DATETIME, #levelEndDate#, 121),]]>
+			</isNotEmpty>
+			<isEmpty property="levelEndDate">
+					<![CDATA[null,]]>
+			</isEmpty>
+		<include refid="BINBEDRCOM01.insertValueSql" />
+		<![CDATA[
+		)
+		]]>
+	</insert>
+	
+	<!--更新会员等级信息表(俱乐部) -->
+	<update id="updateMemClubLevel" parameterClass="com.cherry.dr.cmbussiness.dto.core.CampBaseDTO">
+		<![CDATA[
+			UPDATE
+				Members.BIN_MemClubLevel
+			SET		
+				MemberLevel = #curLevelId#,
+				GrantMemberLevel = #grantMemberLevel#,
+				LevelChangeType = #changeType#,
+				LevelAdjustDay = CONVERT(DATETIME, #ticketDate#, 121),
+				FirstBillID = #billId#,
+				LevelStatus = #levelStatus#,
+		]]>
+			<isNotEmpty property="levelStartDate">
+					<![CDATA[LevelStartDate = CONVERT(DATETIME, #levelStartDate#, 121),]]>
+			</isNotEmpty>
+			<isEmpty property="levelStartDate">
+					<![CDATA[LevelStartDate = null,]]>
+			</isEmpty>
+			<isNotEmpty property="levelEndDate">
+					<![CDATA[LevelEndDate = CONVERT(DATETIME, #levelEndDate#, 121),]]>
+			</isNotEmpty>
+			<isEmpty property="levelEndDate">
+					<![CDATA[levelEndDate = null,]]>
+			</isEmpty>
+			<include refid="BINBEDRCOM01.updateSql" />	
+		<![CDATA[				
+			WHERE					
+				BIN_ClubLevelID = #memClubLeveId#
+		]]>
+    </update>
+		
+</sqlMap>

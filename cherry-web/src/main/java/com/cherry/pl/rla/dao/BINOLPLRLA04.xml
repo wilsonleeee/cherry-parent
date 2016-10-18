@@ -1,0 +1,90 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sqlMap PUBLIC "-//iBATIS.com//DTD SQL Map 2.0//EN" "http://ibatis.apache.org/dtd/sql-map-2.dtd">
+<sqlMap namespace="BINOLPLRLA04">
+	
+	<!-- 用户信息查询sql文  -->
+	<sql id="userQuery">
+		<![CDATA[
+			SELECT	DISTINCT		
+				M.BIN_UserID,	
+				M.LonginName,									
+				A.BIN_EmployeeID,	
+				A.BIN_BrandInfoID,																																																																												
+		]]>
+		<dynamic>
+			<isNotEmpty property="language">
+				<isEqual property="language" compareValue="en_US">
+					A.EmployeeNameForeign AS EmployeeName,
+					I.BrandNameForeign AS BrandNameChinese,
+					B.NameForeign AS DepartName,
+					C.CategoryNameForeign AS CategoryName	
+				</isEqual>
+				<isEqual property="language" compareValue="zh_CN">	
+					A.EmployeeName AS EmployeeName,														
+					I.BrandNameChinese AS BrandNameChinese,														
+					B.DepartName AS DepartName,
+					C.CategoryName AS CategoryName
+				</isEqual>								
+			</isNotEmpty>
+			<isEmpty property="language">
+				A.EmployeeName AS EmployeeName,													
+				I.BrandNameChinese AS BrandNameChinese,														
+				B.DepartName AS DepartName,
+				C.CategoryName AS CategoryName
+			</isEmpty>
+		</dynamic>		
+		<![CDATA[													
+			FROM 															
+				Basis.BIN_Employee A
+				LEFT JOIN Basis.BIN_Organization B
+				ON (A.BIN_OrganizationID = B.BIN_OrganizationID AND B.ValidFlag = '1')	
+				LEFT JOIN Privilege.BIN_PositionCategory C
+				ON (A.BIN_PositionCategoryID = C.BIN_PositionCategoryID AND C.ValidFlag = '1')																				
+				LEFT JOIN Basis.BIN_BrandInfo I
+				ON(A.BIN_BrandInfoID = I.BIN_BrandInfoID AND I.ValidFlag = '1')
+				JOIN Privilege.BIN_User M
+				ON(A.BIN_EmployeeID = M.BIN_EmployeeID AND M.ValidFlag = '1')		
+			WHERE
+				A.BIN_OrganizationInfoID = #organizationInfoId#			
+		]]>
+		<isNotEmpty prepend="AND" property="brandInfoId">
+			A.BIN_BrandInfoID=#brandInfoId#
+		</isNotEmpty>
+		<isNotEmpty prepend="AND" property="longinName" >
+			M.LonginName LIKE '%' + #longinName# + '%'
+		</isNotEmpty>
+		<isNotEmpty prepend="AND" property="employeeName" >
+			A.EmployeeName LIKE '%' + #employeeName# + '%'
+		</isNotEmpty>
+	</sql>
+	
+	<!-- 查询用户总数 -->
+	<select id="getUserInfoCount" parameterClass="java.util.HashMap" resultClass="java.lang.Integer">
+		<![CDATA[
+			SELECT	COUNT(SORT_T1.BIN_UserID) AS count FROM (
+		]]>	
+		<include refid="BINOLPLRLA04.userQuery" />
+		<![CDATA[	
+			) SORT_T1
+		]]>	
+    </select>
+	
+	<!-- 查询用户信息 -->
+	<resultMap id="BINOLPLRLA04.userInfo" class="java.util.HashMap">
+		<result property="RowNumber" column="RowNumber"/>
+		<result property="userId" column="BIN_UserID"/>
+		<result property="longinName" column="LonginName"/>
+		<result property="employeeId" column="BIN_EmployeeID"/>
+		<result property="employeeName" column="EmployeeName"/>
+		<result property="brandInfoId" column="BIN_BrandInfoID"/>
+		<result property="brandNameChinese" column="BrandNameChinese"/>
+		<result property="departName" column="DepartName"/>
+		<result property="categoryName" column="CategoryName"/>
+	</resultMap>
+	<select id="getUserInfoList" parameterClass="java.util.HashMap" resultMap="BINOLPLRLA04.userInfo">
+		<include refid="BINOLCMINC99.pageheader" />
+		<include refid="BINOLPLRLA04.userQuery" />
+		<include refid="BINOLCMINC99.pagefooter" />
+    </select>
+	
+</sqlMap>

@@ -1,0 +1,257 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sqlMap PUBLIC "-//iBATIS.com//DTD SQL Map 2.0//EN" "http://ibatis.apache.org/dtd/sql-map-2.dtd">
+<sqlMap namespace="BINOLSSPRM71">
+	<sql id="prmQuery">
+		<![CDATA[
+			SELECT 
+				A.BIN_GroupID AS groupId,
+				A.BIN_ProductVendorID AS prmVendorId,
+				B.BarCode AS barCode,
+				C.UnitCode AS unitCode,
+				C.PromotionCateCD AS prmCate,
+				B.ValidFlag AS validFlag
+		]]>
+		<dynamic>
+			<isNotEmpty property="language">
+				<isEqual property="language" compareValue="en_US">
+					,C.NameForeign as nameTotal
+				</isEqual>
+				<isEqual property="language" compareValue="zh_CN">
+					,C.NameTotal AS nameTotal
+				</isEqual>
+			</isNotEmpty>
+			<isEmpty property="language">
+				,C.NameTotal AS nameTotal
+			</isEmpty>
+		</dynamic>
+		<![CDATA[
+			FROM
+				Basis.BIN_Conjunction A
+				LEFT JOIN Basis.BIN_PromotionProductVendor B ON A.BIN_ProductVendorID = B.BIN_PromotionProductVendorID
+				LEFT JOIN Basis.BIN_PromotionProduct C ON B.BIN_PromotionProductID = C.BIN_PromotionProductID
+				LEFT JOIN Basis.BIN_PromotionPrtType D ON C.BIN_PromotionPrtTypeID = D.BIN_PromotionPrtTypeID
+			WHERE
+				A.BIN_OrganizationInfoID = #organizationInfoId#
+			AND A.BIN_BrandInfoID = #brandInfoId#
+			AND A.BIN_MerchandiseType = #BIN_MerchandiseType#
+		]]>
+		<dynamic>
+			<isNotEmpty prepend="AND" property="groupIdList">
+				A.BIN_GroupID IN 
+		    	<iterate conjunction="," open="(" close=")" property="groupIdList">
+					#groupIdList[]#
+				</iterate>
+			</isNotEmpty>
+			<isEmpty property="groupIdList">
+				<isNotEmpty prepend="AND" property="BIN_ProductVendorID" >
+					A.BIN_ProductVendorID = #BIN_ProductVendorID#
+				</isNotEmpty>
+				<isNotEmpty prepend="AND" property="barCode" >
+					B.BarCode LIKE '%' + #barCode# + '%'
+				</isNotEmpty>
+				<isNotEmpty prepend="AND" property="unitCode">
+					C.UnitCode LIKE '%' + #unitCode# + '%'
+				</isNotEmpty>
+				<isNotEmpty prepend="AND" property="prmCate">
+					C.PromotionCateCD = #prmCate#
+				</isNotEmpty>
+				<isNotEmpty prepend="AND" property="nameTotal">
+					(
+						C.NameTotal LIKE '%' +  #nameTotal#  + '%' OR
+						C.NameShort LIKE '%' +  #nameTotal#  + '%' OR
+						C.NameAlias LIKE '%' +  #nameTotal#  + '%' OR
+						C.NameForeign LIKE '%' +  #nameTotal#  + '%' OR
+						C.NameShortForeign LIKE '%' +  #nameTotal#  + '%'
+					)
+				</isNotEmpty>
+			</isEmpty>
+		</dynamic>
+	</sql>
+	
+	<!-- 查询促销产品数量 -->
+	<select id="getPrmCount" parameterClass="java.util.HashMap" resultClass="java.lang.Integer">
+		<![CDATA[
+			SELECT	COUNT(SORT_T1.prmVendorId) AS count FROM (
+		]]>	
+		<include refid="BINOLSSPRM71.prmQuery" />
+		<![CDATA[	
+			)SORT_T1
+		]]>	
+	</select>
+	
+	<!-- 查询促销产品List -->
+	<select id="getPrmList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+		<include refid="BINOLCMINC99.pageheader" />
+       	<include refid="BINOLSSPRM71.prmQuery" />
+		<include refid="BINOLCMINC99.pagefooter" />
+	</select>
+	
+	<!-- 查询最大组号 -->
+	<select id="getMaxGroupId" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+		<![CDATA[
+			SELECT 
+				MAX(BIN_GroupID) AS groupId
+			FROM 
+				Basis.BIN_Conjunction
+			WHERE
+				BIN_BrandInfoID = #brandInfoId#
+			AND BIN_OrganizationInfoID = #organizationInfoId#
+			AND BIN_MerchandiseType = #BIN_MerchandiseType#
+		]]>
+	</select>
+	
+	<!-- 促销品关联 -->
+	<insert id="conjunction" parameterClass="java.util.HashMap">
+		<![CDATA[
+			INSERT INTO 
+ 				Basis.BIN_Conjunction (
+ 					BIN_BrandInfoID,
+ 					BIN_OrganizationInfoID,
+ 					BIN_MerchandiseType,
+ 					BIN_GroupID,
+ 					BIN_ProductVendorID,
+   		]]>
+ 		<include refid="BINOLCMINC99.insertKeySql"/>
+ 		<![CDATA[			
+    			) VALUES (
+    				#brandInfoId#,
+    				#organizationInfoId#,
+    				#BIN_MerchandiseType#,
+    				#BIN_GroupID#,
+    				#BIN_ProductVendorID#,
+	    ]]>
+	    <include refid="BINOLCMINC99.insertValueSql"/>
+	   	<![CDATA[
+   				)
+    	]]>
+	</insert>
+	
+	<!-- 根据分组ID查询改组所有数据 -->
+	<select id="getDetailPrmList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+		<![CDATA[
+			SELECT 
+				A.BIN_GroupID,
+				A.BIN_ProductVendorID,
+				B.BarCode,
+				C.UnitCode,
+				C.PromotionCateCD,
+				B.ValidFlag
+		]]>
+		<dynamic>
+			<isNotEmpty property="language">
+				<isEqual property="language" compareValue="en_US">
+					,C.NameForeign as NameTotal
+				</isEqual>
+				<isEqual property="language" compareValue="zh_CN">
+					,C.NameTotal AS NameTotal
+				</isEqual>
+			</isNotEmpty>
+			<isEmpty property="language">
+				,C.NameTotal AS NameTotal
+			</isEmpty>
+		</dynamic>
+		<![CDATA[
+			FROM
+				Basis.BIN_Conjunction A
+				LEFT JOIN Basis.BIN_PromotionProductVendor B ON A.BIN_ProductVendorID = B.BIN_PromotionProductVendorID
+				LEFT JOIN Basis.BIN_PromotionProduct C ON B.BIN_PromotionProductID = C.BIN_PromotionProductID
+				LEFT JOIN Basis.BIN_PromotionPrtType D ON C.BIN_PromotionPrtTypeID = D.BIN_PromotionPrtTypeID
+			WHERE
+				A.BIN_OrganizationInfoID = #organizationInfoId#
+			AND A.BIN_BrandInfoID = #brandInfoId#
+			AND A.BIN_MerchandiseType = #BIN_MerchandiseType#
+			AND A.BIN_GroupID = #BIN_GroupID#
+			ORDER BY NameTotal
+		]]>
+	</select>
+	
+	<!-- 删除分组 -->
+	<delete id="delGroups" parameterClass="java.util.HashMap">
+		<![CDATA[
+			DELETE
+				Basis.BIN_Conjunction
+			WHERE
+					BIN_BrandInfoID = #brandInfoId#
+				AND BIN_OrganizationInfoID = #organizationInfoId#
+				AND BIN_MerchandiseType = #BIN_MerchandiseType#
+				AND	BIN_GroupID IN
+		]]>
+		<iterate conjunction="," open="(" close=")" property="groupIdArr">
+			#groupIdArr[]#
+		</iterate>
+	</delete>
+	
+	<!-- 删除一组数据 -->
+	<delete id="delOneGroup" parameterClass="java.util.HashMap">
+		<![CDATA[
+			DELETE
+				Basis.BIN_Conjunction
+			WHERE
+				BIN_BrandInfoID = #brandInfoId#
+			AND BIN_OrganizationInfoID = #organizationInfoId#
+			AND BIN_MerchandiseType = #BIN_MerchandiseType#
+			AND	BIN_GroupID  = #BIN_GroupID#
+		]]>
+	</delete>
+	
+	<!-- 删除一条促销品记录 -->
+	<delete id="delOnePrm" parameterClass="java.util.HashMap">
+		<![CDATA[
+			DELETE
+				Basis.BIN_Conjunction
+			WHERE
+				BIN_BrandInfoID = #brandInfoId#
+			AND BIN_OrganizationInfoID = #organizationInfoId#
+			AND BIN_MerchandiseType = #BIN_MerchandiseType#
+			AND	BIN_ProductVendorID = #BIN_ProductVendorID#
+		]]>
+	</delete>
+	
+	<!-- 根据BIN_ProductVendorID查询所在组的所有信息 -->
+	<select id="getPrmListByPrmVendorId" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+		<![CDATA[
+			SELECT 
+				A.BIN_GroupID AS groupId,
+				A.BIN_ProductVendorID AS prmVendorId,
+				B.BarCode AS barCode,
+				C.UnitCode AS unitCode,
+				C.PromotionCateCD AS prmCate,
+				B.ValidFlag AS validFlag
+		]]>
+		<dynamic>
+			<isNotEmpty property="language">
+				<isEqual property="language" compareValue="en_US">
+					,C.NameForeign as nameTotal
+				</isEqual>
+				<isEqual property="language" compareValue="zh_CN">
+					,C.NameTotal AS nameTotal
+				</isEqual>
+			</isNotEmpty>
+			<isEmpty property="language">
+				,C.NameTotal AS nameTotal
+			</isEmpty>
+		</dynamic>
+		<![CDATA[
+			FROM
+				Basis.BIN_Conjunction A
+				LEFT JOIN Basis.BIN_PromotionProductVendor B ON A.BIN_ProductVendorID = B.BIN_PromotionProductVendorID
+				LEFT JOIN Basis.BIN_PromotionProduct C ON B.BIN_PromotionProductID = C.BIN_PromotionProductID
+				LEFT JOIN Basis.BIN_PromotionPrtType D ON C.BIN_PromotionPrtTypeID = D.BIN_PromotionPrtTypeID
+			WHERE
+				A.BIN_OrganizationInfoID = #organizationInfoId#
+			AND A.BIN_BrandInfoID = #brandInfoId#
+			AND A.BIN_MerchandiseType = #BIN_MerchandiseType#
+			AND A.BIN_GroupID = (
+				SELECT 
+					E.BIN_GroupID
+				FROM 
+					Basis.BIN_Conjunction E
+				WHERE
+					E.BIN_OrganizationInfoID = #organizationInfoId#
+				AND E.BIN_BrandInfoID = #brandInfoId#
+				AND E.BIN_MerchandiseType = #BIN_MerchandiseType#
+				AND E.BIN_ProductVendorID = #BIN_ProductVendorID# 
+			)
+		]]>
+	</select>
+</sqlMap>

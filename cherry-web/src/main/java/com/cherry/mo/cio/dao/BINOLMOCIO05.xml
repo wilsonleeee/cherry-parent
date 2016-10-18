@@ -1,0 +1,161 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE sqlMap PUBLIC "-//iBATIS.com//DTD SQL Map 2.0//EN" "http://ibatis.apache.org/dtd/sql-map-2.dtd">
+<sqlMap namespace="BINOLMOCIO05">
+	<!--根据问卷ID获取问卷主表信息-->
+	<select id="getPaperForEdit" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+		<![CDATA[
+		SELECT 
+			distinct A.[BIN_PaperID] AS [paperId]
+      		,A.[BIN_OrganizationInfoID] AS [organizationInfoId]
+      		,A.[BIN_BrandInfoID] AS [brandInfoId]
+      		,A.[PaperName] AS [paperName]
+      		,A.[PaperType] AS [paperType]
+      		,A.[PaperStatus] AS [paperStatus]
+      		,CONVERT(CHAR(10),A.PublishTime,120) AS publishTime
+      		,A.[Publisher] AS [publisher]
+      		,ISNULL(A.[MaxPoint],0.00) AS [maxPoint]
+			,A.StartTime AS startTime
+			,A.EndTime AS endTime		
+			,C.[BrandNameChinese] AS [brandName]
+			,A.[ModifyCount] AS [modifyCount]
+			,convert(varchar(30),A.[UpdateTime],121) AS [updateTime]
+  		FROM 
+			[Monitor].[BIN_Paper] A JOIN
+			[Basis].[BIN_BrandInfo] C ON(
+			C.[BIN_BrandInfoID] = A.[BIN_BrandInfoID])
+  		WHERE
+			A.[BIN_PaperID] = #paperId#
+			]]>
+	</select>
+	
+	<select id="getPaperForShow" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+		<![CDATA[
+		SELECT 
+			distinct A.[BIN_PaperID] AS [paperId]
+      		,A.[BIN_OrganizationInfoID] AS [organizationInfoId]
+      		,A.[BIN_BrandInfoID] AS [brandInfoId]
+      		,A.[PaperName] AS [paperName]
+      		,A.[PaperType] AS [paperType]
+      		,A.[PaperStatus] AS [paperStatus]
+      		,CONVERT(CHAR(10),A.PublishTime,120) AS publishTime
+      		,CONVERT(CHAR(10),A.StartTime,120) AS startTime
+      		,CONVERT(CHAR(10),A.EndTime,120) AS endTime
+      		,A.[Publisher] AS [publisher]
+      		,ISNULL(A.[MaxPoint],0.00) AS [maxPoint]	
+			,C.[BrandNameChinese] AS [brandName]
+			,A.[ModifyCount] AS [modifyCount]
+			,convert(varchar(30),A.[UpdateTime],121) AS [updateTime]
+  		FROM 
+			[Monitor].[BIN_Paper] A 
+			JOIN [Basis].[BIN_BrandInfo] C ON(
+			C.[BIN_BrandInfoID] = A.[BIN_BrandInfoID])
+  		WHERE
+			A.[BIN_PaperID] = #paperId#
+			]]>
+	</select>
+	<!--根据问卷ID获取问卷明细信息-->
+	<select id="getPaperQuestion" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+		SELECT 
+			[BIN_PaperQuestionID] AS [paperQuestionId]
+      		,[BIN_PaperID] AS [paperId]
+      		,[QuestionType] AS [questionType]
+      		,[QuestionItem] AS [questionItem]
+      		,[Point] AS [point]
+      		,[IsRequired] AS [isRequired]
+      		,[OptionA] AS [optionA]
+      		,[OptionB] AS [optionB]
+      		,[OptionC] AS [optionC]
+      		,[OptionD] AS [optionD]
+      		,[OptionE] AS [optionE]
+      		,[OptionF] AS [optionF]
+      		,[OptionG] AS [optionG]
+      		,[OptionH] AS [optionH]
+      		,[OptionI] AS [optionI]
+      		,[OptionJ] AS [optionJ]
+      		,[OptionK] AS [optionK]
+      		,[OptionL] AS [optionL]
+      		,[OptionM] AS [optionM]
+      		,[OptionN] AS [optionN]
+      		,[OptionO] AS [optionO]
+      		,[OptionP] AS [optionP]
+      		,[OptionQ] AS [optionQ]
+      		,[OptionR] AS [optionR]
+      		,[OptionS] AS [optionS]
+      		,[OptionT] AS [optionT]
+      		,[PointA] AS [pointA]
+      		,[PointB] AS [pointB]
+      		,[PointC] AS [pointC]
+      		,[PointD] AS [pointD]
+      		,[PointE] AS [pointE]
+      		,[PointF] AS [pointF]
+      		,[PointG] AS [pointG]
+      		,[PointH] AS [pointH]
+      		,[PointI] AS [pointI]
+      		,[PointJ] AS [pointJ]
+      		,[PointK] AS [pointK]
+      		,[PointL] AS [pointL]
+      		,[PointM] AS [pointM]
+      		,[PointN] AS [pointN]
+      		,[PointO] AS [pointO]
+      		,[PointP] AS [pointP]
+      		,[PointQ] AS [pointQ]
+      		,[PointR] AS [pointR]
+      		,[PointS] AS [pointS]
+      		,[PointT] AS [pointT]
+      		,[DisplayOrder] AS [displayOrder]
+			,[StartTime] AS [startTime]
+			,[EndTime] AS [endTime]
+  		FROM 
+			[Monitor].[BIN_PaperQuestion]
+		WHERE
+			[BIN_PaperID] = #paperId# AND
+			[ValidFlag] = 1
+			ORDER BY [DisplayOrder]
+	</select>
+	<!--在对问题进行更新之前先将问题 删除-->
+	<delete id="deleteQuestion" parameterClass="java.util.HashMap">
+		DELETE FROM
+			[Monitor].[BIN_PaperQuestion]
+		WHERE
+			[BIN_PaperID] = #paperId#
+	</delete>
+	<!--根据问卷id更新问卷主表信息-->
+	<update id="updatePaper" parameterClass="java.util.HashMap">
+		UPDATE 
+			[Monitor].[BIN_Paper]
+   		SET 
+		<dynamic>
+			<isNotEmpty property = "paperName">
+				[PaperName] = #paperName#,
+			</isNotEmpty>
+			<isNotEmpty property = "paperType">
+      			[PaperType] = #paperType#,
+			</isNotEmpty>
+			<isNotEmpty property = "paperStatus">
+      			[PaperStatus] = #paperStatus#,
+			</isNotEmpty>
+			<isNotEmpty property = "publishTime">
+      			[PublishTime] = #publishTime#,
+			</isNotEmpty>
+			<isNotEmpty property = "publisher">
+      			[Publisher] = #publisher#,
+			</isNotEmpty>
+			<isNotEmpty property = "maxPoint">
+      			[MaxPoint] = #maxPoint#,
+			</isNotEmpty>
+			<isNotEmpty property = "startTime">
+      			[StartTime] = #startTime#,
+			</isNotEmpty>
+			<isNotEmpty property = "endTime">
+      			[EndTime] = #endTime#,
+			</isNotEmpty>
+		</dynamic>
+			<include refid="BINOLCMINC99.updateSql" />
+      WHERE 
+	  	[BIN_PaperID] = #paperId#
+		AND [ModifyCount] = #modifyCount#
+		AND [UpdateTime] = #modifyTime#
+	</update>
+	
+</sqlMap>
+ 

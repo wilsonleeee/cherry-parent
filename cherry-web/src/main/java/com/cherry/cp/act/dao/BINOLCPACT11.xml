@@ -1,0 +1,74 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sqlMap PUBLIC "-//iBATIS.com//DTD SQL Map 2.0//EN" "http://ibatis.apache.org/dtd/sql-map-2.dtd">
+<sqlMap namespace="BINOLCPACT11">
+<sql id="campHistory">
+	<![CDATA[
+	SELECT 
+	   A.BatchNo AS batchNo,
+	   A.TradeNoIF AS tradeNoIF ,
+	   C.CampaignCode AS campaignCode,
+	   C.CampaignName AS campaignName,
+	   '(' + D.SubCampaignCode + ')' + D.SubCampaignName AS subCampaignName,
+	   '('+E.MemCode+')'+B.Name AS memName,
+	   B.MobilePhone AS mobilePhone,
+	   A.TradeType AS tradeType,
+	   A.State AS state,
+	   CONVERT(varchar, A.ParticipateTime, 120 ) AS optTime,
+	   CASE ISNULL(F.DepartName,'') WHEN '' THEN F.DepartCode ELSE '(' + F.DepartCode + ')' + F.DepartName END AS departName
+	]]>			
+	<![CDATA[		
+	FROM 
+      Campaign.BIN_CampaignHistory A WITH (NOLOCK)
+	  LEFT JOIN  Members.BIN_MemberInfo B WITH (NOLOCK) ON(A.BIN_MemberInfoID=B.BIN_MemberInfoID)
+	  LEFT JOIN Campaign.BIN_Campaign C WITH (NOLOCK) ON (A.CampaignCode=C.CampaignCode)
+	  LEFT JOIN Campaign.BIN_CampaignRule D WITH (NOLOCK) ON (A.MainCode = D.SubCampaignCode )
+	  JOIN Members.BIN_MemCardInfo E WITH(NOLOCK)
+	  ON B.BIN_MemberInfoID = E.BIN_MemberInfoID AND E.CardValidFlag = '1' AND E.ValidFlag = '1'
+	  LEFT JOIN Basis.BIN_Organization F WITH(NOLOCK) ON A.BIN_OrganizationID = F.BIN_OrganizationID  
+	WHERE 
+		A.CampaignCode =#campaignCode#
+    ]]>
+	<isNotEmpty prepend="AND" property="state">	
+		<![CDATA[A.State = #state#]]>
+	</isNotEmpty>	
+	<isNotEmpty prepend="AND" property="startDate">	
+		<![CDATA[CONVERT(varchar, A.ParticipateTime, 23) >= #startDate#]]>
+	</isNotEmpty>
+	<isNotEmpty prepend="AND" property="endDate">	
+		<![CDATA[CONVERT(varchar, A.ParticipateTime,23) <= #endDate#]]>
+	</isNotEmpty>
+	<isNotEmpty prepend="AND" property="departName">	
+		<![CDATA[F.DepartCode like '%'+#departName#+'%']]>
+	</isNotEmpty>
+	<isNotEmpty prepend="AND" property="tradeNoIF">	
+		<![CDATA[A.TradeNoIF like '%'+#tradeNoIF#+'%']]>
+	</isNotEmpty>
+	<isNotEmpty prepend="AND" property="batchNo">	
+		<![CDATA[A.BatchNo like '%'+#batchNo#+'%']]>
+	</isNotEmpty>
+	<isNotEmpty prepend="AND" property="mobilePhone">	
+		<![CDATA[B.MobilePhone like '%'+#mobilePhone#+'%']]>
+	</isNotEmpty>
+	<isNotEmpty prepend="AND" property="memCode">	
+		<![CDATA[E.MemCode like '%'+#memCode#+'%']]>
+	</isNotEmpty>
+	</sql>
+	
+	<!-- 活动履历List  -->
+	<select id="getCampHistoryList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+	   <include refid="BINOLCMINC99.pageheader" />
+	   <include refid="BINOLCPACT11.campHistory" />
+	   <include refid="BINOLCMINC99.pagefooter" />
+	</select>
+	
+	<!-- 活动履历Count-->
+    <select id="getCampHistoryCount" parameterClass="java.util.HashMap" resultClass="java.lang.Integer">
+        <![CDATA[
+            SELECT  COUNT(SORT_T1.tradeNoIF) AS count FROM (
+        ]]>
+        <include refid="BINOLCPACT11.campHistory" />
+        <![CDATA[
+            )SORT_T1
+        ]]>
+    </select>
+</sqlMap>

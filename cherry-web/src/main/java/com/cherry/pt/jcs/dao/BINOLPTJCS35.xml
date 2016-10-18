@@ -1,0 +1,150 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sqlMap PUBLIC "-//iBATIS.com//DTD SQL Map 2.0//EN" "http://ibatis.apache.org/dtd/sql-map-2.dtd">
+<sqlMap namespace="BINOLPTJCS35">
+	<!-- 删除产品价格信息 -->
+	<delete id="delProductPrice" parameterClass="java.util.HashMap">
+	<![CDATA[DELETE FROM Basis.BIN_ProductPrice WHERE BIN_ProductID = #productId# AND Type = '2']]>
+    </delete>
+	<!--删除产品分类对应表  -->
+	<delete id="delPrtCategory" parameterClass="java.util.HashMap">
+		<![CDATA[DELETE FROM Basis.BIN_PrtCategory WHERE BIN_ProductID = #productId#]]>
+    </delete>
+    <!-- 查询产品条码信息 -->
+	<select id="getBarCodeList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+		<![CDATA[
+		SELECT 	
+			BIN_ProductVendorID AS proVendorId,
+			BarCode AS barCode,
+			ValidFlag AS validFlag
+		FROM
+			Basis.BIN_ProductVendor
+		WHERE
+			BIN_ProductID = #productId#
+		ORDER BY ValidFlag DESC
+		]]>
+    </select>
+    <!-- 查询有效产品条码信息 -->
+	<select id="getProductVendorInfo" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+		<![CDATA[
+		SELECT 	
+			BIN_ProductVendorID AS proVendorId,
+			BarCode AS barCode
+		FROM
+			Basis.BIN_ProductVendor
+		WHERE
+			ValidFlag = '1' AND
+			BIN_ProductID = #productId#
+		]]>
+    </select>
+    <!-- 查询当前业务日期生效的产品价格记录 -->
+	<select id="getProductPrice" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+		<![CDATA[
+			SELECT 
+				BIN_ProductID ,BIN_ProductPriceID,SalePrice,MemPrice,StartDate,EndDate 
+			FROM 
+				Basis.BIN_ProductPrice 
+			WHERE 
+				BIN_ProductID = #productId#
+			AND Type = '2'
+			AND (StartDate <= #businessDate# AND EndDate >= #businessDate#) 
+		]]>
+    </select>
+    <!-- 查询分类属性名称在分类预设值表中已经存在 -->
+	<select id="getExistPvCN" parameterClass="java.util.HashMap" resultClass="java.lang.String">
+		<![CDATA[
+			SELECT
+				BIN_PrtCatPropValueID AS propValId
+			FROM
+				Basis.BIN_PrtCatPropValue
+			WHERE
+				BIN_PrtCatPropertyID = #propId#
+			AND PropValueChinese = #propValueCN#
+			AND	BIN_PrtCatPropValueID <> #propValId#
+		]]>
+    </select>
+    <!-- 取得未生效的产品价格 -->
+	<select id="getPreProductPrice" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+		<![CDATA[
+			SELECT TOP(1) 
+				BIN_ProductID, BIN_ProductPriceID, SalePrice, StartDate, EndDate 
+			FROM 
+				Basis.BIN_ProductPrice 
+			WHERE 
+				BIN_ProductID = #productId#
+			AND Type = '2'
+			AND StartDate >= #businessDate#
+			ORDER BY StartDate
+		]]>
+    </select>
+    
+	<!--更新产品价格数据 -->
+	<update id="upProPrices" parameterClass="java.util.HashMap">
+		<![CDATA[
+			UPDATE	
+				Basis.BIN_ProductPrice
+			SET	
+		]]>
+			<isNotEmpty property="salePrice">
+				SalePrice = #salePrice#,
+			</isNotEmpty>
+			<isNotEmpty property="memPrice">
+				MemPrice = #memPrice#,
+			</isNotEmpty>
+			<isNotEmpty property="endDate">
+				EndDate = #endDate#,
+			</isNotEmpty>
+			
+			<include refid="BINOLCMINC99.updateSql" />		
+		<![CDATA[				
+			WHERE					
+				BIN_ProductPriceID  = #productPriceID# 
+		]]>
+    </update>
+    
+    <!-- 更新产品厂商信息 -->
+	<update id="updProductVendor" parameterClass="java.util.HashMap">
+		<![CDATA[
+			UPDATE
+				Basis.BIN_ProductVendor
+			SET
+				ValidFlag= #validFlag#,
+		]]>
+		<include refid="BINOLCMINC99.updateSql" />	
+		<isNotEmpty property="proVendorId" prepend="WHERE">
+			BIN_ProductVendorID = #proVendorId#
+		</isNotEmpty>
+		<isNotEmpty property="productId" prepend="WHERE">
+			BIN_ProductID = #productId#
+		</isNotEmpty>
+    </update>
+	<!-- 更新产品表  -->
+	<update id="updProduct" parameterClass="java.util.HashMap">	
+		<![CDATA[
+		UPDATE
+			Basis.BIN_Product
+		SET
+			BIN_OrganizationInfoID = #organizationInfoId#,
+			BIN_BrandInfoID = #brandInfoId#,
+			NameTotal = #nameTotal#,
+			NameAlias = #nameAlias#,
+			StandardCost = #standardCost#,
+			OrderPrice = #orderPrice#,
+			IsBOMCompatible = #isBOM#,
+			Status = #status#,
+			Mode = #mode#,
+			ValidFlag = '1',
+			IsStock = #isStock#,
+			OriginalBrand = #originalBrand#,
+			ItemType = #itemType#,
+		]]>	
+			<isNotEmpty property="isExchanged">		
+			IsExchanged = #isExchanged#,
+			</isNotEmpty>	
+			Version = #tVersion#+1,
+		<include refid="BINOLCMINC99.updateSql" />									
+		<![CDATA[								
+		WHERE
+			BIN_ProductID = #productId#
+		]]>
+	</update>
+</sqlMap>

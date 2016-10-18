@@ -1,0 +1,143 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sqlMap PUBLIC "-//iBATIS.com//DTD SQL Map 2.0//EN" "http://ibatis.apache.org/dtd/sql-map-2.dtd">
+<sqlMap namespace="BINOLSSPRM55">	
+	<!-- 调拨记录查询sql文  -->
+	<sql id="AllocationSQL">
+		<![CDATA[
+		SELECT
+			DISTINCT								
+			A.BIN_PromotionAllocationID AS proAllocationId,							
+			A.AllocationNoIF AS allocationNo,
+		]]>
+		<isNotEmpty property="prmVendorId">
+            <![CDATA[
+                ISNULL(SUM(ISNULL(C.Quantity,0)),0) AS totalQuantity,
+                ISNULL(SUM(ISNULL(C.Quantity,0)*ISNULL(C.Price,0)),0) AS totalAmount,
+            ]]>
+		</isNotEmpty>
+		<isEmpty property="prmVendorId">
+	        <![CDATA[
+	            ISNULL(A.TotalQuantity,0) AS totalQuantity,                         
+	            ISNULL(A.TotalAmount,0) AS totalAmount,
+	        ]]>
+		</isEmpty>
+		<![CDATA[
+			A.VerifiedFlag AS verifiedFlag,							
+			A.TradeType AS tradeType,							
+			A.AllocationDate AS allocationDate,
+			A.TradeStatus AS tradeStatus,
+		]]>
+		<dynamic>
+			<isNotEmpty property="language">
+				<isEqual property="language" compareValue="en_US">
+					'('+E.DepartCode+')'+E.NameForeign AS sendDepart,							
+					'('+F.DepartCode+')'+F.NameForeign AS receiveDepart
+				</isEqual>
+				<isEqual property="language" compareValue="zh_CN">	
+					'('+E.DepartCode+')'+E.DepartName AS sendDepart,							
+					'('+F.DepartCode+')'+F.DepartName AS receiveDepart	
+				</isEqual>								
+			</isNotEmpty>
+			<isEmpty property="language">
+				'('+E.DepartCode+')'+E.DepartName AS sendDepart,							
+				'('+F.DepartCode+')'+F.DepartName AS receiveDepart
+			</isEmpty>
+		</dynamic>
+	<![CDATA[						
+		FROM								
+			Inventory.BIN_PromotionAllocation A	
+			LEFT JOIN Basis.BIN_Organization E
+			ON (A.BIN_OrganizationID = E.BIN_OrganizationID
+				AND	E.ValidFlag = '1')
+			LEFT JOIN Basis.BIN_Organization F
+			ON (A.BIN_OrganizationIDAccept = F.BIN_OrganizationID
+				AND	F.ValidFlag = '1')
+			LEFT JOIN Basis.BIN_Employee G
+			ON (A.BIN_EmployeeID = G.BIN_EmployeeID
+				AND G.ValidFlag = '1')
+			LEFT JOIN Inventory.BIN_PromotionAllocationDetail C ON A.BIN_PromotionAllocationID = C.BIN_PromotionAllocationID
+		WHERE
+			A.ValidFlag = '1'	
+			AND A.TradeType='5'				
+	]]>
+	<![CDATA[AND EXISTS ( ]]>
+	<include refid="BINOLCMINC99.getDepartList" />
+	<![CDATA[
+        AND (A.BIN_OrganizationID = A99.BIN_OrganizationID OR A.BIN_OrganizationIDAccept = A99.BIN_OrganizationID))
+	]]>
+		<isNotEmpty prepend="AND" property="allocationNo" >
+			A.AllocationNoIF Like '%' + #allocationNo# + '%'
+		</isNotEmpty>
+		<isNotEmpty prepend="AND" property="startDate" >
+			<![CDATA[ A.allocationDate >= #startDate# ]]>
+		</isNotEmpty>
+		<isNotEmpty prepend="AND" property="endDate" >
+			<![CDATA[ A.allocationDate <= #endDate# ]]>
+		</isNotEmpty>
+		<isNotEmpty prepend="AND" property="verifiedFlag" >
+			A.VerifiedFlag = #verifiedFlag#
+		</isNotEmpty>
+		<isNotEmpty prepend="AND" property="tradeStatus" >
+			A.TradeStatus = #tradeStatus#
+		</isNotEmpty>
+        <isNotEmpty prepend="AND" property="depotId">
+            <![CDATA[C.BIN_InventoryInfoID = #depotId#]]>
+        </isNotEmpty>
+		<isNotEmpty prepend="AND" property="prmVendorId">
+			<![CDATA[
+                C.BIN_PromotionProductVendorID = #prmVendorId#
+				GROUP BY
+				    A.BIN_PromotionAllocationID,
+                    A.AllocationNoIF,
+					A.VerifiedFlag,
+					A.TradeType,
+					A.TradeStatus,
+					A.AllocationDate,
+            ]]>
+			<isNotEmpty property="language">
+                <isEqual property="language" compareValue="en_US">
+                	'('+E.DepartCode+')'+E.NameForeign,
+					'('+F.DepartCode+')'+F.NameForeign
+				</isEqual>
+				<isEqual property="language" compareValue="zh_CN">
+					'('+E.DepartCode+')'+E.DepartName,
+					'('+F.DepartCode+')'+F.DepartName
+				</isEqual>
+			</isNotEmpty>
+			<isEmpty property="language">
+                '('+E.DepartCode+')'+E.DepartName,
+                '('+F.DepartCode+')'+F.DepartName
+			</isEmpty>
+		</isNotEmpty>
+	</sql>
+	<!-- 取得调拨记录总数  -->
+    <select id="getAllocationCount" parameterClass="java.util.HashMap" resultClass="java.lang.Integer">
+    	<![CDATA[
+			SELECT	COUNT(SORT_T1.proAllocationId) AS count FROM (
+		]]>	
+		<include refid="BINOLSSPRM55.AllocationSQL" />
+		<![CDATA[	
+			)SORT_T1
+		]]>										
+    </select>
+	<!-- 取得调拨记录LIST  -->
+	<select id="getAllocationList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+		<include refid="BINOLCMINC99.pageheader" />
+		<include refid="BINOLSSPRM55.AllocationSQL" />
+		<include refid="BINOLCMINC99.pagefooter" />
+    </select>
+	
+	<!-- 取得调拨汇总信息【产品作为检索条件】  -->
+    <select id="getSumInfo" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+        <![CDATA[
+            SELECT  
+                ISNULL(SUM(SORT_T1.totalQuantity),0) AS sumQuantity,
+                ISNULL(SUM(SORT_T1.totalAmount),0) AS sumAmount
+            FROM (
+        ]]> 
+        <include refid="BINOLSSPRM55.AllocationSQL" />
+        <![CDATA[
+            )SORT_T1
+        ]]>
+    </select>
+</sqlMap>

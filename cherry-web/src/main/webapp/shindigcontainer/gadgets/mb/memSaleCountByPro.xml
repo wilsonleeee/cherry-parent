@@ -1,0 +1,142 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Module>
+    <ModulePrefs
+            title="memSaleCountByPro">
+       		<Require feature="settitle"/>
+            <Require feature="dynamic-height" /> 
+			<Optional feature="content-rewrite">
+			  <Param name="exclude-urls">.*</Param>
+			</Optional>
+			<Require feature="oauthpopup" />
+			<Require feature="cherryOpenSocial"/>
+			<Require feature="cherryChart"/>
+			<Require feature="opensocial-i18n"/> 
+			<Locale messages="/Cherry/shindigcontainer/i18n/mb/zh_CN_ALL.xml"/>
+			<Locale lang="zh_CN" messages="/Cherry/shindigcontainer/i18n/mb/zh_CN_ALL.xml"/>
+			<Locale lang="zh_TW" messages="/Cherry/shindigcontainer/i18n/mb/zh_TW_ALL.xml"/>
+    </ModulePrefs>
+    <Content type="html" ><![CDATA[
+    <style type="text/css">
+	
+	#memSaleCountInfoDiv {
+		color: #000000;
+   		font-family: Verdana,Geneva,sans-serif;
+   		font-size: 14px;
+   		padding: 2px 10px 10px 10px;
+   		overflow: auto;
+	}
+	.section {
+		margin: 0px 0px 10px 0px;
+	}
+	.section-header {
+   		padding: 5px 5px 5px 5px;
+   		font-weight: bold;
+   		border-bottom: 1px solid #E5E5E5;
+   	}
+   	.section-content {
+   		margin: 5px 0px 5px 0px;
+   	}
+  	#waiting {
+  		height:200px;
+  	}
+  	#waiting div {
+  		background-image: url("/Cherry/css/common/blueprint/images/loading.gif");
+	    background-position: 20px center;
+	    background-repeat: no-repeat;
+	    height: 50px;
+	    width: 50px;
+	    left: 40%;
+	    top: 20%;
+	    position: absolute;
+	    z-index: 100;
+  	}
+	</style>
+	
+	<div id="waiting"><div></div></div>
+	<div id="memSaleCountInfoDiv" style="display:none"></div>
+    
+    
+	<script type='text/javascript'>
+	
+	var baseUrl = window.parent.getBaseUrl();
+	var gadgetPrefs = new gadgets.Prefs();
+	
+	function cutStr(str, length) {
+		var l = 0;
+		var a = str.split(""); 
+		for (var i = 0; i < a.length; i++) {
+			if (a[i].charCodeAt(0) < 299) {
+				l++; 
+			} else {
+				l+=2; 
+			}
+			if(l > length) {
+				str = str.substr(0,i) + "...";
+				return str;
+			}
+		}
+		return str; 
+	}
+	
+	function render(data) {
+		$("#waiting").hide();
+		$("#memSaleCountInfoDiv").show();
+		if(data) {
+			var prtCatPropertyList = data.entry.prtCatPropertyList;
+			if(prtCatPropertyList) {
+				for(var i = 0; i < prtCatPropertyList.length; i++) {
+					var saleCountInfoByProList = prtCatPropertyList[i].saleCountInfoByProList;
+					if(saleCountInfoByProList && saleCountInfoByProList.length > 0) {
+						$("#memSaleCountInfoDiv").append('<div class="section"><div class="section-header">'+gadgetPrefs.getMsg("salePro")+prtCatPropertyList[i].propertyNameChinese+gadgetPrefs.getMsg("saleGraph")+'</div><div class="section-content" id="saleCountByProPie'+i+'" style="height:240px;width:100%"></div></div>');
+						var pieData = [];
+						for(var j = 0; j < saleCountInfoByProList.length; j++) {
+							var labelText = saleCountInfoByProList[j].propValueChinese == "-1" ? gadgetPrefs.getMsg("saleOther") : saleCountInfoByProList[j].propValueChinese;
+							labelText = cutStr(labelText, 18);
+							labelText += "("+saleCountInfoByProList[j].quantity+")";
+							pieData.push({"label":labelText,"data":saleCountInfoByProList[j].quantity});
+						}
+						$.plot($("#saleCountByProPie"+i), pieData,
+						{
+					        colors:["#75A11B", "#F2AA08", "#CB4B4B", "#9440ED", "#1E90FF", "#3CB371", "#CD853F", "#BB5500", "#6A5ACD", "#00CED1"],
+					        series: {
+					            pie: {
+					                show: true,
+					                radius: 1,
+					                label: {
+					                    show: true,
+					                    radius: 3/4,
+					                    formatter: function(label, series){
+					                        return '<div style="font-size:8pt;text-align:center;padding:2px;color:white;">'+series.data.toString().split(",")[1]+gadgetPrefs.getMsg("salePart")+'<br/>'+Math.round(series.percent)+'%</div>';
+					                    }
+					                }
+					            }
+					        },
+					        legend: {
+					            show: true,
+					            position:"nw"
+					        }
+						});
+					}
+				}
+			}	
+		}
+	    gadgets.window.adjustHeight();
+	}
+	
+	function init() {
+		$("#waiting").show();
+		$("#memSaleCountInfoDiv").hide();
+		gadgets.window.adjustHeight();
+	   	var url = baseUrl + "/social/rest/memSaleCountByPro";
+	   	var param = {};
+	   	param.userInfo = window.parent.getUserInfo();
+	   	param.gadgetParam = window.parent.getGadgetParam();
+	   	sendRequestToServer(url, 'POST', param, render, false);
+	}
+	
+    gadgets.util.registerOnLoadHandler(init);
+	
+	</script>
+	
+	]]></Content>
+</Module>

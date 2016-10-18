@@ -1,0 +1,611 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE sqlMap PUBLIC "-//iBATIS.com//DTD SQL Map 2.0//EN" "http://ibatis.apache.org/dtd/sql-map-2.dtd">
+<sqlMap namespace="BINOLMOPMC01">
+	<!-- 菜单分组查询sql文  -->
+    <sql id="menuGrpQuery">
+        <![CDATA[
+        	SELECT
+				A.BIN_PosMenuGrpID AS menuGrpID,
+				A.GroupCode AS menuGrpCode,
+				A.MachineType AS machineType,
+				A.StartDate AS startDate,
+				A.EndDate AS endDate,
+				A.PublishDate AS publishDate,
+				CASE 
+					WHEN CONVERT(varchar(10), getDate(),121) <= A.EndDate THEN '0'
+					ELSE '1' END AS pastStatus,
+				CASE WHEN 
+					B.BIN_PosMenuGrpID IS NULL THEN '0' 
+				ELSE '1' END AS publishFlag,
+				CASE WHEN 
+					C.BIN_PosMenuGrpID IS NULL THEN '0' 
+				ELSE '1' END AS configFlag,
+				convert(varchar(30),A.UpdateTime,121) AS updateTime,
+				A.ModifyCount AS modifyCount,
+		]]>
+	<dynamic>
+		<isNotEmpty property="language">
+			<isEqual property="language" compareValue="en_US">
+				ISNULL(A.ForeignName,GroupName) AS menuGrpName
+			</isEqual>
+			<isEqual property="language" compareValue="zh_CN">
+				A.GroupName AS menuGrpName
+			</isEqual>
+		</isNotEmpty>
+		<isEmpty property="language">
+			A.GroupName AS menuGrpName
+		</isEmpty>
+	</dynamic>
+		<![CDATA[
+			FROM
+				Monitor.BIN_PosMenuGrp A
+				LEFT JOIN 
+					(SELECT DISTINCT
+						BIN_PosMenuGrpID
+					 FROM 
+						Monitor.BIN_PosMenuGrpCounter
+					) B
+				ON(A.BIN_PosMenuGrpID = B.BIN_PosMenuGrpID)
+				LEFT JOIN 
+					(
+					SELECT DISTINCT
+						BIN_PosMenuGrpID
+					FROM
+						Monitor.BIN_PosMenuGrpConfig
+					) C
+				ON(A.BIN_PosMenuGrpID = C.BIN_PosMenuGrpID)
+			WHERE
+				A.ValidFlag = '1'
+        ]]>
+        <isNotEmpty prepend="AND" property="menuGrpName">
+            <isNotEmpty property="language">
+				<isEqual property="language" compareValue="en_US">
+					A.ForeignName like '%'+#menuGrpName#+'%'
+				</isEqual>
+				<isEqual property="language" compareValue="zh_CN">
+					A.GroupName like '%'+#menuGrpName#+'%'
+				</isEqual>
+			</isNotEmpty>
+			<isEmpty property="language">
+				A.GroupName like '%'+#menuGrpName#+'%'
+			</isEmpty>
+        </isNotEmpty>
+       	<isNotEmpty prepend="AND" property="brandInfoId">
+               A.BIN_BrandInfoID = #brandInfoId#
+        </isNotEmpty>
+		<isNotEmpty prepend="AND" property="organizationInfoId">
+               A.BIN_OrganizationInfoID = #organizationInfoId#
+        </isNotEmpty>
+        <isNotEmpty prepend="AND" property="startPublishDate">
+            <![CDATA[A.PublishDate >= #startPublishDate#]]>
+        </isNotEmpty>
+		<isNotEmpty prepend="AND" property="endPublishDate">
+             <![CDATA[A.PublishDate <= #endPublishDate#]]>
+        </isNotEmpty>
+        <isNotEmpty prepend="AND" property="machineType">
+             <![CDATA[A.MachineType = #machineType#]]>
+        </isNotEmpty>
+        <isNotEmpty prepend="AND" property="dateStatus">
+        	<isEqual  property="dateStatus" compareValue="1">
+			<![CDATA[	A.StartDate <= CONVERT(varchar(10), getDate(),121) AND CONVERT(varchar(10), getDate(),121) <= A.EndDate ]]>
+		   	</isEqual>
+		   	<isEqual  property="dateStatus" compareValue="2">
+			<![CDATA[	CONVERT(varchar(10), getDate(),121) > A.EndDate ]]>
+		   	</isEqual>
+		   	<isEqual  property="dateStatus" compareValue="3">
+			<![CDATA[	CONVERT(varchar(10), getDate(),121) < A.StartDate ]]>
+		   	</isEqual>
+		   	<isEqual  property="dateStatus" compareValue="4">
+			<![CDATA[	A.StartDate IS NULL AND A.EndDate IS NULL ]]>
+		   	</isEqual>
+        </isNotEmpty>
+	</sql>
+	
+	<!-- 取得菜单组总数  -->
+    <select id="getMenuGrpCount" parameterClass="java.util.HashMap" resultClass="java.lang.Integer">
+        <![CDATA[
+            SELECT COUNT(1) AS count FROM (
+        ]]>
+        <include refid="BINOLMOPMC01.menuGrpQuery" />
+        <![CDATA[
+            )SORT_T1
+        ]]>
+    </select>
+    
+    <!-- 取得菜单组List  -->
+    <select id="getMenuGrpList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+        <include refid="BINOLCMINC99.pageheader" />
+        <include refid="BINOLMOPMC01.menuGrpQuery" />
+        <include refid="BINOLCMINC99.pagefooter" />
+    </select>
+    
+    <!-- 新增菜单组  -->
+	<insert id="addMenuGrp" parameterClass="java.util.HashMap">
+		<selectKey resultClass="java.lang.Integer" type="post" keyProperty="BIN_PosMenuGrpID" >
+        <![CDATA[
+            INSERT INTO Monitor.BIN_PosMenuGrp(
+            	BIN_OrganizationInfoID,
+            	BIN_BrandInfoID,
+                GroupName,
+                StartDate,
+                EndDate,
+                MachineType,
+        ]]>
+        <include refid="BINOLCMINC99.insertKeySql" />
+        <![CDATA[
+            )VALUES(
+            	#organizationInfoId#,
+            	#brandInfoId#,
+                #menuGrpName#,
+                #startDate#,
+                #endDate#,
+                #machineType#,
+        ]]>
+        <include refid="BINOLCMINC99.insertValueSql" />
+        <![CDATA[
+            )
+            SELECT SCOPE_IDENTITY() AS value
+        ]]>
+        </selectKey>
+    </insert>
+    
+    <!-- 取得菜单组信息 -->
+    <select id="getMenuGrpInfo" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+        <![CDATA[
+        	SELECT
+				StartDate AS startDate,
+				EndDate AS endDate,
+				MachineType AS machineType,
+				ModifyCount AS modifyCount,
+				UpdateTime AS updateTime,
+		]]>
+		<isNotEmpty property="language">
+			<isEqual property="language" compareValue="en_US">
+				ISNULL(ForeignName,GroupName) AS menuGrpName
+			</isEqual>
+			<isEqual property="language" compareValue="zh_CN">
+				ISNULL(GroupName,'') AS menuGrpName
+			</isEqual>
+		</isNotEmpty>
+		<isEmpty property="language">
+			ISNULL(GroupName,'') AS menuGrpName
+		</isEmpty>
+		<![CDATA[
+			FROM
+				Monitor.BIN_PosMenuGrp
+			WHERE
+				BIN_PosMenuGrpID = #menuGrpID#
+        ]]>
+    </select>
+    
+    <!-- 更新菜单组信息【机器类型不可编辑】-->
+    <update id="updateMenuGrp" parameterClass="java.util.HashMap">
+		<![CDATA[
+        UPDATE
+            Monitor.BIN_PosMenuGrp
+        SET
+			GroupName=#menuGrpName#,
+			StartDate=#startDate#,
+			EndDate=#endDate#,
+    ]]>
+        <include refid="BINOLCMINC99.updateSql"/>
+        <![CDATA[
+        WHERE
+            BIN_PosMenuGrpID=#menuGrpID#
+    ]]>
+	</update>
+	
+	<!-- 删除菜单组-->
+	<delete id="deleteMenuGrp" parameterClass="java.util.HashMap">
+		<![CDATA[
+			DELETE FROM Monitor.BIN_PosMenuGrp		
+			WHERE		
+				BIN_PosMenuGrpID = #menuGrpID# AND	
+				UpdateTime = #modifyTime# AND	
+				ModifyCount = #modifyCount#	
+		]]>
+		<isNotEmpty prepend="AND" property="brandInfoId">
+			BIN_BrandInfoID = #brandInfoId#
+	    </isNotEmpty>
+		<isNotEmpty prepend="AND" property="organizationInfoId">
+			BIN_OrganizationInfoID = #organizationInfoId#
+		</isNotEmpty>
+	</delete>
+	
+	<!-- 删除菜单组-->
+	<delete id="deletePosMenuGrpConfig" parameterClass="java.util.HashMap">
+		<![CDATA[
+			DELETE FROM Monitor.BIN_PosMenuGrpConfig		
+			WHERE		
+				BIN_PosMenuGrpID = #menuGrpID#
+		]]>
+		<isNotEmpty prepend="AND" property="brandInfoId">
+			BIN_BrandInfoID = #brandInfoId#
+	    </isNotEmpty>
+		<isNotEmpty prepend="AND" property="organizationInfoId">
+			BIN_OrganizationInfoID = #organizationInfoId#
+		</isNotEmpty>
+	</delete>
+	
+	<!-- 取得已下发的菜单组的下发柜台及其所属组织结构 -->
+	<select id="getPublishOrganize" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+		<![CDATA[
+		SELECT
+			T.id,
+			T.name,
+			T.path,
+			T.configCntID,
+			T.level	
+		FROM
+			(SELECT
+				A.BIN_OrganizationID AS id,
+				A.Path AS path,
+				C.BIN_CounterInfoID AS configCntID,
+				A.Level AS level,
+		]]>
+        <dynamic>
+            <isNotEmpty property="language">
+                <isEqual property="language" compareValue="en_US">
+                   <![CDATA[
+                   		'('+A.DepartCode+')' + A.NameForeign AS name
+                   ]]>
+                </isEqual>
+                <isEqual property="language" compareValue="zh_CN">
+                    <![CDATA[
+                    	'('+A.DepartCode+')' + A.DepartName AS name
+                    ]]>
+                </isEqual>
+            </isNotEmpty>
+            <isEmpty property="language">
+                <![CDATA[
+                	'('+A.DepartCode+')' + A.DepartName AS name
+                ]]>
+            </isEmpty>
+        </dynamic>
+		<![CDATA[
+			FROM
+				Basis.BIN_Organization A WITH(NOLOCK)
+				LEFT JOIN Basis.BIN_CounterInfo B WITH(NOLOCK)
+				ON(A.BIN_OrganizationID = B.BIN_OrganizationID)
+				LEFT JOIN Monitor.BIN_PosMenuGrpCounter C WITH(NOLOCK)
+				ON(B.BIN_CounterInfoID = C.BIN_CounterInfoID AND 
+					C.BIN_PosMenuGrpID=#menuGrpID#)	
+			WHERE
+				A.Type <> '4' AND
+				EXISTS (
+					SELECT 
+						1
+					FROM
+						Basis.BIN_Organization D
+				]]>
+					<isNotEmpty property="privilegeFlag">
+					<isEqual property="privilegeFlag" compareValue="1">			
+				<![CDATA[			
+						JOIN (]]><include refid="BINOLCMINC99.departPrivilegeSql" /><![CDATA[) A99 
+						ON D.BIN_OrganizationID=A99.BIN_OrganizationID
+				]]>
+					</isEqual>
+					</isNotEmpty>
+				<![CDATA[				
+					WHERE
+						D.Type = '4' AND
+						D.ValidFlag = '1' AND
+						D.NodeID.IsDescendantOf(A.NodeID) = 1
+				) AND
+				A.BIN_OrganizationInfoID = #organizationInfoId#
+		]]>		
+			<isNotEmpty property="brandInfoId" prepend="AND">
+				A.BIN_BrandInfoID = #brandInfoId#
+			</isNotEmpty>
+		<![CDATA[
+			UNION	
+			SELECT
+				A.BIN_OrganizationID AS id,
+				A.Path AS path,
+				T0.BIN_CounterInfoID AS configCntID,
+				A.Level AS level,
+		]]>
+        <dynamic>
+            <isNotEmpty property="language">
+                <isEqual property="language" compareValue="en_US">
+                   <![CDATA[
+                   		'('+A.DepartCode+')' + A.NameForeign AS name
+                   ]]>
+                </isEqual>
+                <isEqual property="language" compareValue="zh_CN">
+                    <![CDATA[
+                    	'('+A.DepartCode+')' + A.DepartName AS name
+                    ]]>
+                </isEqual>
+            </isNotEmpty>
+            <isEmpty property="language">
+                <![CDATA[
+                	'('+A.DepartCode+')' + A.DepartName AS name
+                ]]>
+            </isEmpty>
+        </dynamic>
+		<![CDATA[
+			FROM
+				Basis.BIN_Organization A WITH(NOLOCK)
+		]]>
+			<isNotEmpty property="privilegeFlag">
+			<isEqual property="privilegeFlag" compareValue="1">			
+		<![CDATA[			
+				JOIN (]]><include refid="BINOLCMINC99.departPrivilegeSql" /><![CDATA[) A99 
+				ON A.BIN_OrganizationID=A99.BIN_OrganizationID
+		]]>
+			</isEqual>
+			</isNotEmpty>
+		<![CDATA[
+				LEFT JOIN Basis.BIN_CounterInfo B WITH(NOLOCK)
+				ON(A.BIN_OrganizationID = B.BIN_OrganizationID)
+				LEFT JOIN Monitor.BIN_PosMenuGrpCounter T0 WITH(NOLOCK)
+				ON(B.BIN_CounterInfoID = T0.BIN_CounterInfoID AND
+					T0.BIN_PosMenuGrpID = #menuGrpID# AND T0.ValidFlag='1')
+			WHERE
+				A.Type = '4' AND
+				A.ValidFlag = '1' AND
+				A.BIN_OrganizationInfoID = #organizationInfoId#
+		]]>	
+			<isNotEmpty property="brandInfoId" prepend="AND">
+				A.BIN_BrandInfoID = #brandInfoId#
+			</isNotEmpty>
+		<![CDATA[) T					
+			ORDER BY
+				T.path
+		]]>
+	</select>
+	
+	<!--取得柜台菜单组的下发柜台及其所属区域-->
+	<select id="getPosMenuRegion" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+		<![CDATA[
+			SELECT
+				A.BIN_OrganizationID AS organizationID,
+				A.BIN_RegionID AS regionID,
+				A.BIN_ProvinceID AS provinceID,
+				A.BIN_CityID AS cityID,
+				A.BIN_CountyID AS countyID,
+		]]>
+		<dynamic>
+			<isNotEmpty property="language">
+				<isEqual property="language" compareValue="en_US">
+					<![CDATA[
+						case  
+							when A.DepartCode IS NULL 
+							then A.NameForeign
+							else '('+A.DepartCode+')'+A.NameForeign end AS departName,
+						case  
+							when C.RegionCode IS NULL 
+							then C.RegionNameForeign
+							else '('+C.RegionCode+')'+C.RegionNameForeign end AS regionName,
+						case  
+							when D.RegionCode IS NULL 
+							then D.RegionNameForeign
+							else '('+D.RegionCode+')'+D.RegionNameForeign end AS provinceName,
+						case  
+							when E.RegionCode IS NULL 
+							then E.RegionNameForeign
+							else '('+E.RegionCode+')'+E.RegionNameForeign end AS cityName,
+						case  
+							when F.RegionCode IS NULL 
+							then F.RegionNameForeign
+							else '('+F.RegionCode+')'+F.RegionNameForeign end AS countyName
+					]]>
+				</isEqual>
+				<isEqual property="language" compareValue="zh_CN">
+					<![CDATA[
+						case  
+							when A.DepartCode IS NULL 
+							then A.DepartName
+							else '('+A.DepartCode+')'+A.DepartName end AS departName,
+						case  
+							when C.RegionCode IS NULL 
+							then C.RegionNameChinese
+							else '('+C.RegionCode+')'+C.RegionNameChinese end AS regionName,
+						case  
+							when D.RegionCode IS NULL 
+							then D.RegionNameChinese
+							else '('+D.RegionCode+')'+D.RegionNameChinese end AS provinceName,
+						case  
+							when E.RegionCode IS NULL 
+							then E.RegionNameChinese
+							else '('+E.RegionCode+')'+E.RegionNameChinese end AS cityName,
+						case  
+							when F.RegionCode IS NULL 
+							then F.RegionNameChinese
+							else '('+F.RegionCode+')'+F.RegionNameChinese end AS countyName
+					]]>
+				</isEqual>
+			</isNotEmpty>
+			<isEmpty property="language">
+				<![CDATA[
+					case  
+							when A.DepartCode IS NULL 
+							then A.DepartName
+							else '('+A.DepartCode+')'+A.DepartName end AS departName,
+						case  
+							when C.RegionCode IS NULL 
+							then C.RegionNameChinese
+							else '('+C.RegionCode+')'+C.RegionNameChinese end AS regionName,
+						case  
+							when D.RegionCode IS NULL 
+							then D.RegionNameChinese
+							else '('+D.RegionCode+')'+D.RegionNameChinese end AS provinceName,
+						case  
+							when E.RegionCode IS NULL 
+							then E.RegionNameChinese
+							else '('+E.RegionCode+')'+E.RegionNameChinese end AS cityName,
+						case  
+							when F.RegionCode IS NULL 
+							then F.RegionNameChinese
+							else '('+F.RegionCode+')'+F.RegionNameChinese end AS countyName
+				]]>
+			</isEmpty>
+		</dynamic>
+		<![CDATA[
+			FROM
+				Basis.BIN_Organization A WITH(NOLOCK)
+				LEFT JOIN Basis.BIN_CounterInfo B WITH(NOLOCK)
+				ON(A.BIN_OrganizationID = B.BIN_OrganizationID)
+				JOIN Monitor.BIN_PosMenuGrpCounter T0 WITH(NOLOCK)
+				ON(B.BIN_CounterInfoID = T0.BIN_CounterInfoID AND
+					T0.BIN_PosMenuGrpID = #menuGrpID# AND T0.ValidFlag='1')
+				JOIN Basis.BIN_Region C WITH(NOLOCK)
+				ON(A.BIN_RegionID = C.BIN_RegionID)
+				JOIN Basis.BIN_Region D WITH(NOLOCK)
+				ON(A.BIN_ProvinceID = D.BIN_RegionID)
+				JOIN Basis.BIN_Region E WITH(NOLOCK)
+				ON(A.BIN_CityID = E.BIN_RegionID)
+				LEFT JOIN Basis.BIN_Region F WITH(NOLOCK)
+				ON(A.BIN_CountyID = F.BIN_RegionID)
+		]]>
+		<isNotEmpty property="privilegeFlag">
+		<isEqual property="privilegeFlag" compareValue="1">			
+			<![CDATA[			
+				JOIN (]]><include refid="BINOLCMINC99.departPrivilegeSql" /><![CDATA[) A99 
+				ON A.BIN_OrganizationID=A99.BIN_OrganizationID
+			]]>
+		</isEqual>
+		</isNotEmpty>
+		<![CDATA[
+			WHERE
+				A.Type = '4'
+				AND A.ValidFlag = '1' AND
+				A.BIN_OrganizationInfoID = #organizationInfoId#
+		]]>		
+			<isNotEmpty property="brandInfoId" prepend="AND">
+				A.BIN_BrandInfoID = #brandInfoId#
+			</isNotEmpty>
+		<![CDATA[
+		]]>
+	</select>
+    
+    <!-- 取得已下发的菜单组的下发柜台及其所属渠道 -->
+	<select id="getPosMenuChannel" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+		<![CDATA[
+			SELECT
+				D.BIN_ChannelID AS channelId,
+				A.BIN_OrganizationID AS organizationId,
+		]]>
+		<dynamic>
+			<isNotEmpty property="language">
+				<isEqual property="language" compareValue="en_US">
+					<![CDATA[
+						case  
+							when A.DepartCode IS NULL 
+							then A.NameForeign
+							else '('+A.DepartCode+')'+A.NameForeign end AS departName,
+						D.ChannelNameForeign AS channelName
+					]]>
+				</isEqual>
+				<isEqual property="language" compareValue="zh_CN">
+					<![CDATA[
+						case  
+							when A.DepartCode IS NULL 
+							then A.DepartName
+							else '('+A.DepartCode+')'+A.DepartName end AS departName,
+						D.ChannelName AS channelName
+					]]>
+				</isEqual>
+			</isNotEmpty>
+			<isEmpty property="language">
+				<![CDATA[
+					case  
+						when A.DepartCode IS NULL 
+						then A.DepartName
+						else '('+A.DepartCode+')'+A.DepartName end AS departName,
+					D.ChannelName AS channelName
+				]]>
+			</isEmpty>
+		</dynamic>
+		<![CDATA[
+			FROM 
+				Basis.BIN_Organization A WITH(NOLOCK)
+				LEFT JOIN Basis.BIN_CounterInfo B WITH(NOLOCK)
+				ON(A.BIN_OrganizationID = B.BIN_OrganizationID)
+				JOIN Monitor.BIN_PosMenuGrpCounter T0 WITH(NOLOCK)
+				ON(B.BIN_CounterInfoID = T0.BIN_CounterInfoID AND
+					T0.BIN_PosMenuGrpID = #menuGrpID# AND T0.ValidFlag='1')
+				JOIN Basis.BIN_CounterInfo C ON A.BIN_OrganizationID = C.BIN_OrganizationID
+				JOIN Basis.BIN_Channel D ON C.BIN_ChannelID = D.BIN_ChannelID
+		]]>
+		<isNotEmpty property="privilegeFlag">
+		<isEqual property="privilegeFlag" compareValue="1">			
+			<![CDATA[			
+				JOIN (]]><include refid="BINOLCMINC99.departPrivilegeSql" /><![CDATA[) A99 
+				ON A.BIN_OrganizationID=A99.BIN_OrganizationID
+			]]>
+		</isEqual>
+		</isNotEmpty>
+		<![CDATA[
+			WHERE
+				A.Type = '4' AND
+				A.ValidFlag = '1' AND
+				A.BIN_OrganizationInfoID = #organizationInfoId#
+		]]>		
+			<isNotEmpty property="brandInfoId" prepend="AND">
+				A.BIN_BrandInfoID = #brandInfoId#
+			</isNotEmpty>
+			<isNotEmpty property="regionId" prepend="AND">
+				A.BIN_RegionID = #regionId#
+			</isNotEmpty>
+		<![CDATA[
+		]]>
+	</select>
+	
+	<!-- 根据菜单组ID取得其菜单配置 -->
+	<select id="getMenuGrpConfig" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+		<![CDATA[
+			SELECT 
+				BIN_PosMenuID,
+				MenuStatus
+		  	FROM 
+		  		Monitor.BIN_PosMenuGrpConfig
+		  	WHERE
+		  		BIN_PosMenuGrpID = #menuGrpID#
+		]]>
+	</select>
+	
+	<!-- 插入复制的菜单组的菜单配置 -->
+	<insert id="insertMenuGrpConfig" parameterClass="java.util.HashMap">	
+		<![CDATA[
+	    INSERT INTO Monitor.BIN_PosMenuGrpConfig (
+	   		BIN_OrganizationInfoID,
+      		BIN_BrandInfoID,
+      		BIN_PosMenuGrpID,
+      		BIN_PosMenuID,
+      		MenuStatus,
+		]]>
+		<include refid="BINOLCMINC99.insertKeySql" />									
+		<![CDATA[								
+		)VALUES (
+			#organizationInfoId#,
+			#brandInfoId#,		
+			#menuGrpIdNew#,
+			#BIN_PosMenuID#,		
+			#MenuStatus#,	
+		]]>
+		<include refid="BINOLCMINC99.insertValueSql"/>
+		<![CDATA[ ) ]]>
+	</insert>
+	
+	<!-- 查找指定分组名称是否已经存在 -->
+	<select id="getMenuGrpByName" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+		<![CDATA[
+			SELECT 
+				1
+		  	FROM 
+		  		Monitor.BIN_PosMenuGrp
+		  	WHERE
+		  		GroupName = #menuGrpName# AND
+		  		BIN_OrganizationInfoID = #organizationInfoId# AND
+				BIN_BrandInfoID = #brandInfoId#
+		]]>
+		<isNotEmpty property="menuGrpID" prepend="AND">
+				<![CDATA[ BIN_PosMenuGrpID <> #menuGrpID# ]]>
+		</isNotEmpty>
+		<isNotEmpty property="machineType" prepend="AND">
+				<![CDATA[ MachineType = #machineType# ]]>
+		</isNotEmpty>
+	</select>
+</sqlMap>

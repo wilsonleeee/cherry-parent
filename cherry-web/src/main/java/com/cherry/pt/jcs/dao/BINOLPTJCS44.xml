@@ -1,0 +1,333 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sqlMap PUBLIC "-//iBATIS.com//DTD SQL Map 2.0//EN" "http://ibatis.apache.org/dtd/sql-map-2.dtd">
+<sqlMap namespace="BINOLPTJCS44">
+	<sql id="queryDropList">
+		<![CDATA[
+			 SELECT 
+				pt.NameTotal As nameTotal,
+				pv.BarCode As barCode,
+				pt.Spec As spec,
+				pp.SalePrice As salePrice,
+				pp.MemPrice As memprice,
+				pv.BIN_ProductID as productId
+			From 
+				Basis.BIN_Product pt WITH(NOLOCK)
+			LEFT JOIN
+				Basis.BIN_ProductPrice pp WITH(NOLOCK)
+			ON
+				(pt.BIN_ProductID=pp.BIN_ProductID)
+			LEFT JOIN
+				Basis.BIN_ProductVendor pv WITH(NOLOCK)
+			ON
+				(pt.BIN_ProductID=pv.BIN_ProductID)
+			WHERE
+				pt.BIN_OrganizationInfoID = #organizationInfoId# AND
+				pt.BIN_BrandInfoID = #brandInfoId#
+				]]>	
+			<isNotEmpty prepend="AND" property="validFlag">
+				pt.ValidFlag = #validFlag#
+			</isNotEmpty>
+			<isNotEmpty prepend="AND" property="nameTotal">
+				pt.NameTotal = #nameTotal#
+			</isNotEmpty>
+			<isNotEmpty prepend="AND" property="barCode">
+				pv.BarCode = #barCode#
+			</isNotEmpty>	
+	</sql>
+
+	<select id="getDropList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+       	<include refid="BINOLCMINC99.pageheader" />
+		<include refid="BINOLPTJCS44.queryDropList" />
+		<include refid="BINOLCMINC99.pagefooter" />
+	</select>
+
+
+	<select id="getDropCountInfo" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+    	<![CDATA[
+			SELECT 
+				COUNT(1) AS count 
+			FROM 
+				(]]><include refid="BINOLPTJCS44.queryDropList" /><![CDATA[) T
+		]]>
+    </select>
+    
+    
+    <!-- 取得柜台方案对应的方案中的产品信息 -->
+	<sql id="getPrtByCntSolu">
+		<![CDATA[ 
+			SELECT 
+				P.BIN_ProductID,P.NameTotal,PPSD.SoluProductName,P.UnitCode,P.ValidFlag,B.BarCode,P.Spec,
+				B.BIN_ProductVendorID,P.StandardCost,PPSD.SalePrice,PPSD.MemPrice,PPSD.PlatinumPrice 
+			FROM 
+				Basis.BIN_PrtSoluDepartRelation PSDR
+				JOIN Basis.BIN_ProductPriceSolution PPS 
+					ON (PPS.BIN_ProductPriceSolutionID = PSDR.BIN_SolutionId 
+						AND PPS.ValidFlag = '1' AND 
+						PPS.StartDate <= #businessDate# AND PPS.EndDate >= #businessDate# 
+					)
+				JOIN Basis.BIN_ProductPriceSolutionDetail PPSD 
+					ON (PPSD.BIN_ProductPriceSolutionID = PPS.BIN_ProductPriceSolutionID 
+						AND PPSD.ValidFlag = '1'
+					)
+				JOIN Basis.BIN_Product P ON P.BIN_ProductID = PPSD.BIN_ProductID 
+				JOIN Basis.BIN_ProductVendor B ON P.BIN_ProductID = B.BIN_ProductID 
+			WHERE 
+				PSDR.BIN_OrganizationInfoID = #organizationInfoId# AND 
+				PSDR.BIN_BrandInfoID = #brandInfoId# AND 
+				PSDR.DepartCode = #counterCode# 
+		]]>
+		<isNotEmpty prepend="AND" property="validFlag">
+			P.ValidFlag = #validFlag# AND 
+			B.ValidFlag = #validFlag# 
+		</isNotEmpty>
+		<isNotEmpty prepend="AND" property="nameTotal">
+		<![CDATA[
+			P.NameTotal like '%'+ #nameTotal# +'%'
+		]]>
+		</isNotEmpty>
+		<isNotEmpty prepend="AND" property="barCode">
+			B.BarCode = #barCode#
+		</isNotEmpty>
+		<isNotEmpty prepend="AND" property="originalBrand">
+		 	P.OriginalBrand=#originalBrand#
+		</isNotEmpty>
+	</sql>
+				
+    <!--根据输入字符串模糊查询产品信息-->
+	<sql id="queryProductList">
+        <![CDATA[
+		SELECT 
+			A.UnitCode AS unitCode,
+			B.BarCode AS barCode,
+			A.Spec As spec,
+			A.BIN_ProductID AS productId,
+			B.BIN_ProductVendorID AS productVendorId,
+			ISNULL(CONVERT(Decimal(16,2),C.TagPrice),0) AS salePrice,
+            ISNULL(CONVERT(Decimal(16,2),C.MemPrice),0) AS memPrice,
+            ISNULL(CONVERT(Decimal(16,2),C.PlatinumPrice),0) AS platinumPrice,
+            ISNULL(CONVERT(Decimal(16,2),A.StandardCost),0) AS standardCost,
+            ISNULL(CONVERT(Decimal(16,2),A.OrderPrice),0) AS orderPrice,
+        ]]>
+			<dynamic>
+				<isNotEmpty property="language">
+					<isEqual property="language" compareValue="zh_CN">										
+						A.NameTotal AS nameTotal,
+						A.NameTotal AS soluProductName
+						
+					</isEqual>
+					<isEqual property="language" compareValue="en_US">										
+						A.NameForeign AS nameTotal,
+						A.NameForeign AS soluProductName
+					</isEqual>
+				</isNotEmpty>
+				<isEmpty property="language">
+						A.NameTotal AS nameTotal,
+						A.NameTotal AS soluProductName
+				</isEmpty>
+			</dynamic>
+        <![CDATA[
+		FROM
+			Basis.BIN_Product A
+			JOIN Basis.BIN_ProductVendor B ON A.BIN_ProductID = B.BIN_ProductID	
+            LEFT JOIN Basis.BIN_ProductPrice C ON A.BIN_ProductID = C.BIN_ProductID AND A.ValidFlag = C.ValidFlag AND C.Type = '2' AND C.EndDate >= #businessDate# AND C.StartDate <= #businessDate# 
+		WHERE 
+			A.BIN_OrganizationInfoID = #organizationInfoId# AND 
+			A.BIN_BrandInfoID = #brandInfoId# 
+        ]]>
+        <isNotEmpty prepend="AND" property="validFlag">
+			A.ValidFlag = #validFlag# AND 
+			B.ValidFlag = #validFlag# 
+		</isNotEmpty>
+		<isNotEmpty prepend="AND" property="nameTotal">
+		<![CDATA[
+			A.NameTotal like '%'+ #nameTotal# +'%' 
+		]]>
+		</isNotEmpty>
+		<isNotEmpty prepend="AND" property="barCode">
+			B.BarCode = #barCode#
+		</isNotEmpty>
+		<isNotEmpty property="originalBrand">
+		 <![CDATA[AND A.OriginalBrand=#originalBrand#]]>
+		</isNotEmpty>
+	</sql>
+	
+	<select id="getProductList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+       	<include refid="BINOLCMINC99.pageheader" />
+		<include refid="BINOLPTJCS44.queryProductList" />
+		<include refid="BINOLCMINC99.pagefooter" />
+	</select>
+	
+	<select id="getProductCount" parameterClass="java.util.HashMap" resultClass="java.lang.Integer">
+		<![CDATA[
+			SELECT COUNT(1) AS count FROM (
+		]]>	
+		<include refid="BINOLPTJCS44.queryProductList" />
+		<![CDATA[	
+			) SORT_T1
+		]]>
+    </select>
+	
+	<!-- 检查柜台是否有分配可用的方案  -->
+	<select id="chkCntSoluData" parameterClass="java.util.HashMap" resultClass="java.util.HashMap"> 
+	 <![CDATA[
+		SELECT 1
+		FROM 
+			Basis.BIN_PrtSoluDepartRelation PSDR 
+			JOIN Basis.BIN_ProductPriceSolution PPS ON PPS.BIN_ProductPriceSolutionID = PSDR.BIN_SolutionId
+		WHERE
+			PSDR.DepartCode = #counterCode# AND 
+			PPS.ValidFlag = '1' AND 
+			PSDR.ValidFlag = '1' AND 
+			PPS.StartDate <= #businessDate# AND PPS.EndDate >= #businessDate#
+	 ]]>
+	</select>
+	
+	<!--根据输入字符串模糊查询柜台对应的产品信息-->
+	<sql id="queryCntProductList">
+		SELECT 
+			A.UnitCode AS unitCode,
+			A.BarCode AS barCode,
+			A.Spec As spec,
+			A.BIN_ProductID AS productId,
+			A.BIN_ProductVendorID AS productVendorId,
+			ISNULL(CONVERT(Decimal(16,2),A.StandardCost),0) AS standardCost,
+			<!-- 颖通模式价格从产品价格表取  -->
+			<isEqual property="soluAddModeConf" compareValue="2">
+				ISNULL(CONVERT(Decimal(16,2),C.TagPrice),0) AS salePrice,
+	            ISNULL(CONVERT(Decimal(16,2),C.MemPrice),0) AS memPrice,
+	            ISNULL(CONVERT(Decimal(16,2),C.PlatinumPrice),0) AS platinumPrice,
+			</isEqual>
+			<isEqual property="soluAddModeConf" compareValue="3">
+				ISNULL(CONVERT(Decimal(16,2),C.TagPrice),0) AS salePrice,
+	            ISNULL(CONVERT(Decimal(16,2),C.MemPrice),0) AS memPrice, 
+	            ISNULL(CONVERT(Decimal(16,2),C.PlatinumPrice),0) AS platinumPrice,
+			</isEqual>
+			<!-- 标准模式价格从方案明细中取得  -->
+			<isEqual property="soluAddModeConf" compareValue="1">
+				ISNULL(CONVERT(Decimal(16,2),A.SalePrice),0) AS salePrice,
+	            ISNULL(CONVERT(Decimal(16,2),A.MemPrice),0) AS memPrice,
+	            ISNULL(CONVERT(Decimal(16,2),A.PlatinumPrice),0) AS platinumPrice,
+			</isEqual>
+			A.SoluProductName AS soluProductName,
+			<dynamic>
+				<isNotEmpty property="language">
+					<isEqual property="language" compareValue="zh_CN">										
+						A.NameTotal AS nameTotal
+					</isEqual>
+					<isEqual property="language" compareValue="en_US">										
+						A.NameForeign AS nameTotal
+					</isEqual>
+				</isNotEmpty>
+				<isEmpty property="language">
+						A.NameTotal AS nameTotal
+				</isEmpty>
+			</dynamic>
+		FROM
+			(
+				<!-- 柜台产品使用模式 1:严格校验  -->
+				<isEqual property="cntPrtModeConf" compareValue="1">
+					<!-- 取得柜台方案对应的方案中的产品信息 -->
+					<include refid="getPrtByCntSolu"/>
+				</isEqual>
+				<!-- 柜台产品使用模式 2:补充校验 -->
+				<isEqual property="cntPrtModeConf" compareValue="2">
+					<!-- 取得柜台方案对应的方案中的产品信息 -->
+					<include refid="getPrtByCntSolu"/>
+					<![CDATA[
+					UNION
+					SELECT 
+						A2.*,
+					]]>
+					<!-- 标准模式价格从方案明细中取得:因为是补充，所以只能从标准产品价格表中取得   -->
+					<![CDATA[
+						PP.TagPrice AS SalePrice,PP.MemPrice,PP.PlatinumPrice
+					FROM(
+						SELECT 
+							P.BIN_ProductID,P.NameTotal ,P.NameTotal AS SoluProductName,P.UnitCode,
+							P.ValidFlag,PV.BarCode,P.Spec,PV.BIN_ProductVendorID,P.StandardCost 
+						FROM 
+							Basis.BIN_Product P 
+							JOIN Basis.BIN_ProductVendor PV ON PV.BIN_ProductID = P.BIN_ProductID 
+						WHERE 
+							P.BIN_OrganizationInfoID = #organizationInfoId# AND 
+							P.BIN_BrandInfoID = #brandInfoId# AND 
+							]]>
+							<isNotEmpty property="originalBrand">
+							 	P.OriginalBrand=#originalBrand# AND
+							</isNotEmpty>
+							<![CDATA[ 
+							NOT EXISTS(
+								SELECT 1 FROM (
+								]]>
+									<include refid="getPrtByCntSolu"/>
+								<![CDATA[
+								)  A3 WHERE A3.BIN_ProductID = P.BIN_ProductID
+							)
+					]]>
+					<isNotEmpty prepend="AND" property="validFlag">
+						P.ValidFlag = #validFlag# AND 
+						PV.ValidFlag = #validFlag# 
+					</isNotEmpty>
+					<isNotEmpty prepend="AND" property="nameTotal">
+					<![CDATA[
+						P.NameTotal like '%'+ #nameTotal# +'%' 
+					]]>
+					</isNotEmpty>
+					<isNotEmpty prepend="AND" property="barCode">
+						PV.BarCode = #barCode# 
+					</isNotEmpty>
+					<![CDATA[
+					) A2
+					]]>
+					<!-- 标准模式价格从方案明细中取得:因为是补充，所以只能从标准产品价格表中取得   -->
+		            <![CDATA[
+		            LEFT JOIN Basis.BIN_ProductPrice PP
+			            ON (A2.BIN_ProductID = PP.BIN_ProductID
+			            AND A2.ValidFlag = PP.ValidFlag 
+			            AND PP.Type = '2'
+			            AND PP.EndDate >= #businessDate#
+			            AND PP.StartDate <= #businessDate#)
+		            ]]>
+				</isEqual>
+			) A
+			<!-- 颖通模式价格从产品价格表取  -->
+			<isEqual property="soluAddModeConf" compareValue="2">
+            <![CDATA[
+            LEFT JOIN Basis.BIN_ProductPrice C
+	            ON (A.BIN_ProductID = C.BIN_ProductID
+	            AND A.ValidFlag = C.ValidFlag 
+	            AND C.Type = '2'
+	            AND C.EndDate >= #businessDate#
+	            AND C.StartDate <= #businessDate#)
+            ]]>
+			</isEqual>
+			<!-- 颖通模式价格从产品价格表取  -->
+			<isEqual property="soluAddModeConf" compareValue="3">
+            <![CDATA[
+            LEFT JOIN Basis.BIN_ProductPrice C
+	            ON (A.BIN_ProductID = C.BIN_ProductID
+	            AND A.ValidFlag = C.ValidFlag 
+	            AND C.Type = '2'
+	            AND C.EndDate >= #businessDate#
+	            AND C.StartDate <= #businessDate#)
+            ]]>
+			</isEqual>
+	</sql>
+    
+    <select id="getCntProductList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+       	<include refid="BINOLCMINC99.pageheader" />
+		<include refid="BINOLPTJCS44.queryCntProductList" />
+		<include refid="BINOLCMINC99.pagefooter" />
+	</select>
+	
+	<select id="getCntProductCount" parameterClass="java.util.HashMap" resultClass="java.lang.Integer">
+		<![CDATA[
+			SELECT COUNT(1) AS count FROM (
+		]]>	
+		<include refid="BINOLPTJCS44.queryCntProductList" />
+		<![CDATA[	
+			) SORT_T1
+		]]>
+    </select>
+    
+</sqlMap>

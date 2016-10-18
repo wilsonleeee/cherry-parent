@@ -1,0 +1,351 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sqlMap PUBLIC "-//iBATIS.com//DTD SQL Map 2.0//EN" "http://ibatis.apache.org/dtd/sql-map-2.dtd">
+<sqlMap namespace="BINOLSTSFH23">
+
+    <!-- 符合订单主表信息 -->
+	<sql id="getOrderInfo" >
+		SELECT
+		    A.BIN_ProductOrderID as binProductOrderID,
+		    A.OrderNo  orderNo,
+		    B.DepartName  departName,
+		    A.Date orderDate,
+		    A.ApplyQuantity applyQuantity,
+		    A.TotalAmount totalAmount,
+		    A.ExpectDeliverDate expectDeliverDate,
+		    A.TotalQuantity  totalQuantity,
+		    C.Date deliverDate,
+		    A.VerifiedFlag
+		FROM   Inventory.BIN_ProductOrder  A	
+		LEFT JOIN  Basis.BIN_Organization B ON  A.BIN_OrganizationID=B.BIN_OrganizationID
+		LEFT JOIN  Inventory.BIN_ProductDeliver C ON  A.OrderNo=C.RelevanceNo
+		 <isNotEmpty property="privilegeFlag">
+			<isEqual property="privilegeFlag" compareValue="1">			
+			<![CDATA[			
+				JOIN (]]><include refid="BINOLCMINC99.departPrivilegeSql" /><![CDATA[) A99 
+				ON A.BIN_OrganizationID=A99.BIN_OrganizationID
+			]]>
+			</isEqual>
+		</isNotEmpty>
+		WHERE  A.ValidFlag=1
+		<isNotEmpty prepend="AND" property="brandInfoId">
+			<![CDATA[
+				A.BIN_BrandInfoID=#brandInfoId#
+			]]>
+		</isNotEmpty>
+		<isNotEmpty prepend="AND" property="organizationInfoId">
+			<![CDATA[
+				A.BIN_OrganizationInfoID=#organizationInfoId#
+			]]>
+		</isNotEmpty>
+	    <isNotEmpty prepend="AND" property="fromDate">
+			<![CDATA[
+				#fromDate# <= CONVERT(varchar(10),ExpectDeliverDate, 120)
+			]]>
+		</isNotEmpty>
+        <isNotEmpty prepend="AND" property="toDate">
+			<![CDATA[
+				#toDate# >= CONVERT(varchar(10),ExpectDeliverDate, 120)
+			]]>
+		</isNotEmpty>
+		<isNotEmpty prepend="AND" property="orderStatus">
+			<![CDATA[
+				A.VerifiedFlag=#orderStatus#
+			]]>
+		</isNotEmpty>
+		<isNotEmpty prepend="AND" property="orderNum">
+			<![CDATA[
+				A.OrderNo like '%' + #orderNum# + '%'
+			]]>
+		</isNotEmpty>
+		<isNotEmpty prepend="AND" property="employeeName">
+			<![CDATA[
+				B.DepartName  like '%' + #employeeName# + '%'
+			]]>
+		</isNotEmpty>
+
+	</sql>
+
+
+  <!-- 产品信息查询sql（浓妆淡抹） -->
+	 <sql id="productQueryTwo">
+	 	<![CDATA[
+    		(SELECT
+    			DISTINCT
+    			A.BIN_ProductID AS bin_ProductID,
+    			A.UnitCode AS unitCode,
+    		    A.ItemCode, 
+    			C.BarCode AS barCode,
+    			C.BIN_ProductVendorID,
+    			ISNULL(CONVERT(Decimal(16,2),A.StandardCost),0) AS standardCost,
+    			ISNULL(CONVERT(Decimal(16,2),A.OrderPrice),0) AS orderPrice,
+				ISNULL(CONVERT(Decimal(16,2),A.MinSalePrice),0) AS minSalePrice,
+				ISNULL(CONVERT(Decimal(16,2),A.MaxSalePrice),0) AS maxSalePrice,
+    			ISNULL(A.OriginalBrand,'') AS originalBrand,
+    			ISNULL(CONVERT(Decimal(16,2),B.DistributionPrice),0) AS distributionPrice,
+    			C.ValidFlag AS validFlag,
+    			]]>
+    			<dynamic>
+					<isNotEmpty property="language">
+						<isEqual property="language" compareValue="zh_CN">										
+							A.NameTotal AS nameTotal,
+							D.PropValueChinese AS primaryCategoryBig,
+							E.PropValueChinese AS primaryCategorySmall,
+						</isEqual>
+						<isEqual property="language" compareValue="en_US">										
+							A.NameForeign AS nameTotal,
+							D.PropValueForeign AS primaryCategoryBig,
+							E.PropValueForeign AS primaryCategorySmall,
+						</isEqual>
+					</isNotEmpty>
+					<isEmpty property="language">
+							A.NameTotal AS nameTotal,
+							D.PropValueChinese AS primaryCategoryBig,
+							E.PropValueChinese AS primaryCategorySmall,
+					</isEmpty>
+					ISNULL(CONVERT(Decimal(16,2),B.SalePrice),0) AS salePrice,
+                    ISNULL(CONVERT(Decimal(16,2),B.MemPrice),0) AS memPrice,
+                    ISNULL(CONVERT(Decimal(16,2),B.PlatinumPrice),0) AS platinumPrice,
+                    ISNULL(CONVERT(Decimal(16,2),B.TagPrice),0) AS tagPrice
+				</dynamic>
+    		<![CDATA[
+    		FROM
+    			Basis.BIN_Product A WITH(NOLOCK)
+    			JOIN Basis.BIN_ProductVendor C WITH(NOLOCK) ON(A.BIN_ProductID = C.BIN_ProductID)
+    			LEFT JOIN Basis.BIN_ProductPrice B WITH(NOLOCK)
+    			ON (A.BIN_ProductID = B.BIN_ProductID  
+    				AND A.ValidFlag = B.ValidFlag 
+    				AND B.Type = '2'
+    				AND B.StartDate <= #bussinessDate# 
+    				AND B.endDate >=#bussinessDate# )
+    			LEFT JOIN (
+    				SELECT
+    					pc.BIN_ProductID,
+    					pcv.PropValueChinese,
+    					pcv.PropValueForeign
+    				FROM
+    					Basis.BIN_PrtCategory pc WITH(NOLOCK),
+    					Basis.BIN_PrtCatProperty pcp WITH(NOLOCK),
+    					Basis.BIN_PrtCatPropValue pcv WITH(NOLOCK)
+    				WHERE
+    					pc.BIN_PrtCatPropValueID = pcv.BIN_PrtCatPropValueID AND
+    					pcv.BIN_PrtCatPropertyID = pcp.BIN_PrtCatPropertyID AND
+    					pcp.TeminalFlag = '1' AND 
+    					pcp.BIN_OrganizationInfoID = #organizationInfoId#  AND
+		    			]]>
+			    			<isNotEmpty property="brandInfoId">
+			    				pcp.BIN_BrandInfoID = #brandInfoId# AND 
+			    			</isNotEmpty>
+						<![CDATA[
+						pc.ValidFlag = '1' AND
+						pcv.ValidFlag = '1' AND
+						pcp.ValidFlag = '1'
+    			) D ON (D.BIN_ProductID = A.BIN_ProductID)
+    			LEFT JOIN (
+    				SELECT
+    					pc.BIN_ProductID,
+    					pcv.PropValueChinese,
+    					pcv.PropValueForeign
+    				FROM
+    					Basis.BIN_PrtCategory pc WITH(NOLOCK),
+    					Basis.BIN_PrtCatProperty pcp WITH(NOLOCK),
+    					Basis.BIN_PrtCatPropValue pcv WITH(NOLOCK)
+    				WHERE
+    					pc.BIN_PrtCatPropValueID = pcv.BIN_PrtCatPropValueID AND
+    					pcv.BIN_PrtCatPropertyID = pcp.BIN_PrtCatPropertyID AND
+    					pcp.TeminalFlag = '2' AND 
+    					pcp.BIN_OrganizationInfoID = #organizationInfoId#  AND 
+    					]]>
+			    			<isNotEmpty property="brandInfoId">
+			    				pcp.BIN_BrandInfoID = #brandInfoId# AND 
+			    			</isNotEmpty>
+						<![CDATA[
+						pc.ValidFlag = '1' AND
+						pcv.ValidFlag = '1' AND
+						pcp.ValidFlag = '1'
+    			) E ON (E.BIN_ProductID = A.BIN_ProductID)
+    		WHERE
+    		      1=1
+			]]>
+   			<isNotEmpty property="brandInfoId" prepend="AND">
+   				A.BIN_BrandInfoID = #brandInfoId#
+   			</isNotEmpty>
+			<![CDATA[
+			 )  M   
+   			]]>
+	 </sql>
+	<!-- 查询符合条件的订单总数  -->
+    <select id="getOrderCount" parameterClass="java.util.HashMap" resultClass="java.lang.Integer">    
+    	SELECT	COUNT(SORT_T1.OrderNo) AS count FROM (			
+			<include refid="BINOLSTSFH23.getOrderInfo"/>		
+			)SORT_T1	
+    </select>
+    
+     <!-- 查询符合条件的订单主表信息List  -->
+    <select id="getOrderInfoList"   parameterClass="java.util.HashMap"  resultClass="java.util.HashMap">
+        <include refid="BINOLCMINC99.pageheader"/>
+		<include refid="BINOLSTSFH23.getOrderInfo"/>
+		<include refid="BINOLCMINC99.pagefooter"/>
+    </select>
+    
+    
+     <!-- 获取符合查询条件的订单导出数据List  -->
+    <select id="getOrderDetailInfoList"   parameterClass="java.util.HashMap"  resultClass="java.util.HashMap">
+        SELECT
+		    A.OrderNo  orderNo,
+		    B.DepartName  departName,
+		    A.DeliverAddress deliverAddress,
+		    A.VerifiedFlag,
+		    E.EmployeeName,
+		    A.Date orderDate,
+		    A.ExpectDeliverDate expectDeliverDate,
+		    C.Date deliverDate,
+		    A.Comments orderComments,
+		    F.BarCode,
+		    G.NameTotal,
+		    D.Price,
+		    D.ApplyQuantity,
+		    D.ApplyQuantity*D.Price applyAmount, 
+		    D.Quantity quantity,
+		    D.Comments productComments
+		FROM   Inventory.BIN_ProductOrder  A
+		INNER JOIN Inventory.BIN_ProductOrderDetail  D  ON A.BIN_ProductOrderID=D.BIN_ProductOrderID
+		LEFT JOIN  Basis.BIN_Organization B ON  A.BIN_OrganizationID=B.BIN_OrganizationID
+		LEFT JOIN  Inventory.BIN_ProductDeliver C ON  A.OrderNo=C.RelevanceNo
+		LEFT JOIN  Basis.BIN_Employee E ON A.BIN_EmployeeID=E.BIN_EmployeeID
+		LEFT JOIN  Basis.BIN_ProductVendor F ON D.BIN_ProductVendorID=F.BIN_ProductVendorID
+		LEFT JOIN  Basis.BIN_Product G ON F.BIN_ProductID=G.BIN_ProductID 
+		WHERE   A.ValidFlag=1
+		<isNotEmpty prepend="AND" property="brandInfoId">
+			<![CDATA[
+				A.BIN_BrandInfoID=#brandInfoId#
+			]]>
+		</isNotEmpty>
+		<isNotEmpty prepend="AND" property="organizationInfoId">
+			<![CDATA[
+				A.BIN_OrganizationInfoID=#organizationInfoId#
+			]]>
+		</isNotEmpty>
+	    <isNotEmpty prepend="AND" property="fromDate">
+			<![CDATA[
+				#fromDate# <= CONVERT(varchar(10),A.ExpectDeliverDate, 120)
+			]]>
+		</isNotEmpty>
+        <isNotEmpty prepend="AND" property="toDate">
+			<![CDATA[
+				#toDate# >= CONVERT(varchar(10),A.ExpectDeliverDate, 120)
+			]]>
+		</isNotEmpty>
+		<isNotEmpty prepend="AND" property="orderStatus">
+			<![CDATA[
+				A.VerifiedFlag=#orderStatus#
+			]]>
+		</isNotEmpty>
+		<isNotEmpty prepend="AND" property="orderNum">
+			<![CDATA[
+				A.OrderNo like '%' + #orderNum# + '%'
+			]]>
+		</isNotEmpty>
+		<isNotEmpty prepend="AND" property="employeeName">
+			<![CDATA[
+				B.DepartName  like '%' + #employeeName# + '%'
+			]]>
+		</isNotEmpty>
+
+    </select>
+    
+        <!--删除订单主表-->
+    <update id="deleteOrder" parameterClass="java.util.HashMap">
+        <![CDATA[
+            UPDATE
+               Inventory.BIN_ProductOrder 
+            SET
+                ValidFlag ='0',
+                UpdateTime=GETDATE(),
+                UpdatedBy=#updatedBy#,
+                UpdatePGM=#updatePGM#,
+                ModifyCount=ModifyCount+1
+            WHERE ValidFlag ='1'
+              ]]>
+         <isNotEmpty property="checkOrderNoId" prepend="AND">
+	  		 OrderNo  IN
+			<iterate property="checkOrderNoId" open="(" close=")" conjunction=",">
+				#checkOrderNoId[]#
+			</iterate>
+	  	</isNotEmpty> 
+	  	<isEmpty property="checkOrderNoId" prepend="AND">
+           ValidFlag ='0'
+	  	</isEmpty> 
+    </update>
+    <!--删除订单明细表-->
+    <update id="deleteOrderDetail" parameterClass="java.util.HashMap">
+        <![CDATA[
+            UPDATE
+                Inventory.BIN_ProductOrderDetail
+            SET
+                ValidFlag ='0',
+                UpdateTime=GETDATE(),
+                UpdatedBy=#updatedBy#,
+                UpdatePGM=#updatePGM#,
+                ModifyCount=ModifyCount+1
+           WHERE ValidFlag ='1' 
+           AND  BIN_ProductOrderID IN
+           (SELECT BIN_ProductOrderID FROM  Inventory.BIN_ProductOrder 
+           WHERE ValidFlag ='0' ]]> 
+           <isNotEmpty property="checkOrderNoId" prepend="AND">
+	  	    OrderNo  IN
+			<iterate property="checkOrderNoId" open="(" close=")" conjunction=",">
+				#checkOrderNoId[]#
+			</iterate>
+		  	</isNotEmpty> 
+		  	<isEmpty property="checkOrderNoId" prepend="AND">
+	           ValidFlag ='0'
+		  	</isEmpty> 
+           <![CDATA[
+           )
+        ]]>  
+    </update>
+    
+     <!-- 获取符合查询条件的订单导出数据List  -->
+    <select id="getOrderInfoByOrder"   parameterClass="java.util.HashMap"  resultClass="java.util.HashMap">
+    	<![CDATA[
+    	 SELECT M.distributionPrice*N.Quantity money,N.Quantity,M.bin_ProductID,M.unitCode,M.barCode,M.distributionPrice,M.originalBrand,M.validFlag,M.nameTotal,M.ItemCode,N.BIN_ProductVendorID
+    	  FROM 
+    	]]>
+    	<![CDATA[
+	    	(        SELECT
+               A.OrderNo,B.BIN_ProductVendorID,B.Quantity
+		FROM   Inventory.BIN_ProductOrder  A
+		INNER JOIN Inventory.BIN_ProductOrderDetail  B  ON A.BIN_ProductOrderID=B.BIN_ProductOrderID
+		WHERE   A.ValidFlag=1 AND A.OrderNo=#orderNumCopy#
+			]]>
+   			<isNotEmpty property="brandInfoId" prepend="AND">
+   				A.BIN_BrandInfoID = #brandInfoId#
+   			</isNotEmpty> 
+
+    	 	<isNotEmpty property="organizationInfoId" prepend="AND">
+   				A.BIN_OrganizationInfoID = #organizationInfoId#
+   			</isNotEmpty> 
+   	   	<![CDATA[
+			 )  N  LEFT JOIN 
+   			]]>
+		 <include refid="BINOLSTSFH23.productQueryTwo" />
+		  	<![CDATA[
+			ON	N.BIN_ProductVendorID=M.BIN_ProductVendorID
+   			]]>
+
+    </select>
+    
+       <!-- 单据汇总信息 -->
+    <select id="getSumInfo" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+       <![CDATA[
+        SELECT 
+        ISNULL(CONVERT(Decimal(16,2),SUM(X.applyQuantity)),0)  sumApplyQuantity, 
+        ISNULL(CONVERT(Decimal(16,2),SUM(X.totalAmount)),0) sumTotalAmount ,
+        ISNULL(CONVERT(Decimal(16,2),SUM(X.totalQuantity)),0) sumTotalQuantity 
+        FROM (
+        ]]>
+        <include refid="BINOLSTSFH23.getOrderInfo"/>
+        <![CDATA[ )  X 
+        ]]>
+    </select>
+</sqlMap>

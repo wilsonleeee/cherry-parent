@@ -1,0 +1,93 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE sqlMap PUBLIC "-//iBATIS.com//DTD SQL Map 2.0//EN" "http://ibatis.apache.org/dtd/sql-map-2.dtd">
+
+<sqlMap namespace="BINOLMBMBM21">
+    
+    <!-- 查询推荐者基本信息 -->
+	<select id="getReferrerInfo" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+		<![CDATA[
+			SELECT TOP 1
+				A.Name AS name,
+				A.MobilePhone AS mobilePhone,
+				A.BirthYear AS birthYear,
+				SUBSTRING(A.BirthDay,1,2) AS birthMonth,
+				SUBSTRING(A.BirthDay,3,2) AS birthDay,
+				CONVERT(varchar(30),A.JoinDate,120) AS joinDate,
+				CASE ISNULL(C.DepartName,'') WHEN '' THEN C.DepartCode ELSE '(' + C.DepartCode + ')' + C.DepartName END AS counterName,
+				B.MemCode AS memCode
+			FROM
+				Members.BIN_MemberInfo A WITH(NOLOCK)
+				JOIN Members.BIN_MemCardInfo B WITH(NOLOCK) ON A.BIN_MemberInfoID = B.BIN_MemberInfoID AND B.ValidFlag = '1'
+				LEFT JOIN Basis.BIN_Organization C WITH(NOLOCK) ON A.BIN_OrganizationID = C.BIN_OrganizationID
+			WHERE
+				A.BIN_MemberInfoID = #referrerId#
+			ORDER BY
+				B.CardCount DESC
+		]]>	
+    </select>
+    
+    <!-- 查询推荐过的会员List  -->
+	<sql id="ReferListQuery">
+		<![CDATA[
+			SELECT
+				A.Name AS name,
+				A.MobilePhone AS mobilePhone,
+				A.BirthYear AS birthYear,
+				SUBSTRING(A.BirthDay,1,2) AS birthMonth,
+				SUBSTRING(A.BirthDay,3,2) AS birthDay,
+				CONVERT(varchar(30),A.JoinDate,120) AS joinDate,
+				CASE ISNULL(C.DepartName,'') WHEN '' THEN C.DepartCode ELSE '(' + C.DepartCode + ')' + C.DepartName END AS counterName,
+				B.MemCode AS memCode,
+				E.StandardProvince AS standardProvince,
+				E.StandardCity AS standardCity
+			FROM
+				Members.BIN_MemberInfo A WITH(NOLOCK)
+				JOIN Members.BIN_MemCardInfo B WITH(NOLOCK) ON A.BIN_MemberInfoID = B.BIN_MemberInfoID AND B.validFlag = '1' AND B.CardValidFlag = '1'
+		]]>		
+			<isNotEmpty property="privilegeFlag">
+			<isEqual property="privilegeFlag" compareValue="1">			
+				<![CDATA[JOIN (]]><include refid="BINOLCMINC99.departPrivilegeSql" />
+				<![CDATA[) A99 ON A.BIN_OrganizationID=A99.BIN_OrganizationID]]>
+			</isEqual>
+			</isNotEmpty>
+		<![CDATA[	
+				LEFT JOIN Basis.BIN_Organization C WITH(NOLOCK) ON A.BIN_OrganizationID = C.BIN_OrganizationID
+				LEFT JOIN Members.BIN_MemberAddress D WITH(NOLOCK) 
+					JOIN Basis.BIN_AddressInfo E WITH(NOLOCK) ON D.BIN_AddressInfoID = E.BIN_AddressInfoID AND E.validFlag = '1'
+				ON A.BIN_MemberInfoID = D.BIN_MemberInfoID AND D.validFlag = '1'
+			WHERE
+				A.ReferrerID = #memberInfoId# AND
+				A.MemInfoRegFlg = '0' AND
+				B.CardValidFlag = '1' AND
+				A.validFlag = '1'
+		]]>		
+			<isNotEmpty prepend="AND" property="memCode">	
+				B.MemCode = #memCode#
+			</isNotEmpty>
+			<isNotEmpty prepend="AND" property="mobilePhone">	
+				A.MobilePhone = #mobilePhone#
+			</isNotEmpty>		
+	</sql>
+	
+	<!-- 查询推荐过的会员总数  -->
+    <select id="getReferCount" parameterClass="java.util.HashMap" resultClass="java.lang.Integer">
+    	<![CDATA[
+			SELECT	COUNT(1) AS count FROM (
+		]]>	
+		<include refid="BINOLMBMBM21.ReferListQuery" />	
+		<![CDATA[	
+			)SORT_T1
+		]]>										
+    </select>
+	
+	<!-- 查询推荐过的会员List  -->
+    <select id="getReferList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+       	<include refid="BINOLCMINC99.pageheader" />
+		<include refid="BINOLMBMBM21.ReferListQuery" />
+		<include refid="BINOLCMINC99.pagefooter" />
+    </select>
+	
+</sqlMap>
+
+
+

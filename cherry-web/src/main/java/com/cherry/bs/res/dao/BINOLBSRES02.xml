@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sqlMap PUBLIC "-//iBATIS.com//DTD SQL Map 2.0//EN" "http://ibatis.apache.org/dtd/sql-map-2.dtd">
+<sqlMap namespace="BINOLBSRES02">
+	<select id="resellerDetail" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+	<![CDATA[
+			SELECT
+				A.BIN_ResellerInfoID as resellerInfoId,
+				A.BIN_BrandInfoID as brandInfoId,
+				A.BIN_OrganizationInfoID as organizationInfoId,
+				A.ResellerCode as resellerCode,
+				A.ResellerName as resellerName,
+				A.ResellerNameShort as resellerNameShort,
+				A.LegalPerson as legalPerson,
+				A.TelePhone as telePhone,
+				A.Mobile as mobile,
+				A.ValidFlag as validFlag,
+				A.ResellerCodeIF as resellerCodeIf,
+				A.LevelCode as levelCode,
+				A.PriceFlag as priceFlag,
+				A.Status as status,
+				A.ParentResellerCode as parentResellerCode,		
+				B.ResellerName as parentResellerName,			
+				A.Type as type,
+			]]>	
+			<dynamic>
+			<isNotEmpty property="language">
+				<isEqual property="language" compareValue="en_US">
+					X.RegionNameForeign AS regionName,
+					Y.RegionNameForeign AS provinceName,
+					Z.RegionNameForeign AS cityName
+				</isEqual>
+				<isEqual property="language" compareValue="zh_CN">						
+					X.RegionNameChinese AS regionName,
+					Y.RegionNameChinese AS provinceName,
+					Z.RegionNameChinese AS cityName					
+				</isEqual>								
+			</isNotEmpty>
+			<isEmpty property="language">				
+				X.RegionNameChinese AS regionName,
+				Y.RegionNameChinese AS provinceName,
+				Z.RegionNameChinese AS cityName				
+			</isEmpty>
+		</dynamic>
+		<![CDATA[		
+		
+		from 
+			Basis.BIN_ResellerInfo A
+			LEFT JOIN Basis.BIN_ResellerInfo B ON A.ParentResellerCode = B.ResellerCode				
+			LEFT JOIN Basis.BIN_Region X ON A.BIN_RegionID = X.BIN_RegionID
+			LEFT JOIN Basis.BIN_Region Y ON A.BIN_ProvinceID = Y.BIN_RegionID
+			LEFT JOIN Basis.BIN_Region Z ON A.BIN_CityID = Z.BIN_RegionID
+			]]>
+		<![CDATA[
+		where		
+				A.BIN_ResellerInfoID=#resellerInfoId#
+		]]>
+	</select>
+</sqlMap>
+

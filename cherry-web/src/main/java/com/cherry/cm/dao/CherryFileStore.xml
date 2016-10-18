@@ -1,0 +1,82 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sqlMap PUBLIC "-//iBATIS.com//DTD SQL Map 2.0//EN" "http://ibatis.apache.org/dtd/sql-map-2.dtd">
+<sqlMap namespace="CherryFileStore">
+	
+	<!-- 储存文件一览 -->
+	<resultMap id="CherryFileStore.FileStoreList" class="com.cherry.cm.core.FileStoreDTO">
+		<result property="fileStoreId" column="BIN_FileStoreID"/>						<!-- 文件储存表ID -->	
+		<result property="orgCode" column="OrgCode"/>									<!-- 组织Code -->	
+		<result property="brandCode" column="BrandCode"/>								<!-- 品牌代码 -->	
+		<result property="fileCategory" column="FileCategory"/>							<!-- 文件类别 -->
+		<result property="fileCode" column="FileCode"/>									<!-- 文件代号 -->
+		<result property="fileName" column="FileName"/>									<!-- 文件名称 -->
+		<result property="fileContent" column="FileContent"/>							<!-- 文件内容 -->
+		<result property="fileType" column="FileType"/>									<!-- 文件类型 -->
+		<result property="modifyCount" column="ModifyCount"/>							<!-- 修改次数 -->
+	</resultMap>
+	<!-- 储存文件一览 -->
+    <select id="getFileStoreList" parameterClass="java.util.HashMap" resultMap="CherryFileStore.FileStoreList">
+		<![CDATA[
+			SELECT
+				BIN_FileStoreID,
+				OrgCode,
+				BrandCode,
+				FileCategory,
+				FileCode,
+				FileName,
+				FileContent,
+				FileType,
+				ModifyCount
+			FROM
+				Tools.BIN_FileStore
+			WHERE
+				ValidFlag = '1'
+		]]>
+    </select>
+	
+	<!-- 更新储存文件  -->
+	<update id="updateFileContent" parameterClass="com.cherry.cm.core.FileStoreDTO">
+        <![CDATA[ 
+		  UPDATE   
+		           Tools.BIN_FileStore					
+		  SET     			
+		           FileContent = #fileContent#,			
+		]]>	
+		    <include refid="BINOLCMINC99.updateSql" />	
+		<![CDATA[			
+       	  WHERE									
+				   BIN_FileStoreID = #fileStoreId#
+       ]]>   
+    </update>
+	
+	<!-- 插入存储文件  -->
+	<insert id="insertFileStore" parameterClass="com.cherry.cm.core.FileStoreDTO">
+		<selectKey resultClass="java.lang.Integer" type="post" keyProperty="fileStoreId" >
+        <![CDATA[ 
+		INSERT INTO Tools.BIN_FileStore						
+		           (OrgCode,	
+		            BrandCode,
+					FileCategory,													
+	                FileName,	
+	                FileCode,
+	                FileContent,
+	                FileType,
+		]]>	
+		    <include refid="BINOLCMINC99.insertKeySql" />	
+		<![CDATA[			
+        )VALUES							
+		           (#orgCode#,	
+				    #brandCode#,	
+					#fileCategory#,			
+		            #fileName#,			
+		            #fileCode#,		
+		            #fileContent#,		
+		            #fileType#,	
+       ]]>
+	        <include refid="BINOLCMINC99.insertValueSql" />
+		<![CDATA[)
+			select SCOPE_IDENTITY() as value
+			]]> 
+		</selectKey>
+    </insert>
+</sqlMap>

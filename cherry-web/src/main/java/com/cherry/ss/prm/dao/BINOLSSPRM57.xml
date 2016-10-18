@@ -1,0 +1,180 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sqlMap PUBLIC "-//iBATIS.com//DTD SQL Map 2.0//EN" "http://ibatis.apache.org/dtd/sql-map-2.dtd">
+<sqlMap namespace="BINOLSSPRM57">
+    <!-- 发货单查询sql文  -->
+    <sql id="deliverQuery">
+        <![CDATA[
+            SELECT
+                DISTINCT
+                A.BIN_PromotionDeliverID AS deliverId,
+                A.DeliverReceiveNoIF AS deliverRecNo,
+                A.BIN_OrganizationID AS deliverDepId,
+                A.BIN_OrganizationIDReceive AS receiveDepId,
+                A.WorkFlowID,
+        ]]>
+        <isNotEmpty property="prmVendorId">
+            <![CDATA[
+                ISNULL(SUM(ISNULL(C.Quantity,0)),0) AS totalQuantity,
+                ISNULL(SUM(ISNULL(C.Quantity,0)*ISNULL(C.Price,0)),0) AS totalAmount,
+            ]]>
+        </isNotEmpty>
+        <isEmpty property="prmVendorId">
+            <![CDATA[
+                A.TotalQuantity AS totalQuantity,
+                A.TotalAmount AS totalAmount,
+            ]]>
+        </isEmpty>
+        <![CDATA[
+                A.VerifiedFlag AS verifiedFlag,
+                A.DeliverDate AS deliverDate,
+                A.StockInFlag AS stockInFlag,
+                A.CreatedBy AS createdBy,
+                convert(varchar(30),A.UpdateTime,121) AS deliverUpdateTime,
+                case StockInFlag when '2' then  datediff(day,A.DeliverDate,getdate()) else 0 end as DateRange,
+                A.ModifyCount AS modifyCount,
+				A.TradeType AS tradeType
+            ]]>
+        <dynamic>
+        <isNotEmpty property="language">
+            <isEqual property="language" compareValue="en_US">
+            ,'('+B.DepartCode+')'+B.NameForeign AS departName
+            ,'('+G.DepartCode+')'+G.NameForeign AS departNameReceive
+            </isEqual>
+            <isEqual property="language" compareValue="zh_CN">
+            ,'('+B.DepartCode+')'+B.DepartName AS departName
+            ,'('+G.DepartCode+')'+G.DepartName AS departNameReceive
+            </isEqual>
+        </isNotEmpty>
+        <isEmpty property="language">
+            ,'('+B.DepartCode+')'+B.DepartName AS departName
+            ,'('+G.DepartCode+')'+G.DepartName AS departNameReceive
+        </isEmpty>
+        </dynamic>
+         <![CDATA[
+            FROM
+                Inventory.BIN_PromotionDeliver A
+                left join Basis.BIN_Organization B on A.BIN_OrganizationID = B.BIN_OrganizationID
+                left join Basis.BIN_Organization G on A.BIN_OrganizationIDReceive = G.BIN_OrganizationID
+                LEFT JOIN Inventory.BIN_PromotionDeliverDetail C ON A.BIN_PromotionDeliverID = C.BIN_PromotionDeliverID
+                LEFT JOIN
+                (
+                SELECT
+                    DISTINCT
+                    PE1.GLOBAL_KEY,
+                    CASE WHEN PE2.STRING_VALUE IS NULL THEN #osRule# ELSE PE2.STRING_VALUE END AS osRule
+                FROM
+                    dbo.OS_PROPERTYENTRY PE1
+                LEFT JOIN dbo.OS_PROPERTYENTRY PE2 ON PE1.GLOBAL_KEY = PE2.GLOBAL_KEY
+                    AND PE2.ITEM_KEY = #participantID#
+				LEFT JOIN dbo.OS_PROPERTYENTRY PE3 ON PE1.GLOBAL_KEY = PE3.GLOBAL_KEY
+                    AND PE3.ITEM_KEY = 'SendToCounter'
+				WHERE PE1.ITEM_KEY = 'BIN_PromotionDeliverID' AND PE3.STRING_VALUE = 'NO'
+                )PE ON 'os_'+ convert(varchar(20),A.WorkFlowID) = PE.GLOBAL_KEY
+            WHERE
+                A.ValidFlag = '1'
+				AND A.StockInFlag = '2'
+        ]]>
+        <![CDATA[AND EXISTS ( ]]>
+        <include refid="BINOLCMINC99.getDepartList" />
+        <![CDATA[
+            AND (A.BIN_OrganizationIDReceive = A99.BIN_OrganizationID))
+        ]]>
+        <dynamic>
+            <isNotEmpty prepend="AND" property="deliverRecNo">
+                (A.DeliverReceiveNoIF LIKE '%' + #deliverRecNo# + '%')
+            </isNotEmpty>
+            <isNotEmpty prepend="AND" property="startDate">
+            <![CDATA[
+                A.DeliverDate >= #startDate#
+            ]]>
+            </isNotEmpty>
+            <isNotEmpty prepend="AND" property="endDate">
+            <![CDATA[
+                A.DeliverDate <= #endDate#
+            ]]>
+            </isNotEmpty>
+            <![CDATA[
+                    AND (PE.osRule LIKE '%userID'+#LoginUserID#+'%' 
+                        OR PE.osRule LIKE '%positionID'+#LoginPositionID#+'%' 
+                        OR PE.osRule LIKE '%organizationID'+#LoginOrganizationID#+'%'
+            ]]>
+            <isEmpty prepend="OR" property="osRule">
+            <![CDATA[
+                (PE.osRule = '' AND A.BIN_OrganizationIDReceive = #LoginOrganizationID#)
+            ]]>
+            </isEmpty>
+			<![CDATA[)]]>
+        </dynamic>
+        <isNotEmpty prepend="AND" property="prmVendorId">
+            <![CDATA[
+                C.BIN_PromotionProductVendorID = #prmVendorId#
+                GROUP BY
+                    A.BIN_PromotionDeliverID,
+                    A.DeliverReceiveNoIF,
+                    A.BIN_OrganizationID,
+                    A.BIN_OrganizationIDReceive,
+                    A.WorkFlowID,
+                    A.VerifiedFlag,
+                    A.DeliverDate,
+                    A.StockInFlag,
+                    A.CreatedBy,
+                    convert(varchar(30),A.UpdateTime,121),
+                    case StockInFlag when '2' then  datediff(day,A.DeliverDate,getdate()) else 0 end,
+                    A.ModifyCount,
+					A.TradeType,
+            ]]>
+            <isNotEmpty property="language">
+                <isEqual property="language" compareValue="en_US">
+                    <![CDATA[
+                       '('+B.DepartCode+')'+B.NameForeign,
+                       '('+G.DepartCode+')'+G.NameForeign
+                    ]]>
+                </isEqual>
+                <isEqual property="language" compareValue="zh_CN">
+                    <![CDATA[
+                        '('+B.DepartCode+')'+B.DepartName,
+                        '('+G.DepartCode+')'+G.DepartName
+                    ]]>
+                </isEqual>
+            </isNotEmpty>
+            <isEmpty property="language">
+                <![CDATA[
+                '('+B.DepartCode+')'+B.DepartName,
+                '('+G.DepartCode+')'+G.DepartName
+                ]]>
+            </isEmpty>
+        </isNotEmpty>
+    </sql>
+    
+    <!-- 取得发货单总数  -->
+    <select id="getDeliverCount" parameterClass="java.util.HashMap" resultClass="java.lang.Integer">
+        <![CDATA[
+            SELECT COUNT(SORT_T1.deliverId) AS count FROM (
+        ]]>    
+        <include refid="BINOLSSPRM57.deliverQuery" />
+        <![CDATA[
+            )SORT_T1
+        ]]>
+    </select>
+    
+    <!-- 取得发货单List  -->
+    <select id="getDeliverList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+           <include refid="BINOLCMINC99.pageheader" />
+        <include refid="BINOLSSPRM57.deliverQuery" />
+        <include refid="BINOLCMINC99.pagefooter" />
+    </select>
+    
+     <!-- 取得收货汇总信息【产品作为检索条件】  -->
+    <select id="getSumInfo" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+        <![CDATA[
+            SELECT  
+                ISNULL(SUM(SORT_T1.totalQuantity),0) AS sumQuantity,
+                ISNULL(SUM(SORT_T1.totalAmount),0) AS sumAmount
+            FROM (
+        ]]> 
+        <include refid="BINOLSSPRM57.deliverQuery" />
+        <![CDATA[
+            )SORT_T1
+        ]]>
+    </select>
+</sqlMap>

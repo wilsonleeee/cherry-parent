@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sqlMap PUBLIC "-//iBATIS.com//DTD SQL Map 2.0//EN" "http://ibatis.apache.org/dtd/sql-map-2.dtd">
+<sqlMap namespace="BINOLBSWEM03">
+	<insert id="saveRebateDivide" parameterClass="java.util.HashMap">
+		<![CDATA[
+			MERGE  Basis.BIN_RebateDivide WITH (HOLDLOCK) AS TGT
+        		USING (select #organizationInfoId# as organizationInfoId,#brandInfoId# as brandInfoId,#departType# as departType,#dividePer# as dividePer
+				) as SRC
+                ON TGT.DepartType = SRC.departType and
+                TGT.Bin_OrganizationInfoId = SRC.organizationInfoId and
+                TGT.Bin_BrandInfoId=SRC.brandInfoId
+            WHEN MATCHED THEN 
+                UPDATE SET TGT.DividePer = SRC.DividePer,
+		]]>
+		<include refid="BINOLCMINC99.updateSql" />
+		<![CDATA[
+            WHEN NOT MATCHED THEN 
+                insert (BIN_OrganizationInfoID,BIN_BrandInfoID,DepartType,DividePer,
+         ]]>
+         <include refid="BINOLCMINC99.insertKeySql" /> 
+         <![CDATA[
+             	)
+			values (SRC.organizationInfoId,SRC.brandInfoId,SRC.departType,SRC.dividePer,
+ 		  ]]>
+          <include refid="BINOLCMINC99.insertValueSql" /> 
+          <![CDATA[
+             );
+		   ]]>	
+	</insert>
+    <select id="getDivideList" resultClass="java.util.HashMap" >
+		SELECT
+			DepartType as departType,
+			DividePer as dividePer
+		FROM 
+			Basis.BIN_RebateDivide
+	</select>
+</sqlMap>

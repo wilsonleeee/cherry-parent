@@ -1,0 +1,81 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE sqlMap PUBLIC "-//iBATIS.com//DTD SQL Map 2.0//EN" "http://ibatis.apache.org/dtd/sql-map-2.dtd">
+<sqlMap namespace="UdiskSynchro">
+	<!--根据员工ID获取员工基本信息以及其所属岗位(类别)信息-->
+	<select id="getEmplyeeInfo" parameterClass="java.lang.Integer" resultClass="java.util.HashMap">
+		<![CDATA[
+		SELECT
+			A.EmployeeCode,
+			A.EmployeeName AS EmployeeName,
+			A.BIN_PositionCategoryID,
+			B.CategoryCode,
+			B.CategoryName,
+			B.Grade,
+			B.BIN_OrganizationInfoID,
+			B.BIN_BrandInfoID
+		FROM
+			Basis.BIN_Employee A
+			LEFT JOIN Privilege.BIN_PositionCategory B
+			ON(A.BIN_PositionCategoryID = B.BIN_PositionCategoryID)
+		WHERE
+			A.ValidFlag = '1'
+			AND A.BIN_EmployeeID=#BIN_EmployeeID#
+		]]>
+	</select>
+	
+	<!--根据员工ID获取该员工所管辖和关注的所有的柜台CODE-->
+	<select id="getCounterCode" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+		<![CDATA[
+		SELECT
+			A.CounterCode
+		FROM
+			Basis.BIN_CounterInfo A 
+			JOIN (]]><include refid="BINOLCMINC99.departPrivilegeSql" /><![CDATA[) A99 
+			ON A.BIN_OrganizationID=A99.BIN_OrganizationID
+		WHERE
+			A.ValidFlag=1
+		]]>
+	</select>
+	
+	<!--根据岗位类别取得对应的级别-->
+	<select id="getPositionGrade" parameterClass="java.util.HashMap" resultClass="java.lang.Integer">
+		<![CDATA[
+		SELECT
+			Grade
+		FROM
+			Privilege.BIN_PositionCategory
+		WHERE
+			BIN_OrganizationInfoID = #BIN_OrganizationInfoID#
+			AND BIN_BrandInfoID = #BIN_BrandInfoID#
+			AND CategoryCode = #CategoryCode#
+		]]>
+	</select>
+	
+	
+	<!--调用存储过程进行U盘与员工之间的绑定-->
+	<parameterMap id="bindUdiskMap" class="java.util.Map">
+		<parameter property="UdiskXml" />
+		<parameter property="Result"  jdbcType="VARCHAR" javaType="java.lang.String"  mode="OUT" />
+	</parameterMap>
+	<procedure id="bindUdisk" parameterMap="bindUdiskMap">
+		{call cherry_base_bindUdisk(?,?)}
+	</procedure>
+	
+	<!--调用存放过程进行解除U盘与员工之间的绑定关系或者逻辑删除U盘信息-->
+	<parameterMap id="unbindUdiskMap" class="java.util.Map">
+		<parameter property="UDiskSN" />
+		<parameter property="BrandCode" />
+		<parameter property="Result"  jdbcType="VARCHAR" javaType="java.lang.String"  mode="OUT" />
+	</parameterMap>
+	<procedure id="unbindUdisk" parameterMap="unbindUdiskMap">
+		{call cherry_base_unbindUdisk(?,?,?)}
+	</procedure>
+	
+	<parameterMap id="addUdiskMap" class="java.util.Map">
+		<parameter property="UdiskXml" />
+		<parameter property="Result"  jdbcType="VARCHAR" javaType="java.lang.String"  mode="OUT" />
+	</parameterMap>
+	<procedure id="addUdisk" parameterMap="addUdiskMap">
+		{call cherry_base_addUdisk(?,?)}
+	</procedure>
+</sqlMap>

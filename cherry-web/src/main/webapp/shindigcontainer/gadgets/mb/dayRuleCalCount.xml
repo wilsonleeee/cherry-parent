@@ -1,0 +1,127 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Module>
+    <ModulePrefs
+            title="dayRuleCalCount">
+            <Require feature="pubsub"/>
+       		<Require feature="settitle"/>
+            <Require feature="dynamic-height" /> 
+			<Optional feature="content-rewrite">
+			  <Param name="exclude-urls">.*</Param>
+			</Optional>
+			<Require feature="oauthpopup" />
+			<Require feature="cherryOpenSocial"/>
+			<Require feature="cherryChart"/>
+			<Require feature="opensocial-i18n"/> 
+			<Locale messages="/Cherry/shindigcontainer/i18n/mb/zh_CN_ALL.xml"/>
+			<Locale lang="zh_CN" messages="/Cherry/shindigcontainer/i18n/mb/zh_CN_ALL.xml"/>
+			<Locale lang="zh_TW" messages="/Cherry/shindigcontainer/i18n/mb/zh_TW_ALL.xml"/>
+    </ModulePrefs>
+    <Content type="html" ><![CDATA[
+    <style type="text/css">
+    #dayRuleCalCountDiv {
+    	padding: 10px 10px 10px 30px;
+    	font-size: 14px;
+    }
+    #dayRuleCalCountLineChart {
+    	width: 400px;
+    	height:240px;
+    }
+  	#waiting {
+  		height:200px;
+  	}
+  	#waiting div {
+  		background-image: url("/Cherry/css/common/blueprint/images/loading.gif");
+	    background-position: 20px center;
+	    background-repeat: no-repeat;
+	    height: 50px;
+	    width: 50px;
+	    left: 40%;
+	    top: 20%;
+	    position: absolute;
+	    z-index: 100;
+  	}
+	</style>
+	
+	<div id="waiting"><div></div></div>
+	<div id="dayRuleCalCountDiv" style="display:none;">
+	<div id="dayRuleCalCountLineChart"></div>
+	</div>
+    
+    
+	<script type='text/javascript'>
+	
+	var baseUrl = window.parent.getBaseUrl();
+	var gadgetPrefs = new gadgets.Prefs();
+	var linesData = [];
+	var ticks = [];
+	
+	function pointMessageCallback(sender, message) {
+		var lastData = linesData[linesData.length-1];
+		linesData[linesData.length-1] = [lastData[0],lastData[1]+1];
+		linesInit();
+	}
+	
+	function render(data) {
+		$("#waiting").hide();
+		$("#dayRuleCalCountDiv").show();
+		var _gadgetSizeMax = window.parent.getGadgetSizeMax();
+		if(_gadgetSizeMax) {
+			$("#dayRuleCalCountLineChart").css({ "width": "800px", "height": "300px" });
+		} else {
+			$("#dayRuleCalCountLineChart").css({ "width": "400px", "height": "240px" });
+		}
+		data = data.entry;
+		for(var i = 0; i < data.dayRuleCalCountMes.length; i++) {
+			var dayRuleCalCountMesObj = data.dayRuleCalCountMes[i];
+			linesData.push([i, dayRuleCalCountMesObj.totalCount]);
+			ticks.push([i,dayRuleCalCountMesObj.changeDate]);
+		}
+		linesInit();
+	    gadgets.window.adjustHeight();
+	    gadgets.pubsub.subscribe("PointMessage", pointMessageCallback);
+	}
+	
+	function linesInit() {
+		$.plot($("#dayRuleCalCountLineChart"), [linesData], {
+			colors:["#F2AA08"],
+            series: {
+                lines: { show: true, fill: false},
+                points: { show: true }
+            },
+            xaxis: {
+            	ticks: ticks
+            },
+            yaxis: {
+            	minTickSize: 1,
+            	tickFormatter: function(val, axis) {
+            		return val;
+            	}
+            },
+            grid: {
+            	borderWidth: 1
+            }
+        });
+	}
+	
+	function fetchDayRuleCalCount() {
+		$("#waiting").show();
+		$("#dayRuleCalCountDiv").hide();
+	   	gadgets.window.adjustHeight();
+	   	var url = baseUrl + "/social/rest/dayRuleCalCount";
+	   	var param = {};
+	   	param.userInfo = window.parent.getUserInfo();
+	   	var _gadgetSizeMax = window.parent.getGadgetSizeMax();
+	   	if(_gadgetSizeMax) {
+	   		param.days = 10
+	   	} else {
+	   		param.days = 5
+	   	}
+	   	sendRequestToServer(url, 'POST', param, render, false);
+	}
+	
+	gadgets.util.registerOnLoadHandler(fetchDayRuleCalCount);
+	
+	</script>
+	
+	]]></Content>
+</Module>

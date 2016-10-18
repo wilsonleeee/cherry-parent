@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sqlMap PUBLIC "-//iBATIS.com//DTD SQL Map 2.0//EN" "http://ibatis.apache.org/dtd/sql-map-2.dtd">
+<sqlMap namespace="BINOLBSFAC02">
+	<!-- 取得生产厂商基本信息  -->
+    <select id="getFacInfo" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+       	SELECT  
+			A.BIN_ManufacturerInfoID AS manufacturerInfoId,
+			A.BIN_OrganizationInfoID AS organizationInfoId,
+			A.BIN_BrandInfoID AS brandInfoId,
+			B.BrandNameChinese AS brandNameCN,
+			B.BrandNameForeign AS brandNameEN,
+			A.ManufacturerCode AS manufacturerCode,
+			A.LegalPerson AS legalPerson,
+			A.FactoryNameEN AS factoryNameEN,
+			A.FactoryNameENShort AS factoryNameShortEN,
+			A.FactoryNameCN AS factoryNameCN,
+			A.FactoryNamecnCNShort AS factoryNameShortCN,
+			A.TelePhone AS telePhone,
+			A.Mobile AS mobile,
+			A.LevelCode AS levelCode,
+			A.Status AS status,
+			A.DefaultFlag AS defaultFlag1,
+			A.ValidFlag AS validFlag,
+			convert(varchar(30),A.UpdateTime,121) AS modifyTime,
+			A.ModifyCount AS modifyCount
+		FROM    
+			Basis.BIN_ManufacturerInfo A
+			LEFT JOIN Basis.BIN_BrandInfo B
+			ON(A.BIN_BrandInfoID=B.BIN_BrandInfoID
+				AND B.ValidFlag='1')
+		WHERE    
+			A.BIN_ManufacturerInfoID = #manufacturerInfoId#
+    </select>
+	<!-- 取得厂商地址List -->
+    <select id="getAddList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+       	SELECT
+			A.BIN_AddressInfoID AS addressInfoId,
+			A.BIN_AddressTypeID AS addressTypeId,
+			A.DefaultFlag AS defaultFlag2,
+			B.AddressLine1 AS address,
+			B.ZipCode AS zipCode,
+			C.BIN_RegionID AS provinceId,
+			D.BIN_RegionID AS cityId,
+			C.RegionNameChinese AS provinceCN,
+			D.RegionNameChinese AS cityCN,
+			C.RegionNameForeign AS provinceEN,
+			D.RegionNameForeign AS cityEN
+		FROM
+			Basis.BIN_ManufacturerAddress A
+			JOIN Basis.BIN_AddressInfo B
+			ON(A.BIN_AddressInfoID=B.BIN_AddressInfoID
+				AND B.ValidFlag='1')
+			LEFT JOIN Basis.BIN_StandardRegion C
+			ON(B.StandardProvince=C.BIN_RegionID
+				AND C.ValidFlag='1')
+			LEFT JOIN Basis.BIN_StandardRegion D
+			ON(B.StandardCity=D.BIN_RegionID
+				AND D.ValidFlag='1')
+		WHERE
+			A.BIN_ManufacturerInfoID= #manufacturerInfoId#
+		ORDER BY
+			defaultFlag DESC
+    </select>
+</sqlMap>

@@ -1,0 +1,462 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sqlMap PUBLIC "-//iBATIS.com//DTD SQL Map 2.0//EN" "http://ibatis.apache.org/dtd/sql-map-2.dtd">
+<sqlMap namespace="BINOLSSPRM03">
+	
+	<!-- 更新促销品信息  -->
+	<update id="updatePrmInfo" parameterClass="java.util.HashMap">
+		
+		<![CDATA[
+	      UPDATE
+	               Basis.BIN_PromotionProduct
+		  SET    
+		  		Version = #tVersion# + 1,
+		 ]]>
+		 <isEqual property="validFlag" compareValue="1">
+		  <![CDATA[
+				   BIN_PromotionPrtTypeID = #promPrtTypeId#,
+			]]>	
+				<isEmpty property="editFlag">
+					<isNotEmpty property="unitCode">
+						<![CDATA[UnitCode = #unitCode#,]]>
+					</isNotEmpty>
+				</isEmpty>
+		<![CDATA[											
+			       NameTotal = #nameTotal#,												
+			       NameShort = #nameShort#,												
+			       NameAlias = #nameAlias#,												
+			       NameForeign = #nameForeign#,
+			       NameShortForeign = #nameShortForeign#,												
+			       StyleCode = #styleCode#,												
+			       OperationStyle = #operationStyle#,																								
+			       Volume = #volume#,												
+			       VolumeUnitMeasureCode = #volumeUnit#,												
+			       Weight = #weight#,												
+			       WeightUnitMeasureCode = #weightUnit#,												
+			       ModuleCode = #moduleCode#,												
+			       SaleUnit = #saleUnit#,										
+			       DiscontinueCounter = #discontCounter#,
+				   DiscontinueReseller = #discontReseller#,												
+			       StandardCost = #standardCost#,																							
+			       IsReplenish = #isReplenish#,												
+			       Status = #status#,										
+			       ShelfLife = #shelfLife#,
+				   ValidFlag = '1',	
+				   SellStartDate = CONVERT(date , #sellStartDate#),
+				   SellEndDate = CONVERT(date , #sellEndDate#),
+				   PromotionCateCD = #promCate#,
+				   ExPoint = #exPoint#,
+				   IsStock = #isStock#,	
+				   IsExchanged = #isExchanged#,
+				   IsPosIss = #isPosIss#,
+				   Mode = #mode#,
+		]]>
+		</isEqual>
+		<isEqual property="validFlag" compareValue="0">
+			ValidFlag = '0',	
+		</isEqual>
+			<include refid="BINOLCMINC99.updateSql" />									
+		<![CDATA[								
+		  WHERE									
+				  BIN_PromotionProductID = #promotionProId# AND								
+				  UpdateTime = #prmUpdateTime# AND								
+				  ModifyCount = #prmModifyCount#	
+		]]>
+		   
+	</update> 
+	
+    <!-- 更新促销品价格信息  -->
+	<update id="updatePrmPriceInfo" parameterClass="java.util.HashMap">
+        <![CDATA[ 
+		  UPDATE   
+		           Basis.BIN_PromotionPrice							
+		  SET     			
+		           SalePrice = #salePrice#,	
+		           EndDate = #endDate#,					
+		]]>	
+		<dynamic>
+			<isNotEmpty property="startDate">
+				StartDate = #startDate#,
+			</isNotEmpty>
+		</dynamic>
+		    <include refid="BINOLCMINC99.updateSql" />	
+		<![CDATA[			
+       	  WHERE									
+				   BIN_PromotionPriceID = #promotionPriceId# AND
+				   UpdateTime = #priceUpdateTime# AND								
+				   ModifyCount = #priceModifyCount#
+       ]]>   
+    </update>
+	
+	<!-- 更新促销品历史价格信息  -->
+	<update id="updatePrmHistoryPrice" parameterClass="java.util.HashMap">
+        <![CDATA[ 
+		  UPDATE   
+		           Basis.BIN_PromotionPrice							
+		  SET				
+		           EndDate = #hiEndDate#,					
+		]]>	
+		    <include refid="BINOLCMINC99.updateSql" />	
+		<![CDATA[			
+       	  WHERE									
+				   BIN_PromotionPriceID = #promotionPriceId# AND
+				   UpdateTime = #priceUpdateTime# AND								
+				   ModifyCount = #priceModifyCount#
+       ]]>
+	        
+    </update>
+	
+	<!-- 插入促销品价格表  -->
+	<insert id="insertPrmPriceInfo" parameterClass="java.util.HashMap">
+        <![CDATA[ 
+		INSERT INTO Basis.BIN_PromotionPrice						
+		           (BIN_PromotionProductID,	
+		            SalePrice,
+					StartDate,													
+	                EndDate,		
+		]]>	
+		    <include refid="BINOLCMINC99.insertKeySql" />	
+		<![CDATA[			
+        )VALUES							
+		           (#promotionProId#,	
+				    #salePrice#,	
+					#startDate#,			
+		            #endDate#,			
+       ]]>
+	        <include refid="BINOLCMINC99.insertValueSql" />
+		<![CDATA[
+		)
+		]]>
+    </insert>
+	
+	<!-- 删除促销产品价格 -->
+	<delete id="deletePrmPrice" parameterClass="java.util.HashMap">
+		
+		<![CDATA[
+			DELETE FROM   
+				Basis.BIN_PromotionPrice
+            WHERE 
+               	BIN_PromotionPriceID = #promotionPriceId# AND
+			   	UpdateTime = #priceUpdateTime# AND								
+			   	ModifyCount = #priceModifyCount#
+		]]>
+	</delete> 
+	
+	 <!-- 插入部门机构产品价格表  -->
+	<insert id="insertPrmPriceDepart" parameterClass="java.util.HashMap">
+        <![CDATA[ 
+		INSERT INTO Basis.BIN_PrmPriceDepart						
+		           (BIN_PromotionProductID,	
+		            BIN_OrganizationID,
+					DepartType,													
+	                DiscountRate,														
+	                DecimalMode,														
+	                AllocationPrice,														
+	                SalePrice,														
+	                MinPrice,														
+	                MaxPrice,
+					StartDate,
+					EndDate,			
+		]]>	
+		    <include refid="BINOLCMINC99.insertKeySql" />	
+		<![CDATA[			
+        )VALUES							
+		           (#promotionProId#,	
+				    #departInfoId#,	
+					#departType#,			
+		            #discountRate#,					
+		            #decimalMode#,					
+		            #allocationPrice#,	
+					#depSalePrice#,	
+					#minPrice#,	
+					#maxPrice#,	
+					#depStartDate#,
+					#depEndDate#,				
+       ]]>
+	        <include refid="BINOLCMINC99.insertValueSql" />
+		<![CDATA[
+		)
+		]]>
+    </insert>
+	
+	<!-- 更新部门机构促销产品价格 -->
+	<update id="updatePrmPriceDepart" parameterClass="java.util.HashMap">
+        <![CDATA[ 
+		  UPDATE   
+		           Basis.BIN_PrmPriceDepart							
+		  SET	  					
+		           BIN_OrganizationID = #departInfoId#,
+	               DepartType = #departType#,													
+	               DiscountRate = #discountRate#,														
+	               DecimalMode = #decimalMode#,														
+	               AllocationPrice = #allocationPrice#,														
+	               SalePrice = #depSalePrice#,														
+	               MinPrice = #minPrice#,														
+	               MaxPrice = #maxPrice#,
+			       EndDate = #depEndDate#,					
+		]]>	
+		<dynamic>
+			<isNotEmpty property="depStartDate">
+				StartDate = #depStartDate#,
+			</isNotEmpty>
+		</dynamic>
+		    <include refid="BINOLCMINC99.updateSql" />	
+		<![CDATA[			
+       	  WHERE									
+				   BIN_PrmPriceDepartID = #prmPriceDepartId# AND
+				   UpdateTime = #depUpdateTime# AND								
+				   ModifyCount = #depModifyCount#
+       ]]>
+	        
+    </update>
+	
+	<!-- 更新部门机构促销产品历史价格 -->
+	<update id="updatePrmHistoryPriceDepart" parameterClass="java.util.HashMap">
+        <![CDATA[ 
+		  UPDATE   
+		           Basis.BIN_PrmPriceDepart							
+		  SET
+			       EndDate = #hiEndDate#,						
+		]]>	
+		    <include refid="BINOLCMINC99.updateSql" />	
+		<![CDATA[			
+       	  WHERE									
+				   BIN_PrmPriceDepartID = #prmPriceDepartId# AND
+				   UpdateTime = #depUpdateTime# AND								
+				   ModifyCount = #depModifyCount#
+       ]]>
+	        
+    </update>
+	
+	<!-- 删除部门机构促销产品价格 -->
+	<delete id="deletePrmPriceDepart" parameterClass="java.util.HashMap">
+		
+		<![CDATA[
+			DELETE FROM   
+				Basis.BIN_PrmPriceDepart
+            WHERE 
+                BIN_PrmPriceDepartID = #prmPriceDepartId#  AND
+				   UpdateTime = #depUpdateTime# AND								
+				   ModifyCount = #depModifyCount#
+		]]>
+	</delete> 
+	<!-- 插入促销产品厂商表  -->
+	<insert id="insertPrmFac" parameterClass="java.util.HashMap">
+        <![CDATA[ 
+		INSERT INTO Basis.BIN_PromotionProductVendor							
+		           (BIN_PromotionProductID,					
+		            BIN_ManufacturerInfoID,					
+		            BarCode,					
+		            MinOrderQuantity,
+					DaysToOrder,	
+		]]>	
+		    <include refid="BINOLCMINC99.insertKeySql" />	
+		<![CDATA[			
+        )VALUES							
+		           (#promotionProId#,					
+		            #manuFactId#,					
+		            #barCode#,
+		            #minOrderQuantity#,
+					#daysToOrder#,								
+       ]]>
+	        <include refid="BINOLCMINC99.insertValueSql" />
+		<![CDATA[
+		)
+		]]>
+    </insert>
+	
+	<!-- 更新促销品厂商信息List -->
+	<update id="updatePrmFac" parameterClass="java.util.HashMap">
+        <![CDATA[ 
+		  UPDATE   
+		           Basis.BIN_PromotionProductVendor						
+		  SET				
+	               BarCode = #newBarCode#,	
+		]]>	
+		    <include refid="BINOLCMINC99.updateSql" />	
+		<![CDATA[			
+       	  WHERE									
+				   BIN_PromotionProductVendorID = #prmVendorId# AND
+				   UpdateTime = #facUpdateTime# AND								
+				   ModifyCount = #facModifyCount#   		
+       ]]>
+	        
+    </update>
+	
+	<!-- 删除促销产品厂商信息 -->
+	<update id="deletePrmFac" parameterClass="java.util.HashMap">
+        <![CDATA[ 
+		  UPDATE   
+		           Basis.BIN_PromotionProductVendor						
+		  SET 
+		]]>	
+		<dynamic>
+		<isNotEmpty property="validFlag">
+				ValidFlag = #validFlag#,
+			</isNotEmpty>
+			<isEmpty property="validFlag">
+				ValidFlag = '0',
+			</isEmpty>
+		</dynamic>
+		    <include refid="BINOLCMINC99.updateSql" />	
+		<![CDATA[			
+       	  WHERE									
+				   BIN_PromotionProductVendorID = #prmVendorId# AND
+				   UpdateTime = #facUpdateTime# AND								
+				   ModifyCount = #facModifyCount#   		
+       ]]>
+	        
+    </update>
+	
+	<!-- 更新促销产品条码对应关系表  -->
+	<update id="updatePromotionPrtBarCode" parameterClass="java.util.HashMap">
+        <![CDATA[ 
+		  UPDATE   
+		       		Basis.BIN_PromotionPrtBarCode						
+		  SET				
+	          		UnitCode = #unitCode#,
+					BarCode = #newBarCode#,
+					ValidFlag = '1',
+		]]>	
+		    <include refid="BINOLCMINC99.updateSql" />	
+		<![CDATA[			
+       	  WHERE									
+				   BIN_PromotionProductVendorID = #prmVendorId#
+				   AND ClosingTime IS NULL
+       ]]>
+	        
+    </update>
+	<!--更新停用日时 -->
+	<update id="updateClosingTime" parameterClass="java.util.HashMap">
+		<![CDATA[
+			UPDATE 		
+				Basis.BIN_PromotionPrtBarCode	
+			SET		
+				ClosingTime = #closingTime#,
+				UpdateFlag = '0',
+		]]>
+			<include refid="BINOLCMINC99.updateSql" />	
+		<![CDATA[				
+			WHERE					
+				BIN_PromotionProductVendorID = #prmVendorId# AND
+				ClosingTime IS NULL
+		]]>
+    </update>
+	<!-- 插入促销产品条码对应关系表  -->
+	<insert id="insertPromotionPrtBarCode" parameterClass="java.util.HashMap">
+        <![CDATA[ 
+		INSERT INTO Basis.BIN_PromotionPrtBarCode							
+           (BIN_PromotionProductVendorID,					
+            OldUnitCode,
+            UnitCode,					
+            OldBarCode,
+            BarCode,					
+            StartTime,
+			UpdateFlag,
+		]]>
+			<include refid="BINOLCMINC99.insertKeySql" />		
+		<![CDATA[			
+        )VALUES	(
+			#prmVendorId#,
+			#oldUnitCode#,
+			#unitCode#,	
+			#oldBarCode#,				
+            #newBarCode#,					
+            #startTime#,
+			'1',
+		]]>
+			<include refid="BINOLCMINC99.insertValueSql" />		
+		<![CDATA[
+				)
+    	]]>
+    </insert>
+	<!-- 插入促销产品信息扩展表  -->
+	<insert id="insertPrmExt" parameterClass="java.util.HashMap">
+        <![CDATA[ 
+		INSERT INTO Basis.BIN_PromotionProductExt						
+		           (BIN_PromotionProductID,	
+		            PromotionImagePath,	
+		]]>	
+		    <include refid="BINOLCMINC99.insertKeySql" />	
+		<![CDATA[			
+        )VALUES							
+		           (#promotionProId#,	
+				    #promotionImagePath#,
+       ]]>
+	        <include refid="BINOLCMINC99.insertValueSql" />
+		<![CDATA[
+		)
+		]]>
+    </insert>
+	<!-- 更新促销产品信息扩展表  
+	<update id="updatePrmExt" parameterClass="java.util.HashMap">
+        <![CDATA[ 
+		update 
+		          Basis.BIN_PromotionProductExt
+		   set  
+		          PromotionImagePath = #promotionImagePath#,	
+		]]>	
+		    <include refid="BINOLCMINC99.updateSql" />	
+		<![CDATA[			
+       	  WHERE									
+				  BIN_PromotionProductExtID = #prmExtId#			
+       ]]>
+    </update>-->
+	
+	<!-- 删除促销产品信息扩展表
+	<delete id="invalidPrmExt" parameterClass="java.util.HashMap">
+		<![CDATA[
+			DELETE FROM  Basis.BIN_PromotionProductExt	
+                  WHERE  
+				         BIN_PromotionProductExtID = #prmExtId#
+		]]>	
+	</delete>-->
+	
+	<!-- 取得促销活动所用的促销品件数 -->
+	<select id="getActUsePrmCount" parameterClass="java.util.HashMap" resultClass="java.lang.Integer">
+		<![CDATA[
+		SELECT 
+			COUNT(A.BIN_PromotionProductVendorID)
+		FROM
+			Basis.BIN_PromotionProductVendor A,
+			Promotion.BIN_ActivityTransHis B
+		WHERE 
+			A.BIN_PromotionProductID = #promotionProId# AND
+			A.BIN_PromotionProductVendorID = B.BIN_PromotionProductVendorID AND
+			B.PrtType = 'P' AND
+			B.ValidFlag = '1' AND 
+			B.BIN_BrandInfoID = #brandInfoId#
+		]]>
+	</select>
+	
+	<!-- 取得促销活动所用的促销品List -->
+	<select id="getActPrmCount" parameterClass="java.util.HashMap" resultClass="java.lang.Integer">
+		<![CDATA[
+		SELECT 
+			COUNT(A.BIN_PromotionProductVendorID)
+		FROM
+			Basis.BIN_PromotionProductVendor A,
+			Basis.BIN_PromotionProduct B,
+			Promotion.BIN_PromotionRuleResult C,
+			Promotion.BIN_PromotionActivityRule D,
+			Promotion.BIN_PromotionActivity E,
+			Promotion.BIN_PromotionRuleCondition F,
+			Promotion.BIN_PromotionBaseProp G
+			
+		WHERE 
+			A.BIN_PromotionProductID = #promotionProId# AND
+			A.BIN_PromotionProductID = B.BIN_PromotionProductID AND
+			A.BIN_PromotionProductVendorID = C.BIN_ProductVendorID AND 
+			C.SaleType = 'P' AND 
+			C.BIN_PromotionActivityRuleID = D.BIN_PromotionActivityRuleID AND
+			D.BIN_PromotionActivityID = E.BIN_PromotionActivityID AND
+			F.BIN_PromotionBasePropID = G.BIN_PromotionBasePropID AND G.PropertyName ='baseProp_time' AND
+			D.BIN_PromotionActivityRuleID = F.BIN_PromotionActivityRuleID AND
+			E.ValidFlag = '1' AND
+			(E.TemplateFlag IS NULL OR E.TemplateFlag='0' OR E.TemplateFlag ='') and
+			C.ValidFlag = '1' AND
+			D.ValidFlag = '1' AND 
+			B.BIN_BrandInfoID = #brandInfoId# AND
+			(F.BasePropValue2 >= #bussDate# OR F.BasePropValue2 IS NULL)
+		]]>
+	</select>
+</sqlMap>

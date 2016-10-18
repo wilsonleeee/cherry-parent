@@ -1,0 +1,260 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sqlMap PUBLIC "-//iBATIS.com//DTD SQL Map 2.0//EN" "http://ibatis.apache.org/dtd/sql-map-2.dtd">
+<sqlMap namespace="BINOLBSCNT02">
+	
+	<!-- 取得柜台详细信息  -->
+    <select id="getCounterInfo" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+    	<![CDATA[
+			SELECT 			
+				A.BIN_CounterInfoID AS counterInfoId,
+				A.BIN_BrandInfoID AS brandInfoId,
+				A.CounterCode AS counterCode,
+				A.CounterNameIF AS counterNameIF,
+				A.BusniessPrincipal AS busniessPrincipal,
+				A.CounterNameShort AS counterNameShort,
+				A.NameForeign AS nameForeign,
+				A.NameShortForeign AS nameShortForeign,
+				A.CounterTelephone AS counterTelephone,
+				A.Status AS status,
+				A.BIN_OrganizationID AS organizationId,
+				A.CounterAddress AS counterAddress,
+				A.CounterCategory AS counterCategory,
+				A.CounterLevel AS counterLevel,
+				A.CounterSpace AS counterSpace,
+				A.UpdateStatus AS updateStatus,
+				A.CounterKind AS counterKind,
+				A.ValidFlag AS validFlag,
+				convert(varchar(30),A.UpdateTime,121) AS updateTime,
+				A.ModifyCount AS modifyCount,
+				A.PassWord AS passWord,
+				B.OrgSynergyFlag AS counterSynergyFlag,
+				X.BIN_RegionID AS regionId,
+				Y.BIN_RegionID AS provinceId,
+				Z.BIN_RegionID AS cityId,
+				W.BIN_RegionID AS countyId,
+				D.BIN_ChannelID AS channelId,
+				E.BIN_MallInfoID AS mallInfoId,
+				F.BIN_ResellerInfoID AS resellerInfoId,
+				convert(varchar(30),B.UpdateTime,121) AS updateTimeDep,
+				B.ModifyCount AS modifyCountDep,
+				B.Path AS departPath,
+				B.NodeID.GetAncestor(1).ToString() AS higherDepartPath,
+				G.BIN_OrganizationID AS resellerDepartId,
+				G.DepartName AS resellerDepartName,
+				convert(varchar(30),B.ExpiringDate,120) AS expiringDate,
+				A.longitude,
+				A.latitude,
+				A.PosFlag AS posFlag,
+				A.BelongFaction AS belongFaction,
+				A.OperateMode AS operateMode,
+				A.InvoiceCompany AS invoiceCompany,
+				A.EmployeeNum AS employeeNum,
+				A.BusDistrict AS busDistrict,	
+				A.EquipmentCode AS equipmentCode,
+				A.ManagingType2 AS managingType2,			
+		]]>
+		<dynamic>
+			<isNotEmpty property="language">
+				<isEqual property="language" compareValue="en_US">
+					X.RegionNameForeign AS region,
+					Y.RegionNameForeign AS province,
+					Z.RegionNameForeign AS city,
+					W.RegionNameForeign AS county,
+					C.BrandNameForeign AS brandNameChinese,
+					D.ChannelNameForeign AS channelName,
+					E.MallName AS mallName,
+					F.ResellerName AS resellerName
+				</isEqual>
+				<isEqual property="language" compareValue="zh_CN">	
+					X.RegionNameChinese AS region,
+					Y.RegionNameChinese AS province,
+					Z.RegionNameChinese AS city,
+					W.RegionNameChinese AS county,
+					C.BrandNameChinese AS brandNameChinese,
+					D.ChannelName AS channelName,
+					E.MallName AS mallName,
+					F.ResellerName AS resellerName
+				</isEqual>								
+			</isNotEmpty>
+			<isEmpty property="language">
+				X.RegionNameChinese AS region,
+				Y.RegionNameChinese AS province,
+				Z.RegionNameChinese AS city,
+				W.RegionNameChinese AS county,
+				C.BrandNameChinese AS brandNameChinese,
+				D.ChannelName AS channelName,
+				E.MallName AS mallName,
+				F.ResellerName AS resellerName
+			</isEmpty>
+		</dynamic>
+		<![CDATA[				
+			FROM
+				Basis.BIN_CounterInfo A
+				JOIN Basis.BIN_Organization B ON (A.BIN_OrganizationID = B.BIN_OrganizationID)
+				LEFT JOIN Basis.BIN_BrandInfo C ON (A.BIN_BrandInfoID = C.BIN_BrandInfoID)
+				LEFT JOIN Basis.BIN_Channel D ON (A.BIN_ChannelID = D.BIN_ChannelID)
+				LEFT JOIN Basis.BIN_MallInfo E ON (A.BIN_MallInfoID = E.BIN_MallInfoID)
+				LEFT JOIN Basis.BIN_ResellerInfo F ON (A.BIN_ResellerInfoID = F.BIN_ResellerInfoID)
+				LEFT JOIN Basis.BIN_Region X ON B.BIN_RegionID = X.BIN_RegionID
+				LEFT JOIN Basis.BIN_Region Y ON B.BIN_ProvinceID = Y.BIN_RegionID
+				LEFT JOIN Basis.BIN_Region Z ON B.BIN_CityID = Z.BIN_RegionID
+				LEFT JOIN Basis.BIN_Region W ON B.BIN_CountyID = W.BIN_RegionID
+				LEFT JOIN Basis.BIN_Organization G ON (A.ResellerDepartID = G.BIN_OrganizationID)
+		]]>
+		<dynamic prepend="WHERE">
+			<isNotEmpty prepend="AND" property="counterInfoId">
+				A.BIN_CounterInfoID = #counterInfoId#
+			</isNotEmpty>
+			<isNotEmpty prepend="AND" property="organizationId">
+				A.BIN_OrganizationID = #organizationId#
+			</isNotEmpty>
+			<isNotEmpty prepend="AND" property="counterCode">
+				A.CounterCode = #counterCode#
+			</isNotEmpty>
+		</dynamic>								
+    </select>
+    
+    <!-- 取得管辖或者关注指定柜台的人的信息  -->
+    <select id="getEmployeeList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+    	<![CDATA[
+			SELECT 
+				B.BIN_EmployeeID AS employeeId,
+				B.EmployeeCode AS employeeCode,
+				B.Email AS email,
+				B.MobilePhone AS mobilePhone,
+				A.ManageType AS manageType,
+		]]>
+		<dynamic>
+			<isNotEmpty property="language">
+				<isEqual property="language" compareValue="en_US">
+					B.EmployeeNameForeign AS employeeName,
+					C.NameForeign AS departName,
+					D.CategoryNameForeign AS categoryName	
+				</isEqual>
+				<isEqual property="language" compareValue="zh_CN">	
+					B.EmployeeName AS employeeName,
+					C.DepartName AS departName,
+					D.CategoryName AS categoryName
+				</isEqual>								
+			</isNotEmpty>
+			<isEmpty property="language">
+				B.EmployeeName AS employeeName,
+				C.DepartName AS departName,
+				D.CategoryName AS categoryName
+			</isEmpty>
+		</dynamic>
+		<![CDATA[			 
+			FROM
+				Privilege.BIN_EmployeeDepart A
+				JOIN Basis.BIN_Employee B
+				LEFT JOIN Basis.BIN_Organization C
+				ON (B.BIN_OrganizationID = C.BIN_OrganizationID AND C.ValidFlag = '1')	
+				LEFT JOIN Privilege.BIN_PositionCategory D
+				ON (B.BIN_PositionCategoryID = D.BIN_PositionCategoryID AND D.ValidFlag = '1')	
+				ON (A.BIN_EmployeeID = B.BIN_EmployeeID AND B.ValidFlag = '1')
+			WHERE
+				A.BIN_OrganizationID = #organizationId#
+		]]>									
+    </select>
+    
+    <!-- 取得上级部门信息 -->
+	<select id="getHigherDepart" parameterClass="java.util.HashMap" resultClass="java.util.HashMap" >
+		<![CDATA[
+			SELECT				
+				A.BIN_OrganizationID AS organizationId,	
+				A.DepartCode AS departCode,		
+		]]>			
+		<isNotEmpty property="language">
+			<isEqual property="language" compareValue="en_US">
+				A.NameForeign AS departName,
+			</isEqual>
+			<isEqual property="language" compareValue="zh_CN">	
+				A.DepartName AS departName,
+			</isEqual>								
+		</isNotEmpty>
+		<isEmpty property="language">
+				A.DepartName AS departName,
+		</isEmpty>
+		<![CDATA[
+				A.Type AS type,
+				A.Path AS path
+			FROM
+				Basis.BIN_Organization A
+			WHERE
+				A.Path = #higherDepartPath# AND
+				A.Type <> 'Z' AND
+				A.ValidFlag = '1'
+		]]>
+    </select>
+    
+    <!-- 柜台事件信息信息查询sql文  -->
+	<sql id="CounterEventQuery">
+		<![CDATA[
+			SELECT				
+				A.EventNameID AS eventNameId,	
+				CONVERT(varchar(30),A.FromDate,120) AS fromDate
+			FROM
+				Basis.BIN_CounterEvent A
+			WHERE
+				A.BIN_CounterInfoID = #counterInfoId# AND
+				A.ValidFlag = '1'
+		]]>
+	</sql>
+	
+	<!-- 取得柜台事件信息总数  -->
+    <select id="getCounterEventCount" parameterClass="java.util.HashMap" resultClass="java.lang.Integer">
+    	<![CDATA[
+			SELECT	COUNT(1) AS count FROM (
+		]]>	
+		<include refid="BINOLBSCNT02.CounterEventQuery" />
+		<![CDATA[	
+			)SORT_T1
+		]]>										
+    </select>
+    
+    <!-- 取得柜台事件信息List -->
+	<select id="getCounterEventList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap" >
+		<include refid="BINOLCMINC99.pageheader" />
+		<include refid="BINOLBSCNT02.CounterEventQuery" />
+		<include refid="BINOLCMINC99.pagefooter" />
+    </select>
+    
+    <!-- 柜台方案信息信息查询sql文  -->
+	<sql id="CounterSolutionQuery">
+		<![CDATA[
+			SELECT
+			    B.SolutionCode AS solutionCode,				
+				B.SolutionName AS solutionName,
+				convert(varchar(30),B.StartDate,120) AS startDate,
+				convert(varchar(30),B.EndDate,120) AS endDate,
+				B.ValidFlag AS validFlag
+                
+			FROM
+				 Basis.BIN_PrtSoluDepartRelation A
+			JOIN Basis.BIN_ProductPriceSolution B ON A.BIN_SolutionId=B.BIN_ProductPriceSolutionID
+			WHERE
+				A.DepartCode = #counterCode# AND
+				A.ValidFlag = '1'
+		]]>
+	</sql>
+	
+	<!-- 取得柜台方案信息总数  -->
+    <select id="getCounterSolutionCount" parameterClass="java.util.HashMap" resultClass="java.lang.Integer">
+    	<![CDATA[
+			SELECT	COUNT(1) AS count FROM (
+		]]>	
+		<include refid="BINOLBSCNT02.CounterSolutionQuery" />
+		<![CDATA[	
+			)SORT_T1
+		]]>										
+    </select>
+    
+    <!-- 取得柜台方案信息List -->
+	<select id="getCounterSolutionList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap" >
+		<include refid="BINOLCMINC99.pageheader" />
+		<include refid="BINOLBSCNT02.CounterSolutionQuery" />
+		<include refid="BINOLCMINC99.pagefooter" />
+    </select>
+    
+    
+</sqlMap>

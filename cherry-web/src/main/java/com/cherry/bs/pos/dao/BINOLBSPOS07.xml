@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sqlMap PUBLIC "-//iBATIS.com//DTD SQL Map 2.0//EN" "http://ibatis.apache.org/dtd/sql-map-2.dtd">
+<sqlMap namespace="BINOLBSPOS07">
+	
+	<!-- 取得岗位类别信息 -->
+	<resultMap id="BINOLBSPOS07.PosCategoryInfo" class="java.util.HashMap">
+		<result property="positionCategoryId" column="BIN_PositionCategoryID"/>
+		<result property="categoryCode" column="CategoryCode"/>
+		<result property="categoryName" column="CategoryName"/>
+		<result property="categoryNameForeign" column="CategoryNameForeign"/>
+		<result property="brandInfoId" column="BIN_BrandInfoID"/>
+		<result property="posGrade" column="Grade"/>
+		<result property="brandNameChinese" column="BrandNameChinese"/>
+		<result property="orgNameChinese" column="OrgNameChinese"/>
+		<result property="updateTime" column="UpdateTime"/>
+		<result property="modifyCount" column="ModifyCount"/>
+	</resultMap>
+	<select id="getPosCategoryInfo" parameterClass="java.util.HashMap" resultMap="BINOLBSPOS07.PosCategoryInfo">
+		<![CDATA[
+			SELECT
+				A.BIN_PositionCategoryID,
+				A.CategoryCode,
+				A.CategoryName,
+				A.CategoryNameForeign,
+				A.BIN_BrandInfoID,
+				A.Grade,
+		]]>		
+		<isNotEmpty property="language">
+			<isEqual property="language" compareValue="en_US">
+				B.BrandNameForeign AS BrandNameChinese,
+				C.OrgNameForeign AS OrgNameChinese,
+			</isEqual>
+			<isEqual property="language" compareValue="zh_CN">	
+				B.BrandNameChinese AS BrandNameChinese,
+				C.OrgNameChinese AS OrgNameChinese,	
+			</isEqual>								
+		</isNotEmpty>
+		<isEmpty property="language">
+				B.BrandNameChinese AS BrandNameChinese,
+				C.OrgNameChinese AS OrgNameChinese,	
+		</isEmpty>	
+		<![CDATA[	
+				convert(varchar(30),A.UpdateTime,121) AS UpdateTime,
+				A.ModifyCount		
+			FROM
+				Privilege.BIN_PositionCategory A left join 
+				Basis.BIN_BrandInfo B on A.BIN_BrandInfoID=B.BIN_BrandInfoID,
+				Basis.BIN_OrganizationInfo C
+			WHERE
+				A.BIN_OrganizationInfoID=C.BIN_OrganizationInfoID AND
+				A.BIN_PositionCategoryID=#positionCategoryId# AND
+				A.ValidFlag='1'
+		]]>
+    </select>
+	
+</sqlMap>

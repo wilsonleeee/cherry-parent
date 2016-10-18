@@ -1,0 +1,187 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sqlMap PUBLIC "-//iBATIS.com//DTD SQL Map 2.0//EN" "http://ibatis.apache.org/dtd/sql-map-2.dtd">
+<sqlMap namespace="MemDetailInfo">
+    
+    <!-- 查询会员基本信息 -->
+	<select id="getMemberInfo" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+		<![CDATA[
+			SELECT 
+				A.BIN_MemberInfoID AS memberInfoId,
+				A.Name AS name,
+				A.Email AS email,
+				A.MobilePhone AS mobilePhone,
+				A.Telephone AS telephone,
+				CONVERT(varchar(30),A.JoinDate,120) AS joinDate,
+				A.BirthYear AS birthYear,
+				A.BirthDay AS birthDay,
+				A.Gender AS gender,
+				A.IdentityCard AS identityCard,
+				A.MaritalStatus AS maritalStatus,
+				A.ChannelCode AS channelCode,
+				B.DepartCode AS counterCode,
+				B.DepartName AS counterName,
+				C.EmployeeCode AS employeeCode,
+				C.EmployeeName AS employeeName,
+				D.LevelName AS levelName,
+				E.Name AS recommendName
+			FROM
+				Members.BIN_MemberInfo A WITH(NOLOCK)
+				LEFT JOIN Basis.BIN_Organization B WITH(NOLOCK) ON A.BIN_OrganizationID = B.BIN_OrganizationID
+				LEFT JOIN Basis.BIN_Employee C WITH(NOLOCK) ON A.BIN_EmployeeID = C.BIN_EmployeeID
+				LEFT JOIN Members.BIN_MemberLevel D WITH(NOLOCK) ON A.MemberLevel = D.BIN_MemberLevelID
+				LEFT JOIN Members.BIN_MemberInfo E WITH(NOLOCK) ON A.ReferrerID = E.BIN_MemberInfoID
+			WHERE
+				A.BIN_MemberInfoID = #memberInfoId#	
+		]]>
+    </select>
+    
+    <!-- 销售信息查询SQL文  -->
+	<sql id="saleInfoQuery">
+	 	<![CDATA[
+            SELECT
+				A.SaleType AS saleType,
+				A.Amount AS amount,
+				A.Quantity AS quantity,
+				CONVERT(varchar(30),A.SaleTime,120) AS saleTime,
+				C.DepartCode AS departCode,
+				C.DepartName AS departName
+			FROM
+				Sale.BIN_SaleRecord A WITH(NOLOCK)
+				LEFT JOIN Basis.BIN_Organization C WITH(NOLOCK) ON A.BIN_OrganizationID = C.BIN_OrganizationID
+			WHERE
+				A.BIN_MemberInfoID = #memberInfoId# AND
+				A.ValidFlag = '1'
+		]]>		
+	</sql>
+	
+	<!-- 查询销售信息List  -->
+    <select id="getSaleInfoList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+       	<include refid="BINOLCMINC99.pageheader" />
+		<include refid="MemDetailInfo.saleInfoQuery" />
+		<include refid="BINOLCMINC99.pagefooter" />
+    </select>
+    
+    <!-- 统计销售总金额和总数量  -->
+    <select id="getSaleAmountSum" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+       	<![CDATA[
+            SELECT
+            	SUM(CASE WHEN A.SaleType = 'SR' THEN -A.Amount ELSE A.Amount END) AS totalAmount,
+				SUM(CASE WHEN A.SaleType = 'SR' THEN -A.Quantity ELSE A.Quantity END) AS totalQuantity,
+				COUNT(1) AS totalCount
+			FROM
+				Sale.BIN_SaleRecord A WITH(NOLOCK)
+			WHERE
+				A.BIN_MemberInfoID = #memberInfoId# AND
+				A.ValidFlag = '1'	
+		]]>
+    </select>
+    
+    <!-- 积分计算信息查询SQL文  -->
+	<sql id="PointCalInfoQuery">
+	 	<![CDATA[
+             SELECT
+				CONVERT(varchar(30),A.ChangeDate,120) AS changeDate,
+				A.TradeType AS billType,
+				A.Amount AS amount,
+				A.Quantity AS quantity,
+				A.Point AS point,
+				C.DepartName AS departName
+			FROM
+				Members.BIN_PointChange A WITH(NOLOCK)
+				LEFT JOIN Basis.BIN_Organization C WITH(NOLOCK) ON A.BIN_OrganizationID = C.BIN_OrganizationID
+			WHERE
+				A.BIN_MemberInfoID = #memberInfoId# AND
+				A.ValidFlag = '1'	
+		]]>
+	</sql>
+	
+	<!-- 查询积分计算信息List  -->
+    <select id="getPointCalInfoList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+       	<include refid="BINOLCMINC99.pageheader" />
+		<include refid="MemDetailInfo.PointCalInfoQuery" />
+		<include refid="BINOLCMINC99.pagefooter" />
+    </select>
+    
+    <!-- 查询积分计算信息总数  -->
+    <select id="getPointCalInfoCount" parameterClass="java.util.HashMap" resultClass="java.lang.Integer">
+    	<![CDATA[
+			SELECT	COUNT(1) AS count FROM (
+		]]>	
+		<include refid="MemDetailInfo.PointCalInfoQuery" />	
+		<![CDATA[	
+			)SORT_T1
+		]]>										
+    </select>
+    
+    <!-- 统计不同时间段的销售金额、数量、次数  -->
+    <select id="getSaleCountInfoByTime" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+       	<![CDATA[
+            SELECT
+            	SUM(CASE WHEN A.SaleType = 'SR' THEN -A.Amount ELSE A.Amount END) AS totalAmount,
+				SUM(CASE WHEN A.SaleType = 'SR' THEN -A.Quantity ELSE A.Quantity END) AS totalQuantity,
+				SUM(CASE WHEN A.SaleType = 'SR' THEN 0 ELSE CASE WHEN A.Amount > 0 THEN 1 ELSE 0 END END) AS totalCount
+			FROM
+				Sale.BIN_SaleRecord A WITH(NOLOCK)
+			WHERE
+				A.BIN_MemberInfoID = #memberInfoId# AND
+				A.SaleDate >= #saleDateStart# AND
+				A.ValidFlag = '1'	
+		]]>
+    </select>
+    
+    <!-- 统计不同产品类别的销售数量  -->
+    <select id="getSaleCountInfoByProCat" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+       	<![CDATA[
+            SELECT
+            	E.PropValueChinese AS propValueChinese,
+				SUM(CASE WHEN A.SaleType = 'SR' THEN -B.Quantity ELSE B.Quantity END) AS quantity
+			FROM
+				Sale.BIN_SaleRecord A WITH(NOLOCK)
+				JOIN Sale.BIN_SaleRecordDetail B WITH(NOLOCK) ON A.BIN_SaleRecordID = B.BIN_SaleRecordID
+				JOIN Basis.BIN_ProductVendor C WITH(NOLOCK) ON B.BIN_ProductVendorID = C.BIN_ProductVendorID
+				JOIN Basis.BIN_PrtCategory D WITH(NOLOCK) ON C.BIN_ProductID = D.BIN_ProductID
+				JOIN Basis.BIN_PrtCatPropValue E WITH(NOLOCK) ON D.BIN_PrtCatPropValueID = E.BIN_PrtCatPropValueID
+			WHERE
+				A.BIN_MemberInfoID = #memberInfoId# AND
+				E.BIN_PrtCatPropertyID = #prtCatPropertyId# AND
+				B.SaleType = 'N' AND
+				A.ValidFlag = '1'	
+			GROUP BY
+				E.BIN_PrtCatPropValueID,
+				E.PropValueChinese
+			ORDER BY
+				quantity DESC	
+		]]>
+    </select>
+    
+    <!-- 统计会员的总销售数量  -->
+    <select id="getSaleTotalQuantity" parameterClass="java.util.HashMap" resultClass="java.lang.Integer">
+       	<![CDATA[
+            SELECT
+				SUM(CASE WHEN A.SaleType = 'SR' THEN -B.Quantity ELSE B.Quantity END) AS quantity
+			FROM
+				Sale.BIN_SaleRecord A WITH(NOLOCK)
+				JOIN Sale.BIN_SaleRecordDetail B WITH(NOLOCK) ON A.BIN_SaleRecordID = B.BIN_SaleRecordID
+			WHERE
+				A.BIN_MemberInfoID = #memberInfoId# AND
+				B.SaleType = 'N' AND
+				A.ValidFlag = '1'
+		]]>
+    </select>
+    
+    <!-- 取得产品类别List  -->
+    <select id="getPrtCatPropertyList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+       	<![CDATA[
+            SELECT
+            	BIN_PrtCatPropertyID AS prtCatPropertyId,
+            	PropertyNameChinese AS propertyNameChinese
+			FROM
+				Basis.BIN_PrtCatProperty WITH(NOLOCK)
+			WHERE
+				BIN_OrganizationInfoID = #organizationInfoId# AND
+				BIN_BrandInfoID = #brandInfoId# AND
+				ValidFlag = '1'
+		]]>
+    </select>
+    
+</sqlMap>

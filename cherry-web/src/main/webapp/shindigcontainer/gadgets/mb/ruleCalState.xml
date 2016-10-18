@@ -1,0 +1,211 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Module>
+    <ModulePrefs
+            title="ruleCalState">
+            <Require feature="pubsub"/>
+       		<Require feature="settitle"/>
+            <Require feature="dynamic-height" /> 
+			<Optional feature="content-rewrite">
+			  <Param name="exclude-urls">.*</Param>
+			</Optional>
+			<Require feature="oauthpopup" />
+			<Require feature="cherryOpenSocial"/>
+			<Require feature="opensocial-i18n"/> 
+			<Locale messages="/Cherry/shindigcontainer/i18n/mb/zh_CN_ALL.xml"/>
+			<Locale lang="zh_CN" messages="/Cherry/shindigcontainer/i18n/mb/zh_CN_ALL.xml"/>
+			<Locale lang="zh_TW" messages="/Cherry/shindigcontainer/i18n/mb/zh_TW_ALL.xml"/>
+    </ModulePrefs>
+    <Content type="html" ><![CDATA[
+    <style type="text/css">
+	
+	#ruleCalStateDiv {
+		color: #000000;
+   		font-family: Verdana,Geneva,sans-serif;
+   		font-size: 14px;
+   		padding: 2px 10px 10px 10px;
+   		overflow: auto;
+	}
+	
+	.section-header {
+	    border-bottom: 1px solid #E5E5E5;
+	    height: 24px;
+	    line-height: 24px;
+	}
+
+	.section-content {
+		margin: 5px 0 0 0;
+		width:100%;
+	}
+	
+	table {
+	    background: none repeat scroll 0 0 #FFFFFF;
+	    border: 1px solid #CCCCCC;
+	    border-collapse:collapse;
+	    width:100%;
+	}
+
+	th, td {
+  		border: 1px solid #CCCCCC;
+  		font-size: 13px;
+  	}
+  	
+  	th {
+  		background: none repeat scroll 0 0 #F9F9F9;
+	    height: 30px;
+	    line-height: 25px;
+	    padding: 0 5px;
+	    white-space: nowrap;
+	    text-align:left;
+	    font-weight: normal;
+  	}
+  	
+  	td {
+	    height: 20px;
+	    padding: 3px 5px;
+	    white-space: nowrap;
+	}
+
+ 	a {
+  		color: #3366FF;
+   		text-decoration: none;
+  	}
+  	 a:hover {
+  		color: #FF6D06;
+   		text-decoration: underline;
+  	}
+  	#waiting {
+  		height:200px;
+  	}
+  	#waiting div {
+  		background-image: url("/Cherry/css/common/blueprint/images/loading.gif");
+	    background-position: 20px center;
+	    background-repeat: no-repeat;
+	    height: 50px;
+	    width: 50px;
+	    left: 40%;
+	    top: 20%;
+	    position: absolute;
+	    z-index: 100;
+  	}
+  	.subList {
+  		padding: 3px 5px 3px 26px;
+  	}
+	.icon-ibox-expand {
+	    background-position: -240px -336px;
+	}
+	.icon-ibox-close {
+	    background-position: -224px -336px;
+	}
+	.gadget-icon {
+	    background-image: url("/Cherry/css/cherry/img/ui-icons_333333_256x240.png");
+	    background-repeat: no-repeat;
+	    display: block;
+	    height: 16px;
+	    margin-right: 5px;
+	    overflow: hidden;
+	    text-indent: -99999px;
+	    width: 16px;
+	    float: left;
+	    cursor: pointer;
+	}
+	</style>
+	
+	<div id="waiting"><div></div></div>
+	<div class="section" id="ruleCalStateDiv" style="display:none">  
+      <div class="section-header"></div>
+      <div class="section-content">
+        <table border="0">
+		  <thead></thead>
+		  <tbody></tbody>
+		</table>            
+      </div>
+    </div>
+    
+    
+	<script type='text/javascript'>
+	
+	var baseUrl = window.parent.getBaseUrl();
+	var gadgetPrefs = new gadgets.Prefs();
+	
+	function pointMessageCallback(sender, message) {
+		for(var i = 0; i < message.length; i++) {
+			var $yearTotalCount = $("#"+message[i]).find(".yearTotalCount");
+			var yearTotalCount = parseInt($yearTotalCount.html(),10);
+       		$yearTotalCount.html(yearTotalCount + 1);
+       		var $monthTotalCount = $("#"+message[i]).find(".monthTotalCount");
+			var monthTotalCount = parseInt($monthTotalCount.html(),10);
+       		$monthTotalCount.html(monthTotalCount + 1);
+		}
+	}
+	
+	function ecpand(object) {
+		if($(object).is('.icon-ibox-expand')) {
+			$(object).removeClass('icon-ibox-expand').addClass('icon-ibox-close');
+			var id = $(object).parents('tr').attr("id");
+			$('tr[id$=_'+id+']').hide();
+		} else {
+			$(object).removeClass('icon-ibox-close').addClass('icon-ibox-expand');
+			var id = $(object).parents('tr').attr("id");
+			$('tr[id$=_'+id+']').show();
+		}
+	}
+	
+	function render(data) {
+		$("#waiting").hide();
+		$("#ruleCalStateDiv").show();
+		data = data.entry;
+		$('#ruleCalStateDiv').find('.section-header').html('<strong>'+gadgetPrefs.getMsg("ruleCount")+'：<span style="color:red">'+data.ruleCount+'</span>&nbsp;'+gadgetPrefs.getMsg("rulePart")+'</strong>');
+		var $tbody = $('#ruleCalStateDiv').find('tbody');
+		var $thead = $('#ruleCalStateDiv').find('thead');
+		var _gadgetSizeMax = window.parent.getGadgetSizeMax();
+		
+		var theadContext = '<tr>'+
+		'<th style="width:25%;">'+gadgetPrefs.getMsg("campaignName")+'</th>'+
+		'<th style="width:25%">'+gadgetPrefs.getMsg("campaignFromDate")+'</th>'+
+		'<th style="width:25%">'+gadgetPrefs.getMsg("yearTotalCount")+'</th>'+
+		'<th style="width:25%">'+gadgetPrefs.getMsg("monthTotalCount")+'</th>'+
+		'</tr>';
+		$thead.append(theadContext);
+		for(var i = 0; i < data.ruleCalStateMes.length; i++) {
+			var ruleCalStateMesInfo = data.ruleCalStateMes[i];
+			var subList = ruleCalStateMesInfo.subList;
+			var tr = '<tr id="'+ruleCalStateMesInfo.subCampaignId+'">'+
+			'<td>'+(subList ? '<span onclick="ecpand(this);" class="gadget-icon icon-ibox-expand"></span>' : '')+(ruleCalStateMesInfo.campaignName ? '<a href="'+baseUrl+'/cp/BINOLCPCOM02_detailInit?brandInfoId='+data.brandInfoId+'&campaignId='+ruleCalStateMesInfo.campaignId+'" onclick="window.parent.openWin(this);return false;">'+ruleCalStateMesInfo.campaignName+'</a>' : gadgetPrefs.getMsg("unKnown"))+'</td>'+
+			'<td>'+ruleCalStateMesInfo.campaignFromDate+'</td>'+
+			'<td class="yearTotalCount">'+(ruleCalStateMesInfo.yearTotalCount ? ruleCalStateMesInfo.yearTotalCount : "0")+'</td>'+
+			'<td class="monthTotalCount">'+(ruleCalStateMesInfo.monthTotalCount ? ruleCalStateMesInfo.monthTotalCount : "0")+'</td>'+
+			'</tr>'
+			$tbody.append(tr);
+			if(subList) {
+				for(var j = 0; j < subList.length; j++) {
+					var subInfo = subList[j];
+					var tr = '<tr id="'+subInfo.subCampaignId+'_'+subInfo.mainRuleId+'">'+
+					'<td class="subList">'+(subInfo.campaignName ? '<a href="'+baseUrl+'/cp/BINOLCPCOM02_detailInit?brandInfoId='+data.brandInfoId+'&campaignId='+subInfo.campaignId+'" onclick="window.parent.openWin(this);return false;">'+subInfo.campaignName+'</a>' : gadgetPrefs.getMsg("unKnown"))+'</td>'+
+					'<td>'+(subInfo.campaignFromDate?subInfo.campaignFromDate:'')+'</td>'+
+					'<td class="yearTotalCount">'+(subInfo.yearTotalCount ? subInfo.yearTotalCount : "0")+'</td>'+
+					'<td class="monthTotalCount">'+(subInfo.monthTotalCount ? subInfo.monthTotalCount : "0")+'</td>'+
+					'</tr>'
+					$tbody.append(tr);
+				}
+			}
+		}
+	    gadgets.window.adjustHeight();
+	    gadgets.pubsub.subscribe("PointMessage", pointMessageCallback);
+	}
+	
+	function fetchRuleCalState() {
+		$("#waiting").show();
+		$("#ruleCalStateDiv").hide();
+	   	gadgets.window.adjustHeight();
+	   	var url = baseUrl + "/social/rest/ruleCalState";
+	   	var param = {};
+	   	param.userInfo = window.parent.getUserInfo();
+	   	sendRequestToServer(url, 'POST', param, render, false);
+	}
+	
+	gadgets.util.registerOnLoadHandler(fetchRuleCalState);
+	
+	</script>
+	
+	]]></Content>
+</Module>

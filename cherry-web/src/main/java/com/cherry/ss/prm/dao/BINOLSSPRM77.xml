@@ -1,0 +1,74 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sqlMap PUBLIC "-//iBATIS.com//DTD SQL Map 2.0//EN" "http://ibatis.apache.org/dtd/sql-map-2.dtd">
+<sqlMap namespace="BINOLSSPRM77">
+	
+	<!-- 优惠券查询sql  -->
+	<sql id="CouponInfoQuery">
+		<![CDATA[
+			SELECT 
+				MC.CouponType couponType
+				,MC.BatchNo batchNo
+				,MC.RuleCode ruleCode
+				,PCR.RuleName ruleName
+				,MC.CouponNo couponNo
+				,MC.CouponCode couponCode
+				,MC.Status status
+				,CONVERT(varchar(25),MC.CreateTime,120) as createTime
+				,CONVERT(varchar(25),MC.EndTime,120) as endTime
+				,CONVERT(varchar(25),MC.FinshTime,120) as finishTime
+				,MC.RelatedNoA relatedNoA
+				,MC.RelatedNoB relatedNoB
+				,CONVERT(varchar(25),GETDATE(),120) as currentTime
+			FROM 
+				Promotion.BIN_MemberCoupon MC WITH(NOLOCK)
+			LEFT JOIN
+				Promotion.BIN_PromotionCouponRule PCR WITH(NOLOCK)
+			ON 
+				MC.RuleCode = PCR.RuleCode
+			WHERE
+				(MC.BPCode = #bpCode# OR (MC.BPCode is null and MC.Mobile = #memPhone# ))
+		]]>
+		<isNotEmpty prepend="AND" property="status">
+			<![CDATA[ MC.Status = #status#]]>
+		</isNotEmpty>
+		<isNotEmpty prepend="AND" property="couponNo">
+			<![CDATA[ MC.CouponNo = #couponNo#]]>
+		</isNotEmpty>
+	</sql>
+	
+	<!-- 取得优惠券总数  -->
+    <select id="getCouponInfoCount" parameterClass="java.util.HashMap" resultClass="java.lang.Integer">
+    	<![CDATA[
+			SELECT COUNT(SORT_T1.couponNo) AS count FROM (
+		]]>	
+		<include refid="BINOLSSPRM77.CouponInfoQuery" />	
+		<![CDATA[	
+			)SORT_T1
+		]]>										
+    </select>
+    
+    <!-- 取得优惠券规则List  -->
+    <select id="getCouponInfoList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+       	<include refid="BINOLCMINC99.pageheader" />
+		<include refid="BINOLSSPRM77.CouponInfoQuery" />
+		<include refid="BINOLCMINC99.pagefooter" />
+    </select>
+    
+   	<!-- 取得优惠券详细信息Map  -->
+    <select id="getCouponInfo" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+		<include refid="BINOLSSPRM77.CouponInfoQuery" />
+    </select>
+    
+    <select id="getBrandInfo" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+    	<![CDATA[
+    		SELECT
+    			BIN_BrandInfoID brandInfoID
+    			,BIN_OrganizationInfoID organizationInfoID
+    		FROM 
+    			Basis.BIN_BrandInfo
+    		WHERE
+    			BrandCode = #brandCode#
+    	]]>
+    </select>
+    
+</sqlMap>

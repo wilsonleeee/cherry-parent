@@ -1,0 +1,99 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sqlMap PUBLIC "-//iBATIS.com//DTD SQL Map 2.0//EN" "http://ibatis.apache.org/dtd/sql-map-2.dtd">
+<sqlMap namespace="BINOLBSPOS99">
+	
+    <!-- 员工查询SQL -->
+    <sql id="EmployeeQuery">
+    	<![CDATA[
+			SELECT
+				 BIN_EmployeeID,
+		]]>
+		<dynamic>
+			<isNotEmpty property="language">
+				<isEqual property="language" compareValue="en_US">
+					EmployeeNameForeign AS EmployeeName
+				</isEqual>
+				<isEqual property="language" compareValue="zh_CN">	
+					EmployeeName AS EmployeeName
+				</isEqual>								
+			</isNotEmpty>
+			<isEmpty property="language">
+				EmployeeName AS EmployeeName
+			</isEmpty>
+		</dynamic>
+		<![CDATA[			
+			FROM
+			    Basis.BIN_Employee
+			WHERE
+				BIN_OrganizationInfoID = #organizationInfoId# AND
+				ValidFlag = '1'
+			]]>
+		<dynamic>
+			<isNotEmpty prepend="AND" property="brandInfoId">
+				BIN_BrandInfoID=#brandInfoId#
+			</isNotEmpty>
+			<isNotEmpty prepend="AND" property="employeeKw">
+				(EmployeeCode like '%'+#employeeKw#+'%' OR 
+				EmployeeName like '%'+#employeeKw#+'%' OR
+				EmployeeNameForeign like '%'+#employeeKw#+'%')
+			</isNotEmpty>
+		</dynamic>	
+    </sql>
+    
+    <!-- 取得员工总数 -->
+	<select id="getEmployeeCount" parameterClass="java.util.HashMap" resultClass="java.lang.Integer">
+		<![CDATA[
+			SELECT	COUNT(SORT_T1.BIN_EmployeeID) AS count FROM (
+		]]>	
+		<include refid="BINOLBSPOS99.EmployeeQuery" />
+		<![CDATA[	
+			) SORT_T1
+		]]>	
+    </select>
+    
+    <!-- 取得员工List -->
+    <resultMap id="BINOLBSPOS99.Employee" class="java.util.HashMap">
+		<result property="employeeId" column="BIN_EmployeeID"/>
+		<result property="employeeName" column="EmployeeName"/>
+		<result property="extraInfoList" column="BIN_EmployeeID" select="BINOLBSPOS99.getExtraInfoList" javaType="java.util.List"/>
+	</resultMap>
+	<select id="getEmployeeList" parameterClass="java.util.HashMap" resultMap="BINOLBSPOS99.Employee">
+		<include refid="BINOLCMINC99.pageheader" />
+		<include refid="BINOLBSPOS99.EmployeeQuery" />
+		<include refid="BINOLCMINC99.pagefooter" />
+    </select>
+    
+    <resultMap id="BINOLBSPOS99.extraInfo" class="java.util.HashMap">
+		<result property="positionName" column="PositionName"/>
+		<result property="positionNameForeign" column="PositionNameForeign"/>
+		<result property="organizationId" column="BIN_OrganizationID"/>
+		<result property="departName" column="DepartName"/>
+		<result property="nameForeign" column="NameForeign"/>
+	</resultMap>
+	<select id="getExtraInfoList" parameterClass="java.lang.Integer" resultMap="BINOLBSPOS99.extraInfo">
+		<![CDATA[
+			SELECT		
+				C.PositionName,				
+				C.PositionNameForeign,
+				D.BIN_OrganizationID,
+				D.DepartName,	
+				D.NameForeign					
+			FROM					
+				Basis.BIN_Employee A,				
+				Basis.BIN_PostDistribution B,				
+				Basis.BIN_Position C,				
+				Basis.BIN_Organization D				
+			WHERE					
+				A.BIN_EmployeeID=B.BIN_EmployeeID and				
+				B.BIN_PositionID = C.BIN_PositionID and				
+				C.BIN_OrganizationID = D.BIN_OrganizationID and				
+				A.ValidFlag='1' and				
+				B.ValidFlag='1' and				
+				C.ValidFlag='1' and				
+				D.ValidFlag='1' and 		
+				A.BIN_EmployeeID=#employeeId#
+		]]>
+    </select>
+    
+</sqlMap>
+    

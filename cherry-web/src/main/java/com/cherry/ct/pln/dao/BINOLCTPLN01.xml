@@ -1,0 +1,163 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sqlMap PUBLIC "-//iBATIS.com//DTD SQL Map 2.0//EN" "http://ibatis.apache.org/dtd/sql-map-2.dtd">
+<sqlMap namespace="BINOLCTPLN01">
+	<!-- 沟通模板信息查询sql  -->
+	<sql id="PlanQuery">
+		<![CDATA[
+			SELECT 
+				tm.BIN_UserId as userId,
+				tm.Bin_PlanCode AS planCode,
+				tm.PlanName AS planName,
+				ta.BIN_ActivityCode as campaignCode,
+				tc.CampaignName AS campaignName,
+				tm.ChannelId as channelId,
+				tn.ChannelName as channelName,
+				tm.CounterCode as counterCode,
+				tt.CounterNameIF as counterName,
+				tm.Status AS status,
+				tb.lastRunTime as lastRunTime,
+				tm.Memo1 AS memo1,
+				tm.Memo2 AS memo2,
+				tm.ValidFlag as validFlag,
+				tm.CreateTime AS createTime  
+			FROM
+				Communication.BIN_Communicationplan as tm 
+				left join Communication.BIN_ActivityCommPlan as ta 
+				on tm.Bin_PlanCode = ta.Bin_PlanCode 
+				left join Campaign.BIN_Campaign as tc 
+				on ta.BIN_ActivityCode = tc.CampaignCode 
+				left join Basis.BIN_Channel as tn 
+				on tm.ChannelId = tn.BIN_ChannelID 
+				left join Basis.BIN_CounterInfo as tt 
+				on tm.CounterCode = tt.CounterCode 
+				left join (
+					select Bin_PlanCode,MAX(RunBeginTime) as lastRunTime 
+					from Communication.BIN_CommRunLog 
+					where RunType = 1 group by Bin_PlanCode 
+				) as tb 
+				on tm.Bin_PlanCode=tb.Bin_PlanCode 
+		]]>
+			<isNotEmpty property="privilegeFlag">
+			<isEqual property="privilegeFlag" compareValue="1">			
+			<![CDATA[			
+				inner join (]]><include refid="BINOLCMINC99.departPrivilegeSql" /><![CDATA[) A99 
+				on tm.BIN_OrganizationID = A99.BIN_OrganizationID
+			]]>
+			</isEqual>
+			</isNotEmpty>
+		<![CDATA[
+			Where 
+				tm.BIN_BrandInfoID = #brandInfoId# AND 
+				tm.BIN_OrganizationInfoID = #organizationInfoId# 
+		]]>
+		<dynamic>
+			<!-- 参数中存在沟通计划名称查询条件时  -->
+			<isNotEmpty prepend="AND" property="planName" >
+				tm.PlanName LIKE '%' + #planName# + '%' 
+			</isNotEmpty>
+			<!-- 参数中存在活动名称查询条件时  -->
+			<isNotEmpty prepend="AND" property="campaignName" >
+				tc.CampaignName like '%' + #campaignName# + '%'  
+			</isNotEmpty>
+			<!-- 参数中存在适用客户类型查询条件时  -->
+			<isNotEmpty prepend="AND" property="fromDate" >
+				tm.CreateTime >= #fromDate# 
+			</isNotEmpty>
+			<!-- 参数中存在适用客户类型查询条件时  -->
+			<isNotEmpty prepend="AND" property="toDate" >
+				<![CDATA[
+					tm.CreateTime <= #toDate# 
+				]]>
+			</isNotEmpty>
+			<!-- 参数中存在模板状态查询条件时  -->
+			<isNotEmpty prepend="AND" property="channelId" >
+				tm.channelId = #channelId# 
+			</isNotEmpty>
+			<!-- 参数中存在模板状态查询条件时  -->
+			<isNotEmpty prepend="AND" property="counterCode" >
+				tm.counterCode = #counterCode# 
+			</isNotEmpty>
+			<!-- 参数中存在模板状态查询条件时  -->
+			<isNotEmpty prepend="AND" property="status" >
+				tm.Status = #status# 
+			</isNotEmpty>
+			<!-- 参数中存在模板状态查询条件时  -->
+			<isNotEmpty prepend="AND" property="validFlag" >
+				tm.ValidFlag = #validFlag# 
+			</isNotEmpty>
+		</dynamic>
+	</sql>
+	
+	<!-- 获取沟通模板总数  -->
+    <select id="getPlanCount" parameterClass="java.util.HashMap" resultClass="java.lang.Integer">
+    	<![CDATA[
+			SELECT	COUNT(SORT_T1.planCode) AS count FROM (
+		]]>	
+		<include refid="BINOLCTPLN01.PlanQuery" />	
+		<![CDATA[	
+			)SORT_T1
+		]]>
+    </select>
+	
+	<!-- 获取沟通模板信息List -->
+    <select id="getPlanList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+       	<include refid="BINOLCMINC99.pageheader" />
+		<include refid="BINOLCTPLN01.PlanQuery" />
+		<include refid="BINOLCMINC99.pagefooter" />
+    </select>
+	
+	<!-- 停用沟通计划的活动关联信息 -->
+	<update id="stopCommPlanActivityInfo" parameterClass="java.util.HashMap">
+		<![CDATA[
+			UPDATE 
+				Communication.BIN_ActivityCommPlan 
+			SET 
+				ValidFlag = 0, 
+		]]>
+			<include refid="BINOLCMINC99.updateSql" />
+		<![CDATA[
+			WHERE 
+				ValidFlag = 1 AND 
+				BIN_OrganizationInfoID = #organizationInfoId# AND
+		  		BIN_BrandInfoID = #brandInfoId# AND
+		  		Bin_PlanCode = #planCode# 
+		]]>
+    </update>
+    
+	<!-- 停用沟通计划 -->
+	<update id="stopCommPlan" parameterClass="java.util.HashMap">
+		<![CDATA[
+			UPDATE 
+				Communication.BIN_Communicationplan 
+			SET 
+				ValidFlag = 0, 
+		]]>
+			<include refid="BINOLCMINC99.updateSql" />
+		<![CDATA[
+			WHERE 
+				ValidFlag = 1 AND 
+				BIN_OrganizationInfoID = #organizationInfoId# AND
+		  		BIN_BrandInfoID = #brandInfoId# AND
+		  		Bin_PlanCode = #planCode# 
+		]]>
+    </update>
+	
+	<!-- 停用沟通设置-->
+	<update id="stopCommSet" parameterClass="java.util.HashMap">
+		<![CDATA[
+			UPDATE 
+				Communication.BIN_CommunicationSet 
+			SET 
+				ValidFlag = 0, 
+		]]>
+			<include refid="BINOLCMINC99.updateSql" />
+		<![CDATA[
+			WHERE 
+				ValidFlag = 1 AND 
+				BIN_OrganizationInfoID = #organizationInfoId# AND
+		  		BIN_BrandInfoID = #brandInfoId# AND
+		  		Bin_PlanCode = #planCode# 
+		]]>
+    </update>
+    
+</sqlMap>

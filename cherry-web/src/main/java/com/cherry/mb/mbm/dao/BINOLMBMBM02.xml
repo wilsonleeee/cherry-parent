@@ -1,0 +1,331 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE sqlMap PUBLIC "-//iBATIS.com//DTD SQL Map 2.0//EN" "http://ibatis.apache.org/dtd/sql-map-2.dtd">
+
+<sqlMap namespace="BINOLMBMBM02">
+    
+    <!-- 查询会员基本信息 -->
+	<select id="getMemberInfo" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+		<![CDATA[
+			SELECT TOP 1
+				A.BIN_MemberInfoID AS memberInfoId,
+				A.Name AS name,
+				A.Nickname AS nickname,
+				A.CreditRating AS creditRating,
+				A.TencentQQ AS tencentQQ,
+				A.Email AS email,
+				A.MobilePhone AS mobilePhone,
+				A.Telephone AS telephone,
+				CONVERT(varchar(30),A.JoinDate,120) AS joinDate,
+				A.BirthYear AS birthYear,
+				A.BirthDay AS birthDay,
+				A.Gender AS gender,
+				A.IdentityCard AS identityCard,
+				A.MaritalStatus AS maritalStatus,
+				A.BlogId AS blogId,
+				A.MessageId AS messageId,
+				A.ChannelCode AS channelCode,
+				A.IsReceiveMsg AS isReceiveMsg,
+				A.Active AS active,
+				A.MemType AS memType,
+				A.TestType AS testType,
+				A.BIN_OrganizationID AS organizationId,
+				A.BIN_EmployeeID AS employeeId,
+				A.Memo1 AS memo1,
+				A.Memo2 AS memo2,
+				A.MemInfoRegFlg AS memInfoRegFlg,
+				B.DepartCode AS counterCode,
+				B.DepartName AS counterName,
+				B.TestType AS counterKind,
+				C.EmployeeCode AS employeeCode,
+				C.EmployeeName AS employeeName,
+				D.LevelName AS levelName,
+				A.ReferrerID AS referrerId,
+				E.Name AS recommendName,
+				A.Profession AS profession,
+				A.ConnectTime AS connectTime,
+				A.Version AS version,
+				CONVERT(varchar(30),A.UpdateTime,121) AS updateTime,
+				A.ModifyCount AS modifyCount,
+				F.TotalPoint AS totalPoint,
+				F.ChangablePoint AS changablePoint,
+				G.MemCode AS memCode,
+				CASE WHEN G.MemCode IS NULL THEN '0' ELSE '1' END AS status,
+				H.TotalAmount AS totalAmount,
+				H.InitTotalAmount AS initTotalAmount,
+				CONVERT(varchar(30),H.LastSaleDate,120) AS lastSaleDate,
+				H.TotalSaleCount AS totalSaleCount,
+				CONVERT(varchar(10),A.LevelStartDate,23) AS levelStartDate,
+				CONVERT(varchar(10),A.LevelEndDate,23) AS levelEndDate,
+				CONVERT(varchar(30),A.ActiveDate,120) AS activeDate,
+				A.ActiveChannel AS activeChannel,
+				CONVERT(varchar(30),A.WechatBindTime,120) AS wechatBindTime,
+				CONVERT(varchar(30),H.FirstSaleDate,120) AS firstSaleDate,
+				I.DepartCode AS firstSaleCounterCode,
+				I.DepartName AS firstSaleCounterName,
+				A.MemberPassword AS memberPassword
+			FROM
+				Members.BIN_MemberInfo A WITH(NOLOCK)
+				LEFT JOIN Basis.BIN_Organization B WITH(NOLOCK) ON A.BIN_OrganizationID = B.BIN_OrganizationID
+				LEFT JOIN Basis.BIN_Employee C WITH(NOLOCK) ON A.BIN_EmployeeID = C.BIN_EmployeeID
+				LEFT JOIN Members.BIN_MemberLevel D WITH(NOLOCK) ON A.MemberLevel = D.BIN_MemberLevelID
+				LEFT JOIN Members.BIN_MemberInfo E WITH(NOLOCK) ON A.ReferrerID = E.BIN_MemberInfoID
+				LEFT JOIN Members.BIN_MemberPoint F WITH(NOLOCK) ON A.BIN_MemberInfoID = F.BIN_MemberInfoID
+				LEFT JOIN Members.BIN_MemCardInfo G WITH(NOLOCK) ON A.BIN_MemberInfoID = G.BIN_MemberInfoID AND G.validFlag = '1' AND G.CardValidFlag = '1'
+				LEFT JOIN Members.BIN_MemberExtInfo H WITH(NOLOCK) ON A.BIN_MemberInfoID = H.BIN_MemberInfoID
+				LEFT JOIN Basis.BIN_Organization I WITH(NOLOCK) ON H.FirstSaleCounter = I.BIN_OrganizationID
+			WHERE
+				A.BIN_MemberInfoID = #memberInfoId#	
+		]]>
+    </select>
+    
+     <!-- 查询会员俱乐部信息 -->
+	<select id="getMemClubInfo" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+		<![CDATA[
+		SELECT
+			A.IsReceiveMsg AS isReceiveMsg,
+			B.LevelName AS levelName,
+			CONVERT(VARCHAR,A.LevelStartDate,23) AS levelStartDate,
+			CONVERT(VARCHAR,A.LevelEndDate,23) AS levelEndDate,
+			A.ReferrerID AS referrerIdClub,
+			E.Name AS recommendNameClub,
+			A.BIN_EmployeeID AS employeeIdClub,
+			A.BIN_OrganizationID AS organizationIdClub,
+			F.DepartCode AS counterCodeClub,
+			F.DepartName AS counterNameClub,
+			F.TestType AS counterKindClub,
+			G.EmployeeCode AS employeeCodeClub,
+			G.EmployeeName AS employeeNameClub,
+			CONVERT(varchar, A.JoinTime, 23) AS joinTimeClub
+		FROM
+			Members.BIN_MemClubLevel A WITH(NOLOCK) LEFT JOIN
+			Members.BIN_MemberLevel B WITH(NOLOCK)
+			ON (A.MemberLevel = B.BIN_MemberLevelID) LEFT JOIN
+			Members.BIN_MemberInfo E WITH(NOLOCK) 
+			ON (A.ReferrerID = E.BIN_MemberInfoID)
+			LEFT JOIN Basis.BIN_Organization F WITH(NOLOCK) ON A.BIN_OrganizationID = F.BIN_OrganizationID
+			LEFT JOIN Basis.BIN_Employee G WITH(NOLOCK) ON A.BIN_EmployeeID = G.BIN_EmployeeID
+		WHERE
+			A.BIN_MemberInfoID = #memberInfoId#	AND
+			A.BIN_MemberClubID = #memberClubId#
+    ]]>
+    </select>
+    
+    <!-- 查询会员持卡信息 -->
+	<select id="getMemCardInfoList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+		<![CDATA[
+			SELECT 
+				A.MemCode AS memCode,
+				A.GrantDate AS grantDate,
+				A.GrantTime AS grantTime,
+				A.CardValidFlag AS cardValidFlag,
+				A.CardCount AS cardCount,
+				B.BIN_OrganizationID AS memCodeOrgId,
+				B.CounterCode AS memCodeCouCode,
+				B.CounterNameIF AS memCodeCouName,
+				C.BIN_EmployeeID AS memCodeEmpId,
+				C.EmployeeCode AS memCodeEmpCode,
+				C.EmployeeName AS memCodeEmpName
+			FROM
+				Members.BIN_MemCardInfo A WITH(NOLOCK)
+				LEFT JOIN Basis.BIN_CounterInfo B WITH(NOLOCK) ON A.CounterCode = B.CounterCode
+				LEFT JOIN Basis.BIN_Employee C WITH(NOLOCK) ON A.BaCode = C.EmployeeCode
+			WHERE
+				A.BIN_MemberInfoID = #memberInfoId# AND
+				A.ValidFlag = '1'
+			ORDER BY
+				A.CardCount DESC
+		]]>
+    </select>
+    
+    <!-- 查询会员地址信息 -->
+	<select id="getMemberAddress" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+		<![CDATA[
+			SELECT 
+				B.BIN_AddressInfoID AS addressInfoId,
+				B.AddressLine1 AS addressLine1,
+				B.StandardCity AS cityId,
+				B.StandardProvince AS provinceId,
+				B.StandardCounty AS countyId,
+				B.ZipCode AS zipCode,
+				C.RegionNameChinese AS cityName,
+				D.RegionNameChinese AS provinceName,
+				E.RegionNameChinese AS countyName
+			FROM
+				Members.BIN_MemberAddress A WITH(NOLOCK)
+				LEFT JOIN Basis.BIN_AddressInfo B WITH(NOLOCK) ON A.BIN_AddressInfoID = B.BIN_AddressInfoID
+				LEFT JOIN Basis.BIN_StandardRegion C WITH(NOLOCK) ON B.StandardCity = C.BIN_RegionID
+				LEFT JOIN Basis.BIN_StandardRegion D WITH(NOLOCK) ON B.StandardProvince = D.BIN_RegionID
+				LEFT JOIN Basis.BIN_StandardRegion E WITH(NOLOCK) ON B.StandardCounty = E.BIN_RegionID
+			WHERE
+				A.BIN_MemberInfoID = #memberInfoId# AND
+				A.ValidFlag = '1'
+		]]>
+    </select>
+    
+    <!-- 查询会员问卷信息 -->
+	<select id="getMemPaperList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+		<![CDATA[
+			SELECT
+				A.BIN_PaperID AS paperId,
+				A.PaperName AS paperName,
+				B.BIN_PaperQuestionID AS paperQuestionId,
+				B.QuestionItem AS questionItem,
+				B.QuestionType AS questionType,
+				B.OptionA AS optionA,
+	      		B.OptionB AS optionB,
+	      		B.OptionC AS optionC,
+	      		B.OptionD AS optionD,
+	      		B.OptionE AS optionE,
+	      		B.OptionF AS optionF,
+	      		B.OptionG AS optionG,
+	      		B.OptionH AS optionH,
+	      		B.OptionI AS optionI,
+	      		B.OptionJ AS optionJ,
+	      		B.OptionK AS optionK,
+	      		B.OptionL AS optionL,
+	      		B.OptionM AS optionM,
+	      		B.OptionN AS optionN,
+	      		B.OptionO AS optionO,
+	      		B.OptionP AS optionP,
+	      		B.OptionQ AS optionQ,
+	      		B.OptionR AS optionR,
+	      		B.OptionS AS optionS,
+	      		B.OptionT AS optionT,
+				C.Answer AS answer
+			FROM
+				Monitor.BIN_Paper A WITH(NOLOCK)
+				JOIN Monitor.BIN_PaperQuestion B WITH(NOLOCK) ON A.BIN_PaperID = B.BIN_PaperID AND B.ValidFlag = '1'
+				LEFT JOIN Monitor.BIN_PaperAnswerDetail C WITH(NOLOCK) JOIN Monitor.BIN_PaperAnswer D WITH(NOLOCK)
+				ON C.BIN_PaperAnswerID = D.BIN_PaperAnswerID AND D.BIN_MemberInfoID = #memberInfoId# AND D.ValidFlag = '1'
+				ON B.BIN_PaperQuestionID = C.BIN_PaperQuestionID AND C.ValidFlag = '1'
+			WHERE
+				A.PaperType = '1' AND
+				A.StartTime <= CONVERT(CHAR(19),getdate(),120) AND
+				A.EndTime >= CONVERT(CHAR(19),getdate(),120) AND
+				A.PaperStatus = '2' AND
+				A.ValidFlag = '1' AND
+				B.QuestionItem IS NOT NULL AND
+				B.QuestionItem <> '' AND
+				A.BIN_OrganizationInfoID = #organizationInfoId#
+		]]>
+			<isNotEmpty prepend="AND" property="brandInfoId">	
+				A.BIN_BrandInfoID = #brandInfoId#
+			</isNotEmpty>
+		<![CDATA[	
+			ORDER BY
+				A.BIN_PaperID,
+				B.DisplayOrder
+		]]>
+    </select>
+    
+    <!-- 根据会员卡号查询会员ID -->
+	<select id="getMemberInfoId" parameterClass="java.util.HashMap" resultClass="java.lang.String">
+		<![CDATA[
+			SELECT
+				A.BIN_MemberInfoID AS memberInfoId
+			FROM
+				Members.BIN_MemberInfo A WITH(NOLOCK)
+				JOIN Members.BIN_MemCardInfo B WITH(NOLOCK) ON A.BIN_MemberInfoID = B.BIN_MemberInfoID AND B.ValidFlag = '1'
+			WHERE
+				B.MemCode = #memCode# AND
+				A.BIN_OrganizationInfoID = #organizationInfoId#
+		]]>	
+			<isNotEmpty prepend="AND" property="brandInfoId">	
+				A.BIN_BrandInfoID = #brandInfoId#
+			</isNotEmpty>
+    </select>
+    
+    <!-- 根据会员ID查询会员卡号 -->
+	<select id="getMemCode" parameterClass="java.util.HashMap" resultClass="java.lang.String">
+		<![CDATA[
+			SELECT TOP 1
+				A.MemCode AS memCode
+			FROM
+				Members.BIN_MemCardInfo A WITH(NOLOCK)
+			WHERE
+				A.BIN_MemberInfoID = #referrerId#
+			ORDER BY
+				A.CardCount DESC	
+		]]>
+    </select>
+    
+    <!--查询会员俱乐部扩展信息 -->
+	<select id="getMB02ClubExtInfo" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+		<![CDATA[
+			SELECT
+				BIN_ClubLevelID AS clubLevelId,
+				ISNULL(Version,0) AS version,
+				CONVERT(VARCHAR, JoinTime, 23) AS joinDay,
+				CONVERT(VARCHAR, JoinTime, 120) AS joinTime
+			FROM						
+				Members.BIN_MemClubLevel
+			WHERE
+				BIN_MemberInfoID = #memberInfoId# AND
+				BIN_MemberClubID = #memberClubId#
+		]]>
+		
+    </select>
+    
+     <!-- 更新会员俱乐部扩展信息 -->
+    <update id="updateMB02ClubExtInfo" parameterClass="java.util.HashMap">
+    <![CDATA[
+    	UPDATE Members.BIN_MemClubLevel
+    	SET
+    		IsReceiveMsg = #isReceiveMsg#,
+    		Version = ISNULL(Version,0) + 1,
+    		ReferrerID = #referrerId#,
+    		BIN_EmployeeID = #employeeIdClub#,
+    		BaCode = #employeeCodeClub#,
+    		BIN_OrganizationID = #organizationIdClub#,
+    		CounterCode = #organizationCodeClub#,
+    		JoinTime = #joinTimeClub#,
+    ]]>		
+    	<include refid="BINOLCMINC99.updateSql" />		
+    <![CDATA[					
+		WHERE				
+			BIN_ClubLevelID = #clubLevelId#		
+	]]>	
+    </update>
+    
+    <!-- 插入会员俱乐部扩展信息 -->
+    <insert id="addMB02ClubExtInfo" parameterClass="java.util.HashMap">
+    <![CDATA[
+    	INSERT INTO Members.BIN_MemClubLevel
+    	(
+    		BIN_MemberInfoID,													
+			BIN_MemberClubID,													
+			IsReceiveMsg,
+			BIN_EmployeeID,
+			BaCode,
+			Version,
+			ReferrerID,
+			BIN_OrganizationID,
+			CounterCode,
+			JoinTime,
+	]]>								
+		<include refid="BINOLCMINC99.insertKeySql" />		
+	<![CDATA[																									
+    	)
+    	VALUES
+    	(
+    		#memberInfoId#,
+    		#memberClubId#,
+    		#isReceiveMsg#,
+    		#employeeID#,
+    		#employeeCode#,
+    		'1',
+    		#referrerId#,
+    		#organizationIdClub#,
+    		#organizationCodeClub#,
+    		#joinTimeClub#,
+	]]>
+		<include refid="BINOLCMINC99.insertValueSql" />		
+	<![CDATA[
+    	)
+    ]]>		
+    </insert>
+	
+</sqlMap>
+
+
+

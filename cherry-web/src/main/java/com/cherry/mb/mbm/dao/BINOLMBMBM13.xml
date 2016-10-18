@@ -1,0 +1,91 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sqlMap PUBLIC "-//iBATIS.com//DTD SQL Map 2.0//EN" "http://ibatis.apache.org/dtd/sql-map-2.dtd">
+<sqlMap namespace="BINOLMBMBM13">
+    
+    <!-- 查询会员资料修改履历 -->
+	<select id="getMemInfoRecordInfo" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+		<![CDATA[
+    		SELECT
+				A.MemCode AS memCode,
+				CONVERT(varchar(30),A.ModifyTime,120) AS modifyTime,
+				CASE ISNULL(B.CounterNameIF,'') WHEN '' THEN B.CounterCode ELSE '(' + B.CounterCode + ')' + B.CounterNameIF END AS modifyCounter,
+				CASE ISNULL(C.EmployeeName,'') WHEN '' THEN C.EmployeeCode ELSE '(' + C.EmployeeCode + ')' + C.EmployeeName END AS modifyEmployee,
+				A.ModifyType AS modifyType,
+				A.Sourse AS sourse,
+				A.BatchNo AS batchNo,
+				A.Remark AS remark
+			FROM
+				Members.BIN_MemInfoRecord A
+				LEFT JOIN Basis.BIN_CounterInfo B ON A.modifyCounter = B.CounterCode
+				AND A.BIN_OrganizationInfoID = B.BIN_OrganizationInfoID AND A.BIN_BrandInfoID = B.BIN_BrandInfoID
+				LEFT JOIN Basis.BIN_Employee C ON A.modifyEmployee = C.EmployeeCode 
+				AND A.BIN_OrganizationInfoID = C.BIN_OrganizationInfoID AND A.BIN_BrandInfoID = C.BIN_BrandInfoID
+			WHERE
+				BIN_MemInfoRecordID = #memInfoRecordId#
+		]]>
+    </select>
+    
+    <!-- 查询会员资料修改履历明细 -->
+	<select id="getMemInfoRecordDetail" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+		<![CDATA[
+    		SELECT
+    			ModifyField AS modifyField,
+				OldValue AS oldValue,
+				NewValue AS newValue
+			FROM
+				Members.BIN_MemInfoRecordDetail
+			WHERE
+				BIN_MemInfoRecordID = #memInfoRecordId#	
+		]]>
+    </select>
+    
+    <!-- 根据区域ID查询区域名称 -->
+	<select id="getRegionName" parameterClass="java.util.HashMap" resultClass="java.lang.String">
+		<![CDATA[
+    		SELECT
+    			RegionNameChinese AS regionName
+			FROM
+				Basis.BIN_StandardRegion
+			WHERE
+				BIN_RegionID = #regionId#	
+		]]>
+    </select>
+    
+    <!-- 根据员工ID查询员工名称 -->
+	<select id="getEmployeeName" parameterClass="java.util.HashMap" resultClass="java.lang.String">
+		<![CDATA[
+    		SELECT
+    			CASE ISNULL(EmployeeName,'') WHEN '' THEN EmployeeCode ELSE '(' + EmployeeCode + ')' + EmployeeName END AS employeeName
+			FROM
+				Basis.BIN_Employee
+			WHERE
+				BIN_EmployeeID = #employeeId#	
+		]]>
+    </select>
+    
+    <!-- 根据部门ID查询部门名称 -->
+	<select id="getDepartName" parameterClass="java.util.HashMap" resultClass="java.lang.String">
+		<![CDATA[
+    		SELECT
+    			CASE ISNULL(DepartName,'') WHEN '' THEN DepartCode ELSE '(' + DepartCode + ')' + DepartName END AS departName
+			FROM
+				Basis.BIN_Organization
+			WHERE
+				BIN_OrganizationID = #organizationId#	
+		]]>
+    </select>
+    
+    <!-- 根据会员ID查询会员姓名 -->
+	<select id="getMemName" parameterClass="java.util.HashMap" resultClass="java.lang.String">
+		<![CDATA[
+			SELECT
+				B.MemCode AS memCode
+			FROM
+				Members.BIN_MemberInfo A
+				JOIN Members.BIN_MemCardInfo B ON A.BIN_MemberInfoID = B.BIN_MemberInfoID AND B.CardValidFlag = '1' AND B.ValidFlag = '1'
+			WHERE
+				A.BIN_MemberInfoID = #memberInfoId#
+		]]>
+    </select>
+    
+</sqlMap>

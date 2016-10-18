@@ -1,0 +1,427 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sqlMap PUBLIC "-//iBATIS.com//DTD SQL Map 2.0//EN" "http://ibatis.apache.org/dtd/sql-map-2.dtd">
+<sqlMap namespace="BINOLSSPRM74">
+
+	<select id="getProductInfo" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+		<![CDATA[
+			select top(1)
+				pv.BIN_ProductID as  productId,
+				pv.BIN_ProductVendorID as prtVendorId,
+				p.UnitCode as unitCode,
+				Convert(decimal(18,2),pp.SalePrice) as price,
+				p.NameTotal as nameTotal,
+				p.OriginalBrand as originalBrand,
+				pv.BarCode as barCode
+			from 
+				Basis.BIN_ProductVendor pv
+			Left Join
+				Basis.BIN_ProductPrice  pp
+			on
+				(pv.BIN_ProductID=pp.BIN_ProductID)
+			Left Join
+				Basis.BIN_Product p
+			on
+				(pv.BIN_ProductID=p.BIN_ProductID)
+			where 
+				p.UnitCode=#B# and
+				#systime# between pp.StartDate and pp.EndDate
+		]]>
+	</select>
+	
+	<select id="getActivityInfo" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+		<![CDATA[
+			SELECT top(1)
+				pa.DescriptionDtl as descriptionDtl,
+				pr.RuleCond as ruleCond,
+				CONVERT(nvarchar(10),pr.EndTime,120) as endTime
+			FROM
+				Promotion.BIN_PromotionActivity pa
+			LEFT JOIN
+				Promotion.BIN_PromotionRule pr
+			on
+				(pa.ActivityCode = pr.RuleCode)
+			where
+				pa.ActivityCode=#maincode#
+		]]>
+	</select>
+
+	<insert id="insertMain" parameterClass="java.util.HashMap">
+		<![CDATA[
+		insert into Campaign.BIN_GetIntelligentResultMain(
+			BIN_OrganizationInfoID,
+			BIN_BrandInfoID,
+			CounterCode,
+			TradeNoIF,
+			TotalQuantity,
+			OriginalAmount,
+			DiscountAmount,
+			TotalAmount,
+			MemberCode,
+			MemberName,
+			MemberPhone,
+			MemberLevel,
+			MainState,
+			IntegralAmount,
+			SendFlag,
+			BPCode,
+			ValidFlag,
+			CreateTime,
+			CreatePGM
+		)values(
+			#organizationInfoID#,
+			#brandInfoId#,
+			#CC#,
+			#TN#,
+			#totalQuantity#,
+			#originalAmount#,
+			#discountAmount#,
+			#totalAmount#,
+			#MC#,
+			#MN#,
+			#MP#,
+			#ML#,
+			'0',
+			#computedPoint#,
+			#SendFlag#,
+			#BP#,
+			'1',
+			GETDATE(),
+			'BINOLSSPRM74'
+		)
+		
+		]]>
+	</insert>
+	
+	<insert id="insertCoupon" parameterClass="java.util.HashMap">
+		<![CDATA[
+		insert into Campaign.BIN_IntelligentResultCoupon
+		(
+			TradeNoIF,
+			CouponNumber,
+			Unitcode,
+			Barcode,
+			CouponAmount,
+			CouponActualAmount,
+			CouponType,
+			CouponActivityCode,
+			ValidFlag,
+			CreateTime,
+			CreatePGM
+		)values(
+			#TN#,
+			#CouponCode#,
+			#Unitcode#,
+			#Barcode#,
+			#Price#,
+			#ActualAmount#,
+			#CouponType#,
+			#Maincode#,
+			'1',
+			GETDATE(),
+			'BINOLSSPRM74'
+		)
+		]]>
+	</insert>
+	
+	<insert id="insertRule" parameterClass="java.util.HashMap">
+		<![CDATA[
+		insert into Campaign.BIN_IntelligentResultRule
+		(
+			TradeNoIF,
+			Price,
+			ActivityMainCode,
+			ActivityName,
+			ActivityCode,
+			Unitcode,
+			Barcode,
+			RuleDetailType,
+			Quantity,
+			TagPrice,
+			ComputePoint,
+			ValidFlag,
+			CreateTime,
+			CreatePGM
+		)values(
+			#TN#,
+			#salePrice#,
+			#maincode#,
+			#mainname#,
+			#activitycode#,
+			#unitCode#,
+			#barCode#,
+			#type#,
+			#quantity#,
+			#price#,
+			#computePoint#,
+			'1',
+			GETDATE(),
+			'BINOLSSPRM74'
+		)
+		]]>
+	</insert>
+	
+	<insert id="insertCart" parameterClass="java.util.HashMap">
+		<![CDATA[
+		insert into Campaign.BIN_IntelligentResultShoppingCart
+		(
+			TradeNoIF,
+			Unitcode,
+			Barcode,
+			Quantity,
+			TagPrice,
+			Price,
+			ActivityMainCode,
+			ValidFlag,
+			CreateTime,
+			CreatePGM
+		)values(
+			#TN#,
+			#unitCode#,
+			#barCode#,
+			#quantity#,
+			#price#,
+			#salePrice#,
+			#maincode#,
+			'1',
+			GETDATE(),
+			'BINOLSSPRM74'
+		)
+		
+		]]>
+	</insert>
+	
+	<select id="getDateSourceName" parameterClass="java.util.HashMap" resultClass="java.util.HashMap"> 
+		<![CDATA[
+		SELECT top(1)
+			A.BrandCode AS brandCode,
+			A.DataSourceName AS dataSourceName,
+			A.OldDataSourceName AS oldDataSourceName,
+			A.IFDataSourceName,
+			A.AESKey
+		FROM
+			dbo.BIN_BrandDataSourceConfig A
+		WHERE
+			A.ValidFlag = '1' and
+			A.BrandCode=#brandCode#
+		]]>
+	</select>
+	
+	<select id="getOrganizationID" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+		<![CDATA[
+		SELECT top(1)
+			oz.BIN_OrganizationID as organizationID,
+			oz.BIN_OrganizationInfoID as organizationInfoID,
+			oz.BIN_BrandInfoID as  brandInfoID,
+			oz.DepartCode as departCode,
+			oi.OrgCode as orgCode
+		FROM 
+			Basis.BIN_Organization oz
+		Left join
+			Basis.BIN_OrganizationInfo oi
+		on
+			(oz.BIN_OrganizationInfoID = oi.BIN_OrganizationInfoID)
+		WHERE 
+			oz.DepartCode=#CC#
+		]]>
+	</select>
+	
+	<select id="checkMain" parameterClass="java.util.HashMap" resultClass="java.lang.Integer">
+		<![CDATA[
+		SELECT COUNT(1) as count FROM(
+			SELECT 
+				BIN_IntelligentResultId 
+			FROM  
+				Campaign.BIN_GetIntelligentResultMain 
+			WHERE 
+				TradeNoIF=#TN#
+		)T
+		]]>
+	</select>
+	
+	<delete id="delmain_all" parameterClass="java.util.HashMap">
+		<![CDATA[
+			BEGIN
+			      DELETE FROM  Campaign.BIN_GetIntelligentResultMain where TradeNoIF=#TN#;
+			      DELETE FROM  Campaign.BIN_IntelligentResultShoppingCart where TradeNoIF=#TN#;
+			      DELETE FROM  Campaign.BIN_IntelligentResultRule where TradeNoIF=#TN#;
+			      DELETE FROM  Campaign.BIN_IntelligentResultCoupon where TradeNoIF=#TN#;
+			END;
+		]]>
+	</delete>
+	
+	<select id="getMemberLevel" parameterClass="java.util.HashMap" resultClass="java.util.HashMap"> 
+		<![CDATA[
+		SELECT top(1)
+			LevelName as levelName
+		FROM 
+			members.BIN_MemberLevel
+		WHERE
+			LevelCode=#ML# AND
+			BIN_OrganizationInfoID =#organizationInfoID# AND
+			BIN_BrandInfoID=#brandInfoId#
+		]]>
+	</select>
+	<!-- 获取全部活动的列表 -->
+	<select id="getAllActivity" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+		<![CDATA[
+			SELECT
+				ath.MainCode,
+				ath.ActivityType,
+				Convert(nvarchar(10),ath.ActivityFromDate,120) as ActivityFromDate,
+				Convert(nvarchar(10),ath.ActivityToDate,120) as ActivityToDate,
+				pr.RuleName,
+				pr.RuleType,
+				pa.DescriptionDtl
+			FROM
+				[Promotion].[BIN_ActivityTransHis] ath
+			LEFT JOIN
+				[Promotion].[BIN_PromotionRule]	pr
+			ON
+				(ath.MainCode=pr.RuleCode)
+			LEFT JOIN
+				[Promotion].BIN_PromotionActivity pa
+			ON
+				(ath.MainCode=pa.ActivityCode)
+			WHERE
+				ath.BIN_BrandInfoID = #brandInfoId#
+				and ath.BIN_OrganizationID in(-8888,#organizationID#)
+				and ath.ValidFlag = '1'
+				and #tradeDate# between ath.ActivityFromDate and ath.ActivityToDate
+		]]>
+	</select>
+	
+	<!-- 转换购物车添加产商ID字段 -->
+	<select id="collect2pro" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+		<![CDATA[
+			SELECT top(1)
+				#price# as price,
+				p.OriginalBrand as originalBrand,
+				#nameTotal# as nameTotal,
+				#barCode# as barCode,
+				#salePrice# as salePrice,
+				#quantity# as quantity,
+				pv.BIN_ProductVendorID as prtVendorId,
+				#unitCode# as unitCode,
+				#productId# as productId
+			FROM
+				Basis.BIN_Product p
+			Left Join
+				Basis.BIN_ProductVendor pv
+			on
+				(pv.BIN_ProductID=p.BIN_ProductID)
+			WHERE
+				p.BIN_ProductID=#productId#
+			]]>
+	</select>
+		
+	<select id="getMainByTradeNo" parameterClass="java.util.HashMap" resultClass="java.util.HashMap"> 
+		<![CDATA[
+		SELECT
+			TradeNoIF as TN,
+			Convert(nvarchar(10),CreateTime,120) as TD,
+			Convert(nvarchar(10),CreateTime,108) as TT,
+			CounterCode as CC,
+			MemberCode as MC,
+			MemberName as MN,
+			MemberPhone as MP,
+			MemberLevel as ML,
+			BPCode as BP,
+			TotalAmount ,
+			BIN_OrganizationInfoID AS organizationInfoID,
+			BIN_BrandInfoID AS brandInfoID
+		FROM 
+			Campaign.BIN_GetIntelligentResultMain
+		WHERE
+			TradeNoIF=#tradeNoIF#
+		]]>
+	</select>
+	
+	<select id="getShoppingCartByTradeNo" parameterClass="java.util.HashMap" resultClass="java.util.HashMap"> 
+		<![CDATA[
+		SELECT 
+			rsc.Barcode as barcode,
+			rsc.Unitcode as unitcode,
+			rsc.Quantity as quantity,
+			rsc.Price as salePrice,
+			rsc.TagPrice as price,
+			p.NameTotal as nameTotal,
+			p.BIN_ProductID as productId,
+			p.OriginalBrand as originalBrand,
+			pv.BIN_ProductVendorID as prtVendorId
+		FROM
+			Campaign.BIN_IntelligentResultShoppingCart rsc
+		LEFT JOIN
+			Basis.BIN_Product p
+		ON
+			(rsc.Unitcode=p.UnitCode)
+		LEFT JOIN
+			Basis.BIN_ProductVendor pv
+		ON
+			(p.BIN_ProductID=pv.BIN_ProductID)
+		WHERE
+			rsc.TradeNoIF=#tradeNoIF#
+		]]>
+	</select>
+	
+	<select id="getRuleByTradeNo" parameterClass="java.util.HashMap" resultClass="java.util.HashMap"> 
+		<![CDATA[
+		SELECT
+			ActivityMainCode as maincode
+		FROM
+			campaign.BIN_IntelligentResultRule
+		WHERE
+			TradeNoIF=#tradeNoIF#
+		]]>
+	</select>
+	
+	<select id="getCouponByTradeNo" parameterClass="java.util.HashMap" resultClass="java.util.HashMap"> 
+		<![CDATA[
+		SELECT
+			CouponNumber as couponCode 
+		FROM 
+			campaign.BIN_IntelligentResultCoupon 
+		WHERE 
+			TradeNoIF=#tradeNoIF#
+		]]>
+	</select>
+	
+	<!-- 更新 智能促销最终计算结果维护表-家化(Coupon)状态-->
+	<update id="updateProCoupon" parameterClass="java.util.HashMap">
+		<![CDATA[
+			UPDATE 
+				promotion.BIN_MemberCoupon
+			Set
+				Status='OK',
+				FinshTime=GETDATE(),
+				RelatedNoB=#TradeNoIF#,
+				UserMemCode=#MemberCode#,
+				UserMobile=#MemberPhone#,
+				userBP=#bpCode#,
+				SyncFlag=NULL
+			WHERE
+				CouponNo=#CouponCode#
+		]]>
+	</update>
+	
+	<!-- 取得优惠券总数  -->
+    <select id="getNoMemberCouponCount" parameterClass="java.util.HashMap" resultClass="java.lang.Integer">
+    	<![CDATA[
+			SELECT	COUNT(SORT_T1.couponNo) AS count FROM (
+		]]>	
+		<![CDATA[
+			SELECT
+				CouponNo
+			FROM 
+				promotion.BIN_MemberCoupon 
+			WHERE
+				MemCode is NULL and
+				Mobile is NULL and
+				BPCode is NULL and
+				Status='AR'
+		]]>	
+		<![CDATA[	
+			)SORT_T1
+		]]>										
+    </select>
+	
+</sqlMap>

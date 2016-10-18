@@ -1,0 +1,537 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sqlMap PUBLIC "-//iBATIS.com//DTD SQL Map 2.0//EN" "http://ibatis.apache.org/dtd/sql-map-2.dtd">
+<sqlMap namespace="BINOLCM32">
+	<!-- 活动List查询sql  -->
+	<resultMap id="BINOLCM32.ActivityList" class="java.util.HashMap">
+		<result property="campaignCode" column="CampaignCode"/>
+		<result property="campaignName" column="CampaignName"/>
+	</resultMap>
+	<!-- 取得活动信息  -->
+    <select id="getActivityList" parameterClass="java.util.HashMap" resultMap="BINOLCM32.ActivityList">
+       	<![CDATA[
+			SELECT
+				CampaignCode, 
+				CampaignName 														
+			FROM(	
+				SELECT 
+					CampaignCode as CampaignCode,
+					CampaignName as CampaignName,
+					BIN_OrganizationInfoID,
+					BIN_BrandInfoID,
+					ValidFlag,
+					CampaignFromDate as FromDate,
+					CampaignToDate as ToDate 
+				from Campaign.BIN_Campaign
+				union 
+				SELECT 
+					ActivityCode,
+					ActivityName,
+					BIN_OrganizationInfoID,
+					BIN_BrandInfoID,
+					ValidFlag,
+					ActivityFromDate as FromDate,
+					ActivityToDate as ToDate 
+				from Promotion.BIN_PromotionActivity
+				where (TemplateFlag IS NULL OR TemplateFlag='0' OR TemplateFlag ='')
+				) as Tab 
+			WHERE 
+				BIN_BrandInfoID=#brandInfoId# AND 
+				BIN_OrganizationInfoID=#organizationInfoId# AND 
+				ValidFlag='1'
+		]]>
+		<dynamic>
+			<!-- 参数中存在活动编号查询条件时  -->
+			<isNotEmpty prepend="AND" property="campaignCode" >
+				CampaignCode = #campaignCode# 
+			</isNotEmpty>
+		</dynamic>
+    </select>
+	
+	<!-- 取得活动信息  -->
+    <select id="getActivityInfo" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+       	<![CDATA[
+			SELECT
+				CampaignCode as campaignCode,
+				CampaignName as campaignName,
+				FromDate as beginDate,
+				ToDate as endDate 
+			FROM(	
+				SELECT 
+					CampaignCode as CampaignCode,
+					CampaignName as CampaignName,
+					BIN_OrganizationInfoID,
+					BIN_BrandInfoID,
+					ValidFlag,
+					CampaignFromDate as FromDate,
+					CampaignToDate as ToDate 
+				from Campaign.BIN_Campaign
+				union 
+				SELECT 
+					ActivityCode,
+					ActivityName,
+					BIN_OrganizationInfoID,
+					BIN_BrandInfoID,
+					ValidFlag,
+					ActivityFromDate as FromDate,
+					ActivityToDate as ToDate 
+				from Promotion.BIN_PromotionActivity
+				where (TemplateFlag IS NULL OR TemplateFlag='0' OR TemplateFlag ='')
+				) as Tab 
+			WHERE 
+				BIN_BrandInfoID=#brandInfoId# AND 
+				BIN_OrganizationInfoID=#organizationInfoId# AND 
+				ValidFlag='1'
+		]]>
+		<dynamic>
+			<!-- 参数中存在活动编号查询条件时  -->
+			<isNotEmpty prepend="AND" property="campaignCode" >
+				CampaignCode = #campaignCode# 
+			</isNotEmpty>
+		</dynamic>
+    </select>
+    
+	<!-- 根据活动编号取得沟通计划信息 -->
+    <select id="getPlanInfoByCampaign" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+       	<![CDATA[
+			SELECT TOP 1 
+				TB.Bin_UserId as userId,
+				TA.BIN_PlanCode as planCode,
+				TB.PlanName as planName,
+				TB.PlanCondition as planCondition,
+				TB.Memo1 as memo 
+  			FROM 
+  				Communication.BIN_ActivityCommPlan TA
+  				Left join Communication.BIN_Communicationplan TB 
+  				on TA.BIN_PlanCode=TB.Bin_PlanCode 
+  			WHERE 
+  				TA.ValidFlag=1 AND 
+				TA.BIN_BrandInfoID=#brandInfoId# AND 
+				TA.BIN_OrganizationInfoID=#organizationInfoId# AND 
+				TA.BIN_ActivityCode=#campaignCode#
+		]]>
+    </select>
+    
+	<!-- 取得沟通对象集合名称  -->
+    <select id="getObjRecordInfo" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+       	<![CDATA[
+			SELECT
+				RecordName as recordName,
+				CustomerType as customerType,
+				RecordType as recordType,
+				RecordCount as recordCount,
+				ConditionInfo as conditionInfo,
+				Comments as comments,
+				FromType as fromType 
+			FROM 
+				Members.BIN_SearchLog 
+			WHERE 
+				BIN_BrandInfoID=#brandInfoId# AND 
+				BIN_OrganizationInfoID=#organizationInfoId# AND 
+				BIN_SearchCode=#searchCode#
+		]]>
+    </select>
+    
+    <!-- 根据活动ID或Code获取活动的沟通对象搜索集合List -->
+    <select id="getCommObjListByCampaign" parameterClass="java.util.HashMap" resultClass="java.lang.String">
+       	<![CDATA[
+			select
+				C.BasePropValue1 AS searchCode
+			from
+				Campaign.BIN_Campaign A
+				JOIN Campaign.BIN_CampaignRule B
+				ON(A.BIN_CampaignID = B.BIN_CampaignID AND B.ValidFlag='1')
+				JOIN Campaign.BIN_CamRuleCondition C
+				ON(B.BIN_CampaignRuleID = C.BIN_CampaignRuleID AND C.ValidFlag='1')
+				JOIN Campaign.BIN_CampaignBaseProp D
+				ON(C.BIN_CampaignBasePropID = D.BIN_CampaignBasePropID 
+					AND D.PropertyName = 'baseProp_customer' AND D.ValidFlag='1')
+			WHERE 
+				A.BIN_BrandInfoID=#brandInfoId# AND 
+				A.BIN_OrganizationInfoID=#organizationInfoId# 
+		]]>
+		<dynamic>
+			<!-- 参数中存在活动ID查询条件时  -->
+			<isNotEmpty prepend="AND" property="campaignID" >
+				A.BIN_CampaignID = #campaignID# 
+			</isNotEmpty>
+			<!-- 参数中存在活动编号查询条件时  -->
+			<isNotEmpty prepend="AND" property="campaignCode" >
+				A.CampaignCode = #campaignCode# 
+			</isNotEmpty>
+		</dynamic>
+    </select>
+    
+    <!-- 沟通模板信息查询sql  -->
+	<sql id="TemplateQuery">
+		<![CDATA[
+			SELECT 
+				BIN_TemplateID AS templateId,
+				TemplateCode AS templateCode,
+				TemplateName AS templateName,
+				TemplateUse AS templateUse,
+				Type AS type,
+				CustomerType AS customerType,
+				Contents AS contents,
+				ValidFlag AS status,
+				IsDefault AS isDefault 
+			FROM
+				Communication.BIN_MessageTemplate 
+			Where 
+				BIN_BrandInfoID = #brandInfoId# AND 
+				BIN_OrganizationInfoID = #organizationInfoId# AND 
+				TYPE = #templateType# 
+		]]>
+		<dynamic>
+			<!-- 参数中存在模板名称查询条件时  -->
+			<isNotEmpty prepend="AND" property="templateName" >
+				TemplateName LIKE '%' + #templateName# + '%' 
+			</isNotEmpty>
+			<!-- 参数中存在模板用途查询条件时  -->
+			<isNotEmpty prepend="AND" property="templateUse" >
+				TemplateUse = #templateUse# 
+			</isNotEmpty>
+			<!-- 参数中存在适用客户类型查询条件时  -->
+			<isNotEmpty prepend="AND" property="customerType" >
+				CustomerType = #customerType# 
+			</isNotEmpty>
+			<!-- 参数中存在模板状态查询条件时  -->
+			<isNotEmpty prepend="AND" property="status" >
+				ValidFlag = #status# 
+			</isNotEmpty>
+		</dynamic>
+	</sql>
+	
+	<!-- 获取沟通模板总数  -->
+    <select id="getMsgTemplateCount" parameterClass="java.util.HashMap" resultClass="java.lang.Integer">
+    	<![CDATA[
+			SELECT COUNT(SORT_T1.templateId) AS count FROM (
+		]]>	
+		<include refid="BINOLCM32.TemplateQuery" />	
+		<![CDATA[	
+			)SORT_T1
+		]]>										
+    </select>
+	
+	<!-- 获取沟通模板信息List -->
+    <select id="getMsgTemplateList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+       	<include refid="BINOLCMINC99.pageheader" />
+		<include refid="BINOLCM32.TemplateQuery" />
+		<include refid="BINOLCMINC99.pagefooter" />
+    </select>
+    
+    <!--根据搜索记录编号查询非会员类型的搜索结果 -->
+	<sql id="NoMemberSearchResultQuery">
+		<![CDATA[
+			select isnull(cast(tn.CustomerCode as varchar),tt.BIN_CustomerCode) As memId 
+				  ,tt.BIN_CustomerCode As memCode 
+				  ,tt.CustomerName As memName 
+				  ,tn.Gender As gender
+				  ,tt.Mobilephone As mobilePhone 
+				  ,tt.Email As email 
+				  ,tt.Telephone As telephone 
+				  ,null As totalPoint 
+				  ,null As changablePoint 
+				  ,tt.CounterCode As counterCode 
+				  ,tc.CounterNameIF As counterName 
+				  ,tt.IsReceiveMsg As receiveMsgFlg 
+				  ,tt.CouponCode As couponCode
+			FROM 
+				  Members.BIN_CustomerInfo As tt with(nolock) 
+				  Left Join Members.BIN_NonMembers as tn with(nolock) on tt.BIN_CustomerCode=tn.CustomerCode 
+				  Left Join Basis.BIN_CounterInfo as tc on tt.CounterCode=tc.CounterCode
+			WHERE 
+				  tt.BIN_BrandInfoID = #brandInfoId# AND 
+				  tt.BIN_OrganizationInfoID = #organizationInfoId# AND 
+				  tt.BIN_SearchCode = #searchCode# 
+		]]>
+		<dynamic>
+			<!-- 参数中存在非会员卡号时  -->
+			<isNotEmpty prepend="AND" property="memCode" >
+				tt.BIN_CustomerCode = #memCode# 
+			</isNotEmpty>
+			<!-- 参数中存在非会员姓名时  -->
+			<isNotEmpty prepend="AND" property="name" >
+				tt.CustomerName like '%' + #name# + '%' 
+			</isNotEmpty>
+			<!-- 参数中存在非会员手机号时  -->
+			<isNotEmpty prepend="AND" property="mobilePhone" >
+				tt.Mobilephone = #mobilePhone# 
+			</isNotEmpty>
+			<!-- 参数中存在非会员生日时间时  -->
+			<isNotEmpty prepend="AND" property="birthMonthDay" >
+				tn.Birthday = #birthMonthDay# 
+			</isNotEmpty>
+			<!-- 参数中存在非会员加入时间时  -->
+			<isNotEmpty prepend="AND" property="joinDate" >
+			<![CDATA[
+				CONVERT(nvarchar(30), tn.InTime, 23) = #joinDate#
+			]]>
+			</isNotEmpty>
+		</dynamic>
+    </sql>
+    
+    <!-- 根据搜索记录编号查询非会员类型的搜索结果总数  -->
+    <select id="getNoMemberSearchResultCount" parameterClass="java.util.HashMap" resultClass="java.lang.Integer">
+    	<![CDATA[
+			SELECT	COUNT(SORT_T1.memId) AS count FROM (
+		]]>	
+		<include refid="BINOLCM32.NoMemberSearchResultQuery" />	
+		<![CDATA[	
+			)SORT_T1
+		]]>
+    </select>
+	
+	<!-- 根据搜索记录编号查询非会员类型的搜索结果 -->
+    <select id="getNoMemberSearchResultList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+       	<include refid="BINOLCMINC99.pageheader" />
+		<include refid="BINOLCM32.NoMemberSearchResultQuery" />
+		<include refid="BINOLCMINC99.pagefooter" />
+    </select>
+    
+    <!--根据搜索记录编号查询搜索结果 -->
+	<sql id="SearchResultQuery">
+		<![CDATA[
+			select tc.BIN_MemberInfoID As memId 
+				  ,tt.BIN_CustomerCode As memCode 
+				  ,tt.CustomerName As memName 
+				  ,tm.Gender As gender
+				  ,tt.Mobilephone As mobilePhone 
+				  ,tt.Email As email 
+				  ,tt.Telephone As telephone 
+				  ,tp.TotalPoint As totalPoint 
+				  ,tp.ChangablePoint As changablePoint 
+				  ,tt.CounterCode As counterCode 
+				  ,tu.CounterNameIF as counterName 
+				  ,tt.IsReceiveMsg As receiveMsgFlg 
+				  ,tt.CouponCode As couponCode 
+			FROM 
+				  Members.BIN_CustomerInfo As tt with(nolock) 
+				  Left Join Members.BIN_MemCardInfo As tc with(nolock) on tt.BIN_CustomerCode = tc.MemCode 
+				  Left Join Members.BIN_MemberInfo As tm with(nolock) on tc.BIN_MemberInfoID = tm.BIN_MemberInfoID 
+				  Left Join Members.BIN_MemberPoint As tp with(nolock) on tc.BIN_MemberInfoID = tp.BIN_MemberInfoID 
+				  Left join Basis.BIN_CounterInfo as tu on tt.CounterCode=tu.CounterCode 
+			WHERE 
+				  tt.BIN_BrandInfoID = #brandInfoId# AND 
+				  tt.BIN_OrganizationInfoID = #organizationInfoId# AND 
+				  tt.BIN_SearchCode = #searchCode# 
+		]]>
+		<dynamic>
+			<!-- 参数中存在会员卡号时  -->
+			<isNotEmpty prepend="AND" property="memCode" >
+				tt.BIN_CustomerCode = #memCode# 
+			</isNotEmpty>
+			<!-- 参数中存在会员姓名时  -->
+			<isNotEmpty prepend="AND" property="name" >
+				tt.CustomerName like '%' + #name# + '%' 
+			</isNotEmpty>
+			<!-- 参数中存在会员手机号时  -->
+			<isNotEmpty prepend="AND" property="mobilePhone" >
+				tt.Mobilephone = #mobilePhone# 
+			</isNotEmpty>
+			<!-- 参数中存在会员生日时间时  -->
+			<isNotEmpty prepend="AND" property="birthMonthDay" >
+				tm.Birthday = #birthMonthDay# 
+			</isNotEmpty>
+			<!-- 参数中存在会员入会时间时  -->
+			<isNotEmpty prepend="AND" property="joinDate" >
+				tm.JoinDate = #joinDate# 
+			</isNotEmpty>
+			<!-- 参数中存在会员升级时间时  -->
+			<isNotEmpty prepend="AND" property="levelAdjustDay" >
+				tm.LevelAdjustDay = #levelAdjustDay# 
+			</isNotEmpty>
+			<!-- 参数中存在会员最近购买时间时  -->
+			<isNotEmpty prepend="AND" property="lastSaleDate" >
+				EXISTS (
+					SELECT Top 1 
+						SaleRecordCode 
+					FROM 
+						Sale.BIN_SaleRecord As ts 
+					WHERE 
+						tc.BIN_MemberInfoID=ts.BIN_MemberInfoID AND
+						SaleDate = #lastSaleDate# 
+				)
+			</isNotEmpty>
+			<!-- 参数中存在会员积分值条件时  -->
+			<isNotEmpty prepend="AND" property="totalPoint" >
+				tp.TotalPoint >= #totalPoint# 
+			</isNotEmpty>
+		</dynamic>
+    </sql>
+    
+    <!-- 根据搜索记录编号查询搜索结果总数  -->
+    <select id="getSearchResultCount" parameterClass="java.util.HashMap" resultClass="java.lang.Integer">
+    	<![CDATA[
+			SELECT	COUNT(*) AS count FROM (
+		]]>	
+		<include refid="BINOLCM32.SearchResultQuery" />	
+		<![CDATA[	
+			)SORT_T1
+		]]>
+    </select>
+	
+	<!-- 根据搜索记录编号查询搜索结果 -->
+    <select id="getSearchResultList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+       	<include refid="BINOLCMINC99.pageheader" />
+		<include refid="BINOLCM32.SearchResultQuery" />
+		<include refid="BINOLCMINC99.pagefooter" />
+    </select>
+    
+    <!-- 查询基础沟通模版变量sql文 -->
+    <sql id="queryVariable1">
+    	<![CDATA[
+			select 
+				tt1.BIN_VariableID as variableId,
+				tt1.VariableCode as variableCode,
+				tt1.VariableName as variableName,
+				tt1.VariableValue as variableValue,
+				tt1.IsBasicFlag as isBasicFlag,
+				tt1.Comments as comments,
+				tt1.BasicVariable as basicVariable,
+				tt1.OperatorChar as operatorChar,
+				tt1.ComputedValue as computedValue,
+				tt1.Type as type,
+				tt1.ValidFlag as validFlag,
+				tt2.VariableName as basicVariableName
+			from 
+				Communication.BIN_TemplateVariable tt1 with(nolock)
+				left join Communication.BIN_TemplateVariable tt2 with(nolock) on tt1.BasicVariable = tt2.VariableCode
+		]]>
+			<dynamic prepend="where">
+				<isNotEmpty prepend="and" property="variableId">
+					tt1.BIN_VariableID = #variableId#
+				</isNotEmpty>
+				<isNotEmpty prepend="and" property="variableCode">
+					tt1.VariableCode = #variableCode#
+				</isNotEmpty>
+				<isNotEmpty prepend="and" property="validFlag">
+					tt1.ValidFlag = #validFlag#
+				</isNotEmpty>
+				<isNotEmpty prepend="and" property="isBasicFlag">
+					tt1.IsBasicFlag = #isBasicFlag#
+				</isNotEmpty>
+				<isNotEmpty prepend="and" property="type">
+					tt1.Type = #type#
+				</isNotEmpty>
+			</dynamic>		
+    </sql>
+    
+    <!-- 根据用途查询沟通模版变量sql文 -->
+    <sql id="queryVariable2">
+    	<![CDATA[
+			select 
+				tu.BIN_AssociateID as associateId,
+				tu.TemplateUse as templateUse,
+				tu.OrderNo as orderNo,
+				tu.ValidFlag as validFlag,
+				tt1.BIN_VariableID as variableId,
+				tt1.VariableCode as variableCode,
+				tt1.VariableName as variableName,
+				tt1.VariableValue as variableValue,
+				tt1.IsBasicFlag as isBasicFlag,
+				tt2.VariableName as basicVariableName,
+				tt1.Comments as comments,
+				tt1.BasicVariable as basicVariable,
+				tt2.VariableName as basicVariableName,
+				tt1.OperatorChar as operatorChar,
+				tt1.ComputedValue as computedValue,
+				tt1.Type as type
+			from 
+				Communication.BIN_TemplateUseVariable tu with(nolock)
+				left join Communication.BIN_TemplateVariable tt1 with(nolock) on tt1.VariableCode = tu.VariableCode and tt1.validFlag = '1'
+				left join Communication.BIN_TemplateVariable tt2 with(nolock) on tt1.BasicVariable = tt2.VariableCode
+		]]>
+			<dynamic prepend="where">
+				<isNotEmpty prepend="and" property="variableCode">
+					tt1.VariableCode = #variableCode#
+				</isNotEmpty>
+				<isNotEmpty prepend="and" property="associateId">
+					tu.BIN_AssociateID = #associateId#
+				</isNotEmpty>
+				<isNotEmpty prepend="and" property="templateUse">
+					tu.TemplateUse = #templateUse#
+				</isNotEmpty>
+				<isNotEmpty prepend="and" property="validFlag">
+					tu.ValidFlag = #validFlag#
+				</isNotEmpty>
+				<isNotEmpty prepend="and" property="isBasicFlag">
+					tt1.IsBasicFlag = #isBasicFlag#
+				</isNotEmpty>
+				<isNotEmpty prepend="and" property="type">
+					tt1.Type = #type#
+				</isNotEmpty>
+			</dynamic>		
+			order by tu.OrderNo
+    </sql>
+    
+    <!-- 获取沟通模版变量  -->
+    <select id="getVariable" parameterClass="java.util.HashMap" resultClass="java.util.HashMap" remapResults="true">
+    	<!-- 查询基础变量 -->
+		<isEqual property="queryType" compareValue="1">
+			<include refid="BINOLCM32.queryVariable1"/>
+		</isEqual>
+		<!-- 根据用途查询 -->
+		<isEqual property="queryType" compareValue="2">
+			<include refid="BINOLCM32.queryVariable2"/>
+		</isEqual>
+    </select>
+    
+    <!-- 获取沟通模版内容非法字符List -->
+    <select id="getIllegalCharList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+    <![CDATA[
+	   	select 
+	   		A.BIN_CharId as charId,
+			A.CharValue as charValue,
+			A.CommType as commType,
+			A.Remark as remark,
+			A.ValidFlag as validFlag
+		from 
+			Communication.BIN_MessageillegalChar A
+		where
+			A.BIN_BrandInfoID = #brandInfoId#
+ 			and A.BIN_OrganizationInfoID = #organizationInfoId#
+	]]>
+		<isNotEmpty prepend="and" property="charId">
+			A.BIN_CharId = #charId#
+		</isNotEmpty>
+		<isNotEmpty prepend="and" property="charValue">
+			A.CharValue = #charValue#
+		</isNotEmpty>
+		<isNotEmpty prepend="and" property="commType">
+			A.CommType = #commType#
+		</isNotEmpty>
+		<isNotEmpty prepend="and" property="validFlag">
+			A.ValidFlag = #validFlag#
+		</isNotEmpty>
+			order by A.OrderNo
+    </select>
+    
+    <!-- 根据沟通阶段标识检查沟通是否已经存在并且有过成功运行记录 -->
+	<select id="getCommunicationByPhaseNum" parameterClass="java.util.HashMap" resultClass="java.lang.String">
+		<![CDATA[
+			SELECT 
+				tc.BIN_CommunicationCode as communicationCode 
+			FROM 
+				Communication.BIN_Communication as tc 
+			WHERE 
+				tc.BIN_BrandInfoID = #brandInfoId# AND 
+				tc.BIN_OrganizationInfoID = #organizationInfoId# AND 
+				tc.Bin_PlanCode = #planCode# AND 
+				tc.PhaseNum = #phaseNum# AND 
+				EXISTS 
+				(
+					SELECT 
+						ts.TaskCode as communicationCode 
+					FROM 
+						Communication.BIN_SchedulesLog as ts with (nolock) 
+					WHERE 
+						ts.Status = 0 AND 
+						ts.BIN_BrandInfoID = #brandInfoId# AND 
+						ts.BIN_OrganizationInfoID = #organizationInfoId# AND 
+						ts.TaskType = #taskType# AND 
+						ts.TaskCode = tc.BIN_CommunicationCode 
+				)
+		]]>
+    </select>
+    
+</sqlMap>

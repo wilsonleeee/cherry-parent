@@ -1,0 +1,182 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sqlMap PUBLIC "-//iBATIS.com//DTD SQL Map 2.0//EN" "http://ibatis.apache.org/dtd/sql-map-2.dtd">
+<sqlMap namespace="BINOLCPACT13">
+	<!-- 导入的活动号存在性验证 -->
+	<select id="getSubCampaignInfo" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+		<![CDATA[
+			SELECT 
+				A.SubCampaignCode AS subCampCode,
+				A.SubCampaignName AS subCampaignName,
+				B.CampaignCode AS campaignCode
+			FROM
+				Campaign.BIN_CampaignRule A WITH(NOLOCK)
+				JOIN Campaign.BIN_Campaign B WITH(NOLOCK)
+				ON(A.BIN_CampaignID=B.BIN_CampaignID AND B.ManageGift='1')
+			WHERE
+				B.BIN_OrganizationInfoID=#organizationInfoId# AND
+				A.ValidFlag = '1' AND
+				B.ValidFlag='1' AND
+				A.SubCampaignCode=#subCampCode#
+		]]>	
+		<isNotEmpty property="brandInfoId" prepend="AND">
+			B.BIN_BrandInfoID = #brandInfoId#
+		</isNotEmpty>
+	</select>
+    
+    <!-- 导入的柜台号唯一验证 -->
+	<select id="getCounterInfo" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+		<![CDATA[
+			SELECT 
+				B.BIN_CounterInfoID AS counterID,
+				B.BIN_OrganizationID AS organizationID,
+		]]>
+		<isNotEmpty property="language">
+            <isEqual property="language" compareValue="en_US">
+                B.NameForeign AS counterName
+            </isEqual>
+            <isEqual property="language" compareValue="zh_CN">
+                B.CounterNameIF AS counterName
+            </isEqual>
+        </isNotEmpty>
+        <isEmpty property="language">
+                B.CounterNameIF AS counterName
+        </isEmpty>
+        <![CDATA[
+	    	FROM
+				Basis.BIN_Organization A WITH(NOLOCK)
+		]]>
+		<isNotEmpty property="privilegeFlag">
+			<isEqual property="privilegeFlag" compareValue="1">			
+			<![CDATA[			
+					JOIN (]]><include refid="BINOLCMINC99.departPrivilegeSql" /><![CDATA[) A99 
+					ON A.BIN_OrganizationID=A99.BIN_OrganizationID
+			]]>
+			</isEqual>
+		</isNotEmpty>
+		<![CDATA[
+				LEFT JOIN Basis.BIN_CounterInfo B WITH(NOLOCK)
+				ON(A.BIN_OrganizationID = B.BIN_OrganizationID)					
+			WHERE
+				A.Type = '4' AND
+				A.ValidFlag = '1' AND
+				B.ValidFlag = '1' AND
+				A.BIN_OrganizationInfoID = #organizationInfoId#
+		]]>	
+		<isNotEmpty property="brandInfoId" prepend="AND">
+			A.BIN_BrandInfoID = #brandInfoId#
+		</isNotEmpty>
+		<isNotEmpty property="counterCode" prepend="AND">
+			B.CounterCode = #counterCode#
+		</isNotEmpty>
+    </select>
+    
+    <!-- 查询商品的信息 -->
+	<select id="getPrtInfoByUnitCode"  parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+		<![CDATA[
+		SELECT 
+			'N' AS PrtType,
+			A.BIN_ProductID AS BIN_ProductID,
+			A.NameTotal AS NameTotal,
+			B.BarCode AS BarCode,
+			B.BIN_ProductVendorID AS BIN_ProductVendorID
+		FROM 
+			Basis.BIN_Product A WITH(NOLOCK)
+			left join Basis.BIN_ProductVendor B WITH(NOLOCK) 
+			ON(A.BIN_ProductID = B.BIN_ProductID)
+		WHERE
+			A.ValidFlag ='1' 
+			AND B.ValidFlag = '1'
+			AND A.UnitCode = #unitCode#
+			AND A.BIN_OrganizationInfoID = #organizationInfoId#
+			AND A.BIN_BrandInfoID = #brandInfoId#
+		UNION
+		SELECT 
+			'P' AS PrtType,
+			A.BIN_PromotionProductID AS BIN_ProductID,
+			A.NameTotal AS NameTotal,
+			B.BarCode AS BarCode,
+			B.BIN_PromotionProductVendorID AS BIN_ProductVendorID
+		FROM 
+			Basis.BIN_PromotionProduct A WITH(NOLOCK)
+			left join Basis.BIN_PromotionProductVendor B WITH(NOLOCK) 
+			ON(A.BIN_PromotionProductID = B.BIN_PromotionProductID)
+		WHERE
+			A.ValidFlag ='1' 
+			AND B.ValidFlag = '1'
+			AND A.UnitCode = #unitCode#
+			AND A.BIN_OrganizationInfoID = #organizationInfoId#
+			AND A.BIN_BrandInfoID = #brandInfoId#
+		]]>
+	</select>
+	
+	<!-- 插入或者更新活动产品库存信息 -->
+	<select id="mergeCampaignStock" parameterClass="java.util.HashMap" resultClass="java.lang.Integer">
+		<![CDATA[
+			MERGE Campaign.BIN_CampaignStock AS TGT
+			USING (
+				SELECT 
+					#campaignCode# as CampaignCode,
+					#subCampCode# as SubCampCode,
+					#organizationID# AS BIN_OrganizationID,
+					#prtType# AS PrtType,
+					#productVendorId# as BIN_ProductVendorID
+			) AS SRC
+		    ON (
+		    	TGT.CampaignCode=SRC.CampaignCode AND
+		    	TGT.SubCampCode=SRC.SubCampCode AND
+		        TGT.BIN_OrganizationID = SRC.BIN_OrganizationID AND
+		        TGT.PrtType = SRC.PrtType AND
+		        TGT.BIN_ProductVendorID = SRC.BIN_ProductVendorID
+		        )
+		    WHEN MATCHED THEN 
+		    UPDATE SET
+		    		]]>
+		    <isNotEmpty property="importType">
+		    	<!-- 覆盖模式 -->
+		    	<isEqual property="importType" compareValue="0">
+		    		TGT.TotalQuantity = #totalQuantity#,
+		    		TGT.SafeQuantity = #safeQuantity#,
+		    		TGT.CurrentQuantity = #totalQuantity#,
+		    	</isEqual>
+		    	<!-- 追加模式 -->
+		    	<isEqual property="importType" compareValue="1">
+		    		TGT.TotalQuantity = TGT.TotalQuantity + convert(INT,#totalQuantity#),
+		    		TGT.CurrentQuantity = TGT.CurrentQuantity + convert(INT,#totalQuantity#),
+		    	</isEqual>
+			</isNotEmpty>
+        	<include refid="BINOLCMINC99.updateSql" />
+		    <![CDATA[
+		    WHEN NOT MATCHED THEN
+				INSERT(
+					[BIN_OrganizationInfoID],
+					[BIN_BrandInfoID],
+					[CampaignCode],
+					[SubCampCode],
+					[BIN_OrganizationID],
+					[PrtType],
+					[BIN_ProductVendorID],
+					[CurrentQuantity],
+					[SafeQuantity],
+					[TotalQuantity],
+			]]>
+	        <include refid="BINOLCMINC99.insertKeySql" />
+	        <![CDATA[
+				) VALUES (
+					#organizationInfoId#,
+					#brandInfoId#,
+					#campaignCode#,
+					#subCampCode#,
+					#organizationID#,
+					#prtType#,
+					#productVendorId#,
+					#totalQuantity#,
+					#safeQuantity#,
+					#totalQuantity#,
+			]]>
+        	<include refid="BINOLCMINC99.insertValueSql" />
+        	<![CDATA[
+				)
+			OUTPUT inserted.BIN_CampaignStockID;
+			]]>
+	</select>
+</sqlMap>

@@ -1,0 +1,252 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sqlMap PUBLIC "-//iBATIS.com//DTD SQL Map 2.0//EN" "http://ibatis.apache.org/dtd/sql-map-2.dtd">
+<sqlMap namespace="BINOLMOCIO06">
+	<!--获取所有的柜台信息以及其所属的区域信息-->
+	<select id="getAllCounterAndRegion" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+		SELECT
+   			C.BIN_RegionID AS regionId,
+			B.BIN_RegionID AS provinceId,
+			A.BIN_RegionID AS cityId,
+			oz.BIN_OrganizationID AS counterId, 
+   				<dynamic>
+					<isNotEmpty property="language">
+						<isEqual property="language" compareValue="en_US">
+							case  
+								when C.RegionCode IS NULL 
+								then C.RegionNameForeign
+								else '('+C.RegionCode+')'+C.RegionNameForeign end AS regionName, 
+							case  
+								when B.RegionCode IS NULL 
+								then B.RegionNameForeign
+								else '('+B.RegionCode+')'+B.RegionNameForeign end AS provinceName,                                                                                  
+							case  
+								when A.RegionCode IS NULL 
+								then A.RegionNameForeign
+								else '('+A.RegionCode+')'+A.RegionNameForeign end AS cityName, 
+							case
+								when D.NameForeign IS NULL
+								then D.NameForeign
+								else '('+D.NameForeign+')'+D.NameForeign end AS counterName
+						</isEqual>
+						<isEqual property="language" compareValue="zh_CN">
+							case  
+								when C.RegionCode IS NULL 
+								then C.RegionNameChinese
+								else '('+C.RegionCode+')'+C.RegionNameChinese end  AS regionName, 
+							case  
+								when B.RegionCode IS NULL 
+								then B.RegionNameChinese
+								else '('+B.RegionCode+')'+B.RegionNameChinese end AS provinceName,                                                                                  
+							case  
+								when A.RegionCode IS NULL 
+								then A.RegionNameChinese
+								else '('+A.RegionCode+')'+A.RegionNameChinese end AS cityName, 
+							case
+								when D.CounterCode IS NULL
+								then D.CounterNameIF
+								else '('+D.CounterCode+')'+D.CounterNameIF end AS counterName
+						</isEqual>								
+					</isNotEmpty>
+					<isEmpty property="language">
+						case  
+							when C.RegionCode IS NULL 
+							then C.RegionNameChinese
+							else '('+C.RegionCode+')'+C.RegionNameChinese end  AS regionName, 
+						case  
+							when B.RegionCode IS NULL 
+							then B.RegionNameChinese
+							else '('+B.RegionCode+')'+B.RegionNameChinese end AS provinceName,                                                                                  
+						case  
+							when A.RegionCode IS NULL 
+							then A.RegionNameChinese
+							else '('+A.RegionCode+')'+A.RegionNameChinese end AS cityName, 
+						case
+							when D.CounterCode IS NULL
+							then D.CounterNameIF
+							else '('+D.CounterCode+')'+D.CounterNameIF end AS counterName
+					</isEmpty>
+				</dynamic>
+   	   FROM                 
+   			Basis.BIN_Region A WITH(NOLOCK),     
+			Basis.BIN_Region B WITH(NOLOCK),     
+			Basis.BIN_Region C WITH(NOLOCK),     
+			Basis.BIN_CounterInfo D WITH(NOLOCK),     
+			Basis.BIN_Organization oz WITH(NOLOCK),     
+			Basis.BIN_Region AD WITH(NOLOCK)
+   		WHERE     
+   			C.BIN_OrganizationInfoID = #organizationInfoId#  
+   			AND C.BIN_BrandInfoID = #brandInfoId# 
+   			AND C.RegionType = '0' 
+			AND A.NodeID.GetAncestor(1) = B.NodeID 
+   			AND B.NodeID.GetAncestor(1) = C.NodeID 
+   			AND D.BIN_RegionID = AD.BIN_RegionID 
+   			AND AD.NodeID.IsDescendantOf(A.NodeID)=1 
+   			AND D.BIN_OrganizationID = oz.BIN_OrganizationID 
+   			AND D.ValidFlag = '1' 
+   			AND oz.ValidFlag = '1' 
+			AND A.ValidFlag = '1' 
+			AND B.ValidFlag = '1' 
+			AND C.ValidFlag = '1'
+	</select>
+	<select id="getCounterOrganiztionId" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+			SELECT 
+      			[BIN_OrganizationID] as [organizationId],
+				[ControlFlag] as [controlFlag]
+  			FROM 
+				[Monitor].[BIN_PaperForbidden]
+			WHERE
+			    [ValidFlag] = 1
+				AND [BIN_PaperID] =#paperId#
+	</select>
+	<!--根据问卷ID删除问卷下发禁止表中的所有该问题信息-->
+	<delete id="deletePaper" parameterClass="java.util.HashMap">
+		DELETE FROM
+			[Monitor].[BIN_PaperForbidden]
+		WHERE
+			[BIN_OrganizationInfoID] = #organizationInfoId#
+			AND [BIN_BrandInfoID] = #brandInfoId#
+			AND [BIN_PaperID] =#paperId#
+	</delete>
+	<!--往问卷下发禁止表中写数据-->
+	<insert id="insertPaperForbidden" parameterClass="java.util.HashMap">
+		INSERT INTO [Monitor].[BIN_PaperForbidden]
+           	(
+			[BIN_OrganizationInfoID],
+           	[BIN_BrandInfoID],
+           	[BIN_PaperID],
+           	[BIN_OrganizationID],
+           	[ControlFlag],
+			<include refid="BINOLCMINC99.insertKeySql" />
+			)
+     	VALUES
+           (
+		   #organizationInfoId#,
+		   #brandInfoId#,
+		   #paperId#,
+		   #organizationId#,
+		   #controlFlag#,
+		   <include refid="BINOLCMINC99.insertValueSql" />
+		   )
+	</insert>
+	<!--更新被下发的问卷在问卷主表中的信息-->
+	<update id="updatePaper" parameterClass="java.util.HashMap">
+		UPDATE 
+			[Monitor].[BIN_Paper]
+   		SET 
+      		[PublishTime] = GETDATE(),
+      		[Publisher] = #publisher#,
+      		<include refid="BINOLCMINC99.updateSql" />
+ 		WHERE 
+	 		[BIN_OrganizationInfoID] = #organizationInfoId#
+			AND [BIN_BrandInfoID] = #brandInfoId#
+			AND [BIN_PaperID] =#paperId#
+	</update>
+	<!--获取发布人的姓名-->
+	<select id="getPublisher" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+		SELECT 
+			EmployeeName
+		FROM
+			Basis.BIN_Employee A
+			JOIN Privilege.BIN_User B
+			ON A.BIN_EmployeeID = B.BIN_EmployeeID
+		WHERE
+			B.BIN_UserID = #userId#
+	</select>
+	
+	<!--根据柜台对应的部门ID获取柜台code-->
+	<select id="getCounterCode" parameterClass="java.lang.String" resultClass="java.lang.String">
+		SELECT
+			CounterCode AS counterCode
+		FROM
+			[Basis].[BIN_CounterInfo]
+		WHERE
+			BIN_OrganizationID = #organizationId#
+			
+	</select>
+	
+	<!-- 导入的柜台号唯一验证【验证的范围为"页面上的柜台树的柜台节点"】 -->
+	<select id="getCounterInfo" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+		<![CDATA[
+			SELECT 
+				D.BIN_CounterInfoID AS counterID,
+				D.BIN_OrganizationID AS organizationID,
+		]]>
+		<isNotEmpty property="language">
+            <isEqual property="language" compareValue="en_US">
+                D.NameForeign AS counterName
+            </isEqual>
+            <isEqual property="language" compareValue="zh_CN">
+                D.CounterNameIF AS counterName
+            </isEqual>
+        </isNotEmpty>
+        <isEmpty property="language">
+                D.CounterNameIF AS counterName
+        </isEmpty>
+        <![CDATA[
+	    	FROM                 
+				Basis.BIN_Region A WITH(NOLOCK),     
+				Basis.BIN_Region B WITH(NOLOCK),     
+				Basis.BIN_Region C WITH(NOLOCK),     
+				Basis.BIN_CounterInfo D WITH(NOLOCK),     
+				Basis.BIN_Organization oz WITH(NOLOCK),     
+				Basis.BIN_Region AD WITH(NOLOCK)
+			WHERE
+				C.RegionType = '0' 
+				AND A.NodeID.GetAncestor(1) = B.NodeID 
+				AND B.NodeID.GetAncestor(1) = C.NodeID 
+				AND D.BIN_RegionID = AD.BIN_RegionID 
+				AND AD.NodeID.IsDescendantOf(A.NodeID)=1 
+				AND D.BIN_OrganizationID = oz.BIN_OrganizationID 
+				AND D.ValidFlag = '1' 
+				AND oz.ValidFlag = '1' 
+				AND A.ValidFlag = '1' 
+				AND B.ValidFlag = '1' 
+				AND C.ValidFlag = '1'
+				AND A.BIN_OrganizationInfoID = 1
+				AND D.BIN_OrganizationInfoID = #organizationInfoId#
+		]]>	
+		<isNotEmpty property="brandInfoId" prepend="AND">
+			D.BIN_BrandInfoID = #brandInfoId#
+		</isNotEmpty>
+		<isNotEmpty property="counterCode" prepend="AND">
+			D.CounterCode = #counterCode#
+		</isNotEmpty>
+    </select>
+    
+    <!-- 取得与导入柜台下发类型相对立的柜台【此对立（补集）的全集是"页面上的柜台树的柜台节点"】-->
+	<select id="getContraryOrgID" parameterClass="java.util.HashMap" resultClass="java.lang.String">
+		<![CDATA[
+			SELECT
+				oz.BIN_OrganizationID AS organizationId
+			FROM                 
+				Basis.BIN_Region A WITH(NOLOCK),     
+				Basis.BIN_Region B WITH(NOLOCK),     
+				Basis.BIN_Region C WITH(NOLOCK),     
+				Basis.BIN_CounterInfo D WITH(NOLOCK),     
+				Basis.BIN_Organization oz WITH(NOLOCK),     
+				Basis.BIN_Region AD WITH(NOLOCK)
+			WHERE
+				C.RegionType = '0' 
+				AND A.NodeID.GetAncestor(1) = B.NodeID 
+				AND B.NodeID.GetAncestor(1) = C.NodeID 
+				AND D.BIN_RegionID = AD.BIN_RegionID 
+				AND AD.NodeID.IsDescendantOf(A.NodeID)=1 
+				AND D.BIN_OrganizationID = oz.BIN_OrganizationID 
+				AND D.ValidFlag = '1' 
+				AND oz.ValidFlag = '1' 
+				AND A.ValidFlag = '1' 
+				AND B.ValidFlag = '1' 
+				AND C.ValidFlag = '1'
+				AND A.BIN_OrganizationInfoID = #organizationInfoId#
+		]]>	
+		<isNotEmpty property="brandInfoId" prepend="AND">
+			oz.BIN_BrandInfoID = #brandInfoId#
+		</isNotEmpty>
+		<isNotEmpty property="contraryIDList" prepend="AND">
+			oz.BIN_OrganizationID NOT IN
+			<iterate property="contraryIDList" open="(" close=")" conjunction=",">
+				#contraryIDList[]#
+			</iterate>
+		</isNotEmpty>
+	</select>
+</sqlMap>

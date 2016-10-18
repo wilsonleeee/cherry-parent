@@ -1,0 +1,388 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sqlMap PUBLIC "-//iBATIS.com//DTD SQL Map 2.0//EN" "http://ibatis.apache.org/dtd/sql-map-2.dtd">
+<sqlMap namespace="BINOLPTJCS02">
+	
+	<!-- 取得产品扩展属性List-->
+	<select id="getProductExtPropertyList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap"> 
+	  SELECT 
+		     C.extendPropertyID,
+			 C.organizationInfoID,
+			 C.brandInfoID,
+			 C.extendedTable,
+			 C.groupID,
+			 C.groupName,
+			 C.groupNameForeign,
+			 C.propertyKey,
+			 C.propertyName,
+			 C.propertyNameForeign,
+			 C.viewType,
+			 C.validFlag,
+	         C.updateTime,
+	         C.modifyCount
+	  FROM (
+		<![CDATA[
+		  SELECT 
+			  MAX(A.BIN_ExtendPropertyID) AS extendPropertyID,
+			  MAX(A.BIN_OrganizationInfoID) AS organizationInfoID,
+			  MAX(A.BIN_BrandInfoID) AS brandInfoID,
+			  MAX(A.ExtendedTable) AS extendedTable,
+			  A.GroupID AS groupID,
+			  MAX(A.GroupName) AS groupName,
+			  MAX(A.GroupNameForeign) AS groupNameForeign,
+			  MAX(A.PropertyKey) AS propertyKey,
+			  MAX(A.GroupName) AS propertyName,
+			  MAX(A.GroupNameForeign) AS propertyNameForeign,
+			  MAX(A.ViewType) AS viewType,
+			  MAX(A.ValidFlag) AS validFlag,
+			  MAX(A.UpdateTime) AS updateTime,
+			  MAX(A.ModifyCount) AS modifyCount
+	      FROM 
+	      	  Basis.BIN_ExtendProperty A
+	      ]]>
+	      <dynamic prepend="WHERE"> 
+	                <isNotEmpty property="extendPropertyID" prepend="AND">
+						  A.BIN_ExtendPropertyID = #extendPropertyID#
+	                </isNotEmpty>
+	                <isNotEmpty property="organizationInfoId" prepend="AND">
+						  A.BIN_OrganizationInfoID = #organizationInfoId#
+	                </isNotEmpty>
+	                <isNotEmpty property="brandInfoId" prepend="AND">
+						  A.BIN_BrandInfoID = #brandInfoId#
+	                </isNotEmpty>               
+	                <isNotEmpty property="extendedTable" prepend="AND">
+						  A.ExtendedTable = #extendedTable#
+	                </isNotEmpty>  
+	                <isNotEmpty property="groupID" prepend="AND">
+						  A.GroupID = #groupID#
+	                </isNotEmpty>            
+					  <![CDATA[ 
+						  AND A.ViewType ='checkbox'
+					  ]]>	
+					  	  GROUP BY A.GroupID
+	        </dynamic>
+		  UNION ALL
+		  <![CDATA[ 
+		  SELECT 
+		     B.BIN_ExtendPropertyID AS extendPropertyID,
+			 B.BIN_OrganizationInfoID AS organizationInfoID,
+			 B.BIN_BrandInfoID AS brandInfoID,
+			 B.ExtendedTable AS extendedTable,
+			 B.GroupID AS groupID,
+			 B.GroupName AS groupName,
+			 B.GroupNameForeign AS groupNameForeign,
+			 B.PropertyKey AS propertyKey,
+			 B.PropertyName AS propertyName,
+			 B.PropertyNameForeign AS propertyNameForeign,
+			 B.ViewType AS viewType,
+			 B.ValidFlag AS validFlag,
+	         B.UpdateTime AS updateTime,
+	         B.ModifyCount AS modifyCount
+	     FROM 
+	      	  Basis.BIN_ExtendProperty B
+	      ]]>	
+	      
+	      <dynamic prepend="WHERE"> 
+	                <isNotEmpty property="extendPropertyID" prepend="AND">
+						  B.BIN_ExtendPropertyID = #extendPropertyID#
+	                </isNotEmpty>
+	                <isNotEmpty property="organizationInfoId" prepend="AND">
+						  B.BIN_OrganizationInfoID = #organizationInfoId#
+	                </isNotEmpty>
+	                <isNotEmpty property="brandInfoId" prepend="AND">
+						  B.BIN_BrandInfoID = #brandInfoId#
+	                </isNotEmpty>               
+	                <isNotEmpty property="extendedTable" prepend="AND">
+						  B.ExtendedTable = #extendedTable#
+	                </isNotEmpty>   
+	                <isNotEmpty property="groupID" prepend="AND">
+						  B.GroupID = #groupID#
+	                </isNotEmpty>   
+					  <![CDATA[ 
+						  AND B.ViewType <>'checkbox'
+					  ]]>	
+	        </dynamic>
+		) C
+		<dynamic prepend="WHERE">
+			<isNotNull property="propertyName">
+				C.propertyName = #propertyName#
+			</isNotNull>
+		</dynamic>
+		ORDER BY C.extendPropertyID
+	</select>
+	
+	<!--增加产品扩展属性 -->
+	<insert id="insertProductExtProperty" parameterClass="java.util.HashMap">
+		<![CDATA[
+		INSERT INTO Basis.BIN_ExtendProperty(
+				
+		        BIN_OrganizationInfoID,
+		        BIN_BrandInfoID,
+		        ExtendedTable,
+		        GroupID,
+		        GroupName,
+		        GroupNameForeign,
+		        PropertyKey,
+		        PropertyName,
+		        PropertyNameForeign,
+		        ViewType,
+		        Comments,
+		]]>
+	  	        <include refid="BINOLCMINC99.insertKeySql" />)
+		<![CDATA[
+        VALUES(
+				#organizationInfoId#,
+				#brandInfoId#,
+		        #extendedTable#,
+				#groupID#,
+				#groupName#,
+				#groupNameForeign#,
+				#propertyKey#,
+				#propertyName#,
+				#propertyNameForeign#,
+				#viewType#,
+				#comments#,
+		]]>
+                <include refid="BINOLCMINC99.insertValueSql" />
+         )
+	</insert>
+	
+	<!--更新产品扩展属性 -->
+	<update id="updateProductExtProperty" parameterClass="java.util.HashMap">
+		
+		<![CDATA[
+		 UPDATE
+		       Basis.BIN_ExtendProperty
+		 SET
+		]]>
+		<dynamic>
+			<isNotEmpty property="groupID">
+	        GroupID = #groupID#,
+			</isNotEmpty>
+			<isNotEmpty property="groupName">
+	        GroupName = #groupName#,
+			</isNotEmpty>
+			<isNotNull property="groupNameForeign">
+	        GroupNameForeign = #groupNameForeign#,
+			</isNotNull>
+			<isNotEmpty property="propertyKey">
+	        PropertyKey = #propertyKey#,
+			</isNotEmpty>
+			<isNotEmpty property="propertyName">
+	        PropertyName = #propertyName#,
+			</isNotEmpty>
+			<isNotNull property="propertyNameForeign">
+	        PropertyNameForeign = #propertyNameForeign#,
+			</isNotNull>
+			<isNotEmpty property="comments">
+	        Comments = #comments#,
+			</isNotEmpty>
+		</dynamic>		 
+		       <include refid="BINOLCMINC99.updateSql" />
+       <dynamic prepend="WHERE">
+           <isNotEmpty property="extendPropertyID" prepend="AND">
+		       BIN_ExtendPropertyID = #extendPropertyID#
+           </isNotEmpty>
+           <isNotEmpty property="updateTimeOld" prepend="AND">
+		       UpdateTime = #updateTimeOld#
+           </isNotEmpty>
+           <isNotEmpty property="modifyCount" prepend="AND">
+		       ModifyCount = #modifyCount#
+           </isNotEmpty>
+       </dynamic>
+	</update>
+	
+	<!-- 取得checkbox的扩展属性 -->
+	<select id="getProductExtPropertyListByGroupId" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+		SELECT 
+		     A.BIN_ExtendPropertyID AS extendPropertyID,
+			 A.BIN_OrganizationInfoID AS organizationInfoID,
+			 A.BIN_BrandInfoID AS brandInfoID,
+			 A.ExtendedTable AS extendedTable,
+			 A.GroupID AS groupID,
+			 A.GroupName AS groupName,
+			 A.GroupNameForeign AS groupNameForeign,
+			 A.PropertyKey AS propertyKey,
+			 A.PropertyName AS propertyName,
+			 A.PropertyNameForeign AS propertyNameForeign,
+			 A.ViewType AS viewType,
+			 A.ValidFlag AS validFlag,
+	         A.UpdateTime AS updateTime,
+	         A.ModifyCount AS modifyCount
+	     FROM 
+	      	  Basis.BIN_ExtendProperty A
+	     WHERE 
+	     	A.GroupID = #groupID#  
+	</select>
+	
+	<!--停用或启用产品扩展属性 -->
+	<update id="disOrEnableExtProp" parameterClass="java.util.HashMap">
+		<![CDATA[
+	     UPDATE 
+		      Basis.BIN_ExtendProperty
+	     SET 
+	    ]]>
+			  <isEqual property="data" compareValue="0" >
+				   ValidFlag = '0',
+		      </isEqual>
+		      <isNotEqual property="data" compareValue="0" >
+				   ValidFlag = '1',
+		      </isNotEqual>
+		      <include refid="BINOLCMINC99.updateSql" />
+        <dynamic prepend="WHERE">
+        	<isNotEmpty property="extendPropertyID" prepend="AND">
+        		BIN_ExtendPropertyID = #extendPropertyID#
+        	</isNotEmpty>
+        	<isNotEmpty property="groupID" prepend="AND">
+        		GroupID = #groupID#
+        	</isNotEmpty>
+        </dynamic>
+	</update>
+	
+	 <!-- 查询产品扩展属性总数 
+	<select id="getProductExtPropertyCount" parameterClass="java.util.HashMap" resultClass="java.lang.Integer">
+		<![CDATA[SELECT COUNT(SORT_1.extendPropertyID) AS count
+			FROM (]]>
+				<include refid="BINOLPTJCS02.getProductExtPropertyList" />
+			<![CDATA[
+			)AS SORT_1
+		]]>
+    </select>
+	-->
+	
+	<!--############################################### 产品预设值 start ###############################################-->
+	<!-- 产品预设值List -->
+	<select id="getProductExtDefValueList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap"> 
+		<![CDATA[
+			SELECT 
+				 BIN_ExtendDefValueID AS extendDefValueID,
+				 BIN_OrganizationInfoID AS organizationInfoID,
+				 BIN_BrandInfoID AS brandInfoID,
+			     BIN_ExtendPropertyID AS extendPropertyID,
+			     CodeKey AS codeKey,
+			     Value1 AS value1,
+			     Value2 AS value2,
+			     Value3 AS value3,
+			     OrderNumber AS orderNumber,
+			     ValidFlag AS validFlag
+			  FROM Basis.BIN_ExtendDefValue
+		]]>
+        <dynamic prepend="WHERE"> 
+                <isNotEmpty property="extendDefValueID" prepend="AND">
+					  BIN_ExtendDefValueID = #extendDefValueID#
+                </isNotEmpty>
+                <isNotEmpty property="extendPropertyID" prepend="AND">
+					  BIN_ExtendPropertyID = #extendPropertyID#
+                </isNotEmpty>
+                <isNotEmpty property="organizationInfoId" prepend="AND">
+					  BIN_OrganizationInfoID = #organizationInfoId#
+                </isNotEmpty>
+                <isNotEmpty property="brandInfoId" prepend="AND">
+					  BIN_BrandInfoID = #brandInfoId#
+                </isNotEmpty>               
+          </dynamic>
+		  
+	</select>
+	
+	<!-- 产品设定表List（checkbox类型） -->
+	<select id="getProductExtDefValueListForChk" parameterClass="java.util.HashMap" resultClass="java.util.HashMap"> 
+		<![CDATA[
+		    SELECT 
+		        BIN_ExtendPropertyID AS extendPropertyID,
+			    BIN_OrganizationInfoID AS organizationInfoID,
+			    BIN_BrandInfoID AS brandInfoID,
+			    ExtendedTable AS extendedTable,
+			    GroupID AS groupID,
+			    GroupName AS groupName,
+			    GroupNameForeign AS groupNameForeign,
+			    PropertyKey AS codeKey,
+			    PropertyName AS value1,
+			    PropertyNameForeign AS value2
+	       FROM 
+	      	   Basis.BIN_ExtendProperty  
+    	]]>
+        <dynamic prepend="WHERE"> 
+                <isNotEmpty property="groupID" prepend="AND">
+					  GroupID = #groupID#
+                </isNotEmpty>
+          </dynamic>
+	</select>
+	
+	<!-- 删除产品扩展属性预设值 -->
+	<delete id="deleteExtDefVal" parameterClass="java.util.HashMap">
+		  DELETE FROM 
+		      Basis.BIN_ExtendDefValue
+		  WHERE BIN_ExtendPropertyID = #extendPropertyID#
+	</delete>
+	
+	<!-- 删除产品扩展属性预设值(checkbox) -->
+	<delete id="deleteExtDefValForChk" parameterClass="java.util.HashMap">
+		  DELETE FROM 
+		      Basis.BIN_ExtendProperty
+		  WHERE GroupID = #groupID#
+	</delete>
+	
+	<!-- 添加产品扩展属性预设值 -->
+	<insert id="insertExtDefVal" parameterClass="java.util.HashMap">
+	<![CDATA[
+		INSERT INTO Basis.BIN_ExtendDefValue(
+		      BIN_OrganizationInfoID,
+		      BIN_BrandInfoID,
+		      BIN_ExtendPropertyID,
+		      CodeKey,
+		      Value1,
+		      Value2,
+		      Value3,
+		      OrderNumber,
+		]]>
+	  	        <include refid="BINOLCMINC99.insertKeySql" />)
+	<![CDATA[
+        VALUES(
+				#organizationInfoId#,
+				#brandInfoId#,
+		        #extendPropertyID#,
+				#codeKey#,
+				#value1#,
+				#value2#,
+				#value3#,
+				#orderNumber#,
+		]]>
+                <include refid="BINOLCMINC99.insertValueSql" />
+              )
+	</insert>
+	
+	<!--增加产品扩展属性（checkbox） -->
+	<insert id="insertExtDefValForChk" parameterClass="java.util.HashMap">
+		<![CDATA[
+		INSERT INTO Basis.BIN_ExtendProperty(
+				
+		        BIN_OrganizationInfoID,
+		        BIN_BrandInfoID,
+		        ExtendedTable,
+		        GroupID,
+		        GroupName,
+		        GroupNameForeign,
+		        PropertyKey,
+		        PropertyName,
+		        PropertyNameForeign,
+		        ViewType,
+		]]>
+	  	        <include refid="BINOLCMINC99.insertKeySql" />)
+		<![CDATA[
+        VALUES(
+				#organizationInfoId#,
+				#brandInfoId#,
+		        #extendedTable#,
+				#groupID#,
+				#groupName#,
+				#groupNameForeign#,
+				#codeKey#,
+				#value1#,
+				#value2#,
+				#viewType#,
+		]]>
+                <include refid="BINOLCMINC99.insertValueSql" />
+         )
+	</insert>
+	
+	<!--############################################### 产品预设值 end ###############################################-->
+</sqlMap>

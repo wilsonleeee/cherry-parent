@@ -1,0 +1,253 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sqlMap PUBLIC "-//iBATIS.com//DTD SQL Map 2.0//EN" "http://ibatis.apache.org/dtd/sql-map-2.dtd">
+<sqlMap namespace="BINOLPTRPS34">
+    <!--取得电商订单主表信息-->
+    <select id="getESOrderMain" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+        <![CDATA[
+        SELECT
+            A.BIN_OrganizationInfoID AS organizationInfoID,
+            A.BIN_BrandInfoID AS brandInfoID,
+            A.BIN_ESOrderMainID AS esOrderMainID,
+            ISNULL(A.Amount,0) AS amount,
+            ISNULL(A.Quantity,0) AS totalQuantity,
+            A.PreSale AS preSale,
+            A.DataSource AS dataSource,
+            A.DataSourceCustomer AS dataSourceCustomer,
+            A.OrderNo AS orderNo,
+            A.BillCode AS billCode,
+            A.RelevanceBillCode AS relevanceBillCode,
+            A.OriginalBillCode AS originalBillCode,
+            A.SaleType AS businessType,
+            A.TicketType AS ticketType,
+            A.BillType As billType,
+            A.BillState AS billState,
+            A.ConsumerType AS consumerType,
+            A.MemberCode AS memberCode,
+            A.MemberName AS memberName,
+            A.MemberNickname AS memberNickname,
+            A.BuyerName AS buyerName,
+            A.BuyerMobilePhone AS buyerMobilePhone,
+            A.ConsigneeName AS consigneeName,
+            A.ConsigneeMobilePhone AS consigneeMobilePhone,
+            A.ConsigneeProvince AS consigneeProvince,
+            A.ConsigneeCity AS consigneeCity,
+            A.ConsigneeAddress AS consigneeAddress,
+            A.BuyerMessage AS buyerMessage,
+            A.SellerMemo AS sellerMemo,
+            CONVERT(varchar(30),A.BillCreateTime,120) AS billCreateTime,
+            CONVERT(varchar(30),A.BillPayTime,120) AS billPayTime,
+            CONVERT(varchar(30),A.BillCloseTime,120) AS billCloseTime,
+            CONVERT(varchar(30),A.BillLastUpdateTime,120) AS billLastUpdateTime,
+            A.OriginalAmount AS originalAmount,
+            A.Discount AS billDiscount,
+            A.PayAmount AS payAmount,
+            A.ExpressCompanyCode AS expressCompanyCode,
+            A.ExpressBillCode AS expressBillCode,
+            A.ExpressCost AS expressCost,
+            A.Comments AS comments,
+            B.DepartCode AS departCode,
+            D.EmployeeCode AS employeeCode,
+            E.DepartCode AS departCodeDX,
+            F.EmployeeCode AS employeeCodeDX,
+            ]]>
+        <dynamic>
+            <isNotEmpty property="language">
+                <isEqual property="language" compareValue="en_US">
+                    B.NameForeign AS departName,
+                    D.EmployeeNameForeign AS employeeName,
+                    E.NameForeign AS departNameDX,
+                    F.EmployeeNameForeign AS employeeNameDX
+                </isEqual>
+                <isEqual property="language" compareValue="zh_CN">
+                    B.DepartName AS departName,
+                    D.EmployeeName AS employeeName,
+                    E.DepartName AS departNameDX,
+                    F.EmployeeName AS employeeNameDX
+                </isEqual>
+            </isNotEmpty>
+            <isEmpty property="language">
+                B.DepartName AS departName,
+                D.EmployeeName AS employeeName,
+                E.DepartName AS departNameDX,
+                F.EmployeeName AS employeeNameDX
+            </isEmpty>
+        </dynamic>
+        <![CDATA[
+        FROM
+            Sale.BIN_ESOrderMain A WITH(NOLOCK)
+            LEFT JOIN Basis.BIN_Organization B
+            ON A.BIN_OrganizationID = B.BIN_OrganizationID
+            LEFT JOIN Basis.BIN_Employee D
+            ON A.BIN_EmployeeID = D.BIN_EmployeeID
+            LEFT JOIN Basis.BIN_Organization E
+            ON A.BIN_OrganizationIDDX = E.BIN_OrganizationID
+            LEFT JOIN Basis.BIN_Employee F
+            ON A.BIN_EmployeeIDDX = F.BIN_EmployeeID
+        WHERE
+            A.BIN_ESOrderMainID = #esOrderMainID#
+        ]]>
+    </select>
+    
+    <!--取得电商订单明细表的详细信息-->
+    <select id="geESOrderDetail" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+        <![CDATA[
+        SELECT * FROM(
+        SELECT
+        ]]>
+        <dynamic>
+            <isNotEmpty property="language">
+                <isEqual property="language" compareValue="en_US">
+                    C.NameForeign AS productName,
+                </isEqual>
+                <isEqual property="language" compareValue="zh_CN">
+                    C.NameTotal AS productName,
+                </isEqual>
+            </isNotEmpty>
+            <isEmpty property="language">
+                C.NameTotal AS productName,
+            </isEmpty>
+        </dynamic>  
+        <![CDATA[
+        	B.EsProductTitleName AS esProductTitleName,
+        	B.IsExistsPos AS isExistsPos,
+            B.BarCode AS barCode,
+            B.UnitCode AS unitCode,
+            B.AmountPortion AS amountPortion,
+            B.InventoryTypeCode AS inventoryTypeCode,
+            B.Price AS price,
+            B.PricePay AS pricePay,
+            B.PayableAmount AS payableAmount,
+            B.Quantity AS quantity,
+            B.Discount AS discount,
+            B.AgioAmount AS agioAmount,
+            B.ActualAmount AS ActualAmount,
+            B.Comment AS comment,
+            B.SaleType AS saleType,
+            B.DetailNo AS detailNo,
+            B.BatchCode AS batchCode,
+            B.UniqueCode AS uniqueCode,           
+            CASE WHEN G.ActivityName IS NOT NULL THEN G.ActivityName
+            ELSE H.SubCampaignName END AS inActivityName,
+            C.ModuleCode AS moduleCode
+        FROM
+            Sale.BIN_ESOrderMain A WITH(NOLOCK)
+            JOIN Sale.BIN_ESOrderDetail B WITH(NOLOCK)
+            ON(A.BIN_ESOrderMainID = B.BIN_ESOrderMainID AND B.ValidFlag = '1')
+            LEFT JOIN Basis.BIN_ProductVendor D
+            ON (B.BIN_ProductVendorID = D.BIN_ProductVendorID)
+            LEFT JOIN Basis.BIN_Product C
+            ON (D.BIN_ProductID = C.BIN_ProductID)
+            LEFT JOIN Promotion.BIN_PromotionActivity G
+            ON(B.ActivityMainCode = G.ActivityCode)
+            LEFT JOIN Campaign.BIN_CampaignRule H
+            ON(B.ActivityMainCode = H.SubCampaignCode)
+        WHERE
+            A.BIN_ESOrderMainID = #esOrderMainID#
+            AND B.SaleType='N'
+            UNION
+        SELECT
+        ]]>
+        <dynamic>
+            <isNotEmpty property="language">
+                <isEqual property="language" compareValue="en_US">
+                    C.NameForeign AS productName,
+                </isEqual>
+                <isEqual property="language" compareValue="zh_CN">
+                    C.NameTotal AS productName,
+                </isEqual>
+            </isNotEmpty>
+            <isEmpty property="language">
+                C.NameTotal AS productName,
+            </isEmpty>
+        </dynamic>
+        <![CDATA[
+        	B.EsProductTitleName AS esProductTitleName,
+        	B.IsExistsPos AS isExistsPos,
+            B.BarCode AS barCode,
+            B.UnitCode AS unitCode,
+            B.AmountPortion AS amountPortion,
+            B.InventoryTypeCode AS inventoryTypeCode,
+            B.Price AS price,
+            B.PricePay AS pricePay,
+            B.PayableAmount AS payableAmount,
+            B.Quantity AS quantity,
+            B.Discount AS discount,
+            B.AgioAmount AS agioAmount,
+            B.ActualAmount AS ActualAmount,
+            B.Comment AS comment,
+            CASE WHEN  B.SaleType = 'BC' THEN 'P' ELSE B.SaleType END AS saleType,
+            B.DetailNo AS detailNo,
+            B.BatchCode AS batchCode,
+            B.UniqueCode AS uniqueCode,           
+            CASE WHEN G.ActivityName IS NOT NULL THEN G.ActivityName
+            ELSE H.SubCampaignName END AS inActivityName,
+            C.ModuleCode AS moduleCode
+        FROM
+            Sale.BIN_ESOrderMain A WITH(NOLOCK)
+            JOIN Sale.BIN_ESOrderDetail B WITH(NOLOCK)
+            ON(A.BIN_ESOrderMainID = B.BIN_ESOrderMainID AND B.ValidFlag = '1')
+            LEFT JOIN Basis.BIN_PromotionProductVendor D 
+            ON (B.BIN_ProductVendorID = D.BIN_PromotionProductVendorID)
+            LEFT JOIN Basis.BIN_PromotionProduct C 
+            ON (D.BIN_PromotionProductID = C.BIN_PromotionProductID)
+            LEFT JOIN Promotion.BIN_PromotionActivity G
+            ON(B.ActivityMainCode = G.ActivityCode)
+            LEFT JOIN Campaign.BIN_CampaignRule H
+            ON(B.ActivityMainCode = H.SubCampaignCode)
+        WHERE
+            A.BIN_ESOrderMainID = #esOrderMainID#
+            AND B.SaleType IN ('P','BC')
+        ]]>
+        UNION
+        <![CDATA[
+		SELECT
+            NULL AS productName,
+        	B.EsProductTitleName AS esProductTitleName,
+        	B.IsExistsPos AS isExistsPos,
+            B.BarCode AS barCode,
+            B.UnitCode AS unitCode,
+            B.AmountPortion AS amountPortion,
+            B.InventoryTypeCode AS inventoryTypeCode,
+            B.Price AS price,
+            B.PricePay AS pricePay,
+            B.PayableAmount AS payableAmount,
+            B.Quantity AS quantity,
+            B.Discount AS discount,
+            B.AgioAmount AS agioAmount,
+            B.ActualAmount AS ActualAmount,
+            B.Comment AS comment,
+            B.SaleType AS saleType,
+            B.DetailNo AS detailNo,
+            B.BatchCode AS batchCode,
+            B.UniqueCode AS uniqueCode,           
+            CASE WHEN G.ActivityName IS NOT NULL THEN G.ActivityName
+            ELSE H.SubCampaignName END AS inActivityName,
+            NULL AS moduleCode
+        FROM
+            Sale.BIN_ESOrderMain A WITH(NOLOCK)
+            JOIN Sale.BIN_ESOrderDetail B WITH(NOLOCK)
+            ON(A.BIN_ESOrderMainID = B.BIN_ESOrderMainID AND B.ValidFlag = '1')
+            LEFT JOIN Promotion.BIN_PromotionActivity G ON(B.ActivityMainCode = G.ActivityCode)
+            LEFT JOIN Campaign.BIN_CampaignRule H ON(B.ActivityMainCode = H.SubCampaignCode)
+        WHERE
+            A.BIN_ESOrderMainID = #esOrderMainID#
+        AND B.SaleType IS NULL
+        )T ORDER BY T.detailNo
+        ]]>
+    </select>
+    
+    <!--获取支付方式详细信息-->
+    <select id="getPayTypeDetail" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+        <![CDATA[
+	        SELECT
+	            PayTypeCode AS payTypeCode,
+	            PayAmount AS payAmount,
+	            SerialNumber AS serialNumber
+	        FROM
+	            Sale.BIN_ESOrderPayList WITH(NOLOCK)
+	        WHERE
+	            BIN_ESOrderMainID = #esOrderMainID#
+	        ORDER BY DetailNo
+        ]]>
+    </select>
+</sqlMap>

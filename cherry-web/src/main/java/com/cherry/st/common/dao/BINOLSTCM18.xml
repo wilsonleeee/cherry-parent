@@ -1,0 +1,115 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sqlMap PUBLIC "-//iBATIS.com//DTD SQL Map 2.0//EN" "http://ibatis.apache.org/dtd/sql-map-2.dtd">
+<sqlMap namespace="BINOLSTCM18"> 
+    <!-- 入库单查询sql文  -->
+    <sql id="commQuery">
+        <![CDATA[
+            SELECT
+               	A.BIN_ProductInDepotID,                 
+				A.BillNoIF,                
+				A.BIN_OrganizationID,                 
+				A.ValidFlag,
+				A.TotalQuantity AS totalQuantity,       
+				A.TotalAmount AS totalAmount     
+            ]]>
+        <![CDATA[
+            FROM
+                Inventory.BIN_ProductInDepot A WITH(NOLOCK)
+            WHERE
+		]]>
+	 	<![CDATA[EXISTS (]]>
+		<include refid="BINOLCMINC99.getDepartList" />
+		<![CDATA[AND A.BIN_OrganizationID = A99.BIN_OrganizationID)]]>
+    </sql>
+    <!-- 入库单查询sql文  -->
+	<sql id="inDepotQuery">
+		<![CDATA[
+			SELECT
+				T1.BIN_ProductInDepotID AS inDepotID,
+				T1.BillNoIF AS billNoIF,
+				T1.BIN_OrganizationID AS organizationID,
+				T1.totalQuantity,
+				T1.totalAmount
+		]]>  
+		  <dynamic>
+        <isNotEmpty property="language">
+            <isEqual property="language" compareValue="en_US">
+            ,'('+B.DepartCode+')'+B.NameForeign AS departName
+            </isEqual>
+            <isEqual property="language" compareValue="zh_CN">
+            ,'('+B.DepartCode+')'+B.DepartName AS departName
+            </isEqual>
+        </isNotEmpty>
+        <isEmpty property="language">
+            ,'('+B.DepartCode+')'+B.DepartName AS departName
+        </isEmpty>
+        </dynamic>
+		<![CDATA[FROM ( ]]>
+        <include refid="BINOLSTCM18.commQuery" />   
+		<![CDATA[)T1
+			LEFT JOIN Basis.BIN_Organization B
+			ON T1.BIN_OrganizationID = B.BIN_OrganizationID
+		WHERE
+            T1.ValidFlag = '1'   
+		]]>
+		<include refid="BINOLCMINC99.filterSql" />
+	</sql>
+    <!-- 取得入库单总数  -->
+    <select id="getInDepotCount" parameterClass="java.util.HashMap" resultClass="java.lang.Integer">
+        <![CDATA[
+            SELECT COUNT(SORT_T1.inDepotID) AS count FROM (
+        ]]>    
+        <include refid="BINOLSTCM18.inDepotQuery" />
+        <![CDATA[
+            )SORT_T1
+        ]]>
+    </select>
+    
+    <!-- 取得入库单List  -->
+    <select id="getInDepotList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+        <include refid="BINOLCMINC99.pageheader" />
+        <include refid="BINOLSTCM18.inDepotQuery" />
+        <include refid="BINOLCMINC99.pagefooter" />
+    </select>
+	
+    <!-- 入库单详细List -->
+    <select id="getInDepotDetailList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+        <![CDATA[
+            SELECT
+                A.BIN_ProductVendorID AS productVendorId,
+                ISNULL(A.Quantity,0) AS quantity,
+                B.BarCode AS barCode,
+                C.NameTotal AS nameTotal,
+                C.UnitCode AS unitCode,
+                ISNULL(D.Quantity,0) AS curStock,
+                ISNULL(CONVERT(Decimal(16,2),C.StandardCost),0) AS standardCost,
+                ISNULL(CONVERT(Decimal(16,2),C.OrderPrice),0) AS orderPrice,
+                ISNULL((ISNULL(A.Quantity,0) * ISNULL(CONVERT(Decimal(16,2),F.SalePrice),0)),0) AS totalAmount,
+                A.Comments AS reason,
+                E.BatchNo AS batchNo,
+                ISNULL(CONVERT(Decimal(16,2),F.SalePrice),0) AS salePrice,
+                ISNULL(CONVERT(Decimal(16,2),F.MemPrice),0) AS memPrice
+            FROM
+                Inventory.BIN_ProductInDepotDetail A
+                LEFT JOIN Basis.BIN_ProductVendor B
+                ON A.BIN_ProductVendorID = B.BIN_ProductVendorID
+                LEFT JOIN Basis.BIN_Product C
+                ON B.BIN_ProductID = C.BIN_ProductID
+                LEFT JOIN Inventory.BIN_ProductStock D
+                ON (A.BIN_ProductVendorID = D.BIN_ProductVendorID AND D.BIN_InventoryInfoID = #depotInfoId# AND D.BIN_LogicInventoryInfoID = #BIN_LogicInventoryInfoID# AND D.ValidFlag='1')
+                LEFT JOIN Basis.BIN_ProductBatch E
+                ON A.BIN_ProductBatchID = E.BIN_ProductBatchID
+                LEFT JOIN Basis.BIN_ProductPrice F
+                ON (C.BIN_ProductID = F.BIN_ProductID  
+                    AND C.ValidFlag = F.ValidFlag 
+                    AND F.Type = '2'
+                    AND F.StartDate <= #businessDate# 
+                    AND F.endDate >=#businessDate# )
+			WHERE
+                A.BIN_ProductInDepotID = #BIN_ProductInDepotID#
+                AND A.ValidFlag = '1'
+                AND B.ValidFlag = '1'
+                AND C.ValidFlag = '1'
+        ]]>
+    </select>
+</sqlMap>

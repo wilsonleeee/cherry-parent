@@ -1,0 +1,159 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sqlMap PUBLIC "-//iBATIS.com//DTD SQL Map 2.0//EN" "http://ibatis.apache.org/dtd/sql-map-2.dtd">
+<sqlMap namespace="BINOLCPACT08">
+	<!-- 根据id取得礼品领用基本信息 -->
+	<select id="getGiftDrawDetail" parameterClass="java.util.HashMap"
+		resultClass="java.util.HashMap">
+		<![CDATA[
+			SELECT
+				A.BIN_GiftDrawID AS giftDrawId,
+				A.BillNo AS billNo,
+				A.BillNoIF AS billNoIF,
+				ISNULL(A.Quantity,0) AS totalQuantity,
+				ISNULL(A.Amount,0) AS totalAmount,
+				A.CampaignCode AS activityCode,
+				CASE 
+					WHEN E.GroupName IS NOT NULL THEN E.GroupName
+					ELSE F.CampaignName END AS activityName,
+				CONVERT(varchar, A.TradeDateTime, 120 ) AS getTime,
+				B.Name AS memberName,
+				A.MemberCode AS memberCode,
+				A.SubType AS giftDrawType,
+				A.CouponCode AS couponCode,
+				A.RelevanceNo AS relevanceNo,
+				B.MobilePhone AS memberPhone,
+				B.BirthYear AS birthYear,
+				B.BirthDay AS birthDay,
+				B.JoinDate AS joinDate,
+				CASE 
+					WHEN A.BIN_MemberInfoID IS NOT NULL THEN ISNULL(B.TestType,1)
+					ELSE NULL END AS testType,
+				D.DepartCode AS counterCode,
+				D.DepartName AS counterName,
+				A.EmployeeCode AS employeeCode,
+				A.Comments AS comments,
+		]]>
+		<isNotEmpty property="language">
+			<isEqual property="language" compareValue="en_US">
+				C.EmployeeNameForeign AS employeeName
+			</isEqual>
+			<isEqual property="language" compareValue="zh_CN">
+				C.EmployeeName AS
+				employeeName
+			</isEqual>
+		</isNotEmpty>
+		<isEmpty property="language">
+			C.EmployeeName AS employeeName
+		</isEmpty>
+		<![CDATA[		
+			FROM
+				Inventory.BIN_GiftDraw A WITH(NOLOCK)
+			LEFT JOIN Members.BIN_MemberInfo B WITH(NOLOCK)
+				ON(A.BIN_MemberInfoID = B.BIN_MemberInfoID)
+			LEFT JOIN Basis.BIN_Employee C WITH(NOLOCK)
+				ON(A.BIN_EmployeeID = C.BIN_EmployeeID)
+			LEFT JOIN Basis.BIN_Organization D WITH(NOLOCK)
+				ON(A.BIN_OrganizationID = D.BIN_OrganizationID)
+			LEFT JOIN Promotion.BIN_PromotionActGrp E WITH (NOLOCK)
+				ON (A.CampaignCode = E.GroupCode)
+			LEFT JOIN Campaign.BIN_Campaign F WITH (NOLOCK)
+				ON (A.CampaignCode = F.CampaignCode)
+				
+		]]>
+		<dynamic prepend="WHERE">
+			<isNotEmpty property="giftDrawId">
+				A.BIN_GiftDrawID = #giftDrawId#
+			</isNotEmpty>
+			<isNotEmpty property="billNo">
+				A.BillNo = #billNo#
+			</isNotEmpty>
+		</dynamic>
+	</select>
+	<!-- 领用礼品详细 -->
+	<sql id="giftDrawGoodsQuery">
+		<![CDATA[
+			SELECT
+				A.BIN_GiftDrawID AS giftDrawId,
+				A.DetailNo AS detailNo,
+				A.UnitCode AS unitCode,
+				A.BarCode AS barCode,
+				ISNULL(A.Quantity,0) AS quantity,
+				ISNULL(A.Price,0) AS price,
+				C.NameTotal AS productName,
+				A.GiftType AS giftType,
+				A.MainCode AS inActivityCode,
+				CASE 
+					WHEN D.ActivityName IS NOT NULL THEN D.ActivityName
+					ELSE E.SubCampaignName END AS inActivityName,
+				A.Comment AS comment
+			FROM
+				Inventory.BIN_GiftDrawDetail A WITH(NOLOCK)
+			LEFT JOIN Basis.BIN_ProductVendor B WITH(NOLOCK)
+				ON(A.BIN_ProductVendorID = B.BIN_ProductVendorID)
+			LEFT JOIN Basis.BIN_Product C WITH(NOLOCK)
+				ON(B.BIN_ProductID = C.BIN_ProductID)
+			LEFT JOIN Promotion.BIN_PromotionActivity D WITH(NOLOCK)
+				ON(A.MainCode = D.ActivityCode)
+			LEFT JOIN Campaign.BIN_CampaignRule E WITH(NOLOCK)
+				ON(A.MainCode = E.SubCampaignCode)
+			WHERE
+				A.GiftType = 'N'
+			UNION
+			SELECT
+				A.BIN_GiftDrawID AS giftDrawId,
+				A.DetailNo AS detailNo,
+				A.UnitCode AS unitCode,
+				A.BarCode AS barCode,
+				ISNULL(A.Quantity,0) AS quantity,
+				ISNULL(A.Price,0) AS price,
+				C.NameTotal AS productName,
+				A.GiftType AS giftType,
+				A.MainCode AS inActivityCode,
+				CASE 
+					WHEN D.ActivityName IS NOT NULL THEN D.ActivityName
+					ELSE E.SubCampaignName END AS inActivityName,
+				A.Comment AS comment
+			FROM
+				Inventory.BIN_GiftDrawDetail A WITH (NOLOCK)
+			LEFT JOIN Basis.BIN_PromotionProductVendor B WITH (NOLOCK)
+				ON (A.BIN_ProductVendorID = B.BIN_PromotionProductVendorID)
+			LEFT JOIN Basis.BIN_PromotionProduct C WITH (NOLOCK)
+				ON (B.BIN_PromotionProductID = C.BIN_PromotionProductID)
+			LEFT JOIN Promotion.BIN_PromotionActivity D WITH (NOLOCK)
+				ON(A.MainCode = D.ActivityCode)
+			LEFT JOIN Campaign.BIN_CampaignRule E WITH (NOLOCK)
+				ON(A.MainCode = E.SubCampaignCode)
+			WHERE
+				A.GiftType = 'P'
+		]]>
+	</sql>
+
+	<!-- 取得礼品领用礼品信息 -->
+	<select id="getGiftDrawPrtDetail" parameterClass="java.util.HashMap"
+		resultClass="java.util.HashMap">
+		<![CDATA[
+			SELECT
+				T0.giftDrawId,
+				T0.detailNo,
+				T0.unitCode,
+				T0.barCode,
+				T0.quantity,
+				T0.price,
+				T0.productName,
+				T0.giftType,
+				T0.inActivityCode,
+				T0.inActivityName,
+				T0.comment
+			FROM(
+		]]>
+		<include refid="BINOLCPACT08.giftDrawGoodsQuery" />
+		<![CDATA[
+			) T0
+		]]>
+		<dynamic prepend="WHERE">
+			<isNotEmpty property="giftDrawId">
+				T0.giftDrawId = #giftDrawId#
+			</isNotEmpty>
+		</dynamic>
+	</select>
+</sqlMap>

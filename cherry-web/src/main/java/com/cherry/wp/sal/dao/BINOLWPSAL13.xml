@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE sqlMap PUBLIC "-//iBATIS.com//DTD SQL Map 2.0//EN" "http://ibatis.apache.org/dtd/sql-map-2.dtd">
+
+<sqlMap namespace="BINOLWPSAL13">
+	<!-- 根据会员卡号查询 -->
+    <select id="getCardId" parameterClass="java.util.HashMap" resultClass="java.lang.Integer">
+    	SELECT
+			BIN_CardId
+		FROM
+			Members.BIN_StoredValueCard
+		WHERE 
+			CardCode=#cardCode# AND
+			BIN_OrganizationInfoID=#organizationInfoId# AND
+			BIN_BrandInfoID=#brandInfoId#
+    </select>
+    <!-- 如果会员卡号存在，就添加相应储值卡会员ID -->
+	<update id="relation" parameterClass="java.util.HashMap">
+		UPDATE
+			Members.BIN_StoredValueCard
+		SET
+			BIN_MemberInfoId=#memberInfoId#,
+			MobilePhone=#mobilePhone#,
+			<include refid="BINOLCMINC99.updateSql"/>
+		WHERE
+			BIN_OrganizationInfoID=#organizationInfoId# AND
+			BIN_BrandInfoID=#brandInfoId# AND
+			BIN_CardId=#cardId#
+	</update>
+	<select id="getMemberIdByCode" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+	<![CDATA[
+		SELECT Top 1
+			BIN_MemberInfoID AS memberInfoId 
+		FROM 
+			Members.BIN_MemCardInfo 
+		WHERE 
+			ValidFlag = 1 AND 
+			CardValidFlag = 1 AND 
+			MemCode = #MemberCode#
+	]]>
+	</select>
+</sqlMap>

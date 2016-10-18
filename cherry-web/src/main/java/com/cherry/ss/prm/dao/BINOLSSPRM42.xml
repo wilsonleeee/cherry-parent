@@ -1,0 +1,95 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sqlMap PUBLIC "-//iBATIS.com//DTD SQL Map 2.0//EN" "http://ibatis.apache.org/dtd/sql-map-2.dtd">
+<sqlMap namespace="BINOLSSPRM42">
+	<!-- 取得退库记录信息  -->
+	<select id="getReturnInfo" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+		<![CDATA[
+		SELECT
+			A.ReturnNoIF AS returnNo,
+			A.ReturnNo AS number,
+			ISNULL(A.TotalQuantity,0) AS totalQuantity,
+			ISNULL(A.TotalAmount,0) AS totalAmount,
+			A.VerifiedFlag AS verifiedFlag,
+			A.ReturnDate AS returnDate,
+			A.Reason AS reason,
+			A.TradeType AS tradeType,
+		]]>
+		<dynamic>
+			<isNotEmpty property="language">
+				<isEqual property="language" compareValue="en_US">
+					'(' + B.DepartCode + ')' + B.NameForeign AS sendDepart,	
+					'(' + G.DepartCode + ')' + G.NameForeign AS receiveDepart,
+					E.EmployeeNameForeign AS employeeName
+				</isEqual>
+				<isEqual property="language" compareValue="zh_CN">	
+					'(' + B.DepartCode + ')' + B.DepartName AS sendDepart,
+					'(' + G.DepartCode + ')' + G.DepartName AS receiveDepart,
+					E.EmployeeName AS employeeName
+				</isEqual>								
+			</isNotEmpty>
+			<isEmpty property="language">
+				'(' + B.DepartCode + ')' + B.DepartName AS sendDepart,
+				'(' + G.DepartCode + ')' + G.DepartName AS receiveDepart,
+				E.EmployeeName AS employeeName
+			</isEmpty>
+		</dynamic>
+		<![CDATA[
+		FROM
+			Inventory.BIN_PromotionReturn A
+			LEFT JOIN Basis.BIN_Organization B
+			ON (A.BIN_OrganizationID = B.BIN_OrganizationID)
+			LEFT JOIN Basis.BIN_Organization G
+			ON (A.BIN_OrganizationIDReceive = G.BIN_OrganizationID)
+			LEFT JOIN Basis.BIN_Employee E
+			ON (A.BIN_EmployeeID = E.BIN_EmployeeID)
+		WHERE
+			A.BIN_PromotionReturnID=#proReturnId#
+		]]>
+	</select>	
+	<!-- 取得退库记录详细  -->
+    <select id="getReturnList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+    	<![CDATA[
+		SELECT													
+			A.Price AS price,																	
+			A.Quantity AS quantity,																
+			B.BarCode AS barCode,
+			C.UnitCode AS unitCode,
+			A.Reason AS reason,
+		]]>
+		<dynamic>
+			<isNotEmpty property="language">
+				<isEqual property="language" compareValue="en_US">
+					C.NameForeign AS nameTotal,
+					D.DepotNameEN AS inventoryName,
+					G.PackageNameForeign AS packageName
+				</isEqual>
+				<isEqual property="language" compareValue="zh_CN">	
+					C.NameTotal AS nameTotal,
+					D.DepotNameCN AS inventoryName,
+					G.PackageName AS packageName
+				</isEqual>								
+			</isNotEmpty>
+			<isEmpty property="language">
+				C.NameTotal AS nameTotal,
+				D.DepotNameCN AS inventoryName,
+				G.PackageName AS packageName
+			</isEmpty>
+		</dynamic>
+		<![CDATA[
+		FROM		
+			Inventory.BIN_PromotionReturnDetail A
+			JOIN Basis.BIN_PromotionProductVendor B
+			ON(A.BIN_PromotionProductVendorID = B.BIN_PromotionProductVendorID)
+			JOIN Basis.BIN_PromotionProduct C
+			ON(B.BIN_PromotionProductID = C.BIN_PromotionProductID)
+			LEFT JOIN Basis.BIN_DepotInfo D
+			ON(A.BIN_InventoryInfoID = D.BIN_DepotInfoID)
+			LEFT JOIN Basis.BIN_ProductVendorPackage F
+			ON(A.BIN_ProductVendorPackageID = F.BIN_ProductVendorPackageID)
+			LEFT JOIN Basis.BIN_PackageType G
+			ON(F.BIN_PackageTypeID = G.BIN_PackageTypeID)
+		WHERE
+			A.BIN_PromotionReturnID=#proReturnId#
+		]]>								
+    </select>
+</sqlMap>

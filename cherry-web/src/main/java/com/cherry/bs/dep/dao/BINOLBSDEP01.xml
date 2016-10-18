@@ -1,0 +1,731 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sqlMap PUBLIC "-//iBATIS.com//DTD SQL Map 2.0//EN" "http://ibatis.apache.org/dtd/sql-map-2.dtd">
+<sqlMap namespace="BINOLBSDEP01">
+	
+	<!-- 取得带权限的部门所有上级信息SQL  -->
+	<sql id="allDepPlHigherSql">
+    	<![CDATA[
+		    SELECT 
+		    	1
+			FROM
+				Basis.BIN_Organization Y
+				JOIN (]]><include refid="BINOLCMINC99.departPrivilegeSql" /><![CDATA[) A99 
+				ON Y.BIN_OrganizationID=A99.BIN_OrganizationID
+			WHERE		
+				Y.ValidFlag = '1'
+		]]>
+    </sql>
+	
+	<resultMap id="BINOLBSDEP01.NextOrganizationInfo" class="java.util.HashMap">
+		<result property="organizationId" column="BIN_OrganizationID"/>
+		<result property="departCode" column="DepartCode"/>
+		<result property="departName" column="DepartName"/>
+		<result property="path" column="Path"/>
+		<result property="type" column="Type"/>
+		<result property="validFlag" column="ValidFlag"/>
+	</resultMap>
+	
+	<!-- 取得某一用户能访问的顶层部门List --><!-- 
+	<select id="getFirstOrganizationList" parameterClass="java.util.HashMap" resultMap="BINOLBSDEP01.NextOrganizationInfo">
+		<![CDATA[WITH allDepPlHigher AS (]]>	
+		<include refid="BINOLBSDEP01.allDepPlHigherSql" />
+		<![CDATA[)]]>	
+		
+		<![CDATA[
+			SELECT						
+				X.BIN_OrganizationID,	
+				X.DepartCode,	
+		]]>			
+		<isNotEmpty property="language">
+			<isEqual property="language" compareValue="en_US">
+				X.NameForeign AS DepartName,
+			</isEqual>
+			<isEqual property="language" compareValue="zh_CN">	
+				X.DepartName AS DepartName,
+			</isEqual>								
+		</isNotEmpty>
+		<isEmpty property="language">
+				X.DepartName AS DepartName,
+		</isEmpty>
+		<![CDATA[					
+				X.Path,
+				X.Type,
+				X.ValidFlag,
+				Y.Child					
+			FROM						
+				Basis.BIN_Organization X JOIN
+				(SELECT
+					A.BIN_OrganizationID,
+					COUNT(B.BIN_OrganizationID) AS Child
+				FROM
+					allDepPlHigher A LEFT JOIN allDepPlHigher B ON B.NodeID.GetAncestor(1) = A.NodeID
+				WHERE	
+					A.Type IN
+			]]>			
+				<iterate property="departTypeList" open="(" close=")" conjunction=","> 
+					#departTypeList[].CodeKey#
+				</iterate>
+			<![CDATA[		
+				GROUP BY 
+					A.BIN_OrganizationID) Y ON X.BIN_OrganizationID = Y.BIN_OrganizationID
+			WHERE						
+				X.BIN_OrganizationInfoID=#organizationInfoId#
+		]]>		
+		<dynamic>
+			<isNotEmpty prepend="AND" property="brandInfoId">
+				X.BIN_BrandInfoID=#brandInfoId#
+			</isNotEmpty>
+		</dynamic>	
+    </select> -->
+    
+    <resultMap id="BINOLBSDEP01.FirstOrganizationInfo" class="java.util.HashMap">
+		<result property="organizationId" column="BIN_OrganizationID"/>
+		<result property="departCode" column="DepartCode"/>
+		<result property="departName" column="DepartName"/>
+		<result property="path" column="Path"/>
+		<result property="type" column="Type"/>
+		<result property="level" column="Level"/>
+		<result property="validFlag" column="ValidFlag"/>
+	</resultMap>
+    
+    <!-- 取得某一用户能访问的顶层部门List --><!-- 
+	<select id="getFirstOrganizationList" parameterClass="java.util.HashMap" resultMap="BINOLBSDEP01.FirstOrganizationInfo">
+		<![CDATA[
+			SELECT DISTINCT					
+				X.BIN_OrganizationID,	
+				X.DepartCode,	
+		]]>			
+		<isNotEmpty property="language">
+			<isEqual property="language" compareValue="en_US">
+				X.NameForeign AS DepartName,
+			</isEqual>
+			<isEqual property="language" compareValue="zh_CN">	
+				X.DepartName AS DepartName,
+			</isEqual>								
+		</isNotEmpty>
+		<isEmpty property="language">
+				X.DepartName AS DepartName,
+		</isEmpty>
+		<![CDATA[					
+				X.Path,
+				X.Type,
+				X.Level,
+				X.ValidFlag			
+			FROM						
+				Basis.BIN_Organization X			
+			WHERE	
+				X.ValidFlag = '1' AND
+				X.BIN_OrganizationInfoID=#organizationInfoId# AND
+		]]>	
+			<isNotEmpty property="brandInfoId">
+				X.BIN_BrandInfoID=#brandInfoId# AND
+			</isNotEmpty>
+		<![CDATA[		
+				X.Type IN
+		]]>			
+			<iterate property="departTypeList" open="(" close=")" conjunction=","> 
+				#departTypeList[].CodeKey#
+			</iterate>
+			<isNotEmpty property="privilegeFlag">
+			<isEqual property="privilegeFlag" compareValue="1">					
+			<![CDATA[
+				AND EXISTS (]]><include refid="BINOLBSDEP01.allDepPlHigherSql" /><![CDATA[ AND Y.NodeID.IsDescendantOf(X.NodeID) = 1)
+			]]>
+			</isEqual>
+			</isNotEmpty>		
+		<![CDATA[		
+			ORDER BY
+				X.Level
+		]]>			
+    </select> -->
+    
+    <!-- 取得某一用户能访问的顶层部门List -->
+	<select id="getFirstOrganizationList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+		<![CDATA[
+			SELECT					
+				X.BIN_OrganizationID AS organizationId,	
+				X.DepartCode AS departCode,
+				X.DepartName AS departName,				
+				X.Path AS path,
+				X.Type AS type,
+				X.Level AS level,
+				X.ValidFlag AS validFlag,
+				MAX(Y.BIN_OrganizationID) AS childOrganizationId,
+				COUNT(1) AS childCount		
+			FROM						
+				Basis.BIN_Organization X,
+				Basis.BIN_Organization Y
+		]]>				
+			<isNotEmpty property="privilegeFlag">
+			<isEqual property="privilegeFlag" compareValue="1">					
+			<![CDATA[
+				JOIN (]]><include refid="BINOLCMINC99.departPrivilegeSql" /><![CDATA[) A99 
+				ON Y.BIN_OrganizationID=A99.BIN_OrganizationID		
+			]]>
+			</isEqual>
+			</isNotEmpty>		
+		<![CDATA[					
+			WHERE	
+				X.Type IN
+		]]>			
+			<iterate property="departTypeList" open="(" close=")" conjunction=","> 
+				#departTypeList[].CodeKey#
+			</iterate>
+		<![CDATA[	
+				AND	
+				X.BIN_OrganizationInfoID=#organizationInfoId# AND
+		]]>	
+			<isNotEmpty property="brandInfoId">
+				X.BIN_BrandInfoID=#brandInfoId# AND
+			</isNotEmpty>
+		<![CDATA[	
+				Y.NodeID.IsDescendantOf(X.NodeID) = 1	
+			GROUP BY
+				X.BIN_OrganizationID,	
+				X.DepartCode,
+				X.DepartName,				
+				X.Path,
+				X.Type,
+				X.Level,
+				X.ValidFlag	
+			ORDER BY
+				X.Level
+		]]>			
+    </select>
+	
+	<!-- 取得某一部门的直属下级部门 --><!-- 
+	<select id="getNextOrganizationInfoList" parameterClass="java.util.HashMap" resultMap="BINOLBSDEP01.NextOrganizationInfo">
+		<![CDATA[WITH allDepPlHigher AS (]]>	
+		<include refid="BINOLBSDEP01.allDepPlHigherSql" />
+		<![CDATA[)]]>	
+		
+		<![CDATA[
+			SELECT				
+				X.BIN_OrganizationID,		
+				X.DepartCode,	
+		]]>			
+		<isNotEmpty property="language">
+			<isEqual property="language" compareValue="en_US">
+				X.NameForeign AS DepartName,
+			</isEqual>
+			<isEqual property="language" compareValue="zh_CN">	
+				X.DepartName AS DepartName,
+			</isEqual>								
+		</isNotEmpty>
+		<isEmpty property="language">
+				X.DepartName AS DepartName,
+		</isEmpty>
+		<![CDATA[
+				X.Path,
+				X.Type,
+				X.ValidFlag,
+				Y.Child		
+			FROM
+				Basis.BIN_Organization X JOIN				
+				(SELECT
+					A.BIN_OrganizationID,
+					COUNT(B.BIN_OrganizationID) AS Child
+				FROM
+					allDepPlHigher A LEFT JOIN allDepPlHigher B ON B.NodeID.GetAncestor(1) = A.NodeID,
+					Basis.BIN_Organization C
+				WHERE
+					A.Type <> 'Z' AND
+					A.NodeID.GetAncestor(1) = C.NodeID AND
+					C.BIN_OrganizationID = #path#
+				GROUP BY 
+					A.BIN_OrganizationID) Y ON X.BIN_OrganizationID = Y.BIN_OrganizationID		
+		]]>
+    </select> -->
+    
+    <!-- 取得某一部门的直属下级部门 --><!-- 
+	<select id="getNextOrganizationInfoList" parameterClass="java.util.HashMap" resultMap="BINOLBSDEP01.NextOrganizationInfo">
+		<![CDATA[
+			SELECT DISTINCT				
+				X.BIN_OrganizationID,		
+				X.DepartCode,	
+		]]>			
+		<isNotEmpty property="language">
+			<isEqual property="language" compareValue="en_US">
+				X.NameForeign AS DepartName,
+			</isEqual>
+			<isEqual property="language" compareValue="zh_CN">	
+				X.DepartName AS DepartName,
+			</isEqual>								
+		</isNotEmpty>
+		<isEmpty property="language">
+				X.DepartName AS DepartName,
+		</isEmpty>
+		<![CDATA[
+				X.Path,
+				X.Type,
+				X.ValidFlag	
+			FROM
+				Basis.BIN_Organization Z,
+				Basis.BIN_Organization X	
+			WHERE
+				X.NodeID.GetAncestor(1) = Z.NodeID AND
+				Z.BIN_OrganizationID = #path# AND
+				X.Type <> 'Z' AND
+				X.ValidFlag = '1' AND
+				X.BIN_OrganizationInfoID=#organizationInfoId#
+		]]>		
+			<isNotEmpty prepend="AND" property="brandInfoId">
+				X.BIN_BrandInfoID=#brandInfoId#
+			</isNotEmpty>
+			<isNotEmpty property="privilegeFlag">
+			<isEqual property="privilegeFlag" compareValue="1">					
+			<![CDATA[
+				AND EXISTS (]]><include refid="BINOLBSDEP01.allDepPlHigherSql" /><![CDATA[ AND Y.NodeID.IsDescendantOf(X.NodeID) = 1)
+			]]>
+			</isEqual>
+			</isNotEmpty>	
+    </select> -->
+    
+    <!-- 取得某一部门的直属下级部门 -->
+	<select id="getNextOrganizationInfoList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+		<![CDATA[
+			SELECT				
+				X.BIN_OrganizationID AS organizationId,	
+				X.DepartCode AS departCode,
+				X.DepartName AS departName,				
+				X.Path AS path,
+				X.Type AS type,
+				X.Level AS level,
+				X.ValidFlag AS validFlag,
+				MAX(Y.BIN_OrganizationID) AS childOrganizationId,
+				COUNT(1) AS childCount		
+			FROM
+				Basis.BIN_Organization Z,
+				Basis.BIN_Organization X,
+				Basis.BIN_Organization Y
+		]]>				
+			<isNotEmpty property="privilegeFlag">
+			<isEqual property="privilegeFlag" compareValue="1">					
+			<![CDATA[
+				JOIN (]]><include refid="BINOLCMINC99.departPrivilegeSql" /><![CDATA[) A99 
+				ON Y.BIN_OrganizationID=A99.BIN_OrganizationID		
+			]]>
+			</isEqual>
+			</isNotEmpty>	
+		<![CDATA[		
+			WHERE
+				X.NodeID.GetAncestor(1) = Z.NodeID AND
+				Z.BIN_OrganizationID = #path# AND
+				X.Type <> 'Z' AND
+				X.BIN_OrganizationInfoID=#organizationInfoId# AND
+		]]>		
+			<isNotEmpty property="brandInfoId">
+				X.BIN_BrandInfoID=#brandInfoId# AND
+			</isNotEmpty>
+		<![CDATA[	
+				Y.NodeID.IsDescendantOf(X.NodeID) = 1	
+			GROUP BY
+				X.BIN_OrganizationID,	
+				X.DepartCode,
+				X.DepartName,				
+				X.Path,
+				X.Type,
+				X.Level,
+				X.ValidFlag
+		]]>				
+    </select>
+    
+    <!-- 取得未知节点下的部门 --><!-- 
+	<select id="getRootNextOrgList" parameterClass="java.util.HashMap" resultMap="BINOLBSDEP01.NextOrganizationInfo">
+		<![CDATA[WITH allDepPlHigher AS (]]>	
+		<include refid="BINOLBSDEP01.allDepPlHigherSql" />
+		<![CDATA[)]]>	
+		
+		<![CDATA[
+			SELECT				
+				X.BIN_OrganizationID,		
+				X.DepartCode,	
+		]]>			
+		<isNotEmpty property="language">
+			<isEqual property="language" compareValue="en_US">
+				X.NameForeign AS DepartName,
+			</isEqual>
+			<isEqual property="language" compareValue="zh_CN">	
+				X.DepartName AS DepartName,
+			</isEqual>								
+		</isNotEmpty>
+		<isEmpty property="language">
+				X.DepartName AS DepartName,
+		</isEmpty>
+		<![CDATA[
+				X.Path,
+				X.Type,
+				X.ValidFlag,
+				Y.Child		
+			FROM
+				Basis.BIN_Organization X JOIN				
+				(SELECT
+					A.BIN_OrganizationID,
+					COUNT(B.BIN_OrganizationID) AS Child
+				FROM
+					allDepPlHigher A LEFT JOIN allDepPlHigher B ON B.NodeID.GetAncestor(1) = A.NodeID,
+					Basis.BIN_Organization C
+				WHERE
+					A.Type NOT IN
+			]]>			
+				<iterate property="departTypeList" open="(" close=")" conjunction=","> 
+					#departTypeList[].CodeKey#
+				</iterate>
+			<![CDATA[		
+					AND A.NodeID.GetAncestor(1) = C.NodeID AND
+					C.Type = 'Z'
+				GROUP BY 
+					A.BIN_OrganizationID) Y ON X.BIN_OrganizationID = Y.BIN_OrganizationID		
+		]]>
+    </select> -->
+    
+    <!-- 取得未知节点下的部门 --><!-- 
+	<select id="getRootNextOrgList" parameterClass="java.util.HashMap" resultMap="BINOLBSDEP01.NextOrganizationInfo">
+		<![CDATA[
+			SELECT DISTINCT			
+				X.BIN_OrganizationID,		
+				X.DepartCode,	
+		]]>			
+		<isNotEmpty property="language">
+			<isEqual property="language" compareValue="en_US">
+				X.NameForeign AS DepartName,
+			</isEqual>
+			<isEqual property="language" compareValue="zh_CN">	
+				X.DepartName AS DepartName,
+			</isEqual>								
+		</isNotEmpty>
+		<isEmpty property="language">
+				X.DepartName AS DepartName,
+		</isEmpty>
+		<![CDATA[
+				X.Path,
+				X.Type,
+				X.ValidFlag
+			FROM
+				Basis.BIN_Organization Z,
+				Basis.BIN_Organization X	
+			WHERE
+				X.NodeID.GetAncestor(1) = Z.NodeID AND
+				Z.Type = 'Z' AND
+				X.ValidFlag = '1' AND
+				X.BIN_OrganizationInfoID=#organizationInfoId# AND
+		]]>	
+			<isNotEmpty property="brandInfoId">
+				X.BIN_BrandInfoID=#brandInfoId# AND
+			</isNotEmpty>
+		<![CDATA[				
+				X.Type NOT IN
+		]]>			
+			<iterate property="departTypeList" open="(" close=")" conjunction=","> 
+				#departTypeList[].CodeKey#
+			</iterate>
+			<isNotEmpty property="privilegeFlag">
+			<isEqual property="privilegeFlag" compareValue="1">					
+			<![CDATA[
+				AND EXISTS (]]><include refid="BINOLBSDEP01.allDepPlHigherSql" /><![CDATA[ AND Y.NodeID.IsDescendantOf(X.NodeID) = 1)
+			]]>
+			</isEqual>
+			</isNotEmpty>	
+    </select> -->
+    
+    <!-- 取得未知节点下的部门 -->
+	<select id="getRootNextOrgList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+		<![CDATA[
+			SELECT		
+				X.BIN_OrganizationID AS organizationId,	
+				X.DepartCode AS departCode,
+				X.DepartName AS departName,				
+				X.Path AS path,
+				X.Type AS type,
+				X.Level AS level,
+				X.ValidFlag AS validFlag,
+				MAX(Y.BIN_OrganizationID) AS childOrganizationId,
+				COUNT(1) AS childCount		
+			FROM
+				Basis.BIN_Organization Z,
+				Basis.BIN_Organization X,
+				Basis.BIN_Organization Y
+		]]>				
+			<isNotEmpty property="privilegeFlag">
+			<isEqual property="privilegeFlag" compareValue="1">					
+			<![CDATA[
+				JOIN (]]><include refid="BINOLCMINC99.departPrivilegeSql" /><![CDATA[) A99 
+				ON Y.BIN_OrganizationID=A99.BIN_OrganizationID		
+			]]>
+			</isEqual>
+			</isNotEmpty>	
+		<![CDATA[			
+			WHERE
+				X.NodeID.GetAncestor(1) = Z.NodeID AND
+				Z.Type = 'Z' AND
+				X.BIN_OrganizationInfoID=#organizationInfoId# AND
+		]]>	
+			<isNotEmpty property="brandInfoId">
+				X.BIN_BrandInfoID=#brandInfoId# AND
+			</isNotEmpty>
+		<![CDATA[				
+				X.Type NOT IN
+		]]>			
+			<iterate property="departTypeList" open="(" close=")" conjunction=","> 
+				#departTypeList[].CodeKey#
+			</iterate>
+		<![CDATA[
+				AND	
+				Y.NodeID.IsDescendantOf(X.NodeID) = 1	
+			GROUP BY
+				X.BIN_OrganizationID,	
+				X.DepartCode,
+				X.DepartName,				
+				X.Path,
+				X.Type,
+				X.Level,
+				X.ValidFlag
+		]]>				
+    </select>
+    
+    <sql id="OrganizationInfoQuery">
+    	<![CDATA[
+	    	SELECT 
+				A.BIN_OrganizationID,
+				A.DepartCode,
+		]]>			
+		<isNotEmpty property="language">
+			<isEqual property="language" compareValue="en_US">
+				A.NameForeign AS DepartName,
+				B.BrandNameForeign AS BrandNameChinese,
+				C.RegionNameForeign AS RegionName,
+				D.RegionNameForeign AS ProvinceName,
+				E.RegionNameForeign AS CityName,
+				T.ChannelNameForeign AS channelName,
+				F.RegionNameForeign AS CountyName,
+			</isEqual>
+			<isEqual property="language" compareValue="zh_CN">	
+				A.DepartName AS DepartName,
+				B.BrandNameChinese AS BrandNameChinese,
+				C.RegionNameChinese AS RegionName,
+				D.RegionNameChinese AS ProvinceName,
+				E.RegionNameChinese AS CityName,
+				T.ChannelName AS channelName,
+				F.RegionNameChinese AS CountyName,
+			</isEqual>								
+		</isNotEmpty>
+		<isEmpty property="language">
+				A.DepartName AS DepartName,
+				B.BrandNameChinese AS BrandNameChinese,
+				C.RegionNameChinese AS RegionName,
+				D.RegionNameChinese AS ProvinceName,
+				E.RegionNameChinese AS CityName,
+				T.ChannelName AS channelName,
+				F.RegionNameChinese AS CountyName,
+		</isEmpty>
+		<![CDATA[		
+				A.Type,
+				A.Status,
+				A.ValidFlag,
+				A.BIN_BrandInfoID,
+				A.OrgSynergyFlag
+			FROM 
+				Basis.BIN_Organization A 
+				LEFT JOIN Basis.BIN_BrandInfo B ON A.BIN_BrandInfoID = B.BIN_BrandInfoID 
+				LEFT JOIN Basis.BIN_Region C ON A.BIN_RegionID = C.BIN_RegionID
+				LEFT JOIN Basis.BIN_Region D ON A.BIN_ProvinceID = D.BIN_RegionID
+				LEFT JOIN Basis.BIN_Region E ON A.BIN_CityID = E.BIN_RegionID
+				LEFT JOIN Basis.BIN_Region F ON A.BIN_CountyID = F.BIN_RegionID
+				LEFT JOIN Basis.BIN_CounterInfo H ON A.BIN_OrganizationID = H.BIN_OrganizationID
+				LEFT JOIN Basis.BIN_Channel T ON (H.BIN_ChannelID = T.BIN_ChannelID)
+		]]>
+			<isNotEmpty property="privilegeFlag">
+			<isEqual property="privilegeFlag" compareValue="1">			
+		<![CDATA[			
+				JOIN (]]><include refid="BINOLCMINC99.departPrivilegeSql" /><![CDATA[) A99 
+				ON A.BIN_OrganizationID=A99.BIN_OrganizationID
+		]]>
+			</isEqual>
+			</isNotEmpty>
+		<![CDATA[					
+			WHERE
+				A.BIN_OrganizationInfoID=#organizationInfoId#
+		]]>		
+		<dynamic>
+			<isNotEmpty prepend="AND" property="brandInfoId">
+				A.BIN_BrandInfoID=#brandInfoId#
+			</isNotEmpty>
+			<isNotEmpty prepend="AND" property="departCode">
+				A.DepartCode like '%'+#departCode#+'%'
+			</isNotEmpty>
+			<isNotEmpty prepend="AND" property="departName">
+				(A.DepartName like '%'+#departName#+'%' OR
+				A.DepartNameShort like '%'+#departName#+'%' OR
+				A.NameForeign like '%'+#departName#+'%' OR
+				A.NameShortForeign like '%'+#departName#+'%')
+			</isNotEmpty>
+			<isNotEmpty prepend="AND" property="path">
+				(A.NodeID.IsDescendantOf(#path#)=1 AND
+				A.Path != #path#)
+			</isNotEmpty>
+			<isNotEmpty prepend="AND" property="type">
+				A.Type = #type#
+			</isNotEmpty>
+			<isNotEmpty prepend="AND" property="status">
+				A.Status = #status#
+			</isNotEmpty>
+			<isEmpty prepend="AND" property="validFlag" >
+				A.ValidFlag='1'
+			</isEmpty>
+		</dynamic>
+    </sql>
+    
+    <!-- 查询部门总数 -->
+	<select id="getOrganizationInfoCount" parameterClass="java.util.HashMap" resultClass="java.lang.Integer">
+		<![CDATA[
+			SELECT	COUNT(SORT_T1.BIN_OrganizationID) AS count FROM (
+		]]>	
+		<include refid="BINOLBSDEP01.OrganizationInfoQuery" />
+		<![CDATA[	
+			) SORT_T1
+		]]>	
+    </select>
+    
+    <!-- 取得部门信息List -->
+	<resultMap id="BINOLBSDEP01.OrganizationInfo" class="java.util.HashMap">
+		<result property="RowNumber" column="RowNumber"/>
+		<result property="organizationId" column="BIN_OrganizationID"/>
+		<result property="departCode" column="DepartCode"/>
+		<result property="departName" column="DepartName"/>
+		<result property="brandNameChinese" column="BrandNameChinese"/>
+		<result property="regionName" column="RegionName"/>
+		<result property="provinceName" column="ProvinceName"/>
+		<result property="cityName" column="CityName"/>
+		<result property="countyName" column="CountyName"/>
+		<result property="type" column="Type"/>
+		<result property="status" column="Status"/>
+		<result property="validFlag" column="ValidFlag"/>
+		<result property="brandInfoId" column="BIN_BrandInfoID"/>
+		<result property="channelName" column="channelName"/>		
+		<result property="orgSynergyFlag" column="OrgSynergyFlag"/>		
+	</resultMap>
+	
+	<select id="getOrganizationInfoList" parameterClass="java.util.HashMap" resultMap="BINOLBSDEP01.OrganizationInfo">
+		<include refid="BINOLCMINC99.pageheader" />
+		<include refid="BINOLBSDEP01.OrganizationInfoQuery" />
+		<include refid="BINOLCMINC99.pagefooter" />
+    </select>
+	
+	<!-- 查询定位到的部门的所有上级部门位置 -->
+	<select id="getLocationHigher" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+		<![CDATA[
+			SELECT
+				A.BIN_OrganizationID AS organizationId,
+				A.Type AS type
+			FROM
+				Basis.BIN_Organization A,
+				Basis.BIN_Organization B
+			WHERE
+				A.BIN_OrganizationInfoID=#organizationInfoId# AND
+		]]>
+			<isNotEmpty property="brandInfoId">
+				A.BIN_BrandInfoID=#brandInfoId# AND
+			</isNotEmpty>
+		<![CDATA[	
+				B.NodeID.IsDescendantOf(A.NodeID) = 1 AND
+				B.BIN_OrganizationID = #organizationId# AND
+				A.BIN_OrganizationID <> #organizationId# AND
+				A.ValidFlag = '1'
+			ORDER BY
+				A.Path
+		]]>
+    </select>
+    
+    <!-- 查询定位到的部门ID -->
+	<select id="getLocationOrgId" parameterClass="java.util.HashMap" resultClass="java.lang.String">
+		<![CDATA[
+			SELECT TOP 1
+				A.BIN_OrganizationID AS organizationId
+			FROM
+				Basis.BIN_Organization A
+		]]>
+			<isNotEmpty property="privilegeFlag">
+			<isEqual property="privilegeFlag" compareValue="1">			
+		<![CDATA[		
+				JOIN (]]><include refid="BINOLCMINC99.departPrivilegeSql" /><![CDATA[) A99 
+				ON A.BIN_OrganizationID=A99.BIN_OrganizationID
+		]]>
+			</isEqual>
+			</isNotEmpty>
+		<![CDATA[			
+			WHERE
+				A.BIN_OrganizationInfoID=#organizationInfoId# AND
+		]]>
+			<isNotEmpty property="brandInfoId">
+				A.BIN_BrandInfoID=#brandInfoId# AND
+			</isNotEmpty>
+		<![CDATA[
+				(A.DepartCode like '%'+#locationPosition#+'%' OR
+				A.DepartName like '%'+#locationPosition#+'%' OR
+				A.DepartNameShort like '%'+#locationPosition#+'%') AND
+				A.ValidFlag = '1'
+			ORDER BY
+				A.Path
+		]]>
+    </select>
+    
+    <!-- 取得存在下级节点的部门List -->
+	<select id="getHasLowerOrgList" parameterClass="java.util.HashMap" resultClass="java.lang.String">
+        <![CDATA[
+			SELECT DISTINCT
+				Z.BIN_OrganizationID
+			FROM						
+				Basis.BIN_Organization Z,
+				Basis.BIN_Organization X		
+			WHERE						
+				X.NodeID.GetAncestor(1) = Z.NodeID AND
+				Z.BIN_OrganizationID IN
+		]]>			
+			<iterate property="departList" open="(" close=")" conjunction=","> 
+				#departList[].organizationId#
+			</iterate>	
+		<![CDATA[ AND
+				X.ValidFlag = '1' AND
+				X.BIN_OrganizationInfoID=#organizationInfoId#
+		]]>		
+			<isNotEmpty prepend="AND" property="brandInfoId">
+				X.BIN_BrandInfoID=#brandInfoId#
+			</isNotEmpty>	
+			<isNotEmpty property="privilegeFlag">
+			<isEqual property="privilegeFlag" compareValue="1">					
+			<![CDATA[
+				AND EXISTS (]]><include refid="BINOLBSDEP01.allDepPlHigherSql" /><![CDATA[ AND Y.NodeID.IsDescendantOf(X.NodeID) = 1)
+			]]>
+			</isEqual>
+			</isNotEmpty>			
+    </select>
+    
+    	<select id="organizationInfoList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+		<include refid="BINOLBSDEP01.OrganizationInfoQuery" />
+    </select>
+    
+    <!-- 取得用户权限部门类型 -->
+	<select id="getDepartType" parameterClass="java.util.HashMap" resultClass="java.lang.String">
+        <![CDATA[
+			SELECT DISTINCT
+				A.Type
+			FROM	
+				Basis.BIN_Organization A
+		]]>
+			<isNotEmpty property="privilegeFlag">
+			<isEqual property="privilegeFlag" compareValue="1">			
+		<![CDATA[		
+				JOIN (]]><include refid="BINOLCMINC99.departPrivilegeSql" /><![CDATA[) A99 
+				ON A.BIN_OrganizationID=A99.BIN_OrganizationID
+		]]>
+			</isEqual>
+			</isNotEmpty>
+		<![CDATA[			
+			WHERE		
+				A.BIN_OrganizationInfoID=#organizationInfoId#
+		]]>
+			<isNotEmpty prepend="AND" property="brandInfoId">
+				A.BIN_BrandInfoID=#brandInfoId#
+			</isNotEmpty>
+    </select>
+</sqlMap>

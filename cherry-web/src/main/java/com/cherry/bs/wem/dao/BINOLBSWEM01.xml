@@ -1,0 +1,416 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sqlMap PUBLIC "-//iBATIS.com//DTD SQL Map 2.0//EN" "http://ibatis.apache.org/dtd/sql-map-2.dtd">
+<sqlMap namespace="BINOLBSWEM01">
+	<sql id="querySQL">
+		<![CDATA[
+			SELECT 
+				A.BIN_AgentApplyID,
+				A.BillCode,
+				A.ApplyType,
+				A.Status,
+				A.ApplyTime,
+				A.ApplyMobile,
+				A.ApplyName,
+				A.ApplyOpenID,
+				A.ApplyProvince,
+				A.ApplyCity,
+				A.ApplyDesc,
+				A.ApplyLevel,
+				A.SuperMobile,
+				A.OldSuperMobile,
+				'(' + A.Assigner + ')' + B.EmployeeName AS Assigner,
+				A.AssignTime,
+				A.Auditor,
+				A.AuditTime,
+				A.AuditLevel,
+				A.Reason,
+				A.ValidFlag,
+				DATEDIFF(SS, A.APPLYTIME, GETDATE())-86400 AS ReAssignFlag				
+			FROM 
+				Basis.BIN_AgentApply A
+				LEFT JOIN Basis.BIN_Employee B 
+				ON 
+					A.Assigner = B.EmployeeCode 
+				AND A.BIN_OrganizationInfoID = B.BIN_OrganizationInfoID 
+				AND A.BIN_BrandInfoID = B.BIN_BrandInfoID  	
+			WHERE
+				A.BIN_OrganizationInfoID = #organizationInfoId#
+			AND A.BIN_BrandInfoID = #brandInfoId#
+		]]>
+		<dynamic>
+			<isNotEmpty prepend="AND" property="BillCode">
+				<![CDATA[A.BillCode LIKE '%' + #BillCode# + '%']]>
+			</isNotEmpty>
+			<isNotEmpty prepend="AND" property="ApplyName">
+				<![CDATA[A.ApplyName LIKE '%' + #ApplyName# + '%']]>
+			</isNotEmpty>
+			<isNotEmpty prepend="AND" property="ApplyMobile">
+				<![CDATA[A.ApplyMobile LIKE '%' + #ApplyMobile# + '%']]>
+			</isNotEmpty>
+			<isNotEmpty prepend="AND" property="ApplyType">
+				<![CDATA[A.ApplyType = #ApplyType#]]>
+			</isNotEmpty>
+			<isNotEmpty prepend="AND" property="Status">
+				<![CDATA[A.Status = #Status#]]>
+			</isNotEmpty>
+			<isNotEmpty prepend="AND" property="startDate">
+            <![CDATA[A.ApplyTime >= #startDate#]]>
+			</isNotEmpty>
+			<isNotEmpty prepend="AND" property="endDate">
+            <![CDATA[A.ApplyTime <= #endDate#]]>
+           	</isNotEmpty>
+		</dynamic>
+	</sql>
+	
+	<!-- 申请总数 -->
+	<select id="getWechatMerchantApplyCount" parameterClass="java.util.HashMap" resultClass="java.lang.Integer">
+		<![CDATA[
+			SELECT	COUNT(SORT_T1.BIN_AgentApplyID) AS count FROM (
+		]]>	
+		<include refid="BINOLBSWEM01.querySQL" />	
+		<![CDATA[	
+			)SORT_T1
+		]]>	
+	</select>
+	
+	<!-- 申请List -->
+	<resultMap class="java.util.HashMap" id="BINOLBSWEM01.applyInfo">
+		<result property="agentApplyId" column="BIN_AgentApplyID"/>
+		<result property="billCode" column="BillCode"/>
+		<result property="applyType" column="ApplyType"/>
+		<result property="status" column="Status"/>
+		<result property="applyTime" column="ApplyTime"/>
+		<result property="applyMobile" column="ApplyMobile"/>
+		<result property="applyName" column="ApplyName"/>
+		<result property="applyOpenID" column="ApplyOpenID"/>
+		<result property="applyProvince" column="ApplyProvince"/>
+		<result property="applyCity" column="ApplyCity"/>
+		<result property="applyDesc" column="ApplyDesc"/>
+		<result property="applyLevel" column="ApplyLevel"/>
+		<result property="superMobile" column="SuperMobile"/>
+		<result property="oldSuperMobile" column="OldSuperMobile"/>
+		<result property="assigner" column="Assigner"/>
+		<result property="assignTime" column="AssignTime"/>
+		<result property="auditor" column="Auditor"/>
+		<result property="auditTime" column="AuditTime"/>
+		<result property="auditLevel" column="AuditLevel"/>
+		<result property="reason" column="Reason"/>
+		<result property="validFlag" column="ValidFlag"/>
+		<result property="reAssignFlag" column="ReAssignFlag"/>
+	</resultMap>
+	<select id="getWechatMerchantApplyList" parameterClass="java.util.HashMap" resultMap="BINOLBSWEM01.applyInfo">
+		<include refid="BINOLCMINC99.pageheader" />
+		<include refid="BINOLBSWEM01.querySQL" />
+		<include refid="BINOLCMINC99.pagefooter" />
+	</select>
+	
+	<select id="getApplyInfoById" parameterClass="java.util.HashMap" resultMap="BINOLBSWEM01.applyInfo">
+		<![CDATA[
+			SELECT 
+				A.BIN_AgentApplyID,
+				A.BillCode,
+				A.ApplyType,
+				A.Status,
+				A.ApplyTime,
+				A.ApplyMobile,
+				A.ApplyName,
+				A.ApplyOpenID,
+				A.ApplyProvince,
+				A.ApplyCity,
+				A.ApplyDesc,
+				A.ApplyLevel,
+				A.SuperMobile,
+				A.OldSuperMobile,
+				'(' + A.Assigner + ')' + B.EmployeeName AS Assigner,
+				A.AssignTime,
+				A.Auditor,
+				A.AuditTime,
+				A.AuditLevel,
+				A.Reason,
+				A.ValidFlag,
+				DATEDIFF(SS, A.APPLYTIME, GETDATE())-86400 AS ReAssignFlag
+			FROM 
+				Basis.BIN_AgentApply A
+				LEFT JOIN Basis.BIN_Employee B 
+				ON 
+					A.Assigner = B.EmployeeCode 
+				AND A.BIN_OrganizationInfoID = B.BIN_OrganizationInfoID 
+				AND A.BIN_BrandInfoID = B.BIN_BrandInfoID						
+			WHERE
+				A.BIN_AgentApplyID = #agentApplyId#
+		]]>
+	</select>
+	
+	<sql id="querySQL01">
+		<![CDATA[
+			SELECT 
+				A.BIN_EmployeeID AS employeeId,
+				A.EmployeeCode AS employeeCode,
+				A.MobilePhone AS mobilePhone,
+				C.Type AS agentLevel
+			]]>
+    		<dynamic>
+				<isNotEmpty property="language">
+					<isEqual property="language" compareValue="en_US">
+							,A.EmployeeNameForeign AS employeeName 
+							,C.NameForeign AS departName
+							,B.CategoryNameForeign AS positionName
+					</isEqual>
+					<isEqual property="language" compareValue="zh_CN">
+						<![CDATA[
+							,A.EmployeeName AS employeeName
+							,C.DepartName AS departName
+							,B.CategoryName AS positionName
+						]]>
+					</isEqual>
+				</isNotEmpty>
+				<isEmpty property="language">
+					,A.EmployeeName AS employeeName
+					,C.DepartName AS departName
+					,B.CategoryName AS positionName
+				</isEmpty>
+			</dynamic>
+			<![CDATA[		
+				FROM 
+					BASIS.BIN_Employee A
+				LEFT JOIN Privilege.BIN_PositionCategory B 
+					ON 
+						A.BIN_PositionCategoryID = B.BIN_PositionCategoryID 
+					AND B.ValidFlag = '1'
+				LEFT JOIN Basis.BIN_Organization C 
+					ON 
+						A.BIN_OrganizationID = C.BIN_OrganizationID 
+				WHERE 
+					A.BIN_BrandInfoID = #brandInfoId#
+				AND A.BIN_OrganizationInfoID = #organizationInfoId#
+				AND A.ValidFlag = '1'
+				AND A.OpenID IS NOT NULL
+				AND A.OpenID <> ''				
+		]]>
+		<dynamic>
+			<isNotEmpty prepend="AND" property="employeeName">
+				<![CDATA[
+				(
+					A.EmployeeCode LIKE '%' + #employeeName# + '%'
+				OR
+					A.EmployeeName LIKE '%' + #employeeName# + '%'
+				OR
+					A.MobilePhone LIKE '%' + #employeeName# + '%'
+				]]>
+				<isNotEmpty prepend="OR" property="superTypeList">
+					<![CDATA[
+						C.TYPE IN
+					]]>
+					<iterate conjunction = "," open = "(" close = ")" property = "superTypeList">
+			    		#superTypeList[]#
+			    	</iterate>
+				</isNotEmpty>
+				<![CDATA[
+				)
+				]]>
+			</isNotEmpty>
+			<isNotEmpty prepend="AND" property="superCodeList">
+				<![CDATA[
+					C.TYPE IN
+				]]>
+				<iterate conjunction = "," open = "(" close = ")" property = "superCodeList">
+		    		#superCodeList[]#
+		    	</iterate>
+			</isNotEmpty>
+			<isNotEmpty prepend="AND" property="employeeIdArr">
+				<![CDATA[
+					A.BIN_EmployeeID NOT IN 
+				]]>
+				<iterate conjunction = "," open = "(" close = ")" property = "employeeIdArr">
+		    		#employeeIdArr[]#
+		    	</iterate>
+			</isNotEmpty>
+			<isNotEmpty prepend="AND" property="excludeList">
+				<![CDATA[
+					C.TYPE NOT IN
+				]]>
+				<iterate conjunction = "," open = "(" close = ")" property = "excludeList">
+		    		#excludeList[]#
+		    	</iterate>
+			</isNotEmpty>
+		</dynamic>
+	</sql>
+	
+	<select id="getEmpCount" parameterClass="java.util.HashMap" resultClass="java.lang.Integer">
+		<![CDATA[
+			SELECT COUNT(*) AS count FROM (
+    	]]>
+		<include refid="BINOLBSWEM01.querySQL01" />
+		<![CDATA[
+			)SORT_T1	
+    	]]>
+	</select>
+	
+	<select id="getEmpList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+    	<include refid="BINOLCMINC99.pageheader" />
+    	<include refid="BINOLBSWEM01.querySQL01" />
+	    <include refid="BINOLCMINC99.pagefooter" />
+    </select>
+	
+	<!-- 更新上级号码 -->
+	<update id="updateAssignInfo" parameterClass="java.util.HashMap" >
+		<![CDATA[
+			UPDATE
+				Basis.BIN_AgentApply
+			SET
+				SuperMobile = #mobilePhone#,
+				Status = #status#,
+				Assigner = #assigner#,
+				AssignTime = #assignTime#,
+		]]>
+	    <include refid="BINOLCMINC99.updateSql"/>
+	    <![CDATA[
+	    	WHERE
+	    		BIN_AgentApplyID = #agentApplyId#	 
+	 	]]>
+	</update>
+	
+	<insert id="addToLog" parameterClass="java.util.HashMap">
+		<![CDATA[
+			INSERT INTO Basis.BIN_AgentApplyLog (
+				BIN_OrganizationInfoID,
+				BIN_BrandInfoID,
+				BillCode,
+				Status,
+				LogType,
+				LogTime,
+		]]>
+		<dynamic>
+			<isNotEmpty property="logSource">
+				LogSource,
+			</isNotEmpty>
+			<isNotEmpty property="applyMobile">
+				ApplyMobile,
+			</isNotEmpty>
+			<isNotEmpty property="assigner">
+				Assigner,
+			</isNotEmpty>
+			<isNotEmpty property="auditor">
+				Auditor,
+			</isNotEmpty>
+			<isNotEmpty property="applyType">
+				ApplyType,
+			</isNotEmpty>
+			<isNotEmpty property="superMobile">
+				SuperMobile,
+			</isNotEmpty>
+			<isNotEmpty property="auditLevel">
+				AuditLevel,
+			</isNotEmpty>
+			<isNotEmpty property="reason">
+				Reason,
+			</isNotEmpty>
+		</dynamic>
+		<include refid="BINOLCMINC99.insertKeySql" />		
+		<![CDATA[
+			) VALUES (
+				#organizationInfoId#,
+				#brandInfoId#,
+				#billCode#,
+				#status#,
+				#logType#,
+				#logTime#,
+		]]>
+		<dynamic>
+			<isNotEmpty property="logSource">
+				#logSource#,
+			</isNotEmpty>
+			<isNotEmpty property="applyMobile">
+				#applyMobile#,
+			</isNotEmpty>
+			<isNotEmpty property="assigner">
+				#assigner#,
+			</isNotEmpty>
+			<isNotEmpty property="auditor">
+				#auditor#,
+			</isNotEmpty>
+			<isNotEmpty property="applyType">
+				#applyType#,
+			</isNotEmpty>
+			<isNotEmpty property="superMobile">
+				#superMobile#,
+			</isNotEmpty>
+			<isNotEmpty property="auditLevel">
+				#auditLevel#,
+			</isNotEmpty>
+			<isNotEmpty property="reason">
+				#reason#,
+			</isNotEmpty>
+		</dynamic>
+		<include refid="BINOLCMINC99.insertValueSql" />		
+		<![CDATA[
+			)
+    	]]>
+	</insert>
+	
+	<!-- 审核 -->
+	<update id="audit" parameterClass="java.util.HashMap" >
+		<![CDATA[
+			UPDATE
+				Basis.BIN_AgentApply
+			SET
+				ApplyName = #applyName#,
+				ApplyMobile = #applyMobile#,
+				ApplyProvince = #applyProvince#,
+				ApplyCity = #applyCity#,
+				SuperMobile = #superMobile#,
+				OldSuperMobile = #oldSuperMobile#,				
+				Status = #status#,
+				Auditor = #auditor#,
+				AuditTime = #auditTime#,
+				AuditLevel = #auditLevel#,
+				Reason = #reason#,
+		]]>
+	    <include refid="BINOLCMINC99.updateSql"/>
+	    <![CDATA[
+	    	WHERE
+	    		BIN_AgentApplyID = #agentApplyId#	 
+	 	]]>
+	</update>
+	
+	<!-- 获取某员工直接下级的人数 -->
+	<select id="getSubAmount" parameterClass="java.util.HashMap" resultClass="java.lang.Integer">
+		<![CDATA[
+		 	SELECT 
+				Count(1) as count
+			From				
+				Basis.BIN_Employee B 
+				left JOIN Basis.BIN_Employee A ON B.NodeID.GetAncestor(1) = A.NodeID and B.NodeID != A.NodeID
+			WHERE 
+				A.BIN_EmployeeID = #employeeId#
+		]]>
+	</select>
+	
+	<!-- 只获取下级的employeeId -->
+	<select id="getSubEmployeeIdList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+		<![CDATA[
+			SELECT 
+				B.BIN_EmployeeID AS employeeId
+			From
+				Basis.BIN_Employee A 
+				LEFT JOIN Basis.BIN_Employee B ON B.NodeID.IsDescendantOf(A.NodeID) = 1 AND A.NodeID != B.NodeID
+			WHERE 
+				A.BIN_EmployeeID = #employeeId#
+			GROUP BY 
+				B.BIN_EmployeeID
+		]]>
+	</select>
+	
+	<!-- 获取员工部门类型，即微商等级 -->
+	<select id="getEmpAgentLevel" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+		<![CDATA[
+			SELECT 
+				B.Type AS agentLevel
+			FROM 
+				Basis.BIN_Employee A 
+				LEFT JOIN Basis.BIN_Organization B on A.BIN_OrganizationID = B.BIN_OrganizationID
+			WHERE 
+			A.BIN_EmployeeID = #employeeId#
+		]]>
+	</select>
+</sqlMap>

@@ -1,0 +1,246 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sqlMap PUBLIC "-//iBATIS.com//DTD SQL Map 2.0//EN" "http://ibatis.apache.org/dtd/sql-map-2.dtd">
+<sqlMap namespace="BINOLPTRPS38">
+	<!-- 库存记录查询sql文  -->
+	<sql id="ProStockSQL">
+		<![CDATA[
+		SELECT
+			E.UnitCode AS unitCode,
+			D.BarCode AS barCode,
+			E.OriginalBrand AS originalBrand,
+			E.ModuleCode AS moduleCode,
+			SUM(S.Quantity) as quantity,
+			ISNULL(Convert(decimal(16,2),F.SalePrice),0) AS price,
+		]]>
+		<dynamic>
+			<!-- 按照厂商编码统计  -->
+			<isEqual property="type" compareValue="2">
+				E.BIN_ProductID AS productId,
+			</isEqual>
+			<isNotEqual property="type" compareValue="2">
+				S.BIN_ProductVendorID AS prtVendorId,
+			</isNotEqual>
+			<isNotEmpty property="language">
+				<isEqual property="language" compareValue="en_US">
+					E.NameForeign AS nameTotal
+				</isEqual>
+				<isEqual property="language" compareValue="zh_CN">	
+					E.NameTotal AS nameTotal
+				</isEqual>								
+			</isNotEmpty>
+			<isEmpty property="language">
+				E.NameTotal AS nameTotal
+			</isEmpty>
+		</dynamic>
+		<![CDATA[ 
+				FROM Inventory.BIN_ProductStock S WITH(NOLOCK)
+				JOIN Basis.BIN_ProductVendor D WITH(NOLOCK)
+				ON S.BIN_ProductVendorID = D.BIN_ProductVendorID 
+				JOIN Basis.BIN_Product E WITH(NOLOCK)
+				ON (D.BIN_ProductID = E.BIN_ProductID AND E.IsStock='1')
+				JOIN T99
+				ON(S.BIN_InventoryInfoID = T99.BIN_InventoryInfoID)
+				LEFT JOIN Basis.BIN_ProductPrice F WITH(NOLOCK)
+				ON (E.BIN_ProductID = F.BIN_ProductID AND F.Type = '2' AND  F.ValidFlag = '1')
+		]]>
+		<isNotEmpty property="catePropValId" prepend="JOIN">
+		<![CDATA[ Basis.BIN_PrtCategory G
+				ON(E.BIN_ProductID = G.BIN_ProductID 
+ 				AND G.BIN_PrtCatPropValueID = #catePropValId# AND G.ValidFlag='1') 
+ 		]]> 
+		</isNotEmpty>
+		<dynamic prepend="WHERE">
+			<isNotEmpty property="validFlag" prepend="AND">
+				D.ValidFlag = #validFlag#
+			</isNotEmpty>
+			<isNotEmpty property="productId" prepend="AND">
+				E.BIN_ProductID = #productId#
+			</isNotEmpty>
+			<isNotEmpty property="originalBrand" prepend="AND">
+				E.OriginalBrand = #originalBrand#
+			</isNotEmpty>
+			<isNotEmpty property="prtVendorId" prepend="AND">
+				S.BIN_ProductVendorID = #prtVendorId#
+			</isNotEmpty>
+			<isNotEmpty property="depotId" prepend="AND">
+				S.BIN_InventoryInfoID = #depotId#
+			</isNotEmpty>
+			<isNotEmpty property="lgcInventoryId" prepend="AND">
+				S.BIN_LogicInventoryInfoID = #lgcInventoryId#
+			</isNotEmpty>
+			<isNotEmpty property="date" prepend="AND">
+				#date# BETWEEN F.StartDate AND F.EndDate
+			</isNotEmpty>
+		</dynamic>
+		<![CDATA[
+			GROUP BY 
+				E.UnitCode, 
+				E.OriginalBrand, 
+				E.ModuleCode,
+				E.BIN_ProductID,
+				F.SalePrice,
+				D.BarCode,
+		]]>
+		<dynamic>
+			<isEqual property="type" compareValue="2">
+				E.BIN_ProductID,
+			</isEqual>
+			<isNotEqual property="type" compareValue="2">
+				S.BIN_ProductVendorID,
+			</isNotEqual>
+			<isNotEmpty property="language">
+				<isEqual property="language" compareValue="en_US">
+					E.NameForeign
+				</isEqual>
+				<isEqual property="language" compareValue="zh_CN">	
+					E.NameTotal
+				</isEqual>								
+			</isNotEmpty>
+			<isEmpty property="language">
+				E.NameTotal
+			</isEmpty>
+		</dynamic>					
+	</sql>
+	<!-- 取得库存记录总数  -->
+    <select id="getProStockCount" parameterClass="java.util.HashMap" resultClass="java.lang.Integer">
+    	<include refid="BINOLCMINC99.getInventoryList" />
+    	<![CDATA[
+			SELECT	COUNT(SORT_T1.unitCode) AS count FROM (
+		]]>	
+		<include refid="BINOLPTRPS38.ProStockSQL" />
+		<![CDATA[
+			)SORT_T1
+		]]>										
+    </select>
+    
+    <!-- 取得库存记录一览概要LIST -->
+    <select id="getProStockSummaryInfo" parameterClass="java.util.HashMap" resultClass="java.util.HashMap" remapResults="true">
+    	<include refid="BINOLCMINC99.getInventoryList" />
+		<include refid="BINOLPTRPS38.ProStockSQL" />
+		<![CDATA[
+			ORDER BY
+				nameTotal asc
+		]]>
+    </select>
+    
+	<!-- 取得库存记录LIST  -->
+	<select id="getProStockList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap" remapResults="true">
+		<include refid="BINOLCMINC99.getInventoryList" />
+		<include refid="BINOLCMINC99.pageheader" />
+		<include refid="BINOLPTRPS38.ProStockSQL" />
+		<include refid="BINOLCMINC99.pagefooter" />
+    </select>
+    
+    <sql id="getProProductSQL" >
+			<![CDATA[
+			SELECT
+				A.UnitCode AS unitCode,
+				A.ModuleCode AS moduleCode,
+			]]>
+			<dynamic>
+				<isNotEmpty property="prtVendorId">
+					B.BarCode AS barCode,
+				</isNotEmpty>
+				<isNotEmpty property="language">
+					<isEqual property="language" compareValue="en_US">
+						A.NameForeign AS nameTotal
+					</isEqual>
+					<isEqual property="language" compareValue="zh_CN">	
+						A.NameTotal AS nameTotal
+					</isEqual>								
+				</isNotEmpty>
+				<isEmpty property="language">
+					A.NameTotal AS nameTotal
+				</isEmpty>
+			</dynamic>
+			<![CDATA[FROM Basis.BIN_Product A]]>
+			<isNotEmpty property="prtVendorId">
+				JOIN Basis.BIN_ProductVendor B	
+				ON(A.BIN_ProductID = B.BIN_ProductID 
+				AND B.BIN_ProductVendorID = #prtVendorId#)
+			</isNotEmpty>
+			<isEmpty property="prtVendorId">
+			<![CDATA[WHERE A.BIN_ProductID = #productId#]]>
+		</isEmpty>
+	</sql>
+    
+    
+    <!-- 产品库存明细记录查询sql文  -->
+	<sql id="ProStockDetailSQL">
+		<![CDATA[
+		SELECT
+			D.BarCode AS barCode,
+			S.Quantity as quantity,
+		]]>
+		<dynamic>
+			<isNotEqual property="type" compareValue="2">
+				S.BIN_ProductVendorID AS prtVendorId,
+			</isNotEqual>
+			<isNotEmpty property="language">
+				<isEqual property="language" compareValue="en_US">
+					'('+O.DepartCode+')' + O.NameForeign AS departName,
+					A1.DepotNameEN AS inventoryName,
+					A2.InventoryNameEN AS lgcInventoryName
+				</isEqual>
+				<isEqual property="language" compareValue="zh_CN">	
+					'('+O.DepartCode+')' + O.DepartName AS departName,
+					A1.DepotNameCN AS inventoryName,
+					A2.InventoryNameCN AS lgcInventoryName
+				</isEqual>								
+			</isNotEmpty>
+			<isEmpty property="language">
+				'('+O.DepartCode+')' + O.DepartName AS departName,
+				A1.DepotNameCN AS inventoryName,
+				A2.InventoryNameCN AS lgcInventoryName
+			</isEmpty>
+		</dynamic>
+		<![CDATA[ 
+				FROM Inventory.BIN_ProductStock S
+				JOIN Basis.BIN_ProductVendor D ON S.BIN_ProductVendorID = D.BIN_ProductVendorID 
+				JOIN Basis.BIN_DepotInfo A1	ON(S.BIN_InventoryInfoID = A1.BIN_DepotInfoID)
+				LEFT JOIN Basis.BIN_Organization O ON(A1.BIN_OrganizationID = O.BIN_OrganizationID)
+				LEFT JOIN Basis.BIN_LogicInventory A2 ON(S.BIN_LogicInventoryInfoID = A2.BIN_LogicInventoryInfoID)
+				JOIN T99 ON(S.BIN_InventoryInfoID = T99.BIN_InventoryInfoID)
+		]]>
+		<dynamic prepend="WHERE">
+			<isNotEmpty property="productId" prepend="AND">	
+					D.BIN_ProductID = #productId#
+			</isNotEmpty>
+			<isNotEmpty property="validFlag" prepend="AND">
+				D.ValidFlag = #validFlag#
+			</isNotEmpty>
+			<isNotEmpty property="prtVendorId" prepend="AND">
+				S.BIN_ProductVendorID = #prtVendorId#
+			</isNotEmpty>
+			<isNotEmpty property="depotId" prepend="AND">
+				S.BIN_InventoryInfoID = #depotId#
+			</isNotEmpty>
+			<isNotEmpty property="lgcInventoryId" prepend="AND">
+				S.BIN_LogicInventoryInfoID = #lgcInventoryId#
+			</isNotEmpty>
+		</dynamic>
+	</sql>
+	
+	 <!-- 取得产品信息  -->
+	<select id="getProProduct" parameterClass="java.util.HashMap" resultClass="java.util.HashMap" remapResults="true">
+		<include refid="BINOLPTRPS38.getProProductSQL" />
+	</select>
+    <!-- 取得产品条码信息  -->
+	<select id="getBarCodeList" parameterClass="java.util.HashMap" resultClass="java.lang.String">
+		<![CDATA[
+		SELECT
+			BarCode
+		FROM		
+			Basis.BIN_ProductVendor
+		WHERE
+			BIN_ProductID = #productId#
+			AND ValidFlag = #validFlag#
+		]]>
+	</select>
+	<!-- 取得库存记录详细  -->
+    <select id="getProStockDetails" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+    	<include refid="BINOLCMINC99.getInventoryList" />
+    	<include refid="BINOLPTRPS38.ProStockDetailSQL" />
+    </select>
+    
+</sqlMap>

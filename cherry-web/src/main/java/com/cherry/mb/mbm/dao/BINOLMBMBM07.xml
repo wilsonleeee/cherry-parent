@@ -1,0 +1,462 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE sqlMap PUBLIC "-//iBATIS.com//DTD SQL Map 2.0//EN" "http://ibatis.apache.org/dtd/sql-map-2.dtd">
+
+<sqlMap namespace="BINOLMBMBM07">
+    
+    <sql id="QueryCampaignHistory">
+    	<![CDATA[
+			(SELECT 
+				A.TradeNoIF AS tradeNoIF,
+				A.TradeType AS tradeType,
+				A.BatchNo AS batchNo,
+				A.State AS state,
+				CONVERT(varchar(30),A.ParticipateTime,120) AS participateTime,
+				A.CampaignType AS campaignType,
+				A.MainCode AS mainCode,
+				B.ActivityName AS actName,
+				B.ActivityType AS actType,
+				C.GroupName AS actGroupName,
+				NULL AS actGroupType,
+				A.InformType AS informType,
+				CASE ISNULL(D.DepartName,'') WHEN '' THEN D.DepartCode ELSE '(' + D.DepartCode + ')' + D.DepartName END AS departName
+			FROM
+				Campaign.BIN_CampaignHistory A WITH(NOLOCK)
+				LEFT JOIN Promotion.BIN_PromotionActivity B WITH(NOLOCK) ON A.MainCode = B.ActivityCode
+				LEFT JOIN Promotion.BIN_PromotionActGrp C WITH(NOLOCK) ON B.BIN_PromotionActGrpID = C.BIN_PromotionActGrpID
+				LEFT JOIN Basis.BIN_Organization D WITH(NOLOCK) ON A.BIN_OrganizationID = D.BIN_OrganizationID
+			WHERE
+				A.BIN_MemberInfoID = #memberInfoId# AND
+				A.CampaignType = '0'
+		]]>	
+			<isNotEmpty prepend="AND" property="activityName">	
+				(B.ActivityName like '%'+#activityName#+'%' OR A.MainCode like '%'+#activityName#+'%')
+			</isNotEmpty>	
+			<isNotEmpty prepend="AND" property="state">	
+				A.State = #state#
+			</isNotEmpty>	
+			<isNotEmpty prepend="AND" property="participateTimeStart">	
+				A.ParticipateTime >= #participateTimeStart#
+			</isNotEmpty>
+			<isNotEmpty prepend="AND" property="participateTimeEnd">	
+				<![CDATA[A.ParticipateTime <= #participateTimeEnd#]]>
+			</isNotEmpty>
+			<isNotEmpty prepend="AND" property="departName">	
+				D.DepartCode like '%'+#departName#+'%'
+			</isNotEmpty>
+			<isNotEmpty prepend="AND" property="tradeNoIF">	
+				A.TradeNoIF like '%'+#tradeNoIF#+'%'
+			</isNotEmpty>
+			<isNotEmpty prepend="AND" property="batchNo">	
+				A.BatchNo like '%'+#batchNo#+'%'
+			</isNotEmpty>
+		<![CDATA[
+			)UNION
+			(SELECT 
+				A.TradeNoIF AS tradeNoIF,
+				A.TradeType AS tradeType,
+				A.BatchNo AS batchNo,
+				A.State AS state,
+				CONVERT(varchar(30),A.ParticipateTime,120) AS participateTime,
+				A.CampaignType AS campaignType,
+				A.MainCode AS mainCode,
+				E.SubCampaignName AS actName,
+				E.SubCampaignType AS actType,
+				F.CampaignName AS actGroupName,
+				F.CampaignType AS actGroupType,
+				A.InformType AS informType,
+				CASE ISNULL(D.DepartName,'') WHEN '' THEN D.DepartCode ELSE '(' + D.DepartCode + ')' + D.DepartName END AS departName
+			FROM
+				Campaign.BIN_CampaignHistory A WITH(NOLOCK)
+				LEFT JOIN Campaign.BIN_CampaignRule E WITH(NOLOCK) ON A.MainCode = E.SubCampaignCode
+				LEFT JOIN Campaign.BIN_Campaign F WITH(NOLOCK) ON E.BIN_CampaignID = F.BIN_CampaignID
+				LEFT JOIN Basis.BIN_Organization D WITH(NOLOCK) ON A.BIN_OrganizationID = D.BIN_OrganizationID
+			WHERE
+				A.BIN_MemberInfoID = #memberInfoId# AND
+				A.CampaignType = '1'
+		]]>	
+			<isNotEmpty prepend="AND" property="activityName">	
+				(E.SubCampaignName like '%'+#activityName#+'%' OR A.MainCode like '%'+#activityName#+'%')
+			</isNotEmpty>	
+			<isNotEmpty prepend="AND" property="state">	
+				A.State = #state#
+			</isNotEmpty>	
+			<isNotEmpty prepend="AND" property="participateTimeStart">	
+				A.ParticipateTime >= #participateTimeStart#
+			</isNotEmpty>
+			<isNotEmpty prepend="AND" property="participateTimeEnd">	
+				<![CDATA[A.ParticipateTime <= #participateTimeEnd#]]>
+			</isNotEmpty>
+			<isNotEmpty prepend="AND" property="departName">	
+				D.DepartCode like '%'+#departName#+'%'
+			</isNotEmpty>
+			<isNotEmpty prepend="AND" property="tradeNoIF">	
+				A.TradeNoIF like '%'+#tradeNoIF#+'%'
+			</isNotEmpty>
+			<isNotEmpty prepend="AND" property="batchNo">	
+				A.BatchNo like '%'+#batchNo#+'%'
+			</isNotEmpty>
+		<![CDATA[ 
+			)
+		]]>	
+    </sql>
+    
+    <!-- 查询会员参与活动履历总数 -->
+	<select id="getCampaignHistoryCount" parameterClass="java.util.HashMap" resultClass="java.lang.Integer">
+		<![CDATA[
+			SELECT	COUNT(1) AS count FROM (
+		]]>	
+		<include refid="BINOLMBMBM07.QueryCampaignHistory" />
+		<![CDATA[	
+			) SORT_T1
+		]]>	
+    </select>
+    
+    <!-- 查询会员参与活动履历List -->
+	<select id="getCampaignHistoryList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+		<include refid="BINOLCMINC99.pageheader" />
+		<include refid="BINOLMBMBM07.QueryCampaignHistory" />
+		<include refid="BINOLCMINC99.pagefooter" />
+    </select>
+    
+    <!-- 查询所有进行中的会员活动 -->
+	<select id="getCurCampaignList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+		<![CDATA[
+			SELECT 
+				A.BIN_CampaignID AS campaignId,
+				A.CampaignName AS campaignName,
+				CONVERT(varchar(30),A.CampaignOrderToDate,23) AS campaignOrderToDate,
+				CONVERT(varchar(30),A.CampaignFromDate,23) AS campaignFromDate,
+				CONVERT(varchar(30),A.CampaignToDate,23) AS campaignToDate,
+				A.CampaignType AS campaignType,
+				A.GotCounter AS gotCounter,
+				B.BIN_CampaignRuleID AS subCampaignId,
+				B.SubCampaignCode AS subCampaignCode,
+				B.SubCampaignName AS subCampaignName,
+				B.SubCampaignType AS subCampaignType,
+				C.BasePropValue1 AS basePropValue1,
+				C.ActLocationType AS actLocationType,
+				E.ConditionInfo AS conditionInfo,
+				F.BIN_CustomerCode AS customerCode,
+				'1' AS actType
+			FROM
+				Campaign.BIN_Campaign A WITH(NOLOCK)
+				JOIN Campaign.BIN_CampaignRule B WITH(NOLOCK) ON A.BIN_CampaignID = B.BIN_CampaignID
+				JOIN Campaign.BIN_CamRuleCondition C WITH(NOLOCK) ON B.BIN_CampaignRuleID = C.BIN_CampaignRuleID AND C.ValidFlag='1'
+				JOIN Campaign.BIN_CampaignBaseProp D WITH(NOLOCK) ON C.BIN_CampaignBasePropID = D.BIN_CampaignBasePropID AND D.PropertyName = 'baseProp_customer' AND D.ValidFlag='1'
+				LEFT JOIN Members.BIN_SearchLog E WITH(NOLOCK) ON C.BasePropValue1 = E.BIN_SearchCode AND C.ActLocationType = '1'
+				LEFT JOIN Members.BIN_CustomerInfo F WITH(NOLOCK) 
+					JOIN Members.BIN_MemCardInfo G WITH(NOLOCK) 
+					ON F.BIN_CustomerCode = G.MemCode AND G.BIN_MemberInfoID = #memberInfoId#
+				ON C.BasePropValue1 = F.BIN_SearchCode AND (C.ActLocationType = '2' OR C.ActLocationType = '3')
+			WHERE
+				A.BIN_OrganizationInfoID = #organizationInfoId# AND
+		]]>
+			<isNotEmpty property="brandInfoId">	
+				A.BIN_BrandInfoID = #brandInfoId# AND
+			</isNotEmpty>	
+			<isNotEmpty property="campaignOrderList">	
+				B.BIN_CampaignRuleID NOT IN
+				<iterate property="campaignOrderList" open="(" close=")" conjunction=","> 
+					#campaignOrderList[].campaignRuleId#
+				</iterate> AND
+			</isNotEmpty>
+		<![CDATA[	
+				A.State = '1' AND
+				A.CampaignTypeFlag = '1' AND
+				A.ValidFlag = '1' AND
+				B.ValidFlag = '1'
+		]]>	
+    </select>
+    
+    <!-- 查询会员已预约活动 -->
+	<select id="getCampaignOrderList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+		<![CDATA[
+			SELECT
+		  		A.BIN_CampaignOrderID AS campOrderId,
+			  	A.TradeNoIF AS billNo,
+			  	B.CampaignName AS campaignName,
+			  	UPPER(A.CounterGot) AS counterGot,
+			  	A.OrderCounterCode AS counterOrder,
+			  	A.CouponCode AS couponCode,
+			  	A.Quantity AS quantity,
+			  	A.Amout AS amout,
+			  	convert(varchar(30),A.CampaignOrderTime,120) AS campOrderTime,
+			  	CASE WHEN (A.State='RV' OR (A.State='AR' AND B.StockToDate IS NULL)) THEN '1' ELSE '0' END AS cancelStatus
+			FROM
+			  	Campaign.BIN_CampaignOrder A WITH(NOLOCK)
+			  	LEFT JOIN Campaign.BIN_Campaign B WITH(NOLOCK) ON A.CampaignCode = B.CampaignCode
+			WHERE
+				A.BIN_MemberInfoID = #memberInfoId# AND
+				(A.State='RV' OR A.State='AR' OR A.State='ST')
+		]]>
+    </select>
+    
+    <!-- 查询会员已预约活动明细 -->
+	<select id="getCampaignOrderDetail" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+		<![CDATA[
+			SELECT
+		  		A.BIN_CampaignOrderID AS campOrderId,
+			  	A.TradeNoIF AS billNo,
+			  	A.CampaignCode AS campCode,
+			  	B.CampaignName AS campaignName,
+			  	UPPER(A.CounterGot) AS counterGot,
+			  	A.OrderCounterCode AS counterOrder,
+			  	A.CouponCode AS couponCode,
+			  	A.Quantity AS quantity,
+			  	A.Amout AS amout,
+			  	A.State AS state,
+		  	  	A.SendFlag AS sendFlag,
+		  	  	convert(varchar(30),A.GetFromTime,23) AS getFromTime,
+		  	  	convert(varchar(30),A.GetToTime,23) AS getToTime,
+			  	A.PointRequired AS pointRequired,
+			  	convert(varchar(30),A.CampaignOrderTime,120) AS campOrderTime
+			FROM
+			  	Campaign.BIN_CampaignOrder A WITH(NOLOCK)
+			  	LEFT JOIN Campaign.BIN_Campaign B WITH(NOLOCK) ON A.CampaignCode = B.CampaignCode
+			WHERE
+				A.BIN_CampaignOrderID=#campOrderId#
+		]]>
+    </select>
+    
+    <!-- 取得礼品信息List-->
+    <select id="getPrtInfoList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+    	<![CDATA[
+	    	SELECT 
+			     B.MainCode AS subCampCode,
+				 A.SubCampaignName AS subCampName,
+				 B.BIN_ProductVendorID AS prodId,
+				 B.GiftType AS prtTpye,
+				 B.UnitCode AS unitCode,
+				 B.BarCode AS  barCode,
+				 B.Quantity AS quantity,
+				 D.PromotionCateCD AS prmCate,
+				 ISNULL(B.Amout,0) AS amout,
+				 ISNULL(B.PointRequired,0) AS pointRequired,
+				 ISNULL(D.NameTotal,F.NameTotal) AS nameTotal
+		    FROM 
+				Campaign.BIN_CampaignOrderDetail B WITH(NOLOCK)
+				LEFT JOIN Campaign.BIN_CampaignRule A WITH(NOLOCK)
+				ON(A.SubCampaignCode = B.MainCode)
+				LEFT JOIN Basis.BIN_PromotionProductVendor C WITH(NOLOCK)
+				ON(B.BIN_ProductVendorID=C.BIN_PromotionProductVendorID
+					AND B.GiftType = 'P')
+				LEFT JOIN Basis.BIN_PromotionProduct D WITH(NOLOCK)
+				ON (C.BIN_PromotionProductID=D.BIN_PromotionProductID)
+				LEFT JOIN Basis.BIN_ProductVendor E WITH(NOLOCK)
+				ON(B.BIN_ProductVendorID=E.BIN_ProductVendorID
+					AND B.GiftType = 'N')
+				LEFT JOIN Basis.BIN_Product F WITH(NOLOCK)
+				ON (E.BIN_ProductID=F.BIN_ProductID)
+   			WHERE 		   
+			    B.BIN_CampaignOrderID=#campOrderId#
+    	]]>
+    </select>
+    
+    <!-- 查询促销活动 -->
+	<select id="getPromotionActList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+		<![CDATA[
+			SELECT
+				A.BIN_PromotionActGrpID AS campaignId,
+				A.GroupName AS campaignName,
+				A.ActivityType AS campaignType,
+				B.BIN_PromotionActivityID AS subCampaignId,
+				B.ActivityCode AS subCampaignCode,
+				B.ActivityName AS subCampaignName,
+				CASE WHEN isdate(D.BasePropValue1)=1 THEN D.BasePropValue1 END AS campaignFromDate,
+				CASE WHEN isdate(D.BasePropValue2)=1 THEN D.BasePropValue2 END AS campaignToDate,
+				'0' AS actType
+			FROM
+				Promotion.BIN_PromotionActGrp A
+				JOIN Promotion.BIN_PromotionActivity B ON A.BIN_PromotionActGrpID = B.BIN_PromotionActGrpID
+				LEFT JOIN Promotion.BIN_PromotionActivityRule C ON B.BIN_PromotionActivityID = C.BIN_PromotionActivityID AND C.ValidFlag = '1'
+				LEFT JOIN Promotion.BIN_PromotionRuleCondition D ON C.BIN_PromotionActivityRuleID = D.BIN_PromotionActivityRuleID AND D.ValidFlag = '1'
+				LEFT JOIN Promotion.BIN_PromotionBaseProp E ON D.BIN_PromotionBasePropID = E.BIN_PromotionBasePropID AND E.ValidFlag = '1'
+			WHERE
+				A.BIN_OrganizationInfoID = #organizationInfoId# AND
+				(B.TemplateFlag IS NULL OR B.TemplateFlag='0' OR B.TemplateFlag ='') and
+		]]>
+			<isNotEmpty property="brandInfoId">	
+				A.BIN_BrandInfoID = #brandInfoId# AND
+			</isNotEmpty>	
+		<![CDATA[	
+				A.ValidFlag = '1' AND 
+				B.ValidFlag = '1' AND
+				E.PropertyName = 'baseProp_time'
+		]]>
+    </select>
+    
+    <!-- 取得活动基本信息--> 
+    <select id="getSubBaseInfo" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+	<![CDATA[
+	    SELECT
+		      A.SubCampaignName AS subCampaignName,
+		      A.SubCampaignCode AS subCampaignCode,
+		      A.SubCampaignType AS subCampaignType,
+			  A.Description AS description,
+			  B.CampaignName AS campaignName,
+			  B.CampaignType AS campaignType
+	    FROM
+			 Campaign.BIN_CampaignRule A
+			 JOIN Campaign.BIN_Campaign B ON A.BIN_CampaignID = B.BIN_CampaignID
+		WHERE 
+			A.BIN_CampaignRuleID = #subCampaignId#
+	]]>	
+    </select>
+    
+    <!-- 取得活动结果信息 --> 
+    <select id="getSubResultList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+	<![CDATA[
+		SELECT 
+			B.BIN_ProductVendorID AS productVendorId,
+			B.BarCode AS barCode,
+			B.UnitCode AS unitCode,
+			B.SaleType AS prtType,
+			D.PromotionCateCD AS prmCate,
+			CASE WHEN D.PromotionCateCD IN('TZZK','DHCP','DHMY') THEN ISNULL(B.Price,0) * -1
+			ELSE ISNULL(B.Price,0) END AS price,
+			B.Quantity AS quantity,
+			CASE WHEN D.PromotionCateCD IN('DHCP','DHMY') THEN D.ExPoint END AS exPoint,
+			CASE WHEN B.SaleType = 'P' THEN D.NameTotal ELSE F.NameTotal END AS nameTotal,
+			A.SubCampaignCode AS subCampCode
+		FROM
+			Campaign.BIN_CampaignRule A WITH(NOLOCK)
+			JOIN Campaign.BIN_CampaignRuleResult B WITH(NOLOCK)
+			ON (A.BIN_CampaignRuleID=B.BIN_CampaignRuleID AND B.ValidFlag = '1')
+			LEFT JOIN Basis.BIN_PromotionProductVendor C WITH(NOLOCK)
+			ON(B.BIN_ProductVendorID=C.BIN_PromotionProductVendorID AND B.SaleType = 'P')
+			LEFT JOIN Basis.BIN_PromotionProduct D WITH(NOLOCK) 
+			ON (C.BIN_PromotionProductID=D.BIN_PromotionProductID)
+			LEFT JOIN Basis.BIN_ProductVendor E WITH(NOLOCK)
+			ON(B.BIN_ProductVendorID=E.BIN_ProductVendorID AND B.SaleType = 'N')
+			LEFT JOIN Basis.BIN_Product F WITH(NOLOCK)
+			ON (E.BIN_ProductID=F.BIN_ProductID)
+		WHERE	
+			A.BIN_CampaignRuleID = #subCampaignId#
+	]]>	
+    </select>
+    
+    <!-- 取得活动条件信息 --> 
+    <select id="getSubConditionList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+	<![CDATA[
+		SELECT
+			D.PropertyName AS propertyName,     
+			C.BasePropValue1 AS basePropValue1,         
+			C.BasePropValue2 AS basePropValue1,         
+			C.ActLocationType AS actLocationType,
+			E.ConditionInfo AS conditionInfo
+		FROM      
+			Campaign.BIN_CamRuleCondition C WITH(NOLOCK)
+			JOIN Campaign.BIN_CampaignBaseProp D WITH(NOLOCK) ON (C.BIN_CampaignBasePropID = D.BIN_CampaignBasePropID AND D.ValidFlag = '1')
+			LEFT JOIN Members.BIN_SearchLog E WITH(NOLOCK) ON (C.BasePropValue1 = E.BIN_SearchCode AND E.ValidFlag = '1')
+		WHERE 
+			C.BIN_CampaignRuleID = #subCampaignId# AND 
+			C.ValidFlag='1'
+	]]>	
+    </select>
+    
+    <!-- 查询促销活动信息 -->
+	<select id="getPromotionActInfo" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+	 	SELECT 
+	 		A.ActivityCode AS activityCode, 
+	 		A.ActivityName AS activityName,
+	 		B.ActivityType AS activityType,
+	 		A.DescriptionDtl AS descriptionDtl
+	 	FROM
+	 		Promotion.BIN_PromotionActivity A
+	 		JOIN Promotion.BIN_PromotionActGrp B ON A.BIN_PromotionActGrpID = B.BIN_PromotionActGrpID
+	 	WHERE
+	 	 	A.BIN_PromotionActivityID = #subCampaignId#
+	</select>
+	
+	<!-- 查询促销活动条件 -->
+	<select id="getPromotionActConList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+		SELECT
+			A.BasePropValue1 AS basePropValue1,
+			A.BasePropValue2 AS basePropValue2,
+			A.ConditionGrpID AS conditionGrpId,
+			A.ActLocationType AS actLocationType,
+			C.PropertyName AS propertyName
+		FROM
+			Promotion.BIN_PromotionRuleCondition A
+			JOIN Promotion.BIN_PromotionActivityRule B ON A.BIN_PromotionActivityRuleID = B.BIN_PromotionActivityRuleID
+			JOIN Promotion.BIN_PromotionBaseProp C ON A.BIN_PromotionBasePropID = C.BIN_PromotionBasePropID AND C.ValidFlag = '1'
+		WHERE
+			B.BIN_PromotionActivityID = #subCampaignId# AND
+			A.ValidFlag = '1' AND
+			B.ValidFlag = '1'
+ 	</select>
+ 	
+ 	<!-- 查询促销活动结果 -->
+ 	<select id="getPromotionActRelList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+ 	<![CDATA[
+ 		SELECT
+ 	 		CASE WHEN E.BIN_PromotionProductVendorID IS NOT NULL THEN E.BIN_PromotionProductVendorID ELSE F.BIN_ProductVendorID END AS proId,
+			CASE WHEN E.BIN_PromotionProductVendorID IS NOT NULL THEN C.ValidFlag + E.ValidFlag ELSE D.ValidFlag + F.ValidFlag END AS validFlag,
+			A.PromotionPrtCode AS barCode,
+			A.PromotionPrtUnitcode AS unitCode,
+			A.Price AS price,
+			A.Quantity AS quantity,
+			A.OldPrice AS oldPrice,
+			A.GroupType AS groupType,
+			C.ExPoint AS exPoint,
+			CASE WHEN C.BIN_PromotionProductID IS NULL THEN 'CPCX' ELSE C.PromotionCateCD END AS prmCate,
+			CASE WHEN C.BIN_PromotionProductID IS NOT NULL THEN C.NameTotal ELSE D.NameTotal END AS nameTotal
+		FROM
+			Promotion.BIN_PromotionRuleResult A 
+			JOIN Promotion.BIN_PromotionActivityRule B ON A.BIN_PromotionActivityRuleID = B.BIN_PromotionActivityRuleID
+			LEFT JOIN Basis.BIN_PromotionProduct C ON A.PromotionPrtUnitcode = C.UnitCode
+			LEFT JOIN Basis.BIN_PromotionProductVendor E ON C.BIN_PromotionProductID = E.BIN_PromotionProductID AND A.PromotionPrtCode = E.BarCode
+			LEFT JOIN Basis.BIN_Product D ON A.PromotionPrtUnitcode = D.UnitCode
+			LEFT JOIN Basis.BIN_ProductVendor F ON D.BIN_ProductID = F.BIN_ProductID AND A.PromotionPrtCode = F.BarCode
+		WHERE
+			B.BIN_PromotionActivityID = #subCampaignId# AND
+			B.ValidFlag = '1'
+	]]>
+ 	</select>
+    
+    <!-- 查询柜台名称  -->
+    <select id="getCounterName" parameterClass="java.util.HashMap" resultClass="java.lang.String">
+       	<![CDATA[
+			SELECT
+				CounterNameIF
+			FROM
+				Basis.BIN_CounterInfo
+			WHERE 
+				CounterCode = #counterCode# AND
+				BIN_BrandInfoID = #brandInfoId# AND
+				BIN_OrganizationInfoID = #organizationInfoId#
+		]]>
+    </select>
+    
+    <!-- 查询渠道名称  -->
+    <select id="getChannelName" parameterClass="java.util.HashMap" resultClass="java.lang.String">
+       	<![CDATA[
+			SELECT
+				ChannelName	
+			FROM
+				Basis.BIN_Channel
+			WHERE 
+				BIN_ChannelID = #channelId# AND
+				BIN_BrandInfoID = #brandInfoId# AND
+				BIN_OrganizationInfoID = #organizationInfoId#
+		]]>
+    </select>
+    
+    <!-- 查询城市名称  -->
+    <select id="getCityName" parameterClass="java.util.HashMap" resultClass="java.lang.String">
+       	<![CDATA[
+			SELECT
+				RegionNameChinese
+			FROM
+				Basis.BIN_Region
+			WHERE 
+				BIN_RegionID = #cityId# AND
+				BIN_BrandInfoID = #brandInfoId# AND
+				BIN_OrganizationInfoID = #organizationInfoId#
+		]]>
+    </select>
+    
+</sqlMap>
+
+
+

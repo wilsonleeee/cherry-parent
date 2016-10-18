@@ -1,0 +1,295 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sqlMap PUBLIC "-//iBATIS.com//DTD SQL Map 2.0//EN" "http://ibatis.apache.org/dtd/sql-map-2.dtd">
+<sqlMap namespace="BINOLPTJCS42">
+
+    <!--取得所有有效产品信息-->
+    <select id="getAllProductList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+        <![CDATA[
+            SELECT
+                A.BIN_ProductID,
+                B.BIN_ProductVendorID,
+                A.UnitCode,
+                B.BarCode
+            FROM Basis.BIN_Product A
+            JOIN Basis.BIN_ProductVendor B ON(A.BIN_ProductID = B.BIN_ProductID AND B.ValidFlag = '1')
+            WHERE
+                A.ValidFlag = '1'
+                AND A.BIN_OrganizationInfoID = #BIN_OrganizationInfoID#
+                AND A.BIN_BrandInfoID = #BIN_BrandInfoID#
+        ]]>
+    </select>
+    
+    <!--取得所有有效经销商信息-->
+    <select id="getAllResellerList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+        <![CDATA[
+            SELECT
+                A.BIN_ResellerInfoID,
+                A.ResellerCode,
+                A.ResellerName,
+                '('+A.ResellerCode+')'+ISNULL(A.ResellerName,'') AS ResellerCodeName
+            FROM Basis.BIN_ResellerInfo A
+            WHERE
+                A.ValidFlag = '1'
+                AND A.BIN_OrganizationInfoID = #BIN_OrganizationInfoID#
+                AND A.BIN_BrandInfoID = #BIN_BrandInfoID#
+        ]]>
+        <isNotEmpty property="BIN_ResellerInfoID">
+            <![CDATA[
+                AND A.BIN_ResellerInfoID = #BIN_ResellerInfoID#
+            ]]>
+        </isNotEmpty>
+    </select>
+
+    <!-- 产品信息二维码查询sql文  -->
+    <sql id="productQRCodeQuery">
+            <![CDATA[
+                SELECT
+                    A.Bin_ProductQRCodeID AS productQRCodeID,
+                    A.ProductType AS productType,
+                    A.ValidFlag AS validFlag,
+                    B.BarCode AS barCode,
+                    C.UnitCode AS unitCode,
+                    A.QRCodePlaintext AS qrCodePlaintext,
+                    A.QRCodeCiphertext AS qrCodeCiphertext,
+                    A.WholeURL AS wholeURL,
+                    D.ResellerCode AS resellerCode,
+                    D.ResellerName AS resellerName,
+                    '('+D.ResellerCode+')'+ISNULL(D.ResellerName,'') AS resellerCodeName,
+            ]]>
+            <isNotEmpty property="language">
+                <isEqual property="language" compareValue="en_US">
+                    <![CDATA[
+                        C.NameForeign AS procudtName
+                    ]]>
+                </isEqual>
+                <isEqual property="language" compareValue="zh_CN">
+                    <![CDATA[
+                        C.NameTotal AS productName
+                    ]]>
+                </isEqual>
+            </isNotEmpty>
+            <isEmpty property="language">
+                <![CDATA[
+                    C.NameTotal AS productName
+                ]]>
+            </isEmpty>
+            <![CDATA[
+                FROM Basis.BIN_ProductQRCode A
+                LEFT JOIN Basis.BIN_ProductVendor B
+                ON A.BIN_ProductVendorID = B.BIN_ProductVendorID
+                LEFT JOIN Basis.BIN_Product C
+                ON B.BIN_ProductID = C.BIN_ProductID
+                LEFT JOIN Basis.BIN_ResellerInfo D
+                ON A.BIN_ResellerInfoID = D.BIN_ResellerInfoID
+                WHERE
+                    A.BIN_OrganizationInfoID = #organizationInfoId#
+            ]]>
+            <isNotEmpty prepend="AND" property="brandInfoId">
+                <![CDATA[A.BIN_BrandInfoID=#brandInfoId#]]>
+            </isNotEmpty>
+            <isEmpty prepend="AND" property="validFlag">
+                <![CDATA[A.ValidFlag='1']]>
+            </isEmpty>
+            <isEmpty property="prtVendorId">
+                <isNotEmpty property="productName" >
+                    <![CDATA[AND C.NameTotal like '%' + #productName# + '%']]>
+                </isNotEmpty>
+            </isEmpty>
+            <isNotEmpty prepend="AND" property="prtVendorId">
+                <![CDATA[A.BIN_ProductVendorID = #prtVendorId#]]>
+            </isNotEmpty>
+            <isEmpty property="resellerCode">
+                <isNotEmpty property="resellerName" >
+                    <![CDATA[AND D.ResellerName like '%' + #resellerName# + '%']]>
+                </isNotEmpty>
+            </isEmpty>
+            <isNotEmpty prepend="AND" property="resellerCode">
+                <![CDATA[D.ResellerCode = #resellerCode#]]>
+            </isNotEmpty>
+    </sql>
+    
+    <!-- 取得产品信息二维码总数  -->
+    <select id="getProductQRCodeCount" parameterClass="java.util.HashMap" resultClass="java.lang.Integer">
+        <![CDATA[
+            SELECT COUNT(SORT_T1.productQRCodeID) AS count FROM (
+        ]]>
+        <include refid="BINOLPTJCS42.productQRCodeQuery" />
+        <![CDATA[
+            )SORT_T1
+        ]]>
+    </select>
+    
+    <!-- 取得产品信息二维码List  -->
+    <select id="getProductQRCodeList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+        <include refid="BINOLCMINC99.pageheader" />
+        <include refid="BINOLPTJCS42.productQRCodeQuery" />
+        <include refid="BINOLCMINC99.pagefooter" />
+    </select>
+    
+    <!-- 取得产品信息二维码(Excel)  -->
+    <select id="getProductQRCodeListExcel" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+        <include refid="BINOLPTJCS42.productQRCodeQuery" />
+        <![CDATA[ORDER BY productName]]>
+    </select>
+    
+    <!--删除【产品信息二维码临时表】 -->
+    <update id="deleteProductQRCodeTemp" parameterClass="java.util.HashMap">
+        <![CDATA[
+            DELETE FROM
+                Basis.BIN_ProductQRCode_Temp
+            WHERE
+                BIN_OrganizationInfoID = #BIN_OrganizationInfoID#
+                AND BIN_BrandInfoID=#BIN_BrandInfoID#
+        ]]>
+    </update>
+    
+    <!--插入【产品信息二维码临时表】-->
+    <insert id="insertProductQRCodeTemp" parameterClass="java.util.HashMap">
+        <![CDATA[
+            INSERT INTO Basis.BIN_ProductQRCode_Temp(
+                BIN_OrganizationInfoID,
+                BIN_BrandInfoID,
+                ProductType,
+                BIN_ProductVendorID,
+        ]]>
+        <dynamic>
+            <isNotEmpty property="BIN_ResellerInfoID">
+                <![CDATA[BIN_ResellerInfoID,]]>
+            </isNotEmpty>
+            <isNotEmpty property="QRCodePlaintext">
+                <![CDATA[QRCodePlaintext,]]>
+            </isNotEmpty>
+            <isNotEmpty property="QRCodeCiphertext">
+                <![CDATA[QRCodeCiphertext,]]>
+            </isNotEmpty>
+            <isNotEmpty property="WholeURL">
+                <![CDATA[WholeURL,]]>
+            </isNotEmpty>
+        </dynamic>
+        <![CDATA[
+                ValidFlag,
+                CreateTime,
+                CreatedBy,
+                CreatePGM,
+                UpdateTime,
+                UpdatedBy,
+                UpdatePGM,
+                ModifyCount
+            )VALUES(
+                #BIN_OrganizationInfoID#,
+                #BIN_BrandInfoID#,
+                #ProductType#,
+                #BIN_ProductVendorID#,
+        ]]>
+        <dynamic>
+            <isNotEmpty property="BIN_ResellerInfoID">
+                <![CDATA[#BIN_ResellerInfoID#,]]>
+            </isNotEmpty>
+            <isNotEmpty property="QRCodePlaintext">
+                <![CDATA[#QRCodePlaintext#,]]>
+            </isNotEmpty>
+            <isNotEmpty property="QRCodeCiphertext">
+                <![CDATA[#QRCodeCiphertext#,]]>
+            </isNotEmpty>
+            <isNotEmpty property="WholeURL">
+                <![CDATA[#WholeURL#,]]>
+            </isNotEmpty>
+        </dynamic>
+        <![CDATA[
+                '1',
+                GETDATE(),
+                #CreatedBy#,
+                #CreatePGM#,
+                GETDATE(),
+                #UpdatedBy#,
+                #UpdatePGM#,
+                '0'
+                )
+        ]]>
+    </insert>
+    
+    <!-- 更新产品信息二维码表  -->
+    <update id="mergeProductQRCode" parameterClass="java.util.HashMap">
+        <![CDATA[
+        MERGE Basis.BIN_ProductQRCode AS TGT
+        USING Basis.BIN_ProductQRCode_Temp AS SRC
+            ON (
+                    TGT.BIN_OrganizationInfoID = SRC.BIN_OrganizationInfoID
+                    AND TGT.BIN_BrandInfoID = SRC.BIN_BrandInfoID
+                    AND TGT.ProductType = SRC.ProductType
+                    AND TGT.BIN_ProductVendorID = SRC.BIN_ProductVendorID
+                    AND TGT.BIN_ResellerInfoID = SRC.BIN_ResellerInfoID
+                    )
+        WHEN MATCHED
+            AND SRC.BIN_OrganizationInfoID = #BIN_OrganizationInfoID#
+            AND SRC.BIN_BrandInfoID = #BIN_BrandInfoID#
+            THEN
+                UPDATE
+                SET TGT.QRCodePlaintext = SRC.QRCodePlaintext
+                    ,TGT.QRCodeCiphertext = SRC.QRCodeCiphertext
+                    ,TGT.WholeURL = SRC.WholeURL
+                    ,TGT.ValidFlag = '1'
+                    ,TGT.UpdatedBy = #UpdatedBy#
+                    ,TGT.UpdatePGM = #UpdatePGM#
+                    ,TGT.UpdateTime = GETDATE()
+                    ,TGT.ModifyCount = TGT.ModifyCount + 1
+        WHEN NOT MATCHED BY TARGET
+            AND SRC.BIN_OrganizationInfoID = #BIN_OrganizationInfoID#
+            AND SRC.BIN_BrandInfoID = #BIN_BrandInfoID#
+            THEN
+                INSERT (
+                    BIN_OrganizationInfoID
+                    ,BIN_BrandInfoID
+                    ,ProductType
+                    ,BIN_ProductVendorID
+                    ,BIN_ResellerInfoID
+                    ,QRCodePlaintext
+                    ,QRCodeCiphertext
+                    ,WholeURL
+                    ,ValidFlag
+                    ,CreateTime
+                    ,UpdateTime
+                    ,CreatedBy
+                    ,CreatePGM
+                    ,UpdatedBy
+                    ,UpdatePGM
+                    ,ModifyCount
+                    )
+                VALUES (
+                    SRC.BIN_OrganizationInfoID
+                    ,SRC.BIN_BrandInfoID
+                    ,SRC.ProductType
+                    ,SRC.BIN_ProductVendorID
+                    ,SRC.BIN_ResellerInfoID
+                    ,SRC.QRCodePlaintext
+                    ,SRC.QRCodeCiphertext
+                    ,SRC.WholeURL
+                    ,'1'
+                    ,GETDATE()
+                    ,GETDATE()
+                    ,#CreatedBy#
+                    ,#CreatePGM#
+                    ,#CreatePGM#
+                    ,#UpdatePGM#
+                    ,0
+                    )
+        WHEN NOT MATCHED BY SOURCE
+            AND TGT.BIN_OrganizationInfoID = #BIN_OrganizationInfoID#
+            AND TGT.BIN_BrandInfoID = #BIN_BrandInfoID#
+        ]]>
+       <isNotEmpty property="BIN_ResellerInfoID">
+            <![CDATA[
+                AND TGT.BIN_ResellerInfoID = #BIN_ResellerInfoID#
+            ]]>
+       </isNotEmpty>
+       <![CDATA[
+            THEN
+                UPDATE
+                SET TGT.ValidFlag = '0'
+                    ,TGT.UpdatedBy = #UpdatedBy#
+                    ,TGT.UpdatePGM = #UpdatePGM#
+                    ,TGT.UpdateTime = GETDATE()
+                    ,TGT.ModifyCount = TGT.ModifyCount + 1;
+        ]]>
+    </update>
+</sqlMap>

@@ -1,0 +1,104 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sqlMap PUBLIC "-//iBATIS.com//DTD SQL Map 2.0//EN" "http://ibatis.apache.org/dtd/sql-map-2.dtd">
+<sqlMap namespace="BINOLPLSCF14">
+<!-- 组织信息 -->
+	<resultMap id="BINOLPLSCF14.orgInfoList" class="java.util.HashMap">
+		<result property="orgCode" column="OrgCode"/>					<!-- 组织Code -->
+		<result property="orgName" column="OrgNameChinese"/>			<!-- 组织名称 -->
+	</resultMap>
+	<!-- 取得品牌信息  -->
+    <select id="getOrgInfoList" parameterClass="java.util.HashMap" resultMap="BINOLPLSCF14.orgInfoList">
+       	<![CDATA[
+			SELECT DISTINCT
+				OrgCode,
+				OrgNameChinese											
+			FROM
+				dbo.BIN_BrandDataSourceConfig
+			WHERE
+				ValidFlag = '1'
+		]]>
+    </select>	
+	
+	<!-- 品牌信息 -->
+	<resultMap id="BINOLPLSCF14.brandCodeList" class="java.util.HashMap">
+		<result property="brandCode" column="BrandCode"/>					<!-- 品牌Code -->
+		<result property="brandName" column="BrandName"/>					<!-- 品牌名称 -->
+	</resultMap>
+	<!-- 取得品牌信息  -->
+    <select id="getBrandCodeList" parameterClass="java.util.HashMap" resultMap="BINOLPLSCF14.brandCodeList">
+       	<![CDATA[
+			SELECT DISTINCT
+				BrandCode,
+				BrandName											
+			FROM
+				dbo.BIN_BrandDataSourceConfig
+			WHERE
+				OrgCode = #orgCode# AND
+				ValidFlag = '1'
+		]]>
+    </select>
+    
+    <!-- 查询当前文件是否存在  -->
+    <select id="getFileCount" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+       	<![CDATA[
+		SELECT 
+			BIN_FileStoreID as fileId
+		FROM
+			Tools.BIN_FileStore
+		WHERE 
+			OrgCode = #orgCode# AND
+			BrandCode = #brandCode# AND
+			FileCode = #fileCode# AND
+			ValidFlag = '1'
+		]]>
+    </select>
+    
+    <!-- 插入文件表  -->
+	<insert id="insertFile" parameterClass="java.util.HashMap">
+        <![CDATA[ 
+		INSERT INTO Tools.BIN_FileStore						
+		           (OrgCode,	
+		            BrandCode,
+					FileCategory,													
+	                FileName,	
+	                FileCode,
+	                FileContent,
+	                FileType,
+		]]>	
+		    <include refid="BINOLCMINC99.insertKeySql" />	
+		<![CDATA[			
+        )VALUES							
+		           (#orgCode#,	
+				    #brandCode#,	
+					#fileCategory#,			
+		            #fileName#,			
+		            #fileCode#,		
+		            #fileContent#,		
+		            #fileType#,	
+       ]]>
+	        <include refid="BINOLCMINC99.insertValueSql" />
+		<![CDATA[
+		)
+		]]>
+    </insert>
+    
+      <!-- 更新文件表  -->
+	<insert id="updateFile" parameterClass="java.util.HashMap">
+        <![CDATA[ 					
+		        UPDATE Tools.BIN_FileStore
+				SET
+					OrgCode = #orgCode#,
+					BrandCode = #brandCode#,
+					FileCategory = #fileCategory#,
+					FileCode = #fileCode#,
+					FileContent = #fileContent#,
+					FileName = #fileName#,
+					FileType = #fileType#,
+		]]>	
+		    <include refid="BINOLCMINC99.updateSql" />	
+		      <![CDATA[ 
+		      WHERE
+		      		BIN_FileStoreID = #fileId#
+		      ]]>	
+    </insert>
+    </sqlMap>

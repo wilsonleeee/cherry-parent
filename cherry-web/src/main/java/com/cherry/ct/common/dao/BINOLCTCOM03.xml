@@ -1,0 +1,408 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sqlMap PUBLIC "-//iBATIS.com//DTD SQL Map 2.0//EN" "http://ibatis.apache.org/dtd/sql-map-2.dtd">
+<sqlMap namespace="BINOLCTCOM03">
+	
+	<!-- 插入沟通计划表  -->
+	<insert id="insertCommPlanInfo" parameterClass="java.util.HashMap">
+        <![CDATA[
+		INSERT INTO Communication.BIN_Communicationplan
+		           (Bin_PlanCode,
+		            BIN_OrganizationInfoID,
+		            BIN_BrandInfoID,
+		            BIN_OrganizationID,
+		            BIN_UserId,
+		            PlanName,
+		            ChannelId,
+		            CounterCode,
+		            PlanCondition,
+		            VerifiedFlag,
+		            Status,
+		            Memo1,
+		]]>	
+		    <include refid="BINOLCMINC99.insertKeySql" />
+		<![CDATA[
+        )VALUES
+		           (#planCode#,
+		            #organizationInfoId#,
+		            #brandInfoId#,
+		            #organizationId#,
+		            #userId#,
+		            #planName#,
+		            #channelId#,
+		            #counterCode#,
+		            #planCondition#,
+		            #verifiedFlag#,
+		            #status#,
+		            #memo#,
+       ]]>
+	        <include refid="BINOLCMINC99.insertValueSql" />
+		<![CDATA[
+		)
+		]]>
+    </insert>
+	
+    <!-- 插入沟通表  -->
+	<insert id="insertCommInfo" parameterClass="java.util.HashMap">
+        <![CDATA[ 
+		INSERT INTO Communication.BIN_Communication
+		           (BIN_CommunicationCode,
+		            BIN_OrganizationInfoID,
+		            BIN_BrandInfoID,
+		            Bin_PlanCode,
+		            PhaseNum,
+		            Name,
+		            TimeType,
+		            Frequency,
+		            Condition,
+		            DateValue,
+		            TimeValue,
+		            Value,
+		            RunBeginDate,
+		            RunEndDate,
+		            RunType,
+		]]>	
+		    <include refid="BINOLCMINC99.insertKeySql" />
+		<![CDATA[
+        )VALUES
+		           (#communicationCode#,
+		            #organizationInfoId#,
+		            #brandInfoId#,
+		            #planCode#,
+		            #phaseNum#,
+		            #communicationName#,
+		            #timeType#,
+		            #frequency#,
+		            #condition#,
+		            #dateValue#,
+		            #timeValue#,
+		            #value#,
+		            #runBeginDate#,
+		            #runEndDate#,
+		            #runType#,
+       ]]>
+	        <include refid="BINOLCMINC99.insertValueSql" />
+		<![CDATA[
+		)
+		]]>
+    </insert>
+    
+    <!-- 增加调度信息  -->
+	<insert id="insertGtSchedules" parameterClass="java.util.HashMap">
+        <![CDATA[ 
+		INSERT INTO Communication.BIN_Schedules
+		           (BIN_OrganizationInfoID,
+		            BIN_BrandInfoID,
+		            RunTime,
+		            BeginDate,
+		            EndDate,
+		            TaskType,
+		            TaskCode,
+		            AllowRepeat,
+		            Status,
+		            LoadFlag,
+		            RunCount,
+		]]>	
+		    <include refid="BINOLCMINC99.insertKeySql" />
+		<![CDATA[
+        )VALUES
+		           (#organizationInfoId#,
+		            #brandInfoId#,
+		            #runTime#,
+		            #runBeginDate#,
+		            #runEndDate#,
+		            #taskType#,
+		            #taskCode#,
+		            #allowRepeat#,
+		            #status#,
+		            #loadFlag#,
+		            #runCount#,
+       ]]>
+	        <include refid="BINOLCMINC99.insertValueSql" />
+		<![CDATA[
+		)
+		]]>
+    </insert>
+    
+    <!-- 更新沟通调度有效标识 -->
+	<update id="updateSchedulesFlag" parameterClass="java.util.HashMap">
+		<![CDATA[
+	      UPDATE
+	               Communication.BIN_Schedules 
+		  SET 
+				   ValidFlag = 0,
+		]]>
+			<include refid="BINOLCMINC99.updateSql" />									
+		<![CDATA[								
+		  WHERE	  
+		  		  TaskType = #taskType# AND 
+		  		  BIN_OrganizationInfoID = #organizationInfoId# AND
+		  		  BIN_BrandInfoID = #brandInfoId# AND
+		  		  TaskCode in (
+		  			SELECT BIN_CommunicationCode 
+		  			FROM Communication.BIN_Communication 
+		  			WHERE BIN_OrganizationInfoID = #organizationInfoId# AND 
+		  			BIN_BrandInfoID = #brandInfoId# AND 
+		  			Bin_PlanCode = #planCode# 
+		  		)
+		]]>
+	</update>
+	
+	 <!-- 插入沟通对象搜索记录表  -->
+	<insert id="insertCommObjectInfo" parameterClass="java.util.HashMap">
+        <![CDATA[
+		INSERT INTO Members.BIN_SearchLog
+		           (BIN_SearchCode,
+		            BIN_OrganizationInfoID,
+					BIN_BrandInfoID,
+					BIN_OrganizationID,
+	                RecordName,
+	                CustomerType,
+	                RecordType,
+	                RecordCount,
+	                ConditionInfo,
+	                Comments,
+	                FromType,
+					UseFlag,
+					OwnerUser,
+		]]>	
+		    <include refid="BINOLCMINC99.insertKeySql" />
+		<![CDATA[
+        )VALUES
+		           (#recordCode#,
+				    #organizationInfoId#,
+					#brandInfoId#,
+					#organizationId#,
+		            #recordName#,
+		            #customerType#,
+		            #recordType#,
+					#recordCount#,
+					#conditionInfo#,
+					#comments#,
+					#fromType#,
+					#useFlag#,
+					#ownerUser#,
+       ]]>
+	        <include refid="BINOLCMINC99.insertValueSql" />
+		<![CDATA[
+		)
+		]]>
+    </insert>
+	
+	<!-- 插入沟通设置信息表  -->
+	<insert id="insertCommSetInfo" parameterClass="java.util.HashMap">
+        <![CDATA[
+		INSERT INTO Communication.BIN_CommunicationSet
+		           (BIN_OrganizationInfoID,
+		            BIN_BrandInfoID,
+		            BIN_PlanCode,
+		            BIN_CommunicationCode,
+		            BIN_SearchCode,
+		            IsTemplate,
+		            TemplateCode,
+		            MessageInfo,
+		            CommType,
+		            smsChannel,
+		]]>	
+		    <include refid="BINOLCMINC99.insertKeySql" />
+		<![CDATA[
+        )VALUES
+		           (#organizationInfoId#,
+				    #brandInfoId#,
+				    #planCode#,
+				    #communicationCode#,
+				    #recordCode#,
+				    #isTemplate#,
+				    #templateCode#,
+				    #messageInfo#,
+				    #commType#,
+				    #smsChannel#,
+       ]]>
+	        <include refid="BINOLCMINC99.insertValueSql" />
+		<![CDATA[
+		)
+		]]>
+    </insert>
+    
+     <!-- 插入活动与沟通计划关联表  -->
+	<insert id="insertCommAsActivity" parameterClass="java.util.HashMap">
+        <![CDATA[ 
+		INSERT INTO Communication.BIN_ActivityCommPlan
+		           (BIN_OrganizationInfoID,
+		            BIN_BrandInfoID,
+					BIN_ActivityCode,
+	                BIN_PlanCode,
+		]]>	
+		    <include refid="BINOLCMINC99.insertKeySql" />	
+		<![CDATA[			
+        )VALUES
+		           (#organizationInfoId#,
+				    #brandInfoId#,
+					#campaignCode#,
+		            #planCode#,
+       ]]>
+	        <include refid="BINOLCMINC99.insertValueSql" />
+		<![CDATA[
+		)
+		]]>
+    </insert>
+    
+    <!-- 更新沟通计划信息 -->
+	<update id="updateCommPlanInfo" parameterClass="java.util.HashMap">
+		<![CDATA[
+	      UPDATE 
+	               Communication.BIN_Communicationplan 
+		  SET    
+				   PlanName = #planName#,
+				   ChannelId = #channelId#,
+				   CounterCode = #counterCode#,
+				   PlanCondition = #planCondition#,
+				   VerifiedFlag = #verifiedFlag#,
+				   Status = #status#,
+				   Memo1 = #memo#,
+		]]>
+			<include refid="BINOLCMINC99.updateSql" />
+		<![CDATA[
+		  WHERE	  
+		  		  BIN_OrganizationInfoID = #organizationInfoId# AND
+		  		  BIN_BrandInfoID = #brandInfoId# AND
+		  		  Bin_PlanCode = #planCode#
+		]]>
+	</update>
+	
+	<!-- 停用沟通信息 -->
+	<update id="stopCommInfo" parameterClass="java.util.HashMap">
+		<![CDATA[
+			UPDATE 
+				Communication.BIN_Communication 
+			SET 
+				ValidFlag = 0, 
+		]]>
+			<include refid="BINOLCMINC99.updateSql" />
+		<![CDATA[
+			WHERE 
+				ValidFlag = 1 AND 
+				BIN_OrganizationInfoID = #organizationInfoId# AND
+		  		BIN_BrandInfoID = #brandInfoId# AND
+		  		Bin_PlanCode = #planCode# 
+		]]>
+    </update>
+    
+    <!-- 删除沟通设置信息 -->
+	<delete id="deleteCommSetInfo" parameterClass="java.util.HashMap">
+		<![CDATA[
+			DELETE FROM	
+				Communication.BIN_CommunicationSet 
+			WHERE					
+				BIN_OrganizationInfoID = #organizationInfoId# AND
+		  		BIN_BrandInfoID = #brandInfoId# AND
+		  		Bin_PlanCode = #planCode# AND 
+		  		BIN_CommunicationCode Not In (
+		  			SELECT TaskCode 
+		  			FROM Communication.BIN_Schedules 
+		  			WHERE Status = 2 AND 
+		  			BIN_OrganizationInfoID = #organizationInfoId# AND 
+		  			BIN_BrandInfoID = #brandInfoId# 
+		  		)
+		]]>
+    </delete>
+    
+    <!-- 删除不在运行的调度信息 -->
+	<delete id="deleteSchedulesInfo" parameterClass="java.util.HashMap">
+		<![CDATA[
+			DELETE FROM	
+				Communication.BIN_Schedules 
+			WHERE 
+				Status != 2 AND 
+				TaskType = #taskType# AND 
+				BIN_OrganizationInfoID = #organizationInfoId# AND
+		  		BIN_BrandInfoID = #brandInfoId# AND 
+		  		TaskCode in (
+		  			SELECT BIN_CommunicationCode 
+		  			FROM Communication.BIN_Communication 
+		  			WHERE BIN_OrganizationInfoID = #organizationInfoId# AND 
+		  			BIN_BrandInfoID = #brandInfoId# AND 
+		  			Bin_PlanCode = #planCode# 
+		  		)
+		]]>
+    </delete>
+    
+    <!-- 根据沟通计划编号取得沟通计划详细信息 -->
+    <select id="getPlanInfoByCode" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+       	<![CDATA[
+			SELECT TOP 1 
+				TA.BIN_UserId as userId,
+				TA.BIN_PlanCode as planCode,
+				TB.BIN_ActivityCode as campaignCode,
+				TA.PlanName as planName,
+				TA.ChannelId as channelId,
+				TA.CounterCode as counterCode,
+				TA.PlanCondition as planCondition,
+				TA.Memo1 as memo,
+				ta.BIN_BrandInfoID as brandInfoId,
+				TA.CreateTime as createTime 
+  			FROM 
+  				Communication.BIN_Communicationplan TA
+  				Left join Communication.BIN_ActivityCommPlan TB 
+  					on TA.BIN_PlanCode=TB.Bin_PlanCode 
+  			WHERE 
+				TA.BIN_OrganizationInfoID=#organizationInfoId# AND 
+				TA.BIN_PlanCode=#planCode#
+		]]>
+    </select>
+    
+    <!-- 统计沟通对象搜索记录数量  -->
+    <select id="getObjRecordCountByCode" parameterClass="java.util.HashMap" resultClass="java.lang.Integer">
+       	<![CDATA[
+			SELECT
+				Count(BIN_SearchCode) as recordCount 
+			FROM 
+				Members.BIN_SearchLog 
+			WHERE 
+				BIN_SearchCode=#searchCode#
+		]]>
+    </select>
+    
+    <!-- 将配置的利润分摊的指定时间添加到调度信息表/修改分摊时间  -->
+	<insert id="insertUpdSchedules" parameterClass="java.util.HashMap">
+        <![CDATA[ 
+        MERGE Communication.BIN_Schedules WITH (HOLDLOCK) AS a
+        USING (select #organizationInfoId# as organizationInfoId,#brandInfoId# as brandInfoId,#taskType# as taskType) AS b
+        ON	  b.organizationInfoId=a.BIN_OrganizationInfoId AND
+        	  b.brandInfoId = a.BIN_BrandInfoId AND
+        	  b.taskType = a.TaskType
+            WHEN MATCHED THEN 
+                UPDATE SET RunTime = #runTime#,
+        ]]>
+		<include refid="BINOLCMINC99.updateSql" />
+		<![CDATA[
+		WHEN NOT MATCHED THEN
+		INSERT
+	           (BIN_OrganizationInfoID,
+	            BIN_BrandInfoID,
+	            RunTime,
+	            TaskType,
+	            TaskCode,
+	            AllowRepeat,
+	            Status,
+	            LoadFlag,
+	            RunCount,
+		]]>	
+		    <include refid="BINOLCMINC99.insertKeySql" />
+		<![CDATA[
+        )VALUES
+	           (#organizationInfoId#,
+	            #brandInfoId#,
+	            #runTime#,
+	            #taskType#,
+	            #taskCode#,
+	            #allowRepeat#,
+	            #status#,
+	            #loadFlag#,
+	            0,
+       ]]>
+	        <include refid="BINOLCMINC99.insertValueSql" />
+		<![CDATA[
+		);
+		]]>
+    </insert>
+</sqlMap>

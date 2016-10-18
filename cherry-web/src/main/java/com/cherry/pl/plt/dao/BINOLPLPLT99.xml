@@ -1,0 +1,314 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sqlMap PUBLIC "-//iBATIS.com//DTD SQL Map 2.0//EN" "http://ibatis.apache.org/dtd/sql-map-2.dtd">
+<sqlMap namespace="BINOLPLPLT99">
+	
+	<!-- 查询权限类型总数 -->
+	<select id="getPrivilegeTypeCount" parameterClass="java.util.HashMap" resultClass="java.lang.Integer">
+		<![CDATA[
+			SELECT				
+				count(BIN_PrivilegeTypeID)	
+			FROM
+				Privilege.BIN_PrivilegeType A left join Privilege.BIN_PositionCategory B on
+				A.BIN_PositionCategoryID=B.BIN_PositionCategoryID
+			WHERE
+				A.BIN_OrganizationInfoID=#organizationInfoId# AND
+				A.ValidFlag = '1'
+		]]>		
+		<dynamic>
+			<isNotEmpty prepend="AND" property="category">
+				A.Category=#category#
+			</isNotEmpty>
+			<isNotEmpty prepend="AND" property="departType">
+				A.Category='0' AND
+				A.DepartType=#departType#
+			</isNotEmpty>
+			<isNotEmpty prepend="AND" property="positionCategoryId">
+				A.Category='1' AND
+				A.BIN_PositionCategoryID=#positionCategoryId#
+			</isNotEmpty>
+			<isNotEmpty prepend="AND" property="brandInfoId">
+				(case when A.Category='1' then B.BIN_BrandInfoID else #brandInfoId# end)=#brandInfoId#
+			</isNotEmpty>
+			<isNotEmpty prepend="AND" property="businessType">
+				A.BusinessType=#businessType#
+			</isNotEmpty>
+		</dynamic>
+    </select>
+	<!-- 查询权限类型List -->
+	<resultMap id="BINOLPLPLT99.PrivilegeType" class="java.util.HashMap">
+		<result property="privilegeTypeId" column="BIN_PrivilegeTypeID"/>
+		<result property="category" column="Category"/>
+		<result property="departType" column="DepartType"/>
+		<result property="positionCategoryId" column="BIN_PositionCategoryID"/>
+		<result property="exclusive" column="Exclusive"/>
+		<result property="categoryName" column="CategoryName"/>
+		<result property="businessType" column="BusinessType"/>
+		<result property="operationType" column="OperationType"/>
+		<result property="privilegeType" column="PrivilegeType"/>
+		<result property="updateTime" column="UpdateTime"/>
+		<result property="modifyCount" column="ModifyCount"/>
+	</resultMap>
+	<select id="getPrivilegeTypeList" parameterClass="java.util.HashMap" resultMap="BINOLPLPLT99.PrivilegeType">
+		<include refid="BINOLCMINC99.pageheader" />
+		<![CDATA[
+			SELECT
+				A.BIN_PrivilegeTypeID,
+				A.Category,
+				A.DepartType,
+				A.BIN_PositionCategoryID,
+				A.Exclusive,
+		]]>
+		<dynamic>
+		<isNotEmpty property="language">
+			<isEqual property="language" compareValue="en_US">
+				B.CategoryNameForeign AS CategoryName,
+			</isEqual>
+			<isEqual property="language" compareValue="zh_CN">	
+				B.CategoryName AS CategoryName,
+			</isEqual>								
+		</isNotEmpty>
+		<isEmpty property="language">
+			B.CategoryName AS CategoryName,
+		</isEmpty>
+		</dynamic>
+		<![CDATA[			
+				A.BusinessType,
+				A.OperationType,
+				A.PrivilegeType,
+				convert(varchar(30),A.UpdateTime,121) AS UpdateTime,
+				A.ModifyCount
+			FROM
+				Privilege.BIN_PrivilegeType A left join Privilege.BIN_PositionCategory B on 
+				A.BIN_PositionCategoryID=B.BIN_PositionCategoryID
+			WHERE
+				A.BIN_OrganizationInfoID=#organizationInfoId# AND
+				A.ValidFlag = '1'
+		]]>		
+		<dynamic>
+			<isNotEmpty prepend="AND" property="category">
+				A.Category=#category#
+			</isNotEmpty>
+			<isNotEmpty prepend="AND" property="departType">
+				A.Category='0' AND
+				A.DepartType=#departType#
+			</isNotEmpty>
+			<isNotEmpty prepend="AND" property="positionCategoryId">
+				A.Category='1' AND
+				A.BIN_PositionCategoryID=#positionCategoryId#
+			</isNotEmpty>
+			<isNotEmpty prepend="AND" property="brandInfoId">
+				(case when A.Category='1' then B.BIN_BrandInfoID else #brandInfoId# end)=#brandInfoId#
+			</isNotEmpty>
+			<isNotEmpty prepend="AND" property="businessType">
+				A.BusinessType=#businessType#
+			</isNotEmpty>
+		</dynamic>
+		<include refid="BINOLCMINC99.pagefooter" />
+    </select>
+    
+    <!-- 取得岗位类别信息 -->
+	<resultMap id="BINOLPLPLT99.PositionCategory" class="java.util.HashMap">
+		<result property="positionCategoryId" column="BIN_PositionCategoryID"/>
+		<result property="categoryCode" column="CategoryCode"/>
+		<result property="categoryName" column="CategoryName"/>
+	</resultMap>
+	<select id="getPositionCategoryList" parameterClass="java.util.HashMap" resultMap="BINOLPLPLT99.PositionCategory">
+		<![CDATA[
+			SELECT 
+				A.BIN_PositionCategoryID,
+				A.CategoryCode,
+		]]>	
+		<isNotEmpty property="language">
+			<isEqual property="language" compareValue="en_US">										
+				A.CategoryNameForeign AS CategoryName
+			</isEqual>
+			<isEqual property="language" compareValue="zh_CN">										
+				A.CategoryName AS CategoryName
+			</isEqual>								
+		</isNotEmpty>
+		<isEmpty property="language">
+			A.CategoryName AS CategoryName
+		</isEmpty>
+		<![CDATA[
+			FROM 
+				Privilege.BIN_PositionCategory A
+			WHERE
+				A.BIN_OrganizationInfoID = #organizationInfoId# AND
+		]]>
+		<dynamic>
+			<isNotEmpty property="brandInfoId">
+				A.BIN_BrandInfoID=#brandInfoId# AND
+			</isNotEmpty>
+		</dynamic>	
+		<![CDATA[
+			A.ValidFlag = '1'
+		]]>
+    </select>
+    
+    <!-- 添加权限类型 -->
+    <insert id="addPlt" parameterClass="java.util.HashMap">
+    	<![CDATA[
+    		INSERT INTO Privilege.BIN_PrivilegeType			
+			(				
+				BIN_OrganizationInfoID,			
+				Category,			
+				DepartType,			
+				BIN_PositionCategoryID,			
+				BusinessType,
+				OperationType,
+				PrivilegeType,
+				Exclusive,
+		]]>
+				<include refid="BINOLCMINC99.insertKeySql" />		
+		<![CDATA[				
+			)				
+			VALUES				
+			(				
+				#organizationInfoId#,			
+				#category#,			
+				#departType#,			
+				#positionCategoryId#,			
+				#businessType#,
+				#operationType#,
+				#privilegeType#,
+				#exclusive#,
+		]]>
+				<include refid="BINOLCMINC99.insertValueSql" />		
+		<![CDATA[	
+			)				
+    	]]>
+    </insert>
+    
+    <!-- 查询权限类型是否存在 -->
+	<select id="getPltCountVal" parameterClass="java.util.HashMap" resultClass="java.lang.String">
+		<![CDATA[
+			SELECT				
+				BIN_PrivilegeTypeID	
+			FROM
+				Privilege.BIN_PrivilegeType
+			WHERE
+				BIN_OrganizationInfoID=#organizationInfoId# AND
+				BusinessType=#businessType# AND
+				OperationType=#operationType# AND
+				PrivilegeType=#privilegeType#
+		]]>		
+		<dynamic>
+			<isNotEmpty prepend="AND" property="departType">
+				Category='0' AND
+				DepartType=#departType#
+			</isNotEmpty>
+			<isNotEmpty prepend="AND" property="positionCategoryId">
+				Category='1' AND
+				BIN_PositionCategoryID=#positionCategoryId#
+			</isNotEmpty>
+		</dynamic>
+    </select>
+    
+    <!-- 查询权限类型是否存在（添加画面用） -->
+	<select id="getPltCount" parameterClass="java.util.HashMap" resultClass="java.lang.Integer">
+		<![CDATA[
+			SELECT				
+				COUNT(BIN_PrivilegeTypeID)	
+			FROM
+				Privilege.BIN_PrivilegeType
+			WHERE
+				BIN_OrganizationInfoID=#organizationInfoId# AND
+				BusinessType IN
+		]]>			
+			<iterate property="businessType" open="(" close=")" conjunction=","> 
+				#businessType[]#
+			</iterate>		
+		<![CDATA[	
+				AND OperationType IN
+		]]>			
+			<iterate property="operationType" open="(" close=")" conjunction=","> 
+				#operationType[]#
+			</iterate>		
+		<![CDATA[
+				AND PrivilegeType=#privilegeType#
+		]]>		
+		<dynamic>
+			<isNotEmpty prepend="AND" property="departType">
+				Category='0' AND
+				DepartType IN
+				<iterate property="departType" open="(" close=")" conjunction=","> 
+					#departType[]#
+				</iterate>	
+			</isNotEmpty>
+			<isNotEmpty prepend="AND" property="positionCategoryId">
+				Category='1' AND
+				BIN_PositionCategoryID IN
+				<iterate property="positionCategoryId" open="(" close=")" conjunction=","> 
+					#positionCategoryId[]#
+				</iterate>
+			</isNotEmpty>
+		</dynamic>
+    </select>
+    
+    <!-- 查询权限类型信息 -->
+	<resultMap id="BINOLPLPLT99.PrivilegeTypeInfo" class="java.util.HashMap">
+		<result property="category" column="Category"/>
+		<result property="departType" column="DepartType"/>
+		<result property="positionCategoryId" column="BIN_PositionCategoryID"/>
+		<result property="businessType" column="BusinessType"/>
+		<result property="operationType" column="OperationType"/>
+		<result property="privilegeType" column="PrivilegeType"/>
+		<result property="exclusive" column="Exclusive"/>
+		<result property="updateTime" column="UpdateTime"/>
+		<result property="modifyCount" column="ModifyCount"/>
+	</resultMap>
+	<select id="getPrivilegeTypeInfo" parameterClass="java.util.HashMap" resultMap="BINOLPLPLT99.PrivilegeTypeInfo">
+		<![CDATA[
+			SELECT
+				Category,
+				DepartType,
+				BIN_PositionCategoryID,		
+				BusinessType,
+				OperationType,
+				PrivilegeType,
+				Exclusive,
+				convert(varchar(30),UpdateTime,121) AS UpdateTime,
+				ModifyCount
+			FROM
+				Privilege.BIN_PrivilegeType
+			WHERE
+				BIN_PrivilegeTypeID=#privilegeTypeId# AND
+				ValidFlag = '1'
+		]]>		
+    </select>
+    
+    <!-- 更新权限类型 -->
+	<update id="updatePlt" parameterClass="java.util.HashMap">
+		<![CDATA[
+			UPDATE Privilege.BIN_PrivilegeType				
+			SET						
+				DepartType=#departType#,			
+				BIN_PositionCategoryID=#positionCategoryId#,				
+				BusinessType=#businessType#,			
+				OperationType=#operationType#,			
+				PrivilegeType=#privilegeType#,	
+				Exclusive=#exclusive#,		
+		]]>
+				<include refid="BINOLCMINC99.updateSql" />		
+		<![CDATA[					
+			WHERE				
+				BIN_PrivilegeTypeID=#privilegeTypeId# AND
+				ValidFlag = '1' AND
+				UpdateTime = #modifyTime# AND		
+				ModifyCount = #modifyCount#					
+		]]>
+	</update>
+    
+    <!-- 删除权限类型 -->
+	<delete id="deletePlt" parameterClass="java.util.HashMap">
+		<![CDATA[
+			DELETE FROM Privilege.BIN_PrivilegeType		
+			WHERE		
+				BIN_PrivilegeTypeID=#privilegeTypeId# AND
+				ValidFlag = '1' AND
+				UpdateTime = #modifyTime# AND		
+				ModifyCount = #modifyCount#		
+		]]>
+	</delete>
+	
+</sqlMap>

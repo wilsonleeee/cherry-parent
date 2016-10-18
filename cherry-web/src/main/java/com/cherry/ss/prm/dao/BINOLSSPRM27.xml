@@ -1,0 +1,201 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sqlMap PUBLIC "-//iBATIS.com//DTD SQL Map 2.0//EN" "http://ibatis.apache.org/dtd/sql-map-2.dtd">
+<sqlMap namespace="BINOLSSPRM27">
+<sql id="commMainSQL">
+	<![CDATA[
+  SELECT 
+		A.BIN_BrandInfoID,	
+		A.BIN_PromotionDeliverID, 
+		A.DeliverReceiveNo,
+		A.DeliverReceiveNoIF, 
+		A.RelevanceNo,
+		A.BIN_OrganizationID,
+		A.BIN_OrganizationIDReceive,
+		A.VerifiedFlag,																	
+		A.DeliverDate,
+		A.StockInFlag,
+		A.BIN_EmployeeID,
+		C.BIN_InventoryInfoID,
+	   	ISNULL(SUM(ISNULL(C.Quantity, 0)),0) AS totalQuantity,                                                                        
+		ISNULL(SUM(ISNULL(C.Quantity, 0)* ISNULL(C.Price, 0)),0) AS totalAmount
+	FROM
+		Inventory.BIN_PromotionDeliver A
+		JOIN Inventory.BIN_PromotionDeliverDetail C
+		ON (A.BIN_PromotionDeliverID = C.BIN_PromotionDeliverID	AND C.ValidFlag = '1')
+   WHERE
+	]]>
+	<isNotEmpty property="startDate" >
+        <![CDATA[A.DeliverDate >= #startDate# AND]]>
+    </isNotEmpty>
+    <isNotEmpty property="endDate" >
+        <![CDATA[A.DeliverDate <= #endDate# AND]]>
+    </isNotEmpty>
+	<![CDATA[A.ValidFlag = '1']]>
+	<![CDATA[AND EXISTS ( ]]>
+	<include refid="BINOLCMINC99.getDepartList" />
+	<isNotEmpty property="tradeType">
+		<isEqual property="tradeType" compareValue="1" prepend="AND">
+			<![CDATA[A.BIN_OrganizationID = A99.BIN_OrganizationID]]>
+		</isEqual>
+		<isEqual property="tradeType" compareValue="2" prepend="AND">
+			<![CDATA[A.BIN_OrganizationIDReceive = A99.BIN_OrganizationID]]>
+		</isEqual>
+	</isNotEmpty>
+	<![CDATA[)]]>
+	<isNotEmpty property="tradeType" prepend="AND">
+		<![CDATA[A.TradeType = #tradeType#]]>
+	</isNotEmpty>
+	<isNotEmpty prepend="AND" property="deliverRecNo">	
+		<![CDATA[A.DeliverReceiveNoIF LIKE '%' + #deliverRecNo# + '%']]>						
+	</isNotEmpty>
+	<isNotEmpty prepend="AND" property="relevanceNo">	
+		<![CDATA[A.RelevanceNo LIKE '%' + #relevanceNo# + '%']]>						
+	</isNotEmpty>
+	<isNotEmpty prepend="AND" property="verifiedFlag">												
+		<![CDATA[A.VerifiedFlag = #verifiedFlag#]]>										
+	</isNotEmpty>
+	<isNotEmpty prepend="AND" property="stockInFlag">											
+		<![CDATA[A.StockInFlag = #stockInFlag#]]>		
+	</isNotEmpty>
+	<isNotEmpty prepend="AND" property="inOrganizationId">												
+		<![CDATA[A.BIN_OrganizationIDReceive = #inOrganizationId#]]>										
+	</isNotEmpty>
+	<isNotEmpty prepend="AND" property="outOrganizationId">												
+		<![CDATA[A.BIN_OrganizationID = #outOrganizationId#]]>										
+	</isNotEmpty>
+	<isNotEmpty prepend="AND" property="depotId">											
+		<![CDATA[C.BIN_InventoryInfoID = #depotId#]]>
+	</isNotEmpty>
+    <isNotEmpty prepend="AND" property="prmVendorId">   
+        <![CDATA[C.BIN_PromotionProductVendorID = #prmVendorId#]]>	
+	</isNotEmpty>
+	<![CDATA[
+	GROUP BY
+	    A.BIN_BrandInfoID,	
+		A.BIN_PromotionDeliverID, 
+		A.DeliverReceiveNo,
+		A.DeliverReceiveNoIF, 
+		A.RelevanceNo,
+		A.BIN_OrganizationID,
+		A.BIN_OrganizationIDReceive,
+		A.VerifiedFlag,																	
+		A.DeliverDate,
+		A.StockInFlag,
+		A.BIN_EmployeeID,
+		C.BIN_InventoryInfoID
+	]]>	
+</sql>
+
+<!-- 促销品发货单查询sql文  -->
+<sql id="deliverQuery">
+	<![CDATA[
+	SELECT 
+		DISTINCT
+		T1.BIN_BrandInfoID,
+		T1.BIN_PromotionDeliverID AS deliverId,
+		T1.DeliverReceiveNo AS deliverRecNoSort,
+		T1.DeliverReceiveNoIF AS deliverRecNo,	
+		T1.BIN_OrganizationID AS deliverDepId,
+		T1.BIN_OrganizationIDReceive AS receiveDepId,
+		T1.totalQuantity,
+		T1.totalAmount,
+		T1.VerifiedFlag AS verifiedFlag,																		
+		T1.DeliverDate AS deliverDate,
+		T1.StockInFlag AS stockInFlag,
+		F.EmployeeName AS employeeName,
+		B.DepartCode AS sendDepartCode,
+		G.DepartCode AS receiveDepartCode,
+		CASE WHEN T10.BillNo is not null THEN 1 ELSE 0 END AS printStatus
+	]]>	
+	<dynamic>
+	<isNotEmpty property="language">
+		<isEqual property="language" compareValue="en_US">
+		,'(' + B.DepartCode + ')' + B.NameForeign AS departName										
+		,D.DepotNameEN AS inventoryName
+		,'(' + G.DepartCode + ')' + G.NameForeign AS departNameReceive
+		</isEqual>
+		<isEqual property="language" compareValue="zh_CN">	
+		,'(' + B.DepartCode + ')' + B.DepartName AS departName								
+		,D.DepotNameCN AS inventoryName
+		,'(' + G.DepartCode + ')' + G.DepartName AS departNameReceive
+		</isEqual>								
+	</isNotEmpty>
+	<isEmpty property="language">
+		,'(' + B.DepartCode + ')' + B.DepartName AS departName
+		,D.DepotNameCN AS inventoryName
+		,'(' + G.DepartCode + ')' + G.DepartName AS departNameReceive
+	</isEmpty>
+	</dynamic>
+	<![CDATA[FROM ( ]]>
+    <include refid="BINOLSSPRM27.commMainSQL" />   
+	<![CDATA[)T1
+		LEFT JOIN Basis.BIN_Employee F																			
+		ON (T1.BIN_EmployeeID = F.BIN_EmployeeID)
+		LEFT JOIN  Basis.BIN_Organization B
+		ON (T1.BIN_OrganizationID = B.BIN_OrganizationID)																																
+		LEFT JOIN Basis.BIN_DepotInfo D
+		ON (T1.BIN_InventoryInfoID = D.BIN_DepotInfoID)
+		LEFT JOIN Basis.BIN_Organization G
+		ON (T1.BIN_OrganizationIDReceive = G.BIN_OrganizationID)
+		LEFT JOIN Basis.BIN_PrintLog T10
+		ON(T1.BIN_BrandInfoID = T10.BIN_BrandInfoID AND T1.DeliverReceiveNoIF = T10.BillNo) 
+	]]>
+	<isNotEmpty property="printStatus">
+		<isEqual property="printStatus" compareValue="1" prepend="WHERE">
+			<![CDATA[T10.BillNo is not null]]>
+		</isEqual>
+		<isEqual property="printStatus" compareValue="0" prepend="WHERE">
+			<![CDATA[T10.BillNo is null]]>
+		</isEqual>
+	</isNotEmpty>
+</sql>
+	<!-- 取得发货单List  -->
+    <select id="getDeliverList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+       	<include refid="BINOLCMINC99.pageheader" />
+		<include refid="BINOLSSPRM27.deliverQuery" />
+		<include refid="BINOLCMINC99.pagefooter" />
+    </select>
+	<!-- 伦理删除促销产品收发货业务单据表 -->
+	<update id="invalidPromotionDeliver" parameterClass="java.util.HashMap">		
+	<![CDATA[
+		UPDATE
+			Inventory.BIN_PromotionDeliver
+		SET
+			ValidFlag = '0',
+	]]>
+			<include refid="BINOLCMINC99.updateSql" />		
+	<![CDATA[	
+		WHERE
+			BIN_PromotionDeliverID = #deliverId# AND
+			UpdateTime = #deliverUpdateTime# AND
+			ModifyCount = #modifyCount#
+		]]>
+	</update>
+	
+	<!-- 伦理删除促销产品收发货业务单据明细表 -->
+	<update id="invalidPromotionDeliverDetail" parameterClass="java.util.HashMap">		
+	<![CDATA[
+		UPDATE
+			Inventory.BIN_PromotionDeliverDetail
+		SET
+			ValidFlag = '0',
+	]]>
+			<include refid="BINOLCMINC99.updateSql" />		
+	<![CDATA[	
+		WHERE
+			BIN_PromotionDeliverID = #deliverId#
+		]]>
+	</update>
+	
+	 <!-- 取得出入库汇总信息【产品作为检索条件】  -->
+    <select id="getSumInfo" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+    	<![CDATA[
+		SELECT 
+			COUNT(SORT_T1.deliverId) AS count,
+           	ISNULL(SUM(ISNULL(SORT_T1.totalQuantity, 0)),0) AS sumQuantity,
+            ISNULL(SUM(ISNULL(SORT_T1.totalAmount, 0)),0) AS sumAmount
+		FROM (]]>	
+		<include refid="BINOLSSPRM27.deliverQuery" />	
+		<![CDATA[)SORT_T1]]>
+    </select>
+</sqlMap>

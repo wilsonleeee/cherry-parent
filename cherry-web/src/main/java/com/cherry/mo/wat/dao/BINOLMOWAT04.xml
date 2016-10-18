@@ -1,0 +1,240 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sqlMap PUBLIC "-//iBATIS.com//DTD SQL Map 2.0//EN" "http://ibatis.apache.org/dtd/sql-map-2.dtd">
+<sqlMap namespace="BINOLMOWAT04">
+    <!-- 异常盘点次数柜台查询sql文  -->
+    <sql id="counterInfoQuery">
+        <![CDATA[
+            SELECT
+                D.DepartCode AS departCode,
+        ]]>
+        <dynamic>
+	        <isNotEmpty property="language">
+	            <isEqual property="language" compareValue="en_US">
+	                D.NameForeign AS departName,
+	            </isEqual>
+	            <isEqual property="language" compareValue="zh_CN">
+		            D.DepartName AS departName,
+	            </isEqual>
+	        </isNotEmpty>
+	        <isEmpty property="language">
+	            D.DepartName AS departName,
+	        </isEmpty>
+        </dynamic>
+        <![CDATA[
+                C.Count AS count
+            FROM
+                (SELECT
+                    B.BIN_OrganizationID,
+                    B.Count
+                FROM
+                    (SELECT
+                        Count(BIN_ProductStockTakingID) AS count,
+                        A.BIN_OrganizationID AS BIN_OrganizationID
+                    FROM
+                        Inventory.BIN_ProductStockTaking A
+                    WHERE
+                        A.ValidFlag='1'
+                        AND A.BIN_OrganizationInfoID=#organizationInfoId#
+                        AND A.Date>=#startDate#
+                        AND A.Date<=#endDate#
+        ]]>
+        <dynamic>
+            <isNotEmpty prepend="AND" property="brandInfoId">
+                A.BIN_BrandInfoID=#brandInfoId#
+            </isNotEmpty>
+        </dynamic>
+        <![CDATA[
+                    GROUP BY A.BIN_OrganizationID)B
+                WHERE
+                    B.count>=#maxLimit#
+                )C
+            LEFT JOIN Basis.BIN_Organization D
+            ON C.BIN_OrganizationID=D.BIN_OrganizationID AND D.ValidFlag = '1'
+            WHERE 1=1
+        ]]>
+        <![CDATA[AND EXISTS ( ]]>
+        <include refid="BINOLCMINC99.getDepartList" />
+        <![CDATA[
+            AND C.BIN_OrganizationID = A99.BIN_OrganizationID)
+        ]]>
+    </sql>
+	
+	<!-- 取得异常盘点次数柜台总数  -->
+    <select id="getCounterInfoCount" parameterClass="java.util.HashMap" resultClass="java.lang.Integer">
+        <![CDATA[
+            SELECT COUNT(SORT_T1.departCode) AS count FROM (
+        ]]>
+        <include refid="BINOLMOWAT04.counterInfoQuery" />
+        <![CDATA[
+            )SORT_T1
+        ]]>
+    </select>
+    
+    <!-- 取得异常盘点次数柜台List  -->
+    <select id="getCounterInfoList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+        <include refid="BINOLCMINC99.pageheader" />
+        <include refid="BINOLMOWAT04.counterInfoQuery" />
+        <include refid="BINOLCMINC99.pagefooter" />
+    </select>
+	
+	<!-- 取得异常盘点次数柜台List(Excel)  -->
+    <select id="getCounterInfoListExcel" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+        <include refid="BINOLMOWAT04.counterInfoQuery" />
+		<![CDATA[ORDER BY departCode]]>
+    </select>
+	
+	<!-- 异常盘差查询sql文  -->
+    <sql id="abnormalGainQuantityQuery">
+        <![CDATA[
+            SELECT
+                S.stockTakingId,
+                S.stockTakingNo,
+				S.verifiedFlag,
+				S.takingType,
+				S.date,
+				S.departCode,
+				S.departName,
+				S.employeeName,
+				S.summQuantity,
+				S.summAmount
+			FROM
+	            (SELECT
+	                A.BIN_ProductStockTakingID AS stockTakingId,
+	                A.StockTakingNoIF AS stockTakingNo,
+	                A.VerifiedFlag AS verifiedFlag,
+	                A.Type AS takingType,
+	                A.Date AS date,
+	                F.DepartCode AS departCode,
+	                H.EmployeeName AS employeeName,
+	                SUM(ISNULL(C.GainQuantity, 0)) AS summQuantity,
+	                SUM(ISNULL(C.GainQuantity, 0) * ISNULL(C.Price, 0)) AS summAmount
+            ]]>
+        <dynamic>
+        <isNotEmpty property="language">
+            <isEqual property="language" compareValue="en_US">
+            ,F.NameForeign AS departName
+            ,D.DepotNameEN AS inventoryName
+            </isEqual>
+            <isEqual property="language" compareValue="zh_CN">
+            ,F.DepartName AS departName
+            ,D.DepotNameCN AS inventoryName
+            </isEqual>
+        </isNotEmpty>
+        <isEmpty property="language">
+            ,F.DepartName AS departName
+            ,D.DepotNameCN AS inventoryName
+        </isEmpty>
+        </dynamic>
+         <![CDATA[
+            FROM
+                Inventory.BIN_ProductStockTaking A
+                JOIN Inventory.BIN_ProductTakingDetail C
+                ON(A.BIN_ProductStockTakingID = C.BIN_ProductTakingID AND C.ValidFlag = '1')
+                JOIN Basis.BIN_DepotInfo D
+                ON(C.BIN_InventoryInfoID = D.BIN_DepotInfoID AND D.ValidFlag = '1')
+                JOIN Basis.BIN_Organization F
+                ON(A.BIN_OrganizationID = F.BIN_OrganizationID AND F.ValidFlag = '1')
+        ]]>
+        <![CDATA[
+                LEFT JOIN Basis.BIN_Employee H
+                ON (A.BIN_EmployeeID = H.BIN_EmployeeID AND H.ValidFlag = '1')
+            WHERE
+                A.ValidFlag = '1'
+        ]]>
+        <dynamic>
+        <isNotEmpty prepend="AND" property="profitKbn">
+            <isEqual property="profitKbn" compareValue="0">
+                    <![CDATA[ISNULL(C.GainQuantity, 0) >= 0 ]]>
+            </isEqual>
+            <isEqual property="profitKbn" compareValue="1">                                      
+                    <![CDATA[ISNULL(C.GainQuantity, 0) < 0 ]]>
+            </isEqual>
+        </isNotEmpty>
+        <isNotEmpty prepend="AND" property="startDate">
+            <![CDATA[
+            A.Date >= #startDate#
+            ]]>
+        </isNotEmpty>
+        <isNotEmpty prepend="AND" property="endDate">
+            <![CDATA[
+            A.Date <= #endDate#
+            ]]>           
+        </isNotEmpty>
+        </dynamic>
+        <![CDATA[AND EXISTS ( ]]>
+        <include refid="BINOLCMINC99.getDepartList" />
+        <![CDATA[
+                AND A.BIN_OrganizationID = A99.BIN_OrganizationID)
+        ]]>
+        <![CDATA[
+            GROUP BY
+                A.BIN_ProductStockTakingID,
+                A.StockTakingNoIF,
+                A.VerifiedFlag,
+                A.Type,
+                A.Date,   
+                A.ValidFlag,
+                F.DepartCode,
+                H.EmployeeName
+        ]]>
+        <dynamic>
+        <isNotEmpty property="language">
+            <isEqual property="language" compareValue="en_US">
+            ,F.NameForeign
+            ,D.DepotNameEN
+            </isEqual>
+            <isEqual property="language" compareValue="zh_CN">  
+            ,F.DepartName
+            ,D.DepotNameCN
+            </isEqual>
+        </isNotEmpty>
+        <isEmpty property="language">
+            ,F.DepartName
+            ,D.DepotNameCN
+        </isEmpty>
+        </dynamic>
+		<![CDATA[
+            )S WHERE ABS(S.summQuantity)>= #gainQuantityGE#
+		]]>
+		<!--
+		<dynamic>
+	        <isNotEmpty prepend="(" property="gainQuantityGE">
+	        	<![CDATA[S.summQuantity>= #gainQuantityGE#]]>
+	        </isNotEmpty>
+            <isEmpty prepend="(" property="gainQuantityGE">
+                <![CDATA[1!=1]]>
+            </isEmpty>
+            <isNotEmpty prepend="OR" property="gainQuantityLE">
+            	<![CDATA[S.summQuantity<= #gainQuantityLE#)]]>
+            </isNotEmpty>
+            <isEmpty prepend="OR" property="gainQuantityLE">
+                <![CDATA[1!=1)]]>
+            </isEmpty>
+		</dynamic>
+		-->
+    </sql>
+	
+	<!-- 取得异常盘差总数  -->
+    <select id="getAbnormalGainQuantityCount" parameterClass="java.util.HashMap" resultClass="java.lang.Integer">
+        <![CDATA[
+            SELECT COUNT(SORT_T1.stockTakingId) AS count FROM (
+        ]]>
+        <include refid="BINOLMOWAT04.abnormalGainQuantityQuery" />
+        <![CDATA[
+            )SORT_T1
+        ]]>
+    </select>
+	
+	<!-- 取得异常盘差List  -->
+    <select id="getAbnormalGainQuantityList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+        <include refid="BINOLCMINC99.pageheader" />
+        <include refid="BINOLMOWAT04.abnormalGainQuantityQuery" />
+        <include refid="BINOLCMINC99.pagefooter" />
+    </select>
+	
+	<!-- 取得异常盘差(Excel)  -->
+    <select id="getAbnormalGainQuantityListExcel" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+        <include refid="BINOLMOWAT04.abnormalGainQuantityQuery" />
+        <![CDATA[ORDER BY stockTakingId]]>
+    </select>
+</sqlMap>

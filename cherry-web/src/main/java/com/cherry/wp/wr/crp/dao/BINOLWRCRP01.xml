@@ -1,0 +1,110 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sqlMap PUBLIC "-//iBATIS.com//DTD SQL Map 2.0//EN" "http://ibatis.apache.org/dtd/sql-map-2.dtd">
+<sqlMap namespace="BINOLWRCRP01">
+	<sql id="CampaignOrderQuery">
+		<![CDATA[
+			SELECT
+				CASE ISNULL(A.CouponCode,'') WHEN '' THEN A.CouponCode 
+					ELSE LEFT(A.CouponCode,5)+'****'+RIGHT(A.CouponCode,5) END as couponCode,
+				A.SubType AS subType,
+				CASE WHEN A.BIN_MemberInfoID IS NULL THEN A.Name 
+					ELSE B.Name END AS customerName,
+				A.Mobile AS mobilePhone,
+				CASE ISNULL(B.BirthDay,'') WHEN '' THEN '' 
+					ELSE LEFT(B.BirthDay,2)+'-'+RIGHT(B.BirthDay,2) END AS birthDay,
+				B.Gender AS gender,
+				CONVERT(date,A.CampaignOrderTime,120) AS campaignOrderDate,
+				A.BookDate AS bookDate,
+				CONVERT(date,A.FinishTime,120) AS finishTime,
+				A.[State] AS [state],
+				ISNULL(A.CounterGot,'') AS counterGot,
+		]]>
+		<dynamic>
+			<isNotEmpty property="language">
+				<isEqual property="language" compareValue="en_US">
+					<![CDATA[
+						CASE ISNULL(C.EmployeeCode,'') WHEN '' THEN C.EmployeeNameForeign 
+							ELSE '('+C.EmployeeCode+')'+C.EmployeeNameForeign END AS optPerson
+					]]>
+				</isEqual>
+				<isEqual property="language" compareValue="zh_CN">
+					<![CDATA[
+					CASE ISNULL(C.EmployeeCode,'') WHEN '' THEN C.EmployeeName 
+						ELSE '('+C.EmployeeCode+')'+C.EmployeeName END AS optPerson
+					]]>
+				</isEqual>
+			</isNotEmpty>
+			<isEmpty property="language">
+				<![CDATA[
+					CASE ISNULL(C.EmployeeCode,'') WHEN '' THEN C.EmployeeName 
+						ELSE '('+C.EmployeeCode+')'+C.EmployeeName END AS optPerson
+				]]>
+			</isEmpty>
+		</dynamic>
+		<![CDATA[
+			FROM
+				Campaign.BIN_CampaignOrder A WITH(NOLOCK)
+				LEFT JOIN Members.BIN_MemberInfo B WITH(NOLOCK)
+				ON(A.BIN_MemberInfoID=B.BIN_MemberInfoID)
+				LEFT JOIN Basis.BIN_Employee C WITH(NOLOCK)
+				ON(A.Opeartor=C.BIN_EmployeeID)
+			WHERE
+				A.ValidFlag='1'
+				AND A.BIN_OrganizationInfoID = #organizationInfoId#
+                AND A.BIN_BrandInfoID = #brandInfoId#
+		]]>
+		<dynamic>
+            <isNotEmpty prepend="AND" property="subType">
+                <![CDATA[A.SubType = #subType# ]]>
+            </isNotEmpty>
+            <isNotEmpty prepend="AND" property="customerName">
+                <![CDATA[(A.Name like '%'+#customerName#+'%' OR B.Name like '%'+#customerName#+'%')]]>
+            </isNotEmpty>
+            <isNotEmpty prepend="AND" property="mobilePhone">
+                <![CDATA[A.Mobile like '%' + #mobilePhone# + '%']]>
+            </isNotEmpty>
+            <isNotEmpty prepend="AND" property="employeeId">
+                <![CDATA[A.Opeartor = #employeeId# ]]>
+            </isNotEmpty>
+			<isNotEmpty prepend="AND" property="campaignOrderDateStart">
+                <![CDATA[A.CampaignOrderTime >= #campaignOrderDateStart#]]>
+            </isNotEmpty>
+			<isNotEmpty prepend="AND" property="campaignOrderDateEnd">
+                <![CDATA[A.CampaignOrderTime <= dateadd(day,1,#campaignOrderDateEnd#)]]>
+            </isNotEmpty>
+            <isNotEmpty prepend="AND" property="finishTimeStart">
+                <![CDATA[A.FinishTime >= #finishTimeStart#]]>
+            </isNotEmpty>
+			<isNotEmpty prepend="AND" property="finishTimeEnd">
+                <![CDATA[A.FinishTime <= dateadd(day,1,#finishTimeEnd#)]]>
+            </isNotEmpty>
+            <isNotEmpty prepend="AND" property="bookDateStart">
+                <![CDATA[A.BookDate >= #bookDateStart#]]>
+            </isNotEmpty>
+			<isNotEmpty prepend="AND" property="bookDateEnd">
+                <![CDATA[A.BookDate <= #bookDateEnd#]]>
+            </isNotEmpty>
+            <isNotEmpty prepend="AND" property="state">
+				<![CDATA[	(A.[State] = #state#)]]>
+            </isNotEmpty>
+        </dynamic>
+	</sql>
+	
+	<!-- 取得代理商提成统计信息LIST的行数 -->
+    <select id="getCampaignOrderCount" parameterClass="java.util.HashMap" resultClass="java.lang.Integer">
+        <![CDATA[
+            SELECT COUNT(1) AS count FROM (
+        ]]>
+        <include refid="BINOLWRCRP01.CampaignOrderQuery" />
+        <![CDATA[
+            )SORT_T1
+        ]]>
+    </select>
+    
+    <!-- 取得代理商提成统计信息LIST  -->
+    <select id="getCampaignOrderList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+        <include refid="BINOLCMINC99.pageheader" />
+        <include refid="BINOLWRCRP01.CampaignOrderQuery" />
+        <include refid="BINOLCMINC99.pagefooter" />
+    </select>
+</sqlMap>

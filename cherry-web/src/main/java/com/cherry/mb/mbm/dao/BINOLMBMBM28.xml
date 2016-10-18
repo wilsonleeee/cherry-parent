@@ -1,0 +1,188 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE sqlMap PUBLIC "-//iBATIS.com//DTD SQL Map 2.0//EN" "http://ibatis.apache.org/dtd/sql-map-2.dtd">
+
+<sqlMap namespace="BINOLMBMBM28">
+    
+    <!-- 取得会员问题明细 -->
+    <select id="getIssueDetail" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+        <![CDATA[
+            SELECT
+				A.BIN_IssueID AS issueId,
+				A.IssueNo AS issueNo,
+				A.IssueType AS issueType,
+				A.IssueSubType AS issueSubType,
+				A.IssueSummary AS issueSummary,
+				A.Resolution AS resolution,
+				A.IssueStatus AS issueStatus,
+				A.Priority AS priority,
+				A.Assignee AS assignee,
+				A.Speaker AS speaker,
+				CONVERT(varchar(30),A.CreateTime,120) AS createTime,
+				CONVERT(varchar(30),A.UpdateTime,120) AS updateTime,
+				CASE ISNULL(B.EmployeeName,'') WHEN '' THEN B.EmployeeCode ELSE '(' + B.EmployeeCode + ')' + B.EmployeeName END AS assigneeName,
+				CASE ISNULL(C.EmployeeName,'') WHEN '' THEN C.EmployeeCode ELSE '(' + C.EmployeeCode + ')' + C.EmployeeName END AS speakerName,
+				A.Description AS description,
+				CONVERT(varchar(10),A.DueDate,120) AS dueDate,
+				CONVERT(varchar(30),A.ResolutionDate,120) AS resolutionDate,
+				A.ReIssueNo AS reIssueNo,
+				A.BillCode AS billCode,
+				A.CampaignType AS campaignType,
+				A.CampaignCode AS campaignCode,
+				CASE WHEN A.CampaignType = '1' THEN E.ActivityName ELSE D.CampaignName END AS campaignName
+			FROM
+				Members.BIN_Issue A
+				LEFT JOIN Basis.BIN_Employee B ON A.Assignee = B.BIN_EmployeeID
+				LEFT JOIN Basis.BIN_Employee C ON A.Speaker = C.BIN_EmployeeID
+				LEFT JOIN Campaign.BIN_Campaign D ON A.CampaignCode = D.CampaignCode AND A.CampaignType = '0'
+				LEFT JOIN Promotion.BIN_PromotionActivity E ON A.CampaignCode = E.ActivityCode AND A.CampaignType = '1'
+			WHERE
+        ]]>
+        	<isNotEmpty property="issueId">
+        		A.BIN_IssueID = #issueId#
+        	</isNotEmpty>
+        	<isNotEmpty property="issueNo">
+        		A.IssueNo = #issueNo# AND
+        		A.BIN_OrganizationInfoID = #organizationInfoId#
+				<isNotEmpty prepend="AND" property="brandInfoId">	
+					A.BIN_BrandInfoID = #brandInfoId#
+				</isNotEmpty>
+        	</isNotEmpty>
+    </select>
+    
+    <!-- 取得会员问题处理信息List -->
+    <select id="getIssueActionList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+        <![CDATA[
+            SELECT
+				A.BIN_IssueActionID AS issueActionId,
+				A.ActionBody AS actionBody,
+				CONVERT(varchar(30),A.UpdateTime,120) AS updateTime,
+				A.Author AS author,
+				B.EmployeeName AS assigneeName
+			FROM
+				Members.BIN_IssueAction A
+				LEFT JOIN Basis.BIN_Employee B ON A.Author = B.BIN_EmployeeID
+			WHERE
+				A.BIN_IssueID = #issueId#
+        ]]>
+    </select>
+    
+    <!-- 更新会员问题 -->
+    <update id="updIssue" parameterClass="java.util.HashMap">
+    	<![CDATA[
+			UPDATE
+				Members.BIN_Issue
+			SET
+				IssueType=#issueTypeAdd#,
+				IssueSubType=#issueSubTypeAdd#,
+				IssueSummary=#issueSummaryAdd#,
+				Description=#descriptionAdd#,
+				BillCode=#billCodeAdd#,
+				CampaignType=#campaignTypeAdd#,
+				CampaignCode=#campaignCodeAdd#,
+				ReIssueNo=#reIssueNoAdd#,
+				Assignee=#assigneeAdd#,
+				Speaker=#speakerAdd#,
+				Resolution=#resolutionAdd#,
+				IssueStatus=#issueStatus#,
+		]]>
+			<isNotEmpty property="dueDateAdd">
+				DueDate = #dueDateAdd#,
+			</isNotEmpty>	
+			<isEmpty property="dueDateAdd">
+				DueDate = NULL,
+			</isEmpty>
+			<isNotEmpty property="resolutionDate">
+				ResolutionDate = #resolutionDate#,
+			</isNotEmpty>	
+		<![CDATA[		
+				Priority = #priorityAdd#,
+		]]>
+			<include refid="BINOLCMINC99.updateSql" />
+		<![CDATA[		
+			WHERE
+				BIN_IssueID = #issueId#
+		]]>
+    </update>
+    
+    <!-- 更新会员问题状态 -->
+    <update id="updIssueStatus" parameterClass="java.util.HashMap">
+    	<![CDATA[
+			UPDATE
+				Members.BIN_Issue
+			SET
+				IssueStatus = #issueStatus#,
+				Resolution = #resolutionAdd#,
+				ResolutionDate = GETDATE(),
+		]]>
+			<include refid="BINOLCMINC99.updateSql" />
+		<![CDATA[		
+			WHERE
+				BIN_IssueID = #issueId#
+		]]>
+    </update>
+    
+    <!-- 删除会员问题 -->
+    <delete id="delIssue" parameterClass="java.util.HashMap">
+    	<![CDATA[
+			DELETE FROM
+				Members.BIN_Issue
+			WHERE
+				BIN_IssueID = #issueId#
+		]]>
+    </delete>
+    
+    <!-- 添加会员问题处理内容 -->
+    <insert id="addIssueAction" parameterClass="java.util.HashMap">
+    	<![CDATA[
+    		INSERT INTO Members.BIN_IssueAction					
+			(					
+				BIN_IssueID,				
+				Author,				
+				ActionRole,			
+				ActionBody,
+		]]>
+				<include refid="BINOLCMINC99.insertKeySql" />		
+		<![CDATA[						
+			)					
+			VALUES					
+			(					
+				#issueId#,				
+				#author#,							
+				#actionRole#,
+				#actionBodyAdd#,
+		]]>
+				<include refid="BINOLCMINC99.insertValueSql" />		
+		<![CDATA[							
+			)		
+    	]]> 
+    </insert>
+    
+    <!-- 更新会员问题处理内容 -->
+    <update id="updIssueAction" parameterClass="java.util.HashMap">
+    	<![CDATA[
+			UPDATE
+				Members.BIN_IssueAction
+			SET
+				ActionBody = #actionBodyAdd#,
+		]]>
+			<include refid="BINOLCMINC99.updateSql" />
+		<![CDATA[		
+			WHERE
+				BIN_IssueActionID = #issueActionId#
+		]]>
+    </update>
+    
+    <!-- 删除会员问题处理内容 -->
+    <delete id="delIssueAction" parameterClass="java.util.HashMap">
+    	<![CDATA[
+			DELETE FROM
+				Members.BIN_IssueAction
+			WHERE
+				BIN_IssueActionID = #issueActionId#	
+		]]>
+    </delete>
+	
+</sqlMap>
+
+
+

@@ -1,0 +1,293 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sqlMap PUBLIC "-//iBATIS.com//DTD SQL Map 2.0//EN" "http://ibatis.apache.org/dtd/sql-map-2.dtd">
+<sqlMap namespace="BINOLMBVIS02">
+
+	<sql id="queryVisitPlan">
+		<![CDATA[
+			SELECT 
+				A.BIN_VisitPlanID AS visitPlanId,
+				B.VisitTypeName AS visitTypeName,
+				CONVERT(varchar(30),A.StartDate,23) AS startDate,
+				CONVERT(varchar(30),A.EndDate,23) AS endDate,
+				A.VisitDes AS visitDes,
+				CONVERT(varchar(30),A.PlanDateTime,120) AS planDateTime,
+				C.EmployeeName AS employeeName,
+				convert(varchar(30),A.UpdateTime,121) AS modifyTime,
+				A.ModifyCount AS modifyCount,
+				A.ValidFlag AS validFlag
+			FROM
+				Members.BIN_VisitPlan A
+				LEFT JOIN Members.BIN_VisitCategory B ON A.BIN_VisitCategoryID = B.BIN_VisitCategoryID
+				LEFT JOIN Basis.BIN_Employee C ON A.BIN_EmployeeID = C.BIN_EmployeeID
+			WHERE
+				A.BIN_OrganizationInfoID = #organizationInfoId# AND
+				A.BIN_BrandInfoID = #brandInfoId#
+		]]>
+			<isNotEmpty prepend="AND" property="visitCategoryId">
+				A.BIN_VisitCategoryID = #visitCategoryId#
+			</isNotEmpty>
+			<isNotEmpty prepend="AND" property="visitDes">
+				A.VisitDes LIKE '%'+#visitDes#+'%'
+			</isNotEmpty>
+			<isNotEmpty prepend="AND" property="visitState">
+				<isEqual property="visitState" compareValue="1">
+					<![CDATA[(A.StartDate <= #businessDate# AND (A.EndDate IS NULL OR A.EndDate >= #businessDate#))]]>
+				</isEqual>
+				<isEqual property="visitState" compareValue="2">
+					A.StartDate > #businessDate#
+				</isEqual>
+				<isEqual property="visitState" compareValue="3">
+					<![CDATA[A.EndDate < #businessDate#]]>
+				</isEqual>
+			</isNotEmpty>
+			<isNotEmpty prepend="AND" property="validFlag">
+				A.ValidFlag = #validFlag#
+			</isNotEmpty>
+	</sql>
+	
+	<!-- 取得会员回访计划总数  -->
+    <select id="getVisitPlanCount" parameterClass="java.util.HashMap" resultClass="java.lang.Integer">
+    	<![CDATA[
+			SELECT COUNT(1) AS count
+			FROM (]]><include refid="BINOLMBVIS02.queryVisitPlan" /><![CDATA[) T
+		]]>										
+    </select>
+	
+	<!-- 取得会员回访计划List  -->
+    <select id="getVisitPlanList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+       	<include refid="BINOLCMINC99.pageheader" />
+		<include refid="BINOLMBVIS02.queryVisitPlan" />
+		<include refid="BINOLCMINC99.pagefooter" />
+    </select>
+    
+    <!-- 取得会员回访计划信息  -->
+    <select id="getVisitPlanInfo" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+    	<![CDATA[
+			SELECT 
+				A.BIN_VisitPlanID AS visitPlanId,
+				B.VisitTypeName AS visitTypeName,
+				CONVERT(varchar(30),A.StartDate,23) AS startDate,
+				CONVERT(varchar(30),A.EndDate,23) AS endDate,
+				A.VisitDes AS visitDes,
+				CONVERT(varchar(30),A.PlanDateTime,120) AS planDateTime,
+				C.EmployeeName AS employeeName,
+				A.VisitObjType AS visitObjType,
+				A.VisitObjJson AS visitObjJson,
+				A.VisitObjCode AS visitObjCode,
+				A.VisitObjName AS visitObjName,
+				A.VisitDateJson AS visitDateJson,
+				A.PaperID AS paperId,
+				D.PaperName AS paperName,
+				convert(varchar(30),A.UpdateTime,121) AS modifyTime,
+				A.ModifyCount AS modifyCount,
+				A.ValidFlag AS validFlag
+			FROM
+				Members.BIN_VisitPlan A
+				LEFT JOIN Members.BIN_VisitCategory B ON A.BIN_VisitCategoryID = B.BIN_VisitCategoryID
+				LEFT JOIN Basis.BIN_Employee C ON A.BIN_EmployeeID = C.BIN_EmployeeID
+				LEFT JOIN Monitor.BIN_Paper D ON A.PaperID = D.BIN_PaperID
+			WHERE
+				A.BIN_VisitPlanID = #visitPlanId#
+		]]>										
+    </select>
+	
+	<!-- 添加会员回访计划 -->
+    <insert id="addVisitPlan" parameterClass="java.util.HashMap">
+    	<![CDATA[
+    		INSERT INTO Members.BIN_VisitPlan
+			(					
+				BIN_OrganizationInfoID,				
+				BIN_BrandInfoID,		
+				BIN_VisitCategoryID,
+				VisitObjType,
+				VisitObjJson,
+				VisitObjCode,
+				VisitObjName,
+				VisitDateJson,
+				PaperID,
+				VisitDes,
+				StartDate,
+				EndDate,
+				PlanDateTime,
+				BIN_EmployeeID,		
+		]]>
+				<include refid="BINOLCMINC99.insertKeySql" />		
+		<![CDATA[						
+			)					
+			VALUES					
+			(					
+				#organizationInfoId#,				
+				#brandInfoId#,				
+				#visitCategoryId#,
+				#visitObjType#,
+				#visitObjJson#,
+				#visitObjCode#,
+				#visitObjName#,
+				#visitDateJson#,
+				#paperId#,
+				#visitDes#,
+				#startDate#,
+				#endDate#,
+				#planDateTime#,
+				#employeeId#,		
+		]]>
+				<include refid="BINOLCMINC99.insertValueSql" />		
+		<![CDATA[							
+			)	
+    	]]>
+    </insert>
+    
+    <!-- 更新会员回访计划 -->
+    <update id="updateVisitPlan" parameterClass="java.util.HashMap">
+    	<![CDATA[
+			UPDATE Members.BIN_VisitPlan		
+			SET							
+				VisitObjType = #visitObjType#,			
+				VisitObjJson = #visitObjJson#,
+				VisitObjCode = #visitObjCode#,
+				VisitObjName = #visitObjName#,
+				VisitDateJson = #visitDateJson#,
+				PaperID = #paperId#,
+				VisitDes = #visitDes#,
+				StartDate = #startDate#,
+				EndDate = #endDate#,
+		]]>			
+				<include refid="BINOLCMINC99.updateSql" />		
+		<![CDATA[					
+			WHERE				
+				BIN_VisitPlanID = #visitPlanId# AND			
+				UpdateTime = #modifyTime# AND		
+				ModifyCount = #modifyCount#				
+		]]>
+    </update>
+    
+    <!-- 启用停用会员回访计划 -->
+    <update id="updVisitPlanValid" parameterClass="java.util.HashMap">
+    	<![CDATA[
+			UPDATE Members.BIN_VisitPlan	
+			SET				
+				ValidFlag = #validFlag#,
+		]]>			
+				<include refid="BINOLCMINC99.updateSql" />		
+		<![CDATA[					
+			WHERE				
+				BIN_VisitPlanID = #visitPlanId# AND			
+				UpdateTime = #modifyTime# AND		
+				ModifyCount = #modifyCount#				
+		]]>
+    </update>
+    
+    <!-- 取得会员回访类型List  -->
+    <select id="getVisitCategoryList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+    	<![CDATA[
+			SELECT 
+				A.BIN_VisitCategoryID AS visitCategoryId,
+				A.VisitTypeCode AS visitTypeCode,
+				A.VisitTypeName AS visitTypeName,
+				A.VisitObjJson AS visitObjJson
+			FROM
+				Members.BIN_VisitCategory A
+			WHERE
+				A.BIN_OrganizationInfoID = #organizationInfoId# AND
+				A.BIN_BrandInfoID = #brandInfoId# AND
+				A.ValidFlag = '1'
+		]]>										
+    </select>
+    
+    <!-- 取得会员问卷List  -->
+    <select id="getPaperList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+    	<![CDATA[
+			SELECT 
+				A.BIN_PaperID AS paperId,
+				A.PaperName AS paperName
+			FROM
+				Monitor.BIN_Paper A
+			WHERE
+				A.BIN_OrganizationInfoID = #organizationInfoId# AND
+				A.BIN_BrandInfoID = #brandInfoId# AND
+				A.PaperType = '1' AND
+				A.PaperStatus = '2' AND
+				A.StartTime <= #businessDate# AND
+				A.EndTime >= #businessDate# AND
+				A.ValidFlag = '1'
+		]]>										
+    </select>
+    
+    <!-- 添加会员回访对象 -->
+    <insert id="addVisitObj" parameterClass="java.util.HashMap">
+    	<![CDATA[
+    		INSERT INTO Members.BIN_VisitObj
+			(					
+				VisitObjCode,				
+				VisitObjName,		
+				MemCode,
+				Name,
+				JoinDate,
+				MobilePhone,
+				BirthYear,
+				BirthDay,
+				CounterCode,
+				CounterName,
+		]]>
+				<include refid="BINOLCMINC99.insertKeySql" />		
+		<![CDATA[						
+			)					
+			VALUES					
+			(					
+				#visitObjCode#,				
+				#visitObjName#,				
+				#memCode#,
+				#name#,
+				#joinDate#,
+				#mobilePhone#,
+				#birthYear#,
+				#birthDay#,
+				#counterCode#,
+				#counterName#,
+		]]>
+				<include refid="BINOLCMINC99.insertValueSql" />		
+		<![CDATA[							
+			)	
+    	]]>
+    </insert>
+    
+    <!-- 删除会员回访对象  -->
+    <delete id="delVisitObj" parameterClass="java.util.HashMap">
+    	DELETE FROM Members.BIN_VisitObj 
+    	WHERE VisitObjCode = #visitObjCode#
+    </delete>
+    
+    <sql id="queryVisitObj">
+		<![CDATA[
+			SELECT 
+				A.MemCode AS memCode,
+				A.Name AS memName,
+				A.MobilePhone AS mobilePhone,
+				A.JoinDate AS joinDate,
+				A.BirthYear AS birthYear,
+				SUBSTRING(A.BirthDay,1,2) AS birthMonth,
+				SUBSTRING(A.BirthDay,3,2) AS birthDay,
+				CounterCode AS counterCode,
+				CounterName AS counterName
+			FROM
+				Members.BIN_VisitObj A
+			WHERE
+				A.VisitObjCode = #visitObjCode#
+		]]>
+	</sql>
+	
+	<!-- 取得会员回访对象总数  -->
+    <select id="getVisitObjCount" parameterClass="java.util.HashMap" resultClass="java.lang.Integer">
+    	<![CDATA[
+			SELECT COUNT(1) AS count
+			FROM (]]><include refid="BINOLMBVIS02.queryVisitObj" /><![CDATA[) T
+		]]>										
+    </select>
+	
+	<!-- 取得会员回访对象List  -->
+    <select id="getVisitObjList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+       	<include refid="BINOLCMINC99.pageheader" />
+		<include refid="BINOLMBVIS02.queryVisitObj" />
+		<include refid="BINOLCMINC99.pagefooter" />
+    </select>
+</sqlMap>

@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sqlMap PUBLIC "-//iBATIS.com//DTD SQL Map 2.0//EN" "http://ibatis.apache.org/dtd/sql-map-2.dtd">
+<sqlMap namespace="BINOLCPCOM04">
+	<!-- 取得会员活动组规则 -->
+    <select id="getGrpRuleContent" parameterClass="java.util.HashMap" resultClass="java.lang.String">
+    	<![CDATA[
+			SELECT
+				RuleFileContent
+			FROM 
+				Campaign.BIN_CampaignGrp
+			WHERE
+				BIN_CampaignGrpID = #campaignGrpId#	
+		]]>
+    </select>
+	
+	<!-- 取得会员等级List -->
+    <select id="getMemLevelList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+    	<![CDATA[
+			SELECT
+				A.BIN_MemberLevelID AS levelId,
+				A.LevelName AS levelName,
+				B.Grade AS grade
+			FROM
+				Members.BIN_MemberLevel A JOIN
+				Members.BIN_MemberLevelDetail B
+				ON (A.BIN_MemberLevelID = B.BIN_MemberLevelID)
+			WHERE
+				A.BIN_OrganizationInfoID = #organizationInfoId# AND
+				A.BIN_BrandInfoID = #brandInfoId# AND
+				B.ToDate >= convert(DATE, #ticketDate#, 121) AND
+				B.FromDate <= convert(DATE, #ticketDate#, 121) AND
+				A.ValidFlag = '1'
+			ORDER BY B.Grade ASC
+		]]>
+    </select>
+	
+	<!-- 取得规则内容 -->	
+	<resultMap id="BINOLCPCOM04.CampaignNameList" class="java.util.HashMap">
+		<result property="campaignName" column="CampaignName"/>
+	</resultMap>	
+	<select id="getCampaignNameList" parameterClass="java.util.HashMap" resultMap="BINOLCPCOM04.CampaignNameList">
+		<![CDATA[
+			SELECT
+				CampaignName
+			FROM
+				Campaign.BIN_Campaign
+		]]>	
+		<dynamic>
+			<isNotEmpty property="campaignIdArr" >
+				WHERE BIN_CampaignID IN
+			<iterate conjunction="," open="(" close=")" property="campaignIdArr">  
+		        #campaignIdArr[]#
+		    </iterate>							
+			</isNotEmpty>
+		</dynamic>
+    </select>
+	
+</sqlMap>

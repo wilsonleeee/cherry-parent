@@ -1,0 +1,372 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sqlMap PUBLIC "-//iBATIS.com//DTD SQL Map 2.0//EN" "http://ibatis.apache.org/dtd/sql-map-2.dtd">
+<sqlMap namespace="SaleTargetRpt">
+    
+    <!-- 销售完成进度报表查询SQL文（按柜台）  -->
+	<sql id="SaleTargetByCounterQuery">
+	 	<![CDATA[
+             SELECT
+				A.DepartCode AS departCode,
+				A.DepartName AS departName,
+				ISNULL(B.Amount,0) AS amount,
+				C.TargetMoney AS targetMoney,
+				C.TargetMoney - ISNULL(B.Amount,0) AS lastMoney,
+				D.RegionNameChinese AS provinceName,
+				E.RegionNameChinese AS cityName,
+				G.ChannelName AS channelName
+			FROM
+				Basis.BIN_Organization A WITH(NOLOCK)
+				LEFT JOIN
+				(SELECT 
+					X.BIN_OrganizationID,
+					SUM(CASE WHEN X.SaleType = 'SR' THEN -X.Amount ELSE X.Amount END) AS Amount
+				FROM
+					Sale.BIN_SaleRecord X WITH(NOLOCK)	
+				WHERE
+					X.SaleDate >= #minDateValue# AND
+					X.SaleDate <= #maxDateValue# AND
+					X.BIN_OrganizationInfoID = #organizationInfoId# AND
+			]]>
+				<isNotEmpty property="brandInfoId">
+					X.BIN_BrandInfoID = #brandInfoId# AND
+				</isNotEmpty>	
+			<![CDATA[ EXISTS ( ]]><include refid="BINOLCMINC99.getDepartList" />
+			<![CDATA[ AND X.BIN_OrganizationID = A99.BIN_OrganizationID) AND ]]> 			
+			<![CDATA[
+					X.ValidFlag='1'
+				GROUP BY
+					X.BIN_OrganizationID) B ON A.BIN_OrganizationID = B.BIN_OrganizationID
+				LEFT JOIN Monitor.BIN_SaleTarget C WITH(NOLOCK)
+				ON A.BIN_OrganizationID = C.Parameter AND C.Type = '2' AND C.TargetDate = #fiscalYearMonth# AND C.ValidFlag = '1'
+				LEFT JOIN Basis.BIN_Region D WITH(NOLOCK) ON A.BIN_ProvinceID = D.BIN_RegionID
+				LEFT JOIN Basis.BIN_Region E WITH(NOLOCK) ON A.BIN_CityID = E.BIN_RegionID
+				JOIN Basis.BIN_CounterInfo F WITH(NOLOCK) ON A.BIN_OrganizationID = F.BIN_OrganizationID
+				LEFT JOIN Basis.BIN_Channel G WITH(NOLOCK) ON F.BIN_ChannelID = G.BIN_ChannelID
+			WHERE
+				A.BIN_OrganizationInfoID = #organizationInfoId# AND
+		]]>
+			<isNotEmpty property="brandInfoId">
+				A.BIN_BrandInfoID = #brandInfoId# AND
+			</isNotEmpty>
+			<isNotEmpty property="channelIdQ">
+				F.BIN_ChannelID = #channelIdQ# AND
+			</isNotEmpty>
+			<isNotEmpty property="provinceIdQ">
+				A.BIN_ProvinceID = #provinceIdQ# AND
+				<isNotEmpty property="cityIdQ">
+					A.BIN_CityID = #cityIdQ# AND
+				</isNotEmpty>
+			</isNotEmpty>
+		<![CDATA[ EXISTS ( ]]><include refid="BINOLCMINC99.getDepartList" />
+		<![CDATA[ AND A.BIN_OrganizationID = A99.BIN_OrganizationID) AND ]]> 	
+		<![CDATA[	
+				A.type = '4'
+		]]>
+	</sql>
+	
+	<!-- 销售完成进度报表查询SQL文（按区域）  -->
+	<sql id="SaleTargetByRegionQuery">
+	 	<![CDATA[
+        	SELECT
+        		L.DepartName AS departName,
+				M.Amount AS amount,
+				N.TargetMoney AS targetMoney,
+				N.TargetMoney - M.Amount AS lastMoney
+        	FROM	
+        	(SELECT
+				A.BIN_OrganizationID,
+				SUM(ISNULL(C.Amount, 0)) AS Amount
+			FROM
+				Basis.BIN_Organization A WITH(NOLOCK)
+				LEFT JOIN Basis.BIN_Organization B WITH(NOLOCK) ON B.NodeID.IsDescendantOf(A.NodeID) = 1 AND B.type = '4'
+				LEFT JOIN
+				(SELECT 
+					X.BIN_OrganizationID,
+					SUM(CASE WHEN X.SaleType = 'SR' THEN -X.Amount ELSE X.Amount END) AS Amount
+				FROM
+					Sale.BIN_SaleRecord X WITH(NOLOCK)
+				WHERE
+					X.SaleDate >= #minDateValue# AND
+					X.SaleDate <= #maxDateValue# AND
+					X.BIN_OrganizationInfoID = #organizationInfoId# AND
+			]]>
+				<isNotEmpty property="brandInfoId">
+					X.BIN_BrandInfoID = #brandInfoId# AND
+				</isNotEmpty>
+			<![CDATA[ EXISTS ( ]]><include refid="BINOLCMINC99.getDepartList" />
+			<![CDATA[ AND X.BIN_OrganizationID = A99.BIN_OrganizationID) AND ]]> 		
+			<![CDATA[
+					X.ValidFlag='1'
+				GROUP BY
+					X.BIN_OrganizationID) C ON B.BIN_OrganizationID = C.BIN_OrganizationID
+			WHERE
+				A.BIN_OrganizationInfoID = #organizationInfoId# AND
+		]]>
+			<isNotEmpty property="brandInfoId">
+				A.BIN_BrandInfoID = #brandInfoId# AND
+			</isNotEmpty>
+		<![CDATA[ EXISTS ( ]]><include refid="BINOLCMINC99.getDepartList" />
+		<![CDATA[ AND A.BIN_OrganizationID = A99.BIN_OrganizationID) AND ]]> 		
+		<![CDATA[	
+				A.type = '5'
+			GROUP BY
+				A.BIN_OrganizationID) M
+			LEFT JOIN Monitor.BIN_SaleTarget N WITH(NOLOCK)
+				ON M.BIN_OrganizationID = N.Parameter AND N.Type = '1' AND N.TargetDate = #fiscalYearMonth# AND N.ValidFlag = '1'
+			LEFT JOIN Basis.BIN_Organization L WITH(NOLOCK)
+				ON M.BIN_OrganizationID = L.BIN_OrganizationID
+		]]>
+	</sql>
+	
+	<!-- 销售完成进度报表查询SQL文（按渠道）  -->
+	<sql id="SaleTargetByChannelQuery">
+	 	<![CDATA[
+             SELECT
+				A.BIN_ChannelID AS channelId,
+				A.ChannelName AS channelName,
+				ISNULL(C.counterCount, 0) AS counterCount,
+				ISNULL(B.amount,0) AS amount,
+				C.targetMoney AS targetMoney,
+				C.targetMoney - ISNULL(B.amount,0) AS lastMoney
+			FROM
+				Basis.BIN_Channel A WITH(NOLOCK)
+				LEFT JOIN
+				(SELECT 
+					Y.BIN_ChannelID,
+					SUM(CASE WHEN X.SaleType = 'SR' THEN -X.Amount ELSE X.Amount END) AS amount
+				FROM
+					Sale.BIN_SaleRecord X WITH(NOLOCK)	
+					JOIN Basis.BIN_CounterInfo Y WITH(NOLOCK) ON X.BIN_OrganizationID = Y.BIN_OrganizationID
+				WHERE
+					X.SaleDate >= #minDateValue# AND
+					X.SaleDate <= #maxDateValue# AND
+					X.BIN_OrganizationInfoID = #organizationInfoId# AND
+			]]>
+				<isNotEmpty property="brandInfoId">
+					X.BIN_BrandInfoID = #brandInfoId# AND
+				</isNotEmpty>	
+			<![CDATA[ EXISTS ( ]]><include refid="BINOLCMINC99.getDepartList" />
+			<![CDATA[ AND X.BIN_OrganizationID = A99.BIN_OrganizationID) AND ]]> 			
+			<![CDATA[
+					X.ValidFlag='1'
+				GROUP BY
+					Y.BIN_ChannelID) B ON A.BIN_ChannelID = B.BIN_ChannelID
+					
+				LEFT JOIN
+				(SELECT
+					A.BIN_ChannelID,
+					COUNT(1) AS counterCount,
+					SUM(B.TargetMoney) AS targetMoney
+				FROM
+					Basis.BIN_CounterInfo A WITH(NOLOCK)	
+					LEFT JOIN Monitor.BIN_SaleTarget B WITH(NOLOCK)
+					ON A.BIN_OrganizationID = B.Parameter AND B.Type = '2' AND B.TargetDate = #fiscalYearMonth# AND B.ValidFlag = '1'
+				WHERE
+					A.BIN_OrganizationInfoID = #organizationInfoId# AND
+		]]>
+				<isNotEmpty property="brandInfoId">
+					A.BIN_BrandInfoID = #brandInfoId# AND
+				</isNotEmpty>
+			<![CDATA[ EXISTS ( ]]><include refid="BINOLCMINC99.getDepartList" />
+			<![CDATA[ AND A.BIN_OrganizationID = A99.BIN_OrganizationID) ]]> 	
+			<![CDATA[	
+				GROUP BY
+					A.BIN_ChannelID) C ON A.BIN_ChannelID = C.BIN_ChannelID		
+			WHERE
+				A.BIN_OrganizationInfoID = #organizationInfoId# AND
+		]]>
+			<isNotEmpty property="brandInfoId">
+				A.BIN_BrandInfoID = #brandInfoId# AND
+			</isNotEmpty>
+		<![CDATA[	
+				A.ValidFlag = '1'
+		]]>
+	</sql>
+	
+	<!-- 销售完成进度报表查询SQL文（按目标平台区域）  -->
+	<sql id="SaleTargetByOperateModeQuery">
+	 	<![CDATA[
+             SELECT
+				T.code AS code,
+				T.name AS name,
+				ISNULL(C.counterCount, 0) AS counterCount,
+				ISNULL(B.amount,0) AS amount,
+				C.targetMoney AS targetMoney,
+				C.targetMoney - ISNULL(B.amount,0) AS lastMoney
+			FROM
+		]]>		
+				<iterate property="belongFactionList" open="(" close=")" conjunction="union all">
+					select #belongFactionList[].CodeKey# as code, #belongFactionList[].Value# as name
+				</iterate> T
+		<![CDATA[		
+				LEFT JOIN
+				(SELECT
+					A.BelongFaction,
+					COUNT(1) AS counterCount,
+					SUM(B.TargetMoney) AS targetMoney
+				FROM
+					Basis.BIN_CounterInfo A WITH(NOLOCK)	
+					LEFT JOIN Monitor.BIN_SaleTarget B WITH(NOLOCK)
+					ON A.BIN_OrganizationID = B.Parameter AND B.Type = '2' AND B.TargetDate = #fiscalYearMonth# AND B.ValidFlag = '1'
+				WHERE
+					A.BIN_OrganizationInfoID = #organizationInfoId# AND
+		]]>
+				<isNotEmpty property="brandInfoId">
+					A.BIN_BrandInfoID = #brandInfoId# AND
+				</isNotEmpty>
+			<![CDATA[ EXISTS ( ]]><include refid="BINOLCMINC99.getDepartList" />
+			<![CDATA[ AND A.BIN_OrganizationID = A99.BIN_OrganizationID) ]]> 	
+			<![CDATA[	
+				GROUP BY
+					A.BelongFaction) C ON T.code = C.BelongFaction
+				
+				LEFT JOIN
+				(SELECT 
+					Y.BelongFaction,
+					SUM(CASE WHEN X.SaleType = 'SR' THEN -X.Amount ELSE X.Amount END) AS amount
+				FROM
+					Sale.BIN_SaleRecord X WITH(NOLOCK)	
+					JOIN Basis.BIN_CounterInfo Y WITH(NOLOCK) ON X.BIN_OrganizationID = Y.BIN_OrganizationID
+				WHERE
+					X.SaleDate >= #minDateValue# AND
+					X.SaleDate <= #maxDateValue# AND
+					X.BIN_OrganizationInfoID = #organizationInfoId# AND
+			]]>
+				<isNotEmpty property="brandInfoId">
+					X.BIN_BrandInfoID = #brandInfoId# AND
+				</isNotEmpty>	
+			<![CDATA[ EXISTS ( ]]><include refid="BINOLCMINC99.getDepartList" />
+			<![CDATA[ AND X.BIN_OrganizationID = A99.BIN_OrganizationID) AND ]]> 			
+			<![CDATA[
+					X.ValidFlag='1'
+				GROUP BY
+					Y.BelongFaction) B ON T.code = B.BelongFaction
+		]]>
+	</sql>
+	
+	<!-- 销售完成进度报表查询SQL文  -->
+	<sql id="SaleTargetRptQuery">
+		<isNotEmpty property="countModel">
+			<isEqual property="countModel" compareValue="0">			
+				<include refid="SaleTargetRpt.SaleTargetByCounterQuery" />
+			</isEqual>
+			<isEqual property="countModel" compareValue="1">			
+				<include refid="SaleTargetRpt.SaleTargetByRegionQuery" />
+			</isEqual>
+			<isEqual property="countModel" compareValue="2">			
+				<include refid="SaleTargetRpt.SaleTargetByChannelQuery" />
+			</isEqual>
+			<isEqual property="countModel" compareValue="3">			
+				<include refid="SaleTargetRpt.SaleTargetByOperateModeQuery" />
+			</isEqual>
+		</isNotEmpty>
+		<isEmpty property="countModel">
+			<include refid="SaleTargetRpt.SaleTargetByCounterQuery" />
+		</isEmpty>
+	</sql>
+	
+	<!-- 查询销售完成进度报表信息总件数 -->
+    <select id="getSaleTargetRptCount" parameterClass="java.util.HashMap" resultClass="java.lang.Integer" remapResults="true">
+    	<![CDATA[
+			SELECT	COUNT(1) AS count FROM (
+		]]>	
+		<include refid="SaleTargetRpt.SaleTargetRptQuery" />	
+		<![CDATA[	
+			)SORT_T1
+		]]>										
+    </select>
+    
+    <!-- 查询销售完成进度报表统计信息 -->
+    <select id="getSaleTargetRptCountInfo" parameterClass="java.util.HashMap" resultClass="java.util.HashMap" remapResults="true">
+    	<![CDATA[
+			SELECT	
+				COUNT(1) AS count,
+				SUM(T.amount) AS sumAmount,
+				SUM(T.targetMoney) AS sumTargetMoney,
+				SUM(T.lastMoney) AS sumLastMoney
+		]]>			
+			<isEqual property="countModel" compareValue="2">
+				,SUM(T.counterCount) AS sumCounterCount
+			</isEqual>
+			<isEqual property="countModel" compareValue="3">
+				,SUM(T.counterCount) AS sumCounterCount
+			</isEqual>		
+		<![CDATA[
+			FROM (]]><include refid="SaleTargetRpt.SaleTargetRptQuery" /><![CDATA[) T
+		]]>										
+    </select>
+	
+	<!-- 查询销售完成进度报表信息List  -->
+    <select id="getSaleTargetRptList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap" remapResults="true">
+       	<include refid="BINOLCMINC99.pageheader" />
+		<include refid="SaleTargetRpt.SaleTargetRptQuery" />
+		<include refid="BINOLCMINC99.pagefooter" />
+    </select>
+    
+    <!-- 取得渠道信息List  -->
+    <select id="getChannelList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+       	<![CDATA[
+           	SELECT
+            	A.BIN_ChannelID AS channelId,
+            	A.ChannelName AS channelName
+			FROM
+				Basis.BIN_Channel A WITH(NOLOCK)
+			WHERE
+				A.ValidFlag = '1' AND
+				A.BIN_OrganizationInfoID = #organizationInfoId#
+		]]>
+			<isNotEmpty prepend="AND" property="brandInfoId">
+				A.BIN_BrandInfoID = #brandInfoId#
+			</isNotEmpty>
+		<![CDATA[
+			ORDER BY
+				A.BIN_ChannelID
+		]]>	
+    </select>
+    
+    <!-- 取得区域信息List  -->
+    <select id="getRegionList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+       	<![CDATA[
+           	SELECT
+            	A.BIN_RegionID AS regionId,
+            	A.RegionNameChinese AS regionName
+			FROM
+				Basis.BIN_Region A WITH(NOLOCK)
+			WHERE
+				A.RegionType = '1' AND
+				A.ValidFlag = '1' AND
+				A.BIN_OrganizationInfoID = #organizationInfoId#
+		]]>
+			<isNotEmpty prepend="AND" property="brandInfoId">
+				A.BIN_BrandInfoID = #brandInfoId#
+			</isNotEmpty>
+		<![CDATA[
+			ORDER BY
+				A.BIN_RegionID
+		]]>	
+    </select>
+    
+    <!-- 取得省市信息List  -->
+    <select id="getProCityList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+       	<![CDATA[
+           	SELECT
+            	A.BIN_RegionID AS id,
+            	A.RegionNameChinese AS name,
+            	A.Level AS level
+			FROM
+				Basis.BIN_Region A WITH(NOLOCK)
+			WHERE
+				A.RegionType in ('1','2','3') AND
+				A.ValidFlag = '1' AND
+				A.BIN_OrganizationInfoID = #organizationInfoId#
+		]]>
+			<isNotEmpty prepend="AND" property="brandInfoId">
+				A.BIN_BrandInfoID = #brandInfoId#
+			</isNotEmpty>
+		<![CDATA[
+			ORDER BY
+				A.Path
+		]]>	
+    </select>
+    
+</sqlMap>

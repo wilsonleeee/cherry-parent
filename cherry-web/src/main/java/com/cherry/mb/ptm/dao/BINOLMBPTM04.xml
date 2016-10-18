@@ -1,0 +1,135 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sqlMap PUBLIC "-//iBATIS.com//DTD SQL Map 2.0//EN" "http://ibatis.apache.org/dtd/sql-map-2.dtd">
+<sqlMap namespace="BINOLMBPTM04">
+	 <!--积分导入结果  -->
+	<sql id="PointQuery">
+	<![CDATA[			
+	SELECT 
+		  A.BIN_MemPointImportID AS memPointImportId,
+	      A.PointBillNo AS pointImportCode,
+	      A.PointType AS pointType,
+	      A.ImportName AS pointBillName,
+	      A.ImportType AS importType ,
+	      CONVERT(varchar(30),A.BusinessTime,120) AS businessTime,
+	      A.Reason AS reason,
+	       ]]>
+		<isNotEmpty property="language">
+			<isEqual property="language" compareValue="en_US">
+				'('+B.EmployeeCode+')'+B.EmployeeNameForeign AS employeeName
+			</isEqual>
+			<isEqual property="language" compareValue="zh_CN">
+				'('+B.EmployeeCode+')'+B.EmployeeName AS employeeName
+			</isEqual>
+		</isNotEmpty>
+		<isEmpty property="language">
+				'('+B.EmployeeCode+')'+B.EmployeeName AS employeeName
+		</isEmpty>
+   <![CDATA[		
+     FROM
+  		  Members.BIN_MemPointImport A
+  		  LEFT JOIN Basis.BIN_Employee B WITH(NOLOCK) 
+		  ON (A.BIN_EmployeeID = B.BIN_EmployeeID)
+  		  
+  	WHERE
+  	    A.BIN_BrandInfoID = #brandInfoId#	
+		AND A.BIN_OrganizationInfoID = #organizationInfoId#
+     ]]>
+     <isNotEmpty property="pointType" prepend="AND">															
+	  <![CDATA[PointType = #pointType#]]>															
+	 </isNotEmpty>	
+	  <isNotEmpty property="importName" prepend="AND">															
+	  <![CDATA[ImportName LIKE '%' + #importName# + '%']]>															
+	 </isNotEmpty>													
+	 <isNotEmpty prepend="AND" property="startTime">
+            <![CDATA[
+            CONVERT(varchar(30),BusinessTime,23) >= #startTime#
+            ]]>
+        </isNotEmpty>
+        <isNotEmpty prepend="AND" property="endTime">
+            <![CDATA[
+            CONVERT(varchar(30),BusinessTime,23) <= #endTime#
+            ]]>           
+        </isNotEmpty>		
+	</sql>
+	<!-- 积分导入结果List  -->
+	<select id="getPointList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+	   <include refid="BINOLCMINC99.pageheader" />
+	   <include refid="BINOLMBPTM04.PointQuery" />
+	   <include refid="BINOLCMINC99.pagefooter" />
+	</select>
+	
+	<!-- 积分导入结果Count-->
+    <select id="getPointCount" parameterClass="java.util.HashMap" resultClass="java.lang.Integer">
+        <![CDATA[
+            SELECT  COUNT(SORT_T1.memPointImportId) AS count FROM (
+        ]]>
+        <include refid="BINOLMBPTM04.PointQuery" />
+        <![CDATA[
+            )SORT_T1
+        ]]>
+    </select>
+    
+    
+     <!--积分导入明细结果  -->
+	<sql id="PointDetailQuery">
+	<![CDATA[			
+	SELECT 
+		  B.BIN_MemPointImportDetailID AS memPointDetailId,
+		  A.PointBillNo AS pointImportCode,
+		  B.BIN_MemberInfoID,
+		  B.MemCode AS memCode,
+		  B.MemName AS memName,
+		  B.MobilePhone AS mobilePhone,
+		  B.Point AS point,
+		  CONVERT(varchar(30),B.PointTime ,120) AS pointTime,
+		  B.ImportResults AS importResults,
+		  B.ResultFlag AS resultFlag
+	FROM 
+	     Members.BIN_MemPointImport A WITH(NOLOCK) 
+         LEFT JOIN Members.BIN_MemPointImportDetail B WITH(NOLOCK) 
+         ON(A.BIN_MemPointImportID=B.BIN_MemPointImportID)
+    WHERE 
+        A.BIN_MemPointImportID=#memPointImportId#
+     ]]>
+	<isNotEmpty prepend="AND" property="memCode" >															
+	<![CDATA[
+		B.MemCode LIKE '%' + #memCode# + '%'
+	]]>															
+	</isNotEmpty>													
+	<isNotEmpty prepend="AND" property="resultFlag">
+	<![CDATA[
+		B.ResultFlag = #resultFlag#
+	]]>           
+	</isNotEmpty>		
+	</sql>
+	<!-- 积分导入明细结果List  -->
+	<select id="getPointDetailList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+	   <include refid="BINOLCMINC99.pageheader" />
+	   <include refid="BINOLMBPTM04.PointDetailQuery" />
+	   <include refid="BINOLCMINC99.pagefooter" />
+	</select>
+	
+	<!-- 积分导入明细结果Count-->
+    <select id="getPointDetailCount" parameterClass="java.util.HashMap" resultClass="java.lang.Integer">
+        <![CDATA[
+            SELECT  COUNT(SORT_T1.memPointDetailId) AS count FROM (
+        ]]>
+        <include refid="BINOLMBPTM04.PointDetailQuery" />
+        <![CDATA[
+            )SORT_T1
+        ]]>
+    </select>
+    <!-- 取得导入会员的结果件数  -->
+    <select id="getSumInfo" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+    	<![CDATA[
+	       SELECT 
+				 ISNULL(SUM (CASE ResultFlag WHEN '0' THEN 1 ELSE 0 END ),0) AS fCount,
+				 ISNULL(SUM (CASE ResultFlag WHEN '1' THEN 1 ELSE 0 END ),0) AS sCount,
+				 ISNULL(SUM (CASE ResultFlag WHEN '2' THEN 1 ELSE 0 END ),0) AS pCount
+	    	FROM 
+	    	   	  Members.BIN_MemPointImportDetail 
+	        WHERE    
+	              BIN_MemPointImportID=#memPointImportId#
+         ]]>
+    </select>
+</sqlMap>

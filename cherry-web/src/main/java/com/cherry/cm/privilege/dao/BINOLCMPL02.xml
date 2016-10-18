@@ -1,0 +1,402 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sqlMap PUBLIC "-//iBATIS.com//DTD SQL Map 2.0//EN" "http://ibatis.apache.org/dtd/sql-map-2.dtd">
+<sqlMap namespace="BINOLCMPL02">
+	<!-- 查询所有的用户信息 
+	<resultMap id="BINBEPLDPL02.DataPrivilege" class="java.util.HashMap">
+		<result property="userId" column="BIN_UserID"/>
+		<result property="businessType" column="BusinessType"/>
+		<result property="operationType" column="OperationType"/>
+		<result property="privilegeType" column="PrivilegeType"/>
+	</resultMap>
+	<select id="getUserList" parameterClass="java.util.HashMap" resultMap="BINBEPLDPL02.DataPrivilege">
+		<![CDATA[
+			SELECT						
+				A.BIN_UserID,					
+				E.BusinessType,				
+				E.OperationType,		
+				MAX(E.PrivilegeType) AS PrivilegeType					
+			FROM		 				
+				Privilege.BIN_User A,					
+				Basis.BIN_Employee B,					
+				Basis.BIN_PostDistribution C,					
+				Basis.BIN_Position D,									
+				Privilege.BIN_PrivilegeType E				
+			WHERE 						
+				A.BIN_EmployeeID=B.BIN_EmployeeID AND 					
+				B.BIN_EmployeeID=C.BIN_EmployeeID AND					
+				C.BIN_PositionID=D.BIN_PositionID AND					
+				D.BIN_PositionCategoryID=E.BIN_PositionCategoryID AND		
+				E.Category='1' AND				
+				A.ValidFlag='1' AND					
+				B.ValidFlag='1' AND					
+				C.ValidFlag='1' AND					
+				D.ValidFlag='1' AND					
+				E.ValidFlag='1'
+		]]>	
+		<dynamic>
+			<isNotEmpty prepend="AND" property="userId">
+				(A.BIN_UserID=#userId#)
+			</isNotEmpty>
+		</dynamic>	
+		<![CDATA[			
+			GROUP BY						
+				A.BIN_UserID,					
+				E.BusinessType,
+				E.OperationType				
+			ORDER BY 						
+				A.BIN_UserID					
+		]]>
+    </select>-->
+    
+    <!-- 查询所有的用户信息 --><!-- 
+	<resultMap id="BINOLCMPL02.DataPrivilege" class="java.util.HashMap">
+		<result property="userId" column="BIN_UserID"/>
+		<result property="employeeId" column="BIN_EmployeeID"/>
+		<result property="businessType" column="BusinessType"/>
+		<result property="operationType" column="OperationType"/>
+		<result property="privilegeType" column="PrivilegeType"/>
+	</resultMap>
+	<select id="getUserList" parameterClass="java.util.HashMap" resultMap="BINOLCMPL02.DataPrivilege">
+		<![CDATA[
+			SELECT						
+				A.BIN_UserID,	
+				A.BIN_EmployeeID,						
+				C.BusinessType,				
+				C.OperationType,		
+				MAX(C.PrivilegeType) AS PrivilegeType					
+			FROM		 				
+				Privilege.BIN_User A,					
+				Basis.BIN_Employee B,											
+				Privilege.BIN_PrivilegeType C				
+			WHERE 						
+				A.BIN_EmployeeID=B.BIN_EmployeeID AND 									
+				B.BIN_PositionCategoryID=C.BIN_PositionCategoryID AND			
+				A.ValidFlag='1' AND					
+				B.ValidFlag='1' AND					
+				C.ValidFlag='1'				
+		]]>	
+		<dynamic>
+			<isNotEmpty prepend="AND" property="userId">
+				(A.BIN_UserID=#userId#)
+			</isNotEmpty>
+		</dynamic>	
+		<![CDATA[			
+			GROUP BY						
+				A.BIN_UserID,		
+				A.BIN_EmployeeID,			
+				C.BusinessType,
+				C.OperationType				
+			ORDER BY 						
+				A.BIN_UserID					
+		]]>
+    </select>-->
+    
+    <!-- 删除岗位数据权限 
+	<delete id="deletePositionPrivilege" parameterClass="java.util.HashMap">
+		<![CDATA[
+			DELETE FROM Privilege.BIN_PositionPrivilege
+		]]>	
+		<dynamic prepend="WHERE">
+			<isNotEmpty prepend="AND" property="userId">
+				(BIN_UserID=#userId#)
+			</isNotEmpty>
+		</dynamic>	
+		<![CDATA[																		
+		]]>
+	</delete>-->
+	
+	<!-- 删除人员数据权限 -->
+	<delete id="deletePositionPrivilege" parameterClass="java.util.HashMap">
+		<![CDATA[
+			DELETE FROM 
+				Privilege.BIN_EmployeePrivilege
+			WHERE
+				BIN_EmployeeID=#employeeId#	
+		]]>	
+	</delete>
+	
+	<!-- 查询某一用户管辖的所有岗位ID(权限类型为0时) 
+	<resultMap id="BINBEPLDPL02.PositionID" class="java.util.HashMap">
+		<result property="positionId" column="BIN_PositionID"/>
+		<result property="positionCategoryId" column="BIN_PositionCategoryID"/>
+	</resultMap>
+	<select id="getPositionID0List" parameterClass="java.util.HashMap" resultMap="BINBEPLDPL02.PositionID">
+		<![CDATA[
+			SELECT DISTINCT 					
+				C.BIN_PositionID,				
+				C.BIN_PositionCategoryID			
+			FROM		 			
+				Privilege.BIN_User A,				
+				Basis.BIN_PostDistribution B,				
+				Basis.BIN_Position C			
+			WHERE 					
+				A.BIN_EmployeeID=B.BIN_EmployeeID AND 				
+				B.BIN_PositionID=C.BIN_PositionID AND		
+				A.BIN_UserID = #userId# AND				
+				A.ValidFlag='1' AND				
+				B.ValidFlag='1' AND				
+				C.ValidFlag='1'		
+		]]>
+    </select>-->
+    
+    <!-- 查询某一用户管辖的所有用户ID(权限类型为0时) -->
+	<resultMap id="BINOLCMPL02.PositionID" class="java.util.HashMap">
+		<result property="subEmployeeId" column="BIN_EmployeeID"/>
+		<result property="positionCategoryId" column="BIN_PositionCategoryID"/>
+		<result property="privilegeFlag" column="PrivilegeFlag"/>
+	</resultMap>
+	<select id="getPositionID0List" parameterClass="java.util.HashMap" resultMap="BINOLCMPL02.PositionID">
+		<![CDATA[
+			SELECT					
+				A.BIN_EmployeeID,					
+				A.BIN_PositionCategoryID,
+				1 AS PrivilegeFlag
+			FROM						
+				Basis.BIN_Employee A,
+				Basis.BIN_Employee B				
+			WHERE						
+				B.BIN_EmployeeID = #employeeId# AND		
+				A.NodeID.IsDescendantOf(B.NodeID)=1		
+		]]>
+    </select>
+	
+	<!-- 查询某一用户管辖的所有岗位ID(权限类型为1时) 
+	<select id="getPositionID1List" parameterClass="java.util.HashMap" resultMap="BINBEPLDPL02.PositionID">
+		<![CDATA[
+			SELECT DISTINCT						
+				D.BIN_PositionID,					
+				D.BIN_PositionCategoryID					
+			FROM						
+				Privilege.BIN_User A,					
+				Basis.BIN_PostDistribution B,					
+				Basis.BIN_Position C,									
+				Basis.BIN_Position D					
+			WHERE						
+				A.BIN_EmployeeID=B.BIN_EmployeeID AND 					
+				B.BIN_PositionID=C.BIN_PositionID AND				
+				A.BIN_UserID = #userId# AND					
+				A.ValidFlag='1' AND					
+				B.ValidFlag='1' AND					
+				C.ValidFlag='1' AND					
+				D.ValidFlag='1' AND					
+				D.NodeID.IsDescendantOf(C.NodeID)=1 							
+		]]>
+    </select>-->
+    
+    <!-- 查询某一用户管辖的所有用户ID(权限类型为1时) -->
+	<select id="getPositionID1List" parameterClass="java.util.HashMap" resultMap="BINOLCMPL02.PositionID">
+		<![CDATA[
+			SELECT
+				T.BIN_EmployeeID,
+				T.BIN_PositionCategoryID,
+				MAX(T.PrivilegeFlag) AS PrivilegeFlag
+			FROM
+			(
+				(SELECT					
+					A.BIN_EmployeeID,					
+					A.BIN_PositionCategoryID,
+					1 AS PrivilegeFlag					
+				FROM						
+					Basis.BIN_Employee A,
+					Basis.BIN_Employee B				
+				WHERE						
+					B.BIN_EmployeeID = #employeeId# AND		
+					A.NodeID.IsDescendantOf(B.NodeID)=1	
+				)										
+				UNION				
+				(SELECT	DISTINCT				
+					C.BIN_EmployeeID,					
+					C.BIN_PositionCategoryID,
+					0 AS PrivilegeFlag					
+				FROM						
+					Privilege.BIN_LikeEmployee A,
+					Basis.BIN_Employee B,
+					Basis.BIN_Employee C				
+				WHERE						
+					A.BIN_EmployeeID = #employeeId# AND
+					A.BIN_LikeEmployeeID = B.BIN_EmployeeID AND			
+					C.NodeID.IsDescendantOf(B.NodeID)=1
+				)			
+			) T
+			GROUP BY
+				T.BIN_EmployeeID,
+				T.BIN_PositionCategoryID				
+		]]>
+    </select>
+    
+    <!-- 查询某一用户管辖的所有岗位ID(权限类型为2时)
+	<select id="getPositionID2List" parameterClass="java.util.HashMap" resultMap="BINBEPLDPL02.PositionID">
+		<![CDATA[
+		SELECT DISTINCT 								
+			D.BIN_PositionID,					
+			D.BIN_PositionCategoryID							
+		FROM								
+			Privilege.BIN_User A,							
+			Basis.BIN_PostDistribution B,							
+			Basis.BIN_Position C,					
+			Basis.BIN_Position D							
+		WHERE								
+			A.BIN_EmployeeID=B.BIN_EmployeeID AND 							
+			B.BIN_PositionID=C.BIN_PositionID AND													
+			A.BIN_UserID = #userId# AND							
+			A.ValidFlag='1' AND							
+			B.ValidFlag='1' AND							
+			C.ValidFlag='1' AND							
+			D.ValidFlag='1' AND							
+			D.NodeID.IsDescendantOf(C.NodeID.GetAncestor(1))=1 							
+		]]>
+    </select>-->
+    
+    <!-- 查询某一用户管辖的所有用户ID(权限类型为2时) -->
+	<select id="getPositionID2List" parameterClass="java.util.HashMap" resultMap="BINOLCMPL02.PositionID">
+		<![CDATA[
+			SELECT
+				T.BIN_EmployeeID,
+				T.BIN_PositionCategoryID,
+				MAX(T.PrivilegeFlag) AS PrivilegeFlag
+			FROM
+			(
+				(SELECT					
+					A.BIN_EmployeeID,					
+					A.BIN_PositionCategoryID,
+					1 AS PrivilegeFlag					
+				FROM						
+					Basis.BIN_Employee A,
+					Basis.BIN_Employee B				
+				WHERE						
+					B.BIN_EmployeeID = #employeeId# AND		
+					A.NodeID.IsDescendantOf(B.NodeID)=1	
+				)										
+				UNION				
+				(SELECT				
+					B.BIN_EmployeeID,					
+					B.BIN_PositionCategoryID,
+					0 AS PrivilegeFlag				
+				FROM						
+					Privilege.BIN_LikeEmployee A,
+					Basis.BIN_Employee B			
+				WHERE						
+					A.BIN_EmployeeID = #employeeId# AND
+					A.BIN_LikeEmployeeID = B.BIN_EmployeeID
+				)	
+			) T
+			GROUP BY
+				T.BIN_EmployeeID,
+				T.BIN_PositionCategoryID			
+		]]>
+    </select>
+
+	<!-- 添加岗位数据过滤权限 
+    <insert id="addPositionPrivilege" parameterClass="java.util.HashMap">
+    	<![CDATA[
+    		INSERT INTO Privilege.BIN_PositionPrivilege
+			(		
+				BIN_UserID,			
+				BIN_PositionID,			
+				BIN_PositionCategoryID,			
+				BusinessType,
+				OperationType,
+		]]>
+				<include refid="BINBECMINC99.insertKeySql" />		
+		<![CDATA[				
+			)		
+			VALUES		
+			(		
+				#userId#,			
+				#positionId#,			
+				#positionCategoryId#,			
+				#businessType#,
+				#operationType#,
+		]]>
+				<include refid="BINBECMINC99.insertValueSql" />		
+		<![CDATA[			
+			)		
+    	]]>
+    </insert>-->
+    
+    <!-- 添加人员数据过滤权限 -->
+    <insert id="addPositionPrivilege" parameterClass="java.util.HashMap">
+    	<![CDATA[
+    		INSERT INTO Privilege.BIN_EmployeePrivilege
+			(		
+				BIN_UserID,			
+				BIN_EmployeeID,	
+				BIN_SubEmployeeID,				
+				BusinessType,
+				OperationType,
+				PrivilegeFlag,
+		]]>
+				<include refid="BINOLCMINC99.insertKeySql" />
+		<![CDATA[				
+			)		
+			VALUES		
+			(		
+				#userId#,			
+				#employeeId#,	
+				#subEmployeeId#,			
+				#businessType#,
+				#operationType#,
+				#privilegeFlag#,
+		]]>
+				<include refid="BINOLCMINC99.insertValueSql" />
+		<![CDATA[			
+			)		
+    	]]>
+    </insert>
+    
+    <!-- 查询所有业务类型 --><!--  
+	<resultMap id="BINOLCMPL02.BusinessType" class="java.util.HashMap">
+		<result property="businessType" column="BusinessType"/>
+	</resultMap>
+	<select id="getBusinessTypeList" parameterClass="java.util.HashMap" resultMap="BINOLCMPL02.BusinessType">
+		<![CDATA[
+			SELECT 
+				CodeKey AS BusinessType
+			FROM 
+				Tools.BIN_Coder
+			WHERE
+				CodeType = '1048' AND
+				CodeKey <> 'A' AND
+				ValidFlag='1'
+		]]>
+    </select>-->
+    
+    <!-- 查询指定组织的所有岗位 
+	<resultMap id="BINBEPLDPL01.Position" class="java.util.HashMap">
+		<result property="positionId" column="BIN_PositionID"/>
+		<result property="positionCategoryId" column="BIN_PositionCategoryID"/>
+	</resultMap>
+	<select id="getPositionList" parameterClass="java.util.HashMap" resultMap="BINBEPLDPL01.Position">
+		<![CDATA[
+			SELECT
+				A.BIN_PositionID,
+				A.BIN_PositionCategoryID
+			FROM
+				Basis.BIN_Position A,
+				Basis.BIN_Organization B
+			WHERE
+				A.BIN_OrganizationID=B.BIN_OrganizationID AND
+				B.BIN_OrganizationInfoID=#organizationInfoId# AND
+				A.ValidFlag='1'	AND
+				B.ValidFlag='1'
+		]]>
+    </select>-->
+    
+    <!-- 查询指定组织的所有人员 -->
+	<resultMap id="BINBEPLDPL01.Position" class="java.util.HashMap">
+		<result property="employeeId" column="BIN_EmployeeID"/>
+		<result property="positionCategoryId" column="BIN_PositionCategoryID"/>
+	</resultMap>
+	<select id="getPositionList" parameterClass="java.util.HashMap" resultMap="BINBEPLDPL01.Position">
+		<![CDATA[
+			SELECT
+				BIN_EmployeeID,
+				BIN_PositionCategoryID
+			FROM
+				Basis.BIN_Employee
+			WHERE
+				BIN_OrganizationInfoID=#organizationInfoId#
+		]]>
+    </select>
+	
+</sqlMap>

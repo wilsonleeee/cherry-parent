@@ -1,0 +1,67 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sqlMap PUBLIC "-//iBATIS.com//DTD SQL Map 2.0//EN" "http://ibatis.apache.org/dtd/sql-map-2.dtd">
+<sqlMap namespace="BINOLWRCOM01">	
+    <!-- 获取大类和小类信息List  -->
+    <select id="getCategoryList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+    	<![CDATA[
+			SELECT
+				T.bigClassId AS bigClassId,
+				T.smallClassId AS smallClassId,
+				X.PropValue AS bigClassCode,
+				X.PropValueChinese AS bigClassName,
+				Y.PropValue AS smallClassCode,
+				Y.PropValueChinese AS smallClassName
+			FROM
+				(SELECT
+					E.BIN_PrtCatPropValueID AS bigClassId,
+					E1.BIN_PrtCatPropValueID AS smallClassId
+				FROM
+					Basis.BIN_InventoryInfo A WITH(NOLOCK)
+					LEFT JOIN Inventory.BIN_ProductStock B WITH(NOLOCK) ON A.BIN_InventoryInfoID = B.BIN_InventoryInfoID
+					
+					LEFT JOIN Basis.BIN_ProductVendor C WITH(NOLOCK) ON B.BIN_ProductVendorID = C.BIN_ProductVendorID
+					
+					JOIN Basis.BIN_PrtCategory D WITH(NOLOCK) ON C.BIN_ProductID = D.BIN_ProductID
+					JOIN Basis.BIN_PrtCatPropValue E WITH(NOLOCK) ON D.BIN_PrtCatPropValueID = E.BIN_PrtCatPropValueID
+					JOIN Basis.BIN_PrtCatProperty F WITH(NOLOCK) ON E.BIN_PrtCatPropertyID = F.BIN_PrtCatPropertyID AND F.TeminalFlag='1'
+					
+					JOIN Basis.BIN_PrtCategory D1 WITH(NOLOCK) ON C.BIN_ProductID = D1.BIN_ProductID
+					JOIN Basis.BIN_PrtCatPropValue E1 WITH(NOLOCK) ON D1.BIN_PrtCatPropValueID = E1.BIN_PrtCatPropValueID
+					JOIN Basis.BIN_PrtCatProperty F1 WITH(NOLOCK) ON E1.BIN_PrtCatPropertyID = F1.BIN_PrtCatPropertyID AND F1.TeminalFlag='2'
+				WHERE
+					A.BIN_OrganizationID = #organizationId#
+				GROUP BY
+					E.BIN_PrtCatPropValueID,
+					E1.BIN_PrtCatPropValueID) T
+					
+				LEFT JOIN Basis.BIN_PrtCatPropValue X WITH(NOLOCK) 
+				ON T.bigClassId = X.BIN_PrtCatPropValueID	
+				LEFT JOIN Basis.BIN_PrtCatPropValue Y WITH(NOLOCK) 
+				ON T.smallClassId = Y.BIN_PrtCatPropValueID	
+			ORDER BY
+				T.bigClassId,
+				T.smallClassId		
+		]]>
+    </select>
+    
+    <!-- 获取逻辑仓库List  -->
+    <select id="getLogicInventoryList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+    	<![CDATA[
+    		SELECT 
+    			A.BIN_LogicInventoryInfoID AS logicInventoryInfoId,
+    			A.LogicInventoryCode AS logicInventoryCode,
+    			A.InventoryNameCN AS logicInventoryName
+			FROM
+				Basis.BIN_LogicInventory A
+			WHERE
+				A.Type='1' AND 
+				A.BIN_OrganizationInfoID=#organizationInfoId# AND 
+				A.BIN_BrandInfoID=#brandInfoId# AND 
+				A.ValidFlag='1'
+    	]]>
+    </select>
+    
+</sqlMap>
+
+
+

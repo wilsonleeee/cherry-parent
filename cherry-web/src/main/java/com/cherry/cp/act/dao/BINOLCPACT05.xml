@@ -1,0 +1,135 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sqlMap PUBLIC "-//iBATIS.com//DTD SQL Map 2.0//EN" "http://ibatis.apache.org/dtd/sql-map-2.dtd">
+<sqlMap namespace="BINOLCPACT05">
+	<resultMap id="BINOLCPACT05.SubCampMap" class="java.util.HashMap">
+		<result property="list" column="subCampId" select="BINOLCPACT05.getGiftList" javaType="java.util.List" />
+		<result property="subCampCode" column="subCampCode"/>
+		<result property="subCampType" column="subCampType"/>
+		<result property="subCampName" column="subCampName"/>
+		<result property="locationType" column="locationType"/>
+		<result property="conInfo" column="conInfo"/>
+	</resultMap>
+	<!-- 取得档次信息 -->
+	<select id="getSubCampList" parameterClass="java.util.HashMap" resultMap="BINOLCPACT05.SubCampMap">
+		  <![CDATA[
+			SELECT
+				A.BIN_CampaignRuleID AS subCampId,
+				A.SubCampaignCode AS subCampCode,
+				A.SubCampaignType AS subCampType,
+				A.SubCampaignName AS subCampName,
+				B.ActLocationType AS locationType,
+				D.ConditionInfo AS conInfo
+			FROM 	
+				Campaign.BIN_CampaignRule A 
+				JOIN Campaign.BIN_CamRuleCondition B 
+				ON (A.BIN_CampaignRuleID=B.BIN_CampaignRuleID  
+					AND B.ValidFlag = '1')
+				JOIN Campaign.BIN_CampaignBaseProp C 
+				ON(B.BIN_CampaignBasePropID=C.BIN_CampaignBasePropID 
+					AND C.PropertyName='baseProp_customer' 
+					AND C.ValidFlag = '1')
+				LEFT JOIN  Members.BIN_SearchLog D
+				ON(B.BasePropValue1 = D.BIN_SearchCode
+					AND D.ValidFlag = '1')
+			WHERE 
+			    A.BIN_CampaignID=#campaignId#
+			    AND A.State IN ('1','2')
+			    AND A.ValidFlag = '1'
+	    ]]>
+	</select>
+    <!-- 取得子活动奖励List-->
+    <select id="getGiftList" parameterClass="java.lang.Integer" resultClass="java.util.HashMap">
+    	<include refid="BINOLCPACT02.getPrtList_SQL" />
+    	<![CDATA[WHERE A.BIN_CampaignRuleID = #subCampId#]]>
+    </select>
+     <!-- 取得子活动奖励List-->
+    <select id="getPrtList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+    	<include refid="BINOLCPACT02.getPrtList_SQL" />
+    	<![CDATA[WHERE A.SubCampaignCode = #subCampCode#]]>
+    </select>
+      <!-- 取得会员INFO-->
+    <select id="getMemInfo" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+		<![CDATA[
+		  SELECT 
+	 			A.BIN_MemberInfoID AS memId,
+	 			 A.Telephone AS telephone,
+	 			 A.Mobilephone AS mobilePhone,
+	 			 A.BirthYear + A.BirthDay AS birthDay,
+	 			 A.CounterCodeBelong AS counterCode,
+	 			 B.MemCode AS memCode
+		   FROM 
+	  			 Members.BIN_MemberInfo A WITH(NOLOCK) 
+	  			 JOIN Members.BIN_MemCardInfo B WITH(NOLOCK) 
+	  			 ON(A.BIN_MemberInfoID=B.BIN_MemberInfoID 
+	  				AND B.CardValidFlag = '1' 
+	  				AND B.ValidFlag = '1')
+		  WHERE 
+		 	   	 B.MemCode=#memCode#
+	  			 AND A.BIN_BrandInfoID = #brandInfoId#
+    	]]>
+    </select>
+    <!-- 取得礼品信息-->
+    <select id="getPrtInfo" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+		<![CDATA[
+		SELECT
+			B.BIN_ProductVendorID AS proId,
+			'N' AS prtType,
+			0 AS exPoint,
+			A.IsStock AS isStock
+		FROM
+			Basis.BIN_Product A WITH(NOLOCK)
+			JOIN Basis.BIN_ProductVendor B WITH(NOLOCK)
+			ON(A.BIN_ProductID = B.BIN_ProductID
+				AND B.ValidFlag = '1')
+		WHERE
+			A.UnitCode = #unitCode#
+			AND A.ValidFlag = '1'
+			AND B.BarCode = #barCode#
+		UNION
+		SELECT
+			B.BIN_PromotionProductVendorID AS proId,
+			'P' AS prtType,
+			CASE A.PromotionCateCD WHEN 'DHCP' THEN A.ExPoint END AS exPoint,
+			A.IsStock AS isStock
+		FROM
+			Basis.BIN_PromotionProduct A WITH(NOLOCK)
+			JOIN Basis.BIN_PromotionProductVendor B WITH(NOLOCK)
+			ON(A.BIN_PromotionProductID = B.BIN_PromotionProductID
+				AND B.ValidFlag = '1')
+		WHERE
+			A.UnitCode = #unitCode#
+			AND A.ValidFlag = '1'
+			AND B.BarCode = #barCode#
+    	]]>
+    </select>
+    <!-- 取得主活动信息  -->
+    <select id="getCampaignInfo" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+    	<![CDATA[
+	     SELECT
+			A.BIN_CampaignID AS campaignId,
+		 	A.CampaignName AS campaignName,
+		 	A.CampaignCode AS campaignCode,
+			A.CampaignType AS campaignType,
+			A.State AS state,
+			A.GotCounter AS gotCounter,
+			convert(varchar,A.CampaignOrderFromDate,121) AS CampaignOrderFromDate,
+			convert(varchar,A.CampaignOrderToDate,121) AS CampaignOrderToDate
+		FROM
+			Campaign.BIN_Campaign A
+		WHERE
+			A.BIN_CampaignID = #campaignId#
+		]]>
+    </select>
+    <!-- 取得柜台部门ID  -->
+    <select id="getCntDepartId" parameterClass="java.util.HashMap" resultClass="java.lang.Integer">
+    	<![CDATA[
+	     SELECT
+			BIN_OrganizationID
+		FROM
+			Basis.BIN_CounterInfo
+		WHERE
+			BIN_BrandInfoID = #brandInfoId#
+			AND CounterCode = #cntCode#
+		]]>
+    </select>
+</sqlMap>

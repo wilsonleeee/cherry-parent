@@ -1,0 +1,499 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sqlMap PUBLIC "-//iBATIS.com//DTD SQL Map 2.0//EN" "http://ibatis.apache.org/dtd/sql-map-2.dtd">
+<sqlMap namespace="BINBEDRPOI01">
+	
+	<!-- 取得销售业务数据主表信息 -->
+	<resultMap id="BINBEDRPOI01.SaleRecordPointInfo" class="com.cherry.dr.cmbussiness.dto.core.PointChangeDTO">
+		<result property="organizationInfoId" column="BIN_OrganizationInfoID"/>				<!-- 所属组织ID -->
+		<result property="brandInfoId" column="BIN_BrandInfoID"/>							<!-- 所属品牌ID -->
+		<result property="organizationId" column="BIN_OrganizationID"/>						<!-- 组织结构ID -->
+		<result property="tradeNoIF" column="BillCode"/>									<!-- 单据号 -->
+		<result property="tradeType" column="SaleType"/>									<!-- 业务类型 -->
+		<result property="memberInfoId" column="BIN_MemberInfoID"/>							<!-- 会员信息ID -->
+		<result property="changeDate" column="SaleTime"/>									<!-- 积分变化日期  -->
+		<result property="amount" column="Amount"/>											<!-- 实收金额 -->
+		<result property="quantity" column="Quantity"/>										<!-- 销售数量 -->
+		<result property="discount" column="Discount"/>										<!-- 折扣率 -->
+	</resultMap>
+	<!-- 取得销售业务数据主表信息  -->
+    <select id="getSaleRecordPointInfo" parameterClass="com.cherry.dr.cmbussiness.dto.core.CampBaseDTO" resultMap="BINBEDRPOI01.SaleRecordPointInfo">
+       	<![CDATA[
+			SELECT
+				BIN_OrganizationInfoID AS BIN_OrganizationInfoID,
+				BIN_BrandInfoID AS BIN_BrandInfoID,
+				BIN_OrganizationID AS BIN_OrganizationID,
+				BillCode AS BillCode,
+				SaleType AS SaleType,
+				BIN_MemberInfoID AS BIN_MemberInfoID,
+				convert(varchar, SaleTime, 121) AS SaleTime,
+				ISNULL(Amount, 0) AS Amount,
+				ISNULL(Quantity, 0) AS Quantity,
+				Discount AS Discount
+			FROM 
+				Sale.BIN_SaleRecord WITH(nolock)
+			WHERE
+				BillCode = #billId# AND
+				BIN_BrandInfoID = #brandInfoId# AND
+				BIN_OrganizationInfoID = #organizationInfoId#
+		  ]]>
+    </select>
+    
+	<!-- 取得支付方式列表  -->
+    <select id="getPTSalePayList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+       	<![CDATA[
+			SELECT
+				BIN_SaleRecordID AS saleRecordId,
+				PayTypeCode AS payTypeCode,
+				ISNULL(PayAmount, 0) AS payAmount
+			FROM 
+				Sale.BIN_SalePayList WITH(nolock)
+			WHERE
+		  ]]>	
+		<dynamic>
+			<isEmpty property="saleIdArr" >
+				<![CDATA[BIN_SaleRecordID = #saleId# ]]>	
+			</isEmpty>
+			<isNotEmpty property="saleIdArr" >
+				BIN_SaleRecordID IN
+			<iterate conjunction="," open="(" close=")" property="saleIdArr">  
+		        #saleIdArr[]#
+		    </iterate>							
+			</isNotEmpty>
+		</dynamic>
+		<![CDATA[
+			AND ValidFlag = '1'
+			ORDER BY BIN_SaleRecordID,DetailNo
+		  ]]>	
+    </select>
+    
+    <!-- 取得支付方式列表(订单)  -->
+    <select id="getESSalePayList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+       	<![CDATA[
+			SELECT
+				BIN_ESOrderMainID AS saleRecordId,
+				PayTypeCode AS payTypeCode,
+				ISNULL(PayAmount, 0) AS payAmount
+			FROM 
+				Sale.BIN_ESOrderPayList WITH(nolock)
+			WHERE
+		  ]]>	
+		<dynamic>
+			<isEmpty property="saleIdArr" >
+				<![CDATA[BIN_ESOrderMainID = #saleId# ]]>	
+			</isEmpty>
+			<isNotEmpty property="saleIdArr" >
+				BIN_ESOrderMainID IN
+			<iterate conjunction="," open="(" close=")" property="saleIdArr">  
+		        #saleIdArr[]#
+		    </iterate>							
+			</isNotEmpty>
+		</dynamic>
+		<![CDATA[
+			AND ValidFlag = '1'
+			ORDER BY BIN_ESOrderMainID,DetailNo
+		  ]]>	
+    </select>
+    
+    
+	<!-- 取得销售业务件数  -->
+    <select id="getPTSaleRecordCount" parameterClass="java.util.HashMap" resultClass="java.lang.Integer">
+       	<![CDATA[
+			SELECT
+				COUNT(1)
+			FROM 
+				Sale.BIN_SaleRecord WITH(nolock)
+			WHERE
+				BIN_MemberInfoID = #memberInfoId# AND
+				BIN_BrandInfoID = #brandInfoId# AND
+				BIN_OrganizationInfoID = #organizationInfoId# AND
+				BillCode = #billId#
+		  ]]>
+		  <isNotEmpty property="memberClubId">
+			 AND BIN_MemberClubID = #memberClubId#
+	</isNotEmpty>
+    </select>
+	
+	<!-- 会员当前的积分信息 -->
+	<resultMap id="BINBEDRPOI01.MemberPointInfo" class="com.cherry.dr.cmbussiness.dto.core.PointDTO">
+		<result property="memberPointId" column="MemberPointID"/>					<!-- 会员积分ID -->
+		<result property="curTotalPoint" column="CurTotalPoint"/>					<!-- 当前的累计积分 -->
+		<result property="curTotalChanged" column="CurTotalChanged"/>				<!-- 当前的累计兑换积分 -->
+		<result property="curChangablePoint" column="CurChangablePoint"/>			<!-- 当前的可兑换积分 -->
+		<result property="preCardPoint" column="PreCardPoint"/>						<!-- 前卡积分 -->
+		<result property="initialPoint" column="InitialPoint"/>						<!-- 初始导入总积分 -->
+		<result property="initChangablePoint" column="InitChangablePoint"/>			<!-- 初始导入可兑换积分 -->
+		<result property="initTotalChanged" column="InitTotalChanged"/>				<!-- 初始导入总兑换积分 -->
+		<result property="totalDisablePoint" column="TotalDisablePoint"/>			<!-- 累计失效积分 -->
+		<result property="curDisablePoint" column="CurDisablePoint"/>				<!-- 本次将失效积分 -->
+		<result property="preDisableDate" column="PreDisableDate"/>					<!-- 上回积分失效日期 -->
+		<result property="curDealDate" column="CurDealDate"/>						<!-- 本次积分失效日期 -->
+		<result property="memberClubId" column="BIN_MemberClubID"/>					<!-- 会员俱乐部ID -->
+	</resultMap>
+	<!-- 取得会员当前的积分信息  -->
+    <select id="getMemberPointInfo" parameterClass="java.util.HashMap" resultMap="BINBEDRPOI01.MemberPointInfo">
+       	<![CDATA[
+			SELECT
+				BIN_MemberPointID AS MemberPointID,
+				ISNULL(TotalPoint, 0) AS CurTotalPoint,
+				ISNULL(TotalChanged, 0) AS CurTotalChanged,
+				ISNULL(ChangablePoint, 0) AS CurChangablePoint,
+				ISNULL(PreCardPoint, 0) AS PreCardPoint,
+				ISNULL(InitialPoint, 0) AS InitialPoint,
+				ISNULL(InitChangablePoint, 0) AS InitChangablePoint,
+				ISNULL(InitTotalChanged, 0) AS InitTotalChanged,
+				ISNULL(TotalDisablePoint, 0) AS TotalDisablePoint,
+				ISNULL(CurDisablePoint, 0) AS CurDisablePoint,
+				convert(varchar, PreDisableDate, 120) AS PreDisableDate,
+				convert(varchar, CurDealDate, 120) AS CurDealDate,
+				ISNULL(BIN_MemberClubID, 0) AS BIN_MemberClubID
+			FROM 
+				Members.BIN_MemberPoint
+			WHERE
+				BIN_MemberInfoID = #memberInfoId#
+		  ]]>
+		  <isNotEmpty property="memberClubId">
+				AND BIN_MemberClubID = #memberClubId# 
+			</isNotEmpty>
+    </select>
+	
+	<!-- 插入会员积分变化主表  -->
+	<insert id="addPointChange" parameterClass="com.cherry.dr.cmbussiness.dto.core.PointChangeDTO">
+		<selectKey resultClass="java.lang.Integer" type="post" keyProperty="pointChangeId" >
+		<![CDATA[
+		INSERT Members.BIN_PointChange(
+			BIN_OrganizationInfoID,
+			BIN_BrandInfoID,
+			BIN_OrganizationID,
+			TradeNoIF,
+			TradeType,
+			BIN_MemberInfoID,
+			MemCode,
+			ChangeDate,
+			Point,
+			Amount,
+			Quantity,
+			BIN_EmployeeID,
+			ReCalcCount,
+			BIN_MemberClubID,
+			EsFlag,
+		]]>
+			<include refid="BINBEDRCOM01.insertKeySql" />									
+		<![CDATA[	
+		)VALUES(
+			#organizationInfoId#,
+			#brandInfoId#,
+			#organizationId#,
+			#tradeNoIF#,
+			#tradeType#,
+			#memberInfoId#,
+			#memCode#,
+			#changeDate#,
+			#point#,
+			#amount#,
+			#quantity#,
+			#employeeId#,
+			#reCalcCount#,
+			#clubIdStr#,
+			#esFlag#,
+		]]>
+		<include refid="BINBEDRCOM01.insertValueSql" />
+		<![CDATA[)
+			select SCOPE_IDENTITY() as value
+			]]> 
+	    </selectKey>
+	</insert>
+	
+	<!-- 取得会员积分变化的最大重算次数 -->	
+	<select id="getPointReCalcInfo" parameterClass="com.cherry.dr.cmbussiness.dto.core.PointChangeDTO" resultClass="java.util.HashMap">
+		<![CDATA[
+			SELECT TOP 1
+				BIN_PointChangeID AS pointChangeId,
+				ISNULL(ReCalcCount, 0) AS reCalcCount,
+				ISNULL(Point, 0) AS histPoint,
+				ValidFlag AS histValidFlag
+			FROM
+				Members.BIN_PointChange
+			WHERE
+				 BIN_MemberInfoID = #memberInfoId# AND
+				 BIN_BrandInfoID = #brandInfoId# AND
+				 BIN_OrganizationInfoID = #organizationInfoId# AND
+				 TradeNoIF = #tradeNoIF#
+			ORDER BY 
+				ReCalcCount desc
+			
+		]]>	
+    </select>
+    
+    <!-- 取得历史积分明细信息 -->	
+	<select id="getHistPointDetailInfo" parameterClass="com.cherry.dr.cmbussiness.dto.core.PointChangeDTO" resultClass="java.util.HashMap">
+		<![CDATA[
+			SELECT
+				UnitCode AS unitCode,
+				BarCode AS barCode,
+				SaleType AS saleType,
+				PointType AS pointType
+			FROM
+				Members.BIN_PointChangeDetail
+			WHERE
+				BIN_PointChangeID = #pointChangeId#
+		]]>	
+    </select>
+    
+	<!-- 更新会员积分变化表  -->
+	<update id="updatePointChange" parameterClass="com.cherry.dr.cmbussiness.dto.core.PointChangeDTO">
+		
+		<![CDATA[
+	      UPDATE
+	               Members.BIN_PointChange
+		  SET    
+		  		   TradeType = #tradeType#,
+				   MemCode = #memCode#,
+				   ChangeDate = #changeDate#,
+				   Point = #point#,
+				   Amount = #amount#,
+				   Quantity = #quantity#,
+				   BIN_EmployeeID = #employeeId#,
+				   ValidFlag  = '1',
+				   ClearFlag = NULL,
+				   EsFlag = #esFlag#,
+		]]>
+			<include refid="BINBEDRCOM01.updateSql" />									
+		<![CDATA[								
+		  WHERE									
+				  BIN_MemberInfoID = #memberInfoId# AND
+				  BIN_BrandInfoID = #brandInfoId# AND
+				  BIN_OrganizationInfoID = #organizationInfoId# AND
+				  TradeNoIF = #tradeNoIF#
+		]]> 
+		<isNotEmpty property="clubIdStr">
+				  AND BIN_MemberClubID = #memberClubId#
+			</isNotEmpty>
+	</update> 
+	
+	<!-- 更新会员积分变化表(历史导入的明细)  -->
+	<update id="updateHistPointChange" parameterClass="com.cherry.dr.cmbussiness.dto.core.PointChangeDTO">
+		
+		<![CDATA[
+	      UPDATE
+	               Members.BIN_PointChange
+		  SET    
+		  		   TradeType = #tradeType#,
+				   MemCode = #memCode#,
+				   ChangeDate = #changeDate#,
+				   Point = #point#,
+				   Amount = #amount#,
+				   Quantity = #quantity#,
+				   BIN_EmployeeID = #employeeId#,
+				   ValidFlag  = #validFlag#,
+				   ReCalcCount = #reCalcCount#,
+				   ClearFlag = NULL,
+		]]>
+			<include refid="BINBEDRCOM01.updateSql" />									
+		<![CDATA[								
+		  WHERE									
+				 BIN_PointChangeID = #pointChangeId#
+		]]>  
+	</update> 
+	
+	<!-- 插入会员积分变化明细表  -->
+	<insert id="addPointChangeDetail" parameterClass="com.cherry.dr.cmbussiness.dto.core.PointChangeDetailDTO">
+		<![CDATA[
+		INSERT Members.BIN_PointChangeDetail(
+			BIN_PointChangeID,
+			UnitCode,
+			BarCode,
+			BIN_PrmPrtVendorID,
+			SaleType,
+			Point,
+			ValidMonths,
+			Price,
+			Quantity,
+			PointType,
+			Reason,
+			SubCampaignID,
+			MainRuleID,
+			CombRuleID,
+			RelevantSRCode,
+		]]>	
+			<include refid="BINBEDRCOM01.insertKeySql" />									
+		<![CDATA[	
+		)VALUES(
+			#pointChangeId#,
+			#unitCode#,
+			#barCode#,
+			#prmPrtVendorId#,
+			#saleType#,
+			#point#,
+			#validMonths#,
+			#price#,
+			#quantity#,
+			#pointType#,
+			#reason#,
+			#subCampaignId#,
+			#mainRuleId#,
+			#combRuleId#,
+			#billCodeSR#,
+		]]>
+		<include refid="BINBEDRCOM01.insertValueSql" />
+		<![CDATA[
+		)
+		]]>
+	</insert>
+	
+	 <!-- 删除会员积分变化明细表 -->
+	<delete id="delPointChangeDetail" parameterClass="java.util.HashMap">
+		<![CDATA[
+			DELETE FROM			
+				Members.BIN_PointChangeDetail						
+			WHERE					
+				BIN_PointChangeID = #pointChangeId#
+		]]>
+    </delete>
+	
+	<!-- 插入会员积分表  -->
+	<insert id="addMemberPoint" parameterClass="com.cherry.dr.cmbussiness.dto.core.PointDTO">
+		<![CDATA[
+		INSERT Members.BIN_MemberPoint(
+			BIN_OrganizationInfoID,
+			BIN_BrandInfoID,
+			BIN_MemberInfoID,
+			TotalPoint,
+			TotalChanged,
+			ChangablePoint,
+			FreezePoint,
+			PreCardPoint,
+			LastChangeTime,
+		]]>	
+		<isNotEmpty property="clubIdStr">
+				BIN_MemberClubID,
+			</isNotEmpty>
+			<include refid="BINBEDRCOM01.insertKeySql" />									
+		<![CDATA[	
+		)VALUES(
+			#organizationInfoId#,
+			#brandInfoId#,
+			#memberInfoId#,
+			#curTotalPoint#,
+			#curTotalChanged#,
+			#curChangablePoint#,
+			#freezePoint#,
+			#preCardPoint#,
+			GETDATE(),
+		]]>
+		<isNotEmpty property="clubIdStr">
+				#memberClubId#,
+			</isNotEmpty>
+		<include refid="BINBEDRCOM01.insertValueSql" />
+		<![CDATA[
+		)
+		]]>
+	</insert>
+	
+	<!-- 更新会员积分表  -->
+	<update id="updateMemberPoint" parameterClass="com.cherry.dr.cmbussiness.dto.core.PointDTO">
+		
+		<![CDATA[
+	      UPDATE
+	               Members.BIN_MemberPoint
+		  SET    
+				   TotalPoint = #curTotalPoint#,
+				   TotalChanged = #curTotalChanged#,
+				   ChangablePoint = #curChangablePoint#,
+				   FreezePoint = #freezePoint#,
+				   PreCardPoint = #preCardPoint#,
+		]]>
+		<isEmpty property="lcTimeKbn">
+			<![CDATA[LastChangeTime = GETDATE(),]]>
+		</isEmpty>
+			<include refid="BINBEDRCOM01.updateSql" />									
+		<![CDATA[								
+		  WHERE									
+				  BIN_MemberPointID = #memberPointId#
+		]]>
+		   <isNotEmpty property="clubIdStr">
+				AND BIN_MemberClubID = #memberClubId#
+			</isNotEmpty>
+	</update> 
+	
+	<!-- 更新会员积分表(初始导入信息)  -->
+	<update id="updateInitMemberPoint" parameterClass="com.cherry.dr.cmbussiness.dto.core.PointDTO">
+		
+		<![CDATA[
+	      UPDATE
+	               Members.BIN_MemberPoint
+		  SET    
+				   InitialPoint = #initialPoint#,
+				   InitChangablePoint = #initChangablePoint#,
+				   InitTotalChanged = #initTotalChanged#,
+		]]>
+			<include refid="BINBEDRCOM01.updateSql" />									
+		<![CDATA[								
+		  WHERE									
+				  BIN_MemberPointID = #memberPointId#
+		]]>
+		  <isNotEmpty property="memberClubId">
+			 AND BIN_MemberClubID = #memberClubId#
+	</isNotEmpty>
+	</update> 
+	
+	<!-- 取得支付方式列表  -->
+    <select id="getPayTypePT01List" parameterClass="com.cherry.dr.cmbussiness.dto.core.CampBaseDTO" resultClass="java.util.HashMap">
+       	<![CDATA[
+			SELECT
+				PayTypeCode AS codeKey,
+				PayTypeDescCN AS PayTypeDesc
+			FROM 
+				Basis.BIN_PayType
+			WHERE
+				BIN_OrganizationInfoID = #organizationInfoId# AND
+				BIN_BrandInfoID = #brandInfoId# AND
+				ValidFlag = '1'
+		  ]]>
+    </select>
+    
+    <!-- 更新积分变化关联的奖励ID  -->
+	<update id="upReleUsedNo" parameterClass="java.util.HashMap">
+		
+		<![CDATA[
+	      UPDATE
+	               Members.BIN_PointChange
+		  SET    
+				   RelevantUsedNo = #relevantUsedNo#							
+		  WHERE									
+				  BIN_PointChangeID = #pointChangeId#
+		]]>
+	</update>
+	
+	<!-- 取得活动代号  -->
+    <select id="getActMainCode" parameterClass="java.util.HashMap" resultClass="java.lang.String">
+       	<![CDATA[
+			SELECT TOP 1
+				MainCode
+			FROM 
+				Promotion.BIN_ActivityTransHis
+			WHERE
+				CountActCode = #countActCode# AND
+				BIN_BrandInfoID = #brandInfoId# AND
+				BIN_OrganizationInfoID = #organizationInfoId#
+		  ]]>
+    </select>
+    
+    <!-- 取得推荐奖励总件数  -->
+    <select id="getPTRewCount" parameterClass="java.util.HashMap" resultClass="java.lang.Integer">
+       	<![CDATA[
+			SELECT
+				COUNT(1)
+			FROM
+				Members.BIN_MemUsedDetail A JOIN
+				Members.BIN_MemUsedInfo B
+				ON(A.BIN_MemberInfoID = #memberInfoId# AND 
+				A.ValidFlag='1' AND 
+				A.BIN_MemUsedInfoID = B.BIN_MemUsedInfoID AND 
+				B.TradeType = 'PT' AND
+				B.MaintainType = '1' AND
+				B.RelevantNo IS NOT NULL AND
+				B.RelevantNo <> #relevantNo# AND
+				B.ValidFlag = '1')
+		  ]]>
+    </select>
+</sqlMap>

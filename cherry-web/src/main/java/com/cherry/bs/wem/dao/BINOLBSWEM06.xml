@@ -1,0 +1,127 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sqlMap PUBLIC "-//iBATIS.com//DTD SQL Map 2.0//EN" "http://ibatis.apache.org/dtd/sql-map-2.dtd">
+<sqlMap namespace="BINOLBSWEM06">
+    <!-- 取出要重新返利的销售数据sql -->
+	<sql id="SalList">
+		<![CDATA[
+			SELECT 
+				a.SaleRecordCode AS saleRecordCode,
+				a.BillCodePre AS billCodePre,
+				a.BillCode AS billCode,
+				a.SaleType AS saleType,
+				a.SaleTime AS saleTime,
+				a.EmployeeCode as employeeCode,
+				a.Quantity as saleCount,
+				f.salePrice as amount,
+				e.EmployeeName as employeeName,
+				f.salePrice-f.StandardCost as saleProfit,
+				a.Channel AS channel
+			FROM Sale.BIN_SaleRecord a WITH(NOLOCK)
+			LEFT JOIN Basis.BIN_Employee e WITH(NOLOCK) on a.BIN_EmployeeID = e.BIN_EmployeeID 
+				AND a.BIN_OrganizationInfoID=e.BIN_OrganizationInfoID AND a.BIN_BrandInfoID=e.BIN_BrandInfoID AND a.BIN_OrganizationID=e.BIN_OrganizationID
+			LEFT JOIN Basis.BIN_Organization o WITH(NOLOCK) on
+				 a.BIN_OrganizationInfoID=o.BIN_OrganizationInfoID AND a.BIN_BrandInfoID=o.BIN_BrandInfoID AND a.BIN_OrganizationID=o.BIN_OrganizationID  
+			LEFT JOIN (SELECT 
+							d.BIN_SaleRecordID,
+							f.BIN_BrandInfoID,
+							f.BIN_OrganizationInfoID,
+							sum(f.StandardCost*d.Quantity) as StandardCost,
+							sum(d.PricePay*d.Quantity) as salePrice
+						FROM 
+							Sale.BIN_SaleRecordDetail d WITH(NOLOCK) 
+						LEFT JOIN
+							Basis.BIN_ProductVendor m WITH(NOLOCK) 
+						ON 
+							d.BIN_ProductVendorID = m.BIN_ProductVendorID
+						LEFT JOIN
+							Basis.BIN_Product f WITH(NOLOCK) 
+						ON 
+							m.BIN_ProductID = f.BIN_ProductID 
+						LEFT JOIN
+							Basis.BIN_ProductPrice p WITH(NOLOCK) 
+						ON 
+							f.BIN_BrandInfoID = p.BIN_BrandInfoID and 
+							f.BIN_ProductID = p.BIN_ProductID 
+						WHERE 
+							d.SaleType='N' AND f.StandardCost<d.PricePay
+						GROUP BY 
+							d.BIN_SaleRecordID,f.BIN_BrandInfoID,f.BIN_OrganizationInfoID
+						)f on
+			a.BIN_BrandInfoID=f.BIN_BrandInfoID AND f.BIN_OrganizationInfoID = a.BIN_OrganizationInfoID AND a.BIN_SaleRecordID = f.BIN_SaleRecordID
+			WHERE 
+				a.BIN_OrganizationInfoID = #organizationInfoId# AND
+				a.BIN_BrandInfoID = #brandInfoId# AND
+				a.ValidFlag='1'
+		]]>
+		<dynamic>
+			<isNotEmpty prepend="AND" property="rebateFlag">
+				<![CDATA[a.RebateFlag = #rebateFlag#]]>
+			</isNotEmpty>
+			<isNotEmpty prepend="AND" property="employeeCode">
+				<![CDATA[a.EmployeeCode = #employeeCode#]]>
+			</isNotEmpty>
+			<isNotEmpty prepend="AND" property="employeeName">
+				<![CDATA[e.EmployeeName = #employeeName#]]>
+			</isNotEmpty>
+			<isNotEmpty prepend="AND" property="billCode">
+				<![CDATA[a.BillCode = #billCode#]]>
+			</isNotEmpty>
+			<isNotEmpty prepend="AND" property="channel">
+				<![CDATA[a.Channel = #channel#]]>
+			</isNotEmpty>
+			<isNotEmpty prepend="AND" property="saleType">
+				<![CDATA[a.SaleType = #saleType#]]>
+			</isNotEmpty>
+			<isNotEmpty prepend="AND" property="startDate">
+				<![CDATA[CONVERT(varchar(10),a.SaleTime,120) >= #startDate#]]>
+			</isNotEmpty>
+			<isNotEmpty prepend="AND" property="endDate">
+				<![CDATA[CONVERT(varchar(10),a.SaleTime,120) <= #endDate#]]>
+			</isNotEmpty>
+		</dynamic>
+    </sql>
+    <!-- 根据条件取得已分摊数据总数  -->
+    <select id="getSalListCount" parameterClass="java.util.HashMap" resultClass="java.lang.Integer">
+    	<![CDATA[
+			SELECT	COUNT(*) AS count FROM (
+		]]>	
+		<include refid="BINOLBSWEM06.SalList" />	
+		<![CDATA[	
+			)SORT_T1
+		]]>										
+    </select>
+    <!-- 取出要重新返利的销售数据 -->
+    <select id="getSalList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+		<include refid="BINOLCMINC99.pageheader" />
+		<include refid="BINOLBSWEM06.SalList" />
+		<include refid="BINOLCMINC99.pagefooter" />
+	</select>
+	
+    <!-- 重新利润分摊 修改已分摊数据ValidFlag为0 -->
+    <update id="updateSaleRecordRebateFlag" parameterClass="java.util.HashMap">
+	    <![CDATA[
+	    	UPDATE
+				Sale.BIN_SaleRecord
+			SET 
+				RebateFlag='0',
+	    ]]>
+	    <include refid="BINOLCMINC99.updateSql" />	
+			WHERE
+				BIN_OrganizationInfoID=#organizationInfoId# AND
+				BIN_BrandInfoID=#brandInfoId# AND
+	    		saleRecordCode=#saleRecordCode#
+    </update>
+    <update id="delRebateDivide" parameterClass="java.util.HashMap">
+		<![CDATA[
+			UPDATE 
+				Sale.BIN_ProfitRebate 
+			SET 
+				ValidFlag='0',
+		]]>
+		<include refid="BINOLCMINC99.updateSql" />	
+			WHERE
+				BIN_OrganizationInfoID=#organizationInfoId# AND
+				BIN_BrandInfoID=#brandInfoId# AND
+				SaleRecordCode = #saleRecordCode#
+	</update>
+</sqlMap>

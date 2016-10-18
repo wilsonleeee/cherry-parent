@@ -1,0 +1,103 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sqlMap PUBLIC "-//iBATIS.com//DTD SQL Map 2.0//EN" "http://ibatis.apache.org/dtd/sql-map-2.dtd">
+<sqlMap namespace="BINOLPLSCF07">
+	
+	<!-- 取得code值管理详细信息  -->
+    <select id="getCodeManagerDetail" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+         <![CDATA[
+	   	SELECT
+			BIN_CodeManagerID AS codeManagerID, 
+			OrgCode AS orgCode,
+			BrandCode AS brandCode,
+			CodeType AS codeType,
+			CodeName AS codeName,
+			KeyDescription AS keyDescription,
+			Value1Description AS value1Description,
+			Value2Description AS value2Description,
+			Value3Description AS value3Description
+		 FROM    
+			Tools.BIN_CodeManager
+		WHERE    
+			BIN_CodeManagerID = #codeManagerID#
+		]]>			
+    </select>	
+	
+	<!-- 取得组织名称  -->
+    <select id="getOrgNameSCF" parameterClass="java.util.HashMap" resultClass="java.lang.String">
+         <![CDATA[
+	   	SELECT  DISTINCT
+			OrgNameChinese
+		FROM    
+			dbo.BIN_BrandDataSourceConfig
+		WHERE    
+			OrgCode = #orgCode#
+		]]>	
+    </select>
+	
+	<!-- 取得品牌名称  -->
+    <select id="getBrandNameSCF" parameterClass="java.util.HashMap" resultClass="java.lang.String">
+         <![CDATA[
+	   	SELECT  DISTINCT
+			BrandName
+		FROM    
+			dbo.BIN_BrandDataSourceConfig
+		WHERE  
+			OrgCode = #orgCode# AND  
+			BrandCode = #brandCode#
+		]]>	
+    </select>	
+	<!-- 查询code表List -->
+	<resultMap id="BINOLPLSCF07.coder" class="java.util.HashMap">
+		<result property="coderId" column="BIN_CoderID"/>
+		<result property="codeType" column="CodeType"/>		
+		<result property="codeKey" column="CodeKey"/>
+		<result property="value1" column="Value1"/>
+		<result property="value2" column="Value2"/>
+		<result property="value3" column="Value3"/>
+		<result property="grade" column="Grade"/>
+		<result property="codeOrder" column="CodeOrder"/>
+	</resultMap>
+	<select id="getCoderList" parameterClass="java.util.HashMap" resultMap="BINOLPLSCF07.coder">
+		<![CDATA[
+			SELECT				
+				BIN_CoderID,
+				CodeType,
+				CodeKey,
+				Value1,
+				Value2,
+				Value3,
+				Grade,
+				CodeOrder
+			FROM
+				Tools.BIN_Coder
+			WHERE
+				ValidFlag='1' AND
+				OrgCode=#orgCode# AND
+				BrandCode=#brandCode# AND
+				CodeType=#codeType#
+		]]>
+    </select>
+	
+	<!--判断某组织和品牌下的是否已经存在某个codeType-->
+	<select id="isExist" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+		 <![CDATA[
+	   	SELECT
+			BIN_CodeManagerID AS codeManagerID, 
+			OrgCode AS orgCode,
+			BrandCode AS brandCode,
+			CodeType AS codeType,
+			CodeName AS codeName,
+			KeyDescription AS keyDescription,
+			Value1Description AS value1Description,
+			Value2Description AS value2Description,
+			Value3Description AS value3Description
+		 FROM    
+			Tools.BIN_CodeManager
+		WHERE    
+			CodeType = #codeType#
+			AND BrandCode = #brandCode#
+			AND OrgCode = #orgCode#
+			AND ValidFlag = '1'
+		]]>		
+	</select>
+</sqlMap>

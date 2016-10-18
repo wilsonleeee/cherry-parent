@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sqlMap PUBLIC "-//iBATIS.com//DTD SQL Map 2.0//EN" "http://ibatis.apache.org/dtd/sql-map-2.dtd">
+<sqlMap namespace="BINOLBSPOS03">
+    
+    <!-- 更新岗位 -->
+    <update id="updatePosition" parameterClass="java.util.HashMap">
+    	<![CDATA[
+    		UPDATE Basis.BIN_Position
+    		SET	
+				PositionName = #positionName#,			
+				PositionNameForeign = #positionNameForeign#,			
+				PositionDESC = #positionDESC#,
+				BIN_PositionCategoryID = #positionCategoryId#,
+				isManager = #isManager#,
+				FoundationDate = CONVERT(Date,#foundationDate#),
+				PositionType = #positionType#,
+				BIN_ResellerInfoID = #resellerInfoId#,
+		]]>
+				<include refid="BINOLCMINC99.updateSql" />	
+		<![CDATA[					
+			WHERE				
+				BIN_PositionID = #positionId# AND			
+				ValidFlag='1' AND
+				UpdateTime = #modifyTime# AND		
+				ModifyCount = #modifyCount#					
+		]]>		
+    </update>
+    
+    <!-- 岗位结构节点移动 -->
+    <update id="updatePositionNode" parameterClass="java.util.HashMap">
+    	<![CDATA[
+			UPDATE Basis.BIN_Position	
+			SET				
+				NodeID = NodeID.GetReparentedValue(#positionPath#, #newNodeId#),
+		]]>
+				<include refid="BINOLCMINC99.updateSql" />		
+		<![CDATA[					
+			WHERE				
+				NodeID.IsDescendantOf(#positionPath#) = 1		
+		]]>
+    </update>
+	
+</sqlMap>

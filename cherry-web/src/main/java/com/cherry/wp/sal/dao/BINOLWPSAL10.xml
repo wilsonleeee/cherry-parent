@@ -1,0 +1,139 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sqlMap PUBLIC "-//iBATIS.com//DTD SQL Map 2.0//EN" "http://ibatis.apache.org/dtd/sql-map-2.dtd">
+<sqlMap namespace="BINOLWPSAL10">
+	
+	<select id="getCouponOrderInfo" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+    	<![CDATA[
+    		SELECT Top 1 
+				td.MainCode as mainCode,
+				tc.SubCampaignName as activityName,
+				tp.CampaignType as activityClassify,
+				sum(case td.GiftType when 'N' then td.Quantity when 'P' then 0 end) as quantity,
+				tr.Amout as amount
+			FROM 
+				Campaign.BIN_CampaignOrder as tr with(nolock) 
+				Inner join Campaign.BIN_CampaignOrderDetail as td with(nolock) on tr.BIN_CampaignOrderID = td.BIN_CampaignOrderID 
+				Left join 
+					Campaign.BIN_CampaignRule as tc with(nolock) on td.MainCode = tc.SubCampaignCode 
+				Left join 
+					Campaign.BIN_Campaign as tp on tc.BIN_CampaignID = tp.BIN_CampaignID 
+			WHERE 
+				tr.ValidFlag = 1 AND 
+				tr.BIN_OrganizationInfoID = #organizationInfoId# AND 
+				tr.BIN_BrandInfoID = #brandInfoId# AND 
+				tr.CampaignCode = #subjectCode# AND 
+				td.MainCode = #activityCode# AND 
+				tr.GetFromTime <= #businessDate# AND 
+				tr.GetToTime >= #businessDate# AND 
+				tr.[State] = 'AR' 
+		]]>
+		<dynamic>
+			<isNotEmpty prepend="AND" property="couponCode" >
+			<![CDATA[
+				tr.CouponCode = #couponCode# 
+			]]>
+			</isNotEmpty>
+			<isNotEmpty prepend="AND" property="memberInfoId" >
+			<![CDATA[
+				tr.BIN_MemberInfoID = #memberInfoId# 
+			]]>
+			</isNotEmpty>
+			<isNotEmpty prepend="AND" property="mobilePhone" >
+			<![CDATA[
+				tr.Mobile = #mobilePhone# 
+			]]>
+			</isNotEmpty>
+		</dynamic>
+		<![CDATA[
+			group by 
+				td.MainCode,
+				tc.SubCampaignName,
+				tp.CampaignType,
+				tr.Quantity,
+				tr.Amout
+    	]]>
+    </select>
+
+ 	<!-- 根据Coupon号获取产品明细  -->
+    <select id="getCouponOrderProduct" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+    	<![CDATA[
+    		SELECT 
+				td.MainCode as mainCode,
+				'' as counterActCode,
+				'1' as activityType,
+				'CPLP' as promotionType,
+				tr.TradeNoIF as orderId,
+				tr.CouponCode as couponCode,
+				tr.IsStock as isStock,
+				td.BIN_ProductVendorID as productVendorId,
+				td.UnitCode as unitCode,
+				td.BarCode as barCode,
+				(case td.GiftType when 'N' then tt.NameTotal when 'P' then tb.NameTotal end) as productName, 
+				td.Quantity as quantity,
+				(case td.GiftType when 'N' then tt.salePrice when 'P' then -tb.StandardCost end) as oldPrice,
+				(case td.GiftType when 'N' then tp.Price when 'P' then -tp.Price end) as price,
+				td.Amout as amount,
+				td.GiftType as proType,
+				0 as exPoint,
+				tc.SubCampaignValid as campaignValid 
+			FROM 
+				Campaign.BIN_CampaignOrder as tr with(nolock) 
+				Inner join Campaign.BIN_CampaignOrderDetail as td with(nolock) on tr.BIN_CampaignOrderID = td.BIN_CampaignOrderID 
+				Left join(
+					SELECT 
+						tpv.BIN_ProductVendorID,
+						tpb.UnitCode,
+						tpv.BarCode,
+						tpb.NameTotal,
+						ISNULL(CONVERT(Decimal(16,2),tpb.SalePrice),0) AS salePrice 
+					FROM 
+						Basis.BIN_ProductVendor as tpv with(nolock)
+						Inner join Basis.BIN_Product as tpb with(nolock) on tpb.BIN_ProductID = tpv.BIN_ProductID
+				) as tt on td.BIN_ProductVendorID = tt.BIN_ProductVendorID 
+				Left join(
+					SELECT 
+						tpv.BIN_PromotionProductVendorID,
+						tpb.UnitCode,
+						tpv.BarCode,
+						tpb.NameTotal,
+						tpb.PromotionCateCD,
+						tpb.IsExchanged,
+						tpb.StandardCost,
+						tpb.ExPoint 
+					FROM 
+						Basis.BIN_PromotionProductVendor as tpv with(nolock)
+						Inner join Basis.BIN_PromotionProduct as tpb with(nolock) on tpb.BIN_PromotionProductID = tpv.BIN_PromotionProductID
+				) as tb on td.BIN_ProductVendorID = tb.BIN_PromotionProductVendorID 
+				Left join 
+					Campaign.BIN_CampaignRule as tc with(nolock) on td.MainCode = tc.SubCampaignCode 
+				Left join 
+					Campaign.BIN_CampaignRuleResult as tp with(nolock) on tc.BIN_CampaignRuleID = tp.BIN_CampaignRuleID and td.BIN_ProductVendorID=tp.BIN_ProductVendorID 
+			WHERE 
+				tr.ValidFlag = 1 AND 
+				tr.BIN_OrganizationInfoID = #organizationInfoId# AND 
+				tr.BIN_BrandInfoID = #brandInfoId# AND 
+				tr.CampaignCode = #subjectCode# AND 
+				td.MainCode = #activityCode# AND 
+				tr.GetFromTime <= #businessDate# AND 
+				tr.GetToTime >= #businessDate# AND 
+				tr.[State] = 'AR' 
+		]]>
+		<dynamic>
+			<isNotEmpty prepend="AND" property="couponCode" >
+			<![CDATA[
+				tr.CouponCode = #couponCode# 
+			]]>
+			</isNotEmpty>
+			<isNotEmpty prepend="AND" property="memberInfoId" >
+			<![CDATA[
+				tr.BIN_MemberInfoID = #memberInfoId# 
+			]]>
+			</isNotEmpty>
+			<isNotEmpty prepend="AND" property="mobilePhone" >
+			<![CDATA[
+				tr.Mobile = #mobilePhone# 
+			]]>
+			</isNotEmpty>
+		</dynamic>
+    </select>
+</sqlMap>

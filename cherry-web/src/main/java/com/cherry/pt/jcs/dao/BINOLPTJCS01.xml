@@ -1,0 +1,312 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sqlMap PUBLIC "-//iBATIS.com//DTD SQL Map 2.0//EN" "http://ibatis.apache.org/dtd/sql-map-2.dtd">
+<sqlMap namespace="BINOLPTJCS01">
+	<!-- 根据分类名取得分类ID -->
+	<select id="getPropId1" parameterClass="java.util.HashMap" resultClass="java.lang.String">
+		<![CDATA[
+			SELECT
+				BIN_PrtCatPropertyID AS propId
+			FROM
+				Basis.BIN_PrtCatProperty
+			WHERE
+				BIN_BrandInfoID = #brandInfoId#
+				AND PropertyNameChinese = #propNameCN#					
+		]]>
+    </select>
+	<!-- 根据分类终端下发取得分类ID -->
+	<select id="getPropId2" parameterClass="java.util.HashMap" resultClass="java.lang.String">
+		<![CDATA[
+			SELECT
+				BIN_PrtCatPropertyID AS propId
+			FROM
+				Basis.BIN_PrtCatProperty
+			WHERE
+				BIN_BrandInfoID = #brandInfoId#
+				AND TeminalFlag = #teminalFlag#
+		]]>
+    </select>
+	<!-- 取得分类Info -->
+	<select id="getCategoryInfo" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+		<![CDATA[
+			SELECT
+				BIN_PrtCatPropertyID AS propId,
+				PropertyNameChinese AS propNameCN,
+				PropertyNameForeign AS propNameEN,
+				BIN_BrandInfoID AS brandInfoId,
+				TeminalFlag AS teminalFlag,
+				ViewSeq AS viewSeq
+			FROM
+				Basis.BIN_PrtCatProperty
+			WHERE
+				BIN_PrtCatPropertyID = #propId#
+		]]>
+    </select>
+	<!-- 取得分类List -->
+	<select id="getCategoryList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+		<![CDATA[
+			SELECT
+				BIN_PrtCatPropertyID AS propId,
+				PropertyNameChinese AS propNameCN,
+				PropertyNameForeign AS propNameEN,
+				TeminalFlag AS teminalFlag,
+				ViewSeq AS viewSeq
+			FROM
+				Basis.BIN_PrtCatProperty
+			WHERE
+				BIN_OrganizationInfoID = #organizationInfoId#
+				AND BIN_BrandInfoID = #brandInfoId#	
+				AND ValidFlag = '1'
+			ORDER BY
+				ViewSeq
+		]]>
+    </select>
+	<!-- 添加分类  -->
+	<insert id="addCatProperty" parameterClass="java.util.HashMap">
+		<selectKey resultClass="java.lang.Integer" type="post" keyProperty="BIN_PrtCatPropertyID" >  
+			<![CDATA[
+			INSERT Basis.BIN_PrtCatProperty(
+				BIN_OrganizationInfoID,
+				BIN_BrandInfoID,
+				PropertyNameChinese,
+				PropertyNameForeign,
+				ViewSeq,
+				TeminalFlag,
+			]]>
+			<include refid="BINOLCMINC99.insertKeySql" />
+			<![CDATA[
+			)VALUES(
+				#organizationInfoId#,
+				#brandInfoId#,
+				#propNameCN#,
+				#propNameEN#,
+				IDENT_CURRENT('Basis.BIN_PrtCatProperty'),
+				#teminalFlag#,
+			]]>
+			<include refid="BINOLCMINC99.insertValueSql" />
+			<![CDATA[ ) 
+				select SCOPE_IDENTITY() as value	
+			]]>
+	    </selectKey>
+	</insert>
+	<!-- 分类更新  -->
+	<update id="updCatProperty" parameterClass="java.util.HashMap">
+		<![CDATA[
+		UPDATE	
+			Basis.BIN_PrtCatProperty
+		SET	
+			
+		]]>
+		<isNotEmpty property="viewSeq">
+			ViewSeq = #viewSeq#,
+		</isNotEmpty>
+		<isNotEmpty property="propNameCN">
+			PropertyNameChinese = #propNameCN#,					
+		</isNotEmpty>
+		<isNotEmpty property="propNameEN">
+			PropertyNameForeign = #propNameEN#,					
+		</isNotEmpty>
+		<isNotEmpty property="teminalFlag">
+			TeminalFlag = #teminalFlag#,					
+		</isNotEmpty>
+		<isNotEmpty property="validFlag">
+			ValidFlag = #validFlag#,
+		</isNotEmpty>
+		<include refid="BINOLCMINC99.updateSql" />
+		<![CDATA[
+		WHERE
+			BIN_PrtCatPropertyID = #propId#
+		]]>
+	</update>
+	<!-- 分类树形顺序批量更新  -->
+	<update id="updViewSeq" parameterClass="java.util.HashMap">
+		<![CDATA[
+		UPDATE	
+			Basis.BIN_PrtCatProperty
+		SET	
+		]]>
+		<isNotEmpty property="direction">
+			ViewSeq += 1,
+		</isNotEmpty>
+		<isEmpty property="direction">
+			ViewSeq -= 1,
+		</isEmpty>
+		<include refid="BINOLCMINC99.updateSql" />
+		<![CDATA[
+		WHERE
+			BIN_OrganizationInfoID = #organizationInfoId#
+			AND BIN_BrandInfoID = #brandInfoId#
+			AND ViewSeq <= #viewSeq2#
+			AND ViewSeq >= #viewSeq1#
+			AND ValidFlag = '1'
+		]]>
+	</update>
+	<!-- 取得分类选项值List -->
+	<select id="getCateValList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+		<![CDATA[
+			SELECT
+				BIN_PrtCatPropValueID AS propValId,
+				PropValueCherry AS propValueCherry,
+				PropValueChinese AS propValueCN,
+				PropValueForeign AS propValueEN
+			FROM
+				Basis.BIN_PrtCatPropValue
+			WHERE
+				BIN_PrtCatPropertyID = #propId#
+				AND ValidFlag ='1'
+			ORDER BY
+				PropValueCherry
+		]]>
+    </select>
+	<!-- 根据属性值,品牌查询分类属性值ID -->
+	<select id="getCateValId" parameterClass="java.util.HashMap" resultClass="java.lang.String">
+		<![CDATA[
+		SELECT
+			A.BIN_PrtCatPropValueID AS propValId
+		FROM
+			Basis.BIN_PrtCatPropValue A
+			JOIN Basis.BIN_PrtCatProperty B
+			ON(A.BIN_PrtCatPropertyID = B.BIN_PrtCatPropertyID)
+		WHERE
+			B.BIN_BrandInfoID = #brandInfoId#
+			AND A.PropValue = #propValue#
+		]]>
+    </select>
+	<!-- 根据属性值名查询分类属性值ID -->
+	<select id="getCateValId1" parameterClass="java.util.HashMap" resultClass="java.lang.String">
+		<![CDATA[
+			SELECT
+				BIN_PrtCatPropValueID AS propValId
+			FROM
+				Basis.BIN_PrtCatPropValue
+			WHERE
+				BIN_PrtCatPropertyID = #propId#
+		]]>
+		<isNotEmpty property="propValueCherry" prepend="AND">
+			PropValueCherry = #propValueCherry#
+		</isNotEmpty>
+		<isNotEmpty property="propValue" prepend="AND">
+			PropValue = #propValue#
+		</isNotEmpty>
+    </select>
+	<!-- 根据属性值名查询分类属性值ID -->
+	<select id="getCateValId2" parameterClass="java.util.HashMap" resultClass="java.lang.String">
+		<![CDATA[
+			SELECT
+				BIN_PrtCatPropValueID AS propValId
+			FROM
+				Basis.BIN_PrtCatPropValue
+			WHERE
+				BIN_PrtCatPropertyID = #propId#
+				AND PropValueChinese = #propValueCN#
+		]]>
+    </select>
+	<!-- 取得分类选项值 -->
+	<select id="getCateVal" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+		<![CDATA[
+			SELECT
+				A.BIN_PrtCatPropValueID AS propValId,
+				A.PropValueCherry AS propValueCherry,
+				A.PropValueChinese AS propValueCN,
+				A.PropValueForeign AS propValueEN
+			FROM
+				Basis.BIN_PrtCatPropValue A
+			WHERE
+				A.BIN_PrtCatPropValueID = #propValId#
+				AND A.ValidFlag ='1'
+		]]>	
+    </select>
+	<!-- 添加分类选项值  -->
+	<insert id="addPropVal" parameterClass="java.util.HashMap">
+		<selectKey resultClass="java.lang.Integer" type="post" keyProperty="BIN_PrtCatPropValueID" >
+			<![CDATA[
+			INSERT Basis.BIN_PrtCatPropValue(
+				BIN_PrtCatPropertyID,
+				PropValue,
+				PropValueCherry,
+				PropValueChinese,
+				PropValueForeign,
+				BindBigClass,
+			]]>
+			<include refid="BINOLCMINC99.insertKeySql" />
+			<![CDATA[
+			)VALUES(
+				#propId#,
+				#propValue#,
+				#propValueCherry#,
+				#propValueCN#,
+				#propValueEN#,
+				#bindBigClass#,
+			]]>
+			<include refid="BINOLCMINC99.insertValueSql" />
+			<![CDATA[ )
+				select SCOPE_IDENTITY() as value
+			]]>
+	    </selectKey>
+	</insert>
+	<!-- 分类选项值更新  -->
+	<update id="updPropVal" parameterClass="java.util.HashMap">
+		<![CDATA[
+		UPDATE	
+			Basis.BIN_PrtCatPropValue
+		SET		
+			PropValueChinese = #propValueCN#,
+			PropValueForeign = #propValueEN#,
+		]]>
+		<isNotEmpty property="bindBigClass">
+			BindBigClass = #bindBigClass#,
+		</isNotEmpty>
+		<isNotEmpty property="propValue">
+			PropValue = #propValue#,
+		</isNotEmpty>
+		<isNotEmpty property="propValueCherry">
+			PropValueCherry = #propValueCherry#,
+		</isNotEmpty>
+		<isNotEmpty property="validFlag">
+			ValidFlag = #validFlag#,
+		</isNotEmpty>
+		<include refid="BINOLCMINC99.updateSql" />
+		<![CDATA[
+		WHERE
+			BIN_PrtCatPropValueID = #propValId#
+		]]>
+	</update>
+	<!-- 分类绑定更新  -->
+	<update id="updBindCate" parameterClass="java.util.HashMap">
+		<![CDATA[
+		UPDATE	
+			Basis.BIN_PrtCatPropValue
+		SET	
+			BindBigClass = #bindBigClass#,
+		]]>
+		<include refid="BINOLCMINC99.updateSql" />
+		<![CDATA[
+		WHERE
+			BIN_PrtCatPropValueID = #propValId#
+		]]>
+	</update>
+	<!-- 取得绑定大分类属性值ID -->
+	<select id="getBindPropValId" parameterClass="java.util.HashMap" resultClass="java.lang.Integer">
+		<![CDATA[
+			SELECT
+				BindBigClass
+			FROM
+				Basis.BIN_PrtCatPropValue
+			WHERE
+				BIN_PrtCatPropValueID = #propValId#
+		]]>
+    </select>
+    
+	<!-- 更新产品表  -->
+	<update id="updProduct" parameterClass="java.util.HashMap">	
+		UPDATE 
+			A
+		SET
+			A.Version=#tVersion#+1,
+		<include refid="BINOLCMINC99.updateSql" />
+		FROM 
+			Basis.BIN_Product A		
+		WHERE
+			EXISTS ( select 1 from Basis.BIN_PrtCategory where BIN_PrtCatPropValueID = #propValId# and BIN_ProductID = A.BIN_ProductID)		
+		AND A.BIN_BrandInfoID = #brandInfoId#						
+	</update>
+</sqlMap>

@@ -1,0 +1,133 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sqlMap PUBLIC "-//iBATIS.com//DTD SQL Map 2.0//EN" "http://ibatis.apache.org/dtd/sql-map-2.dtd">
+<sqlMap namespace="BINOLCM26">
+    <!-- 查询用户List -->
+    <resultMap id="BINOLCM26.UserInfo" class="java.util.HashMap">
+        <result property="code" column="BIN_UserID"/>
+        <result property="name" column="EmployeeCodeName"/>
+    </resultMap>
+    <select id="getUserInfoList" parameterClass="java.util.HashMap" resultMap="BINOLCM26.UserInfo">
+        <![CDATA[
+            SELECT
+                A.BIN_UserID,
+                '('+B.EmployeeCode+')'+B.EmployeeName AS EmployeeCodeName
+            FROM
+                Privilege.BIN_User A,
+                Basis.BIN_Employee B
+            WHERE
+                A.BIN_EmployeeID=B.BIN_EmployeeID
+                AND B.BIN_OrganizationInfoID=#organizationInfoId#
+        ]]>
+        <dynamic>
+            <isNotEmpty prepend="AND" property="brandInfoId">
+                B.BIN_BrandInfoID=#brandInfoId#
+            </isNotEmpty>
+            <isNotEmpty property="UserIDArr">
+                <![CDATA[AND A.BIN_UserID IN]]>
+                <iterate conjunction="," open="(" close=")" property="IDArray">  
+                    #IDArray[]#
+                </iterate>
+            </isNotEmpty>
+            <isEmpty property="NeedValidFlag">
+                <![CDATA[
+                    AND A.ValidFlag='1'
+                    AND B.ValidFlag='1'
+                ]]>
+            </isEmpty>
+        </dynamic>
+    </select>
+	
+	<!-- 查询岗位List -->
+    <resultMap id="BINOLCM26.PosInfo" class="java.util.HashMap">
+        <result property="code" column="BIN_PositionCategoryID"/>
+        <result property="name" column="CategoryName"/>
+    </resultMap>
+    <select id="getPosInfoList" parameterClass="java.util.HashMap" resultMap="BINOLCM26.PosInfo">
+        <![CDATA[
+            SELECT 
+                A.BIN_PositionCategoryID,
+        ]]>     
+        <dynamic>
+        <isNotEmpty property="language">
+            <isEqual property="language" compareValue="en_US">
+                A.CategoryNameForeign AS CategoryName
+            </isEqual>
+            <isEqual property="language" compareValue="zh_CN">
+                A.CategoryName AS CategoryName
+            </isEqual>
+        </isNotEmpty>
+        <isEmpty property="language">
+            A.CategoryName AS CategoryName
+        </isEmpty>
+        </dynamic>
+        <![CDATA[
+            FROM
+                Privilege.BIN_PositionCategory A
+            WHERE
+                A.BIN_OrganizationInfoID=#organizationInfoId#
+        ]]>
+        <dynamic>
+            <isNotEmpty prepend="AND" property="brandInfoId">
+                A.BIN_BrandInfoID=#brandInfoId#
+            </isNotEmpty>
+            <isNotEmpty property="UserIDArr">
+                <![CDATA[AND A.BIN_PositionCategoryID IN]]>
+                <iterate conjunction="," open="(" close=")" property="IDArray">  
+                    #IDArray[]#
+                </iterate>
+            </isNotEmpty>
+            <isEmpty property="NeedValidFlag">
+                <![CDATA[
+                    AND A.ValidFlag='1'
+                ]]>
+            </isEmpty>
+        </dynamic>
+    </select>
+	
+    <!-- 查询部门List -->
+    <resultMap id="BINOLCM26.OrgInfo" class="java.util.HashMap">
+        <result property="code" column="BIN_OrganizationID"/>
+        <result property="name" column="DepartName"/>
+    </resultMap>
+    <select id="getOrgInfoList" parameterClass="java.util.HashMap" resultMap="BINOLCM26.OrgInfo">
+        <![CDATA[
+            SELECT 
+                B.BIN_OrganizationID,
+        ]]>
+        <dynamic>
+        <isNotEmpty property="language">
+            <isEqual property="language" compareValue="en_US">
+                B.NameForeign AS DepartName
+            </isEqual>
+            <isEqual property="language" compareValue="zh_CN">
+                B.DepartName AS DepartName
+            </isEqual>
+        </isNotEmpty>
+        <isEmpty property="language">
+            B.DepartName AS DepartName
+        </isEmpty>
+        </dynamic>
+        <![CDATA[
+            FROM
+                Basis.BIN_Organization B
+            WHERE
+                B.BIN_OrganizationInfoID=#organizationInfoId#
+        ]]>
+        <dynamic>
+            <isNotEmpty prepend="AND" property="brandInfoId">
+                B.BIN_BrandInfoID=#brandInfoId#
+            </isNotEmpty>
+            <isNotEmpty property="OrganizationIDArr">
+                <![CDATA[AND B.BIN_OrganizationID IN]]>
+                <iterate conjunction="," open="(" close=")" property="IDArray">  
+                    #IDArray[]#
+                </iterate>
+            </isNotEmpty>
+            <isEmpty property="NeedValidFlag">
+                <![CDATA[
+                    AND B.ValidFlag='1'
+                ]]>
+            </isEmpty>
+        </dynamic>
+    </select>
+</sqlMap>

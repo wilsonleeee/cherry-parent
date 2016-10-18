@@ -1,0 +1,135 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sqlMap PUBLIC "-//iBATIS.com//DTD SQL Map 2.0//EN" "http://ibatis.apache.org/dtd/sql-map-2.dtd">
+<sqlMap namespace="BINOLMOWAT02">
+    <!-- 销售异常柜台查询sql文  -->
+    <sql id="counterInfoQuery">
+    	<![CDATA[
+            SELECT
+                F.RegionNameChinese AS regionNameChinese,
+                E.CounterCode AS counterCode,
+				E.CounterNameIF AS counterNameIF,
+				E.Status As counterStatus,
+				C.SumAmount AS sumAmount,
+				C.SumQuantity AS sumQuantity,
+				convert(varchar(5),C.SaleDate,110) as saleDate,
+				H.EmployeeName as employeeName
+            FROM
+				(SELECT
+                    B.SumAmount,
+					B.SumQuantity,
+					B.BIN_OrganizationID,
+					B.SaleDate FROM
+                    (SELECT
+                        ISNULL(SUM(ISNULL(D.SumAmount,0)),0) AS SumAmount,
+                        ISNULL(SUM(ISNULL(D.SumQuantity,0)),0) AS SumQuantity,
+                        D.BIN_OrganizationID,
+                        D.SaleDate
+                    FROM(SELECT
+                            SUM(CASE WHEN A.SaleType = 'SR' THEN (0-ISNULL(A.Amount, 0)) ELSE ISNULL(A.Amount, 0) END) AS SumAmount,
+							SUM(CASE WHEN A.SaleType = 'SR' THEN (0-ISNULL(A.Quantity, 0)) ELSE ISNULL(A.Quantity, 0) END) AS SumQuantity,
+                            A.BIN_OrganizationID AS BIN_OrganizationID,
+                            A.SaleDate as SaleDate
+                        FROM
+                            Sale.BIN_SaleRecord A
+                        WHERE
+                            A.ValidFlag='1'
+                            AND A.BIN_OrganizationInfoID=#organizationInfoId#
+                            AND A.BIN_BrandInfoID=#brandInfoId#
+                            AND A.SaleDate>=#startDate#
+                            AND A.SaleDate<=#endDate#
+                        GROUP BY A.BIN_OrganizationID,A.SaleDate
+                        UNION
+                            SELECT
+                                0 AS SumAmount,
+                                0 AS SumQuantity,
+                                CI.BIN_OrganizationID,
+                                CAL.DateValue AS SaleDate
+                            FROM
+                                Basis.BIN_CounterInfo CI,
+                                (SELECT
+                                    DateValue
+                                FROM
+                                    Tools.BIN_Calendar
+                                WHERE
+                                    BIN_OrganizationInfoID = #organizationInfoId#
+                                    AND DateValue >= #startDate#
+                                    AND DateValue <= #endDate#
+                                )CAL
+                            WHERE
+                                CI.ValidFlag = 1
+                        )D
+                        GROUP BY D.BIN_OrganizationID,D.SaleDate
+                    )B
+				WHERE (
+		]]>
+		<isNotEmpty prepend="(" property="maxLimit">
+            <![CDATA[B.SumAmount>=#maxLimit#]]>
+		</isNotEmpty>
+        <isEmpty prepend="(" property="maxLimit">
+            <![CDATA[1!=1]]>
+        </isEmpty>
+		<isNotEmpty prepend="OR" property="minLimit">
+            <![CDATA[B.SumAmount<=#minLimit#)]]>
+        </isNotEmpty>
+		<isEmpty prepend="OR" property="minLimit">
+            <![CDATA[1!=1)]]>
+        </isEmpty>
+		<![CDATA[ OR ]]>
+		<isNotEmpty prepend="(" property="maxQuantity">
+            <![CDATA[B.SumQuantity>=#maxQuantity#]]>
+        </isNotEmpty>
+		<isEmpty prepend="(" property="maxQuantity">
+            <![CDATA[1!=1]]>
+        </isEmpty>
+		<isNotEmpty prepend="OR" property="minQuantity">
+            <![CDATA[B.SumQuantity<=#minQuantity#)]]>
+        </isNotEmpty>
+		<isEmpty prepend="OR" property="minQuantity">
+            <![CDATA[1!=1)]]>
+        </isEmpty>
+		<![CDATA[
+				))C
+			LEFT JOIN Basis.BIN_Organization D
+			ON C.BIN_OrganizationID=D.BIN_OrganizationID AND D.ValidFlag = '1'
+			LEFT JOIN Basis.BIN_CounterInfo E
+			ON D.BIN_OrganizationID = E.BIN_OrganizationID
+			LEFT JOIN Basis.BIN_Region F
+			ON E.BIN_RegionID = F.BIN_RegionID
+			LEFT JOIN Privilege.BIN_EmployeeDepart G
+			ON D.BIN_OrganizationID = G.BIN_OrganizationID AND G.ValidFlag = '1' AND G.ManageType = '1'
+			LEFT JOIN Basis.BIN_Employee H
+			ON G.BIN_EmployeeID = H.BIN_EmployeeID 
+            WHERE 1=1
+		]]>
+        <![CDATA[AND EXISTS ( ]]>
+        <include refid="BINOLCMINC99.getDepartList" />
+        <![CDATA[
+            AND C.BIN_OrganizationID = A99.BIN_OrganizationID)
+        ]]>
+    </sql>
+	
+	<!-- 取得销售异常柜台总数  -->
+    <select id="getCounterInfoCount" parameterClass="java.util.HashMap" resultClass="java.lang.Integer">
+        <![CDATA[
+            SELECT COUNT(SORT_T1.CounterCode) AS count FROM (
+        ]]>
+        <include refid="BINOLMOWAT02.counterInfoQuery" />
+        <![CDATA[
+            )SORT_T1
+        ]]>
+    </select>
+    
+    <!-- 取得销售异常柜台List  -->
+    <select id="getCounterInfoList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+        <include refid="BINOLCMINC99.pageheader" />
+        <include refid="BINOLMOWAT02.counterInfoQuery" />
+        <include refid="BINOLCMINC99.pagefooter" />
+    </select>
+	
+	<!-- 取得销售异常柜台List(Excel)  -->
+    <select id="getCounterInfoListExcel" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+        <include refid="BINOLMOWAT02.counterInfoQuery" />
+		<![CDATA[ORDER BY CounterCode]]>
+    </select>
+	
+</sqlMap>

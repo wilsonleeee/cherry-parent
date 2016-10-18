@@ -1,0 +1,96 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sqlMap PUBLIC "-//iBATIS.com//DTD SQL Map 2.0//EN" "http://ibatis.apache.org/dtd/sql-map-2.dtd">
+<sqlMap namespace="BINBEMQMES16">
+	<!-- 查询销售明细数据 -->
+	<select id="getSaleDetailList" parameterClass="java.util.HashMap" resultClass ="java.util.HashMap">
+	<![CDATA[
+			SELECT
+					SRD.InventoryTypeCode AS inventoryTypeCode,
+					SRD.BIN_ProductVendorID AS productVendorID,
+					SRD.Price AS price,
+					SRD.Quantity AS quantity,
+					SRD.SaleType AS saleType
+			FROM Sale.BIN_SaleRecord SR
+			LEFT JOIN Sale.BIN_SaleRecordDetail SRD
+				ON SR.BIN_SaleRecordID = SRD.BIN_SaleRecordID
+			WHERE SR.BIN_OrganizationInfoID = #organizationInfoID#
+			AND SR.BIN_BrandInfoID = #brandInfoID#
+			AND SR.BillCode = #tradeNoIF#
+			AND SR.ValidFlag = '1'
+	]]>
+	</select> 
+		<!-- 查询销售主数据 -->
+	<select id="getSaleRecordInfo" parameterClass="java.util.HashMap" resultClass ="java.util.HashMap">
+	<![CDATA[
+			SELECT
+				BIN_OrganizationID AS organizationID,
+				BIN_OrganizationInfoID AS organizationInfoID,
+				BIN_BrandInfoID AS brandInfoID,
+				BIN_EmployeeID,
+				SaleType AS saleType,
+				CONVERT(VARCHAR(100), SaleDate, 23) AS tradeDate,
+				CONVERT(VARCHAR(100), SaleTime, 24) AS tradeTime,
+				Quantity AS quantity
+			FROM Sale.BIN_SaleRecord
+			WHERE BIN_OrganizationInfoID = #organizationInfoID#
+			AND BIN_BrandInfoID = #brandInfoID#
+			AND BillCode = #tradeNoIF#
+			AND ValidFlag = '1'   
+	]]> 
+	</select>
+	<!-- 更新电商订单表相关信息 -->
+	<update id="updateOrderInfo" parameterClass="java.util.HashMap">
+		<![CDATA[
+			UPDATE 
+				  Sale.BIN_ESOrderMain
+			SET 
+		]]>
+		<isNotEmpty property="takeCounterCode">
+			TakeCounterCode = #takeCounterCode#,
+		</isNotEmpty>
+		<isNotEmpty property="takeBACode">
+			TakeBACode = #takeBACode#,
+		</isNotEmpty>
+		<isNotEmpty property="tradeTime">
+			TradeTime = #tradeTime#,
+		</isNotEmpty>
+		<isNotEmpty property="orderStatus">
+			OrderStatus = #orderStatus#,
+		</isNotEmpty>
+		<isNotEmpty property="pushFlag">
+			PushFlag = #pushFlag#,
+		</isNotEmpty>
+		<isNotEmpty property="pushFailMsg">
+			PushFailMsg = #pushFailMsg#,
+		</isNotEmpty>
+		<include refid="BINOLCMINC99.updateSql" />		
+		<![CDATA[
+			WHERE
+				ValidFlag ='1'
+				AND BIN_BrandInfoID = #brandInfoID#
+				AND BIN_OrganizationInfoID = #organizationInfoID#
+				AND BillCode = #tradeNoIF#
+		]]>
+	</update>
+	<!-- 更新销售主表相关信息 -->
+	<update id="updateSaleRecordInfo" parameterClass="java.util.HashMap">
+		<![CDATA[
+			UPDATE 
+				  Sale.BIN_SaleRecord
+			SET 
+		]]>
+		<isNotEmpty property="orderStatus">
+			PickupStatus = #orderStatus#,
+		</isNotEmpty>
+		<isNotEmpty property="quantity">
+			PickupQuantity = #quantity#,
+		</isNotEmpty>
+		<include refid="BINOLCMINC99.updateSql" />		
+		<![CDATA[
+			WHERE BIN_OrganizationInfoID = #organizationInfoID#
+			AND BIN_BrandInfoID = #brandInfoID#
+			AND BillCode = #tradeNoIF#
+			AND ValidFlag = '1'
+		]]>
+	</update>
+</sqlMap>

@@ -1,0 +1,573 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sqlMap PUBLIC "-//iBATIS.com//DTD SQL Map 2.0//EN" "http://ibatis.apache.org/dtd/sql-map-2.dtd">
+<sqlMap namespace="BINOLSSCM02"> 	
+
+	<!-- 取得指定组织和品牌下的所有大分类 -->
+	 <select id="getPrimaryCategory" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+     	<![CDATA[
+			SELECT 
+			 	 distinct A.PrimaryCategoryCode
+		]]>
+			<isNotEmpty property = "language">
+				<isEqual property="language" compareValue="zh_CN">										
+						,A.PrimaryCategoryNameChinese as PrimaryCategoryName
+				</isEqual>
+				<isEqual property="language" compareValue="en_US">										
+						,A.PrimaryCategoryNameForeign as PrimaryCategoryName
+				</isEqual>
+			</isNotEmpty>
+			<isEmpty property = "language">
+					,A.PrimaryCategoryNameChinese as PrimaryCategoryName
+			</isEmpty>
+		<![CDATA[
+			FROM 
+				Basis.BIN_PromotionPrtType A
+			WHERE
+					A.BIN_OrganizationInfoID =#BIN_OrganizationInfoID#
+				AND A.BIN_BrandInfoID=#BIN_BrandInfoID#
+				AND	A.ValidFlag = '1'		
+		]]>					
+     </select>  
+      <!-- 取得指定组织，品牌，大分类下的所有中分类 -->
+     	 <select id="getSecondryCategory" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+     	<![CDATA[
+			SELECT 
+			 	 distinct A.SecondryCategoryCode
+		]]>
+			<isNotEmpty property = "language">
+				<isEqual property="language" compareValue="zh_CN">										
+						,A.SecondryCategoryNameChinese as SecondCategoryName
+				</isEqual>
+				<isEqual property="language" compareValue="en_US">										
+						,A.SecondryCategoryNameForeign as SecondCategoryName
+				</isEqual>
+			</isNotEmpty>
+			<isEmpty property = "language">
+					,A.SecondryCategoryNameChinese as SecondCategoryName
+			</isEmpty>
+		<![CDATA[
+			FROM 
+				Basis.BIN_PromotionPrtType A
+			WHERE
+					A.BIN_OrganizationInfoID =#BIN_OrganizationInfoID#				
+				AND A.BIN_BrandInfoID=#BIN_BrandInfoID#
+				AND A.PrimaryCategoryCode=#PrimaryCategoryCode#
+				AND	A.ValidFlag = '1'		
+		]]>					
+     </select> 
+           <!-- 取得指定组织，品牌，大分类，中分类下的所有小分类 -->
+     	 <select id="getSmallCategory" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+     	<![CDATA[
+			SELECT 
+			 	  A.SmallCategoryCode
+		]]>
+			<isNotEmpty property = "language">
+				<isEqual property="language" compareValue="zh_CN">										
+						,A.SmallCategoryNameChinese as SmallCategoryName
+				</isEqual>
+				<isEqual property="language" compareValue="en_US">										
+						,A.SmallCategoryNameForeign as SmallCategoryName
+				</isEqual>
+			</isNotEmpty>
+			<isEmpty property = "language">
+					,A.SmallCategoryNameChinese as SmallCategoryName
+			</isEmpty>
+		<![CDATA[
+			FROM 
+				Basis.BIN_PromotionPrtType A
+			WHERE
+					A.BIN_OrganizationInfoID =#BIN_OrganizationInfoID#				
+				AND A.BIN_BrandInfoID=#BIN_BrandInfoID#				
+				AND A.PrimaryCategoryCode=#PrimaryCategoryCode#
+				AND A.SecondryCategoryCode=#SecondryCategoryCode#
+				AND	A.ValidFlag = '1'		
+		]]>					
+     </select>  
+       <!-- 取得指定仓库中的促销品信息列表供盘点画面使用 -->
+     	 <select id="getStocktakingPromotionList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+     	<![CDATA[
+			SELECT 
+			E.IsStock AS isStock,
+			A.BIN_PromotionProductVendorID,    
+			ISNULL(D.Quantity,0) AS Quantity ,   
+			A.BarCode,    
+			E.UnitCode,    
+			ISNULL(B.SalePrice,ISNULL(C.SalePrice,0)) AS SalePrice,
+			ISNULL(CONVERT(Decimal(16,2),E.StandardCost),0) AS standardCost
+		]]>	
+			<isNotEmpty property="language">
+				<isEqual property="language" compareValue="zh_CN">					
+						,E.NameTotal as promotionName
+				</isEqual>
+				<isEqual property="language" compareValue="en_US">
+						,E.NameForeign as promotionName
+				</isEqual>
+			</isNotEmpty>
+			<isEmpty property="language">
+					,E.NameTotal as promotionName
+			</isEmpty>
+		<![CDATA[
+			FROM 
+			 Basis.BIN_PromotionProductVendor A
+			 LEFT JOIN Basis.BIN_PrmPriceDepart B 
+				 on A.BIN_PromotionProductID = B.BIN_PromotionProductID  
+				  AND  B.ValidFlag = '1' 
+				  AND B.BIN_OrganizationID = #BIN_OrganizationID#         
+				  AND getDate() BETWEEN B.StartDate AND B.EndDate              
+			 LEFT JOIN Basis.BIN_PromotionPrice C 
+				 ON A.BIN_PromotionProductID = C.BIN_PromotionProductID    
+				  AND C.ValidFlag='1' 
+				  AND getDate() BETWEEN C.StartDate AND C.EndDate 
+			 left JOIN    Inventory.BIN_PromotionStock D  
+			 	on A.BIN_PromotionProductVendorID=D.BIN_PromotionProductVendorID
+			 	and D.BIN_InventoryInfoID =#BIN_InventoryInfoID#
+				AND D.BIN_LogicInventoryInfoID = #BIN_LogicInventoryInfoID#,
+			 Basis.BIN_PromotionProduct E
+		]]>
+			<isNotEqual property="PrimaryCategoryCode" compareValue="0">
+			,Basis.BIN_PromotionPrtType F
+			</isNotEqual>
+		<![CDATA[	  
+			WHERE
+			   A.BIN_PromotionProductID =E.BIN_PromotionProductID
+		]]>
+		<isNotEqual property="ValidFlag" compareValue="0">
+	        <![CDATA[
+	            AND A.ValidFlag = '1'
+	            AND E.ValidFlag = '1'
+	        ]]>
+		</isNotEqual>
+		<isNotEqual property="PrimaryCategoryCode" compareValue="0">		
+			AND E.BIN_PromotionPrtTypeID =F.BIN_PromotionPrtTypeID		
+			AND F.BIN_OrganizationInfoID=#BIN_OrganizationInfoID#
+			AND F.BIN_BrandInfoID=#BIN_BrandInfoID#
+			AND F.PrimaryCategoryCode=#PrimaryCategoryCode#
+			<isNotEqual property="SecondryCategoryCode" compareValue="0">	
+			AND F.SecondryCategoryCode=#SecondryCategoryCode#
+				<isNotEqual property="SmallCategoryCode" compareValue="0">
+				AND F.SmallCategoryCode=#SmallCategoryCode#
+				</isNotEqual>
+			</isNotEqual>
+		</isNotEqual>
+		<isNotEmpty property="prtOrderBy">
+        	<isEqual property="prtOrderBy" compareValue="0">
+        		ORDER BY
+					E.UnitCode  ASC
+        	</isEqual>
+        	<isEqual property="prtOrderBy" compareValue="1">
+        		ORDER BY
+					A.BarCode  ASC
+        	</isEqual>
+        </isNotEmpty>		
+     </select> 
+     
+     
+           <!-- 取得指定仓库中指定促销品的库存数量供盘点画面使用 -->
+     	<select id="getStockCount" parameterClass="java.util.HashMap" resultClass="java.util.HashMap" remapResults="true">
+     	<![CDATA[
+			SELECT 
+		]]>	
+		<isNotEmpty property="currentIndex">		
+			#currentIndex# AS currentIndex,
+		</isNotEmpty>
+		<![CDATA[
+			'1' as hasprmflag,
+			A.Quantity
+			FROM 
+			Inventory.BIN_PromotionStock A		
+			WHERE
+			A.BIN_PromotionProductVendorID = #BIN_PromotionProductVendorID#			
+			AND A.BIN_InventoryInfoID =#BIN_InventoryInfoID#
+			AND A.ValidFlag='1'		
+		]]>
+		<isNotEmpty property="BIN_LogicInventoryInfoID">
+			<![CDATA[AND A.BIN_LogicInventoryInfoID = #BIN_LogicInventoryInfoID#]]>
+		</isNotEmpty>
+     </select> 
+     
+      <!-- 取得指定促销产品厂商Id是否需要管理库存状态 -->
+     	<select id="getIsStock" parameterClass="java.util.HashMap" resultClass="java.util.HashMap" remapResults="true">
+     			<![CDATA[
+			SELECT 
+				A.IsStock ,
+				A.UnitCode,
+				A.NameTotal,
+				A.BIN_PromotionProductID,
+				B.BIN_PromotionProductVendorID
+			FROM Basis.BIN_PromotionProduct A
+				LEFT JOIN  Basis.BIN_PromotionProductVendor B
+				ON(A.BIN_PromotionProductID=B.BIN_PromotionProductID)
+			WHERE 
+				B.BIN_PromotionProductVendorID=#BIN_PromotionProductVendorID#
+		]]>	 
+     </select> 
+     
+    <!-- 插入【促销产品盘点业务单据表】-->
+    <sql id="insertPromotionStockTakingSQL">
+        <![CDATA[
+                INSERT INTO Inventory.BIN_PromotionStockTaking
+                (
+                    BIN_PromotionInventoryLogID,
+                    BIN_OrganizationInfoID,
+                    BIN_BrandInfoID,
+                    StockTakingNo,
+                    StockTakingNoIF,
+                    BIN_OrganizationID,
+                    BIN_EmployeeID,
+                    TotalQuantity,
+                    TotalAmount,
+                    VerifiedFlag,
+                    TradeType,
+                    Type,
+                    RelevanceNo,
+                    Reason,
+                    StockTakingDate,
+                    TradeTime,
+                    ValidFlag,
+                    CreateTime,
+                    CreatedBy,
+                    CreatePGM,
+                    UpdateTime,
+                    UpdatedBy,
+                    UpdatePGM,
+                    ModifyCount
+        ]]>
+        <![CDATA[
+                )
+                VALUES
+                (
+                    #BIN_PromotionInventoryLogID#,
+                    #BIN_OrganizationInfoID#,
+                    #BIN_BrandInfoID#,
+                    #StockTakingNo#,
+                    #StockTakingNoIF#,
+                    #BIN_OrganizationID#,
+                    #BIN_EmployeeID#,
+                    #TotalQuantity#,
+                    #TotalAmount#,
+                    '1',
+                    #TradeType#,
+                    #Type#,
+                    #RelevanceNo#,
+                    #Reason#,
+        ]]>
+        <isNotEmpty property="StockTakingDate">
+            <![CDATA[#StockTakingDate#,]]>
+        </isNotEmpty>
+        <isEmpty property="StockTakingDate">
+            <![CDATA[GETDATE(),]]>
+        </isEmpty>
+        <isNotEmpty property="TradeTime">
+            <![CDATA[#TradeTime#,]]>
+        </isNotEmpty>
+        <isEmpty property="TradeTime">
+            <![CDATA[CONVERT(VARCHAR(8), GETDATE(), 108),]]>
+        </isEmpty>
+        <![CDATA[ 
+                    '1',
+                    GETDATE(),
+                    #CreatedBy#,
+                    #CreatePGM#,
+                    GETDATE(),
+                    #UpdatedBy#,
+                    #UpdatePGM#,
+                    '0'
+                )
+        ]]>
+    </sql>
+    <insert id="insertPromotionStockTaking" parameterClass="java.util.HashMap">
+        <selectKey resultClass="java.lang.Integer" type="post" keyProperty="BIN_PromotionStockTakingID" >
+            <include refid="BINOLSSCM02.insertPromotionStockTakingSQL" />
+            <![CDATA[SELECT SCOPE_IDENTITY() AS value]]>
+        </selectKey>
+    </insert>
+
+	    <!-- 插入【促销产品盘点业务单据明细表】-->
+       	<insert id="insertPromotionTakingDetail" parameterClass="java.util.HashMap">
+	    	<![CDATA[
+	    		INSERT INTO Inventory.BIN_PromotionTakingDetail			
+				(
+					BIN_PromotionStockTakingID,
+					BIN_PromotionProductVendorID,
+					DetailNo,
+					Quantity,
+					Price,
+					BIN_ProductVendorPackageID,
+					GainQuantity,
+					BIN_InventoryInfoID,
+					BIN_LogicInventoryInfoID,
+					BIN_StorageLocationInfoID,
+					Reason,
+					HandleType,
+					ValidFlag,
+					CreateTime,
+					CreatedBy,
+					CreatePGM,
+					UpdateTime,
+					UpdatedBy,
+					UpdatePGM,
+					ModifyCount
+			]]>				
+			<![CDATA[				
+				)				
+				VALUES				
+				(
+					#BIN_PromotionStockTakingID#,
+					#BIN_PromotionProductVendorID#,
+					#DetailNo#,
+					#Quantity#,
+					#Price#,
+					#BIN_ProductVendorPackageID#,
+					#GainQuantity#,
+					#BIN_InventoryInfoID#,
+					#BIN_LogicInventoryInfoID#,
+					#BIN_StorageLocationInfoID#,
+					#Reason#,
+					#HandleType#,
+					#ValidFlag#,
+					GETDATE(),
+					#CreatedBy#,
+					#CreatePGM#,
+					GETDATE(),
+					#UpdatedBy#,
+					#UpdatePGM#,
+					'0'
+				)
+			]]>	
+	    </insert>
+       <!-- 取得指定ID的盘点单据及其详细信息 -->
+	 <select id="getStockTakingInfoByID" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+     	<![CDATA[
+			SELECT	
+			A.StockTakingNo AS mStockTakingNo,
+			A.StockTakingNoIF AS mStockTakingNoIF,
+			A.BIN_OrganizationID AS mBIN_OrganizationID,
+			A.BIN_EmployeeID AS mBIN_EmployeeID,
+			A.TotalQuantity AS mTotalQuantity,
+			A.TotalAmount AS mTotalAmount,
+			A.VerifiedFlag AS mVerifiedFlag,
+			A.TradeType AS mTradeType,
+			A.Type AS mType,
+			A.RelevanceNo AS mRelevanceNo,
+			A.Reason as mReason,
+			B.BIN_PromotionProductVendorID,
+			B.DetailNo,
+			B.Quantity,
+			B.Price,
+			B.BIN_ProductVendorPackageID,
+			B.GainQuantity,
+			B.BIN_InventoryInfoID,
+			B.BIN_LogicInventoryInfoID,
+			B.BIN_StorageLocationInfoID,
+			B.Reason,
+			B.HandleType
+			FROM 
+			Inventory.BIN_PromotionStockTaking A,
+			Inventory.BIN_PromotionTakingDetail B
+			WHERE 
+			    A.BIN_PromotionStockTakingID =#BIN_PromotionStockTakingID#
+			and A.BIN_PromotionStockTakingID = B.BIN_PromotionStockTakingID
+			and A.ValidFlag ='1'
+			and B.ValidFlag ='1'
+			ORDER BY B.DetailNo asc
+		]]>					
+     </select> 
+     
+     <!-- 插入 入出库表 -->
+         	<insert id="insertPromotionStockInOut" parameterClass="java.util.HashMap">
+			<selectKey resultClass="java.lang.Integer" type="post" keyProperty="BIN_PromotionStockInOutID" >      
+	       	    	<![CDATA[
+	    		INSERT INTO Inventory.BIN_PromotionStockInOut		
+				(	BIN_OrganizationInfoID,
+					BIN_BrandInfoID,	
+					TradeNo,
+					TradeNoIF,
+					BIN_OrganizationID,
+					BIN_EmployeeID,
+					TotalQuantity,
+					TotalAmount,
+					StockType,
+					TradeType,
+					RelevantNo,
+					BIN_LogisticInfoID,					
+					Reason,
+					StockInOutDate,
+					VerifiedFlag,
+					TotalAmountBefore,
+					TotalAmountAfter,
+					ValidFlag,
+					CreateTime,
+					CreatedBy,
+					CreatePGM,
+					UpdateTime,
+					UpdatedBy,
+					UpdatePGM,
+					ModifyCount
+			]]>				
+			<![CDATA[				
+				)				
+				VALUES				
+				(	
+					#BIN_OrganizationInfoID#,
+					#BIN_BrandInfoID#,
+					#TradeNo#,
+					#TradeNoIF#,					
+					#BIN_OrganizationID#,
+					#BIN_EmployeeID#,
+					#TotalQuantity#,
+					#TotalAmount#,
+					#StockType#,
+					#TradeType#,
+					#RelevantNo#,
+					#BIN_LogisticInfoID#,					
+					#Reason#,
+					GETDATE(),
+					#VerifiedFlag#,
+					#TotalAmountBefore#,
+					#TotalAmountAfter#,
+					#ValidFlag#,
+					GETDATE(),
+					#CreatedBy#,
+					#CreatePGM#,
+					GETDATE(),
+					#UpdatedBy#,
+					#UpdatePGM#,
+					'0'
+				)
+			  	SELECT SCOPE_IDENTITY() AS value
+			]]> 
+	    	</selectKey>   
+	    </insert>
+	    
+	     <!-- 插入出入库明细表 -->
+        <insert id="insertPromotionStockDetail" parameterClass="java.util.HashMap">
+	    	<![CDATA[
+	    		INSERT INTO Inventory.BIN_PromotionStockDetail		
+				(		
+					BIN_PromotionStockInOutID,
+					BIN_PromotionProductVendorID,
+					DetailNo,
+					Quantity,
+					Price,
+					BIN_ProductVendorPackageID,
+					StockType,
+					BIN_InventoryInfoID,
+					BIN_LogicInventoryInfoID,
+					BIN_StorageLocationInfoID,
+					Reason,
+					ValidFlag,
+					CreateTime,
+					CreatedBy,
+					CreatePGM,
+					UpdateTime,
+					UpdatedBy,
+					UpdatePGM,
+					ModifyCount
+			]]>				
+			<![CDATA[				
+				)				
+				VALUES				
+				(	
+					#BIN_PromotionStockInOutID#,
+					#BIN_PromotionProductVendorID#,
+					#DetailNo#,
+					#Quantity#,
+					#Price#,
+					#BIN_ProductVendorPackageID#,
+					#StockType#,
+					#BIN_InventoryInfoID#,
+					#BIN_LogicInventoryInfoID#,
+					#BIN_StorageLocationInfoID#,								
+					#Reason#,
+					'1',
+					GETDATE(),
+					#CreatedBy#,
+					#CreatePGM#,
+					GETDATE(),
+					#UpdatedBy#,
+					#UpdatePGM#,
+					'0'
+				)
+			]]>		  
+	    </insert>
+	    <!-- 修改库存表 -->
+    	<update id="updatePromotionStock" parameterClass="java.util.HashMap">		
+		<![CDATA[
+			UPDATE									
+				Inventory.BIN_PromotionStock								
+			SET												
+				Quantity = ISNULL(Quantity,0) + #GainQuantity#,
+				UpdateTime=GETDATE(),
+				UpdatedBy=#UpdatedBy#,
+				UpdatePGM=#UpdatePGM#,
+				ModifyCount=ModifyCount+1								
+			WHERE									
+				BIN_PromotionProductVendorID = #BIN_PromotionProductVendorID#
+			and BIN_InventoryInfoID =#BIN_InventoryInfoID#
+		]]>
+		<isNotEmpty property="BIN_LogicInventoryInfoID">
+			<![CDATA[AND BIN_LogicInventoryInfoID = #BIN_LogicInventoryInfoID#]]>
+		</isNotEmpty>
+	</update>
+		    <!-- 修改库存表 
+    	<update id="updatePromotionStock" parameterClass="java.util.HashMap">		
+		<![CDATA[
+			UPDATE									
+				Inventory.BIN_PromotionStock								
+			SET												
+				Quantity = ISNULL(Quantity,0) + #GainQuantity#,
+				UpdateTime=GETDATE(),
+				UpdatedBy=#UpdatedBy#,
+				UpdatePGM=#UpdatePGM#,
+				ModifyCount=ModifyCount+1								
+			WHERE									
+				BIN_PromotionProductVendorID = #BIN_PromotionProductVendorID#
+			and BIN_InventoryInfoID =#BIN_InventoryInfoID#
+			and BIN_LogicInventoryInfoID=#BIN_LogicInventoryInfoID#
+			and BIN_StorageLocationInfoID=#BIN_StorageLocationInfoID#
+			and BIN_ProductVendorPackageID=#BIN_ProductVendorPackageID#
+		]]>
+	</update>
+	-->
+	<!-- 插入库存表 -->
+        <insert id="insertPromotionStock" parameterClass="java.util.HashMap">
+	    	<![CDATA[
+	    		INSERT INTO Inventory.BIN_PromotionStock		
+				(		
+					BIN_PromotionProductVendorID,
+					BIN_InventoryInfoID,
+					BIN_LogicInventoryInfoID,
+					BIN_StorageLocationInfoID,
+					Quantity,
+					BIN_ProductVendorPackageID,
+					ValidFlag,
+					CreateTime,
+					CreatedBy,
+					CreatePGM,
+					UpdateTime,
+					UpdatedBy,
+					UpdatePGM,
+					ModifyCount
+			]]>				
+			<![CDATA[				
+				)				
+				VALUES				
+				(	
+					#BIN_PromotionProductVendorID#,
+					#BIN_InventoryInfoID#,
+					#BIN_LogicInventoryInfoID#,
+					#BIN_StorageLocationInfoID#,											
+					#GainQuantity#,			
+					#BIN_ProductVendorPackageID#,
+					'1',
+					GETDATE(),
+					#CreatedBy#,
+					#CreatePGM#,
+					GETDATE(),
+					#UpdatedBy#,
+					#UpdatePGM#,
+					'0'
+				)
+			]]>		  
+	    </insert>
+</sqlMap>

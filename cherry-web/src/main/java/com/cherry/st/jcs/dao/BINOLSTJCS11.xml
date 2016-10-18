@@ -1,0 +1,186 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sqlMap PUBLIC "-//iBATIS.com//DTD SQL Map 2.0//EN" "http://ibatis.apache.org/dtd/sql-map-2.dtd">
+<sqlMap namespace="BINOLSTJCS11">
+	<!-- BB柜台查询SQL文 -->
+	<sql id="BBcounterQuery">
+		<![CDATA[
+			SELECT 
+				A.BIN_BrandInfoID AS brandInfoId,
+				A.BIN_BBCounterInfoID AS BBCounterInfoId,
+				A.BIN_OrganizationID AS organizationId,
+				A.BatchCode AS batchCode,
+				B.CounterCode AS departCode,
+				B.CounterNameIF AS departName,
+				CONVERT(nvarchar(10), A.StartTime, 23) AS startDate,
+				CONVERT(nvarchar(10), A.StartTime, 24) AS startTime,
+				CONVERT(nvarchar(10), A.EndTime, 23) AS endDate,
+				CONVERT(nvarchar(10), A.EndTime, 24) AS endTime,
+				A.Comments AS comments,
+				A.ValidFlag AS validFlag,
+				'（' + D.EmployeeCode + '）' + D.EmployeeName as author
+			FROM
+				Sale.bin_bbCounterInfo A WITH(NOLOCK)
+				LEFT JOIN Basis.BIN_CounterInfo B WITH(NOLOCK) ON A.BIN_OrganizationID = B.BIN_OrganizationID
+				LEFT JOIN Privilege.BIN_User C WITH(NOLOCK) ON A.Author = C.BIN_UserID
+				LEFT JOIN Basis.BIN_Employee D WITH(NOLOCK) ON C.BIN_EmployeeID = D.BIN_EmployeeID
+			WHERE
+				A.BIN_BrandInfoID = #brandInfoId#
+				AND A.BIN_OrganizationInfoID = #organizationInfoId#
+		]]>	
+			<isNotEmpty property="BBCounterInfoId" prepend="AND">
+				A.BIN_BBCounterInfoID = #BBCounterInfoId#
+			</isNotEmpty>
+			<isNotEmpty property="batchCode" prepend="AND">
+				A.BatchCode like '%' + #batchCode# + '%'
+			</isNotEmpty>
+			<isNotEmpty property="organizationId" prepend="AND">
+				A.BIN_OrganizationID = #organizationId#
+			</isNotEmpty>
+			<isNotEmpty property="startDate" prepend="AND">
+				A.StartTime = #startTime#
+			</isNotEmpty>
+			<isNotEmpty property="endDate" prepend="AND">
+				A.EndTime = #endTime#
+			</isNotEmpty>
+			<isNotEmpty property="validFlag" prepend="AND">
+				A.ValidFlag = #validFlag#
+			</isNotEmpty>
+			<isNotEmpty property="departCode" prepend="AND">
+				B.CounterCode like '%' + #departCode# + '%'
+			</isNotEmpty>
+			<isNotEmpty property="departName" prepend="AND">
+				B.CounterNameIF like '%' + #departName# + '%'
+			</isNotEmpty>
+	</sql>
+     <!-- 取得BB柜台  -->
+    <select id="getBBcounterCount" parameterClass="java.util.HashMap" resultClass="java.lang.Integer">
+    	<![CDATA[
+			SELECT	COUNT(SORT_T1.BBCounterInfoId) AS count FROM (
+		]]>	
+		<include refid="BINOLSTJCS11.BBcounterQuery" />	
+		<![CDATA[	
+			)SORT_T1
+		]]>										
+    </select>
+    
+	<!-- 取得 BB柜台List  -->
+    <select id="getBBcounterList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+		<include refid="BINOLCMINC99.pageheader" />
+        <include refid="BINOLSTJCS11.BBcounterQuery" />	
+        <include refid="BINOLCMINC99.pagefooter" />	
+    </select>
+    
+    <!-- 取得 BB柜台List  -->
+    <select id="getAllBBCounterList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+        <include refid="BINOLSTJCS11.BBcounterQuery" />	
+    </select>
+    
+    <!-- 取得 BB柜台  -->
+    <select id="getBBcounter" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+        <include refid="BINOLSTJCS11.BBcounterQuery" />	
+    </select>
+
+	<!-- BB柜台新增  -->
+	<insert id="addBBcounter" parameterClass="java.util.HashMap">
+		<selectKey resultClass="java.lang.Integer" type="post" keyProperty="BIN_BBCounterInfoID" > 
+        <![CDATA[
+            INSERT INTO Sale.BIN_BBCounterInfo(
+				BIN_OrganizationInfoID,
+				BIN_BrandInfoID,
+				BIN_OrganizationID,
+				BatchCode,
+				Author,
+				StartTime,
+				EndTime,
+				Comments,
+        ]]>
+        <include refid="BINOLCMINC99.insertKeySql" />
+        <![CDATA[
+            )VALUES(
+                #organizationInfoId#,
+                #brandInfoId#,
+                #organizationId#,
+                #batchCode#,
+                #author#,
+                #startTime#,
+				#endTime#,
+				#comments#,
+        ]]>
+        <include refid="BINOLCMINC99.insertValueSql" />
+        <![CDATA[
+            )
+            SELECT SCOPE_IDENTITY() AS value 
+        ]]>
+        </selectKey>
+    </insert>
+    
+    <!-- 批量BB柜台新增  -->
+	<insert id="addBBcounterBatch" parameterClass="java.util.HashMap">
+        <![CDATA[
+            INSERT INTO Sale.BIN_BBCounterInfo(
+				BIN_OrganizationInfoID,
+				BIN_BrandInfoID,
+				BIN_OrganizationID,
+				BatchCode,
+				Author,
+				StartTime,
+				EndTime,
+				Comments,
+        ]]>
+        <include refid="BINOLCMINC99.insertKeySql" />
+        <![CDATA[
+            )VALUES(
+                #organizationInfoId#,
+                #brandInfoId#,
+                #organizationId#,
+                #batchCode#,
+                #author#,
+                #startTime#,
+				#endTime#,
+				#comments#,
+        ]]>
+        <include refid="BINOLCMINC99.insertValueSql" />
+       	<![CDATA[) ]]>
+    </insert>
+    
+    <!-- BB柜台更新 -->
+	<update id="updateBBcounter" parameterClass="java.util.HashMap">
+		<![CDATA[
+		UPDATE 
+      	   Sale.BIN_BBCounterInfo
+  		SET
+  		]]>
+ 		<isNotEmpty property="startTime">
+			<![CDATA[StartTime = #startTime#,]]>
+		</isNotEmpty>
+		<isNotEmpty property="endTime">
+			<![CDATA[EndTime = #endTime#,]]>
+		</isNotEmpty>
+		<isNotEmpty property="comments">
+			<![CDATA[Comments = #comments#,]]>
+		</isNotEmpty>
+		<isNotEmpty property="validFlag">
+			<![CDATA[ValidFlag = #validFlag#,]]>
+		</isNotEmpty>
+		 <include refid="BINOLCMINC99.updateSql" />
+		<![CDATA[
+		WHERE
+			BIN_BBCounterInfoID = #BBCounterInfoId#
+	 	]]>	
+    </update>
+    
+    <select id="getCounterInfoByCode"  parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+    	<![CDATA[
+    	SELECT 
+			A.BIN_OrganizationID AS organizationId,
+			A.CounterNameIF AS counterName
+		FROM
+			Basis.BIN_CounterInfo A  WITH(NOLOCK)
+		where
+			A.BIN_BrandInfoID = #brandInfoId#
+			AND A.BIN_OrganizationInfoID = #organizationInfoId#
+			AND A.CounterCode = #departCode#
+			AND A.ValidFlag = '1'
+		]]>	
+    </select>
+</sqlMap>

@@ -1,0 +1,66 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sqlMap PUBLIC "-//iBATIS.com//DTD SQL Map 2.0//EN" "http://ibatis.apache.org/dtd/sql-map-2.dtd">
+<sqlMap namespace="BINOLWSMNG06">
+    <!-- 取得审核中单据  -->
+    <select id="getAuditBill" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+		<![CDATA[
+            SELECT 
+                BIN_ProductStockTakingID AS billID
+            FROM Inventory.BIN_ProductStockTaking
+            WHERE
+                BIN_OrganizationID = #BIN_OrganizationID#
+                AND VerifiedFlag IN ('1','5','6')
+                AND ValidFlag = '1'
+            UNION
+            SELECT 
+                BIN_ProReturnRequestID AS billID
+            FROM Inventory.BIN_ProReturnRequest
+            WHERE
+                BIN_OrganizationID = #BIN_OrganizationID#
+                AND VerifiedFlag IN ('1','5','6','9','12')
+                AND ValidFlag = '1'
+		]]>
+    </select>
+    
+    <!-- 柜台产品全盘 -->
+    <select id="getAllCntPrtStockList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+        <![CDATA[
+            SELECT
+                CP.UnitCode,
+                CP.BarCode,
+                CP.BIN_ProductVendorID,
+                CP.StandardCost,
+                CP.SalePrice,
+                CP.MemPrice,
+                CP.NameTotal,
+                ISNULL(PS.Quantity,0) AS StockQuantity
+            FROM(
+        ]]>
+        <isEqual property="isCntPrt" compareValue="0">
+            <include refid="BINOLCM41.getStandProductInfoSQL" />
+        </isEqual>
+        <isEqual property="isCntPrt" compareValue="1">
+            <include refid="BINOLCM41.getCntProductInfoSQL" />
+        </isEqual>
+        <![CDATA[
+            )CP
+        ]]>
+        <![CDATA[
+            LEFT JOIN Inventory.BIN_ProductStock PS
+            ON (CP.BIN_ProductVendorID = PS.BIN_ProductVendorID
+                AND PS.BIN_InventoryInfoID = #BIN_InventoryInfoID#
+                AND PS.BIN_LogicInventoryInfoID = #BIN_LogicInventoryInfoID#)
+        ]]>
+        <isNotEmpty property="prtOrderBy">
+            <isEqual property="prtOrderBy" compareValue="0">
+                ORDER BY
+                    CP.UnitCode  ASC
+            </isEqual>
+            <isEqual property="prtOrderBy" compareValue="1">
+                ORDER BY
+                    CP.BarCode  ASC
+            </isEqual>
+        </isNotEmpty>
+    </select>
+    
+</sqlMap>

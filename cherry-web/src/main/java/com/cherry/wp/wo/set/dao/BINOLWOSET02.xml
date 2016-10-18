@@ -1,0 +1,75 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sqlMap PUBLIC "-//iBATIS.com//DTD SQL Map 2.0//EN" "http://ibatis.apache.org/dtd/sql-map-2.dtd">
+<sqlMap namespace="BINOLWOSET02">	
+	<sql id="queryBAAttendance">
+		<![CDATA[
+			SELECT
+				B.EmployeeCode AS employeeCode,
+				B.EmployeeName AS employeeName,
+				CONVERT(VARCHAR(30), A.AttendanceDateTime, 120) AS attendanceDateTime,
+				A.AttendanceType AS attendanceType
+			FROM
+				Monitor.BIN_BAAttendance A
+				LEFT JOIN Basis.BIN_Employee B ON A.BIN_EmployeeID = B.BIN_EmployeeID
+			WHERE
+				A.BIN_OrganizationID = #organizationId#
+		]]>
+			<isNotEmpty prepend="AND" property="employeeId">
+				A.BIN_EmployeeID = #employeeId#
+			</isNotEmpty>
+			<isNotEmpty prepend="AND" property="startDate">
+				A.AttendanceDateTime >= #startDate#
+			</isNotEmpty>	
+			<isNotEmpty prepend="AND" property="endDate">
+				<![CDATA[A.AttendanceDateTime <= #endDate#]]>	
+			</isNotEmpty>
+	</sql>
+	
+	<!-- 查询营业员考勤信息数量  -->
+    <select id="getBAAttendanceCount" parameterClass="java.util.HashMap" resultClass="java.lang.Integer">
+    	<![CDATA[
+			SELECT COUNT(1) AS count FROM (
+		]]>	
+		<include refid="BINOLWOSET02.queryBAAttendance" />	
+		<![CDATA[	
+			)SORT_T1
+		]]>
+    </select>
+	
+	<!-- 查询营业员考勤信息List -->
+    <select id="getBAAttendanceList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+       	<include refid="BINOLCMINC99.pageheader" />
+		<include refid="BINOLWOSET02.queryBAAttendance" />
+		<include refid="BINOLCMINC99.pagefooter" />
+    </select>
+    
+    <!-- 添加营业员考勤信息 -->
+	<insert id="insertBAAttendance" parameterClass="java.util.HashMap">
+		<![CDATA[
+			INSERT INTO	
+				Monitor.BIN_BAAttendance
+				(
+					BIN_OrganizationInfoID,
+					BIN_BrandInfoID,
+					BIN_EmployeeID,
+					BIN_OrganizationID,
+					AttendanceDateTime,
+					AttendanceType,
+		]]>
+			<include refid="BINOLCMINC99.insertKeySql" />		
+		<![CDATA[
+				)VALUES
+				(		
+					#organizationInfoId#,
+					#brandInfoId#,		
+					#employeeId#,
+					#organizationId#,
+					GETDATE(),
+					#attendanceType#,
+		]]>
+			<include refid="BINOLCMINC99.insertValueSql" />		
+		<![CDATA[
+				)
+    	]]>   				
+    </insert>
+</sqlMap>

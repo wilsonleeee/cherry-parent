@@ -1,0 +1,291 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sqlMap PUBLIC "-//iBATIS.com//DTD SQL Map 2.0//EN" "http://ibatis.apache.org/dtd/sql-map-2.dtd">
+<sqlMap namespace="BINOLCPACT07">
+	<sql id="giftDrawQuery">
+	<![CDATA[
+		SELECT
+			A.BIN_GiftDrawID AS giftDrawId,
+			A.BillNoIF AS billNoIF,
+			A.RelevanceNo AS relevanceNo,
+			A.MemberCode AS memberCode,
+			B.Name AS memberNameExport,
+			'('+A.MemberCode+')'+B.Name AS memberName,
+			B.MobilePhone AS memberPhone,
+			CASE 
+				WHEN A.BIN_MemberInfoID IS NOT NULL THEN ISNULL(B.TestType,1)
+				ELSE NULL END AS testType,
+			ISNULL(A.Quantity,0) AS getQuantity,
+			ISNULL(A.Amount,0) AS getAmount,
+			D.DepartCode AS departCodeExport,
+			D.DepartName AS departNameExport,
+			'('+D.DepartCode+')'+D.DepartName AS getCounter,
+			A.CouponCode AS couponCode,
+			A.SubType AS giftDrawType,
+			A.Comments AS comments,
+			ISNULL(A.CampaignCode,'') AS activityCodeExport,
+			CASE 
+				WHEN A.CampaignCode IS NOT NULL THEN '('+A.CampaignCode+')' 
+				ELSE '' END AS activityCode,
+			CASE 
+				WHEN E.GroupName IS NOT NULL THEN E.GroupName
+				ELSE F.CampaignName END AS activityName,
+			CONVERT(varchar, A.TradeDateTime, 120 ) AS getTime,
+			A.EmployeeCode AS employeeCodeExport,
+	]]>
+		<isNotEmpty property="language">
+			<isEqual property="language" compareValue="en_US">
+				C.EmployeeNameForeign AS employeeName,
+				'('+A.EmployeeCode+')'+C.EmployeeNameForeign AS employee
+			</isEqual>
+			<isEqual property="language" compareValue="zh_CN">
+				C.EmployeeName AS employeeName,
+				'('+A.EmployeeCode+')'+C.EmployeeName AS employee
+			</isEqual>
+		</isNotEmpty>
+		<isEmpty property="language">
+			C.EmployeeName AS employeeName,
+			'('+A.EmployeeCode+')'+C.EmployeeName AS employee
+		</isEmpty>
+			
+	<![CDATA[		
+		FROM
+			Inventory.BIN_GiftDraw A WITH(NOLOCK)
+			LEFT JOIN Members.BIN_MemberInfo B WITH(NOLOCK)
+			ON(A.BIN_MemberInfoID = B.BIN_MemberInfoID)
+			LEFT JOIN Basis.BIN_Employee C WITH(NOLOCK)
+			ON(A.BIN_EmployeeID = C.BIN_EmployeeID)
+			LEFT JOIN Basis.BIN_Organization D WITH(NOLOCK)
+			ON(A.BIN_OrganizationID = D.BIN_OrganizationID)
+			LEFT JOIN Promotion.BIN_PromotionActGrp E WITH (NOLOCK)
+			ON (A.CampaignCode = E.GroupCode)
+			LEFT JOIN Campaign.BIN_Campaign F WITH (NOLOCK)
+			ON (A.CampaignCode = F.CampaignCode)
+    	WHERE EXISTS (]]><include refid="BINOLCMINC99.getDepartList" /><![CDATA[AND A.BIN_OrganizationID = A99.BIN_OrganizationID) AND
+    		A.BIN_OrganizationInfoID = #organizationInfoId# AND
+		  	A.ValidFlag = '1'
+		]]>
+		<isNotEmpty prepend="AND" property="brandInfoId">
+			A.BIN_BrandInfoID=#brandInfoId#
+		</isNotEmpty>
+		<isNotEmpty prepend="AND" property="billNoIF">
+			A.BillNoIF LIKE '%' + #billNoIF# + '%'
+		</isNotEmpty>
+		<isNotEmpty prepend="AND" property="counterCode">
+			D.DepartCode = #counterCode#
+		</isNotEmpty>
+		<isNotEmpty prepend="AND" property="memberCode">
+			A.MemberCode LIKE '%' + #memberCode# + '%'
+		</isNotEmpty>
+		<isNotEmpty prepend="AND" property="mobilePhone">
+			B.MobilePhone LIKE '%' + #mobilePhone# + '%'
+		</isNotEmpty>
+		<isNotEmpty prepend="AND" property="testTypes">
+			<![CDATA[A.BIN_MemberInfoID IS NOT NULL ]]>
+			<isEqual property="testTypes" compareValue="0" prepend="AND">
+				<![CDATA[B.TestType = #testTypes# ]]>
+			</isEqual>
+			<!-- 会员表中TestType为空时默认为正式会员 -->
+			<isEqual property="testTypes" compareValue="1" prepend="AND">
+				<![CDATA[(B.TestType = #testTypes# OR B.TestType IS NULL) ]]>
+			</isEqual>
+		</isNotEmpty>
+		<isNotEmpty prepend="AND" property="couponCode">
+			A.CouponCode LIKE '%' + #couponCode# + '%'
+		</isNotEmpty>
+		<isNotEmpty prepend="AND" property="activityCode">
+			A.CampaignCode = #activityCode#
+		</isNotEmpty>
+		<isNotEmpty prepend="AND" property="startDate">
+		<![CDATA[
+			A.TradeDate >= #startDate#
+		]]>
+		</isNotEmpty>
+		<isNotEmpty prepend="AND" property="endDate">
+		<![CDATA[
+			A.TradeDate <= #endDate#
+		]]>
+		</isNotEmpty>
+	</sql>
+
+	<!-- 取得礼品领用报表数量 -->
+	<select id="getGiftDrawCount" parameterClass="java.util.HashMap"
+		resultClass="java.lang.Integer">
+	<![CDATA[
+		SELECT 
+			COUNT(SORT_T1.giftDrawId) AS count FROM (
+	]]>
+		<include refid="BINOLCPACT07.giftDrawQuery" />
+	<![CDATA[
+		)SORT_T1
+	]]>
+	</select>
+
+	<!-- 取得礼品领用报表List -->
+	<select id="getGiftDrawList" parameterClass="java.util.HashMap"
+		resultClass="java.util.HashMap">
+		<include refid="BINOLCMINC99.pageheader" />
+		<include refid="BINOLCPACT07.giftDrawQuery" />
+		<include refid="BINOLCMINC99.pagefooter" />
+	</select>
+
+	<!-- 主题活动 -->
+	<sql id="activityQuery">
+	<![CDATA[
+		SELECT
+			A.BIN_CampaignID AS id,
+			A.CampaignCode AS code,
+			A.CampaignName AS name
+		FROM
+			Campaign.BIN_Campaign A
+		WHERE
+			A.BIN_OrganizationInfoID = #organizationInfoId# AND
+			A.CampaignTypeFlag = '1'
+	]]>
+		<isNotEmpty prepend="AND" property="brandInfoId">
+			<![CDATA[(A.BIN_BrandInfoID=#brandInfoId# OR A.BIN_BrandInfoID='-9999')]]>
+		</isNotEmpty>
+		<isNotEmpty prepend="AND" property="activityCode">
+			<isEmpty property="onlyCodeFlag">
+				<![CDATA[
+					(
+						A.CampaignCode LIKE '%' + #activityCode# + '%' OR
+						A.CampaignName LIKE '%' + #activityCode# + '%'
+					)
+				]]>
+			</isEmpty>
+			<isNotEmpty property="onlyCodeFlag">
+				<![CDATA[
+					A.CampaignCode = #activityCode#
+				]]>
+			</isNotEmpty>
+		</isNotEmpty>
+	<![CDATA[
+		UNION
+		SELECT
+			B.BIN_PromotionActGrpID AS id,
+			B.GroupCode AS code,
+			B.GroupName AS name
+		FROM 
+			Promotion.BIN_PromotionActGrp B
+		WHERE
+			B.BIN_OrganizationInfoID = #organizationInfoId#
+	]]>
+		<isNotEmpty prepend="AND" property="brandInfoId">
+			<![CDATA[(B.BIN_BrandInfoID=#brandInfoId# OR B.BIN_BrandInfoID='-9999')]]>
+		</isNotEmpty>
+		<isNotEmpty prepend="AND" property="activityCode">
+			<isEmpty property="onlyCodeFlag">
+				<![CDATA[
+					(
+						B.GroupCode LIKE '%' + #activityCode# + '%' OR
+						B.GroupName LIKE '%' + #activityCode# + '%'
+					)
+				]]>
+			</isEmpty>
+			<isNotEmpty property="onlyCodeFlag">
+				<![CDATA[
+					B.GroupCode = #activityCode#
+				]]>
+			</isNotEmpty>
+		</isNotEmpty>
+	</sql>
+
+	<!-- 取得主题活动 -->
+	<select id="getActivity" parameterClass="java.util.HashMap"
+		resultClass="java.util.HashMap">
+	<![CDATA[
+		SELECT 
+	]]>
+	<isNotEmpty property="number">
+		TOP $number$
+	</isNotEmpty>
+	<![CDATA[
+			T.id,
+			T.code,
+			T.name
+		FROM(
+	]]>
+		<include refid="BINOLCPACT07.activityQuery" />
+	<![CDATA[)T]]>
+	</select>
+	
+	<!-- 取得礼品领用结果导出详细 -->
+	<sql id="getExportDetail">
+		<![CDATA[
+			SELECT
+				B.UnitCode AS unitCode,
+				B.BarCode AS barCode,
+				FLOOR(ISNULL(B.Quantity,0)) AS quantity,
+				CAST(ROUND(ISNULL(B.Price,0) * ISNULL(B.Quantity,0),2) AS NUMERIC(32,2)) AS amount,
+				ISNULL(D.NameTotal,F.NameTotal) AS productName,
+				CASE 
+					WHEN B.GiftType='N' THEN 1
+					WHEN B.GiftType='P' THEN 2
+					ELSE '' END AS giftType,
+				B.MainCode AS subActivityCode,
+				CASE 
+					WHEN G.ActivityName IS NOT NULL THEN G.ActivityName
+					ELSE H.SubCampaignName END AS subActivityName,
+				B.Comment AS comment,
+				T0.giftDrawId,
+				T0.billNoIF,
+				T0.relevanceNo,
+				T0.memberCode,
+				T0.memberNameExport,
+				T0.memberPhone,
+				T0.testType,
+				T0.getQuantity AS totalQuantity,
+				T0.getAmount AS totalAmount,
+				T0.getCounter,
+				T0.couponCode,
+				T0.departCodeExport,
+				T0.departNameExport,
+				T0.giftDrawType,
+				T0.activityCodeExport,
+				T0.activityName,
+				T0.getTime,
+				T0.employeeCodeExport,
+				T0.employeeName
+			FROM (
+		]]>
+		<include refid="BINOLCPACT07.giftDrawQuery"/>
+		<![CDATA[) T0
+			LEFT JOIN Inventory.BIN_GiftDrawDetail B WITH(NOLOCK)
+			ON(T0.giftDrawId = B.BIN_GiftDrawID)
+			LEFT JOIN Basis.BIN_PromotionProductVendor C WITH(NOLOCK)
+			ON(B.BIN_ProductVendorID=C.BIN_PromotionProductVendorID
+				AND B.GiftType = 'P')
+			LEFT JOIN Basis.BIN_PromotionProduct D WITH(NOLOCK)
+			ON (C.BIN_PromotionProductID=D.BIN_PromotionProductID)
+			LEFT JOIN Basis.BIN_ProductVendor E WITH(NOLOCK)
+			ON(B.BIN_ProductVendorID=E.BIN_ProductVendorID
+				AND B.GiftType = 'N')
+			LEFT JOIN Basis.BIN_Product F WITH(NOLOCK)
+			ON (E.BIN_ProductID=F.BIN_ProductID)
+			LEFT JOIN Promotion.BIN_PromotionActivity G WITH (NOLOCK)
+				ON (B.MainCode = G.ActivityCode)
+			LEFT JOIN Campaign.BIN_CampaignRule H WITH (NOLOCK)
+				ON (B.MainCode = H.SubCampaignCode)
+		]]>
+	</sql>
+	
+	<!-- 分页查询导出的礼品领用明细  -->
+    <select id="getExportDetailList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+    	<include refid="BINOLCMINC99.pageheader" />
+    	<include refid="BINOLCPACT07.getExportDetail" />
+    	<include refid="BINOLCMINC99.pagefooter" />
+    </select>
+    
+    <!--  取得礼品领用明细总数  -->
+    <select id="getExportDetailCount" parameterClass="java.util.HashMap" resultClass="java.lang.Integer">
+    	<![CDATA[
+    		SELECT 
+				COUNT(SORT_T1.giftDrawId) AS count FROM (
+    	]]>
+    	<include refid="BINOLCPACT07.getExportDetail" />
+    	<![CDATA[
+            )SORT_T1
+        ]]>
+    </select>
+
+</sqlMap>

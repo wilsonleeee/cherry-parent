@@ -1,0 +1,194 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sqlMap PUBLIC "-//iBATIS.com//DTD SQL Map 2.0//EN" "http://ibatis.apache.org/dtd/sql-map-2.dtd">
+<sqlMap namespace="BINOLBSEMP05">
+	<!-- 停用启用员工 -->
+    <update id="updateEmployee" parameterClass="java.util.HashMap">
+    	<![CDATA[
+			UPDATE Basis.BIN_Employee		
+			SET				
+				ValidFlag = #validFlag#,			
+		]]>
+				<include refid="BINOLCMINC99.updateSql" />		
+		<![CDATA[					
+			WHERE
+				BIN_EmployeeID IN		
+		]]>
+		<iterate conjunction="," open="(" close=")" property="employeeId">  
+        	#employeeId[]#
+    	</iterate>
+    </update>
+	
+	<!--停用启用营业员信息-->
+	<update id="updateBaInfo" parameterClass="java.util.HashMap">
+		<![CDATA[
+			UPDATE [Basis].[BIN_BaInfo]		
+			SET				
+				ValidFlag = #validFlag#,			
+		]]>
+				<include refid="BINOLCMINC99.updateSql" />		
+		<![CDATA[					
+			WHERE
+				[BIN_BaInfoID] IN		
+		]]>
+		<iterate conjunction="," open="(" close=")" property="baInfoIdList">  
+        	#baInfoIdList[].baInfoId#
+    	</iterate>
+	</update>
+	
+	<!--根据员工ID取得营业员ID-->
+	<select id="getBaInfoIdList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+		<![CDATA[
+			SELECT 						
+				A.BIN_BaInfoID AS baInfoId,
+				A.[BIN_EmployeeID] AS employeeId,
+				B.EmployeeCode AS employeeCode
+			FROM						
+				Basis.BIN_BaInfo A	
+				JOIN Basis.BIN_Employee	B
+				ON(A.BIN_EmployeeID = B.BIN_EmployeeID)
+				JOIN Privilege.BIN_PositionCategory	C
+				ON(B.BIN_PositionCategoryID = C.BIN_PositionCategoryID
+				AND C.CategoryCode='01')			
+			WHERE						
+				A.[BIN_EmployeeID] IN 
+		]]>
+		<iterate conjunction="," open="(" close=")" property="employeeId">  
+        	#employeeId[]#
+    	</iterate>
+	</select>
+	
+    <!-- 停用启用用户 -->
+    <update id="updateUser" parameterClass="java.util.HashMap">
+    	<![CDATA[
+			UPDATE Privilege.BIN_User		
+			SET				
+				ValidFlag = #validFlag#,			
+		]]>
+				<include refid="BINOLCMINC99.updateSql" />		
+		<![CDATA[					
+			WHERE
+				BIN_UserID IN		
+		]]>
+		<iterate conjunction="," open="(" close=")" property="userId">  
+        	#userId[]#
+    	</iterate>
+    </update>
+    
+    <!-- 停用启用用户(配置数据库) -->
+    <update id="updateUserConf" parameterClass="java.util.HashMap">
+    	<![CDATA[
+			UPDATE dbo.BIN_LoginConfig		
+			SET				
+				ValidFlag = #validFlag#,			
+		]]>
+				<include refid="BINOLCMINC99.updateSql" />		
+		<![CDATA[					
+			WHERE
+				LonginName IN
+		]]>
+		<iterate conjunction="," open="(" close=")" property="longinName">  
+        	#longinName[]#
+    	</iterate>
+    </update>
+    
+    <!-- 取得登录帐号  -->
+    <select id="getUserInfo" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+    	<![CDATA[
+			SELECT	
+				A.LonginName AS longinName,
+				A.PassWord AS passWord,
+				A.BIFlag AS biFlag,
+				B.BIN_BrandInfoID AS brandInfoId
+			FROM 
+				Privilege.BIN_User A JOIN Basis.BIN_Employee B ON A.BIN_EmployeeID = B.BIN_EmployeeID
+			WHERE
+				A.BIN_UserID = #userId#
+		]]>										
+    </select>
+	
+	
+	<!--根据员工ID取得岗位类别code-->
+	<select id="getCategoryCodeByEmployeeId" parameterClass="java.lang.Integer" resultClass="java.lang.String">
+		SELECT
+			B.CategoryCode AS categoryCode
+		From
+			Basis.BIN_Employee A
+			JOIN Privilege.BIN_PositionCategory B
+			ON(A.BIN_PositionCategoryID = B.BIN_PositionCategoryID)
+		WHERE
+			A.BIN_EmployeeID = #employeeID#
+	</select>
+	
+	<!-- 停用不包含有效员工的柜台主管部门 -->
+    <update id="updateOrgInvalid" parameterClass="java.util.HashMap">
+    	<![CDATA[
+			UPDATE Basis.BIN_Organization
+			SET 
+				ValidFlag = '0',
+		]]>
+			<include refid="BINOLCMINC99.updateSql" />		
+		<![CDATA[					
+			FROM
+				Basis.BIN_Organization X
+			WHERE 
+				X.BIN_OrganizationInfoID = #organizationInfoId# AND 
+				X.BIN_BrandInfoID = #brandInfoId# AND
+				X.Type = '6' AND
+				NOT EXISTS (SELECT 1 FROM Basis.BIN_Employee Y WHERE X.BIN_OrganizationID = Y.BIN_OrganizationID AND Y.ValidFlag = '1') AND
+				X.ValidFlag = '1'		
+		]]>
+    </update>
+    
+    <!-- 启用柜台主管对应的柜台主管部门 -->
+    <update id="updateOrgValid" parameterClass="java.util.HashMap">
+    	<![CDATA[
+			UPDATE Basis.BIN_Organization
+			SET 
+				ValidFlag = '1',
+		]]>
+			<include refid="BINOLCMINC99.updateSql" />		
+		<![CDATA[					
+			FROM
+				Basis.BIN_Organization X
+			WHERE 
+				X.Type = '6' AND
+				EXISTS (SELECT 1 FROM Basis.BIN_Employee Y WHERE X.BIN_OrganizationID = Y.BIN_OrganizationID AND Y.BIN_EmployeeID IN
+		]]>	
+			<iterate conjunction="," open="(" close=")" property="employeeId">  
+	        	#employeeId[]#
+	    	</iterate>	
+    	<![CDATA[			
+				) AND
+				X.ValidFlag = '0'		
+		]]>
+    </update>
+    
+    <!--根据员工ID查询U盘SN与ID以及品牌CODE-->
+	<select id="getUdiskInfo" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+		<![CDATA[
+		SELECT
+			A.UdiskSN AS udiskSn,
+			A.BIN_UdiskInfoID AS udiskInfoId,
+			B.BrandCode AS brandCode
+		FROM
+			Monitor.BIN_UdiskInfo A,
+			Basis.BIN_BrandInfo B
+		WHERE
+			A.BIN_EmployeeID = #employeeId#
+			AND	A.ValidFlag = '1'
+			AND A.BIN_BrandInfoID = B.BIN_BrandInfoID
+		]]>
+	</select>
+    
+    <!--解除人员其所绑定的U盘-->
+	<update id="empUnbindUdisk" parameterClass="java.util.HashMap">
+		UPDATE
+			[Monitor].[BIN_UdiskInfo]
+		SET
+			[BIN_EmployeeID] = #employeeId#,
+			[OwnerRight] = #ownerRight#,
+		<include refid="BINOLCMINC99.updateSql" />
+		WHERE
+			[BIN_UdiskInfoID] = #udiskInfoId#
+	</update>
+</sqlMap>

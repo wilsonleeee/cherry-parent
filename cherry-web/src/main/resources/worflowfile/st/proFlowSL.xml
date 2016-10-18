@@ -1,0 +1,513 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE workflow PUBLIC "-//OpenSymphony Group//DTD OSWorkflow 2.8//EN" "http://www.opensymphony.com/osworkflow/workflow_2_8.dtd">
+<!-- 后台销售 审核 》发货 》自动收货 流程  -->
+<workflow>
+    <initial-actions>
+        <action id="1" name="Start Workflow">
+            <pre-functions>
+                <function type="class">
+                    <arg name="class.name">com.opensymphony.workflow.util.Caller</arg>
+                </function>
+            </pre-functions>
+            <results>
+                <!-- 开始工作流程 -->
+                <unconditional-result old-status="Finished" status="Underway" step="10">
+                        <post-functions>
+                            <function type="spring">
+                                <arg name="bean.name">proFlowSL_FN</arg>
+                                <arg name="method">startFlow</arg>
+                            </function>
+                        </post-functions>
+                </unconditional-result>
+            </results>
+        </action>
+    </initial-actions>
+    <steps>
+        <step id="10" name="开始">
+           <meta name="OS_StepShowFlag">1</meta>
+           <meta name="OS_StepShowText">100</meta>
+           <meta name="OS_StepShowOrder">1</meta>
+           <meta name="OS_Rule">{"ThirdPartyFlag":"2","RuleType":"4","RuleOnFlowCode":"proFlowSL","RuleOnStep":[10],"RuleContext":[]}</meta>
+            <actions>
+                <action id="111" name="向ps表中写状态" auto="true">
+                    <results>
+                        <unconditional-result old-status="Finished" status="Underway" step="20">
+                                <post-functions>
+                                      <function type="beanshell">
+                                            <arg name="script">
+                                                propertySet.setString("OS_StepShowOrder","1")
+                                            </arg>
+                                      </function>
+                                </post-functions>
+                        </unconditional-result>
+                    </results>
+                </action>
+            </actions>
+        </step>
+        <step id="20" name="提交销售单">
+            <meta name="OS_StepShowFlag">1</meta>
+            <meta name="OS_StepShowText">101</meta>
+            <meta name="OS_StepShowOrder">2</meta>
+            <actions>
+                <action id="21" name="提交销售单" auto="true">
+                    <pre-functions>
+                        <function type="beanshell">
+                                <arg name="script">
+                                    propertySet.setString("OS_StepShowOrder","2")
+                                </arg>
+                        </function>
+                    </pre-functions>
+                    <results>
+                        <!-- 跳转向  审核 -->
+                        <unconditional-result old-status="Finished" status="Underway" step="50">
+                        </unconditional-result>
+                    </results>
+                </action>
+            </actions>
+        </step>
+        <step id="50" name="审核 ">   
+            <!-- 将工作流的当前业务状态设置为        销售单审核 -->
+            <meta name="OS_Rule">{"ThirdPartyFlag":"2","RuleType":"3","RuleOnFlowCode":"proFlowSL","RuleOnStep":[50],"RuleOnAction":[501,502,504,505],"RuleContext":[],"CanEditFlag":"true","PreferredFlag":"true"}</meta>
+            <pre-functions>
+                <function type="beanshell">
+                    <arg name="script">
+                        propertySet.setString("OS_Current_Operate","151")  
+                    </arg>
+                </function>
+                <function type="spring">
+                    <arg name="bean.name">proFlowSL_FN</arg>
+                    <arg name="method">updateState</arg>
+                    <arg name="BillState">10</arg>
+                </function>
+                <function type="spring">
+                    <arg name="bean.name">workFlowCommon_FN</arg>
+                    <arg name="method">setParticipant</arg>
+                </function>
+                <function type="spring">
+                    <arg name="bean.name">workFlowCommon_FN</arg>
+                    <arg name="method">auditHandle</arg>
+                </function>
+            </pre-functions>
+            <actions>
+                <action id="501" name="同意">
+                    <meta name="OS_ButtonNameCode">os.agree</meta>
+                    <meta name="OS_ButtonClass">icon-confirm</meta>
+                    <meta name="OS_OperateCode">151</meta>
+                    <meta name="OS_OperateResultCode">101</meta>
+                    <meta name="OS_Rule">{"ThirdPartyFlag":"2","RuleType":"3","RuleOnFlowCode":"proFlowSL","RuleOnStep":[50],"RuleOnAction":[501,502,504,505],"RuleContext":[],"CanEditFlag":"true","PreferredFlag":"true"}</meta>
+                    <meta name="OS_ButtonScript">BINOLSTSFH16.beforeDoAction();</meta>
+                    <results>
+                        <unconditional-result old-status="Finished" status="Underway" step="70">
+                        </unconditional-result>
+                    </results>
+                </action>
+                <action id="502" name="拒绝">
+                    <meta name="OS_ButtonNameCode">os.inhibit</meta>
+                    <meta name="OS_ButtonClass">icon-inhibit</meta>
+                    <meta name="OS_OperateCode">151</meta>
+                    <meta name="OS_OperateResultCode">102</meta>
+                    <meta name="OS_Rule">{"ThirdPartyFlag":"2","RuleType":"3","RuleOnFlowCode":"proFlowSL","RuleOnStep":[50],"RuleOnAction":[501,502,504,505],"RuleContext":[],"CanEditFlag":"true","PreferredFlag":"true"}</meta>
+                    <meta name="OS_ButtonScript">BINOLSTSFH16.beforeDoAction();popOSDialog.showDialog(502);</meta>
+                    <results>
+                        <unconditional-result old-status="Finished" status="Underway" step="55">
+                        </unconditional-result>
+                    </results>
+                </action>
+                <action id="503" name="自动执行同意">
+                    <meta name="OS_DefaultAction"></meta>       
+                    <results>
+                        <unconditional-result old-status="Finished" status="Underway" step="70"></unconditional-result>
+                    </results>
+                </action>
+                <action id="504" name="修改">
+                    <meta name="OS_ButtonNameCode">os.edit</meta>
+                    <meta name="OS_ButtonClass">icon-edit-big</meta>
+                    <meta name="OS_ButtonScript">BINOLSTSFH16.modifyOrder()</meta>
+                    <meta name="OS_ButtonEdit"></meta>
+                    <meta name="OS_Rule">{"ThirdPartyFlag":"2","RuleType":"3","RuleOnFlowCode":"proFlowSL","RuleOnStep":[50],"RuleOnAction":[501,502,504,505],"RuleContext":[],"CanEditFlag":"true","PreferredFlag":"true"}</meta>
+                    <results>
+                        <unconditional-result old-status="Finished" status="Underway" step="50">
+                        </unconditional-result>
+                    </results>
+                </action>
+                <action id="505" name="废弃">
+                    <meta name="OS_ButtonNameCode">os.trash</meta>
+                    <meta name="OS_ButtonClass">icon-discard</meta>
+                    <meta name="OS_OperateCode">153</meta>
+                    <meta name="OS_OperateResultCode">104</meta>
+                    <meta name="OS_Rule">{"ThirdPartyFlag":"2","RuleType":"3","RuleOnFlowCode":"proFlowSL","RuleOnStep":[50],"RuleOnAction":[501,502,504,505],"RuleContext":[],"CanEditFlag":"true","PreferredFlag":"true"}</meta>
+                    <meta name="OS_ButtonScript">BINOLSTSFH16.beforeDoAction();popOSDialog.showDialog(505);</meta>
+                    <results>
+                        <unconditional-result old-status="Finished" status="Underway" step="999">
+                            <pre-functions>
+                                <function type="spring">
+                                    <arg name="bean.name">proFlowSL_FN</arg>
+                                    <arg name="method">updateState</arg>
+                                    <arg name="BillState">80</arg>
+                                </function>
+                            </pre-functions>
+                        </unconditional-result>
+                    </results>
+                </action>
+            </actions>
+        </step>
+        <step id="55" name="审核退回">
+            <actions>
+                <action id="551" name="审核退回" auto="true">
+                    <results>
+                        <unconditional-result old-status="Finished" status="Underway" step="60">
+                            <pre-functions>
+                                <function type="spring">
+                                    <arg name="bean.name">proFlowSL_FN</arg>
+                                    <arg name="method">updateState</arg>
+                                    <arg name="BillState">0</arg>
+                                </function>
+                            </pre-functions>
+                        </unconditional-result>
+                    </results>
+                </action>
+            </actions>
+        </step>
+        <step id="60" name="后台销售单编辑">
+            <!-- 将工作流的当前业务状态设置为        后台销售单编辑 -->
+            <pre-functions>
+                <function type="beanshell">
+                    <arg name="script">
+                        propertySet.setString("OS_Current_Operate","152")  
+                    </arg>
+                </function>
+                <function type="spring">
+                    <arg name="bean.name">workFlowCommon_FN</arg>
+                    <arg name="method">setParticipant</arg>
+                </function>
+            </pre-functions>
+            <actions>
+                <action id="601" name="再次提交">   
+                    <meta name="OS_ButtonNameCode">os.submit</meta>
+                    <meta name="OS_ButtonClass">icon-confirm</meta>
+                    <meta name="OS_OperateCode">900</meta>
+                    <meta name="OS_OperateResultCode">103</meta>
+                    <meta name="OS_ButtonScript">BINOLSTSFH16.beforeDoAction();</meta>
+                    <results>
+                        <unconditional-result old-status="Finished" status="Underway" step="20">
+                            <pre-functions>
+                                <function type="spring">
+                                    <arg name="bean.name">proFlowSL_FN</arg>
+                                    <arg name="method">updateState</arg>
+                                    <arg name="BillState">10</arg>
+                                </function>
+                            </pre-functions>
+                        </unconditional-result>
+                    </results>
+                </action>
+                <action id="602" name="废弃">
+                    <meta name="OS_ButtonNameCode">os.trash</meta>
+                    <meta name="OS_ButtonClass">icon-discard</meta>
+                    <meta name="OS_OperateCode">153</meta>
+                    <meta name="OS_OperateResultCode">104</meta>
+                    <meta name="OS_ButtonScript">BINOLSTSFH16.beforeDoAction();popOSDialog.showDialog(602);</meta>
+                    <results>
+                        <unconditional-result old-status="Finished" status="Underway" step="999">
+                            <pre-functions>
+                                <function type="spring">
+                                    <arg name="bean.name">proFlowSL_FN</arg>
+                                    <arg name="method">updateState</arg>
+                                    <arg name="BillState">80</arg>
+                                </function>
+                            </pre-functions>
+                        </unconditional-result>
+                    </results>
+                </action>
+            </actions>
+        </step>
+        <step id="70" name="审核通过">
+            <meta name="OS_StepShowFlag">1</meta>
+            <meta name="OS_StepShowText">102</meta>
+            <meta name="OS_StepShowOrder">3</meta>
+            <actions>
+                <action id="701" name="向ps表中写状态" auto="true">
+                    <results>
+                        <unconditional-result old-status="Finished"	status="Underway" step="80">
+                            <pre-functions>
+                                <function type="beanshell">
+                                    <arg name="script">
+                                        propertySet.setString("OS_StepShowOrder","3")
+                                    </arg>
+                                </function>
+                                <function type="spring">
+                                    <arg name="bean.name">proFlowSL_FN</arg>
+                                    <arg name="method">updateState</arg>
+                                    <arg name="BillState">20</arg>
+                                </function>
+                            </pre-functions>
+                        </unconditional-result>
+                    </results>
+                </action>
+            </actions>
+        </step>
+        <step id="80" name="发货">
+            <!-- 将工作流的当前业务状态设置为        发货-->    
+            <meta name="OS_Rule">{"ThirdPartyFlag":"2","RuleType":"3","RuleOnFlowCode":"proFlowSL","RuleOnStep":[80],"RuleOnAction":[801,803,804,805],"RuleContext":[],"CanEditFlag":"true","PreferredFlag":"true"}</meta>
+            <pre-functions>
+                <function type="beanshell">
+                    <arg name="script">
+                        propertySet.setString("OS_Current_Operate","40")
+                    </arg>
+                </function>
+                <function type="spring">
+                    <arg name="bean.name">workFlowCommon_FN</arg>
+                    <arg name="method">setParticipant</arg>
+                </function>
+                <function type="spring">
+                    <arg name="bean.name">workFlowCommon_FN</arg>
+                    <arg name="method">auditHandle</arg>
+                </function>
+            </pre-functions>
+            <actions>
+                <action id="801" name="os.send_confirm">
+                    <meta name="OS_ButtonNameCode">os.send</meta>
+                    <meta name="OS_ButtonClass">icon-confirm</meta>
+                    <meta name="OS_OperateCode">40</meta>
+                    <meta name="OS_OperateResultCode">105</meta>
+                    <meta name="OS_Rule">{"ThirdPartyFlag":"2","RuleType":"3","RuleOnFlowCode":"proFlowSL","RuleOnStep":[80],"RuleOnAction":[801,803,804,805],"RuleContext":[],"CanEditFlag":"true","PreferredFlag":"true"}</meta>
+                    <meta name="OS_ButtonScript">BINOLSTSFH16.beforeDoAction();</meta>
+                    <results>
+                        <unconditional-result old-status="Finished" status="Underway" step="90" >
+                            <!--
+                            <pre-functions>
+                                <function type="spring">
+                                    <arg name="bean.name">proFlowSL_FN</arg>
+                                    <arg name="method">updateState</arg>
+                                    <arg name="BillState"></arg>
+                                </function>
+                            </pre-functions>
+                            -->
+                        </unconditional-result>
+                    </results>
+                </action>
+                <action id="802" name="自动执行发货">
+                    <meta name="OS_DefaultAction"></meta>
+                    <results>
+                        <unconditional-result old-status="Finished" status="Underway" step="90" >
+                        </unconditional-result>
+                    </results>
+                </action>
+                <action id="803" name="拒绝">
+                    <meta name="OS_ButtonNameCode">os.inhibit</meta>
+                    <meta name="OS_ButtonClass">icon-inhibit</meta>
+                    <meta name="OS_OperateCode">45</meta>
+                    <meta name="OS_OperateResultCode">107</meta>
+                    <meta name="OS_Rule">{"ThirdPartyFlag":"2","RuleType":"3","RuleOnFlowCode":"proFlowSL","RuleOnStep":[80],"RuleOnAction":[801,803,804,805],"RuleContext":[],"CanEditFlag":"true","PreferredFlag":"true"}</meta>
+                    <meta name="OS_ButtonScript">BINOLSTSFH16.beforeDoAction();popOSDialog.showDialog(803);</meta>
+                    <results>
+                        <unconditional-result old-status="Finished" status="Underway" step="50">
+                            <pre-functions>
+                                <function type="beanshell">
+                                    <arg name="script">
+                                        propertySet.setString("OS_StepShowOrder","2");
+                                    </arg>
+                                </function>
+                                <function type="spring">
+                                    <arg name="bean.name">proFlowSL_FN</arg>
+                                    <arg name="method">updateState</arg>
+                                    <arg name="BillState">10</arg>
+                                </function>
+                            </pre-functions>
+                        </unconditional-result>
+                    </results>
+                </action>
+                <action id="804" name="修改">
+                    <meta name="OS_ButtonNameCode">os.edit</meta>
+                    <meta name="OS_ButtonClass">icon-edit-big</meta>
+                    <meta name="OS_ButtonScript">BINOLSTSFH16.modifyOrder()</meta>
+                    <meta name="OS_ButtonEdit"></meta>
+                    <meta name="OS_OperateCode">40</meta>
+                    <meta name="OS_OperateResultCode">106</meta>
+                    <meta name="OS_Rule">{"ThirdPartyFlag":"2","RuleType":"3","RuleOnFlowCode":"proFlowSL","RuleOnStep":[80],"RuleOnAction":[801,803,804,805],"RuleContext":[],"CanEditFlag":"true","PreferredFlag":"true"}</meta>
+                    <results>
+                        <unconditional-result old-status="Finished" status="Underway" step="80">
+                        </unconditional-result>
+                    </results>
+                </action>
+                <action id="805" name="废弃">
+                    <meta name="OS_ButtonNameCode">os.trash</meta>
+                    <meta name="OS_ButtonClass">icon-discard</meta>
+                    <meta name="OS_OperateCode">43</meta>
+                    <meta name="OS_OperateResultCode">104</meta>
+                    <meta name="OS_Rule">{"ThirdPartyFlag":"2","RuleType":"3","RuleOnFlowCode":"proFlowSL","RuleOnStep":[80],"RuleOnAction":[801,803,804,805],"RuleContext":[],"CanEditFlag":"true","PreferredFlag":"true"}</meta>
+                    <meta name="OS_ButtonScript">BINOLSTSFH16.beforeDoAction();popOSDialog.showDialog(805);</meta>
+                    <results>
+                        <unconditional-result old-status="Finished" status="Underway" step="999">
+                            <pre-functions>
+                                <function type="spring">
+                                    <arg name="bean.name">proFlowSL_FN</arg>
+                                    <arg name="method">updateState</arg>
+                                    <arg name="BillState">80</arg>
+                                </function>
+                            </pre-functions>
+                        </unconditional-result>
+                    </results>
+                </action>
+            </actions>
+        </step>
+        <step id="90" name="发货方更改库存">
+            <actions>
+                <action id="901" name="发货方更改库存" auto="true">
+                    <results>
+                        <unconditional-result old-status="Finished" status="Underway" step="91">
+                                <post-functions>
+                                    <function type="spring">
+                                        <arg name="bean.name">proFlowSL_FN</arg>
+                                        <arg name="method">changeStock</arg>
+                                        <arg name="StockType">1</arg>
+                                    </function>
+                                </post-functions>
+                        </unconditional-result>
+                    </results>
+                </action>
+            </actions>
+        </step>
+        <step id="91" name="已发货">
+           <meta name="OS_StepShowFlag">1</meta>
+           <meta name="OS_StepShowText">105</meta>
+           <meta name="OS_StepShowOrder">4</meta>
+            <actions>
+                <action id="911" name="向ps表中写状态" auto="true">
+                    <results>
+                        <!-- 客户类型非内部部门销售 跳过收货不扣库存  -->
+                        <result old-status="Finished" status="Underway" step="999">
+                            <conditions type="AND">
+                                <condition type="beanshell">
+                                    <arg name="script">
+                                        return !"1".equals(propertySet.getString("CustomerType"))
+                                    </arg>
+                                </condition>
+                            </conditions>
+                            <post-functions>
+                                 <function type="spring">
+                                    <arg name="bean.name">proFlowSL_FN</arg>
+                                    <arg name="method">updateState</arg>
+                                    <arg name="BillState">99</arg>
+                                </function>
+                             </post-functions>
+                        </result>
+                        <unconditional-result old-status="Finished" status="Underway" step="100">
+                                <pre-functions>
+                                      <function type="beanshell">
+                                            <arg name="script">
+                                                propertySet.setString("OS_StepShowOrder","4")
+                                            </arg>
+                                      </function>
+                                      <!--
+                                      <function type="spring">
+                                          <arg name="bean.name">proFlowSL_FN</arg>
+                                          <arg name="method">updateState</arg>
+                                          <arg name="BillState"></arg>
+                                      </function>
+                                      -->
+                                </pre-functions>
+                        </unconditional-result>
+                    </results>
+                </action>
+            </actions>
+        </step>
+        <step id="100" name="收货">
+            <meta name="OS_StepShowFlag">1</meta>
+            <meta name="OS_StepShowText">106</meta>
+            <meta name="OS_StepShowOrder">5</meta>
+          <meta name="OS_Rule">{"ThirdPartyFlag":"2","RuleType":"3","RuleOnFlowCode":"proFlowSL","RuleOnStep":[100],"RuleOnAction":[1001],"RuleContext":[]}</meta>
+          <pre-functions>
+                <function type="beanshell">
+                    <arg name="script">
+                         propertySet.setString("OS_Current_Operate","50")
+                    </arg>
+                </function>
+                <function type="spring">
+                    <arg name="bean.name">workFlowCommon_FN</arg>
+                    <arg name="method">setParticipant</arg>
+                </function>
+                <function type="spring">
+                    <arg name="bean.name">workFlowCommon_FN</arg>
+                    <arg name="method">auditHandle</arg>
+                </function>
+            </pre-functions>
+            <actions>
+                <action id="1001" name="收货">
+                    <meta name="OS_ButtonNameCode">os.receive</meta>
+                    <meta name="OS_ButtonClass">icon-confirm</meta>
+                    <meta name="OS_OperateCode">50</meta>
+                    <meta name="OS_OperateResultCode">999</meta>
+                    <meta name="OS_Rule">{"ThirdPartyFlag":"2","RuleType":"3","RuleOnFlowCode":"proFlowSL","RuleOnStep":[100],"RuleOnAction":[1001],"RuleContext":[]}</meta>
+                    <meta name="OS_ButtonScript">BINOLSTSFH16.beforeDoAction();</meta>
+                    <results>
+                        <unconditional-result old-status="Finished" status="Underway" step="999">
+                            <pre-functions>
+                                <function type="beanshell">
+                                    <arg name="script">
+                                        propertySet.setString("OS_StepShowOrder","5"); 
+                                    </arg>
+                                </function>
+                            </pre-functions>
+                            <post-functions>
+                                    <function type="spring">
+                                        <arg name="bean.name">proFlowSL_FN</arg>
+                                        <arg name="method">updateState</arg>
+                                        <arg name="BillState">99</arg>
+                                    </function>
+                                    <function type="spring">
+                                        <arg name="bean.name">proFlowSL_FN</arg>
+                                        <arg name="method">changeStock</arg>
+                                        <arg name="StockType">0</arg>
+                                    </function>
+                             </post-functions>
+                        </unconditional-result>
+                    </results>
+                </action>
+                <action id="1002" name="自动执行收货">
+                    <meta name="OS_DefaultAction"></meta>
+                    <results>
+                        <unconditional-result old-status="Finished" status="Underway" step="999" >
+                            <pre-functions>
+                                <function type="beanshell">
+                                    <arg name="script">
+                                        propertySet.setString("OS_StepShowOrder","5"); 
+                                    </arg>
+                                </function>
+                            </pre-functions>
+                            <post-functions>
+                                    <function type="spring">
+                                        <arg name="bean.name">proFlowSL_FN</arg>
+                                        <arg name="method">updateState</arg>
+                                        <arg name="BillState">99</arg>
+                                    </function>
+                                    <function type="spring">
+                                        <arg name="bean.name">proFlowSL_FN</arg>
+                                        <arg name="method">changeStock</arg>
+                                        <arg name="StockType">0</arg>
+                                    </function>
+                             </post-functions>
+                        </unconditional-result>
+                    </results>
+                </action>
+            </actions>
+        </step> 
+        <step id="999" name="Flow over">
+            <meta name="OS_StepShowFlag">1</meta>
+            <meta name="OS_StepShowText">999</meta>
+            <meta name="OS_StepShowOrder">6</meta>
+            <!-- 将工作流的当前业务状态设置为       工作流结束 -->
+            <pre-functions>
+                <function type="beanshell">
+                    <arg name="script">
+                        propertySet.setString("OS_Current_Operate","999");
+                        propertySet.setString("OS_StepShowOrder","6");
+                    </arg>
+                </function>
+                <function type="spring">
+                    <arg name="bean.name">workFlowCommon_FN</arg>
+                    <arg name="method">deleteUserTask</arg>
+                </function>
+            </pre-functions>
+        </step>
+    </steps>
+</workflow>

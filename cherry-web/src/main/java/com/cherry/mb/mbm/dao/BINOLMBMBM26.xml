@@ -1,0 +1,73 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE sqlMap PUBLIC "-//iBATIS.com//DTD SQL Map 2.0//EN" "http://ibatis.apache.org/dtd/sql-map-2.dtd">
+
+<sqlMap namespace="BINOLMBMBM26">
+    
+    <!-- 会员问题查询SQL文  -->
+    <sql id="IssueQuery">
+        <![CDATA[
+            SELECT
+            	A.BIN_IssueID AS issueId,
+				A.IssueNo AS issueNo,
+				A.IssueType AS issueType,
+				A.IssueSubType AS issueSubType,
+				CASE WHEN ISNULL(A.IssueSummary, '') = '' THEN A.Description ELSE A.IssueSummary END AS issueSummary,
+				A.Resolution AS resolution,
+				A.IssueStatus AS issueStatus,
+				A.Priority AS priority,
+				A.BillCode AS billCode,
+				A.CampaignType AS campaignType,
+				A.CampaignCode AS campaignCode,
+				CONVERT(varchar(30),A.CreateTime,120) AS createTime,
+				CONVERT(varchar(30),A.UpdateTime,120) AS updateTime,
+				CASE ISNULL(B.EmployeeName,'') WHEN '' THEN B.EmployeeCode ELSE '(' + B.EmployeeCode + ')' + B.EmployeeName END AS assigneeName,
+				CASE ISNULL(C.EmployeeName,'') WHEN '' THEN C.EmployeeCode ELSE '(' + C.EmployeeCode + ')' + C.EmployeeName END AS speakerName
+			FROM
+				Members.BIN_Issue A
+				LEFT JOIN Basis.BIN_Employee B ON A.Assignee = B.BIN_EmployeeID
+				LEFT JOIN Basis.BIN_Employee C ON A.Speaker = C.BIN_EmployeeID
+			WHERE
+				A.BIN_MemberInfoID = #memberInfoId#
+        ]]>
+        	<isNotEmpty property="issueNoQ" prepend="AND">
+        		A.IssueNo LIKE '%'+#issueNoQ#+'%'
+			</isNotEmpty>
+        	<isNotEmpty property="issueSummaryQ" prepend="AND">
+				A.IssueSummary LIKE '%'+#issueSummaryQ#+'%'
+			</isNotEmpty>
+			<isNotEmpty property="issueTypeQ" prepend="AND">
+				A.IssueType = #issueTypeQ#
+			</isNotEmpty>
+			<isNotEmpty property="issueSubTypeQ" prepend="AND">
+				A.IssueSubType = #issueSubTypeQ#
+			</isNotEmpty>
+			<isNotEmpty property="resolutionQ" prepend="AND">
+				A.Resolution = #resolutionQ#
+			</isNotEmpty>
+			<isNotEmpty property="issueStatusQ" prepend="AND">
+				A.IssueStatus = #issueStatusQ#
+			</isNotEmpty>
+    </sql>
+	
+	<!-- 取得会员问题总数  -->
+    <select id="getIssueCount" parameterClass="java.util.HashMap" resultClass="java.lang.Integer">
+        <![CDATA[
+            SELECT COUNT(1) AS count FROM (
+        ]]>
+        <include refid="BINOLMBMBM26.IssueQuery" />
+        <![CDATA[
+            )SORT_T1
+        ]]>
+    </select>
+    
+    <!-- 取得会员问题List  -->
+    <select id="getIssueList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+        <include refid="BINOLCMINC99.pageheader" />
+        <include refid="BINOLMBMBM26.IssueQuery" />
+        <include refid="BINOLCMINC99.pagefooter" />
+    </select>
+	
+</sqlMap>
+
+
+

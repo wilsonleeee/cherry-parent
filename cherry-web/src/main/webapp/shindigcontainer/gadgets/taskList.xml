@@ -1,0 +1,171 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Module>
+    <ModulePrefs
+            title="taskList">
+       		<Require feature="settitle"/>
+            <Require feature="dynamic-height" /> 
+			<Optional feature="content-rewrite">
+			  <Param name="exclude-urls">.*</Param>
+			</Optional>
+			<Require feature="oauthpopup" />
+			<Require feature="cherryOpenSocial"/>
+			<Require feature="opensocial-i18n"/> 
+			<Locale messages="../i18n/zh_CN_ALL.xml"/>
+			<Locale lang="zh_CN" messages="../i18n/zh_CN_ALL.xml"/>
+			<Locale lang="zh_TW" messages="../i18n/zh_TW_ALL.xml"/>
+    </ModulePrefs>
+    <Content type="html" ><![CDATA[
+
+	<style type="text/css">
+	
+	#taskDiv {
+		color: #000000;
+   		font-family: Verdana,Geneva,sans-serif;
+   		font-size: 14px;
+   		padding: 2px 10px 10px 10px;
+   		overflow: auto;
+	}
+	
+	.section-header {
+	    border-bottom: 1px solid #E5E5E5;
+	    height: 24px;
+	    line-height: 24px;
+	}
+
+	.section-content {
+		margin: 5px 0 0 0;
+		width:100%;
+	}
+	
+	table {
+	    background: none repeat scroll 0 0 #FFFFFF;
+	    border: 1px solid #CCCCCC;
+	    border-collapse:collapse;
+	    width:100%;
+	}
+
+	th, td {
+  		border: 1px solid #CCCCCC;
+  		font-size: 13px;
+  	}
+  	
+  	th {
+  		background: none repeat scroll 0 0 #F9F9F9;
+	    height: 30px;
+	    line-height: 25px;
+	    padding: 0 5px;
+	    white-space: nowrap;
+	    text-align:left;
+	    font-weight: normal;
+  	}
+  	
+  	td {
+	    height: 20px;
+	    padding: 3px 5px;
+	    white-space: nowrap;
+	}
+
+ 	a {
+  		color: #3366FF;
+   		text-decoration: none;
+  	}
+  	 a:hover {
+  		color: #FF6D06;
+   		text-decoration: underline;
+  	}
+  	#waiting {
+  		height:200px;
+  	}
+  	#waiting div {
+  		background-image: url("/Cherry/css/common/blueprint/images/loading.gif");
+	    background-position: 20px center;
+	    background-repeat: no-repeat;
+	    height: 50px;
+	    width: 50px;
+	    left: 40%;
+	    top: 20%;
+	    position: absolute;
+	    z-index: 100;
+  	}
+	</style>
+	
+	
+    <div class="section" id="taskDiv">  
+      <div class="section-header"></div>
+      <div class="section-content">
+        <table border="0">
+		  <thead></thead>
+		  <tbody></tbody>
+		</table>            
+      </div>
+    </div>
+    
+	<script type='text/javascript'>
+	
+	var baseUrl = window.parent.getBaseUrl();
+	var gadgetPrefs = new gadgets.Prefs();
+	
+    function formatNumber(money, num) {
+        money = parseFloat(money);
+        money = String(money.toFixed(num));
+        var re = /(-?\d+)(\d{3})/;
+        while(re.test(money))
+            money = money.replace(re,"$1,$2");
+        return money;
+    }
+	
+	function render(data) {
+		$("#taskDiv").html('<div class="section-header"></div><div class="section-content"><table border="0"><thead></thead><tbody></tbody></table></div>');
+		data = data.entry;
+		$('#taskDiv').find('.section-header').html('<strong><span class="ui-icon icon-agent"></span>'+gadgetPrefs.getMsg("handleTask")+':<span style="color:red">'+data.taskList.length+'</span>&nbsp;'+gadgetPrefs.getMsg("taskPart")+'</strong>');
+		var $tbody = $('#taskDiv').find('tbody');
+		var $thead = $('#taskDiv').find('thead');
+		var _gadgetSizeMax = window.parent.getGadgetSizeMax();
+		if(_gadgetSizeMax) {
+			var theadContext = '<tr>' + '<th style="width:10%;">No.</th>' + '<th style="width:20%">'+gadgetPrefs.getMsg("taskName")+'</th>' 
+			+ '<th style="width:20%">'+gadgetPrefs.getMsg("billCode")+'</th>' + '<th style="width:15%">'+gadgetPrefs.getMsg("billTotalQuantity")+'</th>'+ '<th style="width:15%">'+gadgetPrefs.getMsg("billTotalAmount")+'</th>'
+			+ '<th style="width:15%">'+gadgetPrefs.getMsg("departNameFrom")+'</th>'+'<th style="width:15%">'+gadgetPrefs.getMsg("departNameTo")+'</th>' + '<th style="width:15%">'+gadgetPrefs.getMsg("employeeName")+'</th>'
+		    + '</tr>';
+			$thead.append(theadContext);
+			for(var i = 0; i < data.taskList.length; i++) {
+				var taskInfo = data.taskList[i];
+				var tr = '<tr><td>'+(i+1)+'</td><td>'+(taskInfo.currentOperate ? gadgetPrefs.getMsg("OS.TaskName.ProType."+taskInfo.proType)+gadgetPrefs.getMsg("OS.TaskName."+taskInfo.currentOperate) : "&nbsp;")+
+				'</td><td>'+(taskInfo.billCode ? taskInfo.billCode : "&nbsp;")+
+				'&nbsp;'+'<a href="javascript:void(0)" onclick="window.parent.todoProcess(\''+taskInfo.entryID+'\',\''+taskInfo.billType+'\',\''+taskInfo.billID+'\',\''+taskInfo.proType+'\');return false;">'+gadgetPrefs.getMsg("operation")+'</a>'+
+                '</td><td style="text-align: right;">'+(taskInfo.totalQuantity ? formatNumber(taskInfo.totalQuantity,0) : "&nbsp;")+
+                '</td><td style="text-align: right;">'+(taskInfo.totalAmount ? formatNumber(taskInfo.totalAmount,2) : "&nbsp;")+
+				'</td><td>'+(taskInfo.departCodeNameFrom ? taskInfo.departCodeNameFrom : "&nbsp;")+
+				'</td><td>'+(taskInfo.departCodeNameTo ? taskInfo.departCodeNameTo : "&nbsp;")+
+				'</td><td>'+(taskInfo.employeeCodeName ? taskInfo.employeeCodeName : "&nbsp;")+
+				'</td></tr>';
+				$tbody.append(tr);
+			}
+		} else {
+			var theadContext = '<tr>' + '<th style="width:10%;">No.</th>' + '<th style="width:25%">'+gadgetPrefs.getMsg("taskName")+'</th>' 
+			+ '<th style="width:10%">'+gadgetPrefs.getMsg("operation")+'</th>' + '</tr>';
+			$thead.append(theadContext);
+			for(var i = 0; i < data.taskList.length; i++) {
+				var taskInfo = data.taskList[i];
+				var tr = '<tr><td>'+(i+1)+'</td><td>'+(taskInfo.currentOperate ? gadgetPrefs.getMsg("OS.TaskName.ProType."+taskInfo.proType)+gadgetPrefs.getMsg("OS.TaskName."+taskInfo.currentOperate) : "&nbsp;")+
+				'</td><td><a href="javascript:void(0)" onclick="window.parent.todoProcess(\''+taskInfo.entryID+'\',\''+taskInfo.billType+'\',\''+taskInfo.billID+'\',\''+taskInfo.proType+'\');return false;">'+gadgetPrefs.getMsg("operation")+'</a></td></tr>';
+				$tbody.append(tr);
+			}
+		}
+	    gadgets.window.adjustHeight();
+	}
+	
+	function fetchTaskList() {
+	   $("#taskDiv").html('<div id="waiting"><div></div></div>');
+	   gadgets.window.adjustHeight();
+	   var url = baseUrl + "/social/rest/taskList";
+	   var param = {};
+	   param.userInfo = window.parent.getUserInfo();
+	   sendRequestToServer(url, 'POST', param, render, false);
+	}
+	
+	gadgets.util.registerOnLoadHandler(fetchTaskList);
+	
+	</script>
+    
+	]]></Content>
+</Module>

@@ -1,0 +1,383 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sqlMap PUBLIC "-//iBATIS.com//DTD SQL Map 2.0//EN" "http://ibatis.apache.org/dtd/sql-map-2.dtd">
+<sqlMap namespace="BINOLJNCOM03">
+	<!-- 插入会员活动组表  -->
+	<insert id="insertCampaignGrp" parameterClass="java.util.HashMap">	
+	<selectKey resultClass="java.lang.Integer" type="post" keyProperty="BIN_CampaignGrpID" >
+		 <![CDATA[
+		 	INSERT INTO Campaign.BIN_CampaignGrp
+				(BIN_OrganizationInfoID,
+				BIN_BrandInfoID,
+				CampaignType,
+				GroupName,
+				RuleDetail,
+		 ]]>
+		  <include refid="BINOLCMINC99.insertKeySql" />	
+		<![CDATA[
+		)VALUES									
+				 (#organizationInfoId#,
+				  #brandInfoId#,
+				  #campaignType#,
+				  #groupName#,
+				  #ruleDetail#,
+		 ]]>
+	        <include refid="BINOLCMINC99.insertValueSql" />
+		 <![CDATA[)
+			select SCOPE_IDENTITY() as value
+			]]> 
+	    </selectKey>
+	</insert> 
+	
+	<!-- 更新会员活动组表  -->
+	<update id="updateCampaignGrp" parameterClass="java.util.HashMap">
+        <![CDATA[ 
+		  UPDATE   
+		           Campaign.BIN_CampaignGrp						
+		  SET
+		]]>	
+		<dynamic>
+			<isNotEmpty property="updateKbn">
+				<isEqual property="updateKbn" compareValue="2">
+				<![CDATA[ 
+				  GroupCode = #groupCode#,
+				]]>	
+				</isEqual>
+				<isEqual property="updateKbn" compareValue="1">
+				<![CDATA[ 
+				  RuleDetail = #ruleDetail#,
+		          BIN_BrandInfoID = #brandInfoId#,
+				  CampaignType = #campaignType#,
+				  GroupName = #groupName#,
+				]]>	
+				</isEqual>
+				<isEqual property="updateKbn" compareValue="0">
+				<![CDATA[
+				  RuleFileContent = #ruleFileContent#,
+				]]>	
+				</isEqual>
+			</isNotEmpty>
+		</dynamic>
+		    <include refid="BINOLCMINC99.updateSql" />	
+		<![CDATA[			
+       	  WHERE									
+				   BIN_CampaignGrpID = #campaignGrpId# AND
+				   UpdateTime = #grpUpdateTime# AND
+				   ModifyCount = #grpModifyCount#
+       ]]>
+	        
+    </update>
+	
+	<!-- 取得活动组信息 -->
+    <select id="getCampaignGrpInfo" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+		<![CDATA[
+			SELECT				
+				BIN_CampaignGrpID AS campaignGrpId,
+				BIN_BrandInfoID AS brandInfoId,
+				CampaignType AS campaignType,
+				GroupName AS groupName,
+				RuleDetail AS ruleDetail,
+				CONVERT(varchar,UpdateTime,121) AS grpUpdateTime,
+				ModifyCount AS grpModifyCount
+			FROM
+				Campaign.BIN_CampaignGrp
+			WHERE
+				BIN_CampaignGrpID = #campaignGrpId#	
+	    ]]>  
+	 </select>
+	 
+	 <sql id="RuleInfoTo">
+	 	<![CDATA[
+			SELECT  
+				BIN_CampaignID AS campaignId,
+				CampaignName AS campaignName,
+				CONVERT(varchar, CampaignFromDate, 121) AS campaignFromDate,
+				CONVERT(varchar, CampaignToDate, 121) AS campaignToDate
+			FROM
+				Campaign.BIN_Campaign
+			WHERE 
+				CampaignType = #campaignType# and
+				ValidFlag = '1'
+				]]>	
+		<isNotEmpty prepend="AND" property="memberClubId">
+			BIN_MemberClubID = #memberClubId#
+		</isNotEmpty>
+		<isNotEmpty property="pointRuleType">		
+			AND PointRuleType = #pointRuleType#						
+		</isNotEmpty>
+	 </sql>
+	 
+	  <sql id="comCampRuleInfo">
+	 	<![CDATA[
+			SELECT  
+				BIN_CampaignID AS campaignId,
+				CampaignName AS campaignName,
+				CONVERT(varchar, CampaignFromDate, 121) AS campaignFromDate,
+				CONVERT(varchar, CampaignToDate, 121) AS campaignToDate
+			FROM
+				Campaign.BIN_Campaign
+			WHERE 
+				BIN_BrandInfoID = #brandInfoId# AND
+				BIN_OrganizationInfoID = #organizationInfoId# AND
+				CampaignType = #campaignType# AND
+				SaveStatus = '1' AND
+				ValidFlag = '1'
+				]]>	
+		<dynamic>
+			<isNotEmpty prepend="AND" property="memberClubId">
+			BIN_MemberClubID = #memberClubId#
+			</isNotEmpty>
+			<isNotEmpty prepend="AND" property="pointRuleType">
+				PointRuleType = #pointRuleType#
+			</isNotEmpty>
+			<isNotEmpty prepend="AND" property="campRuleKw">
+				(CampaignName like '%'+#campRuleKw#+'%')
+			</isNotEmpty>
+		</dynamic>	
+	 </sql>
+	 <!-- 会员活动信息查询sql  -->
+	<sql id="jncom03campaignQuery">
+		<![CDATA[
+			SELECT
+				A.BIN_CampaignID AS campaignId,
+				A.CampaignName AS campaignName,
+				A.CampaignFromDate AS campaignFromDate,
+				A.CampaignToDate AS campaignToDate,
+				case when A.CampaignFromDate > convert(date, #businessDate#, 121) then '1'
+				when A.CampaignFromDate <= convert(date, #businessDate#, 121) and
+				A.CampaignToDate >= convert(date, #businessDate#, 121) then '2'
+				else '3' end AS campaignStatus
+		]]>
+    			<dynamic>
+					<isNotEmpty property="language">
+						<isEqual property="language" compareValue="en_US">										
+						,C.EmployeeNameForeign AS employeeName
+						</isEqual>
+						<isEqual property="language" compareValue="zh_CN">										
+						,C.EmployeeName AS employeeName
+						</isEqual>								
+					</isNotEmpty>
+					<isEmpty property="language">
+						,C.EmployeeName AS employeeName
+					</isEmpty>
+				</dynamic>
+		<![CDATA[
+			FROM
+				Campaign.BIN_Campaign A LEFT JOIN
+				Privilege.BIN_User B ON (A.CampaignSetBy = B.BIN_UserID)
+				LEFT JOIN Basis.BIN_Employee C ON (B.BIN_EmployeeID = C.BIN_EmployeeID)
+			Where
+				A.BIN_CampaignGrpID = #campaignGrpId#
+		]]>
+	</sql>
+	
+	<!-- 取得会员活动总数  -->
+    <select id="getJncom03CampaignCount" parameterClass="java.util.HashMap" resultClass="java.lang.Integer">
+    	<![CDATA[
+			SELECT	COUNT(SORT_T1.campaignId) AS count FROM (
+		]]>	
+		<include refid="BINOLJNCOM03.RuleInfoTo" />	
+		<![CDATA[	
+			)SORT_T1
+		]]>										
+    </select>
+	
+	<!-- 取得会员活动信息List -->
+    <select id="getJncom03CampaignList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+       	<include refid="BINOLCMINC99.pageheader" />
+		<include refid="BINOLJNCOM03.RuleInfoTo" />
+		<include refid="BINOLCMINC99.pagefooter" />
+    </select>
+    
+    <!-- 取得规则总数  -->
+    <select id="getComCampRuleCount" parameterClass="java.util.HashMap" resultClass="java.lang.Integer">
+    	<![CDATA[
+			SELECT	COUNT(SORT_T1.campaignId) AS count FROM (
+		]]>	
+		<include refid="BINOLJNCOM03.comCampRuleInfo" />	
+		<![CDATA[	
+			)SORT_T1
+		]]>										
+    </select>
+	
+	<!-- 取得规则List -->
+    <select id="getComCampRuleList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+       	<include refid="BINOLCMINC99.pageheader" />
+		<include refid="BINOLJNCOM03.comCampRuleInfo" />
+		<include refid="BINOLCMINC99.pagefooter" />
+    </select>
+	
+	<!-- 取得会员等级名称 -->
+    <select id="getLevelName" parameterClass="java.util.HashMap" resultClass="java.lang.String">
+    	<![CDATA[
+			SELECT
+				LevelName
+			FROM 
+				Members.BIN_MemberLevel
+			WHERE
+				BIN_MemberLevelID = #levelId#	
+		]]>
+    </select>
+	
+	<!-- 取得规则名称 -->
+    <select id="getRuleName" parameterClass="java.util.HashMap" resultClass="java.lang.String">
+    	<![CDATA[
+			SELECT 
+				CampaignName AS campaignName
+			FROM 
+				Campaign.BIN_Campaign
+			WHERE 
+				BIN_CampaignID = #campaignId# AND
+				ValidFlag = '1'
+		]]>
+    </select>
+	
+	<!-- 取得活动组中的活动信息 -->
+    <select id="getRuleInfo" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+    	<![CDATA[
+			SELECT  
+				BIN_CampaignID AS campaignId,
+				CampaignName AS campaignName,
+				CONVERT(varchar, CampaignFromDate, 121) AS campaignFromDate,
+				CONVERT(varchar, CampaignToDate, 121) AS campaignToDate
+			FROM
+				Campaign.BIN_Campaign
+			WHERE 
+				CampaignType = #campaignType# and
+				ValidFlag = '1'
+		]]>
+		<isNotEmpty prepend="AND" property="memberClubId">
+			BIN_MemberClubID = #memberClubId#
+		</isNotEmpty>
+		<isNotEmpty property="pointRuleType">		
+			AND PointRuleType = #pointRuleType#						
+		</isNotEmpty>
+    </select>
+	
+	<!-- 规则体详细信息 -->
+	<resultMap id="BINOLJNCOM03.RuleDetail" class="java.util.HashMap">
+		<result property="ruleDetail" column="RuleDetail"/>			<!-- 规则体详细 -->
+	</resultMap>
+	<!-- 取得规则体详细信息  -->
+    <select id="getRuleDetail" parameterClass="java.util.HashMap" resultMap="BINOLJNCOM03.RuleDetail">
+    	<![CDATA[
+		    SELECT
+			 	RuleDetail
+			FROM
+				Campaign.BIN_CampaignGrp
+			WHERE
+				CampaignType = #campaignType#	AND
+				BIN_BrandInfoID = #brandInfoId# AND
+				BIN_OrganizationInfoID = #organizationInfoId# AND
+				ValidFlag = '1'
+		]]>
+		<isNotEmpty prepend="AND" property="memberClubId">
+			BIN_MemberClubID = #memberClubId#
+		</isNotEmpty>
+    </select>
+    
+	<!-- 取得规则列表  -->
+    <select id="getCampRuleList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+       	<![CDATA[
+			SELECT  
+				BIN_CampaignID AS campaignId,
+				CampaignName AS campaignName,
+				CONVERT(varchar, CampaignFromDate, 121) AS campaignFromDate,
+				CONVERT(varchar, CampaignToDate, 121) AS campaignToDate,
+				CONVERT(varchar, Strategy) AS strategy,
+				CASE WHEN #pointRuleType# = '3' THEN RuleDetail ELSE NULL END AS ruleDetail
+			FROM
+				Campaign.BIN_Campaign
+			WHERE 
+				BIN_BrandInfoID = #brandInfoId# AND
+				BIN_OrganizationInfoID = #organizationInfoId# AND
+				CampaignType = #campaignType# AND
+		]]>	
+		<isNotEmpty property="memberClubId">
+			BIN_MemberClubID = #memberClubId# AND
+		</isNotEmpty>
+		<![CDATA[
+				SaveStatus = '1' AND
+				PointRuleType = #pointRuleType# AND
+				ValidFlag = '1'
+			ORDER BY campaignId
+		]]>
+    </select>
+    
+    <!-- 取得规则信息  -->
+    <select id="getCampRuleInfo" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+       	<![CDATA[
+			SELECT
+				BIN_BrandInfoID AS brandInfoId,
+				BIN_OrganizationInfoID AS organizationInfoId,
+				CampaignName AS campaignName,
+				CONVERT(varchar, CampaignFromDate, 121) AS campaignFromDate,
+				CONVERT(varchar, CampaignToDate, 121) AS campaignToDate,
+				CONVERT(varchar, UpdateTime, 121) AS campUpdateTime,
+				ModifyCount AS campModifyCount,
+				RuleDetail AS ruleDetail,
+				PointRuleType AS prType
+			FROM
+				Campaign.BIN_Campaign
+			WHERE 
+				BIN_CampaignID = #campaignId#
+		]]>
+		
+    </select>
+    
+    <!-- 取得规则配置信息  -->
+    <select id="getRuleConfigInfo" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+       	<![CDATA[
+			SELECT  
+				A.GroupName AS groupName,
+				A.DescriptionDtl AS descriptionDtl,
+				A.PriorityRuleDetail AS priorityRuleDetail,
+				A.RuleDetail AS ruleDetail,
+				A.BIN_BrandInfoID AS brandInfoId,
+				A.BIN_OrganizationInfoID AS organizationInfoId,
+				A.Strategy AS execType,
+				convert(varchar,A.UpdateTime,121) AS grpUpdateTime,
+				A.ModifyCount AS grpModifyCount,
+				A.ValidFlag AS groupValidFlag,
+				A.BIN_MemberClubID AS memberClubId
+		]]>
+		<dynamic>
+		<isNotEmpty property="language">
+			<isEqual property="language" compareValue="en_US">
+			,B.BrandNameForeign AS brandName
+			</isEqual>
+			<isEqual property="language" compareValue="zh_CN">	
+			,B.BrandNameChinese AS brandName
+			</isEqual>								
+		</isNotEmpty>
+		<isEmpty property="language">
+			,B.BrandNameChinese AS brandName
+		</isEmpty>
+		</dynamic>
+		<![CDATA[
+			FROM
+				Campaign.BIN_CampaignGrp A LEFT JOIN
+				Basis.BIN_BrandInfo B ON
+				(A.BIN_BrandInfoID = B.BIN_BrandInfoID)
+			WHERE 
+				A.BIN_CampaignGrpID = #campaignGrpId#
+		]]>
+    </select>
+    
+     <!-- 取得有效的规则配置信息  -->
+    <select id="getValidConfigInfo" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+    <![CDATA[
+    	SELECT TOP 1
+			GroupName AS groupName
+		FROM
+			Campaign.BIN_CampaignGrp
+		WHERE
+			BIN_BrandInfoID = #brandInfoId# AND
+			BIN_OrganizationInfoID = #organizationInfoId# AND
+			CampaignType = #campaignType# AND
+			validFlag = '1'
+	]]>
+	<isNotEmpty prepend="AND" property="memberClubId">
+			BIN_MemberClubID = #memberClubId#
+	</isNotEmpty>
+	</select>
+</sqlMap>

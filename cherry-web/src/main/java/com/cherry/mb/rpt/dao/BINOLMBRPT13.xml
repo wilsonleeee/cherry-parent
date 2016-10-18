@@ -1,0 +1,359 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sqlMap PUBLIC "-//iBATIS.com//DTD SQL Map 2.0//EN" "http://ibatis.apache.org/dtd/sql-map-2.dtd">
+<sqlMap namespace="BINOLMBRPT13">
+
+    <!-- 取得活动购买金额、购买人数、新会员购买人数、新会员购买金额  -->
+    <select id="getCampSaleInfo" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+    	<![CDATA[
+			SELECT
+				SUM(T.saleAmount) AS saleAmount,
+				COUNT(1) AS memCount,
+				SUM(CASE WHEN X.JoinDate >= #startDate# and X.JoinDate <= #endDate# THEN 1 END) AS newMemCount,
+				SUM(CASE WHEN X.JoinDate >= #startDate# and X.JoinDate <= #endDate# THEN T.saleAmount END) AS newMemSaleAmount
+			FROM
+				(SELECT 
+					c.BIN_MemberInfoID,
+					SUM(CASE WHEN c.SaleType = 'SR' THEN -c.Amount ELSE c.Amount END) as saleAmount
+				FROM
+					Sale.BIN_SaleRecord c WITH(NOLOCK)
+				WHERE
+					c.SaleDate >= #startDate# and
+					c.SaleDate <= #endDate# and
+					c.BIN_OrganizationInfoID = #organizationInfoId# and
+					c.BIN_BrandInfoID = #brandInfoId# and
+					exists (
+						select 1 
+						from 
+							Campaign.BIN_CampaignOrder a WITH(NOLOCK)
+							join Members.BIN_MemberInfo b WITH(NOLOCK) on a.Mobile = b.MobilePhone
+						where 
+							a.BIN_OrganizationInfoID = #organizationInfoId# and
+							a.BIN_BrandInfoID = #brandInfoId# and
+							a.CampaignCode = #campaignCode#	and
+							c.SaleTime >= a.CampaignOrderTime and
+							c.BIN_MemberInfoID = b.BIN_MemberInfoID
+					)
+				GROUP BY
+					c.BIN_MemberInfoID) T
+				LEFT JOIN Members.BIN_MemberInfo X WITH(NOLOCK) on T.BIN_MemberInfoID = X.BIN_MemberInfoID
+		]]>						
+    </select>
+    
+    <!-- 取得活动预约人数  -->
+    <select id="getCampOrderCount" parameterClass="java.util.HashMap" resultClass="java.lang.Integer">
+    	<![CDATA[
+			select
+				count(1) as orderCount
+			from
+				Campaign.BIN_CampaignOrder a WITH(NOLOCK)
+			where
+				a.BIN_OrganizationInfoID = #organizationInfoId# AND
+				a.BIN_BrandInfoID = #brandInfoId# AND
+				a.CampaignCode = #campaignCode# AND
+				a.CampaignOrderTime >= #startDateTime# AND
+				a.CampaignOrderTime <= #endDateTime# AND
+				a.State <> 'CA'
+		]]>											
+    </select>
+    
+    <!-- 取得活动预期到柜人数  -->
+    <select id="getCampBookCount" parameterClass="java.util.HashMap" resultClass="java.lang.Integer">
+    	<![CDATA[
+			select
+				count(1) as bookCount
+			from
+				Campaign.BIN_CampaignOrder a WITH(NOLOCK)
+			where
+				a.BIN_OrganizationInfoID = #organizationInfoId# AND
+				a.BIN_BrandInfoID = #brandInfoId# AND
+				a.CampaignCode = #campaignCode# AND
+				a.BookDate >= #startDate# AND
+				a.BookDate <= #endDate# AND
+				a.State <> 'CA'
+		]]>											
+    </select>
+    
+    <!-- 取得活动实际到柜人数（会员）  -->
+    <select id="getCampMemArriveCount" parameterClass="java.util.HashMap" resultClass="java.lang.Integer">
+    	<![CDATA[
+			select
+				count(distinct T.BIN_MemberInfoID) AS getCount	
+			from					
+				(SELECT 
+					c.BIN_MemberInfoID
+				FROM
+					Sale.BIN_SaleRecord c WITH(NOLOCK)
+				WHERE
+					c.SaleDate >= #startDate# and
+					c.SaleDate <= #endDate# and
+					c.BIN_OrganizationInfoID = #organizationInfoId# and
+					c.BIN_BrandInfoID = #brandInfoId# and
+					exists (
+						select 1 
+						from 
+							Campaign.BIN_CampaignOrder a WITH(NOLOCK)
+							join Members.BIN_MemberInfo b WITH(NOLOCK) on a.Mobile = b.MobilePhone
+						where 
+							a.BIN_OrganizationInfoID = #organizationInfoId# and
+							a.BIN_BrandInfoID = #brandInfoId# and
+							a.CampaignCode = #campaignCode#	and		
+							c.SaleTime >= a.CampaignOrderTime and
+							c.BIN_MemberInfoID = b.BIN_MemberInfoID 
+					)
+											
+				UNION													
+			
+				SELECT
+					b.BIN_MemberInfoID
+				FROM
+					Campaign.BIN_CampaignOrder a WITH(NOLOCK)
+					join Members.BIN_MemberInfo b WITH(NOLOCK) on a.Mobile = b.MobilePhone
+				WHERE
+					a.BIN_OrganizationInfoID = #organizationInfoId# AND
+					a.BIN_BrandInfoID = #brandInfoId# AND
+					a.CampaignCode = #campaignCode# AND
+					a.FinishTime >= #startDateTime# AND
+					a.FinishTime <= #endDateTime# AND
+					a.State = 'OK'
+				) T
+		]]>						
+    </select>
+    
+    <!-- 取得活动实际到柜人数（非会员）  -->
+    <select id="getCampNomemArriveCount" parameterClass="java.util.HashMap" resultClass="java.lang.Integer">
+    	<![CDATA[
+			SELECT
+				count(distinct a.Mobile) AS getCount
+			FROM
+				Campaign.BIN_CampaignOrder a WITH(NOLOCK)
+				left join Members.BIN_MemberInfo b WITH(NOLOCK) on a.Mobile = b.MobilePhone
+			WHERE
+				a.BIN_OrganizationInfoID = #organizationInfoId# AND
+				a.BIN_BrandInfoID = #brandInfoId# AND
+				a.CampaignCode = #campaignCode# AND
+				a.FinishTime >= #startDateTime# AND
+				a.FinishTime <= #endDateTime# AND
+				a.State = 'OK' AND
+				b.BIN_MemberInfoID is null
+		]]>						
+    </select>
+    
+    <!-- 取得活动按柜台购买金额、购买人数、新会员购买人数、新会员购买金额  -->
+    <sql id="getCampSaleInfoByCounter">
+    	<![CDATA[
+			SELECT
+				T.BIN_OrganizationID,
+				SUM(T.saleAmount) AS saleAmount,
+				COUNT(1) AS memCount,
+				SUM(CASE WHEN X.JoinDate >= #startDate# and X.JoinDate <= #endDate# THEN 1 END) AS newMemCount,
+				SUM(CASE WHEN X.JoinDate >= #startDate# and X.JoinDate <= #endDate# THEN T.saleAmount END) AS newMemSaleAmount
+			FROM
+				(SELECT 
+					c.BIN_OrganizationID,
+					c.BIN_MemberInfoID,
+					SUM(CASE WHEN c.SaleType = 'SR' THEN -c.Amount ELSE c.Amount END) as saleAmount
+				FROM
+					Sale.BIN_SaleRecord c WITH(NOLOCK)
+				WHERE
+					c.SaleDate >= #startDate# and
+					c.SaleDate <= #endDate# and
+					c.BIN_OrganizationInfoID = #organizationInfoId# and
+					c.BIN_BrandInfoID = #brandInfoId# and
+					exists (
+						select 1 
+						from 
+							Campaign.BIN_CampaignOrder a WITH(NOLOCK)
+							join Members.BIN_MemberInfo b WITH(NOLOCK) on a.Mobile = b.MobilePhone
+						where 
+							a.BIN_OrganizationInfoID = #organizationInfoId# and
+							a.BIN_BrandInfoID = #brandInfoId# and
+							a.CampaignCode = #campaignCode# and		
+							c.SaleTime >= a.CampaignOrderTime and
+							c.BIN_MemberInfoID = b.BIN_MemberInfoID 
+					)
+				GROUP BY
+					c.BIN_OrganizationID,
+					c.BIN_MemberInfoID) T
+				LEFT JOIN Members.BIN_MemberInfo X WITH(NOLOCK) on T.BIN_MemberInfoID = X.BIN_MemberInfoID
+			GROUP BY 
+				T.BIN_OrganizationID
+		]]>						
+    </sql>
+    	
+    <!-- 取得活动按柜台预约人数  -->
+    <sql id="getCampOrderCountByCounter">
+    	<![CDATA[
+			select
+				a.CounterGot AS departCode,
+				count(1) AS orderCount
+			from
+				Campaign.BIN_CampaignOrder a WITH(NOLOCK)
+			where
+				a.BIN_OrganizationInfoID = #organizationInfoId# AND
+				a.BIN_BrandInfoID = #brandInfoId# AND
+				a.CampaignCode = #campaignCode# AND
+				a.CampaignOrderTime >= #startDateTime# AND
+				a.CampaignOrderTime <= #endDateTime# AND
+				a.State <> 'CA'		
+			group by 
+				a.CounterGot	
+		]]>						
+    </sql>
+    
+    <!-- 取得活动按柜台预期到柜人数  -->
+    <sql id="getCampBookCountByCounter">
+    	<![CDATA[
+			select
+				a.CounterGot AS departCode,
+				count(1) AS bookCount
+			from
+				Campaign.BIN_CampaignOrder a WITH(NOLOCK)
+			where
+				a.BIN_OrganizationInfoID = #organizationInfoId# AND
+				a.BIN_BrandInfoID = #brandInfoId# AND
+				a.CampaignCode = #campaignCode# AND
+				a.BookDate >= #startDate# AND
+				a.BookDate <= #endDate# AND
+				a.State <> 'CA'	
+			group by 
+				a.CounterGot
+		]]>						
+    </sql>
+    
+    <!-- 取得活动按柜台实际到柜人数（会员）  -->
+    <sql id="getCampMemArriveCountByCounter">
+    	<![CDATA[
+			select
+				T.BIN_OrganizationID,
+				count(distinct T.BIN_MemberInfoID) AS getCount
+			from					
+				(SELECT 
+					c.BIN_OrganizationID,
+					c.BIN_MemberInfoID
+				FROM
+					Sale.BIN_SaleRecord c WITH(NOLOCK)
+				WHERE
+					c.SaleDate >= #startDate# and
+					c.SaleDate <= #endDate# and
+					c.BIN_OrganizationInfoID = #organizationInfoId# and
+					c.BIN_BrandInfoID = #brandInfoId# and
+					exists (
+						select 1 
+						from 
+							Campaign.BIN_CampaignOrder a WITH(NOLOCK)
+							join Members.BIN_MemberInfo b WITH(NOLOCK) on a.Mobile = b.MobilePhone
+						where 
+							a.BIN_OrganizationInfoID = #organizationInfoId# and
+							a.BIN_BrandInfoID = #brandInfoId# and
+							a.CampaignCode = #campaignCode#	and		
+							c.SaleTime >= a.CampaignOrderTime and
+							c.BIN_MemberInfoID = b.BIN_MemberInfoID 
+					)
+																						
+				UNION
+			
+				SELECT
+					c.BIN_OrganizationID,
+					b.BIN_MemberInfoID
+				FROM
+					Campaign.BIN_CampaignOrder a WITH(NOLOCK)
+					join Members.BIN_MemberInfo b WITH(NOLOCK) on a.Mobile = b.MobilePhone
+					join Basis.BIN_Organization c WITH(NOLOCK) on a.CounterGot = c.DepartCode
+				WHERE
+					a.BIN_OrganizationInfoID = #organizationInfoId# AND
+					a.BIN_BrandInfoID = #brandInfoId# AND
+					a.CampaignCode = #campaignCode# AND
+					a.FinishTime >= #startDateTime# AND
+					a.FinishTime <= #endDateTime# AND
+					a.State = 'OK') T
+			group by 
+				T.BIN_OrganizationID
+		]]>						
+    </sql>
+    
+    <!-- 取得活动按柜台实际到柜人数（非会员）  -->
+    <sql id="getCampNomemArriveCountByCounter">
+    	<![CDATA[
+			SELECT
+				a.CounterGot AS departCode,
+				count(1) AS getCount
+			FROM
+				Campaign.BIN_CampaignOrder a WITH(NOLOCK)
+				left join Members.BIN_MemberInfo b WITH(NOLOCK) on a.Mobile = b.MobilePhone
+			WHERE
+				a.BIN_OrganizationInfoID = #organizationInfoId# AND
+				a.BIN_BrandInfoID = #brandInfoId# AND
+				a.CampaignCode = #campaignCode# AND
+				a.FinishTime >= #startDateTime# AND
+				a.FinishTime <= #endDateTime# AND
+				a.State = 'OK' AND
+				b.BIN_MemberInfoID is null
+			group by 
+				a.CounterGot
+		]]>						
+    </sql>
+    
+    <!-- 活动按柜台统计信息  -->
+    <sql id="CampCountInfoByCounter">
+    	<![CDATA[
+			select 
+				A.DepartCode AS departCode,
+				A.DepartName AS departName,
+				B.RegionNameChinese AS cityName,
+				ISNULL(T1.memCount, 0) AS memCount,
+				ISNULL(T1.newMemCount, 0) AS newMemCount,
+				ISNULL(T1.saleAmount, 0) AS saleAmount,
+				ISNULL(T1.newMemSaleAmount, 0) AS newMemSaleAmount,
+				ISNULL(T2.orderCount, 0) AS orderCount,
+				ISNULL(T3.bookCount, 0) AS bookCount,
+				ISNULL(T4.getCount, 0)+ISNULL(T5.getCount, 0) AS getCount
+			from
+				Basis.BIN_Organization A WITH(NOLOCK)
+				LEFT JOIN Basis.BIN_Region B WITH(NOLOCK) on A.BIN_CityID = B.BIN_RegionID
+				left join (]]><include refid="BINOLMBRPT13.getCampSaleInfoByCounter" /><![CDATA[) T1 on A.BIN_OrganizationID = T1.BIN_OrganizationID
+				left join (]]><include refid="BINOLMBRPT13.getCampOrderCountByCounter" /><![CDATA[) T2 on A.DepartCode = T2.departCode
+				left join (]]><include refid="BINOLMBRPT13.getCampBookCountByCounter" /><![CDATA[) T3 on A.DepartCode = T3.departCode
+				left join (]]><include refid="BINOLMBRPT13.getCampMemArriveCountByCounter" /><![CDATA[) T4 on A.BIN_OrganizationID = T4.BIN_OrganizationID
+				left join (]]><include refid="BINOLMBRPT13.getCampNomemArriveCountByCounter" /><![CDATA[) T5 on A.DepartCode = T5.departCode
+			where
+				T1.BIN_OrganizationID is not null or
+				T2.departCode is not null or
+				T3.departCode is not null or
+				T4.BIN_OrganizationID is not null or
+				T5.departCode is not null
+		]]>						
+    </sql>
+    
+    <!-- 取得活动按柜台统计信息件数  -->
+    <select id="getCampCountInfoByCounterCount" parameterClass="java.util.HashMap" resultClass="java.lang.Integer">
+    	<![CDATA[
+			SELECT COUNT(1) AS count
+			FROM (]]><include refid="BINOLMBRPT13.CampCountInfoByCounter" /><![CDATA[) T
+		]]>										
+    </select>
+    
+    <!-- 取得活动按柜台统计信息List  -->
+    <select id="getCampCountInfoByCounterList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+       	<include refid="BINOLCMINC99.pageheader" />
+		<include refid="BINOLMBRPT13.CampCountInfoByCounter" />
+		<include refid="BINOLCMINC99.pagefooter" />
+    </select>
+    
+    <!-- 取得活动List  -->
+    <select id="getCampaignList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+    	<![CDATA[
+			SELECT 
+				A.CampaignCode AS campaignCode,
+				A.CampaignName AS campaignName
+			FROM
+				Campaign.BIN_Campaign A WITH(NOLOCK)
+			WHERE
+				A.BIN_OrganizationInfoID = #organizationInfoId# AND
+				A.BIN_BrandInfoID = #brandInfoId# AND
+				A.CampaignTypeFlag = '1' AND
+				A.State IN ('1','2') AND
+				A.ValidFlag = '1'
+		]]>				
+    </select>
+    
+</sqlMap>

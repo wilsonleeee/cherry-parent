@@ -1,0 +1,2770 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sqlMap PUBLIC "-//iBATIS.com//DTD SQL Map 2.0//EN" "http://ibatis.apache.org/dtd/sql-map-2.dtd">
+<sqlMap namespace="BINOLCM02">
+<!-- 促销产品信息查询sql -->
+	 <sql id="promotionQuery">
+		<![CDATA[
+    		SELECT 
+    			DISTINCT
+    			A.BIN_PromotionProductID AS bin_PromotionProductID,
+    			A.UnitCode AS unitCode,
+				ISNULL(CONVERT(Decimal(16,2),A.StandardCost),0) AS standardCost,
+    			C.BIN_PromotionProductVendorID,
+    			C.BarCode AS barCode,
+    			]]>
+    			<dynamic>
+					<isNotEmpty property="language">
+						<isEqual property="language" compareValue="zh_CN">										
+							A.NameTotal AS nameTotal,
+							E.PrimaryCategoryNameChinese AS primaryCategory,
+							E.SecondryCategoryNameChinese AS secondryCategory,
+							E.SmallCategoryNameChinese AS smallCategory
+						</isEqual>
+						<isEqual property="language" compareValue="en_US">										
+							A.NameForeign AS nameTotal,
+							E.PrimaryCategoryNameForeign AS primaryCategory,
+							E.SecondryCategoryNameForeign AS secondryCategory,
+							E.SmallCategoryNameForeign AS smallCategory
+						</isEqual>
+					</isNotEmpty>
+					<isEmpty property="language">
+						A.NameTotal AS nameTotal,
+						E.PrimaryCategoryNameChinese AS primaryCategory,
+						E.SecondryCategoryNameChinese AS secondryCategory,
+						E.SmallCategoryNameChinese AS smallCategory
+					</isEmpty>
+				</dynamic>
+    			<![CDATA[
+    		FROM
+    			Basis.BIN_PromotionProduct A WITH(NOLOCK)
+    			LEFT JOIN Basis.BIN_PromotionPrtType E WITH(NOLOCK) on E.BIN_PromotionPrtTypeID = A.BIN_PromotionPrtTypeID AND E.ValidFlag = '1'
+    			,Basis.BIN_PromotionProductVendor C WITH(NOLOCK) 
+    			 			
+    		WHERE
+    			A.BIN_PromotionProductID = C.BIN_PromotionProductID AND 
+    			A.BIN_OrganizationInfoID = #organizationInfoId#  AND 
+	    		]]>
+				<isNotEmpty property="brandInfoId">
+					A.BIN_BrandInfoID = #brandInfoId# AND
+				</isNotEmpty>  
+				<isNotEmpty property="promotionCateCD">
+					A.PromotionCateCD = #promotionCateCD# AND
+				</isNotEmpty>
+				<isNotEmpty property="isStock">
+					A.IsStock = #isStock# AND
+				</isNotEmpty>
+				<isNotEmpty property="isExchanged">
+					A.IsExchanged = #isExchanged# AND
+				</isNotEmpty>
+				<![CDATA[
+    			ISNULL(A.UnitCode, '') != #TZZK_UNIT_CODE#                 
+				]]>
+	    			<isNotEmpty property="prmExpiredFlag" prepend="AND">
+	    				(A.SellEndDate IS NULL OR A.SellEndDate >= CONVERT(date, #businessDate#, 121))
+	    			</isNotEmpty>
+			<isNotEmpty property="popValidFlag">
+				<isEqual property="popValidFlag" compareValue="1" prepend="AND">
+	   				A.ValidFlag + C.ValidFlag = '11'
+				</isEqual>
+				<isEqual property="popValidFlag" compareValue="0" prepend="AND">
+	   				A.ValidFlag + C.ValidFlag != '11'
+				</isEqual>
+   			</isNotEmpty>
+			<isNotEmpty property="ingorePrmList" prepend="AND">
+   				C.BIN_PromotionProductVendorID NOT IN 
+	        		<iterate property="ingorePrmList" open="(" close=")" conjunction=","> 
+	        			<![CDATA[
+	        			#ingorePrmList[]#
+	        			]]>
+	        		</iterate>
+   			</isNotEmpty>
+	 </sql>
+	 <sql id="promotionQueryOne">
+		<![CDATA[
+    		SELECT 
+    			DISTINCT
+    			A.BIN_PromotionProductID AS bin_PromotionProductID,
+				ISNULL(CONVERT(Decimal(16,2),A.StandardCost),0) AS standardCost,
+    			C.BIN_PromotionProductVendorID,
+    			C.BarCode AS barCode,
+    			]]>
+    			<dynamic>
+					<isNotEmpty property="language">
+						<isEqual property="language" compareValue="zh_CN">										
+							A.NameTotal AS nameTotal,
+							E.PrimaryCategoryNameChinese AS primaryCategory,
+							E.SecondryCategoryNameChinese AS secondryCategory,
+							E.SmallCategoryNameChinese AS smallCategory
+						</isEqual>
+						<isEqual property="language" compareValue="en_US">										
+							A.NameForeign AS nameTotal,
+							E.PrimaryCategoryNameForeign AS primaryCategory,
+							E.SecondryCategoryNameForeign AS secondryCategory,
+							E.SmallCategoryNameForeign AS smallCategory
+						</isEqual>
+					</isNotEmpty>
+					<isEmpty property="language">
+						A.NameTotal AS nameTotal,
+						E.PrimaryCategoryNameChinese AS primaryCategory,
+						E.SecondryCategoryNameChinese AS secondryCategory,
+						E.SmallCategoryNameChinese AS smallCategory
+					</isEmpty>
+				</dynamic>
+    			<![CDATA[
+    		FROM
+    			Basis.BIN_PromotionProduct A WITH(NOLOCK)
+    			LEFT JOIN Basis.BIN_PromotionPrtType E WITH(NOLOCK) on E.BIN_PromotionPrtTypeID = A.BIN_PromotionPrtTypeID AND E.ValidFlag = '1'
+    			,Basis.BIN_PromotionProductVendor C WITH(NOLOCK)
+    			INNER JOIN (SELECT BarCode,MAX(BIN_PromotionProductID) AS BIN_PromotionProductID FROM Basis.BIN_PromotionProductVendor WITH(NOLOCK) GROUP BY BarCode) T
+    			ON (C.BarCode = T.BarCode AND C.BIN_PromotionProductID = T.BIN_PromotionProductID)
+    		WHERE
+    			A.BIN_PromotionProductID = C.BIN_PromotionProductID AND 
+    			A.BIN_OrganizationInfoID = #organizationInfoId#  AND 
+	    		]]>
+				<isNotEmpty property="brandInfoId">
+					A.BIN_BrandInfoID = #brandInfoId# AND
+				</isNotEmpty>  
+				<isNotEmpty property="promotionCateCD">
+					A.PromotionCateCD = #promotionCateCD# AND
+				</isNotEmpty>
+				<isNotEmpty property="isStock">
+					A.IsStock = #isStock# AND
+				</isNotEmpty>
+				<isNotEmpty property="isExchanged">
+					A.IsExchanged = #isExchanged# AND
+				</isNotEmpty>
+				<![CDATA[
+    			ISNULL(A.UnitCode, '') != #TZZK_UNIT_CODE#                 
+				]]>
+	    			<isNotEmpty property="prmExpiredFlag" prepend="AND">
+	    				(A.SellEndDate IS NULL OR A.SellEndDate >= CONVERT(date, #businessDate#, 121))
+	    			</isNotEmpty>
+			<isNotEmpty property="popValidFlag">
+				<isEqual property="popValidFlag" compareValue="1" prepend="AND">
+	   				A.ValidFlag + C.ValidFlag = '11'
+				</isEqual>
+				<isEqual property="popValidFlag" compareValue="0" prepend="AND">
+	   				A.ValidFlag + C.ValidFlag != '11'
+				</isEqual>
+   			</isNotEmpty>
+			<isNotEmpty property="ingorePrmListArr" prepend="AND">
+   				C.BarCode NOT IN 
+	        		<iterate property="ingorePrmListArr" open="(" close=")" conjunction=","> 
+	        			<![CDATA[
+	        			#ingorePrmListArr[]#
+	        			]]>
+	        		</iterate>
+   			</isNotEmpty>
+	 </sql>
+	 
+	 <!-- 产品信息查询sql -->
+	 <sql id="productQuery">
+	 	<![CDATA[
+    		SELECT
+    			DISTINCT
+    			A.BIN_ProductID AS bin_ProductID,
+    			A.UnitCode AS unitCode, 
+    			C.BarCode AS barCode,
+    			C.BIN_ProductVendorID,
+    			ISNULL(CONVERT(Decimal(16,2),A.StandardCost),0) AS standardCost,
+    			ISNULL(CONVERT(Decimal(16,2),A.OrderPrice),0) AS orderPrice,
+				ISNULL(CONVERT(Decimal(16,2),A.MinSalePrice),0) AS minSalePrice,
+				ISNULL(CONVERT(Decimal(16,2),A.MaxSalePrice),0) AS maxSalePrice,
+    			ISNULL(A.OriginalBrand,'') AS originalBrand,
+    			C.ValidFlag AS validFlag,
+    			]]>
+    			<dynamic>
+					<isNotEmpty property="language">
+						<isEqual property="language" compareValue="zh_CN">										
+							A.NameTotal AS nameTotal,
+							D.PropValueChinese AS primaryCategoryBig,
+							E.PropValueChinese AS primaryCategorySmall,
+						</isEqual>
+						<isEqual property="language" compareValue="en_US">										
+							A.NameForeign AS nameTotal,
+							D.PropValueForeign AS primaryCategoryBig,
+							E.PropValueForeign AS primaryCategorySmall,
+						</isEqual>
+					</isNotEmpty>
+					<isEmpty property="language">
+							A.NameTotal AS nameTotal,
+							D.PropValueChinese AS primaryCategoryBig,
+							E.PropValueChinese AS primaryCategorySmall,
+					</isEmpty>
+					ISNULL(CONVERT(Decimal(16,2),B.SalePrice),0) AS salePrice,
+                    ISNULL(CONVERT(Decimal(16,2),B.MemPrice),0) AS memPrice,
+
+                    ISNULL(CONVERT(Decimal(16,2),B.PlatinumPrice),0) AS platinumPrice,
+                    ISNULL(CONVERT(Decimal(16,2),B.TagPrice),0) AS tagPrice
+				</dynamic>
+    		<![CDATA[
+    		FROM
+    			Basis.BIN_Product A WITH(NOLOCK)
+    			JOIN Basis.BIN_ProductVendor C WITH(NOLOCK) ON(A.BIN_ProductID = C.BIN_ProductID)
+    			LEFT JOIN Basis.BIN_ProductPrice B WITH(NOLOCK)
+    			ON (A.BIN_ProductID = B.BIN_ProductID  
+    				AND A.ValidFlag = B.ValidFlag 
+    				AND B.Type = '2'
+    				AND B.StartDate <= #businessDate# 
+    				AND B.endDate >=#businessDate# )
+    			LEFT JOIN (
+    				SELECT
+    					pc.BIN_ProductID,
+    					pcv.PropValueChinese,
+    					pcv.PropValueForeign
+    				FROM
+    					Basis.BIN_PrtCategory pc WITH(NOLOCK),
+    					Basis.BIN_PrtCatProperty pcp WITH(NOLOCK),
+    					Basis.BIN_PrtCatPropValue pcv WITH(NOLOCK)
+    				WHERE
+    					pc.BIN_PrtCatPropValueID = pcv.BIN_PrtCatPropValueID AND
+    					pcv.BIN_PrtCatPropertyID = pcp.BIN_PrtCatPropertyID AND
+    					pcp.TeminalFlag = '1' AND 
+    					pcp.BIN_OrganizationInfoID = #organizationInfoId#  AND
+		    			]]>
+			    			<isNotEmpty property="brandInfoId">
+			    				pcp.BIN_BrandInfoID = #brandInfoId# AND 
+			    			</isNotEmpty>
+						<![CDATA[
+						pc.ValidFlag = '1' AND
+						pcv.ValidFlag = '1' AND
+						pcp.ValidFlag = '1'
+    			) D ON (D.BIN_ProductID = A.BIN_ProductID)
+    			LEFT JOIN (
+    				SELECT
+    					pc.BIN_ProductID,
+    					pcv.PropValueChinese,
+    					pcv.PropValueForeign
+    				FROM
+    					Basis.BIN_PrtCategory pc WITH(NOLOCK),
+    					Basis.BIN_PrtCatProperty pcp WITH(NOLOCK),
+    					Basis.BIN_PrtCatPropValue pcv WITH(NOLOCK)
+    				WHERE
+    					pc.BIN_PrtCatPropValueID = pcv.BIN_PrtCatPropValueID AND
+    					pcv.BIN_PrtCatPropertyID = pcp.BIN_PrtCatPropertyID AND
+    					pcp.TeminalFlag = '2' AND 
+    					pcp.BIN_OrganizationInfoID = #organizationInfoId#  AND 
+    					]]>
+			    			<isNotEmpty property="brandInfoId">
+			    				pcp.BIN_BrandInfoID = #brandInfoId# AND 
+			    			</isNotEmpty>
+						<![CDATA[
+						pc.ValidFlag = '1' AND
+						pcv.ValidFlag = '1' AND
+						pcp.ValidFlag = '1'
+    			) E ON (E.BIN_ProductID = A.BIN_ProductID)
+    		WHERE
+    			A.BIN_OrganizationInfoID = #organizationInfoId#
+			]]>
+   			<isNotEmpty property="brandInfoId" prepend="AND">
+   				A.BIN_BrandInfoID = #brandInfoId#
+   			</isNotEmpty>
+			<isNotEmpty property="isBOM" prepend="AND">
+   				A.IsBOMCompatible = #isBOM#
+   			</isNotEmpty>
+			<isNotEmpty property="popValidFlag">
+				<isEqual property="popValidFlag" compareValue="1" prepend="AND">
+	   				A.ValidFlag + C.ValidFlag = '11'
+				</isEqual>
+				<isEqual property="popValidFlag" compareValue="0" prepend="AND">
+	   				A.ValidFlag + C.ValidFlag != '11'
+				</isEqual>
+   			</isNotEmpty>
+			<isNotEmpty property="isExchanged" prepend="AND">
+   				A.IsExchanged = #isExchanged#
+   			</isNotEmpty>
+			<isNotEmpty property="originalBrand" prepend="AND">
+   				A.OriginalBrand = #originalBrand#
+   			</isNotEmpty>
+			<isNotEmpty property="ingorePrtList" prepend="AND">
+   				C.BIN_ProductVendorID NOT IN 
+	        		<iterate property="ingorePrtList" open="(" close=")" conjunction=","> 
+	        			<![CDATA[
+	        			#ingorePrtList[]#
+	        			]]>
+	        		</iterate>
+   			</isNotEmpty>
+   			<!-- 忽略指定产品方案中的产品 -->
+			<isNotEmpty property="ignoreSoluId" prepend="AND">
+				NOT EXISTS (
+					SELECT 1 
+					FROM Basis.BIN_ProductPriceSolutionDetail PPSD WITH(NOLOCK)
+					WHERE PPSD.BIN_ProductID = A.BIN_ProductID  AND PPSD.ValidFlag = 1 AND PPSD.BIN_ProductPriceSolutionID = #ignoreSoluId#
+				)
+				<isNotEmpty property="soluCateConfig" prepend="AND">
+					NOT EXISTS (
+						SELECT 1 
+						FROM Basis.BIN_ProductPriceSolutionCateDetail cateDetail WITH(NOLOCK)
+						JOIN Basis.BIN_PrtCategory PC WITH(NOLOCK) ON cateDetail.BIN_PrtCatPropValueID = PC.BIN_PrtCatPropValueID AND PC.ValidFlag = 1
+						WHERE 
+							cateDetail.BIN_ProductPriceSolutionID = #ignoreSoluId# AND PC.BIN_ProductID = A.BIN_ProductID
+					)
+				</isNotEmpty>
+			</isNotEmpty>
+   			<!-- 忽略指定产品功能开启时间表中的产品 -->
+			<isNotEmpty property="ignorePrtFunId" prepend="AND">
+				NOT EXISTS (
+					SELECT 1 
+					FROM Basis.BIN_ProductFunctionDetail PFD WITH(NOLOCK)
+					WHERE PFD.BIN_ProductID = A.BIN_ProductID  AND PFD.ValidFlag = 1 AND PFD.BIN_ProductFunctionID = #ignorePrtFunId#
+				)
+			</isNotEmpty>
+   			
+	 </sql>
+	 
+
+	  <!-- 产品信息查询sql（带图片模式） -->
+	 <sql id="productImageQuery">
+	 	<![CDATA[
+    		SELECT
+    			DISTINCT
+    			ROW_NUMBER() OVER(ORDER BY unitCode asc)AS RowNumber, 
+    			A.BIN_ProductID AS bin_ProductID,
+    			A.UnitCode AS unitCode, 
+    			A.ItemCode,
+    			C.BarCode AS barCode,
+    			C.BIN_ProductVendorID,
+    			ISNULL(CONVERT(Decimal(16,2),A.StandardCost),0) AS standardCost,
+    			ISNULL(CONVERT(Decimal(16,2),A.OrderPrice),0) AS orderPrice,
+				ISNULL(CONVERT(Decimal(16,2),A.MinSalePrice),0) AS minSalePrice,
+				ISNULL(CONVERT(Decimal(16,2),A.MaxSalePrice),0) AS maxSalePrice,
+    			ISNULL(A.OriginalBrand,'') AS originalBrand,
+    			C.ValidFlag AS validFlag,
+    			]]>
+    			<dynamic>
+					<isNotEmpty property="language">
+						<isEqual property="language" compareValue="zh_CN">										
+							A.NameTotal AS nameTotal,
+							D.PropValueChinese AS primaryCategoryBig,
+							E.PropValueChinese AS primaryCategorySmall,
+						</isEqual>
+						<isEqual property="language" compareValue="en_US">										
+							A.NameForeign AS nameTotal,
+							D.PropValueForeign AS primaryCategoryBig,
+							E.PropValueForeign AS primaryCategorySmall,
+						</isEqual>
+					</isNotEmpty>
+					<isEmpty property="language">
+							A.NameTotal AS nameTotal,
+							D.PropValueChinese AS primaryCategoryBig,
+							E.PropValueChinese AS primaryCategorySmall,
+					</isEmpty>
+					ISNULL(CONVERT(Decimal(16,2),B.SalePrice),0) AS salePrice,
+                    ISNULL(CONVERT(Decimal(16,2),B.MemPrice),0) AS memPrice,
+
+                    ISNULL(CONVERT(Decimal(16,2),B.PlatinumPrice),0) AS platinumPrice,
+                    ISNULL(CONVERT(Decimal(16,2),B.DistributionPrice),0) AS distributionPrice,
+                    ISNULL(CONVERT(Decimal(16,2),B.TagPrice),0) AS tagPrice
+				</dynamic>
+    		<![CDATA[
+    		FROM
+    			Basis.BIN_Product A WITH(NOLOCK)
+    			JOIN Basis.BIN_ProductVendor C WITH(NOLOCK) ON(A.BIN_ProductID = C.BIN_ProductID)
+    			LEFT JOIN Basis.BIN_ProductPrice B WITH(NOLOCK)
+    			ON (A.BIN_ProductID = B.BIN_ProductID  
+    				AND A.ValidFlag = B.ValidFlag 
+    				AND B.Type = '2'
+    				AND B.StartDate <= #businessDate# 
+    				AND B.endDate >=#businessDate# )
+    			LEFT JOIN (
+    				SELECT
+    					pc.BIN_ProductID,
+    					pcv.BIN_PrtCatPropValueID  prtCatPropValueID,
+    					pcv.PropValueChinese,
+    					pcv.PropValueForeign
+    				FROM
+    					Basis.BIN_PrtCategory pc WITH(NOLOCK),
+    					Basis.BIN_PrtCatProperty pcp WITH(NOLOCK),
+    					Basis.BIN_PrtCatPropValue pcv WITH(NOLOCK)
+    				WHERE
+    					pc.BIN_PrtCatPropValueID = pcv.BIN_PrtCatPropValueID AND
+    					pcv.BIN_PrtCatPropertyID = pcp.BIN_PrtCatPropertyID AND
+    					pcp.TeminalFlag = '1' AND 
+    					pcp.BIN_OrganizationInfoID = #organizationInfoId#  AND
+		    			]]>
+			    			<isNotEmpty property="brandInfoId">
+			    				pcp.BIN_BrandInfoID = #brandInfoId# AND 
+			    			</isNotEmpty>
+						<![CDATA[
+						pc.ValidFlag = '1' AND
+						pcv.ValidFlag = '1' AND
+						pcp.ValidFlag = '1'
+    			) D ON (D.BIN_ProductID = A.BIN_ProductID)
+    			LEFT JOIN (
+    				SELECT
+    					pc.BIN_ProductID,
+    					pcv.BIN_PrtCatPropValueID,
+    					pcv.PropValueChinese,
+    					pcv.PropValueForeign
+    				FROM
+    					Basis.BIN_PrtCategory pc WITH(NOLOCK),
+    					Basis.BIN_PrtCatProperty pcp WITH(NOLOCK),
+    					Basis.BIN_PrtCatPropValue pcv WITH(NOLOCK)
+    				WHERE
+    					pc.BIN_PrtCatPropValueID = pcv.BIN_PrtCatPropValueID AND
+    					pcv.BIN_PrtCatPropertyID = pcp.BIN_PrtCatPropertyID AND
+    					pcp.TeminalFlag = '2' AND 
+    					pcp.BIN_OrganizationInfoID = #organizationInfoId#  AND 
+    					]]>
+			    			<isNotEmpty property="brandInfoId">
+			    				pcp.BIN_BrandInfoID = #brandInfoId# AND 
+			    			</isNotEmpty>
+						<![CDATA[
+						pc.ValidFlag = '1' AND
+						pcv.ValidFlag = '1' AND
+						pcp.ValidFlag = '1'
+    			) E ON (E.BIN_ProductID = A.BIN_ProductID)
+    		WHERE
+    			A.BIN_OrganizationInfoID = #organizationInfoId#
+			]]>
+			<isNotEmpty property="nameTotal" prepend="AND">
+   				A.NameTotal LIKE '%' + #nameTotal# + '%' 
+   			</isNotEmpty>
+   			<isNotEmpty property="brandInfoId" prepend="AND">
+   				A.BIN_BrandInfoID = #brandInfoId#
+   			</isNotEmpty>
+			<isNotEmpty property="isBOM" prepend="AND">
+   				A.IsBOMCompatible = #isBOM#
+   			</isNotEmpty>
+			<isNotEmpty property="popValidFlag">
+				<isEqual property="popValidFlag" compareValue="1" prepend="AND">
+	   				A.ValidFlag + C.ValidFlag = '11'
+				</isEqual>
+				<isEqual property="popValidFlag" compareValue="0" prepend="AND">
+	   				A.ValidFlag + C.ValidFlag != '11'
+				</isEqual>
+   			</isNotEmpty>
+			<isNotEmpty property="isExchanged" prepend="AND">
+   				A.IsExchanged = #isExchanged#
+   			</isNotEmpty>
+			<isNotEmpty property="originalBrand" prepend="AND">
+   				A.OriginalBrand = #originalBrand#
+   			</isNotEmpty>
+			<isNotEmpty property="ingorePrtList" prepend="AND">
+   				C.BIN_ProductVendorID NOT IN 
+	        		<iterate property="ingorePrtList" open="(" close=")" conjunction=","> 
+	        			<![CDATA[
+	        			#ingorePrtList[]#
+	        			]]>
+	        		</iterate>
+   			</isNotEmpty>
+   			<!-- 忽略指定产品方案中的产品 -->
+			<isNotEmpty property="ignoreSoluId" prepend="AND">
+				NOT EXISTS (
+					SELECT 1 
+					FROM Basis.BIN_ProductPriceSolutionDetail PPSD WITH(NOLOCK)
+					WHERE PPSD.BIN_ProductID = A.BIN_ProductID  AND PPSD.ValidFlag = 1 AND PPSD.BIN_ProductPriceSolutionID = #ignoreSoluId#
+				)
+				<isNotEmpty property="soluCateConfig" prepend="AND">
+					NOT EXISTS (
+						SELECT 1 
+						FROM Basis.BIN_ProductPriceSolutionCateDetail cateDetail WITH(NOLOCK)
+						JOIN Basis.BIN_PrtCategory PC WITH(NOLOCK) ON cateDetail.BIN_PrtCatPropValueID = PC.BIN_PrtCatPropValueID AND PC.ValidFlag = 1
+						WHERE 
+							cateDetail.BIN_ProductPriceSolutionID = #ignoreSoluId# AND PC.BIN_ProductID = A.BIN_ProductID
+					)
+				</isNotEmpty>
+			</isNotEmpty>
+   			<!-- 忽略指定产品功能开启时间表中的产品 -->
+			<isNotEmpty property="ignorePrtFunId" prepend="AND">
+				NOT EXISTS (
+					SELECT 1 
+					FROM Basis.BIN_ProductFunctionDetail PFD WITH(NOLOCK)
+					WHERE PFD.BIN_ProductID = A.BIN_ProductID  AND PFD.ValidFlag = 1 AND PFD.BIN_ProductFunctionID = #ignorePrtFunId#
+				)
+			</isNotEmpty>
+			<!-- (产品分类)大分类 -->
+			<isNotEmpty property="productCategoryId" prepend="AND">
+				D.prtCatPropValueID = #productCategoryId#
+			</isNotEmpty>
+			<!-- 新品的取值 -->
+   			<isNotEmpty property="newProductDays" prepend="AND">
+   				A.CreateTime >= CONVERT(varchar(100), dateadd(day,convert(int,#newProductDays#),GETDATE()), 112)
+   			</isNotEmpty>
+	 </sql>
+
+
+	  <!-- 产品信息查询sql（浓妆淡抹） -->
+	 <sql id="productQueryTwo">
+	 	<![CDATA[
+    		SELECT
+    			DISTINCT
+    			A.BIN_ProductID AS bin_ProductID,
+    			A.UnitCode AS unitCode, 
+    			C.BarCode AS barCode,
+    			A.ItemCode,
+    			C.BIN_ProductVendorID,
+    			ISNULL(CONVERT(Decimal(16,2),A.StandardCost),0) AS standardCost,
+    			ISNULL(CONVERT(Decimal(16,2),A.OrderPrice),0) AS orderPrice,
+				ISNULL(CONVERT(Decimal(16,2),A.MinSalePrice),0) AS minSalePrice,
+				ISNULL(CONVERT(Decimal(16,2),A.MaxSalePrice),0) AS maxSalePrice,
+    			ISNULL(A.OriginalBrand,'') AS originalBrand,
+    			C.ValidFlag AS validFlag,
+    			D.prtCatPropValueID,
+    			]]>
+    			<dynamic>
+					<isNotEmpty property="language">
+						<isEqual property="language" compareValue="zh_CN">										
+							A.NameTotal AS nameTotal,
+							D.PropValueChinese AS primaryCategoryBig,
+							E.PropValueChinese AS primaryCategorySmall,
+						</isEqual>
+						<isEqual property="language" compareValue="en_US">										
+							A.NameForeign AS nameTotal,
+							D.PropValueForeign AS primaryCategoryBig,
+							E.PropValueForeign AS primaryCategorySmall,
+						</isEqual>
+					</isNotEmpty>
+					<isEmpty property="language">
+							A.NameTotal AS nameTotal,
+							D.PropValueChinese AS primaryCategoryBig,
+							E.PropValueChinese AS primaryCategorySmall,
+					</isEmpty>
+					ISNULL(CONVERT(Decimal(16,2),B.SalePrice),0) AS salePrice,
+                    ISNULL(CONVERT(Decimal(16,2),B.MemPrice),0) AS memPrice,
+                    ISNULL(CONVERT(Decimal(16,2),B.DistributionPrice),0) AS distributionPrice,
+                    ISNULL(CONVERT(Decimal(16,2),B.PlatinumPrice),0) AS platinumPrice,
+                    ISNULL(CONVERT(Decimal(16,2),B.TagPrice),0) AS tagPrice
+				</dynamic>
+    		<![CDATA[
+    		FROM
+    			Basis.BIN_Product A WITH(NOLOCK,index = UQ_BIN_Product_UnitCode_BIN_OrganizationInfoID)
+    			JOIN Basis.BIN_ProductVendor C WITH(NOLOCK) ON(A.BIN_ProductID = C.BIN_ProductID)
+    			LEFT JOIN Basis.BIN_ProductPrice B WITH(NOLOCK)
+    			ON (A.BIN_ProductID = B.BIN_ProductID  
+    				AND A.ValidFlag = B.ValidFlag 
+    				AND B.Type = '2'
+    				AND B.StartDate <= #businessDate# 
+    				AND B.endDate >=#businessDate# )
+    			LEFT JOIN (
+    				SELECT
+    					pc.BIN_ProductID,
+    					pcv.PropValueChinese,
+    					pcv.PropValueForeign,
+    					pcv.BIN_PrtCatPropValueID  prtCatPropValueID
+    				FROM
+    					Basis.BIN_PrtCategory pc WITH(NOLOCK),
+    					Basis.BIN_PrtCatProperty pcp WITH(NOLOCK),
+    					Basis.BIN_PrtCatPropValue pcv WITH(NOLOCK)
+    				WHERE
+    					pc.BIN_PrtCatPropValueID = pcv.BIN_PrtCatPropValueID AND
+    					pcv.BIN_PrtCatPropertyID = pcp.BIN_PrtCatPropertyID AND
+    					pcp.TeminalFlag = '1' AND 
+    					pcp.BIN_OrganizationInfoID = #organizationInfoId#  AND
+		    			]]>
+			    			<isNotEmpty property="brandInfoId">
+			    				pcp.BIN_BrandInfoID = #brandInfoId# AND 
+			    			</isNotEmpty>
+						<![CDATA[
+						pc.ValidFlag = '1'  AND
+						pcv.ValidFlag = '1' AND
+						pcp.ValidFlag = '1'
+    			) D ON (D.BIN_ProductID = A.BIN_ProductID)
+    			LEFT JOIN (
+    				SELECT
+    					pc.BIN_ProductID,
+    					pcv.PropValueChinese,
+    					pcv.PropValueForeign
+    				FROM
+    					Basis.BIN_PrtCategory pc WITH(NOLOCK),
+    					Basis.BIN_PrtCatProperty pcp WITH(NOLOCK),
+    					Basis.BIN_PrtCatPropValue pcv WITH(NOLOCK)
+    				WHERE
+    					pc.BIN_PrtCatPropValueID = pcv.BIN_PrtCatPropValueID AND
+    					pcv.BIN_PrtCatPropertyID = pcp.BIN_PrtCatPropertyID AND
+    					pcp.TeminalFlag = '2' AND 
+    					pcp.BIN_OrganizationInfoID = #organizationInfoId#  AND 
+    					]]>
+			    			<isNotEmpty property="brandInfoId">
+			    				pcp.BIN_BrandInfoID = #brandInfoId# AND 
+			    			</isNotEmpty>
+						<![CDATA[
+						pc.ValidFlag = '1' AND
+						pcv.ValidFlag = '1' AND
+						pcp.ValidFlag = '1'
+    			) E ON (E.BIN_ProductID = A.BIN_ProductID)
+    		WHERE
+    		
+    			A.BIN_OrganizationInfoID = #organizationInfoId#
+			]]>
+   			<isNotEmpty property="brandInfoId" prepend="AND">
+   				A.BIN_BrandInfoID = #brandInfoId#
+   			</isNotEmpty>
+   			<isNotEmpty property="productList" prepend="AND">
+   				D.prtCatPropValueID  = #productList#  
+   			</isNotEmpty>
+   			<isNotEmpty property="newProductInitTimeNegative" prepend="AND">
+   				A.CreateTime >= CONVERT(varchar(100), dateadd(day,#newProductInitTimeNegative#,GETDATE()), 112)
+   			</isNotEmpty>
+			<isNotEmpty property="isBOM" prepend="AND">
+   				A.IsBOMCompatible = #isBOM#
+   			</isNotEmpty>
+			<isNotEmpty property="popValidFlag">
+				<isEqual property="popValidFlag" compareValue="1" prepend="AND">
+	   				A.ValidFlag + C.ValidFlag = '11'
+				</isEqual>
+				<isEqual property="popValidFlag" compareValue="0" prepend="AND">
+	   				A.ValidFlag + C.ValidFlag != '11'
+				</isEqual>
+   			</isNotEmpty>
+			<isNotEmpty property="isExchanged" prepend="AND">
+   				A.IsExchanged = #isExchanged#
+   			</isNotEmpty>
+			<isNotEmpty property="originalBrand" prepend="AND">
+   				A.OriginalBrand = #originalBrand#
+   			</isNotEmpty>
+   			<isNotEmpty property="smallBrandCode" prepend="AND">
+   				A.OriginalBrand = #smallBrandCode#
+   			</isNotEmpty>
+			<isNotEmpty property="ingorePrtList" prepend="AND">
+   				C.BIN_ProductVendorID NOT IN 
+	        		<iterate property="ingorePrtList" open="(" close=")" conjunction=","> 
+	        			<![CDATA[
+	        			#ingorePrtList[]#
+	        			]]>
+	        		</iterate>
+   			</isNotEmpty>
+   			<!-- 忽略指定产品方案中的产品 -->
+			<isNotEmpty property="ignoreSoluId" prepend="AND">
+				NOT EXISTS (
+					SELECT 1 
+					FROM Basis.BIN_ProductPriceSolutionDetail PPSD WITH(NOLOCK)
+					WHERE PPSD.BIN_ProductID = A.BIN_ProductID  AND PPSD.ValidFlag = 1 AND PPSD.BIN_ProductPriceSolutionID = #ignoreSoluId#
+				)
+				<isNotEmpty property="soluCateConfig" prepend="AND">
+					NOT EXISTS (
+						SELECT 1 
+						FROM Basis.BIN_ProductPriceSolutionCateDetail cateDetail WITH(NOLOCK)
+						JOIN Basis.BIN_PrtCategory PC WITH(NOLOCK) ON cateDetail.BIN_PrtCatPropValueID = PC.BIN_PrtCatPropValueID AND PC.ValidFlag = 1
+						WHERE 
+							cateDetail.BIN_ProductPriceSolutionID = #ignoreSoluId# AND PC.BIN_ProductID = A.BIN_ProductID
+					)
+				</isNotEmpty>
+			</isNotEmpty>
+   			<!-- 忽略指定产品功能开启时间表中的产品 -->
+			<isNotEmpty property="ignorePrtFunId" prepend="AND">
+				NOT EXISTS (
+					SELECT 1 
+					FROM Basis.BIN_ProductFunctionDetail PFD WITH(NOLOCK)
+					WHERE PFD.BIN_ProductID = A.BIN_ProductID  AND PFD.ValidFlag = 1 AND PFD.BIN_ProductFunctionID = #ignorePrtFunId#
+				)
+			</isNotEmpty>
+   			
+	 </sql>
+
+	 
+	 <!-- 产品信息查询(薇诺娜)sql -->
+	 <sql id="productQueryOne">
+	 	<![CDATA[
+    		SELECT
+    			DISTINCT
+    			A.BIN_ProductID AS bin_ProductID,
+    			C.BarCode AS barCode,
+    			C.BIN_ProductVendorID,
+    			ISNULL(CONVERT(Decimal(16,2),A.StandardCost),0) AS standardCost,
+    			ISNULL(CONVERT(Decimal(16,2),A.OrderPrice),0) AS orderPrice,
+				ISNULL(CONVERT(Decimal(16,2),A.MinSalePrice),0) AS minSalePrice,
+				ISNULL(CONVERT(Decimal(16,2),A.MaxSalePrice),0) AS maxSalePrice,
+    			ISNULL(A.OriginalBrand,'') AS originalBrand,
+    			C.ValidFlag AS validFlag,
+    			]]>
+    			<dynamic>
+					<isNotEmpty property="language">
+						<isEqual property="language" compareValue="zh_CN">										
+							A.NameTotal AS nameTotal,
+							D.PropValueChinese AS primaryCategoryBig,
+							E.PropValueChinese AS primaryCategorySmall,
+						</isEqual>
+						<isEqual property="language" compareValue="en_US">										
+							A.NameForeign AS nameTotal,
+							D.PropValueForeign AS primaryCategoryBig,
+							E.PropValueForeign AS primaryCategorySmall,
+						</isEqual>
+					</isNotEmpty>
+					<isEmpty property="language">
+							A.NameTotal AS nameTotal,
+							D.PropValueChinese AS primaryCategoryBig,
+							E.PropValueChinese AS primaryCategorySmall,
+					</isEmpty>
+					ISNULL(CONVERT(Decimal(16,2),B.SalePrice),0) AS salePrice,
+                    ISNULL(CONVERT(Decimal(16,2),B.MemPrice),0) AS memPrice,
+
+                    ISNULL(CONVERT(Decimal(16,2),B.PlatinumPrice),0) AS platinumPrice,
+                    ISNULL(CONVERT(Decimal(16,2),B.TagPrice),0) AS tagPrice
+				</dynamic>
+    		<![CDATA[
+    		FROM
+    			Basis.BIN_Product A WITH(NOLOCK)
+    			JOIN Basis.BIN_ProductVendor C WITH(NOLOCK) ON(A.BIN_ProductID = C.BIN_ProductID)
+    			INNER JOIN (SELECT BarCode,MAX(BIN_ProductID) AS BIN_ProductID FROM Basis.BIN_ProductVendor WITH(NOLOCK) GROUP BY BarCode) T
+    			ON (C.BarCode = T.BarCode AND C.BIN_ProductID = T.BIN_ProductID)
+    			LEFT JOIN Basis.BIN_ProductPrice B WITH(NOLOCK)
+    			ON (A.BIN_ProductID = B.BIN_ProductID  
+    				AND A.ValidFlag = B.ValidFlag 
+    				AND B.Type = '2'
+    				AND B.StartDate <= #businessDate# 
+    				AND B.endDate >=#businessDate# )
+    			LEFT JOIN (
+    				SELECT
+    					pc.BIN_ProductID,
+    					pcv.PropValueChinese,
+    					pcv.PropValueForeign
+    				FROM
+    					Basis.BIN_PrtCategory pc WITH(NOLOCK),
+    					Basis.BIN_PrtCatProperty pcp WITH(NOLOCK),
+    					Basis.BIN_PrtCatPropValue pcv WITH(NOLOCK)
+    				WHERE
+    					pc.BIN_PrtCatPropValueID = pcv.BIN_PrtCatPropValueID AND
+    					pcv.BIN_PrtCatPropertyID = pcp.BIN_PrtCatPropertyID AND
+    					pcp.TeminalFlag = '1' AND 
+    					pcp.BIN_OrganizationInfoID = #organizationInfoId#  AND
+		    			]]>
+			    			<isNotEmpty property="brandInfoId">
+			    				pcp.BIN_BrandInfoID = #brandInfoId# AND 
+			    			</isNotEmpty>
+						<![CDATA[
+						pc.ValidFlag = '1' AND
+						pcv.ValidFlag = '1' AND
+						pcp.ValidFlag = '1'
+    			) D ON (D.BIN_ProductID = A.BIN_ProductID)
+    			LEFT JOIN (
+    				SELECT
+    					pc.BIN_ProductID,
+    					pcv.PropValueChinese,
+    					pcv.PropValueForeign
+    				FROM
+    					Basis.BIN_PrtCategory pc WITH(NOLOCK),
+    					Basis.BIN_PrtCatProperty pcp WITH(NOLOCK),
+    					Basis.BIN_PrtCatPropValue pcv WITH(NOLOCK)
+    				WHERE
+    					pc.BIN_PrtCatPropValueID = pcv.BIN_PrtCatPropValueID AND
+    					pcv.BIN_PrtCatPropertyID = pcp.BIN_PrtCatPropertyID AND
+    					pcp.TeminalFlag = '2' AND 
+    					pcp.BIN_OrganizationInfoID = #organizationInfoId#  AND 
+    					]]>
+			    			<isNotEmpty property="brandInfoId">
+			    				pcp.BIN_BrandInfoID = #brandInfoId# AND 
+			    			</isNotEmpty>
+						<![CDATA[
+						pc.ValidFlag = '1' AND
+						pcv.ValidFlag = '1' AND
+						pcp.ValidFlag = '1'
+    			) E ON (E.BIN_ProductID = A.BIN_ProductID)
+    		WHERE
+     			A.BIN_OrganizationInfoID = #organizationInfoId#
+			]]>
+   			<isNotEmpty property="brandInfoId" prepend="AND">
+   				A.BIN_BrandInfoID = #brandInfoId#
+   			</isNotEmpty>
+			<isNotEmpty property="isBOM" prepend="AND">
+   				A.IsBOMCompatible = #isBOM#
+   			</isNotEmpty>
+			<isNotEmpty property="popValidFlag">
+				<isEqual property="popValidFlag" compareValue="1" prepend="AND">
+	   				A.ValidFlag + C.ValidFlag = '11'
+				</isEqual>
+				<isEqual property="popValidFlag" compareValue="0" prepend="AND">
+	   				A.ValidFlag + C.ValidFlag != '11'
+				</isEqual>
+   			</isNotEmpty>
+			<isNotEmpty property="isExchanged" prepend="AND">
+   				A.IsExchanged = #isExchanged#
+   			</isNotEmpty>
+			<isNotEmpty property="originalBrand" prepend="AND">
+   				A.OriginalBrand = #originalBrand#
+   			</isNotEmpty>
+			<isNotEmpty property="ingorePrtListArr" prepend="AND">
+   				C.BarCode NOT IN 
+	        		<iterate property="ingorePrtListArr" open="(" close=")" conjunction=","> 
+	        			<![CDATA[
+	        			#ingorePrtListArr[]#
+	        			]]>
+	        		</iterate>
+   			</isNotEmpty>
+   			<!-- 忽略指定产品方案中的产品 -->
+			<isNotEmpty property="ignoreSoluId" prepend="AND">
+				NOT EXISTS (
+					SELECT 1 
+					FROM Basis.BIN_ProductPriceSolutionDetail PPSD WITH(NOLOCK)
+					WHERE PPSD.BIN_ProductID = A.BIN_ProductID  AND PPSD.ValidFlag = 1 AND PPSD.BIN_ProductPriceSolutionID = #ignoreSoluId#
+				)
+				<isNotEmpty property="soluCateConfig" prepend="AND">
+					NOT EXISTS (
+						SELECT 1 
+						FROM Basis.BIN_ProductPriceSolutionCateDetail cateDetail WITH(NOLOCK)
+						JOIN Basis.BIN_PrtCategory PC WITH(NOLOCK) ON cateDetail.BIN_PrtCatPropValueID = PC.BIN_PrtCatPropValueID AND PC.ValidFlag = 1
+						WHERE 
+							cateDetail.BIN_ProductPriceSolutionID = #ignoreSoluId# AND PC.BIN_ProductID = A.BIN_ProductID
+					)
+				</isNotEmpty>
+			</isNotEmpty>
+   			<!-- 忽略指定产品功能开启时间表中的产品 -->
+			<isNotEmpty property="ignorePrtFunId" prepend="AND">
+				NOT EXISTS (
+					SELECT 1 
+					FROM Basis.BIN_ProductFunctionDetail PFD WITH(NOLOCK)
+					WHERE PFD.BIN_ProductID = A.BIN_ProductID  AND PFD.ValidFlag = 1 AND PFD.BIN_ProductFunctionID = #ignorePrtFunId#
+				)
+			</isNotEmpty>
+   			
+	 </sql>
+	 
+	 <!-- 产品分类信息查询sql -->
+	 <sql id="cateQuery">
+	 	<![CDATA[
+	 	SELECT 
+			B.BIN_PrtCatPropValueID as cateId,
+	 		B.PropValue as cateCode,
+	 		]]>
+    			<dynamic>
+					<isNotEmpty property="language">
+						<isEqual property="language" compareValue="zh_CN">	
+							A.PropertyNameChinese as cateType,
+							B.PropValueChinese as cateName
+						</isEqual>
+						<isEqual property="language" compareValue="en_US">	
+							A.PropertyNameForeign as cateType,
+							B.PropValueForeign as cateName
+						</isEqual>
+					</isNotEmpty>
+					<isEmpty property="language">
+						A.PropertyNameChinese as cateType,
+						B.PropValueChinese as cateName
+					</isEmpty>
+				</dynamic>
+    			<![CDATA[
+		FROM
+			Basis.BIN_PrtCatProperty A WITH(NOLOCK),
+			Basis.BIN_PrtCatPropValue B WITH(NOLOCK)
+		WHERE 
+			A.BIN_PrtCatPropertyID = B.BIN_PrtCatPropertyID AND
+			A.TeminalFlag = #teminalFlag# AND
+			A.ValidFlag = '1' AND
+			B.ValidFlag = '1'
+	 	]]>
+	 </sql>
+	 <!-- 俱乐部对应的柜台信息查询sql -->
+	<sql id="clubCounterQuery">
+	 <![CDATA[
+	 SELECT
+	  	TOZ.BIN_OrganizationID AS BIN_OrganizationID
+	  FROM 
+	  	Members.BIN_MemberClub MC WITH(NOLOCK) JOIN
+	  	Members.BIN_MemClubCondition MCD WITH(NOLOCK) 
+	  	ON (MC.BIN_MemberClubID = #memberClubId# AND MC.BIN_MemberClubID = MCD.BIN_MemberClubID) JOIN
+	  	(
+		  SELECT 
+			  'all' AS PropValue, 
+			  CI.BIN_OrganizationID AS BIN_OrganizationID, 
+			  CI.CounterCode AS CounterCode,
+			  CI.BIN_ChannelID AS ChannelID,
+			  OZ.BIN_CityID AS CityID
+		  FROM 
+			  Basis.BIN_CounterInfo CI WITH(NOLOCK) JOIN
+			  Basis.BIN_Organization OZ WITH(NOLOCK) ON
+			  (CI.BIN_OrganizationID = OZ.BIN_OrganizationID)
+	  	) TOZ
+	  ON (
+	  (MC.LocationType = '0' AND MCD.PropValue = TOZ.PropValue) OR
+	  (MC.LocationType = '1' AND MCD.PropValue = convert(varchar,TOZ.CityID)) OR
+		(MC.LocationType IN ('2','4','5') AND MCD.PropValue = TOZ.CounterCode) OR
+		(MC.LocationType = '3' AND MCD.PropValue = convert(varchar,TOZ.ChannelID)))
+	 ]]>
+	 </sql>
+	
+	 <!-- 查询促销产品信息 -->
+     <select id="getPromotionShortInfoList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+    	<include refid="BINOLCMINC99.pageheader" />
+		<include refid="BINOLCM02.promotionQuery" />
+		<include refid="BINOLCMINC99.filterSql" />
+    	<include refid="BINOLCMINC99.pagefooter" />
+    </select>
+    
+    <!-- 查询促销产品总数 -->
+    <select id="getPromotionCount" parameterClass="java.util.HashMap" resultClass="java.lang.Integer">
+     	<![CDATA[
+			SELECT	COUNT(SORT_T1.bin_PromotionProductID) AS count FROM (
+		]]>	
+		<include refid="BINOLCM02.promotionQuery" />
+		<include refid="BINOLCMINC99.filterSql" />
+		<![CDATA[	
+			)SORT_T1
+		]]>		
+    </select>
+    
+	 <!-- 查询促销产品信息 (薇诺娜，合并)-->
+     <select id="getPromotionShortInfoListOne" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+    	<include refid="BINOLCMINC99.pageheader" />
+		<include refid="BINOLCM02.promotionQueryOne" />
+		<include refid="BINOLCMINC99.filterSql" />
+    	<include refid="BINOLCMINC99.pagefooter" />
+    </select>
+    
+    <!-- 查询促销产品总数 (薇诺娜，合并)-->
+    <select id="getPromotionCountOne" parameterClass="java.util.HashMap" resultClass="java.lang.Integer">
+     	<![CDATA[
+			SELECT	COUNT(SORT_T1.bin_PromotionProductID) AS count FROM (
+		]]>	
+		<include refid="BINOLCM02.promotionQueryOne" />
+		<include refid="BINOLCMINC99.filterSql" />
+		<![CDATA[	
+			)SORT_T1
+		]]>		
+    </select>
+    
+     <!-- 查询产品信息 -->
+     <select id="getProductShortInfoList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+    	<include refid="BINOLCMINC99.pageheader" />
+		<include refid="BINOLCM02.productQuery" />
+		<include refid="BINOLCMINC99.filterSql" />
+    	<include refid="BINOLCMINC99.pagefooter" />
+    </select>
+    
+     <!-- 查询产品信息 （带图片模式）-->
+     <select id="getProductImageDInfoList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+		<include refid="BINOLCM02.productImageQuery" />
+    </select>
+    
+    <!--     查询分类信息List(大分类) -->
+	<select id="getProductCategoryList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+	SELECT
+    					pcv.BIN_PrtCatPropValueID AS prtCatPropValueID,
+    					pcv.PropValueChinese
+    				FROM
+    
+    					Basis.BIN_PrtCatProperty pcp WITH(NOLOCK),
+    					Basis.BIN_PrtCatPropValue pcv WITH(NOLOCK)
+    				WHERE
+    		
+    					pcv.BIN_PrtCatPropertyID = pcp.BIN_PrtCatPropertyID AND
+    					pcp.TeminalFlag = '1'  
+    </select>
+   
+   <parameterMap id="inventoryMap" class="java.util.Map">     	   	
+        <parameter property="ItemCode" jdbcType="VARCHAR" javaType="java.lang.String" mode="IN" />
+    </parameterMap>
+    
+   <!--  根据产品ItemCode得到对应的库存信息（库存从金蝶实时获取） -->
+    <procedure id="getInventoryByItemCode" parameterMap="inventoryMap"  resultClass="java.util.HashMap">       
+	 	{call sp_shkd_getInventory (?)}        
+	</procedure> 
+    
+     <!-- 查询产品信息 (薇诺娜)-->
+     <select id="getProductShortInfoListOne" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+    	<include refid="BINOLCMINC99.pageheader" />
+		<include refid="BINOLCM02.productQueryOne" />
+		<include refid="BINOLCMINC99.filterSql" />
+    	<include refid="BINOLCMINC99.pagefooter" />
+    </select>
+    
+      <!-- 查询产品信息 (浓妆淡抹)-->
+     <select id="getProductShortInfoListTwo" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+    	<include refid="BINOLCMINC99.pageheader" />
+		<include refid="BINOLCM02.productQueryTwo" />
+		<isNotNull property="productDialogSearch" >
+			<iterate property="filterList" conjunction="OR" prepend="AND" close=")" open="(" >
+			$filterList[]$ Like '%' + #productDialogSearch# + '%'
+			</iterate>
+		</isNotNull>
+    	<include refid="BINOLCMINC99.pagefooter" />
+    </select>
+    
+    <!-- 查询产品总数(薇诺娜) -->
+    <select id="getProductCountOne" parameterClass="java.util.HashMap" resultClass="java.lang.Integer">
+     	<![CDATA[
+			SELECT	COUNT(SORT_T1.bin_ProductID) AS count FROM (
+		]]>	
+		<include refid="BINOLCM02.productQueryOne" />
+		<include refid="BINOLCMINC99.filterSql" /> 
+		<![CDATA[	
+			)SORT_T1
+		]]>		
+    </select>
+    
+        <!-- 查询产品总数（浓妆淡抹） -->
+    <select id="getProductCountTwo" parameterClass="java.util.HashMap" resultClass="java.lang.Integer">
+     	<![CDATA[
+			SELECT	COUNT(SORT_T1.bin_ProductID) AS count FROM (
+		]]>	
+		<include refid="BINOLCM02.productQueryTwo" />
+		<isNotNull property="FILTER_VALUE" >
+			<iterate property="filterList" conjunction="OR" prepend="AND" close=")" open="(" >
+			$filterList[]$ Like '%' + #FILTER_VALUE# + '%'
+			</iterate>
+		</isNotNull>
+		<![CDATA[	
+			)SORT_T1
+		]]>		
+    </select>
+    <!-- 查询促销产品总数 -->
+    <select id="getProductCount" parameterClass="java.util.HashMap" resultClass="java.lang.Integer">
+     	<![CDATA[
+			SELECT	COUNT(SORT_T1.bin_ProductID) AS count FROM (
+		]]>	
+		<include refid="BINOLCM02.productQuery" />
+		<include refid="BINOLCMINC99.filterSql" /> 
+		<![CDATA[	
+			)SORT_T1
+		]]>		
+    </select>
+    
+    <!-- 查询产品分类信息 -->
+     <select id="getCateInfoList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+    	<include refid="BINOLCMINC99.pageheader" />
+		<include refid="BINOLCM02.cateQuery" />
+		<include refid="BINOLCMINC99.filterSql" />
+    	<include refid="BINOLCMINC99.pagefooter" />
+    </select>
+    
+    <!-- 查询产品分类总数 -->
+    <select id="getCateCount" parameterClass="java.util.HashMap" resultClass="java.lang.Integer">
+     	<![CDATA[
+			SELECT	COUNT(SORT_T1.cateId) AS count FROM (
+		]]>	
+		<include refid="BINOLCM02.cateQuery" />
+		<include refid="BINOLCMINC99.filterSql" />
+		<![CDATA[	
+			)SORT_T1
+		]]>		
+    </select>
+    
+    <!-- 子品牌查询SQL -->
+    <sql id="OrigBrandQuery">
+    	<![CDATA[
+			SELECT DISTINCT
+				B.OriginalBrand AS originalBrand
+			FROM
+				Basis.BIN_ProductBrand A JOIN
+				Basis.BIN_Product B
+				ON (A.BIN_ProductID = B.BIN_ProductID)
+			WHERE
+				A.BIN_BrandInfoID = #brandInfoId# AND
+				A.ValidFlag = '1' AND 
+				B.OriginalBrand IS NOT NULL AND
+				B.ValidFlag = '1'
+		]]>
+    </sql>
+    
+     <!-- 取得子品牌总数 -->
+	<select id="getOrigBrandCount" parameterClass="java.util.HashMap" resultClass="java.lang.Integer">
+		<![CDATA[
+			SELECT	COUNT(SORT_T1.originalBrand) AS count FROM (
+		]]>	
+		<include refid="BINOLCM02.OrigBrandQuery" />
+		<![CDATA[	
+			) SORT_T1
+		]]>	
+    </select>
+    
+    <!-- 取得子品牌List -->
+	<select id="getOrigBrandList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+		<include refid="BINOLCMINC99.pageheader" />
+		<include refid="BINOLCM02.OrigBrandQuery" />
+		<include refid="BINOLCMINC99.pagefooter" />
+    </select>
+    
+    
+    <!-- 柜台查询SQL -->
+    <sql id="CounterInfoQuery">
+    	<![CDATA[
+			SELECT 
+				A.BIN_CounterInfoID,
+				A.CounterCode,
+				A.CounterNameIF,
+				A.BIN_OrganizationID,
+				A.CounterKind
+			FROM 
+				Basis.BIN_CounterInfo A
+		]]>
+			<isNotEmpty property="privilegeFlag">
+			<isEqual property="privilegeFlag" compareValue="1">			
+		<![CDATA[			
+				JOIN (]]><include refid="BINOLCMINC99.departPrivilegeSql" /><![CDATA[) A99 
+				ON A.BIN_OrganizationID=A99.BIN_OrganizationID
+		]]>
+			</isEqual>
+			</isNotEmpty>
+			<isNotEmpty property="memberClubId">		
+		<![CDATA[			
+				JOIN (]]><include refid="BINOLCM02.clubCounterQuery" /><![CDATA[) T99 
+				ON A.BIN_OrganizationID=T99.BIN_OrganizationID
+		]]>
+			</isNotEmpty>
+		<![CDATA[			
+			WHERE
+				A.BIN_OrganizationInfoID = #organizationInfoId#
+		]]>
+		<dynamic>
+			<isNotEmpty prepend="AND" property="brandInfoId">
+				A.BIN_BrandInfoID=#brandInfoId#
+			</isNotEmpty>
+			<isNotEmpty prepend="AND" property="counterKw">
+				(A.CounterCode like '%'+#counterKw#+'%' OR A.CounterNameIF like '%'+#counterKw#+'%')
+			</isNotEmpty>
+			<isEmpty prepend="AND" property="validFlag">
+				A.ValidFlag = '1'
+			</isEmpty>
+		</dynamic>	
+    </sql>
+    
+    <!-- 取得柜台总数 -->
+	<select id="getCounterInfoCount" parameterClass="java.util.HashMap" resultClass="java.lang.Integer">
+		<![CDATA[
+			SELECT	COUNT(SORT_T1.BIN_CounterInfoID) AS count FROM (
+		]]>	
+		<include refid="BINOLCM02.CounterInfoQuery" />
+		<![CDATA[	
+			) SORT_T1
+		]]>	
+    </select>
+    
+    <!-- 取得柜台List -->
+	<resultMap id="BINOLCM02.CounterInfo" class="java.util.HashMap">
+		<result property="counterInfoId" column="BIN_CounterInfoID"/>
+		<result property="counterCode" column="CounterCode"/>
+		<result property="counterNameIf" column="CounterNameIF"/>
+		<result property="organizationId" column="BIN_OrganizationID"/>
+		<result property="counterKind" column="CounterKind"/>
+	</resultMap>
+	<select id="getCounterInfoList" parameterClass="java.util.HashMap" resultMap="BINOLCM02.CounterInfo">
+		<include refid="BINOLCMINC99.pageheader" />
+		<include refid="BINOLCM02.CounterInfoQuery" />
+		<include refid="BINOLCMINC99.pagefooter" />
+    </select>
+    
+    <!-- 根据柜台ID取得柜台信息 -->
+	<resultMap id="BINOLCM02.CounterInfo1" class="java.util.HashMap">
+		<result property="counterInfoId" column="BIN_CounterInfoID"/>
+		<result property="regionId" column="BIN_RegionID"/>
+		<result property="path" column="Path"/>
+		<result property="mallInfoId" column="BIN_MallInfoID"/>
+		<result property="channelId" column="BIN_ChannelID"/>
+		<result property="resellerInfoId" column="BIN_ResellerInfoID"/>
+		<result property="positionId" column="BIN_PositionID"/>
+		<result property="counterAddress" column="CounterAddress"/>
+		<result property="counterCode" column="CounterCode"/>
+		<result property="counterNameIF" column="CounterNameIF"/>
+		<result property="disCounterCode" column="DisCounterCode"/>
+		<result property="counterSpace" column="CounterSpace"/>
+		<result property="counterKind" column="CounterKind"/>
+		<result property="counterLevel" column="CounterLevel"/>
+		<result property="status" column="Status"/>
+		<result property="modifyTime" column="UpdateTime"/>
+		<result property="modifyCount" column="ModifyCount"/>
+	</resultMap>
+	<select id="getCounterInfo" parameterClass="java.util.HashMap" resultMap="BINOLCM02.CounterInfo1">
+		<![CDATA[
+			SELECT 
+				A.BIN_CounterInfoID,
+				A.BIN_RegionID,
+				B.Path,
+				A.BIN_MallInfoID,
+				A.BIN_ChannelID,
+				A.BIN_ResellerInfoID,
+				A.BIN_PositionID,
+				A.CounterAddress,
+				A.CounterCode,
+				A.CounterNameIF,
+				A.DisCounterCode,
+				A.CounterSpace,
+				A.CounterKind,
+				A.CounterLevel,
+				A.Status,
+				convert(varchar(30),A.UpdateTime,121) AS UpdateTime,
+				A.ModifyCount
+			FROM 
+				Basis.BIN_CounterInfo A left join 
+				Basis.BIN_Region B on
+				A.BIN_RegionID = B.BIN_RegionID
+			WHERE
+				A.BIN_CounterInfoID = #counterInfoId# AND
+				A.ValidFlag = '1'
+		]]>			
+    </select>
+    
+    <!-- 查询某一区域的所有上级区域 -->
+	<resultMap id="BINOLCM02.HigherRegion" class="java.util.HashMap">
+		<result property="regionId" column="BIN_RegionID"/>
+		<result property="regionType" column="RegionType"/>
+		<result property="regionNameChinese" column="RegionNameChinese"/>
+	</resultMap>
+	<select id="getHigherRegionList" parameterClass="java.util.HashMap" resultMap="BINOLCM02.HigherRegion">
+		<![CDATA[
+			SELECT
+				BIN_RegionID,
+				RegionType,
+		]]>
+    	<dynamic>
+			<isNotEmpty property="language">
+				<isEqual property="language" compareValue="zh_CN">										
+					RegionNameChinese AS RegionNameChinese
+				</isEqual>
+				<isEqual property="language" compareValue="en_US">										
+					RegionNameForeign AS RegionNameChinese
+				</isEqual>
+			</isNotEmpty>
+			<isEmpty property="language">
+				RegionNameChinese AS RegionNameChinese
+			</isEmpty>
+		</dynamic>
+    	<![CDATA[		
+			FROM
+				Basis.BIN_Region
+			WHERE
+				CONVERT(hierarchyid,#path#).IsDescendantOf(NodeID) = 1 AND
+				ValidFlag = '1'		
+		]]>			
+    </select>
+    
+    <!-- 取得厂商List -->
+	<select id="getFactoryList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+		<![CDATA[
+			SELECT
+				BIN_ManufacturerInfoID AS manuFactId,
+				ManufacturerCode AS manuFactCode
+		]]>
+		<dynamic>
+			<isNotEmpty property="language">
+			<isEqual property="language" compareValue="en_US">
+			,FactoryNameEN AS factoryName
+			</isEqual>
+			<isEqual property="language" compareValue="zh_CN">	
+			,FactoryNameCN AS factoryName
+			</isEqual>								
+		</isNotEmpty>
+		<isEmpty property="language">
+			,FactoryNameCN AS factoryName
+		</isEmpty>
+		</dynamic>
+		<![CDATA[			
+			FROM
+				Basis.BIN_ManufacturerInfo
+			WHERE
+				BIN_OrganizationInfoID = #organizationInfoId# AND
+				ValidFlag = '1'
+			]]>
+		<dynamic>
+			<isNotEmpty prepend="AND" property="brandInfoId">
+				BIN_BrandInfoID=#brandInfoId#
+			</isNotEmpty>
+			<isNotEmpty prepend="AND" property="factoryKw">
+				(ManufacturerCode like '%'+#factoryKw#+'%' OR 
+				FactoryNameCN like '%'+#factoryKw#+'%' OR
+				FactoryNamecnCNShort like '%'+#factoryKw#+'%' OR
+				FactoryNameEN like '%'+#factoryKw#+'%' OR
+				FactoryNameENShort like '%'+#factoryKw#+'%'
+				)
+			</isNotEmpty>
+			<isNotEmpty prepend="AND" property="manuFactId">
+				BIN_ManufacturerInfoID NOT IN
+				<iterate property="manuFactId" open="(" close=")" conjunction=",">
+					#manuFactId[]#
+				</iterate>
+			</isNotEmpty>
+		</dynamic>	
+    </select>
+	
+	<!-- 部门查询SQL -->
+    <sql id="DepartInfoQuery">
+    	<![CDATA[
+			SELECT
+				A.BIN_OrganizationID AS organizationId,
+				A.DepartCode AS departCode,
+				A.Level AS departGrade,
+				A.Type AS type
+		]]>
+		<dynamic>
+		<isNotEmpty property="language">
+			<isEqual property="language" compareValue="en_US">
+				,A.NameForeign AS departName
+			</isEqual>
+			<isEqual property="language" compareValue="zh_CN">	
+				,A.DepartName AS departName
+			</isEqual>								
+		</isNotEmpty>
+		<isEmpty property="language">
+			,A.DepartName AS departName
+		</isEmpty>
+		</dynamic>
+		<![CDATA[			
+			FROM
+				Basis.BIN_Organization A WITH(NOLOCK)
+		]]>		
+			<dynamic>
+				<isNotEmpty  property="organizationId">
+					<isNotEmpty property="isPosFlag">
+						LEFT JOIN
+							Basis.BIN_CounterInfo info WITH(NOLOCK)
+						ON
+							(A.BIN_OrganizationID=info.BIN_OrganizationID)
+					</isNotEmpty>
+				</isNotEmpty>
+			</dynamic>
+			<isEqual property="privilegeFlg" compareValue="1">
+				<![CDATA[			
+				JOIN (]]><include refid="BINOLCMINC99.departPrivilegeSql" /><![CDATA[) A99 
+				ON A.BIN_OrganizationID=A99.BIN_OrganizationID
+				]]>
+			</isEqual>
+			<isNotEmpty prepend="," property="organizationId">
+				Basis.BIN_Organization C WITH(NOLOCK)
+			</isNotEmpty>
+		<![CDATA[		
+			WHERE
+				A.BIN_OrganizationInfoID = #organizationInfoId#
+		]]>
+		<dynamic>
+			<isNotEmpty prepend="AND" property="brandInfoId">
+				A.BIN_BrandInfoID = #brandInfoId#
+			</isNotEmpty>
+			<isNotEmpty prepend="AND" property="testType">
+				A.TestType = #testType#
+			</isNotEmpty>
+			<isNotEmpty prepend="AND" property="validFlag">
+				A.ValidFlag = #validFlag#
+			</isNotEmpty>
+			<isNotEmpty prepend="AND" property="departType">
+				A.Type IN
+                <iterate property="departType" open="(" close=")" conjunction=",">
+                    #departType[]#
+                </iterate>
+			</isNotEmpty>
+			<isEmpty prepend="AND" property="departType">
+				<![CDATA[A.Type<>'Z']]>
+			</isEmpty>
+			<isNotEmpty prepend="AND" property="FILTER_VALUE">
+				(A.DepartCode like '%'+#FILTER_VALUE#+'%' OR 
+				A.DepartName like '%'+#FILTER_VALUE#+'%' OR
+				A.DepartNameShort like '%'+#FILTER_VALUE#+'%' OR
+				A.NameForeign like '%'+#FILTER_VALUE#+'%' OR
+				A.NameShortForeign like '%'+#FILTER_VALUE#+'%')
+			</isNotEmpty>
+			<isNotEmpty prepend="AND" property="organizationId">
+				<isNotEmpty property="testTypeFlg">
+					<![CDATA[A.TestType = C.TestType AND]]>
+				</isNotEmpty>
+				<!-- 云POS调拨业务时不限制调入调出部门的级别关系 -->
+				<isEmpty property="cloudPosFlag">
+					<isNotEmpty property="levelFlg">
+						<isEqual property="levelFlg" compareValue="2">
+						<![CDATA[  	
+							C.BIN_OrganizationID = #organizationId# AND
+							A.NodeID.IsDescendantOf(C.NodeID)=1
+						]]>	
+						</isEqual>
+						<isEqual property="levelFlg" compareValue="1">
+						<![CDATA[  	
+							C.BIN_OrganizationID = #organizationId# AND
+							A.NodeID.IsDescendantOf(C.NodeID)=1 AND
+							A.BIN_OrganizationID <> #organizationId#
+						]]>	
+						</isEqual>
+						<isEqual property="levelFlg" compareValue="0">
+						<![CDATA[	
+							C.BIN_OrganizationID = #organizationId# AND
+							A.NodeID.GetAncestor(1) = C.NodeID.GetAncestor(1) AND
+							A.BIN_OrganizationID <> #organizationId#
+						]]>
+						</isEqual>
+					</isNotEmpty>
+					<isEmpty property="levelFlg">
+						<![CDATA[      
+	                        C.BIN_OrganizationID = #organizationId# AND
+	                        A.NodeID.IsDescendantOf(C.NodeID)=1 AND
+	                        A.BIN_OrganizationID <> #organizationId#
+	                    ]]> 
+					</isEmpty>
+				</isEmpty>
+				
+				<isNotEmpty property="cloudPosFlag">
+					<![CDATA[C.BIN_OrganizationID = #organizationId# AND
+						A.BIN_OrganizationID <> #organizationId#
+					]]>
+				</isNotEmpty>
+				
+				<isNotEmpty property="isPosFlag">
+					<isEqual property="isPosFlag" compareValue="1">
+						<![CDATA[
+							AND (info.PosFlag = '1' or info.PosFlag is NULL)
+						]]>
+					</isEqual>
+					<isNotEqual property="isPosFlag" compareValue="1">
+						<![CDATA[
+							AND info.PosFlag = '0'
+						]]>
+					</isNotEqual>
+				</isNotEmpty>
+			</isNotEmpty>
+		</dynamic>
+    </sql>
+	
+	<!-- 取得部门总数 -->
+	<select id="getDepartInfoCount" parameterClass="java.util.HashMap" resultClass="java.lang.Integer">
+		<![CDATA[
+			SELECT	COUNT(SORT_T1.organizationId) AS count FROM (
+		]]>	
+		<include refid="BINOLCM02.DepartInfoQuery" />
+		<![CDATA[	
+			) SORT_T1
+		]]>	
+    </select>
+    
+    <!-- 取得取得部门List -->
+	<select id="getDepartInfoList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+		<include refid="BINOLCMINC99.pageheader" />
+		<include refid="BINOLCM02.DepartInfoQuery" />
+		<include refid="BINOLCMINC99.pagefooter" />
+    </select>
+	
+	<!-- 员工查询SQL -->
+    <sql id="EmployeeQuery">
+    	<![CDATA[
+			SELECT
+			     DISTINCT
+				 A.BIN_EmployeeID AS employeeId,
+				 A.EmployeeCode AS employeeCode
+		]]>
+		<dynamic>
+		 <isNotEmpty property="language">
+			<isEqual property="language" compareValue="en_US">
+			,A.EmployeeNameForeign AS employeeName
+			</isEqual>
+			<isEqual property="language" compareValue="zh_CN">	
+			,A.EmployeeName AS employeeName
+			</isEqual>								
+		 </isNotEmpty>
+		 <isEmpty property="language">
+		 	,A.EmployeeName AS employeeName
+		 </isEmpty>
+		</dynamic>
+		<![CDATA[			
+			FROM
+			    Basis.BIN_Employee A
+				LEFT JOIN Basis.BIN_PostDistribution B
+				JOIN Basis.BIN_Position C 								
+				ON (C.BIN_PositionID = B.BIN_PositionID AND C.ValidFlag = '1')
+				LEFT JOIN Basis.BIN_Organization D	
+				ON (D.BIN_OrganizationID = C.BIN_OrganizationID AND D.ValidFlag = '1')
+				ON (B.BIN_EmployeeID = A.BIN_EmployeeID AND B.ValidFlag = '1')
+			WHERE
+			    D.BIN_OrganizationInfoID = A.BIN_OrganizationInfoID AND
+				A.BIN_OrganizationInfoID = #organizationInfoId# AND
+				D.BIN_BrandInfoID = A.BIN_BrandInfoID AND
+				A.ValidFlag = '1'
+			]]>
+		<dynamic>
+			<isNotEmpty prepend="AND" property="brandInfoId">
+				A.BIN_BrandInfoID=#brandInfoId#
+			</isNotEmpty>
+			<isNotEmpty prepend="AND" property="factoryKw">
+				(A.EmployeeCode like '%'+#factoryKw#+'%' OR 
+				A.EmployeeName like '%'+#factoryKw#+'%' OR
+				A.EmployeeNameForeign like '%'+#factoryKw#+'%' OR
+				C.PositionName like '%'+#factoryKw#+'%' OR 
+				C.PositionNameForeign like '%'+#factoryKw#+'%' OR
+				D.DepartName like '%'+#factoryKw#+'%' OR
+				D.NameForeign like '%'+#factoryKw#+'%'
+				)
+			</isNotEmpty>
+			<isNotEmpty prepend="AND" property="employeeId">
+				A.BIN_EmployeeID NOT IN
+				<iterate property="employeeId" open="(" close=")" conjunction=",">
+					#employeeId[]#
+				</iterate>
+			</isNotEmpty>
+		</dynamic>	
+    </sql>
+	
+	<!-- 取得员工总数 -->
+	<select id="getEmployeeCount" parameterClass="java.util.HashMap" resultClass="java.lang.Integer">
+		<![CDATA[
+			SELECT	COUNT(SORT_T1.employeeId) AS count FROM (
+		]]>	
+		<include refid="BINOLCM02.EmployeeQuery" />
+		<![CDATA[	
+			) SORT_T1
+		]]>	
+    </select>
+    
+    <!-- 取得员工List -->
+	<select id="getEmployeeList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+		<include refid="BINOLCMINC99.pageheader" />
+		<include refid="BINOLCM02.EmployeeQuery" />
+		<include refid="BINOLCMINC99.pagefooter" />
+    </select>
+	
+	<!-- 取得员工部门、岗位信息 -->
+    <select id="getEmpDptPstList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+		<![CDATA[ SELECT ]]>
+		<dynamic>
+			<isNotEmpty property="language">
+				<isEqual property="language" compareValue="en_US">
+					C.NameForeign  AS departName,	
+					A.PositionNameForeign AS positionName
+				</isEqual>
+				<isEqual property="language" compareValue="zh_CN">	
+					C.DepartName AS departName,											
+					A.PositionName AS positionName
+				</isEqual>								
+			</isNotEmpty>
+			<isEmpty property="language">
+				C.DepartName AS departName,											
+				A.PositionName AS positionName
+			</isEmpty>
+		</dynamic>		
+		<![CDATA[
+			FROM												
+				Basis.BIN_Position A,	
+				Basis.BIN_PostDistribution B,
+				Basis.BIN_Organization C						
+			WHERE												
+				A.BIN_PositionID = B.BIN_PositionID AND	
+				C.BIN_OrganizationID = A.BIN_OrganizationID AND									
+				B.BIN_EmployeeID = #employeeId#
+			ORDER BY C.BIN_OrganizationID
+		]]>
+    </select>
+    
+    <!-- 考核问卷查询SQL -->
+    <sql id="CheckPaperQuery">
+    	<![CDATA[
+			SELECT
+				A.BIN_CheckPaperID AS checkPaperId,
+				A.PaperName AS paperName,
+				A.PaperStatus AS paperStatus
+			FROM
+			    Monitor.BIN_CheckPaper A
+			WHERE
+				A.BIN_OrganizationInfoID = #organizationInfoId# AND
+				A.ValidFlag = '1'
+			]]>
+		<dynamic>
+			<isNotEmpty prepend="AND" property="brandInfoId">
+				A.BIN_BrandInfoID = #brandInfoId#
+			</isNotEmpty>
+			<isNotEmpty prepend="AND" property="paperName">
+				A.PaperName LIKE '%'+#paperName#+'%'
+			</isNotEmpty>
+		</dynamic>	
+    </sql>
+    
+    <!-- 取得考核问卷总数 -->
+	<select id="getCheckPaperCount" parameterClass="java.util.HashMap" resultClass="java.lang.Integer">
+		<![CDATA[
+			SELECT	COUNT(SORT_T1.checkPaperId) AS count FROM (
+		]]>	
+		<include refid="BINOLCM02.CheckPaperQuery" />
+		<![CDATA[	
+			) SORT_T1
+		]]>	
+    </select>
+    
+    <!-- 取得考核问卷List -->
+	<select id="getCheckPaperList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+		<include refid="BINOLCMINC99.pageheader" />
+		<include refid="BINOLCM02.CheckPaperQuery" />
+		<include refid="BINOLCMINC99.pagefooter" />
+    </select>
+    
+    <!-- 问卷查询SQL -->
+    <sql id="PaperQuery">
+    	<![CDATA[
+			SELECT
+				A.BIN_PaperID AS paperId,
+				A.PaperType AS paperType,
+				A.PaperName AS paperName,
+				A.PaperStatus AS paperStatus
+			FROM
+			    Monitor.BIN_Paper A
+			WHERE
+				A.BIN_OrganizationInfoID = #organizationInfoId# AND
+				A.ValidFlag = '1'
+			]]>
+		<dynamic>
+			<isNotEmpty prepend="AND" property="brandInfoId">
+				A.BIN_BrandInfoID = #brandInfoId#
+			</isNotEmpty>
+			<isNotEmpty prepend="AND" property="paperName">
+				A.PaperName LIKE '%'+#paperName#+'%'
+			</isNotEmpty>
+		</dynamic>	
+    </sql>
+    
+    <!-- 取得问卷总数 -->
+	<select id="getPaperCount" parameterClass="java.util.HashMap" resultClass="java.lang.Integer">
+		<![CDATA[
+			SELECT	COUNT(SORT_T1.paperId) AS count FROM (
+		]]>	
+		<include refid="BINOLCM02.PaperQuery" />
+		<![CDATA[	
+			) SORT_T1
+		]]>	
+    </select>
+    
+    <!-- 取得问卷List -->
+	<select id="getPaperList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+		<include refid="BINOLCMINC99.pageheader" />
+		<include refid="BINOLCM02.PaperQuery" />
+		<include refid="BINOLCMINC99.pagefooter" />
+    </select>
+    
+        <!-- 取得分类List -->
+	<select id="getPrtCategoryList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+		<![CDATA[
+			SELECT
+				BIN_PrtCatPropertyID AS cateId
+		]]>
+		<dynamic>
+			<isNotEmpty property="language">
+				<isEqual property="language" compareValue="en_US">
+					,PropertyNameForeign AS cateName
+				</isEqual>
+				<isEqual property="language" compareValue="zh_CN">	
+					,PropertyNameChinese AS cateName
+				</isEqual>								
+			</isNotEmpty>
+			<isEmpty property="language">
+				,PropertyNameChinese AS cateName
+			</isEmpty>
+		</dynamic>		
+		<![CDATA[
+			FROM
+				Basis.BIN_PrtCatProperty
+			WHERE
+				BIN_OrganizationInfoID = #organizationInfoId#
+				AND ValidFlag = '1'
+	    ]]>
+		<isNotEmpty prepend="AND" property="brandInfoId">
+			BIN_BrandInfoID = #brandInfoId#
+		</isNotEmpty>
+		<![CDATA[ORDER BY ViewSeq]]>
+    </select>
+    <!-- 根据分类取得产品List -->
+    <sql id="getProListByCate">
+	    <![CDATA[SELECT T0.* FROM(
+	    	SELECT 
+	    		A.BIN_ProductID,
+	    		MAX(CASE WHEN  B.BIN_PrtCatPropertyID = #propId# THEN A.BIN_PrtCatPropValueID END) AS cateVal$propId$
+	    ]]>
+	    <isNotEmpty property="cateList">
+		    <iterate property="cateList"> 
+				,MAX(CASE WHEN  B.BIN_PrtCatPropertyID = #cateList[].propId# THEN A.BIN_PrtCatPropValueID END) AS cateVal$cateList[].propId$
+			</iterate>
+		</isNotEmpty>
+	    <![CDATA[
+		    FROM
+				Basis.BIN_PrtCategory A WITH(NOLOCK)
+			JOIN Basis.BIN_PrtCatPropValue B WITH(NOLOCK) ON(A.BIN_PrtCatPropValueID = B.BIN_PrtCatPropValueID)
+		]]>
+		<!-- 只查询有效产品对应的产品分类数据 -->
+		<isNotEmpty property="validProduct">
+			JOIN Basis.BIN_Product C WITH(NOLOCK) ON (A.BIN_ProductID = C.BIN_ProductID AND C.ValidFlag = '1')
+		</isNotEmpty>
+		<dynamic prepend="WHERE">
+			<isNotEmpty property="validFlag">
+				A.ValidFlag = #validFlag#
+			</isNotEmpty>
+		</dynamic>	
+		<![CDATA[GROUP BY A.BIN_ProductID) T0]]>
+		<dynamic prepend="WHERE">
+			<isNotEmpty property="cateList">
+				<iterate property="cateList">
+					<isNotEmpty prepend="AND" property="cateList[].propValId">
+						T0.cateVal$cateList[].propId$ = #cateList[].propValId#
+					</isNotEmpty>
+				</iterate>
+			</isNotEmpty>	
+		</dynamic>	
+    </sql>
+    <!-- 取得分类选项值List -->
+	<sql id="getCateValListSql">
+		<![CDATA[
+			SELECT
+				DISTINCT
+				A.BIN_PrtCatPropValueID AS cateValId,
+				A.PropValueCherry AS cateVal,
+				A.PropValue AS cateVal2
+		]]>
+		<dynamic>
+			<isNotEmpty property="language">
+				<isEqual property="language" compareValue="en_US">
+					,A.PropValueForeign AS cateValName
+				</isEqual>
+				<isEqual property="language" compareValue="zh_CN">	
+					,A.PropValueChinese AS cateValName
+				</isEqual>								
+			</isNotEmpty>
+			<isEmpty property="language">
+				,A.PropValueChinese AS cateValName
+			</isEmpty>
+		</dynamic>		
+		<![CDATA[FROM Basis.BIN_PrtCatPropValue A WITH(NOLOCK)]]>
+		<dynamic>
+			<isNotEmpty property="teminalFlag" prepend="JOIN">
+					Basis.BIN_PrtCatProperty B ON(A.BIN_PrtCatPropertyID = B.BIN_PrtCatPropertyID AND B.TeminalFlag = #teminalFlag# AND B.ValidFlag ='1')							
+			</isNotEmpty>
+			<isEmpty property="teminalFlag">
+				<isEqual property="isBind" compareValue="0" prepend="WHERE">
+					A.BIN_PrtCatPropertyID = #propId#
+					AND A.ValidFlag ='1'
+				</isEqual>
+				<isNotEqual property="isBind" compareValue="0" prepend="LEFT JOIN">
+					<![CDATA[(]]>
+					<include refid="BINOLCM02.getProListByCate" />
+					<![CDATA[)T1 ON(A.BIN_PrtCatPropValueID = T1.cateVal$propId$)
+					WHERE 
+						A.BIN_PrtCatPropertyID = #propId#
+						AND A.ValidFlag ='1'
+					]]>
+					<isEqual property="isBind" compareValue="1" prepend="AND">
+						T1.BIN_ProductID IS NOT NULL
+					</isEqual>
+					<isEqual property="isBind" compareValue="2" prepend="AND">
+						T1.BIN_ProductID IS NULL
+					</isEqual>
+				</isNotEqual>
+			</isEmpty>
+		</dynamic>	
+    </sql>
+    <!-- 取得分类选项值总数 -->
+	<select id="getCateValCount" parameterClass="java.util.HashMap" resultClass="java.lang.Integer">
+		<![CDATA[SELECT	COUNT(SORT_T1.cateValId) AS count FROM (]]>	
+		<include refid="BINOLCM02.getCateValListSql" />
+		<include refid="BINOLCMINC99.filterSql" />
+		<![CDATA[) SORT_T1]]>	
+    </select>
+    
+    <!-- 取得分类选项值List -->
+	<select id="getCateValList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+		<include refid="BINOLCMINC99.pageheader" />
+		<include refid="BINOLCM02.getCateValListSql" />
+		<include refid="BINOLCMINC99.filterSql" />
+		<include refid="BINOLCMINC99.pagefooter" />
+    </select>
+    
+    <!-- 取得促销品大分类List -->
+	<sql id="getPriCateListSql">
+		<![CDATA[
+			SELECT
+				DISTINCT
+				PrimaryCategoryCode AS cateCode
+		]]>
+		<dynamic>
+			<isNotEmpty property="language">
+				<isEqual property="language" compareValue="en_US">
+					,PrimaryCategoryNameForeign AS cateName
+				</isEqual>
+				<isEqual property="language" compareValue="zh_CN">	
+					,PrimaryCategoryNameChinese AS cateName
+				</isEqual>								
+			</isNotEmpty>
+			<isEmpty property="language">
+				,PrimaryCategoryNameChinese AS cateName
+			</isEmpty>
+		</dynamic>		
+		<![CDATA[
+			FROM
+				Basis.BIN_PromotionPrtType
+			WHERE
+				ValidFlag ='1'
+		]]>
+		<isNotEmpty property="brandInfoId" prepend="AND">
+			BIN_BrandInfoID = #brandInfoId#
+		</isNotEmpty>
+    </sql>
+    <!-- 取得促销品中分类List -->
+	<sql id="getSecCateListSql">
+		<![CDATA[
+			SELECT
+				DISTINCT
+				SecondryCategoryCode AS cateCode
+		]]>
+		<dynamic>
+			<isNotEmpty property="language">
+				<isEqual property="language" compareValue="en_US">
+					,SecondryCategoryNameForeign AS cateName
+				</isEqual>
+				<isEqual property="language" compareValue="zh_CN">	
+					,SecondryCategoryNameChinese AS cateName
+				</isEqual>
+			</isNotEmpty>
+			<isEmpty property="language">
+				,SecondryCategoryNameChinese AS cateName
+			</isEmpty>
+		</dynamic>		
+		<![CDATA[
+			FROM
+				Basis.BIN_PromotionPrtType
+			WHERE
+				ValidFlag ='1'
+				AND SecondryCategoryCode <> ''
+		]]>
+		<isNotEmpty property="brandInfoId" prepend="AND">
+			BIN_BrandInfoID = #brandInfoId#
+		</isNotEmpty>
+    </sql>
+    <!-- 取得促销品小分类List -->
+	<sql id="getSmlCateListSql">
+		<![CDATA[
+			SELECT
+				DISTINCT
+				SmallCategoryCode AS cateCode
+		]]>
+		<dynamic>
+			<isNotEmpty property="language">
+				<isEqual property="language" compareValue="en_US">
+					,SmallCategoryNameForeign AS cateName
+				</isEqual>
+				<isEqual property="language" compareValue="zh_CN">	
+					,SmallCategoryNameChinese AS cateName
+				</isEqual>
+			</isNotEmpty>
+			<isEmpty property="language">
+				,SmallCategoryNameChinese AS cateName
+			</isEmpty>
+		</dynamic>		
+		<![CDATA[
+			FROM
+				Basis.BIN_PromotionPrtType
+			WHERE
+				ValidFlag ='1'
+				AND SmallCategoryCode <> ''
+		]]>
+		<isNotEmpty property="brandInfoId" prepend="AND">
+			BIN_BrandInfoID = #brandInfoId#
+		</isNotEmpty>
+    </sql>
+    <!-- 取得促销品分类List -->
+	<sql id="getPrmCateListSql">
+	<![CDATA[SELECT	T0.* ,#cateType# AS cateType FROM (]]>	
+	<dynamic>
+		<isEqual property="cateType" compareValue="1">
+			<include refid="BINOLCM02.getPriCateListSql" />
+		</isEqual>
+		<isEqual property="cateType" compareValue="2">	
+			<include refid="BINOLCM02.getSecCateListSql" />
+		</isEqual>
+		<isEqual property="cateType" compareValue="3">	
+			<include refid="BINOLCM02.getSmlCateListSql" />
+		</isEqual>
+	</dynamic>
+	<![CDATA[) T0]]>
+	<isNotNull property="FILTER_VALUE" >
+		<iterate property="filterList" conjunction="OR" prepend="WHERE" close=")" open="(" >
+		$filterList[]$ Like '%' + #FILTER_VALUE# + '%'
+		</iterate>
+	</isNotNull>
+	</sql>
+	<!-- 取得分类选项值总数 -->
+	<select id="getPrmCateCount" parameterClass="java.util.HashMap" resultClass="java.lang.Integer">
+		<![CDATA[SELECT	COUNT(SORT_T1.cateCode) AS count FROM (]]>	
+		<include refid="BINOLCM02.getPrmCateListSql" />
+		<![CDATA[) SORT_T1]]>	
+    </select>
+    
+    <!-- 取得分类选项值List -->
+	<select id="getPrmCateList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+		<include refid="BINOLCMINC99.pageheader" />
+		<include refid="BINOLCM02.getPrmCateListSql" />
+		<include refid="BINOLCMINC99.pagefooter" />
+    </select>
+    <!-- 大分类属性值ID取得小分类属性List -->
+    <select id="getSubCateList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+    	<![CDATA[
+		SELECT
+			BIN_PrtCatPropValueID AS cateValId
+		]]>
+		<dynamic>
+			<isNotEmpty property="language">
+				<isEqual property="language" compareValue="en_US">
+					,PropValueForeign AS propValueName
+				</isEqual>
+				<isEqual property="language" compareValue="zh_CN">	
+					,PropValueChinese AS propValueName
+				</isEqual>
+			</isNotEmpty>
+			<isEmpty property="language">
+				,PropValueChinese AS propValueName
+			</isEmpty>
+		</dynamic>		
+		<![CDATA[
+		FROM
+			Basis.BIN_PrtCatPropValue
+		WHERE
+			BIN_PrtCatPropertyID = #propId#
+			AND (BindBigClass = #cateValId# OR BindBigClass IS NULL)
+			AND ValidFlag = '1'
+		]]>										
+    </select>
+    
+	 <!-- 会员信息查询sql -->
+	 <sql id="memberQuery">
+	 	<![CDATA[
+			SELECT    
+			X.BIN_MemberInfoID AS memberInfoId,
+			Y.MemCode AS memCode,      
+			X.Name AS memName,        
+			X.MobilePhone AS mobilePhone,  
+			C.DepartName AS departName
+		FROM     
+	        Members.BIN_MemberInfo X WITH(nolock) JOIN (SELECT A.BIN_MemberInfoID,MAX(B.MemCode) AS MemCode
+			FROM     
+			   Members.BIN_MemberInfo A WITH(nolock) LEFT JOIN Members.BIN_MemCardInfo B WITH(nolock)
+			   ON A.BIN_MemberInfoID = B.BIN_MemberInfoID 
+			   AND B.validFlag = '1' AND B.CardValidFlag = '1'     
+			 
+	       WHERE      
+			   A.BIN_OrganizationInfoID = #organizationInfoId#       
+			   AND A.BIN_BrandInfoID = #brandInfoId#                                                                  
+			   AND B.CardValidFlag = '1' 
+			   AND A.validFlag = '1'             
+			   AND A.MemInfoRegFlg = '0'                 
+	       GROUP BY      
+			   A.BIN_MemberInfoID) Y ON X.BIN_MemberInfoID = Y.BIN_MemberInfoID     
+			   LEFT JOIN Basis.BIN_Organization C ON X.BIN_OrganizationID = C.BIN_OrganizationID 
+		  WHERE X.ValidFlag = '1'    
+	 	]]>
+	 </sql>
+	  <!-- 查询会员信息总数 -->
+    <select id="getMemberInfoCount" parameterClass="java.util.HashMap" resultClass="java.lang.Integer">
+     	<![CDATA[
+			SELECT	COUNT(SORT_T1.memberInfoId) AS count FROM (
+		]]>	
+		<include refid="BINOLCM02.memberQuery" />
+		<include refid="BINOLCMINC99.filterSql" />
+		<![CDATA[	
+			)SORT_T1
+		]]>		
+    </select>
+	 <!-- 查询会员信息-->
+     <select id="getMemberInfoList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+    	<include refid="BINOLCMINC99.pageheader" />
+		<include refid="BINOLCM02.memberQuery" />
+		<include refid="BINOLCMINC99.filterSql" />
+    	<include refid="BINOLCMINC99.pagefooter" />
+    </select>
+    
+     <!-- 对象批次信息查询sql -->
+	 <sql id="objBatchQuery">
+	 	<![CDATA[
+			SELECT 
+				BIN_SearchCode AS searchCode
+			    ,RecordName AS recordName
+			    ,Comments AS comments
+	  		FROM 
+	  			Members.BIN_SearchLog
+	  		where 
+	  		BIN_BrandInfoID=#brandInfoId#       
+	  		AND FromType='2'
+	  		AND ValidFlag='1'
+	  		
+	 	]]>
+	 </sql>
+	  <!-- 查询会员信息总数 -->
+    <select id="getObjBatchCount" parameterClass="java.util.HashMap" resultClass="java.lang.Integer">
+     	<![CDATA[
+			SELECT	COUNT(SORT_T1.searchCode) AS count FROM (
+		]]>	
+		<include refid="BINOLCM02.objBatchQuery" />
+		<include refid="BINOLCMINC99.filterSql" />
+		<![CDATA[	
+			)SORT_T1
+		]]>		
+    </select>
+	 <!-- 查询会员信息-->
+     <select id="getObjBatchInfoList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+    	<include refid="BINOLCMINC99.pageheader" />
+		<include refid="BINOLCM02.objBatchQuery" />
+		<include refid="BINOLCMINC99.filterSql" />
+		<include refid="BINOLCMINC99.pagefooter" />
+	</select>
+	<!-- 员工信息查询sql -->
+	<sql id="EmployeeListQuery">
+		<![CDATA[
+			SELECT    
+				A.BIN_EmployeeID AS employeeId,
+				A.EmployeeCode AS employeeCode,
+				A.EmployeeName AS employeeName,
+				CASE ISNULL(C.DepartName,'') WHEN '' THEN C.DepartCode ELSE '(' + C.DepartCode + ')' + C.DepartName END AS counterName
+			FROM
+				Basis.BIN_Employee A
+				LEFT JOIN Basis.BIN_Organization C ON A.BIN_OrganizationID = C.BIN_OrganizationID
+		]]>
+			<isNotEmpty property="privilegeFlag">
+			<isEqual property="privilegeFlag" compareValue="1">			
+		<![CDATA[		
+				JOIN (]]><include refid="BINOLCMINC99.employeePrivilegeSql" /><![CDATA[) A99 
+				ON A.BIN_EmployeeID=A99.BIN_SubEmployeeID
+		]]>
+			</isEqual>
+			</isNotEmpty>
+		<![CDATA[				
+		]]>		
+			<isNotEmpty property="categoryCode">		
+				LEFT JOIN Privilege.BIN_PositionCategory B ON A.BIN_PositionCategoryID = B.BIN_PositionCategoryID AND B.ValidFlag = '1'				
+			</isNotEmpty>		
+		<![CDATA[	
+	       	WHERE
+	       		A.BIN_OrganizationInfoID = #organizationInfoId# AND
+				A.ValidFlag = '1'
+		]]>
+			<isNotEmpty prepend="AND" property="brandInfoId">
+				A.BIN_BrandInfoID = #brandInfoId#
+			</isNotEmpty>
+			<isNotEmpty prepend="AND" property="organizationId">
+				A.BIN_OrganizationID = #organizationId#
+			</isNotEmpty>
+			<isNotEmpty prepend="AND" property="categoryCode">
+				B.CategoryCode = #categoryCode#
+			</isNotEmpty>
+			<isNotEmpty prepend="AND" property="employeeKw">
+				(A.EmployeeCode like '%'+#employeeKw#+'%' OR A.EmployeeName like '%'+#employeeKw#+'%' 
+				OR C.DepartCode like '%'+#employeeKw#+'%' OR C.DepartName like '%'+#employeeKw#+'%')
+			</isNotEmpty>
+	</sql>
+	<!-- 查询员工信息总数 -->
+    <select id="getEmployeeInfoCount" parameterClass="java.util.HashMap" resultClass="java.lang.Integer">
+     	<![CDATA[
+			SELECT COUNT(1) AS count FROM (
+		]]>	
+		<include refid="BINOLCM02.EmployeeListQuery" />
+		<![CDATA[	
+			) SORT_T1
+		]]>		
+    </select>
+	 <!-- 查询员工信息List-->
+     <select id="getEmployeeInfoList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+    	<include refid="BINOLCMINC99.pageheader" />
+		<include refid="BINOLCM02.EmployeeListQuery" />
+    	<include refid="BINOLCMINC99.pagefooter" />
+    </select>
+    
+    <!-- 人员信息查询sql -->
+	<sql id="UserListQuery">
+		<![CDATA[
+			SELECT
+                A.BIN_UserID AS userId,
+                B.EmployeeCode AS code,
+                B.EmployeeName AS name
+            FROM
+                Privilege.BIN_User A,
+                Basis.BIN_Employee B
+            WHERE
+                A.BIN_EmployeeID=B.BIN_EmployeeID AND
+                B.BIN_OrganizationInfoID=#organizationInfoId# AND
+                A.ValidFlag='1' AND
+                B.ValidFlag='1'
+        ]]>
+        <dynamic>
+            <isNotEmpty prepend="AND" property="brandInfoId">
+                B.BIN_BrandInfoID=#brandInfoId#
+            </isNotEmpty>
+            <isNotEmpty prepend="AND" property="userKw">
+				(B.EmployeeCode like '%'+#userKw#+'%' OR B.EmployeeName like '%'+#userKw#+'%')
+			</isNotEmpty>
+        </dynamic>
+	</sql>
+	<!-- 查询人员信息总数 -->
+    <select id="getUserInfoCount" parameterClass="java.util.HashMap" resultClass="java.lang.Integer">
+     	<![CDATA[
+			SELECT COUNT(1) AS count FROM (
+		]]>	
+		<include refid="BINOLCM02.UserListQuery" />
+		<![CDATA[	
+			) SORT_T1
+		]]>		
+    </select>
+	 <!-- 查询人员信息List-->
+     <select id="getUserInfoList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+    	<include refid="BINOLCMINC99.pageheader" />
+		<include refid="BINOLCM02.UserListQuery" />
+    	<include refid="BINOLCMINC99.pagefooter" />
+    </select>
+    
+    <!-- 查询所有部门信息 -->
+    <sql id="AllDepartInfoQuery">
+    	<![CDATA[
+            SELECT 
+                A.BIN_OrganizationID AS departId,
+                A.DepartCode AS code,
+        ]]>
+        <dynamic>
+        <isNotEmpty property="language">
+            <isEqual property="language" compareValue="en_US">
+                A.NameForeign AS name
+            </isEqual>
+            <isEqual property="language" compareValue="zh_CN">
+                A.DepartName AS name
+            </isEqual>
+        </isNotEmpty>
+        <isEmpty property="language">
+            A.DepartName AS name
+        </isEmpty>
+        </dynamic>
+        <![CDATA[
+            FROM
+                Basis.BIN_Organization A
+            WHERE
+                A.BIN_OrganizationInfoID=#organizationInfoId# AND
+                A.ValidFlag='1'
+        ]]>
+        <dynamic>
+            <isNotEmpty prepend="AND" property="brandInfoId">
+                A.BIN_BrandInfoID=#brandInfoId#
+            </isNotEmpty>
+            <isNotEmpty prepend="AND" property="departKw">
+            	<isNotEmpty property="language">
+		            <isEqual property="language" compareValue="en_US">
+		                (A.DepartCode like '%'+#departKw#+'%' OR A.NameForeign like '%'+#departKw#+'%')
+		            </isEqual>
+		            <isEqual property="language" compareValue="zh_CN">
+		                (A.DepartCode like '%'+#departKw#+'%' OR A.DepartName like '%'+#departKw#+'%')
+		            </isEqual>
+		        </isNotEmpty>
+		        <isEmpty property="language">
+		            (A.DepartCode like '%'+#departKw#+'%' OR A.DepartName like '%'+#departKw#+'%')
+		        </isEmpty>
+			</isNotEmpty>
+        </dynamic>
+    </sql>
+    
+    <!-- 取得所有部门总数 -->
+	<select id="getAllDepartInfoCount" parameterClass="java.util.HashMap" resultClass="java.lang.Integer">
+     	<![CDATA[
+			SELECT COUNT(1) AS count FROM (
+		]]>	
+		<include refid="BINOLCM02.AllDepartInfoQuery" />
+		<![CDATA[	
+			) SORT_T1
+		]]>		
+	</select>
+	<!-- 取得所有部门List-->
+	<select id="getAllDepartInfoList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+  		<include refid="BINOLCMINC99.pageheader" />
+		<include refid="BINOLCM02.AllDepartInfoQuery" />
+  		<include refid="BINOLCMINC99.pagefooter" />
+	</select>
+    
+    <!-- 查询区域信息List-->
+    <select id="getRegionList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+    	<![CDATA[
+			SELECT 
+				'R'+convert(varchar(20),B.BIN_RegionID) AS regionId,
+				B.RegionNameChinese AS regionName,
+				'P'+convert(varchar(20),C.BIN_RegionID) AS provinceId,
+				C.RegionNameChinese AS provinceName,
+				'C'+convert(varchar(20),D.BIN_RegionID) AS cityId,
+				D.RegionNameChinese AS cityName,
+				'D'+convert(varchar(20),A.BIN_OrganizationID) AS counterId,
+				CASE ISNULL(A.DepartName,'') WHEN '' THEN A.DepartCode ELSE '(' + A.DepartCode + ')' + A.DepartName END AS counterName
+			FROM
+				Basis.BIN_Organization A
+				JOIN Basis.BIN_Region B ON A.BIN_RegionID = B.BIN_RegionID
+				JOIN Basis.BIN_Region C ON A.BIN_ProvinceID = C.BIN_RegionID
+				JOIN Basis.BIN_Region D ON A.BIN_CityID = D.BIN_RegionID
+		]]>
+			<isNotEmpty property="privilegeFlag">
+			<isEqual property="privilegeFlag" compareValue="1">			
+		<![CDATA[			
+				JOIN (]]><include refid="BINOLCMINC99.departPrivilegeSql" /><![CDATA[) A99 
+				ON A.BIN_OrganizationID=A99.BIN_OrganizationID
+		]]>
+			</isEqual>
+			</isNotEmpty>
+			<isNotEmpty property="memberClubId">		
+		<![CDATA[			
+				JOIN (]]><include refid="BINOLCM02.clubCounterQuery" /><![CDATA[) T99 
+				ON A.BIN_OrganizationID=T99.BIN_OrganizationID
+		]]>
+			</isNotEmpty>
+		<![CDATA[				
+			WHERE
+				A.Type = '4' AND
+				A.BIN_OrganizationInfoID = #organizationInfoId#
+		]]>		
+			<isNotEmpty property="brandInfoId" prepend="AND">
+				A.BIN_BrandInfoID = #brandInfoId#
+			</isNotEmpty>	
+			<isNotEmpty property="couValidFlag" prepend="AND">
+				A.ValidFlag = #couValidFlag#
+			</isNotEmpty>	
+			<isEmpty property="couValidFlag" prepend="AND">
+				A.ValidFlag = '1'
+			</isEmpty>
+    </select>
+    
+    <!-- 查询大区信息List-->
+    <select id="getRegionIdList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+    	<![CDATA[
+			SELECT DISTINCT
+				B.BIN_RegionID AS regionId,
+				B.RegionNameChinese AS regionName
+			FROM
+				Basis.BIN_Organization A
+				JOIN Basis.BIN_Region B ON A.BIN_RegionID = B.BIN_RegionID
+				JOIN Basis.BIN_CounterInfo C ON A.BIN_OrganizationID = C.BIN_OrganizationID
+				JOIN Basis.BIN_Channel D ON C.BIN_ChannelID = D.BIN_ChannelID
+		]]>
+			<isNotEmpty property="privilegeFlag">
+			<isEqual property="privilegeFlag" compareValue="1">			
+		<![CDATA[			
+				JOIN (]]><include refid="BINOLCMINC99.departPrivilegeSql" /><![CDATA[) A99 
+				ON A.BIN_OrganizationID=A99.BIN_OrganizationID
+		]]>
+			</isEqual>
+			</isNotEmpty>
+			<isNotEmpty property="memberClubId">		
+		<![CDATA[			
+				JOIN (]]><include refid="BINOLCM02.clubCounterQuery" /><![CDATA[) T99 
+				ON A.BIN_OrganizationID=T99.BIN_OrganizationID
+		]]>
+			</isNotEmpty>
+		<![CDATA[				
+			WHERE
+				A.Type = '4' AND
+				A.BIN_OrganizationInfoID = #organizationInfoId#
+		]]>		
+			<isNotEmpty property="brandInfoId" prepend="AND">
+				A.BIN_BrandInfoID = #brandInfoId#
+			</isNotEmpty>
+			<isNotEmpty property="couValidFlag" prepend="AND">
+				A.ValidFlag = #couValidFlag#
+			</isNotEmpty>	
+			<isEmpty property="couValidFlag" prepend="AND">
+				A.ValidFlag = '1'
+			</isEmpty>
+    </select>
+    
+    <!-- 查询渠道信息List-->
+    <select id="getChannelList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+    	<![CDATA[
+			SELECT
+				'Q'+convert(varchar(20),C.BIN_ChannelID) AS channelId,
+				C.ChannelName AS channelName,
+				'D'+convert(varchar(20),A.BIN_OrganizationID) AS organizationId,
+				CASE ISNULL(A.DepartName,'') WHEN '' THEN A.DepartCode ELSE '(' + A.DepartCode + ')' + A.DepartName END AS departName
+			FROM
+				Basis.BIN_Organization A
+				JOIN Basis.BIN_CounterInfo B ON A.BIN_OrganizationID = B.BIN_OrganizationID
+				JOIN Basis.BIN_Channel C ON B.BIN_ChannelID = C.BIN_ChannelID
+		]]>
+			<isNotEmpty property="privilegeFlag">
+			<isEqual property="privilegeFlag" compareValue="1">			
+		<![CDATA[			
+				JOIN (]]><include refid="BINOLCMINC99.departPrivilegeSql" /><![CDATA[) A99 
+				ON A.BIN_OrganizationID=A99.BIN_OrganizationID
+		]]>
+			</isEqual>
+			</isNotEmpty>
+			<isNotEmpty property="memberClubId">		
+		<![CDATA[			
+				JOIN (]]><include refid="BINOLCM02.clubCounterQuery" /><![CDATA[) T99 
+				ON A.BIN_OrganizationID=T99.BIN_OrganizationID
+		]]>
+			</isNotEmpty>
+		<![CDATA[				
+			WHERE
+				A.Type = '4' AND
+				A.BIN_OrganizationInfoID = #organizationInfoId#
+		]]>		
+			<isNotEmpty property="brandInfoId" prepend="AND">
+				A.BIN_BrandInfoID = #brandInfoId#
+			</isNotEmpty>
+			<isNotEmpty property="regionId" prepend="AND">
+				A.BIN_RegionID = #regionId#
+			</isNotEmpty>
+			<isNotEmpty property="couValidFlag" prepend="AND">
+				A.ValidFlag = #couValidFlag#
+			</isNotEmpty>	
+			<isEmpty property="couValidFlag" prepend="AND">
+				A.ValidFlag = '1'
+			</isEmpty>
+    </select>
+    
+    <!-- 查询部门信息List -->
+    <select id="getDepartList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+    	<![CDATA[
+		SELECT
+			T.id,
+			T.name,
+			T.type,
+			T.path,
+			T.level	
+		FROM
+			(SELECT
+				'D'+convert(varchar(20),A.BIN_OrganizationID) AS id,
+				A.DepartName AS name,
+				A.Type AS type,
+				A.Path AS path,
+				A.Level AS level
+			FROM
+				Basis.BIN_Organization A		
+			WHERE
+				A.Type <> '4' AND
+				A.BIN_OrganizationInfoID = #organizationInfoId#
+		]]>		
+			<isNotEmpty property="brandInfoId" prepend="AND">
+				A.BIN_BrandInfoID = #brandInfoId#
+			</isNotEmpty>
+		<![CDATA[
+			UNION	
+			SELECT
+				'D'+convert(varchar(20),A.BIN_OrganizationID) AS id,
+				A.DepartName AS name,
+				A.Type AS type,
+				A.Path AS path,
+				A.Level AS level
+			FROM
+				Basis.BIN_Organization A	
+		]]>
+			<isNotEmpty property="privilegeFlag">
+			<isEqual property="privilegeFlag" compareValue="1">			
+		<![CDATA[			
+				JOIN (]]><include refid="BINOLCMINC99.departPrivilegeSql" /><![CDATA[) A99 
+				ON A.BIN_OrganizationID=A99.BIN_OrganizationID
+		]]>
+			</isEqual>
+			</isNotEmpty>
+			<isNotEmpty property="memberClubId">		
+		<![CDATA[			
+				JOIN (]]><include refid="BINOLCM02.clubCounterQuery" /><![CDATA[) T99 
+				ON A.BIN_OrganizationID=T99.BIN_OrganizationID
+		]]>
+			</isNotEmpty>
+		<![CDATA[					
+			WHERE
+				A.Type = '4' AND
+				A.BIN_OrganizationInfoID = #organizationInfoId#
+		]]>	
+			<isNotEmpty property="brandInfoId" prepend="AND">
+				A.BIN_BrandInfoID = #brandInfoId#
+			</isNotEmpty>	
+			<isNotEmpty property="couValidFlag" prepend="AND">
+				A.ValidFlag = #couValidFlag#
+			</isNotEmpty>	
+			<isEmpty property="couValidFlag" prepend="AND">
+				A.ValidFlag = '1'
+			</isEmpty>	
+		<![CDATA[) T					
+			ORDER BY
+				T.path
+		]]>
+    </select>
+    
+     <!-- 查询系统柜台List-->
+    <select id="getBelongCounterList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+    	<![CDATA[
+			SELECT 
+				'B'+ B.BelongFaction AS belongId,
+				'D'+convert(varchar(20),A.BIN_OrganizationID) AS counterId,
+				CASE ISNULL(A.DepartName,'') WHEN '' THEN A.DepartCode ELSE '(' + A.DepartCode + ')' + A.DepartName END AS counterName
+			FROM
+				Basis.BIN_Organization A join
+				Basis.BIN_CounterInfo B
+				ON (A.BIN_OrganizationID = B.BIN_OrganizationID AND B.BelongFaction IS NOT NULL AND B.BelongFaction <> '')
+		]]>
+			<isNotEmpty property="privilegeFlag">
+			<isEqual property="privilegeFlag" compareValue="1">			
+		<![CDATA[			
+				JOIN (]]><include refid="BINOLCMINC99.departPrivilegeSql" /><![CDATA[) A99 
+				ON A.BIN_OrganizationID=A99.BIN_OrganizationID
+		]]>
+			</isEqual>
+			</isNotEmpty>
+			<isNotEmpty property="memberClubId">		
+		<![CDATA[			
+				JOIN (]]><include refid="BINOLCM02.clubCounterQuery" /><![CDATA[) T99 
+				ON A.BIN_OrganizationID=T99.BIN_OrganizationID
+		]]>
+			</isNotEmpty>
+		<![CDATA[				
+			WHERE
+				A.BIN_OrganizationInfoID = #organizationInfoId#
+		]]>		
+			<isNotEmpty property="brandInfoId" prepend="AND">
+				A.BIN_BrandInfoID = #brandInfoId#
+			</isNotEmpty>	
+			<isNotEmpty property="couValidFlag" prepend="AND">
+				A.ValidFlag = #couValidFlag#
+			</isNotEmpty>	
+			<isEmpty property="couValidFlag" prepend="AND">
+				A.ValidFlag = '1'
+			</isEmpty>
+    </select>
+    
+    <!-- 查询定位到的区域ID -->
+    <select id="getLocationRegionId" parameterClass="java.util.HashMap" resultClass="java.lang.String">
+    	<![CDATA[
+    		SELECT TOP(1) T.locationId
+    		FROM(
+			SELECT
+				'1' AS orderbyFlag,
+				'D'+convert(varchar(20),A.BIN_OrganizationID) AS locationId
+			FROM
+				Basis.BIN_Organization A 
+		]]>
+			<isNotEmpty property="privilegeFlag">
+			<isEqual property="privilegeFlag" compareValue="1">			
+		<![CDATA[			
+				JOIN (]]><include refid="BINOLCMINC99.departPrivilegeSql" /><![CDATA[) A99 
+				ON A.BIN_OrganizationID=A99.BIN_OrganizationID
+		]]>
+			</isEqual>
+			</isNotEmpty>
+		<![CDATA[		
+			WHERE
+				A.BIN_OrganizationInfoID = #organizationInfoId# AND
+		]]>		
+			<isNotEmpty property="brandInfoId">
+				A.BIN_BrandInfoID = #brandInfoId# AND
+			</isNotEmpty>	
+			<isNotEmpty property="couValidFlag">
+				A.ValidFlag = #couValidFlag# AND
+			</isNotEmpty>
+		<![CDATA[	
+				A.Type = '4' AND
+				A.DepartCode = #locationPosition#
+		]]>
+		<![CDATA[
+			UNION ALL
+			SELECT
+				'0' AS orderbyFlag,
+				'D'+convert(varchar(20),A.BIN_OrganizationID) AS locationId
+			FROM
+				Basis.BIN_Organization A 
+		]]>
+			<isNotEmpty property="privilegeFlag">
+			<isEqual property="privilegeFlag" compareValue="1">			
+		<![CDATA[			
+				JOIN (]]><include refid="BINOLCMINC99.departPrivilegeSql" /><![CDATA[) A99 
+				ON A.BIN_OrganizationID=A99.BIN_OrganizationID
+		]]>
+			</isEqual>
+			</isNotEmpty>
+		<![CDATA[		
+			WHERE
+				A.BIN_OrganizationInfoID = #organizationInfoId# AND
+		]]>		
+			<isNotEmpty property="brandInfoId">
+				A.BIN_BrandInfoID = #brandInfoId# AND
+			</isNotEmpty>	
+			<isNotEmpty property="couValidFlag">
+				A.ValidFlag = #couValidFlag# AND
+			</isNotEmpty>
+		<![CDATA[	
+				A.Type = '4' AND
+				(A.DepartCode like '%'+#locationPosition#+'%' OR
+				A.DepartName like '%'+#locationPosition#+'%')
+				) T
+				ORDER BY T.orderbyFlag DESC
+		]]>
+    </select>
+        <!--根据输入字符串模糊查询领用柜台-->
+	<select id="getCounterCode" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+		<![CDATA[
+			SELECT 
+				A.BIN_CounterInfoID AS id,
+				A.CounterCode AS code,
+				A.CounterNameIF name
+			FROM 
+				Basis.BIN_CounterInfo A
+		]]>
+		<![CDATA[			
+			WHERE
+				A.BIN_OrganizationInfoID = #organizationInfoId#
+		]]>
+		<dynamic>
+			<isNotEmpty prepend="AND" property="brandInfoId">
+				A.BIN_BrandInfoID=#brandInfoId#
+			</isNotEmpty>
+			<isNotEmpty prepend="AND" property="counterStr">
+				(A.CounterCode like '%'+#counterStr#+'%' OR A.CounterNameIF like '%'+#counterStr#+'%')
+			</isNotEmpty>
+		</dynamic>	
+	</select>
+	
+	
+	<!-- 会员活动信息查询sql -->
+	<sql id="MemCampaignListQuery">
+		<![CDATA[
+			SELECT 
+				CampaignName AS campaignName,
+				CampaignCode AS campaignCode,
+				CampaignType AS campaignType
+			FROM
+				Campaign.BIN_Campaign
+			WHERE
+	       		BIN_OrganizationInfoID = #organizationInfoId# AND
+		]]>
+			<isNotEmpty property="brandInfoId">
+				BIN_BrandInfoID = #brandInfoId# AND
+			</isNotEmpty>
+			<isNotEmpty property="campaignKw">
+				(CampaignName LIKE '%'+#campaignKw#+'%' OR CampaignCode LIKE '%'+#campaignKw#+'%') AND
+			</isNotEmpty>
+		<![CDATA[	
+				CampaignTypeFlag = '1' AND
+				State NOT IN ('0','3')
+		]]>
+			<isNotEmpty property="param" prepend="AND">
+				ValidFlag = #param#
+			</isNotEmpty>
+			<isEmpty property="param" prepend="AND">
+				ValidFlag = '1'
+			</isEmpty>
+	</sql>
+	<!-- 查询会员活动信息总数 -->
+    <select id="getMemCampaignCount" parameterClass="java.util.HashMap" resultClass="java.lang.Integer">
+     	<![CDATA[
+			SELECT COUNT(1) AS count FROM (
+		]]>	
+		<include refid="BINOLCM02.MemCampaignListQuery" />
+		<![CDATA[	
+			) SORT_T1
+		]]>		
+    </select>
+	 <!-- 查询会员活动信息List-->
+     <select id="getMemCampaignList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+    	<include refid="BINOLCMINC99.pageheader" />
+		<include refid="BINOLCM02.MemCampaignListQuery" />
+    	<include refid="BINOLCMINC99.pagefooter" />
+    </select>
+    
+    <!-- 促销活动信息查询sql -->
+	<sql id="PrmCampaignListQuery">
+		<![CDATA[	
+			SELECT
+				B.ActivityName AS campaignName,
+				B.ActivityCode AS campaignCode,
+				A.ActivityType AS campaignType
+			FROM
+				Promotion.BIN_PromotionActGrp A
+				JOIN Promotion.BIN_PromotionActivity B ON A.BIN_PromotionActGrpID = B.BIN_PromotionActGrpID
+			WHERE
+				A.BIN_OrganizationInfoID = #organizationInfoId#
+				and (B.TemplateFlag IS NULL OR B.TemplateFlag='0' OR B.TemplateFlag ='')
+		]]>
+			<isNotEmpty property="brandInfoId" prepend="AND">
+				A.BIN_BrandInfoID = #brandInfoId#
+			</isNotEmpty>
+			<isNotEmpty property="campaignKw" prepend="AND">
+				(B.ActivityName LIKE '%'+#campaignKw#+'%' OR B.ActivityCode LIKE '%'+#campaignKw#+'%')
+			</isNotEmpty>
+			<isNotEmpty property="param" prepend="AND">
+				A.ValidFlag = #param# AND
+				B.ValidFlag = #param#
+			</isNotEmpty>
+			<isEmpty property="param" prepend="AND">
+				A.ValidFlag = '1' AND
+				B.ValidFlag = '1'
+			</isEmpty>		
+	</sql>
+	<!-- 查询促销活动信息总数 -->
+    <select id="getPrmCampaignCount" parameterClass="java.util.HashMap" resultClass="java.lang.Integer">
+     	<![CDATA[
+			SELECT COUNT(1) AS count FROM (
+		]]>	
+		<include refid="BINOLCM02.PrmCampaignListQuery" />
+		<![CDATA[	
+			) SORT_T1
+		]]>		
+    </select>
+	 <!-- 查询促销活动信息List-->
+     <select id="getPrmCampaignList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+    	<include refid="BINOLCMINC99.pageheader" />
+		<include refid="BINOLCM02.PrmCampaignListQuery" />
+    	<include refid="BINOLCMINC99.pagefooter" />
+    </select>
+    
+    <!-- 取得所有部门信息List -->
+    <select id="getAllOrgList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+     	<![CDATA[
+			SELECT 
+				A.BIN_OrganizationID AS id,
+				A.DepartName AS name,
+				A.Type AS type,
+				A.Path AS path,
+				A.Level AS level
+			FROM
+				Basis.BIN_Organization A
+			WHERE
+				A.BIN_OrganizationInfoID = #organizationInfoId#
+		]]>
+			<isNotEmpty property="brandInfoId" prepend="AND">
+				A.BIN_BrandInfoID = #brandInfoId#
+			</isNotEmpty>
+		<![CDATA[	
+			ORDER BY
+				A.Path
+		]]>		
+    </select>
+    
+	<!-- 查询对象批次名称 -->
+	<select id="getSearchMemInfo" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+		<![CDATA[
+	   SELECT 
+	   		 RecordName AS recordName,
+	   		 RecordCount AS recordCount,
+	   		 CustomerType AS customerType
+      	FROM 
+      		 Members.BIN_SearchLog
+       WHERE  
+       		 BIN_BrandInfoID=#brandInfoId#
+       		 AND BIN_SearchCode =#searchCode#
+		]]>	
+	</select>
+    
+    <sql id="QuerySaleRecord">
+    	<![CDATA[
+			SELECT
+				A.BIN_SaleRecordID AS saleRecordId,
+				A.MemberCode AS memberCode,
+				A.BillCode AS billCode,
+				A.SaleType AS saleType,
+				A.Quantity AS quantity,
+				A.Amount AS amount,
+				A.Discount AS discount,
+				CONVERT(varchar(30),A.SaleTime,120) AS saleTime,
+				A.Comments AS comments,
+				CASE ISNULL(B.DepartName,'') WHEN '' THEN B.DepartCode ELSE '(' + B.DepartCode + ')' + B.DepartName END AS departCode
+			FROM
+				Sale.BIN_SaleRecord A WITH(NOLOCK)
+				LEFT JOIN Basis.BIN_Organization B WITH(NOLOCK) ON A.BIN_OrganizationID = B.BIN_OrganizationID
+		]]>
+			<isNotEmpty property="privilegeFlag">
+			<isEqual property="privilegeFlag" compareValue="1">			
+		<![CDATA[			
+				JOIN (]]><include refid="BINOLCMINC99.departPrivilegeSql" /><![CDATA[) A99
+				ON A.BIN_OrganizationID=A99.BIN_OrganizationID
+		]]>
+			</isEqual>
+			</isNotEmpty>
+		<![CDATA[
+			WHERE	
+		]]>		
+			<isNotEmpty property="memberInfoId">	
+				A.BIN_MemberInfoID = #memberInfoId# AND
+			</isNotEmpty>
+			<isNotEmpty property="billCode">	
+				A.BillCode like '%'+#billCode#+'%' AND
+			</isNotEmpty>	
+		<![CDATA[				
+				A.ValidFlag = '1'
+		]]>
+    </sql>
+    
+    <!-- 查询销售总数 -->
+	<select id="getSaleRecordCount" parameterClass="java.util.HashMap" resultClass="java.lang.Integer">
+		<![CDATA[
+			SELECT	COUNT(SORT_T1.saleRecordId) AS count FROM (
+		]]>	
+		<include refid="BINOLCM02.QuerySaleRecord" />
+		<![CDATA[	
+			) SORT_T1
+		]]>	
+    </select>
+    
+    <!-- 查询销售信息 -->
+	<select id="getSaleRecordList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+		<include refid="BINOLCMINC99.pageheader" />
+		<include refid="BINOLCM02.QuerySaleRecord" />
+		<include refid="BINOLCMINC99.pagefooter" />
+    </select>
+
+ <!-- 查询Coupon总数 -->
+	<select id="getCouponCount" parameterClass="java.util.HashMap" resultClass="java.lang.Integer">
+		<![CDATA[
+			SELECT  
+				COUNT(CouponCode) AS count
+  			FROM  
+  				Communication.BIN_CouponCreateLog
+  			WHERE
+  			    BatchID =#batchCode#
+		]]>	
+    </select>
+    
+    <!-- 查询经销商sql文 -->
+    <sql id="queryReseller">
+		<![CDATA[
+		select 
+			A.BIN_ResellerInfoID as resellerInfoId,
+			A.ResellerCode as resellerCode,
+			A.ResellerName as resellerName,
+			A.ResellerNameShort as resellerNameShort,
+			A.LegalPerson as legalPerson,
+			A.TelePhone as telePhone,
+			A.Mobile as mobile,
+			A.ValidFlag as validFlag,
+			A.BIN_RegionID as regionId,
+			A.ResellerCodeIF as resellerCodeIf,
+			A.LevelCode as levelCode,
+			A.PriceFlag as priceFlag,
+			A.Status as status,
+			A.ParentResellerCode as parentResellerCode,	
+			A.BIN_ProvinceID as provinceId,
+			A.BIN_CityID as cityId,
+			A.Type as type
+		from 
+			Basis.BIN_ResellerInfo A
+		where
+			A.BIN_BrandInfoID = #brandInfoId#
+			and A.BIN_OrganizationInfoID = #organizationInfoId#
+			and A.ValidFlag = '1'
+		]]>
+			<isNotEmpty prepend="AND" property="param">
+				A.LevelCode = #param#
+			</isNotEmpty>
+	</sql>
+	
+	<!-- 取得经销商总数  -->
+    <select id="getResellerCount" parameterClass="java.util.HashMap" resultClass="java.lang.Integer">
+    	<![CDATA[
+			SELECT	COUNT(SORT_T1.resellerInfoId) AS count FROM (
+		]]>	
+		<include refid="BINOLCM02.queryReseller" />	
+		<include refid="BINOLCMINC99.filterSql" />
+		<![CDATA[	
+			)SORT_T1
+		]]>										
+    </select>
+    
+    <!-- 取得经销商List  -->
+    <select id="getResellerList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+       	<include refid="BINOLCMINC99.pageheader" />
+		<include refid="BINOLCM02.queryReseller" />
+		<include refid="BINOLCMINC99.filterSql" />
+		<include refid="BINOLCMINC99.pagefooter" />
+    </select>
+    
+    <!--     查询分类信息List -->
+	<select id="getSortListSrh" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+	SELECT
+    					pcv.PropValueChinese,
+    					pcv.BIN_PrtCatPropValueID  prtCatPropValueID
+    				FROM
+    
+    					Basis.BIN_PrtCatProperty pcp WITH(NOLOCK),
+    					Basis.BIN_PrtCatPropValue pcv WITH(NOLOCK)
+    				WHERE
+    		
+    					pcv.BIN_PrtCatPropertyID = pcp.BIN_PrtCatPropertyID AND
+    					pcp.TeminalFlag = '1'  
+    </select>
+    
+   
+     <!--     查询品牌信息List -->
+	<select id="getBrandCodeListSrh" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+	
+	      SELECT distinct [OriginalBrand] 
+	      FROM [Basis].[BIN_Product] 		
+          WHERE  OriginalBrand is not null
+          	<isNotEmpty property="organizationInfoId" prepend="AND">
+   			BIN_OrganizationInfoID = #organizationInfoId#  
+   			</isNotEmpty>
+   			<isNotEmpty property="brandInfoId" prepend="AND">
+   			BIN_BrandInfoID = #brandInfoId#
+   			</isNotEmpty>
+		
+    </select>
+
+</sqlMap>

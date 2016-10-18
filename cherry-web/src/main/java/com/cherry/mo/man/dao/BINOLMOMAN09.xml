@@ -1,0 +1,134 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sqlMap PUBLIC "-//iBATIS.com//DTD SQL Map 2.0//EN" "http://ibatis.apache.org/dtd/sql-map-2.dtd">
+<sqlMap namespace="BINOLMOMAN09">
+
+      <!-- POS菜单查询sql文 -->
+     <sql id="posMemu">
+     
+     		SELECT 
+			BIN_PosMenuID AS posMenuID,
+			MenuCode,
+			MenuType,
+			MenuLink,
+			Comment,
+			IsLeaf,
+			ValidFlag
+			 <![CDATA[
+			 FROM
+  				 BIN_PosMenu A WITH(NOLOCK)
+  				 WHERE ValidFlag = '1'
+			  ]]>
+			  <dynamic>
+			   <isNotEmpty prepend="AND" property="menuCode">
+                A.MenuCode  LIKE '%'+#menuCode#+'%'
+               </isNotEmpty>
+               <isNotEmpty prepend="AND" property="menuType">
+                A.MenuType  LIKE '%'+#menuType#+'%'
+               </isNotEmpty>
+               <isNotEmpty prepend="AND" property="menuLink">
+                A.MenuLink  LIKE '%'+#menuLink#+'%'
+               </isNotEmpty>
+			  </dynamic> 		  
+     </sql>
+     
+    <!-- POS菜单总数  -->
+    <select id="getPosMemuInfoCount" parameterClass="java.util.HashMap" resultClass="java.lang.Integer">
+        <![CDATA[
+            SELECT COUNT(SORT_T1.MenuCode) AS count FROM (
+        ]]>
+        <include refid="BINOLMOMAN09.posMemu" />
+        <![CDATA[
+            )SORT_T1
+        ]]>
+    </select>
+
+  	<!--POS菜单List  -->
+	<select id="getPosMemuInfoList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+        <include refid="BINOLCMINC99.pageheader" />
+        <include refid="BINOLMOMAN09.posMemu" />
+        <include refid="BINOLCMINC99.pagefooter" />
+    </select>
+    
+    <!--根据ID取得POS菜单INFO -->
+	<select id="getPosMemu" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+      <![CDATA[
+      
+      		SELECT 
+      		BIN_PosMenuID,
+			MenuCode,
+			MenuType,
+			MenuLink,
+			Comment,
+			IsLeaf,
+			ValidFlag
+      		FROM BIN_PosMenu WITH(NOLOCK)
+      		WHERE BIN_PosMenuID =#posMenuID#
+       ]]>
+    </select>
+    
+     <!-- 修改菜单  -->
+	<update id="updatePosMemu" parameterClass="java.util.HashMap">
+        UPDATE 
+        BIN_PosMenu 
+        SET 
+        MenuCode =  #menuCode#,
+        MenuType =  #menuType#,
+        MenuLink =  #menuLink#,
+        Comment =  #comment#,
+        IsLeaf = #isLeaf#
+		WHERE 
+		BIN_PosMenuID = #posMenuID#          
+    </update>
+    
+    <!-- 新增菜单  -->
+	<insert id="addPosMemu" parameterClass="java.util.HashMap"  >
+	<selectKey resultClass="java.lang.Integer" type="post" keyProperty="BIN_PosMenuID" > 
+        <![CDATA[
+	            INSERT INTO BIN_PosMenu(
+			      	MenuCode,
+			        MenuType,
+			        MenuLink,
+			        Comment,
+			        IsLeaf,
+			        ValidFlag
+          	  )VALUES(
+              		#menuCode#,
+              		#menuType#,
+              		#menuLink#,
+              		#comment#,
+              		#isLeaf#,
+              		'1'
+            )
+           SELECT SCOPE_IDENTITY() AS value
+        ]]>
+   	</selectKey>
+    </insert>
+    
+     <!-- 物理删除菜单  -->
+	<update id="deletePosMemu" parameterClass="java.util.HashMap">
+        UPDATE 
+        BIN_PosMenu 
+        SET 
+      	ValidFlag='0'
+		WHERE 
+		BIN_PosMenuID =#posMenuID# 
+		    
+    </update>
+    
+     <!-- 取得菜单List(WS结构组装使用)  -->
+    <select id="getPosMemuWS" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+    	<![CDATA[
+           SELECT 
+            BIN_PosMenuID,
+      		MenuCode,
+      		MenuType,
+      		MenuLink,
+      		Comment,
+      		IsLeaf,
+      		ValidFlag
+      		FROM BIN_PosMenu WITH(NOLOCK)
+      		WHERE BIN_PosMenuID =#posMenuID#
+		]]>								
+    </select>
+
+</sqlMap>

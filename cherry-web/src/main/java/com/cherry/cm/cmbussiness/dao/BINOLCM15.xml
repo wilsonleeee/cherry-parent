@@ -1,0 +1,247 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sqlMap PUBLIC "-//iBATIS.com//DTD SQL Map 2.0//EN" "http://ibatis.apache.org/dtd/sql-map-2.dtd">
+<sqlMap namespace="BINOLCM15">
+     
+	<select id="getSequenceId" parameterClass="java.util.HashMap" resultClass="java.lang.Integer">
+    	<![CDATA[
+            MERGE  Tools.BIN_SequenceCode AS TGT
+                USING (select #organizationInfoId# as BIN_OrganizationInfoID,#brandInfoId# as BIN_BrandInfoID,#type# as Type2
+                       ) AS SRC
+                ON TGT.BIN_OrganizationInfoID = SRC.BIN_OrganizationInfoID and 
+                    TGT.BIN_BrandInfoID = SRC.BIN_BrandInfoID and 
+                    TGT.Type = SRC.Type2
+            WHEN MATCHED THEN 
+                UPDATE SET TGT.TicketNo = TGT.TicketNo+1
+            WHEN NOT MATCHED THEN 
+                INSERT (BIN_OrganizationInfoID,BIN_BrandInfoID,Type,TicketNo)
+                    values(SRC.BIN_OrganizationInfoID,SRC.BIN_BrandInfoID,SRC.Type2,1)
+            OUTPUT inserted.TicketNo;
+    	]]>
+    </select>
+    
+    <!-- 取得当前编号  -->
+    <select id="getCurrentSequenceId" parameterClass="java.util.HashMap" resultClass="java.lang.Integer">
+            MERGE  Tools.BIN_SequenceCode AS TGT
+                USING (select #organizationInfoId# as BIN_OrganizationInfoID,#brandInfoId# as BIN_BrandInfoID,#type# as Type2
+                       ) AS SRC
+                ON TGT.BIN_OrganizationInfoID = SRC.BIN_OrganizationInfoID and 
+                    TGT.BIN_BrandInfoID = SRC.BIN_BrandInfoID and 
+                    TGT.Type = SRC.Type2
+            WHEN MATCHED THEN 
+                UPDATE SET TGT.TicketNo = TGT.TicketNo+0
+            WHEN NOT MATCHED THEN 
+                INSERT (BIN_OrganizationInfoID,BIN_BrandInfoID,Type,TicketNo)
+                    values(SRC.BIN_OrganizationInfoID,SRC.BIN_BrandInfoID,SRC.Type2,1)
+            OUTPUT inserted.TicketNo;
+    </select>
+    
+    <select id="getPrmCount" parameterClass="java.util.HashMap" resultClass="java.lang.Integer">
+    	<![CDATA[
+           SELECT
+				COUNT(B.BIN_PromotionProductVendorID)
+			FROM
+				Basis.BIN_PromotionProduct A WITH(NOLOCK)
+				JOIN Basis.BIN_PromotionProductVendor B WITH(NOLOCK)
+				ON(A.BIN_PromotionProductID = B.BIN_PromotionProductID)
+			WHERE
+				A.BIN_BrandInfoID = #brandInfoId#
+				AND A.PromotionCateCD = #prmCate#
+				AND (A.UnitCode = #unitCode# OR B.BarCode = #barCode#)
+    	]]>
+    </select>
+    
+    <select id="getPrmVendorId" parameterClass="java.util.HashMap" resultClass="java.lang.Integer">
+    	<![CDATA[
+           SELECT
+				A.BIN_PromotionProductVendorID
+			FROM
+				Basis.BIN_PromotionProductVendor A WITH(NOLOCK)
+			WHERE
+				A.BarCode = #barCode#
+    	]]>
+    </select>
+    
+    <!-- 插入促销产品表  -->
+	<insert id="addPrmInfo" parameterClass="java.util.HashMap">	
+		<selectKey resultClass="java.lang.Integer" type="post" keyProperty="BIN_PromotionProductID" >
+		   <![CDATA[
+		   INSERT INTO Basis.BIN_PromotionProduct
+				      (BIN_OrganizationInfoID,
+					   BIN_BrandInfoID,
+					   UnitCode,												
+				       NameTotal,
+				       StandardCost,
+					   PromotionCateCD,
+					   ExPoint,
+					   IsStock,
+					   Version,
+			]]>
+		    <include refid="BINOLCMINC99.insertKeySql" />	
+			<![CDATA[
+			)VALUES	(
+					  #organizationInfoId#,
+					  #brandInfoId#,
+					  #unitCode#,					
+	                  #nameTotal#,
+	                  #price#,			
+					  #prmCate#,
+					  #exPoint#,
+					  '0',
+					  #tVersion# + 1,
+			]]>
+		   	<include refid="BINOLCMINC99.insertValueSql" />
+			<![CDATA[)select SCOPE_IDENTITY() as value]]> 
+	    </selectKey>
+	</insert> 
+	<!-- 插入促销产品厂商表  -->
+	<insert id="addPrmVendor" parameterClass="java.util.HashMap">
+		<selectKey resultClass="java.lang.Integer" type="post" keyProperty="BIN_PromotionProductVendorID" >
+        <![CDATA[ 
+		INSERT INTO Basis.BIN_PromotionProductVendor(
+			BIN_PromotionProductID,
+			BarCode,
+			BIN_ManufacturerInfoID,
+		]]>
+	    <include refid="BINOLCMINC99.insertKeySql" />	
+		<![CDATA[
+		) VALUES (
+			#promotionId#,
+			#barCode#,
+			1,
+		]]>
+	   	<include refid="BINOLCMINC99.insertValueSql" />
+		<![CDATA[)select SCOPE_IDENTITY() as value]]>
+		</selectKey>
+    </insert>
+    <!-- 更新促销产品表  -->
+    <update id="updatePrmInfo" parameterClass="java.util.HashMap">
+		<![CDATA[
+      	UPDATE A SET 						
+	       	A.NameTotal = #nameTotal#,
+	       	A.StandardCost = #price#,
+		   	A.ExPoint = #exPoint#,
+		   	A.Version = #tVersion# + 1
+	  	FROM
+			Basis.BIN_PromotionProduct A
+			JOIN Basis.BIN_PromotionProductVendor B
+			ON(A.BIN_PromotionProductID = B.BIN_PromotionProductID)
+		WHERE
+			B.BIN_PromotionProductVendorID = #prmVendorId#
+		]]> 
+	</update>
+	<select id="getBarCodeCount" parameterClass="java.util.HashMap" resultClass="java.lang.Integer">
+     <![CDATA[SELECT COUNT(T.proId) FROM(]]>
+     <include refid="BINOLCMINC99.getAllProPrmInfo" />
+     <![CDATA[) T WHERE (T.barCode = #barCode# OR T.unitCode = #barCode#)]]>
+     <isNotEmpty property="prmVendorId" prepend="AND">
+		T.proId != #prmVendorId#
+	 </isNotEmpty>
+     </select>
+    <!-- 取得虚拟促销品 -->
+    <select id="getVirtualPrmVendorId" parameterClass="java.util.HashMap" resultClass="java.lang.String">
+		SELECT 
+			PV.BIN_PromotionProductVendorID
+		FROM 
+			Basis.BIN_PromotionProductVendor PV
+		JOIN Basis.BIN_PromotionProduct P ON P.BIN_PromotionProductID = PV.BIN_PromotionProductID
+		WHERE
+			P.BIN_BrandInfoID = #brandInfoId#
+		AND PV.BarCode = #barCode#
+    </select>
+    
+	<!-- 插入促销产品表  -->
+	<insert id="insertPromotionProduct" parameterClass="java.util.HashMap">	
+	<selectKey resultClass="java.lang.Integer" type="post" keyProperty="BIN_PromotionProductID" >
+		   <![CDATA[
+		   INSERT INTO Basis.BIN_PromotionProduct
+				      (BIN_OrganizationInfoID,
+					   BIN_BrandInfoID,
+					   BIN_PromotionPrtTypeID,
+					   UnitCode,												
+				       NameTotal,												
+				       NameShort,												
+				       NameAlias,												
+				       NameForeign,
+				       NameShortForeign,												
+				       StyleCode,												
+				       OperationStyle,																								
+				       Volume,												
+				       VolumeUnitMeasureCode,												
+				       Weight,												
+				       WeightUnitMeasureCode,												
+				       ModuleCode,												
+				       SaleUnit,												
+				       DiscontinueReseller,												
+				       DiscontinueCounter,												
+				       StandardCost,																						
+				       IsReplenish,												
+				       Status,
+					   ShelfLife,
+					   PromotionCateCD,
+					   ExPoint,
+					   IsStock,
+					   IsExchanged,
+					   Version,		
+			]]>	
+			<include refid="BINOLCMINC99.insertKeySql" />	
+			<![CDATA[								
+			)VALUES									
+					 (#organizationInfoId#,
+					  #brandInfoId#,
+					  #promPrtTypeId#,
+					  #unitCode#,					
+	                  #nameTotal#,					
+	                  #nameShort#,					
+	                  #nameAlias#,					
+	                  #nameForeign#,
+					  #nameShortForeign#,					
+					  #styleCode#,
+	                  #operationStyle#,					
+	                  #volume#,					
+	                  #volumeUnit#,				
+	                  #weight#,					
+	                  #weightUnit#,					
+	                  #moduleCode#,					
+	                  #saleUnit#,					
+	                  #discontReseller#,					
+	                  #discontCounter#,					
+	                  #standardCost#,			
+	                  #isReplenish#,					
+	                  #status#,	
+					  #shelfLife#,
+					  #promCate#,
+					  #exPoint#,
+					  #isStock#,
+					  #isExchanged#,
+					  #tVersion# + 1,
+			]]>
+			<include refid="BINOLCMINC99.insertValueSql" />
+			<![CDATA[)
+			select SCOPE_IDENTITY() as value
+			]]> 
+	    </selectKey>
+	</insert> 
+	
+	<!-- 插入促销产品厂商表  -->
+	<insert id="insertPromProductVendor" parameterClass="java.util.HashMap">
+        <![CDATA[ 
+		INSERT INTO Basis.BIN_PromotionProductVendor							
+		           (BIN_PromotionProductID,					
+		            BIN_ManufacturerInfoID,					
+		            BarCode,
+		]]>	
+		    <include refid="BINOLCMINC99.insertKeySql" />		
+		<![CDATA[			
+        )VALUES							
+		           (#promProductId#,					
+		            #manuFactId#,					
+		            #barCode#,					
+       ]]>
+	        <include refid="BINOLCMINC99.insertValueSql" />
+		<![CDATA[
+		)
+		select SCOPE_IDENTITY() as value
+		]]>
+    </insert>
+    
+</sqlMap>

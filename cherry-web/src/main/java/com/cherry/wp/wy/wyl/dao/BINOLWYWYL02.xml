@@ -1,0 +1,189 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sqlMap PUBLIC "-//iBATIS.com//DTD SQL Map 2.0//EN" "http://ibatis.apache.org/dtd/sql-map-2.dtd">
+<sqlMap namespace="BINOLWYWYL02">
+
+    <!-- 取得会员活动单据LIST信息 -->
+	<resultMap id="BINOLWYWYL02.orderInfoMap" class="java.util.HashMap">
+		<result property="detailList" column="campaignOrderId" select="BINOLWYWYL02.getOrderDetailList" javaType="java.util.List" />
+		<result property="billCode" column="billCode"/>
+		<result property="memberInfoId" column="memberInfoId"/>
+		<result property="messageId" column="messageId"/>
+		<result property="memberCode" column="memberCode"/>
+		<result property="memberName" column="memberName"/>
+		<result property="birthDay" column="birthDay"/>
+		<result property="gender" column="gender"/>
+		<result property="mobilePhone" column="mobilePhone"/>
+		<result property="counterCode" column="counterCode"/>
+		<result property="counterName" column="counterName"/>
+		<result property="couponCode" column="couponCode"/>
+		<result property="state" column="state"/>
+		<result property="subType" column="subType"/>
+		<result property="campaignCode" column="campaignCode"/>
+		<result property="campaignName" column="campaignName"/>
+		<result property="campaignOrderTime" column="campaignOrderTime"/>
+		<result property="bookDate" column="bookDate"/>
+		<result property="getFromTime" column="getFromTime"/>
+		<result property="getToTime" column="getToTime"/>
+		<result property="totalQuantity" column="totalQuantity"/>
+		<result property="totalAmount" column="totalAmount"/>
+		<result property="finishTime" column="finishTime"/>
+		<result property="remark" column="remark"/>
+	</resultMap>
+	
+	<select id="getOrderList" parameterClass="java.util.HashMap" resultMap="BINOLWYWYL02.orderInfoMap">
+    	<![CDATA[
+			SELECT 
+				tr.TradeNoIF as billCode,
+				tr.BIN_CampaignOrderID as campaignOrderId,
+				tr.BIN_MemberInfoID as memberInfoId,
+				tr.MessageId as messageId,
+				tr.MemCode as memberCode,
+				isnull(tr.Name,tm.Name) as memberName,
+				tm.BirthDay as birthDay,
+				isnull(tm.Gender,2) as gender,
+				tr.Mobile as mobilePhone,
+				tr.CounterGot as counterCode,
+				(case tr.CounterGot when 'ALL' then '不限' else tt.CounterNameIF end) as counterName,
+				tr.CouponCode as couponCode,
+				tr.State as state,
+				tr.SubType as subType,
+				tr.CampaignCode as campaignCode,
+				tc.CampaignName as campaignName,
+				CONVERT(varchar,tr.CampaignOrderTime,23) AS campaignOrderTime,
+				CONVERT(varchar,tr.BookDate,23) AS bookDate,
+				CONVERT(varchar,tr.GetFromTime,120) AS getFromTime,
+				CONVERT(varchar,tr.GetToTime,120) AS getToTime,
+				tr.Quantity as totalQuantity,
+				tr.Amout as totalAmount,
+				tr.FinishTime as finishTime,
+				tr.Remark as remark 
+			FROM 
+				Campaign.BIN_CampaignOrder as tr WITH(NOLOCK) 
+				Inner Join Campaign.BIN_Campaign as tc WITH(NOLOCK) on tr.CampaignCode = tc.CampaignCode AND tr.BIN_BrandInfoID = tc.BIN_BrandInfoID 
+				Left join Members.BIN_MemberInfo as tm WITH(NOLOCK) on tr.BIN_MemberInfoID = tm.BIN_MemberInfoID 
+				Left join Basis.BIN_CounterInfo as tt WITH(NOLOCK) on tr.CounterGot = tt.CounterCode 
+			WHERE
+				tr.ValidFlag = '1' AND 
+				tr.BIN_OrganizationInfoID = #organizationInfoId# AND 
+				tr.BIN_BrandInfoID = #brandInfoId# AND 
+				tr.GetFromTime <= GETDATE() AND 
+				tr.GetToTime >= GETDATE() 
+		]]>
+		<dynamic>
+			<isNotEmpty property="billCode" prepend="AND">
+				<![CDATA[tr.TradeNoIF = #billCode#]]>
+			</isNotEmpty>
+			<isNotEmpty property="state" prepend="AND">
+				<![CDATA[tr.State = #state#]]>
+			</isNotEmpty>
+			<isNotEmpty property="stateArr" prepend="AND">
+				<![CDATA[tr.State IN]]>
+				<iterate conjunction="," open="(" close=")" property="stateArr">  
+			       <![CDATA[#stateArr[]#]]>
+			    </iterate>
+			</isNotEmpty>
+			<isNotEmpty property="couponCode" prepend="AND">
+				<![CDATA[tr.CouponCode = #couponCode#]]>
+			</isNotEmpty>
+			<isNotEmpty property="counterCode" prepend="AND">
+				<![CDATA[tr.CounterGot IN (#counterCode#,'ALL')]]>
+			</isNotEmpty>
+		</dynamic>
+		<![CDATA[ORDER BY tr.TradeNoIF DESC]]>
+	</select>
+	
+	<select id="getOrderDetailList" parameterClass="java.lang.Integer" resultClass="java.util.HashMap">
+    	<![CDATA[
+			SELECT
+				td.UnitCode as unitCode,
+				td.BarCode as barCode,
+				(case GiftType when 'P' then tb.NameTotal else tt.NameTotal end) as productName,
+				td.Quantity as quantity,
+				td.Amout AS price,
+				td.PointRequired AS exPoint,
+				td.MainCode as mainCode 
+			FROM
+				Campaign.BIN_CampaignOrderDetail as td WITH(NOLOCK) 
+				Left join(
+					SELECT 
+						tpv.BIN_PromotionProductVendorID,
+						tpb.NameTotal
+					FROM 
+						Basis.BIN_PromotionProductVendor as tpv with(nolock)
+						Inner join Basis.BIN_PromotionProduct as tpb with(nolock) on tpb.BIN_PromotionProductID = tpv.BIN_PromotionProductID
+				) as tb on td.BIN_ProductVendorID = tb.BIN_PromotionProductVendorID 
+				Left join(
+					SELECT 
+						tpv.BIN_ProductVendorID,
+						tpb.NameTotal 
+					FROM 
+						Basis.BIN_ProductVendor as tpv with(nolock)
+						Inner join Basis.BIN_Product as tpb with(nolock) on tpb.BIN_ProductID = tpv.BIN_ProductID
+				) as tt on td.BIN_ProductVendorID = tt.BIN_ProductVendorID 
+			WHERE
+				BIN_CampaignOrderID = #BIN_CampaignOrderID#
+				AND ValidFlag = '1'
+		]]>
+	</select>
+	
+	<!-- 更新会员信息-->    
+    <update id="updateMemberInfo" parameterClass="java.util.HashMap">
+	    <![CDATA[
+		    UPDATE 
+				Members.BIN_MemberInfo 
+			SET 
+			]]>
+			<isNotEmpty property="memberName">
+				<![CDATA[Name = #memberName#,]]>
+			</isNotEmpty>
+			<isNotEmpty property="birthDay">
+				<![CDATA[BirthDay = #birthDay#,]]>
+			</isNotEmpty>
+			<isNotEmpty property="gender">
+				<![CDATA[Gender = #gender#,]]>
+			</isNotEmpty>
+			<include refid="BINOLCMINC99.updateSql" />
+			<![CDATA[
+			WHERE 
+				BIN_OrganizationInfoID = #organizationInfoId# AND 
+			  	BIN_BrandInfoID = #brandInfoId# AND 
+			  	BIN_MemberInfoID = #memberInfoId# 
+		]]>
+    </update>
+    
+    <select id="getMemberInfoByMessageId" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+    	<![CDATA[
+    		SELECT top 1 
+				tm.BIN_MemberInfoID as memberInfoId,
+				tc.MemCode as memCode,
+				tm.Name as memberName,
+				tm.BirthDay as birthDay,
+				isnull(tm.Gender,2) as gender
+			FROM 
+				Members.BIN_MemberInfo as tm WITH(NOLOCK) 
+				Inner join Members.BIN_MemCardInfo as tc WITH(NOLOCK) ON tm.BIN_MemberInfoID = tc.BIN_MemberInfoID AND tc.ValidFlag = 1 AND tc.CardValidFlag = 1
+			WHERE
+				tm.ValidFlag = '1' AND 
+				tm.BIN_OrganizationInfoID = #organizationInfoId# AND 
+				tm.BIN_BrandInfoID = #brandInfoId# AND 
+				tm.MessageId = #messageId#
+		]]>
+	</select>
+	
+	<!-- 更新单据中的会员-->    
+    <update id="updateOrderMemberId" parameterClass="java.util.HashMap">
+	    <![CDATA[
+		    UPDATE 
+		    	Campaign.BIN_CampaignOrder 
+			SET 
+				BIN_MemberInfoID = #memberInfoId#,
+				MemCode = #memCode# 
+			WHERE 
+				BIN_OrganizationInfoID = #organizationInfoId# AND 
+				BIN_BrandInfoID = #brandInfoId# AND 
+				TradeNoIF = #billCode# 
+		]]>
+    </update>
+    
+</sqlMap>
+

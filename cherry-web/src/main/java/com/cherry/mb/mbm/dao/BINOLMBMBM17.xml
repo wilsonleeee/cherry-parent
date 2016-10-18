@@ -1,0 +1,97 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sqlMap PUBLIC "-//iBATIS.com//DTD SQL Map 2.0//EN" "http://ibatis.apache.org/dtd/sql-map-2.dtd">
+<sqlMap namespace="BINOLMBMBM17">
+    
+    <!-- 停用启用会员信息  -->
+	<update id="updMemValidFlag" parameterClass="java.util.HashMap">
+		<![CDATA[
+			UPDATE
+				Members.BIN_MemberInfo
+			SET
+				ValidFlag = #validFlag#,
+				Version = #version#,
+		]]>
+		<include refid="BINOLCMINC99.updateSql" />
+		<![CDATA[		
+			WHERE
+				BIN_MemberInfoID = #memberInfoId#
+		]]>
+    </update>
+    
+    <!-- 停用启用会员卡信息 -->
+	<update id="updMemCardValidFlag" parameterClass="java.util.HashMap">
+		<![CDATA[
+			UPDATE
+				Members.BIN_MemCardInfo
+			SET
+				CardValidFlag = #validFlag#,
+		]]>
+		<include refid="BINOLCMINC99.updateSql" />
+		<![CDATA[		
+			WHERE
+				MemCode = #memCode# AND
+				BIN_MemberInfoID = #memberInfoId#
+		]]>
+    </update>
+    
+    <!-- 查询会员卡信息List -->
+	<select id="getMemCardInfoList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+		<![CDATA[
+			SELECT
+				BIN_MemberInfoID AS memberInfoId,
+				MemCode AS memCode,
+				CardCount AS cardCount
+			FROM	
+				Members.BIN_MemCardInfo
+			WHERE
+				BIN_MemberInfoID IN
+		]]>
+			<iterate property="memberInfoId" close=")" open="(" conjunction=",">
+				#memberInfoId[]#
+			</iterate>
+		<![CDATA[
+			ORDER BY
+				BIN_MemberInfoID,
+				CardCount DESC
+		]]>	
+    </select>
+    
+    <!-- 查询会员信息List -->
+	<select id="getMemInfoList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+		<![CDATA[
+			SELECT
+				A.BIN_MemberInfoID AS memberInfoId,
+				A.Name AS memName,
+				A.Email AS email,
+				A.MobilePhone AS mobilePhone,
+				A.Telephone AS telephone,
+				CONVERT(varchar(30),A.JoinDate,120) AS joinDate,
+				A.BirthYear AS birthYear,
+				A.BirthDay AS birthDay,
+				A.Gender AS gender,
+				A.IsReceiveMsg AS isReceiveMsg,
+				A.TestType AS testType,
+				A.CounterCodeBelong AS organizationCode,
+				A.BaCodeBelong AS employeeCode,
+				E.MemCode AS referrer,
+				C.AddressLine1 AS address,
+				C.StandardCity AS cityId,
+				C.StandardProvince AS provinceId,
+				C.ZipCode AS postcode
+			FROM	
+				Members.BIN_MemberInfo A 
+				LEFT JOIN Members.BIN_MemberAddress B
+					LEFT JOIN Basis.BIN_AddressInfo C ON B.BIN_AddressInfoID = C.BIN_AddressInfoID
+				ON A.BIN_MemberInfoID = B.BIN_MemberInfoID	
+				LEFT JOIN Members.BIN_MemberInfo D 
+					LEFT JOIN Members.BIN_MemCardInfo E ON D.BIN_MemberInfoID = E.BIN_MemberInfoID AND E.CardValidFlag = '1' AND E.ValidFlag = '1'
+				ON A.ReferrerID = D.BIN_MemberInfoID	
+			WHERE
+				A.BIN_MemberInfoID IN
+		]]>
+			<iterate property="memberInfoList" close=")" open="(" conjunction=",">
+				#memberInfoList[].memberInfoId#
+			</iterate>	
+    </select>
+    
+</sqlMap>

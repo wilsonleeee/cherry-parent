@@ -1,0 +1,188 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sqlMap PUBLIC "-//iBATIS.com//DTD SQL Map 2.0//EN" "http://ibatis.apache.org/dtd/sql-map-2.dtd">
+<sqlMap namespace="BINOLMOCIO17">
+	<!-- 柜台消息Excel导入查询sql文 -->
+	<sql id="counterMessageImportQuery">
+		<![CDATA[
+			SELECT DISTINCT
+				A.BIN_CounterMessageImportID AS counterMessageImportId,
+				A.ImportBatch AS importBatch,
+				A.MessageTitle AS messageTitle,
+				A.MessageBody AS messageBody,
+				A.StartValidDate AS startValidDate,
+				A.EndValidDate AS endValidDate,
+				A.BIN_EmployeeID AS employeeID,
+				B.EmployeeCode AS employeeCode,
+				A.Comments AS comments,
+				A.ImportDate AS importDate,
+				A.ImportResult AS importResult,
+				A.BrandCode AS brandCode,
+				ISNULL(C.Status,'0') AS publishStatus
+		]]>	
+		<isNotEmpty property="language">
+            <isEqual property="language" compareValue="en_US">
+            	,CASE ISNULL(B.EmployeeCode,'') WHEN '' THEN B.EmployeeNameForeign ELSE '('+B.EmployeeCode+')'+B.EmployeeNameForeign END AS employee
+				,B.EmployeeNameForeign AS employeeName
+            </isEqual>
+            <isEqual property="language" compareValue="zh_CN">
+            	,CASE ISNULL(B.EmployeeCode,'') WHEN '' THEN B.EmployeeName ELSE '('+B.EmployeeCode+')'+B.EmployeeName END AS employee
+				,B.EmployeeName AS employeeName
+			</isEqual>
+		</isNotEmpty>
+		<isEmpty property="language">
+			,CASE ISNULL(B.EmployeeCode,'') WHEN '' THEN B.EmployeeName ELSE '('+B.EmployeeCode+')'+B.EmployeeName END AS employee
+			,B.EmployeeName AS employeeName
+		</isEmpty>
+		<![CDATA[
+		FROM 
+			Monitor.BIN_CounterMessageImport A WITH(NOLOCK)
+			LEFT JOIN Basis.BIN_Employee B WITH(NOLOCK)
+			ON(A.BIN_EmployeeID = B.BIN_EmployeeID)
+		    LEFT JOIN Monitor.BIN_CounterMessage C WITH(NOLOCK) 
+		    ON(A.BIN_CounterMessageID = C.BIN_CounterMessageID AND A.ImportBatch = C.ImportBatch)
+		    LEFT JOIN Monitor.BIN_CounterMessageImportDetail D WITH(NOLOCK)
+		    ON(A.BIN_CounterMessageImportID = D.BIN_CounterMessageImportID)
+		]]>
+		<dynamic prepend="WHERE">
+			<isNotEmpty prepend="AND" property="brandInfoId">
+				<![CDATA[A.BIN_BrandInfoID = #brandInfoId#]]>
+			</isNotEmpty>
+			<isNotEmpty prepend="AND" property="organizationInfoId">
+				<![CDATA[A.BIN_OrganizationInfoID = #organizationInfoId#]]>
+			</isNotEmpty>
+			<isNotEmpty prepend="AND" property="counterMessageImportId">
+				<![CDATA[A.BIN_CounterMessageImportID = #counterMessageImportId#]]>
+			</isNotEmpty>
+			<isNotEmpty prepend="AND" property="importBatchId">
+				<![CDATA[A.BIN_ImportBatchID = #importBatchId#]]>
+			</isNotEmpty>
+			<isNotEmpty prepend="AND" property="messageTitle">
+				<![CDATA[A.MessageTitle LIKE '%' + #messageTitle# + '%']]>
+			</isNotEmpty>
+			<isNotEmpty prepend="AND" property="messageBody">
+				<![CDATA[A.MessageBody LIKE '%' + #messageBody# + '%']]>
+			</isNotEmpty>
+			<isNotEmpty prepend="AND" property="startValidDateBegin">
+				<![CDATA[A.StartValidDate >= #startValidDateBegin#]]>
+			</isNotEmpty>
+			<isNotEmpty prepend="AND" property="startValidDateFinish">
+				<![CDATA[A.StartValidDate <= #startValidDateFinish#]]>
+			</isNotEmpty>
+			<isNotEmpty prepend="AND" property="endValidDateBegin">
+				<![CDATA[A.EndValidDate >= #endValidDateBegin#]]>
+			</isNotEmpty>
+			<isNotEmpty prepend="AND" property="endValidDateFinish">
+				<![CDATA[A.EndValidDate <= #endValidDateFinish#]]>
+			</isNotEmpty>
+			<isNotEmpty prepend="AND" property="importResult">
+				<![CDATA[A.ImportResult = #importResult#]]>
+			</isNotEmpty>
+			<isNotEmpty prepend="AND" property="publishStatus">
+				<isEqual property="publishStatus" compareValue="1">
+					<![CDATA[C.PublishDate IS NOT NULL]]>
+				</isEqual>
+				<isEqual property="publishStatus" compareValue="0">
+					<![CDATA[C.PublishDate IS NULL]]>
+				</isEqual>
+			</isNotEmpty>
+			<isNotEmpty prepend="AND" property="counterCode">
+				<![CDATA[D.CounterCode LIKE '%' + #counterCode# + '%']]>
+			</isNotEmpty>
+			<isNotEmpty prepend="AND" property="counterName">
+				<![CDATA[D.CounterName LIKE '%' + #counterName# + '%']]>
+			</isNotEmpty>
+		</dynamic>
+	</sql>
+	
+	<!-- 查询一个批次中柜台消息导入总数 -->
+	<select id="getCntMsgImportCount" parameterClass="java.util.HashMap" resultClass="java.lang.Integer">
+    	<![CDATA[
+			SELECT	COUNT(1) AS count FROM (
+		]]>	
+		<include refid="BINOLMOCIO17.counterMessageImportQuery" />
+		<![CDATA[	
+			)SORT_T1
+		]]>		
+	</select>	
+	
+	<!-- 查询一个批次中柜台消息Excel导入信息LIST -->
+	<select id="getCntMsgImportList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+		<include refid="BINOLCMINC99.pageheader" />
+		<include refid="BINOLMOCIO17.counterMessageImportQuery" />
+		<include refid="BINOLCMINC99.pagefooter" />
+	</select>
+	
+	<!-- 柜台消息（Excel导入）明细 sql文 -->
+	<sql id="counterMessageImportDetailQuery">
+		<![CDATA[
+			SELECT 
+				BIN_CounterMessageImportDetailID AS counterMessageImportDetailId
+				,BIN_CounterMessageImportID AS counterMessageImportId
+				,BIN_OrganizationID AS id
+				,CounterCode AS counterCode
+				,CounterName AS counterName
+				,ErrorMsg AS errorMsg
+			FROM 
+				Monitor.BIN_CounterMessageImportDetail WITH(NOLOCK)
+			WHERE
+				BIN_CounterMessageImportID = #counterMessageImportId#
+		]]>
+			<isNotEmpty prepend="AND" property="validFlag">
+				ValidFlag = #validFlag#
+			</isNotEmpty>
+	</sql>
+	
+	<!-- 柜台消息（Excel导入）明细 sql文 -->
+	<!-- 查询入库（Excel导入）明细 -->
+	<select id="getCntMsgImportDetailList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">	
+		<include refid="BINOLMOCIO17.counterMessageImportDetailQuery" />
+	</select>
+	
+	<!-- 根据ID查询柜台消息（Excel导入）信息 -->
+	<select id="getCntMsgImportInfo" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+		<include refid="BINOLMOCIO17.counterMessageImportQuery" />
+	</select>
+	
+	<!-- 导出数据查询sql文 -->
+	<sql id="queryExportData">
+		<![CDATA[
+			SELECT 
+				T0.importBatch,
+				T0.brandCode,
+				B.CounterCode AS counterCode,
+				B.CounterName AS counterName,
+				T0.messageTitle,
+				T0.messageBody,
+				T0.startValidDate,
+				T0.endValidDate,
+				T0.importResult,
+				T0.publishStatus,
+				T0.employee,
+				B.ErrorMsg AS errorMsg
+			FROM(
+		]]>
+		<include refid="BINOLMOCIO17.counterMessageImportQuery" />
+		<![CDATA[ ) T0
+				LEFT JOIN Monitor.BIN_CounterMessageImportDetail B WITH(NOLOCK)
+				ON(T0.counterMessageImportId=B.BIN_CounterMessageImportID)
+		]]> 
+	</sql>
+	
+	<!-- 导出数据总数 -->
+	<select id="getExportDataCount" parameterClass="java.util.HashMap" resultClass="java.lang.Integer">
+    	<![CDATA[
+			SELECT	COUNT(1) AS count FROM (
+		]]>	
+		<include refid="BINOLMOCIO17.queryExportData" />
+		<![CDATA[	
+			)SORT_T1
+		]]>		
+	</select>	
+	
+	<!-- 导出数据 -->
+	<select id="getExportDataList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+		<include refid="BINOLCMINC99.pageheader" />
+		<include refid="BINOLMOCIO17.queryExportData" />
+		<include refid="BINOLCMINC99.pagefooter" />
+	</select>
+</sqlMap>

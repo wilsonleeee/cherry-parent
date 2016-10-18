@@ -1,0 +1,341 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sqlMap PUBLIC "-//iBATIS.com//DTD SQL Map 2.0//EN" "http://ibatis.apache.org/dtd/sql-map-2.dtd">
+<sqlMap namespace="AgentInfo">
+
+	<!-- 添加微商申请单据 -->
+    <insert id="addAgentApply" parameterClass="java.util.HashMap">
+    	<![CDATA[
+    		INSERT INTO Basis.BIN_AgentApply		
+			(					
+				BIN_OrganizationInfoID,				
+				BIN_BrandInfoID,				
+				BillCode,
+				ApplyType,				
+				Status,
+				ApplyTime,
+				ApplyMobile,
+				ApplyName,
+				ApplyOpenID,
+				ApplyProvince,
+				ApplyCity,
+				ApplyDesc,
+				ApplyLevel,
+				SuperMobile,
+				OldSuperMobile,
+		]]>
+				<include refid="BINOLCMINC99.insertKeySql" />		
+		<![CDATA[						
+			)					
+			VALUES					
+			(					
+				#BIN_OrganizationInfoID#,				
+				#BIN_BrandInfoID#,				
+				#BillCode#,
+				#ApplyType#,				
+				#Status#,
+				#ApplyTime#,
+				#ApplyMobile#,
+				#ApplyName#,
+				#ApplyOpenID#,
+				#ApplyProvince#,
+				#ApplyCity#,
+				#ApplyDesc#,
+				#ApplyLevel#,
+				#SuperMobile#,
+				#OldSuperMobile#,
+		]]>
+				<include refid="BINOLCMINC99.insertValueSql" />		
+		<![CDATA[							
+			)			
+    	]]> 
+    </insert>
+    
+    <!-- 添加微商操作履历 -->
+    <insert id="addAgentApplyLog" parameterClass="java.util.HashMap">
+    	<![CDATA[
+    		INSERT INTO Basis.BIN_AgentApplyLog		
+			(					
+				BIN_OrganizationInfoID,				
+				BIN_BrandInfoID,				
+				BillCode,		
+				Status,
+				LogType,
+				LogTime,
+				LogSource,
+				ApplyMobile,
+				Assigner,
+				Auditor,
+				ApplyType,
+				SuperMobile,
+				AuditLevel,
+				Reason,
+		]]>
+				<include refid="BINOLCMINC99.insertKeySql" />		
+		<![CDATA[						
+			)					
+			VALUES					
+			(					
+				#BIN_OrganizationInfoID#,				
+				#BIN_BrandInfoID#,		
+				#BillCode#,
+				#Status#,
+				#LogType#,
+				#LogTime#,
+				#LogSource#,
+				#ApplyMobile#,
+				#Assigner#,
+				#Auditor#,
+				#ApplyType#,
+				#SuperMobile#,
+				#AuditLevel#,
+				#Reason#,
+		]]>
+				<include refid="BINOLCMINC99.insertValueSql" />		
+		<![CDATA[							
+			)			
+    	]]> 
+    </insert>
+    
+    <!-- 审核微商申请单据 -->
+    <update id="auditAgentApply" parameterClass="java.util.HashMap">
+    	<![CDATA[			
+	    	UPDATE 
+	    		Basis.BIN_AgentApply
+	    	SET
+	    		Status=#Status#,
+	    		Auditor=#Auditor#,
+	    		AuditTime=#AuditTime#,
+	    		AuditLevel=#AuditLevel#,
+	    		Reason=#Reason#,
+    	]]>
+    		<include refid="BINOLCMINC99.updateSql" /> 
+    	<![CDATA[	
+	    	WHERE 
+	    		BillCode = #BillCode#
+    	]]> 
+    </update>
+    
+    <!-- 分配微商申请单据 -->
+    <update id="assignAgentApply" parameterClass="java.util.HashMap">
+    	<![CDATA[			
+	    	UPDATE 
+	    		Basis.BIN_AgentApply
+	    	SET
+	    		Status=#status#,
+	    		SuperMobile=#superMobile#,
+	    		Assigner=#assigner#,
+	    		AssignTime=#assignTime#,
+    	]]>
+    		<include refid="BINOLCMINC99.updateSql" /> 
+    	<![CDATA[	
+	    	WHERE 
+	    		BillCode = #billCode#
+    	]]> 
+    </update>
+    
+    <!-- 查询微商申请单据信息 -->
+    <select id="getAgentApplyInfo" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+    	<![CDATA[			
+	    	SELECT
+				A.BillCode AS billCode,
+				A.ApplyType AS applyType,				
+				A.Status AS status,
+				A.ApplyTime AS applyTime,
+				A.ApplyMobile AS applyMobile,
+				A.ApplyName AS applyName,
+				A.ApplyOpenID AS applyOpenID,
+				A.ApplyProvince AS applyProvince,
+				A.ApplyCity AS applyCity,
+				A.SuperMobile AS superMobile
+	    	FROM
+	    		Basis.BIN_AgentApply A WITH(NOLOCK)
+	    	WHERE
+	    		A.BillCode = #BillCode#
+    	]]>
+    </select>
+    
+    <!-- 查询微商申请单据是否存在 -->
+    <select id="getAgentApplyExist" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+    	<![CDATA[			
+	    	SELECT
+				A.BillCode AS billCode
+	    	FROM
+	    		Basis.BIN_AgentApply A WITH(NOLOCK)
+	    	WHERE
+	    		A.ApplyMobile = #ApplyMobile# AND
+	    		A.Status IN ('1','2')
+    	]]>
+    </select>
+	
+	<!-- 微商微信绑定 -->
+    <update id="agentBind" parameterClass="java.util.HashMap">
+    	<![CDATA[			
+	    	UPDATE 
+	    		Basis.BIN_Employee
+	    	SET
+	    		OpenID=#AgentOpenID#,
+    	]]>
+    		<include refid="BINOLCMINC99.updateSql" /> 
+    	<![CDATA[	
+	    	WHERE 
+	    		BIN_EmployeeID = #employeeId#
+    	]]> 
+    </update>
+
+	<!-- 判断是否是保留号 -->    
+	 <select id="getReservedCode" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+    	<![CDATA[
+    		SELECT DISTINCT
+    			ReservedCode
+    		FROM
+    			Basis.BIN_AgentReservedCode
+    		WHERE 
+    			BIN_OrganizationInfoID = #organizationInfoId#
+    		AND BIN_BrandInfoID = #brandInfoId#
+    		AND ReservedCode = #ReservedCode#
+    	]]>
+    </select>
+    
+    <!-- 微商微信绑定 -->
+    <update id="updateSequenceId" parameterClass="java.util.HashMap">
+    	<![CDATA[			
+	    	UPDATE 
+	    		Tools.BIN_SequenceCode
+	    	SET
+	    		TicketNo = #TicketNo#,
+    	]]>
+   		<include refid="BINOLCMINC99.updateSql" /> 
+    	<![CDATA[	
+	    	WHERE 
+	    		BIN_OrganizationInfoID = #organizationInfoId#
+    		AND BIN_BrandInfoID = #brandInfoId#
+    		AND Type = #type#
+    	]]> 
+    </update>
+    
+    <!-- 查询员工是否存在 -->
+    <select id="getEmpExistsMap" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+    	<![CDATA[
+    		SELECT
+    			BIN_EmployeeID,
+    			MobilePhone
+    		FROM
+    			Basis.BIN_Employee
+    		WHERE
+    			BIN_OrganizationInfoID = #BIN_OrganizationInfoID#	
+    		AND BIN_BrandInfoID=#BIN_BrandInfoID#
+    		AND EmployeeCode = #EmployeeCode#
+    	]]>
+    </select>
+    
+    <!-- 更新员工手机号 -->
+    <update id="updateAgentMobile" parameterClass="java.util.HashMap">
+    <![CDATA[			
+    	UPDATE 
+    		Basis.BIN_Employee
+    	SET
+    		MobilePhone = #MobilePhone#,
+   	]]>
+	<include refid="BINOLCMINC99.updateSql" /> 
+   	<![CDATA[	
+    	WHERE 
+    		BIN_OrganizationInfoID = #BIN_OrganizationInfoID#
+   		AND BIN_BrandInfoID = #BIN_BrandInfoID#
+   		AND EmployeeCode = #EmployeeCode#
+   	]]> 
+    </update>
+    
+    <!-- 更新员工帐户信息 -->
+    <insert id="updateAgentMobOrAccInfo" parameterClass="java.util.HashMap">
+    	<![CDATA[
+    		MERGE Basis.BIN_EmpAccountInfo WITH (HOLDLOCK) AS TGT
+    			USING (
+    				SELECT 
+    					#BIN_EmployeeID# AS BIN_EmployeeID,
+    					#BIN_OrganizationInfoID# AS BIN_OrganizationInfoID,
+    					#BIN_BrandInfoID# AS BIN_BrandInfoID,
+    					#AccountType# AS AccountType,
+    					#AccountName# AS AccountName,
+    					#Account# AS Account,
+    					#BankInfo# AS BankInfo,
+    					#ProvinceName# AS ProvinceName,
+    					#CityName# AS CityName
+    					
+    			) AS SRC
+    			ON 
+    				TGT.BIN_EmployeeID = SRC.BIN_EmployeeID
+    			AND TGT.BIN_OrganizationInfoID = SRC.BIN_OrganizationInfoID
+    			AND TGT.BIN_BrandInfoID = SRC.BIN_BrandInfoID
+    			AND TGT.AccountType = SRC.AccountType
+    		WHEN MATCHED THEN
+    			UPDATE 
+    				SET 
+    					TGT.Account = SRC.Account,
+    					TGT.AccountName = SRC.AccountName,
+ 		]]>
+ 		<isNotEmpty property="BankInfo">
+ 			TGT.BankInfo = SRC.BankInfo,
+ 		</isNotEmpty>
+ 		<isNotEmpty property="ProvinceName">
+ 			TGT.ProvinceName = SRC.ProvinceName,
+ 		</isNotEmpty>
+ 		<isNotEmpty property="CityName">
+ 			TGT.CityName = SRC.CityName,
+ 		</isNotEmpty>
+		<include refid="BINOLCMINC99.updateSql" />
+		<![CDATA[
+			WHEN NOT MATCHED THEN
+				INSERT (
+					BIN_EmployeeID,
+					BIN_OrganizationInfoID,
+					BIN_BrandInfoID,
+					Account,
+					AccountType,
+					AccountName,
+		]]>
+		<isNotEmpty property="BankInfo">
+			BankInfo,
+		</isNotEmpty>
+		<isNotEmpty property="ProvinceName">
+			ProvinceName,
+		</isNotEmpty>
+		<isNotEmpty property="CityName">
+			CityName,
+		</isNotEmpty>
+		<include refid="BINOLCMINC99.insertKeySql" />
+		<![CDATA[				
+				) VALUES (
+					SRC.BIN_EmployeeID,
+					SRC.BIN_OrganizationInfoID,
+					SRC.BIN_BrandInfoID,
+					SRC.Account,
+					SRC.AccountType,
+					SRC.AccountName,
+		]]>
+		<isNotEmpty property="BankInfo">
+			SRC.BankInfo,
+		</isNotEmpty>
+		<isNotEmpty property="ProvinceName">
+			SRC.ProvinceName,
+		</isNotEmpty>
+		<isNotEmpty property="CityName">
+			SRC.CityName,
+		</isNotEmpty>
+		<include refid="BINOLCMINC99.insertValueSql" />
+		<![CDATA[
+				);
+    	]]>
+    </insert>
+    
+    <!-- 删除原有账户信息 -->
+    <delete id="deleteAccInfo" parameterClass="java.util.HashMap">
+    	<![CDATA[
+			DELETE 
+				Basis.BIN_EmpAccountInfo
+			WHERE
+				BIN_OrganizationInfoID = #BIN_OrganizationInfoID#
+			AND BIN_BrandInfoID = #BIN_BrandInfoID#
+			AND BIN_EmployeeID = #BIN_EmployeeID#
+    	]]>
+    </delete>
+</sqlMap>

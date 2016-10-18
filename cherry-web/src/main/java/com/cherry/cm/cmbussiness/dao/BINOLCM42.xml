@@ -1,0 +1,321 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sqlMap PUBLIC "-//iBATIS.com//DTD SQL Map 2.0//EN" "http://ibatis.apache.org/dtd/sql-map-2.dtd">
+<!-- 组织结构取得共通 -->
+<sqlMap namespace="BINOLCM42">
+	<!-- 取得品牌所以部门List -->
+	<select id="getAllDepartList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+    	<![CDATA[
+        SELECT
+       		BIN_OrganizationID AS departId,
+			DepartCode AS departCode,
+			Type AS departType,
+			ISNULL(TestType,'0') AS testType,
+			Level AS level,
+			ValidFlag AS orgValid,
+			DepartName AS departName
+        FROM
+			Basis.BIN_Organization WITH(NOLOCK)
+		WHERE
+			BIN_BrandInfoID = #brandInfoId#
+        ORDER BY Path
+        ]]>
+    </select>
+    <!-- 取得用户权限部门 -->
+	<select id="getDepartPrivilegeList" parameterClass="java.util.HashMap" resultClass="java.lang.Integer">
+        <![CDATA[
+		SELECT
+			A.BIN_OrganizationID AS departId
+		FROM
+			Privilege.BIN_DepartPrivilege A WITH(NOLOCK)
+		WHERE		
+			A.BIN_UserID = #userId#
+			AND (A.BusinessType = 'A' OR A.BusinessType = #businessType#) 
+			AND A.ValidFlag = '1'
+		ORDER BY A.BIN_OrganizationID
+		]]>
+    </select>
+	<!-- 取得渠道List -->
+	<select id="getChannelList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+        <![CDATA[
+			SELECT
+				A.BIN_ChannelID AS channelId
+		]]>
+		<dynamic>
+			<isNotEmpty property="language">
+				<isEqual property="language" compareValue="en_US">										
+					,ISNULL(A.ChannelNameForeign,A.ChannelName) AS channelName
+				</isEqual>
+				<isEqual property="language" compareValue="zh_CN">										
+					,A.ChannelName AS channelName
+				</isEqual>							
+			</isNotEmpty>
+			<isEmpty property="language">
+				,A.ChannelName AS channelName
+			</isEmpty>
+		</dynamic>
+		 <![CDATA[		
+		 FROM
+			Basis.BIN_Channel A WITH(NOLOCK)
+		WHERE
+			A.BIN_OrganizationInfoID = #organizationInfoId#
+			AND A.BIN_BrandInfoID = #brandInfoId#
+			AND A.ValidFlag = '1'
+		ORDER BY
+			A.ChannelName
+		]]>
+    </select>
+    
+    <!-- 取得仓库 -->
+	<select id="getDepotList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+        <![CDATA[
+			SELECT
+				DISTINCT
+				TOP $number$
+				E.BIN_DepotInfoID AS depotId,
+				E.DepotCode AS depotCode
+		]]>
+		<dynamic>
+			<isNotEmpty property="language">
+				<isEqual property="language" compareValue="en_US">										
+					,E.DepotNameEN AS depotName
+				</isEqual>
+				<isEqual property="language" compareValue="zh_CN">										
+					,E.DepotNameCN AS depotName
+				</isEqual>								
+			</isNotEmpty>
+			<isEmpty property="language">
+				,E.DepotNameCN AS depotName
+			</isEmpty>
+		</dynamic>
+		 <![CDATA[
+			FROM
+				Basis.BIN_InventoryInfo A WITH(NOLOCK)
+				JOIN Privilege.BIN_DepartPrivilege B WITH(NOLOCK)
+				ON(A.BIN_OrganizationID=B.BIN_OrganizationID
+					AND B.BIN_UserID = #userId#
+					AND	(B.BusinessType = 'A' OR B.BusinessType = #businessType#))
+				JOIN Basis.BIN_DepotInfo E WITH(NOLOCK)
+				ON(A.BIN_InventoryInfoID = E.BIN_DepotInfoID
+					AND E.TestType = #testType#
+					AND E.ValidFlag = '1')
+			WHERE A.ValidFlag = '1'
+		]]>
+		<isNotEmpty property="depotInfoStr" prepend="AND">
+			(E.DepotCode Like '%' + #depotInfoStr# + '%'
+				<isNotEmpty property="language">
+					<isEqual property="language" compareValue="zh_CN" prepend="OR">										
+						E.DepotNameCN Like '%' + #depotInfoStr# + '%'
+					</isEqual>
+					<isEqual property="language" compareValue="en_US" prepend="OR">										
+						E.DepotNameEN Like '%' + #depotInfoStr# + '%'
+					</isEqual>
+				</isNotEmpty>
+				<isEmpty property="language" prepend="OR">
+					E.DepotNameCN Like '%' + #depotInfoStr# + '%'
+				</isEmpty>
+			)
+		</isNotEmpty>
+    </select>
+	<!-- 取得仓库类型 -->
+	<sql id="getDepotType">
+	<![CDATA[
+	SELECT
+		CASE WHEN B.TYPE = '4' THEN 1 else 0 END type
+	FROM
+		Basis.BIN_DepotInfo A WITH(NOLOCK)
+		JOIN Basis.BIN_Organization B WITH(NOLOCK)
+		ON(A.BIN_OrganizationID = B.BIN_OrganizationID)
+	WHERE
+		A.BIN_DepotInfoID = #depotId#
+	]]>
+	</sql>
+    <!-- 取得逻辑仓库 -->
+	<select id="getLgcInventoryList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+        <![CDATA[
+		SELECT
+			T.BIN_LogicInventoryInfoID AS lgcInventoryId
+		]]>
+		<dynamic>
+			<isNotEmpty property="language">
+				<isEqual property="language" compareValue="en_US">										
+					,'('+T.LogicInventoryCode+')'+ T.InventoryNameEN AS lgcInventoryName
+				</isEqual>
+				<isEqual property="language" compareValue="zh_CN">										
+					,'('+T.LogicInventoryCode+')'+ T.InventoryNameCN AS lgcInventoryName
+				</isEqual>								
+			</isNotEmpty>
+			<isEmpty property="language">
+				,'('+T.LogicInventoryCode+')'+ T.InventoryNameCN AS lgcInventoryName
+			</isEmpty>
+		</dynamic>
+		<![CDATA[
+		FROM
+			Basis.BIN_LogicInventory T WITH(NOLOCK)
+		WHERE
+			T.ValidFlag = '1'
+		]]>
+		<isNotEmpty property="brandInfoId" prepend="AND">
+			T.BIN_BrandInfoID = #brandInfoId#
+		</isNotEmpty>
+		<isNotEmpty property="depotId" prepend="AND">
+		<![CDATA[T.Type IN(]]>
+		<include refid="BINOLCM42.getDepotType" />
+		<![CDATA[)]]>
+		</isNotEmpty>
+    </select>
+    
+    <!-- 取得柜台信息List  -->
+    <select id="getCounterList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+       	<![CDATA[
+        SELECT
+        	DISTINCT
+        	TOP $number$
+			A.BIN_OrganizationID AS departId,
+			A.DepartCode AS departCode
+		]]>	
+		<dynamic>
+			<isNotEmpty property="language">
+				<isEqual property="language" compareValue="en_US">										
+					,A.NameForeign AS departName
+				</isEqual>
+				<isEqual property="language" compareValue="zh_CN">										
+					,A.DepartName AS departName
+				</isEqual>								
+			</isNotEmpty>
+			<isEmpty property="language">
+				,A.DepartName AS departName
+			</isEmpty>
+		</dynamic>
+		<![CDATA[
+		FROM
+			Basis.BIN_Organization A WITH(NOLOCK)
+			JOIN Privilege.BIN_DepartPrivilege B WITH(NOLOCK)
+			ON(A.BIN_OrganizationID = B.BIN_OrganizationID
+				AND B.BIN_UserID = #userId#
+				AND	(B.BusinessType = 'A' OR B.BusinessType = #businessType#))
+		]]>
+		<isNotEmpty property="channelId">									
+			JOIN Basis.BIN_CounterInfo C WITH(NOLOCK)
+			ON(A.BIN_OrganizationID = C.BIN_OrganizationID
+				and C.BIN_ChannelID = #channelId#)					
+		</isNotEmpty>
+		<!-- 取得所有下属部门 -->
+		<isNotEmpty property="departId">
+			JOIN Privilege.BIN_DepartRelation C99 WITH(NOLOCK)
+			ON(A.BIN_OrganizationID = C99.BIN_OrganizationIDRel
+				AND C99.BIN_OrganizationID = #departId#)	
+		</isNotEmpty>
+		<![CDATA[	
+		WHERE
+			A.BIN_BrandInfoID = #brandInfoId#
+			AND A.TestType = #testType#
+        ]]>
+         <isNotEmpty property="departType" prepend="AND">
+        	A.Type = #departType#
+        </isNotEmpty>
+        <isNotEmpty property="regionId" prepend="AND">
+        	A.BIN_RegionID = #regionId#
+        </isNotEmpty>
+        <isNotEmpty property="provinceId" prepend="AND">
+        	A.BIN_ProvinceID = #provinceId#
+        </isNotEmpty>
+        <isNotEmpty property="cityId" prepend="AND">
+        	A.BIN_CityID = #cityId#
+        </isNotEmpty>
+        <isNotEmpty property="countyId" prepend="AND">
+        	A.BIN_CountyID = #countyId#
+        </isNotEmpty>
+        <isEmpty property="orgValid" prepend="AND">
+			<isNotEmpty property="orgValidAll">
+       			<!-- 包含停用部门 -->
+		       	<isEqual property="orgValidAll" compareValue="1">
+		       		A.ValidFlag IN('1','0')
+		       	</isEqual>
+		       	<isNotEqual property="orgValidAll" compareValue="1">
+			       	A.ValidFlag = '1'
+			    </isNotEqual>
+	       	</isNotEmpty>
+	       	<isEmpty property="orgValidAll">
+	       		A.ValidFlag = '1'
+	       	</isEmpty>
+		</isEmpty>
+       	<isNotEmpty property="orgValid" prepend="AND">
+       		<isNotEmpty property="orgValidAll">
+       			<!-- 包含停用部门 -->
+		       	<isEqual property="orgValidAll" compareValue="1">
+		       		(A.ValidFlag=#orgValid# OR A.ValidFlag = '0')
+		       	</isEqual>
+		       	<isNotEqual property="orgValidAll" compareValue="1">
+			       	A.ValidFlag = #orgValid#
+			    </isNotEqual>
+	       	</isNotEmpty>
+	       	<isEmpty property="orgValidAll">
+	       		A.ValidFlag = #orgValid#
+	       	</isEmpty>
+       	</isNotEmpty>
+        <isNotEmpty property="departInfoStr" prepend="AND">
+			(A.DepartCode Like '%' + #departInfoStr# + '%'
+				<isNotEmpty property="language">
+					<isEqual property="language" compareValue="zh_CN" prepend="OR">										
+						A.DepartName Like '%' + #departInfoStr# + '%'
+					</isEqual>
+					<isEqual property="language" compareValue="en_US" prepend="OR">										
+						A.NameForeign Like '%' + #departInfoStr# + '%'
+					</isEqual>
+				</isNotEmpty>
+				<isEmpty property="language" prepend="OR">
+					A.DepartName Like '%' + #departInfoStr# + '%'
+				</isEmpty>
+			)
+		</isNotEmpty>
+		<![CDATA[ORDER BY A.DepartCode]]>
+    </select>
+    <!-- 取得用户权限部门类型 -->
+	<select id="getDepartType" parameterClass="java.util.HashMap" resultClass="java.lang.String">
+        <![CDATA[
+			SELECT
+				DISTINCT
+				A.DepartType
+			FROM
+				Privilege.BIN_DepartPrivilege A WITH(NOLOCK)
+			WHERE		
+				A.BIN_UserID = #userId#
+				AND (A.BusinessType = 'A' OR A.BusinessType = #businessType#) 
+				AND A.ValidFlag = '1'
+		]]>
+       	<isEmpty property="orgValid" prepend="AND">
+			<isNotEmpty property="orgValidAll">
+       			<!-- 包含停用部门 -->
+		       	<isEqual property="orgValidAll" compareValue="1">
+		       		A.OrgValidFlag IN('1','0')
+		       	</isEqual>
+		       	<isNotEqual property="orgValidAll" compareValue="1">
+			       	A.OrgValidFlag = '1'
+			    </isNotEqual>
+	       	</isNotEmpty>
+	       	<isEmpty property="orgValidAll">
+	       		A.OrgValidFlag = '1'
+	       	</isEmpty>
+		</isEmpty>
+       	<isNotEmpty property="orgValid" prepend="AND">
+       		<isNotEmpty property="orgValidAll">
+       			<!-- 包含停用部门 -->
+		       	<isEqual property="orgValidAll" compareValue="1">
+		       		(A.OrgValidFlag=#orgValid# OR A.OrgValidFlag = '0')
+		       	</isEqual>
+		       	<isNotEqual property="orgValidAll" compareValue="1">
+			       	A.OrgValidFlag = #orgValid#
+			    </isNotEqual>
+	       	</isNotEmpty>
+	       	<isEmpty property="orgValidAll">
+	       		A.OrgValidFlag = #orgValid#
+	       	</isEmpty>
+       	</isNotEmpty>
+       	<isEmpty property="testType" prepend="AND">
+			A.CounterKind = 0
+		</isEmpty>
+		<isNotEmpty property="testType" prepend="AND">
+			A.CounterKind = #testType#
+		</isNotEmpty>
+    </select>
+</sqlMap>

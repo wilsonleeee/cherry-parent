@@ -1,0 +1,366 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sqlMap PUBLIC "-//iBATIS.com//DTD SQL Map 2.0//EN" "http://ibatis.apache.org/dtd/sql-map-2.dtd">
+<sqlMap namespace="BINOLPLSCF02">
+	
+	<!-- 查询业务类型List -->
+	<resultMap id="BINOLPLSCF02.BussinessTypeCode" class="java.util.HashMap">
+		<result property="configValue" column="ConfigValue"/>
+		<result property="commentsChinese" column="CommentsChinese"/>
+	</resultMap>
+	<select id="getBussinessTypeCodeList" parameterClass="java.util.HashMap" resultMap="BINOLPLSCF02.BussinessTypeCode">
+		<![CDATA[
+			SELECT
+				ConfigValue,
+		]]>		
+		<dynamic>
+		<isNotEmpty property="language">
+			<isEqual property="language" compareValue="en_US">
+				CommentsForeign AS CommentsChinese
+			</isEqual>
+			<isEqual property="language" compareValue="zh_CN">	
+				CommentsChinese AS CommentsChinese
+			</isEqual>								
+		</isNotEmpty>
+		<isEmpty property="language">
+			CommentsChinese AS CommentsChinese
+		</isEmpty>
+		</dynamic>	
+		<![CDATA[
+			FROM
+				Tools.BIN_SystemConfig
+			WHERE
+				BIN_OrganizationInfoID=#organizationInfoId# AND
+				ConfigCode='1000' AND
+				ConfigEfficient='1' AND
+				ValidFlag='1'
+		]]>
+		<dynamic>
+			<isNotEmpty prepend="AND" property="brandInfoId">
+				(BIN_BrandInfoID=#brandInfoId#)
+			</isNotEmpty>
+		</dynamic>
+    </select>
+    
+     <!-- 查询审核审批配置信息总数 -->
+	<select id="getAuditPrivilegeCount" parameterClass="java.util.HashMap" resultClass="java.lang.Integer">
+		<![CDATA[
+			SELECT				
+				count(BIN_AuditPrivilegeID)	
+			FROM
+				Privilege.BIN_AuditPrivilege A
+			WHERE
+				A.ValidFlag='1' AND
+				A.BIN_OrganizationInfoID=#organizationInfoId#
+		]]>		
+		<dynamic>
+			<isNotEmpty prepend="AND" property="brandInfoId">
+				A.BIN_BrandInfoID=#brandInfoId#
+			</isNotEmpty>
+			<isNotEmpty prepend="AND" property="bussinessTypeCode">
+				A.BussinessTypeCode=#bussinessTypeCode#
+			</isNotEmpty>
+		</dynamic>
+    </select>
+    
+    <!-- 查询审核审批配置信息List -->
+	<resultMap id="BINOLPLSCF02.AuditPrivilege" class="java.util.HashMap">
+		<result property="auditPrivilegeId" column="BIN_AuditPrivilegeID"/>
+		<result property="brandInfoId" column="BIN_BrandInfoID"/>
+		<result property="bussinessTypeCode" column="BussinessTypeCode"/>
+		<result property="initiatorType" column="InitiatorType"/>
+		<result property="initiatorID" column="InitiatorID"/>
+		<result property="auditorType" column="AuditorType"/>
+		<result property="auditorID" column="AuditorID"/>
+		<result property="initiatorLonginName" column="InitiatorLonginName"/>
+		<result property="auditorLonginName" column="AuditorLonginName"/>
+		<result property="initiatorDepartName" column="InitiatorDepartName"/>
+		<result property="initiatorPositionName" column="InitiatorPositionName"/>
+		<result property="auditorDepartName" column="AuditorDepartName"/>
+		<result property="auditorPositionName" column="AuditorPositionName"/>
+		<result property="brandNameChinese" column="BrandNameChinese"/>
+		<result property="updateTime" column="UpdateTime"/>
+		<result property="modifyCount" column="ModifyCount"/>
+	</resultMap>
+	<select id="getAuditPrivilegeList" parameterClass="java.util.HashMap" resultMap="BINOLPLSCF02.AuditPrivilege">
+		<include refid="BINOLCMINC99.pageheader" />
+		<![CDATA[
+			SELECT
+				A.BIN_AuditPrivilegeID,
+				A.BIN_BrandInfoID,
+				A.BussinessTypeCode,
+				A.InitiatorType,
+				A.InitiatorID,
+				A.AuditorType,
+				A.AuditorID,
+				user1.LonginName AS InitiatorLonginName,
+				user2.LonginName AS AuditorLonginName,
+				convert(varchar(30),A.UpdateTime,121) AS UpdateTime,
+				A.ModifyCount,
+		]]>
+		<dynamic>
+		<isNotEmpty property="language">
+			<isEqual property="language" compareValue="en_US">
+				org1.NameForeign AS InitiatorDepartName,
+				pos1.CategoryNameForeign AS InitiatorPositionName,
+				org2.NameForeign AS AuditorDepartName,
+				pos2.CategoryNameForeign AS AuditorPositionName,
+				C.BrandNameForeign AS BrandNameChinese
+			</isEqual>
+			<isEqual property="language" compareValue="zh_CN">	
+				org1.DepartName AS InitiatorDepartName,
+				pos1.CategoryName AS InitiatorPositionName,
+				org2.DepartName AS AuditorDepartName,
+				pos2.CategoryName AS AuditorPositionName,
+				C.BrandNameChinese AS BrandNameChinese
+			</isEqual>								
+		</isNotEmpty>
+		<isEmpty property="language">
+			org1.DepartName AS InitiatorDepartName,
+			pos1.CategoryName AS InitiatorPositionName,
+			org2.DepartName AS AuditorDepartName,
+			pos2.CategoryName AS AuditorPositionName,
+			C.BrandNameChinese AS BrandNameChinese
+		</isEmpty>
+		</dynamic>	
+		<![CDATA[		
+			FROM
+				Privilege.BIN_AuditPrivilege A left join Basis.BIN_Organization org1 on
+				A.InitiatorType = '3' and A.InitiatorID = org1.BIN_OrganizationID left join Privilege.BIN_PositionCategory pos1 on
+				A.InitiatorType = '2' and A.InitiatorID = pos1.BIN_PositionCategoryID left join Privilege.BIN_User user1 on
+				A.InitiatorType = '1' and A.InitiatorID = user1.BIN_UserID left join Basis.BIN_Organization org2 on
+				A.AuditorType = '3' and A.AuditorID = org2.BIN_OrganizationID left join Privilege.BIN_PositionCategory pos2 on
+				A.AuditorType = '2' and A.AuditorID = pos2.BIN_PositionCategoryID left join Privilege.BIN_User user2 on
+				A.AuditorType = '1' and A.AuditorID = user2.BIN_UserID left join Basis.BIN_BrandInfo C on
+				A.BIN_BrandInfoID = C.BIN_BrandInfoID
+			WHERE
+				A.ValidFlag='1' AND
+				A.BIN_OrganizationInfoID=#organizationInfoId#
+		]]>
+		<dynamic>
+			<isNotEmpty prepend="AND" property="brandInfoId">
+				A.BIN_BrandInfoID=#brandInfoId#
+			</isNotEmpty>
+			<isNotEmpty prepend="AND" property="bussinessTypeCode">
+				A.BussinessTypeCode=#bussinessTypeCode#
+			</isNotEmpty>
+		</dynamic>
+		<include refid="BINOLCMINC99.pagefooter" />
+    </select>
+    
+    <!-- 查询用户List -->
+	<resultMap id="BINOLPLSCF02.UserInfo" class="java.util.HashMap">
+		<result property="code" column="BIN_UserID"/>
+		<result property="name" column="LonginName"/>
+	</resultMap>
+	<select id="getUserInfoList" parameterClass="java.util.HashMap" resultMap="BINOLPLSCF02.UserInfo">
+		<![CDATA[
+			SELECT 
+				A.BIN_UserID,
+				A.LonginName
+			FROM
+				Privilege.BIN_User A,
+				Basis.BIN_Employee B
+			WHERE
+				A.BIN_EmployeeID=B.BIN_EmployeeID AND
+				B.BIN_OrganizationInfoID=#organizationInfoId# AND
+				A.ValidFlag='1' AND
+				B.ValidFlag='1'
+		]]>
+		<dynamic>
+			<isNotEmpty prepend="AND" property="brandInfoId">
+				B.BIN_BrandInfoID=#brandInfoId#
+			</isNotEmpty>
+		</dynamic>
+    </select>
+    
+    <!-- 查询岗位List -->
+	<resultMap id="BINOLPLSCF02.PosInfo" class="java.util.HashMap">
+		<result property="code" column="BIN_PositionCategoryID"/>
+		<result property="name" column="CategoryName"/>
+	</resultMap>
+	<select id="getPosInfoList" parameterClass="java.util.HashMap" resultMap="BINOLPLSCF02.PosInfo">
+		<![CDATA[
+			SELECT 
+				A.BIN_PositionCategoryID,
+		]]>		
+		<dynamic>
+		<isNotEmpty property="language">
+			<isEqual property="language" compareValue="en_US">
+				A.CategoryNameForeign AS CategoryName
+			</isEqual>
+			<isEqual property="language" compareValue="zh_CN">	
+				A.CategoryName AS CategoryName
+			</isEqual>								
+		</isNotEmpty>
+		<isEmpty property="language">
+			A.CategoryName AS CategoryName
+		</isEmpty>
+		</dynamic>	
+		<![CDATA[		
+			FROM
+				Privilege.BIN_PositionCategory A
+			WHERE
+				A.BIN_OrganizationInfoID=#organizationInfoId# AND
+				A.ValidFlag='1'
+		]]>
+		<dynamic>
+			<isNotEmpty prepend="AND" property="brandInfoId">
+				A.BIN_BrandInfoID=#brandInfoId#
+			</isNotEmpty>
+		</dynamic>
+    </select>
+    
+    <!-- 查询部门List -->
+	<resultMap id="BINOLPLSCF02.OrgInfo" class="java.util.HashMap">
+		<result property="code" column="BIN_OrganizationID"/>
+		<result property="name" column="DepartName"/>
+	</resultMap>
+	<select id="getOrgInfoList" parameterClass="java.util.HashMap" resultMap="BINOLPLSCF02.OrgInfo">
+		<![CDATA[
+			SELECT 
+				B.BIN_OrganizationID,
+		]]>		
+		<dynamic>
+		<isNotEmpty property="language">
+			<isEqual property="language" compareValue="en_US">
+				B.NameForeign AS DepartName
+			</isEqual>
+			<isEqual property="language" compareValue="zh_CN">	
+				B.DepartName AS DepartName
+			</isEqual>								
+		</isNotEmpty>
+		<isEmpty property="language">
+			B.DepartName AS DepartName
+		</isEmpty>
+		</dynamic>	
+		<![CDATA[			
+			FROM
+				Basis.BIN_Organization B
+			WHERE
+				B.BIN_OrganizationInfoID=#organizationInfoId# AND
+				B.ValidFlag='1'
+		]]>
+		<dynamic>
+			<isNotEmpty prepend="AND" property="brandInfoId">
+				B.BIN_BrandInfoID=#brandInfoId#
+			</isNotEmpty>
+		</dynamic>
+    </select>
+    
+    <!-- 查询审核审批配置信息是否存在 -->
+	<select id="getAuditVal" parameterClass="java.util.HashMap" resultClass="java.lang.String">
+		<![CDATA[		
+			SELECT
+				BIN_AuditPrivilegeID	
+			FROM
+				Privilege.BIN_AuditPrivilege
+			WHERE
+				BIN_OrganizationInfoID=#organizationInfoId# AND
+				BIN_BrandInfoID=#brandInfoId# AND
+				BussinessTypeCode=#bussinessTypeCode# AND
+				InitiatorType=#initiatorType# AND
+				InitiatorID=#initiatorID# AND
+				AuditorType=#auditorType# AND
+				AuditorID=#auditorID#
+		]]>
+    </select>
+    
+    <!-- 添加审核审批配置信息 -->
+    <insert id="addAudit" parameterClass="java.util.HashMap">
+    	<![CDATA[
+    		INSERT INTO Privilege.BIN_AuditPrivilege			
+			(				
+				BIN_OrganizationInfoID,			
+				BIN_BrandInfoID,			
+				BussinessTypeCode,			
+				InitiatorType,			
+				InitiatorID,
+				AuditorType,
+				AuditorID,
+		]]>
+				<include refid="BINOLCMINC99.insertKeySql" />		
+		<![CDATA[				
+			)				
+			VALUES				
+			(				
+				#organizationInfoId#,			
+				#brandInfoId#,			
+				#bussinessTypeCode#,			
+				#initiatorType#,			
+				#initiatorID#,
+				#auditorType#,
+				#auditorID#,
+		]]>
+				<include refid="BINOLCMINC99.insertValueSql" />		
+		<![CDATA[	
+			)				
+    	]]>
+    </insert>
+    
+    <!-- 查询审核审批配置信息 -->
+	<resultMap id="BINOLPLSCF02.AuditInfo" class="java.util.HashMap">
+		<result property="auditPrivilegeId" column="BIN_AuditPrivilegeID"/>
+		<result property="brandInfoId" column="BIN_BrandInfoID"/>
+		<result property="bussinessTypeCode" column="BussinessTypeCode"/>
+		<result property="initiatorType" column="InitiatorType"/>
+		<result property="initiatorID" column="InitiatorID"/>
+		<result property="auditorType" column="AuditorType"/>
+		<result property="auditorID" column="AuditorID"/>
+		<result property="updateTime" column="UpdateTime"/>
+		<result property="modifyCount" column="ModifyCount"/>
+	</resultMap>
+	<select id="getAuditInfo" parameterClass="java.util.HashMap" resultMap="BINOLPLSCF02.AuditInfo">
+		<![CDATA[
+			SELECT
+				BIN_AuditPrivilegeID,
+				BIN_BrandInfoID,
+				BussinessTypeCode,
+				InitiatorType,		
+				InitiatorID,
+				AuditorType,
+				AuditorID,
+				convert(varchar(30),UpdateTime,121) AS UpdateTime,
+				ModifyCount
+			FROM
+				Privilege.BIN_AuditPrivilege
+			WHERE
+				BIN_AuditPrivilegeID=#auditPrivilegeId# AND
+				ValidFlag = '1'
+		]]>		
+    </select>
+    
+    <!-- 更新审核审批配置信息 -->
+	<update id="updateAudit" parameterClass="java.util.HashMap">
+		<![CDATA[
+			UPDATE Privilege.BIN_AuditPrivilege				
+			SET						
+				BIN_BrandInfoID=#brandInfoId#,
+				BussinessTypeCode=#bussinessTypeCode#,			
+				InitiatorType=#initiatorType#,				
+				InitiatorID=#initiatorID#,			
+				AuditorType=#auditorType#,			
+				AuditorID=#auditorID#,			
+		]]>
+				<include refid="BINOLCMINC99.updateSql" />		
+		<![CDATA[					
+			WHERE				
+				BIN_AuditPrivilegeID=#auditPrivilegeId# AND
+				ValidFlag = '1' AND
+				UpdateTime = #modifyTime# AND		
+				ModifyCount = #modifyCount#					
+		]]>
+	</update>
+    
+    <!-- 删除审核审批配置信息 -->
+	<delete id="deleteAudti" parameterClass="java.util.HashMap">
+		<![CDATA[
+			DELETE FROM Privilege.BIN_AuditPrivilege		
+			WHERE		
+				BIN_AuditPrivilegeID=#auditPrivilegeId# AND
+				ValidFlag = '1' AND
+				UpdateTime = #modifyTime# AND		
+				ModifyCount = #modifyCount#		
+		]]>
+	</delete>
+	
+</sqlMap>

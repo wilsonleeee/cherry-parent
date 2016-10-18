@@ -1,0 +1,918 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sqlMap PUBLIC "-//iBATIS.com//DTD SQL Map 2.0//EN" "http://ibatis.apache.org/dtd/sql-map-2.dtd">
+<sqlMap namespace="BINOLSSPRM73">
+	<!-- 优惠券查询sql文  -->
+	<sql id="CouponQuery">
+		SELECT
+			A.CouponNo AS couponNo,
+			A.CouponType AS couponType,
+			A.RuleCode AS ruleCode,
+			A.CouponCode AS couponCode,
+			CONVERT(VARCHAR, A.StartTime, 23) AS startTime,
+			CONVERT(VARCHAR, A.EndTime, 23) AS endTime,
+			ISNULL(A.FaceValue, 0) AS faceValue,
+			ISNULL(A.ContentNo, 0) AS contentNo,
+			A.Status AS status,
+			A.MemCode AS memCode,
+			A.Mobile AS mobile,
+			A.BPCode AS bpCode,
+			B.RuleName AS ruleName,
+			B.Description AS description,
+			B.isGive AS isGive
+		FROM
+			Promotion.BIN_MemberCoupon A JOIN
+			Promotion.BIN_PromotionCouponRule B WITH(NOLOCK)
+			ON (A.RuleCode = B.RuleCode)
+	</sql>
+	
+	<!-- 优惠券规则查询sql文  -->
+	<sql id="RuleInfoQuery">
+	<![CDATA[
+		SELECT
+			RuleCode AS ruleCode,
+			RuleName AS ruleName,
+			CONVERT(VARCHAR, SendStartTime, 23) AS sendStartTime,
+			CONVERT(VARCHAR, SendEndTime, 23) AS sendEndTime,
+			Status AS status,
+			ValidFlag AS validFlag 
+		FROM Promotion.BIN_PromotionCouponRule
+		WHERE
+			BIN_BrandInfoID = #brandInfoId#
+		]]>
+		<isNotEmpty prepend="AND" property="ruleName">
+		<![CDATA[RuleName like '%'+#ruleName#+'%']]>
+		</isNotEmpty>
+		<isNotEmpty prepend="AND" property="sendStartTime">
+		<![CDATA[(SendEndTime IS NULL OR CONVERT(DATE, SendEndTime) >= CONVERT(DATE, #sendStartTime#))]]>
+		</isNotEmpty>
+		<isNotEmpty prepend="AND" property="sendEndTime">
+		<![CDATA[CONVERT(DATE, SendStartTime) <= CONVERT(DATE, #sendEndTime#)]]>
+		</isNotEmpty>
+		<isNotEmpty prepend="AND" property="status">
+		<![CDATA[ Status = #status#]]>
+		</isNotEmpty>
+		<isEmpty prepend="AND" property="ruleValidFlag">
+				<![CDATA[ValidFlag = '1']]>
+		</isEmpty>
+	</sql>
+	
+	<!-- 柜台查询sql文  -->
+	<sql id="CounterQuery">
+	<![CDATA[
+		SELECT
+			A.CounterCode AS counterCode,
+			B.DepartName AS counterName
+		FROM 
+			Promotion.BIN_CouponCounterDetail A WITH(NOLOCK) LEFT JOIN
+			Basis.BIN_Organization B WITH(NOLOCK)
+			ON (A.BIN_OrganizationID = B.BIN_OrganizationID)
+		WHERE
+			A.RuleCode = #ruleCode#
+		]]>
+		<isNotEmpty prepend="AND" property="counterKey">
+		<![CDATA[(A.CounterCode LIKE '%'+#counterKey#+'%' OR B.DepartName LIKE '%'+#counterKey#+'%')]]>
+		</isNotEmpty>
+		<![CDATA[
+		AND A.ConditionType = #conditionType#
+		AND A.ValidFlag = '1']]>
+	</sql>
+	
+	<!-- 会员查询sql文  -->
+	<sql id="MemberQuery">
+	<![CDATA[
+		SELECT
+			MemCode AS memCode,
+			Mobile AS mobile
+		FROM 
+			Promotion.BIN_CouponMemeberDetail WITH(NOLOCK)
+		WHERE
+			RuleCode = #ruleCode#
+		]]>
+		<isNotEmpty prepend="AND" property="memberKey">
+		<![CDATA[(MemCode LIKE '%'+#memberKey#+'%' OR Mobile LIKE '%'+#memberKey#+'%')]]>
+		</isNotEmpty>
+		<![CDATA[
+		AND ConditionType = #conditionType#
+		AND ValidFlag = '1']]>
+	</sql>
+	
+	<!-- 取得优惠券规则总数  -->
+    <select id="getCouponRuleInfoCount" parameterClass="java.util.HashMap" resultClass="java.lang.Integer">
+    	<![CDATA[
+			SELECT	COUNT(SORT_T1.ruleCode) AS count FROM (
+		]]>	
+		<include refid="BINOLSSPRM73.RuleInfoQuery" />	
+		<![CDATA[	
+			)SORT_T1
+		]]>										
+    </select>
+	
+	<!-- 取得优惠券规则List  -->
+    <select id="getCouponRuleInfoList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+       	<include refid="BINOLCMINC99.pageheader" />
+		<include refid="BINOLSSPRM73.RuleInfoQuery" />
+		<include refid="BINOLCMINC99.pagefooter" />
+    </select>
+    
+    <!-- 取得优惠券规则详细信息  -->
+    <select id="getCouponRuleInfo" parameterClass="java.util.HashMap" resultClass="com.cherry.ss.prm.dto.CouponRuleDTO">
+       	<![CDATA[
+		SELECT
+			BIN_BrandInfoID AS brandInfoId,
+			BIN_OrganizationInfoID AS organizationInfoId,
+			RuleCode AS ruleCode,
+			RuleName AS ruleName,
+			CONVERT(VARCHAR, SendStartTime, 23) AS sendStartTime,
+			CONVERT(VARCHAR, SendEndTime, 23) AS sendEndTime,
+			Content AS content,
+			UseTimeJson AS useTimeJson,
+			Description AS description,
+			SendCond AS sendCond,
+			UseCond AS useCond,
+			Status AS status,
+			SumQuantity AS sumQuantity,
+			LimitQuantity AS limitQuantity,
+			Quantity AS quantity,
+			ValidMode AS validMode,
+			isGive AS isGive,
+			ValidFlag AS validFlag,
+			CouponFlag AS couponFlag
+		FROM Promotion.BIN_PromotionCouponRule
+		WHERE
+			RuleCode = #ruleCode#
+		]]>
+    </select>
+    
+    <!-- 新增电子券批量生成记录 -->
+	<insert id="addCouponBatchRecord" parameterClass="java.util.HashMap">
+		<![CDATA[
+			INSERT INTO 
+ 				Promotion.BIN_CouponBatchRecord (
+ 					BatchNo,
+ 					BatchMode,
+ 					BIN_BrandInfoID,
+ 					RuleCode,
+ 					TotalCount,
+ 					BatchTime,
+   		]]>
+ 		<include refid="BINOLCMINC99.insertKeySql"/>
+ 		<![CDATA[			
+    			) VALUES (
+    				#batchNo#,
+    				#batchMode#,
+    				#brandInfoId#,
+    				#ruleCode#,
+    				#totalCount#,
+    				getdate(),
+	    ]]>
+	    <include refid="BINOLCMINC99.insertValueSql"/>
+	   	<![CDATA[
+   				)
+    	]]>
+	</insert>
+	
+	<!-- 新增优惠券记录 -->
+	<insert id="addMemberCoupon" parameterClass="com.cherry.ss.prm.dto.CouponDTO">
+		<![CDATA[
+			INSERT INTO 
+ 				Promotion.BIN_MemberCoupon (
+ 					CouponNo,
+ 					CouponType,
+ 					BIN_OrganizationInfoID,
+ 					BIN_BrandInfoID,
+ 					RuleCode,
+ 					CouponCode,
+ 					StartTime,
+ 					EndTime,
+ 					SendCounter,
+ 					Status,
+ 					BatchNo,
+ 					OrderTime,
+ 					CancelTime,
+ 					FinshTime,
+ 					RelatedNoA,
+ 					RelatedNoB,
+ 					MemId,
+ 					MemCode,
+ 					Mobile,
+ 					UserMemCode,
+ 					UserMobile,
+ 					DataSource,
+ 					FaceValue,
+ 					ContentNo,
+ 					BPCode,
+   		]]>
+ 		<include refid="BINOLCMINC99.insertKeySql"/>
+ 		<![CDATA[			
+    			) VALUES (
+    				#couponNo#,
+    				#couponType#,
+    				#organizationInfoId#,
+    				#brandInfoId#,
+    				#ruleCode#,
+    				#couponCode#,
+    				#startTime#,
+    				#endTime#,
+    				#sendCounter#,
+    				#status#,
+    				#batchNo#,
+    				#orderTime#,
+    				#cancelTime#,
+    				#finshTime#,
+    				#relatedNoA#,
+    				#relatedNoB#,
+    				#memId#,
+    				#memCode#,
+    				#mobile#,
+    				#userMemCode#,
+    				#userMobile#,
+    				#dataSource#,
+    				#faceValue#,
+    				#contentNo#,
+    				#bpCode#,
+	    ]]>
+	    <include refid="BINOLCMINC99.insertValueSql"/>
+	   	<![CDATA[
+   				)
+    	]]>
+	</insert>
+	
+	<!-- 更新优惠券规则信息  -->
+	<update id="updateCouponRuleInfo" parameterClass="com.cherry.ss.prm.dto.CouponRuleDTO">
+        <![CDATA[ 
+		  UPDATE   
+		           Promotion.BIN_PromotionCouponRule						
+		  SET     			
+		           RuleName = #ruleName#,
+		           SendStartTime = #sendStartTime#,
+		           SendEndTime = #sendEndTime#,
+		           Content = #content#,
+		           UseTimeJson = #useTimeJson#,
+		           Description = #description#,
+		           SendCond = #sendCond#,
+		           UseCond = #useCond#,
+		           SumQuantity = #sumQuantity#,
+		           LimitQuantity = #limitQuantity#,
+		           Quantity = #quantity#,
+		           ValidMode = #validMode#,
+		           isGive = #isGive#,
+		           CouponFlag = #couponFlag#,
+		]]>	
+		    <include refid="BINOLCMINC99.updateSql" />	
+		<![CDATA[			
+       	  WHERE									
+				   RuleCode = #ruleCode#
+       ]]>   
+    </update>
+    
+    <!-- 更新优惠券条件  -->
+	<update id="updateCouponCondition" parameterClass="java.util.HashMap">
+        <![CDATA[ 
+		  UPDATE   
+		           Promotion.BIN_PromotionCouponRule						
+		  SET
+		]]>
+			<isNotEmpty property="sendCond">
+			<![CDATA[SendCond = #sendCond#,]]>
+			</isNotEmpty>
+			<isNotEmpty property="useCond">
+			<![CDATA[UseCond = #useCond#,]]>
+			</isNotEmpty>
+		    <include refid="BINOLCMINC99.updateSql" />	
+		<![CDATA[			
+       	  WHERE									
+				   RuleCode = #ruleCode#
+       ]]>   
+    </update>
+    
+    <!-- 更新审核状态  -->
+	<update id="updateCouponRuleStatus" parameterClass="java.util.HashMap">
+        <![CDATA[ 
+		  UPDATE   
+		           Promotion.BIN_PromotionCouponRule						
+		  SET     			
+		           Status = '1',
+		]]>	
+		    <include refid="BINOLCMINC99.updateSql" />	
+		<![CDATA[			
+       	  WHERE									
+				   RuleCode = #ruleCode#
+       ]]>   
+    </update>
+    
+    <!-- 取得促销品信息  -->
+    <select id="getPrmInfo" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+       	<![CDATA[
+			SELECT TOP 1
+				A.UnitCode AS unitCode,
+				B.BIN_PromotionProductVendorID AS prmVendorId,
+				B.BarCode AS barCode
+			FROM
+				Basis.BIN_PromotionProduct A WITH(NOLOCK)
+				JOIN Basis.BIN_PromotionProductVendor B WITH(NOLOCK)
+				ON(A.BIN_PromotionProductID = B.BIN_PromotionProductID)
+			WHERE
+				A.BIN_BrandInfoID = #brandInfoId#
+				AND A.NameTotal = #nameTotal#
+		]]>
+    </select>
+    
+    <!-- 取得优惠券List  -->
+    <select id="getCouponList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+       	<include refid="BINOLSSPRM73.CouponQuery" />
+       	<![CDATA[WHERE ]]>
+       	<isNotEmpty property="bpCode">
+       		<![CDATA[(A.BPCode = #bpCode# OR A.MemCode = #memberCode# OR A.Mobile = #mobile#)]]>
+       	</isNotEmpty>
+       	<isEmpty property="bpCode">
+			<isNotEmpty property="memberCode">
+				<isEmpty property="mobile">
+					<![CDATA[A.MemCode = #memberCode#]]>
+				</isEmpty>
+				<isNotEmpty property="mobile">
+				<![CDATA[(A.MemCode = #memberCode# OR A.Mobile = #mobile# AND (A.MemCode IS NULL OR A.MemCode = ''))]]>
+				</isNotEmpty>
+			</isNotEmpty>
+			<isEmpty property="memberCode">
+			<![CDATA[A.Mobile = #mobile# AND (A.MemCode IS NULL OR A.MemCode = '')]]>
+			</isEmpty>
+       	</isEmpty>
+		<![CDATA[
+			AND CONVERT(DATE,A.StartTime) <= #saleDate#
+			AND CONVERT(DATE,A.EndTime) >= #saleDate#
+			AND A.BIN_BrandInfoID = #brandInfoId#
+		]]>
+		<isNotEmpty property="couponType">
+		<![CDATA[AND A.CouponType = #couponType#]]>
+		</isNotEmpty>
+		<isEmpty property="couponType">
+		<![CDATA[AND A.CouponType <> '2']]>
+		</isEmpty>
+		<![CDATA[
+			AND A.Status = 'AR'
+		]]>
+    </select>
+    
+    <!-- 取得单个优惠券信息  -->
+    <select id="getCouponInfo" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+       	<include refid="BINOLSSPRM73.CouponQuery" />
+		<![CDATA[
+			WHERE A.CouponNo = #couponNo#
+		]]>
+    </select>
+    
+    <!-- 取得部门ID  -->
+    <select id="getOrganizationId" parameterClass="java.util.HashMap" resultClass="java.lang.Integer">
+    	<![CDATA[
+			SELECT
+				BIN_OrganizationID
+			FROM
+				Basis.BIN_Organization
+			WHERE
+				DepartCode = #counterCode# AND
+				BIN_BrandInfoID = #brandInfoId#
+		]]>								
+    </select>
+    
+    <!-- 新增门店条件 -->
+	<insert id="addCouponCounter" parameterClass="java.util.HashMap">
+		<![CDATA[
+			INSERT INTO 
+ 				Promotion.BIN_CouponCounterDetail (
+ 					RuleCode,
+ 					BIN_OrganizationID,
+ 					CounterCode,
+ 					ConditionType,
+   		]]>
+ 		<include refid="BINOLCMINC99.insertKeySql"/>
+ 		<![CDATA[			
+    			) VALUES (
+    				#ruleCode#,
+    				#organizationId#,
+    				#counterCode#,
+    				#conditionType#,
+	    ]]>
+	    <include refid="BINOLCMINC99.insertValueSql"/>
+	   	<![CDATA[
+   				)
+    	]]>
+	</insert>
+	
+	
+	<!-- 取得柜台总数  -->
+    <select id="getCounterInfoCount" parameterClass="java.util.HashMap" resultClass="java.lang.Integer">
+    	<![CDATA[
+			SELECT	COUNT(1) AS count FROM (
+		]]>	
+		<include refid="BINOLSSPRM73.CounterQuery" />	
+		<![CDATA[	
+			)SORT_T1
+		]]>										
+    </select>
+	
+	<!-- 取得柜台信息List  -->
+    <select id="getCounterInfoList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+       	<include refid="BINOLCMINC99.pageheader" />
+		<include refid="BINOLSSPRM73.CounterQuery" />
+		<include refid="BINOLCMINC99.pagefooter" />
+    </select>
+    
+    <!-- 取得会员总数  -->
+    <select id="getMemberInfoCount" parameterClass="java.util.HashMap" resultClass="java.lang.Integer">
+    	<![CDATA[
+			SELECT	COUNT(1) AS count FROM (
+		]]>	
+		<include refid="BINOLSSPRM73.MemberQuery" />	
+		<![CDATA[	
+			)SORT_T1
+		]]>										
+    </select>
+	
+	<!-- 取得会员信息List  -->
+    <select id="getMemberInfoList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+       	<include refid="BINOLCMINC99.pageheader" />
+		<include refid="BINOLSSPRM73.MemberQuery" />
+		<include refid="BINOLCMINC99.pagefooter" />
+    </select>
+    
+    <select id="getMemberInfoListWithoutPage" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+		<include refid="BINOLSSPRM73.MemberQuery" />
+    </select>
+    
+    <!-- 删除电子券门店明细 -->
+	<delete id="delCounterDetail" parameterClass="java.util.HashMap">
+		<![CDATA[
+			DELETE FROM			
+				Promotion.BIN_CouponCounterDetail						
+			WHERE					
+				RuleCode = #ruleCode# AND
+				ConditionType = #conditionType#
+		]]>
+    </delete>
+    
+    <!-- 取得等级列表  -->
+    <select id="getLevelList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+       	<![CDATA[
+			SELECT 
+				A.BIN_MemberLevelID AS levelId, 
+				A.LevelName AS levelName
+			  FROM 
+				Members.BIN_MemberLevel A JOIN
+				Members.BIN_MemberLevelDetail B
+			  ON(A.BIN_MemberLevelID = B.BIN_MemberLevelID 
+				 AND B.ValidFlag = '1')
+			  WHERE 
+				A.BIN_BrandInfoID = #brandInfoId#  AND 
+				A.ValidFlag = '1'
+		]]>
+    </select>
+    
+    <!-- 删除电子券会员明细 -->
+	<delete id="delMemberDetail" parameterClass="java.util.HashMap">
+		<![CDATA[
+			DELETE FROM			
+				Promotion.BIN_CouponMemeberDetail						
+			WHERE					
+				RuleCode = #ruleCode# AND
+				ConditionType = #conditionType#
+		]]>
+    </delete>
+    
+    <!-- 新增会员条件 -->
+	<insert id="addCouponMember" parameterClass="java.util.HashMap">
+		<![CDATA[
+			INSERT INTO 
+ 				Promotion.BIN_CouponMemeberDetail (
+ 					RuleCode,
+ 					MemCode,
+ 					Mobile,
+ 					ConditionType,
+   		]]>
+ 		<include refid="BINOLCMINC99.insertKeySql"/>
+ 		<![CDATA[			
+    			) VALUES (
+    				#ruleCode#,
+    				#memCode#,
+    				#mobile#,
+    				#conditionType#,
+	    ]]>
+	    <include refid="BINOLCMINC99.insertValueSql"/>
+	   	<![CDATA[
+   				)
+    	]]>
+	</insert>
+	
+	<!-- 查询产品信息 -->
+    <select id="getProInfo" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">	
+		<![CDATA[
+			SELECT top 1
+				A.BIN_ProductVendorID AS prtVendorId,
+				A.BarCode AS barCode,
+				B.UnitCode AS unitCode,
+				B.NameTotal AS nameTotal
+			FROM	
+				Basis.BIN_ProductVendor A
+				JOIN Basis.BIN_Product B ON A.BIN_ProductID = B.BIN_ProductID
+			WHERE
+				A.BIN_ProductVendorID = #prtVendorId#
+		]]>
+    </select>
+    
+    <!-- 查询产品价格信息 -->
+    <select id="getProPriceInfo" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">	
+		<![CDATA[
+			SELECT top 1
+				ISNULL(B.SalePrice, 0) as salePrice
+			FROM	
+				Basis.BIN_ProductVendor A
+				JOIN Basis.BIN_ProductPrice B ON (A.BIN_ProductID = B.BIN_ProductID)
+			WHERE
+				A.BIN_ProductVendorID = #prtVendorId# AND
+				B.StartDate <= #saleDate# AND
+				B.EndDate >= #saleDate# AND
+				B.ValidFlag = '1'
+		]]>
+    </select>
+    
+    <!-- 查询产品分类信息 -->
+    <select id="getProTypeInfo" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">	
+		<![CDATA[
+			SELECT top 1
+				A.BIN_PrtCatPropValueID AS cateValId,
+				A.PropValueCherry AS cateVal,
+				A.PropValueChinese AS cateValName
+			FROM	
+				Basis.BIN_PrtCatPropValue A
+			WHERE
+				A.BIN_PrtCatPropValueID = #cateValId#
+		]]>	
+    </select>
+    
+    <!-- 查询促销活动信息 -->
+    <select id="getPromActivityInfo" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">	
+		<![CDATA[
+			SELECT
+				ActivityName AS campName
+			FROM	
+				Promotion.BIN_PromotionActivity
+			WHERE
+				ActivityCode = #campaignCode# AND
+				BIN_BrandInfoID = #brandInfoId#
+		]]>	
+    </select>
+    
+     <!-- 查询会员活动信息 -->
+    <select id="getMemActivityInfo" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">	
+		<![CDATA[
+			SELECT
+				CampaignName AS campName
+			FROM	
+				Campaign.BIN_Campaign
+			WHERE
+				CampaignCode = #campaignCode# AND
+				BIN_BrandInfoID = #brandInfoId#
+		]]>	
+    </select>
+    
+    <!-- 配置数据库品牌信息 -->
+	<resultMap id="BINOLSSPRM73.ConfBrandList" class="java.util.HashMap">
+		<result property="orgCode" column="OrgCode"/>							<!-- 组织Code -->
+		<result property="brandCode" column="BrandCode"/>						<!-- 品牌code -->
+		<result property="dataSourceName" column="DataSourceName"/>				<!-- 数据源名 -->
+	</resultMap>
+	<!-- 取得配置数据库品牌信息  -->
+    <select id="getConfBrandList" parameterClass="java.util.HashMap" resultMap="BINOLSSPRM73.ConfBrandList">
+       	<![CDATA[
+			SELECT
+				OrgCode,
+				BrandCode,
+				DataSourceName									
+			FROM
+				dbo.BIN_BrandDataSourceConfig
+			WHERE
+				ValidFlag = '1' AND
+				OrgCode <> '-9999' AND
+				BrandCode <> '-9999'
+		]]>
+    </select>
+    
+    <!-- 品牌信息 -->
+	<resultMap id="BINOLSSPRM73.OSBrandInfo" class="java.util.HashMap">
+		<result property="organizationInfoId" column="BIN_OrganizationInfoID"/>			<!-- 组织ID -->
+		<result property="brandInfoId" column="BIN_BrandInfoID"/>						<!-- 品牌ID -->
+	</resultMap>
+	<!-- 取得品牌信息  -->
+    <select id="getOSBrandInfo" parameterClass="java.util.HashMap" resultMap="BINOLSSPRM73.OSBrandInfo">
+       	<![CDATA[
+			SELECT
+				A.BIN_OrganizationInfoID,
+				B.BIN_BrandInfoID										
+			FROM
+				Basis.BIN_OrganizationInfo A,
+				Basis.BIN_BrandInfo B
+			WHERE
+				A.OrgCode = #orgCode# AND
+				A.ValidFlag = '1' AND
+				A.BIN_OrganizationInfoID = B.BIN_OrganizationInfoID AND
+				B.BrandCode = #brandCode# AND
+				B.ValidFlag = '1'
+		]]>
+    </select>
+    
+    <!-- 取得优惠券规则执行列表  -->
+    <select id="getCouponRuleExecList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+       	<![CDATA[
+		SELECT
+			RuleCode AS ruleCode,
+			RuleName AS ruleName,
+			CONVERT(VARCHAR, SendStartTime, 23) AS sendStartTime,
+			CONVERT(VARCHAR, SendEndTime, 23) AS sendEndTime,
+			Content AS content,
+			UseTimeJson AS useTimeJson,
+			SendCond AS sendCond,
+			UseCond AS useCond,
+			ISNULL(SumQuantity, 0) AS sumQuantity,
+			ISNULL(LimitQuantity, 0) AS limitQuantity,
+			ISNULL(Quantity, 0) AS quantity,
+			ValidMode AS validMode,
+			isGive AS isGive,
+			ISNULL(ModifyCount, 0) AS modifyCount
+		FROM Promotion.BIN_PromotionCouponRule
+		WHERE
+			BIN_BrandInfoID = #brandInfoId# AND
+			Status = '1' AND
+			ValidFlag = '1'
+		ORDER BY 
+			RuleCode DESC
+		]]>
+    </select>
+    
+    <!-- 取得优惠券规则执行列表  -->
+    <select id="getCouponRuleExecInfo" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+       	<![CDATA[
+		SELECT
+			A.RuleCode AS ruleCode,
+			A.RuleName AS ruleName,
+			CONVERT(VARCHAR, A.SendStartTime, 23) AS sendStartTime,
+			CONVERT(VARCHAR, A.SendEndTime, 23) AS sendEndTime,
+			A.Content AS content,
+			A.UseTimeJson AS useTimeJson,
+			A.SendCond AS sendCond,
+			A.UseCond AS useCond,
+			ISNULL(A.SumQuantity, 0) AS sumQuantity,
+			ISNULL(A.LimitQuantity, 0) AS limitQuantity,
+			ISNULL(A.Quantity, 0) AS quantity,
+			A.ValidMode AS validMode,
+			A.isGive AS isGive,
+			ISNULL(A.ModifyCount, 0) AS modifyCount,
+			B.BrandCode AS brandCode,
+			C.OrgCode AS orgCode
+		FROM Promotion.BIN_PromotionCouponRule A JOIN
+			Basis.BIN_BrandInfo B
+			ON(A.BIN_BrandInfoID = B.BIN_BrandInfoID) JOIN
+			Basis.BIN_OrganizationInfo C
+			ON(B.BIN_OrganizationInfoID = C.BIN_OrganizationInfoID)
+		WHERE
+			A.RuleCode = #ruleCode# AND
+			A.Status = '1' AND
+			A.ValidFlag = '1'
+		]]>
+    </select>
+    
+    <!-- 取得门店总数  -->
+    <select id="getCouponCounterCount" parameterClass="java.util.HashMap" resultClass="java.lang.Integer">
+    	<![CDATA[
+			SELECT
+				COUNT(1)
+			FROM
+				Promotion.BIN_CouponCounterDetail
+			WHERE
+				RuleCode = #ruleCode# AND
+				CounterCode = #counterCode# AND
+				ConditionType = #conditionType# AND
+				ValidFlag = '1'
+		]]>										
+    </select>
+    
+    <!-- 取得会员总数  -->
+    <select id="getMemCount" parameterClass="java.util.HashMap" resultClass="java.lang.Integer">
+    	<![CDATA[
+			SELECT
+				COUNT(1)
+			FROM
+				Promotion.BIN_CouponMemeberDetail
+			WHERE
+				RuleCode = #ruleCode# AND
+		]]>	
+		<isEmpty property="bpCode">
+			<![CDATA[(MemCode = #memCode# OR Mobile = #mobile#) AND]]>	
+		</isEmpty>
+		<isNotEmpty property="bpCode">
+			<![CDATA[(BPCode = #bpCode# OR Mobile = #mobile#) AND]]>
+		</isNotEmpty>
+		<![CDATA[
+				ValidFlag = '1'
+		]]>										
+    </select>
+    
+    <!-- 取得活动发券总数  -->
+    <select id="getAllSendCount" parameterClass="java.util.HashMap" resultClass="java.lang.Integer">
+    	<![CDATA[
+			SELECT
+				COUNT(1)
+			FROM
+				Promotion.BIN_MemberCoupon
+			WHERE
+				RuleCode = #ruleCode# AND
+				ValidFlag = '1'
+		]]>										
+    </select>
+    
+    <!-- 取得会员发券总数  -->
+    <select id="getAllMemSendCount" parameterClass="java.util.HashMap" resultClass="java.lang.Integer">
+    	<![CDATA[
+			SELECT
+				COUNT(1)
+			FROM
+				Promotion.BIN_MemberCoupon
+			WHERE
+				RuleCode = #ruleCode# AND
+		]]>	
+		<isEmpty property="bpCode">
+			<![CDATA[(MemCode = #memCode# OR Mobile = #mobile#) AND]]>	
+		</isEmpty>
+		<isNotEmpty property="bpCode">
+			<![CDATA[(BPCode = #bpCode# OR Mobile = #mobile#) AND]]>
+		</isNotEmpty>
+		<![CDATA[
+				ValidFlag = '1'
+		]]>										
+    </select>
+    
+    <!-- 查询产品分类信息 -->
+	<select id ="selPrtCateList" parameterClass="java.util.HashMap" resultClass ="java.util.HashMap">
+	<![CDATA[
+		SELECT 
+		  B.BIN_PrtCatPropValueID AS prtCateId	      
+		FROM 
+		  Basis.BIN_ProductVendor A,
+		  Basis.BIN_PrtCategory B
+		WHERE
+		  A.BIN_ProductVendorID = #prtVendorId# AND
+		  A.BIN_ProductID = B.BIN_ProductID
+	]]>
+	</select>
+	
+	<!-- 查询等级ID -->
+	<select id ="getLevelId" parameterClass="java.util.HashMap" resultClass ="java.util.HashMap">
+	<![CDATA[
+		SELECT 
+		  BIN_MemberLevelID AS levelId
+		FROM 
+		  Members.BIN_MemberLevel
+		WHERE
+		  LevelCode = #levelCode#
+	]]>
+	</select>
+	
+	<!-- 取得券类型 -->
+	<select id="getCouponTypeByCode" parameterClass="java.util.HashMap" resultClass="java.lang.String">
+		<![CDATA[
+			SELECT
+				CouponType
+			FROM
+				Promotion.BIN_MemberCoupon
+			WHERE
+				CouponNo = #couponNo#
+		]]>	
+    </select>
+    
+    <!-- 添加短信信息 -->
+    <insert id="addCouponSmsInfo" parameterClass="java.util.HashMap">
+    	<selectKey resultClass="java.lang.Integer" type="post" keyProperty="BIN_CouponSmsID" >
+    	<![CDATA[
+    		INSERT INTO Promotion.BIN_CouponSmsRecord					
+			(					
+				BuPartner,
+				MemCode,
+				Mobile,
+				Content,
+				SendTime,
+				ErrMsg,
+				RelatedNo,
+		]]>
+				<include refid="BINOLCMINC99.insertKeySql" />		
+		<![CDATA[						
+			)					
+			VALUES					
+			(					
+				#buPartner#,
+				#memCode#,
+				#mobile#,
+				#content#,
+				getdate(),
+				#errMsg#,
+				#relatedNo#,
+		]]>
+				<include refid="BINOLCMINC99.insertValueSql" />		
+		<![CDATA[							
+			)	
+			select SCOPE_IDENTITY() as value				
+    	]]>
+    	</selectKey>   
+    </insert>
+    
+    <!-- 更新短信信息  -->
+	<update id="updateCouponSmsInfo" parameterClass="java.util.HashMap">
+        <![CDATA[ 
+		  UPDATE   
+		           Promotion.BIN_CouponSmsRecord						
+		  SET     			
+		           Zstatus = #zstatus#,
+		]]>	
+		    <include refid="BINOLCMINC99.updateSql" />	
+		<![CDATA[			
+       	  WHERE									
+				   BIN_CouponSmsID = #couponSmsId#
+       ]]>   
+    </update>
+    
+    <!-- 查询该单据发券的信息  -->
+    <select id="getSendCoupon" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+       	<![CDATA[
+			SELECT
+				CouponNo as couponNo,
+				CouponCode as couponCode
+			FROM 
+				Promotion.BIN_MemberCoupon
+			WHERE
+				BIN_OrganizationInfoID=#organizationInfoId# and
+				BIN_BrandInfoID=#brandInfoId# and
+				RelatedNoA=#tradeNoIF#
+		]]>
+    </select>
+    
+    <!-- 查询该单据发送短信情况  -->
+    <select id="getSendSMSInfo" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+       	<![CDATA[
+			SELECT
+				BIN_CouponSmsID 
+			FROM
+				Promotion.BIN_CouponSmsRecord
+			WHERE
+				RelatedNo=#tradeNoIF# and
+				Mobile=#mobile# and
+				MemCode=#memCode# and
+				Zstatus >0	
+		]]>
+    </select>
+    
+    <!-- 获取券的相关信息（短信模版用） -->
+    <select id="getSMSCouponInfo" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+       	<![CDATA[
+			SELECT
+				CouponNo as couponNo,
+				CouponCode as couponCode,
+				CouponType as couponType,
+				cast(FaceValue as int) as faceValue,
+				STUFF(STUFF(CONVERT(char(8),Starttime,112),5,0,N'年'),8,0,N'月')+N'日' as startTime,
+				STUFF(STUFF(CONVERT(char(8),EndTime,112),5,0,N'年'),8,0,N'月')+N'日' as endTime
+			FROM 
+				Promotion.BIN_MemberCoupon
+			WHERE
+				couponNo IN
+		]]>
+		<iterate conjunction="," open="(" close=")" property="couponArr">
+			#couponArr[]#
+		</iterate>
+    </select>
+    
+    <!--  -->
+    <select id="getChannelList" parameterClass="java.util.HashMap" resultClass ="java.util.HashMap">
+    	<![CDATA[ 
+    	SELECT 
+			'Q'+CONVERT(VARCHAR(20),B.BIN_ChannelID) AS channelId,
+			B.ChannelName AS name,
+			'D'+CONVERT(VARCHAR(20),A.BIN_OrganizationID) AS memCounterId,
+			A.CounterNameIF AS counterName
+		FROM
+			Basis.BIN_CounterInfo A with(NOLOCK)
+			JOIN Basis.BIN_Channel B with(NOLOCK)
+			ON (A.BIN_ChannelID=B.BIN_ChannelID AND B.ValidFlag=1)
+		WHERE
+			A.BIN_OrganizationInfoId = #organizationInfoId#
+			AND A.ValidFlag = 1
+		]]>  
+    </select>
+    
+    <select id="getCounterInfoByCode" parameterClass="java.util.HashMap" resultClass ="java.util.HashMap">
+    	SELECT top 1
+    		A.BIN_ChannelID as channelId,
+    		A.BIN_OrganizationID as organizationId
+    	FROM
+    		Basis.BIN_CounterInfo A with(NOLOCK)
+    	WHERE
+    		A.CounterCode = #counterCode#
+    </select>
+    
+</sqlMap>

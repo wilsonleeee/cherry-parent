@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sqlMap PUBLIC "-//iBATIS.com//DTD SQL Map 2.0//EN" "http://ibatis.apache.org/dtd/sql-map-2.dtd">
+<sqlMap namespace="BINOLBSSAM01">
+
+	<sql id="querySchedule">
+		<![CDATA[
+		SELECT 
+			WorkDate as workDate,
+			Type as type,
+			WorkBeginTime as workBeginTime,
+			WorkEndTime as workEndTime,
+			Memo as memo
+		FROM
+			Basis.BIN_WorkScheduling
+		WHERE
+			BIN_OrganizationInfoID=#organizationInfoId# AND
+			BIN_BrandInfoID=#brandInfoId# AND
+			BIN_OrganizationID=#organizationId#
+		]]>
+		<isNotEmpty prepend="AND" property="type">
+				Type = #type#
+			</isNotEmpty>
+		<isNotEmpty prepend="AND" property="fromDate">
+			<![CDATA[
+				#fromDate# <= CONVERT(varchar(10),WorkDate, 120)
+			]]>
+		</isNotEmpty>
+		<isNotEmpty prepend="AND" property="toDate">
+			<![CDATA[
+				#toDate# >= CONVERT(varchar(10),WorkDate, 120)
+			]]>
+		</isNotEmpty>
+	</sql>
+
+	<select id="getScheduleList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+       	<include refid="BINOLCMINC99.pageheader" />
+		<include refid="BINOLBSSAM01.querySchedule" />
+		<include refid="BINOLCMINC99.pagefooter" />
+	</select>
+	
+	<select id="getScheduleCount" parameterClass="java.util.HashMap" resultClass="java.lang.Integer">
+		<![CDATA[
+            SELECT 
+				COUNT(1) AS count 
+			FROM 
+				(]]><include refid="BINOLBSSAM01.querySchedule" /><![CDATA[) T
+        ]]>
+	</select>
+
+</sqlMap>

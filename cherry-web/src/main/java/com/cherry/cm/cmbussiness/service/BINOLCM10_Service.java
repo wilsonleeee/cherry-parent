@@ -1,0 +1,66 @@
+/*	
+ * @(#)BINOLCM10_Service.java     1.0 2010/12/17		
+ * 		
+ * Copyright (c) 2010 SHANGHAI BINGKUN DIGITAL TECHNOLOGY CO.,LTD		
+ * All rights reserved		
+ * 		
+ * This software is the confidential and proprietary information of 		
+ * SHANGHAI BINGKUN.("Confidential Information").  You shall not		
+ * disclose such Confidential Information and shall use it only in		
+ * accordance with the terms of the license agreement you entered into		
+ * with SHANGHAI BINGKUN.		
+ */		
+package com.cherry.cm.cmbussiness.service;
+
+import java.util.List;
+import java.util.Map;
+
+import com.cherry.cm.core.CherryConstants;
+import com.cherry.cm.service.BaseService;
+
+/**
+ * 
+ * @author dingyc
+ *
+ */
+@SuppressWarnings("unchecked")
+public class BINOLCM10_Service extends BaseService{
+	/**
+	 * 取得审核人
+	 * @param map
+	 * @return
+	 */
+//	public List getActors(Map<String, Object> map){
+//		map.put(CherryConstants.IBATIS_SQL_ID, "BINOLCM10.getActors");
+//		return baseServiceImpl.getList(map);
+//	}
+//	
+	/**
+	 * 取得审核人
+	 * @param map
+	 * @return
+	 */
+	public List getActorsAllType(Map<String, Object> map){
+		map.put(CherryConstants.IBATIS_SQL_ID, "BINOLCM10.getActorsAllType");
+		return baseServiceImpl.getList(map);
+	}
+	/**
+	 * 取得指定用户能操作的人的列表
+	 * @param map
+	 * @return
+	 */
+	public List getChildEmployee(Map<String, Object> map){
+		map.put(CherryConstants.IBATIS_SQL_ID, "BINOLCM10.getChildEmployee");
+		return baseServiceImpl.getList(map);
+	}
+//	
+//	/**
+//	 * 取得系统配置项
+//	 * @param map
+//	 * @return
+//	 */
+//	public List getConfigValueEfficient(Map<String, Object> map){
+//		map.put(CherryConstants.IBATIS_SQL_ID, "BINOLCM10.getConfigValueEfficient");
+//		return baseServiceImpl.getList(map);
+//	}
+}

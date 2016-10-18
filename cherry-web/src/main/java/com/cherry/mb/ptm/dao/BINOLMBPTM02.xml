@@ -1,0 +1,241 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sqlMap PUBLIC "-//iBATIS.com//DTD SQL Map 2.0//EN" "http://ibatis.apache.org/dtd/sql-map-2.dtd">
+<sqlMap namespace="BINOLMBPTM02">
+	<!-- 积分信息查询sql文  -->
+	<sql id="PointInfoQuery">
+	 	<![CDATA[
+             SELECT
+             	A.BIN_PointChangeID AS pointChangeId,
+				CONVERT(varchar(30),A.ChangeDate,120) AS changeDate,
+				A.TradeNoIF AS billCode,
+				A.TradeType AS billType,
+				A.Amount AS amount,
+				A.Quantity AS quantity,
+				A.Point AS point,
+				A.BIN_MemberInfoID AS memId,
+				CASE ISNULL(B.Name,'') WHEN '' THEN A.MemCode ELSE '(' + A.MemCode + ')' + B.Name END AS memCode,
+				CASE ISNULL(C.DepartName,'') WHEN '' THEN C.DepartCode ELSE '(' + C.DepartCode + ')' + C.DepartName END AS departCode,
+				A.BIN_EmployeeID AS employeeId,
+				B.Name AS memNameOnly,
+				A.MemCode AS memCodeOnly,
+				C.DepartCode AS departCodeOnly,
+				C.DepartName AS departNameOnly
+			FROM
+				Members.BIN_PointChange A
+				JOIN Members.BIN_MemberInfo B ON A.BIN_MemberInfoID = B.BIN_MemberInfoID
+			]]>
+				<isNotEmpty property="privilegeFlag">
+				<isEqual property="privilegeFlag" compareValue="1">			
+			<![CDATA[			
+					JOIN (]]><include refid="BINOLCMINC99.departPrivilegeSql" /><![CDATA[) A99 
+					ON B.BIN_OrganizationID=A99.BIN_OrganizationID
+			]]>
+				</isEqual>
+				</isNotEmpty>
+			<![CDATA[
+				LEFT JOIN Basis.BIN_Organization C ON A.BIN_OrganizationID = C.BIN_OrganizationID
+			WHERE
+				A.BIN_OrganizationInfoID = #organizationInfoId#
+		]]>
+			<isNotEmpty prepend="AND" property="brandInfoId">
+				A.BIN_BrandInfoID = #brandInfoId#
+			</isNotEmpty>
+			<isNotEmpty prepend="AND" property="changeDateStart">
+				A.ChangeDate >= #changeDateStart#
+			</isNotEmpty>
+			<isNotEmpty prepend="AND" property="changeDateEnd">
+				<![CDATA[A.ChangeDate <= #changeDateEnd#]]>
+			</isNotEmpty>
+			<isNotEmpty prepend="AND" property="memPointStart">
+				ISNULL(A.Point,0) >= #memPointStart#
+			</isNotEmpty>
+			<isNotEmpty prepend="AND" property="memPointEnd">
+				<![CDATA[ISNULL(A.Point,0) <= #memPointEnd#]]>
+			</isNotEmpty>
+			<isNotEmpty prepend="AND" property="billCode">
+				A.TradeNoIF like '%'+#billCode#+'%'
+			</isNotEmpty>
+			<isNotEmpty prepend="AND" property="tradeType">
+				A.TradeType = #tradeType#
+			</isNotEmpty>
+			<isNotEmpty prepend="AND" property="memName">
+				B.Name like '%'+#memName#+'%'
+			</isNotEmpty>
+			<isNotEmpty prepend="AND" property="mobilePhone">
+				B.MobilePhone like '%'+#mobilePhone#+'%'
+			</isNotEmpty>
+			<isNotEmpty prepend="AND" property="organizationId">
+				A.BIN_OrganizationID = #organizationId#
+			</isNotEmpty>
+			<isNotEmpty prepend="AND" property="departCode">
+				C.DepartCode like '%'+#departCode#+'%'
+			</isNotEmpty>
+			<isNotEmpty prepend="AND" property="memberClubId">
+				A.BIN_MemberClubID = #memberClubId#
+			</isNotEmpty>
+			<isEmpty prepend="AND" property="validFlag" >
+				A.ValidFlag = '1'
+			</isEmpty>
+			<isNotEmpty prepend="AND" property="memCode">
+				<![CDATA[
+				EXISTS (
+					SELECT
+		             	1
+					FROM
+						Members.BIN_MemCardInfo X
+					WHERE
+						X.MemCode like '%'+#memCode#+'%' AND
+						A.BIN_MemberInfoID = X.BIN_MemberInfoID
+					)
+				]]>
+			</isNotEmpty>
+			<isNotEmpty prepend="AND" property="detailCondition">
+				<![CDATA[
+				EXISTS (
+					SELECT
+		             	1
+					FROM
+						Members.BIN_PointChangeDetail Y
+					WHERE
+				]]>
+					<isNotEmpty property="subCampaignId">
+						<isEqual property="pointRuleType" compareValue="1">
+							Y.MainRuleID = #subCampaignId# AND
+						</isEqual>
+						<isEqual property="pointRuleType" compareValue="2">
+							Y.SubCampaignID = #subCampaignId# AND
+						</isEqual>
+						<isEqual property="pointRuleType" compareValue="3">
+							Y.CombRuleID = #subCampaignId# AND
+						</isEqual>
+						<isEqual property="pointRuleType" compareValue="4">
+							Y.MainRuleID = #subCampaignId# AND
+						</isEqual>
+					</isNotEmpty>
+					<isNotEmpty property="prtVendorId">
+						Y.BIN_PrmPrtVendorID = #prtVendorId# AND Y.SaleType = 'N' AND
+					</isNotEmpty>
+					<isNotEmpty property="relevantSRCode">
+						Y.RelevantSRCode = #relevantSRCode# AND
+					</isNotEmpty>
+				<![CDATA[
+						Y.ValidFlag = '1' AND
+						A.BIN_PointChangeID = Y.BIN_PointChangeID
+					)
+				]]>		
+			</isNotEmpty>
+	</sql>
+	
+	<!-- 取得积分信息总数  -->
+    <select id="getPointInfoCount" parameterClass="java.util.HashMap" resultClass="java.lang.Integer">
+    	<![CDATA[
+			SELECT	COUNT(SORT_T1.pointChangeId) AS count FROM (
+		]]>	
+		<include refid="BINOLMBPTM02.PointInfoQuery" />	
+		<![CDATA[	
+			)SORT_T1
+		]]>										
+    </select>
+	
+	<!-- 取得积分信息List  -->
+    <select id="getPointInfoList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+       	<include refid="BINOLCMINC99.pageheader" />
+		<include refid="BINOLMBPTM02.PointInfoQuery" />
+		<include refid="BINOLCMINC99.pagefooter" />
+    </select>
+    
+    <!-- 取得积分规则信息List  -->
+    <select id="getCampaignNameList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+       	<![CDATA[
+       		SELECT
+       			CONVERT(varchar(20),B.BIN_CampaignRuleID) + '_' + A.PointRuleType AS subCampaignId,
+       			A.CampaignName AS campaignName
+       		FROM	
+       			Campaign.BIN_Campaign A
+       			JOIN Campaign.BIN_CampaignRule B ON A.BIN_CampaignID = B.BIN_CampaignID AND B.ValidFlag = '1'
+			WHERE
+				A.BIN_OrganizationInfoID = #organizationInfoId# AND
+		]]>
+			<isNotEmpty property="brandInfoId">
+				A.BIN_BrandInfoID = #brandInfoId# AND
+			</isNotEmpty>
+			<isNotEmpty property="subCampaignId">
+				B.BIN_CampaignRuleID = #subCampaignId# AND
+			</isNotEmpty>
+		<![CDATA[	
+				A.CampaignType = '3' AND
+				A.ValidFlag = '1'
+		]]>
+    </select>
+    <!-- 导出积分明细SQL文 -->
+    <sql id="PointDetailExportQuery">
+    	<![CDATA[
+    	SELECT
+			T0.billCode,
+			T0.billType,
+			T0.memNameOnly,
+			T0.memCodeOnly,
+			T0.departCodeOnly,
+			T0.departNameOnly,
+			I.EmployeeCode AS employeeCode,
+			I.EmployeeName AS employeeName,
+			T0.changeDate,
+			A.RelevantSRCode AS relevantSRCode,
+		 	A.UnitCode AS unitCode,
+		 	A.BarCode AS barCode,
+		 	ISNULL(A.SaleType,'') AS saleType,
+		 	CASE ISNULL(A.SaleType,'') WHEN 'N' THEN Y.NameTotal WHEN 'P' THEN N.NameTotal ELSE '' END AS productName,
+		 	A.Price AS price,
+		 	cast(A.Quantity AS int) AS quantity,
+		 	A.Point AS point,
+		 	A.ValidMonths AS validMonths,
+		 	A.PointType AS pointType,
+		 	A.Reason AS reason,
+		 	C.CampaignName AS mainCampaignName,
+		 	F.CampaignName AS subCampaignName,
+		 	H.CampaignName AS combCampaignName
+		FROM(
+    	]]>
+    	<include refid="BINOLMBPTM02.PointInfoQuery" />
+    	<![CDATA[) T0 
+			LEFT JOIN Members.BIN_PointChangeDetail A WITH(NOLOCK)
+			ON(T0.pointChangeId = A.BIN_PointChangeID)
+			LEFT JOIN Basis.BIN_ProductVendor X WITH(NOLOCK)
+				JOIN Basis.BIN_Product Y WITH(NOLOCK) ON X.BIN_ProductID = Y.BIN_ProductID
+			ON A.BIN_PrmPrtVendorID = X.BIN_ProductVendorID AND A.SaleType = 'N'
+			LEFT JOIN Basis.BIN_PromotionProductVendor M WITH(NOLOCK)
+				JOIN Basis.BIN_PromotionProduct N WITH(NOLOCK) ON M.BIN_PromotionProductID = N.BIN_PromotionProductID
+			ON A.BIN_PrmPrtVendorID = M.BIN_PromotionProductVendorID AND A.SaleType = 'P'
+			LEFT JOIN Campaign.BIN_CampaignRule B WITH(NOLOCK)
+				JOIN Campaign.BIN_Campaign C WITH(NOLOCK) ON B.BIN_CampaignID = C.BIN_CampaignID
+			ON A.MainRuleID = B.BIN_CampaignRuleID
+			LEFT JOIN Campaign.BIN_CampaignRule E WITH(NOLOCK)
+				JOIN Campaign.BIN_Campaign F WITH(NOLOCK) ON E.BIN_CampaignID = F.BIN_CampaignID
+			ON A.SubCampaignID = E.BIN_CampaignRuleID
+			LEFT JOIN Campaign.BIN_CampaignRule G WITH(NOLOCK)
+				JOIN Campaign.BIN_Campaign H WITH(NOLOCK) ON G.BIN_CampaignID = H.BIN_CampaignID
+			ON A.CombRuleID = G.BIN_CampaignRuleID
+			LEFT JOIN Basis.BIN_Employee I WITH(NOLOCK)
+			ON(T0.employeeId = I.BIN_EmployeeID)
+    	]]>
+    </sql>
+    
+    <!-- 取得待导出的积分信息总数  -->
+    <select id="getExportDetailCount" parameterClass="java.util.HashMap" resultClass="java.lang.Integer">
+    	<![CDATA[
+			SELECT	COUNT(1) AS count FROM (
+		]]>	
+		<include refid="BINOLMBPTM02.PointDetailExportQuery" />	
+		<![CDATA[	
+			)SORT_T1
+		]]>										
+    </select>
+	
+	<!-- 取得待导出的积分信息List  -->
+    <select id="getExportDetailList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+       	<include refid="BINOLCMINC99.pageheader" />
+		<include refid="BINOLMBPTM02.PointDetailExportQuery" />
+		<include refid="BINOLCMINC99.pagefooter" />
+    </select>
+    
+</sqlMap>

@@ -1,0 +1,111 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sqlMap PUBLIC "-//iBATIS.com//DTD SQL Map 2.0//EN" "http://ibatis.apache.org/dtd/sql-map-2.dtd">
+<sqlMap namespace="BINOLBSPAT01">
+	<sql id="partnerQuery">
+		<![CDATA[
+			SELECT				
+				A.BIN_BussinessPartnerID AS partnerId ,     
+				A.Code AS code,     
+				A.NameEN AS nameEn,     
+				A.NameCN AS nameCn,  
+				A.Address AS address,     
+				A.PhoneNumber AS phoneNumber,     
+				A.PostalCode AS postalCode,     
+				A.ValidFlag AS validFlag,     
+				convert(varchar(30),A.UpdateTime,121) AS UpdateTime,     
+				A.ModifyCount AS modifyCount,
+				B.RegionNameChinese AS region,
+				C.RegionNameChinese AS province,
+				D.RegionNameChinese AS city,
+				E.RegionNameChinese AS county,
+				A.ContactAddress AS contactAddress,
+				A.ContactPerson AS contactPerson,
+				A.DeliverAddress AS deliverAddress 
+			FROM
+				Basis.BIN_BussinessPartner A WITH(NOLOCK)
+				LEFT JOIN Basis.BIN_Region B WITH(NOLOCK)
+				ON(A.BIN_RegionID = B.BIN_RegionID)
+				LEFT JOIN Basis.BIN_Region C WITH(NOLOCK)
+				ON(A.BIN_ProvinceID = C.BIN_RegionID)
+				LEFT JOIN Basis.BIN_Region D WITH(NOLOCK)
+				ON(A.BIN_CityID=D.BIN_RegionID)
+				LEFT JOIN Basis.BIN_Region E WITH(NOLOCK)
+				ON(A.BIN_CountyID=E.BIN_RegionID) 
+			WHERE
+ 				A.BIN_OrganizationInfoID=#organizationInfoId#
+		]]>			
+		<dynamic>
+			<isNotEmpty prepend="AND" property="brandInfoId" >
+				A.BIN_BrandInfoID=#brandInfoId#
+			</isNotEmpty>
+			<isNotEmpty prepend="AND" property="provinceId" >
+				A.BIN_ProvinceID=#provinceId#
+			</isNotEmpty>
+			<isNotEmpty prepend="AND" property="cityId" >
+				A.BIN_CityID=#cityId#
+			</isNotEmpty>
+			<isNotEmpty prepend="AND" property="code">
+				A.Code like '%'+#code#+'%'
+			</isNotEmpty>
+			<isNotEmpty prepend="AND" property="name">
+			 (A.NameEN  like '%'+#name#+'%' OR
+			  A.NameCN  like '%'+#name#+'%' )
+			</isNotEmpty>
+			<isEmpty prepend="AND" property="validFlag" >
+				A.ValidFlag='1'
+			</isEmpty>
+		</dynamic>
+	</sql>
+	
+	<!-- 取得单位总数  -->
+    <select id="getPartnerCount" parameterClass="java.util.HashMap" resultClass="java.lang.Integer">
+    	<![CDATA[
+			SELECT	COUNT(SORT_T1.code) AS count FROM (
+		]]>	
+		<include refid="BINOLBSPAT01.partnerQuery" />	
+		<![CDATA[	
+			)SORT_T1
+		]]>										
+    </select>
+	<!-- 单位停用 -->
+	<update id="disablePartner" parameterClass="java.util.HashMap">     
+    <![CDATA[
+        UPDATE
+           Basis.BIN_BussinessPartner 
+        SET
+            ValidFlag = '0',
+    ]]>
+	<include refid="BINOLCMINC99.updateSql" />
+    <![CDATA[
+        WHERE 
+          BIN_BussinessPartnerID  IN
+    ]]>
+	<iterate conjunction="," open="(" close=")" property="partnerId">  
+        #partnerId[]#
+    </iterate>
+    </update>
+	
+	<!-- 单位启用 -->
+    <update id="enablePartner" parameterClass="java.util.HashMap">     
+    <![CDATA[
+        UPDATE
+            Basis.BIN_BussinessPartner 
+        SET
+           ValidFlag = '1',
+    ]]>
+	<include refid="BINOLCMINC99.updateSql" />
+    <![CDATA[
+        WHERE 
+            BIN_BussinessPartnerID  IN
+    ]]>
+	<iterate conjunction="," open="(" close=")" property="partnerId">  
+        #partnerId[]#
+    </iterate>
+    </update>
+
+    <select id="getPartnerList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+       	<include refid="BINOLCMINC99.pageheader" />
+		<include refid="BINOLBSPAT01.partnerQuery" />
+		<include refid="BINOLCMINC99.pagefooter" />
+    </select>
+</sqlMap>

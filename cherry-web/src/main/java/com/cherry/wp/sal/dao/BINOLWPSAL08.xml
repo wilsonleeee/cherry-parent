@@ -1,0 +1,708 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sqlMap PUBLIC "-//iBATIS.com//DTD SQL Map 2.0//EN" "http://ibatis.apache.org/dtd/sql-map-2.dtd">
+<sqlMap namespace="BINOLWPSAL08">
+	
+    <select id="getPromotionList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+    	<![CDATA[
+	    	SELECT 
+	    		ta.SubjectCode as subjectCode,
+				ta.MainCode as activityCode,
+				ty.ActivityName as activityName,
+				min(CONVERT(varchar(30), ta.ActivityFromDate, 23)) as activityFromDate,
+				max(CONVERT(varchar(30), ta.ActivityToDate, 23)) as activityToDate,
+				ta.ActivityType as activityType,
+				tg.ActivityType as activityClassify,
+				null as campaignValid,
+				null as needBuyFlag,
+				ISNULL(CONVERT(Decimal(16,2),max(tb.ExPoint)),0) as exNeedPoint,
+				0 as detailType 
+			FROM 
+				Promotion.BIN_ActivityTransHis as ta with(nolock) 
+				Left join Promotion.BIN_PromotionActivity as ty with(nolock) on ta.MainCode = ty.ActivityCode 
+				Left join Promotion.BIN_PromotionActGrp as tg with(nolock) on tg.BIN_PromotionActGrpID = ty.BIN_PromotionActGrpID 
+				Left join(
+					SELECT 
+						tpv.BIN_PromotionProductVendorID,
+						tpv.BarCode,
+						tpb.UnitCode,
+						tpb.PromotionCateCD,
+						tpb.NameTotal,
+						tpb.IsExchanged,
+						tpb.ExPoint 
+					FROM 
+						Basis.BIN_PromotionProductVendor as tpv with(nolock)
+						Inner join Basis.BIN_PromotionProduct as tpb with(nolock) on tpb.BIN_PromotionProductID = tpv.BIN_PromotionProductID
+				) as tb on ta.BIN_PromotionProductVendorID = tb.BIN_PromotionProductVendorID and ta.PrtType = 'P' 
+				Left join Basis.BIN_Organization as tz with(nolock) on ta.BIN_OrganizationID = tz.BIN_OrganizationID and tz.[Type] = '4'
+			WHERE 
+				ta.ValidFlag = 1 AND 
+				ta.BIN_OrganizationInfoID = #organizationInfoId# AND 
+				ta.BIN_BrandInfoID = #brandInfoId# AND 
+				ta.ActivityFromDate <= #nowTime# AND 
+				ta.ActivityToDate >= #nowTime# AND 
+				(ta.BIN_OrganizationID = -8888 or tz.DepartCode = #counterCode#) AND 
+				ta.ActivityType = '0' AND
+				NOT EXISTS(
+				SELECT  * FROM  Promotion.BIN_PromotionRule b
+				WHERE  ty.ActivityCode =b.RuleCode
+				) 
+		]]>
+		<dynamic>
+			<isNotEmpty prepend="AND" property="noMemberActivity" >
+			<![CDATA[
+				tg.ActivityType != 'DHHD' 
+			]]>
+			</isNotEmpty>
+			<isNotEmpty prepend="AND" property="memberActivity" >
+			<![CDATA[
+				tg.ActivityType = 'DHHD' 
+			]]>
+			</isNotEmpty>
+		</dynamic>
+		<![CDATA[
+			GROUP BY 
+				ta.SubjectCode,
+				ta.MainCode,
+				ty.ActivityName,
+				ta.ActivityType,
+				tg.ActivityType
+		]]>
+    </select>
+    
+    <select id="getCampaignPromotionList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+    	<![CDATA[
+	    	SELECT 
+				ta.SubjectCode as subjectCode,
+				ta.MainCode as activityCode,
+				tr.SubCampaignName as activityName,
+				min(CONVERT(varchar(30), ta.ActivityFromDate, 23)) as activityFromDate,
+				max(CONVERT(varchar(30), ta.ActivityToDate, 23)) as activityToDate,
+				ta.ActivityType as activityType,
+				tc.CampaignType as activityClassify,
+				tr.SubCampaignValid as campaignValid,
+				tc.NeedBuyFlag as needBuyFlag,
+				tc.GotCounter as gotCounter,
+				0 as exNeedPoint,
+				0 as detailType 
+			FROM 
+				Promotion.BIN_ActivityTransHis as ta with(nolock) 
+				Left join Campaign.BIN_CampaignRule as tr with(nolock) on ta.MainCode = tr.SubCampaignCode 
+				Inner join Campaign.BIN_CamRuleCondition as tt with(nolock) on tr.BIN_CampaignRuleID = tt.BIN_CampaignRuleID 
+				Inner join Campaign.BIN_CampaignBaseProp as tp with(nolock) on tt.BIN_CampaignBasePropID = tp.BIN_CampaignBasePropID AND tp.PropertyName = 'baseProp_customer'
+				Left join Campaign.BIN_Campaign as tc with(nolock) on tr.BIN_CampaignID = tc.BIN_CampaignID 
+				Left join Basis.BIN_Organization as tz with(nolock) on ta.BIN_OrganizationID = tz.BIN_OrganizationID and tz.[Type] = '4'
+			WHERE 
+				tr.ValidFlag = 1 AND 
+				ta.ValidFlag = 1 AND 
+				ta.BIN_OrganizationInfoID = #organizationInfoId# AND 
+				ta.BIN_BrandInfoID = #brandInfoId# AND 
+				ta.ActivityFromDate <= #nowTime# AND 
+				ta.ActivityToDate >= #nowTime# AND 
+				(ta.BIN_OrganizationID = -8888 or tz.DepartCode = #counterCode#) AND 
+				ta.ActivityType = '1' AND 
+				tt.ValidFlag = 1 AND 
+				tt.ActLocationType in('5','6','4') 
+			GROUP BY 
+				ta.SubjectCode,
+				ta.MainCode,
+				tr.SubCampaignName,
+				ta.ActivityType,
+				tc.CampaignType,
+				tr.SubCampaignValid,
+				tc.NeedBuyFlag,
+				tc.GotCounter
+		]]>
+    </select>    
+    
+    <select id="getCampaignList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+    	<![CDATA[
+	    	SELECT 
+	    		ta.SubjectCode as subjectCode,
+				ta.MainCode as activityCode,
+				tr.SubCampaignName as activityName,
+				min(CONVERT(varchar(30), ta.ActivityFromDate, 23)) as activityFromDate,
+				max(CONVERT(varchar(30), ta.ActivityToDate, 23)) as activityToDate,
+				ta.ActivityType as activityType,
+				tc.CampaignType as activityClassify,
+				tr.SubCampaignValid as campaignValid,
+				tc.NeedBuyFlag as needBuyFlag,
+				tc.GotCounter as gotCounter,
+				ISNULL(CONVERT(Decimal(16,2),max(tb.ExPoint)),0) as exNeedPoint,
+				0 as detailType  
+			FROM 
+				Promotion.BIN_ActivityTransHis as ta with(nolock) 
+				Left join Campaign.BIN_CampaignRule as tr with(nolock) on ta.MainCode = tr.SubCampaignCode 
+				Left join Campaign.BIN_Campaign as tc on tr.BIN_CampaignID = tc.BIN_CampaignID 
+				Left join(
+					SELECT 
+						tpv.BIN_PromotionProductVendorID,
+						tpv.BarCode,
+						tpb.UnitCode,
+						tpb.PromotionCateCD,
+						tpb.NameTotal,
+						tpb.IsExchanged,
+						tpb.ExPoint 
+					FROM 
+						Basis.BIN_PromotionProductVendor as tpv with(nolock)
+						Inner join Basis.BIN_PromotionProduct as tpb with(nolock) on tpb.BIN_PromotionProductID = tpv.BIN_PromotionProductID
+				) as tb on ta.BIN_PromotionProductVendorID = tb.BIN_PromotionProductVendorID and ta.PrtType = 'P' 
+				Left join Basis.BIN_Organization as tz with(nolock) on ta.BIN_OrganizationID = tz.BIN_OrganizationID and tz.[Type] = '4'
+			WHERE 
+				tr.ValidFlag = 1 AND 
+				ta.ValidFlag = 1 AND 
+				ta.BIN_OrganizationInfoID = #organizationInfoId# AND 
+				ta.BIN_BrandInfoID = #brandInfoId# AND 
+				ta.ActivityFromDate <= #nowTime# AND 
+				ta.ActivityToDate >= #nowTime# AND 
+				(ta.BIN_OrganizationID = -8888 or tz.DepartCode = #counterCode#) AND 
+				ta.ActivityType = '1' AND 
+				tr.SubCampaignValid != '2' AND 
+				tc.SendFlag = 1  AND 
+				tc.CampaignType != 'LYHD'
+			GROUP BY 
+				ta.SubjectCode,
+				ta.MainCode,
+				tr.SubCampaignName,
+				ta.ActivityType,
+				tc.CampaignType,
+				tr.SubCampaignValid,
+				tc.NeedBuyFlag,
+				tc.GotCounter
+		]]>
+    </select>
+    <!-- 加预约柜台 -->
+    <select id="getCouponOrderList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+    	<![CDATA[
+    		SELECT 
+    			tc.GotCounter as gotCounter,
+				td.CampaignCode as subjectCode,
+				tr.SubCampaignCode as activityCode,
+				tr.SubCampaignName as activityName,
+				min(CONVERT(varchar(30), td.GetFromTime, 23)) as activityFromDate,
+				max(CONVERT(varchar(30), td.GetToTime, 23)) as activityToDate,
+				1 as activityType,
+				tc.CampaignType as activityClassify,
+				tr.SubCampaignValid as campaignValid,
+				tc.NeedBuyFlag as needBuyFlag,
+				0 as exNeedPoint,
+				1 as detailType 
+			FROM 
+				Campaign.BIN_CampaignOrder as td with(nolock) 
+				Inner join Campaign.BIN_Campaign as tc on td.CampaignCode = tc.CampaignCode  
+				Left join Campaign.BIN_CampaignRule as tr with(nolock) on tc.BIN_CampaignID = tr.BIN_CampaignID 
+			WHERE 
+				tr.ValidFlag = 1 AND 
+				td.ValidFlag = 1 AND 
+				td.BIN_OrganizationInfoID = #organizationInfoId# AND 
+				td.BIN_BrandInfoID = #brandInfoId# AND 
+				(td.BIN_MemberInfoID = #memberInfoId# or td.Mobile = #mobilePhone# ) AND 
+				td.GetFromTime <= #nowTime# AND 
+				td.GetToTime >= #nowTime# AND 
+				td.[State] = 'AR' AND
+				tc.ValidFlag='1'
+			GROUP BY 
+				td.CampaignCode,
+				tr.SubCampaignCode,
+				tr.SubCampaignName,
+				tr.SubCampaignValid,
+				tc.CampaignType,
+				tc.NeedBuyFlag,
+				tc.GotCounter
+		]]>
+    </select>
+    
+    <select id="getPromotionProduct" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+    	<![CDATA[
+    		SELECT 
+				ta.MainCode as mainCode,
+				ta.CountActCode as counterActCode,
+				ta.ActivityType as activityType,
+				tb.PromotionCateCD as promotionType,
+				ta.BIN_PromotionProductVendorID as productVendorId,
+				(case ta.PrtType when 'N' then tt.UnitCode when 'P' then tb.UnitCode end) as unitCode,
+				(case ta.PrtType when 'N' then tt.BarCode when 'P' then tb.BarCode end) as barCode,
+				(case ta.PrtType when 'N' then tt.NameTotal when 'P' then tb.NameTotal end) as productName,
+				tr.Quantity as quantity,
+				(case ta.PrtType when 'N' then tr.OldPrice when 'P' then -tr.OldPrice end) as oldPrice,
+				(case ta.PrtType when 'N' then tr.Price when 'P' then -tr.Price end) as price,
+				ta.PrtType as proType,
+				tt.IsStock as isStock,
+				ISNULL(CONVERT(Decimal(16,2),tb.ExPoint),0) as exPoint 
+			FROM 
+				(SELECT th.MainCode,
+						th.CountActCode,
+						th.ActivityType,
+						th.BIN_PromotionProductVendorID,
+						th.PrtType 
+					FROM 
+						Promotion.BIN_ActivityTransHis as th 
+						Left join Basis.BIN_Organization as tz with(nolock) on th.BIN_OrganizationID = tz.BIN_OrganizationID and tz.[Type] = '4' 
+					WHERE 
+						th.ValidFlag = 1 and 
+						th.BIN_OrganizationInfoID = #organizationInfoId# and 
+						th.BIN_BrandInfoID = #brandInfoId# and 
+						(th.BIN_OrganizationID='-8888' or tz.DepartCode = #counterCode#) 
+					GROUP BY 
+						th.MainCode,
+						th.CountActCode,
+						th.ActivityType,
+						th.BIN_PromotionProductVendorID,
+						th.PrtType 
+				)as ta 
+				Left join(
+					SELECT 
+						tpv.BIN_PromotionProductVendorID,
+						tpb.UnitCode,
+						tpv.BarCode,
+						tpb.NameTotal,
+						tpb.PromotionCateCD,
+						tpb.IsExchanged,
+						tpb.ExPoint 
+					FROM 
+						Basis.BIN_PromotionProductVendor as tpv with(nolock)
+						Inner join Basis.BIN_PromotionProduct as tpb with(nolock) on tpb.BIN_PromotionProductID = tpv.BIN_PromotionProductID
+				) as tb on ta.BIN_PromotionProductVendorID = tb.BIN_PromotionProductVendorID and ta.PrtType = 'P' 
+				Left join(
+					SELECT 
+						tpv.BIN_ProductVendorID,
+						tpb.UnitCode,
+						tpv.BarCode,
+						tpb.NameTotal,
+						tpb.IsStock
+					FROM 
+						Basis.BIN_ProductVendor as tpv with(nolock)
+						Inner join Basis.BIN_Product as tpb with(nolock) on tpb.BIN_ProductID = tpv.BIN_ProductID
+				) as tt on ta.BIN_PromotionProductVendorID = tt.BIN_ProductVendorID 
+				Left join(
+					SELECT 
+						A.ActivityCode,
+						B.BIN_PromotionActivityRuleID 
+					FROM 
+						Promotion.BIN_PromotionActivity as A with(nolock) 
+						Inner join Promotion.BIN_PromotionActivityRule as B with(nolock) on A.BIN_PromotionActivityID = B.BIN_PromotionActivityID
+				) as tc on ta.MainCode = tc.ActivityCode 
+				Left join 
+					Promotion.BIN_PromotionRuleResult as tr with(nolock) on tc.BIN_PromotionActivityRuleID = tr.BIN_PromotionActivityRuleID and ta.BIN_PromotionProductVendorID=tr.BIN_ProductVendorID 
+			WHERE 
+				ta.MainCode = #activityCode# AND 
+				ta.ActivityType = #activityType#
+    	]]>
+    </select>
+    
+    <select id="getCampaignProduct" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+    	<![CDATA[
+    		SELECT 
+				ta.MainCode as mainCode,
+				ta.CountActCode as counterActCode,
+				ta.ActivityType as activityType,
+				tb.PromotionCateCD as promotionType,
+				ta.BIN_PromotionProductVendorID as productVendorId,
+				(case ta.PrtType when 'N' then tt.UnitCode when 'P' then tb.UnitCode end) as unitCode,
+				(case ta.PrtType when 'N' then tt.BarCode when 'P' then tb.BarCode end) as barCode,
+				(case ta.PrtType when 'N' then tt.NameTotal when 'P' then tb.NameTotal end) as productName, 
+				tr.Quantity as quantity,
+				(case ta.PrtType when 'N' then tt.salePrice when 'P' then -tb.StandardCost end) as oldPrice,
+				(case ta.PrtType when 'N' then tr.Price when 'P' then -tr.Price end) as price,
+				ta.PrtType as proType,
+				tt.IsStock as isStock,
+				ISNULL(CONVERT(Decimal(16,2),tb.ExPoint),0) as exPoint 
+			FROM 
+				(SELECT th.MainCode,
+						th.CountActCode,
+						th.ActivityType,
+						th.BIN_PromotionProductVendorID,
+						th.PrtType 
+					FROM 
+						Promotion.BIN_ActivityTransHis as th 
+						Left join Basis.BIN_Organization as tz with(nolock) on th.BIN_OrganizationID = tz.BIN_OrganizationID and tz.[Type] = '4' 
+					WHERE 
+						th.ValidFlag = 1 and 
+						th.BIN_OrganizationInfoID = #organizationInfoId# and 
+						th.BIN_BrandInfoID = #brandInfoId# and 
+						(th.BIN_OrganizationID='-8888' or tz.DepartCode = #counterCode#) 
+					GROUP BY 
+						th.MainCode,
+						th.CountActCode,
+						th.ActivityType,
+						th.BIN_PromotionProductVendorID,
+						th.PrtType 
+				)as ta 
+				Left join(
+					SELECT 
+						tpv.BIN_PromotionProductVendorID,
+						tpb.UnitCode,
+						tpv.BarCode,
+						tpb.NameTotal,
+						tpb.PromotionCateCD,
+						tpb.IsExchanged,
+						tpb.StandardCost,
+						tpb.ExPoint 
+					FROM 
+						Basis.BIN_PromotionProductVendor as tpv with(nolock)
+						Inner join Basis.BIN_PromotionProduct as tpb with(nolock) on tpb.BIN_PromotionProductID = tpv.BIN_PromotionProductID
+				) as tb on ta.BIN_PromotionProductVendorID = tb.BIN_PromotionProductVendorID and ta.PrtType = 'P' 
+				Left join(
+					SELECT 
+						tpb.IsStock,
+						tpv.BIN_ProductVendorID,
+						tpb.UnitCode,
+						tpv.BarCode,
+						tpb.NameTotal,
+						ISNULL(CONVERT(Decimal(16,2),tpc.SalePrice),0) AS salePrice  
+					FROM 
+						Basis.BIN_ProductVendor as tpv with(nolock)
+						Inner join Basis.BIN_Product as tpb with(nolock) on tpb.BIN_ProductID = tpv.BIN_ProductID 
+						LEFT JOIN Basis.BIN_ProductPrice as tpc with(nolock) on (tpv.BIN_ProductID = tpc.BIN_ProductID AND tpv.ValidFlag = tpc.ValidFlag AND tpc.Type = '2' AND tpc.EndDate >= #businessDate# AND tpc.StartDate <= #businessDate#) 
+				) as tt on ta.BIN_PromotionProductVendorID = tt.BIN_ProductVendorID 
+				Left join 
+					Campaign.BIN_CampaignRule as tc with(nolock) on ta.MainCode = tc.SubCampaignCode 
+				Left join 
+					Campaign.BIN_CampaignRuleResult as tr with(nolock) on tc.BIN_CampaignRuleID = tr.BIN_CampaignRuleID and ta.BIN_PromotionProductVendorID=tr.BIN_ProductVendorID 
+			WHERE 
+				ta.MainCode = #activityCode# AND 
+				ta.ActivityType = #activityType# AND
+				tc.ValidFlag = 1 
+    	]]>
+    </select>
+    
+    <select id="getPromotionInfo" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+    	<![CDATA[
+    		SELECT Top 1 
+				ta.MainCode as mainCode,
+				tc.ActivityName as activityName,
+				ta.ActivityType as activityType,
+				tc.ActivitySign as activitySign,
+				sum(case ta.PrtType when 'N' then tr.Quantity when 'P' then 0 end) as quantity,
+				sum(case ta.PrtType when 'N' then tr.Quantity*tr.OldPrice when 'P' then -tr.OldPrice end) as oldPrice,
+				sum(case ta.PrtType when 'N' then tr.Quantity*tr.Price when 'P' then -tr.Price end) as price,
+				min(ta.PrtType) as prtType,
+				ISNULL(CONVERT(Decimal(16,2),sum(tb.ExPoint)),0) as exPoint,
+				CONVERT(nvarchar(19),ta.ActivityToDate,120) as ActivityToDate
+			FROM 
+				(SELECT th.MainCode,
+						th.ActivityType,
+						th.BIN_PromotionProductVendorID,
+						th.PrtType,
+						th.ActivityToDate
+					FROM 
+						Promotion.BIN_ActivityTransHis as th 
+						Left join Basis.BIN_Organization as tz with(nolock) on th.BIN_OrganizationID = tz.BIN_OrganizationID and tz.[Type] = '4' 
+					WHERE 
+						th.ValidFlag = 1 and 
+						th.BIN_OrganizationInfoID = #organizationInfoId# and 
+						th.BIN_BrandInfoID =#brandInfoId# and 
+						(th.BIN_OrganizationID='-8888' or tz.DepartCode = #counterCode#) 
+					GROUP BY 
+						th.MainCode,
+						th.ActivityType,
+						th.BIN_PromotionProductVendorID,
+						th.PrtType,
+						th.ActivityToDate 
+				)as ta 
+				Inner join(
+					SELECT 
+						A.ActivityCode,
+						A.ActivityName,
+						B.BIN_PromotionActivityRuleID,
+						C.ActivityType as ActivitySign 
+					FROM 
+						Promotion.BIN_PromotionActivity as A with(nolock) 
+						Inner join Promotion.BIN_PromotionActivityRule as B with(nolock) on A.BIN_PromotionActivityID = B.BIN_PromotionActivityID 
+						Left join Promotion.BIN_PromotionActGrp as C with(nolock) on C.BIN_PromotionActGrpID = A.BIN_PromotionActGrpID 
+				) as tc on ta.MainCode = tc.ActivityCode 
+				Left join(
+					SELECT 
+						tpv.BIN_PromotionProductVendorID,
+						tpb.ExPoint 
+					FROM 
+						Basis.BIN_PromotionProductVendor as tpv with(nolock)
+						Inner join Basis.BIN_PromotionProduct as tpb with(nolock) on tpb.BIN_PromotionProductID = tpv.BIN_PromotionProductID
+				) as tb on ta.BIN_PromotionProductVendorID = tb.BIN_PromotionProductVendorID and ta.PrtType = 'P' 
+				Left join 
+					Promotion.BIN_PromotionRuleResult as tr with(nolock) on tc.BIN_PromotionActivityRuleID = tr.BIN_PromotionActivityRuleID and ta.BIN_PromotionProductVendorID = tr.BIN_ProductVendorID 
+			WHERE 
+				ta.MainCode = #activityCode# AND 
+				ta.ActivityType = #activityType# AND
+				#businessDate# <= ta.ActivityToDate
+			group by 
+				ta.MainCode,
+				tc.ActivityName,
+				ta.ActivityType,
+				tc.ActivitySign,
+				ta.ActivityToDate
+    	]]>
+    </select>
+    
+    <select id="getCampaignInfo" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+    	<![CDATA[
+    		SELECT Top 1 
+				ta.MainCode as mainCode,
+				tc.SubCampaignName as activityName,
+				ta.ActivityType as activityType,
+				tp.CampaignType as activitySign,
+				sum(case ta.PrtType when 'N' then tr.Quantity when 'P' then 0 end) as quantity,
+				sum(case ta.PrtType when 'N' then tr.Quantity*tt.salePrice when 'P' then -tb.StandardCost end) as oldPrice, 
+				sum(case ta.PrtType when 'N' then tr.Quantity*tr.Price when 'P' then -tr.Price end) as price,
+				min(ta.PrtType) as prtType,
+				ISNULL(CONVERT(Decimal(16,2),sum(tb.ExPoint)),0) as exPoint,
+				CONVERT(nvarchar(19),ta.ActivityToDate,120) as ActivityToDate
+			FROM 
+				(SELECT th.MainCode,
+						th.ActivityType,
+						th.BIN_PromotionProductVendorID,
+						th.PrtType,
+						th.ActivityToDate
+					FROM 
+						Promotion.BIN_ActivityTransHis as th 
+						Left join Basis.BIN_Organization as tz with(nolock) on th.BIN_OrganizationID = tz.BIN_OrganizationID and tz.[Type] = '4' 
+					WHERE 
+						th.ValidFlag = 1 and 
+						th.BIN_OrganizationInfoID = #organizationInfoId# and 
+						th.BIN_BrandInfoID = #brandInfoId# and 
+						(th.BIN_OrganizationID='-8888' or tz.DepartCode = #counterCode#) and
+						#businessDate# Between th.ActivityFromDate and th.ActivityToDate
+					GROUP BY 
+						th.MainCode,
+						th.ActivityType,
+						th.BIN_PromotionProductVendorID,
+						th.PrtType,
+						th.ActivityToDate
+				)as ta 
+				Left join 
+					Campaign.BIN_CampaignRule as tc with(nolock) on ta.MainCode = tc.SubCampaignCode 
+				Left join 
+					Campaign.BIN_Campaign as tp on tc.BIN_CampaignID = tp.BIN_CampaignID 
+				Left join 
+					Campaign.BIN_CampaignRuleResult as tr with(nolock) on tc.BIN_CampaignRuleID = tr.BIN_CampaignRuleID and ta.BIN_PromotionProductVendorID = tr.BIN_ProductVendorID 
+				Left join(
+					SELECT 
+						tpv.BIN_PromotionProductVendorID,
+						tpb.StandardCost,
+						tpb.ExPoint 
+					FROM 
+						Basis.BIN_PromotionProductVendor as tpv with(nolock)
+						Inner join Basis.BIN_PromotionProduct as tpb with(nolock) on tpb.BIN_PromotionProductID = tpv.BIN_PromotionProductID
+				) as tb on ta.BIN_PromotionProductVendorID = tb.BIN_PromotionProductVendorID and ta.PrtType = 'P' 
+				Left join(
+					SELECT 
+						tpv.BIN_ProductVendorID,
+						ISNULL(CONVERT(Decimal(16,2),tpc.SalePrice),0) AS salePrice 
+					FROM 
+						Basis.BIN_ProductVendor as tpv with(nolock) 
+						LEFT JOIN Basis.BIN_ProductPrice as tpc with(nolock) on (tpv.BIN_ProductID = tpc.BIN_ProductID AND tpv.ValidFlag = tpc.ValidFlag AND tpc.Type = '2' AND tpc.EndDate >= #businessDate# AND tpc.StartDate <= #businessDate#) 
+				) as tt on ta.BIN_PromotionProductVendorID = tt.BIN_ProductVendorID 
+			WHERE 
+				ta.MainCode = #activityCode# AND 
+				ta.ActivityType = #activityType# AND
+				tc.ValidFlag = 1
+			group by 
+				ta.MainCode,
+				tc.SubCampaignName,
+				ta.ActivityType,
+				ta.ActivityToDate,
+				tp.CampaignType 
+    	]]>
+    </select>
+    
+    <select id="getActivityType" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+    	<![CDATA[
+    		SELECT ActivityType	
+    		 FROM Promotion.BIN_ActivityTransHis 
+    		 WHERE 
+			 MainCode=#MainCode#
+    	]]>
+    </select>
+    
+    <select id="getPromotionProductinfo" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+    	<![CDATA[
+					SELECT 
+						tpv.BIN_PromotionProductVendorID,
+						tpb.UnitCode,
+						tpv.BarCode,
+						tpb.NameTotal,
+						tpb.PromotionCateCD,
+						tpb.IsExchanged,
+						tpb.ExPoint,
+						tpb.IsStock 
+					FROM 
+						Basis.BIN_PromotionProductVendor as tpv with(nolock)
+						Inner join Basis.BIN_PromotionProduct as tpb with(nolock) on tpb.BIN_PromotionProductID = tpv.BIN_PromotionProductID
+					WHERE
+						tpb.UnitCode=#UnitCode# and 
+						tpv.BarCode=#BarCode#	
+    	]]>
+    </select>
+    
+    
+    <select id="getLYHDProductInfo" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+    	<![CDATA[
+    		SELECT Top 1 
+				td.MainCode as mainCode,
+				tc.SubCampaignName as activityName,
+				td.Quantity  as quantity,
+				tr.Amout  as price,
+				tr.Amout as oldPrice,
+				td.GiftType as prtType,
+				tp.CampaignType as activitySign 
+			FROM 
+				Campaign.BIN_CampaignOrder as tr with(nolock) 
+				Inner join Campaign.BIN_CampaignOrderDetail as td with(nolock) on tr.BIN_CampaignOrderID = td.BIN_CampaignOrderID 
+				Left join 
+					Campaign.BIN_CampaignRule as tc with(nolock) on td.MainCode = tc.SubCampaignCode 
+				Left join 
+					Campaign.BIN_Campaign as tp with(nolock) on tp.BIN_CampaignID = tc.BIN_CampaignID 
+			WHERE 
+				tc.ValidFlag = 1 AND 
+				tr.ValidFlag = 1 AND 
+				tr.BIN_OrganizationInfoID = #BIN_OrganizationInfoID# AND 
+				tr.BIN_BrandInfoID = #BIN_BrandInfoID# AND 
+				td.MainCode = #MainCode# AND
+				tr.[State] = 'AR' 
+		]]>
+		<dynamic>
+			<isNotEmpty prepend="AND" property="MemberInfoId" >
+			<![CDATA[
+				tr.BIN_MemberInfoID = #MemberInfoId# 
+			]]>
+			</isNotEmpty>
+			<isNotEmpty prepend="AND" property="MemCode" >
+			<![CDATA[
+				tr.MemCode = #MemCode# 
+			]]>
+			</isNotEmpty>
+		</dynamic>
+		<![CDATA[
+			group by 
+				td.MainCode,
+				tc.SubCampaignName,
+				tr.Amout ,
+				td.GiftType,
+				td.Quantity,
+				tp.CampaignType 
+    	]]>
+    </select>
+    
+    <select id="getLYHDProductDetail" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+    	<![CDATA[
+    		SELECT 
+				td.MainCode as mainCode,
+				'' as counterActCode,
+				'1' as activityType,
+				'LYHD' as promotionType,
+				tr.TradeNoIF as orderId,
+				tr.CouponCode as couponCode,
+				tr.IsStock as isStock,
+				td.BIN_ProductVendorID as productVendorId,
+				td.UnitCode as unitCode,
+				td.BarCode as barCode,
+				(case td.GiftType when 'N' then tt.NameTotal when 'P' then tb.NameTotal end) as productName, 
+				td.Quantity as quantity,
+				(case td.GiftType when 'N' then tt.salePrice when 'P' then -tb.StandardCost end) as oldPrice,
+				(case td.GiftType when 'N' then tp.Price when 'P' then -tp.Price end) as price,
+				td.Amout as amount,
+				td.GiftType as proType,
+				0 as exPoint 
+			FROM 
+				Campaign.BIN_CampaignOrder as tr with(nolock) 
+				Inner join Campaign.BIN_CampaignOrderDetail as td with(nolock) on tr.BIN_CampaignOrderID = td.BIN_CampaignOrderID 
+				Left join(
+					SELECT 
+						tpv.BIN_ProductVendorID,
+						tpb.UnitCode,
+						tpv.BarCode,
+						tpb.NameTotal,
+						ISNULL(CONVERT(Decimal(16,2),tpb.SalePrice),0) AS salePrice 
+					FROM 
+						Basis.BIN_ProductVendor as tpv with(nolock)
+						Inner join Basis.BIN_Product as tpb with(nolock) on tpb.BIN_ProductID = tpv.BIN_ProductID
+				) as tt on td.BIN_ProductVendorID = tt.BIN_ProductVendorID 
+				Left join(
+					SELECT 
+						tpv.BIN_PromotionProductVendorID,
+						tpb.UnitCode,
+						tpv.BarCode,
+						tpb.NameTotal,
+						tpb.PromotionCateCD,
+						tpb.IsExchanged,
+						tpb.StandardCost,
+						tpb.ExPoint 
+					FROM 
+						Basis.BIN_PromotionProductVendor as tpv with(nolock)
+						Inner join Basis.BIN_PromotionProduct as tpb with(nolock) on tpb.BIN_PromotionProductID = tpv.BIN_PromotionProductID
+				) as tb on td.BIN_ProductVendorID = tb.BIN_PromotionProductVendorID 
+				Left join 
+					Campaign.BIN_CampaignRule as tc with(nolock) on td.MainCode = tc.SubCampaignCode 
+				Left join 
+					Campaign.BIN_CampaignRuleResult as tp with(nolock) on tc.BIN_CampaignRuleID = tp.BIN_CampaignRuleID and td.BIN_ProductVendorID=tp.BIN_ProductVendorID 
+			WHERE 
+				tc.ValidFlag = 1 AND 
+				tr.ValidFlag = 1 AND 
+				tr.BIN_OrganizationInfoID = #BIN_OrganizationInfoID# AND 
+				tr.BIN_BrandInfoID = #BIN_BrandInfoID# AND 
+				tr.CampaignCode = #subjectCode# AND 
+				td.MainCode = #MainCode# AND 
+				tr.[State] = 'AR' 
+    	]]>
+    	<dynamic>
+			<isNotEmpty prepend="AND" property="MemberInfoId" >
+			<![CDATA[
+				tr.BIN_MemberInfoID = #MemberInfoId# 
+			]]>
+			</isNotEmpty>
+			<isNotEmpty prepend="AND" property="MemCode" >
+			<![CDATA[
+				tr.MemCode = #MemCode# 
+			]]>
+			</isNotEmpty>
+		</dynamic>
+    </select>
+    
+    <select id="getRegular" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+    	<![CDATA[
+    		SELECT 
+				LocalValidRule as localValidRule
+			FROM 
+				Campaign.BIN_CampaignOrder 
+			WHERE 
+				BIN_OrganizationInfoID=#organizationInfoId# AND
+				BIN_BrandInfoID=#brandInfoId# AND
+				CampaignCode=#subjectCode#  AND 
+				MemCode=#memcode# 
+   		]]>
+    </select>
+    
+    <select id="checkMobilephoneMemcode" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+    	<![CDATA[
+    		SELECT 
+    			Mobile as mobile,
+    			MemCode as memcode
+    		FROM 
+    			Campaign.BIN_CampaignOrder
+			WHERE 
+				CampaignCode=#subjectCode#
+    	]]>
+    	<dynamic>
+			<isNotEmpty prepend="AND" property="mobile" >
+			<![CDATA[
+				Mobile = #mobile# 
+			]]>
+			</isNotEmpty>
+			<isNotEmpty prepend="AND" property="memCode" >
+			<![CDATA[
+				MemCode = #memCode# 
+			]]>
+			</isNotEmpty>
+		</dynamic>
+    </select>
+    
+    <select id="getProductBrand" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+    	<![CDATA[
+    		SELECT top(1)
+				OriginalBrand as originalBrand
+			FROM
+				Basis.BIN_Product
+			WHERE
+				UnitCode=#unitCode#
+    	]]>
+    </select>
+</sqlMap>

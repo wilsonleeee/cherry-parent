@@ -1,0 +1,575 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sqlMap PUBLIC "-//iBATIS.com//DTD SQL Map 2.0//EN" "http://ibatis.apache.org/dtd/sql-map-2.dtd">
+<sqlMap namespace="BINOLWSMNG02">
+    <sql id="prtGRRD">
+        <![CDATA[
+            SELECT DISTINCT
+                'GR' AS tradeType,
+                A.BIN_BrandInfoID,
+                A.BIN_ProductInDepotID AS productInDepotID,
+                A.BillNo AS billNo,
+                A.BillNoIF AS billNoIF,
+                A.RelevanceNo AS relevanceNo,
+                A.ImportBatch AS importBatch,
+                A.TradeStatus AS tradeStatus,
+                A.InDepotDate AS inDepotDate,
+                A.VerifiedFlag AS verifiedFlag,
+                ISNULL(A.TotalQuantity,0) AS totalQuantity,
+                ISNULL(A.TotalAmount,0) AS totalAmount,
+        ]]>
+        <isNotEmpty property="language">
+             <isEqual property="language" compareValue="en_US">
+                 D.DepotNameEN AS depotName,
+                 E.InventoryNameEN AS inventoryName,
+                 F.NameForeign AS departName,
+                 H.EmployeeNameForeign AS employeeName,
+                 K.EmployeeNameForeign AS employeeNameAudit,
+             </isEqual>
+             <isEqual property="language" compareValue="zh_CN">
+                 D.DepotNameCN AS depotName,
+                 E.InventoryNameCN AS inventoryName,
+                 F.DepartName AS departName,
+                 H.EmployeeName AS employeeName,
+                 K.EmployeeName AS employeeNameAudit,
+             </isEqual>
+         </isNotEmpty>
+         <isEmpty property="language">
+             D.DepotNameCN AS depotName,
+             E.InventoryNameCN AS inventoryName,
+             F.DepartName AS departName,
+             H.EmployeeName AS employeeName,
+             K.EmployeeName AS employeeNameAudit,
+         </isEmpty>
+         <![CDATA[
+             D.DepotCode AS depotCode,
+             E.LogicInventoryCode AS logicInventoryCode,
+             F.DepartCode AS departCode,
+             F.NodeID AS nodeID,
+             F.BIN_RegionID AS regionID,
+             F.BIN_ProvinceID AS provinceID,
+             F.BIN_CityID AS cityID,
+             H.EmployeeCode AS employeeCode,
+             K.EmployeeCode AS employeeCodeAudit
+         FROM 
+             Inventory.BIN_ProductInDepot A 
+             JOIN Inventory.BIN_ProductInDepotDetail B ON A.BIN_ProductInDepotID = B.BIN_ProductInDepotID
+             JOIN Basis.BIN_DepotInfo D ON(B.BIN_InventoryInfoID = D.BIN_DepotInfoID)   
+             LEFT JOIN Basis.BIN_LogicInventory E ON(B.BIN_LogicInventoryInfoID = E.BIN_LogicInventoryInfoID )  
+             LEFT JOIN Basis.BIN_Organization F ON(A.BIN_OrganizationID = F.BIN_OrganizationID )      
+             LEFT JOIN Basis.BIN_ProductVendor I ON(I.BIN_ProductVendorID = B.BIN_ProductVendorID)
+             LEFT JOIN Basis.BIN_Product J ON(J.BIN_ProductID = I.BIN_ProductID)
+             LEFT JOIN Basis.BIN_Employee H ON (A.BIN_EmployeeID = H.BIN_EmployeeID)
+             LEFT JOIN Basis.BIN_Employee K ON (A.BIN_EmployeeIDAudit = K.BIN_EmployeeID )
+        ]]>
+        <dynamic prepend="WHERE" >
+            <isNotEmpty prepend="AND" property="brandInfoId">
+                A.BIN_BrandInfoID=#brandInfoId#
+            </isNotEmpty>
+            <isNotEmpty prepend="AND" property="billNoIF">
+                A.BillNoIF LIKE '%' + #billNoIF# + '%'
+            </isNotEmpty>
+            <isNotEmpty prepend="AND" property="relevanceNo">
+                A.RelevanceNo LIKE '%' + #relevanceNo# + '%'
+            </isNotEmpty>
+            <isNotEmpty prepend="AND" property="verifiedFlag">
+                A.VerifiedFlag = #verifiedFlag#
+            </isNotEmpty>
+            <isNotEmpty prepend="AND" property="tradeStatus">
+                A.TradeStatus = #tradeStatus#
+            </isNotEmpty>
+            <isNotEmpty prepend="AND" property="startDate">
+                <![CDATA[A.InDepotDate >= #startDate#]]>
+            </isNotEmpty>
+            <isNotEmpty prepend="AND" property="endDate">
+                <![CDATA[A.InDepotDate <= #endDate#]]>           
+            </isNotEmpty>
+	        <isNotEmpty property="checkedBillIdArrGR" >
+	            <![CDATA[AND A.BIN_ProductInDepotID IN]]>
+	            <iterate conjunction="," open="(" close=")" property="checkedBillIdArrGR">
+	                #checkedBillIdArrGR[]#
+	            </iterate>
+	        </isNotEmpty>
+            <isEmpty property="checkedBillIdArrGR" >
+                <isNotEmpty property="checkedBillIdArrRD" >
+                    <![CDATA[AND 0=1]]>
+                </isNotEmpty>
+            </isEmpty>
+        </dynamic>
+        <![CDATA[AND EXISTS ( ]]>
+        <include refid="BINOLCMINC99.getDepartList" />
+        <![CDATA[AND A.BIN_OrganizationID = A99.BIN_OrganizationID)]]>
+        <![CDATA[UNION]]>
+        <![CDATA[
+            SELECT DISTINCT
+                'RD' AS tradeType,
+                A.BIN_BrandInfoID,
+                A.BIN_ProductReceiveID AS productInDepotID,
+                A.ReceiveNo AS billNo,
+                A.ReceiveNoIF AS billNoIF,
+                A.RelevanceNo AS relevanceNo,
+                '' AS importBatch,
+                '1' AS tradeStatus,
+                A.ReceiveDate AS inDepotDate,
+                A.VerifiedFlag AS verifiedFlag,
+                ISNULL(A.TotalQuantity,0) AS totalQuantity,
+                ISNULL(A.TotalAmount,0) AS totalAmount,
+        ]]>
+        <isNotEmpty property="language">
+             <isEqual property="language" compareValue="en_US">
+                 D.DepotNameEN AS depotName,
+                 E.InventoryNameEN AS inventoryName,
+                 F.NameForeign AS departName,
+                 H.EmployeeNameForeign AS employeeName,
+                 K.EmployeeNameForeign AS employeeNameAudit,
+             </isEqual>
+             <isEqual property="language" compareValue="zh_CN">
+                 D.DepotNameCN AS depotName,
+                 E.InventoryNameCN AS inventoryName,
+                 F.DepartName AS departName,
+                 H.EmployeeName AS employeeName,
+                 K.EmployeeName AS employeeNameAudit,
+             </isEqual>
+         </isNotEmpty>
+         <isEmpty property="language">
+             D.DepotNameCN AS depotName,
+             E.InventoryNameCN AS inventoryName,
+             F.DepartName AS departName,
+             H.EmployeeName AS employeeName,
+             K.EmployeeName AS employeeNameAudit,
+         </isEmpty>
+         <![CDATA[
+             D.DepotCode AS depotCode,
+             E.LogicInventoryCode AS logicInventoryCode,
+             F.DepartCode AS departCode,
+             F.NodeID AS nodeID,
+             F.BIN_RegionID AS regionID,
+             F.BIN_ProvinceID AS provinceID,
+             F.BIN_CityID AS cityID,
+             H.EmployeeCode AS employeeCode,
+             K.EmployeeCode AS employeeCodeAudit
+         FROM 
+             Inventory.BIN_ProductReceive A 
+             JOIN Inventory.BIN_ProductReceiveDetail B ON A.BIN_ProductReceiveID = B.BIN_ProductReceiveID
+             JOIN Basis.BIN_DepotInfo D ON(B.BIN_InventoryInfoID = D.BIN_DepotInfoID)   
+             LEFT JOIN Basis.BIN_LogicInventory E ON(B.BIN_LogicInventoryInfoID = E.BIN_LogicInventoryInfoID )  
+             LEFT JOIN Basis.BIN_Organization F ON(A.BIN_OrganizationIDReceive = F.BIN_OrganizationID )      
+             LEFT JOIN Basis.BIN_ProductVendor I ON(I.BIN_ProductVendorID = B.BIN_ProductVendorID)
+             LEFT JOIN Basis.BIN_Product J ON(J.BIN_ProductID = I.BIN_ProductID)
+             LEFT JOIN Basis.BIN_Employee H ON (A.BIN_EmployeeID = H.BIN_EmployeeID)
+             LEFT JOIN Basis.BIN_Employee K ON (A.BIN_EmployeeIDAudit = K.BIN_EmployeeID )
+        ]]>
+        <dynamic prepend="WHERE" >
+            <isNotEmpty prepend="AND" property="brandInfoId">
+                A.BIN_BrandInfoID=#brandInfoId#
+            </isNotEmpty>
+            <isNotEmpty prepend="AND" property="billNoIF">
+                A.ReceiveNoIF LIKE '%' + #billNoIF# + '%'
+            </isNotEmpty>
+            <isNotEmpty prepend="AND" property="relevanceNo">
+                A.RelevanceNo LIKE '%' + #relevanceNo# + '%'
+            </isNotEmpty>
+            <isNotEmpty prepend="AND" property="verifiedFlag">
+                A.VerifiedFlag = #verifiedFlag#
+            </isNotEmpty>
+            <isNotEmpty prepend="AND" property="tradeStatus">
+                A.TradeStatus = #tradeStatus#
+            </isNotEmpty>
+            <isNotEmpty prepend="AND" property="startDate">
+                <![CDATA[A.ReceiveDate >= #startDate#]]>
+            </isNotEmpty>
+            <isNotEmpty prepend="AND" property="endDate">
+                <![CDATA[A.ReceiveDate <= #endDate#]]>           
+            </isNotEmpty>
+            <isNotEmpty property="checkedBillIdArrRD" >
+                <![CDATA[AND A.BIN_ProductReceiveID IN]]>
+                <iterate conjunction="," open="(" close=")" property="checkedBillIdArrRD">
+                    #checkedBillIdArrRD[]#
+                </iterate>
+            </isNotEmpty>
+            <isEmpty property="checkedBillIdArrRD" >
+                <isNotEmpty property="checkedBillIdArrGR" >
+                    <![CDATA[AND 0=1]]>
+                </isNotEmpty>
+            </isEmpty>
+        </dynamic>
+        <![CDATA[AND EXISTS ( ]]>
+         <include refid="BINOLCMINC99.getDepartList" />
+         <![CDATA[AND A.BIN_OrganizationIDReceive = A99.BIN_OrganizationID)]]>
+    </sql>
+     
+    <!-- 取得入库/收货单总数  -->
+    <select id="getPrtGRRDCount" parameterClass="java.util.HashMap" resultClass="java.lang.Integer">
+        <![CDATA[
+            SELECT  COUNT(SORT_T1.productInDepotID) AS count FROM (
+        ]]> 
+        <include refid="BINOLWSMNG02.prtGRRD" /> 
+        <![CDATA[   
+            )SORT_T1
+        ]]>                                     
+    </select>
+    
+    <!-- 取得入库/收货list-->
+    <select id="getPrtGRRDList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+        <include refid="BINOLCMINC99.pageheader" />
+        <![CDATA[
+            SELECT  
+                T20.*, 
+                CASE WHEN EXISTS(SELECT 1 FROM Basis.BIN_PrintLog T10 WHERE 
+                                    T20.BIN_BrandInfoID = T10.BIN_BrandInfoID 
+                                    AND T20.billNoIF = T10.BillNo) 
+                THEN 1 ELSE 0 END AS printStatus
+            FROM (
+        ]]> 
+        <include refid="BINOLWSMNG02.prtGRRD" />
+        <![CDATA[   
+            )T20
+        ]]> 
+        <include refid="BINOLCMINC99.pagefooter" />
+    </select>
+    
+    <!-- 取得出入库汇总信息【产品作为检索条件】  -->
+    <select id="getSumInfo" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+        <![CDATA[
+            SELECT
+                SUM(TS.sumQuantity) AS sumQuantity,
+                SUM(TS.sumAmount) AS sumAmount
+            FROM(
+        ]]>
+        <![CDATA[
+            SELECT
+                ISNULL(SUM(ISNULL(B.Quantity,0)),0) AS sumQuantity,
+                ISNULL(SUM(ISNULL(B.Quantity,0) * ISNULL(B.Price,0)),0) AS sumAmount
+            FROM 
+                Inventory.BIN_ProductInDepot A 
+                JOIN Inventory.BIN_ProductInDepotDetail B ON A.BIN_ProductInDepotID=B.BIN_ProductInDepotID
+                JOIN Basis.BIN_DepotInfo D  ON(B.BIN_InventoryInfoID = D.BIN_DepotInfoID )   
+                LEFT JOIN Basis.BIN_LogicInventory E ON(B.BIN_LogicInventoryInfoID = E.BIN_LogicInventoryInfoID )  
+                LEFT JOIN Basis.BIN_Organization F ON(A.BIN_OrganizationID = F.BIN_OrganizationID )      
+                LEFT JOIN Basis.BIN_ProductVendor I ON(I.BIN_ProductVendorID = B.BIN_ProductVendorID)
+                LEFT JOIN Basis.BIN_Product J ON(J.BIN_ProductID = I.BIN_ProductID)
+                LEFT JOIN Basis.BIN_Employee H ON (A.BIN_EmployeeID = H.BIN_EmployeeID )
+                LEFT JOIN Basis.BIN_Employee K ON (A.BIN_EmployeeIDAudit = K.BIN_EmployeeID )
+        ]]>
+        <dynamic prepend="WHERE" >
+            <isNotEmpty prepend="AND" property="brandInfoId">
+                A.BIN_BrandInfoID=#brandInfoId#
+            </isNotEmpty>
+            <isNotEmpty prepend="AND" property="billNoIF">
+                A.BillNoIF LIKE '%' + #billNoIF# + '%'
+            </isNotEmpty>
+            <isNotEmpty prepend="AND" property="relevanceNo">
+                A.RelevanceNo LIKE '%' + #relevanceNo# + '%'
+            </isNotEmpty>
+            <isNotEmpty prepend="AND" property="verifiedFlag">
+                A.VerifiedFlag = #verifiedFlag#
+            </isNotEmpty>
+            <isNotEmpty prepend="AND" property="tradeStatus">
+                A.TradeStatus = #tradeStatus#
+            </isNotEmpty>
+            <isNotEmpty prepend="AND" property="depotId">
+                D.BIN_DepotInfoID = #depotId#
+            </isNotEmpty>
+            <isNotEmpty prepend="AND" property="startDate">
+                <![CDATA[A.InDepotDate >= #startDate#]]>
+            </isNotEmpty>
+            <isNotEmpty prepend="AND" property="endDate">
+                <![CDATA[A.InDepotDate <= #endDate#]]>           
+            </isNotEmpty>
+        </dynamic>
+        <![CDATA[AND EXISTS ( ]]>
+        <include refid="BINOLCMINC99.getDepartList" />
+        <![CDATA[AND A.BIN_OrganizationID = A99.BIN_OrganizationID)]]>
+        <![CDATA[UNION]]>
+        <![CDATA[
+            SELECT
+                ISNULL(SUM(ISNULL(B.Quantity,0)),0) AS sumQuantity,
+                ISNULL(SUM(ISNULL(B.Quantity,0) * ISNULL(B.Price,0)),0) AS sumAmount
+            FROM 
+                Inventory.BIN_ProductReceive A 
+                JOIN Inventory.BIN_ProductReceiveDetail B ON A.BIN_ProductReceiveID=B.BIN_ProductReceiveID
+                JOIN Basis.BIN_DepotInfo D  ON(B.BIN_InventoryInfoID = D.BIN_DepotInfoID )   
+                LEFT JOIN Basis.BIN_LogicInventory E ON(B.BIN_LogicInventoryInfoID = E.BIN_LogicInventoryInfoID )  
+                LEFT JOIN Basis.BIN_Organization F ON(A.BIN_OrganizationID = F.BIN_OrganizationID )      
+                LEFT JOIN Basis.BIN_ProductVendor I ON(I.BIN_ProductVendorID = B.BIN_ProductVendorID)
+                LEFT JOIN Basis.BIN_Product J ON(J.BIN_ProductID = I.BIN_ProductID)
+                LEFT JOIN Basis.BIN_Employee H ON (A.BIN_EmployeeID = H.BIN_EmployeeID )
+                LEFT JOIN Basis.BIN_Employee K ON (A.BIN_EmployeeIDAudit = K.BIN_EmployeeID )
+        ]]>
+        <dynamic prepend="WHERE" >
+            <isNotEmpty prepend="AND" property="brandInfoId">
+                A.BIN_BrandInfoID=#brandInfoId#
+            </isNotEmpty>
+            <isNotEmpty prepend="AND" property="billNoIF">
+                A.ReceiveNoIF LIKE '%' + #billNoIF# + '%'
+            </isNotEmpty>
+            <isNotEmpty prepend="AND" property="relevanceNo">
+                A.RelevanceNo LIKE '%' + #relevanceNo# + '%'
+            </isNotEmpty>
+            <isNotEmpty prepend="AND" property="verifiedFlag">
+                A.VerifiedFlag = #verifiedFlag#
+            </isNotEmpty>
+            <isNotEmpty prepend="AND" property="tradeStatus">
+                A.TradeStatus = #tradeStatus#
+            </isNotEmpty>
+            <isNotEmpty prepend="AND" property="depotId">
+                D.BIN_DepotInfoID = #depotId#
+            </isNotEmpty>
+            <isNotEmpty prepend="AND" property="startDate">
+                <![CDATA[A.ReceiveDate >= #startDate#]]>
+            </isNotEmpty>
+            <isNotEmpty prepend="AND" property="endDate">
+                <![CDATA[A.ReceiveDate <= #endDate#]]>           
+            </isNotEmpty>
+        </dynamic>
+        <![CDATA[AND EXISTS ( ]]>
+        <include refid="BINOLCMINC99.getDepartList" />
+        <![CDATA[AND A.BIN_OrganizationIDReceive = A99.BIN_OrganizationID)]]>
+        <![CDATA[)TS]]>
+    </select>
+    
+    <!-- 入库/收货单一览明细（excel导出）-->
+    <sql id="prtGRRDExportQuery">
+        <![CDATA[
+            SELECT
+                T0.billNoIF,
+                T0.relevanceNo,
+                T0.importBatch,
+                T0.verifiedFlag,
+                T0.tradeStatus,
+                T0.inDepotDate,
+                T0.departCode,
+                T0.departName,
+                T0.depotName,
+                T0.depotCode,
+                T0.logicInventoryCode,
+                T0.inventoryName,
+                T0.employeeName,
+                T0.employeeCode,
+                T0.employeeNameAudit,
+                T0.employeeCodeAudit,
+                B.BarCode AS barCode,
+                C.UnitCode AS unitCode,
+                ISNULL(A.PreQuantity,0) AS detailPreQuantity,
+                ISNULL(A.Quantity,0) AS detailQuantity,
+                Convert(decimal(16,2),ISNULL(A.ReferencePrice, 0)) AS detailReferencePrice,
+                Convert(decimal(16,2),ISNULL(A.Price, 0)) AS detailPrice,
+                Convert(decimal(16,2),(ISNULL(A.Price, 0)*ISNULL(A.Quantity,0))) AS detailAmount,
+                A.Comments AS comments
+        ]]>
+        <dynamic>
+            <isNotEmpty property="language">
+                <isEqual property="language" compareValue="en_US">
+                    ,C.NameForeign AS productName
+                    ,G.NameForeign AS area
+                    ,D.RegionNameForeign AS region
+                    ,E.RegionNameForeign AS province
+                    ,F.RegionNameForeign AS city
+                </isEqual>
+                <isEqual property="language" compareValue="zh_CN">
+                    ,C.NameTotal AS productName 
+                    ,G.DepartName AS area
+                    ,D.RegionNameChinese AS region
+                    ,E.RegionNameChinese AS province
+                    ,F.RegionNameChinese AS city
+                </isEqual>                              
+            </isNotEmpty>
+            <isEmpty property="language">
+                ,C.NameTotal AS productName
+                ,G.DepartName AS area
+                ,D.RegionNameChinese AS region
+                ,E.RegionNameChinese AS province
+                ,F.RegionNameChinese AS city
+            </isEmpty>
+        </dynamic>
+        <![CDATA[FROM(]]>
+        <include refid="BINOLWSMNG02.prtGRRD" />
+        <![CDATA[
+            ) T0
+            JOIN Inventory.BIN_ProductInDepotDetail A WITH(NOLOCK)
+            ON(T0.productInDepotID = A.BIN_ProductInDepotID)
+            LEFT JOIN Basis.BIN_ProductVendor B WITH(NOLOCK)
+            ON(A.BIN_ProductVendorID = B.BIN_ProductVendorID)
+            LEFT JOIN Basis.BIN_Product C WITH(NOLOCK)
+            ON(B.BIN_ProductID = C.BIN_ProductID)
+            LEFT JOIN Basis.BIN_Region D WITH(NOLOCK)
+            ON (T0.regionID = D.BIN_RegionID)
+            LEFT JOIN Basis.BIN_Region E WITH(NOLOCK)
+            ON (T0.provinceID= E.BIN_RegionID)
+            LEFT JOIN Basis.BIN_Region F WITH(NOLOCK)
+            ON (T0.cityID= F.BIN_RegionID)
+            LEFT JOIN Basis.BIN_Organization G WITH(NOLOCK) 
+            ON(T0.nodeID.IsDescendantOf(G.NodeID) = 1 AND G.Type = '5')
+            WHERE T0.tradeType = 'GR'
+        ]]>
+        <![CDATA[UNION]]>
+        <![CDATA[
+            SELECT
+                T0.billNoIF,
+                T0.relevanceNo,
+                T0.importBatch,
+                T0.verifiedFlag,
+                T0.tradeStatus,
+                T0.inDepotDate,
+                T0.departCode,
+                T0.departName,
+                T0.depotName,
+                T0.depotCode,
+                T0.logicInventoryCode,
+                T0.inventoryName,
+                T0.employeeName,
+                T0.employeeCode,
+                T0.employeeNameAudit,
+                T0.employeeCodeAudit,
+                B.BarCode AS barCode,
+                C.UnitCode AS unitCode,
+                ISNULL(A.Quantity,0) AS detailPreQuantity,
+                ISNULL(A.Quantity,0) AS detailQuantity,
+                Convert(decimal(16,2),ISNULL(A.ReferencePrice, 0)) AS detailReferencePrice,
+                Convert(decimal(16,2),ISNULL(A.Price, 0)) AS detailPrice,
+                Convert(decimal(16,2),(ISNULL(A.Price, 0)*ISNULL(A.Quantity,0))) AS detailAmount,
+                A.Comments AS comments
+        ]]>
+        <dynamic>
+            <isNotEmpty property="language">
+                <isEqual property="language" compareValue="en_US">
+                    ,C.NameForeign AS productName
+                    ,G.NameForeign AS area
+                    ,D.RegionNameForeign AS region
+                    ,E.RegionNameForeign AS province
+                    ,F.RegionNameForeign AS city
+                </isEqual>
+                <isEqual property="language" compareValue="zh_CN">
+                    ,C.NameTotal AS productName 
+                    ,G.DepartName AS area
+                    ,D.RegionNameChinese AS region
+                    ,E.RegionNameChinese AS province
+                    ,F.RegionNameChinese AS city
+                </isEqual>                              
+            </isNotEmpty>
+            <isEmpty property="language">
+                ,C.NameTotal AS productName
+                ,G.DepartName AS area
+                ,D.RegionNameChinese AS region
+                ,E.RegionNameChinese AS province
+                ,F.RegionNameChinese AS city
+            </isEmpty>
+        </dynamic>
+        <![CDATA[FROM(]]>
+        <include refid="BINOLWSMNG02.prtGRRD" />
+        <![CDATA[
+            ) T0
+            JOIN Inventory.BIN_ProductReceiveDetail A WITH(NOLOCK)
+            ON(T0.productInDepotID = A.BIN_ProductReceiveID)
+            LEFT JOIN Basis.BIN_ProductVendor B WITH(NOLOCK)
+            ON(A.BIN_ProductVendorID = B.BIN_ProductVendorID)
+            LEFT JOIN Basis.BIN_Product C WITH(NOLOCK)
+            ON(B.BIN_ProductID = C.BIN_ProductID)
+            LEFT JOIN Basis.BIN_Region D WITH(NOLOCK)
+            ON (T0.regionID = D.BIN_RegionID)
+            LEFT JOIN Basis.BIN_Region E WITH(NOLOCK)
+            ON (T0.provinceID= E.BIN_RegionID)
+            LEFT JOIN Basis.BIN_Region F WITH(NOLOCK)
+            ON (T0.cityID= F.BIN_RegionID)
+            LEFT JOIN Basis.BIN_Organization G WITH(NOLOCK) 
+            ON(T0.nodeID.IsDescendantOf(G.NodeID) = 1 AND G.Type = '5')
+            WHERE T0.tradeType = 'RD'
+        ]]>
+    </sql>
+      
+    <!-- 分页查询导出的入库/收货单明细 -->
+    <select id="getPrtGRRDExportList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+        <include refid="BINOLCMINC99.pageheader" />
+        <include refid="BINOLWSMNG02.prtGRRDExportQuery" />
+        <include refid="BINOLCMINC99.pagefooter" />
+    </select>
+      
+    <!--  取得入库/收货单明细总数  -->
+    <select id="getExportDetailCount" parameterClass="java.util.HashMap" resultClass="java.lang.Integer">
+        <![CDATA[
+            SELECT 
+                COUNT(1) AS count FROM (
+        ]]>
+        <include refid="BINOLWSMNG02.prtGRRDExportQuery" />
+        <![CDATA[
+            )SORT_T1
+        ]]>
+    </select>
+    
+    <!-- 发货单查询（未收货）sql文  -->
+    <sql id="commQuery">
+        <![CDATA[
+            SELECT
+                A.BIN_ProductDeliverID,                 
+                A.DeliverNoIF,                
+                A.BIN_OrganizationID,                 
+                A.BIN_OrganizationIDReceive,
+                A.ValidFlag,
+                A.TotalQuantity AS totalQuantity,       
+                A.TotalAmount AS totalAmount     
+            ]]>
+        <![CDATA[
+            FROM
+                Inventory.BIN_ProductDeliver A WITH(NOLOCK)
+            WHERE
+            A.BIN_OrganizationIDReceive = #BIN_OrganizationIDReceive#
+            AND A.TradeStatus = '12'
+            AND A.ValidFlag = '1'
+        ]]>
+    </sql>
+    <!-- 发货单查询sql文  -->
+    <sql id="deliverQuery">
+        <![CDATA[
+            SELECT                          
+                T1.BIN_ProductDeliverID AS deliverId,                 
+                T1.DeliverNoIF AS deliverRecNo,                
+                T1.BIN_OrganizationID AS deliverDepId,                 
+                T1.BIN_OrganizationIDReceive AS receiveDepId,
+                T1.totalQuantity,                                                                        
+                T1.totalAmount  
+        ]]>  
+          <dynamic>
+        <isNotEmpty property="language">
+            <isEqual property="language" compareValue="en_US">
+            ,'('+B.DepartCode+')'+B.NameForeign AS departName
+            ,'('+G.DepartCode+')'+G.NameForeign AS departNameReceive
+            </isEqual>
+            <isEqual property="language" compareValue="zh_CN">
+            ,'('+B.DepartCode+')'+B.DepartName AS departName
+            ,'('+G.DepartCode+')'+G.DepartName AS departNameReceive
+            </isEqual>
+        </isNotEmpty>
+        <isEmpty property="language">
+            ,'('+B.DepartCode+')'+B.DepartName AS departName
+            ,'('+G.DepartCode+')'+G.DepartName AS departNameReceive
+        </isEmpty>
+        </dynamic>
+        <![CDATA[FROM ( ]]>
+        <include refid="BINOLWSMNG02.commQuery" />   
+        <![CDATA[)T1
+            LEFT JOIN Basis.BIN_Organization B 
+            ON T1.BIN_OrganizationID = B.BIN_OrganizationID                 
+            LEFT JOIN Basis.BIN_Organization G 
+            ON T1.BIN_OrganizationIDReceive = G.BIN_OrganizationID  
+        WHERE
+            T1.ValidFlag = '1'   
+        ]]>
+        <include refid="BINOLCMINC99.filterSql" />
+    </sql>
+    <!-- 取得发货单总数  -->
+    <select id="getDeliverCount" parameterClass="java.util.HashMap" resultClass="java.lang.Integer">
+        <![CDATA[
+            SELECT COUNT(SORT_T1.deliverId) AS count FROM (
+        ]]>    
+        <include refid="BINOLWSMNG02.deliverQuery" />
+        <![CDATA[
+            )SORT_T1
+        ]]>
+    </select>
+    
+    <!-- 取得发货单List  -->
+    <select id="getDeliverList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+        <include refid="BINOLCMINC99.pageheader" />
+        <include refid="BINOLWSMNG02.deliverQuery" />
+        <include refid="BINOLCMINC99.pagefooter" />
+    </select>
+</sqlMap>

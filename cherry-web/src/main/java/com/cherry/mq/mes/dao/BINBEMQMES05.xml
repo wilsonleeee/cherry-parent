@@ -1,0 +1,365 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sqlMap PUBLIC "-//iBATIS.com//DTD SQL Map 2.0//EN" "http://ibatis.apache.org/dtd/sql-map-2.dtd">
+<sqlMap namespace="BINBEMQMES05">
+    <!-- 插入答卷主表  -->
+    <sql id="addPaperAnswerSQL">
+        <![CDATA[
+            INSERT INTO Monitor.BIN_PaperAnswer(
+                BIN_PaperID,
+                BIN_OrganizationID,
+                PaperType,
+                BACode,
+                BIN_MemberInfoID,
+                TotalPoint,
+        ]]>
+        <isNotEmpty property="checkTime">
+            <![CDATA[CheckDate,]]>
+        </isNotEmpty>
+        <include refid="BINOLCMINC99.insertKeySql" />
+        <![CDATA[
+            )
+            VALUES
+            (
+                #paperID#,
+                #organizationID#,
+                #subType#,
+                #BAcode#,
+                #memberInfoID#,
+                #totalPoint#,
+        ]]>
+        <isNotEmpty property="checkTime">
+            <![CDATA[#checkTime#,]]>
+        </isNotEmpty>
+        <include refid="BINOLCMINC99.insertValueSql" />
+        <![CDATA[
+            )
+        ]]>
+    </sql>
+    <insert id="addPaperAnswer" parameterClass="java.util.HashMap">
+        <selectKey resultClass="java.lang.Integer" type="post" keyProperty="BIN_PaperAnswerID" >
+            <include refid="BINBEMQMES05.addPaperAnswerSQL" />
+            <![CDATA[select SCOPE_IDENTITY() as value]]>
+        </selectKey>
+    </insert>
+	
+	<!-- 插入答卷明细表  -->
+	<insert id="addPaperAnswerDetail" parameterClass="java.util.HashMap">
+		<![CDATA[
+			INSERT INTO Monitor.BIN_PaperAnswerDetail
+			(
+				BIN_PaperAnswerID,
+				BIN_PaperQuestionID,
+				Answer,
+				Point,
+				]]>
+					<include refid="BINOLCMINC99.insertKeySql" />
+				<![CDATA[
+			)
+			VALUES
+			(
+				#paperAnswerID#,
+				#paperQuestionID#,
+				#answer#,
+				#point#,
+				]]>
+					<include refid="BINOLCMINC99.insertValueSql" />
+				<![CDATA[
+			)
+		]]>
+	</insert>
+	
+	<!-- 插入考核答卷主表  -->
+	<insert id="addCheckAnswer" parameterClass="java.util.HashMap">
+		<selectKey resultClass="java.lang.Integer" type="post" keyProperty="BIN_CheckAnswerID" >      
+	       <![CDATA[
+			INSERT INTO Monitor.BIN_CheckAnswer
+			(
+				BIN_CheckPaperID,
+				BIN_OrganizationID,
+				EmployeeCode,
+				UDiskSN,
+				OwnerName,
+				MarketName,
+				Advice,
+				OrderImprove,
+				OrderImproveLastDate,
+				CheckDate,
+				TotalPoint,
+				PointLevel,
+				]]>
+					<include refid="BINOLCMINC99.insertKeySql" />
+				<![CDATA[
+			)
+			VALUES
+			(
+				#paperID#,
+				#organizationID#,
+				#BAcode#,
+				#UDiskSN#,
+				#CSName#,
+				#marketName#,
+				#advice#,
+				#orderImprove#,
+				#orderImproveLastDate#,
+				#checkTime#,
+				#totalPoint#,
+				#pointLevel#,
+				]]>
+					<include refid="BINOLCMINC99.insertValueSql" />
+				<![CDATA[
+			)
+			  	select SCOPE_IDENTITY() as value     
+			]]> 
+	    </selectKey>
+	</insert>
+	
+	<!-- 插入考核答卷明细表  -->
+	<insert id="addCheckAnswerDetail" parameterClass="java.util.HashMap">
+		<![CDATA[
+			INSERT INTO Monitor.BIN_CheckAnswerDetail
+			(
+				BIN_CheckAnswerID,
+				BIN_CheckQuestionID,
+				Answer,
+				Point,
+				]]>
+					<include refid="BINOLCMINC99.insertKeySql" />
+				<![CDATA[
+			)
+			VALUES
+			(
+				#checkAnswerID#,
+				#checkQuestionID#,
+				#answer#,
+				#point#,
+				]]>
+					<include refid="BINOLCMINC99.insertValueSql" />
+				<![CDATA[
+			)
+		]]>
+	</insert>
+	
+	
+	
+	<!-- 删除旧答卷信息(答卷主表) -->
+	<update id="delOldPaperAnswer" parameterClass="java.util.HashMap">
+	<![CDATA[
+		UPDATE
+			Monitor.BIN_PaperAnswer
+		SET
+			]]>
+			ValidFlag = '0',
+			<include refid="BINOLCMINC99.updateSql" />
+			<![CDATA[
+		WHERE
+			BIN_PaperAnswerID = #paperAnswerID# AND
+			ValidFlag = '1'	
+	]]>
+	</update>
+	
+	<!-- 删除旧答卷信息(答卷明细表) -->
+	<update id="delOldPaperAnswerDetail" parameterClass="java.util.HashMap">
+	<![CDATA[
+		UPDATE
+			Monitor.BIN_PaperAnswerDetail
+		SET
+			]]>
+			ValidFlag = '0',
+			<include refid="BINOLCMINC99.updateSql" />
+			<![CDATA[
+		WHERE
+			BIN_PaperAnswerID = #paperAnswerID# AND
+			ValidFlag = '1'	
+	]]>
+	</update>
+	
+	<!-- 删除旧考核答卷信息(考核答卷主表) -->
+	<update id="delOldCheckAnswer" parameterClass="java.util.HashMap">
+	<![CDATA[
+		UPDATE
+			Monitor.BIN_CheckAnswer
+		SET
+			]]>
+			ValidFlag = '0',
+			<include refid="BINOLCMINC99.updateSql" />
+			<![CDATA[
+		WHERE
+			BIN_CheckAnswerID = #checkAnswerID# AND
+			ValidFlag = '1'	
+	]]>
+	</update>
+	
+	<!-- 删除旧考核答卷信息(考核答卷明细表) -->
+	<update id="delOldCheckAnswerDetail" parameterClass="java.util.HashMap">
+	<![CDATA[
+		UPDATE
+			Monitor.BIN_CheckAnswerDetail
+		SET
+			]]>
+			ValidFlag = '0',
+			<include refid="BINOLCMINC99.updateSql" />
+			<![CDATA[
+		WHERE
+			BIN_CheckAnswerID = #checkAnswerID# AND
+			ValidFlag = '1'	
+	]]>
+	</update>
+	
+	<!-- 查询答卷ID -->
+	<select id="selAnswerID" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+		<![CDATA[
+			SELECT
+				A.BIN_PaperAnswerID AS paperAnswerID
+			FROM
+				Monitor.BIN_PaperAnswer A
+			WHERE
+				A.BIN_PaperID = #paperID# AND
+				A.ValidFlag = '1' 
+		]]>
+			<isNotEmpty prepend="AND" property="memberInfoID">
+				A.BIN_MemberInfoID = #memberInfoID#
+			</isNotEmpty>
+	</select>
+	
+	<!-- 查询考核答卷ID -->
+	<select id="selCheckAnswerID" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+		SELECT
+			A.BIN_CheckAnswerID AS checkAnswerID
+		FROM
+			Monitor.BIN_CheckAnswer A
+		WHERE
+			A.BIN_CheckPaperID = #paperID# AND
+			A.EmployeeCode = #BAcode# AND
+			A.BIN_OrganizationID = #organizationID# AND
+			A.ValidFlag = '1' 
+	</select>
+	
+	<!-- 查询问题ID -->
+	<select id="selQuestionID" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+		SELECT
+			A.BIN_PaperQuestionID AS paperQuestionID
+		FROM
+			Monitor.BIN_PaperQuestion A
+		WHERE
+			A.BIN_PaperID = #paperID# AND
+			A.DisplayOrder = #questionNo# AND
+			A.ValidFlag = '1' 
+	</select>
+	
+	<!-- 查询考核问题ID -->
+	<select id="selCheckQuestionID" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+		SELECT
+			A.BIN_CheckQuestionID AS checkQuestionID
+		FROM
+			Monitor.BIN_CheckQuestion A
+		WHERE
+			A.BIN_CheckPaperID = #paperID# AND
+			A.QuestionNO = #questionNo# AND
+			A.ValidFlag = '1' 
+	</select>
+	
+	<!-- 查询考核问题ID -->
+	<select id="selCheckPaperLevel" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+		SELECT  
+		      A.PointLevelOrder AS pointLevelOrder,
+		      A.PointLevelName AS pointLevelName,
+		      A.Point AS point
+		FROM  
+		      Monitor.BIN_CheckPaperLevel A
+        WHERE 
+              A.BIN_CheckPaperID=#paperID#
+	    ORDER BY A.Point DESC
+	</select>
+	
+    <!-- 查询推荐会员 -->
+    <select id="selReferrerID" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+        SELECT  
+              ReferrerID
+        FROM  
+              Members.BIN_MemberInfo
+        WHERE 
+              BIN_MemberInfoID = #memberInfoID#
+    </select>
+    
+    <!-- 更新推荐会员 -->
+    <update id="updateReferrerID" parameterClass="java.util.HashMap">
+    <![CDATA[
+        UPDATE
+            Members.BIN_MemberInfo
+        SET
+            ReferrerID = #ReferrerID#,
+    ]]>
+    <include refid="BINOLCMINC99.updateSql" />
+    <![CDATA[
+        WHERE
+            BIN_MemberInfoID = #memberInfoID#
+    ]]>
+    </update>
+    
+    	<!-- 根据问卷ID取得问题和答案 -->
+	<select id="getQuestionList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+		<![CDATA[
+			SELECT
+				QuestionItem AS questionItem,
+				QuestionType AS questionType,
+				OptionA AS optionA,
+	      		OptionB AS optionB,
+	      		OptionC AS optionC,
+	      		OptionD AS optionD,
+	      		OptionE AS optionE,
+	      		OptionF AS optionF,
+	      		OptionG AS optionG,
+	      		OptionH AS optionH,
+	      		OptionI AS optionI,
+	      		OptionJ AS optionJ,
+	      		OptionK AS optionK,
+	      		OptionL AS optionL,
+	      		OptionM AS optionM,
+	      		OptionN AS optionN,
+	      		OptionO AS optionO,
+	      		OptionP AS optionP,
+	      		OptionQ AS optionQ,
+	      		OptionR AS optionR,
+	      		OptionS AS optionS,
+	      		OptionT AS optionT,
+				PointA AS pointA,
+				PointB AS pointB,
+				PointC AS pointC,
+				PointD AS pointD,
+				PointE AS pointE,
+				PointF AS pointF,
+				PointG AS pointG,
+				PointH AS pointH,
+				PointI AS pointI,
+				PointJ AS pointJ,
+				PointK AS pointK,
+				PointL AS pointL,
+				PointM AS pointM,
+				PointN AS pointN,
+				PointO AS pointO,
+				PointP AS pointP,
+				PointQ AS pointQ,
+				PointR AS pointR,
+				PointS AS pointS,
+				PointT AS pointT, 
+				BIN_PaperQuestionID AS paperQuestionID
+			FROM
+				Monitor.BIN_PaperQuestion
+			WHERE
+				BIN_PaperID = #paperID# AND 
+				DisplayOrder = #questionNo# AND
+				ValidFlag = '1' 
+		]]>		
+	</select>
+    
+    	<!-- 查询考核问题ID -->
+	<select id="getQuestionMain" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+		SELECT 
+ 			  MaxPoint as maxPoint
+ 		 FROM 
+ 		 	Monitor.BIN_Paper
+ 		 WHERE
+			BIN_PaperID = #paperID# 
+	</select>
+    
+</sqlMap>

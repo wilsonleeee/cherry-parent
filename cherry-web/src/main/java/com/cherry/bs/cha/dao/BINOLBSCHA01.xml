@@ -1,0 +1,100 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sqlMap PUBLIC "-//iBATIS.com//DTD SQL Map 2.0//EN" "http://ibatis.apache.org/dtd/sql-map-2.dtd">
+<sqlMap namespace="BINOLBSCHA01">
+	<sql id="channelQuery">
+		<![CDATA[
+			SELECT				
+				A.BIN_ChannelID as channelId,
+				A.Status as	status,
+				A.JoinDate as joinDate,
+				A.ValidFlag as validFlag,
+		]]>			
+		<isNotEmpty property="language">
+			<isEqual property="language" compareValue="en_US">
+				A.ChannelNameForeign AS channelName
+			</isEqual>
+			<isEqual property="language" compareValue="zh_CN">	
+				A.ChannelName AS channelName
+			</isEqual>								
+		</isNotEmpty>
+		<isEmpty property="language">
+				A.ChannelName AS channelName
+		</isEmpty>
+		<![CDATA[
+			FROM				
+				Basis.BIN_Channel A
+			WHERE	
+				A.BIN_OrganizationInfoID = #organizationInfoId#					
+		]]>
+		<isNotEmpty prepend = "AND" property = "brandInfoId">
+				A.BIN_BrandInfoID=#brandInfoId#
+		</isNotEmpty>
+		<isNotEmpty prepend="AND" property="status" >
+			<![CDATA[ A.Status= #status# ]]>
+		</isNotEmpty>
+		<isNotEmpty prepend="AND" property="startDate" >
+			<![CDATA[ A.JoinDate >= #startDate# ]]>
+		</isNotEmpty>
+		<isNotEmpty prepend="AND" property="endDate" >
+			<![CDATA[ A.JoinDate <= #endDate# ]]>
+		</isNotEmpty>
+		<isNotEmpty prepend="AND" property="channelName" >
+           (A.ChannelName LIKE '%' + #channelName# + '%')
+	    </isNotEmpty>
+		<isEmpty prepend="AND" property="validFlag" >
+			A.ValidFlag = '1'
+		</isEmpty>
+	</sql>
+	
+	<!-- 取得渠道总数  -->
+    <select id="getChannelCount" parameterClass="java.util.HashMap" resultClass="java.lang.Integer">
+    	<![CDATA[
+			SELECT	COUNT(SORT_T1.channelId) AS count FROM (
+		]]>	
+		<include refid="BINOLBSCHA01.channelQuery" />	
+		<![CDATA[	
+			)SORT_T1
+		]]>										
+    </select>
+	<!-- 渠道停用 -->
+	<update id="disableChannel" parameterClass="java.util.HashMap">     
+    <![CDATA[
+        UPDATE
+            Basis.BIN_Channel
+        SET
+            ValidFlag = '0',
+    ]]>
+	<include refid="BINOLCMINC99.updateSql" />
+    <![CDATA[
+        WHERE 
+            BIN_ChannelID IN
+    ]]>
+	<iterate conjunction="," open="(" close=")" property="channelId">  
+        #channelId[]#
+    </iterate>
+    </update>
+	
+	<!-- 渠道启用 -->
+    <update id="enableChannel" parameterClass="java.util.HashMap">     
+    <![CDATA[
+        UPDATE
+            Basis.BIN_Channel
+        SET
+            ValidFlag = '1',
+    ]]>
+	<include refid="BINOLCMINC99.updateSql" />
+    <![CDATA[
+        WHERE 
+            BIN_ChannelID IN
+    ]]>
+	<iterate conjunction="," open="(" close=")" property="channelId">  
+        #channelId[]#
+    </iterate>
+    </update>
+
+    <select id="getChannelList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+       	<include refid="BINOLCMINC99.pageheader" />
+		<include refid="BINOLBSCHA01.channelQuery" />
+		<include refid="BINOLCMINC99.pagefooter" />
+    </select>
+</sqlMap>

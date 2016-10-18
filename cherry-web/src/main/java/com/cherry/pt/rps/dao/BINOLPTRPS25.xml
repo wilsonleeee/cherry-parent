@@ -1,0 +1,261 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sqlMap PUBLIC "-//iBATIS.com//DTD SQL Map 2.0//EN" "http://ibatis.apache.org/dtd/sql-map-2.dtd">
+<sqlMap namespace="BINOLPTRPS25">
+	<sql id="prtDeliverSQL">
+		<![CDATA[SELECT]]>
+		<isEmpty property="nameTotal">
+			DISTINCT
+		</isEmpty>
+		<![CDATA[
+			A.BIN_OrganizationID,
+			A.BIN_DepotInfoID,
+			A.BIN_OrganizationIDReceive,
+			A.BIN_EmployeeID,
+			A.BIN_ProductDeliverID,
+			A.DeliverNoIF,
+			A.Date,
+            A.ImportBatch,
+            A.VerifiedFlag,
+            A.TradeStatus,
+            A.BIN_EmployeeIDAudit,
+		]]>
+		<isNotEmpty property="nameTotal">
+			SUM(ISNULL(B.Quantity,0) * ISNULL(B.Price,0)) amount,
+			SUM(ISNULL(B.Quantity,0)) AS quantity
+		</isNotEmpty>
+		<isEmpty property="nameTotal">
+			ISNULL(A.TotalAmount,0) AS amount,
+			ISNULL(A.TotalQuantity,0) AS quantity
+		</isEmpty>
+		<![CDATA[	
+		FROM
+			Inventory.BIN_ProductDeliver A
+			JOIN Inventory.BIN_ProductDeliverDetail B
+			ON(A.BIN_ProductDeliverID = B.BIN_ProductDeliverID
+				AND B.ValidFlag = '1')
+		]]>
+		<isNotEmpty property="nameTotal">
+			<isEmpty property="prtVendorId">
+				JOIN Basis.BIN_ProductVendor F
+				ON(B.BIN_ProductVendorID = F.BIN_ProductVendorID)
+				JOIN Basis.BIN_Product G
+				ON(F.BIN_ProductID = G.BIN_ProductID AND G.NameTotal like '%' + #nameTotal# + '%')
+			</isEmpty>
+		</isNotEmpty>
+		<![CDATA[WHERE A.TradeStatus = '12' AND A.ValidFlag = '1']]>
+		<!-- (有收货部门) -->	
+        <isNotEmpty property="inOrganizationId">
+        	<![CDATA[AND A.BIN_OrganizationIDReceive = #inOrganizationId# ]]>
+        	<!-- 有发货部门 -->
+        	<isEqual property="linkageDepartFlag" compareValue="1">
+				<![CDATA[ AND EXISTS ( ]]>
+				<include refid="BINOLCMINC99.getDepartList" />
+				<![CDATA[
+					AND A.BIN_OrganizationID = A99.BIN_OrganizationID)
+				]]>
+			</isEqual>
+			<!-- 无发货部门，不做处理 -->																					
+		</isNotEmpty>
+		<!-- (无收货部门 ) -->
+		<isEmpty property="inOrganizationId">
+			<!-- 有发货部门 -->
+        	<isEqual property="linkageDepartFlag" compareValue="1">	
+				<![CDATA[ AND EXISTS ( ]]>
+				<include refid="BINOLCMINC99.getDepartList" />
+				<![CDATA[
+					AND A.BIN_OrganizationID = A99.BIN_OrganizationID)
+				]]>
+			</isEqual>
+			<!-- 【无发货部门——>即部门类型、部门ID、渠道ID、区域ID等等都为空】-->
+			<isEqual property="linkageDepartFlag" compareValue="0">	
+				<![CDATA[AND EXISTS ( ]]>
+					<include refid="BINOLCMINC99.getDepartList" />
+		    	<![CDATA[
+		    			AND (A.BIN_OrganizationID = A99.BIN_OrganizationID)
+		    			UNION 
+		    	]]>
+		    	<include refid="BINOLCMINC99.getDepartList" />
+	    		<![CDATA[
+	    				AND (A.BIN_OrganizationIDReceive = A99.BIN_OrganizationID)
+	    				)
+	    		]]>
+			</isEqual>
+		</isEmpty>
+		<isNotEmpty prepend="AND" property="deliverNoIF">											
+			<![CDATA[A.DeliverNoIF LIKE '%' + #deliverNoIF# + '%']]>
+		</isNotEmpty>
+		<isNotEmpty prepend="AND" property="startDate">											
+			<![CDATA[A.Date >= #startDate#]]>
+		</isNotEmpty>
+		<isNotEmpty prepend="AND" property="endDate">											
+			<![CDATA[A.Date <= #endDate#]]>
+		</isNotEmpty>
+		<isNotEmpty prepend="AND" property="depotId">											
+			<![CDATA[A.BIN_DepotInfoID = #depotId#]]>
+		</isNotEmpty>
+		<isNotEmpty prepend="AND" property="prtVendorId">											
+			<![CDATA[B.BIN_ProductVendorID = #prtVendorId#]]>
+		</isNotEmpty>
+		<isNotEmpty property="nameTotal">
+		<![CDATA[GROUP BY 
+					A.BIN_OrganizationID,
+					A.BIN_DepotInfoID,
+					A.BIN_OrganizationIDReceive,
+					A.BIN_EmployeeID,
+					A.BIN_ProductDeliverID,
+					A.DeliverNoIF,
+					A.Date,
+                    A.ImportBatch,
+                    A.VerifiedFlag,
+                    A.TradeStatus,
+                    A.BIN_EmployeeIDAudit
+		]]>
+		</isNotEmpty>
+	</sql>
+	<!-- 取得在途库存单总数  -->
+    <select id="getPrtDeliverCount" parameterClass="java.util.HashMap" resultClass="java.lang.Integer">
+    	<![CDATA[
+			SELECT	COUNT(SORT_T1.deliverNoIF) AS count FROM (
+		]]>	
+		<include refid="BINOLPTRPS25.prtDeliverSQL" />
+		<![CDATA[	
+			)SORT_T1
+		]]>										
+    </select>
+	 <!-- 取得在途库存汇总信息【产品作为检索条件】  -->
+    <select id="getSumInfo" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+		<![CDATA[
+		SELECT
+			COUNT(SORT_T1.deliverNoIF) AS count,
+			ISNULL(SUM(SORT_T1.quantity),0) AS sumQuantity,
+			ISNULL(SUM(SORT_T1.amount),0) AS sumAmount
+		FROM (
+		]]>	
+		<include refid="BINOLPTRPS25.prtDeliverSQL" />
+		<![CDATA[)SORT_T1]]>	
+    </select>
+	<!-- 取得在途库存单List  -->
+    <select id="getPrtDeliverList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+	    <include refid="BINOLCMINC99.pageheader" />
+	    <![CDATA[
+			SELECT
+				T9.BIN_ProductDeliverID AS prtDeliverId,
+				T9.DeliverNoIF AS deliverNoIF,
+				T9.Date AS date,
+				T9.amount,
+				T9.quantity,
+		]]>
+		<dynamic>
+			<isNotEmpty property="language">
+				<isEqual property="language" compareValue="en_US">
+					L1.EmployeeNameForeign AS employeeName,
+					'(' + L2.DepartCode + ')' + L2.NameForeign AS sendDepart,
+					'(' + L3.DepotCode + ')' + L3.DepotNameEN AS depotName,
+					'(' + L4.DepartCode + ')' + L4.NameForeign AS receiveDepart
+				</isEqual>
+				<isEqual property="language" compareValue="zh_CN">	
+					L1.EmployeeName AS employeeName,
+					'(' + L2.DepartCode + ')' + L2.DepartName AS sendDepart,
+					'(' + L3.DepotCode + ')' + L3.DepotNameCN AS depotName,
+					'(' + L4.DepartCode + ')' + L4.DepartName AS receiveDepart
+				</isEqual>
+			</isNotEmpty>
+			<isEmpty property="language">
+				L1.EmployeeName AS employeeName,
+				'(' + L2.DepartCode + ')' + L2.DepartName AS sendDepart,
+				'(' + L3.DepotCode + ')' + L3.DepotNameCN AS depotName,
+				'(' + L4.DepartCode + ')' + L4.DepartName AS receiveDepart
+			</isEmpty>
+		</dynamic>
+		<![CDATA[FROM (]]>
+		<include refid="BINOLPTRPS25.prtDeliverSQL" />
+		<![CDATA[)T9
+			LEFT JOIN Basis.BIN_Employee L1																			
+			ON (T9.BIN_EmployeeID = L1.BIN_EmployeeID)
+			LEFT JOIN Basis.BIN_Organization L2
+			ON (T9.BIN_OrganizationID = L2.BIN_OrganizationID)																																		
+			LEFT JOIN Basis.BIN_DepotInfo L3
+			ON (T9.BIN_DepotInfoID = L3.BIN_DepotInfoID)
+			LEFT JOIN Basis.BIN_Organization L4
+			ON (T9.BIN_OrganizationIDReceive = L4.BIN_OrganizationID)
+		]]>
+		<include refid="BINOLCMINC99.pagefooter" />
+    </select>
+    
+    <!-- 发货Excel导出明细查询sql文 -->
+    <sql id="deliverExportQuery">
+        <![CDATA[
+        SELECT  
+            J.DepartName AS area,
+            C.RegionNameChinese AS region,
+            D.RegionNameChinese AS province,
+            E.RegionNameChinese AS city,
+            T1.DeliverNoIF AS deliverNoIF,
+            T1.ImportBatch AS importBatch,
+            B.DepartCode AS departCodeOut,
+            G.DepartCode AS departCodeIn,
+            I.NameTotal AS productName,
+            I.UnitCode AS unitCode,
+            H.BarCode AS barCode,
+            A.Quantity AS quantity,
+            A.Price AS price,
+            A.Quantity*A.Price AS amount,
+            T1.Date AS date,
+        ]]>
+        <isNotEmpty property="language">
+            <isEqual property="language" compareValue="en_US">
+                B.NameForeign AS departNameOut,
+                G.NameForeign AS departNameIn,
+                FA.EmployeeNameForeign AS employeeNameAudit,
+            </isEqual>
+            <isEqual property="language" compareValue="zh_CN">
+                B.DepartName AS departNameOut,
+                G.DepartName AS departNameIn,
+                FA.EmployeeName AS employeeNameAudit,
+            </isEqual>
+        </isNotEmpty>
+        <isEmpty property="language">
+                B.DepartName AS departNameOut,
+                G.DepartName AS departNameIn,
+                FA.EmployeeName AS employeeNameAudit,
+        </isEmpty>
+        <![CDATA[
+            F.EmployeeName AS employeeName,
+            T1.TradeStatus AS tradeStatus
+        FROM
+            (
+        ]]>
+        <include refid="BINOLPTRPS25.prtDeliverSQL" />
+        <![CDATA[   
+            ) AS T1 
+            LEFT JOIN Inventory.BIN_ProductDeliverDetail A ON A.BIN_ProductDeliverID = T1.BIN_ProductDeliverID
+            LEFT JOIN Basis.BIN_Organization B ON T1.BIN_OrganizationID = B.BIN_OrganizationID
+            LEFT JOIN Basis.BIN_Region C ON B.BIN_RegionID = C.BIN_RegionID
+            LEFT JOIN Basis.BIN_Region D ON B.BIN_ProvinceID= D.BIN_RegionID
+            LEFT JOIN Basis.BIN_Region E ON B.BIN_CityID= E.BIN_RegionID
+            LEFT JOIN Basis.BIN_Employee F ON T1.BIN_EmployeeID = F.BIN_EmployeeID
+            LEFT JOIN Basis.BIN_Organization G ON T1.BIN_OrganizationIDReceive = G.BIN_OrganizationID
+            LEFT JOIN Basis.BIN_ProductVendor H ON A.BIN_ProductVendorID = H.BIN_ProductVendorID
+            LEFT JOIN Basis.BIN_Product I ON H.BIN_ProductID = I.BIN_ProductID
+            LEFT JOIN Basis.BIN_Organization J ON B.NodeID.IsDescendantOf(J.NodeID) = 1 AND J.Type = '5'
+            LEFT JOIN Basis.BIN_Employee FA WITH(NOLOCK) ON T1.BIN_EmployeeIDAudit = FA.BIN_EmployeeID
+        ]]>
+    </sql>
+    
+    <!-- 取得发货Excel导出明细】  -->
+    <select id="getDeliverExportList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+        <include refid="BINOLCMINC99.pageheader" />
+        <include refid="BINOLPTRPS25.deliverExportQuery" />
+        <include refid="BINOLCMINC99.pagefooter" />
+    </select>
+
+    <!-- 取得发货Excel导出明细总数】  -->
+    <select id="getDeliverExportCount" parameterClass="java.util.HashMap" resultClass="java.lang.Integer">
+        <![CDATA[
+            SELECT
+                COUNT(*) AS count
+            FROM(]]>
+        <include refid="BINOLPTRPS25.deliverExportQuery" />
+        <![CDATA[)T11]]>
+    </select>
+</sqlMap>

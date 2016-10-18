@@ -1,0 +1,1259 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sqlMap PUBLIC "-//iBATIS.com//DTD SQL Map 2.0//EN" "http://ibatis.apache.org/dtd/sql-map-2.dtd">
+<sqlMap namespace="BINOLPTJCS24">
+	<!-- 产品信息查询sql  -->
+	<sql id="proQuery">
+		<![CDATA[
+			SELECT
+			   A.BIN_ProductID AS productId,
+			   A.UnitCode AS unitCode,																		
+	           ISNULL(CONVERT(Decimal(16,2),A.StandardCost),0) AS standardCost,							
+	           B.ValidFlag AS validFlag,
+			   A.NameForeign AS nameTotalEN,
+			   A.NameTotal AS nameTotalCN,		
+			   B.BarCode AS barCode,
+			   A.Mode AS mode,
+			   ISNULL(CONVERT(Decimal(16,2),A.OrderPrice),0) AS orderPrice,
+			   ISNULL(CONVERT(Decimal(16,2),T.SalePrice),0) AS salePrice,
+			   ISNULL(CONVERT(Decimal(16,2),T.MemPrice),0) AS memPrice,
+			   A.ModuleCode AS moduleCode,
+			   
+			   B.BIN_ProductVendorID,
+			   A.NameShort,
+			   A.NameAlias,
+			   A.NameShortForeign,
+			   A.OperationStyle,
+			   A.StyleCode,
+			   A.SellStartDate,
+			   A.SellEndDate,
+			   A.Status,
+			   A.RecommendedNumDay,
+			   A.StarProduct,
+               A.ShelfLife,
+               A.IsBOMCompatible,
+               A.IsReplenish,
+               A.LackFlag,
+               A.DiscontinueCounter,
+               A.DiscontinueReseller,
+               A.SaleUnit,
+               A.BIN_BrandInfoID,
+               convert(varchar(30),A.UpdateTime,121) AS UpdateTime,	
+               A.ModifyCount,
+               A.Spec AS spec,
+               A.OriginalBrand AS originalBrand,
+               A.ItemType AS itemType,
+         ]]>
+		<dynamic>
+			<isNotEmpty property="language">
+				<isEqual property="language" compareValue="zh_CN">										
+					A.NameTotal AS nameTotal,
+					D.PropValueChinese AS primaryCategoryBig,
+					F.PropValueChinese AS primaryCategoryMedium,
+					E.PropValueChinese AS primaryCategorySmall
+				</isEqual>
+				<isEqual property="language" compareValue="en_US">										
+					A.NameForeign AS nameTotal,
+					D.PropValueForeign AS primaryCategoryBig,
+					F.PropValueChinese AS primaryCategoryMedium,
+					E.PropValueForeign AS primaryCategorySmall
+				</isEqual>
+			</isNotEmpty>
+			<isEmpty property="language">
+					A.NameTotal AS nameTotal,
+					D.PropValueChinese AS primaryCategoryBig,
+					F.PropValueChinese AS primaryCategoryMedium,
+					E.PropValueChinese AS primaryCategorySmall
+			</isEmpty>
+		</dynamic>
+         <![CDATA[
+		  FROM														
+	         Basis.BIN_Product A WITH(NOLOCK)
+			 JOIN Basis.BIN_ProductVendor B WITH(NOLOCK)
+			 ON(A.BIN_ProductID = B.BIN_ProductID)
+			 LEFT JOIN Basis.BIN_ProductPrice T WITH(NOLOCK)
+		     ON (T.BIN_ProductID = A.BIN_ProductID 
+		     	AND T.Type = '2'
+		    	AND T.EndDate >= #businessDate#
+				AND T.StartDate <= #businessDate#)
+		 ]]>
+		 <include refid="BINOLPTJCS24.joinCateSql"/>
+		   WHERE
+		     A.BIN_BrandInfoID = #brandInfoId#
+		<dynamic>
+			<isNotEmpty prepend="AND" property="unitCode" >
+				A.UnitCode LIKE '%' + #unitCode# + '%'
+			</isNotEmpty>
+			<isNotEmpty prepend="AND" property="nameTotal" >
+				(A.NameTotal LIKE '%' + #nameTotal# + '%' OR
+				A.NameShort LIKE '%' + #nameTotal# + '%' OR
+				A.NameAlias LIKE '%' + #nameTotal# + '%' OR
+				A.NameForeign LIKE '%' + #nameTotal# + '%' OR
+				A.NameShortForeign LIKE '%' + #nameTotal# + '%')
+			</isNotEmpty>
+			<isNotEmpty prepend="AND" property="validFlag" >
+				B.ValidFlag = #validFlag#
+			</isNotEmpty>
+			<isNotEmpty prepend="AND" property="barCode" >
+				B.BarCode LIKE '%' + #barCode# + '%'
+			</isNotEmpty>
+			<isNotEmpty prepend="AND" property="mode" >
+				A.Mode = #mode#
+			</isNotEmpty>
+			<isNotEmpty prepend="AND" property="status" >
+				A.Status = #status#
+			</isNotEmpty>
+		</dynamic>
+	</sql>
+	
+	<!-- 产品信息查询sql无效产品-->
+	<sql id="proQueryInvalid">
+		<![CDATA[
+			SELECT
+			   A.BIN_ProductID AS productId,
+			   C.unitCode AS unitCode,																	
+	           ISNULL(CONVERT(Decimal(16,2),A.StandardCost),0) AS standardCost,							
+	           '0' AS validFlag, 
+			   A.NameForeign AS nameTotalEN,
+			   A.NameTotal AS nameTotalCN,		
+			   C.barCode AS barCode,   
+			   A.Mode AS mode,
+			   ISNULL(CONVERT(Decimal(16,2),A.OrderPrice),0) AS orderPrice,
+			   ISNULL(CONVERT(Decimal(16,2),T.SalePrice),0) AS salePrice,
+			   ISNULL(CONVERT(Decimal(16,2),T.MemPrice),0) AS memPrice,
+			   A.ModuleCode AS moduleCode,
+			   
+			   B.BIN_ProductVendorID,
+			   A.NameShort,
+			   A.NameAlias,
+			   A.NameShortForeign,
+			   A.OperationStyle,
+			   A.StyleCode,
+			   A.SellStartDate,
+			   A.SellEndDate,
+			   A.Status,
+			   A.RecommendedNumDay,
+			   A.StarProduct,
+               A.ShelfLife,
+               A.IsBOMCompatible,
+               A.IsReplenish,
+               A.LackFlag,
+               A.DiscontinueCounter,
+               A.DiscontinueReseller,
+               A.SaleUnit,
+               A.BIN_BrandInfoID,
+               convert(varchar(30),A.UpdateTime,121) AS UpdateTime,	
+               A.ModifyCount,
+               A.Spec AS spec,
+               A.OriginalBrand AS originalBrand,
+               A.ItemType AS itemType,
+         ]]>
+			<dynamic>
+				<isNotEmpty property="language">
+					<isEqual property="language" compareValue="zh_CN">										
+						A.NameTotal AS nameTotal,
+						D.PropValueChinese AS primaryCategoryBig,
+						F.PropValueChinese AS primaryCategoryMedium,
+						E.PropValueChinese AS primaryCategorySmall
+					</isEqual>
+					<isEqual property="language" compareValue="en_US">										
+						A.NameForeign AS nameTotal,
+						D.PropValueForeign AS primaryCategoryBig,
+						F.PropValueChinese AS primaryCategoryMedium,
+						E.PropValueForeign AS primaryCategorySmall
+					</isEqual>
+				</isNotEmpty>
+				<isEmpty property="language">
+						A.NameTotal AS nameTotal,
+						D.PropValueChinese AS primaryCategoryBig,
+						F.PropValueChinese AS primaryCategoryMedium,
+						E.PropValueChinese AS primaryCategorySmall
+				</isEmpty>
+			</dynamic>
+		  <![CDATA[
+		  FROM														
+	         Basis.BIN_Product A WITH(NOLOCK)
+			 JOIN Basis.BIN_ProductVendor B WITH(NOLOCK)
+			 ON(A.BIN_ProductID = B.BIN_ProductID)
+			 LEFT JOIN Basis.BIN_ProductPrice T WITH(NOLOCK)
+		     ON (T.BIN_ProductID = A.BIN_ProductID 
+		     	AND T.Type = '2'
+		    	AND T.EndDate >= #businessDate#
+				AND T.StartDate <= #businessDate#)
+			 JOIN
+		     (
+				SELECT 
+					A.OldUnitCode AS unitCode,
+					A.OldBarCode AS barCode,
+					A.BIN_ProductVendorID AS prtVendorId
+				FROM 
+					Basis.BIN_PrtBarCode A
+					LEFT JOIN Basis.BIN_ProductVendor B WITH(NOLOCK)
+					ON(A.BIN_ProductVendorID = B.BIN_ProductVendorID
+						AND A.OldBarCode = B.BarCode
+						AND B.ValidFlag = '1')
+				WHERE
+					ClosingTime IS NOT NULL
+					AND B.BIN_ProductVendorID IS NULL
+				UNION
+				SELECT
+					A.UnitCode AS unitCode,
+					B.BarCode AS barCode,
+					B.BIN_ProductVendorID AS prtVendorId
+				FROM
+					Basis.BIN_Product A WITH(NOLOCK)     
+					JOIN Basis.BIN_ProductVendor B WITH(NOLOCK)     
+					ON(A.BIN_ProductID = B.BIN_ProductID
+						AND B.ValidFlag = '0') 
+		     ) C ON C.prtVendorId = B.BIN_ProductVendorID
+		     ]]>
+   			 <include refid="BINOLPTJCS24.joinCateSql"/>
+		   WHERE
+		     A.BIN_BrandInfoID = #brandInfoId#
+		<dynamic>
+			<isNotEmpty prepend="AND" property="unitCode" >
+				C.unitCode LIKE '%' + #unitCode# + '%'
+			</isNotEmpty>
+			<isNotEmpty prepend="AND" property="nameTotal" >
+				(A.NameTotal LIKE '%' + #nameTotal# + '%' OR
+				A.NameShort LIKE '%' + #nameTotal# + '%' OR
+				A.NameAlias LIKE '%' + #nameTotal# + '%' OR
+				A.NameForeign LIKE '%' + #nameTotal# + '%' OR
+				A.NameShortForeign LIKE '%' + #nameTotal# + '%')
+			</isNotEmpty>
+			<isNotEmpty prepend="AND" property="barCode" >
+				C.barCode LIKE '%' + #barCode# + '%'
+			</isNotEmpty>
+			<isNotEmpty prepend="AND" property="mode" >
+				A.Mode = #mode#
+			</isNotEmpty>
+			<isNotEmpty prepend="AND" property="status" >
+				A.Status = #status#
+			</isNotEmpty>
+		</dynamic>
+	</sql>
+	
+	<!-- 外接连产品分类用于查询产品对应的大中小分类 -->
+	<sql id="joinCateSql">
+		<![CDATA[
+   			LEFT JOIN (
+    				SELECT
+    					pc.BIN_ProductID,
+    					pcv.PropValueChinese,
+    					pcv.PropValueForeign
+    				FROM
+    					Basis.BIN_PrtCategory pc,
+    					Basis.BIN_PrtCatProperty pcp,
+    					Basis.BIN_PrtCatPropValue pcv
+    				WHERE
+    					pc.BIN_PrtCatPropValueID = pcv.BIN_PrtCatPropValueID AND
+    					pcv.BIN_PrtCatPropertyID = pcp.BIN_PrtCatPropertyID AND
+    					pcp.TeminalFlag = '1' AND 
+    					pcp.BIN_OrganizationInfoID = #organizationInfoId#  AND
+	    				pcp.BIN_BrandInfoID = #brandInfoId# AND 
+						pc.ValidFlag = '1' AND
+						pcv.ValidFlag = '1' AND
+						pcp.ValidFlag = '1'
+    			) D ON (D.BIN_ProductID = A.BIN_ProductID)
+   			LEFT JOIN (
+   				SELECT
+   					pc.BIN_ProductID,
+   					pcv.PropValueChinese,
+   					pcv.PropValueForeign
+   				FROM
+   					Basis.BIN_PrtCategory pc,
+   					Basis.BIN_PrtCatProperty pcp,
+   					Basis.BIN_PrtCatPropValue pcv
+   				WHERE
+   					pc.BIN_PrtCatPropValueID = pcv.BIN_PrtCatPropValueID AND
+   					pcv.BIN_PrtCatPropertyID = pcp.BIN_PrtCatPropertyID AND
+   					pcp.TeminalFlag = '2' AND 
+   					pcp.BIN_OrganizationInfoID = #organizationInfoId#  AND 
+    				pcp.BIN_BrandInfoID = #brandInfoId# AND 
+					pc.ValidFlag = '1' AND
+					pcv.ValidFlag = '1' AND
+					pcp.ValidFlag = '1'
+   			) E ON (E.BIN_ProductID = A.BIN_ProductID)
+   			LEFT JOIN (
+   				SELECT
+   					pc.BIN_ProductID,
+   					pcv.PropValueChinese,
+   					pcv.PropValueForeign
+   				FROM
+   					Basis.BIN_PrtCategory pc,
+   					Basis.BIN_PrtCatProperty pcp,
+   					Basis.BIN_PrtCatPropValue pcv
+   				WHERE
+   					pc.BIN_PrtCatPropValueID = pcv.BIN_PrtCatPropValueID AND
+   					pcv.BIN_PrtCatPropertyID = pcp.BIN_PrtCatPropertyID AND
+   					pcp.TeminalFlag = '3' AND 
+   					pcp.BIN_OrganizationInfoID = #organizationInfoId#  AND 
+    				pcp.BIN_BrandInfoID = #brandInfoId# AND 
+					pc.ValidFlag = '1' AND
+					pcv.ValidFlag = '1' AND
+					pcp.ValidFlag = '1'
+   			) F ON (F.BIN_ProductID = A.BIN_ProductID)
+   			]]>
+	</sql>
+	
+	<!-- 产品信息by分类查询sql  -->
+	<sql id="proQueryByCate">
+		<![CDATA[
+		SELECT
+		   A.BIN_ProductID AS productId,
+		   A.UnitCode AS unitCode,
+		   A.Mode AS mode,																		
+		   ISNULL(CONVERT(Decimal(16,2),A.StandardCost),0) AS standardCost,
+		   B.ValidFlag AS validFlag,
+		   A.NameForeign AS nameTotalEN,
+		   A.NameTotal AS nameTotalCN,
+		   A.NameAlias,
+		   B.BarCode AS barCode,
+		   ISNULL(CONVERT(Decimal(16,2),A.OrderPrice),0) AS orderPrice,
+		   ISNULL(CONVERT(Decimal(16,2),T.SalePrice),0) AS salePrice,
+		   ISNULL(CONVERT(Decimal(16,2),T.MemPrice),0) AS memPrice,
+		   A.ModuleCode AS moduleCode,
+		   A.Spec AS spec,
+           A.OriginalBrand AS originalBrand,
+           A.ItemType AS itemType,
+		]]>
+		<dynamic>
+			<isNotEmpty property="language">
+				<isEqual property="language" compareValue="zh_CN">										
+					A.NameTotal AS nameTotal,
+					D.PropValueChinese AS primaryCategoryBig,
+					F.PropValueChinese AS primaryCategoryMedium,
+					E.PropValueChinese AS primaryCategorySmall
+				</isEqual>
+				<isEqual property="language" compareValue="en_US">										
+					A.NameForeign AS nameTotal,
+					D.PropValueForeign AS primaryCategoryBig,
+					F.PropValueChinese AS primaryCategoryMedium,
+					E.PropValueForeign AS primaryCategorySmall
+				</isEqual>
+			</isNotEmpty>
+			<isEmpty property="language">
+					A.NameTotal AS nameTotal,
+					D.PropValueChinese AS primaryCategoryBig,
+					F.PropValueChinese AS primaryCategoryMedium,
+					E.PropValueChinese AS primaryCategorySmall
+			</isEmpty>
+		</dynamic>
+		<![CDATA[
+		FROM														
+			Basis.BIN_Product A WITH(NOLOCK)
+			JOIN Basis.BIN_ProductVendor B WITH(NOLOCK)
+			ON(A.BIN_ProductID = B.BIN_ProductID
+				AND B.ValidFlag = '1')
+		]]>
+		<![CDATA[JOIN(]]>
+		<include refid="BINOLCM02.getProListByCate" />
+		<![CDATA[)T1 ON(A.BIN_ProductID = T1.BIN_ProductID)]]>
+		<![CDATA[
+			LEFT JOIN Basis.BIN_ProductPrice T WITH(NOLOCK)
+			ON (T.BIN_ProductID = A.BIN_ProductID
+				AND T.Type = '2' 
+				AND T.EndDate >= #businessDate#
+				AND T.StartDate <= #businessDate#)
+		]]>
+		<include refid="BINOLPTJCS24.joinCateSql"/>				
+		WHERE
+			A.BIN_BrandInfoID= #brandInfoId#
+	</sql>
+    <!-- 查询产品一览信息 -->
+    <sql id="proQueryList">
+		<isNotEmpty property="validFlag">
+			<isEqual property="validFlag" compareValue="1">
+				<include refid="BINOLPTJCS24.proQuery" />
+			</isEqual>
+			<isEqual property="validFlag" compareValue="0">
+				<include refid="BINOLPTJCS24.proQueryInvalid" />
+			</isEqual>
+		</isNotEmpty>
+		<isEmpty  property="validFlag">
+			<include refid="BINOLPTJCS24.proQuery" />
+			<![CDATA[UNION]]>
+			<include refid="BINOLPTJCS24.proQueryInvalid" />
+		</isEmpty>
+    </sql>
+	<!-- 查询产品是否已存在有效的相同条码  -->
+    <select id="getPrtBarCodeVF" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+    	<![CDATA[
+			SELECT tt.productId,tt.unitCode,tt.barCode,tt.validFlag,tt.nameTotalCN
+			FROM 
+			(
+		]]>
+			<include refid="BINOLPTJCS24.proQueryList" />
+    	<![CDATA[
+			) tt
+			WHERE tt.productId = #productId# AND tt.barCode = #enableBarCode# AND tt.validFlag = '1'
+		]]>
+			
+	</select>    
+	<!-- 取得产品总数  -->
+    <select id="getProCount" parameterClass="java.util.HashMap" resultClass="java.lang.Integer">
+    	<![CDATA[
+			SELECT	COUNT(SORT_T1.productId) AS count FROM (
+		]]>
+		<isNotEmpty property="path">
+			<include refid="BINOLPTJCS24.proQueryByCate" />
+		</isNotEmpty>
+		<isEmpty property="path">
+			<include refid="BINOLPTJCS24.proQueryList" />
+		</isEmpty>
+		<![CDATA[	
+			)SORT_T1
+		]]>										
+    </select>
+	<!-- 取得产品信息List -->
+    <select id="getProList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap" remapResults="true">
+       	<include refid="BINOLCMINC99.pageheader" />
+		<isNotEmpty property="path">
+			<include refid="BINOLPTJCS24.proQueryByCate" />
+		</isNotEmpty>
+		<isEmpty property="path">
+			<include refid="BINOLPTJCS24.proQueryList" />
+		</isEmpty>
+		<include refid="BINOLCMINC99.pagefooter" />
+    </select>
+	<!-- 取得品牌List -->
+	<select id="getBrandList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+		<![CDATA[
+			SELECT
+				DISTINCT
+				CONVERT(VARCHAR,A.BIN_BrandInfoID) + '/' as path,
+				A.BIN_BrandInfoID AS brandInfoId
+		]]>	
+		<isNotEmpty property="language">
+			<isEqual property="language" compareValue="en_US">
+				,B.BrandNameForeign AS name
+			</isEqual>
+			<isEqual property="language" compareValue="zh_CN">	
+				,B.BrandNameChinese AS name
+			</isEqual>								
+		</isNotEmpty>
+		<isEmpty property="language">
+			,B.BrandNameChinese AS name
+		</isEmpty>
+		<![CDATA[
+			FROM
+				Basis.BIN_PrtCatProperty A WITH(NOLOCK)
+				JOIN Basis.BIN_BrandInfo B WITH(NOLOCK)
+				ON(A.BIN_BrandInfoID = B.BIN_BrandInfoID
+					AND B.ValidFlag = '1')
+			WHERE
+				A.BIN_OrganizationInfoID=#organizationInfoId#
+				AND A.ValidFlag = '1'			
+		]]>
+    </select>
+	<!-- 取得树形显示顺序 -->
+	<select id="getCatPropList" parameterClass="java.util.HashMap" resultClass="java.lang.Integer">
+		<![CDATA[
+		SELECT
+			BIN_PrtCatPropertyID
+		FROM
+			Basis.BIN_PrtCatProperty WITH(NOLOCK)
+		WHERE
+			BIN_BrandInfoID = #brandInfoId#
+			AND ValidFlag = '1'
+		ORDER BY
+			ViewSeq
+		]]>
+    </select>
+    <!-- 取得下挂产品的分类值List -->
+	<select id="getCateValList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+		<![CDATA[
+			SELECT
+				DISTINCT
+				#path# + CONVERT(VARCHAR,A.BIN_PrtCatPropValueID) +'/' AS path
+		]]>
+		<dynamic>
+			<isNotEmpty property="language">
+				<isEqual property="language" compareValue="en_US">
+					,A.PropValueForeign AS name
+				</isEqual>
+				<isEqual property="language" compareValue="zh_CN">	
+					,A.PropValueChinese AS name
+				</isEqual>								
+			</isNotEmpty>
+			<isEmpty property="language">
+				,A.PropValueChinese AS name
+			</isEmpty>
+		</dynamic>
+		<![CDATA[FROM Basis.BIN_PrtCatPropValue A WITH(NOLOCK) JOIN(]]>
+		<include refid="BINOLCM02.getProListByCate" />
+		<![CDATA[)T1 ON(A.BIN_PrtCatPropValueID = T1.cateVal$propId$)
+		WHERE 
+			A.BIN_PrtCatPropertyID = #propId#
+			AND A.ValidFlag ='1'
+		]]>
+    </select>
+     <!-- 取得下挂产品的分类值List -->
+	<select id="getChildCount" parameterClass="java.util.HashMap" resultClass="java.lang.Integer">
+		<![CDATA[SELECT count(A.BIN_PrtCatPropValueID) FROM Basis.BIN_PrtCatPropValue A WITH(NOLOCK) JOIN(]]>
+		<include refid="BINOLCM02.getProListByCate" />
+		<![CDATA[)T1 ON(A.BIN_PrtCatPropValueID = T1.cateVal$propId$)
+		WHERE 
+			A.BIN_PrtCatPropertyID = #propId#
+			AND A.ValidFlag ='1'
+		]]>
+    </select>
+	<!-- 取得产品信息(Excel)  -->
+    <resultMap id="BINOLPTJCS24.proMap" class="java.util.HashMap">
+        <result property="list" column="productId" select="BINOLPTJCS24.getCateList" javaType="java.util.List"/>
+        <result property="productId" column="productId"/>
+        <result property="unitCode" column="unitCode"/>
+        <result property="standardCost" column="standardCost"/>
+        <result property="validFlag" column="validFlag"/>
+        <result property="nameForeign" column="nameTotalEN"/>
+        <result property="nameTotal" column="nameTotalCN"/>
+        <result property="barCode" column="barCode"/>
+        <result property="mode" column="mode"/>
+        <result property="orderPrice" column="orderPrice"/>
+        <result property="salePrice" column="salePrice"/>
+        <result property="memPrice" column="memPrice"/>
+        <result property="moduleCode" column="moduleCode"/>
+        
+        <result property="nameShort" column="NameShort"/>
+        <result property="NameAlias" column="NameAlias"/>
+        <result property="nameShortForeign" column="NameShortForeign"/>
+        <result property="operationStyle" column="OperationStyle"/>
+        <result property="styleCode" column="StyleCode"/>
+		<result property="sellStartDate" column="SellStartDate"/>
+		<result property="sellEndDate" column="SellEndDate"/>
+		<result property="status" column="Status"/>
+		<result property="recommendedNumDay" column="RecommendedNumDay"/>
+		<result property="starProduct" column="StarProduct"/>
+		<result property="shelfLife" column="ShelfLife"/>
+		<result property="isBOMCompatible" column="IsBOMCompatible"/>
+		<result property="isReplenish" column="IsReplenish"/>
+		<result property="lackFlag" column="LackFlag"/>
+		<result property="discontinueCounter" column="DiscontinueCounter"/>
+		<result property="discontinueReseller" column="DiscontinueReseller"/>
+		<result property="saleUnit" column="SaleUnit"/>
+		
+		<result property="originalBrand" column="originalBrand"/>
+		<result property="itemType" column="itemType"/>
+		
+        <result property="brandCode" column="BrandCode"/>
+		<result property="brandNameChinese" column="BrandNameChinese"/>
+		<result property="brandNameForeign" column="BrandNameForeign"/>
+		<result property="brandName" column="brandName"/>
+    </resultMap>
+    <!-- 取得导出产品（Header） -->
+    <sql id="getProductInfoListExcelHeader">
+	   	SELECT
+	   		T1.*,
+            T2.BrandCode,
+            T2.BrandNameChinese,
+            T2.BrandNameForeign
+	       <isNotEmpty property="language">
+	           <isEqual property="language" compareValue="en_US">
+	           	,T2.BrandNameForeign AS brandName
+	           </isEqual>
+	           <isEqual property="language" compareValue="zh_CN">
+	           	,T2.BrandNameChinese AS brandName
+	           </isEqual>                              
+	       </isNotEmpty>
+	       <isEmpty property="language">
+	       	,T2.BrandNameChinese AS brandName
+	       </isEmpty>
+	   	FROM (
+    </sql>
+    <!-- 取得导出产品（Footer） -->
+    <sql id="getProductInfoListExcelFooter">
+    	) T1
+        JOIN Basis.BIN_BrandInfo T2  
+        ON(T1.BIN_BrandInfoID = T2.BIN_BrandInfoID 
+        	AND T2.ValidFlag = '1')
+    </sql>
+    <!-- 取得导出产品  -->
+    <select id="getProductInfoListExcel" parameterClass="java.util.HashMap" resultMap="BINOLPTJCS24.proMap">
+		<isNotEmpty property="validFlag">
+			<isEqual property="validFlag" compareValue="1">
+				<include refid="BINOLPTJCS24.getProductInfoListExcelHeader" />
+					<include refid="BINOLPTJCS24.proQuery" />
+				<include refid="BINOLPTJCS24.getProductInfoListExcelFooter" />
+			</isEqual>
+			<isEqual property="validFlag" compareValue="0">
+				<include refid="BINOLPTJCS24.getProductInfoListExcelHeader" />
+					<include refid="BINOLPTJCS24.proQueryInvalid" />
+				<include refid="BINOLPTJCS24.getProductInfoListExcelFooter" />
+			</isEqual>
+		</isNotEmpty>
+		<isEmpty  property="validFlag">
+			<include refid="BINOLPTJCS24.getProductInfoListExcelHeader" />
+				<include refid="BINOLPTJCS24.proQuery" />
+				<![CDATA[UNION]]>
+				<include refid="BINOLPTJCS24.proQueryInvalid" />
+			<include refid="BINOLPTJCS24.getProductInfoListExcelFooter" />
+		</isEmpty>
+    
+    </select>
+	
+    <!-- 获取产品分类List -->
+    <select id="getCateList" parameterClass="java.lang.Integer" resultClass="java.util.HashMap">
+        <![CDATA[
+        SELECT
+            A.BIN_PrtCatPropValueID AS propValId,
+            C.ViewSeq AS viewSeq,
+            C.PropertyNameForeign AS propertyNameEN,
+			B.PropValue AS propValue,
+            B.PropValueForeign AS propValEN,
+            C.PropertyNameChinese AS propertyNameCN,
+            B.PropValueChinese AS propValCN,
+            C.TeminalFlag AS teminalFlag
+        FROM
+            Basis.BIN_PrtCategory A WITH(NOLOCK)
+            JOIN Basis.BIN_PrtCatPropValue B WITH(NOLOCK)
+            ON(A.BIN_PrtCatPropValueID = B.BIN_PrtCatPropValueID
+                AND B.ValidFlag = '1')
+            JOIN Basis.BIN_PrtCatProperty C WITH(NOLOCK)
+            ON(B.BIN_PrtCatPropertyID = C.BIN_PrtCatPropertyID
+                AND C.ValidFlag = '1')
+        WHERE
+            A.BIN_ProductID = #BIN_ProductID#
+        ORDER BY
+            C.ViewSeq
+        ]]>
+    </select>
+	
+    <!--查询产品类别基本属性定义list -->
+    <select id="getPrtCatPropertyList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+        <![CDATA[
+        SELECT
+            A.ViewSeq AS viewSeq
+        ]]>
+        <isNotEmpty property="language">
+            <isEqual property="language" compareValue="en_US">
+                <![CDATA[,A.PropertyNameForeign AS propertyName]]>
+            </isEqual>
+            <isEqual property="language" compareValue="zh_CN">
+                <![CDATA[,A.PropertyNameChinese AS propertyName]]>
+            </isEqual>
+        </isNotEmpty>
+        <isEmpty property="language">
+            <![CDATA[,A.PropertyNameChinese AS propertyName]]>
+        </isEmpty>
+        <![CDATA[
+        FROM
+            Basis.BIN_PrtCatProperty A WITH(NOLOCK)
+        WHERE
+            A.ValidFlag = '1'
+            AND A.BIN_OrganizationInfoID = #organizationInfoId#
+            AND A.BIN_BrandInfoID = #brandInfoId#
+        ]]>
+    </select>
+	
+    <!-- 取得产品分类的上级分类 -->
+    <select id="getLocateCatHigher" parameterClass="java.util.HashMap" resultClass="java.util.HashMap" remapResults="true">
+		SELECT $column$
+		FROM
+		  (
+		  SELECT 
+		       A.BIN_PrtCatPropValueID
+		      ,B.BIN_PrtCatPropertyID
+		      ,A.PropValueChinese
+		      ,A.PropValueCherry
+		      ,B.ViewSeq,B.BIN_BrandInfoID
+		  FROM Basis.BIN_PrtCatPropValue A
+		  JOIN Basis.BIN_PrtCatProperty B ON A.BIN_PrtCatPropertyID = B.BIN_PrtCatPropertyID 
+		  WHERE A.ValidFlag = 1
+		  AND B.ValidFlag = 1
+		  AND B.BIN_BrandInfoID = #brandInfoId#
+		  ) T1
+		  JOIN (
+		    SELECT 
+		       A.BIN_ProductID
+		      ,A.BIN_PrtCatPropValueID
+		    FROM Basis.BIN_PrtCategory A
+		    WHERE EXISTS (
+				SELECT A.BIN_ProductID
+				 FROM Basis.BIN_PrtCategory A
+				 JOIN Basis.BIN_Product B ON A.BIN_ProductID = B.BIN_ProductID
+				 WHERE 
+				 A.ValidFlag = '1'
+				 AND B.BIN_BrandInfoID = #brandInfoId#
+				 AND A.BIN_PrtCatPropValueID = #BIN_PrtCatPropValueID#
+		  	) AND A.ValidFlag = '1'
+		  ) T2 ON T1.BIN_PrtCatPropValueID = T2.BIN_PrtCatPropValueID
+		
+		ORDER BY T2.BIN_ProductID
+    </select>
+    
+    <!-- 取得已绑定产品的产品分类排序  -->
+    <select id="getCatSortByBing" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+		SELECT 
+		DISTINCT T3.BIN_PrtCatPropertyID,T3.ViewSeq
+		FROM 
+		(
+			SELECT T1.*,T2.BIN_ProductID
+			FROM
+			  (
+			  SELECT 
+			       A.BIN_PrtCatPropValueID
+			      ,B.BIN_PrtCatPropertyID
+			      ,A.PropValueChinese
+			      ,A.PropValueCherry
+			      ,B.ViewSeq,B.BIN_BrandInfoID
+			  FROM Basis.BIN_PrtCatPropValue A
+			  JOIN Basis.BIN_PrtCatProperty B ON A.BIN_PrtCatPropertyID = B.BIN_PrtCatPropertyID 
+			  WHERE A.ValidFlag = 1
+			  AND B.ValidFlag = 1
+			  AND B.BIN_BrandInfoID = #brandInfoId#
+			  ) T1
+			  JOIN (
+			    SELECT 
+			       A.BIN_ProductID
+			      ,A.BIN_PrtCatPropValueID
+			    FROM Basis.BIN_PrtCategory A
+			    WHERE EXISTS (
+					SELECT A.BIN_ProductID
+					 FROM Basis.BIN_PrtCategory A
+					 JOIN Basis.BIN_Product B ON A.BIN_ProductID = B.BIN_ProductID
+					 WHERE 
+					 A.ValidFlag = '1'
+					 AND B.BIN_BrandInfoID = #brandInfoId#
+					 AND A.BIN_PrtCatPropValueID = #BIN_PrtCatPropValueID#
+			  	) AND A.ValidFlag = '1'
+			  ) T2 ON T1.BIN_PrtCatPropValueID = T2.BIN_PrtCatPropValueID
+		) T3
+		ORDER BY T3.ViewSeq
+    </select>
+    
+	<!-- 查询定位到的产品预设值ID -->
+	<select id="getLocationPrtCatValId" parameterClass="java.util.HashMap" resultClass="java.lang.String">
+		<![CDATA[
+			SELECT TOP 1
+				A.BIN_PrtCatPropValueID AS id
+			FROM
+				Basis.BIN_PrtCatPropValue A
+			JOIN Basis.BIN_PrtCatProperty B ON A.BIN_PrtCatPropertyID = B.BIN_PrtCatPropertyID
+			WHERE
+				A.ValidFlag = '1'
+				AND B.ValidFlag = '1'
+				AND B.BIN_OrganizationInfoID = #organizationInfoId#
+				AND B.BIN_BrandInfoID = #brandInfoId#
+				AND
+				(
+				    A.PropValueCherry like '%'+ #locationPosition# +'%'
+				OR  A.PropValueForeign like '%'+ #locationPosition# +'%'
+				OR  A.PropValueChinese like '%'+ #locationPosition# +'%'
+				)
+		]]>
+	</select>
+	
+	<!-- 更新产品信息  -->
+	<update id="updProduct" parameterClass="java.util.HashMap">
+		<![CDATA[
+		UPDATE
+			Basis.BIN_Product
+		SET
+		]]>	
+			ValidFlag = #validFlag#,
+			<isEqual property="validFlag" compareValue="1">
+			UnitCode = #unitCode#,
+			</isEqual>
+			Version=#tVersion#+1,
+		<include refid="BINOLCMINC99.updateSql" />		
+		<![CDATA[								
+		WHERE
+			BIN_ProductID = #productId#
+		AND UpdateTime = #prtUpdateTime#
+		AND	ModifyCount = #prtModifyCount#
+		]]>	
+	</update>
+	
+	<!-- 更新产品信息版本号  -->
+	<update id="updProductVersion" parameterClass="java.util.HashMap">
+		<![CDATA[
+		UPDATE
+			Basis.BIN_Product
+		SET
+		]]>	
+			Version=#tVersion#+1,
+		<include refid="BINOLCMINC99.updateSql" />		
+		<![CDATA[								
+		WHERE
+			BIN_ProductID = #productId#
+		]]>	
+	</update>
+	
+	<!-- 产品变动后更新产品方案明细表的version字段  -->
+	<update id="updPrtSolutionDetail" parameterClass="java.util.HashMap">
+		<![CDATA[
+		UPDATE PPSD
+		SET
+		]]>	
+			PPSD.Version=#pdTVersion#+1,
+			
+			PPSD.UpdateTime=GETDATE(),
+			PPSD.UpdatedBy=#updatedBy#,
+			PPSD.UpdatePGM=#updatePGM#,
+			PPSD.ModifyCount=PPSD.ModifyCount+1
+		<![CDATA[								
+		FROM	
+			Basis.BIN_ProductPriceSolutionDetail PPSD,Basis.BIN_ProductPriceSolution PPS
+		WHERE
+			PPSD.BIN_ProductPriceSolutionID = PPS.BIN_ProductPriceSolutionID
+		]]>	
+		<isNotEmpty property="productId" prepend="AND">
+			BIN_ProductID = #productId#
+		</isNotEmpty>
+		AND	PPS.BIN_OrganizationInfoID = #organizationInfoId#
+		AND	PPS.BIN_BrandInfoID = #brandInfoId#
+	</update>
+	
+	<!-- 更新产品厂商  -->
+	<update id="updPrtVendor" parameterClass="java.util.HashMap">
+		<![CDATA[
+		UPDATE
+			Basis.BIN_ProductVendor
+		SET
+			ValidFlag = #validFlag#,
+		]]>
+		<isEqual property="validFlag" compareValue="1">
+			BarCode = #barCode#,
+		</isEqual>
+		<include refid="BINOLCMINC99.updateSql" />
+		<![CDATA[
+		WHERE
+			BIN_ProductVendorID = #prtVendorId#
+		]]>
+	</update>
+	
+	<!-- 取得同产品下非当前厂商ID的有效厂商记录集合  -->
+	<select id="getPrtVendorDetailList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+		SELECT 
+			A.BIN_ProductVendorID AS prtVendorId ,B.UnitCode AS unitCode,A.BarCode AS barCode
+		FROM 
+			Basis.BIN_ProductVendor A
+		JOIN 
+			Basis.BIN_Product B ON B.BIN_ProductID = A.BIN_ProductID
+		WHERE B.BIN_ProductID = #productId#
+		<isNotEmpty property="validFlag" prepend="AND">
+			A.ValidFlag = #validFlag#
+		</isNotEmpty>
+		<isNotEmpty property="prtVendorId" prepend="AND">
+			<![CDATA[ A.BIN_ProductVendorID <> #prtVendorId# ]]>
+		</isNotEmpty>
+	</select>
+	
+	<!-- 取得产品厂商信息根据厂商ID  -->
+	<select id="getPrtVendorInfo" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+		SELECT 
+			A.BIN_ProductVendorID AS prtVendorId ,A.ValidFlag AS validFlag,BarCode AS barCode
+		FROM 
+			Basis.BIN_ProductVendor A
+		<dynamic prepend="WHERE">
+			<isNotEmpty property="prtVendorId" prepend="AND">
+				A.BIN_ProductVendorID = #prtVendorId#
+			</isNotEmpty>
+			<isNotEmpty property="productId" prepend="AND">
+				A.BIN_ProductID = #productId#
+			</isNotEmpty>
+			<isNotEmpty property="barCode" prepend="AND">
+				A.BarCode = #barCode#
+			</isNotEmpty>
+		</dynamic>
+	</select>
+	
+	<!-- 取得同产品下有效或无效的厂商信息  -->
+	<select id="getPrtDetailInfo" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+		SELECT 
+			A.BIN_ProductVendorID AS prtVendorId ,B.UnitCode AS unitCode,A.BarCode AS barCode
+		FROM 
+			Basis.BIN_ProductVendor A
+		JOIN 
+			Basis.BIN_Product B ON B.BIN_ProductID = A.BIN_ProductID
+		WHERE B.BIN_ProductID = #productId#
+		<isNotEmpty property="validFlag" prepend="AND">
+			A.ValidFlag = #validFlag# AND B.ValidFlag = #validFlag#
+		</isNotEmpty>
+	</select>
+	
+	<!--更新停用日时 -->
+	<update id="updateClosingTime" parameterClass="java.util.HashMap">
+		<![CDATA[
+			UPDATE 		
+				Basis.BIN_PrtBarCode	
+			SET		
+				ClosingTime = #closingTime#,
+				UpdateFlag = '1',
+				ValidFlag = '1',
+		]]>
+			<include refid="BINOLCMINC99.updateSql" />
+		<![CDATA[				
+			WHERE					
+				BIN_ProductVendorID = #prtVendorId# AND
+				ClosingTime IS NULL
+		]]>
+    </update>
+   	<!-- 更新产品条码对应关系表  -->
+	<update id="updPrtBarCode" parameterClass="java.util.HashMap">
+        <![CDATA[ 
+		  UPDATE   
+		       		Basis.BIN_PrtBarCode						
+		  SET				
+	          		UnitCode = #unitCode#,
+					BarCode = #barCode#,
+					ValidFlag = '1',
+		]]>	
+	    	<include refid="BINOLCMINC99.updateSql" />	
+		<![CDATA[			
+       	  WHERE									
+				   BIN_ProductVendorID = #prtVendorId#
+				   AND ClosingTime IS NULL
+       ]]>
+   </update>
+   	<!-- 停用产品 -->
+    <update id="delProductInfo" parameterClass="java.util.HashMap">
+    	<![CDATA[
+			UPDATE Basis.BIN_CounterInfo		
+			SET				
+				ValidFlag = #validFlag#,
+		]]>
+				<include refid="BINOLCMINC99.updateSql" />		
+		<![CDATA[					
+			WHERE
+				BIN_CounterInfoID IN		
+		]]>
+		<iterate conjunction="," open="(" close=")" property="productInfoIds">  
+        	#productInfoIds[]#
+    	</iterate>
+    </update>
+    
+    <!-- ########################################################################################################################################## -->
+    
+	<resultMap id="BINOLPTJCS24.proMap" class="java.util.HashMap">
+		<result property="brandCode" column="BrandCode"/>
+		<result property="unitCode" column="UnitCode"/>
+		<result property="barCode" column="BarCode"/>
+		<result property="prtVendorId" column="BIN_ProductVendorID"/>
+		<result property="nameTotal" column="NameTotal"/>
+		<result property="price" column="SalePrice"/>
+		<result property="discount" column="MemPrice"/>
+		<result property="mode" column="Mode"/>
+		<result property="status" column="Status"/>
+		<result property="cost" column="StandardCost"/>
+		<result property="maxPrice" column="maxPrice"/>
+		<result property="minPrice" column="minPrice"/>
+		<result property="pxEnable" column="pxEnable"/>
+		<result property="useDay" column="RecommendedNumDay"/>
+		<result property="productId" column="BIN_ProductID"/>
+		<result property="IsStock" column="IsStock"/>
+		<result property="Version" column="Version"/>
+		<result property="ValidFlag" column="ValidFlag"/>
+		<result property="SellDateFlag" column="SellDateFlag"/><!-- 0:未过期 1:已过期 -->
+		<result property="list" column="BIN_ProductID" select="BINOLPTJCS24.getCateList2" javaType="java.util.List"/>
+	</resultMap>
+	<!-- 查询新后台产品数据list -->
+	<select id="getProductList" parameterClass="java.util.HashMap" resultMap="BINOLPTJCS24.proMap">
+		<![CDATA[
+		SELECT
+			A.BIN_ProductID,
+			C.BrandCode,
+			A.UnitCode,	
+			B.BarCode,
+			B.BIN_ProductVendorID,
+			A.NameTotal,
+			ISNULL(D.SalePrice,0) AS SalePrice,
+			ISNULL(D.MemPrice,0) AS MemPrice,
+			A.Mode,	
+			ISNULL(A.Status,'E') AS Status,
+			ISNULL(A.StandardCost,0) AS StandardCost,
+			ISNULL(A.MaxSalePrice,ISNULL(D.SalePrice,0)) AS maxPrice,
+			ISNULL(A.MinSalePrice,0) AS minPrice,
+			A.IsExchanged AS pxEnable,
+			A.RecommendedNumDay,
+			A.IsStock,
+			A.Version,
+			B.ValidFlag,
+			CASE 
+				WHEN (A.SellStartDate IS NOT NULL AND A.SellEndDate IS NULL AND #priceDate# >= A.SellStartDate) 
+				  OR (A.SellEndDate IS NOT NULL AND A.SellStartDate IS NULL AND #priceDate# <= A.SellEndDate)
+			      OR (A.SellStartDate IS NOT NULL AND A.SellEndDate IS NOT NULL AND A.SellStartDate <= #priceDate# AND #priceDate# <= A.SellEndDate) 
+			      OR (A.SellStartDate IS NULL AND A.SellEndDate IS NULL)
+			    THEN '0' ELSE '1' END AS SellDateFlag
+		FROM
+			Basis.BIN_Product A	
+			JOIN Basis.BIN_ProductVendor B ON(A.BIN_ProductID = B.BIN_ProductID)
+			JOIN Basis.BIN_BrandInfo C ON(A.BIN_BrandInfoID = C.BIN_BrandInfoID AND C.ValidFlag = '1')
+			LEFT JOIN Basis.BIN_ProductPrice D ON (D.BIN_ProductID = A.BIN_ProductID AND D.Type = '2' AND D.StartDate <=#priceDate# AND D.EndDate >= #priceDate# )
+		WHERE		
+			A.BIN_BrandInfoID = #brandInfoId#
+		AND	A.Version > #tVersion#
+		]]>
+    </select>
+	<!--查询产品分类(下发)信息list -->
+	<select id="getCateList2" parameterClass="java.lang.Integer" resultClass="java.util.HashMap">
+		<![CDATA[
+		SELECT
+			C.TeminalFlag AS cateType,
+			B.PropValue AS cateCode,
+			B.PropValueChinese AS cateName
+		FROM
+			Basis.BIN_PrtCategory A
+			JOIN Basis.BIN_PrtCatPropValue B
+			ON(A.BIN_PrtCatPropValueID = B.BIN_PrtCatPropValueID
+				AND B.ValidFlag = '1')	
+			JOIN Basis.BIN_PrtCatProperty C	
+			ON(B.BIN_PrtCatPropertyID = C.BIN_PrtCatPropertyID
+				AND C.TeminalFlag > 0
+				AND C.ValidFlag = '1')
+		WHERE
+		 	A.BIN_ProductID = #productId#
+		]]>
+    </select>
+    
+    
+	<!--停用ProductSCS表的变更后老的编码条码 -->
+	<update id="disProductSCS" parameterClass="java.util.HashMap">
+	<![CDATA[
+				UPDATE
+					dbo.Product_SCS
+				SET 
+					status = 'D',
+					version = #tVersion#+1
+				WHERE 
+					brand = #brandCode#
+				AND ProductId = #prtVendorId#
+				AND unitcode = #OldUnitCode#
+				AND barcode = #OldBarCode#
+	]]>
+    </update>
+    
+	<!-- 更新ProductSCS  -->
+	<select id="mergeProductSCS" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+	<![CDATA[	
+		MERGE  dbo.Product_SCS AS TGT
+		    USING (select #brandCode# as brand,#prtVendorId# as ProductId,
+						  #unitCode# as unitCode, #barCode# as barCode
+		    ) AS SRC
+		     ON (
+		        TGT.brand = SRC.brand
+		        AND TGT.ProductId = SRC.ProductId
+		        AND TGT.unitcode = SRC.unitCode
+		        AND TGT.barcode = SRC.barCode
+		        )
+		        
+		WHEN MATCHED THEN	
+		    UPDATE SET 
+				chinesename = #nameTotal#,
+				lclassCode = #lCode#,
+				lclassname = #lName#,
+				mclasscode = #mCode#,
+				mclassname = #mName#,
+				bclasscode = #bCode#,
+				bclassname = #bName#,
+				price = #price#,
+				discount_price = #discount#,
+				status = #prtscs_status#,
+				Mode = #mode#,
+				cost = #cost#,
+				maxprice = #maxPrice#,
+				minprice = #minPrice#,
+				pxEnable = #pxEnable#,
+				useup_period = #useDay#,
+				IsStock = #IsStock#,
+				version = #Version#
+		WHEN NOT MATCHED THEN 
+			INSERT(	
+				brand,
+				barcode,
+				unitcode,
+				chinesename,
+				lclassCode,
+				lclassname,
+				mclasscode,
+				mclassname,
+				bclasscode,
+				bclassname,
+				price,
+				discount_price,
+				status,
+				Mode,
+				cost,
+				maxprice,
+				minprice,
+				pxEnable,
+				useup_period,
+				IsStock,
+				version,
+				ProductId
+			)VALUES(
+				#brandCode#,
+				#barCode#,
+				#unitCode#,
+				#nameTotal#,
+				#lCode#,
+				#lName#,
+				#mCode#,
+				#mName#,
+				#bCode#,
+				#bName#,
+				#price#,
+				#discount#,
+				#prtscs_status#,
+				#mode#,
+				#cost#,
+				#maxPrice#,
+				#minPrice#,
+				#pxEnable#,
+				#useDay#,
+				#IsStock#,
+				#Version#,
+				#prtVendorId#
+			)
+		OUTPUT $$action AS actionResult,inserted.brand AS brand,inserted.ProductId AS ProductId,inserted.unitcode AS unitcode ,inserted.barcode  AS barcode;
+	]]>
+	</select>
+    
+    <!-- 删除接口数据库产品信息  -->
+    <delete id="delIFProductInfo" parameterClass="java.util.HashMap">
+    	<![CDATA[
+    		delete from 
+    			dbo.Product_SCS 
+    		where 
+    			brand = #brandCode#
+    		and ProductId = #prtVendorId#
+		]]>	
+    </delete>
+	<!-- 插入产品接口数据库 -->
+	<insert id="addProductSCS" parameterClass="java.util.HashMap">
+		<![CDATA[
+			INSERT INTO dbo.Product_SCS(	
+				brand,
+				barcode,
+				unitcode,
+				chinesename,
+				lclassCode,
+				lclassname,
+				mclasscode,
+				mclassname,
+				bclasscode,
+				bclassname,
+				price,
+				discount_price,
+				status,
+				Mode,
+				cost,
+				maxprice,
+				minprice,
+				pxEnable,
+				useup_period,
+				IsStock,
+				version,
+				ProductId
+			)VALUES(
+				#brandCode#,
+				#barCode#,
+				#unitCode#,
+				#nameTotal#,
+				#lCode#,
+				#lName#,
+				#mCode#,
+				#mName#,
+				#bCode#,
+				#bName#,
+				#price#,
+				#discount#,
+				#prtscs_status#,
+				#mode#,
+				#cost#,
+				#maxPrice#,
+				#minPrice#,
+				#pxEnable#,
+				#useDay#,
+				#IsStock#,
+				#Version#,
+				#prtVendorId#
+			)
+		]]>				
+    </insert>
+	<!-- 查询对应关系件数  -->
+    <select id="getBarCodeCount" parameterClass="java.util.HashMap" resultClass="java.lang.Integer">
+       <![CDATA[
+			SELECT
+				COUNT(BIN_PrtBarCodeID)
+			FROM
+				Basis.BIN_PrtBarCode
+			WHERE
+				BIN_ProductVendorID = #prtVendorId# AND
+				OldUnitCode = #unitCode# AND
+				OldBarCode = #barCode# AND
+				ClosingTime IS NULL
+		]]>	
+    </select>
+	<!-- 插入ProductSetting -->
+	<insert id="addProductSetting" parameterClass="java.util.HashMap">
+		<![CDATA[
+			INSERT INTO dbo.WITPOSA_ProductSetting(	
+				brand,
+				new_barcode,
+		        new_unitcode,
+		        old_barcode,
+		        old_unitcode,
+		        prt_id,
+		        prt_type,
+		        enable_time,
+		        is_handle,
+		        created,
+		        modified
+			)VALUES(
+			   	#brand#,
+				#new_barcode#,
+		        #new_unitcode#,
+		        #old_barcode#,
+		        #old_unitcode#,
+		        #prt_id#,
+		        #prt_type#,
+		        #enable_time#,
+		        ISNULL(#is_handle#,0),
+		        GETDATE(),
+		        GETDATE()
+			)
+		]]>				
+    </insert>
+    
+	<!-- 插入产品条码对应关系表  -->
+	<insert id="insertPrtBarCode" parameterClass="java.util.HashMap">
+        <![CDATA[ 
+		INSERT INTO Basis.BIN_PrtBarCode							
+           (BIN_ProductVendorID,					
+            OldUnitCode,					
+            OldBarCode,					
+            StartTime,
+			UpdateFlag,
+		]]>
+			<include refid="BINOLCMINC99.insertKeySql" />		
+		<![CDATA[
+        )VALUES	(
+			#prtVendorId#,
+			#unitCode#,					
+            #barCode#,					
+            #startTime#,
+			'1',
+		]]>
+			<include refid="BINOLCMINC99.insertValueSql" />		
+		<![CDATA[)]]>
+    </insert>
+    
+	<!-- 查询编码条码变更数据  -->
+    <select id="getBarCodeModify" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+       <![CDATA[
+			SELECT
+				BIN_ProductVendorID,
+				OldUnitCode,
+				OldBarCode,
+				UnitCode,
+				BarCode
+			FROM
+				Basis.BIN_PrtBarCode
+			WHERE
+				BIN_ProductVendorID = #prtVendorId# AND
+				UnitCode = #unitCode# AND
+				BarCode = #barCode# AND
+				ClosingTime IS NULL
+		]]>	
+    </select>
+</sqlMap>

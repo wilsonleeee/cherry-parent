@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sqlMap PUBLIC "-//iBATIS.com//DTD SQL Map 2.0//EN" "http://ibatis.apache.org/dtd/sql-map-2.dtd">
+<sqlMap namespace="BINOLCTCOM09">
+	
+	<!-- 根据沟通计划编号取得沟通信息 -->
+    <select id="getBrandAndOrgByLonginName" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+       	<![CDATA[
+			SELECT Top 1 
+				A.BIN_UserID,
+				B.BIN_OrganizationID,
+				A.BIN_OrganizationInfoID,
+				ISNULL(B.BIN_BrandInfoID,'-9999') as BIN_BrandInfoID,
+				(case  when C.OrgCode ='-9999' or C.OrgCode IS NULL then '-9999' else C.OrgCode end) as OrgCode,
+				(case  when B.BIN_BrandInfoID ='-9999' or B.BIN_BrandInfoID IS NULL then '-9999' else D.BrandCode end) as BrandCode	
+			FROM 
+				Privilege.BIN_User A 
+				LEFT JOIN Basis.BIN_Employee B ON A.BIN_EmployeeID = B.BIN_EmployeeID and B.ValidFlag='1' 
+				LEFT JOIN Basis.BIN_OrganizationInfo C ON A.BIN_OrganizationInfoID = C.BIN_OrganizationInfoID and C.ValidFlag='1' 
+				LEFT JOIN Basis.BIN_BrandInfo D ON B.BIN_BrandInfoID = D.BIN_BrandInfoID and D.ValidFlag='1' 
+			WHERE 
+				A.ValidFlag='1' AND 
+				A.LonginName = #userName# 
+		]]>
+    </select>
+</sqlMap>

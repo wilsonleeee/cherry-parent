@@ -1,0 +1,242 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Module>
+    <ModulePrefs
+            title="dayRuleCalCount">
+            <Require feature="pubsub"/>
+       		<Require feature="settitle"/>
+            <Require feature="dynamic-height" /> 
+			<Optional feature="content-rewrite">
+			  <Param name="exclude-urls">.*</Param>
+			</Optional>
+			<Require feature="oauthpopup" />
+			<Require feature="cherryOpenSocial"/>
+			<Require feature="opensocial-i18n"/> 
+			<Locale messages="/Cherry/shindigcontainer/i18n/mb/zh_CN_ALL.xml"/>
+			<Locale lang="zh_CN" messages="/Cherry/shindigcontainer/i18n/mb/zh_CN_ALL.xml"/>
+			<Locale lang="zh_TW" messages="/Cherry/shindigcontainer/i18n/mb/zh_TW_ALL.xml"/>
+    </ModulePrefs>
+    <Content type="html" ><![CDATA[
+    <style type="text/css">
+    	#pointCalInfoDiv {
+    		padding: 2px 10px 10px 10px;
+    		font-size: 14px;
+    	}
+    	#pointCalCount {
+    		color:red;
+    		margin:0 3px 0 0;
+    	}
+    	.section-header {
+    		padding: 5px 0px 5px 0px;
+    		font-weight: bold;
+    	}
+    	.section-content {
+    		border-top: 1px solid #E5E5E5;
+    	}
+	  	#pointCalInfoDiv ul {
+	    	list-style:none;
+	    	margin: 0 0 10px 0;
+	    	padding: 0;
+	  	}
+	  	#pointCalInfoDiv ul li {
+	    	padding: 10px 0 5px 0;
+	    	border-bottom: 1px solid #E5E5E5;
+	  	}
+	  	#pointCalInfoDiv ul li:hover {
+	    	background-color: #FFFEDD;
+	  	}
+	  	#pointCalInfoDiv a {
+	  		color: #3366FF;
+    		text-decoration: none;
+	  	}
+	  	#pointCalInfoDiv a:hover {
+	  		color: #FF6D06;
+    		text-decoration: underline;
+	  	}
+	  	#waiting {
+	  		height:200px;
+	  	}
+	  	#waiting div {
+	  		background-image: url("/Cherry/css/common/blueprint/images/loading.gif");
+		    background-position: 20px center;
+		    background-repeat: no-repeat;
+		    height: 50px;
+		    width: 50px;
+		    left: 40%;
+		    top: 20%;
+		    position: absolute;
+		    z-index: 100;
+	  	}
+	</style>
+	
+	<div id="waiting"><div></div></div>
+	<div id="pointCalInfoDiv" style="display:none">
+      <div class="section">
+      <div class="section-header">
+	    <div><label>__MSG_pointCalCount__：</label><span id="pointCalCount"></span><span>__MSG_bi__</span></div>
+	  </div>
+      <div class="section-content">
+        <ul></ul>
+      </div>
+      </div>
+    </div>
+    
+    
+	<script type='text/javascript'>
+	
+	var baseUrl = window.parent.getBaseUrl();
+	var gadgetPrefs = new gadgets.Prefs();
+	var curDate = "";
+	
+	function getContext(dataObj) {
+		var context = "";
+		var temp = "";
+		var params = [];
+		var member = '<a href="'+baseUrl+'/mb/BINOLMBMBM10_init?memberInfoId='+dataObj.memberInfoId+'" onclick="window.parent.openWin(this,{width:window.screen.width-10,height:window.screen.height-35});return false;">'+(dataObj.name ? dataObj.name : "")+'</a>';
+		var counter = (dataObj.departName ? gadgetPrefs.getMsg("in")+'<a href="'+baseUrl+'/basis/BINOLBSCNT02_init?organizationId='+dataObj.organizationId+'" onclick="window.parent.openWin(this);return false;">'+dataObj.departName+'</a>' : '');
+		var amount = dataObj.amount;
+		var quantity = dataObj.quantity;
+		var point = dataObj.point;
+		if("PX" == dataObj.billType || "PB" == dataObj.billType || "PC" == dataObj.billType) {
+			point = 0-point;
+		}
+		var pointLink = '<a href="'+baseUrl+'/mb/BINOLMBPTM03_init?pointChangeId='+dataObj.pointChangeId+'" onclick="window.parent.openWin(this);return false;">'+point+'</a>';
+		if("NS" == dataObj.billType) {
+			temp = gadgetPrefs.getMsg("POINT_NS");
+			params.push(member);
+			params.push(counter);
+			params.push(amount);
+			params.push(quantity);
+			params.push(pointLink);
+		} else if("SR" == dataObj.billType) {
+			temp = gadgetPrefs.getMsg("POINT_SR");
+			params.push(member);
+			params.push(counter);
+			params.push(amount);
+			params.push(quantity);
+			params.push(pointLink);
+		} else if("PX" == dataObj.billType) {
+			temp = gadgetPrefs.getMsg("POINT_PX");
+			params.push(member);
+			params.push(counter);
+			params.push(pointLink);
+		} else if("PB" == dataObj.billType) {
+			temp = gadgetPrefs.getMsg("POINT_PB");
+			params.push(member);
+			params.push(counter);
+			params.push(pointLink);
+		} else if("PT" == dataObj.billType) {
+			temp = gadgetPrefs.getMsg("POINT_PT");
+			params.push(member);
+			params.push(pointLink);
+		} else if("MT" == dataObj.billType) {
+			temp = gadgetPrefs.getMsg("POINT_MT");
+			params.push(member);
+			params.push(pointLink);
+		} else if("PC" == dataObj.billType) {
+			temp = gadgetPrefs.getMsg("POINT_PC");
+			params.push(member);
+			params.push(pointLink);
+		}
+		context = parsingTemplate(temp, params);
+		if(context) {
+			context = '<li>' + context + '<br/><span style="color:#999999;">'+dataObj.changeDate+'</span></li>';
+		}
+		return context;
+	}
+	
+	function subscribeResponse(data) {
+		if(data.indexOf('<!-- EOD -->') > -1) {
+			return false;
+		}
+		var dataObj = eval('('+data+')');
+		var context = getContext(dataObj);
+		if(!context) {
+			return false;
+		}
+		var $li = $('#pointCalInfoDiv').find('li');
+		if($li.length > 0) {
+			$li.first().before(context);
+           	if($li.length >= 10) {
+           		$li.last().remove();
+           	}
+       	} else {
+       		$("#pointCalInfoDiv").find("ul").html(context);
+       	}
+       	var curTime = dataObj.changeDate;
+       	var counterKind = dataObj.CounterKind ? dataObj.CounterKind : "0";
+       	if(curTime && curTime.length > 10 && curTime.substring(0,10) == curDate && counterKind == "0") {
+       		var pointCalCount = parseInt($("#pointCalCount").html(),10);
+       		$("#pointCalCount").html(pointCalCount + 1);
+       	}
+        gadgets.window.adjustHeight();
+        $li = $('#pointCalInfoDiv').find('li');
+		$li.first().hide().slideDown('5000');
+		gadgets.pubsub.publish("PointMessage", dataObj.subCampaignId);
+	}
+	
+	function render(data) {
+		$("#waiting").hide();
+		$("#pointCalInfoDiv").show();
+		data = data.entry;
+		curDate = data.sysDate;
+		$("#pointCalCount").html(data.pointCalCount ? data.pointCalCount : '0');
+		var $ul = $("#pointCalInfoDiv").find("ul");
+		if(data.pointCalInfoMes) {
+			for(var i = 0; i < data.pointCalInfoMes.length; i++) {
+				var dataObj = data.pointCalInfoMes[i];
+				var context = getContext(dataObj);
+				if(context) {
+					$ul.append(context);
+				}
+			}
+		}
+		$ul.next().remove();
+		if(data.pageNo) {
+			$ul.after('<span><a href="#" onclick="fetchPointCalInfo({pageNo:\''+data.pageNo+'\'}, false);return false;">'+gadgetPrefs.getMsg("moreButton")+'</a></span>');
+		}
+	    gadgets.window.adjustHeight();
+	    subscribeRequest(baseUrl + '/pubsub/pointCalInfo', subscribeResponse);
+	}
+	
+	function renderMore(data) {
+		data = data.entry;
+		var $ul = $("#pointCalInfoDiv").find("ul");
+		if(data.pointCalInfoMes) {
+			for(var i = 0; i < data.pointCalInfoMes.length; i++) {
+				var dataObj = data.pointCalInfoMes[i];
+				var context = getContext(dataObj);
+				if(context) {
+					$ul.append(context);
+				}
+			}
+		}
+		$ul.next().remove();
+		if(data.pageNo) {
+			$ul.after('<span><a href="#" onclick="fetchPointCalInfo({pageNo:\''+data.pageNo+'\'}, false);return false;">'+gadgetPrefs.getMsg("moreButton")+'</a></span>');
+		}
+	    gadgets.window.adjustHeight();
+	}
+	
+	function fetchPointCalInfo(param, flag) {
+	   	var url = baseUrl + "/social/rest/pointCalInfo";
+	   	param.userInfo = window.parent.getUserInfo();
+		if(flag) {
+	   		sendRequestToServer(url, 'POST', param, render, false);
+	   	} else {
+	   		sendRequestToServer(url, 'POST', param, renderMore, false);
+	   	}
+	}
+	
+	function init() {
+		$("#waiting").show();
+		$("#pointCalInfoDiv").hide();
+	   	gadgets.window.adjustHeight();
+		fetchPointCalInfo({pageNo:'1'}, true);
+	}
+	
+    gadgets.util.registerOnLoadHandler(init);
+	
+	</script>
+	
+	]]></Content>
+</Module>

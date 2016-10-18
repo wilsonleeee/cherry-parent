@@ -1,0 +1,172 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sqlMap PUBLIC "-//iBATIS.com//DTD SQL Map 2.0//EN" "http://ibatis.apache.org/dtd/sql-map-2.dtd">
+<sqlMap namespace="BINOLWPSAL06">
+	<!-- 单据查询Sql  -->
+	<sql id="billDetailQuery">
+		<![CDATA[
+			SELECT 
+				th.BIN_HangBillId as hangBillId,
+				th.BillCode as billCode,
+				th.HangTime as hangTime,
+				th.MemberCode as memberCode,
+				tm.Name as memberName,
+				th.BaCode as baCode,
+				ee.EmployeeName as baName,
+				th.TotalQuantity as quantity,
+				th.TotalAmount as amount,
+				th.BusinessDate as  businessDate,
+				th.CollectStatus as collectStatus
+			FROM 
+				Sale.BIN_SaleHangBillRecord as th with(nolock) 
+				LEFT JOIN Basis.BIN_Employee as ee with(nolock) on th.BIN_EmployeeID = ee.BIN_EmployeeID 
+				LEFT JOIN Members.BIN_MemberInfo as tm with(nolock) on th.BIN_MemberInfoID = tm.BIN_MemberInfoID 
+			WHERE 
+				th.BIN_OrganizationInfoID = #organizationInfoId# AND 
+				th.BIN_BrandInfoID = #brandInfoId# AND 
+				th.ValidFlag = '1' AND 
+				th.CounterCode = #counterCode# 
+		]]>
+		<isEqual prepend="AND" property="retryDataFlag" compareValue="0">
+			(th.SendMQStatus = '0' or th.SendMQStatus is NULL)
+		</isEqual>
+		<isEqual prepend="AND" property="retryDataFlag" compareValue="1">
+			((th.SendMQStatus = '0' or th.SendMQStatus is NULL) and th.collectStatus = '1')
+		</isEqual>
+		<dynamic>
+			<isNotEmpty prepend="AND" property="hangBillCode" >
+				th.BillCode = #hangBillCode#
+			</isNotEmpty>
+			<isNotEmpty prepend="AND" property="billHangDateStart" >
+				th.BusinessDate &gt;= #billHangDateStart#
+			</isNotEmpty>
+			<isNotEmpty prepend="AND" property="billHangDateEnd" >
+				th.BusinessDate &lt;= #billHangDateEnd#
+			</isNotEmpty>
+		</dynamic>
+	</sql>
+	
+	<!-- 获取单据数量  -->
+    <select id="getBillsCount" parameterClass="java.util.HashMap" resultClass="java.lang.Integer">
+    	<![CDATA[
+			SELECT	COUNT(SORT_T1.hangBillId) AS count FROM (
+		]]>	
+		<include refid="BINOLWPSAL06.billDetailQuery" />	
+		<![CDATA[	
+			)SORT_T1
+		]]>
+    </select>
+	
+	<!-- 获取单据List -->
+    <select id="getBillList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+       	<include refid="BINOLCMINC99.pageheader" />
+		<include refid="BINOLWPSAL06.billDetailQuery" />
+		<include refid="BINOLCMINC99.pagefooter" />
+    </select>
+    
+    <!-- 获取单据详细信息 -->
+    <select id="getBillInfo" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+    	<![CDATA[
+	    	SELECT Top 1 
+	    		th.BIN_HangBillId as hangBillId,
+				th.CounterCode as counterCode,
+				th.BaCode as baCode,
+				tb.BaName as baName,
+				th.BillCode as billCode,
+				th.SaleType as saleType,
+				th.TicketType as ticketType,
+				th.BusinessDate as businessDate,
+				th.SearchStr as searchStr,
+				th.BIN_MemberInfoID as memberInfoId,
+				th.MemberCode as memberCode,
+				tm.Name as memberName,
+				tm.MemberLevel as memberLevel,
+				tm.MobilePhone as mobilePhone,
+				tl.LevelName AS levelName,
+				tp.TotalPoint as totalPoint,
+				tp.ChangablePoint as changablePoint,
+				tp.CurDisablePoint as curDisablePoint,
+				CONVERT(varchar(30), te.LastSaleDate,23) as lastSaleDate,
+				tm.JoinDate as joinDate,
+				th.TotalQuantity as totalQuantity,
+				th.TotalAmount as totalAmount,
+				th.OriginalAmount as originalAmount,
+				th.TotalDiscountRate as totalDiscountRate,
+				th.RoundingAmount as roundingAmount,
+				th.SaleDetailStr as saleDetailList,
+				th.PromotionStr as promotionList
+			FROM 
+				Sale.BIN_SaleHangBillRecord as th with(nolock) 
+				LEFT JOIN Members.BIN_MemberInfo as tm with(nolock) on th.BIN_MemberInfoID = tm.BIN_MemberInfoID 
+				LEFT JOIN Members.BIN_MemberPoint as tp WITH(NOLOCK) ON th.BIN_MemberInfoID = tp.BIN_MemberInfoID 
+				LEFT JOIN Members.BIN_MemberExtInfo as te WITH(NOLOCK) ON th.BIN_MemberInfoID = te.BIN_MemberInfoID 
+				LEFT JOIN Members.BIN_MemberLevel tl WITH(NOLOCK) ON tm.MemberLevel = tl.BIN_MemberLevelID 
+				LEFT JOIN Basis.BIN_BaInfo as tb with(nolock) ON th.BaCode = tb.BaCode 
+			WHERE 
+				th.ValidFlag = '1' AND 
+				th.BIN_OrganizationInfoID = #organizationInfoId# AND 
+		  		th.BIN_BrandInfoID = #brandInfoId# AND 
+		  		th.BIN_HangBillId = #hangBillId# 
+	  	]]>
+    </select>
+    
+    <!-- 获取单据明细List -->
+    <select id="getBillDetailList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+    	<![CDATA[
+	    	SELECT 
+				BIN_HangBillDetailId as hangBillDetailId,
+				BIN_HangBillId as hangBillId,
+				BillCode as billCode,
+				CouponOrderId as orderId,
+				CouponCode as couponCode,
+				IsStock as isStock,
+				ActivityCode as activityCode,
+				CounterActCode as counterActCode,
+				RowNumber as rowNumber,
+				BIN_ProductVendorID as productVendorId,
+				UnitCode as unitCode,
+				BarCode as barCode,
+				ProductName as productName,
+				Price as price,
+				MemberPrice as memberPrice,
+				PlatinumPrice as platinumPrice,
+				Quantity as quantity,
+				RealQuantity as realQuantity,
+				GroupQuantity as groupQuantity,
+				DiscountRate as discountRate,
+				RealPrice as realPrice,
+				Amount as amount,
+				OriginalAmount as originalAmount,
+				ActivityTypeCode as activityTypeCode,
+				ExPoint as exPoint,
+				SaleType as proType,
+				ActivitySign as activitySign 
+			FROM 
+				Sale.BIN_SaleHangBillDetail with(nolock) 
+			WHERE 
+				BIN_OrganizationInfoID = #organizationInfoId# AND 
+				BIN_BrandInfoID = #brandInfoId# AND 
+				BIN_HangBillId = #hangBillId# 
+		]]>
+    </select>
+    
+    <!-- 更新提单状态 -->
+	<update id="updateHangBillStatus" parameterClass="java.util.HashMap">
+		<![CDATA[
+			UPDATE 
+				Sale.BIN_SaleHangBillRecord 
+			SET 
+				LadingStatus = 0,
+				LadingTime = GETDATE(),
+				ValidFlag = '0',
+		]]>
+			<include refid="BINOLCMINC99.updateSql" />
+		<![CDATA[
+			WHERE 
+				ValidFlag = '1' AND 
+				BIN_OrganizationInfoID = #organizationInfoId# AND 
+		  		BIN_BrandInfoID = #brandInfoId# AND 
+		  		BIN_HangBillId = #hangBillId# 
+		]]>
+    </update>
+    
+</sqlMap>

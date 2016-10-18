@@ -1,0 +1,204 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sqlMap PUBLIC "-//iBATIS.com//DTD SQL Map 2.0//EN" "http://ibatis.apache.org/dtd/sql-map-2.dtd">
+<sqlMap namespace="BINOLMBMBM12">
+	
+	<sql id="MemInfoRecordSql">
+    	<![CDATA[
+    		SELECT
+    			A.BIN_MemInfoRecordID AS memInfoRecordId,
+    			A.BIN_MemberInfoID AS memId,
+				A.MemCode AS memCode,
+				CONVERT(varchar(30),A.ModifyTime,120) AS modifyTime,
+				CASE ISNULL(B.CounterNameIF,'') WHEN '' THEN A.ModifyCounter ELSE '(' + A.ModifyCounter + ')' + B.CounterNameIF END AS modifyCounter,
+				CASE ISNULL(C.EmployeeName,'') WHEN '' THEN A.ModifyEmployee ELSE '(' + A.ModifyEmployee + ')' + C.EmployeeName END AS modifyEmployee,
+				A.ModifyType AS modifyType,
+				A.Sourse AS sourse,
+				A.BatchNo AS batchNo,
+				A.Remark AS remark
+			FROM
+				Members.BIN_MemInfoRecord A
+		]]>
+				<isNotEmpty property="privilegeFlag">
+				<isEqual property="privilegeFlag" compareValue="1">			
+		<![CDATA[			
+				JOIN Members.BIN_MemberInfo memInfo WITH(NOLOCK) 
+					JOIN (]]><include refid="BINOLCMINC99.departPrivilegeSql" /><![CDATA[) A99 ON memInfo.BIN_OrganizationID = A99.BIN_OrganizationID
+				ON A.BIN_MemberInfoID = memInfo.BIN_MemberInfoID
+		]]>
+				</isEqual>
+				</isNotEmpty>
+		<![CDATA[		
+				LEFT JOIN Basis.BIN_CounterInfo B ON A.ModifyCounter = B.CounterCode
+				AND A.BIN_OrganizationInfoID = B.BIN_OrganizationInfoID AND A.BIN_BrandInfoID = B.BIN_BrandInfoID
+				LEFT JOIN Basis.BIN_Employee C ON A.ModifyEmployee = C.EmployeeCode
+				AND A.BIN_OrganizationInfoID = C.BIN_OrganizationInfoID AND A.BIN_BrandInfoID = C.BIN_BrandInfoID
+			WHERE
+				A.BIN_OrganizationInfoID = #organizationInfoId#	
+		]]>
+			<isNotEmpty prepend="AND" property="brandInfoId">
+				A.BIN_BrandInfoID = #brandInfoId#
+			</isNotEmpty>
+			<isNotEmpty prepend="AND" property="memberInfoId">
+				A.BIN_MemberInfoID = #memberInfoId#
+			</isNotEmpty>
+			<isNotEmpty prepend="AND" property="memCode">
+				A.MemCode = #memCode#
+			</isNotEmpty>
+			<isNotEmpty prepend="AND" property="modifyCounter">
+				A.ModifyCounter = #modifyCounter#
+			</isNotEmpty>
+			<isNotEmpty prepend="AND" property="modifyEmployee">
+				A.ModifyEmployee = #modifyEmployee#
+			</isNotEmpty>
+			<isNotEmpty prepend="AND" property="modifyType">
+				A.ModifyType = #modifyType#
+			</isNotEmpty>
+			<isNotEmpty prepend="AND" property="modifyTimeStart">
+				A.ModifyTime >= #modifyTimeStart#
+			</isNotEmpty>
+			<isNotEmpty prepend="AND" property="modifyTimeEnd">
+				<![CDATA[A.ModifyTime <= #modifyTimeEnd#]]>
+			</isNotEmpty>
+			<isNotEmpty prepend="AND" property="batchNo">
+				A.BatchNo = #batchNo#
+			</isNotEmpty>
+			<isNotEmpty prepend="AND" property="remark">
+				A.Remark LIKE '%'+#remark#+'%'
+			</isNotEmpty>
+    </sql>
+    
+    
+    <!-- 查询会员资料修改履历总件数 -->
+	<select id="getMemInfoRecordCount" parameterClass="java.util.HashMap" resultClass="java.lang.Integer">
+		<![CDATA[
+			SELECT	COUNT(1) AS count FROM (
+		]]>	
+		<include refid="BINOLMBMBM12.MemInfoRecordSql" />
+		<![CDATA[	
+			) SORT_T1
+		]]>	
+    </select>
+    
+    <!-- 查询会员资料修改履历 -->
+	<select id="getMemInfoRecordList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+		<include refid="BINOLCMINC99.pageheader" />
+		<include refid="BINOLMBMBM12.MemInfoRecordSql" />
+		<include refid="BINOLCMINC99.pagefooter" />
+    </select>
+    
+    <!-- 查询会员资料修改履历(导出用) -->
+	<select id="getMemInfoRecordExportList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+		<include refid="BINOLCMINC99.pageheader" />
+		<![CDATA[
+    		SELECT
+				A.MemCode AS memCode,
+				CONVERT(varchar(30),A.ModifyTime,120) AS modifyTime,
+				A.ModifyCounter AS counterCode,
+				B.CounterNameIF AS counterName,
+				A.ModifyEmployee AS employeeCode,
+				C.EmployeeName AS employeeName,
+				A.ModifyType AS modifyType,
+				A.Sourse AS sourse,
+				A.BatchNo AS batchNo,
+				A.Remark AS remark,
+				D.ModifyField AS modifyField,
+				D.OldValue AS oldValue,
+				D.NewValue AS newValue
+			FROM
+				Members.BIN_MemInfoRecord A
+		]]>
+				<isNotEmpty property="privilegeFlag">
+				<isEqual property="privilegeFlag" compareValue="1">			
+		<![CDATA[			
+				JOIN Members.BIN_MemberInfo memInfo WITH(NOLOCK) 
+					JOIN (]]><include refid="BINOLCMINC99.departPrivilegeSql" /><![CDATA[) A99 ON memInfo.BIN_OrganizationID = A99.BIN_OrganizationID
+				ON A.BIN_MemberInfoID = memInfo.BIN_MemberInfoID
+		]]>
+				</isEqual>
+				</isNotEmpty>
+		<![CDATA[		
+				LEFT JOIN Basis.BIN_CounterInfo B ON A.ModifyCounter = B.CounterCode
+				AND A.BIN_OrganizationInfoID = B.BIN_OrganizationInfoID AND A.BIN_BrandInfoID = B.BIN_BrandInfoID
+				LEFT JOIN Basis.BIN_Employee C ON A.ModifyEmployee = C.EmployeeCode
+				AND A.BIN_OrganizationInfoID = C.BIN_OrganizationInfoID AND A.BIN_BrandInfoID = C.BIN_BrandInfoID
+				LEFT JOIN Members.BIN_MemInfoRecordDetail D ON A.BIN_MemInfoRecordID = D.BIN_MemInfoRecordID
+			WHERE
+				A.BIN_OrganizationInfoID = #organizationInfoId#	
+		]]>
+			<isNotEmpty prepend="AND" property="brandInfoId">
+				A.BIN_BrandInfoID = #brandInfoId#
+			</isNotEmpty>
+			<isNotEmpty prepend="AND" property="memberInfoId">
+				A.BIN_MemberInfoID = #memberInfoId#
+			</isNotEmpty>
+			<isNotEmpty prepend="AND" property="memCode">
+				A.MemCode = #memCode#
+			</isNotEmpty>
+			<isNotEmpty prepend="AND" property="modifyCounter">
+				A.ModifyCounter = #modifyCounter#
+			</isNotEmpty>
+			<isNotEmpty prepend="AND" property="modifyEmployee">
+				A.ModifyEmployee = #modifyEmployee#
+			</isNotEmpty>
+			<isNotEmpty prepend="AND" property="modifyType">
+				A.ModifyType = #modifyType#
+			</isNotEmpty>
+			<isNotEmpty prepend="AND" property="modifyTimeStart">
+				A.ModifyTime >= #modifyTimeStart#
+			</isNotEmpty>
+			<isNotEmpty prepend="AND" property="modifyTimeEnd">
+				<![CDATA[A.ModifyTime <= #modifyTimeEnd#]]>
+			</isNotEmpty>
+			<isNotEmpty prepend="AND" property="batchNo">
+				A.BatchNo = #batchNo#
+			</isNotEmpty>
+			<isNotEmpty prepend="AND" property="remark">
+				A.Remark LIKE '%'+#remark#+'%'
+			</isNotEmpty>
+			<include refid="BINOLCMINC99.pagefooter" />
+    </select>
+    
+    <!-- 取得所有柜台信息List -->
+	<select id="getCounterInfoList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+		<![CDATA[
+    		SELECT
+    			BIN_OrganizationID AS id,
+    			CASE ISNULL(CounterNameIF,'') WHEN '' THEN CounterCode ELSE '(' + CounterCode + ')' + CounterNameIF END AS name
+			FROM
+				Basis.BIN_CounterInfo
+			WHERE
+				BIN_OrganizationInfoID = #organizationInfoId#	
+		]]>
+			<isNotEmpty prepend="AND" property="brandInfoId">
+				BIN_BrandInfoID = #brandInfoId#
+			</isNotEmpty>
+    </select>
+    
+    <!-- 取得所有员工信息List -->
+	<select id="getEmployeeList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+		<![CDATA[
+    		SELECT
+    			BIN_EmployeeID AS id,
+    			CASE ISNULL(EmployeeName,'') WHEN '' THEN EmployeeCode ELSE '(' + EmployeeCode + ')' + EmployeeName END AS name
+			FROM
+				Basis.BIN_Employee
+			WHERE
+				BIN_OrganizationInfoID = #organizationInfoId#	
+		]]>
+			<isNotEmpty prepend="AND" property="brandInfoId">
+				BIN_BrandInfoID = #brandInfoId#
+			</isNotEmpty>	
+    </select>
+    
+    <!-- 取得所有区域信息List -->
+	<select id="getRegionList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+		<![CDATA[
+    		SELECT
+    			BIN_RegionID AS id,
+    			RegionNameChinese AS name
+			FROM
+				Basis.BIN_StandardRegion	
+		]]>		
+    </select>
+    
+</sqlMap>

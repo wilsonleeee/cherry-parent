@@ -1,0 +1,276 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Module>
+    <ModulePrefs
+            title="orderTask">
+       		<Require feature="settitle"/>
+            <Require feature="dynamic-height" /> 
+			<Optional feature="content-rewrite">
+			  <Param name="exclude-urls">.*</Param>
+			</Optional>
+			<Require feature="oauthpopup" />
+			<Require feature="cherryOpenSocial"/>
+			<Require feature="cherryPaging"/>
+			<Require feature="opensocial-i18n"/> 
+			<Locale messages="/Cherry/shindigcontainer/i18n/zh_CN_ALL.xml"/>
+			<Locale lang="zh_CN" messages="/Cherry/shindigcontainer/i18n/zh_CN_ALL.xml"/>
+			<Locale lang="zh_TW" messages="/Cherry/shindigcontainer/i18n/zh_TW_ALL.xml"/>
+    </ModulePrefs>
+    <Content type="html" ><![CDATA[
+    <style type="text/css">
+	
+	#orderTaskDiv {
+		color: #000000;
+   		font-family: Verdana,Geneva,sans-serif;
+   		font-size: 14px;
+   		padding: 2px 10px 10px 10px;
+   		overflow: auto;
+	}
+	.section-header {
+   		padding: 5px 0px 5px 0px;
+   		border-bottom: 1px solid #E5E5E5;
+   	}
+   	.query label {
+   		font-weight: bold;
+   	}
+   	.query {
+		margin-top: 5px;
+   		margin-bottom: 10px;
+   	}
+   	.query select {
+   		width: 80px;
+   		margin-right: 10px;
+   	}
+   	#campaignDate {
+   		margin-top: 5px;
+   	}
+   	#campaignDate label {
+   		font-weight: bold;
+   	}
+   	.section-content {
+   		margin: 10px 0 0 0;
+   		clear: both;
+   	}
+   	#orderTaskCount {
+   		margin-top: 5px;
+   		margin-bottom: 5px;
+   	}
+   	#orderTaskCount label {
+   		font-weight: bold;
+   	}
+   	#orderTaskCount span {
+   		margin-right: 20px;
+   		color: red;
+   		font-weight: bold;
+   	}
+   	table {
+	    background: none repeat scroll 0 0 #FFFFFF;
+	    border: 1px solid #CCCCCC;
+	    border-collapse:collapse;
+	    width:100%;
+	    margin: 0 0 10px 0;
+	}
+	th, td {
+  		border: 1px solid #CCCCCC;
+  		font-size: 13px;
+  	}
+  	th {
+  		background: none repeat scroll 0 0 #F9F9F9;
+	    height: 30px;
+	    line-height: 25px;
+	    padding: 0 5px;
+	    white-space: nowrap;
+	    text-align:left;
+	    font-weight: normal;
+  	}
+  	td {
+	    height: 20px;
+	    padding: 3px 5px;
+	    white-space: nowrap;
+	}
+  	.page {
+  		font-size: 13px;
+  	}
+  	.pageInfo {
+  		float: left;
+  	}
+  	.pageLink {
+  		float: right;
+  	}
+  	.page strong {
+  		margin: 0 3px;
+  	}
+  	.page a {
+  		margin: 0 3px;
+  		color: #3366FF;
+    	text-decoration: none;
+  	}
+  	.page a:hover {
+  		color: #FF6D06;
+    	text-decoration: underline;
+  	}
+  	#waiting {
+  		height:200px;
+  	}
+  	#waiting div {
+  		background-image: url("/Cherry/css/common/blueprint/images/loading.gif");
+	    background-position: 20px center;
+	    background-repeat: no-repeat;
+	    height: 50px;
+	    width: 50px;
+	    left: 40%;
+	    top: 40%;
+	    position: absolute;
+	    z-index: 100;
+  	}
+	</style>
+	
+	<div class="section" id="orderTaskDiv">  
+      <div class="section-header">
+          <div id="query" class="query"></div>
+          <div id="campaignDate"></div>
+      </div>
+      <div class="section-content">
+        <div id="waiting"><div></div></div>
+        <div id="orderTaskResult">
+        	<div id="orderTaskCount"></div>
+        	<div id="orderTaskTable"></div>
+        </div>        
+      </div>
+    </div>
+    
+    
+	<script type='text/javascript'>
+	
+	var baseUrl = window.parent.getBaseUrl();
+	var gadgetPrefs = new gadgets.Prefs();
+	
+	function render(data) {
+		data = data.entry;
+		
+		var campaignList = data.campaignList;
+		if(campaignList && campaignList.length > 0) {
+			$("#query").html('<label>'+gadgetPrefs.getMsg("campaignCode")+'</label><select id="campaignCode"></select><label>'
+				+gadgetPrefs.getMsg("campaignStateQ")+'</label><select id="state"></select>');
+			for(var i = 0; i < campaignList.length; i++) {
+				$("#campaignCode").append('<option value="'+campaignList[i].campaignCode+'">'+campaignList[i].campaignName+'</option>');
+			}	
+			$("#state").append('<option value="AR">'+gadgetPrefs.getMsg("campaignState_AR")+'</option>');
+			$("#state").append('<option value="OK">'+gadgetPrefs.getMsg("campaignState_OK")+'</option>');
+			$("#campaignDate").html('<label>'+gadgetPrefs.getMsg("campaignDate")+'</label>'
+							+campaignList[0].campaignFromDate+gadgetPrefs.getMsg("campaignDate1")+campaignList[0].campaignToDate);
+			
+			$("#campaignCode").change(function(){
+				searchOrderTask({pageNo:'1',pageNumber:'10'});
+				var campaignCode = $(this).val();
+				for(var j = 0; j < campaignList.length; j++) {
+					if(campaignList[j].campaignCode == campaignCode) {
+						$("#campaignDate").html('<label>'+gadgetPrefs.getMsg("campaignDate")+'</label>'
+							+campaignList[j].campaignFromDate+gadgetPrefs.getMsg("campaignDate1")+campaignList[j].campaignToDate);
+						break;
+					}
+				}
+			});
+			$("#state").change(function(){
+				searchOrderTask({pageNo:'1',pageNumber:'10'});
+			});
+		}
+		
+		orderTaskTableInit(data);
+		
+		
+	}
+	
+	function orderTaskTableInit(data) {
+	
+		$("#orderTaskCount").empty();
+		var $div = $("#orderTaskTable");
+		$div.empty();
+		
+		var campaignStockCount = data.campaignStockCount
+		if(campaignStockCount) {
+			$("#orderTaskCount").html('<label>'+gadgetPrefs.getMsg("campaignQuantity1")+'</label>'+'<span>'+campaignStockCount.totalQuantity+'</span>'+
+				'<label>'+gadgetPrefs.getMsg("campaignQuantity2")+'</label>'+'<span>'+campaignStockCount.getQuantity+'</span>'+
+				'<label>'+gadgetPrefs.getMsg("campaignQuantity3")+'</label>'+'<span>'+campaignStockCount.currentQuantity)+'</span>';
+		}
+		
+		var totalNumber = data.orderTaskCount;
+		if(totalNumber && totalNumber > 0) {
+			$div.append('<table></table>');
+			var $table = $div.find('table');
+			var theadContext = '<tr>'
+					+'<th style="width:25%;">'+gadgetPrefs.getMsg("campaignOrderTime")+'</th>'
+					+'<th style="width:15%">'+gadgetPrefs.getMsg("memName")+'</th>'
+					+'<th style="width:20%">'+gadgetPrefs.getMsg("mobilePhone")+'</th>'
+					+'<th style="width:15%">'+gadgetPrefs.getMsg("campaignState")+'</th>'
+					+'<th style="width:25%">'+gadgetPrefs.getMsg("finishTime")+'</th>'
+					+'</tr>';
+			$table.append(theadContext);
+			for(var i = 0; i < data.orderTaskList.length; i++) {
+				var orderTaskInfo = data.orderTaskList[i];
+				var stateText = '';
+				if(orderTaskInfo.state == 'AR') {
+					stateText = gadgetPrefs.getMsg("campaignState_AR");
+				} else if(orderTaskInfo.state == 'OK') {
+					stateText = gadgetPrefs.getMsg("campaignState_OK");
+				}
+				var tr = '<tr>'
+						+'<td>'+orderTaskInfo.campaignOrderTime+'</td>'
+						+'<td>'+(orderTaskInfo.name ? orderTaskInfo.name : '')+'</td>'
+						+'<td>'+(orderTaskInfo.mobilePhone ? orderTaskInfo.mobilePhone : '')+'</td>'
+						+'<td>'+stateText+'</td>'
+						+'<td>'+(orderTaskInfo.finishTime ? orderTaskInfo.finishTime : '')+'</td>'
+						+'</tr>';
+				$table.append(tr);
+			}
+			
+			var pageNumber = data.pageNumber;
+			var currentPage = data.pageNo;
+			var clickName = 'searchOrderTask';
+			var textObj = {
+				pageInfoPre: gadgetPrefs.getMsg("pageInfoPre"),
+				pageInfoEnd: gadgetPrefs.getMsg("pageInfoEnd"),
+				pagePre: gadgetPrefs.getMsg("pagePre"),
+				pageNext: gadgetPrefs.getMsg("pageNext")
+			};
+			$div.append(getPageContent(totalNumber,pageNumber,currentPage,clickName,textObj));
+		}
+		
+		$("#waiting").hide();
+		$("#orderTaskResult").show();
+	    gadgets.window.adjustHeight();
+	}
+	
+	function renderQuery(data) {
+		data = data.entry;
+		orderTaskTableInit(data);
+	}
+	
+	function searchOrderTask(param, flag) {
+		$("#waiting").show();
+		$("#orderTaskResult").hide();
+		gadgets.window.adjustHeight();
+	   	var url = baseUrl + "/social/rest/orderTask";
+	   	param.userInfo = window.parent.getUserInfo();
+	   	if($("#campaignCode").length > 0) {
+	   		param.campaignCode = $("#campaignCode").val();
+	   	}
+	   	if($("#state").length > 0) {
+	   		param.state = $("#state").val();
+	   	}
+	   	if(flag) {
+	   		sendRequestToServer(url, 'POST', param, render, false);
+	   	} else {
+	   		sendRequestToServer(url, 'POST', param, renderQuery, false);
+	   	}
+	}
+	
+	function init() {
+		searchOrderTask({pageNo:'1',pageNumber:'10'}, true);
+	}
+	
+    gadgets.util.registerOnLoadHandler(init);
+	
+	</script>
+	
+	]]></Content>
+</Module>

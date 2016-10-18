@@ -1,0 +1,142 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sqlMap PUBLIC "-//iBATIS.com//DTD SQL Map 2.0//EN" "http://ibatis.apache.org/dtd/sql-map-2.dtd">
+<sqlMap namespace="BINOLPLRLA03">
+	
+	<!-- 取得品牌下的顶层岗位级别 -->
+	<select id="getFirstPositionLevel" parameterClass="java.util.HashMap" resultClass="java.lang.Integer">
+		<![CDATA[
+			SELECT					
+				MIN(A.Level) as Level				
+			FROM					
+				Basis.BIN_Position A,				
+				Basis.BIN_Organization B				
+			WHERE					
+				A.BIN_OrganizationID=B.BIN_OrganizationID AND				
+				A.ValidFlag='1' AND				
+				B.ValidFlag='1' AND				
+				B.BIN_OrganizationInfoID=#organizationInfoId#					
+		]]>
+		<dynamic>
+			<isNotEmpty prepend="AND" property="brandInfoId">
+				(B.BIN_BrandInfoID=#brandInfoId#)
+			</isNotEmpty>
+		</dynamic>
+    </select>
+	
+	<!-- 取得品牌下的顶层岗位List -->
+	<resultMap id="BINOLPLRLA03.FirstPosition" class="java.util.HashMap">
+		<result property="positionId" column="BIN_PositionID"/>
+		<result property="brandInfoId" column="BIN_BrandInfoID"/>
+		<result property="positionName" column="PositionName"/>
+		<result property="departName" column="DepartName"/>
+		<result property="path" column="Path"/>
+		<result property="child" column="Child"/>
+	</resultMap>
+	<select id="getFirstPositionList" parameterClass="java.util.HashMap" resultMap="BINOLPLRLA03.FirstPosition">
+		<![CDATA[
+			SELECT				
+				A.BIN_PositionID,
+				B.BIN_BrandInfoID,	
+		]]>		
+		<isNotEmpty property="language">
+			<isEqual property="language" compareValue="en_US">
+				A.PositionNameForeign AS PositionName,	
+				B.NameForeign AS DepartName,
+			</isEqual>
+			<isEqual property="language" compareValue="zh_CN">	
+				A.PositionName AS PositionName,		
+				B.DepartName AS DepartName,
+			</isEqual>								
+		</isNotEmpty>
+		<isEmpty property="language">
+				A.PositionName AS PositionName,		
+				B.DepartName AS DepartName,
+		</isEmpty>	
+		<![CDATA[			
+				A.Path,
+				COUNT(C.BIN_PositionID) AS Child	
+			FROM				
+				Basis.BIN_Position A,			
+				Basis.BIN_Organization B,
+				Basis.BIN_Position C
+			WHERE				
+				A.Level=#level# AND		
+				C.NodeID.IsDescendantOf(A.NodeID)=1 AND	
+				A.BIN_OrganizationID=B.BIN_OrganizationID AND			
+				A.ValidFlag='1' AND			
+				B.ValidFlag='1' AND			
+				B.BIN_OrganizationInfoID=#organizationInfoId#											
+		]]>
+		<dynamic>
+			<isNotEmpty prepend="AND" property="brandInfoId">
+				(B.BIN_BrandInfoID=#brandInfoId#)
+			</isNotEmpty>
+		</dynamic>
+		<![CDATA[				
+			GROUP BY 
+				A.BIN_PositionID,	
+				B.BIN_BrandInfoID,			
+				A.PositionName,
+				A.PositionNameForeign,
+				B.DepartName,
+				B.NameForeign,
+				A.Path									
+		]]>
+    </select>
+	
+	<!-- 取得某一岗位的直属下级岗位 -->
+	<resultMap id="BINOLPLRLA03.NextPosition" class="java.util.HashMap">
+		<result property="positionId" column="BIN_PositionID"/>
+		<result property="brandInfoId" column="BIN_BrandInfoID"/>
+		<result property="positionName" column="PositionName"/>
+		<result property="departName" column="DepartName"/>
+		<result property="path" column="Path"/>
+		<result property="child" column="Child"/>
+	</resultMap>
+	<select id="getNextPositionList" parameterClass="java.util.HashMap" resultMap="BINOLPLRLA03.NextPosition">
+		<![CDATA[
+			SELECT						
+				A.BIN_PositionID,
+				B.BIN_BrandInfoID,						
+		]]>		
+		<isNotEmpty property="language">
+			<isEqual property="language" compareValue="en_US">
+				A.PositionNameForeign AS PositionName,	
+				B.NameForeign AS DepartName,
+			</isEqual>
+			<isEqual property="language" compareValue="zh_CN">	
+				A.PositionName AS PositionName,		
+				B.DepartName AS DepartName,
+			</isEqual>								
+		</isNotEmpty>
+		<isEmpty property="language">
+				A.PositionName AS PositionName,	
+				B.DepartName AS DepartName,	
+		</isEmpty>	
+		<![CDATA[			
+				A.Path,
+				COUNT(C.BIN_PositionID) AS Child						
+			FROM						
+				Basis.BIN_Position A,					
+				Basis.BIN_Organization B,
+				Basis.BIN_Position C					
+			WHERE						
+				A.NodeID.GetAncestor(1)=#path# AND		
+				C.NodeID.IsDescendantOf(A.NodeID)=1 AND				
+				A.BIN_OrganizationID=B.BIN_OrganizationID AND					
+				A.ValidFlag='1' AND					
+				B.ValidFlag='1'
+		]]>
+		<![CDATA[				
+			GROUP BY 
+				A.BIN_PositionID,		
+				B.BIN_BrandInfoID,		
+				A.PositionName,
+				A.PositionNameForeign,
+				B.DepartName,
+				B.NameForeign,
+				A.Path									
+		]]>
+    </select>
+	
+</sqlMap>

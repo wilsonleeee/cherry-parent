@@ -1,0 +1,112 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sqlMap PUBLIC "-//iBATIS.com//DTD SQL Map 2.0//EN" "http://ibatis.apache.org/dtd/sql-map-2.dtd">
+<sqlMap namespace="BINOLMOWAT09">
+    <!-- BA考勤信息查询sql文  -->
+    <sql id="attendanceInfoQuery">
+            <![CDATA[
+	            SELECT
+	                B.BaCode AS baCode,
+	                C.CounterCode AS counterCode,
+	                E.EmployeeCode AS employeeCode,
+	                T.attendanceDate AS attendanceDate,
+	                CONVERT(varchar(30),T.arriveTime,120) AS arriveTime,
+	                CONVERT(varchar(30),T.leaveTime,120) AS leaveTime,
+            ]]>
+            <isNotEmpty property="language">
+                <isEqual property="language" compareValue="en_US">
+                    <![CDATA[
+                        B.BaNameForeign AS baName,
+                        C.NameForeign AS counterName,
+                        E.EmployeeNameForeign AS employeeName
+                    ]]>
+                </isEqual>
+                <isEqual property="language" compareValue="zh_CN">
+                    <![CDATA[
+                        B.BaName AS baName,
+                        C.CounterNameIF AS counterName,
+                        E.EmployeeName AS employeeName
+                    ]]>
+                </isEqual>
+            </isNotEmpty>
+            <isEmpty property="language">
+                <![CDATA[
+                    B.BaName AS baName,
+                    C.CounterNameIF AS counterName,
+                    E.EmployeeName AS employeeName
+                ]]>
+            </isEmpty>
+            <![CDATA[
+	            FROM(
+	            SELECT
+	                A.BIN_EmployeeID,
+	                A.BIN_OrganizationID,
+	                CONVERT(varchar(10), A.AttendanceDateTime, 120) AS attendanceDate,
+	                MIN(CASE WHEN A.AttendanceType = '1' THEN AttendanceDateTime END) AS arriveTime,
+	                MAX(CASE WHEN A.AttendanceType = '0' THEN AttendanceDateTime END) AS leaveTime
+	            FROM Monitor.BIN_BAAttendance A
+	            WHERE
+	                A.ValidFlag = '1'
+	                AND A.BIN_OrganizationInfoID = #organizationInfoId#
+            ]]>
+            <isNotEmpty prepend="AND" property="brandInfoId">
+                <![CDATA[A.BIN_BrandInfoID=#brandInfoId#]]>
+            </isNotEmpty>
+            <isNotEmpty prepend="AND" property="startAttendanceDate">
+                <![CDATA[A.AttendanceDateTime>=#startAttendanceDate# + ' 00:00:00']]>
+            </isNotEmpty>
+            <isNotEmpty prepend="AND" property="endAttendanceDate">
+                <![CDATA[A.AttendanceDateTime<=#endAttendanceDate# + ' 23:59:59']]>
+            </isNotEmpty>
+            <![CDATA[AND EXISTS ( ]]>
+            <include refid="BINOLCMINC99.getDepartList" />
+            <![CDATA[
+                AND A.BIN_OrganizationID = A99.BIN_OrganizationID)
+            ]]>
+            <![CDATA[
+	            GROUP BY
+	                A.BIN_EmployeeID,
+	                A.BIN_OrganizationID,
+	                CONVERT(varchar(10), A.AttendanceDateTime, 120)
+	            )T
+	            LEFT JOIN Basis.BIN_BaInfo B
+	            ON T.BIN_EmployeeID = B.BIN_EmployeeID
+	            LEFT JOIN Basis.BIN_CounterInfo C
+	            ON T.BIN_OrganizationID = C.BIN_OrganizationID
+	            LEFT JOIN Basis.BIN_Employee E
+	            ON T.BIN_EmployeeID = E.BIN_EmployeeID
+            ]]>
+            <![CDATA[
+                WHERE 1=1
+            ]]>
+            <isNotEmpty prepend="AND" property="baCode">
+                <![CDATA[(E.EmployeeCode LIKE '%' + #baCode# + '%')]]>
+            </isNotEmpty>
+            <isNotEmpty prepend="AND" property="baName">
+                <![CDATA[(E.EmployeeName LIKE '%' + #baName# + '%' OR E.EmployeeNameForeign LIKE '%' + #baName# + '%')]]>
+            </isNotEmpty>
+    </sql>
+    
+    <!-- 取得BA考勤信息查询总数  -->
+    <select id="getAttendanceInfoCount" parameterClass="java.util.HashMap" resultClass="java.lang.Integer">
+        <![CDATA[
+            SELECT COUNT(SORT_T1.counterCode) AS count FROM (
+        ]]>
+        <include refid="BINOLMOWAT09.attendanceInfoQuery" />
+        <![CDATA[
+            )SORT_T1
+        ]]>
+    </select>
+    
+    <!-- 取得BA考勤信息List  -->
+    <select id="getAttendanceInfoList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+        <include refid="BINOLCMINC99.pageheader" />
+        <include refid="BINOLMOWAT09.attendanceInfoQuery" />
+        <include refid="BINOLCMINC99.pagefooter" />
+    </select>
+	
+    <!-- 取得BA考勤信息(Excel)  -->
+    <select id="getAttendanceInfoListExcel" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+        <include refid="BINOLMOWAT09.attendanceInfoQuery" />
+		<![CDATA[ORDER BY counterCode]]>
+    </select>
+</sqlMap>

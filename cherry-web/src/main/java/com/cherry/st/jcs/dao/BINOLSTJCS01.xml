@@ -1,0 +1,268 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sqlMap PUBLIC "-//iBATIS.com//DTD SQL Map 2.0//EN" "http://ibatis.apache.org/dtd/sql-map-2.dtd">
+<sqlMap namespace="BINOLSTJCS01">
+	
+	<sql id="getDepotInfoSql">
+		<![CDATA[
+			SELECT
+				DISTINCT
+				A.BIN_DepotInfoID AS depotInfoID,
+				A.DepotCode AS depotCode,
+		]]>
+			<dynamic>
+				<isNotEmpty property="language">
+						<isEqual property = "language" compareValue="en_US">
+							A.DepotNameEN AS depotName,
+							B.NameForeign AS departName,
+						</isEqual>
+						<isEqual property = "language" compareValue="zh_CN">
+							A.DepotNameCN AS depotName,
+							B.DepartName AS departName,
+						</isEqual>
+				</isNotEmpty>
+				<isEmpty property="language">
+						A.DepotNameCN AS depotName,
+						B.DepartName AS departName,
+				</isEmpty>
+			</dynamic>
+		<![CDATA[
+				A.Address AS address,
+				A.TestType as testType,
+				A.ValidFlag AS validFlag,
+				B.DepartCode AS departCode
+			FROM
+				Basis.BIN_DepotInfo A 
+				LEFT JOIN Basis.BIN_Organization B 
+				ON (B.BIN_OrganizationID=A.BIN_OrganizationID)
+			WHERE
+				A.BIN_OrganizationInfoID = #organizationInfoId#
+				AND A.DepotType = '01'
+				AND (B.BIN_BrandInfoID is null OR B.BIN_BrandInfoID = #brandInfoId#)
+		]]>
+			<dynamic>
+				<isEmpty property = "validFlag">
+					AND A.ValidFlag = '1'
+				</isEmpty>
+				<isNotEmpty property = "testType">
+					AND A.TestType = #testType#
+				</isNotEmpty>
+				<isNotEmpty property="language">
+						<isEqual property = "language" compareValue="en_US">
+							<isNotEmpty property = "depotName">
+								AND A.DepotNameEN LIKE '%'+#depotName#+'%'
+							</isNotEmpty>
+							<isNotEmpty property = "departName">
+								AND B.NameForeign LIKE '%'+#departName#+'%'
+							</isNotEmpty>
+						</isEqual>
+						<isEqual property = "language" compareValue="zh_CN">
+							<isNotEmpty property = "depotName">
+								AND A.DepotNameCN LIKE '%'+#depotName#+'%'
+							</isNotEmpty>
+							<isNotEmpty property = "departName">
+								AND B.DepartName LIKE '%'+#departName#+'%'
+							</isNotEmpty>
+						</isEqual>
+				</isNotEmpty>
+				<isEmpty property="language">
+					<isNotEmpty property = "depotName">
+						AND A.DepotNameCN LIKE '%'+#depotName#+'%'
+					</isNotEmpty>
+					<isNotEmpty property = "departName">
+						AND B.DepartName LIKE '%'+#departName#+'%'
+					</isNotEmpty>
+				</isEmpty>
+			</dynamic>
+	</sql>
+	
+	<!-- 取得仓库List -->
+	<select id="getDepotInfoList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+		<include refid="BINOLCMINC99.pageheader" />
+        <include refid="BINOLSTJCS01.getDepotInfoSql" />
+        <include refid="BINOLCMINC99.pagefooter" />
+    </select>
+	
+	<!--取得仓库总数-->
+	<select id="getDepotInfoCount" parameterClass="java.util.HashMap" resultClass="java.lang.Integer">
+		<![CDATA[
+            SELECT COUNT(SORT_T1.depotInfoID) AS count FROM (
+        ]]>
+        <include refid="BINOLSTJCS01.getDepotInfoSql" />
+        <![CDATA[
+            )SORT_T1
+        ]]>
+	</select>
+    
+    <!-- 停用仓库  -->
+	<update id="disableDepot" parameterClass="java.util.HashMap">
+		<![CDATA[
+        UPDATE
+           Basis.BIN_DepotInfo
+        SET
+           ValidFlag = '0',
+		]]>
+	<include refid="BINOLCMINC99.updateSql" />
+    <![CDATA[
+        WHERE 
+            BIN_DepotInfoID IN
+    ]]>
+	<iterate conjunction="," open="(" close=")" property="depotInfoIDArr">  
+        #depotInfoIDArr[]#
+    </iterate>
+    </update>
+    
+    <!-- 启用仓库  -->
+	<update id="enableDepot" parameterClass="java.util.HashMap">
+		<![CDATA[
+        UPDATE
+           Basis.BIN_DepotInfo
+        SET
+           ValidFlag = '1',
+		]]>
+	<include refid="BINOLCMINC99.updateSql" />
+    <![CDATA[
+        WHERE 
+            BIN_DepotInfoID IN
+    ]]>
+	<iterate conjunction="," open="(" close=")" property="depotInfoIDArr">  
+        #depotInfoIDArr[]#
+    </iterate>
+    </update>
+    
+    <!-- 编辑仓库  -->
+	<update id="editDepot" parameterClass="java.util.HashMap">
+		<![CDATA[
+        UPDATE
+           Basis.BIN_DepotInfo
+        SET
+        ]]>
+        <isNotEmpty property="organizationID" >
+			<![CDATA[ BIN_OrganizationID=#organizationID#, ]]>
+		</isNotEmpty>
+        <![CDATA[	
+        	DepotCode=#depotCode#,
+        	DepotNameCN=#depotNameCN#,
+        	DepotNameEN=#depotNameEN#,
+        	Address=#address#,
+		]]>
+	<include refid="BINOLCMINC99.updateSql" />
+    <![CDATA[
+        WHERE 
+            BIN_DepotInfoID = #binDepotInfoID#
+		]]>
+    </update>
+    
+    <!-- 编辑部门仓库关系表  -->
+    <update id="editInventoryInfo" parameterClass="java.util.HashMap">
+		<![CDATA[
+        UPDATE
+           Basis.BIN_InventoryInfo
+        SET
+        	InventoryCode=#depotCode#,
+        	InventoryNameCN=#depotNameCN#,
+        	InventoryNameEN=#depotNameEN#,
+		]]>
+	<include refid="BINOLCMINC99.updateSql" />
+    <![CDATA[
+        WHERE 
+            BIN_InventoryInfoID = #binDepotInfoID#
+		]]>
+    </update>
+  
+    <!-- 新增仓库 -->
+    <insert id="add" parameterClass="java.util.HashMap">
+		<![CDATA[
+		Insert INTO Basis.BIN_DepotInfo(
+			BIN_OrganizationInfoID,
+			BIN_OrganizationID,
+			DepotCode,
+			DepotNameCN,
+			DepotNameEN,
+			DepotType,
+			Address,
+			TestType,
+   ]]>
+	<include refid="BINOLCMINC99.insertKeySql" />
+		<![CDATA[						
+			)					
+			VALUES					
+			(
+			#organizationInfoId#,
+			#organizationID#,
+			#depotCode#,
+			#depotNameCN#,
+			#depotNameEN#,
+			'01',
+			#address#,
+			#testType#,
+		]]>
+		<include refid="BINOLCMINC99.insertValueSql" />		
+		<![CDATA[							
+			)					
+    	]]> 
+    </insert>
+    
+    <!-- 判断仓库是否已经存在 -->
+	<select id="getCount" parameterClass="java.util.HashMap" resultClass="java.lang.String">
+		<![CDATA[
+		SELECT COUNT(1) FROM(
+			SELECT
+				BIN_DepotInfoID
+			FROM
+				Basis.BIN_DepotInfo
+			WHERE
+				BIN_OrganizationInfoID=#organizationInfoId# AND
+				DepotCode=#depotCode#
+			]]>
+		<isNotEmpty prepend="AND" property="binDepotInfoID" >
+			<![CDATA[ BIN_DepotInfoID<>#binDepotInfoID# ]]>
+		</isNotEmpty>
+		<![CDATA[
+			)a
+		]]>
+    </select>
+    
+    <!-- 判断是否是测试柜台-->
+	<select id="testType" parameterClass="java.util.HashMap" resultClass="java.lang.String">
+		<![CDATA[
+			SELECT
+				TestType
+			FROM
+				Basis.BIN_Organization
+			WHERE
+				BIN_OrganizationID=#organizationID#
+			]]>
+    </select>
+    
+	<!-- 部门仓库关系 --> 
+    <select id="getInventoryInfoList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+		<![CDATA[
+		SELECT
+			B.DepartCode as inventoryDepartCode,
+			B.DepartName as inventoryDepartName
+		FROM
+			Basis.BIN_InventoryInfo A left join Basis.BIN_Organization B
+			on (B.BIN_OrganizationID=A.BIN_OrganizationID and B.ValidFlag='1')
+		where
+			A.BIN_InventoryInfoID =#inventoryInfoID#
+		]]>
+    </select>
+    
+    <select id="inventoryInfoDetail" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+		<![CDATA[
+			SELECT
+				A.DepotCode AS inventoryDepartCode,
+				A.DepotNameCN AS inventoryDepotNameCN,
+				A.DepotNameEN AS inventoryDepotNameEN,
+				A.Address AS inventoryAddresse,
+				B.DepartCode as departCode,
+				B.DepartName as departName
+			FROM
+				Basis.BIN_DepotInfo A left join Basis.BIN_Organization B on (B.BIN_OrganizationID=A.BIN_OrganizationID 
+				and B.ValidFlag='1')
+				
+			WHERE
+				A.BIN_DepotInfoID=#inventoryInfoID#
+		]]>
+    </select>
+</sqlMap>

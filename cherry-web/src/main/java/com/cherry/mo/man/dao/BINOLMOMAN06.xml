@@ -1,0 +1,124 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sqlMap PUBLIC "-//iBATIS.com//DTD SQL Map 2.0//EN" "http://ibatis.apache.org/dtd/sql-map-2.dtd">
+<sqlMap namespace="BINOLMOMAN06">
+	<sql id = "udiskList">
+		SELECT
+			<dynamic>
+            	<isNotEmpty property="language">
+                	<isEqual property="language" compareValue="en_US">
+                		B.[EmployeeNameForeign] AS employeeName,
+						C.[BrandNameForeign] AS brandName,
+						D.[CategoryNameForeign] AS categoryName,
+                	</isEqual>
+					<isEqual property="language" compareValue="zh_CN">
+                   		B.[EmployeeName] AS employeeName,
+						C.[BrandNameChinese] AS brandName,
+						D.[CategoryName] AS categoryName,
+                	</isEqual>
+				</isNotEmpty>
+				<isEmpty property="language">
+					B.[EmployeeName] AS employeeName,
+					C.[BrandNameChinese] AS brandName,
+					D.[CategoryName] AS categoryName,
+				</isEmpty>
+			</dynamic>
+			A.[UdiskSN] AS udiskSn,
+			A.[OwnerRight] AS ownerRight,
+			B.[EmployeeCode] AS employeeCode,
+			C.[BrandCode] AS brandCode,
+			A.[BIN_UdiskInfoID] AS udiskInfoId
+		FROM
+			[Monitor].[BIN_UdiskInfo] A 
+			LEFT JOIN [Basis].[BIN_Employee] B 
+			ON(A.[BIN_EmployeeID] = B.[BIN_EmployeeID])
+			LEFT JOIN [Privilege].[BIN_PositionCategory] D
+			ON(B.[BIN_PositionCategoryID] = D.[BIN_PositionCategoryID])
+			JOIN [Basis].[BIN_BrandInfo] C 
+			ON(A.[BIN_BrandInfoID] = C.[BIN_BrandInfoID]
+			)
+		WHERE
+			A.[ValidFlag] = 1 AND
+			A.[BIN_OrganizationInfoID] = #organizationInfoId#
+			<dynamic>
+				<isNotEmpty prepend = "AND" property="udiskSn">
+					A.[UdiskSN] Like '%' + #udiskSn# + '%'
+				</isNotEmpty>
+				<isNotEmpty prepend = "AND" property="brandInfoId">
+					A.[BIN_BrandInfoID] = #brandInfoId#
+				</isNotEmpty>
+				<isNotEmpty prepend = "AND" property="employeeName">
+					B.[EmployeeName] LIKE '%' + #employeeName# +'%'
+				</isNotEmpty>
+				<isNotEmpty prepend = "AND" property="ownerRight">
+					A.[OwnerRight] = #ownerRight#
+				</isNotEmpty>
+				<isNotEmpty prepend = "AND" property="employeeCode">
+					B.[EmployeeCode] LIKE '%' + #employeeCode# + '%'
+				</isNotEmpty>
+			</dynamic>
+	</sql>
+	<select id = "getUdiskList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+		<include refid="BINOLCMINC99.pageheader" />
+        <include refid="BINOLMOMAN06.udiskList" />
+        <include refid="BINOLCMINC99.pagefooter" />
+	</select>
+	<select id = "getUdiskCount" parameterClass="java.util.HashMap" resultClass="java.lang.Integer">
+		<![CDATA[
+            SELECT COUNT(SORT_T1.udiskInfoId) AS count FROM (
+        ]]>
+        <include refid="BINOLMOMAN06.udiskList" />
+        <![CDATA[
+            )SORT_T1
+        ]]>
+	</select>
+	
+	<!--员工绑定或者解除绑定-->
+	<update id="employeeBindOrUnbind" parameterClass="java.util.HashMap">
+		UPDATE
+			[Monitor].[BIN_UdiskInfo]
+		SET
+			[BIN_EmployeeID] = #employeeId#,
+			[OwnerRight] = #ownerRight#,
+		<include refid="BINOLCMINC99.updateSql" />
+		WHERE
+			[BIN_UdiskInfoID] = #udiskInfoId#
+	</update>
+	
+	<!--根据员工Code查询员工ID-->
+	<select id="getEmployeeId" parameterClass="java.util.HashMap" resultClass="java.lang.Integer">
+		SELECT 
+			[BIN_EmployeeID] AS employeeId
+		FROM
+			[Basis].[BIN_Employee]
+		WHERE
+			[EmployeeCode] = #employeeCode# AND
+			[BIN_OrganizationInfoID] = #organizationInfoId# AND
+			[BIN_BrandInfoID] = #brandInfoId#
+	</select>
+	
+	<!--逻辑删除U盘信息-->
+	<update id="deleteUdisk" parameterClass="java.util.HashMap">
+		UPDATE
+			[Monitor].[BIN_UdiskInfo]
+		SET
+			[ValidFlag] = #validFlag#,
+		<include refid="BINOLCMINC99.updateSql" />
+		WHERE
+			[BIN_UdiskInfoID] = #udiskInfoId#
+	</update>
+	
+	<!--根据U盘ID查询U盘SN以及品牌CODE-->
+	<select id="getUdiskInfo" parameterClass="java.lang.Integer" resultClass="java.util.HashMap">
+		<![CDATA[
+		SELECT
+			A.UdiskSN AS udiskSn,
+			B.BrandCode AS brandCode
+		FROM
+			Monitor.BIN_UdiskInfo A,
+			Basis.BIN_BrandInfo B
+		WHERE
+			A.BIN_UdiskInfoID = #BIN_UdiskInfoID#
+			AND A.BIN_BrandInfoID = B.BIN_BrandInfoID
+		]]>
+	</select>
+</sqlMap>

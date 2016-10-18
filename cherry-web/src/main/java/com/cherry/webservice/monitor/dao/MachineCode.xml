@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sqlMap PUBLIC "-//iBATIS.com//DTD SQL Map 2.0//EN" "http://ibatis.apache.org/dtd/sql-map-2.dtd">
+<sqlMap namespace="MachineCode">
+	<!-- 根据MAC地址查询对应的机器号 -->
+	<select id="getMachineCodeByMac" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+		<![CDATA[
+			SELECT TOP(1)
+				MachineCode 
+			FROM 
+				Monitor.BIN_MachineInfo WITH(NOLOCK)
+		]]>
+		<dynamic prepend="WHERE">
+			<isNotEmpty prepend="AND" property="MobileMacAddress">
+				MobileMacAddress = #MobileMacAddress#
+			</isNotEmpty>
+			<isNotEmpty prepend="AND" property="BIN_OrganizationInfoID">
+				BIN_OrganizationInfoID = #BIN_OrganizationInfoID#
+			</isNotEmpty>
+			<isNotEmpty prepend="AND" property="BIN_BrandInfoID">
+				BIN_BrandInfoID = #BIN_BrandInfoID#
+			</isNotEmpty>
+		</dynamic>
+	</select>
+	
+	<!-- 更新机器信息  -->
+	<update id="updateMachineInfo" parameterClass="java.util.HashMap">     
+    <![CDATA[
+        UPDATE
+            Monitor.BIN_MachineInfo
+        SET
+            MobileOS = #MobileOS#,
+            MobileType = #MobileType#,
+    ]]>
+    <include refid="BINOLCMINC99.updateSql" />
+    <![CDATA[
+        WHERE 
+            MobileMacAddress = #MobileMacAddress#
+			AND BIN_OrganizationInfoID = #organizationInfoId#
+			AND BIN_BrandInfoID = #brandInfoId#
+			AND MachineCode = #MachineCode#
+    ]]>
+    </update>
+	
+	
+</sqlMap>

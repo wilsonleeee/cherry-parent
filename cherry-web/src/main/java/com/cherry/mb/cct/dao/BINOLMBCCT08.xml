@@ -1,0 +1,91 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sqlMap PUBLIC "-//iBATIS.com//DTD SQL Map 2.0//EN" "http://ibatis.apache.org/dtd/sql-map-2.dtd">
+<sqlMap namespace="BINOLMBCCT08">
+	<!-- 非会员信息查询sql  -->
+	<sql id="customerQuery">
+		<![CDATA[
+			SELECT 
+				 BIN_CustomerID as customerId
+				,CustomerCode as customerCode
+				,CustomerName as customerName
+				,isnull(Gender,2) as gender
+				,MobilePhone as mobilePhone
+				,Telephone as telephone
+				,BirthYear+Birthday as birthDay
+				,InTime as joinTime
+				,CustomerType as customerType
+				,Company as company
+				,Post as post
+				,Industry as industry
+				,Zip as zip
+				,MessageId as messageId
+				,Email as email
+				,Province as province
+				,City as city
+				,[Address] as address
+				,Memo as memo
+				,isnull(IsReceiveMsg,1) as isReceiveMsg 
+			FROM 
+				Members.BIN_NonMembers with(nolock) 
+			WHERE 
+				BIN_BrandInfoID = #brandInfoId# AND 
+				BIN_OrganizationInfoID = #organizationInfoId#  
+		]]>
+		<dynamic>
+			<!-- 参数中存在客户姓名查询条件时  -->
+			<isNotEmpty prepend="AND" property="customerName" >
+				CustomerName like #customerName# + '%' 
+			</isNotEmpty>
+			<!-- 参数中存在所属行业查询条件时  -->
+			<isNotEmpty prepend="AND" property="industry" >
+				Industry like #industry# + '%' 
+			</isNotEmpty>
+			<!-- 参数中存在手机号码查询条件时  -->
+			<isNotEmpty prepend="AND" property="mobilePhone" >
+				MobilePhone = #mobilePhone# 
+			</isNotEmpty>
+			<!-- 参数中存在客户类型查询条件时  -->
+			<isNotEmpty prepend="AND" property="customerType" >
+				CustomerType = #customerType# 
+			</isNotEmpty>
+			<!-- 参数中存在生日月份查询条件时  -->
+			<isNotEmpty prepend="AND" property="birthMonth" >
+			<![CDATA[
+				left(Birthday,2) = #birthMonth# 
+			]]>
+			</isNotEmpty>
+			<!-- 参数中存在等级起始时间查询条件时  -->
+			<isNotEmpty prepend="AND" property="joinTimeStart" >
+			<![CDATA[
+				InTime >= #joinTimeStart# 
+			]]>
+			</isNotEmpty>
+			<!-- 参数中存在登记截止时间查询条件时  -->
+			<isNotEmpty prepend="AND" property="joinTimeEnd" >
+			<![CDATA[
+				InTime <= #joinTimeEnd# 
+			]]>
+			</isNotEmpty>
+		</dynamic>
+	</sql>
+	
+	<!-- 查询符合条件的非会员总数  -->
+    <select id="getCustomerCount" parameterClass="java.util.HashMap" resultClass="java.lang.Integer">
+    	<![CDATA[
+			SELECT COUNT(SORT_T1.customerId) AS count FROM (
+		]]>	
+		<include refid="BINOLMBCCT08.customerQuery" />	
+		<![CDATA[	
+			)SORT_T1
+		]]>
+    </select>
+	
+	<!-- 查询符合条件的非会员List -->
+    <select id="getCustomerList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+       	<include refid="BINOLCMINC99.pageheader" />
+		<include refid="BINOLMBCCT08.customerQuery" />
+		<include refid="BINOLCMINC99.pagefooter" />
+    </select>
+    
+</sqlMap>
+

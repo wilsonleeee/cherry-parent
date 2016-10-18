@@ -1,0 +1,395 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sqlMap PUBLIC "-//iBATIS.com//DTD SQL Map 2.0//EN" "http://ibatis.apache.org/dtd/sql-map-2.dtd">
+<sqlMap namespace="BINOLBSEMP50">
+	<!--查询BA信息 -->
+	<select id="getBaInfoByNameCode" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+		<![CDATA[
+		SELECT
+			top 1
+			BaCode AS baCode,
+			BIN_BaInfoID AS baInfoID,
+			BIN_EmployeeID AS employeeID,
+		]]>
+		<isNotEmpty property="language">
+			<isEqual property="language" compareValue="en_US">
+				BaNameForeign AS baName
+			</isEqual>
+			<isEqual property="language" compareValue="zh_CN">
+				BaName AS baName
+			</isEqual>								
+		</isNotEmpty>
+		<isEmpty property="language">
+			BaName AS baName
+		</isEmpty>
+		<![CDATA[
+		FROM
+			Basis.BIN_BaInfo WITH(NOLOCK)
+		WHERE	
+			BIN_OrganizationInfoID = #organizationInfoId# AND
+			BIN_BrandInfoID = #brandInfoId# 
+		]]>
+		<isNotEmpty property="baCode">
+			AND BaCode = #baCode#
+		</isNotEmpty>
+		<isNotEmpty property="baName">
+			<isNotEmpty property="language">
+				<isEqual property="language" compareValue="en_US">
+					AND BaNameForeign = #baName#
+				</isEqual>
+				<isEqual property="language" compareValue="zh_CN">
+					AND BaName = #baName#
+				</isEqual>								
+			</isNotEmpty>
+			<isEmpty property="language">
+				AND BaName = #baName#
+			</isEmpty>
+		</isNotEmpty>
+	</select>
+	
+	<!-- 取得指定柜台CODE/柜台名称对应的柜台信息 -->
+	<select id="getCounterInfo" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+		<![CDATA[
+			SELECT
+				BIN_OrganizationID AS organizationID,
+				CounterCode AS counterCode
+			FROM
+				Basis.BIN_CounterInfo
+			WHERE
+				ValidFlag = '1' AND
+				BIN_OrganizationInfoID = #organizationInfoId# AND
+				BIN_BrandInfoID = #brandInfoId#
+		]]>
+		<isNotEmpty property="counterCode">
+			AND CounterCode = #counterCode#
+		</isNotEmpty>
+		<isNotEmpty property="counterName">
+			<isNotEmpty property="language">
+				<isEqual property="language" compareValue="en_US">
+					AND NameForeign = #counterName#
+				</isEqual>
+				<isEqual property="language" compareValue="zh_CN">
+					AND CounterNameIF = #counterName#
+				</isEqual>								
+			</isNotEmpty>
+			<isEmpty property="language">
+				AND CounterNameIF = #counterName#
+			</isEmpty>
+		</isNotEmpty>
+	</select>
+	
+	<!-- 取得在非BA的员工表中存在的指定CODE的数量 -->
+	<select id="getEmpCodeCount" parameterClass="java.util.HashMap" resultClass="java.lang.Integer">
+		<![CDATA[
+			SELECT
+				COUNT(1)
+			FROM
+				Basis.BIN_Employee A WITH(NOLOCK)
+				LEFT JOIN Privilege.BIN_PositionCategory B
+				ON(A.BIN_PositionCategoryID = B.BIN_PositionCategoryID)
+			WHERE
+				B.CategoryCode <> '01' AND
+				A.EmployeeCode = #baCode# AND
+				A.BIN_OrganizationInfoID = #organizationInfoId#
+		]]>
+		<isNotEmpty prepend="AND" property="brandInfoId">
+			A.BIN_BrandInfoID=#brandInfoId#
+		</isNotEmpty>
+	</select>
+	
+	<!-- 取得员工信息新节点 -->
+	<select id="getNewEmpNodeId" parameterClass="java.util.HashMap" resultClass="java.lang.String">
+		<![CDATA[
+			SELECT 
+				CONVERT(hierarchyid,#path#).GetDescendant(max(NodeID), NULL).ToString() AS newNodeId
+        	FROM 
+        		Basis.BIN_Employee
+            WHERE 
+            	NodeID.GetAncestor(1)=#path#
+		]]>
+    </select>
+    
+    <!--根据岗位code(唯一)取得岗位ID(用于员工表的插入)-->
+	<select id="getPositionCategoryIdByCode" parameterClass="java.util.HashMap" resultClass="java.lang.Integer">
+		<![CDATA[
+			SELECT
+				BIN_PositionCategoryID AS positionCategoryID
+			FROM 
+				Privilege.BIN_PositionCategory
+			WHERE
+				BIN_OrganizationInfoID = #organizationInfoId# AND
+				ValidFlag = '1'
+		]]>
+		<isNotEmpty prepend="AND" property="brandInfoId">
+			BIN_BrandInfoID=#brandInfoId#
+		</isNotEmpty>
+		<isNotEmpty prepend="AND" property="categoryCode">
+			CategoryCode=#categoryCode#
+		</isNotEmpty>
+	</select>
+	
+	<!-- 插入人员的手机号KEY -->
+	<sql id="insertEmployeeKey">
+		<isNotEmpty property="mobilePhone">
+			MobilePhone,
+		</isNotEmpty>
+		<isNotEmpty property="employeeStatus">
+			EmployeeStatus,
+		</isNotEmpty>
+	</sql>
+	<!-- 插入人员的手机号VALUE -->
+	<sql id="insertEmployeeValue">
+		<isNotEmpty property="mobilePhone">
+			#mobilePhone#,
+		</isNotEmpty>
+		<isNotEmpty property="employeeStatus">
+			#employeeStatus#,
+		</isNotEmpty>
+	</sql>
+    
+    <!-- 插入员工信息表  -->
+	<insert id="insertEmployee" parameterClass="java.util.HashMap">	
+		<selectKey resultClass="java.lang.Integer" type="post" keyProperty="BIN_EmployeeID" >
+		<![CDATA[
+	    INSERT INTO Basis.BIN_Employee (
+	   		BIN_OrganizationInfoID,				
+			BIN_BrandInfoID,
+			BIN_OrganizationID,
+			BIN_PositionCategoryID,	
+			NodeID,		
+			EmployeeCode,			
+			EmployeeName,
+		]]>
+		<include refid="BINOLBSEMP50.insertEmployeeKey"/>
+		<include refid="BINOLCMINC99.insertKeySql" />									
+		<![CDATA[								
+		)VALUES (
+			#organizationInfoId#,
+			#brandInfoId#,		
+			#organizationID#,
+			#positionCategoryID#,		
+			#newEmpNodeId#,	
+			#employeeCode#,			
+			#employeeName#,	
+		]]>
+		<include refid="BINOLBSEMP50.insertEmployeeValue"/>
+		<include refid="BINOLCMINC99.insertValueSql" />
+		<![CDATA[ 
+			) 
+			select SCOPE_IDENTITY() as value
+		]]>
+	    </selectKey>
+	</insert>
+	
+	<!-- 插入员工入退职信息表  -->
+	<insert id="insertEmpQuit" parameterClass="java.util.HashMap">	
+		<![CDATA[
+	    INSERT INTO Basis.BIN_EmployeeQuit(			
+			BIN_EmployeeID,		
+			CommencementDate,
+		]]>
+		<isNotEmpty property="depDate">
+			DepartureDate,
+		</isNotEmpty>
+		<include refid="BINOLCMINC99.insertKeySql" />									
+		<![CDATA[								
+		)VALUES (
+			#employeeID#,
+		]]>
+		<isNotEmpty property="commtDate">
+			#commtDate#,
+		</isNotEmpty>
+		<isEmpty property="commtDate">
+			CONVERT(Date,#createTime#),
+		</isEmpty>
+		<isNotEmpty property="depDate">
+			#depDate#,
+		</isNotEmpty>
+		<include refid="BINOLCMINC99.insertValueSql" />
+		<![CDATA[ ) ]]>
+	</insert>
+	
+	<!-- 插入员工管辖部门对应表  -->
+	<insert id="insertEmployeeDepart" parameterClass="java.util.HashMap">	
+		<![CDATA[
+	   INSERT INTO Privilege.BIN_EmployeeDepart (			
+			BIN_EmployeeID,		
+			BIN_OrganizationID,		
+			DepartType,
+			ManageType,	
+		]]>
+		<include refid="BINOLCMINC99.insertKeySql" />									
+		<![CDATA[								
+		)VALUES (
+			#employeeId#,		
+			#organizationId#,		
+			#departType#,
+			#manageType#,
+		]]>
+		<include refid="BINOLCMINC99.insertValueSql" />
+		<![CDATA[ ) ]]>
+	</insert>
+	
+	<!-- 更新员工管辖部门对应表  -->
+	<insert id="updateEmployeeDepart" parameterClass="java.util.HashMap">	
+		<![CDATA[
+			UPDATE Privilege.BIN_EmployeeDepart			
+			SET
+				BIN_OrganizationID = #organizationID#,		
+		]]>
+		<include refid="BINOLCMINC99.updateSql" />									
+		<![CDATA[								
+			WHERE
+				BIN_EmployeeID = #employeeID#
+		]]>
+	</insert>
+	
+	<!--更新员工信息表 -->
+	<update id="updateEmployeeInfo" parameterClass="java.util.HashMap">
+		<![CDATA[
+			UPDATE
+				Basis.BIN_Employee
+			SET
+				EmployeeName=#employeeName#,
+				ValidFlag = '1',
+		]]>
+		<isNotEmpty property="organizationID">
+			BIN_OrganizationID=#organizationID#,
+		</isNotEmpty>
+		<isNotEmpty property="mobilePhone">
+			MobilePhone=#mobilePhone#,
+		</isNotEmpty>
+		<isNotEmpty property="employeeStatus">
+			EmployeeStatus=#employeeStatus#,
+		</isNotEmpty>
+		<include refid="BINOLCMINC99.updateSql" />		
+		<![CDATA[				
+			WHERE					
+				BIN_EmployeeID = #employeeID#
+		]]>
+	</update>
+	
+	<!--更新员工入退职信息表 -->
+	<update id="updateEmployeeQuit" parameterClass="java.util.HashMap">
+		<![CDATA[
+			UPDATE
+				Basis.BIN_EmployeeQuit
+			SET
+				ValidFlag = '1',
+		]]>
+		<isNotEmpty property="commtDate">
+			CommencementDate=#commtDate#,
+		</isNotEmpty>
+		<isEmpty property="commtDate">
+			CommencementDate=CONVERT(Date,#updateTime#),
+		</isEmpty>
+		<isNotEmpty property="depDate">
+			DepartureDate=#depDate#,
+		</isNotEmpty>
+		<include refid="BINOLCMINC99.updateSql" />		
+		<![CDATA[				
+			WHERE					
+				BIN_EmployeeID = #employeeID#
+		]]>
+	</update>
+	
+	<!-- 取得指定员工的员工柜台对应表信息数量 -->
+	<select id="getEmployeeDepartCount" parameterClass="java.util.HashMap" resultClass="java.lang.Integer">
+		<![CDATA[
+			SELECT
+				COUNT(1)
+			FROM
+				Privilege.BIN_EmployeeDepart
+			WHERE
+				BIN_EmployeeID = #employeeID#
+		]]>
+	</select>
+	
+	<!-- 删除BA柜台对应关系  -->
+	<delete id="delEmployeeDepart" parameterClass="java.util.HashMap">
+		<![CDATA[
+		DELETE FROM	
+			Privilege.BIN_EmployeeDepart
+		WHERE	
+			BIN_EmployeeID = #employeeID#
+		]]>
+	</delete>
+	
+	<!-- 插入营业员信息 -->
+	<insert id="insertBaInfo" parameterClass="java.util.HashMap">
+		<![CDATA[
+			INSERT INTO	
+				Basis.BIN_BaInfo
+				(
+					BIN_OrganizationInfoID,
+					BIN_BrandInfoID,
+					BIN_EmployeeID,
+					BIN_OrganizationID,
+					BaCode,
+					BaName,
+					BaType,
+		]]>
+				<isNotEmpty property="originFlag">
+					OriginFlag,
+				</isNotEmpty>
+				<isNotEmpty property="mobilePhone">
+					MobilePhone,
+				</isNotEmpty>
+			<include refid="BINOLCMINC99.insertKeySql" />		
+		<![CDATA[
+				)VALUES
+				(		
+					#organizationInfoId#,
+					#brandInfoId#,
+					#newEmpID#,
+					#organizationID#,
+					#baCode#,
+					#baName#,
+					'1',
+		]]>
+				<isNotEmpty property="originFlag">
+					#originFlag#,
+				</isNotEmpty>
+				<isNotEmpty property="mobilePhone">
+					#mobilePhone#,
+				</isNotEmpty>
+			<include refid="BINOLCMINC99.insertValueSql" />		
+		<![CDATA[
+				)
+    	]]>   				
+    </insert>
+    
+    <!--更新营业员信息表 -->
+	<update id="updateBaInfo" parameterClass="java.util.HashMap">
+		<![CDATA[
+			UPDATE				
+				Basis.BIN_BaInfo			
+			SET				
+				BaName = #baName#,
+				ValidFlag = '1',
+		]]>
+		<isNotEmpty property="organizationID">
+			BIN_OrganizationID=#organizationID#,
+		</isNotEmpty>
+		<isNotEmpty property="mobilePhone">
+			MobilePhone=#mobilePhone#,
+		</isNotEmpty>
+		<include refid="BINOLCMINC99.updateSql" />		
+		<![CDATA[				
+			WHERE					
+				BIN_BaInfoID = #baInfoID#
+		]]>
+    </update>
+    
+        <!-- 验证手机是否唯一  -->
+    <select id="getBaCodeByMobile" parameterClass="java.util.HashMap" resultClass="java.lang.String">
+    	<![CDATA[
+			SELECT
+				BaCode
+			FROM 
+				Basis.BIN_BaInfo
+			WHERE 
+				MobilePhone = #mobilePhone#
+		]]>										
+    </select>
+	
+</sqlMap>

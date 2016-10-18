@@ -1,0 +1,739 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sqlMap PUBLIC "-//iBATIS.com//DTD SQL Map 2.0//EN" "http://ibatis.apache.org/dtd/sql-map-2.dtd">
+<sqlMap namespace="BINOLBSEMP01">
+	<!-- 员工信息查询sql文  -->
+	<sql id="empQuery">
+	 	<![CDATA[
+			SELECT	DISTINCT
+				M.LonginName AS longinName,	
+				M.BIN_UserID AS userId,
+				I.BrandCode AS brandCode,											
+				A.BIN_EmployeeID AS	employeeId,														
+				A.EmployeeCode AS employeeCode,																																																																
+				A.MobilePhone AS mobilePhone,
+				A.Email AS email,
+				A.ValidFlag AS validFlag,
+				C.CategoryCode AS categoryCode,
+				convert(varchar(30),A.UpdateTime,121) AS modifyTime,	
+				ISNULL(A.ModifyCount,0) AS modifyCount,
+				N.DepartureDate AS departureDate,		
+		]]>
+		<dynamic>
+			<isNotEmpty property="language">
+				<isEqual property="language" compareValue="en_US">
+					A.EmployeeNameForeign AS employeeName,
+					H.OrgNameForeign AS orgName,
+					I.BrandNameForeign AS brandName,
+					G.RegionNameForeign AS provinceName,
+					F.RegionNameForeign AS cityName,
+					B.NameForeign AS departName,
+					'('+ ISNULL(B.DepartCode,'')+')'+ B.NameForeign  AS departNameEX,
+					C.CategoryNameForeign AS categoryName	
+				</isEqual>
+				<isEqual property="language" compareValue="zh_CN">	
+					A.EmployeeName AS employeeName,
+					H.OrgNameChinese AS orgName,														
+					I.BrandNameChinese AS brandName,														
+					G.RegionNameChinese AS provinceName,														
+					F.RegionNameChinese AS cityName,
+					B.DepartName AS departName,
+					'('+ ISNULL(B.DepartCode,'')+')'+ B.DepartName  AS departNameEX,
+					C.CategoryName AS categoryName
+				</isEqual>								
+			</isNotEmpty>
+			<isEmpty property="language">
+				A.EmployeeName AS employeeName,
+				H.OrgNameChinese AS orgName,														
+				I.BrandNameChinese AS brandName,														
+				G.RegionNameChinese AS provinceName,														
+				F.RegionNameChinese AS cityName,
+				B.DepartName AS departName,
+				'('+ ISNULL(B.DepartCode,'')+')'+ B.DepartName  AS departNameEX,
+				C.CategoryName AS categoryName
+			</isEmpty>
+		</dynamic>		
+		<![CDATA[													
+			FROM 															
+				Basis.BIN_Employee A
+				LEFT JOIN Basis.BIN_Organization B
+				ON (A.BIN_OrganizationID = B.BIN_OrganizationID AND B.ValidFlag = '1')	
+				LEFT JOIN Privilege.BIN_PositionCategory C
+				ON (A.BIN_PositionCategoryID = C.BIN_PositionCategoryID AND C.ValidFlag = '1')																				
+				LEFT JOIN Basis.BIN_EmployeeAddress D													
+				JOIN Basis.BIN_AddressInfo E 												
+				ON (D.BIN_AddressInfoID = E.BIN_AddressInfoID AND E.ValidFlag = '1')											
+				JOIN Basis.BIN_StandardRegion F												
+				ON (E.StandardCity = F.BIN_RegionID AND F.ValidFlag = '1')											
+				JOIN Basis.BIN_StandardRegion G	
+				ON (E.StandardProvince = G.BIN_RegionID AND G.ValidFlag = '1')											
+				ON (A.BIN_EmployeeID = D.BIN_EmployeeID AND D.DefaultFlag = '1' AND D.ValidFlag = '1')
+				LEFT JOIN Basis.BIN_BrandInfo I
+				ON(A.BIN_BrandInfoID = I.BIN_BrandInfoID AND I.ValidFlag = '1')
+				JOIN Basis.BIN_OrganizationInfo H
+				ON(A.BIN_OrganizationInfoID = H.BIN_OrganizationInfoID AND H.ValidFlag = '1')
+				LEFT JOIN Privilege.BIN_User M
+				ON(A.BIN_EmployeeID = M.BIN_EmployeeID)
+				LEFT JOIN (
+					SELECT 
+						T2.BIN_EmployeeID,
+						T2.DepartureDate
+					FROM 
+						(
+						SELECT 
+							BIN_EmployeeID,
+							MAX(BIN_EmployeeQuitID) AS BIN_EmployeeQuitID  
+						FROM Basis.BIN_EmployeeQuit 
+						GROUP BY BIN_EmployeeID
+						) T1
+					LEFT JOIN  Basis.BIN_EmployeeQuit T2
+					ON T1.BIN_EmployeeQuitID = T2.BIN_EmployeeQuitID
+				) N
+				ON (A.BIN_EmployeeID = N.BIN_EmployeeID)
+		]]>
+			<isNotEmpty property="privilegeFlag">
+			<isEqual property="privilegeFlag" compareValue="1">			
+		<![CDATA[		
+				JOIN (]]><include refid="BINOLCMINC99.employeePrivilegeSql" /><![CDATA[) A99 
+				ON A.BIN_EmployeeID=A99.BIN_SubEmployeeID
+		]]>
+			</isEqual>
+			</isNotEmpty>
+		<![CDATA[		
+			WHERE
+				A.BIN_OrganizationInfoID = #organizationInfoId#			
+		]]>
+		<isNotEmpty prepend="AND" property="brandInfoId">
+				A.BIN_BrandInfoID=#brandInfoId#
+			</isNotEmpty>
+		<isEmpty prepend="AND" property="validFlag" >
+			A.ValidFlag = '1'
+		</isEmpty>
+		<isNotEmpty prepend="AND" property="longinName" >
+			M.LonginName LIKE '%' + #longinName# + '%'
+		</isNotEmpty>
+		<isNotEmpty prepend="AND" property="employeeCode" >
+			A.EmployeeCode LIKE '%' + #employeeCode# + '%'
+		</isNotEmpty>
+		<isNotEmpty prepend="AND" property="employeeName" >
+			A.EmployeeName LIKE '%' + #employeeName# + '%'
+		</isNotEmpty>
+		<isNotEmpty prepend="AND" property="cityId" >
+			E.StandardCity = #cityId#
+		</isNotEmpty>										
+		<isNotEmpty prepend="AND" property="provinceId" >
+			E.StandardProvince = #provinceId#	
+		</isNotEmpty> 
+		<isNotEmpty prepend="AND" property="positionCategoryId" >
+			C.BIN_PositionCategoryID = #positionCategoryId#	
+		</isNotEmpty> 
+		<isNotEmpty prepend="AND" property="organizationId" >
+			B.BIN_OrganizationID = #organizationId#	
+		</isNotEmpty> 
+	</sql>
+	<!-- 取得员工总数  -->
+    <select id="getEmpCount" parameterClass="java.util.HashMap" resultClass="java.lang.Integer">
+    	<![CDATA[
+			SELECT	COUNT(SORT_T1.employeeId) AS count FROM (
+		]]>	
+		<include refid="BINOLBSEMP01.empQuery" />	
+		<![CDATA[	
+			)SORT_T1
+		]]>										
+    </select>
+	
+	<!-- 取得员工信息List  -->
+    <select id="getEmployeeList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+       	<include refid="BINOLCMINC99.pageheader" />
+		<include refid="BINOLBSEMP01.empQuery" />
+		<include refid="BINOLCMINC99.pagefooter" />
+    </select>
+    
+    <!-- 取得带权限的员工所有上级信息SQL  -->
+    <sql id="allEmpPlHigherSql">
+    	<![CDATA[
+		    SELECT 
+		    	1
+			FROM
+				Basis.BIN_Employee Y
+				JOIN (]]><include refid="BINOLCMINC99.employeePrivilegeSql" /><![CDATA[) A99 
+				ON Y.BIN_EmployeeID=A99.BIN_SubEmployeeID
+			WHERE
+				Y.ValidFlag = '1'
+		]]>
+    </sql>
+	
+	<resultMap id="BINOLBSDEP06.NextEmployee" class="java.util.HashMap">
+		<result property="employeeId" column="BIN_EmployeeID"/>
+		<result property="employeeCode" column="EmployeeCode"/>
+		<result property="employeeName" column="EmployeeName"/>
+		<result property="path" column="Path"/>
+		<result property="validFlag" column="ValidFlag"/>
+	</resultMap>
+	
+	<!-- 取得顶层雇员List --><!--
+	<select id="getFirstEmployeeList" parameterClass="java.util.HashMap" resultMap="BINOLBSDEP06.NextEmployee">
+		<![CDATA[WITH allEmpPlHigher AS (]]>	
+		<include refid="BINOLBSEMP01.allEmpPlHigherSql" />
+		<![CDATA[)]]>	
+		
+		<![CDATA[
+			SELECT						
+				X.BIN_EmployeeID,	
+		]]>			
+		<isNotEmpty property="language">
+			<isEqual property="language" compareValue="en_US">
+				X.EmployeeNameForeign AS EmployeeName,
+			</isEqual>
+			<isEqual property="language" compareValue="zh_CN">	
+				X.EmployeeName AS EmployeeName,
+			</isEqual>								
+		</isNotEmpty>
+		<isEmpty property="language">
+				X.EmployeeName AS EmployeeName,
+		</isEmpty>
+		<![CDATA[					
+				X.Path,
+				X.ValidFlag,
+				Y.Child					
+			FROM						
+				Basis.BIN_Employee X JOIN
+				(SELECT 
+					A.BIN_EmployeeID,
+					COUNT(B.BIN_EmployeeID) AS Child
+				FROM
+					allEmpPlHigher A LEFT JOIN allEmpPlHigher B ON B.NodeID.GetAncestor(1) = A.NodeID
+				WHERE
+					A.BIN_PositionCategoryID IN
+			]]>			
+				<iterate property="posCategoryList" open="(" close=")" conjunction=","> 
+					#posCategoryList[].positionCategoryId#
+				</iterate>
+			<![CDATA[
+				GROUP BY
+					A.BIN_EmployeeID) Y ON X.BIN_EmployeeID = Y.BIN_EmployeeID
+			WHERE						
+				X.BIN_OrganizationInfoID=#organizationInfoId#
+		]]>		
+		<dynamic>
+			<isNotEmpty prepend="AND" property="brandInfoId">
+				X.BIN_BrandInfoID=#brandInfoId#
+			</isNotEmpty>
+		</dynamic>	
+    </select>-->
+    
+    <resultMap id="BINOLBSDEP06.FirstEmployee" class="java.util.HashMap">
+		<result property="employeeId" column="BIN_EmployeeID"/>
+		<result property="employeeCode" column="EmployeeCode"/>
+		<result property="employeeName" column="EmployeeName"/>
+		<result property="path" column="Path"/>
+		<result property="level" column="Level"/>
+		<result property="validFlag" column="ValidFlag"/>
+	</resultMap>
+    
+    <!-- 取得顶层雇员List --><!-- 
+	<select id="getFirstEmployeeList" parameterClass="java.util.HashMap" resultMap="BINOLBSDEP06.FirstEmployee">
+		<![CDATA[
+			SELECT DISTINCT					
+				X.BIN_EmployeeID,	
+				X.EmployeeCode,
+		]]>			
+		<isNotEmpty property="language">
+			<isEqual property="language" compareValue="en_US">
+				X.EmployeeNameForeign AS EmployeeName,
+			</isEqual>
+			<isEqual property="language" compareValue="zh_CN">	
+				X.EmployeeName AS EmployeeName,
+			</isEqual>								
+		</isNotEmpty>
+		<isEmpty property="language">
+				X.EmployeeName AS EmployeeName,
+		</isEmpty>
+		<![CDATA[					
+				X.Path,
+				X.Level,
+				X.ValidFlag
+			FROM
+				Basis.BIN_Employee X			
+			WHERE
+				X.ValidFlag = '1' AND
+				X.BIN_OrganizationInfoID=#organizationInfoId# AND
+		]]>		
+			<isNotEmpty property="brandInfoId">
+				X.BIN_BrandInfoID=#brandInfoId# AND
+			</isNotEmpty>	
+		<![CDATA[			
+				X.BIN_PositionCategoryID IN		
+		]]>		
+			<iterate property="posCategoryList" open="(" close=")" conjunction=","> 
+				#posCategoryList[].positionCategoryId#
+			</iterate>
+			<isNotEmpty property="privilegeFlag">
+			<isEqual property="privilegeFlag" compareValue="1">					
+			<![CDATA[
+				AND EXISTS (]]><include refid="BINOLBSEMP01.allEmpPlHigherSql" /><![CDATA[ AND Y.NodeID.IsDescendantOf(X.NodeID) = 1)
+			]]>
+			</isEqual>
+			</isNotEmpty>
+		<![CDATA[		
+			ORDER BY
+				X.Level
+		]]>		
+    </select> -->
+    
+    <!-- 取得顶层雇员List -->
+	<select id="getFirstEmployeeList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+		<![CDATA[
+			SELECT					
+				X.BIN_EmployeeID AS employeeId,	
+				X.EmployeeCode AS employeeCode,
+				X.EmployeeName AS employeeName,					
+				X.Path AS path,
+				X.Level AS level,
+				X.ValidFlag AS validFlag,
+				MAX(Y.BIN_EmployeeID) AS childEmployeeId,
+				COUNT(1) AS childCount
+			FROM
+				Basis.BIN_Employee X,
+				Basis.BIN_Employee Y
+		]]>				
+			<isNotEmpty property="privilegeFlag">
+			<isEqual property="privilegeFlag" compareValue="1">					
+			<![CDATA[
+				JOIN (]]><include refid="BINOLCMINC99.employeePrivilegeSql" /><![CDATA[) A99 
+				ON Y.BIN_EmployeeID=A99.BIN_SubEmployeeID
+			]]>
+			</isEqual>
+			</isNotEmpty>		
+		<![CDATA[						
+			WHERE
+				X.BIN_PositionCategoryID IN
+		]]>		
+			<iterate property="firstPosCategoryList" open="(" close=")" conjunction=","> 
+				#firstPosCategoryList[].positionCategoryId#
+			</iterate>		
+		<![CDATA[
+				AND		
+				X.BIN_OrganizationInfoID=#organizationInfoId# AND
+		]]>		
+			<isNotEmpty property="brandInfoId">
+				X.BIN_BrandInfoID=#brandInfoId# AND
+			</isNotEmpty>	
+		<![CDATA[	
+				Y.NodeID.IsDescendantOf(X.NodeID) = 1
+			GROUP BY
+				X.BIN_EmployeeID,	
+				X.EmployeeCode,
+				X.EmployeeName,					
+				X.Path,
+				X.Level,
+				X.ValidFlag	
+			ORDER BY
+				X.Level	
+		]]>		
+    </select>
+	
+	<!-- 取得直属下级雇员 --><!-- 
+	<select id="getNextEmployeeList" parameterClass="java.util.HashMap" resultMap="BINOLBSDEP06.NextEmployee">
+		<![CDATA[WITH allEmpPlHigher AS (]]>	
+		<include refid="BINOLBSEMP01.allEmpPlHigherSql" />
+		<![CDATA[)]]>	
+		
+		<![CDATA[
+			SELECT						
+				X.BIN_EmployeeID,	
+		]]>			
+		<isNotEmpty property="language">
+			<isEqual property="language" compareValue="en_US">
+				X.EmployeeNameForeign AS EmployeeName,
+			</isEqual>
+			<isEqual property="language" compareValue="zh_CN">	
+				X.EmployeeName AS EmployeeName,
+			</isEqual>								
+		</isNotEmpty>
+		<isEmpty property="language">
+				X.EmployeeName AS EmployeeName,
+		</isEmpty>
+		<![CDATA[					
+				X.Path,
+				X.ValidFlag,
+				Y.Child					
+			FROM						
+				Basis.BIN_Employee X JOIN
+				(SELECT 
+					A.BIN_EmployeeID,
+					COUNT(B.BIN_EmployeeID) AS Child
+				FROM
+					allEmpPlHigher A LEFT JOIN allEmpPlHigher B ON B.NodeID.GetAncestor(1) = A.NodeID,
+					Basis.BIN_Employee C
+				WHERE
+					A.NodeID.GetAncestor(1) = C.NodeID AND
+					C.BIN_EmployeeID = #path#
+				GROUP BY
+					A.BIN_EmployeeID) Y ON X.BIN_EmployeeID = Y.BIN_EmployeeID
+			WHERE						
+				X.BIN_OrganizationInfoID=#organizationInfoId#
+		]]>		
+		
+		<dynamic>
+			<isNotEmpty prepend="AND" property="brandInfoId">
+				X.BIN_BrandInfoID=#brandInfoId#
+			</isNotEmpty>
+		</dynamic>				
+    </select> -->
+    
+    <!-- 取得直属下级雇员 --><!-- 
+	<select id="getNextEmployeeList" parameterClass="java.util.HashMap" resultMap="BINOLBSDEP06.NextEmployee">
+		<![CDATA[
+			SELECT DISTINCT					
+				X.BIN_EmployeeID,	
+				X.EmployeeCode,
+		]]>			
+		<isNotEmpty property="language">
+			<isEqual property="language" compareValue="en_US">
+				X.EmployeeNameForeign AS EmployeeName,
+			</isEqual>
+			<isEqual property="language" compareValue="zh_CN">	
+				X.EmployeeName AS EmployeeName,
+			</isEqual>								
+		</isNotEmpty>
+		<isEmpty property="language">
+				X.EmployeeName AS EmployeeName,
+		</isEmpty>
+		<![CDATA[					
+				X.Path,
+				X.ValidFlag		
+			FROM						
+				Basis.BIN_Employee Z,
+				Basis.BIN_Employee X
+			WHERE						
+				X.NodeID.GetAncestor(1) = Z.NodeID AND
+				Z.BIN_EmployeeID = #path# AND
+				X.ValidFlag = '1' AND
+				X.BIN_OrganizationInfoID=#organizationInfoId#
+		]]>		
+			<isNotEmpty prepend="AND" property="brandInfoId">
+				X.BIN_BrandInfoID=#brandInfoId#
+			</isNotEmpty>		
+			<isNotEmpty property="privilegeFlag">
+			<isEqual property="privilegeFlag" compareValue="1">					
+			<![CDATA[
+				AND EXISTS (]]><include refid="BINOLBSEMP01.allEmpPlHigherSql" /><![CDATA[ AND Y.NodeID.IsDescendantOf(X.NodeID) = 1)
+			]]>
+			</isEqual>
+			</isNotEmpty>	
+    </select> -->
+    
+    <!-- 取得直属下级雇员 -->
+	<select id="getNextEmployeeList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+		<![CDATA[
+			SELECT					
+				X.BIN_EmployeeID AS employeeId,	
+				X.EmployeeCode AS employeeCode,
+				X.EmployeeName AS employeeName,					
+				X.Path AS path,
+				X.Level AS level,
+				X.ValidFlag AS validFlag,
+				MAX(Y.BIN_EmployeeID) AS childEmployeeId,
+				COUNT(1) AS childCount
+			FROM						
+				Basis.BIN_Employee Z,
+				Basis.BIN_Employee X,
+				Basis.BIN_Employee Y
+		]]>				
+			<isNotEmpty property="privilegeFlag">
+			<isEqual property="privilegeFlag" compareValue="1">					
+			<![CDATA[
+				JOIN (]]><include refid="BINOLCMINC99.employeePrivilegeSql" /><![CDATA[) A99 
+				ON Y.BIN_EmployeeID=A99.BIN_SubEmployeeID
+			]]>
+			</isEqual>
+			</isNotEmpty>		
+		<![CDATA[				
+			WHERE						
+				X.NodeID.GetAncestor(1) = Z.NodeID AND
+				Z.BIN_EmployeeID = #path# AND
+				X.BIN_OrganizationInfoID=#organizationInfoId# AND
+		]]>		
+			<isNotEmpty property="brandInfoId">
+				X.BIN_BrandInfoID=#brandInfoId# AND
+			</isNotEmpty>
+		<![CDATA[	
+				Y.NodeID.IsDescendantOf(X.NodeID) = 1
+			GROUP BY
+				X.BIN_EmployeeID,	
+				X.EmployeeCode,
+				X.EmployeeName,					
+				X.Path,
+				X.Level,
+				X.ValidFlag
+		]]>			
+    </select>
+    
+    <!-- 取得未知节点的下级雇员（带权限） --><!-- 
+	<select id="getRootNextEmpByplList" parameterClass="java.util.HashMap" resultMap="BINOLBSDEP06.NextEmployee">
+		<![CDATA[WITH allEmpPlHigher AS (]]>	
+		<include refid="BINOLBSEMP01.allEmpPlHigherSql" />
+		<![CDATA[)]]>	
+		
+		<![CDATA[
+			SELECT						
+				X.BIN_EmployeeID,	
+		]]>			
+		<isNotEmpty property="language">
+			<isEqual property="language" compareValue="en_US">
+				X.EmployeeNameForeign AS EmployeeName,
+			</isEqual>
+			<isEqual property="language" compareValue="zh_CN">	
+				X.EmployeeName AS EmployeeName,
+			</isEqual>								
+		</isNotEmpty>
+		<isEmpty property="language">
+				X.EmployeeName AS EmployeeName,
+		</isEmpty>
+		<![CDATA[					
+				X.Path,
+				X.ValidFlag,
+				Y.Child					
+			FROM						
+				Basis.BIN_Employee X JOIN
+				(SELECT 
+					A.BIN_EmployeeID,
+					COUNT(B.BIN_EmployeeID) AS Child
+				FROM
+					allEmpPlHigher A LEFT JOIN allEmpPlHigher B ON B.NodeID.GetAncestor(1) = A.NodeID,
+					Privilege.BIN_PositionCategory C
+				WHERE
+					A.NodeID.GetAncestor(1) = '/' AND
+					A.BIN_PositionCategoryID = C.BIN_PositionCategoryID AND
+					C.Grade > #grade#
+				GROUP BY
+					A.BIN_EmployeeID) Y ON X.BIN_EmployeeID = Y.BIN_EmployeeID
+			WHERE						
+				X.BIN_OrganizationInfoID=#organizationInfoId#
+		]]>		
+		
+		<dynamic>
+			<isNotEmpty prepend="AND" property="brandInfoId">
+				X.BIN_BrandInfoID=#brandInfoId#
+			</isNotEmpty>
+		</dynamic>				
+    </select> -->
+    
+    <!-- 取得未知节点的下级雇员 --><!--
+	<select id="getRootNextEmpByplList" parameterClass="java.util.HashMap" resultMap="BINOLBSDEP06.NextEmployee">
+		<![CDATA[
+			SELECT DISTINCT					
+				X.BIN_EmployeeID,	
+				X.EmployeeCode,
+		]]>			
+		<isNotEmpty property="language">
+			<isEqual property="language" compareValue="en_US">
+				X.EmployeeNameForeign AS EmployeeName,
+			</isEqual>
+			<isEqual property="language" compareValue="zh_CN">	
+				X.EmployeeName AS EmployeeName,
+			</isEqual>								
+		</isNotEmpty>
+		<isEmpty property="language">
+				X.EmployeeName AS EmployeeName,
+		</isEmpty>
+		<![CDATA[					
+				X.Path,
+				X.ValidFlag		
+			FROM						
+				Privilege.BIN_PositionCategory Z,
+				Basis.BIN_Employee X
+			WHERE						
+				X.NodeID.GetAncestor(1) = '/' AND
+				X.BIN_PositionCategoryID = Z.BIN_PositionCategoryID AND
+				Z.Grade > #grade# AND
+				X.ValidFlag = '1' AND
+				X.BIN_OrganizationInfoID=#organizationInfoId#
+		]]>		
+			<isNotEmpty prepend="AND" property="brandInfoId">
+				X.BIN_BrandInfoID=#brandInfoId#
+			</isNotEmpty>
+			<isNotEmpty property="privilegeFlag">
+			<isEqual property="privilegeFlag" compareValue="1">					
+			<![CDATA[
+				AND EXISTS (]]><include refid="BINOLBSEMP01.allEmpPlHigherSql" /><![CDATA[ AND Y.NodeID.IsDescendantOf(X.NodeID) = 1)
+			]]>
+			</isEqual>
+			</isNotEmpty>			
+    </select> -->
+    
+    <!-- 取得未知节点的下级雇员 -->
+	<select id="getRootNextEmpByplList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+		<![CDATA[
+			SELECT					
+				X.BIN_EmployeeID AS employeeId,	
+				X.EmployeeCode AS employeeCode,
+				X.EmployeeName AS employeeName,					
+				X.Path AS path,
+				X.Level AS level,
+				X.ValidFlag AS validFlag,
+				MAX(Y.BIN_EmployeeID) AS childEmployeeId,
+				COUNT(1) AS childCount
+			FROM						
+				Basis.BIN_Employee X,
+				Basis.BIN_Employee Y
+		]]>				
+			<isNotEmpty property="privilegeFlag">
+			<isEqual property="privilegeFlag" compareValue="1">					
+			<![CDATA[
+				JOIN (]]><include refid="BINOLCMINC99.employeePrivilegeSql" /><![CDATA[) A99 
+				ON Y.BIN_EmployeeID=A99.BIN_SubEmployeeID
+			]]>
+			</isEqual>
+			</isNotEmpty>		
+		<![CDATA[			
+			WHERE						
+				X.NodeID.GetAncestor(1) = '/' AND	
+				X.BIN_PositionCategoryID IN
+		]]>		
+			<iterate property="otherPosCategoryList" open="(" close=")" conjunction=","> 
+				#otherPosCategoryList[].positionCategoryId#
+			</iterate>		
+		<![CDATA[
+				AND
+				X.BIN_OrganizationInfoID=#organizationInfoId# AND
+		]]>		
+			<isNotEmpty property="brandInfoId">
+				X.BIN_BrandInfoID=#brandInfoId# AND
+			</isNotEmpty>
+		<![CDATA[	
+				Y.NodeID.IsDescendantOf(X.NodeID) = 1
+			GROUP BY
+				X.BIN_EmployeeID,	
+				X.EmployeeCode,
+				X.EmployeeName,					
+				X.Path,
+				X.Level,
+				X.ValidFlag
+		]]>						
+    </select>
+    
+    <!-- 取得用户权限中的所有岗位级别信息List -->
+	<select id="getPosCategoryList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+        <![CDATA[
+			SELECT DISTINCT
+				A.BIN_PositionCategoryID AS positionCategoryId,
+				A.Grade AS grade
+			FROM
+				Privilege.BIN_PositionCategory A
+		]]>
+			<isNotEmpty property="privilegeFlag">
+			<isEqual property="privilegeFlag" compareValue="1">			
+		<![CDATA[			
+				JOIN Basis.BIN_Employee B JOIN (]]><include refid="BINOLCMINC99.employeePrivilegeSql" /><![CDATA[) A99 
+				ON (B.BIN_EmployeeID=A99.BIN_SubEmployeeID)
+				ON A.BIN_PositionCategoryID = B.BIN_PositionCategoryID
+		]]>
+			</isEqual>
+			</isNotEmpty>
+		<![CDATA[		
+			WHERE
+				A.ValidFlag = '1' AND
+				A.BIN_OrganizationInfoID=#organizationInfoId#
+		]]>
+			<isNotEmpty prepend="AND" property="brandInfoId">
+				A.BIN_BrandInfoID=#brandInfoId#
+			</isNotEmpty>
+		<![CDATA[	
+			ORDER BY
+				A.Grade
+		]]>
+    </select>
+    
+    <!-- 查询定位到的员工的所有上级员工位置 -->
+	<select id="getLocationHigher" parameterClass="java.util.HashMap" resultClass="java.lang.String">
+		<![CDATA[
+			SELECT
+				A.BIN_EmployeeID
+			FROM
+				Basis.BIN_Employee A,
+				Basis.BIN_Employee B
+			WHERE
+				A.BIN_OrganizationInfoID=#organizationInfoId# AND
+		]]>
+			<isNotEmpty property="brandInfoId">
+				A.BIN_BrandInfoID=#brandInfoId# AND
+			</isNotEmpty>
+		<![CDATA[	
+				B.NodeID.IsDescendantOf(A.NodeID) = 1 AND
+				B.BIN_EmployeeID = #employeeId# AND
+				A.BIN_EmployeeID <> #employeeId# AND
+				A.ValidFlag = '1'
+			ORDER BY
+				A.Path
+		]]>
+    </select>
+    
+    <!-- 查询定位到的员工ID -->
+	<select id="getLocationEmployeeId" parameterClass="java.util.HashMap" resultClass="java.lang.String">
+		<![CDATA[
+			SELECT TOP 1
+				A.BIN_EmployeeID AS employeeId
+			FROM
+				Basis.BIN_Employee A
+		]]>
+			<isNotEmpty property="privilegeFlag">
+			<isEqual property="privilegeFlag" compareValue="1">			
+		<![CDATA[		
+				JOIN (]]><include refid="BINOLCMINC99.employeePrivilegeSql" /><![CDATA[) A99 
+				ON A.BIN_EmployeeID=A99.BIN_SubEmployeeID
+		]]>
+			</isEqual>
+			</isNotEmpty>
+		<![CDATA[			
+			WHERE
+				A.BIN_OrganizationInfoID=#organizationInfoId# AND
+		]]>
+			<isNotEmpty property="brandInfoId">
+				A.BIN_BrandInfoID=#brandInfoId# AND
+			</isNotEmpty>
+		<![CDATA[
+				(A.EmployeeCode like '%'+#locationPosition#+'%' OR
+				A.EmployeeName like '%'+#locationPosition#+'%' OR
+				A.EmployeeNameForeign like '%'+#locationPosition#+'%') AND
+				A.ValidFlag = '1'
+			ORDER BY
+				A.Path
+		]]>
+    </select>
+    
+    <!-- 取得存在下级节点的员工List -->
+	<select id="getHasLowerEmpList" parameterClass="java.util.HashMap" resultClass="java.lang.String">
+        <![CDATA[
+			SELECT DISTINCT
+				Z.BIN_EmployeeID
+			FROM						
+				Basis.BIN_Employee Z,
+				Basis.BIN_Employee X	
+			WHERE						
+				X.NodeID.GetAncestor(1) = Z.NodeID AND
+				Z.BIN_EmployeeID IN
+		]]>			
+			<iterate property="employeeList" open="(" close=")" conjunction=","> 
+				#employeeList[].employeeId#
+			</iterate>	
+		<![CDATA[ AND
+				X.ValidFlag = '1' AND
+				X.BIN_OrganizationInfoID=#organizationInfoId#
+		]]>		
+			<isNotEmpty prepend="AND" property="brandInfoId">
+				X.BIN_BrandInfoID=#brandInfoId#
+			</isNotEmpty>
+			<isNotEmpty property="privilegeFlag">
+			<isEqual property="privilegeFlag" compareValue="1">					
+			<![CDATA[
+				AND EXISTS (]]><include refid="BINOLBSEMP01.allEmpPlHigherSql" /><![CDATA[ AND Y.NodeID.IsDescendantOf(X.NodeID) = 1)
+			]]>
+			</isEqual>
+			</isNotEmpty>			
+    </select>
+    	<!-- 取得员工信息List(EXCel导出)  -->
+    <select id="getEmployeeExcelList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">  
+		<include refid="BINOLBSEMP01.empQuery" />
+    </select>
+</sqlMap>

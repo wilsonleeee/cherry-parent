@@ -1,0 +1,249 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sqlMap PUBLIC "-//iBATIS.com//DTD SQL Map 2.0//EN" "http://ibatis.apache.org/dtd/sql-map-2.dtd">
+<sqlMap namespace="BINOLSTYLDZ01">
+     <sql id="querySaleList">
+      <![CDATA[
+		SELECT
+			BIN_BillId AS billId,
+			BatchID AS batchID,
+			TradeDate AS tradeDate,
+			TradeTime AS tradeTime,
+			CardCode AS cardCode,
+			CompanyCode AS companyCode,
+			CompanyName AS companyName,
+			PosCode AS posCode,
+			PosBillCode AS posBillCode,
+			SysBillCode AS sysBillCode,
+			HedgingBillCode AS hedgingBillCode,
+			ReferenceCode AS referenceCode,
+			TradeType AS tradeType,
+			Amount AS amount,
+			TradeResult AS tradeResult,
+			TradeAnswer AS tradeAnswer
+		FROM
+			Sale.BIN_BankBills
+		WHERE
+			ValidFlag='1'
+		]]>
+		<isNotEmpty prepend="AND" property="sysBillCode">
+			<![CDATA[SysBillCode=#sysBillCode#]]>
+		</isNotEmpty>
+		<isNotEmpty prepend="AND" property="hedgingBillCode">
+			<![CDATA[HedgingBillCode LIKE '%' + #hedgingBillCode# + '%']]>
+		</isNotEmpty>
+		<isNotEmpty prepend="AND" property="posBillCode">
+			<![CDATA[PosBillCode LIKE '%' + #posBillCode# + '%']]>
+		</isNotEmpty>
+		<isNotEmpty prepend="AND" property="referenceCode">
+			<![CDATA[ReferenceCode LIKE '%' + #referenceCode# + '%']]>
+		</isNotEmpty>
+		<isNotEmpty prepend="AND" property="posCode">
+			<![CDATA[PosCode LIKE '%' + #posCode# + '%']]>
+		</isNotEmpty>
+		<isNotEmpty prepend="AND" property="companyCode">
+			<![CDATA[CompanyCode LIKE '%' + #companyCode# + '%']]>
+		</isNotEmpty>
+		<isNotEmpty prepend="AND" property="cardCode">
+			<![CDATA[CardCode LIKE '%' + #cardCode# + '%']]>
+		</isNotEmpty>
+		<isNotEmpty prepend="AND" property="companyName">
+			<![CDATA[CompanyName LIKE '%' + #companyName# + '%']]>
+		</isNotEmpty>
+		<isNotEmpty prepend="AND" property="tradeResult">
+			<![CDATA[TradeResult LIKE '%' + #tradeResult# + '%']]>
+		</isNotEmpty>
+		<isNotEmpty prepend="AND" property="tradeAnswer">
+			<![CDATA[TradeAnswer LIKE '%' + #tradeAnswer# + '%']]>
+		</isNotEmpty>
+		<isNotEmpty prepend="AND" property="batchId">
+			<![CDATA[BatchId=#batchId#]]>
+		</isNotEmpty>
+		<isNotEmpty prepend="AND" property="tradeType">
+			<![CDATA[TradeType=#tradeType#]]>
+		</isNotEmpty>
+		<isNotEmpty prepend="AND" property="tradeDateStart">
+			<![CDATA[tradeDate>=#tradeDateStart#]]>
+		</isNotEmpty>
+		<isNotEmpty prepend="AND" property="tradeDateEnd">
+			<![CDATA[tradeDate<=#tradeDateEnd#]]>
+		</isNotEmpty>
+	 </sql>
+	<!-- 取得销售总数  -->
+    <select id="getSaleListCount" parameterClass="java.util.HashMap" resultClass="java.lang.Integer">
+    	<![CDATA[
+			SELECT	COUNT(1) AS count FROM (
+		]]>	
+		<include refid="BINOLSTYLDZ01.querySaleList" />	
+		<![CDATA[	
+			)SORT_T1
+		]]>										
+    </select>
+    <!-- 取得销售数据  -->
+    <select id="getSaleList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+    	<include refid="BINOLCMINC99.pageheader" />
+		<include refid="BINOLSTYLDZ01.querySaleList" />	
+		<include refid="BINOLCMINC99.pagefooter" />
+    </select>
+    <!-- 取得要编辑数据  -->
+    <select id="editInit" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+    	SELECT 
+    		BIN_BillId AS billId,
+    		TradeDate AS tradeDate,
+			TradeTime AS tradeTime,
+			SysBillCode AS sysBillCode,
+			CardCode AS cardCode,
+			CompanyCode AS companyCode,
+			CompanyName AS companyName,
+            PosCode AS posCode,
+            PosBillCode AS posBillCode,
+			HedgingBillCode AS hedgingBillCode,
+			ReferenceCode AS referenceCode,
+			Amount AS amount,
+			TradeType AS tradeType,
+			TradeResult AS tradeResult,
+			TradeAnswer AS tradeAnswer
+		FROM 
+			Sale.BIN_BankBills
+		WHERE
+			BIN_BillId=#billId#
+    </select>
+    <!-- 跟新数据  -->
+	<update id="updateBankBill" parameterClass="java.util.HashMap">
+		<![CDATA[
+			UPDATE 		
+				Sale.BIN_BankBills
+			SET	
+				TradeDate = #tradeDate#,
+				TradeTime = #tradeTime#,
+				SysBillCode = #sysBillCode#,
+				CardCode = #cardCode#,
+				CompanyCode = #companyCode#,
+				CompanyName = #companyName#,
+	            PosCode = #posCode#,
+	            PosBillCode = #posBillCode#,
+				HedgingBillCode = #hedgingBillCode#,
+				ReferenceCode = #referenceCode#,
+				Amount = #amount#,
+				TradeType = #tradeType#,
+				TradeResult = #tradeResult#,
+				TradeAnswer = #tradeAnswer#,
+		]]>
+			<include refid="BINOLCMINC99.updateSql" />
+		<![CDATA[
+			WHERE					
+				BIN_BillId = #billId# AND
+				BIN_BrandInfoID = #brandInfoId# AND
+				BIN_OrganizationInfoID = #organizationInfoId# AND
+				ValidFlag = '1'
+		]]>
+    </update>
+    <!--删除【银行对账单】逻辑删除-->
+    <update id="deleteBankBillsByBill" parameterClass="java.util.HashMap">
+        <![CDATA[
+            UPDATE
+                Sale.BIN_BankBills
+            SET
+                ValidFlag = '0',
+        ]]>
+			<include refid="BINOLCMINC99.updateSql" />
+		<![CDATA[
+            WHERE
+                BIN_BillId=#billId# AND 
+                ValidFlag = '1'
+        ]]>
+    </update>
+    <!-- 插入银行对账单/POS签购单表 -->
+    <insert id="addBankBill" parameterClass="java.util.HashMap">
+    	MERGE [Sale].[BIN_BankBills] AS BK
+    		USING(
+    			SELECT
+    				#organizationInfoId# AS organizationInfoId,
+					#brandInfoId# AS brandInfoId,
+					#tradeDate# AS tradeDate,
+					#posCode# AS posCode,
+					#posBillCode# AS posBillCode
+    		) AS SRC
+    		ON(
+    			BK.BIN_OrganizationInfoID=SRC.organizationInfoId AND
+				BK.BIN_BrandInfoID=SRC.brandInfoId AND
+				BK.TradeDate=SRC.tradeDate AND
+				BK.PosCode=SRC.posCode AND
+				BK.PosBillCode=SRC.posBillCode AND
+				BK.ValidFlag='1'
+    		)
+    		WHEN MATCHED THEN	
+	    		UPDATE SET	
+	    			CardCode = #cardCode#,
+					CompanyCode = #companyCode#,
+					CompanyName = #companyName#,
+		            PosCode = #posCode#,
+		            PosBillCode = #posBillCode#,
+					HedgingBillCode = #hedgingBillCode#,
+					ReferenceCode = #referenceCode#,
+					Amount = #amount#,
+					TradeType = #tradeType#,
+					TradeResult = #tradeResult#,
+					TradeAnswer = #tradeAnswer#,
+					<include refid="BINOLCMINC99.updateSql" />
+			WHEN NOT MATCHED THEN 
+			INSERT(
+					BIN_OrganizationInfoID,
+					BIN_BrandInfoID,
+					BatchId,
+					TradeDate,
+					TradeTime,
+					CardCode,
+					CompanyCode,
+					CompanyName,
+					PosCode,
+					PosBillCode,
+					SysBillCode,
+					HedgingBillCode,
+					ReferenceCode,
+					TradeType,
+					Amount,
+					TradeResult,
+					TradeAnswer,
+					<include refid="BINOLCMINC99.insertKeySql" />
+				)
+				VALUES
+				(
+					#organizationInfoId#,
+					#brandInfoId#,
+					#batchId#,
+					#tradeDate#,
+					#tradeTime#,
+					#cardCode#,
+					#companyCode#,
+					#companyName#,
+					#posCode#,
+					#posBillCode#,
+					#sysBillCode#,
+					#hedgingBillCode#,
+					#referenceCode#,
+					#tradeType#,
+					#amount#,
+					#tradeResult#,
+					#tradeAnswer#,
+					<include refid="BINOLCMINC99.insertValueSql" />
+				);
+	</insert>
+	
+	<!-- 查询销售单据号是否重复 -->
+	<select id="checkBillCode" parameterClass="java.util.HashMap" resultClass="java.lang.Integer">
+    	<![CDATA[
+		SELECT
+			COUNT(BIN_BillId) AS count
+		FROM
+			Sale.BIN_BankBills
+		WHERE
+			TradeDate=#tradeDate# AND
+			PosCode=#posCode# AND
+			PosBillCode=#posBillCode# AND
+			ValidFlag='1'
+		]]>	
+		<isNotEmpty property="billId" prepend="AND">
+			BIN_BillId!=#billId#
+		</isNotEmpty>
+	</select>	
+</sqlMap>

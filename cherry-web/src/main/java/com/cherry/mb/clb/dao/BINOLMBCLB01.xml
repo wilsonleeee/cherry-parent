@@ -1,0 +1,238 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sqlMap PUBLIC "-//iBATIS.com//DTD SQL Map 2.0//EN" "http://ibatis.apache.org/dtd/sql-map-2.dtd">
+<sqlMap namespace="BINOLMBCLB01">
+	<!-- 取得俱乐部List  -->
+    <sql id="getClub">
+       	<![CDATA[
+				SELECT 
+					BIN_MemberClubID AS memberClubId,
+					ClubCode AS clubCode,
+		]]>
+		<dynamic>
+		<isNotEmpty property="language">
+			<isEqual property="language" compareValue="en_US">
+			ClubNameForeign AS clubName,
+			</isEqual>
+			<isEqual property="language" compareValue="zh_CN">	
+			ClubName AS clubName,
+			</isEqual>								
+		</isNotEmpty>
+		<isEmpty property="language">
+			ClubName AS clubName,
+		</isEmpty>
+		</dynamic>
+		 <![CDATA[	
+					DescriptionDtl AS descriptionDtl,
+					ValidFlag AS validFlag
+				FROM
+					Members.BIN_MemberClub
+				WHERE
+					BIN_BrandInfoID = #brandInfoId# AND
+					BIN_OrganizationInfoID = #organizationInfoId#
+			]]>
+			<dynamic>
+				<isNotEmpty property="clubName">
+					AND (ClubName LIKE '%' + #clubName# + '%' OR
+					ClubNameForeign LIKE '%' + #clubName# + '%')
+				</isNotEmpty>
+				<isNotEmpty property="clubCode">
+					AND ClubCode LIKE '%' + #clubCode# + '%'
+				</isNotEmpty>
+				<isNotEmpty property="validFlag">
+					AND ValidFlag = #validFlag#
+				</isNotEmpty>
+			</dynamic>
+    </sql>
+	<!-- 取得俱乐部List(带权限)  -->
+    <sql id="getClubWithPrivil">
+       	<![CDATA[
+				SELECT DISTINCT
+					A.BIN_MemberClubID AS memberClubId,
+					A.ClubCode AS clubCode,
+		]]>
+		<dynamic>
+		<isNotEmpty property="language">
+			<isEqual property="language" compareValue="en_US">
+			A.ClubNameForeign AS clubName,
+			</isEqual>
+			<isEqual property="language" compareValue="zh_CN">	
+			A.ClubName AS clubName,
+			</isEqual>								
+		</isNotEmpty>
+		<isEmpty property="language">
+			A.ClubName AS clubName,
+		</isEmpty>
+		</dynamic>
+		 <![CDATA[	
+					A.DescriptionDtl AS descriptionDtl,
+					A.ValidFlag AS validFlag
+				FROM
+					Members.BIN_MemberClub A WITH(NOLOCK) JOIN
+					Members.BIN_MemClubCondition D WITH(NOLOCK)
+					ON(A.BIN_MemberClubID = D.BIN_MemberClubID) JOIN
+					(
+		]]>
+			<![CDATA[
+					SELECT 
+						oz.BIN_OrganizationID AS counterOrgId,
+						oz.BIN_CityID AS cityId,
+						C.BIN_ChannelID AS channelId,
+						C.CounterCode AS counterCode
+				 	FROM
+						Basis.BIN_Organization oz WITH(NOLOCK)
+						JOIN(
+						]]>
+						<include refid="BINOLCMINC99.departPrivilegeSql" />
+						<![CDATA[
+						)dp
+						ON(dp.BIN_OrganizationID = oz.BIN_OrganizationID)
+						JOIN Basis.BIN_Region B WITH(NOLOCK)
+						ON(oz.BIN_CityID = B.BIN_RegionID 
+							AND B.ValidFlag = '1') JOIN
+						Basis.BIN_CounterInfo C WITH(NOLOCK)
+						ON(oz.BIN_OrganizationID = C.BIN_OrganizationID)
+			) T ON((A.LocationType = '1' AND D.PropValue = convert(varchar,T.cityId)) OR
+				(A.LocationType IN ('2','4','5') AND D.PropValue = T.counterCode) OR
+				(A.LocationType = '3' AND D.PropValue = convert(varchar,T.channelId))
+				)
+				WHERE
+					A.BIN_BrandInfoID = #brandInfoId# AND
+					A.BIN_OrganizationInfoID = #organizationInfoId# AND
+					T.counterOrgId = #prmCounterId#
+			]]>
+			<dynamic>
+				<isNotEmpty property="clubName">
+					AND (A.ClubName LIKE '%' + #clubName# + '%' OR
+					A.ClubNameForeign LIKE '%' + #clubName# + '%')
+				</isNotEmpty>
+				<isNotEmpty property="clubCode">
+					AND A.ClubCode LIKE '%' + #clubCode# + '%'
+				</isNotEmpty>
+				<isNotEmpty property="validFlag">
+					AND A.ValidFlag = #validFlag#
+				</isNotEmpty>
+			</dynamic>
+		<![CDATA[
+		UNION
+				SELECT DISTINCT
+					A.BIN_MemberClubID AS memberClubId,
+					A.ClubCode AS clubCode,
+		]]>
+		<dynamic>
+		<isNotEmpty property="language">
+			<isEqual property="language" compareValue="en_US">
+			A.ClubNameForeign AS clubName,
+			</isEqual>
+			<isEqual property="language" compareValue="zh_CN">	
+			A.ClubName AS clubName,
+			</isEqual>								
+		</isNotEmpty>
+		<isEmpty property="language">
+			A.ClubName AS clubName,
+		</isEmpty>
+		</dynamic>
+		 <![CDATA[	
+					A.DescriptionDtl AS descriptionDtl,
+					A.ValidFlag AS validFlag
+				FROM
+					Members.BIN_MemberClub A
+		WHERE
+					A.BIN_BrandInfoID = #brandInfoId# AND
+					A.BIN_OrganizationInfoID = #organizationInfoId# AND
+					A.LocationType = '0'
+			]]>
+			<dynamic>
+				<isNotEmpty property="clubName">
+					AND (A.ClubName LIKE '%' + #clubName# + '%' OR
+					A.ClubNameForeign LIKE '%' + #clubName# + '%')
+				</isNotEmpty>
+				<isNotEmpty property="clubCode">
+					AND A.ClubCode LIKE '%' + #clubCode# + '%'
+				</isNotEmpty>
+				<isNotEmpty property="validFlag">
+					AND A.ValidFlag = #validFlag#
+				</isNotEmpty>
+			</dynamic>
+    </sql>
+    
+    <!-- 取得俱乐部List  -->
+	<select id="getClubList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+		<include refid="BINOLCMINC99.pageheader" />
+		<include refid="BINOLMBCLB01.getClub" />
+		<include refid="BINOLCMINC99.pagefooter" />
+	</select>
+	
+	<!-- 取得俱乐部件数  -->
+    <select id="getClubCount" parameterClass="java.util.HashMap" resultClass="java.lang.Integer">
+       	<![CDATA[
+			SELECT	COUNT(SORT_T1.memberClubId) AS count FROM (
+		]]>	
+		<include refid="BINOLMBCLB01.getClub" />	
+		<![CDATA[	
+			)SORT_T1
+		]]>	
+    </select>
+    
+    <!-- 取得俱乐部List(带权限)  -->
+	<select id="getClubWithPrivilList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+		<include refid="BINOLCMINC99.pageheader" />
+		<include refid="BINOLMBCLB01.getClubWithPrivil" />
+		<include refid="BINOLCMINC99.pagefooter" />
+	</select>
+	
+	<!-- 取得俱乐部件数(带权限)  -->
+    <select id="getClubWithPrivilCount" parameterClass="java.util.HashMap" resultClass="java.lang.Integer">
+       	<![CDATA[
+			SELECT	COUNT(SORT_T1.memberClubId) AS count FROM (
+		]]>	
+		<include refid="BINOLMBCLB01.getClubWithPrivil" />	
+		<![CDATA[	
+			)SORT_T1
+		]]>	
+    </select>
+    
+     <!-- 停用俱乐部  -->
+	<update id="updateValidClub" parameterClass="java.util.HashMap">
+		<![CDATA[
+       UPDATE 
+       		Members.BIN_MemberClub
+		SET 
+			ValidFlag = '0',
+			InvalidDate = GETDATE(),
+			InvalidReason = #reason#,
+			SendFlag = CASE WHEN SendFlag = '1' THEN '2' ELSE '1' END,
+		]]>
+		<include refid="BINOLCMINC99.updateSql" />		
+    <![CDATA[
+       WHERE 
+			BIN_MemberClubID = #memberClubId#
+    ]]>
+    </update>
+    
+    <!-- 取得需要下发的俱乐部件数  -->
+    <select id="getNeedSendClubCount" parameterClass="java.util.HashMap" resultClass="java.lang.Integer">
+       	<![CDATA[
+			SELECT	
+				COUNT(1)
+			FROM
+				Members.BIN_MemberClub
+			WHERE
+				BIN_BrandInfoID = #brandInfoId# AND
+				SendFlag IN ('0', '2')
+		]]>	
+    </select>
+    
+    <!-- 取得正在下发的俱乐部件数  -->
+    <select id="getExecClubCount" parameterClass="java.util.HashMap" resultClass="java.lang.Integer">
+       	<![CDATA[
+			SELECT	
+				COUNT(1)
+			FROM
+				Members.BIN_MemberClub
+			WHERE
+				BIN_BrandInfoID = #brandInfoId# AND
+				BatchFlag = '1'
+		]]>	
+    </select>
+</sqlMap>
+

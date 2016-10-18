@@ -1,0 +1,114 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE sqlMap PUBLIC "-//iBATIS.com//DTD SQL Map 2.0//EN" "http://ibatis.apache.org/dtd/sql-map-2.dtd">
+<sqlMap namespace="BINOLMORPT04">
+	<!--根据答卷ID获取考核答卷信息-->
+	<select id="getCheckAnswer" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+		<![CDATA[
+            SELECT
+				A.BIN_PaperAnswerID AS paperAnswerId,
+				CONVERT(varchar(30),A.CreateTime,120) AS answerDate,
+				A.TotalPoint AS totalPoint,
+				A.PointLevel AS pointLevel,
+				A.PaperType AS paperType,
+				B.BIN_PaperID AS paperId,
+				B.PaperName AS paperName,
+				B.MaxPoint AS maxPoint,
+				C.DepartCode AS departCode,
+				D.EmployeeCode AS employeeCode,
+				E.Name AS memName,
+				F.MemCode AS memCode,
+		]]>
+		<dynamic>
+			<isNotEmpty property="language">
+				<isEqual property="language" compareValue="en_US">
+					C.NameForeign AS departName,
+					D.EmployeeNameForeign AS employeeName
+				</isEqual>
+				<isEqual property="language" compareValue="zh_CN">	
+					C.DepartName AS departName,
+					D.EmployeeName AS employeeName
+				</isEqual>								
+			</isNotEmpty>
+			<isEmpty property="language"> 
+				C.DepartName AS departName,
+				D.EmployeeName AS employeeName
+			</isEmpty>
+		</dynamic>
+		<![CDATA[
+			FROM
+				Monitor.BIN_PaperAnswer A WITH(NOLOCK)
+				JOIN Monitor.BIN_Paper B WITH(NOLOCK)
+				ON A.BIN_PaperID = B.BIN_PaperID
+				LEFT JOIN Basis.BIN_Organization C WITH(NOLOCK)
+				ON A.BIN_OrganizationID = C.BIN_OrganizationID AND C.ValidFlag = '1'
+				LEFT JOIN Basis.BIN_Employee D WITH(NOLOCK)
+				ON A.BACode = D.EmployeeCode AND D.ValidFlag = '1'
+				LEFT JOIN Members.BIN_MemberInfo E WITH(NOLOCK)
+				ON A.BIN_MemberInfoID = E.BIN_MemberInfoID AND E.ValidFlag = '1'
+				LEFT JOIN Members.BIN_MemCardInfo F WITH(NOLOCK)
+				ON(E.BIN_MemberInfoID = F.BIN_MemberInfoID AND F.ValidFlag='1' AND F.CardValidFlag='1')
+			WHERE
+				A.BIN_PaperAnswerID = #paperAnswerId#
+		]]>	
+	</select>
+	
+	<!-- 根据问卷ID和答卷ID获取问题和答案 -->
+	<select id="getCheckQuestionList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+		<![CDATA[
+			SELECT 
+	      		A.QuestionType AS questionType,
+	      		A.QuestionItem AS questionItem,
+	      		A.Point AS orginalPoint,
+	      		A.OptionA AS optionA,
+	      		A.OptionB AS optionB,
+	      		A.OptionC AS optionC,
+	      		A.OptionD AS optionD,
+	      		A.OptionE AS optionE,
+	      		A.OptionF AS optionF,
+	      		A.OptionG AS optionG,
+	      		A.OptionH AS optionH,
+	      		A.OptionI AS optionI,
+	      		A.OptionJ AS optionJ,
+	      		A.OptionK AS optionK,
+	      		A.OptionL AS optionL,
+	      		A.OptionM AS optionM,
+	      		A.OptionN AS optionN,
+	      		A.OptionO AS optionO,
+	      		A.OptionP AS optionP,
+	      		A.OptionQ AS optionQ,
+	      		A.OptionR AS optionR,
+	      		A.OptionS AS optionS,
+	      		A.OptionT AS optionT,
+	      		A.PointA AS pointA,
+	      		A.PointB AS pointB,
+	      		A.PointC AS pointC,
+	      		A.PointD AS pointD,
+	      		A.PointE AS pointE,
+	      		A.PointF AS pointF,
+	      		A.PointG AS pointG,
+	      		A.PointH AS pointH,
+	      		A.PointI AS pointI,
+	      		A.PointJ AS pointJ,
+	      		A.PointK AS pointK,
+	      		A.PointL AS pointL,
+	      		A.PointM AS pointM,
+	      		A.PointN AS pointN,
+	      		A.PointO AS pointO,
+	      		A.PointP AS pointP,
+	      		A.PointQ AS pointQ,
+	      		A.PointR AS pointR,
+	      		A.PointS AS pointS,
+	      		A.PointT AS pointT,
+	      		B.Answer AS answer,
+	      		B.Point AS point,
+	      		A.BIN_PaperQuestionID AS paperQuestionId
+	  		FROM
+				Monitor.BIN_PaperQuestion A 
+				LEFT JOIN Monitor.BIN_PaperAnswerDetail B ON A.BIN_PaperQuestionID = B.BIN_PaperQuestionID AND B.BIN_PaperAnswerID = #paperAnswerId#
+			WHERE
+				A.BIN_PaperID = #paperId#
+			ORDER BY
+				A.DisplayOrder
+		]]>		
+	</select>
+</sqlMap>

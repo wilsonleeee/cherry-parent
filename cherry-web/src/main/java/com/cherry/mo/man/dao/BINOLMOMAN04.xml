@@ -1,0 +1,645 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sqlMap PUBLIC "-//iBATIS.com//DTD SQL Map 2.0//EN" "http://ibatis.apache.org/dtd/sql-map-2.dtd">
+<sqlMap namespace="BINOLMOMAN04">
+	<!--设置了升级状态的柜台所在的大区LIST-->
+	<select id = "getRegionList" parameterClass = "java.util.HashMap" resultClass = "java.util.HashMap">
+		<![CDATA[
+			WITH c AS 								
+				( 								
+					SELECT
+						A.BIN_RegionID AS id,
+						A.NodeId AS nodeId,
+						CASE 
+							WHEN A.RegionCode IS NULL
+							THEN A.RegionNameChinese
+							ELSE '('+A.RegionCode+')'+A.RegionNameChinese END AS regionNameChinese,										
+						A.RegionType AS regionType,
+						A.BIN_BrandInfoID AS brandInfoId,
+						D.UpdateStatus AS updateStatus,
+						D.MachineType AS  machineType
+					FROM
+						Basis.BIN_Region A
+						JOIN Basis.BIN_CounterInfo B
+						ON (A.BIN_RegionID = B.BIN_RegionID
+						AND B.ValidFlag = 1)
+						JOIN Monitor.BIN_CounterUpgrade D
+						ON(B.BIN_CounterInfoID = D.BIN_CounterInfoID AND
+						D.ValidFlag = 1)
+						WHERE A.ValidFlag = 1 AND
+						A.BIN_BrandInfoID = #brandInfoId#						
+					UNION ALL							
+					SELECT							
+						D.BIN_RegionID,	
+						D.NodeId,
+						CASE WHEN D.RegionCode IS NULL
+							THEN D.RegionNameChinese
+							ELSE '('+D.RegionCode+')'+D.RegionNameChinese END,												
+						D.RegionType,
+						D.BIN_BrandInfoId,						
+						c.updateStatus,
+						c.machineType						
+					FROM 							
+						Basis.BIN_Region D						
+						JOIN c ON 						
+						D.NodeId = c.NodeId.GetAncestor(1)						
+				)								
+			SELECT								
+				DISTINCT id,
+				regionNameChinese AS name,
+				regionType,	
+				updateStatus,
+				machineType,
+				brandInfoId					
+			FROM 								
+				c							
+			WHERE								
+				regionType = '0' AND
+				machineType = #machineType#							
+		]]>
+	</select>
+	
+	<!--未设置升级状态的柜台所在的大区LIST-->
+	<select id="getRegionNoUpdateStatus" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+		<![CDATA[
+			WITH C AS
+				(
+					SELECT
+						A.BIN_RegionID AS id,
+						A.NodeId AS nodeId,																	
+						CASE 
+							WHEN A.RegionCode IS NULL
+							THEN A.RegionNameChinese
+							ELSE '('+A.RegionCode+')'+A.RegionNameChinese END AS regionNameChinese,												
+						A.RegionType AS regionType,
+						A.BIN_BrandInfoID AS brandInfoId,
+						#machineType# AS machineType
+					FROM
+						Basis.BIN_Region A
+						JOIN Basis.BIN_CounterInfo B
+						ON (A.BIN_RegionID = B.BIN_RegionID
+						AND B.ValidFlag = 1
+						AND B.BIN_BrandInfoID = #brandInfoId#)
+					WHERE
+						NOT EXISTS
+						(SELECT
+							DISTINCT BIN_CounterInfoId
+						FROM 
+							Monitor.BIN_CounterUpgrade C
+						WHERE
+							B.BIN_CounterInfoID = C.BIN_CounterInfoID
+							AND C.ValidFlag = 1
+							AND C.MachineType = #machineType#
+							AND C.BIN_BrandInfoId = #brandInfoId#)
+					UNION ALL							
+					SELECT							
+						D.BIN_RegionID,	
+						D.NodeId,
+						CASE WHEN D.RegionCode IS NULL
+							THEN D.RegionNameChinese
+							ELSE '('+D.RegionCode+')'+D.RegionNameChinese END,
+						D.RegionType,
+						D.BIN_BrandInfoId,
+						c.machineType												
+					FROM 							
+						Basis.BIN_Region D						
+						JOIN c ON 						
+						D.NodeId = c.NodeId.GetAncestor(1)	
+				)
+			SELECT								
+				DISTINCT id,
+				regionNameChinese AS name,
+				regionType,	
+				brandInfoId,
+				machineType					
+			FROM 								
+				C							
+			WHERE								
+				regionType = '0'
+		]]>
+	</select>
+	
+	<!--设置了升级状态的柜台根据上级区域获得下级区域-->
+	<select id = "getSubRegionList" parameterClass = "java.util.HashMap" resultClass = "java.util.HashMap">
+		<![CDATA[
+			declare @NodeId hierarchyid
+			select @NodeId=NodeId from Basis.BIN_Region where BIN_RegionID=#id#;
+			WITH c AS 													
+				( 													
+					SELECT
+						A.BIN_RegionID AS id,
+						A.NodeId AS nodeId,																	
+						A.RegionNameChinese AS regionNameChinese,												
+						A.RegionType AS regionType,
+						A.BIN_BrandInfoId AS brandInfoId,
+						D.UpdateStatus AS updateStatus,
+						D.MachineType AS  machineType
+					FROM
+						Basis.BIN_Region A
+						JOIN Basis.BIN_CounterInfo B
+						ON (A.BIN_RegionID = B.BIN_RegionID
+						AND B.ValidFlag = 1)
+						JOIN Monitor.BIN_CounterUpgrade D
+						ON(B.BIN_CounterInfoID = D.BIN_CounterInfoID AND
+						D.ValidFlag = 1)
+						WHERE A.ValidFlag = 1 AND
+						A.BIN_BrandInfoID = #brandInfoId#						
+					UNION ALL							
+					SELECT							
+						D.BIN_RegionID,	
+						D.NodeId,																
+						D.RegionNameChinese,											
+						D.RegionType,
+						D.BIN_BrandInfoId,						
+						c.updateStatus,
+						c.machineType						
+					FROM 							
+						Basis.BIN_Region D						
+						JOIN c ON 						
+						D.NodeId = c.NodeId.GetAncestor(1)										
+				)													
+			SELECT 													
+				distinct A.BIN_RegionID AS id,
+				CASE 
+					WHEN A.RegionCode IS NULL
+					THEN A.RegionNameChinese
+					ELSE '('+A.RegionCode+')'+A.RegionNameChinese END AS name,																			
+				A.RegionType AS regionType,												
+				c.updateStatus AS updateStatus,
+				c.machineType AS machineType,
+				c.brandInfoId												
+			FROM 													
+				Basis.BIN_Region A												
+				join c												
+				on A.BIN_RegionID = c.id							
+			WHERE													
+				A.NodeId.IsDescendantOf(@NodeId)=1 AND 												
+				A.ValidFlag ='1' AND
+				c.machineType = #machineType# AND											
+				c.updateStatus =#updateStatus#]]>	
+				<dynamic>	
+					<isNotEmpty prepend="AND" property="regionType">
+						<![CDATA[c.regionType = #regionType# ]]>
+					</isNotEmpty>
+					<isNotEmpty prepend="AND" property="capital">
+						<![CDATA[c.regionType in (#capital#,#city#) ]]>
+					</isNotEmpty>
+				</dynamic>
+	</select>
+	
+	<!--未设置升级状态的柜台根据上级区域获得下级区域-->
+	<select id = "getSubRegionNoUpdateStatus" parameterClass = "java.util.HashMap" resultClass = "java.util.HashMap">
+		<![CDATA[
+			declare @NodeId hierarchyid
+			select @NodeId=NodeId from Basis.BIN_Region where BIN_RegionID=#id#;
+			WITH c AS 													
+				( 													
+					SELECT
+						A.BIN_RegionID AS id,
+						A.NodeId AS nodeId,																	
+						A.RegionNameChinese AS regionNameChinese,												
+						A.RegionType AS regionType,
+						A.BIN_BrandInfoID AS brandInfoId,
+						#machineType# AS machineType
+					FROM
+						Basis.BIN_Region A
+						JOIN Basis.BIN_CounterInfo B
+						ON (A.BIN_RegionID = B.BIN_RegionID
+						AND B.ValidFlag = 1
+						AND B.BIN_BrandInfoID = #brandInfoId#)
+					WHERE
+						NOT EXISTS
+						(SELECT
+							DISTINCT BIN_CounterInfoId
+						FROM 
+							Monitor.BIN_CounterUpgrade C
+						WHERE
+							B.BIN_CounterInfoID = C.BIN_CounterInfoID
+							AND C.ValidFlag = 1
+							AND C.MachineType = #machineType#
+							AND C.BIN_BrandInfoId = #brandInfoId#)
+					UNION ALL							
+					SELECT							
+						D.BIN_RegionID,	
+						D.NodeId,																
+						D.RegionNameChinese,												
+						D.RegionType,
+						D.BIN_BrandInfoId,
+						c.machineType												
+					FROM 							
+						Basis.BIN_Region D						
+						JOIN c ON 						
+						D.NodeId = c.NodeId.GetAncestor(1)										
+				)													
+			SELECT 													
+				distinct A.BIN_RegionID AS id,
+				CASE 
+					WHEN A.RegionCode IS NULL
+					THEN A.RegionNameChinese
+					ELSE '('+A.RegionCode+')'+A.RegionNameChinese END AS name,																					
+				A.RegionType AS regionType,												
+				c.brandInfoId,
+				c.machineType												
+			FROM 													
+				Basis.BIN_Region A												
+				join C												
+				on A.BIN_RegionID = C.id							
+			WHERE													
+				A.NodeId.IsDescendantOf(@NodeId)=1 AND 												
+				A.ValidFlag ='1']]>	
+				<dynamic>	
+					<isNotEmpty prepend="AND" property="regionType">
+						<![CDATA[C.regionType = #regionType# ]]>
+					</isNotEmpty>
+					<isNotEmpty prepend="AND" property="capital">
+						<![CDATA[C.regionType in (#capital#,#city#) ]]>
+					</isNotEmpty>
+				</dynamic>
+	</select>
+	
+	<!--设置了升级状态的柜台树展开节点时根据区域获得相应的柜台信息-->
+	<select id = "getCounterList" parameterClass = "java.util.HashMap" resultClass = "java.util.HashMap">
+		<![CDATA[
+				DECLARE @NodeId hierarchyid    
+				SELECT @NodeId=NodeId FROM Basis.BIN_Region WHERE BIN_RegionID=#id# AND ValidFlag = 1;
+			WITH cc AS (
+					SELECT 
+						E.BIN_CounterInfoID,
+						F.MachineType,
+						F.SoftWareVersion,
+						F.MachineCode,
+						F.LastConnTime
+					FROM 
+						Monitor.BIN_MachineCodeCollate E     
+						LEFT JOIN(
+							SELECT
+								MachineType,
+								MachineCode,
+								SoftWareVersion,
+								LastConnTime
+							FROM 
+								Monitor.BIN_MachineInfo MI 
+							WHERE 
+								MI.MachineType=#machineType#
+						
+						) F     
+						ON(E.MachineCode=F.MachineCode)
+					WHERE 
+						F.MachineCode IS NOT NULL
+			)   
+			SELECT                
+				distinct B.BIN_CounterInfoID AS id,
+				CASE WHEN B.CounterCode IS NULL THEN B.CounterNameIF 
+					ELSE '(' + B.CounterCode + ')' + B.CounterNameIF END
+				+ CASE ISNULL(T0.MachineType,'') WHEN '' THEN '' 
+					WHEN 'W1' THEN '[WITPOSI]' 
+					WHEN 'W2' THEN '[WITPOSII]'
+					WHEN 'W3' THEN '[WITPOSIII]'
+					WHEN 'WM' THEN '[WITPOSmini]'
+					WHEN 'WS' THEN '[WITSERVER]'
+					WHEN 'MP' THEN '[MobilePOS]' END
+				+ CASE ISNULL(T0.SoftWareVersion,'') WHEN '' THEN '' 
+					ELSE '[' + T0.SoftWareVersion + ']' END
+				AS name,
+				CASE WHEN datediff(minute,T1.LastConnTime,getdate()) < 60 THEN 1 ELSE 0 END AS connectFlag, 
+				B.BIN_RegionID AS regionId,              
+				C.UpdateStatus AS updateStatus,     
+				C.MachineType AS machineType,
+				B.BIN_BrandInfoID AS brandInfoId            
+			FROM                
+				Basis.BIN_Region A,              
+				Basis.BIN_CounterInfo B,
+				Monitor.BIN_CounterUpgrade C
+				LEFT JOIN cc T0
+				ON(C.BIN_CounterInfoID=T0.BIN_CounterInfoID
+					AND T0.SoftWareVersion=(
+							SELECT 
+								MAX(SoftWareVersion) 
+							FROM 
+								cc 
+							WHERE 
+								BIN_CounterInfoID=T0.BIN_CounterInfoID
+							)
+				)
+				LEFT JOIN cc T1
+				ON(C.BIN_CounterInfoID=T1.BIN_CounterInfoID
+				 AND T1.LastConnTime=(SELECT MAX(LastConnTime) FROM cc where BIN_CounterInfoID=T1.BIN_CounterInfoID)
+				) 
+			WHERE                
+				A.NodeId.IsDescendantOf(@NodeId)=1 AND              
+				A.BIN_RegionID = B.BIN_RegionID AND     
+				B.BIN_CounterInfoID = C.BIN_CounterInfoID AND                      
+				C.UpdateStatus = #updateStatus# AND     
+				C.MachineType = #machineType#  AND
+				A.ValidFlag = 1 AND
+				B.ValidFlag = 1 AND
+				C.ValidFlag = 1 AND
+				B.BIN_BrandInfoID = #brandInfoId#
+		]]>
+	</select>
+	
+	<!--未设置升级状态的柜台树展开节点时根据区域获得相应的柜台信息-->
+	<select id="getCounterNoUpdateStatus" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+		<![CDATA[
+			DECLARE @NodeId hierarchyid    
+			SELECT @NodeId=NodeId FROM Basis.BIN_Region WHERE BIN_RegionID=#id# AND ValidFlag = 1;
+			WITH cc AS (
+					SELECT 
+						E.BIN_CounterInfoID,
+						F.MachineType,
+						F.SoftWareVersion,
+						F.MachineCode,
+						F.LastConnTime
+					FROM 
+						Monitor.BIN_MachineCodeCollate E     
+						LEFT JOIN(
+							SELECT
+								MachineType,
+								MachineCode,
+								SoftWareVersion,
+								LastConnTime
+							FROM 
+								Monitor.BIN_MachineInfo MI 
+							WHERE 
+								MI.MachineType=#machineType#
+						
+						) F     
+						ON(E.MachineCode=F.MachineCode)
+					WHERE 
+						F.MachineCode IS NOT NULL
+			)
+			SELECT
+				distinct B.BIN_CounterInfoID AS id,
+				CASE WHEN B.CounterCode IS NULL THEN B.CounterNameIF 
+					ELSE '(' + B.CounterCode + ')' + B.CounterNameIF END
+				+ CASE ISNULL(T0.MachineType,'') WHEN '' THEN '' 
+					WHEN 'W1' THEN '[WITPOSI]' 
+					WHEN 'W2' THEN '[WITPOSII]'
+					WHEN 'W3' THEN '[WITPOSIII]'
+					WHEN 'WM' THEN '[WITPOSmini]'
+					WHEN 'WS' THEN '[WITSERVER]'
+					WHEN 'MP' THEN '[MobilePOS]' END
+				+ CASE ISNULL(T0.SoftWareVersion,'') WHEN '' THEN '' 
+					ELSE '[' + T0.SoftWareVersion + ']' END
+				AS name,
+				CASE WHEN datediff(minute,T1.LastConnTime,getdate()) < 60 THEN 1 ELSE 0 END AS connectFlag,           
+				B.BIN_RegionID AS regionId,
+				D.BrandCode AS BrandCode,
+				D.LastCode AS LastCode,
+				B.CounterCode AS CounterCode,
+				#machineType# AS MachineType                  
+			FROM
+				Basis.BIN_Region A,              
+				Basis.BIN_CounterInfo B
+				LEFT JOIN cc T0
+				ON(B.BIN_CounterInfoID=T0.BIN_CounterInfoID
+					AND T0.SoftWareVersion=(
+							SELECT 
+								MAX(SoftWareVersion) 
+							FROM 
+								cc 
+							WHERE 
+								BIN_CounterInfoID=T0.BIN_CounterInfoID
+							)
+				)
+				LEFT JOIN cc T1
+				ON(B.BIN_CounterInfoID=T1.BIN_CounterInfoID
+				 AND T1.LastConnTime=(SELECT MAX(LastConnTime) FROM cc where BIN_CounterInfoID=T1.BIN_CounterInfoID)
+				),
+				Basis.BIN_BrandInfo D
+			WHERE
+				A.NodeId.IsDescendantOf(@NodeId)=1 AND              
+				A.BIN_RegionID = B.BIN_RegionID AND  
+				B.BIN_BrandInfoID = #brandInfoId# AND
+				B.ValidFlag = '1' AND
+				A.ValidFlag = '1' AND
+				D.BIN_BrandInfoID = B.BIN_BrandInfoID AND
+			NOT EXISTS
+			(SELECT
+				DISTINCT BIN_CounterInfoId
+			FROM 
+				Monitor.BIN_CounterUpgrade C
+			WHERE
+				B.BIN_CounterInfoID = C.BIN_CounterInfoID
+				AND C.ValidFlag = 1
+				AND C.MachineType = #machineType# 
+				AND C.BIN_BrandInfoID = #brandInfoId#)
+		]]>
+	</select>
+	
+	<!--根据柜台ID更行柜台机器升级状态-->
+	<update id = "updateCounterUpdateStatusByCounterId" parameterClass = "java.util.HashMap">
+		<![CDATA[
+			UPDATE
+				Monitor.BIN_CounterUpgrade
+			SET
+				UpdateStatus = #newUpdateStatus#,
+		]]>
+			<include refid="BINOLCMINC99.updateSql" />
+		<![CDATA[
+			WHERE
+				BIN_CounterInfoID = #id# AND
+				MachineType = #machineType# AND
+				BIN_BrandInfoId = #brandInfoId#
+		]]>
+	</update>
+	<!--根据区域ID更新柜台机器升级状态-->
+	<update id = "updateCounterUpdateStatusByRegionId" parameterClass = "java.util.HashMap">
+		<![CDATA[
+			DECLARE @NodeId hierarchyid    
+			SELECT @NodeId=NodeId FROM Basis.BIN_Region WHERE BIN_RegionID=#id#
+			UPDATE
+				Monitor.BIN_CounterUpgrade
+			SET
+				UpdateStatus = #newUpdateStatus#,
+		]]>
+			<include refid="BINOLCMINC99.updateSql" />
+		<![CDATA[
+			WHERE
+				BIN_CounterInfoID
+			IN (
+				SELECT                
+					distinct B.BIN_CounterInfoID                     
+				FROM                
+					Basis.BIN_Region A,              
+					Basis.BIN_CounterInfo B,     
+					Monitor.BIN_CounterUpgrade C              
+				WHERE                
+					A.NodeId.IsDescendantOf(@NodeId)=1 AND              
+					A.BIN_RegionID = B.BIN_RegionID AND     
+					C.BIN_CounterInfoID = B.BIN_CounterInfoID AND     
+					C.BIN_CounterInfoID = B.BIN_CounterInfoID AND                      
+					C.UpdateStatus = #updateStatus# AND     
+					C.MachineType = #machineType# AND
+					C.BIN_BrandInfoID = #brandInfoId#
+				) AND
+				MachineType = #machineType# AND
+				BIN_BrandInfoID = #brandInfoId#
+		]]>
+	</update>
+	<!--更新机器升级状态时根据区域信息获得柜台信息，供下发时使用-->
+	<select id="getCounterInformationWhenUpdateStatusByRegionId" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+		<![CDATA[
+		DECLARE @NodeId hierarchyid    
+		SELECT @NodeId=NodeId FROM Basis.BIN_Region WHERE BIN_RegionID=#id# AND ValidFlag = 1    
+		SELECT                
+			distinct B.CounterCode AS CounterCode,
+			D.BrandCode AS BrandCode,
+			D.LastCode AS LastCode,
+			C.MachineType AS MachineType
+		FROM
+			Basis.BIN_Region A,
+			Basis.BIN_CounterInfo B,
+			Monitor.BIN_CounterUpgrade C,
+			Basis.BIN_BrandInfo D
+		WHERE
+			A.NodeId.IsDescendantOf(@NodeId)=1 AND
+			A.BIN_RegionID = B.BIN_RegionID AND
+			C.BIN_CounterInfoID = B.BIN_CounterInfoID AND
+			C.BIN_CounterInfoID = B.BIN_CounterInfoID AND
+			C.UpdateStatus = #updateStatus# AND
+			C.MachineType = #machineType#  AND
+			A.ValidFlag = 1 AND
+			B.ValidFlag = 1 AND
+			C.ValidFlag = 1 AND
+			B.BIN_BrandInfoID = #brandInfoId# AND
+			B.BIN_BrandInfoID = D.BIN_BrandInfoID AND
+			D.ValidFlag = 1
+		]]>
+	</select>
+	<!--更细柜台升级状态时根据柜台ID获取柜台信息,供下发时使用-->
+	<select id="getCounterInformationWhenUpdateStatusByCounterId" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+		<![CDATA[	
+			SELECT
+				A.CounterCode AS CounterCode,
+				B.BrandCode AS BrandCode,
+				B.LastCode AS LastCode,
+				C.MachineType AS MachineType,
+				C.UpdateStatus AS UpdateStatus
+			FROM
+				Basis.BIN_CounterInfo A,
+				Basis.BIN_BrandInfo B,
+				Monitor.BIN_CounterUpgrade C
+			WHERE
+				A.BIN_BrandInfoID = B.BIN_BrandInfoID AND
+				A.BIN_CounterInfoID = #id# AND
+				B.BIN_BrandInfoID = #brandInfoId# AND
+				C.BIN_CounterInfoID = A.BIN_CounterInfoID AND
+				C.MachineType = #machineType# AND
+				A.ValidFlag = 1 AND
+				B.ValidFlag = 1 AND
+				C.ValidFlag = 1 
+		]]>
+	</select>
+	
+	<!--根据柜台信息删除柜台升级状态表中的相应的数据-->
+	<delete id="deleteUpdateStatusByCounter" parameterClass="java.util.HashMap">
+		<![CDATA[
+			DELETE FROM
+				Monitor.BIN_CounterUpgrade
+			WHERE
+				UpdateStatus = #updateStatus#
+				AND MachineType = #machineType#
+				AND BIN_CounterInfoID = #id#
+				AND BIN_BrandInfoID = #brandInfoId#
+		]]>
+	</delete>
+	
+	<!--删除指定区域下的柜台的在升级状态表中的相应的数据-->
+	<delete id="deleteUpdateStatusByRegion" parameterClass="java.util.HashMap">
+		<![CDATA[
+			DECLARE @NodeId hierarchyid    
+			SELECT @NodeId=NodeId FROM Basis.BIN_Region WHERE BIN_RegionID=#id# AND ValidFlag = 1
+			DELETE FROM
+				Monitor.BIN_CounterUpgrade
+			WHERE
+				UpdateStatus =#updateStatus#
+				AND MachineType =#machineType#
+				AND BIN_BrandInfoID = #brandInfoId#
+				AND
+				EXISTS
+				(SELECT
+					*
+				FROM
+					Basis.BIN_Region A,              
+					Basis.BIN_CounterInfo B
+				WHERE
+					A.NodeId.IsDescendantOf(@NodeId)=1 AND              
+					A.BIN_RegionID = B.BIN_RegionID AND
+					Monitor.BIN_CounterUpgrade.BIN_CounterInfoID = B.BIN_CounterInfoID AND
+					B.BIN_BrandInfoId = #brandInfoId#)
+		]]>
+	</delete>
+	
+	<!--根据柜台信息向柜台升级信息表中插入数据-->
+	<insert id="insertUpdateStatusByCounter" parameterClass="java.util.HashMap">
+		<![CDATA[
+			DECLARE @counterCode nvarchar(15)
+			DECLARE @brandCode varchar(10)
+			SELECT @counterCode=CounterCode FROM Basis.BIN_CounterInfo WHERE BIN_CounterInfoID = #id#
+			SELECT @brandCode=BrandCode FROM Basis.BIN_BrandInfo WHERE BIN_BrandInfoID = #brandInfoId#
+			INSERT INTO
+				Monitor.BIN_CounterUpgrade
+				(
+					BIN_CounterInfoID,
+					CounterCode,
+					BIN_BrandInfoID,
+					BrandCode,
+					MachineType,
+					UpdateStatus,
+			]]>
+				<include refid="BINOLCMINC99.insertKeySql" />
+		<![CDATA[
+				)
+			values
+				(
+					#id#,
+					@counterCode,
+					#brandInfoId#,
+					@brandCode,
+					#machineType#,
+					#updateStatus#,
+			]]>
+				 <include refid="BINOLCMINC99.insertValueSql" />
+		<![CDATA[	
+				)
+			]]>
+	</insert>
+	<!--取得柜台code值-->
+	<select id="getCounterCode" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+		<![CDATA[
+			SELECT 
+				CounterCode 
+			FROM 
+				Basis.BIN_CounterInfo
+			WHERE 
+				BIN_CounterInfoID = #id#
+		]]>
+	</select>
+	<!--取得品牌Code和LastCode-->
+	<select id="getBrandCodeAndLastCode" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+		<![CDATA[
+			SELECT 
+				BrandCode,
+				LastCode 
+			FROM 
+				Basis.BIN_BrandInfo
+			WHERE 
+				BIN_BrandInfoID = #brandInfoId#
+		]]>
+	</select>
+	
+    <!--取得机器类型List-->
+    <select id="getMachineTypeList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+        <![CDATA[
+            SELECT 
+                DISTINCT MachineType 
+            FROM 
+                Monitor.BIN_MachineInfo
+            WHERE 
+                BIN_OrganizationInfoID = #organizationInfoId#
+				AND BIN_BrandInfoID = #brandInfoId#
+				AND ValidFlag = '1'
+        ]]>
+    </select>
+</sqlMap>
+ 

@@ -1,0 +1,640 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sqlMap PUBLIC "-//iBATIS.com//DTD SQL Map 2.0//EN" "http://ibatis.apache.org/dtd/sql-map-2.dtd">
+<sqlMap namespace="BINOLMOCIO07_01">
+<sql id="targetQuery">
+<isNotEqual property="type" compareValue="3">
+	<![CDATA[
+		SELECT
+		   A.BIN_SaleDayTargetID as saleTargetID,
+		   '2' as targetDateType,
+		   A.Type as type,
+		   A.TargetDate as targetDate,
+		   A.TargetMoney as targetMoney,
+		   A.TargetQuantity as targetQuantity,
+		   A.CompleteMoney as completeMoney,
+		   A.CompleteQuantity as completeQuantity,
+		   A.SynchroFlag AS synchroFlag,
+		   CASE ISNULL(B.DepartCode,'') WHEN '' THEN B.DepartName ELSE '('+B.DepartCode+')' + B.DepartName END AS parameter,
+		   B.DepartName AS parameterName,
+		   B.DepartCode AS different,
+		   B.BIN_OrganizationID AS parameterID,
+		   A.TargetType AS targetType,
+		   CASE ISNULL(A.ActivityCode,'') WHEN '' THEN A.ActivityName ELSE '('+A.ActivityCode+')' + A.ActivityName END AS activity,
+		   A.ActivityCode AS activityCode,
+		   A.ActivityName AS activityName,
+		   A.Source AS source,
+		   CONVERT(VARCHAR(30),A.TargetSetTime,120) AS targetSetTime
+		FROM
+			Basis.BIN_Organization B
+			LEFT JOIN Monitor.BIN_SaleDayTarget A on B.BIN_OrganizationID=A.Parameter
+	    ]]>
+		<isNotEmpty prepend="AND" property="validFlag" >
+		<![CDATA[A.ValidFlag = '1']]>
+		</isNotEmpty>
+		<isNotEmpty prepend="AND" property="targetDate" >
+		<![CDATA[A.TargetDate = #targetDate#]]>
+		</isNotEmpty>
+		<isNotEmpty prepend="AND" property="type" >
+		<![CDATA[A.Type = #type#]]>
+		</isNotEmpty>
+		<isNotEmpty prepend="AND" property="targetType" >
+		<![CDATA[A.TargetType = #targetType#]]>
+		</isNotEmpty>
+		<isNotEmpty prepend="AND" property="activityCode" >
+		<![CDATA[A.ActivityCode = #activityCode#]]>
+		</isNotEmpty>
+		<isNotEmpty prepend="AND" property="activityName" >
+		<![CDATA[A.ActivityName = #activityName#]]>
+		</isNotEmpty>
+		<![CDATA[
+		WHERE
+			B.BIN_OrganizationInfoID = #organizationInfoId# AND
+		  	B.ValidFlag = '1' 
+		]]>
+		<![CDATA[AND EXISTS (]]>
+			<include refid="BINOLCMINC99.getDepartList" />
+		<![CDATA[AND B.BIN_OrganizationID = A99.BIN_OrganizationID )]]>
+		<isEqual prepend = "AND" property="type" compareValue="1"><!-- 大区 -->
+		  	B.Type='5'
+		</isEqual>
+		<isEqual prepend = "AND" property="type" compareValue="2"><!-- 柜台 -->
+		  	B.Type='4'
+		</isEqual>
+		<isEqual prepend = "AND" property="type" compareValue="4"><!-- 办事处 -->
+		  	B.Type='2'
+		</isEqual>
+		<isEqual prepend = "AND" property="type" compareValue="5"><!-- 经销商 -->
+		  	B.Type='3'
+		</isEqual>
+		<isEqual prepend = "AND" property="type" compareValue="6"><!-- 柜台主管 -->
+		  	B.Type='6'
+		</isEqual>
+		<isNotEmpty prepend = "AND" property = "brandInfoId">
+				B.BIN_BrandInfoID=#brandInfoId#
+		</isNotEmpty>
+		<isNotEmpty prepend="AND" property="parameter">
+		(B.DepartName LIKE '%' + #parameter# + '%')
+		</isNotEmpty>
+		<!-- 导出时仅导出有设置销售目标的单位信息 -->
+		<isNotEmpty prepend="AND" property="exportModel" >
+		<![CDATA[A.BIN_SaleDayTargetID IS NOT NULL]]>
+		</isNotEmpty>
+</isNotEqual>
+<isEqual property="type" compareValue="3">
+		<![CDATA[
+		SELECT
+		   A.BIN_SaleDayTargetID as saleTargetID,
+		   '2' as targetDateType,
+		   A.Type as type,
+		   A.TargetDate as targetDate,
+		   A.TargetMoney as targetMoney,
+		   A.TargetQuantity as targetQuantity,
+		   A.CompleteMoney as completeMoney,
+		   A.CompleteQuantity as completeQuantity,
+		   A.SynchroFlag AS synchroFlag,
+		   CASE ISNULL(D.BaCode,'') WHEN '' THEN D.BaName ELSE '('+D.BaCode+')' + D.BaName END AS parameter,
+		   D.BaName AS parameterName,
+		   D.BaCode AS different,
+		   D.BIN_EmployeeID AS parameterID,
+		   A.TargetType AS targetType,
+		   CASE ISNULL(A.ActivityCode,'') WHEN '' THEN A.ActivityName ELSE '('+A.ActivityCode+')' + A.ActivityName END AS activity,
+		   A.ActivityCode AS activityCode,
+		   A.ActivityName AS activityName,
+		   A.Source AS source,
+           CONVERT(VARCHAR(30),A.TargetSetTime,120) AS targetSetTime
+		FROM
+			BASIS.BIN_BaInfo D
+		]]>
+        <![CDATA[
+            JOIN (]]><include refid="BINOLCMINC99.employeePrivilegeSql" /><![CDATA[) A99
+            ON D.BIN_EmployeeID=A99.BIN_SubEmployeeID
+        ]]>
+        <![CDATA[
+            LEFT JOIN Monitor.BIN_SaleDayTarget A on D.BIN_EmployeeID=A.Parameter
+        ]]>
+			<isNotEmpty prepend="AND" property="validFlag" >
+			<![CDATA[A.ValidFlag = '1']]>
+			</isNotEmpty>
+			<isNotEmpty prepend="AND" property="targetDate" >
+			<![CDATA[A.TargetDate = #targetDate#]]>
+			</isNotEmpty>
+			<isNotEmpty prepend="AND" property="type" >
+			<![CDATA[A.Type = #type#]]>
+			</isNotEmpty>
+			<isNotEmpty prepend="AND" property="targetType" >
+			<![CDATA[A.TargetType = #targetType#]]>
+			</isNotEmpty>
+			<isNotEmpty prepend="AND" property="activityCode" >
+			<![CDATA[A.ActivityCode = #activityCode#]]>
+			</isNotEmpty>
+			<isNotEmpty prepend="AND" property="activityName" >
+			<![CDATA[A.ActivityName = #activityName#]]>
+			</isNotEmpty>
+		<![CDATA[
+		WHERE
+			D.BIN_OrganizationInfoID = #organizationInfoId# AND
+		  	D.ValidFlag = '1'
+		]]>
+		<![CDATA[AND EXISTS (]]>
+			<include refid="BINOLCMINC99.getDepartList" />
+		<![CDATA[AND D.BIN_OrganizationID = A99.BIN_OrganizationID )]]>
+		<isNotEmpty prepend = "AND" property = "brandInfoId">
+				D.BIN_BrandInfoID=#brandInfoId#
+		</isNotEmpty>
+		<isNotEmpty prepend="AND" property="parameter">
+		(D.BaName LIKE '%' + #parameter# + '%')
+		</isNotEmpty>
+		<!-- 导出时仅导出有设置销售目标的单位信息 -->
+		<isNotEmpty prepend="AND" property="exportModel" >
+		<![CDATA[A.BIN_SaleDayTargetID IS NOT NULL]]>
+		</isNotEmpty>
+</isEqual>
+</sql>
+
+	<!-- 插入或者更新销售目标 -->
+	<select id="mergeSaleDayTarget" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+		<![CDATA[
+			MERGE Monitor.BIN_SaleDayTarget AS TGT
+			USING (select #type# as Type,#parameter# as Parameter,
+						  #targetDate# as TargetDate, #targetType# as TargetType
+		    ) AS SRC
+		    ON (
+		        TGT.Type = SRC.Type
+		        AND TGT.Parameter = SRC.Parameter
+		        AND TGT.TargetDate = SRC.TargetDate
+		        AND TGT.TargetType = SRC.TargetType
+		        )
+		    WHEN MATCHED THEN	
+		    UPDATE SET 
+		        TargetDate=#targetDate#,
+				TargetMoney=#targetMoney#,
+				TargetQuantity=#targetQuantity#,
+				SynchroFlag='0',
+				TargetType=#targetType#,
+				ActivityCode=#activityCode#,
+				ActivityName=#activityName#,
+				Source = #Source#,
+				TargetSetTime = GETDATE(),
+		]]>
+		<include refid="BINOLCMINC99.updateSql"/>
+		<![CDATA[
+			WHEN NOT MATCHED THEN 
+			INSERT (
+				BIN_OrganizationInfoID,
+				BIN_BrandInfoID,
+				Type,
+				Parameter,
+				TargetDate,
+				TargetMoney,
+				TargetQuantity,
+				SynchroFlag,
+				TargetType,
+				ActivityCode,
+				ActivityName,
+				Source,
+				TargetSetTime,
+		]]>
+		<include refid="BINOLCMINC99.insertKeySql" />
+		<![CDATA[						
+			)					
+			VALUES					
+			(			
+			#organizationInfoId#,
+			#brandInfoId#,
+			#type#,
+			#parameter#,
+			#targetDate#,
+			#targetMoney#,
+			#targetQuantity#,
+			'0',
+			#targetType#,
+			#activityCode#,
+			#activityName#,
+			#Source#,
+			GETDATE(),
+		]]>
+		<include refid="BINOLCMINC99.insertValueSql" />		
+		<![CDATA[							
+			)
+			OUTPUT inserted.BIN_SaleDayTargetID AS BIN_SaleDayTargetID;					
+    	]]> 
+	</select>
+	
+	<update id="downUpdate" parameterClass="java.util.HashMap">
+		<![CDATA[
+        UPDATE
+            Monitor.BIN_SaleDayTarget
+        SET
+			SynchroFlag='1',
+    ]]>
+        <include refid="BINOLCMINC99.updateSql"/>
+        <![CDATA[
+        WHERE 
+            BIN_SaleDayTargetID=#BIN_SaleDayTargetID#
+    ]]>
+	</update>
+	
+	<!-- 取得总数  -->
+    <select id="getSaleDayTargetCount" parameterClass="java.util.HashMap" resultClass="java.lang.Integer">
+    	<![CDATA[
+			SELECT	COUNT(SORT_T1.parameter) AS count FROM (
+		]]>	
+		<include refid="BINOLMOCIO07_01.targetQuery" />	
+		<![CDATA[	
+			)SORT_T1
+		]]>										
+    </select>
+    
+    <select id="getBrandCode" parameterClass="java.lang.String" resultClass="java.lang.String">
+		<![CDATA[
+			SELECT
+				BrandCode
+			FROM
+				Basis.BIN_BrandInfo
+			WHERE
+				BIN_BrandInfoID=#brandInfoId#
+		]]>
+    </select>
+    
+    <select id="searchDownList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+        <![CDATA[
+            SELECT
+                ST.BIN_SaleDayTargetID,
+                ST.Type,
+                ST.Parameter,
+                ST.TargetDate,
+                ST.TargetMoney,
+                ST.TargetQuantity,
+                ST.TargetType,
+                ST.ActivityCode,
+                ST.ActivityName
+            FROM
+                Monitor.BIN_SaleDayTarget ST
+            WHERE
+                ST.BIN_OrganizationInfoID = #organizationInfoId#
+                AND ST.BIN_BrandInfoID = #brandInfoId#
+                AND ST.ValidFlag='1'
+                AND ST.SynchroFlag='0'
+                AND EXISTS(
+        ]]>
+        <include refid="BINOLMOCIO07_01.targetQuery" />
+        <![CDATA[
+                AND A.BIN_SaleDayTargetID IS NOT NULL
+                AND ST.BIN_SaleDayTargetID = A.BIN_SaleDayTargetID)
+        ]]>
+    </select>
+	<!-- 取得指定单位的名称与CODE -->
+	<select id="searchParameter" parameterClass="java.util.HashMap"	resultClass="java.util.HashMap">
+		<isNotEqual property="Type" compareValue="3">
+		<![CDATA[
+			SELECT
+			   DepartName as param,
+			   DepartCode as paramID
+			FROM
+				Basis.BIN_Organization
+			WHERE
+				BIN_OrganizationID=#Parameter# AND
+			  	ValidFlag = '1' AND
+		]]>
+			<isEqual property="Type" compareValue="1"><!-- 大区 -->
+			  	Type='5'
+			</isEqual>
+			<isEqual property="Type" compareValue="2"><!-- 柜台 -->
+			  	Type='4'
+			</isEqual>
+			<isEqual property="Type" compareValue="4"><!-- 办事处 -->
+			  	Type='2'
+			</isEqual>
+			<isEqual property="Type" compareValue="5"><!-- 经销商 -->
+			  	Type='3'
+			</isEqual>
+			<isEqual property="Type" compareValue="6"><!-- 柜台主管 -->
+			  	Type='6'
+			</isEqual>
+			<isNotEmpty prepend = "AND" property = "targetCode">
+					A.DepartCode = #targetCode#
+			</isNotEmpty>
+		</isNotEqual>
+		
+		<isEqual property="Type" compareValue="3">
+		<![CDATA[
+		SELECT
+		   BaName as param,
+		   BaCode as paramID
+		FROM
+			BASIS.BIN_BaInfo
+		WHERE
+			BIN_EmployeeID=#Parameter# AND
+		  	ValidFlag = '1'
+		]]>
+		</isEqual>
+	</select>
+	
+	<select id="searchParameterID" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+		<isNotEqual property="type" compareValue="3">
+		<![CDATA[
+			SELECT
+			   A.BIN_OrganizationID AS parameter,
+			   A.DepartCode AS targetCode,
+			   A.DepartName AS targetName
+			FROM
+				Basis.BIN_Organization A
+		]]>
+        <![CDATA[
+            JOIN (]]><include refid="BINOLCMINC99.departPrivilegeSql" /><![CDATA[) A99
+            ON A.BIN_OrganizationID=A99.BIN_OrganizationID
+        ]]>
+        <![CDATA[
+			WHERE
+			  	A.ValidFlag = '1' AND
+		]]>
+		<isEqual property="type" compareValue="1"><!-- 大区 -->
+		  	A.Type='5'
+		</isEqual>
+		<isEqual property="type" compareValue="2"><!-- 柜台 -->
+		  	A.Type='4'
+		</isEqual>
+		<isEqual property="type" compareValue="4"><!-- 办事处 -->
+		  	A.Type='2'
+		</isEqual>
+		<isEqual property="type" compareValue="5"><!-- 经销商 -->
+		  	A.Type='3'
+		</isEqual>
+		<isEqual property="type" compareValue="6"><!-- 柜台主管 -->
+		  	A.Type='6'
+		</isEqual>
+		<isNotEmpty prepend = "AND" property = "targetCode">
+				A.DepartCode = #targetCode#
+		</isNotEmpty>
+		<isNotEmpty prepend = "AND" property = "targetName">
+			<isNotEmpty property="language">
+				<isEqual property="language" compareValue="en_US">
+					A.NameForeign = #targetName#
+				</isEqual>
+				<isEqual property="language" compareValue="zh_CN">
+					A.DepartName = #targetName#
+				</isEqual>								
+			</isNotEmpty>
+			<isEmpty property="language">
+				A.DepartName = #targetName#
+			</isEmpty>
+		</isNotEmpty>
+		</isNotEqual>
+		<!-- 美容顾问 -->
+		<isEqual property="type" compareValue="3">
+		<![CDATA[
+			SELECT
+				A.BIN_EmployeeID AS parameter,
+				A.BaCode AS targetCode,
+				A.BaName AS targetName
+			FROM
+				BASIS.BIN_BaInfo A
+		]]>
+        <![CDATA[
+            JOIN (]]><include refid="BINOLCMINC99.employeePrivilegeSql" /><![CDATA[) A99
+            ON A.BIN_EmployeeID=A99.BIN_SubEmployeeID
+        ]]>
+        <![CDATA[
+			WHERE
+			  	A.ValidFlag = '1'
+		]]>
+		<isNotEmpty prepend = "AND" property = "targetCode">
+				A.BaCode = #targetCode#
+		</isNotEmpty>
+		<isNotEmpty prepend = "AND" property = "targetName">
+			<isNotEmpty property="language">
+				<isEqual property="language" compareValue="en_US">
+					A.BaNameForeign = #targetName#
+				</isEqual>
+				<isEqual property="language" compareValue="zh_CN">
+					A.BaName = #targetName#
+				</isEqual>								
+			</isNotEmpty>
+			<isEmpty property="language">
+				A.BaName = #targetName#
+			</isEmpty>
+		</isNotEmpty>
+		</isEqual>
+	</select>
+     
+	 <select id="searchSaleDayTargetList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+       	<include refid="BINOLCMINC99.pageheader" />
+		<include refid="BINOLMOCIO07_01.targetQuery" />
+		<include refid="BINOLCMINC99.pagefooter" />
+    </select>
+    
+    <!--按共通部门/人员权限取得树节点（区域、柜台、美容顾问）-->
+    <select id="getTreeNodes" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+        <isNotEqual property="type" compareValue="3">
+        <![CDATA[
+            WITH C AS
+            (
+                SELECT
+                    A.Level,
+                    A.Path,
+                    A.DepartCode,
+                    A.DepartName,
+                    A.BIN_OrganizationID,
+                    TG.TargetMoney,
+					TG.TargetQuantity,
+					TG.SynchroFlag,
+                    '01' AS CategoryCodeArr,
+                    1 AS Grade,
+                    A.NodeID
+                FROM 
+                	Basis.BIN_Organization A WITH(NOLOCK)
+                	LEFT JOIN Monitor.BIN_SaleDayTarget TG WITH(NOLOCK)
+					ON(A.BIN_OrganizationID=TG.Parameter 
+		]]>
+			<isNotEmpty prepend="AND" property="targetDate">
+				TG.TargetDate=#targetDate#
+			</isNotEmpty>
+			<isNotEmpty prepend="AND" property="targetType">
+				TG.TargetType=#targetType#
+			</isNotEmpty>
+			<!-- 目前暂时不支持对不同活动设置销售目标 -->
+			<!-- <isNotEmpty prepend="AND" property="campaignCode">
+				TG.ActivityCode=#campaignCode#
+			</isNotEmpty>
+			<isNotEmpty prepend="AND" property="campaignName">
+				TG.ActivityName=#campaignName#
+			</isNotEmpty> -->
+		<![CDATA[			
+					)
+        ]]>
+        <![CDATA[
+                JOIN (]]><include refid="BINOLCMINC99.departPrivilegeSql" /><![CDATA[) A99
+                ON A.BIN_OrganizationID=A99.BIN_OrganizationID
+        ]]>
+        <![CDATA[
+                WHERE
+                    A.BIN_OrganizationInfoID = #organizationInfoId#
+                    AND A.BIN_BrandInfoID = #brandInfoId#
+                    AND A.ValidFlag = '1' AND
+        ]]>
+        <isEqual property="type" compareValue="1"><!-- 大区 -->
+		  	A.Type='5'
+		</isEqual>
+		<isEqual property="type" compareValue="2"><!-- 柜台 -->
+		  	A.Type='4'
+		</isEqual>
+		<isEqual property="type" compareValue="4"><!-- 办事处 -->
+		  	A.Type='2'
+		</isEqual>
+		<isEqual property="type" compareValue="5"><!-- 经销商 -->
+		  	A.Type='3'
+		</isEqual>
+		<isEqual property="type" compareValue="6"><!-- 柜台主管 -->
+		  	A.Type='6'
+		</isEqual>
+        <![CDATA[
+                UNION ALL
+                SELECT
+                    B.Level,
+                    B.Path,
+                    B.DepartCode,
+                    B.DepartName,
+                    NULL AS BIN_OrganizationID,
+                    NULL AS TargetMoney,
+					NULL AS TargetQuantity,
+					NULL AS SynchroFlag,
+                    NULL AS CategoryCodeArr,
+                    NULL AS Grade,
+                    B.NodeID
+                FROM Basis.BIN_Organization B WITH(NOLOCK)
+                JOIN C ON B.NodeID = C.NodeID.GetAncestor(1)
+                AND B.BIN_OrganizationInfoID = #organizationInfoId#
+                AND B.BIN_BrandInfoID = #brandInfoId#
+            )
+            SELECT DISTINCT
+                C.Level AS level,
+                C.Path AS path,
+                '('+C.DepartCode+')'+C.DepartName + 
+				CASE WHEN C.TargetMoney IS NOT NULL AND C.TargetQuantity IS NOT NULL 
+					THEN '['+convert(varchar(20),convert(int,C.TargetQuantity))+'，'+convert(varchar(20),convert(decimal(16,2),C.TargetMoney))+']'
+					ELSE '' END AS name,
+                C.BIN_OrganizationID AS parameterArr,
+				C.SynchroFlag AS synchroFlag,
+                C.DepartCode AS differentArr,
+                C.DepartName AS nameArr,
+                C.CategoryCodeArr AS categoryCodeArr,
+                C.Grade AS grade
+            FROM C
+            ORDER BY C.Path
+        ]]>
+        </isNotEqual>
+        <isEqual property="type" compareValue="3">
+        <![CDATA[
+            WITH C AS
+            (
+                SELECT
+                    A.BIN_BaInfoID,
+                    A.BIN_EmployeeID,
+                    TG.TargetMoney,
+					TG.TargetQuantity,
+					TG.SynchroFlag,
+                    A.BaName,
+                    A.BaCode,
+                    E.Level,
+                    E.Path,
+                    E.EmployeeCode,
+                    E.EmployeeName,
+                    E.NodeID,
+                    P.Grade,
+                    P.CategoryCode
+                FROM 
+                	Basis.BIN_BaInfo A WITH(NOLOCK)
+                	LEFT JOIN Monitor.BIN_SaleDayTarget TG WITH(NOLOCK)
+					ON(A.BIN_EmployeeID=TG.Parameter
+		]]>
+			<isNotEmpty prepend="AND" property="targetDate">
+				TG.TargetDate=#targetDate#
+			</isNotEmpty>
+			<isNotEmpty prepend="AND" property="targetType">
+				TG.TargetType=#targetType#
+			</isNotEmpty>
+			<!-- 目前暂时不支持对不同活动设置销售目标 -->
+			<!-- <isNotEmpty prepend="AND" property="campaignCode">
+				TG.ActivityCode=#campaignCode#
+			</isNotEmpty>
+			<isNotEmpty prepend="AND" property="campaignName">
+				TG.ActivityName=#campaignName#
+			</isNotEmpty> -->
+		<![CDATA[
+			)
+        ]]>
+        <![CDATA[
+                JOIN (]]><include refid="BINOLCMINC99.employeePrivilegeSql" /><![CDATA[) A99
+                ON A.BIN_EmployeeID=A99.BIN_SubEmployeeID
+        ]]>
+        <![CDATA[
+                LEFT JOIN Basis.BIN_Employee E WITH(NOLOCK) 
+                ON A.BIN_EmployeeID = E.BIN_EmployeeID
+                LEFT JOIN Privilege.BIN_PositionCategory P WITH(NOLOCK) 
+                ON E.BIN_PositionCategoryID = P.BIN_PositionCategoryID
+                WHERE
+                    A.BIN_OrganizationInfoID = #organizationInfoId#
+                    AND A.BIN_BrandInfoID = #brandInfoId#
+                    AND A.ValidFlag = '1'
+                UNION ALL
+                SELECT
+                    NULL AS BIN_BaInfoID,
+                    NULL AS BIN_EmployeeID,
+                    NULL AS TargetMoney,
+					NULL AS TargetQuantity,
+					NULL AS SynchroFlag,
+                    NULL AS BaName,
+                    NULL AS BaCode,
+                    B.Level,
+                    B.Path,
+                    B.EmployeeCode,
+                    B.EmployeeName,
+                    B.NodeID,
+                    1 AS Grade,
+                    NULL AS CategoryCode
+                FROM Basis.BIN_Employee B
+                JOIN C ON B.NodeID = C.NodeID.GetAncestor(1)
+                AND B.BIN_OrganizationInfoID = #organizationInfoId#
+                AND B.BIN_BrandInfoID = #brandInfoId#
+            )
+            SELECT DISTINCT
+                C.Level AS level,
+                C.Path AS path,
+                '(' + C.EmployeeCode + ')' + C.EmployeeName + 
+				CASE WHEN C.TargetMoney IS NOT NULL AND C.TargetQuantity IS NOT NULL 
+					THEN '['+convert(varchar(20),convert(int,C.TargetQuantity))+'，'+convert(varchar(20),convert(decimal(16,2),C.TargetMoney))+']'
+					ELSE '' END AS name,
+                C.Grade as grade,
+                C.CategoryCode as categoryCodeArr,
+                C.BIN_EmployeeID AS parameterArr,
+				C.SynchroFlag AS synchroFlag,
+                C.BaName as nameArr,
+                C.BaCode as differentArr
+            FROM C
+            ORDER BY C.Path
+        ]]>
+        </isEqual>
+    </select>
+    
+    <!-- 促销活动信息查询sql -->
+	<select id="getActivityInfoByName" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+		<![CDATA[	
+			SELECT
+				B.ActivityName AS campaignName,
+				B.ActivityCode AS campaignCode,
+				A.ActivityType AS campaignType
+			FROM
+				Promotion.BIN_PromotionActGrp A
+				JOIN Promotion.BIN_PromotionActivity B ON A.BIN_PromotionActGrpID = B.BIN_PromotionActGrpID
+			WHERE
+				A.BIN_OrganizationInfoID = #organizationInfoId#
+				and (B.TemplateFlag IS NULL OR B.TemplateFlag='0' OR B.TemplateFlag ='')
+		]]>
+			<isNotEmpty property="brandInfoId" prepend="AND">
+				A.BIN_BrandInfoID = #brandInfoId#
+			</isNotEmpty>
+			<isNotEmpty property="activityName" prepend="AND">
+				B.ActivityName = #activityName#
+			</isNotEmpty>		
+	</select>
+</sqlMap>

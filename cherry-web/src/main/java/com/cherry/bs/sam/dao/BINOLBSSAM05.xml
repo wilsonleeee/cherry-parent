@@ -1,0 +1,267 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sqlMap PUBLIC "-//iBATIS.com//DTD SQL Map 2.0//EN" "http://ibatis.apache.org/dtd/sql-map-2.dtd">
+<sqlMap namespace="BINOLBSSAM05">
+	
+	<sql id="querySalesBonusRate">
+		<![CDATA[
+		SELECT
+			A.BIN_RecordId AS recordId,
+			B.EmployeeName AS employeeID,
+			A.AssessmentYear AS assessmentYear,
+			A.AssessmentMonth AS assessmentMonth,
+			C.EmployeeName AS assessmentEmployee,
+			A.Score AS score,
+			A.AssessmentDate AS assessmentDate,
+			A.Memo AS memo
+		FROM 
+			Basis.BIN_AssessmentScore A WITH(NOLOCK)
+		LEFT JOIN
+			Basis.BIN_Employee B WITH(NOLOCK)
+		ON 
+			A.BIN_BrandInfoID = B.BIN_BrandInfoID AND
+			A.BIN_EmployeeID = B.BIN_EmployeeID
+		LEFT JOIN
+			Basis.BIN_Employee C WITH(NOLOCK)
+		ON 
+			A.BIN_BrandInfoID = C.BIN_BrandInfoID AND
+			A.AssessmentEmployee = C.BIN_EmployeeID
+		WHERE
+			A.ValidFlag='1'
+		]]>
+		<isNotEmpty prepend="AND" property="employeeID">
+				B.EmployeeName=#employeeID#
+		</isNotEmpty>
+		<isNotEmpty prepend="AND" property="assessmentEmployee">
+				C.EmployeeName=#assessmentEmployee#
+		</isNotEmpty>
+		<isNotEmpty prepend="AND" property="assessmentYear">
+				A.AssessmentYear=#assessmentYear#
+		</isNotEmpty>
+		<isNotEmpty prepend="AND" property="assessmentYear">
+				A.AssessmentYear=#assessmentYear#
+		</isNotEmpty>
+		<isNotEmpty prepend="AND" property="assessmentMonth">
+				A.AssessmentMonth=#assessmentMonth#
+		</isNotEmpty>
+		<isNotEmpty prepend="AND" property="startDate">
+				<![CDATA[A.assessmentDate>=#startDate#]]>
+		</isNotEmpty>
+		<isNotEmpty prepend="AND" property="endDate">
+				<![CDATA[A.assessmentDate<=#endDate#]]>
+		</isNotEmpty>
+		<isNotEmpty prepend="AND" property="score">
+				A.score=#score#
+		</isNotEmpty>
+	</sql>
+
+	<select id="getSalesBonusRateList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+       	<include refid="BINOLCMINC99.pageheader" />
+		<include refid="BINOLBSSAM05.querySalesBonusRate" />
+		<include refid="BINOLCMINC99.pagefooter" />
+	</select>
+	
+	<select id="getSalesBonusRateCount" parameterClass="java.util.HashMap" resultClass="java.lang.Integer">
+		<![CDATA[
+            SELECT 
+				COUNT(1) AS count 
+			FROM 
+				(]]><include refid="BINOLBSSAM05.querySalesBonusRate" /><![CDATA[) T
+        ]]>
+	</select>
+	<!-- 取得要编辑的数据 -->
+	<select id="getSalesBonusRateMap" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+		<![CDATA[
+		SELECT
+			A.BIN_RecordId AS recordId,
+			B.EmployeeName AS employeeID,
+			A.AssessmentYear AS assessmentYear,
+			A.AssessmentMonth AS assessmentMonth,
+			C.EmployeeName AS assessmentEmployee,
+			A.Score AS score,
+			A.AssessmentDate AS assessmentDate,
+			A.Memo AS memo
+		FROM 
+			Basis.BIN_AssessmentScore A WITH(NOLOCK)
+		LEFT JOIN
+			Basis.BIN_Employee B WITH(NOLOCK)
+		ON 
+			A.BIN_BrandInfoID = B.BIN_BrandInfoID AND
+			A.BIN_EmployeeID = B.BIN_EmployeeID
+		LEFT JOIN
+			Basis.BIN_Employee C WITH(NOLOCK)
+		ON 
+			A.BIN_BrandInfoID = C.BIN_BrandInfoID AND
+			A.BIN_EmployeeID = C.BIN_EmployeeID
+		WHERE
+			A.ValidFlag='1' AND
+			A.BIN_RecordId=#recordId#
+        ]]>
+	</select>
+	<!-- 跟新销售与提成率维护的数据 -->
+	<update id="updateSalesBonusRate" parameterClass="java.util.HashMap">
+		<![CDATA[
+		UPDATE
+			Basis.BIN_AssessmentScore
+		SET
+			AssessmentYear=#assessmentYear#,
+			AssessmentMonth=#assessmentMonth#,
+			Score=#score#,
+			AssessmentDate=#assessmentDate#,
+			Memo=#memo#,
+		]]>
+		<include refid="BINOLCMINC99.updateSql" />
+		<![CDATA[
+		WHERE
+			BIN_RecordId=#recordId#
+        ]]>
+	</update>
+	<!-- 逻辑删除数据 -->
+	<update id="deleteSalesBonusRate" parameterClass="java.util.HashMap">
+		<![CDATA[
+		UPDATE
+			Basis.BIN_AssessmentScore
+		SET
+			ValidFlag='0',
+		]]>
+		<include refid="BINOLCMINC99.updateSql" />
+		<![CDATA[
+		WHERE
+			BIN_RecordId=#recordId#
+        ]]>
+	</update>
+	<!-- 插入数据 -->
+	<insert id="addSalesBonusRate" parameterClass="java.util.HashMap">
+		INSERT INTO
+			Basis.BIN_AssessmentScore
+		(
+			BIN_OrganizationID,
+			BIN_BrandInfoID,
+			BIN_EmployeeID,
+			AssessmentEmployee,
+			AssessmentYear,
+			AssessmentMonth,
+			Score,
+			AssessmentDate,
+			Memo,
+			<include refid="BINOLCMINC99.insertKeySql"/>
+		)
+		values(
+			#organizationId#,
+			#brandInfoId#,
+			#employeeID#,
+			#assessmentEmployee#,
+			#assessmentYear#,
+			#assessmentMonth#,
+			#score#,
+			#assessmentDate#,
+			#memo#,
+			<include refid="BINOLCMINC99.insertValueSql"/>
+		)
+	</insert>
+	<!-- 取得岗位信息 -->
+	<select id="getPositionCategoryList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+		<![CDATA[
+		SELECT 
+			BIN_PositionCategoryID,
+			CategoryName
+		FROM 
+			Privilege.BIN_PositionCategory WITH(NOLOCK)
+		WHERE 
+			BIN_OrganizationInfoID=#organizationInfoId# AND
+			BIN_BrandInfoID=#brandInfoId# AND 
+			ValidFlag=1
+        ]]>
+	</select>
+	<!-- 取得柜台信息 -->
+	<select id="getCounterInfoList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+		<![CDATA[
+			SELECT 
+				CounterCode,
+				CounterNameIF
+			FROM 
+				Basis.BIN_CounterInfo
+			WHERE
+				BIN_OrganizationInfoID=#organizationInfoId# AND
+				BIN_BrandInfoID=#brandInfoId# AND
+				ValidFlag=1
+        ]]>
+	</select>
+	<!-- 根据员工CODE查询员工ID -->
+	<select id="getEmployeeCode" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+		<![CDATA[
+			SELECT 
+				BIN_EmployeeID AS employeeID
+			FROM 
+				Basis.BIN_Employee WITH(NOLOCK)
+			WHERE
+				BIN_OrganizationInfoID=#organizationInfoId# AND
+				BIN_BrandInfoID=#brandInfoId# AND
+				EmployeeCode=#employeeCode#
+        ]]>
+	</select>
+    <!-- 插入员工考核信息（导入） -->
+    <insert id="insertAssessmentScore" parameterClass="java.util.HashMap">
+    	MERGE Basis.BIN_AssessmentScore AS BK
+    		USING(
+    			SELECT
+    				#organizationId# AS organizationId,
+					#brandInfoId# AS brandInfoId,
+					#employeeID# AS employeeID,
+					#assessmentYear# AS assessmentYear,
+					#assessmentMonth# AS assessmentMonth
+    		) AS SRC
+    		ON(
+    			BK.BIN_OrganizationID=SRC.organizationId AND
+				BK.BIN_BrandInfoID=SRC.brandInfoId AND
+				BK.BIN_EmployeeID=SRC.employeeID AND
+				BK.AssessmentYear=SRC.assessmentYear AND
+				BK.AssessmentMonth=SRC.assessmentMonth AND
+				BK.ValidFlag='1'
+    		)
+    		WHEN MATCHED THEN	
+	    		UPDATE SET	
+		            AssessmentEmployee=#assessmentEmployee#,
+					Score = #score#,
+					AssessmentDate = #assessmentDate#,
+					Memo = #memo#,
+					<include refid="BINOLCMINC99.updateSql" />
+			WHEN NOT MATCHED THEN 
+			INSERT(
+					BIN_OrganizationID,
+					BIN_BrandInfoID,
+					BIN_EmployeeID,
+					AssessmentEmployee,
+					AssessmentYear,
+					AssessmentMonth,
+					Score,
+					AssessmentDate,
+					Memo,
+			<include refid="BINOLCMINC99.insertKeySql" />
+				)
+				VALUES
+				(
+					#organizationId#,
+					#brandInfoId#,
+					#employeeID#,
+					#assessmentEmployee#,
+					#assessmentYear#,
+					#assessmentMonth#,
+					#score#,
+					#assessmentDate#,
+					#memo#,
+			<include refid="BINOLCMINC99.insertValueSql" />
+				);
+	</insert>
+	<!-- 判断数据是否有重复 -->
+	<select id="getAssessmentCount" parameterClass="java.util.HashMap" resultClass="java.lang.Integer">
+		SELECT 
+			COUNT(BIN_RecordId) AS COUNT
+		FROM 
+			Basis.BIN_AssessmentScore WITH(NOLOCK)
+		WHERE 
+			AssessmentYear=#assessmentYear# AND
+			AssessmentMonth=#assessmentMonth# AND
+			BIN_EmployeeID=#employeeID# AND
+			ValidFlag='1'
+	</select>
+</sqlMap>

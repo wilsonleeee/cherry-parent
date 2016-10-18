@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sqlMap PUBLIC "-//iBATIS.com//DTD SQL Map 2.0//EN" "http://ibatis.apache.org/dtd/sql-map-2.dtd">
+<sqlMap namespace="BINOLBSWEM02">
+	<insert id="saveOrderDiscount" parameterClass="java.util.HashMap">
+		<![CDATA[
+			MERGE  Basis.BIN_OrderDiscount WITH (HOLDLOCK) AS TGT
+        		USING (select #organizationInfoId# as organizationInfoId,#brandInfoId# as brandInfoId,#departType# as departType,#discountPer# as discountPer
+				) as SRC
+                ON TGT.DepartType = SRC.departType and
+                TGT.Bin_OrganizationInfoId = SRC.organizationInfoId and
+                TGT.Bin_BrandInfoId=SRC.brandInfoId
+            WHEN MATCHED THEN 
+                UPDATE SET TGT.DiscountPer = SRC.discountPer,
+		]]>
+		<include refid="BINOLCMINC99.updateSql" />
+		<![CDATA[
+            WHEN NOT MATCHED THEN 
+                insert (BIN_OrganizationInfoID,BIN_BrandInfoID,DepartType,DiscountPer,
+         ]]>
+         <include refid="BINOLCMINC99.insertKeySql" /> 
+         <![CDATA[
+             	)
+			values (SRC.organizationInfoId,SRC.brandInfoId,SRC.departType,SRC.discountPer,
+ 		  ]]>
+          <include refid="BINOLCMINC99.insertValueSql" /> 
+          <![CDATA[
+             );
+		   ]]>	
+	</insert>
+	<select id="getDiscountList" resultClass="java.util.HashMap" >
+		SELECT
+			DepartType as departType,
+			DiscountPer as discountPer
+		FROM 
+			Basis.BIN_OrderDiscount
+	</select>
+</sqlMap>

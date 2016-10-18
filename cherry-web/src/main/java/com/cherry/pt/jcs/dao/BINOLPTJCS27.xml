@@ -1,0 +1,243 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sqlMap PUBLIC "-//iBATIS.com//DTD SQL Map 2.0//EN" "http://ibatis.apache.org/dtd/sql-map-2.dtd">
+<sqlMap namespace="BINOLPTJCS27">
+	<!-- 更新产品表  -->
+	<update id="updProduct" parameterClass="java.util.HashMap">	
+		<![CDATA[
+		UPDATE
+			Basis.BIN_Product
+		SET
+		]]>	
+		<isEqual property="validFlag" compareValue="1">
+			BIN_OrganizationInfoID = #organizationInfoId#,
+			CategorySAP = #categorySAP#,
+			<isEmpty property="editFlag">
+				<isNotEmpty property="unitCode">
+					<![CDATA[UnitCode = #unitCode#,]]>
+				</isNotEmpty>
+			</isEmpty>
+			<![CDATA[
+			NameTotal = #nameTotal#,
+			NameShort = #nameShort#,
+			NameAlias = #nameAlias#,
+			NameForeign = #nameForeign#,
+			NameShortForeign = #nameShortForeign#,
+			StyleCode = #styleCode#,
+			OperationStyle = #operationStyle#,
+			ModuleCode = #moduleCode#,
+			SaleUnit = #saleUnit#,
+			DiscontinueCounter = #discontCounter#,
+			DiscontinueReseller = #discontReseller#,
+			StandardCost = ISNULL(#standardCost#,0),
+			OrderPrice = ISNULL(#orderPrice#,0),
+			LackFlag = #lackFlag#,
+			IsBOMCompatible = #isBOM#,
+			IsReplenish = #isReplenish#,
+			Mode = #mode#,
+			StarProduct = #starProduct#,
+			ShelfLife = #shelfLife#,
+			RecommendedNumDay = #recNumDay#,	
+			IsExchanged = #isExchanged#,	
+			Spec = #spec#,
+			MinSalePrice = #minSalePrice#,
+			MaxSalePrice = #maxSalePrice#,
+			SellStartDate = #sellStartDate#,
+			SellEndDate = #sellEndDate#,
+			IsStock = #isStock#,
+			ItemType = #itemType#,
+			OriginalBrand = #originalBrand#,
+			]]>
+		</isEqual>
+		Version=#tVersion#+1,
+		<isEqual property="validFlag" compareValue="0">
+			ValidFlag = '0',	
+		</isEqual>
+			Status = #status#,
+		<isNotEmpty property="saleStyle">
+			SaleStyle = #saleStyle#,
+		</isNotEmpty>
+		<isNotEmpty property="exchangeRelation">
+			ExchangeRelation = #exchangeRelation#,
+		</isNotEmpty>
+		<include refid="BINOLCMINC99.updateSql" />									
+		<![CDATA[								
+		WHERE
+			BIN_ProductID = #productId#
+			AND UpdateTime = #prtUpdateTime#
+			AND	ModifyCount = #prtModifyCount#
+		]]>
+	</update>
+	<!-- 更新产品厂商  -->
+	<update id="updPrtVendor" parameterClass="java.util.HashMap">
+		<![CDATA[
+		UPDATE
+			Basis.BIN_ProductVendor
+		SET
+		]]>
+		<isNotEmpty property="barCode">
+			BarCode = #barCode#,
+		</isNotEmpty>
+		<isNotEmpty property="validFlag">
+			ValidFlag = #validFlag#,
+		</isNotEmpty>
+		<include refid="BINOLCMINC99.updateSql" />
+		<![CDATA[
+		WHERE
+			BIN_ProductVendorID = #prtVendorId#
+		]]>
+	</update>
+	<!-- 删除产品分类  -->
+	<delete id="delPrtCategory" parameterClass="java.util.HashMap">
+		<![CDATA[
+		DELETE FROM
+			Basis.BIN_PrtCategory
+		WHERE
+			BIN_ProductID = #productId#
+		]]>
+	</delete>
+    <!-- 更新产品价格表  -->
+	<update id="updProductPrice" parameterClass="java.util.HashMap">
+        <![CDATA[ 
+		UPDATE 
+			Basis.BIN_ProductPrice
+		SET
+			BIN_ProductID = #productId#,
+			SalePrice = ISNULL(#salePrice#,0),
+			MemPrice = ISNULL(#memPrice#,0),
+			StartDate = #priceStartDate#,
+			EndDate = #priceEndDate#,					
+		]]>	
+		<include refid="BINOLCMINC99.updateSql" />	
+		<![CDATA[			
+    	WHERE
+			BIN_ProductPriceID = #prtPriceId#
+       	]]>
+    </update>
+	<!-- 删除产品价格  -->
+	<delete id="delProductPrice" parameterClass="java.util.HashMap">
+		<![CDATA[
+		DELETE FROM
+			Basis.BIN_ProductPrice
+		WHERE
+			BIN_ProductPriceID = #prtPriceId#
+		]]>
+	</delete>
+	<!-- 更新产品条码对应关系表  -->
+	<update id="updPrtBarCode" parameterClass="java.util.HashMap">
+        <![CDATA[ 
+		  UPDATE   
+		       		Basis.BIN_PrtBarCode						
+		  SET				
+	          		UnitCode = #unitCode#,
+					BarCode = #barCode#,
+					ValidFlag = '1',
+		]]>	
+	    	<include refid="BINOLCMINC99.updateSql" />	
+		<![CDATA[			
+       	  WHERE									
+				   BIN_ProductVendorID = #prtVendorId#
+				   AND ClosingTime IS NULL
+       ]]>
+    </update>
+    
+    <select id="getPrtBarCode" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+		<![CDATA[			
+    	SELECT 
+    		OldUnitCode,
+    		OldBarCode
+    	FROM 
+    		Basis.BIN_PrtBarCode
+       	  WHERE									
+				   BIN_ProductVendorID = #prtVendorId#
+				   AND ClosingTime IS NULL
+       ]]>
+    </select>
+	
+	<!-- 更新停用日时 -->
+	<update id="updClosingTime" parameterClass="java.util.HashMap">
+        <![CDATA[ 
+		  UPDATE   
+		           Basis.BIN_PrtBarCode						
+		  SET
+				   ClosingTime = NULL,
+		]]>	
+		    <include refid="BINOLCMINC99.updateSql" />	
+		<![CDATA[			
+       	  WHERE									
+				   BIN_ProductVendorID = #prtVendorId# AND
+				   UpdateFlag = '1' AND
+				   ValidFlag = '1'
+       ]]>
+    </update>
+	<!-- 删除BOM信息 -->
+	<delete id="delProductBOM" parameterClass="java.util.HashMap">
+        <![CDATA[ 
+		  DELETE FROM Basis.BIN_ProductBOM WHERE BOM_BIN_ProductVendorID = #prtVendorId#
+       ]]>
+    </delete>
+    
+	<!-- 取得促销活动所用的产品件数(已下发) -->
+	<select id="getActUsePrtCount" parameterClass="java.util.HashMap" resultClass="java.lang.Integer">
+		<![CDATA[
+			SELECT 
+				COUNT(B.BIN_PromotionProductVendorID)
+			FROM
+				Basis.BIN_ProductVendor A,
+				Promotion.BIN_ActivityTransHis B
+			WHERE 
+				A.BIN_ProductID = #productId# AND
+				A.BIN_ProductVendorID = B.BIN_PromotionProductVendorID AND
+				B.PrtType = 'N' AND
+				B.ValidFlag = '1' AND 
+				B.BIN_BrandInfoID = #brandInfoId#
+		]]>
+	</select>
+    
+	<!-- 取得促销活动所用的产品件数 -->
+	<select id="getActPrtCount" parameterClass="java.util.HashMap" resultClass="java.lang.Integer">
+		<![CDATA[
+			SELECT 
+				COUNT(A.BIN_ProductVendorID)
+			FROM 
+				Basis.BIN_ProductVendor A,
+				Basis.BIN_Product B,
+				Promotion.BIN_PromotionRuleResult C,
+				Promotion.BIN_PromotionActivityRule D,
+				Promotion.BIN_PromotionActivity E,
+				Promotion.BIN_PromotionRuleCondition F,
+				Promotion.BIN_PromotionBaseProp G
+			WHERE 
+				A.BIN_ProductID = #productId# AND
+				A.BIN_ProductID = B.BIN_ProductID AND
+				A.BIN_ProductVendorID = C.BIN_ProductVendorID AND
+				C.SaleType = 'N' AND 
+				C.BIN_PromotionActivityRuleID = D.BIN_PromotionActivityRuleID AND
+				D.BIN_PromotionActivityID = E.BIN_PromotionActivityID AND
+				F.BIN_PromotionBasePropID = G.BIN_PromotionBasePropID AND G.PropertyName ='baseProp_time' AND
+				D.BIN_PromotionActivityRuleID = F.BIN_PromotionActivityRuleID AND
+				E.ValidFlag = '1' AND
+				(E.TemplateFlag IS NULL OR E.TemplateFlag='0' OR E.TemplateFlag ='') and
+				C.ValidFlag = '1' AND
+				D.ValidFlag = '1' AND 
+				B.BIN_BrandInfoID = #brandInfoId# AND
+				(F.BasePropValue2 >= #bussDate# OR F.BasePropValue2 IS NULL)
+		]]>
+	</select>
+	<!--更新停用日时 -->
+	<update id="updateClosingTime" parameterClass="java.util.HashMap">
+		<![CDATA[
+			UPDATE 		
+				Basis.BIN_PrtBarCode	
+			SET		
+				ClosingTime = #closingTime#,
+				UpdateFlag = '1',
+				ValidFlag = '1',
+		]]>
+			<include refid="BINOLCMINC99.updateSql" />
+		<![CDATA[				
+			WHERE					
+				BIN_ProductVendorID = #prtVendorId# AND
+				ClosingTime IS NULL
+		]]>
+    </update>
+ </sqlMap>

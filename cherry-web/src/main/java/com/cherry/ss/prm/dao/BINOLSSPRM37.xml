@@ -1,0 +1,326 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sqlMap PUBLIC "-//iBATIS.com//DTD SQL Map 2.0//EN" "http://ibatis.apache.org/dtd/sql-map-2.dtd">
+<sqlMap namespace="BINOLSSPRM37">
+	 
+	 <select id="getValidActCount" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+	 	SELECT
+	 		count(A.BIN_PromotionActivityID) AS count
+	 	FROM
+	 		Promotion.BIN_PromotionActivity A
+	 	WHERE
+	 		A.BIN_PromotionActivityID = #activeID# AND
+	 		A.ValidFlag = '1'
+	 </select>
+	 
+	 <select id="getActivityRuleID" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+	 	SELECT
+	 		max(B.BIN_PromotionActivityRuleID) AS promotionActivityRuleID
+	 	FROM
+	 		Promotion.BIN_PromotionActivity A ,
+	 		Promotion.BIN_PromotionActivityRule B
+	 	WHERE
+	 		A.BIN_PromotionActivityID = #activeID# AND
+	 		A.BIN_PromotionActivityID = B.BIN_PromotionActivityID
+	 </select>
+	
+	 <!-- 查询促销活动信息 -->
+	 <select id="getDetailActInfo" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+	 	SELECT 
+	 		A.ActivityName AS prmActiveName,
+	 		A.ActivityCode AS activityCode,
+	 		A.DescriptionDtl AS descriptionDtl,
+	 		A.ActivityType AS activityType,
+	 		A.Times AS maxReceiveQty,
+	 		A.ChangeableFlag AS mainModify,
+	 		A.BIN_PromotionActGrpID AS actGrpID,
+	 		CONVERT(VARCHAR(30),A.UpdateTime,121) AS updTime,
+	 		A.ModifyCount AS modCount,
+	 		B.BIN_PromotionActivityRuleID AS ruleID,
+	 		B.RuleDetail AS ruleHTML,
+	 		A.BIN_BrandInfoID AS brandInfoId,
+	 		A.ActivitySetBy AS activitySetBy,
+	 		A.TemplateFlag AS templateFlag
+	 	FROM
+	 		Promotion.BIN_PromotionActivity A ,
+	 		Promotion.BIN_PromotionActivityRule B
+	 	WHERE
+	 	 	A.BIN_PromotionActivityID = #activeID# AND
+	 	 	B.BIN_PromotionActivityID = A.BIN_PromotionActivityID AND
+	 	 	B.ValidFlag = '1'
+	 </select>
+	 
+	 <!-- 查询促销活动条件-->
+	 <select id="getDetailActConList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+		SELECT
+			A.BasePropValue1 AS basePropValue1,
+			A.BasePropValue2 AS basePropValue2,
+			A.ConditionGrpID AS grpID,
+			A.ActLocationType AS actLocationType
+		FROM
+			Promotion.BIN_PromotionRuleCondition A,
+			Promotion.BIN_PromotionActivityRule B,
+			Promotion.BIN_PromotionActivity C
+		WHERE
+			C.BIN_PromotionActivityID = #activeID# AND
+			C.BIN_PromotionActivityID = B.BIN_PromotionActivityID AND
+			A.BIN_PromotionActivityRuleID = B.BIN_PromotionActivityRuleID 
+			<isEmpty property="basePropIdList" prepend="AND">
+				A.BIN_PromotionBasePropID = #baseProp_ID# 
+			</isEmpty>
+			<isNotEmpty property="basePropIdList" prepend="AND">
+				<iterate property="basePropIdList" conjunction="OR"  close=")" open="(" >
+					A.BIN_PromotionBasePropID = #basePropIdList[]#
+				</iterate>
+			</isNotEmpty> 
+			AND
+			A.ValidFlag = '1' AND
+			B.ValidFlag = '1' 
+		ORDER BY
+			A.ConditionGrpID
+ 	 </select>
+ 	 
+ 	 <!-- 查询促销活动结果 -->
+ 	 <select id="getDetailActRelList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+ 	 <![CDATA[
+ 	 	SELECT
+ 	 		CASE
+				WHEN E.BIN_PromotionProductVendorID IS NOT NULL  THEN E.BIN_PromotionProductVendorID
+				ELSE F.BIN_ProductVendorID
+			END AS proId,
+ 	 		A.SaleType AS saleType,
+			CASE
+				WHEN E.BIN_PromotionProductVendorID IS NOT NULL  THEN C.ValidFlag + E.ValidFlag
+				ELSE D.ValidFlag + F.ValidFlag
+			END AS validFlag,
+			A.PromotionPrtCode AS barCode,
+			A.PromotionPrtUnitcode AS unitCode,
+			A.Price AS price,
+			A.Quantity AS quantity,
+			A.OldPrice AS oldPrice,
+			A.GroupType AS groupType,
+			C.ExPoint AS exPoint,
+			CASE
+				WHEN C.BIN_PromotionProductID IS NULL  THEN 'CPCX'			
+				ELSE C.PromotionCateCD
+			END AS prmCate
+	  ]]>
+	  <dynamic>
+			<isNotEmpty property="language">
+				<isEqual property="language" compareValue="en_US">										
+					,CASE WHEN C.BIN_PromotionProductID IS NOT NULL  
+					THEN C.NameForeign ELSE D.NameForeign				
+					END AS nameTotal
+				</isEqual>
+				<isEqual property="language" compareValue="zh_CN">										
+					,CASE WHEN C.BIN_PromotionProductID IS NOT NULL  
+					THEN C.NameTotal ELSE D.NameTotal				
+					END AS nameTotal
+				</isEqual>								
+			</isNotEmpty>
+			<isEmpty property="language">
+				,CASE WHEN C.BIN_PromotionProductID IS NOT NULL  
+				THEN C.NameTotal ELSE D.NameTotal				
+				END AS nameTotal
+			</isEmpty>
+	</dynamic>
+	<![CDATA[
+		FROM
+			Promotion.BIN_PromotionRuleResult A 
+			JOIN Promotion.BIN_PromotionActivityRule B
+			ON(A.BIN_PromotionActivityRuleID = B.BIN_PromotionActivityRuleID
+				AND B.ValidFlag = '1')
+			LEFT JOIN Basis.BIN_PromotionProduct C 
+			ON(C.UnitCode = A.PromotionPrtUnitcode)
+			LEFT JOIN Basis.BIN_PromotionProductVendor E
+			ON(C.BIN_PromotionProductID = E.BIN_PromotionProductID
+				AND A.PromotionPrtCode = E.BarCode)
+			LEFT JOIN Basis.BIN_Product D
+			ON(D.UnitCode = A.PromotionPrtUnitcode)
+			LEFT JOIN Basis.BIN_ProductVendor F
+			ON(D.BIN_ProductID = F.BIN_ProductID
+				AND A.PromotionPrtCode = F.BarCode)
+		WHERE
+			B.BIN_PromotionActivityID = #activeID#
+		]]>
+ 	 </select>
+ 	 
+ 	 <select id="selCounterParentList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+		SELECT 
+			B.BIN_RegionID AS cityID, 
+		    D.BIN_ChannelID AS channelID
+		FROM         
+			Basis.BIN_CounterInfo AS C  
+			left JOIN
+		    Basis.BIN_Region AS A JOIN
+		    Basis.BIN_Region AS B ON A.NodeID.IsDescendantOf(B.NodeID) = 1 AND (B.RegionType = '2' OR
+		    B.RegionType = '3') AND B.ValidFlag = '1' ON C.BIN_RegionID = A.BIN_RegionID AND A.ValidFlag = '1'
+		    left JOIN
+		    Basis.BIN_Channel AS D ON C.BIN_ChannelID = D.BIN_ChannelID AND D.ValidFlag = '1',
+		    Basis.BIN_Organization oz
+		WHERE     
+			C.ValidFlag = '1' AND
+			oz.BIN_OrganizationID = C.BIN_OrganizationID AND
+			oz.ValidFlag = '1' AND 
+			(
+				oz.DepartName Like '%' + #counterName# + '%' OR
+				oz.NameForeign Like '%' + #counterName# + '%'
+			)
+ 	 </select>
+ 	 
+ 	 <!-- 更新促销活动 -->
+ 	 <update id="updPrmActivity" parameterClass="java.util.HashMap">
+ 	 <![CDATA[
+ 	 	UPdATE 
+ 	 		Promotion.BIN_PromotionActivity
+ 	 	SET
+ 	 		BIN_PromotionActGrpID = convert (INT,#prmActGrp#),
+ 	 		ActivityName = #prmActiveName#,
+ 	 		DescriptionDtl = #descriptionDtl#,
+ 	 		Times = convert (INT,#maxReceiveQty#),
+ 	 		ChangeableFlag = #mainModify#,
+ 	 		ActivitySetBy = #userID#,
+			ActivityType = #activityType#,
+			NeedBuyFlag = #needBuyFlag#,
+ 	 		]]>
+ 	 		<isNotEmpty property="status">
+ 	 			Status = #status#,
+ 	 		</isNotEmpty>
+ 	 		<isNotEmpty property="sendFlag">
+ 	 			SendFlag = #sendFlag#,
+ 	 		</isNotEmpty>
+			<include refid="BINOLCMINC99.updateSql" />		
+			<![CDATA[
+		WHERE
+			BIN_PromotionActivityID = #activeID# AND
+			UpdateTime = #updTime# AND
+			ModifyCount = #modCount#
+ 	 ]]>	
+ 	 </update>
+ 	 
+ 	 <!-- 更新促销活动 -->
+ 	 <update id="updPrmActHis" parameterClass="java.util.HashMap">
+ 	 <![CDATA[
+ 	 	UPDATE
+ 	 		Promotion.BIN_ActivityTransHis 
+		SET
+			ActivityFromDate = #actStartTime# + ' 00:00:00',
+			ActivityToDate=#actEndTime# + ' 23:59:59'
+		where
+			MainCode = #activityCode#
+			AND BIN_BrandInfoID =#brandInfoId#
+			AND ValidFlag = '1'
+ 	 ]]>	
+ 	 </update>
+ 	 
+ 	 
+ 	 
+ 	 <!-- 删除促销活动规则 -->
+ 	 <delete id="delPrmActivityRule" parameterClass="java.util.HashMap">
+ 	 <![CDATA[
+ 	 	delete from Promotion.BIN_PromotionActivityRule WHERE BIN_PromotionActivityRuleID = #ruleID#
+ 	 ]]>
+ 	 </delete>
+ 	 
+ 	  <!-- 删除促销活动条件 -->
+ 	  <delete id="delPrmActivityRuleCondition" parameterClass="java.util.HashMap">
+ 	  <![CDATA[
+ 	 	delete from Promotion.BIN_PromotionRuleCondition WHERE BIN_PromotionActivityRuleID = #ruleID#
+ 	  ]]>
+ 	 </delete>
+ 	 
+ 	 <!-- 删除促销活动结果 -->
+ 	  <delete id="delPrmActivityRuleResult" parameterClass="java.util.HashMap">
+ 	  <![CDATA[
+ 	 	delete from Promotion.BIN_PromotionRuleResult WHERE BIN_PromotionActivityRuleID = #ruleID#
+ 	 ]]>
+ 	 </delete>
+ 	 
+ 	 <!-- 伦理删除促销活动 -->
+ 	 <update id="disablePrmActivity" parameterClass="java.lang.String">
+ 	 <![CDATA[
+ 	 	UPdATE Promotion.BIN_PromotionActivity SET ValidFlag = '0' WHERE BIN_PromotionActivityID = #activeID#
+ 	 	
+ 	 	UPDATE A SET A.ValidFlag = '0'
+		FROM
+			Promotion.BIN_PromotionRule A
+			JOIN Promotion.BIN_PromotionActivity B
+			on(A.RuleCode = B.ActivityCode and A.BIN_BrandInfoID = B.BIN_BrandInfoID)
+		WHERE 
+			B.BIN_PromotionActivityID = #activeID#
+			
+		UPDATE A SET A.ValidFlag = '0'
+		FROM
+			Campaign.BIN_Campaign A
+			JOIN Promotion.BIN_PromotionActivity B
+			on(A.CampaignCode = 'AS' + B.ActivityCode and A.BIN_BrandInfoID = B.BIN_BrandInfoID)
+		WHERE 
+			B.BIN_PromotionActivityID = #activeID#
+ 	 ]]>
+ 	 </update>
+ 	 <!-- 停止促销活动 -->
+ 	 <update id="stopPrmActivity" parameterClass="java.lang.String">
+ 	 <![CDATA[
+ 	 	UPdATE Promotion.BIN_PromotionActivity SET sendFlag = '2' WHERE BIN_PromotionActivityID = #activeID#
+ 	 	
+ 	 	UPDATE C SET 
+			C.BasePropValue2 = CONVERT(VARCHAR,GetDate(),120)
+		FROM
+			Promotion.BIN_PromotionActivityRule B
+			JOIN Promotion.BIN_PromotionRuleCondition C
+			ON(B.BIN_PromotionActivityRuleID = C.BIN_PromotionActivityRuleID
+				AND C.ValidFlag = '1')
+			JOIN Promotion.BIN_PromotionBaseProp D
+			ON(C.BIN_PromotionBasePropID = D.BIN_PromotionBasePropID
+				AND D.PropertyName = 'baseProp_time')
+		WHERE B.BIN_PromotionActivityID = #activeID#
+		
+		UPDATE A SET A.EndTime = GETDATE()
+		FROM
+			Promotion.BIN_PromotionRule A
+			JOIN Promotion.BIN_PromotionActivity B
+			on(A.RuleCode = B.ActivityCode and A.BIN_BrandInfoID = B.BIN_BrandInfoID)
+		WHERE 
+			B.BIN_PromotionActivityID = #activeID#
+ 	 ]]>
+ 	 </update>
+ 	 <select id="getActivityTransHisCount" parameterClass="java.util.HashMap" resultClass="java.lang.Integer">
+		SELECT
+		  COUNT(1)
+		FROM
+		  Promotion.BIN_ActivityTransHis A
+		  JOIN Promotion.BIN_PromotionActivity B
+		  ON(A.MainCode = B.ActivityCode
+			AND A.BIN_BrandInfoID = B.BIN_BrandInfoID)
+		WHERE
+			B.BIN_PromotionActivityID = #activeID#
+	</select>
+	<!-- 删除会员活动表 -->
+	<update id="delCampain" parameterClass="java.util.HashMap">
+	<![CDATA[
+		UPDATE B 
+			SET B.ValidFlag = '0', B.State = '2'
+		FROM
+			Promotion.BIN_PromotionActivity A
+			JOIN Campaign.BIN_Campaign B
+			ON(A.BIN_BrandInfoID = B.BIN_BrandInfoID
+				AND 'AS' + A.ActivityCode  = B.CampaignCode
+				AND A.ValidFlag = '1')
+		  WHERE
+		  	A.BIN_PromotionActivityID = #activeID#
+		  	
+		UPDATE C 
+			SET C.ValidFlag = '0', C.State = '2'
+		FROM
+			Promotion.BIN_PromotionActivity A
+			JOIN Campaign.BIN_Campaign B
+			ON(A.BIN_BrandInfoID = B.BIN_BrandInfoID
+				AND 'AS' + A.ActivityCode  = B.CampaignCode
+				AND A.ValidFlag = '0')
+			JOIN Campaign.BIN_CampaignRule C
+			ON(B.BIN_CampaignID = C.BIN_CampaignID
+				AND C.ValidFlag = '1')	
+		  WHERE
+		  	A.BIN_PromotionActivityID = #activeID#
+  	]]>
+	</update>
+</sqlMap>

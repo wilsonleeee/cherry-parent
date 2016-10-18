@@ -1,0 +1,70 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sqlMap PUBLIC "-//iBATIS.com//DTD SQL Map 2.0//EN" "http://ibatis.apache.org/dtd/sql-map-2.dtd">
+<sqlMap namespace="UserAuth">
+
+	<select id="getDBByName" parameterClass="java.util.HashMap" resultClass="java.lang.String">
+	<![CDATA[ 
+		SELECT
+			A.DataBaseName
+		FROM 
+			dbo.BIN_LoginConfig A 
+		WHERE
+			(A.LonginName = #loginName# collate Chinese_PRC_CS_AI
+			OR A.LonginPhone = #loginName#
+			OR A.LonginEmail = #loginName#) AND 
+			A.ValidFlag = '1'
+	]]>
+	</select>
+	
+	<select id="getUserSecurityInfo" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+	<![CDATA[ 
+		SELECT 
+			A.BIN_UserID AS userId,
+			A.LonginName AS loginName,
+			A.PassWord AS passWord,
+			A.FailureCount AS failureCount,
+			A.LockTime AS lockTime,
+			B.EmployeeCode AS employeeCode,
+			B.EmployeeName AS employeeName,
+			C.BrandCode AS brandCode
+		FROM
+			Privilege.BIN_User A 
+			JOIN Basis.BIN_Employee B ON A.BIN_EmployeeID = B.BIN_EmployeeID
+			LEFT JOIN Basis.BIN_BrandInfo C ON B.BIN_BrandInfoID = C.BIN_BrandInfoID
+		WHERE 
+			(A.LonginName = #loginName# collate Chinese_PRC_CS_AI
+			OR A.LonginPhone = #loginName#
+			OR A.LonginEmail = #loginName#) AND
+			A.ValidFlag = '1'
+	]]>
+	</select>
+
+    <select id="getUserInfo" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+    <![CDATA[
+        SELECT
+            A.PassWord,
+            B.EmployeeCode,
+            B.EmployeeName,
+            C.BrandCode,
+            D.Type,
+            D.DepartCode,
+            D.DepartName,
+            E.CategoryCode,
+            E.CategoryName,
+            E.Grade AS CategoryGrade
+        FROM
+            Privilege.BIN_User A
+            JOIN Basis.BIN_Employee B ON A.BIN_EmployeeID = B.BIN_EmployeeID
+            LEFT JOIN Basis.BIN_BrandInfo C ON B.BIN_BrandInfoID = C.BIN_BrandInfoID
+            LEFT JOIN Basis.BIN_Organization D ON B.BIN_OrganizationID = D.BIN_OrganizationID
+            LEFT JOIN Privilege.BIN_PositionCategory E ON B.BIN_PositionCategoryID = E.BIN_PositionCategoryID
+        WHERE
+            (A.LonginName = #loginName# collate Chinese_PRC_CS_AI
+            OR A.LonginPhone = #loginName#
+            OR A.LonginEmail = #loginName#)
+            AND A.ValidFlag = '1'
+            AND B.BIN_OrganizationInfoID = #organizationInfoId#
+            AND B.BIN_BrandInfoID = #brandInfoId#
+    ]]>
+    </select>
+</sqlMap>

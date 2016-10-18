@@ -1,0 +1,193 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sqlMap PUBLIC "-//iBATIS.com//DTD SQL Map 2.0//EN" "http://ibatis.apache.org/dtd/sql-map-2.dtd">
+<sqlMap namespace="BINOLPLSCF17">
+	
+	<sql id="insertKezSCF17">
+	<![CDATA[
+		CreateTime,
+		UpdateTime,
+		CreatedBy,
+		CreatePGM,
+		UpdatedBy,
+		UpdatePGM,
+		ModifyCount
+	]]>
+	</sql>			
+	
+	<sql id="insertValSCF17">
+		<isNotEmpty property="createTime">
+			#createTime#,
+		</isNotEmpty>
+		<isEmpty property="createTime">
+			GETDATE(),
+		</isEmpty>
+		<isNotEmpty property="createTime">
+			#createTime#,
+		</isNotEmpty>
+		<isEmpty property="createTime">
+			GETDATE(),
+		</isEmpty>
+	<![CDATA[
+		#createdBy#,
+		#createPGM#,
+		#updatedBy#,
+		#updatePGM#,
+		'0'
+	]]>
+	</sql>	
+	
+	<!-- 取得品牌业务处理器列表  -->
+    <sql id="getBrandHandler">
+       	<![CDATA[
+				SELECT
+					BIN_BussinessHandlerID AS handlerId,
+					DescriptionDtl AS descriptionDtl,
+					ValidFlag AS validFlag,
+					HandlerName AS handlerName,
+					HandlerNameChinese AS handNameCN,
+					BillType AS billType,
+					Type AS ztype,
+					BrandCode AS brandCd
+				FROM
+					Tools.BIN_BussinessHandler
+				WHERE
+					OrgCode = #orgCode# AND
+					BrandCode = #brandCode#
+			]]>
+    </sql>
+    
+    <!-- 取得全部业务处理器列表(品牌和共通)  -->
+    <sql id="getAllHandler">
+    	<include refid="BINOLPLSCF17.getBrandHandler" />
+    	<dynamic>
+			<isNotEmpty property="handNameCN">
+				AND HandlerNameChinese LIKE '%' + #handNameCN# + '%'
+			</isNotEmpty>
+		</dynamic>
+       	<![CDATA[
+			UNION
+				SELECT
+					A.BIN_BussinessHandlerID AS handlerId,
+					A.DescriptionDtl AS descriptionDtl,
+					A.ValidFlag AS validFlag,
+					HandlerName AS handlerName,
+					HandlerNameChinese AS handNameCN,
+					BillType AS billType,
+					Type AS ztype,
+					BrandCode AS brandCd
+				FROM
+					Tools.BIN_BussinessHandler A
+				WHERE A.OrgCode = '-9999' AND
+					  A.BrandCode = '-9999' AND
+					  A.BillType <> 'RF' AND
+		]]>	
+		<isNotEmpty property="handNameCN">
+				A.HandlerNameChinese LIKE '%' + #handNameCN# + '%' AND
+		</isNotEmpty>
+		<![CDATA[
+					  NOT EXISTS (
+					SELECT 1
+					FROM
+						(
+			]]>
+		<include refid="BINOLPLSCF17.getBrandHandler" />
+		<![CDATA[
+				) B
+			WHERE
+				A.BillType = B.BillType AND
+				A.HandlerName = B.HandlerName)
+		]]>
+    </sql>
+
+    <!-- 取得业务处理器列表  -->
+    <select id="getHandlerList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+    	<include refid="BINOLCMINC99.pageheader" />
+		<include refid="BINOLPLSCF17.getAllHandler" />
+		<include refid="BINOLCMINC99.pagefooter" />
+    </select>
+    
+     <!-- 取得业务处理器件数  -->
+    <select id="getHandlerCount" parameterClass="java.util.HashMap" resultClass="java.lang.Integer">
+       	<![CDATA[
+			SELECT	COUNT(SORT_T1.handlerId) AS count FROM (
+		]]>	
+		<include refid="BINOLPLSCF17.getAllHandler" />	
+		<![CDATA[	
+			)SORT_T1
+		]]>	
+    </select>
+    
+    <!-- 取得业务处理器详细信息  -->
+    <select id="getHandlerDetail" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+       	<![CDATA[
+			SELECT
+					DescriptionDtl AS descriptionDtl,
+					HandlerName AS handlerName,
+					HandlerNameChinese AS handNameCN,
+					BillType AS billType,
+					Type AS ztype
+				FROM
+					Tools.BIN_BussinessHandler
+				WHERE
+					BIN_BussinessHandlerID = #handlerId#
+		]]>
+    </select>
+    
+    <!-- 插入业务处理器信息 -->
+	<insert id="insertHandlerInfo" parameterClass="java.util.HashMap">
+		<![CDATA[
+            INSERT INTO Tools.BIN_BussinessHandler(
+			    OrgCode,
+                BrandCode,
+                Type,
+                BillType,
+                HandlerName,
+                DescriptionDtl,
+                HandlerNameChinese,
+                ValidFlag,
+		]]>
+		<include refid="BINOLPLSCF17.insertKezSCF17" />
+		<![CDATA[                               
+        )VALUES (
+            #orgCode#,
+            #brandCd#,
+            #ztype#,
+            #billType#,
+			#handlerName#,
+            #descriptionDtl#,
+            #handNameCN#,
+            #validFlag#,
+        ]]>
+        <include refid="BINOLPLSCF17.insertValSCF17" />
+        <![CDATA[ ) ]]>
+	</insert>
+    
+    <!-- 停用或者启用业务处理器  -->
+	<update id="updateValidHandler" parameterClass="java.util.HashMap">
+		<![CDATA[
+       UPDATE 
+       		Tools.BIN_BussinessHandler
+		SET 
+			ValidFlag = #validFlag#,
+		]]>
+		<include refid="BINOLCMINC99.updateSql" />		
+    <![CDATA[
+       WHERE 
+			BIN_BussinessHandlerID = #handlerId#
+    ]]>
+    </update>
+    
+    <!-- 取得品牌信息  -->
+    <select id="getBrandDetail" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+       	<![CDATA[
+				SELECT
+					BIN_BrandInfoID AS brandInfoId,
+					BIN_OrganizationInfoID AS organizationInfoId
+				FROM
+					Basis.BIN_BrandInfo
+				WHERE
+					BrandCode = #brandCode#
+		]]>
+    </select>
+    
+</sqlMap>

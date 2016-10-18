@@ -1,0 +1,492 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sqlMap PUBLIC "-//iBATIS.com//DTD SQL Map 2.0//EN" "http://ibatis.apache.org/dtd/sql-map-2.dtd">
+<sqlMap namespace="BINOLBSDEP92">
+	
+	<!-- 查询品牌信息SQL -->
+	<sql id="BrandInfoQuery">
+    	<![CDATA[
+	    	SELECT
+				BIN_BrandInfoID,
+				BrandCode,
+				BrandNameChinese,
+				BrandNameShort,
+				BrandNameForeign,
+				BrandNameForeignShort,
+				FoundationDate,
+				ValidFlag,
+				convert(varchar(30),UpdateTime,121) AS UpdateTime,
+				ModifyCount
+			FROM
+				Basis.BIN_BrandInfo
+			WHERE
+				BIN_OrganizationInfoID=#organizationInfoId#
+		]]>		
+		<dynamic>
+			<isNotEmpty prepend="AND" property="brandCode">
+				BrandCode like '%'+#brandCode#+'%'
+			</isNotEmpty>
+			<isNotEmpty prepend="AND" property="brandNameKw">
+				(BrandNameChinese like '%'+#brandNameKw#+'%' OR
+				BrandNameShort like '%'+#brandNameKw#+'%' OR
+				BrandNameForeign like '%'+#brandNameKw#+'%' OR
+				BrandNameForeignShort like '%'+#brandNameKw#+'%')
+			</isNotEmpty>
+			<isEmpty prepend="AND" property="validFlag" >
+				ValidFlag='1'
+			</isEmpty>
+		</dynamic>
+    </sql>
+    
+    <!-- 查询品牌总数 -->
+	<select id="getBrandInfoCount" parameterClass="java.util.HashMap" resultClass="java.lang.Integer">
+		<![CDATA[
+			SELECT	COUNT(SORT_T1.BIN_BrandInfoID) AS count FROM (
+		]]>	
+		<include refid="BINOLBSDEP92.BrandInfoQuery" />
+		<![CDATA[	
+			) SORT_T1
+		]]>	
+    </select>
+	
+	<resultMap id="BINOLBSDEP92.BrandInfo" class="java.util.HashMap">
+		<result property="RowNumber" column="RowNumber"/>
+		<result property="brandInfoId" column="BIN_BrandInfoID"/>
+		<result property="brandCode" column="BrandCode"/>
+		<result property="brandNameChinese" column="BrandNameChinese"/>
+		<result property="brandNameShort" column="BrandNameShort"/>
+		<result property="brandNameForeign" column="BrandNameForeign"/>
+		<result property="brandNameForeignShort" column="BrandNameForeignShort"/>
+		<result property="foundationDate" column="FoundationDate"/>
+		<result property="validFlag" column="ValidFlag"/>
+		<result property="updateTime" column="UpdateTime"/>
+		<result property="modifyCount" column="ModifyCount"/>
+	</resultMap>
+	<!-- 取得品牌信息List -->
+	<select id="getBrandInfoList" parameterClass="java.util.HashMap" resultMap="BINOLBSDEP92.BrandInfo">
+		<include refid="BINOLCMINC99.pageheader" />
+		<include refid="BINOLBSDEP92.BrandInfoQuery" />
+		<include refid="BINOLCMINC99.pagefooter" />
+    </select>
+	
+	<resultMap id="BINOLBSDEP92.BrandInfo1" class="java.util.HashMap">
+		<result property="brandInfoId" column="BIN_BrandInfoID"/>
+		<result property="brandCode" column="BrandCode"/>
+		<result property="brandNameChinese" column="BrandNameChinese"/>
+		<result property="brandNameShort" column="BrandNameShort"/>
+		<result property="brandNameForeign" column="BrandNameForeign"/>
+		<result property="brandNameForeignShort" column="BrandNameForeignShort"/>
+		<result property="foundationDate" column="FoundationDate"/>
+		<result property="updateTime" column="UpdateTime"/>
+		<result property="modifyCount" column="ModifyCount"/>
+	</resultMap>
+	<!-- 取得品牌信息 -->
+	<select id="getBrandInfo" parameterClass="java.util.HashMap" resultMap="BINOLBSDEP92.BrandInfo1">
+		<![CDATA[
+			SELECT
+				BIN_BrandInfoID,
+				BrandCode,
+				BrandNameChinese,
+				BrandNameShort,
+				BrandNameForeign,
+				BrandNameForeignShort,
+				FoundationDate,
+				convert(varchar(30),UpdateTime,121) AS UpdateTime,
+				ModifyCount
+			FROM
+				Basis.BIN_BrandInfo
+			WHERE
+				BIN_BrandInfoID=#brandInfoId#
+		]]>
+    </select>
+    
+    <!-- 判断品牌代码是否已经存在 -->
+	<select id="checkBrandCode" parameterClass="java.util.HashMap" resultClass="java.lang.String">
+		<![CDATA[
+			SELECT
+				BIN_BrandInfoID
+			FROM
+				Basis.BIN_BrandInfo
+			WHERE
+				BIN_OrganizationInfoID=#organizationInfoId# AND
+				BrandCode=#brandCode#
+		]]>
+    </select>
+    
+    <!-- 判断品牌名称是否已经存在 -->
+	<select id="checkBrandName" parameterClass="java.util.HashMap" resultClass="java.lang.String">
+		<![CDATA[
+			SELECT
+				BIN_BrandInfoID
+			FROM
+				Basis.BIN_BrandInfo
+			WHERE
+				BrandNameChinese=#brandNameChinese#
+		]]>
+    </select>
+    
+    <!-- 添加品牌 -->
+    <insert id="addBrandInfo" parameterClass="java.util.HashMap">
+    	<selectKey resultClass="java.lang.Integer" type="post" keyProperty="BIN_BrandInfoID" >
+    	<![CDATA[
+    		INSERT INTO Basis.BIN_BrandInfo					
+			(					
+				BIN_OrganizationInfoID,
+				BrandCode,
+				BrandNameChinese,
+				BrandNameShort,
+				BrandNameForeign,
+				BrandNameForeignShort,
+				FoundationDate,
+		]]>
+				<include refid="BINOLCMINC99.insertKeySql" />		
+		<![CDATA[						
+			)					
+			VALUES					
+			(					
+				#organizationInfoId#,				
+				#brandCode#,				
+				#brandNameChinese#,				
+				#brandNameShort#,
+				#brandNameForeign#,
+				#brandNameForeignShort#,
+				CONVERT(Date,#foundationDate#),
+		]]>
+				<include refid="BINOLCMINC99.insertValueSql" />		
+		<![CDATA[							
+			)
+			select SCOPE_IDENTITY() as value					
+    	]]>
+    	</selectKey>   
+    </insert>
+    
+    <!-- 更新品牌 -->
+    <update id="updateBrandInfo" parameterClass="java.util.HashMap">
+    	<![CDATA[
+			UPDATE Basis.BIN_BrandInfo			
+			SET				
+				BrandNameChinese = #brandNameChinese#,			
+				BrandNameShort = #brandNameShort#,			
+				BrandNameForeign = #brandNameForeign#,
+				BrandNameForeignShort = #brandNameForeignShort#,
+				FoundationDate = CONVERT(Date,#foundationDate#),
+		]]>
+				<include refid="BINOLCMINC99.updateSql" />		
+		<![CDATA[					
+			WHERE				
+				BIN_BrandInfoID=#brandInfoId# AND			
+				UpdateTime = #modifyTime# AND		
+				ModifyCount = #modifyCount#					
+		]]>
+    </update>
+    
+    <!-- 更新部门信息 -->
+    <update id="updateOrganizationInfo" parameterClass="java.util.HashMap">
+    	<![CDATA[
+			UPDATE Basis.BIN_Organization			
+			SET							
+				DepartName = #departName#,			
+				DepartNameShort = #departNameShort#,
+				NameForeign = #nameForeign#,
+				NameShortForeign = #nameShortForeign#,
+		]]>
+				<include refid="BINOLCMINC99.updateSql" />		
+		<![CDATA[					
+			WHERE				
+				BIN_OrganizationInfoID = #organizationInfoId# AND
+				BIN_BrandInfoID=#brandInfoId# AND		
+				DepartCode=#oldDepartCode#		
+		]]>
+    </update>
+    
+    <!-- 伦理删除品牌 -->
+    <update id="deleteBrandInfo" parameterClass="java.util.HashMap">
+    	<![CDATA[
+			UPDATE Basis.BIN_BrandInfo		
+			SET				
+				ValidFlag = #validFlag#,
+		]]>
+				<include refid="BINOLCMINC99.updateSql" />		
+		<![CDATA[					
+			WHERE				
+				BIN_BrandInfoID IN	
+		]]>
+		<iterate conjunction="," open="(" close=")" property="brandInfoId">  
+        	#brandInfoId[]#
+    	</iterate>
+    </update>
+    
+    <!-- 给品牌添加默认的基本配置信息 -->
+    <insert id="addSystemConfig" parameterClass="java.util.HashMap">
+    	<![CDATA[
+    		INSERT INTO Tools.BIN_SystemConfig (
+    			BIN_OrganizationInfoID,
+				BIN_BrandInfoID,
+				BrandConfigFlag,
+				GroupNo,
+				ConfigCode,
+				ConfigDescriptionChinese,
+				ConfigDescriptionForeign,
+				Type,
+				DetailNo,
+				ConfigValue,
+				CommentsChinese,
+				CommentsForeign,
+				ConfigEfficient,
+				CreateTime,
+				UpdateTime,
+				CreatedBy,
+				CreatePGM,
+				UpdatedBy,
+				UpdatePGM,
+				ValidFlag,
+				ModifyCount
+    		)
+				SELECT 
+					#organizationInfoId#,
+					#brandInfoId#,
+					BrandConfigFlag,
+					GroupNo,
+					ConfigCode,
+					ConfigDescriptionChinese,
+					ConfigDescriptionForeign,
+					Type,
+					DetailNo,
+					ConfigValue,
+					CommentsChinese,
+					CommentsForeign,
+					ConfigEfficient,
+		]]>
+				<include refid="BINOLCMINC99.insertValueSql" />		
+		<![CDATA[				
+				FROM 
+					Tools.BIN_SystemConfig
+				WHERE 
+				    BrandConfigFlag='1' AND
+					BIN_OrganizationInfoID='-8888' AND 
+					BIN_BrandInfoID='-8888' AND 
+					ValidFlag='1'
+		]]>
+    </insert>
+    
+    <!-- 给品牌添加默认的岗位信息 -->
+    <insert id="addPosCategory" parameterClass="java.util.HashMap">
+    	<![CDATA[
+    		INSERT INTO Privilege.BIN_PositionCategory (
+    			CategoryCode,
+				CategoryName,
+			    CategoryNameForeign,
+			    BIN_OrganizationInfoID,
+			    BIN_BrandInfoID,
+			    Grade,
+			    CreateTime,
+				UpdateTime,
+				CreatedBy,
+				CreatePGM,
+				UpdatedBy,
+				UpdatePGM,
+				ValidFlag,
+				ModifyCount
+    		)
+				SELECT 
+					CategoryCode,
+				    CategoryName,
+					CategoryNameForeign,
+					#organizationInfoId#,
+					#brandInfoId#,
+					Grade,
+		]]>
+				<include refid="BINOLCMINC99.insertValueSql" />		
+		<![CDATA[				
+				FROM 
+					Privilege.BIN_PositionCategory
+				WHERE 
+					BIN_OrganizationInfoID='-9999' AND 
+					BIN_BrandInfoID='-9999' AND 
+					ValidFlag='1'
+		]]>
+    </insert>
+    
+    <!-- 给品牌添加默认的密码配置信息 -->
+    <insert id="addPwdConfig" parameterClass="java.util.HashMap">
+    	<![CDATA[
+    		INSERT INTO Privilege.BIN_PasswordConfig (
+    			BIN_OrganizationInfoID,
+			    BIN_BrandInfoID,
+			    Duration,
+			    RemindAhead,
+			    RepetitionInterval,
+			    Complexity,
+			    Length,
+			    MaxLength,
+			    IsEncryption,
+			    RetryTimes,
+			    LockPeriod,
+			    IsTracable,
+			    IsTrievable,
+			    CreateTime,
+				UpdateTime,
+				CreatedBy,
+				CreatePGM,
+				UpdatedBy,
+				UpdatePGM,
+				ValidFlag,
+				ModifyCount
+    		)
+				SELECT 
+					#organizationInfoId#,
+					#brandInfoId#,
+					Duration,
+					RemindAhead,
+					RepetitionInterval,
+					Complexity,
+					Length,
+					MaxLength,
+					IsEncryption,
+					RetryTimes,
+					LockPeriod,
+					IsTracable,
+					IsTrievable,
+		]]>
+				<include refid="BINOLCMINC99.insertValueSql" />		
+		<![CDATA[				
+				FROM 
+					Privilege.BIN_PasswordConfig
+				WHERE 
+					BIN_OrganizationInfoID='-9999' AND 
+					BIN_BrandInfoID='-9999' AND 
+					ValidFlag='1'
+		]]>
+    </insert>
+    
+    <!-- 添加品牌数据源信息 -->
+    <insert id="addDataSource" parameterClass="java.util.HashMap">
+    	<![CDATA[
+    		INSERT INTO dbo.BIN_BrandDataSourceConfig		
+			(					
+				OrgCode,
+				OrgNameChinese,
+				BrandCode,
+				BrandName,
+				DataSourceName,
+				OldDataSourceName,
+		]]>
+				<include refid="BINOLCMINC99.insertKeySql" />		
+		<![CDATA[						
+			)					
+			VALUES					
+			(					
+				#orgCode#,				
+				#orgNameChinese#,				
+				#brandCode#,				
+				#brandName#,
+				#dataSourceName#,
+				#oldDataSourceName#,
+		]]>
+				<include refid="BINOLCMINC99.insertValueSql" />		
+		<![CDATA[							
+			)					
+    	]]> 
+    </insert>
+    
+    <!-- 添加品牌业务日期 -->
+    <insert id="addBussinessDate" parameterClass="java.util.HashMap">
+    	<![CDATA[
+    		INSERT INTO Tools.BIN_BussinessDate		
+			(					
+				BIN_OrganizationInfoID,
+				BIN_BrandInfoID,
+				ControlDate,
+		]]>
+				<include refid="BINOLCMINC99.insertKeySql" />		
+		<![CDATA[						
+			)					
+			VALUES					
+			(					
+				#organizationInfoId#,				
+				#brandInfoId#,				
+				GETDATE(),				
+		]]>
+				<include refid="BINOLCMINC99.insertValueSql" />		
+		<![CDATA[							
+			)					
+    	]]> 
+    </insert>
+    
+    <!-- 添加默认厂商信息 -->
+    <insert id="addManufacturerInfo" parameterClass="java.util.HashMap">
+    	<![CDATA[
+    		INSERT INTO Basis.BIN_ManufacturerInfo
+			(
+				BIN_OrganizationInfoID,
+				BIN_BrandInfoID,
+				ManufacturerCode,
+				FactoryNameCN,
+				FactoryNamecnCNShort,
+				FactoryNameEN,
+				FactoryNameENShort,
+				DefaultFlag,
+		]]>
+				<include refid="BINOLCMINC99.insertKeySql" />		
+		<![CDATA[	
+			)
+			VALUES 
+			(
+				#organizationInfoId#,
+				#brandInfoId#,
+				#manufacturerCode#,
+				#factoryNameCN#,
+				#factoryNamecnCNShort#,
+				#factoryNameEN#,
+				#factoryNameENShort#,
+				#defaultFlag#,
+		]]>
+				<include refid="BINOLCMINC99.insertValueSql" />		
+		<![CDATA[							
+			)					
+    	]]> 
+    </insert>
+    
+    <!-- 取得组织区域节点 -->
+	<select id="getOrgRegionNode" parameterClass="java.util.HashMap" resultClass="java.lang.String">
+		<![CDATA[
+			SELECT
+				Path
+			FROM
+				Basis.BIN_Region
+			WHERE
+				BIN_OrganizationInfoID=#organizationInfoId# AND
+				BIN_BrandInfoID='-9999' AND
+				RegionType='-1' AND
+				ValidFlag='1'
+		]]>
+    </select>
+    
+    <!-- 取得品牌区域节点 -->
+	<select id="getBrandRegionNode" parameterClass="java.util.HashMap" resultClass="java.lang.String">
+		<![CDATA[
+			SELECT
+				Path
+			FROM
+				Basis.BIN_Region
+			WHERE
+				BIN_OrganizationInfoID=#organizationInfoId# AND
+				BIN_BrandInfoID=#brandInfoId# AND
+				RegionType='-1' AND
+				ValidFlag='1'
+		]]>
+    </select>
+	
+	 <!-- 判断品牌代码是否已经存在 -->
+	<select id="checkOrgCode" parameterClass="java.util.HashMap" resultClass="java.lang.Integer">
+		<![CDATA[
+			SELECT
+				count(OrgCode)
+			FROM
+				dbo.BIN_BrandDataSourceConfig
+			WHERE
+				OrgCode=#orgCode# AND 
+				BrandCode=#brandCode#
+		]]>
+    </select>
+    
+</sqlMap>

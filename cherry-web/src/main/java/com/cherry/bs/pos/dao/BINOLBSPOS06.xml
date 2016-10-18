@@ -1,0 +1,92 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sqlMap PUBLIC "-//iBATIS.com//DTD SQL Map 2.0//EN" "http://ibatis.apache.org/dtd/sql-map-2.dtd">
+<sqlMap namespace="BINOLBSPOS06">
+    
+    <sql id="PositionCategory">
+    	<![CDATA[
+	    	SELECT
+				A.BIN_PositionCategoryID,
+				A.CategoryCode,
+				A.ValidFlag,
+				A.BIN_BrandInfoID,
+				A.Grade,
+		]]>		
+		<isNotEmpty property="language">
+			<isEqual property="language" compareValue="en_US">
+				A.CategoryNameForeign AS CategoryName,
+				B.BrandNameForeign AS BrandNameChinese
+			</isEqual>
+			<isEqual property="language" compareValue="zh_CN">	
+				A.CategoryName AS CategoryName,
+				B.BrandNameChinese AS BrandNameChinese
+			</isEqual>								
+		</isNotEmpty>
+		<isEmpty property="language">
+				A.CategoryName AS CategoryName,
+				B.BrandNameChinese AS BrandNameChinese	
+		</isEmpty>	
+		<![CDATA[			
+			FROM
+				Privilege.BIN_PositionCategory A left join
+				Basis.BIN_BrandInfo B on A.BIN_BrandInfoID=B.BIN_BrandInfoID
+			WHERE
+				A.BIN_OrganizationInfoID=#organizationInfoId#
+		]]>		
+		<dynamic>
+			<isNotEmpty prepend="AND" property="brandInfoId">
+				A.BIN_BrandInfoID=#brandInfoId#
+			</isNotEmpty>
+			<isNotEmpty prepend="AND" property="categoryCode">
+				A.CategoryCode=#categoryCode#
+			</isNotEmpty>
+		<isNotEmpty prepend="AND" property="categoryName">
+			<isNotEmpty property="language">
+			<isEqual property="language" compareValue="en_US">
+				A.CategoryNameForeign like '%'+#categoryName#+'%'
+			</isEqual>
+			<isEqual property="language" compareValue="zh_CN">	
+				A.CategoryName like '%'+#categoryName#+'%'
+			</isEqual>								
+		</isNotEmpty>
+		<isEmpty property="language">
+				A.CategoryName like '%'+#categoryName#+'%'
+		</isEmpty>	
+			</isNotEmpty>
+			<isEmpty prepend="AND" property="validFlag" >
+				A.ValidFlag='1'
+			</isEmpty>
+		</dynamic>
+    </sql>
+    
+    <!-- 查询岗位类别总数 -->
+	<select id="getPositionCategoryCount" parameterClass="java.util.HashMap" resultClass="java.lang.Integer">
+		<![CDATA[
+			SELECT	COUNT(SORT_T1.BIN_PositionCategoryID) AS count FROM (
+		]]>	
+		<include refid="BINOLBSPOS06.PositionCategory" />
+		<![CDATA[	
+			) SORT_T1
+		]]>	
+    </select>
+    
+    <!-- 取得岗位类别信息List -->
+	<resultMap id="BINOLBSPOS06.PositionCategory" class="java.util.HashMap">
+		<result property="RowNumber" column="RowNumber"/>
+		<result property="positionCategoryId" column="BIN_PositionCategoryID"/>
+		<result property="categoryCode" column="CategoryCode"/>
+		<result property="validFlag" column="ValidFlag"/>
+		<result property="brandInfoId" column="BIN_BrandInfoID"/>
+		<result property="posGrade" column="Grade"/>
+		<result property="categoryName" column="CategoryName"/>
+		<result property="brandNameChinese" column="BrandNameChinese"/>
+	</resultMap>
+	<select id="getPositionCategoryList" parameterClass="java.util.HashMap" resultMap="BINOLBSPOS06.PositionCategory">
+		<include refid="BINOLCMINC99.pageheader" />
+		<include refid="BINOLBSPOS06.PositionCategory" />
+		<include refid="BINOLCMINC99.pagefooter" />
+    </select>
+	
+</sqlMap>
+
+
+

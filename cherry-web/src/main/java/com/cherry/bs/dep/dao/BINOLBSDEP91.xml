@@ -1,0 +1,266 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sqlMap PUBLIC "-//iBATIS.com//DTD SQL Map 2.0//EN" "http://ibatis.apache.org/dtd/sql-map-2.dtd">
+<sqlMap namespace="BINOLBSDEP91">
+	
+	<!-- 查询组织信息SQL -->
+	<sql id="OrganizationQuery">
+    	<![CDATA[
+	    	SELECT
+				BIN_OrganizationInfoID,
+				OrgCode,
+				OrgNameChinese,
+				OrgNameShort,
+				OrgNameForeign,
+				OrgNameForeignShort,
+				FoundationDate,
+				ValidFlag,
+				convert(varchar(30),UpdateTime,121) AS UpdateTime,
+				ModifyCount
+			FROM
+				Basis.BIN_OrganizationInfo
+		]]>		
+		<dynamic prepend="WHERE">
+			<isNotEmpty prepend="AND" property="organizationInfoId" >
+				BIN_OrganizationInfoID=#organizationInfoId#
+			</isNotEmpty>
+			<isNotEmpty prepend="AND" property="orgNameKw">
+				(OrgNameChinese like '%'+#orgNameKw#+'%' OR
+				OrgNameShort like '%'+#orgNameKw#+'%' OR
+				OrgNameForeign like '%'+#orgNameKw#+'%' OR
+				OrgNameForeignShort like '%'+#orgNameKw#+'%')
+			</isNotEmpty>
+			<isEmpty prepend="AND" property="validFlag" >
+				ValidFlag='1'
+			</isEmpty>
+		</dynamic>
+    </sql>
+    
+    <!-- 查询组织总数 -->
+	<select id="getOrganizationCount" parameterClass="java.util.HashMap" resultClass="java.lang.Integer">
+		<![CDATA[
+			SELECT	COUNT(SORT_T1.BIN_OrganizationInfoID) AS count FROM (
+		]]>	
+		<include refid="BINOLBSDEP91.OrganizationQuery" />
+		<![CDATA[	
+			) SORT_T1
+		]]>	
+    </select>
+	
+	<resultMap id="BINOLBSDEP91.Organization" class="java.util.HashMap">
+		<result property="RowNumber" column="RowNumber"/>
+		<result property="organizationInfoId" column="BIN_OrganizationInfoID"/>
+		<result property="orgCode" column="OrgCode"/>
+		<result property="orgNameChinese" column="OrgNameChinese"/>
+		<result property="orgNameShort" column="OrgNameShort"/>
+		<result property="orgNameForeign" column="OrgNameForeign"/>
+		<result property="orgNameForeignShort" column="OrgNameForeignShort"/>
+		<result property="foundationDate" column="FoundationDate"/>
+		<result property="validFlag" column="ValidFlag"/>
+		<result property="updateTime" column="UpdateTime"/>
+		<result property="modifyCount" column="ModifyCount"/>
+	</resultMap>
+	<!-- 取得组织信息List -->
+	<select id="getOrganizationList" parameterClass="java.util.HashMap" resultMap="BINOLBSDEP91.Organization">
+		<include refid="BINOLCMINC99.pageheader" />
+		<include refid="BINOLBSDEP91.OrganizationQuery" />
+		<include refid="BINOLCMINC99.pagefooter" />
+    </select>
+	
+	<resultMap id="BINOLBSDEP91.Organization1" class="java.util.HashMap">
+		<result property="organizationInfoId" column="BIN_OrganizationInfoID"/>
+		<result property="orgCode" column="OrgCode"/>
+		<result property="orgNameChinese" column="OrgNameChinese"/>
+		<result property="orgNameShort" column="OrgNameShort"/>
+		<result property="orgNameForeign" column="OrgNameForeign"/>
+		<result property="orgNameForeignShort" column="OrgNameForeignShort"/>
+		<result property="foundationDate" column="FoundationDate"/>
+		<result property="updateTime" column="UpdateTime"/>
+		<result property="modifyCount" column="ModifyCount"/>
+	</resultMap>
+	<!-- 取得组织信息 -->
+	<select id="getOrganization" parameterClass="java.util.HashMap" resultMap="BINOLBSDEP91.Organization1">
+		<![CDATA[
+			SELECT
+				BIN_OrganizationInfoID,
+				OrgCode,
+				OrgNameChinese,
+				OrgNameShort,
+				OrgNameForeign,
+				OrgNameForeignShort,
+				FoundationDate,
+				convert(varchar(30),UpdateTime,121) AS UpdateTime,
+				ModifyCount
+			FROM
+				Basis.BIN_OrganizationInfo
+			WHERE
+				BIN_OrganizationInfoID=#organizationInfoId#
+		]]>
+    </select>
+    
+    <!-- 判断组织代码是否已经存在 -->
+	<select id="getOrgIdByOrgCode" parameterClass="java.util.HashMap" resultClass="java.lang.String">
+		<![CDATA[
+			SELECT
+				BIN_OrganizationInfoID
+			FROM
+				Basis.BIN_OrganizationInfo
+			WHERE
+				OrgCode=#orgCode#
+		]]>
+    </select>
+    
+    <!-- 判断组织名称是否已经存在 -->
+	<select id="getOrganizationInfoID" parameterClass="java.util.HashMap" resultClass="java.lang.String">
+		<![CDATA[
+			SELECT
+				BIN_OrganizationInfoID
+			FROM
+				Basis.BIN_OrganizationInfo
+			WHERE
+				OrgNameChinese=#orgNameChinese#
+		]]>
+    </select>
+    
+    <!-- 添加组织 -->
+    <insert id="addOrganization" parameterClass="java.util.HashMap">
+    	<selectKey resultClass="java.lang.Integer" type="post" keyProperty="BIN_OrganizationInfoID" >
+    	<![CDATA[
+    		INSERT INTO Basis.BIN_OrganizationInfo					
+			(					
+				OrgCode,
+				OrgNameChinese,
+				OrgNameShort,
+				OrgNameForeign,
+				OrgNameForeignShort,
+				FoundationDate,
+		]]>
+				<include refid="BINOLCMINC99.insertKeySql" />		
+		<![CDATA[						
+			)					
+			VALUES					
+			(					
+				#orgCode#,			
+				#orgNameChinese#,				
+				#orgNameShort#,				
+				#orgNameForeign#,				
+				#orgNameForeignShort#,
+				CONVERT(Date,#foundationDate#),
+		]]>
+				<include refid="BINOLCMINC99.insertValueSql" />		
+		<![CDATA[							
+			)
+			select SCOPE_IDENTITY() as value					
+    	]]>
+    	</selectKey>   
+    </insert>
+    
+    <!-- 更新组织 -->
+    <update id="updateOrganizationInfo" parameterClass="java.util.HashMap">
+    	<![CDATA[
+			UPDATE Basis.BIN_OrganizationInfo			
+			SET				
+				OrgNameChinese = #orgNameChinese#,			
+				OrgNameShort = #orgNameShort#,			
+				OrgNameForeign = #orgNameForeign#,
+				OrgNameForeignShort = #orgNameForeignShort#,
+				FoundationDate = CONVERT(Date,#foundationDate#),
+		]]>
+				<include refid="BINOLCMINC99.updateSql" />		
+		<![CDATA[					
+			WHERE				
+				BIN_OrganizationInfoID=#organizationInfoId# AND			
+				UpdateTime = #modifyTime# AND		
+				ModifyCount = #modifyCount#					
+		]]>
+    </update>
+    
+    <!-- 更新部门信息 -->
+    <update id="updateOrganization" parameterClass="java.util.HashMap">
+    	<![CDATA[
+			UPDATE Basis.BIN_Organization			
+			SET						
+				DepartName = #departName#,			
+				DepartNameShort = #departNameShort#,
+				NameForeign = #nameForeign#,
+				NameShortForeign = #nameShortForeign#,
+		]]>
+				<include refid="BINOLCMINC99.updateSql" />		
+		<![CDATA[					
+			WHERE				
+				BIN_OrganizationID = #organizationId#		
+		]]>
+    </update>
+    
+    <!-- 伦理删除组织 -->
+    <update id="deleteOrganization" parameterClass="java.util.HashMap">
+    	<![CDATA[
+			UPDATE Basis.BIN_OrganizationInfo		
+			SET				
+				ValidFlag = #validFlag#,
+		]]>
+				<include refid="BINOLCMINC99.updateSql" />	
+		<![CDATA[					
+			WHERE				
+				BIN_OrganizationInfoID IN
+		]]>
+		<iterate conjunction="," open="(" close=")" property="organizationInfoId">  
+        	#organizationInfoId[]#
+    	</iterate>
+    </update>
+    
+    <!-- 添加管理员 -->
+    <insert id="addUser" parameterClass="java.util.HashMap">
+    	<selectKey resultClass="java.lang.Integer" type="post" keyProperty="BIN_UserID" >
+    	<![CDATA[
+    		INSERT INTO Privilege.BIN_User					
+			(					
+				BIN_OrganizationInfoID,
+				LonginName,
+				PassWord,
+		]]>
+				<include refid="BINOLCMINC99.insertKeySql" />		
+		<![CDATA[						
+			)					
+			VALUES					
+			(					
+				#organizationInfoId#,				
+				#longinName#,				
+				#passWord#,				
+		]]>
+				<include refid="BINOLCMINC99.insertValueSql" />		
+		<![CDATA[							
+			)
+			select SCOPE_IDENTITY() as value					
+    	]]>
+    	</selectKey>   
+    </insert>
+    
+    <!-- 添加管理员角色 -->
+    <insert id="addUserRole" parameterClass="java.util.HashMap">
+    	<![CDATA[
+    		INSERT INTO Privilege.BIN_UserRole		
+			(		
+				BIN_UserID,	
+				BIN_RoleID,	
+				StartDate,	
+				ExpireDate,	
+				PrivilegeFlag,
+		]]>
+				<include refid="BINOLCMINC99.insertKeySql" />		
+		<![CDATA[				
+			)		
+			VALUES		
+			(		
+				#userId#,	
+				#roleId#,	
+				#startDate#,	
+				#expireDate#,	
+				#privilegeFlag#,
+		]]>
+				<include refid="BINOLCMINC99.insertValueSql" />		
+		<![CDATA[			
+			)		
+    	]]>
+    </insert>
+	
+</sqlMap>

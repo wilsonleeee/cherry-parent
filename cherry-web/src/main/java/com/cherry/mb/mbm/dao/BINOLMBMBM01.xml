@@ -1,0 +1,232 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE sqlMap PUBLIC "-//iBATIS.com//DTD SQL Map 2.0//EN" "http://ibatis.apache.org/dtd/sql-map-2.dtd">
+
+<sqlMap namespace="BINOLMBMBM01">
+    
+    <sql id="ExtendPropertySql">
+		<![CDATA[
+			SELECT 
+				BIN_MemberInfoID 
+			FROM
+				(SELECT 
+					A.BIN_MemberInfoID
+		]]>	
+			<iterate property="propertyInfoList"> 
+				,MAX(CASE WHEN B.BIN_PaperQuestionID = #propertyInfoList[].extendPropertyId# THEN B.Answer END) AS [$propertyInfoList[].extendPropertyId$]
+			</iterate> 	
+		<![CDATA[
+				FROM 
+					Monitor.BIN_PaperAnswer A WITH(NOLOCK) JOIN Monitor.BIN_PaperAnswerDetail B WITH(NOLOCK) ON A.BIN_PaperAnswerID = B.BIN_PaperAnswerID
+				WHERE
+					A.PaperType = '1'	
+				GROUP BY 
+					A.BIN_MemberInfoID) TempMember	
+		]]>
+			<dynamic prepend="WHERE">
+			<iterate property="propertyInfoList" conjunction="AND"> 
+				<isNotEmpty property="propertyInfoList[].propertyValues">
+					<isEqual property="propertyInfoList[].propertyType" compareValue="2">
+						<iterate property="propertyInfoList[].propertyValues" conjunction="OR" close=")" open="("> 
+							SUBSTRING(TempMember.[$propertyInfoList[].extendPropertyId$],CONVERT(INT,#propertyInfoList[].propertyValues[]#),1)='1'
+						</iterate>
+					</isEqual>
+					<isNotEqual property="propertyInfoList[].propertyType" compareValue="2">
+						<iterate property="propertyInfoList[].propertyValues" conjunction="OR" close=")" open="("> 
+							TempMember.[$propertyInfoList[].extendPropertyId$]=#propertyInfoList[].propertyValues[]#
+						</iterate>
+					</isNotEqual>
+				</isNotEmpty>
+			</iterate>
+			</dynamic>
+    </sql>
+    
+    <sql id="MemberInfoSql">
+    	<![CDATA[
+    		SELECT
+				A.BIN_MemberInfoID AS memberInfoId,
+				B.MemCode AS memCode,
+				A.Name AS name,
+				A.MobilePhone AS mobilePhone,
+				CONVERT(varchar(30),A.JoinDate,120) AS joinDate,
+				C.LevelName AS levelName
+			FROM
+				Members.BIN_MemberInfo A WITH(NOLOCK)
+		]]>
+			<isNotEmpty property="memCode">
+				JOIN (SELECT DISTINCT
+					X.BIN_MemberInfoID
+				FROM
+					Members.BIN_MemberInfo X WITH(NOLOCK)
+					JOIN Members.BIN_MemCardInfo Y WITH(NOLOCK) ON X.BIN_MemberInfoID = Y.BIN_MemberInfoID AND Y.validFlag = '1'
+				WHERE
+					Y.MemCode = #memCode#) M ON A.BIN_MemberInfoID = M.BIN_MemberInfoID
+			</isNotEmpty>
+			<isNotEmpty property="privilegeFlag">
+			<isEqual property="privilegeFlag" compareValue="1">			
+		<![CDATA[			
+				JOIN (]]><include refid="BINOLCMINC99.departPrivilegeSql" /><![CDATA[) A99 
+				ON A.BIN_OrganizationID=A99.BIN_OrganizationID
+		]]>
+			</isEqual>
+			</isNotEmpty>
+		<![CDATA[		
+				LEFT JOIN Members.BIN_MemCardInfo B WITH(NOLOCK) ON A.BIN_MemberInfoID = B.BIN_MemberInfoID AND B.validFlag = '1' AND B.CardValidFlag = '1'
+				LEFT JOIN Members.BIN_MemberLevel C WITH(NOLOCK) ON A.MemberLevel = C.BIN_MemberLevelID
+				LEFT JOIN Members.BIN_MemberPoint D WITH(NOLOCK) ON A.BIN_MemberInfoID = D.BIN_MemberInfoID
+		]]>
+			<isNotEmpty property="propertyInfoList">
+				<![CDATA[JOIN (]]><include refid="BINOLMBMBM01.ExtendPropertySql" />
+				<![CDATA[) Z ON A.BIN_MemberInfoID = Z.BIN_MemberInfoID]]>
+			</isNotEmpty>
+		<![CDATA[
+			WHERE
+				A.BIN_OrganizationInfoID = #organizationInfoId#
+		]]>
+			<isNotEmpty prepend="AND" property="brandInfoId">
+				A.BIN_BrandInfoID = #brandInfoId#
+			</isNotEmpty>
+			<isNotEmpty prepend="AND" property="memType">
+				A.MemType IN
+				<iterate property="memType" open="(" close=")" conjunction=","> 
+					#memType[]#
+				</iterate>
+			</isNotEmpty>
+			<isNotEmpty prepend="AND" property="memLevel">
+				A.MemberLevel IN
+				<iterate property="memLevel" open="(" close=")" conjunction=","> 
+					#memLevel[]#
+				</iterate>
+			</isNotEmpty>
+			<isNotEmpty prepend="AND" property="name">
+				A.Name LIKE '%'+#name#+'%'
+			</isNotEmpty>
+			<isNotEmpty prepend="AND" property="mobilePhone">
+				A.MobilePhone = #mobilePhone#
+			</isNotEmpty>
+			<isNotEmpty prepend="AND" property="mebSex">
+				A.Gender IN
+				<iterate property="mebSex" open="(" close=")" conjunction=","> 
+					#mebSex[]#
+				</iterate>
+			</isNotEmpty>
+			<isNotEmpty prepend="AND" property="birthDayMonth">
+				SUBSTRING(A.BirthDay,1,2) = #birthDayMonth#
+			</isNotEmpty>
+			<isNotEmpty prepend="AND" property="birthDayDate">
+				SUBSTRING(A.BirthDay,3,2) = #birthDayDate#
+			</isNotEmpty>
+			<isNotEmpty prepend="AND" property="birthYearStart">
+				<![CDATA[ A.BirthYear >= #birthYearStart# ]]>	
+			</isNotEmpty>
+			<isNotEmpty prepend="AND" property="birthYearEnd">
+				<![CDATA[ A.BirthYear <= #birthYearEnd# ]]>	
+			</isNotEmpty>
+			<isNotEmpty prepend="AND" property="joinDateStart">
+				<![CDATA[ A.JoinDate >= #joinDateStart# ]]>
+			</isNotEmpty>	
+			<isNotEmpty prepend="AND" property="joinDateEnd">
+				<![CDATA[ A.JoinDate <= #joinDateEnd# ]]>
+			</isNotEmpty>
+			<isNotEmpty prepend="AND" property="memberPointStart">
+				D.TotalPoint >= #memberPointStart#
+			</isNotEmpty>
+			<isNotEmpty prepend="AND" property="memberPointEnd">
+				<![CDATA[D.TotalPoint <= #memberPointEnd#]]>
+			</isNotEmpty>
+			<isNotEmpty prepend="AND" property="counterCode">
+				A.CounterCodeBelong = #counterCode#
+			</isNotEmpty>
+			<isNotEmpty prepend="AND" property="referrerMemCode">
+				A.ReferrerID = #referrerMemCode#
+			</isNotEmpty>
+			<isNotEmpty prepend="AND" property="telNotEmpty">
+				A.MobilePhone IS NOT NULL AND A.MobilePhone != ''
+			</isNotEmpty>
+			<isNotEmpty prepend="AND" property="emailNotEmpty">
+				A.Email IS NOT NULL AND A.Email != ''
+			</isNotEmpty>
+			<isNotEmpty prepend="AND" property="telCheck">
+				A.TelCheck = '1'
+			</isNotEmpty>
+			<isEmpty prepend="AND" property="validFlag">
+				B.CardValidFlag = '1' AND
+				A.validFlag = '1'
+			</isEmpty>
+			<isEmpty prepend="AND" property="memInfoRegFlg">
+				A.MemInfoRegFlg = '0'
+			</isEmpty>
+    </sql>
+    
+    
+    <!-- 查询会员总数 -->
+	<select id="getMemberInfoCount" parameterClass="java.util.HashMap" resultClass="java.lang.Integer">
+		<![CDATA[
+			SELECT	COUNT(SORT_T1.memberInfoId) AS count FROM (
+		]]>	
+		<include refid="BINOLMBMBM01.MemberInfoSql" />
+		<![CDATA[	
+			) SORT_T1
+		]]>	
+    </select>
+    
+    <!-- 查询会员 -->
+	<select id="getMemberInfoList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+		<include refid="BINOLCMINC99.pageheader" />
+		<include refid="BINOLMBMBM01.MemberInfoSql" />
+		<include refid="BINOLCMINC99.pagefooter" />
+    </select>
+    
+    <!-- 查询会员问卷信息 -->
+	<select id="getMemPaperList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+		<![CDATA[
+			SELECT
+				A.BIN_PaperID AS paperId,
+				A.PaperName AS paperName,
+				B.BIN_PaperQuestionID AS paperQuestionId,
+	      		B.QuestionItem AS questionItem,
+	      		B.QuestionType AS questionType,
+	      		B.OptionA AS optionA,
+	      		B.OptionB AS optionB,
+	      		B.OptionC AS optionC,
+	      		B.OptionD AS optionD,
+	      		B.OptionE AS optionE,
+	      		B.OptionF AS optionF,
+	      		B.OptionG AS optionG,
+	      		B.OptionH AS optionH,
+	      		B.OptionI AS optionI,
+	      		B.OptionJ AS optionJ,
+	      		B.OptionK AS optionK,
+	      		B.OptionL AS optionL,
+	      		B.OptionM AS optionM,
+	      		B.OptionN AS optionN,
+	      		B.OptionO AS optionO,
+	      		B.OptionP AS optionP,
+	      		B.OptionQ AS optionQ,
+	      		B.OptionR AS optionR,
+	      		B.OptionS AS optionS,
+	      		B.OptionT AS optionT
+			FROM
+				Monitor.BIN_Paper A WITH(NOLOCK)
+				JOIN Monitor.BIN_PaperQuestion B WITH(NOLOCK) ON A.BIN_PaperID = B.BIN_PaperID AND B.ValidFlag = '1'
+			WHERE
+				A.PaperType = '1' AND
+				A.ValidFlag = '1' AND
+				B.QuestionItem IS NOT NULL AND
+				B.QuestionItem <> '' AND
+				A.BIN_OrganizationInfoID = #organizationInfoId#
+		]]>
+			<isNotEmpty prepend="AND" property="brandInfoId">	
+				A.BIN_BrandInfoID = #brandInfoId#
+			</isNotEmpty>	
+		<![CDATA[	
+			ORDER BY
+				A.BIN_PaperID,
+				B.DisplayOrder
+		]]>	
+    </select>
+    
+	
+</sqlMap>
+
+
+

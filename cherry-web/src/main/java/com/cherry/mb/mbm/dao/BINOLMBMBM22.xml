@@ -1,0 +1,96 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE sqlMap PUBLIC "-//iBATIS.com//DTD SQL Map 2.0//EN" "http://ibatis.apache.org/dtd/sql-map-2.dtd">
+
+<sqlMap namespace="BINOLMBMBM22">
+    
+    <!-- 会员答卷查询SQL文  -->
+    <sql id="MemAnswerQuery">
+        <![CDATA[
+            SELECT
+				A.BIN_PaperAnswerID AS paperAnswerId,
+				CONVERT(VARCHAR(30),A.CheckDate,120) AS checkDate,
+				B.BIN_PaperID AS paperId,
+				B.PaperName AS paperName,
+				CASE ISNULL(C.DepartName,'') WHEN '' THEN C.DepartCode ELSE '(' + C.DepartCode + ')' + C.DepartName END AS counterName,
+				CASE ISNULL(D.EmployeeName,'') WHEN '' THEN D.EmployeeCode ELSE '(' + D.EmployeeCode + ')' + D.EmployeeName END AS employeeName
+			FROM
+				Monitor.BIN_PaperAnswer A WITH(NOLOCK)
+				JOIN Monitor.BIN_Paper B WITH(NOLOCK) ON A.BIN_PaperID = B.BIN_PaperID
+				LEFT JOIN Basis.BIN_Organization C WITH(NOLOCK)
+				ON A.BIN_OrganizationID = C.BIN_OrganizationID AND C.ValidFlag = '1'
+				LEFT JOIN Basis.BIN_Employee D WITH(NOLOCK)
+				ON A.BACode = D.EmployeeCode AND B.BIN_OrganizationInfoID = D.BIN_OrganizationInfoID AND 
+				B.BIN_BrandInfoID = D.BIN_BrandInfoID AND D.ValidFlag = '1'
+			WHERE
+				A.BIN_MemberInfoID = #memberInfoId#
+        ]]>
+        	<isNotEmpty property="paperName" prepend="AND">
+				B.PaperName LIKE '%'+#paperName#+'%'
+			</isNotEmpty>
+			<isNotEmpty property="checkDateStart" prepend="AND">
+				CONVERT(VARCHAR(10),A.CheckDate,23) >= #checkDateStart#
+			</isNotEmpty>
+			<isNotEmpty property="checkDateEnd" prepend="AND">
+				<![CDATA[CONVERT(VARCHAR(10),A.CheckDate,23) <= #checkDateEnd#]]>
+			</isNotEmpty>
+    </sql>
+	
+	<!-- 取得会员答卷信息总数  -->
+    <select id="getMemAnswerCount" parameterClass="java.util.HashMap" resultClass="java.lang.Integer">
+        <![CDATA[
+            SELECT COUNT(1) AS count FROM (
+        ]]>
+        <include refid="BINOLMBMBM22.MemAnswerQuery" />
+        <![CDATA[
+            )SORT_T1
+        ]]>
+    </select>
+    
+    <!-- 取得会员答卷信息List  -->
+    <select id="getMemAnswerList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+        <include refid="BINOLCMINC99.pageheader" />
+        <include refid="BINOLMBMBM22.MemAnswerQuery" />
+        <include refid="BINOLCMINC99.pagefooter" />
+    </select>
+    
+    <!-- 根据问卷ID和答卷ID获取问题和答案 -->
+	<select id="getMemQuestionList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+		<![CDATA[
+			SELECT 
+	      		A.QuestionType AS questionType,
+	      		A.QuestionItem AS questionItem,
+	      		A.OptionA AS optionA,
+	      		A.OptionB AS optionB,
+	      		A.OptionC AS optionC,
+	      		A.OptionD AS optionD,
+	      		A.OptionE AS optionE,
+	      		A.OptionF AS optionF,
+	      		A.OptionG AS optionG,
+	      		A.OptionH AS optionH,
+	      		A.OptionI AS optionI,
+	      		A.OptionJ AS optionJ,
+	      		A.OptionK AS optionK,
+	      		A.OptionL AS optionL,
+	      		A.OptionM AS optionM,
+	      		A.OptionN AS optionN,
+	      		A.OptionO AS optionO,
+	      		A.OptionP AS optionP,
+	      		A.OptionQ AS optionQ,
+	      		A.OptionR AS optionR,
+	      		A.OptionS AS optionS,
+	      		A.OptionT AS optionT,
+	      		B.Answer AS answer
+	  		FROM
+				Monitor.BIN_PaperQuestion A 
+				LEFT JOIN Monitor.BIN_PaperAnswerDetail B ON A.BIN_PaperQuestionID = B.BIN_PaperQuestionID AND B.BIN_PaperAnswerID = #paperAnswerId#
+			WHERE
+				A.BIN_PaperID = #paperId#
+			ORDER BY
+				A.DisplayOrder
+		]]>		
+	</select>
+	
+</sqlMap>
+
+
+

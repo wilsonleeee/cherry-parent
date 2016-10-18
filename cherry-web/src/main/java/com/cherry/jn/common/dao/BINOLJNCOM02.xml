@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sqlMap PUBLIC "-//iBATIS.com//DTD SQL Map 2.0//EN" "http://ibatis.apache.org/dtd/sql-map-2.dtd">
+<sqlMap namespace="BINOLJNCOM02">
+	<!-- 会员活动组信息查询sql  -->
+	<sql id="campaignGrpQuery">
+		<![CDATA[
+			SELECT
+				BIN_CampaignGrpID AS campaignGrpId,
+				GroupName AS groupName,
+				CampaignType AS campaignType,
+				ValidFlag AS validFlag
+			FROM
+				Campaign.BIN_CampaignGrp
+			Where
+				BIN_BrandInfoID = #brandInfoId# AND
+				BIN_OrganizationInfoID = #organizationInfoId#
+		]]>
+		<dynamic>
+			<isNotEmpty prepend="AND" property="groupName" >
+				GroupName LIKE '%' + #groupName# + '%'
+			</isNotEmpty>
+			<isNotEmpty prepend="AND" property="campaignType" >
+				CampaignType = #campaignType#
+			</isNotEmpty>
+			<isNotEmpty prepend="AND" property="validFlag" >
+				ValidFlag = #validFlag#
+			</isNotEmpty>
+		</dynamic>
+	</sql>
+	
+	<!-- 取得会员活动组总数  -->
+    <select id="getCampaignGrpCount" parameterClass="java.util.HashMap" resultClass="java.lang.Integer">
+    	<![CDATA[
+			SELECT	COUNT(SORT_T1.campaignGrpId) AS count FROM (
+		]]>	
+		<include refid="BINOLJNCOM02.campaignGrpQuery" />	
+		<![CDATA[	
+			)SORT_T1
+		]]>										
+    </select>
+	
+	<!-- 取得会员活动组信息List -->
+    <select id="getCampaignGrpList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+       	<include refid="BINOLCMINC99.pageheader" />
+		<include refid="BINOLJNCOM02.campaignGrpQuery" />
+		<include refid="BINOLCMINC99.pagefooter" />
+    </select>
+	
+</sqlMap>

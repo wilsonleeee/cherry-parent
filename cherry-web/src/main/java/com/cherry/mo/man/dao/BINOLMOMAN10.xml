@@ -1,0 +1,130 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sqlMap PUBLIC "-//iBATIS.com//DTD SQL Map 2.0//EN" "http://ibatis.apache.org/dtd/sql-map-2.dtd">
+<sqlMap namespace="BINOLMOMAN10">
+
+       
+      <!-- POS品牌菜单管理-->
+     <select id="getMenuBrandInfoList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+     
+	SELECT 
+		  BIN_PosMenuBrandID,
+	      OrgCode,
+	      BrandCode,
+	      BIN_PosMenuID AS id,
+    			<dynamic>
+					<isNotEmpty property="language">
+						<isEqual property="language" compareValue="en_US">										
+							BrandMenuNameEN AS name,
+						</isEqual>
+						<isEqual property="language" compareValue="zh_CN">										
+							BrandMenuNameCN AS name,
+						</isEqual>								
+					</isNotEmpty>
+					<isEmpty property="language">
+						BrandMenuNameCN AS name,
+					</isEmpty>
+				</dynamic>
+		  BrandMenuNameEN,
+		  BrandMenuNameCN,
+	      ParentMenuID AS pId,
+	      Container,
+	      MenuOrder,
+	      MenuStatus,
+	      MenuValue,
+	      ValidFlag
+  		FROM 
+		  	BIN_PosMenuBrand WITH(NOLOCK)
+		  	WHERE OrgCode =#orgCode# AND BrandCode = #brandCode#
+		  	order BY
+		  	ParentMenuID,
+		  	MenuOrder
+		  
+     </select>
+     
+     <!-- 修改品牌菜单 初始化数据 -->
+	<update id="updatePosMenuBrand" parameterClass="java.util.HashMap">
+        UPDATE 
+        BIN_PosMenuBrand
+        SET 
+         <dynamic>
+					<isNotEmpty property="language">
+						<isEqual property="language" compareValue="en_US">										
+							BrandMenuNameEN =#brandMenuName#
+						</isEqual>
+						<isEqual property="language" compareValue="zh_CN">										
+							BrandMenuNameCN =#brandMenuName#
+						</isEqual>								
+					</isNotEmpty>
+					<isEmpty property="language">
+						BrandMenuNameCN =#brandMenuName#
+					</isEmpty>
+		</dynamic>
+		WHERE 
+		BIN_PosMenuBrandID = #posMenuBrandID#          
+    </update>
+    
+       <!-- 修改品牌菜单  -->
+	<update id="updatePosMenuBrandMenuStatus" parameterClass="java.util.HashMap">
+        UPDATE 
+        BIN_PosMenuBrand
+        SET 
+        MenuStatus=#menuStatus#
+		WHERE 
+		BIN_PosMenuBrandID = #posMenuBrandID#           
+    </update>
+    
+    	<!-- 新增菜单管理信息  -->
+	<insert id="addPosMenuBrand" parameterClass="java.util.HashMap"  >
+	<selectKey resultClass="java.lang.Integer" type="post" keyProperty="BIN_PosMenuBrandID" > 
+        <![CDATA[
+            INSERT INTO BIN_PosMenuBrand(
+	      	  OrgCode,
+		      BrandCode,
+		      BIN_PosMenuID,
+			  BrandMenuNameEN,
+			  BrandMenuNameCN,
+		      ParentMenuID,
+		      Container,
+		      MenuOrder,
+		      MenuStatus,
+		      MenuValue,
+	     	  ValidFlag
+            )VALUES(
+                #orgCode#,
+                #brandCode#,
+                #posMenuID#,
+                #BrandMenuNameEN#,                
+                #BrandMenuNameCN#,
+                #parentMenuID#,
+                #container#,
+                #menuOrder#,
+                #menuStatus#,
+                #menuValue#,
+                #validFlag#
+            )
+             SELECT SCOPE_IDENTITY() AS value
+        ]]>
+     </selectKey>
+    </insert>
+    
+        <!-- POS品牌菜单管理List (WS结构组装使用)  -->
+    <select id="getPosMenuBrandWithWS" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+    	<![CDATA[
+           SELECT 
+      		A.BIN_PosMenuID AS BIN_PosMenuID,
+      		A.BrandMenuNameCN AS BrandMenuNameCN,
+      		A.BrandMenuNameEN AS BrandMenuNameEN,
+      		A.ParentMenuID AS ParentMenuID,
+      		A.Container AS Container,
+      		A.MenuOrder AS MenuOrder,
+      		A.MenuStatus AS MenuStatus,
+      		A.MenuValue AS MenuValue,
+      		B.MenuCode AS MenuCode,
+      		A.ValidFlag AS ValidFlag
+      		FROM BIN_PosMenuBrand A WITH(NOLOCK)
+      		LEFT JOIN BIN_PosMenu B WITH(NOLOCK)
+			ON A.BIN_PosMenuID = B.BIN_PosMenuID
+      		WHERE BIN_PosMenuBrandID=#posMenuBrandID#
+		]]>								
+    </select>
+</sqlMap>

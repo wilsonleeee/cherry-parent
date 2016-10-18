@@ -1,0 +1,128 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE sqlMap PUBLIC "-//iBATIS.com//DTD SQL Map 2.0//EN" "http://ibatis.apache.org/dtd/sql-map-2.dtd">
+<sqlMap namespace="BINOLMORPT02">
+	<!--根据答卷ID获取考核答卷信息-->
+	<select id="getCheckAnswer" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+		<![CDATA[
+            SELECT
+				A.BIN_CheckAnswerID AS checkAnswerId,
+				CONVERT(varchar(30),A.CheckDate,120) AS checkDate,
+				A.TotalPoint AS totalPoint,
+				A.PointLevel AS pointLevel,
+				A.OwnerName AS ownerName,
+				A.MarketName AS marketName,
+				A.Advice AS advice,
+				A.OrderImprove AS orderImprove,
+				CONVERT(varchar(30),A.OrderImproveLastDate,120) AS orderImproveLastDate,
+				B.BIN_CheckPaperID AS checkPaperId,
+				B.PaperName AS paperName,
+				C.DepartCode AS departCode,
+				D.EmployeeCode AS employeeCode,
+		]]>
+		<dynamic>
+			<isNotEmpty property="language">
+				<isEqual property="language" compareValue="en_US">
+					C.NameForeign AS departName,
+					D.EmployeeNameForeign AS employeeName
+				</isEqual>
+				<isEqual property="language" compareValue="zh_CN">	
+					C.DepartName AS departName,
+					D.EmployeeName AS employeeName
+				</isEqual>								
+			</isNotEmpty>
+			<isEmpty property="language">
+				C.DepartName AS departName,
+				D.EmployeeName AS employeeName
+			</isEmpty>
+		</dynamic>
+		<![CDATA[
+			FROM
+				Monitor.BIN_CheckAnswer A 
+				JOIN Monitor.BIN_CheckPaper B ON A.BIN_CheckPaperID = B.BIN_CheckPaperID
+				LEFT JOIN Basis.BIN_Organization C ON A.BIN_OrganizationID = C.BIN_OrganizationID AND C.ValidFlag = '1'
+				LEFT JOIN Basis.BIN_Employee D ON A.EmployeeCode = D.EmployeeCode AND D.ValidFlag = '1'
+			WHERE
+				A.BIN_CheckAnswerID = #checkAnswerId#
+		]]>	
+	</select>
+	
+	<!-- 根据考核问卷ID和答卷ID获取问题和答案 -->
+	<select id="getCheckQuestionList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+		<![CDATA[
+			SELECT 
+	      		A.QuestionType AS questionType,
+	      		A.QuestionItem AS questionItem,
+	      		A.MaxPoint AS maxPoint,
+	      		A.MinPoint AS minPoint,
+	      		A.OptionA AS optionA,
+	      		A.OptionB AS optionB,
+	      		A.OptionC AS optionC,
+	      		A.OptionD AS optionD,
+	      		A.OptionE AS optionE,
+	      		A.OptionF AS optionF,
+	      		A.OptionG AS optionG,
+	      		A.OptionH AS optionH,
+	      		A.OptionI AS optionI,
+	      		A.OptionJ AS optionJ,
+	      		A.OptionK AS optionK,
+	      		A.OptionL AS optionL,
+	      		A.OptionM AS optionM,
+	      		A.OptionN AS optionN,
+	      		A.OptionO AS optionO,
+	      		A.OptionP AS optionP,
+	      		A.OptionQ AS optionQ,
+	      		A.OptionR AS optionR,
+	      		A.OptionS AS optionS,
+	      		A.OptionT AS optionT,
+	      		A.PointA AS pointA,
+	      		A.PointB AS pointB,
+	      		A.PointC AS pointC,
+	      		A.PointD AS pointD,
+	      		A.PointE AS pointE,
+	      		A.PointF AS pointF,
+	      		A.PointG AS pointG,
+	      		A.PointH AS pointH,
+	      		A.PointI AS pointI,
+	      		A.PointJ AS pointJ,
+	      		A.PointK AS pointK,
+	      		A.PointL AS pointL,
+	      		A.PointM AS pointM,
+	      		A.PointN AS pointN,
+	      		A.PointO AS pointO,
+	      		A.PointP AS pointP,
+	      		A.PointQ AS pointQ,
+	      		A.PointR AS pointR,
+	      		A.PointS AS pointS,
+	      		A.PointT AS pointT,
+	      		B.BIN_CheckQuestionGroupID AS checkQuestionGroupId,
+	      		B.GroupName AS groupName,
+	      		C.Answer AS answer,
+	      		C.Point AS point
+	  		FROM
+				Monitor.BIN_CheckQuestion A 
+				JOIN Monitor.BIN_CheckQuestionGroup B ON A.BIN_CheckQuestionGroupID = B.BIN_CheckQuestionGroupID
+				LEFT JOIN Monitor.BIN_CheckAnswerDetail C ON A.BIN_CheckQuestionID = C.BIN_CheckQuestionID AND C.BIN_CheckAnswerID = #checkAnswerId#
+			WHERE
+				A.BIN_CheckPaperID = #checkPaperId#
+			ORDER BY
+				B.DisplayOrder,
+				A.DisplayOrder
+		]]>		
+	</select>
+	
+	<!-- 取得评定级别 -->
+	<select id="getPointLevelName" parameterClass="java.util.HashMap" resultClass="java.lang.String">
+		<![CDATA[
+			SELECT
+				TOP 1
+				A.PointLevelName AS pointLevelName
+			FROM
+				Monitor.BIN_CheckPaperLevel A
+			WHERE
+				A.BIN_CheckPaperID = #checkPaperId# AND
+				A.Point <= #totalPoint#
+			ORDER BY
+				A.PointLevelOrder
+		]]>		
+	</select>
+</sqlMap>

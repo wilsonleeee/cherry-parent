@@ -1,0 +1,312 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sqlMap PUBLIC "-//iBATIS.com//DTD SQL Map 2.0//EN" "http://ibatis.apache.org/dtd/sql-map-2.dtd">
+<sqlMap namespace="BINOLSTCM11">
+<!--产品收货单处理-->
+	<!-- 插入产品收货表 -->
+    <insert id="insertProductReceiveMain" parameterClass="java.util.HashMap">
+    	<selectKey resultClass="java.lang.Integer" type="post" keyProperty="BIN_ProductReceiveID" >      
+	       <![CDATA[
+    		INSERT INTO Inventory.BIN_ProductReceive
+    		(
+    			BIN_OrganizationInfoID,
+				BIN_BrandInfoID,
+				ReceiveNo,
+				ReceiveNoIF,
+				RelevanceNo,
+				BIN_OrganizationID,
+				BIN_OrganizationIDReceive,
+				BIN_EmployeeID,
+				BIN_OrganizationIDDX,
+				BIN_EmployeeIDDX,
+				BIN_EmployeeIDAudit,
+				TotalQuantity,
+				TotalAmount,
+				VerifiedFlag,
+				TradeStatus,
+				BIN_LogisticInfoID,
+				Comments,
+				ReceiveDate,
+				WorkFlowID,
+				ValidFlag,
+                CreateTime,
+                CreatedBy,
+                CreatePGM,
+                UpdateTime,
+                UpdatedBy,
+                UpdatePGM,
+                ModifyCount,
+                SynchFlag
+    		)
+    		VALUES
+    		(
+    			#BIN_OrganizationInfoID#,
+    			#BIN_BrandInfoID#,
+				#ReceiveNo#,
+				#ReceiveNoIF#,
+    			#RelevanceNo#,
+    			#BIN_OrganizationIDSend#,
+    			#BIN_OrganizationIDReceive#,
+    			#BIN_EmployeeID#,
+    			#BIN_OrganizationIDDX#,
+    			#BIN_EmployeeIDDX#,
+				#BIN_EmployeeIDAudit#,
+    			#TotalQuantity#,
+    			#TotalAmount#,
+    			#VerifiedFlag#,
+    			#TradeStatus#,
+    			#BIN_LogisticInfoID#,
+    			#Comments#,
+    			#ReceiveDate#,
+    			#WorkFlowID#,
+	    		'1',
+                GETDATE(),
+                #CreatedBy#,
+                #CreatePGM#,
+                GETDATE(),
+                #UpdatedBy#,
+                #UpdatePGM#,
+                '0',
+                #SynchFlag#
+    		)
+			  	select SCOPE_IDENTITY() as value     
+			]]> 
+	    </selectKey>
+    </insert>
+    
+    <!-- 插入产品收货明细表 -->
+    <insert id="insertProductReceiveDetail" parameterClass="java.util.HashMap">
+    	<![CDATA[
+    		INSERT INTO Inventory.BIN_ProductReceiveDetail
+    		(
+    		    BIN_ProductReceiveID,
+				BIN_ProductVendorID,
+				DetailNo,
+				Quantity,
+				Price,
+				ReferencePrice,
+				BIN_ProductVendorPackageID,
+				BIN_InventoryInfoID,
+				BIN_LogicInventoryInfoID,
+				BIN_StorageLocationInfoID,
+				Comments,
+				ValidFlag,
+                CreateTime,
+                CreatedBy,
+                CreatePGM,
+                UpdateTime,
+                UpdatedBy,
+                UpdatePGM,
+                ModifyCount
+    		)
+			VALUES
+			(
+				#BIN_ProductReceiveID#,
+				#BIN_ProductVendorID#,
+				#DetailNo#,
+				#Quantity#,
+				#Price#,
+				#ReferencePrice#,
+				#BIN_ProductVendorPackageID#,
+				#BIN_InventoryInfoID#,
+				#BIN_LogicInventoryInfoID#,
+				#BIN_StorageLocationInfoID#,
+				#Comments#,
+				'1',
+                GETDATE(),
+                #CreatedBy#,
+                #CreatePGM#,
+                GETDATE(),
+                #UpdatedBy#,
+                #UpdatePGM#,
+                '0'
+			)
+    	]]>
+    </insert>
+	
+	<!--根据收货单ID取得收货单主表信息-->
+	<select id="getProductReceiveMainData" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+		<![CDATA[
+		SELECT
+			A.BIN_ProductReceiveID,
+			A.BIN_OrganizationInfoID,
+			A.BIN_BrandInfoID,
+			A.ReceiveNo,
+			A.ReceiveNoIF,
+			A.RelevanceNo,
+			A.BIN_OrganizationID AS BIN_OrganizationIDSend,
+			A.BIN_OrganizationIDReceive,
+			A.BIN_EmployeeID,
+			A.BIN_OrganizationIDDX,
+			A.BIN_EmployeeIDDX,
+			A.BIN_EmployeeIDAudit,
+			ISNULL(A.TotalQuantity,0) AS TotalQuantity,
+			ISNULL(A.TotalAmount,0) AS TotalAmount,
+			A.VerifiedFlag,
+			A.TradeStatus,
+			A.BIN_LogisticInfoID,
+			A.Comments,
+			A.ReceiveDate,
+			A.WorkFlowID,
+			B.DepartCode AS DepartCodeSend,
+			C.DepartCode AS DepartCodeReceive,
+			D.EmployeeCode,
+			E.EmployeeCode AS EmployeeCodeAudit,
+		]]>
+			<dynamic>
+	            <isNotEmpty property="language">
+	                <isEqual property="language" compareValue="en_US">
+	                    <![CDATA[
+							B.NameForeign AS DepartNameSend,
+							C.NameForeign AS DepartNameReceive,
+							'('+B.DepartCode+')'+B.NameForeign AS DepartCodeNameSend,
+							'('+C.DepartCode+')'+C.NameForeign AS DepartCodeNameReceive,
+	                        D.EmployeeNameForeign AS EmployeeName,
+							E.EmployeeNameForeign AS EmployeeNameAudit
+	                    ]]>
+	                </isEqual>
+	                <isEqual property="language" compareValue="zh_CN">
+	                    <![CDATA[
+							B.DepartName AS DepartNameSend,
+							B.DepartName AS DepartNameReceive,
+							'('+B.DepartCode+')'+B.DepartName AS DepartCodeNameSend,
+							'('+B.DepartCode+')'+B.DepartName AS DepartCodeNameReceive,
+	                        D.EmployeeName,
+							E.EmployeeName AS EmployeeNameAudit
+	                    ]]>
+	                </isEqual>
+	            </isNotEmpty>
+	            <isEmpty property="language">
+	                <![CDATA[
+						B.DepartName AS DepartNameSend,
+						B.DepartName AS DepartNameReceive,
+						'('+B.DepartCode+')'+B.DepartName AS DepartCodeNameSend,
+						'('+B.DepartCode+')'+B.DepartName AS DepartCodeNameReceive,
+	                    D.EmployeeName,
+						E.EmployeeName AS EmployeeNameAudit
+	                ]]>
+	            </isEmpty>
+	        </dynamic>
+		<![CDATA[
+		FROM
+			Inventory.BIN_ProductReceive A
+			LEFT JOIN Basis.BIN_Organization B
+			ON(A.BIN_OrganizationID = B.BIN_OrganizationID)
+			LEFT JOIN Basis.BIN_Organization C
+			ON(A.BIN_OrganizationIDReceive = C.BIN_OrganizationID)
+			LEFT JOIN Basis.BIN_Employee D
+			ON(D.BIN_EmployeeID = A.BIN_EmployeeID)
+			LEFT JOIN Basis.BIN_Employee E
+			ON(A.BIN_EmployeeIDAudit = E.BIN_EmployeeID)
+		WHERE
+			A.BIN_ProductReceiveID = #BIN_ProductReceiveID#
+		]]>
+	</select>
+	
+	<!--根据收货单ID取得收货单明细-->
+	<select id="getProductReceiveDetailData" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+		<![CDATA[
+		SELECT
+			A.BIN_ProductReceiveDetailID,
+			A.BIN_ProductReceiveID,
+			A.BIN_ProductVendorID,
+			A.DetailNo,
+			ISNULL(A.Quantity,0) AS Quantity,
+			ISNULL(Convert(decimal(16,2),A.Price),0) AS Price,
+            ISNULL(Convert(decimal(16,2),A.ReferencePrice),0) AS ReferencePrice,
+			A.Comments,
+			A.BIN_InventoryInfoID,
+			A.BIN_LogicInventoryInfoID,
+			A.BIN_StorageLocationInfoID,
+			A.BIN_ProductVendorPackageID,
+			B.BarCode,
+			C.UnitCode,
+			D.DepotCode,
+			E.LogicInventoryCode,
+		]]>
+			<dynamic>
+	            <isNotEmpty property="language">
+	                <isEqual property="language" compareValue="en_US">
+	                    <![CDATA[
+							C.NameForeign AS ProductName,
+							'('+D.DepotCode+')'+D.DepotNameEN AS DepotCodeName,
+							D.DepotNameEN AS DepotName,
+							'('+E.LogicInventoryCode+')'+E.InventoryNameEN AS InventoryCodeName,
+							E.InventoryNameEN AS InventoryName
+	                    ]]>
+	                </isEqual>
+	                <isEqual property="language" compareValue="zh_CN">
+	                    <![CDATA[
+							C.NameTotal AS ProductName,
+							'('+D.DepotCode+')'+D.DepotNameCN AS DepotCodeName,
+							D.DepotNameCN AS DepotName,
+							'('+E.LogicInventoryCode+')'+E.InventoryNameCN AS InventoryCodeName,
+							E.InventoryNameCN AS InventoryName
+	                    ]]>
+	                </isEqual>
+	            </isNotEmpty>
+	            <isEmpty property="language">
+	                <![CDATA[
+						C.NameTotal AS ProductName,
+						'('+D.DepotCode+')'+D.DepotNameCN AS DepotCodeName,
+						D.DepotNameCN AS DepotName,
+						'('+E.LogicInventoryCode+')'+E.InventoryNameCN AS InventoryCodeName,
+						E.InventoryNameCN AS InventoryName
+	                ]]>
+	            </isEmpty>
+	        </dynamic>
+		<![CDATA[
+		FROM
+			Inventory.BIN_ProductReceiveDetail A
+			JOIN Basis.BIN_ProductVendor B
+			ON(A.BIN_ProductVendorID = B.BIN_ProductVendorID)
+			JOIN Basis.BIN_Product C
+			ON(B.BIN_ProductID = C.BIN_ProductID)
+			LEFT JOIN Basis.BIN_DepotInfo D
+			ON(A.BIN_InventoryInfoID = D.BIN_DepotInfoID)
+			LEFT JOIN Basis.BIN_LogicInventory E
+			ON(A.BIN_LogicInventoryInfoID = E.BIN_LogicInventoryInfoID)
+		WHERE
+			A.BIN_ProductReceiveID = #BIN_ProductReceiveID#
+		]]>
+	</select>
+	
+    <!--更新【产品收货单据表】-->
+    <update id="updateProductReceiveMain" parameterClass="java.util.HashMap">
+        <![CDATA[
+            UPDATE
+                Inventory.BIN_ProductReceive
+            SET
+                UpdateTime = GETDATE()
+                ,UpdatedBy = #UpdatedBy#
+                ,UpdatePGM = #UpdatePGM#
+                ,ModifyCount = ModifyCount+1
+        ]]>
+        <dynamic>
+            <isNotEmpty property="ValidFlag">
+                <![CDATA[,ValidFlag = #ValidFlag#]]>
+            </isNotEmpty>
+            <isNotEmpty property="WorkFlowID">
+                <![CDATA[,WorkFlowID = #WorkFlowID#]]>
+            </isNotEmpty>
+            <isNotEmpty property="VerifiedFlag">
+                <![CDATA[,VerifiedFlag = #VerifiedFlag#]]>
+            </isNotEmpty>
+            <isNotEmpty property="SynchFlag">
+                <![CDATA[,SynchFlag = #SynchFlag#]]>
+            </isNotEmpty>
+        </dynamic>
+        <![CDATA[
+            WHERE
+                BIN_ProductReceiveID = #BIN_ProductReceiveID#
+          ]]>
+        <isNotEmpty property="OldValidFlag">
+              <![CDATA[AND ValidFlag = #OldValidFlag#]]>
+       </isNotEmpty>
+       <isNotEmpty property="OldUpdateTime">
+              <![CDATA[AND UpdateTime = #OldUpdateTime#]]>
+       </isNotEmpty>
+       <isNotEmpty property="OldModifyCount">
+              <![CDATA[AND ModifyCount = #OldModifyCount#]]>
+       </isNotEmpty> 
+    </update>
+</sqlMap>

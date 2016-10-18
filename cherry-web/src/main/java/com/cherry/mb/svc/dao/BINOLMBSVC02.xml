@@ -1,0 +1,372 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sqlMap PUBLIC "-//iBATIS.com//DTD SQL Map 2.0//EN" "http://ibatis.apache.org/dtd/sql-map-2.dtd">
+<sqlMap namespace="BINOLMBSVC02">
+	<sql id="queryCardDetail">
+		<![CDATA[
+		SELECT distinct
+			vc.BIN_CardId as cardId,
+			vc.CardCode as cardCode,
+			vc.CardType as cardType,
+			vc.MobilePhone as mobilePhone,
+			vc.Amount as amount,
+			vc.DepositAmount as depositAmount,
+			vc.TotalAmount as totalAmount,
+			vc.LastDepositAmount as lastDepositAmount,
+			CONVERT(nvarchar(20),vc.LastDepositTime,120) as lastDepositTime,
+			vc.State as state,
+			mif.TestType as testType,
+			#dateType# as dateType,
+			oz.DepartName as departName,
+			oz.DepartCode as departCode
+		FROM 
+			Members.BIN_StoredValueCard vc with(nolock)
+		JOIN (]]><include refid="BINOLCMINC99.departPrivilegeSql" /><![CDATA[) A99 
+				ON vc.BIN_OrganizationID=A99.BIN_OrganizationID
+		LEFT JOIN
+			Basis.BIN_Organization oz
+		on
+			(vc.BIN_OrganizationID=oz.BIN_OrganizationID)
+		LEFT JOIN
+			Members.BIN_MemberInfo mif
+		on
+			(vc.BIN_MemberInfoId=mif.BIN_MemberInfoID)
+		WHERE
+			vc.BIN_OrganizationInfoID=#organizationInfoId# AND
+			vc.BIN_BrandInfoID=#brandInfoId# AND
+			vc.ValidFlag = '1' AND
+			vc.State != 'ST'
+		]]>
+			<isNotEmpty property="dateType">
+				<isEqual property="dateType" compareValue="0" prepend="AND">
+					(oz.TestType!='1' OR oz.TestType IS NULL) AND
+					(mif.TestType!='0' OR mif.TestType IS NULL)
+				</isEqual>
+				<isEqual property="dateType" compareValue="1" prepend="AND">
+					(oz.TestType='1' OR mif.TestType='0')
+				</isEqual>
+			</isNotEmpty>
+			<isNotEmpty prepend="AND" property="counterCode">
+				oz.DepartCode = #counterCode#
+			</isNotEmpty>
+			<isNotEmpty prepend="AND" property="cardCode">
+				vc.CardCode = #cardCode#
+			</isNotEmpty>	
+			<isNotEmpty prepend="AND" property="mobilePhone">
+				vc.MobilePhone = #mobilePhone#
+			</isNotEmpty>
+			<isNotEmpty prepend="AND" property="cardState">
+				vc.State = #cardState#
+			</isNotEmpty>
+	</sql>
+	
+	<sql id="querySaleDetail">
+		<![CDATA[
+		SELECT 
+			c.BIN_CardId as cardId,
+			c.CardCode as cardCode,
+			c.CardType as cardType,
+			CONVERT(varchar, c.TransactionTime, 120) as transactionTime,
+			c.BillCode as billCode,
+			c.RelevantCode as relevantCode,
+			c.TransactionType as transactionType,
+			c.ComputeSign*Amount as amount,
+			c.GiftAmount as giftAmount,
+			c.TotalAmount as totalAmount,
+			c.Discount as discount,
+			c.ValidFlag as validFlag,
+			o.DepartName as departName
+		FROM 
+			Members.BIN_CardTransaction c with(nolock)
+		LEFT JOIN
+			Basis.BIN_Organization o with(nolock) 
+		ON
+			(c.BIN_OrganizationID=o.BIN_OrganizationID)
+		WHERE
+			c.BIN_OrganizationInfoID=#organizationInfoId# AND
+			c.BIN_BrandInfoID=#brandInfoId# AND
+			c.ValidFlag = '1'
+		]]>
+			<isNotEmpty prepend="AND" property="cardCode">
+				c.CardCode = #cardCode#
+			</isNotEmpty>
+			<isNotEmpty prepend="AND" property="counterName">
+				o.DepartCode = #counterName#
+			</isNotEmpty>
+			<isNotEmpty prepend="AND" property="transactionType">
+				c.TransactionType=#transactionType#
+			</isNotEmpty>
+			<isNotEmpty prepend="AND" property="fromDate">
+				<![CDATA[
+					#fromDate# <= CONVERT(varchar(10), c.TransactionTime, 120)
+				]]>
+			</isNotEmpty>
+			<isNotEmpty prepend="AND" property="toDate">
+				<![CDATA[
+					#toDate# >= CONVERT(varchar(10), c.TransactionTime, 120)
+				]]>
+			</isNotEmpty>
+		<![CDATA[
+				GROUP BY
+					c.BIN_CardId ,
+					c.CardCode ,
+					c.CardType ,
+					CONVERT(varchar, c.TransactionTime, 120),
+					c.BillCode ,
+					c.RelevantCode ,
+					c.TransactionType ,
+					c.ComputeSign*Amount ,
+					c.GiftAmount ,
+					c.TotalAmount,
+					c.Discount ,
+					c.ValidFlag ,
+					o.DepartName 
+		]]>
+	</sql>
+	
+	<sql id="queryServiceDetail">
+		<![CDATA[
+			SELECT 
+				c.CardCode as cardCode,
+				c.CardType as cardType,
+				o.DepartName as departName,
+				CONVERT(varchar, c.TransactionTime, 120) as transactionTime,
+				c.BillCode as billCode,
+				c.RelevantCode as relevantCode,
+				c.TransactionType as transactionType,
+				c.ComputeSign*Amount as amount,
+				c.GiftAmount as giftAmount,
+				c.TotalAmount as totalAmount,
+				c.ServiceType as serviceType,
+				c.Discount as discount,
+				c.ServiceQuantity as serviceQuantity,
+				s.Quantity as quantity,
+				s.TotalQuantity as totalQuantity
+			FROM 
+				Members.BIN_CardTransaction c with(nolock)
+			LEFT JOIN
+				Basis.BIN_Organization o with(nolock) 
+			ON
+				(c.BIN_OrganizationID=o.BIN_OrganizationID)
+			LEFT JOIN
+				Members.BIN_ServiceCard s with(nolock)
+			ON
+				(s.BIN_CardId=c.BIN_CardId AND
+				c.ServiceType=s.ServiceType)
+			WHERE
+				c.BIN_OrganizationInfoID=#organizationInfoId# AND
+				c.BIN_BrandInfoID=#brandInfoId# AND
+				c.ValidFlag = '1' AND
+				c.BillCode = #billCode# AND
+				c.CardCode = #cardCode#
+			]]>
+	</sql>
+	
+	
+	<select id="getServiceDetailCount" parameterClass="java.util.HashMap" resultClass="java.lang.Integer">
+		<![CDATA[
+            SELECT 
+				COUNT(1) AS count 
+			FROM 
+				(]]><include refid="BINOLMBSVC02.queryServiceDetail" /><![CDATA[) T
+        ]]>
+	</select>
+	
+	<select id="getCardDetailCount" parameterClass="java.util.HashMap" resultClass="java.lang.Integer">
+		<![CDATA[
+            SELECT 
+				COUNT(1) AS count 
+			FROM 
+				(]]><include refid="BINOLMBSVC02.queryCardDetail" /><![CDATA[) T
+        ]]>
+	</select>
+	
+	<select id="getSaleDetailCount" parameterClass="java.util.HashMap" resultClass="java.lang.Integer">
+		<![CDATA[
+            SELECT 
+				COUNT(1) AS count 
+			FROM 
+				(]]><include refid="BINOLMBSVC02.querySaleDetail" /><![CDATA[) T
+        ]]>
+	</select>
+	
+	<update id="updateCardVaild" parameterClass="java.util.HashMap">
+    	<![CDATA[
+    	UPDATE 
+			Members.BIN_StoredValueCard 
+		SET
+			ValidFlag='0'
+		WHERE
+			BIN_CardId=#cardId#
+		]]>
+    </update>
+	
+	<update id="updateCardStateAndVaild" parameterClass="java.util.HashMap">
+    	<![CDATA[
+    	UPDATE 
+			Members.BIN_StoredValueCard 
+		SET
+			State = 'ST'
+		WHERE
+			BIN_CardId=#cardId#
+		]]>
+    </update>
+	
+	<select id="getCardList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+       	<include refid="BINOLCMINC99.pageheader" />
+		<include refid="BINOLMBSVC02.queryCardDetail" />
+		<include refid="BINOLCMINC99.pagefooter" />
+	</select>
+    
+    <select id="getSaleList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+       	<include refid="BINOLCMINC99.pageheader" />
+		<include refid="BINOLMBSVC02.querySaleDetail" />
+		<include refid="BINOLCMINC99.pagefooter" />
+	</select>
+	
+	<select id="getServiceList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+       	<include refid="BINOLCMINC99.pageheader" />
+		<include refid="BINOLMBSVC02.queryServiceDetail" />
+		<include refid="BINOLCMINC99.pagefooter" />
+	</select>
+    
+    <select id="getCardCountInfo" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+    	<![CDATA[
+			SELECT 
+				COUNT(1) AS count 
+			FROM 
+				(]]><include refid="BINOLMBSVC02.queryCardDetail" /><![CDATA[) T
+		]]>
+    </select>
+    
+    <select id="getServiceCountInfo" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+    	<![CDATA[
+			SELECT 
+				COUNT(1) AS count 
+			FROM 
+				(]]><include refid="BINOLMBSVC02.queryServiceDetail" /><![CDATA[) T
+		]]>
+    </select>
+    
+    <select id="getCardDetailList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+		<include refid="BINOLCMINC99.pageheader" />
+        <include refid="BINOLMBSVC02.queryCardDetail" />
+        <include refid="BINOLCMINC99.pagefooter" />
+	</select>
+	
+	<select id="getSaleDetailList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+		<include refid="BINOLCMINC99.pageheader" />
+        <include refid="BINOLMBSVC02.querySaleDetail" />
+        <include refid="BINOLCMINC99.pagefooter" />
+	</select>
+	
+	<select id="getSaleCountInfo" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+    	<![CDATA[
+			SELECT 
+				COUNT(1) AS count 
+			FROM 
+				(]]><include refid="BINOLMBSVC02.querySaleDetail" /><![CDATA[) T
+		]]>
+    </select>
+
+    <!-- 根据billCode查询储值卡交易明细 -->
+    <sql id="querySaleDetailByCardCode">
+    	<![CDATA[
+			SELECT
+				A.transactionTime,
+				(CASE WHEN A.billCode=B.RelevantCode THEN B.transactionType ELSE A.transactionType END) AS transactionType,
+				A.amount,
+				A.billCode
+			FROM
+				(
+					SELECT DISTINCT
+						CONVERT(varchar(10),TransactionTime,120) AS transactionTime,
+						TransactionType AS transactionType,
+						Amount AS amount,
+						BillCode AS billCode
+					FROM 
+						Members.BIN_CardTransaction c with(nolock) 
+					LEFT JOIN
+						Basis.BIN_Organization o with(nolock) 
+					ON
+						(c.BIN_OrganizationID=o.BIN_OrganizationID)
+					WHERE 
+						c.TransactionType!='RU' AND
+						c.BIN_OrganizationInfoID=#organizationInfoId# AND
+						c.BIN_BrandInfoID=#brandInfoId# AND
+						c.CardCode=#cardCode# AND
+						c.ValidFlag = '1'
+				)A
+				LEFT JOIN
+					(			
+						SELECT DISTINCT 
+							transactionType,
+							BillCode,
+							RelevantCode 
+						FROM 
+							Members.BIN_CardTransaction	c
+						LEFT JOIN
+							Basis.BIN_Organization o with(nolock) 
+						ON
+							(c.BIN_OrganizationID=o.BIN_OrganizationID)
+						WHERE 
+							c.BIN_OrganizationInfoID=#organizationInfoId# AND
+							c.BIN_BrandInfoID=#brandInfoId# AND
+							transactionType='RU' AND 
+							CardCode=#cardCode# AND
+							c.ValidFlag = '1'
+					)B
+				ON A.billCode=B.RelevantCode
+		]]>
+		<dynamic prepend="WHERE">
+			<isNotEmpty prepend="AND" property="billCode">
+				A.billCode = #billCode#
+			</isNotEmpty>
+			<isNotEmpty prepend="AND" property="fromDate">
+				<![CDATA[
+					#fromDate# <= CONVERT(varchar(10), A.transactionTime, 120)
+				]]>
+			</isNotEmpty>
+			<isNotEmpty prepend="AND" property="toDate">
+				<![CDATA[
+					#toDate# >= CONVERT(varchar(10), A.transactionTime, 120)
+				]]>
+			</isNotEmpty>
+		</dynamic>
+    </sql>
+    
+    <select id="getSaleByCardCode" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+    	<include refid="BINOLCMINC99.pageheader" />
+	    <include refid="BINOLMBSVC02.querySaleDetailByCardCode" />
+	    <include refid="BINOLCMINC99.pagefooter" />
+    </select>
+    
+    <select id="getSaleByBillCode" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+	    <include refid="BINOLMBSVC02.querySaleDetailByCardCode" />
+    </select>
+    
+   	<!-- 根据billCode查询储值卡交易明细数量 -->
+    <select id="getSaleDetailCountInfo" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+    	<![CDATA[
+			SELECT 
+				COUNT(1) AS count 
+			FROM 
+				(]]><include refid="BINOLMBSVC02.querySaleDetailByCardCode" /><![CDATA[) T
+		]]>
+    </select>
+    <!-- 查询服务 -->
+    <select id="getSaleServiceByCardCode" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+	    SELECT
+			ServiceType AS serviceType,
+			ServiceQuantity AS serviceQuantity
+		FROM
+			Members.BIN_CardTransaction c WITH(NOLOCK) 
+		LEFT JOIN
+			Basis.BIN_Organization o WITH(NOLOCK) 
+		ON
+			(c.BIN_OrganizationID=o.BIN_OrganizationID)
+		WHERE
+			CardCode = #cardCode# AND
+			BillCode = #billCode# AND
+			ServiceType IS NOT NULL
+    </select>
+</sqlMap>

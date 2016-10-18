@@ -1,0 +1,537 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sqlMap PUBLIC "-//iBATIS.com//DTD SQL Map 2.0//EN" "http://ibatis.apache.org/dtd/sql-map-2.dtd">
+<sqlMap namespace="BINOLMBRPT12">
+
+	<sql id="catProQuery">
+		<![CDATA[
+			SELECT
+				pcv.BIN_PrtCatPropValueID,
+  				pc.BIN_ProductID,
+  				pcv.PropValueChinese
+  				FROM
+  					Basis.BIN_PrtCategory pc WITH(NOLOCK),
+  					Basis.BIN_PrtCatProperty pcp WITH(NOLOCK),
+  					Basis.BIN_PrtCatPropValue pcv WITH(NOLOCK)
+  				WHERE
+  					pc.BIN_PrtCatPropValueID = pcv.BIN_PrtCatPropValueID AND
+  					pcv.BIN_PrtCatPropertyID = pcp.BIN_PrtCatPropertyID AND
+  					pcp.TeminalFlag = '1' AND
+	    		pcp.BIN_BrandInfoID = #brandInfoId# AND 
+				pc.ValidFlag = '1' AND
+				pcv.ValidFlag = '1' AND
+				pcp.ValidFlag = '1'
+		]]>
+	</sql>
+	
+	<sql id="rptProductQuery">
+		<![CDATA[
+		SELECT
+			C.BIN_ProductVendorID AS prtVendorId,
+			C.BarCode AS barCode,
+			D.UnitCode AS unitCode,
+			D.NameTotal AS nameTotal,
+			E.PropValueChinese AS primaryCategoryBig,
+			CONVERT(int, T.Quantity) AS quantity
+		FROM (
+			SELECT TOP 10 TQ.*
+			FROM (
+				SELECT
+				B.BIN_ProductVendorID AS ProductVendorID, 
+				SUM(CASE WHEN A.SaleType = 'SR' THEN -B.Quantity ELSE B.Quantity END) AS Quantity
+				FROM Sale.BIN_SaleRecord A WITH(NOLOCK) JOIN
+				Sale.BIN_SaleRecordDetail B WITH(NOLOCK)
+				ON (A.SaleDate >= #startDate# AND A.SaleDate <= #endDate# AND
+				A.BIN_MemberInfoID IS NOT NULL AND
+				A.BIN_BrandInfoID = #brandInfoId# AND 
+				A.BIN_SaleRecordID = B.BIN_SaleRecordID AND B.SaleType = 'N' AND B.Quantity <> 0) 
+				GROUP BY B.BIN_ProductVendorID
+			) TQ
+			WHERE TQ.Quantity > 0 
+			ORDER BY TQ.Quantity DESC
+			) T JOIN Basis.BIN_ProductVendor C WITH(NOLOCK)
+			ON (T.ProductVendorID = C.BIN_ProductVendorID AND C.ValidFlag = '1') JOIN
+			Basis.BIN_Product D WITH(NOLOCK)
+			ON (C.BIN_ProductID = D.BIN_ProductID) LEFT JOIN (
+    	]]>	
+    		<include refid="BINOLMBRPT12.catProQuery" />
+    	<![CDATA[		
+    			) E ON (D.BIN_ProductID = E.BIN_ProductID)
+		]]>
+	</sql>
+	
+	<sql id="jointProductQuery">
+		<![CDATA[
+		SELECT
+			C.BIN_ProductVendorID AS prtVendorId,
+			C.BarCode AS barCode,
+			D.UnitCode AS unitCode,
+			D.NameTotal AS nameTotal,
+			E.PropValueChinese AS primaryCategoryBig,
+			CONVERT(int, T.Quantity) AS quantity
+		FROM (
+			SELECT TOP 10 TQ.*
+			FROM (
+				SELECT
+					T2.BIN_ProductVendorID AS ProductVendorID, 
+					SUM(CASE WHEN T1.SaleType = 'SR' THEN -T2.Quantity ELSE T2.Quantity END) AS Quantity
+				FROM 
+					(SELECT DISTINCT A.BIN_SaleRecordID, A.SaleType
+					FROM  Sale.BIN_SaleRecord A WITH(NOLOCK) JOIN
+					Sale.BIN_SaleRecordDetail B WITH(NOLOCK)
+					ON (A.SaleDate >= #startDate# AND A.SaleDate <= #endDate# AND
+					A.BIN_MemberInfoID IS NOT NULL AND
+					A.BIN_BrandInfoID = #brandInfoId# AND 
+					A.BIN_SaleRecordID = B.BIN_SaleRecordID AND 
+					B.BIN_ProductVendorID = #mainPrtId# AND
+					B.SaleType = 'N')) T1 JOIN
+					Sale.BIN_SaleRecordDetail T2 WITH(NOLOCK)
+					ON (T1.BIN_SaleRecordID = T2.BIN_SaleRecordID AND 
+					T2.SaleType = 'N' AND 
+					T2.BIN_ProductVendorID <> #mainPrtId# AND T2.Quantity <> 0)
+				GROUP BY T2.BIN_ProductVendorID
+				) TQ
+				WHERE TQ.Quantity > 0 
+				ORDER BY TQ.Quantity DESC
+			) T JOIN Basis.BIN_ProductVendor C WITH(NOLOCK)
+			ON (T.ProductVendorID = C.BIN_ProductVendorID AND C.ValidFlag = '1') JOIN
+			Basis.BIN_Product D WITH(NOLOCK)
+			ON (C.BIN_ProductID = D.BIN_ProductID) LEFT JOIN (
+    	]]>	
+    		<include refid="BINOLMBRPT12.catProQuery" />
+    	<![CDATA[	
+    			) E ON (D.BIN_ProductID = E.BIN_ProductID)
+		]]>
+	</sql>
+	
+	<sql id="jointProductByCateIdQuery">
+		<![CDATA[
+		SELECT
+			C.BIN_ProductVendorID AS prtVendorId,
+			C.BarCode AS barCode,
+			D.UnitCode AS unitCode,
+			D.NameTotal AS nameTotal,
+			E.PropValueChinese AS primaryCategoryBig,
+			CONVERT(int, T.Quantity) AS quantity
+		FROM (
+				SELECT TOP 10
+					T2.BIN_ProductVendorID AS ProductVendorID, 
+					SUM(CASE WHEN T1.SaleType = 'SR' THEN -T2.Quantity ELSE T2.Quantity END) AS Quantity
+				FROM
+				(
+				SELECT DISTINCT A.BIN_SaleRecordID, A.SaleType
+				FROM  Sale.BIN_SaleRecord A WITH(NOLOCK) JOIN
+					Sale.BIN_SaleRecordDetail B1 WITH(NOLOCK)
+				ON (A.SaleDate >= #startDate# AND A.SaleDate <= #endDate# AND
+					A.BIN_MemberInfoID IS NOT NULL AND
+					A.BIN_BrandInfoID = #brandInfoId# AND 
+					A.BIN_SaleRecordID = B1.BIN_SaleRecordID AND 
+					B1.SaleType = 'N' AND B1.Quantity <> 0) JOIN
+				Basis.BIN_ProductVendor C WITH(NOLOCK)
+				ON (B1.BIN_ProductVendorID = C.BIN_ProductVendorID AND C.ValidFlag = '1') JOIN
+				Basis.BIN_Product D WITH(NOLOCK)
+				ON (C.BIN_ProductID = D.BIN_ProductID) LEFT JOIN (
+			]]>	
+    		<include refid="BINOLMBRPT12.catProQuery" />
+    	<![CDATA[	
+					) E ON (D.BIN_ProductID = E.BIN_ProductID AND E.BIN_PrtCatPropValueID = #mainCateId#)
+				) T1 JOIN
+				Sale.BIN_SaleRecordDetail T2 WITH(NOLOCK)
+				ON (T1.BIN_SaleRecordID = T2.BIN_SaleRecordID AND 
+				T2.SaleType = 'N' AND T2.Quantity <> 0) JOIN Basis.BIN_ProductVendor C WITH(NOLOCK)
+			ON (T2.BIN_ProductVendorID = C.BIN_ProductVendorID AND C.ValidFlag = '1') JOIN
+			Basis.BIN_Product D WITH(NOLOCK)
+			ON (C.BIN_ProductID = D.BIN_ProductID) LEFT JOIN (
+    	]]>	
+    		<include refid="BINOLMBRPT12.catProQuery" />
+    	<![CDATA[	
+    			) E ON (D.BIN_ProductID = E.BIN_ProductID)
+				WHERE E.BIN_PrtCatPropValueID <> #mainCateId#
+				GROUP BY T2.BIN_ProductVendorID
+				HAVING SUM(CASE WHEN T1.SaleType = 'SR' THEN -T2.Quantity ELSE T2.Quantity END) > 0
+				ORDER BY SUM(CASE WHEN T1.SaleType = 'SR' THEN -T2.Quantity ELSE T2.Quantity END) DESC
+			) T JOIN Basis.BIN_ProductVendor C WITH(NOLOCK)
+			ON (T.ProductVendorID = C.BIN_ProductVendorID AND C.ValidFlag = '1') JOIN
+			Basis.BIN_Product D WITH(NOLOCK)
+			ON (C.BIN_ProductID = D.BIN_ProductID) LEFT JOIN (
+    	]]>	
+    		<include refid="BINOLMBRPT12.catProQuery" />
+    	<![CDATA[	
+    			) E ON (D.BIN_ProductID = E.BIN_ProductID)
+		]]>
+	</sql>
+	
+	
+	<sql id="rptCateQuery">
+		<![CDATA[
+			SELECT
+				TP.BIN_PrtCatPropValueID AS cateId,
+				TP.PropValueChinese AS primaryCategoryBig,
+				TP.PropValue AS cateCode,
+				CONVERT(int, T.Quantity) AS quantity
+			FROM(
+			SELECT TOP 10 TQ.*
+			FROM (
+				SELECT
+				E.BIN_PrtCatPropValueID AS PrtCatPropValueID,
+				SUM(CASE WHEN A.SaleType = 'SR' THEN -B.Quantity ELSE B.Quantity END) AS Quantity
+				FROM 
+					Sale.BIN_SaleRecord A WITH(NOLOCK) JOIN
+					Sale.BIN_SaleRecordDetail B WITH(NOLOCK)
+					ON (A.SaleDate >= #startDate# AND A.SaleDate <= #endDate# AND
+					A.BIN_MemberInfoID IS NOT NULL AND
+					A.BIN_BrandInfoID = #brandInfoId# AND 
+					A.BIN_SaleRecordID = B.BIN_SaleRecordID AND 
+					B.SaleType = 'N' AND B.Quantity <> 0) JOIN
+					Basis.BIN_ProductVendor C WITH(NOLOCK)
+					ON (B.BIN_ProductVendorID = C.BIN_ProductVendorID AND C.ValidFlag = '1') JOIN
+					Basis.BIN_Product D WITH(NOLOCK)
+					ON (C.BIN_ProductID = D.BIN_ProductID) JOIN (
+		]]>	
+    		<include refid="BINOLMBRPT12.catProQuery" />
+    	<![CDATA[	
+						) E ON (D.BIN_ProductID = E.BIN_ProductID)
+					GROUP BY E.BIN_PrtCatPropValueID
+				) TQ
+				WHERE TQ.Quantity > 0 
+				ORDER BY TQ.Quantity DESC
+			) T LEFT JOIN
+			Basis.BIN_PrtCatPropValue TP WITH(NOLOCK)
+			ON (T.PrtCatPropValueID = TP.BIN_PrtCatPropValueID)
+		]]>
+	</sql>
+	
+	<sql id="jointCateQuery">
+		<![CDATA[
+			SELECT
+			TP.BIN_PrtCatPropValueID AS cateId,
+			TP.PropValueChinese AS primaryCategoryBig,
+			TP.PropValue AS cateCode,
+			CONVERT(int, T.Quantity) AS quantity
+			FROM(
+			SELECT TOP 10 
+			ISNULL(E.BIN_PrtCatPropValueID, 0) AS PrtCatPropValueID,
+			SUM(CASE WHEN T1.SaleType = 'SR' THEN -B.Quantity ELSE B.Quantity END) AS Quantity
+			FROM 
+				(SELECT DISTINCT A.BIN_SaleRecordID, A.SaleType
+				FROM  Sale.BIN_SaleRecord A WITH(NOLOCK) JOIN
+					Sale.BIN_SaleRecordDetail B1 WITH(NOLOCK)
+				ON (A.SaleDate >= #startDate# AND A.SaleDate <= #endDate# AND
+					A.BIN_MemberInfoID IS NOT NULL AND
+					A.BIN_BrandInfoID = #brandInfoId# AND 
+					A.BIN_SaleRecordID = B1.BIN_SaleRecordID AND 
+					B1.BIN_ProductVendorID = #mainPrtId# AND
+					B1.SaleType = 'N')
+				) T1 JOIN
+				Sale.BIN_SaleRecordDetail B WITH(NOLOCK)
+				ON (
+				T1.BIN_SaleRecordID = B.BIN_SaleRecordID AND 
+				B.SaleType = 'N' AND B.BIN_ProductVendorID <> #mainPrtId# AND B.Quantity <> 0) JOIN
+				Basis.BIN_ProductVendor C WITH(NOLOCK)
+				ON (B.BIN_ProductVendorID = C.BIN_ProductVendorID AND C.ValidFlag = '1') JOIN
+				Basis.BIN_Product D WITH(NOLOCK)
+				ON (C.BIN_ProductID = D.BIN_ProductID) JOIN (
+		]]>	
+    		<include refid="BINOLMBRPT12.catProQuery" />
+    	<![CDATA[	
+					) E ON (D.BIN_ProductID = E.BIN_ProductID)
+			GROUP BY ISNULL(E.BIN_PrtCatPropValueID, 0)
+			HAVING SUM(CASE WHEN T1.SaleType = 'SR' THEN -B.Quantity ELSE B.Quantity END) > 0
+			ORDER BY SUM(CASE WHEN T1.SaleType = 'SR' THEN -B.Quantity ELSE B.Quantity END) DESC
+			) T LEFT JOIN
+			Basis.BIN_PrtCatPropValue TP WITH(NOLOCK)
+			ON (T.PrtCatPropValueID = TP.BIN_PrtCatPropValueID)
+		]]>
+	</sql>
+	
+	<sql id="jointCateBycateIdQuery">
+		<![CDATA[
+			SELECT		
+			TP.BIN_PrtCatPropValueID AS cateId,
+			TP.PropValueChinese AS primaryCategoryBig,
+			TP.PropValue AS cateCode,
+			CONVERT(int, T.Quantity) AS quantity
+			FROM(
+			SELECT TOP 10 TQ.*
+			FROM (
+				SELECT
+				E.BIN_PrtCatPropValueID AS PrtCatPropValueID,
+				SUM(CASE WHEN T1.SaleType = 'SR' THEN -B.Quantity ELSE B.Quantity END) AS Quantity
+				FROM 
+					(SELECT DISTINCT A.BIN_SaleRecordID, A.SaleType
+					FROM  Sale.BIN_SaleRecord A WITH(NOLOCK) JOIN
+						Sale.BIN_SaleRecordDetail B1 WITH(NOLOCK)
+					ON (A.SaleDate >= #startDate# AND A.SaleDate <= #endDate# AND
+						A.BIN_MemberInfoID IS NOT NULL AND
+						A.BIN_BrandInfoID = #brandInfoId# AND 
+						A.BIN_SaleRecordID = B1.BIN_SaleRecordID AND 
+						B1.SaleType = 'N' AND B1.Quantity <> 0) JOIN
+					Basis.BIN_ProductVendor C WITH(NOLOCK)
+					ON (B1.BIN_ProductVendorID = C.BIN_ProductVendorID AND C.ValidFlag = '1') JOIN
+					Basis.BIN_Product D WITH(NOLOCK)
+					ON (C.BIN_ProductID = D.BIN_ProductID) JOIN (
+				]]>	
+	    		<include refid="BINOLMBRPT12.catProQuery" />
+	    	<![CDATA[	
+						) E ON (D.BIN_ProductID = E.BIN_ProductID AND E.BIN_PrtCatPropValueID = #mainCateId#)
+					) T1 JOIN
+					Sale.BIN_SaleRecordDetail B WITH(NOLOCK)
+					ON (
+					T1.BIN_SaleRecordID = B.BIN_SaleRecordID AND 
+					B.SaleType = 'N' AND B.Quantity <> 0) JOIN
+					Basis.BIN_ProductVendor C WITH(NOLOCK)
+					ON (B.BIN_ProductVendorID = C.BIN_ProductVendorID AND C.ValidFlag = '1') JOIN
+					Basis.BIN_Product D WITH(NOLOCK)
+					ON (C.BIN_ProductID = D.BIN_ProductID) JOIN (
+				]]>	
+	    		<include refid="BINOLMBRPT12.catProQuery" />
+	    	<![CDATA[	
+						) E ON (D.BIN_ProductID = E.BIN_ProductID)
+				WHERE E.BIN_PrtCatPropValueID <> #mainCateId#
+				GROUP BY BIN_PrtCatPropValueID
+				) TQ
+				WHERE TQ.Quantity > 0 
+				ORDER BY TQ.Quantity DESC
+			) T LEFT JOIN
+			Basis.BIN_PrtCatPropValue TP WITH(NOLOCK)
+			ON (T.PrtCatPropValueID = TP.BIN_PrtCatPropValueID)
+		]]>
+	</sql>
+	
+	<sql id="memByPrtIdQuery">
+	<![CDATA[
+	SELECT
+		TZ.BIN_MemberInfoID
+	FROM (
+		SELECT DISTINCT A.BIN_SaleRecordID, A.BIN_MemberInfoID
+		FROM Sale.BIN_SaleRecord A WITH(NOLOCK) JOIN
+			Sale.BIN_SaleRecordDetail B WITH(NOLOCK)
+		ON (A.SaleDate >= #startDate# AND A.SaleDate <= #endDate# AND
+			A.BIN_MemberInfoID IS NOT NULL AND
+			A.BIN_BrandInfoID = #brandInfoId# AND 
+			A.SaleType <> 'SR' AND
+			A.BIN_SaleRecordID = B.BIN_SaleRecordID AND 
+			B.BIN_ProductVendorID = #mainPrtId# AND
+			B.SaleType = 'N' AND
+			B.Quantity <> 0
+			) 
+		) TZ
+	]]>
+	<isNotEmpty property="jointPrtId">
+	<![CDATA[
+	JOIN Sale.BIN_SaleRecordDetail JC WITH(NOLOCK)
+	ON (TZ.BIN_SaleRecordID = JC.BIN_SaleRecordID AND 
+		JC.BIN_ProductVendorID = #jointPrtId# AND
+		JC.SaleType = 'N' AND
+		JC.Quantity <> 0)
+	]]>
+	</isNotEmpty>
+	</sql>
+	
+	<sql id="memByCateIdQuery">
+	<![CDATA[
+	SELECT
+		TZ.BIN_MemberInfoID
+	FROM (
+		SELECT DISTINCT A.BIN_SaleRecordID, A.BIN_MemberInfoID
+		FROM Sale.BIN_SaleRecord A WITH(NOLOCK) JOIN
+			Sale.BIN_SaleRecordDetail B WITH(NOLOCK)
+		ON (A.SaleDate >= #startDate#  AND A.SaleDate <= #endDate# AND
+			A.BIN_MemberInfoID IS NOT NULL AND
+			A.BIN_BrandInfoID = #brandInfoId# AND 
+			A.SaleType <> 'SR' AND
+			A.BIN_SaleRecordID = B.BIN_SaleRecordID AND
+			B.SaleType = 'N' AND
+			B.Quantity <> 0
+			) 
+		JOIN Basis.BIN_ProductVendor C1 WITH(NOLOCK)
+			ON (B.BIN_ProductVendorID = C1.BIN_ProductVendorID AND C1.ValidFlag = '1') JOIN (
+		]]>	
+		<include refid="BINOLMBRPT12.catProQuery" />
+	<![CDATA[	
+				) E1 ON (C1.BIN_ProductID = E1.BIN_ProductID AND E1.BIN_PrtCatPropValueID = #mainCateId#)
+		)TZ
+	]]>
+	<isNotEmpty property="jointCateId">
+	<![CDATA[
+		JOIN Sale.BIN_SaleRecordDetail B2 WITH(NOLOCK)
+		ON(TZ.BIN_SaleRecordID = B2.BIN_SaleRecordID AND 
+		B2.SaleType = 'N' AND
+		B2.Quantity <> 0) 
+	JOIN Basis.BIN_ProductVendor C2 WITH(NOLOCK)
+			ON (B2.BIN_ProductVendorID = C2.BIN_ProductVendorID AND C2.ValidFlag = '1') JOIN (
+		]]>	
+		<include refid="BINOLMBRPT12.catProQuery" />
+	<![CDATA[	
+		) E2 ON (C2.BIN_ProductID = E2.BIN_ProductID AND E2.BIN_PrtCatPropValueID = #jointCateId#)
+		
+	]]>
+	</isNotEmpty>
+	</sql>
+	
+	<sql id="prtMemberQuery">
+	<![CDATA[
+		SELECT DISTINCT
+			C.BIN_MemberInfoID AS memId,
+			C.Name AS name,
+			D.MemCode AS memCode,
+			C.MobilePhone AS mobilePhone,
+			CASE WHEN (C.BirthYear IS NOT NULL AND C.BirthDay IS NOT NULL) 
+			THEN C.BirthYear + C.BirthDay ELSE NULL END  AS birthDay,
+			F.LevelName AS levelName,
+			E.TotalPoint AS totalPoint,
+			G.DepartCode AS departCode,
+			G.DepartName AS departName,
+			C.JoinDate AS jointDate
+		FROM(
+	]]>
+	<isNotEmpty property="mainPrtId">
+		<include refid="BINOLMBRPT12.memByPrtIdQuery" />
+	</isNotEmpty>
+	<isEmpty property="mainPrtId">
+		<include refid="BINOLMBRPT12.memByCateIdQuery" />
+	</isEmpty>
+	<![CDATA[
+		) T JOIN
+		Members.BIN_MemberInfo C WITH(NOLOCK) ON
+		(T.BIN_MemberInfoID = C.BIN_MemberInfoID AND 
+		C.MemInfoRegFlg = '0' AND 
+		C.ValidFlag = '1') JOIN
+		Members.BIN_MemCardInfo D WITH(NOLOCK) ON
+		(C.BIN_MemberInfoID = D.BIN_MemberInfoID 
+		AND D.CardValidFlag = '1')LEFT JOIN
+		Members.BIN_MemberPoint E WITH(NOLOCK)
+		ON (D.BIN_MemberInfoID = E.BIN_MemberInfoID 
+		AND E.ValidFlag = '1') LEFT JOIN
+		Members.BIN_MemberLevel F WITH(NOLOCK)
+		ON (C.MemberLevel = F.BIN_MemberLevelID)
+		LEFT JOIN Basis.BIN_Organization G WITH(NOLOCK) ON C.BIN_OrganizationID = G.BIN_OrganizationID
+	]]>
+	</sql>
+	
+	
+	<!-- 查询产品信息 -->
+     <select id="getProductInfoList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+    	<include refid="BINOLCMINC99.pageheader" />
+		<include refid="BINOLMBRPT12.rptProductQuery" />
+    	<include refid="BINOLCMINC99.pagefooter" />
+    </select>
+    
+    <!-- 查询产品总数 -->
+    <select id="getProductInfoCount" parameterClass="java.util.HashMap" resultClass="java.lang.Integer">
+     	<![CDATA[
+			SELECT	COUNT(SORT_T1.quantity) AS count FROM (
+		]]>	
+		<include refid="BINOLMBRPT12.rptProductQuery" />
+		<![CDATA[	
+			)SORT_T1
+		]]>		
+    </select>
+    
+    <!-- 查询连带产品信息 -->
+     <select id="getJointProductInfoList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+    	<include refid="BINOLCMINC99.pageheader" />
+		<include refid="BINOLMBRPT12.jointProductQuery" />
+    	<include refid="BINOLCMINC99.pagefooter" />
+    </select>
+    
+    <!-- 查询连带产品总数 -->
+    <select id="getJointProductInfoCount" parameterClass="java.util.HashMap" resultClass="java.lang.Integer">
+     	<![CDATA[
+			SELECT	COUNT(SORT_T1.quantity) AS count FROM (
+		]]>	
+		<include refid="BINOLMBRPT12.jointProductQuery" />
+		<![CDATA[	
+			)SORT_T1
+		]]>		
+    </select>
+    
+    <!-- 查询连带产品信息(根据大类ID) -->
+     <select id="getJointPrtByCateIdList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+    	<include refid="BINOLCMINC99.pageheader" />
+		<include refid="BINOLMBRPT12.jointProductByCateIdQuery" />
+    	<include refid="BINOLCMINC99.pagefooter" />
+    </select>
+    
+    <!-- 查询连带产品总数(根据大类ID) -->
+    <select id="getJointPrtByCateIdCount" parameterClass="java.util.HashMap" resultClass="java.lang.Integer">
+     	<![CDATA[
+			SELECT	COUNT(SORT_T1.quantity) AS count FROM (
+		]]>	
+		<include refid="BINOLMBRPT12.jointProductByCateIdQuery" />
+		<![CDATA[	
+			)SORT_T1
+		]]>		
+    </select>
+    
+    <!-- 查询大类信息 -->
+     <select id="getCateList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+    	<include refid="BINOLCMINC99.pageheader" />
+		<include refid="BINOLMBRPT12.rptCateQuery" />
+    	<include refid="BINOLCMINC99.pagefooter" />
+    </select>
+    
+    <!-- 查询大类总数 -->
+    <select id="getCateCount" parameterClass="java.util.HashMap" resultClass="java.lang.Integer">
+     	<![CDATA[
+			SELECT	COUNT(SORT_T1.quantity) AS count FROM (
+		]]>	
+		<include refid="BINOLMBRPT12.rptCateQuery" />
+		<![CDATA[	
+			)SORT_T1
+		]]>		
+    </select>
+    
+    <!-- 查询连带大类信息 -->
+     <select id="getJointCateList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+    	<include refid="BINOLCMINC99.pageheader" />
+		<include refid="BINOLMBRPT12.jointCateQuery" />
+    	<include refid="BINOLCMINC99.pagefooter" />
+    </select>
+    
+    <!-- 查询连带大类总数 -->
+    <select id="getJointCateCount" parameterClass="java.util.HashMap" resultClass="java.lang.Integer">
+     	<![CDATA[
+			SELECT	COUNT(SORT_T1.quantity) AS count FROM (
+		]]>	
+		<include refid="BINOLMBRPT12.jointCateQuery" />
+		<![CDATA[	
+			)SORT_T1
+		]]>		
+    </select>
+    
+    <!-- 查询连带大类信息(根据大类ID) -->
+     <select id="getJointCateBycateIdList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+    	<include refid="BINOLCMINC99.pageheader" />
+		<include refid="BINOLMBRPT12.jointCateBycateIdQuery" />
+    	<include refid="BINOLCMINC99.pagefooter" />
+    </select>
+    
+    <!-- 查询连带大类总数(根据大类ID) -->
+    <select id="getJointCateBycateIdCount" parameterClass="java.util.HashMap" resultClass="java.lang.Integer">
+     	<![CDATA[
+			SELECT	COUNT(SORT_T1.quantity) AS count FROM (
+		]]>	
+		<include refid="BINOLMBRPT12.jointCateBycateIdQuery" />
+		<![CDATA[	
+			)SORT_T1
+		]]>		
+    </select>
+    
+    <!-- 查询会员信息 -->
+     <select id="getRptMemberList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+    	<include refid="BINOLCMINC99.pageheader" />
+		<include refid="BINOLMBRPT12.prtMemberQuery" />
+    	<include refid="BINOLCMINC99.pagefooter" />
+    </select>
+    
+    <!-- 查询会员总数 -->
+    <select id="getRptMemberCount" parameterClass="java.util.HashMap" resultClass="java.lang.Integer">
+     	<![CDATA[
+			SELECT	COUNT(SORT_T1.jointDate) AS count FROM (
+		]]>	
+		<include refid="BINOLMBRPT12.prtMemberQuery" />
+		<![CDATA[	
+			)SORT_T1
+		]]>		
+    </select>
+</sqlMap>

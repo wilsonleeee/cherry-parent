@@ -1,0 +1,77 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sqlMap PUBLIC "-//iBATIS.com//DTD SQL Map 2.0//EN" "http://ibatis.apache.org/dtd/sql-map-2.dtd">
+<sqlMap namespace="BINOLSTCM15"> 
+    <!-- 订货方产品过滤查询sql文  -->
+    <sql id="stockQuery">
+        <![CDATA[
+            SELECT
+                DISTINCT
+                D.BIN_ProductVendorID AS prtVendorId,
+                D.BarCode,
+                E.UnitCode
+        ]]>
+        <dynamic>
+            <isNotEmpty property="language">
+                <isEqual property="language" compareValue="en_US">
+                    <![CDATA[
+                        ,E.NameForeign AS ProductName
+                    ]]>
+                </isEqual>
+                <isEqual property="language" compareValue="zh_CN">
+                    <![CDATA[
+                        ,E.NameTotal AS ProductName
+                    ]]>
+                </isEqual>
+            </isNotEmpty>
+            <isEmpty property="language">
+                <![CDATA[
+                    ,E.NameTotal AS ProductName
+                ]]>
+            </isEmpty>
+        </dynamic>
+        <![CDATA[
+            FROM 
+                Basis.BIN_ProductVendor D
+            LEFT JOIN Basis.BIN_Product E on D.BIN_ProductID = E.BIN_ProductID
+            WHERE
+                D.BIN_ProductVendorID IN
+        ]]>
+        <iterate property="ProductVendorIDArr" open="(" close=")" conjunction=",">#ProductVendorIDArr[]#</iterate>
+        <include refid="BINOLCMINC99.filterSql" />
+    </sql>
+	
+    <!-- 取得订货方产品过滤List总数  -->
+    <select id="getStockCount" parameterClass="java.util.HashMap" resultClass="java.lang.Integer">
+        <![CDATA[
+            SELECT COUNT(SORT_T1.prtVendorId) AS count FROM (
+        ]]>    
+        <include refid="BINOLSTCM15.stockQuery" />
+        <![CDATA[
+            )SORT_T1
+        ]]>
+    </select>
+    
+    <!-- 取得订货方产品过滤List -->
+    <select id="getStockList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+        <include refid="BINOLSTCM15.stockQuery" />
+    </select>
+    
+    <!-- 查询库存权限List -->
+    <select id="getStockPrivilegeList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+        <![CDATA[
+            SELECT
+                1
+            FROM Basis.BIN_Organization A
+            JOIN (
+        ]]>
+        <include refid="BINOLCMINC99.departPrivilegeSql" />
+        <![CDATA[
+            ) A99 
+            ON A.BIN_OrganizationID=A99.BIN_OrganizationID
+            WHERE
+                A.BIN_OrganizationInfoID = #organizationInfoId#
+                AND A.BIN_BrandInfoID = #brandInfoId#
+                AND A.BIN_OrganizationID = #organizationId#
+        ]]>
+    </select>
+</sqlMap>

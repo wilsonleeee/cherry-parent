@@ -1,0 +1,652 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sqlMap PUBLIC "-//iBATIS.com//DTD SQL Map 2.0//EN" "http://ibatis.apache.org/dtd/sql-map-2.dtd">
+<sqlMap namespace="BINOLMBSVC01">
+	<!-- 插入主规则表 -->
+	<insert id="addMainRule" parameterClass="java.util.HashMap">
+		<selectKey resultClass="java.lang.Integer" type="post" keyProperty="BIN_PosMenuGrpID" >
+        <![CDATA[
+		INSERT INTO 
+			Members.BIN_RechargeDiscount(
+				BIN_OrganizationInfoID,
+				BIN_BrandInfoID,
+				DiscountName,
+				DiscountType,
+				RechargeType,
+				DiscountBeginDate,
+				DiscountEndDate,
+				Comments,
+		]]>
+        <include refid="BINOLCMINC99.insertKeySql" />
+        <![CDATA[
+			)VALUES(
+				#organizationInfoId#,
+				#brandInfoId#,
+				#discountName#,
+				#discountType#,
+				#rechargeType#,
+				#discountBeginDate#,
+				#discountEndDate#,
+				#comments#,
+		]]>
+        <include refid="BINOLCMINC99.insertValueSql" />
+        <![CDATA[
+            )
+            SELECT SCOPE_IDENTITY() AS value
+        ]]>
+        </selectKey>
+	</insert>
+	
+	<!-- 插入子规则表 -->
+	<insert id="addRule" parameterClass="java.util.HashMap">
+		<![CDATA[
+		INSERT INTO 
+			Members.BIN_SubRechargeDiscount(
+				BIN_DiscountId,
+				CardType,
+				CardLevel,
+				Channel,
+				SubDiscountName,
+				RechargeValueActual,
+				RechargeMinValue,
+				RechargeMaxValue,
+				GiftAmount,
+				RechargeModel,
+				IsExtraGift,
+			]]>
+	        <include refid="BINOLCMINC99.insertKeySql" />
+	        <![CDATA[
+			)VALUES(
+				#BIN_DiscountId#,
+				#CardType#,
+				#CardLevel#,
+				#Channel#,
+				#SubDiscountName#,
+				#RechargeValueActual#,
+				#RechargeMinValue#,
+				#RechargeMaxValue#,
+				#GiftAmount#,
+				#RechargeModel#,
+				#IsExtraGift#,
+			]]>
+        <include refid="BINOLCMINC99.insertValueSql" />
+        <![CDATA[
+            )
+        ]]>
+	</insert>
+	
+	<!-- 插入储值卡优惠规则使用地点表 -->
+	<insert id="addRechargeRulePlace" parameterClass="java.util.HashMap">
+		<![CDATA[
+		INSERT INTO 
+			Members.BIN_RechargeRulePlace(
+				BIN_DiscountId,
+				PlaceType,
+				PlaceID,
+				PlaceCode,
+			]]>
+	        <include refid="BINOLCMINC99.insertKeySql" />
+	        <![CDATA[
+			) SELECT 
+				#discountId#,
+				#placeType#,
+				BIN_OrganizationID,
+				DepartCode,
+			]]>
+        <include refid="BINOLCMINC99.insertValueSql" />
+        <![CDATA[
+            FROM
+            	Basis.BIN_Organization
+			WHERE
+				BIN_OrganizationID=#id#
+        ]]>
+	</insert>
+	
+	<!-- 删除旧的储值卡优惠规则使用地点表 -->
+	<delete id="delRechargeRulePlace" parameterClass="java.util.HashMap">
+		<![CDATA[
+		DELETE FROM	
+			Members.BIN_RechargeRulePlace
+		WHERE	
+			BIN_DiscountId = #discountId#
+		]]>
+	</delete>
+	
+	<select id="checkMainRule" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+		<![CDATA[
+		SELECT COUNT(1) AS count 
+		FROM(
+		SELECT 
+			BIN_DiscountId,DiscountName 
+		FROM 
+			Members.BIN_RechargeDiscount WITH(NOLOCK)
+		WHERE
+			#discountBeginDate# <DiscountEndDate AND
+			#discountEndDate# >=DiscountBeginDate AND
+			ValidFlag = '1'
+			]]>	
+			<isNotEmpty prepend="AND" property="discountType">
+				DiscountType=#discountType#
+			</isNotEmpty>
+			<![CDATA[	
+		)T
+		]]>
+	</select>
+	
+    <!-- 查询储值卡规则概览 -->
+	<sql id="queryRuleList">
+		<![CDATA[
+			SELECT 
+	 			sd.SubDiscountName as subDiscountName,
+	 			sd.BIN_SubDiscountId as subDiscountId,
+	 			rd.DiscountType as discountType,
+	 			rd.RechargeType as rechargeType,
+	 			rd.BIN_DiscountId as discountId,
+				rd.DiscountName as discountName,
+				sd.CardType as cardType,
+				sd.ValidFlag as validFlag,
+				CONVERT(varchar(10), rd.DiscountBeginDate, 120) as discountBeginDate,
+				CONVERT(varchar(10), rd.DiscountEndDate, 120 ) as discountEndDate,
+				sd.GiftAmount as giftAmount,
+				sd.ServiceType as serviceType,
+				sd.ServiceQuantity as serviceQuantity,
+				sd.RechargeMinValue as rechargeMinValue,
+				sd.RechargeMaxValue as rechargeMaxValue,
+				sd.RechargeValueActual as rechargeValueActual,
+				sd.Discount as discount
+ 			FROM 
+				Members.BIN_RechargeDiscount rd WITH(NOLOCK)
+				JOIN Members.BIN_SubRechargeDiscount sd WITH(NOLOCK)
+				ON(rd.BIN_DiscountId=sd.BIN_DiscountId)
+			WHERE
+				rd.BIN_OrganizationInfoID = #organizationInfoId# AND
+				rd.BIN_BrandInfoID = #brandInfoId#
+			]]>
+			<isNotEmpty prepend="AND" property="organizationId">
+				<![CDATA[EXISTS(
+					SELECT 1 FROM Members.BIN_RechargeRulePlace RR
+					WHERE
+						rd.BIN_DiscountId = RR.BIN_DiscountId
+						AND RR.PlaceType = '1'
+						AND RR.PlaceID=#organizationId#
+					)
+				]]>
+			</isNotEmpty>
+			<isNotEmpty prepend="AND" property="ruleName">
+				<![CDATA[sd.SubDiscountName = #ruleName#]]>
+			</isNotEmpty>
+			<isNotEmpty prepend="AND" property="startDate">
+				<![CDATA[rd.DiscountBeginDate >= #startDate#]]>
+			</isNotEmpty>
+			<isNotEmpty prepend="AND" property="endDate">
+				<![CDATA[rd.DiscountEndDate <= #endDate#]]>
+			</isNotEmpty>
+	</sql>
+	
+	<!-- 查询规则明细 -->
+	<select id="getRuleDetail" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+		<![CDATA[
+			SELECT 
+				rd.BIN_DiscountId as discountId,
+				rd.DiscountName as discountName,
+				CONVERT(varchar(10), rd.DiscountBeginDate, 120) as discountBeginDate,
+				CONVERT(varchar(10), rd.DiscountEndDate, 120 ) as discountEndDate,
+				rd.RechargeType as rechargeType,
+				rd.Comments as comments,
+				
+				sd.BIN_SubDiscountId as subDiscountId,
+				sd.SubDiscountName as subDiscountName,
+				sd.RechargeValueActual as rechargeValueActual,
+				sd.GiftAmount as giftAmount,
+				sd.RechargeMinValue as rechargeMinValue,
+				sd.RechargeMaxValue as rechargeMaxValue,
+				sd.ValidFlag as validFlag,
+				sd.Discount as discount
+			FROM 
+				Members.BIN_RechargeDiscount rd WITH(NOLOCK)
+				JOIN Members.BIN_SubRechargeDiscount sd WITH(NOLOCK)
+				ON(rd.BIN_DiscountId=sd.BIN_DiscountId)
+			WHERE
+				rd.BIN_OrganizationInfoID = #organizationInfoId# AND
+				rd.BIN_BrandInfoID = #brandInfoId# AND
+				rd.ValidFlag = '1' AND
+				sd.BIN_SubDiscountId=#subDiscountId#
+		]]>	
+	</select>
+	
+	<!-- 查询规则概览信息List -->	
+	<select id="getRuleList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+       	<include refid="BINOLCMINC99.pageheader" />
+		<include refid="BINOLMBSVC01.queryRuleList" />
+		<include refid="BINOLCMINC99.pagefooter" />
+	</select>
+	
+	<!-- 获取规则概览统计信息 -->
+	<select id="getRuleCountInfo" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+    	<![CDATA[
+			SELECT 
+				COUNT(1) AS count 
+			FROM 
+				(]]><include refid="BINOLMBSVC01.queryRuleList" /><![CDATA[) T
+		]]>
+    </select>
+    
+    <!-- 逻辑删除主规则 -->
+    <update id="updateMainRuleValid" parameterClass="java.util.HashMap">
+    	<![CDATA[
+	    	UPDATE 
+				Members.BIN_RechargeDiscount
+			SET
+				ValidFlag=#validFlag#,
+		]]>
+		<include refid="BINOLCMINC99.updateSql" />
+		<![CDATA[
+		WHERE
+			BIN_DiscountId=#discountId#
+		]]>
+    </update>
+    
+    <!-- 逻辑删除子规则 -->
+    <update id="updateRuleVaild" parameterClass="java.util.HashMap">
+    	<![CDATA[
+    	UPDATE 
+			Members.BIN_SubRechargeDiscount
+		SET
+			ValidFlag=#validFlag#,
+			]]>
+			<include refid="BINOLCMINC99.updateSql" />
+		<![CDATA[
+		WHERE
+			BIN_SubDiscountId=#subDiscountId#
+		]]>
+    </update>
+    
+    <!-- 更新主规则 --> 
+    <update id="updateMainRule" parameterClass="java.util.HashMap">
+    	<![CDATA[
+	    	UPDATE 
+				Members.BIN_RechargeDiscount
+			SET
+				DiscountName=#discountName#,
+				DiscountBeginDate=#discountBeginDate#,
+				DiscountEndDate=#discountEndDate#,
+				Comments=#comments#,
+		]]>
+		<include refid="BINOLCMINC99.updateSql" />
+		<![CDATA[
+		WHERE
+			BIN_DiscountId=#discountId#
+    	]]>
+    </update>	
+    
+    <!-- 更新子规则 --> 
+    <update id="updateRule" parameterClass="java.util.HashMap">
+    	<![CDATA[
+	    	UPDATE 
+				Members.BIN_SubRechargeDiscount
+			SET
+				SubDiscountName=#subDiscountName#,
+				GiftAmount=#giftAmount#,
+		]]>
+		<include refid="BINOLCMINC99.updateSql" />
+		<![CDATA[
+		WHERE
+			BIN_SubDiscountId=#subDiscountId#
+    	]]>
+    </update>	
+    
+    <!-- 取得储值卡优惠规则的使用柜台组织结构ID信息  -->
+    <select id="getCounterOrganiztionId" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+        <![CDATA[
+            SELECT
+                PlaceID AS organizationId
+            FROM
+                Members.BIN_RechargeRulePlace
+            WHERE
+                BIN_DiscountId = #discountId#
+                AND ValidFlag = '1' 
+                AND PlaceType = '1'
+		]]>
+    </select>
+    
+    <!-- 取得所有区域柜台树 -->
+	<select id = "getAllCounter" parameterClass = "java.util.HashMap" resultClass="java.util.HashMap">
+        <![CDATA[
+            SELECT
+                A.BIN_RegionID AS cityId,
+		]]>
+		<dynamic>
+			<isNotEmpty property="language">
+				<isEqual property="language" compareValue="en_US">
+					<![CDATA[A.RegionNameForeign AS cityName,]]>
+				</isEqual>
+				<isEqual property="language" compareValue="zh_CN">
+				    <![CDATA[A.RegionNameChinese AS cityName,]]>
+				</isEqual>
+			</isNotEmpty>
+			<isEmpty property="language">
+				<![CDATA[A.RegionNameChinese AS cityName,]]>
+			</isEmpty>
+		</dynamic>
+		<![CDATA[
+                B.BIN_RegionID AS provinceId,
+		]]>
+		<dynamic>
+            <isNotEmpty property="language">
+                <isEqual property="language" compareValue="en_US">
+                   <![CDATA[B.RegionNameForeign AS provinceName,]]>
+                </isEqual>
+                <isEqual property="language" compareValue="zh_CN">
+                    <![CDATA[B.RegionNameChinese AS provinceName,]]>
+                </isEqual>
+            </isNotEmpty>
+            <isEmpty property="language">
+                <![CDATA[B.RegionNameChinese AS provinceName,]]>
+            </isEmpty>
+        </dynamic>
+		<![CDATA[
+                C.BIN_RegionID AS regionId,
+		]]>
+        <dynamic>
+            <isNotEmpty property="language">
+                <isEqual property="language" compareValue="en_US">
+                   <![CDATA[C.RegionNameForeign AS regionName,]]>
+                </isEqual>
+                <isEqual property="language" compareValue="zh_CN">
+                    <![CDATA[C.RegionNameChinese AS regionName,]]>
+                </isEqual>
+            </isNotEmpty>
+            <isEmpty property="language">
+                <![CDATA[C.RegionNameChinese AS regionName,]]>
+            </isEmpty>
+        </dynamic>
+		<![CDATA[
+                D.CounterCode AS counterCode,
+                D.CounterNameIF AS counterName,
+                D.BIN_OrganizationID AS organizationId
+            FROM
+                Basis.BIN_Region A,
+                Basis.BIN_Region B,
+                Basis.BIN_Region C,
+                Basis.BIN_CounterInfo D,
+                Basis.BIN_Region AD,
+                Basis.BIN_Organization oz
+        ]]>
+        <isNotEmpty property="privilegeFlag">
+			<isEqual property="privilegeFlag" compareValue="1">			
+			<![CDATA[			
+				JOIN (]]><include refid="BINOLCMINC99.departPrivilegeSql" /><![CDATA[) A99 
+				ON oz.BIN_OrganizationID=A99.BIN_OrganizationID
+			]]>
+			</isEqual>
+		</isNotEmpty>
+		<![CDATA[
+            WHERE
+                C.BIN_OrganizationInfoID = #organizationInfoId#
+                AND C.BIN_BrandInfoID = #brandInfoId#
+                AND C.RegionType = '0'
+                AND A.NodeID.GetAncestor(1) = B.NodeID
+                AND B.NodeID.GetAncestor(1) = C.NodeID
+                AND D.BIN_RegionID = AD.BIN_RegionID
+                AND AD.NodeID.IsDescendantOf(A.NodeID)=1
+                AND D.ValidFlag='1'
+                AND A.ValidFlag = '1'
+                AND B.ValidFlag = '1'
+                AND C.ValidFlag = '1' 
+                AND D.BIN_OrganizationID = oz.BIN_OrganizationID
+                AND oz.ValidFlag = '1'
+		]]>
+	</select>
+	
+	<!-- 查询部门柜台树List -->
+    <select id="getDepartCntList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+    	<![CDATA[
+		SELECT
+			T.id,
+			T.name,
+			T.path,
+			T.level	
+		FROM
+			(SELECT
+				A.BIN_OrganizationID AS id,
+				A.Path AS path,
+				A.Level AS level,
+		]]>
+        <dynamic>
+            <isNotEmpty property="language">
+                <isEqual property="language" compareValue="en_US">
+                   <![CDATA[
+                   		A.NameForeign AS name
+                   ]]>
+                </isEqual>
+                <isEqual property="language" compareValue="zh_CN">
+                    <![CDATA[
+                    	A.DepartName AS name
+                    ]]>
+                </isEqual>
+            </isNotEmpty>
+            <isEmpty property="language">
+                <![CDATA[
+                	A.DepartName AS name
+                ]]>
+            </isEmpty>
+        </dynamic>
+		<![CDATA[
+			FROM
+				Basis.BIN_Organization A		
+			WHERE
+				A.Type <> '4' AND
+				EXISTS (
+					SELECT 
+						1
+					FROM
+						Basis.BIN_Organization B
+				]]>
+					<isNotEmpty property="privilegeFlag">
+					<isEqual property="privilegeFlag" compareValue="1">			
+				<![CDATA[			
+						JOIN (]]><include refid="BINOLCMINC99.departPrivilegeSql" /><![CDATA[) A99 
+						ON B.BIN_OrganizationID=A99.BIN_OrganizationID
+				]]>
+					</isEqual>
+					</isNotEmpty>
+				<![CDATA[				
+					WHERE
+						B.Type = '4' AND
+						B.ValidFlag = '1' AND
+						B.NodeID.IsDescendantOf(A.NodeID) = 1
+				) AND
+				A.BIN_OrganizationInfoID = #organizationInfoId#
+		]]>		
+			<isNotEmpty property="brandInfoId" prepend="AND">
+				A.BIN_BrandInfoID = #brandInfoId#
+			</isNotEmpty>
+		<![CDATA[
+			UNION	
+			SELECT
+				A.BIN_OrganizationID AS id,
+				A.Path AS path,
+				A.Level AS level,
+		]]>
+        <dynamic>
+            <isNotEmpty property="language">
+                <isEqual property="language" compareValue="en_US">
+                   <![CDATA[
+                   		A.NameForeign AS name
+                   ]]>
+                </isEqual>
+                <isEqual property="language" compareValue="zh_CN">
+                    <![CDATA[
+                    	A.DepartName AS name
+                    ]]>
+                </isEqual>
+            </isNotEmpty>
+            <isEmpty property="language">
+                <![CDATA[
+                	A.DepartName AS name
+                ]]>
+            </isEmpty>
+        </dynamic>
+		<![CDATA[
+			FROM
+				Basis.BIN_Organization A	
+		]]>
+			<isNotEmpty property="privilegeFlag">
+			<isEqual property="privilegeFlag" compareValue="1">			
+		<![CDATA[			
+				JOIN (]]><include refid="BINOLCMINC99.departPrivilegeSql" /><![CDATA[) A99 
+				ON A.BIN_OrganizationID=A99.BIN_OrganizationID
+		]]>
+			</isEqual>
+			</isNotEmpty>
+		<![CDATA[					
+			WHERE
+				A.Type = '4' AND
+				A.ValidFlag = '1' AND
+				A.BIN_OrganizationInfoID = #organizationInfoId#
+		]]>	
+			<isNotEmpty property="brandInfoId" prepend="AND">
+				A.BIN_BrandInfoID = #brandInfoId#
+			</isNotEmpty>	
+		<![CDATA[) T					
+			ORDER BY
+				T.path
+		]]>
+    </select>
+    
+    <!-- 查询大区信息List-->
+    <select id="getRegionList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+    	<![CDATA[
+			SELECT DISTINCT
+				B.BIN_RegionID AS regionId,
+		]]>
+        <dynamic>
+            <isNotEmpty property="language">
+                <isEqual property="language" compareValue="en_US">
+                   <![CDATA[B.RegionNameForeign AS regionName]]>
+                </isEqual>
+                <isEqual property="language" compareValue="zh_CN">
+                    <![CDATA[B.RegionNameChinese AS regionName]]>
+                </isEqual>
+            </isNotEmpty>
+            <isEmpty property="language">
+                <![CDATA[B.RegionNameChinese AS regionName]]>
+            </isEmpty>
+        </dynamic>
+		<![CDATA[
+			FROM
+				Basis.BIN_Organization A
+				JOIN Basis.BIN_Region B ON A.BIN_RegionID = B.BIN_RegionID
+				JOIN Basis.BIN_CounterInfo C ON A.BIN_OrganizationID = C.BIN_OrganizationID
+				JOIN Basis.BIN_Channel D ON C.BIN_ChannelID = D.BIN_ChannelID
+		]]>
+		<isNotEmpty property="privilegeFlag">
+			<isEqual property="privilegeFlag" compareValue="1">			
+			<![CDATA[			
+					JOIN (]]><include refid="BINOLCMINC99.departPrivilegeSql" /><![CDATA[) A99 
+					ON A.BIN_OrganizationID=A99.BIN_OrganizationID
+			]]>
+			</isEqual>
+		</isNotEmpty>
+		<![CDATA[				
+			WHERE
+				A.Type = '4' AND
+				A.ValidFlag = '1' AND
+				A.BIN_OrganizationInfoID = #organizationInfoId#
+		]]>		
+		<isNotEmpty property="brandInfoId" prepend="AND">
+			A.BIN_BrandInfoID = #brandInfoId#
+		</isNotEmpty>
+    </select>
+    
+    <!-- 查询渠道柜台树List-->
+    <select id="getChannelCntList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+    	<![CDATA[
+			SELECT
+				C.BIN_ChannelID AS channelId,
+				A.BIN_OrganizationID AS organizationId,
+				A.DepartCode AS departCode,
+		]]>
+        <dynamic>
+            <isNotEmpty property="language">
+                <isEqual property="language" compareValue="en_US">
+                   <![CDATA[
+                   		C.ChannelNameForeign AS channelName,
+                    	A.NameForeign AS departName
+                   ]]>
+                </isEqual>
+                <isEqual property="language" compareValue="zh_CN">
+                    <![CDATA[
+                    	C.ChannelName AS channelName,
+                    	A.DepartName AS departName
+                    ]]>
+                </isEqual>
+            </isNotEmpty>
+            <isEmpty property="language">
+                <![CDATA[
+                	C.ChannelName AS channelName,
+                    A.DepartName AS departName
+                ]]>
+            </isEmpty>
+        </dynamic>
+		<![CDATA[
+			FROM
+				Basis.BIN_Organization A
+				JOIN Basis.BIN_CounterInfo B ON A.BIN_OrganizationID = B.BIN_OrganizationID
+				JOIN Basis.BIN_Channel C ON B.BIN_ChannelID = C.BIN_ChannelID
+		]]>
+			<isNotEmpty property="privilegeFlag">
+			<isEqual property="privilegeFlag" compareValue="1">			
+		<![CDATA[			
+				JOIN (]]><include refid="BINOLCMINC99.departPrivilegeSql" /><![CDATA[) A99 
+				ON A.BIN_OrganizationID=A99.BIN_OrganizationID
+		]]>
+			</isEqual>
+			</isNotEmpty>
+		<![CDATA[				
+			WHERE
+				A.Type = '4' AND
+				A.ValidFlag = '1' AND
+				A.BIN_OrganizationInfoID = #organizationInfoId#
+		]]>		
+			<isNotEmpty property="brandInfoId" prepend="AND">
+				A.BIN_BrandInfoID = #brandInfoId#
+			</isNotEmpty>
+			<isNotEmpty property="regionId" prepend="AND">
+				A.BIN_RegionID = #regionId#
+			</isNotEmpty>
+    </select>
+    
+    <!-- 根据 规则ID取得规则限定的柜台数-->
+    <select id="getApplyCntCount" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+    <![CDATA[
+    	SELECT
+    		COUNT(DISTINCT PlaceID) AS applyCntCount,
+    		BIN_DiscountId as discountId
+    	FROM
+    		Members.BIN_RechargeRulePlace
+    	WHERE
+    		PlaceType = '1'
+    	GROUP BY
+    		BIN_DiscountId
+    ]]>
+    </select>
+    
+    <!-- 根据 规则ID取得发送储值业务柜台数及参与储值人数-->
+    <select id="getUsedCntCountAndInvolveNumber" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+    <![CDATA[
+    	SELECT
+			COUNT(distinct A.BIN_OrganizationID) AS usedCntCount,
+			COUNT(DISTINCT A.Bin_MemberInfoId) AS involveNumber,
+			B.BIN_DiscountId AS discountId
+		FROM
+			Members.BIN_CardRechargeFlowRecord A WITH(NOLOCK)
+			LEFT JOIN Members.BIN_CardRechargeRuleDetail B WITH(NOLOCK)
+			ON(A.BIN_CardRechargeFlowRecordID=B.BIN_CardRechargeFlowRecordID)
+		WHERE
+			A.TransactionType = 'DE' AND A.ValidFlag='1'
+		GROUP BY
+			B.BIN_DiscountId
+    ]]>
+    </select>
+	
+</sqlMap>

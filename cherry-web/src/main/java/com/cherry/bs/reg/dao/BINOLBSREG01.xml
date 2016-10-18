@@ -1,0 +1,138 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sqlMap PUBLIC "-//iBATIS.com//DTD SQL Map 2.0//EN" "http://ibatis.apache.org/dtd/sql-map-2.dtd">
+<sqlMap namespace="BINOLBSREG01">
+    
+    <!-- 取得顶层区域List -->
+	<select id="getFirstRegionList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+		<![CDATA[					
+			SELECT	
+				X.BIN_RegionID AS regionId,
+				X.RegionCode AS regionCode,
+				X.ValidFlag AS validFlag,
+		]]>			
+			<isNotEmpty property="language">
+				<isEqual property="language" compareValue="en_US">
+					X.RegionNameForeign AS regionName,
+				</isEqual>
+				<isEqual property="language" compareValue="zh_CN">	
+					X.RegionNameChinese AS regionName,
+				</isEqual>								
+			</isNotEmpty>
+			<isEmpty property="language">
+					X.RegionNameChinese AS regionName,
+			</isEmpty>
+		<![CDATA[		
+				Y.ChildCount AS childCount
+			FROM						
+				Basis.BIN_Region X
+				JOIN (SELECT 
+						A.BIN_RegionID,
+						COUNT(B.BIN_RegionID) AS ChildCount
+					FROM						
+						Basis.BIN_Region A
+						LEFT JOIN Basis.BIN_Region B ON B.NodeID.GetAncestor(1) = A.NodeID
+					WHERE
+						A.RegionType = #regionType# AND
+						A.BIN_OrganizationInfoID = #organizationInfoId#
+		]]>		
+						<isNotEmpty prepend="AND" property="brandInfoId">
+							A.BIN_BrandInfoID = #brandInfoId#
+						</isNotEmpty>
+		<![CDATA[							
+					GROUP BY
+						A.BIN_RegionID) Y ON X.BIN_RegionID = Y.BIN_RegionID
+		]]>			
+    </select>
+    
+    <!-- 取得下级区域List -->
+	<select id="getNextRegionList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+		<![CDATA[					
+			SELECT	
+				X.BIN_RegionID AS regionId,
+				X.RegionCode AS regionCode,
+				X.ValidFlag AS validFlag,
+		]]>			
+			<isNotEmpty property="language">
+				<isEqual property="language" compareValue="en_US">
+					X.RegionNameForeign AS regionName,
+				</isEqual>
+				<isEqual property="language" compareValue="zh_CN">	
+					X.RegionNameChinese AS regionName,
+				</isEqual>								
+			</isNotEmpty>
+			<isEmpty property="language">
+					X.RegionNameChinese AS regionName,
+			</isEmpty>
+		<![CDATA[		
+				Y.ChildCount AS childCount
+			FROM						
+				Basis.BIN_Region X
+				JOIN (SELECT 
+						A.BIN_RegionID,
+						COUNT(C.BIN_RegionID) AS ChildCount
+					FROM						
+						Basis.BIN_Region A
+						JOIN Basis.BIN_Region B ON A.NodeID.GetAncestor(1) = B.NodeID AND B.BIN_RegionID = #regionId#
+						LEFT JOIN Basis.BIN_Region C ON C.NodeID.GetAncestor(1) = A.NodeID	
+					GROUP BY
+						A.BIN_RegionID) Y ON X.BIN_RegionID = Y.BIN_RegionID
+		]]>		
+    </select>
+    
+    <!-- 查询定位到的区域的所有上级区域位置 -->
+	<select id="getLocationHigher" parameterClass="java.util.HashMap" resultClass="java.lang.String">
+		<![CDATA[
+			SELECT
+				A.BIN_RegionID
+			FROM
+				Basis.BIN_Region A,
+				Basis.BIN_Region B
+			WHERE
+				A.BIN_OrganizationInfoID=#organizationInfoId# AND
+		]]>
+			<isNotEmpty property="brandInfoId">
+				A.BIN_BrandInfoID=#brandInfoId# AND
+			</isNotEmpty>
+		<![CDATA[	
+				B.NodeID.IsDescendantOf(A.NodeID) = 1 AND
+				B.BIN_RegionID = #regionId# AND
+				A.BIN_RegionID <> #regionId#
+			ORDER BY
+				A.Path
+		]]>
+    </select>
+    
+    <!-- 查询定位到的区域ID -->
+	<select id="getLocationRegionId" parameterClass="java.util.HashMap" resultClass="java.lang.String">
+		<![CDATA[
+			SELECT TOP 1
+				A.BIN_RegionID AS regionId
+			FROM
+				Basis.BIN_Region A		
+			WHERE
+				A.RegionType <> '-1' AND
+				A.BIN_OrganizationInfoID=#organizationInfoId# AND
+		]]>
+			<isNotEmpty property="brandInfoId">
+				A.BIN_BrandInfoID=#brandInfoId# AND
+			</isNotEmpty>
+		<![CDATA[(A.RegionCode like '%'+#locationPosition#+'%']]>
+				<isNotEmpty property="language">
+					<isEqual property="language" compareValue="zh_CN">										
+						<![CDATA[OR A.RegionNameChinese like '%'+#locationPosition#+'%']]>
+					</isEqual>
+					<isEqual property="language" compareValue="en_US">
+						<![CDATA[OR A.RegionNameForeign like '%'+#locationPosition#+'%']]>
+					</isEqual>
+				</isNotEmpty>
+				<isEmpty property="language">
+					<![CDATA[OR A.RegionNameChinese like '%'+#locationPosition#+'%']]>
+				</isEmpty>
+		<![CDATA[		
+				)
+			ORDER BY
+				A.Path
+		]]>
+    </select>
+    
+</sqlMap>

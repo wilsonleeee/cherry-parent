@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sqlMap PUBLIC "-//iBATIS.com//DTD SQL Map 2.0//EN" "http://ibatis.apache.org/dtd/sql-map-2.dtd">
+<sqlMap namespace="BINOLCTCOM07">
+	<!-- 根据会员卡号获取会员ID -->
+    <select id="getMemberIdByCode" parameterClass="java.util.HashMap" resultClass="java.lang.String">
+		<![CDATA[
+			SELECT 
+				BIN_MemberInfoID as memberInfoId 
+			FROM 
+				Members.BIN_MemCardInfo with(nolock) 
+			WHERE 
+				MemCode = #memberCode#  
+		]]>
+    </select>
+	
+	<!-- 根据会员卡号或ID获取会员详细信息 -->
+    <select id="getMemberInfoById" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+		<![CDATA[
+			SELECT tm.BIN_MemberInfoID As memId 
+				  ,tm.Name As memName 
+				  ,tm.Gender As gender 
+				  ,tm.MobilePhone As mobilePhone 
+				  ,tm.Email As email 
+				  ,tm.Telephone As telephone 
+				  ,tm.CounterCodeBelong as counterCode
+				  ,tc.CounterNameIF As counterName 
+				  ,tp.TotalPoint as totalPoint
+				  ,tp.ChangablePoint as changablePoint
+				  ,tl.LevelName as memberLevel
+				  ,tm.IsReceiveMsg As receiveMsgFlg 
+				  ,1 As customerType 
+			FROM 
+				  Members.BIN_MemberInfo As tm with(nolock) 
+				  Left join Members.BIN_MemberPoint as tp with(nolock) on tm.BIN_MemberInfoID = tp.BIN_MemberInfoID 
+				  Left join Members.BIN_MemberLevel as tl with(nolock) on tm.MemberLevel=tl.BIN_MemberLevelID and tl.ValidFlag = 1 
+				  Left Join Basis.BIN_CounterInfo As tc with(nolock) on tm.CounterCodeBelong = tc.CounterCode 
+			WHERE 
+				  tm.ValidFlag = 1 AND 
+				  tm.BIN_BrandInfoID = #brandInfoId# AND 
+				  tm.BIN_OrganizationInfoID = #organizationInfoId# AND 
+				  tm.BIN_MemberInfoID = #memberInfoId# 
+		]]>
+    </select>
+</sqlMap>

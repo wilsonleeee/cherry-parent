@@ -1,0 +1,244 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sqlMap PUBLIC "-//iBATIS.com//DTD SQL Map 2.0//EN" "http://ibatis.apache.org/dtd/sql-map-2.dtd">
+<sqlMap namespace="BINOLPTUNQ01"> 
+
+    <!-- 查询唯一码生成信息 -->
+	<sql id="getUnqInfo" >
+		SELECT
+		    A.PrtUniqueCodeBatchNo  AS  prtUniqueCodeBatchNo,
+		    A.PrtUniqueCodeBatchDescribe AS prtUniqueCodeBatchDescribe,
+		    A.BIN_PrtUniqueCodeBatchID AS prtUniqueCodeID,
+			CONVERT(varchar,A.GenerateDate, 120 ) AS generateDate,
+			C.NameTotal AS nameTotal,
+			A.GenerateCount  AS generateCount,
+			A.BoxCount AS boxCount,
+			case A.ExportExcelCount when 0 then '未导出' else '已导出' end AS exportExcelCount,
+			A.ExportExcelCount   AS  relexportExcelCount,
+ 			CONVERT(varchar, A.LastExportExcelTime , 120 ) AS lastExportExcelTime,
+ 			B.BarCode  AS baCode,
+ 			C.UnitCode AS unitCode
+		FROM   Basis.BIN_PrtUniqueCodeBatch  A	
+		LEFT JOIN  Basis.BIN_ProductVendor B ON  A.BIN_ProductVendorID=B.BIN_ProductVendorID
+		LEFT JOIN  Basis.BIN_Product C ON  B.BIN_ProductID=C.BIN_ProductID
+		WHERE 
+		      1=1
+	    <isNotEmpty prepend="AND" property="fromDate">
+			<![CDATA[
+				#fromDate# <= CONVERT(varchar(10),GenerateDate, 120)
+			]]>
+		</isNotEmpty>
+		<isNotEmpty prepend="AND" property="toDate">
+			<![CDATA[
+				#toDate# >= CONVERT(varchar(10),GenerateDate, 120)
+			]]>
+		</isNotEmpty>
+
+	</sql>
+	
+    <!-- 外接连产品分类用于查询产品对应的大中小分类 -->
+	<sql id="joinCateSql">
+		<![CDATA[
+   			LEFT JOIN (
+    				SELECT
+    					pc.BIN_ProductID,
+    					pcv.PropValueChinese,
+    					pcv.PropValueForeign
+    				FROM
+    					Basis.BIN_PrtCategory pc,
+    					Basis.BIN_PrtCatProperty pcp,
+    					Basis.BIN_PrtCatPropValue pcv
+    				WHERE
+    					pc.BIN_PrtCatPropValueID = pcv.BIN_PrtCatPropValueID AND
+    					pcv.BIN_PrtCatPropertyID = pcp.BIN_PrtCatPropertyID AND
+    					pcp.TeminalFlag = '1' AND 
+    					pcp.BIN_OrganizationInfoID = #organizationInfoId#  AND
+	    				pcp.BIN_BrandInfoID = #brandInfoId# AND 
+						pc.ValidFlag = '1' AND
+						pcv.ValidFlag = '1' AND
+						pcp.ValidFlag = '1'
+    			) D ON (D.BIN_ProductID = C.BIN_ProductID)
+   			LEFT JOIN (
+   				SELECT
+   					pc.BIN_ProductID,
+   					pcv.PropValueChinese,
+   					pcv.PropValueForeign
+   				FROM
+   					Basis.BIN_PrtCategory pc,
+   					Basis.BIN_PrtCatProperty pcp,
+   					Basis.BIN_PrtCatPropValue pcv
+   				WHERE
+   					pc.BIN_PrtCatPropValueID = pcv.BIN_PrtCatPropValueID AND
+   					pcv.BIN_PrtCatPropertyID = pcp.BIN_PrtCatPropertyID AND
+   					pcp.TeminalFlag = '2' AND 
+   					pcp.BIN_OrganizationInfoID = #organizationInfoId#  AND 
+    				pcp.BIN_BrandInfoID = #brandInfoId# AND 
+					pc.ValidFlag = '1' AND
+					pcv.ValidFlag = '1' AND
+					pcp.ValidFlag = '1'
+   			) E ON (E.BIN_ProductID = C.BIN_ProductID)
+   			]]>
+	</sql>
+
+	<!-- 查询唯一码明细信息 -->
+	<sql id="getUnqDetailsInfo" >
+		SELECT
+		    C.UnitCode AS unitCode,
+			B.BarCode AS barCode,
+			A.PointUniqueCode AS pointUniqueCode,
+			A.RelUniqueCode AS relUniqueCode,
+			A.BoxCode  AS  boxCode ,
+			A.ActivationStatus AS activationStatus,
+			CONVERT(varchar, A.CreateTime, 120 )AS createTime,
+			A.UseStatus AS useStatus,
+			CONVERT(varchar,A.UseTime, 120 )  AS useTime,
+			<dynamic>
+				<isNotEmpty property="language">
+					<isEqual property="language" compareValue="zh_CN">										
+						C.NameTotal AS nameTotal,
+						D.PropValueChinese AS primaryCategoryBig,
+						E.PropValueChinese AS primaryCategorySmall
+					</isEqual>
+					<isEqual property="language" compareValue="en_US">										
+						C.NameForeign AS nameTotal,
+						D.PropValueForeign AS primaryCategoryBig,
+						E.PropValueForeign AS primaryCategorySmall
+					</isEqual>
+				</isNotEmpty>
+				<isEmpty property="language">
+						C.NameTotal AS nameTotal,
+						D.PropValueChinese AS primaryCategoryBig,
+						E.PropValueChinese AS primaryCategorySmall
+				</isEmpty>
+			</dynamic>
+		FROM
+			 Basis.BIN_PrtUniqueCodeDetail A
+		LEFT JOIN  Basis.BIN_ProductVendor B ON  A.BIN_ProductVendorID=B.BIN_ProductVendorID
+		LEFT JOIN  Basis.BIN_Product C ON  B.BIN_ProductID=C.BIN_ProductID
+		<include refid="BINOLPTUNQ01.joinCateSql"/>
+		WHERE 
+				BIN_PrtUniqueCodeBatchID = #prtUniqueCodeID#
+     </sql>
+     
+
+	<!-- 取得唯一码生成总次数  -->
+    <select id="getUnqGenerateCount" parameterClass="java.util.HashMap" resultClass="java.lang.Integer">    
+    	SELECT	COUNT(SORT_T1.prtUniqueCodeID) AS count FROM (			
+			<include refid="BINOLPTUNQ01.getUnqInfo"/>		
+			)SORT_T1	
+    </select>
+    
+    <!-- 取得唯一码生成信息List  -->
+    <select id="getUnqViewList"   parameterClass="java.util.HashMap"  resultClass="java.util.HashMap">
+        <include refid="BINOLCMINC99.pageheader"/>
+		<include refid="BINOLPTUNQ01.getUnqInfo"/>
+		<include refid="BINOLCMINC99.pagefooter"/>
+    </select>
+    
+    <!-- 取得唯一码明细List  -->
+    <select id="getUnqDetailsList"   parameterClass="java.util.HashMap"  resultClass="java.util.HashMap">
+		<include refid="BINOLPTUNQ01.getUnqDetailsInfo"/>
+    </select>
+
+    <!-- 更新导出Excel次数和最终导出时间  -->
+	<update id="updateExportExcelCountAndExportExcelTime" parameterClass="java.util.HashMap">
+		<![CDATA[
+		UPDATE	
+			Basis.BIN_PrtUniqueCodeBatch
+		SET	
+			ExportExcelCount = ExportExcelCount + 1,
+			LastExportExcelTime = getdate(),
+		]]>				
+          <include refid="BINOLCMINC99.updateSql" />
+		<![CDATA[
+		WHERE
+			BIN_PrtUniqueCodeBatchID = #prtUniqueCodeID#
+		]]>
+	</update>
+    
+    <!-- **************************************************************************************************************************************************  -->
+	
+	<!-- 产品唯一码批次表  -->
+	<insert id="insertPrtUniqueCodeBatch" parameterClass="java.util.HashMap">
+		<selectKey resultClass="java.lang.Integer" type="post" keyProperty="BIN_PrtUniqueCodeBatchID" >
+			<![CDATA[
+			INSERT INTO Basis.BIN_PrtUniqueCodeBatch(
+				BIN_OrganizationInfoID,
+				BIN_BrandInfoID,
+				PrtUniqueCodeBatchNo,
+				PrtUniqueCodeBatchDescribe,
+				GenerateDate,
+				GenerateType,
+				GenerateCount,
+				BoxCount,
+				NeedBoxCode,
+				DefaultActivationStatus,
+				BIN_ProductVendorID,
+				ExportExcelCount,
+				ExportPdfCount,
+			]]>	
+			<include refid="BINOLCMINC99.insertKeySql" />										
+			<![CDATA[								
+			)VALUES	(
+				#organizationInfoId#,
+				#brandInfoId#,
+				#prtUniqueCodeBatchNo#,
+				#prtUniqueCodeBatchDescribe#,
+				GETDATE(),	
+				#generateType#,
+				#generateCount#,
+				#boxCount#,
+				#needBoxCode#,
+				#defaultActivationStatus#,	
+				#productVendorID#,	
+				0,	
+				0,	
+			]]>
+			<include refid="BINOLCMINC99.insertValueSql" />
+			<![CDATA[ ) 
+				select SCOPE_IDENTITY() as value
+			]]> 
+	    </selectKey>
+	</insert> 
+	<!-- 产品唯一码明细表  -->
+	<insert id="insertPrtUniqueCodeDetail" parameterClass="java.util.HashMap">
+			<![CDATA[
+			INSERT INTO Basis.BIN_PrtUniqueCodeDetail(	
+				BIN_PrtUniqueCodeBatchID,
+				BIN_ProductVendorID,
+				BoxCode,
+				PointUniqueCode,
+				RelUniqueCode,
+				ActivationStatus,
+				UseStatus,
+			]]>	
+			<include refid="BINOLCMINC99.insertKeySql" />
+			<![CDATA[								
+			)VALUES	(
+				#prtUniqueCodeBatchID#,
+				#productVendorID#,
+				#boxCode#,
+				#pointUniqueCode#,
+				#relUniqueCode#,
+				#activationStatus#,
+				0,	
+			]]>
+			<include refid="BINOLCMINC99.insertValueSql" />	
+			<![CDATA[ ) 
+			]]> 
+	</insert> 
+
+    <!-- 取得唯一码明细List  -->
+    <select id="getNewPrtUniqueCodeBatchNo"   parameterClass="java.util.HashMap"  resultClass="java.lang.String">
+		SELECT 
+			CONVERT(varchar(100), GETDATE(), 112) 
+			+	REPLICATE('0',4-LEN(ISNULL(CAST(MAX(right(RTRIM(PrtUniqueCodeBatchNo),4)) as varchar)+1,1)))
+			+   CAST(ISNULL(CAST(MAX(RIGHT(RTRIM(PrtUniqueCodeBatchNo),4)) as int)+1,1) as varchar) 
+				AS newBatchNo
+		FROM Basis.BIN_PrtUniqueCodeBatch
+		WHERE 
+			BIN_OrganizationInfoID = #organizationInfoId# 
+		AND	BIN_BrandInfoID = #brandInfoId# 
+		AND	PrtUniqueCodeBatchNo like CONVERT(varchar(100), GETDATE(), 112) +'%'
+    </select>
+
+</sqlMap>

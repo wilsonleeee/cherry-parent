@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sqlMap PUBLIC "-//iBATIS.com//DTD SQL Map 2.0//EN" "http://ibatis.apache.org/dtd/sql-map-2.dtd">
+<sqlMap namespace="BINOLPLRLA02">
+	
+	<!-- 取得岗位类别信息List -->
+	<resultMap id="BINOLPLRLA02.PositionCategory" class="java.util.HashMap">
+		<result property="id" column="BIN_PositionCategoryID"/>
+		<result property="brandInfoId" column="BIN_BrandInfoID"/>
+		<result property="name" column="CategoryName"/>
+		<result property="brandNameChinese" column="BrandNameChinese"/>
+		<result property="pId" column="BIN_BrandInfoID"/>
+	</resultMap>
+	<select id="getPositionCategoryList" parameterClass="java.util.HashMap" resultMap="BINOLPLRLA02.PositionCategory">
+		<![CDATA[
+			SELECT				
+				A.BIN_PositionCategoryID,
+				A.BIN_BrandInfoID,
+		]]>
+		<isNotEmpty property="language">
+			<isEqual property="language" compareValue="en_US">
+				A.CategoryNameForeign AS CategoryName,
+				B.BrandNameForeign AS BrandNameChinese
+			</isEqual>
+			<isEqual property="language" compareValue="zh_CN">	
+				A.CategoryName AS CategoryName,
+				B.BrandNameChinese AS BrandNameChinese
+			</isEqual>								
+		</isNotEmpty>
+		<isEmpty property="language">
+				A.CategoryName AS CategoryName,
+				B.BrandNameChinese AS BrandNameChinese
+		</isEmpty>
+		<![CDATA[
+			FROM				
+				Privilege.BIN_PositionCategory A left join Basis.BIN_BrandInfo B on
+				A.BIN_BrandInfoID=B.BIN_BrandInfoID
+			WHERE				
+				A.BIN_OrganizationInfoID=#organizationInfoId# AND
+				A.ValidFlag='1'				
+		]]>
+		<dynamic>
+			<isNotEmpty prepend="AND" property="brandInfoId">
+				(A.BIN_BrandInfoID=#brandInfoId#)
+			</isNotEmpty>
+		</dynamic>
+		<![CDATA[
+			ORDER BY 	
+				A.BIN_BrandInfoID		
+		]]>
+    </select>
+	
+</sqlMap>

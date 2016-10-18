@@ -1,0 +1,108 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sqlMap PUBLIC "-//iBATIS.com//DTD SQL Map 2.0//EN" "http://ibatis.apache.org/dtd/sql-map-2.dtd">
+<sqlMap namespace="BINOLJNMAN15">
+
+<!-- 取得会员子活动List  -->
+    <sql id="getMAN15CampaignRule">
+       	<![CDATA[
+				SELECT 
+					A.BIN_CampaignID as campaignId,
+					A.CampaignName as campaignName,
+					A.CampaignFromDate as campaignFromDate,
+					A.CampaignToDate as campaigntoDate,
+					A.WorkFlowId as workFlowId,
+					A.ActionId as actionId,
+					A.SaveStatus as saveStatus,
+					A.PointRuleType as pointRuleType,
+					A.ValidFlag as vdFlag,
+					A.BIN_MemberLevelID as memberLevelId,
+					A.DescriptionDtl as descriptionDtl,
+					ISNULL(A.DefaultFlag, 0) as defaultFlag,
+					C.GroupCode as groupCode,
+					C.GroupName as campGroup
+				FROM
+					Campaign.BIN_Campaign A 
+					LEFT JOIN Campaign.BIN_CampaignGrp C
+					ON(C.BIN_CampaignGrpID = A.BIN_CampaignGrpID)
+				WHERE
+				]]>
+				<dynamic>
+					<isNotEmpty property="memberClubId">
+						A.BIN_MemberClubID = #memberClubId# AND
+					</isNotEmpty>
+					<isNotEmpty property="ruleName">
+						A.CampaignName LIKE '%' + #ruleName# + '%' AND
+					</isNotEmpty>
+				</dynamic>
+				<![CDATA[
+					A.BIN_OrganizationInfoID = #organizationInfoId# AND
+					A.BIN_BrandInfoID = #brandInfoId# AND
+					A.CampaignType = #campaignType#
+			]]>
+    </sql>
+	
+	<!-- 取得会员活动List  -->
+	<select id="getMAN15CampaignList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+		<include refid="BINOLCMINC99.pageheader" />
+		<include refid="BINOLJNMAN15.getMAN15CampaignRule" />
+		<include refid="BINOLCMINC99.pagefooter" />
+	</select>
+	
+	 <!-- 取得会员子活动条数  -->
+    <select id="getMAN15CampaignRuleCount" parameterClass="java.util.HashMap" resultClass="java.lang.Integer">
+       	<![CDATA[
+			SELECT	COUNT(SORT_T1.campaignId) AS count FROM (
+		]]>	
+		<include refid="BINOLJNMAN15.getMAN15CampaignRule" />	
+		<![CDATA[	
+			)SORT_T1
+		]]>	
+    </select>
+    
+    <!-- 停用或启用规则  -->
+	<update id="updateMAN15RuleValid" parameterClass="java.util.HashMap">
+		<![CDATA[
+       UPDATE 
+       		Campaign.BIN_Campaign
+		SET 
+			ValidFlag = #validFlag#,
+		]]>
+		<include refid="BINOLCMINC99.updateSql" />		
+    <![CDATA[
+       WHERE 
+			BIN_CampaignID = #campaignId#
+    ]]>
+    </update>
+    
+    <!-- 取得优先级配置信息 -->
+    <select id="getMAN15ConfInfo" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+       	<![CDATA[
+			SELECT 
+				A.BIN_CampaignGrpID AS campaignGrpId,
+				B.PriorityRuleDetail AS priorityRuleDetail
+			FROM
+				Campaign.BIN_Campaign A,
+				Campaign.BIN_CampaignGrp B
+			WHERE
+				A.BIN_CampaignID = #campaignId# AND
+				B.BIN_CampaignGrpID = A.BIN_CampaignGrpID AND
+				B.ValidFlag = '1'
+		]]>
+    </select>
+    
+    <!-- 更新会员活动组表优先级设置信息  -->
+	<update id="updateMAN15Config" parameterClass="java.util.HashMap">
+		
+		<![CDATA[
+	      UPDATE
+	            Campaign.BIN_CampaignGrp 
+		  SET      
+		  		PriorityRuleDetail = #priorityMes#,	
+		]]>
+		 <include refid="BINOLCMINC99.updateSql" />	
+		<![CDATA[
+		  WHERE									
+				BIN_CampaignGrpID = #campaignGrpId#
+		]]>
+	</update> 
+</sqlMap>

@@ -1,0 +1,83 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sqlMap PUBLIC "-//iBATIS.com//DTD SQL Map 2.0//EN" "http://ibatis.apache.org/dtd/sql-map-2.dtd">
+<sqlMap namespace="BINOLBSSAM06">
+	
+	<sql id="queryBAAttendance">
+		<![CDATA[
+			SELECT
+				O.DepartName AS departName,
+				E.EmployeeName AS employeeName,
+				WS.WorkDate AS workDate,
+				SUM(case when AttendanceDateTime <= WS.WorkBeginTime AND AttendanceType=0 then 1 else 0 end) AS stime,
+				SUM(case when TimeCount=1 AND CONVERT(VARCHAR(8),AttendanceDateTime,114) between ATM.TimeStart AND ATM.TimeEnd then 1 else 0 end) AS time1,
+				SUM(case when TimeCount=2 AND CONVERT(VARCHAR(8),AttendanceDateTime,114) between ATM.TimeStart AND ATM.TimeEnd then 1 else 0 end) AS time2,
+				SUM(case when TimeCount=3 AND CONVERT(VARCHAR(8),AttendanceDateTime,114) between ATM.TimeStart AND ATM.TimeEnd then 1 else 0 end) AS time3,
+				SUM(case when TimeCount=4 AND CONVERT(VARCHAR(8),AttendanceDateTime,114) between ATM.TimeStart AND ATM.TimeEnd then 1 else 0 end) AS time4,
+				SUM(case when AttendanceDateTime >= WS.WorkEndTime AND AttendanceType=1 then 1 else 0 end) AS xtime
+			FROM
+				Basis.BIN_WorkScheduling WS WITH(NOLOCK)
+			LEFT JOIN
+				Monitor.BIN_BAAttendance BA WITH(NOLOCK)
+			ON 
+				BA.BIN_OrganizationInfoID = WS.BIN_OrganizationInfoID AND
+				BA.BIN_BrandInfoID = WS.BIN_BrandInfoID AND
+				BA.BIN_OrganizationID = WS.BIN_OrganizationID AND
+				CONVERT(VARCHAR(10),BA.AttendanceDateTime,120)=WS.WorkDate
+			LEFT JOIN 
+				Basis.BIN_AttendanceTimeMaintenance ATM WITH(NOLOCK)
+			ON 
+				ATM.BIN_OrganizationInfoID = BA.BIN_OrganizationInfoID AND
+				ATM.BIN_BrandInfoID = BA.BIN_BrandInfoID AND
+				ATM.Type = WS.Type
+			LEFT JOIN
+				Basis.BIN_Employee E WITH(NOLOCK)
+			ON
+				E.BIN_OrganizationInfoID = WS.BIN_OrganizationInfoID AND
+				E.BIN_BrandInfoID = WS.BIN_BrandInfoID AND
+				E.BIN_OrganizationID = WS.BIN_OrganizationID AND
+				E.BIN_EmployeeID = BA.BIN_EmployeeID
+			LEFT JOIN
+				Basis.BIN_Organization O WITH(NOLOCK)
+			ON
+				O.BIN_OrganizationInfoID = BA.BIN_OrganizationInfoID AND
+				O.BIN_BrandInfoID = BA.BIN_BrandInfoID AND
+				O.BIN_OrganizationID = BA.BIN_OrganizationID
+			WHERE 
+				ATM.ValidFlag='1' AND
+				WS.BIN_OrganizationInfoID=#organizationInfoId# AND
+				WS.BIN_BrandInfoID=#brandInfoId# AND
+				BA.BIN_EmployeeID IS NOT NULL 
+		]]>
+		<isNotEmpty prepend="AND" property="departName">
+				O.DepartName=#departName#
+		</isNotEmpty>
+		<isNotEmpty prepend="AND" property="employeeName">
+				E.EmployeeName=#employeeName#
+		</isNotEmpty>
+		<isNotEmpty prepend="AND" property="startDateTime">
+				<![CDATA[WS.WorkDate>=#startDateTime#]]>
+		</isNotEmpty>
+		<isNotEmpty prepend="AND" property="endDateTime">
+				<![CDATA[WS.WorkDate<=#endDateTime#]]>
+		</isNotEmpty>
+		GROUP BY
+			WS.WorkDate,
+			E.EmployeeName,
+			O.DepartName
+	</sql>
+
+	<select id="getBAAttendanceList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+       	<include refid="BINOLCMINC99.pageheader" />
+		<include refid="BINOLBSSAM06.queryBAAttendance" />
+		<include refid="BINOLCMINC99.pagefooter" />
+	</select>
+	
+	<select id="getBAAttendanceCount" parameterClass="java.util.HashMap" resultClass="java.lang.Integer">
+		<![CDATA[
+            SELECT 
+				COUNT(1) AS count 
+			FROM 
+				(]]><include refid="BINOLBSSAM06.queryBAAttendance" /><![CDATA[) T
+        ]]>
+	</select>
+</sqlMap>

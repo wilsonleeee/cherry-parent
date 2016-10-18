@@ -1,0 +1,127 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sqlMap PUBLIC "-//iBATIS.com//DTD SQL Map 2.0//EN" "http://ibatis.apache.org/dtd/sql-map-2.dtd">
+<sqlMap namespace="BINOLCTPMS01">
+
+	<sql id="queryParamList">
+		<![CDATA[
+		SELECT
+			ts.ParamCode as paramCode,
+			ts.ParamName as paramName,
+			ts.ParamType as paramType,
+			tb.ConfigGroup as configGroup,
+			tb.ParamKey as paramKey,
+			tb.ParamValue as paramValue,
+			ts.SupplierType as supplierType,
+			ts.ParamKey as main_paramKey
+		FROM 
+			Communication.BIN_CommIntelfacesParam as ts 
+		LEFT JOIN 
+		(SELECT 
+			ParamCode,
+			ConfigGroup,
+			ParamKey,
+			ParamValue
+		FROM 
+			Communication.BIN_CommIntelfacesConfig 
+		WHERE 
+			ConfigGroup = #configGroup# AND
+			BIN_OrganizationInfoID=#organizationInfoId# AND
+			BrandCode=#brandCode# AND
+			BIN_BrandInfoID=#brandInfoId#
+			) as tb 
+		ON 
+			ts.ParamCode = tb.ParamCode
+		WHERE 
+			ts.SupplierType=#supplierType#
+			]]>	
+	</sql>
+
+<select id="getParamList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+       	<include refid="BINOLCMINC99.pageheader" />
+		<include refid="BINOLCTPMS01.queryParamList" />
+		<include refid="BINOLCMINC99.pagefooter" />
+</select>
+
+<select id="getParamCountInfo" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+    	<![CDATA[
+			SELECT 
+				COUNT(1) AS count 
+			FROM 
+				(
+		]]>
+				<include refid="BINOLCTPMS01.queryParamList" />
+		<![CDATA[
+			) SORT_T1
+		]]>
+</select>
+
+<select id="checkParam" parameterClass="java.util.HashMap" resultClass="java.lang.Integer">
+	<![CDATA[
+		SELECT 
+				COUNT(1) AS count 
+			FROM 
+				(
+		SELECT 
+			BIN_ConfigId 
+		FROM
+			Communication.BIN_CommIntelfacesConfig
+		WHERE
+			BIN_OrganizationInfoID=#organizationInfoId# AND
+			BIN_BrandInfoID=#brandInfoId# AND
+			BrandCode=#brandCode# AND
+			ParamCode=#paramCode# AND
+			ConfigGroup=#configGroup#
+			) SORT_T1
+	]]>
+</select>
+
+<insert id="insertParam" parameterClass="java.util.HashMap">
+		<![CDATA[
+			INSERT INTO 
+				Communication.BIN_CommIntelfacesConfig
+	           ([BIN_OrganizationInfoID]
+	           ,[BIN_BrandInfoID]
+	           ,[BrandCode]
+	           ,[ParamCode]
+	           ,[ConfigGroup]
+	           ,[ParamKey]
+	           ,[ParamValue]
+	           ,[ValidFlag]
+	           ,[CreateTime]
+	           ,[CreatePGM])
+     		VALUES
+	           (#organizationInfoId#
+	           ,#brandInfoId#
+	           ,#brandCode#
+	           ,#paramCode#
+	           ,#configGroup#
+	           ,#paramKey#
+	           ,#paramValue#
+	           ,'1'
+	           ,GETDATE()
+	           ,'BINOLCTPMS01')
+		]]>
+</insert>
+
+<update id="updateParam" parameterClass="java.util.HashMap">
+		<![CDATA[
+			UPDATE 
+				Communication.BIN_CommIntelfacesConfig
+			SET
+				ParamKey=#paramKey# ,
+				ParamValue=#paramValue#,
+				]]>
+			<include refid="BINOLCMINC99.updateSql" />
+			<![CDATA[
+			WHERE
+				BIN_OrganizationInfoID=#organizationInfoId# AND
+				BIN_BrandInfoID=#brandInfoId# AND
+				BrandCode=#brandCode# AND
+				ParamCode=#paramCode# AND
+				ConfigGroup=#configGroup#
+		]]>
+</update>
+
+
+
+</sqlMap>

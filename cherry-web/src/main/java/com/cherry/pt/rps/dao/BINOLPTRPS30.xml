@@ -1,0 +1,112 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sqlMap PUBLIC "-//iBATIS.com//DTD SQL Map 2.0//EN" "http://ibatis.apache.org/dtd/sql-map-2.dtd">
+<sqlMap namespace="BINOLPTRPS30">
+    
+    <!-- 查询BB柜台销售统计SQL文  -->
+	<sql id="spaRptQuery">
+		<![CDATA[
+			SELECT
+				B.RegionCode AS regionCode,
+				B.RegionNameChinese AS regionName,
+				C.DepartCode AS resellerCode,
+				C.DepartName AS resellerName,
+				E.EmployeeCode AS basCode,
+				E.EmployeeName AS basName,
+				A.CounterCode AS counterCode,
+				A.CounterNameIF AS counterName,
+				ISNULL(F.Amount, 0) AS saleAmount,
+				ISNULL(F.BillCount, 0) AS saleCount,
+				ISNULL(F.Quantity, 0) AS saleQuantity,
+				ISNULL(F.Quantity1, 0) AS saleQuantity1,
+				ISNULL(F.MemberAmount, 0) AS memSaleAmount,
+				ISNULL(F.NotMemberAmount, 0) AS notMemSaleAmout,
+				ISNULL(F.PromAmount, 0) AS promSaleAmount,
+				ISNULL(G.Amount, 0) AS inventoryAmount
+			FROM
+				Basis.BIN_CounterInfo A WITH(NOLOCK)
+				LEFT JOIN (
+					SELECT 
+						T1.BIN_OrganizationID AS  BIN_OrganizationID,
+						T2.RegionCode AS RegionCode,
+						T2.RegionNameChinese AS RegionNameChinese
+					FROM 
+						Basis.BIN_Organization T1 WITH(NOLOCK)
+						LEFT JOIN Basis.BIN_Region T2 WITH(NOLOCK) ON T1.BIN_RegionID = T2.BIN_RegionID
+				) B ON A.BIN_OrganizationID = B.BIN_OrganizationID
+				LEFT JOIN Basis.BIN_Organization C WITH(NOLOCK) ON A.ResellerDepartID = C.BIN_OrganizationID
+				LEFT JOIN Privilege.BIN_EmployeeDepart D WITH(NOLOCK)
+								JOIN Basis.BIN_Employee E WITH(NOLOCK) ON D.BIN_EmployeeID = E.BIN_EmployeeID AND E.ValidFlag = '1'
+							ON A.BIN_OrganizationID = D.BIN_OrganizationID AND D.ManageType = '1'
+				LEFT JOIN (
+					SELECT
+						T1.BIN_OrganizationID AS BIN_OrganizationID,
+						COUNT(T1.BIN_SaleRecordID) AS BillCount,
+						SUM(CASE WHEN T1.SaleType = 'SR' THEN -T1.Amount ELSE T1.Amount END) AS Amount,
+						SUM(CASE WHEN T1.SaleType = 'SR' THEN -T1.Quantity ELSE T1.Quantity END) AS Quantity,
+						SUM(CASE WHEN T1.SaleType = 'SR' THEN -T2.Quantity ELSE T2.Quantity END) AS Quantity1,
+						SUM(CASE WHEN T1.ConsumerType = 'MP' OR T1.ConsumerType = 'MG' THEN CASE WHEN T1.SaleType = 'SR' THEN -T1.Amount ELSE T1.Amount END ELSE 0 END) AS MemberAmount,
+						SUM(CASE WHEN T1.ConsumerType = 'NP' OR T1.ConsumerType = 'NG' THEN CASE WHEN T1.SaleType = 'SR' THEN -T1.Amount ELSE T1.Amount END ELSE 0 END) AS NotMemberAmount,
+						SUM(CASE WHEN T1.SaleType = 'SR' THEN -T2.PromAmount ELSE T2.PromAmount END) AS PromAmount
+					FROM
+						Sale.BIN_SaleRecord T1 WITH(NOLOCK)
+						JOIN (
+							SELECT 
+								T11.BIN_SaleRecordID AS BIN_SaleRecordID,
+								SUM(CASE WHEN T11.PricePay > 0 THEN T11.Quantity ELSE 0 END) AS Quantity,
+								SUM(CASE WHEN T11.SaleType = 'P' THEN T11.Quantity*T11.PricePay ELSE 0 END) AS PromAmount
+							FROM
+								Sale.BIN_SaleRecordDetail T11 WITH(NOLOCK)
+							GROUP BY T11.BIN_SaleRecordID
+						) T2 ON T1.BIN_SaleRecordID = T2.BIN_SaleRecordID
+					WHERE
+						T1.ValidFlag = '1'
+						AND T1.SaleDate >= #startDate#
+						AND T1.SaleDate <= #endDate#
+					GROUP BY T1.BIN_OrganizationID
+				)F ON A.BIN_OrganizationID = F.BIN_OrganizationID
+				LEFT JOIN(
+					SELECT 
+						T1.BIN_OrganizationID AS BIN_OrganizationID,
+						SUM(ISNULL(T3.Quantity*T5.SalePrice, 0)) AS Amount
+					FROM
+						Basis.BIN_CounterInfo T1 WITH(NOLOCK)
+						LEFT JOIN Basis.BIN_InventoryInfo T2 WITH(NOLOCK) ON T1.BIN_OrganizationID = T2.BIN_OrganizationID
+						LEFT JOIN Inventory.BIN_ProductStock T3 WITH(NOLOCK) ON T2.BIN_InventoryInfoID = T3.BIN_InventoryInfoID
+						LEFT JOIN Basis.BIN_ProductVendor T4 WITH(NOLOCK) ON T3.BIN_ProductVendorID = T4.BIN_ProductVendorID
+						LEFT JOIN Basis.BIN_ProductPrice T5 WITH(NOLOCK) ON T4.BIN_ProductID = T5.BIN_ProductID 
+							AND T5.Type = '2'
+							AND T5.StartDate <= #bussnissDate#
+							AND T5.EndDate >= #bussnissDate#
+							AND T5.ValidFlag = '1'
+					GROUP BY T1.BIN_OrganizationID
+				)G ON A.BIN_OrganizationID = G.BIN_OrganizationID
+			WHERE
+				A.BIN_BrandInfoID = #brandInfoId#
+				AND A.BIN_OrganizationInfoID = #organizationInfoId#
+		]]>
+			<isNotEmpty property="counterName" prepend="AND">
+				A.CounterNameIF like '%' + #counterName# + '%'
+			</isNotEmpty>
+			<isNotEmpty property="validFlag" prepend="AND">
+				A.ValidFlag = #validFlag#
+			</isNotEmpty>
+	</sql>
+	
+	<!-- span报表Count -->
+    <select id="getSPARptCount" parameterClass="java.util.HashMap" resultClass="java.lang.Integer">
+    	<![CDATA[
+			SELECT	COUNT(1) AS count FROM (
+		]]>	
+		<include refid="BINOLPTRPS30.spaRptQuery" />	
+		<![CDATA[	
+			)SORT_T1
+		]]>										
+    </select>
+	
+	<!-- spa报表List  -->
+    <select id="getSPARptList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+       	<include refid="BINOLCMINC99.pageheader" />
+		<include refid="BINOLPTRPS30.spaRptQuery" />	
+		<include refid="BINOLCMINC99.pagefooter" />
+    </select>
+</sqlMap>

@@ -1,0 +1,253 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE sqlMap PUBLIC "-//iBATIS.com//DTD SQL Map 2.0//EN" "http://ibatis.apache.org/dtd/sql-map-2.dtd">
+<sqlMap namespace="BINOLMOCIO02">
+	<sql id = "paperList">
+		<![CDATA[
+		SELECT
+			distinct A.BIN_PaperID AS paperId,
+			A.PaperName AS paperName,
+			A.PaperType AS paperType,
+			A.PaperStatus AS paperStatus,
+			A.Publisher AS publisher,
+			CONVERT(CHAR(19),A.StartTime,120) AS startTime,
+			CONVERT(CHAR(19),A.EndTime,120) AS endTime,
+			CONVERT(CHAR(19),getdate(),120) AS currentTime,	
+			CONVERT(CHAR(10),A.PublishTime,120) AS publishTime,
+			CASE WHEN 
+				A.publishTime IS NULL 
+				THEN '0'
+				ELSE '1'
+			END AS issuedStatus
+		FROM
+			Monitor.BIN_Paper A
+		WHERE
+			A.ValidFlag = '1' AND
+			A.BIN_OrganizationInfoID = #organizationInfoId#
+		]]>
+		<dynamic>
+			<isEqual  property="dateStatus" compareValue="1" prepend="AND">
+				<![CDATA[	A.StartTime <= CONVERT(CHAR(19),getdate(),120) AND CONVERT(CHAR(19),getdate(),120) <= A.EndTime ]]>
+	     	</isEqual>
+	     	<isEqual  property="dateStatus" compareValue="2" prepend="AND">
+				<![CDATA[	CONVERT(CHAR(19),getdate(),120) > A.EndTime ]]>
+	     	</isEqual>
+	     	<isEqual  property="dateStatus" compareValue="3" prepend="AND">
+				<![CDATA[	CONVERT(CHAR(19),getdate(),120) < A.StartTime ]]>
+	     	</isEqual>
+			<isNotEmpty prepend = "AND" property = "brandInfoId">
+				A.BIN_BrandInfoID = #brandInfoId#
+			</isNotEmpty>
+			<isNotEmpty prepend = "AND" property = "paperName">
+				<![CDATA[A.PaperName LIKE '%' + #paperName# + '%']]>
+			</isNotEmpty>
+			<isNotEmpty prepend = "AND" property = "paperType">
+				A.PaperType = #paperType#
+			</isNotEmpty>
+			<isNotEmpty prepend = "AND" property = "startDate">
+				<![CDATA[CONVERT(CHAR(10),A.PublishTime,120) >= #startDate#]]>
+			</isNotEmpty>
+			<isNotEmpty prepend = "AND" property = "endDate">
+				<![CDATA[CONVERT(CHAR(10),A.PublishTime,120) <= #endDate#]]>
+			</isNotEmpty>
+		</dynamic>
+	</sql>
+	<select id = "getPaperList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+		<include refid="BINOLCMINC99.pageheader" />
+        <include refid="BINOLMOCIO02.paperList" />
+        <include refid="BINOLCMINC99.pagefooter" />
+	</select>
+	<select id = "getPaperCount" parameterClass="java.util.HashMap" resultClass="java.lang.Integer">
+		<![CDATA[
+            SELECT COUNT(SORT_T1.paperId) AS count FROM (
+        ]]>
+        <include refid="BINOLMOCIO02.paperList" />
+        <![CDATA[
+            )SORT_T1
+        ]]>
+	</select>
+	<!--根据问卷ID进行问卷停用或者启用-->
+	<update id="paperDisableOrEnable" parameterClass="java.util.HashMap">
+		UPDATE
+			[Monitor].[BIN_Paper]
+		SET
+			[PaperStatus] = #paperStatus#,
+		<include refid="BINOLCMINC99.updateSql" />
+		WHERE
+			[BIN_PaperID] = #paperId#
+	</update>
+	<!--获取问卷的信息，供停用时使用-->
+	<select id = "getPaperForDisable" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+		SELECT 
+	  		A.[BIN_PaperID] AS [PaperID],
+	  		B.[BrandCode],
+      		A.[PaperName],
+      		A.[PaperStatus] AS [Enable],
+      		A.[PublishTime],
+      		A.[Publisher],
+			A.[PaperStatus] AS Enable
+  		FROM 
+			[Monitor].[BIN_Paper] A,
+			[Basis].[BIN_BrandInfo] B
+  		WHERE
+			A.[BIN_BrandInfoID] = B.[BIN_BrandInfoID]
+			AND A.BIN_PaperID = #paperId#
+	</select>
+	<!-- 伦理删除问卷 -->
+	<update id="deletePaper" parameterClass="java.util.HashMap">
+		UPDATE
+			[Monitor].[BIN_Paper]
+		SET
+			[ValidFlag] = '0',
+		<include refid="BINOLCMINC99.updateSql" />
+		WHERE
+			[BIN_PaperID] = #paperId# AND			
+			[ValidFlag] = '1' 			
+	</update>
+	<!-- 伦理删除某一问卷中的问题 -->
+	<update id="deletePaperQuestion" parameterClass="java.util.HashMap">
+		UPDATE
+			[Monitor].[BIN_PaperQuestion]
+		SET
+			[ValidFlag] = '0',
+		<include refid="BINOLCMINC99.updateSql" />
+		WHERE
+			[BIN_PaperID] = #paperId# AND			
+			[ValidFlag] = '1'
+	</update>
+	
+	<!--检查是否存在某种类型某种状态的时间有效问卷-->
+	<select id="isExistSomePaper" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+		<![CDATA[
+		SELECT
+			A.BIN_PaperID AS paperId
+		FROM
+			Monitor.BIN_Paper A
+		WHERE
+			A.PaperType = #paperType#
+			AND A.PaperStatus = #paperStatus#
+			AND A.PublishTime IS NOT NULL
+			AND A.StartTime <= GETDATE()
+			AND A.EndTime >= GETDATE()
+		]]>
+	</select>
+	
+	<!--取得某张问卷的下发信息-->
+	<select id="getPaperIssum" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+		<![CDATA[
+			SELECT
+				A.BIN_OrganizationID AS A_BIN_OrganizationID,
+				A.BIN_RegionID AS A_BIN_RegionID,
+				A.BIN_ProvinceID AS A_BIN_ProvinceID,
+				A.BIN_CityID AS A_BIN_CityID,
+				A.BIN_CountyID AS A_BIN_CountyID,
+				B.BIN_OrganizationID AS B_BIN_OrganizationID,
+		]]>
+				<dynamic>
+					<isNotEmpty property="language">
+						<isEqual property="language" compareValue="en_US">
+							<![CDATA[
+								case  
+									when A.DepartCode IS NULL 
+									then ISNULL(A.NameForeign,'')
+									else '('+A.DepartCode+')'+ISNULL(A.NameForeign,'') end AS A_DepartName,
+								case  
+									when C.RegionCode IS NULL 
+									then ISNULL(C.RegionNameForeign,'')
+									else '('+C.RegionCode+')'+ISNULL(C.RegionNameForeign,'') end AS RegionName,
+								case  
+									when D.RegionCode IS NULL 
+									then ISNULL(D.RegionNameForeign,'')
+									else '('+D.RegionCode+')'+ISNULL(D.RegionNameForeign,'') end AS ProvinceName,
+								case  
+									when E.RegionCode IS NULL 
+									then ISNULL(E.RegionNameForeign,'')
+									else '('+E.RegionCode+')'+ISNULL(E.RegionNameForeign,'') end AS CityName,
+								case  
+									when F.RegionCode IS NULL 
+									then ISNULL(F.RegionNameForeign,'')
+									else '('+F.RegionCode+')'+ISNULL(F.RegionNameForeign,'') end AS CountyName
+							]]>
+						</isEqual>
+						<isEqual property="language" compareValue="zh_CN">
+							<![CDATA[
+								case  
+									when A.DepartCode IS NULL 
+									then ISNULL(A.DepartName,'')
+									else '('+A.DepartCode+')'+ISNULL(A.DepartName,'') end AS A_DepartName,
+								case  
+									when C.RegionCode IS NULL 
+									then ISNULL(C.RegionNameChinese,'')
+									else '('+C.RegionCode+')'+ISNULL(C.RegionNameChinese,'') end AS RegionName,
+								case  
+									when D.RegionCode IS NULL 
+									then ISNULL(D.RegionNameChinese,'')
+									else '('+D.RegionCode+')'+ISNULL(D.RegionNameChinese,'') end AS ProvinceName,
+								case  
+									when E.RegionCode IS NULL 
+									then ISNULL(E.RegionNameChinese,'')
+									else '('+E.RegionCode+')'+ISNULL(E.RegionNameChinese,'') end AS CityName,
+								case  
+									when F.RegionCode IS NULL 
+									then ISNULL(F.RegionNameChinese,'')
+									else '('+F.RegionCode+')'+ISNULL(F.RegionNameChinese,'') end AS CountyName
+							]]>
+						</isEqual>
+					</isNotEmpty>
+					<isEmpty property="language">
+						<![CDATA[
+							case  
+								when A.DepartCode IS NULL 
+								then ISNULL(A.DepartName,'')
+								else '('+A.DepartCode+')'+ISNULL(A.DepartName,'') end AS A_DepartName,
+							case  
+								when C.RegionCode IS NULL 
+								then ISNULL(C.RegionNameChinese,'')
+								else '('+C.RegionCode+')'+ISNULL(C.RegionNameChinese,'') end AS RegionName,
+							case  
+								when D.RegionCode IS NULL 
+								then ISNULL(D.RegionNameChinese,'')
+								else '('+D.RegionCode+')'+ISNULL(D.RegionNameChinese,'') end AS ProvinceName,
+							case  
+								when E.RegionCode IS NULL 
+								then ISNULL(E.RegionNameChinese,'')
+								else '('+E.RegionCode+')'+ISNULL(E.RegionNameChinese,'') end AS CityName,
+							case  
+								when F.RegionCode IS NULL 
+								then ISNULL(F.RegionNameChinese,'')
+								else '('+F.RegionCode+')'+ISNULL(F.RegionNameChinese,'') end AS CountyName
+						]]>
+					</isEmpty>
+				</dynamic>
+		<![CDATA[
+			FROM
+				Basis.BIN_Organization A
+				LEFT JOIN Monitor.BIN_PaperForbidden B
+				ON(A.BIN_OrganizationID = B.BIN_OrganizationID
+				AND B.BIN_PaperID = #BIN_PaperID#
+				AND B.ValidFlag = '1')
+				LEFT JOIN Basis.BIN_Region C
+				ON(A.BIN_RegionID = C.BIN_RegionID)
+				LEFT JOIN Basis.BIN_Region D
+				ON(A.BIN_ProvinceID = D.BIN_RegionID)
+				LEFT JOIN Basis.BIN_Region E
+				ON(A.BIN_CityID = E.BIN_RegionID)
+				LEFT JOIN Basis.BIN_Region F
+				ON(A.BIN_CountyID = F.BIN_RegionID)
+			WHERE
+				A.[Type] = '4'
+				AND A.ValidFlag = '1'
+		]]>
+	</select>
+	
+	<!--取得已下发问卷的下发状态：禁止到下发柜台/允许到下发柜台-->
+	<select id="getControlFlag" parameterClass="java.lang.Integer" resultClass="java.util.HashMap">
+		<![CDATA[
+			SELECT
+				ControlFlag
+			FROM
+				Monitor.BIN_PaperForbidden
+			WHERE
+				BIN_PaperID = #BIN_PaperID#
+		]]>
+	</select>
+</sqlMap>

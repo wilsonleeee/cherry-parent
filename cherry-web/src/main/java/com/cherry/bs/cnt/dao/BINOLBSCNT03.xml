@@ -1,0 +1,133 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sqlMap PUBLIC "-//iBATIS.com//DTD SQL Map 2.0//EN" "http://ibatis.apache.org/dtd/sql-map-2.dtd">
+<sqlMap namespace="BINOLBSCNT03">
+	
+	<!-- 更新柜台信息 -->
+    <update id="updateCounterInfo" parameterClass="java.util.HashMap">
+    	<![CDATA[
+			UPDATE Basis.BIN_CounterInfo		
+			SET				
+				BIN_RegionID = #regionId#,			
+				BIN_MallInfoID = #mallInfoId#,			
+				BIN_ChannelID = #channelId#,
+				BIN_ResellerInfoID = #resellerInfoId#,
+				BIN_OrganizationID = #organizationId#,
+				CounterAddress = #counterAddress#,
+				CounterCategory = #counterCategory#,
+				CounterCode = #counterCode#,
+				CounterNameIF = #counterNameIF#,
+				CounterNameShort = #counterNameShort#,
+				NameForeign = #nameForeign#,
+				CounterTelephone = #counterTelephone#,
+				CounterSpace = #counterSpace#,
+				CounterKind = #counterKind#,
+				CounterLevel = #counterLevel#,
+				Status = #status#,
+				ResellerDepartID = #resellerDepartId#,
+				BusDistrict =#busDistrict#,
+				BusniessPrincipal =#busniessPrincipal#,
+				EquipmentCode =#equipmentCode#,
+				ManagingType2 =#managingType2#,
+			]]>
+			<isNotEmpty property="counterSynergyFlag">
+				CounterSynergyFlag = #counterSynergyFlag#,
+			</isNotEmpty>
+			<isNotEmpty property="passWord">
+				PassWord = #passWord#,
+			</isNotEmpty>
+		<![CDATA[
+				longitude = #longitude#,
+				latitude = #latitude#,
+				PosFlag = #posFlag#,
+				BelongFaction = #belongFaction#,
+				OperateMode = #operateMode#,
+				InvoiceCompany = #invoiceCompany#,
+				EmployeeNum = #employeeNum#,
+			]]>
+				<isNotEmpty property="validFlag">
+					ValidFlag = #validFlag#,
+				</isNotEmpty>				
+				<include refid="BINOLCMINC99.updateSql" />		
+		<![CDATA[					
+			WHERE				
+				BIN_CounterInfoID = #counterInfoId# AND			
+				UpdateTime = #modifyTime# AND		
+				ModifyCount = #modifyCount#				
+		]]>
+    </update>
+    
+    <!-- 删除柜台主管和关注柜台的人  -->
+	<delete id="delEmployeeDepart" parameterClass="java.util.HashMap">
+		<![CDATA[
+		DELETE FROM	
+			Privilege.BIN_EmployeeDepart
+		WHERE	
+			BIN_OrganizationID = #organizationId# AND
+			(ManageType = '0' OR ManageType = '1')
+		]]>
+	</delete>
+	
+	<!-- 取得所属部门的员工 -->
+	<select id="getEmployeeInDepartList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+		<![CDATA[
+			SELECT 
+				A.BIN_EmployeeID AS employeeId,
+				B.BIN_EmployeeID AS superEmpId
+			FROM 
+				Basis.BIN_Employee A
+				LEFT JOIN Basis.BIN_Employee B ON A.NodeID.GetAncestor(1) = B.NodeID
+			WHERE
+		]]>
+			<isNotEmpty property="followDepartList">
+				A.BIN_OrganizationID IN 
+				<iterate property="followDepartList" open="(" close=")" conjunction=",">
+					#followDepartList[]#
+				</iterate>
+			</isNotEmpty>
+			<isEmpty property="followDepartList">
+				A.BIN_OrganizationID = #organizationId#
+			</isEmpty>
+    </select>
+    
+    <!-- 取得员工节点 -->
+	<select id="getEmployeePath" parameterClass="java.util.HashMap" resultClass="java.lang.String">
+		<![CDATA[
+			SELECT 
+				Path AS path
+			FROM 
+				Basis.BIN_Employee
+			WHERE
+				BIN_EmployeeID = #counterHead#
+		]]>
+    </select>
+    
+    <!-- 更新员工节点信息 -->
+    <update id="updateEmpSuperiors" parameterClass="java.util.HashMap">
+    	<![CDATA[
+			UPDATE 
+				Basis.BIN_Employee
+			SET				
+				NodeID = #newNodeId#,
+		]]>
+				<include refid="BINOLCMINC99.updateSql" />		
+		<![CDATA[					
+			WHERE				
+				BIN_EmployeeID = #employeeId#
+		]]>
+    </update>
+    
+    <!-- 更新组织结构部门协同信息 -->
+    <update id="updateOrganizationSynergyFlag" parameterClass="java.util.HashMap">
+    	<![CDATA[
+			UPDATE 
+				Basis.BIN_Organization
+			SET				
+				OrgSynergyFlag = #counterSynergyFlag#,
+		]]>
+				<include refid="BINOLCMINC99.updateSql" />		
+		<![CDATA[					
+			WHERE				
+				BIN_OrganizationID = #organizationId#
+		]]>
+    </update>
+</sqlMap>

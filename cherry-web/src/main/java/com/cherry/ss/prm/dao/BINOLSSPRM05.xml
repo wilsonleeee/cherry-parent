@@ -1,0 +1,100 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sqlMap PUBLIC "-//iBATIS.com//DTD SQL Map 2.0//EN" "http://ibatis.apache.org/dtd/sql-map-2.dtd">
+<sqlMap namespace="BINOLSSPRM05">
+	<!-- 促销品分类信息查询sql  -->
+	<sql id="prmTypeQuery">
+		<![CDATA[
+		  SELECT	
+		         A.BIN_PromotionPrtTypeID AS prmTypeId,	
+				 A.BIN_OrganizationInfoID AS organizationInfoId,
+				 A.PrimaryCategoryCode AS primaryCategoryCode,												
+		         A.SecondryCategoryCode AS secondryCategoryCode,							
+		         A.SmallCategoryCode AS smallCategoryCode,
+				 A.ValidFlag AS validFlag
+	    ]]> 
+		<dynamic>
+		<isNotEmpty property="language">
+			<isEqual property="language" compareValue="en_US">
+			,A.PrimaryCategoryNameForeign AS primaryCategoryName
+			,A.SecondryCategoryNameForeign AS secondryCategoryName
+			,A.SmallCategoryNameForeign AS smallCategoryName
+			</isEqual>
+			<isEqual property="language" compareValue="zh_CN">	
+			,A.PrimaryCategoryNameChinese AS primaryCategoryName
+			,A.SecondryCategoryNameChinese AS secondryCategoryName
+			,A.SmallCategoryNameChinese AS smallCategoryName
+			</isEqual>								
+		</isNotEmpty>
+		<isEmpty property="language">
+			,A.PrimaryCategoryNameChinese AS primaryCategoryName
+			,A.SecondryCategoryNameChinese AS secondryCategoryName
+			,A.SmallCategoryNameChinese AS smallCategoryName
+		</isEmpty>
+		</dynamic>
+		<![CDATA[
+		  FROM															
+		           Basis.BIN_PromotionPrtType A
+		  WHERE 
+		           A.BIN_OrganizationInfoID = #organizationInfoId# AND
+				   A.BIN_BrandInfoID = #brandInfoId#
+		]]>
+		<dynamic>
+			<isNotEmpty prepend="AND" property="categoryName" >
+				  <![CDATA[		
+				   (A.PrimaryCategoryNameForeign Like '%' + #categoryName# + '%' OR
+			       A.SecondryCategoryNameForeign Like '%' + #categoryName# + '%' OR
+			       A.SmallCategoryNameForeign Like '%' + #categoryName# + '%' OR
+				   A.PrimaryCategoryNameChinese Like '%' + #categoryName# + '%' OR
+			       A.SecondryCategoryNameChinese Like '%' + #categoryName# + '%' OR
+			       A.SmallCategoryNameChinese Like '%' + #categoryName# + '%')
+			      ]]>
+			</isNotEmpty>
+			<isEmpty prepend="AND" property="validFlag" >
+				A.ValidFlag = '1'
+			</isEmpty>
+			<isNotEmpty prepend="AND" property="categoryCode" >
+				<![CDATA[		
+				   (A.PrimaryCategoryCode Like '%' + #categoryCode# + '%' OR
+			       A.SecondryCategoryCode Like '%' + #categoryCode# + '%' OR
+			       A.SmallCategoryCode Like '%' + #categoryCode# + '%')
+			      ]]>
+			</isNotEmpty>
+		</dynamic>
+	</sql>
+	<!-- 取得促销品分类总数  -->
+    <select id="getPrmTypeCount" parameterClass="java.util.HashMap" resultClass="java.lang.Integer">
+    	<![CDATA[
+			SELECT	COUNT(SORT_T1.prmTypeId) AS count FROM (
+		]]>	
+		<include refid="BINOLSSPRM05.prmTypeQuery" />	
+		<![CDATA[	
+			)SORT_T1
+		]]>										
+    </select>
+	
+	<!-- 取得促销品分类信息List -->
+    <select id="getPrmTypeList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+       	<include refid="BINOLCMINC99.pageheader" />
+		<include refid="BINOLSSPRM05.prmTypeQuery" />
+		<include refid="BINOLCMINC99.pagefooter" />
+    </select>
+	
+	<!-- 伦理删除促销品分类信息  -->
+	<update id="invalidPrmType" parameterClass="java.util.HashMap">
+		
+		<![CDATA[
+		UPDATE									
+				Basis.BIN_PromotionPrtType								
+		SET
+				ValidFlag = #validFlag#,
+		]]>	
+			<include refid="BINOLCMINC99.updateSql" />									
+		<![CDATA[								
+		WHERE									
+				BIN_PromotionPrtTypeID = #prmTypeId# AND								
+				UpdateTime = #modifyTime# AND								
+				ModifyCount = #modifyCount#
+		]]>
+	</update> 
+	
+</sqlMap>

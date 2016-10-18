@@ -1,0 +1,211 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Module>
+    <ModulePrefs
+            title="memPointInfo">
+       		<Require feature="settitle"/>
+            <Require feature="dynamic-height" /> 
+			<Optional feature="content-rewrite">
+			  <Param name="exclude-urls">.*</Param>
+			</Optional>
+			<Require feature="oauthpopup" />
+			<Require feature="cherryOpenSocial"/>
+			<Require feature="cherryPaging"/>
+			<Require feature="opensocial-i18n"/> 
+			<Locale messages="/Cherry/shindigcontainer/i18n/mb/zh_CN_ALL.xml"/>
+			<Locale lang="zh_CN" messages="/Cherry/shindigcontainer/i18n/mb/zh_CN_ALL.xml"/>
+			<Locale lang="zh_TW" messages="/Cherry/shindigcontainer/i18n/mb/zh_TW_ALL.xml"/>
+    </ModulePrefs>
+    <Content type="html" ><![CDATA[
+    <style type="text/css">
+	
+	#memPointInfoDiv {
+		color: #000000;
+   		font-family: Verdana,Geneva,sans-serif;
+   		font-size: 14px;
+   		padding: 2px 10px 10px 10px;
+   		overflow: auto;
+	}
+	.section-header {
+   		padding: 5px 0px 5px 0px;
+   		font-weight: bold;
+   	}
+   	.section-content {
+   		border-top: 1px solid #E5E5E5;
+   	}
+   	.number {
+   		color:red;
+   		margin:0 3px 0 0;
+   	}
+  	ul {
+    	list-style:none;
+    	margin: 0 0 10px 0;
+    	padding: 0;
+  	}
+  	ul li {
+    	padding: 10px 0 5px 0;
+    	border-bottom: 1px solid #E5E5E5;
+  	}
+  	ul li:hover {
+    	background-color: #FFFEDD;
+  	}
+  	.page {
+  		font-size: 13px;
+  	}
+  	.pageInfo {
+  		float: left;
+  	}
+  	.pageLink {
+  		float: right;
+  	}
+  	.page strong {
+  		margin: 0 3px;
+  	}
+  	.page a {
+  		margin: 0 3px;
+  		color: #3366FF;
+    	text-decoration: none;
+  	}
+  	.page a:hover {
+  		color: #FF6D06;
+    	text-decoration: underline;
+  	}
+  	#waiting {
+  		height:200px;
+  	}
+  	#waiting div {
+  		background-image: url("/Cherry/css/common/blueprint/images/loading.gif");
+	    background-position: 20px center;
+	    background-repeat: no-repeat;
+	    height: 50px;
+	    width: 50px;
+	    left: 40%;
+	    top: 20%;
+	    position: absolute;
+	    z-index: 100;
+  	}
+	</style>
+	
+	<div id="waiting"><div></div></div>
+	<div id="memPointInfoDiv" style="display:none"></div>
+    
+	<script type='text/javascript'>
+	
+	var baseUrl = window.parent.getBaseUrl();
+	var gadgetPrefs = new gadgets.Prefs();
+	
+	function formatNumber(s, n) {
+		if(s == null || s == undefined || s === "") {
+			return "";
+		}
+		n = n > 0 && n <= 20 ? n : 2;
+		s = parseFloat((s + "").replace(/[^\d\.-]/g, "")).toFixed(n) + "";
+		var l = s.split(".")[0].split("").reverse(),
+		r = s.split(".")[1];
+		t = "";
+		for(i = 0; i < l.length; i ++ ) {
+			t += l[i] + ((i + 1) % 3 == 0 && (i + 1) != l.length ? "," : "");
+		}
+		t = t.replace(/,-/g, '-');
+		if(parseInt(r, 10) == 0) {
+			return t.split("").reverse().join("");
+		} else {
+			return t.split("").reverse().join("") + "." + r;
+		}
+	}
+	
+	function getContext(dataObj) {
+		var context = "";
+		var temp = "";
+		var params = [];
+		var counter = (dataObj.departName ? gadgetPrefs.getMsg("in")+dataObj.departName : '');
+		var amount = dataObj.amount;
+		var quantity = dataObj.quantity;
+		var point = dataObj.point;
+		if("NS" == dataObj.billType) {
+			temp = gadgetPrefs.getMsg("MEMPOINT_NS");
+			params.push(counter);
+			params.push(amount);
+			params.push(quantity);
+			params.push(point);
+		} else if("SR" == dataObj.billType) {
+			temp = gadgetPrefs.getMsg("MEMPOINT_SR");
+			params.push(counter);
+			params.push(amount);
+			params.push(quantity);
+			params.push(point);
+		} else if("PX" == dataObj.billType) {
+			temp = gadgetPrefs.getMsg("MEMPOINT_PX");
+			params.push(counter);
+			params.push(0-point);
+		} else if("PB" == dataObj.billType) {
+			temp = gadgetPrefs.getMsg("MEMPOINT_PB");
+			params.push(counter);
+			params.push(0-point);
+		} else if("PT" == dataObj.billType) {
+			temp = gadgetPrefs.getMsg("MEMPOINT_PT");
+			params.push(point);
+		} else if("MT" == dataObj.billType) {
+			temp = gadgetPrefs.getMsg("MEMPOINT_MT");
+			params.push(point);
+		} else if("PC" == dataObj.billType) {
+			temp = gadgetPrefs.getMsg("MEMPOINT_PC");
+			params.push(0-point);
+		}
+		context = parsingTemplate(temp, params);
+		if(context) {
+			context = '<li>' + context + '<br/><span style="color:#999999;">'+dataObj.changeDate+'</span></li>';
+		}
+		return context;
+	}
+	
+	function render(data) {
+		$("#memPointInfoDiv").empty();
+		data = data.entry;
+		var totalNumber = data.totalCount;
+		if(totalNumber > 0) {
+			$("#memPointInfoDiv").html('<div class="section-header"></div><div class="section-content"><ul></ul></div>');
+			var $ul = $("#memPointInfoDiv").find("ul");
+			for(var i = 0; i < data.pointCalInfoList.length; i++) {
+				var dataObj = data.pointCalInfoList[i];
+				var context = getContext(dataObj);
+				if(context) {
+					$ul.append(context);
+				}
+			}
+			var pageNumber = data.pageNumber;
+			var currentPage = data.pageNo;
+			var clickName = 'fetchPointInfo';
+			var textObj = {
+				pageInfoPre: gadgetPrefs.getMsg("pageInfoPre"),
+				pageInfoEnd: gadgetPrefs.getMsg("pageInfoEnd"),
+				pagePre: gadgetPrefs.getMsg("pagePre"),
+				pageNext: gadgetPrefs.getMsg("pageNext")
+			};
+			$ul.after(getPageContent(totalNumber,pageNumber,currentPage,clickName,textObj));
+		}
+
+		$("#waiting").hide();
+		$("#memPointInfoDiv").show();
+	    gadgets.window.adjustHeight();
+	}
+	
+	function fetchPointInfo(param, flag) {
+		$("#waiting").show();
+		$("#memPointInfoDiv").hide();
+		gadgets.window.adjustHeight();
+	   	var url = baseUrl + "/social/rest/memPointInfo";
+	   	param.userInfo = window.parent.getUserInfo();
+	   	param.gadgetParam = window.parent.getGadgetParam();
+	  	sendRequestToServer(url, 'POST', param, render, false);
+	}
+	
+	function init() {
+		fetchPointInfo({pageNo:'1',pageNumber:'5'});
+	}
+	
+    gadgets.util.registerOnLoadHandler(init);
+	
+	</script>
+	
+	]]></Content>
+</Module>

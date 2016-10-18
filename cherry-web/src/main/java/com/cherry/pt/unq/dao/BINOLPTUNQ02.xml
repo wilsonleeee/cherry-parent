@@ -1,0 +1,119 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sqlMap PUBLIC "-//iBATIS.com//DTD SQL Map 2.0//EN" "http://ibatis.apache.org/dtd/sql-map-2.dtd">
+<sqlMap namespace="BINOLPTUNQ02"> 
+	
+    <!-- 外接连产品分类用于查询产品对应的大中小分类 -->
+	<sql id="joinCateSql">
+		<![CDATA[
+   			LEFT JOIN (
+    				SELECT
+    					pc.BIN_ProductID,
+    					pcv.PropValueChinese,
+    					pcv.PropValueForeign
+    				FROM
+    					Basis.BIN_PrtCategory pc,
+    					Basis.BIN_PrtCatProperty pcp,
+    					Basis.BIN_PrtCatPropValue pcv
+    				WHERE
+    					pc.BIN_PrtCatPropValueID = pcv.BIN_PrtCatPropValueID AND
+    					pcv.BIN_PrtCatPropertyID = pcp.BIN_PrtCatPropertyID AND
+    					pcp.TeminalFlag = '1' AND 
+    					pcp.BIN_OrganizationInfoID = #organizationInfoId#  AND
+	    				pcp.BIN_BrandInfoID = #brandInfoId# AND 
+						pc.ValidFlag = '1' AND
+						pcv.ValidFlag = '1' AND
+						pcp.ValidFlag = '1'
+    			) D ON (D.BIN_ProductID = C.BIN_ProductID)
+   			LEFT JOIN (
+   				SELECT
+   					pc.BIN_ProductID,
+   					pcv.PropValueChinese,
+   					pcv.PropValueForeign
+   				FROM
+   					Basis.BIN_PrtCategory pc,
+   					Basis.BIN_PrtCatProperty pcp,
+   					Basis.BIN_PrtCatPropValue pcv
+   				WHERE
+   					pc.BIN_PrtCatPropValueID = pcv.BIN_PrtCatPropValueID AND
+   					pcv.BIN_PrtCatPropertyID = pcp.BIN_PrtCatPropertyID AND
+   					pcp.TeminalFlag = '2' AND 
+   					pcp.BIN_OrganizationInfoID = #organizationInfoId#  AND 
+    				pcp.BIN_BrandInfoID = #brandInfoId# AND 
+					pc.ValidFlag = '1' AND
+					pcv.ValidFlag = '1' AND
+					pcp.ValidFlag = '1'
+   			) E ON (E.BIN_ProductID = C.BIN_ProductID)
+   			]]>
+	</sql>
+
+	<!-- 单码查询 -->
+	<sql id="getSingleCodeSearch" >
+		SELECT
+		    C.UnitCode AS unitCode,
+			B.BarCode AS barCode,
+			A.PointUniqueCode AS pointUniqueCode,
+			A.RelUniqueCode AS relUniqueCode,
+			A.BoxCode  AS  boxCode ,
+			A.ActivationStatus AS activationStatus,
+			CONVERT(varchar, A.CreateTime, 120 ) AS createTime,
+			A.UseStatus AS useStatus,
+			CONVERT(varchar,A.UseTime, 120 )  AS useTime,
+			<dynamic>
+				<isNotEmpty property="language">
+					<isEqual property="language" compareValue="zh_CN">										
+						C.NameTotal AS nameTotal,
+						D.PropValueChinese AS primaryCategoryBig,
+						E.PropValueChinese AS primaryCategorySmall
+					</isEqual>
+					<isEqual property="language" compareValue="en_US">										
+						C.NameForeign AS nameTotal,
+						D.PropValueForeign AS primaryCategoryBig,
+						E.PropValueForeign AS primaryCategorySmall
+					</isEqual>
+				</isNotEmpty>
+				<isEmpty property="language">
+						C.NameTotal AS nameTotal,
+						D.PropValueChinese AS primaryCategoryBig,
+						E.PropValueChinese AS primaryCategorySmall
+				</isEmpty>
+			</dynamic>
+		FROM
+			 Basis.BIN_PrtUniqueCodeDetail A
+		LEFT JOIN  Basis.BIN_ProductVendor B ON  A.BIN_ProductVendorID=B.BIN_ProductVendorID
+		LEFT JOIN  Basis.BIN_Product C ON  B.BIN_ProductID=C.BIN_ProductID
+		<include refid="BINOLPTUNQ02.joinCateSql"/>
+		WHERE  1=1
+		<isNotEmpty prepend="AND" property="pointUniqueCodeSrh">
+			<![CDATA[
+				 PointUniqueCode = #pointUniqueCodeSrh# 
+			]]>
+		</isNotEmpty>
+		<isNotEmpty prepend="AND" property="relUniqueCodeSrh">
+			<![CDATA[
+			  RelUniqueCode = #relUniqueCodeSrh#
+			]]>
+		</isNotEmpty>
+			<isNotEmpty prepend="AND" property="boxCodeSrh">
+			<![CDATA[
+			BoxCode = #boxCodeSrh#
+			]]>
+		</isNotEmpty>
+				
+     </sql>
+     
+
+	<!-- 取得单码查询结果总条数  -->
+    <select id="getSingleCodeSearchCount" parameterClass="java.util.HashMap" resultClass="java.lang.Integer">    
+    	SELECT	COUNT(SORT_T1.pointUniqueCode) AS count FROM (			
+			<include refid="BINOLPTUNQ02.getSingleCodeSearch"/>		
+			)SORT_T1	
+    </select>
+    
+    <!-- 取得单码查询List  -->
+    <select id="getSingleCodeList"   parameterClass="java.util.HashMap"  resultClass="java.util.HashMap">
+        <include refid="BINOLCMINC99.pageheader"/>
+		<include refid="BINOLPTUNQ02.getSingleCodeSearch"/>
+		<include refid="BINOLCMINC99.pagefooter"/>
+    </select>
+    
+</sqlMap>

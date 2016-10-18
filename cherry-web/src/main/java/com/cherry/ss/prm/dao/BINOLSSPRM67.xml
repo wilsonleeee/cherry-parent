@@ -1,0 +1,238 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sqlMap PUBLIC "-//iBATIS.com//DTD SQL Map 2.0//EN" "http://ibatis.apache.org/dtd/sql-map-2.dtd">
+<sqlMap namespace="BINOLSSPRM67">
+	<sql id="queryPrmInDepotExcel">
+		<![CDATA[
+			SELECT 
+				A.BIN_PrmInDepotExcelID as prmInDepotExcelId,
+				A.ImportBatch as importBatch,
+				A.BillNo as billNo,
+				A.BillNoIF as billNoIF,
+				A.BIN_OrganizationID as organizationId,
+				A.DepartCode as departCode,
+				A.DepartName as departName,
+				A.BIN_InventoryInfoID as inventoryInfoID,
+				A.BIN_LogicInventoryInfoID logicInventoryInfoID,
+				A.LogicInventoryName as logicInventoryName,
+				A.BIN_EmployeeID as employeeID,
+				A.TotalQuantity as totalQuantity,
+				A.TotalAmount totalAmount,
+				A.Comments as comments,
+				A.InDepotDate as inDepotDate,
+				A.ImportDate as importDate,
+				A.ImportResult as importResult,
+				A.WorkFlowID as workFlowId,
+				B.DepotCode as inventoryCode,
+				C.EmployeeCode as employeeCode,
+		]]>	
+		<isNotEmpty property="language">
+            <isEqual property="language" compareValue="en_US">
+            	B.B.DepotNameEN AS inventoryName,
+				C.EmployeeNameForeign AS employeeName,
+            </isEqual>
+            <isEqual property="language" compareValue="zh_CN">
+				B.DepotNameCN AS inventoryName,
+				C.EmployeeName AS employeeName,
+			</isEqual>
+		</isNotEmpty>
+		<isEmpty property="language">
+			B.DepotNameCN AS inventoryName,
+			C.EmployeeName AS employeeName,
+		</isEmpty>
+		<![CDATA[
+			A.ValidFlag as validFlag,
+			D.TradeStatus as tradeStatus
+		FROM 
+			Inventory.BIN_PrmInDepotExcel A with(nolock)
+			LEFT JOIN  Basis.BIN_DepotInfo B with(nolock) ON B.BIN_DepotInfoID = A.BIN_InventoryInfoID
+			LEFT JOIN Basis.BIN_Employee C with(nolock) ON A.BIN_EmployeeID = C.BIN_EmployeeID
+			LEFT JOIN Inventory.BIN_PrmInDepot D with(nolock) on A.BillNo = D.BillNo and A.ImportBatch = D.ImportBatch
+		]]>
+		<dynamic prepend="WHERE">
+			<isNotEmpty prepend="AND" property="brandInfoId">
+				A.BIN_BrandInfoID = #brandInfoId#
+			</isNotEmpty>
+			<isNotEmpty prepend="AND" property="organizationInfoId">
+				A.BIN_OrganizationInfoID = #organizationInfoId#
+			</isNotEmpty>
+			<isNotEmpty prepend="AND" property="prmInDepotExcelId">
+				A.BIN_PrmInDepotExcelID = #prmInDepotExcelId#
+			</isNotEmpty>
+			<isNotEmpty prepend="AND" property="importBatch">
+				A.ImportBatch = #importBatch#
+			</isNotEmpty>
+			<isNotEmpty prepend="AND" property="importBatchId">
+				A.BIN_ImportBatchID = #importBatchId#
+			</isNotEmpty>
+			<isNotEmpty prepend="AND" property="billNo">
+				A.BillNo = #billNo#
+			</isNotEmpty>
+			<isNotEmpty prepend="AND" property="departCode">
+				A.DepartCode = #departCode#
+			</isNotEmpty>
+			<isNotEmpty prepend="AND" property="departName">
+				<![CDATA[ A.DepartName like '%'+#departName#+'%' ]]>
+			</isNotEmpty>
+			<isNotEmpty prepend="AND" property="importStartTime">
+				<![CDATA[ A.ImportDate >= #importStartTime# ]]>
+			</isNotEmpty>
+			<isNotEmpty prepend="AND" property="importEndTime">
+				<![CDATA[ A.ImportDate <= #importEndTime# ]]>
+			</isNotEmpty>
+			<isNotEmpty prepend="AND" property="inDepotStartTime">
+				<![CDATA[ A.InDepotDate >= #inDepotStartTime# ]]>
+			</isNotEmpty>
+			<isNotEmpty prepend="AND" property="inDepotEndTime">
+				<![CDATA[ A.InDepotDate <= #inDepotEndTime# ]]>
+			</isNotEmpty>
+			<isNotEmpty prepend="AND" property="importResult">
+				A.ImportResult = #importResult#
+			</isNotEmpty>
+			<isNotEmpty prepend="AND" property="tradeStatus">
+				D.TradeStatus = #tradeStatus#
+			</isNotEmpty>
+			<isNotEmpty prepend="AND" property="validFlag">
+				A.ValidFlag = #validFlag#
+			</isNotEmpty>
+		</dynamic>		
+	</sql>
+	
+	<!-- 查询入库单Excel导入总数 -->
+	<select id="getPrmInDepotExcelCount" parameterClass="java.util.HashMap" resultClass="java.lang.Integer">
+    	<![CDATA[
+			SELECT	COUNT(SORT_T1.prmInDepotExcelId) AS count FROM (
+		]]>	
+		<include refid="BINOLSSPRM67.queryPrmInDepotExcel" />
+		<![CDATA[	
+			)SORT_T1
+		]]>		
+	</select>	
+	
+	<!-- 查询入库单Excel导入信息 -->
+	<select id="getPrmInDepotExcelList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+		<include refid="BINOLCMINC99.pageheader" />
+		<include refid="BINOLSSPRM67.queryPrmInDepotExcel" />
+		<include refid="BINOLCMINC99.pagefooter" />
+	</select>
+	
+	<!-- 根据ID查询入库单（Excel导入）信息 -->
+	<select id="getPrmDepotExcelInfoById" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+		<include refid="BINOLSSPRM67.queryPrmInDepotExcel" />
+	</select>	
+	
+	<!-- 入库单（Excel导入）明细 sql文 -->
+	<sql id="queryPrmInDepotExcelDetail">
+		<![CDATA[
+			SELECT 
+				A.BIN_PrmInDepotExcelDetailID as prmInDepotExcelDetailId,
+				A.BIN_PrmInDepotExcelID as prmInDepotExcelId,
+				A.BIN_PromotionProductVendorID as BIN_PromotionProductVendorID,
+				A.UnitCode as unitCode,
+				A.Barcode as barCode,
+				A.NameTotal as nameTotal,
+				A.Quantity as quantity,
+				A.Price as price,
+				A.ErrorMsg as errorMsg,
+				A.ValidFlag as validFlag
+			FROM 
+				Inventory.BIN_PrmInDepotExcelDetail A with(nolock)
+			WHERE
+				A.BIN_PrmInDepotExcelID = #prmInDepotExcelId#
+		]]>
+			<isNotEmpty prepend="AND" property="validFlag">
+				A.ValidFlag = #validFlag#
+			</isNotEmpty>
+	</sql>
+	
+	<!-- 查询入库（Excel导入）明细 -->
+	<select id="getPrmInDepotExcelDetailList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">	
+		<include refid="BINOLSSPRM67.queryPrmInDepotExcelDetail" />
+	</select>
+	
+	<!-- 导出数据查询sql文 -->
+	<sql id="queryExportData">
+		<![CDATA[
+			SELECT 
+				A.BIN_PrmInDepotExcelID as prmInDepotExcelId,
+				A.BillNo as billNo,
+				A.ImportBatch as importBatch,
+				A.DepartCode as departCode,
+				A.DepartName as departName,
+				A.InDepotDate as inDepotDate,
+				A.ImportResult as importResult,
+				A.LogicInventoryName as logicInventoryName,
+				B.UnitCode as unitCode,
+				B.NameTotal as nameTotal,
+				B.BarCode as barCode,
+				B.Quantity as quantity,
+				B.ErrorMsg as errorMsg,
+				C.TradeStatus as tradeStatus
+			FROM 
+				Inventory.BIN_PrmInDepotExcel A with(nolock)
+				LEFT JOIN Inventory.BIN_PrmInDepotExcelDetail B with(nolock) ON A.BIN_PrmInDepotExcelID = B.BIN_PrmInDepotExcelID
+				LEFT JOIN Inventory.BIN_PrmInDepot C with(nolock) on A.BillNo = C.BillNo and A.ImportBatch = C.ImportBatch
+		]]> 
+		<dynamic prepend="WHERE">
+			<isNotEmpty prepend="AND" property="brandInfoId">
+				A.BIN_BrandInfoID = #brandInfoId#
+			</isNotEmpty>
+			<isNotEmpty prepend="AND" property="organizationInfoId">
+				A.BIN_OrganizationInfoID = #organizationInfoId#
+			</isNotEmpty>
+			<isNotEmpty prepend="AND" property="importBatch">
+				A.ImportBatch = #importBatch#
+			</isNotEmpty>
+			<isNotEmpty prepend="AND" property="importBatchId">
+				A.BIN_ImportBatchID = #importBatchId#
+			</isNotEmpty>
+			<isNotEmpty prepend="AND" property="billNo">
+				A.BillNo = #billNo#
+			</isNotEmpty>
+			<isNotEmpty prepend="AND" property="departCode">
+				A.DepartCode = #departCode#
+			</isNotEmpty>
+			<isNotEmpty prepend="AND" property="departName">
+				<![CDATA[ A.DepartName like '%'+#departName#+'%' ]]>
+			</isNotEmpty>
+			<isNotEmpty prepend="AND" property="importStartTime">
+				<![CDATA[ A.ImportDate >= #importStartTime# ]]>
+			</isNotEmpty>
+			<isNotEmpty prepend="AND" property="importEndTime">
+				<![CDATA[ A.ImportDate <= #importEndTime# ]]>
+			</isNotEmpty>
+			<isNotEmpty prepend="AND" property="inDepotStartTime">
+				<![CDATA[ A.InDepotDate >= #inDepotStartTime# ]]>
+			</isNotEmpty>
+			<isNotEmpty prepend="AND" property="inDepotEndTime">
+				<![CDATA[ A.InDepotDate <= #inDepotEndTime# ]]>
+			</isNotEmpty>
+			<isNotEmpty prepend="AND" property="importResult">
+				A.ImportResult = #importResult#
+			</isNotEmpty>
+			<isNotEmpty prepend="AND" property="tradeStatus">
+				C.TradeStatus = #tradeStatus#
+			</isNotEmpty>
+			<isNotEmpty prepend="AND" property="validFlag">
+				A.ValidFlag = #validFlag#
+			</isNotEmpty>
+		</dynamic>
+	</sql>
+	
+	<!-- 导出数据总数 -->
+	<select id="getExportDataCount" parameterClass="java.util.HashMap" resultClass="java.lang.Integer">
+    	<![CDATA[
+			SELECT	COUNT(SORT_T1.prmInDepotExcelId) AS count FROM (
+		]]>	
+		<include refid="BINOLSSPRM67.queryExportData" />
+		<![CDATA[	
+			)SORT_T1
+		]]>		
+	</select>	
+	
+	<!-- 导出数据 -->
+	<select id="getExportDataList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+		<include refid="BINOLCMINC99.pageheader" />
+		<include refid="BINOLSSPRM67.queryExportData" />
+		<include refid="BINOLCMINC99.pagefooter" />
+	</select>
+</sqlMap>

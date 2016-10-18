@@ -1,0 +1,1716 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sqlMap PUBLIC "-//iBATIS.com//DTD SQL Map 2.0//EN" "http://ibatis.apache.org/dtd/sql-map-2.dtd">
+<sqlMap namespace="BINOLPTRPS15">
+	<!-- 链接产品分类用于查询分类信息相对应的产品ID -->
+	<sql id="getProductIdSql">
+	  <isNotEmpty property="bigCateInfo">
+		<![CDATA[
+	   				SELECT DISTINCT PV.BIN_ProductVendorID
+					FROM Basis.BIN_PrtCategory PC WITH (NOLOCK)
+					JOIN Basis.BIN_PrtCatPropValue PCPV WITH (NOLOCK)
+						ON PCPV.BIN_PrtCatPropValueID = PC.BIN_PrtCatPropValueID
+					JOIN Basis.BIN_PrtCatProperty PCP WITH (NOLOCK)
+						ON PCP.BIN_PrtCatPropertyID = PCPV.BIN_PrtCatPropertyID
+					JOIN Basis.BIN_ProductVendor PV WITH(NOLOCK)
+						ON PC.BIN_ProductID=PV.BIN_ProductID
+					JOIN (
+							SELECT S.prtCatPropValueID FROM 
+							(SELECT CONVERT(XML, '<root><v>' + REPLACE(#bigCateInfo#, ',', '</v><v>') + '</v></root>') AS prtCateID) Resolve
+							OUTER APPLY 
+							(SELECT prtCatPropValueID = Q.v.value('.', 'nvarchar(100)') FROM resolve.prtCateID.nodes('/root/v') Q (v)) S
+						) 
+						PRT ON PRT.prtCatPropValueID = PC.BIN_PrtCatPropValueID
+					WHERE PCP.BIN_OrganizationInfoID = #organizationInfoId# 
+					AND PCP.BIN_BrandInfoID = #brandInfoId#
+					AND PCP.TeminalFlag = '1'
+			 ]]>
+		</isNotEmpty>
+		<isNotEmpty property="mediumCateInfo">
+		<![CDATA[
+	   				SELECT DISTINCT PV.BIN_ProductVendorID
+					FROM Basis.BIN_PrtCategory PC WITH (NOLOCK)
+					JOIN Basis.BIN_PrtCatPropValue PCPV WITH (NOLOCK)
+						ON PCPV.BIN_PrtCatPropValueID = PC.BIN_PrtCatPropValueID
+					JOIN Basis.BIN_PrtCatProperty PCP WITH (NOLOCK)
+						ON PCP.BIN_PrtCatPropertyID = PCPV.BIN_PrtCatPropertyID
+					JOIN Basis.BIN_ProductVendor PV WITH(NOLOCK)
+						ON PC.BIN_ProductID=PV.BIN_ProductID
+					JOIN (
+							SELECT S.prtCatPropValueID FROM 
+							(SELECT CONVERT(XML, '<root><v>' + REPLACE(#mediumCateInfo#, ',', '</v><v>') + '</v></root>') AS prtCateID) Resolve
+							OUTER APPLY 
+							(SELECT prtCatPropValueID = Q.v.value('.', 'nvarchar(100)') FROM resolve.prtCateID.nodes('/root/v') Q (v)) S
+						) 
+						PRT ON PRT.prtCatPropValueID = PC.BIN_PrtCatPropValueID
+					WHERE PCP.BIN_OrganizationInfoID = #organizationInfoId# 
+					AND PCP.BIN_BrandInfoID = #brandInfoId#
+					AND PCP.TeminalFlag = '3'
+			]]>
+		</isNotEmpty>
+		<isNotEmpty property="samllCateInfo">
+		<![CDATA[
+	   				SELECT DISTINCT PV.BIN_ProductVendorID
+					FROM Basis.BIN_PrtCategory PC WITH (NOLOCK)
+					JOIN Basis.BIN_PrtCatPropValue PCPV WITH (NOLOCK)
+						ON PCPV.BIN_PrtCatPropValueID = PC.BIN_PrtCatPropValueID
+					JOIN Basis.BIN_PrtCatProperty PCP WITH (NOLOCK)
+						ON PCP.BIN_PrtCatPropertyID = PCPV.BIN_PrtCatPropertyID
+					JOIN Basis.BIN_ProductVendor PV WITH(NOLOCK)
+						ON PC.BIN_ProductID=PV.BIN_ProductID
+					JOIN (
+							SELECT S.prtCatPropValueID FROM 
+							(SELECT CONVERT(XML, '<root><v>' + REPLACE(#samllCateInfo#, ',', '</v><v>') + '</v></root>') AS prtCateID) Resolve
+							OUTER APPLY 
+							(SELECT prtCatPropValueID = Q.v.value('.', 'nvarchar(100)') FROM resolve.prtCateID.nodes('/root/v') Q (v)) S
+						) 
+							PRT ON PRT.prtCatPropValueID = PC.BIN_PrtCatPropValueID
+					WHERE PCP.BIN_OrganizationInfoID = #organizationInfoId# 
+					AND PCP.BIN_BrandInfoID = #brandInfoId#
+					AND PCP.TeminalFlag = '2'
+   			]]>
+   		</isNotEmpty>
+	</sql>
+	<sql id="CouPrtCount">
+    	<![CDATA[
+			SELECT
+				T1.SaleType AS saleType,
+				CASE WHEN T1.SaleType = 'N' THEN C.BarCode ELSE X.BarCode END AS barCode,
+				CASE WHEN T1.SaleType = 'N' THEN D.UnitCode ELSE Y.UnitCode END AS unitCode,
+				CASE WHEN T1.SaleType = 'N' THEN D.NameTotal ELSE Y.NameTotal END AS nameTotal,
+				CASE WHEN E.DepartName IS NOT NULL THEN E.DepartName + '(' + E.DepartCode + ')' ELSE ISNULL(E.DepartCode,'') END AS departName,
+				ISNULL(CNT.BusniessPrincipal,'') AS busniessPrincipal,
+				E.DepartName AS departNameExp,
+				E.DepartCode AS departCode
+		]]>	
+			<isNotEmpty property="saleYearMonthDateFlag">
+				<isEqual property="saleYearMonthDateFlag" compareValue="1">
+					,ISNULL(T1.Amount,0) AS monthAmount
+					,ISNULL(T1.Quantity,0) AS monthQuantity
+					,ISNULL(T2.Amount,0) AS amount
+					,ISNULL(T2.Quantity,0) AS quantity
+				</isEqual>
+				<isEqual property="saleYearMonthDateFlag" compareValue="2">
+					,ISNULL(T1.Amount,0) AS yearAmount
+					,ISNULL(T1.Quantity,0) AS yearQuantity
+					,ISNULL(T2.Amount,0) AS amount
+					,ISNULL(T2.Quantity,0) AS quantity
+				</isEqual>
+				<isEqual property="saleYearMonthDateFlag" compareValue="0">
+					,ISNULL(T1.Amount,0) AS amount
+					,ISNULL(T1.Quantity,0) AS quantity
+				</isEqual>
+			</isNotEmpty>
+			<isEmpty property="saleYearMonthDateFlag">
+				,ISNULL(T1.Amount,0) AS amount
+				,ISNULL(T1.Quantity,0) AS quantity
+			</isEmpty>
+		<![CDATA[				
+			FROM
+		]]>		
+		<isNotEmpty property="saleYearMonthDateFlag">
+			<isNotEqual property="saleYearMonthDateFlag" compareValue="0">
+			<isNotEmpty property="saleCountFlag">
+			<![CDATA[			
+				(SELECT
+					X.BIN_OrganizationID,
+					X.BIN_ProductVendorID,
+					X.SaleType,
+					SUM(X.Amount) AS Amount,
+					SUM(X.Quantity) AS Quantity
+				FROM	
+					(SELECT 
+						A.BIN_OrganizationID,
+						A.BIN_ProductVendorID,
+						A.SaleType,
+						A.Amount,
+						A.Quantity
+					FROM 
+						Sale.BIN_SaleCountHistory A WITH (NOLOCK)
+					WHERE
+			]]>
+			<isNotEmpty property="bigCateInfo">
+				<![CDATA[EXISTS ( SELECT 1 FROM (]]><include refid="BINOLPTRPS15.getProductIdSql" />
+				<![CDATA[) AS M10 WHERE M10.BIN_ProductVendorID=A.BIN_ProductVendorID) AND ]]>
+			</isNotEmpty>	
+			
+			<isEqual property="saleYearMonthDateFlag" compareValue="1">	 
+				<![CDATA[A.SaleYearMonth = #saleYearMonth# AND]]>
+			</isEqual>
+			<!-- 年度统计 -->
+			<isEqual property="saleYearMonthDateFlag" compareValue="2">
+				<![CDATA[
+					A.SaleYearMonth >= #minSaleYearMonth# AND
+					A.SaleYearMonth <= #maxSaleYearMonth# AND
+				]]>
+			</isEqual>
+			<![CDATA[
+						A.BIN_OrganizationInfoID = #organizationInfoId# AND
+			]]>
+					<isNotEmpty property="brandInfoId">
+						A.BIN_BrandInfoID = #brandInfoId# AND
+					</isNotEmpty>
+					<isNotEmpty property="selPrtVendorIdArr">
+						A.BIN_ProductVendorID IN
+						<iterate conjunction="," open="(" close=")" property="selPrtVendorIdArr">
+							#selPrtVendorIdArr[]#
+						</iterate>
+						<![CDATA[ AND ]]>
+					</isNotEmpty>
+			<![CDATA[ EXISTS ( ]]><include refid="BINOLCMINC99.getDepartList" />
+			<![CDATA[ AND A.BIN_OrganizationID = A99.BIN_OrganizationID) ]]> 
+			<isNotEmpty property="channelIdClude">
+				<isNotEmpty property="excludeFlag">
+					<![CDATA[AND NOT EXISTS(
+							SELECT 
+								1 
+							FROM
+								Basis.BIN_CounterInfo CNT WITH(NOLOCK)
+							WHERE 
+								CNT.BIN_ChannelID=#channelIdClude# AND 
+								A.BIN_OrganizationID=CNT.BIN_OrganizationID
+						)
+					]]>
+				</isNotEmpty>
+				<isEmpty property="excludeFlag">
+					<![CDATA[AND EXISTS(
+							SELECT 
+								1 
+							FROM
+								Basis.BIN_CounterInfo CNT WITH(NOLOCK)
+							WHERE 
+								CNT.BIN_ChannelID=#channelIdClude# AND 
+								A.BIN_OrganizationID=CNT.BIN_OrganizationID
+						)
+					]]>
+				</isEmpty>
+			</isNotEmpty>
+			<![CDATA[				
+					UNION ALL
+					SELECT 
+						A.BIN_OrganizationID,
+						B.BIN_ProductVendorID,
+						B.SaleType,
+						CASE 
+							WHEN A.SaleType = 'SR' THEN CASE WHEN B.SaleType = 'N' THEN -B.PricePay*B.Quantity ELSE -B.PricePay END
+							ELSE CASE WHEN B.SaleType = 'N' THEN B.PricePay*B.Quantity ELSE B.PricePay END
+						END AS Amount,
+						CASE 
+							WHEN A.SaleType = 'SR' THEN CASE WHEN B.SaleType = 'N' THEN -B.Quantity ELSE 0 END
+							ELSE CASE WHEN B.SaleType = 'N' THEN B.Quantity ELSE 0 END
+						END AS Quantity
+					FROM
+						Sale.BIN_SaleRecord A WITH (NOLOCK)
+						JOIN Sale.BIN_SaleRecordDetail B WITH (NOLOCK) ON A.BIN_SaleRecordID = B.BIN_SaleRecordID
+					WHERE
+						A.SaleDate >= #minDateValue# AND
+						A.SaleDate <= #maxDateValue# AND
+						A.BIN_OrganizationInfoID = #organizationInfoId# AND
+			]]>				
+					<isNotEmpty property="bigCateInfo">
+					<![CDATA[EXISTS ( SELECT 1 FROM (]]><include refid="BINOLPTRPS15.getProductIdSql" />
+					<![CDATA[) AS M10 WHERE M10.BIN_ProductVendorID=B.BIN_ProductVendorID) AND ]]>
+					</isNotEmpty>
+					<isNotEmpty property="brandInfoId">
+						A.BIN_BrandInfoID = #brandInfoId# AND
+					</isNotEmpty>
+					<isNotEmpty property="selPrtVendorIdArr">
+						B.BIN_ProductVendorID IN
+						<iterate conjunction="," open="(" close=")" property="selPrtVendorIdArr">
+							#selPrtVendorIdArr[]#
+						</iterate>
+						<![CDATA[ AND ]]>
+					</isNotEmpty>
+			<![CDATA[ EXISTS ( ]]><include refid="BINOLCMINC99.getDepartList" />
+			<![CDATA[ AND A.BIN_OrganizationID = A99.BIN_OrganizationID) AND ]]> 
+			<isNotEmpty property="deliveryModel">
+				<isEqual property="deliveryModel" compareValue="0">
+					<![CDATA[A.DeliveryModel IS NULL AND]]>
+				</isEqual>
+				<isNotEqual property="deliveryModel" compareValue="0">
+					<![CDATA[A.DeliveryModel = #deliveryModel# AND]]>
+				</isNotEqual>
+			</isNotEmpty>
+			<isNotEmpty property="channelIdClude">
+				<isNotEmpty property="excludeFlag">
+					<![CDATA[NOT EXISTS(
+							SELECT 
+								1 
+							FROM
+								Basis.BIN_CounterInfo CNT WITH(NOLOCK)
+							WHERE 
+								CNT.BIN_ChannelID=#channelIdClude# AND 
+								A.BIN_OrganizationID=CNT.BIN_OrganizationID
+						) AND
+					]]>
+				</isNotEmpty>
+				<isEmpty property="excludeFlag">
+					<![CDATA[EXISTS(
+							SELECT 
+								1 
+							FROM
+								Basis.BIN_CounterInfo CNT WITH(NOLOCK)
+							WHERE 
+								CNT.BIN_ChannelID=#channelIdClude# AND 
+								A.BIN_OrganizationID=CNT.BIN_OrganizationID
+						) AND
+					]]>
+				</isEmpty>
+			</isNotEmpty>	
+			<![CDATA[	
+						A.SaleCountFlag IS NULL AND
+						A.ValidFlag='1') X
+				GROUP BY
+					X.BIN_OrganizationID,
+					X.BIN_ProductVendorID,
+					X.SaleType) T1
+			]]>	
+			</isNotEmpty>
+			<isEmpty property="saleCountFlag">
+			<![CDATA[	
+				(SELECT 
+					A.BIN_OrganizationID,
+					B.BIN_ProductVendorID,
+					B.SaleType,
+					SUM(CASE 
+							WHEN A.SaleType = 'SR' THEN CASE WHEN B.SaleType = 'N' THEN -B.PricePay*B.Quantity ELSE -B.PricePay END
+							ELSE CASE WHEN B.SaleType = 'N' THEN B.PricePay*B.Quantity ELSE B.PricePay END
+						END) AS Amount,
+					SUM(CASE 
+							WHEN A.SaleType = 'SR' THEN CASE WHEN B.SaleType = 'N' THEN -B.Quantity ELSE 0 END
+							ELSE CASE WHEN B.SaleType = 'N' THEN B.Quantity ELSE 0 END
+						END) AS Quantity
+				FROM
+					Sale.BIN_SaleRecord A WITH (NOLOCK)
+					JOIN Sale.BIN_SaleRecordDetail B WITH (NOLOCK) ON A.BIN_SaleRecordID=B.BIN_SaleRecordID
+				WHERE
+					A.SaleDate >= #minDateValue# AND
+					A.SaleDate <= #maxDateValue# AND
+					A.BIN_OrganizationInfoID = #organizationInfoId# AND
+			]]>
+				<isNotEmpty property="bigCateInfo">
+					<![CDATA[EXISTS ( SELECT 1 FROM (]]><include refid="BINOLPTRPS15.getProductIdSql" />
+					<![CDATA[) AS M10 WHERE M10.BIN_ProductVendorID=B.BIN_ProductVendorID) AND ]]>
+				</isNotEmpty>
+				<isNotEmpty property="brandInfoId">
+					A.BIN_BrandInfoID = #brandInfoId# AND
+				</isNotEmpty>
+				<isNotEmpty property="selPrtVendorIdArr">
+					B.BIN_ProductVendorID IN
+					<iterate conjunction="," open="(" close=")" property="selPrtVendorIdArr">
+						#selPrtVendorIdArr[]#
+					</iterate>
+					<![CDATA[ AND ]]>
+				</isNotEmpty>
+			<![CDATA[ EXISTS ( ]]><include refid="BINOLCMINC99.getDepartList" />
+			<![CDATA[ AND A.BIN_OrganizationID = A99.BIN_OrganizationID) AND ]]> 
+			<isNotEmpty property="deliveryModel">
+				<isEqual property="deliveryModel" compareValue="0">
+					<![CDATA[A.DeliveryModel IS NULL AND]]>
+				</isEqual>
+				<isNotEqual property="deliveryModel" compareValue="0">
+					<![CDATA[A.DeliveryModel = #deliveryModel# AND]]>
+				</isNotEqual>
+			</isNotEmpty>
+			<isNotEmpty property="channelIdClude">
+				<isNotEmpty property="excludeFlag">
+					<![CDATA[NOT EXISTS(
+							SELECT 
+								1 
+							FROM
+								Basis.BIN_CounterInfo CNT WITH(NOLOCK)
+							WHERE 
+								CNT.BIN_ChannelID=#channelIdClude# AND 
+								A.BIN_OrganizationID=CNT.BIN_OrganizationID
+						) AND
+					]]>
+				</isNotEmpty>
+				<isEmpty property="excludeFlag">
+					<![CDATA[EXISTS(
+							SELECT 
+								1 
+							FROM
+								Basis.BIN_CounterInfo CNT WITH(NOLOCK)
+							WHERE 
+								CNT.BIN_ChannelID=#channelIdClude# AND 
+								A.BIN_OrganizationID=CNT.BIN_OrganizationID
+						) AND
+					]]>
+				</isEmpty>
+			</isNotEmpty>		
+			<![CDATA[	
+					A.ValidFlag='1'
+				GROUP BY
+					A.BIN_OrganizationID,
+					B.BIN_ProductVendorID,
+					B.SaleType) T1
+			]]>
+			</isEmpty>	
+			
+		<![CDATA[		
+				LEFT JOIN
+				(SELECT 
+					A.BIN_OrganizationID,
+					B.BIN_ProductVendorID,
+					B.SaleType,
+					SUM(CASE 
+							WHEN A.SaleType = 'SR' THEN CASE WHEN B.SaleType = 'N' THEN -B.PricePay*B.Quantity ELSE -B.PricePay END
+							ELSE CASE WHEN B.SaleType = 'N' THEN B.PricePay*B.Quantity ELSE B.PricePay END
+						END) AS Amount,
+					SUM(CASE 
+							WHEN A.SaleType = 'SR' THEN CASE WHEN B.SaleType = 'N' THEN -B.Quantity ELSE 0 END
+							ELSE CASE WHEN B.SaleType = 'N' THEN B.Quantity ELSE 0 END
+						END) AS Quantity
+				FROM
+					Sale.BIN_SaleRecord A WITH (NOLOCK)
+					JOIN Sale.BIN_SaleRecordDetail B WITH (NOLOCK) ON A.BIN_SaleRecordID = B.BIN_SaleRecordID
+				WHERE
+		]]>
+				<isNotEmpty property="bigCateInfo">
+					<![CDATA[EXISTS ( SELECT 1 FROM (]]><include refid="BINOLPTRPS15.getProductIdSql" />
+					<![CDATA[) AS M10 WHERE M10.BIN_ProductVendorID=B.BIN_ProductVendorID) AND ]]>
+				</isNotEmpty>
+				<isNotEmpty property="saleTimeStart">	
+					A.SaleDate >= #saleTimeStart# AND
+				</isNotEmpty>	
+				<isNotEmpty property="saleTimeEnd">	
+					<![CDATA[A.SaleDate <= #saleTimeEnd# AND]]>
+				</isNotEmpty>
+		<![CDATA[	
+					A.BIN_OrganizationInfoID = #organizationInfoId# AND
+		]]>
+				<isNotEmpty property="brandInfoId">
+					A.BIN_BrandInfoID = #brandInfoId# AND
+				</isNotEmpty>
+				<isNotEmpty property="selPrtVendorIdArr">
+					B.BIN_ProductVendorID IN
+					<iterate conjunction="," open="(" close=")" property="selPrtVendorIdArr">
+						#selPrtVendorIdArr[]#
+					</iterate>
+					<![CDATA[ AND ]]>
+				</isNotEmpty>
+		<![CDATA[ EXISTS ( ]]><include refid="BINOLCMINC99.getDepartList" />
+		<![CDATA[ AND A.BIN_OrganizationID = A99.BIN_OrganizationID) AND ]]>
+		<isNotEmpty property="deliveryModel">
+			<isEqual property="deliveryModel" compareValue="0">
+				<![CDATA[A.DeliveryModel IS NULL AND]]>
+			</isEqual>
+			<isNotEqual property="deliveryModel" compareValue="0">
+				<![CDATA[A.DeliveryModel = #deliveryModel# AND]]>
+			</isNotEqual>
+		</isNotEmpty>
+		<isNotEmpty property="channelIdClude">
+			<isNotEmpty property="excludeFlag">
+				<![CDATA[NOT EXISTS(
+						SELECT 
+							1 
+						FROM
+							Basis.BIN_CounterInfo CNT WITH(NOLOCK)
+						WHERE 
+							CNT.BIN_ChannelID=#channelIdClude# AND 
+							A.BIN_OrganizationID=CNT.BIN_OrganizationID
+					) AND
+				]]>
+			</isNotEmpty>
+			<isEmpty property="excludeFlag">
+				<![CDATA[EXISTS(
+						SELECT 
+							1 
+						FROM
+							Basis.BIN_CounterInfo CNT WITH(NOLOCK)
+						WHERE 
+							CNT.BIN_ChannelID=#channelIdClude# AND 
+							A.BIN_OrganizationID=CNT.BIN_OrganizationID
+					) AND
+				]]>
+			</isEmpty>
+		</isNotEmpty>	 	
+		<![CDATA[	
+					A.ValidFlag='1'
+				GROUP BY
+					A.BIN_OrganizationID,
+					B.BIN_ProductVendorID,
+					B.SaleType) T2
+				ON T1.BIN_OrganizationID = T2.BIN_OrganizationID AND T1.BIN_ProductVendorID = T2.BIN_ProductVendorID AND T1.SaleType = T2.SaleType
+				LEFT JOIN Basis.BIN_ProductVendor C  WITH (NOLOCK)
+						JOIN Basis.BIN_Product D WITH (NOLOCK) ON C.BIN_ProductID = D.BIN_ProductID
+					ON T1.BIN_ProductVendorID = C.BIN_ProductVendorID AND T1.SaleType = 'N'
+				LEFT JOIN Basis.BIN_PromotionProductVendor X WITH (NOLOCK)
+						JOIN Basis.BIN_PromotionProduct Y WITH (NOLOCK) ON X.BIN_PromotionProductID = Y.BIN_PromotionProductID
+					ON T1.BIN_ProductVendorID = X.BIN_PromotionProductVendorID AND T1.SaleType = 'P'			
+				LEFT JOIN Basis.BIN_Organization E WITH (NOLOCK) ON T1.BIN_OrganizationID = E.BIN_OrganizationID
+				LEFT JOIN Basis.BIN_CounterInfo CNT WITH(NOLOCK) ON E.BIN_OrganizationID=CNT.BIN_OrganizationID	
+		]]>
+		</isNotEqual>
+		<isEqual property="saleYearMonthDateFlag" compareValue="0">
+		<![CDATA[		
+				(SELECT 
+					A.BIN_OrganizationID,
+					B.BIN_ProductVendorID,
+					B.SaleType,
+					SUM(CASE 
+							WHEN A.SaleType = 'SR' THEN CASE WHEN B.SaleType = 'N' THEN -B.PricePay*B.Quantity ELSE -B.PricePay END
+							ELSE CASE WHEN B.SaleType = 'N' THEN B.PricePay*B.Quantity ELSE B.PricePay END
+						END) AS Amount,
+					SUM(CASE 
+							WHEN A.SaleType = 'SR' THEN CASE WHEN B.SaleType = 'N' THEN -B.Quantity ELSE 0 END
+							ELSE CASE WHEN B.SaleType = 'N' THEN B.Quantity ELSE 0 END
+						END) AS Quantity
+				FROM
+					Sale.BIN_SaleRecord A WITH (NOLOCK)
+					JOIN Sale.BIN_SaleRecordDetail B WITH (NOLOCK) ON A.BIN_SaleRecordID=B.BIN_SaleRecordID
+				WHERE
+		]]>
+				<isNotEmpty property="bigCateInfo">
+					<![CDATA[EXISTS ( SELECT 1 FROM (]]><include refid="BINOLPTRPS15.getProductIdSql" />
+					<![CDATA[) AS M10 WHERE M10.BIN_ProductVendorID=B.BIN_ProductVendorID) AND ]]>
+				</isNotEmpty>
+				<isNotEmpty property="saleTimeStart">	
+					A.SaleDate >= #saleTimeStart# AND
+				</isNotEmpty>	
+				<isNotEmpty property="saleTimeEnd">	
+					<![CDATA[A.SaleDate <= #saleTimeEnd# AND]]>
+				</isNotEmpty>
+		<![CDATA[	
+					A.BIN_OrganizationInfoID = #organizationInfoId# AND
+		]]>
+				<isNotEmpty property="brandInfoId">
+					A.BIN_BrandInfoID = #brandInfoId# AND
+				</isNotEmpty>
+				<isNotEmpty property="selPrtVendorIdArr">
+					B.BIN_ProductVendorID IN
+					<iterate conjunction="," open="(" close=")" property="selPrtVendorIdArr">
+						#selPrtVendorIdArr[]#
+					</iterate>
+					<![CDATA[ AND ]]>
+				</isNotEmpty>
+		<![CDATA[ EXISTS ( ]]><include refid="BINOLCMINC99.getDepartList" />
+		<![CDATA[ AND A.BIN_OrganizationID = A99.BIN_OrganizationID) AND ]]> 
+		<isNotEmpty property="deliveryModel">
+			<isEqual property="deliveryModel" compareValue="0">
+				<![CDATA[A.DeliveryModel IS NULL AND]]>
+			</isEqual>
+			<isNotEqual property="deliveryModel" compareValue="0">
+				<![CDATA[A.DeliveryModel = #deliveryModel# AND]]>
+			</isNotEqual>
+		</isNotEmpty>	
+		<isNotEmpty property="channelIdClude">
+			<isNotEmpty property="excludeFlag">
+				<![CDATA[NOT EXISTS(
+						SELECT 
+							1 
+						FROM
+							Basis.BIN_CounterInfo CNT WITH(NOLOCK)
+						WHERE 
+							CNT.BIN_ChannelID=#channelIdClude# AND 
+							A.BIN_OrganizationID=CNT.BIN_OrganizationID
+					) AND
+				]]>
+			</isNotEmpty>
+			<isEmpty property="excludeFlag">
+				<![CDATA[EXISTS(
+						SELECT 
+							1 
+						FROM
+							Basis.BIN_CounterInfo CNT WITH(NOLOCK)
+						WHERE 
+							CNT.BIN_ChannelID=#channelIdClude# AND 
+							A.BIN_OrganizationID=CNT.BIN_OrganizationID
+					) AND
+				]]>
+			</isEmpty>
+		</isNotEmpty>
+		<![CDATA[	
+					A.ValidFlag='1'
+				GROUP BY
+					A.BIN_OrganizationID,
+					B.BIN_ProductVendorID,
+					B.SaleType) T1
+		]]>
+		<![CDATA[			
+				LEFT JOIN Basis.BIN_ProductVendor C WITH (NOLOCK) 
+						JOIN Basis.BIN_Product D WITH (NOLOCK) ON C.BIN_ProductID = D.BIN_ProductID
+					ON T1.BIN_ProductVendorID = C.BIN_ProductVendorID AND T1.SaleType = 'N'
+				LEFT JOIN Basis.BIN_PromotionProductVendor X WITH (NOLOCK)
+						JOIN Basis.BIN_PromotionProduct Y WITH (NOLOCK) ON X.BIN_PromotionProductID = Y.BIN_PromotionProductID
+					ON T1.BIN_ProductVendorID = X.BIN_PromotionProductVendorID AND T1.SaleType = 'P'		
+				LEFT JOIN Basis.BIN_Organization E WITH (NOLOCK) ON T1.BIN_OrganizationID = E.BIN_OrganizationID
+				LEFT JOIN Basis.BIN_CounterInfo CNT WITH(NOLOCK) ON E.BIN_OrganizationID=CNT.BIN_OrganizationID	
+		]]>
+		</isEqual>
+		</isNotEmpty>
+		
+		<isEmpty property="saleYearMonthDateFlag">
+			<![CDATA[		
+					(SELECT 
+						A.BIN_OrganizationID,
+						B.BIN_ProductVendorID,
+						B.SaleType,
+						SUM(CASE 
+								WHEN A.SaleType = 'SR' THEN CASE WHEN B.SaleType = 'N' THEN -B.PricePay*B.Quantity ELSE -B.PricePay END
+								ELSE CASE WHEN B.SaleType = 'N' THEN B.PricePay*B.Quantity ELSE B.PricePay END
+							END) AS Amount,
+						SUM(CASE 
+								WHEN A.SaleType = 'SR' THEN CASE WHEN B.SaleType = 'N' THEN -B.Quantity ELSE 0 END
+								ELSE CASE WHEN B.SaleType = 'N' THEN B.Quantity ELSE 0 END
+							END) AS Quantity
+					FROM
+						Sale.BIN_SaleRecord A WITH (NOLOCK)
+						JOIN Sale.BIN_SaleRecordDetail B WITH (NOLOCK) ON A.BIN_SaleRecordID=B.BIN_SaleRecordID
+					WHERE
+			]]>
+					<isNotEmpty property="bigCateInfo">
+						<![CDATA[EXISTS ( SELECT 1 FROM (]]><include refid="BINOLPTRPS15.getProductIdSql" />
+						<![CDATA[) AS M10 WHERE M10.BIN_ProductVendorID=B.BIN_ProductVendorID) AND ]]>
+					</isNotEmpty>
+					<isNotEmpty property="saleTimeStart">	
+						A.SaleDate >= #saleTimeStart# AND
+					</isNotEmpty>	
+					<isNotEmpty property="saleTimeEnd">	
+						<![CDATA[A.SaleDate <= #saleTimeEnd# AND]]>
+					</isNotEmpty>
+			<![CDATA[	
+						A.BIN_OrganizationInfoID = #organizationInfoId# AND
+			]]>
+					<isNotEmpty property="brandInfoId">
+						A.BIN_BrandInfoID = #brandInfoId# AND
+					</isNotEmpty>
+					<isNotEmpty property="selPrtVendorIdArr">
+						B.BIN_ProductVendorID IN
+						<iterate conjunction="," open="(" close=")" property="selPrtVendorIdArr">
+							#selPrtVendorIdArr[]#
+						</iterate>
+						<![CDATA[ AND ]]>
+					</isNotEmpty>
+			<![CDATA[ EXISTS ( ]]><include refid="BINOLCMINC99.getDepartList" />
+			<![CDATA[ AND A.BIN_OrganizationID = A99.BIN_OrganizationID) AND ]]> 	
+			<isNotEmpty property="deliveryModel">
+				<isEqual property="deliveryModel" compareValue="0">
+					<![CDATA[A.DeliveryModel IS NULL AND]]>
+				</isEqual>
+				<isNotEqual property="deliveryModel" compareValue="0">
+					<![CDATA[A.DeliveryModel = #deliveryModel# AND]]>
+				</isNotEqual>
+			</isNotEmpty>
+			<isNotEmpty property="channelIdClude">
+				<isNotEmpty property="excludeFlag">
+					<![CDATA[NOT EXISTS(
+							SELECT 
+								1 
+							FROM
+								Basis.BIN_CounterInfo CNT WITH(NOLOCK)
+							WHERE 
+								CNT.BIN_ChannelID=#channelIdClude# AND 
+								A.BIN_OrganizationID=CNT.BIN_OrganizationID
+						) AND
+					]]>
+				</isNotEmpty>
+				<isEmpty property="excludeFlag">
+					<![CDATA[EXISTS(
+							SELECT 
+								1 
+							FROM
+								Basis.BIN_CounterInfo CNT WITH(NOLOCK)
+							WHERE 
+								CNT.BIN_ChannelID=#channelIdClude# AND 
+								A.BIN_OrganizationID=CNT.BIN_OrganizationID
+						) AND
+					]]>
+				</isEmpty>
+			</isNotEmpty>	
+			<![CDATA[	
+						A.ValidFlag='1'
+					GROUP BY
+						A.BIN_OrganizationID,
+						B.BIN_ProductVendorID,
+						B.SaleType) T1
+			]]>
+			<![CDATA[			
+					LEFT JOIN Basis.BIN_ProductVendor C WITH (NOLOCK)
+							JOIN Basis.BIN_Product D WITH (NOLOCK) ON C.BIN_ProductID = D.BIN_ProductID
+						ON T1.BIN_ProductVendorID = C.BIN_ProductVendorID AND T1.SaleType = 'N'
+					LEFT JOIN Basis.BIN_PromotionProductVendor X WITH (NOLOCK)
+							JOIN Basis.BIN_PromotionProduct Y WITH (NOLOCK) ON X.BIN_PromotionProductID = Y.BIN_PromotionProductID
+						ON T1.BIN_ProductVendorID = X.BIN_PromotionProductVendorID AND T1.SaleType = 'P'		
+					LEFT JOIN Basis.BIN_Organization E WITH (NOLOCK) ON T1.BIN_OrganizationID = E.BIN_OrganizationID
+					LEFT JOIN Basis.BIN_CounterInfo CNT WITH(NOLOCK) ON E.BIN_OrganizationID=CNT.BIN_OrganizationID	
+			]]>
+		</isEmpty>				
+    </sql>
+    
+    <sql id="CouCount">
+    	<![CDATA[
+			SELECT
+				ISNULL(T1.Amount,0) AS amount,
+				ISNULL(T1.Quantity,0) AS quantity,
+				CASE WHEN E.DepartName IS NOT NULL THEN E.DepartName + '(' + E.DepartCode + ')' ELSE ISNULL(E.DepartCode,'') END AS departName,
+				ISNULL(CNT.BusniessPrincipal,'') AS busniessPrincipal,
+				E.DepartName AS departNameExp,
+				E.DepartCode AS departCode
+		]]>	
+			<isNotEmpty property="saleYearMonthDateFlag">
+			<isEqual property="saleYearMonthDateFlag" compareValue="1">
+				,ISNULL(T2.Amount,0) AS monthAmount
+				,ISNULL(T2.Quantity,0) AS monthQuantity
+			</isEqual>
+			<isEqual property="saleYearMonthDateFlag" compareValue="2">
+				,ISNULL(T2.Amount,0) AS yearAmount
+				,ISNULL(T2.Quantity,0) AS yearQuantity
+			</isEqual>
+			</isNotEmpty>
+		<![CDATA[				
+			FROM
+				Basis.BIN_Organization E WITH (NOLOCK) 
+				LEFT JOIN Basis.BIN_CounterInfo CNT WITH(NOLOCK) ON E.BIN_OrganizationID=CNT.BIN_OrganizationID
+				LEFT JOIN
+				(SELECT 
+					A.BIN_OrganizationID,
+					SUM(CASE 
+							WHEN A.SaleType = 'SR' THEN CASE WHEN B.SaleType = 'N' THEN -B.PricePay*B.Quantity ELSE -B.PricePay END
+							ELSE CASE WHEN B.SaleType = 'N' THEN B.PricePay*B.Quantity ELSE B.PricePay END
+						END) AS Amount,
+					SUM(CASE 
+							WHEN A.SaleType = 'SR' THEN CASE WHEN B.SaleType = 'N' THEN -B.Quantity ELSE 0 END
+							ELSE CASE WHEN B.SaleType = 'N' THEN B.Quantity ELSE 0 END
+						END) AS Quantity
+				FROM
+					Sale.BIN_SaleRecord A WITH (NOLOCK)
+					JOIN Sale.BIN_SaleRecordDetail B WITH (NOLOCK) ON A.BIN_SaleRecordID = B.BIN_SaleRecordID
+				WHERE
+		]]>
+				<isNotEmpty property="bigCateInfo">
+				<![CDATA[EXISTS ( SELECT 1 FROM (]]><include refid="BINOLPTRPS15.getProductIdSql" />
+				<![CDATA[) AS M10 WHERE M10.BIN_ProductVendorID=B.BIN_ProductVendorID) AND ]]>
+				</isNotEmpty>	
+				<isNotEmpty property="saleTimeStart">	
+					A.SaleDate >= #saleTimeStart# AND
+				</isNotEmpty>	
+				<isNotEmpty property="saleTimeEnd">	
+					<![CDATA[A.SaleDate <= #saleTimeEnd# AND]]>
+				</isNotEmpty>
+		<![CDATA[		
+				A.BIN_OrganizationInfoID = #organizationInfoId# AND
+		]]>		
+				<isNotEmpty property="brandInfoId">
+					A.BIN_BrandInfoID = #brandInfoId# AND
+				</isNotEmpty>
+				<isNotEmpty property="selPrtVendorIdArr">
+					B.BIN_ProductVendorID IN
+					<iterate conjunction="," open="(" close=")" property="selPrtVendorIdArr">
+						#selPrtVendorIdArr[]#
+					</iterate>
+					<![CDATA[ AND ]]>
+				</isNotEmpty>
+		<![CDATA[ EXISTS ( ]]><include refid="BINOLCMINC99.getDepartList" />
+		<![CDATA[ AND A.BIN_OrganizationID = A99.BIN_OrganizationID) AND ]]> 	
+		<isNotEmpty property="deliveryModel">
+			<isEqual property="deliveryModel" compareValue="0">
+				<![CDATA[A.DeliveryModel IS NULL AND]]>
+			</isEqual>
+			<isNotEqual property="deliveryModel" compareValue="0">
+				<![CDATA[A.DeliveryModel = #deliveryModel# AND]]>
+			</isNotEqual>
+		</isNotEmpty>
+		<isNotEmpty property="channelIdClude">
+			<isNotEmpty property="excludeFlag">
+				<![CDATA[NOT EXISTS(
+						SELECT 
+							1 
+						FROM
+							Basis.BIN_CounterInfo CNT WITH(NOLOCK)
+						WHERE 
+							CNT.BIN_ChannelID=#channelIdClude# AND 
+							A.BIN_OrganizationID=CNT.BIN_OrganizationID
+					) AND
+				]]>
+			</isNotEmpty>
+			<isEmpty property="excludeFlag">
+				<![CDATA[ EXISTS(
+						SELECT 
+							1 
+						FROM
+							Basis.BIN_CounterInfo CNT WITH(NOLOCK)
+						WHERE 
+							CNT.BIN_ChannelID=#channelIdClude# AND 
+							A.BIN_OrganizationID=CNT.BIN_OrganizationID
+					) AND
+				]]>
+			</isEmpty>
+		</isNotEmpty>	
+		<![CDATA[	
+					A.ValidFlag='1'
+				GROUP BY
+					A.BIN_OrganizationID) T1 ON E.BIN_OrganizationID = T1.BIN_OrganizationID
+		]]>	
+		<isNotEmpty property="saleYearMonthDateFlag">
+			<isNotEqual property="saleYearMonthDateFlag" compareValue="0">
+			LEFT JOIN
+			<isNotEmpty property="saleCountFlag">
+			<![CDATA[	
+				(SELECT
+					X.BIN_OrganizationID,
+					SUM(X.Amount) AS Amount,
+					SUM(X.Quantity) AS Quantity
+				FROM	
+					(SELECT 
+						A.BIN_OrganizationID,
+						A.Amount,
+						A.Quantity
+					FROM 
+						Sale.BIN_SaleCountHistory A WITH (NOLOCK)
+					WHERE 
+			]]>
+			<isNotEmpty property="bigCateInfo">
+				<![CDATA[EXISTS ( SELECT 1 FROM (]]><include refid="BINOLPTRPS15.getProductIdSql" />
+				<![CDATA[) AS M10 WHERE M10.BIN_ProductVendorID=A.BIN_ProductVendorID) AND ]]>
+			</isNotEmpty>	
+			<isEqual property="saleYearMonthDateFlag" compareValue="1">	 
+				<![CDATA[A.SaleYearMonth = #saleYearMonth# AND]]>
+			</isEqual>
+			<!-- 年度统计 -->
+			<isEqual property="saleYearMonthDateFlag" compareValue="2">
+				<![CDATA[
+					A.SaleYearMonth >= #minSaleYearMonth# AND
+					A.SaleYearMonth <= #maxSaleYearMonth# AND
+				]]>
+			</isEqual>
+			<![CDATA[
+						A.BIN_OrganizationInfoID = #organizationInfoId# AND
+				]]>
+					<isNotEmpty property="brandInfoId">
+						A.BIN_BrandInfoID = #brandInfoId# AND
+					</isNotEmpty>
+					<isNotEmpty property="selPrtVendorIdArr">
+						A.BIN_ProductVendorID IN
+						<iterate conjunction="," open="(" close=")" property="selPrtVendorIdArr">
+							#selPrtVendorIdArr[]#
+						</iterate>
+						<![CDATA[ AND ]]>
+					</isNotEmpty>
+			<![CDATA[ EXISTS ( ]]><include refid="BINOLCMINC99.getDepartList" />
+			<![CDATA[ AND A.BIN_OrganizationID = A99.BIN_OrganizationID) ]]> 
+			<isNotEmpty property="channelIdClude">
+				<isNotEmpty property="excludeFlag">
+					<![CDATA[AND NOT EXISTS(
+							SELECT 
+								1 
+							FROM
+								Basis.BIN_CounterInfo CNT WITH(NOLOCK)
+							WHERE 
+								CNT.BIN_ChannelID=#channelIdClude# AND 
+								A.BIN_OrganizationID=CNT.BIN_OrganizationID
+						)
+					]]>
+				</isNotEmpty>
+				<isEmpty property="excludeFlag">
+					<![CDATA[AND EXISTS(
+							SELECT 
+								1 
+							FROM
+								Basis.BIN_CounterInfo CNT WITH(NOLOCK)
+							WHERE 
+								CNT.BIN_ChannelID=#channelIdClude# AND 
+								A.BIN_OrganizationID=CNT.BIN_OrganizationID
+						)
+					]]>
+				</isEmpty>
+			</isNotEmpty>
+				<![CDATA[	
+					UNION ALL
+					SELECT 
+						A.BIN_OrganizationID,
+						CASE 
+							WHEN A.SaleType = 'SR' THEN CASE WHEN B.SaleType = 'N' THEN -B.PricePay*B.Quantity ELSE -B.PricePay END
+							ELSE CASE WHEN B.SaleType = 'N' THEN B.PricePay*B.Quantity ELSE B.PricePay END
+						END AS Amount,
+						CASE 
+							WHEN A.SaleType = 'SR' THEN CASE WHEN B.SaleType = 'N' THEN -B.Quantity ELSE 0 END
+							ELSE CASE WHEN B.SaleType = 'N' THEN B.Quantity ELSE 0 END
+						END AS Quantity
+					FROM
+						Sale.BIN_SaleRecord A WITH (NOLOCK)
+						JOIN Sale.BIN_SaleRecordDetail B WITH (NOLOCK) ON A.BIN_SaleRecordID = B.BIN_SaleRecordID
+					WHERE
+						A.SaleDate >= #minDateValue# AND
+						A.SaleDate <= #maxDateValue# AND
+						A.BIN_OrganizationInfoID = #organizationInfoId# AND
+			]]>
+					<isNotEmpty property="bigCateInfo">
+					<![CDATA[EXISTS ( SELECT 1 FROM (]]><include refid="BINOLPTRPS15.getProductIdSql" />
+					<![CDATA[) AS M10 WHERE M10.BIN_ProductVendorID=B.BIN_ProductVendorID) AND ]]>
+					</isNotEmpty>
+					<isNotEmpty property="brandInfoId">
+						A.BIN_BrandInfoID = #brandInfoId# AND
+					</isNotEmpty>
+					<isNotEmpty property="selPrtVendorIdArr">
+						B.BIN_ProductVendorID IN
+						<iterate conjunction="," open="(" close=")" property="selPrtVendorIdArr">
+							#selPrtVendorIdArr[]#
+						</iterate>
+						<![CDATA[ AND ]]>
+					</isNotEmpty>
+			<![CDATA[ EXISTS ( ]]><include refid="BINOLCMINC99.getDepartList" />
+			<![CDATA[ AND A.BIN_OrganizationID = A99.BIN_OrganizationID) AND ]]> 
+			<isNotEmpty property="deliveryModel">
+				<isEqual property="deliveryModel" compareValue="0">
+					<![CDATA[A.DeliveryModel IS NULL AND]]>
+				</isEqual>
+				<isNotEqual property="deliveryModel" compareValue="0">
+					<![CDATA[A.DeliveryModel = #deliveryModel# AND]]>
+				</isNotEqual>
+			</isNotEmpty>
+			<isNotEmpty property="channelIdClude">
+				<isNotEmpty property="excludeFlag">
+					<![CDATA[NOT EXISTS(
+							SELECT 
+								1 
+							FROM
+								Basis.BIN_CounterInfo CNT WITH(NOLOCK)
+							WHERE 
+								CNT.BIN_ChannelID=#channelIdClude# AND 
+								A.BIN_OrganizationID=CNT.BIN_OrganizationID
+						) AND
+					]]>
+				</isNotEmpty>
+				<isEmpty property="excludeFlag">
+					<![CDATA[EXISTS(
+							SELECT 
+								1 
+							FROM
+								Basis.BIN_CounterInfo CNT WITH(NOLOCK)
+							WHERE 
+								CNT.BIN_ChannelID=#channelIdClude# AND 
+								A.BIN_OrganizationID=CNT.BIN_OrganizationID
+						) AND
+					]]>
+				</isEmpty>
+			</isNotEmpty>		
+			<![CDATA[	
+						A.SaleCountFlag IS NULL AND
+						A.ValidFlag='1') X	
+				GROUP BY
+					X.BIN_OrganizationID) T2
+			]]>	
+			</isNotEmpty>
+			<isEmpty property="saleCountFlag">
+			<![CDATA[	
+				(SELECT 
+					A.BIN_OrganizationID,
+					SUM(CASE 
+							WHEN A.SaleType = 'SR' THEN CASE WHEN B.SaleType = 'N' THEN -B.PricePay*B.Quantity ELSE -B.PricePay END
+							ELSE CASE WHEN B.SaleType = 'N' THEN B.PricePay*B.Quantity ELSE B.PricePay END
+						END) AS Amount,
+					SUM(CASE 
+							WHEN A.SaleType = 'SR' THEN CASE WHEN B.SaleType = 'N' THEN -B.Quantity ELSE 0 END
+							ELSE CASE WHEN B.SaleType = 'N' THEN B.Quantity ELSE 0 END
+						END) AS Quantity
+				FROM
+					Sale.BIN_SaleRecord A WITH (NOLOCK)
+					JOIN Sale.BIN_SaleRecordDetail B WITH (NOLOCK) ON A.BIN_SaleRecordID = B.BIN_SaleRecordID
+				WHERE
+					A.SaleDate >= #minDateValue# AND
+					A.SaleDate <= #maxDateValue# AND
+					A.BIN_OrganizationInfoID = #organizationInfoId# AND
+			]]>
+				<isNotEmpty property="bigCateInfo">
+					<![CDATA[EXISTS ( SELECT 1 FROM (]]><include refid="BINOLPTRPS15.getProductIdSql" />
+					<![CDATA[) AS M10 WHERE M10.BIN_ProductVendorID=B.BIN_ProductVendorID) AND ]]>
+				</isNotEmpty>
+				<isNotEmpty property="brandInfoId">
+					A.BIN_BrandInfoID = #brandInfoId# AND
+				</isNotEmpty>
+				<isNotEmpty property="selPrtVendorIdArr">
+					B.BIN_ProductVendorID IN
+					<iterate conjunction="," open="(" close=")" property="selPrtVendorIdArr">
+						#selPrtVendorIdArr[]#
+					</iterate>
+					<![CDATA[ AND ]]>
+				</isNotEmpty>
+			<![CDATA[ EXISTS ( ]]><include refid="BINOLCMINC99.getDepartList" />
+			<![CDATA[ AND A.BIN_OrganizationID = A99.BIN_OrganizationID) AND ]]> 
+			<isNotEmpty property="deliveryModel">
+				<isEqual property="deliveryModel" compareValue="0">
+					<![CDATA[A.DeliveryModel IS NULL AND]]>
+				</isEqual>
+				<isNotEqual property="deliveryModel" compareValue="0">
+					<![CDATA[A.DeliveryModel = #deliveryModel# AND]]>
+				</isNotEqual>
+			</isNotEmpty>	
+			<isNotEmpty property="channelIdClude">
+				<isNotEmpty property="excludeFlag">
+					<![CDATA[ NOT EXISTS(
+							SELECT 
+								1 
+							FROM
+								Basis.BIN_CounterInfo CNT WITH(NOLOCK)
+							WHERE 
+								CNT.BIN_ChannelID=#channelIdClude# AND 
+								A.BIN_OrganizationID=CNT.BIN_OrganizationID
+						) AND
+					]]>
+				</isNotEmpty>
+				<isEmpty property="excludeFlag">
+					<![CDATA[ EXISTS(
+							SELECT 
+								1 
+							FROM
+								Basis.BIN_CounterInfo CNT WITH(NOLOCK)
+							WHERE 
+								CNT.BIN_ChannelID=#channelIdClude# AND 
+								A.BIN_OrganizationID=CNT.BIN_OrganizationID
+						) AND
+					]]>
+				</isEmpty>
+			</isNotEmpty>	
+			<![CDATA[	
+					A.ValidFlag='1'
+				GROUP BY
+					A.BIN_OrganizationID) T2
+			]]>
+			</isEmpty>	
+			ON E.BIN_OrganizationID = T2.BIN_OrganizationID
+			</isNotEqual>
+		</isNotEmpty>	
+								
+		<![CDATA[			
+				WHERE
+					E.BIN_OrganizationInfoID = #organizationInfoId# AND
+		]]>
+				<isNotEmpty property="brandInfoId">
+					E.BIN_BrandInfoID = #brandInfoId# AND
+				</isNotEmpty>
+		<![CDATA[ EXISTS ( ]]><include refid="BINOLCMINC99.getDepartList" />
+		<![CDATA[ AND E.BIN_OrganizationID = A99.BIN_OrganizationID)]]>
+		<isNotEmpty property="channelIdClude">
+				<isNotEmpty property="excludeFlag">
+					<![CDATA[AND NOT EXISTS(
+							SELECT 
+								1 
+							FROM
+								Basis.BIN_CounterInfo CNT WITH(NOLOCK)
+							WHERE 
+								CNT.BIN_ChannelID=#channelIdClude# AND 
+								E.BIN_OrganizationID=CNT.BIN_OrganizationID
+						)
+					]]>
+				</isNotEmpty>
+				<isEmpty property="excludeFlag">
+					<![CDATA[AND EXISTS(
+							SELECT 
+								1 
+							FROM
+								Basis.BIN_CounterInfo CNT WITH(NOLOCK)
+							WHERE 
+								CNT.BIN_ChannelID=#channelIdClude# AND 
+								E.BIN_OrganizationID=CNT.BIN_OrganizationID
+						)
+					]]>
+				</isEmpty>
+			</isNotEmpty>
+		<isNotEmpty property="isOnlyCounterFlag">
+			<isEqual property="isOnlyCounterFlag" compareValue="1">
+				<![CDATA[AND E.type = '4']]>
+			</isEqual>
+		</isNotEmpty>
+		<isEmpty property="isOnlyCounterFlag">
+			<![CDATA[AND E.type = '4']]>
+		</isEmpty>	
+    </sql>
+    
+    <sql id="PrtCount">
+    	<![CDATA[
+			SELECT
+				T1.SaleType AS saleType,
+				CASE WHEN T1.SaleType = 'N' THEN C.BarCode ELSE X.BarCode END AS barCode,
+				CASE WHEN T1.SaleType = 'N' THEN D.UnitCode ELSE Y.UnitCode END AS unitCode,
+				CASE WHEN T1.SaleType = 'N' THEN D.NameTotal ELSE Y.NameTotal END AS nameTotal
+		]]>	
+			<isNotEmpty property="saleYearMonthDateFlag">
+				<isEqual property="saleYearMonthDateFlag" compareValue="1">
+				,ISNULL(T1.Amount,0) AS monthAmount
+				,ISNULL(T1.Quantity,0) AS monthQuantity
+				,ISNULL(T2.Amount,0) AS amount
+				,ISNULL(T2.Quantity,0) AS quantity
+				</isEqual>
+				<isEqual property="saleYearMonthDateFlag" compareValue="2">
+				,ISNULL(T1.Amount,0) AS yearAmount
+				,ISNULL(T1.Quantity,0) AS yearQuantity
+				,ISNULL(T2.Amount,0) AS amount
+				,ISNULL(T2.Quantity,0) AS quantity
+				</isEqual>
+				<isEqual property="saleYearMonthDateFlag" compareValue="0">
+				,ISNULL(T1.Amount,0) AS amount
+				,ISNULL(T1.Quantity,0) AS quantity
+				</isEqual>
+			</isNotEmpty>
+			<isEmpty property="saleYearMonthDateFlag">
+				,ISNULL(T1.Amount,0) AS amount
+				,ISNULL(T1.Quantity,0) AS quantity
+			</isEmpty>
+		<![CDATA[				
+			FROM
+		]]>			
+		<isNotEmpty property="saleYearMonthDateFlag">
+			<isNotEqual property="saleYearMonthDateFlag" compareValue="0">
+			<isNotEmpty property="saleCountFlag">
+			<![CDATA[	
+				(SELECT 
+					X.BIN_ProductVendorID,
+					X.SaleType,
+					SUM(X.Amount) AS Amount,
+					SUM(X.Quantity) AS Quantity
+				FROM		
+					(SELECT 
+						A.BIN_ProductVendorID,
+						A.SaleType,
+						A.Amount,
+						A.Quantity
+					FROM 
+						Sale.BIN_SaleCountHistory A WITH (NOLOCK)
+					WHERE
+			]]>
+			<isNotEmpty property="bigCateInfo">
+				<![CDATA[EXISTS ( SELECT 1 FROM (]]><include refid="BINOLPTRPS15.getProductIdSql" />
+				<![CDATA[) AS M10 WHERE M10.BIN_ProductVendorID=A.BIN_ProductVendorID) AND ]]>
+			</isNotEmpty>	
+			<isEqual property="saleYearMonthDateFlag" compareValue="1">	 
+				<![CDATA[A.SaleYearMonth = #saleYearMonth# AND]]>
+			</isEqual>
+			<!-- 年度统计 -->
+			<isEqual property="saleYearMonthDateFlag" compareValue="2">
+				<![CDATA[
+					A.SaleYearMonth >= #minSaleYearMonth# AND
+					A.SaleYearMonth <= #maxSaleYearMonth# AND
+				]]>
+			</isEqual>
+			<![CDATA[
+						
+						A.BIN_OrganizationInfoID = #organizationInfoId# AND
+			]]>
+					<isNotEmpty property="brandInfoId">
+						A.BIN_BrandInfoID = #brandInfoId# AND
+					</isNotEmpty>
+					<isNotEmpty property="selPrtVendorIdArr">
+						A.BIN_ProductVendorID IN
+						<iterate conjunction="," open="(" close=")" property="selPrtVendorIdArr">
+							#selPrtVendorIdArr[]#
+						</iterate>
+						<![CDATA[ AND ]]>
+					</isNotEmpty>
+			<![CDATA[ EXISTS ( ]]><include refid="BINOLCMINC99.getDepartList" />
+			<![CDATA[ AND A.BIN_OrganizationID = A99.BIN_OrganizationID) ]]>
+			<isNotEmpty property="channelIdClude">
+				<isNotEmpty property="excludeFlag">
+					<![CDATA[AND NOT EXISTS(
+							SELECT 
+								1 
+							FROM
+								Basis.BIN_CounterInfo CNT WITH(NOLOCK)
+							WHERE 
+								CNT.BIN_ChannelID=#channelIdClude# AND 
+								A.BIN_OrganizationID=CNT.BIN_OrganizationID
+						)
+					]]>
+				</isNotEmpty>
+				<isEmpty property="excludeFlag">
+					<![CDATA[AND EXISTS(
+							SELECT 
+								1 
+							FROM
+								Basis.BIN_CounterInfo CNT WITH(NOLOCK)
+							WHERE 
+								CNT.BIN_ChannelID=#channelIdClude# AND 
+								A.BIN_OrganizationID=CNT.BIN_OrganizationID
+						)
+					]]>
+				</isEmpty>
+			</isNotEmpty> 	
+				<![CDATA[			
+					UNION ALL
+					SELECT 
+						B.BIN_ProductVendorID,
+						B.SaleType,
+						CASE 
+							WHEN A.SaleType = 'SR' THEN CASE WHEN B.SaleType = 'N' THEN -B.PricePay*B.Quantity ELSE -B.PricePay END
+							ELSE CASE WHEN B.SaleType = 'N' THEN B.PricePay*B.Quantity ELSE B.PricePay END
+						END AS Amount,
+						CASE 
+							WHEN A.SaleType = 'SR' THEN CASE WHEN B.SaleType = 'N' THEN -B.Quantity ELSE 0 END
+							ELSE CASE WHEN B.SaleType = 'N' THEN B.Quantity ELSE 0 END
+						END AS Quantity
+					FROM
+						Sale.BIN_SaleRecord A WITH (NOLOCK)
+						JOIN Sale.BIN_SaleRecordDetail B WITH (NOLOCK) ON A.BIN_SaleRecordID = B.BIN_SaleRecordID
+					WHERE
+						A.SaleDate >= #minDateValue# AND
+						A.SaleDate <= #maxDateValue# AND
+						A.BIN_OrganizationInfoID = #organizationInfoId# AND
+			]]>
+					<isNotEmpty property="bigCateInfo">
+					<![CDATA[EXISTS ( SELECT 1 FROM (]]><include refid="BINOLPTRPS15.getProductIdSql" />
+					<![CDATA[) AS M10 WHERE M10.BIN_ProductVendorID=B.BIN_ProductVendorID) AND ]]>
+					</isNotEmpty>
+					<isNotEmpty property="brandInfoId">
+						A.BIN_BrandInfoID = #brandInfoId# AND
+					</isNotEmpty>
+					<isNotEmpty property="selPrtVendorIdArr">
+						B.BIN_ProductVendorID IN
+						<iterate conjunction="," open="(" close=")" property="selPrtVendorIdArr">
+							#selPrtVendorIdArr[]#
+						</iterate>
+						<![CDATA[ AND ]]>
+					</isNotEmpty>
+			<![CDATA[ EXISTS ( ]]><include refid="BINOLCMINC99.getDepartList" />
+			<![CDATA[ AND A.BIN_OrganizationID = A99.BIN_OrganizationID) AND ]]> 
+			<isNotEmpty property="deliveryModel">
+				<isEqual property="deliveryModel" compareValue="0">
+					<![CDATA[A.DeliveryModel IS NULL AND]]>
+				</isEqual>
+				<isNotEqual property="deliveryModel" compareValue="0">
+					<![CDATA[A.DeliveryModel = #deliveryModel# AND]]>
+				</isNotEqual>
+			</isNotEmpty>	
+			<isNotEmpty property="channelIdClude">
+				<isNotEmpty property="excludeFlag">
+					<![CDATA[ NOT EXISTS(
+							SELECT 
+								1 
+							FROM
+								Basis.BIN_CounterInfo CNT WITH(NOLOCK)
+							WHERE 
+								CNT.BIN_ChannelID=#channelIdClude# AND 
+								A.BIN_OrganizationID=CNT.BIN_OrganizationID
+						) AND
+					]]>
+				</isNotEmpty>
+				<isEmpty property="excludeFlag">
+					<![CDATA[ EXISTS(
+							SELECT 
+								1 
+							FROM
+								Basis.BIN_CounterInfo CNT WITH(NOLOCK)
+							WHERE 
+								CNT.BIN_ChannelID=#channelIdClude# AND 
+								A.BIN_OrganizationID=CNT.BIN_OrganizationID
+						) AND
+					]]>
+				</isEmpty>
+			</isNotEmpty>	
+			<![CDATA[	
+						A.SaleCountFlag IS NULL AND
+						A.ValidFlag='1') X
+				GROUP BY
+					X.BIN_ProductVendorID,
+					X.SaleType) T1
+			]]>		
+			</isNotEmpty>
+			<isEmpty property="saleCountFlag">
+			<![CDATA[	
+				(SELECT 
+					B.BIN_ProductVendorID,
+					B.SaleType,
+					SUM(CASE 
+							WHEN A.SaleType = 'SR' THEN CASE WHEN B.SaleType = 'N' THEN -B.PricePay*B.Quantity ELSE -B.PricePay END
+							ELSE CASE WHEN B.SaleType = 'N' THEN B.PricePay*B.Quantity ELSE B.PricePay END
+						END) AS Amount,
+					SUM(CASE 
+							WHEN A.SaleType = 'SR' THEN CASE WHEN B.SaleType = 'N' THEN -B.Quantity ELSE 0 END
+							ELSE CASE WHEN B.SaleType = 'N' THEN B.Quantity ELSE 0 END
+						END) AS Quantity
+				FROM
+					Sale.BIN_SaleRecord A WITH (NOLOCK)
+					JOIN Sale.BIN_SaleRecordDetail B WITH (NOLOCK) ON A.BIN_SaleRecordID = B.BIN_SaleRecordID
+				WHERE
+					A.SaleDate >= #minDateValue# AND
+					A.SaleDate <= #maxDateValue# AND
+					A.BIN_OrganizationInfoID = #organizationInfoId# AND
+			]]>
+				<isNotEmpty property="bigCateInfo">
+					<![CDATA[EXISTS ( SELECT 1 FROM (]]><include refid="BINOLPTRPS15.getProductIdSql" />
+					<![CDATA[) AS M10 WHERE M10.BIN_ProductVendorID=B.BIN_ProductVendorID) AND ]]>
+				</isNotEmpty>
+				<isNotEmpty property="brandInfoId">
+					A.BIN_BrandInfoID = #brandInfoId# AND
+				</isNotEmpty>
+				<isNotEmpty property="selPrtVendorIdArr">
+					B.BIN_ProductVendorID IN
+					<iterate conjunction="," open="(" close=")" property="selPrtVendorIdArr">
+						#selPrtVendorIdArr[]#
+					</iterate>
+					<![CDATA[ AND ]]>
+				</isNotEmpty>
+			<![CDATA[ EXISTS ( ]]><include refid="BINOLCMINC99.getDepartList" />
+			<![CDATA[ AND A.BIN_OrganizationID = A99.BIN_OrganizationID) AND ]]> 
+			<isNotEmpty property="deliveryModel">
+				<isEqual property="deliveryModel" compareValue="0">
+					<![CDATA[A.DeliveryModel IS NULL AND]]>
+				</isEqual>
+				<isNotEqual property="deliveryModel" compareValue="0">
+					<![CDATA[A.DeliveryModel = #deliveryModel# AND]]>
+				</isNotEqual>
+			</isNotEmpty>
+			<isNotEmpty property="channelIdClude">
+				<isNotEmpty property="excludeFlag">
+					<![CDATA[NOT EXISTS(
+							SELECT 
+								1 
+							FROM
+								Basis.BIN_CounterInfo CNT WITH(NOLOCK)
+							WHERE 
+								CNT.BIN_ChannelID=#channelIdClude# AND 
+								A.BIN_OrganizationID=CNT.BIN_OrganizationID
+						) AND
+					]]>
+				</isNotEmpty>
+				<isEmpty property="excludeFlag">
+					<![CDATA[EXISTS(
+							SELECT 
+								1 
+							FROM
+								Basis.BIN_CounterInfo CNT WITH(NOLOCK)
+							WHERE 
+								CNT.BIN_ChannelID=#channelIdClude# AND 
+								A.BIN_OrganizationID=CNT.BIN_OrganizationID
+						) AND
+					]]>
+				</isEmpty>
+			</isNotEmpty>	
+			<![CDATA[	
+					A.ValidFlag='1'
+				GROUP BY
+					B.BIN_ProductVendorID,
+					B.SaleType) T1
+			]]>
+			</isEmpty>
+		<![CDATA[		
+				LEFT JOIN
+				(SELECT 
+					B.BIN_ProductVendorID,
+					B.SaleType,
+					SUM(CASE 
+							WHEN A.SaleType = 'SR' THEN CASE WHEN B.SaleType = 'N' THEN -B.PricePay*B.Quantity ELSE -B.PricePay END
+							ELSE CASE WHEN B.SaleType = 'N' THEN B.PricePay*B.Quantity ELSE B.PricePay END
+						END) AS Amount,
+					SUM(CASE 
+							WHEN A.SaleType = 'SR' THEN CASE WHEN B.SaleType = 'N' THEN -B.Quantity ELSE 0 END
+							ELSE CASE WHEN B.SaleType = 'N' THEN B.Quantity ELSE 0 END
+						END) AS Quantity
+				FROM
+					Sale.BIN_SaleRecord A WITH (NOLOCK)
+					JOIN Sale.BIN_SaleRecordDetail B WITH (NOLOCK) ON A.BIN_SaleRecordID = B.BIN_SaleRecordID
+				WHERE	
+		]]>
+				<isNotEmpty property="bigCateInfo">
+					<![CDATA[EXISTS ( SELECT 1 FROM (]]><include refid="BINOLPTRPS15.getProductIdSql" />
+					<![CDATA[) AS M10 WHERE M10.BIN_ProductVendorID=B.BIN_ProductVendorID) AND ]]>
+				</isNotEmpty>
+				<isNotEmpty property="saleTimeStart">	
+					A.SaleDate >= #saleTimeStart# AND
+				</isNotEmpty>	
+				<isNotEmpty property="saleTimeEnd">	
+					<![CDATA[A.SaleDate <= #saleTimeEnd# AND]]>
+				</isNotEmpty>
+		<![CDATA[		
+				A.BIN_OrganizationInfoID = #organizationInfoId# AND
+		]]>		
+				<isNotEmpty property="brandInfoId">
+					A.BIN_BrandInfoID = #brandInfoId# AND
+				</isNotEmpty>
+				<isNotEmpty property="selPrtVendorIdArr">
+					B.BIN_ProductVendorID IN
+					<iterate conjunction="," open="(" close=")" property="selPrtVendorIdArr">
+						#selPrtVendorIdArr[]#
+					</iterate>
+					<![CDATA[ AND ]]>
+				</isNotEmpty>
+		<![CDATA[ EXISTS ( ]]><include refid="BINOLCMINC99.getDepartList" />
+		<![CDATA[ AND A.BIN_OrganizationID = A99.BIN_OrganizationID) AND ]]> 
+		<isNotEmpty property="deliveryModel">
+			<isEqual property="deliveryModel" compareValue="0">
+				<![CDATA[A.DeliveryModel IS NULL AND]]>
+			</isEqual>
+			<isNotEqual property="deliveryModel" compareValue="0">
+				<![CDATA[A.DeliveryModel = #deliveryModel# AND]]>
+			</isNotEqual>
+		</isNotEmpty>
+		<isNotEmpty property="channelIdClude">
+				<isNotEmpty property="excludeFlag">
+					<![CDATA[ NOT EXISTS(
+							SELECT 
+								1 
+							FROM
+								Basis.BIN_CounterInfo CNT WITH(NOLOCK)
+							WHERE 
+								CNT.BIN_ChannelID=#channelIdClude# AND 
+								A.BIN_OrganizationID=CNT.BIN_OrganizationID
+						) AND
+					]]>
+				</isNotEmpty>
+				<isEmpty property="excludeFlag">
+					<![CDATA[ EXISTS(
+							SELECT 
+								1 
+							FROM
+								Basis.BIN_CounterInfo CNT WITH(NOLOCK)
+							WHERE 
+								CNT.BIN_ChannelID=#channelIdClude# AND 
+								A.BIN_OrganizationID=CNT.BIN_OrganizationID
+						) AND
+					]]>
+				</isEmpty>
+			</isNotEmpty>		
+		<![CDATA[	
+					A.ValidFlag='1'
+				GROUP BY
+					B.BIN_ProductVendorID,
+					B.SaleType) T2
+				ON T1.BIN_ProductVendorID = T2.BIN_ProductVendorID AND T1.SaleType = T2.SaleType
+				LEFT JOIN Basis.BIN_ProductVendor C WITH (NOLOCK)
+						JOIN Basis.BIN_Product D WITH (NOLOCK) ON C.BIN_ProductID = D.BIN_ProductID
+					ON T1.BIN_ProductVendorID = C.BIN_ProductVendorID AND T1.SaleType = 'N'
+				LEFT JOIN Basis.BIN_PromotionProductVendor X WITH (NOLOCK)
+						JOIN Basis.BIN_PromotionProduct Y WITH (NOLOCK) ON X.BIN_PromotionProductID = Y.BIN_PromotionProductID
+					ON T1.BIN_ProductVendorID = X.BIN_PromotionProductVendorID AND T1.SaleType = 'P'
+		]]>
+		</isNotEqual>
+		<isEqual property="saleYearMonthDateFlag" compareValue="0">
+			<![CDATA[		
+					(SELECT 
+						B.BIN_ProductVendorID,
+						B.SaleType,
+						SUM(CASE 
+								WHEN A.SaleType = 'SR' THEN CASE WHEN B.SaleType = 'N' THEN -B.PricePay*B.Quantity ELSE -B.PricePay END
+								ELSE CASE WHEN B.SaleType = 'N' THEN B.PricePay*B.Quantity ELSE B.PricePay END
+							END) AS Amount,
+						SUM(CASE 
+								WHEN A.SaleType = 'SR' THEN CASE WHEN B.SaleType = 'N' THEN -B.Quantity ELSE 0 END
+								ELSE CASE WHEN B.SaleType = 'N' THEN B.Quantity ELSE 0 END
+							END) AS Quantity
+					FROM
+						Sale.BIN_SaleRecord A WITH (NOLOCK)
+						JOIN Sale.BIN_SaleRecordDetail B WITH (NOLOCK) ON A.BIN_SaleRecordID = B.BIN_SaleRecordID
+					WHERE	
+			]]>
+				<isNotEmpty property="bigCateInfo">
+					<![CDATA[EXISTS ( SELECT 1 FROM (]]><include refid="BINOLPTRPS15.getProductIdSql" />
+					<![CDATA[) AS M10 WHERE M10.BIN_ProductVendorID=B.BIN_ProductVendorID) AND ]]>
+				</isNotEmpty>
+					<isNotEmpty property="saleTimeStart">	
+						A.SaleDate >= #saleTimeStart# AND
+					</isNotEmpty>	
+					<isNotEmpty property="saleTimeEnd">	
+						<![CDATA[A.SaleDate <= #saleTimeEnd# AND]]>
+					</isNotEmpty>
+			<![CDATA[		
+						A.BIN_OrganizationInfoID = #organizationInfoId# AND
+			]]>		
+					<isNotEmpty property="brandInfoId">
+						A.BIN_BrandInfoID = #brandInfoId# AND
+					</isNotEmpty>
+					<isNotEmpty property="selPrtVendorIdArr">
+						B.BIN_ProductVendorID IN
+						<iterate conjunction="," open="(" close=")" property="selPrtVendorIdArr">
+							#selPrtVendorIdArr[]#
+						</iterate>
+						<![CDATA[ AND ]]>
+					</isNotEmpty>
+			<![CDATA[ EXISTS ( ]]><include refid="BINOLCMINC99.getDepartList" />
+			<![CDATA[ AND A.BIN_OrganizationID = A99.BIN_OrganizationID) AND ]]> 
+			<isNotEmpty property="deliveryModel">
+				<isEqual property="deliveryModel" compareValue="0">
+					<![CDATA[A.DeliveryModel IS NULL AND]]>
+				</isEqual>
+				<isNotEqual property="deliveryModel" compareValue="0">
+					<![CDATA[A.DeliveryModel = #deliveryModel# AND]]>
+				</isNotEqual>
+			</isNotEmpty>	
+			<isNotEmpty property="channelIdClude">
+				<isNotEmpty property="excludeFlag">
+					<![CDATA[NOT EXISTS(
+							SELECT 
+								1 
+							FROM
+								Basis.BIN_CounterInfo CNT WITH(NOLOCK)
+							WHERE 
+								CNT.BIN_ChannelID=#channelIdClude# AND 
+								A.BIN_OrganizationID=CNT.BIN_OrganizationID
+						) AND
+					]]>
+				</isNotEmpty>
+				<isEmpty property="excludeFlag">
+					<![CDATA[ EXISTS(
+							SELECT 
+								1 
+							FROM
+								Basis.BIN_CounterInfo CNT WITH(NOLOCK)
+							WHERE 
+								CNT.BIN_ChannelID=#channelIdClude# AND 
+								A.BIN_OrganizationID=CNT.BIN_OrganizationID
+						) AND
+					]]>
+				</isEmpty>
+			</isNotEmpty>	
+			<![CDATA[	
+						A.ValidFlag='1'
+					GROUP BY
+						B.BIN_ProductVendorID,
+						B.SaleType) T1
+					LEFT JOIN Basis.BIN_ProductVendor C WITH (NOLOCK)
+							JOIN Basis.BIN_Product D WITH (NOLOCK) ON C.BIN_ProductID = D.BIN_ProductID
+						ON T1.BIN_ProductVendorID = C.BIN_ProductVendorID AND T1.SaleType = 'N'	
+					LEFT JOIN Basis.BIN_PromotionProductVendor X WITH (NOLOCK)
+							JOIN Basis.BIN_PromotionProduct Y WITH (NOLOCK) ON X.BIN_PromotionProductID = Y.BIN_PromotionProductID
+						ON T1.BIN_ProductVendorID = X.BIN_PromotionProductVendorID AND T1.SaleType = 'P'	
+			]]>	
+		</isEqual>
+		</isNotEmpty>	
+		<isEmpty property="saleYearMonthDateFlag">
+		<![CDATA[		
+				(SELECT 
+					B.BIN_ProductVendorID,
+					B.SaleType,
+					SUM(CASE 
+							WHEN A.SaleType = 'SR' THEN CASE WHEN B.SaleType = 'N' THEN -B.PricePay*B.Quantity ELSE -B.PricePay END
+							ELSE CASE WHEN B.SaleType = 'N' THEN B.PricePay*B.Quantity ELSE B.PricePay END
+						END) AS Amount,
+					SUM(CASE 
+							WHEN A.SaleType = 'SR' THEN CASE WHEN B.SaleType = 'N' THEN -B.Quantity ELSE 0 END
+							ELSE CASE WHEN B.SaleType = 'N' THEN B.Quantity ELSE 0 END
+						END) AS Quantity
+				FROM
+					Sale.BIN_SaleRecord A WITH (NOLOCK)
+					JOIN Sale.BIN_SaleRecordDetail B WITH (NOLOCK) ON A.BIN_SaleRecordID = B.BIN_SaleRecordID
+				WHERE	
+		]]>
+				<isNotEmpty property="bigCateInfo">
+					<![CDATA[EXISTS ( SELECT 1 FROM (]]><include refid="BINOLPTRPS15.getProductIdSql" />
+					<![CDATA[) AS M10 WHERE M10.BIN_ProductVendorID=B.BIN_ProductVendorID) AND ]]>
+				</isNotEmpty>
+				<isNotEmpty property="saleTimeStart">	
+					A.SaleDate >= #saleTimeStart# AND
+				</isNotEmpty>	
+				<isNotEmpty property="saleTimeEnd">	
+					<![CDATA[A.SaleDate <= #saleTimeEnd# AND]]>
+				</isNotEmpty>
+		<![CDATA[		
+					A.BIN_OrganizationInfoID = #organizationInfoId# AND
+		]]>		
+				<isNotEmpty property="brandInfoId">
+					A.BIN_BrandInfoID = #brandInfoId# AND
+				</isNotEmpty>
+				<isNotEmpty property="selPrtVendorIdArr">
+					B.BIN_ProductVendorID IN
+					<iterate conjunction="," open="(" close=")" property="selPrtVendorIdArr">
+						#selPrtVendorIdArr[]#
+					</iterate>
+					<![CDATA[ AND ]]>
+				</isNotEmpty>
+		<![CDATA[ EXISTS ( ]]><include refid="BINOLCMINC99.getDepartList" />
+		<![CDATA[ AND A.BIN_OrganizationID = A99.BIN_OrganizationID) AND ]]> 
+		<isNotEmpty property="deliveryModel">
+			<isEqual property="deliveryModel" compareValue="0">
+				<![CDATA[A.DeliveryModel IS NULL AND]]>
+			</isEqual>
+			<isNotEqual property="deliveryModel" compareValue="0">
+				<![CDATA[A.DeliveryModel = #deliveryModel# AND]]>
+			</isNotEqual>
+		</isNotEmpty>
+		<isNotEmpty property="channelIdClude">
+			<isNotEmpty property="excludeFlag">
+				<![CDATA[NOT EXISTS(
+						SELECT 
+							1 
+						FROM
+							Basis.BIN_CounterInfo CNT WITH(NOLOCK)
+						WHERE 
+							CNT.BIN_ChannelID=#channelIdClude# AND 
+							A.BIN_OrganizationID=CNT.BIN_OrganizationID
+					) AND
+				]]>
+			</isNotEmpty>
+			<isEmpty property="excludeFlag">
+				<![CDATA[ EXISTS(
+						SELECT 
+							1 
+						FROM
+							Basis.BIN_CounterInfo CNT WITH(NOLOCK)
+						WHERE 
+							CNT.BIN_ChannelID=#channelIdClude# AND 
+							A.BIN_OrganizationID=CNT.BIN_OrganizationID
+					) AND
+				]]>
+			</isEmpty>
+		</isNotEmpty>
+		<![CDATA[	
+					A.ValidFlag='1'
+				GROUP BY
+					B.BIN_ProductVendorID,
+					B.SaleType) T1
+				LEFT JOIN Basis.BIN_ProductVendor C WITH (NOLOCK)
+						JOIN Basis.BIN_Product D WITH (NOLOCK) ON C.BIN_ProductID = D.BIN_ProductID
+					ON T1.BIN_ProductVendorID = C.BIN_ProductVendorID AND T1.SaleType = 'N'	
+				LEFT JOIN Basis.BIN_PromotionProductVendor X WITH (NOLOCK)
+						JOIN Basis.BIN_PromotionProduct Y WITH (NOLOCK) ON X.BIN_PromotionProductID = Y.BIN_PromotionProductID
+					ON T1.BIN_ProductVendorID = X.BIN_PromotionProductVendorID AND T1.SaleType = 'P'	
+		]]>	
+		</isEmpty>
+								
+		
+    </sql>
+    
+    <sql id="SaleCount">
+    	<isNotEmpty property="countModel">
+			<isEqual property="countModel" compareValue="0">			
+				<include refid="BINOLPTRPS15.CouPrtCount" />
+			</isEqual>
+			<isEqual property="countModel" compareValue="1">			
+				<include refid="BINOLPTRPS15.CouCount" />
+			</isEqual>
+			<isEqual property="countModel" compareValue="2">			
+				<include refid="BINOLPTRPS15.PrtCount" />
+			</isEqual>
+		</isNotEmpty>
+		<isEmpty property="countModel">
+			<include refid="BINOLPTRPS15.CouCount" />
+		</isEmpty>
+    </sql>
+    
+    <!-- 查询销售统计总数 -->
+	<select id="getSaleCountInfoCount" parameterClass="java.util.HashMap" resultClass="java.lang.Integer" remapResults="true">
+		<![CDATA[
+			SELECT	COUNT(1) AS count FROM (
+		]]>	
+		<include refid="BINOLPTRPS15.SaleCount" />
+		<![CDATA[	
+			) SORT_T1
+		]]>	
+    </select>
+    
+    <!-- 查询销售统计信息 -->
+	<select id="getSaleCountInfo" parameterClass="java.util.HashMap" resultClass="java.util.HashMap" remapResults="true">
+		<![CDATA[
+			SELECT
+				COUNT(1) AS count,
+				ISNULL(SUM(T.amount),0) AS amount,
+				ISNULL(SUM(T.quantity),0) AS quantity
+			FROM (
+		]]>	
+			<include refid="BINOLPTRPS15.SaleCount" />
+		<![CDATA[	
+			) T
+		]]>	
+    </select>
+    
+    <!-- 查询销售统计信息 -->
+	<select id="getSaleCountInfoList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap" remapResults="true">
+		<include refid="BINOLCMINC99.pageheader" />
+		<include refid="BINOLPTRPS15.SaleCount" />
+		<include refid="BINOLCMINC99.pagefooter" />
+    </select>
+    
+    <!-- 查询指定月份是否存在统计信息 -->
+	<select id="getSaleCountHistoryID" parameterClass="java.util.HashMap" resultClass="java.lang.String">
+		<![CDATA[
+			SELECT 
+				TOP 1 A.BIN_SaleCountHistoryID
+			FROM 
+				Sale.BIN_SaleCountHistory A WITH (NOLOCK)
+			WHERE
+		]]>
+		<isNotEmpty property="saleYearMonthDateFlag">
+			<isEqual property="saleYearMonthDateFlag" compareValue="1">			
+			<![CDATA[A.SaleYearMonth = #saleYearMonth# AND]]>
+			</isEqual>
+			<isEqual property="saleYearMonthDateFlag" compareValue="2">			
+			<![CDATA[
+				A.SaleYearMonth >= #minSaleYearMonth# AND
+				A.SaleYearMonth <= #maxSaleYearMonth# AND
+			]]>
+			</isEqual>
+		</isNotEmpty>
+		<![CDATA[	
+				A.BIN_OrganizationInfoID = #organizationInfoId#
+		]]>
+			<isNotEmpty prepend="AND" property="brandInfoId">
+				A.BIN_BrandInfoID = #brandInfoId#
+			</isNotEmpty>
+    </select>
+    
+    <!-- 查询未进行销售统计且为销售记录修改的记录数 -->
+	<select id="getModifiedSaleCount" parameterClass="java.util.HashMap" resultClass="java.lang.Integer">
+		<![CDATA[
+			SELECT 
+				COUNT(1)
+			FROM
+				Sale.BIN_SaleRecord A WITH (NOLOCK)
+				JOIN Sale.BIN_SaleRecordDetail B WITH (NOLOCK) ON A.BIN_SaleRecordID=B.BIN_SaleRecordID
+			WHERE
+				A.SaleDate >= #minDateValue# AND
+				A.SaleDate <= #maxDateValue# AND
+				A.BIN_OrganizationInfoID = #organizationInfoId# 
+		]]>
+				<isNotEmpty property="bigCateInfo">
+					<![CDATA[AND EXISTS ( SELECT 1 FROM (]]><include refid="BINOLPTRPS15.getProductIdSql" />
+					<![CDATA[) AS M10 WHERE M10.BIN_ProductVendorID=B.BIN_ProductVendorID) ]]>
+				</isNotEmpty>
+			<isNotEmpty property="brandInfoId">
+				AND A.BIN_BrandInfoID = #brandInfoId# 
+			</isNotEmpty>
+			<isNotEmpty property="selPrtVendorIdArr">
+				AND B.BIN_ProductVendorID IN
+				<iterate conjunction="," open="(" close=")" property="selPrtVendorIdArr">
+					#selPrtVendorIdArr[]#
+				</iterate>
+			</isNotEmpty>
+		<![CDATA[ AND EXISTS ( ]]><include refid="BINOLCMINC99.getDepartList" />
+		<![CDATA[ AND A.BIN_OrganizationID = A99.BIN_OrganizationID) ]]> 
+		<isNotEmpty property="channelIdClude">
+			<isNotEmpty property="excludeFlag">
+				<![CDATA[AND NOT EXISTS(
+						SELECT 
+							1 
+						FROM
+							Basis.BIN_CounterInfo CNT WITH(NOLOCK)
+						WHERE 
+							CNT.BIN_ChannelID=#channelIdClude# AND 
+							A.BIN_OrganizationID=CNT.BIN_OrganizationID
+					)
+				]]>
+			</isNotEmpty>
+			<isEmpty property="excludeFlag">
+				<![CDATA[AND EXISTS(
+						SELECT 
+							1 
+						FROM
+							Basis.BIN_CounterInfo CNT WITH(NOLOCK)
+						WHERE 
+							CNT.BIN_ChannelID=#channelIdClude# AND 
+							A.BIN_OrganizationID=CNT.BIN_OrganizationID
+					)
+				]]>
+			</isEmpty>
+		</isNotEmpty>	
+		<![CDATA[ AND
+				A.ModifiedTimes > 0 AND
+				A.SaleCountFlag IS NULL AND
+				A.ValidFlag='1'
+		]]>
+    </select>
+    
+    <!-- 根据指定日期取得其所处财务年的最小最大自然日及对应的财务年  -->
+	<select id="getFiscalYearAndMinMaxDate" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+		<![CDATA[
+			SELECT
+				MIN(A.FiscalYear) AS fiscalYear,
+				MIN(A.DateValue) AS minYearDateValue,
+				MAX(A.DateValue) AS maxYearDateValue  
+			FROM 
+				Tools.BIN_Calendar A WITH (NOLOCK), Tools.BIN_Calendar B WITH (NOLOCK)
+			WHERE 
+				A.FiscalYear = B.FiscalYear
+				AND A.FiscalYear = B.FiscalYear
+				AND A.BIN_OrganizationInfoID = B.BIN_OrganizationInfoID
+				AND A.BIN_OrganizationInfoID = #organizationInfoId#
+				AND B.DateValue = #dateValue#
+		]]>		
+    </select>
+ </sqlMap>

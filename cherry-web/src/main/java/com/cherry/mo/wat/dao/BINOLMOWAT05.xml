@@ -1,0 +1,373 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sqlMap PUBLIC "-//iBATIS.com//DTD SQL Map 2.0//EN" "http://ibatis.apache.org/dtd/sql-map-2.dtd">
+<sqlMap namespace="BINOLMOWAT05">
+    <!-- 考勤信息查询sql文  -->
+    <sql id="attendanceInfoQuery">
+        <![CDATA[
+            SELECT
+                A.BIN_BASAttendanceID AS basAttendanceId,
+                A.UdiskSN AS udiskSN,
+				convert(varchar(30),A.ArriveTime,120) AS arriveTime,
+				convert(varchar(30),A.LeaveTime,120) AS leaveTime,
+				CASE when A.ArriveTime IS NULL THEN 60
+					WHEN A.LeaveTime IS NULL then 60
+					ELSE DATEDIFF(MINUTE,A.ArriveTime,A.LeaveTime) END AS stayMinutes,
+				B.EmployeeCode AS employeeCode,
+				X.RegionNameChinese AS region,
+				Y.RegionNameChinese AS province,
+				Z.RegionNameChinese AS city,
+		]]>
+		<dynamic>
+	        <isNotEmpty property="language">
+	            <isEqual property="language" compareValue="en_US">
+	                <![CDATA[
+					   B.EmployeeNameForeign AS employeeName,
+					   '('+C.DepartCode+')'+C.NameForeign AS departName,
+					   D.CategoryNameForeign AS categoryName
+					]]>
+	            </isEqual>
+	            <isEqual property="language" compareValue="zh_CN">
+	                <![CDATA[
+					   B.EmployeeName AS employeeName,
+					   '('+C.DepartCode+')'+C.DepartName AS departName,
+					   D.CategoryName AS categoryName
+					]]>
+	            </isEqual>
+	        </isNotEmpty>
+	        <isEmpty property="language">
+	                <![CDATA[
+					   B.EmployeeName AS employeeName,
+					   '('+C.DepartCode+')'+C.DepartName AS departName,
+					   D.CategoryName AS categoryName
+					]]>
+	        </isEmpty>
+        </dynamic>
+		<![CDATA[
+			FROM
+                Monitor.BIN_BASAttendance A
+	            LEFT JOIN Basis.BIN_Employee B ON A.BIN_EmployeeID = B.BIN_EmployeeID
+	            LEFT JOIN Basis.BIN_Organization C ON A.BIN_OrganizationID = C.BIN_OrganizationID
+	            LEFT JOIN Basis.BIN_Region X ON C.BIN_RegionID = X.BIN_RegionID
+				LEFT JOIN Basis.BIN_Region Y ON C.BIN_ProvinceID = Y.BIN_RegionID
+				LEFT JOIN Basis.BIN_Region Z ON C.BIN_CityID = Z.BIN_RegionID
+				LEFT JOIN Privilege.BIN_PositionCategory D ON B.BIN_PositionCategoryID = D.BIN_PositionCategoryID
+		]]>
+		<isNotEmpty property="privilegeFlag">
+			<isEqual property="privilegeFlag" compareValue="1">     
+				<![CDATA[JOIN (]]>
+				<include refid="BINOLCMINC99.employeePrivilegeSql" />
+				<![CDATA[) A99 
+						ON A.BIN_EmployeeID=A99.BIN_SubEmployeeID
+				]]>
+			</isEqual>
+		</isNotEmpty>
+		<![CDATA[
+			WHERE
+                A.ValidFlag = '1'
+                AND A.BIN_OrganizationInfoID = #organizationInfoId#
+        ]]>
+        <dynamic>
+	        <isNotEmpty prepend="AND" property="brandInfoId">
+	            <![CDATA[A.BIN_BrandInfoID=#brandInfoId#]]>
+	        </isNotEmpty>
+	        <isNotEmpty prepend="AND" property="startAttendanceDate">
+	            <![CDATA[A.AttendanceDate>=#startAttendanceDate#]]>
+	        </isNotEmpty>
+	        <isNotEmpty prepend="AND" property="endAttendanceDate">
+	            <![CDATA[A.AttendanceDate<=#endAttendanceDate#]]>
+	        </isNotEmpty>
+	        
+	        <isEmpty property="flag">
+	            <isNotEmpty prepend="AND" property="employeeId">
+	                <![CDATA[A.BIN_EmployeeID=#employeeId#]]>
+	            </isNotEmpty>
+		        <![CDATA[AND EXISTS ( ]]>
+		        <include refid="BINOLCMINC99.getDepartList" />
+		        <![CDATA[
+		            	AND A.BIN_OrganizationID = A99.BIN_OrganizationID)
+		        ]]>
+	        </isEmpty>
+	        <!-- 主页导出统计信息的考勤明细 -->
+	        <isNotEmpty property="flag">
+	        	<!-- 默认为不包含测试柜台 -->	
+				<isEmpty property="testFlag" prepend="AND">
+					<![CDATA[
+						NOT EXISTS(
+							SELECT 1
+							FROM 
+								Basis.BIN_Organization ORG
+							WHERE 
+								A.BIN_OrganizationID=ORG.BIN_OrganizationID
+								AND ORG.TestType='1'
+						)
+					]]>
+				</isEmpty>
+				<!-- 默认为不包含停用柜台 -->	
+				<isEmpty property="validFlag" prepend="AND">
+					<![CDATA[
+						NOT EXISTS(
+							SELECT 1
+							FROM 
+								Basis.BIN_Organization ORGV
+							WHERE 
+								A.BIN_OrganizationID=ORGV.BIN_OrganizationID
+								AND ORGV.ValidFlag='0'
+						)
+					]]>
+				</isEmpty>
+	            <isNotEmpty prepend="AND" property="udiskSN">
+	                <![CDATA[A.UdiskSN LIKE '%' + #udiskSN# + '%']]>
+	            </isNotEmpty>
+	            <isNotEmpty prepend="AND" property="positionCategoryId">
+	                <![CDATA[B.BIN_PositionCategoryID=#positionCategoryId#]]>
+	            </isNotEmpty>
+				<isNotEmpty prepend="AND" property="employeeName">
+	                <![CDATA[B.EmployeeName LIKE '%' + #employeeName# + '%']]>
+	            </isNotEmpty>
+	            
+	        </isNotEmpty>
+        </dynamic>
+    </sql>
+    
+    <!-- 取得考勤信息查询总数  -->
+    <select id="getAttendanceInfoCount" parameterClass="java.util.HashMap" resultClass="java.lang.Integer">
+        <![CDATA[
+            SELECT COUNT(SORT_T1.basAttendanceId) AS count FROM (
+        ]]>
+        <include refid="BINOLMOWAT05.attendanceInfoQuery" />
+        <![CDATA[
+            )SORT_T1
+        ]]>
+    </select>
+    
+    <!-- 取得考勤信息List  -->
+    <select id="getAttendanceInfoList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+        <include refid="BINOLCMINC99.pageheader" />
+        <include refid="BINOLMOWAT05.attendanceInfoQuery" />
+        <include refid="BINOLCMINC99.pagefooter" />
+    </select>
+    
+    <!-- ========================主页面改用统计模式【有人员权限控制】=================================== -->
+    
+    <!-- 考勤信息统计查询sql文 -->
+    <sql id="attendanceCountQuery">
+	    <![CDATA[
+	    	SELECT
+	    		#startAttendanceDate# AS startAttendanceDate,
+	    		#endAttendanceDate# AS endAttendanceDate,
+	    		#brandInfoId# AS brandInfoId,
+				A.UdiskSN AS udiskSN,
+				A.BIN_EmployeeID AS employeeId,
+				A.BIN_OrganizationID,
+				B.EmployeeName AS employeeName,
+				B.EmployeeCode AS employeeCode,
+				D.CategoryName AS categoryName,
+				COUNT(A.ArriveTime) AS arrCntSum,
+				SUM(A.stayMinutes) AS stayMinutes
+			FROM 
+				(SELECT *,
+					CASE when AA.ArriveTime IS NULL THEN 60
+					WHEN AA.LeaveTime IS NULL then 60
+					ELSE DATEDIFF(MINUTE,AA.ArriveTime,AA.LeaveTime) END AS stayMinutes
+				FROM
+					Monitor.BIN_BASAttendance AA) A
+				LEFT JOIN Basis.BIN_Employee B
+				ON A.BIN_EmployeeID = B.BIN_EmployeeID
+				LEFT JOIN Privilege.BIN_PositionCategory D
+				ON B.BIN_PositionCategoryID = D.BIN_PositionCategoryID
+		]]>
+		<isNotEmpty property="privilegeFlag">
+			<isEqual property="privilegeFlag" compareValue="1">     
+				<![CDATA[JOIN (]]>
+				<include refid="BINOLCMINC99.employeePrivilegeSql" />
+				<![CDATA[) A99 
+						ON A.BIN_EmployeeID=A99.BIN_SubEmployeeID
+				]]>
+			</isEqual>
+		</isNotEmpty>
+		<![CDATA[
+			WHERE
+	            A.ValidFlag = '1'
+	            AND A.BIN_OrganizationInfoID = #organizationInfoId#
+	    ]]>
+    	<dynamic>
+    		<!-- 默认为不包含测试柜台 -->	
+			<isEmpty property="testFlag" prepend="AND">
+				<![CDATA[
+					NOT EXISTS(
+						SELECT 1
+						FROM 
+							Basis.BIN_Organization ORG
+						WHERE 
+							A.BIN_OrganizationID=ORG.BIN_OrganizationID
+							AND ORG.TestType='1'
+					)
+				]]>
+			</isEmpty>
+			<!-- 默认为不包含停用柜台 -->	
+			<isEmpty property="validFlag" prepend="AND">
+				<![CDATA[
+					NOT EXISTS(
+						SELECT 1
+						FROM 
+							Basis.BIN_Organization ORGV
+						WHERE 
+							A.BIN_OrganizationID=ORGV.BIN_OrganizationID
+							AND ORGV.ValidFlag='0'
+					)
+				]]>
+			</isEmpty>
+            <isNotEmpty prepend="AND" property="brandInfoId">
+                <![CDATA[A.BIN_BrandInfoID=#brandInfoId#]]>
+            </isNotEmpty>
+            <isNotEmpty prepend="AND" property="udiskSN">
+                <![CDATA[A.UdiskSN LIKE '%' + #udiskSN# + '%']]>
+            </isNotEmpty>
+            <isNotEmpty prepend="AND" property="positionCategoryId">
+                <![CDATA[B.BIN_PositionCategoryID=#positionCategoryId#]]>
+            </isNotEmpty>
+			<isNotEmpty prepend="AND" property="employeeName">
+                <![CDATA[B.EmployeeName LIKE '%' + #employeeName# + '%']]>
+            </isNotEmpty>
+            <isNotEmpty prepend="AND" property="startAttendanceDate">
+                <![CDATA[A.AttendanceDate>=#startAttendanceDate#]]>
+            </isNotEmpty>
+            <isNotEmpty prepend="AND" property="endAttendanceDate">
+                <![CDATA[A.AttendanceDate<=#endAttendanceDate#]]>
+            </isNotEmpty>
+        </dynamic>
+        <![CDATA[
+			GROUP BY 
+				A.UdiskSN,
+				A.BIN_EmployeeID,
+				A.BIN_OrganizationID,
+				B.EmployeeName,
+				B.EmployeeCode,
+				D.CategoryName
+        ]]>
+    </sql>
+    
+    <!-- 按大区、省份、城市进行统计 -->
+    <sql id="attendanceCountFromRegionQuery">
+    	 <![CDATA[
+    	 	SELECT 
+				X.RegionNameChinese as region,
+				Y.RegionNameChinese as province,
+				Z.RegionNameChinese AS city,
+				T0.startAttendanceDate,
+				T0.endAttendanceDate,
+				T0.brandInfoId,
+				T0.udiskSN,
+				T0.employeeId,
+				T0.employeeName,
+				T0.employeeCode,
+				T0.categoryName,
+				COUNT(T0.BIN_OrganizationID) AS arrCntCount,
+				SUM(T0.stayMinutes) as stayMinutesSum,
+				SUM(T0.arrCntSum) as arrCntSum
+			FROM
+				Basis.BIN_Organization C
+				LEFT JOIN Basis.BIN_Region X ON C.BIN_RegionID = X.BIN_RegionID
+				LEFT JOIN Basis.BIN_Region Y ON C.BIN_ProvinceID = Y.BIN_RegionID
+				LEFT JOIN Basis.BIN_Region Z ON C.BIN_CityID = Z.BIN_RegionID
+				JOIN(
+    	 ]]>
+    	 <include refid="BINOLMOWAT05.attendanceCountQuery" />
+    	 <![CDATA[) T0
+				ON(C.BIN_OrganizationID=T0.BIN_OrganizationID)
+    	 	GROUP BY 
+				X.RegionNameChinese,
+				Y.RegionNameChinese,
+				Z.RegionNameChinese,
+				T0.startAttendanceDate,
+				T0.endAttendanceDate,
+				T0.brandInfoId,
+				T0.udiskSN,
+				T0.employeeId,
+				T0.employeeName,
+				T0.employeeCode,
+				T0.categoryName
+    	 ]]>
+    </sql>
+    
+    <!-- 取得考勤统计查询总数  -->
+    <select id="getAttendanceCountNum" parameterClass="java.util.HashMap" resultClass="java.lang.Integer">
+        <![CDATA[
+            SELECT COUNT(1) AS count FROM (
+        ]]>
+        <include refid="BINOLMOWAT05.attendanceCountFromRegionQuery" />
+        <![CDATA[
+            )SORT_T1
+        ]]>
+    </select>
+    
+    <!-- 取得考勤统计信息List  -->
+    <select id="getAttendanceCountList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+        <include refid="BINOLCMINC99.pageheader" />
+        <include refid="BINOLMOWAT05.attendanceCountFromRegionQuery" />
+        <include refid="BINOLCMINC99.pagefooter" />
+    </select>
+    
+    <!-- 取得指定员工的考勤明细的主信息  -->
+    <select id="getEmployeeInfoById" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+        <![CDATA[
+	        SELECT 
+	        	A.EmployeeName AS employeeName,
+	        	A.EmployeeCode AS employeeCode,
+				CASE ISNULL(A.EmployeeCode,'') 
+					WHEN '' THEN A.EmployeeName 
+					ELSE '('+A.EmployeeCode+')' + A.EmployeeName END AS employeeCodeName,
+				B.CategoryName AS categoryName
+	        FROM
+	        	Basis.BIN_Employee A
+				LEFT JOIN Privilege.BIN_PositionCategory B
+				ON A.BIN_PositionCategoryID = B.BIN_PositionCategoryID
+			WHERE
+				A.BIN_EmployeeID = #employeeId#
+		]]>
+    </select>
+	
+	<!-- 取得岗位类别信息 -->
+    <select id="getPositionCategoryList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+        <![CDATA[
+            SELECT 
+                BIN_PositionCategoryID AS positionCategoryId,
+                CategoryCode AS categoryCode,
+        ]]>
+        <isNotEmpty property="language">
+            <isEqual property="language" compareValue="en_US">
+                <![CDATA[CategoryNameForeign AS categoryName]]>
+            </isEqual>
+            <isEqual property="language" compareValue="zh_CN">
+                <![CDATA[CategoryName AS categoryName]]>
+            </isEqual>
+        </isNotEmpty>
+        <isEmpty property="language">
+            <![CDATA[CategoryName AS categoryName]]>
+        </isEmpty>
+        <![CDATA[
+            FROM 
+                Privilege.BIN_PositionCategory
+            WHERE
+                BIN_OrganizationInfoID = #organizationInfoId#
+				AND ValidFlag = '1'
+        ]]>
+		<dynamic>
+            <isNotEmpty prepend="AND" property="brandInfoId">
+                <![CDATA[BIN_BrandInfoID=#brandInfoId#]]>
+            </isNotEmpty>
+		</dynamic>
+    </select>
+	
+    <!-- 取得考勤信息(Excel)  -->
+    <select id="getAttendanceInfoListExcel" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+        <include refid="BINOLMOWAT05.attendanceInfoQuery" />
+		<![CDATA[ORDER BY A.BIN_BASAttendanceID]]>
+    </select>
+    
+     <!-- 取得考勤统计信息(Excel)根据区域划分进行统计  -->
+    <select id="getAttendanceCountListExcel" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+        <include refid="BINOLMOWAT05.attendanceCountFromRegionQuery" />
+		<![CDATA[ORDER BY T0.employeeName]]>
+    </select>
+</sqlMap>

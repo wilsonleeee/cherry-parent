@@ -1,0 +1,137 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sqlMap PUBLIC "-//iBATIS.com//DTD SQL Map 2.0//EN" "http://ibatis.apache.org/dtd/sql-map-2.dtd">
+<sqlMap namespace="BINOLMBVIS03">
+
+	<sql id="queryVisitCategory">
+		<![CDATA[
+			SELECT 
+				A.BIN_VisitCategoryID AS visitCategoryId,
+				A.VisitTypeCode AS visitTypeCode,
+				A.VisitTypeName AS visitTypeName,
+				convert(varchar(30),A.UpdateTime,121) AS modifyTime,
+				A.ModifyCount AS modifyCount,
+				A.ValidFlag AS validFlag
+			FROM
+				Members.BIN_VisitCategory A
+			WHERE
+				A.BIN_OrganizationInfoID = #organizationInfoId# AND
+				A.BIN_BrandInfoID = #brandInfoId#
+		]]>
+			<isNotEmpty prepend="AND" property="visitTypeCode">
+				A.VisitTypeCode LIKE '%'+#visitTypeCode#+'%'
+			</isNotEmpty>
+			<isNotEmpty prepend="AND" property="visitTypeName">
+				A.VisitTypeName LIKE '%'+#visitTypeName#+'%'
+			</isNotEmpty>
+			<isNotEmpty prepend="AND" property="validFlag">
+				A.ValidFlag = #validFlag#
+			</isNotEmpty>
+	</sql>
+	
+	<!-- 取得会员回访类型总数  -->
+    <select id="getVisitCategoryCount" parameterClass="java.util.HashMap" resultClass="java.lang.Integer">
+    	<![CDATA[
+			SELECT COUNT(1) AS count
+			FROM (]]><include refid="BINOLMBVIS03.queryVisitCategory" /><![CDATA[) T
+		]]>										
+    </select>
+	
+	<!-- 取得会员回访类型List  -->
+    <select id="getVisitCategoryList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+       	<include refid="BINOLCMINC99.pageheader" />
+		<include refid="BINOLMBVIS03.queryVisitCategory" />
+		<include refid="BINOLCMINC99.pagefooter" />
+    </select>
+    
+    <!-- 取得会员回访类型信息  -->
+    <select id="getVisitCategoryInfo" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+    	<![CDATA[
+			SELECT 
+				A.BIN_VisitCategoryID AS visitCategoryId,
+				A.VisitTypeCode AS visitTypeCode,
+				A.VisitTypeName AS visitTypeName,
+				A.VisitObjJson AS visitObjJson,
+				convert(varchar(30),A.UpdateTime,121) AS modifyTime,
+				A.ModifyCount AS modifyCount
+			FROM
+				Members.BIN_VisitCategory A
+			WHERE
+				A.BIN_VisitCategoryID = #visitCategoryId#
+		]]>										
+    </select>
+	
+	<!-- 添加会员回访类型 -->
+    <insert id="addVisitCategory" parameterClass="java.util.HashMap">
+    	<![CDATA[
+    		INSERT INTO Members.BIN_VisitCategory			
+			(					
+				BIN_OrganizationInfoID,				
+				BIN_BrandInfoID,				
+				VisitTypeCode,				
+				VisitTypeName,
+				VisitObjJson,
+		]]>
+				<include refid="BINOLCMINC99.insertKeySql" />		
+		<![CDATA[						
+			)					
+			VALUES					
+			(					
+				#organizationInfoId#,				
+				#brandInfoId#,				
+				#visitTypeCode#,				
+				#visitTypeName#,
+				#visitObjJson#,
+		]]>
+				<include refid="BINOLCMINC99.insertValueSql" />		
+		<![CDATA[							
+			)	
+    	]]>
+    </insert>
+    
+    <!-- 更新会员回访类型 -->
+    <update id="updateVisitCategory" parameterClass="java.util.HashMap">
+    	<![CDATA[
+			UPDATE Members.BIN_VisitCategory		
+			SET					
+				VisitTypeName = #visitTypeName#,			
+				VisitObjJson = #visitObjJson#,
+		]]>			
+				<include refid="BINOLCMINC99.updateSql" />		
+		<![CDATA[					
+			WHERE				
+				BIN_VisitCategoryID = #visitCategoryId# AND			
+				UpdateTime = #modifyTime# AND		
+				ModifyCount = #modifyCount#				
+		]]>
+    </update>
+    
+    <!-- 启用停用会员回访类型 -->
+    <update id="updVisitCategoryValid" parameterClass="java.util.HashMap">
+    	<![CDATA[
+			UPDATE Members.BIN_VisitCategory		
+			SET				
+				ValidFlag = #validFlag#,
+		]]>			
+				<include refid="BINOLCMINC99.updateSql" />		
+		<![CDATA[					
+			WHERE				
+				BIN_VisitCategoryID = #visitCategoryId# AND			
+				UpdateTime = #modifyTime# AND		
+				ModifyCount = #modifyCount#				
+		]]>
+    </update>
+    
+    <!-- 通过回访类型代码取得会员回访类型ID  -->
+    <select id="getVisitCategoryByCode" parameterClass="java.util.HashMap" resultClass="java.lang.String">
+    	<![CDATA[
+			SELECT 
+				A.BIN_VisitCategoryID AS visitCategoryId
+			FROM
+				Members.BIN_VisitCategory A
+			WHERE
+				A.BIN_OrganizationInfoID = #organizationInfoId# AND
+				A.BIN_BrandInfoID = #brandInfoId# AND
+				A.VisitTypeCode = #visitTypeCode#
+		]]>										
+    </select>
+</sqlMap>

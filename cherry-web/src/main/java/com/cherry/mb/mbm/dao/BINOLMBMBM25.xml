@@ -1,0 +1,302 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sqlMap PUBLIC "-//iBATIS.com//DTD SQL Map 2.0//EN" "http://ibatis.apache.org/dtd/sql-map-2.dtd">
+<sqlMap namespace="BINOLMBMBM25">
+ <!-- 会员卡号唯一验证 -->
+	<select id="getMemberInfoId" parameterClass="java.util.HashMap" resultClass="java.lang.String">
+		<![CDATA[
+			SELECT 
+				A.BIN_MemberInfoID
+        	FROM 
+        		Members.BIN_MemberInfo A WITH(NOLOCK) 
+        		JOIN Members.BIN_MemCardInfo B WITH(NOLOCK) 
+        		ON A.BIN_MemberInfoID = B.BIN_MemberInfoID
+            WHERE 
+				B.MemCode = #memberCode# AND
+				A.BIN_OrganizationInfoID = #organizationInfoId# AND
+				A.BIN_BrandInfoID = #brandInfoId#
+		]]>
+    </select>
+    <!-- 会员等级Id -->
+    <select id="getLevelId" parameterClass="java.util.HashMap" resultClass="java.lang.String">
+		<![CDATA[
+			SELECT 
+				A.BIN_MemberLevelID
+        	FROM 
+        		Members.BIN_MemberLevel A WITH(NOLOCK) 
+            WHERE 
+				A.LevelCode = #memberLevel# AND
+				A.BIN_OrganizationInfoID = #organizationInfoId# AND
+				A.BIN_BrandInfoID = #brandInfoId#
+		]]>
+    </select>
+   <!--取得导入明细表是否相同会员数据-->
+    <select id="getImpMemCount" parameterClass="java.util.HashMap" resultClass="java.lang.String">
+		<![CDATA[
+		SELECT 
+				COUNT(1)
+		 FROM
+		      Members.BIN_MemKeyAttrImportDetail
+		WHERE
+              MemberCode=#memberCode#
+	          AND(ResultFlag = '2' OR ResultFlag = '1')
+		]]>
+    </select>
+     <!-- 更新导入明细表，相同会员卡号不导入  -->
+	<update id="updateImportDetail" parameterClass="java.util.HashMap">
+	<![CDATA[
+	UPDATE Members.BIN_MemKeyAttrImportDetail 
+		     SET ResultFlag = '0',
+		         ImportResults = #importResults#
+		  FROM 
+			  (SELECT 
+			  		MemberCode AS TMemberCode
+			  FROM
+			  		Members.BIN_MemKeyAttrImportDetail
+			  WHERE
+			  		BIN_MemKeyAttrImportID = #keyAttrImportId#
+			  		AND LEN(MemberCode)>0
+			  GROUP BY MemberCode
+			  		HAVING COUNT(1) > 1
+		  ) T
+	  		  WHERE BIN_MemKeyAttrImportID = #keyAttrImportId#
+		  		    AND MemberCode = T.TMemberCode
+	]]>
+	</update> 
+	 <!-- 更新导入明细表SendFlag=1 -->
+	<update id="updateSendflag" parameterClass="java.util.HashMap">
+	<![CDATA[
+		  UPDATE Members.BIN_MemKeyAttrImportDetail 
+		     SET SendFlag = '1'
+	  	   WHERE 
+	  	        BIN_MemKeyAttrImportID = #keyAttrImportId# 
+		  		AND ResultFlag = '2'
+	]]>
+	</update> 
+	 <!-- 更新导入明细表ResultFlag=0 -->
+	<update id="updateResultFlag" parameterClass="java.util.HashMap">
+	<![CDATA[
+		  UPDATE Members.BIN_MemKeyAttrImportDetail 
+		     SET ResultFlag = '0',
+		     ImportResults = #importResults#
+	  	   WHERE 
+	  	        BIN_MemKeyAttrImportID = #keyAttrImportId# 
+	]]>
+	</update> 
+      <!--插入【会员关键属性导入主表】-->
+	<sql id="insertMemberImportSQL">
+        <![CDATA[
+            INSERT INTO Members.BIN_MemKeyAttImport(
+                BIN_OrganizationInfoID,
+			    BIN_BrandInfoID,
+			    SerialNo,
+			    ImportName,
+			    ImportTime,
+			    ImportReason,
+			    BIN_EmployeeID,
+			    ValidFlag,
+			    CreateTime,
+			    CreatedBy,
+			    CreatePGM,
+			    UpdateTime,
+			    UpdatedBy,
+			    UpdatePGM,
+			    ModifyCount,
+			    BIN_MemberClubID
+            )VALUES(
+                #organizationInfoId#,
+                #brandInfoId#,
+                #billNo#,
+                #importName#,
+      			#importTime#,
+      			#importReason#,
+      			#employeeId#,
+                '1',
+                GETDATE(),
+                #CreatedBy#,
+                #CreatePGM#,
+                GETDATE(),
+                #UpdatedBy#,
+                #UpdatePGM#,
+                '0',
+                #memberClubId#
+            )
+        ]]>
+	</sql>
+    <insert id="insertMemberImport" parameterClass="java.util.HashMap">
+        <selectKey resultClass="java.lang.Integer" type="post" keyProperty="BIN_MemPointImportID" >
+            <include refid="BINOLMBMBM25.insertMemberImportSQL" />
+            <![CDATA[SELECT SCOPE_IDENTITY() AS value]]>
+        </selectKey>
+    </insert>
+    <!--插入【会员关键属性导入明细表】-->
+	<insert id="insertMemberImportDetail" parameterClass="java.util.HashMap">
+	<![CDATA[
+			INSERT INTO Members.BIN_MemKeyAttrImportDetail(
+			  BIN_MemKeyAttrImportID,
+			  MemberCode,
+      		  MemberName,
+      		  MemberLevel,
+      		  JoinDate,
+      		  CurBtimes,
+			  ResultFlag,
+			  ImportResults,
+			  SendFlag,
+			  ValidFlag,
+			  CreateTime,
+			  CreatedBy,
+			  CreatePGM,
+			  UpdateTime,
+			  UpdatedBy,
+			  UpdatePGM,
+			  ModifyCount
+			)VALUES(
+			  #keyAttrImportId#,
+			  #memberCode#,
+			  #memberName#,
+			  #memberLevel#,
+      		  #joinDate#,
+      		  #curBtimes#,
+			  #resultFlag#,
+			  #importResults#,
+			  #sendFlag#,
+			  '1',
+			  GETDATE(),
+			  #CreatedBy#,
+			  #CreatePGM#,
+			  GETDATE(),
+			  #UpdatedBy#,
+			  #UpdatePGM#,
+			  '0'
+			)
+	]]>
+    </insert>
+    <!-- 查询会员等级List -->
+	<select id="getLevelList" parameterClass="java.util.HashMap" resultClass="java.lang.String">
+		<![CDATA[
+			SELECT
+				A.LevelCode AS levelCode
+			FROM
+				Members.BIN_MemberLevel A
+			WHERE
+				A.BIN_BrandInfoID = #brandInfoId#
+				AND A.ToDate >= #busDate#
+				AND A.ValidFlag = '1'
+		]]>	
+		<isNotEmpty property="memberClubId">	
+		<![CDATA[
+			AND A.BIN_MemberClubID = #memberClubId#
+			]]>
+		</isNotEmpty>
+    </select>
+     <!--取得成功的会员关键属性List-->
+     <select id="getImportSucList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+     	<include refid="BINOLCMINC99.pageheader" />
+    	<![CDATA[
+	    	SELECT
+	    		   BIN_MemKeyAttrImportID,
+			       MemberCode AS memberCode,
+      			   MemberName AS memberName,
+                   MemberLevel AS memberLevel,
+                   JoinDate AS joinDate,
+                   CurBtimes AS curBtimes
+  			FROM             
+  				  Members.BIN_MemKeyAttrImportDetail
+  			WHERE 
+  				  BIN_MemKeyAttrImportID=#keyAttrImportId# AND
+  				  SendFlag ='1'
+    	]]>
+    	<include refid="BINOLCMINC99.pagefooter" />
+    </select>
+    
+    <!-- 更新导入明细表  -->
+	<update id="updateMemImportDetail" parameterClass="java.util.HashMap">
+       <![CDATA[
+         UPDATE Members.BIN_MemKeyAttrImportDetail
+		     SET   
+		]]>
+		     <isNotEmpty  property="errorFlag">	
+			 <![CDATA[	
+			 		ResultFlag = '0',
+   		        	ImportResults=#importResults#,
+   		        ]]>
+			</isNotEmpty> 
+		      <isNotEmpty  property="successFlag">	
+				 <![CDATA[	
+			 		ResultFlag = '1',
+   		        	ImportResults=#importResults#,
+   		        ]]>
+			</isNotEmpty>
+	  	    <include refid="BINOLCMINC99.updateSql" />								
+	      <![CDATA[
+	      	WHERE  MemberCode = #memberCode#
+		 	  AND ResultFlag='2'
+		  ]]>
+	</update> 
+	 <!-- 通过会员卡号查询会员信息 -->
+	<select id="getMemberInfoByMemCode" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+		<![CDATA[
+			SELECT 
+				A.BIN_MemberInfoID AS memberInfoId,
+				A.MemInfoRegFlg AS memInfoRegFlg,
+				A.MemberLevel AS oldLevelId,
+				A.JoinDate AS oldJoinDate,
+				C.LevelName AS levelName,
+				C.LevelCode AS oldLevelCode,
+				D.Btimes AS oldBtimes,
+				CONVERT(varchar(30),A.UpdateTime,121) AS memInfoUdTime,
+				A.ModifyCount AS memInfoMdCount,
+				CONVERT(varchar(30),D.UpdateTime,121) AS extInfoUdTime,
+				D.ModifyCount AS extInfoMdCount
+        	FROM 
+        		Members.BIN_MemberInfo A
+        		JOIN Members.BIN_MemCardInfo B ON A.BIN_MemberInfoID = B.BIN_MemberInfoID
+        		LEFT JOIN Members.BIN_MemberLevel C ON A.MemberLevel = C.BIN_MemberLevelID
+        		LEFT JOIN Members.BIN_MemberExtInfo D ON A.BIN_MemberInfoID= D.BIN_MemberInfoID AND D.ValidFlag = '1'
+            WHERE 
+				B.MemCode = #memberCode# AND
+				A.BIN_OrganizationInfoID = #organizationInfoId# AND
+				A.BIN_BrandInfoID = #brandInfoId#
+		]]>
+    </select>
+     <!-- 通过会员卡号查询会员信息 -->
+	<select id="getMemberClubInfoByMemCode" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+		<![CDATA[
+		SELECT TOP 1
+		]]>
+		<isEmpty property="NOCLUB">	
+		<![CDATA[	
+			A.BIN_MemberClubID AS memberClubId,
+			A.MemberLevel AS oldLevelId,
+			CONVERT(varchar(30),A.UpdateTime,121) AS clubInfoUdTime,
+			A.ModifyCount AS clubInfoMdCount,
+			C.LevelName AS levelName,
+			C.LevelCode AS oldLevelCode,
+		]]>
+		</isEmpty>
+		<![CDATA[
+			B.BIN_MemberInfoID AS memberInfoId,
+			B.MemInfoRegFlg AS memInfoRegFlg
+		FROM
+			Members.BIN_MemberInfo B JOIN
+			Members.BIN_MemCardInfo D ON(B.BIN_MemberInfoID = D.BIN_MemberInfoID) 
+		]]>
+		<isEmpty property="NOCLUB">	
+		<![CDATA[
+			LEFT JOIN Members.BIN_MemClubLevel A ON (D.BIN_MemberInfoID = A.BIN_MemberInfoID)
+			LEFT JOIN Members.BIN_MemberLevel C 
+			ON (A.MemberLevel = C.BIN_MemberLevelID AND C.ValidFlag = '1')
+			]]>
+		</isEmpty>
+		<![CDATA[	
+		WHERE 
+			D.MemCode = #memberCode# AND
+			B.BIN_OrganizationInfoID = #organizationInfoId# AND
+			B.BIN_BrandInfoID = #brandInfoId#
+		]]>
+		<isEmpty property="NOCLUB">	
+				 <![CDATA[
+			AND A.BIN_MemberClubID = #memberClubId#
+		]]>
+		</isEmpty>
+    </select>
+</sqlMap>

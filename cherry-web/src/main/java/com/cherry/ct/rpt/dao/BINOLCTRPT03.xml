@@ -1,0 +1,190 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sqlMap PUBLIC "-//iBATIS.com//DTD SQL Map 2.0//EN" "http://ibatis.apache.org/dtd/sql-map-2.dtd">
+<sqlMap namespace="BINOLCTRPT03">
+	<!-- 沟通明细记录查询sql  -->
+	<sql id="msgDetailQuery">
+		<![CDATA[
+			SELECT 
+				ts.BIN_SmsID as smsId,
+				ts.PlanCode as planCode,
+				tp.PlanName as planName,
+				ts.BIN_MessageCode as messageCode,
+				ts.CustomerSysID as memberInfoId,
+				tb.MemCode as memCode,
+				tm.Name as memName,
+				tm.JoinDate as joinDate,
+				tm.BirthDay as birthDay,
+				tm.CounterCodeBelong as counterCode,
+				tc.CounterNameIF as counterName,
+				ts.Mobilephone as mobilephone,
+				ts.Message as message,
+				ts.SendTime as sendTime,
+				ts.CouponCode as couponCode,
+				tn.RegionNameChinese as rsm,
+				tg1.DepartName as amm,
+				tl.RunType as runType 
+			FROM 
+				Communication.BIN_SmsSendDetail as ts with(nolock) 
+				Left join Members.BIN_MemberInfo as tm with(nolock) on cast(ts.CustomerSysID as bigint)=tm.BIN_MemberInfoID 
+				Left join Members.BIN_MemCardInfo as tb with(nolock) on cast(ts.CustomerSysID as bigint)=tb.BIN_MemberInfoID and tb.CardValidFlag=1 
+				Left join Basis.BIN_CounterInfo as tc with(nolock) on tm.CounterCodeBelong=tc.CounterCode 
+				Left join Basis.BIN_Organization as tg with(nolock) on tg.BIN_OrganizationID = tc.BIN_OrganizationID
+				Left join Basis.BIN_Region as tn with(nolock) on tg.BIN_RegionID = tn.BIN_RegionID 
+				Left join Basis.BIN_Organization as tg1 with(nolock) on tg1.BIN_OrganizationID = tc.ResellerDepartID 
+				Inner join (
+					select tpl.BIN_OrganizationID,Bin_PlanCode,PlanName from Communication.BIN_Communicationplan as tpl with(nolock) 
+					]]>
+						<isNotEmpty property="privilegeFlag">
+						<isEqual property="privilegeFlag" compareValue="1">			
+						<![CDATA[			
+							inner join (]]><include refid="BINOLCMINC99.departPrivilegeSql" /><![CDATA[) A99 
+							on tpl.BIN_OrganizationID = A99.BIN_OrganizationID
+						]]>
+						</isEqual>
+						</isNotEmpty>
+					<![CDATA[
+					union 
+					select null as BIN_OrganizationID,EventTypeId as Bin_PlanCode,null as PlanName from Communication.BIN_CommEventSet with(nolock)
+					union 
+					select null as BIN_OrganizationID,'9' as Bin_PlanCode,null as PlanName 
+					union 
+					select null as BIN_OrganizationID,'10' as Bin_PlanCode,null as PlanName 
+					union 
+					select null as BIN_OrganizationID,'14' as Bin_PlanCode,null as PlanName 
+					union 
+					select null as BIN_OrganizationID,'99' as Bin_PlanCode,null as PlanName 
+					union 
+					select null as BIN_OrganizationID,'100' as Bin_PlanCode,null as PlanName 
+				) as tp on ts.PlanCode = tp.Bin_PlanCode 
+				left join (
+					select 
+						BatchID,BIN_CommunicationCode,CommType,RunType 
+					from 
+						Communication.BIN_CommRunLog with(nolock) 
+					where 
+						BIN_BrandInfoID = #brandInfoId# AND 
+						BIN_OrganizationInfoID = #organizationInfoId# 
+					]]>
+						<dynamic>
+						<!-- 参数中存在批次号查询条件时  -->
+						<isNotEmpty prepend="AND" property="batchId" >
+							BatchID = #batchId# 
+						</isNotEmpty>
+						<!-- 参数中存在计划编号  -->
+						<isNotEmpty prepend="AND" property="planCode" >
+							Bin_PlanCode = #planCode# 
+						</isNotEmpty>
+						<!-- 参数中存在沟通编号查询条件时  -->
+						<isNotEmpty prepend="AND" property="communicationCode" >
+							BIN_CommunicationCode = #communicationCode# 
+						</isNotEmpty>
+						<!-- 参数中存在发送信息开始时间时  -->
+						<isNotEmpty prepend="AND" property="sendBeginDate" >
+							<![CDATA[
+								RunBeginTime >= #sendBeginDate# 
+							]]>
+						</isNotEmpty>
+						<!-- 参数中存在发送信息截止时间时  -->
+						<isNotEmpty prepend="AND" property="sendEndDate" >
+							<![CDATA[
+								RunBeginTime <= #sendEndDate# 
+							]]>
+						</isNotEmpty>
+						</dynamic>
+					<![CDATA[
+					group by 
+						BatchID,BIN_CommunicationCode,CommType,RunType
+				) as tl on ts.BatchID = tl.BatchID and ts.BIN_CommunicationCode = tl.BIN_CommunicationCode 
+			WHERE 
+				ISNUMERIC(ts.CustomerSysID) = 1 AND 
+				ts.BIN_BrandInfoID = #brandInfoId# AND 
+				ts.BIN_OrganizationInfoID = #organizationInfoId# 
+		]]>
+		<dynamic>
+			<!-- 参数中存在批次号查询条件时  -->
+			<isNotEmpty prepend="AND" property="batchId" >
+				ts.BatchID = #batchId# 
+			</isNotEmpty>
+			<!-- 参数中存在沟通编号查询条件时  -->
+			<isNotEmpty prepend="AND" property="communicationCode" >
+				ts.BIN_CommunicationCode = #communicationCode# 
+			</isNotEmpty>
+			<!-- 参数中存在客户手机号查询条件时  -->
+			<isNotEmpty prepend="AND" property="mobilePhone" >
+				ts.Mobilephone = #mobilePhone# 
+			</isNotEmpty>
+			<!-- 参数中存在活动验证号查询条件时  -->
+			<isNotEmpty prepend="AND" property="couponCode" >
+				ts.CouponCode = #couponCode# 
+			</isNotEmpty>
+			<!-- 参数中存在会员卡号查询条件时  -->
+			<isNotEmpty prepend="AND" property="memCode" >
+				tb.MemCode = #memCode# 
+			</isNotEmpty>
+			<!-- 参数中存在会员所属柜台查询条件时  -->
+			<isNotEmpty prepend="AND" property="counterName" >
+				<![CDATA[
+					(tm.CounterCodeBelong like '%' + #counterName# + '%' OR 
+					tc.CounterNameIF like '%' + #counterName# + '%')
+				]]>
+			</isNotEmpty>
+			<!-- 参数中存在发送信息开始时间时  -->
+			<isNotEmpty prepend="AND" property="sendBeginDate" >
+				<![CDATA[
+					ts.SendTime >= #sendBeginDate# 
+				]]>
+			</isNotEmpty>
+			<!-- 参数中存在发送信息截止时间时  -->
+			<isNotEmpty prepend="AND" property="sendEndDate" >
+				<![CDATA[
+					ts.SendTime <= #sendEndDate# 
+				]]>
+			</isNotEmpty>
+			<!-- 参数中存在计划编号  -->
+			<isNotEmpty prepend="AND" property="planCode" >
+				ts.PlanCode = #planCode# 
+			</isNotEmpty>
+			<!-- 参数中存在会员所属柜台组织ID  -->
+			<isNotEmpty prepend="AND" property="organizationId" >
+				tg.BIN_OrganizationID = #organizationId#
+			</isNotEmpty>
+			<!-- 查询会员所属柜台为空 -->
+			<isNotEmpty prepend="AND" property="organizationNull" >
+				tg.BIN_OrganizationID is null
+			</isNotEmpty>
+			<!-- 参数中存在客户类型  -->
+			<isNotEmpty prepend="AND" property="customerType" >
+				ts.CustomerType = #customerType#
+			</isNotEmpty>
+			<!-- 参数中存在计划名称  -->
+			<isNotEmpty prepend="AND" property="planName" >
+				tp.PlanName like '%'+#planName#+'%' 
+			</isNotEmpty>
+			<!-- 参数中存在执行方式或沟通方式  -->
+			<isNotEmpty prepend="AND" property="commType" >
+				tl.CommType = #commType# 
+			</isNotEmpty>
+			<isNotEmpty prepend="AND" property="runType" >
+				tl.RunType = #runType# 
+			</isNotEmpty>
+		</dynamic>
+	</sql>
+	
+	<!-- 获取沟通事件运行记录总数  -->
+    <select id="getMsgDetailCount" parameterClass="java.util.HashMap" resultClass="java.lang.Integer">
+    	<![CDATA[
+			SELECT	COUNT(SORT_T1.smsId) AS count FROM (
+		]]>	
+		<include refid="BINOLCTRPT03.msgDetailQuery" />	
+		<![CDATA[	
+			)SORT_T1
+		]]>
+    </select>
+	
+	<!-- 获取沟通计划运行记录List -->
+    <select id="getMsgDetailList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+       	<include refid="BINOLCMINC99.pageheader" />
+		<include refid="BINOLCTRPT03.msgDetailQuery" />
+		<include refid="BINOLCMINC99.pagefooter" />
+    </select>
+</sqlMap>

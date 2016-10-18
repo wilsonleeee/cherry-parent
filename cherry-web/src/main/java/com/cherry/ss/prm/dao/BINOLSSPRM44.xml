@@ -1,0 +1,161 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sqlMap PUBLIC "-//iBATIS.com//DTD SQL Map 2.0//EN" "http://ibatis.apache.org/dtd/sql-map-2.dtd">
+<sqlMap namespace="BINOLSSPRM44">
+	
+	<!-- 收货单信息 -->
+	<resultMap id="BINOLSSPRM44.DeliverInfo" class="java.util.HashMap">
+		<result property="deliverRecNoIF" column="DeliverReceiveNoIF"/>						<!-- 收货单号 -->			
+		<result property="deliverRecNo" column="DeliverReceiveNo"/>							<!-- 序号 -->	
+		<result property="relevanceNo" column="RelevanceNo"/>								<!-- 关联单号 -->	
+		<result property="totalQuantity" column="TotalQuantity"/>							<!-- 总数量 -->	
+		<result property="totalAmount" column="TotalAmount"/>								<!-- 总金额 -->
+		<result property="verifiedFlag" column="VerifiedFlag"/>								<!-- 审核状态 -->
+		<result property="deliverDate" column="DeliverDate"/>								<!-- 收货日期 -->
+		<result property="stockInFlag" column="StockInFlag"/>								<!-- 入库状态 -->
+		<result property="reason" column="Reason"/>											<!-- 发货理由 -->
+		<result property="employeeName" column="EmployeeName"/>								<!-- 制单员 -->
+		<result property="departName" column="DepartName"/>									<!-- 发货部门 -->
+		<result property="inventoryName" column="InventoryName"/>							<!-- 收货仓库 -->
+		<result property="lgcInventoryName" column="LgcInventoryName"/>						<!-- 收货逻辑仓库 -->
+		<result property="departNameReceive" column="DepartNameReceive"/>					<!-- 接收部门 -->
+		<result property="tradeType" column="TradeType"/>									<!-- 业务类型 -->
+		<result property="organizationIDReceive" column="BIN_OrganizationIDReceive"/>       <!-- 收货部门 ID-->
+		<result property="ReceiveDepartAddress" column="ReceiveDepartAddress"/>         	<!-- 收货地址 -->
+	    <result property="WorkFlowID" column="WorkFlowID"/>      							<!-- WorkFlowID -->
+	</resultMap>
+	<!-- 取得收货单信息  -->
+    <select id="getDeliverInfo" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+       <![CDATA[
+			SELECT		
+				A.DeliverReceiveNoIF AS deliverRecNoIF,	
+				A.DeliverReceiveNo AS deliverRecNo,
+				A.RelevanceNo AS relevanceNo,																
+				A.TotalQuantity AS totalQuantity,																			
+				A.TotalAmount AS totalAmount,																			
+				A.VerifiedFlag AS verifiedFlag,																		
+				A.DeliverDate AS deliverDate,
+				A.StockInFlag AS stockInFlag,
+				A.Reason AS reason,
+				A.TradeType AS tradeType,
+				F.EmployeeName AS employeeName,
+				A.WorkFlowID AS WorkFlowID,
+				A.BIN_OrganizationIDReceive AS organizationIDReceive,
+				C.BIN_LogicInventoryInfoID AS lgcInventoryId,
+				H.CounterAddress AS ReceiveDepartAddress
+			]]>
+		<dynamic>
+		<isNotEmpty property="language">
+			<isEqual property="language" compareValue="en_US">
+			,'(' + B.DepartCode + ')' + B.NameForeign AS DepartName									
+			,D.DepotNameEN AS InventoryName
+			,'('+K.LogicInventoryCode+')'+ K.InventoryNameEN AS LgcInventoryName
+			,'(' + E.DepartCode + ')' + E.NameForeign AS DepartNameReceive
+			</isEqual>
+			<isEqual property="language" compareValue="zh_CN">	
+			,'(' + B.DepartCode + ')' + B.DepartName AS DepartName		
+			,'('+K.LogicInventoryCode+')' + K.InventoryNameCN AS LgcInventoryName					
+			,D.DepotNameCN AS InventoryName
+			,'(' + E.DepartCode + ')' + E.DepartName AS DepartNameReceive
+			</isEqual>								
+		</isNotEmpty>
+		<isEmpty property="language">
+			,'(' + B.DepartCode + ')' + B.DepartName AS DepartName
+			,'('+K.LogicInventoryCode+')' + K.InventoryNameCN AS LgcInventoryName		
+			,D.DepotNameCN AS InventoryName
+			,'(' + E.DepartCode + ')' + E.DepartName AS DepartNameReceive
+		</isEmpty>
+		</dynamic>
+		 <![CDATA[															
+			FROM																				
+				Inventory.BIN_PromotionDeliver A	
+				JOIN Inventory.BIN_PromotionDeliverDetail C
+				ON (A.BIN_PromotionDeliverID = C.BIN_PromotionDeliverID	AND
+					C.ValidFlag = '1')
+				LEFT JOIN Basis.BIN_Employee F																			
+				ON (A.BIN_EmployeeID = F.BIN_EmployeeID)
+				LEFT JOIN Basis.BIN_Organization B																
+				ON (A.BIN_OrganizationID = B.BIN_OrganizationID)																																
+				LEFT JOIN Basis.BIN_DepotInfo D
+				ON (C.BIN_InventoryInfoID = D.BIN_DepotInfoID)
+				LEFT JOIN Basis.BIN_Organization E
+				ON (A.BIN_OrganizationIDReceive = E.BIN_OrganizationID)
+				LEFT JOIN Basis.BIN_CounterInfo H
+				ON A.BIN_OrganizationIDReceive = H.BIN_OrganizationID
+				LEFT JOIN Basis.BIN_LogicInventory K
+				ON (C.BIN_LogicInventoryInfoID = K.BIN_LogicInventoryInfoID)
+			WHERE
+				A.BIN_PromotionDeliverID = #deliverId#
+				ORDER BY lgcInventoryId
+		]]>
+    </select>
+	
+	<!-- 收货单明细 -->
+	<resultMap id="BINOLSSPRM44.DeliverDetailList" class="java.util.HashMap">
+		<result property="quantity" column="Quantity"/>									<!-- 发货数量 -->	
+		<result property="price" column="Price"/>										<!-- 单价 -->	
+		<result property="detailAmount" column="DetailAmount"/>							<!-- 总金额 -->
+		<result property="reason" column="Reason"/>										<!-- 发货理由 -->
+		<result property="barCode" column="BarCode"/>									<!-- 促销品条码 -->
+		<result property="unitCode" column="UnitCode"/>									<!-- 厂商编码 -->
+		<result property="nameTotal" column="NameTotal"/>								<!-- 促销品名称 -->
+		<result property="packageName" column="PackageName"/>							<!-- 单位 -->
+	</resultMap>
+	<!-- 取得收货单明细信息 -->
+    <select id="getDeliverDetailList" parameterClass="java.util.HashMap" resultMap="BINOLSSPRM44.DeliverDetailList">
+    		<![CDATA[
+			SELECT																					
+				A.Quantity,																				
+				A.Price,																				
+				(A.Quantity * A.Price) AS DetailAmount,																				
+				A.Reason,																				
+				B.BarCode,																				
+				C.UnitCode
+			]]>
+		<dynamic>
+		<isNotEmpty property="language">
+			<isEqual property="language" compareValue="en_US">
+				,C.NameForeign AS NameTotal
+				,D.PackageNameForeign AS PackageName
+			</isEqual>
+			<isEqual property="language" compareValue="zh_CN">	
+				,C.NameTotal
+				,D.PackageName
+			</isEqual>								
+		</isNotEmpty>
+		<isEmpty property="language">
+				,C.NameTotal
+				,D.PackageName
+		</isEmpty>
+		</dynamic>
+		<![CDATA[
+			FROM																					
+				Inventory.BIN_PromotionDeliverDetail A																		
+				LEFT JOIN Basis.BIN_PromotionProductVendor B
+					JOIN Basis.BIN_PromotionProduct C
+					ON (B.BIN_PromotionProductID = C.BIN_PromotionProductID)
+					LEFT JOIN Basis.BIN_PackageType D
+					ON (C.ModuleCode = D.BIN_PackageTypeID)
+				ON (A.BIN_PromotionProductVendorID = B.BIN_PromotionProductVendorID)																																																
+			WHERE																					
+				A.BIN_PromotionDeliverID = #deliverId# AND
+				A.ValidFlag = '1'
+		]]>
+    </select>
+	
+    <!--取得收货部门地址-->
+    <select id="getReceiveDepartAddressList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+        <![CDATA[
+            SELECT
+                A.CounterAddress
+            FROM
+                Basis.BIN_CounterInfo A
+            LEFT JOIN Basis.BIN_Organization B
+                ON A.BIN_OrganizationID = B.BIN_OrganizationID
+            WHERE
+                A.BIN_OrganizationID = #organizationId#
+                AND A.BIN_BrandInfoID = #brandInfoId#
+                AND A.BIN_OrganizationInfoID = #organizationInfoId#
+                AND B.Type = '4'
+        ]]>
+    </select>
+</sqlMap>

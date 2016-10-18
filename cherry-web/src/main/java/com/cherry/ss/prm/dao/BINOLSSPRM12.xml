@@ -1,0 +1,74 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sqlMap PUBLIC "-//iBATIS.com//DTD SQL Map 2.0//EN" "http://ibatis.apache.org/dtd/sql-map-2.dtd">
+<sqlMap namespace="BINOLSSPRM12">
+	<!-- 查询直属上级类别名称 -->
+	<select id="getHigherCategoryName" parameterClass="java.util.HashMap" resultClass="java.lang.String" >
+		<![CDATA[
+			SELECT
+		]]>
+		<dynamic>
+		<isNotEmpty property="language">
+			<isEqual property="language" compareValue="en_US">
+			ItemClassNameForeign AS ItemClassName
+			</isEqual>
+			<isEqual property="language" compareValue="zh_CN">	
+			ItemClassNameChinese AS ItemClassName
+			</isEqual>								
+		</isNotEmpty>
+		<isEmpty property="language">
+			ItemClassNameChinese AS ItemClassName
+		</isEmpty>
+		</dynamic> 
+		<![CDATA[
+			FROM
+				Basis.BIN_PromotionPrtCategory
+			WHERE
+				Path = #path#
+		]]>
+    </select>
+	<!-- 取得促销品类别信息 -->
+    <select id="getPrmCategoryInfo" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+		<![CDATA[
+		  SELECT
+		         DISTINCT
+		         A.BIN_PromotionPrtCategoryID AS prmCategoryId,
+				 A.BIN_OrganizationInfoID AS organizationInfoId,
+				 A.BIN_BrandInfoID AS brandInfoId,
+				 A.NodeID.GetAncestor(1).ToString() AS higherCategoryPath,
+				 A.Path AS path,			
+				 A.ItemClassNameChinese AS itemClassNameCN,
+				 A.ItemClassNameForeign AS itemClassNameEN,											
+		         A.ItemClassCode AS itemClassCode,																
+		         A.CurClassCode AS curClassCode,
+				 convert(varchar(30),A.UpdateTime,121) AS modifyTime,			
+                 A.ModifyCount AS modifyCount
+	    ]]> 
+		<dynamic>
+		<isNotEmpty property="language">
+			<isEqual property="language" compareValue="en_US">
+			,B.OrgNameForeign AS orgName									
+			,C.BrandNameForeign AS brandName
+			</isEqual>
+			<isEqual property="language" compareValue="zh_CN">	
+			,B.OrgNameChinese AS orgName					
+			,C.BrandNameChinese AS brandName
+			</isEqual>								
+		</isNotEmpty>
+		<isEmpty property="language">
+			,B.OrgNameChinese AS orgName						
+			,C.BrandNameChinese AS brandName
+		</isEmpty>
+		</dynamic> 
+		<![CDATA[
+		  FROM																		
+		         Basis.BIN_PromotionPrtCategory A
+				 LEFT JOIN Basis.BIN_OrganizationInfo B
+				 ON (A.BIN_OrganizationInfoID = B.BIN_OrganizationInfoID AND B.ValidFlag = '1')
+				 LEFT JOIN Basis.BIN_BrandInfo C
+				 ON (A.BIN_BrandInfoID = C.BIN_BrandInfoID AND C.ValidFlag = '1')
+		  WHERE
+				 A.BIN_PromotionPrtCategoryID = #prmCategoryId# AND
+				 C.BIN_OrganizationInfoID = B.BIN_OrganizationInfoID								
+		]]>
+    </select>
+</sqlMap>

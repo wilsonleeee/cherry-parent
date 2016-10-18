@@ -1,0 +1,277 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sqlMap PUBLIC "-//iBATIS.com//DTD SQL Map 2.0//EN" "http://ibatis.apache.org/dtd/sql-map-2.dtd">
+<sqlMap namespace="BINOLSSPRM34">
+	
+	<!-- 发货单信息 -->
+	<resultMap id="BINOLSSPRM34.DeliverInfoEdit" class="java.util.HashMap">
+		<result property="deliverId" column="BIN_PromotionDeliverID"/>						<!-- 促销产品收发货ID -->	
+		<result property="deliverRecNo" column="DeliverReceiveNo"/>							<!-- 发货单号 -->			
+		<result property="totalQuantity" column="TotalQuantity"/>							<!-- 总数量 -->	
+		<result property="totalAmount" column="TotalAmount"/>								<!-- 总金额 -->
+		<result property="verifiedFlag" column="VerifiedFlag"/>								<!-- 审核状态 -->
+		<result property="deliverDate" column="DeliverDate"/>								<!-- 发货日期 -->
+		<result property="stockInFlag" column="StockInFlag"/>								<!-- 入库状态 -->
+		<result property="reason" column="Reason"/>											<!-- 发货理由 -->
+		<result property="deliverUpdateTime" column="UpdateTime"/>							<!-- 更新日时 -->
+		<result property="modifyCount" column="ModifyCount"/>								<!-- 更新次数 -->
+		<result property="employeeName" column="EmployeeName"/>								<!-- 制单员 -->
+		<result property="departName" column="DepartName"/>									<!-- 发货部门 -->
+		<result property="inventoryName" column="InventoryName"/>							<!-- 发货仓库 -->
+		<result property="departNameReceive" column="DepartNameReceive"/>					<!-- 接收部门 -->
+		<result property="deliverDepId" column="BIN_OrganizationID"/>						<!-- 发货部门ID -->
+		<result property="receiveDepId" column="BIN_OrganizationIDReceive"/>				<!-- 接收部门ID -->
+		<result property="inventoryId" column="BIN_InventoryInfoID"/>						<!-- 发货仓库ID -->
+	</resultMap>
+	<!-- 取得发货单信息  -->
+    <select id="getDeliverInfoEdit" parameterClass="java.util.HashMap" resultMap="BINOLSSPRM34.DeliverInfoEdit">
+       <![CDATA[
+			SELECT		
+				DISTINCT
+				A.BIN_PromotionDeliverID,
+				A.DeliverReceiveNo,																	
+				A.TotalQuantity,																			
+				A.TotalAmount,																			
+				A.VerifiedFlag,																		
+				A.DeliverDate,
+				A.StockInFlag,
+				A.Reason,
+				convert(varchar(30),A.UpdateTime,121) AS UpdateTime,
+				A.ModifyCount,
+				A.BIN_OrganizationID,
+				A.BIN_OrganizationIDReceive,
+				C.BIN_InventoryInfoID,
+				F.EmployeeName
+			]]>
+		<dynamic>
+		<isNotEmpty property="language">
+			<isEqual property="language" compareValue="en_US">
+			,B.NameForeign AS DepartName										
+			,D.DepotNameEN AS InventoryName
+			,E.NameForeign AS DepartNameReceive
+			</isEqual>
+			<isEqual property="language" compareValue="zh_CN">	
+			,B.DepartName						
+			,D.DepotNameCN AS InventoryName
+			,E.DepartName AS DepartNameReceive
+			</isEqual>								
+		</isNotEmpty>
+		<isEmpty property="language">
+			,B.DepartName
+			,D.DepotNameCN AS InventoryName
+			,E.DepartName AS DepartNameReceive
+		</isEmpty>
+		</dynamic>
+		 <![CDATA[															
+			FROM																				
+				Inventory.BIN_PromotionDeliver A	
+				LEFT JOIN Basis.BIN_Employee F																			
+				ON (A.BIN_EmployeeID = F.BIN_EmployeeID),
+				Basis.BIN_Organization B,																	
+				Inventory.BIN_PromotionDeliverDetail C,																																			
+				Basis.BIN_DepotInfo D,
+				Basis.BIN_Organization E															
+			WHERE
+				A.BIN_PromotionDeliverID = #deliverId# AND
+				A.BIN_OrganizationID = B.BIN_OrganizationID AND
+				A.BIN_PromotionDeliverID = C.BIN_PromotionDeliverID	AND
+				C.ValidFlag = '1' AND
+				C.BIN_InventoryInfoID = D.BIN_DepotInfoID AND
+				A.BIN_OrganizationIDReceive = E.BIN_OrganizationID
+		]]>
+    </select>
+	
+	<!-- 发货单明细 -->
+	<resultMap id="BINOLSSPRM34.DeliverDetailEditList" class="java.util.HashMap">
+		<result property="deliverDetailId" column="BIN_PromotionDeliverDetailID"/>		<!-- 促销产品收发货明细ID -->	
+		<result property="prtVendorId" column="BIN_PromotionProductVendorID"/>			<!-- 促销产品厂商ID -->
+		<result property="nameTotal" column="NameTotal"/>								<!-- 促销品名称 -->
+		<result property="quantity" column="Quantity"/>									<!-- 发货数量 -->	
+		<result property="price" column="Price"/>										<!-- 单价 -->	
+		<result property="detailAmount" column="DetailAmount"/>							<!-- 总金额 -->
+		<result property="reason" column="Reason"/>										<!-- 发货理由 -->
+		<result property="barCode" column="BarCode"/>									<!-- 促销品条码 -->
+		<result property="detailUpdateTime" column="UpdateTime"/>						<!-- 更新日时 -->
+		<result property="modifyCount" column="ModifyCount"/>							<!-- 更新次数 -->
+		<result property="unitCode" column="UnitCode"/>									<!-- 厂商编码 -->
+		<result property="barCode" column="BarCode"/>									<!-- 促销品条码 -->
+		<result property="packageName" column="PackageName"/>							<!-- 单位 -->
+	</resultMap>
+	<!-- 取得发货单明细信息 -->
+    <select id="getDeliverDetailEditList" parameterClass="java.util.HashMap" resultMap="BINOLSSPRM34.DeliverDetailEditList">
+    		<![CDATA[
+			SELECT		
+				A.BIN_PromotionDeliverDetailID,
+				A.BIN_PromotionProductVendorID,																	
+				A.Quantity,																				
+				A.Price,																				
+				(A.Quantity * A.Price) AS DetailAmount,																				
+				A.Reason,
+				A.UpdateTime,
+				A.ModifyCount,																			
+				B.BarCode,																				
+				C.UnitCode
+			]]>
+		<dynamic>
+		<isNotEmpty property="language">
+			<isEqual property="language" compareValue="en_US">
+				,C.NameForeign AS NameTotal
+				,D.PackageNameForeign AS PackageName
+			</isEqual>
+			<isEqual property="language" compareValue="zh_CN">	
+				,C.NameTotal
+				,D.PackageName
+			</isEqual>								
+		</isNotEmpty>
+		<isEmpty property="language">
+				,C.NameTotal
+				,D.PackageName
+		</isEmpty>
+		</dynamic>
+		<![CDATA[
+			FROM																					
+				Inventory.BIN_PromotionDeliverDetail A,																			
+				Basis.BIN_PromotionProductVendor B,																			
+				Basis.BIN_PromotionProduct C
+				LEFT JOIN Basis.BIN_PackageType D
+				ON (C.ModuleCode = D.BIN_PackageTypeID)																																
+			WHERE																					
+				A.BIN_PromotionDeliverID = #deliverId# AND
+				A.ValidFlag = '1' AND
+				A.BIN_PromotionProductVendorID = B.BIN_PromotionProductVendorID AND
+				B.BIN_PromotionProductID = C.BIN_PromotionProductID 
+		]]>
+    </select>
+	
+	<!-- 更新促销产品收发货业务单据表 -->
+	<update id="updatePromotionDeliver" parameterClass="java.util.HashMap">		
+	<![CDATA[
+		UPDATE
+			Inventory.BIN_PromotionDeliver
+		SET
+			BIN_OrganizationIDReceive = #receiveDepId#,
+			TotalQuantity = #totalQuantity#,
+			TotalAmount = #totalAmount#,
+			StockInFlag = #stockInFlag#,
+			Reason = #reason#,
+	]]>
+	<dynamic>
+		<isNotEmpty property="stockInFlag">
+			<isEqual property="stockInFlag" compareValue="2">
+				DeliverDate = GETDATE(),
+			</isEqual>						
+		</isNotEmpty>
+	</dynamic>
+			<include refid="BINOLCMINC99.updateSql" />		
+	<![CDATA[	
+		WHERE
+			BIN_PromotionDeliverID = #deliverId# AND
+			UpdateTime = #deliverUpdateTime# AND
+			ModifyCount = #modifyCount#
+		]]>
+	</update>
+	
+	<!-- 更新入库区分 -->
+	<update id="updateStockInFlag" parameterClass="java.util.HashMap">		
+	<![CDATA[
+		UPDATE
+			Inventory.BIN_PromotionDeliver
+		SET
+			StockInFlag = #stockInFlag#,
+			DeliverDate = GETDATE(),
+	]]>
+			<include refid="BINOLCMINC99.updateSql" />		
+	<![CDATA[	
+		WHERE
+			BIN_PromotionDeliverID = #deliverId# AND
+			UpdateTime = #deliverUpdateTime# AND
+			ModifyCount = #modifyCount#
+		]]>
+	</update>
+	
+	<!-- 更新促销产品收发货业务单据明细表 -->
+	<update id="updatePromotionDeliverDetail" parameterClass="java.util.HashMap">		
+	<![CDATA[
+		UPDATE
+			Inventory.BIN_PromotionDeliverDetail
+		SET
+			BIN_PromotionProductVendorID = #prtVendorId#,
+			Quantity = #quantity#,
+			Price = #price#,
+			BIN_InventoryInfoID = #inventoryId#,
+			Reason = #reason#,
+	]]>
+			<include refid="BINOLCMINC99.updateSql" />		
+	<![CDATA[	
+		WHERE
+			BIN_PromotionDeliverDetailID = #deliverDetailId# AND
+			UpdateTime = #detailUpdateTime# AND
+			ModifyCount = #modifyCount#
+		]]>
+	</update>
+	
+	<!-- 伦理删除促销产品收发货业务单据明细表 -->
+	<update id="invalidPromotionDeliverDetail" parameterClass="java.util.HashMap">		
+	<![CDATA[
+		UPDATE
+			Inventory.BIN_PromotionDeliverDetail
+		SET
+			ValidFlag = '0',
+	]]>
+			<include refid="BINOLCMINC99.updateSql" />		
+	<![CDATA[	
+		WHERE
+			BIN_PromotionDeliverDetailID = #deliverDetailId# AND
+			UpdateTime = #detailUpdateTime# AND
+			ModifyCount = #modifyCount#
+		]]>
+	</update>
+	
+	<!-- 插入促销产品收发货业务单据明细表-->
+   	<insert id="insertPromotionDeliverDetail" parameterClass="java.util.HashMap">
+   		<selectKey resultClass="int" keyProperty="detailNo">
+   			<![CDATA[
+	   			SELECT 
+					ISNULL(MAX(DetailNo),0) + 1 AS detailNo
+				FROM
+					Inventory.BIN_PromotionDeliverDetail
+				WHERE
+					BIN_PromotionDeliverID = #deliverId#
+			]]>
+   		</selectKey>
+   		
+    	<![CDATA[
+    		INSERT INTO Inventory.BIN_PromotionDeliverDetail			
+			(		
+				BIN_PromotionDeliverID,
+				BIN_PromotionProductVendorID,
+				DetailNo,
+				Quantity,
+				Price,
+				BIN_ProductVendorPackageID,
+				BIN_InventoryInfoID,
+				BIN_LogicInventoryInfoID,
+				BIN_StorageLocationInfoID,
+				Reason,
+		]]>
+				<include refid="BINOLCMINC99.insertKeySql" />		
+		<![CDATA[				
+			)				
+			VALUES				
+			(	
+				#deliverId#,
+				#prtVendorId#,
+				#detailNo#,
+				#quantity#,
+				#price#,
+				#packageId#,
+				#inventoryId#,
+				#logicInventoryId#,
+				#storageLocationId#,
+				#reason#,
+		]]>
+				<include refid="BINOLCMINC99.insertValueSql" />		
+		<![CDATA[							
+			)					
+    	]]>
+    </insert>
+</sqlMap>

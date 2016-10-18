@@ -1,0 +1,287 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sqlMap PUBLIC "-//iBATIS.com//DTD SQL Map 2.0//EN" "http://ibatis.apache.org/dtd/sql-map-2.dtd">
+<sqlMap namespace="BINOLSTSFH22">
+	<!--根据部门编码获取部门地址-->
+	<select id="getOrderId" parameterClass="java.util.HashMap" resultClass="java.lang.String">
+		SELECT
+			[BIN_ProductOrderID]
+		FROM
+			[Inventory].[BIN_ProductOrder]
+		WHERE
+			[OrderNoIF] = #OrderNum#
+	</select>
+	 
+	 	<!--根据订单号获取订单ID-->
+	<select id="getDefaultAddress" parameterClass="java.util.HashMap" resultClass="java.lang.String">
+		SELECT
+			[Address]
+		FROM
+			[Basis].[BIN_Organization]
+		WHERE
+			[BIN_OrganizationID] = #BIN_OrganizationID#
+	</select>
+	  <!-- 产品信息查询sql（浓妆淡抹） -->
+	 <sql id="productQueryTwo">
+	 	<![CDATA[
+    		(SELECT
+    			DISTINCT
+    			A.BIN_ProductID AS bin_ProductID,
+    			A.UnitCode AS unitCode,
+    		    A.ItemCode, 
+    			C.BarCode AS barCode,
+    			C.BIN_ProductVendorID,
+    			ISNULL(CONVERT(Decimal(16,2),A.StandardCost),0) AS standardCost,
+    			ISNULL(CONVERT(Decimal(16,2),A.OrderPrice),0) AS orderPrice,
+				ISNULL(CONVERT(Decimal(16,2),A.MinSalePrice),0) AS minSalePrice,
+				ISNULL(CONVERT(Decimal(16,2),A.MaxSalePrice),0) AS maxSalePrice,
+    			ISNULL(A.OriginalBrand,'') AS originalBrand,
+    			ISNULL(CONVERT(Decimal(16,2),B.DistributionPrice),0) AS distributionPrice,
+    			C.ValidFlag AS validFlag,
+    			]]>
+    			<dynamic>
+					<isNotEmpty property="language">
+						<isEqual property="language" compareValue="zh_CN">										
+							A.NameTotal AS nameTotal,
+							D.PropValueChinese AS primaryCategoryBig,
+							E.PropValueChinese AS primaryCategorySmall,
+						</isEqual>
+						<isEqual property="language" compareValue="en_US">										
+							A.NameForeign AS nameTotal,
+							D.PropValueForeign AS primaryCategoryBig,
+							E.PropValueForeign AS primaryCategorySmall,
+						</isEqual>
+					</isNotEmpty>
+					<isEmpty property="language">
+							A.NameTotal AS nameTotal,
+							D.PropValueChinese AS primaryCategoryBig,
+							E.PropValueChinese AS primaryCategorySmall,
+					</isEmpty>
+					ISNULL(CONVERT(Decimal(16,2),B.SalePrice),0) AS salePrice,
+                    ISNULL(CONVERT(Decimal(16,2),B.MemPrice),0) AS memPrice,
+                    ISNULL(CONVERT(Decimal(16,2),B.PlatinumPrice),0) AS platinumPrice,
+                    ISNULL(CONVERT(Decimal(16,2),B.TagPrice),0) AS tagPrice
+				</dynamic>
+    		<![CDATA[
+    		FROM
+    			Basis.BIN_Product A WITH(NOLOCK)
+    			JOIN Basis.BIN_ProductVendor C WITH(NOLOCK) ON(A.BIN_ProductID = C.BIN_ProductID)
+    			LEFT JOIN Basis.BIN_ProductPrice B WITH(NOLOCK)
+    			ON (A.BIN_ProductID = B.BIN_ProductID  
+    				AND A.ValidFlag = B.ValidFlag 
+    				AND B.Type = '2'
+    				AND B.StartDate <= #businessDate# 
+    				AND B.endDate >=#businessDate# )
+    			LEFT JOIN (
+    				SELECT
+    					pc.BIN_ProductID,
+    					pcv.PropValueChinese,
+    					pcv.PropValueForeign
+    				FROM
+    					Basis.BIN_PrtCategory pc WITH(NOLOCK),
+    					Basis.BIN_PrtCatProperty pcp WITH(NOLOCK),
+    					Basis.BIN_PrtCatPropValue pcv WITH(NOLOCK)
+    				WHERE
+    					pc.BIN_PrtCatPropValueID = pcv.BIN_PrtCatPropValueID AND
+    					pcv.BIN_PrtCatPropertyID = pcp.BIN_PrtCatPropertyID AND
+    					pcp.TeminalFlag = '1' AND 
+    					pcp.BIN_OrganizationInfoID = #organizationInfoId#  AND
+		    			]]>
+			    			<isNotEmpty property="brandInfoId">
+			    				pcp.BIN_BrandInfoID = #brandInfoId# AND 
+			    			</isNotEmpty>
+						<![CDATA[
+						pc.ValidFlag = '1' AND
+						pcv.ValidFlag = '1' AND
+						pcp.ValidFlag = '1'
+    			) D ON (D.BIN_ProductID = A.BIN_ProductID)
+    			LEFT JOIN (
+    				SELECT
+    					pc.BIN_ProductID,
+    					pcv.PropValueChinese,
+    					pcv.PropValueForeign
+    				FROM
+    					Basis.BIN_PrtCategory pc WITH(NOLOCK),
+    					Basis.BIN_PrtCatProperty pcp WITH(NOLOCK),
+    					Basis.BIN_PrtCatPropValue pcv WITH(NOLOCK)
+    				WHERE
+    					pc.BIN_PrtCatPropValueID = pcv.BIN_PrtCatPropValueID AND
+    					pcv.BIN_PrtCatPropertyID = pcp.BIN_PrtCatPropertyID AND
+    					pcp.TeminalFlag = '2' AND 
+    					pcp.BIN_OrganizationInfoID = #organizationInfoId#  AND 
+    					]]>
+			    			<isNotEmpty property="brandInfoId">
+			    				pcp.BIN_BrandInfoID = #brandInfoId# AND 
+			    			</isNotEmpty>
+						<![CDATA[
+						pc.ValidFlag = '1' AND
+						pcv.ValidFlag = '1' AND
+						pcp.ValidFlag = '1'
+    			) E ON (E.BIN_ProductID = A.BIN_ProductID)
+    		WHERE
+    		
+    			A.BIN_OrganizationInfoID = #organizationInfoId#
+			]]>
+   			<isNotEmpty property="brandInfoId" prepend="AND">
+   				A.BIN_BrandInfoID = #brandInfoId#
+   			</isNotEmpty>
+   			<isNotEmpty property="newProductInitTimeNegative" prepend="AND">
+   				A.CreateTime >= CONVERT(varchar(100), dateadd(day,#newProductInitTimeNegative#,GETDATE()), 112)
+   			</isNotEmpty>
+			<isNotEmpty property="isBOM" prepend="AND">
+   				A.IsBOMCompatible = #isBOM#
+   			</isNotEmpty>
+			<isNotEmpty property="popValidFlag">
+				<isEqual property="popValidFlag" compareValue="1" prepend="AND">
+	   				A.ValidFlag + C.ValidFlag = '11'
+				</isEqual>
+				<isEqual property="popValidFlag" compareValue="0" prepend="AND">
+	   				A.ValidFlag + C.ValidFlag != '11'
+				</isEqual>
+   			</isNotEmpty>
+			<isNotEmpty property="isExchanged" prepend="AND">
+   				A.IsExchanged = #isExchanged#
+   			</isNotEmpty>
+			<isNotEmpty property="originalBrand" prepend="AND">
+   				A.OriginalBrand = #originalBrand#
+   			</isNotEmpty>
+   			<isNotEmpty property="smallBrandCode" prepend="AND">
+   				A.OriginalBrand = #smallBrandCode#
+   			</isNotEmpty>
+			<isNotEmpty property="ingorePrtList" prepend="AND">
+   				C.BIN_ProductVendorID NOT IN 
+	        		<iterate property="ingorePrtList" open="(" close=")" conjunction=","> 
+	        			<![CDATA[
+	        			#ingorePrtList[]#
+	        			]]>
+	        		</iterate>
+   			</isNotEmpty>
+   			<!-- 忽略指定产品方案中的产品 -->
+			<isNotEmpty property="ignoreSoluId" prepend="AND">
+				NOT EXISTS (
+					SELECT 1 
+					FROM Basis.BIN_ProductPriceSolutionDetail PPSD WITH(NOLOCK)
+					WHERE PPSD.BIN_ProductID = A.BIN_ProductID  AND PPSD.ValidFlag = 1 AND PPSD.BIN_ProductPriceSolutionID = #ignoreSoluId#
+				)
+				<isNotEmpty property="soluCateConfig" prepend="AND">
+					NOT EXISTS (
+						SELECT 1 
+						FROM Basis.BIN_ProductPriceSolutionCateDetail cateDetail WITH(NOLOCK)
+						JOIN Basis.BIN_PrtCategory PC WITH(NOLOCK) ON cateDetail.BIN_PrtCatPropValueID = PC.BIN_PrtCatPropValueID AND PC.ValidFlag = 1
+						WHERE 
+							cateDetail.BIN_ProductPriceSolutionID = #ignoreSoluId# AND PC.BIN_ProductID = A.BIN_ProductID
+					)
+				</isNotEmpty>
+			</isNotEmpty>
+   			<!-- 忽略指定产品功能开启时间表中的产品 -->
+			<isNotEmpty property="ignorePrtFunId" prepend="AND">
+				NOT EXISTS (
+					SELECT 1 
+					FROM Basis.BIN_ProductFunctionDetail PFD WITH(NOLOCK)
+					WHERE PFD.BIN_ProductID = A.BIN_ProductID  AND PFD.ValidFlag = 1 AND PFD.BIN_ProductFunctionID = #ignorePrtFunId#
+				)
+			</isNotEmpty>
+			<![CDATA[
+			 )  M   
+   			]]>
+	 </sql>
+	 
+	   <!-- 建议销售产品数据 (浓妆淡抹)-->
+     <select id="getSuggestProductByAjax" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+    	<![CDATA[
+    	  declare @NodeId hierarchyid
+    	  select @NodeId=NodeId from Basis.BIN_Organization where BIN_OrganizationID=#organizationId#;
+    	  SELECT CEILING(CAST(N.sumQuantity AS NUMERIC(18,4))*CAST(#orderDayNum# AS NUMERIC(18,4))/CAST(#suggestDayInt# AS NUMERIC(18,4))) sumQuantity,M.bin_ProductID,M.unitCode,M.barCode,M.standardCost,M.distributionPrice,M.orderPrice,M.minSalePrice,M.maxSalePrice,M.originalBrand,M.validFlag,M.nameTotal,M.ItemCode,N.BIN_ProductVendorID
+    	  FROM 
+    	]]>
+    	<![CDATA[
+	    	(SELECT
+	    	     
+	    	       Y.BIN_ProductVendorID,
+	    	       SUM(Y.Quantity) sumQuantity
+	    	FROM   SALE.BIN_SaleRecordDetail  Y,SALE.BIN_SaleRecord  X
+	    	WHERE   X.BIN_SaleRecordID=Y.BIN_SaleRecordID   
+	    	 AND    Y.SaleType='N'
+	         AND	X.BIN_OrganizationID  in (SELECT BIN_OrganizationID FROM  [Basis].[BIN_Organization] WHERE LEVEL='4' AND NodeID.IsDescendantOf(@NodeId)=1)
+			]]>
+   			<isNotEmpty property="brandInfoId" prepend="AND">
+   				X.BIN_BrandInfoID = #brandInfoId#
+   			</isNotEmpty> 
+   			<isNotEmpty property="suggestDayIntNegative" prepend="AND">
+   				X.CreateTime >= CONVERT(varchar(100), dateadd(day,#suggestDayIntNegative#,GETDATE()), 112)
+   			</isNotEmpty> 
+    	 	<isNotEmpty property="organizationInfoId" prepend="AND">
+   				X.BIN_OrganizationInfoID = #organizationInfoId#
+   			</isNotEmpty> 
+   	     <![CDATA[
+			GROUP BY   Y.BIN_ProductVendorID
+   			]]>
+   	   	<![CDATA[
+			 )  N  LEFT JOIN 
+   			]]>
+		 <include refid="BINOLSTSFH22.productQueryTwo" />
+		  	<![CDATA[
+			ON	N.BIN_ProductVendorID=M.BIN_ProductVendorID
+   			]]>
+    	
+    </select>
+    
+    
+    <update id="updateOrderStatus" parameterClass="java.util.HashMap">
+        <![CDATA[
+        UPDATE
+            Inventory.BIN_ProductOrder
+        SET
+            VerifiedFlag='P',
+    ]]>
+        <include refid="BINOLCMINC99.updateSql"/>
+        <![CDATA[
+        WHERE 
+            BIN_OrganizationInfoID=#organizationInfoId# AND			
+			BIN_BrandInfoID = #brandInfoId# AND		
+			OrderNo = #orderNum#	
+    ]]>
+    </update>
+    
+    	<!--根据订单单号删除产品订单主表的数据-->
+	<delete id="deleteOrderInfoMain" parameterClass="java.util.HashMap">
+			DELETE FROM
+				[Inventory].[BIN_ProductOrder]
+			WHERE
+				[BIN_ProductOrderID]= #OrderId#
+	</delete>
+	
+		<!--根据订单单号删除产品订单明细表的数据-->
+	<delete id="deleteOrderInfoDetail" parameterClass="java.util.HashMap">
+			DELETE FROM
+				[Inventory].[BIN_ProductOrderDetail]
+			WHERE
+			    [BIN_ProductOrderID]= #OrderId#
+
+	</delete>
+	
+	<select id="getOrderInfo" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+        <![CDATA[
+            SELECT
+                A.OrderNo,
+                A.TotalQuantity,
+                A.TotalAmount,
+                A.CreateTime,
+                E.EmployeeName
+            FROM
+                Inventory.BIN_ProductOrder A  
+            LEFT JOIN  Basis.BIN_Employee E ON A.BIN_EmployeeID=E.BIN_EmployeeID
+            WHERE
+                A.OrderNo = #orderNum#
+        ]]>
+    </select>
+    
+    
+    <select id="getNodeId" parameterClass="java.util.HashMap" resultClass="java.lang.String">
+		SELECT
+			NodeId
+		FROM
+			[Basis].[BIN_Organization]
+		WHERE
+			[BIN_OrganizationID] = #organizationId#
+	</select>
+</sqlMap>

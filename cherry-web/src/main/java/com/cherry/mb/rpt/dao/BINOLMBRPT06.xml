@@ -1,0 +1,87 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sqlMap PUBLIC "-//iBATIS.com//DTD SQL Map 2.0//EN" "http://ibatis.apache.org/dtd/sql-map-2.dtd">
+<sqlMap namespace="BINOLMBRPT06">
+	<!-- 代理商提成统计信息SQL -->
+	<sql id="MemRecommendedRptQuery">
+	<![CDATA[
+		SELECT 
+			REC.Name AS recommendedMemName,
+			MR.MemCode AS recommendedMemCode,
+			CASE ISNULL(MR.MemCode,'') WHEN '' THEN REC.Name ELSE '('+MR.MemCode+')'+REC.Name END AS recommendedMember,
+			A.Name AS memberName,
+			MA.MemCode AS memberCode,
+			CASE ISNULL(MA.MemCode,'') WHEN '' THEN A.Name ELSE '('+MA.MemCode+')'+A.Name END AS member,
+			REC.MobilePhone AS mobilePhone,
+			COUNT(SR.BIN_SaleRecordID) as orderCount,
+			SUM(CONVERT(BIGINT,ISNULL(SR.Quantity,0))) as saleQuantity,
+			SUM(ISNULL(sr.Amount,0)) AS saleAmount
+		FROM 
+			Members.BIN_MemberInfo REC WITH(NOLOCK)
+			JOIN Members.BIN_MemberInfo A WITH(NOLOCK)
+			ON(REC.ReferrerID=A.BIN_MemberInfoID AND A.ValidFlag='1')
+			JOIN Sale.BIN_SaleRecord SR WITH(NOLOCK)
+			ON(REC.BIN_MemberInfoID = SR.BIN_MemberInfoID AND SR.ValidFlag='1')
+			LEFT JOIN Members.BIN_MemCardInfo MR WITH(NOLOCK)
+			ON(REC.BIN_MemberInfoID=MR.BIN_MemberInfoID AND MR.ValidFlag='1' AND MR.CardValidFlag='1')
+			LEFT JOIN Members.BIN_MemCardInfo MA WITH(NOLOCK)
+			ON(A.BIN_MemberInfoID=MA.BIN_MemberInfoID AND MA.ValidFlag='1' AND MA.CardValidFlag='1')
+		WHERE 
+			REC.ValidFlag='1' AND
+			REC.BIN_OrganizationInfoID=#organizationInfoId# AND
+			REC.BIN_BrandInfoID=#brandInfoId#
+	]]>
+	<isNotEmpty prepend="AND" property="startDate">
+		<![CDATA[SR.SaleTime >= #startDate#]]>
+	</isNotEmpty>
+	<isNotEmpty prepend="AND" property="endDate">
+		<![CDATA[SR.SaleTime <= dateadd(day,1,#endDate#)]]>
+	</isNotEmpty>
+	<isNotEmpty prepend="AND" property="memberCode">
+		<![CDATA[MA.MemCode = #memberCode#]]>
+	</isNotEmpty>
+	<isNotEmpty prepend="AND" property="recommendedMemCode">
+		<![CDATA[MR.MemCode = #recommendedMemCode#]]>
+	</isNotEmpty>
+	<![CDATA[
+		GROUP BY 
+			REC.Name,
+			MR.MemCode,
+			A.Name,
+			MA.MemCode,
+			REC.MobilePhone
+	]]>
+	</sql>
+	<!-- 取得代理商提成统计信息LIST的行数 -->
+    <select id="getMemRecommendedRptCount" parameterClass="java.util.HashMap" resultClass="java.lang.Integer">
+        <![CDATA[
+            SELECT COUNT(1) AS count FROM (
+        ]]>
+        <include refid="BINOLMBRPT06.MemRecommendedRptQuery" />
+        <![CDATA[
+            )SORT_T1
+        ]]>
+    </select>
+    
+    <!-- 取得代理商提成统计信息LIST  -->
+    <select id="getMemRecommendedRptList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+        <include refid="BINOLCMINC99.pageheader" />
+        <include refid="BINOLMBRPT06.MemRecommendedRptQuery" />
+        <include refid="BINOLCMINC99.pagefooter" />
+    </select>
+    <!-- 取得汇总信息  -->
+    <select id="getSumInfo" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+    	<![CDATA[
+			SELECT
+				COUNT(SORT_T1.recommendedMemCode) AS count,
+				SUM(convert(INT,ISNULL(SORT_T1.orderCount,0))) AS sumOrderCount,
+				SUM(convert(bigint,ISNULL(SORT_T1.saleQuantity,0))) AS sumSaleQuantity,
+				SUM(convert(decimal(32,2),ISNULL(SORT_T1.saleAmount,0))) AS sumSaleAmount
+			FROM(
+		]]>	
+		<include refid="BINOLMBRPT06.MemRecommendedRptQuery" />
+		<![CDATA[	
+			)SORT_T1
+		]]>		
+    </select>
+    	
+</sqlMap>

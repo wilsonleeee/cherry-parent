@@ -1,0 +1,131 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sqlMap PUBLIC "-//iBATIS.com//DTD SQL Map 2.0//EN" "http://ibatis.apache.org/dtd/sql-map-2.dtd">
+<sqlMap namespace="BINOLSTBIL20">
+    <select id="searchSaleRerurnRequestInfo" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+			<![CDATA[
+			SELECT 
+					A.BillCode AS billCode,
+					A.TradeDate AS tradeDate,
+					A.RelevanceNo AS relevanceNo,
+					B.EmployeeCode AS employeeCode,
+					B.EmployeeName AS employeeName,
+					A.Reason AS reason,
+					A.MemberCode AS memberCode,
+					A.Comments AS comments,
+					C.DepartCode AS counterCode,
+					C.DepartName AS counterName,
+					D.EmployeeCode AS employeeIDAuditCode,
+					D.EmployeeName AS employeeIDAudit,
+					A.VerifiedFlag AS verifiedFlag,
+					ISNULL(A.TotalAmount,0) AS totalAmount,
+					ISNULL(A.TotalQuantity,0) AS totalQuantity,
+					A.WorkFlowID AS WorkFlowID
+			FROM 
+					Sale.BIN_SaleReturnRequest A 
+					LEFT JOIN Basis.BIN_Employee B                         
+					ON (A.BIN_EmployeeID = B.BIN_EmployeeID)
+					LEFT JOIN Basis.BIN_Organization C                       
+					ON (A.BIN_OrganizationID = C.BIN_OrganizationID)
+					LEFT JOIN Basis.BIN_Employee D                        
+					ON (A.BIN_EmployeeIDAudit = D.BIN_EmployeeID)
+			WHERE 
+			 		 A.BIN_SaleReturnRequestID=#saleReturnRequestID#					
+		]]>
+	</select>
+	
+ 	<select id="searchSaleRerurnRequestDetailList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+		<![CDATA[
+		SELECT
+		]]>
+		<dynamic>
+            <isNotEmpty property="language">
+                <isEqual property="language" compareValue="en_US">
+                    C.NameForeign AS productName,
+                </isEqual>
+                <isEqual property="language" compareValue="zh_CN">
+                    C.NameTotal AS productName,
+                </isEqual>
+            </isNotEmpty>
+			<isEmpty property="language">
+                C.NameTotal AS productName,
+            </isEmpty>
+        </dynamic>	
+		<![CDATA[
+			B.BarCode AS barCode,
+			B.UnitCode AS unitCode,
+			B.EmployeeCode AS employeeCode,
+			B.InventoryTypeCode AS inventoryTypeCode,
+			B.Price AS price,
+			B.Quantity AS quantity,
+			B.Comments AS comments,
+			B.SaleType AS saleType,
+			B.DetailNo AS detailNo
+		FROM
+			Sale.BIN_SaleReturnRequest A WITH(nolock)
+			JOIN Sale.BIN_SaleReturnRequestDetail B WITH(nolock)
+			ON(A.BIN_SaleReturnRequestID = B.BIN_SaleReturnRequestID AND
+			B.ValidFlag = '1')
+			LEFT JOIN Basis.BIN_ProductVendor D 
+			ON (B.BIN_ProductVendorID = D.BIN_ProductVendorID)
+			LEFT JOIN Basis.BIN_Product C 
+			ON (D.BIN_ProductID = C.BIN_ProductID)
+			
+		WHERE
+			A.BIN_SaleReturnRequestID = #saleReturnRequestID#
+			AND B.SaleType='N'
+			UNION
+		SELECT
+		]]>
+		<dynamic>
+            <isNotEmpty property="language">
+                <isEqual property="language" compareValue="en_US">
+                    C.NameForeign AS productName,
+                </isEqual>
+                <isEqual property="language" compareValue="zh_CN">
+                    C.NameTotal AS productName,
+                </isEqual>
+            </isNotEmpty>
+			<isEmpty property="language">
+                C.NameTotal AS productName,
+            </isEmpty>
+        </dynamic>
+		<![CDATA[
+			B.BarCode AS barCode,
+			B.UnitCode AS unitCode,
+			B.EmployeeCode AS employeeCode,
+			B.InventoryTypeCode AS inventoryTypeCode,
+			B.Price AS price,
+			B.Quantity AS quantity,
+			B.Comments AS comments,
+			B.SaleType AS saleType,
+			B.DetailNo AS detailNo
+		FROM
+			Sale.BIN_SaleReturnRequest A WITH(nolock)
+			JOIN Sale.BIN_SaleReturnRequestDetail B WITH(nolock)
+			ON(A.BIN_SaleReturnRequestID = B.BIN_SaleReturnRequestID AND
+			B.ValidFlag = '1' )
+			LEFT JOIN Basis.BIN_PromotionProductVendor D 
+			ON (B.BIN_ProductVendorID = D.BIN_PromotionProductVendorID)
+			LEFT JOIN Basis.BIN_PromotionProduct C 
+			ON (D.BIN_PromotionProductID = C.BIN_PromotionProductID)
+		WHERE
+			A.BIN_SaleReturnRequestID = #saleReturnRequestID#
+			AND B.SaleType='P'
+		]]>
+	</select>
+	
+	<!--获取支付方式详细信息-->
+	<select id="getPayTypeDetail" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+		<![CDATA[
+		SELECT 
+			PayTypeCode AS payTypeCode,
+			PayAmount AS payAmount,
+			SerialNumber AS serialNumber
+		FROM
+			Sale.BIN_SaleReturnRequestPayList WITH(NOLOCK)
+		WHERE
+			BIN_SaleReturnRequestID = #saleReturnRequestID#
+		]]>
+	</select>
+	
+</sqlMap>

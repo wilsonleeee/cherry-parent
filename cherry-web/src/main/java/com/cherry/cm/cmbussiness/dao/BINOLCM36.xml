@@ -1,0 +1,136 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sqlMap PUBLIC "-//iBATIS.com//DTD SQL Map 2.0//EN" "http://ibatis.apache.org/dtd/sql-map-2.dtd">
+<sqlMap namespace="BINOLCM36">
+	
+	<!-- 添加会员信息修改履历主表 -->
+    <insert id="addMemInfoRecord" parameterClass="java.util.HashMap">
+    	<selectKey resultClass="java.lang.Integer" type="post" keyProperty="BIN_MemInfoRecordID" >
+    	<![CDATA[
+    		INSERT INTO Members.BIN_MemInfoRecord					
+			(					
+				BIN_MemberInfoID,
+				MemCode,
+				BIN_OrganizationInfoID,				
+				BIN_BrandInfoID,
+				ModifyTime,
+				ModifyCounter,
+				ModifyEmployee,
+				ModifyType,
+				Sourse,
+				BatchNo,
+				Version,
+				Remark,
+		]]>
+				<include refid="BINOLCMINC99.insertKeySql" />		
+		<![CDATA[						
+			)					
+			VALUES					
+			(					
+				#memberInfoId#,
+				#memCode#,
+				#organizationInfoId#,				
+				#brandInfoId#,
+				#modifyTime#,
+				#modifyCounter#,
+				#modifyEmployee#,
+				#modifyType#,
+				#sourse#,
+				#batchNo#,
+				#version#,
+				#remark#,
+		]]>
+				<include refid="BINOLCMINC99.insertValueSql" />		
+		<![CDATA[							
+			)	
+			select SCOPE_IDENTITY() as value		
+    	]]>
+    	</selectKey>   
+    </insert>
+    
+    <!-- 添加会员信息修改履历明细表 -->
+    <insert id="addMemInfoRecordDetail" parameterClass="java.util.HashMap">
+    	<![CDATA[
+    		INSERT INTO Members.BIN_MemInfoRecordDetail					
+			(					
+				BIN_MemInfoRecordID,
+				ModifyField,				
+				OldValue,
+				NewValue,
+		]]>
+				<include refid="BINOLCMINC99.insertKeySql" />		
+		<![CDATA[						
+			)					
+			VALUES					
+			(					
+				#memInfoRecordId#,
+				#modifyField#,				
+				#oldValue#,
+				#newValue#,
+		]]>
+				<include refid="BINOLCMINC99.insertValueSql" />		
+		<![CDATA[							
+			)	
+    	]]>
+    </insert>
+    
+    <!-- 查询会员信息 -->
+	<select id="getMemberInfo" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+		<![CDATA[
+			SELECT
+				B.MemCode AS memCode,
+				A.Name AS name,
+				A.Nickname AS nickname,
+				A.CreditRating AS creditRating,
+				A.Telephone AS telephone,
+				A.MobilePhone AS mobilePhone,
+				A.Gender AS gender,
+				A.BirthYear AS birthYear,
+				A.BirthDay AS birthDay,
+				A.Email AS email,
+				A.BIN_EmployeeID AS employeeId,
+				A.BIN_OrganizationID AS organizationId,
+				CONVERT(varchar(30),A.JoinDate,120) AS joinDate,
+				A.ReferrerID AS referrerId,
+				A.BirthYearGetType AS birthYearGetType,
+				A.BlogId AS blogId,
+				A.MessageId AS messageId,
+				A.IdentityCard AS identityCard,
+				A.MaritalStatus AS maritalStatus,
+				A.Active AS active,
+				A.IsReceiveMsg AS isReceiveMsg,
+				A.Profession AS profession,
+				A.ConnectTime AS connectTime,
+				A.MemType AS memType,
+				A.Memo1 AS memo1,
+				A.Memo2 AS memo2,
+				A.MemberPassword AS memberPassword,
+				C.InitTotalAmount AS initTotalAmount,
+				A.ChannelCode AS channelCode
+			FROM
+				Members.BIN_MemberInfo A
+				LEFT JOIN Members.BIN_MemCardInfo B ON A.BIN_MemberInfoID = B.BIN_MemberInfoID AND B.validFlag = '1' AND B.CardValidFlag = '1'
+				LEFT JOIN Members.BIN_MemberExtInfo C ON A.BIN_MemberInfoID = C.BIN_MemberInfoID
+			WHERE
+				A.BIN_MemberInfoID = #memberInfoId#	
+		]]>
+    </select>
+    
+    <!-- 查询会员地址信息 -->
+	<select id="getMemberAddress" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+		<![CDATA[
+			SELECT 
+				B.StandardProvince AS provinceId,
+				B.StandardCity AS cityId,
+				B.StandardCounty AS countyId,
+				B.AddressLine1 AS address,
+				B.ZipCode AS zipCode
+			FROM
+				Members.BIN_MemberAddress A
+				LEFT JOIN Basis.BIN_AddressInfo B ON A.BIN_AddressInfoID = B.BIN_AddressInfoID
+			WHERE
+				A.BIN_MemberInfoID = #memberInfoId# AND
+				A.ValidFlag = '1'
+		]]>
+    </select>
+    
+</sqlMap>

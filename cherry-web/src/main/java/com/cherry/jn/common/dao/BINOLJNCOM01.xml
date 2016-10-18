@@ -1,0 +1,385 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sqlMap PUBLIC "-//iBATIS.com//DTD SQL Map 2.0//EN" "http://ibatis.apache.org/dtd/sql-map-2.dtd">
+<sqlMap namespace="BINOLJNCOM01">
+
+<!-- 取得会员子活动List  -->
+    <sql id="getCampaignRule">
+       	<![CDATA[
+				SELECT 
+					A.BIN_CampaignID as campaignId,
+					A.CampaignName as campaignName,
+					A.CampaignFromDate as campaignFromDate,
+					A.CampaignToDate as campaigntoDate,
+					A.WorkFlowId as workFlowId,
+					A.ActionId as actionId,
+					A.SaveStatus as saveStatus,
+					A.PointRuleType as pointRuleType,
+					A.BIN_MemberLevelID as memberLevelId,
+					ISNULL(A.DefaultFlag, 0) as defaultFlag,
+					C.GroupCode as groupCode,
+					C.GroupName as campGroup,
+					CASE WHEN A.CampaignFromDate > CONVERT(DATE, #busDate#, 121) THEN '0'
+					WHEN A.CampaignFromDate <= CONVERT(DATE, #busDate#, 121) AND 
+					A.CampaignToDate >= CONVERT(DATE, #busDate#, 121) THEN '1'
+					WHEN A.CampaignToDate < CONVERT(DATE, #busDate#, 121) THEN '2' END AS detailFlag
+				FROM
+					Campaign.BIN_Campaign A 
+					LEFT JOIN Campaign.BIN_CampaignGrp C
+					ON(C.BIN_CampaignGrpID = A.BIN_CampaignGrpID)
+				WHERE
+				]]>
+				<dynamic>
+					<isNotEmpty property="memberClubId">
+						A.BIN_MemberClubID = #memberClubId# AND
+					</isNotEmpty>
+					<isNotEmpty property="memberLevelId">
+						A.BIN_MemberLevelID = #memberLevelId# AND
+					</isNotEmpty>
+					<isNotEmpty property="fromDate">
+					<![CDATA[
+						(A.CampaignToDate IS NULL OR A.CampaignToDate >= CONVERT(DATE, #fromDate#, 121)) AND
+					]]>
+					</isNotEmpty>
+					<isNotEmpty property="toDate">
+					<![CDATA[
+						A.CampaignFromDate <= CONVERT(DATE, #toDate#, 121) AND
+					]]>
+					</isNotEmpty>
+					<isNotEmpty property="pointRuleType">
+					<![CDATA[
+						A.PointRuleType = #pointRuleType# AND
+						]]>
+					</isNotEmpty>
+				</dynamic>
+				<![CDATA[
+					A.BIN_OrganizationInfoID = #organizationInfoId# AND
+					A.BIN_BrandInfoID = #brandInfoId# AND
+					A.CampaignType = #campaignType# AND
+					A.ValidFlag = '1'
+			]]>
+    </sql>
+	
+	<!-- 取得会员活动List  -->
+	<select id="getCampaignList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+		<include refid="BINOLCMINC99.pageheader" />
+		<include refid="BINOLJNCOM01.getCampaignRule" />
+		<include refid="BINOLCMINC99.pagefooter" />
+	</select>
+	
+	<!-- 取得会员子活动List  -->
+	<select id="getCampaignRuleList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+		<include refid="BINOLJNCOM01.getCampaignRule" />
+	</select>
+	
+	 <!-- 取得会员子活动条数  -->
+    <select id="getCampaignRuleCount" parameterClass="java.util.HashMap" resultClass="java.lang.Integer">
+       	<![CDATA[
+			SELECT	COUNT(SORT_T1.campaignId) AS count FROM (
+		]]>	
+		<include refid="BINOLJNCOM01.getCampaignRule" />	
+		<![CDATA[	
+			)SORT_T1
+		]]>	
+    </select>
+    
+     <!-- 取得默认规则数  -->
+    <select id="getDefaultCount" parameterClass="java.util.HashMap" resultClass="java.lang.Integer">
+       	<![CDATA[
+			SELECT 
+				COUNT(BIN_CampaignID)
+			FROM
+				Campaign.BIN_Campaign
+			WHERE
+				BIN_BrandInfoID = #brandInfoId# AND
+				BIN_OrganizationInfoID = #organizationInfoId# AND
+				CampaignType = #campaignType# AND
+				DefaultFlag = 1 AND
+				ValidFlag = '1'
+		]]>
+		<isNotEmpty prepend="AND" property="memberClubId">
+			BIN_MemberClubID = #memberClubId#
+		</isNotEmpty>
+    </select>
+		
+	<!-- 活动模板信息 -->
+	<resultMap id="BINOLJNCOM01.CamTempList" class="java.util.HashMap">
+		<result property="levelName" column="LevelName"/>			<!-- 会员等级名ID -->
+		<result property="memberLevelId" column="BIN_MemberLevelID"/>	<!-- 会员等级ID -->
+		<result property="periodvalidity" column="Periodvalidity"/>	<!-- 会员有效期信息 -->
+	</resultMap>
+	<!-- 取得活动模板信息  -->
+    <select id="getCamTempList" parameterClass="java.util.HashMap" resultMap="BINOLJNCOM01.CamTempList">
+       	<![CDATA[
+				SELECT 
+					B.LevelName,
+					B.BIN_MemberLevelID,
+					B.Periodvalidity
+				FROM
+					Members.BIN_MemberLevelDetail A,
+					Members.BIN_MemberLevel B
+				WHERE
+					B.BIN_BrandInfoID = #brandInfoId# AND
+					B.BIN_OrganizationInfoID = #organizationInfoId# AND
+					B.BIN_MemberLevelID = A.BIN_MemberLevelID AND
+					A.ValidFlag = '1' AND
+					B.ValidFlag = '1' 
+			]]>
+		<isNotEmpty prepend="AND" property="memberClubId">
+			B.BIN_MemberClubID = #memberClubId#
+		</isNotEmpty>
+			<isNotEmpty property="fromDate">
+			<![CDATA[
+				AND A.FromDate = CONVERT(DATE, #fromDate#, 121)
+			]]>
+			</isNotEmpty>
+			<isNotEmpty property="toDate">
+			<![CDATA[
+				AND A.ToDate = CONVERT(DATE, #toDate#, 121) 
+			]]>
+			</isNotEmpty>
+				<![CDATA[
+				ORDER BY Grade ASC
+				]]>
+    </select>
+	
+	<!-- 会员等级List -->
+	<resultMap id="BINOLJNCOM01.MemberLevelList" class="java.util.HashMap">
+		<result property="levelDate" column="LevelDate"/>			<!-- 会员等级ID -->
+	</resultMap>
+	<!-- 取得会员等级List  -->
+    <select id="getMemberLevelList" parameterClass="java.util.HashMap" resultMap="BINOLJNCOM01.MemberLevelList">
+       	<![CDATA[
+			SELECT 
+				DISTINCT convert (varchar, B.FromDate, 121)+ '~' + convert (varchar, B.ToDate, 121) AS LevelDate
+			FROM 
+				Members.BIN_MemberLevel A,
+	 			Members.BIN_MemberLevelDetail B
+			WHERE 
+				A.BIN_OrganizationInfoID = #organizationInfoId# AND
+				A.BIN_BrandInfoID = #brandInfoId# AND 
+		]]>	
+		<isNotEmpty property="memberClubId">
+			A.BIN_MemberClubID = #memberClubId# AND
+		</isNotEmpty>
+		<![CDATA[
+	 	 		B.BIN_MemberLevelID = A.BIN_MemberLevelID AND
+	 	 		B.ToDate >= #busDate# AND
+				A.ValidFlag = '1' AND
+				B.ValidFlag = '1'
+			]]>
+		<![CDATA[
+				ORDER BY 
+					LevelDate ASC
+			]]>
+    </select>
+	
+	<!-- 会员子活动信息 -->
+	<resultMap id="BINOLJNCOM01.CampaignRuleMap" class="java.util.HashMap">
+		<result property="ruleDetail" column="RuleDetail"/>						<!-- 规则体详细 -->
+		<result property="ruleUpdateTime" column="UpdateTime"/>					<!-- 更新日时 -->
+		<result property="ruleModifyCount" column="ModifyCount"/>				<!-- 更新次数 -->
+	</resultMap>
+	<!-- 取得会员子活动信息  -->
+    <select id="getCampaignRuleMap" parameterClass="java.util.HashMap" resultMap="BINOLJNCOM01.CampaignRuleMap">
+       	<![CDATA[
+				SELECT
+					RuleDetail,
+					CONVERT(varchar(100), UpdateTime, 25) AS UpdateTime,
+					ModifyCount
+				FROM
+					Campaign.BIN_CampaignRule
+				WHERE
+					BIN_CampaignRuleID = #campaignRuleId#
+			]]>
+    </select>
+	
+	<!-- 插入会员活动表  -->
+	<insert id="insertCampaign" parameterClass="com.cherry.cp.common.dto.CampaignDTO">	
+		<selectKey resultClass="java.lang.Integer" type="post" keyProperty="campaignId" >  
+		<![CDATA[
+	   INSERT INTO Campaign.BIN_Campaign
+			      (CampaignCode,
+				   CampaignType,
+				   BIN_CampaignGrpID,
+				   CampaignName,												
+			       BIN_OrganizationInfoID,												
+			       BIN_BrandInfoID,											
+			       CampaignFromDate,												
+			       CampaignToDate,
+			       CampaignSetBy,												
+			       CampaignLeader,												
+			       State,
+			       BIN_MemberClubID,																							
+		]]>	
+			<include refid="BINOLCMINC99.insertKeySql" />									
+		<![CDATA[								
+		)VALUES									
+				 (#campaignCode#,
+				  #campaignType#,
+				  #campaignGrpId#,
+				  #campaignName#,
+				  #organizationInfoId#,
+				  #brandInfoId#,
+				  #campaignFromDate#,
+				  #campaignToDate#,
+				  #campaignSetBy#,
+				  #campaignLeader#,
+				  #state#,
+				  #memberClubId#,
+				  
+		]]>
+		    <include refid="BINOLCMINC99.insertValueSql" />
+		<![CDATA[
+		)
+			  	select SCOPE_IDENTITY() as value
+			]]> 
+	    </selectKey>
+	</insert> 
+	
+	<!-- 插入会员子活动表  -->
+	<insert id="insertCampaignRule" parameterClass="com.cherry.cp.common.dto.CampaignRuleDTO">	
+		<selectKey resultClass="java.lang.Integer" type="post" keyProperty="campaignRuleId" > 
+		<![CDATA[
+	   INSERT INTO Campaign.BIN_CampaignRule
+			      (SubCampaignCode,
+				   BIN_CampaignID,
+				   BIN_MemberLevelID,
+				   RuleFileName,												
+			       CampaignRule,												
+			       Times,												
+			       TopLimit,												
+			       Description,
+			       RuleDetail,												
+			       State,																																	
+		]]>	
+			<include refid="BINOLCMINC99.insertKeySql" />									
+		<![CDATA[								
+		)VALUES									
+				 (#subCampaignCode#,
+				  #campaignId#,
+				  #memberLevelId#,
+				  #ruleFileName#,
+				  #campaignRule#,
+				  #times#,
+				  #topLimit#,
+				  #description#,
+				  #ruleDetail#,
+				  #state#,
+		]]>
+		    <include refid="BINOLCMINC99.insertValueSql" />
+		<![CDATA[
+		)
+			  	select SCOPE_IDENTITY() as value
+			]]> 
+	    </selectKey>
+	</insert> 
+	
+	<!-- 更新会员子活动表  -->
+	<update id="updateCampaignRule" parameterClass="com.cherry.cp.common.dto.CampaignRuleDTO">
+		
+		<![CDATA[
+	      UPDATE
+	               Campaign.BIN_CampaignRule
+		  SET      
+				   RuleDetail = #ruleDetail#,
+		]]>
+			<include refid="BINOLCMINC99.updateSql" />									
+		<![CDATA[								
+		  WHERE									
+				  BIN_CampaignRuleID = #campaignRuleId# AND								
+				  UpdateTime = #ruleUpdateTime# AND								
+				  ModifyCount = #ruleModifyCount#	
+		]]>
+		   
+	</update> 
+	
+	<!-- 插入会员活动基础属性表
+	<insert id="insertCampaignBaseProp" parameterClass="com.cherry.cp.common.dto.CamRuleConditionDTO">	
+		<selectKey resultClass="java.lang.Integer" type="post" keyProperty="campaignBasePropId" >
+		<![CDATA[
+	   INSERT INTO Campaign.BIN_CampaignBaseProp
+			      (Condition,
+				   PropertyName,
+				   FieldType,																													
+		]]>	
+			<include refid="BINOLCMINC99.insertKeySql" />									
+		<![CDATA[								
+		)VALUES									
+				 (#condition#,
+				  #propertyName#,
+				  #fieldType#,
+		]]>
+		    <include refid="BINOLCMINC99.insertValueSql" />
+		<![CDATA[)
+			select SCOPE_IDENTITY() as value
+			]]> 
+	    </selectKey>
+	</insert>   -->
+	
+	<!-- 取得基础属性ID 
+	<select id="getCampaignBasePropID" parameterClass="com.cherry.cp.common.dto.CamRuleConditionDTO" resultClass="java.lang.String">
+		<![CDATA[
+			SELECT 
+				BIN_CampaignBasePropID
+        	FROM 
+        		Campaign.BIN_CampaignBaseProp
+            WHERE 
+            	PropertyName = #propertyName#
+		]]>
+    </select>-->
+	
+	<!-- 插入会员活动规则条件明细表
+	<insert id="insertCamRuleCondition" parameterClass="com.cherry.cp.common.dto.CamRuleConditionDTO">	
+		<![CDATA[
+	   INSERT INTO Campaign.BIN_CamRuleCondition
+			      (BIN_CampaignRuleID,
+				   BIN_CampaignBasePropID,
+				   BasePropValue1,
+				   BasePropValue2,												
+			       PropFlag,												
+			       ConditionGrpID,												
+			       ActLocationType,																															
+		]]>	
+			<include refid="BINOLCMINC99.insertKeySql" />									
+		<![CDATA[								
+		)VALUES									
+				 (#campaignRuleId#,
+				  #campaignBasePropId#,
+				  #basePropValue1#,
+				  #basePropValue2#,
+				  #propFlag#,
+				  #conditionGrpId#,
+				  #actLocationType#,
+		]]>
+		    <include refid="BINOLCMINC99.insertValueSql" />
+		<![CDATA[
+		)
+		]]>
+	</insert>   -->
+	
+	<!-- 删除会员活动规则条件明细 
+	<delete id="deleteCamRuleCondition" parameterClass="com.cherry.cp.common.dto.CamRuleConditionDTO">
+		
+		<![CDATA[
+			DELETE FROM   
+				Campaign.BIN_CamRuleCondition
+            WHERE 
+               	BIN_CampaignRuleID = #campaignRuleId#
+		]]>
+	</delete> -->
+	
+	<!-- 查找规则ID -->
+	<select id="getCampaignID" resultClass="java.lang.String">
+		<![CDATA[
+			SELECT 
+				BIN_CampaignID
+        	FROM 
+        		Campaign.BIN_CampaignRule
+            WHERE 
+            	BIN_CampaignRuleID = #campaignRuleId# AND
+				BIN_MemberLevelID = #memberLevelId# AND
+				ValidFlag = '1' 
+		]]>
+    </select>
+ 
+</sqlMap>

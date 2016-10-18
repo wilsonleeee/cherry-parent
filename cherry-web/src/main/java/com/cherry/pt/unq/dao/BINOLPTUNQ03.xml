@@ -1,0 +1,68 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sqlMap PUBLIC "-//iBATIS.com//DTD SQL Map 2.0//EN" "http://ibatis.apache.org/dtd/sql-map-2.dtd">
+<sqlMap namespace="BINOLPTUNQ03"> 
+
+	<!-- 唯一码基础信息查询 -->
+	<select id="getUnqInfo" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+		SELECT
+		    C.UnitCode AS unitCode,
+			B.BarCode AS barCode,
+			A.PointUniqueCode AS pointUniqueCode,
+			A.RelUniqueCode AS relUniqueCode,
+			A.BoxCode  AS  boxCode ,
+			A.ActivationStatus AS activationStatus,
+			A.UseStatus AS useStatus
+		FROM
+			 Basis.BIN_PrtUniqueCodeDetail A
+		LEFT JOIN  Basis.BIN_ProductVendor B ON  A.BIN_ProductVendorID=B.BIN_ProductVendorID
+		LEFT JOIN  Basis.BIN_Product C ON  B.BIN_ProductID=C.BIN_ProductID
+		WHERE  1=1
+		<isNotEmpty prepend="AND" property="pointUniqueCode">
+			<![CDATA[
+				 PointUniqueCode = #pointUniqueCode# 
+			]]>
+		</isNotEmpty>
+		<isNotEmpty prepend="AND" property="relUniqueCode">
+			<![CDATA[
+			  RelUniqueCode = #relUniqueCode#
+			]]>
+		</isNotEmpty>
+    </select>
+    
+    	<!-- 厂商编码基础信息查询 -->
+	<select id="getUnitCodeInfo" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+		SELECT 
+				A.BIN_ProductID, 
+				B.BIN_ProductVendorID
+		FROM  
+				Basis.BIN_Product A , 
+				Basis.BIN_ProductVendor B
+		WHERE 
+		        A.BIN_ProductID = B.BIN_ProductID
+		AND     A.UnitCode=#unitCode#
+    </select>
+     
+        <!-- 唯一码信息维护（更新）-->
+	<update id="updateUnqCode" parameterClass="java.util.HashMap">
+		<![CDATA[
+		UPDATE	
+			Basis.BIN_PrtUniqueCodeDetail
+		SET	
+			BIN_ProductVendorID = #BIN_ProductVendorID#,
+			ActivationStatus = #activationStatus#,
+		]]>				
+          <include refid="BINOLCMINC99.updateSql" />
+		WHERE
+			 1=1
+		<isNotEmpty prepend="AND" property="pointUniqueCode">
+			<![CDATA[
+				 PointUniqueCode = #pointUniqueCode# 
+			]]>
+		</isNotEmpty>
+		<isNotEmpty prepend="AND" property="relUniqueCodeSrh">
+			<![CDATA[
+			  RelUniqueCode = #relUniqueCode#
+			]]>
+	</isNotEmpty>
+	</update>
+</sqlMap>

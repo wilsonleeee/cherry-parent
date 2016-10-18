@@ -1,0 +1,211 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sqlMap PUBLIC "-//iBATIS.com//DTD SQL Map 2.0//EN" "http://ibatis.apache.org/dtd/sql-map-2.dtd">
+<sqlMap namespace="BINOLBSPOS02">
+	
+	<!-- 取得岗位信息 -->
+	<resultMap id="BINOLBSPOS02.PositionInfo" class="java.util.HashMap">
+		<result property="higherPositionPath" column="HigherPositionPath"/>
+		<result property="positionPath" column="Path"/>
+		<result property="positionId" column="BIN_PositionID"/>
+		<result property="positionName" column="PositionName"/>
+		<result property="positionNameForeign" column="PositionNameForeign"/>
+		<result property="positionDESC" column="PositionDESC"/>
+		<result property="positionCategoryId" column="BIN_PositionCategoryID"/>
+		<result property="categoryName" column="CategoryName"/>
+		<result property="organizationId" column="BIN_OrganizationID"/>
+		<result property="departName" column="DepartName"/>
+		<result property="isManager" column="isManager"/>
+		<result property="foundationDate" column="FoundationDate"/>
+		<result property="positionType" column="PositionType"/>
+		<result property="resellerInfoId" column="BIN_ResellerInfoID"/>
+		<result property="resellerName" column="ResellerName"/>
+		<result property="updateTime" column="UpdateTime"/>
+		<result property="modifyCount" column="ModifyCount"/>
+		<result property="brandInfoId" column="BIN_BrandInfoID"/>
+		<result property="brandNameChinese" column="BrandNameChinese"/>
+	</resultMap>
+	<select id="getPositionInfo" parameterClass="java.util.HashMap" resultMap="BINOLBSPOS02.PositionInfo">
+		<![CDATA[
+			SELECT 
+				A.NodeID.GetAncestor(1).ToString() AS HigherPositionPath,
+				A.Path,
+				A.BIN_PositionID,
+				A.PositionName,
+				A.PositionNameForeign,
+				A.PositionDESC,
+				A.BIN_PositionCategoryID,
+				C.CategoryName,
+				B.BIN_OrganizationID,
+				B.DepartName,
+				A.isManager,
+				A.FoundationDate,
+				A.PositionType,
+				A.BIN_ResellerInfoID,
+				D.ResellerName,
+				convert(varchar(30),A.UpdateTime,121) AS UpdateTime,
+				A.ModifyCount,
+				B.BIN_BrandInfoID,
+				E.BrandNameChinese
+			FROM 
+				Basis.BIN_Position A left join Privilege.BIN_PositionCategory C on
+				A.BIN_PositionCategoryID = C.BIN_PositionCategoryID left join Basis.BIN_ResellerInfo D on
+				A.BIN_ResellerInfoID = D.BIN_ResellerInfoID,
+				Basis.BIN_Organization B left join Basis.BIN_BrandInfo E on
+				B.BIN_BrandInfoID=E.BIN_BrandInfoID
+			WHERE
+				A.BIN_OrganizationID = B.BIN_OrganizationID AND
+				A.ValidFlag = '1' AND
+				B.ValidFlag = '1' AND
+				A.BIN_PositionID = #positionId#
+		]]>
+    </select>
+    
+    <!-- 查询直属上级岗位名称 -->
+	<select id="getHigherPositionName" parameterClass="java.util.HashMap" resultClass="java.lang.String" >
+		<![CDATA[
+			SELECT
+				PositionName
+			FROM
+				Basis.BIN_Position
+			WHERE
+				Path = #path#
+		]]>
+    </select>
+    
+    <!-- 查询当前岗位所在的员工 -->
+    <resultMap id="BINOLBSPOS02.EmployeeByPos" class="java.util.HashMap">
+		<result property="employeeId" column="BIN_EmployeeID"/>
+		<result property="employeeCode" column="EmployeeCode"/>
+		<result property="employeeName" column="EmployeeName"/>
+		<result property="gender" column="Gender"/>
+		<result property="employeeNameForeign" column="EmployeeNameForeign"/>
+		<result property="academic" column="Academic"/>
+		<result property="maritalStatus" column="MaritalStatus"/>
+		<result property="identityCard" column="IdentityCard"/>
+		<result property="birthDay" column="BirthDay"/>
+		<result property="phone" column="Phone"/>
+		<result property="mobilePhone" column="MobilePhone"/>
+		<result property="email" column="Email"/>
+		<result property="validFlag" column="ValidFlag"/>
+	</resultMap>
+	<select id="getEmployeeByPos" parameterClass="java.util.HashMap" resultMap="BINOLBSPOS02.EmployeeByPos" >
+		<![CDATA[
+			SELECT
+				n.BIN_EmployeeID,
+				n.EmployeeCode,
+				n.EmployeeName,
+				n.Gender,
+				n.EmployeeNameForeign,
+				n.Academic,
+				n.MaritalStatus,
+				n.IdentityCard,
+				n.BirthDay,
+				n.Phone,
+				n.MobilePhone,
+				n.Email,
+				n.ValidFlag
+			FROM
+				Basis.BIN_Position x join 
+				Basis.BIN_PostDistribution m join Basis.BIN_Employee n on m.BIN_EmployeeID=n.BIN_EmployeeID
+				on x.BIN_PositionID=m.BIN_PositionID
+			WHERE
+				x.BIN_PositionID = #positionId#
+		]]>
+    </select>
+    
+    <!-- 查询员工信息 -->
+    <resultMap id="BINOLBSPOS02.EmployeeInfo" class="java.util.HashMap">
+		<result property="employeeId" column="BIN_EmployeeID"/>
+		<result property="employeeCode" column="EmployeeCode"/>
+		<result property="employeeName" column="EmployeeName"/>
+		<result property="gender" column="Gender"/>
+		<result property="employeeNameForeign" column="EmployeeNameForeign"/>
+		<result property="academic" column="Academic"/>
+		<result property="maritalStatus" column="MaritalStatus"/>
+		<result property="identityCard" column="IdentityCard"/>
+		<result property="birthDay" column="BirthDay"/>
+		<result property="phone" column="Phone"/>
+		<result property="mobilePhone" column="MobilePhone"/>
+		<result property="email" column="Email"/>
+		<result property="validFlag" column="ValidFlag"/>
+	</resultMap>
+	<select id="getEmployeeInfo" parameterClass="java.util.HashMap" resultMap="BINOLBSPOS02.EmployeeInfo" >
+		<![CDATA[
+			SELECT
+				a.BIN_EmployeeID,
+				a.EmployeeCode,
+				a.EmployeeName,
+				a.Gender,
+				a.EmployeeNameForeign,
+				a.Academic,
+				a.MaritalStatus,
+				a.IdentityCard,
+				a.BirthDay,
+				a.Phone,
+				a.MobilePhone,
+				a.Email,
+				a.ValidFlag
+			FROM
+				Basis.BIN_Employee a
+			WHERE
+				a.BIN_EmployeeID=#employeeId# AND
+				a.ValidFlag='1'
+		]]>
+    </select>
+    
+    <!-- 取得员工管辖的柜台List -->
+	<resultMap id="BINOLBSPOS02.Counter" class="java.util.HashMap">
+		<result property="counterInfoId" column="BIN_CounterInfoID"/>
+		<result property="counterCode" column="CounterCode"/>
+		<result property="counterNameIF" column="CounterNameIF"/>
+		<result property="counterKind" column="CounterKind"/>
+		<result property="counterLevel" column="CounterLevel"/>
+		<result property="status" column="Status"/>
+	</resultMap>
+	<select id="getCounterList" parameterClass="java.util.HashMap" resultMap="BINOLBSPOS02.Counter">
+		<![CDATA[
+			SELECT
+				a.BIN_CounterInfoID,
+				a.CounterCode,
+				a.CounterNameIF,
+				a.CounterKind,
+				a.CounterLevel,
+				a.Status
+			FROM
+				Basis.BIN_CounterInfo a,
+				Basis.BIN_PostDistribution b
+			WHERE
+				a.ValidFlag='1' AND
+				b.ValidFlag='1' AND
+				b.BIN_PositionID=a.BIN_PositionID AND
+				b.BIN_EmployeeID=#employeeId#
+		]]>
+    </select>
+    
+    <!-- 查询柜台信息 -->
+    <resultMap id="BINOLBSPOS02.CounterInfo" class="java.util.HashMap">
+		<result property="counterInfoId" column="BIN_CounterInfoID"/>
+		<result property="counterCode" column="CounterCode"/>
+		<result property="counterNameIF" column="CounterNameIF"/>
+		<result property="counterKind" column="CounterKind"/>
+		<result property="counterLevel" column="CounterLevel"/>
+		<result property="status" column="Status"/>
+	</resultMap>
+	<select id="getCounterInfo" parameterClass="java.util.HashMap" resultMap="BINOLBSPOS02.CounterInfo" >
+		<![CDATA[
+			SELECT
+				a.BIN_CounterInfoID,
+				a.CounterCode,
+				a.CounterNameIF,
+				a.CounterKind,
+				a.CounterLevel,
+				a.Status
+			FROM
+				Basis.BIN_CounterInfo a
+			WHERE
+				a.BIN_CounterInfoID=#counterInfoId# AND
+				a.ValidFlag='1'
+		]]>
+    </select>
+	
+</sqlMap>

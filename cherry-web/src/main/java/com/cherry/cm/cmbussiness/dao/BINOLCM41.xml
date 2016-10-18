@@ -1,0 +1,190 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sqlMap PUBLIC "-//iBATIS.com//DTD SQL Map 2.0//EN" "http://ibatis.apache.org/dtd/sql-map-2.dtd">
+<!-- 产品基础信息  共通SQL -->
+<sqlMap namespace="BINOLCM41">
+
+	<!-- 取得柜台方案对应的方案中的产品信息 -->
+	<sql id="getPrtByCntSolu">
+			SELECT P.BIN_ProductID,P.NameTotal,P.UnitCode,P.ValidFlag,B.BarCode,B.BIN_ProductVendorID ,P.StandardCost,PPSD.SalePrice,PPSD.MemPrice
+			FROM Basis.BIN_PrtSoluDepartRelation PSDR WITH(NOLOCK)
+			JOIN Basis.BIN_ProductPriceSolution PPS WITH(NOLOCK)
+				ON (PPS.BIN_ProductPriceSolutionID = PSDR.BIN_SolutionId 
+					AND PPS.ValidFlag = '1' AND <![CDATA[ PPS.StartDate <= #businessDate# AND PPS.EndDate >= #businessDate# ]]>
+				)
+			JOIN Basis.BIN_ProductPriceSolutionDetail PPSD WITH(NOLOCK)
+				ON (PPSD.BIN_ProductPriceSolutionID = PPS.BIN_ProductPriceSolutionID 
+					AND PPSD.ValidFlag = '1'
+				)
+			JOIN Basis.BIN_Product P WITH(NOLOCK) ON P.BIN_ProductID = PPSD.BIN_ProductID AND P.ValidFlag = #validFlag#
+			JOIN Basis.BIN_ProductVendor B WITH(NOLOCK) ON(P.BIN_ProductID = B.BIN_ProductID AND B.ValidFlag = #validFlag#)
+			WHERE 
+				PSDR.BIN_OrganizationInfoID = #organizationInfoId#
+			AND PSDR.BIN_BrandInfoID = #brandInfoId#
+			AND PSDR.DepartCode = #counterCode#
+	</sql>
+	
+	<!-- 取得柜台对应的产品信息SQL -->
+	<sql id="getCntProductInfoSQL">
+		SELECT 
+			A.UnitCode,
+			A.BarCode,
+			A.BIN_ProductID,
+			A.BIN_ProductVendorID,
+			ISNULL(CONVERT(Decimal(16,2),A.StandardCost),0) AS StandardCost,
+			<!-- 颖通模式价格从产品价格表取  -->
+			<isEqual property="soluAddModeConf" compareValue="2">
+				ISNULL(CONVERT(Decimal(16,2),C.SalePrice),0) AS SalePrice,
+	            ISNULL(CONVERT(Decimal(16,2),C.MemPrice),0) AS MemPrice,
+			</isEqual>
+			<isEqual property="soluAddModeConf" compareValue="3">
+				ISNULL(CONVERT(Decimal(16,2),C.SalePrice),0) AS SalePrice,
+	            ISNULL(CONVERT(Decimal(16,2),C.MemPrice),0) AS MemPrice,
+			</isEqual>
+			<!-- 标准模式价格从方案明细中取得  -->
+			<isEqual property="soluAddModeConf" compareValue="1">
+				ISNULL(CONVERT(Decimal(16,2),A.SalePrice),0) AS SalePrice,
+	            ISNULL(CONVERT(Decimal(16,2),A.MemPrice),0) AS MemPrice,
+			</isEqual>
+			<dynamic>
+				<isNotEmpty property="language">
+					<isEqual property="language" compareValue="zh_CN">										
+						A.NameTotal AS NameTotal
+					</isEqual>
+					<isEqual property="language" compareValue="en_US">										
+						A.NameForeign AS NameTotal
+					</isEqual>
+				</isNotEmpty>
+				<isEmpty property="language">
+						A.NameTotal AS NameTotal
+				</isEmpty>
+			</dynamic>
+		FROM
+			(
+				<!-- 柜台产品使用模式 1:严格校验  -->
+				<isEqual property="cntPrtModeConf" compareValue="1">
+					<!-- 取得柜台方案对应的方案中的产品信息 -->
+					<include refid="BINOLCM41.getPrtByCntSolu"/>
+				</isEqual>
+				<!-- 柜台产品使用模式 2:补充校验 -->
+				<isEqual property="cntPrtModeConf" compareValue="2">
+					<!-- 取得柜台方案对应的方案中的产品信息 -->
+					<include refid="BINOLCM41.getPrtByCntSolu"/>
+					UNION
+					
+					SELECT 
+						A2.*
+						<!-- 标准模式价格从方案明细中取得:因为是补充，所以只能从标准产品价格表中取得   -->
+							,PP.SalePrice,PP.MemPrice
+					FROM(
+					
+						SELECT P.BIN_ProductID,P.NameTotal ,P.UnitCode,P.ValidFlag,PV.BarCode,PV.BIN_ProductVendorID,P.StandardCost
+						FROM Basis.BIN_Product P WITH(NOLOCK)
+						JOIN Basis.BIN_ProductVendor PV WITH(NOLOCK) ON PV.BIN_ProductID = P.BIN_ProductID AND  PV.ValidFlag = #validFlag#
+						WHERE 
+							P.ValidFlag = #validFlag# 
+						AND P.BIN_OrganizationInfoID = #organizationInfoId# 
+						AND P.BIN_BrandInfoID = #brandInfoId#
+						AND NOT EXISTS(
+							SELECT 1 FROM (<include refid="BINOLCM41.getPrtByCntSolu"/>)  A3 WHERE A3.BIN_ProductID = P.BIN_ProductID
+						)
+					) A2
+					<!-- 标准模式价格从方案明细中取得:因为是补充，所以只能从标准产品价格表中取得   -->
+		            <![CDATA[
+		            LEFT JOIN Basis.BIN_ProductPrice PP WITH(NOLOCK)
+			            ON (A2.BIN_ProductID = PP.BIN_ProductID
+			            AND A2.ValidFlag = PP.ValidFlag 
+			            AND PP.Type = '2'
+			            AND PP.EndDate >= #businessDate#
+			            AND PP.StartDate <= #businessDate#)
+		            ]]>
+				</isEqual>
+			) A
+			<!-- 颖通模式价格从产品价格表取  -->
+			<isEqual property="soluAddModeConf" compareValue="2">
+            <![CDATA[
+            LEFT JOIN Basis.BIN_ProductPrice C WITH(NOLOCK)
+	            ON (A.BIN_ProductID = C.BIN_ProductID
+	            AND A.ValidFlag = C.ValidFlag 
+	            AND C.Type = '2'
+	            AND C.EndDate >= #businessDate#
+	            AND C.StartDate <= #businessDate#)
+            ]]>
+			</isEqual>	
+			<!-- 颖通模式价格从产品价格表取  -->
+			<isEqual property="soluAddModeConf" compareValue="3">
+            <![CDATA[
+            LEFT JOIN Basis.BIN_ProductPrice C WITH(NOLOCK)
+	            ON (A.BIN_ProductID = C.BIN_ProductID
+	            AND A.ValidFlag = C.ValidFlag 
+	            AND C.Type = '2'
+	            AND C.EndDate >= #businessDate#
+	            AND C.StartDate <= #businessDate#)
+            ]]>
+			</isEqual>	
+	</sql>
+	
+	<!-- 取得标准产品表 -->
+	<sql id="getStandProductInfoSQL">
+        <![CDATA[
+		SELECT 
+			A.UnitCode,
+			B.BarCode,
+			A.BIN_ProductID,
+			B.BIN_ProductVendorID,
+			ISNULL(CONVERT(Decimal(16,2),C.SalePrice),0) AS SalePrice,
+            ISNULL(CONVERT(Decimal(16,2),C.MemPrice),0) AS MemPrice,
+            ISNULL(CONVERT(Decimal(16,2),A.StandardCost),0) AS StandardCost,
+        ]]>
+			<dynamic>
+				<isNotEmpty property="language">
+					<isEqual property="language" compareValue="zh_CN">										
+						A.NameTotal AS NameTotal
+					</isEqual>
+					<isEqual property="language" compareValue="en_US">										
+						A.NameForeign AS NameTotal
+					</isEqual>
+				</isNotEmpty>
+				<isEmpty property="language">
+						A.NameTotal AS NameTotal
+				</isEmpty>
+			</dynamic>
+        <![CDATA[
+		FROM
+			Basis.BIN_Product A WITH(NOLOCK)
+			JOIN Basis.BIN_ProductVendor B WITH(NOLOCK) ON(A.BIN_ProductID = B.BIN_ProductID AND B.ValidFlag = #validFlag#)
+            LEFT JOIN Basis.BIN_ProductPrice C WITH(NOLOCK)
+            ON (A.BIN_ProductID = C.BIN_ProductID
+            AND A.ValidFlag = C.ValidFlag 
+            AND C.Type = '2'
+            AND C.EndDate >= #businessDate#
+            AND C.StartDate <= #businessDate#)
+		WHERE
+			A.ValidFlag = #validFlag#
+			AND A.BIN_OrganizationInfoID = #organizationInfoId#
+			AND A.BIN_BrandInfoID = #brandInfoId#
+        ]]>
+	</sql>
+	
+	<!-- 取得柜台方案产品列表 -->
+	<sql id="getCommonProductInfoList">
+		<isNotEmpty>
+			<isEqual property="cntPrt" compareValue="1">
+				<include refid="BINOLCM41.getCntProductInfoSQL"/>
+			</isEqual>
+			<isEqual property="cntPrt" compareValue="0">
+				<include refid="BINOLCM41.getStandProductInfoSQL"/>
+			</isEqual>
+		</isNotEmpty>
+	</sql>
+
+	<!--取得柜台对应的产品信息-->
+	<select id="getCntProductInfo" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+		<include refid="BINOLCM41.getCntProductInfoSQL"/>
+	</select>
+
+	<!--取得柜台对应的产品信息-->
+	<select id="getStandProductInfo" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+		<include refid="BINOLCM41.getStandProductInfoSQL"/>
+	</select>
+
+</sqlMap>

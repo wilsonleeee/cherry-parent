@@ -1,0 +1,424 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sqlMap PUBLIC "-//iBATIS.com//DTD SQL Map 2.0//EN" "http://ibatis.apache.org/dtd/sql-map-2.dtd">
+<sqlMap namespace="BINOLMOPMC04">
+	<!-- POS品牌菜单管理-->
+	<select id="getPosMenuBrandInfoList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+	<![CDATA[
+		SELECT 
+			  A.BIN_PosMenuBrandID AS posMenuBrandID,
+		      A.BIN_PosMenuID AS id,
+	]]>
+  	<dynamic>
+		<isNotEmpty property="language">
+			<isEqual property="language" compareValue="en_US">										
+				'('+B.MenuCode+')'+A.BrandMenuNameEN AS name,
+			</isEqual>
+			<isEqual property="language" compareValue="zh_CN">										
+				'('+B.MenuCode+')'+A.BrandMenuNameCN AS name,
+			</isEqual>								
+		</isNotEmpty>
+		<isEmpty property="language">
+			'('+B.MenuCode+')'+A.BrandMenuNameCN AS name,
+		</isEmpty>
+	</dynamic>
+	<![CDATA[
+		  A.BrandMenuNameEN AS brandMenuNameEN,
+		  A.BrandMenuNameCN AS brandMenuNameCN,
+		  CASE A.BrandMenuNameCN WHEN '补登销售记录' THEN '1' ELSE '0' END AS editConfigFlag,
+	      A.ParentMenuID AS pId,
+	      A.Container AS container,
+	      A.MenuOrder AS menuOrder,
+	      A.MenuStatus AS menuStatus,
+	      A.MenuValue AS menuValue,
+	      A.ValidFlag AS brandValidFlag,
+	      B.MenuCode AS menuCode,
+	      B.MenuType AS menuType,
+	      B.ValidFlag AS validFlag
+  		FROM 
+		  	Monitor.BIN_PosMenuBrand A WITH(NOLOCK)
+		  	LEFT JOIN Monitor.BIN_PosMenu B WITH(NOLOCK)
+			ON(A.BIN_PosMenuID = B.BIN_PosMenuID)
+		WHERE 
+			A.BIN_OrganizationInfoID =#organizationInfoId# 
+			AND A.BIN_BrandInfoID = #brandInfoId#
+	]]>
+	<isNotEmpty prepend="AND" property="machineType">
+			B.MachineType = #machineType#
+	</isNotEmpty>
+	<![CDATA[
+		ORDER BY
+		  	A.ParentMenuID,
+		  	A.MenuOrder
+	]]>
+	</select>
+    
+    <!-- 修改品牌菜单的显示状态  -->
+	<update id="updatePosMenuBrandMenuStatus" parameterClass="java.util.HashMap">
+		<![CDATA[
+	        UPDATE 
+	        	Monitor.BIN_PosMenuBrand
+	        SET 
+	        	MenuStatus=#menuStatus#,
+   		]]>
+		<include refid="BINOLCMINC99.updateSql" />
+		<![CDATA[    
+			WHERE 
+				BIN_PosMenuBrandID = #posMenuBrandID#
+		]]>         
+    </update>
+    
+    <!-- 删除柜台特殊配置差分结果表中当前菜单的所有配置，统一回归以共通配置为准 -->
+    <delete id="deletePosMenuBrandCounterInfo" parameterClass="java.util.HashMap">
+    	<![CDATA[
+    		DELETE FROM
+    			Monitor.BIN_PosMenuBrandCounter
+    		WHERE
+    			BIN_OrganizationInfoID =#organizationInfoId# 
+				AND BIN_BrandInfoID = #brandInfoId#
+				AND BIN_PosMenuID = #posMenuID#
+    	]]>
+    </delete>
+    
+    <!-- 取得非终结点的菜单信息SQL -->
+    <sql id="noLeafPosMenuQuery">
+    	<![CDATA[
+			SELECT
+				B.BIN_PosMenuID AS posMenuID,
+				B.MenuCode AS menuCode,
+				B.MenuType AS menuType,
+		]]>
+	  	<dynamic>
+			<isNotEmpty property="language">
+				<isEqual property="language" compareValue="en_US">										
+					ISNULL(A.BrandMenuNameEN,A.BrandMenuNameCN) AS menuName
+				</isEqual>
+				<isEqual property="language" compareValue="zh_CN">										
+					A.BrandMenuNameCN AS menuName
+				</isEqual>								
+			</isNotEmpty>
+			<isEmpty property="language">
+				A.BrandMenuNameCN AS menuName
+			</isEmpty>
+		</dynamic>
+		<![CDATA[
+			FROM
+				Monitor.BIN_PosMenuBrand A WITH(NOLOCK)
+				LEFT JOIN Monitor.BIN_PosMenu B WITH(NOLOCK)
+				ON(A.BIN_PosMenuID = B.BIN_PosMenuID)
+			WHERE
+				B.IsLeaf = '0'
+    	]]>
+    	<isNotEmpty prepend="AND" property="brandInfoId">
+			A.BIN_BrandInfoID =#brandInfoId#
+		</isNotEmpty>  
+		<isNotEmpty prepend="AND" property="organizationInfoId">
+			A.BIN_OrganizationInfoID =#organizationInfoId#
+		</isNotEmpty>
+		<isNotEmpty prepend="AND" property="machineType">
+			B.MachineType =#machineType#
+		</isNotEmpty>
+		<isNotEmpty prepend="AND" property="posMenuKw">
+			(B.MenuCode like '%'+#posMenuKw#+'%' OR 
+			A.BrandMenuNameCN like '%'+#posMenuKw#+'%' OR
+			A.BrandMenuNameEN like '%'+#posMenuKw#+'%')
+		</isNotEmpty>
+    </sql>
+    
+    <!-- 取得非终结点的菜单信息总数  -->
+    <select id="getNoLeafPosMenuCount" parameterClass="java.util.HashMap" resultClass="java.lang.Integer">
+        <![CDATA[
+            SELECT COUNT(1) AS count FROM (
+        ]]>
+        <include refid="BINOLMOPMC04.noLeafPosMenuQuery" />
+        <![CDATA[
+            )SORT_T1
+        ]]>
+    </select>
+    
+    <!-- 取得非终结点的菜单信息List  -->
+    <select id="getNoLeafPosMenuList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+        <include refid="BINOLCMINC99.pageheader" />
+        <include refid="BINOLMOPMC04.noLeafPosMenuQuery" />
+        <include refid="BINOLCMINC99.pagefooter" />
+    </select>
+    
+    <!-- 新增菜单管理信息  -->
+	<insert id="addPosMenuBrand" parameterClass="java.util.HashMap"  >
+	<selectKey resultClass="java.lang.Integer" type="post" keyProperty="BIN_PosMenuBrandID" > 
+        <![CDATA[
+            INSERT INTO Monitor.BIN_PosMenuBrand(
+	      	  BIN_OrganizationInfoID,
+		      BIN_BrandInfoID,
+		      BIN_PosMenuID,
+		      MenuCode,
+			  BrandMenuNameEN,
+			  BrandMenuNameCN,
+		      ParentMenuID,
+		      Container,
+		      MenuOrder,
+		      MenuStatus,
+		      MenuValue,
+	    ]]>
+		<include refid="BINOLCMINC99.insertKeySql" />		
+		<![CDATA[
+            )VALUES(
+                #organizationInfoId#,
+                #brandInfoId#,
+                #posMenuID#,
+                #menuCode#,
+                #brandMenuNameEN#,                
+                #brandMenuNameCN#,
+                #parentMenuID#,
+                #container#,
+                #menuOrder#,
+                #menuStatus#,
+                #menuValue#,
+        ]]>
+		<include refid="BINOLCMINC99.insertValueSql" />		
+		<![CDATA[
+            )
+             SELECT SCOPE_IDENTITY() AS value
+        ]]>
+     </selectKey>
+    </insert>
+    
+    <!-- 新增一条菜单 -->
+    <insert id="addPosMenu" parameterClass="java.util.HashMap"  >
+	<selectKey resultClass="java.lang.Integer" type="post" keyProperty="BIN_PosMenuID" > 
+        <![CDATA[
+        	INSERT INTO Monitor.BIN_PosMenu(
+      			MenuCode,
+      			MenuType,
+      			MenuLink,
+      			Comment,
+      			IsLeaf,
+      			MachineType,
+      	]]>
+		<include refid="BINOLCMINC99.insertKeySql" />		
+		<![CDATA[
+      		)VALUES(
+      			#menuCode#,
+      			#menuType#,
+      			#menuLink#,
+      			#comment#,
+      			#isLeaf#,
+      			#machineType#,
+      	]]>
+		<include refid="BINOLCMINC99.insertValueSql" />		
+		<![CDATA[
+      		)
+      		SELECT SCOPE_IDENTITY() AS value
+        ]]>
+    </selectKey>
+    </insert>
+    
+    <!-- 取得指定上级菜单的下级菜单最大【MenuOrder】 -->
+    <select id="getMaxChildOrder" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+	<![CDATA[	
+		SELECT
+			MAX(ISNULL(MenuOrder,0)) AS maxOrder
+		FROM
+			Monitor.BIN_PosMenuBrand
+		WHERE
+			ParentMenuID=#parentMenuID#
+	]]>
+		<isNotEmpty property="brandInfoId">
+			AND BIN_BrandInfoID =#brandInfoId#
+		</isNotEmpty>  
+		<isNotEmpty property="organizationInfoId">
+			AND BIN_OrganizationInfoID =#organizationInfoId#
+		</isNotEmpty>
+    </select>
+    
+    <!-- POS品牌菜单管理List (WS结构组装使用)  -->
+    <select id="getPosMenuBrandWithWS" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+    	<![CDATA[
+            SELECT 
+	      		A.BIN_PosMenuID AS BIN_PosMenuID,
+	      		A.BrandMenuNameCN AS BrandMenuNameCN,
+	      		A.BrandMenuNameEN AS BrandMenuNameEN,
+	      		A.ParentMenuID AS ParentMenuID,
+	      		A.Container AS Container,
+	      		A.MenuOrder AS MenuOrder,
+	      		A.MenuStatus AS MenuStatus,
+	      		A.MenuValue AS MenuValue,
+	      		B.MenuCode AS MenuCode,
+	      		A.ValidFlag AS ValidFlag
+      		FROM 
+      			Monitor.BIN_PosMenuBrand A WITH(NOLOCK)
+      			LEFT JOIN Monitor.BIN_PosMenu B WITH(NOLOCK)
+				ON A.BIN_PosMenuID = B.BIN_PosMenuID
+      		WHERE 
+      			A.BIN_PosMenuBrandID=#posMenuBrandID#
+		]]> 
+		<isNotEmpty property="brandInfoId">
+			AND A.BIN_BrandInfoID =#brandInfoId#
+		</isNotEmpty>  
+		<isNotEmpty property="organizationInfoId">
+			AND A.BIN_OrganizationInfoID =#organizationInfoId#
+		</isNotEmpty>								
+    </select>
+    
+    <!-- 取得指定POS品牌菜单详细 -->
+    <select id="getPosMenuDetail" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+    	<![CDATA[
+    	SELECT
+    		A.BIN_PosMenuBrandID AS posMenuBrandID,
+      		A.BIN_PosMenuID AS posMenuID,
+      		A.ParentMenuID AS parentMenuID,
+      		A.Container AS container,
+      		A.MenuOrder AS menuOrder,
+      		A.MenuStatus AS menuStatus,
+      		A.MenuValue AS menuValue,
+      		B.MenuCode AS menuCode,
+      		B.MenuType AS menuType,
+      		B.MenuLink AS menuLink,
+      		B.Comment AS comment,
+      		B.IsLeaf AS isLeaf,
+      		B.ValidFlag AS validFlag,
+      		B.MachineType AS machineType,
+      		CASE A.BrandMenuNameCN WHEN '补登销售记录' THEN '1' ELSE '0' END AS editConfigFlag,
+      		A.BrandMenuNameCN AS brandMenuNameCN,
+      		A.BrandMenuNameEN AS brandMenuNameEN
+      	FROM 
+      		Monitor.BIN_PosMenuBrand A WITH(NOLOCK)
+      		LEFT JOIN Monitor.BIN_PosMenu B WITH(NOLOCK)
+			ON A.BIN_PosMenuID = B.BIN_PosMenuID
+      	WHERE 
+      		A.BIN_PosMenuBrandID=#posMenuBrandID#
+    	]]>
+    </select>
+    
+    <!-- 更新对品牌菜单详细信息的更改 -->
+	<update id="updatePosMenuBrand" parameterClass="java.util.HashMap">
+        <![CDATA[
+	        UPDATE 
+	        	Monitor.BIN_PosMenuBrand
+	        SET
+	        	Container = #container#,
+				MenuValue = #menuValue#,
+				BrandMenuNameEN =#brandMenuNameEN#,
+				BrandMenuNameCN =#brandMenuNameCN#,
+		]]>
+		<include refid="BINOLCMINC99.updateSql" />
+		<![CDATA[
+			WHERE 
+				BIN_PosMenuBrandID = #posMenuBrandID#   
+		]]> 
+		<isNotEmpty property="brandInfoId">
+			AND BIN_BrandInfoID =#brandInfoId#
+		</isNotEmpty>  
+		<isNotEmpty property="organizationInfoId">
+			AND BIN_OrganizationInfoID =#organizationInfoId#
+		</isNotEmpty>    
+    </update>
+    
+    <!-- 更新菜单信息 -->
+    <update id="updatePosMenu" parameterClass="java.util.HashMap">
+    	<![CDATA[
+        UPDATE 
+			Monitor.BIN_PosMenu
+		SET
+			MenuType = #menuType#,
+			MenuLink = #menuLink#,
+			Comment = #comment#,
+		]]>
+		<include refid="BINOLCMINC99.updateSql" />
+		<![CDATA[				
+		WHERE 
+			BIN_PosMenuID = #posMenuID#
+       	]]>
+    </update>
+    
+    <!-- 启用或者停用品牌菜单-->
+	<update id="disOrEnableMenuBrand" parameterClass="java.util.HashMap">
+		<![CDATA[
+	        UPDATE 
+	        	Monitor.BIN_PosMenu
+	        SET
+	        	ValidFlag = #validFlag#,
+	    ]]>
+		<include refid="BINOLCMINC99.updateSql" />
+		<![CDATA[
+	        WHERE
+	        	BIN_PosMenuID = #posMenuID#
+	    ]]>
+	</update>
+	
+	<!-- 验证同一组织品牌中是否存在同样的菜单编码 -->
+	<select id="getSamePosMenuCodeCheck" parameterClass="java.util.HashMap" resultClass="java.lang.String">
+    	<![CDATA[
+    		SELECT
+				B.BIN_PosMenuID
+			FROM
+				Monitor.BIN_PosMenuBrand A WITH(NOLOCK)
+				LEFT JOIN Monitor.BIN_PosMenu B WITH(NOLOCK)
+				ON(A.BIN_PosMenuID = B.BIN_PosMenuID)
+			WHERE
+				B.MenuCode=#menuCode#
+    	]]>
+    	<isNotEmpty property="brandInfoId">
+			AND A.BIN_BrandInfoID =#brandInfoId#
+		</isNotEmpty>  
+		<isNotEmpty property="organizationInfoId">
+			AND A.BIN_OrganizationInfoID =#organizationInfoId#
+		</isNotEmpty>
+		<isNotEmpty prepend="AND" property="machineType">
+			B.MachineType =#machineType#
+		</isNotEmpty>
+    </select>
+    
+    <!-- 取得菜单信息（用于快捷定位 ）-->
+	<select id="getPosMenuInfo" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+	<![CDATA[
+		SELECT TOP $number$
+			A.BIN_PosMenuID AS posMenuID,
+	]]>
+  	<dynamic>
+		<isNotEmpty property="language">
+			<isEqual property="language" compareValue="en_US">
+				'('+A.MenuCode+')' + A.BrandMenuNameEN AS menuName
+			</isEqual>
+			<isEqual property="language" compareValue="zh_CN">
+				'('+A.MenuCode+')' + A.BrandMenuNameCN AS menuName
+			</isEqual>								
+		</isNotEmpty>
+		<isEmpty property="language">
+			'('+A.MenuCode+')' + A.BrandMenuNameCN AS menuName
+		</isEmpty>
+	</dynamic>
+	<![CDATA[	
+		FROM
+			Monitor.BIN_PosMenuBrand A
+			LEFT JOIN Monitor.BIN_PosMenu B
+			ON(A.BIN_PosMenuID=B.BIN_PosMenuID)
+		WHERE
+			A.ValidFlag = '1'
+			AND A.BIN_OrganizationInfoID = #organizationInfoId#
+			AND A.BIN_BrandInfoID = #brandInfoId#
+	]]>
+	<dynamic>
+	<isNotEmpty prepend="AND" property="machineType">
+			B.MachineType = #machineType#
+	</isNotEmpty>
+	<isNotEmpty property="menuInfoStr" prepend="AND">
+		(
+			<isNotEmpty property="language">
+				<isEqual property="language" compareValue="zh_CN">										
+					<![CDATA[A.BrandMenuNameCN Like '%' + #menuInfoStr# + '%']]>
+				</isEqual>
+				<isEqual property="language" compareValue="en_US">										
+					<![CDATA[A.BrandMenuNameEN Like '%' + #menuInfoStr# + '%']]>
+				</isEqual>
+			</isNotEmpty>
+			<isEmpty property="language">
+				<![CDATA[A.BrandMenuNameCN Like '%' + #menuInfoStr# + '%']]>
+			</isEmpty>
+			OR
+				A.MenuCode Like '%' + #menuInfoStr# + '%'
+		)
+	</isNotEmpty>
+	</dynamic>
+	</select>
+	
+</sqlMap>

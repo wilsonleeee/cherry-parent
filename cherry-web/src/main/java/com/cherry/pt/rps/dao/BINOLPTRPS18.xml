@@ -1,0 +1,206 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sqlMap PUBLIC "-//iBATIS.com//DTD SQL Map 2.0//EN" "http://ibatis.apache.org/dtd/sql-map-2.dtd">
+<sqlMap namespace="BINOLPTRPS18">
+    <!-- 取得调拨单详细信息(调出) -->
+    <sql id="AllocationOUTInfoSQL">
+    	<![CDATA[
+		SELECT					
+			A.AllocationOutNoIF AS allocationNoIF,
+			A.AllocationOutNo AS allocationNo,
+			A.RelevanceNo AS relevanceNo,		
+			ISNULL(A.TotalQuantity,0) AS totalQuantity,				
+			ISNULL(A.TotalAmount,0) AS totalAmount,				
+			A.VerifiedFlag AS verifiedFlag,							
+			A.Date AS allocationDate,
+			A.Comments AS reason,
+			E.DepartCode as bin_OrganizationIDOut,
+			F.DepartCode as bin_OrganizationIDIn,
+		]]>
+		<dynamic>
+			<isNotEmpty property="language">
+				<isEqual property="language" compareValue="en_US">
+					E.NameForeign AS sendDepart,													
+					F.NameForeign AS receiveDepart,													
+					G.EmployeeNameForeign AS employeeName
+				</isEqual>
+				<isEqual property="language" compareValue="zh_CN">	
+					E.DepartName AS sendDepart,												
+					F.DepartName AS receiveDepart,													
+					G.EmployeeName AS employeeName
+				</isEqual>								
+			</isNotEmpty>
+			<isEmpty property="language">
+				E.DepartName AS sendDepart,													
+				F.DepartName AS receiveDepart,													
+				G.EmployeeName AS employeeName
+			</isEmpty>
+		</dynamic>
+		<![CDATA[						
+			FROM														
+				Inventory.BIN_ProductAllocationOut A											
+				LEFT JOIN Basis.BIN_Organization E													
+				ON (A.BIN_OrganizationIDOut = E.BIN_OrganizationID)											
+				LEFT JOIN Basis.BIN_Organization F													
+				ON (A.BIN_OrganizationIDIn = F.BIN_OrganizationID )											
+				LEFT JOIN Basis.BIN_Employee G													
+				ON (A.BIN_EmployeeID = G.BIN_EmployeeID)												
+			WHERE														
+				A.BIN_ProductAllocationOutID = #proAllocationId#
+		]]>									
+    </sql>
+	<!-- 取得调拨单详细信息(调入)  -->
+    <sql id="AllocationINInfoSQL" >
+    	<![CDATA[
+		SELECT					
+			A.AllocationInNoIF AS allocationNoIF,
+			A.AllocationInNo AS allocationNo,
+			A.RelevanceNo AS relevanceNo,		
+			ISNULL(A.TotalQuantity,0) AS totalQuantity,				
+			ISNULL(A.TotalAmount,0) AS totalAmount,				
+			A.VerifiedFlag AS verifiedFlag,							
+			A.Date AS allocationDate,
+			A.Comments AS reason,
+			E.DepartCode as bin_OrganizationIDOut,
+			F.DepartCode as bin_OrganizationIDIn,
+		]]>
+		<dynamic>
+			<isNotEmpty property="language">
+				<isEqual property="language" compareValue="en_US">
+					E.NameForeign AS sendDepart,													
+					F.NameForeign AS receiveDepart,													
+					G.EmployeeNameForeign AS employeeName
+				</isEqual>
+				<isEqual property="language" compareValue="zh_CN">	
+					E.DepartName AS sendDepart,												
+					F.DepartName AS receiveDepart,													
+					G.EmployeeName AS employeeName
+				</isEqual>								
+			</isNotEmpty>
+			<isEmpty property="language">
+				E.DepartName AS sendDepart,													
+				F.DepartName AS receiveDepart,													
+				G.EmployeeName AS employeeName
+			</isEmpty>
+		</dynamic>
+		<![CDATA[						
+			FROM														
+				Inventory.BIN_ProductAllocationIn A											
+				LEFT JOIN Basis.BIN_Organization E													
+				ON (A.BIN_OrganizationIDOut = E.BIN_OrganizationID)											
+				LEFT JOIN Basis.BIN_Organization F													
+				ON (A.BIN_OrganizationIDIn = F.BIN_OrganizationID)											
+				LEFT JOIN Basis.BIN_Employee G													
+				ON (A.BIN_EmployeeID = G.BIN_EmployeeID)												
+			WHERE														
+				A.BIN_ProductAllocationInID = #proAllocationId#
+		]]>									
+    </sql>
+	<!-- 取得调拨单详细信息  -->
+    <select id="getAllocationInfo" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+		<isNotEmpty property="allocationType">
+			<isEqual property="allocationType" compareValue="1">
+				<!-- 调出单 -->
+				<include refid="BINOLPTRPS18.AllocationOUTInfoSQL" />
+			</isEqual>
+			<isEqual property="allocationType" compareValue="2">
+				<!-- 调入单 -->
+				<include refid="BINOLPTRPS18.AllocationINInfoSQL" />
+			</isEqual>
+		</isNotEmpty>
+    </select>
+
+	<!-- 取得调拨记录LIST(调出)   -->
+	<sql id="AllocationOutListSQL">
+		<![CDATA[
+		SELECT								
+			B.BarCode AS barCode,
+			C.UnitCode AS unitCode,
+			ISNULL(A.Price,0) AS price,
+			ISNULL(A.Quantity,0) AS quantity,
+			A.Comments AS reason,
+			C.ModuleCode AS moduleCode,
+		]]>
+		<dynamic>
+			<isNotEmpty property="language">
+				<isEqual property="language" compareValue="en_US">
+					C.NameForeign AS nameTotal,
+					G.DepotNameEN AS inventoryName 
+				</isEqual>
+				<isEqual property="language" compareValue="zh_CN">	
+					C.NameTotal AS nameTotal,
+					G.DepotNameCN AS inventoryName 
+				</isEqual>								
+			</isNotEmpty>
+			<isEmpty property="language">
+				C.NameTotal AS nameTotal,
+				G.DepotNameCN AS inventoryName
+			</isEmpty>
+		</dynamic>
+		<![CDATA[						
+			FROM														
+				Inventory.BIN_ProductAllocationOutDetail A
+				JOIN Basis.BIN_ProductVendor B
+				ON(A.BIN_ProductVendorID = B.BIN_ProductVendorID)
+				JOIN Basis.BIN_Product C
+				ON(B.BIN_ProductID = C.BIN_ProductID)
+				LEFT JOIN Basis.BIN_DepotInfo G
+				ON(A.BIN_InventoryInfoID = G.BIN_DepotInfoID)												
+			WHERE														
+				A.BIN_ProductAllocationOutID = #proAllocationId#
+		]]>								
+    </sql>
+	<!-- 取得调拨记录LIST(调入)   -->
+	<sql id="AllocationINListSQL">
+		<![CDATA[
+		SELECT								
+			B.BarCode AS barCode,
+			C.UnitCode AS unitCode,
+			ISNULL(A.Price,0) AS price,
+			ISNULL(A.Quantity,0) AS quantity,
+			A.Comments AS reason,
+			C.ModuleCode AS moduleCode,
+		]]>
+		<dynamic>
+			<isNotEmpty property="language">
+				<isEqual property="language" compareValue="en_US">
+					C.NameForeign AS nameTotal,
+					G.DepotNameEN AS inventoryName 
+				</isEqual>
+				<isEqual property="language" compareValue="zh_CN">	
+					C.NameTotal AS nameTotal,
+					G.DepotNameCN AS inventoryName 
+				</isEqual>								
+			</isNotEmpty>
+			<isEmpty property="language">
+				C.NameTotal AS nameTotal,
+				G.DepotNameCN AS inventoryName
+			</isEmpty>
+		</dynamic>
+		<![CDATA[						
+			FROM														
+				Inventory.BIN_ProductAllocationInDetail A
+				JOIN Basis.BIN_ProductVendor B
+				ON(A.BIN_ProductVendorID = B.BIN_ProductVendorID)
+				JOIN Basis.BIN_Product C
+				ON(B.BIN_ProductID = C.BIN_ProductID)
+				LEFT JOIN Basis.BIN_DepotInfo G
+				ON(A.BIN_InventoryInfoID = G.BIN_DepotInfoID)												
+			WHERE														
+				A.BIN_ProductAllocationInID = #proAllocationId#
+		]]>								
+    </sql>
+    
+   	<!-- 取得调拨记录LIST   -->
+	<select id="getAllocationList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+		<isNotEmpty property="allocationType">
+			<isEqual property="allocationType" compareValue="1">
+				<!-- 调出单 -->
+				<include refid="BINOLPTRPS18.AllocationOutListSQL" />
+			</isEqual>
+			<isEqual property="allocationType" compareValue="2">
+				<!-- 调入单 -->
+				<include refid="BINOLPTRPS18.AllocationINListSQL" />
+			</isEqual>
+		</isNotEmpty>
+	</select>
+</sqlMap>

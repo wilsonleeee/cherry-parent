@@ -1,0 +1,69 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sqlMap PUBLIC "-//iBATIS.com//DTD SQL Map 2.0//EN" "http://ibatis.apache.org/dtd/sql-map-2.dtd">
+<sqlMap namespace="TmUpdRegMemberMoble">
+	<select id="getOnlineMemberInfo" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+		SELECT
+			BuyerNick,
+			MixBuyerNick,
+			TmallMixMobile,
+			Mobile,
+			BindFlag
+		FROM
+			Members.BIN_OnlineMemberInfo
+		WHERE
+			BIN_OrganizationInfoID = #organizationInfoId#
+			AND BIN_BrandInfoID = #brandInfoId#
+			AND TmallMixMobile = #tmallMixMobile#
+	</select>
+	<select id="getMemberInfo" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+	 	SELECT
+	 		M.BIN_MemberInfoID AS memberId,
+			MC.MemCode AS MemberCard,
+			M.MemberLevel AS Level,
+			M.MobilePhone AS Mobile,
+			M.BindFlag,
+			M.TaobaoNick,
+			M.IsSameMobile
+		FROM
+			Members.BIN_MemberInfo M
+		LEFT JOIN Members.BIN_MemCardInfo MC 
+		ON M.BIN_MemberInfoID = MC.BIN_MemberInfoID
+		WHERE
+			M.BIN_OrganizationInfoID = #organizationInfoId#
+			AND M.BIN_BrandInfoID = #brandInfoId#
+			AND M.TmallMixMobile = #tmallMixMobile#
+	</select>
+	<!-- 根据天猫加密手机号更新已有线下会员信息 -->
+	<update id="updateMemberInfoByTmMixMobile" parameterClass="java.util.HashMap">
+		UPDATE 
+			Members.BIN_MemberInfo
+		SET
+			TmallMixMobile = #tmallMixMobile#,
+			TaobaoNick = #taobaonick#,
+			TmallBindTime = #tmallBindTime#,
+			<isNotEmpty property="sourceFlag">
+				SourceFlag = #sourceFlag#,
+			</isNotEmpty>
+			MixBuyerNick = #mixBuyerNick#,
+			BindFlag = '2',
+			IsSameMobile = '1',
+			BindMobile = #mobile#,
+	<include refid="BINOLCMINC99.updateSql" />
+		WHERE
+			BIN_MemberInfoID = #memberId#
+			AND BIN_OrganizationInfoID = #organizationInfoId#
+			AND BIN_BrandInfoID = #brandInfoId#
+	</update>
+	<!-- 根据天猫加密手机号更新已有线上会员明文手机号 -->
+	<update id="updateOnineMobileByTmallMixMobile" parameterClass="java.util.HashMap">
+			UPDATE 
+				Members.BIN_OnlineMemberInfo
+			SET 
+				[Mobile] = #mobile#,
+				<include refid="BINOLCMINC99.updateSql" />
+			WHERE
+				BIN_OrganizationInfoID = #organizationInfoId#
+				AND BIN_BrandInfoID = #brandInfoId#
+				AND TmallMixMobile = #tmallMixMobile#
+	</update>
+</sqlMap>

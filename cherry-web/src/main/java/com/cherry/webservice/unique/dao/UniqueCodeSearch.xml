@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sqlMap PUBLIC "-//iBATIS.com//DTD SQL Map 2.0//EN" "http://ibatis.apache.org/dtd/sql-map-2.dtd">
+<sqlMap namespace="UniqueCodeSearch">
+	<!-- 根据积分唯一码查询对应产品信息 -->
+	<select id="getPrtUniqueInfo" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+		<![CDATA[
+			SELECT   
+			         A.UseStatus AS UseStatus,
+			         C.NameTotal AS PrtName,
+			         D.SalePrice,
+			         A.BIN_ProductVendorID AS IFProductID,
+			         C.UnitCode AS UnitCode,
+			         B.BarCode AS BarCode
+			FROM 
+				     Basis.BIN_PrtUniqueCodeDetail  A
+		    LEFT JOIN  Basis.BIN_ProductVendor B ON  A.BIN_ProductVendorID=B.BIN_ProductVendorID
+		    LEFT JOIN  Basis.BIN_Product C ON  B.BIN_ProductID=C.BIN_ProductID	
+		    LEFT JOIN  Basis.BIN_ProductPrice D ON B.BIN_ProductID=D.BIN_ProductID	
+		    WHERE A.PointUniqueCode=#PointUniqueCode#
+		    AND CONVERT(varchar(10),GETDATE(), 120) >=D.StartDate
+		    AND CONVERT(varchar(10),GETDATE(), 120) <=D.EndDate
+		]]>
+			<isNotEmpty prepend="AND" property="RelUniqueCode">
+				RelUniqueCode = #RelUniqueCode#
+			</isNotEmpty>
+			<isNotEmpty prepend="AND" property="OpenID ">
+				Openid = #OpenID#
+			</isNotEmpty>
+	</select>
+	
+    <!-- 查询积分唯一码是否存在于系统之中 -->
+	<select id="getPrtUnique" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+		<![CDATA[
+			SELECT   A.BIN_PrtUniqueCodeDetailID
+			FROM 
+				     Basis.BIN_PrtUniqueCodeDetail  A	
+		    WHERE    A.PointUniqueCode=#PointUniqueCode#
+		    ]]>
+	</select>
+	
+	
+</sqlMap>

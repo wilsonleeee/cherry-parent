@@ -1,0 +1,151 @@
+<!DOCTYPE struts PUBLIC 
+    "-//Apache Software Foundation//DTD Struts Configuration 2.0//EN" 
+    "http://struts.apache.org/dtds/struts-2.0.dtd">
+<struts>
+	<!--  ====================== struts 全局属性定义 ========================== -->
+	    <!-- 设置为true时，针对每个请求都会重新加载配置文件，方便开发调试不用重启，正式发布要关闭 -->
+     <constant name="struts.devMode" value="false"/>
+     <!-- 此参数为了严格验证排除一些不安全的对象类型  -->
+     <constant name="struts.excludedClasses" value="
+						java.lang.Object,
+						java.lang.Runtime,
+						java.lang.System,
+						java.lang.Class,
+						java.lang.ClassLoader,
+						java.lang.Shutdown,
+						ognl.OgnlContext,
+						ognl.MemberAccess,
+						ognl.ClassResolver,
+						ognl.TypeConverter,
+						com.opensymphony.xwork2.ActionContext"/>
+						
+	<constant name="struts.objectFactory" value="spring" />
+	
+	<constant name="struts.custom.i18n.resources" value="i18n.message.message,i18n.common.commonText" />
+	<constant name="struts.i18n.encoding" value="UTF-8" />
+	<constant name="struts.ui.theme" value="simple" />
+	<constant name="struts.ui.templateDir" value="template" />
+	<constant name="struts.ui.templateSuffix" value="ftl" />
+	<constant name="struts.multipart.maxSize" value="10000000" />
+	
+	<!-- 对Action进行aop拦截后，action中的@Resource注解 会无效，需要补上这个参数-->
+	<constant name="struts.objectFactory.spring.autoWire.alwaysRespect" value="true" />
+	<include file="conf/struts-conf/struts-bs.xml"></include>
+	<include file="conf/struts-conf/struts-cm.xml"></include>
+	<include file="conf/struts-conf/struts-cp.xml"></include>
+	<include file="conf/struts-conf/struts-jn.xml"></include>
+	<include file="conf/struts-conf/struts-lg.xml"></include>
+	<include file="conf/struts-conf/struts-mb.xml"></include>
+	<include file="conf/struts-conf/struts-mo.xml"></include>
+	<include file="conf/struts-conf/struts-pl.xml"></include>
+	<include file="conf/struts-conf/struts-pt.xml"></include>
+	<include file="conf/struts-conf/struts-rp.xml"></include>
+	<include file="conf/struts-conf/struts-ss.xml"></include>
+	<include file="conf/struts-conf/struts-st.xml"></include>
+	<include file="conf/struts-conf/struts-ct.xml"></include>
+	<include file="conf/struts-conf/struts-wp.xml"></include>
+	<include file="conf/struts-conf/struts-yh.xml"></include>
+	<include file="conf/struts-conf/struts-tao.xml"></include>
+	<include file="conf/struts-conf/struts-gadget.xml"></include>
+   <!--  ====================== 共通部分设定 ========================== -->
+<package name="cherry-default" extends="struts-default">
+ <interceptors>
+ 
+ 
+ <!-- 
+ <interceptor-stack name="defaultStack">
+  <interceptor-ref name="exception" /> 
+  <interceptor-ref name="alias" /> 
+  <interceptor-ref name="servletConfig" /> 
+  <interceptor-ref name="i18n" /> 
+  <interceptor-ref name="prepare" /> 
+  <interceptor-ref name="chain" /> 
+  <interceptor-ref name="debugging" /> 
+  <interceptor-ref name="scopedModelDriven" /> 
+  <interceptor-ref name="modelDriven" /> 
+  <interceptor-ref name="fileUpload" /> 
+  <interceptor-ref name="checkbox" /> 
+  <interceptor-ref name="multiselect" /> 
+  <interceptor-ref name="staticParams" /> 
+  <interceptor-ref name="actionMappingParams" /> 
+- <interceptor-ref name="params">
+  <param name="excludeParams">dojo\..*,^struts\..*</param> 
+  </interceptor-ref>
+  <interceptor-ref name="conversionError" /> 
+- <interceptor-ref name="validation">
+  <param name="excludeMethods">input,back,cancel,browse</param> 
+  </interceptor-ref>
+- <interceptor-ref name="workflow">
+  <param name="excludeMethods">input,back,cancel,browse</param> 
+  </interceptor-ref>
+  </interceptor-stack>
+  -->
+ 
+ 
+      <!-- 定义拦截器 -->
+      <interceptor name="cherryExcrption" class="com.cherry.cm.interceptor.CherryExceptionInterceptor"/>
+      <interceptor name="cherryLogger" class="com.cherry.cm.interceptor.CherryLoggerInterceptor"/>
+      <interceptor name="checkToken" class="com.cherry.cm.interceptor.CheckTokenInterceptor"/>
+      <interceptor name="checkLogin" class="com.cherry.cm.interceptor.CheckLoginInterceptor"/>
+      <interceptor name="cherryI18n" class="com.cherry.cm.interceptor.Cherryi18nInterceptor"/>
+      <!-- 定义拦截器栈  默认情况下每个action都会执行该栈中的拦截器 -->
+      <!-- 拦截器在栈中的引用顺序即为其执行顺序 -->
+      <interceptor-stack name="cherryDefaultStack">
+        <interceptor-ref name="cherryExcrption"/>
+        <interceptor-ref name="cherryI18n"/>
+        <interceptor-ref name="cherryLogger"/>
+        <interceptor-ref name="servletConfig"/><!-- 实现ServletRequestAware ServletResponseAware SessionAware接口 -->
+		
+		
+        <interceptor-ref name="checkLogin">  
+        	<param name="excludeMethods">doLogin,initialLogin,getRandomCode,witPosLogin,thirdpartyLogin,callCenterLogin,getPwdInit,getPwdSendMessage,taoInit,taoLogin,promotionInit,promotionGetComputeRule,tran_promotionCollect,promotionSendInit,promotionSend,promotionProSendInit,promotionProSendCheck,tran_promotionSendProCollect,prm77Init,prm78Init,prm77Seach,prm77SendMsg</param>
+        </interceptor-ref>
+        <!-- 
+      	<interceptor-ref name="checkToken">   
+        	<param name="excludeMethods">initialLogin,queryBINOLCM13,queryDepartBINOLCM13,queryEmpBINOLCM13,queryCounterBINOLCM13,getRandomCode,searchBIRptDef,queryPrintLog,doLogout,initPrtCateDialog,thirdpartyLogin,callCenterLogin,export,getPwdInit,getPwdSendMessage,taoInit,taoLogin,promotionInit,promotionGetComputeRule,tran_promotionCollect</param> 
+        </interceptor-ref>		
+         -->
+		<!-- modelDriven拦截器要位于params之前 --> 
+		 <interceptor-ref name="modelDriven" />
+		 <interceptor-ref name="fileUpload" /> 
+        <interceptor-ref name="params">
+  			<param name="excludeParams">dojo\..*,^struts\..*</param> 
+  		</interceptor-ref>
+  		<interceptor-ref name="i18n"/>
+        <interceptor-ref name="validation"/> <!-- 开启验证 -->        
+        <interceptor-ref name="workflow"/> <!-- 可以调用validateXxx()方法 -->  
+        
+       
+      </interceptor-stack>     
+    </interceptors>
+    <default-interceptor-ref name="cherryDefaultStack"/>
+    
+     <!--  全局结果，严重异常时跳转到错误画面 -->
+    <global-results>
+        	<result name="globalError">/WEB-INF/jsp/common/error.jsp</result>
+        	<result name="globalAcctionResult">/WEB-INF/jsp/common/actionResult.jsp</result>
+        	<result name="globalAcctionResultBody">/WEB-INF/jsp/common/actionResultBody.jsp</result>
+			<result name="globalAcctionResultDialog">/WEB-INF/jsp/common/actionResultDialog.jsp</result>
+        	<result name="globalLogin">/WEB-INF/jsp/lg/lgn/login.jsp</result>
+			<result name="globalAcctionResultPage">/WEB-INF/jsp/common/actionResultPage.jsp</result>
+    </global-results>
+  </package>
+  
+  <package name="memIf-default" extends="struts-default">
+ 		 
+	 <interceptors>
+	 <!-- 定义拦截器 -->
+      <interceptor name="cherrySign" class="com.cherry.cm.interceptor.CherrySignInterceptor"/>
+	  <interceptor-stack name="cherryIFStack">
+	  <interceptor-ref name="servletConfig"/>
+	  <interceptor-ref name="cherrySign"/>
+	  <interceptor-ref name="modelDriven" />
+        <interceptor-ref name="params">
+  			<param name="excludeParams">dojo\..*,^struts\..*</param> 
+  		</interceptor-ref>
+  		<interceptor-ref name="i18n"/>
+  		 </interceptor-stack>
+	 </interceptors>
+	  <default-interceptor-ref name="cherryIFStack"/>
+ </package>
+</struts> 

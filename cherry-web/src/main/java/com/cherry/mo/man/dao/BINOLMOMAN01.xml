@@ -1,0 +1,207 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sqlMap PUBLIC "-//iBATIS.com//DTD SQL Map 2.0//EN" "http://ibatis.apache.org/dtd/sql-map-2.dtd">
+<sqlMap namespace="BINOLMOMAN01">
+    <!-- 机器查询sql文  -->
+	<sql id="machineInfoQuery">
+		<![CDATA[
+		    SELECT
+				A.MachineCode as machineCode,
+				A.MachineCodeOld as machineCodeOld,
+				B.MachineType as machineType,
+                B.PhoneCode as phoneCode,
+				B.SoftWareVersion as softWareVersion,
+                A.MachineStatus as machineStatus,
+				A.BindStatus as bindStatus,
+				C.BIN_BrandInfoID as brandInfoId,
+				F.EmployeeName as employeeName,
+				B.StartTime as startTime,
+				B.CreateTime as createTime,
+				B.Capacity as capacity,
+				B.MobileMacAddress AS mobileMacAddress,
+        ]]>
+		<dynamic>
+        <isNotEmpty property="language">
+            <isEqual property="language" compareValue="en_US">
+            	CASE ISNULL(D.NameForeign,'') WHEN '' THEN D.CounterCode 
+					ELSE '('+D.CounterCode+')'+D.NameForeign END AS counterNameIF,
+				CASE ISNULL(G.NameForeign,'') WHEN '' THEN G.CounterCode 
+					ELSE '('+G.CounterCode+')'+G.NameForeign END AS bindCounterName,
+                C.BrandNameForeign AS BrandNameChinese
+            </isEqual>
+            <isEqual property="language" compareValue="zh_CN">
+            	CASE ISNULL(D.CounterNameIF,'') WHEN '' THEN D.CounterCode 
+					ELSE '('+D.CounterCode+')'+D.CounterNameIF END AS counterNameIF,
+				CASE ISNULL(G.CounterNameIF,'') WHEN '' THEN G.CounterCode 
+					ELSE '('+G.CounterCode+')'+G.CounterNameIF END AS bindCounterName,
+                C.BrandNameChinese AS BrandNameChinese
+            </isEqual>
+        </isNotEmpty>
+        <isEmpty property="language">
+        		CASE ISNULL(D.CounterNameIF,'') WHEN '' THEN D.CounterCode 
+					ELSE '('+D.CounterCode+')'+D.CounterNameIF END AS counterNameIF,
+				CASE ISNULL(G.CounterNameIF,'') WHEN '' THEN G.CounterCode 
+					ELSE '('+G.CounterCode+')'+G.CounterNameIF END AS bindCounterName,
+                C.BrandNameChinese AS BrandNameChinese
+        </isEmpty>
+		</dynamic>
+        <![CDATA[
+			FROM
+			    Monitor.BIN_MachineCodeCollate A
+				LEFT JOIN Monitor.BIN_MachineInfo B
+				ON A.MachineCode = B.MachineCode AND B.ValidFlag = '1'
+				LEFT JOIN Basis.BIN_BrandInfo C 
+				ON A.BIN_BrandInfoID = C.BIN_BrandInfoID AND C.ValidFlag = '1'
+                LEFT JOIN Basis.BIN_CounterInfo D WITH(NOLOCK)
+				ON A.BIN_CounterInfoID = D.BIN_CounterInfoID
+				LEFT JOIN Basis.BIN_CounterInfo G WITH(NOLOCK)
+				ON A.BindCounterInfoID = G.BIN_CounterInfoID
+				LEFT JOIN Privilege.BIN_User E
+				ON A.BIN_UserID = E.BIN_UserID
+				LEFT JOIN Basis.BIN_Employee F WITH(NOLOCK)
+				ON E.BIN_EmployeeID = F.BIN_EmployeeID
+			WHERE
+                A.ValidFlag = '1'
+			AND
+			    NOT (B.MachineType IN (#WITPOSIII#,#WITPOSIV#,#WITSERVER#) and RIGHT(A.MachineCodeOld,1)='9')
+		]]>
+        <dynamic>
+        	<isNotEmpty prepend="AND" property="brandInfoId">
+                A.BIN_BrandInfoID =  #brandInfoId#
+            </isNotEmpty>
+			<isNotEmpty prepend="AND" property="organizationInfoId">
+                A.BIN_OrganizationInfoID = #organizationInfoId#
+            </isNotEmpty>
+			<isNotEmpty prepend="AND" property="machineCode">
+                (A.MachineCode like '%' + #machineCode# +'%' OR A.MachineCodeOld like '%' + #machineCode# +'%')
+            </isNotEmpty>
+			<isNotEmpty prepend="AND" property="machineType">
+                B.MachineType = #machineType#
+            </isNotEmpty>
+			<isNotEmpty prepend="AND" property="machineStatus">
+                A.MachineStatus = #machineStatus#
+            </isNotEmpty>
+			<isNotEmpty prepend="AND" property="bindStatus">
+                A.BindStatus = #bindStatus#
+            </isNotEmpty>
+            <isNotEmpty prepend="AND" property="mobileMacAddress">
+                B.MobileMacAddress LIKE '%'+ #mobileMacAddress# + '%'
+            </isNotEmpty>
+            <isNotEmpty prepend="AND" property="counterCodeName">
+                <![CDATA[
+                (D.CounterCode LIKE '%'+#counterCodeName#+'%' OR D.CounterNameIF LIKE '%'+#counterCodeName#+'%')
+                ]]>
+            </isNotEmpty>
+        </dynamic>
+	</sql>
+	
+	<!-- 取得机器总数  -->
+    <select id="getMachineInfoCount" parameterClass="java.util.HashMap" resultClass="java.lang.Integer">
+        <![CDATA[
+            SELECT COUNT(SORT_T1.machineCode) AS count FROM (
+        ]]>
+        <include refid="BINOLMOMAN01.machineInfoQuery" />
+        <![CDATA[
+            )SORT_T1
+        ]]>
+    </select>
+	
+	<!-- 取得机器List  -->
+	<select id="getMachineInfoList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+        <include refid="BINOLCMINC99.pageheader" />
+        <include refid="BINOLMOMAN01.machineInfoQuery" />
+        <include refid="BINOLCMINC99.pagefooter" />
+    </select>
+	
+	<!-- 修改机器状态， -->
+	<update id="modifyMachineStatus" parameterClass="java.util.HashMap">     
+    <![CDATA[
+        UPDATE
+            Monitor.BIN_MachineCodeCollate
+		SET
+		    MachineStatus = #MachineStatus#,
+    ]]>
+	<include refid="BINOLCMINC99.updateSql" />
+	<![CDATA[
+	    WHERE 
+		    MachineCode = #machineCode#
+		AND
+		    MachineCodeOld = #machineCodeOld#
+	]]>
+    </update>
+	
+	<!-- 解除绑定 -->
+	<update id="unbindCounter" parameterClass="java.util.HashMap">     
+    <![CDATA[
+        UPDATE                                  
+            Monitor.BIN_MachineCodeCollate
+        SET
+            BindStatus = #BindStatus#,
+			BindCounterInfoID = #BindCounterInfoID#,
+    ]]>
+    <include refid="BINOLCMINC99.updateSql" />
+    <![CDATA[
+        WHERE 
+            MachineCode = #machineCode#
+        AND
+            MachineCodeOld = #machineCodeOld#
+    ]]>
+    </update>
+
+    <!-- 物理删除机器号对照表中数据  -->
+    <delete id="deleteMachineCodeCollate" parameterClass="java.util.HashMap">     
+    <![CDATA[
+		DELETE FROM
+			Monitor.BIN_MachineCodeCollate
+		WHERE                                   
+            MachineCode = #machineCode# 
+    ]]>
+    </delete>
+	
+	<!-- 物理删除机器信息表中数据  -->
+    <delete id="deleteMachineInfo" parameterClass="java.util.HashMap">     
+    <![CDATA[
+		DELETE FROM
+			Monitor.[BIN_MachineInfo]
+		WHERE                                   
+            MachineCode = #machineCode# 
+		AND
+		    MachineCodeOld = #machineCodeOld#
+    ]]>
+    </delete>
+    
+    <!-- 根据机器编号取得绑定信息 -->
+    <select id="getBindInfoByMachine" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+        <![CDATA[
+			SELECT
+                A.BrandCode as brandCode,
+				A.BIN_BrandInfoID as brandInfoId,
+				B.BindCounterInfoID as counterInfoId,
+				C.MachineType as machineType
+		    FROM Basis.BIN_BrandInfo A
+			    LEFT JOIN Monitor.BIN_MachineCodeCollate B 
+			    ON A.BIN_BrandInfoID =B.BIN_BrandInfoID
+				LEFT JOIN Monitor.BIN_MachineInfo C
+				ON B.MachineCode = C.MachineCode
+			WHERE
+			    B.ValidFlag = 1
+			AND
+			    B.MachineCode = #machineCode#
+		    AND 
+			    B.MachineCodeOld= #machineCodeOld#	
+        ]]>
+    </select>
+
+    <!-- 删除柜台机器升级表  -->
+    <delete id="delCounterUpgrade" parameterClass="java.util.HashMap">
+        <![CDATA[
+        DELETE FROM
+            Monitor.BIN_CounterUpgrade
+        WHERE
+            BIN_CounterInfoID = #counterInfoId#
+		AND
+		    BIN_BrandInfoID = #brandInfoId#
+		AND
+		    MachineType = #machineType#
+        ]]>
+    </delete>
+</sqlMap>

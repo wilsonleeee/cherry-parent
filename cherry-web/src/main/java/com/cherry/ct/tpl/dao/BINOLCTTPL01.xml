@@ -1,0 +1,88 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sqlMap PUBLIC "-//iBATIS.com//DTD SQL Map 2.0//EN" "http://ibatis.apache.org/dtd/sql-map-2.dtd">
+<sqlMap namespace="BINOLCTTPL01">
+	<!-- 沟通模板信息查询sql  -->
+	<sql id="TemplateQuery">
+		<![CDATA[
+			SELECT 
+				tt.BIN_TemplateID AS templateId,
+				tt.TemplateCode AS templateCode,
+				tt.TemplateName AS templateName,
+				tt.TemplateUse AS templateUse,
+				tt.Type AS type,
+				tt.CustomerType AS customerType,
+				tt.Contents AS contents,
+				tt.ValidFlag AS status 
+			FROM
+				Communication.BIN_MessageTemplate as tt 
+		]]>
+			<isNotEmpty property="privilegeFlag">
+			<isEqual property="privilegeFlag" compareValue="1">			
+			<![CDATA[			
+				Inner join (]]><include refid="BINOLCMINC99.departPrivilegeSql" /><![CDATA[) A99 
+				on tt.BIN_OrganizationID = A99.BIN_OrganizationID
+			]]>
+			</isEqual>
+			</isNotEmpty>
+		<![CDATA[
+			Where 
+				tt.BIN_BrandInfoID = #brandInfoId# AND 
+				tt.BIN_OrganizationInfoID = #organizationInfoId# AND 
+				tt.TYPE = #templateType# 
+		]]>
+		<dynamic>
+			<!-- 参数中存在模板名称查询条件时  -->
+			<isNotEmpty prepend="AND" property="templateName" >
+				tt.TemplateName LIKE '%' + #templateName# + '%' 
+			</isNotEmpty>
+			<!-- 参数中存在模板用途查询条件时  -->
+			<isNotEmpty prepend="AND" property="templateUse" >
+				tt.TemplateUse = #templateUse# 
+			</isNotEmpty>
+			<!-- 参数中存在适用客户类型查询条件时  -->
+			<isNotEmpty prepend="AND" property="customerType" >
+				tt.CustomerType = #customerType# 
+			</isNotEmpty>
+			<!-- 参数中存在模板状态查询条件时  -->
+			<isNotEmpty prepend="AND" property="status" >
+				tt.ValidFlag = #status# 
+			</isNotEmpty>
+		</dynamic>
+	</sql>
+	
+	<!-- 获取沟通模板总数  -->
+    <select id="getTemplateCount" parameterClass="java.util.HashMap" resultClass="java.lang.Integer">
+    	<![CDATA[
+			SELECT	COUNT(SORT_T1.templateId) AS count FROM (
+		]]>	
+		<include refid="BINOLCTTPL01.TemplateQuery" />	
+		<![CDATA[	
+			)SORT_T1
+		]]>										
+    </select>
+	
+	<!-- 获取沟通模板信息List -->
+    <select id="getTemplateList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+       	<include refid="BINOLCMINC99.pageheader" />
+		<include refid="BINOLCTTPL01.TemplateQuery" />
+		<include refid="BINOLCMINC99.pagefooter" />
+    </select>
+	
+	<!-- 停用沟通模板 -->
+	<update id="disableTemplate" parameterClass="java.util.HashMap">
+		<![CDATA[
+			UPDATE 
+				Communication.BIN_MessageTemplate 
+			SET 
+				ValidFlag = 0, 
+		]]>
+			<include refid="BINOLCMINC99.updateSql" />
+		<![CDATA[
+			WHERE 
+				ValidFlag = 1 AND 
+				BIN_OrganizationInfoID = #organizationInfoId# AND
+		  		BIN_BrandInfoID = #brandInfoId# AND
+		  		TemplateCode = #templateCode# 
+		]]>
+    </update>
+</sqlMap>

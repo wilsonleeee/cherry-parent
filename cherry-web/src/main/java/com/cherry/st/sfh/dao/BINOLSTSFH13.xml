@@ -1,0 +1,239 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sqlMap PUBLIC "-//iBATIS.com//DTD SQL Map 2.0//EN" "http://ibatis.apache.org/dtd/sql-map-2.dtd">
+<sqlMap namespace="BINOLSTSFH13">
+	<sql id="prtDeliverExcelQuery">
+	<![CDATA[
+		SELECT
+			A.BIN_ProductDeliverExcelID AS prtDeliverExcelId,
+			A.BillNo AS billNo,
+			A.BillNoIF AS billNoIF,
+			A.RelevanceNo as relevanceNo,
+			A.BIN_OrganizationIDFrom AS organizationIdFrom,
+			A.BIN_OrganizationIDTo AS organizationIdTo,
+			A.DepartCodeFrom AS departCodeFrom,
+			A.DepartCodeTo AS departCodeTo,
+			A.DepartNameFrom AS departNameFrom,
+			A.DepartNameTo AS departNameTo,
+			A.BIN_InventoryInfoID AS inventoryInfoID,
+			A.BIN_LogicInventoryInfoID AS logicInventoryInfoID,
+			A.LogicInventoryName AS logicInventoryName,
+			A.BIN_EmployeeID AS employeeID,
+			A.TotalQuantity AS totalQuantity,
+			A.TotalAmount AS totalAmount,
+			A.Comments AS comments,
+			A.ImportDate AS importDate,
+			A.ImportResult AS importResult,
+			A.PlanArriveDate AS planArriveDate,
+			A.WorkFlowID AS workFlowId,
+			B.DepotCode AS inventoryCode,
+			C.EmployeeCode AS employeeCode,
+		]]>	
+		<isNotEmpty property="language">
+            <isEqual property="language" compareValue="en_US">
+            	B.DepotNameEN AS inventoryName,
+				C.EmployeeNameForeign AS employeeName,
+            </isEqual>
+            <isEqual property="language" compareValue="zh_CN">
+				B.DepotNameCN AS inventoryName,
+				C.EmployeeName AS employeeName,
+			</isEqual>
+		</isNotEmpty>
+		<isEmpty property="language">
+			B.DepotNameCN AS inventoryName,
+			C.EmployeeName AS employeeName,
+		</isEmpty>
+		<![CDATA[
+			A.ValidFlag AS ValidFlag,
+			D.TradeStatus AS tradeStatus
+		FROM 
+			Inventory.BIN_ProductDeliverExcel A WITH(NOLOCK)
+			LEFT JOIN  Basis.BIN_DepotInfo B with(nolock) 
+			ON(B.BIN_DepotInfoID = A.BIN_InventoryInfoID)
+			LEFT JOIN Basis.BIN_Employee C with(nolock)
+			ON(A.BIN_EmployeeID = C.BIN_EmployeeID)
+		    LEFT JOIN Inventory.BIN_ProductDeliver D WITH(NOLOCK)
+		    ON(A.BillNo = D.DeliverNo and A.ImportBatch = D.ImportBatch)
+		]]>
+		<dynamic prepend="WHERE">
+			<isNotEmpty prepend="AND" property="brandInfoId">
+				A.BIN_BrandInfoID = #brandInfoId#
+			</isNotEmpty>
+			<isNotEmpty prepend="AND" property="organizationInfoId">
+				A.BIN_OrganizationInfoID = #organizationInfoId#
+			</isNotEmpty>
+			<isNotEmpty prepend="AND" property="prtDeliverExcelId">
+				A.BIN_ProductDeliverExcelID = #prtDeliverExcelId#
+			</isNotEmpty>
+			<isNotEmpty prepend="AND" property="importBatchId">
+				A.BIN_ImportBatchID = #importBatchId#
+			</isNotEmpty>
+			<isNotEmpty prepend="AND" property="billNo">
+				A.BillNo = #billNo#
+			</isNotEmpty>
+			<isNotEmpty prepend="AND" property="organizationId">
+				A.BIN_OrganizationIDFrom = #organizationId#
+			</isNotEmpty>
+			<isNotEmpty prepend="AND" property="organizationIdReceive">
+				A.BIN_OrganizationIDTo = #organizationIdReceive#
+			</isNotEmpty>
+			<isNotEmpty prepend="AND" property="importDateStart">
+				<![CDATA[ A.ImportDate >= #importDateStart# ]]>
+			</isNotEmpty>
+			<isNotEmpty prepend="AND" property="importDateEnd">
+				<![CDATA[ A.ImportDate <= #importDateEnd# ]]>
+			</isNotEmpty>
+			<isNotEmpty prepend="AND" property="importResult">
+				A.ImportResult = #importResult#
+			</isNotEmpty>
+			<isNotEmpty prepend="AND" property="tradeStatus">
+				D.TradeStatus = #tradeStatus#
+			</isNotEmpty>
+			<isNotEmpty prepend="AND" property="validFlag">
+				A.ValidFlag = #validFlag#
+			</isNotEmpty>
+			<isNotEmpty prepend="AND" property="relevanceNo">
+				A.RelevanceNo = #relevanceNo#
+			</isNotEmpty>
+		</dynamic>
+	</sql>
+	
+	<!-- 查询发货单（Excel导入）总数 -->
+	<select id="getPrtDeliverExcelCount" parameterClass="java.util.HashMap" resultClass="java.lang.Integer">
+    	<![CDATA[
+			SELECT	COUNT(1) AS count FROM (
+		]]>	
+		<include refid="BINOLSTSFH13.prtDeliverExcelQuery" />
+		<![CDATA[	
+			)SORT_T1
+		]]>		
+	</select>	
+	
+	<!-- 查询发货单（Excel导入）信息 -->
+	<select id="getPrtDeliverExcelList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+		<include refid="BINOLCMINC99.pageheader" />
+		<include refid="BINOLSTSFH13.prtDeliverExcelQuery" />
+		<include refid="BINOLCMINC99.pagefooter" />
+	</select>
+	
+	<!-- 根据ID查询发货单（Excel导入）的主信息 -->
+	<select id="getPrtDeliverExcelInfo" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+		<include refid="BINOLSTSFH13.prtDeliverExcelQuery" />
+	</select>
+	
+	<!--发货单（Excel导入）产品明细 SQL文 -->
+	<sql id="queryPrtDeliverExcelDetail">
+		<![CDATA[
+			SELECT 
+				A.BIN_ProductDeliverExcelDetailID as prtDeliverExcelDetailId,
+				A.BIN_ProductDeliverExcelID as prtDeliverExcelId,
+				A.BIN_ProductVendorID as productVendorId,
+				A.UnitCode as unitCode,
+				A.Barcode as barCode,
+				A.NameTotal as nameTotal,
+				A.Quantity as quantity,
+				ISNULL(Convert(decimal(16,2),A.Price),0) AS price,
+				ISNULL(Convert(decimal(16,2),A.ReferencePrice),0) AS referencePrice,
+				A.ErrorMsg as errorMsg,
+				A.ValidFlag as validFlag,
+				A.ErpCode erpCode
+			FROM 
+				Inventory.BIN_ProductDeliverExcelDetail A with(nolock)
+			WHERE
+				A.BIN_ProductDeliverExcelID = #prtDeliverExcelId#
+		]]>
+			<isNotEmpty prepend="AND" property="validFlag">
+				A.ValidFlag = #validFlag#
+			</isNotEmpty>
+	</sql>
+	
+	<!-- 查询发货（Excel导入）产品明细 -->
+	<select id="getPrtDeliverExcelDetailList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">	
+		<include refid="BINOLSTSFH13.queryPrtDeliverExcelDetail" />
+	</select>
+	
+	<!-- 导出数据查询SQL文 -->
+	<sql id="queryExportData">
+		<![CDATA[
+			SELECT 
+				A.BIN_ProductDeliverExcelID as prtDeliverExcelId,
+				A.BillNo as billNo,
+				A.ImportBatch as importBatch,
+				A.DepartCodeFrom as departCodeFrom,
+				A.DepartNameFrom as departNameFrom,
+				A.DepartCodeTo as departCodeTo,
+				A.DepartNameTo as departNameTo,
+				A.ImportResult as importResult,
+				A.LogicInventoryName as logicInventoryName,
+				A.ImportDate AS importDate,
+				A.PlanArriveDate AS planArriveDate,
+				B.UnitCode as unitCode,
+				B.NameTotal as nameTotal,
+				B.BarCode as barCode,
+				B.Quantity as quantity,
+				ISNULL(Convert(decimal(16,2),B.Price),0) AS price,
+                ISNULL(Convert(decimal(16,2),B.ReferencePrice),0) AS referencePrice,
+				B.ErrorMsg as errorMsg,
+				C.TradeStatus as tradeStatus,
+				B.ErpCode AS erpCode
+			FROM 
+				Inventory.BIN_ProductDeliverExcel A WITH(NOLOCK)
+				LEFT JOIN Inventory.BIN_ProductDeliverExcelDetail B WITH(NOLOCK)
+				ON(A.BIN_ProductDeliverExcelID = B.BIN_ProductDeliverExcelID)
+				LEFT JOIN Inventory.BIN_ProductDeliver C WITH(NOLOCK)
+				ON(A.BillNo = C.DeliverNo and A.ImportBatch = C.ImportBatch)
+		]]> 
+		<dynamic prepend="WHERE">
+			<isNotEmpty prepend="AND" property="brandInfoId">
+				A.BIN_BrandInfoID = #brandInfoId#
+			</isNotEmpty>
+			<isNotEmpty prepend="AND" property="organizationInfoId">
+				A.BIN_OrganizationInfoID = #organizationInfoId#
+			</isNotEmpty>
+			<isNotEmpty prepend="AND" property="importBatchId">
+				A.BIN_ImportBatchID = #importBatchId#
+			</isNotEmpty>
+			<isNotEmpty prepend="AND" property="billNo">
+				A.BillNo = #billNo#
+			</isNotEmpty>
+			<isNotEmpty prepend="AND" property="organizationId">
+				A.BIN_OrganizationIDFrom = #organizationId#
+			</isNotEmpty>
+			<isNotEmpty prepend="AND" property="organizationIdReceive">
+				A.BIN_OrganizationIDTo = #organizationIdReceive#
+			</isNotEmpty>
+			<isNotEmpty prepend="AND" property="importDateStart">
+				<![CDATA[ A.ImportDate >= #importDateStart# ]]>
+			</isNotEmpty>
+			<isNotEmpty prepend="AND" property="importDateEnd">
+				<![CDATA[ A.ImportDate <= #importDateEnd# ]]>
+			</isNotEmpty>
+			<isNotEmpty prepend="AND" property="importResult">
+				A.ImportResult = #importResult#
+			</isNotEmpty>
+			<isNotEmpty prepend="AND" property="tradeStatus">
+				D.TradeStatus = #tradeStatus#
+			</isNotEmpty>
+			<isNotEmpty prepend="AND" property="validFlag">
+				A.ValidFlag = #validFlag#
+			</isNotEmpty>
+		</dynamic>
+	</sql>
+	
+	<!-- 导出数据总数 -->
+	<select id="getExportDataCount" parameterClass="java.util.HashMap" resultClass="java.lang.Integer">
+    	<![CDATA[
+			SELECT	COUNT(1) AS count FROM (
+		]]>	
+		<include refid="BINOLSTSFH13.queryExportData" />
+		<![CDATA[	
+			)SORT_T1
+		]]>		
+	</select>	
+	
+	<!-- 导出数据 -->
+	<select id="getExportDataList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+		<include refid="BINOLCMINC99.pageheader" />
+		<include refid="BINOLSTSFH13.queryExportData" />
+		<include refid="BINOLCMINC99.pagefooter" />
+	</select>
+</sqlMap>

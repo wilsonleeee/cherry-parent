@@ -1,0 +1,85 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sqlMap PUBLIC "-//iBATIS.com//DTD SQL Map 2.0//EN" "http://ibatis.apache.org/dtd/sql-map-2.dtd">
+<sqlMap namespace="BINOLSSPRM06">
+
+	<!-- 插入促销品大中分类信息  -->
+	<insert id="insertPrmType" parameterClass="java.util.HashMap">	
+		<![CDATA[
+		INSERT INTO Basis.BIN_PromotionPrtType
+                   (BIN_OrganizationInfoID,
+                    BIN_BrandInfoID,
+                    PrimaryCategoryCode,
+                    PrimaryCategoryNameChinese,
+                    PrimaryCategoryNameForeign,
+                    SecondryCategoryCode,
+                    SecondryCategoryNameChinese,
+                    SecondryCategoryNameForeign,
+                    SmallCategoryCode,
+                    SmallCategoryNameChinese,
+                    SmallCategoryNameForeign,				
+		]]>	
+			<include refid="BINOLCMINC99.insertKeySql" />									
+		<![CDATA[								
+		)VALUES									
+				 (#organizationInfoId#,
+				  #brandInfoId#,
+				  #primaryCategoryCode#,					
+                  #primaryCategoryNameCN#,					
+                  #primaryCategoryNameEN#,					
+                  #secondryCategoryCode#,					
+                  #secondryCategoryNameCN#,
+				  #secondryCategoryNameEN#,					
+				  #smallCategoryCode#,
+                  #smallCategoryNameCN#,					
+                  #smallCategoryNameEN#,				
+		]]>
+		    <include refid="BINOLCMINC99.insertValueSql" />
+		<![CDATA[
+		)
+		]]>
+		
+	</insert>
+	
+	<!-- 更新促销品大中分类信息  -->
+	<update id="updatePrmType" parameterClass="java.util.HashMap">
+		<![CDATA[
+            UPDATE
+                Basis.BIN_PromotionPrtType
+            SET
+		]]>
+		<dynamic>
+			<isEqual property="categoryType" compareValue="1">
+				<![CDATA[
+                    SecondryCategoryCode = #secondryCategoryCode#,
+					SecondryCategoryNameChinese = #secondryCategoryNameCN#,
+					SecondryCategoryNameForeign = #secondryCategoryNameEN#,
+				]]>
+			</isEqual>
+			<isEqual property="categoryType" compareValue="2">
+				<![CDATA[
+					SmallCategoryCode = #smallCategoryCode#,
+					SmallCategoryNameChinese = #smallCategoryNameCN#,
+					SmallCategoryNameForeign = #smallCategoryNameEN#,
+				]]>
+			</isEqual>
+		</dynamic>
+		<include refid="BINOLCMINC99.updateSql" />
+		<![CDATA[
+			WHERE
+                PrimaryCategoryCode = #primaryCategoryCode#
+		]]>
+		<dynamic>
+			<isEqual property="categoryType" compareValue="1">
+				<![CDATA[
+	                AND (SecondryCategoryCode IS NULL OR SecondryCategoryCode='')
+				]]>
+			</isEqual>
+			<isEqual property="categoryType" compareValue="2">
+				<![CDATA[
+				    AND SecondryCategoryCode = #secondryCategoryCode#
+	                AND (SmallCategoryCode IS NULL OR SmallCategoryCode='')
+				]]>
+			</isEqual>
+		</dynamic>
+	</update>
+</sqlMap>

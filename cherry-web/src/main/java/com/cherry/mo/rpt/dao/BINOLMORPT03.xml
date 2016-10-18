@@ -1,0 +1,257 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE sqlMap PUBLIC "-//iBATIS.com//DTD SQL Map 2.0//EN" "http://ibatis.apache.org/dtd/sql-map-2.dtd">
+<sqlMap namespace="BINOLMORPT03">
+    <!-- 答卷查询SQL文  -->
+    <sql id="CheckAnswerQuery">
+        <![CDATA[
+            SELECT
+            	C.BIN_RegionID,
+				C.BIN_CityID,
+				A.BIN_PaperAnswerID AS paperAnswerId,
+				A.BIN_MemberInfoID AS memberInfoId,
+				CONVERT(varchar(30),A.CreateTime,120) AS answerDate,
+				CONVERT(varchar(30),A.UpdateTime,23) AS excelAnsDate,
+				A.TotalPoint AS totalPoint,
+				A.PointLevel AS pointLevel,
+				B.PaperType AS paperType,
+				B.BIN_PaperID AS paperId,
+				B.PaperName AS paperName,
+				C.DepartCode AS departCode,
+				D.EmployeeCode AS employeeCode,
+		]]>
+		<dynamic>
+			<isNotEmpty property="language">
+				<isEqual property="language" compareValue="en_US">
+					C.NameForeign AS departName,
+					D.EmployeeNameForeign AS employeeName
+				</isEqual>
+				<isEqual property="language" compareValue="zh_CN">	
+					C.DepartName AS departName,
+					D.EmployeeName AS employeeName
+				</isEqual>								
+			</isNotEmpty>
+			<isEmpty property="language">
+					C.DepartName AS departName,
+					D.EmployeeName AS employeeName
+			</isEmpty>
+		</dynamic>
+		<![CDATA[		
+			FROM
+				Monitor.BIN_PaperAnswer A WITH(NOLOCK)
+		]]>
+		<dynamic>
+		<isNotEmpty property="showMode">
+			<isEqual property="showMode" compareValue="1">
+				JOIN(
+					SELECT 
+						BIN_PaperID	
+						,BACode
+						,MAX(UpdateTime) AS updateTime
+					FROM 
+						Monitor.BIN_PaperAnswer WITH(NOLOCK)
+					WHERE
+						ValidFlag='1'
+					GROUP BY 
+						BIN_PaperID
+						,BACode) TT
+				ON(A.BIN_PaperID = TT.BIN_PaperID 
+					AND A.BACode = TT.BACode
+					AND A.UpdateTime = TT.updateTime)
+			</isEqual>
+			<isEqual property="showMode" compareValue="2">
+				JOIN(
+					SELECT 
+						BIN_PaperID	
+						,BIN_OrganizationID
+						,BACode
+						,MAX(UpdateTime) AS updateTime
+					FROM 
+						Monitor.BIN_PaperAnswer WITH(NOLOCK)
+					WHERE
+						ValidFlag='1'
+					GROUP BY 
+						BIN_PaperID
+						,BIN_OrganizationID
+						,BACode) TT
+				ON(A.BIN_PaperID = TT.BIN_PaperID 
+					AND A.BIN_OrganizationID = TT.BIN_OrganizationID
+					AND A.BACode = TT.BACode
+					AND A.UpdateTime = TT.updateTime)
+			</isEqual>
+		</isNotEmpty>
+		</dynamic>
+		<![CDATA[
+				JOIN Monitor.BIN_Paper B ON A.BIN_PaperID = B.BIN_PaperID
+				LEFT JOIN Basis.BIN_Organization C WITH(NOLOCK)
+				ON (A.BIN_OrganizationID = C.BIN_OrganizationID AND C.ValidFlag = '1')
+				LEFT JOIN Basis.BIN_Employee D WITH(NOLOCK)
+				ON (D.ValidFlag = '1' AND A.BACode = D.EmployeeCode )
+			WHERE
+				B.BIN_OrganizationInfoID = #organizationInfoId# AND
+				B.BIN_BrandInfoID = #brandInfoId# AND
+				A.ValidFlag = '1' AND
+				B.ValidFlag = '1'
+        ]]>
+        <![CDATA[AND EXISTS (]]>
+			<include refid="BINOLCMINC99.getDepartList" />
+		<![CDATA[AND A.BIN_OrganizationID = A99.BIN_OrganizationID )]]>
+        <dynamic>
+            <isNotEmpty prepend="AND" property="paperId">
+                <![CDATA[B.BIN_PaperID = #paperId#]]>
+            </isNotEmpty>
+            <isNotEmpty prepend="AND" property="paperType">
+                <![CDATA[B.PaperType = #paperType#]]>
+            </isNotEmpty>
+            <isNotEmpty prepend="AND" property="checkDateStart">
+                <![CDATA[A.UpdateTime >= CONVERT(datetime,#checkDateStart#)]]>
+            </isNotEmpty>
+			<isNotEmpty prepend="AND" property="checkDateEnd">
+                <![CDATA[A.UpdateTime <= CONVERT(datetime,#checkDateEnd#)]]>
+            </isNotEmpty>
+        </dynamic>
+    </sql>
+	
+	<!-- 取得答卷信息总数  -->
+    <select id="getCheckAnswerCount" parameterClass="java.util.HashMap" resultClass="java.lang.Integer">
+        <![CDATA[
+            SELECT COUNT(1) AS count FROM (
+        ]]>
+        <include refid="BINOLMORPT03.CheckAnswerQuery" />
+        <![CDATA[
+            )SORT_T1
+        ]]>
+    </select>
+    
+    <!-- 取得查询结果所属问卷总数  -->
+    <select id="getPaperCount" parameterClass="java.util.HashMap" resultClass="java.lang.Integer">
+        <![CDATA[
+            SELECT COUNT(DISTINCT SORT_T1.paperId) AS count FROM (
+        ]]>
+        <include refid="BINOLMORPT03.CheckAnswerQuery" />
+        <![CDATA[
+            )SORT_T1
+        ]]>
+    </select>
+    
+    <!-- 取得答卷信息List  -->
+    <select id="getCheckAnswerList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+        <include refid="BINOLCMINC99.pageheader" />
+        <include refid="BINOLMORPT03.CheckAnswerQuery" />
+        <include refid="BINOLCMINC99.pagefooter" />
+    </select>
+
+	<!-- 取得考核答卷信息(Excel) -->
+	<select id="getCheckAnswerListExcel" parameterClass="java.util.HashMap"
+		resultClass="java.util.HashMap">
+		<![CDATA[
+            SELECT
+            	A.excelAnsDate,
+            	A.paperType,
+            	A.paperName,
+            	A.paperId,
+            	A.paperAnswerId,
+            	ISNULL(A.departCode, '') AS departCode,
+            	ISNULL(A.departName, '') AS departName,
+            	ISNULL(A.employeeCode, '') AS employeeCode,
+            	ISNULL(A.employeeName, '') AS employeeName,
+            	ISNULL(E.MemCode, '') AS memberCode, 
+				ISNULL(B.Name, '') AS memberName,
+				C.BIN_PaperQuestionID AS paperQuestionId,
+				C.Answer AS answer,
+				D.QuestionType AS questionType,
+				A.totalPoint AS realTotalPoint,
+		]]>
+		<dynamic>
+			<isNotEmpty property="language">
+				<isEqual property="language" compareValue="en_US">
+					K.RegionNameForeign AS region,
+					M.RegionNameForeign AS city
+				</isEqual>
+				<isEqual property="language" compareValue="zh_CN">	
+					K.RegionNameChinese AS region,
+					M.RegionNameChinese AS city
+				</isEqual>								
+			</isNotEmpty>
+			<isEmpty property="language">
+					K.RegionNameChinese AS region,
+					M.RegionNameChinese AS city
+			</isEmpty>
+		</dynamic>
+		<![CDATA[
+			FROM (
+		]]>
+		<include refid="BINOLMORPT03.CheckAnswerQuery" />
+		<![CDATA[
+			) A LEFT JOIN Monitor.BIN_PaperAnswerDetail C WITH(NOLOCK)
+				ON (A.paperAnswerId = C.BIN_PaperAnswerID AND C.ValidFlag = '1')
+				LEFT JOIN Monitor.BIN_PaperQuestion D WITH(NOLOCK)
+				ON (C.BIN_PaperQuestionID = D.BIN_PaperQuestionID AND D.ValidFlag = '1')
+				LEFT JOIN Members.BIN_MemberInfo B WITH(NOLOCK)
+				ON (A.memberInfoId = B.BIN_MemberInfoID AND B.ValidFlag = '1')
+				LEFT JOIN Members.BIN_MemCardInfo E WITH(NOLOCK)
+				ON (B.BIN_MemberInfoID = E.BIN_MemberInfoID AND E.CardValidFlag = '1' AND E.ValidFlag='1')
+				LEFT JOIN Basis.BIN_Region K WITH (NOLOCK)
+				ON (A.BIN_RegionID = K.BIN_RegionID)
+				LEFT JOIN Basis.BIN_Region M WITH (NOLOCK)
+				ON (A.BIN_CityID = M.BIN_RegionID)
+			ORDER BY 
+				A.paperAnswerId
+		]]>
+	</select>
+	
+	<!-- 根据问卷ID取得问题和答案 -->
+	<select id="getCheckQuestionList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+		<![CDATA[
+			SELECT
+				QuestionItem AS questionItem,
+				QuestionType AS questionType,
+				OptionA AS optionA,
+	      		OptionB AS optionB,
+	      		OptionC AS optionC,
+	      		OptionD AS optionD,
+	      		OptionE AS optionE,
+	      		OptionF AS optionF,
+	      		OptionG AS optionG,
+	      		OptionH AS optionH,
+	      		OptionI AS optionI,
+	      		OptionJ AS optionJ,
+	      		OptionK AS optionK,
+	      		OptionL AS optionL,
+	      		OptionM AS optionM,
+	      		OptionN AS optionN,
+	      		OptionO AS optionO,
+	      		OptionP AS optionP,
+	      		OptionQ AS optionQ,
+	      		OptionR AS optionR,
+	      		OptionS AS optionS,
+	      		OptionT AS optionT,
+				PointA AS pointA,
+				PointB AS pointB,
+				PointC AS pointC,
+				PointD AS pointD,
+				PointE AS pointE,
+				PointF AS pointF,
+				PointG AS pointG,
+				PointH AS pointH,
+				PointI AS pointI,
+				PointJ AS pointJ,
+				PointK AS pointK,
+				PointL AS pointL,
+				PointM AS pointM,
+				PointN AS pointN,
+				PointO AS pointO,
+				PointP AS pointP,
+				PointQ AS pointQ,
+				PointR AS pointR,
+				PointS AS pointS,
+				PointT AS pointT,
+				BIN_PaperQuestionID AS paperQuestionId
+			FROM
+				Monitor.BIN_PaperQuestion
+			WHERE
+				BIN_PaperID = #paperId#
+			ORDER BY
+				DisplayOrder
+		]]>		
+	</select>
+</sqlMap>

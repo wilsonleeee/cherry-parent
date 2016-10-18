@@ -1,0 +1,906 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sqlMap PUBLIC "-//iBATIS.com//DTD SQL Map 2.0//EN" "http://ibatis.apache.org/dtd/sql-map-2.dtd">
+<sqlMap namespace="BINOLCM18">
+    <!--取得指定组织下的所有有效的实体仓库信息。-->
+    <select id="getAllDepots" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+        <![CDATA[
+		    SELECT
+	            A.BIN_DepotInfoID AS BIN_DepotInfoID
+				,A.BIN_OrganizationID AS BIN_OrganizationID
+				,A.DepotCode AS DepotCode
+				,A.DepotNameCN AS DepotNameCN
+				,A.DepotNameEN AS DepotNameEN
+				,A.DepotType AS DepotType
+		]]>
+        <dynamic>
+            <isNotEmpty property="language">
+                <isEqual property="language" compareValue="en_US">
+                	<![CDATA[
+	                    ,A.DepotNameEN AS DepotName
+	                    ,'('+A.DepotCode+')'+A.DepotNameEN AS DepotCodeName
+					]]>
+                </isEqual>
+                <isEqual property="language" compareValue="zh_CN">
+                	<![CDATA[
+	                    ,A.DepotNameCN AS DepotName
+	                    ,'('+A.DepotCode+')'+A.DepotNameCN AS DepotCodeName
+					]]>
+                </isEqual>
+            </isNotEmpty>
+            <isEmpty property="language">
+            	<![CDATA[
+	                ,A.DepotNameCN AS DepotName
+	                ,'('+A.DepotCode+')'+A.DepotNameCN AS DepotCodeName
+				]]>
+            </isEmpty>
+        </dynamic>
+        <![CDATA[
+	        FROM
+	            Basis.BIN_DepotInfo A
+	        WHERE
+	            A.ValidFlag = '1'
+        ]]>
+        <dynamic>
+            <isNotEmpty property="depotInfoId">
+            	<![CDATA[AND A.BIN_DepotInfoID = #depotInfoId#]]>
+	   		</isNotEmpty>
+			<isNotEmpty property="organizationInfoId">
+                <![CDATA[AND A.BIN_OrganizationInfoID = #organizationInfoId#]]>
+            </isNotEmpty>
+            <isNotEmpty property="organizationId">
+            	<![CDATA[AND A.BIN_OrganizationID = #organizationId#]]>
+            </isNotEmpty>
+            <isNotEmpty property="depotType">
+            	<![CDATA[AND A.DepotType = #depotType#]]>
+            </isNotEmpty>
+	   </dynamic>
+    </select>
+	
+	<!--取得指定部门使用的实体仓库信息-->
+    <select id="getDepotsByDepartID" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+		<![CDATA[
+            SELECT
+                B.BIN_DepotInfoID AS BIN_DepotInfoID
+				,B.BIN_OrganizationID AS BIN_OrganizationID
+				,B.DepotCode AS DepotCode
+				,B.DepotNameCN AS DepotNameCN
+				,B.DepotNameEN AS DepotNameEN
+				,B.DepotType AS DepotType
+				,B.TestType AS TestType
+		]]>
+        <dynamic>
+            <isNotEmpty property="language">
+                <isEqual property="language" compareValue="en_US">
+                    <![CDATA[
+                        ,B.DepotNameEN AS DepotName
+                        ,'('+B.DepotCode+')'+B.DepotNameEN AS DepotCodeName
+                    ]]>
+                </isEqual>
+                <isEqual property="language" compareValue="zh_CN">
+                    <![CDATA[
+                        ,B.DepotNameCN AS DepotName
+                        ,'('+B.DepotCode+')'+B.DepotNameCN AS DepotCodeName
+                    ]]>
+                </isEqual>
+            </isNotEmpty>
+            <isEmpty property="language">
+                <![CDATA[
+                    ,B.DepotNameCN AS DepotName
+                    ,'('+B.DepotCode+')'+B.DepotNameCN AS DepotCodeName
+                ]]>
+            </isEmpty>
+        </dynamic>
+		<![CDATA[
+            FROM
+                Basis.BIN_InventoryInfo A
+			LEFT JOIN Basis.BIN_DepotInfo B
+			ON A.BIN_InventoryInfoID = B.BIN_DepotInfoID
+			WHERE
+                A.ValidFlag = '1'
+                AND B.ValidFlag='1' 
+                AND A.BIN_OrganizationID = #organizationId#
+		    ORDER BY A.DefaultFlag desc
+		]]>
+    </select>
+	
+	<!--取得用户能操作的所有实体仓库信息-->
+    <select id="getDepotsByUser" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+        <![CDATA[
+            SELECT
+                A.BIN_DepotInfoID AS BIN_DepotInfoID
+				,A.DepotCode AS DepotCode
+				,A.DepotNameCN AS DepotNameCN
+				,A.DepotNameEN AS DepotNameEN
+				,A.DepotType AS DepotType
+		]]>
+        <dynamic>
+            <isNotEmpty property="language">
+                <isEqual property="language" compareValue="en_US">
+                    <![CDATA[
+                        ,A.DepotNameEN AS DepotName
+                        ,'('+A.DepotCode+')'+A.DepotNameEN AS DepotCodeName
+                    ]]>
+                </isEqual>
+                <isEqual property="language" compareValue="zh_CN">
+                    <![CDATA[
+                        ,A.DepotNameCN AS DepotName
+                        ,'('+A.DepotCode+')'+A.DepotNameCN AS DepotCodeName
+                    ]]>
+                </isEqual>
+            </isNotEmpty>
+            <isEmpty property="language">
+                <![CDATA[
+                    ,A.DepotNameCN AS DepotName
+                    ,'('+A.DepotCode+')'+A.DepotNameCN AS DepotCodeName
+                ]]>
+            </isEmpty>
+        </dynamic>
+		<![CDATA[
+            FROM
+                Basis.BIN_DepotInfo A
+			WHERE
+                A.ValidFlag = '1'
+                AND EXISTS(
+                            SELECT
+                                '1'
+                            FROM
+                                Basis.BIN_InventoryInfo B
+                                JOIN (]]><include refid="BINOLCMINC99.departPrivilegeSql" /><![CDATA[) A99 
+								ON B.BIN_OrganizationID=A99.BIN_OrganizationID
+                            WHERE
+                                B.ValidFlag = '1'
+								AND A.BIN_DepotInfoID = B.BIN_InventoryInfoID
+                           )
+		]]>
+		<dynamic>
+            <isNotEmpty property="depotType">
+                <![CDATA[AND A.DepotType = #depotType#]]>
+            </isNotEmpty>
+		</dynamic>
+	</select>
+	
+	<!--给定业务类型，取得配置的逻辑仓库-->
+    <select id="getBusinessLogicDepots" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+        <![CDATA[
+            SELECT
+				DISTINCT
+                B.BIN_LogicInventoryInfoID
+                ,A.Type AS logicType
+				,B.LogicInventoryCode AS LogicInventoryCode
+				,B.InventoryNameCN AS InventoryNameCN
+				,B.InventoryNameEN AS InventoryNameEN
+				,B.DefaultFlag AS DefaultFlag
+				,A.ConfigOrder AS ConfigOrder
+        ]]>
+        <dynamic>
+            <isNotEmpty property="language">
+                <isEqual property="language" compareValue="en_US">
+                    <![CDATA[
+                        ,B.InventoryNameEN AS LogicInventoryName
+                        ,'('+B.LogicInventoryCode+')'+B.InventoryNameEN AS LogicInventoryCodeName
+                    ]]>
+                </isEqual>
+                <isEqual property="language" compareValue="zh_CN">
+                    <![CDATA[
+                        ,B.InventoryNameCN AS LogicInventoryName
+                        ,'('+B.LogicInventoryCode+')'+B.InventoryNameCN AS LogicInventoryCodeName
+                    ]]>
+                </isEqual>
+            </isNotEmpty>
+            <isEmpty property="language">
+                <![CDATA[
+                    ,B.InventoryNameCN AS LogicInventoryName
+                    ,'('+B.LogicInventoryCode+')'+B.InventoryNameCN AS LogicInventoryCodeName
+                ]]>
+            </isEmpty>
+        </dynamic>
+		<![CDATA[
+            FROM
+                Basis.BIN_LogicDepotBusiness A
+                LEFT JOIN Basis.BIN_LogicInventory B
+				ON A.BIN_LogicInventoryInfoID = B.BIN_LogicInventoryInfoID
+			WHERE
+                A.ValidFlag = '1'
+                AND B.ValidFlag = '1'
+				AND A.BIN_BrandInfoID = #BIN_BrandInfoID#
+				
+		]]>
+        <dynamic>
+            <isNotEmpty property="BusinessType">
+                <![CDATA[AND A.BusinessType = #BusinessType#]]>
+            </isNotEmpty>
+            <isNotEmpty property="Type">
+                <![CDATA[AND B.Type=#Type# ]]>
+            </isNotEmpty>
+			<isNotEmpty property="SubType">
+                <![CDATA[AND A.SubType=#SubType# ]]>
+            </isNotEmpty>
+			<isEmpty property="SubType">
+				<![CDATA[AND A.SubType IS NULL]]>
+			</isEmpty>
+			<isNotEmpty property="ProductType">
+                <![CDATA[AND A.ProductType=#ProductType# ]]>
+            </isNotEmpty>
+        </dynamic>
+		<![CDATA[ORDER BY A.ConfigOrder ASC]]>
+    </select>
+	
+	<!--取出品牌下所有的逻辑仓库-->
+    <select id="getAllLogicDepots" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+        <![CDATA[
+            SELECT
+                A.BIN_LogicInventoryInfoID AS BIN_LogicInventoryInfoID
+				,A.LogicInventoryCode AS LogicInventoryCode
+				,A.InventoryNameCN AS InventoryNameCN
+				,A.InventoryNameEN AS InventoryNameEN
+				,A.DefaultFlag AS DefaultFlag
+        ]]>
+        <dynamic>
+            <isNotEmpty property="language">
+                <isEqual property="language" compareValue="en_US">
+                    <![CDATA[
+                        ,A.InventoryNameEN AS LogicInventoryName
+                        ,'('+A.LogicInventoryCode+')'+A.InventoryNameEN AS LogicInventoryCodeName
+                    ]]>
+                </isEqual>
+                <isEqual property="language" compareValue="zh_CN">
+                    <![CDATA[
+                        ,A.InventoryNameCN AS LogicInventoryName
+                        ,'('+A.LogicInventoryCode+')'+A.InventoryNameCN AS LogicInventoryCodeName
+                    ]]>
+                </isEqual>
+            </isNotEmpty>
+            <isEmpty property="language">
+                <![CDATA[
+                    ,A.InventoryNameCN AS LogicInventoryName
+                    ,'('+A.LogicInventoryCode+')'+A.InventoryNameCN AS LogicInventoryCodeName
+                ]]>
+            </isEmpty>
+        </dynamic>
+        <![CDATA[
+            FROM
+                Basis.BIN_LogicInventory A
+			WHERE 
+                A.ValidFlag='1'
+                AND A.BIN_BrandInfoID = #BIN_BrandInfoID#
+         ]]>
+             <isNotEmpty property="Type">
+                <![CDATA[
+                 AND A.Type=#Type#
+                ]]>
+            </isNotEmpty>
+            <![CDATA[
+			ORDER BY A.DefaultFlag desc
+        ]]>
+    </select>
+	
+	<!--取得后台逻辑仓库-->
+	<select id="getLogicDepotBackEnd" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+		<![CDATA[
+            SELECT
+                B.BIN_LogicInventoryInfoID,
+                B.LogicInventoryCode,
+                B.InventoryNameCN,
+                B.InventoryNameEN,
+		]]>
+        <dynamic>
+            <isNotEmpty property="language">
+                <isEqual property="language" compareValue="en_US">
+                	<![CDATA[
+	                	B.InventoryNameEN AS LogicInventoryName,
+						'('+B.LogicInventoryCode+')'+ B.InventoryNameEN AS LogicInventoryCodeName
+					]]>
+                </isEqual>
+				<isEqual property="language" compareValue="zh_CN">
+					<![CDATA[
+	                    B.InventoryNameCN AS LogicInventoryName,
+						'('+B.LogicInventoryCode+')'+ B.InventoryNameCN AS LogicInventoryCodeName
+					]]>
+                </isEqual>
+			</isNotEmpty>
+			<isEmpty property="language">
+				<![CDATA[
+	                B.InventoryNameCN AS LogicInventoryName,
+					'('+B.LogicInventoryCode+')'+ B.InventoryNameCN AS LogicInventoryCodeName
+				]]>
+			</isEmpty>
+		</dynamic>
+		<![CDATA[
+			FROM
+                Basis.BIN_LogicDepotPB A
+			LEFT JOIN Basis.BIN_LogicInventory B
+			ON A.BackEndLogicInventoryInfoID = B.BIN_LogicInventoryInfoID
+			WHERE
+                A.ValidFlag='1'
+				AND A.BIN_BrandInfoID = #brandInfoID#
+				AND A.BusinessType = #businessType#
+		]]>
+		<dynamic>
+            <isNotEmpty property="posLogicDepotID">
+                <![CDATA[AND A.PosLogicInventoryInfoID = #posLogicDepotID#]]>
+			</isNotEmpty>
+		</dynamic>
+	</select>
+	
+	<!--根据仓库ID，业务类型以及入/出库区分查询出对应的出/入库（仓库/区域）信息-->
+	<select id="getIdInfoByInventroyId" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+		SELECT
+			<dynamic>
+				<isEqual property="InOutFlag" compareValue="IN">
+					OutID AS id,
+					OutIdFlag AS idFlag
+				</isEqual>
+				<isEqual property="InOutFlag" compareValue="OUT">
+					InID AS id,
+					InIdFlag AS idFlag
+				</isEqual>
+			</dynamic>
+		FROM
+			Basis.BIN_DepotBusiness
+		WHERE
+			ValidFlag = '1'
+			AND BusinessType = #BusinessType#
+			<dynamic>
+				<isEqual property="InOutFlag" compareValue="IN">
+					AND InID = #DepotID#
+					AND InIdFlag = '0'
+				</isEqual>
+				<isEqual property="InOutFlag" compareValue="OUT">
+					AND OutID = #DepotID#
+					AND OutIdFlag = '0'
+				</isEqual>
+			</dynamic>
+	</select>
+	
+	<!--根据区域ID，业务类型以及入/出库区分查询出对应的出/入库（仓库/区域）信息-->
+	<select id="getIdInfoByRegionId" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+		SELECT
+			<dynamic>
+				<isEqual property="InOutFlag" compareValue="IN">
+					OutID AS id,
+					OutIdFlag AS idFlag
+				</isEqual>
+				<isEqual property="InOutFlag" compareValue="OUT">
+					InID AS id,
+					InIdFlag AS idFlag
+				</isEqual>
+			</dynamic>
+		FROM
+			Basis.BIN_DepotBusiness
+		WHERE
+			ValidFlag = '1'
+			AND BusinessType = #BusinessType#
+			<dynamic>
+				<isEqual property="InOutFlag" compareValue="IN">
+					AND InID = #RegionId#
+					AND InIdFlag = '1'
+				</isEqual>
+				<isEqual property="InOutFlag" compareValue="OUT">
+					AND OutID = #RegionId#
+					AND OutIdFlag = '1'
+				</isEqual>
+			</dynamic>
+	</select>
+	
+    <!--根据部门ID，业务类型以及入/出库区分查询出对应的出/入库（仓库/区域）信息-->
+    <select id="getIdInfoByDepartId" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+        SELECT
+            <dynamic>
+                <isEqual property="InOutFlag" compareValue="IN">
+                    OutID AS id,
+                    OutIdFlag AS idFlag
+                </isEqual>
+                <isEqual property="InOutFlag" compareValue="OUT">
+                    InID AS id,
+                    InIdFlag AS idFlag
+                </isEqual>
+            </dynamic>
+        FROM
+            Basis.BIN_DepotBusiness
+        WHERE
+            ValidFlag = '1'
+            AND BusinessType = #BusinessType#
+            <dynamic>
+                <isEqual property="InOutFlag" compareValue="IN">
+                    AND InID = #RegionId#
+                    AND InIdFlag = '2'
+                </isEqual>
+                <isEqual property="InOutFlag" compareValue="OUT">
+                    AND OutID = #RegionId#
+                    AND OutIdFlag = '2'
+                </isEqual>
+            </dynamic>
+    </select>
+    
+    <select id="getALLBossDepartDepotBusinessList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+        <![CDATA[
+            WITH C AS
+			(
+			    SELECT
+                    *
+                FROM Basis.BIN_Organization
+                WHERE
+                    BIN_OrganizationID = #BIN_OrganizationID#
+			    UNION ALL
+			    SELECT
+                    A.*
+                FROM Basis.BIN_Organization AS A
+			    JOIN C ON A.NodeId = C.NodeId.GetAncestor(1)
+			)
+           SELECT
+        ]]>
+        <dynamic>
+            <isEqual property="InOutFlag" compareValue="IN">
+                OutID AS id,
+                OutIdFlag AS idFlag
+            </isEqual>
+            <isEqual property="InOutFlag" compareValue="OUT">
+                InID AS id,
+                InIdFlag AS idFlag
+            </isEqual>
+        </dynamic>
+        <![CDATA[
+            FROM C
+            JOIN Basis.BIN_DepotBusiness D
+        ]]>
+        <dynamic>
+            <isEqual property="InOutFlag" compareValue="IN">
+                ON (C.BIN_OrganizationID = D.InID AND InIdFlag = '2' AND D.BusinessType = #BusinessType#)
+            </isEqual>
+            <isEqual property="InOutFlag" compareValue="OUT">
+                ON (C.BIN_OrganizationID = OutID AND OutIdFlag = '2' AND D.BusinessType = #BusinessType#)
+            </isEqual>
+        </dynamic>
+        <![CDATA[
+            WHERE
+                C.BIN_OrganizationInfoID = #BIN_OrganizationInfoID#
+                AND C.BIN_BrandInfoID = #BIN_BrandInfoID#
+            ORDER BY C.Path DESC
+        ]]>
+    </select>
+	
+	<!--根据仓库ID获取其所在的市ID、省ID以及区域ID-->
+	<select id="getRegionIdByInventroyId" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+		<![CDATA[
+			SELECT
+				B.BIN_RegionID AS RegionId
+			FROM
+				Basis.BIN_InventoryInfo A
+				JOIN Basis.BIN_Organization B
+				ON(A.BIN_OrganizationID = B.BIN_OrganizationID
+				AND A.BIN_InventoryInfoID = #DepotID#
+				AND A.ValidFlag = '1'
+				AND B.ValidFlag = '1')
+				JOIN Basis.BIN_Region C
+				ON(C.BIN_RegionID = B.BIN_RegionID
+				AND C.ValidFlag = '1')
+			UNION
+			SELECT
+				B.BIN_ProvinceID AS RegionId
+			FROM
+				Basis.BIN_InventoryInfo A
+				JOIN Basis.BIN_Organization B
+				ON(A.BIN_OrganizationID = B.BIN_OrganizationID
+				AND A.BIN_InventoryInfoID = #DepotID#
+				AND A.ValidFlag = '1'
+				AND B.ValidFlag = '1')
+				JOIN Basis.BIN_Region C
+				ON(C.BIN_RegionID = B.BIN_ProvinceID
+				AND C.ValidFlag = '1')
+			UNION
+			SELECT
+				B.BIN_CityID AS RegionId
+			FROM
+				Basis.BIN_InventoryInfo A
+				JOIN Basis.BIN_Organization B
+				ON(A.BIN_OrganizationID = B.BIN_OrganizationID
+				AND A.BIN_InventoryInfoID = #DepotID#
+				AND A.ValidFlag = '1'
+				AND B.ValidFlag = '1')
+				JOIN Basis.BIN_Region C
+				ON(C.BIN_RegionID = B.BIN_CityID
+				AND C.ValidFlag = '1')
+		]]>
+	</select>
+	
+	<!--根据仓库ID获取仓库信息-->
+	<select id="getDeportByDeportId" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+		SELECT
+			A.BIN_DepotInfoID,
+			B.BIN_OrganizationID,
+			A.DepotCode,
+			A.DepotNameCN,
+			A.DepotNameEN,
+			A.DepotType,
+			A.TestType,
+			<dynamic>
+           		<isNotEmpty property="language">
+                	<isEqual property="language" compareValue="en_US">
+                		A.DepotNameEN AS DepotName,
+						'('+A.DepotCode+')'+A.DepotNameEN AS DepotCodeName
+                	</isEqual>
+					<isEqual property="language" compareValue="en_US">
+						A.DepotNameCN AS DepotName,
+						'('+A.DepotCode+')'+A.DepotNameCN AS DepotCodeName
+               		</isEqual>
+				</isNotEmpty>
+				<isNotEmpty>
+					A.DepotNameCN AS DepotName,
+					'('+A.DepotCode+')'+A.DepotNameCN AS DepotCodeName
+				</isNotEmpty>
+			</dynamic>
+		FROM
+			Basis.BIN_DepotInfo A
+			JOIN Basis.BIN_InventoryInfo B
+			ON(A.BIN_DepotInfoID = B.BIN_InventoryInfoID
+			AND B.ValidFlag = 1
+			AND B.BIN_BrandInfoID = #BIN_BrandInfoID#)
+		WHERE
+			A.BIN_DepotInfoID = #id#
+			AND A.TestType = #TestType#
+	</select>
+	
+	<!--跟据区域ID获取其下属仓库信息-->
+	<select id="getDeportByRegonId" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+		SELECT
+			distinct
+			A.BIN_DepotInfoID,
+			C.BIN_OrganizationID,
+			A.DepotCode,
+			A.DepotNameCN,
+			A.DepotNameEN,
+			A.DepotType,
+			A.TestType,
+			<dynamic>
+           		<isNotEmpty property="language">
+                	<isEqual property="language" compareValue="en_US">
+                		A.DepotNameEN AS DepotName,
+						'('+A.DepotCode+')'+A.DepotNameEN AS DepotCodeName
+                	</isEqual>
+					<isEqual property="language" compareValue="en_US">
+						A.DepotNameCN AS DepotName,
+						'('+A.DepotCode+')'+A.DepotNameCN AS DepotCodeName
+               		</isEqual>
+				</isNotEmpty>
+				<isNotEmpty>
+					A.DepotNameCN AS DepotName,
+					'('+A.DepotCode+')'+A.DepotNameCN AS DepotCodeName
+				</isNotEmpty>
+			</dynamic>
+		FROM
+			Basis.BIN_DepotInfo A
+			JOIN Basis.BIN_InventoryInfo C
+			ON(A.BIN_DepotInfoID = C.BIN_InventoryInfoID
+			AND C.ValidFlag = '1'
+			AND C.BIN_BrandInfoID = #BIN_BrandInfoID#)
+			JOIN Basis.BIN_Organization B
+			ON(B.BIN_OrganizationID = C.BIN_OrganizationID
+			AND B.ValidFlag = '1'
+			AND	B.[Type] = '4')
+		WHERE
+			(B.BIN_RegionID = #id#
+			OR B.BIN_ProvinceID = #id#
+			OR B.BIN_CityID = #id#)
+			AND B.TestType = #TestType#
+			AND A.ValidFlag = '1'
+	</select>
+	
+    <!--根据子区域ID获取其下属仓库信息-->
+    <select id="getDeportBySubRegonId" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+        SELECT
+            distinct
+            A.BIN_DepotInfoID,
+            C.BIN_OrganizationID,
+            A.DepotCode,
+            A.DepotNameCN,
+            A.DepotNameEN,
+            A.DepotType,
+            A.TestType,
+            <dynamic>
+                <isNotEmpty property="language">
+                    <isEqual property="language" compareValue="en_US">
+                        A.DepotNameEN AS DepotName,
+                        '('+A.DepotCode+')'+A.DepotNameEN AS DepotCodeName
+                    </isEqual>
+                    <isEqual property="language" compareValue="en_US">
+                        A.DepotNameCN AS DepotName,
+                        '('+A.DepotCode+')'+A.DepotNameCN AS DepotCodeName
+                    </isEqual>
+                </isNotEmpty>
+                <isNotEmpty>
+                    A.DepotNameCN AS DepotName,
+                    '('+A.DepotCode+')'+A.DepotNameCN AS DepotCodeName
+                </isNotEmpty>
+            </dynamic>
+        FROM
+            Basis.BIN_DepotInfo A
+            JOIN Basis.BIN_InventoryInfo C
+            ON(A.BIN_DepotInfoID = C.BIN_InventoryInfoID
+            AND C.ValidFlag = '1'
+            AND C.BIN_BrandInfoID = #BIN_BrandInfoID#)
+            JOIN Basis.BIN_Organization B
+            ON(B.BIN_OrganizationID = C.BIN_OrganizationID
+            AND B.ValidFlag = '1'
+            AND B.[Type] = '4')
+        WHERE
+            (
+            B.BIN_RegionID IN (SELECT R1.BIN_RegionID FROM Basis.BIN_Region R1,Basis.BIN_Region R2 WHERE R2.BIN_RegionID = #BIN_RegionID# AND R1.NodeID.IsDescendantOf(R2.NodeID) = 1)
+            OR B.BIN_ProvinceID IN (SELECT R1.BIN_RegionID FROM Basis.BIN_Region R1,Basis.BIN_Region R2 WHERE R2.BIN_RegionID = #BIN_RegionID# AND R1.NodeID.IsDescendantOf(R2.NodeID) = 1)
+            OR B.BIN_CityID IN (SELECT R1.BIN_RegionID FROM Basis.BIN_Region R1,Basis.BIN_Region R2 WHERE R2.BIN_RegionID = #BIN_RegionID# AND R1.NodeID.IsDescendantOf(R2.NodeID) = 1)
+            )
+            AND B.TestType = #TestType#
+            AND A.ValidFlag = '1'
+    </select>
+	
+	<!--根据仓库ID取得其TestType字段-->
+	<select id="getDepotTestType" parameterClass="java.lang.Integer" resultClass="java.lang.Integer">
+		SELECT
+			TestType
+		FROM
+			Basis.BIN_DepotInfo
+		WHERE
+			BIN_DepotInfoID = #id#
+	</select>
+	
+	<!--取得指定区域ID的所有下级区域-->
+	<select id="getSubReginByReginId" parameterClass="java.lang.Integer" resultClass="java.util.HashMap">
+		SELECT
+			A.BIN_RegionID AS id,
+			A.RegionNameChinese
+		FROM
+			Basis.BIN_Region A,
+			Basis.BIN_Region B
+		WHERE
+			B.BIN_RegionID = #BIN_RegionID# AND
+			A.NodeID.IsDescendantOf(B.NodeID) = 1
+	</select>
+	
+    <!--取得指定部门ID的仓库及所有下级部门的仓库-->
+    <select id="getDepotsAndSubByDepartId" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+        <![CDATA[
+	        SELECT
+	            DISTINCT
+	            D.BIN_DepotInfoID,
+	            A.BIN_OrganizationID,
+	            D.DepotCode,
+	            D.DepotNameCN,
+	            D.DepotNameEN,
+	            D.DepotType,
+	            D.TestType,
+        ]]>
+        <dynamic>
+            <isNotEmpty property="language">
+                <isEqual property="language" compareValue="en_US">
+                    D.DepotNameEN AS DepotName,
+                    '('+D.DepotCode+')'+D.DepotNameEN AS DepotCodeName
+                </isEqual>
+                <isEqual property="language" compareValue="en_US">
+                    D.DepotNameCN AS DepotName,
+                    '('+D.DepotCode+')'+D.DepotNameCN AS DepotCodeName
+                </isEqual>
+            </isNotEmpty>
+            <isNotEmpty>
+                D.DepotNameCN AS DepotName,
+                '('+D.DepotCode+')'+D.DepotNameCN AS DepotCodeName
+            </isNotEmpty>
+        </dynamic>
+        <![CDATA[
+	        FROM
+	            Basis.BIN_Organization A
+	            JOIN Basis.BIN_Organization B
+	            ON (B.ValidFlag = '1' AND B.BIN_OrganizationID = #BIN_OrganizationID# AND A.NodeID.IsDescendantOf(B.NodeID) = 1)
+	            JOIN Basis.BIN_InventoryInfo C
+	            ON (C.ValidFlag = '1' AND A.BIN_OrganizationID = C.BIN_OrganizationID AND C.BIN_BrandInfoID = #BIN_BrandInfoID#)
+	            JOIN Basis.BIN_DepotInfo D
+	            ON (D.ValidFlag = '1' AND C.BIN_InventoryInfoID = D.BIN_DepotInfoID)
+	        WHERE
+	            D.TestType = #TestType#
+        ]]>
+    </select>
+	
+	<!--根据仓库ID取得与之关联的所有部门的上级部门(带权限或者不带权限),带有测试部门和正式部门控制-->
+	<select id="getSuperordinateDepartByDepotId" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+		<![CDATA[
+		WITH E AS(
+			SELECT
+				A.BIN_OrganizationID AS organizationID,
+				A.NodeID AS nodeID,
+				A.DepartName,
+				F.TestType
+			FROM
+				Basis.BIN_Organization	A
+				JOIN Basis.BIN_InventoryInfo B
+				ON(A.BIN_OrganizationID = B.BIN_OrganizationID
+				AND A.ValidFlag = '1'
+				AND B.BIN_InventoryInfoID = #DepotID#
+				AND A.BIN_OrganizationInfoID=#BIN_OrganizationInfoID#
+				AND B.BIN_BrandInfoID=#BIN_BrandInfoID#)
+				JOIN Basis.BIN_DepotInfo F
+				ON(F.BIN_DepotInfoID = B.BIN_InventoryInfoID)
+			UNION ALL
+			SELECT
+				C.BIN_OrganizationID,
+				C.NodeID,
+				C.DepartName,
+				C.TestType
+			FROM
+				Basis.BIN_Organization C
+				JOIN E
+				ON(C.NodeId = E.NodeId.GetAncestor(1)
+				AND C.TestType = E.TestType
+				AND C.[Type] != 'Z')
+		)
+		SELECT
+			distinct
+			E.nodeID,
+			E.DepartName,
+			E.organizationID,
+			E.TestType
+		FROM
+			E
+		]]>	
+		<dynamic>
+			<isNotEmpty property="userId">	
+			<![CDATA[			
+				JOIN (]]><include refid="BINOLCMINC99.departPrivilegeSql" /><![CDATA[) A99 
+				ON E.organizationID=A99.BIN_OrganizationID
+			]]>
+			</isNotEmpty>
+		</dynamic>
+	</select>
+	
+	<!--根据仓库ID取得与其关联的所有部门的下级部门(带有权限或不带权限),带有测试部门和正式部门控制-->
+	<select id="getChildordinateDepartByDepotId" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+		<![CDATA[
+			SELECT
+				distinct
+				C.BIN_OrganizationID AS organizationID,
+				C.NodeID AS nodeID,
+				C.DepartName,
+				C.DepartCode,
+				C.TestType
+			FROM
+				Basis.BIN_Organization	A
+				JOIN Basis.BIN_InventoryInfo B
+				ON(A.BIN_OrganizationID = B.BIN_OrganizationID
+				AND A.ValidFlag = '1'
+				AND A.BIN_BrandInfoID = #BIN_BrandInfoID#
+				AND A.BIN_OrganizationInfoID = #BIN_OrganizationInfoID#
+				AND B.BIN_InventoryInfoID = #DepotID#)
+				JOIN Basis.BIN_DepotInfo E
+				ON(E.BIN_DepotInfoID = B.BIN_InventoryInfoID) ,
+				Basis.BIN_Organization	C
+				]]>
+				<dynamic>
+					<isNotEmpty property="userId">
+					<![CDATA[			
+						JOIN (]]><include refid="BINOLCMINC99.departPrivilegeSql" /><![CDATA[) A99 
+						ON C.BIN_OrganizationID=A99.BIN_OrganizationID
+					]]>
+					</isNotEmpty>
+				</dynamic>
+				<![CDATA[
+			WHERE
+				C.NodeID.IsDescendantOf(A.NodeID) = 1
+				AND C.TestType = E.TestType
+				]]>
+	</select>
+	
+	<!-- 从【BIN_LogicInventory逻辑仓库表】中取得符合参数条件的逻辑仓库信息 -->
+	<select id="getLogicDepotByPraMap" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+        <![CDATA[
+            SELECT
+                A.BIN_LogicInventoryInfoID AS BIN_LogicInventoryInfoID
+				,A.LogicInventoryCode AS LogicInventoryCode
+				,A.InventoryNameCN AS InventoryNameCN
+				,A.InventoryNameEN AS InventoryNameEN
+				,A.Type AS Type
+				,A.OrderNO AS OrderNO
+				,A.Comments AS Comments
+        ]]>
+        <dynamic>
+            <isNotEmpty property="language">
+                <isEqual property="language" compareValue="en_US">
+                    <![CDATA[
+                        ,A.InventoryNameEN AS LogicInventoryName
+                        ,'('+A.LogicInventoryCode+')'+A.InventoryNameEN AS LogicInventoryCodeName
+                    ]]>
+                </isEqual>
+                <isEqual property="language" compareValue="zh_CN">
+                    <![CDATA[
+                        ,A.InventoryNameCN AS LogicInventoryName
+                        ,'('+A.LogicInventoryCode+')'+A.InventoryNameCN AS LogicInventoryCodeName
+                    ]]>
+                </isEqual>
+            </isNotEmpty>
+            <isEmpty property="language">
+                <![CDATA[
+                    ,A.InventoryNameCN AS LogicInventoryName
+                    ,'('+A.LogicInventoryCode+')'+A.InventoryNameCN AS LogicInventoryCodeName
+                ]]>
+            </isEmpty>
+        </dynamic>
+        <![CDATA[
+            FROM
+                Basis.BIN_LogicInventory A
+         ]]>
+			WHERE 
+                A.ValidFlag='1'
+                <dynamic>
+                	<isNotEmpty property="BIN_BrandInfoID" prepend="AND">
+		                A.BIN_BrandInfoID = #BIN_BrandInfoID#
+                	</isNotEmpty>
+                	<isNotEmpty property="DefaultFlag" prepend="AND">
+		                A.DefaultFlag = #DefaultFlag#
+                	</isNotEmpty>
+                	<isNotEmpty property="LogicInventoryCode" prepend="AND">
+		                A.LogicInventoryCode = #LogicInventoryCode#
+                	</isNotEmpty>
+                	<isNotEmpty property="Type" prepend="AND">
+		                A.Type = #Type#
+                	</isNotEmpty>
+                	<isNotEmpty property="BIN_LogicInventoryInfoID" prepend="AND">
+		                A.BIN_LogicInventoryInfoID = #BIN_LogicInventoryInfoID#
+                	</isNotEmpty>
+                	<isNotNull property="OrderBy">
+                		ORDER BY A.DefaultFlag DESC , A.OrderNO
+                	</isNotNull>
+                </dynamic>
+          
+	</select>
+	
+	<!-- 从【逻辑仓库业务配置表BIN_LogicDepotBusiness】中取得符合参数条件的逻辑仓库信息,返回的列表按照优先级从高到低排序(代表优先级的数字越小，则优先级越高)。 -->
+	<select id="getLogicDepotByBusiness" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+        <![CDATA[
+            SELECT
+                B.BIN_LogicInventoryInfoID AS BIN_LogicInventoryInfoID
+				,B.LogicInventoryCode AS LogicInventoryCode
+				,B.InventoryNameCN AS InventoryNameCN
+				,B.InventoryNameEN AS InventoryNameEN
+				,B.Type AS Type
+				,B.OrderNO AS OrderNO
+				,B.Comments AS Comments
+        ]]>
+        <dynamic>
+            <isNotEmpty property="language">
+                <isEqual property="language" compareValue="en_US">
+                    <![CDATA[
+                        ,B.InventoryNameEN AS LogicInventoryName
+                        ,'('+B.LogicInventoryCode+')'+B.InventoryNameEN AS LogicInventoryCodeName
+                    ]]>
+                </isEqual>
+                <isEqual property="language" compareValue="zh_CN">
+                    <![CDATA[
+                        ,B.InventoryNameCN AS LogicInventoryName
+                        ,'('+B.LogicInventoryCode+')'+B.InventoryNameCN AS LogicInventoryCodeName
+                    ]]>
+                </isEqual>
+            </isNotEmpty>
+            <isEmpty property="language">
+                <![CDATA[
+                    ,B.InventoryNameCN AS LogicInventoryName
+                    ,'('+B.LogicInventoryCode+')'+B.InventoryNameCN AS LogicInventoryCodeName
+                ]]>
+            </isEmpty>
+        </dynamic>
+        <![CDATA[
+            FROM
+                Basis.BIN_LogicDepotBusiness A
+            LEFT JOIN Basis.BIN_LogicInventory B ON B.BIN_LogicInventoryInfoID = A.BIN_LogicInventoryInfoID
+         ]]>
+			WHERE 
+                A.ValidFlag='1'
+            AND B.ValidFlag='1'
+            AND A.BIN_BrandInfoID = #BIN_BrandInfoID#
+            AND A.Type = #Type#
+            AND A.BusinessType = #BusinessType#
+            AND A.ProductType = #ProductType#
+            <dynamic>
+            	<isNotEmpty property="SubType" prepend="AND">
+              A.SubType = #SubType#
+            	</isNotEmpty>
+            </dynamic>
+            ORDER BY A.ConfigOrder
+	</select>
+	
+</sqlMap>

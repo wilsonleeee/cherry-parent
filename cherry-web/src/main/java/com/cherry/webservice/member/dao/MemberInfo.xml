@@ -1,0 +1,1289 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sqlMap PUBLIC "-//iBATIS.com//DTD SQL Map 2.0//EN" "http://ibatis.apache.org/dtd/sql-map-2.dtd">
+<sqlMap namespace="MemberInfo">
+
+	<!-- 取得会员基本信息 -->
+	<select id="getMemberInfo" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+    	<![CDATA[
+			SELECT	TOP 10 
+				A.BIN_MemberInfoID AS MemberID,
+				B.MemCode AS MemberCode,
+				A.Name,
+				A.Nickname,
+      			A.CreditRating,
+      			A.TencentQQ,
+				A.Gender,
+				A.MobilePhone,
+				A.Email,
+				A.MessageID,
+				A.BirthYear,
+				A.BirthDay,
+				A.JoinDate,
+				A.BaCodeBelong,
+				K.EmployeeName AS BaNameBelong,
+				A.CounterCodeBelong,
+				A.MemberPassword,
+				CONVERT(varchar(30),A.LevelStartDate,120) AS LevelStartDate,
+				CONVERT(varchar(30),A.LevelEndDate,120) AS LevelEndDate,
+				D.TotalPoint,
+				D.TotalChanged,
+				D.ChangablePoint,
+				D.FreezePoint,
+				D.TotalDisablePoint,
+				D.CurDisablePoint,
+				CONVERT(varchar(30),D.CurDealDate,120) AS CurDealDate,
+				D.InitialLastdate,
+				D.ChangablePoint AS CurrentPoint,	
+				C.LevelCode,
+				C.LevelName,
+				E.DepartCode,
+				E.DepartName,
+				G.ZipCode AS Postcode,
+				G.AddressLine1 AS Address,
+				H.RegionCode AS CityCode,
+				H.RegionNameChinese AS City,
+				I.RegionCode AS ProvinceCode,
+				I.RegionNameChinese AS Province,
+				J.RegionCode AS CountyCode,
+				J.RegionNameChinese AS County,
+				A.Memo3 AS Memo3,
+				A.Active AS Active,
+				A.Profession,
+				A.Interests 
+			FROM [Members].[BIN_MemberInfo] A WITH(NOLOCK)
+			]]>	
+			<isEqual property="ConditionType" compareValue="MemberCode">
+				JOIN (
+					SELECT
+						Y.BIN_MemberInfoID
+					FROM
+						Members.BIN_MemCardInfo Y WITH(NOLOCK)
+					WHERE
+						Y.MemCode = #Condition#
+					) T ON A.BIN_MemberInfoID = T.BIN_MemberInfoID
+			</isEqual>
+			<![CDATA[
+				JOIN [Members].[BIN_MemCardInfo] B WITH(NOLOCK) ON A.BIN_MemberInfoID = B.BIN_MemberInfoID AND B.CardValidFlag = '1'
+				LEFT JOIN Members.BIN_MemberLevel C WITH(NOLOCK) on A.MemberLevel=C.BIN_MemberLevelID
+				LEFT JOIN [Members].[BIN_MemberPoint] D WITH(NOLOCK) on A.BIN_MemberInfoID = D.BIN_MemberInfoID
+				LEFT JOIN [Basis].BIN_Organization E  WITH(NOLOCK) on A.BIN_OrganizationID=E.BIN_OrganizationID				
+				LEFT JOIN Members.BIN_MemberAddress F WITH(NOLOCK) ON A.BIN_MemberInfoID = F.BIN_MemberInfoID
+				LEFT JOIN Basis.BIN_AddressInfo G WITH(NOLOCK) ON F.BIN_AddressInfoID = G.BIN_AddressInfoID
+				LEFT JOIN Basis.BIN_StandardRegion H WITH(NOLOCK) ON G.StandardCity = H.BIN_RegionID
+				LEFT JOIN Basis.BIN_StandardRegion I WITH(NOLOCK) ON G.StandardProvince = I.BIN_RegionID
+				LEFT JOIN Basis.BIN_StandardRegion J WITH(NOLOCK) ON G.StandardCounty = J.BIN_RegionID
+				LEFT JOIN Basis.BIN_Employee K WITH(NOLOCK) ON A.BaCodeBelong = K.EmployeeCode
+			WHERE
+				A.BIN_OrganizationInfoID=#BIN_OrganizationInfoID#
+				AND A.BIN_BrandInfoID=#BIN_BrandInfoID#
+				AND A.ValidFlag = '1'
+				]]>
+	<dynamic>
+		<isEqual property="ConditionType" compareValue="MemberID">
+				AND A.BIN_MemberInfoID = #Condition#
+		</isEqual>
+		<isEqual property="ConditionType" compareValue="MessageID">
+				AND A.MessageId = #Condition#
+		</isEqual>
+		<isEqual property="ConditionType" compareValue="MobilePhone">
+				AND A.MobilePhone = #Condition#
+		</isEqual>
+		<isEqual property="ConditionType" compareValue="Email">
+				AND A.Email = #Condition#
+		</isEqual>
+	</dynamic>
+	</select>
+	
+		<!-- 取得会员基本信息2 -->
+	<select id="getMemberInfoOAuth" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+    	<![CDATA[
+			SELECT	TOP 10 
+				A.BIN_MemberInfoID,
+				A.MemberPassword,
+				B.MemCode,
+				A.MessageID,
+				A.InitialDate,
+				C.LevelCode
+			FROM [Members].[BIN_MemberInfo] A WITH(NOLOCK)
+				JOIN [Members].[BIN_MemCardInfo] B WITH(NOLOCK) ON A.BIN_MemberInfoID = B.BIN_MemberInfoID AND B.CardValidFlag = '1'
+				LEFT JOIN [Members].[BIN_MemberLevel] C WITH(NOLOCK) ON A.MemberLevel = C.BIN_MemberLevelID AND C.ValidFlag = '1'
+			WHERE
+				A.BIN_OrganizationInfoID=#BIN_OrganizationInfoID#
+			 AND A.BIN_BrandInfoID=#BIN_BrandInfoID#
+			 AND A.ValidFlag = '1'
+		]]>
+			<isNotEmpty prepend="AND" property="MemberCode">
+			 	B.MemCode = #MemberCode#
+			</isNotEmpty>
+			<isNotEmpty prepend="AND" property="MemberName">
+			 	A.Name = #MemberName#
+			</isNotEmpty>	
+			<isNotEmpty prepend="AND" property="MobilePhone">
+				A.MobilePhone=#MobilePhone#
+			</isNotEmpty>
+	</select>
+	
+	<!-- 取得会员ID -->
+	<select id="getMemberInfoByMessageID" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+    	<![CDATA[
+			SELECT	
+				A.BIN_MemberInfoID,
+				A.Name,
+				A.Gender
+			FROM [Members].[BIN_MemberInfo] A WITH(NOLOCK)	
+			WHERE
+				A.BIN_OrganizationInfoID=#BIN_OrganizationInfoID#
+				AND A.BIN_BrandInfoID=#BIN_BrandInfoID#		
+				AND A.MessageId = #MessageID#			
+				AND A.ValidFlag = '1'
+		]]>
+	</select>
+
+	<!-- 取得会员积分 -->
+	<select id="getMemberPoint" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+    	<![CDATA[
+			SELECT	
+				A.TotalPoint,
+				A.TotalChanged,
+				A.ChangablePoint,
+				A.FreezePoint,
+				A.TotalDisablePoint,
+				A.CurDisablePoint,
+				CONVERT(varchar(30),A.CurDealDate,120) AS CurDealDate,
+				A.InitialLastdate
+			FROM [Members].[BIN_MemberPoint] A WITH(NOLOCK)
+			WHERE
+				A.BIN_OrganizationInfoID=#BIN_OrganizationInfoID#
+				AND A.BIN_BrandInfoID=#BIN_BrandInfoID#
+				AND A.BIN_MemberInfoID=#MemberID#
+				AND A.ValidFlag = '1'
+		]]>
+	</select>
+	
+	<!-- 验证coupon -->
+	<select id="oAuthCoupon" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+    	<![CDATA[
+			SELECT	TOP (1)
+			A.MemberCode,
+			A.CustomerSysID,
+			DateDiff(ss,A.ExpiredTime,GETDATE()) AS Seconds
+			FROM [Communication].[BIN_CouponCreateLog] A WITH(NOLOCK)
+			WHERE
+				A.CampaignCode=#CampaignCode#
+			 AND A.CouponCode=#CouponCode#
+			 AND A.ReceiverCode=#MobilePhone#
+		    ORDER BY A.ExpiredTime DESC
+				]]>
+	</select>
+	
+	<!-- 绑定微信号 -->
+	<update id="updateMessageId" parameterClass="java.util.HashMap">
+    	<![CDATA[
+			UPDATE [Members].[BIN_MemberInfo] 
+			SET MessageId=#MessageID#	,ActiveChannel='Wechat',Active='1', ActiveDate = #BindTime#, WechatBindTime=#BindTime#,MemberPassword=#MemberPassword#,Version=isnull(Version,0)+1
+			WHERE
+				BIN_MemberInfoID=#BIN_MemberInfoID#
+		]]>
+	</update>
+	
+		<!-- 绑定微信号 -->
+	<update id="bindWechat" parameterClass="java.util.HashMap">
+    	<![CDATA[
+			UPDATE [Members].[BIN_MemberInfo] 
+			SET MessageId=#MessageID#,WechatBindTime=#BindTime#,Version=isnull(Version,0)+1
+			WHERE
+				BIN_MemberInfoID=#BIN_MemberInfoID#
+		]]>
+	</update>
+	
+	<resultMap id="pointChangeInfo" class="java.util.HashMap">
+		<result property="DetailList" column="BIN_PointChangeID" select="MemberInfo.getPointDetail" javaType="java.util.List" />
+		<result property="ChangeDate" column="ChangeDate"/>
+		<result property="ChangeType" column="ChangeType"/>
+		<result property="Amount" column="Amount"/>
+		<result property="Quantity" column="Quantity"/>
+		<result property="Point" column="Point"/>
+		<result property="State" column="State"/>
+		<result property="DeliveryMothod" column="DeliveryMothod"/>
+		<result property="DeliveryState" column="DeliveryState"/>
+		<result property="DeliveryAddress" column="DeliveryAddress"/>
+		<result property="CounterGot" column="CounterGot"/>
+		<result property="MemName" column="ReceiverName"/>
+		<result property="MemMobile" column="ReceiverMobile"/>
+		<result property="DeliveryProvince" column="DeliveryProvince"/>
+		<result property="DeliveryCity" column="DeliveryCity"/>
+		<result property="DeliveryCounty" column="DeliveryCounty"/>
+	</resultMap>
+	<!-- 查询会员积分变化履历 -->
+    <sql id="QueryPointChange">
+    	SELECT
+			A.BIN_PointChangeID,
+			CONVERT(VARCHAR(30),A.ChangeDate,120) AS ChangeDate,
+			A.TradeType AS ChangeType,
+			A.Amount,
+			A.Quantity,
+			A.Point,
+			B.State,
+			B.DeliveryMothod,
+			B.DeliveryState,
+			B.DeliveryAddress,
+			B.CounterGot,
+			B.ReceiverName,
+      		B.ReceiverMobile,
+      		B.DeliveryProvince,
+      		B.DeliveryCity,
+      		B.DeliveryCounty
+		FROM 
+			Members.BIN_PointChange A WITH(NOLOCK)
+			LEFT JOIN Campaign.BIN_CampaignOrder B WITH(NOLOCK) ON A.TradeNoIF = B.TradeNoIF
+		WHERE
+			A.BIN_MemberInfoID = #memberId# AND 
+			A.ValidFlag = '1'
+    </sql>
+	
+	<!-- 取得会员积分变化履历 -->
+	<select id="getPointChange" parameterClass="java.util.HashMap" resultMap="pointChangeInfo">
+    	<include refid="BINOLCMINC99.pageheader" />
+		<include refid="MemberInfo.QueryPointChange" />
+		<include refid="BINOLCMINC99.pagefooter" />
+	</select>
+	
+	<!-- 取得会员积分变化履历总数  -->
+    <select id="getPointChangeCount" parameterClass="java.util.HashMap" resultClass="java.lang.Integer">
+    	<![CDATA[
+			SELECT COUNT(1) FROM (]]><include refid="MemberInfo.QueryPointChange" /><![CDATA[) T
+		]]>										
+    </select>
+    
+    <!-- 取得积分明细信息  -->
+    <select id="getPointDetail" parameterClass="java.lang.Integer" resultClass="java.util.HashMap">
+    	<![CDATA[
+			 SELECT
+			 	A.RelevantSRCode AS relevantSRCode,
+			 	A.BIN_PrmPrtVendorID AS prmPrtVendorId,
+			 	A.UnitCode AS unitCode,
+			 	A.BarCode AS barCode,
+			 	case when A.SaleType = 'N' then Y.NameTotal else N.NameTotal end AS prtName,
+			 	A.SaleType AS saleType,
+             	A.Price AS price,
+             	A.Quantity AS quantity,
+             	A.Point AS point,
+             	A.ValidMonths AS validMonths,
+             	A.PointType AS pointType,
+             	A.Reason AS reason
+			FROM
+				Members.BIN_PointChangeDetail A WITH(NOLOCK)
+				LEFT JOIN Basis.BIN_ProductVendor X WITH(NOLOCK)
+					JOIN Basis.BIN_Product Y WITH(NOLOCK) ON X.BIN_ProductID = Y.BIN_ProductID
+				ON A.BIN_PrmPrtVendorID = X.BIN_ProductVendorID AND A.SaleType = 'N'
+				LEFT JOIN Basis.BIN_PromotionProductVendor M WITH(NOLOCK)
+					JOIN Basis.BIN_PromotionProduct N WITH(NOLOCK) ON M.BIN_PromotionProductID = N.BIN_PromotionProductID
+				ON A.BIN_PrmPrtVendorID = M.BIN_PromotionProductVendorID AND A.SaleType = 'P'
+			WHERE
+				A.BIN_PointChangeID = #PointChangeID# AND
+				A.ValidFlag = '1'
+			ORDER BY
+				A.RelevantSRCode,
+				A.BIN_PrmPrtVendorID	
+		]]>								
+    </select>
+	
+	<!-- 查询柜台信息 -->
+	<select id ="selCounterInfo" parameterClass="java.util.HashMap" resultClass ="java.util.HashMap">
+	<![CDATA[
+		SELECT		
+			A.BIN_OrganizationID AS organizationId,
+			A.BIN_CounterInfoID AS counterInfoId,
+			A.CounterNameIF AS counterName,
+			A.CounterKind AS counterKind
+		FROM
+			Basis.BIN_CounterInfo A
+		WHERE
+			A.CounterCode = #organizationCode# AND
+			A.BIN_BrandInfoID = #brandInfoId# AND		    
+			A.BIN_OrganizationInfoID = #organizationInfoId#
+	]]> 
+	</select>
+	
+	<!-- 查询员工信息 -->
+	<select id="selEmployeeInfo" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+      <![CDATA[
+			SELECT 
+			     A.BIN_EmployeeID AS employeeId,
+			     A.EmployeeName AS  employeeName
+			FROM
+				 Basis.BIN_Employee A
+			WHERE 
+			     A.BIN_OrganizationInfoID = #organizationInfoId# AND
+			     A.BIN_BrandInfoID = #brandInfoId# AND
+			     A.EmployeeCode = #employeeCode#
+		]]>
+	</select>
+	
+	<!-- 查询推荐会员ID -->
+	<select id="selReferrerID" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+	<![CDATA[	
+		SELECT
+			A.BIN_MemberInfoID AS referrerId,
+			B.MemCode AS memCode
+		FROM
+			Members.BIN_MemberInfo A
+			JOIN Members.BIN_MemCardInfo B ON A.BIN_MemberInfoID = B.BIN_MemberInfoID AND B.ValidFlag = '1' 
+		WHERE
+			(B.MemCode = #recommenderMember# OR A.MobilePhone = #recommenderMember#) AND
+			A.BIN_OrganizationInfoID = #organizationInfoId# AND
+			A.BIN_BrandInfoID = #brandInfoId#
+	]]>
+	</select>
+	
+	<!-- 查询区域省ID和市ID -->
+	<select id="selProvinceCityID" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+		<![CDATA[
+		SELECT
+			A.BIN_RegionID AS provinceId,
+			B.BIN_RegionID AS cityId
+		FROM
+			Basis.BIN_StandardRegion A
+			JOIN Basis.BIN_StandardRegion B ON B.NodeID.IsDescendantOf(A.NodeID) = 1
+		WHERE
+		]]>	
+		<isNotEmpty property="memProvince">	
+			A.RegionNameChinese LIKE '%' + #memProvince# + '%' AND
+		</isNotEmpty>	
+		<![CDATA[
+			B.RegionNameChinese LIKE '%' + #memCity# + '%' AND
+			A.NodeID != B.NodeID AND
+			A.RegionType = '1' AND
+			A.ValidFlag = '1' AND
+			B.ValidFlag = '1'
+		]]>	
+	</select>
+	
+	<!-- 查询区域省ID -->
+	<select id="selProvinceID" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+		<![CDATA[
+		SELECT
+			A.BIN_RegionID AS provinceId
+		FROM
+			Basis.BIN_StandardRegion A
+		WHERE
+			A.RegionNameChinese LIKE '%' + #memProvince# + '%' AND
+			A.RegionType = '1' AND
+			A.ValidFlag = '1'
+		]]>		
+	</select>
+	<!-- 查询会员等级信息 -->
+	<select id="selMemberLevel" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+      <![CDATA[
+		    SELECT 
+		         B.BIN_MemberLevelID  AS memLevel
+		    FROM  
+			     Members.BIN_MemberLevel B
+		    WHERE
+			     B.BIN_BrandInfoID = #brandInfoId# AND
+		         B.BIN_OrganizationInfoID = #organizationInfoId# AND
+		         B.LevelCode=#memLevel# AND
+		         B.ValidFlag='1'
+		]]>
+	</select>
+	
+	<!-- 查询会员销售记录(以销售表为主，销售表没有的加上电商订单表) -->
+	<select id="selMemSaleRecord" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+        <![CDATA[
+			WITH TT AS
+			(
+			SELECT
+			    T.BillCode
+			FROM (
+			    SELECT
+			        B.BillCode
+			    FROM Members.BIN_MemCardInfo A WITH (NOLOCK)
+			    JOIN Sale.BIN_SaleRecord B WITH (NOLOCK) ON A.BIN_MemberInfoID = B.BIN_MemberInfoID
+			    WHERE A.MemCode = #memCode#
+			        AND B.BIN_OrganizationInfoID = #organizationInfoId#
+			        AND B.BIN_BrandInfoID = #brandInfoId#
+            ]]>
+            <isNotEmpty property="saleDateStart" prepend="AND"> 
+                <![CDATA[B.SaleDate >= #saleDateStart#]]>
+            </isNotEmpty>
+            <isNotEmpty property="saleDateEnd" prepend="AND">   
+                <![CDATA[B.SaleDate <= #saleDateEnd#]]>
+            </isNotEmpty>
+            <![CDATA[
+			    ) T
+			)
+        ]]>
+        <![CDATA[
+            SELECT
+        ]]>
+        <isNotEmpty property="COUNT" >  
+                TOP $COUNT$
+        </isNotEmpty>
+        <![CDATA[
+            * FROM(
+        ]]>
+        <![CDATA[
+            SELECT
+                B.BillCode AS BillCode,
+                B.SaleType AS SaleType,
+                B.BillState AS BillState,
+                CONVERT(varchar(30),B.SaleTime,120) AS SaleTime,
+                D.DepartCode AS CounterCode,
+                D.DepartName AS CounterName,
+                B.Amount AS Amount,
+                B.Quantity AS Quantity,
+                E.Point AS Point,
+                C.UnitCode AS UnitCode,
+                C.BarCode AS BarCode,
+                C.SaleType AS PrtType,
+                CASE WHEN C.SaleType = 'N' THEN Y.NameTotal ELSE N.NameTotal END AS PrtName,
+                C.PricePay AS PricePay,
+                C.Quantity AS QuantityDetail
+            FROM  
+                Members.BIN_MemCardInfo A WITH(NOLOCK) 
+                JOIN Sale.BIN_SaleRecord B WITH(NOLOCK) ON A.BIN_MemberInfoID = B.BIN_MemberInfoID
+                JOIN Sale.BIN_SaleRecordDetail C WITH(NOLOCK) ON B.BIN_SaleRecordID = C.BIN_SaleRecordID
+                LEFT JOIN Basis.BIN_Organization D WITH(NOLOCK) ON B.BIN_OrganizationID = D.BIN_OrganizationID
+                LEFT JOIN Members.BIN_PointChange E ON B.BillCode = E.TradeNoIF AND E.ValidFlag = '1'
+                LEFT JOIN Basis.BIN_ProductVendor X WITH(NOLOCK)
+                    JOIN Basis.BIN_Product Y WITH(NOLOCK) ON X.BIN_ProductID = Y.BIN_ProductID
+                ON C.BIN_ProductVendorID = X.BIN_ProductVendorID AND C.SaleType = 'N'
+                LEFT JOIN Basis.BIN_PromotionProductVendor M WITH(NOLOCK)
+                    JOIN Basis.BIN_PromotionProduct N WITH(NOLOCK) ON M.BIN_PromotionProductID = N.BIN_PromotionProductID
+                ON C.BIN_ProductVendorID = M.BIN_PromotionProductVendorID AND C.SaleType = 'P'
+            WHERE
+                EXISTS (SELECT 1 FROM TT WHERE B.BillCode = TT.BillCode)
+            UNION   
+            SELECT
+                B.BillCode AS BillCode,
+                B.SaleType AS SaleType,
+                B.BillState AS BillState,
+                CONVERT(varchar(30),B.BillCreateTime,120) AS SaleTime,
+                D.DepartCode AS CounterCode,
+                D.DepartName AS CounterName,
+                B.Amount AS Amount,
+                B.Quantity AS Quantity,
+                E.Point AS Point,
+                C.UnitCode AS UnitCode,
+                C.BarCode AS BarCode,
+                C.SaleType AS PrtType,
+                CASE WHEN C.SaleType = 'N' THEN Y.NameTotal ELSE N.NameTotal END AS PrtName,
+                C.PricePay AS PricePay,
+                C.Quantity AS QuantityDetail
+            FROM  
+                Members.BIN_MemCardInfo A WITH(NOLOCK) 
+                JOIN Sale.BIN_ESOrderMain B WITH(NOLOCK) ON A.BIN_MemberInfoID = B.BIN_MemberInfoID
+                JOIN Sale.BIN_ESOrderDetail C WITH(NOLOCK) ON B.BIN_ESOrderMainID = C.BIN_ESOrderMainID
+                LEFT JOIN Basis.BIN_Organization D WITH(NOLOCK) ON B.BIN_OrganizationID = D.BIN_OrganizationID
+                LEFT JOIN Members.BIN_PointChange E ON B.BillCode = E.TradeNoIF AND E.ValidFlag = '1'
+                LEFT JOIN Basis.BIN_ProductVendor X WITH(NOLOCK)
+                    JOIN Basis.BIN_Product Y WITH(NOLOCK) ON X.BIN_ProductID = Y.BIN_ProductID
+                ON C.BIN_ProductVendorID = X.BIN_ProductVendorID AND C.SaleType = 'N'
+                LEFT JOIN Basis.BIN_PromotionProductVendor M WITH(NOLOCK)
+                    JOIN Basis.BIN_PromotionProduct N WITH(NOLOCK) ON M.BIN_PromotionProductID = N.BIN_PromotionProductID
+                ON C.BIN_ProductVendorID = M.BIN_PromotionProductVendorID AND C.SaleType = 'P'
+            WHERE
+                    A.MemCode = #memCode#
+                    AND B.BIN_OrganizationInfoID = #organizationInfoId#
+                    AND B.BIN_BrandInfoID = #brandInfoId#
+        ]]>
+        <isNotEmpty property="saleDateStart" prepend="AND"> 
+            <![CDATA[B.BillCreateTime >= #saleDateStart# + ' 00:00:00']]>
+        </isNotEmpty>
+        <isNotEmpty property="saleDateEnd" prepend="AND">   
+            <![CDATA[B.BillCreateTime <= #saleDateEnd# + ' 23:59:59']]>
+        </isNotEmpty>
+        <![CDATA[
+            AND NOT EXISTS (SELECT 1 FROM TT WHERE B.BillCode = TT.BillCode)  
+        ]]>
+		<![CDATA[
+		  )USR
+            ORDER BY
+                USR.SaleTime desc
+		]]>
+	</select>
+	
+	<!-- 查询会员优惠信息 -->
+	<select id="getCampaignOrderList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+		<![CDATA[
+			SELECT
+		  		A.MemCode AS MemCode,
+			  	A.Mobile AS MobilePhone,
+			  	ISNULL(A.CouponCode,'') AS CouponCode,
+			  	ISNULL(A.CounterGot,'') AS CounterCode,
+			  	ISNULL(B.CounterNameIF,'') AS CounterName,
+			  	CONVERT(varchar(30),A.GetFromTime,120) AS GetFromTime,
+			  	CONVERT(varchar(30),A.GetToTime,120) AS GetToTime,
+			  	A.State AS State
+			FROM
+			  	Campaign.BIN_CampaignOrder A WITH(NOLOCK)
+			  	LEFT JOIN Basis.BIN_CounterInfo B WITH(NOLOCK) ON A.CounterGot = B.CounterCode
+			WHERE
+				A.BIN_OrganizationInfoID = #organizationInfoId# AND
+				A.BIN_BrandInfoID = #brandInfoId#
+		]]>
+			<isEqual property="ConditionType" compareValue="MemberID" prepend="AND">
+				A.BIN_MemberInfoID = #Condition#
+			</isEqual>
+			<isEqual property="ConditionType" compareValue="MemberCode" prepend="AND">
+				EXISTS (SELECT 1 FROM Members.BIN_MemCardInfo X WITH(NOLOCK) WHERE X.MemCode = #Condition# AND X.BIN_MemberInfoID = A.BIN_MemberInfoID)
+			</isEqual>
+			<isEqual property="ConditionType" compareValue="MobilePhone" prepend="AND">
+				A.Mobile = #Condition#
+			</isEqual>
+    </select>
+    
+    <!-- 会员微信解绑 -->
+	<update id="unbindMessageId" parameterClass="java.util.HashMap">
+    	<![CDATA[
+			UPDATE Members.BIN_MemberInfo
+			SET 
+				MessageId=NULL,
+				WechatBindTime=NULL,
+		]]>
+			<include refid="BINOLCMINC99.updateSql" />
+		<![CDATA[			
+			WHERE
+				BIN_MemberInfoID=#memId#
+		]]>
+	</update>
+	
+	<!-- 取得CouponCode -->
+	<select id="getNewestCouponCode" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+    	<![CDATA[
+			SELECT TOP (1) 
+				BIN_CouponID as couponId,
+				CouponCode as couponCode 
+			FROM 
+				[Communication].[BIN_CouponCreateLog] WITH(NOLOCK) 
+			WHERE 
+				CampaignCode = #CampaignCode# AND 
+				CustomerSysID = #MemberID# AND 
+				ReceiverCode = #MobilePhone# 
+			ORDER BY ExpiredTime DESC
+		]]>	  	
+	</select>
+	
+	<!-- 延长验证码有效时间-->
+	<update id="extendCouponExpiredTime" parameterClass="java.util.HashMap">
+    	<![CDATA[
+			UPDATE 
+				Communication.BIN_CouponCreateLog 
+			SET 
+				ExpiredTime = #expiredTime# 
+			WHERE 
+				BIN_CouponID = #couponId# 
+		]]>
+	</update>
+	
+	<!-- 添加会员微信绑定履历 -->
+    <insert id="addMemBindRecord" parameterClass="java.util.HashMap">
+    	<![CDATA[
+    		INSERT INTO Members.BIN_MemBindRecord		
+			(					
+				BIN_OrganizationInfoID,				
+				BIN_BrandInfoID,				
+				BIN_MemberInfoID,
+				WechatSeviceCode,				
+				WechatID,
+				RecordType,
+				RecordDateTime,
+		]]>
+				<include refid="BINOLCMINC99.insertKeySql" />		
+		<![CDATA[						
+			)					
+			VALUES					
+			(					
+				#organizationInfoId#,				
+				#brandInfoId#,				
+				#memberInfoId#,				
+				#wechatSeviceCode#,
+				#wechatId#,
+				#recordType#,
+				#recordDateTime#,
+		]]>
+				<include refid="BINOLCMINC99.insertValueSql" />		
+		<![CDATA[							
+			)			
+    	]]> 
+    </insert>
+    
+    <!-- 添加会员微信绑定关系 -->
+    <insert id="addMemBindRelation" parameterClass="java.util.HashMap">
+    	<![CDATA[
+    	insert into Members.BIN_MemWechatBind(
+			BIN_OrganizationInfoID,
+			BIN_BrandInfoID,
+			BIN_MemberInfoID,
+			WechatSeviceCode ,
+			WechatID,
+		]]> 
+			<include refid="BINOLCMINC99.insertKeySql" />
+		<![CDATA[		   
+		)
+		values(
+			#BIN_OrganizationInfoID#,
+			#BIN_BrandInfoID#,
+			#BIN_MemberInfoID#,
+			#WechatSeviceCode#,
+			#WechatID#,
+		]]> 
+			<include refid="BINOLCMINC99.insertValueSql" />		
+		<![CDATA[							
+		)			
+    	]]> 
+    </insert>
+    
+    <!-- 更新会员微信绑定关系 -->
+    <update id="updateMemBindRelation" parameterClass="java.util.HashMap">
+    	<![CDATA[			
+    	update 
+    		Members.BIN_MemWechatBind
+    	set
+    		ValidFlag = #ValidFlag#, 
+    	]]> 
+    	<isNotEmpty property="BIN_MemberInfoID">
+    		BIN_MemberInfoID = #BIN_MemberInfoID#,
+    	</isNotEmpty>
+    	<include refid="BINOLCMINC99.updateSql" /> 
+    	<![CDATA[	
+    	where 
+    		WechatSeviceCode = #WechatSeviceCode# 
+    		and WechatID = #WechatID#
+    	]]> 
+    </update>
+    
+    <!-- 查询会员微信绑定关系 -->
+    <select id="getMemBindRelation" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+    	<![CDATA[		
+    	select
+    		BIN_MemWechatBindID as MemWechatBindID,
+			BIN_MemberInfoID as MemberInfoID,
+			WechatSeviceCode as WechatSeviceCode,
+			WechatID as WechatID,
+			ValidFlag as ValidFlag
+    	from
+    		Members.BIN_MemWechatBind  with(nolock)
+    	where
+    		BIN_OrganizationInfoID=#BIN_OrganizationInfoID#
+			AND BIN_BrandInfoID=#BIN_BrandInfoID#
+    	]]>
+    	<isNotEmpty prepend="and" property="MemWechatBindID">
+    		<![CDATA[ BIN_MemWechatBindID = #BIN_MemWechatBindID# ]]> 
+    	</isNotEmpty>
+    	<isNotEmpty prepend="and" property="BIN_MemberInfoID">
+    		<![CDATA[ BIN_MemberInfoID = #BIN_MemberInfoID# ]]> 
+    	</isNotEmpty>
+    	<isNotEmpty prepend="and" property="WechatSeviceCode">
+    		<![CDATA[ WechatSeviceCode = #WechatSeviceCode# ]]> 
+    	</isNotEmpty>
+    	<isNotEmpty prepend="and" property="WechatID">
+    		<![CDATA[ WechatID = #WechatID# ]]> 
+    	</isNotEmpty>
+    	<isNotEmpty prepend="and" property="ValidFlag">
+    		<![CDATA[ ValidFlag = #ValidFlag# ]]> 
+    	</isNotEmpty>	
+    </select>
+    
+    <!-- 查询会员微信绑定履历 -->
+    <select id="getMemBindRecord" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+    	<![CDATA[		
+    	select
+    		BIN_MemBindRecordID,
+			BIN_MemberInfoID,
+			WechatSeviceCode,
+			WechatID,
+			RecordType,
+			RecordDateTime,
+			ValidFlag
+    	from
+    		Members.BIN_MemBindRecord with(nolock)
+    	where
+    		BIN_OrganizationInfoID=#BIN_OrganizationInfoID#
+			AND BIN_BrandInfoID=#BIN_BrandInfoID#
+    		AND BIN_MemberInfoID = #BIN_MemberInfoID#
+    	]]>	
+    	<dynamic>
+    		<isNotEmpty prepend="AND" property="WechatSeviceCode">
+    			WechatSeviceCode = #WechatSeviceCode#
+    		</isNotEmpty>
+    	</dynamic>
+    </select>
+    
+    	<!-- 取得会员密码 -->
+	<select id="getMemberPassword" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+    	<![CDATA[
+			SELECT	TOP 10 
+				A.BIN_MemberInfoID AS MemberID,
+				B.MemCode AS MemberCode,
+				A.Name,
+				A.MobilePhone,
+				A.MemberPassword
+			FROM [Members].[BIN_MemberInfo] A WITH(NOLOCK)
+				JOIN [Members].[BIN_MemCardInfo] B WITH(NOLOCK) ON A.BIN_MemberInfoID = B.BIN_MemberInfoID AND B.CardValidFlag = '1'
+			WHERE
+				A.BIN_OrganizationInfoID=#BIN_OrganizationInfoID#
+				AND A.BIN_BrandInfoID=#BIN_BrandInfoID#
+				AND A.ValidFlag = '1'
+				]]>
+	<dynamic>
+		<isEqual property="ConditionType" compareValue="MemberID">
+				AND A.BIN_MemberInfoID = #Condition#
+		</isEqual>
+		<isEqual property="ConditionType" compareValue="MemberCode">
+				AND B.MemCode = #Condition#
+		</isEqual>
+		<isEqual property="ConditionType" compareValue="MessageID">
+				AND A.MessageId = #Condition#
+		</isEqual>
+		<isEqual property="ConditionType" compareValue="MobilePhone">
+				AND A.MobilePhone = #Condition#
+		</isEqual>
+		<isEqual property="ConditionType" compareValue="Email">
+				AND A.Email = #Condition#
+		</isEqual>
+	</dynamic>
+	</select>
+    
+    <!-- 更新会员密码 -->
+	<update id="updateMemberPassword" parameterClass="java.util.HashMap">
+    	<![CDATA[
+			UPDATE [Members].[BIN_MemberInfo] 
+			SET MemberPassword=#MemberPassword#
+			WHERE
+				BIN_MemberInfoID=#BIN_MemberInfoID#
+		]]>
+	</update>
+	
+	<!-- 查询区域省ID和市ID -->
+	<select id="selProvinceCityByCode" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+		<![CDATA[
+		SELECT
+			A.BIN_RegionID AS provinceId,
+			B.BIN_RegionID AS cityId,
+			A.RegionNameChinese AS provinceName,
+			B.RegionNameChinese AS cityName
+		FROM
+			Basis.BIN_StandardRegion A
+			JOIN Basis.BIN_StandardRegion B ON B.NodeID.IsDescendantOf(A.NodeID) = 1
+		WHERE
+		]]>	
+		<isNotEmpty property="provinceCode">	
+			A.RegionCode = #provinceCode# AND
+		</isNotEmpty>	
+		<![CDATA[
+			B.RegionCode = #cityCode# AND
+			A.NodeID != B.NodeID AND
+			A.RegionType = '1' AND
+			A.ValidFlag = '1' AND
+			B.ValidFlag = '1'
+		]]>	
+	</select>
+	
+	<!-- 查询区域省ID -->
+	<select id="selProvinceByCode" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+		<![CDATA[
+		SELECT
+			A.BIN_RegionID AS provinceId,
+			A.RegionNameChinese AS provinceName
+		FROM
+			Basis.BIN_StandardRegion A
+		WHERE
+			A.RegionCode = #provinceCode# AND
+			A.RegionType = '1' AND
+			A.ValidFlag = '1'
+		]]>		
+	</select>
+	
+	<!-- 查询会员销售信息 -->
+	<select id="selMemSaleInfo" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+		<![CDATA[
+			SELECT
+				SUM(CASE WHEN X.saleType = 'SR' THEN -ISNULL(X.amount,0) ELSE ISNULL(X.amount,0) END) AS totalAmount,
+				SUM(CASE WHEN X.saleType = 'SR' THEN -ISNULL(X.quantity,0) ELSE ISNULL(X.quantity,0) END) AS totalQuantity
+			FROM
+				Sale.BIN_SaleRecord X WITH(NOLOCK)
+			WHERE
+				X.BIN_MemberInfoID = #MemberID# AND
+				X.ValidFlag = '1'
+		]]>	
+	        <isNotEmpty property="SaleDateStart" prepend="AND"> 
+	            <![CDATA[X.SaleDate >= #SaleDateStart#]]>
+	        </isNotEmpty>
+	        <isNotEmpty property="SaleDateEnd" prepend="AND">   
+	            <![CDATA[X.SaleDate <= #SaleDateEnd#]]>
+	        </isNotEmpty>
+	</select>
+	
+	<!-- 取得会员基本信息 -->
+	<select id="getMemberInfoByCode" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+    	<![CDATA[
+			SELECT
+				A.BIN_MemberInfoID AS memberInfoId,
+				B.MemCode AS memCodeOld,
+				B.CardCount AS cardCount,
+				A.Name AS memName,
+				A.Gender AS gender,
+				A.Telephone AS telephone,
+				A.MobilePhone AS oldMobilePhone,
+				A.Email AS email,
+				A.BirthYear AS birthYear,
+				A.BirthDay AS birthDay,
+				CONVERT(varchar(30),A.JoinDate,120) AS joinDate,
+				A.IsReceiveMsg AS isReceiveMsg,
+				A.TestType AS testType,
+				A.ReferrerID AS referrerId,
+				A.Version AS version,
+				C.EmployeeCode AS employeeCode,
+				E.DepartCode AS organizationCode,
+				G.ZipCode AS postcode,
+				G.AddressLine1 AS address,
+				H.BIN_RegionID AS cityId,
+				I.BIN_RegionID AS provinceId
+			FROM 
+				[Members].[BIN_MemberInfo] A WITH(NOLOCK)
+				JOIN [Members].[BIN_MemCardInfo] B WITH(NOLOCK) ON A.BIN_MemberInfoID = B.BIN_MemberInfoID
+				LEFT JOIN Basis.BIN_Employee C WITH(NOLOCK) ON A.BIN_EmployeeID = C.BIN_EmployeeID
+				LEFT JOIN [Basis].BIN_Organization E  WITH(NOLOCK) on A.BIN_OrganizationID=E.BIN_OrganizationID
+				LEFT JOIN Members.BIN_MemberAddress F WITH(NOLOCK) ON A.BIN_MemberInfoID = F.BIN_MemberInfoID
+				LEFT JOIN Basis.BIN_AddressInfo G WITH(NOLOCK) ON F.BIN_AddressInfoID = G.BIN_AddressInfoID
+				LEFT JOIN Basis.BIN_StandardRegion H WITH(NOLOCK) ON G.StandardCity = H.BIN_RegionID
+				LEFT JOIN Basis.BIN_StandardRegion I WITH(NOLOCK) ON G.StandardProvince = I.BIN_RegionID
+			WHERE
+				A.BIN_OrganizationInfoID=#organizationInfoId# AND
+				A.BIN_BrandInfoID=#brandInfoId# AND
+				B.MemCode = #memCode#
+		]]>
+	</select>
+	
+	<!-- 查询会员是否存在 -->
+	<select id="getMemInfoByMemCode" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+    	<![CDATA[
+			SELECT
+				A.BIN_MemberInfoID AS memberInfoId,
+				B.MemCode AS MemCode,
+				A.MemInfoRegFlg AS MemInfoRegFlg
+			FROM 
+				[Members].[BIN_MemberInfo] A WITH(NOLOCK)
+				JOIN [Members].[BIN_MemCardInfo] B WITH(NOLOCK) ON A.BIN_MemberInfoID = B.BIN_MemberInfoID
+			WHERE
+				A.BIN_OrganizationInfoID=#organizationInfoId# AND
+				A.BIN_BrandInfoID=#brandInfoId# AND
+				B.MemCode = #memCode#
+		]]>
+	</select>
+	
+	<!-- 更新会员激活状态 -->
+	<update id="updateMemActive" parameterClass="java.util.HashMap">
+    	<![CDATA[
+			UPDATE Members.BIN_MemberInfo 
+			SET 
+				Active = #Active#,
+				ActiveDate = #ActiveDate#,
+				ActiveChannel = #ActiveChannel#,
+		]]>
+			<include refid="BINOLCMINC99.updateSql" />
+		<![CDATA[	
+			WHERE
+				BIN_MemberInfoID = #memberInfoId#
+		]]>
+	</update>
+	
+	
+	<resultMap id="saleInfo" class="java.util.HashMap">
+		<result property="DetailList" column="BIN_SaleRecordID" select="MemberInfo.getSaleDetail" javaType="java.util.List" />
+		<result property="BillCode" column="BillCode"/>
+		<result property="SaleType" column="SaleType"/>
+		<result property="BillState" column="BillState"/>
+		<result property="SaleTime" column="SaleTime"/>
+		<result property="DepartCode" column="DepartCode"/>
+		<result property="DepartName" column="DepartName"/>
+		<result property="Amount" column="Amount"/>
+		<result property="Quantity" column="TotalQuantity"/>
+		<result property="Point" column="Point"/>
+	</resultMap>
+	<!-- 查询会员销售记录 -->
+	<sql id="MemSaleListSql">
+		<![CDATA[          
+	        SELECT
+	            A.BIN_SaleRecordID,
+	            A.BillCode,
+	            A.SaleType,
+	            A.BillState,
+	            CONVERT(varchar(30),A.SaleTime,120) AS SaleTime,
+	            D.DepartCode,
+	            D.DepartName,
+	            A.Amount,
+	            A.Quantity AS TotalQuantity,
+	            E.Point
+	        FROM  
+	        	Sale.BIN_SaleRecord A WITH(NOLOCK)
+	        	LEFT JOIN Basis.BIN_Organization D WITH(NOLOCK) ON A.BIN_OrganizationID = D.BIN_OrganizationID
+	        	LEFT JOIN Members.BIN_PointChange E ON A.BillCode = E.TradeNoIF
+	        WHERE
+	           	A.BIN_MemberInfoID = #memberInfoId# AND
+	           	A.ValidFlag = '1'
+		]]>   
+			<isNotEmpty property="saleDateStart" prepend="AND">
+				<![CDATA[A.SaleDate >= #saleDateStart#]]>   
+			</isNotEmpty>     
+			<isNotEmpty property="saleDateEnd" prepend="AND">
+				<![CDATA[A.SaleDate <= #saleDateEnd#]]>   
+			</isNotEmpty>     
+			<isNotEmpty property="saleType" prepend="AND">
+				<![CDATA[A.SaleType = #saleType#]]>   
+			</isNotEmpty>            
+	</sql>
+	
+	<!-- 取得会员销售记录 -->
+	<select id="selMemSaleList" parameterClass="java.util.HashMap" resultMap="saleInfo">
+    	<include refid="BINOLCMINC99.pageheader" />
+		<include refid="MemberInfo.MemSaleListSql" />
+		<include refid="BINOLCMINC99.pagefooter" />
+	</select>
+	
+	<!-- 取得会员销售记录总数  -->
+    <select id="selMemSaleCount" parameterClass="java.util.HashMap" resultClass="java.lang.Integer">
+    	<![CDATA[
+			SELECT COUNT(1) FROM (]]><include refid="MemberInfo.MemSaleListSql" /><![CDATA[) T
+		]]>										
+    </select>
+    
+    <!-- 取得销售明细信息  -->
+    <select id="getSaleDetail" parameterClass="java.lang.Integer" resultClass="java.util.HashMap">
+    	<![CDATA[
+			 SELECT
+			 	A.UnitCode AS UnitCode,
+			 	A.BarCode AS BarCode,
+			 	case when A.SaleType = 'N' then Y.NameTotal else N.NameTotal end AS PrtName,
+			 	A.SaleType AS PrtType,
+             	A.PricePay AS Price,
+             	A.Quantity AS Quantity
+			FROM
+				Sale.BIN_SaleRecordDetail A WITH(NOLOCK)
+				LEFT JOIN Basis.BIN_ProductVendor X WITH(NOLOCK)
+					JOIN Basis.BIN_Product Y WITH(NOLOCK) ON X.BIN_ProductID = Y.BIN_ProductID
+				ON A.BIN_ProductVendorID = X.BIN_ProductVendorID AND A.SaleType = 'N'
+				LEFT JOIN Basis.BIN_PromotionProductVendor M WITH(NOLOCK)
+					JOIN Basis.BIN_PromotionProduct N WITH(NOLOCK) ON M.BIN_PromotionProductID = N.BIN_PromotionProductID
+				ON A.BIN_ProductVendorID = M.BIN_PromotionProductVendorID AND A.SaleType = 'P'
+			WHERE
+				A.BIN_SaleRecordID = #SaleRecordID# AND
+				A.ValidFlag = '1'
+		]]>								
+    </select>
+    
+    <!-- 查询会员信息List  -->
+    <sql id="MemInfoListSql2">
+    	<![CDATA[
+			SELECT 
+				A.BIN_MemberInfoID AS memId,
+				A.MemCode AS memCode,
+				A.Name AS memName,
+				A.MobilePhone AS mobilePhone,
+				T.lastSaleDate AS lastSaleDate,
+				T.totalAmount AS totalAmount
+			FROM
+				Members.BIN_MemQueryObj A WITH(NOLOCK)
+				LEFT JOIN
+				(SELECT 
+					A.BIN_MemberInfoID,
+					CONVERT(varchar(10),MAX(B.SaleTime),120) AS lastSaleDate,
+					SUM(CASE WHEN B.SaleType='SR' THEN -B.Amount ELSE B.Amount END) AS totalAmount
+				FROM
+					Members.BIN_MemQueryObj A WITH(NOLOCK)
+					JOIN Sale.BIN_SaleRecord B WITH(NOLOCK) ON A.BIN_MemberInfoID=B.BIN_MemberInfoID
+				WHERE
+					A.SearchCode=#searchCode# AND
+					A.CounterCode=#counterCode#
+				GROUP BY
+					A.BIN_MemberInfoID) T on A.BIN_MemberInfoID=T.BIN_MemberInfoID
+			WHERE
+				A.SearchCode=#searchCode# AND
+				A.CounterCode=#counterCode#
+		]]>								
+    </sql>
+    
+    <!-- 查询会员信息List  -->
+    <sql id="MemInfoListSql1">
+    	<![CDATA[
+			SELECT 
+				A.BIN_MemberInfoID AS memId,
+				B.MemCode AS memCode,
+				A.Name AS memName,
+				A.MobilePhone AS mobilePhone,
+				T.lastSaleDate AS lastSaleDate,
+				T.totalAmount AS totalAmount
+			FROM
+				Members.BIN_MemberInfo A WITH(NOLOCK)
+				JOIN Members.BIN_MemCardInfo B WITH(NOLOCK) ON A.BIN_MemberInfoID=B.BIN_MemberInfoID AND B.CardValidFlag='1'
+				JOIN Basis.BIN_Organization C WITH(NOLOCK) ON A.BIN_OrganizationID=C.BIN_OrganizationID
+				LEFT JOIN Members.BIN_MemberLevel D WITH(NOLOCK) ON A.MemberLevel=D.BIN_MemberLevelID
+				LEFT JOIN
+				(SELECT 
+					A.BIN_MemberInfoID,
+					CONVERT(varchar(10),MAX(B.SaleTime),120) AS lastSaleDate,
+					SUM(CASE WHEN B.SaleType='SR' THEN -B.Amount ELSE B.Amount END) AS totalAmount
+				FROM
+					Members.BIN_MemberInfo A WITH(NOLOCK)
+					JOIN Sale.BIN_SaleRecord B WITH(NOLOCK) ON A.BIN_MemberInfoID=B.BIN_MemberInfoID
+					JOIN Basis.BIN_Organization C WITH(NOLOCK) ON A.BIN_OrganizationID=C.BIN_OrganizationID
+				WHERE
+					C.DepartCode=#counterCode#
+				GROUP BY
+					A.BIN_MemberInfoID) T on A.BIN_MemberInfoID=T.BIN_MemberInfoID
+			WHERE
+				C.DepartCode=#counterCode#	
+		]]>	
+			<isNotEmpty property="birthDayStart">
+				<isNotEmpty prepend="AND" property="birthDayEnd">
+					<isGreaterThan property="birthDayStart" compareProperty="birthDayEnd">
+						<![CDATA[(A.BirthDay >= #birthDayStart# OR A.BirthDay <= #birthDayEnd#)]]>
+					</isGreaterThan>
+					<isLessEqual property="birthDayStart" compareProperty="birthDayEnd">
+						<![CDATA[(A.BirthDay >= #birthDayStart# AND A.BirthDay <= #birthDayEnd#)]]>
+					</isLessEqual>
+				</isNotEmpty>
+				<isEmpty prepend="AND" property="birthDayEnd">
+					A.BirthDay >= #birthDayStart#
+				</isEmpty>
+			</isNotEmpty>
+			<isEmpty property="birthDayStart">
+				<isNotEmpty prepend="AND" property="birthDayEnd">
+					<![CDATA[A.BirthDay <= #birthDayEnd#]]>
+				</isNotEmpty>
+			</isEmpty>	
+			<isNotEmpty prepend="AND" property="levelCode">
+				D.LevelCode = #levelCode#
+			</isNotEmpty>							
+    </sql>
+    
+    <!-- 查询会员信息List  -->
+    <sql id="MemInfoListSql3">
+    	<![CDATA[
+			SELECT 
+				A.BIN_MemberInfoID AS memId,
+				B.MemCode AS memCode,
+				A.Name AS memName,
+				A.MobilePhone AS mobilePhone,
+				A.BirthDay AS birthDay,
+				T.lastSaleDate AS lastSaleDate,
+				T.totalAmount AS totalAmount
+			FROM
+				Members.BIN_MemberInfo A WITH(NOLOCK)
+				JOIN Members.BIN_MemCardInfo B WITH(NOLOCK) ON A.BIN_MemberInfoID=B.BIN_MemberInfoID AND B.CardValidFlag='1'
+				JOIN Basis.BIN_Organization C WITH(NOLOCK) ON A.BIN_OrganizationID=C.BIN_OrganizationID
+				LEFT JOIN
+				(SELECT 
+					A.BIN_MemberInfoID,
+					CONVERT(varchar(10),MAX(B.SaleTime),120) AS lastSaleDate,
+					SUM(CASE WHEN B.SaleType='SR' THEN -B.Amount ELSE B.Amount END) AS totalAmount
+				FROM
+					Members.BIN_MemberInfo A WITH(NOLOCK)
+					JOIN Sale.BIN_SaleRecord B WITH(NOLOCK) ON A.BIN_MemberInfoID=B.BIN_MemberInfoID
+					JOIN Basis.BIN_Organization C WITH(NOLOCK) ON A.BIN_OrganizationID=C.BIN_OrganizationID
+				]]>
+				<dynamic prepend="WHERE">
+					<isNotEmpty prepend="AND" property="counterCode">
+						C.DepartCode=#counterCode#	
+					</isNotEmpty>	
+					<isNotEmpty property="birthDayStart">
+						<isNotEmpty prepend="AND" property="birthDayEnd">
+							<isGreaterThan property="birthDayStart" compareProperty="birthDayEnd">
+								<![CDATA[(A.BirthDay >= #birthDayStart# OR A.BirthDay <= #birthDayEnd#)]]>
+							</isGreaterThan>
+							<isLessEqual property="birthDayStart" compareProperty="birthDayEnd">
+								<![CDATA[(A.BirthDay >= #birthDayStart# AND A.BirthDay <= #birthDayEnd#)]]>
+							</isLessEqual>
+						</isNotEmpty>
+						<isEmpty prepend="AND" property="birthDayEnd">
+							A.BirthDay >= #birthDayStart#
+						</isEmpty>
+					</isNotEmpty>
+					<isEmpty property="birthDayStart">
+						<isNotEmpty prepend="AND" property="birthDayEnd">
+							<![CDATA[A.BirthDay <= #birthDayEnd#]]>
+						</isNotEmpty>
+					</isEmpty>
+					<isNotEmpty prepend="AND" property="mobilePhone">
+						A.MobilePhone = #mobilePhone#
+					</isNotEmpty>	
+					<isNotEmpty prepend="AND" property="memName">
+						A.Name LIKE '%'+#memName#+'%'
+					</isNotEmpty>
+				</dynamic>	
+				<![CDATA[
+				GROUP BY
+					A.BIN_MemberInfoID) T on A.BIN_MemberInfoID=T.BIN_MemberInfoID
+		]]>
+		<dynamic prepend="WHERE">
+			<isNotEmpty prepend="AND" property="counterCode">
+				C.DepartCode=#counterCode#	
+			</isNotEmpty>	
+			<isNotEmpty property="birthDayStart">
+				<isNotEmpty prepend="AND" property="birthDayEnd">
+					<isGreaterThan property="birthDayStart" compareProperty="birthDayEnd">
+						<![CDATA[(A.BirthDay >= #birthDayStart# OR A.BirthDay <= #birthDayEnd#)]]>
+					</isGreaterThan>
+					<isLessEqual property="birthDayStart" compareProperty="birthDayEnd">
+						<![CDATA[(A.BirthDay >= #birthDayStart# AND A.BirthDay <= #birthDayEnd#)]]>
+					</isLessEqual>
+				</isNotEmpty>
+				<isEmpty prepend="AND" property="birthDayEnd">
+					A.BirthDay >= #birthDayStart#
+				</isEmpty>
+			</isNotEmpty>
+			<isEmpty property="birthDayStart">
+				<isNotEmpty prepend="AND" property="birthDayEnd">
+					<![CDATA[A.BirthDay <= #birthDayEnd#]]>
+				</isNotEmpty>
+			</isEmpty>
+			<isNotEmpty prepend="AND" property="mobilePhone">
+				A.MobilePhone = #mobilePhone#
+			</isNotEmpty>	
+			<isNotEmpty prepend="AND" property="memName">
+				A.Name LIKE '%'+#memName#+'%'
+			</isNotEmpty>
+		</dynamic>								
+    </sql>
+    
+    <!-- 取得会员信息总数  -->
+    <select id="selMemInfoCount" parameterClass="java.util.HashMap" resultClass="java.lang.Integer">
+    	<![CDATA[
+			SELECT COUNT(1) FROM (]]>
+			<isNotEmpty property="mode">
+		    	<isEqual property="mode" compareValue="1">
+		    		<include refid="MemberInfo.MemInfoListSql1" />
+		    	</isEqual>
+		    	<isEqual property="mode" compareValue="2">
+		    		<include refid="MemberInfo.MemInfoListSql2" />
+		    	</isEqual>
+		    	<isEqual property="mode" compareValue="3">
+	    		<include refid="MemberInfo.MemInfoListSql3" />
+	    	</isEqual>
+	    	</isNotEmpty>
+			<isEmpty property="mode">
+				<include refid="MemberInfo.MemInfoListSql1" />
+			</isEmpty>
+			<![CDATA[) T
+		]]>										
+    </select>
+    <!-- 查询会员俱乐部ID -->
+	<select id="selMemberClubId" parameterClass="java.util.HashMap" resultClass ="java.util.HashMap">
+	<![CDATA[
+		SELECT TOP 1
+			BIN_MemberClubID AS memberClubId
+		FROM
+			Members.BIN_MemberClub
+		WHERE
+			ClubCode = #clubCode#
+	]]> 
+	</select>
+    <!-- 取得会员信息List -->
+	<select id="selMemInfoList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+    	<include refid="BINOLCMINC99.pageheader" />
+    	<isNotEmpty property="mode">
+	    	<isEqual property="mode" compareValue="1">
+	    		<include refid="MemberInfo.MemInfoListSql1" />
+	    	</isEqual>
+	    	<isEqual property="mode" compareValue="2">
+	    		<include refid="MemberInfo.MemInfoListSql2" />
+	    	</isEqual>
+	    	<isEqual property="mode" compareValue="3">
+	    		<include refid="MemberInfo.MemInfoListSql3" />
+	    	</isEqual>
+    	</isNotEmpty>
+		<isEmpty property="mode">
+			<include refid="MemberInfo.MemInfoListSql1" />
+		</isEmpty>
+		<include refid="BINOLCMINC99.pagefooter" />
+	</select>
+	
+	<select id="getMemInfoListByMobilePhone" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+    	<![CDATA[
+			SELECT	TOP 10 
+				A.BIN_MemberInfoID,
+				A.MemberPassword,
+				A.MessageID,
+				A.InitialDate
+			FROM [Members].[BIN_MemberInfo] A WITH(NOLOCK)
+			WHERE
+				A.BIN_OrganizationInfoID=#BIN_OrganizationInfoID#
+			 AND A.BIN_BrandInfoID=#BIN_BrandInfoID#
+			 AND A.MobilePhone=#MobilePhone#
+		]]>
+	</select>
+	
+	<!-- 添加潜在会员 -->
+    <insert id="addPotentialMemInfo" parameterClass="java.util.HashMap">
+    	<![CDATA[
+    	insert into Members.BIN_PotentialMemInfo(
+			BIN_OrganizationInfoID,
+			BIN_BrandInfoID,
+			OpenID,
+			Name,
+			MobilePhone,
+			RegisterTime,
+			ProvinceCode,
+			CityCode,
+			Point,
+			ExpiryTime,
+			IsMember,
+			IsExchange,
+			BenefitsDetail,
+			Source,
+		]]> 
+			<include refid="BINOLCMINC99.insertKeySql" />
+		<![CDATA[		   
+		)
+		values(
+			#BIN_OrganizationInfoID#,
+			#BIN_BrandInfoID#,
+			#OpenID#,
+			#Name#,
+			#MobilePhone#,
+			#RegisterTime#,
+			#ProvinceCode#,
+			#CityCode#,
+			#Point#,
+			#ExpiryTime#,
+			#IsMember#,
+			#IsExchange#,
+			#BenefitsDetail#,
+			#Source#,
+		]]> 
+			<include refid="BINOLCMINC99.insertValueSql" />		
+		<![CDATA[							
+		)			
+    	]]> 
+    </insert>
+    
+    <!-- 通过手机号查询潜在会员 -->
+    <select id="getPotentialMemInfoCountByMobile" parameterClass="java.util.HashMap" resultClass="java.lang.Integer">
+    	<![CDATA[
+			SELECT
+				COUNT(1)
+			FROM
+				Members.BIN_PotentialMemInfo A WITH(NOLOCK)
+			WHERE
+				A.MobilePhone=#MobilePhone# AND
+				A.BIN_OrganizationInfoID=#BIN_OrganizationInfoID# AND
+			 	A.BIN_BrandInfoID=#BIN_BrandInfoID#
+		]]>
+	</select>
+	
+	<!-- 通过微信号查询潜在会员 -->
+    <select id="getPotentialMemInfoCountByOpenID" parameterClass="java.util.HashMap" resultClass="java.lang.Integer">
+    	<![CDATA[
+			SELECT
+				COUNT(1)
+			FROM
+				Members.BIN_PotentialMemInfo A WITH(NOLOCK)
+			WHERE
+				A.OpenID=#OpenID# AND
+				A.BIN_OrganizationInfoID=#BIN_OrganizationInfoID# AND
+			 	A.BIN_BrandInfoID=#BIN_BrandInfoID#
+		]]>
+	</select>
+	
+</sqlMap>

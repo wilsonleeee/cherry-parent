@@ -1,0 +1,303 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sqlMap PUBLIC "-//iBATIS.com//DTD SQL Map 2.0//EN" "http://ibatis.apache.org/dtd/sql-map-2.dtd">
+<sqlMap namespace="BINOLSTBIL09">
+	<sql id="commTakingQuery">
+		<![CDATA[
+			SELECT
+				A.BIN_BrandInfoID,
+				A.BIN_EmployeeID,
+				A.BIN_OrganizationID,
+				B.BIN_InventoryInfoID,
+				B.BIN_LogicInventoryInfoID,
+				A.BIN_EmployeeIDAudit,
+				A.BIN_ProductStockTakingID AS stockTakingId,     
+				A.StockTakingNoIF AS stockTakingNo,                 
+				A.VerifiedFlag AS verifiedFlag,                 
+				A.Type AS takingType,                  
+				A.Date AS date,
+				CONVERT(VARCHAR(10), A.Date, 120) + ' ' + A.TradeTime AS tradeDateTime,
+				SUM(CONVERT(bigint, (CASE WHEN J.IsStock='1' THEN ISNULL(B.Quantity,0) ELSE 0 END)) + CONVERT(bigint, (CASE WHEN J.IsStock='1' THEN ISNULL(B.GainQuantity,0) ELSE 0 END))) AS realQuantity,
+				SUM(CONVERT(bigint, (CASE WHEN (J.IsStock='1' AND B.HandleType !='0') THEN ISNULL(B.Quantity,0) ELSE 0 END)) + CONVERT(bigint, (CASE WHEN (J.IsStock='1' AND B.HandleType !='0') THEN ISNULL(B.GainQuantity,0) ELSE 0 END))) AS realQuantity_MNG06_UNSUBMIT,
+				SUM(CONVERT(bigint, (CASE WHEN J.IsStock='1' THEN ISNULL(B.GainQuantity,0) ELSE 0 END))) AS summQuantity,
+				SUM((CASE WHEN J.IsStock='1' THEN ISNULL(B.GainQuantity,0) ELSE 0 END) * ISNULL(B.Price, 0)) AS summAmount
+      		FROM
+	            Inventory.BIN_ProductStockTaking A     
+				LEFT JOIN Inventory.BIN_ProductTakingDetail B     
+				ON(A.BIN_ProductStockTakingID = B.BIN_ProductTakingID)
+				LEFT JOIN Basis.BIN_ProductVendor C
+				ON(B.BIN_ProductVendorID = C.BIN_ProductVendorID)
+				LEFT JOIN Basis.BIN_Product J
+				ON(J.BIN_ProductID = C.BIN_ProductID)
+            WHERE
+                A.ValidFlag = '1'
+        ]]>
+        <dynamic>
+        <isNotEmpty prepend="AND" property="profitKbn">
+            <isEqual property="profitKbn" compareValue="0">
+                    <![CDATA[ISNULL(B.GainQuantity, 0) >= 0 ]]>
+            </isEqual>
+            <isEqual property="profitKbn" compareValue="1">
+                    <![CDATA[ISNULL(B.GainQuantity, 0) < 0 ]]>
+            </isEqual>
+        </isNotEmpty>
+        <isNotEmpty prepend="AND" property="stockTakingNo">
+            A.StockTakingNoIF LIKE '%' + #stockTakingNo# + '%'
+        </isNotEmpty>
+        <isNotEmpty prepend="AND" property="verifiedFlag">
+            A.VerifiedFlag = #verifiedFlag#
+		</isNotEmpty>
+        <isNotEmpty prepend="AND" property="startDate">
+            <![CDATA[
+            A.Date >= #startDate#
+            ]]>
+        </isNotEmpty>
+        <isNotEmpty prepend="AND" property="endDate">
+            <![CDATA[
+            A.Date <= #endDate#
+            ]]>           
+        </isNotEmpty>
+        <isNotEmpty prepend="AND" property="prtVendorId">
+            <![CDATA[
+                C.BIN_ProductVendorID = #prtVendorId#
+            ]]>
+        </isNotEmpty>
+        <isEmpty property="prtVendorId">
+            <isNotEmpty prepend="AND" property="productName" >
+                <![CDATA[J.NameTotal like '%' + #productName# + '%']]>
+            </isNotEmpty>
+        </isEmpty>
+        <isNotEmpty prepend="AND" property="depotId">
+            <![CDATA[  
+                B.BIN_InventoryInfoID = #depotId#
+            ]]>
+        </isNotEmpty>
+        <isNotEmpty property="checkedBillIdArr" >
+            <![CDATA[AND A.BIN_ProductStockTakingID IN]]>
+            <iterate conjunction="," open="(" close=")" property="checkedBillIdArr">  
+                #checkedBillIdArr[]#
+            </iterate>
+        </isNotEmpty>
+        </dynamic>
+		<![CDATA[AND EXISTS ( ]]>
+        <include refid="BINOLCMINC99.getDepartList" />
+        <![CDATA[
+                AND A.BIN_OrganizationID = A99.BIN_OrganizationID)
+        ]]>
+		<![CDATA[
+	    GROUP BY
+			A.BIN_BrandInfoID,
+			A.BIN_EmployeeID,
+			A.BIN_OrganizationID,
+			B.BIN_InventoryInfoID,
+			B.BIN_LogicInventoryInfoID,
+			A.BIN_EmployeeIDAudit,
+			A.BIN_ProductStockTakingID,     
+			A.StockTakingNoIF,                 
+			A.VerifiedFlag,               
+			A.Type,                  
+			A.Date,
+			CONVERT(VARCHAR(10), A.Date, 120) + ' ' + A.TradeTime
+		]]>
+	</sql>
+    <!-- 盘点单查询sql文  -->
+    <sql id="takingQuery">
+    	 <![CDATA[
+    	SELECT 
+				T0.BIN_BrandInfoID,
+				T0.stockTakingId,
+				T0.stockTakingNo,
+				T0.realQuantity,
+                T0.realQuantity_MNG06_UNSUBMIT,
+				T0.summQuantity,
+				T0.summAmount,
+				T0.takingType,                  
+				T0.date,
+				T0.tradeDateTime,
+				T0.verifiedFlag,
+				H.EmployeeName AS employeeName
+			]]>
+			<dynamic>
+		<isNotEmpty property="language">
+	            <isEqual property="language" compareValue="en_US">
+	            ,'(' + F.DepartCode + ')'+F.NameForeign AS departName
+	            ,'('+DepotCode+')'+D.DepotNameEN AS inventoryName
+	            </isEqual>
+	            <isEqual property="language" compareValue="zh_CN">
+	            ,'(' + F.DepartCode + ')'+F.DepartName AS departName
+	            ,'('+DepotCode+')'+D.DepotNameCN AS inventoryName
+	            </isEqual>
+	        </isNotEmpty>
+	        <isEmpty property="language">
+	            ,'(' + F.DepartCode + ')'+F.DepartName AS departName
+	            ,'('+DepotCode+')'+D.DepotNameCN AS inventoryName
+	        </isEmpty>
+	    </dynamic>
+        <![CDATA[FROM ( ]]>
+        <include refid="BINOLSTBIL09.commTakingQuery" />   
+		<![CDATA[)T0
+		LEFT JOIN Basis.BIN_Employee H
+		ON (T0.BIN_EmployeeID = H.BIN_EmployeeID )
+		LEFT JOIN Basis.BIN_Organization F
+		ON(T0.BIN_OrganizationID = F.BIN_OrganizationID)
+		LEFT JOIN Basis.BIN_DepotInfo D
+		ON(T0.BIN_InventoryInfoID = D.BIN_DepotInfoID)
+	 ]]>        
+    </sql>
+    
+    <!-- 取得盘点单总数  -->
+    <select id="getTakingCount" parameterClass="java.util.HashMap" resultClass="java.lang.Integer">
+        <![CDATA[
+            SELECT  COUNT(SORT_T1.stockTakingNo) AS count FROM (
+        ]]>
+        <include refid="BINOLSTBIL09.takingQuery" />
+        <![CDATA[
+            )SORT_T1
+        ]]>
+    </select>
+    <!-- 取得盘点单List  -->
+    <select id="getTakingList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+        <include refid="BINOLCMINC99.pageheader" />
+		<![CDATA[
+			SELECT	
+				T20.*, 
+				CASE WHEN EXISTS(SELECT 1 FROM Basis.BIN_PrintLog T10 WHERE 
+									T20.BIN_BrandInfoID = T10.BIN_BrandInfoID 
+									AND T20.stockTakingNo = T10.BillNo) 
+				THEN 1 ELSE 0 END AS printStatus
+			FROM (
+		]]>	
+		<include refid="BINOLSTBIL09.takingQuery" />
+		<![CDATA[	
+			)T20
+		]]>	
+        <include refid="BINOLCMINC99.pagefooter" />
+    </select>
+	
+    <!-- 取得盘点单汇总信息【产品作为检索条件】  -->
+    <select id="getSumInfo" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+        <![CDATA[
+            SELECT
+                ISNULL(SUM(ISNULL(T0.summQuantity, 0)),0) AS sumQuantity,
+                ISNULL(SUM(ISNULL(T0.summAmount, 0)),0) AS sumAmount,
+				ISNULL(SUM(ISNULL(T0.realQuantity,0)),0) AS sumrealQuantity
+            FROM(]]>
+			<include refid="BINOLSTBIL09.commTakingQuery" />
+			<![CDATA[)T0]]>
+    </select>
+    
+    <!-- 产品盘点单excel导出数据SQL文 -->
+    <sql id="prtTakingExportQuery">
+    	<![CDATA[
+    		SELECT
+				T0.stockTakingNo,
+				T0.verifiedFlag,
+				T0.takingType,
+				T0.date,
+				T0.tradeDateTime,
+				A.Comments AS comments,
+				CASE WHEN ISNULL(A.GainQuantity, 0) >= 0 THEN 0 ELSE 1 END AS profitKbn,
+				ISNULL(A.Quantity,0) AS quantity,
+				ISNULL(A.Quantity,0) + ISNULL(A.GainQuantity,0) AS realQuantity,
+				ISNULL(A.GainQuantity, 0) AS gainQuantity,
+				CONVERT(decimal(16, 2),ISNULL(A.Price,0)) AS price,
+				ISNULL(A.GainQuantity, 0) * CONVERT(decimal(16, 2),ISNULL(A.Price,0)) AS amount,
+				B.BarCode AS barCode,
+				C.UnitCode AS unitCode,
+				D.DepartCode AS departCode,
+				I.EmployeeCode AS employeeCode,
+				J.DepotCode AS depotCode,
+				K.LogicInventoryCode AS logicInventoryCode,
+				L.EmployeeCode AS employeeCodeAudit
+    	]]>
+    	<dynamic>
+			<isNotEmpty property="language">
+	            <isEqual property="language" compareValue="en_US">
+		            ,C.NameForeign AS productName
+					,D.NameForeign AS departName
+					,I.EmployeeNameForeign AS employeeName
+					,J.DepotNameEN AS depotName
+					,K.InventoryNameEN AS logicInventoryName
+					,H.NameForeign AS area
+					,E.RegionNameForeign AS region
+					,F.RegionNameForeign AS province
+					,G.RegionNameForeign AS city
+					,L.EmployeeNameForeign AS employeeNameAudit
+	            </isEqual>
+	            <isEqual property="language" compareValue="zh_CN">
+		            ,C.NameTotal AS productName
+					,D.DepartName AS departName
+					,I.EmployeeName AS employeeName
+					,J.DepotNameCN AS depotName
+					,K.InventoryNameCN AS logicInventoryName
+					,H.DepartName AS area
+					,E.RegionNameChinese AS region
+					,F.RegionNameChinese AS province
+					,G.RegionNameChinese AS city
+					,L.EmployeeName AS employeeNameAudit
+	            </isEqual>
+	        </isNotEmpty>
+	        <isEmpty property="language">
+	            ,C.NameTotal AS productName
+				,D.DepartName AS departName
+				,I.EmployeeName AS employeeName
+				,J.DepotNameCN AS depotName
+				,K.InventoryNameCN AS logicInventoryName
+				,H.DepartName AS area
+				,E.RegionNameChinese AS region
+				,F.RegionNameChinese AS province
+				,G.RegionNameChinese AS city
+				,L.EmployeeName AS employeeNameAudit
+	        </isEmpty>
+	    </dynamic>
+	    <![CDATA[FROM(]]>
+	    	<include refid="BINOLSTBIL09.commTakingQuery" />
+	    <![CDATA[
+	    	)T0
+			LEFT JOIN Inventory.BIN_ProductTakingDetail A WITH(NOLOCK)
+				ON(T0.stockTakingId = A.BIN_ProductTakingID)
+			LEFT JOIN Basis.BIN_ProductVendor B WITH (NOLOCK)
+				ON (A.BIN_ProductVendorID = B.BIN_ProductVendorID)
+			LEFT JOIN Basis.BIN_Product C WITH (NOLOCK)
+				ON (B.BIN_ProductID = C.BIN_ProductID)
+			LEFT JOIN Basis.BIN_Organization D WITH (NOLOCK)
+			ON(T0.BIN_OrganizationID = D.BIN_OrganizationID)
+			LEFT JOIN Basis.BIN_Region E WITH (NOLOCK)
+				ON (D.BIN_RegionID = E.BIN_RegionID)
+			LEFT JOIN Basis.BIN_Region F WITH (NOLOCK)
+				ON (D.BIN_ProvinceID = F.BIN_RegionID)
+			LEFT JOIN Basis.BIN_Region G WITH (NOLOCK)
+				ON (D.BIN_CityID = G.BIN_RegionID)
+			LEFT JOIN Basis.BIN_Organization H WITH (NOLOCK)
+				ON (D.NodeID.IsDescendantOf(H.NodeID) = 1 AND H.Type = '5')
+			LEFT JOIN Basis.BIN_Employee I WITH(NOLOCK)
+				ON (T0.BIN_EmployeeID = I.BIN_EmployeeID )
+			LEFT JOIN Basis.BIN_DepotInfo J WITH(NOLOCK)
+				ON(T0.BIN_InventoryInfoID = J.BIN_DepotInfoID)
+			LEFT JOIN Basis.BIN_LogicInventory K WITH(NOLOCK)
+				ON(T0.BIN_LogicInventoryInfoID = K.BIN_LogicInventoryInfoID)
+			LEFT JOIN Basis.BIN_Employee L WITH(NOLOCK)
+				ON(T0.BIN_EmployeeIDAudit = L.BIN_EmployeeID)
+		WHERE
+			C.IsStock='1'
+	    ]]>
+    </sql>
+    
+	<!-- 分页查询导出的盘点单明细 -->
+	<select id="getPrtTakingExportList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+		<include refid="BINOLCMINC99.pageheader" />
+	  	<include refid="BINOLSTBIL09.prtTakingExportQuery" />
+	  	<include refid="BINOLCMINC99.pagefooter" />
+	</select>
+ 
+	<!--  取得盘点单明细总数  -->
+	<select id="getExportDetailCount" parameterClass="java.util.HashMap" resultClass="java.lang.Integer">
+		<![CDATA[
+			SELECT 
+				COUNT(1) AS count FROM (
+		]]>
+		<include refid="BINOLSTBIL09.prtTakingExportQuery" />
+		<![CDATA[
+			)SORT_T1
+		]]>
+	</select>
+</sqlMap>

@@ -1,0 +1,143 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sqlMap PUBLIC "-//iBATIS.com//DTD SQL Map 2.0//EN" "http://ibatis.apache.org/dtd/sql-map-2.dtd">
+<sqlMap namespace="BINOLSSPRM10">
+
+   <!-- 取得某品牌下的所有上级促销品类别List -->
+	<resultMap id="BINOLSSPRM10.HigherCategory" class="java.util.HashMap">
+		<result property="prmCategoryId" column="BIN_PromotionPrtCategoryID"/>
+		<result property="itemClassName" column="ItemClassName"/>
+		<result property="path" column="Path"/>
+	</resultMap>
+	<select id="getHigherCategoryList" parameterClass="java.util.HashMap" resultMap="BINOLSSPRM10.HigherCategory">
+		<![CDATA[
+			SELECT				
+				A.BIN_PromotionPrtCategoryID,	
+				A.Path,
+		]]>	
+		<isNotEmpty property="language">
+			<isEqual property="language" compareValue="en_US">										
+				case when B.BrandNameForeign = '' then A.ItemClassNameForeign else 
+				A.ItemClassNameForeign+'('+B.BrandNameForeign+')' end AS ItemClassName
+			</isEqual>
+			<isEqual property="language" compareValue="zh_CN">										
+				case when B.BrandNameChinese = '' then A.ItemClassNameChinese else		
+				A.ItemClassNameChinese+'('+B.BrandNameChinese+')' end AS ItemClassName
+			</isEqual>								
+		</isNotEmpty>
+		<isEmpty property="language">
+			case when B.BrandNameChinese = '' then A.ItemClassNameChinese else		
+				A.ItemClassNameChinese+'('+B.BrandNameChinese+')' end AS ItemClassName
+		</isEmpty>
+		<![CDATA[
+			FROM
+				Basis.BIN_PromotionPrtCategory A,
+				Basis.BIN_BrandInfo B
+			WHERE
+				A.BIN_OrganizationInfoID = B.BIN_OrganizationInfoID AND
+				A.BIN_BrandInfoID = B.BIN_BrandInfoID AND
+				B.BIN_OrganizationInfoID = #organizationInfoId# AND
+				A.ValidFlag = '1' AND
+				B.ValidFlag = '1'
+		]]>
+		<dynamic>
+			<isNotEmpty prepend="AND" property="brandInfoId">
+				B.BIN_BrandInfoID=#brandInfoId#
+			</isNotEmpty>
+			
+			<isNotEmpty prepend="AND" property="categoryPath">
+				A.NodeID.IsDescendantOf(#categoryPath#)!=1
+			</isNotEmpty>
+		</dynamic>	
+    </select>
+	
+	<!-- 取得新节点 -->
+	<select id="getNewNodeId" parameterClass="java.util.HashMap" resultClass="java.lang.String">
+		<![CDATA[
+			SELECT 
+				CONVERT(hierarchyid,#path#).GetDescendant(max(NodeID), NULL).ToString() AS newNodeId
+        	FROM 
+        		Basis.BIN_PromotionPrtCategory
+            WHERE 
+            	NodeID.GetAncestor(1)=#path#
+		]]>
+    </select>
+	
+	<!-- 插入促销品类别信息  -->
+	<insert id="insertPrmCategory" parameterClass="java.util.HashMap">	
+		<![CDATA[
+		INSERT INTO Basis.BIN_PromotionPrtCategory
+                   (BIN_OrganizationInfoID,
+                    BIN_BrandInfoID,
+                    NodeID,
+                    ItemClassNameChinese,
+                    ItemClassNameForeign,
+                    ItemClassCode,
+                    CurClassCode,				
+		]]>	
+			<include refid="BINOLCMINC99.insertKeySql" />									
+		<![CDATA[								
+		)VALUES									
+				 (#organizationInfoId#,
+				  #brandInfoId#,
+				  #newNodeId#,					
+                  #itemClassNameCN#,					
+                  #itemClassNameEN#,					
+                  #itemClassCode#,					
+                  #curClassCode#,			
+		]]>
+		    <include refid="BINOLCMINC99.insertValueSql" />
+		<![CDATA[
+		)
+		]]>
+		
+	</insert>
+	
+    <!-- 取得上级促销品类别信息 -->
+	<resultMap id="BINOLSSPRM10.HigherClass" class="java.util.HashMap">
+		<result property="brandInfoId" column="BIN_BrandInfoID"/>
+		<result property="itemClassName" column="ItemClassName"/>
+		<result property="path" column="Path"/>
+		<result property="brandName" column="BrandName"/>
+	</resultMap>
+	<select id="getHigherClass" parameterClass="java.util.HashMap" resultMap="BINOLSSPRM10.HigherClass">
+		<![CDATA[
+			SELECT				
+				A.BIN_BrandInfoID,	
+				A.Path,
+		]]>	
+		<isNotEmpty property="language">
+			<isEqual property="language" compareValue="en_US">
+				A.ItemClassNameForeign AS ItemClassName,
+				B.BrandNameForeign AS BrandName
+			</isEqual>
+			<isEqual property="language" compareValue="zh_CN">		
+				A.ItemClassNameChinese AS ItemClassName,
+				B.BrandNameChinese AS BrandName
+			</isEqual>								
+		</isNotEmpty>
+		<isEmpty property="language">	
+				A.ItemClassNameChineseAS ItemClassName,
+				B.BrandNameChinese AS BrandName
+		</isEmpty>
+		<![CDATA[
+			FROM
+				Basis.BIN_PromotionPrtCategory A 
+                LEFT JOIN Basis.BIN_BrandInfo B
+				ON (A.BIN_OrganizationInfoID = B.BIN_OrganizationInfoID AND
+				    A.BIN_BrandInfoID = B.BIN_BrandInfoID AND
+					B.ValidFlag='1')
+			WHERE
+				A.ValidFlag='1'
+		]]>
+		<dynamic>
+			<isNotEmpty prepend="AND" property="prmCategoryId">		
+				A.BIN_PromotionPrtCategoryID = #prmCategoryId#
+			</isNotEmpty>
+			
+			<isEmpty prepend="AND" property="organizationId">
+				A.BIN_OrganizationInfoID=#organizationInfoId# AND
+				A.NodeID.GetAncestor(1)=hierarchyid::GetRoot()
+			</isEmpty>
+		</dynamic>	
+    </select>
+</sqlMap>

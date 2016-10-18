@@ -1,0 +1,81 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sqlMap PUBLIC "-//iBATIS.com//DTD SQL Map 2.0//EN" "http://ibatis.apache.org/dtd/sql-map-2.dtd">
+<sqlMap namespace="BINOLCTCOM02">
+	<sql id="querySearchReCord">
+       	<![CDATA[
+			select 
+				A.BIN_SearchCode as searchCode,
+				A.RecordName as recordName,
+				isnull(A.CustomerType,'4') as customerType,
+				isnull(A.RecordCount,0) as recordCount,
+				A.FromType as fromType,
+				A.RecordType as recordType
+			from 
+				Members.BIN_SearchLog A with(nolock) 
+		]]>
+			<isNotEmpty property="privilegeFlag">
+			<isEqual property="privilegeFlag" compareValue="1">			
+			<![CDATA[			
+				Inner join (]]><include refid="BINOLCMINC99.departPrivilegeSql" /><![CDATA[) A99 
+				on A.BIN_OrganizationID = A99.BIN_OrganizationID
+			]]>
+			</isEqual>
+			</isNotEmpty>
+		<![CDATA[
+			where
+				A.BIN_BrandInfoID = #brandInfoId#
+				and A.BIN_OrganizationInfoID = #organizationInfoId#
+				and A.RecordType = '2'
+				and A.ValidFlag = '1'
+				and A.RecordCount is not null
+		]]>		
+			<isNotEmpty prepend="and" property="searchCode">
+				A.BIN_SearchCode like '%' + #searchCode# + '%'
+			</isNotEmpty>
+			<isNotEmpty prepend="and" property="recordName">
+				A.RecordName like '%' + #recordName# + '%'
+			</isNotEmpty>
+			<isNotEmpty prepend="and" property="customerType">
+				<isEqual property="customerType" compareValue="4">
+					(A.CustomerType is null or A.CustomerType = '4')
+				</isEqual>
+				<isNotEqual property="customerType" compareValue="4">
+					A.CustomerType = #customerType#
+				</isNotEqual>
+			</isNotEmpty>
+	</sql>
+
+	
+	<!-- 取得沟通对象查询记录List -->
+    <select id="getSearchRecordList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+		<include refid="BINOLCMINC99.pageheader" />
+		<include refid="BINOLCTCOM02.querySearchReCord" />
+		<include refid="BINOLCMINC99.pagefooter" />
+    </select>
+    
+	<!-- 获取沟通对象查询记录总数  -->
+    <select id="getSearchRecordCount" parameterClass="java.util.HashMap" resultClass="java.lang.Integer">
+    	<![CDATA[
+			SELECT	COUNT(SORT_T1.searchCode) AS count FROM (
+		]]>	
+		<include refid="BINOLCTCOM02.querySearchReCord" />
+		<![CDATA[	
+			)SORT_T1
+		]]>
+    </select>
+    
+    <select id="getSendType" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+    	<![CDATA[
+			SELECT 
+				RunStatus as runStatus 
+			FROM 
+				Communication.BIN_CommRunLog 
+			WHERE 
+				Bin_PlanCode=#Bin_PlanCode# 
+				and BIN_OrganizationInfoID=#BIN_OrganizationInfoID# 
+				and BIN_BrandInfoID=#BIN_BrandInfoID#
+				and PhaseNum=#PhaseNum#
+		]]>	
+    </select>
+
+</sqlMap>

@@ -1,0 +1,196 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sqlMap PUBLIC "-//iBATIS.com//DTD SQL Map 2.0//EN" "http://ibatis.apache.org/dtd/sql-map-2.dtd">
+<sqlMap namespace="BINOLMBCCT01">
+	<!-- 会员信息查询sql  -->
+	<sql id="MemberInfoQuery">
+		<![CDATA[
+			select tm.BIN_MemberInfoID As memId 
+				  ,tc.MemCode as memCode 
+				  ,tm.Name As memName 
+				  ,isnull(tm.Gender,2) As gender 
+				  ,tm.MobilePhone As mobilePhone 
+				  ,tm.Email As email 
+				  ,tm.Telephone As telephone 
+				  ,tm.CounterCodeBelong As counterCode 
+				  ,tb.CounterNameIF As counterName 
+				  ,tm.BirthDay as birthDay 
+				  ,tm.JoinDate as joinDate 
+				  ,isnull(tc.CardValidFlag,1) as cardValidFlag 
+			FROM 
+				  Members.BIN_MemberInfo As tm with(nolock) 
+				  Left Join Members.BIN_MemCardInfo as tc with(nolock) on tm.BIN_MemberInfoID = tc.BIN_MemberInfoID and tc.ValidFlag = 1 
+				  Left Join Basis.BIN_CounterInfo As tb with(nolock) on tm.CounterCodeBelong = tb.CounterCode 
+			WHERE 
+				  tm.BIN_BrandInfoID = #brandInfoId# AND 
+				  tm.BIN_OrganizationInfoID = #organizationInfoId# 
+		]]>
+		<dynamic>
+			<!-- 参数中存在手机号码查询条件时  -->
+			<isNotEmpty prepend="AND" property="mobilePhone" >
+				tm.MobilePhone = #mobilePhone# 
+			</isNotEmpty>
+			<!-- 参数中存在固话号码查询条件时  -->
+			<isNotEmpty prepend="AND" property="telephone" >
+				tm.Telephone = #telephone# 
+			</isNotEmpty>
+			<!-- 参数中存在会员卡号查询条件时  -->
+			<isNotEmpty prepend="AND" property="memCode" >
+				tc.memCode = #memCode# 
+			</isNotEmpty>
+			<!-- 参数中存在会员姓名查询条件时  -->
+			<isNotEmpty prepend="AND" property="memName" >
+				tm.Name like #memName# + '%' 
+			</isNotEmpty>
+			<!-- 参数中存在会员生日查询条件时  -->
+			<isNotEmpty prepend="AND" property="birthYear" >
+				tm.BirthYear = #birthYear# 
+			</isNotEmpty>
+			<!-- 参数中存在会员生日查询条件时  -->
+			<isNotEmpty prepend="AND" property="birthDay" >
+				tm.BirthDay = #birthDay# 
+			</isNotEmpty>
+			<!-- 参数中存在会员有效状态查询条件时  -->
+			<isNotEmpty prepend="AND" property="validFlag" >
+				tm.ValidFlag = #validFlag# 
+			</isNotEmpty>
+			<!-- 参数中存在会员有效卡号查询条件时  -->
+			<isNotEmpty prepend="AND" property="cardValidFlag" >
+				tc.CardValidFlag = #cardValidFlag# 
+			</isNotEmpty>
+		</dynamic>
+	</sql>
+	
+	<!-- 根据来电号码查询匹配会员的总数  -->
+    <select id="getMemberCountByPhone" parameterClass="java.util.HashMap" resultClass="java.lang.Integer">
+    	<![CDATA[
+			SELECT COUNT(SORT_T1.memId) AS count FROM (
+		]]>	
+		<include refid="BINOLMBCCT01.MemberInfoQuery" />	
+		<![CDATA[	
+			)SORT_T1
+		]]>
+    </select>
+	
+	<!-- 根据来电号码查询匹配会员信息List -->
+    <select id="getMemberListByPhone" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+       	<include refid="BINOLCMINC99.pageheader" />
+		<include refid="BINOLMBCCT01.MemberInfoQuery" />
+		<include refid="BINOLCMINC99.pagefooter" />
+    </select>
+
+	<!-- 非会员信息查询sql  -->
+	<sql id="CustomerQuery">
+		<![CDATA[
+			select CustomerCode As customerId 
+				  ,CustomerName As customerName 
+				  ,Gender As gender 
+				  ,MobilePhone As mobilePhone 
+				  ,Email As email 
+				  ,Telephone As telephone 
+				  ,BirthDay as birthDay 
+				  ,InTime as joinDate 
+			FROM 
+				  Members.BIN_NonMembers with(nolock) 
+			WHERE 
+				  BIN_BrandInfoID = #brandInfoId# AND 
+				  BIN_OrganizationInfoID = #organizationInfoId# 
+		]]>
+		<dynamic>
+			<!-- 参数中存在手机号码查询条件时  -->
+			<isNotEmpty prepend="AND" property="mobilePhone" >
+				MobilePhone = #mobilePhone# 
+			</isNotEmpty>
+			<!-- 参数中存在固话号码查询条件时  -->
+			<isNotEmpty prepend="AND" property="telephone" >
+				Telephone = #telephone# 
+			</isNotEmpty>
+			<!-- 参数中存在非会员有效状态查询条件时  -->
+			<isNotEmpty prepend="AND" property="validFlag" >
+				ValidFlag = #validFlag# 
+			</isNotEmpty>
+		</dynamic>
+	</sql>
+	
+	<!-- 根据来电号码查询匹配会员的总数  -->
+    <select id="getCustomerCountByPhone" parameterClass="java.util.HashMap" resultClass="java.lang.Integer">
+    	<![CDATA[
+			SELECT COUNT(SORT_T1.customerId) AS count FROM (
+		]]>	
+		<include refid="BINOLMBCCT01.CustomerQuery" />	
+		<![CDATA[	
+			)SORT_T1
+		]]>
+    </select>
+	
+	<!-- 根据来电号码查询匹配会员信息List -->
+    <select id="getCustomerListByPhone" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+       	<include refid="BINOLCMINC99.pageheader" />
+		<include refid="BINOLMBCCT01.CustomerQuery" />
+		<include refid="BINOLCMINC99.pagefooter" />
+    </select>
+    
+    <!-- 新增来电日志  -->
+	<insert id="insertCallLog" parameterClass="java.util.HashMap">
+        <![CDATA[
+		INSERT INTO Members.BIN_CallLog 
+		           (BIN_OrganizationInfoID,
+		            BIN_BrandInfoID,
+		            CallId,
+		            CustomerNumber,
+		            CustomerNumberType,
+		            CustomerAreaCode,
+		            Calltype,
+		            CallTime,
+		            Cno,
+		            Ismember,
+		            CustomerSysId,
+					CreateTime,
+					CreatedBy,
+					CreatePGM,
+					UpdateTime,
+					UpdatedBy,
+					UpdatePGM,
+					ModifyCount 
+        )VALUES
+		           (#organizationInfoId#,
+		            #brandInfoId#,
+		            #callId#,
+		            #customerNumber#,
+		            #customerNumberType#,
+		            #customerAreaCode#,
+		            #calltype#,
+		            GETDATE(),
+		            #cno#,
+		            #isMember#,
+		            #customerSysId#,
+       				GETDATE(),
+       				#cno#,
+       				#createPGM#,
+       				GETDATE(),
+       				#cno#,
+       				#updatePGM#,
+       				'0' 
+		)
+		]]>
+    </insert>
+    
+    <!-- 更新来电日志 -->
+	<update id="updateCallLog" parameterClass="java.util.HashMap">
+		<![CDATA[
+	      UPDATE 
+	               Members.BIN_CallLog 
+		  SET    
+				   Ismember = #isMember#,
+				   CustomerSysId = #customerSysId#,
+		]]>
+			<include refid="BINOLCMINC99.updateSql" />
+		<![CDATA[
+		  WHERE	  
+		  		  BIN_OrganizationInfoID = #organizationInfoId# AND
+		  		  BIN_BrandInfoID = #brandInfoId# AND
+		  		  CallId = #callId#
+		]]>
+	</update>
+	
+</sqlMap>
+

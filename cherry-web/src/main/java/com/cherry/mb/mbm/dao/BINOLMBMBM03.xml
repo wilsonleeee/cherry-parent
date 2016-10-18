@@ -1,0 +1,191 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE sqlMap PUBLIC "-//iBATIS.com//DTD SQL Map 2.0//EN" "http://ibatis.apache.org/dtd/sql-map-2.dtd">
+
+<sqlMap namespace="BINOLMBMBM03">
+    
+    <!-- 会员信息-->
+	<select id="getMemberInfo" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+<![CDATA[
+		SELECT TOP 1
+			A.BIN_MemberInfoID AS memberInfoId,
+			A.Name,
+			B.MemCode,
+			A.MobilePhone,
+			A.Gender,
+			CONVERT(varchar(30),A.JoinDate,120) AS joinDate,
+			A.MemberLevel,
+			C.BIN_MemberLevelID AS memberLevelId,
+			C.LevelName AS LevelName,
+			C.LevelCode AS levelcode,
+			D.Btimes AS btimes,
+			D.TotalAmount AS totalAmount,
+			CONVERT(varchar(30),A.UpdateTime,121) AS memInfoUdTime,
+			A.ModifyCount AS memInfoMdCount,
+			CONVERT(varchar(30),D.UpdateTime,121) AS extInfoUdTime,
+			D.ModifyCount AS extInfoMdCount,
+			CONVERT(varchar(30),E.UpdateTime,121) AS pointUdTime,
+			E.ModifyCount AS pointMdCount,
+			E.TotalPoint AS totalPoint,
+			CONVERT(varchar(30),E.InitialTime,120) AS initialTime
+		FROM
+			Members.BIN_MemberInfo A 
+			JOIN Members.BIN_MemCardInfo B ON A.BIN_MemberInfoID = B.BIN_MemberInfoID AND B.CardValidFlag = '1' AND B.ValidFlag = '1'
+			LEFT JOIN Members.BIN_MemberLevel C ON A.MemberLevel = C.BIN_MemberLevelID AND C.ValidFlag = '1'
+			LEFT JOIN Members.BIN_MemberExtInfo D ON A.BIN_MemberInfoID= D.BIN_MemberInfoID AND D.ValidFlag = '1'
+			LEFT JOIN Members.BIN_MemberPoint E ON A.BIN_MemberInfoID= E.BIN_MemberInfoID AND E.ValidFlag = '1'
+		WHERE 
+			A.BIN_MemberInfoID = #memberInfoId# 
+			AND A.BIN_OrganizationInfoID = #organizationInfoId#
+			AND  A.BIN_BrandInfoID = #brandInfoId#
+		 ]]>	
+    </select>
+    
+    <!-- 会员信息-->
+	<select id="getMemberClubLevelInfo" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+<![CDATA[
+		SELECT TOP 1
+			MemberLevel AS MemberLevel,
+			MemberLevel AS memberLevelId,
+			C.LevelName AS LevelName,
+			C.LevelCode AS levelcode,
+			A.TotalAmount AS totalAmount,
+			E.TotalPoint AS totalPoint,
+			CONVERT(varchar(30),E.InitialTime,120) AS initialTime,
+			CONVERT(varchar(30),A.UpdateTime,121) AS clubInfoUdTime,
+			A.ModifyCount AS clubInfoMdCount
+		FROM
+			Members.BIN_MemClubLevel A 
+			LEFT JOIN Members.BIN_MemberLevel C 
+			ON (A.MemberLevel = C.BIN_MemberLevelID AND C.ValidFlag = '1')
+			LEFT JOIN Members.BIN_MemberPoint E 
+			ON (A.BIN_MemberInfoID = E.BIN_MemberInfoID AND A.BIN_MemberClubID = E.BIN_MemberClubID AND E.ValidFlag = '1')
+		WHERE 
+			A.BIN_MemberInfoID = #memberInfoId# AND
+			A.BIN_MemberClubID = #memberClubId#
+		 ]]>	
+    </select>
+    
+	<!-- 会员修改记录SQL -->
+	<select id="getMemUsedInfoList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+	<![CDATA[
+		SELECT 
+			B.BIN_MemUsedDetailID as memUsedDetailId,
+			CONVERT(varchar(30),B.BusinessTime,120) AS businessTime,
+			F.LevelName AS oldMemberLevel,
+			B.OldCurBtimes AS oldCurBtimes,
+			B.OldTotalAmounts AS oldTotalAmounts,
+			CONVERT(varchar(30),B.OldJoinDate,120) AS oldJoinDate,
+			CONVERT(varchar(30),B.joinDate,120) AS joinDate,
+			E.LevelName AS memberLevel,
+			B.CurBtimes AS curBtimes,
+			B.TotalAmounts AS totalAmounts,
+			B.OldCurPoints  AS oldCurPoints,
+			B.CurPoints  AS curPoints,
+			'(' + D.EmployeeCode + ')'+D.EmployeeName AS employeeName,
+			B.Reason AS reason,
+			A.TradeType AS tradeType,
+			CONVERT(varchar(30),B.UpdateTime,120)  AS updateTime,
+			A.Channel
+
+		FROM
+			Members.BIN_MemUsedInfo A 
+			JOIN Members.BIN_MemUsedDetail B ON(A.BIN_MemUsedInfoID=B.BIN_MemUsedInfoID)
+			JOIN Members.BIN_MemberInfo C WITH(nolock) ON(B.BIN_MemberInfoID=C.BIN_MemberInfoID)
+			LEFT JOIN Basis.BIN_Employee D ON(A.BIN_EmployeeID=D.BIN_EmployeeID)
+			LEFT JOIN Members.BIN_MemberLevel E ON(B.MemberLevel=E.BIN_MemberLevelID)
+			LEFT JOIN Members.BIN_MemberLevel F ON(B.OldMemberLevel=F.BIN_MemberLevelID)
+		WHERE
+			A.TradeType=#tradeType#
+			AND  A.BIN_BrandInfoID = #brandInfoId#
+		 	AND  A.BIN_OrganizationInfoID = #organizationInfoId#
+			AND  B.BIN_MemberInfoID = #memberInfoId#
+	 ]]>
+		  <isNotEmpty property="memberClubId">
+				AND B.BIN_MemberClubID = #memberClubId#
+		</isNotEmpty>
+	<![CDATA[
+		ORDER BY 
+			B.BusinessTime DESC
+	]]>
+	</select>
+	<!-- 会员积分记录SQL -->
+	<select id="getMemPointList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+	<![CDATA[
+		SELECT 
+			B.BIN_MemUsedDetailID as memPointId,
+			CONVERT(varchar(30),B.BusinessTime,120) AS businessTime,
+			B.OldCurPoints  AS oldCurPoints,    
+  			B.CurPoints  AS curPoints,  
+  			B.UsedCount  AS usedCount,  
+			'(' + D.EmployeeCode + ')'+D.EmployeeName AS employeeName,
+			B.Reason AS reason,
+			A.TradeType AS tradeType,
+			A.TradeNoIF AS tradeNo,
+			CONVERT(varchar(30),B.UpdateTime,120)  AS updateTime,
+			A.Channel
+		FROM
+			Members.BIN_MemUsedDetail B 
+			JOIN Members.BIN_MemUsedInfo A ON(B.BIN_MemUsedInfoID=A.BIN_MemUsedInfoID)
+			JOIN Members.BIN_MemberInfo C WITH(nolock) ON(B.BIN_MemberInfoID=C.BIN_MemberInfoID)
+			LEFT JOIN Basis.BIN_Employee D ON(A.BIN_EmployeeID=D.BIN_EmployeeID)
+		WHERE
+			B.BIN_MemberInfoID = #memberInfoId# 
+			AND  A.TradeType=#tradeType#
+			AND  A.BIN_BrandInfoID = #brandInfoId#
+		 	AND  A.BIN_OrganizationInfoID = #organizationInfoId#
+		 	AND	 A.ValidFlag = '1'
+	 ]]>
+		  <isNotEmpty property="memberClubId">
+				AND B.BIN_MemberClubID = #memberClubId#
+		</isNotEmpty>
+	<![CDATA[
+		ORDER BY 
+			B.BusinessTime DESC
+	]]>
+	</select>
+	<!-- 取得用户密码  -->
+	<select id="getUserPassWord" parameterClass="java.util.HashMap" resultClass="java.lang.String">
+		<![CDATA[ 
+			SELECT 
+				A.PassWord
+			FROM
+				Privilege.BIN_User A
+			WHERE 
+				A.BIN_UserID = #userId# AND
+				A.ValidFlag = '1' 
+		]]>
+	</select>
+	
+	  <!-- 会员信息-->
+	<select id="getReason" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+	<![CDATA[
+	SELECT 
+		BIN_MemUsedDetailID,
+		Reason,
+		BIN_MemberInfoID
+	FROM 
+		Members.BIN_MemUsedDetail
+	WHERE  
+		BIN_MemUsedDetailID=#memUsedDetailId#
+		 ]]>	
+    </select>
+    
+    <!-- 取得指定积分时间 -->
+	<select id="getPointTime" parameterClass="java.util.HashMap" resultClass="java.lang.String">
+	<![CDATA[ 
+		SELECT 
+			DISTINCT
+			CONVERT(varchar(30),B.BusinessTime,120) AS businessTime
+		FROM
+			Members.BIN_MemUsedInfo A 
+			JOIN Members.BIN_MemUsedDetail B WITH(NOLOCK) ON(A.BIN_MemUsedInfoID=B.BIN_MemUsedInfoID)
+		WHERE
+			A.TradeType='PT'
+			AND  A.BIN_BrandInfoID =#brandInfoId#
+		 	AND  A.BIN_OrganizationInfoID = #organizationInfoId#
+			AND  B.BusinessTime=#BusinessTime#
+			AND B.BIN_MemberInfoID=#memberInfoId#
+
+	]]>
+	</select>
+</sqlMap>

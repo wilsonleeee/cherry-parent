@@ -1,0 +1,70 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sqlMap PUBLIC "-//iBATIS.com//DTD SQL Map 2.0//EN" "http://ibatis.apache.org/dtd/sql-map-2.dtd">
+<sqlMap namespace="BINOLPLGAD01">
+	<!-- 小工具信息表集合 -->
+	<sql id="gadgetInfoQuery">
+		SELECT
+			  BIN_GadgetInfoID AS gadgetInfoId,
+		      PageID AS pageId,
+		      GadgetCode AS gadgetCode,
+		      GadgetName AS gadgetName,
+		      GadgetConfPath AS gadgetConfPath,
+		      GadgetParam AS gadgetParam
+		  FROM 
+		  	  Social.BIN_GadgetInfo
+		  WHERE
+		  	  ValidFlag= 1
+		  	  <isNotEmpty property="gadgetName" prepend="AND">
+		  	  	GadgetName LIKE '%' + #gadgetName# + '%'
+		  	  </isNotEmpty>
+		  	  <isNotEmpty property="pageId" prepend="AND">
+		  	  	PageID = #pageId#
+		  	  </isNotEmpty>
+		  	  
+	</sql>
+	
+	<!-- 取得 小工具信息表集合总数 -->
+	<select id="getGadgetInfoCount" parameterClass="java.util.HashMap" resultClass="java.lang.Integer">
+    	<![CDATA[
+			SELECT	COUNT(SORT_T1.gadgetInfoId) AS count FROM (
+		]]>	
+		<include refid="BINOLPLGAD01.gadgetInfoQuery" />	
+		<![CDATA[	
+			)SORT_T1
+		]]>	
+	</select>
+	
+	<!-- 取得 小工具信息表集合List  -->
+	<select id="getGadgetInfoList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+		<include refid="BINOLCMINC99.pageheader" />
+        <include refid="BINOLPLGAD01.gadgetInfoQuery" />
+        <include refid="BINOLCMINC99.pagefooter" />	
+	</select>
+	
+	<!-- 根据ID取得小工具信息 -->
+	<select id="getGadgetInfoById" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+		SELECT
+			  BIN_GadgetInfoID AS gadgetInfoId,
+		      PageID AS pageId,
+		      GadgetCode AS gadgetCode,
+		      GadgetName AS gadgetName,
+		      GadgetConfPath AS gadgetConfPath,
+		      GadgetParam AS gadgetParam
+		  FROM 
+		  	  Social.BIN_GadgetInfo
+		  WHERE
+		  	  ValidFlag= 1 AND
+	  	  	  BIN_GadgetInfoID = #gadgetInfoId#	
+		  	  
+	</select>
+	<!-- 更新小工具信息 -->
+	<update id="updGadgetInfo" parameterClass="java.util.HashMap">
+		UPDATE
+			Social.BIN_GadgetInfo
+		SET 
+			GadgetParam = #gadgetParam#,
+			<include refid="BINOLCMINC99.updateSql" />	
+		WHERE
+			BIN_GadgetInfoID = #gadgetInfoId#
+	</update>
+</sqlMap>

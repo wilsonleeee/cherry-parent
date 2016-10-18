@@ -1,0 +1,132 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sqlMap PUBLIC "-//iBATIS.com//DTD SQL Map 2.0//EN" "http://ibatis.apache.org/dtd/sql-map-2.dtd">
+<sqlMap namespace="BINOLMOMAN02">
+
+    <!-- 插入机器信息表  -->
+    <insert id="addMachineInfo" parameterClass="java.util.HashMap">
+        <![CDATA[
+            INSERT INTO Monitor.BIN_MachineInfo(
+                BIN_OrganizationInfoID,
+                BIN_BrandInfoID,
+                MachineCode,
+                MachineCodeOld,
+				MachineType,
+				PhoneCode,
+                Comment,
+        ]]>
+        <isNotEmpty property="MobileMacAddress">
+        	MobileMacAddress,
+        </isNotEmpty>
+        <isNotEmpty property="MobileOS">
+        	MobileOS,
+        </isNotEmpty>
+        <isNotEmpty property="MobileType">
+        	MobileType,
+        </isNotEmpty>
+        <include refid="BINOLCMINC99.insertKeySql" />
+        <![CDATA[
+            )VALUES(
+                #organizationInfoId#,
+                #brandInfoId#,
+                #machineCode#,
+                #machineCodeOld#,
+				#machineType#,
+				#phoneCode#,
+                #comment#,
+        ]]>
+        <isNotEmpty property="MobileMacAddress">
+        	#MobileMacAddress#,
+        </isNotEmpty>
+        <isNotEmpty property="MobileOS">
+        	#MobileOS#,
+        </isNotEmpty>
+        <isNotEmpty property="MobileType">
+        	#MobileType#,
+        </isNotEmpty>
+        <include refid="BINOLCMINC99.insertValueSql" />
+        <![CDATA[
+            )
+        ]]>
+    </insert>
+    
+	<!-- 插入机器号对照表  -->
+    <insert id="addMachineCodeCollate" parameterClass="java.util.HashMap">
+        <![CDATA[
+            INSERT INTO Monitor.BIN_MachineCodeCollate(
+                BIN_OrganizationInfoID,
+                BIN_BrandInfoID,
+                MachineCode,
+                MachineCodeOld,
+                MachineStatus,
+				BindStatus,
+                BIN_UserID,
+        ]]>
+        <include refid="BINOLCMINC99.insertKeySql" />
+        <![CDATA[
+            )VALUES(
+                #organizationInfoId#,
+				#brandInfoId#,
+				#machineCode#,
+				#machineCodeOld#,
+				#machineStatus#,
+				#bindStatus#,
+                #userId#,
+        ]]>
+        <include refid="BINOLCMINC99.insertValueSql" />
+        <![CDATA[
+            )
+        ]]>
+    </insert>
+	
+    <!-- 判断机器信息表机器编号是否已经存在 -->
+    <select id="getMachineInfoId" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+        <![CDATA[
+            SELECT
+                B.MachineCodeOld
+            FROM
+                Monitor.BIN_MachineInfo A
+			LEFT JOIN Monitor.BIN_MachineCodeCollate B
+			ON A.MachineCode = B.MachineCode
+            WHERE
+                A.MachineCode=#machineCode#
+        ]]>
+    </select>
+	
+	
+	<!-- 取得品牌末位码 -->
+    <select id="getBrandLastCode" parameterClass="java.util.HashMap" resultClass="java.lang.String">
+        <![CDATA[
+            SELECT
+			    LastCode AS lastCode
+            FROM
+			    Basis.BIN_BrandInfo
+			WHERE
+				BIN_BrandInfoID = #brandInfoId#
+        ]]>
+    </select>
+
+    <!-- 取得品牌简称 -->
+    <select id="getBrandNameShort" parameterClass="java.util.HashMap" resultClass="java.lang.String">
+        <![CDATA[
+            SELECT
+                BrandNameShort AS brandNameShort
+            FROM
+                Basis.BIN_BrandInfo
+            WHERE
+                BIN_BrandInfoID = #brandInfoId#
+        ]]>
+    </select>
+
+    <!-- 取得品牌编号 -->
+    <select id="getBrandCode" parameterClass="java.util.HashMap" resultClass="java.lang.String">
+        <![CDATA[
+            SELECT
+                BrandCode AS brandCode
+            FROM
+                Basis.BIN_BrandInfo
+            WHERE
+                BIN_BrandInfoID = #brandInfoId#
+        ]]>
+    </select>
+
+</sqlMap>

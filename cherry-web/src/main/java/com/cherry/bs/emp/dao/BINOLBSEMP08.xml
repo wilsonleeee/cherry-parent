@@ -1,0 +1,74 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sqlMap PUBLIC "-//iBATIS.com//DTD SQL Map 2.0//EN" "http://ibatis.apache.org/dtd/sql-map-2.dtd">
+<sqlMap namespace="BINOLBSEMP08">
+	<sql id="baCouponQuery">
+		<![CDATA[
+			SELECT
+				BIN_BaCouponID AS baCouponId,
+				B.ResellerCode AS resellerCode,
+				B.ResellerName AS resellerName,
+				CASE ISNULL(B.ResellerCode,'') WHEN '' THEN ISNULL(B.ResellerName,'null') 
+					ELSE '('+B.ResellerCode+')'+ISNULL(B.ResellerName,'null') END AS resellerNameShow,
+				CASE ISNULL(B.ParentResellerCode,'') WHEN '' THEN ISNULL(C.ResellerName,'null') 
+					ELSE '('+B.ParentResellerCode+')'+ISNULL(C.ResellerName,'null') END AS parentResellerNameShow,
+				A.CouponCode AS couponCode,
+				A.BatchDate AS batchDate,
+				A.UseFlag AS useFlag,
+				A.SynchFlag AS synchFlag
+			FROM 
+				Basis.BIN_BaCoupon A WITH(NOLOCK)
+				LEFT JOIN Basis.BIN_ResellerInfo B WITH(NOLOCK)
+				ON(A.ResellerCode=B.ResellerCode)
+				LEFT JOIN Basis.BIN_ResellerInfo C WITH(NOLOCK)
+				ON(B.ParentResellerCode=C.ResellerCode AND C.LevelCode='1')
+			WHERE
+				A.ValidFlag='1' AND
+				A.BIN_BrandInfoID=#brandInfoId# AND
+				A.BIN_OrganizationInfoID=#organizationInfoId# AND
+				A.BatchCode = #batchCode#
+		]]>
+		<isNotEmpty prepend="AND" property="resellerCode">
+				<![CDATA[A.ResellerCode = #resellerCode#]]>
+		</isNotEmpty>
+		<isNotEmpty prepend="AND" property="parentResellerCode">
+				<![CDATA[B.ParentResellerCode = #parentResellerCode#]]>
+		</isNotEmpty>
+		<isNotEmpty prepend="AND" property="couponCode">
+				<![CDATA[A.CouponCode LIKE '%' + #couponCode# + '%']]>
+		</isNotEmpty>
+		<isNotEmpty prepend="AND" property="synchFlag">
+				<![CDATA[A.SynchFlag = #synchFlag#]]>
+		</isNotEmpty>
+	</sql>
+	
+	<!-- 取得当前批次的代理商优惠券数量  -->
+    <select id="getBaCouponCount" parameterClass="java.util.HashMap" resultClass="java.lang.Integer">
+        <![CDATA[
+            SELECT COUNT(1) AS count FROM (
+        ]]>
+        <include refid="BINOLBSEMP08.baCouponQuery" />
+        <![CDATA[
+            )SORT_T1
+        ]]>
+    </select>
+    
+    <!-- 取得当前批次的代理商优惠券List  -->
+    <select id="getBaCouponList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+        <include refid="BINOLCMINC99.pageheader" />
+        <include refid="BINOLBSEMP08.baCouponQuery" />
+        <include refid="BINOLCMINC99.pagefooter" />
+    </select>
+    <!-- 删除代理商优惠券  -->
+	<delete id="deleteBaCoupon" parameterClass="java.util.HashMap">
+		<![CDATA[
+			DELETE FROM Basis.BIN_BaCoupon		
+			WHERE
+				BIN_BrandInfoID = #brandInfoId# AND
+				BIN_OrganizationInfoID = #organizationInfoId# AND
+				SynchFlag='0'
+		]]>
+		<isNotEmpty prepend="AND" property="baCouponId">
+			<![CDATA[BIN_BaCouponID = #baCouponId# ]]>
+		</isNotEmpty>
+	</delete>
+</sqlMap>

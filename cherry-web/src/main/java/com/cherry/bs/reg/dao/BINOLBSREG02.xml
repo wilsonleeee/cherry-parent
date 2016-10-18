@@ -1,0 +1,82 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sqlMap PUBLIC "-//iBATIS.com//DTD SQL Map 2.0//EN" "http://ibatis.apache.org/dtd/sql-map-2.dtd">
+<sqlMap namespace="BINOLBSREG02">
+    
+    <!-- 取得区域详细信息 -->
+	<select id="getRegionInfo" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+		<![CDATA[					
+			SELECT	
+				A.BIN_RegionID AS regionId,
+				A.Path AS regionPath,
+				A.RegionCode AS regionCode,
+				A.RegionNameForeign AS regionNameEn,
+				A.RegionNameChinese AS regionNameCh,		
+				A.BIN_BrandInfoID AS brandInfoId,
+				A.RegionType AS regionType,
+				A.HelpCode AS helpCode,
+				A.ZipCode AS zipCode,
+				A.TeleCode AS teleCode,
+				CONVERT(varchar(30),A.UpdateTime,121) AS updateTime,
+				A.ModifyCount AS modifyCount,
+				A.ValidFlag AS validFlag,
+				B.BrandNameChinese AS brandName,
+				C.Path AS higherPath,
+				C.RegionCode AS higherRegionCode,
+				C.RegionType AS higherRegionType,
+		]]>
+		<dynamic>
+			<isNotEmpty property="language">
+				<isEqual property="language" compareValue="en_US">
+					C.RegionNameForeign AS higherRegionName
+				</isEqual>
+				<isEqual property="language" compareValue="zh_CN">	
+					C.RegionNameChinese AS higherRegionName
+				</isEqual>								
+			</isNotEmpty>
+			<isEmpty property="language">
+				C.RegionNameChinese AS higherRegionName
+			</isEmpty>
+		</dynamic>
+		<![CDATA[		
+			FROM						
+				Basis.BIN_Region A
+				LEFT JOIN Basis.BIN_BrandInfo B ON A.BIN_BrandInfoID = B.BIN_BrandInfoID
+				LEFT JOIN Basis.BIN_Region C ON A.NodeID.GetAncestor(1) = C.NodeID AND C.RegionType <> '-1'
+			WHERE
+				A.BIN_RegionID = #regionId#
+		]]>			
+    </select>
+    <!-- 取得省份或直辖市List -->
+	<select id="getProvinceList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+	<![CDATA[
+			SELECT
+				 B.BIN_RegionID AS regionId,
+				 A.Path AS regionPath,
+				 B.Path AS path,
+				 B.RegionCode AS regionCode,
+				 B.RegionType AS regionType,
+		]]>
+		<dynamic>
+			<isNotEmpty property="language">
+				<isEqual property="language" compareValue="en_US">
+					B.RegionNameForeign AS regionName
+				</isEqual>
+				<isEqual property="language" compareValue="zh_CN">	
+					B.RegionNameChinese AS regionName
+				</isEqual>								
+			</isNotEmpty>
+			<isEmpty property="language">
+				B.RegionNameChinese AS regionName
+			</isEmpty>
+		</dynamic>
+		<![CDATA[			
+			FROM 
+			    Basis.BIN_Region A	
+			    LEFT JOIN Basis.BIN_Region B ON B.NodeID.GetAncestor(1) = A.NodeID
+			WHERE
+				A.BIN_RegionID = #regionId# AND
+				B.ValidFlag = '1' AND
+				B.RegionType='1'
+			]]>
+    </select>
+</sqlMap>

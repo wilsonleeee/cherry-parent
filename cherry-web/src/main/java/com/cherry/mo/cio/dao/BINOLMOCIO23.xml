@@ -1,0 +1,148 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE sqlMap PUBLIC "-//iBATIS.com//DTD SQL Map 2.0//EN" "http://ibatis.apache.org/dtd/sql-map-2.dtd">
+<sqlMap namespace="BINOLMOCIO23">
+    <!-- 柜台消息查询sql文  -->
+    <sql id="departmentMessageQuery">
+        <![CDATA[
+            SELECT
+                A.BIN_DepartmentMessageID AS departmentMessageId,
+                A.MessageType AS messageType,
+                A.MessageTitle AS messageTitle,
+                CAST(A.PublishDate AS date) AS publishDate,
+				A.BIN_BrandInfoID as brandInfoId,
+				CASE 
+					WHEN CONVERT(varchar(10), getDate(),121) <= A.EndDate THEN '0'
+					ELSE '1' END AS pastStatus,
+				A.StartDate AS startValidDate,
+				A.EndDate AS endValidDate,
+				A.Status AS status,
+				CASE 
+					WHEN A.publishDate IS NULL THEN '0'
+					ELSE '1' END AS issuedStatus
+            FROM
+                Monitor.BIN_DepartmentMessage A
+            WHERE
+                A.ValidFlag = '1' AND Status='1'
+                AND A.BIN_OrganizationInfoID = #organizationInfoId#
+                AND A.BIN_BrandInfoID = #brandInfoId#
+                AND A.BIN_DepartmentMessageID IN (
+               	SELECT 
+               		C.BIN_DepartmentMessageID 
+				FROM Monitor.BIN_DepartmentMessageForbidden C 
+				WHERE C.ControlFlag=1 AND C.BIN_OrganizationID=#organizationId#
+				AND C.ValidFlag='1'
+				UNION 
+				SELECT D.BIN_DepartmentMessageID 
+				FROM Monitor.BIN_DepartmentMessageForbidden D 
+				WHERE D.ControlFlag=2 AND D.BIN_OrganizationID <> #organizationId#
+				AND D.ValidFlag='1' AND D.BIN_DepartmentMessageID IN(
+				SELECT E.BIN_DepartmentMessageID 
+				FROM Monitor.BIN_DepartmentMessage E
+				WHERE 1=1
+				]]>
+				 <dynamic>
+            <isNotEmpty prepend="AND" property="message">
+                <![CDATA[(E.MessageTitle like '%'+#message#+'%')]]>
+            </isNotEmpty>
+            <isNotEmpty prepend="AND" property="messageType">
+                <![CDATA[E.MessageType = #messageType#]]>
+            </isNotEmpty>
+			<isNotEmpty prepend="AND" property="startDate">
+                <![CDATA[CAST(E.StartDate AS date) >= #startDate#]]>
+            </isNotEmpty>
+			<isNotEmpty prepend="AND" property="endDate">
+                <![CDATA[CAST(E.EndDate AS date) <= #endDate#]]>
+            </isNotEmpty>
+            <isNotEmpty prepend="AND" property="dateStatus">
+            	<isEqual  property="dateStatus" compareValue="1">
+					<![CDATA[	E.StartDate <= CONVERT(varchar(10), getDate(),121) AND CONVERT(varchar(10), getDate(),121) <= E.EndDate ]]>
+		     	</isEqual>
+		     	<isEqual  property="dateStatus" compareValue="2">
+					<![CDATA[	CONVERT(varchar(10), getDate(),121) > E.EndDate ]]>
+		     	</isEqual>
+		     	<isEqual  property="dateStatus" compareValue="3">
+					<![CDATA[	CONVERT(varchar(10), getDate(),121) < E.StartDate ]]>
+		     	</isEqual>
+		     	<isEqual  property="dateStatus" compareValue="4">
+					<![CDATA[	E.StartDate IS NULL AND E.EndDate IS NULL ]]>
+		     	</isEqual>
+            </isNotEmpty>
+        </dynamic>
+        <![CDATA[
+				)               
+               )                             
+        ]]>
+           <dynamic>
+            <isNotEmpty prepend="AND" property="message">
+                <![CDATA[(A.MessageTitle like '%'+#message#+'%')]]>
+            </isNotEmpty>
+            <isNotEmpty prepend="AND" property="messageType">
+                <![CDATA[A.MessageType = #messageType#]]>
+            </isNotEmpty>
+			<isNotEmpty prepend="AND" property="startDate">
+                <![CDATA[CAST(A.StartDate AS date) >= #startDate#]]>
+            </isNotEmpty>
+			<isNotEmpty prepend="AND" property="endDate">
+                <![CDATA[CAST(A.EndDate AS date) <= #endDate#]]>
+            </isNotEmpty>
+            <isNotEmpty prepend="AND" property="dateStatus">
+            	<isEqual  property="dateStatus" compareValue="1">
+					<![CDATA[	A.StartDate <= CONVERT(varchar(10), getDate(),121) AND CONVERT(varchar(10), getDate(),121) <= A.EndDate ]]>
+		     	</isEqual>
+		     	<isEqual  property="dateStatus" compareValue="2">
+					<![CDATA[	CONVERT(varchar(10), getDate(),121) > A.EndDate ]]>
+		     	</isEqual>
+		     	<isEqual  property="dateStatus" compareValue="3">
+					<![CDATA[	CONVERT(varchar(10), getDate(),121) < A.StartDate ]]>
+		     	</isEqual>
+		     	<isEqual  property="dateStatus" compareValue="4">
+					<![CDATA[	A.StartDate IS NULL AND A.EndDate IS NULL ]]>
+		     	</isEqual>
+            </isNotEmpty>
+        </dynamic>
+    </sql>
+	
+	<!-- 取得柜台消息总数  -->
+    <select id="getDepartmentMessageCount" parameterClass="java.util.HashMap" resultClass="java.lang.Integer">
+        <![CDATA[
+            SELECT COUNT(SORT_T1.departmentMessageId) AS count FROM (
+        ]]>
+        <include refid="BINOLMOCIO23.departmentMessageQuery" />
+        <![CDATA[
+            )SORT_T1
+        ]]>
+    </select>
+    
+    <!-- 取得柜台消息List  -->
+    <select id="getDepartmentMessageList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+        <include refid="BINOLCMINC99.pageheader" />
+        <include refid="BINOLMOCIO23.departmentMessageQuery" />
+        <include refid="BINOLCMINC99.pagefooter" />
+    </select>
+	
+	
+	
+	<!-- 取得柜台消息  -->
+	<select id="getDepartmentMessage" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+        <![CDATA[
+            SELECT
+			    BIN_DepartmentMessageID AS departmentMessageId,
+				BIN_BrandInfoID AS brandInfoId,
+                MessageTitle AS messageTitle,
+                StartDate AS startValidDate,
+                EndDate AS endValidDate,
+                PublishDate AS publishDate,
+                MessageBody AS messageBody,
+                convert(varchar(30),UpdateTime,121)  as updateTime,
+                ModifyCount as modifyCount,
+                FileName as fileName,
+                FilePath as filePath
+            FROM
+                Monitor.BIN_DepartmentMessage
+            WHERE
+                BIN_DepartmentMessageID = #departmentMessageId# AND
+                ValidFlag='1'
+        ]]>
+    </select>
+	
+</sqlMap>

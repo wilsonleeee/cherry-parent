@@ -1,0 +1,232 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sqlMap PUBLIC "-//iBATIS.com//DTD SQL Map 2.0//EN" "http://ibatis.apache.org/dtd/sql-map-2.dtd">
+<sqlMap namespace="BINOLSSPRM04">
+	
+	<!-- 取得促销品信息 -->
+    <select id="getPrmInfo" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+		<![CDATA[
+			SELECT												
+			       A.BIN_PromotionProductID AS promotionProId,										
+			       A.UnitCode AS unitCode,												
+			       A.NameTotal AS nameTotal,												
+			       A.NameShort AS nameShort,												
+			       A.NameAlias AS nameAlias,												
+			       A.NameForeign AS nameForeign,
+			       A.NameShortForeign AS nameShortForeign,												
+			       A.StyleCode AS styleCode,												
+			       A.OperationStyle AS operationStyle,
+				   A.Volume AS volume,											
+			       A.VolumeUnitMeasureCode AS volumeUnitMeasureCode,
+				   A.Weight AS weight,											
+			       A.WeightUnitMeasureCode AS weightUnitMeasureCode,												
+			       A.ModuleCode AS moduleCode,												
+			       A.SaleUnit AS saleUnit,												
+			       A.DiscontinueReseller AS discontinueReseller,												
+			       A.DiscontinueCounter AS discontinueCounter,
+				   ISNULL(CONVERT(Decimal(16,2),A.StandardCost),0) AS standardCost,																						
+			       A.IsReplenish AS isReplenish,												
+			       A.Status AS status,											
+			       A.SellStartDate AS sellStartDate,												
+			       A.SellEndDate AS sellEndDate,												
+			       A.ShelfLife AS shelfLife,
+				   A.ValidFlag AS validFlag,
+				   A.PromotionCateCD AS promCate,
+				   A.Mode AS mode,
+				   ISNULL(CONVERT(int,A.ExPoint),0) AS exPoint,
+				   A.IsStock AS isStock,
+				   convert(varchar(30),A.UpdateTime,121) AS prmUpdateTime,
+                   A.ModifyCount AS prmModifyCount,
+				   C.PrimaryCategoryCode AS primaryCateCode,
+				   C.SecondryCategoryCode AS secondCateCode,
+				   C.SmallCategoryCode AS smallCateCode,
+				   B.BIN_BrandInfoID AS brandInfoId,
+				   isExchanged AS isExchanged,
+				   A.IsPosIss AS isPosIss
+	    ]]>  
+		<dynamic>
+		<isNotEmpty property="language">
+			<isEqual property="language" compareValue="en_US">
+			,C.PrimaryCategoryNameForeign AS primaryCateName
+			,C.SecondryCategoryNameForeign AS secondCateName
+			,C.SmallCategoryNameForeign AS smallCateName
+			,B.BrandNameForeign AS brandName
+			</isEqual>
+			<isEqual property="language" compareValue="zh_CN">	
+			,C.PrimaryCategoryNameChinese AS primaryCateName
+			,C.SecondryCategoryNameChinese AS secondCateName
+			,C.SmallCategoryNameChinese AS smallCateName
+			,B.BrandNameChinese AS brandName
+			</isEqual>								
+		</isNotEmpty>
+		<isEmpty property="language">
+			,C.PrimaryCategoryNameChinese AS primaryCateName
+			,C.SecondryCategoryNameChinese AS secondCateName
+			,C.SmallCategoryNameChinese AS smallCateName
+			,B.BrandNameChinese AS brandName
+		</isEmpty>
+		</dynamic>
+		<![CDATA[
+		  FROM														
+			       Basis.BIN_PromotionProduct A
+				   LEFT JOIN Basis.BIN_PromotionPrtType C ON
+				   (A.BIN_PromotionPrtTypeID = C.BIN_PromotionPrtTypeID AND
+				   C.ValidFlag = '1'),
+				   Basis.BIN_BrandInfo B
+	      WHERE	
+		           A.BIN_PromotionProductID = #promotionProId# AND
+				   A.BIN_BrandInfoID = B.BIN_BrandInfoID	
+		]]>
+    </select>
+	
+	<!-- 取得促销品销售价格 -->
+    <select id="getPrmSalePriceList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+		<![CDATA[
+		SELECT																
+		       A.BIN_PromotionPriceID AS promotionPriceId,
+			   A.SalePrice AS salePrice,														
+		       A.StartDate AS startDate,														
+		       A.EndDate AS endDate,
+			   convert(varchar(30),A.UpdateTime,121) AS priceUpdateTime,
+			   A.ModifyCount AS priceModifyCount,
+			   A.ValidFlag AS validFlag,
+			   case when A.StartDate > CONVERT(date, GETDATE()) then '1'
+			   else '0' end AS displayKbn,
+			   case when A.StartDate <= CONVERT(date, GETDATE()) AND
+			   A.EndDate > CONVERT(date, GETDATE())  then '1'
+			   else '0' end AS doingKbn
+		FROM 																
+		       Basis.BIN_PromotionPrice A													
+        WHERE																
+		       A.BIN_PromotionProductID = #promotionProId#	AND
+			   A.ValidFlag = '1'
+		]]> 
+		<dynamic>
+		<isNotEmpty property="priceKbn">
+			<isEqual prepend="AND" property="priceKbn" compareValue="0">	
+			<![CDATA[
+				A.EndDate > CONVERT(date, GETDATE())
+				ORDER BY A.StartDate
+			]]>
+			</isEqual>				
+		</isNotEmpty>
+		<isEmpty property="priceKbn">
+			<![CDATA[
+				ORDER BY A.StartDate DESC
+			]]>
+		</isEmpty>
+		</dynamic>
+    </select>
+	
+	<!-- 取得部门机构促销产品价格List -->
+    <select id="getPrmPriceDepartList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+		<![CDATA[
+		SELECT			
+			   A.BIN_PrmPriceDepartID AS prmPriceDepartId,
+			   A.BIN_OrganizationID AS departInfoId,	
+	           B.Type AS departType,	
+			   A.DiscountRate AS discountRate,											
+	           A.DecimalMode AS decimalMode,	
+			   A.AllocationPrice AS allocationPrice,
+			   A.SalePrice AS depSalePrice,
+			   A.MinPrice AS minPrice,
+			   A.MaxPrice AS maxPrice,
+			   A.StartDate AS depStartDate,
+			   A.EndDate AS depEndDate,
+			   convert(varchar(30),A.UpdateTime,121) AS depUpdateTime,
+			   A.ModifyCount AS depModifyCount,
+			   A.ValidFlag AS validFlag,
+			   case when A.StartDate > CONVERT(date, GETDATE()) then '1'
+			   else '0' end AS displayKbn,
+			   case when A.StartDate <= CONVERT(date, GETDATE()) AND
+			   A.EndDate > CONVERT(date, GETDATE())  then '1'
+			   else '0' end AS doingKbn
+	    ]]> 
+		<dynamic>
+		<isNotEmpty property="language">
+			<isEqual property="language" compareValue="en_US">	
+			,B.NameForeign AS departName	
+			</isEqual>
+			<isEqual property="language" compareValue="zh_CN">				
+			,B.DepartName AS departName
+			</isEqual>								
+		</isNotEmpty>
+		<isEmpty property="language">						
+			,B.DepartName AS departName
+		</isEmpty>
+		</dynamic> 
+		<![CDATA[
+		FROM															
+	           Basis.BIN_PrmPriceDepart A
+			   JOIN Basis.BIN_Organization B
+			   ON (A.BIN_OrganizationID = B.BIN_OrganizationID)
+			   JOIN (
+				]]>
+				<include refid="BINOLCMINC99.departPrivilegeSql" />
+				<![CDATA[
+				)C
+				ON (B.BIN_OrganizationID = C.BIN_OrganizationID)							
+        WHERE															
+	           A.BIN_PromotionProductID = #promotionProId# AND
+			   A.ValidFlag = '1' AND
+			   B.ValidFlag = '1'
+		]]>
+		<dynamic>
+		<isNotEmpty property="priceKbn">
+			<isEqual prepend="AND" property="priceKbn" compareValue="0">	
+			<![CDATA[
+				A.EndDate > CONVERT(date, GETDATE())
+				ORDER BY 
+				A.BIN_OrganizationID,
+				A.StartDate
+			]]>
+			</isEqual>				
+		</isNotEmpty>
+		<isEmpty property="priceKbn">
+			<![CDATA[
+				ORDER BY 
+				A.BIN_OrganizationID,
+				A.StartDate DESC
+			]]>
+		</isEmpty>
+		</dynamic>
+    </select>
+	
+	<!-- 取得促销品厂商信息List -->
+	<select id="getPrmFacList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+		<![CDATA[
+		SELECT		
+			   BIN_PromotionProductVendorID AS prmPrtVendorId,							
+	           BarCode AS barCode,
+			   convert(varchar(30), UpdateTime,121) AS facUpdateTime,
+			   ModifyCount AS facModifyCount,
+			   ValidFlag AS facValidFlag
+		FROM		
+		       Basis.BIN_PromotionProductVendor										
+        WHERE				
+			   BIN_PromotionProductID = #promotionProId#
+		]]>
+		<dynamic>
+		<isNotEmpty property="validFlagKbn">
+			<isEqual prepend="AND" property="validFlagKbn" compareValue="1">	
+				ValidFlag = '1'
+			</isEqual>				
+		</isNotEmpty>
+		</dynamic>
+	</select>
+	
+	<!-- 取得促销品扩展信息List-->
+    <select id="getPrmExtList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+		<![CDATA[
+		SELECT		
+			   A.BIN_PromotionProductExtID AS prmProductExtId,
+		       A.PromotionImagePath AS promotionImagePath,
+			   convert(varchar(30),A.UpdateTime,121) AS extUpdateTime,
+			   A.ModifyCount AS extModifyCount
+		FROM 																
+		       Basis.BIN_PromotionProductExt A																							
+        WHERE																
+		       A.BIN_PromotionProductID = #promotionProId# AND
+			   A.ValidFlag = '1'																																	
+	    ]]>  
+    </select>
+</sqlMap>

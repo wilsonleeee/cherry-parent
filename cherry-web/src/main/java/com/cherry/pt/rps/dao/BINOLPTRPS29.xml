@@ -1,0 +1,139 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sqlMap PUBLIC "-//iBATIS.com//DTD SQL Map 2.0//EN" "http://ibatis.apache.org/dtd/sql-map-2.dtd">
+<sqlMap namespace="BINOLPTRPS29">
+    
+    <!-- 查询BB柜台销售统计SQL文  -->
+	<sql id="BBCounterSaleRptQuery">
+		<![CDATA[
+			SELECT
+				MIN(A.BatchCode) AS batchCode,
+				MIN(D.DepartCode) AS resellerCode,
+				MIN(D.DepartName) AS resellerName,
+				MIN(B.CounterCode) AS counterCode,
+				MIN(B.CounterNameIF) AS counterName,
+				CONVERT(nvarchar(19), A.StartTime, 120) AS startTime,
+				CONVERT(nvarchar(19), A.EndTime, 120) AS endTime,
+				ISNULL(SUM(CASE WHEN C.SaleType = 'SR' THEN -C.Amount ELSE C.Amount END), 0) AS totalAmount, 
+				ISNULL(SUM(CASE WHEN C.SaleType = 'SR' THEN -C.Quantity ELSE C.Quantity END), 0) AS totalQuantity, 
+				COUNT(C.BIN_SaleRecordID) AS totalBillCount
+			FROM
+				Sale.BIN_BBCounterInfo A WITH(NOLOCK)
+				LEFT JOIN Basis.BIN_CounterInfo B WITH(NOLOCK) ON A.BIN_OrganizationID = B.BIN_OrganizationID 
+				LEFT JOIN Sale.BIN_SaleRecord C WITH(NOLOCK) 
+					ON A.BIN_OrganizationID = C.BIN_OrganizationID AND C.ValidFlag = '1'
+					AND C.SaleTime >= A.StartTime AND C.SaleTime <= A.EndTime
+				LEFT JOIN Basis.BIN_Organization D WITH(NOLOCK) ON B.ResellerDepartID = D.BIN_OrganizationID
+					
+			WHERE
+				A.BIN_BrandInfoID = #brandInfoId#
+				AND A.BIN_OrganizationInfoID = #organizationInfoId#
+		]]>	
+			<isNotEmpty property="batchCode" prepend="AND">
+				A.BatchCode = #batchCode#
+			</isNotEmpty>
+			<isNotEmpty property="counterCode" prepend="AND">
+				B.CounterCode like '%' + #counterCode# + '%'
+			</isNotEmpty>
+			<isNotEmpty property="counterName" prepend="AND">
+				B.CounterNameIF like '%' + #counterName# + '%'
+			</isNotEmpty>
+		<![CDATA[
+				AND A.ValidFlag = '1'
+			GROUP BY A.BIN_OrganizationID,A.StartTime,A.EndTime
+		]]>	
+	</sql>
+	
+	<!-- 查询BB柜台销售统计Count -->
+    <select id="getBBCounterSaleRptCount" parameterClass="java.util.HashMap" resultClass="java.lang.Integer" remapResults="true">
+    	<![CDATA[
+			SELECT	COUNT(1) AS count FROM (
+		]]>	
+		<include refid="BINOLPTRPS29.BBCounterSaleRptQuery" />	
+		<![CDATA[	
+			)SORT_T1
+		]]>										
+    </select>
+	
+	<!-- 查询BB柜台销售统计List  -->
+    <select id="getBBCounterSaleRptList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+       	<include refid="BINOLCMINC99.pageheader" />
+		<include refid="BINOLPTRPS29.BBCounterSaleRptQuery" />	
+		<include refid="BINOLCMINC99.pagefooter" />
+    </select>
+    
+    <!-- 查询BB柜台销售明细SQL文  -->
+    <sql id="BBCounterSaleDetailRptQuery">
+    <![CDATA[	
+		SELECT
+			F.BillCode AS billCode,																		
+			F.BillCodePre AS billCodepre,																
+			C.DepartCode AS resellerCode,																
+			C.DepartName AS resellerName,																
+			B.CounterCode AS counterCode,																
+			B.CounterNameIF AS counterName,																
+			E.EmployeeCode AS baCode,																	
+			E.EmployeeName AS baName,																	
+			F.MemberCode AS memberCode,																	
+			L.Name AS memberName,																		
+			G.UnitCode AS unitCode,																		
+			G.BarCode AS barCode,																		
+			(CASE  WHEN G.SaleType = 'N' THEN I.NameTotal ELSE K.NameTotal END) AS productName,			
+			G.Quantity AS quantity,																		
+			G.Quantity*G.PricePay AS amount,															
+			F.SaleType AS saleType,																		
+			G.SaleType AS prtType,																		
+			G.MainCode AS actCode,																		
+			M.ActivityName AS actName,																	
+			F.SaleDate AS saleDate,																		
+			F.SaleTime AS saleTime																		
+		FROM
+			Sale.BIN_BBCounterInfo A WITH(NOLOCK)
+			LEFT JOIN Basis.BIN_CounterInfo B WITH(NOLOCK) ON A.BIN_OrganizationID = B.BIN_OrganizationID 
+			LEFT JOIN Basis.BIN_Organization C WITH(NOLOCK) ON B.ResellerDepartID = C.BIN_OrganizationID
+			JOIN Sale.BIN_SaleRecord F WITH(NOLOCK) 
+				ON A.BIN_OrganizationID = F.BIN_OrganizationID AND F.ValidFlag = '1'
+				AND F.SaleTime >= A.StartTime AND F.SaleTime <= A.EndTime
+			LEFT JOIN Basis.BIN_Employee E WITH(NOLOCK) ON F.BIN_EmployeeID = E.BIN_EmployeeID
+			LEFT JOIN Sale.BIN_SaleRecordDetail G WITH(NOLOCK) ON F.BIN_SaleRecordID = G.BIN_SaleRecordID AND G.ValidFlag = '1'
+			LEFT JOIN Basis.BIN_ProductVendor H WITH(NOLOCK) ON G.BIN_ProductVendorID = H.BIN_ProductVendorID AND G.BarCode = H.BarCode AND G.SaleType = 'N' 
+			LEFT JOIN Basis.BIN_Product I WITH(NOLOCK) ON H.BIN_ProductID = I.BIN_ProductID
+			LEFT JOIN Basis.BIN_PromotionProductVendor J WITH(NOLOCK) ON G.BIN_ProductVendorID = G.BIN_ProductVendorID AND G.BarCode = H.BarCode AND G.SaleType = 'P'
+			LEFT JOIN Basis.BIN_PromotionProduct K WITH(NOLOCK) ON J.BIN_PromotionProductID = K.BIN_PromotionProductID
+			LEFT JOIN Members.BIN_MemberInfo L WITH(NOLOCK) ON F.BIN_MemberInfoID = L.BIN_MemberInfoID
+			LEFT JOIN Promotion.BIN_PromotionActivity M WITH(NOLOCK) ON G.MainCode = M.ActivityCode
+		WHERE
+				A.BIN_BrandInfoID = #brandInfoId#
+				AND A.BIN_OrganizationInfoID = #organizationInfoId#
+		]]>	
+			<isNotEmpty property="batchCode" prepend="AND">
+				A.BatchCode = #batchCode#
+			</isNotEmpty>
+			<isNotEmpty property="counterCode" prepend="AND">
+				B.CounterCode like '%' + #counterCode# + '%'
+			</isNotEmpty>
+			<isNotEmpty property="counterName" prepend="AND">
+				B.CounterNameIF like '%' + #counterName# + '%'
+			</isNotEmpty>
+		<![CDATA[
+				AND A.ValidFlag = '1'
+    	]]>
+    </sql>
+    
+    <!-- 查询BB柜台销售明细Count -->
+    <select id="getBBCounterSaleDetailRptCount" parameterClass="java.util.HashMap" resultClass="java.lang.Integer" remapResults="true">
+    	<![CDATA[
+			SELECT	COUNT(1) AS count FROM (
+		]]>	
+		<include refid="BINOLPTRPS29.BBCounterSaleDetailRptQuery" />	
+		<![CDATA[	
+			)SORT_T1
+		]]>										
+    </select>
+	
+	<!-- 查询BB柜台销售明细List  -->
+    <select id="getBBCounterSaleDetailRptList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+       	<include refid="BINOLCMINC99.pageheader" />
+		<include refid="BINOLPTRPS29.BBCounterSaleDetailRptQuery" />	
+		<include refid="BINOLCMINC99.pagefooter" />
+    </select>
+</sqlMap>

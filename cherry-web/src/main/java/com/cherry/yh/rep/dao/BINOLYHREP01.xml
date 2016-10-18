@@ -1,0 +1,227 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sqlMap PUBLIC "-//iBATIS.com//DTD SQL Map 2.0//EN" "http://ibatis.apache.org/dtd/sql-map-2.dtd">
+<sqlMap namespace="BINOLYHREP01">
+	<!-- 使用优惠券的订单详细SQL-->
+	<sql id="usedCounponOrderQuery">
+	<![CDATA[
+		SELECT
+			SR.BillCode AS billCode,
+			TT0.UniqueCode AS couponCode,
+			'('+MC.MemCode+')'+MB.Name AS memberName,
+			CASE SD.SaleType
+				WHEN 'N' THEN PT.NameTotal 
+				WHEN 'P' THEN PPT.NameTotal 
+				ELSE PT.NameTotal END AS productName,
+			CONVERT(decimal(32,2),ISNULL(SD.PricePay,0)*ISNULL(SD.Quantity,0)) AS detailAmount,
+			'('+RI1.ParentResellerCode+')'+RI11.ResellerName AS resellerName1L,
+			'('+RI1.ResellerCode+')'+RI1.ResellerName as resellerName2L
+		FROM
+			Sale.BIN_SaleRecord SR WITH(NOLOCK)
+			LEFT JOIN Sale.BIN_SaleRecordDetail SD WITH(NOLOCK)
+			ON(SD.BIN_SaleRecordID=SR.BIN_SaleRecordID)
+			LEFT JOIN Basis.BIN_BaCoupon COU WITH(NOLOCK)
+			ON(COU.CouponCode=SD.UniqueCode 
+				AND SD.UnitCode='BACOUPON' 
+				AND SD.Barcode='BACOUPON' 
+				AND COU.UseFlag='1'
+				AND COU.SynchFlag='2')
+			LEFT JOIN Members.BIN_MemberInfo MB WITH(NOLOCK)
+			ON(SR.BIN_MemberInfoID=MB.BIN_MemberInfoID)
+			LEFT JOIN Members.BIN_MemCardInfo MC WITH(NOLOCK)
+			ON(MB.BIN_MemberInfoID=MC.BIN_MemberInfoID)
+			LEFT JOIN Basis.BIN_ProductVendor PV WITH(NOLOCK)
+			ON(SD.BIN_ProductVendorID=PV.BIN_ProductVendorID)
+			LEFT JOIN Basis.BIN_Product PT WITH(NOLOCK)
+			ON(PV.BIN_ProductID=PT.BIN_ProductID)
+			LEFT JOIN Basis.BIN_PromotionProductVendor PPV WITH(NOLOCK)
+			ON(SD.BIN_ProductVendorID=PPV.BIN_PromotionProductVendorID AND PPV.ValidFlag='1')
+			LEFT JOIN Basis.BIN_PromotionProduct PPT WITH(NOLOCK)
+			ON(PPV.BIN_PromotionProductID=PPT.BIN_PromotionProductID AND PPT.ValidFlag='1')
+			LEFT JOIN Basis.BIN_BaInfo BA1 WITH(NOLOCK)
+			ON(SR.BIN_EmployeeID=BA1.BIN_EmployeeID)
+			LEFT JOIN Basis.BIN_ResellerInfo RI1 WITH(NOLOCK)
+			ON(BA1.BaCode=RI1.ResellerCode AND RI1.LevelCode='2')
+			LEFT JOIN Basis.BIN_ResellerInfo RI11 WITH(NOLOCK)
+			ON(RI1.ParentResellerCode=RI11.ResellerCode AND RI11.LevelCode='1')
+			LEFT JOIN (
+				SELECT 
+					DISTINCT
+				BIN_SaleRecordID,UniqueCode from Sale.BIN_SaleRecordDetail 
+				WHERE UnitCode='BACOUPON' AND BarCode='BACOUPON'
+			) TT0
+			ON(SR.BIN_SaleRecordID=TT0.BIN_SaleRecordID)
+		WHERE
+			SR.BIN_OrganizationInfoID=#organizationInfoId# AND
+			SR.BIN_BrandInfoID=#brandInfoId# AND
+			SR.ValidFlag='1' AND
+			EXISTS(
+				SELECT 
+					1 
+				FROM
+					Sale.BIN_SaleRecordDetail EX WITH(NOLOCK)
+				WHERE
+					EX.UnitCode='BACOUPON'
+					AND EX.BarCode='BACOUPON'
+					AND SR.BIN_SaleRecordID=EX.BIN_SaleRecordID
+			)
+		]]>
+		<isNotEmpty prepend="AND" property="startDate">
+			<![CDATA[SR.SaleTime >= #startDate#]]>
+		</isNotEmpty>
+		<isNotEmpty prepend="AND" property="endDate">
+			<![CDATA[SR.SaleTime <= dateadd(day,1,#endDate#)]]>
+		</isNotEmpty>
+		<isNotEmpty prepend="AND" property="billCode">
+			<![CDATA[SR.BillCode like '%'+#billCode#+'%']]>
+		</isNotEmpty>
+		<isNotEmpty prepend="AND" property="parentResellerCode">
+			<![CDATA[RI1.ParentResellerCode = #parentResellerCode#]]>
+		</isNotEmpty>
+		<isNotEmpty prepend="AND" property="resellerCode">
+			<![CDATA[RI1.ResellerCode = #resellerCode#]]>
+		</isNotEmpty>
+		<isNotEmpty prepend="AND" property="provinceId">
+			<![CDATA[RI1.BIN_ProvinceID = #provinceId#]]>
+		</isNotEmpty>
+		<isNotEmpty prepend="AND" property="cityId">
+			<![CDATA[RI1.BIN_CityID = #cityId# ]]>
+		</isNotEmpty>
+	</sql>
+	
+	<!-- 未使用优惠券的关联订单 -->
+	<sql id="noUsedCouponRelateOrderQuery">
+	<![CDATA[
+		SELECT
+			A.BillCode as billCode,
+			'--' as couponCode,
+			'('+MC.MemCode+')'+B.Name as memberName,
+			CASE D.SaleType 
+				WHEN 'N' THEN PT.NameTotal 
+				WHEN 'P' THEN PPT.NameTotal 
+				ELSE PT.NameTotal END AS productName,
+			CONVERT(decimal(32,2),ISNULL(D.PricePay,0)*ISNULL(D.Quantity,0)) AS detailAmount,
+			'('+RI.ParentResellerCode+')'+PRI.ResellerName AS resellerName1L,
+			'('+RI.ResellerCode+')'+RI.ResellerName as resellerName2L
+		FROM 
+			Sale.BIN_SaleRecord A WITH(NOLOCK)
+			LEFT JOIN Sale.BIN_SaleRecordDetail D
+			ON(A.BIN_SaleRecordID=D.BIN_SaleRecordID)
+			LEFT JOIN Basis.BIN_ProductVendor PV WITH(NOLOCK)
+			ON(D.BIN_ProductVendorID=PV.BIN_ProductVendorID)
+			LEFT JOIN Basis.BIN_Product PT WITH(NOLOCK)
+			ON(PV.BIN_ProductID=PT.BIN_ProductID)
+			LEFT JOIN Basis.BIN_PromotionProductVendor PPV WITH(NOLOCK)
+			ON(D.BIN_ProductVendorID=PPV.BIN_PromotionProductVendorID AND PPV.ValidFlag='1')
+			LEFT JOIN Basis.BIN_PromotionProduct PPT WITH(NOLOCK)
+			ON(PPV.BIN_PromotionProductID=PPT.BIN_PromotionProductID AND PPT.ValidFlag='1')
+			JOIN Members.BIN_MemberInfo B WITH(NOLOCK)
+			ON(A.BIN_MemberInfoID=B.BIN_MemberInfoID AND B.ValidFlag='1')
+			LEFT JOIN Members.BIN_MemCardInfo MC WITH(NOLOCK)
+			ON(B.BIN_MemberInfoID=MC.BIN_MemberInfoID)
+			JOIN Basis.BIN_BaInfo C WITH(NOLOCK)
+			ON(B.BIN_EmployeeID=C.BIN_EmployeeID)
+			JOIN Basis.BIN_ResellerInfo RI WITH(NOLOCK)
+			ON(C.BaCode=RI.ResellerCode AND RI.LevelCode='2')
+			LEFT JOIN Basis.BIN_ResellerInfo PRI WITH(NOLOCK)
+			ON(RI.ParentResellerCode=PRI.ResellerCode AND PRI.LevelCode='1')
+		WHERE
+			A.BIN_OrganizationInfoID=#organizationInfoId# AND
+			A.BIN_BrandInfoID=#brandInfoId# AND
+			A.ValidFlag='1' AND
+			NOT EXISTS(
+				SELECT 
+					1 
+				FROM
+					Sale.BIN_SaleRecordDetail EX WITH(NOLOCK)
+				WHERE
+					EX.UnitCode='BACOUPON'
+					AND EX.BarCode='BACOUPON'
+					AND A.BIN_SaleRecordID=EX.BIN_SaleRecordID
+			)
+	]]>
+	<isNotEmpty prepend="AND" property="startDate">
+			<![CDATA[A.SaleTime >= #startDate#]]>
+		</isNotEmpty>
+		<isNotEmpty prepend="AND" property="endDate">
+			<![CDATA[A.SaleTime <= dateadd(day,1,#endDate#)]]>
+		</isNotEmpty>
+		<isNotEmpty prepend="AND" property="billCode">
+			<![CDATA[A.BillCode like '%'+#billCode#+'%']]>
+		</isNotEmpty>
+		<isNotEmpty prepend="AND" property="parentResellerCode">
+			<![CDATA[RI.ParentResellerCode = #parentResellerCode#]]>
+		</isNotEmpty>
+		<isNotEmpty prepend="AND" property="resellerCode">
+			<![CDATA[RI.ResellerCode = #resellerCode#]]>
+		</isNotEmpty>
+		<isNotEmpty prepend="AND" property="provinceId">
+			<![CDATA[RI.BIN_ProvinceID = #provinceId#]]>
+		</isNotEmpty>
+		<isNotEmpty prepend="AND" property="cityId">
+			<![CDATA[R1.BIN_CityID = #cityId# ]]>
+		</isNotEmpty>
+	</sql>
+	
+	<!-- 取得使用优惠券的订单详细 LIST的行数 -->
+    <select id="getSaleOrderDetailCount" parameterClass="java.util.HashMap" resultClass="java.lang.Integer">
+        <![CDATA[
+            SELECT COUNT(1) AS count FROM (
+        ]]>
+        <include refid="BINOLYHREP01.usedCounponOrderQuery" />
+        <![CDATA[
+            )SORT_T1
+        ]]>
+    </select>
+    
+    <!-- 取得使用优惠券的订单详细 LISR -->
+    <select id="getSaleOrderDetailList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+        <include refid="BINOLCMINC99.pageheader" />
+        <include refid="BINOLYHREP01.usedCounponOrderQuery" />
+        <![CDATA[UNION ALL]]>
+        <include refid="BINOLYHREP01.noUsedCouponRelateOrderQuery" />
+        <include refid="BINOLCMINC99.pagefooter" />
+    </select>
+    
+     <!-- 取得有使用优惠券的汇总信息  -->
+    <select id="getSumInfo" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+    	<![CDATA[
+			SELECT
+				COUNT(1) AS sumOrderCount,
+				ISNULL(SUM(SORT_T2.detailCount),0) as count,
+				ISNULL(SUM(sumAmount),0) as sumAmount
+			FROM(
+			SELECT
+				COUNT(SORT_T1.billCode) as detailCount,
+				SUM(convert(decimal(32,2),SORT_T1.detailAmount)) AS sumAmount
+			FROM (
+		]]>
+		<include refid="BINOLYHREP01.usedCounponOrderQuery" />
+		<![CDATA[	
+				)SORT_T1
+				GROUP BY SORT_T1.billCode
+			) SORT_T2
+		]]>		
+    </select>
+    
+     <!-- 取得未使用优惠券关联订单的汇总信息  -->
+    <select id="getSumNoUsedInfo" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+    	<![CDATA[
+			SELECT
+				COUNT(1) AS noUsedCouponOrderCount,
+				ISNULL(SUM(SORT_T2.detailCount),0) as count,
+				ISNULL(SUM(sumAmount),0) as noUsedCouponOrderAmount
+			FROM(
+				SELECT
+					COUNT(SORT_T1.billCode) as detailCount,
+					SUM(convert(decimal(32,2),SORT_T1.detailAmount)) AS sumAmount
+				FROM (
+		]]>
+		<include refid="BINOLYHREP01.noUsedCouponRelateOrderQuery" />
+		<![CDATA[	
+				) SORT_T1
+				GROUP BY SORT_T1.billCode
+			) SORT_T2
+		]]>		
+    </select>
+    
+</sqlMap>

@@ -1,0 +1,221 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE sqlMap PUBLIC "-//iBATIS.com//DTD SQL Map 2.0//EN" "http://ibatis.apache.org/dtd/sql-map-2.dtd">
+<sqlMap namespace="BINOLMOPMC02">
+	<!-- 菜单组菜单配置树-->
+	<select id="getMenuGrpConfig" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+	<![CDATA[
+		SELECT
+			A.ParentMenuID AS pId,
+			A.BIN_PosMenuID AS id,
+			A.MenuStatus AS brandMenuStatus,
+			CASE WHEN
+				(B.MenuStatus IS NULL) OR (A.MenuStatus = B.MenuStatus) THEN '0' 
+			ELSE '1' END AS diffentFlag,
+			'0' AS changeFlag,
+			ISNULL(B.MenuStatus,A.MenuStatus) AS menuStatus,
+			C.MachineType AS machineType,
+	]]>
+  	<dynamic>
+		<isNotEmpty property="language">
+			<isEqual property="language" compareValue="en_US">										
+				'('+A.MenuCode+')' + A.BrandMenuNameEN AS name
+			</isEqual>
+			<isEqual property="language" compareValue="zh_CN">										
+				'('+A.MenuCode+')' + A.BrandMenuNameCN AS name
+			</isEqual>								
+		</isNotEmpty>
+		<isEmpty property="language">
+			'('+A.MenuCode+')' + A.BrandMenuNameCN AS name
+		</isEmpty>
+	</dynamic>
+	<![CDATA[
+  		FROM 
+		  	Monitor.BIN_PosMenuBrand A WITH(NOLOCK)
+			LEFT JOIN (
+				SELECT
+					BIN_PosMenuID,
+					MenuStatus 
+				FROM 
+					Monitor.BIN_PosMenuGrpConfig 
+				WHERE
+					BIN_PosMenuGrpID = #menuGrpID#
+				) B
+			ON(A.BIN_PosMenuID = B.BIN_PosMenuID)
+			LEFT JOIN Monitor.BIN_PosMenu C WITH(NOLOCK)
+			ON(A.MenuCode = C.MenuCode)
+		WHERE
+            A.BIN_BrandInfoID = #brandInfoId# AND
+            A.BIN_OrganizationInfoID = #organizationInfoId#
+    ]]>
+    <isNotEmpty property="machineType" prepend="AND">
+            C.MachineType=#machineType#
+    </isNotEmpty>
+    <![CDATA[
+		ORDER BY
+		  	A.ParentMenuID,
+		  	A.MenuOrder
+	]]>
+	</select>
+	
+	<!-- 菜单组基本信息-->
+	<select id="getPosMenuGrpInfo" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+	<![CDATA[
+		SELECT DISTINCT
+			CASE WHEN 
+				C.BIN_PosMenuGrpID IS NULL THEN '0'
+			ELSE '1' END AS isSpecial,
+			A.MachineType AS machineType,
+			A.StartDate AS startDate,
+			A.EndDate AS endDate,
+			#pastStatus# AS pastStatus,
+	]]>
+  	<dynamic>
+		<isNotEmpty property="language">
+			<isEqual property="language" compareValue="en_US">
+				B.BrandNameForeign AS brandName,									
+				A.ForeignName AS posMenuGrpName
+			</isEqual>
+			<isEqual property="language" compareValue="zh_CN">
+				B.BrandNameChinese AS brandName,									
+				A.GroupName AS posMenuGrpName
+			</isEqual>								
+		</isNotEmpty>
+		<isEmpty property="language">
+			B.BrandNameChinese AS brandName,
+			A.GroupName AS posMenuGrpName
+		</isEmpty>
+	</dynamic>
+	<![CDATA[		
+		FROM
+			Monitor.BIN_PosMenuGrp A
+			LEFT JOIN Basis.BIN_BrandInfo B
+			ON(A.BIN_BrandInfoID = B.BIN_BrandInfoID)
+			LEFT JOIN Monitor.BIN_PosMenuGrpConfig C
+			ON(A.BIN_PosMenuGrpID = C.BIN_PosMenuGrpID)
+		WHERE
+			A.BIN_BrandInfoID = #brandInfoId# AND
+            A.BIN_OrganizationInfoID = #organizationInfoId# AND
+            A.BIN_PosMenuGrpID = #menuGrpID#
+	]]>
+	</select>
+	
+	<!-- 取得菜单信息（用于快捷定位 ）-->
+	<select id="getPosMenuInfo" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+	<![CDATA[
+		SELECT TOP $number$
+			BIN_PosMenuID AS posMenuID,
+	]]>
+  	<dynamic>
+		<isNotEmpty property="language">
+			<isEqual property="language" compareValue="en_US">
+				'('+MenuCode+')' + BrandMenuNameEN AS menuName
+			</isEqual>
+			<isEqual property="language" compareValue="zh_CN">
+				'('+MenuCode+')' + BrandMenuNameCN AS menuName
+			</isEqual>								
+		</isNotEmpty>
+		<isEmpty property="language">
+			'('+MenuCode+')' + BrandMenuNameCN AS menuName
+		</isEmpty>
+	</dynamic>
+	<![CDATA[	
+		FROM
+			Monitor.BIN_PosMenuBrand
+		WHERE
+			ValidFlag = '1'
+			AND BIN_OrganizationInfoID = #organizationInfoId#
+			AND BIN_BrandInfoID = #brandInfoId#
+	]]>
+	<dynamic>
+		<isNotEmpty property="menuInfoStr" prepend="AND">
+			(
+				<isNotEmpty property="language">
+					<isEqual property="language" compareValue="zh_CN">										
+						<![CDATA[BrandMenuNameCN Like '%' + #menuInfoStr# + '%']]>
+					</isEqual>
+					<isEqual property="language" compareValue="en_US">										
+						<![CDATA[BrandMenuNameEN Like '%' + #menuInfoStr# + '%']]>
+					</isEqual>
+				</isNotEmpty>
+				<isEmpty property="language">
+					<![CDATA[BrandMenuNameCN Like '%' + #menuInfoStr# + '%']]>
+				</isEmpty>
+				OR
+					MenuCode Like '%' + #menuInfoStr# + '%'
+			)
+		</isNotEmpty>
+	</dynamic>
+	</select>
+	
+	<!-- 取得菜单组配置差分表中的信息-->
+	<select id="getGrpConfigList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+	<![CDATA[
+		SELECT
+		    BIN_PosMenuID AS posMenuID,
+		    MenuStatus AS menuStatus
+		FROM 
+			Monitor.BIN_PosMenuGrpConfig
+		WHERE
+			BIN_BrandInfoID = #brandInfoId# AND
+            BIN_OrganizationInfoID = #organizationInfoId# AND
+            BIN_PosMenuGrpID = #menuGrpID#
+	]]>
+	</select>
+	
+    <!-- 删除分组菜单配置差分表 -->
+	<delete id="delPosMenuGrpConfig" parameterClass="java.util.HashMap">
+		<![CDATA[
+		DELETE FROM
+			Monitor.BIN_PosMenuGrpConfig
+		WHERE
+			BIN_BrandInfoID = #brandInfoId# AND
+            BIN_OrganizationInfoID = #organizationInfoId# AND
+            BIN_PosMenuGrpID = #menuGrpID#
+		]]>
+		<isNotEmpty property="changList" prepend="AND">
+	  		BIN_PosMenuID IN
+			<iterate property="changList" open="(" close=")" conjunction=",">
+				#changList[]#
+			</iterate>
+	  	</isNotEmpty>
+	</delete>
+	
+	<!-- 插入分组菜单配置差分表 -->
+	<insert id="insertPosMenuGrpConfig" parameterClass="java.util.HashMap">	
+		<![CDATA[
+	    INSERT INTO Monitor.BIN_PosMenuGrpConfig (
+	   		BIN_OrganizationInfoID,
+      		BIN_BrandInfoID,
+      		BIN_PosMenuGrpID,
+      		BIN_PosMenuID,
+      		MenuStatus,
+		]]>
+		<include refid="BINOLCMINC99.insertKeySql" />									
+		<![CDATA[								
+		)VALUES (
+			#organizationInfoId#,
+			#brandInfoId#,		
+			#menuGrpID#,
+			#posMenuID#,		
+			#menuStatus#,	
+		]]>
+		<include refid="BINOLCMINC99.insertValueSql"/>
+		<![CDATA[ ) ]]>
+	</insert>
+	
+	<!-- 删除因品牌菜单管理表改变而造成的多余的菜单组的菜单配置 -->
+	<delete id="refreshPosMenuGrpConfig" parameterClass="java.util.HashMap">
+		<![CDATA[
+			DELETE 
+				[Monitor].[BIN_PosMenuGrpConfig] 
+			FROM 
+				[Monitor].[BIN_PosMenuGrpConfig] A
+				LEFT JOIN [Monitor].[BIN_PosMenuBrand] B
+				ON(A.BIN_PosMenuID=B.BIN_PosMenuID)
+			WHERE 
+				A.MenuStatus=B.MenuStatus AND 
+				A.BIN_OrganizationInfoID=B.BIN_OrganizationInfoID AND 
+				A.BIN_BrandInfoID=B.BIN_BrandInfoID
+		]]>
+	</delete>
+</sqlMap>

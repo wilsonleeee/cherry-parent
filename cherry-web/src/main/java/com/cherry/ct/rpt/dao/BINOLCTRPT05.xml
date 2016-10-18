@@ -1,0 +1,297 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sqlMap PUBLIC "-//iBATIS.com//DTD SQL Map 2.0//EN" "http://ibatis.apache.org/dtd/sql-map-2.dtd">
+<sqlMap namespace="BINOLCTRPT05">
+	<!-- 沟通效果分析查询sql -->
+	<sql id="queryAnalysis">
+		<![CDATA[
+		select 
+			A.BatchID as batchId,
+			count(A.CustomerSysID) as sendNumber,
+			count(F.BIN_MemberInfoID) as saleNumber,
+			rate = 
+			case count(A.CustomerSysID) when 0 then 0
+			else count(F.BIN_MemberInfoID)*100/cast(count(A.CustomerSysID) as float)
+			end ,
+			max(G.DepartName) as counterName,
+			max(G.DepartCode) as counterCode,
+			G.BIN_OrganizationID as organizationId,
+			max(D.RegionNameChinese) as regionName,
+			max(E.DepartName) as departName,
+			isnull(sum(F.Amount),0) as amount,
+			isnull(sum(F.Quantity),0) quantity,
+			isnull(sum(F.billQuantity),0) billQuantity
+		from 
+			Communication.BIN_SmsSendDetail A with(nolock)
+			left join Members.BIN_MemberInfo B with(nolock) on cast(A.CustomerSysID as bigint) = B.BIN_MemberInfoID 
+			Left join Basis.BIN_CounterInfo C with(nolock) on B.CounterCodeBelong=C.CounterCode 
+			left join Basis.BIN_Organization G with(nolock) ON C.BIN_OrganizationID = G.BIN_OrganizationID
+			left join Basis.BIN_Region D with(nolock) on G.BIN_RegionID = D.BIN_RegionID
+			left join Basis.BIN_Organization E with(nolock) on C.ResellerDepartID = E.BIN_OrganizationID
+			left join (
+				select 
+					T.BIN_MemberInfoID as BIN_MemberInfoID,
+					sum(T.Quantity) as Quantity,
+					sum(T.Amount) as Amount,
+					count(T.BIN_MemberInfoID) as billQuantity
+				from 
+					Sale.BIN_SaleRecord T with(nolock)
+				where 
+					T.BIN_BrandInfoID = #brandInfoId#
+					and T.SaleType = 'NS'
+					and T.ValidFlag = '1'
+		]]>
+			<isNotEmpty prepend="and" property="startTime">
+						<![CDATA[ T.SaleDate >= #startTime# ]]>
+			</isNotEmpty>
+			<isNotEmpty prepend="and" property="endTime">
+						<![CDATA[ T.SaleDate <= #endTime# ]]>
+			</isNotEmpty>
+		<![CDATA[
+				group by 
+					T.BIN_MemberInfoID
+			) F on B.BIN_MemberInfoID = F.BIN_MemberInfoID
+		where
+			A.BIN_OrganizationInfoID = #organizationInfoId#
+			and A.BIN_BrandInfoID = #brandInfoId#
+			and A.BatchID = #batchId#
+			and A.CustomerType  = 1
+			and ISNUMERIC(A.CustomerSysID) = 1
+		]]>
+		<isNotEmpty property="privilegeFlag">
+		<isEqual property="privilegeFlag" compareValue="1">	
+			AND (
+				EXISTS ( 
+					<include refid="BINOLCMINC99.getDepartList" />
+					AND C.BIN_OrganizationID = A99.BIN_OrganizationID
+				)
+				<isNotEmpty prepend="or" property="organizationNull">
+					C.BIN_OrganizationID is null
+				</isNotEmpty>
+			)
+		</isEqual>
+		</isNotEmpty>
+		group by 
+			A.BatchID,G.BIN_OrganizationID
+	</sql>
+
+	<!-- 查询效果分析count -->
+	<select id="getAnalysisCount" parameterClass="java.util.HashMap"
+		resultClass="java.lang.Integer">
+    	<![CDATA[
+			SELECT	COUNT(SORT_T1.sendNumber) AS count FROM (
+		]]>
+		<include refid="BINOLCTRPT05.queryAnalysis" />	
+		<![CDATA[	
+			)SORT_T1
+		]]>
+	</select>
+
+	<!-- 查询效果分析List -->
+	<select id="getAnalysisList" parameterClass="java.util.HashMap"
+		resultClass="java.util.HashMap">
+		<include refid="BINOLCMINC99.pageheader" />
+		<include refid="BINOLCTRPT05.queryAnalysis" />
+		<include refid="BINOLCMINC99.pagefooter" />
+	</select>
+
+	<!-- 效果分析统计 -->
+	<select id="getAnalysisTotal" parameterClass="java.util.HashMap"
+		resultClass="java.util.HashMap">
+    <![CDATA[
+       select 
+       		isnull(sum(sendNumber),0) as totalSendNumber,
+       		isnull(sum(saleNumber),0) as totalSaleNumber,
+       		isnull(sum(amount),0) as totalAmount,
+       		isnull(sum(quantity),0) as totalQuantity,
+       		isnull(sum(billQuantity),0) as totalBillQuantity
+       	from(
+    ]]>
+		<include refid="BINOLCTRPT05.queryAnalysis" />
+    <![CDATA[
+       		)Total_Table
+        where
+        	Total_Table.batchId = #batchId# 
+    ]]>
+	</select>
+
+	<!-- 查询沟通信息发送时间 -->
+	<select id="getSendTime" parameterClass="java.util.HashMap"
+		resultClass="java.lang.String">
+	<![CDATA[
+		select
+			max(SendTime) as sendTime
+		from
+			Communication.BIN_SmsSendDetail
+		where
+			BatchID = #batchId#
+	]]>
+	</select>
+
+	<!-- 查询回柜会员明细sql -->
+	<sql id="queryJoinDetailSql">
+	<![CDATA[
+		select
+			A.Mobilephone as mobilephone,
+			B.BIN_MemberInfoID as memberInfoId,
+			B.Name as memberName,
+			C.CounterNameIF as counterName,
+			C.CounterCode as counterCode, 
+			isnull(D.Amount,0) as amount,
+			isnull(D.Quantity,0) as quantity,
+			isnull(D.billQuantity,0) billQuantity,
+			E.MemCode as memCode
+		from 
+			Communication.BIN_SmsSendDetail A with(nolock)
+			left join Members.BIN_MemberInfo B with(nolock) on cast(A.CustomerSysID as bigint) = B.BIN_MemberInfoID 
+			Left join Members.BIN_MemCardInfo E with(nolock) on B.BIN_MemberInfoID = E.BIN_MemberInfoID and E.CardValidFlag=1 
+			Left join Basis.BIN_CounterInfo C with(nolock) on B.CounterCodeBelong=C.CounterCode 
+			left join (
+				select 
+					T.BIN_MemberInfoID as BIN_MemberInfoID,
+					sum(T.Quantity) as Quantity,
+					sum(T.Amount) as Amount,
+					count(T.BIN_MemberInfoID) as billQuantity
+				from 
+					Sale.BIN_SaleRecord T with(nolock)
+		]]>
+				where
+					T.BIN_BrandInfoID = #brandInfoId#
+					and T.SaleType = 'NS'
+					and T.ValidFlag = '1'
+			<isNotEmpty prepend="and" property="startTime">
+						<![CDATA[ T.SaleDate >= #startTime# ]]>
+			</isNotEmpty>
+			<isNotEmpty prepend="and" property="endTime">
+						<![CDATA[ T.SaleDate <= #endTime# ]]>
+			</isNotEmpty>
+		<![CDATA[
+				group by 
+					T.BIN_MemberInfoID
+			) D on B.BIN_MemberInfoID = D.BIN_MemberInfoID
+		where
+			A.BIN_OrganizationInfoID = #organizationInfoId#
+			and A.BIN_BrandInfoID = #brandInfoId#
+			and A.CustomerType  = 1
+			and A.BatchID = #batchId#
+			and D.Quantity is not null
+			and ISNUMERIC(A.CustomerSysID) = 1
+	]]>
+			<isNotEmpty prepend="and" property="organizationId">
+				<isEqual property="organizationId" compareValue="0">
+					C.BIN_OrganizationID is null
+				</isEqual>
+				<isNotEqual property="organizationId" compareValue="0">
+					C.BIN_OrganizationID = #organizationId#
+				</isNotEqual>	
+			</isNotEmpty>
+			<isEmpty prepend="and" property="organizationId">
+			(
+				EXISTS ( 
+					<include refid="BINOLCMINC99.getDepartList" />
+					AND C.BIN_OrganizationID = A99.BIN_OrganizationID
+				)
+				<isNotEmpty prepend="or" property="organizationNull">
+					C.BIN_OrganizationID is null
+				</isNotEmpty>
+			)
+			</isEmpty>
+	</sql>
+	
+	<!-- 查询回柜会员明细count -->
+	<select id="getJoinDetailCount" parameterClass="java.util.HashMap"
+		resultClass="java.lang.Integer">
+    	<![CDATA[
+			SELECT	COUNT(SORT_T1.memberInfoId) AS count FROM (
+		]]>
+		<include refid="BINOLCTRPT05.queryJoinDetailSql" />	
+		<![CDATA[	
+			)SORT_T1
+		]]>
+	</select>
+
+	<!-- 查询回柜会员明细List -->
+	<select id="getJoinDetailList" parameterClass="java.util.HashMap"
+		resultClass="java.util.HashMap">
+		<include refid="BINOLCMINC99.pageheader" />
+		<include refid="BINOLCTRPT05.queryJoinDetailSql" />
+		<include refid="BINOLCMINC99.pagefooter" />
+	</select>
+
+
+	<!-- 查询回柜会员销售明细sql -->
+	<sql id="querySaleDetailSql">
+	<![CDATA[
+		select
+			A.Mobilephone as mobilephone,
+			B.BIN_MemberInfoID as memberInfoId,
+			B.Name as memberName,
+			C.CounterNameIF as counterName,
+			C.CounterCode as counterCode, 
+			D.BillCode as billCode,
+			isnull(D.Amount,0) as amount,
+			isnull(D.Quantity,0) as quantity,
+			D.SaleDate as saleDate,
+			E.MemCode as memCode
+		from 
+			Communication.BIN_SmsSendDetail A with(nolock)
+			left join Members.BIN_MemberInfo B with(nolock) on cast(A.CustomerSysID as bigint) = B.BIN_MemberInfoID 
+			Left join Members.BIN_MemCardInfo E with(nolock) on B.BIN_MemberInfoID = E.BIN_MemberInfoID and E.CardValidFlag=1 
+			Left join Basis.BIN_CounterInfo C with(nolock) on B.CounterCodeBelong=C.CounterCode 
+			left join Sale.BIN_SaleRecord D with(nolock) on B.BIN_MemberInfoID = D.BIN_MemberInfoID
+		where
+			A.BIN_OrganizationInfoID = #organizationInfoId#
+			and A.BIN_BrandInfoID = #brandInfoId#
+			and A.CustomerType  = 1
+			and A.BatchID = #batchId#
+			and D.Quantity is not null
+			and ISNUMERIC(A.CustomerSysID) = 1
+			and D.BIN_BrandInfoID = #brandInfoId#
+			and D.SaleType = 'NS'
+			and D.ValidFlag = '1'
+	]]>
+			<isNotEmpty prepend="and" property="startTime">
+				<![CDATA[ D.SaleDate >= #startTime# ]]>
+			</isNotEmpty>
+			<isNotEmpty prepend="and" property="endTime">
+				<![CDATA[ D.SaleDate <= #endTime# ]]>
+			</isNotEmpty>
+			<isNotEmpty prepend="and" property="organizationId">
+				<isEqual property="organizationId" compareValue="0">
+					C.BIN_OrganizationID is null
+				</isEqual>
+				<isNotEqual property="organizationId" compareValue="0">
+					C.BIN_OrganizationID = #organizationId#
+				</isNotEqual>	
+			</isNotEmpty>
+			<isEmpty prepend="and" property="organizationId">
+			(
+				EXISTS ( 
+					<include refid="BINOLCMINC99.getDepartList" />
+					AND C.BIN_OrganizationID = A99.BIN_OrganizationID
+				)
+				<isNotEmpty prepend="or" property="organizationNull">
+					C.BIN_OrganizationID is null
+				</isNotEmpty>
+			)
+			</isEmpty>
+	</sql>
+	<!-- 查询回柜会员销售明细count -->
+	<select id="getSaleDetailCount" parameterClass="java.util.HashMap"
+		resultClass="java.lang.Integer">
+    	<![CDATA[
+			SELECT	COUNT(SORT_T1.memberInfoId) AS count FROM (
+		]]>
+		<include refid="BINOLCTRPT05.querySaleDetailSql" />	
+		<![CDATA[	
+			)SORT_T1
+		]]>
+	</select>
+
+	<!-- 查询回柜会员销售明细List -->
+	<select id="getSaleDetailList" parameterClass="java.util.HashMap"
+		resultClass="java.util.HashMap">
+		<include refid="BINOLCMINC99.pageheader" />
+		<include refid="BINOLCTRPT05.querySaleDetailSql" />
+		<include refid="BINOLCMINC99.pagefooter" />
+	</select>
+</sqlMap>

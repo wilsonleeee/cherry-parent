@@ -1,0 +1,378 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sqlMap PUBLIC "-//iBATIS.com//DTD SQL Map 2.0//EN" "http://ibatis.apache.org/dtd/sql-map-2.dtd">
+<sqlMap namespace="BINOLBSCNT01">
+	<!-- 柜台信息查询sql文  -->
+	<sql id="counterQuery">
+	 	<![CDATA[
+			SELECT 
+				A.BIN_CounterInfoID AS counterInfoId,
+				A.BIN_OrganizationID AS organizationId,
+				A.BIN_BrandInfoID AS brandInfoId,
+				A.CounterCode AS counterCode,
+				A.Status AS status,
+				A.CounterAddress AS counterAddress,
+				A.CounterCategory AS counterCategory,
+				A.ValidFlag AS validFlag,
+				A.PosFlag AS posFlag,
+				A.BelongFaction AS belongFaction,
+				A.OperateMode AS operateMode,
+				A.InvoiceCompany AS invoiceCompany,
+				A.EmployeeNum AS employeeNum,
+				convert(varchar(30),A.UpdateTime,121) AS updateTime,
+				A.ModifyCount AS modifyCount,
+				F.EmployeeCode AS employeeCode,
+				B.OrgSynergyFlag AS counterSynergyFlag,
+				A.BusniessPrincipal AS busniessPrincipal,
+				A.EquipmentCode AS equipmentCode,
+				A.ManagingType2 AS managingType2,
+		]]>
+		<dynamic>
+			<isNotEmpty property="language">
+				<isEqual property="language" compareValue="en_US">
+					A.NameForeign AS counterNameIF,
+					C.BrandNameForeign AS brandNameChinese,
+					D.ChannelNameForeign AS channelName,
+					F.EmployeeNameForeign AS employeeName,
+					X.RegionNameForeign AS region,
+					Y.RegionNameForeign AS province,
+					Z.RegionNameForeign AS city,
+					H.ResellerName AS resellerName,
+					G.NameForeign AS resellerDepartName
+				</isEqual>
+				<isEqual property="language" compareValue="zh_CN">	
+					A.CounterNameIF AS counterNameIF,
+					C.BrandNameChinese AS brandNameChinese,
+					D.ChannelName AS channelName,
+					F.EmployeeName AS employeeName,
+					X.RegionNameChinese AS region,
+					Y.RegionNameChinese AS province,
+					Z.RegionNameChinese AS city,
+					H.ResellerName AS resellerName,
+					G.DepartName AS resellerDepartName
+				</isEqual>								
+			</isNotEmpty>
+			<isEmpty property="language">
+				A.CounterNameIF AS counterNameIF,
+				C.BrandNameChinese AS brandNameChinese,
+				D.ChannelName AS channelName,
+				F.EmployeeName AS employeeName,
+				X.RegionNameChinese AS region,
+				Y.RegionNameChinese AS province,
+				Z.RegionNameChinese AS city,
+				H.ResellerName AS resellerName,
+				G.DepartName AS resellerDepartName
+			</isEmpty>
+		</dynamic>
+		<![CDATA[		
+			FROM
+				Basis.BIN_CounterInfo A
+				JOIN Basis.BIN_Organization B ON A.BIN_OrganizationID = B.BIN_OrganizationID
+				LEFT JOIN Basis.BIN_BrandInfo C ON A.BIN_BrandInfoID = C.BIN_BrandInfoID
+				LEFT JOIN Basis.BIN_Channel D ON A.BIN_ChannelID = D.BIN_ChannelID
+				LEFT JOIN Privilege.BIN_EmployeeDepart E 
+					JOIN Basis.BIN_Employee F ON E.BIN_EmployeeID = F.BIN_EmployeeID AND F.ValidFlag = '1'
+				ON B.BIN_OrganizationID = E.BIN_OrganizationID AND E.ManageType = '1'
+				LEFT JOIN Basis.BIN_Region X ON B.BIN_RegionID = X.BIN_RegionID
+				LEFT JOIN Basis.BIN_Region Y ON B.BIN_ProvinceID = Y.BIN_RegionID
+				LEFT JOIN Basis.BIN_Region Z ON B.BIN_CityID = Z.BIN_RegionID
+				LEFT JOIN Basis.BIN_ResellerInfo H ON A.BIN_ResellerInfoID = H.BIN_ResellerInfoID
+				LEFT JOIN Basis.BIN_Organization G ON A.ResellerDepartID = G.BIN_OrganizationID
+		]]>
+			<isNotEmpty property="privilegeFlag">
+			<isEqual property="privilegeFlag" compareValue="1">			
+		<![CDATA[			
+				JOIN (]]><include refid="BINOLCMINC99.departPrivilegeSql" /><![CDATA[) A99 
+				ON B.BIN_OrganizationID=A99.BIN_OrganizationID
+		]]>
+			</isEqual>
+			</isNotEmpty>
+		<![CDATA[			
+			WHERE
+				A.BIN_OrganizationInfoID = #organizationInfoId#
+		]]>
+			<isNotEmpty prepend="AND" property="brandInfoId">
+				A.BIN_BrandInfoID = #brandInfoId#
+			</isNotEmpty>
+			<isNotEmpty prepend="AND" property="counterCode">
+				A.CounterCode LIKE '%'+#counterCode#+'%'
+			</isNotEmpty>
+			<isNotEmpty prepend="AND" property="counterNameIF">
+				A.CounterNameIF LIKE '%'+#counterNameIF#+'%'
+			</isNotEmpty>
+			<isNotEmpty prepend="AND" property="channelId">
+				A.BIN_ChannelID = #channelId#
+			</isNotEmpty>
+			<isNotEmpty prepend="AND" property="status">
+				A.Status = #status#
+			</isNotEmpty>
+			<isNotEmpty prepend="AND" property="counterAddress">
+				A.CounterAddress LIKE '%'+#counterAddress#+'%'
+			</isNotEmpty>
+			<isEmpty prepend="AND" property="validFlag" >
+				A.ValidFlag = '1'
+			</isEmpty>
+			<isNotEmpty prepend="AND" property="provinceId">
+				B.BIN_ProvinceID = #provinceId#
+			</isNotEmpty>
+			<isNotEmpty prepend="AND" property="cityId">
+				B.BIN_CityID = #cityId#
+			</isNotEmpty>
+			<isNotEmpty prepend="AND" property="counterBAS">
+				<isNotEmpty property="language">
+					<isEqual property="language" compareValue="en_US">
+						F.EmployeeNameForeign LIKE '%' + #counterBAS# + '%'
+					</isEqual>
+					<isEqual property="language" compareValue="zh_CN">
+						F.EmployeeName LIKE '%' + #counterBAS# + '%'
+					</isEqual>
+				</isNotEmpty>
+				<isEmpty property="language">
+					F.EmployeeName LIKE '%' + #counterBAS# + '%'
+				</isEmpty>
+			</isNotEmpty>
+			<isNotEmpty prepend="AND" property="busniessPrincipal">
+				A.BusniessPrincipal LIKE '%' + #busniessPrincipal# + '%'
+			</isNotEmpty>
+	</sql>
+	
+	<!-- 取得柜台总数  -->
+    <select id="getCounterCount" parameterClass="java.util.HashMap" resultClass="java.lang.Integer">
+    	<![CDATA[
+			SELECT	COUNT(SORT_T1.counterCode) AS count FROM (
+		]]>	
+		<include refid="BINOLBSCNT01.counterQuery" />	
+		<![CDATA[	
+			)SORT_T1
+		]]>										
+    </select>
+	
+	<!-- 取得柜台信息List  -->
+    <select id="getCounterList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+       	<include refid="BINOLCMINC99.pageheader" />
+		<include refid="BINOLBSCNT01.counterQuery" />
+		<include refid="BINOLCMINC99.pagefooter" />
+    </select>
+    
+    <!-- 取得柜台区域信息  -->
+    <select id="getRegionInfoList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+    	<![CDATA[
+			SELECT
+				A.BIN_RegionID AS regionId,     
+		]]>
+		<dynamic>
+			<isNotEmpty property="language">
+				<isEqual property="language" compareValue="en_US">
+					MAX(CASE WHEN B.RegionType = '0' THEN B.RegionNameForeign END) AS region, 
+					MAX(CASE WHEN B.RegionType = '1' THEN B.RegionNameForeign END) AS province,
+					MAX(CASE WHEN B.RegionType = '2' OR B.RegionType = '3' THEN B.RegionNameForeign END) AS city 
+				</isEqual>
+				<isEqual property="language" compareValue="zh_CN">	
+					MAX(CASE WHEN B.RegionType = '0' THEN B.RegionNameChinese END) AS region,      
+					MAX(CASE WHEN B.RegionType = '1' THEN B.RegionNameChinese END) AS province,      
+					MAX(CASE WHEN B.RegionType = '2' OR B.RegionType = '3' THEN B.RegionNameChinese END) AS city
+				</isEqual>								
+			</isNotEmpty>
+			<isEmpty property="language">
+				MAX(CASE WHEN B.RegionType = '0' THEN B.RegionNameChinese END) AS region,      
+				MAX(CASE WHEN B.RegionType = '1' THEN B.RegionNameChinese END) AS province,      
+				MAX(CASE WHEN B.RegionType = '2' OR B.RegionType = '3' THEN B.RegionNameChinese END) AS city
+			</isEmpty>
+		</dynamic>
+		<![CDATA[				 
+			FROM
+				Basis.BIN_Region A JOIN Basis.BIN_Region B ON A.NodeID.IsDescendantOf(B.NodeID) = 1
+			WHERE
+				A.BIN_RegionID IN
+		]]>			
+			<iterate property="counterList" open="(" close=")" conjunction=","> 
+				#counterList[].regionId#
+			</iterate>	
+		<![CDATA[		
+			GROUP BY 
+				A.BIN_RegionID	
+		]]>							
+    </select>
+	<!-- 取得柜台信息(Excel)  -->
+    <select id="getCounterInfoListExcel" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+       <![CDATA[
+	    SELECT 
+			    C.BrandCode,
+				A.CounterCode,
+				A.CounterNameIF,
+				A.CounterNameShort,
+				A.NameForeign,
+				A.NameShortForeign,	
+				A.CounterAddress,
+				A.DisCounterCode,
+				A.CounterSpace,
+				A.CounterKind,
+				A.CounterCategory,
+				A.CounterLevel,
+				A.Status,
+				A.UpdateStatus,
+				A.InvoiceCompany,
+				A.OperateMode,
+
+				A.PosFlag,
+				A.BelongFaction,
+				Mall.MallName,
+				A.BusDistrict,
+				A.longitude,
+				A.latitude,
+				A.EquipmentCode,
+				A.ManagingType2,
+		]]>	
+		<dynamic>
+			<isNotEmpty property="language">
+				<isEqual property="language" compareValue="en_US">
+					K.RegionNameForeign AS region,
+					L.RegionNameForeign AS province,
+					M.RegionNameForeign AS city,
+					N.RegionNameForeign AS county,
+					F.EmployeeNameForeign AS employeeName,
+					D.ChannelNameForeign AS channelName,
+					H.ResellerName AS resellerName,
+					G.NameForeign AS resellerDepartName
+				</isEqual>
+				<isEqual property="language" compareValue="zh_CN">	
+					K.RegionNameChinese AS region,
+					L.RegionNameChinese AS province,
+					M.RegionNameChinese AS city,
+					N.RegionNameChinese AS county,
+					F.EmployeeName AS employeeName,
+					D.ChannelName AS channelName,
+					H.ResellerName AS resellerName,
+					G.DepartName AS resellerDepartName
+				</isEqual>								
+			</isNotEmpty>
+			<isEmpty property="language">
+				K.RegionNameChinese AS region,
+				L.RegionNameChinese AS province,
+				M.RegionNameChinese AS city,
+				N.RegionNameChinese AS county,
+				F.EmployeeName AS employeeName,
+				D.ChannelName AS channelName,
+				H.ResellerName AS resellerName,
+				G.DepartName AS resellerDepartName
+			</isEmpty>
+		</dynamic>
+		<![CDATA[	
+			FROM
+				Basis.BIN_CounterInfo A
+				JOIN Basis.BIN_Organization B ON A.BIN_OrganizationID = B.BIN_OrganizationID
+			    LEFT JOIN Basis.BIN_BrandInfo C ON A.BIN_BrandInfoID = C.BIN_BrandInfoID
+				LEFT JOIN Basis.BIN_Channel D ON A.BIN_ChannelID = D.BIN_ChannelID
+				LEFT JOIN Basis.BIN_Region K ON B.BIN_RegionID = K.BIN_RegionID
+				LEFT JOIN Basis.BIN_Region L ON B.BIN_ProvinceID = L.BIN_RegionID
+				LEFT JOIN Basis.BIN_Region M ON B.BIN_CityID = M.BIN_RegionID
+				LEFT JOIN Basis.BIN_Region N ON B.BIN_CountyID = N.BIN_RegionID
+				LEFT JOIN Privilege.BIN_EmployeeDepart E 
+					JOIN Basis.BIN_Employee F ON E.BIN_EmployeeID = F.BIN_EmployeeID AND F.ValidFlag = '1'
+				ON B.BIN_OrganizationID = E.BIN_OrganizationID AND E.ManageType = '1'
+				LEFT JOIN Basis.BIN_ResellerInfo H ON A.BIN_ResellerInfoID = H.BIN_ResellerInfoID
+				LEFT JOIN Basis.BIN_Organization G ON A.ResellerDepartID = G.BIN_OrganizationID
+				LEFT JOIN Basis.BIN_MallInfo Mall ON A.BIN_MallInfoID = Mall.BIN_MallInfoID   
+			]]>	
+					<isNotEmpty property="privilegeFlag">
+			<isEqual property="privilegeFlag" compareValue="1">			
+		<![CDATA[			
+				JOIN (]]><include refid="BINOLCMINC99.departPrivilegeSql" /><![CDATA[) A99 
+				ON B.BIN_OrganizationID=A99.BIN_OrganizationID
+		]]>
+			</isEqual>
+			</isNotEmpty>
+		<![CDATA[			
+			WHERE
+				A.BIN_OrganizationInfoID = #organizationInfoId#
+		]]>
+			<isNotEmpty prepend="AND" property="brandInfoId">
+				A.BIN_BrandInfoID = #brandInfoId#
+			</isNotEmpty>
+			<isNotEmpty prepend="AND" property="counterCode">
+				A.CounterCode LIKE '%'+#counterCode#+'%'
+			</isNotEmpty>
+			<isNotEmpty prepend="AND" property="counterNameIF">
+				A.CounterNameIF LIKE '%'+#counterNameIF#+'%'
+			</isNotEmpty>
+			<isNotEmpty prepend="AND" property="channelId">
+				A.BIN_ChannelID = #channelId#
+			</isNotEmpty>
+			<isNotEmpty prepend="AND" property="status">
+				A.Status = #status#
+			</isNotEmpty>
+			<isNotEmpty prepend="AND" property="counterAddress">
+				A.CounterAddress LIKE '%'+#counterAddress#+'%'
+			</isNotEmpty>
+			<isEmpty prepend="AND" property="validFlag" >
+				A.ValidFlag = '1'
+			</isEmpty>
+			<isNotEmpty prepend="AND" property="provinceId">
+				B.BIN_ProvinceID = #provinceId#
+			</isNotEmpty>
+			<isNotEmpty prepend="AND" property="cityId">
+				B.BIN_CityID = #cityId#
+			</isNotEmpty>
+    </select>
+    <!-- 根据输入字符串模糊查询柜台主管 -->
+    <select id="getCounterBAS" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+    	<![CDATA[
+			SELECT TOP $number$
+				 A.BIN_EmployeeID AS id,
+				 A.EmployeeCode AS code,
+		]]>
+		<dynamic>
+			<isNotEmpty property="language">
+				<isEqual property="language" compareValue="en_US">
+					A.EmployeeNameForeign AS name
+				</isEqual>
+				<isEqual property="language" compareValue="zh_CN">	
+					A.EmployeeName AS name
+				</isEqual>								
+			</isNotEmpty>
+			<isEmpty property="language">
+				A.EmployeeName AS name
+			</isEmpty>
+		</dynamic>
+		<![CDATA[			
+			FROM
+			    Basis.BIN_Employee A
+			    LEFT JOIN Basis.BIN_Organization B
+				ON (A.BIN_OrganizationID = B.BIN_OrganizationID AND B.ValidFlag = '1')	
+				LEFT JOIN Privilege.BIN_PositionCategory C
+				ON (A.BIN_PositionCategoryID = C.BIN_PositionCategoryID AND C.ValidFlag = '1')	
+		]]>
+			<isNotEmpty property="privilegeFlag">
+			<isEqual property="privilegeFlag" compareValue="1">			
+		<![CDATA[		
+				JOIN (]]><include refid="BINOLCMINC99.employeePrivilegeSql" /><![CDATA[) A99 
+				ON A.BIN_EmployeeID=A99.BIN_SubEmployeeID
+		]]>
+			</isEqual>
+			</isNotEmpty>
+		<![CDATA[				
+			WHERE
+				A.BIN_OrganizationInfoID = #organizationInfoId# AND
+				A.ValidFlag = '1'
+			]]>
+		<dynamic>
+			<isNotEmpty prepend="AND" property="brandInfoId">
+				<![CDATA[(A.BIN_BrandInfoID=#brandInfoId# OR A.BIN_BrandInfoID='-9999')]]>
+			</isNotEmpty>
+			<isNotEmpty prepend="AND" property="counterBAS">
+				<![CDATA[(A.EmployeeCode LIKE '%' + #counterBAS# + '%']]>
+				<isNotEmpty prepend="OR" property="language">
+					<isEqual property="language" compareValue="en_US">
+						A.EmployeeNameForeign LIKE '%' + #counterBAS# + '%'
+					</isEqual>
+					<isEqual property="language" compareValue="zh_CN">
+						A.EmployeeName LIKE '%' + #counterBAS# + '%'
+					</isEqual>
+				</isNotEmpty>
+				<isEmpty prepend="OR" property="language">
+					A.EmployeeName LIKE '%' + #counterBAS# + '%'
+				</isEmpty>
+				<![CDATA[ ) ]]>
+			</isNotEmpty>
+		</dynamic>	
+    </select>
+</sqlMap>

@@ -1,0 +1,192 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE sqlMap PUBLIC "-//iBATIS.com//DTD SQL Map 2.0//EN" "http://ibatis.apache.org/dtd/sql-map-2.dtd">
+<sqlMap namespace="BINOLMOCIO09">
+	<sql id="paperList">
+		SELECT 
+			[BIN_CheckPaperID] AS paperId,
+      		[BIN_OrganizationInfoID] AS organizationInfoId,
+      		[BIN_BrandInfoID] AS brandInfoId,
+      		[PaperName] AS paperName,
+      		[PaperRight] AS paperRight,
+      		[PaperStatus] AS paperStatus,
+      		CONVERT(CHAR(10),[StartDate],120) AS startDate,
+      		CONVERT(CHAR(10),[EndDate],120) AS endDate,
+      		CONVERT(CHAR(10),[PublishTime],120) AS publishTime,
+      		[Publisher] AS publisher,
+      		[MaxPoint] AS maxPoint,
+      		CASE WHEN 
+				Publisher IS NULL 
+				THEN '0'
+				ELSE '1'
+			END AS issuedStatus
+  		FROM 
+			[Monitor].[BIN_CheckPaper] A
+  		WHERE
+			A.ValidFlag = '1' AND
+			A.BIN_OrganizationInfoID = #organizationInfoId#
+		<dynamic>
+			<isNotEmpty prepend = "AND" property = "brandInfoId">
+				A.BIN_BrandInfoID = #brandInfoId#
+			</isNotEmpty>
+			<isNotEmpty prepend = "AND" property = "paperName">
+				<![CDATA[A.PaperName LIKE '%' + #paperName# + '%']]>
+			</isNotEmpty>
+			<isNotEmpty prepend = "AND" property = "paperStatus">
+				A.PaperStatus = #paperStatus#
+			</isNotEmpty>
+			<isNotEmpty prepend = "AND" property = "startDate">
+				<![CDATA[A.EndDate >= #startDate#]]>
+			</isNotEmpty>
+			<isNotEmpty prepend = "AND" property = "endDate">
+				<![CDATA[A.StartDate <= #endDate#]]>
+			</isNotEmpty>
+			<isNotEmpty prepend = "AND" property = "paperRight">
+				A.[PaperRight] = #paperRight#
+			</isNotEmpty>
+		</dynamic>
+	</sql>
+	<!--取得问题考核问卷List-->
+	<select id = "getPaperList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+		<include refid="BINOLCMINC99.pageheader" />
+        <include refid="BINOLMOCIO09.paperList" />
+        <include refid="BINOLCMINC99.pagefooter" />
+	</select>
+	<!--取得问卷总数-->
+	<select id = "getPaperCount" parameterClass="java.util.HashMap" resultClass="java.lang.Integer">
+		<![CDATA[
+            SELECT COUNT(SORT_T1.paperId) AS count FROM (
+        ]]>
+        <include refid="BINOLMOCIO09.paperList" />
+        <![CDATA[
+            )SORT_T1
+        ]]>
+	</select>
+	<!--根据问卷ID取得考核问卷的主要信息，供下发时使用-->
+	<select id="getCheckPaper" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+		SELECT 
+ 			A.[BIN_CheckPaperID] AS [CheckPaperID],
+      		A.[PaperName] AS [CheckPaperName],
+      		A.[PaperRight],
+      		A.[PaperStatus],
+     		A.[StartDate],
+      		A.[EndDate],
+			B.[BrandCode],
+			A.[CreatedBy] AS [userId]
+  		FROM 
+			[Monitor].[BIN_CheckPaper] A,
+  			[Basis].[BIN_BrandInfo] B
+  		WHERE
+  			A.[BIN_BrandInfoID] = B.[BIN_BrandInfoID]
+ 	 		AND A.[BIN_CheckPaperID] = #paperId#
+	</select>
+	<!--根据问卷ID取得考核问卷分组信息，供下发时使用-->
+	<select id="getCheckPaperGroup" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+		SELECT 
+			[BIN_CheckQuestionGroupID] AS [QuestionGroupID],
+      		[BIN_CheckPaperID] AS [CheckPaperID],
+      		[GroupName],
+      		[DisplayOrder]
+  		FROM 
+			[Monitor].[BIN_CheckQuestionGroup]
+		WHERE
+			[BIN_CheckPaperID] = #paperId#
+	</select>
+	<!--根据考核问卷ID获取问题，供下发时使用-->
+	<select id="getCheckPaperQuestion" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+		SELECT 
+			[BIN_CheckQuestionID] AS [CheckQuestionID],
+      		[BIN_CheckPaperID] AS [CheckPaperID],
+      		[BIN_CheckQuestionGroupID] AS [QuestionGroupID],
+      		[QuestionType],
+      		[QuestionItem],
+      		[MaxPoint],
+      		[MinPoint],
+			[QuestionNO],
+      		[DisplayOrder] AS [QuestionDisplayOrder],
+      		[OptionA],
+      		[OptionB],
+      		[OptionC],
+      		[OptionD],
+      		[OptionE],
+      		[OptionF],
+      		[OptionG],
+      		[OptionH],
+      		[OptionI],
+      		[OptionJ],
+      		[OptionK],
+      		[OptionL],
+      		[OptionM],
+      		[OptionN],
+      		[OptionO],
+      		[OptionP],
+      		[OptionQ],
+      		[OptionR],
+      		[OptionS],
+      		[OptionT],
+      		[PointA],
+      		[PointB],
+      		[PointC],
+      		[PointD],
+      		[PointE],
+      		[PointF],
+      		[PointG],
+      		[PointH],
+      		[PointI],
+      		[PointJ],
+      		[PointK],
+      		[PointL],
+      		[PointM],
+      		[PointN],
+      		[PointO],
+      		[PointP],
+      		[PointQ],
+      		[PointR],
+      		[PointS],
+      		[PointT]
+  		FROM 
+  			[Monitor].[BIN_CheckQuestion]
+  		WHERE
+  			[BIN_CheckPaperID] = #paperId#
+	</select>
+	<!--根据考核问卷ID获取问题评分标准，供下发时使用-->
+	<select id="getCheckPaperLevel" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+		SELECT 
+			[BIN_CheckPaperID] AS [CheckPaperID],
+      		[PointLevelOrder],
+      		[PointLevelName],
+      		[Point]
+  		FROM 
+			[Monitor].[BIN_CheckPaperLevel]
+		WHERE
+			[BIN_CheckPaperID] = #paperId#
+	</select>
+	<!--根据考核问卷ID进行考核问卷启用操作，对考核问卷状态，发布时间，发布人进行更新-->
+	<update id="enableCheckPaper" parameterClass="java.util.HashMap">
+		UPDATE 
+			[Monitor].[BIN_CheckPaper]
+   		SET 
+      		[PaperStatus] = '2',
+      		[PublishTime] = GETDATE(),
+      		[Publisher] = #publisher#,
+			<include refid="BINOLCMINC99.updateSql" />
+ 		WHERE 
+ 			[BIN_CheckPaperID] = #paperId#
+	</update>
+	<!--根据考核问卷ID进行考核问卷停用操作，对问卷状态进行更新-->
+	<update id="disableCheckPaper" parameterClass="java.util.HashMap">
+		UPDATE 
+			[Monitor].[BIN_CheckPaper]
+   		SET 
+      		[PaperStatus] = '1',
+			<include refid="BINOLCMINC99.updateSql" />
+ 		WHERE 
+ 			[BIN_CheckPaperID] = #paperId#
+	</update>
+	<!--根据考核问卷ID对考核问卷进行逻辑上的删除操作-->
+	<delete id="deleteCheckPaper" parameterClass="java.util.HashMap">
+		DELETE FROM 
+			[Monitor].[BIN_CheckPaper]
+ 		WHERE 
+ 			[BIN_CheckPaperID] = #paperId#
+	</delete>
+</sqlMap>

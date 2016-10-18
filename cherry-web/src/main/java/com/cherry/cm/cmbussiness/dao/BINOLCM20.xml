@@ -1,0 +1,293 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sqlMap PUBLIC "-//iBATIS.com//DTD SQL Map 2.0//EN" "http://ibatis.apache.org/dtd/sql-map-2.dtd">
+<sqlMap namespace="BINOLCM20">
+    <!--取得指定仓库指定产品的全部库存（逻辑仓库看参数而定）-->
+    <select id="getProductStock" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+        <![CDATA[
+		   select 
+			ISNULL(sum(B.Quantity),0) as TotalQuantity
+		   FROM Inventory.BIN_ProductStock B 
+			where 
+			    B.ValidFlag = '1'
+			and B.BIN_InventoryInfoID =#BIN_DepotInfoID#
+			and B.BIN_ProductVendorID=#BIN_ProductVendorID#
+		]]>
+		<isNotEmpty property="BIN_LogicInventoryInfoID">
+			and B.BIN_LogicInventoryInfoID =#BIN_LogicInventoryInfoID#
+		 </isNotEmpty>	
+    </select>
+	
+    <!--取得指定部门指定产品的全部库存，且排除掉冻结库存（逻辑仓库看参数而定）-->
+    <select id="getProductStockNofrozen" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+		<![CDATA[
+			with t1 as( 
+			  select 
+				ISNULL(sum(B.Quantity),0) as TotalQuantity
+			from  Inventory.BIN_ProductStock B 
+			where 
+			    B.ValidFlag = '1'
+			and B.BIN_InventoryInfoID =#BIN_DepotInfoID#
+			and B.BIN_ProductVendorID=#BIN_ProductVendorID#
+		]]>
+		<isNotEmpty property="BIN_LogicInventoryInfoID">
+			and B.BIN_LogicInventoryInfoID =#BIN_LogicInventoryInfoID#
+		 </isNotEmpty>	
+		 <![CDATA[		
+			),
+			t2 as(select 
+			ISNULL(sum(B.Quantity),0) as TotalQuantity
+			from 
+			Inventory.BIN_ProductDeliverDetail B 
+			left join Inventory.BIN_ProductDeliver C on B.BIN_ProductDeliverID = C.BIN_ProductDeliverID 
+			where 			
+			    C.ValidFlag ='1'
+        ]]>
+        <!-- 发货审核状态
+			0   未提交审核
+			1   审核中
+			2   审核通过
+			3   审核退回
+			4   二审中
+			5   二审通过
+			6   二审退回
+			7   三审中（发货尚无三审，先定义一下）
+			8   三审通过（发货尚无三审，先定义一下）
+			9   三审退回（发货尚无三审，先定义一下）
+			D   废弃
+        -->
+        <isEmpty property="LockSection">
+            <![CDATA[
+                AND C.VerifiedFlag IN ('2','5','8')
+            ]]>
+        </isEmpty>
+        <isNotEmpty property="LockSection">
+            <!-- 制单员查看 -->
+	        <isEqual property="LockSection" compareValue="0">
+                <![CDATA[
+	               AND C.VerifiedFlag IN ('1','2','4','5','7','8')
+                ]]>
+	        </isEqual>
+            <!-- 审核（一审）时查看 -->
+            <isEqual property="LockSection" compareValue="1">
+                <![CDATA[
+                   AND C.VerifiedFlag IN ('2','4','5','7','8')
+                ]]>
+            </isEqual>
+            <!-- 二审时查看 -->
+            <isEqual property="LockSection" compareValue="4">
+                <![CDATA[
+                   AND C.VerifiedFlag IN ('5','7','8')
+                ]]>
+            </isEqual>
+            <!-- 三审时查看（发货尚无三审，先定义一下） -->
+            <isEqual property="LockSection" compareValue="7">
+                <![CDATA[
+                   AND C.VerifiedFlag IN ('8')
+                ]]>
+            </isEqual>
+        </isNotEmpty>
+        <![CDATA[
+			and C.TradeStatus = '10'
+			and B.ValidFlag ='1'
+			and B.BIN_InventoryInfoID =#BIN_DepotInfoID#
+			and B.BIN_ProductVendorID=#BIN_ProductVendorID#
+		]]>
+		<isNotEmpty property="BIN_LogicInventoryInfoID">
+			and B.BIN_LogicInventoryInfoID =#BIN_LogicInventoryInfoID#
+		 </isNotEmpty>	
+		 <![CDATA[
+			)
+			select t1.TotalQuantity - t2.TotalQuantity as TotalQuantity
+			from t1,t2
+		]]>
+  
+    </select>
+    
+    <!--取得指定部门下的所有仓库指定产品的全部库存-->
+    <select id="getDepartProductStock" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+        <![CDATA[
+			SELECT 
+				ISNULL(SUM(C.Quantity),0) AS TotalQuantity
+			FROM 
+				Basis.BIN_Organization A WITH(NOLOCK)
+				LEFT JOIN Basis.BIN_InventoryInfo B WITH(NOLOCK)
+				ON(A.BIN_OrganizationID=B.BIN_OrganizationID)
+				LEFT JOIN Inventory.BIN_ProductStock C WITH(NOLOCK)
+				ON(B.BIN_InventoryInfoID=C.BIN_InventoryInfoID)
+			WHERE 
+			    C.ValidFlag = '1'
+				AND A.BIN_OrganizationID =#BIN_OrganizationID#
+				AND C.BIN_ProductVendorID=#BIN_ProductVendorID#
+		]]>
+    </select>
+	
+    <!--取得指定部门下的所有仓库指定产品的全部库存，且排除掉冻结库存（逻辑仓库看参数而定）-->
+    <select id="getDepartProductStockNofrozen" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+		<![CDATA[
+			WITH t1 AS( 
+				SELECT 
+					ISNULL(SUM(C.Quantity),0) AS TotalQuantity
+				FROM 
+					Basis.BIN_Organization A WITH(NOLOCK)
+					LEFT JOIN Basis.BIN_InventoryInfo B WITH(NOLOCK)
+					ON(A.BIN_OrganizationID=B.BIN_OrganizationID)
+					LEFT JOIN Inventory.BIN_ProductStock C WITH(NOLOCK)
+					ON(B.BIN_InventoryInfoID=C.BIN_InventoryInfoID)
+				WHERE 
+				    C.ValidFlag = '1'
+					AND A.BIN_OrganizationID =#BIN_OrganizationID#
+					AND C.BIN_ProductVendorID=#BIN_ProductVendorID#
+		]]>
+		<![CDATA[		
+			),
+			t2 AS(
+				SELECT 
+					ISNULL(SUM(B.Quantity),0) as TotalQuantity
+				FROM 
+					Inventory.BIN_ProductDeliverDetail B 
+					LEFT JOIN Inventory.BIN_ProductDeliver C 
+					ON B.BIN_ProductDeliverID = C.BIN_ProductDeliverID 
+				WHERE 			
+			    	C.ValidFlag ='1'
+        ]]>
+        <!-- 发货审核状态
+            0   未提交审核
+            1   审核中
+            2   审核通过
+            3   审核退回
+            4   二审中
+            5   二审通过
+            6   二审退回
+            7   三审中（发货尚无三审，先定义一下）
+            8   三审通过（发货尚无三审，先定义一下）
+            9   三审退回（发货尚无三审，先定义一下）
+            D   废弃
+        -->
+        <isEmpty property="LockSection">
+            <![CDATA[
+                AND C.VerifiedFlag IN ('2','5','8')
+            ]]>
+        </isEmpty>
+        <isNotEmpty property="LockSection">
+            <!-- 制单员查看 -->
+            <isEqual property="LockSection" compareValue="0">
+                <![CDATA[
+                   AND C.VerifiedFlag IN ('1','2','4','5','7','8')
+                ]]>
+            </isEqual>
+            <!-- 审核（一审）时查看 -->
+            <isEqual property="LockSection" compareValue="1">
+                <![CDATA[
+                   AND C.VerifiedFlag IN ('2','4','5','7','8')
+                ]]>
+            </isEqual>
+            <!-- 二审时查看 -->
+            <isEqual property="LockSection" compareValue="4">
+                <![CDATA[
+                   AND C.VerifiedFlag IN ('5','7','8')
+                ]]>
+            </isEqual>
+            <!-- 三审时查看（发货尚无三审，先定义一下） -->
+            <isEqual property="LockSection" compareValue="7">
+                <![CDATA[
+                   AND C.VerifiedFlag IN ('8')
+                ]]>
+            </isEqual>
+        </isNotEmpty>
+        <![CDATA[
+					AND C.TradeStatus = '10'
+					AND B.ValidFlag ='1'
+					AND C.BIN_OrganizationIDReceive =#BIN_OrganizationID#
+					AND B.BIN_ProductVendorID=#BIN_ProductVendorID#
+		]]>
+		<![CDATA[
+			)
+			select t1.TotalQuantity - t2.TotalQuantity as TotalQuantity
+			from t1,t2
+		]]>
+  
+    </select>
+	
+	<!--给定业务类型，取得配置的逻辑仓库-->
+    <select id="getBusinessLogicDepots" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+        <![CDATA[
+            SELECT
+                B.BIN_LogicInventoryInfoID
+				,B.LogicInventoryCode AS LogicInventoryCode
+				,B.InventoryNameCN AS InventoryNameCN
+				,B.InventoryNameEN AS InventoryNameEN
+				,B.DefaultFlag AS DefaultFlag
+        ]]>
+        <dynamic>
+            <isNotEmpty property="language">
+                <isEqual property="language" compareValue="en_US">
+                    <![CDATA[
+                        ,B.InventoryNameEN AS LogicInventoryName
+                        ,'('+B.LogicInventoryCode+')'+B.InventoryNameEN AS LogicInventoryCodeName
+                    ]]>
+                </isEqual>
+                <isEqual property="language" compareValue="zh_CN">
+                    <![CDATA[
+                        ,B.InventoryNameCN AS LogicInventoryName
+                        ,'('+B.LogicInventoryCode+')'+B.InventoryNameCN AS LogicInventoryCodeName
+                    ]]>
+                </isEqual>
+            </isNotEmpty>
+            <isEmpty property="language">
+                <![CDATA[
+                    ,B.InventoryNameCN AS LogicInventoryName
+                    ,'('+B.LogicInventoryCode+')'+B.InventoryNameCN AS LogicInventoryCodeName
+                ]]>
+            </isEmpty>
+        </dynamic>
+		<![CDATA[
+            FROM
+                Basis.BIN_LogicDepotBusiness A
+                LEFT JOIN Basis.BIN_LogicInventory B
+				ON A.BIN_LogicInventoryInfoID = B.BIN_LogicInventoryInfoID
+			WHERE
+                A.ValidFlag = '1'
+                AND B.ValidFlag = '1'
+				AND A.BIN_BrandInfoID = #brandInfoId#
+				AND (A.BIN_LogicInventoryInfoID != '' OR A.BIN_LogicInventoryInfoID IS NOT NULL)
+		]]>
+        <dynamic>
+            <isNotEmpty property="businessType">
+                <![CDATA[AND A.BusinessType = #businessType#]]>
+            </isNotEmpty>
+        </dynamic>
+		<![CDATA[ORDER BY B.DefaultFlag]]>
+    </select>
+
+    <!--取得产品批次ID-->
+    <select id="getProductBatchID" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+        <![CDATA[
+            SELECT 
+                A.BIN_ProductBatchID
+            FROM
+                Basis.BIN_ProductBatch A 
+            WHERE 
+                A.ValidFlag = '1'
+                AND A.BIN_ProductVendorID = #BIN_ProductVendorID#
+                AND A.BatchNo = #BatchNo#
+        ]]>
+    </select>
+
+	<!--按批次取得产品库存。-->
+    <select id="getProductStockBatch" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+        <![CDATA[
+            SELECT 
+                ISNULL(SUM(A.Quantity),0) AS Quantity
+            FROM
+                Inventory.BIN_ProductBatchStock A 
+            WHERE 
+                A.ValidFlag = '1'
+				AND A.BIN_ProductBatchID = #BIN_ProductBatchID#
+                AND A.BIN_InventoryInfoID = #BIN_DepotInfoID#
+        ]]>
+		<isNotEmpty property="BIN_LogicInventoryInfoID">
+            <![CDATA[AND A.BIN_LogicInventoryInfoID =#BIN_LogicInventoryInfoID#]]>
+        </isNotEmpty>  
+    </select>
+
+</sqlMap>

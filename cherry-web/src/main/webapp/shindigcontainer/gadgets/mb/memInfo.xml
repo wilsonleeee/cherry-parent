@@ -1,0 +1,136 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Module>
+    <ModulePrefs
+            title="memInfo">
+       		<Require feature="settitle"/>
+            <Require feature="dynamic-height" /> 
+			<Optional feature="content-rewrite">
+			  <Param name="exclude-urls">.*</Param>
+			</Optional>
+			<Require feature="oauthpopup" />
+			<Require feature="cherryOpenSocial"/>
+			<Require feature="opensocial-i18n"/> 
+			<Locale messages="/Cherry/shindigcontainer/i18n/mb/zh_CN_ALL.xml"/>
+			<Locale lang="zh_CN" messages="/Cherry/shindigcontainer/i18n/mb/zh_CN_ALL.xml"/>
+			<Locale lang="zh_TW" messages="/Cherry/shindigcontainer/i18n/mb/zh_TW_ALL.xml"/>
+    </ModulePrefs>
+    <Content type="html" ><![CDATA[
+    <style type="text/css">
+	
+	#memInfoDiv {
+		color: #000000;
+   		font-family: Verdana,Geneva,sans-serif;
+   		font-size: 14px;
+   		padding: 2px 10px 10px 10px;
+   		overflow: auto;
+	}
+	
+	.section-header {
+	    border-bottom: 1px solid #E5E5E5;
+	    height: 24px;
+	    line-height: 24px;
+	}
+
+	.section-content {
+		margin: 5px 0 0 0;
+		width:100%;
+	}
+	
+	table {
+	    background: none repeat scroll 0 0 #FFFFFF;
+	    border: 1px solid #CCCCCC;
+	    border-collapse:collapse;
+	    width:100%;
+	}
+
+	th, td {
+  		border: 1px solid #CCCCCC;
+  		font-size: 13px;
+  	}
+  	
+  	th {
+  		background: none repeat scroll 0 0 #F9F9F9;
+	    height: 30px;
+	    line-height: 25px;
+	    padding: 0 5px;
+	    white-space: nowrap;
+	    text-align:left;
+	    font-weight: normal;
+	    width: 15%;
+  	}
+  	
+  	td {
+	    height: 20px;
+	    padding: 3px 5px;
+	    white-space: nowrap;
+	    width: 35%;
+	}
+
+ 	
+  	#waiting {
+  		height:200px;
+  	}
+  	#waiting div {
+  		background-image: url("/Cherry/css/common/blueprint/images/loading.gif");
+	    background-position: 20px center;
+	    background-repeat: no-repeat;
+	    height: 50px;
+	    width: 50px;
+	    left: 40%;
+	    top: 20%;
+	    position: absolute;
+	    z-index: 100;
+  	}
+	</style>
+	
+	<div id="waiting"><div></div></div>
+	<div class="section" id="memInfoDiv" style="display:none"></div>
+    
+    
+	<script type='text/javascript'>
+	
+	var baseUrl = window.parent.getBaseUrl();
+	var gadgetPrefs = new gadgets.Prefs();
+	
+	function render(data) {
+		$("#waiting").hide();
+		$("#memInfoDiv").show();
+		data = data.entry;
+		var memDetailInfo = data.memDetailInfoMes;
+		
+		var table = '<table border="0">';
+		table += '<tr>';
+		table += '<th>'+gadgetPrefs.getMsg("memName")+'</th>';
+		table += '<td><span>'+(memDetailInfo.name ? memDetailInfo.name : '')+'</span></td>';
+		table += '<th>'+gadgetPrefs.getMsg("memLevel")+'</th>';
+		table += '<td><span>'+(memDetailInfo.levelName ? memDetailInfo.levelName : '')+'</span></td>';
+		table += '</tr>';
+		table += '<tr>';
+		table += '<th>'+gadgetPrefs.getMsg("memMobilePhone")+'</th>';
+		table += '<td><span>'+(memDetailInfo.mobilePhone ? memDetailInfo.mobilePhone : '')+'</span></td>';
+		table += '<th>'+gadgetPrefs.getMsg("memJoinDate")+'</th>';
+		table += '<td><span>'+(memDetailInfo.joinDate ? memDetailInfo.joinDate : '')+'</span></td>';
+		table += '</tr>';
+		table += '</table>';
+      	$("#memInfoDiv").html(table);
+		
+	    gadgets.window.adjustHeight();
+	}
+	
+	function fetchMemInfo() {
+		$("#waiting").show();
+		$("#memInfoDiv").hide();
+	   	gadgets.window.adjustHeight();
+	   	var url = baseUrl + "/social/rest/memInfo";
+	   	var param = {};
+	   	param.userInfo = window.parent.getUserInfo();
+	   	param.gadgetParam = window.parent.getGadgetParam();
+	   	sendRequestToServer(url, 'POST', param, render, false);
+	}
+	
+	gadgets.util.registerOnLoadHandler(fetchMemInfo);
+	
+	</script>
+	
+	]]></Content>
+</Module>

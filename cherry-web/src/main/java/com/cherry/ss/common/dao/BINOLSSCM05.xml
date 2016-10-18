@@ -1,0 +1,106 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sqlMap PUBLIC "-//iBATIS.com//DTD SQL Map 2.0//EN" "http://ibatis.apache.org/dtd/sql-map-2.dtd">
+<sqlMap namespace="BINOLSSCM05"> 
+ 	<!-- 取得指定ID的收发货单据及其详细信息 -->
+	 <select id="getPromotionDeliverAllGroupByID" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+     	<![CDATA[
+			SELECT					
+				A.DeliverReceiveNo as mDeliverReceiveNo,
+				A.TotalQuantity as mTotalQuantity,
+				A.TotalAmount as mTotalAmount,
+				CONVERT(varchar(100),A.DeliverDate,120) as mDeliverDate,
+				CONVERT(varchar(100),A.PlanArriveDate,120) as mPlanArriveDate,
+				SUM(B.Quantity) as Quantity,
+				B.Price,
+				C.BarCode,
+				D.UnitCode,
+				E.CounterCode
+			FROM 
+			Inventory.BIN_PromotionDeliver A
+			left join Basis.BIN_CounterInfo E	
+			on A.BIN_OrganizationIDReceive =E.BIN_OrganizationID,
+			Inventory.BIN_PromotionDeliverDetail B
+			left join Basis.BIN_PromotionProductVendor C on B.BIN_PromotionProductVendorID = C.BIN_PromotionProductVendorID
+			left join Basis.BIN_PromotionProduct D on C.BIN_PromotionProductID = D.BIN_PromotionProductID
+			WHERE 
+			    A.BIN_PromotionDeliverID =#BIN_PromotionDeliverID#
+			and A.BIN_PromotionDeliverID = B.BIN_PromotionDeliverID
+			and A.ValidFlag ='1'
+			group by A.DeliverReceiveNo,A.TotalQuantity	,A.TotalAmount,A.DeliverDate,A.PlanArriveDate,B.Price,C.BarCode,D.UnitCode,E.CounterCode
+		]]>					
+     </select>   
+      <!-- 取得收发货单据信息(主表) -->
+	 <select id="getPromotionDeliverForMQ" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+     	<![CDATA[
+			SELECT
+				A.BIN_PromotionDeliverID,
+				A.BIN_OrganizationInfoID,
+				A.BIN_BrandInfoID,
+				B.BrandCode,
+				C.DepartCode		
+			FROM 
+				Inventory.BIN_PromotionDeliver A 
+				left join  Basis.BIN_BrandInfo B on A.BIN_BrandInfoID = B.BIN_BrandInfoID
+				left join Basis.BIN_Organization C on A.BIN_OrganizationID = C.BIN_OrganizationID
+			WHERE 
+			    A.BIN_PromotionDeliverID = #BIN_PromotionDeliverID#
+		]]>					
+     </select>  
+     <!-- 取得部门类型 -->
+	<select id="getOrganizationType" parameterClass="java.util.HashMap" resultClass="java.lang.String">
+		<![CDATA[
+		SELECT 
+			Type
+  		FROM 
+  			Basis.BIN_Organization
+ 		WHERE 
+ 			BIN_OrganizationID = #organizationId#
+		]]>
+    </select> 
+    
+    <!-- 取得指定ID的入库单据及其详细信息 -->
+    <select id="getPrmInDepotAllGroupByID" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+        <![CDATA[
+            SELECT                  
+                A.BillNoIF as mDeliverReceiveNo,
+                A.TotalQuantity as mTotalQuantity,
+                A.TotalAmount as mTotalAmount,
+                CONVERT(varchar(100),A.InDepotDate,120) as mDeliverDate,
+                SUM(B.Quantity) as Quantity,
+                B.Price,
+                C.BarCode,
+                D.UnitCode,
+                E.CounterCode
+            FROM 
+            Inventory.BIN_PrmInDepot A
+            left join Basis.BIN_CounterInfo E   
+            on A.BIN_OrganizationID = E.BIN_OrganizationID,
+            Inventory.BIN_PrmInDepotDetail B
+            left join Basis.BIN_PromotionProductVendor C on B.BIN_PromotionProductVendorID = C.BIN_PromotionProductVendorID
+            left join Basis.BIN_PromotionProduct D on C.BIN_PromotionProductID = D.BIN_PromotionProductID
+            WHERE 
+                A.BIN_PrmInDepotID = #BIN_PrmInDepotID#
+            and A.BIN_PrmInDepotID = B.BIN_PrmInDepotID
+            and A.ValidFlag ='1'
+            group by A.BillNoIF,A.TotalQuantity ,A.TotalAmount,CONVERT(varchar(100),A.InDepotDate,120),B.Price,C.BarCode,D.UnitCode,E.CounterCode
+        ]]>                 
+    </select>
+     
+    <!-- 取得入出库货单据信息(主表) -->
+    <select id="getPrmInDepotForMQ" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+        <![CDATA[
+            SELECT
+                A.BIN_PrmInDepotID,
+                A.BIN_OrganizationInfoID,
+                A.BIN_BrandInfoID,
+                B.BrandCode,
+                C.DepartCode
+            FROM
+                Inventory.BIN_PrmInDepot A
+                left join  Basis.BIN_BrandInfo B on A.BIN_BrandInfoID = B.BIN_BrandInfoID
+                left join Basis.BIN_Organization C on A.BIN_OrganizationID = C.BIN_OrganizationID
+            WHERE
+                A.BIN_PrmInDepotID = #BIN_PrmInDepotID#
+        ]]>
+    </select>
+</sqlMap>

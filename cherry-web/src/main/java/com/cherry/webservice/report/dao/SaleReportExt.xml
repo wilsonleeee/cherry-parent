@@ -1,0 +1,901 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sqlMap PUBLIC "-//iBATIS.com//DTD SQL Map 2.0//EN" "http://ibatis.apache.org/dtd/sql-map-2.dtd">
+<sqlMap namespace="SaleReportExt">
+
+    <!-- 查询指定产品ID的大分类码 -->
+    <sql id="productCategorySQL">
+    	<![CDATA[
+    	SELECT
+			pc.BIN_ProductID,
+			pcv.PropValue
+		FROM
+			Basis.BIN_PrtCategory pc,
+			Basis.BIN_PrtCatProperty pcp,
+			Basis.BIN_PrtCatPropValue pcv
+		WHERE
+			pc.BIN_PrtCatPropValueID = pcv.BIN_PrtCatPropValueID AND
+			pcv.BIN_PrtCatPropertyID = pcp.BIN_PrtCatPropertyID AND
+			pcp.TeminalFlag = '1' AND 
+			pcp.BIN_OrganizationInfoID = #organizationInfoId#  AND
+			pcp.BIN_BrandInfoID = #brandInfoId# AND 
+			pc.ValidFlag = '1' AND
+			pcv.ValidFlag = '1' AND
+			pcp.ValidFlag = '1'
+		]]>
+    </sql>
+    
+    <!-- 统计每天的销售金额和数量  -->
+    <select id="getSaleCountByDay" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+       	<![CDATA[
+            SELECT
+				A.SaleDate AS saleDate,
+				SUM(CASE WHEN A.SaleType = 'SR' THEN 
+					CASE WHEN B.SaleType = 'N' THEN -B.PricePay*B.Quantity ELSE -B.PricePay END
+					ELSE CASE WHEN B.SaleType = 'N' THEN B.PricePay*B.Quantity ELSE B.PricePay END
+				END) AS amount,
+				SUM(CASE WHEN A.SaleType = 'SR' THEN 
+					CASE WHEN B.SaleType = 'N' THEN CASE WHEN D.SaleStyle = '2' THEN -1 ELSE -B.Quantity END ELSE 0 END
+					ELSE CASE WHEN B.SaleType = 'N' THEN CASE WHEN D.SaleStyle = '2' THEN 1 ELSE B.Quantity END ELSE 0 END 
+				END) AS quantity
+			FROM
+				Sale.BIN_SaleRecord A WITH(NOLOCK)
+				JOIN (]]><include refid="BINOLCMINC99.departPrivilegeSql" /><![CDATA[) A99 
+				ON A.BIN_OrganizationID=A99.BIN_OrganizationID		
+				JOIN Sale.BIN_SaleRecordDetail B WITH(NOLOCK) ON A.BIN_SaleRecordID = B.BIN_SaleRecordID	
+				
+				LEFT JOIN Basis.BIN_ProductVendor C WITH(NOLOCK)
+				JOIN Basis.BIN_Product D WITH(NOLOCK) ON C.BIN_ProductID = D.BIN_ProductID
+				ON B.BIN_ProductVendorID = C.BIN_ProductVendorID AND B.SaleType = 'N'
+		]]>
+		<isNotEmpty property="IsFliter">
+			<isEqual property="IsFliter" compareValue="1">
+				<!-- 过滤掉大分类为物料的产品详细的相关信息 -->
+				<![CDATA[LEFT JOIN (]]>
+				<include refid="SaleReportExt.productCategorySQL" />
+				<![CDATA[)P
+				ON(C.BIN_ProductID=P.BIN_ProductID)
+				]]>
+			</isEqual>
+		</isNotEmpty>
+		<![CDATA[
+			WHERE
+				A.SaleDate >= #StartDate# AND
+				A.SaleDate <= #EndDate# AND
+				A.BIN_OrganizationInfoID = #organizationInfoId# AND
+				A.BIN_BrandInfoID = #brandInfoId# AND
+				A.ValidFlag = '1'
+		]]>
+		<isNotEmpty property="IsFliter">
+		<isEqual property="IsFliter" compareValue="1">
+			<![CDATA[
+				AND ISNULL(P.PropValue,'') <> 'WL99'
+			]]>
+		</isEqual>
+		</isNotEmpty>
+		<![CDATA[
+			GROUP BY
+				A.SaleDate	
+		]]>
+    </select>
+    
+    <!-- BAS管辖柜台的销售统计List（某月） -->
+    <sql id="BASCouSaleByMonth">
+	    <![CDATA[
+			SELECT
+				T.DepartCode AS departCode,
+				T.DepartName AS departName,
+				T.ranking AS ranking,
+				T.amount AS totalAmount,
+				T.quantity AS totalQuantity,
+				Z.TargetMoney AS targetAmount
+			FROM
+				(SELECT 
+					X.BIN_OrganizationID,
+					X.DepartCode,
+					X.DepartName,
+					ROW_NUMBER() OVER(ORDER BY amount desc) AS ranking,
+					ISNULL(Y.amount, 0) AS amount,
+					ISNULL(Y.quantity, 0) AS quantity
+				FROM
+					Basis.BIN_Organization X WITH(NOLOCK)
+					LEFT JOIN 
+					(SELECT
+						A.BIN_OrganizationID,
+						SUM(CASE WHEN A.SaleType = 'SR' THEN 
+							CASE WHEN B.SaleType = 'N' THEN -B.PricePay*B.Quantity ELSE -B.PricePay END
+							ELSE CASE WHEN B.SaleType = 'N' THEN B.PricePay*B.Quantity ELSE B.PricePay END
+						END) AS amount,
+						SUM(CASE WHEN A.SaleType = 'SR' THEN 
+							CASE WHEN B.SaleType = 'N' THEN CASE WHEN D.SaleStyle = '2' THEN -1 ELSE -B.Quantity END ELSE 0 END
+							ELSE CASE WHEN B.SaleType = 'N' THEN CASE WHEN D.SaleStyle = '2' THEN 1 ELSE B.Quantity END ELSE 0 END 
+						END) AS quantity
+					FROM
+						Sale.BIN_SaleRecord A WITH(NOLOCK)
+						JOIN Sale.BIN_SaleRecordDetail B WITH(NOLOCK) ON A.BIN_SaleRecordID = B.BIN_SaleRecordID	
+						
+						LEFT JOIN Basis.BIN_ProductVendor C WITH(NOLOCK)
+						JOIN Basis.BIN_Product D WITH(NOLOCK) ON C.BIN_ProductID = D.BIN_ProductID
+						ON B.BIN_ProductVendorID = C.BIN_ProductVendorID AND B.SaleType = 'N'
+		]]>
+			<isNotEmpty property="IsFliter">
+				<isEqual property="IsFliter" compareValue="1">
+					<!-- 过滤掉大分类为物料的产品详细的相关信息 -->
+					<![CDATA[LEFT JOIN (]]>
+					<include refid="SaleReportExt.productCategorySQL" />
+					<![CDATA[)P
+						ON(C.BIN_ProductID=P.BIN_ProductID)
+					]]>
+				</isEqual>
+			</isNotEmpty>
+		<![CDATA[				
+					WHERE
+						A.SaleDate >= #StartDate# AND
+						A.SaleDate <= #EndDate# AND
+						A.BIN_OrganizationInfoID = #organizationInfoId# AND
+						A.BIN_BrandInfoID = #brandInfoId# AND
+						A.ValidFlag = '1'
+		]]>
+			<isNotEmpty property="IsFliter">
+				<isEqual property="IsFliter" compareValue="1">
+					<![CDATA[
+						AND ISNULL(P.PropValue,'') <> 'WL99'
+					]]>
+				</isEqual>
+			</isNotEmpty>
+		<![CDATA[
+					GROUP BY
+						A.BIN_OrganizationID) Y
+					ON X.BIN_OrganizationID = Y.BIN_OrganizationID
+				WHERE
+					X.BIN_OrganizationInfoID = #organizationInfoId# AND
+					X.BIN_BrandInfoID = #brandInfoId# AND
+					X.Type = '4' AND
+					X.ValidFlag='1'
+				]]>			
+				<isNotEmpty property="Counter" prepend="AND">
+					(X.DepartCode LIKE '%'+#Counter#+'%' OR
+					X.DepartName LIKE '%'+#Counter#+'%')
+				</isNotEmpty>
+				<![CDATA[) T
+				JOIN (]]><include refid="BINOLCMINC99.departPrivilegeSql" /><![CDATA[) A99 
+				ON T.BIN_OrganizationID=A99.BIN_OrganizationID
+				LEFT JOIN Monitor.BIN_SaleTarget Z WITH(NOLOCK)
+				ON T.BIN_OrganizationID = Z.Parameter AND Z.Type = '2' AND Z.TargetDate = #DateYM#
+		]]>
+    </sql>
+    
+    <!-- 取得BAS管辖柜台的销售统计List（某月） -->
+    <select id="getBASCouSaleByMonthList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+       	<include refid="BINOLCMINC99.pageheader" />
+		<include refid="SaleReportExt.BASCouSaleByMonth" />
+		<include refid="BINOLCMINC99.pagefooter" />
+    </select>
+    
+    <!-- BAS管辖柜台的销售统计List（某天） -->
+    <sql id="BASCouSaleByDay">
+	    <![CDATA[
+			SELECT 
+				X.DepartCode AS departCode,
+				X.DepartName AS departName,
+				ISNULL(Y.amount, 0) AS totalAmount,
+				ISNULL(Y.quantity, 0) AS totalQuantity,
+				ISNULL(Y.saleCount, 0) AS saleCount,
+				ISNULL(Z.memCount, 0) AS memCount
+			FROM
+				Basis.BIN_Organization X WITH(NOLOCK)
+				JOIN (]]><include refid="BINOLCMINC99.departPrivilegeSql" /><![CDATA[) A99 
+				ON X.BIN_OrganizationID=A99.BIN_OrganizationID
+				
+				LEFT JOIN 
+				(SELECT
+					A.BIN_OrganizationID,
+					SUM(CASE WHEN A.SaleType = 'SR' THEN 
+						CASE WHEN B.SaleType = 'N' THEN -B.PricePay*B.Quantity ELSE -B.PricePay END
+						ELSE CASE WHEN B.SaleType = 'N' THEN B.PricePay*B.Quantity ELSE B.PricePay END
+					END) AS amount,
+					SUM(CASE WHEN A.SaleType = 'SR' THEN 
+						CASE WHEN B.SaleType = 'N' THEN CASE WHEN D.SaleStyle = '2' THEN -1 ELSE -B.Quantity END ELSE 0 END
+						ELSE CASE WHEN B.SaleType = 'N' THEN CASE WHEN D.SaleStyle = '2' THEN 1 ELSE B.Quantity END ELSE 0 END 
+					END) AS quantity,
+					COUNT(DISTINCT CASE WHEN A.SaleType = 'NS' THEN A.BIN_SaleRecordID END) AS saleCount
+				FROM
+					Sale.BIN_SaleRecord A WITH(NOLOCK)
+					JOIN (]]><include refid="BINOLCMINC99.departPrivilegeSql" /><![CDATA[) A99 
+					ON A.BIN_OrganizationID=A99.BIN_OrganizationID
+					JOIN Sale.BIN_SaleRecordDetail B WITH(NOLOCK) ON A.BIN_SaleRecordID = B.BIN_SaleRecordID	
+					
+					LEFT JOIN Basis.BIN_ProductVendor C WITH(NOLOCK)
+					JOIN Basis.BIN_Product D WITH(NOLOCK) ON C.BIN_ProductID = D.BIN_ProductID
+					ON B.BIN_ProductVendorID = C.BIN_ProductVendorID AND B.SaleType = 'N'
+			]]>
+				<isNotEmpty property="IsFliter">
+					<isEqual property="IsFliter" compareValue="1">
+						<!-- 过滤掉大分类为物料的产品详细的相关信息 -->
+						<![CDATA[LEFT JOIN (]]>
+						<include refid="SaleReportExt.productCategorySQL" />
+						<![CDATA[)P
+							ON(C.BIN_ProductID=P.BIN_ProductID)
+						]]>
+					</isEqual>
+				</isNotEmpty>
+			<![CDATA[		
+				WHERE
+					A.SaleDate = #DateYMD# AND
+					A.BIN_OrganizationInfoID = #organizationInfoId# AND
+					A.BIN_BrandInfoID = #brandInfoId# AND
+					A.ValidFlag = '1'
+			]]>
+				<isNotEmpty property="IsFliter">
+					<isEqual property="IsFliter" compareValue="1">
+						<![CDATA[
+							AND ISNULL(P.PropValue,'') <> 'WL99'
+						]]>
+					</isEqual>
+				</isNotEmpty>
+			<![CDATA[		
+				GROUP BY
+					A.BIN_OrganizationID) Y
+				ON X.BIN_OrganizationID = Y.BIN_OrganizationID
+				
+				LEFT JOIN 
+				(SELECT 
+					A.BIN_OrganizationID,
+					COUNT(1) AS memCount
+				FROM
+					Members.BIN_MemberInfo A WITH(NOLOCK) JOIN Members.BIN_MemCardInfo B WITH(NOLOCK) 
+					ON A.BIN_MemberInfoID = B.BIN_MemberInfoID AND B.CardValidFlag = '1'
+					JOIN (]]><include refid="BINOLCMINC99.departPrivilegeSql" /><![CDATA[) A99 
+					ON A.BIN_OrganizationID=A99.BIN_OrganizationID
+				WHERE
+					A.JoinDate = #DateYMD# AND
+					A.BIN_OrganizationInfoID = #organizationInfoId# AND
+					A.BIN_BrandInfoID = #brandInfoId# AND
+					A.MemInfoRegFlg = '0'
+				GROUP BY
+					A.BIN_OrganizationID) Z
+				ON X.BIN_OrganizationID = Z.BIN_OrganizationID
+			WHERE
+				X.BIN_OrganizationInfoID = #organizationInfoId# AND
+				X.BIN_BrandInfoID = #brandInfoId# AND
+				X.Type = '4' AND
+				X.ValidFlag='1'
+		]]>
+			<isNotEmpty property="Counter" prepend="AND">
+				(X.DepartCode LIKE '%'+#Counter#+'%' OR
+				X.DepartName LIKE '%'+#Counter#+'%')
+			</isNotEmpty>
+    </sql>
+    
+    <!-- 取得BAS管辖柜台的销售统计List（某天） -->
+    <select id="getBASCouSaleByDayList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+       	<include refid="BINOLCMINC99.pageheader" />
+		<include refid="SaleReportExt.BASCouSaleByDay" />
+		<include refid="BINOLCMINC99.pagefooter" />
+    </select>
+    
+    <!-- 统计柜台每天的销售金额和数量  -->
+    <select id="getCouSaleCountByDay" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+       	<![CDATA[
+       		SELECT
+				A.SaleDate AS saleDate,
+				SUM(CASE WHEN A.SaleType = 'SR' THEN 
+					CASE WHEN B.SaleType = 'N' THEN -B.PricePay*B.Quantity ELSE -B.PricePay END
+					ELSE CASE WHEN B.SaleType = 'N' THEN B.PricePay*B.Quantity ELSE B.PricePay END
+				END) AS amount,
+				SUM(CASE WHEN A.SaleType = 'SR' THEN 
+					CASE WHEN B.SaleType = 'N' THEN CASE WHEN D.SaleStyle = '2' THEN -1 ELSE -B.Quantity END ELSE 0 END
+					ELSE CASE WHEN B.SaleType = 'N' THEN CASE WHEN D.SaleStyle = '2' THEN 1 ELSE B.Quantity END ELSE 0 END 
+				END) AS quantity,
+				SUM(CASE WHEN A.BIN_MemberInfoID IS NOT NULL THEN (CASE WHEN A.SaleType = 'SR' THEN 
+					CASE WHEN B.SaleType = 'N' THEN -B.PricePay*B.Quantity ELSE -B.PricePay END
+					ELSE CASE WHEN B.SaleType = 'N' THEN B.PricePay*B.Quantity ELSE B.PricePay END END) END) AS memAmount
+			FROM
+				Sale.BIN_SaleRecord A WITH(NOLOCK)		
+				JOIN Sale.BIN_SaleRecordDetail B WITH(NOLOCK) ON A.BIN_SaleRecordID = B.BIN_SaleRecordID	
+				
+				LEFT JOIN Basis.BIN_ProductVendor C WITH(NOLOCK)
+				JOIN Basis.BIN_Product D WITH(NOLOCK) ON C.BIN_ProductID = D.BIN_ProductID
+				ON B.BIN_ProductVendorID = C.BIN_ProductVendorID AND B.SaleType = 'N'
+		]]>
+			<isNotEmpty property="IsFliter">
+				<isEqual property="IsFliter" compareValue="1">
+					<!-- 过滤掉大分类为物料的产品详细的相关信息 -->
+					<![CDATA[LEFT JOIN (]]>
+					<include refid="SaleReportExt.productCategorySQL" />
+					<![CDATA[)P
+						ON(C.BIN_ProductID=P.BIN_ProductID)
+					]]>
+				</isEqual>
+			</isNotEmpty>
+		<![CDATA[		
+			WHERE
+				A.SaleDate >= #StartDate# AND
+				A.SaleDate <= #EndDate# AND
+				A.BIN_OrganizationID = #organizationId# AND
+				A.BIN_OrganizationInfoID = #organizationInfoId# AND
+				A.BIN_BrandInfoID = #brandInfoId# AND
+				A.ValidFlag = '1'
+		]]>
+			<isNotEmpty property="IsFliter">
+				<isEqual property="IsFliter" compareValue="1">
+					<![CDATA[
+						AND ISNULL(P.PropValue,'') <> 'WL99'
+					]]>
+				</isEqual>
+			</isNotEmpty>
+		<![CDATA[
+			GROUP BY
+				A.SaleDate
+			ORDER BY
+				A.SaleDate DESC
+		]]>
+    </select>
+    
+    <!-- 取得柜台销售排名  -->
+    <select id="getCouSaleRanking" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+    	<![CDATA[
+			SELECT
+				T.ranking AS ranking,
+				T.amount AS totalAmount,
+				T.quantity AS totalAuantity,
+				Z.TargetMoney AS targetAmount
+			FROM
+				(SELECT 
+					X.BIN_OrganizationID,
+					ROW_NUMBER() OVER(ORDER BY amount desc) AS ranking,
+					ISNULL(Y.amount, 0) AS amount,
+					ISNULL(Y.quantity, 0) AS quantity
+				FROM
+					Basis.BIN_Organization X WITH(NOLOCK)
+					LEFT JOIN 
+					(SELECT
+						A.BIN_OrganizationID,
+						SUM(CASE WHEN A.SaleType = 'SR' THEN 
+							CASE WHEN B.SaleType = 'N' THEN -B.PricePay*B.Quantity ELSE -B.PricePay END
+							ELSE CASE WHEN B.SaleType = 'N' THEN B.PricePay*B.Quantity ELSE B.PricePay END
+						END) AS amount,
+						SUM(CASE WHEN A.SaleType = 'SR' THEN 
+							CASE WHEN B.SaleType = 'N' THEN CASE WHEN D.SaleStyle = '2' THEN -1 ELSE -B.Quantity END ELSE 0 END
+							ELSE CASE WHEN B.SaleType = 'N' THEN CASE WHEN D.SaleStyle = '2' THEN 1 ELSE B.Quantity END ELSE 0 END 
+						END) AS quantity
+					FROM
+						Sale.BIN_SaleRecord A WITH(NOLOCK)
+						JOIN Sale.BIN_SaleRecordDetail B WITH(NOLOCK) ON A.BIN_SaleRecordID = B.BIN_SaleRecordID	
+				
+						LEFT JOIN Basis.BIN_ProductVendor C WITH(NOLOCK)
+						JOIN Basis.BIN_Product D WITH(NOLOCK) ON C.BIN_ProductID = D.BIN_ProductID
+						ON B.BIN_ProductVendorID = C.BIN_ProductVendorID AND B.SaleType = 'N'
+				]]>
+				<isNotEmpty property="IsFliter">
+					<isEqual property="IsFliter" compareValue="1">
+						<!-- 过滤掉大分类为物料的产品详细的相关信息 -->
+						<![CDATA[LEFT JOIN (]]>
+						<include refid="SaleReportExt.productCategorySQL" />
+						<![CDATA[)P
+							ON(C.BIN_ProductID=P.BIN_ProductID)
+						]]>
+					</isEqual>
+				</isNotEmpty>
+				<![CDATA[
+					WHERE
+						A.SaleDate >= #StartDate# AND
+						A.SaleDate <= #EndDate# AND
+						A.BIN_OrganizationInfoID = #organizationInfoId# AND
+						A.BIN_BrandInfoID = #brandInfoId# AND
+						A.ValidFlag = '1'
+				]]>
+				<isNotEmpty property="IsFliter">
+					<isEqual property="IsFliter" compareValue="1">
+						<![CDATA[
+							AND ISNULL(P.PropValue,'') <> 'WL99'
+						]]>
+					</isEqual>
+				</isNotEmpty>
+				<![CDATA[
+					GROUP BY
+						A.BIN_OrganizationID) Y
+					ON X.BIN_OrganizationID = Y.BIN_OrganizationID
+				WHERE
+					X.BIN_OrganizationInfoID = #organizationInfoId# AND
+					X.BIN_BrandInfoID = #brandInfoId# AND
+					X.Type = '4' AND
+					X.ValidFlag='1') T
+				
+				LEFT JOIN Monitor.BIN_SaleTarget Z WITH(NOLOCK)
+				ON T.BIN_OrganizationID = Z.Parameter AND Z.Type = '2' AND Z.TargetDate = #DateYM#
+			WHERE
+				T.BIN_OrganizationID = #organizationId#
+		]]>
+    </select>
+    
+    <!-- 柜台的销售统计（按BA统计）  -->
+    <select id="getCouSaleByBA" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+    	<![CDATA[
+			SELECT
+				B.EmployeeName AS baName,
+				ISNULL(C.amount, 0) AS amount,
+				ISNULL(C.quantity, 0) AS quantity,
+				ISNULL(C.memAmount, 0) AS memAmount,
+				ISNULL(C.saleCount, 0) AS saleCount,
+				ISNULL(D.memCount, 0) AS memCount
+			FROM
+				Basis.BIN_Employee B WITH(NOLOCK)
+				
+				LEFT JOIN 
+				(SELECT
+					A.BIN_EmployeeID,
+					SUM(CASE WHEN A.SaleType = 'SR' THEN 
+						CASE WHEN B.SaleType = 'N' THEN -B.PricePay*B.Quantity ELSE -B.PricePay END
+						ELSE CASE WHEN B.SaleType = 'N' THEN B.PricePay*B.Quantity ELSE B.PricePay END
+					END) AS amount,
+					SUM(CASE WHEN A.SaleType = 'SR' THEN 
+						CASE WHEN B.SaleType = 'N' THEN CASE WHEN D.SaleStyle = '2' THEN -1 ELSE -B.Quantity END ELSE 0 END
+						ELSE CASE WHEN B.SaleType = 'N' THEN CASE WHEN D.SaleStyle = '2' THEN 1 ELSE B.Quantity END ELSE 0 END 
+					END) AS quantity,
+					SUM(CASE WHEN A.BIN_MemberInfoID IS NOT NULL THEN (CASE WHEN A.SaleType = 'SR' THEN 
+						CASE WHEN B.SaleType = 'N' THEN -B.PricePay*B.Quantity ELSE -B.PricePay END
+						ELSE CASE WHEN B.SaleType = 'N' THEN B.PricePay*B.Quantity ELSE B.PricePay END END) END) AS memAmount,
+					COUNT(DISTINCT CASE WHEN A.SaleType = 'NS' THEN A.BIN_SaleRecordID END) AS saleCount
+				FROM
+					Sale.BIN_SaleRecord A WITH(NOLOCK)
+					JOIN Sale.BIN_SaleRecordDetail B WITH(NOLOCK) ON A.BIN_SaleRecordID = B.BIN_SaleRecordID	
+					
+					LEFT JOIN Basis.BIN_ProductVendor C WITH(NOLOCK)
+					JOIN Basis.BIN_Product D WITH(NOLOCK) ON C.BIN_ProductID = D.BIN_ProductID
+					ON B.BIN_ProductVendorID = C.BIN_ProductVendorID AND B.SaleType = 'N'
+			]]>
+			<isNotEmpty property="IsFliter">
+				<isEqual property="IsFliter" compareValue="1">
+					<!-- 过滤掉大分类为物料的产品详细的相关信息 -->
+					<![CDATA[LEFT JOIN (]]>
+					<include refid="SaleReportExt.productCategorySQL" />
+					<![CDATA[)P
+						ON(C.BIN_ProductID=P.BIN_ProductID)
+					]]>
+				</isEqual>
+			</isNotEmpty>
+			<![CDATA[
+				WHERE
+					A.SaleDate >= #StartDate# AND
+					A.SaleDate <= #EndDate# AND
+					A.BIN_OrganizationID = #organizationId# AND
+					A.BIN_OrganizationInfoID = #organizationInfoId# AND
+					A.BIN_BrandInfoID = #brandInfoId# AND
+					A.ValidFlag = '1'
+			]]>
+				<isNotEmpty property="IsFliter">
+					<isEqual property="IsFliter" compareValue="1">
+						<![CDATA[
+							AND ISNULL(P.PropValue,'') <> 'WL99'
+						]]>
+					</isEqual>
+				</isNotEmpty>
+			<![CDATA[
+				GROUP BY
+					A.BIN_EmployeeID) C
+				ON B.BIN_EmployeeID = C.BIN_EmployeeID
+				
+				LEFT JOIN 
+				(SELECT 
+					A.BIN_EmployeeID,
+					COUNT(1) AS memCount
+				FROM
+					Members.BIN_MemberInfo A WITH(NOLOCK) JOIN Members.BIN_MemCardInfo B WITH(NOLOCK) 
+					ON A.BIN_MemberInfoID = B.BIN_MemberInfoID AND B.CardValidFlag = '1'
+				WHERE
+					A.JoinDate >= #StartDate# AND
+					A.JoinDate <= #EndDate# AND
+					A.BIN_OrganizationID = #organizationId# AND
+					A.BIN_OrganizationInfoID = #organizationInfoId# AND
+					A.BIN_BrandInfoID = #brandInfoId# AND
+					A.MemInfoRegFlg = '0'
+				GROUP BY
+					A.BIN_EmployeeID) D
+				ON B.BIN_EmployeeID = D.BIN_EmployeeID
+			WHERE
+				ISNULL(C.amount, 0) <> 0 OR
+				ISNULL(C.quantity, 0) <> 0 OR
+				ISNULL(D.memCount, 0) <> 0
+		]]>
+    </select>
+    
+    <!-- 柜台的销售统计（按产品统计）  -->
+    <select id="getCouSaleByPro" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+    	<![CDATA[
+			SELECT TOP $LIMIT$
+				D.NameTotal AS proName,
+				ISNULL(T.amount, 0) AS amount,
+				ISNULL(T.quantity, 0) AS quantity
+			FROM		
+				(SELECT
+					B.BIN_ProductVendorID,					
+					SUM(CASE WHEN A.SaleType = 'SR' THEN 
+						CASE WHEN B.SaleType = 'N' THEN -B.PricePay*B.Quantity ELSE -B.PricePay END
+						ELSE CASE WHEN B.SaleType = 'N' THEN B.PricePay*B.Quantity ELSE B.PricePay END
+					END) AS amount,
+					SUM(CASE WHEN A.SaleType = 'SR' THEN 
+						CASE WHEN B.SaleType = 'N' THEN CASE WHEN D.SaleStyle = '2' THEN -1 ELSE -B.Quantity END ELSE 0 END
+						ELSE CASE WHEN B.SaleType = 'N' THEN CASE WHEN D.SaleStyle = '2' THEN 1 ELSE B.Quantity END ELSE 0 END 
+					END) AS quantity
+				FROM
+					Sale.BIN_SaleRecord A WITH(NOLOCK)
+					JOIN Sale.BIN_SaleRecordDetail B WITH(NOLOCK) ON A.BIN_SaleRecordID = B.BIN_SaleRecordID
+					
+					LEFT JOIN Basis.BIN_ProductVendor C WITH(NOLOCK)
+					JOIN Basis.BIN_Product D WITH(NOLOCK) ON C.BIN_ProductID = D.BIN_ProductID
+					ON B.BIN_ProductVendorID = C.BIN_ProductVendorID
+			]]>
+			<isNotEmpty property="IsFliter">
+				<isEqual property="IsFliter" compareValue="1">
+					<!-- 过滤掉大分类为物料的产品详细的相关信息 -->
+					<![CDATA[LEFT JOIN (]]>
+					<include refid="SaleReportExt.productCategorySQL" />
+					<![CDATA[)P
+						ON(C.BIN_ProductID=P.BIN_ProductID)
+					]]>
+				</isEqual>
+			</isNotEmpty>
+			<![CDATA[
+				WHERE
+					A.SaleDate >= #StartDate# AND
+					A.SaleDate <= #EndDate# AND
+					A.BIN_OrganizationID = #organizationId# AND
+					B.SaleType = 'N' AND
+					A.BIN_OrganizationInfoID = #organizationInfoId# AND
+					A.BIN_BrandInfoID = #brandInfoId# AND
+					A.ValidFlag = '1'
+			]]>
+				<isNotEmpty property="IsFliter">
+					<isEqual property="IsFliter" compareValue="1">
+						<![CDATA[
+							AND ISNULL(P.PropValue,'') <> 'WL99'
+						]]>
+					</isEqual>
+				</isNotEmpty>
+			<![CDATA[
+				GROUP BY
+					B.BIN_ProductVendorID) T
+						
+				LEFT JOIN Basis.BIN_ProductVendor C WITH(NOLOCK)
+					JOIN Basis.BIN_Product D WITH(NOLOCK) ON C.BIN_ProductID = D.BIN_ProductID
+				ON T.BIN_ProductVendorID = C.BIN_ProductVendorID
+			WHERE
+				ISNULL(T.amount, 0) <> 0 OR
+				ISNULL(T.quantity, 0) <> 0	
+			ORDER BY
+				T.quantity DESC			
+		]]>
+    </select>
+    
+    <!-- 查询柜台的销售明细 -->
+    <sql id="CouSaleList">
+	    <![CDATA[
+			SELECT
+				T.Amount AS amount,
+				T.Quantity AS quantity,
+				CONVERT(varchar(30), A.SaleTime, 120) AS saleTime,
+				CASE WHEN A.BIN_MemberInfoID IS NOT NULL THEN 1 ELSE 0 END AS memFlag,
+				B.Name AS memName
+			FROM
+				Sale.BIN_SaleRecord A WITH(NOLOCK) 
+				
+				JOIN (SELECT
+					A.BIN_SaleRecordID,
+					SUM(CASE WHEN A.SaleType = 'SR' THEN 
+						CASE WHEN B.SaleType = 'N' THEN -B.PricePay*B.Quantity ELSE -B.PricePay END
+						ELSE CASE WHEN B.SaleType = 'N' THEN B.PricePay*B.Quantity ELSE B.PricePay END
+					END) AS amount,
+					SUM(CASE WHEN A.SaleType = 'SR' THEN 
+						CASE WHEN B.SaleType = 'N' THEN CASE WHEN D.SaleStyle = '2' THEN -1 ELSE -B.Quantity END ELSE 0 END
+						ELSE CASE WHEN B.SaleType = 'N' THEN CASE WHEN D.SaleStyle = '2' THEN 1 ELSE B.Quantity END ELSE 0 END 
+					END) AS quantity
+				FROM
+					Sale.BIN_SaleRecord A WITH(NOLOCK)
+					JOIN Sale.BIN_SaleRecordDetail B WITH(NOLOCK) ON A.BIN_SaleRecordID = B.BIN_SaleRecordID	
+					
+					LEFT JOIN Basis.BIN_ProductVendor C WITH(NOLOCK)
+					JOIN Basis.BIN_Product D WITH(NOLOCK) ON C.BIN_ProductID = D.BIN_ProductID
+					ON B.BIN_ProductVendorID = C.BIN_ProductVendorID AND B.SaleType = 'N'
+			]]>
+				<isNotEmpty property="IsFliter">
+					<isEqual property="IsFliter" compareValue="1">
+						<!-- 过滤掉大分类为物料的产品详细的相关信息 -->
+						<![CDATA[LEFT JOIN (]]>
+						<include refid="SaleReportExt.productCategorySQL" />
+						<![CDATA[)P
+							ON(C.BIN_ProductID=P.BIN_ProductID)
+						]]>
+					</isEqual>
+				</isNotEmpty>
+			<![CDATA[
+				WHERE
+					A.SaleDate = #Date# AND
+					A.BIN_OrganizationID = #organizationId# AND
+					A.BIN_OrganizationInfoID = #organizationInfoId# AND
+					A.BIN_BrandInfoID = #brandInfoId# AND
+					A.ValidFlag = '1'
+					
+			]]>
+				<isNotEmpty property="IsFliter">
+					<isEqual property="IsFliter" compareValue="1">
+						<![CDATA[
+							AND ISNULL(P.PropValue,'') <> 'WL99'
+						]]>
+					</isEqual>
+				</isNotEmpty>
+			<![CDATA[
+				GROUP BY
+					A.BIN_SaleRecordID) T ON A.BIN_SaleRecordID = T.BIN_SaleRecordID
+				
+				LEFT JOIN Members.BIN_MemberInfo B WITH(NOLOCK) ON A.BIN_MemberInfoID = B.BIN_MemberInfoID
+			WHERE
+				A.SaleDate = #Date# AND
+				A.BIN_OrganizationID = #organizationId# AND
+				A.BIN_OrganizationInfoID = #organizationInfoId# AND
+				A.BIN_BrandInfoID = #brandInfoId# AND
+				A.ValidFlag = '1'
+			]]>
+    </sql>
+    
+    <!-- 查询柜台的销售明细 -->
+    <select id="getCouSaleList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+       	<include refid="BINOLCMINC99.pageheader" />
+		<include refid="SaleReportExt.CouSaleList" />
+		<include refid="BINOLCMINC99.pagefooter" />
+    </select>
+    
+    <!-- 柜台的销售统计  -->
+    <select id="getCouSaleCount" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+    	<![CDATA[
+			SELECT	
+				ISNULL(SUM(CASE WHEN A.SaleType = 'SR' THEN 
+					CASE WHEN B.SaleType = 'N' THEN -B.PricePay*B.Quantity ELSE -B.PricePay END
+					ELSE CASE WHEN B.SaleType = 'N' THEN B.PricePay*B.Quantity ELSE B.PricePay END
+				END), 0) AS amount,
+				ISNULL(SUM(CASE WHEN A.SaleType = 'SR' THEN 
+					CASE WHEN B.SaleType = 'N' THEN CASE WHEN D.SaleStyle = '2' THEN -1 ELSE -B.Quantity END ELSE 0 END
+					ELSE CASE WHEN B.SaleType = 'N' THEN CASE WHEN D.SaleStyle = '2' THEN 1 ELSE B.Quantity END ELSE 0 END 
+				END), 0) AS quantity,
+				ISNULL(SUM(CASE WHEN A.BIN_MemberInfoID IS NOT NULL THEN (CASE WHEN A.SaleType = 'SR' THEN 
+					CASE WHEN B.SaleType = 'N' THEN -B.PricePay*B.Quantity ELSE -B.PricePay END
+					ELSE CASE WHEN B.SaleType = 'N' THEN B.PricePay*B.Quantity ELSE B.PricePay END
+				END) END), 0) AS memAmount,
+				ISNULL(SUM(CASE WHEN A.BIN_MemberInfoID IS NOT NULL THEN (CASE WHEN A.SaleType = 'SR' THEN 
+					CASE WHEN B.SaleType = 'N' THEN CASE WHEN D.SaleStyle = '2' THEN -1 ELSE -B.Quantity END ELSE 0 END
+					ELSE CASE WHEN B.SaleType = 'N' THEN CASE WHEN D.SaleStyle = '2' THEN 1 ELSE B.Quantity END ELSE 0 END 
+				END) END), 0) AS memQuantity,
+				COUNT(DISTINCT CASE WHEN A.SaleType = 'SR' THEN A.BIN_SaleRecordID end) AS srCount,
+				COUNT(DISTINCT CASE WHEN A.SaleType = 'NS' THEN A.BIN_SaleRecordID end) AS saleCount
+			FROM
+				Sale.BIN_SaleRecord A WITH(NOLOCK)
+				JOIN Sale.BIN_SaleRecordDetail B WITH(NOLOCK) ON A.BIN_SaleRecordID = B.BIN_SaleRecordID	
+				
+				LEFT JOIN Basis.BIN_ProductVendor C WITH(NOLOCK)
+				JOIN Basis.BIN_Product D WITH(NOLOCK) ON C.BIN_ProductID = D.BIN_ProductID
+				ON B.BIN_ProductVendorID = C.BIN_ProductVendorID AND B.SaleType = 'N'
+		]]>
+			<isNotEmpty property="IsFliter">
+				<isEqual property="IsFliter" compareValue="1">
+					<!-- 过滤掉大分类为物料的产品详细的相关信息 -->
+					<![CDATA[LEFT JOIN (]]>
+					<include refid="SaleReportExt.productCategorySQL" />
+					<![CDATA[)P
+						ON(C.BIN_ProductID=P.BIN_ProductID)
+					]]>
+				</isEqual>
+			</isNotEmpty>
+		<![CDATA[
+			WHERE
+		]]>
+			<isNotEmpty property="StartDate">
+				A.SaleDate >= #StartDate# AND
+			</isNotEmpty>
+			<isNotEmpty property="EndDate">
+				<![CDATA[A.SaleDate <= #EndDate# AND]]>
+			</isNotEmpty>
+			<isNotEmpty property="employeeId">
+				A.BIN_EmployeeID = #employeeId# AND
+			</isNotEmpty>
+		<![CDATA[
+				A.BIN_OrganizationID = #organizationId# AND
+				A.BIN_OrganizationInfoID = #organizationInfoId# AND
+				A.BIN_BrandInfoID = #brandInfoId# AND
+				A.ValidFlag = '1'
+		]]>
+		<isNotEmpty property="IsFliter">
+			<isEqual property="IsFliter" compareValue="1">
+				<![CDATA[
+					AND ISNULL(P.PropValue,'') <> 'WL99'
+				]]>
+			</isEqual>
+		</isNotEmpty>
+    </select>
+    
+    <!-- 按分类统计销售  -->
+    <select id="getSaleCountByClass" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+    	<![CDATA[
+			SELECT
+				T.bigClassId AS bigClassId,
+				T.smallClassId AS smallClassId,
+				X.PropValueChinese AS bigClass,
+				Y.PropValueChinese AS smallClass,
+				ISNULL(T.amount,0) AS amount,
+				ISNULL(T.quantity,0) AS quantity
+			FROM
+				(SELECT
+					E.BIN_PrtCatPropValueID AS bigClassId,
+					E1.BIN_PrtCatPropValueID AS smallClassId,
+					SUM(CASE WHEN A.SaleType = 'SR' THEN 
+						CASE WHEN D2.SaleStyle = '2' THEN -1 ELSE -B.Quantity END 
+						ELSE CASE WHEN D2.SaleStyle = '2' THEN 1 ELSE B.Quantity END 
+					END) AS quantity,
+					SUM(CASE WHEN A.SaleType = 'SR' THEN -B.PricePay*B.Quantity ELSE B.PricePay*B.Quantity END) AS amount
+				FROM
+					Sale.BIN_SaleRecord A WITH(NOLOCK)
+					JOIN Sale.BIN_SaleRecordDetail B WITH(NOLOCK) ON A.BIN_SaleRecordID = B.BIN_SaleRecordID	
+					
+					LEFT JOIN Basis.BIN_ProductVendor C WITH(NOLOCK) ON B.BIN_ProductVendorID = C.BIN_ProductVendorID
+					JOIN Basis.BIN_PrtCategory D WITH(NOLOCK) ON C.BIN_ProductID = D.BIN_ProductID
+					JOIN Basis.BIN_PrtCatPropValue E WITH(NOLOCK) ON D.BIN_PrtCatPropValueID = E.BIN_PrtCatPropValueID
+					JOIN Basis.BIN_PrtCatProperty F WITH(NOLOCK) ON E.BIN_PrtCatPropertyID = F.BIN_PrtCatPropertyID AND F.TeminalFlag='1'
+					
+					LEFT JOIN Basis.BIN_ProductVendor C1 WITH(NOLOCK) ON B.BIN_ProductVendorID = C1.BIN_ProductVendorID
+					JOIN Basis.BIN_PrtCategory D1 WITH(NOLOCK) ON C1.BIN_ProductID = D1.BIN_ProductID
+					JOIN Basis.BIN_PrtCatPropValue E1 WITH(NOLOCK) ON D1.BIN_PrtCatPropValueID = E1.BIN_PrtCatPropValueID
+					JOIN Basis.BIN_PrtCatProperty F1 WITH(NOLOCK) ON E1.BIN_PrtCatPropertyID = F1.BIN_PrtCatPropertyID AND F1.TeminalFlag='2'
+					
+					LEFT JOIN Basis.BIN_ProductVendor C2 WITH(NOLOCK)
+					JOIN Basis.BIN_Product D2 WITH(NOLOCK) ON C2.BIN_ProductID = D2.BIN_ProductID
+					ON B.BIN_ProductVendorID = C2.BIN_ProductVendorID
+				WHERE
+			]]>
+				<isNotEmpty property="StartDate">
+					A.SaleDate >= #StartDate# AND
+				</isNotEmpty>
+				<isNotEmpty property="EndDate">
+					<![CDATA[A.SaleDate <= #EndDate# AND]]>
+				</isNotEmpty>
+				<isNotEmpty property="employeeId">
+					A.BIN_EmployeeID = #employeeId# AND
+				</isNotEmpty>
+			<![CDATA[
+					A.BIN_OrganizationID = #organizationId# AND
+					A.BIN_OrganizationInfoID = #organizationInfoId# AND
+					B.SaleType = 'N' AND
+					A.BIN_BrandInfoID = #brandInfoId# AND
+					A.ValidFlag = '1'
+				GROUP BY
+					E.BIN_PrtCatPropValueID,
+					E1.BIN_PrtCatPropValueID) T
+					
+				LEFT JOIN Basis.BIN_PrtCatPropValue X WITH(NOLOCK) 
+				ON T.bigClassId = X.BIN_PrtCatPropValueID	
+				]]>
+					<isNotEmpty property="IsFliter">
+						<isEqual property="IsFliter" compareValue="1">
+							<![CDATA[
+								AND X.PropValue <> 'WL99'
+							]]>
+						</isEqual>
+					</isNotEmpty>
+				<![CDATA[	
+				LEFT JOIN Basis.BIN_PrtCatPropValue Y WITH(NOLOCK) 
+				ON T.smallClassId = Y.BIN_PrtCatPropValueID	
+			ORDER BY
+				T.bigClassId,
+				T.smallClassId
+		]]>
+    </select>
+    
+    <!-- 柜台的销售分类明细(始终不过滤大分类为物料的产品，此SQL用于查询指定分类的销售情况)  -->
+    <select id="getSaleCategoryDetail" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+    	<![CDATA[
+			SELECT 
+				D.UnitCode AS productCode,
+				D.NameTotal AS productName,
+				ISNULL(T.amount, 0) AS amount,
+				ISNULL(T.quantity, 0) AS quantity
+			FROM	
+				(SELECT
+					B.BIN_ProductVendorID,
+					SUM(CASE WHEN A.SaleType = 'SR' THEN -B.PricePay*B.Quantity ELSE B.PricePay*B.Quantity END) AS amount,
+					SUM(CASE WHEN A.SaleType = 'SR' THEN 
+						CASE WHEN D2.SaleStyle = '2' THEN -1 ELSE -B.Quantity END 
+						ELSE CASE WHEN D2.SaleStyle = '2' THEN 1 ELSE B.Quantity END 
+					END) AS quantity
+				FROM
+					Sale.BIN_SaleRecord A WITH(NOLOCK)
+					JOIN Sale.BIN_SaleRecordDetail B WITH(NOLOCK) ON A.BIN_SaleRecordID = B.BIN_SaleRecordID
+					
+					LEFT JOIN Basis.BIN_ProductVendor C WITH(NOLOCK) ON B.BIN_ProductVendorID = C.BIN_ProductVendorID
+					JOIN Basis.BIN_PrtCategory D WITH(NOLOCK) ON C.BIN_ProductID = D.BIN_ProductID
+					JOIN Basis.BIN_PrtCatPropValue E WITH(NOLOCK) ON D.BIN_PrtCatPropValueID = E.BIN_PrtCatPropValueID
+					
+					LEFT JOIN Basis.BIN_ProductVendor C2 WITH(NOLOCK)
+					JOIN Basis.BIN_Product D2 WITH(NOLOCK) ON C2.BIN_ProductID = D2.BIN_ProductID
+					ON B.BIN_ProductVendorID = C2.BIN_ProductVendorID
+				WHERE
+			]]>
+				<isNotEmpty property="StartDate">
+					A.SaleDate >= #StartDate# AND
+				</isNotEmpty>
+				<isNotEmpty property="EndDate">
+					<![CDATA[A.SaleDate <= #EndDate# AND]]>
+				</isNotEmpty>
+				<isNotEmpty property="employeeId">
+					A.BIN_EmployeeID = #employeeId# AND
+				</isNotEmpty>
+			<![CDATA[
+					E.BIN_PrtCatPropValueID = #SmallClassId# AND
+					A.BIN_OrganizationID = #organizationId# AND
+					B.SaleType = 'N' AND
+					A.BIN_OrganizationInfoID = #organizationInfoId# AND
+					A.BIN_BrandInfoID = #brandInfoId# AND
+					A.ValidFlag = '1'
+				GROUP BY
+					B.BIN_ProductVendorID) T	
+					
+				LEFT JOIN Basis.BIN_ProductVendor C WITH(NOLOCK)
+					JOIN Basis.BIN_Product D WITH(NOLOCK) ON C.BIN_ProductID = D.BIN_ProductID
+				ON T.BIN_ProductVendorID = C.BIN_ProductVendorID	
+		]]>
+    </select>
+    
+    <!-- 按时间统计销售金额和数量  -->
+    <select id="getSaleByHours" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+       	<![CDATA[
+       		SELECT
+				DATEPART(hh,A.SaleTime) AS hours,
+				SUM(CASE WHEN A.SaleType = 'SR' THEN 
+					CASE WHEN B.SaleType = 'N' THEN -B.PricePay*B.Quantity ELSE -B.PricePay END
+					ELSE CASE WHEN B.SaleType = 'N' THEN B.PricePay*B.Quantity ELSE B.PricePay END
+				END) AS amount,
+				SUM(CASE WHEN A.SaleType = 'SR' THEN 
+					CASE WHEN B.SaleType = 'N' THEN CASE WHEN D.SaleStyle = '2' THEN -1 ELSE -B.Quantity END ELSE 0 END
+					ELSE CASE WHEN B.SaleType = 'N' THEN CASE WHEN D.SaleStyle = '2' THEN 1 ELSE B.Quantity END ELSE 0 END 
+				END) AS quantity
+			FROM
+				Sale.BIN_SaleRecord A WITH(NOLOCK)
+				JOIN (]]><include refid="BINOLCMINC99.departPrivilegeSql" /><![CDATA[) A99 
+				ON A.BIN_OrganizationID=A99.BIN_OrganizationID		
+				JOIN Sale.BIN_SaleRecordDetail B WITH(NOLOCK) ON A.BIN_SaleRecordID = B.BIN_SaleRecordID	
+				
+				LEFT JOIN Basis.BIN_ProductVendor C WITH(NOLOCK)
+				JOIN Basis.BIN_Product D WITH(NOLOCK) ON C.BIN_ProductID = D.BIN_ProductID
+				ON B.BIN_ProductVendorID = C.BIN_ProductVendorID AND B.SaleType = 'N'
+		]]>
+			<isNotEmpty property="IsFliter">
+				<isEqual property="IsFliter" compareValue="1">
+					<!-- 过滤掉大分类为物料的产品详细的相关信息 -->
+					<![CDATA[LEFT JOIN (]]>
+					<include refid="SaleReportExt.productCategorySQL" />
+					<![CDATA[)P
+						ON(C.BIN_ProductID=P.BIN_ProductID)
+					]]>
+				</isEqual>
+			</isNotEmpty>
+		<![CDATA[
+			WHERE
+				A.SaleDate = #Date# AND
+				A.BIN_OrganizationInfoID = #organizationInfoId# AND
+				A.BIN_BrandInfoID = #brandInfoId# AND
+				A.ValidFlag = '1'
+		]]>	
+			<isNotEmpty property="IsFliter">
+				<isEqual property="IsFliter" compareValue="1">
+					<![CDATA[
+						AND ISNULL(P.PropValue,'') <> 'WL99'
+					]]>
+				</isEqual>
+			</isNotEmpty>
+			<isNotEmpty property="organizationId" prepend="AND">
+				A.BIN_OrganizationID = #organizationId#
+			</isNotEmpty>
+		<![CDATA[			
+			GROUP BY 
+				DATEPART(hh,A.SaleTime)
+		]]>	
+    </select>
+    
+    
+</sqlMap>

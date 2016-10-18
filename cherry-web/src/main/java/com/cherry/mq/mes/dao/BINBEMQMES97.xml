@@ -1,0 +1,359 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sqlMap PUBLIC "-//iBATIS.com//DTD SQL Map 2.0//EN" "http://ibatis.apache.org/dtd/sql-map-2.dtd">
+<sqlMap namespace="BINBEMQMES97">
+	<!-- 查询柜台部门信息 -->
+	<select id ="selCounterDepartmentInfo" parameterClass="java.util.HashMap" resultClass ="java.util.HashMap">
+	<![CDATA[
+		SELECT		
+			A.BIN_OrganizationID,
+			A.BIN_CounterInfoID,
+			A.CounterNameIF
+		FROM
+			Basis.BIN_CounterInfo A
+		WHERE
+			A.CounterCode = #CounterCode#
+            AND A.BIN_BrandInfoID = #BIN_BrandInfoID#
+            AND A.BIN_OrganizationInfoID = #BIN_OrganizationInfoID#
+	]]> 
+	</select>
+	
+    <!-- 查询员工信息 -->
+    <select id ="selEmployeeInfo" parameterClass="java.util.HashMap" resultClass ="java.util.HashMap">
+        SELECT
+            A.BIN_EmployeeID,
+            A.EmployeeName,
+            A.BIN_PositionCategoryID,
+            B.CategoryName
+        FROM
+            Basis.BIN_Employee A
+            LEFT JOIN Privilege.BIN_PositionCategory B
+            ON A.BIN_PositionCategoryID = B.BIN_PositionCategoryID
+        WHERE
+            A.EmployeeCode = #EmployeeCode#
+            AND A.BIN_BrandInfoID = #BIN_BrandInfoID#
+            AND A.BIN_OrganizationInfoID = #BIN_OrganizationInfoID#
+    </select>
+
+    <!-- 查询产品信息 -->
+    <select id="selProductInfo" parameterClass="java.util.HashMap" resultClass ="java.util.HashMap">
+        <![CDATA[
+	        SELECT 
+	            B.BIN_ProductVendorID
+	        FROM
+	            Basis.BIN_Product A,
+	            Basis.BIN_ProductVendor B
+	        WHERE
+	            A.UnitCode = #UnitCode#
+	            AND A.BIN_ProductID = B.BIN_ProductID
+	            AND B.BarCode = #BarCode#
+	            AND A.BIN_BrandInfoID = #BIN_BrandInfoID#
+	            AND A.BIN_OrganizationInfoID = #BIN_OrganizationInfoID#
+	            AND A.ValidFlag = '1'
+	            AND B.ValidFlag = '1'
+        ]]>
+    </select>
+    
+    <!-- 查询barcode变更后的产品信息 -->
+    <select id="selPrtBarCode" parameterClass="java.util.HashMap" resultClass ="java.util.HashMap">
+        <![CDATA[
+            SELECT
+                A.BarCode,
+                A.UnitCode,
+                A.BIN_ProductVendorID
+            FROM 
+                Basis.BIN_PrtBarCode A
+            WHERE 
+                A.OldBarCode = #BarCode#
+                AND A.OldUnitCode = #UnitCode#
+                AND A.StartTime <= #TradeDateTime#
+                AND (A.ClosingTime IS NULL OR A.ClosingTime >= #TradeDateTime#)
+                AND A.ValidFlag ='1'
+        ]]>
+    </select>
+    
+    <!-- 查询产品信息 根据产品厂商ID -->
+    <select id="selProductInfoByPrtVenID" parameterClass="java.util.HashMap" resultClass ="java.util.HashMap">
+        <![CDATA[
+	        SELECT 
+	            B.BIN_ProductVendorID
+	        FROM
+	            Basis.BIN_Product A,
+	            Basis.BIN_ProductVendor B
+	        WHERE
+	            A.BIN_ProductID = B.BIN_ProductID
+	            AND B.BIN_ProductVendorID = #BIN_ProductVendorID#
+	            AND A.ValidFlag = '1'
+	            AND B.ValidFlag = '1'
+        ]]>
+    </select>
+
+    <!-- 查询产品信息  根据产品厂商ID，去查产品ID，再去查有效的厂商ID -->
+    <select id="selProAgainByPrtVenID" parameterClass="java.util.HashMap" resultClass ="java.util.HashMap">
+        <![CDATA[
+            SELECT 
+                B.BIN_ProductVendorID
+            FROM 
+                Basis.BIN_Product A,
+                Basis.BIN_ProductVendor B
+            WHERE 
+                A.BIN_ProductID = B.BIN_ProductID
+                AND B.BIN_ProductID = (
+                          SELECT 
+                                BIN_ProductID
+                          FROM 
+                                Basis.BIN_ProductVendor C 
+                          
+                          WHERE C.BIN_ProductVendorID = #BIN_ProductVendorID# )
+                AND A.ValidFlag = '1'
+                AND B.ValidFlag = '1'
+          ORDER BY  
+              B.CreateTime DESC,B.BIN_ProductVendorID DESC
+        ]]>
+    </select>
+    
+    <!-- 查询barcode变更后的产品信息（按tradeDateTime与StartTime最接近的升序） -->
+    <select id="selPrtBarCodeList" parameterClass="java.util.HashMap" resultClass ="java.util.HashMap">
+        <![CDATA[
+            SELECT
+                A.BarCode,
+                A.UnitCode,
+                A.BIN_ProductVendorID
+            FROM 
+                Basis.BIN_PrtBarCode A
+            WHERE 
+                A.OldBarCode = #BarCode#
+                AND A.OldUnitCode = #UnitCode#
+                AND A.ValidFlag ='1'
+                AND DATEDIFF(SECOND, A.StartTime, #TradeDateTime#) >= 0
+            ORDER BY
+                DATEDIFF(SECOND, A.StartTime, #TradeDateTime#)
+        ]]>
+    </select>
+    
+    <!-- 查询促销产品信息 -->
+    <select id ="selPrmProductInfo" parameterClass="java.util.HashMap" resultClass ="java.util.HashMap">
+    <![CDATA[
+        SELECT
+            B.BIN_PromotionProductVendorID,
+            C.SalePrice,
+            C.AllocationPrice,
+            D.BIN_ProductVendorPackageID,
+            A.UnitCode,
+            A.IsStock,
+            A.PromotionCateCD,
+            A.ExPoint
+        FROM
+            Basis.BIN_PromotionProduct A 
+            ]]> 
+            LEFT JOIN (
+                            SELECT
+                                pp.BIN_PromotionProductID,
+                                case when pb.SalePrice IS NULL then pp.SalePrice
+                                else pb.SalePrice end AS SalePrice,
+                                case when pb.AllocationPrice IS NULL then pp.SalePrice
+                                else pb.AllocationPrice end AS AllocationPrice
+                            FROM
+                                Basis.BIN_PromotionPrice pp
+                                LEFT JOIN Basis.BIN_PrmPriceDepart pb
+                                ON(pp.BIN_PromotionPriceID = pb.BIN_PromotionProductID AND
+                                    pb.BIN_OrganizationID = #BIN_OrganizationID# AND
+                                    <![CDATA[
+                                        pb.StartDate <= CONVERT(date, GETDATE()) AND
+                                    ]]>
+                                    pb.endDate > CONVERT(date, GETDATE()) AND
+                                    pb.ValidFlag = '1'
+                                )
+                            WHERE
+                                <![CDATA[
+                                    pp.StartDate <= CONVERT(date, GETDATE()) AND
+                                ]]>
+                                <![CDATA[
+                                pp.endDate > CONVERT(date, GETDATE()) AND
+                                pp.ValidFlag = '1'
+                            ) C ON (A.BIN_PromotionProductID = C.BIN_PromotionProductID),
+            Basis.BIN_PromotionProductVendor B 
+            LEFT JOIN Basis.BIN_ProductVendorPackage D ON D.BIN_ProductVendorID = B.BIN_ManufacturerInfoID AND D.ValidFlag = '1' AND D.DefaultFlag = '1'
+        WHERE
+            A.UnitCode = #UnitCode# AND
+            A.BIN_PromotionProductID = B.BIN_PromotionProductID AND
+            B.BarCode = #BarCode# AND 
+            A.ValidFlag = '1' AND
+            B.ValidFlag = '1'
+    ]]>
+    </select>
+    
+    <!-- 查询barcode变更后的促销产品信息-->
+    <select id="selPrmProductPrtBarCodeInfo" parameterClass="java.util.HashMap" resultClass ="java.util.HashMap">
+       <![CDATA[
+         SELECT
+               A.BarCode,
+               A.UnitCode,
+               A.BIN_PromotionProductVendorID
+         FROM 
+               Basis.BIN_PromotionPrtBarCode A
+         WHERE 
+               A.OldBarCode = #BarCode# AND 
+               A.OldUnitCode = #UnitCode# AND 
+               A.StartTime <= convert(datetime,#TradeDateTime#,121) AND (
+               A.ClosingTime is null or
+               A.ClosingTime >= convert(datetime,#TradeDateTime#,121)) AND
+               A.ValidFlag ='1'
+        ]]>
+    </select>
+    
+    <!-- 查询促销产品信息    根据促销产品厂商ID -->
+    <select id ="selPrmProductInfoByPrmVenID" parameterClass="java.util.HashMap" resultClass ="java.util.HashMap">
+    <![CDATA[
+        SELECT
+            B.BIN_PromotionProductVendorID,
+            C.SalePrice,
+            C.AllocationPrice,
+            D.BIN_ProductVendorPackageID,
+            A.UnitCode,
+            A.IsStock,
+            A.PromotionCateCD,
+            A.ExPoint
+        FROM
+            Basis.BIN_PromotionProduct A 
+            ]]> 
+            LEFT JOIN (
+                            SELECT
+                                pp.BIN_PromotionProductID,
+                                case when pb.SalePrice IS NULL then pp.SalePrice
+                                else pb.SalePrice end AS SalePrice,
+                                case when pb.AllocationPrice IS NULL then pp.SalePrice
+                                else pb.AllocationPrice end AS AllocationPrice
+                            FROM
+                                Basis.BIN_PromotionPrice pp
+                                LEFT JOIN Basis.BIN_PrmPriceDepart pb
+                                ON(pp.BIN_PromotionPriceID = pb.BIN_PromotionProductID AND
+                                    pb.BIN_OrganizationID = #BIN_OrganizationID# AND
+                                    <![CDATA[
+                                        pb.StartDate <= CONVERT(date, GETDATE()) AND
+                                    ]]>
+                                    pb.endDate > CONVERT(date, GETDATE()) AND
+                                    pb.ValidFlag = '1'
+                                )
+                            WHERE
+                                <![CDATA[
+                                    pp.StartDate <= CONVERT(date, GETDATE()) AND
+                                ]]>
+                                <![CDATA[
+                                pp.endDate > CONVERT(date, GETDATE()) AND
+                                pp.ValidFlag = '1'
+                            ) C ON (A.BIN_PromotionProductID = C.BIN_PromotionProductID),
+            Basis.BIN_PromotionProductVendor B 
+            LEFT JOIN Basis.BIN_ProductVendorPackage D ON D.BIN_ProductVendorID = B.BIN_ManufacturerInfoID AND D.ValidFlag = '1' AND D.DefaultFlag = '1'
+        WHERE
+            A.BIN_PromotionProductID = B.BIN_PromotionProductID AND
+            B.BIN_PromotionProductVendorID = #BIN_PromotionProductVendorID# AND 
+            A.ValidFlag = '1' AND
+            B.ValidFlag = '1'
+    ]]>
+    </select>
+    
+    <!-- 查询促销产品信息  根据促销产品厂商ID，去查产品ID，再去查有效的厂商ID -->
+    <select id ="selPrmAgainByPrmVenID" parameterClass="java.util.HashMap" resultClass ="java.util.HashMap">
+        <![CDATA[
+            SELECT 
+                  B.BIN_PromotionProductVendorID,
+                  A.UnitCode,
+                  A.IsStock,
+                  A.PromotionCateCD,
+                  A.ExPoint
+              FROM 
+                  Basis.BIN_PromotionProduct A,
+                  Basis.BIN_PromotionProductVendor B
+              WHERE 
+                  A.BIN_PromotionProductID = B.BIN_PromotionProductID AND 
+                  B.BIN_PromotionProductID = (
+                              SELECT 
+                                    BIN_PromotionProductID
+                              FROM 
+                                    Basis.BIN_PromotionProductVendor C 
+                              WHERE 
+                                    C.BIN_PromotionProductVendorID = #BIN_PromotionProductVendorID# ) AND
+                  A.ValidFlag = '1' AND
+                  B.ValidFlag = '1'
+              ORDER BY  
+                  B.CreateTime DESC,B.BIN_PromotionProductVendorID DESC
+        ]]>
+    </select>
+    
+    <!-- 查询促销产品信息  根据促销产品厂商ID 不区分有效状态 -->
+    <select id ="selPrmByPrmVenID" parameterClass="java.util.HashMap" resultClass ="java.util.HashMap">
+        <![CDATA[
+            SELECT 
+                B.BIN_PromotionProductVendorID,
+                A.UnitCode,
+                A.IsStock,
+                A.PromotionCateCD,
+                A.ExPoint
+            FROM 
+                Basis.BIN_PromotionProduct A,
+                Basis.BIN_PromotionProductVendor B
+            WHERE 
+                A.BIN_PromotionProductID = B.BIN_PromotionProductID AND
+                B.BIN_PromotionProductVendorID = #BIN_PromotionProductVendorID#
+            ORDER BY  
+                B.CreateTime DESC,B.BIN_PromotionProductVendorID DESC
+        ]]>
+    </select>
+    
+    <!-- 查询barcode变更后的促销产品信息（按tradeDateTime与StartTime最接近的升序）-->
+    <select id="selPrmPrtBarCodeList" parameterClass="java.util.HashMap" resultClass ="java.util.HashMap">
+        <![CDATA[
+            SELECT
+                A.BarCode,
+                A.UnitCode,
+                A.BIN_PromotionProductVendorID
+            FROM 
+                Basis.BIN_PromotionPrtBarCode A
+            WHERE 
+                A.OldBarCode = #BarCode#
+                AND A.OldUnitCode = #UnitCode#
+                AND A.ValidFlag = '1'
+                AND DATEDIFF(SECOND, A.StartTime, #TradeDateTime#) >= 0
+            ORDER BY
+                DATEDIFF(SECOND, A.StartTime, #TradeDateTime#)
+        ]]>
+    </select>
+    
+    <!-- 查询会员信息数据 -->
+    <select id="selMemberInfo" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+        <![CDATA[
+            SELECT
+                A.BIN_MemberInfoID,
+                A.Name,
+                A.MobilePhone,
+                A.MessageId,
+                A.CounterCodeBelong,
+                C.FirstSaleCounterCode
+            FROM
+                Members.BIN_MemberInfo A
+                JOIN Members.BIN_MemCardInfo B
+                ON(A.BIN_MemberInfoID = B.BIN_MemberInfoID
+					AND B.ValidFlag = '1')
+                LEFT JOIN Members.BIN_MemberExtInfo C
+                ON(A.BIN_MemberInfoID = C.BIN_MemberInfoID)
+            WHERE
+                B.MemCode = #MemCode#
+                AND A.BIN_OrganizationInfoID = #BIN_OrganizationInfoID#
+                AND A.BIN_BrandInfoID = #BIN_BrandInfoID#
+        ]]>
+    </select>
+    
+    <!-- 查询问题ID -->
+    <select id="selQuestionID" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+        <![CDATA[
+            SELECT
+                A.BIN_PaperQuestionID
+            FROM
+                Monitor.BIN_PaperQuestion A
+            WHERE
+                A.BIN_PaperID = #BIN_PaperID#
+                AND A.DisplayOrder = #DisplayOrder#
+                AND A.ValidFlag = '1'
+        ]]>
+    </select>
+</sqlMap>

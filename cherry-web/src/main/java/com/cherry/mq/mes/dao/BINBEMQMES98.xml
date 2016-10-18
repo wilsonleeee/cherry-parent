@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sqlMap PUBLIC "-//iBATIS.com//DTD SQL Map 2.0//EN" "http://ibatis.apache.org/dtd/sql-map-2.dtd">
+<sqlMap namespace="BINBEMQMES98">
+
+	<!-- 取得共通有效的业务处理器列表  -->
+    <sql id="getBaseHandler">
+       	<![CDATA[
+				SELECT	
+					Type AS type,
+					OrgCode AS orgCode,
+					BrandCode AS brandCode,
+					BillType AS billType,
+					HandlerName	AS handlerName,
+					ValidFlag AS valFlag													
+				FROM																
+					Tools.BIN_BussinessHandler
+				WHERE 
+					BrandCode = '-9999' AND
+					ValidFlag = '1'
+			]]>
+    </sql>
+    
+	<!-- 取得处理器名称List -->
+	<select id ="getHandlerNameList" parameterClass="java.util.HashMap" resultClass ="java.util.HashMap">
+	<include refid="BINBEMQMES98.getBaseHandler" />
+	<![CDATA[
+	UNION
+		SELECT	
+			Type AS type,
+			OrgCode AS orgCode,
+			BrandCode AS brandCode,
+			BillType AS billType,
+			HandlerName	AS handlerName,
+			ValidFlag AS valFlag													
+		FROM																
+			Tools.BIN_BussinessHandler
+		WHERE 
+			BrandCode <> '-9999' AND 
+			ValidFlag = '1'
+	UNION
+		SELECT	
+			A.Type AS type,
+			A.OrgCode AS orgCode,
+			A.BrandCode AS brandCode,
+			A.BillType AS billType,
+			A.HandlerName AS handlerName,
+			A.ValidFlag AS valFlag													
+		FROM																
+			Tools.BIN_BussinessHandler A JOIN
+			(
+		]]>
+		<include refid="BINBEMQMES98.getBaseHandler" />
+		<![CDATA[
+		) T
+		ON (A.BrandCode <> '-9999' AND A.ValidFlag = '0' AND A.Type = T.type AND A.BillType = T.billType AND A.HandlerName = T.handlerName)
+	]]>	
+	</select>
+</sqlMap>

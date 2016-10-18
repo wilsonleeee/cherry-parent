@@ -1,0 +1,119 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sqlMap PUBLIC "-//iBATIS.com//DTD SQL Map 2.0//EN" "http://ibatis.apache.org/dtd/sql-map-2.dtd">
+<sqlMap namespace="BINOLSTCM07">
+    <!-- 取得指定ID的收发货单据及其详细信息 -->
+    <select id="getProDeliverAllGroupByID" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+        <![CDATA[
+            SELECT
+                A.DeliverNo as mDeliverReceiveNo,
+				A.DeliverNoIF AS mDeliverNoIF,
+				A.RelevanceNo AS mRelevanceNo,
+                A.TotalQuantity as mTotalQuantity,
+                A.TotalAmount as mTotalAmount,
+				A.DeliverType AS mDeliverType,
+                B.BIN_ProductVendorID,
+                B.Price,
+                B.ReferencePrice,
+                C.BarCode,
+                D.UnitCode,
+                E.CounterCode,
+                CONVERT(varchar(100),A.Date,120) AS mDeliverDate,
+                CONVERT(varchar(100),A.PlanArriveDate,120) AS mPlanArriveDate,
+                A.Comments AS ReasonAll,
+                B.Comments AS Comments
+            FROM 
+                Inventory.BIN_ProductDeliver A
+                LEFT JOIN Basis.BIN_CounterInfo E
+                ON A.BIN_OrganizationIDReceive = E.BIN_OrganizationID
+                AND E.BIN_OrganizationInfoID = #BIN_OrganizationInfoID#
+                AND E.BIN_BrandInfoID = #BIN_BrandInfoID#
+                LEFT JOIN Inventory.BIN_ProductDeliverDetail B
+                ON A.BIN_ProductDeliverID = B.BIN_ProductDeliverID
+                LEFT JOIN Basis.BIN_ProductVendor C on B.BIN_ProductVendorID = C.BIN_ProductVendorID
+                LEFT JOIN Basis.BIN_Product D on C.BIN_ProductID = D.BIN_ProductID
+            WHERE
+                A.BIN_ProductDeliverID = #BIN_ProductDeliverID#
+                AND A.ValidFlag ='1'
+    ]]>
+    </select>
+
+    <!-- 取得指定ID的发货单明细数量（合并同一产品） -->
+    <select id="getProDeliverDetailQuantityByID" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+        <![CDATA[
+            SELECT
+                B.BIN_ProductVendorID,
+                SUM(B.Quantity) AS Quantity
+            FROM
+                Inventory.BIN_ProductDeliverDetail B
+            WHERE 
+                B.BIN_ProductDeliverID = #BIN_ProductDeliverID#
+                AND B.ValidFlag ='1'
+            GROUP BY
+                B.BIN_ProductVendorID
+        ]]>
+    </select>
+
+     <!-- 取得部门类型 -->
+	<select id="getOrganizationType" parameterClass="java.util.HashMap" resultClass="java.lang.String">
+		<![CDATA[
+		SELECT 
+			Type
+  		FROM 
+  			Basis.BIN_Organization
+ 		WHERE 
+ 			BIN_OrganizationID = #organizationId#
+		]]>
+    </select> 
+
+    <!-- 取得指定ID的入库单据及其详细信息 -->
+    <select id="getProInDepotAllGroupByID" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+        <![CDATA[
+            SELECT
+                A.BillNo as mDeliverReceiveNo,
+                A.BillNoIF AS mDeliverNoIF,
+                A.RelevanceNo AS mRelevanceNo,
+                A.PreTotalQuantity as mTotalQuantity,
+                A.PreTotalAmount as mTotalAmount,
+                '' AS mDeliverType,
+                B.BIN_ProductVendorID,
+                B.Price,
+                B.ReferencePrice,
+                C.BarCode,
+                D.UnitCode,
+                E.CounterCode,
+                A.InDepotDate as mDeliverDate,
+                A.Comments AS ReasonAll,
+                B.Comments AS Comments
+            FROM 
+                Inventory.BIN_ProductInDepot A
+                LEFT JOIN Basis.BIN_CounterInfo E
+                ON A.BIN_OrganizationID = E.BIN_OrganizationID
+                AND E.BIN_OrganizationInfoID = #BIN_OrganizationInfoID#
+                AND E.BIN_BrandInfoID = #BIN_BrandInfoID#
+                LEFT JOIN Inventory.BIN_ProductInDepotDetail B
+                ON A.BIN_ProductInDepotID = B.BIN_ProductInDepotID
+                LEFT JOIN Basis.BIN_ProductVendor C on B.BIN_ProductVendorID = C.BIN_ProductVendorID
+                LEFT JOIN Basis.BIN_Product D on C.BIN_ProductID = D.BIN_ProductID
+            WHERE
+                A.BIN_ProductInDepotID = #BIN_ProductInDepotID#
+                AND A.ValidFlag ='1'
+    ]]>
+    </select>
+
+    <!-- 取得指定ID的入库单明细数量（合并同一产品） -->
+    <select id="getProInDepotDetailQuantityByID" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+        <![CDATA[
+            SELECT
+                A.BIN_ProductVendorID,
+                SUM(A.PreQuantity) AS Quantity
+            FROM
+                Inventory.BIN_ProductInDepotDetail A
+            WHERE
+                A.BIN_ProductInDepotID = #BIN_ProductInDepotID#
+                AND A.ValidFlag ='1'
+            GROUP BY
+                A.BIN_ProductVendorID
+        ]]>
+    </select>
+
+</sqlMap>

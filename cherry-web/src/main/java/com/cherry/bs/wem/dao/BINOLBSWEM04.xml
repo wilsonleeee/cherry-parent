@@ -1,0 +1,165 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sqlMap PUBLIC "-//iBATIS.com//DTD SQL Map 2.0//EN" "http://ibatis.apache.org/dtd/sql-map-2.dtd">
+<sqlMap namespace="BINOLBSWEM04">
+	<!-- 查询微商信息 -->
+	<sql id="WeQuery">
+		<![CDATA[
+			SELECT
+	    		A.MobilePhone AS agentMobile,
+	    		A.OpenID AS agentOpenID,
+	    		A.EmployeeName AS agentName,
+	    		B.Type AS agentLevel,
+	    		C.RegionNameChinese AS agentProvince,
+	    		D.RegionNameChinese AS agentCity,
+	    		E.MobilePhone AS superMobile,
+	    		A.Path AS empPath,
+	    		B.Path AS orgPath,
+	    		A.BIN_EmployeeID AS employeeId,
+	    		B.BIN_OrganizationID AS departId,
+	    		B.BIN_ProvinceID AS provinceId,
+	    		B.BIN_CityID AS cityId,
+	    		A.ValidFlag AS validFlag,
+	    		B.DepartName AS departName
+	    	FROM
+	    		Basis.BIN_Employee A WITH(NOLOCK)
+	    		LEFT JOIN Basis.BIN_Organization B WITH(NOLOCK) ON A.BIN_OrganizationID = B.BIN_OrganizationID
+	    		LEFT JOIN Basis.BIN_StandardRegion C WITH(NOLOCK) ON B.BIN_ProvinceID = C.BIN_RegionID
+	    		LEFT JOIN Basis.BIN_StandardRegion D WITH(NOLOCK) ON B.BIN_CityID = D.BIN_RegionID
+	    		LEFT JOIN Basis.BIN_Employee E WITH(NOLOCK) ON A.NodeID.GetAncestor(1) = E.NodeID
+	    		LEFT JOIN Privilege.BIN_PositionCategory F ON A.BIN_PositionCategoryID = F.BIN_PositionCategoryID
+	    	WHERE
+	    		A.BIN_OrganizationInfoID = #organizationInfoId#
+	    	AND A.BIN_BrandInfoID = #brandInfoId#
+	    	AND F.CategoryCode = #categoryCode#
+		]]>
+		<dynamic>
+			<isNotEmpty prepend="AND" property="agentMobile">
+				<![CDATA[A.MobilePhone LIKE '%' + #agentMobile# + '%']]>
+			</isNotEmpty>
+			<isNotEmpty prepend="AND" property="agentName">
+				<![CDATA[A.EmployeeName LIKE '%' + #agentName# + '%']]>
+			</isNotEmpty>
+			<isNotEmpty prepend="AND" property="superMobile">
+				<![CDATA[E.MobilePhone LIKE '%' + #superMobile# + '%']]>
+			</isNotEmpty>
+			<isNotEmpty prepend="AND" property="agentLevel">
+				<![CDATA[B.Type = #agentLevel#]]>
+			</isNotEmpty>
+			<isNotEmpty prepend="AND" property="provinceId">
+				<![CDATA[B.BIN_ProvinceID = #provinceId#]]>
+			</isNotEmpty>
+			<isNotEmpty prepend="AND" property="cityId">
+				<![CDATA[B.BIN_CityID = #cityId#]]>
+			</isNotEmpty>
+			<isNotEmpty prepend="AND" property="departName">
+				<![CDATA[B.DepartName LIKE '%' + #departName# + '%']]>
+			</isNotEmpty>
+		</dynamic>
+	</sql>
+	
+	<!-- 取得微商总数  -->
+    <select id="getWechatMerchantCount" parameterClass="java.util.HashMap" resultClass="java.lang.Integer">
+    	<![CDATA[
+			SELECT	COUNT(SORT_T1.employeeId) AS count FROM (
+		]]>	
+		<include refid="BINOLBSWEM04.WeQuery" />	
+		<![CDATA[	
+			)SORT_T1
+		]]>										
+    </select>
+
+	<!-- 取得微商信息List  -->
+    <select id="getWechatMerchantList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+       	<include refid="BINOLCMINC99.pageheader" />
+		<include refid="BINOLBSWEM04.WeQuery" />
+		<include refid="BINOLCMINC99.pagefooter" />
+    </select>
+    
+    <!-- 微店预留号查询 -->
+	<sql id="reservedCodeQuery">
+		<![CDATA[
+			SELECT
+				ReservedCode AS reservedCode
+			From
+				Basis.BIN_AgentReservedCode
+			WHERE
+				BIN_OrganizationInfoID = #organizationInfoId#
+	    	AND BIN_BrandInfoID = #brandInfoId#
+	    	AND ValidFlag = #ValidFlag#
+		]]>
+		<dynamic>
+			<isNotEmpty prepend="AND" property="ReservedCode">
+				ReservedCode LIKE '%' + #ReservedCode# + '%'
+			</isNotEmpty>
+		</dynamic>
+	</sql>
+	
+	<!-- 取得微店预留号总数  -->
+    <select id="getReservedCodeCount" parameterClass="java.util.HashMap" resultClass="java.lang.Integer">
+    	<![CDATA[
+			SELECT	COUNT(SORT_T1.reservedCode) AS count FROM (
+		]]>	
+		<include refid="BINOLBSWEM04.reservedCodeQuery" />	
+		<![CDATA[	
+			)SORT_T1
+		]]>										
+    </select>
+    
+    <!-- 取得微店预留号List  -->
+    <select id="getReservedCodeList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+       	<include refid="BINOLCMINC99.pageheader" />
+		<include refid="BINOLBSWEM04.reservedCodeQuery" />
+		<include refid="BINOLCMINC99.pagefooter" />
+    </select>
+	
+	<!-- 将使用的预留号置为无效 -->
+	<update id="setReservedCodeInvalid" parameterClass="java.util.HashMap">
+		<![CDATA[
+			UPDATE 
+				Basis.BIN_AgentReservedCode
+			SET
+				ValidFlag = #ValidFlag#
+			WHERE
+				BIN_OrganizationInfoID = #organizationInfoId#
+	    	AND BIN_BrandInfoID = #brandInfoId#
+	    	AND ReservedCode =  #ReservedCode#
+		]]>
+	</update>	
+	
+	<!-- 获取微商帐户信息 -->
+	<select id="getAgentAccountInfoList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+	<![CDATA[
+		SELECT 
+			BIN_EmployeeID,
+			Account,
+			AccountType,
+			AccountName,
+			BankInfo,
+			ProvinceName,
+			CityName,
+			ValidFlag
+		FROM
+			Basis.BIN_EmpAccountInfo
+		WHERE
+			BIN_OrganizationInfoID = #BIN_OrganizationInfoID#
+    	AND BIN_BrandInfoID = #BIN_BrandInfoID#
+		AND	BIN_EmployeeID = #BIN_EmployeeID#
+	]]>
+	</select>
+	
+	<!-- 判断手机号是否在申请表中 -->
+	<select id="getMobExistsInAgentApply" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+		<![CDATA[
+			SELECT
+				TOP 1 
+				BillCode
+			FROM
+				Basis.BIN_AgentApply
+			WHERE 
+				BIN_OrganizationInfoID = #BIN_OrganizationInfoID#
+			AND BIN_BrandInfoID = #BIN_BrandInfoID#
+			AND ApplyMobile = #ApplyMobile#		 				
+		]]>
+	</select>
+	
+</sqlMap>

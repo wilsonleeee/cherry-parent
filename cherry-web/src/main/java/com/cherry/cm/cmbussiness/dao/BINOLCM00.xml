@@ -1,0 +1,668 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sqlMap PUBLIC "-//iBATIS.com//DTD SQL Map 2.0//EN" "http://ibatis.apache.org/dtd/sql-map-2.dtd">
+<sqlMap namespace="BINOLCM00">
+	<!-- 取得省区域 -->
+    <select id="getProvinceList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+        <![CDATA[
+		  	SELECT												
+				A.BIN_RegionID AS provinceId,
+				B.BIN_RegionID AS reginId,
+		]]>
+		<dynamic>
+			<isNotEmpty property="language">
+				<isEqual property="language" compareValue="en_US">
+					A.RegionNameForeign AS provinceName,
+					B.RegionNameForeign AS reginName
+				</isEqual>
+				<isEqual property="language" compareValue="zh_CN">	
+					A.RegionNameChinese AS provinceName,
+					B.RegionNameChinese AS reginName
+				</isEqual>								
+			</isNotEmpty>
+			<isEmpty property="language">
+				A.RegionNameChinese AS provinceName,
+				B.RegionNameChinese AS reginName
+			</isEmpty>
+		</dynamic>
+		<![CDATA[
+			FROM												
+				Basis.BIN_Region A,
+				Basis.BIN_Region B								
+			WHERE												
+				A.NodeID.GetAncestor(1) = B.NodeID AND										
+				A.ValidFlag = '1' AND
+				B.ValidFlag = '1' AND
+				B.BIN_BrandInfoID = #brandInfoId# AND
+				B.RegionType = '0'
+			ORDER BY reginName ASC,provinceName ASC
+		]]>
+    </select>
+	<!-- 取得下属区域  -->
+    <select id="getChildRegionList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+        <![CDATA[
+		  	SELECT												
+				A.BIN_RegionID AS regionId,
+		]]>
+		<dynamic>
+			<isNotEmpty property="language">
+				<isEqual property="language" compareValue="en_US">
+					A.RegionNameForeign AS regionName
+				</isEqual>
+				<isEqual property="language" compareValue="zh_CN">	
+					A.RegionNameChinese AS regionName
+				</isEqual>								
+			</isNotEmpty>
+			<isEmpty property="language">
+				A.RegionNameChinese AS regionName
+			</isEmpty>
+		</dynamic>													
+		<![CDATA[					
+			FROM												
+				Basis.BIN_Region A,
+				Basis.BIN_Region B								
+			WHERE												
+				A.NodeID.GetAncestor(1) = B.NodeID AND										
+				A.ValidFlag = '1' AND
+				B.ValidFlag = '1' AND
+				B.BIN_RegionID = #regionId#
+			ORDER BY regionName ASC
+		]]>
+    </select>
+	<!-- 取得岗位List-->
+	<select id="getPositionList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+        <![CDATA[
+			SELECT
+				BIN_PositionID AS positionId,
+		]]>	
+		<dynamic>
+			<isNotEmpty property="language">
+				<isEqual property="language" compareValue="en_US">
+					PositionNameForeign AS positionName
+				</isEqual>
+				<isEqual property="language" compareValue="zh_CN">	
+					PositionName AS positionName
+				</isEqual>								
+			</isNotEmpty>
+			<isEmpty property="language">
+				PositionName AS positionName
+			</isEmpty>
+		</dynamic>		
+		<![CDATA[		
+			FROM
+				Basis.BIN_Position
+			WHERE
+				BIN_OrganizationID = #organizationId# AND
+				ValidFlag = '1'
+		]]>
+    </select>	
+	
+	<!-- 部门结果Map -->
+	<resultMap id="BINOLCM00.OrganizationList" class="java.util.HashMap">
+		<result property="departId" column="BIN_OrganizationID"/>
+		<result property="departName" column="DepartName"/>
+	</resultMap>
+	<!-- 取得部门List-->
+	<select id="getOrganizationList" parameterClass="java.util.HashMap" resultMap="BINOLCM00.OrganizationList">
+        <![CDATA[
+			SELECT 													
+				B.BIN_OrganizationID
+		]]>
+		<dynamic>
+		<isNotEmpty property="language">
+			<isEqual property="language" compareValue="en_US">										
+			,B.NameForeign AS DepartName
+			</isEqual>
+			<isEqual property="language" compareValue="zh_CN">										
+			,B.DepartName
+			</isEqual>								
+		</isNotEmpty>
+		<isEmpty property="language">
+			,B.DepartName
+		</isEmpty>
+		</dynamic>
+		 <![CDATA[											
+			FROM 																							
+				Basis.BIN_Organization B		
+				JOIN (]]><include refid="BINOLCMINC99.departPrivilegeSql" /><![CDATA[) A99 
+				ON B.BIN_OrganizationID=A99.BIN_OrganizationID																					
+		]]>
+		<dynamic prepend="WHERE">
+		<isNotEmpty prepend="AND" property="departType">												
+			B.Type = #departType#											
+		</isNotEmpty>
+		</dynamic>
+    </select>
+	
+	<!-- 取得部门List-->
+	<select id="getOrgList" parameterClass="java.util.HashMap" resultMap="BINOLCM00.OrganizationList">
+		<![CDATA[
+			SELECT 													
+				BIN_OrganizationID
+		]]>
+		<dynamic>
+			<isNotEmpty property="language">
+				<isEqual property="language" compareValue="en_US">										
+				,NameForeign AS DepartName
+				</isEqual>
+				<isEqual property="language" compareValue="zh_CN">										
+				,DepartName
+				</isEqual>								
+			</isNotEmpty>
+			<isEmpty property="language">
+				,DepartName
+			</isEmpty>
+		</dynamic>
+		<![CDATA[											
+			FROM
+				Basis.BIN_Organization
+			WHERE
+				BIN_OrganizationInfoID = #organizationInfoId# AND
+				ValidFlag = '1'
+		]]>
+		<dynamic>
+			<isNotEmpty prepend="AND" property="departType">												
+				Type = #departType#
+			</isNotEmpty>
+			<isNotEmpty prepend="AND" property="brandInfoId">												
+				BIN_BrandInfoID = #brandInfoId#
+			</isNotEmpty>
+		</dynamic>
+	</select>
+	
+	<!-- 实体仓库结果Map -->
+	<resultMap id="BINOLCM00.InventoryList" class="java.util.HashMap">
+		<result property="inventId" column="BIN_InventoryInfoID"/>
+		<result property="inventName" column="InventoryName"/>
+	</resultMap>
+	<!-- 取得实体仓库List-->
+	<select id="getInventoryList" parameterClass="java.util.HashMap" resultMap="BINOLCM00.InventoryList">
+        <![CDATA[
+			SELECT 													
+				B.BIN_InventoryInfoID
+		]]>
+		<dynamic>
+		<isNotEmpty property="language">
+			<isEqual property="language" compareValue="en_US">										
+			,B.InventoryNameEN AS InventoryName
+			</isEqual>
+			<isEqual property="language" compareValue="zh_CN">										
+			,B.InventoryNameCN AS InventoryName
+			</isEqual>								
+		</isNotEmpty>
+		<isEmpty property="language">
+			,B.InventoryNameCN AS InventoryName
+		</isEmpty>
+		</dynamic>
+		 <![CDATA[												
+			FROM										
+				Basis.BIN_InventoryInfo B
+				JOIN Basis.BIN_Organization C ON B.BIN_OrganizationID = C.BIN_OrganizationID		
+				JOIN (]]><include refid="BINOLCMINC99.departPrivilegeSql" /><![CDATA[) A99 
+				ON C.BIN_OrganizationID=A99.BIN_OrganizationID							
+			WHERE	
+				B.ValidFlag = '1'
+		]]>
+		<dynamic>
+		<isNotEmpty prepend="AND" property="organizationId">												
+			C.BIN_OrganizationID = #organizationId#											
+		</isNotEmpty>
+		<isNotEmpty prepend="AND" property="departType">												
+			C.Type = #departType#											
+		</isNotEmpty>
+		</dynamic>
+    </select>
+    
+    <!-- 渠道结果Map -->
+	<resultMap id="BINOLCM00.Channel" class="java.util.HashMap">
+		<result property="channelId" column="BIN_ChannelID"/>
+		<result property="channelName" column="ChannelName"/>
+	</resultMap>
+	<!-- 取得渠道List -->
+	<select id="getChannelList" parameterClass="java.util.HashMap" resultMap="BINOLCM00.Channel">
+        <![CDATA[
+			SELECT	
+				BIN_ChannelID,
+		]]>	
+		<isNotEmpty property="language">
+			<isEqual property="language" compareValue="en_US">										
+				ChannelNameForeign AS ChannelName
+			</isEqual>
+			<isEqual property="language" compareValue="zh_CN">										
+				ChannelName AS ChannelName
+			</isEqual>								
+		</isNotEmpty>
+		<isEmpty property="language">
+			ChannelName AS ChannelName
+		</isEmpty>
+		<![CDATA[	
+			FROM			
+				Basis.BIN_Channel			
+			WHERE					
+				ValidFlag = '1' AND
+				BIN_OrganizationInfoID = #organizationInfoId#
+		]]>		
+		<dynamic>
+			<isNotEmpty prepend="AND" property="brandInfoId">
+				BIN_BrandInfoID=#brandInfoId#
+			</isNotEmpty>
+			<isNotEmpty prepend="AND" property="channelName">
+				<isNotEmpty property="language">
+					<isEqual property="language" compareValue="en_US">										
+						ChannelNameForeign = #channelName#
+					</isEqual>
+					<isEqual property="language" compareValue="zh_CN">										
+						ChannelName = #channelName#
+					</isEqual>								
+				</isNotEmpty>
+				<isEmpty property="language">
+					ChannelName = #channelName#
+				</isEmpty>
+			</isNotEmpty>
+		</dynamic>
+		<!-- 按渠道名升序排序 -->
+		<![CDATA[
+			ORDER BY
+		]]>
+		<isNotEmpty property="language">
+			<isEqual property="language" compareValue="en_US">										
+				ChannelNameForeign ASC
+			</isEqual>
+			<isEqual property="language" compareValue="zh_CN">										
+				ChannelName ASC
+			</isEqual>								
+		</isNotEmpty>
+		<isEmpty property="language">
+			ChannelName ASC
+		</isEmpty>	
+    </select>	
+    
+    <!-- 商场结果Map -->
+	<resultMap id="BINOLCM00.MallInfo" class="java.util.HashMap">
+		<result property="mallInfoId" column="BIN_MallInfoID"/>
+		<result property="mallName" column="MallName"/>
+	</resultMap>
+	<!-- 取得商场List -->
+	<select id="getMallInfoList" parameterClass="java.util.HashMap" resultMap="BINOLCM00.MallInfo">
+        <![CDATA[
+			SELECT	
+				BIN_MallInfoID,
+		]]>	
+		<isNotEmpty property="language">
+			<isEqual property="language" compareValue="en_US">										
+				MallName AS MallName
+			</isEqual>
+			<isEqual property="language" compareValue="zh_CN">										
+				MallName AS MallName
+			</isEqual>								
+		</isNotEmpty>
+		<isEmpty property="language">
+			MallName AS MallName
+		</isEmpty>
+		<![CDATA[	
+			FROM			
+				Basis.BIN_MallInfo	
+			WHERE					
+				ValidFlag = '1'
+		]]>			
+		<isNotEmpty property="mallName" prepend="AND">
+			(MallName = #mallName#
+			OR MallNameShort = #mallName#)
+		</isNotEmpty>
+		ORDER BY MallName
+    </select>	
+    
+    <!-- 经销商Map -->
+	<resultMap id="BINOLCM00.ResellerInfo" class="java.util.HashMap">
+		<result property="resellerInfoId" column="BIN_ResellerInfoID"/>
+		<result property="resellerName" column="ResellerName"/>
+	</resultMap>
+	<!-- 取得经销商List -->
+	<select id="getResellerInfoList" parameterClass="java.util.HashMap" resultMap="BINOLCM00.ResellerInfo">
+        <![CDATA[
+			SELECT	
+				BIN_ResellerInfoID,
+		]]>	
+		<isNotEmpty property="language">
+			<isEqual property="language" compareValue="en_US">										
+				ResellerName AS ResellerName
+			</isEqual>
+			<isEqual property="language" compareValue="zh_CN">										
+				ResellerName AS ResellerName
+			</isEqual>								
+		</isNotEmpty>
+		<isEmpty property="language">
+			ResellerName AS ResellerName
+		</isEmpty>
+		<![CDATA[	
+			FROM			
+				Basis.BIN_ResellerInfo
+			WHERE					
+				ValidFlag = '1' AND
+				BIN_OrganizationInfoID = #organizationInfoId#
+		]]>		
+		<dynamic>
+			<isNotEmpty prepend="AND" property="brandInfoId">
+				BIN_BrandInfoID=#brandInfoId#
+			</isNotEmpty>
+			<isNotEmpty prepend="AND" property="resellerCode">
+				ResellerCode=#resellerCode#
+			</isNotEmpty>
+			<isNotEmpty prepend="AND" property="resellerName">
+				(ResellerName=#resellerName#
+				OR ResellerNameShort = #resellerName#)
+			</isNotEmpty>
+		</dynamic>		
+		ORDER BY ResellerName
+    </select>	
+    <!-- 柜台主管Map -->
+	<resultMap id="BINOLCM00.CounterPosition" class="java.util.HashMap">
+		<result property="positionId" column="BIN_PositionID"/>
+		<result property="positionName" column="PositionName"/>
+	</resultMap>
+	<!-- 取得柜台主管List -->
+	<select id="getCounterPositionList" parameterClass="java.util.HashMap" resultMap="BINOLCM00.CounterPosition">
+        <![CDATA[
+			SELECT 
+				A.BIN_PositionID,
+		]]>	
+		<isNotEmpty property="language">
+			<isEqual property="language" compareValue="en_US">										
+				case when C.NameForeign = '' then A.PositionNameForeign else 
+				A.PositionNameForeign+'('+C.NameForeign+')' end AS PositionName
+			</isEqual>
+			<isEqual property="language" compareValue="zh_CN">										
+				case when C.DepartName = '' then A.PositionName else		
+				A.PositionName+'('+C.DepartName+')' end AS PositionName
+			</isEqual>								
+		</isNotEmpty>
+		<isEmpty property="language">
+			case when C.DepartName = '' then A.PositionName else		
+			A.PositionName+'('+C.DepartName+')' end AS PositionName
+		</isEmpty>
+		<![CDATA[	
+			FROM
+				Basis.BIN_Position A,
+				Privilege.BIN_PositionCategory B,
+				Basis.BIN_Organization C
+			WHERE
+				A.BIN_PositionCategoryID = B.BIN_PositionCategoryID AND
+				A.BIN_OrganizationID = C.BIN_OrganizationID AND
+				B.CategoryCode = '02' AND
+				A.ValidFlag = '1' AND
+				B.ValidFlag = '1' AND
+				C.BIN_OrganizationInfoID = #organizationInfoId#
+		]]>		
+		<dynamic>
+			<isNotEmpty prepend="AND" property="brandInfoId">
+				C.BIN_BrandInfoID=#brandInfoId#
+			</isNotEmpty>
+		</dynamic>	
+    </select>
+	
+	<!--根据员工code/员工姓名查询员工信息-->
+	<select id="getEmplyessInfo" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+		<![CDATA[
+			SELECT 
+			   [BIN_EmployeeID] AS employeeId
+		      ,[BIN_OrganizationInfoID] AS organizationInfoId
+		      ,[BIN_BrandInfoID] AS brandInfoId
+		      ,[BIN_OrganizationID] AS organizationId 
+		      ,[NodeID] AS nodeId
+		      ,[Level] AS level
+		      ,[Path] AS path
+		      ,[EmployeeCode] AS employeeCode
+		]]>
+		<dynamic>
+			<isNotEmpty property="language">
+				<isEqual property="language" compareValue="en_US">	
+					,[EmployeeNameForeign] AS employessName				
+				</isEqual>
+				<isEqual property="language" compareValue="zh_CN">	
+					,[EmployeeName] AS employessName			
+				</isEqual>								
+			</isNotEmpty>
+			<isEmpty property="language">
+				,[EmployeeName] AS employessName
+			</isEmpty>
+		</dynamic>
+		<![CDATA[
+		  FROM 
+			[Basis].[BIN_Employee]
+		  WHERE
+			ValidFlag = '1'
+			AND BIN_OrganizationInfoID = #organizationInfoId#
+		]]>
+		<dynamic>
+			<isNotEmpty property="brandInfoId">
+				AND BIN_BrandInfoID = #brandInfoId#
+			</isNotEmpty>
+			<isNotEmpty property="employeeCode">
+				AND EmployeeCode = #employeeCode#
+			</isNotEmpty>
+			<isNotEmpty property="employeeName">
+				<isNotEmpty property="language">
+					<isEqual property="language" compareValue="en_US">	
+						AND EmployeeNameForeign = #employeeName#			
+					</isEqual>
+					<isEqual property="language" compareValue="zh_CN">	
+						AND EmployeeName = #employeeName#		
+					</isEqual>								
+				</isNotEmpty>
+				<isEmpty property="language">
+					AND EmployeeName = #employeeName#
+				</isEmpty>
+			</isNotEmpty>
+		</dynamic>
+	</select>
+    
+    <!-- 取得岗位类别信息 -->
+	<resultMap id="BINOLCM00.PositionCategory" class="java.util.HashMap">
+		<result property="positionCategoryId" column="BIN_PositionCategoryID"/>
+		<result property="categoryCode" column="CategoryCode"/>
+		<result property="categoryName" column="CategoryName"/>
+	</resultMap>
+	<select id="getPositionCategoryList" parameterClass="java.util.HashMap" resultMap="BINOLCM00.PositionCategory">
+		<![CDATA[
+			SELECT 
+				BIN_PositionCategoryID,
+				CategoryCode,
+		]]>	
+		<isNotEmpty property="language">
+			<isEqual property="language" compareValue="en_US">										
+				CategoryNameForeign AS CategoryName
+			</isEqual>
+			<isEqual property="language" compareValue="zh_CN">										
+				CategoryName AS CategoryName
+			</isEqual>								
+		</isNotEmpty>
+		<isEmpty property="language">
+			CategoryName AS CategoryName
+		</isEmpty>
+		<![CDATA[
+			FROM 
+				Privilege.BIN_PositionCategory
+			WHERE
+				BIN_OrganizationInfoID = #organizationInfoId# AND
+				ValidFlag = '1'
+		]]>
+		<dynamic>
+			<isNotEmpty prepend="AND" property="brandInfoId">
+				BIN_BrandInfoID=#brandInfoId#
+			</isNotEmpty>
+		</dynamic>	
+		<![CDATA[
+			ORDER BY Grade
+		]]>
+    </select>
+    
+    <!-- 取得最大岗位级别 -->
+	<select id="getMaxPosCategoryGrade" parameterClass="java.util.HashMap" resultClass="java.lang.String">
+		<![CDATA[
+			SELECT TOP 1
+				Grade AS grade
+			FROM 
+				Privilege.BIN_PositionCategory
+			WHERE
+				ValidFlag = '1' AND
+				BIN_OrganizationInfoID = #organizationInfoId#
+		]]>
+		<dynamic>
+			<isNotEmpty prepend="AND" property="brandInfoId">
+				BIN_BrandInfoID=#brandInfoId#
+			</isNotEmpty>
+		</dynamic>	
+		<![CDATA[
+			ORDER BY Grade
+		]]>
+    </select>
+	
+	 <!-- 取得区域名称  -->
+    <select id="getRegionName" parameterClass="java.util.HashMap" resultClass="java.lang.String">
+    	<![CDATA[SELECT]]>
+		<dynamic>
+			<isNotEmpty property="language">
+				<isEqual property="language" compareValue="en_US">
+					RegionNameForeign
+				</isEqual>
+				<isEqual property="language" compareValue="zh_CN">
+					RegionNameChinese
+				</isEqual>								
+			</isNotEmpty>
+			<isEmpty property="language">
+				RegionNameChinese
+			</isEmpty>
+		</dynamic>
+		<![CDATA[
+		FROM
+			Basis.BIN_Region
+		WHERE
+			BIN_RegionID = #regionId#
+		]]>
+    </select>
+    <!-- 取得渠道名称  -->
+    <select id="getChannelName" parameterClass="java.util.HashMap" resultClass="java.lang.String" remapResults="true">
+    	<![CDATA[SELECT]]>
+		<dynamic>
+			<isNotEmpty property="language">
+				<isEqual property="language" compareValue="en_US">
+					ChannelNameForeign
+				</isEqual>
+				<isEqual property="language" compareValue="zh_CN">
+					ChannelName
+				</isEqual>								
+			</isNotEmpty>
+			<isEmpty property="language">
+				ChannelName
+			</isEmpty>
+		</dynamic>
+		<![CDATA[
+		FROM
+			Basis.BIN_Channel
+		WHERE
+			BIN_ChannelID = #channelId#
+		]]>
+    </select>
+    <!-- 取得仓库名称  -->
+    <select id="getDepotName" parameterClass="java.util.HashMap" resultClass="java.lang.String">
+    	<![CDATA[SELECT]]>
+		<dynamic>
+			<isNotEmpty property="language">
+				<isEqual property="language" compareValue="en_US">
+					DepotNameEN
+				</isEqual>
+				<isEqual property="language" compareValue="zh_CN">
+					DepotNameCN
+				</isEqual>								
+			</isNotEmpty>
+			<isEmpty property="language">
+				DepotNameCN
+			</isEmpty>
+		</dynamic>
+		<![CDATA[
+		FROM
+			Basis.BIN_DepotInfo
+		WHERE
+			BIN_DepotInfoID = #depotId#
+		]]>
+    </select>
+	 <!-- 取得逻辑仓库名称  -->
+    <select id="getLogicInventoryName" parameterClass="java.util.HashMap" resultClass="java.lang.String">
+    	<![CDATA[SELECT]]>
+		<dynamic>
+			<isNotEmpty property="language">
+				<isEqual property="language" compareValue="en_US">
+					InventoryNameEN
+				</isEqual>
+				<isEqual property="language" compareValue="zh_CN">
+					InventoryNameCN
+				</isEqual>								
+			</isNotEmpty>
+			<isEmpty property="language">
+				InventoryNameCN
+			</isEmpty>
+		</dynamic>
+		<![CDATA[
+		FROM
+			Basis.BIN_LogicInventory
+		WHERE
+			BIN_LogicInventoryInfoID = #lgcInventoryId#
+		]]>
+    </select>
+	<!-- 取得登陆用户名和密码  -->
+    <select id="UserDetail" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+         <![CDATA[
+			SELECT 
+	      		LonginName,
+	      		PassWord
+	  		FROM 
+				Privilege.BIN_User
+	  		WHERE 
+				LonginName = #loginName#
+		]]>
+    </select>
+    <!-- 取得部门名称  -->
+    <select id="getDepartName" parameterClass="java.util.HashMap" resultClass="java.lang.String" remapResults="true">
+    	<![CDATA[SELECT]]>
+		<dynamic>
+			<isNotEmpty property="language">
+				<isEqual property="language" compareValue="en_US">
+					NameForeign
+				</isEqual>
+				<isEqual property="language" compareValue="zh_CN">
+					DepartName
+				</isEqual>								
+			</isNotEmpty>
+			<isEmpty property="language">
+				DepartName
+			</isEmpty>
+		</dynamic>
+		<![CDATA[
+		FROM
+			Basis.BIN_Organization
+		WHERE
+			BIN_OrganizationID = #departId#
+		]]>
+    </select>
+	
+	<!--根据部门ID取得部门的测试区分-->
+	<select id="getDepartTestType" parameterClass="java.lang.String" resultClass="java.lang.String">
+		SELECT
+			[TestType]
+		FROM
+			[Basis].[BIN_Organization]
+		WHERE
+			[BIN_OrganizationID] = #departId#
+	</select>
+	
+    <!-- 取得登陆用户名  -->
+    <select id="getLoginName" parameterClass="java.lang.String" resultClass="java.lang.String">
+         <![CDATA[
+            SELECT
+                TOP 1 LonginName
+            FROM 
+                Privilege.BIN_User WITH (NOLOCK)
+            WHERE 
+                BIN_EmployeeID = #BIN_EmployeeID#
+        ]]>
+    </select>
+</sqlMap>

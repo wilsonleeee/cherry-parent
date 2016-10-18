@@ -1,0 +1,290 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sqlMap PUBLIC "-//iBATIS.com//DTD SQL Map 2.0//EN" "http://ibatis.apache.org/dtd/sql-map-2.dtd">
+<sqlMap namespace="BINOLMOCIO16">
+	<sql id="importBatchQuery">
+		<![CDATA[
+			SELECT 
+				A.BIN_ImportBatchID AS importBatchId,
+				A.ImportBatchCode AS importBatchCode,
+				A.Type AS type,
+				A.IsPublish AS isPublish,
+				A.ImportDate AS importDate,
+				A.Comments AS comments,
+				A.ValidFlag AS validFlag,
+				B.EmployeeName AS employeeName,
+				B.EmployeeCode AS employeeCode
+			FROM 
+				Monitor.BIN_ImportBatch A WITH(NOLOCK)
+				LEFT JOIN Basis.BIN_Employee B WITH(NOLOCK)
+				ON(A.BIN_EmployeeID = B.BIN_EmployeeID)
+		]]>
+		<isNotEmpty property="privilegeFlag">
+			<isEqual property="privilegeFlag" compareValue="1">			
+				<![CDATA[		
+					JOIN (]]><include refid="BINOLCMINC99.employeePrivilegeSql" /><![CDATA[) A99 
+					ON A.BIN_EmployeeID=A99.BIN_SubEmployeeID
+				]]>
+			</isEqual>
+		</isNotEmpty>
+		<![CDATA[
+			WHERE 
+				A.BIN_OrganizationInfoID = #organizationInfoId#
+				AND A.BIN_BrandInfoID = #brandInfoId#
+		]]>
+			<isNotEmpty prepend="and" property="importBatchId">
+				<![CDATA[A.BIN_ImportBatchID = #importBatchId#]]>
+			</isNotEmpty>
+			<isNotEmpty prepend="and" property="importBatchCode">
+				<![CDATA[A.ImportBatchCode like '%' + #importBatchCode# + '%']]>
+			</isNotEmpty>
+			<isNotEmpty prepend="and" property="isPublish">
+				<![CDATA[A.IsPublish = #isPublish#]]>
+			</isNotEmpty>
+			<isNotEmpty prepend="and" property="ImportType">
+				<![CDATA[A.Type = #ImportType#]]>
+			</isNotEmpty>
+			<isNotEmpty prepend="and" property="importStartDate">
+				<![CDATA[A.ImportDate >= #importStartDate#]]>
+			</isNotEmpty>
+			<isNotEmpty prepend="and" property="importEndDate">
+				<![CDATA[A.ImportDate <= #importEndDate#]]>
+			</isNotEmpty>
+			<isNotEmpty prepend="and" property="validFlag">
+				<![CDATA[A.ValidFlag = #validFlag#]]>
+			</isNotEmpty>
+			<isNotEmpty prepend="and" property="importBatchCodeR">
+				<![CDATA[A.ImportBatchCode = #importBatchCodeR#]]>
+			</isNotEmpty>
+	</sql>
+	
+	<!-- 查询柜台消息Excel导入批次总数 -->
+	<select id="getImportBatchCount" parameterClass="java.util.HashMap" resultClass="java.lang.Integer">
+    	<![CDATA[
+			SELECT	COUNT(1) AS count FROM (
+		]]>	
+		<include refid="BINOLMOCIO16.importBatchQuery" />
+		<![CDATA[	
+			)SORT_T1
+		]]>		
+	</select>	
+	
+	<!-- 查询柜台消息Excel导入批次信息 -->
+	<select id="getImportBatchList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+		<include refid="BINOLCMINC99.pageheader" />
+		<include refid="BINOLMOCIO16.importBatchQuery" />
+		<include refid="BINOLCMINC99.pagefooter" />
+	</select>
+	
+    <!-- 新增柜台消息  -->
+	<insert id="addCounterMessage" parameterClass="java.util.HashMap">
+		<selectKey resultClass="java.lang.Integer" type="post" keyProperty="BIN_CounterMessageID" >
+        <![CDATA[
+            INSERT INTO Monitor.BIN_CounterMessage(
+                BIN_OrganizationInfoID,
+                BIN_BrandInfoID,
+                MessageTitle,
+                MessageBody,
+                StartDate,
+			    EndDate,
+			    ImportBatch,
+        ]]>
+        <include refid="BINOLCMINC99.insertKeySql" />
+        <![CDATA[
+            )VALUES(
+                #organizationInfoId#,
+                #brandInfoId#,
+                #messageTitle#,
+                #messageBody#,
+                #startValidDate#,
+                #endValidDate#,
+                #ImportBatchCode#,
+        ]]>
+        <include refid="BINOLCMINC99.insertValueSql" />
+        <![CDATA[
+            )
+            select SCOPE_IDENTITY() as value
+        ]]>
+        </selectKey>
+    </insert>
+    
+    <!-- 往柜台消息导入主表添加数据key -->
+	<sql id="insertCounterMessageImportKey">
+		<dynamic>
+			<isNotEmpty property="brandCode">
+	        	BrandCode,
+	        </isNotEmpty>
+	        <isNotEmpty property="counterMessageId">
+	        	BIN_CounterMessageID,
+	        </isNotEmpty>
+			<isNotEmpty property="messageTitle">
+	        	MessageTitle,
+	        </isNotEmpty>
+			<isNotEmpty property="messageBody">
+	        	MessageBody,
+	        </isNotEmpty>
+			<isNotEmpty property="startValidDate">
+	        	StartValidDate,
+	        </isNotEmpty>
+			<isNotEmpty property="endValidDate">
+	        	EndValidDate,
+	        </isNotEmpty>
+			<isNotEmpty property="BIN_EmployeeID">
+	        	BIN_EmployeeID,
+	        </isNotEmpty>
+			<isNotEmpty property="Comments">
+	        	Comments,
+	        </isNotEmpty>
+			<isNotEmpty property="ImportDate">
+	        	ImportDate,
+	        </isNotEmpty>
+			<isNotEmpty property="ImportResult">
+	        	ImportResult,
+	        </isNotEmpty>
+		</dynamic>
+	</sql>
+	
+	<!-- 往柜台消息导入主表添加数据value -->
+	<sql id="insertCounterMessageImportValue">
+		<dynamic>
+			<isNotEmpty property="brandCode">
+	        	#brandCode#,
+	        </isNotEmpty>
+	        <isNotEmpty property="counterMessageId">
+	        	#counterMessageId#,
+	        </isNotEmpty>
+			<isNotEmpty property="messageTitle">
+	        	#messageTitle#,
+	        </isNotEmpty>
+			<isNotEmpty property="messageBody">
+	        	#messageBody#,
+	        </isNotEmpty>
+			<isNotEmpty property="startValidDate">
+	        	#startValidDate#,
+	        </isNotEmpty>
+			<isNotEmpty property="endValidDate">
+	        	#endValidDate#,
+	        </isNotEmpty>
+			<isNotEmpty property="BIN_EmployeeID">
+	        	#BIN_EmployeeID#,
+	        </isNotEmpty>
+			<isNotEmpty property="Comments">
+	        	#Comments#,
+	        </isNotEmpty>
+			<isNotEmpty property="ImportDate">
+	        	#ImportDate#,
+	        </isNotEmpty>
+			<isNotEmpty property="ImportResult">
+	        	#ImportResult#,
+	        </isNotEmpty>
+		</dynamic>
+	</sql>
+	
+	<!-- 往柜台消息导入主表中添加数据 -->
+	<insert id="insertCounterMessageImport" parameterClass="java.util.HashMap">
+		<selectKey resultClass="java.lang.Integer" type="post" keyProperty="BIN_CounterMessageImportID" >      
+	    <![CDATA[
+		INSERT INTO Monitor.BIN_CounterMessageImport(
+		        BIN_OrganizationInfoID,
+		        BIN_BrandInfoID,
+		        BIN_ImportBatchID,
+		        ImportBatch,
+		]]>
+				<include refid="insertCounterMessageImportKey" />
+				<include refid="BINOLCMINC99.insertKeySql" />
+			    <![CDATA[
+		 )VALUES(
+				#organizationInfoId#,
+				#brandInfoId#,
+				#BIN_ImportBatchID#,
+				#ImportBatch#,
+				]]>
+				<include refid="insertCounterMessageImportValue" />
+				<include refid="BINOLCMINC99.insertValueSql" />
+				<![CDATA[
+			)
+			  	SELECT SCOPE_IDENTITY() AS value
+			]]> 
+	   </selectKey> 
+	</insert>
+	
+	<!-- 往柜台消息导入明细表中添加数据 -->
+	<insert id="insertCounterMessageImportDetail" parameterClass="java.util.HashMap">
+	    <![CDATA[
+		INSERT INTO Monitor.BIN_CounterMessageImportDetail(
+				BIN_CounterMessageImportID,
+		]]>
+		<dynamic>
+			<isNotEmpty property="id">
+				BIN_OrganizationID,
+			</isNotEmpty>
+			<isNotEmpty property="counterCode">
+				CounterCode,
+			</isNotEmpty>
+			<isNotEmpty property="counterName">
+				CounterName,
+			</isNotEmpty>
+			<isNotEmpty property="ErrorMsg">
+				ErrorMsg,
+			</isNotEmpty>
+		</dynamic>
+		<include refid="BINOLCMINC99.insertKeySql" />
+		<![CDATA[
+		 	)VALUES(
+				#BIN_CounterMessageImportID#,
+		]]>
+		<dynamic>
+			<isNotEmpty property="id">
+				#id#,
+			</isNotEmpty>
+			<isNotEmpty property="counterCode">
+				#counterCode#,
+			</isNotEmpty>
+			<isNotEmpty property="counterName">
+				#counterName#,
+			</isNotEmpty>
+			<isNotEmpty property="ErrorMsg">
+				#ErrorMsg#,
+			</isNotEmpty>
+		</dynamic>
+		<include refid="BINOLCMINC99.insertValueSql" />
+		<![CDATA[
+			)
+		]]> 
+	</insert>
+	
+	<!-- 往导入批次表中添加数据 --> 
+	<insert id="insertImportBatch" parameterClass="java.util.HashMap">
+		<selectKey resultClass="java.lang.Integer" type="post" keyProperty="BIN_ImportBatchID" >    
+			<![CDATA[
+				INSERT INTO Monitor.BIN_ImportBatch(
+					BIN_OrganizationInfoID,
+					BIN_BrandInfoID,
+					ImportBatchCode,
+					ImportBatchCodeIF,
+					Type,
+					IsPublish,
+					ImportDate,
+					BIN_EmployeeID,
+					Comments,
+					]]>
+				<include refid="BINOLCMINC99.insertKeySql" />
+			<![CDATA[	
+				)VALUES(
+					#organizationInfoId#,
+					#brandInfoId#,
+					#ImportBatchCode#,
+					#ImportBatchCodeIF#,
+					#ImportType#,
+					#isPublish#,
+					#ImportDate#,
+					#BIN_EmployeeID#,
+					#Comments#,
+				]]>
+				<include refid="BINOLCMINC99.insertValueSql" />
+			<![CDATA[	
+				)
+				SELECT SCOPE_IDENTITY() AS value
+			]]> 
+		</selectKey> 
+	</insert>
+</sqlMap>

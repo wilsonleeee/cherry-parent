@@ -1,0 +1,170 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sqlMap PUBLIC "-//iBATIS.com//DTD SQL Map 2.0//EN" "http://ibatis.apache.org/dtd/sql-map-2.dtd">
+<sqlMap namespace="BINOLBSPOS04">
+	
+    <!-- 取得新节点 -->
+	<select id="getNewNodeId" parameterClass="java.util.HashMap" resultClass="java.lang.String">
+		<![CDATA[
+			SELECT 
+				CONVERT(hierarchyid,#path#).GetDescendant(max(NodeID), NULL).ToString() AS newNodeId
+        	FROM 
+        		Basis.BIN_Position
+            WHERE 
+            	NodeID.GetAncestor(1)=#path#
+		]]>
+    </select>
+    
+    <!-- 添加岗位 -->
+    <insert id="addPosition" parameterClass="java.util.HashMap">
+    	<![CDATA[
+    		INSERT INTO Basis.BIN_Position				
+			(					
+				BIN_OrganizationID,			
+				NodeID,	
+				PositionName,				
+				PositionNameForeign,				
+				PositionDESC,
+				BIN_PositionCategoryID,
+				isManager,
+				FoundationDate,
+				PositionType,
+				BIN_ResellerInfoID,
+		]]>
+				<include refid="BINOLCMINC99.insertKeySql" />		
+		<![CDATA[						
+			)					
+			VALUES					
+			(					
+				#organizationId#,	
+				#newNodeId#,			
+				#positionName#,				
+				#positionNameForeign#,				
+				#positionDESC#,
+				#positionCategoryId#,
+				#isManager#,
+				CONVERT(Date,#foundationDate#),
+				#positionType#,
+				#resellerInfoId#,
+		]]>
+				<include refid="BINOLCMINC99.insertValueSql" />		
+		<![CDATA[							
+			)					
+    	]]> 
+    </insert>
+    
+    <!-- 取得岗位类别信息 -->
+	<resultMap id="BINOLBSPOS04.PositionCategory" class="java.util.HashMap">
+		<result property="positionCategoryId" column="BIN_PositionCategoryID"/>
+		<result property="categoryCode" column="CategoryCode"/>
+		<result property="ategoryName" column="CategoryName"/>
+	</resultMap>
+	<select id="getPositionCategoryList" parameterClass="java.util.HashMap" resultMap="BINOLBSPOS04.PositionCategory">
+		<![CDATA[
+			SELECT 
+				BIN_PositionCategoryID,
+				CategoryCode,
+		]]>	
+		<isNotEmpty property="language">
+			<isEqual property="language" compareValue="en_US">										
+				CategoryNameForeign AS CategoryName
+			</isEqual>
+			<isEqual property="language" compareValue="zh_CN">										
+				CategoryName AS CategoryName
+			</isEqual>								
+		</isNotEmpty>
+		<isEmpty property="language">
+			CategoryName AS CategoryName
+		</isEmpty>
+		<![CDATA[
+			FROM 
+				Privilege.BIN_PositionCategory
+			WHERE
+				BIN_OrganizationInfoID = #organizationInfoId# AND
+				ValidFlag = '1'
+		]]>
+		<dynamic>
+			<isNotEmpty prepend="AND" property="brandInfoId">
+				BIN_BrandInfoID=#brandInfoId#
+			</isNotEmpty>
+		</dynamic>	
+    </select>
+    
+    <!-- 取得某一部门的所有上级部门岗位List -->
+	<resultMap id="BINOLBSPOS04.Position" class="java.util.HashMap">
+		<result property="path" column="Path"/>
+		<result property="positionName" column="PositionName"/>
+	</resultMap>
+	<select id="getPositionByOrg" parameterClass="java.util.HashMap" resultMap="BINOLBSPOS04.Position">
+		<![CDATA[
+			SELECT
+				A.Path,
+		]]>
+		<isNotEmpty property="language">
+			<isEqual property="language" compareValue="en_US">										
+				case when B.NameForeign = '' then A.PositionNameForeign else 
+				A.PositionNameForeign+'('+B.NameForeign+')' end AS PositionName
+			</isEqual>
+			<isEqual property="language" compareValue="zh_CN">										
+				case when B.DepartName = '' then A.PositionName else		
+				A.PositionName+'('+B.DepartName+')' end AS PositionName
+			</isEqual>								
+		</isNotEmpty>
+		<isEmpty property="language">
+			case when B.DepartName = '' then A.PositionName else		
+			A.PositionName+'('+B.DepartName+')' end AS PositionName
+		</isEmpty>
+		<![CDATA[	
+			FROM
+				Basis.BIN_Position A,
+				Basis.BIN_Organization B,
+				Basis.BIN_Organization C
+			WHERE
+				C.BIN_OrganizationID=#organizationId# AND
+				C.NodeID.IsDescendantOf(B.NodeID)=1 AND
+				A.BIN_OrganizationID=B.BIN_OrganizationID AND
+				A.ValidFlag='1' AND
+				B.ValidFlag='1'	AND
+				C.ValidFlag='1' AND
+				B.BIN_OrganizationInfoID = #organizationInfoId# 
+		]]>
+		<dynamic>
+			<isNotEmpty prepend="AND" property="brandInfoId">
+				B.BIN_BrandInfoID=#brandInfoId#
+			</isNotEmpty>
+			<isNotEmpty prepend="AND" property="positionPath">
+				A.NodeID.IsDescendantOf(#positionPath#)!=1
+			</isNotEmpty>
+		</dynamic>	
+    </select>
+    
+    <!-- 判断组织中是否存在岗位 -->
+	<select id="getPositionIdByOrgInfo" parameterClass="java.util.HashMap" resultClass="java.lang.Integer">
+		<![CDATA[
+			SELECT 
+				COUNT(A.BIN_PositionID)
+        	FROM 
+        		Basis.BIN_Position A,
+        		Basis.BIN_Organization B
+            WHERE 
+				A.BIN_OrganizationID=B.BIN_OrganizationID AND
+				B.BIN_OrganizationInfoID=#organizationInfoId# AND
+				A.ValidFlag='1' AND
+				B.ValidFlag='1'
+		]]>
+    </select>
+    
+    <!-- 取得组织中的最上级部门ID -->
+	<select id="getOrgIdByOrgInfo" parameterClass="java.util.HashMap" resultClass="java.lang.String">
+		<![CDATA[
+			SELECT 
+				BIN_OrganizationID
+        	FROM 
+        		Basis.BIN_Organization
+            WHERE 
+				BIN_OrganizationInfoID=#organizationInfoId# AND
+				ValidFlag='1' AND
+				NodeID.GetAncestor(1)=hierarchyid::GetRoot()
+		]]>
+    </select>
+	
+</sqlMap>

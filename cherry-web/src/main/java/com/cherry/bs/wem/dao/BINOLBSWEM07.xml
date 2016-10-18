@@ -1,0 +1,126 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sqlMap PUBLIC "-//iBATIS.com//DTD SQL Map 2.0//EN" "http://ibatis.apache.org/dtd/sql-map-2.dtd">
+<sqlMap namespace="BINOLBSWEM07">
+	<sql id="EmployeeCommissionRecordQuery">
+		<![CDATA[
+		SELECT 
+			ISNULL(SUM(CASE WHEN (A.SaleType = 'NS' OR A.SaleType = 'PX') THEN A.RoyaltyAmount ELSE (0-A.RoyaltyAmount) END),0) AS amount,
+			A.CommissionEmployeeCode,
+			ISNULL(C.Account,'未完善账户信息('+A.CommissionEmployeeCode+')') AS collectionAccount,
+			C.AccountName AS accountName,
+			'收益' AS comments,
+			C.AccountType AS mainBank,
+			C.BankInfo AS subBank,
+			C.ProvinceName AS province,
+			C.CityName AS cityCounty,
+			ISNULL(B.MobilePhone,'') AS commissionMobile,
+			ISNULL(B.EmployeeName,'') AS commissionName,
+			ISNULL(D.DepartName,'') AS commissionCounter
+		FROM 
+			Sale.BIN_ProfitRebate A WITH(NOLOCK)
+			LEFT JOIN Basis.BIN_Employee B WITH(NOLOCK)
+			ON(A.CommissionEmployeeCode=B.EmployeeCode)
+			LEFT JOIN Basis.BIN_EmpAccountInfo C WITH(NOLOCK)
+			ON(B.BIN_EmployeeID=C.BIN_EmployeeID)
+			LEFT JOIN Basis.BIN_Organization D WITH(NOLOCK)
+			ON(B.BIN_OrganizationID=D.BIN_OrganizationID)
+		]]>
+        <isNotEmpty property="privilegeFlag">
+        	<!-- 只看当前账号有权限的部门的员工的收益情况 -->
+			<isEqual property="privilegeFlag" compareValue="1">			
+			<![CDATA[			
+				JOIN (]]><include refid="BINOLCMINC99.departPrivilegeSql" /><![CDATA[) A99 
+				ON A.CommissionOrganizationID=A99.BIN_OrganizationID
+			]]>
+			</isEqual>
+		</isNotEmpty>
+		<![CDATA[
+		WHERE
+			A.ValidFlag = '1'
+		]]>
+        <dynamic>
+        	<isNotEmpty prepend="AND" property="organizationInfoId">
+                <![CDATA[
+                	A.BIN_OrganizationInfoID=#organizationInfoId#
+				]]>
+            </isNotEmpty>
+            <isNotEmpty prepend="AND" property="brandInfoId">
+                <![CDATA[
+                	A.BIN_BrandInfoID=#brandInfoId#
+				]]>
+            </isNotEmpty>
+            <isNotEmpty prepend="AND" property="employeeCode">
+                <![CDATA[
+                	A.SaleEmployeeCode = #employeeCode#
+				]]>
+            </isNotEmpty>
+            <isNotEmpty prepend="AND" property="commissionEmployeeCode">
+                <![CDATA[
+                	A.CommissionEmployeeCode = #commissionEmployeeCode#
+				]]>
+            </isNotEmpty>
+            <isNotEmpty prepend="AND" property="startDate">
+                <![CDATA[
+					A.SaleTime >= #startDate#
+				]]>
+            </isNotEmpty>
+            <isNotEmpty prepend="AND" property="endDate">
+                <![CDATA[
+					A.SaleTime < DATEADD(dd,1,#endDate#)
+				]]>
+            </isNotEmpty>
+			<isNotEmpty prepend="AND" property="billCode">
+            	<![CDATA[
+                	A.BillCode = #billCode#
+				]]>
+            </isNotEmpty>
+            <isNotEmpty prepend="AND" property="commissionEmployeeLevel">
+            	<![CDATA[
+                	A.CommissionEmployeeLevel = #commissionEmployeeLevel#
+				]]>
+            </isNotEmpty>
+			<isNotEmpty prepend="AND" property="memCode">
+				<![CDATA[
+					EXISTS(
+						SELECT 1 FROM 
+							Sale.BIN_SaleRecord S WITH(NOLOCK)
+						WHERE
+							S.MemberCode = #memCode# AND S.BillCode=A.BillCode
+					)
+				]]>
+            </isNotEmpty>
+        </dynamic>
+        <![CDATA[
+	        GROUP BY 
+				A.CommissionEmployeeCode,
+				C.Account,
+				C.AccountName,
+				C.AccountType,
+				C.BankInfo,
+				C.ProvinceName,
+				C.CityName,
+				B.MobilePhone,
+				B.EmployeeName,
+				D.DepartName
+		]]>
+	</sql>
+	
+	<!--银行汇款明细总数-->
+	<select id="getBankTransferRecordCount" parameterClass="java.util.HashMap" resultClass="java.lang.Integer">
+		<![CDATA[
+            SELECT 
+				COUNT(1) AS count FROM (
+        ]]>
+        <include refid="BINOLBSWEM07.EmployeeCommissionRecordQuery" />
+        <![CDATA[
+            )SORT_T1
+        ]]>
+	</select>
+	
+	<!-- 银行汇款明细一览 -->
+	<select id="getBankTransferRecordList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+		<include refid="BINOLCMINC99.pageheader" />
+        <include refid="BINOLBSWEM07.EmployeeCommissionRecordQuery" />
+        <include refid="BINOLCMINC99.pagefooter" />
+	</select>
+</sqlMap>

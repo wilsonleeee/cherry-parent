@@ -1,0 +1,203 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sqlMap PUBLIC "-//iBATIS.com//DTD SQL Map 2.0//EN" "http://ibatis.apache.org/dtd/sql-map-2.dtd">
+<sqlMap namespace="BINOLCPACT02">
+   	<!-- 取得子活动菜单 -->
+    <select id="getSubMenuList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+    	<![CDATA[
+    		 SELECT 
+				B.BIN_CampaignRuleID AS campRuleId,
+				B.SubCampaignName AS subCampaignName,
+				B.validFlag
+			FROM
+				Campaign.BIN_Campaign A,
+				Campaign.BIN_CampaignRule B
+			WHERE
+				A.BIN_CampaignID = #campaignId# AND
+				A.BIN_CampaignID = B.BIN_CampaignID 
+    	]]>
+    </select>
+    	<!-- 取得子活基本信息--> 
+    <select id="getSubBaseInfo" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+	   <![CDATA[
+	    SELECT
+		      A.SubCampaignName,
+		      A.SubCampaignCode,
+		      A.LocalValidRule,
+		      A.IsCollectInfo,
+		      A.SubCampaignType,
+		      A.SubCampaignValid,
+			  A.Description,
+			  A.Times,
+			  A.TopLimit,
+			  A.PriceControl,
+			  A.SaleBatchNo,
+			  isnull(A.DeliveryPrice,0) AS DeliveryPrice,
+			  isnull(A.DeliveryPoints,0) AS DeliveryPoints
+	    FROM
+			 Campaign.BIN_CampaignRule A
+			 where A.BIN_CampaignRuleID=#subCampId#
+	 	]]>	
+    </select>
+    <sql id="getPrtList_SQL">
+		<![CDATA[
+	    	SELECT 
+					B.BIN_ProductVendorID AS proId,
+					B.BarCode AS barCode,
+					B.UnitCode AS unitCode,
+					B.SaleType AS prtType,
+					ISNULL(B.RewardType,'1') AS rewardType,
+					D.PromotionCateCD AS prmCate,
+					CASE WHEN D.PromotionCateCD IN('TZZK','DHCP','DHMY') THEN ISNULL(B.Price,0) * -1
+					ELSE ISNULL(B.Price,0) END AS price,
+					B.Quantity AS quantity,
+					CASE WHEN B.SaleType = 'P' THEN D.IsStock ELSE F.IsStock END AS isStock,
+					CASE WHEN D.PromotionCateCD IN('DHCP','DHMY') THEN D.ExPoint END AS exPoint,
+					ISNULL(D.NameTotal,F.NameTotal) AS nameTotal,
+					A.SubCampaignCode AS subCampCode,
+					B.GroupType AS groupType,
+					B.LogicOpt AS logicOpt,
+					B.GroupNo AS groupNo,
+					B.DeliveryType AS deliveryType
+			FROM
+					Campaign.BIN_CampaignRule A 
+					JOIN Campaign.BIN_CampaignRuleResult B WITH(NOLOCK)
+					ON (A.BIN_CampaignRuleID=B.BIN_CampaignRuleID  
+					AND B.ValidFlag = '1')
+					LEFT JOIN Basis.BIN_PromotionProductVendor C WITH(NOLOCK)
+					ON(B.BIN_ProductVendorID=C.BIN_PromotionProductVendorID
+						AND B.SaleType = 'P')
+					LEFT JOIN Basis.BIN_PromotionProduct D WITH(NOLOCK)
+					ON (C.BIN_PromotionProductID=D.BIN_PromotionProductID)
+					LEFT JOIN Basis.BIN_ProductVendor E WITH(NOLOCK)
+					ON(B.BIN_ProductVendorID=E.BIN_ProductVendorID
+						AND B.SaleType = 'N')
+					LEFT JOIN Basis.BIN_Product F WITH(NOLOCK)
+					ON (E.BIN_ProductID=F.BIN_ProductID)
+    	]]>
+	</sql>
+    <!-- 取得子活动结果信息--> 
+    <select id="getSubResultList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+	    <include refid="BINOLCPACT02.getPrtList_SQL" />
+	    <![CDATA[WHERE A.BIN_CampaignRuleID = #subCampId#]]>
+    </select>
+      <!-- 取得子条件信息--> 
+    <select id="getSubConditionList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+	        <![CDATA[
+	        SELECT
+				D.PropertyName AS propName,
+				C.BIN_CampaignBasePropID AS propId,  
+				C.BasePropValue1 AS propValue,  
+				C.ActLocationType AS conType,
+				E.ConditionInfo AS conInfo
+			FROM      
+				Campaign.BIN_CamRuleCondition C
+				JOIN Campaign.BIN_CampaignBaseProp D
+				ON(C.BIN_CampaignBasePropID = D.BIN_CampaignBasePropID
+					AND D.PropertyName = 'baseProp_customer'
+					AND D.ValidFlag = '1')
+				LEFT JOIN Members.BIN_SearchLog E
+				ON(C.BasePropValue1 = E.BIN_SearchCode
+					AND E.ValidFlag = '1')
+			WHERE 
+				C.BIN_CampaignRuleID=#subCampId#
+				AND C.ValidFlag='1'
+			UNION
+			SELECT
+				TOP 1
+				D.PropertyName AS propName,
+				C.BIN_CampaignBasePropID AS propId,  
+				C.BasePropValue1 AS propValue,  
+				C.ActLocationType AS conType,
+				'' AS conInfo
+			FROM      
+				Campaign.BIN_CamRuleCondition C
+				JOIN Campaign.BIN_CampaignBaseProp D
+				ON(C.BIN_CampaignBasePropID = D.BIN_CampaignBasePropID
+					AND D.PropertyName in ('baseProp_city','baseProp_counter','baseProp_channal','baseProp_faction')
+					AND D.ValidFlag = '1')
+			WHERE 
+				C.BIN_CampaignRuleID=#subCampId#
+				AND C.ValidFlag='1'
+			]]>	  
+    </select>
+    <!-- 查询柜台List  -->
+    <select id="getCntList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+       	<![CDATA[
+       	SELECT
+			A.BasePropValue1 AS placeCode,
+			B.CounterNameIF AS placeName
+		FROM
+			Campaign.BIN_CamRuleCondition A
+			JOIN Basis.BIN_CounterInfo B
+			ON(A.BasePropValue1 = B.CounterCode
+				AND B.BIN_BrandInfoID = #brandInfoId#)
+		WHERE
+			A.BIN_CampaignRuleID = #subCampId#
+			AND A.BIN_CampaignBasePropID = #propId#
+			AND A.ActLocationType = #conType#
+			AND A.ValidFlag = '1'
+		]]>
+    </select>
+    <!-- 查询渠道List  -->
+    <select id="getChannelList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+       	<![CDATA[
+		SELECT
+			C.ChannelName AS placeName
+		FROM
+			Campaign.BIN_CamRuleCondition A
+			JOIN Basis.BIN_Channel C
+			ON(A.BasePropValue1 = C.BIN_ChannelID
+				AND C.BIN_BrandInfoID = #brandInfoId#)
+		WHERE
+			A.BIN_CampaignRuleID = #subCampId#
+			AND A.BIN_CampaignBasePropID = #propId#
+			AND A.ActLocationType = #conType#
+			AND A.ValidFlag = '1'	
+		]]>
+    </select>
+    <!-- 查询系统List  -->
+    <select id="getFactionList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+       	<![CDATA[
+		SELECT
+			A.BasePropValue1 AS id
+		FROM
+			Campaign.BIN_CamRuleCondition A
+		WHERE
+			A.BIN_CampaignRuleID = #subCampId#
+			AND A.BIN_CampaignBasePropID = #propId#
+			AND A.ActLocationType = #conType#
+			AND A.ValidFlag = '1'	
+		]]>
+    </select>
+     <!-- 查询城市List -->
+    <select id="getCityList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+       	<![CDATA[
+       	SELECT
+			D.RegionNameChinese AS placeName
+		FROM
+			Campaign.BIN_CamRuleCondition A
+			JOIN Basis.BIN_Region D
+			ON(A.BasePropValue1 = D.BIN_RegionID
+				AND D.BIN_BrandInfoID = #brandInfoId#)
+		WHERE
+			A.BIN_CampaignRuleID = #subCampId#
+			AND A.BIN_CampaignBasePropID = #propId#
+			AND A.ActLocationType = #conType#
+			AND A.ValidFlag = '1'
+			]]>
+    </select>
+    <!-- 取得会员活动扩展信息  -->
+    <select id="getCampaignExtInfo" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+    	<![CDATA[
+	    SELECT TOP 1
+			SubCampaignType AS subCampaignType,
+			IsCollectInfo AS isCollectInfo,
+			LocalValidRule AS localValidRule,
+			SubCampaignValid AS subCampaignValid
+		FROM
+			Campaign.BIN_CampaignRule
+		WHERE
+			BIN_CampaignID = #campaignId#
+		]]>
+    </select>
+</sqlMap>

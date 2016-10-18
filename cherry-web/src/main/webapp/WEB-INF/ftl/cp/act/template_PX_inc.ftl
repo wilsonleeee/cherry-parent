@@ -1,0 +1,1 @@
+<#include '/WEB-INF/ftl/cp/act/template_inc.ftl'/>

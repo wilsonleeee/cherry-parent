@@ -1,0 +1,268 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sqlMap PUBLIC "-//iBATIS.com//DTD SQL Map 2.0//EN" "http://ibatis.apache.org/dtd/sql-map-2.dtd">
+<sqlMap namespace="BINOLMBRPT04">
+    <!-- 按柜台统计总客户数、总销费金额、当期有销售会员数量、当期有销售的会员销售金额、新会员数量、新会员销售额 -->
+    <!-- 【暂时把BillState状态为空的也统计进来，后面需要去除】 -->
+    <sql id="MemberSaleCountQuery">
+    	<![CDATA[
+    	SELECT
+    		T0.BIN_OrganizationID,
+			T0.CounterCode,
+			T0.CounterNameIF,
+			T0.BusniessPrincipal,
+			ISNULL(SUM(T0.totalMemberSaleAmount),0) AS totalMemberSaleAmount,
+			COUNT(DISTINCT T0.BIN_MemberInfoID) AS totalMemberNum,
+			
+			ISNULL(SUM(T0.haveMemberSaleAmount),0) as haveMemberSaleAmount,
+			ISNULL(SUM(T0.haveSaleMemberNum),0) as haveSaleMemberNum,
+			
+			isnull(SUM(T0.newMemberSaleAmount),0) as newMemberSaleAmount,
+			ISNULL(SUM(T0.newMemberNum),0) as newMemberNum
+		FROM(
+			SELECT
+				ISNULL(SUM(CASE WHEN A.SaleType = 'SR' THEN -A.Amount ELSE A.Amount END), 0) AS totalMemberSaleAmount,
+				A.BIN_OrganizationID,
+				B.CounterCode,
+				B.CounterNameIF,
+				B.BusniessPrincipal,
+				A.BIN_MemberInfoID,
+				
+				CASE WHEN MAX(A.SaleDate) >= #startDate# AND MIN(A.SaleDate) <= #endDate# 
+					THEN ISNULL(SUM(CASE WHEN A.SaleType = 'SR' THEN -A.Amount ELSE A.Amount END), 0)
+					ELSE 0 END AS haveMemberSaleAmount,
+				CASE WHEN MAX(A.SaleDate) >= #startDate# AND MIN(A.SaleDate) <= #endDate# 
+					THEN 1 ELSE 0 END as haveSaleMemberNum,
+					
+				CASE WHEN MIN(A.SaleDate) >= #startDate# AND MIN(A.SaleDate) <= #endDate# 
+					THEN ISNULL(SUM(CASE WHEN A.SaleType = 'SR' THEN -A.Amount ELSE A.Amount END), 0)
+					ELSE 0 END AS newMemberSaleAmount,
+				CASE WHEN MIN(A.SaleDate) >= #startDate# AND MIN(A.SaleDate) <= #endDate# THEN 1 ELSE 0 END as newMemberNum 
+			FROM
+				Sale.BIN_SaleRecord A WITH(NOLOCK)
+			]]>		
+				<isNotEmpty property="privilegeFlag">
+				<isEqual property="privilegeFlag" compareValue="1">			
+			<![CDATA[			
+				JOIN (]]><include refid="BINOLCMINC99.departPrivilegeSql" /><![CDATA[) A99 
+				ON A.BIN_OrganizationID=A99.BIN_OrganizationID
+			]]>
+				</isEqual>
+				</isNotEmpty>
+			<![CDATA[	
+				LEFT JOIN Basis.BIN_CounterInfo B WITH(NOLOCK) ON A.BIN_OrganizationID = B.BIN_OrganizationID	
+			WHERE
+				A.ValidFlag = '1' AND
+				A.BIN_OrganizationInfoID = #organizationInfoId# AND
+				A.BIN_BrandInfoID = #brandInfoId# AND
+				A.SaleDate <= #endDate# AND
+				(A.BillState IN ('2', '3', '4') OR ISNULL(A.BillState,'') = '') AND
+				EXISTS(
+					SELECT 1
+					FROM
+						Members.BIN_MemberInfo MB WITH(NOLOCK)
+					WHERE
+						A.BIN_MemberInfoID=MB.BIN_MemberInfoID AND
+						MB.ValidFlag='1' AND
+						MB.MemInfoRegFlg = '0'
+				)
+			]]>	
+			<!-- 默认为不包含测试柜台 -->	
+			<isEmpty property="testFlag" prepend="AND">
+				<![CDATA[
+					NOT EXISTS(
+						SELECT 1
+						FROM 
+							Basis.BIN_Organization ORG
+						WHERE 
+							A.BIN_OrganizationID=ORG.BIN_OrganizationID
+							AND ORG.TestType='1'
+					)
+				]]>
+			</isEmpty>
+			<isNotEmpty property="channelId" prepend="AND">
+				B.BIN_ChannelID = #channelId#
+				<isNotEmpty property="organizationId" prepend="AND">
+					B.BIN_OrganizationID = #organizationId#
+				</isNotEmpty>
+			</isNotEmpty>
+			<isNotEmpty property="belongFaction" prepend="AND">
+				B.BelongFaction = #belongFaction#
+			</isNotEmpty>
+		<![CDATA[
+			GROUP BY A.BIN_OrganizationID,B.CounterCode,B.CounterNameIF,B.BusniessPrincipal,A.BIN_MemberInfoID
+		) T0
+		group by T0.BIN_OrganizationID,
+			T0.CounterCode,
+			T0.CounterNameIF,
+			T0.BusniessPrincipal	
+		]]>				
+    </sql>
+    
+    <!-- 按柜台统计总客户数、总销费金额、当期有销售会员数量、当期有销售的会员销售金额、新会员人数（及占比）、新会员销售额（及平均值） -->
+	<sql id="MemberSaleCount">
+		<![CDATA[
+			SELECT
+				MSC.BIN_OrganizationID,
+				MSC.CounterCode AS counterCode,
+				MSC.CounterNameIF AS counterName,
+				MSC.BusniessPrincipal AS busniessPrincipal,
+				CASE ISNULL(MSC.CounterCode,'') WHEN '' THEN MSC.CounterNameIF 
+					ELSE '('+MSC.CounterCode+')' + MSC.CounterNameIF END as [counter],
+					
+				ISNULL(MSC.totalMemberSaleAmount,0) AS totalMemberSaleAmount,
+				ISNULL(MSC.totalMemberNum,0) AS totalMemberNum,
+				
+				ISNULL(MSC.newMemberSaleAmount,0) AS newMemberSaleAmount,
+				ISNULL(MSC.newMemberNum,0) AS newMemberNum,
+				ISNULL(MSC.haveSaleMemberNum,0) AS haveSaleMemberNum,
+				
+				CASE WHEN MSC.haveSaleMemberNum=0 THEN 0.00 ELSE 
+					CONVERT(decimal(16,2),MSC.newMemberNum*100.0/MSC.haveSaleMemberNum) 
+					END AS newMemberProportion,
+					
+				CASE WHEN MSC.newMemberNum=0 THEN 0.00 ELSE
+					CONVERT(decimal(16,2),MSC.newMemberSaleAmount/MSC.newMemberNum) 
+					END AS newMemConsumeAverage
+			FROM(
+		]]>
+		<include refid="BINOLMBRPT04.MemberSaleCountQuery" />
+		<![CDATA[	
+			)MSC
+		]]>
+	</sql>
+    
+    <!-- 按柜台统计回购会员人数，回购的新会员人数，会员回购金额  -->
+    <sql id="BuyBackMemberCount">
+    	<![CDATA[
+			SELECT
+				A.BIN_OrganizationID,
+				COUNT(DISTINCT MB.BIN_MemberInfoID) AS buyBackMemberNum,
+				ISNULL(SUM(CASE WHEN A.SaleType = 'SR' THEN -A.Amount ELSE A.Amount END), 0) AS buyBackMemSaleAmount
+			FROM
+				Members.BIN_MemberInfo MB WITH(NOLOCK)
+				LEFT JOIN Sale.BIN_SaleRecord A WITH(NOLOCK)
+				ON(MB.BIN_MemberInfoID=A.BIN_MemberInfoID 
+					AND MB.BIN_BrandInfoID=A.BIN_BrandInfoID 
+					AND MB.BIN_OrganizationInfoID=A.BIN_OrganizationInfoID)
+		]]>		
+			<isNotEmpty property="privilegeFlag">
+			<isEqual property="privilegeFlag" compareValue="1">			
+		<![CDATA[			
+				JOIN (]]><include refid="BINOLCMINC99.departPrivilegeSql" /><![CDATA[) A99 
+				ON A.BIN_OrganizationID=A99.BIN_OrganizationID
+		]]>
+			</isEqual>
+			</isNotEmpty>
+		<![CDATA[
+				LEFT JOIN Basis.BIN_CounterInfo B WITH(NOLOCK) ON A.BIN_OrganizationID = B.BIN_OrganizationID	
+			WHERE
+				MB.MemInfoRegFlg = '0' AND
+				MB.ValidFlag = '1' AND
+				MB.BIN_OrganizationInfoID = #organizationInfoId# AND
+				MB.BIN_BrandInfoID = #brandInfoId# AND
+				(A.BillState IN ('2', '3', '4') OR ISNULL(A.BillState,'') = '') AND
+				A.SaleDate >= #startDate# AND
+				A.SaleDate <= #endDate# AND
+				EXISTS(
+					SELECT
+						1
+					FROM
+						Sale.BIN_SaleRecord SR WITH(NOLOCK)
+					WHERE
+						MB.BIN_MemberInfoID=SR.BIN_MemberInfoID AND
+						(SR.BillState IN ('2', '3', '4') OR ISNULL(SR.BillState,'') = '') AND
+						SR.SaleDate < #startDate#
+				)
+		]]>	
+		<!-- 默认为不包含测试柜台 -->	
+		<isEmpty property="testFlag" prepend="AND">
+			<![CDATA[
+				NOT EXISTS(
+					SELECT 1
+					FROM 
+						Basis.BIN_Organization ORG
+					WHERE 
+						A.BIN_OrganizationID=ORG.BIN_OrganizationID
+						AND ORG.TestType='1'
+				)
+			]]>
+		</isEmpty>
+		<isNotEmpty property="channelId" prepend="AND">
+			B.BIN_ChannelID = #channelId#
+			<isNotEmpty property="organizationId" prepend="AND">
+				B.BIN_OrganizationID = #organizationId#
+			</isNotEmpty>
+		</isNotEmpty>
+		<isNotEmpty property="belongFaction" prepend="AND">
+			B.BelongFaction = #belongFaction#
+		</isNotEmpty>
+		<![CDATA[
+			GROUP BY A.BIN_OrganizationID	
+		]]>	
+    </sql>
+    
+    <!-- 统计会员发展情况（新会员销售、回购情况） -->
+    <sql id="MemberDevelopQuery">
+    	 <![CDATA[
+            SELECT 
+            	MD.*,
+            	ISNULL(BM.buyBackMemberNum,0) AS buyBackMemberNum,
+            	ISNULL(BM.buyBackMemSaleAmount,0) AS buyBackMemSaleAmount
+            FROM (
+        ]]>
+        <include refid="BINOLMBRPT04.MemberSaleCount" />
+        <![CDATA[
+            )MD 
+            LEFT JOIN (
+        ]]>
+        <include refid="BINOLMBRPT04.BuyBackMemberCount" />
+         <![CDATA[
+            )BM 
+            ON (MD.BIN_OrganizationID=BM.BIN_OrganizationID)
+        ]]>
+    </sql>
+    
+    <!-- 取得会员发展统计行数 -->
+    <select id="getMemberDevelopCount" parameterClass="java.util.HashMap" resultClass="java.lang.Integer">
+        <![CDATA[
+            SELECT COUNT(1) AS count FROM (
+        ]]>
+        <include refid="BINOLMBRPT04.MemberDevelopQuery" />
+        <![CDATA[
+            )SORT_T1 
+        ]]>
+    </select>
+    
+    <select id="getMemberDevelopList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+    	<include refid="BINOLCMINC99.pageheader" />
+        <include refid="BINOLMBRPT04.MemberDevelopQuery" />
+        <include refid="BINOLCMINC99.pagefooter" />
+    </select>
+    
+    <!-- 取得汇总信息  -->
+    <select id="getSumInfo" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+    	<![CDATA[
+			SELECT
+				COUNT(1) AS count,
+				ISNULL(SUM(convert(decimal(32,2),ISNULL(AA.totalMemberSaleAmount,0))),0) AS sumTotalMemberSaleAmount,
+				ISNULL(SUM(convert(bigint,ISNULL(AA.totalMemberNum,0))),0) AS sumTotalMemberNum,
+				ISNULL(SUM(convert(decimal(32,2),ISNULL(AA.newMemberSaleAmount,0))),0) AS sumNewMemberSaleAmount,
+				ISNULL(SUM(convert(bigint,ISNULL(AA.newMemberNum,0))),0) AS sumNewMemberNum,
+				
+				CASE WHEN ISNULL(SUM(AA.haveSaleMemberNum),0)=0 THEN 0.00 ELSE 
+					CONVERT(decimal(16,2),SUM(AA.newMemberNum)*100.0/SUM(AA.haveSaleMemberNum)) 
+					END AS sumNewMemberProportion,
+				CASE WHEN ISNULL(SUM(AA.newMemberNum),0)=0 THEN 0.00 ELSE
+					CONVERT(decimal(16,2),SUM(AA.newMemberSaleAmount)/SUM(AA.newMemberNum)) 
+					END AS sumNewMemConsumeAverage,
+				
+				ISNULL(SUM(convert(bigint,ISNULL(AA.buyBackMemberNum,0))),0) AS sumBuyBackMemberNum,
+				ISNULL(SUM(convert(decimal(32,2),ISNULL(AA.buyBackMemSaleAmount,0))),0) AS sumBuyBackMemSaleAmount
+			FROM(
+		]]>	
+		<include refid="BINOLMBRPT04.MemberDevelopQuery" />
+		<![CDATA[	
+			)AA
+		]]>		
+    </select>
+</sqlMap>

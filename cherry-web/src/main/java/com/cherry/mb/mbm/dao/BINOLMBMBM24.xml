@@ -1,0 +1,159 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sqlMap PUBLIC "-//iBATIS.com//DTD SQL Map 2.0//EN" "http://ibatis.apache.org/dtd/sql-map-2.dtd">
+<sqlMap namespace="BINOLMBMBM24">
+	 <!--导入结果一览  -->
+	<sql id="memImportQuery">
+	<![CDATA[			
+	SELECT 
+		  A.BIN_MemKeyAttImportID AS keyAttrImportId,
+	      A.SerialNo AS serialNo,
+	      A.ImportName AS importName,
+	      CONVERT(varchar(30),A.ImportTime,120) AS importTime,
+	      A.ImportReason AS importReason,
+	       ]]>
+		<isNotEmpty property="language">
+			<isEqual property="language" compareValue="en_US">
+				'('+B.EmployeeCode+')'+B.EmployeeNameForeign AS employeeName
+			</isEqual>
+			<isEqual property="language" compareValue="zh_CN">
+				'('+B.EmployeeCode+')'+B.EmployeeName AS employeeName
+			</isEqual>
+		</isNotEmpty>
+		<isEmpty property="language">
+				'('+B.EmployeeCode+')'+B.EmployeeName AS employeeName
+		</isEmpty>
+   <![CDATA[		
+     FROM
+  		 Members.BIN_MemKeyAttImport A
+  		 LEFT JOIN Basis.BIN_Employee B WITH(NOLOCK) 
+		 ON (A.BIN_EmployeeID = B.BIN_EmployeeID)
+  	WHERE
+  	    A.BIN_BrandInfoID = #brandInfoId#	
+		AND A.BIN_OrganizationInfoID = #organizationInfoId#
+     ]]>
+	  <isNotEmpty property="importName" prepend="AND">															
+	  <![CDATA[A.ImportName LIKE '%' + #importName# + '%']]>	
+	  <![CDATA[OR A.SerialNo like '%'+ #importName# +'%']]>														
+	 </isNotEmpty>		
+	 									
+	 <isNotEmpty prepend="AND" property="startDate">
+            <![CDATA[
+            CONVERT(varchar(30),A.ImportTime,23) >= #startDate#
+            ]]>
+        </isNotEmpty>
+        <isNotEmpty prepend="AND" property="endDate">
+            <![CDATA[
+            CONVERT(varchar(30),A.ImportTime,23) <= #endDate#
+            ]]>           
+        </isNotEmpty>		
+	</sql>
+	<!-- 导入结果List  -->
+	<select id="getMemImportList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+	   <include refid="BINOLCMINC99.pageheader" />
+	   <include refid="BINOLMBMBM24.memImportQuery" />
+	   <include refid="BINOLCMINC99.pagefooter" />
+	</select>
+	
+	<!-- 导入结果Count-->
+    <select id="getCount" parameterClass="java.util.HashMap" resultClass="java.lang.Integer">
+        <![CDATA[
+            SELECT  COUNT(SORT_T1.keyAttrImportId) AS count FROM (
+        ]]>
+        <include refid="BINOLMBMBM24.memImportQuery" />
+        <![CDATA[
+            )SORT_T1
+        ]]>
+    </select>
+    <!--根据输入字符串模糊查询导入名称-->
+	<select id="getImportName" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+		<![CDATA[
+			SELECT
+				 BIN_MemKeyAttImportID AS id,
+				 SerialNo AS code,
+	      		 ImportName AS name
+			FROM 
+				Members.BIN_MemKeyAttImport
+			WHERE
+				BIN_OrganizationInfoID = #organizationInfoId#
+				AND BIN_BrandInfoID = #brandInfoId#
+		]]>
+		<isNotEmpty property="importNameStr" prepend="AND">
+			(
+			<![CDATA[ImportName like '%'+ #importNameStr# +'%']]>
+			<![CDATA[OR SerialNo like '%'+ #importNameStr# +'%']]>
+			)
+		</isNotEmpty>
+	</select>
+	
+ <!--导入明细结果一览 -->
+	<sql id="detailQuery">
+	<![CDATA[	
+	SELECT		
+		   BIN_MemKeyAttrImportDetailID
+	      ,MemberCode
+	      ,MemberName
+	      ,MemberLevel
+	      ,JoinDate
+	      ,CurBtimes
+	      ,ImportResults
+	      ,ResultFlag
+	FROM 
+          Members.BIN_MemKeyAttrImportDetail WITH(NOLOCK) 
+    WHERE 
+          BIN_MemKeyAttrImportID=#keyAttrImportId#
+     ]]>
+	 <isNotEmpty prepend="AND" property="memberCode" >															
+	<![CDATA[
+	    MemberCode LIKE '%' + #memberCode# + '%'
+	]]>															
+	</isNotEmpty>													
+	<isNotEmpty prepend="AND" property="resultFlag">
+	<![CDATA[
+		ResultFlag = #resultFlag#
+	]]>           
+	</isNotEmpty>													
+	</sql>
+	<!-- 导入明细结果List  -->
+	<select id="getDetailList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+	   <include refid="BINOLCMINC99.pageheader" />
+	   <include refid="BINOLMBMBM24.detailQuery" />
+	   <include refid="BINOLCMINC99.pagefooter" />
+	</select>
+	
+	<!-- 导入明细结果Count-->
+    <select id="getDetailCount" parameterClass="java.util.HashMap" resultClass="java.lang.Integer">
+        <![CDATA[
+            SELECT  COUNT(SORT_T1.BIN_MemKeyAttrImportDetailID) AS count FROM (
+        ]]>
+        <include refid="BINOLMBMBM24.detailQuery" />
+        <![CDATA[
+            )SORT_T1
+        ]]>
+    </select>
+         <!-- 取得导入会员的结果件数  -->
+    <select id="getSumInfo" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+    	<![CDATA[
+	       SELECT 
+				 ISNULL(SUM (CASE ResultFlag WHEN '0' THEN 1 ELSE 0 END ),0)as fCount,
+				 ISNULL(SUM (CASE ResultFlag WHEN '1' THEN 1 ELSE 0 END ),0) as sCount,
+				 ISNULL(SUM (CASE ResultFlag WHEN '2' THEN 1 ELSE 0 END ),0)as pCount
+	    	FROM 
+	    	   	 Members.BIN_MemKeyAttrImportDetail
+	        WHERE    
+	             BIN_MemKeyAttrImportID=#keyAttrImportId#
+         ]]>
+    </select>
+        <!-- 取得导入查询条件  -->
+    <select id="getImportInfo" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+    	<![CDATA[
+	       SELECT 
+				 ImportName +'('+SerialNo+')' AS billNo,
+				 CONVERT(varchar(100),ImportTime,120)AS importTime,
+      			 ImportReason AS importReason
+	    	FROM 
+	    	   	 Members.BIN_MemKeyAttImport
+	        WHERE    
+	             BIN_MemKeyAttImportID=#keyAttrImportId#
+         ]]>
+    </select>
+</sqlMap>

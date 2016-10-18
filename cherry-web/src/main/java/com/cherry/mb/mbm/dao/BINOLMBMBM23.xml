@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE sqlMap PUBLIC "-//iBATIS.com//DTD SQL Map 2.0//EN" "http://ibatis.apache.org/dtd/sql-map-2.dtd">
+
+<sqlMap namespace="BINOLMBMBM23">
+    
+    <!-- 会员短信沟通查询SQL文  -->
+    <sql id="SmsSendDetailQuery">
+        <![CDATA[
+            SELECT
+            	A.BIN_MessageCode AS messageCode,
+				A.Message AS message,
+				A.PlanCode AS planCode,
+				A.DataSource AS dataSource,
+				A.Mobilephone AS mobilephone,
+				A.CouponCode AS couponCode,
+				CONVERT(varchar(30),A.SendTime,120) AS sendTime,
+				B.PlanName AS planName
+			FROM
+				Communication.BIN_SmsSendDetail A
+				LEFT JOIN Communication.BIN_Communicationplan B
+				ON A.PlanCode = B.Bin_PlanCode AND A.DataSource = '1'
+			WHERE
+				A.CustomerType = '1' AND
+				A.CustomerSysID = #memberInfoId#
+        ]]>
+        	<isNotEmpty property="sendTimeStart" prepend="AND">
+				CONVERT(VARCHAR(10),A.SendTime,23) >= #sendTimeStart#
+			</isNotEmpty>
+			<isNotEmpty property="sendTimeEnd" prepend="AND">
+				<![CDATA[CONVERT(VARCHAR(10),A.SendTime,23) <= #sendTimeEnd#]]>
+			</isNotEmpty>
+    </sql>
+	
+	<!-- 取得会员短信沟通总数  -->
+    <select id="getSmsSendDetailCount" parameterClass="java.util.HashMap" resultClass="java.lang.Integer">
+        <![CDATA[
+            SELECT COUNT(1) AS count FROM (
+        ]]>
+        <include refid="BINOLMBMBM23.SmsSendDetailQuery" />
+        <![CDATA[
+            )SORT_T1
+        ]]>
+    </select>
+    
+    <!-- 取得会员短信沟通List  -->
+    <select id="getSmsSendDetailList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+        <include refid="BINOLCMINC99.pageheader" />
+        <include refid="BINOLMBMBM23.SmsSendDetailQuery" />
+        <include refid="BINOLCMINC99.pagefooter" />
+    </select>
+	
+</sqlMap>
+
+
+

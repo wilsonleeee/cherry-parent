@@ -1,0 +1,84 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sqlMap PUBLIC "-//iBATIS.com//DTD SQL Map 2.0//EN" "http://ibatis.apache.org/dtd/sql-map-2.dtd">
+<sqlMap namespace="BINOLSSPRM50">
+	<!-- 取得指定部门的信息-->
+	<select id="getDepartInfo" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+        <![CDATA[
+			SELECT 													
+				A.BIN_OrganizationID
+		]]>
+		<dynamic>
+		<isNotEmpty property="language">
+			<isEqual property="language" compareValue="en_US">										
+			,A.NameForeign AS DepartName
+			</isEqual>
+			<isEqual property="language" compareValue="zh_CN">										
+			,A.DepartName AS DepartName
+			</isEqual>								
+		</isNotEmpty>
+		<isEmpty property="language">
+			,A.DepartName AS DepartName
+		</isEmpty>
+		</dynamic>
+		 <![CDATA[												
+			FROM									
+				Basis.BIN_Organization A ,
+				Basis.BIN_Organization B						
+			WHERE	
+					A.BIN_OrganizationInfoID = B.BIN_OrganizationInfoID 
+				]]>
+				<isNotEqual property="BIN_BrandInfoID" compareValue="-9999">
+				and A.BIN_BrandInfoID = B.BIN_BrandInfoID
+				</isNotEqual>
+				 <![CDATA[
+				and B.BIN_OrganizationID =#BIN_OrganizationID#
+				and A.DepartCode=#DepartCode#
+				and A.ValidFlag='1'
+				and B.ValidFlag='1'
+		]]>
+    </select>
+    
+    	<!-- 取得促销品信息-->
+	<select id="getPromotionInfo" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+		<![CDATA[
+    		SELECT 
+    			A.BIN_PromotionProductID,
+    			A.UnitCode, 
+    			C.BarCode,
+    			C.BIN_PromotionProductVendorID
+    					]]>
+		<dynamic>
+		<isNotEmpty property="language">
+			<isEqual property="language" compareValue="en_US">										
+			,A.NameForeign AS PromotionName
+			</isEqual>
+			<isEqual property="language" compareValue="zh_CN">										
+			,A.NameTotal AS PromotionName
+			</isEqual>								
+		</isNotEmpty>
+		<isEmpty property="language">
+			,A.NameTotal AS PromotionName
+		</isEmpty>
+		</dynamic>
+		 <![CDATA[
+    			,ISNULL(B.SalePrice,'0.00') as SalePrice
+    		FROM
+    			Basis.BIN_PromotionProduct A left join 
+    			Basis.BIN_PromotionPrice B on A.BIN_PromotionProductID = B.BIN_PromotionProductID AND 
+    			B.ValidFlag = '1' ,
+    			Basis.BIN_PromotionProductVendor C
+    		WHERE    			 
+    			A.BIN_PromotionProductID = C.BIN_PromotionProductID 
+    		AND A.ValidFlag = '1'  
+    		AND	C.ValidFlag = '1'
+    		AND A.UnitCode=#UnitCode#
+    		]]>
+    		<dynamic>
+		<isNotEmpty property="BarCode">
+		     AND C.BarCode=#BarCode#							
+		</isNotEmpty>	
+		</dynamic>
+		<![CDATA[
+    	]]>
+    </select> 
+</sqlMap>

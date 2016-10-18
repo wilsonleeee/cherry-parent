@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sqlMap PUBLIC "-//iBATIS.com//DTD SQL Map 2.0//EN" "http://ibatis.apache.org/dtd/sql-map-2.dtd">
+<sqlMap namespace="BINOLSTIOS10">
+    <!-- 取部门编号名称 -->
+    <select id="getDepart" parameterClass="java.util.HashMap" resultClass="java.lang.String">
+        <![CDATA[
+            SELECT
+               '('+DepartCode+')'+DepartName
+            FROM
+                Basis.BIN_Organization
+            WHERE
+                BIN_OrganizationID=#BIN_OrganizationID#
+        ]]>
+    </select>
+	
+    <!--按仓库取得所有库存大于0的产品-->
+    <select id="searchProductList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+        <![CDATA[
+            SELECT
+                A.BIN_ProductVendorID,
+                B.BarCode,
+                C.UnitCode,
+                ISNULL(C.StandardCost,0) AS StandardCost,
+                ISNULL(D.SalePrice,0) AS SalePrice,
+                ISNULL(D.MemPrice,0) AS MemPrice,
+                ISNULL(A.Quantity,0) AS Quantity
+        ]]>
+        <dynamic>
+            <isNotEmpty property="language">
+                <isEqual property="language" compareValue="zh_CN">
+                    <![CDATA[,C.NameTotal as prodcutName]]>
+                </isEqual>
+                <isEqual property="language" compareValue="en_US">
+                    <![CDATA[,C.NameForeign as prodcutName]]>
+                </isEqual>
+            </isNotEmpty>
+            <isEmpty property="language">
+                <![CDATA[,C.NameTotal as prodcutName]]>
+            </isEmpty>
+        </dynamic>
+        <![CDATA[
+            FROM
+                Inventory.BIN_ProductStock A
+                LEFT JOIN Basis.BIN_ProductVendor B
+                ON A.BIN_ProductVendorID = B.BIN_ProductVendorID
+                LEFT JOIN Basis.BIN_Product C
+                ON B.BIN_ProductID = C.BIN_ProductID
+                LEFT JOIN Basis.BIN_ProductPrice D
+                ON B.BIN_ProductID = D.BIN_ProductID
+                AND D.ValidFlag='1' AND D.Type = '2'
+                AND GetDate() BETWEEN D.StartDate AND D.EndDate
+            WHERE
+                A.BIN_InventoryInfoID = #BIN_InventoryInfoID#
+                AND A.BIN_LogicInventoryInfoID = #BIN_LogicInventoryInfoID#
+                AND A.Quantity > 0
+                AND B.ValidFlag = '1'
+                AND C.ValidFlag = '1'
+            ORDER BY
+                C.UnitCode ASC
+        ]]>
+    </select>
+</sqlMap>

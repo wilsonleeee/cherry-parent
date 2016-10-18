@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sqlMap PUBLIC "-//iBATIS.com//DTD SQL Map 2.0//EN" "http://ibatis.apache.org/dtd/sql-map-2.dtd">
+<sqlMap namespace="WebserviceDataSource">
+
+	<!-- 查询品牌数据库对应表获取所有品牌的数据源 -->
+	<select id="getBrandDataSourceConfigList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+		SELECT
+		A.BrandCode AS brandCode,
+		A.DataSourceName AS dataSourceName,
+		A.AESKey
+		FROM
+		dbo.BIN_BrandDataSourceConfig A
+		WHERE
+		A.ValidFlag = '1'
+	</select>
+
+	<!-- 查询品牌信息 -->
+	<select id="getBrandInfo" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+		SELECT
+		A.BIN_BrandInfoID ,
+		A.BIN_OrganizationInfoID,
+		B.OrgCode
+		FROM
+		Basis.BIN_BrandInfo A,
+		Basis.BIN_OrganizationInfo B
+		WHERE
+		A.BIN_OrganizationInfoID=B.BIN_OrganizationInfoID AND
+		A.BrandCode = #brandCode#
+	</select>
+	
+	<!-- 查询所有第三方信息 -->
+	<select id="getThirdPartyConfigList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+		SELECT
+		A.OrgCode,
+		A.BrandCode,
+		A.AppName,
+		A.AppID,
+		A.AppSecret,
+		A.DynamicAESKey,
+		A.AESKeyExpireTime
+		FROM
+		dbo.BIN_ThirdPartyConfig A
+		WHERE
+		A.ValidFlag = '1'
+	</select>
+	
+		<update id="refreshDynamicAESKey" parameterClass="java.util.HashMap">
+    	<![CDATA[
+			UPDATE dbo.BIN_ThirdPartyConfig 
+			SET DynamicAESKey=#DynamicAESKey#,AESKeyExpireTime=#AESKeyExpireTime#,UpdateTime=GETDATE(),ModifyCount=ModifyCount+1
+			WHERE
+				AppID=#AppID#
+		]]>
+	</update>
+
+</sqlMap>

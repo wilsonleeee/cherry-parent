@@ -1,0 +1,206 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sqlMap PUBLIC "-//iBATIS.com//DTD SQL Map 2.0//EN" "http://ibatis.apache.org/dtd/sql-map-2.dtd">
+<sqlMap namespace="BINOLCTPLN02">
+
+	<!-- 获取沟通事件设置信息List -->
+    <select id="getEventSetList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+		<![CDATA[
+			SELECT 
+				tc.EventTypeId as eventType,
+				tc.SearchCode as searchCode,
+				ts.RecordName as recordName,
+				ts.CustomerType as customerType,
+				ts.RecordType as recordType,
+				ts.RecordCount as recordCount,
+				ts.ConditionInfo as conditionInfo,
+				ts.Comments as comments,
+				ts.FromType as fromType,
+				tc.IsTemplate as isTemplate,
+				tc.TemplateCode as templateCode,
+				tc.MessageInfo as contents,
+				tc.CommType as messageType,
+				tc.GroupNo as activityCode ,
+				tc.SmsChannel as smsChannel
+			FROM 
+  				Communication.BIN_CommEventSet as tc with(nolock) 
+				LEFT JOIN Members.BIN_SearchLog as ts with(nolock) on tc.SearchCode = ts.BIN_SearchCode 
+  			WHERE 
+  				tc.ValidFlag = 1 AND 
+				tc.BIN_BrandInfoID = #brandInfoId# AND 
+				tc.BIN_OrganizationInfoID = #organizationInfoId# AND 
+				tc.EventTypeId = #eventType# 
+		]]>
+    </select>
+	
+	<!-- 停用事件设置 -->
+	<update id="stopEventSet" parameterClass="java.util.HashMap">
+		<![CDATA[
+			UPDATE 
+				Communication.BIN_CommEventSet 
+			SET 
+				ValidFlag = 0, 
+		]]>
+			<include refid="BINOLCMINC99.updateSql" />
+		<![CDATA[
+			WHERE 
+				ValidFlag = 1 AND 
+				BIN_BrandInfoID=#brandInfoId# AND 
+				BIN_OrganizationInfoID=#organizationInfoId# AND 
+				EventTypeId=#eventType# 
+		]]>
+    </update>
+	
+	<!-- 插入沟通事件设置信息  -->
+	<insert id="insertEventSetInfo" parameterClass="java.util.HashMap">
+        <![CDATA[
+		INSERT INTO Communication.BIN_CommEventSet 
+		           (BIN_OrganizationInfoID,
+					BIN_BrandInfoID,
+					EventTypeId,
+					SearchCode,
+					IsTemplate,
+					TemplateCode,
+					MessageInfo,
+					CommType,
+					GroupNo,
+					SmsChannel,
+		]]>	
+		    <include refid="BINOLCMINC99.insertKeySql" />
+		<![CDATA[
+        )VALUES
+		           (#organizationInfoId#,
+		            #brandInfoId#,
+		            #eventType#,
+		            #searchCode#,
+		            #isTemplate#,
+		            #templateCode#,
+		            #contents#,
+		            #messageType#,
+		            #activityCode#,
+		            #smsChannel#,
+       ]]>
+	        <include refid="BINOLCMINC99.insertValueSql" />
+		<![CDATA[
+		)
+		]]>
+    </insert>
+    
+    <!-- 插入沟通事件延时设置信息  -->
+	<insert id="insertDelaySetInfo" parameterClass="java.util.HashMap">
+        <![CDATA[
+		INSERT INTO Communication.BIN_DelaySetInfo 
+		           (BIN_OrganizationInfoID,
+					BIN_BrandInfoID,
+					EventTypeId,
+					Frequency,
+					DateBegin,
+					DateEnd,
+					TimeBegin,
+					TimeEnd,
+		]]>	
+		    <include refid="BINOLCMINC99.insertKeySql" />
+		<![CDATA[
+        )VALUES
+		           (#organizationInfoId#,
+		            #brandInfoId#,
+		            #eventType#,
+		            #frequencyCode#,
+		            #sendBeginDate#,
+		            #sendEndDate#,
+		            #sendBeginTime#,
+		            #sendEndTime#,
+       ]]>
+	        <include refid="BINOLCMINC99.insertValueSql" />
+		<![CDATA[
+		)
+		]]>
+    </insert>
+    
+    <update id="updateDelaySetInfo" parameterClass="java.util.HashMap">
+		<![CDATA[
+			UPDATE 
+				Communication.BIN_DelaySetInfo 
+			SET 
+				Frequency = #frequencyCode#,
+				DateBegin = #sendBeginDate#,
+				DateEnd = #sendEndDate#,
+				TimeBegin = #sendBeginTime#,
+				TimeEnd = #sendEndTime#,
+		]]>
+			<include refid="BINOLCMINC99.updateSql" />
+		<![CDATA[
+			WHERE 
+				ValidFlag = 1 AND 
+				BIN_BrandInfoID=#brandInfoId# AND 
+				BIN_OrganizationInfoID=#organizationInfoId# AND 
+				EventTypeId=#eventType# 
+		]]>
+    </update>
+        
+    <!--查询延时设置信息是否已经存在 -->
+	<select id="getDelaySetCount" parameterClass="java.util.HashMap" resultClass="java.lang.Integer">
+		<![CDATA[
+			SELECT 
+				count(1) As setCount 
+			FROM 
+				Communication.BIN_DelaySetInfo 
+			WHERE 
+				ValidFlag = 1 AND 
+				BIN_BrandInfoID = #brandInfoId# AND 
+				BIN_OrganizationInfoID = #organizationInfoId# AND 
+				EventTypeId=#eventType# 
+		]]>
+    </select>
+    
+    <!-- 获取沟通事件延时设置信息List -->
+    <select id="getDelaySetInfo" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+		<![CDATA[
+			SELECT Top 1 
+				BIN_DelaySetId as delaySetId,
+				EventTypeId as eventType,
+      			Frequency as frequencyCode,
+      			DateBegin as sendBeginDate,
+      			DateEnd as sendEndDate,
+      			TimeBegin as sendBeginTime,
+      			TimeEnd as sendEndTime 
+  			FROM 
+  				Communication.BIN_DelaySetInfo 
+  			WHERE 
+  				ValidFlag = 1 AND 
+				BIN_BrandInfoID=#brandInfoId# AND 
+				BIN_OrganizationInfoID=#organizationInfoId# AND 
+				EventTypeId=#eventType# 	
+		]]>
+    </select>
+    
+    <!-- 更新调度有效标识 -->
+	<update id="updateEventSchedulesFlag" parameterClass="java.util.HashMap">
+		<![CDATA[
+	      UPDATE
+	               Communication.BIN_Schedules 
+		  SET 
+				   ValidFlag = 0,
+		]]>
+			<include refid="BINOLCMINC99.updateSql" />									
+		<![CDATA[								
+		  WHERE	  
+		  		  TaskType = 'DE' AND 
+		  		  BIN_OrganizationInfoID = #organizationInfoId# AND
+		  		  BIN_BrandInfoID = #brandInfoId# AND
+		  		  TaskCode = #eventType#
+		]]>
+	</update>
+	
+	<!-- 删除沟通设置信息 -->
+	<delete id="deleteDelaySetInfo" parameterClass="java.util.HashMap">
+		<![CDATA[
+			DELETE FROM	
+				Communication.BIN_DelaySetInfo  
+			WHERE					
+				BIN_BrandInfoID=#brandInfoId# AND 
+				BIN_OrganizationInfoID=#organizationInfoId# AND 
+				EventTypeId=#eventType# 
+		]]>
+    </delete>
+    
+</sqlMap>

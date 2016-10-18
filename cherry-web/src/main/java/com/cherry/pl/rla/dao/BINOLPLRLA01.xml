@@ -1,0 +1,134 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sqlMap PUBLIC "-//iBATIS.com//DTD SQL Map 2.0//EN" "http://ibatis.apache.org/dtd/sql-map-2.dtd">
+<sqlMap namespace="BINOLPLRLA01">
+	
+	<!-- 取得品牌下的顶层部门级别 -->
+	<select id="getFirstOrganizationLevel" parameterClass="java.util.HashMap" resultClass="java.lang.Integer">
+		<![CDATA[
+			SELECT				
+				MIN(Level) as Level			
+			FROM				
+				Basis.BIN_Organization			
+			WHERE				
+				BIN_OrganizationInfoID=#organizationInfoId# AND			
+				ValidFlag='1'					
+		]]>
+		<dynamic>
+			<isNotEmpty prepend="AND" property="brandInfoId">
+				(BIN_BrandInfoID=#brandInfoId#)
+			</isNotEmpty>
+		</dynamic>
+    </select>
+	
+	<!-- 取得品牌下的顶层部门List -->
+	<resultMap id="BINOLPLRLA01.FirstOrganization" class="java.util.HashMap">
+		<result property="organizationId" column="BIN_OrganizationID"/>
+		<result property="brandInfoId" column="BIN_BrandInfoID"/>
+		<result property="departCode" column="DepartCode"/>
+		<result property="departName" column="DepartName"/>
+		<result property="path" column="Path"/>
+		<result property="child" column="Child"/>
+	</resultMap>
+	<select id="getFirstOrganizationList" parameterClass="java.util.HashMap" resultMap="BINOLPLRLA01.FirstOrganization">
+		<![CDATA[
+			SELECT						
+				X.BIN_OrganizationID,	
+				X.BIN_BrandInfoID,
+				X.DepartCode,	
+		]]>			
+		<isNotEmpty property="language">
+			<isEqual property="language" compareValue="en_US">
+				X.NameForeign AS DepartName,
+			</isEqual>
+			<isEqual property="language" compareValue="zh_CN">	
+				X.DepartName AS DepartName,
+			</isEqual>								
+		</isNotEmpty>
+		<isEmpty property="language">
+				X.DepartName AS DepartName,
+		</isEmpty>
+		<![CDATA[					
+				X.Path,
+				Y.Child					
+			FROM						
+				(SELECT
+					A.BIN_OrganizationID,
+					count(B.BIN_OrganizationID)	as Child
+				FROM						
+					Basis.BIN_Organization A LEFT JOIN Basis.BIN_Organization B ON
+					B.NodeID.GetAncestor(1) = A.NodeID AND B.ValidFlag='1'
+				WHERE						
+					A.Level=#level# AND	
+					A.ValidFlag='1'
+				GROUP BY 
+					A.BIN_OrganizationID) Y left join Basis.BIN_Organization X on
+				X.BIN_OrganizationID=Y.BIN_OrganizationID	
+			WHERE						
+				X.BIN_OrganizationInfoID=#organizationInfoId#
+		]]>		
+		<dynamic>
+			<isNotEmpty prepend="AND" property="brandInfoId">
+				X.BIN_BrandInfoID=#brandInfoId#
+			</isNotEmpty>
+		</dynamic>	
+    </select>
+	
+	<!-- 取得某一组织的直属下级组织 -->
+	<resultMap id="BINOLPLRLA01.NextOrganizationInfo" class="java.util.HashMap">
+		<result property="organizationId" column="BIN_OrganizationID"/>
+		<result property="brandInfoId" column="BIN_BrandInfoID"/>
+		<result property="departCode" column="DepartCode"/>
+		<result property="departName" column="DepartName"/>
+		<result property="path" column="Path"/>
+		<result property="child" column="Child"/>
+	</resultMap>
+	<select id="getNextOrganizationInfoList" parameterClass="java.util.HashMap" resultMap="BINOLPLRLA01.NextOrganizationInfo">
+		<![CDATA[
+			SELECT				
+				X.BIN_OrganizationID,		
+				X.BIN_BrandInfoID,		
+				X.DepartCode,		
+		]]>			
+		<isNotEmpty property="language">
+			<isEqual property="language" compareValue="en_US">
+				X.NameForeign AS DepartName,
+			</isEqual>
+			<isEqual property="language" compareValue="zh_CN">	
+				X.DepartName AS DepartName,
+			</isEqual>								
+		</isNotEmpty>
+		<isEmpty property="language">
+				X.DepartName AS DepartName,
+		</isEmpty>
+		<![CDATA[
+				X.Path,
+				Y.Child		
+			FROM				
+				(SELECT
+					A.BIN_OrganizationID,
+					count(B.BIN_OrganizationID)	as Child
+				FROM						
+					Basis.BIN_Organization A LEFT JOIN Basis.BIN_Organization B ON
+					B.NodeID.GetAncestor(1) = A.NodeID AND B.ValidFlag='1' AND B.ValidFlag='1'	
+				WHERE						
+					A.NodeID.GetAncestor(1)=#path# AND
+					A.Type <> '4' AND
+					A.ValidFlag='1'
+				GROUP BY 
+					A.BIN_OrganizationID
+				UNION
+				SELECT
+					A.BIN_OrganizationID,
+					0 as Child
+				FROM						
+					Basis.BIN_Organization A
+				WHERE						
+					A.NodeID.GetAncestor(1)=#path# AND	
+					A.Type = '4' AND
+					A.ValidFlag='1'				
+					) Y left join Basis.BIN_Organization X on
+				X.BIN_OrganizationID=Y.BIN_OrganizationID		
+		]]>
+    </select>
+	
+</sqlMap>

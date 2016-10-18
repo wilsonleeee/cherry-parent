@@ -1,0 +1,68 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sqlMap PUBLIC "-//iBATIS.com//DTD SQL Map 2.0//EN" "http://ibatis.apache.org/dtd/sql-map-2.dtd">
+<sqlMap namespace="BINOLPLUPM04"> 	    	    
+	<!-- 密码安全配置信息 -->
+	<resultMap id="BINOLPLUPM04.PwConfInfo" class="java.util.HashMap">
+		<result property="pwConfId" column="BIN_PasswordConfigID"/>							<!-- 密码配置ID -->			
+		<result property="brandInfoId" column="BIN_BrandInfoID"/>							<!-- 所属品牌ID -->	
+		<result property="duration" column="Duration"/>										<!-- 密码有效期 -->
+		<result property="remindAhead" column="RemindAhead"/>								<!-- 密码修改提醒提前天数 -->
+		<result property="repetitionInterval" column="RepetitionInterval"/>					<!-- 密码重复间隔 -->
+		<result property="complexity" column="Complexity"/>									<!-- 密码复杂度 -->
+		<result property="pwLength" column="Length"/>										<!-- 密码最小长度 -->
+		<result property="maxLength" column="MaxLength"/>									<!-- 密码最大长度 -->
+		<result property="isEncryption" column="IsEncryption"/>								<!-- 是否加密 -->
+		<result property="retryTimes" column="RetryTimes"/>									<!-- 重试次数 -->
+		<result property="isTracable" column="IsTracable"/>									<!-- 是否开启访问跟踪 -->
+		<result property="isTrievable" column="IsTrievable"/>								<!-- 是否开启密码找回 -->
+		<result property="pwUpdateTime" column="UpdateTime"/>								<!-- 更新日时 -->
+		<result property="modifyCount" column="ModifyCount"/>								<!-- 更新次数 -->
+		<result property="brandName" column="BrandName"/>									<!-- 所属品牌名称 -->	
+        <result property="overdueTactic" column="OverdueTactic"/>                           <!-- 密码过期策略 --> 
+	</resultMap>
+	<!-- 取得密码安全配置信息  -->
+    <select id="getPwConfInfo" parameterClass="java.util.HashMap" resultMap="BINOLPLUPM04.PwConfInfo">
+       <![CDATA[
+			SELECT
+				A.BIN_PasswordConfigID,
+				A.BIN_BrandInfoID,
+				A.Duration,
+				A.RemindAhead,
+				A.RepetitionInterval,
+				A.Complexity,
+				A.Length,
+				A.MaxLength,
+				A.IsEncryption,
+				A.RetryTimes,
+				A.IsTracable,
+				A.IsTrievable,
+				convert(varchar(30),A.UpdateTime,121) AS UpdateTime,
+				A.ModifyCount,
+				A.OverdueTactic
+		]]>
+		<dynamic>
+		<isNotEmpty property="language">
+			<isEqual property="language" compareValue="en_US">
+			,B.BrandNameForeign AS BrandName
+			</isEqual>
+			<isEqual property="language" compareValue="zh_CN">	
+			,B.BrandNameChinese AS BrandName
+			</isEqual>								
+		</isNotEmpty>
+		<isEmpty property="language">
+			,B.BrandNameChinese AS BrandName
+		</isEmpty>
+		</dynamic>
+		 <![CDATA[		
+			FROM
+				Privilege.BIN_PasswordConfig A 
+				LEFT JOIN Basis.BIN_BrandInfo B
+				ON (A.BIN_BrandInfoID = B.BIN_BrandInfoID AND
+					B.ValidFlag = '1')
+			WHERE
+				A.BIN_BrandInfoID = #brandInfoId# AND
+				A.BIN_OrganizationInfoID = #organizationInfoId# AND
+				A.ValidFlag = '1'
+		]]>
+    </select>
+</sqlMap>

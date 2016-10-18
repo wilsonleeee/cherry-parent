@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sqlMap PUBLIC "-//iBATIS.com//DTD SQL Map 2.0//EN" "http://ibatis.apache.org/dtd/sql-map-2.dtd">
+<sqlMap namespace="BINOLSSPRM08">
+	<!-- 取得促销品分类信息 -->
+    <select id="getPrmTypeInfo" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+		<![CDATA[
+		 SELECT					
+		 	   A.BIN_PromotionPrtTypeID AS prmTypeId,
+			   A.BIN_BrandInfoID AS brandInfoId,
+		       A.PrimaryCategoryCode AS primaryCategoryCode ,													
+		       A.PrimaryCategoryNameChinese AS primaryCategoryNameCN,													
+		       A.PrimaryCategoryNameForeign AS primaryCategoryNameEN,													
+		       A.SecondryCategoryCode AS secondryCategoryCode,													
+		       A.SecondryCategoryNameChinese AS secondryCategoryNameCN,													
+		       A.SecondryCategoryNameForeign AS secondryCategoryNameEN,													
+		       A.SmallCategoryCode AS smallCategoryCode,													
+		       A.SmallCategoryNameChinese AS smallCategoryNameCN,													
+		       A.SmallCategoryNameForeign AS smallCategoryNameEN,
+			   convert(varchar(30),A.UpdateTime,121) AS modifyTime,
+			   A.ModifyCount AS modifyCount
+	    ]]> 
+		<dynamic>
+		<isNotEmpty property="language">
+			<isEqual property="language" compareValue="en_US">
+			,B.OrgNameForeign AS orgName									
+			,C.BrandNameForeign AS brandName
+			</isEqual>
+			<isEqual property="language" compareValue="zh_CN">	
+			,B.OrgNameChinese AS orgName					
+			,C.BrandNameChinese AS brandName
+			</isEqual>								
+		</isNotEmpty>
+		<isEmpty property="language">
+			,B.OrgNameChinese AS orgName						
+			,C.BrandNameChinese AS brandName
+		</isEmpty>
+		</dynamic> 
+		<![CDATA[
+		  FROM																		
+		         Basis.BIN_PromotionPrtType A,
+				 Basis.BIN_OrganizationInfo B,
+				 Basis.BIN_BrandInfo C
+		  WHERE
+				 A.BIN_PromotionPrtTypeID = #prmTypeId# AND
+				 A.BIN_OrganizationInfoID = B.BIN_OrganizationInfoID AND
+				 B.ValidFlag = '1' AND
+				 A.BIN_BrandInfoID = C.BIN_BrandInfoID AND
+				 C.ValidFlag = '1'					
+		]]>
+    </select>
+</sqlMap>

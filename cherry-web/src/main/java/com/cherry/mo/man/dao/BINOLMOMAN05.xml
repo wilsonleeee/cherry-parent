@@ -1,0 +1,137 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE sqlMap PUBLIC "-//iBATIS.com//DTD SQL Map 2.0//EN" "http://ibatis.apache.org/dtd/sql-map-2.dtd">
+<sqlMap namespace="BINOLMOMAN05">
+	<insert id="insertUdiskInfo" parameterClass="java.util.HashMap">
+		INSERT INTO 
+			[Monitor].[BIN_UdiskInfo]
+           	(
+				[BIN_OrganizationInfoID],
+           		[BIN_BrandInfoID],
+           		[UdiskSN],
+			<dynamic>
+				<isNotEmpty property="employeeId">
+					[BIN_EmployeeID],
+				</isNotEmpty>
+			</dynamic>
+           		[OwnerRight],
+			<include refid="BINOLCMINC99.insertKeySql" />
+			)
+     	VALUES
+           (
+		   		#organizationInfoId#,
+				#brandInfoId#,
+				#udiskSn#,
+			<dynamic>
+				<isNotEmpty property="employeeId">
+					#employeeId#,
+				</isNotEmpty>
+			</dynamic>
+				#ownerRight#,
+			<include refid="BINOLCMINC99.insertValueSql" />
+           	)
+	</insert>
+	<select id="isBrandExist" parameterClass="java.lang.String" resultClass="java.lang.String">
+		SELECT
+			[BIN_BrandInfoID] AS brandinfoId
+		FROM
+			[Basis].[BIN_BrandInfo]
+		WHERE
+			[BrandCode] = #brandCode#
+			AND [ValidFlag]='1'
+	</select>
+	<!-- 取得品牌信息  -->
+    <select id="getBrandInfoList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+       	<![CDATA[
+			SELECT
+				BIN_BrandInfoID,
+				BrandCode AS brandCode
+			]]>
+		<dynamic>
+		<isNotEmpty property="language">
+			<isEqual property="language" compareValue="en_US">
+			,BrandNameForeign AS BrandName
+			</isEqual>
+			<isEqual property="language" compareValue="zh_CN">	
+			,BrandNameChinese AS BrandName
+			</isEqual>								
+		</isNotEmpty>
+		<isEmpty property="language">
+			,BrandNameChinese AS BrandName
+		</isEmpty>
+		</dynamic>
+		 <![CDATA[															
+			FROM
+				Basis.BIN_BrandInfo
+			WHERE
+				BIN_OrganizationInfoID=#organizationInfoId# AND
+				ValidFlag='1'
+		]]>
+    </select>
+	<select id="isUdiskExist" parameterClass="java.util.HashMap" resultClass="java.lang.String">
+		SELECT
+			[BIN_UdiskInfoID] AS udiskInfoId
+		FROM
+			[Monitor].[BIN_UdiskInfo]
+		WHERE
+			[UdiskSN] = #udiskSn#
+			AND [BIN_OrganizationInfoID] = #organizationInfoId#
+			AND [BIN_BrandInfoID] = #brandInfoId# 
+			AND [ValidFlag] = 1
+	</select>
+	<select id="isEmployeeExist" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+		SELECT
+			A.[BIN_EmployeeID] AS employeeId,
+			A.[EmployeeCode] AS employeeCode,
+			B.[BIN_PositionCategoryID] AS positionCategoryId,
+			B.CategoryCode AS categoryCode,
+			B.Grade AS grade,
+			B.BIN_OrganizationInfoID AS organizationInfoId,
+			B.BIN_BrandInfoID AS brandInfoId,
+			<dynamic>
+				<isNotEmpty property="language">
+					<isEqual property="language" compareValue="en_US">
+						A.EmployeeName AS employeeName,
+						B.CategoryName AS categoryName
+ 					</isEqual>
+					<isEqual property="language" compareValue="zh_CN">	
+						A.EmployeeNameForeign AS employeeName,
+						B.CategoryNameForeign AS categoryName
+					</isEqual>								
+				</isNotEmpty>
+				<isEmpty property="language">
+					A.EmployeeName AS employeeName,
+					B.CategoryName AS categoryName
+				</isEmpty>
+			</dynamic>
+		FROM
+			[Basis].[BIN_Employee] A
+			JOIN [Privilege].[BIN_PositionCategory] B ON(
+			A.[BIN_PositionCategoryID] = B.[BIN_PositionCategoryID]
+			AND B.[ValidFlag] = 1
+			)
+		WHERE
+			A.[EmployeeCode] = #employeeCode#
+			AND A.[ValidFlag] = 1
+			AND A.[BIN_OrganizationInfoID] = #organizationInfoId#
+			AND A.[BIN_BrandInfoID] = #brandInfoId#
+	</select>
+	
+	<!--根据U盘SN号\组织\部门取得相应的U盘信息-->
+	<select id="getUdiskInfo" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+		<![CDATA[
+		SELECT
+			A.UdiskSN AS udiskSn,
+			A.BIN_EmployeeID AS employeeId,
+			B.BrandCode AS brandCode
+		FROM
+			Monitor.BIN_UdiskInfo A,
+			Basis.BIN_BrandInfo B
+		WHERE
+			A.UdiskSN = #udiskSn#
+			AND A.BIN_OrganizationInfoID = #organizationInfoId#
+			AND A.BIN_BrandInfoID = #brandInfoId#
+			AND A.BIN_BrandInfoID = B.BIN_BrandInfoID
+			AND A.[ValidFlag] = 1
+		]]>
+	</select>
+</sqlMap>

@@ -1,0 +1,509 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sqlMap PUBLIC "-//iBATIS.com//DTD SQL Map 2.0//EN" "http://ibatis.apache.org/dtd/sql-map-2.dtd">
+<sqlMap namespace="BINOLPLRLA05">
+	<sql id="getEmployeeListSQL">
+		<![CDATA[
+			SELECT DISTINCT
+				A.BIN_EmployeeID,
+				A.EmployeeCode,
+				C.DepartCode,
+				D.BrandCode,
+				E.LonginName,
+		]]>
+			<dynamic>
+				<isNotEmpty property="language">
+					<isEqual property="language" compareValue="en_US">
+						<![CDATA[
+							A.EmployeeNameForeign AS EmployeeName,
+							B.CategoryNameForeign AS CategoryName,
+							C.NameForeign AS DepartName,
+							D.BrandNameForeign AS BrandNameChinese
+						]]>
+					</isEqual>
+					<isEqual property="language" compareValue="zh_CN">
+						<![CDATA[
+							A.EmployeeName,
+							B.CategoryName,
+							C.DepartName,
+							D.BrandNameChinese
+						]]>
+					</isEqual>
+				</isNotEmpty>
+				<isEmpty property="language">
+					<![CDATA[
+						A.EmployeeName,
+						B.CategoryName,
+						C.DepartName,
+						D.BrandNameChinese
+					]]>
+				</isEmpty>
+			
+		<![CDATA[
+			FROM
+				Basis.BIN_Employee A
+				LEFT JOIN Privilege.BIN_PositionCategory B
+				ON(A.BIN_PositionCategoryID = B.BIN_PositionCategoryID
+				AND B.ValidFlag = '1')
+				LEFT JOIN Basis.BIN_Organization C
+				ON(A.BIN_OrganizationID = C.BIN_OrganizationID
+				AND C.ValidFlag = '1')
+				LEFT JOIN Basis.BIN_BrandInfo D
+				ON(A.BIN_BrandInfoID = D.BIN_BrandInfoID
+				AND D.ValidFlag = '1')
+				LEFT JOIN Privilege.BIN_User E
+				ON(A.BIN_EmployeeID = E.BIN_EmployeeID
+				AND E.ValidFlag = '1')
+			WHERE
+				A.BIN_OrganizationInfoID = #BIN_OrganizationInfoID#
+				AND A.ValidFlag = '1'
+			]]>
+			<isNotEmpty prepend="AND" property="BIN_BrandInfoID">
+				<![CDATA[A.BIN_BrandInfoID = #BIN_BrandInfoID#]]>
+			</isNotEmpty>
+			<isNotEmpty prepend="AND" property="EmployeeCode">
+				<![CDATA[A.EmployeeCode LIKE '%'+ #EmployeeCode# +'%']]>
+			</isNotEmpty>
+			<isNotEmpty prepend="AND" property="EmployeeName">
+				<![CDATA[A.EmployeeName LIKE '%'+ #EmployeeName# +'%']]>
+			</isNotEmpty>
+			<isNotEmpty prepend="AND" property="BIN_PositionCategoryID">
+				<![CDATA[A.BIN_PositionCategoryID = #BIN_PositionCategoryID#]]>
+			</isNotEmpty>
+			<isNotEmpty prepend="AND" property="LonginName">
+				<![CDATA[E.LonginName = #LonginName#]]>
+			</isNotEmpty>
+		</dynamic>
+	</sql>
+	
+	<sql id="getRoleListSQL">
+		<![CDATA[
+			SELECT
+				A.BIN_RoleID,
+				A.RoleName,
+				A.RoleKind,
+				A.Decription,
+				B.BrandCode,
+		]]>
+			<dynamic>
+				<isNotEmpty property="language">
+					<isEqual property="language" compareValue="en_US">
+						<![CDATA[B.BrandNameForeign AS BrandNameChinese]]>
+					</isEqual>
+					<isEqual property="language" compareValue="zh_CN">
+						<![CDATA[B.BrandNameChinese]]>
+					</isEqual>
+				</isNotEmpty>
+				<isEmpty property="language">
+					<![CDATA[B.BrandNameChinese]]>
+				</isEmpty>
+		<![CDATA[
+			FROM
+				Privilege.BIN_Role A
+				JOIN Basis.BIN_BrandInfo B
+				ON(A.BIN_BrandInfoID = B.BIN_BrandInfoID
+				AND B.ValidFlag = '1')
+			WHERE
+				A.ValidFlag = '1'
+			]]>
+				<isNotEmpty property="BIN_BrandInfoID" prepend="AND">
+					<![CDATA[A.BIN_BrandInfoID = #BIN_BrandInfoID#]]>
+				</isNotEmpty>
+				<isNotEmpty property="RoleName" prepend="AND">
+					<![CDATA[A.RoleName LIKE '%' + #RoleName# + '%']]>
+				</isNotEmpty>
+				<isNotEmpty property="RoleKind" prepend="AND">
+					<![CDATA[A.RoleKind = #RoleKind#]]>
+				</isNotEmpty>
+			</dynamic>
+	</sql>
+	
+	<!--查询角色LIST-->
+	<select id="getRoleList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+		<include refid="BINOLCMINC99.pageheader" />
+		<include refid="BINOLPLRLA05.getRoleListSQL" />
+		<include refid="BINOLCMINC99.pagefooter" />
+	</select>
+	
+	<!--查询角色总数-->
+	<select id="getRoleCount" parameterClass="java.util.HashMap" resultClass="java.lang.Integer">
+		<![CDATA[
+			SELECT	COUNT(SORT_T1.BIN_RoleID) AS count FROM (
+		]]>	
+		<include refid="BINOLPLRLA05.getRoleListSQL" />
+		<![CDATA[	
+			) SORT_T1
+		]]>	
+	</select>
+	
+	<!--查询员工LIST-->
+	<select id="getEmployeeList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+		<include refid="BINOLCMINC99.pageheader" />
+		<include refid="BINOLPLRLA05.getEmployeeListSQL" />
+		<include refid="BINOLCMINC99.pagefooter" />
+	</select>
+	
+	<!--查询员工总数-->
+	<select id="getEmployeeCount" resultClass="java.lang.Integer" parameterClass="java.util.HashMap">
+		<![CDATA[
+			SELECT	COUNT(SORT_T1.BIN_EmployeeID) AS count FROM (
+		]]>	
+		<include refid="BINOLPLRLA05.getEmployeeListSQL" />
+		<![CDATA[	
+			) SORT_T1
+		]]>	
+	</select>
+	
+	<!--根据员工ID取得其所对应的角色信息-->
+	<select id="getRolesByEmployee" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+		<![CDATA[
+			SELECT
+				C.BIN_RoleID,
+				C.RoleName,
+				C.RoleKind,
+				B.StartDate,
+				B.ExpireDate,
+				'1' AS PrivilegeFlag
+			FROM
+				Basis.BIN_Employee A
+				JOIN Privilege.BIN_PositionCategoryRole B
+				ON(A.BIN_PositionCategoryID = B.BIN_PositionCategoryID
+				AND B.ValidFlag = '1')
+				JOIN Privilege.BIN_Role C
+				ON(B.BIN_RoleID = C.BIN_RoleID
+				AND C.ValidFlag = '1')
+				WHERE
+				A.BIN_EmployeeID = #BIN_EmployeeID#
+			UNION ALL
+			SELECT
+				F.BIN_RoleID,
+				F.RoleName,
+				F.RoleKind,
+				E.StartDate,
+				E.ExpireDate,
+				'1' AS PrivilegeFlag
+			FROM
+				Basis.BIN_Employee D
+				JOIN Privilege.BIN_OrganizationRole E
+				ON(D.BIN_OrganizationID = E.BIN_OrganizationID
+				AND E.ValidFlag = '1')
+				JOIN Privilege.BIN_Role F
+				ON(E.BIN_RoleID = F.BIN_RoleID
+				AND F.ValidFlag = '1')
+			WHERE
+				D.BIN_EmployeeID = #BIN_EmployeeID#
+			UNION ALL
+			SELECT
+				J.BIN_RoleID,
+				J.RoleName,
+				J.RoleKind,
+				I.StartDate,
+				I.ExpireDate,
+				I.PrivilegeFlag
+			FROM
+				Basis.BIN_Employee G
+				JOIN Privilege.BIN_User H
+				ON(G.BIN_EmployeeID = H.BIN_EmployeeID
+				AND H.ValidFlag = '1')
+				JOIN Privilege.BIN_UserRole I
+				ON(H.BIN_UserID = I.BIN_UserID
+				AND I.ValidFlag = '1')
+				JOIN Privilege.BIN_Role J
+				ON(I.BIN_RoleID = J.BIN_RoleID
+				AND J.ValidFlag = '1')
+			WHERE
+				G.BIN_EmployeeID = #BIN_EmployeeID#
+		]]>
+	</select>
+	
+	<!--查询某个岗位类型角色对应的员工SQL-->
+	<sql id="getEmpByPostCatRoleSQL">
+		<![CDATA[
+			SELECT
+				DISTINCT
+				A.BIN_EmployeeID,
+				A.EmployeeCode,
+				D.DepartCode,
+		]]>
+			<dynamic>
+				<isNotEmpty property="language">
+					<isEqual property="language" compareValue="en_US">
+						<![CDATA[
+							A.EmployeeNameForeign AS EmployeeName,
+							C.CategoryNameForeign AS CategoryName,
+							D.NameForeign AS DepartName
+						]]>
+					</isEqual>
+					<isEqual property="language" compareValue="zh_CN">
+						<![CDATA[
+							A.EmployeeName,
+							C.CategoryName,
+							D.DepartName
+						]]>
+					</isEqual>
+				</isNotEmpty>
+				<isEmpty property="language">
+					<![CDATA[
+						A.EmployeeName,
+						C.CategoryName,
+						D.DepartName
+					]]>
+				</isEmpty>
+		<![CDATA[
+			FROM
+				Basis.BIN_Employee A
+				JOIN Privilege.BIN_PositionCategoryRole B
+				ON(A.BIN_PositionCategoryID = B.BIN_PositionCategoryID
+				AND A.ValidFlag = '1')
+				JOIN Privilege.BIN_PositionCategory C
+				ON(A.BIN_PositionCategoryID = C.BIN_PositionCategoryID
+				AND C.ValidFlag = '1')
+				LEFT JOIN Basis.BIN_Organization D
+				ON(A.BIN_OrganizationID = D.BIN_OrganizationID
+				AND D.ValidFlag = '1')
+			WHERE
+				A.BIN_OrganizationInfoID = #BIN_OrganizationInfoID#
+				AND B.ValidFlag = '1'
+				AND B.BIN_RoleID = #BIN_RoleID#
+		]]>
+				<isNotEmpty property="BIN_BrandInfoID" prepend="AND">
+					<![CDATA[A.BIN_BrandInfoID = #BIN_BrandInfoID#]]>
+				</isNotEmpty>
+				<isNotEmpty property="inputting" prepend="AND">
+					<![CDATA[(
+						A.EmployeeName Like '%' + #inputting# + '%'
+						OR A.EmployeeCode Like '%' + #inputting# + '%'
+						OR C.CategoryName Like '%' + #inputting# + '%'
+						OR D.DepartName Like '%' + #inputting# + '%'
+					)]]>
+				</isNotEmpty>
+			</dynamic>
+	</sql>
+	
+	<!--查询某个岗位类型角色对应的员工LIST-->
+	<select id="getEmpByPostCatRoleList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+		<include refid="BINOLCMINC99.pageheader" />
+		<include refid="BINOLPLRLA05.getEmpByPostCatRoleSQL" />
+		<include refid="BINOLCMINC99.pagefooter" />
+	</select>
+	
+	<!--查询某个岗位类型角色对应的员工总数-->
+	<select id="getEmpByPostCatRoleCount" parameterClass="java.util.HashMap" resultClass="java.lang.Integer">
+		<![CDATA[
+			SELECT	COUNT(SORT_T1.BIN_EmployeeID) AS count FROM (
+		]]>	
+		<include refid="BINOLPLRLA05.getEmpByPostCatRoleSQL" />
+		<![CDATA[	
+			) SORT_T1
+		]]>	
+	</select>
+	
+	<!--查询某个部门角色对应的员工SQL-->
+	<sql id="getEmpByOrgRoleSQL">
+		<![CDATA[
+			SELECT
+				DISTINCT
+				A.BIN_EmployeeID,
+				A.EmployeeCode,
+				D.DepartCode,
+		]]>
+			<dynamic>
+				<isNotEmpty property="language">
+					<isEqual property="language" compareValue="en_US">
+						<![CDATA[
+							A.EmployeeNameForeign AS EmployeeName,
+							C.CategoryNameForeign AS CategoryName,
+							D.NameForeign AS DepartName
+						]]>
+					</isEqual>
+					<isEqual property="language" compareValue="zh_CN">
+						<![CDATA[
+							A.EmployeeName,
+							C.CategoryName,
+							D.DepartName
+						]]>
+					</isEqual>
+				</isNotEmpty>
+				<isEmpty property="language">
+					<![CDATA[
+						A.EmployeeName,
+						C.CategoryName,
+						D.DepartName
+					]]>
+				</isEmpty>
+		<![CDATA[
+			FROM
+				Basis.BIN_Employee A
+				JOIN Privilege.BIN_OrganizationRole B
+				ON(A.BIN_OrganizationID = B.BIN_OrganizationID
+				AND A.ValidFlag = '1')
+				LEFT JOIN Privilege.BIN_PositionCategory C
+				ON(A.BIN_PositionCategoryID = C.BIN_PositionCategoryID
+				AND C.ValidFlag = '1')
+				LEFT JOIN Basis.BIN_Organization D
+				ON(A.BIN_OrganizationID = D.BIN_OrganizationID
+				AND D.ValidFlag = '1')
+			WHERE
+				A.BIN_OrganizationInfoID = #BIN_OrganizationInfoID#
+				AND B.ValidFlag = '1'
+				AND B.BIN_RoleID = #BIN_RoleID#
+		]]>
+				<isNotEmpty property="BIN_BrandInfoID" prepend="AND">
+					<![CDATA[A.BIN_BrandInfoID = #BIN_BrandInfoID#]]>
+				</isNotEmpty>
+				<isNotEmpty property="inputting" prepend="AND">
+					<![CDATA[(
+						A.EmployeeName Like '%' + #inputting# + '%'
+						OR A.EmployeeCode Like '%' + #inputting# + '%'
+						OR C.CategoryName Like '%' + #inputting# + '%'
+						OR D.DepartName Like '%' + #inputting# + '%'
+					)]]>
+				</isNotEmpty>
+			</dynamic>
+	</sql>
+	
+	<!--查询某个部门角色对应的员工LIST-->
+	<select id="getEmpByOrgRoleList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+		<include refid="BINOLCMINC99.pageheader" />
+		<include refid="BINOLPLRLA05.getEmpByOrgRoleSQL" />
+		<include refid="BINOLCMINC99.pagefooter" />
+	</select>
+	
+	<!--查询某个部门角色对应的员工总数-->
+	<select id="getEmpByOrgRoleCount" parameterClass="java.util.HashMap" resultClass="java.lang.Integer">
+		<![CDATA[
+			SELECT	COUNT(SORT_T1.BIN_EmployeeID) AS count FROM (
+		]]>	
+		<include refid="BINOLPLRLA05.getEmpByOrgRoleSQL" />
+		<![CDATA[	
+			) SORT_T1
+		]]>	
+	</select>
+	
+	<!--查询某个用户角色对应的员工SQL-->
+	<sql id="getEmpByUserRoleSQL">
+		<![CDATA[
+			SELECT
+				DISTINCT
+				A.BIN_EmployeeID,
+				A.EmployeeCode,
+				D.DepartCode,
+		]]>
+			<dynamic>
+				<isNotEmpty property="language">
+					<isEqual property="language" compareValue="en_US">
+						<![CDATA[
+							A.EmployeeNameForeign AS EmployeeName,
+							C.CategoryNameForeign AS CategoryName,
+							D.NameForeign AS DepartName
+						]]>
+					</isEqual>
+					<isEqual property="language" compareValue="zh_CN">
+						<![CDATA[
+							A.EmployeeName,
+							C.CategoryName,
+							D.DepartName
+						]]>
+					</isEqual>
+				</isNotEmpty>
+				<isEmpty property="language">
+					<![CDATA[
+						A.EmployeeName,
+						C.CategoryName,
+						D.DepartName
+					]]>
+				</isEmpty>
+		<![CDATA[
+			FROM
+				Basis.BIN_Employee A
+				JOIN Privilege.BIN_User E
+				ON(A.BIN_EmployeeID = E.BIN_EmployeeID
+				AND E.ValidFlag = '1')
+				JOIN Privilege.BIN_UserRole B
+				ON(E.BIN_UserID = B.BIN_UserID
+				AND A.ValidFlag = '1')
+				LEFT JOIN Privilege.BIN_PositionCategory C
+				ON(A.BIN_PositionCategoryID = C.BIN_PositionCategoryID
+				AND C.ValidFlag = '1')
+				LEFT JOIN Basis.BIN_Organization D
+				ON(A.BIN_OrganizationID = D.BIN_OrganizationID
+				AND D.ValidFlag = '1')
+			WHERE
+				A.BIN_OrganizationInfoID = #BIN_OrganizationInfoID#
+				AND B.ValidFlag = '1'
+				AND B.BIN_RoleID = #BIN_RoleID#
+		]]>
+				<isNotEmpty property="BIN_BrandInfoID" prepend="AND">
+					<![CDATA[A.BIN_BrandInfoID = #BIN_BrandInfoID#]]>
+				</isNotEmpty>
+				<isNotEmpty property="inputting" prepend="AND">
+					<![CDATA[(
+						A.EmployeeName Like '%' + #inputting# + '%'
+						OR A.EmployeeCode Like '%' + #inputting# + '%'
+						OR C.CategoryName Like '%' + #inputting# + '%'
+						OR D.DepartName Like '%' + #inputting# + '%'
+					)]]>
+				</isNotEmpty>
+			</dynamic>
+	</sql>
+	
+	<!--查询某个用户角色对应的员工LIST-->
+	<select id="getEmpByUserRoleList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+		<include refid="BINOLCMINC99.pageheader" />
+		<include refid="BINOLPLRLA05.getEmpByUserRoleSQL" />
+		<include refid="BINOLCMINC99.pagefooter" />
+	</select>
+	
+	<!--查询某个用户角色对应的员工总数-->
+	<select id="getEmpByUserRoleCount" parameterClass="java.util.HashMap" resultClass="java.lang.Integer">
+		<![CDATA[
+			SELECT	COUNT(SORT_T1.BIN_EmployeeID) AS count FROM (
+		]]>	
+		<include refid="BINOLPLRLA05.getEmpByUserRoleSQL" />
+		<![CDATA[	
+			) SORT_T1
+		]]>	
+	</select>
+	
+	<!-- 查询所有的菜单资源 -->
+    <select id="getMenuList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+		<![CDATA[
+			SELECT DISTINCT
+				A.MENU_ID AS menuId,
+				A.MENU_NM AS menuNm,
+				A.PARENT_MENU_ID AS parentMenuId,
+				A.MENU_TYPE AS menuType,
+				A.MENU_SORT_NO
+			FROM 
+				Privilege.BIN_Menu A
+				JOIN Privilege.BIN_RoleResource C ON A.MENU_ID = C.MENU_ID AND C.ValidFlag = '1' AND
+				
+		]]>
+				<iterate property="roleList" open="(" close=")" conjunction="OR">
+					C.BIN_RoleID = #roleList[]#
+				</iterate>
+		<![CDATA[						
+			WHERE			
+				A.ValidFlag = '1'
+			ORDER BY
+				A.MENU_SORT_NO
+		]]>
+    </select>
+	
+	<!-- 查询所有菜单的子菜单数 -->
+	<select id="getChildMenuCount" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">	
+		<![CDATA[ 
+		SELECT 
+			A.MENU_ID AS menuId,
+			COUNT(B.MENU_ID) AS count
+		FROM 
+			Privilege.BIN_Menu A
+			JOIN Privilege.BIN_Menu B ON A.MENU_ID = B.PARENT_MENU_ID AND B.ValidFlag = '1'
+			JOIN Privilege.BIN_RoleResource C ON B.MENU_ID = C.MENU_ID AND C.ValidFlag = '1' AND C.BIN_RoleID = '2'
+		WHERE 
+			A.MENU_ID <> B.MENU_ID AND
+			A.ValidFlag = '1'
+		GROUP BY
+			A.MENU_ID
+		]]>
+	</select>
+</sqlMap>

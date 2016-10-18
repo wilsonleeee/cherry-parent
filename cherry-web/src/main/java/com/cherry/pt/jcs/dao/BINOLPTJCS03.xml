@@ -1,0 +1,381 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sqlMap PUBLIC "-//iBATIS.com//DTD SQL Map 2.0//EN" "http://ibatis.apache.org/dtd/sql-map-2.dtd">
+<sqlMap namespace="BINOLPTJCS03">
+	<sql id="sql1">
+		<dynamic>
+			<isNotEmpty property="sellStartDate">
+				SellStartDate,
+			</isNotEmpty>
+			<isNotEmpty property="sellEndDate">
+				SellEndDate,
+			</isNotEmpty>
+		</dynamic>
+		<include refid="BINOLCMINC99.insertKeySql" />
+	</sql>
+	<sql id="sql2">
+		<dynamic>
+			<isNotEmpty property="sellStartDate">
+				#sellStartDate#,
+			</isNotEmpty>
+			<isNotEmpty property="sellEndDate">
+				#sellEndDate#,
+			</isNotEmpty>
+		</dynamic>
+		<include refid="BINOLCMINC99.insertValueSql" />
+	</sql>
+	<!-- 取得产品ID  -->
+    <select id="getProductId" parameterClass="java.util.HashMap" resultClass="java.lang.Integer">
+    	<![CDATA[
+			SELECT
+				BIN_ProductID
+			FROM 
+				Basis.BIN_Product
+			WHERE
+			 	BIN_BrandInfoID = #brandInfoId#
+				AND	UnitCode = #unitCode#
+		]]>										
+    </select>
+	<!-- 取得促销产品ID  -->
+    <select id="getPromotionId" parameterClass="java.util.HashMap" resultClass="java.lang.Integer">
+    	<![CDATA[
+			SELECT
+				BIN_PromotionProductID
+			FROM 
+				Basis.BIN_PromotionProduct
+			WHERE
+			 	BIN_BrandInfoID = #brandInfoId#
+				AND	UnitCode = #unitCode#
+		]]>
+    </select>
+	<!-- 取得分类List -->
+	<select id="getCategoryList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+		<![CDATA[
+			SELECT
+				BIN_PrtCatPropertyID AS propId,
+				TeminalFlag AS teminalFlag
+		]]>
+		<dynamic>
+		<isNotEmpty property="language">
+			<isEqual property="language" compareValue="en_US">
+			,PropertyNameForeign AS propName
+			</isEqual>
+			<isEqual property="language" compareValue="zh_CN">	
+			,PropertyNameChinese AS propName
+			</isEqual>								
+		</isNotEmpty>
+		<isEmpty property="language">
+			,PropertyNameChinese AS propName
+		</isEmpty>
+		</dynamic>
+		<![CDATA[
+			FROM
+				Basis.BIN_PrtCatProperty
+			WHERE
+				BIN_OrganizationInfoID = #organizationInfoId#
+				AND BIN_BrandInfoID = #brandInfoId#	
+				AND ValidFlag = '1'
+			ORDER BY
+				ViewSeq
+		]]>
+    </select>
+    <!-- 取得分类选项值 -->
+	<select id="getCateValList2" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+		<![CDATA[
+			SELECT
+				A.BIN_PrtCatPropValueID AS propValId,
+				B.BIN_PrtCatPropertyID AS propId
+		]]>
+		<dynamic>
+		<isNotEmpty property="language">
+			<isEqual property="language" compareValue="en_US">
+			,A.PropValueChinese AS propValName
+			</isEqual>
+			<isEqual property="language" compareValue="zh_CN">	
+			,A.PropValueChinese AS propValName
+			</isEqual>								
+		</isNotEmpty>
+		<isEmpty property="language">
+			,A.PropValueChinese AS propValName
+		</isEmpty>
+		</dynamic>
+		<![CDATA[
+			FROM
+				Basis.BIN_PrtCatPropValue A
+				JOIN Basis.BIN_PrtCatProperty B
+				ON(B.BIN_PrtCatPropertyID = A.BIN_PrtCatPropertyID
+					AND B.ValidFlag = '1'
+					AND A.ValidFlag ='1')
+			WHERE
+				A.BIN_PrtCatPropValueID IN
+		]]>	
+		<iterate conjunction="," open="(" close=")" property="propValId">  
+        	#propValId[]#
+    	</iterate>
+    </select>
+	<!-- 取得分类选项值List -->
+	<select id="getCateValList" parameterClass="java.lang.Integer" resultClass="java.util.HashMap">
+		<![CDATA[
+			SELECT
+				BIN_PrtCatPropValueID AS propValId,
+				PropValueChinese AS propValueCN,
+				PropValueForeign AS propValueEN
+			FROM
+				Basis.BIN_PrtCatPropValue
+			WHERE
+				BIN_PrtCatPropertyID = #propId#
+				AND ValidFlag ='1'
+			ORDER BY
+				PropValue	
+		]]>
+    </select>
+	<!-- 插入产品表  -->
+	<insert id="insertProduct" parameterClass="java.util.HashMap">
+		<selectKey resultClass="java.lang.Integer" type="post" keyProperty="BIN_ProductID" >
+			<![CDATA[
+			INSERT INTO Basis.BIN_Product(	
+				BIN_OrganizationInfoID,
+				BIN_BrandInfoID,
+				CategorySAP,
+				UnitCode,
+				NameTotal,
+				NameShort,
+				NameAlias,
+				NameForeign,
+				NameShortForeign,
+				StyleCode,
+				OperationStyle,
+				ModuleCode,
+				SaleUnit,
+				DiscontinueCounter,
+				DiscontinueReseller,
+				StandardCost,
+				OrderPrice,
+				LackFlag,
+				IsBOMCompatible,
+				IsReplenish,
+				Status,
+				Mode,
+				StarProduct,
+				ShelfLife,
+				RecommendedNumDay,
+				IsExchanged,
+				Spec,
+				MinSalePrice,
+				MaxSalePrice,			
+				SaleStyle,			
+				ExchangeRelation,
+				IsStock,
+				ItemType,
+				OriginalBrand,	
+				Version,
+				Color,
+				Profit,	
+				Grade,
+				SecQty,
+				DisplayQty,	
+			]]>	
+			<include refid="BINOLPTJCS03.sql1" />									
+			<![CDATA[								
+			)VALUES	(
+				#organizationInfoId#,	
+				#brandInfoId#,
+				#categorySAP#,
+				#unitCode#,
+				#nameTotal#,
+				#nameShort#,
+				#nameAlias#,	
+				#nameForeign#,	
+				#nameShortForeign#,	
+				#styleCode#,	
+				#operationStyle#,	
+				#moduleCode#,	
+				#saleUnit#,	
+				#discontCounter#,	
+				#discontReseller#,	
+				ISNULL(#standardCost#,0),
+				ISNULL(#orderPrice#,0),
+				#lackFlag#,	
+				#isBOM#,	
+				#isReplenish#,	
+				#status#,	
+				#mode#,
+				#starProduct#,	
+				#shelfLife#,	
+				#recNumDay#,
+				#isExchanged#,
+				#spec#,
+				#minSalePrice#,
+				#maxSalePrice#,
+				#saleStyle#,			
+				#exchangeRelation#,
+				#isStock#,
+				#itemType#,
+				#originalBrand#,
+				#tVersion#+1,
+				#color#,
+				ISNULL(#profit#,0),
+				#grade#,
+				#secQty#,
+				#displayQty#,
+			]]>
+			<include refid="BINOLPTJCS03.sql2" />	
+			<![CDATA[ ) 
+				select SCOPE_IDENTITY() as value
+			]]> 
+	    </selectKey>
+	</insert> 
+	<!-- 插入产品厂商表  -->
+	<insert id="insertProductVendor" parameterClass="java.util.HashMap">
+		<selectKey resultClass="java.lang.Integer" type="post" keyProperty="BIN_ProductVendorID" >
+	        <![CDATA[ 
+			INSERT INTO Basis.BIN_ProductVendor(	
+				BIN_ProductID,
+				BarCode,
+			]]>
+		    <include refid="BINOLCMINC99.insertKeySql" />	
+			<![CDATA[			
+	        )VALUES(
+				#productId#,
+				#barCode#,							
+	       	]]>
+		   	<include refid="BINOLCMINC99.insertValueSql" />
+			<![CDATA[ )
+				select SCOPE_IDENTITY() as value	
+			]]>
+	    </selectKey>
+    </insert>
+	<!-- 插入产品分类对应表  -->
+	<insert id="insertPrtCategory" parameterClass="java.util.HashMap">
+        <![CDATA[ 
+		INSERT INTO Basis.BIN_PrtCategory(	
+			BIN_ProductID,
+			BIN_PrtCatPropValueID,
+		]]>	
+	    <include refid="BINOLCMINC99.insertKeySql" />	
+		<![CDATA[			
+        )VALUES(
+			#productId#,
+			#propValId#,							
+       	]]>
+	   	<include refid="BINOLCMINC99.insertValueSql" />
+		<![CDATA[ ) ]]>
+    </insert>
+    <!-- 插入产品价格表  -->
+	<insert id="insertProductPrice" parameterClass="java.util.HashMap">
+        <![CDATA[ 
+		INSERT INTO Basis.BIN_ProductPrice(	
+			BIN_ProductID,
+			BIN_BrandInfoID,
+			SalePrice,
+			MemPrice,
+			StartDate,
+			EndDate,
+			Type,					
+		]]>	
+		<include refid="BINOLCMINC99.insertKeySql" />	
+		<![CDATA[			
+        )VALUES	(
+			#productId#,
+			#brandInfoId#,
+			ISNULL(#salePrice#,0),
+			ISNULL(#memPrice#,0),
+			#priceStartDate#,
+			#priceEndDate#,
+			'2',							
+       	]]>
+	   	<include refid="BINOLCMINC99.insertValueSql" />
+		<![CDATA[ ) ]]>
+    </insert>
+	<!-- 插入产品图片信息表  -->
+	<insert id="insertProductImage" parameterClass="java.util.HashMap">
+        <![CDATA[ 
+		INSERT INTO Basis.BIN_ProductImage(	
+			BIN_ProductID,
+			ImageShowNameChinese,
+			ImageShowNameForeign,
+			ImageFullPath,
+		]]>	
+		<include refid="BINOLCMINC99.insertKeySql" />	
+		<![CDATA[			
+        )VALUES(	
+			#productId#,
+			#imageNameCN#,
+			#imageNameEN#,
+			#path#,
+       	]]>
+	    <include refid="BINOLCMINC99.insertValueSql" />
+		<![CDATA[ ) ]]>
+    </insert>
+	<!-- 大分类属性值ID取得小分类属性List -->
+    <select id="getSubCateList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+    	<![CDATA[
+		SELECT
+			BIN_PrtCatPropValueID AS propValId,
+			PropValueChinese AS propValueCN,
+			PropValueForeign AS propValueEN,
+		]]>
+		<isEqual property="propValId" compareValue="0">
+			1 AS status
+		</isEqual>
+		<isNotEqual property="propValId" compareValue="0">
+			CASE
+				WHEN BindBigClass != #propValId# THEN 0
+				ELSE 1
+			END AS status
+		</isNotEqual>		
+		<![CDATA[
+		FROM
+			Basis.BIN_PrtCatPropValue
+		WHERE
+			BIN_PrtCatPropertyID = #propId#
+			AND ValidFlag = '1'
+		ORDER BY
+			PropValue
+		]]>										
+    </select>
+	<!-- 小分类属性值ID取得大分类属性List -->
+    <select id="getPatCateList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+    	<![CDATA[
+			SELECT
+				A.BIN_PrtCatPropValueID AS propValId,
+				A.PropValueChinese AS propValueCN,
+				A.PropValueForeign AS propValueEN,
+				CASE 
+					WHEN B.BIN_PrtCatPropValueID IS NULL THEN 0
+					ELSE 1
+				END AS status
+			FROM
+				Basis.BIN_PrtCatPropValue A
+				LEFT JOIN Basis.BIN_PrtCatPropValue B
+				ON(B.BindBigClass = A.BIN_PrtCatPropValueID
+					AND B.BIN_PrtCatPropValueID = #propValId#)
+			WHERE
+				A.BIN_PrtCatPropertyID = #propId#
+				AND A.ValidFlag = '1'
+			ORDER BY
+				A.PropValue
+		]]>										
+    </select>
+	<!-- 插入产品BOM表  -->
+	<insert id="insertProductBOM" parameterClass="java.util.HashMap">
+		INSERT INTO Basis.BIN_ProductBOM(	
+			BOM_BIN_ProductVendorID,
+           <isNotEmpty property="subProdouctType">
+               SUB_ProdouctType,
+           </isNotEmpty>
+			SUB_BIN_ProductVendorID,
+			Quantity,
+			Price,
+		<include refid="BINOLCMINC99.insertKeySql" />	
+        )VALUES	(
+			#prtVendorId#,
+           <isNotEmpty property="subProdouctType">
+               #subProdouctType#,
+           </isNotEmpty>
+			#subPrtVendorId#,
+			#bomQuantity#,
+			#bomPrice#,							
+	   	<include refid="BINOLCMINC99.insertValueSql" />
+		<![CDATA[ ) ]]>
+    </insert>
+</sqlMap>

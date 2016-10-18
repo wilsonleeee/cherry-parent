@@ -1,0 +1,216 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sqlMap PUBLIC "-//iBATIS.com//DTD SQL Map 2.0//EN" "http://ibatis.apache.org/dtd/sql-map-2.dtd">
+<sqlMap namespace="BINOLPTJCS06">
+	<!--取得产品详细信息-->
+	<select id="getDetail" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+		<![CDATA[
+		SELECT
+			A.BIN_BrandInfoID AS brandInfoId,
+			A.CategorySAP AS cateSAP,
+			A.UnitCode AS unitCode,
+			A.NameTotal AS nameCN,
+			A.NameShort AS stNameCN,
+			A.NameAlias AS nameAlias,
+			A.NameForeign AS nameEN,
+			A.NameShortForeign AS stNameEN,
+			A.StyleCode AS styleCode,
+			A.OperationStyle AS optStyle,
+			A.SaleUnit AS saleUnit,
+			A.DiscontinueCounter AS disCounter,
+			A.DiscontinueReseller AS disReseller,
+			ISNULL(CONVERT(Decimal(16,2),A.StandardCost),0) AS standardCost,
+			ISNULL(CONVERT(Decimal(16,2),A.OrderPrice),0) AS orderPrice,
+			A.LackFlag AS lackFlag,
+			A.IsBOMCompatible AS isBOM,
+			A.IsReplenish AS isReplenish,
+			A.Status AS status,
+			A.Mode AS mode,
+			A.StarProduct AS starProduct,
+			A.ShelfLife AS shelfLife,
+			A.RecommendedNumDay AS recNumDay,
+			A.SellStartDate AS sellStartDate,
+			A.SellEndDate AS sellEndDate,
+			A.ValidFlag AS validFlag,
+			convert(varchar(30),A.UpdateTime,121) AS prtUpdateTime,
+			A.ModifyCount AS prtModifyCount,
+			A.ModuleCode AS moduleCode,
+			A.IsExchanged AS isExchanged,
+			A.Spec AS spec,
+			ISNULL(CONVERT(Decimal(16,2),A.MinSalePrice),0) AS minSalePrice,
+			ISNULL(CONVERT(Decimal(16,2),A.MaxSalePrice),0) AS maxSalePrice,
+			A.SaleStyle AS saleStyle,
+			CONVERT(Decimal(16,2),A.ExchangeRelation) AS exchangeRelation,
+			A.IsStock AS isStock,
+			A.ItemType AS itemType,
+			A.OriginalBrand AS originalBrand,
+			A.Color AS color,
+			ISNULL(CONVERT(Decimal(16,2),A.Profit),0) AS profit,
+			A.Grade AS grade,
+			CONVERT(Int,A.SecQty) AS secQty,
+			CONVERT(Int,A.DisplayQty) AS displayQty
+		FROM
+			Basis.BIN_Product A
+		WHERE
+			BIN_ProductID = #productId#
+		]]>
+	</select>
+ 	<!-- 取得产品条码List -->
+	<select id="getBarCodeList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+		<![CDATA[
+		SELECT
+			BIN_ProductVendorID AS prtVendorId,
+			BarCode AS barCode,
+			ValidFlag AS validFlag
+		FROM
+			Basis.BIN_ProductVendor
+		WHERE
+			BIN_ProductID = #productId#
+		]]>
+		<isNotEmpty prepend="AND" property="validFlag">
+			ValidFlag = #validFlag#
+		</isNotEmpty>
+		ORDER BY ValidFlag DESC , BIN_ProductVendorID
+	</select>
+	<!-- 获取产品分类List -->
+	<select id="getCateList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+		<![CDATA[
+		SELECT
+			A.BIN_PrtCatPropValueID AS propValId,
+			B.BIN_PrtCatPropertyID AS propId,
+			C.TeminalFlag AS teminalFlag
+		]]>
+		<dynamic>
+		<isNotEmpty property="language">
+			<isEqual property="language" compareValue="en_US">
+			,B.PropValueForeign AS propValName
+			,C.PropertyNameForeign AS propName
+			</isEqual>
+			<isEqual property="language" compareValue="zh_CN">	
+			,B.PropValueChinese AS propValName
+			,C.PropertyNameChinese AS propName
+			</isEqual>								
+		</isNotEmpty>
+		<isEmpty property="language">
+			,B.PropValueChinese AS propValName
+			,C.PropertyNameChinese AS propName
+		</isEmpty>
+		</dynamic>
+		<![CDATA[	
+		FROM
+			Basis.BIN_PrtCategory A
+			JOIN Basis.BIN_PrtCatPropValue B
+			ON(A.BIN_PrtCatPropValueID = B.BIN_PrtCatPropValueID
+				AND B.ValidFlag = '1')
+			JOIN Basis.BIN_PrtCatProperty C
+			ON(B.BIN_PrtCatPropertyID = C.BIN_PrtCatPropertyID
+				AND C.ValidFlag = '1')
+		WHERE
+			A.BIN_ProductID = #productId#
+		ORDER BY
+			C.ViewSeq
+		]]>
+	</select>
+	<!-- 获取产品销售价格List -->
+	<select id="getSellPriceList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+		<![CDATA[
+		SELECT
+			BIN_ProductPriceID AS prtPriceId,
+			ISNULL(CONVERT(Decimal(16,2),SalePrice),0) AS salePrice,
+			ISNULL(CONVERT(Decimal(16,2),MemPrice),0) AS memPrice,
+			StartDate AS startDate,
+			EndDate AS endDate
+		FROM
+			Basis.BIN_ProductPrice
+		WHERE
+			BIN_ProductID = #productId#
+		AND Type = '2'
+		ORDER BY
+			StartDate
+		]]>
+	</select>
+	<!-- 获取产品图片List -->
+	<select id="getImgList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+		<![CDATA[
+		SELECT
+			ImageShowNameChinese AS nameCN,
+			ImageShowNameForeign AS nameEN,
+			ImageFullPath AS path
+		FROM
+			Basis.BIN_ProductImage
+		WHERE
+			BIN_ProductID = #productId#
+		]]>
+	</select>
+	<!-- 获取产品BOM组件List -->
+	<select id="getBOMList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+		<![CDATA[
+		SELECT
+			A.Quantity AS bomQuantity,
+			ISNULL(CONVERT(Decimal(16,2),A.Price),0) AS bomPrice,
+			A.SUB_ProdouctType AS subProdouctType,
+			B.BarCode AS barCode,
+			B.BIN_ProductVendorID AS subPrtVendorId,
+			C.UnitCode AS unitCode,
+			C.NameTotal AS nameCN,
+			C.NameForeign AS nameEN
+		FROM
+			Basis.BIN_ProductBOM A WITH(NOLOCK)
+		JOIN Basis.BIN_ProductVendor B WITH(NOLOCK) ON(A.SUB_BIN_ProductVendorID = B.BIN_ProductVendorID AND A.SUB_ProdouctType = 'N')
+		JOIN Basis.BIN_Product C WITH(NOLOCK) ON(B.BIN_ProductID = C.BIN_ProductID)
+		JOIN Basis.BIN_ProductVendor D WITH(NOLOCK) ON(A.BOM_BIN_ProductVendorID = D.BIN_ProductVendorID AND D.BIN_ProductID = #productId#)
+
+		UNION
+		
+		SELECT
+			A.Quantity AS bomQuantity,
+			ISNULL(CONVERT(Decimal(16,2),A.Price),0) AS bomPrice,
+			A.SUB_ProdouctType AS subProdouctType,
+			B.BarCode AS barCode,
+			B.BIN_PromotionProductVendorID AS subPrtVendorId,
+			C.UnitCode AS unitCode,
+			C.NameTotal AS nameCN,
+			C.NameForeign AS nameEN
+		FROM
+			Basis.BIN_ProductBOM A WITH(NOLOCK)
+		JOIN Basis.BIN_PromotionProductVendor B WITH(NOLOCK) ON(A.SUB_BIN_ProductVendorID = B.BIN_PromotionProductVendorID AND A.SUB_ProdouctType = 'P')
+		JOIN Basis.BIN_PromotionProduct C WITH(NOLOCK) ON(B.BIN_PromotionProductID = C.BIN_PromotionProductID)
+		JOIN Basis.BIN_ProductVendor D WITH(NOLOCK) ON(A.BOM_BIN_ProductVendorID = D.BIN_ProductVendorID AND D.BIN_ProductID = #productId#)
+		]]>
+	</select>
+	<!-- 取得产品编码条码修改履历(resultMap)  -->
+    <resultMap id="BINOLPTJCS06.proMap" class="java.util.HashMap">
+        <result property="list" column="prtVendorId" select="BINOLPTJCS06.getPrtBCList" javaType="java.util.List"/>
+        <result property="prtVendorId" column="prtVendorId"/>
+        <result property="barCode" column="barCode"/>
+        <result property="validFlag" column="validFlag"/>
+    </resultMap>
+    <select id="getPrtBCList" parameterClass="java.lang.Integer" resultClass="java.util.HashMap">
+		<![CDATA[
+		  SELECT 
+		      Pbc.BIN_ProductVendorID AS prtVendorId,
+		      Pbc.OldUnitCode AS oldUnitCode,
+		      Pbc.UnitCode AS unitCode,
+		      Pbc.OldBarCode AS oldBarCode,
+		      Pbc.BarCode AS barCode,
+		      convert(varchar(30),Pbc.UpdateTime,120) AS updateTime
+		  FROM 
+		  	  Basis.BIN_PrtBarCode Pbc
+		  WHERE 
+		  	  Pbc.BIN_ProductVendorID = #prtVendorId#
+		  ORDER BY Pbc.BIN_ProductVendorID,Pbc.BIN_PrtBarCodeID 
+		  ]]>
+    </select>
+    
+    <!-- 取得产品编码条码修改履历 -->
+	<select id="getPrtBCHistoryList" parameterClass="java.util.HashMap" resultMap="BINOLPTJCS06.proMap">
+		SELECT 
+			BIN_ProductVendorID AS prtVendorId,
+			BarCode AS barCode,
+			ValidFlag AS validFlag
+		FROM 
+			Basis.BIN_ProductVendor
+		WHERE 
+			BIN_ProductID = #productId#
+		ORDER BY ValidFlag DESC , BIN_ProductVendorID
+	</select>
+ </sqlMap>

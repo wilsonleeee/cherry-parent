@@ -1,0 +1,161 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE sqlMap PUBLIC "-//iBATIS.com//DTD SQL Map 2.0//EN" "http://ibatis.apache.org/dtd/sql-map-2.dtd">
+<sqlMap namespace="BINOLSTIOS02">
+	
+	<sql id="insertToProductShiftKey">
+		<dynamic>
+			<isNotEmpty property="totalAmount">
+				TotalAmount,
+			</isNotEmpty>
+		</dynamic>
+		<include refid="BINOLCMINC99.insertKeySql" />
+	</sql>
+	
+	<sql id="insertToProductShiftValue">
+		<dynamic>
+			<isNotEmpty property="totalAmount">
+				#totalAmount#,
+			</isNotEmpty>
+		</dynamic>
+		<include refid="BINOLCMINC99.insertValueSql" />
+	</sql>
+	
+	<!--往产品移库主表中插入数据并返回记录ID-->
+	<insert id="insertToProductShift" parameterClass="java.util.HashMap">
+		<selectKey resultClass="java.lang.Integer" type="post" keyProperty="BIN_ProductShiftID" >
+			<![CDATA[ 
+			INSERT INTO
+				[Inventory].[BIN_ProductShift]
+				(
+					BIN_OrganizationInfoID,
+					BIN_BrandInfoID,
+					BusinessType,
+					BillNo,
+					BIN_OrganizationID,
+					TotalQuantity,
+					BIN_EmployeeID,
+					VerifiedFlag,
+					Comments,
+					OperateDate,
+			]]> 
+					<include refid="BINOLSTIOS02.insertToProductShiftKey" />
+			<![CDATA[
+				)
+			VALUES
+				(
+					#organizationInfoId#,
+					#brandInfoId#,
+					#businessType#,
+					#billNo#,
+					#organizationId#,
+					#totalQuantity#,
+					#employeeId#,
+					#verifiedFlag#,
+					#comments#,
+					#operateDate#,
+			]]>
+					<include refid="BINOLSTIOS02.insertToProductShiftValue" />
+			<![CDATA[
+				)
+			  	select SCOPE_IDENTITY() as value
+			]]> 
+	   </selectKey> 
+	</insert>
+	
+	<!--往移库明细表中插入数据-->
+	<insert id="insertToProductShiftDetail" parameterClass="java.util.HashMap">
+		INSERT INTO
+			[Inventory].[BIN_ProductShiftDetail]
+			(
+				BIN_ProductShiftID,
+				BIN_ProductVendorID,
+				DetailNo,
+				Quantity,
+				<dynamic>
+					<isNotEmpty property="price">
+						Price,
+					</isNotEmpty>
+				</dynamic>
+				FromDepotInfoID,
+				FromLogicInventoryInfoID,
+				FromStorageLocationInfoID,
+				ToDepotInfoID,
+				ToLogicInventoryInfoID,
+				ToStorageLocationInfoID,
+				Comments,
+				<include refid="BINOLCMINC99.insertKeySql" />
+			)
+		VALUES
+			(
+				#productShiftId#,
+				#productVendorId#,
+				#detailNo#,
+				#quantity#,
+				<dynamic>
+					<isNotEmpty property="price">
+						#price#,
+					</isNotEmpty>
+				</dynamic>
+				#fromDepotInfoId#,
+				#fromLogicInventoryInfoId#,
+				#fromStorageLocationInfoId#,
+				#toDepotInfoId#,
+				#toLogicInventoryInfoId#,
+				#toStorageLocationInfoId#,
+				#comments#,
+				<include refid="BINOLCMINC99.insertValueSql" />
+			)
+	</insert>
+	
+	<!--根据部门Code获取部门ID-->
+	<select id="getOrganizationId" parameterClass="java.util.HashMap" resultClass="java.lang.Integer">
+		SELECT
+			BIN_OrganizationID AS organizationId
+		FROM
+			Basis.BIN_Organization
+		WHERE
+			BIN_OrganizationInfoID = #organizationInfoId#
+			AND BIN_BrandInfoID = #brandInfoId#
+			AND DepartCode = #departCode#
+	</select>
+	
+	<!--根据产品条码以及厂商编码获取产品厂商ID以及对应的库存-->
+	<select id="getPrtVenIdAndStock" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+		SELECT
+			A.BIN_ProductVendorID AS productVendorId,
+			A.Quantity AS quantity
+		FROM
+			Inventory.BIN_ProductStock A
+			JOIN Basis.BIN_ProductVendor B
+			ON(A.BIN_ProductVendorID = B.BIN_ProductVendorID
+			AND B.ValidFlag = 1)
+			JOIN Basis.BIN_Product C
+			ON(B.BIN_ProductID = C.BIN_ProductID
+			AND C.ValidFlag = 1)
+		WHERE
+			A.ValidFlag = 1
+			AND B.BarCode = #barCode#
+			AND C.UnitCode = #unitCode#
+			AND C.BIN_OrganizationInfoID = #organizationInfoId#
+			AND C.BIN_BrandInfoID = #brandInfoId#
+			AND A.BIN_InventoryInfoID = #inventoryInfoId#
+			AND A.BIN_LogicInventoryInfoID = #logicInventoryInfoId#
+	</select>
+	
+	<!---->
+	<select id="getPrtVenId" parameterClass="java.util.HashMap" resultClass="java.lang.Integer">
+		SELECT 
+			A.BIN_ProductVendorID AS productVendorId
+		FROM
+			Basis.BIN_ProductVendor A
+			JOIN Basis.BIN_Product B
+			ON(A.BIN_ProductID = B.BIN_ProductID
+			AND B.ValidFlag = 1)
+		WHERE
+			A.ValidFlag = 1
+			AND A.BarCode = #barCode#
+			AND B.UnitCode = #unitCode#
+			AND B.BIN_OrganizationInfoID = #organizationInfoId#
+			AND B.BIN_BrandInfoID = #brandInfoId#
+</select>
+</sqlMap>

@@ -1,0 +1,1415 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sqlMap PUBLIC "-//iBATIS.com//DTD SQL Map 2.0//EN" "http://ibatis.apache.org/dtd/sql-map-2.dtd">
+<sqlMap namespace="BINBEDRCOM01">
+	<sql id="pageheader">
+	 	<![CDATA[
+			SELECT * FROM(SELECT ROW_NUMBER() OVER(ORDER BY $SORT_ID$) AS RowNumber, * FROM ( 
+		]]>
+	</sql>
+	<sql id="pagefooter">
+	 	<![CDATA[	
+			)SORT_T1)SORT_T2 WHERE RowNumber BETWEEN  #START# AND #END#
+		]]>
+	</sql>
+	
+	<sql id="insertKeySql">
+	<![CDATA[
+		CreateTime,
+		UpdateTime,
+		CreatedBy,
+		CreatePGM,
+		UpdatedBy,
+		UpdatePGM,
+		ValidFlag,
+		ModifyCount
+	]]>
+	</sql>			
+	
+	<sql id="insertValueSql">
+		<isNotEmpty property="createTime">
+			#createTime#,
+		</isNotEmpty>
+		<isEmpty property="createTime">
+			GETDATE(),
+		</isEmpty>
+		<isNotEmpty property="createTime">
+			#createTime#,
+		</isNotEmpty>
+		<isEmpty property="createTime">
+			GETDATE(),
+		</isEmpty>
+	<![CDATA[
+		#createdBy#,
+		#createPGM#,
+		#updatedBy#,
+		#updatePGM#,
+		'1',
+		'0'
+	]]>
+	</sql>		
+	
+	<sql id="updateSql">
+		<isNotEmpty property="updateTime">
+			UpdateTime=#updateTime#,
+		</isNotEmpty>
+		<isEmpty property="updateTime">
+			UpdateTime=GETDATE(),
+		</isEmpty>
+	<![CDATA[
+		UpdatedBy=#updatedBy#,
+		UpdatePGM=#updatePGM#,
+		ModifyCount=ModifyCount+1
+	]]>
+	</sql>
+	
+	<!-- 插入规则执行履历表  -->
+	<insert id="addRuleExecRecord" parameterClass="com.cherry.dr.cmbussiness.dto.core.CampBaseDTO">
+		<![CDATA[
+		INSERT Members.BIN_RuleExecRecord(
+			BIN_OrganizationInfoID,
+			BIN_BrandInfoID,
+			BIN_MemberInfoID,
+			MemCode,
+			BillID,
+			TradeType,
+			RecordKbn,
+			OldValue,
+			NewValue,
+			TicketDate,
+			CalcDate,
+			BIN_RuleIDs,
+			ReCalcCount,
+			Reason,
+			ChangeType,
+			SubCampaignCodes,
+		]]>	
+		<isNotEmpty property="clubIdStr">
+				BIN_MemberClubID,
+		</isNotEmpty>
+			<include refid="BINBEDRCOM01.insertKeySql" />									
+		<![CDATA[	
+		)VALUES(
+			#organizationInfoId#,
+			#brandInfoId#,
+			#memberInfoId#,
+			#memCode#,
+			#billId#,
+			#tradeType#,
+			#recordKbn#,
+			#oldValue#,
+			#newValue#,
+			#ticketDate#,
+			#calcDate#,
+			#ruleIds#,
+			#reCalcCount#,
+			#reason#,
+			#changeType#,
+			#subCampCodes#,
+]]>
+		<isNotEmpty property="clubIdStr">
+				#memberClubId#,
+		</isNotEmpty>
+		<include refid="BINBEDRCOM01.insertValueSql" />
+		<![CDATA[
+		)
+		]]>
+	</insert>
+	
+	<!--更新规则执行履历记录 -->
+	<update id="updRuleExecRecord" parameterClass="com.cherry.dr.cmbussiness.dto.core.CampBaseDTO">
+		<![CDATA[
+			UPDATE 		
+				Members.BIN_RuleExecRecord
+			SET		
+				MemCode = #memCode#,
+				OldValue = #oldValue#,
+				NewValue = #newValue#,
+				TicketDate = #ticketDate#,
+				CalcDate = #calcDate#,
+				BIN_RuleIDs = #ruleIds#,
+				Reason = #reason#,
+				ChangeType = #changeType#,
+				SubCampaignCodes = #subCampCodes#,
+				ValidFlag = '1',
+		]]>
+			<include refid="BINBEDRCOM01.updateSql" />									
+		<![CDATA[			
+			WHERE					
+				BIN_MemberInfoID = #memberInfoId# AND
+				BIN_BrandInfoID = #brandInfoId# AND
+				BIN_OrganizationInfoID = #organizationInfoId# AND
+				BillID = #billId# AND
+				TradeType = #tradeType# AND
+				RecordKbn = #recordKbn#
+		]]>
+		<isNotEmpty property="clubIdStr">
+			AND BIN_MemberClubID = #memberClubId#
+		</isNotEmpty>
+    </update>
+	
+	<!--清除规则执行履历记录 -->
+	<update id="removeRuleExecRecord" parameterClass="com.cherry.dr.cmbussiness.dto.core.CampBaseDTO">
+		<![CDATA[
+			UPDATE 		
+				Members.BIN_RuleExecRecord
+			SET		
+				ReCalcCount = ReCalcCount+1,
+				ValidFlag = '0',
+		]]>
+			<include refid="BINBEDRCOM01.updateSql" />									
+		<![CDATA[			
+			WHERE					
+				BIN_MemberInfoID = #memberInfoId# AND
+				BIN_BrandInfoID = #brandInfoId# AND
+				BIN_OrganizationInfoID = #organizationInfoId# AND
+				BillID = #billId# AND
+				TradeType = #tradeType# AND
+				RecordKbn = #recordKbn#
+		]]>
+    </update>
+	
+	<!--删除清零记录 -->
+	<update id="removeZCRecord" parameterClass="com.cherry.dr.cmbussiness.dto.core.CampBaseDTO">
+		<![CDATA[
+			UPDATE 		
+				Members.BIN_RuleExecRecord
+			SET		
+				ValidFlag = '0'
+			WHERE					
+				BIN_MemberInfoID = #memberInfoId# AND
+				BIN_BrandInfoID = #brandInfoId# AND
+				BIN_OrganizationInfoID = #organizationInfoId# AND
+				BillID = #billId# AND
+				TradeType = #tradeType# AND
+				RecordKbn = #recordKbn#
+		]]>
+    </update>
+	
+	<!--更新会员信息表（会员等级） -->
+	<update id="updMemberInfo" parameterClass="com.cherry.dr.cmbussiness.dto.core.CampBaseDTO">
+		<![CDATA[
+			UPDATE 		
+				Members.BIN_MemberInfo
+			SET		
+				MemberLevel = #curLevelId#,
+				UpgradeFromLevel = #prevLevel#,
+				LevelAdjustDay = CONVERT(DATETIME, #ticketDate#, 121),
+				LevelStatus = #levelStatus#,
+				LevelChangeType = #changeType#,
+				FirstBillID = #billId#,
+		]]>
+			<isNotEmpty property="levelStartDate">
+					<![CDATA[LevelStartDate = CONVERT(DATETIME, #levelStartDate#, 121),]]>
+			</isNotEmpty>
+			<isEmpty property="levelStartDate">
+					<![CDATA[LevelStartDate = null,]]>
+			</isEmpty>
+			<isNotEmpty property="levelEndDate">
+					<![CDATA[LevelEndDate = CONVERT(DATETIME, #levelEndDate#, 121),]]>
+			</isNotEmpty>
+			<isEmpty property="levelEndDate">
+					<![CDATA[levelEndDate = null,]]>
+			</isEmpty>
+			<include refid="BINBEDRCOM01.updateSql" />									
+		<![CDATA[
+			WHERE					
+				BIN_MemberInfoID = #memberInfoId#
+		]]>
+    </update>
+    
+    <!--更新会员信息表（会员俱乐部等级） -->
+	<update id="updClubMemberInfo" parameterClass="com.cherry.dr.cmbussiness.dto.core.CampBaseDTO">
+		<![CDATA[
+			UPDATE 		
+				Members.BIN_MemClubLevel
+			SET		
+				MemberLevel = #curLevelId#,
+				UpgradeFromLevel = #prevLevel#,
+				LevelAdjustDay = CONVERT(DATETIME, #ticketDate#, 121),
+				LevelChangeType = #changeType#,
+				FirstBillID = #billId#,
+		]]>
+			<isNotEmpty property="levelStatus">
+					<![CDATA[LevelStatus = #levelStatus#,]]>
+			</isNotEmpty>
+			<isNotEmpty property="levelStartDate">
+					<![CDATA[LevelStartDate = CONVERT(DATETIME, #levelStartDate#, 121),]]>
+			</isNotEmpty>
+			<isEmpty property="levelStartDate">
+					<![CDATA[LevelStartDate = null,]]>
+			</isEmpty>
+			<isNotEmpty property="levelEndDate">
+					<![CDATA[LevelEndDate = CONVERT(DATETIME, #levelEndDate#, 121),]]>
+			</isNotEmpty>
+			<isEmpty property="levelEndDate">
+					<![CDATA[levelEndDate = null,]]>
+			</isEmpty>
+			<include refid="BINBEDRCOM01.updateSql" />									
+		<![CDATA[
+			WHERE					
+				BIN_ClubLevelID = #memClubLeveId#
+		]]>
+    </update>
+	
+
+	<!-- 通过会员卡号取得会员ID -->	
+	<select id="getMemberInfoId" parameterClass="java.util.HashMap" resultClass="java.lang.Integer">
+		<![CDATA[
+			SELECT
+				A.BIN_MemberInfoID
+			FROM
+				Members.BIN_MemCardInfo A,
+				Members.BIN_MemberInfo B
+			WHERE
+				A.MemCode = #memberCode# AND
+				A.ValidFlag = '1' AND
+				A.BIN_MemberInfoID = B.BIN_MemberInfoID
+		]]>	
+    </select>
+	
+	<!-- 取得会员卡号 -->
+	<select id="getMemCard" parameterClass="java.util.HashMap" resultClass="java.lang.String">
+		<![CDATA[
+			SELECT TOP 1
+				MemCode
+			FROM
+				Members.BIN_MemCardInfo
+			WHERE
+				BIN_MemberInfoID = #memberInfoId# AND
+				ValidFlag = '1'
+			ORDER BY
+				CardValidFlag DESC,
+				CardCount DESC
+		]]>	
+    </select>
+	
+	<!-- 根据单据号取得规则执行信息(单据产生时间) -->
+	<select id="getTicketDate" parameterClass="java.util.HashMap" resultClass="java.lang.String">
+		<![CDATA[
+			SELECT
+				DISTINCT
+				convert(varchar, TicketDate, 121) AS TicketDate
+			FROM
+				Members.BIN_RuleExecRecord
+			WHERE
+				BIN_MemberInfoID = #memberInfoId# AND
+				BillID = #billId# AND
+				ValidFlag = '1'
+		]]>	
+    </select>
+	
+	<!-- 取得规则执行记录数 -->
+	<select id="getRuleExecCount" parameterClass="java.util.HashMap" resultClass="java.lang.Integer">
+		<![CDATA[
+			SELECT
+				COUNT(BIN_MemberInfoID)
+			FROM
+				Members.BIN_RuleExecRecord
+			WHERE
+				BIN_MemberInfoID = #memberInfoId# AND
+				BIN_BrandInfoID = #brandInfoID# AND
+				BIN_OrganizationInfoID = #organizationInfoID# AND
+		]]>
+			<isNotEmpty property="memberClubId">
+				BIN_MemberClubID = #memberClubId# AND
+			</isNotEmpty>
+		<![CDATA[
+				TicketDate >= convert(datetime, #saleTime#, 121) AND
+				TradeType <> 'MB' AND
+				ValidFlag = '1'
+		]]>	
+    </select>
+    
+    <!-- 取得规则执行记录数(调整等级用) -->
+	<select id="getRuleByKbnCount" parameterClass="java.util.HashMap" resultClass="java.lang.Integer">
+		<![CDATA[
+			SELECT
+				COUNT(BIN_MemberInfoID)
+			FROM
+				Members.BIN_RuleExecRecord
+			WHERE
+				BIN_MemberInfoID = #memberInfoId# AND
+				BIN_BrandInfoID = #brandInfoID# AND
+				BIN_OrganizationInfoID = #organizationInfoID# AND
+				TicketDate >= convert(datetime, #saleTime#, 121) AND
+				(RecordKbn = 0 OR RecordKbn = 1) AND
+				ValidFlag = '1'
+		]]>	
+    </select>
+	
+	<!-- 取得重算信息记录数 -->
+	<select id="getReCalcInfoCount" parameterClass="java.util.HashMap" resultClass="java.lang.Integer">
+		<![CDATA[
+			SELECT
+				COUNT(BIN_MemberInfoID)
+			FROM
+				Members.BIN_ReCalcInfo
+			WHERE
+				BIN_MemberInfoID = #memberInfoId# AND
+				BIN_BrandInfoID = #brandInfoID# AND
+				BIN_OrganizationInfoID = #organizationInfoID# AND
+				ReCalcType = #reCalcType# AND
+				ValidFlag = '1'
+		]]>	
+    </select>
+    
+    <!-- 取得重算信息记录数 -->
+	<select id="getCmReCalcCount" parameterClass="java.util.HashMap" resultClass="java.lang.Integer">
+		<![CDATA[
+			SELECT
+				COUNT(BIN_MemberInfoID)
+			FROM
+				Members.BIN_ReCalcInfo
+			WHERE
+				BIN_MemberInfoID = #memberInfoId# AND
+				BIN_BrandInfoID = #brandInfoID# AND
+				BIN_OrganizationInfoID = #organizationInfoID# AND
+				ReCalcType = #reCalcType# AND
+				ReCalcDate = #reCalcDate# AND
+				ValidFlag = '1'
+		]]>	
+		<isNotEmpty property="memberClubId">
+			 AND BIN_MemberClubID = #memberClubId#
+	</isNotEmpty>
+    </select>
+	
+	<!-- 查询重算日期信息 -->
+	<select id="getReCalcDateInfo" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+		<![CDATA[
+			SELECT
+				convert(varchar, ReCalcDate, 121) AS reCalcDate
+			FROM
+				Members.BIN_ReCalcInfo
+			WHERE
+				BIN_MemberInfoID = #memberInfoId# AND
+				BIN_BrandInfoID = #brandInfoID# AND
+				BIN_OrganizationInfoID = #organizationInfoID# AND
+				ReCalcType = #reCalcType# AND
+				ValidFlag = '1'
+		]]>	
+    </select>
+	
+	<!-- 插入重算信息表  -->
+	<insert id="insertReCalcInfo" parameterClass="java.util.HashMap">	
+		<![CDATA[
+	   INSERT INTO Members.BIN_ReCalcInfo
+			      (BIN_OrganizationInfoID,
+				   BIN_BrandInfoID,
+				   BIN_MemberInfoID,
+				   MemCode,												
+			       ReCalcType,												
+			       ReCalcDate,
+			       BIN_MemberClubID,
+		]]>
+			<include refid="BINBEDRCOM01.insertKeySql" />									
+		<![CDATA[								
+		)VALUES									
+				 (#organizationInfoID#,
+				  #brandInfoID#,
+				  #memberInfoId#,
+				  #memberCode#,					
+                  #reCalcType#,					
+                  #reCalcDate#,
+                  #memberClubId#,
+		]]>
+		    <include refid="BINBEDRCOM01.insertValueSql" />
+		<![CDATA[)]]>
+	</insert> 
+	
+	<!-- 更新重算信息表  -->
+	<update id="updateReCalcInfo" parameterClass="java.util.HashMap">
+		
+		<![CDATA[
+	      UPDATE
+	               Members.BIN_ReCalcInfo
+		  SET    
+				   ReCalcDate = case when ReCalcDate <= convert(datetime, #reCalcDate#, 121) then ReCalcDate else #reCalcDate# end,
+		]]>
+			<include refid="BINBEDRCOM01.updateSql" />									
+		<![CDATA[								
+		  WHERE									
+				  BIN_BrandInfoID = #brandInfoID# AND
+				  BIN_OrganizationInfoID = #organizationInfoID# AND
+				  BIN_MemberInfoID = #memberInfoId# AND
+				  ReCalcType = #reCalcType# AND
+				  ValidFlag = '1'
+		]]>
+		   
+	</update> 
+	
+	<!-- 取得会员信息 -->
+	<resultMap id="BINBEDRCOM01.CampBaseDTO" class="com.cherry.dr.cmbussiness.dto.core.CampBaseDTO">
+		<result property="organizationInfoId" column="BIN_OrganizationInfoID"/>
+		<result property="orgCode" column="OrgCode"/>
+		<result property="brandInfoId" column="BIN_BrandInfoID"/>
+		<result property="brandCode" column="BrandCode"/>
+		<result property="memberInfoId" column="BIN_MemberInfoID"/>
+		<result property="referrerId" column="ReferrerID"/>
+		<result property="memName" column="Name"/>
+		<result property="joinDate" column="JoinDate"/>
+		<result property="joinTime" column="JoinTime"/>
+		<result property="initLevel" column="InitialMemLevel"/>
+		<result property="curLevelId" column="MemberLevel"/>
+		<result property="levelStatus" column="LevelStatus"/>
+		<result property="levelStartDate" column="LevelStartDate"/>
+		<result property="levelEndDate" column="LevelEndDate"/>
+		<result property="levelAdjustDay" column="LevelAdjustDay"/>
+		<result property="grantMemberLevel" column="GrantMemberLevel"/>
+		<result property="memRegFlg" column="MemInfoRegFlg"/>
+		<result property="upgradeFromLevel" column="UpgradeFromLevel"/>
+		<result property="firstBillId" column="FirstBillID"/>
+		<result property="birthday" column="Birthday"/>
+		<result property="channelCode" column="ChannelCode"/>
+		<result property="wechatBindTime" column="WechatBindTime"/>
+	</resultMap>	
+	<select id="getCampBaseDTO" parameterClass="java.util.HashMap" resultMap="BINBEDRCOM01.CampBaseDTO">
+		<![CDATA[
+			SELECT
+				A.BIN_OrganizationInfoID AS BIN_OrganizationInfoID,
+				A.BIN_BrandInfoID AS BIN_BrandInfoID,
+				A.BIN_MemberInfoID AS BIN_MemberInfoID,
+				ISNULL(A.ReferrerID, 0) AS ReferrerID,
+				A.Name AS Name,
+				convert(varchar, A.JoinDate, 121) AS JoinDate,
+				A.JoinTime AS JoinTime,
+				ISNULL(A.InitialMemLevel, 0) AS InitialMemLevel,
+				ISNULL(A.MemberLevel, 0) AS MemberLevel,
+				A.LevelStatus AS LevelStatus,
+				convert(varchar, A.LevelStartDate, 121) AS LevelStartDate,
+				convert(varchar, A.LevelEndDate, 121) AS LevelEndDate,
+				convert(varchar, A.LevelAdjustDay, 121) AS LevelAdjustDay,
+				ISNULL(A.GrantMemberLevel, 0) AS GrantMemberLevel,
+				ISNULL(A.UpgradeFromLevel, 0) AS UpgradeFromLevel,
+				A.FirstBillID AS FirstBillID,
+				ISNULL(A.MemInfoRegFlg, 0) AS MemInfoRegFlg,
+				B.BrandCode AS BrandCode,
+				C.OrgCode AS OrgCode,
+				A.BirthYear + A.BirthDay AS Birthday,
+				A.ChannelCode AS ChannelCode,
+				convert(varchar, A.WechatBindTime, 120) AS WechatBindTime
+			FROM
+				Members.BIN_MemberInfo A
+				LEFT JOIN Basis.BIN_BrandInfo B
+				ON(A.BIN_BrandInfoID = B.BIN_BrandInfoID)
+				LEFT JOIN Basis.BIN_OrganizationInfo C
+				ON(A.BIN_OrganizationInfoID = C.BIN_OrganizationInfoID)
+			WHERE
+				A.BIN_MemberInfoID = #memberInfoId#
+		]]>	
+    </select>
+	
+	<!-- 取得会员销售记录数 -->
+	<select id="getSaleRecordCount" parameterClass="java.util.HashMap" resultClass="java.lang.Integer">
+		<![CDATA[
+			SELECT
+				COUNT(BIN_SaleRecordID)
+			FROM
+				Sale.BIN_SaleRecord WITH(nolock)
+			WHERE
+				BIN_MemberInfoID = #memberInfoId# AND
+				BIN_BrandInfoID = #brandInfoID# AND
+				BIN_OrganizationInfoID = #organizationInfoID# AND
+				MemberCode = #memberCode# AND
+				(BillModel IS NULL OR  BillModel IN ('0','1','3','4')) AND
+				(IsPoint IS NULL OR IsPoint <> '0') AND
+				ValidFlag = '1'
+		]]>	
+    </select>
+	
+	<!-- 查询销售记录 -->
+	<resultMap id="BINBEDRCOM01.SaleRecordInfo" class="java.util.HashMap">
+		<result property="amount" column="Amount"/>
+	</resultMap>	
+	<select id="getSaleRecordInfo" parameterClass="java.util.HashMap" resultMap="BINBEDRCOM01.SaleRecordInfo">
+		<![CDATA[
+			SELECT
+				Amount
+			FROM
+				Sale.BIN_SaleRecord WITH(nolock)
+			WHERE
+				BillCode = #billCode# AND
+				BIN_BrandInfoID = #brandInfoId# AND
+				BIN_OrganizationInfoID = #organizationInfoId#
+		]]>	
+    </select>
+    
+    <!-- 查询订单记录 -->
+	<resultMap id="BINBEDRCOM01.ESOrderInfo" class="java.util.HashMap">
+		<result property="amount" column="Amount"/>
+	</resultMap>	
+	<select id="getESOrderInfo" parameterClass="java.util.HashMap" resultMap="BINBEDRCOM01.ESOrderInfo">
+		<![CDATA[
+			SELECT
+				Amount
+			FROM
+				Sale.BIN_ESOrderMain WITH(nolock)
+			WHERE
+				BillCode = #billCode# AND
+				BIN_BrandInfoID = #brandInfoId# AND
+				BIN_OrganizationInfoID = #organizationInfoId#
+		]]>	
+    </select>
+	
+	<!-- 查询基准点的 累计金额, 等级, 化妆次数 -->
+	<select id="getNewValue" parameterClass="com.cherry.dr.cmbussiness.dto.core.CampBaseDTO" resultClass="java.lang.String">
+		<![CDATA[
+			SELECT TOP 1
+				NewValue
+			FROM
+				Members.BIN_RuleExecRecord
+			WHERE
+				BIN_MemberInfoID = #memberInfoId# AND
+				BIN_BrandInfoID = #brandInfoId# AND
+				BIN_OrganizationInfoID = #organizationInfoId# AND
+				RecordKbn = #recordKbn# AND
+				TicketDate < convert(datetime, #ticketDate#, 121) AND
+				TradeType <> 'MB' AND
+				ValidFlag = '1'
+			 ORDER BY 
+			 	CalcDate DESC,
+			 	TicketDate DESC
+		]]>	
+    </select>
+	
+	<!-- 查询当前累计金额, 等级, 化妆次数 -->
+	<select id="getCurNewValue" parameterClass="com.cherry.dr.cmbussiness.dto.core.CampBaseDTO" resultClass="java.lang.String">
+		<![CDATA[
+			SELECT TOP 1
+				NewValue
+			FROM
+				Members.BIN_RuleExecRecord
+			WHERE
+				BIN_MemberInfoID = #memberInfoId# AND
+				BIN_BrandInfoID = #brandInfoId# AND
+				BIN_OrganizationInfoID = #organizationInfoId# AND
+				RecordKbn = #recordKbn# AND
+				TradeType <> 'MB' AND
+				ValidFlag = '1'
+		]]>	
+		<isNotEqual property="memberClubId" compareValue="0">
+		<![CDATA[AND BIN_MemberClubID = #memberClubId#
+		]]>
+		</isNotEqual>
+		<![CDATA[
+		 ORDER BY 
+			 	CalcDate DESC,
+			 	TicketDate DESC
+		]]>
+    </select>
+	
+	<!-- 查询最后一次引起某一属性变化的单据信息 -->
+	<select id="getLastChangeInfo" parameterClass="com.cherry.dr.cmbussiness.dto.core.CampBaseDTO" resultClass="java.util.HashMap">
+		<![CDATA[
+			SELECT TOP 1
+				BillID AS billId,
+				TradeType AS tradeType,
+				CONVERT(varchar, TicketDate, 121) AS ticketDate,
+				OldValue AS oldValue,
+				NewValue AS newValue,
+				ChangeType AS changeType
+			FROM
+				Members.BIN_RuleExecRecord
+			WHERE
+				BIN_MemberInfoID = #memberInfoId# AND
+				BIN_BrandInfoID = #brandInfoId# AND
+				BIN_OrganizationInfoID = #organizationInfoId# AND
+				RecordKbn = #recordKbn# 
+			]]>
+	<isNotEqual property="memberClubId" compareValue="0">
+		<![CDATA[AND BIN_MemberClubID = #memberClubId#
+		]]>
+	</isNotEqual>
+	<isNotEmpty property="recordKbn">
+		<isEqual property="recordKbn" compareValue="0">
+		<![CDATA[AND (ChangeType = '1' OR ChangeType = '2')
+		]]>
+		</isEqual>
+	</isNotEmpty>
+	<isNotEmpty property="ignoreMBFlag">
+		<isEqual property="ignoreMBFlag" compareValue="1">
+		<![CDATA[AND TradeType <> 'MB'
+		]]>
+		</isEqual>
+	</isNotEmpty>
+	<![CDATA[
+				AND ValidFlag = '1'
+			 ORDER BY 
+			 	CalcDate DESC,
+			 	TicketDate DESC
+		]]>	
+    </select>
+    
+    <!-- 查询最后一次引起某一属性变化的单据信息(历史履历) -->
+	<select id="getLastChangeHistoryInfo" parameterClass="com.cherry.dr.cmbussiness.dto.core.CampBaseDTO" resultClass="java.util.HashMap">
+		<![CDATA[
+			SELECT TOP 1
+				BillID AS billId,
+				TradeType AS tradeType,
+				CONVERT(varchar, TicketDate, 121) AS ticketDate,
+				OldValue AS oldValue,
+				NewValue AS newValue,
+				ChangeType AS changeType
+			FROM
+				Members.BIN_RuleExecRecordHistory
+			WHERE
+				BIN_MemberInfoID = #memberInfoId# AND
+				BIN_BrandInfoID = #brandInfoId# AND
+				BIN_OrganizationInfoID = #organizationInfoId# AND
+				RecordKbn = #recordKbn# 
+			]]>
+	<isNotEqual property="memberClubId" compareValue="0">
+		<![CDATA[AND BIN_MemberClubID = #memberClubId#
+		]]>
+	</isNotEqual>
+	<isNotEmpty property="recordKbn">
+		<isEqual property="recordKbn" compareValue="0">
+		<![CDATA[AND (ChangeType = '1' OR ChangeType = '2')
+		]]>
+		</isEqual>
+	</isNotEmpty>
+	<isNotEmpty property="ignoreMBFlag">
+		<isEqual property="ignoreMBFlag" compareValue="1">
+		<![CDATA[AND TradeType <> 'MB'
+		]]>
+		</isEqual>
+	</isNotEmpty>
+	<![CDATA[
+				AND ValidFlag = '1'
+			 ORDER BY 
+			 	CalcDate DESC,
+			 	TicketDate DESC
+		]]>	
+    </select>
+    
+    <!-- 查询有效期开始的单据信息 -->
+	<select id="getValidStartList" parameterClass="com.cherry.dr.cmbussiness.dto.core.CampBaseDTO" resultClass="java.util.HashMap">
+		<![CDATA[
+			SELECT
+				BillID AS billId,
+				TradeType AS tradeType,
+				CONVERT(varchar, TicketDate, 120) AS ticketDate,
+				OldValue AS oldValue,
+				NewValue AS newValue,
+				ChangeType AS changeType
+			FROM
+				Members.BIN_RuleExecRecord
+			WHERE
+				BIN_MemberInfoID = #memberInfoId# AND
+				BIN_BrandInfoID = #brandInfoId# AND
+				BIN_OrganizationInfoID = #organizationInfoId# AND
+		]]>
+	<isNotEqual property="memberClubId" compareValue="0">
+		<![CDATA[ BIN_MemberClubID = #memberClubId# AND
+		]]>
+	</isNotEqual>
+	<![CDATA[
+				RecordKbn = 0 AND
+				(ChangeType = '1' OR ChangeType = '2')AND 
+				TradeType <> 'MB' AND
+				ValidFlag = '1'
+		]]>
+	<isNotEmpty property="srRecalcDate">
+		<![CDATA[AND TicketDate < CONVERT(DATETIME, #srRecalcDate#, 121)
+		]]>
+	</isNotEmpty>
+	<![CDATA[
+			ORDER BY 
+			 	CalcDate DESC,
+			 	TicketDate DESC
+		]]>	
+    </select>
+    
+    <!-- 查询有效期开始的单据信息(历史履历) -->
+	<select id="getValidStartHistoryList" parameterClass="com.cherry.dr.cmbussiness.dto.core.CampBaseDTO" resultClass="java.util.HashMap">
+		<![CDATA[
+			SELECT
+				BillID AS billId,
+				TradeType AS tradeType,
+				CONVERT(varchar, TicketDate, 120) AS ticketDate,
+				OldValue AS oldValue,
+				NewValue AS newValue,
+				ChangeType AS changeType
+			FROM
+				Members.BIN_RuleExecRecordHistory
+			WHERE
+				BIN_MemberInfoID = #memberInfoId# AND
+				BIN_BrandInfoID = #brandInfoId# AND
+				BIN_OrganizationInfoID = #organizationInfoId# AND
+	]]>
+	<isNotEqual property="memberClubId" compareValue="0">
+		<![CDATA[ BIN_MemberClubID = #memberClubId# AND
+		]]>
+	</isNotEqual>
+	<![CDATA[
+				RecordKbn = 0 AND
+				(ChangeType = '1' OR ChangeType = '2')AND 
+				TradeType <> 'MB' AND
+				ValidFlag = '1'
+	]]>
+	<isNotEmpty property="srRecalcDate">
+		<![CDATA[AND TicketDate < CONVERT(DATETIME, #srRecalcDate#, 121)
+		]]>
+	</isNotEmpty>
+	<![CDATA[
+			ORDER BY 
+			 	CalcDate DESC,
+			 	TicketDate DESC
+	]]>	
+    </select>
+	
+	<!-- 取得规则执行履历信息 -->
+	<resultMap id="BINBEDRCOM01.RuleExecList" class="java.util.HashMap">
+		<result property="oldValue" column="OldValue"/>
+		<result property="newValue" column="NewValue"/>
+		<result property="recordKbn" column="RecordKbn"/>
+		<result property="ruleIds" column="BIN_RuleIDs"/>
+	</resultMap>	
+	<select id="getRuleExecList" parameterClass="com.cherry.dr.cmbussiness.dto.core.CampBaseDTO" resultMap="BINBEDRCOM01.RuleExecList">
+		<![CDATA[
+			SELECT
+				OldValue,
+				NewValue,
+				RecordKbn,
+				BIN_RuleIDs
+			FROM
+				Members.BIN_RuleExecRecord
+			WHERE
+				BIN_MemberInfoID = #memberInfoId# AND
+				BIN_BrandInfoID = #brandInfoId# AND
+				BIN_OrganizationInfoID = #organizationInfoId# AND
+				BillID = #billId# AND
+				ReCalcCount = 0 AND
+				(RecordKbn = 0 OR RecordKbn = 2) AND
+				ValidFlag = '1'
+		]]>	
+    </select>
+	
+	<!-- 通过会员等级ID取得会员等级代码 -->	
+	<select id="getLevelCode" parameterClass="java.util.HashMap" resultClass="java.lang.String">
+		<![CDATA[
+			SELECT
+				LevelCode
+			FROM
+				Members.BIN_MemberLevel
+			WHERE
+				BIN_MemberLevelID = #memberLevelId#
+		]]>	
+    </select>
+	
+	<!-- 取得规则内容 -->	
+	<resultMap id="BINBEDRCOM01.RuleContentList" class="java.util.HashMap">
+		<result property="ruleContent" column="RuleContent"/>
+	</resultMap>	
+	<select id="getRuleContentList" parameterClass="java.util.HashMap" resultMap="BINBEDRCOM01.RuleContentList">
+		<![CDATA[
+			SELECT
+				RuleContent
+			FROM
+				Campaign.BIN_Rule
+		]]>	
+		<dynamic>
+			<isNotEmpty property="ruleIdArr" >
+				WHERE BIN_RuleID IN
+			<iterate conjunction="," open="(" close=")" property="ruleIdArr">  
+		        #ruleIdArr[]#
+		    </iterate>							
+			</isNotEmpty>
+		</dynamic>
+    </select>
+	
+	<!-- 取得同一单据号和履历区分的最大重算次数 -->	
+	<select id="getReCalcCount" parameterClass="com.cherry.dr.cmbussiness.dto.core.CampBaseDTO" resultClass="java.lang.Integer">
+		<![CDATA[
+			SELECT
+				MAX(ReCalcCount) AS reCalcCount
+			FROM
+				Members.BIN_RuleExecRecord
+			WHERE
+				BIN_MemberInfoID = #memberInfoId# AND
+				BIN_BrandInfoID = #brandInfoId# AND
+				BIN_OrganizationInfoID = #organizationInfoId# AND
+				BillID = #billId# AND
+				RecordKbn = #recordKbn#
+			GROUP BY
+				BillID
+		]]>	
+    </select>
+	
+	<!-- 取得同一天清零的最大重算次数 -->	
+	<select id="getReCalcCountByTicDate" parameterClass="com.cherry.dr.cmbussiness.dto.core.CampBaseDTO" resultClass="java.util.HashMap">
+		<![CDATA[
+			SELECT
+				MAX(ReCalcCount) AS reCalcCount
+			FROM
+				Members.BIN_RuleExecRecord
+			WHERE
+				BIN_MemberInfoID = #memberInfoId# AND
+				BIN_BrandInfoID = #brandInfoId# AND
+				BIN_OrganizationInfoID = #organizationInfoId# AND
+				TicketDate = #ticketDate# AND
+				RecordKbn = #recordKbn# AND
+				ValidFlag = '1'
+			GROUP BY
+				TicketDate
+		]]>	
+    </select>
+	
+	<!-- 取得会员等级List -->
+    <select id="getMemLevelcomList" parameterClass="com.cherry.dr.cmbussiness.dto.core.CampBaseDTO" resultClass="java.util.HashMap">
+    	<![CDATA[
+			SELECT
+				A.BIN_MemberLevelID AS levelId,
+				A.LevelCode AS levelCode,
+				A.LevelName AS levelName,
+				A.Periodvalidity AS periodValidity,
+				B.Grade AS grade,
+				B.DefaultFlag AS defaultFlag
+			FROM
+				Members.BIN_MemberLevel A JOIN
+				Members.BIN_MemberLevelDetail B
+				ON (A.BIN_MemberLevelID = B.BIN_MemberLevelID)
+			WHERE
+				A.BIN_OrganizationInfoID = #organizationInfoId# AND
+				A.BIN_BrandInfoID = #brandInfoId# AND
+		]]>
+			<isNotEmpty property="clubIdStr">
+				A.BIN_MemberClubID = #memberClubId# AND
+			</isNotEmpty>
+		<![CDATA[
+				B.ToDate >= convert(DATE, #ticketDate#, 121) AND
+				B.FromDate <= convert(DATE, #ticketDate#, 121) AND
+				A.ValidFlag = '1'
+			ORDER BY B.Grade ASC
+		]]>
+    </select>
+	
+	<!-- 取得购买的产品明细List -->
+    <select id="getBuyProductList" parameterClass="com.cherry.dr.cmbussiness.dto.core.CampBaseDTO" resultClass="java.util.HashMap">
+    	<![CDATA[
+			SELECT
+				A.BIN_SaleRecordID AS saleRecId,
+				B.BIN_SaleRecordDetailID AS saleDetailId,
+				B.BIN_ProductVendorID AS prtVendorId,
+				B.UnitCode AS unitCode,
+				B.BarCode AS barCode,
+				B.PricePay AS pricePay,
+				B.Discount AS discount,
+				B.Quantity AS quantity,
+				B.SaleType AS saleType,
+				B.MainCode AS actMainCode,
+				B.CountActCode AS countActCode
+			FROM 
+				Sale.BIN_SaleRecord A WITH(nolock),
+				Sale.BIN_SaleRecordDetail B WITH(nolock)
+			WHERE
+				A.BillCode = #billId# AND
+				A.BIN_BrandInfoID = #brandInfoId# AND
+				A.BIN_OrganizationInfoID = #organizationInfoId# AND
+				A.BIN_SaleRecordID = B.BIN_SaleRecordID
+			ORDER BY B.DetailNo
+		]]>
+    </select>
+    
+  	<!-- 取得购买的产品明细List(订单) -->
+    <select id="getESBuyProductList" parameterClass="com.cherry.dr.cmbussiness.dto.core.CampBaseDTO" resultClass="java.util.HashMap">
+    	<![CDATA[
+			SELECT
+				A.BIN_ESOrderMainID AS saleRecId,
+				B.BIN_ESOrderDetailID AS saleDetailId,
+				B.BIN_ProductVendorID AS prtVendorId,
+				B.UnitCode AS unitCode,
+				B.BarCode AS barCode,
+				B.PricePay AS pricePay,
+				B.Discount AS discount,
+				B.Quantity AS quantity,
+				CASE WHEN B.SaleType = 'BC' THEN 'P' ELSE B.SaleType END AS saleType,
+				B.ActivityMainCode AS actMainCode,
+				B.ActivityCode AS countActCode
+			FROM 
+				Sale.BIN_ESOrderMain A WITH(nolock),
+				Sale.BIN_ESOrderDetail B WITH(nolock)
+			WHERE
+				A.BillCode = #billId# AND
+				A.BIN_BrandInfoID = #brandInfoId# AND
+				A.BIN_OrganizationInfoID = #organizationInfoId# AND
+				A.BIN_ESOrderMainID = B.BIN_ESOrderMainID
+			ORDER BY B.DetailNo
+		]]>
+    </select>
+    
+    <!-- 取得关联退货的产品明细List -->
+    <select id="getSrProductList" parameterClass="com.cherry.dr.cmbussiness.dto.core.CampBaseDTO" resultClass="java.util.HashMap">
+    	<![CDATA[
+			SELECT
+				A.BIN_SaleRecordID AS saleRecId,
+				A.BillCode AS billCodeSR,
+				ISNULL(A.Quantity, 0) AS totalQuantitySR,
+				ISNULL(A.Amount, 0) AS totalAmountSR,
+				ISNULL(A.ModifiedTimes, 0) AS modifiedTimesSR,
+				CONVERT(varchar, A.SaleTime,121) AS ticketDateSR,
+				B.BIN_SaleRecordDetailID AS saleDetailId,
+				B.BIN_ProductVendorID AS prtVendorId,
+				B.UnitCode AS unitCode,
+				B.BarCode AS barCode,
+				B.PricePay AS pricePay,
+				B.Discount AS discount,
+				(0-ISNULL(B.Quantity, 0)) AS quantity,
+				B.SaleType AS saleType
+			FROM 
+				Sale.BIN_SaleRecord A WITH(nolock),
+				Sale.BIN_SaleRecordDetail B WITH(nolock)
+			WHERE
+				A.BIN_MemberInfoID = #memberInfoId# AND
+				A.BIN_BrandInfoID = #brandInfoId# AND
+				A.BIN_OrganizationInfoID = #organizationInfoId# AND
+				A.BillCodePre = #billId# AND
+				A.BIN_SaleRecordID = B.BIN_SaleRecordID AND
+				A.SaleType = 'SR'
+			ORDER BY A.SaleTime, B.BIN_SaleRecordID, B.DetailNo
+		]]>
+    </select>
+	
+	<!-- 取得单据信息 -->
+    <select id="getBuyInfo" parameterClass="com.cherry.dr.cmbussiness.dto.core.CampBaseDTO" resultClass="java.util.HashMap">
+    	<![CDATA[
+			SELECT
+				BIN_OrganizationID AS organizationId,
+				ISNULL(ModifiedTimes, 0) AS modifiedTimes,
+				ISNULL(Amount, 0) AS amount,
+				ISNULL(Quantity, 0) AS quantity,
+				MachineCode AS machineCode
+			FROM 
+				Sale.BIN_SaleRecord WITH(nolock)
+			WHERE
+				BillCode = #billId# AND
+				BIN_BrandInfoID = #brandInfoId# AND
+				BIN_OrganizationInfoID = #organizationInfoId#
+		]]>
+    </select>
+    
+    <!-- 取得订单信息 -->
+    <select id="getESBuyInfo" parameterClass="com.cherry.dr.cmbussiness.dto.core.CampBaseDTO" resultClass="java.util.HashMap">
+    	<![CDATA[
+			SELECT
+				BIN_OrganizationID AS organizationId,
+				ISNULL(ModifiedTimes, 0) AS modifiedTimes,
+				ISNULL(Amount, 0) AS amount,
+				ISNULL(Quantity, 0) AS quantity,
+				null AS machineCode
+			FROM 
+				Sale.BIN_ESOrderMain WITH(nolock)
+			WHERE
+				BillCode = #billId# AND
+				BIN_BrandInfoID = #brandInfoId# AND
+				BIN_OrganizationInfoID = #organizationInfoId#
+		]]>
+    </select>
+    
+    <!-- 取得关联单据信息 -->
+    <select id="getRelevantSaleInfo" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+    	<![CDATA[
+			SELECT
+				CONVERT(varchar, SaleTime,120) AS ticketDate,
+				SaleType AS saleType
+			FROM 
+				Sale.BIN_SaleRecord WITH(nolock)
+			WHERE
+				BillCode = #relevantNo# AND
+				BIN_BrandInfoID = #brandInfoID# AND
+				BIN_OrganizationInfoID = #organizationInfoID#
+		]]>
+		<isNotEmpty property="memberClubId">
+			 AND BIN_MemberClubID = #memberClubId#
+	</isNotEmpty>
+    </select>
+	
+	<!-- 查询促销产品信息 -->
+	<select id ="selPrmProductVendorIdInfo" parameterClass="java.util.HashMap" resultClass ="java.util.HashMap">
+	<![CDATA[
+		SELECT
+			B.BIN_PromotionProductVendorID AS promotionProductVendorID
+		FROM
+			Basis.BIN_PromotionProduct A,
+			Basis.BIN_PromotionProductVendor B
+		WHERE
+			A.UnitCode = #unitcode# AND
+			A.BIN_BrandInfoID = #brandInfoID# AND
+			A.BIN_OrganizationInfoID = #organizationInfoID# AND
+			A.ValidFlag = '1' AND
+			A.BIN_PromotionProductID = B.BIN_PromotionProductID AND
+			B.BarCode = #barcode# AND
+			B.ValidFlag = '1'
+	]]>
+	</select>
+	
+	<!-- 查询促销产品信息 -->
+	<select id ="selPrmProductByVenID" parameterClass="java.util.HashMap" resultClass ="java.util.HashMap">
+	<![CDATA[
+		SELECT
+			B.BIN_PromotionProductVendorID AS promotionProductVendorID
+		FROM
+			Basis.BIN_PromotionProduct A,
+			Basis.BIN_PromotionProductVendor B
+		WHERE
+			A.BIN_PromotionProductID = B.BIN_PromotionProductID AND
+			A.ValidFlag = '1' AND
+			B.BIN_PromotionProductVendorID=#promotionProductVendorID# AND
+			B.ValidFlag = '1'
+	]]>
+	</select>
+	
+	<!-- 查询促销产品类别信息 -->
+	<select id ="selPromotionCateCd" parameterClass="java.util.HashMap" resultClass ="java.util.HashMap">
+	<![CDATA[
+		SELECT
+			A.PromotionCateCD AS promotionCateCd,
+			A.ExPoint AS exPoint
+		FROM
+			Basis.BIN_PromotionProduct A,
+			Basis.BIN_PromotionProductVendor B
+		WHERE
+			B.BIN_PromotionProductVendorID = #prtVendorId# AND
+			B.BIN_PromotionProductID = A.BIN_PromotionProductID
+	]]>
+	</select>
+	
+	<!-- 查询产品分类信息 -->
+	<select id ="selPrtCateList" parameterClass="java.util.HashMap" resultClass ="java.util.HashMap">
+	<![CDATA[
+		SELECT 
+		  B.BIN_PrtCatPropValueID AS prtCateId	      
+		FROM 
+		  Basis.BIN_ProductVendor A,
+		  Basis.BIN_PrtCategory B
+		WHERE
+		  A.BIN_ProductVendorID = #prtVendorId# AND
+		  A.BIN_ProductID = B.BIN_ProductID
+	]]>
+	</select>
+	
+	<!-- 查询某个时间点的值 -->
+	<select id ="getNewValueByTime" parameterClass="java.util.HashMap" resultClass ="java.util.HashMap">
+	<![CDATA[
+		SELECT TOP 1
+		  	NewValue AS newValue	      
+		FROM 
+		  	Members.BIN_RuleExecRecord
+		WHERE
+		  	BIN_MemberInfoID = #memberInfoId# AND
+		  	BIN_BrandInfoID = #brandInfoId# AND
+			BIN_OrganizationInfoID = #organizationInfoId# AND
+		]]>
+	<isNotEmpty property="memberClubId">
+			BIN_MemberClubID = #memberClubId# AND
+	</isNotEmpty>
+	<![CDATA[
+			RecordKbn = #recordKbn# AND
+			ValidFlag = '1'
+	]]>
+	<isNotEmpty property="datekbn">
+		<isEqual property="datekbn" compareValue="1">
+		<![CDATA[AND TicketDate < CONVERT(DATETIME, #fromTime#, 121)
+		]]>
+		</isEqual>
+		<isEqual property="datekbn" compareValue="2">
+			<isNotEmpty property="toTime">
+		<![CDATA[AND TicketDate <= CONVERT(DATETIME, #toTime#, 121)
+		]]>
+		</isNotEmpty>
+		</isEqual>
+	</isNotEmpty>
+	<![CDATA[
+			ORDER BY 
+				CalcDate DESC,
+				TicketDate DESC
+		]]>
+	</select>
+	
+	<!-- 查询某个时间点的值(规则履历历史表) -->
+	<select id ="getHistoryValueByTime" parameterClass="java.util.HashMap" resultClass ="java.util.HashMap">
+	<![CDATA[
+		SELECT TOP 1
+		  	NewValue AS newValue	      
+		FROM 
+		  	Members.BIN_RuleExecRecordHistory
+		WHERE
+		  	BIN_MemberInfoID = #memberInfoId# AND
+		  	BIN_BrandInfoID = #brandInfoId# AND
+			BIN_OrganizationInfoID = #organizationInfoId# AND
+	]]>
+	<isNotEmpty property="memberClubId">
+			BIN_MemberClubID = #memberClubId# AND
+	</isNotEmpty>
+	<![CDATA[
+			RecordKbn = #recordKbn# AND
+			TicketDate < CONVERT(DATETIME, #fromTime#, 121) AND
+			ValidFlag = '1'
+		ORDER BY 
+			CalcDate DESC,
+			TicketDate DESC
+		]]>
+	</select>
+	
+	<!-- 查询某个时间段内的购买信息 -->
+	<select id ="getBillList" parameterClass="java.util.HashMap" resultClass ="java.util.HashMap">
+	<![CDATA[
+		SELECT 
+			BillCode AS billCode,
+			SaleType AS saleType,
+			BillCodePre AS billCodePre,
+			ISNULL(Amount, 0) AS amount,
+			convert(varchar, SaleTime, 120) AS saleTime
+		FROM 
+			Sale.BIN_SaleRecord WITH(nolock)
+		WHERE 
+			BIN_MemberInfoID = #memberInfoId# AND
+		 	BIN_BrandInfoID = #brandInfoId# AND
+		 	BIN_OrganizationInfoID = #organizationInfoId# AND
+		 	SaleTime >= CONVERT(DATETIME,#fromTime#,121) AND
+	]]>
+	<isNotEmpty property="memberClubId">
+			BIN_MemberClubID = #memberClubId# AND
+	</isNotEmpty>
+	<isNotEmpty property="lelEndTime">
+		<![CDATA[SaleTime <= CONVERT(DATETIME,#lelEndTime#,121) AND]]>
+		</isNotEmpty>
+		<![CDATA[
+			ISNULL(Amount, 0) > 0 AND
+			(BillModel IS NULL OR  BillModel IN ('0','1','3','4')) AND
+			(IsPoint IS NULL OR IsPoint <> '0')
+	UNION
+		SELECT 
+			BillCode AS billCode,
+			SaleType AS saleType,
+			null AS billCodePre,
+			ISNULL(Amount, 0) AS amount,
+			convert(varchar, BillCreateTime, 120) AS saleTime
+		FROM 
+			Sale.BIN_ESOrderMain WITH(nolock)
+		WHERE 
+			BIN_MemberInfoID = #memberInfoId# AND
+		 	BIN_BrandInfoID = #brandInfoId# AND
+		 	BIN_OrganizationInfoID = #organizationInfoId# AND
+		 	BillCreateTime >= CONVERT(DATETIME,#fromTime#,121) AND
+	]]>
+	<isNotEmpty property="lelEndTime">
+		<![CDATA[BillCreateTime <= CONVERT(DATETIME,#lelEndTime#,121) AND]]>
+		</isNotEmpty>
+	<![CDATA[
+		ISNULL(Amount, 0) > 0 AND
+		BillType = '2'
+	ORDER BY saleTime
+	]]>
+	</select>
+	
+	<!-- 取得原会员卡号 -->
+	<select id ="getOldMemCodeList" parameterClass="com.cherry.dr.cmbussiness.dto.core.CampBaseDTO" resultClass ="java.util.HashMap">
+	<![CDATA[
+		SELECT DISTINCT
+			MemCode AS memCode,
+			BillID AS billId
+		FROM 
+			Members.BIN_RuleExecRecord WITH(nolock)
+		WHERE
+			BIN_MemberInfoID = #memberInfoId# AND
+			BIN_BrandInfoID = #brandInfoId# AND
+			BIN_OrganizationInfoID = #organizationInfoId# AND
+			TradeType = #tradeType# AND
+			CONVERT(DATE, TicketDate, 121) = CONVERT(DATE, #businessDate#, 121)
+	]]>
+	<isNotEmpty property="clubIdStr">
+			 AND BIN_MemberClubID = #memberClubId#
+		</isNotEmpty>
+	</select>
+	
+	<!-- 取得首单金额信息 -->
+	<select id ="getFromAmountInfo" parameterClass="java.util.HashMap" resultClass ="java.util.HashMap">
+	<![CDATA[
+		SELECT
+			OldValue AS oldValue,
+		  	NewValue AS newValue	      
+		FROM 
+		  	Members.BIN_RuleExecRecord
+		WHERE
+		  	BIN_MemberInfoID = #memberInfoId# AND
+		  	BIN_BrandInfoID = #brandInfoId# AND
+			BIN_OrganizationInfoID = #organizationInfoId# AND
+	]]>
+	<isNotEmpty property="memberClubId">
+			BIN_MemberClubID = #memberClubId# AND
+	</isNotEmpty>
+	<![CDATA[
+			RecordKbn = 1 AND
+			BillID = #firstBillId# AND
+			TicketDate >= CONVERT(DATETIME, #fromTime#, 121) AND
+			ValidFlag = '1'
+	]]>
+	</select>
+	
+	<!-- 取得首单金额信息(规则履历历史表) -->
+	<select id ="getHistoryAmountInfo" parameterClass="java.util.HashMap" resultClass ="java.util.HashMap">
+	<![CDATA[
+		SELECT
+			OldValue AS oldValue,
+		  	NewValue AS newValue	      
+		FROM 
+		  	Members.BIN_RuleExecRecordHistory
+		WHERE
+		  	BIN_MemberInfoID = #memberInfoId# AND
+		  	BIN_BrandInfoID = #brandInfoId# AND
+			BIN_OrganizationInfoID = #organizationInfoId# AND
+	]]>
+	<isNotEmpty property="memberClubId">
+			BIN_MemberClubID = #memberClubId# AND
+	</isNotEmpty>
+	<![CDATA[
+			RecordKbn = 1 AND
+			BillID = #firstBillId# AND
+			TicketDate >= CONVERT(DATETIME, #fromTime#, 121) AND
+			ValidFlag = '1'
+	]]>
+	</select>
+	
+	<!-- 根据业务类型，业务时间取得执行次数 -->
+	<select id ="getCountByType" parameterClass="java.util.HashMap" resultClass ="java.lang.Integer">
+	<![CDATA[
+			SELECT
+				COUNT(BIN_MemberInfoID)
+			FROM
+				Members.BIN_RuleExecRecord WITH(nolock)
+			WHERE
+				BIN_MemberInfoID = #memberInfoId# AND
+				BIN_BrandInfoID = #brandInfoID# AND
+				BIN_OrganizationInfoID = #organizationInfoID# AND
+				TradeType = #tradeType# AND
+				convert(date, TicketDate, 121) = convert(date, #saleTime#, 121) AND
+				ValidFlag = '1'
+	]]>
+	</select>
+	
+	<!-- 根据履历区分取得履历次数 -->
+	<select id ="getRecordCountByKbn" parameterClass="java.util.HashMap" resultClass ="java.lang.Integer">
+	<![CDATA[
+			SELECT
+				COUNT(BIN_MemberInfoID)
+			FROM
+				Members.BIN_RuleExecRecord WITH(nolock)
+			WHERE
+				BIN_MemberInfoID = #memberInfoId# AND
+				BIN_BrandInfoID = #brandInfoID# AND
+				BIN_OrganizationInfoID = #organizationInfoID# AND
+				RecordKbn = #recordKbn# AND
+				ValidFlag = '1'
+	]]>
+	<isNotEmpty property="memberClubId">
+			AND BIN_MemberClubID = #memberClubId#
+	</isNotEmpty>
+	</select>
+	
+	<!-- 会员当前的积分信息 -->
+	<resultMap id="BINBEDRCOM01.CurMemPointInfo" class="com.cherry.dr.cmbussiness.dto.core.PointDTO">
+		<result property="memberPointId" column="MemberPointID"/>					<!-- 会员积分ID -->
+		<result property="curTotalPoint" column="CurTotalPoint"/>					<!-- 当前的累计积分 -->
+		<result property="curTotalChanged" column="CurTotalChanged"/>				<!-- 当前的累计兑换积分 -->
+		<result property="curChangablePoint" column="CurChangablePoint"/>			<!-- 当前的可兑换积分 -->
+		<result property="preCardPoint" column="PreCardPoint"/>						<!-- 前卡积分 -->
+		<result property="totalDisablePoint" column="TotalDisablePoint"/>			<!-- 累计失效积分 -->
+		<result property="curDisablePoint" column="CurDisablePoint"/>				<!-- 本次将失效积分 -->
+		<result property="preDisableDate" column="PreDisableDate"/>					<!-- 上回积分失效日期 -->
+		<result property="curDealDate" column="CurDealDate"/>						<!-- 本次积分失效日期 -->
+	</resultMap>
+	<!-- 取得会员当前的积分信息  -->
+    <select id="getCurMemPointInfo" parameterClass="java.util.HashMap" resultMap="BINBEDRCOM01.CurMemPointInfo">
+       	<![CDATA[
+			SELECT
+				BIN_MemberPointID AS MemberPointID,
+				ISNULL(TotalPoint, 0) AS CurTotalPoint,
+				ISNULL(TotalChanged, 0) AS CurTotalChanged,
+				ISNULL(ChangablePoint, 0) AS CurChangablePoint,
+				ISNULL(PreCardPoint, 0) AS PreCardPoint,
+				ISNULL(TotalDisablePoint, 0) AS TotalDisablePoint,
+				ISNULL(CurDisablePoint, 0) AS CurDisablePoint,
+				convert(varchar, PreDisableDate, 120) AS PreDisableDate,
+				convert(varchar, CurDealDate, 120) AS CurDealDate
+			FROM 
+				Members.BIN_MemberPoint
+			WHERE
+				BIN_MemberInfoID = #memberInfoId#
+		  ]]>
+		  <isNotEmpty property="memberClubId">
+			AND BIN_MemberClubID = #memberClubId#
+	</isNotEmpty>
+    </select>
+    
+    <!-- 取得会员扩展信息  -->
+    <select id="getCurMemberExtInfo" parameterClass="com.cherry.dr.cmbussiness.dto.core.CampBaseDTO" resultClass="java.util.HashMap">
+       	<![CDATA[
+			SELECT
+				ISNULL(TotalAmount, 0) AS totalAmount,
+				InitTotalAmount AS initTotalAmount
+			FROM 
+				Members.BIN_MemberExtInfo
+			WHERE
+				BIN_MemberInfoID = #memberInfoId#
+		  ]]>
+    </select>
+    
+    <!-- 查询首单时间 -->
+	<select id ="getCMFirstTicketTime" parameterClass="java.util.HashMap" resultClass ="java.lang.String">
+	<![CDATA[
+	SELECT 
+		MIN(T.saleTime) AS saleTime
+	FROM(
+		SELECT
+			convert(varchar, MIN(SaleTime), 120) AS saleTime
+		FROM 
+			Sale.BIN_SaleRecord WITH(nolock)
+		WHERE 
+			BIN_MemberInfoID = #memberInfoId# AND
+		 	BIN_BrandInfoID = #brandInfoID# AND
+		 	BIN_OrganizationInfoID = #organizationInfoID#
+	]]>
+	<isNotEmpty property="memberClubId">
+			AND BIN_MemberClubID = #memberClubId#
+	</isNotEmpty>
+	<![CDATA[
+			AND (BillModel IS NULL OR  BillModel IN ('0','1','3','4'))
+			AND (IsPoint IS NULL OR IsPoint <> '0')
+		UNION
+		SELECT
+			convert(varchar, MIN(BillCreateTime), 120) AS saleTime
+		FROM 
+			Sale.BIN_ESOrderMain WITH(nolock)
+		WHERE 
+			BIN_MemberInfoID = #memberInfoId# AND
+		 	BIN_BrandInfoID = #brandInfoID# AND
+		 	BIN_OrganizationInfoID = #organizationInfoID# AND
+		 	BillType = '2'
+	) T
+	]]>
+	</select>
+	<select id="getRefMemLevelInfo" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+		<![CDATA[
+			SELECT
+				ISNULL(MemberLevel, 0) AS memberLevel
+			FROM
+				Members.BIN_MemberInfo
+			WHERE
+				BIN_MemberInfoID = #memberInfoId#
+		]]>	
+    </select>
+    <select id="getCmMemClubLevelList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+		<![CDATA[
+			SELECT
+				A.BIN_MemberClubID AS memberClubId,
+				B.ClubCode AS clubCode
+			FROM
+				Members.BIN_MemClubLevel A WITH(NOLOCK) LEFT JOIN
+				Members.BIN_MemberClub B WITH(NOLOCK)
+				ON (A.BIN_MemberClubID = B.BIN_MemberClubID)
+			WHERE
+				A.BIN_MemberInfoID = #memberInfoId#
+			GROUP BY A.BIN_MemberClubID, B.ClubCode
+		]]>	
+    </select>
+</sqlMap>

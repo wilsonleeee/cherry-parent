@@ -1,0 +1,161 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sqlMap PUBLIC "-//iBATIS.com//DTD SQL Map 2.0//EN" "http://ibatis.apache.org/dtd/sql-map-2.dtd">
+<sqlMap namespace="BINOLMBCCT09">
+	<!-- 来电记录查询sql  -->
+	<sql id="callLogQuery">
+		<![CDATA[
+			SELECT 
+				MAX(logId) as logId,
+				callId as callId,
+				cNo as cNo,
+				customerNumber as customerNumber,
+				customerSysId as customerSysId,
+				customerCode as customerCode,
+				customerName as customerName,
+				isMember as isMember,
+				callType as callType,
+				MAX(callTime) as callTime,
+				MAX(issueId) as issueId 
+			FROM (
+				SELECT tb.BIN_LogId as logId
+					,tb.CallId as callId
+					,tb.Cno as cNo
+					,tb.CustomerNumber as customerNumber
+					,tb.CustomerSysId as customerSysId
+					,(case tb.Ismember 
+						when '1' then 
+							(SELECT Top 1 MemCode FROM Members.BIN_MemCardInfo as ti WHERE ti.BIN_MemberInfoID=tb.CustomerSysId and ti.CardValidFlag=1) 
+						else tb.CustomerSysId end
+					 ) as customerCode 
+					,(case tb.Ismember 
+						when '1' then 
+							(SELECT Top 1 tm.Name FROM Members.BIN_MemberInfo as tm WHERE tm.BIN_MemberInfoID=tb.CustomerSysId) 
+						else tn.CustomerName end
+					) as customerName 
+					,tb.Ismember as isMember
+					,tb.Calltype as callType
+					,tb.CallTime as callTime
+					,ts.BIN_IssueID as issueId 
+				FROM (
+					SELECT tc.BIN_LogId,
+						tc.BIN_BrandInfoID,
+						tc.BIN_OrganizationInfoID,
+						tc.CallId,
+						tc.CustomerSysId,
+						tc.CustomerNumber,
+						tc.Ismember,
+						tc.Calltype,
+						tc.CallTime,
+						tc.Cno 
+					FROM 
+						Members.BIN_CallLog as tc with(nolock) 
+					WHERE 
+						tc.BIN_BrandInfoID = #brandInfoId# AND 
+						tc.BIN_OrganizationInfoID = #organizationInfoId# 
+			]]>
+			<dynamic>
+				<!-- 参数中存在客服工号查询条件时  -->
+				<isNotEmpty prepend="AND" property="cNo" >
+					tc.Cno = #cNo# 
+				</isNotEmpty>
+				<!-- 参数中存在是否会员查询条件时  -->
+				<isNotEmpty prepend="AND" property="isMember" >
+					tc.Ismember = #isMember# 
+				</isNotEmpty>
+				<!-- 参数中存在来电号码查询条件时  -->
+				<isNotEmpty prepend="AND" property="customerNumber" >
+					tc.CustomerNumber = #customerNumber# 
+				</isNotEmpty>
+				<!-- 参数中存在来电时间起始查询条件时  -->
+				<isNotEmpty prepend="AND" property="callTimeStart" >
+				<![CDATA[
+					tc.CallTime >= #callTimeStart# 
+				]]>
+				</isNotEmpty>
+				<!-- 参数中存在来电时间截止查询条件时  -->
+				<isNotEmpty prepend="AND" property="callTimeEnd" >
+				<![CDATA[
+					tc.CallTime <= #callTimeEnd# 
+				]]>
+				</isNotEmpty>
+			</dynamic>
+			<![CDATA[ 
+					AND tc.CallTime in(
+						SELECT 
+							MAX(tl.CallTime) 
+						FROM 
+							Members.BIN_CallLog as tl with(nolock) 
+						WHERE 
+							tl.BIN_BrandInfoID = tc.BIN_BrandInfoID AND 
+							tl.BIN_OrganizationInfoID = tc.BIN_OrganizationInfoID AND 
+							tl.CallId=tc.CallId AND 
+							tl.CustomerNumber = tc.CustomerNumber
+						) 
+					AND ISNUMERIC(tc.CustomerSysId) = 1 or tc.CustomerSysId is null 
+				) AS tb 
+				LEFT JOIN Members.BIN_Issue as ts with(nolock) on tb.BIN_BrandInfoID = ts.BIN_BrandInfoID and tb.BIN_OrganizationInfoID = ts.BIN_OrganizationInfoID and tb.CallId = ts.CallId 
+				LEFT JOIN Members.BIN_NonMembers as tn with(nolock) on tb.BIN_BrandInfoID = tn.BIN_BrandInfoID and tb.CustomerSysId = tn.CustomerCode 
+			WHERE 
+				tb.BIN_BrandInfoID = #brandInfoId# AND 
+				tb.BIN_OrganizationInfoID = #organizationInfoId# 
+		]]>
+		<dynamic>
+			<!-- 参数中存在客服工号查询条件时  -->
+			<isNotEmpty prepend="AND" property="cNo" >
+				tb.Cno = #cNo# 
+			</isNotEmpty>
+			<!-- 参数中存在是否会员查询条件时  -->
+			<isNotEmpty prepend="AND" property="isMember" >
+				tb.Ismember = #isMember# 
+			</isNotEmpty>
+			<!-- 参数中存在来电号码查询条件时  -->
+			<isNotEmpty prepend="AND" property="customerNumber" >
+				tb.CustomerNumber = #customerNumber# 
+			</isNotEmpty>
+			<!-- 参数中存在来电时间起始查询条件时  -->
+			<isNotEmpty prepend="AND" property="callTimeStart" >
+			<![CDATA[
+				tb.CallTime >= #callTimeStart# 
+			]]>
+			</isNotEmpty>
+			<!-- 参数中存在来电时间截止查询条件时  -->
+			<isNotEmpty prepend="AND" property="callTimeEnd" >
+			<![CDATA[
+				tb.CallTime <= #callTimeEnd# 
+			]]>
+			</isNotEmpty>
+		</dynamic>
+		<![CDATA[
+			) AS TAB 
+			GROUP BY 
+				callId,
+				cNo,
+				customerNumber,
+				customerSysId,
+				customerCode,
+				customerName,
+				isMember,
+				callType
+		]]>
+	</sql>
+	
+	<!-- 查询符合条件的来电记录总数  -->
+    <select id="getCallLogCount" parameterClass="java.util.HashMap" resultClass="java.lang.Integer">
+    	<![CDATA[
+			SELECT COUNT(SORT_T1.logId) AS count FROM (
+		]]>	
+		<include refid="BINOLMBCCT09.callLogQuery" />	
+		<![CDATA[	
+			)SORT_T1
+		]]>
+    </select>
+	
+	<!-- 查询符合条件的来电记录List -->
+    <select id="getCallLogList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+       	<include refid="BINOLCMINC99.pageheader" />
+		<include refid="BINOLMBCCT09.callLogQuery" />
+		<include refid="BINOLCMINC99.pagefooter" />
+    </select>
+    
+</sqlMap>
+

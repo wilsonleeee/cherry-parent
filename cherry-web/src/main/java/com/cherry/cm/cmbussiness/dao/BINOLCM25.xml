@@ -1,0 +1,69 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sqlMap PUBLIC "-//iBATIS.com//DTD SQL Map 2.0//EN" "http://ibatis.apache.org/dtd/sql-map-2.dtd">
+<sqlMap namespace="BINOLCM25">
+    <!--查询流水表-->
+	<select id="selInventoryOpLog" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+          SELECT	
+		      A.OpCode,
+              CONVERT(VARCHAR(30),A.OpDate,120) AS OpDate,
+              CONVERT(VARCHAR(30),A.CreateTime,120) AS CreateTime,
+			  A.OpResult,
+			  A.TableName,
+			  A.BillID,
+			  A.HistoryBillID,
+	   <isNotEmpty property="language">
+		    <isEqual property="language" compareValue="en_US">
+		        <![CDATA[
+		           	 B.EmployeeNameForeign AS EmployeeName,
+					 C.NameForeign AS DepartName
+		        ]]>
+		    </isEqual>
+	        <isEqual property="language" compareValue="zh_CN">
+	        	B.EmployeeName AS EmployeeName,
+				C.DepartName AS DepartName
+    	    </isEqual>
+       </isNotEmpty>
+       <isEmpty property="language">
+       	      B.EmployeeName AS EmployeeName,
+			  C.DepartName AS DepartName,
+       </isEmpty>         
+			  A.BillNo AS BillNo,
+			  A.OpComments AS OpComments
+		  FROM 
+		      Inventory.BIN_InventoryOpLog A WITH(nolock)
+		      LEFT JOIN   Basis.BIN_Employee B  on A.BIN_EmployeeID=B.BIN_EmployeeID
+		      LEFT JOIN   Basis.BIN_Organization C on A.BIN_OrganizationID=C.BIN_OrganizationID
+		  WHERE 
+		      A.WorkFlowID=#WorkFlowID# 
+		  ORDER BY A.OpDate,A.CreateTime ASC
+	</select>
+	<!--取得用户名-->
+	<select id="getUserName" parameterClass="java.util.HashMap" resultClass="java.lang.String">
+		SELECT
+			'(' + B.EmployeeCode + ')' + B.EmployeeName AS  employeeName
+		FROM
+			Privilege.BIN_User A WITH(nolock),
+			Basis.BIN_Employee B
+		WHERE
+			A.BIN_UserID = #userID# AND
+			A.BIN_EmployeeID = B.BIN_EmployeeID 
+	</select>
+	<!--取得岗位名-->
+	<select id="getCategoryName" parameterClass="java.util.HashMap" resultClass="java.lang.String">
+		SELECT
+			CategoryName AS categoryName
+		FROM
+			Privilege.BIN_PositionCategory WITH(nolock)
+		WHERE
+			BIN_PositionCategoryID = #positionID#
+	</select>
+	<!--取得部门名-->
+	<select id="getDepartName" parameterClass="java.util.HashMap" resultClass="java.lang.String">
+		SELECT
+			'(' + DepartCode + ')' + DepartName AS departName
+		FROM
+			Basis.BIN_Organization WITH(nolock)
+		WHERE
+			BIN_OrganizationID = #organizationID#
+	</select>
+</sqlMap>

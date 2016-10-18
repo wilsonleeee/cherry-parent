@@ -1,0 +1,82 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sqlMap PUBLIC "-//iBATIS.com//DTD SQL Map 2.0//EN" "http://ibatis.apache.org/dtd/sql-map-2.dtd">
+<sqlMap namespace="BINOLWSMNG05">
+    <!-- 调入申请单查询（调入申请单审核通过+未处理）sql文  -->
+    <sql id="commQuery">
+        <![CDATA[
+            SELECT
+                A.BIN_ProductAllocationID,                 
+                A.AllocationNoIF,                
+                A.BIN_OrganizationIDIn,                 
+                A.BIN_OrganizationIDOut,
+                A.ValidFlag,
+                A.TotalQuantity AS totalQuantity,       
+                A.TotalAmount AS totalAmount
+            FROM
+                Inventory.BIN_ProductAllocation A WITH(NOLOCK)
+            WHERE
+            A.BIN_OrganizationIDOut = #BIN_OrganizationIDOut#
+            AND A.TradeStatus = '10'
+            AND A.VerifiedFlag != 'D'
+            AND A.WorkFlowID IS NOT NULL
+            AND A.ValidFlag = '1'
+        ]]>
+    </sql>
+    <!-- 调入申请单查询sql文  -->
+    <sql id="productAllocationQuery">
+        <![CDATA[
+            SELECT                          
+                T1.BIN_ProductAllocationID AS productAllocationID,                 
+                T1.AllocationNoIF AS allocationNoIF,                
+                T1.BIN_OrganizationIDIn AS organizationIDIn,                 
+                T1.BIN_OrganizationIDOut AS organizationIDOut,
+                T1.totalQuantity,                                                                        
+                T1.totalAmount  
+        ]]>  
+          <dynamic>
+        <isNotEmpty property="language">
+            <isEqual property="language" compareValue="en_US">
+            ,'('+B.DepartCode+')'+B.NameForeign AS departNameIn
+            ,'('+G.DepartCode+')'+G.NameForeign AS departNameOut
+            </isEqual>
+            <isEqual property="language" compareValue="zh_CN">
+            ,'('+B.DepartCode+')'+B.DepartName AS departNameIn
+            ,'('+G.DepartCode+')'+G.DepartName AS departNameOut
+            </isEqual>
+        </isNotEmpty>
+        <isEmpty property="language">
+            ,'('+B.DepartCode+')'+B.DepartName AS departNameIn
+            ,'('+G.DepartCode+')'+G.DepartName AS departNameOut
+        </isEmpty>
+        </dynamic>
+        <![CDATA[FROM ( ]]>
+        <include refid="BINOLWSMNG05.commQuery" />   
+        <![CDATA[)T1
+            LEFT JOIN Basis.BIN_Organization B 
+            ON T1.BIN_OrganizationIDIn = B.BIN_OrganizationID                 
+            LEFT JOIN Basis.BIN_Organization G 
+            ON T1.BIN_OrganizationIDOut = G.BIN_OrganizationID  
+        WHERE
+            T1.ValidFlag = '1'   
+        ]]>
+        <include refid="BINOLCMINC99.filterSql" />
+    </sql>
+    
+    <!-- 取得调入申请单总数  -->
+    <select id="getProductAllocationCount" parameterClass="java.util.HashMap" resultClass="java.lang.Integer">
+        <![CDATA[
+            SELECT COUNT(SORT_T1.productAllocationID) AS count FROM (
+        ]]>
+        <include refid="BINOLWSMNG05.productAllocationQuery" />
+        <![CDATA[
+            )SORT_T1
+        ]]>
+    </select>
+    
+    <!-- 取得调入申请单List  -->
+    <select id="getProductAllocationList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+        <include refid="BINOLCMINC99.pageheader" />
+        <include refid="BINOLWSMNG05.productAllocationQuery" />
+        <include refid="BINOLCMINC99.pagefooter" />
+    </select>
+</sqlMap>

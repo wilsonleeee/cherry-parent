@@ -1,0 +1,2145 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sqlMap PUBLIC "-//iBATIS.com//DTD SQL Map 2.0//EN" "http://ibatis.apache.org/dtd/sql-map-2.dtd">
+<sqlMap namespace="BINOLCM31">
+
+	<!-- 取得会员等级信息 -->
+    <select id="getMemLevelcomInfo" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+    	<![CDATA[
+			SELECT
+				Periodvalidity AS periodValidity
+			FROM
+				Members.BIN_MemberLevel
+			WHERE
+				BIN_MemberLevelID = #memberLevel#
+		]]>
+    </select>
+	
+	<!-- 取得系统默认等级 -->	
+	<select id="getDefaultLevel" parameterClass="java.util.HashMap" resultClass="java.lang.Integer">
+		<![CDATA[
+			  SELECT 
+				A.BIN_MemberLevelID
+			  FROM
+				Members.BIN_MemberLevel A LEFT JOIN
+				Members.BIN_MemberLevelDetail B ON
+				(A.BIN_MemberLevelID = B.BIN_MemberLevelID AND A.ValidFlag='1' AND B.ValidFlag = '1')
+			  WHERE 
+				A.BIN_BrandInfoID = #brandInfoID# AND
+				A.BIN_OrganizationInfoID = #organizationInfoID# AND
+				B.DefaultFlag = '1'
+		]]>	
+		<isNotEmpty property="mClubId">
+		<![CDATA[ AND A.BIN_MemberClubID = #mClubId#
+		]]>
+		</isNotEmpty>
+    </select>
+    
+    <!-- 取得注册会员信息 -->
+    <select id="getMemRegisInfo" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+    	<![CDATA[
+			SELECT TOP 1
+				TmallMixNick AS mixNick
+			FROM
+				Members.BIN_MemRegisterInfo
+			WHERE
+				BIN_MemberInfoID = #memberInfoId#
+		]]>
+    </select>
+    
+    <!-- 取得会员  -->
+    <select id="getMemberInfo" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+       	<![CDATA[
+			SELECT TOP 1
+				A.MobilePhone AS mobile,
+				ISNULL(A.MemberLevel, 0) AS level,
+				ISNULL(B.TotalPoint, 0) AS point,
+				A.TaobaoNick AS nick,
+				A.Nickname AS tNickName
+			FROM
+				Members.BIN_MemberInfo A left join
+				Members.BIN_MemberPoint B
+				ON (A.BIN_MemberInfoID = B.BIN_MemberInfoID)
+			WHERE
+		]]>
+		<isNotEmpty property="memberInfoId">
+		<![CDATA[ A.BIN_MemberInfoID = #memberInfoId#
+		]]>
+	</isNotEmpty>
+	<isEmpty property="memberInfoId">
+		<![CDATA[
+			A.BIN_BrandInfoID = #brandInfoId# AND
+			A.BIN_OrganizationInfoID = #organizationInfoId# AND
+		 	A.TmallMixMobile = #mix_mobile#
+		]]>
+			<isNotEmpty property="tmallCounterArr" >
+				AND A.CounterCodeBelong IN
+			<iterate conjunction="," open="(" close=")" property="tmallCounterArr">  
+		        #tmallCounterArr[]#
+		    </iterate>							
+			</isNotEmpty>
+		<![CDATA[
+			ORDER BY A.BIN_MemberInfoID
+		]]>
+	</isEmpty>
+    </select>
+    
+    <!-- 取得会员等级List(非默认) -->
+    <select id="getNoDefLevelList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+    	<![CDATA[
+			SELECT
+				A.BIN_MemberLevelID AS levelId,
+				A.Periodvalidity AS periodValidity
+			FROM
+				Members.BIN_MemberLevel A JOIN
+				Members.BIN_MemberLevelDetail B
+				ON (A.BIN_MemberLevelID = B.BIN_MemberLevelID)
+			WHERE
+				A.BIN_BrandInfoID = #brandInfoID# AND
+				A.BIN_OrganizationInfoID = #organizationInfoID# AND
+				A.ValidFlag = '1' AND
+				B.DefaultFlag <> '1'
+			ORDER BY B.Grade
+		]]>
+    </select>
+    
+    <!-- 插入天猫会员同步表  -->
+	<insert id="addTmallMemSyncInfo" parameterClass="java.util.HashMap">
+		<![CDATA[
+		INSERT INTO Members.BIN_TmallMemSyncInfo(
+			BIN_MemberInfoID,
+			Version,
+			SyncResult,
+			ErrorCode,
+			MemberLevel,
+			Point,
+			ResultMsg,
+		]]>	
+			<include refid="BINOLCMINC99.insertKeySql" />									
+		<![CDATA[	
+		)VALUES(
+			#memberInfoId#,
+			#syncVersion#,
+			#syncResult#,
+			#errorCode#,
+			#level#,
+			#point#,
+			#resultMsg#,
+		]]>
+		<include refid="BINOLCMINC99.insertValueSql" />
+		<![CDATA[
+		)
+		]]>
+	</insert>
+	
+	 <!--更新会员同步信息 -->
+	<update id="updateMemSyncInfo" parameterClass="java.util.HashMap">
+		<![CDATA[
+			UPDATE 		
+				Members.BIN_MemberInfo
+			SET	
+	      		TmallSyncFlg = #tmallSyncFlg#,
+		]]>
+		<isNotEmpty property="taobao_nick" >
+			TaobaoNick = CASE WHEN (TaobaoNick IS NULL OR TaobaoNick = '') THEN #taobao_nick# ELSE TaobaoNick END,
+		</isNotEmpty>
+		<isNotEmpty property="mobileNew" >
+			MobilePhone = CASE WHEN (MobilePhone IS NULL OR MobilePhone = '') THEN #mobileNew# ELSE MobilePhone END,
+		</isNotEmpty>
+		<include refid="BINOLCMINC99.updateSql" />
+		<![CDATA[
+			WHERE 
+				BIN_MemberInfoID = #memberInfoId#
+		]]>
+    </update>
+    
+    <!-- 检查天猫会员是否已绑定 -->	
+	<select id="getBindMemCount" parameterClass="java.util.HashMap" resultClass="java.lang.Integer">
+		<![CDATA[
+			  SELECT
+				COUNT(1)
+			  FROM
+			  	Members.BIN_MemberInfo
+			  WHERE
+			  	BIN_MemberInfoID = #memberInfoId# AND
+			  	TmallMixMobile IS NOT NULL AND
+			  	TmallBindTime IS NOT NULL
+		]]>	
+    </select>
+	
+	<!-- 取得规则ID -->	
+	<select id="getRuleIdByCode" parameterClass="java.util.HashMap" resultClass="java.lang.Integer">
+		<![CDATA[
+			  SELECT TOP 1
+				BIN_RuleID
+			  FROM
+			  	Campaign.BIN_Rule
+			  WHERE
+			  	ContentCode = #contentCode#
+		]]>	
+    </select>
+	
+	<!-- 取得规则内容 -->	
+	<select id="getRuleContent" parameterClass="java.util.HashMap" resultClass="java.lang.String">
+		<![CDATA[
+			  SELECT
+				RuleContent
+			FROM
+				Campaign.BIN_Rule
+			WHERE BIN_RuleID = #ruleId#
+		]]>	
+    </select>
+	
+	<!-- 插入规则表  -->
+	<insert id="insertRuleContent" parameterClass="java.util.HashMap">	
+		<selectKey resultClass="java.lang.Integer" type="post" keyProperty="BIN_RuleID" >
+		<![CDATA[
+	   INSERT INTO Campaign.BIN_Rule
+			      (BIN_CampaignRuleID,
+				   RuleContent,
+				   ContentCode,																										
+		]]>	
+			<include refid="BINOLCMINC99.insertKeySql" />									
+		<![CDATA[								
+		)VALUES									
+				 (#campaignRuleId#,
+				  #ruleContent#,
+				  #contentCode#,
+		]]>
+		    <include refid="BINOLCMINC99.insertValueSql" />
+		<![CDATA[)
+			select SCOPE_IDENTITY() as value
+			]]> 
+	    </selectKey>
+	</insert>
+	
+	<!-- 取得会员初始采集信息 -->
+    <select id="getMemberInitialInfo" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+    	<![CDATA[
+			SELECT
+				InitialMemLevel AS initialMemLevel,
+				CONVERT(VARCHAR, InitialDate, 121) AS initialDate,
+				CONVERT(VARCHAR, InitLevelStartDate, 120) AS initStartDate,
+				CONVERT(VARCHAR, InitLevelEndDate, 120) AS initEndDate,
+				CONVERT(VARCHAR, LevelStartDate, 120) AS leStartDate,
+				CONVERT(VARCHAR, LevelEndDate, 120) AS leEndDate
+			FROM
+				Members.BIN_MemberInfo
+			WHERE
+				BIN_MemberInfoID = #memberInfoId#
+		]]>
+    </select>
+    
+    <!-- 取得会员初始采集信息(会员俱乐部) -->
+    <select id="getClubMemberInitialInfo" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+    	<![CDATA[
+			SELECT
+				InitialMemLevel AS initialMemLevel,
+				CONVERT(VARCHAR, InitialDate, 121) AS initialDate,
+				CONVERT(VARCHAR, InitLevelStartDate, 120) AS initStartDate,
+				CONVERT(VARCHAR, InitLevelEndDate, 120) AS initEndDate,
+				CONVERT(VARCHAR, LevelStartDate, 120) AS leStartDate,
+				CONVERT(VARCHAR, LevelEndDate, 120) AS leEndDate
+			FROM
+				Members.BIN_MemClubLevel
+			WHERE
+				BIN_MemberInfoID = #memberInfoId# AND
+				BIN_MemberClubID = #memberClubId#
+		]]>
+    </select>
+    
+    <!-- 取得会员初始积分信息 -->
+    <select id="getMemPointInitInfo" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+    	<![CDATA[
+			SELECT
+				CONVERT(VARCHAR, InitialTime, 120) AS initialTime,
+				ISNULL(InitialPoint, 0) AS initialPoint,
+				ISNULL(InitChangablePoint, 0) AS initChangablePoint,
+				ISNULL(InitTotalChanged, 0) AS initTotalChanged,
+				ISNULL(TotalPoint, 0) AS beftPoint
+			FROM
+				Members.BIN_MemberPoint
+			WHERE
+				BIN_MemberInfoID = #memberInfoId#
+		]]>
+		 <isNotEmpty property="memberClubId">
+			 AND BIN_MemberClubID = #memberClubId#
+	</isNotEmpty>
+    </select>
+    
+	
+	<!-- 取得单据对应的BA卡号及柜台号信息(销售) -->
+    <select id="getSaleBaCounterInfo" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+    	<![CDATA[
+				SELECT TOP 1
+					A.Channel AS channel,
+					B.EmployeeCode AS baCode,
+					C.CounterCode AS counterCode
+				FROM
+					Sale.BIN_SaleRecord A WITH(nolock)
+					JOIN Sale.BIN_SaleRecordDetail B WITH(nolock)
+					ON(A.BIN_SaleRecordID = B.BIN_SaleRecordID)
+					LEFT JOIN Basis.BIN_CounterInfo C WITH(nolock)
+					ON(A.BIN_OrganizationID = C.BIN_OrganizationID)
+				WHERE
+					A.BillCode = #billCode# AND
+					A.BIN_BrandInfoID = #brandInfoId# AND
+					A.BIN_OrganizationInfoID = #organizationInfoId#
+		]]>
+    </select>
+	
+	<!-- 取得单据对应的BA卡号及柜台号信息(订单) -->
+    <select id="getESBaCounterInfo" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+    	<![CDATA[
+				SELECT TOP 1
+					A.DataSource AS channel,
+					A.EmployeeCode AS baCode,
+					C.CounterCode AS counterCode
+				FROM
+					Sale.BIN_ESOrderMain A WITH(nolock)
+					LEFT JOIN Basis.BIN_CounterInfo C WITH(nolock)
+					ON(A.BIN_OrganizationID = C.BIN_OrganizationID)
+				WHERE
+					A.BillCode = #billCode# AND
+					A.BIN_BrandInfoID = #brandInfoId# AND
+					A.BIN_OrganizationInfoID = #organizationInfoId#
+		]]>
+    </select>
+    
+	<!-- 取得单据对应的BA卡号及柜台号信息(初始数据采集) -->
+    <select id="getMSBaCounterInfo" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+    	<![CDATA[
+				SELECT
+					BaCode AS baCode,
+					Countercode AS counterCode
+				FROM
+					Members.BIN_MemUsedInfo WITH(nolock)
+				WHERE
+					TradeNoIF = #billCode# AND
+					BIN_BrandInfoID = #brandInfoId# AND
+					BIN_OrganizationInfoID = #organizationInfoId#
+		]]>
+    </select>
+	<!-- 会员等级List -->
+	<resultMap id="BINOLCM31.MemberLevelList" class="java.util.HashMap">
+		<result property="memberLevelId" column="BIN_MemberLevelID"/>			<!-- 会员等级ID -->
+		<result property="levelName" column="LevelName"/>						<!-- 会员等级名称 -->
+		<result property="fromDate" column="FromDate"/>							<!-- 有效期开始日期 -->
+		<result property="toDate" column="ToDate"/>								<!-- 有效期结束日期 -->
+		<result property="defFromDate" column="DefFromDate"/>					<!-- 默认有效期开始日期 -->
+		<result property="grade" column="Grade"/>								<!-- 级别 -->
+		<result property="periodvalidity" column="Periodvalidity"/>				<!-- 会员等级有效期信息 -->
+	</resultMap>
+	<!-- 取得会员等级List -->
+    <select id="getMemberLevelList" parameterClass="java.util.HashMap" resultMap="BINOLCM31.MemberLevelList">
+       	<![CDATA[
+				SELECT
+					A.BIN_MemberLevelID,
+					A.LevelName,
+					B.FromDate,
+					case when B.FromDate >= convert(DATE, #busDate#, 121) then B.FromDate else convert(DATE, #busDate#, 121) end AS DefFromDate,
+					B.ToDate,
+					B.Grade,
+					A.Periodvalidity
+				FROM
+					Members.BIN_MemberLevel A JOIN
+					Members.BIN_MemberLevelDetail B
+					ON (A.BIN_MemberLevelID = B.BIN_MemberLevelID AND B.ValidFlag = '1')
+				WHERE
+					A.BIN_OrganizationInfoID = #organizationInfoId# AND
+					A.BIN_BrandInfoID = #brandInfoId# AND
+					A.ValidFlag = '1'
+			]]>
+			<dynamic>
+				<isNotEmpty prepend="AND" property="memberClubId">
+					A.BIN_MemberClubID = #memberClubId#
+				</isNotEmpty>
+				<isNotEmpty prepend="AND" property="memberLevelId">
+					A.BIN_MemberLevelID = #memberLevelId#
+				</isNotEmpty>
+			</dynamic>
+    </select>
+	
+	<!-- 插入会员信息扩展表 -->
+    <insert id="addComMemberExtInfo" parameterClass="java.util.HashMap">
+    <![CDATA[
+    	INSERT INTO Members.BIN_MemberExtInfo
+    	(
+    		BIN_MemberInfoID,													
+			TotalAmount,													
+			Btimes,
+			DepositAmount,
+			UpLevelAmount,
+	]]>								
+		<include refid="BINOLCMINC99.insertKeySql" />		
+	<![CDATA[																									
+    	)
+    	VALUES
+    	(
+    		#memberInfoId#,
+    		#totalAmounts#,
+    		#curBtimes#,
+    		#depositAmount#,
+    		#upLevelAmount#,
+	]]>
+		<include refid="BINOLCMINC99.insertValueSql" />		
+	<![CDATA[
+    	)
+    ]]>		
+    </insert>
+    
+    <!--更新会员信息扩展表 -->
+	<update id="updateComMemberExtInfo" parameterClass="java.util.HashMap">
+		<![CDATA[
+			UPDATE				
+				Members.BIN_MemberExtInfo			
+			SET				
+		]]>		
+			<isNotEmpty property="totalAmounts">
+    			TotalAmount = #totalAmounts#,
+			</isNotEmpty>
+			<isNotEmpty property="curBtimes">
+    			Btimes = #curBtimes#,
+			</isNotEmpty>
+			<isNotEmpty property="depositAmount">
+    			DepositAmount = #depositAmount#,
+			</isNotEmpty>
+			<isNotEmpty property="upLevelAmount">
+    			UpLevelAmount = #upLevelAmount#,
+			</isNotEmpty>
+			<include refid="BINOLCMINC99.updateSql" />		
+		<![CDATA[				
+			WHERE					
+				BIN_MemberInfoID = #memberInfoId#
+		]]>
+    </update>
+    
+    <!-- 插入会员俱乐部等级扩展信息 -->
+    <insert id="addComMemberClubExtInfo" parameterClass="java.util.HashMap">
+    <![CDATA[
+    	INSERT INTO Members.BIN_MemClubLevel
+    	(
+    		BIN_MemberInfoID,													
+			BIN_MemberClubID,													
+			TotalAmount,
+			UpLevelAmount,
+	]]>								
+		<include refid="BINOLCMINC99.insertKeySql" />		
+	<![CDATA[																									
+    	)
+    	VALUES
+    	(
+    		#memberInfoId#,
+    		#memberClubId#,
+    		#totalAmounts#,
+    		#upLevelAmount#,
+	]]>
+		<include refid="BINOLCMINC99.insertValueSql" />		
+	<![CDATA[
+    	)
+    ]]>		
+    </insert>
+    
+    <!-- 插入会员俱乐部属性 -->
+    <insert id="addComMemClubInfo" parameterClass="java.util.HashMap">
+    <![CDATA[
+    	INSERT INTO Members.BIN_MemClubLevel
+    	(
+    		BIN_MemberInfoID,													
+			BIN_MemberClubID,													
+			BIN_EmployeeID,
+			BaCode,
+			BIN_OrganizationID,
+			CounterCode,
+			JoinTime,
+			IsReceiveMsg,
+			Version,
+	]]>								
+		<include refid="BINOLCMINC99.insertKeySql" />		
+	<![CDATA[																									
+    	)
+    	VALUES
+    	(
+    		#memberInfoId#,
+    		#memberClubId#,
+    		#employeeId#,
+    		#employeeCode#,
+    		#organizationId#,
+    		#departCode#,
+    		#joinTime#,
+    		'1',
+    		'1',
+	]]>
+		<include refid="BINOLCMINC99.insertValueSql" />		
+	<![CDATA[
+    	)
+    ]]>		
+    </insert>
+    
+    <!--更新会员俱乐部等级扩展信息 -->
+	<update id="updateComMemberClubExtInfo" parameterClass="java.util.HashMap">
+		<![CDATA[
+			UPDATE				
+				Members.BIN_MemClubLevel			
+			SET				
+		]]>		
+			<isNotEmpty property="totalAmounts">
+    			TotalAmount = #totalAmounts#,
+			</isNotEmpty>
+			<isNotEmpty property="upLevelAmount">
+    			UpLevelAmount = #upLevelAmount#,
+			</isNotEmpty>
+			<include refid="BINOLCMINC99.updateSql" />		
+		<![CDATA[				
+			WHERE					
+				BIN_MemberInfoID = #memberInfoId# AND
+				BIN_MemberClubID = #memberClubId#
+		]]>
+    </update>
+    
+     <!--更新会员俱乐部等级扩展信息 -->
+	<update id="updateComClubExtInfo" parameterClass="java.util.HashMap">
+		<![CDATA[
+			UPDATE				
+				Members.BIN_MemClubLevel			
+			SET	
+				BIN_EmployeeID = #employeeID#,
+	    		BaCode = #BAcode#,
+	    		BIN_OrganizationID = #organizationID#,
+	    		CounterCode = #counterCode#,
+	    		JoinTime = #joinTime#,
+	    		IsReceiveMsg = case when (IsReceiveMsg is null or IsReceiveMsg = '') then '1' else IsReceiveMsg end,
+	    		Version = ISNULL(Version, 0) + 1,
+		]]>		
+			<include refid="BINOLCMINC99.updateSql" />		
+		<![CDATA[				
+			WHERE					
+				BIN_MemberInfoID = #memberInfoId# AND
+				BIN_MemberClubID = #memberClubId#
+		]]>
+    </update>
+	
+	     <!--更新会员俱乐部属性 -->
+	<update id="updateComMemClubInfo" parameterClass="java.util.HashMap">
+		<![CDATA[
+			UPDATE				
+				Members.BIN_MemClubLevel			
+			SET	
+				BIN_EmployeeID = #employeeId#,
+	    		BaCode = #employeeCode#,
+	    		BIN_OrganizationID = #organizationId#,
+	    		CounterCode = #departCode#,
+	    		JoinTime = #joinTime#,
+	    		IsReceiveMsg = case when (IsReceiveMsg is null or IsReceiveMsg = '') then '1' else IsReceiveMsg end,
+	    		Version = ISNULL(Version, 0) + 1,
+	    		PreOrganizationID = #preOrganizationId#,
+	    		PreCounterCode = #preCounterCode#,
+	    		PreEmployeeID = #preEmployeeCode#,
+	    		PreBaCode = #preBaCode#,
+	    		PreJoinTime = #preJoinTime#,
+		]]>		
+			<include refid="BINOLCMINC99.updateSql" />		
+		<![CDATA[				
+			WHERE					
+				BIN_ClubLevelID = #clubLeveId#
+		]]>
+    </update>
+	
+	
+	<!-- 取得柜台信息 -->
+    <select id="getComCounterInfo" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+    	<![CDATA[
+			SELECT TOP 1
+				A.BIN_OrganizationID AS organizationId,
+				A.CounterNameIF AS departName,
+				A.BIN_ChannelID AS channelId,
+				B.BIN_CityID AS cityId
+			FROM
+				Basis.BIN_CounterInfo A WITH(nolock) LEFT JOIN
+				Basis.BIN_Organization B WITH(nolock)
+				ON (A.BIN_OrganizationID = B.BIN_OrganizationID)
+			WHERE
+				A.CounterCode = #counterCode# AND
+				A.BIN_BrandInfoID = #brandInfoId# AND
+				A.BIN_OrganizationInfoID = #organizationInfoId#
+			ORDER BY A.ValidFlag DESC
+		]]>
+    </select>
+	
+	<!-- 取得员工信息 -->
+    <select id="getComEmployeeInfo" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+    	<![CDATA[
+			SELECT TOP 1
+				BIN_EmployeeID AS employeeId
+			FROM
+				Basis.BIN_Employee WITH(nolock)
+			WHERE
+				EmployeeCode = #employeeCode# AND
+				BIN_BrandInfoID = #brandInfoId# AND
+				BIN_OrganizationInfoID = #organizationInfoId#
+			ORDER BY ValidFlag DESC
+		]]>
+    </select>
+    
+    <!-- 插入会员积分表  -->
+	<insert id="addComMemberPointInfo" parameterClass="java.util.HashMap">
+		<![CDATA[
+		INSERT Members.BIN_MemberPoint(
+			BIN_OrganizationInfoID,
+			BIN_BrandInfoID,
+			BIN_MemberInfoID,
+			TotalPoint,
+			ChangablePoint,
+			TotalChanged,
+			PreCardPoint,
+			LastChangeTime,
+			InitialMTPoint,
+			InitialMTTime,
+			BIN_MemberClubID,
+		]]>	
+			<include refid="BINOLCMINC99.insertKeySql" />									
+		<![CDATA[	
+		)VALUES(
+			#organizationInfoId#,
+			#brandInfoId#,
+			#memberInfoId#,
+			#curTotalPoint#,
+			#curChangablePoint#,
+			#curTotalChanged#,
+			#preCardPoint#,
+			GETDATE(),
+			#initialMTPoint#,
+			#initialMTTime#,
+			#memberClubId#,
+		]]>
+		<include refid="BINOLCMINC99.insertValueSql" />
+		<![CDATA[
+		)
+		]]>
+	</insert>
+	
+	<!-- 插入会员积分表  -->
+	<insert id="addComHistoryPointInfo" parameterClass="java.util.HashMap">
+		<![CDATA[
+		INSERT Members.BIN_MemberPoint(
+			BIN_OrganizationInfoID,
+			BIN_BrandInfoID,
+			BIN_MemberInfoID,
+			TotalPoint,
+			ChangablePoint,
+			InitialPoint,
+			InitialTime,
+			InitChangablePoint,
+			InitTotalChanged,
+			InitialID,
+			InitialLastdate,
+		]]>	
+			<include refid="BINOLCMINC99.insertKeySql" />									
+		<![CDATA[	
+		)VALUES(
+			#organizationInfoId#,
+			#brandInfoId#,
+			#memberInfoId#,
+			#curTotalPoint#,
+			#curChangablePoint#,
+			#initialPoint#,
+			#initialTime#,
+			#initChangablePoint#,
+			#initTotalChanged#,
+			#initialId#,
+			#initialLastdate#,
+		]]>
+		<include refid="BINOLCMINC99.insertValueSql" />
+		<![CDATA[
+		)
+		]]>
+	</insert>
+	
+	<!-- 更新会员积分表  -->
+	<update id="updateComMemberPointInfo" parameterClass="java.util.HashMap">
+		
+		<![CDATA[
+	      UPDATE
+	               Members.BIN_MemberPoint
+		  SET    
+				   TotalPoint = #curTotalPoint#,
+				   ChangablePoint = #curChangablePoint#,
+		]]>
+		<isNotEmpty property="curTotalChanged">
+			<![CDATA[TotalChanged = #curTotalChanged#,]]>
+		</isNotEmpty>
+		<isNotEmpty property="preCardPoint">
+			<![CDATA[PreCardPoint = #preCardPoint#,]]>
+		</isNotEmpty>
+		<isEmpty property="lcTimeKbn">
+			<![CDATA[LastChangeTime = GETDATE(),]]>
+		</isEmpty>
+		<isNotEmpty property="initialMTPoint">
+			<![CDATA[InitialMTPoint = #initialMTPoint#,]]>
+		</isNotEmpty>
+		<isNotEmpty property="initialMTTime">
+			<![CDATA[InitialMTTime = #initialMTTime#,]]>
+		</isNotEmpty>
+			<include refid="BINOLCMINC99.updateSql" />									
+		<![CDATA[								
+		  WHERE	  
+		  		  BIN_MemberInfoID = #memberInfoId#
+		]]>
+		   <isNotEmpty property="memberClubId">
+			 AND BIN_MemberClubID = #memberClubId#
+	</isNotEmpty>
+	</update> 
+	
+	<!-- 更新会员积分表(历史记录)  -->
+	<update id="updateComHistoryPointInfo" parameterClass="java.util.HashMap">
+		
+		<![CDATA[
+	      UPDATE
+	               Members.BIN_MemberPoint
+		  SET    
+				   TotalPoint = #curTotalPoint#,
+				   ChangablePoint = #curChangablePoint#,
+				   InitialPoint = #initialPoint#,
+				   InitChangablePoint = #initChangablePoint#,
+		]]>
+			<include refid="BINOLCMINC99.updateSql" />									
+		<![CDATA[								
+		  WHERE	  
+		  		  BIN_MemberInfoID = #memberInfoId#
+		]]>
+		   
+	</update> 
+	
+	<!-- 更新会员前卡积分值  -->
+	<update id="updateMemPreCardPoint" parameterClass="java.util.HashMap">
+		
+		<![CDATA[
+	      UPDATE
+	               Members.BIN_MemberPoint
+		  SET    
+				   PreCardPoint = #preCardPoint#,
+		]]>
+			<include refid="BINOLCMINC99.updateSql" />									
+		<![CDATA[								
+		  WHERE	  
+		  		  BIN_MemberInfoID = #memberInfoId#
+		]]>
+		<isNotEmpty property="memberClubId">
+			AND BIN_MemberClubID = #memberClubId#
+	</isNotEmpty>
+		   
+	</update> 
+	
+	<!-- 插入会员积分变化主表  -->
+	<insert id="addComPointChange" parameterClass="com.cherry.dr.cmbussiness.dto.core.PointChangeDTO">
+		<selectKey resultClass="java.lang.Integer" type="post" keyProperty="pointChangeId" >
+		<![CDATA[
+		INSERT Members.BIN_PointChange(
+			BIN_OrganizationInfoID,
+			BIN_BrandInfoID,
+			BIN_OrganizationID,
+			TradeNoIF,
+			TradeType,
+			BIN_MemberInfoID,
+			MemCode,
+			ChangeDate,
+			Point,
+			Amount,
+			Quantity,
+			BIN_EmployeeID,
+			ReCalcCount,
+			BIN_MemberClubID,
+		]]>	
+			<include refid="BINOLCMINC99.insertKeySql" />									
+		<![CDATA[	
+		)VALUES(
+			#organizationInfoId#,
+			#brandInfoId#,
+			#organizationId#,
+			#tradeNoIF#,
+			#tradeType#,
+			#memberInfoId#,
+			#memCode#,
+			#changeDate#,
+			#point#,
+			#amount#,
+			#quantity#,
+			#employeeId#,
+			#reCalcCount#,
+			#clubIdStr#,
+		]]>
+		<include refid="BINOLCMINC99.insertValueSql" />
+		<![CDATA[)
+			select SCOPE_IDENTITY() as value
+			]]> 
+	    </selectKey>
+	</insert>
+	
+	<!-- 更新会员积分变化表  -->
+	<update id="updateComPointChange" parameterClass="com.cherry.dr.cmbussiness.dto.core.PointChangeDTO">
+		
+		<![CDATA[
+	      UPDATE
+	               Members.BIN_PointChange
+		  SET    
+		  		   TradeType = #tradeType#,
+				   MemCode = #memCode#,
+				   ChangeDate = #changeDate#,
+				   Point = #point#,
+				   Amount = #amount#,
+				   Quantity = #quantity#,
+				   BIN_EmployeeID = #employeeId#,
+				   ValidFlag  = '1',
+				   ClearFlag = NULL,
+		]]>
+			<include refid="BINOLCMINC99.updateSql" />									
+		<![CDATA[								
+		  WHERE									
+				  BIN_PointChangeID = #pointChangeId#
+		]]>  
+	</update> 
+	
+	<!-- 插入会员积分变化明细表  -->
+	<insert id="addComPointChangeDetail" parameterClass="com.cherry.dr.cmbussiness.dto.core.PointChangeDetailDTO">
+		<![CDATA[
+		INSERT Members.BIN_PointChangeDetail(
+			BIN_PointChangeID,
+			UnitCode,
+			BarCode,
+			BIN_PrmPrtVendorID,
+			SaleType,
+			Point,
+			ValidMonths,
+			Price,
+			Quantity,
+			PointType,
+			Reason,
+			SubCampaignID,
+			MainRuleID,
+		]]>	
+			<include refid="BINOLCMINC99.insertKeySql" />									
+		<![CDATA[	
+		)VALUES(
+			#pointChangeId#,
+			#unitCode#,
+			#barCode#,
+			#prmPrtVendorId#,
+			#saleType#,
+			#point#,
+			#validMonths#,
+			#price#,
+			#quantity#,
+			#pointType#,
+			#reason#,
+			#subCampaignId#,
+			#mainRuleId#,
+		]]>
+		<include refid="BINOLCMINC99.insertValueSql" />
+		<![CDATA[
+		)
+		]]>
+	</insert>
+	
+	 <!-- 删除会员积分变化明细表 -->
+	<delete id="delComPointChangeDetail" parameterClass="java.util.HashMap">
+		<![CDATA[
+			DELETE FROM			
+				Members.BIN_PointChangeDetail						
+			WHERE					
+				BIN_PointChangeID = #pointChangeId#
+		]]>
+    </delete>
+    
+    <!-- 取得会员积分变化信息 -->	
+	<select id="getComPointChangeInfo" parameterClass="com.cherry.dr.cmbussiness.dto.core.PointChangeDTO" resultClass="java.util.HashMap">
+		<![CDATA[
+			SELECT TOP 1
+				BIN_PointChangeID AS pointChangeId,
+				ISNULL(ReCalcCount, 0) AS reCalcCount
+			FROM
+				Members.BIN_PointChange
+			WHERE
+				 BIN_MemberInfoID = #memberInfoId# AND
+				 TradeNoIF = #tradeNoIF#
+			ORDER BY 
+				ReCalcCount desc
+			
+		]]>	
+    </select>
+    
+    <!-- 取得会员积分变化信息(积分维护) -->	
+	<select id="getComMSPointChangeInfo" parameterClass="com.cherry.dr.cmbussiness.dto.core.PointChangeDTO" resultClass="java.util.HashMap">
+		<![CDATA[
+			SELECT TOP 1
+				B.BIN_PointChangeDetailID AS pointChangeDetailId,
+				B.BIN_PointChangeID AS pointChangeId,
+				B.Point AS point,
+				ISNULL(A.ReCalcCount, 0) AS reCalcCount
+			FROM
+				Members.BIN_PointChange A JOIN 
+				Members.BIN_PointChangeDetail B
+				ON(A.BIN_PointChangeID = B.BIN_PointChangeID)
+			WHERE
+				 A.BIN_MemberInfoID = #memberInfoId# AND
+				 A.TradeNoIF = #tradeNoIF#
+			ORDER BY
+				A.ReCalcCount desc,
+				B.BIN_PointChangeDetailID
+		]]>	
+    </select>
+    
+    <!-- 取得会员卡号 -->
+	<select id="getComMemCard" parameterClass="java.util.HashMap" resultClass="java.lang.String">
+		<![CDATA[
+			SELECT TOP 1
+				MemCode
+			FROM
+				Members.BIN_MemCardInfo
+			WHERE
+				BIN_MemberInfoID = #memberInfoId# AND
+				ValidFlag = '1'
+			ORDER BY
+				CardValidFlag DESC,
+				CardCount DESC
+		]]>	
+    </select>
+    
+     <!-- 取得会员卡件数-->
+	<select id="getComMemCardCount" parameterClass="java.util.HashMap" resultClass="java.lang.Integer">
+		<![CDATA[
+			  	SELECT
+					COUNT(BIN_MemCardInfoID)
+				FROM
+					Members.BIN_MemCardInfo
+				WHERE
+					BIN_MemberInfoID = #memberInfoId# AND
+					ValidFlag = '1'
+		]]>	
+    </select>
+    
+    <!-- 取得会员当前卡的积分值之和  -->
+    <select id="getCurPointInfo" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+       	<![CDATA[
+				SELECT
+					SUM(ISNULL(Point, 0)) AS curCardPoint
+				FROM 
+					Members.BIN_PointChange
+				WHERE
+					BIN_MemberInfoID = #memberInfoId# AND
+					MemCode = #memCode# AND
+					ValidFlag = '1'
+		  ]]>
+		  <isNotEmpty property="memberClubId">
+				AND BIN_MemberClubID = #memberClubId#
+		</isNotEmpty>
+	</select>
+    
+    <!-- 取得规则名称列表 -->
+	<select id="getCampRuleNameList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+		<![CDATA[
+			SELECT  
+				A.BIN_CampaignID AS campaignId,
+				A.CampaignName AS campaignName,
+				B.BIN_CampaignRuleID AS campaignRuleId
+			FROM
+				Campaign.BIN_Campaign A JOIN
+				Campaign.BIN_CampaignRule B
+				ON (A.BIN_CampaignID = B.BIN_CampaignID)
+			WHERE 
+				A.BIN_BrandInfoID = #brandInfoId# AND
+				A.BIN_OrganizationInfoID = #organizationInfoId# AND
+				A.ValidFlag = '1'
+		]]>	
+		<dynamic>
+		<isNotEmpty property="campaignType">
+				AND A.CampaignType = #campaignType#
+		</isNotEmpty>
+		<isNotEmpty property="memberClubId">
+				AND A.BIN_MemberClubID = #memberClubId#
+		</isNotEmpty>
+		</dynamic>
+    </select>
+    
+    <!-- 统计时间段内某规则的所有积分总和  -->
+    <select id="getComTotalPointInfo" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+       	<![CDATA[
+			SELECT
+				SUM(ISNULL(B.Point, 0)) AS totalPoint
+			FROM 
+				Members.BIN_PointChange A JOIN
+				Members.BIN_PointChangeDetail B
+				ON (A.BIN_PointChangeID = B.BIN_PointChangeID)
+			WHERE
+				A.BIN_MemberInfoID = #memberInfoId# AND
+		 ]]>
+		 <dynamic>
+			<isNotEmpty property="fromDate">
+				<![CDATA[A.ChangeDate >= CONVERT(DATETIME, #fromDate#) AND
+				]]>
+			</isNotEmpty>
+		  </dynamic>
+		 <![CDATA[
+				A.ChangeDate <= CONVERT(DATETIME, #toDate#) AND 
+				A.ValidFlag = '1'
+		  ]]>
+		  <dynamic>
+			<isNotEmpty property="searchIdKbn">
+				<isEqual property="searchIdKbn" compareValue="1">
+				<![CDATA[AND B.SubCampaignID = #ruleId#
+				]]>
+				</isEqual>
+				<isEqual property="searchIdKbn" compareValue="2">
+				<![CDATA[AND B.MainRuleID = #ruleId#
+						AND B.SubCampaignID IS NULL
+				]]>
+				</isEqual>
+			</isNotEmpty>
+		  </dynamic>
+    </select>
+    
+    <!-- 取得会员所属柜台信息  -->
+    <select id="getComCouBelongInfo" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+       	<![CDATA[
+			SELECT TOP 1
+				A.BIN_OrganizationID AS organizationId,
+				B.BIN_CityID AS cityId,
+				B.DepartCode AS counterCode,
+				C.CounterNameIF AS departName,
+				C.BIN_ChannelID AS channelId
+			FROM 
+				Members.BIN_MemberInfo A WITH(nolock)
+				LEFT JOIN Basis.BIN_Organization B WITH(nolock)
+				ON (A.BIN_OrganizationID = B.BIN_OrganizationID)
+				LEFT JOIN Basis.BIN_CounterInfo C WITH(nolock)
+				ON (B.BIN_OrganizationID = C.BIN_OrganizationID)
+			WHERE
+				A.BIN_MemberInfoID = #memberInfoId#
+			ORDER BY C.ValidFlag DESC
+		  ]]>
+	</select>
+	
+	<!-- 取得会员所属柜台信息  -->
+    <select id="getComClubCouBelongInfo" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+       	<![CDATA[
+			SELECT TOP 1
+				convert(varchar, D.JoinTime, 23) as joinDate,
+				D.BIN_OrganizationID AS organizationId,
+				B.BIN_CityID AS cityId,
+				B.DepartCode AS counterCode,
+				C.CounterNameIF AS departName,
+				C.BIN_ChannelID AS channelId
+			FROM 
+				Members.BIN_MemberInfo A WITH(nolock) join
+				Members.BIN_MemClubLevel D WITH(nolock)
+				ON (A.BIN_MemberInfoID = D.BIN_MemberInfoID AND D.BIN_MemberClubID = #memberClubId#)
+				LEFT JOIN Basis.BIN_Organization B WITH(nolock)
+				ON (D.BIN_OrganizationID = B.BIN_OrganizationID)
+				LEFT JOIN Basis.BIN_CounterInfo C WITH(nolock)
+				ON (B.BIN_OrganizationID = C.BIN_OrganizationID)
+			WHERE
+				A.BIN_MemberInfoID = #memberInfoId#
+			ORDER BY C.ValidFlag DESC
+		  ]]>
+	</select>
+		  
+    <!-- 取得会员当前积分信息 -->
+    <select id="getComMemberPointInfo" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+    	<![CDATA[
+			SELECT
+				BIN_MemberPointID AS memberPointId,
+				ISNULL(TotalPoint, 0) AS curTotalPoint,
+				ISNULL(TotalChanged, 0) AS curTotalChanged,
+				ISNULL(ChangablePoint, 0) AS curChangablePoint,
+				ISNULL(PreCardPoint, 0) AS mbPreCardPoint,
+				ISNULL(TotalDisablePoint, 0) AS totalDisablePoint,
+				ISNULL(CurDisablePoint, 0) AS curDisablePoint,
+				convert(varchar, PreDisableDate, 120) AS preDisableDate,
+				convert(varchar, CurDealDate, 120) AS curDealDate,
+				CONVERT(VARCHAR, InitialTime, 120) AS initialMPTime,
+				ISNULL(InitChangablePoint, 0) AS initMPChangablePoint,
+				ISNULL(InitialPoint, 0) AS initialMPPoint,
+				ISNULL(InitialID, 0) AS initialId,
+				ISNULL(InitTotalChanged, 0) AS initMPTotalChanged,
+				InitialLastdate AS initialLastdate
+			FROM 
+				Members.BIN_MemberPoint
+			WHERE
+				BIN_MemberInfoID = #memberInfoId#
+		]]>
+		<isNotEmpty property="memberClubId">
+			AND BIN_MemberClubID = #memberClubId#
+	</isNotEmpty>
+    </select>
+    
+    <!-- 会员当前的积分信息 -->
+	<resultMap id="BINOLCM31.MemberPointInfo" class="com.cherry.dr.cmbussiness.dto.core.PointDTO">
+		<result property="memberPointId" column="MemberPointID"/>				<!-- 会员积分ID -->
+		<result property="curTotalPoint" column="CurTotalPoint"/>					<!-- 当前的累计积分 -->
+		<result property="curTotalChanged" column="CurTotalChanged"/>				<!-- 当前的累计兑换积分 -->
+		<result property="curChangablePoint" column="CurChangablePoint"/>			<!-- 当前的可兑换积分 -->
+	</resultMap>
+	<!-- 取得会员当前的积分信息  -->
+    <select id="getPointDTOInfo" parameterClass="java.util.HashMap" resultMap="BINOLCM31.MemberPointInfo">
+       	<![CDATA[
+			SELECT
+				BIN_MemberPointID AS MemberPointID,
+				ISNULL(TotalPoint, 0) AS CurTotalPoint,
+				ISNULL(TotalChanged, 0) AS CurTotalChanged,
+				ISNULL(ChangablePoint, 0) AS CurChangablePoint
+			FROM 
+				Members.BIN_MemberPoint
+			WHERE
+				BIN_MemberInfoID = #memberInfoId#
+		  ]]>
+		  <isNotEmpty property="memberClubId">
+			AND BIN_MemberClubID = #memberClubId#
+	</isNotEmpty>
+    </select>
+    
+    <!-- 取得会员等级有效期信息 -->
+    <select id="getComLevelValidInfo" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+    	<![CDATA[
+			SELECT
+				Periodvalidity AS validity
+			FROM 
+				Members.BIN_MemberLevel
+			WHERE
+				BIN_MemberLevelID = #memberLevelId#
+		]]>
+    </select>
+    
+    <!-- 取得会员等级列表 -->
+    <select id="getComLevelList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+    	<![CDATA[
+			SELECT
+				BIN_MemberLevelID AS levelId,
+				LevelCode AS levelCode,
+				Periodvalidity AS periodValidity
+			FROM 
+				Members.BIN_MemberLevel
+		]]>
+    </select>
+    
+    <!-- 查询有效期开始的单据信息 -->
+	<select id="getComValidStartList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+		<![CDATA[
+			SELECT
+				BillID AS billId,
+				TradeType AS tradeType,
+				CONVERT(varchar, TicketDate, 121) AS ticketDate,
+				OldValue AS oldValue,
+				NewValue AS newValue,
+				ChangeType AS changeType
+			FROM
+				Members.BIN_RuleExecRecord
+			WHERE
+				BIN_MemberInfoID = #memberInfoId# AND
+				RecordKbn = 0 AND
+				(ChangeType = '1' OR ChangeType = '2')AND 
+				TradeType <> 'MB' AND
+		]]>
+		<isNotEmpty property="lelEndTime">
+		<![CDATA[TicketDate <= CONVERT(DATETIME,#lelEndTime#,121) AND]]>
+		</isNotEmpty>
+		<![CDATA[
+			ValidFlag = '1'
+			 ORDER BY 
+			 	CalcDate DESC,
+			 	TicketDate DESC
+	]]>
+    </select>
+    
+    <!-- 查询有效期开始的单据信息(历史履历) -->
+	<select id="getComValidStartHistoryList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+		<![CDATA[
+			SELECT
+				BillID AS billId,
+				TradeType AS tradeType,
+				CONVERT(varchar, TicketDate, 121) AS ticketDate,
+				OldValue AS oldValue,
+				NewValue AS newValue,
+				ChangeType AS changeType
+			FROM
+				Members.BIN_RuleExecRecordHistory
+			WHERE
+				BIN_MemberInfoID = #memberInfoId# AND
+				RecordKbn = 0 AND
+				(ChangeType = '1' OR ChangeType = '2')AND 
+				TradeType <> 'MB' AND
+		]]>
+		<isNotEmpty property="lelEndTime">
+		<![CDATA[TicketDate <= CONVERT(DATETIME,#lelEndTime#,121) AND]]>
+		</isNotEmpty>
+		<![CDATA[
+			ValidFlag = '1'
+			 ORDER BY 
+			 	CalcDate DESC,
+			 	TicketDate DESC
+	]]>
+    </select>
+    
+    <!-- 查询指定单据某个属性信息 -->
+	<select id="getComBillInfo" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+		<![CDATA[
+			SELECT TOP 1
+				OldValue AS oldValue,
+				NewValue AS newValue
+			FROM
+				Members.BIN_RuleExecRecord WITH(nolock)
+			WHERE
+				BillID = #billId# AND
+				RecordKbn = #recordKbn# AND
+				ValidFlag = '1'
+		]]>	
+    </select>
+    
+    <!-- 查询指定单据某个属性信息(历史履历) -->
+	<select id="getComBillHistoryInfo" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+		<![CDATA[
+			SELECT TOP 1
+				OldValue AS oldValue,
+				NewValue AS newValue
+			FROM
+				Members.BIN_RuleExecRecordHistory WITH(nolock)
+			WHERE
+				BillID = #billId# AND
+				RecordKbn = #recordKbn# AND
+				ValidFlag = '1'
+		]]>	
+    </select>
+    
+     <!-- 查询等级所有变化履历 -->
+	<select id="getComLevelAllRecordList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+		<![CDATA[
+			SELECT
+				MemCode AS memCode,
+				BillID AS billId,
+				TradeType AS tradeType,
+				OldValue AS oldValue,
+				NewValue AS newValue,
+				ChangeType AS changeType,
+				CONVERT(varchar, TicketDate, 121) AS ticketDate,
+				BIN_RuleIDs AS ruleIDs,
+				ReCalcCount AS reCalcCount,
+				CONVERT(varchar, CalcDate, 121) AS CalcDate
+			FROM
+				Members.BIN_RuleExecRecord
+			WHERE
+				BIN_MemberInfoID = #memberInfoId# AND
+]]>
+	<isNotEmpty property="memberClubId">
+		<![CDATA[ BIN_MemberClubID = #memberClubId# AND
+		]]>
+	</isNotEmpty>
+<![CDATA[
+				RecordKbn = 0 AND
+				(ChangeType = '1' OR ChangeType = '2')AND 
+				TradeType <> 'MB' AND
+				ValidFlag = '1'
+		UNION
+			SELECT
+				MemCode AS memCode,
+				BillID AS billId,
+				TradeType AS tradeType,
+				OldValue AS oldValue,
+				NewValue AS newValue,
+				ChangeType AS changeType,
+				CONVERT(varchar, TicketDate, 121) AS ticketDate,
+				BIN_RuleIDs AS ruleIDs,
+				ReCalcCount AS reCalcCount,
+				CONVERT(varchar, CalcDate, 121) AS CalcDate
+			FROM
+				Members.BIN_RuleExecRecordHistory
+			WHERE
+				BIN_MemberInfoID = #memberInfoId# AND
+]]>
+	<isNotEmpty property="memberClubId">
+		<![CDATA[ BIN_MemberClubID = #memberClubId# AND
+		]]>
+	</isNotEmpty>
+<![CDATA[
+				RecordKbn = 0 AND
+				(ChangeType = '1' OR ChangeType = '2')AND 
+				TradeType <> 'MB' AND
+				ValidFlag = '1'
+			 ORDER BY 
+			 	CalcDate DESC,
+			 	ticketDate DESC
+		]]>	
+    </select>
+    
+    <!-- 取得规则内容 -->	
+	<resultMap id="BINOLCM31.ComRuleContentList" class="java.util.HashMap">
+		<result property="ruleContent" column="RuleContent"/>
+	</resultMap>	
+	<select id="getComRuleContentList" parameterClass="java.util.HashMap" resultMap="BINOLCM31.ComRuleContentList">
+		<![CDATA[
+			SELECT
+				RuleContent
+			FROM
+				Campaign.BIN_Rule
+		]]>	
+		<dynamic>
+			<isNotEmpty property="ruleIdArr" >
+				WHERE BIN_RuleID IN
+			<iterate conjunction="," open="(" close=")" property="ruleIdArr">  
+		        #ruleIdArr[]#
+		    </iterate>							
+			</isNotEmpty>
+		</dynamic>
+    </select>
+    
+    <!-- 取得会员当前的更新信息  -->
+    <select id="getMemberUpInfo" parameterClass="com.cherry.dr.cmbussiness.dto.core.CampBaseDTO" resultClass="java.util.HashMap">
+		<![CDATA[
+			SELECT
+				A.UpdateTime AS memInfoUdTime,
+				A.ModifyCount AS memInfoMdCount,
+				B.UpdateTime AS extInfoUdTime,
+				B.ModifyCount AS extInfoMdCount
+			FROM
+				Members.BIN_MemberInfo A
+				LEFT JOIN Members.BIN_MemberExtInfo B
+				ON(A.BIN_MemberInfoID = B.BIN_MemberInfoID)
+			WHERE
+				A.BIN_MemberInfoID = #memberInfoId#
+		]]>	
+    </select>
+    
+    <!-- 查询首单时间 -->
+	<select id ="getFirstBillDate" parameterClass="com.cherry.dr.cmbussiness.dto.core.CampBaseDTO" resultClass ="java.lang.String">
+	<![CDATA[
+	SELECT 
+		MIN(T.saleTime) AS saleTime
+	FROM(
+		SELECT
+			convert(varchar, MIN(SaleTime), 120) AS saleTime
+		FROM 
+			Sale.BIN_SaleRecord WITH(nolock)
+		WHERE 
+			BIN_MemberInfoID = #memberInfoId# AND
+		 	BIN_BrandInfoID = #brandInfoId# AND
+		 	BIN_OrganizationInfoID = #organizationInfoId# AND
+]]>
+	<isNotEmpty property="clubIdStr">
+			BIN_MemberClubID = #memberClubId# AND
+	</isNotEmpty>
+	<![CDATA[
+		 	ISNULL(Amount, 0) > 0 AND
+		 	SaleType <> 'SR' AND
+		 	(BillModel IS NULL OR  BillModel IN ('0','1','3','4')) AND
+		 	ValidFlag = '1'
+	UNION
+		SELECT
+			convert(varchar, MIN(BillCreateTime), 120) AS saleTime
+		FROM 
+			Sale.BIN_ESOrderMain WITH(nolock)
+		WHERE 
+			BIN_MemberInfoID = #memberInfoId# AND
+		 	BIN_BrandInfoID = #brandInfoId# AND
+		 	BIN_OrganizationInfoID = #organizationInfoId# AND
+		 	ISNULL(Amount, 0) > 0 AND
+		 	SaleType <> 'SR' AND
+		 	BillType = '2' AND
+		 	ValidFlag = '1'
+	) T
+	]]>
+	</select>
+	
+	<!-- 查询指定时间段的积分情况 -->
+	<select id ="getPointChangeTimesList" parameterClass="java.util.HashMap" resultClass ="java.util.HashMap">
+	<![CDATA[
+		SELECT
+			ISNULL(Point, 0) AS point,
+			convert(varchar, ChangeDate, 120) AS changeDate,
+			TradeNoIF AS pcTradeNoIF
+		FROM 
+			Members.BIN_PointChange
+		WHERE 
+			BIN_MemberInfoID = #memberInfoId# AND
+		 	BIN_BrandInfoID = #brandInfoId# AND
+		 	BIN_OrganizationInfoID = #organizationInfoId# AND
+		 	ISNULL(Point, 0) > 0
+	]]>
+	<isNotEmpty property="memberClubId">
+			 AND BIN_MemberClubID = #memberClubId#
+	</isNotEmpty>
+	<isNotEmpty property="fromTime">
+		<![CDATA[AND ChangeDate >= CONVERT(DATETIME, #fromTime#, 121)
+		]]>
+	</isNotEmpty>
+	<![CDATA[
+			AND ChangeDate < CONVERT(DATETIME, #toTime#, 121)
+		 	AND ValidFlag = '1'
+		ORDER BY ChangeDate DESC
+	]]>
+	</select>
+	
+	<!-- 查询指定时间段的积分情况 -->
+	<select id ="getPCTimesList" parameterClass="java.util.HashMap" resultClass ="java.util.HashMap">
+	<![CDATA[
+		SELECT
+			ISNULL(Point, 0) AS point,
+			convert(varchar, ChangeDate, 120) AS changeDate,
+			TradeNoIF AS pcTradeNoIF,
+			TradeType AS pcTradeType
+		FROM 
+			Members.BIN_PointChange
+		WHERE 
+			BIN_MemberInfoID = #memberInfoId# AND
+		 	BIN_BrandInfoID = #brandInfoId# AND
+		 	BIN_OrganizationInfoID = #organizationInfoId#
+	]]>
+	<isNotEmpty property="fromTime">
+		<![CDATA[AND ChangeDate >= CONVERT(DATETIME, #fromTime#, 121)
+		]]>
+	</isNotEmpty>
+	<![CDATA[
+			AND ChangeDate < CONVERT(DATETIME, #toTime#, 121)
+			AND TradeType <> 'PC' 
+		 	AND ValidFlag = '1'
+		ORDER BY ChangeDate DESC
+	]]>
+	</select>
+	
+	<!-- 查询指定时间段的积分情况 -->
+	<select id ="getPCTimesSRList" parameterClass="java.util.HashMap" resultClass ="java.util.HashMap">
+	<![CDATA[
+		SELECT DISTINCT
+			A.TradeNoIF AS pcTradeNoIF
+		FROM 
+			Members.BIN_PointChange A JOIN
+			Members.BIN_PointChangeDetail B
+			ON (A.BIN_PointChangeID = B.BIN_PointChangeID)
+		WHERE 
+			A.BIN_MemberInfoID = #memberInfoId# AND
+		 	A.BIN_BrandInfoID = #brandInfoId# AND
+		 	A.BIN_OrganizationInfoID = #organizationInfoId# AND
+		 	ISNULL(A.Point, 0) = 0
+	]]>
+	<isNotEmpty property="fromTime">
+		<![CDATA[AND A.ChangeDate >= CONVERT(DATETIME, #fromTime#, 121)
+		]]>
+	</isNotEmpty>
+	<![CDATA[
+			AND A.ChangeDate < CONVERT(DATETIME, #toTime#, 121)
+			AND TradeType <> 'PC'
+		 	AND A.ValidFlag = '1'
+		 	AND B.RelevantSRCode IS NOT NULL
+		 	AND B.RelevantSRCode <> ''
+	]]>
+	</select>
+	
+	<!-- 更新积分导入明细表  -->
+	<update id="updateMemPointImportDetail" parameterClass="java.util.HashMap">
+		
+		<![CDATA[
+	      UPDATE Members.BIN_MemPointImportDetail
+   			 SET ResultFlag = #resultFlag#,
+       			 ImportResults=#importResults#,
+		]]>
+			<include refid="BINOLCMINC99.updateSql" />									
+		<![CDATA[								
+		  WHERE MemCode=#memberCode#
+				AND PointTime =#businessTime#
+				AND ResultFlag='2'
+		]]>
+	</update> 
+	
+	<!-- 取得一段时间内的购买信息 -->	
+	<select id="getCMBillCodeList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+		<![CDATA[
+			SELECT 
+				BillCode AS billCode,
+				SaleType AS saleType,
+				BillCodePre AS billCodePre,
+				ISNULL(Amount, 0) AS amount,
+				SaleTime AS saleTime
+			FROM 
+				Sale.BIN_SaleRecord WITH(nolock)
+			WHERE 
+				BIN_MemberInfoID = #memberInfoId# AND
+			 	BIN_BrandInfoID = #brandInfoId# AND
+			 	BIN_OrganizationInfoID = #organizationInfoId# AND
+	]]>
+		<isNotEmpty property="memberClubId">
+			BIN_MemberClubID = #memberClubId# AND
+		</isNotEmpty>
+	<![CDATA[
+				ISNULL(Amount, 0) > 0 AND
+				(BillModel IS NULL OR  BillModel IN ('0','1','3','4')) AND
+				ValidFlag = '1'
+		UNION
+			SELECT 
+				BillCode AS billCode,
+				SaleType AS saleType,
+				null AS billCodePre,
+				ISNULL(Amount, 0) AS amount,
+				BillCreateTime AS saleTime
+			FROM 
+				Sale.BIN_ESOrderMain WITH(nolock)
+			WHERE 
+				BIN_MemberInfoID = #memberInfoId# AND
+			 	BIN_BrandInfoID = #brandInfoId# AND
+			 	BIN_OrganizationInfoID = #organizationInfoId# AND
+				ISNULL(Amount, 0) > 0 AND
+				BillType = '2' AND
+				ValidFlag = '1'
+		ORDER BY saleTime
+		]]>	
+    </select>
+    
+    <!-- 取得当前业务日期对应的可兑换积分截止日期 -->	
+	<select id="getCMExPointDate" parameterClass="java.util.HashMap" resultClass="java.lang.String">
+		<![CDATA[
+			SELECT TOP 1
+				convert(varchar, ExPointDeadDate, 121) AS exPointDeadDate
+			FROM 
+				Campaign.BIN_Campaign
+			WHERE 
+				BIN_BrandInfoID = #brandInfoId# AND
+				ObtainToDate >= convert(date, #busDate#, 121) AND
+				CampaignTypeFlag = '1' AND
+				CampaignType = 'DHHD' AND
+				ExPointDeadDate IS NOT NULL AND
+				ObtainToDate IS NOT NULL AND
+				State IN ('0','1') AND
+				ValidFlag = '1'
+			ORDER BY ExPointDeadDate, BIN_CampaignID
+		]]>	
+    </select>
+    
+     <!-- 取得会员积分变化件数-->
+	<select id="getComPTChangeCount" parameterClass="java.util.HashMap" resultClass="java.lang.Integer">
+		<![CDATA[
+			  	SELECT
+					COUNT(1)
+				FROM
+					Members.BIN_PointChange
+				WHERE
+					BIN_MemberInfoID = #memberInfoId# AND
+				]]>
+	<isNotEmpty property="fromTime">
+		<![CDATA[ChangeDate > CONVERT(DATETIME, #fromTime#, 121) AND
+		]]>
+	</isNotEmpty>
+	<isNotEmpty property="memberClubId">
+			  BIN_MemberClubID = #memberClubId# AND
+	</isNotEmpty>
+	<![CDATA[	
+				ClearFlag = 1
+		]]>	
+    </select>
+    
+    <!--更新积分变化表清零标识 -->
+	<update id="updateDelClearFlag" parameterClass="java.util.HashMap">
+		<![CDATA[
+			UPDATE 		
+				Members.BIN_PointChange
+			SET	
+				ClearFlag = NULL,
+		]]>
+		<include refid="BINOLCMINC99.updateSql" />
+		<![CDATA[
+			WHERE 
+				BIN_MemberInfoID = #memberInfoId# AND
+		]]>
+	<isNotEmpty property="fromTime">
+		<![CDATA[ChangeDate > CONVERT(DATETIME, #fromTime#, 121) AND
+		]]>
+	</isNotEmpty>
+	<isNotEmpty property="memberClubId">
+			  BIN_MemberClubID = #memberClubId# AND
+	</isNotEmpty>
+	<![CDATA[	
+				ClearFlag = 1
+		]]>	
+    </update>
+    
+    <!-- 取得会员上次积分清零信息 -->	
+	<select id="getCMPreClearDate" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+		<![CDATA[
+			SELECT
+				convert(varchar, PreDisPointTime, 120) AS preDisPointTime
+			FROM
+				Members.BIN_MemberPoint
+			WHERE	
+				BIN_MemberInfoID = #memberInfoId#
+		]]>	
+		<isNotEmpty property="memberClubId">
+			 AND BIN_MemberClubID = #memberClubId#
+	</isNotEmpty>
+    </select>
+    
+    <!-- 取得会员最近一次积分变化信息 -->	
+	<select id="getComLastPtChangeInfo" parameterClass="com.cherry.dr.cmbussiness.dto.core.CampBaseDTO" resultClass="java.util.HashMap">
+		<![CDATA[
+			SELECT TOP 1
+				convert(varchar, ChangeDate, 120) AS changeDate
+			FROM
+				Members.BIN_PointChange
+			WHERE
+				 BIN_MemberInfoID = #memberInfoId# AND
+				 TradeType <> 'PC' AND
+				 ISNULL(Point, 0) >= 0 AND
+				 ValidFlag = '1'
+			ORDER BY 
+				ChangeDate desc
+			
+		]]>	
+    </select>
+    
+     <!--取得会员生日变更履历 -->
+	<select id="getComBirthModyList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+		<![CDATA[
+			SELECT
+				CONVERT(VARCHAR(100), A.ModifyTime, 23) AS modifyTime,
+				B.OldValue AS oldBirth,
+				B.NewValue AS newBirth
+			FROM
+				Members.BIN_MemInfoRecord A JOIN
+				Members.BIN_MemInfoRecordDetail B
+				ON (A.BIN_MemInfoRecordID = B.BIN_MemInfoRecordID)
+			WHERE
+				A.BIN_MemberInfoID = #memberInfoId# AND
+				A.ValidFlag = '1' AND
+		]]>	
+		<dynamic>
+			<isNotEmpty property="beginTime" >
+				A.ModifyTime >= #beginTime#	AND
+			</isNotEmpty>
+		</dynamic>
+		<![CDATA[
+				B.ModifyField='10' AND
+				B.ValidFlag = '1'
+			ORDER BY A.ModifyTime
+		]]>
+    </select>
+    
+    <!--取得积分类规则 -->
+	<select id="getComBTPointRuleList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+		<![CDATA[
+			SELECT
+				B.BIN_CampaignRuleID AS campaignRuleId,
+				A.RuleDetail AS ruleDetail
+			FROM
+				Campaign.BIN_Campaign A
+				JOIN Campaign.BIN_CampaignRule B
+				ON (A.BIN_CampaignID = B.BIN_CampaignID)
+				JOIN Campaign.BIN_CampaignGrp C
+				ON (A.BIN_CampaignGrpID = C.BIN_CampaignGrpID)
+			WHERE
+				A.BIN_BrandInfoID = #brandInfoId# AND
+				A.BIN_OrganizationInfoID = #organizationInfoId# AND
+				A.CampaignType = '3' AND
+				A.SaveStatus = '1' AND
+				A.ValidFlag = '1' AND
+				C.CampaignType = '3' AND
+				C.ValidFlag = '1'
+		]]>
+    </select>
+    
+    <!--取得会员生日规则匹配的履历 -->
+	<select id="getComBirthPointInfo" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+		<![CDATA[
+			SELECT TOP 1
+				CONVERT(VARCHAR, A.ChangeDate, 120) AS changeDate
+			FROM 
+				Members.BIN_PointChange A JOIN 
+				Members.BIN_PointChangeDetail B
+				ON (A.BIN_PointChangeID = B.BIN_PointChangeID)
+			WHERE A.BIN_MemberInfoID = #memberInfoId# AND
+				A.ChangeDate >= #fromDate# AND
+				A.ChangeDate < #toDate# AND
+				A.ValidFlag = '1'
+		]]>	
+		<dynamic>
+			<isNotEmpty property="mainIdArr" >
+				AND B.MainRuleID IN
+			<iterate conjunction="," open="(" close=")" property="mainIdArr">  
+		        #mainIdArr[]#
+		    </iterate>					
+			</isNotEmpty>
+		</dynamic>
+		<![CDATA[
+			ORDER BY A.ChangeDate DESC
+		]]>
+    </select>
+    
+    <!--取得规则条件 -->
+	<select id="getComRuleCond" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+		<![CDATA[
+			SELECT TOP 1
+				RuleFilter AS ruleFilter
+			FROM
+				Campaign.BIN_Campaign
+			WHERE
+				BIN_BrandInfoID = #brandInfoId# AND
+				BIN_OrganizationInfoID = #organizationInfoId# AND
+				CampaignType = #campaignType#
+		]]>
+    </select>
+    
+    <!--取得规则条件列表 -->
+	<select id="getComRuleCondList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+		<![CDATA[
+			SELECT
+				RuleFilter AS ruleFilter
+			FROM
+				Campaign.BIN_Campaign
+			WHERE
+				BIN_BrandInfoID = #brandInfoId# AND
+				BIN_OrganizationInfoID = #organizationInfoId# AND
+				CampaignType = #campaignType#
+		]]>
+		<isNotEmpty property="memberClubId">
+				AND BIN_MemberClubID = #memberClubId#
+			</isNotEmpty>
+    </select>
+    
+    <!-- 统计某段时间的累计金额 -->
+	<select id ="getTotalAmountByTime" parameterClass="java.util.HashMap" resultClass ="java.util.HashMap">
+	<![CDATA[
+		SELECT
+			SUM(ISNULL(Amount, 0)) AS totalAmount
+		FROM 
+			Sale.BIN_SaleRecord WITH(nolock)
+		WHERE 
+			BIN_MemberInfoID = #memberInfoId# AND
+			SaleTime >= #fromDate# AND
+			SaleTime < #toDate# AND
+	]]>	
+		<dynamic>
+			<isEmpty property="SRFLAG">
+				<![CDATA[SaleType <> 'SR' AND]]>
+			</isEmpty>
+			<isNotEmpty property="SRFLAG">
+				SaleType = 'SR' AND
+			</isNotEmpty>
+		</dynamic>
+		<![CDATA[
+		 	ValidFlag = '1'
+	]]>
+	</select>
+	
+	<!-- 取得会员等级维护记录 -->
+	<select id ="getMSLevelRecord" parameterClass="java.util.HashMap" resultClass ="java.util.HashMap">
+	<![CDATA[
+		SELECT TOP 1
+			A.BIN_MemUsedDetailID AS usedDetailId,
+			A.MemberLevel AS memberLevel
+		FROM 
+			Members.BIN_MemUsedDetail A,
+			Members.BIN_MemUsedInfo B
+		WHERE 
+			A.BIN_MemberInfoID = #memberInfoId# AND
+			A.BusinessTime = #businessTime# AND
+			A.BIN_MemUsedInfoID = B.BIN_MemUsedInfoID AND
+			B.TradeType = 'MS' AND
+			B.ValidFlag = '1'
+	]]>	
+	</select>
+	
+	<!-- 取得会员购买记录数 -->
+	<select id ="getCMSaleCount" parameterClass="java.util.HashMap" resultClass ="java.lang.Integer">
+	<![CDATA[
+		SELECT COUNT(1)
+		FROM 
+			Sale.BIN_SaleRecord WITH(nolock)
+		WHERE 
+			BIN_MemberInfoID = #memberInfoId# AND
+			SaleTime < #toDate# AND
+			ValidFlag = '1'
+	]]>	
+	</select>
+	
+	 <!--更新状态维护明细信息 -->
+	<update id="updateMSLevelInfo" parameterClass="java.util.HashMap">
+		<![CDATA[
+			UPDATE				
+				Members.BIN_MemUsedDetail
+			SET
+				MemberLevel = #memberLevel#,
+				Reason = #reason#,
+		]]>
+			<include refid="BINOLCMINC99.updateSql" />									
+		<![CDATA[
+			WHERE
+				BIN_MemUsedDetailID = #usedDetailId#
+		]]>
+    </update>
+    
+    <!-- 插入会员使用化妆次数积分主表 -->
+    <insert id="addMSLevelInfo" parameterClass="java.util.HashMap">
+    <selectKey resultClass="java.lang.Integer" type="post" keyProperty="BIN_MemUsedInfoID" >
+    <![CDATA[
+    	INSERT INTO Members.BIN_MemUsedInfo
+    	(
+    		BIN_OrganizationInfoID,													
+			BIN_BrandInfoID,													
+			TradeNoIF,
+			TradeType,
+			Channel,
+	]]>								
+		<include refid="BINOLCMINC99.insertKeySql" />		
+	<![CDATA[																									
+    	)
+    	VALUES
+    	(
+    		#organizationInfoId#,
+    		#brandInfoId#,
+    		#tradeNoIF#,
+    		#tradeType#,
+    		#ladChannel#,
+	]]>
+		<include refid="BINOLCMINC99.insertValueSql" />		
+	<![CDATA[
+    	)
+    	select SCOPE_IDENTITY() as value
+    ]]>		
+    </selectKey>
+    </insert>
+    
+    <!-- 插入会员使用化妆次数积分明细表 -->
+    <insert id="addMSLevelDetail" parameterClass="java.util.HashMap">
+    <![CDATA[
+    	INSERT INTO Members.BIN_MemUsedDetail
+    	(
+    		BIN_MemUsedInfoID,													
+			BIN_MemberInfoID,													
+			MemCode,
+			MemberLevel,
+			BusinessTime,
+			Reason,
+	]]>								
+		<include refid="BINOLCMINC99.insertKeySql" />		
+	<![CDATA[																									
+    	)
+    	VALUES
+    	(
+    		#memUsedInfoId#,
+    		#memberInfoId#,
+    		#memberCode#,
+    		#memberLevel#,
+    		#businessTime#,
+			#reason#,
+	]]>
+		<include refid="BINOLCMINC99.insertValueSql" />		
+	<![CDATA[
+    	)
+    ]]>		
+    </insert>
+    
+    <!-- 取得会员所属柜台信息 -->
+	<select id ="getComMemOrgInfo" parameterClass="com.cherry.dr.cmbussiness.dto.core.CampBaseDTO" resultClass ="java.util.HashMap">
+	<![CDATA[
+		SELECT
+			BIN_OrganizationID AS organizationId
+		FROM 
+			Members.BIN_MemberInfo
+		WHERE 
+			BIN_MemberInfoID = #memberInfoId#
+	]]>	
+	</select>
+	
+	 <!-- 取得规则执行次数 -->	
+	<select id="getComRuleCount" parameterClass="java.util.HashMap" resultClass="java.lang.Integer">
+		<![CDATA[
+			SELECT
+				COUNT(A.BIN_PointChangeID)
+			FROM
+				Members.BIN_PointChange A JOIN
+				Members.BIN_PointChangeDetail B
+				ON (A.BIN_MemberInfoID = #memberInfoId# AND
+					A.ValidFlag = '1' AND 
+					A.BIN_PointChangeID = B.BIN_PointChangeID)
+				JOIN Campaign.BIN_CampaignRule C WITH(nolock)
+				ON (((B.MainRuleID IS NOT NULL AND B.MainRuleID = C.BIN_CampaignRuleID) OR
+				     (B.SubCampaignID IS NOT NULL AND B.SubCampaignID = C.BIN_CampaignRuleID)) AND
+					C.BIN_CampaignID = #ruleCampId#
+				)
+			]]>	
+    </select>
+    
+    <!-- 取得会员积分明细总数 -->	
+	<select id="getComPTLCount" parameterClass="java.util.HashMap" resultClass="java.lang.Integer">
+		<![CDATA[
+			SELECT
+				COUNT(1)
+			FROM
+				Members.BIN_PointChange WITH(nolock)
+			WHERE
+				BIN_MemberInfoID = #memberInfoId# AND
+				ValidFlag = '1'
+			]]>	
+    </select>
+    <!-- 取得会员俱乐部当前等级信息 -->	
+	<select id="getComClubCurLevelInfo" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+		<![CDATA[
+			SELECT
+				BIN_ClubLevelID AS clubLeveId,
+				ISNULL(MemberLevel, 0) AS memberLevel,
+				convert(varchar, LevelStartDate, 121) AS levelStartDate,
+				convert(varchar, LevelEndDate, 121) AS levelEndDate,
+				convert(varchar, LevelAdjustDay, 121) AS levelAdjustDay,
+				ISNULL(GrantMemberLevel, 0) AS grantMemberLevel,
+				ISNULL(UpgradeFromLevel, 0) AS upgradeFromLevel,
+				ISNULL(TotalAmount, 0) as totalAmount,
+				ISNULL(initTotalAmount, 0) as initTotalAmount,
+				ISNULL(BIN_OrganizationID, 0) as organizationId,
+				LevelStatus as mLevelStatus
+			FROM
+				Members.BIN_MemClubLevel
+			WHERE
+				BIN_MemberInfoID = #memberInfoId# AND
+				BIN_MemberClubID = #memberClubId#
+			]]>	
+    </select>
+    
+    <!-- 取得会员俱乐部代号 -->	
+	<select id="getComClubCode" parameterClass="java.util.HashMap" resultClass="java.lang.String">
+		<![CDATA[
+			SELECT
+				ClubCode
+			FROM
+				Members.BIN_MemberClub
+			WHERE
+				BIN_MemberClubID = #memberClubId#
+			]]>	
+    </select>
+    
+    <!-- 查询会员俱乐部ID -->
+	<select id="selComClubId" parameterClass="java.util.HashMap" resultClass ="java.util.HashMap">
+	<![CDATA[
+		SELECT
+			BIN_MemberClubID AS memberClubId
+		FROM
+			Members.BIN_MemberClub
+		WHERE
+			ClubCode = #clubCode#
+	]]> 
+	</select>
+	
+	<!-- 查询会员俱乐部首单信息 -->
+	<select id="selComMemClubFirstSale" parameterClass="java.util.HashMap" resultClass ="java.util.HashMap">
+	<![CDATA[
+		SELECT top 1
+			a.BIN_SaleRecordID as saleRecordId,
+			a.BIN_OrganizationID as organizationId,
+			convert(varchar, a.SaleTime, 120) as saleTime,
+			convert(varchar, a.SaleDate, 23) as saleDate,
+			ISNULL(a.BIN_EmployeeID, 0) as employeeId,
+			a.EmployeeCode as employeeCode,
+			b.DepartCode as departCode
+		FROM
+			Sale.BIN_SaleRecord a with(nolock) join
+			Basis.BIN_Organization b with(nolock)
+			on (a.BIN_MemberInfoID = #memberInfoId# and
+			a.BIN_MemberClubID = #memberClubId# and 
+			a.SaleType = 'NS' AND
+			a.BIN_OrganizationID = b.BIN_OrganizationID)
+		ORDER BY a.SaleTime
+	]]> 
+	</select>
+	
+	<!-- 查询销售单的BA信息 -->
+	<select id="selComBAInfoBySaleId" parameterClass="java.util.HashMap" resultClass ="java.util.HashMap">
+	<![CDATA[
+		SELECT
+			MAX(EmployeeCode) AS employeeCode
+		FROM
+			Sale.BIN_SaleRecordDetail WITH(NOLOCK)
+		WHERE
+			BIN_SaleRecordID = #saleRecordId# and 
+			EmployeeCode IS NOT NULL
+	]]> 
+	</select>
+	
+	 <!-- 查询会员俱乐部属性 -->
+	<select id="selComMemClubInfo" parameterClass="java.util.HashMap" resultClass ="java.util.HashMap">
+	<![CDATA[
+		SELECT TOP 1
+			ISNULL(B.MemInfoRegFlg, 1) AS memInfoRegFlg,
+			B.BIN_MemberInfoID AS memberInfoId,
+			C.BIN_ClubLevelID AS clubLeveId,
+			ISNULL(C.BIN_OrganizationID, 0) as organizationId,
+			CONVERT(varchar, C.JoinTime, 23) AS joinDate,
+			CONVERT(varchar, C.JoinTime, 120) AS joinTime,
+			C.CounterCode AS counterCode,
+			C.BIN_EmployeeID AS employeeId,
+			C.BaCode AS baCode
+		FROM
+			Members.BIN_MemCardInfo A JOIN
+			Members.BIN_MemberInfo B
+			ON (A.MemCode = #memberCode# AND 
+			A.BIN_MemberInfoID = B.BIN_MemberInfoID) LEFT JOIN
+			Members.BIN_MemClubLevel C
+			ON (B.BIN_MemberInfoID = C.BIN_MemberInfoID AND
+			C.BIN_MemberClubID = #memberClubId#)
+		
+	]]> 
+	</select>
+	
+	<select id="getComClubExtList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+		<![CDATA[
+			SELECT
+				A.IsReceiveMsg AS isReceiveMsg,
+				A.Version AS version,
+				B.ClubCode AS clubCode,
+				A.ReferrerID AS referrerId,
+				A.CounterCode AS counterCode,
+				A.BaCode AS baCode,
+				convert(varchar, A.JoinTime, 120) AS joinTime
+			FROM						
+				Members.BIN_MemClubLevel A JOIN
+				Members.BIN_MemberClub B
+				ON(A.BIN_MemberClubID = B.BIN_MemberClubID)
+			WHERE
+				A.BIN_MemberInfoID = #memberInfoId# AND
+		]]>
+		<isNotEmpty property="mzClubId">
+		<![CDATA[A.BIN_MemberClubID = #mzClubId# AND]]>
+		</isNotEmpty>
+		<![CDATA[
+				A.version IS NOT NULL AND
+				A.version <> 0
+		]]>
+		
+    </select>
+    
+    <!-- 取得一段时间内的购买金额 -->	
+	<select id="getComTtlAmountInfo" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+		<![CDATA[
+			SELECT 
+				SUM(CASE WHEN SaleType <> 'SR' THEN Amount ELSE -Amount END) AS ttlAmount
+			FROM 
+				Sale.BIN_SaleRecord
+			WHERE 
+				BIN_MemberInfoID = #memberInfoId# AND
+		]]>
+		<isNotEmpty property="fromTime">
+				<![CDATA[SaleTime >= #fromTime# AND]]>
+		</isNotEmpty>
+		<![CDATA[
+				SaleTime <= #toTime# AND
+		]]>
+		<isNotEmpty property="firstBillId">
+				<![CDATA[BillCode <> #firstBillId# AND]]>
+		</isNotEmpty>
+		<![CDATA[
+				(BillCodePre IS NULL OR BillCodePre = '') AND
+				(BillModel IS NULL OR  BillModel IN ('0','1','3','4')) AND
+				ValidFlag = '1'
+		]]>	
+    </select>
+    
+    <!-- 取得一段时间内的购买金额(订单) -->	
+	<select id="getComESTtlAmountInfo" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+		<![CDATA[
+			SELECT 
+				SUM(CASE WHEN SaleType <> 'SR' THEN Amount ELSE -Amount END) AS ttlAmount
+			FROM 
+				Sale.BIN_ESOrderMain
+			WHERE 
+				BIN_MemberInfoID = #memberInfoId# AND
+		]]>
+		<isNotEmpty property="fromTime">
+				<![CDATA[BillCreateTime >= #fromTime# AND]]>
+		</isNotEmpty>
+		<![CDATA[
+				BillCreateTime <= #toTime# AND
+		]]>
+		<isNotEmpty property="firstBillId">
+				<![CDATA[BillCode <> #firstBillId# AND]]>
+		</isNotEmpty>
+		<![CDATA[
+				BillType = '2' AND
+				ValidFlag = '1'
+		]]>	
+    </select>
+    
+    <!-- 取得一段时间内的退货金额(关联退货) -->	
+	<select id="getComTtlSRAmountInfo" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+		<![CDATA[
+			SELECT 
+				ISNULL(SUM(A.Amount),0) AS ttlSRAmount
+			FROM 
+				Sale.BIN_SaleRecord A,
+				Sale.BIN_SaleRecord B,
+				Members.BIN_MemberInfo C
+			WHERE 
+				A.BIN_MemberInfoID = #memberInfoId# AND
+			 	A.SaleType = 'SR' AND
+		]]>
+		<isNotEmpty property="fromTime">
+				<![CDATA[ A.SaleTime >= #fromTime# AND ]]>
+		</isNotEmpty>
+		<![CDATA[
+				A.ValidFlag = '1' AND
+				A.BillCodePre IS NOT NULL AND
+				A.BillCodePre <> '' AND
+		]]>
+		<isNotEmpty property="firstBillId">
+				<![CDATA[A.BillCodePre <> #firstBillId# AND]]>
+		</isNotEmpty>
+		<![CDATA[
+				A.BillCodePre = B.BillCode AND
+				A.BIN_MemberInfoID = C.BIN_MemberInfoID AND
+				(
+			]]>
+		<isNotEmpty property="fromTime">
+				<![CDATA[(B.SaleTime >= #fromTime# AND B.SaleTime <= #toTime#) OR ]]>
+		</isNotEmpty>
+		<isEmpty property="fromTime">
+				<![CDATA[B.SaleTime <= #toTime# OR]]>
+		</isEmpty>
+		<![CDATA[
+				(C.InitialDate IS NOT NULL AND B.SaleTime < C.InitialDate)) AND
+				B.ValidFlag = '1'
+		]]>	
+    </select>
+	
+    <!-- 查询会员俱乐部规则列表 -->
+	<select id="selComClubRuleList" parameterClass="java.util.HashMap" resultClass ="java.util.HashMap">
+	<![CDATA[
+		SELECT
+			BIN_MemberClubID as clubId
+		FROM
+			Campaign.BIN_CampaignGrp
+		WHERE
+				BIN_BrandInfoID = #brandInfoId# AND
+				BIN_OrganizationInfoID = #organizationInfoId# AND
+				CampaignType = #campaignType# AND
+				BIN_MemberClubID is not null and BIN_MemberClubID <> 0 AND
+				ValidFlag = '1'
+	]]> 
+	</select>
+	
+	<!-- 取得重算信息记录数 -->
+	<select id="getReCalcCount" parameterClass="java.util.HashMap" resultClass="java.lang.Integer">
+		<![CDATA[
+			SELECT
+				COUNT(1)
+			FROM
+				Members.BIN_ReCalcInfo
+			WHERE
+				BIN_MemberInfoID = #memberInfoId# AND
+				ReCalcType = #reCalcType# AND
+				ValidFlag = '1'
+		]]>	
+    </select>
+    
+    <!-- 等级调整会员插入到临时表 -->
+    <insert id="insertTempAdjustMember" parameterClass="java.util.HashMap">
+    	INSERT INTO
+    		Members.BIN_MemberLevelTemp
+    		(
+    			BIN_MemberInfoID,
+    			CreateTime
+    		)
+    	VALUES
+    		(
+    			#memberId#,
+    			GETDATE()
+    		)
+    </insert>
+</sqlMap>

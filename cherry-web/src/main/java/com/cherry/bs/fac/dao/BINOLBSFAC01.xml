@@ -1,0 +1,109 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sqlMap PUBLIC "-//iBATIS.com//DTD SQL Map 2.0//EN" "http://ibatis.apache.org/dtd/sql-map-2.dtd">
+<sqlMap namespace="BINOLBSFAC01">
+	<!-- 生产厂商信息查询sql文  -->
+	<sql id="facQuery">
+	 	<![CDATA[
+			SELECT
+				DISTINCT														
+				A.BIN_ManufacturerInfoID AS manufacturerInfoId,
+				A.ManufacturerCode AS manufacturerCode,
+				A.LegalPerson AS legalPerson,
+				A.TelePhone AS telePhone,
+				A.Mobile AS mobile,
+				A.LevelCode AS levelCode,
+				A.Status AS status,
+				A.DefaultFlag AS defaultFlag,
+				A.ValidFlag AS validFlag,
+		]]>
+		<dynamic>
+			<isNotEmpty property="language">
+				<isEqual property="language" compareValue="en_US">
+					A.FactoryNameEN AS factoryName,
+					A.FactoryNameENShort AS factoryNameShort,
+					D.RegionNameForeign AS provinceName,
+					E.RegionNameForeign AS cityName
+				</isEqual>
+				<isEqual property="language" compareValue="zh_CN">	
+					A.FactoryNameCN AS factoryName,
+					A.FactoryNamecnCNShort AS factoryNameShort,
+					D.RegionNameChinese AS provinceName,
+					E.RegionNameChinese AS cityName
+				</isEqual>								
+			</isNotEmpty>
+			<isEmpty property="language">
+				A.FactoryNameCN AS factoryName,
+				A.FactoryNamecnCNShort AS factoryNameShort,
+				D.RegionNameChinese AS provinceName,
+				E.RegionNameChinese AS cityName
+			</isEmpty>
+		</dynamic>		
+		<![CDATA[													
+			FROM
+			Basis.BIN_ManufacturerInfo A
+			LEFT JOIN Basis.BIN_ManufacturerAddress B
+			ON(A.BIN_ManufacturerInfoID = B.BIN_ManufacturerInfoID
+				AND B.DefaultFlag = '1'
+				AND B.ValidFlag = '1')
+			LEFT JOIN Basis.BIN_AddressInfo C
+			ON(B.BIN_AddressInfoID = C.BIN_AddressInfoID
+				AND C.ValidFlag = '1')
+			LEFT JOIN Basis.BIN_StandardRegion D
+			ON(C.StandardProvince = D.BIN_RegionID
+				AND D.ValidFlag = '1')
+			LEFT JOIN Basis.BIN_StandardRegion E
+			ON(C.StandardCity = E.BIN_RegionID
+				AND E.ValidFlag = '1')			
+		WHERE
+			A.BIN_OrganizationInfoID = #organizationInfoId#
+		]]>
+		<isNotEmpty prepend="AND" property="brandInfoId" >
+			A.BIN_BrandInfoID = #brandInfoId#
+		</isNotEmpty>
+		<isEmpty prepend="AND" property="validFlag" >
+			A.ValidFlag = '1'
+		</isEmpty>
+		<isNotEmpty prepend="AND" property="manufacturerCode" >
+			A.ManufacturerCode LIKE  '%' + #manufacturerCode# + '%'
+		</isNotEmpty>											
+		<dynamic>	
+			<isNotEmpty property="language">
+				<isEqual property="language" compareValue="en_US">
+					<isNotEmpty prepend="AND" property="factoryName" >
+						(A.FactoryNameEN LIKE  '%' + #factoryName# + '%'
+						OR A.FactoryNameENShort LIKE  '%' + #factoryName# + '%')
+					</isNotEmpty>
+				</isEqual>
+				<isEqual property="language" compareValue="zh_CN">	
+					<isNotEmpty prepend="AND" property="factoryName" >
+						(A.FactoryNameCN LIKE  '%' + #factoryName# + '%'
+						OR A.FactoryNamecnCNShort LIKE  '%' + #factoryName# + '%')
+					</isNotEmpty>
+				</isEqual>								
+				<isEmpty property="language">
+					<isNotEmpty prepend="AND" property="factoryName" >
+						(A.FactoryNameCN LIKE  '%' + #factoryName# + '%'
+						OR A.FactoryNamecnCNShort LIKE  '%' + #factoryName# + '%')
+					</isNotEmpty>
+				</isEmpty>
+			</isNotEmpty>
+		</dynamic>
+	</sql>
+	<!-- 取得生产厂商总数  -->
+    <select id="getFacCount" parameterClass="java.util.HashMap" resultClass="java.lang.Integer">
+    	<![CDATA[
+			SELECT	COUNT(SORT_T1.manufacturerInfoId) AS count FROM (
+		]]>	
+		<include refid="BINOLBSFAC01.facQuery" />	
+		<![CDATA[	
+			)SORT_T1
+		]]>										
+    </select>
+	
+	<!-- 取得生产厂商信息List  -->
+    <select id="getFactoryList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+       	<include refid="BINOLCMINC99.pageheader" />
+		<include refid="BINOLBSFAC01.facQuery" />
+		<include refid="BINOLCMINC99.pagefooter" />
+    </select>
+</sqlMap>

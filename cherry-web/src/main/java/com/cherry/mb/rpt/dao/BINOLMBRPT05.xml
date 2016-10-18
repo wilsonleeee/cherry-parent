@@ -1,0 +1,218 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sqlMap PUBLIC "-//iBATIS.com//DTD SQL Map 2.0//EN" "http://ibatis.apache.org/dtd/sql-map-2.dtd">
+<sqlMap namespace="BINOLMBRPT05">
+    <!-- 取得会员销售额，年龄，消费次数【暂时把BillState状态为空的也统计进来，后面需要去除】 -->
+    <sql id="MemberConsumeCountQuery">
+    	<![CDATA[
+			SELECT
+				A.BIN_MemberInfoID,
+				ISNULL(SUM(CASE WHEN A.SaleType = 'SR' THEN -A.Amount ELSE A.Amount END), 0) AS memberConsumeAmount,
+				CASE ISNULL(MB.BirthYear,0) WHEN 0 THEN -1 
+					ELSE convert(int,DateName(year,GetDate()))-CONVERT(int,MB.BirthYear) END as age,
+				COUNT(A.BIN_SaleRecordID) as consumeTimes
+			FROM
+				Sale.BIN_SaleRecord A WITH(NOLOCK)
+				JOIN Members.BIN_MemberInfo MB WITH(NOLOCK)
+				ON(A.BIN_MemberInfoID=MB.BIN_MemberInfoID AND MB.ValidFlag='1' AND MB.MemInfoRegFlg = '0')
+			]]>		
+			<isNotEmpty property="privilegeFlag">
+				<isEqual property="privilegeFlag" compareValue="1">			
+					<![CDATA[			
+						JOIN (]]><include refid="BINOLCMINC99.departPrivilegeSql" /><![CDATA[) A99 
+						ON A.BIN_OrganizationID=A99.BIN_OrganizationID
+					]]>
+				</isEqual>
+			</isNotEmpty>
+			<![CDATA[
+					LEFT JOIN Basis.BIN_CounterInfo B WITH(NOLOCK) ON A.BIN_OrganizationID = B.BIN_OrganizationID	
+				WHERE
+					A.ValidFlag = '1' AND
+					A.BIN_OrganizationInfoID = #organizationInfoId# AND
+					A.BIN_BrandInfoID = #brandInfoId# AND
+					(A.BillState IN ('2', '3', '4') OR ISNULL(A.BillState,'') = '') AND
+					A.SaleDate >= #startDate# AND
+					A.SaleDate <= #endDate#
+			]]>		
+			<!-- 默认为不包含测试柜台 -->	
+			<isEmpty property="testFlag" prepend="AND">
+				<![CDATA[
+					NOT EXISTS(
+						SELECT 1
+						FROM 
+							Basis.BIN_Organization ORG
+						WHERE 
+							A.BIN_OrganizationID=ORG.BIN_OrganizationID
+							AND ORG.TestType='1'
+					)
+				]]>
+			</isEmpty>
+			<isNotEmpty property="channelId" prepend="AND">
+				B.BIN_ChannelID = #channelId#
+				<isNotEmpty property="organizationId" prepend="AND">
+					B.BIN_OrganizationID = #organizationId#
+				</isNotEmpty>
+			</isNotEmpty>
+			<isNotEmpty property="belongFaction" prepend="AND">
+				B.BelongFaction = #belongFaction#
+			</isNotEmpty>
+		<![CDATA[
+			GROUP BY A.BIN_MemberInfoID,MB.BirthYear
+		]]>				
+    </sql>
+    
+    <!-- 按区间统计SQL -->
+	<sql id="RegionStatisticsQuery">
+		<![CDATA[
+		SELECT 
+		]]>
+		<isEqual property="statisticsType" compareValue="1">
+			<![CDATA[isnull(RESULT.region,8) as region,]]>
+		</isEqual>
+		<isEqual property="statisticsType" compareValue="2">
+			<![CDATA[isnull(RESULT.region,8) as region,]]>
+		</isEqual>
+		<isEqual property="statisticsType" compareValue="3">
+			<![CDATA[isnull(RESULT.region,6) as region,]]>
+		</isEqual>
+		<![CDATA[
+			RESULT.regionMemConsumeAmount as regionMemConsumeAmount,
+			RESULT.regionMemNum as regionMemNum,
+			convert(decimal(16,2),RESULT.memberAverageConsume) as memberAverageConsume
+		FROM(
+			SELECT 
+				SORT_ID.region as region,
+				isnull(SUM(SORT_ID.memberConsumeAmount),0) as regionMemConsumeAmount,
+				COUNT(DISTINCT SORT_ID.BIN_MemberInfoID) as regionMemNum,
+				AVG(memberConsumeAmount) as memberAverageConsume
+			FROM(
+				SELECT   
+			        T0.BIN_MemberInfoID,
+			        T0.memberConsumeAmount,
+		]]>
+		<isEqual property="statisticsType" compareValue="1">
+			<![CDATA[
+			        case    
+			            when   (T0.consumeTimes>7)   then    7 
+			            when   (T0.consumeTimes=7)   then    6 
+			            when   (T0.consumeTimes=6)   then    5
+			            when   (T0.consumeTimes=5)   then    4 
+			            when   (T0.consumeTimes=4)   then    3 
+			            when   (T0.consumeTimes=3)   then    2 
+			            when   (T0.consumeTimes=2)   then    1 
+			            when   (T0.consumeTimes=1)   then    0
+			        end  as region
+			]]>
+		</isEqual>
+		<isEqual property="statisticsType" compareValue="2">
+			<![CDATA[
+			        case    
+			            when   (T0.memberConsumeAmount>=1000)              then   7 
+			            when   (T0.memberConsumeAmount>=800 and T0.memberConsumeAmount<1000)   then    6 
+			            when   (T0.memberConsumeAmount>=500 and T0.memberConsumeAmount<800)    then    5 
+			            when   (T0.memberConsumeAmount>=300 and T0.memberConsumeAmount<500)    then    4 
+			            when   (T0.memberConsumeAmount>=200 and T0.memberConsumeAmount<300)    then    3 
+			            when   (T0.memberConsumeAmount>=100 and T0.memberConsumeAmount<200)    then    2 
+			            when   (T0.memberConsumeAmount>=0 and T0.memberConsumeAmount<100)      then    1
+			            when   (T0.memberConsumeAmount<0)     then    0
+			        end  as region
+			]]>
+		</isEqual>
+		<isEqual property="statisticsType" compareValue="3">
+			<![CDATA[
+			         case    
+			            when   (T0.age>=45)                  then    5  
+			            when   (T0.age>=35 and T0.age<45)    then    4
+			            when   (T0.age>=25 and T0.age<35)    then    3 
+			            when   (T0.age>=18 and T0.age<25)    then    2 
+			            when   (T0.age>=0 and T0.age<18)     then    1
+			            when   (T0.age=-1)                   then    0
+			        end  as region
+			]]>
+		</isEqual>
+		<![CDATA[
+				FROM(
+		]]>
+		<include refid="BINOLMBRPT05.MemberConsumeCountQuery" />
+		<![CDATA[	
+				)T0
+			) SORT_ID
+			GROUP BY SORT_ID.region WITH ROLLUP
+		) RESULT
+		]]>
+	</sql>
+	
+	<!-- 会员销售区间统计 -->
+	<select id="getRegionStatisticsList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+		<![CDATA[
+			SELECT 
+		]]>
+		<isEqual property="statisticsType" compareValue="1">
+			<![CDATA[case  
+						when   (sq.i=8)  then    'summary'
+			            when   (sq.i=7)  then    '大于7' 
+			            when   (sq.i=6)   then    '7' 
+			            when   (sq.i=5)   then    '6'
+			            when   (sq.i=4)   then    '5' 
+			            when   (sq.i=3)   then    '4' 
+			            when   (sq.i=2)   then    '3' 
+			            when   (sq.i=1)   then    '2' 
+			            when   (sq.i=0)   then    '1'
+			        end  as region,]]>
+		</isEqual>
+		<isEqual property="statisticsType" compareValue="2">
+			<![CDATA[case  
+						when   (sq.i=8)   then    'summary'
+			            when   (sq.i=7)   then    '>=1000' 
+			            when   (sq.i=6)   then    '800~1000' 
+			            when   (sq.i=5)   then    '500~800' 
+			            when   (sq.i=4)   then    '300~500'  
+			            when   (sq.i=3)   then    '200~300' 
+			            when   (sq.i=2)   then    '100~200'
+			            when   (sq.i=1)   then    '0~100' 
+			            when   (sq.i=0)   then    '< 0'
+			        end  as region,]]>
+		</isEqual>
+		<isEqual property="statisticsType" compareValue="3">
+			<![CDATA[case  
+						when   (sq.i=6)  then     'summary'
+			            when   (sq.i=5)   then    '45及以上'
+			            when   (sq.i=4)   then    '35~44' 
+			            when   (sq.i=3)   then    '25~34' 
+			            when   (sq.i=2)   then    '18~24' 
+			            when   (sq.i=1)   then    '0~17' 
+			            when   (sq.i=0)   then    '未知'
+			        end  as region,]]>
+		</isEqual>
+		<![CDATA[
+				isnull(ret.regionMemConsumeAmount,0) as regionMemConsumeAmount,
+				isnull(ret.regionMemNum,0) as regionMemNum,
+				isnull(ret.memberAverageConsume,0) as memberAverageConsume
+			FROM
+		]]>
+		<isEqual property="statisticsType" compareValue="1">
+		<![CDATA[
+				(SELECT TOP(9) i FROM Tools.BIN_Sequence WITH(nolock)) sq 
+		]]>
+		</isEqual>
+		<isEqual property="statisticsType" compareValue="2">
+		<![CDATA[
+				(SELECT TOP(9) i FROM Tools.BIN_Sequence WITH(nolock)) sq 
+		]]>
+		</isEqual>
+		<isEqual property="statisticsType" compareValue="3">
+		<![CDATA[
+				(SELECT TOP(7) i FROM Tools.BIN_Sequence WITH(nolock)) sq 
+		]]>
+		</isEqual>
+		<![CDATA[
+				LEFT JOIN(
+		]]>
+		<include refid="BINOLMBRPT05.RegionStatisticsQuery" />
+		<![CDATA[
+			) ret
+			on(sq.i=ret.region)
+			order by sq.i asc
+		]]>
+	</select>
+	
+</sqlMap>

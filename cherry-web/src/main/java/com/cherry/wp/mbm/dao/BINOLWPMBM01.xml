@@ -1,0 +1,124 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sqlMap PUBLIC "-//iBATIS.com//DTD SQL Map 2.0//EN" "http://ibatis.apache.org/dtd/sql-map-2.dtd">
+<sqlMap namespace="BINOLWPMBM01">
+    
+    <!-- 按天统计会员的购买金额  -->
+    <select id="getSaleAmountByDay" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+       	<![CDATA[
+            SELECT TOP $TOP$
+            	A.SaleDate AS date,
+				ISNULL(SUM(CASE WHEN A.SaleType = 'SR' THEN -A.Amount ELSE A.Amount END), 0) AS value
+			FROM
+				Sale.BIN_SaleRecord A WITH(NOLOCK)
+			WHERE
+				A.BIN_MemberInfoID = #memberInfoId# AND
+				A.ValidFlag = '1'	
+			GROUP BY
+				A.SaleDate
+			ORDER BY
+				A.SaleDate desc
+		]]>
+    </select>
+    
+    <!-- 按天统计会员的积分  -->
+    <select id="getPointByDay" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+       	<![CDATA[
+            SELECT TOP $TOP$
+            	CONVERT(varchar(10),A.ChangeDate,120) AS date,
+				ISNULL(SUM(A.Point), 0) AS value
+			FROM
+				Members.BIN_PointChange A WITH(NOLOCK)
+			WHERE
+				A.BIN_MemberInfoID = #memberInfoId# AND
+				A.ValidFlag = '1'	
+			GROUP BY
+				CONVERT(varchar(10),A.ChangeDate,120)
+			ORDER BY
+				CONVERT(varchar(10),A.ChangeDate,120) desc
+		]]>
+    </select>
+    
+    <!-- 统计不同产品类别的销售数量和金额  -->
+    <select id="getSaleCountByProCat" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+       	<![CDATA[
+            SELECT
+            	E.PropValueChinese AS propValueChinese,
+				ISNULL(SUM(CASE WHEN A.SaleType = 'SR' THEN -B.Quantity ELSE B.Quantity END), 0) AS quantity,
+				ISNULL(SUM(CASE WHEN A.SaleType = 'SR' THEN -B.PricePay*B.Quantity ELSE B.PricePay*B.Quantity END), 0) AS amount
+			FROM
+				Sale.BIN_SaleRecord A WITH(NOLOCK)
+				JOIN Sale.BIN_SaleRecordDetail B WITH(NOLOCK) ON A.BIN_SaleRecordID = B.BIN_SaleRecordID
+				JOIN Basis.BIN_ProductVendor C WITH(NOLOCK) ON B.BIN_ProductVendorID = C.BIN_ProductVendorID
+				JOIN Basis.BIN_PrtCategory D WITH(NOLOCK) ON C.BIN_ProductID = D.BIN_ProductID
+				JOIN Basis.BIN_PrtCatPropValue E WITH(NOLOCK) ON D.BIN_PrtCatPropValueID = E.BIN_PrtCatPropValueID
+				JOIN Basis.BIN_PrtCatProperty F WITH(NOLOCK) ON E.BIN_PrtCatPropertyID = F.BIN_PrtCatPropertyID AND F.TeminalFlag='1'
+			WHERE
+				A.BIN_MemberInfoID = #memberInfoId# AND
+				B.SaleType = 'N' AND
+				A.ValidFlag = '1'	
+			GROUP BY
+				E.BIN_PrtCatPropValueID,
+				E.PropValueChinese
+		]]>
+    </select>
+    
+    <!-- 根据柜台号取得柜台信息  -->
+    <select id="getCouInfoByCouId" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+       	<![CDATA[
+            SELECT 
+				A.BIN_OrganizationID AS organizationId,
+				A.CounterKind AS counterKind
+        	FROM 
+        		Basis.BIN_CounterInfo A
+            WHERE 
+				A.CounterCode = #counterCode# AND
+				A.BIN_OrganizationInfoID = #organizationInfoId# AND
+				A.BIN_BrandInfoID = #brandInfoId#
+		]]>
+    </select>
+    
+    <!-- 根据员工ID查询员工信息  -->
+    <select id="getEmpInfoByEmpId" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+       	<![CDATA[
+       		SELECT
+				A.BIN_EmployeeID AS employeeId,
+				A.EmployeeCode AS employeeCode
+			FROM
+				Basis.BIN_Employee A
+			WHERE
+				A.BIN_EmployeeID = #employeeId#
+		]]>
+    </select>
+    
+    <!-- 获取短信模版 -->
+    <select id="getContents" parameterClass="java.util.HashMap" resultClass="java.lang.String">
+    	<![CDATA[
+			SELECT TOP 1
+				tc.MessageInfo as contents
+			FROM 
+  				Communication.BIN_CommEventSet as tc with(nolock) 
+				LEFT JOIN Members.BIN_SearchLog as ts with(nolock) on tc.SearchCode = ts.BIN_SearchCode 
+  			WHERE 
+  				tc.ValidFlag = 1 AND 
+				tc.BIN_BrandInfoID = #brandInfoId# AND 
+				tc.BIN_OrganizationInfoID = #organizationInfoId# AND 
+				tc.EventTypeId = #eventType# 
+		]]>
+    </select>
+    
+    <!-- 获取短信CouponCode(List) -->
+    <select id="getCouponCodeList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+		SELECT 
+			CouponCode
+		FROM
+			Communication.BIN_SmsSendDetail
+		WHERE
+			BIN_OrganizationInfoID = #organizationInfoId#
+			AND BIN_BrandInfoID = #brandInfoId#
+			AND Mobilephone = #mobilePhone#
+			AND Status = 0
+			AND SendTime >= #startTime#
+			AND CouponCode is not null
+    </select>
+    
+</sqlMap>

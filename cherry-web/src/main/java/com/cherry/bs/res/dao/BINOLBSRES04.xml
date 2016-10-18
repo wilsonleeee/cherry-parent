@@ -1,0 +1,116 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sqlMap PUBLIC "-//iBATIS.com//DTD SQL Map 2.0//EN" "http://ibatis.apache.org/dtd/sql-map-2.dtd">
+<sqlMap namespace="BINOLBSRES04">
+
+	<sql id="addResKey">
+		BIN_OrganizationInfoID,
+		BIN_BrandInfoID,
+		ResellerCode,
+		ResellerName,
+		BIN_RegionID,
+		ParentResellerCode,
+		BIN_ProvinceID,
+		BIN_CityID,
+		Type,
+		
+		<isNotEmpty property="resellerCodeIF">
+			ResellerCodeIF,
+		</isNotEmpty>
+		<isNotEmpty property="resellerNameShort">
+			ResellerNameShort,
+		</isNotEmpty>
+		<isNotEmpty property="legalPerson">
+			LegalPerson,
+		</isNotEmpty>
+		<isNotEmpty property="telephone">
+			TelePhone,
+		</isNotEmpty>
+		<isNotEmpty property="mobile">
+			Mobile,
+		</isNotEmpty>
+		<isNotEmpty property="levelCode">
+			LevelCode,
+		</isNotEmpty>
+		<isNotEmpty property="priceFlag">
+			PriceFlag,
+		</isNotEmpty>
+		<isNotEmpty property="status">
+			Status,
+		</isNotEmpty>
+		<include refid="BINOLCMINC99.insertKeySql" />
+	</sql>
+	<sql id="addResValue">
+		#organizationInfoId#,
+		#brandInfoId#,
+		#resellerCode#,
+		#resellerName#,
+		#regionId#,
+		#parentResellerCode#,
+		#provinceId#,
+		#cityId#,
+		#type#,
+		<isNotEmpty property="resellerCodeIF">
+			#resellerCodeIF#,
+		</isNotEmpty>
+		<isNotEmpty property="resellerNameShort">
+			#resellerNameShort#,
+		</isNotEmpty>
+		
+		<isNotEmpty property="legalPerson">
+			#legalPerson#,
+		</isNotEmpty>
+		<isNotEmpty property="telephone">
+			#telephone#,
+		</isNotEmpty>
+		<isNotEmpty property="mobile">
+			#mobile#,
+		</isNotEmpty>
+		<isNotEmpty property="levelCode">
+			#levelCode#,
+		</isNotEmpty>
+		<isNotEmpty property="priceFlag">
+			#priceFlag#,
+		</isNotEmpty>
+		<isNotEmpty property="status">
+			#status#,
+		</isNotEmpty>
+		<include refid="BINOLCMINC99.insertValueSql" />
+	</sql>
+
+	<!-- 经销商添加，并返回自增ID -->
+	<insert id="addRes" parameterClass="java.util.HashMap">
+		<selectKey resultClass="java.lang.Integer" type="post" keyProperty="BIN_ResellerInfoID">     
+		    <![CDATA[
+				Insert INTO Basis.BIN_ResellerInfo
+				(
+		    ]]>
+			<include refid="BINOLBSRES04.addResKey" />
+			<![CDATA[						
+				)					
+				VALUES					
+				(
+			]]>
+			<include refid="BINOLBSRES04.addResValue" />		
+			<![CDATA[							
+				)		
+				select SCOPE_IDENTITY() as value			
+	    	]]>
+		</selectKey>
+	</insert>
+
+	<!-- 判断经销商名称是否已经存在 -->
+	<select id="getCount" parameterClass="java.util.HashMap" resultClass="java.lang.String">
+		<![CDATA[
+		SELECT COUNT(1) FROM(
+			SELECT
+				BIN_BrandInfoID,
+		        ResellerCode
+			FROM
+				Basis.BIN_ResellerInfo
+			WHERE
+				BIN_BrandInfoID=#brandInfoId# AND
+				ResellerCode=#resellerCode#
+		)a
+		]]>
+	</select>
+</sqlMap>

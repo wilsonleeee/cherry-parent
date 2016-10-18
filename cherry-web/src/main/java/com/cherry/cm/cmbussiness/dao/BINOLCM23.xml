@@ -1,0 +1,65 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sqlMap PUBLIC "-//iBATIS.com//DTD SQL Map 2.0//EN" "http://ibatis.apache.org/dtd/sql-map-2.dtd">
+<sqlMap namespace="BINOLCM23">
+    <!--查询出系统中所有未完成的工作流的相关信息-->
+	<select id="getUnfinishedEntry" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+		  with t1 as(
+			  select 
+			  A.ID ,  B.GLOBAL_KEY,B.ITEM_KEY,  B.STRING_VALUE
+			  from 
+			  [dbo].[OS_WFENTRY] A ,
+			  dbo.OS_PROPERTYENTRY B  
+			  where A.STATE !=4
+			  and B.GLOBAL_KEY = 'os_'+convert(varchar(10),A.ID)
+			  and B.ITEM_KEY ='OS_Current_Operate'),
+			  t2 as (
+			    select 
+			  A.ID ,  B.ITEM_KEY,  B.STRING_VALUE
+			  from 
+			  [dbo].[OS_WFENTRY] A ,
+			  dbo.OS_PROPERTYENTRY B  
+			  where A.STATE !=4
+			  and B.GLOBAL_KEY = 'os_'+convert(varchar(10),A.ID)
+			  and B.ITEM_KEY ='OS_BillType'
+			  ),
+			  t3 as (
+			    select 
+			  A.ID ,  B.ITEM_KEY,  B.STRING_VALUE
+			  from 
+			  [dbo].[OS_WFENTRY] A ,
+			  dbo.OS_PROPERTYENTRY B  
+			  where A.STATE !=4
+			  and B.GLOBAL_KEY = 'os_'+convert(varchar(10),A.ID)
+			  and B.ITEM_KEY ='OS_BillID'
+			  ),
+			    t4 as (
+			    select 
+			  A.ID ,  B.ITEM_KEY,  B.STRING_VALUE
+			  from 
+			  [dbo].[OS_WFENTRY] A ,
+			  dbo.OS_PROPERTYENTRY B  
+			  where A.STATE !=4
+			  and B.GLOBAL_KEY = 'os_'+convert(varchar(10),A.ID)
+			  and B.ITEM_KEY ='OS_BillCode'
+			  )
+			  select 
+			  t1.ID,
+			  t1.ITEM_KEY,
+			  t1.STRING_VALUE   as OS_Current_Operate,
+			  t2.ITEM_KEY,
+			  t2.STRING_VALUE as OS_BillType,
+			  t3.ITEM_KEY,
+			  t3.STRING_VALUE as OS_BillID,
+			  t4.ITEM_KEY,
+			  t4.STRING_VALUE as OS_BillCode,
+			  t5.STRING_VALUE as participant
+			  from 
+			    t1 left join t2 on t1.ID =t2.ID 
+			    left join t3 on t1.ID = t3.ID
+			    left join t4 on t1.ID = t4.ID,
+			    dbo.OS_PROPERTYENTRY t5
+			  where 
+			   t5.ITEM_KEY ='participant'+t1.STRING_VALUE
+			  and t5.GLOBAL_KEY =t1.GLOBAL_KEY
+	</select>
+</sqlMap>

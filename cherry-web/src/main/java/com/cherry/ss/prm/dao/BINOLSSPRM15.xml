@@ -1,0 +1,223 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sqlMap PUBLIC "-//iBATIS.com//DTD SQL Map 2.0//EN" "http://ibatis.apache.org/dtd/sql-map-2.dtd">
+<sqlMap namespace="BINOLSSPRM15">
+	<sql id="activeQuery">
+		<![CDATA[
+				SELECT 			
+					C.BIN_PromotionActivityID AS activeID,																	
+					A.CountActCode AS counterActId,																			
+					'(' + C.ActivityCode + ')' + C.ActivityName AS activeName,																			
+					'(' + D.CounterCode + ')' + D.CounterNameIF AS prmCounter,																			
+					case when PrtType = 'P' then '(' + F.UnitCode + ')' + F.NameTotal 
+					else '(' + F1.UnitCode + ')' + F1.NameTotal
+					end AS prmPro,																			
+					A.TransferDate AS sendDate,																			
+					CONVERT (varchar, A.ActivityFromDate, 120) AS startDate,																			
+					CONVERT (varchar, A.ActivityToDate, 120) AS endDate,	
+					A.ValidFlag as validFlag																	
+				FROM																				
+					Promotion.BIN_ActivityTransHis A WITH(NOLOCK) 			
+					JOIN (
+					]]>
+					<include refid="BINOLCMINC99.departPrivilegeSql" />
+					<![CDATA[
+					UNION 
+						SELECT -8888
+					) B 
+					ON (A.BIN_OrganizationID=B.BIN_OrganizationID)
+					JOIN Promotion.BIN_PromotionActivity C WITH(NOLOCK)
+					ON(C.ActivityCode = A.MainCode)
+					LEFT JOIN Basis.BIN_CounterInfo D WITH(NOLOCK)
+					ON(D.BIN_OrganizationID = A.BIN_OrganizationID)																								
+					LEFT JOIN Basis.BIN_PromotionProductVendor E WITH(NOLOCK)
+					ON(E.BIN_PromotionProductVendorID = A.BIN_PromotionProductVendorID
+						AND A.PrtType = 'P')								 																			
+					LEFT JOIN Basis.BIN_PromotionProduct F WITH(NOLOCK)
+					ON(E.BIN_PromotionProductID = F.BIN_PromotionProductID)
+					LEFT JOIN  Basis.BIN_ProductVendor E1 WITH(NOLOCK)
+					ON(E1.BIN_ProductVendorID = A.BIN_PromotionProductVendorID
+						AND A.PrtType = 'N')								 																			
+					LEFT JOIN Basis.BIN_Product F1 WITH(NOLOCK)
+					ON(E1.BIN_ProductID = F1.BIN_ProductID)
+				WHERE
+					A.BIN_OrganizationInfoID = #organizationInfoId# AND
+					A.ActivityType = '0'
+			 ]]>
+			 <dynamic>
+			 	<isNotEmpty prepend="AND" property="activityCode">
+		            <![CDATA[A.MainCode = #activityCode#]]>
+		        </isNotEmpty>
+		        <isNotEmpty prepend="AND" property="prmCounterId">
+		            <![CDATA[
+		                (A.BIN_OrganizationID = #prmCounterId#
+						OR A.BIN_OrganizationID = '-8888')
+		            ]]>
+		        </isNotEmpty>
+				<isEmpty prepend="AND" property="validFlag">	
+						A.ValidFlag = '1'	
+				</isEmpty>
+			 	<isNotEmpty prepend="AND" property="brandInfoId">
+						A.BIN_BrandInfoID = #brandInfoId#		
+				</isNotEmpty>
+				<isNotEmpty prepend="AND" property="prtType">
+						A.PrtType = #prtType#		
+				</isNotEmpty>
+		        <isEmpty property="prmCounterId">
+		            <isNotEmpty prepend="AND" property="prmCounter">
+						(D.CounterCode LIKE '%' + #prmCounter# + '%' 
+						OR D.CounterNameIF LIKE '%' + #prmCounter# + '%'
+						OR D.CounterCode IS NULL)			
+					</isNotEmpty>
+		        </isEmpty>
+		        
+		        <isEmpty property="activityCode">
+		            <isNotEmpty prepend="AND" property="prmActiveName">
+						(C.ActivityCode LIKE '%' + #prmActiveName# + '%' 
+						OR C.ActivityName LIKE '%' + #prmActiveName# + '%')			
+					</isNotEmpty>
+		        </isEmpty>
+		        <isNotEmpty prepend="AND" property="prmProductId">
+		            <![CDATA[
+		                A.BIN_PromotionProductVendorID = #prmProductId#
+		            ]]>
+		        </isNotEmpty>
+		        <isEmpty property="prmProductId">
+		            <isNotEmpty prepend="AND" property="prmProduct">	
+						(E.BarCode LIKE '%' + #prmProduct# + '%' 
+						OR F.NameTotal LIKE '%' + #prmProduct# + '%' 
+						OR F.UnitCode LIKE '%' + #prmProduct# + '%')							
+					</isNotEmpty>
+		        </isEmpty>
+				<isNotEmpty property="dateAllFlag">	
+					<isEqual property="dateAllFlag" compareValue="1">
+					<![CDATA[
+					  AND A.ActivityFromDate <= #endDate#
+					  AND A.ActivityToDate >= #startDate#
+					]]>
+					</isEqual>		
+					<isEqual property="dateAllFlag" compareValue="0">
+					 <isNotEmpty property="startDate">
+					 	<![CDATA[
+							AND A.ActivityFromDate <= #startDate#
+							AND A.ActivityToDate >= #startDate#
+						]]>
+					 </isNotEmpty>
+					 <isNotEmpty property="endDate">
+					 	<![CDATA[
+							AND A.ActivityFromDate <= #endDate#
+							AND A.ActivityToDate >= #endDate#
+						]]>
+					 </isNotEmpty>
+					</isEqual>			
+				</isNotEmpty>
+				<isNotEmpty property="actState">
+		            <isEqual property="actState" compareValue="1">
+		            <![CDATA[
+		                AND A.ActivityFromDate <= GETDATE()
+						AND A.ActivityToDate >= GETDATE()
+		            ]]>
+		            </isEqual>
+		            <isEqual property="actState" compareValue="0">
+		            <![CDATA[
+		                 AND A.ActivityToDate < GETDATE()
+		            ]]>
+		            </isEqual>
+		        </isNotEmpty>
+			</dynamic>
+		</sql>
+    
+    <!-- 取得促销活动下发信息List -->
+    <select id="getActiveList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+       	<include refid="BINOLCMINC99.pageheader" /> 
+		<include refid="BINOLSSPRM15.activeQuery" />
+		<include refid="BINOLCMINC99.pagefooter" />
+    </select>
+    
+    <!-- 取得促销活动下发总数  -->
+    <select id="getActiveCount" parameterClass="java.util.HashMap" resultClass="java.lang.Integer">
+    	<![CDATA[
+			SELECT COUNT(SORT_T1.counterActId) AS count FROM (
+		]]>	
+		<include refid="BINOLSSPRM15.activeQuery" />	
+		<![CDATA[	
+			)SORT_T1
+		]]>										
+    </select>
+    
+     <!-- 取得柜台信息  -->
+    <select id="getCounterList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+    	<![CDATA[
+    		SELECT TOP $number$
+				CounterCode AS counterCode,
+				CounterNameIF AS counterNameIF,
+				BIN_OrganizationID AS prmCounterId
+			FROM
+				Basis.BIN_CounterInfo WITH(NOLOCK)
+			WHERE 
+				BIN_OrganizationInfoID = #organizationInfoId# AND
+				(CounterCode LIKE '%' + #paramInfoStr# + '%'
+				OR CounterNameIF LIKE '%' + #paramInfoStr# + '%')	
+    	]]>
+    	<dynamic>
+		 	<isNotEmpty property="brandInfoId">
+				AND BIN_BrandInfoID = #brandInfoId#		
+			</isNotEmpty>	
+		</dynamic>			
+    </select>
+    
+    <!-- 取得产品+促销品信息  -->
+    <select id="getPrmPrtList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+    	<![CDATA[
+    		SELECT DISTINCT TOP $number$
+				T0.*
+			FROM
+				Promotion.BIN_PromotionActivity A WITH(NOLOCK)
+				JOIN Promotion.BIN_PromotionActivityRule B WITH(NOLOCK)
+				ON(A.BIN_PromotionActivityID = B.BIN_PromotionActivityID)
+				JOIN Promotion.BIN_PromotionRuleResult C WITH(NOLOCK)
+				ON(B.BIN_PromotionActivityRuleID = C.BIN_PromotionActivityRuleID)
+				JOIN (
+			]]>
+			<include refid="BINOLCMINC99.getProPrmList" />
+			
+    		<![CDATA[
+    			WHERE 
+    				T.nameTotal LIKE '%' + #paramInfoStr# + '%' OR
+    				T.unitCode LIKE '%' + #paramInfoStr# + '%' OR
+    				T.barCode  LIKE '%' + #paramInfoStr# + '%'
+ 			]]>
+			<![CDATA[	
+				)T0 
+				ON(C.PromotionPrtUnitcode = T0.unitCode
+					AND C.PromotionPrtCode = T0.barCode)
+			WHERE 
+				A.BIN_OrganizationInfoID = #organizationInfoId#
+    	]]>
+    	<dynamic>
+		 	<isNotEmpty property="brandInfoId">
+				AND A.BIN_BrandInfoID = #brandInfoId#		
+			</isNotEmpty>	
+		</dynamic>			
+    </select>
+    
+    <!-- 取得促销活动名信息  -->
+    <select id="getPrmActNameList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+    	<![CDATA[
+    		SELECT TOP $number$
+				ActivityCode AS activityCode,
+				ActivityName AS activityName
+			FROM
+				Promotion.BIN_PromotionActivity WITH(NOLOCK)
+			WHERE 
+				BIN_OrganizationInfoID = #organizationInfoId# AND
+				(ActivityCode LIKE '%' + #paramInfoStr# + '%'
+				OR ActivityName LIKE '%' + #paramInfoStr# + '%') 
+				and (TemplateFlag IS NULL OR TemplateFlag='0' OR TemplateFlag ='')
+    	]]>
+    	<dynamic>
+		 	<isNotEmpty property="brandInfoId">
+				AND BIN_BrandInfoID = #brandInfoId#		
+			</isNotEmpty>	
+		</dynamic>			
+    </select>
+</sqlMap>

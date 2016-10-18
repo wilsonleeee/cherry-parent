@@ -1,0 +1,191 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sqlMap PUBLIC "-//iBATIS.com//DTD SQL Map 2.0//EN" "http://ibatis.apache.org/dtd/sql-map-2.dtd">
+<sqlMap namespace="BINOLSSPRM20">
+	<!-- 取得调拨单概要信息-->
+	<select id="getAllOrder" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+        <![CDATA[
+			SELECT 
+				'-999' as TaskInstanceID,
+				A.BIN_PromotionAllocationID,													
+				A.AllocationNo,
+				A.AllocationNoIF,
+				A.RelevanceNo,
+				A.BIN_EmployeeID,
+				A.TotalQuantity,
+				A.AllocationDate
+		]]>
+		<dynamic>
+		<isNotEmpty property="language">
+			<isEqual property="language" compareValue="en_US">										
+			,B.NameForeign AS DepartName
+			,C.EmployeeNameForeign AS EmployeeName
+			</isEqual>
+			<isEqual property="language" compareValue="zh_CN">										
+			,B.DepartName AS DepartName
+			,C.EmployeeName AS EmployeeName
+			</isEqual>								
+		</isNotEmpty>
+		<isEmpty property="language">
+			,B.DepartName AS DepartName
+			,C.EmployeeName AS EmployeeName
+		</isEmpty>
+		</dynamic>
+		 <![CDATA[												
+			FROM 
+				Inventory.BIN_PromotionAllocation A 
+				left join  Basis.BIN_Organization B  on A.BIN_OrganizationID = B.BIN_OrganizationID
+				left join Basis.BIN_Employee C on A.BIN_EmployeeID = C.BIN_EmployeeID
+			WHERE					
+				    A.ValidFlag='1'				
+				and A.VerifiedFlag ='2'
+				and A.TradeType='5'
+				and A.TradeStatus='1'
+				and A.BIN_OrganizationIDAccept=#BIN_OrganizationIDAccept#
+		]]>
+    </select>
+    
+    <!-- 取得调拨单概要信息    工作流用-->
+	<select id="getAllOrderJbpm" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+        <![CDATA[
+			SELECT 
+				#TaskInstanceID# as TaskInstanceID,	
+				A.BIN_PromotionAllocationID,													
+				A.AllocationNo,
+				A.AllocationNoIF,
+				A.RelevanceNo,
+				A.BIN_EmployeeID,
+				A.TotalQuantity,
+				A.AllocationDate
+		]]>
+		<dynamic>
+		<isNotEmpty property="language">
+			<isEqual property="language" compareValue="en_US">										
+			,B.NameForeign AS DepartName
+			,C.EmployeeNameForeign AS EmployeeName
+			</isEqual>
+			<isEqual property="language" compareValue="zh_CN">										
+			,B.DepartName AS DepartName
+			,C.EmployeeName AS EmployeeName
+			</isEqual>								
+		</isNotEmpty>
+		<isEmpty property="language">
+			,B.DepartName AS DepartName
+			,C.EmployeeName AS EmployeeName
+		</isEmpty>
+		</dynamic>
+		 <![CDATA[												
+			FROM 
+				Inventory.BIN_PromotionAllocation A 
+				left join  Basis.BIN_Organization B  on A.BIN_OrganizationID = B.BIN_OrganizationID
+				left join Basis.BIN_Employee C on A.BIN_EmployeeID = C.BIN_EmployeeID
+			WHERE					
+				    A.ValidFlag='1'				
+				and A.VerifiedFlag ='2'
+				and A.TradeType='5'
+				and A.TradeStatus='1'
+				and A.BIN_PromotionAllocationID=#BIN_PromotionAllocationID#
+		]]>
+    </select>
+    
+    
+    <!-- 取得调拨单明细数据-->
+    <select id="getAllocationDetailList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+        <![CDATA[
+			SELECT 
+				#TaskInstanceID# as TaskInstanceID,	
+				A.BIN_PromotionProductVendorID,
+				A.DetailNo,
+				A.Quantity,
+				A.Price,
+				A.BIN_InventoryInfoID,
+				A.Reason,
+				B.BarCode,
+				D.BIN_PromotionAllocationID,
+				D.BIN_OrganizationID,
+				D.BIN_OrganizationIDAccept,
+				D.AllocationNo,
+				D.AllocationNoIF,
+				D.RelevanceNo,
+				convert(varchar(30),D.UpdateTime,121) as UpdateTime,
+				D.ModifyCount,
+				C.UnitCode
+		]]>
+		<dynamic>
+		<isNotEmpty property="language">
+			<isEqual property="language" compareValue="en_US">										
+			,C.NameForeign AS NameTotal
+			</isEqual>
+			<isEqual property="language" compareValue="zh_CN">										
+			,C.NameTotal AS NameTotal
+			</isEqual>								
+		</isNotEmpty>
+		<isEmpty property="language">
+			,C.NameTotal AS NameTotal
+		</isEmpty>
+		</dynamic>
+		 <![CDATA[		
+			FROM 
+				Inventory.BIN_PromotionAllocation D ,
+				Inventory.BIN_PromotionAllocationDetail A,
+				Basis.BIN_PromotionProductVendor B,
+				Basis.BIN_PromotionProduct C
+			WHERE
+				 A.BIN_PromotionProductVendorID = B.BIN_PromotionProductVendorID
+				and B.BIN_PromotionProductID = C.BIN_PromotionProductID
+				and D.BIN_PromotionAllocationID =A.BIN_PromotionAllocationID
+				and A.BIN_PromotionAllocationID =#BIN_PromotionAllocationID#		
+				ORDER BY A.BIN_PromotionAllocationID,A.DetailNo ASC
+		]]>
+    </select>
+    	<!-- 取得调拨单详细信息  -->
+    <select id="getAllocationInfo" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+    	<![CDATA[
+		SELECT					
+			A.AllocationNo,				
+			ISNULL(A.TotalQuantity,0) AS totalQuantity,				
+			ISNULL(A.TotalAmount,0) AS totalAmount,				
+			A.VerifiedFlag AS verifiedFlag,	
+			A.TradeStatus,			
+			A.TradeType AS tradeType,
+			A.RelevanceNo,	
+			A.AllocationNoIF,	
+			A.AllocationDate AS allocationDate,
+			A.Reason AS reason,
+			A.BIN_OrganizationIDAccept,
+		]]>
+		<dynamic>
+			<isNotEmpty property="language">
+				<isEqual property="language" compareValue="en_US">
+					E.NameForeign AS sendDepart,													
+					F.NameForeign AS receiveDepart,													
+					G.EmployeeNameForeign AS employeeName
+				</isEqual>
+				<isEqual property="language" compareValue="zh_CN">	
+					E.DepartName AS sendDepart,												
+					F.DepartName AS receiveDepart,													
+					G.EmployeeName AS employeeName
+				</isEqual>								
+			</isNotEmpty>
+			<isEmpty property="language">
+				E.DepartName AS sendDepart,													
+				F.DepartName AS receiveDepart,													
+				G.EmployeeName AS employeeName
+			</isEmpty>
+		</dynamic>
+		<![CDATA[						
+			FROM														
+				Inventory.BIN_PromotionAllocation A											
+				LEFT JOIN Basis.BIN_Organization E													
+				ON (A.BIN_OrganizationID = E.BIN_OrganizationID 													
+					AND	E.ValidFlag = '1')											
+				LEFT JOIN Basis.BIN_Organization F													
+				ON (A.BIN_OrganizationIDAccept = F.BIN_OrganizationID 													
+					AND	F.ValidFlag = '1')											
+				LEFT JOIN Basis.BIN_Employee G													
+				ON (A.BIN_EmployeeID = G.BIN_EmployeeID													
+					AND G.ValidFlag = '1')												
+			WHERE														
+				A.BIN_PromotionAllocationID = #proAllocationId#
+		]]>									
+    </select>
+</sqlMap>

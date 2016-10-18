@@ -1,0 +1,163 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sqlMap PUBLIC "-//iBATIS.com//DTD SQL Map 2.0//EN" "http://ibatis.apache.org/dtd/sql-map-2.dtd">
+<sqlMap namespace="BINOLSSPRM56">
+	<!-- 取得调拨记录LIST  -->
+	<select id="getAllocationList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+		<![CDATA[
+		SELECT								
+			B.BarCode AS barCode,
+			C.UnitCode AS unitCode,
+			ISNULL(A.Price,0) AS price,
+			ISNULL(A.Quantity,0) AS quantity,
+			A.Reason AS reason,
+			A.BIN_PromotionProductVendorID,
+		]]>
+		<dynamic>
+			<isNotEmpty property="language">
+				<isEqual property="language" compareValue="en_US">
+					C.NameForeign AS nameTotal
+					,D.DepotNameEN AS inventoryName
+				</isEqual>
+				<isEqual property="language" compareValue="zh_CN">	
+					C.NameTotal AS nameTotal
+					,D.DepotNameCN AS inventoryName
+				</isEqual>								
+			</isNotEmpty>
+			<isEmpty property="language">
+				C.NameTotal AS nameTotal
+				,D.DepotNameCN AS inventoryName
+			</isEmpty>
+		</dynamic>
+		<![CDATA[						
+			FROM														
+				Inventory.BIN_PromotionAllocationDetail A
+				JOIN Basis.BIN_PromotionProductVendor B
+				ON(A.BIN_PromotionProductVendorID = B.BIN_PromotionProductVendorID
+					)
+				JOIN Basis.BIN_PromotionProduct C
+				ON(B.BIN_PromotionProductID = C.BIN_PromotionProductID 				
+					)
+				LEFT JOIN Basis.BIN_DepotInfo D
+				ON(A.BIN_InventoryInfoID = D.BIN_DepotInfoID)					
+			WHERE														
+				A.BIN_PromotionAllocationID = #proAllocationId#
+		]]>								
+    </select>
+    	<!-- 更新【促销产品收调拨业务单据表】-->
+    	<update id="updateAllocationMain" parameterClass="java.util.HashMap">		
+		<![CDATA[
+			UPDATE									
+				Inventory.BIN_PromotionAllocation								
+			SET
+			    Reason = #Reason#,
+				TotalQuantity = #TotalQuantity#,
+				TotalAmount = #TotalAmount#,
+				VerifiedFlag='0',
+				UpdateTime=GETDATE(),
+				UpdatedBy=#UpdatedBy#,
+				UpdatePGM=#UpdatePGM#,
+				ModifyCount=ModifyCount+1								
+			WHERE									
+				BIN_PromotionAllocationID = #BIN_PromotionAllocationID#
+				and ValidFlag ='1'
+				and UpdateTime = #outUpdateTime#
+				and ModifyCount = #outModifyCount#
+				
+		]]>
+	</update>
+	    <!-- 更新【促销产品收调拨业务单据表】伦理删除-->
+    	<update id="deleteAllocationMain" parameterClass="java.util.HashMap">		
+		<![CDATA[
+			UPDATE									
+				Inventory.BIN_PromotionAllocation								
+			SET
+				ValidFlag ='0',
+				UpdateTime=GETDATE(),
+				UpdatedBy=#UpdatedBy#,
+				UpdatePGM=#UpdatePGM#,
+				ModifyCount=ModifyCount+1								
+			WHERE									
+				BIN_PromotionAllocationID = #BIN_PromotionAllocationID#
+				and ValidFlag ='1'
+				and UpdateTime = #outUpdateTime#
+				and ModifyCount = #outModifyCount#
+				
+		]]>
+	</update>
+		    <!-- 更新【促销产品收调拨业务明细表】伦理删除-->
+    	<update id="deleteAllocationDetailLogic" parameterClass="java.util.HashMap">		
+		<![CDATA[
+			UPDATE									
+				Inventory.BIN_PromotionAllocationDetail								
+			SET
+				ValidFlag ='0',
+				UpdateTime=GETDATE(),
+				UpdatedBy=#UpdatedBy#,
+				UpdatePGM=#UpdatePGM#,
+				ModifyCount=ModifyCount+1								
+			WHERE									
+				BIN_PromotionAllocationID = #BIN_PromotionAllocationID#
+				and ValidFlag ='1'
+		]]>
+	</update>
+	    <!-- 删除【促销产品收调拨业务单据明细表】 -->
+    	<update id="deleteAllocationDetail" parameterClass="java.util.HashMap">		
+		<![CDATA[
+			DELETE FROM									
+				Inventory.BIN_PromotionAllocationDetail	
+			WHERE									
+				BIN_PromotionAllocationID = #BIN_PromotionAllocationID#			
+			
+		]]>
+		</update>
+	
+		    <!-- 插入【促销产品调拨业务单据明细表】-->
+       	<insert id="insertAllocationDetail" parameterClass="java.util.HashMap">
+	    	<![CDATA[
+	    		INSERT INTO Inventory.BIN_PromotionAllocationDetail			
+				(
+					BIN_PromotionAllocationID,
+					BIN_PromotionProductVendorID,
+					DetailNo,
+					Quantity,
+					Price,
+					BIN_ProductVendorPackageID,
+					BIN_InventoryInfoID,
+					BIN_LogicInventoryInfoID,
+					BIN_StorageLocationInfoID,
+					Reason,
+					ValidFlag,
+					CreateTime,
+					CreatedBy,
+					CreatePGM,
+					UpdateTime,
+					UpdatedBy,
+					UpdatePGM,
+					ModifyCount
+			]]>				
+			<![CDATA[				
+				)				
+				VALUES				
+				(
+					#BIN_PromotionAllocationID#,
+					#BIN_PromotionProductVendorID#,
+					#DetailNo#,
+					#Quantity#,
+					#Price#,
+					#BIN_ProductVendorPackageID#,
+					#BIN_InventoryInfoID#,
+					#BIN_LogicInventoryInfoID#,
+					#BIN_StorageLocationInfoID#,
+					#Reason#,
+					#ValidFlag#,
+					GETDATE(),
+					#CreatedBy#,
+					#CreatePGM#,
+					GETDATE(),
+					#UpdatedBy#,
+					#UpdatePGM#,
+					'0'
+				)
+			]]>	
+	    </insert>
+</sqlMap>

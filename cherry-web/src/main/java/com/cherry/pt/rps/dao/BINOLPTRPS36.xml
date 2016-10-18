@@ -1,0 +1,84 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sqlMap PUBLIC "-//iBATIS.com//DTD SQL Map 2.0//EN" "http://ibatis.apache.org/dtd/sql-map-2.dtd">
+<sqlMap namespace="BINOLPTRPS36">
+    <!--柜台月度人效明细-->
+    <sql id="MonthPeopleEffectQuery">
+        <![CDATA[
+	        SELECT 
+				T0.counterCode,
+				T0.counterName,
+				case when ISNULL(T0.employeeNum,0)=0 THEN '--' ELSE CONVERT(varchar(10),T0.employeeNum) END AS employeeNum,
+				TM.numberOfDay AS numberOfDay,
+				ISNULL(T0.monthSaleAmount,0) as monthSaleAmount,
+				CASE 
+					WHEN ISNULL(T0.employeeNum,0)=0 THEN '--'
+					WHEN TM.numberOfDay=0 THEN '--'
+					WHEN ISNULL(T0.employeeNum,0)<>0 AND TM.numberOfDay<>0 THEN 
+							convert(varchar(20),CONVERT(decimal(16,2),ISNULL(T0.monthSaleAmount,0)/T0.employeeNum/TM.numberOfDay))
+				END AS monthPeopleEffect
+			FROM(
+				SELECT
+					A.CounterCode AS counterCode,
+					A.CounterNameIF AS counterName,
+					A.EmployeeNum AS employeeNum,
+					#month# AS month,
+					SUM(CASE WHEN SR.SaleType = 'SR' THEN -SR.Amount ELSE SR.Amount END) AS monthSaleAmount
+			FROM
+				Basis.BIN_CounterInfo A WITH(NOLOCK)
+				LEFT JOIN Sale.BIN_SaleRecord SR WITH(NOLOCK)
+				ON(A.BIN_OrganizationID=SR.BIN_OrganizationID
+				 AND CONVERT(varchar(6),SR.SaleDate,112) = #month#)
+		]]>
+		<isNotEmpty property="privilegeFlag">
+			<isEqual property="privilegeFlag" compareValue="1">			
+				<![CDATA[			
+					JOIN (]]><include refid="BINOLCMINC99.departPrivilegeSql" /><![CDATA[) A99 
+					ON A.BIN_OrganizationID=A99.BIN_OrganizationID
+				]]>
+			</isEqual>
+		</isNotEmpty>
+		<![CDATA[			
+			WHERE
+				A.ValidFlag = '1' AND
+				A.BIN_OrganizationInfoID = #organizationInfoId#
+		]]>
+		<isNotEmpty prepend="AND" property="brandInfoId">
+			A.BIN_BrandInfoID = #brandInfoId#
+		</isNotEmpty>
+		<isNotEmpty prepend="AND" property="counterName">
+			(A.CounterCode LIKE '%'+#counterName#+'%' OR A.CounterNameIF LIKE '%'+#counterName#+'%')
+		</isNotEmpty>
+		<![CDATA[
+			GROUP BY 
+				A.CounterCode,
+				A.CounterNameIF,
+				A.EmployeeNum
+			)T0
+			LEFT JOIN (
+				SELECT 
+					Year+RIGHT('00'+convert(varchar,Month),2) as month,
+					COUNT(Day) as numberOfDay
+			 	FROM 
+			 		Tools.BIN_Calendar group BY Year,Month
+			) TM ON(T0.month=TM.month)
+		]]>
+    </sql>
+    
+	<!-- 取得柜台月度人效明细Count -->
+    <select id="getMonthPeopleEffectCount" parameterClass="java.util.HashMap" resultClass="java.lang.Integer">
+    	<![CDATA[
+			SELECT	COUNT(1) AS count FROM (
+		]]>	
+		<include refid="BINOLPTRPS36.MonthPeopleEffectQuery" />	
+		<![CDATA[	
+			)SORT_T1
+		]]>										
+    </select>
+	
+	<!-- 取得柜台月度人效明细LIST  -->
+    <select id="getMonthPeopleEffectList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+       	<include refid="BINOLCMINC99.pageheader" />
+		<include refid="BINOLPTRPS36.MonthPeopleEffectQuery" />	
+		<include refid="BINOLCMINC99.pagefooter" />
+    </select>
+</sqlMap>

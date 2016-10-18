@@ -1,0 +1,76 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sqlMap PUBLIC "-//iBATIS.com//DTD SQL Map 2.0//EN" "http://ibatis.apache.org/dtd/sql-map-2.dtd">
+<sqlMap namespace="BINOLMBPTM03">
+	
+	<!-- 取得积分信息  -->
+    <select id="getPointInfo" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+    	<![CDATA[
+			 SELECT
+             	A.BIN_PointChangeID AS pointChangeId,
+				CONVERT(varchar(30),A.ChangeDate,120) AS changeDate,
+				A.TradeNoIF AS billCode,
+				A.TradeType AS billType,
+				A.Amount AS amount,
+				A.Quantity AS quantity,
+				A.Point AS point,
+				CASE ISNULL(B.Name,'') WHEN '' THEN A.MemCode ELSE '(' + A.MemCode + ')' + B.Name END AS memCode,
+				CASE ISNULL(C.DepartName,'') WHEN '' THEN C.DepartCode ELSE '(' + C.DepartCode + ')' + C.DepartName END AS departCode,
+				CASE ISNULL(D.EmployeeName,'') WHEN '' THEN D.EmployeeCode ELSE '(' + D.EmployeeCode + ')' + D.EmployeeName END AS employeeCode
+			FROM
+				Members.BIN_PointChange A WITH(NOLOCK)
+				LEFT JOIN Members.BIN_MemberInfo B ON A.BIN_MemberInfoID = B.BIN_MemberInfoID
+				LEFT JOIN Basis.BIN_Organization C WITH(NOLOCK) ON A.BIN_OrganizationID = C.BIN_OrganizationID
+				LEFT JOIN Basis.BIN_Employee D WITH(NOLOCK) ON A.BIN_EmployeeID = D.BIN_EmployeeID
+			WHERE
+				A.BIN_PointChangeID = #pointChangeId#
+		]]>								
+    </select>
+    
+    <!-- 取得积分明细信息  -->
+    <select id="getPointInfoDetail" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+    	<![CDATA[
+			 SELECT
+			 	A.RelevantSRCode AS relevantSRCode,
+			 	A.BIN_PrmPrtVendorID AS prmPrtVendorId,
+			 	A.UnitCode AS unitCode,
+			 	A.BarCode AS barCode,
+			 	A.SaleType AS saleType,
+			 	Y.NameTotal AS proName,
+			 	N.NameTotal AS prmProName,
+             	A.Price AS price,
+             	A.Quantity AS quantity,
+             	A.Point AS point,
+             	A.ValidMonths AS validMonths,
+             	A.PointType AS pointType,
+             	A.Reason AS reason,
+             	C.CampaignName AS mainCampaignName,
+             	F.CampaignName AS subCampaignName,
+             	H.CampaignName AS combCampaignName
+			FROM
+				Members.BIN_PointChangeDetail A WITH(NOLOCK)
+				LEFT JOIN Basis.BIN_ProductVendor X WITH(NOLOCK)
+					JOIN Basis.BIN_Product Y WITH(NOLOCK) ON X.BIN_ProductID = Y.BIN_ProductID
+				ON A.BIN_PrmPrtVendorID = X.BIN_ProductVendorID AND A.SaleType = 'N'
+				LEFT JOIN Basis.BIN_PromotionProductVendor M WITH(NOLOCK)
+					JOIN Basis.BIN_PromotionProduct N WITH(NOLOCK) ON M.BIN_PromotionProductID = N.BIN_PromotionProductID
+				ON A.BIN_PrmPrtVendorID = M.BIN_PromotionProductVendorID AND A.SaleType = 'P'
+				LEFT JOIN Campaign.BIN_CampaignRule B WITH(NOLOCK)
+					JOIN Campaign.BIN_Campaign C WITH(NOLOCK) ON B.BIN_CampaignID = C.BIN_CampaignID
+				ON A.MainRuleID = B.BIN_CampaignRuleID
+				LEFT JOIN Campaign.BIN_CampaignRule E WITH(NOLOCK)
+					JOIN Campaign.BIN_Campaign F WITH(NOLOCK) ON E.BIN_CampaignID = F.BIN_CampaignID
+				ON A.SubCampaignID = E.BIN_CampaignRuleID
+				LEFT JOIN Campaign.BIN_CampaignRule G WITH(NOLOCK)
+					JOIN Campaign.BIN_Campaign H WITH(NOLOCK) ON G.BIN_CampaignID = H.BIN_CampaignID
+				ON A.CombRuleID = G.BIN_CampaignRuleID
+			WHERE
+				A.BIN_PointChangeID = #pointChangeId# AND
+				A.ValidFlag = '1'
+			ORDER BY
+				A.RelevantSRCode,
+				A.BIN_PrmPrtVendorID	
+		]]>								
+    </select>
+	
+    
+</sqlMap>

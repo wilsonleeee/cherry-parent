@@ -1,0 +1,260 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sqlMap PUBLIC "-//iBATIS.com//DTD SQL Map 2.0//EN" "http://ibatis.apache.org/dtd/sql-map-2.dtd">
+<sqlMap namespace="BINOLCM07">
+<!-- 促销产品信息查询sql -->
+	 <sql id="promotionQuery">
+		<![CDATA[
+    		SELECT 
+    			A.BIN_PromotionProductID AS bin_PromotionProductID,
+    			A.UnitCode AS unitCode, 
+    			C.BIN_PromotionProductVendorID,
+    			C.BarCode AS barCode,
+    			]]>
+    			<dynamic>
+					<isNotEmpty property="language">
+						<isEqual property="language" compareValue="zh_CN">										
+							A.NameTotal AS nameTotal,
+						</isEqual>
+						<isEqual property="language" compareValue="en_US">										
+							A.NameForeign AS nameTotal,
+						</isEqual>
+					</isNotEmpty>
+					<isEmpty property="language">
+						A.NameTotal AS nameTotal,
+					</isEmpty>
+				</dynamic>
+    			<![CDATA[
+    			B.SalePrice AS salePrice
+    		FROM
+    			Basis.BIN_PromotionProduct A
+    			]]>
+    				<dynamic>
+	    				<isEqual property="type" compareValue="1">
+	    					LEFT JOIN Basis.BIN_PrmPriceDepart B on A.BIN_PromotionProductID = B.BIN_PromotionProductID  AND 
+	    					B.ValidFlag = '1' AND B.BIN_OrganizationID = #organizationID#,
+	    				</isEqual>
+	    				<isEqual property="type" compareValue="0">
+	    					LEFT JOIN Basis.BIN_PromotionPrice B on A.BIN_PromotionProductID = B.BIN_PromotionProductID  AND 
+	    					B.ValidFlag = '1',
+	    				</isEqual>
+    				</dynamic>
+    			<![CDATA[
+
+    			Basis.BIN_PromotionProductVendor C,
+    			Basis.BIN_PromotionPrtCategory D
+    		WHERE
+    			A.BIN_PromotionProductID = C.BIN_PromotionProductID AND 
+    			A.BIN_PromotionPrtCategoryID = D.BIN_PromotionPrtCategoryID AND
+    			D.BIN_OrganizationInfoID = #bin_OrganizationInfoID#  AND 
+				]]>
+					<isNotEmpty property="brandInfoID">
+	    				D.BIN_BrandInfoID = #brandInfoID# AND
+	    			</isNotEmpty>
+				<![CDATA[
+    			A.ValidFlag = '1' AND 
+    			C.ValidFlag = '1' AND
+    			D.ValidFlag = '1'
+    	]]>
+	 </sql>
+	
+	 <!-- 查询促销产品信息 -->
+     <select id="getPromotionShortInfoList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+    	<include refid="BINOLCMINC99.pageheader" />
+		<include refid="BINOLCM07.promotionQuery" />
+		<include refid="BINOLCMINC99.filterSql" />
+    	<include refid="BINOLCMINC99.pagefooter" />
+    </select>
+    
+    <!-- 查询促销产品总数 -->
+    <select id="getPromotionCount" parameterClass="java.util.HashMap" resultClass="java.lang.Integer">
+     	<![CDATA[
+			SELECT	COUNT(SORT_T1.bin_PromotionProductID) AS count FROM (
+		]]>	
+		<include refid="BINOLCM07.promotionQuery" />
+		<include refid="BINOLCMINC99.filterSql" />
+		<![CDATA[	
+			)SORT_T1
+		]]>		
+    </select>
+    
+    <!-- 柜台查询SQL -->
+    <sql id="CounterInfoQuery">
+    	<![CDATA[
+			SELECT 
+				BIN_CounterInfoID,
+				CounterCode,
+				CounterNameIF
+			FROM 
+				Basis.BIN_CounterInfo
+			WHERE
+				BIN_OrganizationID is null AND
+				ValidFlag = '1' AND
+				BIN_OrganizationInfoID = #organizationInfoId#
+		]]>
+		<dynamic>
+			<isNotEmpty prepend="AND" property="brandInfoId">
+				BIN_BrandInfoID=#brandInfoId#
+			</isNotEmpty>
+			<isNotEmpty prepend="AND" property="counterKw">
+				(CounterCode like '%'+#counterKw#+'%' OR CounterNameIF like '%'+#counterKw#+'%')
+			</isNotEmpty>
+		</dynamic>	
+    </sql>
+    
+    <!-- 取得柜台总数 -->
+	<select id="getCounterInfoCount" parameterClass="java.util.HashMap" resultClass="java.lang.Integer">
+		<![CDATA[
+			SELECT	COUNT(SORT_T1.BIN_CounterInfoID) AS count FROM (
+		]]>	
+		<include refid="BINOLCM07.CounterInfoQuery" />
+		<![CDATA[	
+			) SORT_T1
+		]]>	
+    </select>
+    
+    <!-- 取得柜台List -->
+	<resultMap id="BINOLCM07.CounterInfo" class="java.util.HashMap">
+		<result property="counterInfoId" column="BIN_CounterInfoID"/>
+		<result property="counterCode" column="CounterCode"/>
+		<result property="counterNameIf" column="CounterNameIF"/>
+	</resultMap>
+	<select id="getCounterInfoList" parameterClass="java.util.HashMap" resultMap="BINOLCM07.CounterInfo">
+		<include refid="BINOLCMINC99.pageheader" />
+		<include refid="BINOLCM07.CounterInfoQuery" />
+		<include refid="BINOLCMINC99.pagefooter" />
+    </select>
+    
+    <!-- 根据柜台ID取得柜台信息 -->
+	<resultMap id="BINOLCM07.CounterInfo1" class="java.util.HashMap">
+		<result property="counterInfoId" column="BIN_CounterInfoID"/>
+		<result property="regionId" column="BIN_RegionID"/>
+		<result property="path" column="Path"/>
+		<result property="mallInfoId" column="BIN_MallInfoID"/>
+		<result property="channelId" column="BIN_ChannelID"/>
+		<result property="resellerInfoId" column="BIN_ResellerInfoID"/>
+		<result property="positionId" column="BIN_PositionID"/>
+		<result property="counterAddress" column="CounterAddress"/>
+		<result property="counterCode" column="CounterCode"/>
+		<result property="counterNameIF" column="CounterNameIF"/>
+		<result property="disCounterCode" column="DisCounterCode"/>
+		<result property="counterSpace" column="CounterSpace"/>
+		<result property="counterKind" column="CounterKind"/>
+		<result property="counterLevel" column="CounterLevel"/>
+		<result property="status" column="Status"/>
+		<result property="modifyTime" column="UpdateTime"/>
+		<result property="modifyCount" column="ModifyCount"/>
+	</resultMap>
+	<select id="getCounterInfo" parameterClass="java.util.HashMap" resultMap="BINOLCM07.CounterInfo1">
+		<![CDATA[
+			SELECT 
+				A.BIN_CounterInfoID,
+				A.BIN_RegionID,
+				B.Path,
+				A.BIN_MallInfoID,
+				A.BIN_ChannelID,
+				A.BIN_ResellerInfoID,
+				A.BIN_PositionID,
+				A.CounterAddress,
+				A.CounterCode,
+				A.CounterNameIF,
+				A.DisCounterCode,
+				A.CounterSpace,
+				A.CounterKind,
+				A.CounterLevel,
+				A.Status,
+				convert(varchar(30),A.UpdateTime,121) AS UpdateTime,
+				A.ModifyCount
+			FROM 
+				Basis.BIN_CounterInfo A,
+				Basis.BIN_Region B
+			WHERE
+				A.BIN_RegionID = B.BIN_RegionID AND
+				A.BIN_CounterInfoID = #counterInfoId# AND
+				A.ValidFlag = '1' AND
+				B.ValidFlag = '1'
+		]]>			
+    </select>
+    
+    <!-- 查询某一区域的所有上级区域 -->
+	<resultMap id="BINOLCM07.HigherRegion" class="java.util.HashMap">
+		<result property="regionId" column="BIN_RegionID"/>
+		<result property="regionType" column="RegionType"/>
+		<result property="regionNameChinese" column="RegionNameChinese"/>
+	</resultMap>
+	<select id="getHigherRegionList" parameterClass="java.util.HashMap" resultMap="BINOLCM07.HigherRegion">
+		<![CDATA[
+			SELECT
+				BIN_RegionID,
+				RegionType,
+		]]>
+    	<dynamic>
+			<isNotEmpty property="language">
+				<isEqual property="language" compareValue="zh_CN">										
+					RegionNameChinese AS RegionNameChinese
+				</isEqual>
+				<isEqual property="language" compareValue="en_US">										
+					RegionNameForeign AS RegionNameChinese
+				</isEqual>
+			</isNotEmpty>
+			<isEmpty property="language">
+				RegionNameChinese AS RegionNameChinese
+			</isEmpty>
+		</dynamic>
+    	<![CDATA[		
+			FROM
+				Basis.BIN_Region
+			WHERE
+				CONVERT(hierarchyid,#path#).IsDescendantOf(NodeID) = 1 AND
+				ValidFlag = '1'		
+		]]>			
+    </select>
+    
+    <!-- 取得厂商List -->
+	<select id="getFactoryList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+		<![CDATA[
+			SELECT
+				BIN_ManufacturerInfoID AS manuFactId,
+				ManufacturerCode AS manuFactCode
+		]]>
+		<dynamic>
+			<isNotEmpty property="language">
+			<isEqual property="language" compareValue="en_US">
+			,FactoryNameEN AS factoryName
+			</isEqual>
+			<isEqual property="language" compareValue="zh_CN">	
+			,FactoryNameCN AS factoryName
+			</isEqual>								
+		</isNotEmpty>
+		<isEmpty property="language">
+			,FactoryNameCN AS factoryName
+		</isEmpty>
+		</dynamic>
+		<![CDATA[			
+			FROM
+				Basis.BIN_ManufacturerInfo
+			WHERE
+				BIN_OrganizationInfoID = #organizationInfoId# AND
+				ValidFlag = '1'
+			]]>
+		<dynamic>
+			<isNotEmpty prepend="AND" property="brandInfoId">
+				BIN_BrandInfoID=#brandInfoId#
+			</isNotEmpty>
+			<isNotEmpty prepend="AND" property="factoryKw">
+				(ManufacturerCode like '%'+#factoryKw#+'%' OR 
+				FactoryNameCN like '%'+#factoryKw#+'%' OR
+				FactoryNamecnCNShort like '%'+#factoryKw#+'%' OR
+				FactoryNameEN like '%'+#factoryKw#+'%' OR
+				FactoryNameENShort like '%'+#factoryKw#+'%'
+				)
+			</isNotEmpty>
+			<isNotEmpty prepend="AND" property="manuFactId">
+				BIN_ManufacturerInfoID NOT IN
+				<iterate property="manuFactId" open="(" close=")" conjunction=",">
+					#manuFactId[]#
+				</iterate>
+			</isNotEmpty>
+		</dynamic>	
+    </select>
+	
+</sqlMap>

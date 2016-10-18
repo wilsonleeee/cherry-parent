@@ -1,0 +1,184 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sqlMap PUBLIC "-//iBATIS.com//DTD SQL Map 2.0//EN" "http://ibatis.apache.org/dtd/sql-map-2.dtd">
+<sqlMap namespace="BINOLCM08">
+	<!-- 取得省区域 -->
+    <select id="getStandProvinceList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+        <![CDATA[
+		  	SELECT												
+				A.BIN_RegionID AS provinceId,
+				B.BIN_RegionID AS reginId,
+		]]>
+		<dynamic>
+			<isNotEmpty property="language">
+				<isEqual property="language" compareValue="en_US">
+					A.RegionNameForeign AS provinceName,
+					B.RegionNameForeign AS reginName
+				</isEqual>
+				<isEqual property="language" compareValue="zh_CN">	
+					A.RegionNameChinese AS provinceName,
+					B.RegionNameChinese AS reginName
+				</isEqual>								
+			</isNotEmpty>
+			<isEmpty property="language">
+				A.RegionNameChinese AS provinceName,
+				B.RegionNameChinese AS reginName
+			</isEmpty>
+		</dynamic>
+		<![CDATA[
+			FROM												
+				Basis.BIN_StandardRegion A,
+				Basis.BIN_StandardRegion B								
+			WHERE												
+				A.NodeID.GetAncestor(1) = B.NodeID AND										
+				A.ValidFlag = '1' AND
+				B.ValidFlag = '1' AND
+				B.RegionType = '0'
+		]]>
+    </select>
+	<!-- 取得下属区域  -->
+    <select id="getChildStandRegionList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+        <![CDATA[
+		  	SELECT												
+				A.BIN_RegionID AS regionId,
+		]]>
+		<dynamic>
+			<isNotEmpty property="language">
+				<isEqual property="language" compareValue="en_US">
+					A.RegionNameForeign AS regionName
+				</isEqual>
+				<isEqual property="language" compareValue="zh_CN">	
+					A.RegionNameChinese AS regionName
+				</isEqual>								
+			</isNotEmpty>
+			<isEmpty property="language">
+				A.RegionNameChinese AS regionName
+			</isEmpty>
+		</dynamic>													
+		<![CDATA[					
+			FROM												
+				Basis.BIN_StandardRegion A,
+				Basis.BIN_StandardRegion B								
+			WHERE												
+				A.NodeID.GetAncestor(1) = B.NodeID AND										
+				A.ValidFlag = '1' AND
+				B.ValidFlag = '1' AND
+				B.BIN_RegionID = #regionId#
+		]]>
+    </select>
+    
+    <!-- 取得所有下属区域  -->
+    <select id="getAllChildStandRegionList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+        <![CDATA[
+		  	SELECT												
+				A.BIN_RegionID AS regionId,
+		]]>
+		<dynamic>
+			<isNotEmpty property="language">
+				<isEqual property="language" compareValue="en_US">
+					A.RegionNameForeign AS regionName
+				</isEqual>
+				<isEqual property="language" compareValue="zh_CN">	
+					A.RegionNameChinese AS regionName
+				</isEqual>								
+			</isNotEmpty>
+			<isEmpty property="language">
+				A.RegionNameChinese AS regionName
+			</isEmpty>
+		</dynamic>													
+		<![CDATA[					
+			FROM												
+				Basis.BIN_StandardRegion A,
+				Basis.BIN_StandardRegion B								
+			WHERE	
+				A.NodeID.IsDescendantOf(B.NodeID) = 1 AND		
+				B.BIN_RegionID = #regionId# AND		
+				A.BIN_RegionID <> #regionId# AND
+				A.Level = B.Level + 1 AND										
+				A.ValidFlag = '1' AND
+				B.ValidFlag = '1'
+			ORDER BY
+				A.Level,
+				A.RegionNameChinese
+		]]>
+    </select>
+	
+	<!--根据区域code或者区域名称以及区域类型去匹配区域-->
+	<select id="getRegionInfoList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+		<![CDATA[
+			SELECT
+				BIN_RegionID AS regionId,
+				RegionCode AS regionCode,
+				HelpCode AS HelpCode,
+				NodeID AS nodeId,
+				[Level] AS [level],
+				[Path] AS [path],
+		]]>
+			<dynamic>
+				<isNotEmpty property="language">
+					<isEqual property="language" compareValue="en_US">
+						RegionNameForeign AS regionName
+					</isEqual>
+					<isEqual property="language" compareValue="zh_CN">	
+						RegionNameChinese AS regionName
+					</isEqual>								
+				</isNotEmpty>
+				<isEmpty property="language">
+					RegionNameChinese AS regionName
+				</isEmpty>
+			</dynamic>
+		<![CDATA[
+			FROM
+				[Basis].[BIN_Region]
+			WHERE
+				ValidFlag = '1'
+				AND BIN_OrganizationInfoID = #organizationInfoId#
+		]]>	
+			<dynamic>
+				<isNotEmpty property="brandInfoId">
+					AND BIN_BrandInfoID = #brandInfoId#
+				</isNotEmpty>
+				<isNotEmpty property="regionType">
+					AND RegionType = #regionType#
+				</isNotEmpty>
+				<isNotEmpty property="regionTypeCityFlag">
+					AND RegionType NOT IN (0,1)
+				</isNotEmpty>
+				<isNotEmpty property="regionCode">
+					AND RegionCode = #regionCode#
+				</isNotEmpty>
+				<isNotEmpty property="regionName">
+					<isNotEmpty property="language">
+						<isEqual property="language" compareValue="en_US">
+							AND RegionNameForeign = #regionName#
+						</isEqual>
+						<isEqual property="language" compareValue="zh_CN">	
+							AND RegionNameChinese = #regionName#
+						</isEqual>								
+					</isNotEmpty>
+					<isEmpty property="language">
+						AND RegionNameChinese = #regionName#
+					</isEmpty>
+				</isNotEmpty>
+			</dynamic>
+	</select>
+	
+	<!-- 取得所有省份、城市、区县数据List  -->
+    <select id="getAllRegionList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+        <![CDATA[
+			SELECT 
+				A.BIN_RegionID AS id,
+				A.RegionCode AS code,
+				A.RegionNameChinese AS name,
+				A.RegionType AS type,
+				A.Path AS path,
+				A.Level AS level
+			FROM
+				Basis.BIN_StandardRegion A
+			WHERE
+				A.RegionType IN ('1','2','3','4') AND
+				A.ValidFlag = '1'
+			ORDER BY
+				A.RegionNameChinese
+		]]>
+    </select>
+</sqlMap>

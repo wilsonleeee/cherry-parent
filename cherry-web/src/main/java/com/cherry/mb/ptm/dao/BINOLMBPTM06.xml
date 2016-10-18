@@ -1,0 +1,120 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE sqlMap PUBLIC "-//iBATIS.com//DTD SQL Map 2.0//EN" "http://ibatis.apache.org/dtd/sql-map-2.dtd">
+
+<sqlMap namespace="BINOLMBPTM06">
+    
+    <!-- 取得扫码积分报表汇总 -->
+    <select id="getScanQRPointsReportSummary" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">        
+		SELECT COUNT(distinct A.MemberID) AS memberTotal,
+		COUNT(DISTINCT 
+			CASE WHEN 
+			B.JoinDate &gt;= Convert(Datetime,#startDate#) 
+			AND B.JoinDate &lt;= Convert(Datetime,#endDate#)
+			THEN B.BIN_MemberInfoID
+			END
+		) AS newMemberTotal,
+		SUM(
+			CASE WHEN B.JoinDate &gt;= Convert(Datetime,#startDate#) 
+			AND B.JoinDate &lt;= Convert(Datetime,#endDate#)
+			 THEN A.Points
+			END
+		) AS newMemberQRPointsTotal,
+		COUNT(DISTINCT 
+			CASE WHEN 
+			B.JoinDate &lt; Convert(Datetime,#startDate#) 
+			THEN B.BIN_MemberInfoID
+			END
+		) AS oldMemberTotal,
+		SUM(
+			CASE WHEN 
+				B.JoinDate &lt; Convert(Datetime,#startDate#) 
+			 THEN A.Points
+			END
+		) AS oldMemberQRPointsTotal
+		FROM Basis.BIN_PrtUniqueCodeDetail A 
+		JOIN Members.BIN_MemberInfo B
+		ON A.MemberID IS NOT NULL AND A.MemberID = B.BIN_MemberInfoID
+		WHERE 
+			A.ValidFlag = '1' AND 
+			A.ActivationStatus = '1' AND
+			A.UseStatus = '1' AND 
+    </select>
+    
+    <!-- 积分信息查询sql文  -->
+	<sql id="DetailInfoQuery">
+             SELECT
+             	A.MemberID memberId,
+             	C.MemCode AS memberCode,
+             	B.Name AS memberName,
+             	B.MobilePhone AS mobile,
+             	Convert(char(10),convert(datetime,C.GrantDate),120) + ' ' + ISNULL(C.GrantTime,'00:00:00') AS grantCardTime,
+             	A.Points AS grantPoints,
+             	Convert(char(19),A.UseTime,120) AS grantPointTime,
+             	(CASE WHEN 
+					B.JoinDate &gt;= Convert(Datetime,#startDate#) 
+				THEN 0
+				ELSE 1 
+				END) newOldMemberFlag,
+				CNT.CounterCode AS counterCode,				
+				<dynamic>
+					<isNotEmpty property="language">
+						<isEqual property="language" compareValue="en_US">
+							CNT.NameForeign AS counterName,
+							X.RegionNameForeign AS region,
+							Y.RegionNameForeign AS province,
+							Z.RegionNameForeign AS city
+						</isEqual>
+						<isEqual property="language" compareValue="zh_CN">	
+							CNT.CounterNameIF AS counterName,
+							X.RegionNameChinese AS region,
+							Y.RegionNameChinese AS province,
+							Z.RegionNameChinese AS city
+						</isEqual>								
+					</isNotEmpty>
+					<isEmpty property="language">
+						CNT.CounterNameIF AS counterName,
+						X.RegionNameChinese AS region,
+						Y.RegionNameChinese AS province,
+						Z.RegionNameChinese AS city
+					</isEmpty>
+				</dynamic>
+		
+			FROM Basis.BIN_PrtUniqueCodeDetail A 
+			JOIN Members.BIN_MemberInfo B
+				ON A.MemberID IS NOT NULL AND A.MemberID = B.BIN_MemberInfoID	
+			JOIN Basis.BIN_CounterInfo CNT
+				ON CNT.BIN_OrganizationID=B.BIN_OrganizationID 
+			JOIN Basis.BIN_Organization O ON O.BIN_OrganizationID = B.BIN_OrganizationID
+			LEFT JOIN Basis.BIN_Region X ON O.BIN_RegionID = X.BIN_RegionID
+			LEFT JOIN Basis.BIN_Region Y ON O.BIN_ProvinceID = Y.BIN_RegionID
+			LEFT JOIN Basis.BIN_Region Z ON O.BIN_CityID = Z.BIN_RegionID			
+			LEFT JOIN Members.BIN_MemCardInfo C
+			ON C.BIN_MemberInfoID = A.MemberID	
+				AND C.MemCode=A.MemberCode
+			WHERE 
+				A.ValidFlag = '1' AND 
+				A.ActivationStatus = '1' AND
+				A.UseStatus = '1' 
+			</sql>
+	
+	<!-- 取得积分信息总数  -->
+    <select id="getExportDetailCount" parameterClass="java.util.HashMap" resultClass="java.lang.Integer">
+    	<![CDATA[
+			SELECT	COUNT(SORT_T1.memberId) AS count FROM (
+		]]>	
+		<include refid="BINOLMBPTM06.DetailInfoQuery" />	
+		<![CDATA[	
+			)SORT_T1
+		]]>										
+    </select>
+	
+	<!-- 取得积分信息List  -->
+    <select id="getExportDetailList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+       	<include refid="BINOLCMINC99.pageheader" />
+		<include refid="BINOLMBPTM06.DetailInfoQuery" />
+		<include refid="BINOLCMINC99.pagefooter" />
+    </select>
+</sqlMap>
+
+
+

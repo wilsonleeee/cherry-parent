@@ -1,0 +1,140 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sqlMap PUBLIC "-//iBATIS.com//DTD SQL Map 2.0//EN" "http://ibatis.apache.org/dtd/sql-map-2.dtd">
+<sqlMap namespace="BINOLMOMAN03">
+	<!-- 绑定机器 -->
+	<update id="bindCounter" parameterClass="java.util.HashMap">     
+    <![CDATA[
+        UPDATE                                  
+            Monitor.BIN_MachineCodeCollate
+        SET
+            BindCounterInfoID = #BindCounterInfoID#,
+			BindStatus = #BindStatus#,
+    ]]>
+    <include refid="BINOLCMINC99.updateSql" />
+    <![CDATA[
+        WHERE                                   
+            MachineCode = #machineCode#
+		AND
+			MachineCodeOld =#machineCodeOld#
+    ]]>
+    </update>
+
+    <!-- 插入柜台机器升级表  -->
+    <insert id="addCounterUpgrade" parameterClass="java.util.HashMap">
+        <![CDATA[
+            INSERT INTO Monitor.BIN_CounterUpgrade(
+                BIN_CounterInfoID,
+                CounterCode,
+                BIN_BrandInfoID,
+                BrandCode,
+                MachineType,
+                UpdateStatus,
+        ]]>
+        <include refid="BINOLCMINC99.insertKeySql" />
+        <![CDATA[
+            )VALUES(
+                #counterInfoId#,
+                #counterCode#,
+                #brandInfoId#,
+                #brandCode#,
+                #machineType#,
+                #updateStatus#,
+        ]]>
+        <include refid="BINOLCMINC99.insertValueSql" />
+        <![CDATA[
+            )
+        ]]>
+    </insert>
+
+    <!-- 柜台查询SQL -->
+    <sql id="CounterInfoQuery">
+        <![CDATA[
+            SELECT 
+                BIN_CounterInfoID,
+                CounterCode,
+                CounterNameIF
+            FROM 
+                Basis.BIN_CounterInfo
+            WHERE
+                ValidFlag = '1' AND
+                BIN_OrganizationInfoID = #organizationInfoId#
+        ]]>
+        <dynamic>
+            <isNotEmpty prepend="AND" property="brandInfoId">
+                BIN_BrandInfoID=#brandInfoId#
+            </isNotEmpty>
+            <isNotEmpty prepend="AND" property="counterKw">
+                (CounterCode like '%'+#counterKw#+'%' OR CounterNameIF like '%'+#counterKw#+'%')
+            </isNotEmpty>
+			<isNotEmpty prepend="AND" property="counterInfoId">
+                BIN_CounterInfoID = #counterInfoId#
+            </isNotEmpty>
+        </dynamic>  
+    </sql>
+	
+    <!-- 取得柜台总数 -->
+    <select id="getCounterInfoCount" parameterClass="java.util.HashMap" resultClass="java.lang.Integer">
+        <![CDATA[
+            SELECT  COUNT(SORT_T1.BIN_CounterInfoID) AS count FROM (
+        ]]> 
+        <include refid="BINOLMOMAN03.CounterInfoQuery" />
+        <![CDATA[   
+            ) SORT_T1
+        ]]> 
+    </select>
+	
+    <!-- 取得柜台List -->
+    <resultMap id="BINOLMOMAN03.CounterInfo" class="java.util.HashMap">
+        <result property="counterInfoId" column="BIN_CounterInfoID"/>
+        <result property="counterCode" column="CounterCode"/>
+        <result property="counterNameIf" column="CounterNameIF"/>
+    </resultMap>
+    <select id="getCounterInfoList" parameterClass="java.util.HashMap" resultMap="BINOLMOMAN03.CounterInfo">
+        <include refid="BINOLCMINC99.pageheader" />
+        <include refid="BINOLMOMAN03.CounterInfoQuery" />
+        <include refid="BINOLCMINC99.pagefooter" />
+    </select>
+	
+	<!-- 根据机器编号取得品牌简称 -->
+    <select id="getBrandNameShortByMachine" parameterClass="java.util.HashMap" resultClass="java.lang.String">
+        <![CDATA[
+            SELECT
+                A.BrandNameShort as brandNameShort
+            FROM Basis.BIN_BrandInfo A
+                LEFT JOIN Monitor.BIN_MachineCodeCollate B 
+                ON A.BIN_BrandInfoID =B.BIN_BrandInfoID 
+            WHERE
+                B.MachineCode = #machineCode#
+            AND 
+                B.MachineCodeOld= #machineCodeOld#  
+        ]]>
+    </select>
+	
+	<!-- 根据机器编号取得机器类型 -->
+    <select id="getMachineTypeByCode" parameterClass="java.util.HashMap" resultClass="java.lang.String">
+        <![CDATA[
+            SELECT
+                A.MachineType as machineType
+            FROM 
+			    Monitor.BIN_MachineInfo A
+            WHERE
+                A.MachineCode = #machineCode#
+        ]]>
+    </select>
+	
+	<!-- 判断升级柜台的机器类型是否存在 -->
+    <select id="getUpgradeMachineType" parameterClass="java.util.HashMap" resultClass="java.lang.String">
+        <![CDATA[
+            SELECT
+                A.MachineType as machineType
+            FROM 
+                Monitor.BIN_CounterUpgrade A
+            WHERE
+                A.BIN_CounterInfoID = #counterInfoId#
+			AND
+			    A.BIN_BrandInfoID = #brandInfoId#
+			AND
+			    A.MachineType = #machineType#
+        ]]>
+    </select>
+</sqlMap>

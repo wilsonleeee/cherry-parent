@@ -1,0 +1,78 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sqlMap PUBLIC "-//iBATIS.com//DTD SQL Map 2.0//EN" "http://ibatis.apache.org/dtd/sql-map-2.dtd">
+<sqlMap namespace="BINOLMOWAT03">
+    <!-- 会员异常数据查询sql文  -->
+    <sql id="memberInfoQuery">
+        <![CDATA[
+			SELECT
+			    C.memberInfoId AS memberInfoId,
+                C.memberCode AS memberCode,
+                D.Name AS memberName,
+				C.count AS count,
+				C.sumQuantity AS sumQuantity,
+			    C.sumAmount AS sumAmount
+			FROM
+			    (SELECT
+			        B.sumAmount,
+			        B.sumQuantity,
+			        B.count,
+			        B.memberInfoId,
+			        B.memberCode
+			    FROM
+			        (SELECT
+			            SUM(A.Amount) AS sumAmount,
+			            SUM(A.Quantity) AS sumQuantity,
+			            Count(A.BIN_SaleRecordID) AS count,
+			            BIN_MemberInfoID AS memberInfoId,
+			            MemberCode AS memberCode
+			        FROM
+			            Sale.BIN_SaleRecord A
+			        WHERE
+			            A.ValidFlag='1'
+			            AND A.BIN_OrganizationInfoID=#organizationInfoId#
+			            AND A.SaleDate>=#startDate#
+			            AND A.SaleDate<=#endDate#
+						AND A.BIN_BrandInfoID=#brandInfoId#
+						AND A.BIN_MemberInfoID IS NOT NULL
+						AND EXISTS (
+		]]>
+		<include refid="BINOLCMINC99.getDepartList" />		
+		<![CDATA[       AND A.BIN_OrganizationID = A99.BIN_OrganizationID)		
+			        GROUP BY A.BIN_MemberInfoID,A.MemberCode)B
+			    WHERE
+        ]]>
+        <isNotEmpty prepend="" property="maxCount">
+            <![CDATA[B.Count>=#maxCount#]]>
+        </isNotEmpty>
+		<![CDATA[
+			    )C
+			LEFT JOIN Members.BIN_MemberInfo D
+			ON C.memberInfoId = D.BIN_MemberInfoID
+        ]]>
+    </sql>
+	
+	<!-- 取得会员异常数据总数  -->
+    <select id="getMemberInfoCount" parameterClass="java.util.HashMap" resultClass="java.lang.Integer">
+        <![CDATA[
+            SELECT COUNT(SORT_T1.memberInfoId) AS count FROM (
+        ]]>
+        <include refid="BINOLMOWAT03.memberInfoQuery" />
+        <![CDATA[
+            )SORT_T1
+        ]]>
+    </select>
+    
+    <!-- 取得会员异常数据List  -->
+    <select id="getMemberInfoList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+        <include refid="BINOLCMINC99.pageheader" />
+        <include refid="BINOLMOWAT03.memberInfoQuery" />
+        <include refid="BINOLCMINC99.pagefooter" />
+    </select>
+	
+	<!-- 取得会员异常数据List(Excel)  -->
+    <select id="getMemberInfoListExcel" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+        <include refid="BINOLMOWAT03.memberInfoQuery" />
+		<![CDATA[ORDER BY memberInfoId]]>
+    </select>
+	
+</sqlMap>

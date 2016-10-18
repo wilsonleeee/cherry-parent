@@ -1,0 +1,149 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sqlMap PUBLIC "-//iBATIS.com//DTD SQL Map 2.0//EN" "http://ibatis.apache.org/dtd/sql-map-2.dtd">
+<sqlMap namespace="BINOLSTCM12"> 
+    <!-- 发货单查询sql文  -->
+    <sql id="commQuery">
+        <![CDATA[
+            SELECT
+               	A.BIN_ProductDeliverID,                 
+				A.DeliverNoIF,                
+				A.BIN_OrganizationID,                 
+				A.BIN_OrganizationIDReceive,
+				A.ValidFlag,
+				A.TotalQuantity AS totalQuantity,       
+				A.TotalAmount AS totalAmount     
+            ]]>
+        <![CDATA[
+            FROM
+                Inventory.BIN_ProductDeliver A WITH(NOLOCK)
+            WHERE
+		]]>
+	 	<![CDATA[EXISTS (]]>
+		<include refid="BINOLCMINC99.getDepartList" />
+		<![CDATA[AND A.BIN_OrganizationID = A99.BIN_OrganizationID)]]>
+    </sql>
+    <!-- 发货单查询sql文  -->
+	<sql id="deliverQuery">
+		<![CDATA[
+			SELECT         	                
+				T1.BIN_ProductDeliverID AS deliverId,                 
+				T1.DeliverNoIF AS deliverRecNo,                
+				T1.BIN_OrganizationID AS deliverDepId,                 
+				T1.BIN_OrganizationIDReceive AS receiveDepId,
+				T1.totalQuantity,                                                                        
+				T1.totalAmount  
+		]]>  
+		  <dynamic>
+        <isNotEmpty property="language">
+            <isEqual property="language" compareValue="en_US">
+            ,'('+B.DepartCode+')'+B.NameForeign AS departName
+            ,'('+G.DepartCode+')'+G.NameForeign AS departNameReceive
+            </isEqual>
+            <isEqual property="language" compareValue="zh_CN">
+            ,'('+B.DepartCode+')'+B.DepartName AS departName
+            ,'('+G.DepartCode+')'+G.DepartName AS departNameReceive
+            </isEqual>
+        </isNotEmpty>
+        <isEmpty property="language">
+            ,'('+B.DepartCode+')'+B.DepartName AS departName
+            ,'('+G.DepartCode+')'+G.DepartName AS departNameReceive
+        </isEmpty>
+        </dynamic>
+		<![CDATA[FROM ( ]]>
+        <include refid="BINOLSTCM12.commQuery" />   
+		<![CDATA[)T1
+			LEFT JOIN Basis.BIN_Organization B 
+			ON T1.BIN_OrganizationID = B.BIN_OrganizationID                 
+			LEFT JOIN Basis.BIN_Organization G 
+			ON T1.BIN_OrganizationIDReceive = G.BIN_OrganizationID  
+		WHERE
+            T1.ValidFlag = '1'   
+		]]>
+		<include refid="BINOLCMINC99.filterSql" />
+	</sql>
+    <!-- 取得发货单总数  -->
+    <select id="getDeliverCount" parameterClass="java.util.HashMap" resultClass="java.lang.Integer">
+        <![CDATA[
+            SELECT COUNT(SORT_T1.deliverId) AS count FROM (
+        ]]>    
+        <include refid="BINOLSTCM12.deliverQuery" />
+        <![CDATA[
+            )SORT_T1
+        ]]>
+    </select>
+    
+    <!-- 取得发货单List  -->
+    <select id="getDeliverList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+        <include refid="BINOLCMINC99.pageheader" />
+        <include refid="BINOLSTCM12.deliverQuery" />
+        <include refid="BINOLCMINC99.pagefooter" />
+    </select>
+	
+    <!-- 发货单详细List -->
+    <select id="getDeliverDetailList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+        <![CDATA[
+            SELECT
+                A.BIN_ProductVendorID AS productVendorId,
+                ISNULL(A.Quantity,0) AS quantity,
+                B.BarCode AS barCode,
+                C.NameTotal AS nameTotal,
+                C.UnitCode AS unitCode,
+                ISNULL(D.Quantity,0) AS curStock,
+        ]]>
+        <!-- 查询是有带收货方部门ID时需额外查询出收货方部门的库存情况 -->
+        <isNotEmpty property="BIN_OrganizationIDReceive">
+        <![CDATA[ISNULL(T0.departStockQuantity,0) AS inDepartStock, ]]>
+        </isNotEmpty>
+        <![CDATA[
+                ISNULL(CONVERT(Decimal(16,2),E.SalePrice),0) AS salePrice,
+                ISNULL(CONVERT(Decimal(16,2),E.MemPrice),0) AS memPrice,
+                ISNULL(CONVERT(Decimal(16,2),C.StandardCost),0) AS standardCost,
+                ISNULL(CONVERT(Decimal(16,2),C.OrderPrice),0) AS orderPrice,
+                ISNULL((ISNULL(A.Quantity,0) * ISNULL(CONVERT(Decimal(16,2),E.SalePrice),0)),0) AS totalAmount,
+                A.Comments AS reason
+            FROM
+                Inventory.BIN_ProductDeliverDetail A
+                LEFT JOIN Basis.BIN_ProductVendor B
+                ON A.BIN_ProductVendorID = B.BIN_ProductVendorID
+                LEFT JOIN Basis.BIN_Product C
+                ON B.BIN_ProductID = C.BIN_ProductID
+                LEFT JOIN Inventory.BIN_ProductStock D
+                ON (A.BIN_ProductVendorID = D.BIN_ProductVendorID AND D.BIN_InventoryInfoID = #depotInfoId# AND D.BIN_LogicInventoryInfoID =#BIN_LogicInventoryInfoID# AND D.ValidFlag='1')
+            	LEFT JOIN Basis.BIN_ProductPrice E
+                ON (C.BIN_ProductID = E.BIN_ProductID
+                AND E.Type = '2'
+                AND C.ValidFlag = E.ValidFlag 
+                AND GetDate() BETWEEN E.StartDate AND E.EndDate)
+		]]>
+		<!-- 有收货方部门参数时 -->
+		<isNotEmpty property="BIN_OrganizationIDReceive">
+			<![CDATA[
+                LEFT JOIN (
+                	SELECT
+						A.BIN_OrganizationID,
+						C.BIN_ProductVendorID,
+						SUM(convert(bigint,ISNULL(C.Quantity,0))) AS departStockQuantity 
+					FROM
+						Basis.BIN_Organization A WITH(NOLOCK)
+						LEFT JOIN Basis.BIN_InventoryInfo B WITH(NOLOCK)
+						ON(A.BIN_OrganizationID=B.BIN_OrganizationID)
+						LEFT JOIN Inventory.BIN_ProductStock C WITH(NOLOCK)
+						ON(B.BIN_InventoryInfoID=C.BIN_InventoryInfoID)
+					WHERE
+						C.ValidFlag='1'
+					GROUP BY 
+						A.BIN_OrganizationID,
+						C.BIN_ProductVendorID
+                ) T0
+                ON(A.BIN_ProductVendorID=T0.BIN_ProductVendorID AND T0.BIN_OrganizationID=#BIN_OrganizationIDReceive#)
+        	]]>
+        </isNotEmpty>
+		<![CDATA[
+			WHERE
+                A.BIN_ProductDeliverID =#BIN_ProductDeliverID#
+                AND A.ValidFlag = '1'
+                AND B.ValidFlag = '1'
+                AND C.ValidFlag = '1'
+        ]]>
+    </select>
+</sqlMap>

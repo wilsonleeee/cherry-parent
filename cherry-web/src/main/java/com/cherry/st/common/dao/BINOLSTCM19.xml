@@ -1,0 +1,1185 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sqlMap PUBLIC "-//iBATIS.com//DTD SQL Map 2.0//EN" "http://ibatis.apache.org/dtd/sql-map-2.dtd">
+<sqlMap namespace="BINOLSTCM19">
+	<!--插入销售单据-->
+	<sql id="insertSaleBillSQL">
+        <![CDATA[
+            INSERT INTO Sale.BIN_BackstageSale(
+                BIN_OrganizationInfoID,
+                BIN_BrandInfoID,
+                BIN_OrganizationID,
+                CustomerType,
+                CustomerID,
+                BillType,
+                BillState,
+                SaleType,
+                BillCode,
+                TotalQuantity,
+                OriginalAmount,
+        ]]>
+        <dynamic>
+            <isNotEmpty property="DiscountRate">
+                <![CDATA[DiscountRate,]]>
+            </isNotEmpty>
+            <isNotEmpty property="ImportBatch">
+                <![CDATA[ImportBatch,]]>
+            </isNotEmpty>
+		</dynamic>
+        <![CDATA[
+                DiscountAmount,
+                DecreaseAmount,
+                PayAmount,
+                Settlement,
+                Currency,
+                SaleEmployee,
+                SaleDate,
+                SaleTime,
+                BillTicketEmployee,
+                BillTicketTime,
+		]]>
+        <dynamic>
+            <isNotEmpty property="ExpectFinishDate">
+                <![CDATA[ExpectFinishDate,]]>
+            </isNotEmpty>
+		</dynamic>
+        <![CDATA[
+                ModifiedTimes,
+                DataSource,
+                SynchFlag,
+                ContactPerson,
+                DeliverAddress,
+                Comments,
+                SaleCountFlag,
+                BIN_InventoryInfoIDAccept,
+                BIN_LogicInventoryInfoIDAccept,
+                BIN_InventoryInfoID,
+                BIN_LogicInventoryInfoID,
+                WorkFlowID,
+                ValidFlag,
+                CreateTime,
+                CreatedBy,
+                CreatePGM,
+                UpdateTime,
+                UpdatedBy,
+                UpdatePGM,
+                ModifyCount
+            )VALUES(
+                #BIN_OrganizationInfoID#,
+                #BIN_BrandInfoID#,
+                #BIN_OrganizationID#,
+                #CustomerType#,
+                #CustomerID#,
+                #BillType#,
+                #BillState#,
+                #SaleType#,
+                #BillCode#,
+                #TotalQuantity#,
+                #OriginalAmount#,
+		]]>
+        <dynamic>
+            <isNotEmpty property="DiscountRate">
+                <![CDATA[#DiscountRate#,]]>
+            </isNotEmpty>
+            <isNotEmpty property="ImportBatch">
+                <![CDATA[#ImportBatch#,]]>
+            </isNotEmpty>
+		</dynamic>
+        <![CDATA[
+                #DiscountAmount#,
+                #DecreaseAmount#,
+                #PayAmount#,
+                #Settlement#,
+                #Currency#,
+                #SaleEmployee#,
+                #SaleDate#,
+                #SaleTime#,
+                #BillTicketEmployee#,
+                GETDATE(),
+		]]>
+        <dynamic>
+            <isNotEmpty property="ExpectFinishDate">
+                <![CDATA[#ExpectFinishDate#,]]>
+            </isNotEmpty>
+		</dynamic>
+        <![CDATA[
+                #ModifiedTimes#,
+                #DataSource#,
+                #SynchFlag#,
+                #ContactPerson#,
+                #DeliverAddress#,
+                #Comments#,
+                #SaleCountFlag#,
+                #BIN_InventoryInfoIDAccept#,
+                #BIN_LogicInventoryInfoIDAccept#,
+                #BIN_InventoryInfoID#,
+                #BIN_LogicInventoryInfoID#,
+                #WorkFlowID#,
+                '1',
+                GETDATE(),
+                #CreatedBy#,
+                #CreatePGM#,
+                GETDATE(),
+                #UpdatedBy#,
+                #UpdatePGM#,
+                '0'
+            )
+        ]]>
+	</sql>
+    <insert id="insertSaleBill" parameterClass="java.util.HashMap">
+        <selectKey resultClass="java.lang.Integer" type="post" keyProperty="BIN_BackstageSaleID" >
+            <include refid="BINOLSTCM19.insertSaleBillSQL" />
+            <![CDATA[SELECT SCOPE_IDENTITY() AS value]]>
+        </selectKey>
+    </insert>
+	
+	<!-- 新增销售明细  -->
+	<insert id="insertSaleDetail" parameterClass="java.util.HashMap">
+        <![CDATA[
+			INSERT INTO Sale.BIN_BackstageSaleDetail(
+				BIN_BackstageSaleID,
+				BIN_ProductVendorID,
+				UnitCode,
+				BarCode,
+				DetailNo,
+				Quantity,
+				Price,
+				PricePay,
+		]]>
+        <dynamic>
+            <isNotEmpty property="DiscountRate">
+                <![CDATA[DiscountRate,]]>
+            </isNotEmpty>
+		</dynamic>
+        <![CDATA[
+				DiscountAmount,
+				PayAmount,
+				AmountPortion,
+				BIN_InventoryInfoIDAccept,
+                BIN_LogicInventoryInfoIDAccept,
+                BIN_InventoryInfoID,
+                BIN_LogicInventoryInfoID,
+				Comment,
+				ModifiedTimes,
+                ValidFlag,
+                CreateTime,
+                CreatedBy,
+                CreatePGM,
+                UpdateTime,
+                UpdatedBy,
+                UpdatePGM,
+                ModifyCount
+            )VALUES(
+                #BIN_BackstageSaleID#,
+				#BIN_ProductVendorID#,
+				#UnitCode#,
+				#BarCode#,
+				#DetailNo#,
+				#Quantity#,
+				#Price#,
+				#PricePay#,
+		]]>
+        <dynamic>
+            <isNotEmpty property="DiscountRate">
+                <![CDATA[#DiscountRate#,]]>
+            </isNotEmpty>
+		</dynamic>
+        <![CDATA[
+				#DiscountAmount#,
+				#PayAmount#,
+				#AmountPortion#,
+				#BIN_InventoryInfoIDAccept#,
+                #BIN_LogicInventoryInfoIDAccept#,
+                #BIN_InventoryInfoID#,
+                #BIN_LogicInventoryInfoID#,
+				#Comment#,
+				0,
+                '1',
+                GETDATE(),
+                #CreatedBy#,
+                #CreatePGM#,
+                GETDATE(),
+                #UpdatedBy#,
+                #UpdatePGM#,
+                '0'
+            )
+		]]>
+    </insert>
+    
+    <!--更新销售单据主表-->
+    <update id="updateSaleBill" parameterClass="java.util.HashMap">
+        <![CDATA[
+            UPDATE
+                Sale.BIN_BackstageSale 
+            SET
+                 UpdateTime = GETDATE()
+                ,UpdatedBy = #UpdatedBy#
+                ,UpdatePGM = #UpdatePGM#
+                ,ModifiedTimes = ModifiedTimes+1
+                ,ModifyCount = ModifyCount+1
+        ]]>
+        <dynamic>
+        	<isNotEmpty property="BIN_OrganizationID">
+                <![CDATA[,BIN_OrganizationID = #BIN_OrganizationID#]]>
+            </isNotEmpty>
+        	<isNotEmpty property="CustomerType">
+                <![CDATA[,CustomerType = #CustomerType#]]>
+			</isNotEmpty>
+			<isNotEmpty property="CustomerID">
+                <![CDATA[,CustomerID = #CustomerID#]]>
+            </isNotEmpty>
+            <isNotEmpty property="BillType">
+                <![CDATA[,BillType = #BillType#]]>
+            </isNotEmpty>
+            <isNotEmpty property="BillState">
+                <![CDATA[,BillState = #BillState#]]>
+            </isNotEmpty>
+            <isNotEmpty property="SaleType">
+                <![CDATA[,SaleType = #SaleType#]]>
+            </isNotEmpty>
+			<isNotEmpty property="TotalQuantity">
+                <![CDATA[,TotalQuantity = #TotalQuantity#]]>
+            </isNotEmpty>
+            <isNotEmpty property="OriginalAmount">
+                <![CDATA[,OriginalAmount = #OriginalAmount#]]>
+            </isNotEmpty>
+            <isNotEmpty property="DiscountRate">
+                <![CDATA[,DiscountRate = #DiscountRate#]]>
+            </isNotEmpty>
+            <isNotEmpty property="DiscountAmount">
+                <![CDATA[,DiscountAmount = #DiscountAmount#]]>
+            </isNotEmpty>
+            <isNotEmpty property="DecreaseAmount">
+                <![CDATA[,DecreaseAmount = #DecreaseAmount#]]>
+            </isNotEmpty>
+            <isNotEmpty property="PayAmount">
+                <![CDATA[,PayAmount = #PayAmount#]]>
+            </isNotEmpty>
+            <isNotEmpty property="Settlement">
+                <![CDATA[,Settlement = #Settlement#]]>
+            </isNotEmpty>
+            <isNotEmpty property="Currency">
+                <![CDATA[,Currency = #Currency#]]>
+            </isNotEmpty>
+            <isNotEmpty property="SaleEmployee">
+                <![CDATA[,SaleEmployee = #SaleEmployee#]]>
+            </isNotEmpty>
+            <isNotEmpty property="SaleDate">
+                <![CDATA[,SaleDate = #SaleDate#]]>
+            </isNotEmpty>
+			<isNotEmpty property="SaleTime">
+                <![CDATA[,SaleTime = #SaleTime#]]>
+            </isNotEmpty>
+            <isNotEmpty property="BillTicketEmployee">
+                <![CDATA[,BillTicketEmployee = #BillTicketEmployee#]]>
+            </isNotEmpty>
+            <isNotEmpty property="ExpectFinishDate">
+                <![CDATA[,ExpectFinishDate = #ExpectFinishDate#]]>
+            </isNotEmpty>
+            <isNotEmpty property="ContactPerson">
+                <![CDATA[,ContactPerson = #ContactPerson#]]>
+            </isNotEmpty>
+            <isNotEmpty property="DeliverAddress">
+                <![CDATA[,DeliverAddress = #DeliverAddress#]]>
+            </isNotEmpty>
+            <isNotEmpty property="Comments">
+                <![CDATA[,Comments = #Comments#]]>
+            </isNotEmpty>
+            <isNotEmpty property="BIN_InventoryInfoIDAccept">
+                <![CDATA[,BIN_InventoryInfoIDAccept = #BIN_InventoryInfoIDAccept#]]>
+            </isNotEmpty>
+            <isNotEmpty property="BIN_LogicInventoryInfoIDAccept">
+                <![CDATA[,BIN_LogicInventoryInfoIDAccept = #BIN_LogicInventoryInfoIDAccept#]]>
+            </isNotEmpty>
+            <isNotEmpty property="BIN_InventoryInfoID">
+                <![CDATA[,BIN_InventoryInfoID = #BIN_InventoryInfoID#]]>
+            </isNotEmpty>
+            <isNotEmpty property="BIN_LogicInventoryInfoID">
+                <![CDATA[,BIN_LogicInventoryInfoID = #BIN_LogicInventoryInfoID#]]>
+            </isNotEmpty>
+            <isNotEmpty property="WorkFlowID">
+                <![CDATA[,WorkFlowID = #WorkFlowID#]]>
+            </isNotEmpty>
+            <isNotEmpty property="ValidFlag">
+                <![CDATA[,ValidFlag = #ValidFlag#]]>
+            </isNotEmpty>
+        </dynamic>
+        <![CDATA[
+            WHERE
+                BIN_BackstageSaleID = #BIN_BackstageSaleID#
+         ]]>
+    </update>
+    
+    <!--删除销售单据（逻辑删除）-->
+    <update id="deleteSaleOrdersLogic" parameterClass="java.util.HashMap">
+        <![CDATA[
+            UPDATE
+                Sale.BIN_BackstageSale 
+            SET
+				ValidFlag = '0',
+				UpdateTime = GETDATE(),
+				UpdatedBy = #UpdatedBy#,
+				UpdatePGM = #UpdatePGM#,
+				ModifyCount = ModifyCount+1 
+            WHERE
+            	ValidFlag = '1' AND 
+                BIN_BackstageSaleID = #BIN_BackstageSaleID# 
+		]]>
+    </update>
+    
+    <!--删除销售单据（逻辑删除）-->
+    <update id="deleteSaleDetailLogic" parameterClass="java.util.HashMap">
+        <![CDATA[
+            UPDATE
+                Sale.BIN_BackstageSaleDetail 
+            SET
+				ValidFlag = '0',
+				UpdateTime = GETDATE(),
+				UpdatedBy = #UpdatedBy#,
+				UpdatePGM = #UpdatePGM#,
+				ModifyCount = ModifyCount+1 
+            WHERE
+            	ValidFlag = '1' AND 
+                BIN_BackstageSaleID = #BIN_BackstageSaleID# 
+		]]>
+    </update>
+    
+    <!--删除销售单据明细-->
+	<delete id="deleteSaleDetail" parameterClass="java.util.HashMap">
+	    <![CDATA[
+            DELETE FROM 
+                Sale.BIN_BackstageSaleDetail 
+            WHERE
+                BIN_BackstageSaleID = #BIN_BackstageSaleID#
+	    ]]>
+    </delete>
+    
+    <!--更新后台销售主表-->
+    <update id="updateBackstageSale" parameterClass="java.util.HashMap">
+        <![CDATA[
+            UPDATE
+                Sale.BIN_BackstageSale 
+            SET
+                 UpdateTime = GETDATE()
+                ,UpdatedBy = #UpdatedBy#
+                ,UpdatePGM = #UpdatePGM#
+                ,ModifyCount = ModifyCount+1
+        ]]>
+        <dynamic>
+            <isNotEmpty property="WorkFlowID">
+                <![CDATA[,WorkFlowID = #WorkFlowID#]]>
+            </isNotEmpty>
+            <isNotEmpty property="BillState">
+                <![CDATA[,BillState = #BillState#]]>
+            </isNotEmpty>
+            <isNotEmpty property="ValidFlag">
+                <![CDATA[,ValidFlag = #ValidFlag#]]>
+            </isNotEmpty>
+            <isNotEmpty property="ActualFinishDate">
+                <![CDATA[,ActualFinishDate = #ActualFinishDate#]]>
+            </isNotEmpty>
+        </dynamic>
+        <![CDATA[
+            WHERE
+                BIN_BackstageSaleID = #BIN_BackstageSaleID#
+         ]]>
+        <isNotEmpty property="OldValidFlag">
+              <![CDATA[AND ValidFlag = #OldValidFlag#]]>
+       </isNotEmpty>
+       <isNotEmpty property="OldUpdateTime">
+              <![CDATA[AND UpdateTime = #OldUpdateTime#]]>
+       </isNotEmpty>
+       <isNotEmpty property="OldModifyCount">
+              <![CDATA[AND ModifyCount = #OldModifyCount#]]>
+       </isNotEmpty> 
+    </update>
+    
+    <!--取得后台销售主表信息-->
+    <select id="getBackstageSaleMainData" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+        <![CDATA[
+            SELECT
+                A.BIN_OrganizationInfoID,
+                A.BIN_BrandInfoID,
+                A.BIN_OrganizationID,
+                A.ImportBatch,
+                A.CustomerType,
+                A.CustomerID,
+                A.BIN_InventoryInfoID,
+                A.BIN_LogicInventoryInfoID,
+                A.BIN_StorageLocationInfoID,
+                A.BIN_InventoryInfoIDAccept,
+                A.BIN_LogicInventoryInfoIDAccept,
+                A.BIN_StorageLocationInfoIDAccept,
+                A.BillType,
+                A.BillState,
+                A.SaleType,
+                A.BillCode,
+                A.BillCodeRelevance,
+                FLOOR(ISNULL(A.TotalQuantity,0)) AS TotalQuantity,
+                ISNULL(A.OriginalAmount,0) AS OriginalAmount,
+                Convert(decimal(16,2),A.DiscountRate*100) AS DiscountRate,
+                ISNULL(A.DiscountAmount,0) as DiscountAmount,
+                ISNULL(A.DecreaseAmount,0) AS DecreaseAmount,
+                ISNULL(A.PayAmount,0) AS PayAmount,
+                A.Settlement,
+                A.Currency,
+                A.SaleEmployee,
+                A.SaleDate,
+                CONVERT(VARCHAR(30),A.SaleTime,120) AS SaleTime,
+                A.BillTicketEmployee,
+                 CONVERT(VARCHAR(30),A.BillTicketTime,120) AS BillTicketTime,
+                A.ExpectFinishDate,
+                A.ActualFinishDate,
+                A.ModifiedTimes,
+                A.DataSource,
+                A.SynchFlag,
+                A.ContactPerson,
+                A.DeliverAddress,
+                A.Comments,
+                A.SaleCountFlag,
+                A.WorkFlowID,
+                CONVERT(VARCHAR(30),A.CreateTime,121) AS CreateTime,
+                CONVERT(VARCHAR(30),A.UpdateTime,121) AS UpdateTime,
+                A.ModifyCount,
+                A.CreatedBy,
+                A.CreatePGM,
+                A.UpdatedBy,
+                A.UpdatePGM,
+                B.TestType,
+        ]]>
+        <dynamic>
+            <isNotEmpty property="language">
+                <isEqual property="language" compareValue="en_US">
+                    <![CDATA[
+                        '('+B.DepartCode+')'+B.NameForeign AS DepartCodeName,
+                        '('+F.DepotCode+')'+F.DepotNameEN AS DepotCodeName,
+                        '('+G.LogicInventoryCode+')'+G.InventoryNameEN AS LogicInventoryName,
+                        '('+H.DepotCode+')'+H.DepotNameEN AS AcceptDepotCodeName,
+                        '('+I.LogicInventoryCode+')'+I.InventoryNameEN AS AcceptLogicInventoryName,
+                        '('+C.EmployeeCode+')' + C.EmployeeNameForeign AS SaleEmployeeName,
+                        '('+D.EmployeeCode+')' + D.EmployeeNameForeign AS BillTicketEmployeeName,
+                        CASE
+                            WHEN A.CustomerType = '1' THEN '('+E1.DepartCode+')'+E1.NameForeign
+                            WHEN A.CustomerType = '2' THEN '('+E2.Code+')'+E2.NameEN
+                            WHEN A.CustomerType = '3' THEN '('+E3.EmployeeCode+')'+E3.EmployeeNameForeign
+                        END AS CustomerCodeName
+                    ]]>
+                </isEqual>
+                <isEqual property="language" compareValue="zh_CN">
+                    <![CDATA[
+                        '('+B.DepartCode+')'+B.DepartName AS DepartCodeName,
+                        '('+F.DepotCode+')'+F.DepotNameCN AS DepotCodeName,
+                        '('+G.LogicInventoryCode+')'+G.InventoryNameCN AS LogicInventoryName,
+                        '('+H.DepotCode+')'+H.DepotNameCN AS AcceptDepotCodeName,
+                        '('+I.LogicInventoryCode+')'+I.InventoryNameCN AS AcceptLogicInventoryName,
+                        '('+C.EmployeeCode+')' + C.EmployeeName AS SaleEmployeeName,
+                        '('+D.EmployeeCode+')' + D.EmployeeName AS BillTicketEmployeeName,
+                        CASE
+                            WHEN A.CustomerType = '1' THEN '('+E1.DepartCode+')'+E1.DepartName
+                            WHEN A.CustomerType = '2' THEN '('+E2.Code+')'+E2.NameCN
+                            WHEN A.CustomerType = '3' THEN '('+E3.EmployeeCode+')'+E3.EmployeeName
+                        END  AS CustomerCodeName
+                    ]]>
+                </isEqual>
+            </isNotEmpty>
+            <isEmpty property="language">
+                <![CDATA[
+                    '('+B.DepartCode+')'+B.DepartName AS DepartCodeName,
+                    '('+F.DepotCode+')'+F.DepotNameCN AS DepotCodeName,
+                    '('+G.LogicInventoryCode+')'+G.InventoryNameCN AS LogicInventoryName,
+                    '('+H.DepotCode+')'+H.DepotNameCN AS AcceptDepotCodeName,
+                    '('+I.LogicInventoryCode+')'+I.InventoryNameCN AS AcceptLogicInventoryName,
+                    '('+C.EmployeeCode+')' + C.EmployeeName AS SaleEmployeeName,
+                    '('+D.EmployeeCode+')' + D.EmployeeName AS BillTicketEmployeeName,
+                    CASE
+                        WHEN A.CustomerType = '1' THEN '('+E1.DepartCode+')'+E1.DepartName
+                        WHEN A.CustomerType = '2' THEN '('+E2.Code+')'+E2.NameCN
+                        WHEN A.CustomerType = '3' THEN '('+E3.EmployeeCode+')'+E3.EmployeeName
+                    END AS CustomerCodeName
+                ]]>
+            </isEmpty>
+        </dynamic>
+        <![CDATA[
+            FROM
+                Sale.BIN_BackstageSale A
+                LEFT JOIN Basis.BIN_Organization B
+                ON A.BIN_OrganizationID = B.BIN_OrganizationID
+                LEFT JOIN Basis.BIN_Employee C
+                ON A.SaleEmployee = C.BIN_EmployeeID
+                LEFT JOIN Basis.BIN_Employee D
+                ON A.BillTicketEmployee = D.BIN_EmployeeID
+                LEFT JOIN Basis.BIN_Organization E1
+                ON A.CustomerID = E1.BIN_OrganizationID
+                LEFT JOIN Basis.BIN_BussinessPartner E2
+                ON A.CustomerID = E2.BIN_BussinessPartnerID
+                LEFT JOIN Basis.BIN_Employee E3
+                ON A.CustomerID = E3.BIN_EmployeeID
+                LEFT JOIN Basis.BIN_DepotInfo F
+                ON A.BIN_InventoryInfoID = F.BIN_DepotInfoID
+                LEFT JOIN Basis.BIN_LogicInventory G
+                ON A.BIN_LogicInventoryInfoID = G.BIN_LogicInventoryInfoID
+                LEFT JOIN Basis.BIN_DepotInfo H
+                ON A.BIN_InventoryInfoIDAccept = H.BIN_DepotInfoID
+                LEFT JOIN Basis.BIN_LogicInventory I
+                ON A.BIN_LogicInventoryInfoIDAccept = I.BIN_LogicInventoryInfoID
+            WHERE
+                A.BIN_BackstageSaleID = #BIN_BackstageSaleID#
+        ]]>
+    </select>
+    
+    <!--取得后台销售从表信息-->
+    <select id="getBackstageSaleDetailData" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+        <![CDATA[
+            SELECT
+                A.BIN_BackstageSaleDetailID,
+                A.BIN_BackstageSaleID,
+                A.BIN_ProductVendorID,
+                A.DetailNo,
+                FLOOR(ISNULL(A.Quantity,0)) AS Quantity,
+                ISNULL(A.Price,0) AS Price,
+                ISNULL(A.PricePay,0) AS PricePay,
+                Convert(decimal(16,2),DiscountRate*100) AS DiscountRate,
+                ISNULL(A.DiscountAmount,0) AS DiscountAmount,
+                ISNULL(A.PayAmount,0) AS PayAmount,
+                ISNULL(A.AmountPortion,0) AS AmountPortion,
+                A.BIN_InventoryInfoID,
+                A.BIN_LogicInventoryInfoID,
+                A.BIN_StorageLocationInfoID,
+                A.BIN_InventoryInfoIDAccept,
+                A.BIN_LogicInventoryInfoIDAccept,
+                A.BIN_StorageLocationInfoIDAccept,
+                A.Comment,
+                A.ModifiedTimes,
+                A.CreatedBy,
+                A.CreatePGM,
+                A.UpdatedBy,
+                A.UpdatePGM,
+                B.BarCode,
+                C.UnitCode,
+            ]]>
+            <dynamic>
+                <isNotEmpty property="language">
+                    <isEqual property="language" compareValue="en_US">
+                        <![CDATA[
+                            C.NameForeign AS ProductName,
+                            '('+D.DepotCode+')'+D.DepotNameEN AS DepotCodeName,
+                            '('+E.LogicInventoryCode+')'+E.InventoryNameEN AS LogicInventoryName,
+                            '('+F.DepotCode+')'+F.DepotNameEN AS AcceptDepotCodeName,
+                            '('+G.LogicInventoryCode+')'+G.InventoryNameEN AS AcceptLogicInventoryName
+                        ]]>
+                    </isEqual>
+                    <isEqual property="language" compareValue="zh_CN">
+                        <![CDATA[
+                            C.NameTotal AS ProductName,
+                            '('+D.DepotCode+')'+D.DepotNameCN AS DepotCodeName,
+                            '('+E.LogicInventoryCode+')'+E.InventoryNameCN AS LogicInventoryName,
+                            '('+F.DepotCode+')'+F.DepotNameCN AS AcceptDepotCodeName,
+                            '('+G.LogicInventoryCode+')'+G.InventoryNameCN AS AcceptLogicInventoryName
+                        ]]>
+                    </isEqual>
+                </isNotEmpty>
+                <isEmpty property="language">
+                    <![CDATA[
+                        C.NameTotal AS ProductName,
+                        '('+D.DepotCode+')'+D.DepotNameCN AS DepotCodeName,
+                        '('+E.LogicInventoryCode+')'+E.InventoryNameCN AS LogicInventoryName,
+                        '('+F.DepotCode+')'+F.DepotNameCN AS AcceptDepotCodeName,
+                        '('+G.LogicInventoryCode+')'+G.InventoryNameCN AS AcceptLogicInventoryName
+                    ]]>
+                </isEmpty>
+            </dynamic>
+            <![CDATA[
+            FROM
+                Sale.BIN_BackstageSaleDetail A
+            LEFT JOIN Basis.BIN_ProductVendor B
+            ON A.BIN_ProductVendorID = B.BIN_ProductVendorID
+            LEFT JOIN Basis.BIN_Product C
+            ON B.BIN_ProductID = C.BIN_ProductID
+            LEFT JOIN Basis.BIN_DepotInfo D
+            ON A.BIN_InventoryInfoID = D.BIN_DepotInfoID
+            LEFT JOIN Basis.BIN_LogicInventory E
+            ON A.BIN_LogicInventoryInfoID = E.BIN_LogicInventoryInfoID
+            LEFT JOIN Basis.BIN_DepotInfo F
+            ON A.BIN_InventoryInfoIDAccept = F.BIN_DepotInfoID
+            LEFT JOIN Basis.BIN_LogicInventory G
+            ON A.BIN_LogicInventoryInfoIDAccept = G.BIN_LogicInventoryInfoID
+        ]]>
+        <![CDATA[
+            WHERE
+                A.BIN_BackstageSaleID = #BIN_BackstageSaleID#
+                AND A.ValidFlag = '1'
+        ]]>
+    </select>
+    
+    <!--取得最新的履历编号-->
+    <select id="getLatestHistoryNo" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+        <![CDATA[
+            SELECT
+                MAX(HistoryNo) AS HistoryNo
+            FROM
+                Sale.BIN_BackstageSaleHistory A
+            WHERE
+                A.BIN_BackstageSaleID = #BIN_BackstageSaleID#
+                AND A.ValidFlag = '1'
+        ]]>
+    </select>
+    
+    <!--插入后台销售单据（履历）-->
+    <sql id="insertSaleBillHistorySQL">
+        <![CDATA[
+            INSERT INTO Sale.BIN_BackstageSaleHistory(
+                BIN_BackstageSaleID,
+                BIN_OrganizationInfoID,
+                BIN_BrandInfoID,
+                BIN_OrganizationID,
+                HistoryNo,
+                HistoryEmployeeID,
+                CustomerType,
+                CustomerID,
+                BIN_InventoryInfoID,
+                BIN_LogicInventoryInfoID,
+                BIN_StorageLocationInfoID,
+                BIN_InventoryInfoIDAccept,
+                BIN_LogicInventoryInfoIDAccept,
+                BIN_StorageLocationInfoIDAccept,
+                BillType,
+                BillState,
+                SaleType,
+                BillCode,
+                BillCodeRelevance,
+                TotalQuantity,
+                OriginalAmount,
+                DiscountRate,
+                DiscountAmount,
+                DecreaseAmount,
+                PayAmount,
+                Settlement,
+                Currency,
+                SaleEmployee,
+                SaleDate,
+                SaleTime,
+                BillTicketEmployee,
+                BillTicketTime,
+        ]]>
+        <dynamic>
+            <isNotEmpty property="ExpectFinishDate">
+                <![CDATA[ExpectFinishDate,]]>
+            </isNotEmpty>
+            <isNotEmpty property="ActualFinishDate">
+                <![CDATA[ActualFinishDate,]]>
+            </isNotEmpty>
+            <isNotEmpty property="ImportBatch">
+                <![CDATA[ImportBatch,]]>
+            </isNotEmpty>
+        </dynamic>
+        <![CDATA[
+                ModifiedTimes,
+                DataSource,
+                SynchFlag,
+                ContactPerson,
+                DeliverAddress,
+                Comments,
+                SaleCountFlag,
+                WorkFlowID,
+                ValidFlag,
+                CreateTime,
+                CreatedBy,
+                CreatePGM,
+                UpdateTime,
+                UpdatedBy,
+                UpdatePGM,
+                ModifyCount
+            )VALUES(
+                #BIN_BackstageSaleID#,
+                #BIN_OrganizationInfoID#,
+                #BIN_BrandInfoID#,
+                #BIN_OrganizationID#,
+                #HistoryNo#,
+                #HistoryEmployeeID#,
+                #CustomerType#,
+                #CustomerID#,
+                #BIN_InventoryInfoID#,
+                #BIN_LogicInventoryInfoID#,
+                #BIN_StorageLocationInfoID#,
+                #BIN_InventoryInfoIDAccept#,
+                #BIN_LogicInventoryInfoIDAccept#,
+                #BIN_StorageLocationInfoIDAccept#,
+                #BillType#,
+                #BillState#,
+                #SaleType#,
+                #BillCode#,
+                #BillCodeRelevance#,
+                #TotalQuantity#,
+                #OriginalAmount#,
+                #DiscountRate#,
+                #DiscountAmount#,
+                #DecreaseAmount#,
+                #PayAmount#,
+                #Settlement#,
+                #Currency#,
+                #SaleEmployee#,
+                #SaleDate#,
+                #SaleTime#,
+                #BillTicketEmployee#,
+                #BillTicketTime#,
+        ]]>
+        <dynamic>
+            <isNotEmpty property="ExpectFinishDate">
+                <![CDATA[#ExpectFinishDate#,]]>
+            </isNotEmpty>
+            <isNotEmpty property="ActualFinishDate">
+                <![CDATA[#ActualFinishDate#,]]>
+            </isNotEmpty>
+            <isNotEmpty property="ImportBatch">
+                <![CDATA[#ImportBatch#,]]>
+            </isNotEmpty>
+        </dynamic>
+        <![CDATA[
+                #ModifiedTimes#,
+                #DataSource#,
+                #SynchFlag#,
+                #ContactPerson#,
+                #DeliverAddress#,
+                #Comments#,
+                #SaleCountFlag#,
+                #WorkFlowID#,
+                '1',
+                GETDATE(),
+                #CreatedBy#,
+                #CreatePGM#,
+                GETDATE(),
+                #UpdatedBy#,
+                #UpdatePGM#,
+                '0'
+            )
+        ]]>
+    </sql>
+    <insert id="insertBackstageSaleHistory" parameterClass="java.util.HashMap">
+        <selectKey resultClass="java.lang.Integer" type="post" keyProperty="BIN_BackstageSaleHistoryID" >
+            <include refid="BINOLSTCM19.insertSaleBillHistorySQL" />
+            <![CDATA[SELECT SCOPE_IDENTITY() AS value]]>
+        </selectKey>
+    </insert>
+    
+    <!-- 新增后台销售明细（履历）  -->
+    <insert id="insertBackstageSaleDetailHistory" parameterClass="java.util.HashMap">
+        <![CDATA[
+            INSERT INTO Sale.BIN_BackstageSaleDetailHistory(
+                BIN_BackstageSaleHistoryID,
+                BIN_ProductVendorID,
+                UnitCode,
+                BarCode,
+                DetailNo,
+                Quantity,
+                Price,
+                PricePay,
+                DiscountRate,
+                DiscountAmount,
+                PayAmount,
+                AmountPortion,
+                A.BIN_InventoryInfoID,
+                A.BIN_LogicInventoryInfoID,
+                A.BIN_StorageLocationInfoID,
+                A.BIN_InventoryInfoIDAccept,
+                A.BIN_LogicInventoryInfoIDAccept,
+                A.BIN_StorageLocationInfoIDAccept,
+                Comment,
+                ModifiedTimes,
+                ValidFlag,
+                CreateTime,
+                CreatedBy,
+                CreatePGM,
+                UpdateTime,
+                UpdatedBy,
+                UpdatePGM,
+                ModifyCount
+            )VALUES(
+                #BIN_BackstageSaleHistoryID#,
+                #BIN_ProductVendorID#,
+                #UnitCode#,
+                #BarCode#,
+                #DetailNo#,
+                #Quantity#,
+                #Price#,
+                #PricePay#,
+                #DiscountRate#,
+                #DiscountAmount#,
+                #PayAmount#,
+                #AmountPortion#,
+                #BIN_InventoryInfoID#,
+                #BIN_LogicInventoryInfoID#,
+                #BIN_StorageLocationInfoID#,
+                #BIN_InventoryInfoIDAccept#,
+                #BIN_LogicInventoryInfoIDAccept#,
+                #BIN_StorageLocationInfoIDAccept#,
+                #Comment#,
+                0,
+                '1',
+                GETDATE(),
+                #CreatedBy#,
+                #CreatePGM#,
+                GETDATE(),
+                #UpdatedBy#,
+                #UpdatePGM#,
+                '0'
+            )
+        ]]>
+    </insert>
+    
+    <!--取得后台销售主表信息(履历)-->
+    <select id="getBackstageSaleHistoryMainData" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+        <![CDATA[
+            SELECT
+                A.BIN_OrganizationInfoID,
+                A.BIN_BrandInfoID,
+                A.BIN_OrganizationID,
+                A.HistoryNo,
+                A.HistoryEmployeeID,
+                A.CustomerType,
+                A.CustomerID,
+                A.BIN_InventoryInfoID,
+                A.BIN_LogicInventoryInfoID,
+                A.BIN_StorageLocationInfoID,
+                A.BIN_InventoryInfoIDAccept,
+                A.BIN_LogicInventoryInfoIDAccept,
+                A.BIN_StorageLocationInfoIDAccept,
+                A.BillType,
+                A.BillState,
+                A.SaleType,
+                A.BillCode,
+                A.BillCodeRelevance,
+                FLOOR(ISNULL(A.TotalQuantity,0)) AS TotalQuantity,
+                ISNULL(A.OriginalAmount,0) AS OriginalAmount,
+                A.DiscountRate,
+                ISNULL(A.DecreaseAmount,0) AS DecreaseAmount,
+                ISNULL(A.PayAmount,0) AS PayAmount,
+                A.Settlement,
+                A.Currency,
+                A.SaleEmployee,
+                A.SaleDate,
+                CONVERT(VARCHAR(30),A.SaleTime,120)  AS SaleTime,
+                A.BillTicketEmployee,
+                CONVERT(VARCHAR(30),A.BillTicketTime,120) AS BillTicketTime,
+                A.ExpectFinishDate,
+                A.ActualFinishDate,
+                A.ModifiedTimes,
+                A.DataSource,
+                A.SynchFlag,
+                A.ContactPerson,
+                A.DeliverAddress,
+                A.Comments,
+                A.SaleCountFlag,
+                A.WorkFlowID,
+                CONVERT(VARCHAR(30),A.CreateTime,121) AS CreateTime,
+                CONVERT(VARCHAR(30),A.UpdateTime,121) AS UpdateTime,
+                A.ModifyCount,
+                B.TestType,
+        ]]>
+        <dynamic>
+            <isNotEmpty property="language">
+                <isEqual property="language" compareValue="en_US">
+                    <![CDATA[
+                        '('+B.DepartCode+')'+B.NameForeign AS DepartCodeName,
+                        '('+F.DepotCode+')'+F.DepotNameEN AS DepotCodeName,
+                        '('+G.LogicInventoryCode+')'+G.InventoryNameEN AS LogicInventoryName,
+                        '('+H.DepotCode+')'+H.DepotNameEN AS AcceptDepotCodeName,
+                        '('+I.LogicInventoryCode+')'+I.InventoryNameEN AS AcceptLogicInventoryName,
+                        '('+C.EmployeeCode+')' + C.EmployeeNameForeign AS SaleEmployeeName,
+                        '('+D.EmployeeCode+')' + D.EmployeeNameForeign AS BillTicketEmployeeName,
+                        CASE
+                            WHEN A.CustomerType = '1' THEN '('+E1.DepartCode+')'+E1.NameForeign
+                            WHEN A.CustomerType = '2' THEN '('+E2.Code+')'+E2.NameEN
+                            WHEN A.CustomerType = '3' THEN '('+E3.EmployeeCode+')'+E3.EmployeeNameForeign
+                        END AS CustomerCodeName,
+                        '('+J.EmployeeCode+')' + J.EmployeeNameForeign AS HistoryEmployeeName
+                    ]]>
+                </isEqual>
+                <isEqual property="language" compareValue="zh_CN">
+                    <![CDATA[
+                        '('+B.DepartCode+')'+B.DepartName AS DepartCodeName,
+                        '('+F.DepotCode+')'+F.DepotNameCN AS DepotCodeName,
+                        '('+G.LogicInventoryCode+')'+G.InventoryNameCN AS LogicInventoryName,
+                        '('+H.DepotCode+')'+H.DepotNameCN AS AcceptDepotCodeName,
+                        '('+I.LogicInventoryCode+')'+I.InventoryNameCN AS AcceptLogicInventoryName,
+                        '('+C.EmployeeCode+')' + C.EmployeeName AS SaleEmployeeName,
+                        '('+D.EmployeeCode+')' + D.EmployeeName AS BillTicketEmployeeName,
+                        CASE
+                            WHEN A.CustomerType = '1' THEN '('+E1.DepartCode+')'+E1.DepartName
+                            WHEN A.CustomerType = '2' THEN '('+E2.Code+')'+E2.NameCN
+                            WHEN A.CustomerType = '3' THEN '('+E3.EmployeeCode+')'+E3.EmployeeName
+                        END  AS CustomerCodeName,
+                         '('+J.EmployeeCode+')' + J.EmployeeName AS HistoryEmployeeName
+                    ]]>
+                </isEqual>
+            </isNotEmpty>
+            <isEmpty property="language">
+                <![CDATA[
+                    '('+B.DepartCode+')'+B.DepartName AS DepartCodeName,
+                    '('+F.DepotCode+')'+F.DepotNameCN AS DepotCodeName,
+                    '('+G.LogicInventoryCode+')'+G.InventoryNameCN AS LogicInventoryName,
+                    '('+H.DepotCode+')'+H.DepotNameCN AS AcceptDepotCodeName,
+                    '('+I.LogicInventoryCode+')'+I.InventoryNameCN AS AcceptLogicInventoryName,
+                    '('+C.EmployeeCode+')' + C.EmployeeName AS SaleEmployeeName,
+                    '('+D.EmployeeCode+')' + D.EmployeeName AS BillTicketEmployeeName,
+                    CASE
+                        WHEN A.CustomerType = '1' THEN '('+E1.DepartCode+')'+E1.DepartName
+                        WHEN A.CustomerType = '2' THEN '('+E2.Code+')'+E2.NameCN
+                        WHEN A.CustomerType = '3' THEN '('+E3.EmployeeCode+')'+E3.EmployeeName
+                    END AS CustomerCodeName,
+                    '('+J.EmployeeCode+')' + J.EmployeeName AS HistoryEmployeeName
+                ]]>
+            </isEmpty>
+        </dynamic>
+        <![CDATA[
+            FROM
+                Sale.BIN_BackstageSaleHistory A
+                LEFT JOIN Basis.BIN_Organization B
+                ON A.BIN_OrganizationID = B.BIN_OrganizationID
+                LEFT JOIN Basis.BIN_Employee C
+                ON A.SaleEmployee = C.BIN_EmployeeID
+                LEFT JOIN Basis.BIN_Employee D
+                ON A.BillTicketEmployee = D.BIN_EmployeeID
+                LEFT JOIN Basis.BIN_Organization E1
+                ON A.CustomerID = E1.BIN_OrganizationID
+                LEFT JOIN Basis.BIN_BussinessPartner E2
+                ON A.CustomerID = E2.BIN_BussinessPartnerID
+                LEFT JOIN Basis.BIN_Employee E3
+                ON A.CustomerID = E3.BIN_EmployeeID
+                LEFT JOIN Basis.BIN_DepotInfo F
+                ON A.BIN_InventoryInfoID = F.BIN_DepotInfoID
+                LEFT JOIN Basis.BIN_LogicInventory G
+                ON A.BIN_LogicInventoryInfoID = G.BIN_LogicInventoryInfoID
+                LEFT JOIN Basis.BIN_DepotInfo H
+                ON A.BIN_InventoryInfoIDAccept = H.BIN_DepotInfoID
+                LEFT JOIN Basis.BIN_LogicInventory I
+                ON A.BIN_LogicInventoryInfoIDAccept = I.BIN_LogicInventoryInfoID
+                LEFT JOIN Basis.BIN_Employee J
+                ON A.HistoryEmployeeID = J.BIN_EmployeeID
+            WHERE
+                A.BIN_BackstageSaleHistoryID = #BIN_BackstageSaleHistoryID#
+        ]]>
+    </select>
+    
+    <!--取得后台销售从表信息（履历）-->
+    <select id="getBackstageSaleDetailHistoryData" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+        <![CDATA[
+            SELECT
+                A.BIN_BackstageSaleHistoryID,
+                A.BIN_ProductVendorID,
+                A.DetailNo,
+                FLOOR(ISNULL(A.Quantity,0)) AS Quantity,
+                ISNULL(A.Price,0) AS Price,
+                ISNULL(A.PricePay,0) AS PricePay,
+                DiscountRate,
+                ISNULL(A.DiscountAmount,0) AS DiscountAmount,
+                ISNULL(A.PayAmount,0) AS PayAmount,
+                ISNULL(A.AmountPortion,0) AS AmountPortion,
+                A.BIN_InventoryInfoID,
+                A.BIN_LogicInventoryInfoID,
+                A.BIN_StorageLocationInfoID,
+                A.BIN_InventoryInfoIDAccept,
+                A.BIN_LogicInventoryInfoIDAccept,
+                A.BIN_StorageLocationInfoIDAccept,
+                A.Comment,
+                A.ModifiedTimes,
+                B.BarCode,
+                C.UnitCode,
+            ]]>
+            <dynamic>
+                <isNotEmpty property="language">
+                    <isEqual property="language" compareValue="en_US">
+                        <![CDATA[
+                            C.NameForeign AS ProductName,
+                            '('+D.DepotCode+')'+D.DepotNameEN AS DepotCodeName,
+                            '('+E.LogicInventoryCode+')'+E.InventoryNameEN AS LogicInventoryName,
+                            '('+F.DepotCode+')'+F.DepotNameEN AS AcceptDepotCodeName,
+                            '('+G.LogicInventoryCode+')'+G.InventoryNameEN AS AcceptLogicInventoryName
+                        ]]>
+                    </isEqual>
+                    <isEqual property="language" compareValue="zh_CN">
+                        <![CDATA[
+                            C.NameTotal AS ProductName,
+                            '('+D.DepotCode+')'+D.DepotNameCN AS DepotCodeName,
+                            '('+E.LogicInventoryCode+')'+E.InventoryNameCN AS LogicInventoryName,
+                            '('+F.DepotCode+')'+F.DepotNameCN AS AcceptDepotCodeName,
+                            '('+G.LogicInventoryCode+')'+G.InventoryNameCN AS AcceptLogicInventoryName
+                        ]]>
+                    </isEqual>
+                </isNotEmpty>
+                <isEmpty property="language">
+                    <![CDATA[
+                        C.NameTotal AS ProductName,
+                        '('+D.DepotCode+')'+D.DepotNameCN AS DepotCodeName,
+                        '('+E.LogicInventoryCode+')'+E.InventoryNameCN AS LogicInventoryName,
+                        '('+F.DepotCode+')'+F.DepotNameCN AS AcceptDepotCodeName,
+                        '('+G.LogicInventoryCode+')'+G.InventoryNameCN AS AcceptLogicInventoryName
+                    ]]>
+                </isEmpty>
+            </dynamic>
+            <![CDATA[
+            FROM
+                Sale.BIN_BackstageSaleDetailHistory A
+            LEFT JOIN Basis.BIN_ProductVendor B
+            ON A.BIN_ProductVendorID = B.BIN_ProductVendorID
+            LEFT JOIN Basis.BIN_Product C
+            ON B.BIN_ProductID = C.BIN_ProductID
+            LEFT JOIN Basis.BIN_DepotInfo D
+            ON A.BIN_InventoryInfoID = D.BIN_DepotInfoID
+            LEFT JOIN Basis.BIN_LogicInventory E
+            ON A.BIN_LogicInventoryInfoID = E.BIN_LogicInventoryInfoID
+            LEFT JOIN Basis.BIN_DepotInfo F
+            ON A.BIN_InventoryInfoIDAccept = F.BIN_DepotInfoID
+            LEFT JOIN Basis.BIN_LogicInventory G
+            ON A.BIN_LogicInventoryInfoIDAccept = G.BIN_LogicInventoryInfoID
+            WHERE
+                A.BIN_BackstageSaleHistoryID = #BIN_BackstageSaleHistoryID#
+                AND A.ValidFlag = '1'
+        ]]>
+    </select>
+    
+    <!--根据后台销售单据ID取得该后台销售单据的所有履历-->
+    <select id="getAllBackstageSaleHistory" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+        <![CDATA[
+            SELECT
+                A.BIN_BackstageSaleHistoryID,
+                A.HistoryNo,
+                A.HistoryEmployeeID,
+                A.TotalQuantity,
+                A.PayAmount,
+         ]]>
+        <dynamic>
+            <isNotEmpty property="language">
+                <isEqual property="language" compareValue="en_US">
+                    <![CDATA[
+                        '('+C.EmployeeCode+')' + C.EmployeeNameForeign AS HistoryEmployeeName
+                    ]]>
+                </isEqual>
+                <isEqual property="language" compareValue="zh_CN">
+                    <![CDATA[
+                        '('+C.EmployeeCode+')' + C.EmployeeName AS HistoryEmployeeName
+                     ]]>
+                </isEqual>
+            </isNotEmpty>
+            <isEmpty property="language">
+                <![CDATA[
+                    '('+C.EmployeeCode+')' + C.EmployeeName AS HistoryEmployeeName
+                ]]>
+            </isEmpty>
+        </dynamic>
+        <![CDATA[
+            FROM
+                Sale.BIN_BackstageSaleHistory A
+                LEFT JOIN Basis.BIN_Employee C
+                ON A.HistoryEmployeeID = C.BIN_EmployeeID
+            WHERE
+                A.BIN_BackstageSaleID = #BIN_BackstageSaleID#
+                AND A.ValidFlag = '1'
+        ]]>
+    </select>
+    
+    <!--更新后台销售主表（履历）-->
+    <update id="updateBackstageSaleHistory" parameterClass="java.util.HashMap">
+        <![CDATA[
+            UPDATE
+                Sale.BIN_BackstageSaleHistory 
+            SET
+                 UpdateTime = GETDATE()
+                ,UpdatedBy = #UpdatedBy#
+                ,UpdatePGM = #UpdatePGM#
+                ,ModifyCount = ModifyCount+1
+        ]]>
+        <dynamic>
+            <isNotEmpty property="WorkFlowID">
+                <![CDATA[,WorkFlowID = #WorkFlowID#]]>
+            </isNotEmpty>
+            <isNotEmpty property="BillState">
+                <![CDATA[,BillState = #BillState#]]>
+            </isNotEmpty>
+            <isNotEmpty property="ValidFlag">
+                <![CDATA[,ValidFlag = #ValidFlag#]]>
+            </isNotEmpty>
+            <isNotEmpty property="ActualFinishDate">
+                <![CDATA[,ActualFinishDate = #ActualFinishDate#]]>
+            </isNotEmpty>
+        </dynamic>
+        <![CDATA[
+            WHERE
+                BIN_BackstageSaleHistoryID = #BIN_BackstageSaleHistoryID#
+         ]]>
+        <isNotEmpty property="OldValidFlag">
+              <![CDATA[AND ValidFlag = #OldValidFlag#]]>
+       </isNotEmpty>
+       <isNotEmpty property="OldUpdateTime">
+              <![CDATA[AND UpdateTime = #OldUpdateTime#]]>
+       </isNotEmpty>
+       <isNotEmpty property="OldModifyCount">
+              <![CDATA[AND ModifyCount = #OldModifyCount#]]>
+       </isNotEmpty> 
+    </update>
+    
+    <!--更新组织结构表联系人和联系地址-->
+    <update id="updateOrganizationInfo" parameterClass="java.util.HashMap">
+        <![CDATA[
+        	UPDATE 
+        		Basis.BIN_Organization 
+        	SET 
+        	]]>
+			<dynamic>
+				<isNotEmpty property="ContactPerson">
+	                <![CDATA[ContactPerson = #ContactPerson#,]]>
+	            </isNotEmpty>
+	            <isNotEmpty property="DeliverAddress">
+	                <![CDATA[Address = #DeliverAddress#,]]>
+	            </isNotEmpty>
+        	</dynamic>
+			<![CDATA[
+        		UpdateTime = GETDATE(),
+                UpdatedBy = #UpdatedBy#,
+                UpdatePGM = #UpdatePGM#,
+                ModifyCount = ModifyCount+1 
+            WHERE
+                BIN_OrganizationID = #CustomerID#
+		]]>
+    </update>
+    
+    <!--更新组织结构表联系人和联系地址-->
+    <update id="updateDepartAddress" parameterClass="java.util.HashMap">
+        <![CDATA[
+        	UPDATE 
+        		tab 
+        	SET 
+        	]]>
+			<dynamic>
+				<isNotEmpty property="addressLine1">
+	                <![CDATA[tab.AddressLine1 = #addressLine1#,]]>
+	            </isNotEmpty>
+	            <isNotEmpty property="addressLine2">
+	                <![CDATA[tab.AddressLine2 = #addressLine2#,]]>
+	            </isNotEmpty>
+	            <isNotEmpty property="city">
+	                <![CDATA[tab.City = #city#,]]>
+	            </isNotEmpty>
+	            <isNotEmpty property="province">
+	                <![CDATA[tab.Province = #province#,]]>
+	            </isNotEmpty>
+	            <isNotEmpty property="zipCode">
+	                <![CDATA[tab.ZipCode = #zipCode#,]]>
+	            </isNotEmpty>
+        	</dynamic>
+			<![CDATA[
+        		tab.UpdateTime = GETDATE(),
+                tab.UpdatedBy = #UpdatedBy#,
+                tab.UpdatePGM = #UpdatePGM#,
+                tab.ModifyCount = tab.ModifyCount+1 
+            FROM 
+            	Basis.BIN_SubordinateAddress as tsb 
+				LEFT JOIN Basis.BIN_AddressInfo as tab ON tsb.BIN_AddressInfoID = tab.BIN_AddressInfoID 
+			WHERE 
+				tsb.ValidFlag = '1' AND 
+				tab.ValidFlag = '1' AND 
+				tsb.BIN_AddressTypeID = #addressTypeId# AND 
+				tsb.BIN_OrganizationID = #customerId#
+		]]>
+    </update>
+    
+</sqlMap>
+

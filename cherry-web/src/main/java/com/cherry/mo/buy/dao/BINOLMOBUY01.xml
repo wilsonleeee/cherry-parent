@@ -1,0 +1,253 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sqlMap PUBLIC "-//iBATIS.com//DTD SQL Map 2.0//EN" "http://ibatis.apache.org/dtd/sql-map-2.dtd">
+<sqlMap namespace="BINOLMOBUY01">
+    
+	<!--U盘考勤信息统计SQL-->
+	<sql id="udiskAttendanceStatisticsSQL">
+		<![CDATA[
+		SELECT
+			ttt2.UdiskSN,
+			ttt2.BIN_EmployeeID,
+		]]>
+			<dynamic>
+		        <isNotEmpty property="language">
+		            <isEqual property="language" compareValue="en_US">
+		            	<![CDATA[
+							'('+D.EmployeeCode+')'+D.EmployeeNameForeign AS EmployeeCodeName,
+							'('+H.DepartCode+')'+H.NameForeign AS DepartCodeName,
+							E.CategoryNameForeign AS CategoryName,
+							G.RegionNameForeign AS RegionNameChinese,
+						]]>
+		            </isEqual>
+					<isEqual property="language" compareValue="zh_CN">
+		            	<![CDATA[
+							'('+D.EmployeeCode+')'+D.EmployeeName AS EmployeeCodeName,
+							'('+H.DepartCode+')'+H.DepartName AS DepartCodeName,
+							E.CategoryName,
+							G.RegionNameChinese,
+						]]>
+		            </isEqual>
+				</isNotEmpty>
+				<isEmpty property="language">
+					<![CDATA[
+						'('+D.EmployeeCode+')'+D.EmployeeName AS EmployeeCodeName,
+						'('+H.DepartCode+')'+H.DepartName AS DepartCodeName,
+						E.CategoryName,
+						G.RegionNameChinese,
+					]]>
+				</isEmpty>
+			</dynamic>
+		<![CDATA[
+			ISNULL(ttt2.DepartNum,0) AS DepartNum,
+			ISNULL(ttt2.AllArriTime,0) AS AllArriTime,
+			ISNULL(ttt2.ArriveCountersNm,0) AS ArriveCountersNm,
+			ISNULL(ttt2.ArriveDays,0) AS ArriveDays,
+			ISNULL(ttt2.ArriveDiffCountersNm,0) AS ArriveDiffCountersNm,
+			ISNULL(ttt2.perCoutArriTime,0) AS PerCoutArriTime
+			]]>
+			<isNotEmpty property="ImportTimeDaysSQL">
+				,ISNULL(ttt2.importTimeDays,0) AS ImportTimeDays
+			</isNotEmpty>
+			<isEmpty property="ImportTimeDaysSQL">
+				,0 AS ImportTimeDays
+			</isEmpty>
+			<![CDATA[
+		FROM
+			(
+			SELECT
+				distinct
+				C.UdiskSN,
+				C.BIN_EmployeeID,
+				ttt1.AllArriTime AS AllArriTime,
+				ISNULL(ttt3.departNum,0) AS DepartNum,
+				ISNULL(CAST(ttt1.AllArriTime/ttt1.ArriveCountersNm  as decimal(18,0)) ,0) AS perCoutArriTime,
+				ttt1.ArriveCountersNm AS ArriveCountersNm,
+				ttt1.ArriveDays AS ArriveDays,
+				ttt1.ArriveDiffCountersNm AS ArriveDiffCountersNm
+				]]>
+				<isNotEmpty property="ImportTimeDaysSQL">
+					,ttt1.importTimeDays AS importTimeDays
+				</isNotEmpty>
+				<![CDATA[
+			FROM
+				[Monitor].[BIN_BASAttendance] C
+				LEFT JOIN
+				(
+					SELECT
+						ttt.UdiskSN AS UdiskSN,
+						ttt.BIN_EmployeeID AS BIN_EmployeeID,
+						ISNULL(COUNT(ttt.BIN_BASAttendanceID),0) AS ArriveCountersNm,
+						ISNULL(COUNT(distinct CONVERT(CHAR(10),ttt.ArriveTime,120)),0) AS ArriveDays,
+						ISNULL(COUNT(distinct ttt.BIN_OrganizationID),0) AS ArriveDiffCountersNm,
+						ISNULL(SUM(ISNULL(DATEDIFF(N,ttt.ArriveTime,ttt.LeaveTime),0)),0) AS AllArriTime
+						]]>
+						<isNotEmpty property="ImportTimeDaysSQL">
+							,COUNT(distinct ttt.importTimeDays) AS importTimeDays
+						</isNotEmpty>
+						<![CDATA[
+					FROM
+						(
+							SELECT
+								A.UdiskSN AS UdiskSN,
+								A.BIN_EmployeeID AS BIN_EmployeeID,
+								A.BIN_BASAttendanceID,
+								A.ArriveTime,
+								A.LeaveTime,
+								]]>
+								<isNotEmpty property="ImportTimeDaysSQL">
+									$ImportTimeDaysSQL$ AS importTimeDays,
+								</isNotEmpty>
+								<![CDATA[	
+								A.BIN_OrganizationID,
+								B.BIN_CounterInfoID,
+								A.AttendanceDate,
+								A.ValidFlag,
+								A.BIN_OrganizationInfoID,
+								A.BIN_BrandInfoID
+							FROM
+								[Monitor].[BIN_BASAttendance] A
+								LEFT JOIN Basis.BIN_CounterInfo B
+								ON(B.BIN_OrganizationID = A.BIN_OrganizationID
+								]]>
+								<isNotEmpty property="ForbiddenChannelArr">
+									<![CDATA[AND B.BIN_ChannelID NOT IN(]]>
+										<iterate property="ForbiddenChannelArr" conjunction=",">
+											#ForbiddenChannelArr[]#
+										</iterate>
+									<![CDATA[)]]>
+								</isNotEmpty>
+								<isNotEmpty property="ChannelArr">
+									<![CDATA[AND B.BIN_ChannelID IN(]]>
+										<iterate property="ChannelArr" conjunction=",">
+											#ChannelArr[]#
+										</iterate>
+									<![CDATA[)]]>
+								</isNotEmpty>
+								
+								<![CDATA[
+								)
+							WHERE
+								EXISTS(
+									]]>
+										<include refid="BINOLCMINC99.employeePrivilegeSql" />
+									<![CDATA[
+										AND A.BIN_EmployeeID = BIN_SubEmployeeID
+										)
+								AND
+								EXISTS(
+									]]>
+										<include refid="BINOLCMINC99.getDepartList" />
+									<![CDATA[
+										AND A.BIN_OrganizationID = A99.BIN_OrganizationID
+									)
+						)ttt
+					WHERE
+						ttt.ValidFlag = '1'
+						AND ttt.BIN_OrganizationInfoID = #organizationInfoId# 
+						]]>
+						<isNotEmpty property="ForbiddenChannelArr">
+							<![CDATA[AND ttt.BIN_CounterInfoID is not null]]>
+						</isNotEmpty>
+						<isNotEmpty property="ChannelArr">
+							<![CDATA[AND ttt.BIN_CounterInfoID is not null]]>
+						</isNotEmpty>
+						<isNotEmpty property="brandInfoId">
+							<![CDATA[AND ttt.BIN_BrandInfoID = #brandInfoId#]]>
+						</isNotEmpty>
+						<isNotEmpty property="startAttendanceDate">
+							<![CDATA[AND ttt.AttendanceDate >= #startAttendanceDate#]]>
+						</isNotEmpty>
+						<isNotEmpty property="endAttendanceDate">
+							<![CDATA[AND ttt.AttendanceDate <= #endAttendanceDate#]]>
+						</isNotEmpty>
+						<isNotEmpty property="ForbiddenChannelList">
+							<![CDATA[ttt.BIN_CounterInfoID is not null]]>
+						</isNotEmpty>
+						<![CDATA[
+						group by UdiskSN,BIN_EmployeeID
+				)ttt1
+				ON(C.UdiskSN = ttt1.UdiskSN
+				AND C.BIN_EmployeeID = ttt1.BIN_EmployeeID)
+				LEFT JOIN(
+					]]>
+						<include refid="BINOLCMINC99.departNumPrivilegeSql" />
+					<![CDATA[
+				)ttt3
+				ON(ttt3.BIN_EmployeeID = C.BIN_EmployeeID)
+			]]>
+				<isNotEmpty property="udiskSN">
+					<![CDATA[
+					WHERE
+						C.UdiskSN = #udiskSN#
+					]]>
+				</isNotEmpty>
+			<![CDATA[
+			)ttt2
+			JOIN Basis.BIN_Employee D
+			ON(ttt2.BIN_EmployeeID = D.BIN_EmployeeID)
+			LEFT JOIN Privilege.BIN_PositionCategory E
+			ON(D.BIN_PositionCategoryID = E.BIN_PositionCategoryID)
+			LEFT JOIN Basis.BIN_Organization F
+			ON(D.BIN_OrganizationID = F.BIN_OrganizationID)
+			LEFT JOIN Basis.BIN_Region G
+			ON(F.BIN_CityID = G.BIN_RegionID)
+			LEFT JOIN Basis.BIN_Organization H
+			ON(F.NodeID.IsDescendantOf(H.NodeID) = 1
+			AND H.Type = '5'
+			]]>
+				<isNotEmpty property="reginDepartID">
+					<![CDATA[
+						AND H.BIN_OrganizationID = #reginDepartID#
+					]]>
+				</isNotEmpty>
+			<![CDATA[
+			)
+			WHERE
+				D.BIN_OrganizationInfoID = #organizationInfoId#
+		]]>
+			<isNotEmpty property="brandInfoId">
+				<![CDATA[
+					AND D.BIN_BrandInfoID = #brandInfoId#
+				]]>
+			</isNotEmpty>
+			<isNotEmpty property="employeeName">
+				<![CDATA[
+					AND D.EmployeeName = #employeeName#
+				]]>
+			</isNotEmpty>
+			<isNotEmpty property="cityID">
+				<![CDATA[
+					AND G.BIN_RegionID = #cityID#
+				]]>
+			</isNotEmpty>
+			<isNotEmpty property="empValidFlag">
+				 <![CDATA[
+				   AND D.ValidFlag=#empValidFlag#
+				 ]]>
+			</isNotEmpty>
+	</sql>
+	
+	<!--取得U盘考勤统计信息List，画面使用-->
+	<select id="getUdiskAttendanceStatisticsList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+		<include refid="BINOLCMINC99.pageheader" />
+        <include refid="BINOLMOBUY01.udiskAttendanceStatisticsSQL" />
+        <include refid="BINOLCMINC99.pagefooter" />
+	</select>
+	
+	<!--取得U盘考勤统计信息总数-->
+	<select id="getUdiskAttendanceStatisticsCount" parameterClass="java.util.HashMap" resultClass="java.lang.Integer">
+		<![CDATA[
+            SELECT COUNT(SORT_T1.UdiskSN) AS count FROM (
+        ]]>
+        <include refid="BINOLMOBUY01.udiskAttendanceStatisticsSQL" />
+        <![CDATA[
+            )SORT_T1
+        ]]>
+	</select>
+	
+	<!--取得U盘考勤统计信息List，导出使用-->
+	<select id="getUdiskAttendanceStatisticsForImport" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+        <include refid="BINOLMOBUY01.udiskAttendanceStatisticsSQL" />
+	</select>
+	
+</sqlMap>

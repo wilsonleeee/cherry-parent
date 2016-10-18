@@ -1,0 +1,449 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sqlMap PUBLIC "-//iBATIS.com//DTD SQL Map 2.0//EN" "http://ibatis.apache.org/dtd/sql-map-2.dtd">
+<sqlMap namespace="BINOLPLRLM99">
+	
+	<!-- 查询角色信息总数 -->
+	<select id="getRoleInfoCount" parameterClass="java.util.HashMap" resultClass="java.lang.Integer">
+		<![CDATA[
+			SELECT				
+				count(BIN_RoleID)	
+			FROM				
+				Privilege.BIN_Role			
+			WHERE	
+				ValidFlag='1' AND			
+				BIN_OrganizationInfoID=#organizationInfoId#
+		]]>
+		<dynamic>
+			<isNotEmpty prepend="AND" property="brandInfoId">
+				(BIN_BrandInfoID=#brandInfoId#)
+			</isNotEmpty>
+			<isNotEmpty prepend="AND" property="roleKind">
+				(RoleKind = #roleKind#)
+			</isNotEmpty>
+			<isNotEmpty prepend="AND" property="roleKw">
+				((RoleName like '%'+#roleKw#+'%') or (Decription like '%'+#roleKw#+'%'))
+			</isNotEmpty>
+		</dynamic>
+    </select>
+	<!-- 查询角色信息一览 -->
+	<resultMap id="BINOLPLRLM99.RoleInfo" class="java.util.HashMap">
+		<result property="RowNumber" column="RowNumber"/>
+		<result property="roleId" column="BIN_RoleID"/>
+		<result property="roleName" column="RoleName"/>
+		<result property="roleKind" column="RoleKind"/>
+		<result property="decription" column="Decription"/>
+		<result property="updateTime" column="UpdateTime"/>
+		<result property="modifyCount" column="ModifyCount"/>
+		<result property="brandInfoId" column="BIN_BrandInfoID"/>
+		<result property="brandNameChinese" column="BrandNameChinese"/>
+	</resultMap>
+	<select id="getRoleInfoList" parameterClass="java.util.HashMap" resultMap="BINOLPLRLM99.RoleInfo">
+		<include refid="BINOLCMINC99.pageheader" />
+		<![CDATA[
+			SELECT				
+				A.BIN_RoleID,			
+				A.RoleName,			
+				A.RoleKind,			
+				A.Decription,	
+				convert(varchar(30),A.UpdateTime,121) AS UpdateTime,
+				A.ModifyCount,
+				A.BIN_BrandInfoID,
+		]]>
+		<dynamic>
+		<isNotEmpty property="language">
+			<isEqual property="language" compareValue="en_US">
+				B.BrandNameForeign AS BrandNameChinese
+			</isEqual>
+			<isEqual property="language" compareValue="zh_CN">	
+				B.BrandNameChinese AS BrandNameChinese
+			</isEqual>								
+		</isNotEmpty>
+		<isEmpty property="language">
+			B.BrandNameChinese AS BrandNameChinese
+		</isEmpty>
+		</dynamic>
+		<![CDATA[			
+			FROM				
+				Privilege.BIN_Role A left join Basis.BIN_BrandInfo B on
+				A.BIN_BrandInfoID=B.BIN_BrandInfoID		
+			WHERE		
+				A.ValidFlag='1' AND					
+				A.BIN_OrganizationInfoID=#organizationInfoId#
+		]]>
+		<dynamic>
+			<isNotEmpty prepend="AND" property="brandInfoId">
+				(A.BIN_BrandInfoID=#brandInfoId#)
+			</isNotEmpty>
+			<isNotEmpty prepend="AND" property="roleKind">
+				(A.RoleKind = #roleKind#)
+			</isNotEmpty>
+			<isNotEmpty prepend="AND" property="roleKw">
+				((A.RoleName like '%'+#roleKw#+'%') or (A.Decription like '%'+#roleKw#+'%'))
+			</isNotEmpty>
+		</dynamic>
+		<include refid="BINOLCMINC99.pagefooter" />
+    </select>
+	
+	<!-- 删除角色 -->
+	<delete id="deleteRole" parameterClass="java.util.HashMap">
+		<![CDATA[
+			DELETE FROM Privilege.BIN_Role		
+			WHERE		
+				BIN_RoleID = #roleId# AND	
+				UpdateTime = #modifyTime# AND	
+				ModifyCount = #modifyCount#		
+		]]>
+	</delete>
+	
+	<!-- 删除组织角色对应关系 -->
+	<delete id="deleteOrganizationRole" parameterClass="java.util.HashMap">
+		<![CDATA[
+			DELETE FROM Privilege.BIN_OrganizationRole		
+			WHERE		
+				BIN_RoleID = #roleId#	
+		]]>
+	</delete>
+	
+	<!-- 删除岗位类别角色对应关系 -->
+	<delete id="deletePositionCategoryRole" parameterClass="java.util.HashMap">
+		<![CDATA[
+			DELETE FROM Privilege.BIN_PositionCategoryRole				
+			WHERE				
+				BIN_RoleID = #roleId#			
+		]]>
+	</delete>
+	
+	<!-- 删除岗位角色对应关系 -->
+	<delete id="deletePositionRole" parameterClass="java.util.HashMap">
+		<![CDATA[
+			DELETE FROM Privilege.BIN_PositionRole			
+			WHERE			
+				BIN_RoleID = #roleId#		
+		]]>
+	</delete>
+	
+	<!-- 删除用户角色对应关系 -->
+	<delete id="deleteUserRole" parameterClass="java.util.HashMap">
+		<![CDATA[
+			DELETE FROM Privilege.BIN_UserRole			
+			WHERE			
+				BIN_RoleID = #roleId#		
+		]]>
+	</delete>
+	
+	<!-- 查询指定角色是否存在 -->
+	<resultMap id="BINOLPLRLM99.RoleByRoleName" class="java.util.HashMap">
+		<result property="roleId" column="BIN_RoleID"/>
+	</resultMap>
+	<select id="getRoleByRoleName" parameterClass="java.util.HashMap" resultMap="BINOLPLRLM99.RoleByRoleName">
+		<![CDATA[
+			SELECT				
+				BIN_RoleID
+			FROM				
+				Privilege.BIN_Role			
+			WHERE	
+				ValidFlag='1' AND			
+				BIN_OrganizationInfoID=#organizationInfoId# AND			
+				BIN_BrandInfoID=#brandInfoId# AND
+				RoleName=#roleName#
+		]]>
+    </select>
+
+	<!-- 添加角色 -->
+    <insert id="addRole" parameterClass="java.util.HashMap">
+    	<selectKey resultClass="java.lang.Integer" type="post" keyProperty="BIN_RoleID" >
+    	<![CDATA[
+    		INSERT INTO Privilege.BIN_Role				
+			(				
+				RoleName,			
+				BIN_OrganizationInfoID,			
+				BIN_BrandInfoID,			
+				RoleKind,			
+				Decription,
+		]]>
+				<include refid="BINOLCMINC99.insertKeySql" />		
+		<![CDATA[				
+			)				
+			VALUES				
+			(				
+				#roleName#,			
+				#organizationInfoId#,			
+				#brandInfoId#,			
+				#roleKind#,			
+				#decription#,
+		]]>
+				<include refid="BINOLCMINC99.insertValueSql" />		
+		<![CDATA[	
+			)
+			select SCOPE_IDENTITY() as value				
+    	]]>
+    	</selectKey>   
+    </insert>
+	
+	<!-- 查询角色信息 -->
+	<resultMap id="BINOLPLRLM99.RoleInfo01" class="java.util.HashMap">
+		<result property="brandInfoId" column="BIN_BrandInfoID"/>
+		<result property="roleName" column="RoleName"/>
+		<result property="roleKind" column="RoleKind"/>
+		<result property="decription" column="Decription"/>
+		<result property="updateTime" column="UpdateTime"/>
+		<result property="modifyCount" column="ModifyCount"/>
+	</resultMap>
+	<select id="getRoleInfo" parameterClass="java.util.HashMap" resultMap="BINOLPLRLM99.RoleInfo01">
+		<![CDATA[
+			SELECT		
+				BIN_BrandInfoID,		
+				RoleName,			
+				RoleKind,			
+				Decription,
+				convert(varchar(30),UpdateTime,121) AS UpdateTime,
+				ModifyCount			
+			FROM				
+				Privilege.BIN_Role			
+			WHERE				
+				BIN_RoleID = #roleId# AND			
+				ValidFlag='1'
+		]]>
+    </select>
+	
+	<!-- 更新角色 -->
+	<update id="updateRole" parameterClass="java.util.HashMap">
+		<![CDATA[
+			UPDATE Privilege.BIN_Role				
+			SET				
+				RoleName = #roleName#,			
+				RoleKind = #roleKind#,			
+				Decription = #decription#,
+		]]>
+				<include refid="BINOLCMINC99.updateSql" />		
+		<![CDATA[					
+			WHERE				
+				BIN_RoleID = #roleId# AND			
+				ValidFlag='1' AND
+				UpdateTime = #modifyTime# AND		
+				ModifyCount = #modifyCount#					
+		]]>
+	</update>
+	
+	<!-- 查询所有的功能权限 -->
+	<resultMap id="BINOLPLRLM99.Resource" class="java.util.HashMap">
+		<result property="resourceId" column="BIN_ResourceID"/>
+		<result property="subSysId" column="SubSysID"/>
+		<result property="moduleId" column="ModuleID"/>
+		<result property="functionId" column="FunctionID"/>
+		<result property="pageId" column="PageID"/>
+		<result property="controlId" column="ControlID"/>
+		<result property="subSysName" column="SubSysName"/>
+		<result property="moduleName" column="ModuleName"/>
+		<result property="functionName" column="FunctionName"/>
+		<result property="pageName" column="PageName"/>
+		<result property="controlName" column="ControlName"/>
+		<result property="resourceType" column="ResourceType"/>
+	</resultMap>
+	<select id="getResourceList" parameterClass="java.util.HashMap" resultMap="BINOLPLRLM99.Resource">
+		<![CDATA[
+			SELECT			
+				A.BIN_ResourceID,		
+				A.SubSysID,		
+				A.ModuleID,		
+				A.FunctionID,		
+				A.PageID,
+				A.ControlID,
+				A.SubSysName,
+				A.ModuleName,
+				A.FunctionName,
+				A.PageName,
+				A.ControlName,
+				B.ResourceType
+			FROM 			
+				Privilege.BIN_Resource A left join
+				(SELECT BIN_ResourceID,ResourceType
+				FROM Privilege.BIN_RoleResource
+				WHERE BIN_RoleID = #roleId# and ValidFlag = '1') B on
+				A.BIN_ResourceID = B.BIN_ResourceID
+			WHERE			
+				A.ValidFlag = '1'		
+		]]>
+    </select>
+	
+	<!-- 查询指定角色的所有授权 -->
+	<resultMap id="BINOLPLRLM99.RoleResource" class="java.util.HashMap">
+		<result property="resourceId" column="BIN_ResourceID"/>
+		<result property="resourceType" column="ResourceType"/>
+		<result property="subSysId" column="SubSysID"/>
+		<result property="moduleId" column="ModuleID"/>
+		<result property="functionId" column="FunctionID"/>
+		<result property="pageId" column="PageID"/>
+		<result property="controlId" column="ControlID"/>
+	</resultMap>
+	<select id="getRoleResourceList" parameterClass="java.util.HashMap" resultMap="BINOLPLRLM99.RoleResource">
+		<![CDATA[
+			SELECT 					
+				A.BIN_ResourceID,				
+				A.ResourceType,
+				B.SubSysID,
+				B.ModuleID,
+				B.FunctionID,
+				B.PageID,
+				B.ControlID			
+			FROM 					
+				Privilege.BIN_RoleResource A,
+				Privilege.BIN_Resource B		
+			WHERE	
+				A.BIN_ResourceID = B.BIN_ResourceID AND				
+				A.BIN_RoleID=#roleId# AND					
+				A.ValidFlag = '1' AND
+				B.ValidFlag = '1'			
+		]]>
+    </select>
+	
+	<!-- 取得画面对应的控件资源List -->
+	<resultMap id="BINOLPLRLM99.PageControl" class="java.util.HashMap">
+		<result property="resourceId" column="BIN_ResourceID"/>
+		<result property="controlId" column="ControlID"/>
+	</resultMap>
+	<select id="getPageControlList" parameterClass="java.util.HashMap" resultMap="BINOLPLRLM99.PageControl">
+		<![CDATA[
+			SELECT				
+				BIN_ResourceID,			
+				ControlID			
+			FROM 				
+				Privilege.BIN_Resource			
+			WHERE				
+				PageID = #pageId# AND			
+				ValidFlag = '1'					
+		]]>
+    </select>
+	
+	<!-- 取得角色对应的某个画面的控件资源List -->
+	<resultMap id="BINOLPLRLM99.RoleControl" class="java.util.HashMap">
+		<result property="resourceId" column="BIN_ResourceID"/>
+		<result property="controlId" column="ControlID"/>
+	</resultMap>
+	<select id="getRoleControlList" parameterClass="java.util.HashMap" resultMap="BINOLPLRLM99.RoleControl">
+		<![CDATA[
+			SELECT 				
+				A.BIN_ResourceID			
+				B.ControlID			
+			FROM 				
+				Privilege.BIN_RoleResource A,			
+				Privilege.BIN_Resource B			
+			WHERE				
+				A.BIN_ResourceID = B.BIN_ResourceID AND			
+				A.BIN_RoleID=#roleId# AND			
+				B.PageID=#pageId# AND			
+				ResourceType = '4' AND			
+				A.ValidFlag = '1' AND			
+				B.ValidFlag = '1'						
+		]]>
+    </select>
+	
+	<!-- 删除角色已有的的功能资源 -->
+	<delete id="deleteRoleResource" parameterClass="java.util.HashMap">
+		<![CDATA[
+			DELETE FROM Privilege.BIN_RoleResource							
+			WHERE							
+				BIN_RoleID=#roleId#				
+		]]>
+	</delete>
+	
+	<!-- 保存角色功能资源 -->
+	<insert id="addRoleResource" parameterClass="java.util.HashMap">
+    	<![CDATA[
+    		INSERT INTO Privilege.BIN_RoleResource			
+			(			
+				BIN_RoleID,		
+				MENU_ID,				
+		]]>
+				<include refid="BINOLCMINC99.insertKeySql" />		
+		<![CDATA[		
+			)			
+			VALUES			
+			(			
+				#roleId#,		
+				#menuId#,		
+		]]>
+				<include refid="BINOLCMINC99.insertValueSql" />		
+		<![CDATA[			
+			)			
+    	]]>
+    </insert>
+    
+    <!-- 查询所有的菜单资源 -->
+	<resultMap id="BINOLPLRLM99.Menu" class="java.util.HashMap">
+		<result property="menuId" column="MENU_ID"/>
+		<result property="menuNm" column="MENU_NM"/>
+		<result property="parentMenuId" column="PARENT_MENU_ID"/>
+		<result property="menuType" column="MENU_TYPE"/>
+		<result property="isChecked" column="isChecked"/>
+	</resultMap>
+	<select id="getMenuList" parameterClass="java.util.HashMap" resultMap="BINOLPLRLM99.Menu">
+		<![CDATA[
+			SELECT DISTINCT	
+				A.MENU_ID,
+				A.MENU_NM,
+				A.PARENT_MENU_ID,
+				A.MENU_TYPE,
+				CASE WHEN B.MENU_ID IS NULL THEN 'false' ELSE 'true' END AS isChecked,
+				A.MENU_SORT_NO
+			FROM 
+				Privilege.BIN_Menu A
+				LEFT JOIN Privilege.BIN_RoleResource B ON A.MENU_ID = B.MENU_ID AND B.BIN_RoleID = #roleId# AND B.ValidFlag = '1'
+		]]>
+			<isNotEmpty property="brandRole">
+				JOIN Privilege.BIN_RoleResource C ON A.MENU_ID = C.MENU_ID AND C.ValidFlag = '1' AND
+				C.BIN_RoleID = #brandRole#
+			</isNotEmpty>
+		<![CDATA[						
+			WHERE			
+				A.ValidFlag = '1'			
+			ORDER BY
+				A.MENU_SORT_NO
+		]]>
+    </select>
+    
+    <!-- 查询所有的禁止菜单资源 -->
+    <select id="getNotMenuList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+		<![CDATA[
+			SELECT DISTINCT	
+				A.MENU_ID AS menuId,
+				A.MENU_NM AS menuNm,
+				A.PARENT_MENU_ID AS parentMenuId,
+				A.MENU_TYPE AS menuType,
+				A.MENU_SORT_NO
+			FROM 
+				Privilege.BIN_Menu A
+		]]>
+			<isNotEmpty property="notRoleList">
+				JOIN Privilege.BIN_RoleResource C ON A.MENU_ID = C.MENU_ID AND C.ValidFlag = '1' AND
+				<iterate property="notRoleList" open="(" close=")" conjunction="OR">
+					C.BIN_RoleID = #notRoleList[]#
+				</iterate>
+			</isNotEmpty>
+		<![CDATA[						
+			WHERE			
+				A.ValidFlag = '1'
+			ORDER BY
+				A.MENU_SORT_NO	
+		]]>
+    </select>
+    
+    <!-- 查询所有菜单的子菜单数 -->
+	<select id="getChildMenuCount" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">	
+		<![CDATA[ 
+		SELECT 
+			A.MENU_ID AS menuId,
+			COUNT(B.MENU_ID) AS count
+		FROM 
+			Privilege.BIN_Menu A
+			JOIN Privilege.BIN_Menu B ON A.MENU_ID = B.PARENT_MENU_ID AND B.ValidFlag = '1'
+			JOIN Privilege.BIN_RoleResource C ON B.MENU_ID = C.MENU_ID AND C.ValidFlag = '1' AND C.BIN_RoleID = '2'
+		WHERE 
+			A.MENU_ID <> B.MENU_ID AND
+			A.ValidFlag = '1'
+		GROUP BY
+			A.MENU_ID
+		]]>
+	</select>
+	
+</sqlMap>

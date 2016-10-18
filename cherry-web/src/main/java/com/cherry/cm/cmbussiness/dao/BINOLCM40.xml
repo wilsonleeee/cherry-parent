@@ -1,0 +1,93 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sqlMap PUBLIC "-//iBATIS.com//DTD SQL Map 2.0//EN" "http://ibatis.apache.org/dtd/sql-map-2.dtd">
+<sqlMap namespace="BINOLCM40">
+    <!-- 取得未完成工作流信息  -->
+    <select id="getWorkFlowContent" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+        <![CDATA[
+            SELECT
+                FileContent AS fileContent
+            FROM
+                Tools.BIN_FileStore
+            WHERE
+                OrgCode = #orgCode# AND
+                BrandCode = #brandCode# AND
+                FileCode = #fileCode# AND
+                ValidFlag = '1'
+        ]]>
+    </select>
+    
+    <sql id="getWorkFlowStep">
+        <![CDATA[
+            SELECT
+                ID,
+                ENTRY_ID,
+                STEP_ID,
+                ACTION_ID,
+                CONVERT(VARCHAR, START_DATE, 121) AS startDate,
+                CONVERT(VARCHAR, FINISH_DATE, 121) AS finishDate
+            FROM dbo.OS_HISTORYSTEP
+        UNION
+            SELECT
+                ID,
+                ENTRY_ID,
+                STEP_ID,
+                ACTION_ID,
+                CONVERT(VARCHAR, START_DATE, 121) AS startDate,
+                CONVERT(VARCHAR, FINISH_DATE, 121) AS finishDate
+            FROM dbo.OS_CURRENTSTEP
+        ]]>
+    </sql>
+    
+    <!-- 取得最后一次未完成工作流信息 -->
+    <select id="getWorkFlowInfo" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+        <![CDATA[
+            SELECT TOP 1
+                A.ID AS workFlowId,
+                A.NAME AS workFlowName,
+                A.STATE AS state,
+                OS2.startDate AS startTime,
+                OS3.finishDate AS finishTime,
+                OS3.STEP_ID AS currentStepId,
+                OS3.ACTION_ID AS currentActionId
+            FROM dbo.OS_WFENTRY A
+            LEFT JOIN (
+                SELECT
+                    T1.ENTRY_ID,
+                    min(T1.ID) AS MIN_ID,
+                    MAX(T1.ID) AS MAX_ID
+            FROM ( 
+                SELECT
+                    ID,
+                    ENTRY_ID
+                FROM dbo.OS_HISTORYSTEP
+            UNION
+                SELECT
+                    C1.ID,
+                    C1.ENTRY_ID
+                FROM
+                    dbo.OS_CURRENTSTEP C1
+                LEFT JOIN
+                    dbo.OS_HISTORYSTEP H1
+                ON (C1.ENTRY_ID = H1.ENTRY_ID)
+                WHERE
+                    H1.ENTRY_ID IS NULL
+                ) T1
+            GROUP BY T1.ENTRY_ID
+            )OS1 ON (A.ID = OS1.ENTRY_ID)
+            LEFT JOIN (
+        ]]>
+        <include refid="BINOLCM40.getWorkFlowStep" />
+        <![CDATA[
+            )OS2 ON (OS1.MIN_ID = OS2.ID)
+            LEFT JOIN (
+        ]]>
+        <include refid="BINOLCM40.getWorkFlowStep" />
+        <![CDATA[
+            )OS3 ON (OS1.MAX_ID = OS3.ID)
+            WHERE
+                A.NAME = #wfName#
+                AND A.STATE != 4
+            ORDER BY A.ID DESC
+        ]]>
+    </select>
+</sqlMap>

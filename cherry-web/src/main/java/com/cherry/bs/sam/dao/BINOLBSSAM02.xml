@@ -1,0 +1,72 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sqlMap PUBLIC "-//iBATIS.com//DTD SQL Map 2.0//EN" "http://ibatis.apache.org/dtd/sql-map-2.dtd">
+<sqlMap namespace="BINOLBSSAM02">
+	<sql id="queryOverTime">
+		<![CDATA[
+		SELECT
+			o1.DepartName as applyDepart,
+			o2.DepartName as workDepart,
+			be.EmployeeName as applyEmployee,
+			Convert(nvarchar(10),ot.OvertimeDate,120) as overtimeDate,
+			Convert(nvarchar,ot.OvertimeBegin,120) as overtimeBegin,
+			Convert(nvarchar,ot.OvertimeEnd,120) as overtimeEnd,
+			ot.OvertimeHours as overtimeHours,
+			ot.OvertimeMemo as overtimeMemo,
+			Convert(nvarchar,ot.ApplyTime,120) as applyTime,
+			ot.AuditedState as auditedState,
+			bs.EmployeeName as auditedEmployee,
+			Convert(nvarchar,ot.AuditedTime,120) as auditedTime,
+			ot.AuditedMemo as auditedMemo
+		FROM
+			Basis.BIN_OvertimeAuditing ot
+		LEFT JOIN
+			Basis.BIN_Employee be
+		ON 
+			(ot.BIN_ApplyEmployee=be.BIN_EmployeeID)
+		LEFT JOIN
+			basis.BIN_Employee bs
+		ON 
+			(ot.AuditedEmployee=bs.BIN_EmployeeID)
+		LEFT JOIN
+			Basis.BIN_Organization o1
+		ON 
+			(ot.BIN_OrganizationID=o1.BIN_OrganizationID)
+		LEFT JOIN
+			Basis.BIN_Organization o2
+		ON 
+			(ot.BIN_WorkOrganizationID=o2.BIN_OrganizationID)
+		WHERE
+			ot.BIN_OrganizationInfoID=#organizationInfoId#  AND
+			ot.BIN_BrandInfoID=#brandInfoId# 
+		]]>
+		<isNotEmpty prepend="AND" property="auditedState">
+				ot.AuditedState=#auditedState#
+		</isNotEmpty>
+		<isNotEmpty prepend="AND" property="fromDate">
+			<![CDATA[
+				#fromDate# <= CONVERT(varchar(10),ot.OvertimeDate, 120)
+			]]>
+		</isNotEmpty>
+		<isNotEmpty prepend="AND" property="toDate">
+			<![CDATA[
+				#toDate# >= CONVERT(varchar(10),ot.OvertimeDate, 120)
+			]]>
+		</isNotEmpty>
+	</sql>
+
+	<select id="getOverTimeList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+       	<include refid="BINOLCMINC99.pageheader" />
+		<include refid="BINOLBSSAM02.queryOverTime" />
+		<include refid="BINOLCMINC99.pagefooter" />
+	</select>
+	
+	<select id="getOverTimeCount" parameterClass="java.util.HashMap" resultClass="java.lang.Integer">
+		<![CDATA[
+            SELECT 
+				COUNT(1) AS count 
+			FROM 
+				(]]><include refid="BINOLBSSAM02.queryOverTime" /><![CDATA[) T
+        ]]>
+	</select>
+
+</sqlMap>

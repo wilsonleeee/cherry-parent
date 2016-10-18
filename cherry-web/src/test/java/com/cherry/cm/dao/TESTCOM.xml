@@ -1,0 +1,141 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sqlMap PUBLIC "-//iBATIS.com//DTD SQL Map 2.0//EN" "http://ibatis.apache.org/dtd/sql-map-2.dtd">
+<sqlMap namespace="TESTCOM">
+	<!-- ===============================增删改查开始============================================ -->
+	<insert id="executeInsert" parameterClass="java.util.HashMap"><![CDATA[$sql$]]></insert>
+	<delete id="executeDelete" parameterClass="java.util.HashMap"><![CDATA[$sql$]]></delete>
+	<update id="executeUpdate" parameterClass="java.util.HashMap"><![CDATA[$sql$]]></update>
+	<select id="executeSelect" parameterClass="java.util.HashMap" resultClass="java.util.HashMap" remapResults="true"><![CDATA[$sql$]]></select>
+	<!-- ===============================增删改查结束============================================= -->
+	
+	<!-- 取得系统时间(年月日) -->
+    <select id="getDateYMD" resultClass="java.lang.String">
+    	<![CDATA[
+			SELECT CONVERT(varchar(10), GETDATE(), 120) AS sysDate
+		]]>										
+    </select>
+	
+	<!--取得数据库系统时间-->
+	<select id="getDbTime" resultClass="java.lang.String">
+		<![CDATA[SELECT CONVERT(varchar(12), GETDATE(), 114) AS sysTime]]>
+	</select>
+	
+	<!--删除表中指定的数据-->
+	<delete id="deleteTableData" parameterClass="java.util.HashMap">
+		<![CDATA[DELETE FROM
+						$tableName$
+				 WHERE
+				 	[CreateTime] >= #startTime#
+					AND [CreateTime] <= #endTime#
+		]]>
+	</delete>
+	<!--根据指定的字段条件取得新后台数据库指定表中的数据-->
+	<select id="getCherryTableData" parameterClass="java.util.HashMap" resultClass="java.util.HashMap" remapResults="true">
+		SELECT
+			*
+		FROM
+			$tableName$
+		WHERE
+			<dynamic>
+				<isNotEmpty property="conditionList">
+					<iterate property="conditionList" conjunction="AND"> 
+						<![CDATA[$conditionList[].fieldName$=#conditionList[].fieldValue#]]>
+					</iterate>
+					<isNotEmpty property="startTime" prepend="AND">
+						<![CDATA[CreateTime >= #startTime#]]>
+					</isNotEmpty>
+					<isNotEmpty property="endTime" prepend="AND">
+						<![CDATA[CreateTime <= #endTime#]]>
+					</isNotEmpty>
+				</isNotEmpty>
+				<isEmpty property="conditionList">
+					<isNotEmpty property="startTime">
+						<![CDATA[CreateTime >= #startTime#]]>
+						<isNotEmpty property="endTime" prepend="AND">
+							<![CDATA[CreateTime <= #endTime#]]>
+						</isNotEmpty>
+					</isNotEmpty>
+					<isEmpty property="startTime">
+						<isNotEmpty property="endTime">
+							<![CDATA[CreateTime <= #endTime#]]>
+						</isNotEmpty>
+					</isEmpty>
+				</isEmpty>
+			</dynamic>
+	</select>
+	
+	<!--根据指定的字段条件取得老后台数据库指定表中的数据-->
+	<select id="getWitTableData" parameterClass="java.util.HashMap" resultClass="java.util.HashMap" remapResults="true">
+		SELECT
+			*
+		FROM
+			$tableName$
+		<dynamic>
+			<isNotEmpty property="conditionList">
+				WHERE
+				<iterate property="conditionList" conjunction="AND"> 
+					<![CDATA[$conditionList[].fieldName$=#conditionList[].fieldValue#]]>
+				</iterate>
+			</isNotEmpty>
+		</dynamic>
+	</select>
+	
+	<!--向指定的表中插入指定的字段数据,并返回自增ID-->
+	<sql id="insertTableDataSQL">
+		INSERT INTO
+			$tableName$(
+			<iterate property="fieldsName" conjunction=",">
+				$fieldsName[]$
+			</iterate>
+				,ValidFlag	
+			 	,CreateTime
+				,UpdateTime	
+			)
+		VALUES(
+			<iterate property="fieldsValue" conjunction=",">
+				#fieldsValue[]#
+			</iterate>
+			<isNull property="ValidFlag" prepend=",">
+				1
+			</isNull>
+			<isNotNull property="ValidFlag" prepend=",">
+			 	#ValidFlag#
+			</isNotNull>
+			<isNull property="CreateTime" prepend=",">
+				GETDATE()
+			</isNull>
+			<isNotNull property="CreateTime" prepend=",">
+			 	#CreateTime#
+			</isNotNull>
+			<isNull property="UpdateTime" prepend=",">
+				GETDATE()
+			</isNull>
+			<isNotNull property="UpdateTime" prepend=",">
+			 	#UpdateTime#
+			</isNotNull>
+			)
+	</sql>
+	<insert id="insertTableData" parameterClass="java.util.HashMap">
+		<selectKey resultClass="java.lang.Integer" type="post">
+        	<include refid="TESTCOM.insertTableDataSQL" />
+            <![CDATA[SELECT SCOPE_IDENTITY() AS value]]>
+        </selectKey>
+	</insert>
+	
+	<!--根据指定的条件删除指定表中的数据-->
+	<delete id="deleteData" parameterClass="java.util.HashMap">
+		<![CDATA[DELETE FROM
+						$tableName$
+		]]>
+		<dynamic>
+			<isNotEmpty property="conditionList">
+				<![CDATA[
+				WHERE
+				]]>
+					<iterate property="conditionList" conjunction="AND"> 
+						<![CDATA[$conditionList[].fieldName$=#conditionList[].fieldValue#]]>
+					</iterate>
+			</isNotEmpty>
+		</dynamic>
+	</delete>
+</sqlMap>

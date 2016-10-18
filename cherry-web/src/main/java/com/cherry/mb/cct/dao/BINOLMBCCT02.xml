@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sqlMap PUBLIC "-//iBATIS.com//DTD SQL Map 2.0//EN" "http://ibatis.apache.org/dtd/sql-map-2.dtd">
+<sqlMap namespace="BINOLMBCCT02">
+	<!-- 会员信息查询sql  -->
+	<sql id="issueQuery">
+		<![CDATA[
+			SELECT  
+				 tc.BIN_LogId as logId 
+				,ts.BIN_IssueID as issueId 
+				,ts.IssueNo as issueNo 
+				,tc.CallTime as callTime
+				,tc.CustomerNumber as phoneNum 
+				,ts.IssueSummary as issueSummary 
+				,ts.resolution as resolution 
+			FROM 
+				Members.BIN_CallLog as tc with(nolock) inner join Members.BIN_Issue as ts with(nolock) on tc.CallId = ts.CallId 
+			WHERE 
+				tc.BIN_BrandInfoID = #brandInfoId# AND 
+				tc.BIN_OrganizationInfoID = #organizationInfoId# AND 
+				tc.CustomerSysId = #customerSysId# 
+		]]>
+	</sql>
+	
+	<!-- 根据客户ID查询客户问题记录总数  -->
+    <select id="getIssueCountByCustomer" parameterClass="java.util.HashMap" resultClass="java.lang.Integer">
+    	<![CDATA[
+			SELECT COUNT(SORT_T1.logId) AS count FROM (
+		]]>	
+		<include refid="BINOLMBCCT02.issueQuery" />	
+		<![CDATA[	
+			)SORT_T1
+		]]>
+    </select>
+	
+	<!-- 根据客户Id查询客户问题记录List -->
+    <select id="getIssueListByCustomer" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+       	<include refid="BINOLCMINC99.pageheader" />
+		<include refid="BINOLMBCCT02.issueQuery" />
+		<include refid="BINOLCMINC99.pagefooter" />
+    </select>
+    
+</sqlMap>
+

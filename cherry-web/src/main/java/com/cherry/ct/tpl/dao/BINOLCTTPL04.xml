@@ -1,0 +1,109 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sqlMap PUBLIC "-//iBATIS.com//DTD SQL Map 2.0//EN" "http://ibatis.apache.org/dtd/sql-map-2.dtd">
+<!-- 沟通模版内容非法字符查询sql文 -->
+<sqlMap namespace="BINOLCTTPL04">
+   <sql id="queryIllegalChar">
+   	<![CDATA[
+	   	select 
+	   		A.BIN_CharId as charId,
+			A.CharValue as charValue,
+			A.CommType as commType,
+			A.Remark as remark,
+			A.ValidFlag as validFlag
+		from 
+			Communication.BIN_MessageillegalChar A
+		where
+			A.BIN_BrandInfoID = #brandInfoId#
+ 			and A.BIN_OrganizationInfoID = #organizationInfoId#
+	]]>
+		<isNotEmpty prepend="and" property="charId">
+			A.BIN_CharId = #charId#
+		</isNotEmpty>
+		<isNotEmpty prepend="and" property="sCharValue">
+			A.CharValue = #sCharValue#
+		</isNotEmpty>
+		<isNotEmpty prepend="and" property="commType">
+			A.CommType = #commType#
+		</isNotEmpty>
+		<isNotEmpty prepend="and" property="validFlag">
+			A.ValidFlag = #validFlag#
+		</isNotEmpty>
+   </sql>
+   
+   <!-- 非法字符总数  -->
+   <select id="getIllegalCharCount" parameterClass="java.util.HashMap" resultClass="java.lang.Integer">
+	   	<![CDATA[
+			SELECT	COUNT(SORT_T1.charId) AS count FROM (
+		]]>	
+		<include refid="BINOLCTTPL04.queryIllegalChar" />	
+		<![CDATA[	
+			)SORT_T1
+		]]>										
+    </select>
+	
+	<!-- 获取非法字符List -->
+	<select id="getIllegalCharList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+      	<include refid="BINOLCMINC99.pageheader" />
+		<include refid="BINOLCTTPL04.queryIllegalChar" />
+		<include refid="BINOLCMINC99.pagefooter" />
+    </select>   
+   	
+   	<!-- 获取非法字符List -->
+	<select id="getIllegalCharMap" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+		<include refid="BINOLCTTPL04.queryIllegalChar" />
+    </select>
+   	
+   	<!-- 添加非法字符 -->
+   	<insert id="addIllegalChar" parameterClass="java.util.HashMap">
+   		<selectKey resultClass="java.lang.Integer" type="post" keyProperty="BIN_CharId" >
+   		<![CDATA[
+   			insert into Communication.BIN_MessageillegalChar(
+				BIN_OrganizationInfoID,
+				BIN_BrandInfoID,
+				CharValue,
+				CommType,
+				Remark,
+				OrderNo,
+		]]>
+   			<include refid="BINOLCMINC99.insertKeySql" />	
+   		<![CDATA[	
+			)
+			values(
+				#organizationInfoId#,
+				#brandInfoId#,
+				#charValue#,
+				#commType#,
+				#remark#,
+				#orderNo#,
+				
+   		]]>
+   			<include refid="BINOLCMINC99.insertValueSql" />		
+   		<![CDATA[							
+			)	
+			select SCOPE_IDENTITY() as value				
+    	]]>
+    	</selectKey>  
+   	</insert>
+   	
+   	<!-- 更新非法字符 -->
+   	<update id="updateIllegalChar"  parameterClass="java.util.HashMap">
+   		update 
+			Communication.BIN_MessageillegalChar
+		set
+			<isNotEmpty property="charValue">
+				<![CDATA[	CharValue = #charValue#, ]]>
+			</isNotEmpty>
+			<isNotEmpty property="commType">
+				<![CDATA[	CommType = #commType#, ]]>
+			</isNotEmpty>
+			<isNotEmpty property="remark">
+				<![CDATA[	Remark = #remark#, ]]>
+			</isNotEmpty>
+			<isNotEmpty property="validFlag">
+				<![CDATA[	ValidFlag = #validFlag#, ]]>
+			</isNotEmpty>
+			<include refid="BINOLCMINC99.updateSql" />		
+		where 
+			BIN_CharId = #charId#
+   	</update>
+</sqlMap>

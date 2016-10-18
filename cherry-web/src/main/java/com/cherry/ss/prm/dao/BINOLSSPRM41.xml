@@ -1,0 +1,160 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sqlMap PUBLIC "-//iBATIS.com//DTD SQL Map 2.0//EN" "http://ibatis.apache.org/dtd/sql-map-2.dtd">
+<sqlMap namespace="BINOLSSPRM41">
+	<!-- 退库记录查询sql文  -->
+	<sql id="ProReturnSQL">
+		<![CDATA[SELECT]]>	
+		<isEmpty property="prmVendorId">
+				DISTINCT
+		</isEmpty>
+		<![CDATA[
+				A.BIN_BrandInfoID,
+				A.BIN_PromotionReturnID AS promotionReturnId,														
+				A.ReturnNoIF AS returnNo,
+				A.TradeType AS tradeType,												
+				A.VerifiedFlag AS verifiedFlag,													
+				A.ReturnDate AS returnDate,
+				B.DepartCode AS sendDepartCode,
+				G.DepartCode AS receiveDepartCode,
+		]]>
+		<isEmpty property="prmVendorId">
+				ISNULL(A.TotalQuantity,0) AS totalQuantity,
+				ISNULL(A.TotalAmount,0) AS totalAmount,
+		</isEmpty>
+		<isNotEmpty property="prmVendorId">
+				ISNULL(D.Quantity,0) AS totalQuantity,
+				ISNULL(D.Quantity,0) * ISNULL(D.Price,0)  AS totalAmount,
+		</isNotEmpty>
+		<dynamic>
+			<isNotEmpty property="language">
+				<isEqual property="language" compareValue="en_US">
+					B.NameForeign AS sendDepart,
+					G.NameForeign AS receiveDepart,	
+					F.EmployeeNameForeign AS employeeName								
+				</isEqual>
+				<isEqual property="language" compareValue="zh_CN">	
+					B.DepartName AS sendDepart,
+					G.DepartName AS receiveDepart,
+					F.EmployeeName	AS employeeName
+				</isEqual>								
+			</isNotEmpty>
+			<isEmpty property="language">
+				B.DepartName AS sendDepart,
+				G.DepartName AS receiveDepart,
+				F.EmployeeName	AS employeeName
+			</isEmpty>
+		</dynamic>
+		<![CDATA[
+			FROM 
+				Inventory.BIN_PromotionReturn A
+				JOIN Inventory.BIN_PromotionReturnDetail D
+				ON(A.BIN_PromotionReturnID = D.BIN_PromotionReturnID)
+				LEFT JOIN Basis.BIN_Organization B																		
+				ON (A.BIN_OrganizationID = B.BIN_OrganizationID)																	
+				LEFT JOIN Basis.BIN_Organization G																		
+				ON (A.BIN_OrganizationIDReceive = G.BIN_OrganizationID)																		
+				LEFT JOIN Basis.BIN_Employee F
+				ON (A.BIN_EmployeeID = F.BIN_EmployeeID)
+			WHERE
+				A.ValidFlag = '1'
+    	]]>
+		<isNotEmpty prepend="AND" property="returnNo" >
+			A.ReturnNoIF Like '%' + #returnNo# + '%'
+		</isNotEmpty>
+		<isNotEmpty prepend="AND" property="startDate" >
+			<![CDATA[ A.ReturnDate >= #startDate# ]]>
+		</isNotEmpty>
+		<isNotEmpty prepend="AND" property="endDate" >
+			<![CDATA[ A.ReturnDate <= #endDate# ]]>
+		</isNotEmpty>
+		<isNotEmpty prepend="AND" property="tradeType" >
+			A.TradeType = #tradeType#
+		</isNotEmpty>
+		<isNotEmpty prepend="AND" property="verifiedFlag" >
+			A.VerifiedFlag = #verifiedFlag#
+		</isNotEmpty>
+        <isNotEmpty prepend="AND" property="prmVendorId">   
+            D.BIN_PromotionProductVendorID = #prmVendorId#
+        </isNotEmpty>
+        <isNotEmpty prepend="AND" property="depotId">   
+            D.BIN_InventoryInfoID = #depotId#
+        </isNotEmpty>
+        <![CDATA[AND EXISTS (]]>
+		<include refid="BINOLCMINC99.getDepartList" />
+		<![CDATA[AND (A.BIN_OrganizationID = A99.BIN_OrganizationID OR A.BIN_OrganizationIDReceive = A99.BIN_OrganizationID))]]>
+	</sql>
+	<!-- 取得退库记录总数  -->
+    <select id="getProCount" parameterClass="java.util.HashMap" resultClass="java.lang.Integer">
+    	<![CDATA[
+			SELECT	COUNT(SORT_T1.promotionReturnId) AS count FROM (
+		]]>	
+		<include refid="BINOLSSPRM41.ProReturnSQL" />	
+		<![CDATA[	
+			)SORT_T1
+		]]>										
+    </select>
+	<!-- 取得退库记录LIST  -->
+	<select id="getProReturnList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+		<include refid="BINOLCMINC99.pageheader" />
+		<![CDATA[
+			SELECT	
+				T20.*, 
+				CASE WHEN EXISTS(SELECT 1 FROM Basis.BIN_PrintLog T10 WHERE 
+									T20.BIN_BrandInfoID = T10.BIN_BrandInfoID 
+									AND T20.returnNo = T10.BillNo) 
+				THEN 1 ELSE 0 END AS printStatus
+			FROM (
+		]]>	
+		<include refid="BINOLSSPRM41.ProReturnSQL" />	
+		<![CDATA[	
+			)T20
+		]]>	
+		<include refid="BINOLCMINC99.pagefooter" />
+    </select>
+    <!-- 取得汇总信息【产品作为检索条件】  -->
+    <select id="getSumInfo" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+       	<![CDATA[
+			SELECT
+				ISNULL(SUM(ISNULL(D.Quantity,0)),0) AS sumQuantity,
+				ISNULL(SUM(ISNULL(D.Quantity,0) * ISNULL(D.Price,0)),0) AS sumAmount
+		]]>		
+		<![CDATA[
+			FROM 
+				Inventory.BIN_PromotionReturn A
+				JOIN Inventory.BIN_PromotionReturnDetail D
+				ON(A.BIN_PromotionReturnID = D.BIN_PromotionReturnID)
+				LEFT JOIN Basis.BIN_Organization B																		
+				ON (A.BIN_OrganizationID = B.BIN_OrganizationID)																	
+				LEFT JOIN Basis.BIN_Organization G																		
+				ON (A.BIN_OrganizationIDReceive = G.BIN_OrganizationID)																		
+				LEFT JOIN Basis.BIN_Employee F
+				ON (A.BIN_EmployeeID = F.BIN_EmployeeID)
+			WHERE
+				A.ValidFlag = '1'
+    	]]>
+		<isNotEmpty prepend="AND" property="returnNo" >
+			A.ReturnNoIF Like '%' + #returnNo# + '%'
+		</isNotEmpty>
+		<isNotEmpty prepend="AND" property="startDate" >
+			<![CDATA[ A.ReturnDate >= #startDate# ]]>
+		</isNotEmpty>
+		<isNotEmpty prepend="AND" property="endDate" >
+			<![CDATA[ A.ReturnDate <= #endDate# ]]>
+		</isNotEmpty>
+		<isNotEmpty prepend="AND" property="tradeType" >
+			A.TradeType = #tradeType#
+		</isNotEmpty>
+		<isNotEmpty prepend="AND" property="verifiedFlag" >
+			A.VerifiedFlag = #verifiedFlag#
+		</isNotEmpty>
+        <isNotEmpty prepend="AND" property="prmVendorId">   
+            D.BIN_PromotionProductVendorID = #prmVendorId#
+        </isNotEmpty>
+        <isNotEmpty prepend="AND" property="depotId">   
+            D.BIN_InventoryInfoID = #depotId#
+        </isNotEmpty>
+		<![CDATA[AND EXISTS (]]>
+		<include refid="BINOLCMINC99.getDepartList" />
+		<![CDATA[AND (A.BIN_OrganizationID = A99.BIN_OrganizationID OR A.BIN_OrganizationIDReceive = A99.BIN_OrganizationID))]]>
+    </select>
+</sqlMap>

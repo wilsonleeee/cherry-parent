@@ -1,0 +1,1520 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sqlMap PUBLIC "-//iBATIS.com//DTD SQL Map 2.0//EN" "http://ibatis.apache.org/dtd/sql-map-2.dtd">
+<sqlMap namespace="BINOLCM21">
+	
+	<!--根据输入字符串模糊查询产品信息-->
+	<select id="getProductInfo" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+        <![CDATA[
+		SELECT TOP $number$
+			A.UnitCode AS unitCode,
+			B.BarCode AS barCode,
+			A.BIN_ProductID AS productId,
+			B.BIN_ProductVendorID AS productVendorId,
+			A.ItemCode,
+			ISNULL(CONVERT(Decimal(16,2),C.DistributionPrice),0) AS distributionPrice,
+			ISNULL(CONVERT(Decimal(16,2),C.SalePrice),0) AS salePrice,
+            ISNULL(CONVERT(Decimal(16,2),C.MemPrice),0) AS memPrice,
+            ISNULL(CONVERT(Decimal(16,2),C.PlatinumPrice),0) AS platinumPrice,
+            ISNULL(CONVERT(Decimal(16,2),C.TagPrice),0) AS tagPrice,
+            ISNULL(CONVERT(Decimal(16,2),A.StandardCost),0) AS standardCost,
+            ISNULL(CONVERT(Decimal(16,2),A.OrderPrice),0) AS orderPrice,
+            A.IsExchanged,
+            A.IsStock,
+        ]]>
+			<dynamic>
+				<isNotEmpty property="language">
+					<isEqual property="language" compareValue="zh_CN">										
+						A.NameTotal AS nameTotal,
+						A.NameTotal AS soluProductName
+						
+					</isEqual>
+					<isEqual property="language" compareValue="en_US">										
+						A.NameForeign AS nameTotal,
+						A.NameForeign AS soluProductName
+					</isEqual>
+				</isNotEmpty>
+				<isEmpty property="language">
+						A.NameTotal AS nameTotal,
+						A.NameTotal AS soluProductName
+				</isEmpty>
+			</dynamic>
+        <![CDATA[
+		FROM
+			Basis.BIN_Product A
+			JOIN Basis.BIN_ProductVendor B
+			ON(A.BIN_ProductID = B.BIN_ProductID
+			AND B.ValidFlag = #validFlag#)
+            LEFT JOIN Basis.BIN_ProductPrice C
+            ON (A.BIN_ProductID = C.BIN_ProductID
+            AND A.ValidFlag = C.ValidFlag 
+            AND C.Type = '2'
+            AND C.EndDate >= #businessDate#
+            AND C.StartDate <= #businessDate#)
+		WHERE
+			A.ValidFlag = #validFlag#
+			AND A.BIN_OrganizationInfoID = #organizationInfoId#
+			AND A.BIN_BrandInfoID = #brandInfoId#
+        ]]>
+			<dynamic>
+				<isNotEmpty property="originalBrand" prepend="AND">
+					A.OriginalBrand = #originalBrand#
+				</isNotEmpty>
+				<isNotEmpty property="productInfoStr" prepend="AND">
+				(
+					<![CDATA[A.UnitCode like '%'+ #productInfoStr# +'%'
+					OR B.BarCode like '%'+ #productInfoStr# +'%']]>
+					<isNotEmpty property="language">
+						<isEqual property="language" compareValue="zh_CN">										
+							<![CDATA[OR A.NameTotal like '%'+ #productInfoStr# +'%']]>
+						</isEqual>
+						<isEqual property="language" compareValue="en_US">
+							<![CDATA[OR A.NameForeign like '%'+ #productInfoStr# +'%']]>
+						</isEqual>
+					</isNotEmpty>
+					<isEmpty property="language">
+						<![CDATA[OR A.NameTotal like '%'+ #productInfoStr# +'%']]>
+					</isEmpty>
+				)
+				</isNotEmpty>
+			</dynamic>
+	</select>
+	
+	<!-- 检查柜台是否有分配可用的方案  -->
+	<select id="chkCntSoluData" parameterClass="java.util.HashMap" resultClass="java.util.HashMap"> 
+	 <![CDATA[
+		SELECT 1
+		FROM Basis.BIN_PrtSoluDepartRelation PSDR 
+		JOIN Basis.BIN_ProductPriceSolution PPS ON PPS.BIN_ProductPriceSolutionID = PSDR.BIN_SolutionId
+		WHERE
+			PSDR.DepartCode = #counterCode#
+		AND PPS.ValidFlag = '1'
+		AND PSDR.ValidFlag = '1'
+		AND PPS.StartDate <= #businessDate# AND PPS.EndDate >= #businessDate#
+	 ]]>
+	</select>
+	
+	<!-- 检查柜台是否有分配可用的特价产品方案明细（产品信息）  -->
+	<select id="getPrtBySpeSoluDetail" parameterClass="java.util.HashMap" resultClass="java.util.HashMap"> 
+		 SELECT s.*  
+			FROM ( 
+			SELECT 
+			row_number() over (partition by  PPSD.BIN_ProductID order by PPSD.CreateTime desc) as group_idx ,<!-- 同一产品去重复时使用 -->
+			P.BIN_ProductID,P.NameTotal,PPSD.SoluProductName,P.UnitCode,P.ValidFlag,B.BarCode,B.BIN_ProductVendorID,P.StandardCost ,P.IsExchanged,P.IsStock,PPSD.SpecialOfferSalePrice SalePrice,PPSD.SpecialOfferMemPrice MemPrice,PPSD.SpecialOfferPlatinumPrice PlatinumPrice,PP.TagPrice
+						FROM Basis.BIN_PrtSpecialOfferSoluDepartRelation PSDR WITH(NOLOCK)
+						JOIN Basis.BIN_ProductSpecialOfferSolu PPS  WITH(NOLOCK)
+							ON (PPS.BIN_ProductSpecialOfferSoluID = PSDR.BIN_SpecialOfferSolutionId 
+								AND PPS.ValidFlag = '1' 
+							)
+						JOIN Basis.BIN_ProductSpecialOfferSoluDetail PPSD  WITH(NOLOCK)
+							ON (PPSD.BIN_ProductSpecialOfferSoluID = PPS.BIN_ProductSpecialOfferSoluID 
+								AND PPSD.ValidFlag = '1' AND <![CDATA[  PPSD.SpecialOfferStartDate <= #businessDate# AND PPSD.SpecialOfferEndDate >= #businessDate# ]]>
+							)
+						JOIN Basis.BIN_Product P WITH(NOLOCK) ON P.BIN_ProductID = PPSD.BIN_ProductID AND P.ValidFlag = #validFlag#
+						JOIN Basis.BIN_ProductVendor B WITH(NOLOCK) ON(P.BIN_ProductID = B.BIN_ProductID AND B.ValidFlag = #validFlag#)
+			            <!-- 吊牌价统一从标准产品表取   -->
+	           			<![CDATA[
+			            LEFT JOIN Basis.BIN_ProductPrice PP WITH(NOLOCK)
+				            ON (P.BIN_ProductID = PP.BIN_ProductID
+				            AND P.ValidFlag = PP.ValidFlag 
+				            AND PP.Type = '2'
+				            AND PP.EndDate >= #businessDate#
+				            AND PP.StartDate <= #businessDate#)
+						]]>			
+						WHERE 
+							PSDR.BIN_OrganizationInfoID = #organizationInfoId#
+						AND PSDR.BIN_BrandInfoID = #brandInfoId#
+						AND PSDR.DepartCode = #counterCode#
+						<isNotEmpty property="productInfoStr" prepend="AND">
+						(
+							<![CDATA[P.UnitCode like '%'+ #productInfoStr# +'%'
+							OR B.BarCode like '%'+ #productInfoStr# +'%']]>
+							<isNotEmpty property="language">
+								<isEqual property="language" compareValue="zh_CN">										
+									<![CDATA[OR P.NameTotal like '%'+ #productInfoStr# +'%']]>
+								</isEqual>
+								<isEqual property="language" compareValue="en_US">
+									<![CDATA[OR P.NameForeign like '%'+ #productInfoStr# +'%']]>
+								</isEqual>
+							</isNotEmpty>
+							<isEmpty property="language">
+								<![CDATA[OR P.NameTotal like '%'+ #productInfoStr# +'%']]>
+							</isEmpty>
+							<isNotEmpty property="isPosCloud">
+								<![CDATA[OR PPSD.SoluProductName like '%'+ #productInfoStr# +'%']]>
+							</isNotEmpty>
+						)
+						</isNotEmpty>
+				) s
+			WHERE s.group_idx = 1
+	</select>
+	
+	<!-- 取得柜台方案对应的方案中的产品信息 -->
+	<sql id="getPrtByCntSolu">
+			SELECT P.BIN_ProductID,P.NameTotal,PPSD.SoluProductName,P.UnitCode,P.ValidFlag,B.BarCode,B.BIN_ProductVendorID,P.StandardCost ,P.IsExchanged,P.IsStock,PPSD.SalePrice,PPSD.MemPrice,PPSD.PlatinumPrice,PP.TagPrice
+			FROM Basis.BIN_PrtSoluDepartRelation PSDR
+			JOIN Basis.BIN_ProductPriceSolution PPS 
+				ON (PPS.BIN_ProductPriceSolutionID = PSDR.BIN_SolutionId 
+					AND PPS.ValidFlag = '1' AND <![CDATA[ PPS.StartDate <= #businessDate# AND PPS.EndDate >= #businessDate# ]]>
+				)
+			JOIN Basis.BIN_ProductPriceSolutionDetail PPSD 
+				ON (PPSD.BIN_ProductPriceSolutionID = PPS.BIN_ProductPriceSolutionID 
+					AND PPSD.ValidFlag = '1'
+				)
+			JOIN Basis.BIN_Product P ON P.BIN_ProductID = PPSD.BIN_ProductID AND P.ValidFlag = #validFlag#
+			JOIN Basis.BIN_ProductVendor B ON(P.BIN_ProductID = B.BIN_ProductID AND B.ValidFlag = #validFlag#)
+			<!-- 吊牌价统一从标准产品表取   -->
+            <![CDATA[
+            LEFT JOIN Basis.BIN_ProductPrice PP
+	            ON (P.BIN_ProductID = PP.BIN_ProductID
+	            AND P.ValidFlag = PP.ValidFlag 
+	            AND PP.Type = '2'
+	            AND PP.EndDate >= #businessDate#
+	            AND PP.StartDate <= #businessDate#)
+            ]]>
+			
+			
+			WHERE 
+				PSDR.BIN_OrganizationInfoID = #organizationInfoId#
+			AND PSDR.BIN_BrandInfoID = #brandInfoId#
+			AND PSDR.DepartCode = #counterCode#
+			<isNotEmpty property="productInfoStr" prepend="AND">
+			(
+				<![CDATA[P.UnitCode like '%'+ #productInfoStr# +'%'
+				OR B.BarCode like '%'+ #productInfoStr# +'%']]>
+				<isNotEmpty property="language">
+					<isEqual property="language" compareValue="zh_CN">										
+						<![CDATA[OR P.NameTotal like '%'+ #productInfoStr# +'%']]>
+					</isEqual>
+					<isEqual property="language" compareValue="en_US">
+						<![CDATA[OR P.NameForeign like '%'+ #productInfoStr# +'%']]>
+					</isEqual>
+				</isNotEmpty>
+				<isEmpty property="language">
+					<![CDATA[OR P.NameTotal like '%'+ #productInfoStr# +'%']]>
+				</isEmpty>
+				<isNotEmpty property="isPosCloud">
+					<![CDATA[OR PPSD.SoluProductName like '%'+ #productInfoStr# +'%']]>
+				</isNotEmpty>
+			)
+			</isNotEmpty>
+	</sql>
+	
+	
+	<!-- 取得柜台方案对应的方案中的产品信息（排除掉特价方案中的产品信息） -->
+	<sql id="getPrtByCntSolu1">
+			SELECT  1 as group_idx,P.BIN_ProductID,P.NameTotal,PPSD.SoluProductName,P.UnitCode,P.ValidFlag,B.BarCode,B.BIN_ProductVendorID,P.StandardCost ,P.IsExchanged,P.IsStock,PPSD.SalePrice,PPSD.MemPrice,PPSD.PlatinumPrice,PP.TagPrice
+			FROM Basis.BIN_PrtSoluDepartRelation PSDR
+			JOIN Basis.BIN_ProductPriceSolution PPS 
+				ON (PPS.BIN_ProductPriceSolutionID = PSDR.BIN_SolutionId 
+					AND PPS.ValidFlag = '1' AND <![CDATA[ PPS.StartDate <= #businessDate# AND PPS.EndDate >= #businessDate# ]]>
+				)
+			JOIN Basis.BIN_ProductPriceSolutionDetail PPSD 
+				ON (PPSD.BIN_ProductPriceSolutionID = PPS.BIN_ProductPriceSolutionID 
+					AND PPSD.ValidFlag = '1'
+				)
+			JOIN Basis.BIN_Product P ON P.BIN_ProductID = PPSD.BIN_ProductID AND P.ValidFlag = #validFlag#
+			JOIN Basis.BIN_ProductVendor B ON(P.BIN_ProductID = B.BIN_ProductID AND B.ValidFlag = #validFlag#)
+			<!-- 吊牌价统一从标准产品表取   -->
+            <![CDATA[
+            LEFT JOIN Basis.BIN_ProductPrice PP
+	            ON (P.BIN_ProductID = PP.BIN_ProductID
+	            AND P.ValidFlag = PP.ValidFlag 
+	            AND PP.Type = '2'
+	            AND PP.EndDate >= #businessDate#
+	            AND PP.StartDate <= #businessDate#)
+            ]]>
+			
+			
+			WHERE 
+				PSDR.BIN_OrganizationInfoID = #organizationInfoId#
+			AND PSDR.BIN_BrandInfoID = #brandInfoId#
+			AND PSDR.DepartCode = #counterCode#
+			AND PSDR.ValidFlag = '1'
+			AND NOT EXISTS(
+							SELECT 1 FROM (<include refid="getPrtBySpeSolu"/>)  A3 WHERE A3.BIN_ProductID = P.BIN_ProductID
+			)
+			<isNotEmpty property="productInfoStr" prepend="AND">
+			(
+				<![CDATA[P.UnitCode like '%'+ #productInfoStr# +'%'
+				OR B.BarCode like '%'+ #productInfoStr# +'%']]>
+				<isNotEmpty property="language">
+					<isEqual property="language" compareValue="zh_CN">										
+						<![CDATA[OR P.NameTotal like '%'+ #productInfoStr# +'%']]>
+					</isEqual>
+					<isEqual property="language" compareValue="en_US">
+						<![CDATA[OR P.NameForeign like '%'+ #productInfoStr# +'%']]>
+					</isEqual>
+				</isNotEmpty>
+				<isEmpty property="language">
+					<![CDATA[OR P.NameTotal like '%'+ #productInfoStr# +'%']]>
+				</isEmpty>
+				<isNotEmpty property="isPosCloud">
+					<![CDATA[OR PPSD.SoluProductName like '%'+ #productInfoStr# +'%']]>
+				</isNotEmpty>
+			)
+			</isNotEmpty>
+	</sql>
+	
+	<!-- 取得特价产品方案对应的方案中的产品信息
+		第一步：查询特价产品方案对应的方案中的产品信息（进行中的）
+		第二步：针对第一步查询出来的同品牌同柜台同一产品去重复，取最新的一条数据（使用 row_number() over (partition by  PPSD.BIN_ProductID order by PPSD.CreateTime desc)进行去重复处理）
+	 -->
+	<sql id="getPrtBySpeSolu">
+	SELECT s.*  
+		FROM ( 
+		SELECT 
+		row_number() over (partition by  PPSD.BIN_ProductID order by PPSD.CreateTime desc) as group_idx ,<!-- 同一产品去重复时使用 -->
+		P.BIN_ProductID,P.NameTotal,PPSD.SoluProductName,P.UnitCode,P.ValidFlag,B.BarCode,B.BIN_ProductVendorID,P.StandardCost ,P.IsExchanged,P.IsStock,PPSD.SpecialOfferSalePrice SalePrice,PPSD.SpecialOfferMemPrice MemPrice,PPSD.SpecialOfferPlatinumPrice PlatinumPrice,PP.TagPrice
+					FROM Basis.BIN_PrtSpecialOfferSoluDepartRelation PSDR WITH(NOLOCK)
+					JOIN Basis.BIN_ProductSpecialOfferSolu PPS  WITH(NOLOCK)
+						ON (PPS.BIN_ProductSpecialOfferSoluID = PSDR.BIN_SpecialOfferSolutionId 
+							AND PPS.ValidFlag = '1' 
+						)
+					JOIN Basis.BIN_ProductSpecialOfferSoluDetail PPSD  WITH(NOLOCK)
+						ON (PPSD.BIN_ProductSpecialOfferSoluID = PPS.BIN_ProductSpecialOfferSoluID 
+							AND PPSD.ValidFlag = '1' AND <![CDATA[  PPSD.SpecialOfferStartDate <= #businessDate# AND PPSD.SpecialOfferEndDate >= #businessDate# ]]>
+						)
+					JOIN Basis.BIN_Product P WITH(NOLOCK) ON P.BIN_ProductID = PPSD.BIN_ProductID AND P.ValidFlag = #validFlag#
+					JOIN Basis.BIN_ProductVendor B WITH(NOLOCK) ON(P.BIN_ProductID = B.BIN_ProductID AND B.ValidFlag = #validFlag#)
+		            <!-- 吊牌价统一从标准产品表取   -->
+           			<![CDATA[
+		            LEFT JOIN Basis.BIN_ProductPrice PP WITH(NOLOCK)
+			            ON (P.BIN_ProductID = PP.BIN_ProductID
+			            AND P.ValidFlag = PP.ValidFlag 
+			            AND PP.Type = '2'
+			            AND PP.EndDate >= #businessDate#
+			            AND PP.StartDate <= #businessDate#)
+					]]>			
+					WHERE 
+						PSDR.BIN_OrganizationInfoID = #organizationInfoId#
+					AND PSDR.BIN_BrandInfoID = #brandInfoId#
+					AND PSDR.DepartCode = #counterCode#
+					<isNotEmpty property="productInfoStr" prepend="AND">
+					(
+						<![CDATA[P.UnitCode like '%'+ #productInfoStr# +'%'
+						OR B.BarCode like '%'+ #productInfoStr# +'%']]>
+						<isNotEmpty property="language">
+							<isEqual property="language" compareValue="zh_CN">										
+								<![CDATA[OR P.NameTotal like '%'+ #productInfoStr# +'%']]>
+							</isEqual>
+							<isEqual property="language" compareValue="en_US">
+								<![CDATA[OR P.NameForeign like '%'+ #productInfoStr# +'%']]>
+							</isEqual>
+						</isNotEmpty>
+						<isEmpty property="language">
+							<![CDATA[OR P.NameTotal like '%'+ #productInfoStr# +'%']]>
+						</isEmpty>
+						<isNotEmpty property="isPosCloud">
+							<![CDATA[OR PPSD.SoluProductName like '%'+ #productInfoStr# +'%']]>
+						</isNotEmpty>
+					)
+					</isNotEmpty>
+			) s
+	WHERE s.group_idx = 1
+	</sql>
+
+<!--根据输入字符串模糊查询柜台对应的产品信息（特价产品方案）-->
+	<select id="getSpeProductInfo" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+		SELECT TOP $number$
+			A.UnitCode AS unitCode,
+			A.BarCode AS barCode,
+			A.BIN_ProductID AS productId,
+			A.BIN_ProductVendorID AS productVendorId,
+			ISNULL(CONVERT(Decimal(16,2),A.StandardCost),0) AS standardCost,
+			A.IsExchanged,
+			A.IsStock,			
+			ISNULL(CONVERT(Decimal(16,2),A.SalePrice),0) AS salePrice,
+	        ISNULL(CONVERT(Decimal(16,2),A.MemPrice),0) AS memPrice,
+	        ISNULL(CONVERT(Decimal(16,2),A.PlatinumPrice),0) AS platinumPrice,
+	        ISNULL(CONVERT(Decimal(16,2),A.TagPrice),0) AS tagPrice,
+			A.SoluProductName AS soluProductName,
+			<dynamic>
+				<isNotEmpty property="language">
+					<isEqual property="language" compareValue="zh_CN">										
+						A.NameTotal AS nameTotal
+					</isEqual>
+					<isEqual property="language" compareValue="en_US">										
+						A.NameForeign AS nameTotal
+					</isEqual>
+				</isNotEmpty>
+				<isEmpty property="language">
+						A.NameTotal AS nameTotal
+				</isEmpty>
+			</dynamic>
+		FROM
+			(
+					<!-- 取得特价产品方案对应的方案中的产品信息 -->
+					<include refid="getPrtBySpeSolu"/>
+					UNION
+					<!-- 取得柜台产品方案对应的方案中的产品信息（排除掉特价产品方案中的产品信息） -->
+					<include refid="getPrtByCntSolu1"/>
+					UNION
+					<!-- 取得标准产品信息（排除掉柜台产品方案和特价产品方案中的产品信息） -->
+					SELECT 
+						A2.*
+						<!-- 标准模式价格从方案明细中取得:因为是补充，所以只能从标准产品价格表中取得   -->
+							,PP.SalePrice,PP.MemPrice,PP.PlatinumPrice,PP.TagPrice
+					FROM(
+					
+						SELECT  1 as group_idx,P.BIN_ProductID,P.NameTotal ,P.NameTotal AS SoluProductName,P.UnitCode,P.ValidFlag,PV.BarCode,PV.BIN_ProductVendorID,P.StandardCost,P.IsExchanged,P.IsStock
+						FROM Basis.BIN_Product P
+						JOIN Basis.BIN_ProductVendor PV ON PV.BIN_ProductID = P.BIN_ProductID AND  PV.ValidFlag = #validFlag#
+						WHERE 
+							P.ValidFlag = #validFlag# 
+						AND P.BIN_OrganizationInfoID = #organizationInfoId# 
+						AND P.BIN_BrandInfoID = #brandInfoId#
+						AND NOT EXISTS(
+							SELECT 1 FROM (<include refid="getPrtBySpeSolu"/>)  A3 WHERE A3.BIN_ProductID = P.BIN_ProductID<!-- 不存在与特价产品方案对应的产品中 -->
+						)
+						AND NOT EXISTS(
+							SELECT 1 FROM (<include refid="getPrtByCntSolu1"/>)  A3 WHERE A3.BIN_ProductID = P.BIN_ProductID<!-- 不存在与柜台产品方案对应的产品中 -->
+						)
+						<isNotEmpty property="productInfoStr" prepend="AND">
+						(
+							<![CDATA[P.UnitCode like '%'+ #productInfoStr# +'%'
+							OR PV.BarCode like '%'+ #productInfoStr# +'%']]>
+							<isNotEmpty property="language">
+								<isEqual property="language" compareValue="zh_CN">										
+									<![CDATA[OR P.NameTotal like '%'+ #productInfoStr# +'%']]>
+								</isEqual>
+								<isEqual property="language" compareValue="en_US">
+									<![CDATA[OR P.NameForeign like '%'+ #productInfoStr# +'%']]>
+								</isEqual>
+							</isNotEmpty>
+							<isEmpty property="language">
+								<![CDATA[OR P.NameTotal like '%'+ #productInfoStr# +'%']]>
+							</isEmpty>
+						)
+						</isNotEmpty>
+					) A2
+					<!-- 标准模式价格从方案明细中取得:因为是补充，所以只能从标准产品价格表中取得   -->
+		            <![CDATA[
+		            LEFT JOIN Basis.BIN_ProductPrice PP
+			            ON (A2.BIN_ProductID = PP.BIN_ProductID
+			            AND A2.ValidFlag = PP.ValidFlag 
+			            AND PP.Type = '2'
+			            AND PP.EndDate >= #businessDate#
+			            AND PP.StartDate <= #businessDate#)
+		            ]]>
+			) A
+	</select>	
+	
+	<!--根据输入字符串模糊查询柜台对应的产品信息-->
+	<select id="getCntProductInfo" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+		SELECT TOP $number$
+			A.UnitCode AS unitCode,
+			A.BarCode AS barCode,
+			A.BIN_ProductID AS productId,
+			A.BIN_ProductVendorID AS productVendorId,
+			ISNULL(CONVERT(Decimal(16,2),A.StandardCost),0) AS standardCost,
+			A.IsExchanged,
+			A.IsStock,
+			<!-- 颖通模式价格从产品价格表取  -->
+			<isEqual property="soluAddModeConf" compareValue="2">
+				ISNULL(CONVERT(Decimal(16,2),C.SalePrice),0) AS salePrice,
+	            ISNULL(CONVERT(Decimal(16,2),C.MemPrice),0) AS memPrice,
+	            ISNULL(CONVERT(Decimal(16,2),C.PlatinumPrice),0) AS platinumPrice,
+	            
+	            ISNULL(CONVERT(Decimal(16,2),A.TagPrice),0) AS tagPrice,
+			</isEqual>
+			<isEqual property="soluAddModeConf" compareValue="3">
+				ISNULL(CONVERT(Decimal(16,2),C.SalePrice),0) AS salePrice,
+	            ISNULL(CONVERT(Decimal(16,2),C.MemPrice),0) AS memPrice, 
+	            ISNULL(CONVERT(Decimal(16,2),C.PlatinumPrice),0) AS platinumPrice,
+	            
+	            ISNULL(CONVERT(Decimal(16,2),A.TagPrice),0) AS tagPrice,
+			</isEqual>
+			<!-- 标准模式价格从方案明细中取得  -->
+			<isEqual property="soluAddModeConf" compareValue="1">
+				ISNULL(CONVERT(Decimal(16,2),A.SalePrice),0) AS salePrice,
+	            ISNULL(CONVERT(Decimal(16,2),A.MemPrice),0) AS memPrice,
+	            ISNULL(CONVERT(Decimal(16,2),A.PlatinumPrice),0) AS platinumPrice,
+	            ISNULL(CONVERT(Decimal(16,2),A.TagPrice),0) AS tagPrice,
+			</isEqual>
+			A.SoluProductName AS soluProductName,
+			<dynamic>
+				<isNotEmpty property="language">
+					<isEqual property="language" compareValue="zh_CN">										
+						A.NameTotal AS nameTotal
+					</isEqual>
+					<isEqual property="language" compareValue="en_US">										
+						A.NameForeign AS nameTotal
+					</isEqual>
+				</isNotEmpty>
+				<isEmpty property="language">
+						A.NameTotal AS nameTotal
+				</isEmpty>
+			</dynamic>
+		FROM
+			(
+				<!-- 柜台产品使用模式 1:严格校验  -->
+				<isEqual property="cntPrtModeConf" compareValue="1">
+					<!-- 取得柜台方案对应的方案中的产品信息 -->
+					<include refid="getPrtByCntSolu"/>
+				</isEqual>
+				<!-- 柜台产品使用模式 2:补充校验 -->
+				<isEqual property="cntPrtModeConf" compareValue="2">
+					<!-- 取得柜台方案对应的方案中的产品信息 -->
+					<include refid="getPrtByCntSolu"/>
+					UNION
+					
+					SELECT 
+						A2.*
+						<!-- 标准模式价格从方案明细中取得:因为是补充，所以只能从标准产品价格表中取得   -->
+							,PP.SalePrice,PP.MemPrice,PP.PlatinumPrice,PP.TagPrice
+					FROM(
+					
+						SELECT P.BIN_ProductID,P.NameTotal ,P.NameTotal AS SoluProductName,P.UnitCode,P.ValidFlag,PV.BarCode,PV.BIN_ProductVendorID,P.StandardCost,P.IsExchanged,P.IsStock
+						FROM Basis.BIN_Product P
+						JOIN Basis.BIN_ProductVendor PV ON PV.BIN_ProductID = P.BIN_ProductID AND  PV.ValidFlag = #validFlag#
+						WHERE 
+							P.ValidFlag = #validFlag# 
+						AND P.BIN_OrganizationInfoID = #organizationInfoId# 
+						AND P.BIN_BrandInfoID = #brandInfoId#
+						AND NOT EXISTS(
+							SELECT 1 FROM (<include refid="getPrtByCntSolu"/>)  A3 WHERE A3.BIN_ProductID = P.BIN_ProductID
+						)
+						<isNotEmpty property="productInfoStr" prepend="AND">
+						(
+							<![CDATA[P.UnitCode like '%'+ #productInfoStr# +'%'
+							OR PV.BarCode like '%'+ #productInfoStr# +'%']]>
+							<isNotEmpty property="language">
+								<isEqual property="language" compareValue="zh_CN">										
+									<![CDATA[OR P.NameTotal like '%'+ #productInfoStr# +'%']]>
+								</isEqual>
+								<isEqual property="language" compareValue="en_US">
+									<![CDATA[OR P.NameForeign like '%'+ #productInfoStr# +'%']]>
+								</isEqual>
+							</isNotEmpty>
+							<isEmpty property="language">
+								<![CDATA[OR P.NameTotal like '%'+ #productInfoStr# +'%']]>
+							</isEmpty>
+						)
+						</isNotEmpty>
+					) A2
+					<!-- 标准模式价格从方案明细中取得:因为是补充，所以只能从标准产品价格表中取得   -->
+		            <![CDATA[
+		            LEFT JOIN Basis.BIN_ProductPrice PP
+			            ON (A2.BIN_ProductID = PP.BIN_ProductID
+			            AND A2.ValidFlag = PP.ValidFlag 
+			            AND PP.Type = '2'
+			            AND PP.EndDate >= #businessDate#
+			            AND PP.StartDate <= #businessDate#)
+		            ]]>
+				</isEqual>
+			) A
+			<!-- 颖通模式价格从产品价格表取  -->
+			<isEqual property="soluAddModeConf" compareValue="2">
+            <![CDATA[
+            LEFT JOIN Basis.BIN_ProductPrice C
+	            ON (A.BIN_ProductID = C.BIN_ProductID
+	            AND A.ValidFlag = C.ValidFlag 
+	            AND C.Type = '2'
+	            AND C.EndDate >= #businessDate#
+	            AND C.StartDate <= #businessDate#)
+            ]]>
+			</isEqual>
+			<!-- 颖通模式价格从产品价格表取  -->
+			<isEqual property="soluAddModeConf" compareValue="3">
+            <![CDATA[
+            LEFT JOIN Basis.BIN_ProductPrice C
+	            ON (A.BIN_ProductID = C.BIN_ProductID
+	            AND A.ValidFlag = C.ValidFlag 
+	            AND C.Type = '2'
+	            AND C.EndDate >= #businessDate#
+	            AND C.StartDate <= #businessDate#)
+            ]]>
+			</isEqual>
+	</select>
+	
+    <!--根据输入字符串模糊查询促销品信息-->
+    <select id="getPrmProductInfo" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+        <![CDATA[
+        SELECT TOP $number$
+            A.UnitCode AS unitCode,
+            B.BarCode AS barCode,
+            A.BIN_PromotionProductID AS prmProductId,
+            B.BIN_PromotionProductVendorID AS prmProductVendorId,
+            ISNULL(CONVERT(Decimal(16,2),A.StandardCost),0) AS standardCost,
+        ]]>
+            <dynamic>
+                <isNotEmpty property="language">
+                    <isEqual property="language" compareValue="zh_CN">                                      
+                        A.NameTotal AS nameTotal
+                    </isEqual>
+                    <isEqual property="language" compareValue="en_US">                                      
+                        A.NameForeign AS nameTotal
+                    </isEqual>
+                </isNotEmpty>
+                <isEmpty property="language">
+                        A.NameTotal AS nameTotal
+                </isEmpty>
+            </dynamic>
+        <![CDATA[
+        FROM
+            Basis.BIN_PromotionProduct A
+            JOIN Basis.BIN_PromotionProductVendor B
+            ON(A.BIN_PromotionProductID = B.BIN_PromotionProductID
+            AND B.ValidFlag = #validFlag#)
+        WHERE
+            A.ValidFlag = #validFlag#
+            AND A.BIN_OrganizationInfoID = #organizationInfoId#
+            AND A.BIN_BrandInfoID = #brandInfoId#
+        ]]>
+            <dynamic>
+                <isNotEmpty property="productInfoStr" prepend="AND">
+                (
+                    <![CDATA[A.UnitCode like '%'+ #productInfoStr# +'%'
+                    OR B.BarCode like '%'+ #productInfoStr# +'%']]>
+                    <isNotEmpty property="language">
+                        <isEqual property="language" compareValue="zh_CN">                                      
+                            <![CDATA[OR A.NameTotal like '%'+ #productInfoStr# +'%']]>
+                        </isEqual>
+                        <isEqual property="language" compareValue="en_US">
+                            <![CDATA[OR A.NameForeign like '%'+ #productInfoStr# +'%']]>
+                        </isEqual>
+                    </isNotEmpty>
+                    <isEmpty property="language">
+                        <![CDATA[OR A.NameTotal like '%'+ #productInfoStr# +'%']]>
+                    </isEmpty>
+                )
+                </isNotEmpty>
+            </dynamic>
+    </select>
+	
+	<!--根据输入的字符串模糊查询柜台信息-->
+	<select id="getCounterInfo" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+		<![CDATA[
+		SELECT TOP $number$
+			A.CounterCode AS counterCode,
+			A.BIN_OrganizationID AS organizationId,
+		]]>	
+			<dynamic>
+				<isNotEmpty property="language">
+					<isEqual property="language" compareValue="zh_CN">										
+						A.CounterNameIF AS counterName
+					</isEqual>
+					<isEqual property="language" compareValue="en_US">										
+						A.NameForeign AS counterName
+					</isEqual>
+				</isNotEmpty>
+				<isEmpty property="language">
+						A.CounterNameIF AS counterName
+				</isEmpty>
+			</dynamic>
+		<![CDATA[	
+		FROM
+			Basis.BIN_CounterInfo A
+		]]>
+			<isNotEmpty property="privilegeFlag">
+			<isEqual property="privilegeFlag" compareValue="1">		
+		<![CDATA[			
+			JOIN (]]><include refid="BINOLCMINC99.departPrivilegeSql" /><![CDATA[) A99 
+			ON A.BIN_OrganizationID=A99.BIN_OrganizationID 
+		]]>
+			</isEqual>
+			</isNotEmpty>
+		<![CDATA[	
+		WHERE
+			A.ValidFlag = '1'
+			AND A.BIN_OrganizationInfoID = #organizationInfoId#
+			AND A.BIN_BrandInfoID = #brandInfoId#
+		]]>	
+			<dynamic>
+				<isNotEmpty property="counterInfoStr" prepend="AND">
+					(
+						<![CDATA[A.CounterCode Like '%' + #counterInfoStr# + '%']]>
+						<isNotEmpty property="language">
+							<isEqual property="language" compareValue="zh_CN">										
+								<![CDATA[OR A.CounterNameIF Like '%' + #counterInfoStr# + '%']]>
+							</isEqual>
+							<isEqual property="language" compareValue="en_US">										
+								<![CDATA[OR A.NameForeign Like '%' + #counterInfoStr# + '%']]>
+							</isEqual>
+						</isNotEmpty>
+						<isEmpty property="language">
+							<![CDATA[OR A.CounterNameIF Like '%' + #counterInfoStr# + '%']]>
+						</isEmpty>
+					)
+				</isNotEmpty>
+			</dynamic>
+	</select>
+	
+	<!--根据输入的字符模糊查询部门信息-->
+	<select id="getDepartInfo" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+		<![CDATA[
+		SELECT
+			A.DepartCode AS departCode,
+		]]>	
+			<dynamic>
+				<isNotEmpty property="language">
+					<isEqual property="language" compareValue="zh_CN">										
+						<![CDATA[A.DepartName AS name ]]>
+					</isEqual>
+					<isEqual property="language" compareValue="en_US">										
+						<![CDATA[A.NameForeign AS name]]>
+					</isEqual>
+				</isNotEmpty>
+				<isEmpty property="language">
+					<![CDATA[A.DepartName AS name ]]>
+				</isEmpty>
+			</dynamic>
+		<![CDATA[	
+		FROM    
+			[Basis].[BIN_Organization] A
+		]]>
+			<isNotEmpty property="privilegeFlag">
+			<isEqual property="privilegeFlag" compareValue="1">		
+		<![CDATA[			
+			JOIN (]]><include refid="BINOLCMINC99.departPrivilegeSql" /><![CDATA[) A99 
+			ON A.BIN_OrganizationID=A99.BIN_OrganizationID 
+		]]>
+			</isEqual>
+			</isNotEmpty>
+		<![CDATA[
+		WHERE       
+			A.ValidFlag = '1' AND
+			A.BIN_OrganizationInfoID = #organizationInfoId#   
+			AND A.BIN_BrandInfoID = #brandInfoId#
+		]]>	
+			<dynamic>
+				<isEmpty property="flag" prepend="AND">
+					<![CDATA[A.Type<>'4']]>
+				</isEmpty>
+			</dynamic>
+			<dynamic>
+				<isNotEmpty property="departInfoStr" prepend="AND">
+					(
+						<![CDATA[A.DepartCode Like '%' + #departInfoStr# + '%']]>
+						<isNotEmpty property="language">
+							<isEqual property="language" compareValue="zh_CN">										
+								<![CDATA[OR A.DepartName Like '%' + #departInfoStr# + '%']]>
+							</isEqual>
+							<isEqual property="language" compareValue="en_US">										
+								<![CDATA[OR A.NameForeign Like '%' + #departInfoStr# + '%']]>
+							</isEqual>
+						</isNotEmpty>
+						<isEmpty property="language">
+							<![CDATA[OR A.DepartName Like '%' + #departInfoStr# + '%']]>
+						</isEmpty>
+					)
+				</isNotEmpty>
+			</dynamic>
+	</select>
+	
+	<!--根据输入字符串模糊查询产品分类-->
+	<select id="getProductCategory" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+		<![CDATA[
+			SELECT TOP $number$
+				A.BIN_PrtCatPropValueID AS id,
+				A.PropValueCherry AS code,
+		]]>				
+			<dynamic>
+				<isNotEmpty property="language">
+					<isEqual property="language" compareValue="zh_CN">										
+						A.PropValueChinese AS name
+					</isEqual>
+					<isEqual property="language" compareValue="en_US">										
+						A.PropValueForeign AS name
+					</isEqual>
+				</isNotEmpty>
+				<isEmpty property="language">
+						A.PropValueChinese AS name
+				</isEmpty>
+			</dynamic>
+	<![CDATA[	
+			FROM
+				Basis.BIN_PrtCatPropValue A
+			JOIN Basis.BIN_PrtCatProperty B ON A.BIN_PrtCatPropertyID = B.BIN_PrtCatPropertyID
+			WHERE
+				A.ValidFlag = '1'
+				AND B.ValidFlag = '1'
+				AND B.BIN_OrganizationInfoID = #organizationInfoId#
+		]]>
+		<dynamic>
+			<isNotEmpty prepend="AND" property="brandInfoId">
+				B.BIN_BrandInfoID = #brandInfoId#
+			</isNotEmpty>
+			<isNotEmpty property="prtCatInfoStr" prepend="AND">
+			(
+				<![CDATA[A.PropValueCherry like '%'+ #prtCatInfoStr# +'%']]>
+				<isNotEmpty property="language">
+					<isEqual property="language" compareValue="zh_CN">										
+						<![CDATA[OR A.PropValueChinese like '%'+ #prtCatInfoStr# +'%']]>
+					</isEqual>
+					<isEqual property="language" compareValue="en_US">
+						<![CDATA[OR A.PropValueForeign like '%'+ #prtCatInfoStr# +'%']]>
+					</isEqual>
+				</isNotEmpty>
+				<isEmpty property="language">
+					<![CDATA[OR A.PropValueChinese like '%'+ #prtCatInfoStr# +'%']]>
+				</isEmpty>
+			)
+			</isNotEmpty>
+		</dynamic>
+	</select>
+	
+	<!--根據輸入的字符模糊查詢實體倉庫-->
+	<select id="getDeportInfo" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+		SELECT
+ 			A.DepotCode AS code,
+			<dynamic>
+				<isNotEmpty property="language">
+					<isEqual property="language" compareValue="zh_CN">										
+						<![CDATA[A.[DepotNameCN] AS name ]]>
+					</isEqual>
+					<isEqual property="language" compareValue="en_US">										
+						<![CDATA[A.[NameForeign] AS name]]>
+					</isEqual>
+				</isNotEmpty>
+				<isEmpty property="language">
+					<![CDATA[A.[DepotNameCN] AS name ]]>
+				</isEmpty>
+			</dynamic>
+ 		FROM
+ 			[Basis].[BIN_DepotInfo] A 
+ 		WHERE
+ 			A.ValidFlag = '1'
+			AND A.[BIN_OrganizationInfoID] = #organizationInfoId#
+			<dynamic>
+				<isNotEmpty property="deportInfoStr" prepend="AND">
+					(
+						<![CDATA[A.[DepotCode] Like '%' + #deportInfoStr# + '%']]>
+						<isNotEmpty property="language">
+							<isEqual property="language" compareValue="zh_CN">										
+								<![CDATA[OR A.[DepotNameCN] Like '%' + #deportInfoStr# + '%']]>
+							</isEqual>
+							<isEqual property="language" compareValue="en_US">										
+								<![CDATA[OR A.[DepotNameEN] Like '%' + #deportInfoStr# + '%']]>
+							</isEqual>
+						</isNotEmpty>
+						<isEmpty property="language">
+							<![CDATA[OR A.[DepotNameCN] Like '%' + #deportInfoStr# + '%']]>
+						</isEmpty>
+					)
+				</isNotEmpty>
+				<isNotEmpty property="onlyNoneCounterDeport" prepend="AND">
+					A.[DepotType] = '01'
+				</isNotEmpty>
+				<isNotEmpty property="onlyCounterDeport" prepend="AND">
+					A.[DepotType] = '02'
+				</isNotEmpty>
+				<isNotEmpty property="onlyDepart" prepend="AND">
+				    1 != 1
+				</isNotEmpty>
+				<isNotEmpty property="includeRegion">
+					UNION
+					SELECT
+						B.RegionCode AS code,
+						<isNotEmpty property="language">
+							<isEqual property="language" compareValue="zh_CN">										
+								<![CDATA[B.[RegionNameChinese] AS name ]]>
+							</isEqual>
+							<isEqual property="language" compareValue="en_US">										
+								<![CDATA[B.[RegionNameForeign] AS name]]>
+							</isEqual>
+						</isNotEmpty>
+						<isEmpty property="language">
+							<![CDATA[B.[RegionNameChinese] AS name ]]>
+						</isEmpty>
+					FROM
+						[Basis].[BIN_Region] B
+					WHERE
+						B.ValidFlag = '1'
+						AND B.[BIN_OrganizationInfoID] = #organizationInfoId#
+						AND B.BIN_BrandInfoID = #brandInfoId#
+						<isNotEmpty property="deportInfoStr" prepend="AND">
+							(
+								<![CDATA[B.[RegionCode] Like '%' + #deportInfoStr# + '%']]>
+								<isNotEmpty property="language">
+									<isEqual property="language" compareValue="zh_CN">										
+										<![CDATA[OR B.[RegionNameChinese] Like '%' + #deportInfoStr# + '%']]>
+									</isEqual>
+									<isEqual property="language" compareValue="en_US">										
+										<![CDATA[OR B.[RegionNameForeign] Like '%' + #deportInfoStr# + '%']]>
+									</isEqual>
+								</isNotEmpty>
+								<isEmpty property="language">
+									<![CDATA[OR B.[RegionNameChinese] Like '%' + #deportInfoStr# + '%']]>
+								</isEmpty>
+							)
+						</isNotEmpty>
+		                <isNotEmpty property="onlyDepart" prepend="AND">
+		                    1 != 1
+		                </isNotEmpty>
+				</isNotEmpty>
+                <isNotEmpty property="includeDepart">
+                    UNION
+                    SELECT
+                        C.DepartCode AS code,
+                        <isNotEmpty property="language">
+                            <isEqual property="language" compareValue="zh_CN">                                      
+                                <![CDATA[C.DepartName AS name ]]>
+                            </isEqual>
+                            <isEqual property="language" compareValue="en_US">                                      
+                                <![CDATA[C.NameForeign AS name]]>
+                            </isEqual>
+                        </isNotEmpty>
+                        <isEmpty property="language">
+                            <![CDATA[C.DepartName AS name ]]>
+                        </isEmpty>
+                    FROM
+                        Basis.BIN_Organization C
+                    WHERE
+                        C.ValidFlag = '1'
+                        AND C.BIN_OrganizationInfoID = #organizationInfoId#
+                        AND C.BIN_BrandInfoID = #brandInfoId#
+                        <isNotEmpty property="deportInfoStr" prepend="AND">
+                            (
+                                <![CDATA[C.DepartCode Like '%' + #deportInfoStr# + '%']]>
+                                <isNotEmpty property="language">
+                                    <isEqual property="language" compareValue="zh_CN">                                      
+                                        <![CDATA[OR C.DepartName Like '%' + #deportInfoStr# + '%']]>
+                                    </isEqual>
+                                    <isEqual property="language" compareValue="en_US">                                      
+                                        <![CDATA[OR C.NameForeign Like '%' + #deportInfoStr# + '%']]>
+                                    </isEqual>
+                                </isNotEmpty>
+                                <isEmpty property="language">
+                                    <![CDATA[OR C.DepartName Like '%' + #deportInfoStr# + '%']]>
+                                </isEmpty>
+                            )
+                        </isNotEmpty>
+                </isNotEmpty>
+			</dynamic>
+	</select>
+	
+	<!--根据输入的字符串模糊查询员工信息-->
+	<select id="getEmployeeInfo" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+		<![CDATA[
+		SELECT TOP $number$
+			A.BIN_EmployeeID AS id,
+			A.EmployeeCode AS code,
+		]]>	
+			<dynamic>
+				<isNotEmpty property="language">
+					<isEqual property="language" compareValue="zh_CN">										
+						A.EmployeeName AS name
+					</isEqual>
+					<isEqual property="language" compareValue="en_US">										
+						A.EmployeeNameForeign AS name
+					</isEqual>
+				</isNotEmpty>
+				<isEmpty property="language">
+						A.EmployeeName AS name
+				</isEmpty>
+			</dynamic>
+		<![CDATA[	
+		FROM
+			Basis.BIN_Employee A
+		]]>
+			<isNotEmpty property="privilegeFlag">
+			<isEqual property="privilegeFlag" compareValue="1">			
+		<![CDATA[	
+			JOIN (]]><include refid="BINOLCMINC99.employeePrivilegeSql" /><![CDATA[) A99 
+			ON A.BIN_EmployeeID=A99.BIN_SubEmployeeID
+		]]>
+			</isEqual>
+			</isNotEmpty>
+		<![CDATA[	
+		WHERE
+			A.ValidFlag = '1'
+			AND A.BIN_OrganizationInfoID = #organizationInfoId#
+			AND A.BIN_BrandInfoID = #brandInfoId#
+		]]>		
+			<dynamic>
+				<isNotEmpty property="employeeInfoStr" prepend="AND">
+					(
+						<![CDATA[A.EmployeeCode Like '%' + #employeeInfoStr# + '%']]>
+						<isNotEmpty property="language">
+							<isEqual property="language" compareValue="zh_CN">										
+								<![CDATA[OR A.EmployeeName Like '%' + #employeeInfoStr# + '%']]>
+							</isEqual>
+							<isEqual property="language" compareValue="en_US">										
+								<![CDATA[OR A.EmployeeNameForeign Like '%' + #employeeInfoStr# + '%']]>
+							</isEqual>
+						</isNotEmpty>
+						<isEmpty property="language">
+							<![CDATA[OR A.EmployeeName Like '%' + #employeeInfoStr# + '%']]>
+						</isEmpty>
+					)
+				</isNotEmpty>
+			</dynamic>
+	</select>
+	
+	<!--根据输入的字符串模糊查询营业员信息-->
+	<select id="getBaInfo" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+		<![CDATA[
+		SELECT TOP $number$
+			A.BIN_BaInfoID AS id,
+			A.BaCode AS code,
+		]]>	
+			<dynamic>
+				<isNotEmpty property="language">
+					<isEqual property="language" compareValue="zh_CN">										
+						A.BaName AS name
+					</isEqual>
+					<isEqual property="language" compareValue="en_US">										
+						A.BaNameForeign AS name
+					</isEqual>
+				</isNotEmpty>
+				<isEmpty property="language">
+						A.BaName AS name
+				</isEmpty>
+			</dynamic>
+		<![CDATA[	
+		FROM
+			Basis.BIN_BaInfo A WITH(NOLOCK)
+			JOIN Basis.BIN_Employee B WITH(NOLOCK)
+			ON(A.BIN_EmployeeID = B.BIN_EmployeeID)
+		]]>
+			<isNotEmpty property="privilegeFlag">
+			<isEqual property="privilegeFlag" compareValue="1">			
+		<![CDATA[	
+			JOIN (]]><include refid="BINOLCMINC99.employeePrivilegeSql" /><![CDATA[) A99 
+			ON B.BIN_EmployeeID=A99.BIN_SubEmployeeID
+		]]>
+			</isEqual>
+			</isNotEmpty>
+		<![CDATA[
+		WHERE
+			A.ValidFlag = '1' AND B.ValidFlag='1'
+			AND A.BIN_OrganizationInfoID = #organizationInfoId#
+			AND A.BIN_BrandInfoID = #brandInfoId#
+		]]>		
+			<dynamic>
+				<isNotEmpty property="employeeInfoStr" prepend="AND">
+					(
+						<![CDATA[A.BaCode Like '%' + #employeeInfoStr# + '%']]>
+						<isNotEmpty property="language">
+							<isEqual property="language" compareValue="zh_CN">										
+								<![CDATA[OR A.BaName Like '%' + #employeeInfoStr# + '%']]>
+							</isEqual>
+							<isEqual property="language" compareValue="en_US">										
+								<![CDATA[OR A.BaNameForeign Like '%' + #employeeInfoStr# + '%']]>
+							</isEqual>
+						</isNotEmpty>
+						<isEmpty property="language">
+							<![CDATA[OR A.BaName Like '%' + #employeeInfoStr# + '%']]>
+						</isEmpty>
+					)
+				</isNotEmpty>
+				<!-- 代理商优惠券的查询时需要过滤掉的特殊BA编码 -->
+				<isNotEmpty property="filterBaCode" prepend="AND">
+					<![CDATA[
+						A.BaCode <> #filterBaCode#
+					]]>
+				</isNotEmpty>
+			</dynamic>
+	</select>
+	
+	<!--根据输入的字符串模糊查询代理商信息-->
+	<select id="getResellerInfo" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+		<![CDATA[
+		SELECT TOP $number$
+			A.ResellerCode AS id,
+			A.ResellerCode AS code,
+			A.ResellerName AS name	
+		FROM
+			Basis.BIN_ResellerInfo A WITH(NOLOCK)
+		WHERE
+			A.ValidFlag = '1'
+			AND A.BIN_OrganizationInfoID = #organizationInfoId#
+			AND A.BIN_BrandInfoID = #brandInfoId#
+		]]>		
+		<dynamic>
+            <isNotEmpty property="levelCode" prepend="AND">
+                <isNotEqual property="levelCode" compareValue="ALL">
+	                <![CDATA[
+	                   A.LevelCode = #levelCode#
+	                ]]>
+                </isNotEqual>
+            </isNotEmpty>
+			<isNotEmpty property="resellerInfoStr" prepend="AND">
+				<![CDATA[
+				(A.ResellerCode Like '%' + #resellerInfoStr# + '%' 
+					OR A.ResellerName Like '%' + #resellerInfoStr# + '%')]]>
+			</isNotEmpty>
+			<!-- 二级代理商的查询需要根据一级代理商联动 -->
+			<isEqual property="levelCode" compareValue="2">	
+				<isNotEmpty property="parentResellerCode" prepend="AND">
+				<![CDATA[
+					A.ParentResellerCode = #parentResellerCode#
+				]]>
+				</isNotEmpty>
+			</isEqual>
+			<isNotEmpty property="provinceId" prepend="AND">
+				<![CDATA[
+					A.BIN_ProvinceID = #provinceId#
+				]]>
+			</isNotEmpty>
+			<isNotEmpty property="cityId" prepend="AND">
+				<![CDATA[
+					A.BIN_CityID = #cityId#
+				]]>
+			</isNotEmpty>
+			<isNotEmpty property="resellerType" prepend="AND">
+				<![CDATA[
+					A.Type = #resellerType#
+				]]>
+			</isNotEmpty>
+		</dynamic>
+	</select>
+	
+	<!--根据输入的字符串模糊查询销售人员信息-->
+	<select id="getSalesStaffInfo" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+		<![CDATA[
+		SELECT TOP $number$
+			A.BIN_EmployeeID AS id,
+			A.EmployeeCode AS code,
+		]]>	
+			<dynamic>
+				<isNotEmpty property="language">
+					<isEqual property="language" compareValue="zh_CN">										
+						A.EmployeeName AS name
+					</isEqual>
+					<isEqual property="language" compareValue="en_US">										
+						A.EmployeeNameForeign AS name
+					</isEqual>
+				</isNotEmpty>
+				<isEmpty property="language">
+						A.EmployeeName AS name
+				</isEmpty>
+			</dynamic>
+		<![CDATA[	
+		FROM						
+			Basis.BIN_Employee A 
+			JOIN Privilege.BIN_PositionCategory	B ON A.BIN_PositionCategoryID = B.BIN_PositionCategoryID
+		]]>
+		<isNotEmpty property="privilegeFlag">
+			<isEqual property="privilegeFlag" compareValue="1">			
+				<![CDATA[	
+					JOIN (]]><include refid="BINOLCMINC99.employeePrivilegeSql" /><![CDATA[) A99 
+					ON A.BIN_EmployeeID=A99.BIN_SubEmployeeID
+				]]>
+			</isEqual>
+		</isNotEmpty>
+		<![CDATA[	
+		WHERE
+			A.ValidFlag = '1'
+			AND A.BIN_OrganizationInfoID = #organizationInfoId#
+			AND A.BIN_BrandInfoID = #brandInfoId#
+		]]>		
+			<dynamic>
+				<isNotEmpty prepend="AND" property="categoryCode" >
+					B.CategoryCode = #categoryCode# 
+				</isNotEmpty>
+				<isNotEmpty property="employeeInfoStr" prepend="AND">
+					(
+						<![CDATA[A.EmployeeCode Like '%' + #employeeInfoStr# + '%']]>
+						<isNotEmpty property="language">
+							<isEqual property="language" compareValue="zh_CN">										
+								<![CDATA[OR A.EmployeeName Like '%' + #employeeInfoStr# + '%']]>
+							</isEqual>
+							<isEqual property="language" compareValue="en_US">										
+								<![CDATA[OR A.EmployeeNameForeign Like '%' + #employeeInfoStr# + '%']]>
+							</isEqual>
+						</isNotEmpty>
+						<isEmpty property="language">
+							<![CDATA[OR A.EmployeeName Like '%' + #employeeInfoStr# + '%']]>
+						</isEmpty>
+					)
+				</isNotEmpty>
+			</dynamic>
+	</select>
+	
+	<!--根据输入的字符串模糊查询往来单位(合作伙伴)-->
+	<select id="getBussinessPartnerInfo" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+		<![CDATA[
+		SELECT
+			TOP $number$
+			BIN_BussinessPartnerID AS id,
+			Code AS code,
+		]]>
+			<dynamic>
+				<isNotEmpty property="language">
+					<isEqual property="language" compareValue="zh_CN">										
+						NameCN AS name
+					</isEqual>
+					<isEqual property="language" compareValue="en_US">										
+						NameCN AS name
+					</isEqual>
+				</isNotEmpty>
+				<isEmpty property="language">
+						NameCN AS name
+				</isEmpty>
+			</dynamic>
+		<![CDATA[
+		FROM
+			Basis.BIN_BussinessPartner
+		WHERE
+			BIN_OrganizationInfoID = #organizationInfoId#
+			AND BIN_BrandInfoID = #brandInfoId#
+			AND ValidFlag = '1'
+		]]>
+			<dynamic>
+				<isNotEmpty property="partnerInfoStr" prepend="AND">
+					(
+						<![CDATA[Code LIKE '%' + #partnerInfoStr# + '%']]>
+						<isNotEmpty property="language">
+							<isEqual property="language" compareValue="zh_CN">										
+								<![CDATA[OR NameCN LIKE '%' + #partnerInfoStr# + '%']]>
+							</isEqual>
+							<isEqual property="language" compareValue="en_US">										
+								<![CDATA[OR NameEN Like '%' + #partnerInfoStr# + '%']]>
+							</isEqual>
+						</isNotEmpty>
+						<isEmpty property="language">
+							<![CDATA[OR NameCN LIKE '%' + #partnerInfoStr# + '%']]>
+						</isEmpty>
+					)
+				</isNotEmpty>
+			</dynamic>
+	</select>
+	
+	<!--根据输入字符串模糊查询区域信息-->
+	<select id="getRegionInfo" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+	<![CDATA[			
+		SELECT TOP $number$
+			A.BIN_RegionID AS id,
+			A.RegionCode AS code,
+	]]>				
+			<dynamic>
+				<isNotEmpty property="language">
+					<isEqual property="language" compareValue="zh_CN">										
+						A.RegionNameChinese AS name
+					</isEqual>
+					<isEqual property="language" compareValue="en_US">										
+						A.RegionNameForeign AS name
+					</isEqual>
+				</isNotEmpty>
+				<isEmpty property="language">
+						A.RegionNameChinese AS name
+				</isEmpty>
+			</dynamic>
+	<![CDATA[		
+		FROM
+			Basis.BIN_Region A
+		WHERE
+			A.RegionType <> '-1' AND
+			A.BIN_OrganizationInfoID = #organizationInfoId#
+	]]>		
+		<dynamic>
+			<isNotEmpty prepend="AND" property="brandInfoId">
+				A.BIN_BrandInfoID = #brandInfoId#
+			</isNotEmpty>
+			<isNotEmpty property="regionInfoStr" prepend="AND">
+			(
+				<![CDATA[A.RegionCode like '%'+ #regionInfoStr# +'%']]>
+				<isNotEmpty property="language">
+					<isEqual property="language" compareValue="zh_CN">										
+						<![CDATA[OR A.RegionNameChinese like '%'+ #regionInfoStr# +'%']]>
+					</isEqual>
+					<isEqual property="language" compareValue="en_US">
+						<![CDATA[OR A.RegionNameForeign like '%'+ #regionInfoStr# +'%']]>
+					</isEqual>
+				</isNotEmpty>
+				<isEmpty property="language">
+					<![CDATA[OR A.RegionNameChinese like '%'+ #regionInfoStr# +'%']]>
+				</isEmpty>
+			)
+			</isNotEmpty>
+		</dynamic>
+	</select>
+	
+	<!--根据输入字符串模糊查询逻辑仓库信息-->
+	<select id="getLogicInventoryInfo" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+		<![CDATA[
+			SELECT TOP $number$
+				[BIN_LogicInventoryInfoID] AS id,
+				[LogicInventoryCode] AS code,
+		]]>				
+			<dynamic>
+				<isNotEmpty property="language">
+					<isEqual property="language" compareValue="zh_CN">										
+						[InventoryNameCN] AS name
+					</isEqual>
+					<isEqual property="language" compareValue="en_US">										
+						[InventoryNameEN] AS name
+					</isEqual>
+				</isNotEmpty>
+				<isEmpty property="language">
+						[InventoryNameCN] AS name
+				</isEmpty>
+			</dynamic>
+	<![CDATA[	
+			FROM
+				[Basis].[BIN_LogicInventory]
+			WHERE
+				[ValidFlag] = '1'
+				AND BIN_OrganizationInfoID = #organizationInfoId#
+		]]>
+		<dynamic>
+			<isNotEmpty prepend="AND" property="brandInfoId">
+				BIN_BrandInfoID = #brandInfoId#
+			</isNotEmpty>
+			<isNotEmpty property="logicInventoryInfoStr" prepend="AND">
+			(
+				<![CDATA[[LogicInventoryCode] like '%'+ #logicInventoryInfoStr# +'%']]>
+				<isNotEmpty property="language">
+					<isEqual property="language" compareValue="zh_CN">										
+						<![CDATA[OR [InventoryNameCN] like '%'+ #logicInventoryInfoStr# +'%']]>
+					</isEqual>
+					<isEqual property="language" compareValue="en_US">
+						<![CDATA[OR [InventoryNameEN] like '%'+ #logicInventoryInfoStr# +'%']]>
+					</isEqual>
+				</isNotEmpty>
+				<isEmpty property="language">
+					<![CDATA[OR [InventoryNameCN] like '%'+ #logicInventoryInfoStr# +'%']]>
+				</isEmpty>
+			)
+			</isNotEmpty>
+		</dynamic>
+	</select>
+		
+		
+		
+		
+	<!--根据输入字符串模糊查询渠道信息-->
+	<select id="getChannelInfo" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+		<![CDATA[
+			SELECT TOP $number$
+				A.BIN_ChannelID AS id,
+		]]>				
+			<dynamic>
+				<isNotEmpty property="language">
+					<isEqual property="language" compareValue="zh_CN">										
+						A.ChannelName AS nameTotal
+					</isEqual>
+					<isEqual property="language" compareValue="en_US">										
+						A.ChannelNameForeign AS nameTotal
+					</isEqual>
+				</isNotEmpty>
+				<isEmpty property="language">
+						A.ChannelName AS nameTotal
+				</isEmpty>
+			</dynamic>
+		<![CDATA[	
+			FROM
+				Basis.BIN_Channel  A
+			WHERE
+				A.ValidFlag = '1'
+				AND A.BIN_OrganizationInfoID = #organizationInfoId#
+				AND A.BIN_BrandInfoID = #brandInfoId#
+		]]>
+		<dynamic>
+			<isNotEmpty property="channelInfoStr" prepend="AND">
+				<isNotEmpty property="language">
+					<isEqual property="language" compareValue="zh_CN">										
+						<![CDATA[A.ChannelName like '%'+ #channelInfoStr# +'%']]>
+					</isEqual>
+					<isEqual property="language" compareValue="en_US">
+						<![CDATA[A.ChannelNameForeign like '%'+ #channelInfoStr# +'%']]>
+					</isEqual>
+				</isNotEmpty>
+				<isEmpty property="language">
+					<![CDATA[A.ChannelName like '%'+ #channelInfoStr# +'%']]>
+				</isEmpty>
+			</isNotEmpty>
+		</dynamic>
+	</select>
+	
+	<!--根据输入字符串模糊查询会员问题信息-->
+	<select id="getIssueInfo" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+		<![CDATA[
+			SELECT TOP $number$
+				A.IssueNo AS id,
+				A.IssueSummary AS nameTotal	
+			FROM
+				Members.BIN_Issue A
+		]]>
+		<dynamic prepend="where">
+        	<isNotEmpty property="memberInfoId" prepend="AND">
+        		A.BIN_MemberInfoID = #memberInfoId#
+        	</isNotEmpty>
+        	<isNotEmpty property="issueNoKw" prepend="AND">
+        		(A.IssueNo LIKE '%'+#issueNoKw#+'%' OR A.IssueSummary LIKE '%'+#issueNoKw#+'%')
+			</isNotEmpty>
+        </dynamic>
+	</select>
+	
+	<!--根据输入的字符模糊查询组织详细信息-->
+	<select id="getOrganizationDetail" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+		<![CDATA[
+		SELECT
+			A.BIN_OrganizationID AS id,
+			A.DepartCode AS departCode,
+		]]>	
+			<dynamic>
+				<isNotEmpty property="language">
+					<isEqual property="language" compareValue="zh_CN">										
+						<![CDATA[A.DepartName AS name,]]>
+					</isEqual>
+					<isEqual property="language" compareValue="en_US">										
+						<![CDATA[A.NameForeign AS name,]]>
+					</isEqual>
+				</isNotEmpty>
+				<isEmpty property="language">
+					<![CDATA[A.DepartName AS name,]]>
+				</isEmpty>
+			</dynamic>
+		<![CDATA[
+			ISNULL(A.ContactPerson,'') AS contactPerson,
+			ISNULL(A.Address,'') AS address 
+		FROM    
+			[Basis].[BIN_Organization] A
+		]]>
+			<isNotEmpty property="privilegeFlag">
+			<isEqual property="privilegeFlag" compareValue="1">		
+		<![CDATA[			
+			JOIN (]]><include refid="BINOLCMINC99.departPrivilegeSql" /><![CDATA[) A99 
+			ON A.BIN_OrganizationID=A99.BIN_OrganizationID 
+		]]>
+			</isEqual>
+			</isNotEmpty>
+		<![CDATA[
+		WHERE       
+			A.ValidFlag = '1' AND
+			A.BIN_OrganizationInfoID = #organizationInfoId#   
+			AND A.BIN_BrandInfoID = #brandInfoId#
+		]]>	
+			<dynamic>
+				<isEmpty property="flag" prepend="AND">
+					<![CDATA[A.Type<>'4']]>
+				</isEmpty>
+			</dynamic>
+			<dynamic>
+				<isNotEmpty property="departInfoStr" prepend="AND">
+					(
+						<![CDATA[A.DepartCode Like '%' + #departInfoStr# + '%']]>
+						<isNotEmpty property="language">
+							<isEqual property="language" compareValue="zh_CN">										
+								<![CDATA[OR A.DepartName Like '%' + #departInfoStr# + '%']]>
+							</isEqual>
+							<isEqual property="language" compareValue="en_US">										
+								<![CDATA[OR A.NameForeign Like '%' + #departInfoStr# + '%']]>
+							</isEqual>
+						</isNotEmpty>
+						<isEmpty property="language">
+							<![CDATA[OR A.DepartName Like '%' + #departInfoStr# + '%']]>
+						</isEmpty>
+					)
+				</isNotEmpty>
+			</dynamic>
+	</select>
+	
+	<!--根据输入的字符模糊查询柜台详细信息-->
+	<select id="getCounterDetail" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+		<![CDATA[
+		SELECT TOP $number$ 
+			A.BIN_CounterInfoID AS counterId,
+			A.CounterCode AS counterCode,
+		]]>	
+			<dynamic>
+				<isNotEmpty property="language">
+					<isEqual property="language" compareValue="zh_CN">										
+						<![CDATA[A.CounterNameIF AS counterName]]>
+					</isEqual>
+					<isEqual property="language" compareValue="en_US">										
+						<![CDATA[A.NameForeign AS couneterName]]>
+					</isEqual>
+				</isNotEmpty>
+				<isEmpty property="language">
+					<![CDATA[A.CounterNameIF AS couneterName]]>
+				</isEmpty>
+			</dynamic>
+		<![CDATA[
+		FROM    
+			[Basis].[BIN_CounterInfo] A
+		]]>
+			<isNotEmpty property="privilegeFlag">
+			<isEqual property="privilegeFlag" compareValue="1">		
+				<![CDATA[			
+					JOIN (]]><include refid="BINOLCMINC99.departPrivilegeSql" /><![CDATA[) A99 
+					ON A.BIN_OrganizationID=A99.BIN_OrganizationID 
+				]]>
+			</isEqual>
+			</isNotEmpty>
+		<![CDATA[
+		WHERE       
+			A.ValidFlag = '1' AND
+			A.BIN_OrganizationInfoID = #organizationInfoId# AND 
+			A.BIN_BrandInfoID = #brandInfoId# 
+		]]>	
+			<dynamic>
+				<isNotEmpty property="regionId" prepend="AND">
+					<![CDATA[A.BIN_RegionID = #regionId#]]>
+				</isNotEmpty>
+				<isNotEmpty property="channelId" prepend="AND">
+					<![CDATA[A.BIN_ChannelID = #channelId#]]>
+				</isNotEmpty>
+			</dynamic>
+			<dynamic>
+				<isNotEmpty property="counterInfoStr" prepend="AND">
+					(
+						<![CDATA[A.CounterCode Like '%' + #counterInfoStr# + '%']]>
+						<isNotEmpty property="language">
+							<isEqual property="language" compareValue="zh_CN">										
+								<![CDATA[OR A.CounterNameIF Like '%' + #counterInfoStr# + '%']]>
+							</isEqual>
+							<isEqual property="language" compareValue="en_US">										
+								<![CDATA[OR A.NameForeign Like '%' + #counterInfoStr# + '%']]>
+							</isEqual>
+						</isNotEmpty>
+						<isEmpty property="language">
+							<![CDATA[OR A.CounterNameIF Like '%' + #counterInfoStr# + '%']]>
+						</isEmpty>
+					)
+				</isNotEmpty>
+			</dynamic>
+	</select>
+	
+	<!-- 查询柜台营业员信息 -->
+	<select id="getBaByCounter" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+		<![CDATA[
+			SELECT TOP $number$ 
+				A.BIN_EmployeeID as baInfoId,
+				B.EmployeeCode as baCode,
+		]]>	
+		<dynamic>
+			<isNotEmpty property="language">
+				<isEqual property="language" compareValue="zh_CN">										
+					<![CDATA[B.EmployeeName AS baName,]]>
+				</isEqual>
+				<isEqual property="language" compareValue="en_US">										
+					<![CDATA[B.EmployeeName AS baName,]]>
+				</isEqual>
+			</isNotEmpty>
+			<isEmpty property="language">
+				<![CDATA[B.EmployeeName AS baName,]]>
+			</isEmpty>
+		</dynamic>
+		<![CDATA[
+				B.BIN_PositionCategoryID AS positionCategoryID
+			FROM 
+				Basis.BIN_EmployeeCounter A
+				JOIN Basis.BIN_Employee B ON A.BIN_EmployeeID = B.BIN_EmployeeID
+			WHERE 
+				A.BIN_OrganizationID = #organizationId# 
+		]]>
+		<dynamic>
+			<isNotEmpty property="baInfoStr" prepend="AND">
+				(
+					<![CDATA[B.EmployeeCode Like '%' + #baInfoStr# + '%']]>
+					<isNotEmpty property="language">
+						<isEqual property="language" compareValue="zh_CN">										
+							<![CDATA[OR B.EmployeeName Like '%' + #baInfoStr# + '%']]>
+						</isEqual>
+						<isEqual property="language" compareValue="en_US">										
+							<![CDATA[OR B.EmployeeNameForeign Like '%' + #baInfoStr# + '%']]>
+						</isEqual>
+					</isNotEmpty>
+					<isEmpty property="language">
+						<![CDATA[OR B.EmployeeName Like '%' + #baInfoStr# + '%']]>
+					</isEmpty>
+				)
+			</isNotEmpty>
+		</dynamic>
+    </select>
+	
+</sqlMap>

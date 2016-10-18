@@ -1,0 +1,369 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sqlMap PUBLIC "-//iBATIS.com//DTD SQL Map 2.0//EN" "http://ibatis.apache.org/dtd/sql-map-2.dtd">
+<sqlMap namespace="BINOLSSPRM31">
+	<!-- 月度库存历史记录查询sql文  -->
+	<sql id="PrmStockHistorySQL">
+		<![CDATA[
+		SELECT
+			A.BIN_PromotionProductVendorID,
+			A.BIN_InventoryInfoID,
+			ISNULL(A.Quantity,0) AS hQuantity,
+			0 AS inQuantity,
+			0 AS outQuantity,
+			0 AS hDinQuantity,
+			0 AS hDoutQuantity,
+			0 AS hinQuantity,
+			0 AS houtQuantity
+		FROM
+			Inventory.BIN_PrmStockHistory A
+			JOIN T99 ON(A.BIN_InventoryInfoID = T99.BIN_InventoryInfoID)
+		WHERE
+			A.CutOfDate = CONVERT(date,#cutOfDate#)
+			AND A.ValidFlag = '1'
+		]]>
+		<isNotEmpty property="prmVendorId" prepend="AND">
+			A.BIN_PromotionProductVendorID = #prmVendorId#
+		</isNotEmpty>
+		<isNotEmpty property="depotId" prepend="AND">
+			A.BIN_InventoryInfoID = #depotId#
+		</isNotEmpty>
+		<isNotEmpty property="lgcInventoryId" prepend="AND">
+			A.BIN_LogicInventoryInfoID = #lgcInventoryId#
+		</isNotEmpty>
+	</sql>
+	<!-- 月度库存历史到集结日点延迟上传数据（入库）  -->
+	<sql id="PrmStockHistoryDelayInSQL">
+		<![CDATA[
+		SELECT
+			B.BIN_PromotionProductVendorID,
+			B.BIN_InventoryInfoID,
+			0 AS hQuantity,
+			0 AS inQuantity,
+			0 AS outQuantity,
+			ISNULL(B.Quantity,0) AS hDinQuantity,
+			0 AS hDoutQuantity,
+			0 AS hinQuantity,
+			0 AS houtQuantity
+		FROM
+			Inventory.BIN_PromotionStockInOut A WITH(NOLOCK)
+			JOIN Inventory.BIN_PromotionStockDetail B WITH(NOLOCK)																		
+			ON(A.BIN_PromotionStockInOutID = B.BIN_PromotionStockInOutID
+				AND B.StockType = '0'
+				AND B.ValidFlag = '1')
+			JOIN T99 ON(B.BIN_InventoryInfoID = T99.BIN_InventoryInfoID)
+		WHERE
+			A.StockInOutDate <= CONVERT(date,#cutOfDate#)
+			AND A.ValidFlag = '1'
+			AND A.CloseFlag = '0'
+		]]>
+		<isNotEmpty property="depotId" prepend="AND">
+			B.BIN_InventoryInfoID = #depotId#
+		</isNotEmpty>
+		<isNotEmpty property="prmVendorId" prepend="AND">
+			B.BIN_PromotionProductVendorID = #prmVendorId#
+		</isNotEmpty>
+		<isNotEmpty property="lgcInventoryId" prepend="AND">
+			B.BIN_LogicInventoryInfoID = #lgcInventoryId#
+		</isNotEmpty>
+	</sql>	
+	<!-- 月度库存历史到集结日点延迟上传数据（出库）  -->
+	<sql id="PrmStockHistoryDelayOutSQL">
+		<![CDATA[
+		SELECT
+			B.BIN_PromotionProductVendorID,
+			B.BIN_InventoryInfoID,
+			0 AS hQuantity,
+			0 AS inQuantity,
+			0 AS outQuantity,
+			0 AS hDinQuantity,
+			ISNULL(B.Quantity,0) AS hDoutQuantity,
+			0 AS hinQuantity,
+			0 AS houtQuantity
+		FROM
+			Inventory.BIN_PromotionStockInOut A WITH(NOLOCK)
+			JOIN Inventory.BIN_PromotionStockDetail B WITH(NOLOCK)																			
+			ON(A.BIN_PromotionStockInOutID = B.BIN_PromotionStockInOutID
+				AND B.StockType = '1'
+				AND B.ValidFlag = '1')
+			JOIN T99 ON(B.BIN_InventoryInfoID = T99.BIN_InventoryInfoID)
+		WHERE
+			A.StockInOutDate <= CONVERT(date,#cutOfDate#)
+			AND A.ValidFlag = '1'
+			AND A.CloseFlag = '0'
+		]]>
+		<isNotEmpty property="depotId" prepend="AND">
+			B.BIN_InventoryInfoID = #depotId#
+		</isNotEmpty>
+		<isNotEmpty property="prmVendorId" prepend="AND">
+			B.BIN_PromotionProductVendorID = #prmVendorId#
+		</isNotEmpty>
+		<isNotEmpty property="lgcInventoryId" prepend="AND">
+			B.BIN_LogicInventoryInfoID = #lgcInventoryId#
+		</isNotEmpty>
+	</sql>
+	<!-- 月度库存历史到集结日时间段的收入变化统计sql文  -->
+	<sql id="PrmStockHistoryInSQL">
+		<![CDATA[
+		SELECT
+			B.BIN_PromotionProductVendorID,
+			B.BIN_InventoryInfoID,
+			0 AS hQuantity,
+			0 AS inQuantity,
+			0 AS outQuantity,
+			0 AS hDinQuantity,
+			0 AS hDoutQuantity,
+			ISNULL(B.Quantity,0) AS hinQuantity,
+			0 AS houtQuantity
+		FROM
+			Inventory.BIN_PromotionStockInOut A WITH(NOLOCK)
+			JOIN Inventory.BIN_PromotionStockDetail B WITH(NOLOCK)																			
+			ON(A.BIN_PromotionStockInOutID = B.BIN_PromotionStockInOutID
+				AND B.StockType = '0'
+				AND B.ValidFlag = '1')
+			JOIN T99 ON(B.BIN_InventoryInfoID = T99.BIN_InventoryInfoID)
+		WHERE
+			A.StockInOutDate > CONVERT(date,#date1#)
+			AND A.StockInOutDate <= CONVERT(date,#date2#)
+			AND A.ValidFlag = '1'
+		]]>
+		<isNotEmpty property="depotId" prepend="AND">
+			B.BIN_InventoryInfoID = #depotId#
+		</isNotEmpty>
+		<isNotEmpty property="prmVendorId" prepend="AND">
+			B.BIN_PromotionProductVendorID = #prmVendorId#
+		</isNotEmpty>
+		<isNotEmpty property="lgcInventoryId" prepend="AND">
+			B.BIN_LogicInventoryInfoID = #lgcInventoryId#
+		</isNotEmpty>
+	</sql>	
+	<!-- 月度库存历史到集结日时间段的发出变化统计sql文  -->
+	<sql id="PrmStockHistoryOutSQL">
+		<![CDATA[
+		SELECT
+			B.BIN_PromotionProductVendorID,
+			B.BIN_InventoryInfoID,
+			0 AS hQuantity,
+			0 AS inQuantity,
+			0 AS outQuantity,
+			0 AS hDinQuantity,
+			0 AS hDoutQuantity,
+			0 AS hinQuantity,
+			ISNULL(B.Quantity,0) AS houtQuantity
+		FROM
+			Inventory.BIN_PromotionStockInOut A WITH(NOLOCK)
+			JOIN Inventory.BIN_PromotionStockDetail B WITH(NOLOCK)																		
+			ON(A.BIN_PromotionStockInOutID = B.BIN_PromotionStockInOutID
+				AND B.StockType = '1'
+				AND B.ValidFlag = '1')
+			JOIN T99 ON(B.BIN_InventoryInfoID = T99.BIN_InventoryInfoID)
+		WHERE
+			A.StockInOutDate > CONVERT(date,#date1#)
+			AND A.StockInOutDate <= CONVERT(date,#date2#)
+			AND A.ValidFlag = '1'
+		]]>
+		<isNotEmpty property="depotId" prepend="AND">
+			B.BIN_InventoryInfoID = #depotId#
+		</isNotEmpty>
+		<isNotEmpty property="prmVendorId" prepend="AND">
+			B.BIN_PromotionProductVendorID = #prmVendorId#
+		</isNotEmpty>
+		<isNotEmpty property="lgcInventoryId" prepend="AND">
+			B.BIN_LogicInventoryInfoID = #lgcInventoryId#
+		</isNotEmpty>
+	</sql>
+	<!-- 本期发出变化统计sql文  -->
+	<sql id="PrmStockOutSQL">
+		<![CDATA[
+		SELECT
+			B.BIN_PromotionProductVendorID,
+			B.BIN_InventoryInfoID,
+			0 AS hQuantity,
+			0 AS inQuantity,
+			ISNULL(B.Quantity,0) AS outQuantity,
+			0 AS hDinQuantity,
+			0 AS hDoutQuantity,
+			0 AS hinQuantity,
+			0 AS houtQuantity
+		FROM
+			Inventory.BIN_PromotionStockInOut A WITH(NOLOCK)
+			JOIN Inventory.BIN_PromotionStockDetail B WITH(NOLOCK)																		
+			ON(A.BIN_PromotionStockInOutID = B.BIN_PromotionStockInOutID
+				AND B.StockType = '1'
+				AND B.ValidFlag = '1')
+			JOIN T99 ON(B.BIN_InventoryInfoID = T99.BIN_InventoryInfoID)
+		WHERE
+			A.StockInOutDate >= CONVERT(date,#startDate#)
+			AND A.StockInOutDate <= CONVERT(date,#endDate#)
+			AND A.ValidFlag = '1'
+		]]>
+		<isNotEmpty property="depotId" prepend="AND">
+			B.BIN_InventoryInfoID = #depotId#
+		</isNotEmpty>
+		<isNotEmpty property="prmVendorId" prepend="AND">
+			B.BIN_PromotionProductVendorID = #prmVendorId#
+		</isNotEmpty>
+		<isNotEmpty property="lgcInventoryId" prepend="AND">
+			B.BIN_LogicInventoryInfoID = #lgcInventoryId#
+		</isNotEmpty>
+	</sql>
+	<!-- 本期收入变化统计sql文  -->
+	<sql id="PrmStockInSQL">
+		<![CDATA[
+		SELECT
+			B.BIN_PromotionProductVendorID,
+			B.BIN_InventoryInfoID,
+			0 AS hQuantity,
+			ISNULL(B.Quantity,0) AS inQuantity,
+			0 AS outQuantity,
+			0 AS hDinQuantity,
+			0 AS hDoutQuantity,
+			0 AS hinQuantity,
+			0 AS houtQuantity
+		FROM
+			Inventory.BIN_PromotionStockInOut A WITH(NOLOCK)
+			JOIN Inventory.BIN_PromotionStockDetail B WITH(NOLOCK)																		
+			ON(A.BIN_PromotionStockInOutID = B.BIN_PromotionStockInOutID
+				AND B.StockType = '0'
+				AND B.ValidFlag = '1')
+			JOIN T99 ON(B.BIN_InventoryInfoID = T99.BIN_InventoryInfoID)
+		WHERE
+			A.StockInOutDate >= CONVERT(date,#startDate#)
+			AND A.StockInOutDate <= CONVERT(date,#endDate#)
+			AND A.ValidFlag = '1'
+		]]>
+		<isNotEmpty property="depotId" prepend="AND">
+			B.BIN_InventoryInfoID = #depotId#
+		</isNotEmpty>
+		<isNotEmpty property="prmVendorId" prepend="AND">
+			B.BIN_PromotionProductVendorID = #prmVendorId#
+		</isNotEmpty>
+		<isNotEmpty property="lgcInventoryId" prepend="AND">
+			B.BIN_LogicInventoryInfoID = #lgcInventoryId#
+		</isNotEmpty>
+	</sql>
+	<!-- 库存记录查询sql文  -->
+	<sql id="ProStockSQL">
+		<![CDATA[
+		SELECT
+			T0.BIN_PromotionProductVendorID AS prmVendorId,
+			E.UnitCode AS unitCode,
+			D.BarCode AS barCode,
+			SUM(CONVERT(BIGINT,T0.inQuantity)) AS inQuantity,
+			SUM(CONVERT(BIGINT,T0.outQuantity)) AS outQuantity,
+		]]>
+		<dynamic>
+			<isNotEmpty property="language">
+				<isEqual property="language" compareValue="en_US">
+					E.NameForeign AS nameTotal,
+				</isEqual>
+				<isEqual property="language" compareValue="zh_CN">	
+					E.NameTotal AS nameTotal,
+				</isEqual>								
+			</isNotEmpty>
+			<isEmpty property="language">
+				E.NameTotal AS nameTotal,
+			</isEmpty>
+		</dynamic>
+		<isNotEmpty property="flagB" >
+			<![CDATA[		
+				SUM(CONVERT(BIGINT,T0.hQuantity) + (CONVERT(BIGINT,T0.hDinQuantity) - CONVERT(BIGINT,T0.hDoutQuantity)) 
+					+ (CONVERT(BIGINT,T0.hinQuantity) - CONVERT(BIGINT,T0.houtQuantity)) * #flag#) AS endQuantity,
+				SUM(CONVERT(BIGINT,T0.hQuantity) + (CONVERT(BIGINT,T0.hDinQuantity) - CONVERT(BIGINT,T0.hDoutQuantity)) 
+					+ (CONVERT(BIGINT,T0.hinQuantity) - CONVERT(BIGINT,T0.houtQuantity)) * #flag# 
+					- (CONVERT(BIGINT,T0.inQuantity) - CONVERT(BIGINT,T0.outQuantity))) AS startQuantity
+			]]>		
+		</isNotEmpty>
+		<isEmpty property="flagB" >
+			<![CDATA[		
+				SUM(CONVERT(BIGINT,T0.hQuantity) + (CONVERT(BIGINT,T0.hDinQuantity) - CONVERT(BIGINT,T0.hDoutQuantity)) 
+					+ (CONVERT(BIGINT,T0.hinQuantity) - CONVERT(BIGINT,T0.houtQuantity)) * #flag#) AS startQuantity,
+				SUM(CONVERT(BIGINT,T0.hQuantity) + (CONVERT(BIGINT,T0.hDinQuantity) - CONVERT(BIGINT,T0.hDoutQuantity)) 
+					+ (CONVERT(BIGINT,T0.hinQuantity) - CONVERT(BIGINT,T0.houtQuantity)) * #flag# 
+					+ (CONVERT(BIGINT,T0.inQuantity) - CONVERT(BIGINT,T0.outQuantity))) AS endQuantity
+			]]>		
+		</isEmpty>
+		<![CDATA[ FROM( ]]>
+			<include refid="BINOLSSPRM31.PrmStockHistorySQL" />
+			<![CDATA[ UNION ALL ]]>
+			<include refid="BINOLSSPRM31.PrmStockHistoryDelayInSQL" />
+			<![CDATA[ UNION ALL ]]>
+			<include refid="BINOLSSPRM31.PrmStockHistoryDelayOutSQL" />
+			<![CDATA[ UNION ALL ]]>
+			<include refid="BINOLSSPRM31.PrmStockHistoryInSQL" />
+			<![CDATA[ UNION ALL ]]>
+			<include refid="BINOLSSPRM31.PrmStockHistoryOutSQL" />
+			<![CDATA[ UNION ALL ]]>
+			<include refid="BINOLSSPRM31.PrmStockInSQL" />
+			<![CDATA[ UNION ALL ]]>
+			<include refid="BINOLSSPRM31.PrmStockOutSQL" />
+		<![CDATA[ ) T0
+				JOIN Basis.BIN_PromotionProductVendor D
+				ON(T0.BIN_PromotionProductVendorID = D.BIN_PromotionProductVendorID)
+				JOIN Basis.BIN_PromotionProduct E
+				ON(D.BIN_PromotionProductID = E.BIN_PromotionProductID 
+					AND E.IsStock = '1')
+		]]>
+		    <isNotEmpty prepend="WHERE" property="validFlag">
+				<isEqual property="validFlag" compareValue="1">
+	   				D.ValidFlag + E.ValidFlag = '11'
+				</isEqual>
+				<isEqual property="validFlag" compareValue="0">
+	   				D.ValidFlag + E.ValidFlag != '11'
+				</isEqual>
+			</isNotEmpty>
+		<![CDATA[
+			GROUP BY 
+				T0.BIN_PromotionProductVendorID,
+				E.UnitCode,
+				D.BarCode,
+		]]>
+		<dynamic>
+			<isNotEmpty property="language">
+				<isEqual property="language" compareValue="en_US">
+					E.NameForeign
+				</isEqual>
+				<isEqual property="language" compareValue="zh_CN">	
+					E.NameTotal
+				</isEqual>								
+			</isNotEmpty>
+			<isEmpty property="language">
+				E.NameTotal
+			</isEmpty>
+		</dynamic>
+	</sql>
+	<!-- 取得库存记录总数  -->
+    <select id="getProStockCount" parameterClass="java.util.HashMap" resultClass="java.lang.Integer">
+    	<include refid="BINOLCMINC99.getInventoryList" />
+    	<![CDATA[
+			SELECT	COUNT(SORT_T1.unitCode) AS count FROM (
+		]]>	
+		<include refid="BINOLSSPRM31.ProStockSQL" />
+		<![CDATA[	
+			)SORT_T1
+		]]>										
+    </select>
+	<!-- 取得库存记录LIST  -->
+	<select id="getProStockList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+		<include refid="BINOLCMINC99.getInventoryList" />
+		<include refid="BINOLCMINC99.pageheader" />
+		<include refid="BINOLSSPRM31.ProStockSQL" />
+		<include refid="BINOLCMINC99.pagefooter" />
+    </select>
+    <!-- 取得汇总信息  -->
+    <select id="getSumInfo" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+    	<include refid="BINOLCMINC99.getInventoryList" />
+    	<![CDATA[
+			SELECT	
+				COUNT(SORT_T1.unitCode) AS count,
+				ISNULL(SUM(CONVERT(BIGINT,ISNULL(SORT_T1.startQuantity,0))),0) AS sumStartQuantity,
+				ISNULL(SUM(CONVERT(BIGINT,ISNULL(SORT_T1.inQuantity,0))),0) AS sumInQuantity,
+				ISNULL(SUM(CONVERT(BIGINT,ISNULL(SORT_T1.outQuantity,0))),0) AS sumOutQuantity,
+			 	ISNULL(SUM(CONVERT(BIGINT,ISNULL(SORT_T1.endQuantity,0))),0) AS sumEndQuantity 
+			FROM (
+		]]>	
+		<include refid="BINOLSSPRM31.ProStockSQL" />
+		<![CDATA[	
+			)SORT_T1
+		]]>		
+    </select>
+</sqlMap>

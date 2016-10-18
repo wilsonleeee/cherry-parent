@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sqlMap PUBLIC "-//iBATIS.com//DTD SQL Map 2.0//EN" "http://ibatis.apache.org/dtd/sql-map-2.dtd">
+<sqlMap namespace="BINOLMOWAT11">
+    <!-- Job失敗履历查询sql文  -->
+	<sql id="jobRunFaildHistoryQuery">
+		<![CDATA[
+			SELECT
+				J.BIN_BrandInfoID AS brandInfoId,
+				B.BrandCode AS brandCode,
+				J.JobCode AS jobCode,
+				J.UnionIndex AS unionIndex,
+				J.UnionIndex1 AS unionIndex1,
+				J.UnionIndex2 AS unionIndex2,
+				J.UnionIndex3 AS unionIndex3,
+				J.ErrorMsg AS errorMsg,
+				J.Comments AS comments
+			FROM Tools.BIN_JobRunFaildHistory J
+			JOIN Basis.BIN_BrandInfo B
+				ON j.BIN_BrandInfoID = B.BIN_BrandInfoID
+		]]>
+			WHERE
+				J.ValidFlag = '1'
+		<dynamic>
+			<isNotEmpty prepend="AND" property="brandCode" >
+				B.BrandCode LIKE '%' + #brandCode# + '%'
+			</isNotEmpty>
+			<isNotEmpty prepend="AND" property="jobCode" >
+				J.JobCode LIKE '%' + #jobCode# + '%'
+			</isNotEmpty>
+			<isNotEmpty prepend="AND" property="unionIndex" >
+				J.UnionIndex = #unionIndex#
+			</isNotEmpty>
+			<isNotEmpty prepend="AND" property="unionIndex1" >
+				J.UnionIndex1 = #unionIndex1#
+			</isNotEmpty>
+			<isNotEmpty prepend="AND" property="unionIndex2" >
+				J.UnionIndex2 = #unionIndex2#
+			</isNotEmpty>
+			<isNotEmpty prepend="AND" property="unionIndex3" >
+				J.UnionIndex3 = #unionIndex3#
+			</isNotEmpty>
+		</dynamic>
+	</sql>
+	
+	<!-- 取得Job失败履历表信息总数  -->
+    <select id="getCountJobRunFaildHistory" parameterClass="java.util.HashMap" resultClass="java.lang.Integer">
+    	<![CDATA[
+			SELECT	COUNT(1) AS count FROM (
+		]]>	
+		<include refid="BINOLMOWAT11.jobRunFaildHistoryQuery" />
+		<![CDATA[	
+			)SORT_T1
+		]]>										
+    </select>
+    
+    <!-- 取得Job失败履历表信息List -->
+	<select id="getJobRunFaildHistoryList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap" >
+		<include refid="BINOLCMINC99.pageheader" />
+		<include refid="BINOLMOWAT11.jobRunFaildHistoryQuery"/>
+		<include refid="BINOLCMINC99.pagefooter" />
+    </select>
+
+</sqlMap>

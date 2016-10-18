@@ -1,0 +1,238 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sqlMap PUBLIC "-//iBATIS.com//DTD SQL Map 2.0//EN" "http://ibatis.apache.org/dtd/sql-map-2.dtd">
+<sqlMap namespace="BINOLSTBIL19">
+    <!-- 退库单查询sql文  -->
+    <sql id="SaleReturnReqQuery">
+        <![CDATA[SELECT]]>
+        <isEmpty property="prtVendorId">
+            <isEmpty property="nameTotal">
+                <![CDATA[DISTINCT]]>
+            </isEmpty>
+        </isEmpty>
+        <![CDATA[
+                A.BIN_BrandInfoID,
+                A.BIN_SaleReturnRequestID AS saleReturnRequestID,
+                A.BillCode AS billNo,
+                A.RelevanceNo AS relevanceNo,
+                A.VerifiedFlag AS verifiedFlag,
+                A.TradeDate AS tradeDate,
+                N.EmployeeName AS employeeIDAudit,
+				H.EmployeeCode AS employeeCode,
+                F.DepartCode AS counterCode,
+                A.MemberCode AS memberCode,
+                A.BIN_MemberInfoID AS memberInfoId
+            ]]>
+        <dynamic>
+        <isNotEmpty property="language">
+            <isEqual property="language" compareValue="en_US">
+            <![CDATA[
+            	,H.EmployeeNameForeign AS employeeName
+                ,F.DepartName AS counterName
+				,F.NameForeign AS departNameOnly
+            ]]>
+            </isEqual>
+            <isEqual property="language" compareValue="zh_CN">
+            <![CDATA[
+            	,H.EmployeeName AS employeeName
+                ,F.DepartName AS counterName
+				,F.DepartName AS departNameOnly
+            ]]>
+            </isEqual>
+        </isNotEmpty>
+        <isEmpty property="language">
+        <![CDATA[
+        	,H.EmployeeName AS employeeName
+            ,F.DepartName AS counterName
+			,F.DepartName AS departNameOnly
+        ]]>
+        </isEmpty>
+        </dynamic>
+        <isEmpty property="prtVendorId">
+            <isNotEmpty property="nameTotal">
+            <![CDATA[
+                ,ISNULL(C.Quantity,0) AS totalQuantity
+                ,ISNULL(C.Quantity,0) * ISNULL(C.Price,0) AS totalAmount
+            ]]>
+            </isNotEmpty>
+            <isEmpty property="nameTotal">
+            <![CDATA[
+                ,ISNULL(A.TotalQuantity,0) AS totalQuantity
+                ,ISNULL(A.TotalAmount,0) AS totalAmount
+            ]]>
+            </isEmpty>
+        </isEmpty>
+        <isNotEmpty property="prtVendorId">
+        <![CDATA[
+            ,ISNULL(C.Quantity,0) AS totalQuantity
+            ,ISNULL(C.Quantity,0) * ISNULL(C.Price,0) AS totalAmount
+        ]]>
+        </isNotEmpty>
+        <![CDATA[
+            FROM
+            Sale.BIN_SaleReturnRequest A
+            JOIN Sale.BIN_SaleReturnRequestDetail C
+            ON(A.BIN_SaleReturnRequestID  = C.BIN_SaleReturnRequestID AND C.ValidFlag = '1')
+            JOIN Basis.BIN_Organization F
+            ON(A.BIN_OrganizationID = F.BIN_OrganizationID)
+            LEFT JOIN Basis.BIN_Employee H
+            ON (A.BIN_EmployeeID = H.BIN_EmployeeID )
+            LEFT JOIN Basis.BIN_Employee N
+            ON (A.BIN_EmployeeIDAudit = N.BIN_EmployeeID )
+            LEFT JOIN Members.BIN_MemberInfo M
+            ON (A.BIN_MemberInfoID = M.BIN_MemberInfoID)
+        ]]>
+        <isEmpty property="prtVendorId">
+            <isNotEmpty property="nameTotal">
+                <![CDATA[
+                    JOIN Basis.BIN_ProductVendor I
+                    ON(C.BIN_ProductVendorID = I.BIN_ProductVendorID)
+                    JOIN Basis.BIN_Product J
+                    ON(I.BIN_ProductID = J.BIN_ProductID
+                    AND J.NameTotal like '%' + #nameTotal# + '%')
+                ]]>
+            </isNotEmpty>
+        </isEmpty>
+        <![CDATA[
+            WHERE
+                A.ValidFlag = '1' AND TradeType='SA'
+        ]]>
+        <![CDATA[AND EXISTS (]]>
+        <include refid="BINOLCMINC99.getDepartList" />
+        <![CDATA[AND A.BIN_OrganizationID = A99.BIN_OrganizationID)]]>
+        <isNotEmpty prepend="AND" property="brandInfoId">
+            <![CDATA[A.BIN_BrandInfoID = #brandInfoId#]]>
+        </isNotEmpty>
+        <isNotEmpty prepend="AND" property="startDate">
+            <![CDATA[A.TradeDate >= #startDate# ]]>
+        </isNotEmpty>
+        <isNotEmpty prepend="AND" property="endDate">
+            <![CDATA[A.TradeDate <= #endDate# ]]>
+        </isNotEmpty>
+        <isNotEmpty prepend="AND" property="billNo">
+            <![CDATA[(A.BillCode LIKE '%' + #billNo# + '%')]]>
+        </isNotEmpty>
+        <isNotEmpty prepend="AND" property="verifiedFlag">
+            <![CDATA[A.VerifiedFlag = #verifiedFlag#]]>
+        </isNotEmpty>
+        <isNotEmpty prepend="AND" property="prtVendorId">
+            <![CDATA[C.BIN_ProductVendorID = #prtVendorId#]]>
+        </isNotEmpty>
+    </sql>
+    
+    <!-- 取得退库申请单总数  -->
+    <select id="getSaleReturnRequestCount" parameterClass="java.util.HashMap" resultClass="java.lang.Integer">
+        <![CDATA[
+            SELECT  COUNT(SORT_T1.saleReturnRequestID) AS count FROM (
+        ]]>
+        <include refid="BINOLSTBIL19.SaleReturnReqQuery" />
+        <![CDATA[
+            )SORT_T1
+        ]]>
+    </select>
+    
+    <!-- 取得退库申请单List  -->
+    <select id="getSaleReturnRequestList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+        <include refid="BINOLCMINC99.pageheader" />
+        <![CDATA[
+            SELECT  
+                T20.*, 
+                CASE WHEN EXISTS(SELECT 1 FROM Basis.BIN_PrintLog T10 WHERE 
+                                    T20.BIN_BrandInfoID = T10.BIN_BrandInfoID 
+                                    AND T20.billNo = T10.BillNo) 
+                THEN 1 ELSE 0 END AS printStatus
+            FROM (
+        ]]>
+        <include refid="BINOLSTBIL19.SaleReturnReqQuery" />
+        <![CDATA[   
+            )T20
+        ]]> 
+        <include refid="BINOLCMINC99.pagefooter" />
+    </select>
+
+    <!-- 取得出退库申请汇总信息【产品作为检索条件】  -->
+    <select id="getSumInfo" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+       	<![CDATA[
+            SELECT
+                ISNULL(SUM(ISNULL(T.totalQuantity,0)),0) AS sumQuantity,
+                ISNULL(SUM(ISNULL(T.totalAmount,0)),0) AS sumAmount
+            FROM
+			(	
+		]]>
+	        <include refid="BINOLSTBIL19.SaleReturnReqQuery" />
+		<![CDATA[ 
+			) T	
+		]]>
+
+    </select>
+    <!-- 退库申请单一览明细excel导出SQL -->
+    <sql id="saleReturnReqExportQuery">
+    	<![CDATA[
+	    	SELECT
+	    		T0.billNo,
+	    		T0.relevanceNo,
+				T0.verifiedFlag,
+				T0.tradeDate,
+				T0.counterName,
+				T0.counterCode,
+				T0.employeeCode,
+				T0.employeeName,
+				T0.memberCode,
+				A.Comments AS saleReason,
+				D.Name AS memberName,
+				ISNULL(A.Quantity, 0) AS detailQuantity,
+				CONVERT(decimal(16, 2), ISNULL(A.Price, 0)) AS detailPrice,
+				C.UnitCode AS unitCode,
+				B.BarCode AS barCode,
+				T0.employeeIDAudit AS employeeNameAudit
+    	]]>
+    	<dynamic>
+        <isNotEmpty property="language">
+            <isEqual property="language" compareValue="en_US">
+            <![CDATA[
+				,C.NameForeign AS productName
+            ]]>
+            </isEqual>
+            <isEqual property="language" compareValue="zh_CN">
+            <![CDATA[
+				,C.NameTotal AS productName
+            ]]>
+            </isEqual>
+        </isNotEmpty>
+        <isEmpty property="language">
+        <![CDATA[
+			,C.NameTotal AS productName
+        ]]>
+        </isEmpty>
+        </dynamic>
+        <![CDATA[FROM(]]>
+        <include refid="BINOLSTBIL19.SaleReturnReqQuery" />
+        <![CDATA[)T0
+        	JOIN Sale.BIN_SaleReturnRequestDetail A WITH(NOLOCK)
+				ON(T0.saleReturnRequestID = A.BIN_SaleReturnRequestID)
+			LEFT JOIN Basis.BIN_ProductVendor B WITH(NOLOCK)
+				ON (A.BIN_ProductVendorID = B.BIN_ProductVendorID)
+			LEFT JOIN Basis.BIN_Product C WITH(NOLOCK)
+				ON (B.BIN_ProductID = C.BIN_ProductID)
+			LEFT JOIN Members.BIN_MemberInfo D WITH(NOLOCK)
+				ON(T0.memberInfoId = D.BIN_MemberInfoID)
+        ]]>
+    </sql>
+    <!-- 分页查询导出的退库申请单明细 -->
+	<select id="getSaleReturnReqExportList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+		<include refid="BINOLCMINC99.pageheader" />
+	  	<include refid="BINOLSTBIL19.saleReturnReqExportQuery" />
+	  	<include refid="BINOLCMINC99.pagefooter" />
+	</select>
+ 
+	<!--  取得退库申请单明细总数  -->
+	<select id="getExportDetailCount" parameterClass="java.util.HashMap" resultClass="java.lang.Integer">
+		<![CDATA[
+			SELECT 
+				COUNT(1) AS count FROM (
+		]]>
+		<include refid="BINOLSTBIL19.saleReturnReqExportQuery" />
+		<![CDATA[
+			)SORT_T1
+		]]>
+	</select>
+</sqlMap>

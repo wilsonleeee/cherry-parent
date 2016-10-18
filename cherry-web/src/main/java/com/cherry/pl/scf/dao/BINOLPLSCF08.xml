@@ -1,0 +1,238 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sqlMap PUBLIC "-//iBATIS.com//DTD SQL Map 2.0//EN" "http://ibatis.apache.org/dtd/sql-map-2.dtd">
+<sqlMap namespace="BINOLPLSCF08">
+	
+	<!-- 取得code值管理详细信息  -->
+    <select id="getCodeMInfo" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+         <![CDATA[
+	   	SELECT  
+			OrgCode AS orgCode,
+			BrandCode AS brandCode,
+			CodeType AS codeType,
+			CodeName AS codeName,
+			KeyDescription AS keyDescription,
+			Value1Description AS value1Description,
+			Value2Description AS value2Description,
+			Value3Description AS value3Description			
+		 FROM    
+			Tools.BIN_CodeManager
+		WHERE    
+			BIN_CodeManagerID = #codeManagerID# 
+		]]>			
+    </select>	
+	
+	<!-- 更新code值管理表  -->
+	<update id="updateCodeM" parameterClass="java.util.HashMap">
+		<![CDATA[
+		UPDATE
+			Tools.BIN_CodeManager
+		SET
+			OrgCode=#orgCode#,
+			BrandCode=#brandCode#,
+			CodeName=#codeName#,
+			KeyDescription=#keyDescription#,
+			Value1Description=#value1Description#,
+			Value2Description=#value2Description#,
+			Value3Description=#value3Description#,			
+		]]>
+		<include refid="BINOLCMINC99.updateSql" />
+		<![CDATA[
+		WHERE
+			BIN_CodeManagerID = #codeManagerID#
+		]]>
+	</update>	
+	
+	<!--根据通用的code值管理设定品牌的code值-->
+	<insert id="insertCodeManager" parameterClass="java.util.HashMap">
+		<![CDATA[
+		INSERT INTO 
+			Tools.BIN_CodeManager
+			(
+				OrgCode,
+				BrandCode,
+				CodeType,
+				CodeName,
+				KeyDescription,
+				Value1Description,
+				Value2Description,
+				Value3Description,
+				ValidFlag,
+				CreateTime,
+				CreatedBy,
+				CreatePGM,
+				UpdateTime,
+				UpdatedBy,
+				UpdatePGM,
+				ModifyCount
+			)
+				SELECT
+					#orgCode#,
+					#brandCode#,
+					CodeType,
+					CodeName,
+					KeyDescription,
+					Value1Description,
+					Value2Description,
+					Value3Description,
+					ValidFlag,
+					GETDATE(),
+					#createdBy#,
+					#createPGM#,
+					GETDATE(),
+					#updatedBy#,
+					#updatePGM#,
+					0
+				FROM
+					Tools.BIN_CodeManager
+				WHERE
+					CodeType = #codeType#
+					AND OrgCode = '-9999'
+					AND BrandCode = '-9999'
+					AND ValidFlag = '1'
+		]]>
+	</insert>
+	
+	<!--根据通用的Code值设定品牌code值-->
+	<insert id="insertCode" parameterClass="java.util.HashMap">
+		<![CDATA[
+		INSERT INTO
+			Tools.BIN_Coder
+			(
+				OrgCode,
+				BrandCode,
+				CodeType,
+				CodeKey,
+				Value1,
+				Value2,
+				Value3,
+				Grade,
+				CodeOrder,
+				ValidFlag,
+				CreateTime,
+				CreatedBy,
+				CreatePGM,
+				UpdateTime,
+				UpdatedBy,
+				UpdatePGM,
+				ModifyCount
+			)
+			SELECT
+				#orgCode#,
+				#brandCode#,
+				CodeType,
+				CodeKey,
+				Value1,
+				Value2,
+				Value3,
+				Grade,
+				CodeOrder,
+				ValidFlag,
+				GETDATE(),
+				#createdBy#,
+				#createPGM#,
+				GETDATE(),
+				#updatedBy#,
+				#updatePGM#,
+				0
+			FROM
+				Tools.BIN_Coder
+			WHERE
+				CodeType = #codeType#
+				AND OrgCode = '-9999'
+				AND BrandCode = '-9999'
+				AND ValidFlag = '1'
+		]]>
+	</insert>
+	
+	<!--根据组织、品牌、CodeType、（CodeKey）,删除Code值-->
+	<delete id="deleteCode" parameterClass="java.util.HashMap">
+		<![CDATA[
+			DELETE FROM
+				Tools.BIN_Coder
+			WHERE
+				OrgCode = #orgCode#
+				AND BrandCode = #brandCode#
+				AND CodeType = #codeType#
+				AND ValidFlag = '1'
+		]]>
+				<dynamic>
+					<isNotEmpty property="codeKey" prepend="AND">
+						CodeKey = #codeKey#
+					</isNotEmpty>
+				</dynamic>
+	</delete>
+	
+	<!--根据组织、品牌、codeType删除code管理值 -->
+	<delete id="deleteCodeManage" parameterClass="java.util.HashMap">
+		DELETE FROM
+			Tools.BIN_CodeManager
+		WHERE
+			ValidFlag = '1'
+			AND OrgCode = #orgCode#
+			AND BrandCode = #brandCode#
+			AND CodeType = #codeType#
+	</delete>
+	
+	<!--编辑的时候往code管理值表中插入数据-->
+	<insert id="instCodeMgrWhenEdit" parameterClass="java.util.HashMap">
+		<selectKey resultClass="java.lang.Integer" type="post" keyProperty="BIN_CodeManagerID" >
+			INSERT INTO 
+				Tools.BIN_CodeManager
+				(
+					OrgCode,
+					BrandCode,
+					CodeType,
+					CodeName,
+					KeyDescription,
+					Value1Description,
+					Value2Description,
+					Value3Description,
+					<include refid="BINOLCMINC99.insertKeySql" />
+				)
+				VALUES
+				(
+					#orgCode#,
+					#brandCode#,
+					#codeType#,
+					#codeName#,
+					#keyDescription#,
+					#value1Description#,
+					#value2Description#,
+					#value3Description#,
+					<include refid="BINOLCMINC99.insertValueSql" />
+				)
+				SELECT SCOPE_IDENTITY() AS value
+			</selectKey>
+	</insert>
+	
+	<!--编辑的时候往code值表中插入数据-->
+	<insert id="instCodeWhenEdit" parameterClass="java.util.HashMap">
+		INSERT INTO
+			Tools.BIN_Coder
+			(
+				OrgCode,
+				BrandCode,
+				CodeType,
+				CodeKey,
+				Value1,
+				Value2,
+				Value3,
+				Grade,
+				CodeOrder,
+				<include refid="BINOLCMINC99.insertKeySql" />
+			)
+			VALUES
+			(
+				#orgCode#,
+				#brandCode#,
+				#codeType#,
+				#codeKey#,
+				#value1#,
+				#value2#,
+				#value3#,
+				#grade#,
+				#codeOrder#,
+				<include refid="BINOLCMINC99.insertValueSql" />
+			)
+	</insert>
+</sqlMap>

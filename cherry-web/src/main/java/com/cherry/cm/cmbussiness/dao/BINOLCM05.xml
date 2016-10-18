@@ -1,0 +1,847 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sqlMap PUBLIC "-//iBATIS.com//DTD SQL Map 2.0//EN" "http://ibatis.apache.org/dtd/sql-map-2.dtd">
+<sqlMap namespace="BINOLCM05">
+	<!-- 品牌信息 -->
+	<resultMap id="BINOLCM05.BrandInfoList" class="java.util.HashMap">
+		<result property="brandInfoId" column="BIN_BrandInfoID"/>				<!-- 品牌信息ID -->
+		<result property="brandCode" column="BrandCode"/>
+		<result property="brandName" column="BrandName"/>						<!-- 品牌信息名称 -->
+	</resultMap>
+	<!-- 取得品牌信息  -->
+    <select id="getBrandInfoList" parameterClass="java.util.HashMap" resultMap="BINOLCM05.BrandInfoList">
+       	<![CDATA[
+			SELECT
+				BIN_BrandInfoID
+				,BrandCode
+			]]>
+		<dynamic>
+		<isNotEmpty property="language">
+			<isEqual property="language" compareValue="en_US">
+			,BrandNameForeign AS BrandName
+			</isEqual>
+			<isEqual property="language" compareValue="zh_CN">	
+			,BrandNameChinese AS BrandName
+			</isEqual>								
+		</isNotEmpty>
+		<isEmpty property="language">
+			,BrandNameChinese AS BrandName
+		</isEmpty>
+		</dynamic>
+		 <![CDATA[															
+			FROM
+				Basis.BIN_BrandInfo
+			WHERE
+				BIN_OrganizationInfoID=#organizationInfoId# AND
+				ValidFlag='1'
+		]]>
+		<dynamic>
+		<isNotEmpty property="noHeadKbn">
+				<![CDATA[AND BIN_BrandInfoID <> -9999	]]>	
+		</isNotEmpty>
+		</dynamic>
+    </select>
+    
+    <select id="getBrandInfoShowList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+       	<![CDATA[
+			SELECT
+				BIN_BrandInfoID,
+				BrandCode
+		]]>
+		<dynamic>
+		<isNotEmpty property="language">
+			<isEqual property="language" compareValue="en_US">
+			,BrandNameForeign AS BrandName
+			</isEqual>
+			<isEqual property="language" compareValue="zh_CN">	
+			,BrandNameChinese AS BrandName
+			</isEqual>								
+		</isNotEmpty>
+		<isEmpty property="language">
+			,BrandNameChinese AS BrandName
+		</isEmpty>
+		</dynamic>
+		 <![CDATA[															
+			FROM
+				Basis.BIN_BrandInfo
+			WHERE
+				BIN_OrganizationInfoID = #organizationInfoId# AND
+		]]>		
+			<isNotEmpty property="brandInfoId">
+				BIN_BrandInfoID = #brandInfoId# AND
+			</isNotEmpty>
+		<![CDATA[	
+				ValidFlag = '1'
+		]]>
+    </select>
+	
+	<!-- 取得品牌名称 -->
+	<select id="getBrandName" parameterClass="java.util.HashMap" resultClass="java.lang.String" >
+		<![CDATA[
+			SELECT
+			]]>
+		<dynamic>
+		<isNotEmpty property="language">
+			<isEqual property="language" compareValue="en_US">
+			BrandNameForeign AS brandName
+			</isEqual>
+			<isEqual property="language" compareValue="zh_CN">	
+			BrandNameChinese AS brandName
+			</isEqual>								
+		</isNotEmpty>
+		<isEmpty property="language">
+			BrandNameChinese AS brandName
+		</isEmpty>
+		</dynamic>
+		 <![CDATA[															
+			FROM
+				Basis.BIN_BrandInfo
+			WHERE
+				BIN_BrandInfoID = #brandInfoId# AND
+				ValidFlag='1'
+		]]>
+    </select>
+	<!-- 取得品牌code -->
+	<select id="getBrandCode" parameterClass="java.util.HashMap" resultClass="java.lang.String" >
+		<![CDATA[
+			SELECT
+				BrandCode AS brandCode															
+			FROM
+				Basis.BIN_BrandInfo
+			WHERE
+				BIN_BrandInfoID = #brandInfoId# AND
+				ValidFlag='1'
+		]]>
+    </select>
+    
+	<!-- 取得天猫加密秘钥 -->
+	<select id="getTmMixKey" parameterClass="java.util.HashMap" resultClass="java.lang.String" >
+		<![CDATA[
+			SELECT
+				TmMixKey AS tmMixKey															
+			FROM
+				Basis.BIN_BrandInfo
+			WHERE
+				BIN_BrandInfoID = #brandInfoId# AND
+				ValidFlag='1'
+		]]>
+    </select>
+	
+	<!-- 取得品牌lastcode -->
+	<select id="getBrandLastCode" parameterClass="java.util.HashMap" resultClass="java.lang.String" >
+		<![CDATA[
+			SELECT
+				LastCode AS lastCode															
+			FROM
+				Basis.BIN_BrandInfo
+			WHERE
+				BIN_BrandInfoID = #brandInfoId# AND
+				ValidFlag='1'
+		]]>
+    </select>
+	
+	<!--根据品牌code和组织ID取得品牌ID-->
+	<select id="getBrandInfoId" parameterClass="java.util.HashMap" resultClass="java.lang.Integer">
+		<![CDATA[
+			SELECT
+				BIN_BrandInfoID AS brandInfoId															
+			FROM
+				Basis.BIN_BrandInfo
+			WHERE
+				BrandCode = #brandCode#
+				AND BIN_OrganizationInfoID = #organizationInfoId#
+				AND ValidFlag='1'
+		]]>
+	</select>
+	
+	<!-- 促销产品类型 -->
+	<resultMap id="BINOLCM05.PromPrtCateList" class="java.util.HashMap">
+		<result property="promPrtCateId" column="BIN_PromotionPrtCategoryID"/>				<!-- 促销产品类别ID -->
+		<result property="itemClassName" column="ItemClassName"/>							<!-- 类型名称 -->
+	</resultMap>
+	<!-- 取得促销产品类型  -->
+    <select id="getPromPrtCateList" parameterClass="java.util.HashMap" resultMap="BINOLCM05.PromPrtCateList">
+       	<![CDATA[
+			SELECT
+				BIN_PromotionPrtCategoryID
+			]]>
+		<dynamic>
+		<isNotEmpty property="language">
+			<isEqual property="language" compareValue="en_US">
+			,ItemClassNameForeign AS ItemClassName
+			</isEqual>
+			<isEqual property="language" compareValue="zh_CN">	
+			,ItemClassNameChinese AS ItemClassName
+			</isEqual>								
+		</isNotEmpty>
+		<isEmpty property="language">
+			,ItemClassNameChinese AS ItemClassName
+		</isEmpty>
+		</dynamic>
+		 <![CDATA[															
+			FROM
+				Basis.BIN_PromotionPrtCategory
+			WHERE
+				BIN_OrganizationInfoID = #organizationInfoId# AND
+				ValidFlag = '1'
+		]]>
+		<dynamic>
+		<isNotEmpty prepend="AND" property="brandInfoId">
+			BIN_BrandInfoID = #brandInfoId#
+		</isNotEmpty>
+		</dynamic>
+    </select>
+	<!-- 取得产品类型  -->
+    <select id="getPrtCateList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+       	<![CDATA[
+			SELECT
+				BIN_ProductCategoryID AS prtCateId,
+			]]>
+		<dynamic>
+		<isNotEmpty property="language">
+			<isEqual property="language" compareValue="en_US">
+			ItemClassNameForeign AS itemName
+			</isEqual>
+			<isEqual property="language" compareValue="zh_CN">	
+			ItemClassNameChinese AS itemName
+			</isEqual>								
+		</isNotEmpty>
+		<isEmpty property="language">
+			ItemClassNameChinese AS itemName
+		</isEmpty>
+		</dynamic>
+		 <![CDATA[															
+			FROM
+				Basis.BIN_ProductCategory
+			WHERE
+				BIN_OrganizationInfoID = #organizationInfoId# 
+				AND ValidFlag = '1'
+		]]>
+		<dynamic>
+		<isNotEmpty prepend="AND" property="brandInfoId">
+			BIN_BrandInfoID = #brandInfoId#
+		</isNotEmpty>
+		</dynamic>
+    </select>
+	<!-- 大分类 -->
+	<resultMap id="BINOLCM05.PrimaryCateList" class="java.util.HashMap">
+		<result property="primaryCateCode" column="PrimaryCategoryCode"/>			<!-- 大分类代码 -->
+		<result property="primaryCateName" column="PrimaryCategoryName"/>			<!-- 大分类名称 -->
+	</resultMap>
+	<!-- 取得大分类  -->
+    <select id="getPrimaryCateList" parameterClass="java.util.HashMap" resultMap="BINOLCM05.PrimaryCateList">
+       	<![CDATA[
+			SELECT
+				DISTINCT
+				PrimaryCategoryCode
+			]]>
+		<dynamic>
+		<isNotEmpty property="language">
+			<isEqual property="language" compareValue="en_US">
+			,PrimaryCategoryNameForeign AS PrimaryCategoryName
+			</isEqual>
+			<isEqual property="language" compareValue="zh_CN">	
+			,PrimaryCategoryNameChinese AS PrimaryCategoryName
+			</isEqual>								
+		</isNotEmpty>
+		<isEmpty property="language">
+			,PrimaryCategoryNameChinese AS PrimaryCategoryName
+		</isEmpty>
+		</dynamic>
+		 <![CDATA[															
+			FROM
+				Basis.BIN_PromotionPrtType
+			WHERE
+				BIN_OrganizationInfoID = #organizationInfoId# AND
+				ValidFlag = '1'
+		]]>
+		<dynamic>
+		<isNotEmpty prepend="AND" property="brandInfoId">
+			BIN_BrandInfoID = #brandInfoId#
+		</isNotEmpty>
+		</dynamic>
+    </select>
+	
+	<!-- 中分类 -->
+	<resultMap id="BINOLCM05.SecondCateList" class="java.util.HashMap">
+		<result property="secondCateCode" column="SecondryCategoryCode"/>			<!-- 中分类代码 -->
+		<result property="secondCateName" column="SecondryCategoryName"/>			<!-- 中分类名称 -->
+	</resultMap>
+	<!-- 取得中分类  -->
+    <select id="getSecondCateList" parameterClass="java.util.HashMap" resultMap="BINOLCM05.SecondCateList">
+       	<![CDATA[
+			SELECT
+				DISTINCT
+				SecondryCategoryCode
+			]]>
+		<dynamic>
+		<isNotEmpty property="language">
+			<isEqual property="language" compareValue="en_US">
+			,SecondryCategoryNameForeign AS SecondryCategoryName
+			</isEqual>
+			<isEqual property="language" compareValue="zh_CN">	
+			,SecondryCategoryNameChinese AS SecondryCategoryName
+			</isEqual>								
+		</isNotEmpty>
+		<isEmpty property="language">
+			,SecondryCategoryNameChinese AS SecondryCategoryName
+		</isEmpty>
+		</dynamic>
+		 <![CDATA[															
+			FROM
+				Basis.BIN_PromotionPrtType
+			WHERE
+				BIN_OrganizationInfoID = #organizationInfoId# AND
+				PrimaryCategoryCode = #primaryCateCode# AND
+				ValidFlag = '1' AND
+				SecondryCategoryCode IS NOT NULL AND
+				SecondryCategoryCode != ''
+		]]>
+		<dynamic>
+		<isNotEmpty prepend="AND" property="brandInfoId">
+			BIN_BrandInfoID = #brandInfoId#
+		</isNotEmpty>
+		</dynamic>
+    </select>
+	
+	<!-- 小分类 -->
+	<resultMap id="BINOLCM05.SmallCateList" class="java.util.HashMap">
+		<result property="smallCateCode" column="SmallCategoryCode"/>			<!-- 小分类代码 -->
+		<result property="smallCateName" column="SmallCategoryName"/>			<!-- 小分类名称 -->
+	</resultMap>
+	<!-- 取得小分类  -->
+    <select id="getSmallCateList" parameterClass="java.util.HashMap" resultMap="BINOLCM05.SmallCateList">
+       	<![CDATA[
+			SELECT
+				DISTINCT
+				SmallCategoryCode
+			]]>
+		<dynamic>
+		<isNotEmpty property="language">
+			<isEqual property="language" compareValue="en_US">
+			,SmallCategoryNameForeign AS SmallCategoryName
+			</isEqual>
+			<isEqual property="language" compareValue="zh_CN">	
+			,SmallCategoryNameChinese AS SmallCategoryName
+			</isEqual>								
+		</isNotEmpty>
+		<isEmpty property="language">
+			,SmallCategoryNameChinese AS SmallCategoryName
+		</isEmpty>
+		</dynamic>
+		 <![CDATA[															
+			FROM
+				Basis.BIN_PromotionPrtType
+			WHERE
+				BIN_OrganizationInfoID = #organizationInfoId# AND
+				PrimaryCategoryCode = #primaryCateCode# AND
+				SecondryCategoryCode = #secondCateCode# AND
+				ValidFlag = '1' AND
+				SmallCategoryCode IS NOT NULL AND
+				SmallCategoryCode != ''
+		]]>
+		<dynamic>
+		<isNotEmpty prepend="AND" property="brandInfoId">
+			BIN_BrandInfoID = #brandInfoId#
+		</isNotEmpty>
+		</dynamic>
+    </select>
+	
+	<!-- 最小包装类型 -->
+	<resultMap id="BINOLCM05.MinPackageTypeList" class="java.util.HashMap">
+		<result property="packageTypeId" column="BIN_PackageTypeID"/>	<!-- 包装类型ID -->
+		<result property="packageName" column="PackageName"/>			<!-- 包装类型名称 -->
+	</resultMap>
+	<!-- 取得最小包装类型  -->
+    <select id="getMinPackageTypeList" parameterClass="java.util.HashMap" resultMap="BINOLCM05.MinPackageTypeList">
+       	<![CDATA[
+			SELECT 
+				T.BIN_PackageTypeID,
+				T.PackageName
+			FROM (
+				SELECT 
+					A.BIN_PackageTypeID,
+					COUNT(B.BIN_PackageTypeID) AS ChildPackageTypeID
+			]]>
+		<dynamic>
+		<isNotEmpty property="language">
+			<isEqual property="language" compareValue="en_US">
+			,A.PackageNameForeign AS PackageName
+			</isEqual>
+			<isEqual property="language" compareValue="zh_CN">	
+			,A.PackageName
+			</isEqual>								
+		</isNotEmpty>
+		<isEmpty property="language">
+			,A.PackageName
+		</isEmpty>
+		</dynamic>
+		 <![CDATA[															
+			FROM 
+				Basis.BIN_PackageType A,
+				Basis.BIN_PackageType B
+			WHERE
+				B.NodeID.IsDescendantOf(A.NodeID)=1 AND
+				A.ValidFlag = '1' AND
+				A.BIN_OrganizationInfoID = #organizationInfoId#
+		]]>
+		<dynamic>
+		<isNotEmpty prepend="AND" property="brandInfoId">
+			A.BIN_BrandInfoID = #brandInfoId#
+		</isNotEmpty>
+		</dynamic>
+		<![CDATA[															
+			GROUP BY 
+				A.BIN_PackageTypeID
+		]]>
+		<dynamic>
+		<isNotEmpty property="language">
+			<isEqual property="language" compareValue="en_US">
+			,A.PackageNameForeign
+			</isEqual>
+			<isEqual property="language" compareValue="zh_CN">	
+			,A.PackageName
+			</isEqual>								
+		</isNotEmpty>
+		<isEmpty property="language">
+			,A.PackageName
+		</isEmpty>
+		</dynamic>
+		<![CDATA[															
+			) T
+		WHERE 
+			T.ChildPackageTypeID = 1
+		]]>
+    </select>
+	
+	<!-- 促销产品分类ID -->
+	<resultMap id="BINOLCM05.PromPrtTypeId" class="java.util.HashMap">
+		<result property="promPrtTypeId" column="BIN_PromotionPrtTypeID"/>			<!-- 促销产品分类ID -->
+	</resultMap>
+	<!-- 取得促销产品分类ID  -->
+    <select id="getPromPrtTypeId" parameterClass="java.util.HashMap" resultMap="BINOLCM05.PromPrtTypeId">
+       	<![CDATA[
+			SELECT 
+				BIN_PromotionPrtTypeID
+			FROM
+				Basis.BIN_PromotionPrtType
+			WHERE
+				BIN_OrganizationInfoID = #organizationInfoId# AND
+				BIN_BrandInfoID = #brandInfoId# AND
+				PrimaryCategoryCode = #primaryCateCode# AND
+				SecondryCategoryCode = #secondCateCode# AND
+				SmallCategoryCode = #smallCateCode# AND
+				ValidFlag = '1'
+			]]>
+	 </select>
+	 
+	<!-- 默认显示的生产厂商信息 -->
+	<resultMap id="BINOLCM05.FactoryList" class="java.util.HashMap">
+		<result property="manuFactId" column="BIN_ManufacturerInfoID"/>			<!-- 生产厂商ID -->
+		<result property="factoryName" column="FactoryName"/>					<!-- 生产厂商名称 -->
+	</resultMap>
+	<!-- 取得默认显示的生产厂商信息  -->
+    <select id="getFactoryList" parameterClass="java.util.HashMap" resultMap="BINOLCM05.FactoryList">
+       	<![CDATA[
+			SELECT
+				BIN_ManufacturerInfoID
+			]]>
+			<dynamic>
+			<isNotEmpty property="language">
+			<isEqual property="language" compareValue="en_US">
+			,FactoryNameEN AS FactoryName
+			</isEqual>
+			<isEqual property="language" compareValue="zh_CN">	
+			,FactoryNameCN AS FactoryName
+			</isEqual>								
+		</isNotEmpty>
+		<isEmpty property="language">
+			,FactoryNameCN AS FactoryName
+		</isEmpty>
+		</dynamic>
+		<![CDATA[			
+			FROM
+				Basis.BIN_ManufacturerInfo
+			WHERE
+				BIN_OrganizationInfoID = #organizationInfoId# AND
+				BIN_BrandInfoID = #brandInfoId# AND
+				DefaultFlag = '1' AND
+				ValidFlag = '1'
+			]]>
+	 </select>
+	 
+	<!-- 验证是否存在同样的促销品分类ID -->
+	<select id="getPrmTypeIdCheck" parameterClass="java.util.HashMap" resultClass="java.lang.Integer">
+		<![CDATA[
+			SELECT 
+				COUNT(BIN_PromotionPrtTypeID)
+        	FROM 
+        		Basis.BIN_PromotionPrtType
+            WHERE 
+            	BIN_BrandInfoID = #brandInfoId# AND
+            	PrimaryCategoryCode = #primaryCategoryCode#
+		]]>
+		<dynamic>
+	        <isNotEmpty prepend="AND" property="secondryCategoryCode">
+	            SecondryCategoryCode = #secondryCategoryCode#
+	        </isNotEmpty>
+	        <isNotEmpty prepend="AND" property="smallCategoryCode">
+	            SmallCategoryCode = #smallCategoryCode#
+	        </isNotEmpty>
+        </dynamic>
+    </select>
+	
+	<!-- 验证厂商编码是否已经存在  -->
+    <select id="getUnitCodeCount" parameterClass="java.util.HashMap" resultClass="java.lang.Integer">
+		<![CDATA[
+			SELECT 
+				COUNT(BIN_PromotionProductID)
+        	FROM 
+        		Basis.BIN_PromotionProduct
+            WHERE 
+				BIN_OrganizationInfoID = #organizationInfoId# AND
+				BIN_BrandInfoID = #brandInfoId# AND
+            	UnitCode = #unitCode#
+		]]>
+		<dynamic>
+		<isNotEmpty prepend="AND" property="validFlag">
+				ValidFlag = #validFlag#
+		</isNotEmpty>
+		<isNotEmpty prepend="AND" property="promotionProId">
+			<![CDATA[
+				BIN_PromotionProductID != #promotionProId#
+			]]>				
+		</isNotEmpty>
+		</dynamic>
+    </select>
+	<!-- 验证厂商编码是否已经存在于产品表中  -->
+    <select id="getUnitCodeCount2" parameterClass="java.util.HashMap" resultClass="java.lang.Integer">
+		<![CDATA[
+			SELECT 
+				COUNT(BIN_ProductID)
+        	FROM 
+        		Basis.BIN_Product
+            WHERE 
+				BIN_BrandInfoID = #brandInfoId# AND
+            	UnitCode = #unitCode#
+		]]>
+		<dynamic>
+			<isNotEmpty prepend="AND" property="validFlag">
+				ValidFlag = #validFlag#
+			</isNotEmpty>
+		</dynamic>
+    </select>
+	<!-- 验证厂商编码促销品条码是否已经存在 -->
+	<resultMap id="BINOLCM05.UnitCodeBarCodeList" class="java.util.HashMap">
+		<result property="promotionProductId" column="BIN_PromotionProductID"/>			<!-- 促销品ID -->
+	</resultMap>
+	<!-- 取得促销品ID  -->
+    <select id="getUnitCodeBarCodeList" parameterClass="java.util.HashMap" resultMap="BINOLCM05.UnitCodeBarCodeList">
+		<![CDATA[
+			SELECT 
+				A.BIN_PromotionProductID
+        	FROM 
+        		Basis.BIN_PromotionProduct A,
+				Basis.BIN_PromotionProductVendor B
+            WHERE 
+				A.BIN_OrganizationInfoID = #organizationInfoId# AND
+				A.BIN_BrandInfoID = #brandInfoId# AND
+            	A.UnitCode = #unitCode# AND
+				A.BIN_PromotionProductID = B.BIN_PromotionProductID AND
+				B.BarCode = #barCode#
+		]]>
+    </select>
+	<!-- 取得产品信息(根据barcode)  -->
+    <select id="getProductListByBarCode" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+    	<![CDATA[
+			SELECT 
+				PV.BIN_ProductID,
+				PV.BIN_ProductVendorID,
+				P.NameTotal,
+				P.NameAlias,
+				P.OriginalBrand,
+				PV.BarCode,
+				P.UnitCode,
+				ISNULL(CONVERT(Decimal(16,2),PP.SalePrice),0) AS SalePrice,
+				ISNULL(CONVERT(Decimal(16,2),PP.MemPrice),0) AS MemPrice
+			FROM 
+				 Basis.BIN_ProductVendor PV
+			JOIN Basis.BIN_Product P ON PV.BIN_ProductID = P.BIN_ProductID
+			LEFT JOIN Basis.BIN_ProductPrice PP ON P.BIN_ProductID = PP.BIN_ProductID AND PP.Type = '2'  
+			WHERE  
+				PV.BIN_ProductID = P.BIN_ProductID
+			AND PV.ValidFlag = '1'
+			AND P.ValidFlag = '1'
+			AND P.BIN_BrandInfoID = #brandInfoId#
+			AND PV.BarCode = #barCode#
+		]]>
+    </select>
+	<!-- 取得产品云及产品方案中的产品信息(根据barcode)  -->
+    <select id="getProductListByBarCodeForSolu" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+    	<![CDATA[
+			SELECT 
+				PV.BIN_ProductID,
+				PV.BIN_ProductVendorID,
+				P.NameTotal,
+				P.NameAlias,
+				P.OriginalBrand,
+				PV.BarCode,
+				P.UnitCode,
+				ISNULL(CONVERT(Decimal(16,2),PP.SalePrice),0) AS SalePrice,
+				ISNULL(CONVERT(Decimal(16,2),PP.MemPrice),0) AS MemPrice,
+				'0' AS frFlag
+				
+			FROM 
+				 Basis.BIN_ProductVendor PV
+			JOIN Basis.BIN_Product P ON PV.BIN_ProductID = P.BIN_ProductID
+			LEFT JOIN Basis.BIN_ProductPrice PP ON P.BIN_ProductID = PP.BIN_ProductID AND PP.Type = '2'  
+			WHERE  
+				PV.BIN_ProductID = P.BIN_ProductID
+			AND PV.ValidFlag = '1'
+			AND P.ValidFlag = '1'
+			AND P.BIN_BrandInfoID = #brandInfoId#
+			AND PV.BarCode = #barCode#
+			AND NOT EXISTS(
+				SELECT 1 
+				FROM Basis.BIN_ProductPriceSolutionDetail PPSD 
+				JOIN Basis.BIN_ProductVendor PV2 ON PPSD.BIN_ProductID = PV2.BIN_ProductID 
+				WHERE PPSD.BIN_ProductPriceSolutionID = #productPriceSolutionID# AND PV.BarCode = #barCode# AND P.BIN_ProductID = PPSD.BIN_ProductID
+			)
+			UNION
+			SELECT
+				PV.BIN_ProductID,
+				PV.BIN_ProductVendorID,
+				PPSD.SoluProductName AS NameTotal,
+				P.NameAlias,
+				P.OriginalBrand,
+				PV.BarCode,
+				P.UnitCode,
+				ISNULL(CONVERT(Decimal(16,2),PPSD.SalePrice),0) AS SalePrice,
+				ISNULL(CONVERT(Decimal(16,2),PPSD.MemPrice),0) AS MemPrice,
+				'1' AS frFlag
+			FROM Basis.BIN_ProductPriceSolutionDetail PPSD
+			JOIN Basis.BIN_Product P ON PPSD.BIN_ProductID = P.BIN_ProductID
+			JOIN Basis.BIN_ProductVendor PV ON P.BIN_ProductID = PV.BIN_ProductID
+			WHERE 
+				PPSD.BIN_ProductPriceSolutionID = #productPriceSolutionID# 
+			AND PV.BarCode = #barCode# 
+			AND P.BIN_BrandInfoID = #brandInfoId#
+		]]>
+    </select>
+	<!-- 取得产品ID(根据barcode)  -->
+    <select id="getProductIdByBarCode" parameterClass="java.util.HashMap" resultClass="java.lang.Integer">
+    	<![CDATA[
+			SELECT 
+				A.BIN_ProductID
+			FROM 
+			    Basis.BIN_ProductVendor A,
+			    Basis.BIN_Product B
+			WHERE  
+				A.BIN_ProductID = B.BIN_ProductID
+			AND A.ValidFlag = '1'
+			AND B.ValidFlag = '1'
+			AND B.BIN_BrandInfoID = #brandInfoId#
+			AND A.BarCode = #barCode#
+		]]>
+    </select>
+	<!-- 取得促销产品ID(根据barcode)  -->
+    <select id="getPromotionIdByBarCode" parameterClass="java.util.HashMap" resultClass="java.lang.Integer">
+    	<![CDATA[
+			SELECT 
+				A.BIN_PromotionProductID
+			FROM 
+			    Basis.BIN_PromotionProductVendor A,
+			    Basis.BIN_PromotionProduct B
+			WHERE  
+				A.BIN_PromotionProductID = B.BIN_PromotionProductID
+			AND A.ValidFlag = '1'
+			AND B.ValidFlag = '1'
+			AND B.BIN_BrandInfoID = #brandInfoId#
+			AND A.BarCode = #barCode#
+		]]>
+    </select>
+    <!-- 取得有效的促销品/产品件数  -->
+    <select id="getValidCount" parameterClass="java.util.HashMap" resultClass="java.lang.Integer">
+    	<![CDATA[
+    	SELECT
+    		COUNT(T0.UnitCode)
+    	FROM(
+			SELECT
+				A.UnitCode
+			FROM
+				Basis.BIN_Product A
+				JOIN Basis.BIN_ProductVendor B
+				ON(A.BIN_ProductID = B.BIN_ProductID
+					AND B.ValidFlag = '1')
+			WHERE
+				A.BIN_BrandInfoID = #brandInfoId#
+				AND A.UnitCode = #unitCode#
+				AND B.BarCode = #barCode#
+				AND A.ValidFlag = '1'
+			UNION
+			SELECT
+				A.UnitCode
+			FROM
+				Basis.BIN_PromotionProduct A
+				JOIN Basis.BIN_PromotionProductVendor B
+				ON(	A.BIN_PromotionProductID = B.BIN_PromotionProductID
+					AND B.ValidFlag = '1')
+			WHERE
+				A.BIN_BrandInfoID = #brandInfoId#
+				AND A.UnitCode = #unitCode#
+				AND B.BarCode = #barCode#
+				AND A.ValidFlag = '1'
+			) T0
+		]]>
+    </select>
+    <!-- 根据unitCode查询产品/促销品的当前及历史编码条码关系表中是否已存在  -->
+    <select id="getExistUnitCodeForPrtAndProm" parameterClass="java.util.HashMap" resultClass="java.lang.Integer">
+   		<![CDATA[
+		SELECT	COUNT(T1.unitCode) AS count FROM (    
+				SELECT 
+					UnitCode AS unitCode
+	        	FROM 
+	        		Basis.BIN_Product
+	            WHERE 
+					BIN_OrganizationInfoID = #organizationInfoId# AND
+					BIN_BrandInfoID = #brandInfoId# AND
+	            	UnitCode = #unitCode#
+		]]>
+			<isNotEmpty prepend="AND" property="productId">
+				<![CDATA[
+					BIN_ProductID != #productId#
+				]]>				
+			</isNotEmpty>
+			
+        <![CDATA[
+	       UNION
+				SELECT
+					A.OldUnitCode AS unitCode
+				FROM 
+					Basis.BIN_PrtBarCode A
+				LEFT JOIN
+					Basis.BIN_ProductVendor B ON B.BIN_ProductVendorID = A.BIN_ProductVendorID
+				LEFT JOIN 
+					Basis.BIN_Product C ON C.BIN_ProductID = B.BIN_ProductID
+				WHERE
+					C.BIN_OrganizationInfoID = #organizationInfoId# AND
+					C.BIN_BrandInfoID = #brandInfoId# AND
+					A.OldUnitCode = #unitCode#
+		]]>
+			<isNotEmpty prepend="AND" property="productId">
+				<![CDATA[
+					C.BIN_ProductID != #productId#
+				]]>				
+			</isNotEmpty>
+			
+    	<![CDATA[
+    	   UNION	
+				SELECT 
+					UnitCode AS unitCode
+	        	FROM 
+	        		Basis.BIN_PromotionProduct
+	            WHERE 
+					BIN_OrganizationInfoID = #organizationInfoId# AND
+					BIN_BrandInfoID = #brandInfoId# AND
+	            	UnitCode = #unitCode#
+			]]>				
+			<isNotEmpty prepend="AND" property="promotionProId">
+				<![CDATA[
+					BIN_PromotionProductID != #promotionProId#
+				]]>				
+			</isNotEmpty>
+	    <![CDATA[
+	       UNION
+				SELECT
+					A.OldUnitCode AS unitCode
+				FROM 
+					Basis.BIN_PromotionPrtBarCode A
+				LEFT JOIN
+					Basis.BIN_PromotionProductVendor B ON B.BIN_PromotionProductVendorID = A.BIN_PromotionProductVendorID
+				LEFT JOIN 
+					Basis.BIN_PromotionProduct C ON C.BIN_PromotionProductID = B.BIN_PromotionProductID	
+				WHERE
+					C.BIN_OrganizationInfoID = #organizationInfoId# AND
+					C.BIN_BrandInfoID = #brandInfoId# AND
+					A.OldUnitCode = #unitCode#
+		]]>
+			<isNotEmpty prepend="AND" property="promotionProId">
+				<![CDATA[
+					C.BIN_PromotionProductID != #promotionProId#
+				]]>				
+			</isNotEmpty>
+			
+		<![CDATA[	
+			)T1
+		]]>	
+    </select>
+    
+    <!-- 取得会员俱乐部列表  -->
+    <select id="getCM05ClubList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+       <![CDATA[
+				SELECT 
+					BIN_MemberClubID AS memberClubId,
+		]]>
+		<dynamic>
+		<isNotEmpty property="language">
+			<isEqual property="language" compareValue="en_US">
+			ClubNameForeign AS clubName
+			</isEqual>
+			<isEqual property="language" compareValue="zh_CN">	
+			ClubName AS clubName
+			</isEqual>								
+		</isNotEmpty>
+		<isEmpty property="language">
+			ClubName AS clubName
+		</isEmpty>
+		</dynamic>
+		 <![CDATA[	
+				FROM
+					Members.BIN_MemberClub
+				WHERE
+					BIN_BrandInfoID = #brandInfoId# AND
+					BIN_OrganizationInfoID = #organizationInfoId#
+				ORDER BY ValidFlag DESC, BIN_MemberClubID
+			]]>
+    </select>
+    
+    <!-- 取得会员已经拥有的俱乐部列表  -->
+    <select id="getCM05MemClubList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+       <![CDATA[
+				SELECT 
+					BIN_MemberClubID AS memberClubId
+				FROM
+					Members.BIN_MemClubLevel
+				WHERE
+					BIN_MemberInfoID = #memberInfoId# AND
+					BIN_MemberClubID IS NOT NULL
+				GROUP BY BIN_MemberClubID
+				ORDER BY BIN_MemberClubID
+			]]>
+    </select>
+    
+    <!-- 取得会员俱乐部名称 -->
+	<select id="getCM05ClubName" parameterClass="java.util.HashMap" resultClass="java.lang.String" >
+		 <![CDATA[
+			SELECT
+		]]>
+		<dynamic>
+		<isNotEmpty property="language">
+			<isEqual property="language" compareValue="en_US">
+			ClubNameForeign AS clubName
+			</isEqual>
+			<isEqual property="language" compareValue="zh_CN">	
+			ClubName AS clubName
+			</isEqual>								
+		</isNotEmpty>
+		<isEmpty property="language">
+			ClubName AS clubName
+		</isEmpty>
+		</dynamic>
+		 <![CDATA[	
+				FROM
+					Members.BIN_MemberClub
+				WHERE
+					BIN_MemberClubID = #memberClubId#
+			]]>
+    </select>
+</sqlMap>

@@ -1,0 +1,333 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sqlMap PUBLIC "-//iBATIS.com//DTD SQL Map 2.0//EN" "http://ibatis.apache.org/dtd/sql-map-2.dtd">
+<sqlMap namespace="BINOLSSPRM66">
+	<!-- 判断是否为重复数据 -->
+	<select id="getRepeatData" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+		<![CDATA[
+		select 
+			1
+		from	
+			Inventory.BIN_PrmInDepotExcel A with(nolock)
+			left join Inventory.BIN_PrmInDepotExcelDetail B with(nolock) on A.BIN_PrmInDepotExcelID = B.BIN_PrmInDepotExcelID
+		where 
+			A.BIN_BrandInfoID = #brandInfoId#
+			and A.BIN_OrganizationInfoID = #organizationInfoId#
+			and A.DepartCode = #departCode#
+			and A.InDepotDate = #inDepotDate#
+			and A.ValidFlag = '1'
+			and A.ImportResult = '1'
+			and B.UnitCode = #unitCode#
+			and B.Quantity = #quantity#
+		]]>
+		<isNotEmpty prepend="and" property="barCode">
+			B.Barcode = #barCode#
+		</isNotEmpty>
+	</select>
+	<!-- 查询促销品的信息 -->
+	<select id="getPrmInfoByUnitCode" parameterClass="java.util.HashMap"
+		resultClass="java.util.HashMap">
+		<![CDATA[
+		select 
+			A.BIN_PromotionProductID as BIN_PromotionProductID,
+			A.NameTotal as NameTotal,
+			B.BarCode as BarCode,
+			B.BIN_PromotionProductVendorID as BIN_PromotionProductVendorID
+		from 
+			Basis.BIN_PromotionProduct A with(nolock)
+			left join Basis.BIN_PromotionProductVendor B with(nolock) on A.BIN_PromotionProductID = B.BIN_PromotionProductID
+		where
+			A.ValidFlag ='1' 
+			and B.ValidFlag = '1'
+			and A.UnitCode = #UnitCode#
+			and A.BIN_OrganizationInfoID = #BIN_OrganizationInfoID#
+			and A.BIN_BrandInfoID = #BIN_BrandInfoID#
+		]]>
+	</select>
+
+	<!-- 查询促销品的价格 -->
+	<select id="getPrmPrice" parameterClass="java.util.HashMap"
+		resultClass="java.lang.Object">
+		<![CDATA[
+		select 
+			StandardCost as standardCost
+		from 
+			Basis.BIN_PromotionProduct with(nolock)
+		where
+			BIN_PromotionProductID = #BIN_PromotionProductID#
+		]]>
+	</select>
+
+	<!-- 查询逻辑仓库信息 -->
+	<select id="getLogicInventoryByName" parameterClass="java.util.HashMap"
+		resultClass="java.util.HashMap">
+		<![CDATA[
+			select 
+				top(1)
+				A.BIN_LogicInventoryInfoID as BIN_LogicInventoryInfoID,
+				A.InventoryNameCN as LogicInventoryName
+			from 
+				Basis.BIN_LogicInventory A with(nolock)
+			where 
+				(A.InventoryNameCN = #InventoryName# or  A.InventoryNameEN = #InventoryName# )
+				and A.BIN_BrandInfoID = #BIN_BrandInfoID#
+				and A.BIN_OrganizationInfoID = #BIN_OrganizationInfoID#
+				and A.ValidFlag = '1'
+		]]>
+		<isNotEmpty prepend="and" property="Type">
+			A.Type=#Type#
+		</isNotEmpty>
+	</select>
+
+	<!-- 查询部门信息 -->
+	<select id="getOrgByCode" parameterClass="java.util.HashMap"
+		resultClass="java.util.HashMap">
+		<![CDATA[
+		select 
+			A.BIN_BrandInfoID as BIN_BrandInfoID,
+			A.BIN_OrganizationID as BIN_OrganizationID,
+			A.DepartCode as DepartCode,
+			A.DepartName as DepartName,
+			A.Type as Type
+		from
+			Basis.BIN_Organization A with(nolock)
+		where
+			A.DepartCode=#DepartCode# 
+			and A.BIN_OrganizationInfoID = #BIN_OrganizationInfoID#
+			and A.BIN_BrandInfoID = #BIN_BrandInfoID#
+			and A.ValidFlag='1'
+		]]>
+	</select>
+
+	<!-- 往入库Excel导入主表添加数据key -->
+	<sql id="insertPrmInDepotExcelKey">
+		<dynamic>
+			<isNotEmpty property="BillNo">
+				BillNo,
+			</isNotEmpty>
+			<isNotEmpty property="BillNoIF">
+				BillNoIF,
+			</isNotEmpty>
+			<isNotEmpty property="BIN_OrganizationID">
+				BIN_OrganizationID,
+			</isNotEmpty>
+			<isNotEmpty property="ImportDepartCode">
+				DepartCode,
+			</isNotEmpty>
+			<isNotEmpty property="ImportDepartName">
+				DepartName,
+			</isNotEmpty>
+			<isNotEmpty property="BIN_InventoryInfoID">
+				BIN_InventoryInfoID,
+			</isNotEmpty>
+			<isNotEmpty property="BIN_LogicInventoryInfoID">
+				BIN_LogicInventoryInfoID,
+			</isNotEmpty>
+			<isNotEmpty property="LogicInventoryName">
+				LogicInventoryName,
+			</isNotEmpty>
+			<isNotEmpty property="BIN_EmployeeID">
+				BIN_EmployeeID,
+			</isNotEmpty>
+			<isNotEmpty property="TotalQuantity">
+				TotalQuantity,
+			</isNotEmpty>
+			<isNotEmpty property="TotalAmount">
+				TotalAmount,
+			</isNotEmpty>
+			<isNotEmpty property="Comments">
+				Comments,
+			</isNotEmpty>
+			<isNotEmpty property="InDepotDate">
+				InDepotDate,
+			</isNotEmpty>
+			<isNotEmpty property="ImportDate">
+				ImportDate,
+			</isNotEmpty>
+			<isNotEmpty property="ImportResult">
+				ImportResult,
+			</isNotEmpty>
+			<isNotEmpty property="WorkFlowID">
+				WorkFlowID,
+			</isNotEmpty>
+		</dynamic>
+	</sql>
+
+	<!-- 往入库Excel导入主表添加数据value -->
+	<sql id="insertPrmInDepotExcelValue">
+		<dynamic>
+			<isNotEmpty property="BillNo">
+				#BillNo#,
+			</isNotEmpty>
+			<isNotEmpty property="BillNoIF">
+				#BillNoIF#,
+			</isNotEmpty>
+			<isNotEmpty property="BIN_OrganizationID">
+				#BIN_OrganizationID#,
+			</isNotEmpty>
+			<isNotEmpty property="ImportDepartCode">
+				#ImportDepartCode#,
+			</isNotEmpty>
+			<isNotEmpty property="ImportDepartName">
+				#ImportDepartName#,
+			</isNotEmpty>
+			<isNotEmpty property="BIN_InventoryInfoID">
+				#BIN_InventoryInfoID#,
+			</isNotEmpty>
+			<isNotEmpty property="BIN_LogicInventoryInfoID">
+				#BIN_LogicInventoryInfoID#,
+			</isNotEmpty>
+			<isNotEmpty property="LogicInventoryName">
+				#LogicInventoryName#,
+			</isNotEmpty>
+			<isNotEmpty property="BIN_EmployeeID">
+				#BIN_EmployeeID#,
+			</isNotEmpty>
+			<isNotEmpty property="TotalQuantity">
+				#TotalQuantity#,
+			</isNotEmpty>
+			<isNotEmpty property="TotalAmount">
+				#TotalAmount#,
+			</isNotEmpty>
+			<isNotEmpty property="Comments">
+				#Comments#,
+			</isNotEmpty>
+			<isNotEmpty property="InDepotDate">
+				#InDepotDate#,
+			</isNotEmpty>
+			<isNotEmpty property="ImportDate">
+				#ImportDate#,
+			</isNotEmpty>
+			<isNotEmpty property="ImportResult">
+				#ImportResult#,
+			</isNotEmpty>
+			<isNotEmpty property="WorkFlowID">
+				#WorkFlowID#,
+			</isNotEmpty>
+		</dynamic>
+	</sql>
+
+	<!-- 往入库Excel导入主表中添加数据 -->
+	<insert id="insertPrmInDepotExcel" parameterClass="java.util.HashMap">
+		<selectKey resultClass="java.lang.Integer" type="post"
+			keyProperty="BIN_PrmInDepotExcelID">      
+	    <![CDATA[
+		INSERT INTO Inventory.BIN_PrmInDepotExcel(
+		        BIN_OrganizationInfoID,
+		        BIN_BrandInfoID,
+		        ImportBatch,
+		        BIN_ImportBatchID,
+		]]>
+			<include refid="insertPrmInDepotExcelKey" />
+			    <![CDATA[
+				CreateTime,
+				UpdateTime,
+				CreatedBy,
+				CreatePGM,
+				UpdatedBy,
+				UpdatePGM,
+				ValidFlag,
+				ModifyCount
+		 )
+		VALUES
+			(
+				#BIN_OrganizationInfoID#,
+				#BIN_BrandInfoID#,
+				#ImportBatch#,
+				#BIN_ImportBatchID#,
+				]]>
+			<include refid="insertPrmInDepotExcelValue" />
+				<![CDATA[
+				GETDATE(),
+				GETDATE(),
+				#CreatedBy#,
+				#CreatePGM#,
+				#UpdatedBy#,
+				#UpdatePGM#,
+				'1',
+				0
+			)
+			  	SELECT SCOPE_IDENTITY() AS value
+			]]>
+		</selectKey>
+	</insert>
+
+	<!-- 往入库Excel导入明细表中添加数据 -->
+	<insert id="insertPrmInDepotDetailExcel" parameterClass="java.util.HashMap">
+	    <![CDATA[
+		INSERT INTO Inventory.BIN_PrmInDepotExcelDetail(
+				BIN_PrmInDepotExcelID,
+		]]>
+		<dynamic>
+			<isNotEmpty property="BIN_PromotionProductVendorID">
+				BIN_PromotionProductVendorID,
+			</isNotEmpty>
+			<isNotEmpty property="ImportUnitCode">
+				UnitCode,
+			</isNotEmpty>
+			<isNotEmpty property="BarCode">
+				BarCode,
+			</isNotEmpty>
+			<isNotEmpty property="ImportNameTotal">
+				NameTotal,
+			</isNotEmpty>
+			<isNotEmpty property="Quantity">
+				Quantity,
+			</isNotEmpty>
+			<isNotEmpty property="Price">
+				Price,
+			</isNotEmpty>
+			<isNotEmpty property="ErrorMsg">
+				ErrorMsg,
+			</isNotEmpty>
+		</dynamic>
+			    <![CDATA[
+				CreateTime,
+				UpdateTime,
+				CreatedBy,
+				CreatePGM,
+				UpdatedBy,
+				UpdatePGM,
+				ValidFlag,
+				ModifyCount
+		 )
+		VALUES
+			(
+				#BIN_PrmInDepotExcelID#,
+				]]>
+		<dynamic>
+			<isNotEmpty property="BIN_PromotionProductVendorID">
+				#BIN_PromotionProductVendorID#,
+			</isNotEmpty>
+			<isNotEmpty property="ImportUnitCode">
+				#ImportUnitCode#,
+			</isNotEmpty>
+			<isNotEmpty property="BarCode">
+				#BarCode#,
+			</isNotEmpty>
+			<isNotEmpty property="ImportNameTotal">
+				#ImportNameTotal#,
+			</isNotEmpty>
+			<isNotEmpty property="Quantity">
+				#Quantity#,
+			</isNotEmpty>
+			<isNotEmpty property="Price">
+				#Price#,
+			</isNotEmpty>
+			<isNotEmpty property="ErrorMsg">
+				#ErrorMsg#,
+			</isNotEmpty>
+		</dynamic>
+				<![CDATA[
+				GETDATE(),
+				GETDATE(),
+				#CreatedBy#,
+				#CreatePGM#,
+				#UpdatedBy#,
+				#UpdatePGM#,
+				'1',
+				0
+			)
+			]]>
+	</insert>
+
+</sqlMap>

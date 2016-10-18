@@ -1,0 +1,140 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sqlMap PUBLIC "-//iBATIS.com//DTD SQL Map 2.0//EN" "http://ibatis.apache.org/dtd/sql-map-2.dtd">
+<sqlMap namespace="BINOLSTSFH21">
+
+	<!-- 统计代商务通指定部门的后台销售报表SQL文 -->
+	<sql id="backSaleReportQuery">
+		<![CDATA[
+			SELECT
+				#departName# AS departName,
+				#startDate# AS startDate,
+				#endDate# AS endDate,
+				'' AS FPC,
+				PT.UnitCode AS unitCode,
+				PV.BarCode AS barCode,
+				ISNULL(PT.NameForeign,PT.NameTotal) AS prtName,
+				ISNULL(B.saleQuantity,0) AS saleQuantity,
+				convert(decimal(32,2),ISNULL(B.saleQuantity,0)*ISNULL(T11.SalePrice,0)*0.4615) AS saleAmount,
+				ISNULL(C.stockQuantity,0) AS stockQuantity,
+				'' AS UnitsInTransit,
+				convert(decimal(32,2),ISNULL(C.stockQuantity,0)*ISNULL(T11.SalePrice,0)*0.4615) AS stockAmount,
+				ISNULL(E.PropValueForeign,E.PropValueChinese) AS propNameMid,
+				ISNULL(D.PropValueForeign,D.PropValueChinese) AS propNameBig,
+				'MaxFactor' AS Brand,
+				convert(decimal(16,2),ISNULL(T11.SalePrice,0)) AS salePrice
+			FROM
+				Basis.BIN_Product PT WITH(NOLOCK)
+				LEFT JOIN Basis.BIN_ProductVendor PV WITH(NOLOCK)
+				ON(PT.BIN_ProductID=PV.BIN_ProductID)
+				LEFT JOIN Basis.BIN_ProductPrice T11 WITH(NOLOCK) 
+				ON (PT.BIN_ProductID = T11.BIN_ProductID 
+							AND T11.Type = '2'
+							AND T11.StartDate <= #bussnissDate#
+							AND T11.EndDate >= #bussnissDate#
+							AND T11.ValidFlag = '1')
+				LEFT JOIN 
+				(
+					SELECT
+						T2.UnitCode,
+						T2.BarCode,
+						T3.BIN_ProductID,
+						convert(int,SUM(ISNULL(T2.Quantity,0))) AS saleQuantity
+					FROM
+						Sale.BIN_BackstageSale T1 WITH(NOLOCK)
+						JOIN (
+							SELECT 
+								TD1.BIN_BackstageSaleID AS BIN_BackstageSaleID,
+								TD1.UnitCode AS UnitCode,
+								TD1.BarCode AS BarCode,
+								SUM(TD1.Quantity) AS Quantity
+							FROM
+								Sale.BIN_BackstageSaleDetail TD1 WITH(NOLOCK)
+							GROUP BY TD1.BIN_BackstageSaleID,TD1.UnitCode,TD1.BarCode
+						) T2 ON T1.BIN_BackstageSaleID = T2.BIN_BackstageSaleID
+						LEFT JOIN Basis.BIN_Product T3 WITH(NOLOCK)
+						ON(T2.UnitCode=T3.UnitCode)
+					WHERE
+						T1.ValidFlag = '1'
+						AND T1.SaleDate >= #startDate#
+						AND T1.SaleDate <= #endDate#
+					GROUP BY T2.UnitCode,T2.BarCode,T3.BIN_ProductID
+				)B ON(PT.BIN_ProductID=B.BIN_ProductID)
+				LEFT JOIN(
+					SELECT
+						T41.UnitCode AS UnitCode,
+						T4.BarCode AS BarCode,
+						T41.BIN_ProductID,
+						convert(int,SUM(ISNULL(T3.Quantity,0))) AS stockQuantity
+					FROM
+						Inventory.BIN_ProductStock T3 WITH(NOLOCK)
+						LEFT JOIN Basis.BIN_ProductVendor T4 WITH(NOLOCK) ON T3.BIN_ProductVendorID = T4.BIN_ProductVendorID
+						JOIN Basis.BIN_Product T41 WITH(NOLOCK) ON(T4.BIN_ProductID=T41.BIN_ProductID)
+					GROUP BY T41.UnitCode,T4.BarCode,T41.BIN_ProductID
+				)C ON (PT.BIN_ProductID=C.BIN_ProductID)
+				LEFT JOIN (
+    				SELECT
+    					pc.BIN_ProductID,
+    					pcv.PropValueChinese,
+    					pcv.PropValueForeign
+    				FROM
+    					Basis.BIN_PrtCategory pc,
+    					Basis.BIN_PrtCatProperty pcp,
+    					Basis.BIN_PrtCatPropValue pcv
+    				WHERE
+    					pc.BIN_PrtCatPropValueID = pcv.BIN_PrtCatPropValueID AND
+    					pcv.BIN_PrtCatPropertyID = pcp.BIN_PrtCatPropertyID AND
+    					pcp.TeminalFlag = '1' AND 
+    					pcp.BIN_OrganizationInfoID = #organizationInfoId#  AND
+	    				pcp.BIN_BrandInfoID = #brandInfoId# AND 
+						pc.ValidFlag = '1' AND
+						pcv.ValidFlag = '1' AND
+						pcp.ValidFlag = '1'
+    			) D ON (D.BIN_ProductID = PT.BIN_ProductID)
+   				LEFT JOIN (
+	   				SELECT
+	   					pc.BIN_ProductID,
+	   					pcv.PropValueChinese,
+	   					pcv.PropValueForeign
+	   				FROM
+	   					Basis.BIN_PrtCategory pc,
+	   					Basis.BIN_PrtCatProperty pcp,
+	   					Basis.BIN_PrtCatPropValue pcv
+	   				WHERE
+	   					pc.BIN_PrtCatPropValueID = pcv.BIN_PrtCatPropValueID AND
+	   					pcv.BIN_PrtCatPropertyID = pcp.BIN_PrtCatPropertyID AND
+	   					pcp.TeminalFlag = '3' AND 
+	   					pcp.BIN_OrganizationInfoID = #organizationInfoId#  AND 
+	    				pcp.BIN_BrandInfoID = #brandInfoId# AND 
+						pc.ValidFlag = '1' AND
+						pcv.ValidFlag = '1' AND
+						pcp.ValidFlag = '1'
+	   			) E ON (E.BIN_ProductID = PT.BIN_ProductID)				
+			WHERE
+				PT.BIN_OrganizationInfoID = #organizationInfoId#
+		]]>
+		<isNotEmpty property="brandInfoId" prepend="AND">
+			PT.BIN_BrandInfoID = #brandInfoId#
+		</isNotEmpty>
+		<isNotEmpty property="prtVendorId" prepend="AND">
+			PV.BIN_ProductVendorID = #prtVendorId#
+		</isNotEmpty>
+	</sql>	
+	<!-- 代商务通财务报表Count -->
+    <select id="getBackSaleReportCount" parameterClass="java.util.HashMap" resultClass="java.lang.Integer">
+    	<![CDATA[
+			SELECT	COUNT(1) AS count FROM (
+		]]>	
+		<include refid="BINOLSTSFH21.backSaleReportQuery" />	
+		<![CDATA[	
+			)SORT_T1
+		]]>										
+    </select>
+	
+	<!-- 代商务通财务报表List  -->
+    <select id="getBackSaleReportList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+       	<include refid="BINOLCMINC99.pageheader" />
+		<include refid="BINOLSTSFH21.backSaleReportQuery" />	
+		<include refid="BINOLCMINC99.pagefooter" />
+    </select>
+
+</sqlMap>

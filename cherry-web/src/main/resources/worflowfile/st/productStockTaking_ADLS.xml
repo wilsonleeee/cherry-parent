@@ -1,0 +1,324 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE workflow PUBLIC "-//OpenSymphony Group//DTD OSWorkflow 2.8//EN" "http://www.opensymphony.com/osworkflow/workflow_2_8.dtd">
+<!-- 产品盘点 一审》二审 流程（阿蒂朗丝） -->
+<workflow>
+    <initial-actions>
+        <action id="1" name="Start Workflow">
+            <!-- 画面上显示的盘点审核状态下拉框 -->
+            <meta name="BrandVerifiedFlagCA">0|1|2|3|4|5|6|7|8|D</meta>
+            <pre-functions>
+                <function type="class">
+                    <arg name="class.name">com.opensymphony.workflow.util.Caller</arg>
+                </function>
+            </pre-functions>
+            <results>
+                <!-- 开始工作流程 -->
+                <unconditional-result old-status="Finished" status="Underway" step="10">
+                    <post-functions>
+                        <function type="spring">
+                            <arg name="bean.name">productStockTaking_FN</arg>
+                            <arg name="method">startProductStockTakingFlow</arg>
+                        </function>
+                    </post-functions>
+                </unconditional-result>
+            </results>
+        </action>
+    </initial-actions>
+    <steps>
+        <step id="10" name="开始">
+           <meta name="OS_StepShowFlag">1</meta>
+           <meta name="OS_StepShowText">100</meta>
+           <meta name="OS_StepShowOrder">1</meta>
+            <actions>
+                <action id="101" name="向ps表中写状态" auto="true">
+                    <results>
+                        <unconditional-result old-status="Finished" status="Underway" step="20">
+                            <pre-functions>
+                                <function type="beanshell">
+                                    <arg name="script">
+                                        propertySet.setString("OS_StepShowOrder","1")
+                                    </arg>
+                                </function>
+                            </pre-functions>
+                        </unconditional-result>
+                    </results>
+                </action>
+            </actions>
+        </step>
+        <step id="20" name="提交审核">
+            <meta name="OS_StepShowFlag">1</meta>
+            <meta name="OS_StepShowText">101</meta>
+            <meta name="OS_StepShowOrder">2</meta>
+            <actions>
+                <action id="21" name="提交审核" auto="true">
+                    <pre-functions>
+                        <function type="spring">
+                            <arg name="bean.name">productStockTaking_FN</arg>
+                            <arg name="method">CA_submitAudit</arg>
+                        </function>
+                        <function type="beanshell">
+                            <arg name="script">
+                                propertySet.setString("OS_StepShowOrder","2")
+                            </arg>
+                        </function>
+                    </pre-functions>
+                    <results>
+                        <!-- 跳转向  审核判定 -->
+                        <unconditional-result old-status="Finished" status="Underway" step="50">
+                        </unconditional-result>
+                    </results>
+                </action>
+            </actions>
+        </step>
+        <step id="50" name="一审">
+            <!-- 将工作流的当前业务状态设置为       盘点单审核 -->
+            <meta name="OS_Rule">{"ThirdPartyFlag":"2","RuleType":"3","RuleOnFlowCode":"productStockTaking","RuleOnStep":[50],"RuleOnAction":[501],"RuleContext":[],"PreferredFlag":"true"}</meta>
+            <pre-functions>
+                <function type="beanshell">
+                    <arg name="script">
+                        propertySet.setString("OS_Current_Operate","91")
+                    </arg>
+                </function>
+                <function type="spring">
+                    <arg name="bean.name">workFlowCommon_FN</arg>
+                    <arg name="method">setParticipant</arg>
+                </function>
+                <function type="spring">
+                    <arg name="bean.name">workFlowCommon_FN</arg>
+                    <arg name="method">auditHandle</arg>
+                </function>
+            </pre-functions>
+            <actions>
+                <action id="501" name="同意">
+                    <meta name="OS_ButtonNameCode">os.agree</meta>
+                    <meta name="OS_ButtonClass">icon-confirm</meta>
+                    <meta name="OS_OperateCode">91</meta>
+                    <meta name="OS_OperateResultCode">101</meta>
+                    <meta name="OS_Rule">{"ThirdPartyFlag":"2","RuleType":"3","RuleOnFlowCode":"productStockTaking","RuleOnStep":[50],"RuleOnAction":[501],"RuleContext":[],"PreferredFlag":"true"}</meta>
+                    <results>
+                        <unconditional-result old-status="Finished" status="Underway" step="51">
+                        </unconditional-result>
+                    </results>
+                </action>
+                <action id="502" name="自动执行同意">
+                    <meta name="OS_DefaultAction"></meta>
+                    <results>
+                        <unconditional-result old-status="Finished" status="Underway" step="51">
+                        </unconditional-result>
+                    </results>
+                </action>
+                <!--
+                <action id="503" name="拒绝">
+                    <meta name="OS_ButtonNameCode">os.inhibit</meta>
+                    <meta name="OS_ButtonClass">icon-inhibit</meta>
+                    <meta name="OS_OperateCode">91</meta>
+                    <meta name="OS_OperateResultCode">102</meta>
+                    <results>
+                        <unconditional-result old-status="Finished" status="Underway" step="70">
+                                <post-functions>
+                                    <function type="spring">
+                                        <arg name="bean.name">productStockTaking_FN</arg>
+                                        <arg name="method">CA_auditDisAgreeHand</arg>
+                                    </function>
+                                </post-functions>
+                        </unconditional-result>
+                    </results>
+                </action>
+                -->
+            </actions>
+        </step>
+        <step id="51" name="一审通过">
+           <meta name="OS_StepShowFlag">1</meta>
+           <meta name="OS_StepShowText">103</meta>
+           <meta name="OS_StepShowOrder">3</meta>
+            <actions>
+                <action id="511" name="向ps表中写状态" auto="true">
+                    <results>
+                        <unconditional-result old-status="Finished" status="Underway" step="52">
+                            <pre-functions>
+                                <function type="beanshell">
+                                    <arg name="script">
+                                        propertySet.setString("OS_StepShowOrder","3")
+                                    </arg>
+                                </function>
+                            </pre-functions>
+                        </unconditional-result>
+                    </results>
+                </action>
+            </actions>
+        </step>
+        <step id="52" name="二审">
+            <!-- 将工作流的当前业务状态设置为       盘点单审核 -->
+            <meta name="OS_Rule">{"ThirdPartyFlag":"2","RuleType":"3","RuleOnFlowCode":"productStockTaking","RuleOnStep":[52],"RuleOnAction":[521,523],"RuleContext":[],"PreferredFlag":"true"}</meta>
+            <pre-functions>
+                <function type="beanshell">
+                    <arg name="script">
+                        propertySet.setString("OS_Current_Operate","95")
+                    </arg>
+                </function>
+                <function type="spring">
+                    <arg name="bean.name">productStockTaking_FN</arg>
+                    <arg name="method">updateCA</arg>
+                    <arg name="VerifiedFlag">6</arg>
+                </function>
+                <function type="spring">
+                    <arg name="bean.name">workFlowCommon_FN</arg>
+                    <arg name="method">setParticipant</arg>
+                </function>
+                <function type="spring">
+                    <arg name="bean.name">workFlowCommon_FN</arg>
+                    <arg name="method">auditHandle</arg>
+                </function>
+            </pre-functions>
+            <actions>
+                <action id="521" name="同意">
+                    <meta name="OS_ButtonNameCode">os.agree</meta>
+                    <meta name="OS_ButtonClass">icon-confirm</meta>
+                    <meta name="OS_OperateCode">95</meta>
+                    <meta name="OS_OperateResultCode">101</meta>
+                    <meta name="OS_Rule">{"ThirdPartyFlag":"2","RuleType":"3","RuleOnFlowCode":"productStockTaking","RuleOnStep":[52],"RuleOnAction":[521,523],"RuleContext":[],"PreferredFlag":"true"}</meta>
+                    <results>
+                        <unconditional-result old-status="Finished" status="Underway" step="53">
+                        </unconditional-result>
+                    </results>
+                </action>
+                <action id="522" name="自动执行同意">
+                    <meta name="OS_DefaultAction"></meta>
+                    <results>
+                        <unconditional-result old-status="Finished" status="Underway" step="53">
+                        </unconditional-result>
+                    </results>
+                </action>
+                <action id="523" name="不同意">
+                    <meta name="OS_ButtonNameCode">os.inhibit</meta>
+                    <meta name="OS_ButtonClass">icon-inhibit</meta>
+                    <meta name="OS_OperateCode">95</meta>
+                    <meta name="OS_OperateResultCode">102</meta>
+                    <meta name="OS_Rule">{"ThirdPartyFlag":"2","RuleType":"3","RuleOnFlowCode":"productShift","RuleOnStep":[52],"RuleOnAction":[521,523],"RuleContext":[],"PreferredFlag":"true"}</meta>
+                    <meta name="OS_ButtonScript">popOSDialog.showDialog(523);</meta>
+                    <results>
+                        <unconditional-result old-status="Finished" status="Underway" step="50">
+                            <post-functions>
+                                <function type="beanshell">
+                                    <arg name="script">
+                                        propertySet.setString("OS_StepShowOrder","2")
+                                    </arg>
+                                </function>
+                                <function type="spring">
+                                    <arg name="bean.name">productStockTaking_FN</arg>
+                                    <arg name="method">updateCA</arg>
+                                    <arg name="VerifiedFlag">5</arg>
+                                </function>
+                            </post-functions>
+                        </unconditional-result>
+                    </results>
+                </action>
+            </actions>
+        </step>
+        <step id="53" name="二审通过">
+           <meta name="OS_StepShowFlag">1</meta>
+           <meta name="OS_StepShowText">104</meta>
+           <meta name="OS_StepShowOrder">4</meta>
+            <actions>
+                <action id="531" name="向ps表中写状态" auto="true">
+                    <results>
+                        <unconditional-result old-status="Finished" status="Underway" step="60">
+                            <pre-functions>
+                                <function type="spring">
+                                    <arg name="bean.name">productStockTaking_FN</arg>
+                                    <arg name="method">updateCA</arg>
+                                    <arg name="VerifiedFlag">7</arg>
+                                </function>
+                                <function type="beanshell">
+                                    <arg name="script">
+                                        propertySet.setString("OS_StepShowOrder","4")
+                                    </arg>
+                                </function>
+                            </pre-functions>
+                        </unconditional-result>
+                    </results>
+                </action>
+            </actions>
+        </step>
+        <step id="60" name="出入库操作">
+            <actions>
+                <action id="601" name="写出入库表和库存表" auto="true">
+                    <results>
+                        <unconditional-result old-status="Finished" status="Underway" step="999">
+                            <pre-functions>
+                                <function type="spring">
+                                    <arg name="bean.name">productStockTaking_FN</arg>
+                                    <arg name="method">stockInOut</arg>
+                                </function>
+                            </pre-functions>
+                        </unconditional-result>
+                    </results>
+                </action>
+            </actions>
+        </step>
+        <step id="70" name="编辑">
+            <!-- 将工作流的当前业务状态设置为        盘点单编辑 -->
+            <pre-functions>
+                <function type="beanshell">
+                    <arg name="script">
+                        propertySet.setString("OS_Current_Operate","92")
+                    </arg>
+                </function>
+                <function type="spring">
+                    <arg name="bean.name">workFlowCommon_FN</arg>
+                    <arg name="method">setParticipant</arg>
+                </function>
+            </pre-functions>
+            <actions>
+                <action id="71" name="再次提交">
+                    <meta name="OS_ButtonNameCode">os.submit</meta>
+                    <meta name="OS_ButtonClass">icon-confirm</meta>
+                    <meta name="OS_OperateCode">900</meta>
+                    <meta name="OS_OperateResultCode">103</meta>
+                    <results>
+                        <unconditional-result old-status="Finished" status="Underway" step="20">
+                            <post-functions>
+                                <function type="spring">
+                                    <arg name="bean.name">productStockTaking_FN</arg>
+                                    <arg name="method">CA_auditAgreeHand</arg>
+                                </function>
+                            </post-functions>
+                        </unconditional-result>
+                    </results>
+                </action>
+                <!--
+                <action id="72" name="删除">
+                    <results>
+                        <unconditional-result old-status="Finished" status="Underway" step="999">
+                                <post-functions>
+                                    <function type="spring">
+                                        <arg name="bean.name">productStockTaking_FN</arg>
+                                        <arg name="method">auditDisAgreeHand</arg>
+                                    </function>
+                                </post-functions>
+                        </unconditional-result>
+                    </results>
+                </action>
+                -->
+            </actions>
+        </step>
+        <step id="999" name="Flow over">
+            <meta name="OS_StepShowFlag">1</meta>
+            <meta name="OS_StepShowText">999</meta>
+            <meta name="OS_StepShowOrder">5</meta>
+            <!-- 将工作流的当前业务状态设置为       工作流结束 -->
+            <pre-functions>
+                <function type="beanshell">
+                    <arg name="script">
+                        propertySet.setString("OS_Current_Operate","999");
+                        propertySet.setString("OS_StepShowOrder","5");
+                    </arg>
+                </function>
+                <function type="spring">
+                    <arg name="bean.name">workFlowCommon_FN</arg>
+                    <arg name="method">deleteUserTask</arg>
+                </function>
+            </pre-functions>
+        </step>
+    </steps>
+</workflow>

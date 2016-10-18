@@ -1,0 +1,188 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sqlMap PUBLIC "-//iBATIS.com//DTD SQL Map 2.0//EN" "http://ibatis.apache.org/dtd/sql-map-2.dtd">
+<sqlMap namespace="BINOLSTSFH03">
+    <!--删除【产品订货单据表】伦理删除-->
+    <update id="deleteProductOrderLogic" parameterClass="java.util.HashMap">
+        <![CDATA[
+            UPDATE
+                Inventory.BIN_ProductOrder
+            SET
+                ValidFlag = '0',
+                UpdateTime = GETDATE(),
+                UpdatedBy = #UpdatedBy#,
+                UpdatePGM = #UpdatePGM#,
+                ModifyCount = ModifyCount+1
+            WHERE
+                BIN_ProductOrderID = #BIN_ProductOrderID#
+                and ValidFlag = '1'
+                and UpdateTime = #UpdateTime#
+                and ModifyCount = #ModifyCount#
+        ]]>
+    </update>
+    
+    <!--删除【产品订货单据明细表】 伦理删除-->
+    <update id="deleteProductOrderDetailLogic" parameterClass="java.util.HashMap">
+        <![CDATA[
+            UPDATE
+                Inventory.BIN_ProductOrderDetail
+            SET
+                ValidFlag ='0',
+                UpdateTime=GETDATE(),
+                UpdatedBy=#UpdatedBy#,
+                UpdatePGM=#UpdatePGM#,
+                ModifyCount=ModifyCount+1
+            WHERE
+                BIN_ProductOrderID = #BIN_ProductOrderID#
+                and ValidFlag ='1'
+        ]]>
+    </update>
+    
+    <!--删除【产品订货单据明细表】 -->
+    <update id="deleteProductOrderDetail" parameterClass="java.util.HashMap">
+        <![CDATA[
+            DELETE FROM
+                Inventory.BIN_ProductOrderDetail
+            WHERE
+                BIN_ProductOrderID = #BIN_ProductOrderID#
+        ]]>
+        <isNotEmpty property="prtVendorId">
+	        <![CDATA[
+	                AND BIN_ProductVendorID IN
+	        ]]>
+	        <iterate conjunction="," open="(" close=")" property="prtVendorId">
+	            #prtVendorId[]#
+	        </iterate>
+        </isNotEmpty>
+    </update>
+    
+    <!-- 根据订单ID获取订单明细的产品厂商ID -->
+    <select id="getOrderDetailPrtVentorID" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+    	<![CDATA[
+    		SELECT 
+				BIN_ProductOrderID,
+				BIN_ProductVendorID
+			FROM
+				Inventory.BIN_ProductOrderDetail
+			WHERE
+				BIN_ProductOrderID=#BIN_ProductOrderID#
+    	]]>
+    </select>
+    
+    <!--【产品订货单据明细表】订货核准数量置为0 -->
+    <update id="setProductOrderDetailZero" parameterClass="java.util.HashMap">
+        <![CDATA[
+            UPDATE
+                Inventory.BIN_ProductOrderDetail
+            SET
+            	Quantity = 0,
+            	DetailNo = #DetailNo#
+            WHERE
+                BIN_ProductOrderID = #BIN_ProductOrderID#
+                and BIN_ProductVendorID = #BIN_ProductVendorID#
+        ]]>
+    </update>
+    
+    <!-- 取得近30天销量(按照订货时间往前退30天计算，包含会员礼品领用以及会员积分兑换所出库的产品)  -->
+    <select id="getSaleQuantity" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+        <![CDATA[
+            SELECT FLOOR(ISNULL(SUM(CASE
+                            WHEN A.SaleType = 'SR'
+                                THEN - B.Quantity
+                            ELSE B.Quantity
+                            END), 0)) AS SaleQuantity
+                    ,BIN_ProductVendorID
+            FROM Sale.BIN_SaleRecord A WITH (NOLOCK)
+            JOIN Sale.BIN_SaleRecordDetail B WITH (NOLOCK) ON A.BIN_SaleRecordID = B.BIN_SaleRecordID
+            WHERE
+        ]]>
+        <isNotEmpty property="saleTimeEnd">
+            <![CDATA[
+                DATEDIFF(DAY,A.SaleTime,#saleTimeEnd#) <= 30
+                AND DATEDIFF(DAY,A.SaleTime,#saleTimeEnd#) >= 0
+            ]]>
+        </isNotEmpty>
+        <isEmpty property="saleTimeEnd">
+            <![CDATA[
+                DATEDIFF(DAY,A.SaleTime,GetDate()) <= 30
+                AND DATEDIFF(DAY,A.SaleTime,GetDate()) >= 0
+            ]]>
+        </isEmpty>
+        <![CDATA[
+                AND A.BIN_OrganizationInfoID = #organizationInfoId#
+                AND A.BIN_BrandInfoID = #brandInfoId#
+                AND A.BIN_OrganizationID = #organizationId#
+                AND B.SaleType = 'N'
+                AND B.BIN_ProductVendorID IN
+        ]]>
+        <iterate conjunction="," open="(" close=")" property="prtVendorId">
+            #prtVendorId[]#
+        </iterate>
+        <![CDATA[
+            GROUP BY BIN_ProductVendorID
+        ]]>
+    </select>
+    
+    <!-- 安全库存天数 -->
+    <select id="getLowestStockDays" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+        <![CDATA[
+            SELECT
+                A.BIN_ProductVendorID,
+                A.LowestStockDays
+            FROM
+                Inventory.BIN_CounterPrtOrParameter A
+            WHERE
+                A.BIN_OrganizationInfoID = #organizationInfoId#
+                AND A.BIN_BrandInfoID = #brandInfoId#
+                AND A.BIN_OrganizationID = #organizationId#
+                AND A.BIN_ProductVendorID IN
+        ]]>
+        <iterate conjunction="," open="(" close=")" property="prtVendorId">
+            #prtVendorId[]#
+        </iterate>
+    </select>
+    
+    <!-- 系数 -->
+    <select id="getAdtCoefficient" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+        <![CDATA[
+            SELECT
+                A.BIN_ProductVendorID,
+                A.AdtCoefficient
+            FROM
+                Inventory.BIN_ProductOrderParameter A
+            WHERE
+                A.BIN_OrganizationInfoID = #organizationInfoId#
+                AND A.BIN_BrandInfoID = #brandInfoId#
+        ]]>
+        <isNotEmpty property="saleTimeEnd">
+            <![CDATA[
+                AND A.Year = LEFT(#saleTimeEnd#,4)
+                AND A.Month = RIGHT(LEFT(#saleTimeEnd#,7),2)
+            ]]>
+        </isNotEmpty>
+        <isEmpty property="saleTimeEnd">
+            <![CDATA[
+                AND A.Year = YEAR(GETDATE())
+                AND A.Month = MONTH(GETDATE())
+            ]]>
+        </isEmpty>
+        <![CDATA[
+                AND A.BIN_ProductVendorID IN
+        ]]>
+        <iterate conjunction="," open="(" close=")" property="prtVendorId">
+            #prtVendorId[]#
+        </iterate>
+    </select>
+    
+    <!-- 根据订货单的工作流ID取得关联的发货单主ID -->
+    <select id="getDeliverIDByWorkFlowID" parameterClass="java.util.HashMap" resultClass="java.lang.String">
+    	<![CDATA[
+    		SELECT 
+				BIN_ProductDeliverID
+			FROM
+				Inventory.BIN_ProductDeliver
+			WHERE
+				WorkFlowID=#WorkFlowID#
+    	]]>
+    </select>
+    
+</sqlMap>

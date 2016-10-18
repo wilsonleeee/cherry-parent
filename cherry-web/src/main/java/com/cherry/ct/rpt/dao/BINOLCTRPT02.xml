@@ -1,0 +1,102 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sqlMap PUBLIC "-//iBATIS.com//DTD SQL Map 2.0//EN" "http://ibatis.apache.org/dtd/sql-map-2.dtd">
+<sqlMap namespace="BINOLCTRPT02">    
+    <!-- 沟通事件运行记录查询sql  -->
+	<sql id="eventRunDetailQuery">
+		<![CDATA[
+			SELECT 
+				min(tr.BIN_CommRunLogID) as runId,
+				tr.BIN_BrandInfoID as brandInfoId,
+				tr.BIN_OrganizationInfoID as organizationInfoId,
+				tr.BatchID as batchId,
+				tr.Bin_PlanCode as eventType,
+				tr.BIN_CommunicationCode as communicationCode,
+				tr.CommType as commType,
+				tr.RunType as runType,
+				min(tr.RunBeginTime) as runBeginTime,
+				sum(tr.SendMsgNum) as sendMsgNum,
+				isnull(sum(tr.NotReceiveNum),0)+isnull(sum(tr.CodeIllegalNum),0)+isnull(sum(tr.NotCreateMsgNum),0)+isnull(sum(tr.SendErrorNum),0) as sendErrorNum,
+				tr.RunStatus as runStatus,
+				max(tr.RunError) as runError 
+			FROM 
+				Communication.BIN_CommRunLog as tr with(nolock) 
+			Where 
+				Exists (
+					Select distinct EventTypeId from Communication.BIN_CommEventSet as tc 
+					Where EventTypeId < 90 and tc.EventTypeId = tr.Bin_PlanCode
+				) AND 
+				tr.BIN_BrandInfoID = #brandInfoId# AND 
+				tr.BIN_OrganizationInfoID = #organizationInfoId# AND 
+				tr.RunType = 3 
+		]]>
+		<dynamic>
+			<!-- 参数中存在沟通方式查询条件时  -->
+			<isNotEmpty prepend="AND" property="commType" >
+				tr.CommType = #commType# 
+			</isNotEmpty>
+			<!-- 参数中存在沟通计划名称查询条件时  -->
+			<isNotEmpty prepend="AND" property="eventType" >
+				tr.Bin_PlanCode = #eventType# 
+			</isNotEmpty>
+			<isNotEmpty prepend="AND" property="startTime">
+				<![CDATA[ tr.RunBeginTime >= #startTime#]]>
+			</isNotEmpty>
+			<isNotEmpty prepend="AND" property="endTime">
+				<![CDATA[ tr.RunBeginTime <= #endTime#]]>
+			</isNotEmpty>
+			<isNotEmpty prepend="AND" property="mobilePhone">
+				<![CDATA[ 
+					Exists (
+						SELECT 1 
+						FROM 
+							Communication.BIN_SmsSendDetail as ts 
+						WHERE 
+							ts.BIN_OrganizationInfoID = #organizationInfoId# AND 
+							ts.BIN_BrandInfoID = #brandInfoId# AND 
+							ts.Mobilephone = #mobilePhone# AND
+							ts.BatchID = tr.BatchID
+					)
+				]]>
+			</isNotEmpty>
+		</dynamic>
+		<![CDATA[
+			Group by
+				tr.BIN_BrandInfoID,
+				tr.BIN_OrganizationInfoID,
+				tr.BatchID,
+				tr.Bin_PlanCode,
+				tr.BIN_CommunicationCode,
+				tr.CommType,
+				tr.RunType,
+				tr.RunStatus
+		]]>	
+	</sql>
+	
+	<!-- 获取沟通事件运行记录总数  -->
+    <select id="getEventRunDetailCount" parameterClass="java.util.HashMap" resultClass="java.lang.Integer">
+    	<![CDATA[
+			SELECT	COUNT(SORT_T1.runId) AS count FROM (
+		]]>	
+		<include refid="BINOLCTRPT02.eventRunDetailQuery" />	
+		<![CDATA[	
+			)SORT_T1
+		]]>
+    </select>
+	
+	<!-- 获取沟通计划运行记录List -->
+    <select id="getEventRunDetailList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+       	<include refid="BINOLCMINC99.pageheader" />
+		<include refid="BINOLCTRPT02.eventRunDetailQuery" />
+		<include refid="BINOLCMINC99.pagefooter" />
+    </select>
+    
+    <select id="getEventRunTotalInfo" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+		select 
+			isnull(sum(DETAIL_TABLE.sendMsgNum),0) as totalSendNum,
+			isnull(sum(DETAIL_TABLE.sendErrorNum),0) as totalSendErrorNum
+		from(
+			<include refid="BINOLCTRPT02.eventRunDetailQuery" />
+		)DETAIL_TABLE
+    </select>
+</sqlMap>
+

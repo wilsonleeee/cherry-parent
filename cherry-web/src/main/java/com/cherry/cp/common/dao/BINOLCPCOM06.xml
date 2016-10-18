@@ -1,0 +1,99 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sqlMap PUBLIC "-//iBATIS.com//DTD SQL Map 2.0//EN" "http://ibatis.apache.org/dtd/sql-map-2.dtd">
+<sqlMap namespace="BINOLCPCOM06">
+	<resultMap id="BINOLCPCOM06.campInfoMap" class="java.util.HashMap">
+		<result property="list" column="campId" select="BINOLCPCOM06.getSubCampList" javaType="java.util.List" />
+		<result property="campCode" column="campCode"/>
+		<result property="campName" column="campName"/>
+		<result property="campType" column="campType"/>
+		<result property="campFromDate" column="campFromDate"/>
+		<result property="campToDate" column="campToDate"/>
+		<result property="orderFromDate" column="orderFromDate"/>
+		<result property="orderToDate" column="orderToDate"/>
+		<result property="stockFromDate" column="stockFromDate"/>
+		<result property="stockToDate" column="stockToDate"/>
+		<result property="obtainFromDate" column="obtainFromDate"/>
+		<result property="obtainToDate" column="obtainToDate"/>
+		<result property="obtainRule" column="obtainRule"/>
+		<result property="exPointDeadDate" column="exPointDeadDate"/>
+		<result property="exPointDeductFlag" column="exPointDeductFlag"/>
+		<result property="gotCounter" column="gotCounter"/>
+		<result property="state" column="state"/>
+		<result property="validFlag" column="validFlag"/>
+	</resultMap>
+	
+	<resultMap id="BINOLCPCOM06.subCampInfoMap" class="java.util.HashMap">
+		<result property="conList" column="subCampId" select="BINOLCPCOM06.getConList" javaType="java.util.List" />
+		<result property="subCampCode" column="subCampCode"/>
+		<result property="subCampName" column="subCampName"/>
+		<result property="subCampType" column="subCampType"/>
+		<result property="subCampValid" column="subCampValid"/>
+		<result property="exPointDeadDate" column="exPointDeadDate"/>
+		<result property="state" column="state"/>
+		<result property="validFlag" column="validFlag"/>
+	</resultMap>
+	
+	<!-- 取得会员主题活动INFO -->
+    <select id="getCampInfo" parameterClass="java.util.HashMap" resultMap="BINOLCPCOM06.campInfoMap">
+    	<![CDATA[
+		SELECT
+			BIN_CampaignID AS campId,
+			CampaignCode AS campCode,
+			CampaignName AS campName,
+			CampaignType AS campType,
+			CampaignFromDate AS campFromDate,
+			CampaignToDate AS campToDate,
+			CampaignOrderFromDate AS orderFromDate,
+			CampaignOrderToDate AS orderToDate,
+			StockFromDate AS stockFromDate,
+			StockToDate AS stockToDate,
+			ObtainFromDate AS obtainFromDate,
+			ObtainToDate AS obtainToDate,
+			ObtainRule AS obtainRule,
+			ExPointDeadDate AS exPointDeadDate,
+			ExPointDeductFlag AS exPointDeductFlag,
+			GotCounter AS gotCounter,
+			State AS state,
+			ValidFlag AS validFlag
+		FROM
+			Campaign.BIN_Campaign
+		WHERE
+			CampaignCode = #campCode#
+		]]>
+    </select>
+    <!-- 取得会员活动INFO -->
+    <select id="getSubCampList" parameterClass="java.lang.Integer" resultMap="BINOLCPCOM06.subCampInfoMap">
+    	<![CDATA[
+		SELECT
+			BIN_CampaignRuleID AS subCampId,
+			SubCampaignCode AS subCampCode,
+			SubCampaignName AS subCampName,
+			SubCampaignType AS subCampType,
+			SubCampaignValid AS subCampValid,
+			ExPointDeadDate AS exPointDeadDate,
+			State AS state,
+			ValidFlag AS validFlag
+		FROM
+			Campaign.BIN_CampaignRule
+		WHERE
+			BIN_CampaignID = #campId#
+		]]>
+    </select>
+    <!-- 取得会员活动条件 -->
+    <select id="getConList" parameterClass="java.lang.Integer" resultClass="java.util.HashMap">
+    	<![CDATA[
+		SELECT
+			A.BasePropValue1 AS propValue1,
+			A.BasePropValue2 AS propValue2,
+			B.PropertyName AS propName
+		FROM
+			Campaign.BIN_CamRuleCondition A
+			JOIN Campaign.BIN_CampaignBaseProp B
+			ON(A.BIN_CampaignBasePropID = B.BIN_CampaignBasePropID
+				AND B.PropertyName IN('baseProp_rese_time','baseprop_stocking_time','baseProp_obtain_time','baseProp_customer')
+				AND B.ValidFlag = '1')
+		WHERE
+			A.BIN_CampaignRuleID = #subCampId#
+		]]>
+    </select>
+</sqlMap>

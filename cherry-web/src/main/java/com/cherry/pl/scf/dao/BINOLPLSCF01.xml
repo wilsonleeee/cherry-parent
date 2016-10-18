@@ -1,0 +1,287 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sqlMap PUBLIC "-//iBATIS.com//DTD SQL Map 2.0//EN" "http://ibatis.apache.org/dtd/sql-map-2.dtd">
+<sqlMap namespace="BINOLPLSCF01">
+	 
+	<!-- 查询默认基本配置信息-->
+	<select id="getDefaultSystemConfigList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+        <![CDATA[
+        SELECT  
+            ConfigCode AS configCode,
+            ConfigDescriptionChinese AS configDescriptionChinese,
+            ConfigDescriptionForeign AS configDescriptionForeign,
+            GroupNo AS groupNo,
+            Type AS type,
+            DetailNo AS detailNo,
+			ConfigValue AS configValue,
+			CommentsChinese AS commentsChinese,
+			CommentsForeign AS commentsForeign,
+			ConfigEfficient AS configEfficient
+        FROM    
+            Tools.BIN_SystemConfig
+        WHERE    
+            BIN_OrganizationInfoID = '-9999'
+			AND BIN_BrandInfoID = '-9999'
+			AND BrandConfigFlag = '1'
+			AND ValidFlag = '1'
+		]]>
+		<isNotEmpty prepend="AND" property="configCode">
+			ConfigCode=#configCode#
+		</isNotEmpty>
+		<![CDATA[
+		ORDER BY 
+			GroupNo ASC,
+			ConfigValue ASC
+        ]]>        
+    </select>
+	
+	<!-- 查询基本配置信息 -->
+	<resultMap id="BINOLPLSCF01.SystemConfig" class="java.util.HashMap">
+		<result property="configCode" column="ConfigCode"/>
+		<result property="configDescriptionChinese" column="ConfigDescriptionChinese"/>
+		<result property="commentsChinese" column="CommentsChinese"/>
+		<result property="type" column="Type"/>
+		<result property="configValue" column="ConfigValue"/>
+		<result property="configEfficient" column="ConfigEfficient"/>
+		<result property="groupNo" column="GroupNo"/>
+	</resultMap>
+	<select id="getSystemConfigList" parameterClass="java.util.HashMap" resultMap="BINOLPLSCF01.SystemConfig">
+		<![CDATA[
+			SELECT
+				A.ConfigCode,
+		]]>		
+		<dynamic>
+		<isNotEmpty property="language">
+			<isEqual property="language" compareValue="en_US">
+				A.ConfigDescriptionForeign AS ConfigDescriptionChinese,
+				A.CommentsForeign AS CommentsChinese,
+			</isEqual>
+			<isEqual property="language" compareValue="zh_CN">	
+				A.ConfigDescriptionChinese AS ConfigDescriptionChinese,
+				A.CommentsChinese AS CommentsChinese,
+			</isEqual>
+		</isNotEmpty>
+		<isEmpty property="language">
+			A.ConfigDescriptionChinese AS ConfigDescriptionChinese,
+			A.CommentsChinese AS CommentsChinese,
+		</isEmpty>
+		</dynamic>
+		<![CDATA[
+				A.Type,
+				CASE
+				    WHEN (B.ConfigValue IS NULL) THEN A.ConfigValue
+					ELSE B.ConfigValue
+				END AS ConfigValue,
+				CASE
+					WHEN (A.Type != '3' AND B.ConfigEfficient IS NOT NULL) THEN B.ConfigEfficient
+					ELSE A.ConfigEfficient
+				END AS ConfigEfficient,
+				A.GroupNo,
+				A.DetailNo
+			FROM
+				Tools.BIN_SystemConfig A
+				LEFT JOIN Tools.BIN_SystemConfig B
+				ON A.ConfigCode = B.ConfigCode 
+				AND A.DetailNo = B.DetailNo
+				AND B.BIN_OrganizationInfoID = #organizationInfoId#
+				AND B.BIN_BrandInfoID = #brandInfoId#
+				AND B.ValidFlag='1'
+			WHERE
+				A.BIN_OrganizationInfoID = '-9999'
+                AND A.BIN_BrandInfoID = '-9999'
+                AND A.BrandConfigFlag = '1'
+                AND A.ValidFlag = '1'
+            ORDER BY 
+				A.GroupNo ASC,
+				A.ConfigValue ASC
+		]]>
+    </select>
+	
+	<!-- 查询Admin基本配置信息 -->
+    <select id="getAdminSystemConfigList" parameterClass="java.util.HashMap" resultMap="BINOLPLSCF01.SystemConfig">
+        <![CDATA[
+            SELECT
+                A.ConfigCode,
+        ]]>     
+        <dynamic>
+        <isNotEmpty property="language">
+            <isEqual property="language" compareValue="en_US">
+                A.ConfigDescriptionForeign AS ConfigDescriptionChinese,
+                A.CommentsForeign AS CommentsChinese,
+            </isEqual>
+            <isEqual property="language" compareValue="zh_CN">  
+                A.ConfigDescriptionChinese AS ConfigDescriptionChinese,
+                A.CommentsChinese AS CommentsChinese,
+            </isEqual>
+        </isNotEmpty>
+        <isEmpty property="language">
+            A.ConfigDescriptionChinese AS ConfigDescriptionChinese,
+            A.CommentsChinese AS CommentsChinese,
+        </isEmpty>
+        </dynamic>
+        <![CDATA[
+                A.Type,
+                A.ConfigValue,
+                A.ConfigEfficient,
+                A.GroupNo,
+                A.DetailNo
+            FROM
+                Tools.BIN_SystemConfig A
+            WHERE
+                A.BIN_OrganizationInfoID = '-9999'
+                AND A.BIN_BrandInfoID = '-9999'
+                AND A.ValidFlag = '1'
+            ORDER BY 
+				GroupNo ASC,
+				ConfigValue ASC
+        ]]>
+    </select>
+	
+    <!-- 给品牌添加默认的基本配置信息 已失效 -->
+    <!--
+    <insert id="addSystemConfig" parameterClass="java.util.HashMap">
+    	<![CDATA[
+    		INSERT INTO Tools.BIN_SystemConfig (
+    			BIN_OrganizationInfoID,
+				BIN_BrandInfoID,
+				BrandConfigFlag,
+				GroupNo,
+				ConfigCode,
+				ConfigDescriptionChinese,
+				ConfigDescriptionForeign,
+				Type,
+				DetailNo,
+				ConfigValue,
+				CommentsChinese,
+				CommentsForeign,
+				ConfigEfficient,
+				CreateTime,
+				UpdateTime,
+				CreatedBy,
+				CreatePGM,
+				UpdatedBy,
+				UpdatePGM,
+				ValidFlag,
+				ModifyCount
+    		)
+				SELECT 
+					#organizationInfoId#,
+					#brandInfoId#,
+					BrandConfigFlag,
+					GroupNo,
+					ConfigCode,
+					ConfigDescriptionChinese,
+					ConfigDescriptionForeign,
+					Type,
+					DetailNo,
+					ConfigValue,
+					CommentsChinese,
+					CommentsForeign,
+					ConfigEfficient,
+		]]>
+				<include refid="BINOLCMINC99.insertValueSql" />		
+		<![CDATA[				
+				FROM 
+					Tools.BIN_SystemConfig
+				WHERE 
+				    BrandConfigFlag='1' AND
+					BIN_OrganizationInfoID='-8888' AND 
+					BIN_BrandInfoID='-8888' AND 
+					ValidFlag='1'
+		]]>
+    </insert>
+    -->
+	
+    <!-- 更新基本配置信息 -->
+    <update id="updateSystemConfig" parameterClass="java.util.HashMap">
+    	<![CDATA[
+			UPDATE Tools.BIN_SystemConfig			
+			SET				
+				ConfigEfficient = #configEfficient#,
+		]]>
+				<dynamic>
+					<isEqual property="type" compareValue="3">
+						ConfigValue = #configValue#,
+					</isEqual>
+				</dynamic>
+				<include refid="BINOLCMINC99.updateSql" />		
+		<![CDATA[
+			WHERE				
+				BIN_OrganizationInfoID=#organizationInfoId# AND
+				BIN_BrandInfoID=#brandInfoId# AND
+				ValidFlag='1' AND
+				ConfigCode=#configCode#
+		]]>
+		<dynamic>
+			<isNotEqual property="type" compareValue="3">
+				<isNotEmpty prepend="AND" property="configValue">
+					<isEqual property="configEfficient" compareValue="0">
+						ConfigValue NOT IN
+					</isEqual>
+					<isEqual property="configEfficient" compareValue="1">
+						ConfigValue IN
+					</isEqual>
+					<iterate property="configValue" open="(" close=")" conjunction=",">
+						#configValue[]#
+					</iterate>
+				</isNotEmpty>
+			</isNotEqual>
+			<isNotEmpty prepend="AND" property="detailNo">
+				DetailNo = #detailNo#
+			</isNotEmpty>
+		</dynamic>
+    </update>
+	
+	<!-- 删除基本配置信息 -->
+	<delete id="delSystemConfig" parameterClass="java.util.HashMap">
+        <![CDATA[
+        DELETE FROM 
+            Tools.BIN_SystemConfig
+        WHERE   
+            BIN_OrganizationInfoID=#organizationInfoId#
+            AND BIN_BrandInfoID=#brandInfoId#
+        ]]>
+        <isNotEmpty prepend="AND" property="configCode">
+			ConfigCode = #configCode#
+		</isNotEmpty>
+    </delete>
+	
+	<!-- 插入基本配置信息 -->
+	<insert id="insertSystemConfig" parameterClass="java.util.HashMap">
+		<![CDATA[
+            INSERT INTO Tools.BIN_SystemConfig(
+			    BIN_OrganizationInfoID,
+                BIN_BrandInfoID,
+                BrandConfigFlag,
+                GroupNo,
+                ConfigCode,
+                ConfigDescriptionChinese,
+                ConfigDescriptionForeign,
+                Type,
+                DetailNo,
+                ConfigValue,
+                CommentsChinese,
+                CommentsForeign,
+                ConfigEfficient,
+		]]>
+		<include refid="BINOLCMINC99.insertKeySql" />
+		<![CDATA[                               
+        )VALUES (
+            #organizationInfoId#,
+            #brandInfoId#,
+            #brandConfigFlag#,
+            #groupNo#,
+			#configCode#,
+            #configDescriptionChinese#,
+            #configDescriptionForeign#,
+            #type#,
+			#detailNo#,
+            #configValue#,
+            #commentsChinese#,
+            #commentsForeign#,
+			#configEfficient#,
+        ]]>
+        <include refid="BINOLCMINC99.insertValueSql" />
+        <![CDATA[ ) ]]>
+	</insert>
+	
+</sqlMap>

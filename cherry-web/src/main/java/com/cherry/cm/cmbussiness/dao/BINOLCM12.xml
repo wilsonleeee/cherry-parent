@@ -1,0 +1,153 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sqlMap PUBLIC "-//iBATIS.com//DTD SQL Map 2.0//EN" "http://ibatis.apache.org/dtd/sql-map-2.dtd">
+<sqlMap namespace="BINOLCM12">	
+	<!-- 取得扩展属性List-->
+	<select id="getExtPropertyList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+        <![CDATA[
+			SELECT
+				A.BIN_ExtendPropertyID AS extendPropertyId,
+				A.GroupID AS groupId,
+		]]>
+		<dynamic>
+			<isNotEmpty property="language">
+				<isEqual property="language" compareValue="en_US">										
+					A.PropertyNameForeign AS propertyName,
+					A.GroupNameForeign AS groupName,
+				</isEqual>
+				<isEqual property="language" compareValue="zh_CN">										
+					A.PropertyName AS propertyName,
+					A.GroupName AS groupName,
+				</isEqual>								
+			</isNotEmpty>
+			<isEmpty property="language">
+				A.PropertyName AS propertyName,
+				A.GroupName AS groupName,
+			</isEmpty>
+		</dynamic>
+		 <![CDATA[		
+				A.PropertyRule AS propertyRule,
+				A.PropertyType AS propertyType,
+				A.ViewType AS viewType,
+				A.ValueTable AS valueTable,
+				B.PropertyValue AS propertyValue
+			FROM
+				Basis.BIN_ExtendProperty A
+				LEFT JOIN Basis.BIN_ProductExtValue B
+				ON(A.BIN_ExtendPropertyID = B.BIN_ExtendPropertyID
+					AND B.BIN_ProductID = #productId#
+					AND B.ValidFlag = '1')
+			WHERE
+				A.BIN_OrganizationInfoID = #organizationInfoId#
+				AND A.BIN_BrandInfoID = #brandInfoId#
+				AND A.ExtendedTable = #extendedTable#
+				AND A.ValidFlag = '1'
+			ORDER BY
+				A.GroupID
+		]]>
+    </select>
+	<!-- 取得产品扩展属性及属性值List-->
+	<select id="getExtValList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+        <![CDATA[
+		SELECT
+			B.PropertyValue AS propertyValue,
+			A.PropertyKey AS propertyKey,
+			A.GroupID AS groupId,
+		]]>
+		<dynamic>
+			<isNotEmpty property="language">
+				<isEqual property="language" compareValue="en_US">	
+					A.GroupNameForeign AS groupName,									
+					A.PropertyNameForeign AS propertyName,
+					C.Value2 AS defValue
+				</isEqual>
+				<isEqual property="language" compareValue="zh_CN">	
+					A.GroupName AS groupName,									
+					A.PropertyName AS propertyName,
+					C.Value1 AS defValue
+				</isEqual>								
+			</isNotEmpty>
+			<isEmpty property="language">
+				A.GroupName AS groupName,
+				A.PropertyName AS propertyName,
+				C.Value1 AS defValue
+			</isEmpty>
+		</dynamic>
+		<![CDATA[
+		FROM
+			Basis.BIN_ExtendProperty A
+		LEFT JOIN Basis.BIN_ProductExtValue B ON(A.BIN_ExtendPropertyID = B.BIN_ExtendPropertyID  AND B.BIN_ProductID = #productId# AND B.ValidFlag = '1') 
+		LEFT JOIN Basis.BIN_ExtendDefValue C ON(A.BIN_ExtendPropertyID = C.BIN_ExtendPropertyID AND B.PropertyValue = C.CodeKey AND C.ValidFlag = '1')	   
+		WHERE
+			A.BIN_OrganizationInfoID = #organizationInfoId#
+		AND A.BIN_BrandInfoID = #brandInfoId#
+		AND A.ExtendedTable = #extendedTable#
+		AND A.ValidFlag = '1'
+		]]>
+    </select>
+    <!-- 取得扩展属性选项值List-->
+	<select id="getItemList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+        <![CDATA[	SELECT	]]>
+		<dynamic>
+			<isNotEmpty property="language">
+				<isEqual property="language" compareValue="en_US">										
+					Value2 AS value,
+				</isEqual>
+				<isEqual property="language" compareValue="zh_CN">										
+					Value1 AS value,
+				</isEqual>								
+			</isNotEmpty>
+			<isEmpty property="language">
+				Value1 AS value,
+			</isEmpty>
+		</dynamic>
+		 <![CDATA[		
+				CodeKey AS codeKey
+			FROM
+				Basis.BIN_ExtendDefValue 
+			WHERE
+				BIN_ExtendPropertyID = #extendPropertyId#
+				AND ValidFlag = '1'
+			ORDER BY
+				OrderNumber
+		]]>
+    </select>
+	<!-- 插入产品扩展属性值表  -->
+	<insert id="insertPrtExtValue" parameterClass="java.util.HashMap">
+        <![CDATA[ 
+		INSERT INTO Basis.BIN_ProductExtValue(	
+			BIN_ExtendPropertyID,
+			BIN_ProductID,
+			PropertyValue,
+		]]>	
+	    <include refid="BINOLCMINC99.insertKeySql" />	
+		<![CDATA[			
+        )VALUES(	
+			#extendPropertyId#,
+			#productId#,
+			#propertyValue#,					
+       	]]>
+	   	<include refid="BINOLCMINC99.insertValueSql" />
+		<![CDATA[ ) ]]>
+    </insert>
+	<!-- 删除产品扩展属性值表  -->
+	<delete id="delPrtExtValue" parameterClass="java.util.HashMap">
+        <![CDATA[ DELETE FROM Basis.BIN_ProductExtValue WHERE BIN_ProductID = #productId#]]>
+    </delete>
+    <!-- 查询扩展属性个数  -->
+    <select id="getExtProCount" parameterClass="java.util.HashMap" resultClass="java.lang.Integer">
+ 		SELECT 
+			COUNT(1) AS count
+  		FROM Basis.BIN_ExtendProperty
+	     WHERE
+	     	ValidFlag = '1'
+         <isNotEmpty property="organizationInfoId" prepend="AND">
+			BIN_OrganizationInfoID = #organizationInfoId#
+         </isNotEmpty>
+         <isNotEmpty property="brandInfoId" prepend="AND">
+			BIN_BrandInfoID = #brandInfoId#
+         </isNotEmpty>               
+         <isNotEmpty property="extendedTable" prepend="AND">
+			ExtendedTable = #extendedTable#
+         </isNotEmpty>  
+    </select>
+</sqlMap>

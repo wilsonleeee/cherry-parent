@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sqlMap PUBLIC "-//iBATIS.com//DTD SQL Map 2.0//EN" "http://ibatis.apache.org/dtd/sql-map-2.dtd">
+<sqlMap namespace="BINOLSTJCS12">
+	<!-- 电商产品对应关系一览查询SQL文 -->
+	<sql id="getProductRelation">
+		<![CDATA[
+			SELECT
+				A.EsProductTitleName esProductTitleName,
+				A.SkuCode skuCode,
+				A.OutCode outCode,
+				A.UnitCode unitCode,
+				A.BarCode barCode,
+				P.NameTotal nameTotal,
+				CONVERT(varchar(19),A.GetDate,120) getDate,
+				A.IsRelationChange isRelationChange,
+				A.ValidFlag validFlag
+			FROM Sale.BIN_ESProductRelation A
+			LEFT JOIN Basis.BIN_Product P
+				ON A.UnitCode = P.UnitCode
+			WHERE
+				A.BIN_BrandInfoID = #brandInfoId#
+				AND A.BIN_OrganizationInfoID = #organizationInfoId#
+		]]>	
+			<isNotEmpty property="skuCode" prepend="AND">
+				A.SkuCode = #skuCode#
+			</isNotEmpty>
+			<isNotEmpty property="outCode" prepend="AND">
+				A.OutCode = #outCode#
+			</isNotEmpty>
+			<isNotEmpty property="unitCode" prepend="AND">
+				A.UnitCode = #unitCode#
+			</isNotEmpty>
+			<isNotEmpty property="barCode" prepend="AND">
+				A.BarCode = #barCode#
+			</isNotEmpty>
+	</sql>
+     <!-- 取得电商对应关系一览Count  -->
+    <select id="getProductRelationCount" parameterClass="java.util.HashMap" resultClass="java.lang.Integer">
+    	<![CDATA[
+			SELECT	COUNT(SORT_T1.OutCode) AS count FROM (
+		]]>	
+		<include refid="BINOLSTJCS12.getProductRelation" />	
+		<![CDATA[	
+			)SORT_T1
+		]]>										
+    </select>
+    
+	<!-- 取得电商产品对应关系一览List  -->
+    <select id="getProductRelationList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+		<include refid="BINOLCMINC99.pageheader" />
+        <include refid="BINOLSTJCS12.getProductRelation" />	
+        <include refid="BINOLCMINC99.pagefooter" />	
+        <![CDATA[
+				ORDER BY outCode
+		]]>
+    </select>
+</sqlMap>

@@ -1,0 +1,1010 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sqlMap PUBLIC "-//iBATIS.com//DTD SQL Map 2.0//EN" "http://ibatis.apache.org/dtd/sql-map-2.dtd">
+<sqlMap namespace="BINBEMQMES01">
+	<!-- 查询库存数据 -->
+	<select id="selPrmStockNumInfo" parameterClass="java.util.HashMap" resultClass ="java.util.HashMap">
+	<![CDATA[
+		SELECT
+			Quantity AS stockQuantity
+		FROM
+			Inventory.BIN_PromotionStock A
+		WHERE
+			A.BIN_PromotionProductVendorID = #promotionProductVendorID# AND
+			A.BIN_InventoryInfoID = #inventoryInfoID# AND
+			]]>
+			<isNotEmpty property="logicInventoryInfoID">
+    		   A.BIN_LogicInventoryInfoID = #logicInventoryInfoID# AND
+			</isNotEmpty>
+			<![CDATA[ 
+			A.ValidFlag = '1'
+	]]> 
+	</select>
+	
+	<!-- 查询促销品库存信息 -->
+	<select id="selPrmPrtStockInfoList" parameterClass="java.util.HashMap" resultClass ="java.util.HashMap">
+		<![CDATA[
+			SELECT
+				C.UnitCode AS unitcode,
+				B.BarCode AS barcode,
+				D.SalePrice AS salePrice,
+				A.Quantity AS quantity
+			FROM
+				Inventory.BIN_PromotionStock A,
+				Basis.BIN_PromotionProductVendor B,
+				Basis.BIN_PromotionProduct C
+				]]> 
+					<isEmpty property="brandInfoID" >
+						LEFT JOIN Basis.BIN_PromotionPrice D ON D.BIN_PromotionProductID = C.BIN_PromotionProductID AND D.ValidFlag = '1'
+					</isEmpty>
+					<isNotEmpty property="brandInfoID">
+						LEFT JOIN Basis.BIN_PrmPriceDepart D ON D.BIN_PromotionProductID = C.BIN_PromotionProductID AND D.ValidFlag = '1' AND D.BIN_OrganizationID = #organizationID#
+					</isNotEmpty>
+	    		<![CDATA[
+			WHERE
+				A.BIN_InventoryInfoID = #inventoryInfoID# AND
+				A.ValidFlag = '1' AND 
+				A.BIN_PromotionProductVendorID = B.BIN_PromotionProductVendorID AND
+				B.ValidFlag = '1' AND 
+				B.BIN_PromotionProductID = C.BIN_PromotionProductID AND
+				C.ValidFlag = '1'
+		]]> 
+	</select>
+	
+	<!-- 查询调拨单据号 -->
+	<select id="selPrmAllocationNo" parameterClass="java.util.HashMap" resultClass ="java.util.HashMap">
+		<![CDATA[
+			SELECT
+                A.BIN_PromotionAllocationID AS promotionAllocationID,
+				A.AllocationNo AS allocationNo,
+				A.AllocationNoIF AS allocationNoIF,
+				A.BIN_EmployeeID AS employeeID
+			FROM
+				Inventory.BIN_PromotionAllocation A
+			WHERE
+				A.AllocationNoIF = #relevantNo# AND
+				A.ValidFlag = '1'
+		]]> 
+	</select>
+	
+	<!-- 查询发货单据号 -->
+	<select id="selPromotionDeliverInfo" parameterClass="java.util.HashMap" resultClass ="java.util.HashMap">
+		<![CDATA[
+			SELECT
+				A.BIN_OrganizationID AS sendOrganizationID,
+				A.WorkFlowID AS workFlowID
+			FROM
+				Inventory.BIN_PromotionDeliver A
+			WHERE
+				A.DeliverReceiveNo = #relevantNo# AND
+				A.ValidFlag = '1'
+		]]>
+	</select>
+	
+	<!-- 查询销售单据表ID -->
+	<select id="selPromotionSaleID" parameterClass="java.util.HashMap" resultClass ="java.util.HashMap">
+		<![CDATA[
+			SELECT
+				A.BIN_PromotionSaleID AS promotionSaleID,
+				A.SaleNo AS saleNo
+			FROM
+				Inventory.BIN_PromotionSale A
+			WHERE
+				A.SaleNoIF = #tradeNoIF# AND
+				A.ValidFlag = '1'
+		]]>
+	</select>
+	
+	<!-- 查询销售单据明细表最大明细连番 -->
+	<select id="selPromotionSaleDetailMaxNo" parameterClass="java.util.HashMap" resultClass ="java.util.HashMap">
+		<![CDATA[
+			SELECT	
+				MAX(DetailNo) AS maxDetailNo
+			FROM
+				Inventory.BIN_PromotionSaleDetail A
+			WHERE
+				A.BIN_PromotionSaleID = #promotionSaleID# AND
+				A.ValidFlag = '1'
+		]]>
+	</select>
+	
+	<!-- 查询促销品入出库表ID -->
+	<select id="selPromotionStockInOutID" parameterClass="java.util.HashMap" resultClass ="java.util.HashMap">
+		<![CDATA[
+			SELECT	
+				BIN_PromotionStockInOutID AS promotionStockInOutID
+			FROM
+				Inventory.BIN_PromotionStockInOut A
+			WHERE
+				A.RelevantNo = #saleNo# AND
+				A.ValidFlag = '1'
+		]]>
+	</select>
+	
+    
+    <!-- 插入促销品库存操作流水表 -->
+    <insert id="addPromotionInventoryLog" parameterClass="java.util.HashMap">
+    	<selectKey resultClass="java.lang.Integer" type="post" keyProperty="BIN_PromotionInventoryLogID" >      
+	       <![CDATA[
+    	INSERT INTO Inventory.BIN_PromotionInventoryLog
+    	(
+    		BIN_OrganizationID,													
+			BIN_EmployeeID,													
+			TotalQuantity,													
+			TotalAmount,													
+			VerifiedFlag,													
+			TradeType,																								
+			Reason,													
+			DeliverDate,													
+			DataChannel,	
+			]]>
+				<include refid="BINOLCMINC99.insertKeySql" />		
+			<![CDATA[																									
+    	)
+    	VALUES
+    	(
+    		#organizationID#,
+    		#employeeID#,
+    		#totalQuantity#,
+    		#totalAmount#,
+    		#verifiedFlag#,
+    		#cherry_tradeType#,
+    		#reason#,
+    		#tradeDate#,
+    		'0',
+    		]]>
+				<include refid="BINOLCMINC99.insertValueSql" />		
+			<![CDATA[
+    	)
+			  	select SCOPE_IDENTITY() as value     
+			]]> 
+	    </selectKey>   
+    </insert>
+    
+    <!-- 促销产品销售业务单据表 -->
+    <insert id="addPromotionSale" parameterClass="java.util.HashMap">
+    	<selectKey resultClass="java.lang.Integer" type="post" keyProperty="BIN_PromotionSaleID" >      
+	       <![CDATA[
+    		INSERT INTO Inventory.BIN_PromotionSale
+    		(
+    			BIN_PromotionInventoryLogID,													
+				SaleNo,													
+				SaleNoIF,													
+				SaleRecordModifyCount,													
+				BIN_OrganizationID,													
+				BIN_EmployeeID,													
+				TotalQuantity,													
+				TotalAmount,													
+				TradeType,													
+				RelevanceNo,													
+				Reason,							
+				SaleDate,													
+				BIN_MemberInfoID,
+				]]>
+					<include refid="BINOLCMINC99.insertKeySql" />		
+				<![CDATA[	
+    		)
+    		VALUES
+    		(
+    			#promotionInventoryLogID#,
+    			#saleNo#,
+    			#tradeNoIF#,
+    			#modifyCounts#,
+    			#organizationID#,
+    			#employeeID#,
+    			#totalQuantity#,
+    			#totalAmount#,
+    			#cherry_tradeType#,
+    			#cherry_relevanceNo#,
+    			#reason#,
+    			#tradeDate#,
+    			#memberInfoID#,
+    			]]>
+					<include refid="BINOLCMINC99.insertValueSql" />		
+				<![CDATA[
+    		)
+			  	select SCOPE_IDENTITY() as value     
+			]]> 
+	    </selectKey>
+    </insert>
+    
+    <!-- 促销产品销售业务单据明细表 -->
+    <insert id="addPromotionSaleDetail" parameterClass="java.util.HashMap">
+    	<![CDATA[
+    		INSERT INTO Inventory.BIN_PromotionSaleDetail
+    		(
+    			BIN_PromotionSaleID,															
+				BIN_PromotionProductVendorID,															
+				DetailNo,															
+				SaleRecordModifyCount,															
+				BIN_EmployeeID,															
+				Quantity,															
+				Price,															
+				BIN_ProductVendorPackageID,															
+				StockType,															
+				BIN_InventoryInfoID,															
+				BIN_LogicInventoryInfoID,															
+				BIN_StorageLocationInfoID,															
+				Reason,															
+				]]>
+					<include refid="BINOLCMINC99.insertKeySql" />		
+				<![CDATA[	
+    		)
+    		VALUES
+    		(
+    			#promotionSaleID#,
+    			#promotionProductVendorID#,
+    			#detailNo#,
+    			#modifyCounts#,
+    			#employeeID#,
+    			#quantity#,
+    			#promotion_price#,
+    			#productVendorPackageID#,
+    			#stockType#,
+    			#inventoryInfoID#,
+    			#logicInventoryInfoID#,
+    			#storageLocationInfoID#,
+    			#reason#,
+    			]]>
+					<include refid="BINOLCMINC99.insertValueSql" />		
+				<![CDATA[
+    		)
+    	]]>
+    </insert>
+    
+    <!-- 促销产品入出库表 -->
+    <insert id="addPromotionStockInOut" parameterClass="java.util.HashMap">
+    	<selectKey resultClass="java.lang.Integer" type="post" keyProperty="BIN_PromotionStockInOutID" >      
+	     <![CDATA[
+    		INSERT INTO Inventory.BIN_PromotionStockInOut
+    		(
+    			TradeNo,
+    			TradeNoIF,
+    			BIN_OrganizationInfoID,
+    			BIN_BrandInfoID,
+    			BIN_OrganizationID,
+    			BIN_EmployeeID,
+    			TotalQuantity,
+    			TotalAmount,
+    			StockType,
+    			TradeType,
+    			RelevantNo,
+    			Reason,
+    			StockInOutDate,
+    			StockInOutTime,
+    			VerifiedFlag,
+			    CloseFlag,
+				ChangeFlag,
+    			]]>
+					<include refid="BINOLCMINC99.insertKeySql" />		
+				<![CDATA[
+    		)
+    		VALUES
+    		(
+    			#stockInOut_tradeNo#,
+    			#stockInOut_tradeNoIf#,
+    			#organizationInfoID#,
+    			#brandInfoID#,
+    			#organizationID#,
+    			#employeeID#,
+    			#totalQuantity#,
+    			#totalAmount#,
+    			#stockInOutType#,
+    			#cherry_tradeType#,
+    			#stockInOut_relevantNo#,
+    			#reason#,
+    			#tradeDate#,
+    			#stockInOutTime#,
+    			#verifiedFlag#,
+				'0',
+    			#modifyCounts#,
+    			]]>
+					<include refid="BINOLCMINC99.insertValueSql" />		
+				<![CDATA[
+    		)
+			  	select SCOPE_IDENTITY() as value    
+			]]> 
+	    </selectKey>
+    </insert>
+    
+    <!-- 促销产品入出库明细表 -->
+    <insert id="addPromotionStockDetail" parameterClass="java.util.HashMap">
+    	<![CDATA[
+    		INSERT INTO Inventory.BIN_PromotionStockDetail
+    		(
+    			BIN_PromotionStockInOutID,
+    			BIN_PromotionProductVendorID,
+    			DetailNo,
+    			Quantity,
+    			Price,
+    			BIN_ProductVendorPackageID,
+    			StockType,
+    			BIN_InventoryInfoID,
+    			BIN_LogicInventoryInfoID,
+    			BIN_StorageLocationInfoID,
+    			Reason,
+    			]]>
+					<include refid="BINOLCMINC99.insertKeySql" />		
+				<![CDATA[
+    		)
+    		VALUES
+    		(
+    			#promotionStockInOutID#,
+    			#promotionProductVendorID#,
+    			#detailNo#,
+    			#quantity#,
+				#promotion_price#,
+    			#productVendorPackageID#,
+    			#stockType#,
+    			#inventoryInfoID#,
+    			#logicInventoryInfoID#,
+    			#storageLocationInfoID#,
+    			#reason#,
+    			]]>
+					<include refid="BINOLCMINC99.insertValueSql" />		
+				<![CDATA[
+    		)
+    	]]>
+    </insert>
+    
+    <!-- 插入促销产品库存表  -->
+    <insert id="addPromotionStock" parameterClass="java.util.HashMap">
+    	<![CDATA[
+	    	INSERT INTO Inventory.BIN_PromotionStock
+	    	(
+	    		BIN_PromotionProductVendorID,
+				BIN_InventoryInfoID,
+				BIN_LogicInventoryInfoID,
+				BIN_StorageLocationInfoID,
+				Quantity,
+				BIN_ProductVendorPackageID,
+				]]>
+					<include refid="BINOLCMINC99.insertKeySql" />		
+				<![CDATA[
+	    	)
+	    	VALUES
+	    	(
+	    		#promotionProductVendorID#,
+				#inventoryInfoID#,
+				#logicInventoryInfoID#,
+				#storageLocationInfoID#,
+				#stockQuantity#,
+				#productVendorPackageID#,
+				]]>
+					<include refid="BINOLCMINC99.insertValueSql" />		
+				<![CDATA[
+	    	)
+    	]]>
+    </insert>
+    
+    <!-- 插入促销产品收发货业务单据表 -->
+    <insert id="addPromotionDeliver" parameterClass="java.util.HashMap">
+    	<selectKey resultClass="java.lang.Integer" type="post" keyProperty="BIN_PromotionDeliverID" >      
+	        <![CDATA[
+    		INSERT INTO Inventory.BIN_PromotionDeliver
+    		(
+				BIN_PromotionInventoryLogID,
+				BIN_OrganizationInfoID,
+				BIN_BrandInfoID,
+				DeliverReceiveNo,
+				DeliverReceiveNoIF,
+				BIN_OrganizationID,
+				BIN_OrganizationIDReceive,
+				BIN_EmployeeID,
+				TotalQuantity,
+				TotalAmount,
+				VerifiedFlag,
+				StockInFlag,
+				TradeType,
+				RelevanceNo,
+				BIN_LogisticInfoID,
+				WorkFlowID,
+				Reason,
+				DeliverDate,
+    			]]>
+					<include refid="BINOLCMINC99.insertKeySql" />		
+				<![CDATA[
+    		)
+    		VALUES
+    		(	
+    			#promotionInventoryLogID#,
+    			#organizationInfoID#,
+    			#brandInfoID#,
+    			#deliver_receiveNo#,
+    			#tradeNoIF#,
+    			#sendOrganizationID#,
+    			#organizationID#,
+    			#employeeID#,
+    			#totalQuantity#,
+    			#totalAmount#,
+    			#verifiedFlag#,
+    			#stockInFlag#,
+    			#cherry_tradeType#,
+    			#relevantNo#,
+    			'0',
+				#workFlowID#,
+    			#reason#,
+    			#tradeDate#,
+    			]]>
+					<include refid="BINOLCMINC99.insertValueSql" />		
+				<![CDATA[
+    		)
+			  	select SCOPE_IDENTITY() as value    
+			]]> 
+	    </selectKey>
+    </insert>
+    
+    <!-- 插入促销产品收发货业务单据明细表 -->
+    <insert id="addPromotionDeliverDetail" parameterClass="java.util.HashMap">
+    	<![CDATA[
+    		INSERT INTO Inventory.BIN_PromotionDeliverDetail
+    		(
+    			BIN_PromotionDeliverID,
+				BIN_PromotionProductVendorID,
+				DetailNo,
+				Quantity,
+				Price,
+				BIN_ProductVendorPackageID,
+				BIN_InventoryInfoID,
+				BIN_LogicInventoryInfoID,
+				BIN_StorageLocationInfoID,
+				Reason,
+				]]>
+					<include refid="BINOLCMINC99.insertKeySql" />		
+				<![CDATA[
+    		)
+    		VALUES
+    		(
+    			#promotionDeliverID#,
+    			#promotionProductVendorID#,
+    			#detailNo#,
+    			#quantity#,
+    			#promotion_price#,
+    			#productVendorPackageID#,
+    			#inventoryInfoID#,
+    			#logicInventoryInfoID#,
+    			#storageLocationInfoID#,
+    			#reason#,
+    			]]>
+					<include refid="BINOLCMINC99.insertValueSql" />		
+				<![CDATA[
+    		)
+    	]]>
+    </insert>
+    
+    <!-- 插入促销产品退货单据表 -->
+    <insert id="addPromotionReturn" parameterClass="java.util.HashMap">
+    	<selectKey resultClass="java.lang.Integer" type="post" keyProperty="BIN_PromotionReturnID" >      
+	        <![CDATA[
+    		INSERT INTO Inventory.BIN_PromotionReturn
+    		(
+    			BIN_PromotionInventoryLogID,
+    			BIN_OrganizationInfoID,
+    			BIN_BrandInfoID,
+				ReturnNo,
+				ReturnNoIF,
+				BIN_OrganizationID,
+				BIN_OrganizationIDReceive,
+				BIN_EmployeeID,
+				TotalQuantity,
+				TotalAmount,
+				VerifiedFlag,
+				TradeType,
+				RelevanceNo,
+				Reason,
+				ReturnDate,
+				]]>
+					<include refid="BINOLCMINC99.insertKeySql" />		
+				<![CDATA[
+    		)
+    		VALUES
+    		(
+    			#promotionInventoryLogID#,
+    			#organizationInfoID#,
+    			#brandInfoID#,
+    			#returnNo#,
+    			#tradeNoIF#,
+    			#organizationID#,
+    			#organizationIDReceive#,
+    			#employeeID#,
+    			#totalQuantity#,
+    			#totalAmount#,
+    			#verifiedFlag#,
+    			#cherry_tradeType#,
+    			#relevantNo#,
+    			#reason#,
+    			#tradeDate#,
+    			]]>
+					<include refid="BINOLCMINC99.insertValueSql" />		
+				<![CDATA[
+    		)
+			  	select SCOPE_IDENTITY() as value     
+			]]> 
+	    </selectKey>
+    </insert>
+    
+    <!-- 插入促销产品退货单据明细表 -->
+    <insert id="addPromotionReturnDetail" parameterClass="java.util.HashMap">
+    	<![CDATA[
+    		INSERT INTO Inventory.BIN_PromotionReturnDetail
+    		(
+				BIN_PromotionReturnID,
+				BIN_PromotionProductVendorID,
+				DetailNo,
+				Quantity,
+				Price,
+				BIN_ProductVendorPackageID,
+				BIN_InventoryInfoID,
+				BIN_LogicInventoryInfoID,
+				BIN_StorageLocationInfoID,
+				Reason,
+				]]>
+					<include refid="BINOLCMINC99.insertKeySql" />		
+				<![CDATA[
+    		)
+    		VALUES
+    		(
+    			#promotionReturnID#,
+    			#promotionProductVendorID#,
+    			#detailNo#,
+    			#quantity#,
+    			#price#,
+    			'0',
+    			#inventoryInfoID#,
+    			#logicInventoryInfoID#,
+    			'0',
+    			#reason#,
+    			]]>
+					<include refid="BINOLCMINC99.insertValueSql" />		
+				<![CDATA[
+    		)
+    	]]>
+    </insert>
+    
+    <!-- 插入促销产品调拨业务单据表 -->
+    <insert id="addPromotionAllocation" parameterClass="java.util.HashMap">
+		<selectKey resultClass="java.lang.Integer" type="post" keyProperty="BIN_PromotionAllocationID" >      
+	        <![CDATA[
+	    	INSERT INTO Inventory.BIN_PromotionAllocation
+	    	(
+    			BIN_PromotionInventoryLogID,
+    			BIN_OrganizationInfoID,
+    			BIN_BrandInfoID,
+				AllocationNo,
+				AllocationNoIF,
+				BIN_OrganizationID,
+				BIN_OrganizationIDAccept,
+				BIN_EmployeeID,
+				TotalQuantity,
+				TotalAmount,
+				VerifiedFlag,
+				TradeType,
+				TradeStatus,
+				AllocationFlag,
+				RelevanceNo,
+				Reason,
+				AllocationDate,
+				]]>
+					<include refid="BINOLCMINC99.insertKeySql" />		
+				<![CDATA[
+	    	)
+	    	VALUES
+	    	(
+	    		#promotionInventoryLogID#,
+	    		#organizationInfoID#,
+    			#brandInfoID#,
+	    		#allocation_no#,
+	    		#tradeNoIF#,
+	    		#inOrganizationID#,
+	    		#outOrganizationID#,
+	    		#employeeID#,
+	    		#totalQuantity#,
+	    		#totalAmount#,
+	    		#verifiedFlag#,
+	    		#cherry_tradeType#,
+	    		#tradeStatus#,
+	    		#allocationFlag#,
+	    		#relevantNo#,
+	    		#reason#,
+	    		#tradeDate#,
+	    		]]>
+					<include refid="BINOLCMINC99.insertValueSql" />		
+				<![CDATA[
+	    	)
+			  	select SCOPE_IDENTITY() as value     
+			]]> 
+	    </selectKey>
+    </insert>
+    
+    <!-- 插入促销产品调拨业务单据明细表 -->
+    <insert id="addPromotionAllocationDetail" parameterClass="java.util.HashMap">
+    	<![CDATA[
+    		INSERT INTO Inventory.BIN_PromotionAllocationDetail
+    		(
+    			BIN_PromotionAllocationID,
+				BIN_PromotionProductVendorID,
+				DetailNo,
+				Quantity,
+				Price,
+				BIN_ProductVendorPackageID,
+				BIN_InventoryInfoID,
+				BIN_LogicInventoryInfoID,
+				BIN_StorageLocationInfoID,
+				Reason,
+				]]>
+					<include refid="BINOLCMINC99.insertKeySql" />		
+				<![CDATA[
+    		)
+    		VALUES
+    		(
+    			#promotionAllocationID#,
+    			#promotionProductVendorID#,
+    			#detailNo#,
+    			#quantity#,
+    			#allocation_price#,
+				#productVendorPackageID#,
+    			#inventoryInfoID#,
+    			#logicInventoryInfoID#,
+    			#storageLocationInfoID#,
+    			#reason#,
+    			]]>
+					<include refid="BINOLCMINC99.insertValueSql" />		
+				<![CDATA[
+    		)
+    	]]>
+    </insert>
+    
+    <!-- 插入促销产品盘点业务单据表 -->
+    <insert id="addPromotionStockTaking" parameterClass="java.util.HashMap">
+    	<selectKey resultClass="java.lang.Integer" type="post" keyProperty="BIN_PromotionStockTakingID" >      
+	           	<![CDATA[
+    		INSERT INTO Inventory.BIN_PromotionStockTaking
+    		(
+    			BIN_PromotionInventoryLogID,
+    			BIN_OrganizationInfoID,
+    			BIN_BrandInfoID,
+				StockTakingNo,
+				StockTakingNoIF,
+				BIN_OrganizationID,
+				BIN_EmployeeID,
+				TotalQuantity,
+				TotalAmount,
+				VerifiedFlag,
+				TradeType,
+				Type,
+				Reason,
+				StockTakingDate,
+				TradeTime,
+				StockReason,
+				]]>
+					<include refid="BINOLCMINC99.insertKeySql" />		
+				<![CDATA[
+    		)	
+    		VALUES
+    		(
+    			#promotionInventoryLogID#,
+    			#organizationInfoID#,
+    			#brandInfoID#,
+    			#stockTaking_no#,
+    			#tradeNoIF#,
+    			#organizationID#,
+    			#employeeID#,
+    			#totalQuantity#,
+    			#totalAmount#,
+    			#verifiedFlag#,
+    			#cherry_tradeType#,
+    			#subType#,
+    			#reason#,
+    			#tradeDate#,
+    			#tradeTime#,
+    			#stockReason#,
+    			]]>
+					<include refid="BINOLCMINC99.insertValueSql" />		
+				<![CDATA[	
+    		)
+			  	select SCOPE_IDENTITY() as value     
+			]]> 
+	    </selectKey>
+    </insert>
+    
+    <!-- 插入促销产品盘点业务单据明细表 -->
+    <insert id="addPromotionTakingDetail" parameterClass="java.util.HashMap">
+    	<![CDATA[
+    		INSERT INTO Inventory.BIN_PromotionTakingDetail
+    		(
+				BIN_PromotionStockTakingID,
+				BIN_PromotionProductVendorID,
+				DetailNo,
+				Quantity,
+				Price,
+				BIN_ProductVendorPackageID,
+				GainQuantity,
+				BIN_InventoryInfoID,
+				BIN_LogicInventoryInfoID,
+				BIN_StorageLocationInfoID,
+				HandleType,
+				]]>
+					<include refid="BINOLCMINC99.insertKeySql" />		
+				<![CDATA[
+    		)	
+    		VALUES
+    		(
+    			#promotionStockTakingID#,
+    			#promotionProductVendorID#,
+    			#detailNo#,
+    			#quantityBefore#,
+    			#promotion_price#,
+    			#productVendorPackageID#,
+    			#gainQuantity#,
+    			#inventoryInfoID#,
+    			#logicInventoryInfoID#,
+    			#storageLocationInfoID#,
+    			#reason#,
+    			]]>
+					<include refid="BINOLCMINC99.insertValueSql" />
+				<![CDATA[	
+    		)
+    	]]>
+    </insert>
+    
+    <!-- 更新库存数据 -->
+    <update id="updPromotionStock" parameterClass="java.util.HashMap">
+    	<![CDATA[
+    	UPDATE
+    		Inventory.BIN_PromotionStock 
+    	SET
+    		Quantity = Quantity + #updQuantity#,
+			]]>
+			<include refid="BINOLCMINC99.updateSql" />
+			<![CDATA[
+    	WHERE
+			BIN_PromotionProductVendorID = #promotionProductVendorID# AND
+			BIN_InventoryInfoID = #inventoryInfoID# AND
+		    ]]>
+			<isNotEmpty property="logicInventoryInfoID">
+    		   BIN_LogicInventoryInfoID = #logicInventoryInfoID# AND
+			</isNotEmpty>
+			<isNotEmpty property="productVendorPackageID">
+				<isNotEqual property="productVendorPackageID" compareValue="0" >
+    		      BIN_ProductVendorPackageID = #productVendorPackageID# AND
+			    </isNotEqual>
+			</isNotEmpty>
+		    <isNotEmpty property="storageLocationInfoID">
+				<isNotEqual property="storageLocationInfoID" compareValue="0" >
+    		      BIN_StorageLocationInfoID = #storageLocationInfoID# AND
+			    </isNotEqual>
+			</isNotEmpty>
+			<![CDATA[ 
+			ValidFlag = '1'
+			]]>
+    </update>
+    
+    <!-- 更新促销产品收发货业务单据表 -->
+    <update id="updPromotionDeliver" parameterClass="java.util.HashMap">
+    	UPDATE
+    		Inventory.BIN_PromotionDeliver
+    	SET	
+    		StockInFlag = '4'
+    	WHERE
+    		DeliverReceiveNo = #relevantNo# AND
+    		ValidFlag = '1'
+    </update>
+    
+    <!-- 更新促销品销售单据表 -->
+    <update id="updPromotionSale" parameterClass="java.util.HashMap">
+    	UPDATE
+    		Inventory.BIN_PromotionSale
+    	SET
+    		BIN_PromotionInventoryLogID = #promotionInventoryLogID#,
+    		SaleRecordModifyCount = #modifyCounts#,
+    		TotalQuantity = #totalQuantity#,
+    		TotalAmount = #totalAmount#,
+    		SaleDate = #tradeDate#,
+    		Reason = #reason#,
+    		BIN_MemberInfoID = #memberInfoID#
+    	WHERE
+			BIN_PromotionSaleID = #promotionSaleID# AND
+			ValidFlag = '1'
+    </update>
+    
+    <!-- 更新促销品入出库单据表 -->
+	<update id="updPromotionStockInOut" parameterClass="java.util.HashMap">
+		UPDATE
+    		Inventory.BIN_PromotionStockInOut
+    	SET
+    		TotalQuantity = #totalQuantity#,
+    		TotalAmount = #totalAmount#,
+    		Reason = #reason#,
+    		StockInOutDate = #tradeDate#
+    	WHERE
+			BIN_PromotionStockInOutID = #promotionStockInOutID# AND
+			ValidFlag = '1'
+	</update>
+    <!-- 查询促销产品入出库主表 -->
+    <select id ="selPrmProductInOut" parameterClass="java.util.HashMap" resultClass ="java.util.HashMap">
+		<![CDATA[
+          SELECT          
+		        A.BIN_PromotionStockInOutID AS promotionStockInOutID,
+				A.BIN_OrganizationInfoID AS organizationInfoID,
+				A.BIN_BrandInfoID AS brandInfoID,
+				A.TradeNo AS stockInOut_tradeNo,
+				A.TradeNoIF AS stockInOut_tradeNoIF,
+				A.RelevantNo AS stockInOut_relevantNo,
+				A.StockType AS stockInOutType,
+				A.BIN_OrganizationID AS organizationID,
+				A.BIN_EmployeeID AS employeeID,
+				A.TotalQuantity AS totalQuantity,
+				A.TotalAmount AS totalAmount,
+				A.TradeType AS cherry_tradeType,
+				A.BIN_LogisticInfoID AS logisticInfoID,
+				A.Reason AS reason,
+				A.StockInOutDate AS tradeDate,
+				A.StockInOutTime AS stockInOutTime,
+				A.VerifiedFlag AS verifiedFlag,
+				A.TotalAmountBefore AS totalAmountBefore,
+				A.TotalAmountAfter AS totalAmountAfter,
+				A.CloseFlag AS closeFlag,
+				A.ChangeFlag AS modifyCounts,
+				A.CreateTime AS createTime,
+				A.CreatedBy AS createBy,
+				A.CreatePGM AS createPGM
+		   FROM 
+		        Inventory.BIN_PromotionStockInOut A
+		   WHERE
+				A.ValidFlag = '1' AND
+				A.BIN_PromotionStockInOutID = (
+				  SELECT  
+				       top 1 BIN_PromotionStockInOutID AS tempPrmStockInOutID  
+				  FROM 
+				       Inventory.BIN_PromotionStockInOut B
+				  where 
+				       B.RelevantNo = #tradeNoIF#
+				  order by 
+				       B.CreateTime desc )
+		]]>	
+	</select>
+	<!-- 查询促销产品入出库明细表 -->
+	<select id ="selPrmProductInOutDetail" parameterClass="java.util.HashMap" resultClass ="java.util.HashMap">
+		<![CDATA[
+            SELECT 
+				A.BIN_PromotionStockInOutID AS promotionStockInOutID,
+				A.BIN_PromotionProductVendorID AS productVendorID,
+				A.DetailNo AS detailNo,
+				A.Quantity AS quantity,
+				A.Price AS price,
+				A.BIN_ProductVendorPackageID AS productVendorPackageID,
+				A.StockType AS stockType,
+				A.BIN_InventoryInfoID AS inventoryInfoID,
+				A.BIN_LogicInventoryInfoID AS logicInventoryInfoID,
+				A.BIN_StorageLocationInfoID AS storageLocationInfoID,
+				A.Reason AS reason
+			FROM
+				Inventory.BIN_PromotionStockDetail A
+			WHERE
+				A.ValidFlag = '1' AND
+				A.BIN_PromotionStockInOutID = #promotionStockInOutID#
+		]]>	
+	</select>
+	
+	<!-- 插入历史促销产品入出库数据主表 -->
+    <insert id="addPrmProductInOutHistory" parameterClass="java.util.HashMap">
+    	<selectKey resultClass="java.lang.Integer" type="post" keyProperty="BIN_PromotionStockInOutID" >      
+	        <![CDATA[
+    		INSERT INTO Inventory.BIN_PromoStockInOutHis
+    		(
+    			TradeNo,
+    			TradeNoIF,
+    			BIN_OrganizationInfoID,
+    			BIN_BrandInfoID,
+    			BIN_OrganizationID,
+    			BIN_EmployeeID,
+    			TotalQuantity,
+    			TotalAmount,
+    			StockType,
+    			TradeType,
+    			RelevantNo,
+    			Reason,
+    			StockInOutDate,
+    			StockInOutTime,
+    			VerifiedFlag,
+				ChangeFlag,
+    			]]>
+					<include refid="BINOLCMINC99.insertKeySql" />		
+				<![CDATA[
+    		)
+    		VALUES
+    		(
+    			#stockInOut_tradeNo#,
+    			#stockInOut_tradeNoIf#,
+    			#organizationInfoID#,
+    			#brandInfoID#,
+    			#organizationID#,
+    			#employeeID#,
+    			#totalQuantity#,
+    			#totalAmount#,
+    			#stockInOutType#,
+    			#cherry_tradeType#,
+    			#stockInOut_relevantNo#,
+    			#reason#,
+    			#tradeDate#,
+    			#stockInOutTime#,
+    			#verifiedFlag#,
+				#modifyCounts#,
+    			]]>
+					<include refid="BINOLCMINC99.insertValueSql" />		
+				<![CDATA[
+    		)
+			  	select SCOPE_IDENTITY() as value    
+			]]> 
+	    </selectKey>
+    </insert>
+    
+    <!-- 插入历史促销产品入出库明细表 -->
+    <insert id="addPrmProductInOutDetailHistory" parameterClass="java.util.HashMap">
+    	<![CDATA[
+    		INSERT INTO Inventory.BIN_PromoStockDetailHis
+    		(
+    			BIN_PromoStockInOutHisID,
+    			BIN_PromotionProductVendorID,
+    			DetailNo,
+    			Quantity,
+    			Price,
+    			BIN_ProductVendorPackageID,
+    			StockType,
+    			BIN_InventoryInfoID,
+    			BIN_LogicInventoryInfoID,
+    			BIN_StorageLocationInfoID,
+    			Reason,
+    			]]>
+					<include refid="BINOLCMINC99.insertKeySql" />		
+				<![CDATA[
+    		)
+    		VALUES
+    		(
+    			#promotionStockInOutID#,
+    			#promotionProductVendorID#,
+    			#detailNo#,
+    			#quantity#,
+				#promotion_price#,
+    			#productVendorPackageID#,
+    			#stockType#,
+    			#inventoryInfoID#,
+    			#logicInventoryInfoID#,
+    			#storageLocationInfoID#,
+    			#reason#,
+    			]]>
+					<include refid="BINOLCMINC99.insertValueSql" />		
+				<![CDATA[
+    		)
+    	]]>
+    </insert>
+	
+    <!-- 删除促销产品入出库数据主表 -->
+    <delete id="delPrmProductInOut" parameterClass="java.util.HashMap">
+      	DELETE FROM
+    		Inventory.BIN_PromotionStockInOut
+    	WHERE
+    		BIN_PromotionStockInOutID = #promotionStockInOutID#
+    </delete>
+    
+    <!-- 删除促销产品入出库数据明细表 -->
+    <delete id="delPrmProductInOutDetail" parameterClass="java.util.HashMap">
+       	DELETE FROM
+    		Inventory.BIN_PromotionStockDetail
+    	WHERE
+    		BIN_PromotionStockInOutID = #promotionStockInOutID#
+    </delete>
+	
+    <!-- 更新促销产品退库业务单据表 -->
+    <update id="updPromotionReturn" parameterClass="java.util.HashMap">
+    <![CDATA[
+        UPDATE
+            Inventory.BIN_PromotionReturn
+        SET 
+            TotalQuantity = #TotalQuantity#,
+            TotalAmount = #TotalAmount#
+        WHERE
+            BIN_PromotionReturnID = #BIN_PromotionReturnID# AND
+            ValidFlag = '1'
+    ]]>
+    </update>
+</sqlMap>

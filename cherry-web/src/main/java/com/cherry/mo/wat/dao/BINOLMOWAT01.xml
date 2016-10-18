@@ -1,0 +1,222 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sqlMap PUBLIC "-//iBATIS.com//DTD SQL Map 2.0//EN" "http://ibatis.apache.org/dtd/sql-map-2.dtd">
+<sqlMap namespace="BINOLMOWAT01">
+    <!-- 机器查询sql文  -->
+    <sql id="machineInfoQuery">
+        <![CDATA[
+            SELECT
+			    B.BIN_MachineInfoID as machineInfoId,
+                A.MachineCode as machineCode,
+                B.MachineType as machineType,
+				B.SoftWareVersion as softWareVersion,
+				B.Capacity as capacity,
+				B.InternetFlow as internetFlow,
+				B.InternetTime as internetTime,
+				B.InternetTimes as internetTimes,
+				convert(varchar(30),B.UploadLasttime,120) as uploadLasttime,
+				convert(varchar(30),B.SyncLasttime,120) as syncLasttime,
+				B.PhoneCode as phoneCode,
+				B.IMSIcode as iMSIcode,
+				convert(varchar(30),B.StartTime,120) as startTime,
+				convert(varchar(30),B.LastConnTime,120) as lastConnTime,
+				convert(varchar(30),B.LastStartTime,120) as lastStartTime,
+				A.MachineStatus as machineStatus,
+				P.RegionNameChinese AS provinceName,
+				CY.RegionNameChinese AS cityName,
+		]]>
+		<dynamic>
+            <isEqual property="searchType" compareValue="minute">
+		        <![CDATA[
+	                CASE when (machineStatus=0) then 3
+	                     when (datediff(MI,lastConnTime,GETDATE()) > #dateDiff# OR lastConnTime is NULL)
+	                     then 2
+	                     else 1
+	                end AS connStatus,
+		        ]]>
+			</isEqual>
+            <isEqual property="searchType" compareValue="day">
+                <![CDATA[
+                    CASE when (machineStatus=0) then 3
+                        else 2 
+                    end AS connStatus,
+                ]]>
+            </isEqual>
+            <isEqual property="searchType" compareValue="date">
+                <![CDATA[
+                    '' AS connStatus,
+                ]]>
+            </isEqual>
+		</dynamic>
+		<![CDATA[
+                D.CounterCode as counterCode,
+                D.CounterNameIF as counterNameIF,
+        ]]>
+        <dynamic>
+        <isNotEmpty property="language">
+            <isEqual property="language" compareValue="en_US">
+                <![CDATA[
+					C.BrandNameForeign AS BrandNameChinese,
+					CASE WHEN (D.CounterCode IS NOT NULL AND D.CounterCode <> '' ) 
+					    THEN '('+D.CounterCode+')'+ISNULL(NameShortForeign,'')
+					ELSE ISNULL(D.NameShortForeign,'') END AS counterCodeName
+				]]>
+            </isEqual>
+            <isEqual property="language" compareValue="zh_CN">
+                <![CDATA[
+				    C.BrandNameChinese AS BrandNameChinese,
+                    CASE WHEN (D.CounterCode IS NOT NULL AND D.CounterCode <> '' ) 
+                        THEN '('+D.CounterCode+')'+ISNULL(D.CounterNameIF,'')
+                    ELSE ISNULL(D.CounterNameIF,'') END AS counterCodeName
+				]]>
+            </isEqual>
+        </isNotEmpty>
+        <isEmpty property="language">
+                <![CDATA[
+				    C.BrandNameChinese AS BrandNameChinese,
+                    CASE WHEN (D.CounterCode IS NOT NULL AND D.CounterCode <> '' ) 
+                        THEN '('+D.CounterCode+')'+ISNULL(D.CounterNameIF,'')
+                    ELSE ISNULL(D.CounterNameIF,'') END AS counterCodeName
+				]]>
+        </isEmpty>
+        </dynamic>
+        <![CDATA[
+            FROM
+			    Monitor.BIN_MachineCodeCollate  A WITH(NOLOCK)
+				JOIN Monitor.BIN_MachineInfo B WITH(NOLOCK)
+                ON A.MachineCode = B.MachineCode AND B.ValidFlag = '1'
+				LEFT JOIN Basis.BIN_BrandInfo C WITH(NOLOCK)
+				ON A.BIN_BrandInfoID = C.BIN_BrandInfoID AND C.ValidFlag = '1'
+				LEFT JOIN Basis.BIN_CounterInfo D WITH(NOLOCK)
+				ON A.BIN_CounterInfoID = D.BIN_CounterInfoID
+				LEFT JOIN Basis.BIN_Organization O WITH(NOLOCK)
+				ON(D.BIN_OrganizationID=O.BIN_OrganizationID)
+				LEFT JOIN Basis.BIN_Region P WITH(NOLOCK)
+					ON(O.BIN_ProvinceID=P.BIN_RegionID)
+				LEFT JOIN Basis.BIN_Region CY WITH(NOLOCK)
+					ON(O.BIN_CityID=CY.BIN_RegionID)
+            WHERE
+                A.ValidFlag = '1'
+				AND A.BIN_BrandInfoID = #brandInfoId#
+                AND A.BIN_OrganizationInfoID = #organizationInfoId#
+				AND NOT (B.MachineType IN (#WITPOSIII#,#WITSERVER#,#WITPOSIV#) AND RIGHT(A.MachineCodeOld,1)='9')
+        ]]>
+		<dynamic>
+			<isEqual property="searchType" compareValue="day">
+				<![CDATA[
+				    AND (datediff(MI,lastConnTime,GETDATE()) > 24*60*#day# OR lastConnTime is NULL)
+				]]>
+			</isEqual>
+            <isNotEmpty prepend="AND" property="machineCode">
+                <![CDATA[
+                (A.MachineCode like '%' + #machineCode# +'%' OR A.MachineCodeOld like '%' + #machineCode# +'%')
+                ]]>
+            </isNotEmpty>
+            <isNotEmpty prepend="AND" property="counterCodeName">
+                <![CDATA[
+                (D.CounterCode LIKE '%'+#counterCodeName#+'%' OR D.CounterNameIF LIKE '%'+#counterCodeName#+'%')
+                ]]>
+            </isNotEmpty>
+		</dynamic>
+    </sql>
+    
+    <!-- 取得机器总数  -->
+    <select id="getMachineInfoCount" parameterClass="java.util.HashMap" resultClass="java.lang.Integer">
+        <![CDATA[
+            SELECT COUNT(SORT_T1.machineInfoId) AS count FROM (
+        ]]>
+        <include refid="BINOLMOWAT01.machineInfoQuery" />
+        <![CDATA[
+            )SORT_T1
+        ]]>
+    </select>
+    
+    <!-- 取得机器List  -->
+    <select id="getMachineInfoList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+        <include refid="BINOLCMINC99.pageheader" />
+        <include refid="BINOLMOWAT01.machineInfoQuery" />
+        <include refid="BINOLCMINC99.pagefooter" />
+    </select>
+	
+	<!-- 取得机器数据List(Excel)  -->
+    <select id="getMachineInfoListExcel" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+        <include refid="BINOLMOWAT01.machineInfoQuery" />
+        <![CDATA[ORDER BY machineInfoId]]>
+    </select>
+	
+    <!--统计连接信息-->
+    <select id="getSumInfo" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+    	<![CDATA[
+            SELECT
+                ISNULL(CAST(A.normalConnectCount AS int),0) AS normalConnectCount,
+                ISNULL(CAST(B.abnormalConnectCount AS int),0) AS abnormalConnectCount FROM
+            (
+            SELECT
+            COUNT(1) normalConnectCount
+            FROM
+                Monitor.BIN_MachineCodeCollate  A
+                JOIN Monitor.BIN_MachineInfo B
+                ON A.MachineCode = B.MachineCode AND B.ValidFlag = '1'
+            WHERE
+                A.ValidFlag = '1'
+                AND A.BIN_BrandInfoID = #brandInfoId#
+                AND A.BIN_OrganizationInfoID = #organizationInfoId#
+                AND NOT (B.MachineType =#WITPOSIII# and RIGHT(A.MachineCodeOld,1)='9')
+				AND A.machineStatus != 0
+        ]]>
+        <dynamic>
+            <isEqual property="searchType" compareValue="minute">
+                <![CDATA[
+                    AND (datediff(MI,lastConnTime,GETDATE()) < #dateDiff#)
+                ]]>
+            </isEqual>
+            <isEqual property="searchType" compareValue="day">
+                <![CDATA[
+                    AND (datediff(MI,lastConnTime,GETDATE()) < 24*60*#day#)
+                ]]>
+            </isEqual>
+        </dynamic>
+        <![CDATA[
+            )A,
+            (
+            SELECT
+            COUNT(1) abnormalConnectCount
+            FROM
+                Monitor.BIN_MachineCodeCollate  A
+                JOIN Monitor.BIN_MachineInfo B
+                ON A.MachineCode = B.MachineCode AND B.ValidFlag = '1'
+                LEFT JOIN Basis.BIN_CounterInfo D
+                ON A.BIN_CounterInfoID = D.BIN_CounterInfoID
+            WHERE
+                A.ValidFlag = '1'
+                AND A.BIN_BrandInfoID = #brandInfoId#
+                AND A.BIN_OrganizationInfoID = #organizationInfoId#
+                AND NOT (B.MachineType IN (#WITPOSIII#,#WITSERVER#,#WITPOSIV#) AND RIGHT(A.MachineCodeOld,1)='9')
+				AND A.machineStatus != 0
+        ]]>
+        <dynamic>
+            <isEqual property="searchType" compareValue="minute">
+                <![CDATA[
+                    AND (datediff(MI,lastConnTime,GETDATE()) > #dateDiff# OR lastConnTime is NULL)
+                ]]>
+            </isEqual>
+            <isEqual property="searchType" compareValue="day">
+                <![CDATA[
+                    AND (datediff(MI,lastConnTime,GETDATE()) > 24*60*#day# OR lastConnTime is NULL)
+                ]]>
+            </isEqual>
+            <isNotEmpty prepend="AND" property="machineCode">
+                <![CDATA[
+                (A.MachineCode like '%' + #machineCode# +'%' OR A.MachineCodeOld like '%' + #machineCode# +'%')
+                ]]>
+            </isNotEmpty>
+            <isNotEmpty prepend="AND" property="counterCodeName">
+                <![CDATA[
+                (D.CounterCode LIKE '%'+#counterCodeName#+'%' OR D.CounterNameIF LIKE '%'+#counterCodeName#+'%')
+                ]]>
+            </isNotEmpty>
+        </dynamic>
+        <![CDATA[
+            )B
+        ]]>
+    </select>
+</sqlMap>

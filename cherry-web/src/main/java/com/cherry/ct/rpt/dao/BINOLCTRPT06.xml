@@ -1,0 +1,386 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sqlMap PUBLIC "-//iBATIS.com//DTD SQL Map 2.0//EN" "http://ibatis.apache.org/dtd/sql-map-2.dtd">
+<sqlMap namespace="BINOLCTRPT06">    
+
+	<sql id="communStatisticsQuery">
+		<![CDATA[
+			SELECT
+				#brandInfoId# AS brandInfoId,
+				A.Bin_PlanCode AS communicationCode,
+				A.PlanName AS communicationName,
+				A.ChannelId as channelId,
+				tn.ChannelName as channelName,
+				A.CounterCode as counterCode,
+				tt.CounterNameIF as counterName,
+				tb.lastRunTime AS sendTime,
+				COUNT(MA.CustomerSysID) AS sendMemCount
+			FROM
+				Communication.BIN_Communicationplan A WITH(NOLOCK)
+		]]>
+			<isNotEmpty property="privilegeFlag">
+			<isEqual property="privilegeFlag" compareValue="1">			
+			<![CDATA[			
+				Inner join (]]><include refid="BINOLCMINC99.departPrivilegeSql" /><![CDATA[) A99 
+				on A.BIN_OrganizationID = A99.BIN_OrganizationID
+			]]>
+			</isEqual>
+			</isNotEmpty>
+		<![CDATA[
+				LEFT JOIN Basis.BIN_Channel tn WITH(NOLOCK) 
+				ON(A.ChannelId = tn.BIN_ChannelID) 
+				LEFT JOIN Basis.BIN_CounterInfo tt WITH(NOLOCK) 
+				ON(A.CounterCode = tt.CounterCode) 
+				LEFT JOIN(
+					SELECT 
+						DISTINCT
+						A.BIN_OrganizationInfoID,
+						A.BIN_BrandInfoID,
+						A.PlanCode,
+						A.CustomerType,
+						A.CustomerSysID
+					FROM
+						Communication.BIN_SmsSendDetail A with(NOLOCK) 
+					WHERE
+						A.BIN_OrganizationInfoID = #organizationInfoId#
+						AND A.BIN_BrandInfoID = #brandInfoId#
+						AND A.CustomerType  = 1
+						AND ISNUMERIC(A.CustomerSysID) = 1
+					) MA 
+				ON(A.Bin_PlanCode=MA.PlanCode)
+				JOIN (
+					SELECT 
+						Bin_PlanCode,
+						MAX(RunBeginTime) as lastRunTime 
+					FROM 
+						Communication.BIN_CommRunLog
+					GROUP BY 
+						Bin_PlanCode 
+				) as tb 
+				ON(A.Bin_PlanCode=tb.Bin_PlanCode)
+			WHERE
+				A.BIN_OrganizationInfoID = #organizationInfoId#
+				AND A.BIN_BrandInfoID = #brandInfoId#
+			]]>
+			<dynamic>
+				<isNotEmpty prepend="AND" property="startDate">
+					<![CDATA[ tb.lastRunTime >= #startDate#]]>
+				</isNotEmpty>
+				<isNotEmpty prepend="AND" property="endDate">
+					<![CDATA[ tb.lastRunTime <= #endDate#]]>
+				</isNotEmpty>
+				<isNotEmpty prepend="AND" property="communicationName">
+					<![CDATA[ (A.Bin_PlanCode LIKE '%' + #communicationName# + '%' OR
+							A.PlanName LIKE '%' + #communicationName# + '%')
+					]]>
+				</isNotEmpty>
+				<!-- 参数中存在模板状态查询条件时  -->
+				<isNotEmpty prepend="AND" property="channelId" >
+					A.ChannelId = #channelId# 
+				</isNotEmpty>
+				<!-- 参数中存在模板状态查询条件时  -->
+				<isNotEmpty prepend="AND" property="counterCode" >
+					A.CounterCode = #counterCode# 
+				</isNotEmpty>
+			</dynamic>
+			<![CDATA[
+			GROUP BY 
+				A.Bin_PlanCode,
+				A.PlanName,
+				A.ChannelId,
+				tn.ChannelName,
+				A.CounterCode,
+				tt.CounterNameIF,
+				tb.lastRunTime
+			]]>
+	</sql>
+	
+	<!-- 获取沟通记录总数  -->
+    <select id="getMemCommunStatisticsCount" parameterClass="java.util.HashMap" resultClass="java.lang.Integer">
+    	<![CDATA[
+			SELECT	COUNT(1) AS count FROM (
+		]]>	
+		<include refid="BINOLCTRPT06.communStatisticsQuery" />	
+		<![CDATA[	
+			)SORT_T1
+		]]>
+    </select>
+	
+	<!-- 获取沟通记录List -->
+    <select id="getMemCommunStatisticsList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+       	<include refid="BINOLCMINC99.pageheader" />
+		<include refid="BINOLCTRPT06.communStatisticsQuery" />
+		<include refid="BINOLCMINC99.pagefooter" />
+    </select>
+    
+    <!-- 会员沟通效果明细（会员一览） -->
+    <sql id="communEffectDetailQuery">
+    	<![CDATA[
+    		SELECT 
+				A.CustomerSysID, 
+				B.Name AS memberName,
+				C.MemCode AS memberCode,
+				sum(isnull(SS.dealQuantity,0)) AS dealQuantity,
+				sum(isnull(SS.dealAmount,0)) AS dealAmount,
+				sum(isnull(SC.orderQuantity,0)) AS orderQuantity,
+				sum(ISNULL(SC.orderAmount,0)) AS orderAmount
+			FROM 
+				(SELECT 
+					DISTINCT CustomerSysID 
+				FROM 
+					Communication.BIN_SmsSendDetail WITH(NOLOCK)
+				WHERE
+					BIN_OrganizationInfoID = #organizationInfoId#
+					AND BIN_BrandInfoID = #brandInfoId#
+					AND CustomerType  = 1
+					AND ISNUMERIC(CustomerSysID) = 1
+					AND PlanCode=#communicationCode#
+				) A
+				LEFT JOIN Members.BIN_MemberInfo B with(nolock) 
+				ON(cast(A.CustomerSysID as bigint) = B.BIN_MemberInfoID AND B.ValidFlag='1')
+				LEFT JOIN Members.BIN_MemCardInfo C WITH(NOLOCK) 
+				ON(B.BIN_MemberInfoID=C.BIN_MemberInfoID AND C.ValidFlag='1' AND C.CardValidFlag='1')
+				LEFT JOIN (
+						SELECT 
+							T.BIN_MemberInfoID,
+							sum(T.Quantity) as orderQuantity,
+							sum(T.Amount) as orderAmount
+						FROM 
+							Sale.BIN_ESOrderMain T WITH(NOLOCK)
+						WHERE
+							T.BIN_BrandInfoID = #brandInfoId#
+							AND T.BIN_OrganizationInfoID = #organizationInfoId#
+							AND T.SaleType = 'NS'
+							AND T.ValidFlag = '1'
+							AND NOT EXISTS(
+									SELECT
+										1
+									FROM
+										Sale.BIN_ESOrderMain T1
+									WHERE 
+										T1.BillState <> '1'
+										AND T.BIN_MemberInfoID=T1.BIN_MemberInfoID
+								)
+		]]>
+		<dynamic>
+			<isNotEmpty prepend="AND" property="startDate">
+				<![CDATA[ T.BillCreateTime >= #startDate#]]>
+			</isNotEmpty>
+			<isNotEmpty prepend="AND" property="endDate">
+				<![CDATA[ T.BillCreateTime <= #endDate#]]>
+			</isNotEmpty>
+		</dynamic>
+			<![CDATA[
+				GROUP BY
+					T.BIN_MemberInfoID
+				) SC
+				ON(cast(A.CustomerSysID as bigint)=SC.BIN_MemberInfoID)
+			LEFT JOIN (
+				SELECT 
+					T.BIN_MemberInfoID,
+					sum(T.Quantity) as dealQuantity,
+					sum(T.Amount) as dealAmount
+				FROM 
+					Sale.BIN_SaleRecord T WITH(NOLOCK)
+				WHERE
+					T.BIN_BrandInfoID = #brandInfoId#
+					AND T.BIN_OrganizationInfoID = #organizationInfoId#
+					AND T.SaleType = 'NS'
+					AND T.ValidFlag = '1'
+					AND ISNULL(T.BillState,'') NOT IN('0','1')
+			]]>
+		<dynamic>
+			<isNotEmpty prepend="AND" property="startDate">
+				<![CDATA[ T.SaleDate >= #startDate#]]>
+			</isNotEmpty>
+			<isNotEmpty prepend="AND" property="endDate">
+				<![CDATA[ T.SaleDate <= #endDate#]]>
+			</isNotEmpty>
+		</dynamic>
+			<![CDATA[
+				GROUP BY
+					T.BIN_MemberInfoID
+				) SS
+				ON(cast(A.CustomerSysID as bigint)=SS.BIN_MemberInfoID)
+			GROUP BY
+				A.CustomerSysID,
+				B.Name,
+				C.MemCode
+    		]]>
+    </sql>
+    
+    <!-- 获取沟通记录总数  -->
+    <select id="getCommunEffectDetailCount" parameterClass="java.util.HashMap" resultClass="java.lang.Integer">
+    	<![CDATA[
+			SELECT	COUNT(1) AS count FROM (
+		]]>	
+		<include refid="BINOLCTRPT06.communEffectDetailQuery" />	
+		<![CDATA[	
+			)SORT_T1
+		]]>
+    </select>
+	
+	<!-- 获取沟通记录List -->
+    <select id="getCommunEffectDetailList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+       	<include refid="BINOLCMINC99.pageheader" />
+		<include refid="BINOLCTRPT06.communEffectDetailQuery" />
+		<include refid="BINOLCMINC99.pagefooter" />
+    </select>
+
+    <!-- 会员沟通效果统计查询sql  -->
+	<sql id="memCommunResultQuery">
+		<![CDATA[
+			SELECT
+				sum(sendT.sendDetail) AS sendMsgCount,
+				COUNT(ST.CustomerSysID) AS coverMemCount,
+				SUM(isnull(ST.orderMemCount,0)) AS orderMemCount,
+				convert(int,SUM(isnull(ST.orderQuantity,0))) AS orderQuantity,
+				SUM(isnull(ST.orderAmount,0)) AS orderAmount,
+				SUM(isnull(ST.dealMemCount,0)) AS dealMemCount,
+				convert(int,SUM(isnull(ST.dealQuantity,0))) AS dealQuantity,
+				SUM(isnull(ST.dealAmount,0)) AS dealAmount
+			FROM(
+				SELECT 
+					A.CustomerSysID,
+					COUNT(SC.BIN_MemberInfoID) AS orderMemCount,
+					SUM(ISNULL(SC.orderQuantity,0)) AS orderQuantity,
+					SUM(ISNULL(SC.orderAmount,0)) AS orderAmount,
+					COUNT(SS.BIN_MemberInfoID) AS dealMemCount,
+					SUM(ISNULL(SS.dealQuantity,0)) AS dealQuantity,
+					SUM(ISNULL(SS.dealAmount,0)) AS dealAmount
+				FROM 
+					(SELECT 
+						DISTINCT CustomerSysID 
+					FROM 
+						Communication.BIN_SmsSendDetail WITH(NOLOCK)
+					WHERE
+						BIN_OrganizationInfoID = #organizationInfoId#
+						AND BIN_BrandInfoID = #brandInfoId#
+						AND CustomerType  = 1
+						AND ISNUMERIC(CustomerSysID) = 1
+			]]>
+			<dynamic>
+				<isNotEmpty prepend="AND" property="communicationCode">
+					<![CDATA[ PlanCode = #communicationCode#]]>
+				</isNotEmpty>
+			</dynamic>
+			<![CDATA[
+					) A
+					LEFT JOIN (
+						SELECT 
+							T.BIN_MemberInfoID,
+							sum(T.Quantity) as orderQuantity,
+							sum(T.Amount) as orderAmount
+						FROM 
+							Sale.BIN_ESOrderMain T WITH(NOLOCK)
+						WHERE
+							T.BIN_BrandInfoID = #brandInfoId#
+							AND T.BIN_OrganizationInfoID = #organizationInfoId#
+							AND T.SaleType = 'NS'
+							AND T.ValidFlag = '1'
+							AND NOT EXISTS(
+									SELECT
+										1
+									FROM
+										Sale.BIN_ESOrderMain T1
+									WHERE 
+										T1.BillState <> '1'
+										AND T.BIN_MemberInfoID=T1.BIN_MemberInfoID
+								)
+		]]>
+			<dynamic>
+				<isNotEmpty prepend="AND" property="startDate">
+					<![CDATA[ T.BillCreateTime >= #startDate#]]>
+				</isNotEmpty>
+				<isNotEmpty prepend="AND" property="endDate">
+					<![CDATA[ T.BillCreateTime <= #endDate#]]>
+				</isNotEmpty>
+			</dynamic>
+			<![CDATA[
+				GROUP BY
+					T.BIN_MemberInfoID
+				) SC
+				ON(cast(A.CustomerSysID as bigint)=SC.BIN_MemberInfoID)
+			LEFT JOIN (
+				SELECT 
+					T.BIN_MemberInfoID,
+					sum(T.Quantity) as dealQuantity,
+					sum(T.Amount) as dealAmount
+				FROM 
+					Sale.BIN_SaleRecord T WITH(NOLOCK)
+				WHERE
+					T.BIN_BrandInfoID = #brandInfoId#
+					AND T.BIN_OrganizationInfoID = #organizationInfoId#
+					AND T.SaleType = 'NS'
+					AND T.ValidFlag = '1'
+					AND ISNULL(T.BillState,'') NOT IN('0','1')
+		]]>
+			<dynamic>
+				<isNotEmpty prepend="AND" property="startDate">
+					<![CDATA[ T.SaleDate >= #startDate#]]>
+				</isNotEmpty>
+				<isNotEmpty prepend="AND" property="endDate">
+					<![CDATA[ T.SaleDate <= #endDate#]]>
+				</isNotEmpty>
+			</dynamic>
+			<![CDATA[
+				GROUP BY
+					T.BIN_MemberInfoID
+				) SS
+				ON(cast(A.CustomerSysID as bigint)=SS.BIN_MemberInfoID)
+			GROUP BY 
+				A.CustomerSysID) ST
+			LEFT JOIN ( SELECT 
+							B.CustomerSysID,COUNT(B.BIN_SmsID) AS sendDetail 
+						FROM
+							Communication.BIN_SmsSendDetail B WITH(NOLOCK)
+			]]>
+			<dynamic>
+				<isNotEmpty prepend="WHERE" property="communicationCode">
+					<![CDATA[ B.PlanCode = #communicationCode#]]>
+				</isNotEmpty>
+			</dynamic>
+			<![CDATA[
+						GROUP BY B.CustomerSysID
+			) SendT ON(ST.CustomerSysID=SendT.CustomerSysID)
+			]]>
+	</sql>
+	
+	<!-- 获取会员沟通效果统计记录总数  -->
+    <!-- <select id="getMemCommunResultCount" parameterClass="java.util.HashMap" resultClass="java.lang.Integer">
+    	<![CDATA[
+			SELECT	COUNT(1) AS count FROM (
+		]]>	
+		<include refid="BINOLCTRPT06.memCommunResultQuery" />	
+		<![CDATA[	
+			)SORT_T1
+		]]>
+    </select> -->
+	
+	<!-- 获取会员沟通效果统计记录List -->
+    <!-- <select id="getMemCommunResultList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+       	<include refid="BINOLCMINC99.pageheader" />
+		<include refid="BINOLCTRPT06.memCommunResultQuery" />
+		<include refid="BINOLCMINC99.pagefooter" />
+    </select> -->
+    
+    <!-- 获取会员沟通效果统计信息 -->
+    <select id="getMemCommunResultInfo" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+		SELECT 
+			CASE ISNULL(DETAIL.sendMsgCount,0) when 0 then 0
+				ELSE ISNULL(DETAIL.dealAmount,0)/(DETAIL.sendMsgCount*cast(#price# as float)) END AS ROI,
+			CASE ISNULL(DETAIL.coverMemCount,0) WHEN 0 THEN 0
+				ELSE (ISNULL(DETAIL.orderMemCount,0)+ISNULL(DETAIL.dealMemCount,0))*100.00/CAST(DETAIL.coverMemCount AS float) END AS resTotalRate,
+			CASE ISNULL(DETAIL.coverMemCount,0) WHEN 0 THEN 0
+				ELSE ISNULL(DETAIL.dealMemCount,0)*100.00/CAST(DETAIL.coverMemCount AS float) END AS resDealRate,
+			CASE ISNULL(DETAIL.coverMemCount,0) WHEN 0 THEN 0
+				ELSE ISNULL(DETAIL.orderMemCount,0)*100.00/CAST(DETAIL.coverMemCount AS float) END AS resOrderRate,
+			convert(bigint,ISNULL(DETAIL.sendMsgCount,0)) AS sendMsgCount,
+			convert(bigint,ISNULL(DETAIL.coverMemCount,0)) AS coverMemCount,
+			convert(bigint,ISNULL(DETAIL.orderMemCount,0)) AS orderMemCount,
+			convert(bigint,ISNULL(DETAIL.dealMemCount,0)) AS dealMemCount
+		FROM(
+			<include refid="BINOLCTRPT06.memCommunResultQuery" />
+		)DETAIL
+    </select>
+</sqlMap>
+

@@ -1,0 +1,163 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sqlMap PUBLIC "-//iBATIS.com//DTD SQL Map 2.0//EN" "http://ibatis.apache.org/dtd/sql-map-2.dtd">
+<sqlMap namespace="BINOLMOPOS01">
+	<!-- 查询销售支付配置-->
+	<sql id="query" >
+	<![CDATA[
+		SELECT
+			StorePayCode AS storePayCode,
+			StorePayValue AS storePayValue,
+			PayType AS payType,
+			IsEnable AS isEnable,
+			DefaultPay AS defaultPay
+		FROM
+			Sale.BIN_StorePayConfig WITH(NOLOCK)
+		WHERE
+			ValidFlag='1' AND
+			BIN_OrganizationInfoID=#organizationInfoId# AND
+			BIN_BrandInfoID=#brandInfoId#
+	]]>
+		<isNotEmpty property="storePayCode" prepend="and">
+			StorePayCode=#storePayCode#
+		</isNotEmpty>
+		<isNotEmpty property="storePayValue" prepend="and">
+			StorePayValue=#storePayValue#
+		</isNotEmpty>
+	</sql>
+    
+    <!-- 取得销售支付配置总数  -->
+    <select id="getListCount" parameterClass="java.util.HashMap" resultClass="java.lang.Integer">
+        <![CDATA[
+            SELECT COUNT(1) AS count FROM (
+        ]]>
+        <include refid="BINOLMOPOS01.query" />
+        <![CDATA[
+            )SORT_T1
+        ]]>
+    </select>
+    <!-- 分页查询 -->
+    <select id="getStorePayConfigList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+        <include refid="BINOLCMINC99.pageheader" />
+        <include refid="BINOLMOPOS01.query"/>
+        <include refid="BINOLCMINC99.pagefooter" />
+    </select>
+    <!-- 查询已有支付代码 -->
+    <select id="getStorePayCodeList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+	    <![CDATA[
+	        SELECT
+	        	StorePayCode AS storePayCode,
+	        	StorePayValue AS storePayValue,
+	        	DefaultPay AS defaultPay
+	        FROM
+	        	Sale.BIN_StorePayConfig WITH(NOLOCK)
+			WHERE
+				ValidFlag='1' AND
+				BIN_OrganizationInfoID=#organizationInfoId# AND
+				BIN_BrandInfoID=#brandInfoId#
+		]]>
+			<isNotEmpty property="isEnable" prepend="AND">
+				IsEnable = #isEnable#
+			</isNotEmpty>
+    </select>
+    <!-- 添加配置 -->
+    <insert id="addStorePayConfig">
+    	<![CDATA[
+    	INSERT INTO Sale.BIN_StorePayConfig(
+			BIN_OrganizationInfoID,
+			BIN_BrandInfoID,
+			StorePayCode,
+			StorePayValue,
+			PayType,
+			IsEnable,
+		]]>
+		<include refid="BINOLCMINC99.insertKeySql"/>
+		<![CDATA[
+		) VALUES(
+			#organizationInfoId#,
+			#brandInfoId#,
+			#codeKey#,
+			#value1#,
+			#payType#,
+			'Y',
+		]]>
+		<include refid="BINOLCMINC99.insertValueSql"/>
+		<![CDATA[
+		)
+		]]>
+    </insert>
+    <!-- 逻辑删除 -->
+    <update id="delStorePayConfig" parameterClass="java.util.HashMap">
+    	<![CDATA[
+    		UPDATE
+    			Sale.BIN_StorePayConfig
+    		SET
+    			ValidFlag='0',
+    	]]>
+		<include refid="BINOLCMINC99.updateSql"/>
+		<![CDATA[
+    		WHERE
+				ValidFlag='1' AND
+				BIN_OrganizationInfoID=#organizationInfoId# AND
+				BIN_BrandInfoID=#brandInfoId# AND
+				StorePayCode=#storePayCode#
+    	]]>
+    </update>
+    <!-- 启用/禁用 -->
+    <update id="editStorePayConfig" parameterClass="java.util.HashMap">
+    	<![CDATA[
+    		UPDATE
+    			Sale.BIN_StorePayConfig
+    		SET
+    	]]>
+    	<isEqual property="flag" compareValue="enable">
+    		IsEnable='Y',
+    	</isEqual>
+    	<isEqual property="flag" compareValue="disable">
+    		IsEnable='N',
+    	</isEqual>
+    	<isEqual property="flag" compareValue="delete">
+    		ValidFlag='0',
+    	</isEqual>
+    	<isEqual property="flag" compareValue="default">
+    		DefaultPay='Y',
+    	</isEqual>
+		<include refid="BINOLCMINC99.updateSql"/>
+    	<![CDATA[
+    		WHERE
+				ValidFlag='1' AND
+				BIN_OrganizationInfoID=#organizationInfoId# AND
+				BIN_BrandInfoID=#brandInfoId# AND
+				StorePayCode=#storePayCode#
+    	]]>
+    	<isEqual property="flag" compareValue="enable" prepend="AND">
+    		(IsEnable!='Y' OR IsEnable IS NULL)
+    	</isEqual>
+    	<isEqual property="flag" compareValue="disable" prepend="AND">
+    		IsEnable='Y'
+    	</isEqual>
+    	<isEqual property="flag" compareValue="delete" prepend="AND">
+    		ValidFlag='1'
+    	</isEqual>
+    	<isEqual property="flag" compareValue="default" prepend="AND">
+    		(DefaultPay!='Y' OR DefaultPay IS NULL)
+    	</isEqual>
+    </update>
+    <!-- 取消默认方式 -->
+    <update id="editDefaultPay" parameterClass="java.util.HashMap">
+    	<![CDATA[
+    		UPDATE
+    			Sale.BIN_StorePayConfig
+    		SET
+   			DefaultPay='N',
+    	]]>
+		<include refid="BINOLCMINC99.updateSql"/>
+    	<![CDATA[
+    		WHERE
+				ValidFlag='1' AND
+				BIN_OrganizationInfoID=#organizationInfoId# AND
+				BIN_BrandInfoID=#brandInfoId# AND
+				StorePayCode!=#storePayCode# AND
+				DefaultPay='Y'
+    	]]>
+    </update>
+</sqlMap>

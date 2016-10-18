@@ -1,0 +1,111 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sqlMap PUBLIC "-//iBATIS.com//DTD SQL Map 2.0//EN" "http://ibatis.apache.org/dtd/sql-map-2.dtd">
+<sqlMap namespace="BINOLSSCM06"> 
+    <sql id="commQuery">
+        <![CDATA[
+            SELECT
+               	A.BIN_PromotionDeliverID,
+                A.DeliverReceiveNoIF,
+                A.BIN_OrganizationID,
+                A.BIN_OrganizationIDReceive,
+				A.ValidFlag,
+				A.TradeType,
+				A.TotalQuantity AS totalQuantity,       
+				A.TotalAmount AS totalAmount     
+            ]]>
+        <![CDATA[
+            FROM
+                Inventory.BIN_PromotionDeliver A WITH(NOLOCK)
+			WHERE
+		]]>
+	 	<![CDATA[EXISTS (]]>
+		<include refid="BINOLCMINC99.getDepartList" />
+		<![CDATA[AND A.BIN_OrganizationID = A99.BIN_OrganizationID)]]>
+    </sql>
+    <!-- 发货单查询sql文  -->
+	<sql id="deliverQuery">
+		<![CDATA[
+			SELECT        
+                T1.BIN_PromotionDeliverID AS deliverId,
+                T1.DeliverReceiveNoIF AS deliverRecNo,
+                T1.BIN_OrganizationID AS deliverDepId,
+                T1.BIN_OrganizationIDReceive AS receiveDepId,
+                T1.TotalQuantity AS totalQuantity,
+                T1.TotalAmount AS totalAmount
+		]]>  
+		  <dynamic>
+        <isNotEmpty property="language">
+            <isEqual property="language" compareValue="en_US">
+            ,'('+B.DepartCode+')'+B.NameForeign AS departName
+            ,'('+G.DepartCode+')'+G.NameForeign AS departNameReceive
+            </isEqual>
+            <isEqual property="language" compareValue="zh_CN">
+            ,'('+B.DepartCode+')'+B.DepartName AS departName
+            ,'('+G.DepartCode+')'+G.DepartName AS departNameReceive
+            </isEqual>
+        </isNotEmpty>
+        <isEmpty property="language">
+            ,'('+B.DepartCode+')'+B.DepartName AS departName
+            ,'('+G.DepartCode+')'+G.DepartName AS departNameReceive
+        </isEmpty>
+        </dynamic>
+		<![CDATA[FROM ( ]]>
+        <include refid="BINOLSSCM06.commQuery" />   
+		<![CDATA[)T1
+			LEFT JOIN Basis.BIN_Organization B 
+			ON T1.BIN_OrganizationID = B.BIN_OrganizationID                 
+			LEFT JOIN Basis.BIN_Organization G 
+			ON T1.BIN_OrganizationIDReceive = G.BIN_OrganizationID  
+		WHERE
+            T1.ValidFlag = '1'
+			AND T1.TradeType ='1'     
+		]]>
+		<include refid="BINOLCMINC99.filterSql" />
+	</sql>
+    <!-- 取得发货单总数  -->
+    <select id="getDeliverCount" parameterClass="java.util.HashMap" resultClass="java.lang.Integer">
+        <![CDATA[
+            SELECT COUNT(SORT_T1.deliverId) AS count FROM (
+        ]]>    
+        <include refid="BINOLSSCM06.deliverQuery" />
+        <![CDATA[
+            )SORT_T1
+        ]]>
+    </select>
+    
+    <!-- 取得发货单List  -->
+    <select id="getDeliverList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+        <include refid="BINOLCMINC99.pageheader" />
+        <include refid="BINOLSSCM06.deliverQuery" />
+        <include refid="BINOLCMINC99.pagefooter" />
+    </select>
+	
+    <!-- 发货单详细List -->
+    <select id="getDeliverDetailList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+        <![CDATA[
+            SELECT
+                A.BIN_PromotionProductVendorID AS proId,
+                ISNULL(A.Quantity,0) AS quantity,
+                B.BarCode AS barCode,
+                C.NameTotal AS nameTotal,
+                C.UnitCode AS unitCode,
+                ISNULL(D.Quantity,0) AS stockQuantity,
+                ISNULL(CONVERT(Decimal(16,2),C.StandardCost),0) As standardCost,
+                ISNULL((ISNULL(A.Quantity,0) * ISNULL(CONVERT(Decimal(16,2),C.StandardCost),0)),0) AS totalAmount,
+                A.Reason AS reason
+            FROM
+                Inventory.BIN_PromotionDeliverDetail A
+                LEFT JOIN Basis.BIN_PromotionProductVendor B
+                ON A.BIN_PromotionProductVendorID = B.BIN_PromotionProductVendorID
+                LEFT JOIN Basis.BIN_PromotionProduct C
+                ON B.BIN_PromotionProductID = C.BIN_PromotionProductID
+                LEFT JOIN Inventory.BIN_PromotionStock D
+                ON (A.BIN_PromotionProductVendorID = D.BIN_PromotionProductVendorID AND D.BIN_InventoryInfoID = #depotInfoId# AND D.BIN_LogicInventoryInfoID = #BIN_LogicInventoryInfoID# AND D.ValidFlag='1')
+            WHERE
+                A.BIN_PromotionDeliverID = #BIN_PromotionDeliverID#
+                AND A.ValidFlag = '1'
+                AND B.ValidFlag = '1'
+                AND C.ValidFlag = '1'
+        ]]>
+    </select>
+</sqlMap>

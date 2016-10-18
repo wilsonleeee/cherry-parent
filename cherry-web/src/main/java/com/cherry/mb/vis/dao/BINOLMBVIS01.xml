@@ -1,0 +1,328 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sqlMap PUBLIC "-//iBATIS.com//DTD SQL Map 2.0//EN" "http://ibatis.apache.org/dtd/sql-map-2.dtd">
+<sqlMap namespace="BINOLMBVIS01">
+
+	<sql id="VisitTaskInfoQuery">
+		<![CDATA[
+			SELECT 
+			A.BIN_VisitTaskID,
+			A.CounterCode,
+			A.VisitType,
+			A.MemberCode,
+			A.BIN_OrganizationID,
+			CONVERT(varchar(100), A.StartTime, 23) AS StartTime,
+			CONVERT(varchar(100), A.EndTime, 23) AS EndTime,
+			B.EmployeeName,
+			A.FirstBillNS,
+			A.LastBillNS,
+			A.TaskState,
+			A.SynchroFlag,
+			A.MemberName,
+			A.BirthDay,
+			A.BIN_EmployeeID,
+			'('+ ISNULL(E.CounterCode,'')+')'+ E.CounterNameIF  AS CounterNameIF,
+		    '('+ ISNULL(H.DepartCode,'')+')'+	H.DepartName AS CounterNameIFS,
+			'('+ ISNULL(F.CounterCode,'')+')'+	F.CounterNameIF AS CounterNameIFTS,
+			CONVERT(varchar(100), D.JoinTime, 23) AS JoinTime,
+			CONVERT(varchar(100), A.VisitTime, 23) AS VisitTime,
+			A.VisitTime AS VisitTimeDate,
+			T.SaleTime,
+			A.VisitResult,
+			A.PaperID,
+			A.BIN_PaperAnswerID
+			FROM
+			Members.BIN_VisitTask A WITH(NOLOCK)
+			LEFT JOIN Basis.BIN_Employee B WITH(NOLOCK)
+			ON (A.BIN_EmployeeID = B.BIN_EmployeeID )
+			LEFT JOIN Members.BIN_MemberVisit C WITH(NOLOCK)
+			ON (A.BIN_VisitTaskID = C.BIN_VisitTaskID )
+			LEFT JOIN Members.BIN_MemberInfo D WITH(NOLOCK)
+			ON (A.BIN_MemberID = D.BIN_MemberInfoID)
+			LEFT JOIN Basis.BIN_CounterInfo E WITH(NOLOCK)
+			ON (A.CounterCode = E.CounterCode)
+			LEFT JOIN Basis.BIN_CounterInfo F WITH(NOLOCK)
+			ON (D.CounterCodeBelong = F.CounterCode)
+			LEFT JOIN Sale.BIN_SaleRecord G WITH(NOLOCK)
+			ON (A.FirstBillNS = G.CounterTicketCode)
+			LEFT JOIN Basis.BIN_Organization H WITH(NOLOCK)
+			ON (G.BIN_OrganizationID = H.BIN_OrganizationID)
+			LEFT JOIN Sale.BIN_SaleRecord T WITH(NOLOCK)
+			ON (A.LastBillNS = T.CounterTicketCode)
+			
+		]]>
+		<![CDATA[
+		WHERE 
+		G.SaleType='NS' AND
+		A.TaskState <> '1' AND
+		A.BIN_OrganizationInfoID = #organizationInfoId#
+		]]>
+		<isNotEmpty prepend="AND" property="brandInfoId">
+				A.BIN_BrandInfoID = #brandInfoId#
+		</isNotEmpty>
+		<isNotEmpty prepend="AND" property="startDate">
+            <![CDATA[
+           A.StartTime >= #startDate#
+            ]]>
+		</isNotEmpty>
+		<isNotEmpty prepend="AND" property="endDate">
+           <![CDATA[
+            A.EndTime <= #endDate#
+           ]]>
+        </isNotEmpty>
+        <isNotEmpty prepend="AND" property="visitTimeStart">
+            <![CDATA[
+          C.VisitTime >= #visitTimeStart#
+            ]]>
+		</isNotEmpty>
+				<isNotEmpty prepend="AND" property="visitTimeEnd">
+           <![CDATA[
+            C.VisitTime <= #visitTimeEnd#
+           ]]>
+        </isNotEmpty>
+        <isNotEmpty prepend="AND" property="birthDayMonth">
+			SUBSTRING(A.BirthDay,1,2) = #birthDayMonth#
+		</isNotEmpty>
+		<isNotEmpty prepend="AND" property="birthDayDate">
+			SUBSTRING(A.BirthDay,3,2) = #birthDayDate#
+		</isNotEmpty>
+		<isNotEmpty prepend="AND" property="visitType">
+				A.VisitType = #visitType#
+		</isNotEmpty>
+		<isNotEmpty prepend="AND" property="memberCode">
+				A.MemberCode  like '%'+#memberCode#+'%'
+		</isNotEmpty>
+		<isNotEmpty prepend="AND" property="visitResult">
+				A.VisitResult = #visitResult#
+		</isNotEmpty>
+		<isNotEmpty prepend="AND" property="employeeName">
+				B.EmployeeName like '%'+#employeeName#+'%'
+		</isNotEmpty>
+		<isNotEmpty prepend="AND" property="counterCodeName">
+				E.CounterNameIF like '%'+#counterCodeName#+'%'
+		</isNotEmpty>
+	</sql>
+	
+	<!-- 取得回访信息总数  -->
+    <select id="getVisitTaskInfoCount" parameterClass="java.util.HashMap" resultClass="java.lang.Integer">
+    	<![CDATA[
+			SELECT	COUNT(SORT_T1.BIN_VisitTaskID) AS count FROM (
+		]]>	
+		<include refid="BINOLMBVIS01.VisitTaskInfoQuery" />	
+		<![CDATA[	
+			)SORT_T1
+		]]>										
+    </select>
+    	<!-- 取得回访信息List  -->
+    <select id="getvisitTaskInfoList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+       	<include refid="BINOLCMINC99.pageheader" />
+		<include refid="BINOLMBVIS01.VisitTaskInfoQuery" />
+		<include refid="BINOLCMINC99.pagefooter" />
+    </select>
+    
+    <!--根据ID取得任务信息INFO -->
+	<select id="getVisitTask" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+      <![CDATA[
+      
+      		SELECT 
+      		A.VisitType,
+      		A.VisitTaskName,
+      		A.VisitTaskCreateTime,
+      		CONVERT(varchar(100), A.StartTime, 23) AS StartTime,
+			CONVERT(varchar(100), A.EndTime, 23) AS EndTime,
+			B.EmployeeName,
+			A.MemberCode,
+			A.MemberName,
+			CONVERT(varchar(100), A.JoinTime, 23) AS JoinTime,
+			A.MobilePhone,
+			A.BirthDay,
+			A.FirstBillNS,
+			A.LastBillNS,
+			A.SynchroFlag,
+			A.TaskState,
+			CONVERT(varchar(100), A.VisitTime, 23) AS VisitTime,
+			A.VisitResult
+      		FROM
+			Members.BIN_VisitTask A
+			LEFT JOIN Basis.BIN_Employee B
+			ON (A.BIN_EmployeeID = B.BIN_EmployeeID )
+      		WHERE BIN_VisitTaskID =#visitTaskID#
+       ]]>
+    </select>
+    
+    <!--根据ID取得回访信息INFO -->
+	<select id="getVisitTaskDetails" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+      <![CDATA[
+      
+      	SELECT 
+		CONVERT(varchar(100), A.VisitBeginTime, 23) AS VisitBeginTime,
+		CONVERT(varchar(100), A.VisitEndTime, 23) AS VisitEndTime,
+		CONVERT(varchar(100), A.VisitTime, 23) AS VisitTime,
+		A.VisitFlag,
+		A.VisitCode,
+		A.VisitTypeCode,
+		A.Sourse,
+		A.Comments,
+		C.MemberName,
+		C.VisitTaskName
+		FROM   Members.BIN_MemberVisit A
+		LEFT JOIN Basis.BIN_Employee B
+		ON (A.BIN_EmployeeID = B.BIN_EmployeeID )
+		LEFT JOIN Members.BIN_VisitTask C
+		ON (A.BIN_VisitTaskID = C.BIN_VisitTaskID ) 
+		WHERE A.BIN_VisitTaskID = #visitTaskID#
+       ]]>
+    </select>
+    
+    <!-- 修改回访任务  SynchroFlag=0-->
+	<update id="updateVisitTaskSF0" parameterClass="java.util.HashMap">
+        UPDATE 
+        Members.BIN_VisitTask
+        SET 
+      	TaskState ='1',
+      	SynchroFlag = '0'
+		WHERE 
+		BIN_VisitTaskID = #visitTaskID#          
+    </update>
+    
+        <!-- 修改回访任务  SynchroFlag=1-->
+	<update id="updateVisitTaskSF1" parameterClass="java.util.HashMap">
+        UPDATE 
+        Members.BIN_VisitTask
+        SET 
+      	TaskState ='1'
+		WHERE 
+		BIN_VisitTaskID = #visitTaskID#          
+    </update>
+    
+        <!--根据ID查询任务信息对应的柜台BA -->
+	<select id="getEmployeeList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+      <![CDATA[
+      
+      		SELECT 
+			A.BIN_EmployeeID,
+			A.BaCode,
+			'('+A.BaCode +')'+ A.BaName AS BaName
+      		FROM
+			Basis.BIN_BaInfo A
+      		WHERE BIN_OrganizationID =#organizationID#
+       ]]>
+    </select>
+    
+        <!-- 根据会员回访ID改变执行者  SynchroFlag=0-->
+	<update id="updateVisitTaskBACode" parameterClass="java.util.HashMap">
+        UPDATE 
+        Members.BIN_VisitTask
+        SET 
+      	BIN_EmployeeID = #employeeID#,
+      	BACode = #BACode#
+		WHERE 
+		BIN_VisitTaskID = #visitTaskIDTwo#          
+    </update>
+    
+        <!--根据ID查询任务全部信息，变更执行者时复制数据调用 -->
+	<select id="getVisitTaskMap" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+      <![CDATA[
+      
+      		SELECT 
+      		A.VisitType,
+      		A.VisitTaskName,
+      		A.VisitTaskCreateTime,
+      		A.StartTime,
+			A.EndTime,
+			A.BIN_OrganizationID,
+			A.CounterCode,
+			A.BIN_EmployeeID,
+			A.BACode,
+			A.BIN_MemberID,
+			A.MemberCode,
+			A.MemberName,
+			A.JoinTime,
+			A.MobilePhone,
+			A.BirthDay,
+			A.PaperID,
+			A.FirstBillNS,
+			A.LastBillNS,
+			A.SkinType,
+			A.SynchroFlag,
+			A.TaskState,
+			A.BIN_PaperAnswerID,
+			A.VisitTime,
+			A.VisitResult
+      		FROM
+			Members.BIN_VisitTask A
+      		WHERE BIN_VisitTaskID =#visitTaskID#
+       ]]>
+    </select>
+    
+    <!-- 将原任务复制一份，更换掉执行BA，插入任务表 -->
+   	<insert id="addVisitTask" parameterClass="java.util.HashMap"  >
+	<selectKey resultClass="java.lang.Integer" type="post" keyProperty="BIN_VisitTaskID" > 
+        <![CDATA[
+            INSERT INTO Members.BIN_VisitTask(
+      		BIN_OrganizationInfoID,
+      		BIN_BrandInfoID,
+      		VisitType,
+      		VisitTaskName,
+      		VisitTaskCreateTime,
+      		StartTime,
+			EndTime,
+			BIN_OrganizationID,
+			CounterCode,
+			BIN_EmployeeID,
+			BACode,
+			BIN_MemberID,
+			MemberCode,
+			MemberName,
+			JoinTime,
+			MobilePhone,
+			BirthDay,
+			PaperID,
+			FirstBillNS,
+			LastBillNS,
+			SkinType,
+			SynchroFlag,
+			TaskState,
+			BIN_PaperAnswerID,
+			VisitTime,
+			VisitResult,
+			ValidFlag
+            )VALUES(
+                #organizationInfoId#,
+                #brandInfoId#,
+				#VisitType#,
+	      		#VisitTaskName#,
+	      		#VisitTaskCreateTime#,
+	      		#StartTime#,
+				#EndTime#,
+				#BIN_OrganizationID#,
+				#CounterCode#,
+				#BIN_EmployeeID#,
+				#BACode#,
+				#BIN_MemberID#,
+				#MemberCode#,
+				#MemberName#,
+				#JoinTime#,
+				#MobilePhone#,
+				#BirthDay#,
+				#PaperID#,
+				#FirstBillNS#,
+				#LastBillNS#,
+				#SkinType#,
+				#SynchroFlag#,
+				#TaskState#,
+				#BIN_PaperAnswerID#,
+				#VisitTime#,
+				#VisitResult#,
+				'1'
+            )
+           SELECT SCOPE_IDENTITY() AS value
+        ]]>
+   	</selectKey>
+    </insert>
+    
+    	<!-- 取得會員信息(Excel导出) -->
+	<select id="getVisitTaskInfoListExcel" parameterClass="java.util.HashMap"
+		resultClass="java.util.HashMap">
+		<include refid="BINOLMBVIS01.VisitTaskInfoQuery" />
+		</select>
+</sqlMap>

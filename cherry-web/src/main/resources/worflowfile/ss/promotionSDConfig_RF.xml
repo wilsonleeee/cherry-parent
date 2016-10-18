@@ -1,0 +1,182 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE workflow PUBLIC "-//OpenSymphony Group//DTD OSWorkflow 2.8//EN" "http://www.opensymphony.com/osworkflow/workflow_2_8.dtd">
+<!-- 促销品发货-审核-收货流程（馥绿德雅，支持配置收货人员与接收部门的权限关系） -->
+<workflow>
+    <initial-actions>
+        <action id="1" name="Start Workflow">
+            <pre-functions>
+                <function type="class">
+                    <arg name="class.name">com.opensymphony.workflow.util.Caller</arg>
+                </function>
+            </pre-functions>
+            <results>
+                <unconditional-result old-status="Finished"  status="Underway" step="10">
+                </unconditional-result>
+            </results>
+        </action>
+    </initial-actions>
+	<steps>
+        <step id="10" name="生成发货单">
+            <meta name="OS_StepShowFlag">1</meta>
+            <meta name="OS_StepShowText">os.navigation.CreateSDBill</meta>
+            <meta name="OS_StepShowOrder">1</meta>
+            <meta name="OS_FlowName">100</meta>
+            <meta name="OS_FlowOperateCode">40</meta>
+            <meta name="OS_Rule">{"ThirdPartyFlag":"2","RuleType":"4","RuleOnFlowCode":"promotionDFS","RuleOnStep":[10],"RuleContext":[]}</meta> 
+            <actions>
+                <action id="101" name="保存规则">
+                    <meta name="OS_ButtonNameCode">os.navigation.Save</meta>
+                    <meta name="OS_ButtonClass">icon-save</meta>
+                    <results>
+                        <unconditional-result old-status="Finished"  status="Underway" step="10">
+                            <post-functions>
+                                <function type="spring">
+                                    <arg name="bean.name">promotionSDConfigFN</arg>
+                                    <arg name="method">saveCreateRule</arg>
+                                </function>
+                            </post-functions>
+                        </unconditional-result>
+                    </results>
+                </action>  
+                <action id="102" name="下一步">
+                    <meta name="OS_ButtonNameCode">os.navigation.NextStep</meta>
+                    <meta name="OS_ButtonClass">icon-mover</meta>
+                    <results>
+                        <unconditional-result old-status="Finished"  status="Underway" step="20">
+                        </unconditional-result>
+                    </results>
+                </action>
+            </actions>
+        </step>
+        <step id="20" name="审核">
+            <meta name="OS_StepShowFlag">1</meta>
+            <meta name="OS_StepShowText">os.navigation.Audit</meta>
+            <meta name="OS_StepShowOrder">2</meta>
+            <meta name="OS_FlowName">200</meta>
+            <meta name="OS_FlowOperateCode">41</meta>
+            <meta name="OS_Rule">{"ThirdPartyFlag":"2","RuleType":"3","RuleOnStep":[50],"RuleOnFlowCode":"promotionDFS","RuleOnAction":[501,502],"RuleContext":[],"PreferredFlag":"true"}</meta>
+            <actions>
+                <action id="201" name="上一步">
+                    <meta name="OS_ButtonNameCode">os.navigation.PreStep</meta>
+                    <meta name="OS_ButtonClass">icon-movel</meta>
+                    <results>
+                        <unconditional-result old-status="Finished"  status="Underway" step="10">
+                        </unconditional-result>
+                    </results>
+                </action>
+                <action id="202" name="保存规则">
+                    <meta name="OS_ButtonNameCode">os.navigation.Save</meta>
+                    <meta name="OS_ButtonClass">icon-save</meta>
+                    <results>
+                        <unconditional-result old-status="Finished"  status="Underway" step="20">
+                            <post-functions>
+                                <function type="spring">
+                                    <arg name="bean.name">promotionSDConfigFN</arg>
+                                    <arg name="method">saveAuditRule</arg>
+                                </function>
+                            </post-functions>
+                        </unconditional-result>
+                    </results>
+                </action>
+                <action id="203" name="下一步">
+                    <meta name="OS_ButtonNameCode">os.navigation.NextStep</meta>
+                    <meta name="OS_ButtonClass">icon-mover</meta>
+                    <results>
+                        <unconditional-result old-status="Finished"  status="Underway" step="40">
+                        </unconditional-result>
+                    </results>
+                </action>
+            </actions>
+        </step>
+		<!--
+        <step id="30" name="发货">
+            <meta name="OS_StepShowFlag">1</meta>
+            <meta name="OS_StepShowText">os.navigation.Deliver</meta>
+            <meta name="OS_StepShowOrder">3</meta>
+            <meta name="OS_FlowName">300</meta>
+            <meta name="OS_FlowOperateCode">40</meta>  
+            <meta name="OS_Rule">{"ThirdPartyFlag":"2","RuleType":"2","RuleOnStep":[80],"RuleOnFlowCode":"promotionDFS","RuleOnAction":[801],"RuleContext":[]}</meta> 
+            <actions>
+                <action id="301" name="上一步">
+                    <meta name="OS_ButtonNameCode">os.navigation.PreStep</meta>
+                    <meta name="OS_ButtonClass">icon-movel</meta>
+                    <results>
+                        <unconditional-result old-status="Finished"  status="Underway" step="20">
+                        </unconditional-result>
+                    </results>
+                </action>
+                <action id="302" name="保存规则">
+                    <meta name="OS_ButtonNameCode">os.navigation.Save</meta>
+                    <meta name="OS_ButtonClass">icon-save</meta>
+                    <results>
+                        <unconditional-result old-status="Finished"  status="Underway" step="30">
+                            <post-functions>
+                                <function type="spring">
+                                    <arg name="bean.name">promotionSDConfigFN</arg>
+                                    <arg name="method">saveSendRule</arg>
+                                </function>
+                            </post-functions>
+                        </unconditional-result>
+                    </results>
+                </action>
+                <action id="303" name="下一步">
+                    <meta name="OS_ButtonNameCode">os.navigation.NextStep</meta>
+                    <meta name="OS_ButtonClass">icon-mover</meta>
+                    <results>
+                        <unconditional-result old-status="Finished"  status="Underway" step="40">
+                        </unconditional-result>
+                    </results>
+                </action>
+            </actions>
+        </step>
+		-->
+        <step id="40" name="收货">
+            <meta name="OS_StepShowFlag">1</meta>
+            <meta name="OS_StepShowText">os.navigation.Receive</meta>
+            <meta name="OS_StepShowOrder">3</meta>
+            <meta name="OS_FlowName">400</meta>
+            <meta name="OS_FlowOperateCode">50</meta>
+            <meta name="OS_Rule">{"ThirdPartyFlag":"3","RuleType":"5","RuleOnStep":[100],"RuleOnFlowCode":"promotionDFS","RuleOnAction":[1001],"RuleContext":[],"PreferredFlag":"true"}</meta> 
+            <actions>
+                <action id="401" name="上一步">
+                    <meta name="OS_ButtonNameCode">os.navigation.PreStep</meta>
+                    <meta name="OS_ButtonClass">icon-movel</meta>
+                    <results>
+                        <unconditional-result old-status="Finished"  status="Underway" step="20">
+                        </unconditional-result>
+                    </results>
+                </action>
+                <action id="402" name="保存规则">
+                    <meta name="OS_ButtonNameCode">os.navigation.Save</meta>
+                    <meta name="OS_ButtonClass">icon-save</meta>
+                    <results>
+                        <unconditional-result old-status="Finished"  status="Underway" step="40">
+                            <post-functions>
+                                <function type="spring">
+                                    <arg name="bean.name">promotionSDConfigFN</arg>
+                                    <arg name="method">saveAcceptRule</arg>
+                                </function>
+                            </post-functions>
+                        </unconditional-result>
+                    </results>
+                </action>
+                <action id="403" name="保存所有规则">
+                    <meta name="OS_ButtonNameCode">os.navigation.SaveAll</meta>
+                    <meta name="OS_ButtonClass">icon-save</meta>
+                    <results>
+                        <unconditional-result old-status="Finished"  status="Underway" step="40">
+                            <post-functions>
+                                <function type="spring">
+                                    <arg name="bean.name">promotionSDConfigFN</arg>
+                                    <arg name="method">saveAcceptRule</arg>
+                                </function>
+                            </post-functions>
+                        </unconditional-result>
+                    </results>
+                </action>
+            </actions>
+        </step>
+        <step id="999" name="Flow over">
+        </step>
+	</steps>
+</workflow>

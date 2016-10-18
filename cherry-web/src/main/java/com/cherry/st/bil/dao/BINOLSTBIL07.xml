@@ -1,0 +1,305 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sqlMap PUBLIC "-//iBATIS.com//DTD SQL Map 2.0//EN" "http://ibatis.apache.org/dtd/sql-map-2.dtd">
+<sqlMap namespace="BINOLSTBIL07">
+	<sql id="shiftQuery">
+		<![CDATA[SELECT]]>
+		<isEmpty property="prtVendorId">
+			<isEmpty property="nameTotal">
+				DISTINCT
+			</isEmpty>
+		</isEmpty>
+		<![CDATA[		
+				A.BIN_BrandInfoID,					
+				A.BIN_ProductShiftID as productShiftID,
+				A.BillNo as billNo,
+				A.BillNoIF as billNoIF,
+				A.RelevanceNo as relevanceNo,
+				A.BIN_EmployeeID as employeeID,
+				A.BIN_EmployeeIDAudit as employeeIDAudit,
+				A.VerifiedFlag as verifiedFlag,
+				A.Comments as comments,
+				A.OperateDate as operateDate,
+				B.NodeID AS nodeID,
+				B.BIN_RegionID AS regionID,
+				B.BIN_ProvinceID AS provinceID,
+				B.BIN_CityID AS cityID,
+				B.DepartCode as departCode,
+				F.DepotCode as fromDepotCode,
+				F.DepotNameCN as fromDepot,
+				G.LogicInventoryCode as fromLogicInventoryCode,
+				G.InventoryNameCN as fromLogicInventory,
+				H.LogicInventoryCode as toLogicInventoryCode,
+				H.InventoryNameCN as toLogicInventory
+
+		]]>
+		<dynamic>
+			<isNotEmpty property="language">
+				<isEqual property="language" compareValue="en_US">
+					,B.NameForeign AS departName
+			</isEqual>
+				<isEqual property="language" compareValue="zh_CN">
+					,B.DepartName AS departName		
+			</isEqual>
+			</isNotEmpty>
+			<isEmpty property="language">
+				,B.DepartName AS departName
+		</isEmpty>
+		</dynamic>
+		<isEmpty property="prtVendorId">
+			<isNotEmpty property="nameTotal">
+				,ISNULL(C.Quantity,0) AS
+				totalQuantity
+				,ISNULL(C.Quantity,0) * ISNULL(C.Price,0) AS
+				totalAmount
+				</isNotEmpty>
+			<isEmpty property="nameTotal">
+				,ISNULL(A.TotalQuantity,0) AS totalQuantity
+				,ISNULL(A.TotalAmount,0) AS totalAmount
+				</isEmpty>
+		</isEmpty>
+		<isNotEmpty property="prtVendorId">
+			,ISNULL(C.Quantity,0) AS totalQuantity
+			,ISNULL(C.Quantity,0) * ISNULL(C.Price,0) AS totalAmount
+		</isNotEmpty>
+		<![CDATA[
+			FROM				
+				Inventory.BIN_ProductShift A
+				left join Basis.BIN_Organization B on( A.BIN_OrganizationID = B.BIN_OrganizationID)
+				join Inventory.BIN_ProductShiftDetail C
+				on(A.BIN_ProductShiftID=C.BIN_ProductShiftID)
+				join Basis.BIN_DepotInfo F
+				on(C.FromDepotInfoID=F.BIN_DepotInfoID)
+				join Basis.BIN_LogicInventory G
+				on (C.FromLogicInventoryInfoID=G.BIN_LogicInventoryInfoID)
+				join Basis.BIN_LogicInventory H
+				on (C.ToLogicInventoryInfoID=H.BIN_LogicInventoryInfoID)
+			]]>
+		<isEmpty property="prtVendorId">
+			<isNotEmpty property="nameTotal">
+				JOIN Basis.BIN_ProductVendor D
+				ON(C.BIN_ProductVendorID = D.BIN_ProductVendorID)
+				JOIN Basis.BIN_Product E
+				ON(D.BIN_ProductID = E.BIN_ProductID
+				AND E.NameTotal like '%' + #nameTotal# + '%')
+			</isNotEmpty>
+		</isEmpty>
+		<![CDATA[		
+			WHERE
+				A.ValidFlag = '1'
+				AND A.BIN_OrganizationInfoID = #organizationInfoId#		
+				]]>
+		<![CDATA[AND EXISTS (]]>
+		<include refid="BINOLCMINC99.getDepartList" />
+		<![CDATA[AND A.BIN_OrganizationID = A99.BIN_OrganizationID)]]>
+		<isNotEmpty prepend="AND" property="brandInfoId">
+			A.BIN_BrandInfoID=#brandInfoId#
+		</isNotEmpty>
+		<isNotEmpty prepend="AND" property="startDate">
+			<![CDATA[ A.OperateDate >= #startDate# ]]>
+		</isNotEmpty>
+		<isNotEmpty prepend="AND" property="endDate">
+			<![CDATA[ A.OperateDate <= #endDate# ]]>
+		</isNotEmpty>
+		<isNotEmpty prepend="AND" property="billNo">
+			(A.BillNoIF LIKE '%' + #billNo# + '%')
+		</isNotEmpty>
+		<isNotEmpty prepend="AND" property="verifiedFlag">
+			<![CDATA[A.VerifiedFlag = #verifiedFlag#]]>
+		</isNotEmpty>
+		<isNotEmpty prepend="AND" property="prtVendorId">
+			C.BIN_ProductVendorID = #prtVendorId#
+		</isNotEmpty>
+		<isNotEmpty prepend="AND" property="depotId">
+			(C.FromDepotInfoID = #depotId#)
+		</isNotEmpty>
+	</sql>
+
+	<!-- 取得渠道总数  -->
+	<select id="getShiftCount" parameterClass="java.util.HashMap"
+		resultClass="java.lang.Integer">
+    	<![CDATA[
+			SELECT	COUNT(SORT_T1.productShiftID) AS count FROM (
+		]]>
+		<include refid="BINOLSTBIL07.shiftQuery" />	
+		<![CDATA[	
+			)SORT_T1
+		]]>
+	</select>
+
+	<select id="getShiftList" parameterClass="java.util.HashMap"
+		resultClass="java.util.HashMap">
+		<include refid="BINOLCMINC99.pageheader" />
+		<![CDATA[
+			SELECT	
+				T20.*, 
+				CASE WHEN EXISTS(SELECT 1 FROM Basis.BIN_PrintLog T10 WHERE 
+									T20.BIN_BrandInfoID = T10.BIN_BrandInfoID 
+									AND T20.billNoIF = T10.BillNo) 
+				THEN 1 ELSE 0 END AS printStatus
+			FROM (
+		]]>	
+		<include refid="BINOLSTBIL07.shiftQuery" />	
+		<![CDATA[	
+			)T20
+		]]>	
+		<include refid="BINOLCMINC99.pagefooter" />
+	</select>
+	
+	 <!-- 取得出入库汇总信息【产品作为检索条件】  -->
+    <select id="getSumInfo" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+       	<![CDATA[
+			SELECT
+				ISNULL(SUM(ISNULL(C.Quantity,0)),0) AS sumQuantity,
+				ISNULL(SUM(ISNULL(C.Quantity,0) * ISNULL(C.Price,0)),0) AS sumAmount
+			FROM				
+				Inventory.BIN_ProductShift A
+				left join Basis.BIN_Organization B on( A.BIN_OrganizationID = B.BIN_OrganizationID)
+				join Inventory.BIN_ProductShiftDetail C
+				on(A.BIN_ProductShiftID=C.BIN_ProductShiftID)
+				join Basis.BIN_DepotInfo F
+				on(C.FromDepotInfoID=F.BIN_DepotInfoID)
+				join Basis.BIN_LogicInventory G
+				on (C.FromLogicInventoryInfoID=G.BIN_LogicInventoryInfoID)
+				join Basis.BIN_LogicInventory H
+				on (C.ToLogicInventoryInfoID=H.BIN_LogicInventoryInfoID)
+			]]>
+		<isEmpty property="prtVendorId">
+			<isNotEmpty property="nameTotal">
+				JOIN Basis.BIN_ProductVendor D
+				ON(C.BIN_ProductVendorID = D.BIN_ProductVendorID)
+				JOIN Basis.BIN_Product E
+				ON(D.BIN_ProductID = E.BIN_ProductID
+				AND E.NameTotal like '%' + #nameTotal# + '%')
+			</isNotEmpty>
+		</isEmpty>
+		<![CDATA[		
+			WHERE
+				A.ValidFlag = '1'
+				AND A.BIN_OrganizationInfoID = #organizationInfoId#		
+				]]>
+		<![CDATA[AND EXISTS (]]>
+		<include refid="BINOLCMINC99.getDepartList" />
+		<![CDATA[AND A.BIN_OrganizationID = A99.BIN_OrganizationID)]]>
+		<isNotEmpty prepend="AND" property="brandInfoId">
+			A.BIN_BrandInfoID=#brandInfoId#
+		</isNotEmpty>
+		<isNotEmpty prepend="AND" property="startDate">
+			<![CDATA[ A.OperateDate >= #startDate# ]]>
+		</isNotEmpty>
+		<isNotEmpty prepend="AND" property="endDate">
+			<![CDATA[ A.OperateDate <= #endDate# ]]>
+		</isNotEmpty>
+		<isNotEmpty prepend="AND" property="billNo">
+			(A.BillNoIF LIKE '%' + #billNo# + '%')
+		</isNotEmpty>
+		<isNotEmpty prepend="AND" property="verifiedFlag">
+			<![CDATA[A.VerifiedFlag = #verifiedFlag#]]>
+		</isNotEmpty>
+		<isNotEmpty prepend="AND" property="prtVendorId">
+			C.BIN_ProductVendorID = #prtVendorId#
+		</isNotEmpty>
+		<isNotEmpty prepend="AND" property="depotId">
+			(C.FromDepotInfoID = #depotId#)
+		</isNotEmpty>
+      </select>
+      
+      <!-- 产品移库单excel导出数据SQL文 -->
+      <sql id="prtShiftExportQuery">
+      	<![CDATA[
+      		SELECT
+				T0.billNo,
+				T0.relevanceNo,
+				T0.verifiedFlag,
+				T0.operateDate,
+				T0.departCode,
+				T0.departName,
+				H.EmployeeCode AS employeeCode,
+				I.EmployeeCode AS employeeCodeAudit,
+				T0.fromDepotCode,
+				T0.fromDepot,
+				T0.fromLogicInventoryCode,
+				T0.fromLogicInventory,
+				T0.toLogicInventoryCode,
+				T0.toLogicInventory,
+				A.Comments AS comments,
+				ISNULL(A.Quantity, 0) AS detailQuantity,
+				CONVERT(decimal(16, 2), ISNULL(A.Price, 0)) AS detailPrice,
+				CONVERT(decimal(16, 2), (ISNULL(A.Price, 0) * ISNULL(A.Quantity, 0))) AS detailAmount,
+				B.BarCode AS barCode,
+				C.UnitCode AS unitCode
+      	]]>
+      	<dynamic>
+        <isNotEmpty property="language">
+            <isEqual property="language" compareValue="en_US">
+            	,C.NameForeign AS productName
+				,G.DepartName AS area
+				,D.RegionNameForeign AS region
+				,E.RegionNameForeign AS province
+				,F.RegionNameForeign AS city
+				,H.EmployeeNameForeign AS employeeName
+				,I.EmployeeNameForeign AS employeeNameAudit
+            </isEqual>
+            <isEqual property="language" compareValue="zh_CN">
+            	,C.NameTotal AS productName
+				,G.DepartName AS area
+				,D.RegionNameChinese AS region
+				,E.RegionNameChinese AS province
+				,F.RegionNameChinese AS city
+				,H.EmployeeName AS employeeName
+				,I.EmployeeName AS employeeNameAudit
+            </isEqual>
+        </isNotEmpty>
+        <isEmpty property="language">
+            ,C.NameTotal AS productName
+			,G.DepartName AS area
+			,D.RegionNameChinese AS region
+			,E.RegionNameChinese AS province
+			,F.RegionNameChinese AS city
+			,H.EmployeeName AS employeeName
+			,I.EmployeeName AS employeeNameAudit    
+	    </isEmpty>
+        </dynamic>
+		<![CDATA[FROM(]]>
+		<include refid="BINOLSTBIL07.shiftQuery" />	
+		<![CDATA[	
+			)T0
+			JOIN Inventory.BIN_ProductShiftDetail A
+				ON(T0.productShiftID = A.BIN_ProductShiftID)
+			LEFT JOIN Basis.BIN_ProductVendor B WITH (NOLOCK)
+				ON (A.BIN_ProductVendorID = B.BIN_ProductVendorID)
+			LEFT JOIN Basis.BIN_Product C WITH (NOLOCK)
+				ON (B.BIN_ProductID = C.BIN_ProductID)
+			LEFT JOIN Basis.BIN_Region D WITH (NOLOCK)
+				ON (T0.regionID = D.BIN_RegionID)
+			LEFT JOIN Basis.BIN_Region E WITH (NOLOCK)
+				ON (T0.provinceID = E.BIN_RegionID)
+			LEFT JOIN Basis.BIN_Region F WITH (NOLOCK)
+				ON (T0.cityID = F.BIN_RegionID)
+			LEFT JOIN Basis.BIN_Organization G WITH (NOLOCK)
+				ON (T0.nodeID.IsDescendantOf(G.NodeID) = 1 AND G.Type = '5')
+			LEFT JOIN Basis.BIN_Employee H WITH(NOLOCK)
+				ON(T0.employeeID = H.BIN_EmployeeID)
+			LEFT JOIN Basis.BIN_Employee I WITH (NOLOCK)
+				ON (T0.employeeIDAudit = I.BIN_EmployeeID)
+		]]>	
+      </sql>
+      
+    <!-- 分页查询导出的移库单明细 -->
+	<select id="getPrtShiftExportList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+		<include refid="BINOLCMINC99.pageheader" />
+	  	<include refid="BINOLSTBIL07.prtShiftExportQuery" />
+	  	<include refid="BINOLCMINC99.pagefooter" />
+	</select>
+ 
+	<!--  取得移库单明细总数  -->
+	<select id="getExportDetailCount" parameterClass="java.util.HashMap" resultClass="java.lang.Integer">
+		<![CDATA[
+			SELECT 
+				COUNT(1) AS count FROM (
+		]]>
+		<include refid="BINOLSTBIL07.prtShiftExportQuery" />
+		<![CDATA[
+			)SORT_T1
+		]]>
+	</select>
+</sqlMap>

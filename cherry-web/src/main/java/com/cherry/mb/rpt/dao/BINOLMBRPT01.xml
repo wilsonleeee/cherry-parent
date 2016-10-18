@@ -1,0 +1,379 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sqlMap PUBLIC "-//iBATIS.com//DTD SQL Map 2.0//EN" "http://ibatis.apache.org/dtd/sql-map-2.dtd">
+<sqlMap namespace="BINOLMBRPT01">
+
+	<!-- 按柜台统计总销售金额、数量、单数，会员销售金额、数量、单数 ，非会员销售金额、数量、单数   -->
+    <select id="getMemSaleCount" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+    	<![CDATA[
+			SELECT
+				A.BIN_OrganizationID AS organizationId,
+				ISNULL(SUM(CASE WHEN A.SaleType = 'SR' THEN -A.Amount ELSE A.Amount END), 0) AS totalAmount,
+				ISNULL(SUM(CASE WHEN A.SaleType = 'SR' THEN -A.Quantity ELSE A.Quantity END), 0) AS totalQuantity,
+				COUNT(1) AS totalSaleCount,
+				
+				ISNULL(SUM(CASE WHEN A.BIN_MemberInfoID IS NULL THEN (CASE WHEN A.SaleType = 'SR' THEN -A.Amount ELSE A.Amount END) END), 0) AS nonMemAmount,
+				ISNULL(SUM(CASE WHEN A.BIN_MemberInfoID IS NULL THEN (CASE WHEN A.SaleType = 'SR' THEN -A.Quantity ELSE A.Quantity END) END), 0) AS nonMemQuantity,
+				ISNULL(SUM(CASE WHEN A.BIN_MemberInfoID IS NULL THEN 1 END), 0) AS nonMemSaleCount,
+				
+				ISNULL(SUM(CASE WHEN A.BIN_MemberInfoID IS NOT NULL THEN (CASE WHEN A.SaleType = 'SR' THEN -A.Amount ELSE A.Amount END) END), 0) AS memAmount,
+				ISNULL(SUM(CASE WHEN A.BIN_MemberInfoID IS NOT NULL THEN (CASE WHEN A.SaleType = 'SR' THEN -A.Quantity ELSE A.Quantity END) END), 0) AS memQuantity,
+				ISNULL(SUM(CASE WHEN A.BIN_MemberInfoID IS NOT NULL THEN 1 END), 0) AS memSaleCount
+			FROM
+				Sale.BIN_SaleRecord A WITH(NOLOCK)
+		]]>		
+			<isNotEmpty property="privilegeFlag">
+			<isEqual property="privilegeFlag" compareValue="1">			
+		<![CDATA[			
+				JOIN (]]><include refid="BINOLCMINC99.departPrivilegeSql" /><![CDATA[) A99 
+				ON A.BIN_OrganizationID=A99.BIN_OrganizationID
+		]]>
+			</isEqual>
+			</isNotEmpty>	
+			<isNotEmpty property="channelId">
+				LEFT JOIN Basis.BIN_CounterInfo B WITH(NOLOCK) ON A.BIN_OrganizationID = B.BIN_OrganizationID	
+			</isNotEmpty>
+		<![CDATA[	
+			WHERE
+				A.SaleDate >= #saleDateStart# AND
+				A.SaleDate <= #saleDateEnd# AND
+				A.BIN_OrganizationInfoID = #organizationInfoId# AND
+				A.BIN_BrandInfoID = #brandInfoId# AND
+				A.ValidFlag = '1'
+		]]>		
+			<isNotEmpty property="channelId" prepend="AND">
+				B.BIN_ChannelID = #channelId#
+				<isNotEmpty property="organizationId" prepend="AND">
+					B.BIN_OrganizationID = #organizationId#
+				</isNotEmpty>
+			</isNotEmpty>
+		<![CDATA[			
+			GROUP BY
+				A.BIN_OrganizationID
+		]]>							
+    </select>
+    
+    <!-- 按柜台统计新会员销售金额、数量、单数  -->
+    <select id="getNewMemSaleCount" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+    	<![CDATA[
+			SELECT
+				A.BIN_OrganizationID AS organizationId,
+				ISNULL(SUM(CASE WHEN A.SaleType = 'SR' THEN -A.Amount ELSE A.Amount END), 0) AS newMemAmount,
+				ISNULL(SUM(CASE WHEN A.SaleType = 'SR' THEN -A.Quantity ELSE A.Quantity END), 0) AS newMemQuantity,
+				COUNT(1) AS newMemSaleCount
+			FROM
+				Sale.BIN_SaleRecord A WITH(NOLOCK)
+		]]>		
+			<isNotEmpty property="privilegeFlag">
+			<isEqual property="privilegeFlag" compareValue="1">			
+		<![CDATA[			
+				JOIN (]]><include refid="BINOLCMINC99.departPrivilegeSql" /><![CDATA[) A99 
+				ON A.BIN_OrganizationID=A99.BIN_OrganizationID
+		]]>
+			</isEqual>
+			</isNotEmpty>	
+			<isNotEmpty property="channelId">
+				LEFT JOIN Basis.BIN_CounterInfo B WITH(NOLOCK) ON A.BIN_OrganizationID = B.BIN_OrganizationID	
+			</isNotEmpty>
+		<![CDATA[		
+			WHERE
+				A.SaleDate >= #saleDateStart# AND
+				A.SaleDate <= #saleDateEnd# AND
+				A.BIN_OrganizationInfoID = #organizationInfoId# AND
+				A.BIN_BrandInfoID = #brandInfoId# AND
+				A.ValidFlag = '1' AND
+				EXISTS (
+					SELECT 1 FROM Members.BIN_MemberInfo B WITH(NOLOCK)
+					WHERE B.JoinDate >= #saleDateStart# AND B.MemInfoRegFlg = '0' AND A.BIN_MemberInfoID = B.BIN_MemberInfoID
+				)
+		]]>		
+			<isNotEmpty property="channelId" prepend="AND">
+				B.BIN_ChannelID = #channelId#
+				<isNotEmpty property="organizationId" prepend="AND">
+					B.BIN_OrganizationID = #organizationId#
+				</isNotEmpty>
+			</isNotEmpty>
+		<![CDATA[			
+			GROUP BY
+				A.BIN_OrganizationID
+		]]>							
+    </select>
+    
+    <!-- 按柜台统计会员购买人数  -->
+    <select id="getMemSalePeopleCount" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+    	<![CDATA[
+			SELECT
+				X.BIN_OrganizationID AS organizationId,
+				COUNT(1) AS memSaleNumber,
+				ISNULL(SUM(CASE WHEN Y.JoinDate >= #saleDateStart# THEN 1 END), 0) AS newMemSaleNumber
+			FROM
+				(SELECT DISTINCT
+					A.BIN_OrganizationID,
+					A.BIN_MemberInfoID,
+					A.MemberCode
+				FROM
+					Sale.BIN_SaleRecord A WITH(NOLOCK)
+			]]>		
+				<isNotEmpty property="privilegeFlag">
+				<isEqual property="privilegeFlag" compareValue="1">			
+			<![CDATA[			
+					JOIN (]]><include refid="BINOLCMINC99.departPrivilegeSql" /><![CDATA[) A99 
+					ON A.BIN_OrganizationID=A99.BIN_OrganizationID
+			]]>
+				</isEqual>
+				</isNotEmpty>	
+				<isNotEmpty property="channelId">
+					LEFT JOIN Basis.BIN_CounterInfo B WITH(NOLOCK) ON A.BIN_OrganizationID = B.BIN_OrganizationID	
+				</isNotEmpty>
+			<![CDATA[		
+				WHERE
+					A.SaleDate >= #saleDateStart# AND
+					A.SaleDate <= #saleDateEnd# AND
+					A.BIN_MemberInfoID IS NOT NULL AND
+					A.BIN_OrganizationInfoID = #organizationInfoId# AND
+					A.BIN_BrandInfoID = #brandInfoId# AND
+					A.ValidFlag = '1'
+			]]>		
+				<isNotEmpty property="channelId" prepend="AND">
+					B.BIN_ChannelID = #channelId#
+					<isNotEmpty property="organizationId" prepend="AND">
+						B.BIN_OrganizationID = #organizationId#
+					</isNotEmpty>
+				</isNotEmpty>
+			<![CDATA[) X 
+				LEFT JOIN Members.BIN_MemberInfo Y WITH(NOLOCK)	
+				ON X.BIN_MemberInfoID = Y.BIN_MemberInfoID AND Y.MemInfoRegFlg = '0'
+			GROUP BY
+				X.BIN_OrganizationID
+		]]>							
+    </select>
+    
+    <!-- 按柜台统计非会员购买人数  -->
+    <select id="getNonMemSalePeopleCount" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+    	<![CDATA[
+			SELECT
+				A.BIN_OrganizationID AS organizationId,
+				COUNT(1) AS nonMemSaleNumber
+			FROM
+				Sale.BIN_SaleRecord A WITH(NOLOCK)
+		]]>		
+			<isNotEmpty property="privilegeFlag">
+			<isEqual property="privilegeFlag" compareValue="1">			
+		<![CDATA[			
+				JOIN (]]><include refid="BINOLCMINC99.departPrivilegeSql" /><![CDATA[) A99 
+				ON A.BIN_OrganizationID=A99.BIN_OrganizationID
+		]]>
+			</isEqual>
+			</isNotEmpty>	
+			<isNotEmpty property="channelId">
+				LEFT JOIN Basis.BIN_CounterInfo B WITH(NOLOCK) ON A.BIN_OrganizationID = B.BIN_OrganizationID	
+			</isNotEmpty>	
+		<![CDATA[		
+			WHERE
+				A.SaleDate >= #saleDateStart# AND
+				A.SaleDate <= #saleDateEnd# AND
+				A.BIN_MemberInfoID IS NULL AND
+				A.BIN_OrganizationInfoID = #organizationInfoId# AND
+				A.BIN_BrandInfoID = #brandInfoId# AND
+				A.ValidFlag = '1'	
+		]]>		
+			<isNotEmpty property="channelId" prepend="AND">
+				B.BIN_ChannelID = #channelId#
+				<isNotEmpty property="organizationId" prepend="AND">
+					B.BIN_OrganizationID = #organizationId#
+				</isNotEmpty>
+			</isNotEmpty>
+		<![CDATA[		
+			GROUP BY
+				A.BIN_OrganizationID
+		]]>							
+    </select>
+    
+    <!-- 按柜台统计销售天数  -->
+    <select id="getSaleDaysList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+    	<![CDATA[
+			SELECT
+				X.BIN_OrganizationID AS organizationId,
+				COUNT(1) AS saleDays
+			FROM
+				(SELECT DISTINCT
+					A.BIN_OrganizationID,
+					A.SaleDate
+				FROM
+					Sale.BIN_SaleRecord A WITH(NOLOCK)
+			]]>		
+				<isNotEmpty property="privilegeFlag">
+				<isEqual property="privilegeFlag" compareValue="1">			
+			<![CDATA[			
+					JOIN (]]><include refid="BINOLCMINC99.departPrivilegeSql" /><![CDATA[) A99 
+					ON A.BIN_OrganizationID=A99.BIN_OrganizationID
+			]]>
+				</isEqual>
+				</isNotEmpty>	
+				<isNotEmpty property="channelId">
+					LEFT JOIN Basis.BIN_CounterInfo B WITH(NOLOCK) ON A.BIN_OrganizationID = B.BIN_OrganizationID	
+				</isNotEmpty>	
+			<![CDATA[		
+				WHERE
+					A.SaleDate >= #saleDateStart# AND
+					A.SaleDate <= #saleDateEnd# AND
+					A.BIN_OrganizationInfoID = #organizationInfoId# AND
+					A.BIN_BrandInfoID = #brandInfoId# AND
+					A.ValidFlag = '1'
+			]]>		
+				<isNotEmpty property="channelId" prepend="AND">
+					B.BIN_ChannelID = #channelId#
+					<isNotEmpty property="organizationId" prepend="AND">
+						B.BIN_OrganizationID = #organizationId#
+					</isNotEmpty>
+				</isNotEmpty>
+			<![CDATA[) X
+			GROUP BY
+				X.BIN_OrganizationID
+		]]>									
+    </select>
+    
+    <!-- 按柜台统计会员人数  -->
+    <select id="getMemPeopleCount" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+    	<![CDATA[
+			SELECT
+				A.BIN_OrganizationID AS organizationId,
+				COUNT(1) AS memNumber,
+				ISNULL(SUM(CASE WHEN A.JoinDate >= #saleDateStart# THEN 1 END), 0) AS newMemNumber
+			FROM
+				Members.BIN_MemberInfo A WITH(NOLOCK)
+				JOIN Members.BIN_MemCardInfo B WITH(NOLOCK) ON A.BIN_MemberInfoID = B.BIN_MemberInfoID AND B.CardValidFlag = '1'
+		]]>		
+			<isNotEmpty property="privilegeFlag">
+			<isEqual property="privilegeFlag" compareValue="1">			
+		<![CDATA[			
+				JOIN (]]><include refid="BINOLCMINC99.departPrivilegeSql" /><![CDATA[) A99 
+				ON A.BIN_OrganizationID=A99.BIN_OrganizationID
+		]]>
+			</isEqual>
+			</isNotEmpty>	
+			<isNotEmpty property="channelId">
+				LEFT JOIN Basis.BIN_CounterInfo C WITH(NOLOCK) ON A.BIN_OrganizationID = C.BIN_OrganizationID	
+			</isNotEmpty>
+		<![CDATA[		
+			WHERE
+				A.JoinDate <= #saleDateEnd# AND
+				A.BIN_OrganizationInfoID = #organizationInfoId# AND
+				A.BIN_BrandInfoID = #brandInfoId# AND
+				A.BIN_OrganizationID IS NOT NULL AND
+				A.MemInfoRegFlg = '0' AND
+				A.ValidFlag = '1'
+		]]>		
+			<isNotEmpty property="channelId" prepend="AND">
+				C.BIN_ChannelID = #channelId#
+				<isNotEmpty property="organizationId" prepend="AND">
+					C.BIN_OrganizationID = #organizationId#
+				</isNotEmpty>
+			</isNotEmpty>
+		<![CDATA[		
+			GROUP BY
+				A.BIN_OrganizationID
+		]]>							
+    </select>
+    
+    <!-- 查询柜台信息List -->
+    <select id="getCounterList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+    	<![CDATA[
+			SELECT 
+				A.BIN_OrganizationID AS organizationId,
+				A.CounterCode AS counterCode,
+				A.CounterNameIF AS counterName,
+				C.ChannelName AS channelName,
+				D.RegionNameChinese AS provinceName,
+				E.RegionNameChinese AS cityName,
+				G.EmployeeName AS employeeName
+			FROM
+				Basis.BIN_CounterInfo A WITH(NOLOCK)
+				JOIN Basis.BIN_Organization B WITH(NOLOCK) ON A.BIN_OrganizationID = B.BIN_OrganizationID
+		]]>		
+			<isNotEmpty property="privilegeFlag">
+			<isEqual property="privilegeFlag" compareValue="1">			
+		<![CDATA[			
+				JOIN (]]><include refid="BINOLCMINC99.departPrivilegeSql" /><![CDATA[) A99 
+				ON B.BIN_OrganizationID=A99.BIN_OrganizationID
+		]]>
+			</isEqual>
+			</isNotEmpty>	
+		<![CDATA[		
+				LEFT JOIN Basis.BIN_Channel C WITH(NOLOCK) ON A.BIN_ChannelID = C.BIN_ChannelID
+				LEFT JOIN Basis.BIN_Region D WITH(NOLOCK) ON B.BIN_ProvinceID = D.BIN_RegionID
+				LEFT JOIN Basis.BIN_Region E WITH(NOLOCK) ON B.BIN_CityID = E.BIN_RegionID
+				LEFT JOIN Privilege.BIN_EmployeeDepart F WITH(NOLOCK) ON A.BIN_OrganizationID = F.BIN_OrganizationID AND F.ManageType = '1'
+				LEFT JOIN Basis.BIN_Employee G WITH(NOLOCK) ON F.BIN_EmployeeID = G.BIN_EmployeeID
+			WHERE
+				A.BIN_OrganizationInfoID = #organizationInfoId# AND
+				A.BIN_BrandInfoID = #brandInfoId# AND
+				A.CounterKind = '0' AND
+				A.ValidFlag = '1'
+		]]>		
+			<isNotEmpty property="channelId" prepend="AND">
+				A.BIN_ChannelID = #channelId#
+				<isNotEmpty property="organizationId" prepend="AND">
+					A.BIN_OrganizationID = #organizationId#
+				</isNotEmpty>
+			</isNotEmpty>
+		<![CDATA[				
+			ORDER BY
+				B.Path
+		]]>							
+    </select>
+    
+    <!-- 会员等级统计   -->
+    <select id="getMemLevelCount" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+    	<![CDATA[
+			SELECT 
+				X.LevelName AS levelName,
+				ISNULL(T.memCount, 0) AS memCount,
+				ISNULL(T.amount, 0) AS amount
+			FROM	
+				(SELECT
+					C.MemberLevel AS memberLevel,
+					COUNT(DISTINCT A.BIN_MemberInfoID) AS memCount,
+					SUM(CASE WHEN A.SaleType = 'SR' THEN -A.Amount ELSE A.Amount END) AS amount
+				FROM
+					Sale.BIN_SaleRecord A WITH(NOLOCK)
+			]]>		
+				<isNotEmpty property="privilegeFlag">
+				<isEqual property="privilegeFlag" compareValue="1">			
+			<![CDATA[			
+					JOIN (]]><include refid="BINOLCMINC99.departPrivilegeSql" /><![CDATA[) A99 
+					ON A.BIN_OrganizationID=A99.BIN_OrganizationID
+			]]>
+				</isEqual>
+				</isNotEmpty>	
+				<isNotEmpty property="channelId">
+					LEFT JOIN Basis.BIN_CounterInfo B WITH(NOLOCK) ON A.BIN_OrganizationID = B.BIN_OrganizationID	
+				</isNotEmpty>
+			<![CDATA[			
+					LEFT JOIN Members.BIN_MemberInfo C WITH(NOLOCK) ON A.BIN_MemberInfoID = C.BIN_MemberInfoID
+				WHERE
+					A.BIN_OrganizationInfoID = #organizationInfoId# AND
+					A.BIN_BrandInfoID = #brandInfoId# AND
+					A.ValidFlag = '1'
+			]]>	
+				<isNotEmpty property="saleDateStart" prepend="AND">
+					A.SaleDate >= #saleDateStart#
+				</isNotEmpty>
+				<isNotEmpty property="saleDateEnd" prepend="AND">
+					<![CDATA[A.SaleDate <= #saleDateEnd#]]>
+				</isNotEmpty>
+				<isNotEmpty property="channelId" prepend="AND">
+					B.BIN_ChannelID = #channelId#
+					<isNotEmpty property="organizationId" prepend="AND">
+						B.BIN_OrganizationID = #organizationId#
+					</isNotEmpty>
+				</isNotEmpty>
+			<![CDATA[			
+				GROUP BY
+					C.MemberLevel) T
+				LEFT JOIN Members.BIN_MemberLevel X ON T.memberLevel = X.BIN_MemberLevelID
+			ORDER BY
+				T.memberLevel desc
+		]]>							
+    </select>
+    	
+</sqlMap>

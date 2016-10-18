@@ -1,0 +1,565 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sqlMap PUBLIC "-//iBATIS.com//DTD SQL Map 2.0//EN" "http://ibatis.apache.org/dtd/sql-map-2.dtd">
+<sqlMap namespace="BINOLMBRPT07">
+
+	<!-- 查询柜台预约统计信息 -->
+    <sql id="CountByCounter">
+    	<![CDATA[
+			SELECT 
+				C.RegionNameChinese AS cityName,
+				A.CounterCode AS counterCode,
+				A.CounterNameIF AS counterName,
+				ISNULL(T.saleAmount, 0) AS saleAmount,
+				ISNULL(T.saleCount, 0) AS saleCount,
+				ISNULL(T1.ordercount, 0) AS orderCount
+			FROM
+				Basis.BIN_CounterInfo A WITH(NOLOCK)
+				JOIN Basis.BIN_Organization B WITH(NOLOCK) on A.BIN_OrganizationID=B.BIN_OrganizationID
+				LEFT JOIN Basis.BIN_Region C WITH(NOLOCK) on B.BIN_CityID = C.BIN_RegionID
+				LEFT JOIN (
+					SELECT 
+						c.BIN_OrganizationID,
+						SUM(CASE WHEN c.SaleType = 'SR' THEN -c.Amount ELSE c.Amount END) as saleAmount,
+						COUNT(distinct CASE WHEN c.SaleType != 'SR' AND c.Amount > 0 THEN c.BIN_MemberInfoID END) as saleCount
+					FROM
+						Sale.BIN_SaleRecord c WITH(NOLOCK)
+					WHERE
+					]]>
+					<isNotEmpty property="saleDateStart">
+						c.SaleDate >= #saleDateStart# and
+					</isNotEmpty>
+					<isNotEmpty property="saleDateEnd">
+						<![CDATA[c.SaleDate <= #saleDateEnd# and]]>
+					</isNotEmpty>
+					<![CDATA[
+						c.BIN_OrganizationInfoID = #organizationInfoId# and
+						c.BIN_BrandInfoID = #brandInfoId# and
+						exists (
+							select 1 
+							from 
+								Campaign.BIN_CampaignOrder a WITH(NOLOCK)
+								join Members.BIN_MemberInfo b WITH(NOLOCK) on a.Mobile = b.MobilePhone
+							where 
+								a.BIN_OrganizationInfoID = #organizationInfoId# and
+								a.BIN_BrandInfoID = #brandInfoId# and
+								a.CampaignCode = #campaignCode#	and	
+								c.BIN_MemberInfoID = b.BIN_MemberInfoID and
+								c.SaleTime >= a.CampaignOrderTime
+						)
+					GROUP BY
+						c.BIN_OrganizationID
+				) T ON A.BIN_OrganizationID = T.BIN_OrganizationID
+				
+				LEFT JOIN (
+					SELECT
+						a.CounterGot,
+						count(1) as orderCount
+					FROM
+						Campaign.BIN_CampaignOrder a WITH(NOLOCK)
+					WHERE
+						a.BIN_OrganizationInfoID = #organizationInfoId# and
+						a.BIN_BrandInfoID = #brandInfoId# and
+						a.CampaignCode = #campaignCode# and
+					]]>
+					<isNotEmpty property="orderTimeStart">
+						a.CampaignOrderTime >= #orderTimeStart# and
+					</isNotEmpty>
+					<isNotEmpty property="orderTimeEnd">
+						<![CDATA[a.CampaignOrderTime <= #orderTimeEnd# and]]>
+					</isNotEmpty>
+					<![CDATA[	
+						a.State <> 'CA'
+					GROUP BY
+						a.CounterGot
+				) T1 ON A.CounterCode = T1.CounterGot
+			WHERE
+				A.BIN_OrganizationInfoID = #organizationInfoId# AND
+				A.BIN_BrandInfoID = #brandInfoId# AND
+				(ISNULL(T.saleAmount, 0) <> 0 OR
+				ISNULL(T.saleCount, 0) <> 0 OR
+				ISNULL(T1.ordercount, 0) <> 0)
+		]]>
+    </sql>
+    
+    <!-- 取得柜台预约统计信息件数  -->
+    <select id="getCountByCounterCount" parameterClass="java.util.HashMap" resultClass="java.lang.Integer">
+    	<![CDATA[
+			SELECT COUNT(1) AS count
+			FROM (]]><include refid="BINOLMBRPT07.CountByCounter" /><![CDATA[) T
+		]]>										
+    </select>
+    
+    <!-- 取得柜台预约统计信息List  -->
+    <select id="getCountByCounterList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+       	<include refid="BINOLCMINC99.pageheader" />
+		<include refid="BINOLMBRPT07.CountByCounter" />
+		<include refid="BINOLCMINC99.pagefooter" />
+    </select>
+    
+    <!-- 取得活动List  -->
+    <select id="getCampaignList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+    	<![CDATA[
+			SELECT 
+				A.CampaignCode AS campaignCode,
+				A.CampaignName AS campaignName
+			FROM
+				Campaign.BIN_Campaign A WITH(NOLOCK)
+			WHERE
+				A.BIN_OrganizationInfoID = #organizationInfoId# AND
+				A.BIN_BrandInfoID = #brandInfoId# AND
+				A.CampaignTypeFlag = '1' AND
+				A.State IN ('1','2') AND
+				A.ValidFlag = '1'
+		]]>				
+    </select>
+    
+    <!-- 查询活动信息 -->
+    <sql id="QueryCampaignInfo">
+    	<![CDATA[
+    		SELECT
+				CONVERT(varchar(30),A.CampaignOrderTime,120) AS campaignOrderTime,
+				CASE WHEN T.saleTime IS NOT NULL THEN CONVERT(varchar(30),T.saleTime,120) ELSE CONVERT(varchar(30),A.FinishTime,120) END AS finishTime,
+				A.name AS nikeName,
+				B.BIN_MemberInfoID AS memberInfoId,
+				B.Name AS memName,
+				C.MemCode AS memCode,
+				A.Mobile AS mobile,
+				CASE WHEN A.State='OK' THEN 1 ELSE 0 END AS state,
+				CASE WHEN B.BIN_MemberInfoID IS NOT NULL THEN 
+				(CASE WHEN B.JoinDate = T.saleDate THEN 1 ELSE 2 END) ELSE 0 END AS memFlag,
+				E.RegionNameChinese AS cityName,
+				A.CounterGot AS counterCode,
+				D.NameForeign AS nameForeign,
+				D.DepartName AS counterName,
+				T.saleAmount AS saleAmount,
+				CASE WHEN T.saleCount > 0 AND Y.saleCount > 1 THEN 1 ELSE 0 END AS backFlag
+			FROM
+				Campaign.BIN_CampaignOrder A WITH(NOLOCK)
+				JOIN (
+					SELECT
+						M.BIN_CampaignOrderID,
+						MAX(M.saleAmount) as saleAmount,
+						MAX(M.saleCount) as saleCount,
+						MAX(M.saleTime) as saleTime,
+						MAX(M.saleDate) as saleDate
+					FROM
+						(SELECT
+							X.BIN_CampaignOrderID,
+							Y.saleAmount,
+							Y.saleCount,
+							Y.saleTime,
+							Y.saleDate
+						FROM
+							Campaign.BIN_CampaignOrder X WITH(NOLOCK)
+							JOIN Members.BIN_MemberInfo Z WITH(NOLOCK) ON X.Mobile=Z.MobilePhone
+							JOIN
+							(SELECT 
+								c.BIN_MemberInfoID,
+								SUM(CASE WHEN c.SaleType = 'SR' THEN -c.Amount ELSE c.Amount END) as saleAmount,
+								SUM(CASE WHEN c.SaleType != 'SR' AND c.Amount > 0 THEN 1 ELSE 0 END) as saleCount,
+								MAX(CASE WHEN c.SaleType != 'SR' AND c.Amount > 0 THEN c.SaleTime END) as saleTime,
+								MIN(CASE WHEN c.SaleType != 'SR' AND c.Amount > 0 THEN c.SaleDate END) as saleDate
+							FROM
+								Sale.BIN_SaleRecord c WITH(NOLOCK)
+							WHERE
+							]]>
+							<isNotEmpty property="saleDateStart">
+								c.SaleDate >= #saleDateStart# and
+							</isNotEmpty>
+							<isNotEmpty property="saleDateEnd">
+								<![CDATA[c.SaleDate <= #saleDateEnd# and]]>
+							</isNotEmpty>
+							<![CDATA[
+								c.BIN_OrganizationInfoID = #organizationInfoId# and
+								c.BIN_BrandInfoID = #brandInfoId# and
+								exists (
+									select 1 
+									from 
+										Campaign.BIN_CampaignOrder a WITH(NOLOCK)
+										join Members.BIN_MemberInfo b WITH(NOLOCK) on a.Mobile = b.MobilePhone
+									where 
+										a.BIN_OrganizationInfoID = #organizationInfoId# and
+										a.BIN_BrandInfoID = #brandInfoId# and
+										a.CampaignCode = #campaignCode#	and		
+										c.BIN_MemberInfoID = b.BIN_MemberInfoID and
+										c.SaleTime >= a.CampaignOrderTime
+								)
+							GROUP BY
+								c.BIN_MemberInfoID) Y ON Z.BIN_MemberInfoID = Y.BIN_MemberInfoID
+						WHERE
+							X.BIN_OrganizationInfoID = #organizationInfoId# AND
+							X.BIN_BrandInfoID = #brandInfoId# AND
+							X.CampaignCode = #campaignCode#
+							
+						UNION
+						
+						SELECT
+							A.BIN_CampaignOrderID,
+							0 AS saleAmount,
+							0 AS saleCount,
+							NULL AS saleTime,
+							NULL AS saleDate
+						FROM
+							Campaign.BIN_CampaignOrder A WITH(NOLOCK)
+						WHERE
+							A.BIN_OrganizationInfoID = #organizationInfoId# AND
+							A.BIN_BrandInfoID = #brandInfoId# AND
+							A.CampaignCode = #campaignCode# AND
+							A.State = 'OK'
+						]]>
+						<isNotEmpty property="finishTimeStart" prepend="AND">
+							A.FinishTime >= #finishTimeStart#  
+						</isNotEmpty>
+						<isNotEmpty property="finishTimeEnd" prepend="AND">
+							<![CDATA[A.FinishTime <= #finishTimeEnd#]]>
+						</isNotEmpty>
+						<![CDATA[) M
+					GROUP BY
+						M.BIN_CampaignOrderID		
+				) T ON A.BIN_CampaignOrderID = T.BIN_CampaignOrderID
+				
+				LEFT JOIN Members.BIN_MemberInfo B WITH(NOLOCK) ON A.Mobile = B.MobilePhone
+				LEFT JOIN Members.BIN_MemCardInfo C WITH(NOLOCK) ON B.BIN_MemberInfoID = C.BIN_MemberInfoID AND C.CardValidFlag='1'
+				LEFT JOIN Basis.BIN_Organization D WITH(NOLOCK) ON A.CounterGot = D.DepartCode
+				LEFT JOIN Basis.BIN_Region E WITH(NOLOCK) ON D.BIN_CityID = E.BIN_RegionID
+				
+				LEFT JOIN (
+				SELECT
+					P.BIN_MemberInfoID,
+					SUM(CASE WHEN P.saleAmount > 0 THEN 1 ELSE 0 END) as saleCount
+				FROM
+					(SELECT 
+						c.BIN_MemberInfoID,
+						c.SaleDate,
+						SUM(CASE WHEN c.SaleType = 'SR' THEN -c.Amount ELSE c.Amount END) as saleAmount
+					FROM
+						Sale.BIN_SaleRecord c WITH(NOLOCK)
+					WHERE
+					]]>
+					<isNotEmpty property="saleDateEnd">
+						<![CDATA[c.SaleDate <= #saleDateEnd# and]]>
+					</isNotEmpty>
+					<![CDATA[
+						c.BIN_OrganizationInfoID = #organizationInfoId# and
+						c.BIN_BrandInfoID = #brandInfoId# and
+						exists (
+							select 1 
+							from 
+								Campaign.BIN_CampaignOrder a WITH(NOLOCK)
+								join Members.BIN_MemberInfo b WITH(NOLOCK) on a.Mobile = b.MobilePhone
+							where 
+								a.BIN_OrganizationInfoID = #organizationInfoId# and
+								a.BIN_BrandInfoID = #brandInfoId# and
+								a.CampaignCode = #campaignCode#	and		
+								c.BIN_MemberInfoID = b.BIN_MemberInfoID and
+								c.SaleTime >= a.CampaignOrderTime
+						)
+					GROUP BY
+						c.BIN_MemberInfoID,
+						c.SaleDate) P
+				GROUP BY
+					P.BIN_MemberInfoID) Y ON B.BIN_MemberInfoID = Y.BIN_MemberInfoID
+			WHERE
+				A.BIN_OrganizationInfoID = #organizationInfoId# AND
+				A.BIN_BrandInfoID = #brandInfoId# AND
+				A.CampaignCode = #campaignCode#
+		]]>
+    </sql>
+    
+    <!-- 取得活动信息件数  -->
+    <select id="getCampaignInfoCount" parameterClass="java.util.HashMap" resultClass="java.lang.Integer">
+    	<![CDATA[
+			SELECT COUNT(1) AS count
+			FROM (]]><include refid="BINOLMBRPT07.QueryCampaignInfo" /><![CDATA[) T
+		]]>										
+    </select>
+    
+    <!-- 取得活动信息List  -->
+    <select id="getCampaignInfoList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+       	<include refid="BINOLCMINC99.pageheader" />
+		<include refid="BINOLMBRPT07.QueryCampaignInfo" />
+		<include refid="BINOLCMINC99.pagefooter" />
+    </select>
+    
+    <!-- 取得活动预约数  -->
+    <select id="getOrderCount" parameterClass="java.util.HashMap" resultClass="java.lang.Integer">
+    	<![CDATA[
+			SELECT
+				COUNT(1) AS orderCount
+			FROM
+				Campaign.BIN_CampaignOrder A WITH(NOLOCK)
+			WHERE
+				A.BIN_OrganizationInfoID = #organizationInfoId# AND
+				A.BIN_BrandInfoID = #brandInfoId# AND
+				A.CampaignCode = #campaignCode# AND
+				A.State <> 'CA'
+		]]>	
+			<isNotEmpty property="orderTimeStart" prepend="AND">
+				A.CampaignOrderTime >= #orderTimeStart#
+			</isNotEmpty>
+			<isNotEmpty property="orderTimeEnd" prepend="AND">
+				<![CDATA[A.CampaignOrderTime <= #orderTimeEnd#]]>
+			</isNotEmpty>							
+    </select>
+    
+    <!-- 取得活动预约到柜数  -->
+    <select id="getBookCount" parameterClass="java.util.HashMap" resultClass="java.lang.Integer">
+    	<![CDATA[
+			SELECT
+				COUNT(1) AS bookCount
+			FROM
+				Campaign.BIN_CampaignOrder A WITH(NOLOCK)
+			WHERE
+				A.BIN_OrganizationInfoID = #organizationInfoId# AND
+				A.BIN_BrandInfoID = #brandInfoId# AND
+				A.CampaignCode = #campaignCode#
+		]]>	
+			<isNotEmpty property="bookDateStart" prepend="AND">
+				A.BookDate >= #bookDateStart#
+			</isNotEmpty>
+			<isNotEmpty property="bookDateEnd" prepend="AND">
+				<![CDATA[A.BookDate <= #bookDateEnd#]]>
+			</isNotEmpty>												
+    </select>
+    
+    <!-- 取得活动购买人数和金额  -->
+    <select id="getSaleCount" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+    	<![CDATA[
+			SELECT
+				SUM(T.saleAmount) AS saleAmount,
+				COUNT(1) AS memCount,
+				SUM(CASE WHEN X.JoinDate = T.saleDate THEN 1 END) AS newMemCount,
+				SUM(CASE WHEN Y.saleCount > 1 THEN Y.saleAmount-Y.amount END) AS backSaleAmount,
+				SUM(CASE WHEN Y.saleCount > 1 THEN Y.saleCount-1 END) AS backSaleCount,
+				SUM(CASE WHEN Y.saleCount > 1 THEN 1 END) AS backMemCount
+			FROM
+				(SELECT 
+					c.BIN_MemberInfoID,
+					SUM(CASE WHEN c.SaleType = 'SR' THEN -c.Amount ELSE c.Amount END) as saleAmount,
+					SUM(CASE WHEN c.SaleType != 'SR' AND c.Amount > 0 THEN 1 ELSE 0 END) as saleCount,
+					MIN(CASE WHEN c.SaleType != 'SR' AND c.Amount > 0 THEN c.SaleDate END) as saleDate
+				FROM
+					Sale.BIN_SaleRecord c WITH(NOLOCK)
+				WHERE
+				]]>
+				<isNotEmpty property="saleDateStart">
+					c.SaleDate >= #saleDateStart# and
+				</isNotEmpty>
+				<isNotEmpty property="saleDateEnd">
+					<![CDATA[c.SaleDate <= #saleDateEnd# and]]>
+				</isNotEmpty>
+				<![CDATA[
+					c.BIN_OrganizationInfoID = #organizationInfoId# and
+					c.BIN_BrandInfoID = #brandInfoId# and
+					exists (
+						select 1 
+						from 
+							Campaign.BIN_CampaignOrder a WITH(NOLOCK)
+							join Members.BIN_MemberInfo b WITH(NOLOCK) on a.Mobile = b.MobilePhone
+						where 
+							a.BIN_OrganizationInfoID = #organizationInfoId# and
+							a.BIN_BrandInfoID = #brandInfoId# and
+							a.CampaignCode = #campaignCode#	and		
+							c.BIN_MemberInfoID = b.BIN_MemberInfoID and
+							c.SaleTime >= a.CampaignOrderTime
+					)
+				GROUP BY
+					c.BIN_MemberInfoID) T
+				LEFT JOIN Members.BIN_MemberInfo X WITH(NOLOCK) on T.BIN_MemberInfoID = X.BIN_MemberInfoID
+					
+				LEFT JOIN 
+				(SELECT
+					N.BIN_MemberInfoID,
+					SUM(CASE WHEN M.SaleType = 'SR' THEN -M.Amount ELSE M.Amount END) AS amount,
+					MAX(N.saleAmount) AS saleAmount,
+					MAX(N.saleCount) AS saleCount
+				FROM
+					Sale.BIN_SaleRecord M WITH(NOLOCK)
+					JOIN (
+					SELECT
+						P.BIN_MemberInfoID,
+						SUM(P.saleAmount) as saleAmount,
+						SUM(CASE WHEN P.saleAmount > 0 THEN 1 ELSE 0 END) as saleCount,
+						MIN(CASE WHEN P.saleAmount > 0 THEN P.SaleDate END) as saleDate
+					FROM	
+						(SELECT 
+							c.BIN_MemberInfoID,
+							c.SaleDate,
+							SUM(CASE WHEN c.SaleType = 'SR' THEN -c.Amount ELSE c.Amount END) as saleAmount
+						FROM
+							Sale.BIN_SaleRecord c WITH(NOLOCK)
+						WHERE
+						]]>
+						<isNotEmpty property="saleDateEnd">
+							<![CDATA[c.SaleDate <= #saleDateEnd# and]]>
+						</isNotEmpty>
+						<![CDATA[	
+							c.BIN_OrganizationInfoID = #organizationInfoId# and
+							c.BIN_BrandInfoID = #brandInfoId# and
+							exists (
+								select 1 
+								from 
+									Campaign.BIN_CampaignOrder a WITH(NOLOCK)
+									join Members.BIN_MemberInfo b WITH(NOLOCK) on a.Mobile = b.MobilePhone
+								where 
+									a.BIN_OrganizationInfoID = #organizationInfoId# and
+									a.BIN_BrandInfoID = #brandInfoId# and
+									a.CampaignCode = #campaignCode#	and		
+									c.BIN_MemberInfoID = b.BIN_MemberInfoID and
+									c.SaleTime >= a.CampaignOrderTime
+							)
+						GROUP BY
+							c.BIN_MemberInfoID,
+							c.SaleDate) P
+					GROUP BY
+						P.BIN_MemberInfoID) N ON M.BIN_MemberInfoID = N.BIN_MemberInfoID AND M.SaleDate = N.saleDate
+				WHERE
+					N.saleCount > 1
+				GROUP BY
+					N.BIN_MemberInfoID) Y ON T.BIN_MemberInfoID = Y.BIN_MemberInfoID
+						
+			WHERE
+				T.saleCount > 0
+		]]>										
+    </select>
+    
+    <!--销售明细记录查询SQL文-->
+    <sql id="querySaleDetail">
+        <![CDATA[
+		SELECT
+			A.BillCodePre AS billCodePre,
+			A.BillCode AS billCode,
+			A.SaleType AS saleType,
+			CONVERT(varchar(30), A.SaleDate, 23) AS saleDate,
+			CONVERT(varchar(30), A.SaleTime, 120) AS saleTime,
+			A.MemberCode AS memCode,
+			D.Name AS memberName,
+			C.DepartCode AS departCode,
+			C.DepartName AS departName,
+			E.EmployeeCode AS employeeCode,
+            E.EmployeeName AS employeeName,
+            B.Quantity AS buyQuantity,
+            CASE WHEN B.SaleType = 'N' THEN B.PricePay * B.Quantity ELSE B.PricePay END AS buyAmount,
+            B.SaleType AS saleTypeDetail,
+            B.UnitCode AS unitCode,
+			B.BarCode AS barCode,
+			CASE WHEN B.SaleType = 'N' THEN Y.NameTotal ELSE Y1.NameTotal END AS productName
+		FROM
+			Sale.BIN_SaleRecord A WITH(NOLOCK)
+			JOIN Sale.BIN_SaleRecordDetail B WITH(NOLOCK) ON A.BIN_SaleRecordID = B.BIN_SaleRecordID
+			LEFT JOIN Basis.BIN_Organization C WITH(NOLOCK) ON A.BIN_OrganizationID = C.BIN_OrganizationID
+			LEFT JOIN Members.BIN_MemberInfo D WITH(NOLOCK) ON A.BIN_MemberInfoID = D.BIN_MemberInfoID
+			LEFT JOIN Basis.BIN_Employee E WITH(NOLOCK) ON A.BIN_EmployeeID = E.BIN_EmployeeID
+			
+			LEFT JOIN Basis.BIN_ProductVendor X WITH(NOLOCK)
+				LEFT JOIN Basis.BIN_Product Y WITH(NOLOCK) ON (X.BIN_ProductID = Y.BIN_ProductID)
+			ON (B.BIN_ProductVendorID = X.BIN_ProductVendorID AND B.SaleType='N')
+			
+			LEFT JOIN Basis.BIN_PromotionProductVendor X1 WITH(NOLOCK)
+				LEFT JOIN Basis.BIN_PromotionProduct Y1 WITH(NOLOCK) ON (X1.BIN_PromotionProductID = Y1.BIN_PromotionProductID)
+			ON (B.BIN_ProductVendorID = X1.BIN_PromotionProductVendorID AND B.SaleType='P')
+			
+			]]>		
+			<isEmpty property="memberInfoId">
+			<![CDATA[	
+			JOIN (
+			SELECT
+				P.BIN_MemberInfoID,
+				SUM(CASE WHEN P.saleAmount > 0 THEN 1 ELSE 0 END) as saleCount
+			FROM
+				(SELECT 
+					c.BIN_MemberInfoID,
+					c.SaleDate,
+					SUM(CASE WHEN c.SaleType = 'SR' THEN -c.Amount ELSE c.Amount END) as saleAmount
+				FROM
+					Sale.BIN_SaleRecord c WITH(NOLOCK)
+				WHERE
+				]]>
+				<isNotEmpty property="endDate">
+					<![CDATA[c.SaleDate <= #endDate# and]]>
+				</isNotEmpty>
+				<![CDATA[
+					c.BIN_OrganizationInfoID = #organizationInfoId# and
+					c.BIN_BrandInfoID = #brandInfoId# and
+					exists (
+						select 1 
+						from 
+							Campaign.BIN_CampaignOrder a WITH(NOLOCK)
+							join Members.BIN_MemberInfo b WITH(NOLOCK) on a.Mobile = b.MobilePhone
+						where 
+							a.BIN_OrganizationInfoID = #organizationInfoId# and
+							a.BIN_BrandInfoID = #brandInfoId# and
+							a.CampaignCode = #campaignCode#	and		
+							c.BIN_MemberInfoID = b.BIN_MemberInfoID and
+							c.SaleTime >= a.CampaignOrderTime
+					)
+				GROUP BY
+					c.BIN_MemberInfoID,
+					c.SaleDate) P
+			GROUP BY
+				P.BIN_MemberInfoID) T ON A.BIN_MemberInfoID = T.BIN_MemberInfoID AND T.saleCount > 1
+			]]>			
+			</isEmpty>	
+			<![CDATA[	
+		WHERE
+        ]]>	
+       	<isNotEmpty property="memberInfoId">
+          	A.BIN_MemberInfoID = #memberInfoId# and
+        </isNotEmpty>
+        <isEmpty property="memberInfoId">
+        	B.PricePay > 0 and
+        </isEmpty>
+        <isNotEmpty property="startDate">
+            <![CDATA[A.SaleDate >= #startDate# and]]>
+        </isNotEmpty>
+        <isNotEmpty property="endDate">
+        	<![CDATA[A.SaleDate <= #endDate# and]]>
+		</isNotEmpty>
+		<![CDATA[
+			A.BIN_OrganizationInfoID = #organizationInfoId# and
+			A.BIN_BrandInfoID = #brandInfoId# and
+			exists (
+				select 1 
+				from 
+					Campaign.BIN_CampaignOrder x WITH(NOLOCK)
+					join Members.BIN_MemberInfo y WITH(NOLOCK) on x.Mobile = y.MobilePhone
+				where 
+					x.BIN_OrganizationInfoID = #organizationInfoId# and
+					x.BIN_BrandInfoID = #brandInfoId# and
+					x.CampaignCode = #campaignCode#	and		
+					A.BIN_MemberInfoID = y.BIN_MemberInfoID and
+					A.SaleTime >= x.CampaignOrderTime
+			)
+		]]>	
+    </sql>
+	
+	<!--获取销售明细记录单数量-->
+	<select id="getSaleDetailCount" parameterClass="java.util.HashMap" resultClass="java.lang.Integer">
+		<![CDATA[
+            SELECT 
+				COUNT(1) AS count 
+			FROM 
+				(]]><include refid="BINOLMBRPT07.querySaleDetail" /><![CDATA[) T
+        ]]>
+	</select>
+	
+	<!--获取销售明细统计信息-->
+	<select id="getSaleDetailCountInfo" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+		<![CDATA[
+            SELECT 
+				COUNT(1) AS count,
+				ISNULL(SUM(CASE WHEN T.saleType = 'SR' THEN -T.buyQuantity ELSE T.buyQuantity END),0) AS sumQuantity,
+				ISNULL(SUM(CASE WHEN T.saleType = 'SR' THEN -T.buyAmount ELSE T.buyAmount END),0) AS sumAmount
+			FROM 
+				(]]><include refid="BINOLMBRPT07.querySaleDetail" /><![CDATA[) T
+		]]>
+	</select>
+	
+	<!--获取销售明细记录list-->
+	<select id="getSaleDetailList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+		<include refid="BINOLCMINC99.pageheader" />
+        <include refid="BINOLMBRPT07.querySaleDetail" />
+        <include refid="BINOLCMINC99.pagefooter" />
+	</select>
+    	
+</sqlMap>

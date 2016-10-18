@@ -1,0 +1,100 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sqlMap PUBLIC "-//iBATIS.com//DTD SQL Map 2.0//EN" "http://ibatis.apache.org/dtd/sql-map-2.dtd">
+<sqlMap namespace="BINOLSSPRM36">
+	<!-- 取得入出库单详细信息  -->
+    <select id="getProStockInOutInfo" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+    	<![CDATA[
+		SELECT			
+			A.TradeNoIF AS tradeNo,
+			A.RelevantNo AS relevantNo,
+			A.TradeNo AS number,
+			A.StockInOutDate AS stockInOutDate,
+			A.Reason AS reason,
+			A.TradeType AS tradeType,
+			A.StockType AS stockType,
+			A.VerifiedFlag AS verifiedFlag,
+			ISNULL(A.TotalQuantity,0) AS totalQuantity,
+			ISNULL(A.TotalAmount,0) AS totalAmount
+		]]>
+		<dynamic>
+			<isNotEmpty property="language">
+				<isEqual property="language" compareValue="en_US">
+					,'('+B.DepartCode+')'+B.NameForeign AS departName
+					,'('+C.EmployeeCode+')'+C.EmployeeNameForeign AS employeeName
+					,'('+E.DepotCode+')'+E.DepotNameEN AS depotName
+					,'('+F.LogicInventoryCode+')'+F.InventoryNameEN AS InventoryName
+				</isEqual>
+				<isEqual property="language" compareValue="zh_CN">	
+					,'('+B.DepartCode+')'+B.DepartName AS departName
+					,'('+C.EmployeeCode+')'+C.EmployeeName AS employeeName
+					,'('+E.DepotCode+')'+E.DepotNameCN AS depotName
+					,'('+F.LogicInventoryCode+')'+F.InventoryNameCN AS InventoryName
+				</isEqual>
+			</isNotEmpty>
+			<isEmpty property="language">
+					,'('+B.DepartCode+')'+B.DepartName AS departName
+					,'('+C.EmployeeCode+')'+C.EmployeeName AS employeeName
+					,'('+E.DepotCode+')'+E.DepotNameCN AS depotName
+					,'('+F.LogicInventoryCode+')'+F.InventoryNameCN AS InventoryName
+			</isEmpty>
+		</dynamic>
+		<![CDATA[						
+			FROM												
+				Inventory.BIN_PromotionStockInOut A	
+				JOIN Inventory.BIN_PromotionStockDetail D
+				ON(A.BIN_PromotionStockInOutID = D.BIN_PromotionStockInOutID)								
+				LEFT JOIN Basis.BIN_Organization B											
+				ON(A.BIN_OrganizationID = B.BIN_OrganizationID)										
+				LEFT JOIN Basis.BIN_Employee C											
+				ON(A.BIN_EmployeeID = C.BIN_EmployeeID)	
+				LEFT JOIN Basis.BIN_DepotInfo E
+				ON (D.BIN_InventoryInfoID = E.BIN_DepotInfoID)
+				LEFT JOIN Basis.BIN_LogicInventory F
+				ON(D.BIN_LogicInventoryInfoID = F.BIN_LogicInventoryInfoID)										
+			WHERE												
+				A.BIN_PromotionStockInOutID = #proStockIOId#
+		]]>									
+    </select>
+	<!-- 取得入出库物品清单LIST  -->
+	<select id="getProStockInOutList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+		<![CDATA[
+		SELECT								
+			B.BarCode AS barCode,
+			C.UnitCode AS unitCode,
+			ISNULL(A.Price,0) AS price,
+			ISNULL(A.Quantity,0) AS quantity,
+			A.StockType AS stockType,
+			A.Reason AS reason,
+		]]>
+		<dynamic>
+			<isNotEmpty property="language">
+				<isEqual property="language" compareValue="en_US">
+					C.NameForeign AS nameTotal,
+					F.PackageNameForeign AS packageName
+				</isEqual>
+				<isEqual property="language" compareValue="zh_CN">	
+					C.NameTotal AS nameTotal,
+					F.PackageName AS packageName
+				</isEqual>								
+			</isNotEmpty>
+			<isEmpty property="language">
+				C.NameTotal AS nameTotal,
+				F.PackageName AS packageName
+			</isEmpty>
+		</dynamic>
+		<![CDATA[						
+			FROM														
+				Inventory.BIN_PromotionStockDetail A
+				JOIN Basis.BIN_PromotionProductVendor B
+				ON(A.BIN_PromotionProductVendorID = B.BIN_PromotionProductVendorID)
+				JOIN Basis.BIN_PromotionProduct C
+				ON(B.BIN_PromotionProductID = C.BIN_PromotionProductID)
+				LEFT JOIN Basis.BIN_ProductVendorPackage D
+				ON(A.BIN_ProductVendorPackageID = D.BIN_ProductVendorPackageID)
+				LEFT JOIN Basis.BIN_PackageType F
+				ON(D.BIN_PackageTypeID = F.BIN_PackageTypeID)
+			WHERE														
+				A.BIN_PromotionStockInOutID = #proStockIOId#
+		]]>								
+    </select>
+</sqlMap>

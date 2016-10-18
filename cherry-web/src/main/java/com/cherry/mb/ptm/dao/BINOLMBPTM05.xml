@@ -1,0 +1,229 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sqlMap PUBLIC "-//iBATIS.com//DTD SQL Map 2.0//EN" "http://ibatis.apache.org/dtd/sql-map-2.dtd">
+<sqlMap namespace="BINOLMBPTM05">
+	  <!-- 取得会员Id-->
+    <select id="getMemberId" parameterClass="java.util.HashMap" resultClass="java.lang.Integer">
+		<![CDATA[
+		  SELECT 
+	 			 A.BIN_MemberInfoID AS  memberId
+		   FROM 
+	  			 Members.BIN_MemberInfo A WITH(NOLOCK) 
+	  			 JOIN Members.BIN_MemCardInfo B WITH(NOLOCK) 
+	  			 ON(A.BIN_MemberInfoID=B.BIN_MemberInfoID  AND B.ValidFlag = '1')
+		  WHERE 
+		 	   	 B.MemCode=#memCode#
+	  			 AND A.BIN_BrandInfoID = #brandInfoId# 
+	 			 AND A.BIN_OrganizationInfoID = #organizationInfoId#
+    	]]>
+    </select>
+   <!--取得积分时间是否相同-->
+    <select id="getCount" parameterClass="java.util.HashMap" resultClass="java.lang.String">
+		<![CDATA[
+		SELECT 
+				count(1)
+		 FROM
+		      Members.BIN_MemUsedDetail A WITH(NOLOCK)
+		      JOIN Members.BIN_MemUsedInfo B WITH(NOLOCK) ON(A.BIN_MemUsedInfoID=B.BIN_MemUsedInfoID)
+		WHERE
+			 A.BIN_MemberInfoID=#memberInfoId# AND
+			 A.BusinessTime=#businessTime# AND
+			 B.TradeType='PT'
+		]]>
+    </select>
+     <!--取得发明Mq消息List-->
+     <select id="getSuccessList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+     	<include refid="BINOLCMINC99.pageheader" />
+    	<![CDATA[
+	    	SELECT  
+	    		  BIN_MemPointImportDetailID,
+      			  MemCode AS memCode,
+      			  Point AS points,
+      			  CONVERT(varchar(30),PointTime,120) AS pointTime
+  			FROM 
+  				  Members.BIN_MemPointImportDetail
+ 		   WHERE    
+ 		         BIN_MemPointImportID=#memPointImportId#
+ 		   		 AND SendFlag ='1'
+    	]]>
+    	<include refid="BINOLCMINC99.pagefooter" />
+    </select>
+     <!--插入【产品发货单据概要表】-->
+	<sql id="insertMemPointImportSQL">
+        <![CDATA[
+            INSERT INTO Members.BIN_MemPointImport(
+                BIN_OrganizationInfoID,
+                BIN_BrandInfoID,
+                PointBillNo,
+                ImportName,
+				PointType,
+      			ImportType,
+      			BusinessTime,
+      			Reason,
+      			BIN_EmployeeID,
+                ValidFlag,
+                CreateTime,
+                CreatedBy,
+                CreatePGM,
+                UpdateTime,
+                UpdatedBy,
+                UpdatePGM,
+                ModifyCount,
+                BIN_MemberClubID
+            )VALUES(
+                #organizationInfoId#,
+                #brandInfoId#,
+                #pointBillNo#,
+                #importName#,
+       			#pointType#,
+      			#importType#,
+      			#businessTime#,
+      			#reason#,
+      			#employeeId#,
+                '1',
+                GETDATE(),
+                #CreatedBy#,
+                #CreatePGM#,
+                GETDATE(),
+                #UpdatedBy#,
+                #UpdatePGM#,
+                '0',
+                #memberClubId#
+            )
+        ]]>
+	</sql>
+    <insert id="insertMemPointImport" parameterClass="java.util.HashMap">
+        <selectKey resultClass="java.lang.Integer" type="post" keyProperty="BIN_MemPointImportID" >
+            <include refid="BINOLMBPTM05.insertMemPointImportSQL" />
+            <![CDATA[SELECT SCOPE_IDENTITY() AS value]]>
+        </selectKey>
+    </insert>
+    <!--插入【产品发货单据明细表】-->
+    <insert id="insertMemPointImportDetail" parameterClass="java.util.HashMap">
+        <![CDATA[
+            INSERT INTO Members.BIN_MemPointImportDetail(
+				BIN_MemPointImportID,
+				BIN_MemberInfoID,
+				MemCode,
+				MemName,
+				MobilePhone,
+				Point,
+				PointTime,
+				ImportResults,
+				ResultFlag,
+				SendFlag,
+                ValidFlag,
+                CreateTime,
+                CreatedBy,
+                CreatePGM,
+                UpdateTime,
+                UpdatedBy,
+                UpdatePGM,
+                ModifyCount
+            )VALUES(
+                #memPointImportId#,
+				#memberInfoId#,
+				#memCode#,
+				#memName#,
+				#mobilePhone#,
+				#point#,
+				#businessTime#,
+				#importResults#,
+				#resultFlag#,
+				#sendFlag#,
+                '1',
+                GETDATE(),
+                #CreatedBy#,
+                #CreatePGM#,
+                GETDATE(),
+                #UpdatedBy#,
+                #UpdatePGM#,
+                '0'
+                )
+        ]]>
+    </insert>
+    <!-- 更新积分导入明细表，相同会员卡号不导入  -->
+	<update id="updateImportDetail" parameterClass="java.util.HashMap">
+	<![CDATA[
+		  UPDATE Members.BIN_MemPointImportDetail
+		     SET ResultFlag = '0',
+		         ImportResults = #importResults#
+		  FROM 
+			  (SELECT 
+			  		BIN_MemberInfoID AS TmemberInfoID
+			  FROM
+			  		Members.BIN_MemPointImportDetail
+			  WHERE
+			  		BIN_MemPointImportID = #memPointImportId#
+			  GROUP BY BIN_MemberInfoID
+			  		HAVING COUNT(1) > 1
+		  ) T
+	  		  WHERE BIN_MemPointImportID = #memPointImportId# 
+		  		    AND BIN_MemberInfoID = T.TmemberInfoID
+	]]>
+	</update> 
+	 <!-- 更新积分导入明细表SendFlag=1 -->
+	<update id="updateSendflag" parameterClass="java.util.HashMap">
+	<![CDATA[
+		  UPDATE Members.BIN_MemPointImportDetail
+		     SET SendFlag = '1'
+	  	   WHERE 
+	  	        BIN_MemPointImportID = #memPointImportId# 
+		  		AND ResultFlag = '2'
+	]]>
+	</update> 
+	<!--取得积分导入明细表是否相同数据-->
+    <select id="getImpCount" parameterClass="java.util.HashMap" resultClass="java.lang.String">
+		<![CDATA[
+		SELECT 
+				COUNT(1)
+		 FROM
+		      Members.BIN_MemPointImportDetail
+		WHERE
+              MemCode=#memCode#
+	          AND PointTime=#businessTime#
+	          AND(ResultFlag = '2' OR ResultFlag = '1')
+		]]>
+    </select>
+     <!-- 更新积分导入明细表,同批次相同会员时间多条不导入  -->
+	<update id="updateImportTimeDetail" parameterClass="java.util.HashMap">
+	<![CDATA[
+			UPDATE Members.BIN_MemPointImportDetail
+			   SET ResultFlag = '0',
+				   ImportResults = #importResults#
+			FROM 
+			 (SELECT
+				   BIN_MemberInfoID AS TmemberID,
+			       PointTime AS TpointTime
+			 FROM
+			       Members.BIN_MemPointImportDetail
+			 WHERE
+			       BIN_MemPointImportID = #memPointImportId# 
+			 GROUP BY 
+		           BIN_MemberInfoID,
+		           PointTime
+			       HAVING COUNT(1) > 1
+			) T
+			   WHERE BIN_MemPointImportID = #memPointImportId# 
+				  AND BIN_MemberInfoID = T.TmemberID
+	]]>
+	</update> 
+	
+	<!--取得会员初始导入时间-->
+    <select id="getInitialTime" parameterClass="java.util.HashMap" resultClass="java.lang.String">
+		<![CDATA[
+		SELECT TOP 1
+      		  CONVERT(varchar(30),InitialTime,120) AS initialTime
+  		FROM 
+  		      Members.BIN_MemberPoint
+  		WHERE
+  		      BIN_MemberInfoID=#memberInfoId#
+  			  AND BIN_BrandInfoID = #brandInfoId# 
+	 		  AND BIN_OrganizationInfoID = #organizationInfoId#
+		]]>
+		<isNotEmpty property="memberClubId">	
+		<![CDATA[
+			AND BIN_MemberClubID = #memberClubId#
+			]]>
+		</isNotEmpty>
+    </select>
+</sqlMap>

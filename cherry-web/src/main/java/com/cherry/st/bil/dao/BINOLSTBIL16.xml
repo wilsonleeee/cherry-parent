@@ -1,0 +1,78 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sqlMap PUBLIC "-//iBATIS.com//DTD SQL Map 2.0//EN" "http://ibatis.apache.org/dtd/sql-map-2.dtd">
+<sqlMap namespace="BINOLSTBIL16">
+    <!--删除【产品盘点申请单据明细表】 -->
+    <update id="deleteProStocktakeRequestDetail" parameterClass="java.util.HashMap">
+        <![CDATA[
+            DELETE FROM
+                Inventory.BIN_ProStocktakeRequestDetail
+            WHERE
+                BIN_ProStocktakeRequestID = #BIN_ProStocktakeRequestID#
+        ]]>
+    </update>
+    
+    
+    <sql id="TakingDetailList">
+        <![CDATA[
+            SELECT
+                A.BookQuantity,
+                A.Price,
+                A.GainQuantity,
+                A.HandleType,
+                (A.BookQuantity + A.GainQuantity) AS RealQuantity,
+                (A.Price * A.GainQuantity) AS DetailAmount,
+                B.BarCode,
+                C.UnitCode,
+                E.BatchNo
+            ]]>
+        <dynamic>
+        <isNotEmpty property="language">
+            <isEqual property="language" compareValue="en_US">
+                ,C.NameForeign AS NameTotal
+                ,D.PackageNameForeign AS PackageName
+            </isEqual>
+            <isEqual property="language" compareValue="zh_CN">
+                ,C.NameTotal
+                ,D.PackageName
+            </isEqual>
+        </isNotEmpty>
+        <isEmpty property="language">
+                ,C.NameTotal
+                ,D.PackageName
+        </isEmpty>
+        </dynamic>
+        <![CDATA[
+            FROM
+                Inventory.BIN_ProStocktakeRequestDetail A
+                LEFT JOIN Basis.BIN_ProductBatch E
+                ON A.BIN_ProductBatchID = E.BIN_ProductBatchID
+                LEFT JOIN Basis.BIN_ProductVendor B
+                ON A.BIN_ProductVendorID = B.BIN_ProductVendorID
+                LEFT JOIN Basis.BIN_Product C
+                ON B.BIN_ProductID = C.BIN_ProductID
+                LEFT JOIN Basis.BIN_PackageType D
+                ON (C.ModuleCode = D.BIN_PackageTypeID)
+            WHERE
+                A.BIN_ProStocktakeRequestID = #BIN_ProStocktakeRequestID# AND
+                A.ValidFlag = '1'
+        ]]>
+    </sql>
+    
+    <!-- 取得盘点明细汇总信息  -->
+    <select id="getSumInfo" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+        <![CDATA[
+            SELECT
+                ISNULL(SUM(ISNULL(SORT_T1.BookQuantity, 0)),0) AS SumQuantity,
+                ISNULL(SUM(ISNULL(SORT_T1.RealQuantity,0)),0) AS SumRealQuantity,
+                ISNULL(SUM(case when ISNULL(SORT_T1.GainQuantity, 0) >= 0 then 0 else ISNULL(SORT_T1.GainQuantity, 0) end),0) AS ShortQuantity,
+                ISNULL(SUM(case when ISNULL(SORT_T1.GainQuantity, 0) >= 0 then 0 else ISNULL(SORT_T1.GainQuantity, 0) * ISNULL(SORT_T1.Price, 0) end),0) AS ShortAmount,
+                ISNULL(SUM(case when ISNULL(SORT_T1.GainQuantity, 0) < 0 then 0 else ISNULL(SORT_T1.GainQuantity, 0) end),0) AS OverQuantity,
+                ISNULL(SUM(case when ISNULL(SORT_T1.GainQuantity, 0) < 0 then 0 else ISNULL(SORT_T1.GainQuantity, 0) * ISNULL(SORT_T1.Price, 0) end),0) AS OverAmount
+            FROM (
+        ]]> 
+        <include refid="BINOLSTBIL16.TakingDetailList" />
+        <![CDATA[
+            )SORT_T1
+        ]]>
+    </select>
+</sqlMap>

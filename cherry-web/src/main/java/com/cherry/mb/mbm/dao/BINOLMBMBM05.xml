@@ -1,0 +1,296 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE sqlMap PUBLIC "-//iBATIS.com//DTD SQL Map 2.0//EN" "http://ibatis.apache.org/dtd/sql-map-2.dtd">
+
+<sqlMap namespace="BINOLMBMBM05">
+    
+    <sql id="QuerySaleRecord">
+    	<![CDATA[
+			SELECT
+				A.BIN_SaleRecordID AS saleRecordId,
+				A.MemberCode AS memberCode,
+				A.BillCode AS billCode,
+				A.SaleType AS saleType,
+				A.Quantity AS quantity,
+				A.Amount AS amount,
+				A.Discount AS discount,
+				CONVERT(varchar(30),A.SaleTime,120) AS saleTime,
+				A.Comments AS comments,
+				CASE ISNULL(B.DepartName,'') WHEN '' THEN B.DepartCode ELSE '(' + B.DepartCode + ')' + B.DepartName END AS departCode,
+				A.BillState AS billState
+			FROM
+				Sale.BIN_SaleRecord A WITH(NOLOCK)
+		]]>			
+			<isNotEmpty property="prtVendorId">	
+				JOIN (SELECT DISTINCT
+					X.BIN_SaleRecordID
+				FROM
+					Sale.BIN_SaleRecord X WITH(NOLOCK)
+					JOIN Sale.BIN_SaleRecordDetail Y WITH(NOLOCK) ON X.BIN_SaleRecordID = Y.BIN_SaleRecordID
+				WHERE	
+					X.BIN_MemberInfoID = #memberInfoId# AND
+					Y.BIN_ProductVendorID = #prtVendorId# AND
+					Y.SaleType = 'N') T ON A.BIN_SaleRecordID = T.BIN_SaleRecordID
+			</isNotEmpty>		
+		<![CDATA[		
+				LEFT JOIN Basis.BIN_Organization B WITH(NOLOCK) ON A.BIN_OrganizationID = B.BIN_OrganizationID	
+			WHERE
+				A.BIN_MemberInfoID = #memberInfoId# AND
+		]]>		
+			<isNotEmpty property="saleTimeStart">	
+				A.SaleDate >= #saleTimeStart# AND
+			</isNotEmpty>	
+			<isNotEmpty property="saleTimeEnd">	
+				<![CDATA[A.SaleDate <= #saleTimeEnd# AND]]>
+			</isNotEmpty>
+			<isNotEmpty property="billCode">	
+				A.BillCode like '%'+#billCode#+'%' AND
+			</isNotEmpty>
+			<isNotEmpty property="saleType">	
+				A.SaleType = #saleType# AND
+			</isNotEmpty>	
+			<isNotEmpty property="memberClubId">
+				A.BIN_MemberClubID = #memberClubId# AND
+				<isNotEmpty property="privilegeFlag">
+				<isEqual property="privilegeFlag" compareValue="1">			
+					<![CDATA[
+						EXISTS ( 
+							SELECT 1
+							FROM 
+							Members.BIN_MemberClub CLBC WITH(NOLOCK)
+							JOIN Members.BIN_MemClubCounter CLCC WITH(NOLOCK)
+							ON (CLBC.ClubCode = CLCC.ClubCode) JOIN
+							Basis.BIN_Organization ClOT WITH(NOLOCK)
+							ON (CLCC.CounterCode = ClOT.DepartCode)
+							JOIN (]]><include refid="BINOLCMINC99.departPrivilegeSql" />
+						<![CDATA[) A99 ON ClOT.BIN_OrganizationID=A99.BIN_OrganizationID 
+							WHERE A.BIN_MemberClubID = CLBC.BIN_MemberClubID
+						) AND]]>
+				</isEqual>
+				</isNotEmpty>
+			</isNotEmpty>	
+		<![CDATA[				
+				A.ValidFlag = '1'
+		]]>
+    </sql>
+    
+    <!-- 查询会员销售总数 -->
+	<select id="getSaleRecordCount" parameterClass="java.util.HashMap" resultClass="java.lang.Integer">
+		<![CDATA[
+			SELECT	COUNT(SORT_T1.saleRecordId) AS count FROM (
+		]]>	
+		<include refid="BINOLMBMBM05.QuerySaleRecord" />
+		<![CDATA[	
+			) SORT_T1
+		]]>	
+    </select>
+    
+    <!-- 查询会员销售信息 -->
+	<select id="getSaleRecordList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+		<include refid="BINOLCMINC99.pageheader" />
+		<include refid="BINOLMBMBM05.QuerySaleRecord" />
+		<include refid="BINOLCMINC99.pagefooter" />
+    </select>
+    
+    <!-- 统计会员销售信息 -->
+	<select id="getSaleCount" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+		<![CDATA[
+			SELECT
+				COUNT(T.saleRecordId) AS count,
+				SUM(CASE WHEN T.saleType = 'SR' THEN -ISNULL(T.amount,0) ELSE ISNULL(T.amount,0) END) AS amount,
+				SUM(CASE WHEN T.saleType = 'SR' THEN -ISNULL(T.quantity,0) ELSE ISNULL(T.quantity,0) END) AS quantity
+			FROM (
+		]]>	
+			<include refid="BINOLMBMBM05.QuerySaleRecord" />
+		<![CDATA[	
+			) T
+		]]>	
+    </select>
+    
+    <!-- 查询会员销售明细信息 -->
+	<select id="getSaleRecordDetail" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+		<![CDATA[
+			SELECT
+				A.BIN_OrganizationInfoID AS organizationInfoId,
+				A.BIN_BrandInfoID AS brandInfoId,
+				A.BillCode AS billCode,
+				A.BillCodePre AS billCodePre,
+				A.MemberCode AS memberCode,
+				A.SaleType AS saleType,
+				A.Quantity AS quantity,
+				A.Amount AS amount,
+				A.Discount AS discount,
+				A.TicketType AS ticketType,
+				A.Comments AS comments,
+				CONVERT(varchar(30),A.SaleTime,120) AS saleTime,
+				CASE ISNULL(B.DepartName,'') WHEN '' THEN B.DepartCode ELSE '(' + B.DepartCode + ')' + B.DepartName END AS departCode
+			FROM
+				Sale.BIN_SaleRecord A WITH(NOLOCK)
+				LEFT JOIN Basis.BIN_Organization B WITH(NOLOCK) ON A.BIN_OrganizationID = B.BIN_OrganizationID
+			WHERE
+				A.BIN_SaleRecordID = #saleRecordId#
+		]]>
+    </select>
+    
+    <!-- 查询会员销售明细List -->
+	<select id="getSaleRecordDetailList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+		<![CDATA[
+			SELECT
+				B.UnitCode AS unitCode,
+				B.BarCode AS barCode,
+				B.Quantity AS quantity,
+				B.PricePay AS pricePay,
+				B.Price AS price,
+				B.Discount AS discount,
+				B.AmountPortion AS amountPortion,
+				B.SaleType AS saleType,
+				B.SaleExt AS saleExt,
+				B.EmployeeCode AS employeeCode,
+				B.UniqueCode AS uniqueCode,
+				D.NameTotal AS prtName,
+				Y.NameTotal AS prmName,
+				CASE WHEN F.ActivityName IS NOT NULL THEN F.ActivityName ELSE G.SubCampaignName END AS activityName
+			FROM
+				Sale.BIN_SaleRecord A WITH(NOLOCK)
+				JOIN Sale.BIN_SaleRecordDetail B WITH(NOLOCK)
+					LEFT JOIN Basis.BIN_ProductVendor C WITH(NOLOCK)
+						JOIN Basis.BIN_Product D WITH(NOLOCK) ON C.BIN_ProductID = D.BIN_ProductID
+					ON B.BIN_ProductVendorID = C.BIN_ProductVendorID AND B.SaleType = 'N'
+					LEFT JOIN Basis.BIN_PromotionProductVendor X WITH(NOLOCK)
+						JOIN Basis.BIN_PromotionProduct Y WITH(NOLOCK) ON X.BIN_PromotionProductID = Y.BIN_PromotionProductID
+					ON B.BIN_ProductVendorID = X.BIN_PromotionProductVendorID AND B.SaleType = 'P'
+					LEFT JOIN Promotion.BIN_PromotionActivity F WITH(NOLOCK) ON B.MainCode = F.ActivityCode
+					LEFT JOIN Campaign.BIN_CampaignRule G WITH(NOLOCK) ON B.MainCode = G.SubCampaignCode
+				ON A.BIN_SaleRecordID = B.BIN_SaleRecordID
+			WHERE
+				A.BIN_SaleRecordID = #saleRecordId#
+		]]>
+    </select>
+    
+    <!--获取支付方式详细信息-->
+	<select id="getPayTypeDetail" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+		<![CDATA[
+		SELECT 
+			PayTypeCode AS payTypeCode,
+			PayAmount AS payAmount,
+			SerialNumber AS serialNumber,
+			BIN_SalePayListID AS salepayListID
+		FROM
+			Sale.BIN_SalePayList WITH(NOLOCK)
+		WHERE
+			BIN_SaleRecordID = #saleRecordId#
+		]]>
+	</select>
+	
+	<!--获取操作员姓名-->
+	<select id="getEmployeeName" parameterClass="java.util.HashMap" resultClass="java.lang.String">
+		<![CDATA[
+		SELECT
+			CASE ISNULL(EmployeeName,'') WHEN '' THEN EmployeeCode ELSE '(' + EmployeeCode + ')' + EmployeeName END AS employeeCode
+		FROM
+			Basis.BIN_Employee WITH(nolock)
+		WHERE
+			EmployeeCode = #employeeCode# AND
+			BIN_OrganizationInfoID = #organizationInfoId# AND
+			BIN_BrandInfoID = #brandInfoId#
+		]]>
+	</select>
+	
+	<sql id="QuerySaleDetail">
+    	<![CDATA[
+			SELECT
+				A.BillCode AS billCode,
+				A.SaleType AS saleType,
+				A.MemberCode AS memberCode,
+				CONVERT(varchar(30),A.SaleTime,120) AS saleTime,
+				H.DepartCode AS departCode,
+				H.DepartName AS departName,
+				M.EmployeeCode AS employeeCode,
+				M.EmployeeName AS employeeName,
+				B.UnitCode AS unitCode,
+				B.BarCode AS barCode,
+				B.Quantity AS quantity,
+				B.PricePay AS pricePay,
+				B.SaleType AS detailSaleType,
+				B.SaleExt AS saleExt,
+				B.UniqueCode AS uniqueCode,
+				CASE WHEN B.SaleType = 'N' THEN D.NameTotal ELSE Y.NameTotal END AS prtName,
+				CASE WHEN F.ActivityName IS NOT NULL THEN F.ActivityName ELSE G.SubCampaignName END AS activityName
+			FROM
+				Sale.BIN_SaleRecord A WITH(NOLOCK)
+				JOIN Sale.BIN_SaleRecordDetail B WITH(NOLOCK)
+					LEFT JOIN Basis.BIN_ProductVendor C WITH(NOLOCK)
+						JOIN Basis.BIN_Product D WITH(NOLOCK) ON C.BIN_ProductID = D.BIN_ProductID
+					ON B.BIN_ProductVendorID = C.BIN_ProductVendorID AND B.SaleType = 'N'
+					LEFT JOIN Basis.BIN_PromotionProductVendor X WITH(NOLOCK)
+						JOIN Basis.BIN_PromotionProduct Y WITH(NOLOCK) ON X.BIN_PromotionProductID = Y.BIN_PromotionProductID
+					ON B.BIN_ProductVendorID = X.BIN_PromotionProductVendorID AND B.SaleType = 'P'
+					LEFT JOIN Promotion.BIN_PromotionActivity F WITH(NOLOCK) ON B.MainCode = F.ActivityCode
+					LEFT JOIN Campaign.BIN_CampaignRule G WITH(NOLOCK) ON B.MainCode = G.SubCampaignCode
+				ON A.BIN_SaleRecordID = B.BIN_SaleRecordID
+				LEFT JOIN Basis.BIN_Organization H WITH(NOLOCK) ON A.BIN_OrganizationID = H.BIN_OrganizationID
+				LEFT JOIN Basis.BIN_Employee M WITH(NOLOCK) ON B.EmployeeCode = M.EmployeeCode
+			WHERE
+				A.BIN_MemberInfoID = #memberInfoId# AND
+		]]>		
+			<isNotEmpty property="saleTimeStart">	
+				A.SaleDate >= #saleTimeStart# AND
+			</isNotEmpty>	
+			<isNotEmpty property="saleTimeEnd">	
+				<![CDATA[A.SaleDate <= #saleTimeEnd# AND]]>
+			</isNotEmpty>
+			<isNotEmpty property="billCode">	
+				A.BillCode like '%'+#billCode#+'%' AND
+			</isNotEmpty>
+			<isNotEmpty property="saleType">	
+				A.SaleType = #saleType# AND
+			</isNotEmpty>		
+			<isNotEmpty property="prtVendorId">	
+				B.BIN_ProductVendorID = #prtVendorId# AND B.SaleType = 'N' AND
+			</isNotEmpty>
+			<isNotEmpty property="memberClubId">
+				A.BIN_MemberClubID = #memberClubId# AND
+				<isNotEmpty property="privilegeFlag">
+				<isEqual property="privilegeFlag" compareValue="1">			
+					<![CDATA[
+						EXISTS ( 
+							SELECT 1
+							FROM 
+							Members.BIN_MemberClub CLBC WITH(NOLOCK)
+							JOIN Members.BIN_MemClubCounter CLCC WITH(NOLOCK)
+							ON (CLBC.ClubCode = CLCC.ClubCode) JOIN
+							Basis.BIN_Organization ClOT WITH(NOLOCK)
+							ON (CLCC.CounterCode = ClOT.DepartCode)
+							JOIN (]]><include refid="BINOLCMINC99.departPrivilegeSql" />
+						<![CDATA[) A99 ON ClOT.BIN_OrganizationID=A99.BIN_OrganizationID 
+							WHERE A.BIN_MemberClubID = CLBC.BIN_MemberClubID
+						) AND]]>
+				</isEqual>
+				</isNotEmpty>
+			</isNotEmpty>
+		<![CDATA[				
+				A.ValidFlag = '1'
+		]]>
+    </sql>
+    
+    <!-- 查询会员销售明细总数 -->
+	<select id="getSaleDetailCount" parameterClass="java.util.HashMap" resultClass="java.lang.Integer">
+		<![CDATA[
+			SELECT COUNT(1) AS count FROM (
+		]]>	
+		<include refid="BINOLMBMBM05.QuerySaleDetail" />
+		<![CDATA[	
+			) T
+		]]>	
+    </select>
+    
+    <!-- 查询会员销售明细List -->
+	<select id="getSaleDetailList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+		<include refid="BINOLCMINC99.pageheader" />
+		<include refid="BINOLMBMBM05.QuerySaleDetail" />
+		<include refid="BINOLCMINC99.pagefooter" />
+    </select>
+    
+</sqlMap>
+
+
+

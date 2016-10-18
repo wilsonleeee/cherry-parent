@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sqlMap PUBLIC "-//iBATIS.com//DTD SQL Map 2.0//EN" "http://ibatis.apache.org/dtd/sql-map-2.dtd">
+<sqlMap namespace="BINOLBSSAM03">
+	
+	<sql id="queryPayroll">
+		<![CDATA[
+		SELECT 
+			oz.DepartName AS departName,
+			ee.EmployeeName AS employeeName,
+			ew.WorkingHours AS workingHours,
+			ew.WorkingDays as workingDays,
+			ew.UsualOvertime AS usualOvertime,
+			ew.HolidayOvertime AS specialOvertime,
+			ew.SaleTarget AS saleTarget,
+			ew.SaleAmount AS saleAmount,
+			ew.BonusRate AS bonusRate,
+			ew.CompletionRate AS completionRate,
+			ew.Score AS score,
+			ew.WagesAmount AS wagesAmount,
+			ew.Memo AS memo
+		FROM 
+			Basis.BIN_EmployeeWages ew
+		LEFT JOIN
+			basis.BIN_Organization oz
+		ON
+			(ew.BIN_OrganizationID=oz.BIN_OrganizationID)
+		LEFT JOIN
+			Basis.BIN_Employee ee
+		ON
+			(ew.BIN_EmployeeID=ee.BIN_EmployeeID)
+		WHERE
+			ew.BIN_BrandInfoID=#brandInfoId# AND
+			ew.BIN_OrganizationInfoID=#organizationInfoId#
+		]]>
+		<isNotEmpty prepend="AND" property="wagesYear">
+				ew.WagesYear=#wagesYear#
+		</isNotEmpty>
+		<isNotEmpty prepend="AND" property="wagesMonth">
+				ew.WagesMonth=#wagesMonth#
+		</isNotEmpty>
+		<isNotEmpty prepend="AND" property="employeeName">
+				ee.EmployeeName=#employeeName#
+		</isNotEmpty>
+	</sql>
+
+	<select id="getPayrollList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+       	<include refid="BINOLCMINC99.pageheader" />
+		<include refid="BINOLBSSAM03.queryPayroll" />
+		<include refid="BINOLCMINC99.pagefooter" />
+	</select>
+	
+	<select id="getPayrollCount" parameterClass="java.util.HashMap" resultClass="java.lang.Integer">
+		<![CDATA[
+            SELECT 
+				COUNT(1) AS count 
+			FROM 
+				(]]><include refid="BINOLBSSAM03.queryPayroll" /><![CDATA[) T
+        ]]>
+	</select>
+
+</sqlMap>

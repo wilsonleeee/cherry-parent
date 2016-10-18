@@ -1,0 +1,1016 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sqlMap PUBLIC "-//iBATIS.com//DTD SQL Map 2.0//EN" "http://ibatis.apache.org/dtd/sql-map-2.dtd">
+<sqlMap namespace="BINOLPTRPS43">
+    <!--销售记录查询SQL文-->
+    <sql id="getSaleRecord">
+        <![CDATA[
+		SELECT
+			A.BIN_SaleRecordID AS saleRecordId,
+			A.BIN_OrganizationID AS organizationId,
+			A.MachineCode AS machineCode,
+			A.BillCodePre AS billCodePre,
+			A.BillCode AS billCode,
+			A.SaleType AS saleType,
+		    A.InvoiceFlag AS invoiceFlag,
+			ISNULL(A.Amount,0) AS amount,
+			ISNULL(A.Quantity,0) AS quantity,
+			A.SaleDate AS saleDate,
+			A.SaleTime AS saleTime,
+			A.ValidFlag AS validFlag,
+			A.ConsumerType AS consumerType,
+			A.TicketType AS ticketType,
+			A.MemberCode AS memberCode,
+			A.BIN_MemberInfoID AS memberId,
+			A.SaleRecordCode AS saleRecordCode,
+			A.ModifiedTimes AS modifiedTimes,
+			A.CreateTime AS createTime,
+			C.DepartCode AS departCode,
+			E.EmployeeCode AS employeeCode,
+			A.BillState AS billState,
+			A.DeliveryModel AS deliveryModel,
+			A.Comments as reason,
+		]]>
+            <isNotEmpty property="language">
+                <isEqual property="language" compareValue="en_US">
+                    C.NameForeign AS departName,
+                    E.EmployeeNameForeign AS employeeName,
+                </isEqual>
+                <isEqual property="language" compareValue="zh_CN">
+                    C.DepartName AS departName,
+                    E.EmployeeName AS employeeName
+                </isEqual>
+            </isNotEmpty>
+            <isEmpty property="language">
+                C.DepartName AS departName,
+                E.EmployeeName AS employeeName
+            </isEmpty>
+        <![CDATA[
+		FROM
+			Sale.BIN_SaleRecord A WITH(NOLOCK)
+			LEFT JOIN Basis.BIN_Organization C WITH(NOLOCK) ON(A.BIN_OrganizationID = C.BIN_OrganizationID)
+			LEFT JOIN Basis.BIN_Employee E WITH(NOLOCK) ON(A.BIN_EmployeeID = E.BIN_EmployeeID)
+		WHERE
+			EXISTS (]]><include refid="BINOLCMINC99.getDepartList" />
+		<![CDATA[AND C.BIN_OrganizationID = A99.BIN_OrganizationID) AND]]>
+		<isNotEmpty property="deliveryModel">
+			<isEqual property="deliveryModel" compareValue="0">
+				<![CDATA[A.DeliveryModel IS NULL AND]]>
+			</isEqual>
+			<isNotEqual property="deliveryModel" compareValue="0">
+				<![CDATA[A.DeliveryModel = #deliveryModel# AND]]>
+			</isNotEqual>
+		</isNotEmpty>
+		<![CDATA[
+			A.ValidFlag = '1'
+		]]>
+        <dynamic>
+        	<!-- 查询销售商品 -->
+        	<isNotEmpty property="saleProPrmList" prepend="AND">
+        		<isEqual property="saleProPrmConcatStr" compareValue="AND">
+	        		<iterate property="saleProPrmList" open="(" close=")" conjunction="AND"> 
+	        			EXISTS (
+	        				SELECT 1 
+	        				FROM Sale.BIN_SaleRecordDetail SRD WITH(NOLOCK) 
+	        				JOIN Sale.BIN_SaleRecord SR WITH(NOLOCK) ON SR.BIN_SaleRecordID = SRD.BIN_SaleRecordID 
+	        				WHERE SRD.BarCode = #saleProPrmList[].prmPrtVendorId# AND SRD.SaleType = #saleProPrmList[].prtType# 
+				            <isNotEmpty prepend="AND" property="startDate">
+				                <![CDATA[
+									SR.SaleDate >= #startDate#
+								]]>
+				            </isNotEmpty>
+				            <isNotEmpty prepend="AND" property="endDate">
+				                <![CDATA[
+									SR.SaleDate <= #endDate#
+								]]>
+				            </isNotEmpty>
+	        				AND SRD.BIN_SaleRecordID = A.BIN_SaleRecordID 
+        				) 
+	        		</iterate>
+        		</isEqual>
+        		<isEqual property="saleProPrmConcatStr" compareValue="OR">
+	        		<iterate property="saleProPrmList" open="(" close=")" conjunction="OR"> 
+	        			EXISTS (
+	        				SELECT 1 
+	        				FROM Sale.BIN_SaleRecordDetail SRD WITH(NOLOCK) 
+	        				JOIN Sale.BIN_SaleRecord SR WITH(NOLOCK) ON SR.BIN_SaleRecordID = SRD.BIN_SaleRecordID 
+	        				WHERE SRD.BarCode = #saleProPrmList[].prmPrtVendorId# AND SRD.SaleType = #saleProPrmList[].prtType# 
+				            <isNotEmpty prepend="AND" property="startDate">
+				                <![CDATA[
+									SR.SaleDate >= #startDate#
+								]]>
+				            </isNotEmpty>
+				            <isNotEmpty prepend="AND" property="endDate">
+				                <![CDATA[
+									SR.SaleDate <= #endDate#
+								]]>
+				            </isNotEmpty>
+	        				AND SRD.BIN_SaleRecordID = A.BIN_SaleRecordID 
+        				) 
+	        		</iterate>
+        		</isEqual>
+        	</isNotEmpty>
+        	<!-- 查询连带销售 -->
+        	<isNotEmpty property="jointProPrmList" prepend="AND">
+        		<isEqual property="jointProPrmConcatStr" compareValue="AND">
+	        		<iterate property="jointProPrmList" open="(" close=")" conjunction="AND"> 
+	        			EXISTS (
+	        				SELECT 1 
+	        				FROM Sale.BIN_SaleRecordDetail SRD WITH(NOLOCK) 
+	        				JOIN Sale.BIN_SaleRecord SR WITH(NOLOCK) ON SR.BIN_SaleRecordID = SRD.BIN_SaleRecordID 
+	        				WHERE SRD.BarCode = #jointProPrmList[].prmPrtVendorId# AND SRD.SaleType = #jointProPrmList[].prtType# 
+				            <isNotEmpty prepend="AND" property="startDate">
+				                <![CDATA[
+									SR.SaleDate >= #startDate#
+								]]>
+				            </isNotEmpty>
+				            <isNotEmpty prepend="AND" property="endDate">
+				                <![CDATA[
+									SR.SaleDate <= #endDate#
+								]]>
+				            </isNotEmpty>
+	        				AND SRD.BIN_SaleRecordID = A.BIN_SaleRecordID 
+        				) 
+	        		</iterate>
+        		</isEqual>
+        		<isEqual property="jointProPrmConcatStr" compareValue="OR">
+	        		<iterate property="jointProPrmList" open="(" close=")" conjunction="OR"> 
+	        			EXISTS (
+	        				SELECT 1 
+	        				FROM Sale.BIN_SaleRecordDetail SRD WITH(NOLOCK) 
+	        				JOIN Sale.BIN_SaleRecord SR WITH(NOLOCK) ON SR.BIN_SaleRecordID = SRD.BIN_SaleRecordID 
+	        				WHERE SRD.BarCode = #jointProPrmList[].prmPrtVendorId# AND SRD.SaleType = #jointProPrmList[].prtType# 
+				            <isNotEmpty prepend="AND" property="startDate">
+				                <![CDATA[
+									SR.SaleDate >= #startDate#
+								]]>
+				            </isNotEmpty>
+				            <isNotEmpty prepend="AND" property="endDate">
+				                <![CDATA[
+									SR.SaleDate <= #endDate#
+								]]>
+				            </isNotEmpty>
+	        				AND SRD.BIN_SaleRecordID = A.BIN_SaleRecordID 
+        				) 
+	        		</iterate>
+        		</isEqual>
+        	</isNotEmpty>
+            <isNotEmpty prepend="AND" property="employeeCode">
+                <![CDATA[
+					E.EmployeeCode = #employeeCode#
+				]]>
+            </isNotEmpty>
+            <isNotEmpty prepend="AND" property="saleType">
+                <![CDATA[
+					A.SaleType = #saleType#
+				]]>
+            </isNotEmpty>
+            <isNotEmpty prepend="AND" property="startDate">
+                <![CDATA[
+					A.SaleDate >= #startDate#
+				]]>
+            </isNotEmpty>
+            <isNotEmpty prepend="AND" property="endDate">
+                <![CDATA[
+					A.SaleDate <= #endDate#
+				]]>
+            </isNotEmpty>
+			<isNotEmpty prepend="AND" property="consumerType">
+				<![CDATA[
+					A.ConsumerType = #consumerType#
+				]]>
+            </isNotEmpty>
+			<isNotEmpty prepend="AND" property="invoiceFlag">
+				<![CDATA[
+					A.InvoiceFlag = #invoiceFlag#
+				]]>
+            </isNotEmpty>
+			<isNotEmpty prepend="AND" property="ticketType">
+				<![CDATA[
+					A.TicketType = #ticketType#
+				]]>
+            </isNotEmpty>
+			<isNotEmpty prepend="AND" property="billCode">
+            	<![CDATA[
+                	A.BillCode LIKE '%' + #billCode# + '%'
+				]]>
+            </isNotEmpty>
+			<isNotEmpty prepend="AND" property="saleRecordCode">
+            	<![CDATA[
+                	A.SaleRecordCode LIKE '%' + #saleRecordCode# + '%'
+				]]>
+            </isNotEmpty>
+			<isNotEmpty prepend="AND" property="memCode">
+				<![CDATA[
+					EXISTS (
+						SELECT 1
+						FROM Members.BIN_MemCardInfo X WITH(NOLOCK) 
+						WHERE X.MemCode like '%'+#memCode#+'%' AND X.BIN_MemberInfoID = A.BIN_MemberInfoID
+					)
+				]]>
+            </isNotEmpty>
+			<isNotEmpty property="campaignMode" prepend="AND">
+				<isEqual property="campaignMode" compareValue="0">
+					EXISTS (
+						SELECT 1 
+						FROM Sale.BIN_SaleRecordDetail X WITH(NOLOCK)
+						JOIN Campaign.BIN_CampaignRule Y WITH(NOLOCK) ON X.MainCode = Y.SubCampaignCode
+						JOIN Campaign.BIN_Campaign Z WITH(NOLOCK) ON Y.BIN_CampaignID = Z.BIN_CampaignID
+						WHERE Z.CampaignCode = #campaignCode# AND X.BIN_SaleRecordID = A.BIN_SaleRecordID
+					)
+				</isEqual>
+				<isEqual property="campaignMode" compareValue="1">
+					EXISTS (
+						SELECT 1
+						FROM Sale.BIN_SaleRecordDetail X WITH(NOLOCK)
+						WHERE X.MainCode = #campaignCode# AND X.BIN_SaleRecordID = A.BIN_SaleRecordID
+					)
+				</isEqual>
+			</isNotEmpty>
+			<isNotEmpty property="payTypeCode" prepend="AND">
+				EXISTS (
+					SELECT 1 
+					FROM Sale.BIN_SalePayList PL WITH(NOLOCK)
+					WHERE PL.BIN_SaleRecordID = A.BIN_SaleRecordID AND PayTypeCode = #payTypeCode# 
+				) 
+			</isNotEmpty>
+			<isNotEmpty property="originalBrand" prepend="AND">
+				EXISTS (
+					SELECT 1 
+					FROM Sale.BIN_SaleRecordDetail Z 
+					LEFT JOIN Basis.BIN_ProductVendor BPV 
+					ON (Z.BIN_ProductVendorID = BPV.BIN_ProductVendorID)
+					LEFT JOIN Basis.BIN_Product BP 
+					ON (BP.BIN_ProductID = BPV.BIN_ProductID)
+					WHERE Z.BIN_SaleRecordID = A.BIN_SaleRecordID AND Z.ValidFlag = '1' AND BP.OriginalBrand = #originalBrand#
+				) 
+			</isNotEmpty>
+        </dynamic>
+    </sql>
+	
+	<!--获取销售记录单数量SQL文-->
+	<select id="getSaleRecordCount" parameterClass="java.util.HashMap" resultClass="java.lang.Integer">
+		<![CDATA[
+            SELECT 
+				COUNT(SORT_T1.saleRecordId) AS count FROM (
+        ]]>
+        <include refid="BINOLPTRPS43.getSaleRecord" />
+        <![CDATA[
+            )SORT_T1
+        ]]>
+	</select>
+	
+	<!--获取销售记录LIST的SQL文-->
+	<select id="getSaleRecordList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+		<include refid="BINOLCMINC99.pageheader" />
+        <include refid="BINOLPTRPS43.getSaleRecord" />
+        <include refid="BINOLCMINC99.pagefooter" />
+	</select>
+	
+	 <!-- 取得出入库汇总信息【产品作为检索条件】  
+    <select id="getSumInfo" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+    	<![CDATA[
+			SELECT	
+				ISNULL(SUM(SORT_T1.quantity),0) AS sumQuantity,
+			 	ISNULL(SUM(SORT_T1.amount),0) AS sumAmount 
+			FROM (
+		]]>	
+		<include refid="BINOLPTRPS43.getSaleRecord" />	
+		<![CDATA[	
+			)SORT_T1
+		]]>		
+    </select>
+	-->
+	<select id="getSumInfo" parameterClass="java.util.HashMap"
+	resultClass="java.util.HashMap">
+		<![CDATA[
+		SELECT
+			COUNT(T.saleRecordId) AS sum,
+			ISNULL(SUM(CASE WHEN (T.saleType = 'NS' OR T.saleType = 'PX') THEN T.quantity ELSE (0-T.quantity) END),0) AS sumQuantity,
+			ISNULL(SUM(CASE WHEN (T.saleType = 'NS' OR T.saleType = 'PX') THEN T.amount ELSE (0-T.amount) END),0) AS sumAmount
+		FROM
+			(	
+		]]>
+	<include refid="BINOLPTRPS43.getSaleRecord" /> 
+		<![CDATA[ 
+			) T	
+		]]>
+	</select>
+	
+	<!-- 商品详细：产品 -->
+	<sql id="getSaleProPrmByN">
+		SELECT
+			DISTINCT
+			T10.nameTotal,
+			T10.barCode,
+			T10.type,
+			<isNotEmpty property="saleType">
+				ISNULL(SUM(ISNULL(D.Quantity,0)),0) AS quantity,
+				ISNULL(SUM(ISNULL(D.Quantity,0)*ISNULL(D.PricePay,0)),0) AS amount
+ 				<isNotEmpty property="selqPaP" prepend=",">
+					<isNotEqual property="sumQuantity" compareValue="0">
+						Convert(varchar(6),Convert(decimal(5,2), (ISNULL(SUM(ISNULL(D.Quantity,0)),0)) / #sumQuantity# * 100
+						)) AS quantityPercent,
+						Convert(varchar(6),Convert(decimal(5,2), (ISNULL(SUM(ISNULL(D.Quantity,0)*ISNULL(D.PricePay,0)),0)) / #sumAmount# * 100
+						)) AS amountPercent		
+					</isNotEqual>
+					<isEqual property="sumQuantity" compareValue="0">
+						'-' AS quantityPercent,
+						'-' AS amountPercent
+					</isEqual>
+				</isNotEmpty>
+			</isNotEmpty>
+			<isEmpty property="saleType">
+				ISNULL(SUM(CASE WHEN (A.SaleType = 'NS' OR A.SaleType = 'PX') THEN (ISNULL(D.Quantity,0)) ELSE (0-(ISNULL(D.Quantity,0))) END),0) AS quantity,
+				ISNULL(SUM(CASE WHEN (A.SaleType = 'NS' OR A.SaleType = 'PX') THEN ISNULL(D.Quantity,0)*ISNULL(D.PricePay,0) ELSE (0-ISNULL(D.Quantity,0)*ISNULL(D.PricePay,0)) END),0) AS amount  
+				<isNotEmpty property="selqPaP" prepend=",">
+					<isNotEqual property="sumQuantity" compareValue="0">
+						Convert(varchar(6),Convert(decimal(5,2),           
+							(ISNULL(SUM(CASE WHEN (A.SaleType = 'NS' OR A.SaleType = 'PX') THEN (ISNULL(D.Quantity,0)) ELSE (0-(ISNULL(D.Quantity,0))) END),0)
+							) / #sumQuantity# * 100 )) AS quantityPercent,
+						Convert(varchar(6),Convert(decimal(5,2),	
+							(ISNULL(SUM(CASE WHEN (A.SaleType = 'NS' OR A.SaleType = 'PX') THEN ISNULL(D.Quantity,0)*ISNULL(D.PricePay,0) ELSE (0-ISNULL(D.Quantity,0)*ISNULL(D.PricePay,0)) END),0)
+							) / #sumAmount# * 100 )) AS amountPercent              
+					</isNotEqual>
+					<isEqual property="sumQuantity" compareValue="0">
+						'-' AS quantityPercent,
+						'-' AS amountPercent
+					</isEqual>
+				</isNotEmpty>
+			</isEmpty>
+		FROM    
+			Sale.BIN_SaleRecord A WITH(NOLOCK)    
+		LEFT JOIN Basis.BIN_Organization C WITH(NOLOCK) ON(A.BIN_OrganizationID = C.BIN_OrganizationID)    
+		JOIN Sale.BIN_SaleRecordDetail D WITH(NOLOCK) ON(A.BIN_SaleRecordID = D.BIN_SaleRecordID AND D.ValidFlag = '1') 
+		JOIN (
+				<include refid="BINOLCMINC99.getProPrmList" />
+				WHERE T.type ='N' 
+				<isNotEmpty property="prtListArr" prepend="AND">
+					T.barCode IN
+					<iterate property="prtListArr" open="(" close=")" conjunction=","> 
+						#prtListArr[]#
+					</iterate>
+				</isNotEmpty>
+			) T10 ON ( D.BarCode = T10.barCode AND D.SaleType = T10.type )
+		
+		<![CDATA[
+		WHERE
+			A.ValidFlag = '1'
+			]]>
+        <dynamic>
+        	<!-- 查询销售商品 -->
+        	<isNotEmpty property="saleProPrmList" prepend="AND">
+        		<isEqual property="saleProPrmConcatStr" compareValue="AND">
+	        		<iterate property="saleProPrmList" open="(" close=")" conjunction="AND"> 
+	        			EXISTS (
+	        				SELECT 1 
+	        				FROM Sale.BIN_SaleRecordDetail SRD WITH(NOLOCK) 
+	        				JOIN Sale.BIN_SaleRecord SR WITH(NOLOCK) ON SR.BIN_SaleRecordID = SRD.BIN_SaleRecordID 
+	        				WHERE SRD.BarCode = #saleProPrmList[].prmPrtVendorId# AND SRD.SaleType = #saleProPrmList[].prtType# 
+				            <isNotEmpty prepend="AND" property="startDate">
+				                <![CDATA[
+									SR.SaleDate >= #startDate#
+								]]>
+				            </isNotEmpty>
+				            <isNotEmpty prepend="AND" property="endDate">
+				                <![CDATA[
+									SR.SaleDate <= #endDate#
+								]]>
+				            </isNotEmpty>
+	        				AND SRD.BIN_SaleRecordID = A.BIN_SaleRecordID 
+        				) 
+	        		</iterate>
+        		</isEqual>
+        		<isEqual property="saleProPrmConcatStr" compareValue="OR">
+	        		<iterate property="saleProPrmList" open="(" close=")" conjunction="OR"> 
+	        			EXISTS (
+	        				SELECT 1 
+	        				FROM Sale.BIN_SaleRecordDetail SRD WITH(NOLOCK) 
+	        				JOIN Sale.BIN_SaleRecord SR WITH(NOLOCK) ON SR.BIN_SaleRecordID = SRD.BIN_SaleRecordID 
+	        				WHERE SRD.BarCode = #saleProPrmList[].prmPrtVendorId# AND SRD.SaleType = #saleProPrmList[].prtType# 
+				            <isNotEmpty prepend="AND" property="startDate">
+				                <![CDATA[
+									SR.SaleDate >= #startDate#
+								]]>
+				            </isNotEmpty>
+				            <isNotEmpty prepend="AND" property="endDate">
+				                <![CDATA[
+									SR.SaleDate <= #endDate#
+								]]>
+				            </isNotEmpty>
+	        				AND SRD.BIN_SaleRecordID = A.BIN_SaleRecordID 
+        				) 
+	        			
+	        		</iterate>
+        		</isEqual>
+        	</isNotEmpty>
+        	<!-- 查询连带销售 -->
+        	<isNotEmpty property="jointProPrmList" prepend="AND">
+        		<isEqual property="jointProPrmConcatStr" compareValue="AND">
+	        		<iterate property="jointProPrmList" open="(" close=")" conjunction="AND"> 
+	        			EXISTS (
+	        				SELECT 1 
+	        				FROM Sale.BIN_SaleRecordDetail SRD WITH(NOLOCK) 
+	        				JOIN Sale.BIN_SaleRecord SR WITH(NOLOCK) ON SR.BIN_SaleRecordID = SRD.BIN_SaleRecordID 
+	        				WHERE SRD.BarCode = #jointProPrmList[].prmPrtVendorId# AND SRD.SaleType = #jointProPrmList[].prtType# 
+				            <isNotEmpty prepend="AND" property="startDate">
+				                <![CDATA[
+									SR.SaleDate >= #startDate#
+								]]>
+				            </isNotEmpty>
+				            <isNotEmpty prepend="AND" property="endDate">
+				                <![CDATA[
+									SR.SaleDate <= #endDate#
+								]]>
+				            </isNotEmpty>
+	        				AND SRD.BIN_SaleRecordID = A.BIN_SaleRecordID 
+        				)
+	        		</iterate>
+        		</isEqual>
+        		<isEqual property="jointProPrmConcatStr" compareValue="OR">
+	        		<iterate property="jointProPrmList" open="(" close=")" conjunction="OR"> 
+	        			EXISTS (
+	        				SELECT 1 
+	        				FROM Sale.BIN_SaleRecordDetail SRD WITH(NOLOCK) 
+	        				JOIN Sale.BIN_SaleRecord SR WITH(NOLOCK) ON SR.BIN_SaleRecordID = SRD.BIN_SaleRecordID 
+	        				WHERE SRD.BarCode = #jointProPrmList[].prmPrtVendorId# AND SRD.SaleType = #jointProPrmList[].prtType# 
+				            <isNotEmpty prepend="AND" property="startDate">
+				                <![CDATA[
+									SR.SaleDate >= #startDate#
+								]]>
+				            </isNotEmpty>
+				            <isNotEmpty prepend="AND" property="endDate">
+				                <![CDATA[
+									SR.SaleDate <= #endDate#
+								]]>
+				            </isNotEmpty>
+	        				AND SRD.BIN_SaleRecordID = A.BIN_SaleRecordID 
+        				)
+	        		</iterate>
+        		</isEqual>
+        	</isNotEmpty>
+        	
+            <isNotEmpty prepend="AND" property="employeeCode">
+                <![CDATA[
+					D.EmployeeCode = #employeeCode#
+				]]>
+            </isNotEmpty>
+            <isNotEmpty prepend="AND" property="saleType">
+                <![CDATA[
+					A.SaleType = #saleType#
+				]]>
+            </isNotEmpty>
+            <isNotEmpty prepend="AND" property="startDate">
+                <![CDATA[
+					A.SaleDate >= #startDate#
+				]]>
+            </isNotEmpty>
+            <isNotEmpty prepend="AND" property="endDate">
+                <![CDATA[
+					A.SaleDate <= #endDate#
+				]]>
+            </isNotEmpty>
+			<isNotEmpty prepend="AND" property="consumerType">
+				<![CDATA[
+					A.ConsumerType = #consumerType#
+				]]>
+            </isNotEmpty>
+			<isNotEmpty prepend="AND" property="invoiceFlag">
+				<![CDATA[
+					A.InvoiceFlag = #invoiceFlag#
+				]]>
+            </isNotEmpty>
+			<![CDATA[AND EXISTS ( ]]>
+			<include refid="BINOLCMINC99.getDepartList" />
+			<![CDATA[
+				AND C.BIN_OrganizationID = A99.BIN_OrganizationID)
+			]]> 
+			 <isNotEmpty prepend="AND" property="billCode">
+            	<![CDATA[
+                A.BillCode LIKE '%' + #billCode# + '%'
+				]]>
+            </isNotEmpty>
+			<isNotEmpty prepend="AND" property="memCode">
+					<![CDATA[A.MemberCode LIKE '%' + #memCode# + '%']]>
+            </isNotEmpty>
+			<isNotEmpty property="campaignMode" prepend="AND">
+				<isEqual property="campaignMode" compareValue="0">
+					EXISTS (
+						SELECT 1 
+						FROM Campaign.BIN_Campaign A WITH(NOLOCK) 
+						JOIN Campaign.BIN_CampaignRule B WITH(NOLOCK) ON (B.BIN_CampaignID = A.BIN_CampaignID) 
+						WHERE D.MainCode = B.SubCampaignCode AND  A.CampaignCode = #campaignCode#
+					)
+				</isEqual>
+				<isEqual property="campaignMode" compareValue="1">
+					D.MainCode = #campaignCode#
+				</isEqual>
+			</isNotEmpty>
+			<isNotEmpty property="payTypeCode" prepend="AND">
+				EXISTS (
+					SELECT 1 
+					FROM Sale.BIN_SalePayList PL WITH(NOLOCK) 
+					WHERE PL.BIN_SaleRecordID = A.BIN_SaleRecordID AND PayTypeCode = #payTypeCode# 
+				) 
+			</isNotEmpty>
+			GROUP BY
+					T10.nameTotal,
+					T10.barCode,
+					T10.id,
+					T10.type
+        </dynamic>
+	</sql>
+	
+	<!-- 商品详细：促销品 -->
+	<sql id="getSaleProPrmByP">
+		SELECT
+			DISTINCT
+			T10.nameTotal,
+			T10.barCode,
+			T10.type,
+			<isNotEmpty property="saleType">
+				ISNULL(SUM(ISNULL(D.Quantity,0)),0) AS quantity,
+				ISNULL(SUM(ISNULL(D.Quantity,0)*ISNULL(D.PricePay,0)),0) AS amount
+				<isNotEmpty property="selqPaP" prepend=",">
+				'-' AS quantityPercent,
+				'-' AS amountPercent
+				</isNotEmpty>
+			</isNotEmpty>
+			<isEmpty property="saleType">
+				ISNULL(SUM(CASE WHEN (A.SaleType = 'NS' OR A.SaleType = 'PX') THEN (ISNULL(D.Quantity,0)) ELSE (0-(ISNULL(D.Quantity,0))) END),0) AS quantity,
+				ISNULL(SUM(CASE WHEN (A.SaleType = 'NS' OR A.SaleType = 'PX') THEN ISNULL(D.Quantity,0)*ISNULL(D.PricePay,0) ELSE (0-ISNULL(D.Quantity,0)*ISNULL(D.PricePay,0)) END),0) AS amount
+				<isNotEmpty property="selqPaP" prepend=",">
+				'-' AS quantityPercent,
+				'-' AS amountPercent
+				</isNotEmpty>
+			</isEmpty>
+		FROM    
+			Sale.BIN_SaleRecord A WITH(NOLOCK)    
+		LEFT JOIN Basis.BIN_Organization C WITH(NOLOCK) ON(A.BIN_OrganizationID = C.BIN_OrganizationID)    
+		JOIN Sale.BIN_SaleRecordDetail D WITH(NOLOCK) ON(A.BIN_SaleRecordID = D.BIN_SaleRecordID AND D.ValidFlag = '1') 
+		JOIN (
+				<include refid="BINOLCMINC99.getProPrmList" />
+				WHERE T.type ='P' 
+				<isNotEmpty property="prmListArr" prepend="AND">
+					T.barCode IN
+					<iterate property="prmListArr" open="(" close=")" conjunction=","> 
+						#prmListArr[]#
+					</iterate>
+				</isNotEmpty>
+			) T10 ON ( D.BarCode = T10.barCode AND D.SaleType = T10.type )
+		
+		<![CDATA[
+		WHERE
+			A.ValidFlag = '1'
+			]]>
+        <dynamic>
+        	<!-- 查询销售商品 -->
+        	<isNotEmpty property="saleProPrmList" prepend="AND">
+        		<isEqual property="saleProPrmConcatStr" compareValue="AND">
+	        		<iterate property="saleProPrmList" open="(" close=")" conjunction="AND"> 
+	        			EXISTS (
+	        				SELECT 1 
+	        				FROM Sale.BIN_SaleRecordDetail SRD WITH(NOLOCK) 
+	        				JOIN Sale.BIN_SaleRecord SR WITH(NOLOCK) ON SR.BIN_SaleRecordID = SRD.BIN_SaleRecordID 
+	        				WHERE SRD.BarCode = #saleProPrmList[].prmPrtVendorId# AND SRD.SaleType = #saleProPrmList[].prtType# 
+				            <isNotEmpty prepend="AND" property="startDate">
+				                <![CDATA[
+									SR.SaleDate >= #startDate#
+								]]>
+				            </isNotEmpty>
+				            <isNotEmpty prepend="AND" property="endDate">
+				                <![CDATA[
+									SR.SaleDate <= #endDate#
+								]]>
+				            </isNotEmpty>
+	        				AND SRD.BIN_SaleRecordID = A.BIN_SaleRecordID 
+        				)
+	        		</iterate>
+        		</isEqual>
+        		<isEqual property="saleProPrmConcatStr" compareValue="OR">
+	        		<iterate property="saleProPrmList" open="(" close=")" conjunction="OR"> 
+	        			EXISTS (
+	        				SELECT 1 
+	        				FROM Sale.BIN_SaleRecordDetail SRD WITH(NOLOCK) 
+	        				JOIN Sale.BIN_SaleRecord SR WITH(NOLOCK) ON SR.BIN_SaleRecordID = SRD.BIN_SaleRecordID 
+	        				WHERE SRD.BarCode = #saleProPrmList[].prmPrtVendorId# AND SRD.SaleType = #saleProPrmList[].prtType# 
+				            <isNotEmpty prepend="AND" property="startDate">
+				                <![CDATA[
+									SR.SaleDate >= #startDate#
+								]]>
+				            </isNotEmpty>
+				            <isNotEmpty prepend="AND" property="endDate">
+				                <![CDATA[
+									SR.SaleDate <= #endDate#
+								]]>
+				            </isNotEmpty>
+	        				AND SRD.BIN_SaleRecordID = A.BIN_SaleRecordID 
+        				)
+	        		</iterate>
+        		</isEqual>
+        	</isNotEmpty>
+        	<!-- 查询连带销售 -->
+        	<isNotEmpty property="jointProPrmList" prepend="AND">
+        		<isEqual property="jointProPrmConcatStr" compareValue="AND">
+	        		<iterate property="jointProPrmList" open="(" close=")" conjunction="AND"> 
+	        			EXISTS (
+	        				SELECT 1 
+	        				FROM Sale.BIN_SaleRecordDetail SRD WITH(NOLOCK) 
+	        				JOIN Sale.BIN_SaleRecord SR WITH(NOLOCK) ON SR.BIN_SaleRecordID = SRD.BIN_SaleRecordID 
+	        				WHERE SRD.BarCode = #jointProPrmList[].prmPrtVendorId# AND SRD.SaleType = #jointProPrmList[].prtType# 
+				            <isNotEmpty prepend="AND" property="startDate">
+				                <![CDATA[
+									SR.SaleDate >= #startDate#
+								]]>
+				            </isNotEmpty>
+				            <isNotEmpty prepend="AND" property="endDate">
+				                <![CDATA[
+									SR.SaleDate <= #endDate#
+								]]>
+				            </isNotEmpty>
+	        				AND SRD.BIN_SaleRecordID = A.BIN_SaleRecordID 
+        				)
+	        		</iterate>
+        		</isEqual>
+        		<isEqual property="jointProPrmConcatStr" compareValue="OR">
+	        		<iterate property="jointProPrmList" open="(" close=")" conjunction="OR"> 
+	        			EXISTS (
+	        				SELECT 1 
+	        				FROM Sale.BIN_SaleRecordDetail SRD WITH(NOLOCK) 
+	        				JOIN Sale.BIN_SaleRecord SR WITH(NOLOCK) ON SR.BIN_SaleRecordID = SRD.BIN_SaleRecordID 
+	        				WHERE SRD.BarCode = #jointProPrmList[].prmPrtVendorId# AND SRD.SaleType = #jointProPrmList[].prtType# 
+				            <isNotEmpty prepend="AND" property="startDate">
+				                <![CDATA[
+									SR.SaleDate >= #startDate#
+								]]>
+				            </isNotEmpty>
+				            <isNotEmpty prepend="AND" property="endDate">
+				                <![CDATA[
+									SR.SaleDate <= #endDate#
+								]]>
+				            </isNotEmpty>
+	        				AND SRD.BIN_SaleRecordID = A.BIN_SaleRecordID 
+        				)
+	        		</iterate>
+        		</isEqual>
+        	</isNotEmpty>
+        	
+            <isNotEmpty prepend="AND" property="employeeCode">
+                <![CDATA[
+					D.EmployeeCode = #employeeCode#
+				]]>
+            </isNotEmpty>
+            <isNotEmpty prepend="AND" property="saleType">
+                <![CDATA[
+					A.SaleType = #saleType#
+				]]>
+            </isNotEmpty>
+            <isNotEmpty prepend="AND" property="startDate">
+                <![CDATA[
+					A.SaleDate >= #startDate#
+				]]>
+            </isNotEmpty>
+            <isNotEmpty prepend="AND" property="endDate">
+                <![CDATA[
+					A.SaleDate <= #endDate#
+				]]>
+            </isNotEmpty>
+			<isNotEmpty prepend="AND" property="consumerType">
+				<![CDATA[
+					A.ConsumerType = #consumerType#
+				]]>
+            </isNotEmpty>
+			<isNotEmpty prepend="AND" property="invoiceFlag">
+				<![CDATA[
+					A.InvoiceFlag = #invoiceFlag#
+				]]>
+            </isNotEmpty>
+			<![CDATA[AND EXISTS ( ]]>
+			<include refid="BINOLCMINC99.getDepartList" />
+			<![CDATA[
+				AND C.BIN_OrganizationID = A99.BIN_OrganizationID)
+			]]> 
+			 <isNotEmpty prepend="AND" property="billCode">
+            	<![CDATA[
+                A.BillCode LIKE '%' + #billCode# + '%'
+				]]>
+            </isNotEmpty>
+			<isNotEmpty prepend="AND" property="memCode">
+					<![CDATA[A.MemberCode LIKE '%' + #memCode# + '%']]>
+            </isNotEmpty>
+			<isNotEmpty property="campaignMode" prepend="AND">
+				<isEqual property="campaignMode" compareValue="0">
+					EXISTS (
+						SELECT 1 
+						FROM Campaign.BIN_Campaign A WITH(NOLOCK) 
+						JOIN Campaign.BIN_CampaignRule B WITH(NOLOCK) ON (B.BIN_CampaignID = A.BIN_CampaignID) 
+						WHERE D.MainCode = B.SubCampaignCode AND  A.CampaignCode = #campaignCode#
+					)
+				</isEqual>
+				<isEqual property="campaignMode" compareValue="1">
+					D.MainCode = #campaignCode#
+				</isEqual>
+			</isNotEmpty>
+			GROUP BY
+					T10.nameTotal,
+					T10.barCode,
+					T10.id,
+					T10.type
+        </dynamic>
+	</sql>
+	
+	<!-- 各商品统计详细（各商品的总数量及总金额） -->
+	<select id="getSaleProPrmList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap" remapResults="true">
+		<isNotEmpty property="prtListArr" >
+			<include refid="BINOLPTRPS43.getSaleProPrmByN"/>
+		</isNotEmpty>
+		<isNotEmpty property="byPrtPrmList">
+			UNION ALL
+		</isNotEmpty>
+		<isNotEmpty property="prmListArr" >
+			<include refid="BINOLPTRPS43.getSaleProPrmByP"/>
+		</isNotEmpty>
+	</select>
+	
+	<!--销售记录明细查询SQL文-->
+    <sql id="getExportDetail">
+    	<![CDATA[
+    		SELECT
+    			A.saleRecordId AS saleRecordId, 
+    			A.saleTime AS saleTime,
+    			A.billCodePre AS billCodePre,
+				A.billCode AS billCode,
+				A.saleRecordCode,
+				A.billState,
+				A.departCode AS departCode,
+				A.departName AS departName,
+				A.memberCode AS memberCode,
+				A.saleType AS saleType,
+				A.saleDate AS saleDate,
+				A.employeeCode AS employeeCode,
+				A.employeeName AS employeeName,
+				A.deliveryModel AS deliveryModel,
+				CONVERT(varchar(12) , A.saleTime, 108 ) AS saleProductTime,
+				FLOOR(B.Quantity) AS buyQuantity,
+				B.PricePay AS pricePay,
+				CAST(ROUND(B.PricePay * B.Quantity,2) AS NUMERIC(32,2)) AS buyAmount,
+				B.BarCode AS barCode,
+				B.UniqueCode AS uniqueCode,
+				CASE WHEN ISNULL(B.Comment,'')='' THEN ISNULL(A.reason,'') ELSE B.Comment END AS comment,
+				D.Name AS memberName,
+				E.Mode AS productType,
+				CASE WHEN G.ActivityName IS NOT NULL THEN G.ActivityName
+				ELSE I.SubCampaignName END AS inActivity,
+				'固定' as billStateDetail,
+		]]>
+		<dynamic>
+				<isNotEmpty property="language">
+	                <isEqual property="language" compareValue="en_US">
+	                    E.NameForeign AS productName
+	                </isEqual>
+	                <isEqual property="language" compareValue="zh_CN">
+						E.NameTotal AS productName 
+	                </isEqual>
+	            </isNotEmpty>
+	            <isEmpty property="language">
+					E.NameTotal AS productName
+	            </isEmpty>
+	    </dynamic>
+	    <![CDATA[
+			FROM
+				(
+    	]]>
+    	<include refid="BINOLPTRPS43.getSaleRecord" />
+    	<![CDATA[
+    		) A JOIN Sale.BIN_SaleRecordDetail B WITH(NOLOCK)
+				ON(A.saleRecordId = B.BIN_SaleRecordID AND 
+					B.ValidFlag = '1' AND 
+					A.modifiedTimes = B.ModifiedTimes)
+				LEFT JOIN Basis.BIN_ProductVendor F WITH(NOLOCK) 
+				ON (B.BIN_ProductVendorID = F.BIN_ProductVendorID)
+				LEFT JOIN Basis.BIN_Product E WITH(NOLOCK) 
+				ON (F.BIN_ProductID = E.BIN_ProductID)
+				LEFT JOIN Members.BIN_MemberInfo D WITH(NOLOCK)
+				ON(A.memberId = D.BIN_MemberInfoID)
+				LEFT JOIN Promotion.BIN_PromotionActivity G WITH(NOLOCK) 
+				ON(B.MainCode = G.ActivityCode)
+				LEFT JOIN Campaign.BIN_CampaignRule I WITH(NOLOCK) 
+				ON(B.MainCode = I.SubCampaignCode)
+			WHERE
+				B.SaleType='N'
+				UNION ALL
+			SELECT 
+				A.saleRecordId AS saleRecordId,
+				A.saleTime AS saleTime,
+				A.billCodePre AS billCodePre,
+				A.billCode AS billCode,
+				A.saleRecordCode,
+				A.billState,
+				A.departCode AS departCode,
+				A.departName AS departName,
+				A.memberCode AS memberCode,
+				A.saleType AS saleType,
+				A.saleDate AS saleDate,
+				A.employeeCode AS employeeCode,
+				A.employeeName AS employeeName,
+				A.deliveryModel AS deliveryModel,
+				CONVERT(varchar(12) , A.saleTime, 108 ) AS saleProductTime,
+				FLOOR(B.Quantity) AS buyQuantity,
+				B.PricePay AS pricePay,
+				CAST(CASE WHEN B.Quantity = 0 THEN 0 ELSE ROUND(B.PricePay,2) END AS NUMERIC(32,2)) AS buyAmount,
+				B.BarCode AS barCode,
+				B.UniqueCode AS uniqueCode,
+				CASE WHEN ISNULL(B.Comment,'')='' THEN ISNULL(A.reason,'') ELSE B.Comment END AS comment,
+				D.Name AS memberName,
+				CASE WHEN E.Mode IS NULL THEN 'PRM' ELSE E.Mode END AS productType,
+				CASE WHEN G.ActivityName IS NOT NULL THEN G.ActivityName
+				ELSE I.SubCampaignName END AS inActivity,
+				'固定' as billStateDetail,
+				]]>
+			<dynamic>
+					<isNotEmpty property="language">
+		                <isEqual property="language" compareValue="en_US">
+		                    E.NameForeign AS productName
+		                </isEqual>
+		                <isEqual property="language" compareValue="zh_CN">
+							E.NameTotal AS productName 
+		                </isEqual>
+		            </isNotEmpty>
+		            <isEmpty property="language">
+						E.NameTotal AS productName
+		            </isEmpty>
+		    </dynamic>
+		    <![CDATA[
+				FROM
+					(
+	    	]]>
+	    	<include refid="BINOLPTRPS43.getSaleRecord" />
+	    	<![CDATA[
+		    	) A JOIN Sale.BIN_SaleRecordDetail B WITH(NOLOCK)
+					ON(A.saleRecordId = B.BIN_SaleRecordID AND 
+						B.ValidFlag = '1' AND 
+						A.modifiedTimes = B.ModifiedTimes)
+					LEFT JOIN Basis.BIN_PromotionProductVendor F WITH(NOLOCK) 
+					ON (B.BIN_ProductVendorID = F.BIN_PromotionProductVendorID)
+					LEFT JOIN Basis.BIN_PromotionProduct E WITH(NOLOCK) 
+					ON (F.BIN_PromotionProductID = E.BIN_PromotionProductID)
+					LEFT JOIN Members.BIN_MemberInfo D WITH(NOLOCK)
+					ON(A.memberId = D.BIN_MemberInfoID)
+					LEFT JOIN Promotion.BIN_PromotionActivity G WITH(NOLOCK) 
+					ON(B.MainCode = G.ActivityCode)
+					LEFT JOIN Campaign.BIN_CampaignRule I WITH(NOLOCK) 
+					ON(B.MainCode = I.SubCampaignCode)
+				WHERE
+					B.SaleType='P'
+    	]]>
+    </sql>
+    
+    <!-- 分页查询导出的销售记录明细  -->
+    <select id="getExportDetailList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+    	<include refid="BINOLCMINC99.pageheader" />
+    	<include refid="BINOLPTRPS43.getExportDetail" />
+    	<include refid="BINOLCMINC99.pagefooter" />
+    </select>
+    
+    <!-- 导出销售数据一览(海明威) -->
+	<sql id="getExportSaleRecord">
+		<![CDATA[
+			SELECT 
+				RD.*,
+				ISNULL(MI.Name,RD.memberCode) AS memberName,
+				ES.ConsigneeName AS consigneeName,
+				isnull(province.RegionNameChinese,'')+ isnull(city.RegionNameChinese,'')
+					+ isnull(county.RegionNameChinese,'') + isnull(ES.ConsigneeAddress,'') as consigneeAddress,
+				ES.ConsigneeMobilePhone as consigneeMobilePhone,
+				'买家已付款，等待卖家发货' as billStateMain,
+				CASE WHEN ISNULL(ES.BillPayTime,'') = '' THEN CONVERT(varchar(100),RD.saleTime,120)
+				ELSE CONVERT(varchar(100),ES.BillPayTime,120) END AS billPayTime
+			 FROM (
+		]]>
+		<include refid="BINOLPTRPS43.getSaleRecord" />
+	    <![CDATA[) RD
+		    LEFT JOIN Members.BIN_MemberInfo MI WITH (NOLOCK)
+				ON (RD.memberId = MI.BIN_MemberInfoID)
+			LEFT JOIN Sale.BIN_ESOrderMain ES WITH(NOLOCK)
+				ON(RD.billCode=ES.BillCode)	
+			LEFT JOIN Basis.BIN_Region province WITH(NOLOCK)
+				ON(ES.ConsigneeProvince=CONVERT(nvarchar,province.BIN_RegionID))
+			LEFT JOIN Basis.BIN_Region city WITH(NOLOCK)
+				ON(ES.ConsigneeCity=CONVERT(nvarchar,city.BIN_RegionID))
+			LEFT JOIN Basis.BIN_Region county WITH(NOLOCK)
+				ON(ES.ConsigneeCounty=CONVERT(nvarchar,county.BIN_RegionID))
+	    ]]>
+	</sql>
+    
+    <!-- 分页查询导出的销售记录主单 -->
+    <select id="getExportSaleRecordList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+		<include refid="BINOLCMINC99.pageheader" />
+        <include refid="BINOLPTRPS43.getExportSaleRecord" />
+        <include refid="BINOLCMINC99.pagefooter" />
+	</select>
+	
+    <!--  取得销售记录明细总数  -->
+    <select id="getExportDetailCount" parameterClass="java.util.HashMap" resultClass="java.lang.Integer">
+    	<![CDATA[
+    		SELECT 
+				COUNT(SORT_T1.saleRecordId) AS count FROM (
+    	]]>
+    	<include refid="BINOLPTRPS43.getExportDetail" />
+    	<![CDATA[
+            )SORT_T1
+        ]]>
+    </select>
+    
+    <!--  取得销售记录明细总数 （过滤明细中的快递费信息） -->
+    <select id="getExportDetailFilterKDCount" parameterClass="java.util.HashMap" resultClass="java.lang.Integer">
+    	<![CDATA[
+    		SELECT 
+				COUNT(SORT_T1.saleRecordId) AS count FROM (
+    	]]>
+    	<include refid="BINOLPTRPS43.getExportDetail" />
+    	<![CDATA[
+            )SORT_T1
+            WHERE            	
+    			SORT_T1.barCode <> 'KDCOST'
+        ]]>
+    </select>
+    
+    <!-- 分页查询导出的销售记录明细(过滤快递费明细)  -->
+    <select id="getExprotDetailListFilterKD" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+    	<include refid="BINOLCMINC99.pageheader" />
+    	<![CDATA[
+    		SELECT 
+				detail.*
+			FROM (
+    	]]>
+    	<include refid="BINOLPTRPS43.getExportDetail" />
+    	<![CDATA[) detail
+    		WHERE     			
+    			detail.barCode <> 'KDCOST'
+    	]]>
+    	<include refid="BINOLCMINC99.pagefooter" />
+    </select>
+    
+    <!-- 取得产品+促销品信息  -->
+    <select id="getPrmPrtList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+    	<![CDATA[
+    		SELECT DISTINCT TOP $number$
+				T0.*
+			FROM
+				Sale.BIN_SaleRecordDetail A WITH(NOLOCK) 
+				JOIN Sale.BIN_SaleRecord B WITH(NOLOCK) 
+				ON(A.BIN_SaleRecordID = B.BIN_SaleRecordID AND B.ValidFlag = '1') 
+				JOIN (
+			]]>
+			<include refid="BINOLCMINC99.getProPrmList" />
+			
+    		<![CDATA[
+    			WHERE 
+    				T.nameTotal LIKE '%' + #paramInfoStr# + '%' OR   				
+    				T.barCode  LIKE '%' + #paramInfoStr# + '%'
+ 			]]>
+			<![CDATA[	
+				)T0 
+				ON(A.BIN_ProductVendorID = T0.id AND A.SaleType = T0.type)
+			WHERE
+				A.ValidFlag = 1	
+			AND B.BIN_OrganizationInfoID = #organizationInfoId#
+    	]]>
+    	<dynamic>
+		 	<isNotEmpty property="brandInfoId">
+				AND B.BIN_BrandInfoID = #brandInfoId#		
+			</isNotEmpty>	
+		</dynamic>			
+    </select>
+    <!-- 取得支付方式List -->
+    <select id="getPayTypeList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+		SELECT 
+			PayTypeCode  AS payTypeCode,
+			<isNotEmpty property="language">
+				<isEqual property="language" compareValue="en_US">
+					PayTypeDescEN AS payTypeDesc
+				</isEqual>
+				<isEqual property="language" compareValue="zh_CN">	
+					PayTypeDescCN AS payTypeDesc
+				</isEqual>								
+			</isNotEmpty>
+			<isEmpty property="language">
+				PayTypeDescCN AS payTypeDesc
+			</isEmpty>
+		FROM Basis.BIN_PayType WITH(NOLOCK) 
+		WHERE 
+			BIN_OrganizationInfoID = #organizationInfoId#
+		AND BIN_BrandInfoID = #brandInfoId#
+    </select>
+    
+    <!-- 更新发票类型 -->
+    <update id="updateInvoiceFlag" parameterClass="java.util.HashMap">
+	     <![CDATA[ 
+	    	UPDATE
+	    		Sale.BIN_SaleRecord
+	    	SET
+	    	    InvoiceFlag = #invoiceFlag#
+	    	WHERE 
+	    		BIN_SaleRecordID=#saleRecordId#
+	    ]]>
+    </update> 
+</sqlMap>

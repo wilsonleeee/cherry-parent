@@ -1,0 +1,380 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sqlMap PUBLIC "-//iBATIS.com//DTD SQL Map 2.0//EN" "http://ibatis.apache.org/dtd/sql-map-2.dtd">
+<sqlMap namespace="BINOLMBRPT02">
+
+	<!-- 统计会员绑定数 -->
+    <select id="getBindCount" parameterClass="java.util.HashMap" resultClass="java.util.HashMap" remapResults="true">
+    	<![CDATA[
+			SELECT 
+				COUNT(1) AS totalBind_count
+		]]>		
+			<iterate property="memLevelList" conjunction="," prepend=",">
+				ISNULL(SUM(CASE WHEN B.MemberLevel = #memLevelList[].memberLevelId# THEN 1 ELSE 0 END), 0) AS [$memLevelList[].memberLevelId$_count]
+			</iterate>
+			<isNotEmpty property="dateList">
+			<iterate property="dateList" conjunction="," prepend=",">
+			<![CDATA[
+				ISNULL(SUM(CASE WHEN A.RecordDateTime >= #dateList[].startDateTime# AND 
+					A.RecordDateTime <= #dateList[].endDateTime# THEN 1 ELSE 0 END), 0) AS [totalBind_$dateList[].key$],
+			]]>
+			<![CDATA[
+				ISNULL(SUM(CASE WHEN A.RecordDateTime >= #dateList[].startDateTime# AND 
+					A.RecordDateTime <= #dateList[].endDateTime# AND 
+					B.JoinDate >= #dateList[].startDate# AND 
+					B.JoinDate <= #dateList[].endDate# THEN 1 ELSE 0 END), 0) AS [newBind_$dateList[].key$]
+			]]>
+			<iterate property="memLevelList" conjunction="," prepend=",">
+			<![CDATA[
+				ISNULL(SUM(CASE WHEN A.RecordDateTime >= #dateList[].startDateTime# AND 
+					A.RecordDateTime <= #dateList[].endDateTime# AND 
+					B.MemberLevel = #memLevelList[].memberLevelId# THEN 1 ELSE 0 END), 0) AS [$memLevelList[].memberLevelId$_$dateList[].key$]
+			]]>
+			</iterate>
+			</iterate>
+			</isNotEmpty>
+		<![CDATA[
+			FROM
+				Members.BIN_MemBindRecord A WITH(NOLOCK)
+				LEFT JOIN Members.BIN_MemberInfo B WITH(NOLOCK) ON A.BIN_MemberInfoID = B.BIN_MemberInfoID
+			WHERE
+				A.RecordDateTime >= #recordDateTimeStart# AND
+				A.RecordDateTime <= #recordDateTimeEnd# AND
+				A.RecordType = '1' AND
+				A.BIN_OrganizationInfoID = #organizationInfoId# AND
+				A.BIN_BrandInfoID = #brandInfoId#
+		]]>								
+    </select>
+    
+    <!-- 统计会员绑定数（销售首单作为入会时间） -->
+    <select id="getBindCount1" parameterClass="java.util.HashMap" resultClass="java.util.HashMap" remapResults="true">
+    	<![CDATA[
+			SELECT 
+				COUNT(1) AS totalBind_count
+		]]>		
+			<iterate property="memLevelList" conjunction="," prepend=",">
+				ISNULL(SUM(CASE WHEN B.MemberLevel = #memLevelList[].memberLevelId# THEN 1 ELSE 0 END), 0) AS [$memLevelList[].memberLevelId$_count]
+			</iterate>
+			<isNotEmpty property="dateList">
+			<iterate property="dateList" conjunction="," prepend=",">
+			<![CDATA[
+				ISNULL(SUM(CASE WHEN A.RecordDateTime >= #dateList[].startDateTime# AND 
+					A.RecordDateTime <= #dateList[].endDateTime# THEN 1 ELSE 0 END), 0) AS [totalBind_$dateList[].key$],
+			]]>
+			<![CDATA[
+				ISNULL(SUM(CASE WHEN A.RecordDateTime >= #dateList[].startDateTime# AND 
+					A.RecordDateTime <= #dateList[].endDateTime# AND 
+					T.SaleDate >= #dateList[].startDate# AND 
+					T.SaleDate <= #dateList[].endDate# THEN 1 ELSE 0 END), 0) AS [newBind_$dateList[].key$]
+			]]>
+			<iterate property="memLevelList" conjunction="," prepend=",">
+			<![CDATA[
+				ISNULL(SUM(CASE WHEN A.RecordDateTime >= #dateList[].startDateTime# AND 
+					A.RecordDateTime <= #dateList[].endDateTime# AND 
+					B.MemberLevel = #memLevelList[].memberLevelId# THEN 1 ELSE 0 END), 0) AS [$memLevelList[].memberLevelId$_$dateList[].key$]
+			]]>
+			</iterate>
+			</iterate>
+			</isNotEmpty>
+		<![CDATA[
+			FROM
+				Members.BIN_MemBindRecord A WITH(NOLOCK)
+				LEFT JOIN Members.BIN_MemberInfo B WITH(NOLOCK) ON A.BIN_MemberInfoID = B.BIN_MemberInfoID
+				
+				LEFT JOIN
+				(SELECT 
+					A.BIN_MemberInfoID,
+					MIN(A.SaleDate) AS SaleDate
+				FROM
+					Sale.BIN_SaleRecord A
+				WHERE
+					A.BIN_OrganizationInfoID = #organizationInfoId# AND
+					A.BIN_BrandInfoID = #brandInfoId# AND
+					A.BIN_MemberInfoID IS NOT NULL AND
+					A.ValidFlag = '1'
+				GROUP BY
+					A.BIN_MemberInfoID) T
+				ON A.BIN_MemberInfoID = T.BIN_MemberInfoID
+			WHERE
+				A.RecordDateTime >= #recordDateTimeStart# AND
+				A.RecordDateTime <= #recordDateTimeEnd# AND
+				A.RecordType = '1' AND
+				A.BIN_OrganizationInfoID = #organizationInfoId# AND
+				A.BIN_BrandInfoID = #brandInfoId#
+		]]>								
+    </select>
+    
+    <!-- 统计新会员数  -->
+    <select id="getNewMemCount" parameterClass="java.util.HashMap" resultClass="java.util.HashMap" remapResults="true">
+    	<![CDATA[
+			SELECT 
+				COUNT(1) AS newMem_count
+		]]>			
+			<isNotEmpty property="dateList">
+			<iterate property="dateList" conjunction="," prepend=",">
+			<![CDATA[
+				ISNULL(SUM(CASE WHEN A.JoinDate >= #dateList[].startDate# 
+					AND A.JoinDate <= #dateList[].endDate# THEN 1 ELSE 0 END), 0) AS [newMem_$dateList[].key$]
+			]]>
+			</iterate>
+			</isNotEmpty>
+		<![CDATA[
+			FROM
+				Members.BIN_MemberInfo A WITH(NOLOCK)
+			WHERE
+				A.JoinDate >= #wechatBindTimeStart# AND 
+				A.JoinDate <= #wechatBindTimeEnd# AND
+				A.BIN_OrganizationInfoID = #organizationInfoId# AND
+				A.BIN_BrandInfoID = #brandInfoId# AND
+				A.MemInfoRegFlg = '0'
+		]]>				
+    </select>
+    
+    <!-- 统计新会员数（销售首单作为入会时间）  -->
+    <select id="getNewMemCount1" parameterClass="java.util.HashMap" resultClass="java.util.HashMap" remapResults="true">
+    	<![CDATA[
+			SELECT 
+				COUNT(1) AS newMem_count
+		]]>			
+			<isNotEmpty property="dateList">
+			<iterate property="dateList" conjunction="," prepend=",">
+			<![CDATA[
+				ISNULL(SUM(CASE WHEN T.SaleDate >= #dateList[].startDate# 
+					AND T.SaleDate <= #dateList[].endDate# THEN 1 ELSE 0 END), 0) AS [newMem_$dateList[].key$]
+			]]>
+			</iterate>
+			</isNotEmpty>
+		<![CDATA[
+			FROM
+				Members.BIN_MemberInfo A WITH(NOLOCK)
+				
+				LEFT JOIN
+				(SELECT 
+					A.BIN_MemberInfoID,
+					MIN(A.SaleDate) AS SaleDate
+				FROM
+					Sale.BIN_SaleRecord A
+				WHERE
+					A.BIN_OrganizationInfoID = #organizationInfoId# AND
+					A.BIN_BrandInfoID = #brandInfoId# AND
+					A.BIN_MemberInfoID IS NOT NULL AND
+					A.ValidFlag = '1'
+				GROUP BY
+					A.BIN_MemberInfoID) T
+				ON A.BIN_MemberInfoID = T.BIN_MemberInfoID
+			WHERE
+				T.SaleDate >= #wechatBindTimeStart# AND 
+				T.SaleDate <= #wechatBindTimeEnd# AND
+				A.BIN_OrganizationInfoID = #organizationInfoId# AND
+				A.BIN_BrandInfoID = #brandInfoId# AND
+				A.MemInfoRegFlg = '0'
+		]]>				
+    </select>
+    
+    <!-- 按城市统计绑定会员数 -->
+    <select id="getBindCountByCity" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+    	<![CDATA[
+			SELECT 
+				M.BIN_RegionID AS regionId,
+				M.BIN_CityID AS cityId,
+				X.RegionNameChinese AS regionName,
+				Y.RegionNameChinese AS cityName,
+				ISNULL(N.totalBindCount, 0) AS totalBindCount,
+				ISNULL(N.newBindCount, 0) AS newBindCount
+			FROM
+				(SELECT 
+					A.BIN_RegionID,
+					A.BIN_CityID
+				FROM
+					Basis.BIN_Organization A WITH(NOLOCK)
+				WHERE
+					A.BIN_OrganizationInfoID = #organizationInfoId# AND
+					A.BIN_BrandInfoID = #brandInfoId# AND
+					A.Type = '4'
+				GROUP BY
+					A.BIN_RegionID,
+					A.BIN_CityID) M 
+					
+				LEFT JOIN 
+				(SELECT 
+					C.BIN_RegionID,
+					C.BIN_CityID,
+					COUNT(1) AS totalBindCount,
+					SUM(CASE WHEN B.JoinDate >= #wechatBindTimeStart# AND B.JoinDate <= #wechatBindTimeEnd# THEN 1 ELSE 0 END) AS newBindCount
+				FROM
+					Members.BIN_MemBindRecord A WITH(NOLOCK)
+					LEFT JOIN Members.BIN_MemberInfo B WITH(NOLOCK) ON A.BIN_MemberInfoID = B.BIN_MemberInfoID
+					LEFT JOIN Basis.BIN_Organization C WITH(NOLOCK) ON B.BIN_OrganizationID = C.BIN_OrganizationID
+				WHERE
+					A.RecordDateTime >= #recordDateTimeStart# AND
+					A.RecordDateTime <= #recordDateTimeEnd# AND
+					A.RecordType = '1' AND
+					A.BIN_OrganizationInfoID = #organizationInfoId# AND
+					A.BIN_BrandInfoID = #brandInfoId#
+				GROUP BY
+					C.BIN_RegionID,
+					C.BIN_CityID) N ON M.BIN_RegionID = N.BIN_RegionID AND M.BIN_CityID = N.BIN_CityID
+				
+				LEFT JOIN Basis.BIN_Region X WITH(NOLOCK)	ON M.BIN_RegionID = X.BIN_RegionID
+				LEFT JOIN Basis.BIN_Region Y WITH(NOLOCK)	ON M.BIN_CityID = Y.BIN_RegionID
+			WHERE 
+				M.BIN_CityID IS NOT NULL
+			ORDER BY
+				M.BIN_RegionID,
+				M.BIN_CityID
+		]]>							
+    </select>
+    
+    <!-- 按城市统计绑定会员数（销售首单作为入会时间） -->
+    <select id="getBindCountByCity1" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+    	<![CDATA[
+			SELECT 
+				M.BIN_RegionID AS regionId,
+				M.BIN_CityID AS cityId,
+				X.RegionNameChinese AS regionName,
+				Y.RegionNameChinese AS cityName,
+				ISNULL(N.totalBindCount, 0) AS totalBindCount,
+				ISNULL(N.newBindCount, 0) AS newBindCount
+			FROM
+				(SELECT 
+					A.BIN_RegionID,
+					A.BIN_CityID
+				FROM
+					Basis.BIN_Organization A WITH(NOLOCK)
+				WHERE
+					A.BIN_OrganizationInfoID = #organizationInfoId# AND
+					A.BIN_BrandInfoID = #brandInfoId# AND
+					A.Type = '4'
+				GROUP BY
+					A.BIN_RegionID,
+					A.BIN_CityID) M 
+					
+				LEFT JOIN 
+				(SELECT 
+					C.BIN_RegionID,
+					C.BIN_CityID,
+					COUNT(1) AS totalBindCount,
+					SUM(CASE WHEN T.SaleDate >= #wechatBindTimeStart# AND T.SaleDate <= #wechatBindTimeEnd# THEN 1 ELSE 0 END) AS newBindCount
+				FROM
+					Members.BIN_MemBindRecord A WITH(NOLOCK)
+					LEFT JOIN Members.BIN_MemberInfo B WITH(NOLOCK) ON A.BIN_MemberInfoID = B.BIN_MemberInfoID
+					LEFT JOIN Basis.BIN_Organization C WITH(NOLOCK) ON B.BIN_OrganizationID = C.BIN_OrganizationID
+					
+					LEFT JOIN
+					(SELECT 
+						A.BIN_MemberInfoID,
+						MIN(A.SaleDate) AS SaleDate
+					FROM
+						Sale.BIN_SaleRecord A
+					WHERE
+						A.BIN_OrganizationInfoID = #organizationInfoId# AND
+						A.BIN_BrandInfoID = #brandInfoId# AND
+						A.BIN_MemberInfoID IS NOT NULL AND
+						A.ValidFlag = '1'
+					GROUP BY
+						A.BIN_MemberInfoID) T
+					ON A.BIN_MemberInfoID = T.BIN_MemberInfoID
+				WHERE
+					A.RecordDateTime >= #recordDateTimeStart# AND
+					A.RecordDateTime <= #recordDateTimeEnd# AND
+					A.RecordType = '1' AND
+					A.BIN_OrganizationInfoID = #organizationInfoId# AND
+					A.BIN_BrandInfoID = #brandInfoId#
+				GROUP BY
+					C.BIN_RegionID,
+					C.BIN_CityID) N ON M.BIN_RegionID = N.BIN_RegionID AND M.BIN_CityID = N.BIN_CityID
+				
+				LEFT JOIN Basis.BIN_Region X WITH(NOLOCK)	ON M.BIN_RegionID = X.BIN_RegionID
+				LEFT JOIN Basis.BIN_Region Y WITH(NOLOCK)	ON M.BIN_CityID = Y.BIN_RegionID
+			WHERE 
+				M.BIN_CityID IS NOT NULL
+			ORDER BY
+				M.BIN_RegionID,
+				M.BIN_CityID
+		]]>							
+    </select>
+    
+    <!-- 取得微信绑定起止时间  -->
+    <select id="getWechatBindTimeRange" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+    	<![CDATA[
+			SELECT 
+				CONVERT(varchar(30), MIN(A.RecordDateTime), 23) AS wechatBindTimeStart,
+				CONVERT(varchar(30), MAX(A.RecordDateTime), 23) AS wechatBindTimeEnd
+			FROM
+				Members.BIN_MemBindRecord A WITH(NOLOCK)
+			WHERE
+				A.BIN_OrganizationInfoID = #organizationInfoId# AND
+				A.BIN_BrandInfoID = #brandInfoId#
+		]]>				
+    </select>
+    
+    <!-- 取得指定活动申请总人数  -->
+    <select id="getTotalOrderCount" parameterClass="java.util.HashMap" resultClass="java.util.HashMap" remapResults="true">
+    	<![CDATA[
+			SELECT 
+				COUNT(1) AS totalOrder_count
+		]]>
+			<isNotEmpty property="dateList">
+			<iterate property="dateList" conjunction="," prepend=",">
+			<![CDATA[
+				ISNULL(SUM(CASE WHEN CONVERT(varchar(30), A.CampaignOrderTime, 23) >= #dateList[].startDate# AND 
+					CONVERT(varchar(30), A.CampaignOrderTime, 23) <= #dateList[].endDate# THEN 1 ELSE 0 END), 0) AS [totalOrder_$dateList[].key$]
+			]]>
+			</iterate>
+			</isNotEmpty>
+		<![CDATA[		
+			FROM
+				Campaign.BIN_CampaignOrder A WITH(NOLOCK)
+			WHERE
+				A.BIN_OrganizationInfoID = #organizationInfoId# AND
+				A.BIN_BrandInfoID = #brandInfoId# AND
+				A.CampaignCode = #campaignCode# AND 
+				CONVERT(varchar(30), A.CampaignOrderTime, 23) >= #wechatBindTimeStart# AND
+				CONVERT(varchar(30), A.CampaignOrderTime, 23) <= #wechatBindTimeEnd# AND
+				A.State <> 'CA'
+		]]>				
+    </select>
+    
+    <!-- 取得指定活动领用总人数  -->
+    <select id="getTotalGetCount" parameterClass="java.util.HashMap" resultClass="java.util.HashMap" remapResults="true">
+    	<![CDATA[
+			SELECT 
+				COUNT(1) AS totalGet_count
+		]]>
+			<isNotEmpty property="dateList">
+			<iterate property="dateList" conjunction="," prepend=",">
+			<![CDATA[
+				ISNULL(SUM(CASE WHEN A.TradeDate >= #dateList[].startDate# AND 
+					A.TradeDate <= #dateList[].endDate# THEN 1 ELSE 0 END), 0) AS [totalGet_$dateList[].key$]
+			]]>
+			</iterate>
+			</isNotEmpty>
+		<![CDATA[		
+			FROM
+				Inventory.BIN_GiftDraw A WITH(NOLOCK)
+			WHERE
+				A.BIN_OrganizationInfoID = #organizationInfoId# AND
+				A.BIN_BrandInfoID = #brandInfoId# AND
+				A.CampaignCode = #campaignCode# AND 
+				A.TradeDate >= #wechatBindTimeStart# AND
+				A.TradeDate <= #wechatBindTimeEnd#
+		]]>				
+    </select>
+    
+    <!-- 取得活动List  -->
+    <select id="getCampaignList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+    	<![CDATA[
+			SELECT 
+				A.CampaignCode AS campaignCode,
+				A.CampaignName AS campaignName
+			FROM
+				Campaign.BIN_Campaign A WITH(NOLOCK)
+			WHERE
+				A.BIN_OrganizationInfoID = #organizationInfoId# AND
+				A.BIN_BrandInfoID = #brandInfoId# AND
+				A.CampaignTypeFlag = '1' AND
+				A.CampaignType = 'LYHD' AND
+				A.State IN ('1','2')
+		]]>				
+    </select>
+    	
+</sqlMap>

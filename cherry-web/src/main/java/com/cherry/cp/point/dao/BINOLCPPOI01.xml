@@ -1,0 +1,409 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sqlMap PUBLIC "-//iBATIS.com//DTD SQL Map 2.0//EN" "http://ibatis.apache.org/dtd/sql-map-2.dtd">
+<sqlMap namespace="BINOLCPPOI01">
+    <!-- 取得区域信息 -->
+	<select id="getRegionInfoList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+		<![CDATA[											
+			SELECT DISTINCT											
+				A.BIN_RegionID AS cityId,	
+				 ]]>
+    			<dynamic>
+					<isNotEmpty property="language">
+						<isEqual property="language" compareValue="en_US">										
+							A.RegionNameForeign AS cityName,
+						</isEqual>
+						<isEqual property="language" compareValue="zh_CN">										
+							A.RegionNameChinese AS cityName,
+						</isEqual>								
+					</isNotEmpty>
+					<isEmpty property="language">
+						A.RegionNameChinese AS cityName,
+					</isEmpty>
+				</dynamic>
+    			<![CDATA[										
+				B.BIN_RegionID AS provinceId,
+				]]>
+    			<dynamic>
+					<isNotEmpty property="language">
+						<isEqual property="language" compareValue="en_US">										
+							B.RegionNameForeign AS provinceName,
+						</isEqual>
+						<isEqual property="language" compareValue="zh_CN">										
+							B.RegionNameChinese AS provinceName,
+						</isEqual>								
+					</isNotEmpty>
+					<isEmpty property="language">
+						B.RegionNameChinese AS provinceName,
+					</isEmpty>
+				</dynamic>
+    			<![CDATA[
+				C.BIN_RegionID AS regionId
+				]]>
+    			<dynamic>
+					<isNotEmpty property="language">
+						<isEqual property="language" compareValue="en_US">										
+							,C.RegionNameForeign AS regionName
+						</isEqual>
+						<isEqual property="language" compareValue="zh_CN">										
+							,C.RegionNameChinese AS regionName
+						</isEqual>								
+					</isNotEmpty>
+					<isEmpty property="language">
+						,C.RegionNameChinese AS regionName
+					</isEmpty>
+					<isNotEmpty property="city_counter">	
+						,D.CounterCode AS counterCode
+						,oz.DepartName AS counterName						
+					</isNotEmpty>
+					<isEmpty property="city_counter">	
+						,null AS counterCode
+						,null AS counterName						
+					</isEmpty>
+				</dynamic>
+    			<![CDATA[			
+			FROM												
+				Basis.BIN_Region A,
+				Basis.BIN_Region B,
+				Basis.BIN_Region C,
+				Basis.BIN_Region AD
+				]]>
+				<isNotEmpty property="city_counter">	
+				<![CDATA[	
+				JOIN Basis.BIN_CounterInfo D
+				ON(D.BIN_RegionID = AD.BIN_RegionID)
+				JOIN Basis.BIN_Organization oz
+				ON(D.BIN_OrganizationID = oz.BIN_OrganizationID)
+				JOIN(
+				]]>
+				<include refid="BINOLCMINC99.departPrivilegeSql" />
+				<![CDATA[
+				)dp
+				ON(dp.BIN_OrganizationID = oz.BIN_OrganizationID)
+				]]>		
+				</isNotEmpty>
+				<![CDATA[
+			WHERE
+				C.BIN_OrganizationInfoID = #organizationInfoId#  AND 
+				]]>
+					<isNotEmpty property="brandInfoId">
+	    				C.BIN_BrandInfoID = #brandInfoId# AND
+	    			</isNotEmpty>
+					<isNotEmpty property="city_counter">
+						D.ValidFlag='1' AND
+						oz.ValidFlag='1' AND 	
+					</isNotEmpty>
+				<![CDATA[
+				C.RegionType = '0' AND											
+				A.NodeID.GetAncestor(1) = B.NodeID AND	
+				B.NodeID.GetAncestor(1) = C.NodeID AND
+				AD.NodeID.IsDescendantOf(A.NodeID)=1 AND				
+				A.ValidFlag = '1' AND
+				B.ValidFlag = '1' AND
+				C.ValidFlag = '1' 
+		]]>
+    </select>
+    
+    <!-- 查询柜台信息 -->
+    <select id="getCounterInfoList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+    	<![CDATA[		
+	    	SELECT DISTINCT
+	    		ci.CounterCode AS counterCode,
+	    		]]>
+	    			<isNotEmpty property="city">
+	    				ct.BIN_RegionID AS cityID,
+	    			</isNotEmpty>
+	    			<isEmpty property="city">
+	    				ci.BIN_RegionID AS cityID,
+	    			</isEmpty>
+	    		<![CDATA[
+	    		ci.BIN_ChannelID AS channelID,
+	    		]]>
+    			<dynamic>
+					<isNotEmpty property="language">
+						<isEqual property="language" compareValue="en_US">										
+							oz.NameForeign AS counterName
+						</isEqual>
+						<isEqual property="language" compareValue="zh_CN">										
+							oz.DepartName AS counterName
+						</isEqual>								
+					</isNotEmpty>
+					<isEmpty property="language">
+						oz.DepartName AS counterName
+					</isEmpty>
+				</dynamic>
+    			<![CDATA[
+	    	FROM
+	    		Basis.BIN_CounterInfo ci
+				JOIN Basis.BIN_Organization oz
+				ON(ci.BIN_OrganizationID = oz.BIN_OrganizationID)
+				JOIN (
+				]]>
+				<include refid="BINOLCMINC99.departPrivilegeSql" />
+				<![CDATA[
+				)dp
+				ON(dp.BIN_OrganizationID = oz.BIN_OrganizationID)
+	    		]]>
+	    			<isNotEmpty property="city">
+	    				,Basis.BIN_Region ct
+						,Basis.BIN_Region ctd    
+	    			</isNotEmpty>
+				<![CDATA[
+	    	WHERE
+	    		ci.BIN_OrganizationInfoID = #organizationInfoId#   AND
+	    		]]>
+	    			<dynamic>
+		    			<isNotEmpty property="city">
+		    				ct.BIN_RegionID = #city# AND
+		    				ctd.BIN_RegionID = ci.BIN_RegionID AND 
+							ctd.NodeID.IsDescendantOf(ct.NodeID)=1 AND
+							ctd.ValidFlag = '1' AND
+							ct.ValidFlag = '1' AND
+		    			</isNotEmpty>
+		    			<isNotEmpty property="channel">
+		    				ci.BIN_ChannelID = #channel# AND
+		    			</isNotEmpty>
+	    			</dynamic>
+					<isNotEmpty property="brandInfoId">
+	    				ci.BIN_BrandInfoID = #brandInfoId# AND
+	    			</isNotEmpty>
+						<![CDATA[
+				ci.ValidFlag = '1' AND
+				oz.ValidFlag = '1' 
+		]]> 
+    </select>
+    
+    <!-- 取得组织信息 -->
+    <select id="getOrganizationInfoList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+    	<![CDATA[
+    		SELECT
+			T.id,
+			T.name,
+			T.type,
+			T.path,
+			T.level	
+		FROM
+			(SELECT
+				convert(varchar(20),A.BIN_OrganizationID) AS id,
+				A.DepartName AS name,
+				A.Type AS type,
+				A.Path AS path,
+				A.Level AS level
+			FROM
+				Basis.BIN_Organization A		
+			WHERE
+				A.Type <> '4' AND
+				A.BIN_BrandInfoID = #brandInfoId#
+		
+			UNION	
+			SELECT
+				convert(varchar(20),A.BIN_OrganizationID) AS id,
+				A.DepartName AS name,
+				A.Type AS type,
+				A.Path AS path,
+				A.Level AS level
+			FROM
+				Basis.BIN_Organization A	
+				JOIN (]]>
+				<include refid="BINOLCMINC99.departPrivilegeSql"/>
+				<![CDATA[) A99 
+				ON A.BIN_OrganizationID=A99.BIN_OrganizationID	
+			WHERE
+				A.Type = '4' AND
+				A.BIN_BrandInfoID = #brandInfoId# AND
+				A.ValidFlag = '1'
+		) T					
+			ORDER BY
+				T.path
+    	]]>
+    </select>
+    
+	<!-- 取得品牌信息 -->
+	<select id="getPOIBrandInfo" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+	<![CDATA[
+		SELECT TOP 1
+			BIN_BrandInfoID AS brandInfoId,
+			BIN_OrganizationInfoID AS organizationInfoId
+		FROM
+			Basis.BIN_BrandInfo
+		WHERE
+			BrandCode = #brandCode#
+	]]> 
+	</select>
+    <!-- 取得渠道信息 -->
+    <select id="getChannelInfoList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+    	<![CDATA[
+    		SELECT DISTINCT
+    			bc.BIN_ChannelID AS id
+    			]]>
+    			<dynamic>
+					<isNotEmpty property="language">
+						<isEqual property="language" compareValue="en_US">										
+							,bc.ChannelNameForeign AS name
+						</isEqual>
+						<isEqual property="language" compareValue="zh_CN">										
+							,bc.ChannelName AS name
+						</isEqual>								
+					</isNotEmpty>
+					<isEmpty property="language">
+						,bc.ChannelName AS name
+					</isEmpty>
+					<isNotEmpty property="channel_counter">	
+    					,ci.CounterCode AS counterCode
+						,oz.DepartName AS counterName							
+					</isNotEmpty>
+					<isEmpty property="channel_counter">	
+    					,null AS counterCode
+						,null AS counterName							
+					</isEmpty>
+				</dynamic>
+    			<![CDATA[
+    		FROM
+    		    Basis.BIN_Channel bc
+	    		]]>
+    			<isNotEmpty property="channel_counter">
+    				<![CDATA[
+   					JOIN Basis.BIN_CounterInfo ci
+					ON(bc.BIN_ChannelID = ci.BIN_ChannelID)
+    				JOIN Basis.BIN_Organization oz
+	    			ON(ci.BIN_OrganizationID = oz.BIN_OrganizationID)
+					JOIN (
+					]]>
+					<include refid="BINOLCMINC99.departPrivilegeSql" />
+					<![CDATA[
+					)dp	
+					ON(dp.BIN_OrganizationID = oz.BIN_OrganizationID)
+					]]>					
+				</isNotEmpty>
+				<![CDATA[
+    		WHERE 
+    			bc.BIN_OrganizationInfoID = #organizationInfoId#  AND 
+	    		]]>
+					<isNotEmpty property="brandInfoId">
+	    				bc.BIN_BrandInfoID = #brandInfoId# AND
+	    			</isNotEmpty>
+					<isNotEmpty property="channel_counter">
+						ci.ValidFlag = '1' AND
+						oz.ValidFlag = '1' AND	
+					</isNotEmpty>
+				<![CDATA[
+				bc.ValidFlag = '1'
+    	]]>			
+    </select>
+    <!-- 取得柜台信息 -->
+    <select id="getCntInfoList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+    	<![CDATA[
+		SELECT
+			A.BelongFaction AS id,
+			A.CounterCode AS counterCode,
+			A.CounterNameIF AS counterName
+		FROM
+			Basis.BIN_CounterInfo A
+			JOIN (
+		]]>
+		<include refid="BINOLCMINC99.departPrivilegeSql" />
+		<![CDATA[)dp ON(A.BIN_OrganizationID = dp.BIN_OrganizationID)
+		where
+			A.BIN_BrandInfoID = #brandInfoId#
+			AND A.ValidFlag = '1'
+			AND A.BelongFaction IS NOT NULL
+		ORDER BY
+			A.CounterCode
+    	]]>			
+    </select>
+    <!-- 取得会员等级List  -->
+    <select id="getLevelDateList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+       	<![CDATA[
+			SELECT 
+				DISTINCT convert (varchar, B.FromDate, 121)+ '~' + convert (varchar, B.ToDate, 121) AS levelDate
+			FROM 
+				Members.BIN_MemberLevel A,
+	 			Members.BIN_MemberLevelDetail B
+			WHERE 
+				A.BIN_OrganizationInfoID = #organizationInfoId# AND
+				A.BIN_BrandInfoID = #brandInfoId# AND 
+	 	 		B.BIN_MemberLevelID = A.BIN_MemberLevelID AND
+	 	 		B.ToDate >= #busDate# AND
+				A.ValidFlag = '1' AND
+				B.ValidFlag = '1'
+			]]>
+		<![CDATA[
+				ORDER BY 
+					LevelDate ASC
+			]]>
+    </select>
+	
+	<!-- 查询柜台件数  -->
+    <select id="getCounterCount" parameterClass="java.util.HashMap" resultClass="java.lang.Integer">
+       	<![CDATA[
+			SELECT 
+				COUNT(*) AS count
+			FROM
+				Basis.BIN_BrandInfo A,
+				Basis.BIN_CounterInfo B
+			WHERE
+				A.BrandCode = #brandCode# AND
+				A.BIN_BrandInfoID = B.BIN_BrandInfoID AND
+				B.CounterCode = #counterCode# AND
+				A.ValidFlag = '1' AND
+				B.ValidFlag = '1'
+			]]>
+    </select>
+	
+	<!-- 查询柜台名称  -->
+    <select id="getCounterName" parameterClass="java.util.HashMap" resultClass="java.lang.String">
+       	<![CDATA[
+			SELECT
+				CounterNameIF
+			FROM
+				Basis.BIN_CounterInfo
+			WHERE 
+				CounterCode = #counterCode# AND
+				BIN_BrandInfoID = #brandInfoId# AND
+				BIN_OrganizationInfoID = #organizationInfoId#
+			]]>
+    </select>
+				
+    <!-- 按区域查询  -->
+    <select id="getCityCount" parameterClass="java.util.HashMap" resultClass="java.lang.Integer">
+       		<![CDATA[
+        	SELECT  
+        		  COUNT(A.BIN_OrganizationID)
+			FROM
+				  Basis.BIN_Organization A
+			JOIN (]]>
+				  <include refid="BINOLCMINC99.departPrivilegeSql" />
+			<![CDATA[)B 
+				  ON(B.BIN_OrganizationID = A.BIN_OrganizationID)
+			WHERE 
+			    A.BIN_BrandInfoID = #brandInfoId#
+			    AND  A.Type = '4'
+			    AND	 A.BIN_CityID IN
+			 ]]>   
+		    <iterate property="cityId" open="(" close=")" conjunction=","> 
+			 <![CDATA[ #cityId[]# ]]> 
+		    </iterate>
+			 <![CDATA[ AND  A.ValidFlag='1' ]]> 
+    </select>
+    
+     <!-- 按渠道查询  -->
+    <select id="getChannelCount" parameterClass="java.util.HashMap" resultClass="java.lang.Integer">
+       		<![CDATA[
+        	SELECT
+				   COUNT(A.BIN_OrganizationID)
+			FROM
+				   Basis.BIN_CounterInfo A
+			JOIN   Basis.BIN_Organization B ON(A.BIN_OrganizationID = B.BIN_OrganizationID)
+			JOIN (
+			]]>   <include refid="BINOLCMINC99.departPrivilegeSql" />
+			<![CDATA[)C
+				   ON(C.BIN_OrganizationID = B.BIN_OrganizationID)
+			WHERE 
+				    A.BIN_BrandInfoID = #brandInfoId#
+				    AND	 A.BIN_ChannelID IN
+			 ]]>   
+		    <iterate property="channelId" open="(" close=")" conjunction=","> 
+			 <![CDATA[ #channelId[]# ]]> 
+		    </iterate>
+			 <![CDATA[ AND  A.ValidFlag='1' ]]> 
+    </select>
+</sqlMap>

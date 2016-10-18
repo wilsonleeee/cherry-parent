@@ -1,0 +1,136 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sqlMap PUBLIC "-//iBATIS.com//DTD SQL Map 2.0//EN" "http://ibatis.apache.org/dtd/sql-map-2.dtd">
+<sqlMap namespace="BINOLMBMBM16">
+    
+  <!-- 会员积分记录SQL -->
+	<select id="getMemLevelList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+	<![CDATA[
+			(SELECT
+				BIN_MemberInfoID AS memberInfoId,
+				MemCode AS memCode,
+				BillID AS billNo,
+				TradeType AS tradeType,
+				RecordKbn AS recordKbn,
+				OldValue AS oldValue,
+				NewValue AS newValue,
+				CONVERT(varchar(30), TicketDate, 120) AS ticketDate,
+				CalcDate AS calcDate,
+				ReCalcCount AS reCalcCount,
+				BIN_RuleIDs AS ruleId,
+				ChangeType AS changeType,
+				SubCampaignCodes AS subCampCode
+			FROM 
+				Members.BIN_RuleExecRecord WITH (NOLOCK)
+			WHERE 
+				BIN_MemberInfoID = #memberInfoId#
+				AND BIN_BrandInfoID =#brandInfoId#
+				AND BIN_OrganizationInfoID =#organizationInfoId#
+	]]>
+		  <isNotEmpty property="memberClubId">
+				AND BIN_MemberClubID = #memberClubId#
+		</isNotEmpty>
+	<![CDATA[
+				AND RecordKbn = '0'
+				AND ValidFlag = '1'
+				AND (ChangeType = '1' OR ChangeType = '2')
+				) 
+	UNION (SELECT
+				BIN_MemberInfoID AS memberInfoId,
+				MemCode AS memCode,
+				BillID AS billNo,
+				TradeType AS tradeType,
+				RecordKbn AS recordKbn,
+				OldValue AS oldValue,
+				NewValue AS newValue,
+				CONVERT(varchar(30), TicketDate, 120) AS ticketDate,
+				CalcDate AS calcDate,
+				ReCalcCount AS reCalcCount,
+				BIN_RuleIDs AS ruleId,
+				ChangeType AS changeType,
+				SubCampaignCodes AS subCampCodeFROM
+			FROM 
+				Members.BIN_RuleExecRecordHistory WITH (NOLOCK)
+			WHERE 
+				BIN_MemberInfoID = #memberInfoId#
+				AND BIN_BrandInfoID =#brandInfoId#
+				AND BIN_OrganizationInfoID =#organizationInfoId#
+		]]>
+		  <isNotEmpty property="memberClubId">
+				AND BIN_MemberClubID = #memberClubId#
+		</isNotEmpty>
+	<![CDATA[
+				AND RecordKbn = '0'
+				AND ValidFlag = '1'
+				AND (ChangeType = '1' OR ChangeType = '2')
+				)
+			ORDER BY CalcDate DESC, TicketDate DESC
+	]]>
+	</select>
+    <!--取得升降级原因List-->
+	<select id="getLevelReasonList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+		<![CDATA[
+			SELECT 						
+				  A.BIN_RuleID,
+     			  A.BIN_CampaignRuleID,
+      			  A.RuleContent AS reason
+			FROM						
+				  Campaign.BIN_Rule A WITH(NOLOCK)
+		]]>
+			<isNotEmpty  property="ruleId">
+				WHERE	
+					A.BIN_RuleID IN 
+				<iterate conjunction="," open="(" close=")" property="ruleId">  
+	    	   	#ruleId[]#
+				</iterate>
+			<![CDATA[AND A.ValidFlag='1']]>
+			</isNotEmpty>
+	</select>
+	 <!--取得升降级匹配规则List-->
+	<select id="getCampNameList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+		<![CDATA[
+			SELECT 
+			      A.SubCampaignCode,
+			      A.BIN_CampaignID,
+			      B.CampaignName campaignName
+  			FROM
+  				  Campaign.BIN_CampaignRule A WITH(NOLOCK)
+				  JOIN Campaign.BIN_Campaign B WITH(NOLOCK) ON (A.BIN_CampaignID=B.BIN_CampaignID)
+		]]>
+			<isNotEmpty property="subCampCode">
+				 WHERE 
+				     A.SubCampaignCode IN 
+				<iterate conjunction="," open="(" close=")" property="subCampCode">  
+	    	   	#subCampCode[]#
+				</iterate>
+				<![CDATA[AND A.ValidFlag='1']]>
+			</isNotEmpty>
+		  <isNotEmpty property="memberClubId">
+				AND B.BIN_MemberClubID = #memberClubId#
+		</isNotEmpty>
+	</select>
+	 <!--取得手动修改原因List-->
+	<select id="getReasonList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+		<![CDATA[
+		SELECT  
+				B.BIN_MemberInfoID,
+				B.Reason AS reason,
+				A.Channel AS channel,
+				B.MemberLevel AS  memberLevel
+		FROM    
+				Members.BIN_MemUsedInfo A WITH(NOLOCK)
+  				JOIN Members.BIN_MemUsedDetail B WITH(NOLOCK)
+  				ON (A.BIN_MemUsedInfoID=B.BIN_MemUsedInfoID)
+  		WHERE  
+			    B.BIN_MemberInfoID=#memberInfoId#
+			 	AND A.BIN_BrandInfoID = #brandInfoId#
+		 	 	AND A.BIN_OrganizationInfoID = #organizationInfoId#
+		]]>
+		  <isNotEmpty property="memberClubId">
+				AND B.BIN_MemberClubID = #memberClubId#
+		</isNotEmpty>
+	<![CDATA[
+			 	AND A.TradeType=#tradeType#
+			 	AND A.ValidFlag='1'
+		]]>
+	</select>
+</sqlMap>

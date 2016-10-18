@@ -1,0 +1,141 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sqlMap PUBLIC "-//iBATIS.com//DTD SQL Map 2.0//EN" "http://ibatis.apache.org/dtd/sql-map-2.dtd">
+<sqlMap namespace="BINOLWSMNG07">
+    <!-- 取得审核中单据  -->
+    <select id="getAuditBill" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+            SELECT 
+                BIN_ProductStockTakingID AS billID
+            FROM Inventory.BIN_ProductStockTaking
+            WHERE
+                BIN_OrganizationID = #BIN_OrganizationID#
+                AND VerifiedFlag IN (
+           <isEmpty property="submit">
+          	 '0',
+           </isEmpty>
+                '1','5','6')
+                AND ValidFlag = '1'
+            UNION
+            SELECT 
+                BIN_ProReturnRequestID AS billID
+            FROM Inventory.BIN_ProReturnRequest
+            WHERE
+                BIN_OrganizationID = #BIN_OrganizationID#
+                AND VerifiedFlag IN (
+			<isEmpty property="submit">
+          		 '0',
+           </isEmpty>
+				'1','5','6','9','12')
+                AND ValidFlag = '1'
+            UNION
+            SELECT 
+                BIN_ProStocktakeRequestID AS billID
+            FROM Inventory.BIN_ProStocktakeRequest
+            WHERE
+                BIN_OrganizationID = #BIN_OrganizationID#
+                AND VerifiedFlag IN (
+			<isEmpty property="submit">
+          		 '0',
+           </isEmpty>
+				'1','5','6')
+                AND ValidFlag = '1'
+    </select>
+    
+    <!-- 柜台产品全盘 -->
+    <select id="getAllCntPrtStockList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+        <![CDATA[
+            SELECT
+                CP.UnitCode,
+                CP.BarCode,
+                CP.BIN_ProductVendorID,
+                CP.StandardCost,
+                CP.SalePrice,
+                CP.MemPrice,
+                CP.NameTotal,
+                ISNULL(PS.Quantity,0) AS StockQuantity
+            FROM(
+        ]]>
+        <isEqual property="isCntPrt" compareValue="0">
+            <include refid="BINOLCM41.getStandProductInfoSQL" />
+        </isEqual>
+        <isEqual property="isCntPrt" compareValue="1">
+            <include refid="BINOLCM41.getCntProductInfoSQL" />
+        </isEqual>
+        <![CDATA[
+            )CP
+        ]]>
+        <![CDATA[
+            LEFT JOIN Inventory.BIN_ProductStock PS
+            ON (CP.BIN_ProductVendorID = PS.BIN_ProductVendorID
+                AND PS.BIN_InventoryInfoID = #BIN_InventoryInfoID#
+                AND PS.BIN_LogicInventoryInfoID = #BIN_LogicInventoryInfoID#)
+        ]]>
+        <isNotEmpty property="prtOrderBy">
+            <isEqual property="prtOrderBy" compareValue="0">
+                ORDER BY
+                    CP.UnitCode  ASC
+            </isEqual>
+            <isEqual property="prtOrderBy" compareValue="1">
+                ORDER BY
+                    CP.BarCode  ASC
+            </isEqual>
+        </isNotEmpty>
+    </select>
+    
+    <!-- 柜台产品指定盘点 -->
+    <select id="getGivenCntPrtStockList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+       SELECT 
+			P.UnitCode,
+			B.BarCode,
+			P.BIN_ProductID,
+			B.BIN_ProductVendorID,
+			ISNULL(CONVERT(Decimal(16,2),C.SalePrice),0) AS SalePrice,
+            ISNULL(CONVERT(Decimal(16,2),C.MemPrice),0) AS MemPrice,
+            ISNULL(CONVERT(Decimal(16,2),P.StandardCost),0) AS StandardCost,
+            ISNULL(PS.Quantity,0) AS StockQuantity,
+			<dynamic>
+				<isNotEmpty property="language">
+					<isEqual property="language" compareValue="zh_CN">										
+						P.NameTotal AS NameTotal
+					</isEqual>
+					<isEqual property="language" compareValue="en_US">										
+						P.NameForeign AS NameTotal
+					</isEqual>
+				</isNotEmpty>
+				<isEmpty property="language">
+						P.NameTotal AS NameTotal
+				</isEmpty>
+			</dynamic>
+		FROM 
+			Basis.BIN_ProductFunctionDetail PFD 
+			JOIN Basis.BIN_Product P WITH(NOLOCK) ON P.BIN_ProductID = PFD.BIN_ProductID
+			JOIN Basis.BIN_ProductVendor B WITH(NOLOCK) ON(p.BIN_ProductID = B.BIN_ProductID AND B.ValidFlag = '1')
+            LEFT JOIN Basis.BIN_ProductPrice C WITH(NOLOCK)
+            ON (P.BIN_ProductID = C.BIN_ProductID
+            AND P.ValidFlag = C.ValidFlag 
+            AND C.Type = '2')
+        <![CDATA[
+            LEFT JOIN Inventory.BIN_ProductStock PS
+            ON (B.BIN_ProductVendorID = PS.BIN_ProductVendorID
+                AND PS.BIN_InventoryInfoID = #BIN_InventoryInfoID#
+                AND PS.BIN_LogicInventoryInfoID = #BIN_LogicInventoryInfoID#)
+        ]]>
+		WHERE 
+			PFD.BIN_ProductFunctionID = #productFunctionID#
+			AND PFD.ValidFlag = '1'
+    </select>
+    
+    <!-- 取得商品盘点 -->
+    <select id="getPrtFunList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+    	  SELECT TOP 1
+			  BIN_ProductFunctionID AS productFunctionID
+		  FROM 
+		  	  Basis.BIN_ProductFunction
+		  WHERE
+			  BIN_OrganizationInfoID = #organizationInfoId#					
+		  	  AND BIN_BrandInfoID=#brandInfoId#
+		  	  AND ValidFlag = '1'
+		  	  AND PrtFunType = '1'
+		  	  AND (#bussDate# between StartDate and EndDate ) 
+    </select>
+    
+</sqlMap>

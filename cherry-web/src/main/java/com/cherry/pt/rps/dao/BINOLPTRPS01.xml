@@ -1,0 +1,276 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sqlMap PUBLIC "-//iBATIS.com//DTD SQL Map 2.0//EN" "http://ibatis.apache.org/dtd/sql-map-2.dtd">
+<sqlMap namespace="BINOLPTRPS01">
+    <!-- 盘点单查询sql文  -->
+    <sql id="takingQuery">
+        <![CDATA[
+            SELECT
+		]]>
+		<isEmpty property="prtVendorId">
+			<isEmpty property="productName">
+		        <![CDATA[DISTINCT]]>
+			</isEmpty>
+		</isEmpty>
+		<![CDATA[
+                A.BIN_ProductStockTakingID AS stockTakingId,
+				A.StockTakingNoIF AS stockTakingNo,
+                A.VerifiedFlag AS verifiedFlag,
+                A.Type AS takingType,
+                A.Date AS date,
+                F.DepartCode AS departCode,
+                H.EmployeeName AS employeeName,
+        ]]>
+        <dynamic>
+        	<isEmpty property="profitKbn">
+        		<isEmpty property="prtVendorId">
+        			<isEmpty property="productName">
+	                    <![CDATA[
+	                        A.TotalQuantity AS summQuantity,
+	                        A.TotalAmount AS summAmount
+	                    ]]>
+        			</isEmpty>
+					<isNotEmpty property="productName">
+	                    <![CDATA[
+	                        ISNULL(C.GainQuantity, 0) AS summQuantity,                                                                        
+	                        ISNULL(C.GainQuantity, 0)* ISNULL(C.Price, 0) AS summAmount
+	                    ]]>
+					</isNotEmpty>
+				</isEmpty>
+				<isNotEmpty property="prtVendorId">
+	                <![CDATA[
+	                    ISNULL(C.GainQuantity, 0) AS summQuantity,                                                                        
+	                    ISNULL(C.GainQuantity, 0)* ISNULL(C.Price, 0) AS summAmount
+	                ]]>
+				</isNotEmpty>
+        	</isEmpty>
+			<isNotEmpty property="profitKbn">
+				<isEmpty property="prtVendorId">
+					<isEmpty property="productName">
+	                    <![CDATA[
+	                        SUM(ISNULL(C.GainQuantity, 0)) AS summQuantity,
+	                        SUM(ISNULL(C.GainQuantity, 0) * ISNULL(C.Price, 0)) AS summAmount
+	                    ]]>
+					</isEmpty>
+					<isNotEmpty property="productName">
+	                    <![CDATA[
+	                        ISNULL(C.GainQuantity, 0) AS summQuantity,                                                                        
+	                        ISNULL(C.GainQuantity, 0)* ISNULL(C.Price, 0) AS summAmount
+	                    ]]>
+					</isNotEmpty>
+				</isEmpty>
+				<isNotEmpty property="prtVendorId">
+	                <![CDATA[
+	                    ISNULL(C.GainQuantity, 0) AS summQuantity,                                                                        
+	                    ISNULL(C.GainQuantity, 0)* ISNULL(C.Price, 0) AS summAmount
+	                ]]>
+				</isNotEmpty>
+			</isNotEmpty>
+	        <isNotEmpty property="language">
+	            <isEqual property="language" compareValue="en_US">
+	            ,'(' + F.DepartCode + ')'+F.NameForeign AS departName
+	            ,'('+DepotCode+')'+D.DepotNameEN AS inventoryName
+	            </isEqual>
+	            <isEqual property="language" compareValue="zh_CN">
+	            ,'(' + F.DepartCode + ')'+F.DepartName AS departName
+	            ,'('+DepotCode+')'+D.DepotNameCN AS inventoryName
+	            </isEqual>
+	        </isNotEmpty>
+	        <isEmpty property="language">
+	            ,'(' + F.DepartCode + ')'+F.DepartName AS departName
+	            ,'('+DepotCode+')'+D.DepotNameCN AS inventoryName
+	        </isEmpty>
+        </dynamic>
+         <![CDATA[
+            FROM
+                Inventory.BIN_ProductStockTaking A
+				JOIN Inventory.BIN_ProductTakingDetail C
+				ON(A.BIN_ProductStockTakingID = C.BIN_ProductTakingID AND C.ValidFlag = '1')
+				JOIN Basis.BIN_DepotInfo D
+				ON(C.BIN_InventoryInfoID = D.BIN_DepotInfoID AND D.ValidFlag = '1')
+				JOIN Basis.BIN_Organization F
+                ON(A.BIN_OrganizationID = F.BIN_OrganizationID AND F.ValidFlag = '1')
+			    LEFT JOIN Basis.BIN_Employee H
+			    ON (A.BIN_EmployeeID = H.BIN_EmployeeID AND H.ValidFlag = '1')
+		]]>
+		<isEmpty property="prtVendorId">
+            <isNotEmpty property="productName" >
+				<![CDATA[
+		            LEFT JOIN Basis.BIN_ProductVendor I
+		            ON(I.BIN_ProductVendorID = C.BIN_ProductVendorID)
+		            LEFT JOIN Basis.BIN_Product J
+		            ON(J.BIN_ProductID = I.BIN_ProductID)
+				]]>
+		  </isNotEmpty>
+		</isEmpty>
+		<![CDATA[
+            WHERE
+                A.ValidFlag = '1'
+        ]]>
+        <dynamic>
+        <isNotEmpty prepend="AND" property="profitKbn">
+            <isEqual property="profitKbn" compareValue="0">
+                    <![CDATA[ISNULL(C.GainQuantity, 0) >= 0 ]]>
+            </isEqual>
+            <isEqual property="profitKbn" compareValue="1">
+                    <![CDATA[ISNULL(C.GainQuantity, 0) < 0 ]]>
+            </isEqual>
+        </isNotEmpty>
+        <isNotEmpty prepend="AND" property="stockTakingNo">
+            A.StockTakingNoIF LIKE '%' + #stockTakingNo# + '%'
+        </isNotEmpty>
+        <isNotEmpty prepend="AND" property="verifiedFlag">
+            A.VerifiedFlag = #verifiedFlag#
+		</isNotEmpty>
+        <isNotEmpty prepend="AND" property="startDate">
+            <![CDATA[
+            A.Date >= #startDate#
+            ]]>
+        </isNotEmpty>
+        <isNotEmpty prepend="AND" property="endDate">
+            <![CDATA[
+            A.Date <= #endDate#
+            ]]>           
+        </isNotEmpty>
+        <isNotEmpty prepend="AND" property="prtVendorId">
+            <![CDATA[
+                C.BIN_ProductVendorID = #prtVendorId#
+            ]]>
+        </isNotEmpty>
+        <isEmpty property="prtVendorId">
+            <isNotEmpty prepend="AND" property="productName" >
+                <![CDATA[J.NameTotal like '%' + #productName# + '%']]>
+            </isNotEmpty>
+        </isEmpty>
+        <isNotEmpty prepend="AND" property="depotId">
+            <![CDATA[  
+                C.BIN_InventoryInfoID = #depotId#
+            ]]>
+        </isNotEmpty>
+        </dynamic>
+		<![CDATA[AND EXISTS ( ]]>
+        <include refid="BINOLCMINC99.getDepartList" />
+        <![CDATA[
+                AND A.BIN_OrganizationID = A99.BIN_OrganizationID)
+        ]]>
+		<dynamic>
+			<isNotEmpty property="profitKbn">
+				<isEmpty property="prtVendorId">
+					<isEmpty property="productName">
+	                    <![CDATA[
+	                        GROUP BY
+	                            A.BIN_ProductStockTakingID,
+	                            A.StockTakingNoIF,
+	                            A.VerifiedFlag,
+	                            A.Type,
+	                            A.Date,   
+	                            A.ValidFlag,
+	                            F.DepartCode,
+	                            H.EmployeeName
+	                    ]]>
+	                    <isNotEmpty property="language">
+	                        <isEqual property="language" compareValue="en_US">
+	                        ,'(' + F.DepartCode + ')'+F.NameForeign
+	                        ,'('+DepotCode+')'+D.DepotNameEN
+	                        </isEqual>
+	                        <isEqual property="language" compareValue="zh_CN">  
+	                        ,'(' + F.DepartCode + ')'+F.DepartName
+	                        ,'('+DepotCode+')'+D.DepotNameCN
+	                        </isEqual>
+	                    </isNotEmpty>
+	                    <isEmpty property="language">
+	                        ,'(' + F.DepartCode + ')'+F.DepartName
+	                        ,'('+DepotCode+')'+D.DepotNameCN
+	                    </isEmpty>
+					</isEmpty>
+				</isEmpty>
+			</isNotEmpty>
+		</dynamic>
+    </sql>
+    
+    <!-- 取得盘点单总数  -->
+    <select id="getTakingCount" parameterClass="java.util.HashMap" resultClass="java.lang.Integer">
+        <![CDATA[
+            SELECT  COUNT(SORT_T1.stockTakingNo) AS count FROM (
+        ]]>
+        <include refid="BINOLPTRPS01.takingQuery" />
+        <![CDATA[
+            )SORT_T1
+        ]]>
+    </select>
+    
+    <!-- 取得盘点单List  -->
+    <select id="getTakingList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+        <include refid="BINOLCMINC99.pageheader" />
+        <include refid="BINOLPTRPS01.takingQuery" />
+        <include refid="BINOLCMINC99.pagefooter" />
+    </select>
+	
+    <!-- 取得盘点单汇总信息【产品作为检索条件】  -->
+    <select id="getSumInfo" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+        <![CDATA[
+            SELECT
+                ISNULL(SUM(ISNULL(B.GainQuantity, 0)),0) AS sumQuantity,
+                ISNULL(SUM(ISNULL(B.GainQuantity, 0) * ISNULL(B.Price, 0)),0) AS sumAmount
+            FROM
+                Inventory.BIN_ProductStockTaking A
+                JOIN Inventory.BIN_ProductTakingDetail B
+                ON(A.BIN_ProductStockTakingID = B.BIN_ProductTakingID
+                   AND B.ValidFlag = '1')
+                LEFT JOIN Basis.BIN_Organization C
+                    ON(A.BIN_OrganizationID = C.BIN_OrganizationID)
+		]]>		
+        <isEmpty property="prtVendorId">
+            <isNotEmpty prepend="" property="productName" >
+                <![CDATA[
+                    LEFT JOIN Basis.BIN_ProductVendor I
+                    ON(I.BIN_ProductVendorID = B.BIN_ProductVendorID)
+                    LEFT JOIN Basis.BIN_Product J
+                    ON(J.BIN_ProductID = I.BIN_ProductID)
+                ]]>
+            </isNotEmpty>
+        </isEmpty>
+		<![CDATA[
+            WHERE
+                A.ValidFlag = '1'
+        ]]>
+        <dynamic>
+            <isNotEmpty prepend="AND" property="profitKbn">
+                <isEqual property="profitKbn" compareValue="0">
+                        <![CDATA[ISNULL(B.GainQuantity, 0) >= 0 ]]>
+                </isEqual>
+                <isEqual property="profitKbn" compareValue="1">
+                        <![CDATA[ISNULL(B.GainQuantity, 0) < 0 ]]>
+                </isEqual>
+            </isNotEmpty>
+            <isNotEmpty prepend="AND" property="verifiedFlag">
+                <![CDATA[A.VerifiedFlag = #verifiedFlag#]]>
+            </isNotEmpty>
+            <isNotEmpty prepend="AND" property="stockTakingNo">   
+                <![CDATA[A.StockTakingNoIF Like '%' + #stockTakingNo# + '%']]>
+            </isNotEmpty>
+            <isNotEmpty prepend="AND" property="tradeType">
+                <![CDATA[A.TradeType = #tradeType#]]>
+            </isNotEmpty>
+            <isNotEmpty prepend="AND" property="startDate">
+                <![CDATA[ A.Date >= #startDate# ]]>
+            </isNotEmpty>
+            <isNotEmpty prepend="AND" property="endDate">
+                <![CDATA[ A.Date <= #endDate# ]]>
+            </isNotEmpty>
+            <isNotEmpty prepend="AND" property="depotId">
+                <![CDATA[B.BIN_InventoryInfoID = #depotId#]]>
+            </isNotEmpty>
+            <isNotEmpty prepend="AND" property="prtVendorId">
+                <![CDATA[B.BIN_ProductVendorID = #prtVendorId#]]>
+            </isNotEmpty>
+	        <isEmpty property="prtVendorId">
+	            <isNotEmpty prepend="AND" property="productName" >
+	                <![CDATA[J.NameTotal like '%' + #productName# + '%']]>
+	            </isNotEmpty>
+	        </isEmpty>
+        </dynamic>
+        <![CDATA[AND EXISTS (]]>
+        <include refid="BINOLCMINC99.getDepartList" />
+        <![CDATA[AND A.BIN_OrganizationID = A99.BIN_OrganizationID)]]>
+    </select>
+</sqlMap>

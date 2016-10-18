@@ -1,0 +1,114 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sqlMap PUBLIC "-//iBATIS.com//DTD SQL Map 2.0//EN" "http://ibatis.apache.org/dtd/sql-map-2.dtd">
+<sqlMap namespace="BINOLSTCM20">
+	<sql id="ProductLastWeightedAvgPriceSQL">
+	<![CDATA[
+		SELECT DISTINCT
+			A.BIN_ProductVendorID,
+			D.BIN_OrganizationID,
+			A.BIN_InventoryInfoID,
+			A.BIN_LogicInventoryInfoID,
+			A.BIN_StorageLocationInfoID,
+			ISNULL(A.Price,0.0) AS inDepotPrice,
+			ISNULL(A.Quantity,0) AS inDepotQuantity,
+			ISNULL(B.Quantity,0) AS stockQuantityOld,
+			MAX(C.Date) as lastDate,
+			MAX(C.CreateTime) as lastCreateTime
+		FROM 
+			Inventory.BIN_ProductInDepotDetail A
+			LEFT JOIN Inventory.BIN_ProductStock B
+			ON(A.BIN_ProductVendorID=B.BIN_ProductVendorID
+				AND A.BIN_InventoryInfoID=B.BIN_InventoryInfoID
+				AND A.BIN_LogicInventoryInfoID=B.BIN_LogicInventoryInfoID)
+			LEFT JOIN Inventory.BIN_ProductWeightedAvgPrice C
+			ON(A.BIN_ProductVendorID=C.BIN_ProductVendorID
+				AND A.BIN_InventoryInfoID=C.BIN_InventoryInfoID
+				AND A.BIN_LogicInventoryInfoID=C.BIN_LogicInventoryInfoID)
+			,Inventory.BIN_ProductInDepot D
+		WHERE 
+			A.BIN_ProductInDepotID = #BIN_ProductInDepotID#
+			AND A.ValidFlag='1'
+			AND A.BIN_ProductInDepotID=D.BIN_ProductInDepotID
+			AND D.ValidFlag='1'
+		GROUP BY 
+			A.BIN_ProductVendorID,
+			D.BIN_OrganizationID,
+			A.BIN_InventoryInfoID,
+			A.BIN_LogicInventoryInfoID,
+			A.BIN_StorageLocationInfoID,
+			A.Price,
+			A.Quantity,
+			B.Quantity
+	]]>
+	</sql>
+
+	<!-- 根据入库单明细，获取相应的入库产品的库存、入库数量、入库价及经加权后计算得到的最新的加权平均价 -->
+	<select id="getProductWeightedAvgInfo" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+        <![CDATA[
+			SELECT 
+				T0.BIN_ProductVendorID,
+				T0.BIN_OrganizationID,
+				T0.BIN_InventoryInfoID,
+				T0.BIN_LogicInventoryInfoID,
+				T0.BIN_StorageLocationInfoID,
+				T0.inDepotPrice,
+				T0.inDepotQuantity,
+				T0.stockQuantityOld,
+				T0.lastDate,
+				CASE WHEN (stockQuantityOld+inDepotQuantity = 0) THEN 0.000000
+				ELSE 
+				CAST((CAST((T0.inDepotPrice * T0.inDepotQuantity + ISNULL(W.AvgPrice,ISNULL(PT.StandardCost,0.0))*T0.stockQuantityOld) as decimal(32,6))
+				/(stockQuantityOld+inDepotQuantity)) AS decimal(32,6)) end AS avgPriceNew,
+				#CreatedBy# AS createdBy,
+				#CreatePGM# AS createPGM,
+				#UpdatedBy# AS updatedBy,
+				#UpdatePGM# AS updatePGM
+			FROM 
+			(
+		]]>
+		<include refid="BINOLSTCM20.ProductLastWeightedAvgPriceSQL" />
+		<![CDATA[
+				) T0
+				LEFT JOIN Inventory.BIN_ProductWeightedAvgPrice W WITH(NOLOCK)
+				ON(W.BIN_ProductVendorID=T0.BIN_ProductVendorID 
+					AND W.BIN_OrganizationID=T0.BIN_OrganizationID
+					AND W.BIN_InventoryInfoID=T0.BIN_InventoryInfoID 
+					AND W.BIN_LogicInventoryInfoID=T0.BIN_LogicInventoryInfoID
+					AND W.Date=T0.lastDate AND W.CreateTime=T0.lastCreateTime)
+				LEFT JOIN Basis.BIN_ProductVendor PV WITH(NOLOCK)
+				ON(T0.BIN_ProductVendorID=PV.BIN_ProductVendorID)
+				LEFT JOIN Basis.BIN_Product PT WITH(NOLOCK)
+				ON(PV.BIN_ProductID=PT.BIN_ProductID)
+		]]>
+	</select>
+	
+    <!--插入【大仓加权平均成本价格表】-->
+	<insert id="insertProductWeightedAvgPrice" parameterClass="java.util.HashMap">
+        <![CDATA[
+            INSERT INTO Inventory.BIN_ProductWeightedAvgPrice(
+                Date,
+                BIN_ProductVendorID,
+                AvgPrice,
+                BIN_OrganizationID,
+		      	BIN_InventoryInfoID,
+		      	BIN_LogicInventoryInfoID,
+		      	BIN_StorageLocationInfoID,
+		      	BIN_ProductVendorPackageID,
+        ]]>
+        <include refid="BINOLCMINC99.insertKeySql" />
+        <![CDATA[
+            )VALUES(
+                cast(GETDATE() AS date),
+                #BIN_ProductVendorID#,
+                #avgPriceNew#,
+                #BIN_OrganizationID#,
+                #BIN_InventoryInfoID#,
+                #BIN_LogicInventoryInfoID#,
+                #BIN_StorageLocationInfoID#,
+                '0',
+        ]]>
+        <include refid="BINOLCMINC99.insertValueSql"/>
+		<![CDATA[ ) ]]>
+	</insert>
+	
+</sqlMap>

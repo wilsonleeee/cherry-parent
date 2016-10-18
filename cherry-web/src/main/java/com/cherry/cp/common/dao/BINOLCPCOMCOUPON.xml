@@ -1,0 +1,105 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sqlMap PUBLIC "-//iBATIS.com//DTD SQL Map 2.0//EN" "http://ibatis.apache.org/dtd/sql-map-2.dtd">
+<sqlMap namespace="BINOLCPCOMCOUPON">
+    <!-- 主题活动Coupon设定信息 -->
+	<resultMap id="BINOLCPCOMCOUPON.CouponInfo" class="java.util.HashMap">
+		<result property="npq" column="Npq"/>			<!-- P和Q的乘积 -->
+		<result property="primeE" column="PrimeE"/>		<!-- 大质数E -->
+		<result property="seqNum" column="SeqNum"/>		<!-- 更新前有序数 -->
+	</resultMap>
+
+	<!-- 更新会员活动Coupon信息表,输出修改前的序列号以及大质数 -->
+	<select id="getCouponInfo" parameterClass="java.util.HashMap" resultMap="BINOLCPCOMCOUPON.CouponInfo">
+		<![CDATA[
+			SELECT
+				SeqNum,
+				Npq,
+				PrimeE
+			FROM				
+				Campaign.BIN_CampaignCoupon
+			WHERE					
+				CampaignCode = #campCode# AND
+				BIN_BrandInfoID=#brandInfoId# AND 
+				BIN_OrganizationInfoID=#organizationInfoId#				
+		]]>
+    </select>
+    <!-- 更新会员活动Coupon信息表,输出修改前的序列号以及大质数 -->
+	<update id="updCouponSeq" parameterClass="java.util.HashMap">
+		<![CDATA[
+			UPDATE				
+				Campaign.BIN_CampaignCoupon			
+			SET				
+    			SeqNum = SeqNum +  #couponCount#,
+		]]>
+		<include refid="BINOLCMINC99.updateSql" />		
+		<![CDATA[			
+			WHERE					
+				CampaignCode = #campCode# AND
+				BIN_BrandInfoID=#brandInfoId# AND 
+				BIN_OrganizationInfoID=#organizationInfoId#				
+		]]>
+    </update>
+    <select id="addCouponInfo" parameterClass="java.util.HashMap" resultMap="BINOLCPCOMCOUPON.CouponInfo">
+    	<![CDATA[
+		INSERT INTO Campaign.BIN_CampaignCoupon(
+				BIN_OrganizationInfoID,
+				BIN_BrandInfoID,
+				CampaignCode,
+				PrimeP,
+				PrimeQ,
+				Npq,
+				PrimeE,
+				SeqNum,
+		]]>	
+		<include refid="BINOLCMINC99.insertKeySql" />									
+		<![CDATA[	
+		  	)
+		  	OUTPUT inserted.SeqNum as SeqNum,
+			inserted.Npq as Npq,
+			inserted.PrimeE as PrimeE				
+		  	VALUES(
+				#organizationInfoId#,
+				#brandInfoId#,
+				#campCode#,
+				#primeP#,
+				#primeQ#,
+				#npq#,
+				#primeE#,
+				#seqNum#,		
+		]]>	
+		<include refid="BINOLCMINC99.insertValueSql" />
+		<![CDATA[)]]>
+    </select>
+    <!-- 取得活动已生成的coupon信息List -->
+    <select id="getCouponHisList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+    	<include refid="BINOLCMINC99.pageheader" />
+    	<![CDATA[
+		SELECT
+			A.BIN_CouponID AS couponId,
+			ISNULL(A.ReceiverCode,B.MobilePhone) AS mobilePhone,
+			A.CouponCode AS couponCode,
+			A.MemberCode AS memCode,
+			B.BIN_MemberInfoID AS memId,
+			SUBSTRING(B.BirthDay,1,2) AS birthMonth,
+			SUBSTRING(B.BirthDay,3,2) AS birthDay,
+			CONVERT(varchar(10),B.JoinDate,120) AS joinDate,
+			CONVERT(varchar(10),B.LevelAdjustDay,120) AS levelAdjustDay,
+			B.CounterCodeBelong AS counterCode
+		FROM
+		   Communication.BIN_CouponCreateLog A
+		   LEFT JOIN Members.BIN_MemberInfo B
+		   ON(A.CustomerSysID = B.BIN_MemberInfoID
+				AND A.MemberCode != '')
+		where
+			A.CampaignCode = #campCode#
+		]]>
+		<isNotEmpty property="memId" prepend="AND">
+		<![CDATA[B.BIN_MemberInfoID = #memId#]]>
+		</isNotEmpty>
+		<include refid="BINOLCMINC99.pagefooter" />
+    </select>
+    <!-- 删除活动已生成的coupon信息List -->
+    <delete id="delCouponHisList" parameterClass="java.util.HashMap">
+    	<![CDATA[DELETE FROM Communication.BIN_CouponCreateLog WHERE BIN_CouponID = #couponId#]]>	
+    </delete>	
+</sqlMap>

@@ -1,0 +1,98 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sqlMap PUBLIC "-//iBATIS.com//DTD SQL Map 2.0//EN" "http://ibatis.apache.org/dtd/sql-map-2.dtd">
+<sqlMap namespace="BINOLPTRPS20">
+	<!-- 取得发货单概要信息  -->
+    <select id="getDeliverMainInfo" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+    	<![CDATA[
+		SELECT	
+			A.BIN_ProductDeliverID AS productDeliverID,
+			A.DeliverNo AS deliverNo,
+			A.DeliverNoIF AS deliverNoIF,
+			A.RelevanceNo AS relevanceNo,
+			ISNULL(A.TotalQuantity,0) AS totalQuantity,				
+			ISNULL(A.TotalAmount,0) AS totalAmount,	
+			A.VerifiedFlag AS verifiedFlag,
+			A.TradeStatus AS tradeStatus,
+			A.Date AS date,
+			A.Comments AS comments,
+			E.DepartCode as departCode,
+			F.DepartCode as receiveDepartCode,
+		]]>
+		<dynamic>
+			<isNotEmpty property="language">
+				<isEqual property="language" compareValue="en_US">
+					E.NameForeign AS sendDepart,													
+					F.NameForeign AS receiveDepart
+				</isEqual>
+				<isEqual property="language" compareValue="zh_CN">	
+					E.DepartName AS sendDepart,												
+					F.DepartName AS receiveDepart
+				</isEqual>								
+			</isNotEmpty>
+			<isEmpty property="language">
+				E.DepartName AS sendDepart,													
+				F.DepartName AS receiveDepart
+			</isEmpty>
+		</dynamic>
+		<![CDATA[						
+			FROM														
+				Inventory.BIN_ProductDeliver A											
+				LEFT JOIN Basis.BIN_Organization E													
+				ON (A.BIN_OrganizationID = E.BIN_OrganizationID 													
+					AND	E.ValidFlag = '1')
+				LEFT JOIN Basis.BIN_Organization F
+				ON (A.BIN_OrganizationIDReceive = F.BIN_OrganizationID 													
+					AND	F.ValidFlag = '1')												
+			WHERE														
+				A.BIN_ProductDeliverID = #deliverId#
+		]]>									
+    </select>
+    <!-- 取得发货单明细数据-->
+    <select id="getDeliverDetailList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+        <![CDATA[
+			SELECT
+				A.BIN_ProductVendorID AS productVendorID,
+				A.DetailNo AS detailNo,
+				A.Quantity AS quantity,
+				A.BIN_InventoryInfoID AS inventoryInfoID,
+				A.Price AS price,
+				A.BIN_ProductVendorPackageID AS productVendorPackageID,
+				B.BarCode AS barCode,
+				A.Comments AS comments,
+				ISNULL(E.Quantity,0) AS  nowCount,
+				C.UnitCode AS unitCode
+		]]>
+		<dynamic>
+		<isNotEmpty property="language">
+			<isEqual property="language" compareValue="en_US">										
+			,C.NameForeign AS nameTotal
+			,D.InventoryNameEN AS inventoryName
+			</isEqual>
+			<isEqual property="language" compareValue="zh_CN">										
+			,C.NameTotal AS nameTotal
+			,D.InventoryNameCN AS inventoryName
+			</isEqual>								
+		</isNotEmpty>
+		<isEmpty property="language">
+			,C.NameTotal AS nameTotal
+			,D.InventoryNameCN AS inventoryName
+		</isEmpty>
+		</dynamic>
+		 <![CDATA[		
+			FROM 
+				Inventory.BIN_ProductDeliverDetail A 
+			left join Inventory.BIN_ProductStock E on A.BIN_ProductVendorID = E.BIN_ProductVendorID
+			and A.BIN_InventoryInfoID =E.BIN_InventoryInfoID,
+				Basis.BIN_ProductVendor B,
+				Basis.BIN_Product C,
+				Basis.BIN_InventoryInfo D
+			WHERE
+				 A.BIN_ProductVendorID = B.BIN_ProductVendorID
+				and B.BIN_ProductID = C.BIN_ProductID
+				and A.BIN_InventoryInfoID = D.BIN_InventoryInfoID
+				and A.ValidFlag='1'
+				and A.BIN_ProductDeliverID =#deliverId# 		
+			ORDER BY A.DetailNo ASC
+		]]>
+    </select>
+</sqlMap>

@@ -1,0 +1,341 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Module>
+    <ModulePrefs
+            title="saleCountByHours">
+       		<Require feature="settitle"/>
+            <Require feature="dynamic-height" /> 
+			<Optional feature="content-rewrite">
+			  <Param name="exclude-urls">.*</Param>
+			</Optional>
+			<Require feature="oauthpopup" />
+			<Require feature="cherryOpenSocial"/>
+			<Require feature="cherryChart"/>
+			<Require feature="opensocial-i18n"/> 
+			<Locale messages="../i18n/zh_CN_ALL.xml"/>
+			<Locale lang="zh_CN" messages="../i18n/zh_CN_ALL.xml"/>
+			<Locale lang="zh_TW" messages="../i18n/zh_TW_ALL.xml"/>
+    </ModulePrefs>
+    <Content type="html" ><![CDATA[
+    <style type="text/css">
+    .section-header {
+   		padding: 5px 0px 5px 0px;
+   		font-weight: bold;
+   		//border-bottom: 2px solid #3a3032;
+   		margin-bottom: 5px;
+   		height: 45px;
+   	}
+   	#dateTime {
+   		padding-top: 32px;
+   		position: absolute;
+   		right: 20px;
+   	}
+   	.time {
+   		color: #aeaeae;
+   	}
+   	.amount {
+   		margin-left: 10px;
+   	}
+   	label {
+   		//color: #ffffff;
+   	}
+   	.number {
+   		color:#ff0000;
+   		margin:0 3px 0 0;
+   		font-size:24px;
+    }
+    #saleCountByHoursDiv {
+    	padding: 10px 10px 10px 20px;
+    	font-size: 14px;
+    	//background-color: #000000;
+    }
+  	#waiting {
+  		height:200px;
+  	}
+  	#waiting div {
+  		background-image: url("/Cherry/css/common/blueprint/images/loading.gif");
+	    background-position: 20px center;
+	    background-repeat: no-repeat;
+	    height: 50px;
+	    width: 50px;
+	    left: 40%;
+	    top: 20%;
+	    position: absolute;
+	    z-index: 100;
+  	}
+	</style>
+	
+	<div id="waiting"><div></div></div>
+	<div id="saleCountByHoursDiv" style="display:none;">
+		<div class="section-header">
+	      	<span id="quantity"><label></label><span class="number"></span><span class="unit"></span></span>
+	      	<span id="amount" class="amount"><label></label><span class="number"></span><span class="unit"></span></span>
+	      	<span id="dateTime"><span class="time"></span></span>
+	    </div>
+		<div id="saleCountByHoursLineChart"></div>
+	</div>
+    
+    
+	<script type='text/javascript'>
+	
+	var baseUrl = window.parent.getBaseUrl();
+	var gadgetPrefs = new gadgets.Prefs();
+	var linesData = [];
+	var barsData = [];
+	var ticks = [];
+	var TotalAmount = 0;
+	var TotalQuantity = 0;
+	var curDate = "";
+	
+	function formatNumber(s, n) {
+		if(s == null || s == undefined || s === "") {
+			return "";
+		}
+		n = n > 0 && n <= 20 ? n : 2;
+		s = parseFloat((s + "").replace(/[^\d\.-]/g, "")).toFixed(n) + "";
+		var l = s.split(".")[0].split("").reverse(),
+		r = s.split(".")[1];
+		t = "";
+		for(i = 0; i < l.length; i ++ ) {
+			t += l[i] + ((i + 1) % 3 == 0 && (i + 1) != l.length ? "," : "");
+		}
+		t = t.replace(/,-/g, '-');
+		if(parseInt(r, 10) == 0) {
+			return t.split("").reverse().join("");
+		} else {
+			return t.split("").reverse().join("") + "." + r;
+		}
+	}
+	
+	function accAdd(arg1, arg2) {
+	    var r1,r2,m;
+	    try{r1=arg1.toString().split(".")[1].length}catch(e){r1=0}
+	    try{r2=arg2.toString().split(".")[1].length}catch(e){r2=0}
+	    m=Math.pow(10,Math.max(r1,r2))
+	    return (arg1*m+arg2*m)/m
+	}
+	
+	function subscribeResponse(data) {
+		if(data.indexOf('<!-- EOD -->') > -1) {
+			return false;
+		}
+		var dataObj = eval('('+data+')');
+       	var curTime = dataObj.OccurTime;
+       	var counterKind = dataObj.CounterKind ? dataObj.CounterKind : "0";
+       	if(curTime && curTime.length >= 19 && curTime.substring(0,10) == curDate && counterKind == "0") {
+       		var amount = dataObj.TotalAmount ? dataObj.TotalAmount : 0;
+			var quantity = dataObj.TotalQuantity ? dataObj.TotalQuantity : 0;
+			if(dataObj.saleType == 'SR') {
+				amount = -amount;
+				quantity = -quantity;
+			}
+       		TotalAmount = accAdd(TotalAmount,amount);
+			TotalQuantity = accAdd(TotalQuantity,quantity);
+			var $amount = $("#saleCountByHoursDiv #amount").find('.number');
+			var $quantity = $("#saleCountByHoursDiv #quantity").find('.number');
+			$amount.html(formatNumber(TotalAmount,2));
+			$quantity.html(TotalQuantity);
+			
+			if(amount == 0) {
+				return;
+			}
+			var curHours = parseInt(curTime.substring(11,13), 10);
+			for(var i = 0; i < ticks.length; i++) {
+				var hours = ticks[i][1];
+				if(hours > curHours) {
+					if(linesData[i][1] != null) {
+						linesData[i][1] = accAdd(linesData[i][1],amount);
+					} else {
+						hours = ticks[i-1][1];
+						if(hours <= curHours) {
+							linesData[i][1] = accAdd(linesData[i-1][1],amount);
+						}
+						break;
+					}
+				} else {
+					if(linesData[i][1] == null) {
+						linesData[i][1] = linesData[i-1][1];
+					}
+				}
+			}
+			for(var i = 0; i < ticks.length; i++) {
+				var hours = ticks[i][1];
+				if(hours > curHours) {
+					if(barsData[i][1] == null) {
+						barsData[i][1] = amount;
+					} else {
+						barsData[i][1] = accAdd(barsData[i][1],amount);
+					}
+					break;
+				}
+			}
+       		linesInit();
+       	}
+	}
+	
+	function showTime() {
+		var currentDate = new Date();
+        var year = currentDate.getFullYear();
+        var month = currentDate.getMonth()+1;
+        var day = currentDate.getDate();
+        var hour = currentDate.getHours();
+        var minute = currentDate.getMinutes();
+        var second = currentDate.getSeconds();
+        var currentDateStr = year + "-";
+        if (month >= 10) {
+        	currentDateStr = currentDateStr + month + "-";
+        } else {
+        	currentDateStr = currentDateStr + "0" + month + "-";
+        }
+        if (day >= 10) {
+        	currentDateStr = currentDateStr + day ;
+        } else {
+        	currentDateStr = currentDateStr + "0" + day ;
+        }
+        if(hour >=10) {
+        	 currentDateStr = currentDateStr + " " + hour ;
+        } else {
+        	currentDateStr = currentDateStr + " 0" + hour ;
+        }
+        if(minute >=10) {
+        	currentDateStr = currentDateStr + ":" + minute ;
+        } else {
+        	currentDateStr = currentDateStr + ":0" + minute ;
+        }
+        if(second >=10) {
+        	currentDateStr = currentDateStr + ":" + second ;
+        } else {
+        	currentDateStr = currentDateStr + ":0" + second ;
+        }
+	    $("#saleCountByHoursDiv #dateTime").find(".time").html(currentDateStr);
+	    setTimeout(showTime,1000);
+	} 
+		
+	function render(data) {
+		$("#waiting").hide();
+		$("#saleCountByHoursDiv").show();
+		showTime();
+		
+		data = data.entry;
+		TotalAmount = data.amount;
+		TotalQuantity = data.quantity;
+		curDate = data.sysDate;
+		var $amount = $("#saleCountByHoursDiv #amount").find('.number');
+		var $quantity = $("#saleCountByHoursDiv #quantity").find('.number');
+		$amount.html(formatNumber(TotalAmount,2));
+		$quantity.html(TotalQuantity);
+		
+		if(TotalAmount != 0) {
+			var width = $("#saleCountByHoursDiv").width() - 40;
+			if(width < 300) {
+       			width = 300;
+       		}
+			var height = parseInt(width*1/4, 10);
+			if(height < 150) {
+       			height = 150;
+       		}
+			var _gadgetSizeMax = window.parent.getGadgetSizeMax();
+			if(_gadgetSizeMax) {
+				$("#saleCountByHoursLineChart").css({ "width": width+"px", "height": height+"px" });
+			} else {
+				$("#saleCountByHoursLineChart").css({ "width": width+"px", "height": height+"px" });
+			}
+			for(var i = 0; i < data.saleByHoursList.length; i++) {
+				var saleByHoursMap = data.saleByHoursList[i];
+				linesData.push([i, saleByHoursMap.amountSum]);
+				barsData.push([i, saleByHoursMap.amount]);
+				ticks.push([i,saleByHoursMap.xaxes]);
+			}
+			linesInit();
+			subscribeRequest(baseUrl + '/pubsub/saleInfo', subscribeResponse);
+		}
+	    gadgets.window.adjustHeight();
+	}
+	
+	function linesInit() {
+		var linesObj = {data:linesData, lines: {show: true, fill: false}};
+		var barsObj = {data:barsData, bars:{show: true, align:'center', barWidth:0.3, fillColor: "#9ace05"}};
+		$.plot($("#saleCountByHoursLineChart"), [linesObj,barsObj], {
+			colors:["#ffba01","#9ace05"],
+            xaxis: {
+            	ticks: ticks,
+            	//color: "#ffffff",
+            	//tickColor: "#000000"
+            	tickColor: "#ffffff"
+            },
+            yaxis: {
+            	minTickSize: 1,
+            	tickFormatter: function(val, axis) {
+            		return val;
+            	},
+            	//color: "#ffffff",
+            	//tickColor: "#3a3032"
+            	tickColor: null
+            },
+            grid: {
+            	hoverable: true,
+            	borderWidth: 0
+            }
+        });
+        var previousPoint = null;
+        $("#saleCountByHoursLineChart").bind("plothover", function (event, pos, item) {
+        	if (item) {
+				if (previousPoint != item.dataIndex) {
+					previousPoint = item.dataIndex;
+					$("#tooltip").remove();
+					var y = item.datapoint[1];
+					showTooltip(item.pageX, item.pageY, gadgetPrefs.getMsg("amount")+"："+formatNumber(y,2));
+				}
+			} else {
+				$("#tooltip").remove();
+				previousPoint = null;
+			}
+		});
+	}
+	
+	function showTooltip(x, y, contents) {
+		var left = x + 5;
+		var width = 120;
+		if($("body").width() - left < width) {
+			left = x - width - 10;
+		}
+		$('<div id="tooltip">' + contents + '</div>').css({
+			position: 'absolute',
+			display: 'none',
+			width: width,
+			'text-align': 'center',
+			top: y - 30,
+			left: left,
+			border: '1px solid #eeeeee',
+			padding: '5px 2px 3px 2px',
+			'background-color': '#eeeeee',
+			'font-size': '12px',
+			'color': '#CC6600',
+			'font-weight': 'bold',
+			opacity: 0.80
+		}).appendTo("body").fadeIn(200);
+	}
+	
+	function fetchSaleCountByHours() {
+		$("#waiting").show();
+		$("#saleCountByHoursDiv").hide();
+		$("#saleCountByHoursDiv #amount").find('label').html(gadgetPrefs.getMsg("amount")+"：");
+		$("#saleCountByHoursDiv #quantity").find('label').html(gadgetPrefs.getMsg("quantity")+"：");
+	   	gadgets.window.adjustHeight();
+	   	var url = baseUrl + "/social/rest/saleCountByHours";
+	   	var param = {};
+	   	param.userInfo = window.parent.getUserInfo();
+	   	var _gadgetSizeMax = window.parent.getGadgetSizeMax();
+	   	if(_gadgetSizeMax) {
+	   		param.interval = 1
+	   	} else {
+	   		param.interval = 2
+	   	}
+	   	sendRequestToServer(url, 'POST', param, render, false);
+	}
+	
+	gadgets.util.registerOnLoadHandler(fetchSaleCountByHours);
+	
+	</script>
+	
+	]]></Content>
+</Module>

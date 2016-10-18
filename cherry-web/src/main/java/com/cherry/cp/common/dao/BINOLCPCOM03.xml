@@ -1,0 +1,397 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sqlMap PUBLIC "-//iBATIS.com//DTD SQL Map 2.0//EN" "http://ibatis.apache.org/dtd/sql-map-2.dtd">
+<sqlMap namespace="BINOLCPCOM03">
+	<!-- 取得会员活动组信息List -->
+    <select id="getCpcom03CampaignGrpList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+    	<![CDATA[
+			SELECT
+				BIN_CampaignGrpID AS campaignGrpId,
+				GroupName AS groupName
+			FROM
+				Campaign.BIN_CampaignGrp
+			Where
+				BIN_BrandInfoID = #brandInfoId# AND
+				BIN_OrganizationInfoID = #organizationInfoId# AND
+				CampaignType = #campaignType# AND
+				ValidFlag = '1'
+		]]>
+    </select>
+    <!-- 新增沟通对象搜索记录 -->
+    <insert id="addMemSearchLog" parameterClass="java.util.HashMap">
+	    <![CDATA[
+	    	INSERT INTO Members.BIN_SearchLog(
+				BIN_SearchCode,
+				BIN_OrganizationInfoID,
+				BIN_BrandInfoID,
+				BIN_OrganizationID,
+				RecordName,
+				CustomerType,
+				RecordType,
+				RecordCount,
+				ConditionInfo,
+				Comments,
+				FromType,
+				UseFlag,
+				OwnerUser,
+		]]>	
+		<include refid="BINOLCMINC99.insertKeySql" />									
+		<![CDATA[	
+		  	)VALUES(
+				#searchCode#,
+				#organizationInfoId#,
+				#brandInfoId#,
+				#organizationId#,
+		]]>	
+		<isNotEmpty property="recordName">
+			#recordName#,
+		</isNotEmpty>
+		<isEmpty property="recordName">
+			#searchCode#,
+		</isEmpty>					
+		<![CDATA[		
+				#customerType#,
+				#recordType#,
+				#recordCount#,
+				#conditionInfo#,
+				#comments#,
+				#fromType#,
+				#useFlag#,
+				#ownerUser#,
+		]]>
+		<include refid="BINOLCMINC99.insertValueSql" />
+		<![CDATA[)]]>
+    </insert>
+    <!-- 新增沟通对象 -->
+    <insert id="addCustomerInfo" parameterClass="java.util.HashMap">
+    <![CDATA[
+    	INSERT INTO Members.BIN_CustomerInfo(
+				BIN_SearchCode,
+		      	BIN_CustomerCode,
+		      	BIN_OrganizationInfoID,
+		      	BIN_BrandInfoID,
+		      	CustomerType,
+		      	CustomerName,
+		      	Mobilephone,
+		      	Telephone,
+		      	Email,
+		      	IsReceiveMsg,
+		      	Birthday,
+	     	 	CounterCode,
+		      	UseFlag,
+		]]>	
+		<include refid="BINOLCMINC99.insertKeySql" />									
+		<![CDATA[
+		  )VALUES(
+				#searchCode#,
+				#memCode#,
+				#organizationInfoId#,
+				#brandInfoId#,
+				#customerType#,
+				#memName#,
+				#mobilePhone#,
+				#telephone#,
+				#email#,
+				#receiveMsgFlg#,
+				#birthDay#,
+				#counterCode#,
+				#useFlag#,
+		]]>
+		<include refid="BINOLCMINC99.insertValueSql" />
+		<![CDATA[)]]>
+    </insert>
+    <!-- 更新对象记录 -->
+    <update id="updRecordCount" parameterClass="java.util.HashMap">
+    <![CDATA[
+    	UPDATE Members.BIN_SearchLog
+    	SET RecordCount = #recordCount#
+    	WHERE
+    		BIN_BrandInfoID = #brandInfoId#
+    		AND BIN_SearchCode = #searchCode#
+    ]]>	
+    </update>
+
+	  <!--会员信息 -->
+	 <sql id="MemberInfoSql">
+		<![CDATA[
+			SELECT
+			   A.BIN_SearchCode AS searchCode
+		      ,A.BIN_CustomerCode AS memCode
+		      ,A.CustomerName AS  memName
+		      ,A.Mobilephone AS mobilePhone
+		      ,A.CustomerType AS customerType  
+			  ,A.IsReceiveMsg AS receiveMsgFlg  
+		      ,A.Birthday AS birthDay
+		      ,CONVERT(VARCHAR,C.JoinDate,120) AS joinDate
+		      ,ISNULL(D.ChangablePoint,0) AS changablePoint
+		   FROM 
+			  Members.BIN_CustomerInfo A
+			  LEFT JOIN Members.BIN_MemCardInfo B
+			  ON(A.BIN_CustomerCode = B.MemCode)
+			  LEFT JOIN Members.BIN_MemberInfo C
+			  ON(B.BIN_MemberInfoID = C.BIN_MemberInfoID)
+			  LEFT JOIN Members.BIN_MemberPoint D
+			  ON(C.BIN_MemberInfoID = D.BIN_MemberInfoID
+				AND D.ValidFlag = '1')
+		  WHERE 
+		  	  A.BIN_SearchCode=#searchCode#
+		]]>
+    </sql>
+	 <!-- 查询会员总数 -->
+	<select id="getMemberInfo" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+		<![CDATA[
+		 SELECT
+			  ConditionInfo AS conditionInfo,
+			  ISNULL(RecordCount,0) AS recordCount
+		 FROM 
+			  Members.BIN_SearchLog
+		 WHERE 
+		  	  BIN_BrandInfoID=#brandInfoId#
+			  AND BIN_SearchCode=#searchCode#
+			  AND ValidFlag='1'
+		]]>	
+    </select>
+    <!-- 查询会员信息List-->
+	<select id="getMemInfoList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+		<include refid="BINOLCMINC99.pageheader" />
+		<include refid="BINOLCPCOM03.MemberInfoSql" />
+		<include refid="BINOLCMINC99.pagefooter" />
+    </select>
+  
+	 <!-- 活动对象总数 -->
+	<select id="getRecordCount" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+		<![CDATA[
+		 SELECT
+			  ConditionInfo AS conditionInfo,
+			  ISNULL(RecordCount,0) AS RecordCount
+		 FROM 
+			  Members.BIN_SearchLog
+		 WHERE 
+		  	  BIN_BrandInfoID=#brandInfoId#
+			  AND BIN_SearchCode=#searchCode#
+			  AND ValidFlag='1'
+		]]>	
+    </select>
+    
+     <!-- 更新对象名称，对象数量 -->
+    <update id="updMemSearchLog" parameterClass="java.util.HashMap">
+    <![CDATA[
+    	UPDATE Members.BIN_SearchLog
+    	SET RecordCount = #recordCount#,
+    		RecordName = #recordName#,
+    		CustomerType = #customerType#,
+    ]]>	
+    <include refid="BINOLCMINC99.updateSql" />
+    <![CDATA[
+    	WHERE
+    		BIN_BrandInfoID = #brandInfoId#
+    		AND BIN_SearchCode = #searchCode#
+    ]]>	
+    </update>
+    
+    <!-- 删除活动对象  -->
+	<delete id="delCustomer" parameterClass="java.util.HashMap">
+		<![CDATA[
+		DELETE FROM
+			Members.BIN_CustomerInfo 
+		WHERE
+			BIN_SearchCode =#searchCode# 
+			AND BIN_BrandInfoID = #brandInfoId#
+		]]>
+	</delete>
+	
+	
+	<!-- 复制活动对象Members.BIN_SearchLog表  -->
+	 <update id="copySearchLogInfo" parameterClass="java.util.HashMap">
+		<![CDATA[
+		INSERT Members.BIN_SearchLog(
+				BIN_SearchCode,
+				BIN_OrganizationInfoID,
+				BIN_BrandInfoID,
+				BIN_OrganizationID,
+				RecordName,
+				CustomerType,
+				RecordType,
+				RecordCount,
+				ConditionInfo,
+				Comments,
+				FromType,
+				ValidFlag,
+				CreateTime
+ 			 )
+ 		 SELECT
+				#newSearchCode# as BIN_SearchCode,
+				BIN_OrganizationInfoID,
+				BIN_BrandInfoID,
+				BIN_OrganizationID,
+				RecordName,
+				CustomerType,
+				RecordType,
+				RecordCount,
+				ConditionInfo,
+				Comments,
+				FromType,
+				'1' as ValidFlag,
+				GETDATE() as CreateTime
+ 		 FROM
+			Members.BIN_SearchLog
+  		WHERE
+			BIN_SearchCode = #searchCode#
+			AND BIN_BrandInfoID = #brandInfoId#
+			AND ValidFlag = '1'
+		]]>
+	 </update>
+	 
+	 <!-- 复制活动对象Members.BIN_SearchLog表  -->
+	 <update id="copyCustomerInfo" parameterClass="java.util.HashMap">
+	 	<![CDATA[
+	 		INSERT Members.BIN_CustomerInfo(
+				BIN_SearchCode,
+				BIN_CustomerCode,
+				BIN_OrganizationInfoID,
+				BIN_BrandInfoID,
+				CustomerType,
+				CustomerName,
+				Mobilephone,
+				Telephone,
+				Email,
+				IsReceiveMsg,
+				Birthday,
+				CounterCode,
+				ValidFlag,
+				CreateTime,
+				OrderID,
+				CouponCode
+			)
+		SELECT 
+				#newSearchCode# AS BIN_SearchCode,
+				BIN_CustomerCode,
+				BIN_OrganizationInfoID,
+				BIN_BrandInfoID,
+				CustomerType,
+				CustomerName,
+				Mobilephone,
+				Telephone,
+				Email,
+				IsReceiveMsg,
+				Birthday,
+				CounterCode,
+				'1' AS ValidFlag,
+				GETDATE() as CreateTime,
+				OrderID,
+				CouponCode
+		FROM 
+				Members.BIN_CustomerInfo
+		WHERE
+				BIN_SearchCode = #searchCode#
+				AND BIN_BrandInfoID = #brandInfoId#
+				AND ValidFlag = '1'
+	 	]]>
+	 </update>
+	 
+	<!-- 取得活动档次Id -->
+	<select id="getCampRuleIdList" parameterClass="java.util.HashMap" resultClass="java.lang.String">
+		<![CDATA[
+		 SELECT 
+				DISTINCT
+				A.BIN_CampaignRuleID
+		   FROM 
+				Campaign.BIN_CamRuleCondition A WITH(NOLOCK)
+				JOIN Campaign.BIN_CampaignBaseProp B WITH(NOLOCK)
+				ON(A.BIN_CampaignBasePropID = B.BIN_CampaignBasePropID 
+				AND B.PropertyName = 'baseProp_customer'
+				AND B.ValidFlag = '1')
+		  WHERE   
+				A.BasePropValue1 = #searchCode#
+		]]>	
+    </select>
+    
+    <!-- 记录沟通程序生成的Coupon信息  -->
+	<insert id="addCouponCreateLog" parameterClass="java.util.HashMap">
+		<![CDATA[
+		INSERT INTO Communication.BIN_CouponCreateLog(
+			BatchID,
+			CommCode,
+			CampaignCode,
+			CustomerSysID,
+			MemberCode,
+			ReceiverCode,
+			CouponCode,
+			ExpiredTime,
+			CreateTime,
+			CreatedBy,
+			CreatePGM 
+		)VALUES(
+			#batchId#,
+			#commCode#,
+			#campCode#,
+			#customerSysId#,
+			#memCode#,
+			#receiverCode#,
+			#couponCode#,
+			#expiredTime#,
+			GETDATE(),
+			#createdBy#,
+			#createPGM# 
+		)
+		]]>
+	</insert>
+     <!-- 删除Coupon  -->
+	<delete id="delCouponCreateLog" parameterClass="java.util.HashMap">
+		<![CDATA[
+		DELETE FROM
+			Communication.BIN_CouponCreateLog 
+		WHERE
+			BatchID =#batchId# 
+		]]>
+	</delete>
+	
+	  <!--Coupon 信息 -->
+	 <sql id="CouponInfoSql">
+		<![CDATA[
+			SELECT
+			   BIN_CouponID AS couponId
+			  ,BatchID AS batchCode
+		      ,CampaignCode AS campaignCode
+		      ,convert(varchar,[CreateTime],120) AS createTime
+		      ,CouponCode AS  couponCode
+		      ,convert(varchar,[ExpiredTime],120) AS endTime
+		   FROM 
+			  Communication.BIN_CouponCreateLog 
+		  WHERE 
+		  	  BatchID=#batchCode# AND CampaignCode=#campaignCode#
+		]]>
+    </sql>
+    
+	 <!-- 会员Coupon数量-->
+    <select id="getCouponCount" parameterClass="java.util.HashMap" resultClass="java.lang.Integer">
+        <![CDATA[
+            SELECT  COUNT(SORT_T1.couponId) AS count FROM (
+        ]]>
+        <include refid="BINOLCPCOM03.CouponInfoSql" />
+        <![CDATA[
+            )SORT_T1
+        ]]>
+    </select>
+    
+    <!-- 查询会员信息List-->
+	<select id="getCouponList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+		<include refid="BINOLCMINC99.pageheader" />
+		<include refid="BINOLCPCOM03.CouponInfoSql" />
+		<include refid="BINOLCMINC99.pagefooter" />
+    </select>
+    
+     <!--取得Coupon是否存在 -->
+    <select id="getCouponNum" parameterClass="java.util.HashMap" resultClass="java.lang.String">
+		<![CDATA[
+		SELECT 
+				count(1)
+		 FROM
+		      Communication.BIN_CouponCreateLog WITH(NOLOCK)
+		WHERE
+			 CampaignCode=#campaignCode# AND
+			 CouponCode=#couponCode# 
+			 
+		]]>
+    </select>
+    
+</sqlMap>

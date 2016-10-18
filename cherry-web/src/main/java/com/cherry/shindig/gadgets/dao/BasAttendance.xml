@@ -1,0 +1,72 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sqlMap PUBLIC "-//iBATIS.com//DTD SQL Map 2.0//EN" "http://ibatis.apache.org/dtd/sql-map-2.dtd">
+<sqlMap namespace="BasAttendance">
+    
+    <!-- 考勤信息查询SQL文  -->
+	<sql id="attendanceQuery">
+	 	<![CDATA[
+            (SELECT
+				CONVERT(varchar(30),A.ArriveTime,120) AS OccurTime,
+				D.CategoryName AS UserPost,
+				B.EmployeeCode AS UserCode,
+				B.EmployeeName AS UserName,
+				C.DepartCode AS DeptCode,
+				C.DepartName AS DeptName,
+				'1' AS Content
+			FROM
+				Monitor.BIN_BASAttendance A
+				JOIN (]]><include refid="BINOLCMINC99.employeePrivilegeSql" /><![CDATA[) A99 
+				ON A.BIN_EmployeeID=A99.BIN_SubEmployeeID	
+				LEFT JOIN Basis.BIN_Employee B 
+					LEFT JOIN Privilege.BIN_PositionCategory D ON B.BIN_PositionCategoryID = D.BIN_PositionCategoryID
+				ON A.BIN_EmployeeID = B.BIN_EmployeeID
+			    LEFT JOIN Basis.BIN_Organization C ON A.BIN_OrganizationID = C.BIN_OrganizationID
+				
+			WHERE
+				A.ValidFlag = '1' AND
+				A.ArriveTime IS NOT NULL AND
+				A.ArriveTime <> '' AND
+				A.BIN_OrganizationInfoID = #organizationInfoId#
+		]]>
+			<isNotEmpty prepend="AND" property="brandInfoId">
+				A.BIN_BrandInfoID = #brandInfoId#
+			</isNotEmpty>	
+		<![CDATA[)
+			UNION ALL
+			(SELECT
+				CONVERT(varchar(30),A.LeaveTime,120) AS OccurTime,
+				D.CategoryName AS UserPost,
+				B.EmployeeCode AS UserCode,
+				B.EmployeeName AS UserName,
+				C.DepartCode AS DeptCode,
+				C.DepartName AS DeptName,
+				'0' AS Content
+			FROM
+				Monitor.BIN_BASAttendance A
+				JOIN (]]><include refid="BINOLCMINC99.employeePrivilegeSql" /><![CDATA[) A99 
+				ON A.BIN_EmployeeID=A99.BIN_SubEmployeeID	
+				LEFT JOIN Basis.BIN_Employee B 
+					LEFT JOIN Privilege.BIN_PositionCategory D ON B.BIN_PositionCategoryID = D.BIN_PositionCategoryID
+				ON A.BIN_EmployeeID = B.BIN_EmployeeID
+			    LEFT JOIN Basis.BIN_Organization C ON A.BIN_OrganizationID = C.BIN_OrganizationID
+			WHERE
+				A.ValidFlag = '1' AND
+				A.LeaveTime IS NOT NULL AND
+				A.LeaveTime <> '' AND
+				A.BIN_OrganizationInfoID = #organizationInfoId#
+		]]>
+			<isNotEmpty prepend="AND" property="brandInfoId">
+				A.BIN_BrandInfoID = #brandInfoId#
+			</isNotEmpty>	
+		<![CDATA[)
+		]]>
+	</sql>
+	
+	<!-- 查询考勤信息List  -->
+    <select id="getAttendanceList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+       	<include refid="BINOLCMINC99.pageheader" />
+		<include refid="BasAttendance.attendanceQuery" />
+		<include refid="BINOLCMINC99.pagefooter" />
+    </select>
+    
+</sqlMap>

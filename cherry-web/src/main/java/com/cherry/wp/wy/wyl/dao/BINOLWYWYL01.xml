@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sqlMap PUBLIC "-//iBATIS.com//DTD SQL Map 2.0//EN" "http://ibatis.apache.org/dtd/sql-map-2.dtd">
+<sqlMap namespace="BINOLWYWYL01">
+	
+ 	<select id="getSubCampaignList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+		<![CDATA[
+		SELECT TOP $number$ 
+			BIN_CampaignID AS subCampaignId,
+			SubCampaignCode AS subCampaignCode, 
+			SubCampaignName  AS subCampaignName
+		FROM    
+			Campaign.BIN_CampaignRule 
+		WHERE       
+			ValidFlag = '1' AND 
+			SubCampaignName is not null AND 
+			SubCampaignCode is not null 
+		]]>	
+		<dynamic>
+			<isNotEmpty property="state" prepend="AND">
+				<isEqual property="state" compareValue="-999">										
+					<![CDATA[State in ('0','1','2')]]>
+				</isEqual>
+				<isNotEqual property="state" compareValue="-999">									
+					<![CDATA[State = #state#]]>
+				</isNotEqual>
+			</isNotEmpty>
+			<isNotEmpty property="subCampInfoStr" prepend="AND">
+				(
+				<![CDATA[ SubCampaignName like '%'+ #subCampInfoStr# +'%']]>
+				<![CDATA[OR SubCampaignCode like '%'+ #subCampInfoStr# +'%']]>
+				)
+			</isNotEmpty>
+		</dynamic>
+	</select>
+    
+</sqlMap>

@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="UTF-8"?> 
+<definitions id="Definition"
+             targetNamespace="http://www.jboss.org/drools"
+             typeLanguage="http://www.java.com/javaTypes"
+             expressionLanguage="http://www.mvel.org/2.0"
+             xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL"
+             xmlns:xs="http://www.w3.org/2001/XMLSchema-instance"
+             xs:schemaLocation="http://www.omg.org/spec/BPMN/20100524/MODEL BPMN20.xsd"
+             xmlns:g="http://www.jboss.org/drools/flow/gpd"
+             xmlns:tns="http://www.jboss.org/drools">
+
+  <itemDefinition id="_PromotionInventoryLogIDItem" structureRef="Integer" />
+  <itemDefinition id="_UserNameItem" structureRef="String" />
+  <itemDefinition id="_BINOLSSCM01Item" structureRef="com.cherry.ss.common.bl.BINOLSSCM01_BL" />
+  <itemDefinition id="_UnitNameItem" structureRef="String" />
+
+  <process processType="Private" isExecutable="true" id="PromotionDeliverFlow_01" name="发货流程" >
+
+    <!-- process variables -->
+    <property id="PromotionInventoryLogID" itemSubjectRef="_PromotionInventoryLogIDItem"/>
+    <property id="UserName" itemSubjectRef="_UserNameItem"/>
+    <property id="BINOLSSCM01" itemSubjectRef="_BINOLSSCM01Item"/>
+    <property id="UnitName" itemSubjectRef="_UnitNameItem"/>
+
+    <!-- nodes -->
+    <startEvent id="_1" name="StartProcess" g:x="16" g:y="16" g:width="48" g:height="48" />
+    <scriptTask id="_2" name="Auto审核" g:x="96" g:y="16" g:width="80" g:height="48" scriptLanguage="http://www.java.com/java" >
+      <script>System.out.println("================工作流  开始");
+System.out.println("================工作流  第1步 审核 流水号：" + PromotionInventoryLogID);
+
+//com.cherry.cm.cmbussiness.bl.BINOLCM04_BL a = (com.cherry.cm.cmbussiness.bl.BINOLCM04_BL)BINOLCM04BL;
+int upCount = BINOLSSCM01.autoAudit(PromotionInventoryLogID,UserName,UnitName);
+System.out.println("================工作流  已经审核条数：" + upCount);</script>
+    </scriptTask>
+    <scriptTask id="_3" name="Auto修改入出库表" g:x="208" g:y="16" g:width="80" g:height="48" scriptLanguage="http://www.java.com/java" >
+      <script>System.out.println("================工作流  第2步 insert入出库表and入出库明细表");
+BINOLSSCM01.autoPromotionStockInOut(PromotionInventoryLogID,UserName,UnitName);
+System.out.println("================工作流  入出库表and入出库明细表 插入成功");</script>
+    </scriptTask>
+    <endEvent id="_4" name="End" g:x="320" g:y="16" g:width="48" g:height="48" >
+        <terminateEventDefinition/>
+    </endEvent>
+
+    <!-- connections -->
+    <sequenceFlow id="_1-_2" sourceRef="_1" targetRef="_2" />
+    <sequenceFlow id="_2-_3" sourceRef="_2" targetRef="_3" />
+    <sequenceFlow id="_3-_4" sourceRef="_3" targetRef="_4" />
+
+  </process>
+
+</definitions>

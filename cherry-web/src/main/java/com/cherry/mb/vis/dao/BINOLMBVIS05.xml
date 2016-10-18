@@ -1,0 +1,225 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sqlMap PUBLIC "-//iBATIS.com//DTD SQL Map 2.0//EN" "http://ibatis.apache.org/dtd/sql-map-2.dtd">
+<sqlMap namespace="BINOLMBVIS05">
+
+	<sql id="VisitTaskQuery">
+		<![CDATA[
+			SELECT 
+				A.BIN_VisitTaskID AS visitTaskId,
+				A.VisitType AS visitType,
+				E.VisitTypeName AS visitTypeName,
+				CONVERT(varchar(30), A.StartTime, 23) AS startTime,
+				CONVERT(varchar(30), A.EndTime, 23) AS endTime,
+				C.CounterCode AS counterCode,
+				C.CounterNameIF AS counterName,
+				D.EmployeeCode AS employeeCode,
+				D.EmployeeName AS employeeName,
+				A.MemberCode AS memCode,
+				A.MemberName AS memName,
+				A.BIN_MemberID AS memberID,
+				A.MobilePhone AS memMobile,
+				A.SkinType AS skinType,
+				SUBSTRING(A.BirthDay,5,4) AS birthDay,
+				CONVERT(varchar(30), A.JoinTime, 23) AS joinTime,
+				A.FirstBillNS AS firstBillNS,
+				A.LastBillNS AS lastBillNS,
+				A.TaskState AS taskState,
+				A.SynchroFlag AS synchroFlag,
+				A.VisitResult AS visitResult
+			FROM
+				Members.BIN_VisitTask A WITH(NOLOCK)
+				LEFT JOIN Basis.BIN_CounterInfo C WITH(NOLOCK) ON A.BIN_OrganizationID = C.BIN_OrganizationID
+				LEFT JOIN Basis.BIN_Employee D WITH(NOLOCK) ON A.BIN_EmployeeID = D.BIN_EmployeeID
+				LEFT JOIN Members.BIN_VisitCategory E WITH(NOLOCK) ON A.VisitType = E.VisitTypeCode
+			WHERE 
+				A.VisitResult is NULL AND
+				A.BIN_OrganizationInfoID = #organizationInfoId# AND
+				A.BIN_OrganizationID =#organizationId# AND
+				A.BIN_BrandInfoID = #brandInfoId# AND
+				#sysDate# between StartTime and EndTime AND
+				E.ValidFlag = '1'
+		]]>
+			<isNotEmpty prepend="AND" property="visitType">
+				A.VisitType = #visitType#
+			</isNotEmpty>
+			<isNotEmpty prepend="AND" property="employeeCode">
+				D.EmployeeCode = #employeeCode#
+			</isNotEmpty>
+	</sql>
+	
+	<!-- 取得回访信息总数  -->
+    <select id="getVisitTaskCount" parameterClass="java.util.HashMap" resultClass="java.lang.Integer">
+    	<![CDATA[
+			SELECT COUNT(1) AS count FROM (]]><include refid="BINOLMBVIS05.VisitTaskQuery" /><![CDATA[) T
+		]]>										
+    </select>
+    
+    <!-- 取得回访信息List  -->
+    <select id="getVisitTaskList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+       	<include refid="BINOLCMINC99.pageheader" />
+		<include refid="BINOLMBVIS05.VisitTaskQuery" />
+		<include refid="BINOLCMINC99.pagefooter" />
+    </select>
+    
+    <!-- 取得该会员的第一次与最后一次的销售相关信息 -->
+    <select id="getSaleDetailByMemberCodeFL" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+    	<![CDATA[
+			SELECT
+				Convert(nvarchar,A.CreateTime,120) AS CreateTime,
+				B.NameTotal,
+				B.UnitCode,
+				B.BarCode,
+				Convert(int,b.Quantity) AS Quantity
+			FROM
+				(
+				SELECT
+					CreateTime,
+					BIN_SaleRecordID,
+					BIN_OrganizationInfoID,
+					BIN_BrandInfoID
+				FROM
+					sale.BIN_SaleRecord 
+				WHERE
+					(CreateTime= (SELECT MAX (CreateTime) FROM sale.BIN_SaleRecord where MemberCode=#memCode#)
+					OR
+					CreateTime= (SELECT MIN (CreateTime) FROM sale.BIN_SaleRecord  where MemberCode=#memCode#)
+					)
+				) A
+			LEFT JOIN
+				(
+				SELECT
+					d.BIN_SaleRecordID,
+					d.Quantity,
+					d.UnitCode ,
+					d.BarCode ,
+					p.NameTotal
+				FROM 
+					sale.BIN_SaleRecordDetail d
+				LEFT JOIN
+					basis.BIN_ProductVendor v
+				ON
+					(d.BIN_ProductVendorID=v.BIN_ProductVendorID)
+				LEFT JOIN
+					Basis.BIN_Product p
+				on
+					(p.BIN_ProductID=v.BIN_ProductID)	
+				)B
+			ON
+				(A.BIN_SaleRecordID=B.BIN_SaleRecordID)
+			where
+				A.BIN_OrganizationInfoID=#organizationInfoId# and
+				A.BIN_BrandInfoID=#brandInfoId#
+		]]>										
+    </select>
+    
+    <insert id="insertMemberVisit" parameterClass="java.util.HashMap">
+    	<![CDATA[
+    	INSERT 
+			Members.BIN_MemberVisit(
+				BIN_OrganizationInfoID,
+				BIN_BrandInfoID,
+				BIN_OrganizationID,
+				BIN_EmployeeID,
+				BIN_MemberInfoID,
+				BIN_VisitTaskID,
+				VisitBeginTime,
+				VisitEndTime,
+				VisitTime,
+				VisitFlag,
+				VisitCode,
+				VisitTypeCode,
+				VisitWay,
+				Sourse,
+				CreateTime,
+				CreatedBy,
+				CreatePGM,
+				ModifyCount
+				) 
+					VALUES
+				(
+				#organizationInfoId#,
+				#brandInfoId#,
+				#organizationID#,
+				#tradeEmployeeID#,
+				(select top(1) BIN_MemberInfoID from Members.BIN_MemCardInfo where MemCode=#memCode#),
+				#visitTaskId#,
+				(select top(1) StartTime from Members.BIN_VisitTask where BIN_VisitTaskID=#visitTaskId#),
+				(select top(1) EndTime from Members.BIN_VisitTask where BIN_VisitTaskID=#visitTaskId#),
+				GETDATE(),
+				#visitResult#,
+				'WEBPOS',
+				#visitType#,
+				'1',
+				'WEBPOS',
+				GETDATE(),
+				#userId#,
+				'BINOLMBVIS05',
+				'0'
+				)
+    	]]>
+    </insert>
+    
+    <update id="updateVisitTask">
+    	<![CDATA[
+    		UPDATE 
+				Members.BIN_VisitTask 
+			SET
+				BIN_EmployeeID=result.BIN_EmployeeID,
+				BACode=result.BACode,
+				VisitTime=result.VisitTime,
+				VisitResult=result.VisitResult
+			FROM	
+				(
+					SELECT 
+						ee.BIN_EmployeeID ,
+						ba.BaCode AS BACode,
+						GETDATE() as VisitTime,
+						#visitResult# as VisitResult
+					FROM 
+						Basis.BIN_Employee ee
+					LEFT JOIN
+						Basis.BIN_BaInfo ba
+					ON
+						(ee.BIN_EmployeeID=ba.BIN_EmployeeID)
+					WHERE 
+						ee.BIN_EmployeeID=#tradeEmployeeID# and 
+						ee.BIN_OrganizationInfoID=#organizationInfoId# and 
+						ee.BIN_BrandInfoID=#brandInfoId#
+				) AS result
+			WHERE
+				BIN_VisitTaskID=#visitTaskId#
+    	]]>
+    </update>
+    
+    <select id="getMemberInfo" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+    	<![CDATA[
+    		SELECT Top(1)
+				info.Name as name,
+				c.MemCode as memCode,
+				info.MobilePhone as mobilePhone,
+				info.JoinDate as joinDate,
+				ext.SkinType as skinType,
+				v.VisitTypeName as visitTypeName
+			FROM
+				Members.BIN_MemberInfo info
+			LEFT JOIN
+				Members.BIN_MemberExtInfo ext
+			ON
+				(info.BIN_MemberInfoID=ext.BIN_MemberInfoID)
+			LEFT JOIN
+				Members.BIN_MemCardInfo c
+			ON
+				(info.BIN_MemberInfoID=c.BIN_MemberInfoID)
+			LEFT JOIN
+				Members.BIN_VisitCategory v
+			ON
+				(v.VisitTypeCode=#visitType#)
+			WHERE
+				info.BIN_OrganizationInfoID=#organizationInfoId# AND
+				info.BIN_BrandInfoID=#brandInfoId# AND
+				info.BIN_MemberInfoID=#memberID# AND
+				c.CardValidFlag='1'
+    	]]>
+    </select>
+    
+</sqlMap>

@@ -1,0 +1,240 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sqlMap PUBLIC "-//iBATIS.com//DTD SQL Map 2.0//EN" "http://ibatis.apache.org/dtd/sql-map-2.dtd">
+<sqlMap namespace="BINOLBSDEP02">
+	
+	<!-- 取得部门信息 -->
+	<resultMap id="BINOLBSDEP02.OrganizationInfo" class="java.util.HashMap">
+		<result property="departPath" column="DepartPath"/>
+		<result property="organizationId" column="BIN_OrganizationID"/>
+		<result property="brandInfoId" column="BIN_BrandInfoID"/>
+		<result property="departCode" column="DepartCode"/>
+		<result property="departName" column="DepartName"/>
+		<result property="departNameShort" column="DepartNameShort"/>
+		<result property="nameForeign" column="NameForeign"/>
+		<result property="nameShortForeign" column="NameShortForeign"/>
+		<result property="type" column="Type"/>
+		<result property="testType" column="TestType"/>
+		<result property="status" column="Status"/>
+		<result property="updateTime" column="UpdateTime"/>
+		<result property="modifyCount" column="ModifyCount"/>
+		<result property="validFlag" column="ValidFlag"/>
+		<result property="regionId" column="BIN_RegionID"/>
+		<result property="provinceId" column="BIN_ProvinceID"/>
+		<result property="cityId" column="BIN_CityID"/>
+		<result property="countyId" column="BIN_CountyID"/>
+		<result property="brandNameChinese" column="BrandNameChinese"/>
+		<result property="regionName" column="RegionName"/>
+		<result property="provinceName" column="ProvinceName"/>
+		<result property="cityName" column="CityName"/>
+		<result property="countyName" column="CountyName"/>
+		<result property="higherDepartPath" column="HigherDepartPath"/>
+		<result property="higherDepartName" column="HigherDepartName"/>
+		<result property="higherDepartCode" column="HigherDepartCode"/>
+		<result property="higherType" column="HigherType"/>
+		<result property="expiringDate" column="expiringDate"/>
+		<result property="orgSynergyFlag" column="orgSynergyFlag"/>
+	</resultMap>
+	<select id="getOrganizationInfo" parameterClass="java.util.HashMap" resultMap="BINOLBSDEP02.OrganizationInfo">
+		<![CDATA[
+			SELECT
+				A.Path AS DepartPath,
+				A.BIN_OrganizationID,
+				A.BIN_BrandInfoID,
+				A.DepartCode,
+				A.DepartName,
+				A.DepartNameShort,
+				A.NameForeign,
+				A.NameShortForeign,
+				A.Type,
+				A.TestType,
+				A.Status,
+				convert(varchar(30),A.UpdateTime,121) AS UpdateTime,
+				A.ModifyCount,
+				A.ValidFlag,
+				A.BIN_RegionID,
+				A.BIN_ProvinceID,
+				A.BIN_CityID,
+				A.BIN_CountyID,
+				B.BrandNameChinese,
+				C.RegionNameChinese AS RegionName,
+				D.RegionNameChinese AS ProvinceName,
+				E.RegionNameChinese AS CityName,
+				F.RegionNameChinese AS CountyName,
+				G.Path AS HigherDepartPath,
+				G.DepartName AS HigherDepartName,
+				G.DepartCode AS HigherDepartCode,
+				G.Type AS HigherType,
+				convert(varchar(30),A.ExpiringDate,120) AS expiringDate,
+				A.OrgSynergyFlag orgSynergyFlag
+			FROM 
+				Basis.BIN_Organization A 
+				LEFT JOIN Basis.BIN_BrandInfo B ON A.BIN_BrandInfoID = B.BIN_BrandInfoID
+				LEFT JOIN Basis.BIN_Region C ON A.BIN_RegionID = C.BIN_RegionID
+				LEFT JOIN Basis.BIN_Region D ON A.BIN_ProvinceID = D.BIN_RegionID
+				LEFT JOIN Basis.BIN_Region E ON A.BIN_CityID = E.BIN_RegionID
+				LEFT JOIN Basis.BIN_Region F ON A.BIN_CountyID = F.BIN_RegionID
+				LEFT JOIN Basis.BIN_Organization G ON A.NodeID.GetAncestor(1) = G.NodeID AND G.Type <> 'Z'
+			WHERE
+				A.BIN_OrganizationID = #organizationId#
+		]]>
+    </select>
+    
+    <!-- 取得部门地址信息 -->
+	<resultMap id="BINOLBSDEP02.DepartAddressInfo" class="java.util.HashMap">
+		<result property="addressInfoId" column="BIN_AddressInfoID"/>
+		<result property="addressTypeId" column="BIN_AddressTypeID"/>
+		<result property="defaultFlag" column="DefaultFlag"/>
+		<result property="addressLine1" column="AddressLine1"/>
+		<result property="addressLine2" column="AddressLine2"/>
+		<result property="city" column="City"/>
+		<result property="province" column="Province"/>
+		<result property="locationGPS" column="LocationGPS"/>
+		<result property="zipCode" column="ZipCode"/>
+		<result property="cityName" column="CityName"/>
+		<result property="provinceName" column="ProvinceName"/>
+	</resultMap>
+	<select id="getDepartAddressList" parameterClass="java.util.HashMap" resultMap="BINOLBSDEP02.DepartAddressInfo">
+		<![CDATA[
+			SELECT 
+				A.BIN_AddressInfoID,
+				A.BIN_AddressTypeID,
+				A.DefaultFlag,
+				B.AddressLine1,
+				B.AddressLine2,
+				B.City,
+				B.LocationGPS,
+				B.Province,
+				B.ZipCode,
+				C.RegionNameChinese AS CityName,
+				D.RegionNameChinese AS ProvinceName
+			FROM 
+				Basis.BIN_SubordinateAddress A, 
+				Basis.BIN_AddressInfo B left join 
+				Basis.BIN_Region C on
+				B.City = C.BIN_RegionID left join
+				Basis.BIN_Region D on
+				B.Province = D.BIN_RegionID
+			WHERE
+				A.BIN_AddressInfoID = B.BIN_AddressInfoID AND
+				A.BIN_OrganizationID = #organizationId#	AND
+				A.ValidFlag = '1' AND
+				B.ValidFlag = '1'
+		]]>
+    </select>
+    
+    <!-- 取得部门联系人信息 -->
+	<resultMap id="BINOLBSDEP02.DepartContactInfo" class="java.util.HashMap">
+		<result property="employeeId" column="BIN_EmployeeID"/>
+		<result property="defaultFlag" column="DefaultFlag"/>
+		<result property="employeeName" column="EmployeeName"/>
+		<result property="phone" column="Phone"/>
+		<result property="mobilePhone" column="MobilePhone"/>
+		<result property="email" column="Email"/>
+	</resultMap>
+	<select id="getDepartContactList" parameterClass="java.util.HashMap" resultMap="BINOLBSDEP02.DepartContactInfo">
+		<![CDATA[
+			SELECT 
+				A.BIN_EmployeeID,
+				A.DefaultFlag,
+				B.EmployeeName,
+				B.Phone,
+				B.MobilePhone,
+				B.Email
+			FROM 
+				Basis.BIN_ContactInfo A,
+				Basis.BIN_Employee B	
+			WHERE
+				A.BIN_EmployeeID=B.BIN_EmployeeID AND
+				A.BIN_OrganizationID = #organizationId#	AND
+				A.ValidFlag = '1' AND
+				B.ValidFlag = '1'
+		]]>
+    </select>
+    
+    <!-- 根据部门ID取得部门类型-->
+	<select id="getDepartType" parameterClass="java.util.HashMap" resultClass="java.lang.String">
+		<![CDATA[
+			SELECT 													
+				Type										
+			FROM
+				Basis.BIN_Organization
+			WHERE
+				BIN_OrganizationID=#organizationId#
+		]]>
+	</select>
+	
+	<!-- 取得所属部门的员工 -->
+	<select id="getEmployeeInDepartList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+		<![CDATA[
+			SELECT 
+				A.BIN_EmployeeID AS employeeId,
+				A.EmployeeCode AS employeeCode,
+		]]>			
+		<isNotEmpty property="language">
+			<isEqual property="language" compareValue="en_US">
+				A.EmployeeNameForeign AS employeeName,
+				B.CategoryNameForeign AS categoryName
+			</isEqual>
+			<isEqual property="language" compareValue="zh_CN">	
+				A.EmployeeName AS employeeName,
+				B.CategoryName AS categoryName
+			</isEqual>								
+		</isNotEmpty>
+		<isEmpty property="language">
+				A.EmployeeName AS employeeName,
+				B.CategoryName AS categoryName
+		</isEmpty>
+		<![CDATA[		
+			FROM 
+				Basis.BIN_Employee A
+				LEFT JOIN Privilege.BIN_PositionCategory B ON A.BIN_PositionCategoryID = B.BIN_PositionCategoryID	
+			WHERE
+				A.BIN_OrganizationID = #organizationId# AND
+				A.ValidFlag = '1'
+		]]>
+    </select>
+    
+    <!-- 取得管辖或者关注指定部门的人的信息  -->
+    <select id="getEmployeeList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+    	<![CDATA[
+			SELECT 
+				B.BIN_EmployeeID AS employeeId,
+				B.EmployeeCode AS employeeCode,
+				B.Email AS email,
+				B.MobilePhone AS mobilePhone,
+				A.ManageType AS manageType,
+		]]>
+		<dynamic>
+			<isNotEmpty property="language">
+				<isEqual property="language" compareValue="en_US">
+					B.EmployeeNameForeign AS employeeName,
+					C.NameForeign AS departName,
+					D.CategoryNameForeign AS categoryName	
+				</isEqual>
+				<isEqual property="language" compareValue="zh_CN">	
+					B.EmployeeName AS employeeName,
+					C.DepartName AS departName,
+					D.CategoryName AS categoryName
+				</isEqual>								
+			</isNotEmpty>
+			<isEmpty property="language">
+				B.EmployeeName AS employeeName,
+				C.DepartName AS departName,
+				D.CategoryName AS categoryName
+			</isEmpty>
+		</dynamic>
+		<![CDATA[			 
+			FROM
+				Privilege.BIN_EmployeeDepart A
+				JOIN Basis.BIN_Employee B
+				LEFT JOIN Basis.BIN_Organization C
+				ON (B.BIN_OrganizationID = C.BIN_OrganizationID AND C.ValidFlag = '1')	
+				LEFT JOIN Privilege.BIN_PositionCategory D
+				ON (B.BIN_PositionCategoryID = D.BIN_PositionCategoryID AND D.ValidFlag = '1')	
+				ON (A.BIN_EmployeeID = B.BIN_EmployeeID AND B.ValidFlag = '1')
+			WHERE
+				A.BIN_OrganizationID = #organizationId#
+		]]>									
+    </select>
+	
+</sqlMap>

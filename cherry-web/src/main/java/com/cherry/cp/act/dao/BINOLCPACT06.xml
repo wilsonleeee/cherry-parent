@@ -1,0 +1,565 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sqlMap PUBLIC "-//iBATIS.com//DTD SQL Map 2.0//EN" "http://ibatis.apache.org/dtd/sql-map-2.dtd">
+<sqlMap namespace="BINOLCPACT06">
+	<!-- 取得会员活动INFO -->
+    <select id="getCampInfo" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+    	<![CDATA[
+		SELECT
+			DISTINCT
+			CASE A.CampaignType 
+			WHEN 'DHHD' THEN 'PB'
+			WHEN 'LYHD' THEN 'SP' 
+			ELSE '' END AS tradeType,
+			A.CampaignCode AS campCode,
+			A.NeedBuyFlag AS needBuyFlag,
+			A.CampaignOrderFromDate AS orderFromDate,
+			A.CampaignOrderToDate AS orderToDate,
+			A.StockFromDate AS stockFromDate,
+			A.StockToDate AS stockToDate,
+			A.ObtainFromDate AS obtainFromDate,
+			A.ObtainToDate AS obtainToDate,
+			A.ObtainRule AS obtainRule,
+			B.SubCampaignType AS subCampType,
+			B.IsCollectInfo AS isCollectInfo,
+			B.SubCampaignValid AS subCampaignValid,
+			B.LocalValidRule AS localValidRule,
+			A.GotCounter AS gotCounter,
+			A.ExPointDeductFlag AS exPointDeductFlag
+		FROM
+			Campaign.BIN_Campaign A
+			JOIN Campaign.BIN_CampaignRule B
+			ON(A.BIN_CampaignID = B.BIN_CampaignID)
+		WHERE
+			A.CampaignCode = #campCode#
+		]]>
+	</select>
+	<sql id="campOrderQuery">
+		<![CDATA[	
+		SELECT
+		  	  A.BIN_CampaignOrderID AS campOrderId,
+			  A.TradeNoIF AS billNo,
+			  A.TradeType AS tradeType,
+			  A.BIN_MemberInfoID AS memId,
+			  A.CampaignCode AS campCode,
+			  B.Name AS memName,
+			  A.MemCode AS memCode,
+			  '('+A.MemCode+')'+B.Name AS memNameCode,
+			  A.Name as name,
+		  	  A.Mobile as mobile,
+		  	  ISNULL(A.MessageId,'') AS messageId,
+			  A.CounterGot AS counterGot,
+			  A.OrderCounterCode AS counterOrder,
+			  C.CounterNameIF AS counterGotName,
+			  D.CounterNameIF AS counterOrderName,
+			  A.CouponCode AS couponCode,
+			  A.Quantity AS quantity,
+			  A.Amout AS amout,
+			  A.DataChannel AS dataChannel,
+			  A.State AS state,
+			  CASE WHEN A.BIN_MemberInfoID IS NOT NULL THEN ISNULL(B.TestType,1)
+			  ELSE  NULL END AS testType,
+		  	  A.SendFlag AS sendFlag,
+		  	  convert(varchar,A.GetFromTime,23) AS getFromTime,
+		  	  convert(varchar,A.GetToTime,23) AS getToTime,
+			  A.PointRequired AS pointRequired,
+			  convert(varchar,A.CampaignOrderTime,120) AS campOrderTime,
+			  convert(varchar(30),A.UpdateTime ,121) AS modifyTime,
+			  A.ModifyCount AS modifyCount,
+			  convert(varchar,A.BookDate,23) AS bookDate,
+			  A.BookTimeRange AS bookTimeRange,
+			  convert(varchar,A.FinishTime,120) AS finishTime,
+			  convert(varchar,A.CancelTime,120) AS cancelTime
+		FROM 
+			  Campaign.BIN_CampaignOrder A WITH(NOLOCK)
+			  LEFT JOIN Members.BIN_MemberInfo B WITH(NOLOCK) ON (A.BIN_MemberInfoID=B.BIN_MemberInfoID)
+			  LEFT JOIN Basis.BIN_CounterInfo C WITH(NOLOCK) ON A.CounterGot = C.CounterCode  AND A.BIN_BrandInfoID = C.BIN_BrandInfoID AND A.BIN_OrganizationInfoID = C.BIN_OrganizationInfoID
+			  LEFT JOIN Basis.BIN_CounterInfo D WITH(NOLOCK) ON A.OrderCounterCode = D.CounterCode AND A.BIN_BrandInfoID = D.BIN_BrandInfoID AND A.BIN_OrganizationInfoID = D.BIN_OrganizationInfoID
+		WHERE 
+		]]>
+			<isNotEmpty property="campOrderId">																				
+			<![CDATA[A.BIN_CampaignOrderID = #campOrderId#]]>																				
+			</isNotEmpty>
+			<isEmpty  property="campOrderId">
+			<![CDATA[
+				A.CampaignCode= #campaignCode#
+				AND A.BIN_BrandInfoID = #brandInfoId#
+	 		  	AND A.ValidFlag='1'
+	 		]]>
+			</isEmpty>
+			<isNotEmpty property="tradeNoIF" prepend="AND">																				
+			<![CDATA[A.TradeNoIF = #tradeNoIF#]]>																				
+			</isNotEmpty>
+			<isNotEmpty property="memCode" prepend="AND">																				
+			<![CDATA[A.MemCode = #memCode#]]>																				
+			</isNotEmpty>
+			<isNotEmpty property="mobile" prepend="AND">																				
+			<![CDATA[A.Mobile = #mobile#]]>																				
+			</isNotEmpty>
+			<isNotEmpty property="counterGot" prepend="AND">																				
+			<![CDATA[(A.CounterGot = #counterGot# OR A.CounterGot = 'ALL')]]>																				
+			</isNotEmpty>
+			<isNotEmpty property="counterOrder" prepend="AND">																				
+			<![CDATA[A.OrderCounterCode = #counterOrder#]]>																				
+			</isNotEmpty>
+			<isNotEmpty property="counterBelong" prepend="AND">																				
+			<![CDATA[B.counterCodeBelong = #counterBelong#]]>																				
+			</isNotEmpty>
+			<isNotEmpty property="state" prepend="AND">														
+			<![CDATA[A.State = #state#]]>																			
+			</isNotEmpty>	
+			<isNotEmpty property="testType" prepend="AND">		
+				<![CDATA[A.BIN_MemberInfoID IS NOT NULL ]]>
+			<isEqual property="testType" compareValue="0" prepend="AND">												
+				<![CDATA[B.TestType = #testType# ]]>															
+			</isEqual>	
+			<isEqual property="testType" compareValue="1" prepend="AND">
+				<![CDATA[(B.TestType = #testType# OR B.TestType IS NULL)]]>	
+			</isEqual>
+			</isNotEmpty>																					
+			<isNotEmpty property="sendFlag" prepend="AND">																				
+			<![CDATA[A.SendFlag = #sendFlag#]]>																				
+			</isNotEmpty>
+			<isNotEmpty property="couponCode" prepend="AND">																				
+			<![CDATA[A.CouponCode = #couponCode#]]>																				
+			</isNotEmpty>
+			<isNotEmpty prepend="AND" property="startDate">
+			<![CDATA[
+				CONVERT(varchar(10),A.CampaignOrderTime,121) >= #startDate#
+			]]>
+			</isNotEmpty>
+			<isNotEmpty prepend="AND" property="endDate">
+			<![CDATA[
+				CONVERT(varchar(10),A.CampaignOrderTime,121) <= #endDate#
+			]]>           
+			</isNotEmpty>
+	</sql>
+	<!-- 活动结果一览List  -->
+	<resultMap id="BINOLCPACT06.campOrderMap" class="java.util.HashMap">
+		<result property="list" column="campOrderId" select="BINOLCPACT06.getOrderDetailList" javaType="java.util.List" />
+		<result property="campOrderId" column="campOrderId"/>
+		<result property="billNo" column="billNo"/>
+		<result property="tradeType" column="tradeType"/>
+		<result property="memId" column="memId"/>
+		<result property="campCode" column="campCode"/>
+		<result property="memCode" column="memCode"/>
+		<result property="memNameCode" column="memNameCode"/>
+		<result property="name" column="name"/>
+		<result property="counterOrder" column="counterOrder"/>
+		<result property="mobile" column="mobile"/>
+		<result property="messageId" column="messageId"/>
+		<result property="counterGot" column="counterGot"/>
+		<result property="couponCode" column="couponCode"/>
+		<result property="quantity" column="quantity"/>
+		<result property="amout" column="amout"/>
+		<result property="dataChannel" column="dataChannel"/>
+		<result property="state" column="state"/>
+		<result property="testType" column="testType" />
+		<result property="sendFlag" column="sendFlag"/>
+		<result property="getFromTime" column="getFromTime"/>
+		<result property="getToTime" column="getToTime"/>
+		<result property="pointRequired" column="pointRequired"/>
+		<result property="campOrderTime" column="campOrderTime"/>
+		<result property="modifyTime" column="modifyTime"/>
+		<result property="modifyCount" column="modifyCount"/>
+		<result property="RowNumber" column="RowNumber"/>
+		<result property="bookDate" column="bookDate"/>
+		<result property="bookTimeRange" column="bookTimeRange"/>
+		<result property="cancelTime" column="cancelTime"/>
+		<result property="finishTime" column="finishTime"/>
+		<result property="counterOrderName" column="counterOrderName"/>
+		<result property="counterGotName" column="counterGotName"/>
+	</resultMap>
+	<select id="getCampOrderList" parameterClass="java.util.HashMap" resultMap="BINOLCPACT06.campOrderMap">
+	   <include refid="BINOLCMINC99.pageheader" />
+	   <include refid="BINOLCPACT06.campOrderQuery" />
+	   <include refid="BINOLCMINC99.pagefooter" />
+	</select>
+	<select id="getOrderDetailList" parameterClass="java.lang.Integer" resultClass="java.util.HashMap">
+	<![CDATA[
+	SELECT
+		DISTINCT
+		MainCode AS subCampCode
+	FROM
+		Campaign.BIN_CampaignOrderDetail WITH(NOLOCK)
+	WHERE
+		BIN_CampaignOrderID = #campOrderId#
+	]]>
+	</select>
+	<!-- 活动结果Count-->
+    <select id="getOrderCount" parameterClass="java.util.HashMap" resultClass="java.lang.Integer">
+        <![CDATA[
+            SELECT  COUNT(SORT_T1.campOrderId) AS count FROM (
+        ]]>
+         <include refid="BINOLCPACT06.campOrderQuery" />
+        <![CDATA[
+            )SORT_T1
+        ]]>
+    </select>
+    
+    <!-- 活动明细信息-->
+    <select id="getCampDetailMap" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+    	 <include refid="BINOLCPACT06.campOrderQuery" />
+    </select>
+    
+    <!-- 取得礼品信息List-->
+    <select id="getPrtInfoList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+    	<![CDATA[
+	    	SELECT 
+			     B.MainCode AS subCampCode,
+				 A.SubCampaignName AS subCampName,
+				 B.BIN_ProductVendorID AS prodId,
+				 B.GiftType AS prtTpye,
+				 B.UnitCode AS unitCode,
+				 B.BarCode AS  barCode,
+				 B.Quantity AS quantity,
+				 D.PromotionCateCD AS prmCate,
+				 ISNULL(B.Amout,0) AS amout,
+				 ISNULL(B.PointRequired,0) AS pointRequired,
+				 ISNULL(D.NameTotal,F.NameTotal) AS nameTotal
+		    FROM 
+				Campaign.BIN_CampaignOrderDetail B WITH(NOLOCK)
+				LEFT JOIN Campaign.BIN_CampaignRule A WITH(NOLOCK)
+				ON(A.SubCampaignCode = B.MainCode)
+				LEFT JOIN Basis.BIN_PromotionProduct D WITH(NOLOCK)
+				ON (B.UnitCode=D.UnitCode AND B.GiftType = 'P')
+				LEFT JOIN Basis.BIN_Product F WITH(NOLOCK)
+				ON (B.UnitCode=F.UnitCode AND B.GiftType = 'N')
+   			WHERE 		   
+			     B.BIN_CampaignOrderID=#campOrderId#
+			     AND B.ValidFlag = '1'
+    	]]>
+    </select>
+     <!--  取得单据信息  -->
+    <select id="getTradeNo" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+    	<![CDATA[
+    	SELECT 
+			  BIN_CampaignOrderID,
+		      TradeNoIF AS tradeNo,
+		      CouponCode AS couponCode,
+		      CounterGot AS counter
+			FROM 
+	    	   	 Campaign.BIN_CampaignOrder WITH(NOLOCK)
+			WHERE 
+		        CampaignCode=#campaignCode# AND  State=#state#
+         ]]>
+         <isNotEmpty property="campOrderId" prepend="AND">																				
+			<![CDATA[BIN_CampaignOrderID = #campOrderId#]]>																				
+		</isNotEmpty>
+    </select>
+    <!-- 活动Excel结果信息-->
+    <sql id="excelResultQuery">
+    		<![CDATA[ SELECT
+	 		T0.campOrderId,
+	 		T0.billNo,
+	 		T0.campCode,
+			D.CampaignName AS campaignName,
+			D.ObtainFromDate AS obtainFromDate,
+      		D.ObtainToDate AS obtainToDate,
+			E.SubCampaignName AS subCampaignName,
+			E.SubCampaignCode AS subCampCode,
+			T0.campOrderTime,
+			T0.couponCode,
+			T0.state,
+			ISNULL(T0.memName,T0.name) AS memName,
+			T0.memCode,
+			T0.mobile,
+			T0.messageId,
+			T0.getFromTime,
+			T0.getToTime,
+			T0.testType,
+			T0.counterGot,
+			T0.counterOrder,
+			T0.counterGotName,
+			T0.counterOrderName,
+			ISNULL(G.NameTotal,K.NameTotal) AS nameTotal,
+			CASE C.GiftType 
+			WHEN 'N' THEN '1'
+			WHEN 'P' THEN '2' 
+			ELSE '' END AS prtTpye,
+			C.UnitCode AS unitCode,
+			C.BarCode AS  barCode,
+			CAST(C.Quantity as int) AS quantity,
+			G.PromotionCateCD AS prmCate,
+			ISNULL(C.Amout,0) AS amout,
+			ISNULL(C.PointRequired,0) AS pointRequired
+			]]>
+	<![CDATA[FROM (]]>
+	 <include refid="BINOLCPACT06.campOrderQuery"/>						
+		<![CDATA[)T0
+			LEFT JOIN 
+			Campaign.BIN_CampaignOrderDetail C WITH (NOLOCK) 
+			ON (T0.campOrderId=C.BIN_CampaignOrderID)
+			LEFT JOIN Campaign.BIN_Campaign D WITH (NOLOCK)
+			ON (T0.campCode=D.CampaignCode)
+			LEFT JOIN Campaign.BIN_CampaignRule E WITH (NOLOCK)
+			ON(C.MainCode = E.SubCampaignCode )
+			LEFT JOIN Basis.BIN_PromotionProductVendor F WITH(NOLOCK)
+			ON(C.BIN_ProductVendorID=F.BIN_PromotionProductVendorID
+				AND C.GiftType = 'P')
+			LEFT JOIN Basis.BIN_PromotionProduct G WITH(NOLOCK)
+			ON (F.BIN_PromotionProductID=G.BIN_PromotionProductID)
+			LEFT JOIN Basis.BIN_ProductVendor H WITH(NOLOCK)
+			ON(C.BIN_ProductVendorID=H.BIN_ProductVendorID
+				AND C.GiftType = 'N')
+			LEFT JOIN Basis.BIN_Product K WITH(NOLOCK)
+			ON (H.BIN_ProductID=K.BIN_ProductID)
+		]]>
+    	</sql>
+    <!-- 活动Excel导出全部结果信息-->
+    <sql id="excelCouponResultQuery">
+    <![CDATA[ 
+    	SELECT
+		  	  A.BIN_CampaignOrderID AS campOrderId,
+			  A.CampaignCode AS campCode,
+		  	  A.Mobile as mobile,
+			  A.CouponCode AS couponCode,
+		  	  convert(varchar,A.GetFromTime,23) AS getFromTime,
+		  	  convert(varchar,A.GetToTime,23) AS getToTime
+		FROM 
+			  Campaign.BIN_CampaignOrder A WITH(NOLOCK)
+		WHERE 
+			A.CampaignCode=#campaignCode#
+			and BIN_BrandInfoID = #brandInfoId#
+	]]>
+    </sql>
+    <!-- Excel导出coupon结果List  -->
+	<select id="getExcelCouponResultList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+	   <include refid="BINOLCMINC99.pageheader" />
+	   <include refid="BINOLCPACT06.excelCouponResultQuery"/>		
+	   <include refid="BINOLCMINC99.pagefooter" />
+	</select>
+	<!-- 活动导出coupon结果Count-->
+    <select id="getExcelCouponCount" parameterClass="java.util.HashMap" resultClass="java.lang.Integer">
+        <![CDATA[
+            SELECT  COUNT(SORT_T1.campOrderId) AS count FROM (
+        ]]>
+          <include refid="BINOLCPACT06.excelCouponResultQuery"/>
+        <![CDATA[
+            )SORT_T1
+        ]]>
+    </select>
+    <!-- Excel导出结果List  -->
+	<select id="getExcelResultList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+	   <include refid="BINOLCMINC99.pageheader" />
+	   <include refid="BINOLCPACT06.excelResultQuery"/>		
+	   <include refid="BINOLCMINC99.pagefooter" />
+	</select>
+	<!-- 活动Excel结果Count-->
+    <select id="getExcelCount" parameterClass="java.util.HashMap" resultClass="java.lang.Integer">
+        <![CDATA[
+            SELECT  COUNT(SORT_T1.campOrderId) AS count FROM (
+        ]]>
+          <include refid="BINOLCPACT06.excelResultQuery"/>
+        <![CDATA[
+            )SORT_T1
+        ]]>
+    </select>
+    <!-- 更新活动信息 -->
+    <update id="updateDetailInfo" parameterClass="java.util.HashMap">     
+    <![CDATA[
+        UPDATE
+            Campaign.BIN_CampaignOrder
+        SET
+           CounterGot = #counterGot#,
+           GetFromTime = #getFromTime#,
+           GetToTime = #getToTime#,
+    ]]>
+    <isEqual property="sendFlag" compareValue="0">	
+				<![CDATA[ SendFlag = '0',]]>
+	</isEqual>	
+    <isEqual property="sendFlag" compareValue="1">	
+				<![CDATA[ SendFlag = '2',]]>
+	</isEqual>
+	<isEqual property="sendFlag" compareValue="2">	
+				<![CDATA[ SendFlag = '2',]]>
+	</isEqual>
+	<isEqual property="campState" compareValue="NG">	
+				<![CDATA[ State = 'AR',]]>
+	</isEqual>
+	<include refid="BINOLCMINC99.updateSql" />
+    <![CDATA[
+        WHERE 
+            BIN_CampaignOrderID =#campOrderId# AND
+            UpdateTime = #modifyTime# AND
+			ModifyCount = #modifyCount#
+    ]]>
+    </update>
+    
+    <select id="getCounterId" parameterClass="java.util.HashMap" resultClass="java.lang.String">
+		<![CDATA[
+			SELECT 
+				A.BIN_CounterInfoID
+			FROM 
+				Basis.BIN_CounterInfo A WITH(NOLOCK) 
+			WHERE 
+				A.CounterCode=#counterGot# AND
+				A.BIN_OrganizationInfoID = #organizationInfoId# AND
+				A.BIN_BrandInfoID = #brandInfoId# AND
+				A.ValidFlag = '1'
+		]]>
+    </select>
+     <!--  取得编辑后的信息 -->
+    <select id="getEditInfo" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+    	<![CDATA[
+    	   SELECT 
+			  BIN_CampaignOrderID,
+		      CounterGot AS counterGot,
+			  SendFlag AS sendFlag,
+			  State AS state,
+			  convert(varchar(100),GetFromTime ,23) AS  getFromTime,
+			  convert(varchar(100),GetToTime ,23) AS  getToTime
+			FROM 
+	    	   	 Campaign.BIN_CampaignOrder WITH(NOLOCK)
+			WHERE 														
+			BIN_CampaignOrderID =#campOrderId#	
+         ]]>
+    </select>
+    
+     <!-- 提前或者延后领用开始日期 -->
+    <select id="getDateAddFrom" parameterClass="java.util.HashMap" resultClass="java.lang.String">
+    	 <isEqual property="referFromType" compareValue="1">	
+    	 	<isEqual property="referFromDate" compareValue="1">	
+			<![CDATA[
+    	   		 SELECT CONVERT(VARCHAR(10),DATEADD(DAY,#fromValue#,#getFromTime#),120) 
+         	]]>
+	     	</isEqual>	
+	     	<isEqual property="referFromDate" compareValue="2">	
+			<![CDATA[
+				 SELECT CONVERT(VARCHAR(10),DATEADD(MONTH,#fromValue#,#getFromTime#),120) 
+         	]]>
+	     	</isEqual>	
+	      </isEqual>	
+    </select>
+    
+     <!--  提前或者延后领用结束日期 -->
+    <select id="getDateAddTo" parameterClass="java.util.HashMap" resultClass="java.lang.String">
+		<isEqual property="referToType" compareValue="1">	
+    	 	<isEqual property="referToDate" compareValue="1">	
+			<![CDATA[
+    	         SELECT CONVERT(VARCHAR(10),DATEADD(DAY,#toValue#,#getToTime#),120) 
+         	]]>
+	     	</isEqual>	
+	     	<isEqual property="referToDate" compareValue="2">	
+			<![CDATA[
+			     SELECT CONVERT(VARCHAR(10),DATEADD(MONTH,#toValue#,#getToTime#),120) 
+         	]]>
+	     	</isEqual>	
+       </isEqual>	
+    </select>
+    
+   <!-- 更新会员活动预约表 -->
+    <update id="batchUpdCampOrder" parameterClass="java.util.HashMap">
+    <![CDATA[
+    UPDATE
+		Campaign.BIN_CampaignOrder
+	SET																
+		CounterGot = #counterGot#,																																	
+		GetFromTime = #getFromTime#,					
+		GetToTime = #getToTime#,
+	]]>		
+	<isEqual property="sendFlag" compareValue="0">	
+				<![CDATA[ SendFlag = '0',]]>
+	</isEqual>	
+    <isEqual property="sendFlag" compareValue="1">	
+				<![CDATA[ SendFlag = '2',]]>
+	</isEqual>
+	<isEqual property="sendFlag" compareValue="2">	
+				<![CDATA[ SendFlag = '2',]]>
+	</isEqual>
+	<isEqual property="state" compareValue="NG">	
+				<![CDATA[ State = 'AR',]]>
+	</isEqual>																		
+	<include refid="BINOLCMINC99.updateSql" />
+	<![CDATA[   
+	 WHERE
+		TradeNoIF = #billNo#
+		AND State != 'OK' 
+		AND State != 'CA'
+    ]]>
+    </update>
+    
+    <sql id="counterOrderQuery">
+			<isNotEmpty property="campOrderId">																				
+			<![CDATA[A.BIN_CampaignOrderID = #campOrderId#]]>																				
+			</isNotEmpty>
+			<isEmpty  property="campOrderId">
+			<![CDATA[
+				A.BIN_BrandInfoID = #brandInfoId#	
+			  	AND A.CampaignCode= #campaignCode#
+	 		  	AND A.ValidFlag='1'
+	 		]]>
+			</isEmpty>
+			<isNotEmpty property="tradeNoIF" prepend="AND">																				
+			<![CDATA[A.TradeNoIF = #tradeNoIF#]]>																				
+			</isNotEmpty>
+			<isNotEmpty property="memCode" prepend="AND">																				
+			<![CDATA[A.MemCode = #memCode#]]>																				
+			</isNotEmpty>
+			<isNotEmpty property="mobile" prepend="AND">																				
+			<![CDATA[A.Mobile = #mobile#]]>																				
+			</isNotEmpty>
+			<isNotEmpty property="counterGot" prepend="AND">																				
+			<![CDATA[(A.CounterGot = #counterGot# OR A.CounterGot = 'ALL')]]>																				
+			</isNotEmpty>
+			<isNotEmpty property="counterOrder" prepend="AND">																				
+			<![CDATA[A.OrderCounterCode = #counterOrder#]]>																				
+			</isNotEmpty>
+			<isNotEmpty property="state" prepend="AND">														
+			<![CDATA[A.State = #state#]]>																			
+			</isNotEmpty>	
+			<isNotEmpty property="testType" prepend="AND">		
+				<![CDATA[A.BIN_MemberInfoID IS NOT NULL ]]>
+			<isEqual property="testType" compareValue="0" prepend="AND">												
+				<![CDATA[B.TestType = #testType# ]]>															
+			</isEqual>	
+			<isEqual property="testType" compareValue="1" prepend="AND">
+				<![CDATA[(B.TestType = #testType# OR B.TestType IS NULL)]]>	
+			</isEqual>
+			</isNotEmpty>
+			<isNotEmpty property="counterBelong" prepend="AND">																				
+			<![CDATA[B.counterCodeBelong = #counterBelong#]]>																				
+			</isNotEmpty>																					
+			<isNotEmpty property="sendFlag" prepend="AND">																				
+			<![CDATA[A.SendFlag = #sendFlag#]]>																				
+			</isNotEmpty>
+			<isNotEmpty property="couponCode" prepend="AND">																				
+			<![CDATA[A.CouponCode = #couponCode#]]>																				
+			</isNotEmpty>
+			<isNotEmpty prepend="AND" property="startDate">
+			<![CDATA[
+				CONVERT(varchar(10),A.CampaignOrderTime,121) >= #startDate#
+			]]>
+			</isNotEmpty>
+			<isNotEmpty prepend="AND" property="endDate">
+			<![CDATA[
+				CONVERT(varchar(10),A.CampaignOrderTime,121) <= #endDate#
+			]]>           
+			</isNotEmpty>
+	</sql>
+	
+   <!-- 会员发开柜台作为领用柜台-->
+   <update id="updCounterIssue" parameterClass="java.util.HashMap">  	
+	<![CDATA[
+		UPDATE  A
+		   SET  A.CounterGot = B.CounterCodeBelong
+		  FROM 
+				Campaign.BIN_CampaignOrder A WITH(NOLOCK)
+		  JOIN Members.BIN_MemberInfo B WITH(NOLOCK) ON (A.BIN_MemberInfoID=B.BIN_MemberInfoID)
+		  WHERE
+	]]>     
+	<include refid="BINOLCPACT06.counterOrderQuery" />
+  </update>
+  
+   <!-- 会员预约柜台作为领用柜台 -->
+  <update id="updResCounter" parameterClass="java.util.HashMap">  	
+	<![CDATA[
+		UPDATE  A
+		   SET  A.CounterGot = A.OrderCounterCode
+		  FROM 
+				Campaign.BIN_CampaignOrder A WITH(NOLOCK)
+		  JOIN Members.BIN_MemberInfo B WITH(NOLOCK) ON (A.BIN_MemberInfoID=B.BIN_MemberInfoID)
+		  WHERE
+	]]>     
+	<include refid="BINOLCPACT06.counterOrderQuery" />
+  </update>
+</sqlMap>

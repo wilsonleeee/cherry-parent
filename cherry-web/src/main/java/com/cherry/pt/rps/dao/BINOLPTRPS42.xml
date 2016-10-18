@@ -1,0 +1,390 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sqlMap PUBLIC "-//iBATIS.com//DTD SQL Map 2.0//EN" "http://ibatis.apache.org/dtd/sql-map-2.dtd">
+<sqlMap namespace="BINOLPTRPS42">
+    <!--销售记录查询SQL文-->
+    <sql id="getPreInfo">
+        <![CDATA[
+		SELECT 
+				A.BIN_SaleRecordID  AS prePayBillMainId,		
+		      	A.BillCode AS prePayNo,
+		      	B.DepartCode AS departCode,
+			    B.DepartName AS departName,
+			    A.MobilePhone AS telephone,
+		      	A.SaleDate AS prePayDate,
+			    A.SaleTime AS prePayTime,
+			    A.Amount AS prePayAmount,
+			    A.Quantity AS buyQuantity,
+			    A.PickupQuantity AS pickupQuantity,
+			    ISNULL(A.Quantity,0)-ISNULL(A.PickupQuantity,0) AS leftQuantity,
+			    A.PickupDate AS pickupDate,
+			    COUNT(D.BIN_PickupBillMainID) AS pickupTimes,
+			    E.EmployeeCode AS employeeCode,
+			    E.EmployeeName AS employeeName,
+			    A.SaleType AS transactionType,
+			    CASE WHEN 
+			    	A.SaleType='NS' THEN 1
+			    	WHEN  A.SaleType='SR' THEN -1
+			    END AS computeSign
+  		FROM 
+  				Sale.BIN_SaleRecord A WITH(NOLOCK)
+  				LEFT JOIN Basis.BIN_Organization B WITH(NOLOCK) ON (A.BIN_OrganizationID = B.BIN_OrganizationID)
+   				LEFT JOIN Basis.BIN_Employee E WITH(NOLOCK) ON (A.BIN_EmployeeID = E.BIN_EmployeeID)
+   				LEFT JOIN Sale.BIN_PickupBillMain D	  WITH(NOLOCK) ON (A.BIN_SaleRecordID = D.BIN_SaleRecordID)
+		WHERE 	
+				A.ValidFlag = '1' 
+				AND A.BillModel=5 AND 
+			]]>EXISTS (<include refid="BINOLCMINC99.getDepartList" />
+		<![CDATA[AND B.BIN_OrganizationID = A99.BIN_OrganizationID)]]>
+		<isNotEmpty prepend="AND" property="prePayNo">
+			<![CDATA[A.BillCode LIKE '%' + #prePayNo# + '%'  ]]>
+		</isNotEmpty>
+		<isNotEmpty prepend="AND" property="phoneNo">
+			<![CDATA[A.MobilePhone LIKE '%' + #phoneNo# + '%'  ]]>
+		</isNotEmpty>
+		<isNotEmpty prepend="AND" property="prePayAmountStart">
+			 <![CDATA[A.Amount >= #prePayAmountStart#]]>
+		</isNotEmpty>
+		<isNotEmpty prepend="AND" property="prePayAmountEnd">
+			 <![CDATA[A.Amount <= #prePayAmountEnd#]]>
+		</isNotEmpty>
+		<isNotEmpty prepend="AND" property="prePayStartDate">
+			<![CDATA[A.SaleDate >= #prePayStartDate#]]>
+		</isNotEmpty>
+		<isNotEmpty prepend="AND" property="prePayEndDate">
+			 <![CDATA[A.SaleDate <= #prePayEndDate#]]>
+		</isNotEmpty>
+		<isEmpty property="includeNoPickUpTime">
+			<isNotEmpty prepend="AND" property="pickUpStartDate">
+				<![CDATA[A.PickupDate >= #pickUpStartDate# AND A.PickupDate is not NULL ]]>
+			</isNotEmpty>
+			<isNotEmpty prepend="AND" property="pickUpEndDate">
+				 <![CDATA[A.PickupDate <= #pickUpEndDate# AND A.PickupDate is not NULL ]]>
+			</isNotEmpty>	
+		</isEmpty>					
+		<isNotEmpty property="includeNoPickUpTime" prepend="AND">
+			<isEqual property="includeNoPickUpTime" open="(" close=")"  compareValue="1">
+						<![CDATA[ 1=1]]>
+					<isNotEmpty prepend="AND" property="pickUpStartDate">
+						<![CDATA[A.PickupDate >= #pickUpStartDate# AND A.PickupDate is not NULL ]]>
+					</isNotEmpty>
+					<isNotEmpty prepend="AND" property="pickUpEndDate">
+						 <![CDATA[A.PickupDate <= #pickUpEndDate# AND A.PickupDate is not NULL ]]>
+					</isNotEmpty>			
+				OR A.PickupDate IS NULL
+			</isEqual>
+		</isNotEmpty>
+		 <![CDATA[ GROUP BY A.BIN_SaleRecordID,A.BillCode,B.DepartCode,B.DepartName,
+  				 A.MobilePhone,
+		      	 A.SaleDate,
+			     A.SaleTime,
+			     A.Amount,
+			     A.Quantity,
+			     A.PickupQuantity,			   
+			     A.PickupDate,
+			     E.EmployeeCode,
+			     E.EmployeeName,
+			     A.SaleType
+			    ]]>
+    </sql>
+	
+	<!--获取销售记录单数量SQL文-->
+	<select id="getPreInfoCount" parameterClass="java.util.HashMap" resultClass="java.lang.Integer">
+		<![CDATA[
+            SELECT 
+				COUNT(SORT_T1.prePayBillMainId) AS count FROM (
+        ]]>
+        <include refid="BINOLPTRPS42.getPreInfo" />
+        <![CDATA[
+            )SORT_T1
+        ]]>
+	</select>
+	
+	<!--获取销售记录LIST的SQL文-->
+	<select id="getPreInfoList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+		<include refid="BINOLCMINC99.pageheader" />
+        <include refid="BINOLPTRPS42.getPreInfo" />
+        <include refid="BINOLCMINC99.pagefooter" />
+	</select>
+	
+	<select id="getSumPreInfo" parameterClass="java.util.HashMap"
+	resultClass="java.util.HashMap">
+		<![CDATA[
+		SELECT
+				ISNULL(SUM(T.prePayAmount*T.computeSign),0) AS sumPrePayAmount,
+				ISNULL(SUM(T.buyQuantity*T.computeSign),0) AS sumBuyQuantity,
+				ISNULL(SUM(T.leftQuantity*T.computeSign),0) AS sumLeftQuantity
+		FROM
+			(	
+		]]>
+	<include refid="BINOLPTRPS42.getPreInfo" /> 
+		<![CDATA[ 
+			) T	
+		]]>
+	</select>
+	
+	
+	
+	<!--预付单记录明细查询SQL文-->
+    <sql id="getExportDetail">
+    	<![CDATA[
+    		SELECT 
+    			T.prePayBillMainId AS prePayBillMainId,
+	    		T.telephone AS telephone,
+				T.prePayNo AS prePayNo,
+				T.departCode AS departCode,
+				T.departName AS departName,
+				T.employeeCode AS employeeCode,
+				T.employeeName AS employeeName,
+				B.PickupQuantity AS pickupQuantity,
+				T.pickupDate AS pickupDate,
+				D.UnitCode AS unitCode,
+				C.BarCode AS barCode,
+				B.Price AS price,
+				B.Quantity AS quantity,
+				B.Price*B.Quantity  AS deatilAmount,
+				ISNULL(B.Quantity,0)-ISNULL(B.PickupQuantity,0) AS leftQuantity,
+				T.prePayDate AS prePayDate,
+		]]>
+		<dynamic>
+				<isNotEmpty property="language">
+	                <isEqual property="language" compareValue="en_US">
+	                    D.NameForeign AS productName
+	                </isEqual>
+	                <isEqual property="language" compareValue="zh_CN">
+						D.NameTotal AS productName 
+	                </isEqual>
+	            </isNotEmpty>
+	            <isEmpty property="language">
+					D.NameTotal AS productName
+	            </isEmpty>
+	    </dynamic>
+	    <![CDATA[
+			FROM
+				(
+    	]]>
+    	<include refid="BINOLPTRPS42.getPreInfo" />
+    	<![CDATA[
+    		) T JOIN Sale.BIN_SaleRecordDetail B WITH(NOLOCK)
+				ON(T.prePayBillMainId = B.BIN_SaleRecordID AND 
+					B.ValidFlag = '1')
+				LEFT JOIN Basis.BIN_ProductVendor C WITH(NOLOCK) 
+				ON (B.BIN_ProductVendorID = C.BIN_ProductVendorID)
+				LEFT JOIN Basis.BIN_Product D WITH(NOLOCK) 
+				ON (C.BIN_ProductID = D.BIN_ProductID)
+			WHERE
+				B.SaleType='N'
+				UNION ALL
+			SELECT 
+				T.prePayBillMainId AS prePayBillMainId,
+	    		T.telephone AS telephone,
+				T.prePayNo AS prePayNo,
+				T.departCode AS departCode,
+				T.departName AS departName,
+				T.employeeCode AS employeeCode,
+				T.employeeName AS employeeName,
+				B.PickupQuantity AS pickupQuantity,
+				T.pickupDate AS pickupDate,
+				D.UnitCode AS unitCode,
+				C.BarCode AS barCode,
+				B.Price AS price,
+				B.Quantity AS quantity,
+				B.Price*B.Quantity  AS deatilAmount,
+				ISNULL(B.Quantity,0)-ISNULL(B.PickupQuantity,0) AS leftQuantity,
+				T.prePayDate AS prePayDate,
+				]]>
+			<dynamic>
+					<isNotEmpty property="language">
+		                <isEqual property="language" compareValue="en_US">
+		                    D.NameForeign AS productName
+		                </isEqual>
+		                <isEqual property="language" compareValue="zh_CN">
+							D.NameTotal AS productName 
+		                </isEqual>
+		            </isNotEmpty>
+		            <isEmpty property="language">
+						D.NameTotal AS productName
+		            </isEmpty>
+		    </dynamic>
+		    <![CDATA[
+				FROM
+					(
+	    	]]>
+	    	<include refid="BINOLPTRPS42.getPreInfo" />
+	    	<![CDATA[
+		    	) T 
+	   				JOIN Sale.BIN_SaleRecordDetail B WITH(NOLOCK)
+					ON(T.prePayBillMainId = B.BIN_SaleRecordID AND 
+					B.ValidFlag = '1')
+					LEFT JOIN Basis.BIN_PromotionProductVendor C WITH(NOLOCK) 
+					ON (B.BIN_ProductVendorID = C.BIN_PromotionProductVendorID)
+					LEFT JOIN Basis.BIN_PromotionProduct D WITH(NOLOCK) 
+					ON (C.BIN_PromotionProductID = D.BIN_PromotionProductID)
+				WHERE
+					B.SaleType='P'
+    	]]>
+    </sql>
+    
+    <!-- 分页查询导出的销售记录明细  -->
+    <select id="getExportDetailList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+    	<include refid="BINOLCMINC99.pageheader" />
+    	<include refid="BINOLPTRPS42.getExportDetail" />
+    	<include refid="BINOLCMINC99.pagefooter" />
+    </select>
+    
+   
+	
+    <!--  取得销售记录明细总数  -->
+    <select id="getExportDetailCount" parameterClass="java.util.HashMap" resultClass="java.lang.Integer">
+    	<![CDATA[
+    		SELECT 
+				COUNT(SORT_T1.prePayBillMainId) AS count FROM (
+    	]]>
+    	<include refid="BINOLPTRPS42.getExportDetail" />
+    	<![CDATA[
+            )SORT_T1
+        ]]>
+    </select>
+    
+    
+    <!-- 取得预付单明细 -->
+    <select id="getpreInfoMap" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+		SELECT 
+				A.BIN_SaleRecordID  AS prePayBillMainId,		
+		      	A.BillCode AS prePayNo,
+		      	B.DepartCode AS departCode,
+			    B.DepartName AS departName,
+			    A.MobilePhone AS telephone,
+		      	A.SaleDate AS prePayDate,
+			    A.SaleTime AS prePayTime,
+			    A.Amount AS prePayAmount,
+			    A.Quantity AS buyQuantity,
+			    A.PickupQuantity AS pickupQuantity,
+			    ISNULL(A.Quantity,0)-ISNULL(A.PickupQuantity,0) AS leftQuantity,
+			    A.PickupDate AS pickupDate,
+			    E.EmployeeCode AS employeeCode,
+			    E.EmployeeName AS employeeName,
+			    A.SaleType AS transactionType,
+			    CASE WHEN 
+			    	A.SaleType='NS' THEN 1
+			    	WHEN  A.SaleType='SR' THEN -1
+			    END AS computeSign
+  		FROM 
+  				Sale.BIN_SaleRecord A WITH(NOLOCK)
+  				LEFT JOIN Basis.BIN_Organization B WITH(NOLOCK) ON (A.BIN_OrganizationID = B.BIN_OrganizationID)
+   				LEFT JOIN Basis.BIN_Employee E WITH(NOLOCK) ON (A.BIN_EmployeeID = E.BIN_EmployeeID)
+		WHERE 
+				A.BIN_SaleRecordID=#prePayBillMainId#
+
+    </select>
+    
+    <!-- 取得预付单明细list -->
+    <select id="getPreDetailInfoList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+		SELECT 	
+				D.UnitCode AS unitCode,
+				C.BarCode AS barCode,
+				A.Price*A.Quantity  AS deatilAmount,
+				A.Quantity AS quantity,
+				A.Price AS price,
+				A.PickupQuantity AS pickupQuantity,
+				ISNULL(A.Quantity,0)-ISNULL(A.PickupQuantity,0) AS leftQuantity,
+				<isNotEmpty property="language">
+	                <isEqual property="language" compareValue="en_US">
+	                    D.NameForeign AS productName
+	                </isEqual>
+	                <isEqual property="language" compareValue="zh_CN">
+						D.NameTotal AS productName 
+	                </isEqual>
+	            </isNotEmpty>
+	            <isEmpty property="language">
+					D.NameTotal AS productName
+	            </isEmpty>
+		FROM 
+				Sale.BIN_SaleRecordDetail A WITH(NOLOCK)
+				LEFT JOIN Sale.BIN_SaleRecord B WITH(NOLOCK) ON (A.BIN_SaleRecordID = B.BIN_SaleRecordID)
+				LEFT JOIN Basis.BIN_ProductVendor C WITH(NOLOCK) ON (A.BIN_ProductVendorID = C.BIN_ProductVendorID)
+				LEFT JOIN Basis.BIN_Product D WITH(NOLOCK) ON (C.BIN_ProductID = D.BIN_ProductID)
+			WHERE
+				A.SaleType='N' AND 		
+				B.BIN_SaleRecordID=#prePayBillMainId#
+			UNION ALL	
+		SELECT 	
+				D.UnitCode AS unitCode,
+				C.BarCode AS barCode,
+				A.Price*A.Quantity  AS deatilAmount,
+				ISNULL(A.Quantity,0) AS quantity,
+				A.Price AS price,
+				ISNULL(A.PickupQuantity,0) AS pickupQuantity,
+				ISNULL(A.Quantity,0)-ISNULL(A.PickupQuantity,0) AS leftQuantity,
+				<isNotEmpty property="language">
+	                <isEqual property="language" compareValue="en_US">
+	                    D.NameForeign AS productName
+	                </isEqual>
+	                <isEqual property="language" compareValue="zh_CN">
+						D.NameTotal AS productName 
+	                </isEqual>
+	            </isNotEmpty>
+	            <isEmpty property="language">
+					D.NameTotal AS productName
+	            </isEmpty>
+		FROM 
+				Sale.BIN_SaleRecordDetail A WITH(NOLOCK)
+				LEFT JOIN Sale.BIN_SaleRecord B WITH(NOLOCK) ON (A.BIN_SaleRecordID = B.BIN_SaleRecordID)
+				LEFT JOIN Basis.BIN_PromotionProductVendor C WITH(NOLOCK) ON (A.BIN_ProductVendorID = C.BIN_PromotionProductVendorID)
+				LEFT JOIN Basis.BIN_PromotionProduct D WITH(NOLOCK) ON (C.BIN_PromotionProductID = D.BIN_PromotionProductID)
+			WHERE
+				A.SaleType='P' AND 		
+				B.BIN_SaleRecordID=#prePayBillMainId#
+    </select>
+    
+    
+    <!-- 取得提货单明细list -->
+    <select id="getPickDetailInfoList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+		SELECT 
+				D.UnitCode AS unitCode,
+				C.BarCode AS barCode,
+				D.NameTotal AS productName,
+				ISNULL(A.Quantity*B.ComputeSign,0) AS quantity,
+				A.Price AS price,
+				B.PickupTime AS pickupTime,
+				ISNULL(B.PickupQuantity,0) AS pickupQuantity
+		FROM 
+				Sale.BIN_PickupBillDetail A WITH(NOLOCK)
+				LEFT JOIN Sale.BIN_PickupBillMain B WITH(NOLOCK) ON (A.BIN_PickupBillMainID = B.BIN_PickupBillMainID)
+				LEFT JOIN Basis.BIN_ProductVendor C WITH(NOLOCK) ON (A.BIN_ProductVendorID = C.BIN_ProductVendorID)
+				LEFT JOIN Basis.BIN_Product D WITH(NOLOCK) ON (C.BIN_ProductID = D.BIN_ProductID)
+		WHERE
+				A.DetailType='N' AND 		
+				B.BIN_SaleRecordID=#prePayBillMainId#
+			UNION ALL	
+		SELECT 
+				D.UnitCode AS unitCode,
+				C.BarCode AS barCode,
+				D.NameTotal AS productName,
+				ISNULL(A.Quantity*B.ComputeSign,0) AS quantity,
+				A.Price AS price,
+				B.PickupTime AS pickupTime,
+				ISNULL(B.PickupQuantity,0) AS pickupQuantity
+		FROM
+				Sale.BIN_PickupBillDetail A WITH(NOLOCK)
+				LEFT JOIN Sale.BIN_PickupBillMain B WITH(NOLOCK) ON (A.BIN_PickupBillMainID = B.BIN_PickupBillMainID)
+				LEFT JOIN Basis.BIN_PromotionProductVendor C WITH(NOLOCK) ON (A.BIN_ProductVendorID = C.BIN_PromotionProductVendorID)
+				LEFT JOIN Basis.BIN_PromotionProduct D WITH(NOLOCK) ON (C.BIN_PromotionProductID = D.BIN_PromotionProductID)
+			WHERE
+				A.DetailType='P' AND
+				B.BIN_SaleRecordID=#prePayBillMainId#
+    </select>
+    
+    <!-- 取得支付方式List -->
+    <select id="getPayTypeList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+		SELECT 
+			PayTypeCode  AS payTypeCode,
+			PayAmount AS payAmount,
+			SerialNumber AS serialNumber
+		FROM 
+			Sale.BIN_SalePayList 
+		WHERE 
+			BIN_SaleRecordID = #prePayBillMainId#
+
+    </select>
+    
+</sqlMap>

@@ -1,0 +1,172 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sqlMap PUBLIC "-//iBATIS.com//DTD SQL Map 2.0//EN" "http://ibatis.apache.org/dtd/sql-map-2.dtd">
+<sqlMap namespace="BINOLSTJCS06">
+	<!-- 取得逻辑仓库List  -->
+    <select id="getLogInvByBrand" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+    	<![CDATA[
+           SELECT
+		       A.BIN_LogicInventoryInfoID AS logInvId,
+		       A.LogicInventoryCode AS logInvCode,
+		       A.InventoryNameCN AS logInvNameCN,
+		       A.InventoryNameEN AS logInvNameEN,
+		       A.Comments AS comments,
+		       A.DefaultFlag AS defaultFlag,
+		       A.ValidFlag AS validFlag,
+			   A.Type AS type,
+			   A.OrderNO AS orderNo,
+		       A.UpdateTime AS updateTime,
+		       A.ModifyCount AS modifyCount
+           FROM
+		       Basis.BIN_LogicInventory A 
+           WHERE
+		       A.BIN_BrandInfoID = #brandInfoId#
+		]]>										
+    </select>
+	
+    <!-- 取得逻辑仓库  -->
+    <select id="getLogInvByLogInvId" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+    	<![CDATA[
+           SELECT
+		       A.BIN_LogicInventoryInfoID AS logInvId,
+		       A.LogicInventoryCode AS logInvCode,
+		       A.InventoryNameCN AS logInvNameCN,
+		       A.InventoryNameEN AS logInvNameEN,
+		       A.Comments AS comments,
+			   A.Type AS type,
+			   A.OrderNO AS orderNo,
+		       A.DefaultFlag AS defaultFlag,
+		       A.ValidFlag AS validFlag,
+		       A.UpdateTime AS updateTime,
+		       convert(varchar(30),A.UpdateTime,121) AS oldUpdateTime,
+		       A.ModifyCount AS modifyCount
+           FROM
+		       Basis.BIN_LogicInventory A 
+           WHERE
+		       A.BIN_LogicInventoryInfoID  = #logInvId#
+		]]>										
+    </select>
+	<!--更新逻辑仓库-->
+	<update id="updateLogInv" parameterClass="java.util.HashMap">
+		<![CDATA[
+		 UPDATE
+		       Basis.BIN_LogicInventory
+		 SET
+		        LogicInventoryCode = #logInvCode#,
+		        InventoryNameCN= #logInvNameCN#,
+		        InventoryNameEN= #logInvNameEN#,
+		        DefaultFlag = #defaultFlag#,
+		        Comments = #comments#,
+		        Type = #type#,
+		        OrderNO = #orderNo#,
+		        ValidFlag = #validFlag#,
+		]]>
+		       <include refid="BINOLCMINC99.updateSql" />
+		<![CDATA[	
+		WHERE
+		       BIN_LogicInventoryInfoID = #logInvId# AND
+		       UpdateTime = #updateTimeOld# AND 
+		       ModifyCount = #modifyCount#
+       ]]>	
+	</update>
+	
+	<!--增加逻辑仓库-->
+	<insert id="insertLogInv" parameterClass="java.util.HashMap">
+	<selectKey resultClass="java.lang.Integer" type="post" keyProperty="BIN_LogicInventoryInfoID" > 
+		<![CDATA[
+		INSERT INTO Basis.BIN_LogicInventory(
+				LogicInventoryCode,
+				InventoryNameCN,
+				InventoryNameEN,
+				BIN_OrganizationInfoID,
+				BIN_BrandInfoID,
+		        DefaultFlag,
+		        Comments,
+				Type,
+				OrderNO,
+		]]>
+	  	        <include refid="BINOLCMINC99.insertKeySql" />)
+		<![CDATA[
+        VALUES(
+		        #logInvCode#,
+				#logInvNameCN#,
+				#logInvNameEN#,
+				#organizationInfoId#,
+				#brandInfoId#,
+				#defaultFlag#,
+				#comments#,
+				#type#,
+				#orderNo#,
+		]]>
+                <include refid="BINOLCMINC99.insertValueSql" />
+			<![CDATA[	
+				)			
+			  	SELECT SCOPE_IDENTITY() AS value 	
+	    	]]>
+   	</selectKey>
+	</insert>
+	
+	<!--停用或启用逻辑仓库-->
+	<update id="disOrEnableLogInv" parameterClass="java.util.HashMap">
+		<![CDATA[
+	     UPDATE 
+		      Basis.BIN_LogicInventory
+	     SET 
+	    ]]>
+			  <isEqual property="data" compareValue="0" >
+				   ValidFlag = '0',
+				   DefaultFlag = '0',
+		      </isEqual>
+		      <isNotEqual property="data" compareValue="0" >
+				   ValidFlag = '1',
+		      </isNotEqual>
+		      <include refid="BINOLCMINC99.updateSql" />
+		<![CDATA[	
+         WHERE 
+		      BIN_LogicInventoryInfoID = #logInvId#
+        ]]>	
+	</update>
+	
+    <!--取消原有默认仓库-->
+	<update id="cancleDefaultFlag" parameterClass="java.util.HashMap">
+		<![CDATA[
+		 UPDATE
+             Basis.BIN_LogicInventory
+         SET 
+             DefaultFlag = '0',
+		]]>
+		     <include refid="BINOLCMINC99.updateSql" />
+		<![CDATA[	
+		 WHERE 
+		     DefaultFlag='1' AND
+			 ]]>
+			 <isNotEmpty property="logInvId">
+			   BIN_LogicInventoryInfoID!=#logInvId# AND
+			 </isNotEmpty>
+			 <![CDATA[
+		     BIN_BrandInfoID=#brandInfoId# AND
+			 Type = #type#
+       ]]>	
+	</update>
+	
+	<!-- 取得逻辑仓库List(WS结构组装使用)  -->
+    <select id="getLogInvByBrandWithWS" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+    	<![CDATA[
+           SELECT
+		       A.LogicInventoryCode AS Code,
+		       A.InventoryNameCN AS NameCn,
+		       A.InventoryNameEN AS NameEn,
+		       A.Comments AS Comment,
+		       CASE A.ValidFlag WHEN '1' THEN 'OK' ELSE 'NG' END AS Status,
+			   A.OrderNO AS OrderByNo,
+			   #Operate# AS Operate
+           FROM
+		       Basis.BIN_LogicInventory A 
+           WHERE
+		       A.BIN_BrandInfoID = #brandInfoId#
+		   AND A.Type = 1
+		]]>					
+		<isNotEmpty property="logInvId" prepend="AND">
+			   A.BIN_LogicInventoryInfoID = #logInvId#
+		</isNotEmpty>					
+    </select>
+</sqlMap>

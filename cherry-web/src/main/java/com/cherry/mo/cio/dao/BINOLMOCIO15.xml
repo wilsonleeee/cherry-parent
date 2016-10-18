@@ -1,0 +1,169 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sqlMap PUBLIC "-//iBATIS.com//DTD SQL Map 2.0//EN" "http://ibatis.apache.org/dtd/sql-map-2.dtd">
+<sqlMap namespace="BINOLMOCIO15">
+	<sql id="rivalQuery">
+		<![CDATA[
+			SELECT
+				A.BIN_RivalID AS binRivalID,
+				A.RivalNameCN AS rivalNameCN,
+				A.RivalNameEN AS rivalNameEN,
+				A.BIN_BrandInfoID AS brandInfoId
+			FROM				
+				Monitor.BIN_Rival A
+			WHERE	
+				A.BIN_OrganizationInfoID = #organizationInfoId# AND
+				A.ValidFlag = '1'
+		]]>
+		<isNotEmpty prepend = "AND" property = "brandInfoId">
+				A.BIN_BrandInfoID=#brandInfoId#
+		</isNotEmpty>
+		<isNotEmpty prepend="AND" property="rivalNameCN">
+           (A.RivalNameCN LIKE '%' + #rivalNameCN# + '%')
+	    </isNotEmpty>
+	</sql>
+	
+	<!-- 取得总数  -->
+    <select id="getRivalCount" parameterClass="java.util.HashMap" resultClass="java.lang.Integer">
+    	<![CDATA[
+			SELECT	COUNT(SORT_T1.binRivalID) AS count FROM (
+		]]>	
+		<include refid="BINOLMOCIO15.rivalQuery" />	
+		<![CDATA[	
+			)SORT_T1
+		]]>										
+    </select>
+    
+    <insert id="addRival" parameterClass="java.util.HashMap">
+    <selectKey resultClass="java.lang.Integer" type="post" keyProperty="BIN_RivalID" >
+    	<![CDATA[
+			Insert INTO Monitor.BIN_Rival
+				(
+		  BIN_OrganizationInfoID,
+		  BIN_BrandInfoID,
+		  RivalNameCN,
+		  RivalNameEN,
+		  ]]>
+		<include refid="BINOLCMINC99.insertKeySql" />
+		<![CDATA[						
+			)					
+			VALUES					
+			(			
+			#organizationInfoId#,
+			#brandInfoId#,
+			#rivalNameCN#,
+			#rivalNameEN#,
+		]]>
+		<include refid="BINOLCMINC99.insertValueSql" />		
+		<![CDATA[							
+			)
+			select SCOPE_IDENTITY() as value
+    	]]>
+	    </selectKey>
+  </insert>
+  
+  	<!-- 停用 -->
+	<update id="disableRival" parameterClass="java.util.HashMap">     
+    <![CDATA[
+        UPDATE
+            Monitor.BIN_Rival
+        SET
+            ValidFlag = '0',
+    ]]>
+	<include refid="BINOLCMINC99.updateSql" />
+    <![CDATA[
+        WHERE 
+            BIN_RivalID IN
+    ]]>
+	<iterate conjunction="," open="(" close=")" property="binRivalID">  
+        #binRivalID[]#
+    </iterate>
+    </update>
+    
+    <!-- 逻辑删除竞争对手 -->
+    <delete id="deleteRival" parameterClass="java.util.HashMap">     
+	    <![CDATA[
+	        DELETE FROM
+	            Monitor.BIN_Rival
+	        WHERE 
+	            BIN_RivalID = #rivalId#
+	    ]]>
+    </delete>
+    
+    <!-- 更新竞争对手 -->
+    <update id="updateRival" parameterClass="java.util.HashMap">     
+	    <![CDATA[
+	        UPDATE
+	            Monitor.BIN_Rival
+	        SET
+	    ]]>
+	    <isNotEmpty property = "brandInfoId">
+				BIN_BrandInfoID=#brandInfoId#,
+		</isNotEmpty>
+		<isNotEmpty property = "rivalNameCN">
+				RivalNameCN=#rivalNameCN#,
+		</isNotEmpty>
+		<isNotEmpty property = "rivalNameEN">
+				RivalNameEN=#rivalNameEN#,
+		</isNotEmpty>
+		<include refid="BINOLCMINC99.updateSql" />
+	    <![CDATA[
+	        WHERE 
+	            BIN_RivalID = #rivalId#
+	    ]]>
+    </update>
+    
+    <!-- 根据竞争对手ID取得竞争对手所属品牌(用于更新配置数据库的SCS表) -->
+    <select id="getRivalBrandCode" parameterClass="java.util.HashMap" resultClass="java.lang.String">
+    	<![CDATA[
+    		SELECT 
+				B.BrandCode AS brandCode 
+			FROM 
+				Monitor.BIN_Rival A WITH(NOLOCK)
+				LEFT JOIN Basis.BIN_BrandInfo B WITH(NOLOCK)
+				ON(A.BIN_BrandInfoID=B.BIN_BrandInfoID)
+			WHERE
+				BIN_RivalID = #rivalId#
+    	]]>
+    </select>
+    
+     <!-- 判断名称是否已经存在 -->
+	<select id="getCount" parameterClass="java.util.HashMap" resultClass="java.lang.String">
+		<![CDATA[
+		SELECT COUNT(SORT_T1.BIN_RivalID) AS count FROM(
+			SELECT
+				BIN_RivalID,
+		        RivalNameCN
+			FROM
+				Monitor.BIN_Rival
+			WHERE
+				BIN_BrandInfoID=#brandInfoId# AND
+				BIN_OrganizationInfoID = #organizationInfoId# AND
+				RivalNameCN=#rivalNameCN# AND
+				ValidFlag = '1'
+		]]>
+		<!-- 编辑时不校验编辑对象本身 -->
+		<isNotEmpty prepend="AND" property = "rivalId">
+				<![CDATA[BIN_RivalID <> #rivalId#]]>
+		</isNotEmpty>
+		<![CDATA[
+				)SORT_T1
+		]]>
+    </select>
+    
+    <select id="getBrandCode" parameterClass="java.lang.String" resultClass="java.lang.String">
+		<![CDATA[
+			SELECT
+				BrandCode
+			FROM
+				Basis.BIN_BrandInfo
+			WHERE
+				BIN_BrandInfoID=#brandInfoId#
+		]]>
+    </select>
+    
+    <select id="getRivalList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+       	<include refid="BINOLCMINC99.pageheader" />
+		<include refid="BINOLMOCIO15.rivalQuery" />
+		<include refid="BINOLCMINC99.pagefooter" />
+    </select>
+</sqlMap>

@@ -1,0 +1,253 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sqlMap PUBLIC "-//iBATIS.com//DTD SQL Map 2.0//EN" "http://ibatis.apache.org/dtd/sql-map-2.dtd">
+<sqlMap namespace="BINOLMBLEL01">
+	<!-- 取得会员等级ID -->
+	<select id="getLevelId" parameterClass="java.util.HashMap" resultClass="java.lang.Integer">
+		<![CDATA[
+		SELECT
+			BIN_MemberLevelID
+		FROM
+			Members.BIN_MemberLevel
+		WHERE
+			1=1
+		]]>	
+		<isNotEmpty prepend="AND" property="levelName">
+			LevelName = #levelName#
+		</isNotEmpty>	
+		<isNotEmpty prepend="AND" property="levelCode">
+			LevelCode = #levelCode#
+		</isNotEmpty>
+    </select>
+    <!-- 查询会员等级详细List -->
+	<select id="getLelDetailList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+		<![CDATA[
+		SELECT
+			CONVERT(varchar,B.FromDate,112) + CONVERT(varchar,B.ToDate,112) AS groupId,
+			A.BIN_MemberLevelID AS levelId,
+			A.LevelName AS levelName,
+			A.LevelCode AS levelCode,
+			A.Description AS description,
+			B.FromDate AS fromDate,
+			B.ToDate AS toDate,
+			A.Periodvalidity AS periodvalidity,
+			B.DefaultFlag AS defaultFlag
+		FROM
+			Members.BIN_MemberLevel A
+			JOIN Members.BIN_MemberLevelDetail B
+			ON(A.BIN_MemberLevelID = B.BIN_MemberLevelID
+				AND B.ToDate >= #busDate#)
+		WHERE
+			A.BIN_BrandInfoID = #brandInfoId#
+	]]>	
+		<isNotEmpty prepend="AND" property="memberClubId">
+			A.BIN_MemberClubID = #memberClubId#
+		</isNotEmpty>
+		<![CDATA[
+			AND A.ValidFlag = 1
+		ORDER BY
+			B.FromDate,
+			B.Grade
+		]]>	
+    </select>
+	<!-- 查询会员等级List -->
+	<select id="getLevelList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+		<![CDATA[
+			SELECT
+				A.BIN_MemberLevelID AS levelId,
+				A.LevelName AS levelName,
+				A.LevelCode AS levelCode,
+				A.Description AS description,
+				A.FromDate AS fromDate,
+				A.ToDate AS toDate,
+				A.Periodvalidity AS periodvalidity,
+				ISNULL(A.SendFlag,0) AS enable
+			FROM
+				Members.BIN_MemberLevel A
+			WHERE
+				A.BIN_BrandInfoID = #brandInfoId#
+				AND A.ToDate >= #busDate#
+		]]>	
+		<isNotEmpty prepend="AND" property="memberClubId">
+			A.BIN_MemberClubID = #memberClubId#
+		</isNotEmpty>
+		<![CDATA[
+				AND A.ValidFlag = '1'
+		]]>	
+    </select>
+	<!-- 插入会员等级表  -->
+	<insert id="addLevel" parameterClass="java.util.HashMap">
+		<selectKey resultClass="java.lang.Integer" type="post" keyProperty="BIN_MemberLevelID" >
+			<![CDATA[
+				INSERT INTO Members.BIN_MemberLevel(
+					BIN_OrganizationInfoID,
+					BIN_BrandInfoID,
+					LevelName,
+					LevelCode,
+					Description,
+					FromDate,
+					ToDate,
+				    Periodvalidity, 
+				    BIN_MemberClubID,
+			]]>
+			<include refid="BINOLCMINC99.insertKeySql" />
+			<![CDATA[		
+				)VALUES(
+					#organizationInfoId#,
+					#brandInfoId#,
+					#levelName#,
+					#levelCode#,
+					#description#,
+					#fromDate#,
+					#toDate#,
+				    #periodvalidity#,
+				    #memberClubId#,
+			]]>
+			<include refid="BINOLCMINC99.insertValueSql" />
+			<![CDATA[ )
+			    select SCOPE_IDENTITY() as value	
+			]]> 
+	    </selectKey>
+	</insert>
+	<!-- 更新会员等级表  -->
+	<update id="updLevel" parameterClass="java.util.HashMap">
+		<![CDATA[
+			UPDATE
+				Members.BIN_MemberLevel
+			SET
+				ToDate =#toDate#,
+				LevelName=#levelName#,
+				LevelCode=#levelCode#,
+				Description=#description#,
+				FromDate =#fromDate#,
+				Periodvalidity =#periodvalidity#,
+		]]>
+		<include refid="BINOLCMINC99.updateSql" />
+		<![CDATA[
+			WHERE
+				BIN_MemberLevelID = #levelId#
+		]]>
+	</update>
+	
+	<!-- 更新会员等级表  -->
+	<update id="updMemberDate" parameterClass="java.util.HashMap">
+		<![CDATA[
+			UPDATE
+				Members.BIN_MemberLevel
+			SET
+				Periodvalidity =#periodvalidity#,
+		]]>
+		<include refid="BINOLCMINC99.updateSql" />
+		<![CDATA[
+			WHERE
+				BIN_MemberLevelID = #levelMemberId#
+		]]>
+	</update>
+	
+	<!-- 删除会员等级表  -->
+	<delete id="delLevel" parameterClass="java.util.HashMap">
+		<![CDATA[
+		DELETE FROM
+			Members.BIN_MemberLevel
+		WHERE
+			BIN_MemberLevelID = #levelId#
+		]]>
+	</delete>
+	<!-- 插入会员等级详细表  -->
+	<insert id="addLevelDetail" parameterClass="java.util.HashMap">	
+		<![CDATA[
+			INSERT INTO Members.BIN_MemberLevelDetail(
+				BIN_MemberLevelID,
+				Grade,
+				FromDate,
+				ToDate,
+				DefaultFlag,
+		]]>
+		<include refid="BINOLCMINC99.insertKeySql" />
+		<![CDATA[		
+			)VALUES(
+				#levelId#,
+				#grade#,
+				#fromDate#,
+				#toDate#,
+		]]>
+		<isNotEmpty property="defaultLevel">
+			#defaultLevel#,
+		</isNotEmpty>
+		<isEmpty property="defaultLevel">
+			0,
+		</isEmpty>
+		<include refid="BINOLCMINC99.insertValueSql" />
+		<![CDATA[ )]]>
+	</insert>
+	<!-- 删除会员等级详细表  -->
+	<delete id="delLevelDetail" parameterClass="java.util.HashMap">
+		<![CDATA[
+		DELETE FROM
+			Members.BIN_MemberLevelDetail
+		WHERE
+			BIN_MemberLevelID = #levelId#	
+		]]>
+	</delete>
+	
+	<!-- 查询会员等级的默认等级信息 -->
+	<select id="getDefaultFlag" parameterClass="java.util.HashMap" resultClass="java.lang.Integer">
+		<![CDATA[
+			SELECT 
+				DefaultFlag AS defaultFlag
+			FROM
+				Members.BIN_MemberLevelDetail
+			WHERE
+				BIN_MemberLevelID = #levelId# AND
+				FromDate = #fromDate# AND
+				ToDate = #toDate# 
+		]]>	
+    </select>
+	<!-- 查询等级个数 -->
+	<select id="getMemberCount" parameterClass="java.util.HashMap" resultClass="java.lang.Integer">
+		<![CDATA[
+			SELECT 
+				COUNT(BIN_MemberLevelID)
+			FROM
+				Members.BIN_MemberLevel
+			WHERE
+				BIN_MemberLevelID = #levelId# AND
+				FromDate = #fromDate# AND
+				ToDate = #toDate# 
+		]]>	
+    </select>
+	
+	<!-- 查询升降级规则条数 -->
+	<select id="getUpLevelRuleCount" parameterClass="java.util.HashMap" resultClass="java.lang.Integer">
+		<![CDATA[
+			SELECT
+				COUNT(BIN_CampaignID) AS count
+			FROM
+				Campaign.BIN_Campaign
+			WHERE
+				BIN_BrandInfoID = #brandInfoId# AND
+				CampaignType = #campaignType# AND
+		]]>	
+		<isNotEmpty property="memberClubId">
+			BIN_MemberClubID = #memberClubId# AND
+		</isNotEmpty>
+		<![CDATA[
+				ValidFlag = '1' 
+		]]>	
+    </select>
+	
+	<!-- 查询默认等级 -->
+	<select id="getDefaultLevel" parameterClass="java.util.HashMap" resultClass="java.lang.Integer">
+		<![CDATA[
+			SELECT 
+				DefaultFlag AS defaultFlag
+			FROM
+				Members.BIN_MemberLevelDetail
+			WHERE
+				BIN_MemberLevelID = #levelId# AND
+				ValidFlag = '1'
+		]]>	
+    </select>
+</sqlMap>
+
+
+

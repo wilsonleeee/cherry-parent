@@ -1,0 +1,153 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sqlMap PUBLIC "-//iBATIS.com//DTD SQL Map 2.0//EN" "http://ibatis.apache.org/dtd/sql-map-2.dtd">
+<sqlMap namespace="BINOLBSDEP03">
+    
+    <!-- 更新部门信息 -->
+    <update id="updateOrganizationInfo" parameterClass="java.util.HashMap">
+    	<![CDATA[
+			UPDATE Basis.BIN_Organization			
+			SET				
+				DepartCode = #departCode#,			
+				DepartName = #departName#,			
+				DepartNameShort = #departNameShort#,
+				NameForeign = #nameForeign#,
+				NameShortForeign = #nameShortForeign#,
+				Type = #type#,
+				TestType = #testType#,
+				Status = #status#,
+				BIN_RegionID = #regionId#,
+				BIN_ProvinceID = #provinceId#,
+				BIN_CityID = #cityId#,
+				BIN_CountyID = #countyId#,
+				ExpiringDate = #expiringDate#,
+		]]>
+				<isNotEmpty property="validFlag">
+					ValidFlag = #validFlag#,
+				</isNotEmpty>
+				<isNotEmpty property="orgSynergyFlag">
+					OrgSynergyFlag = #orgSynergyFlag#,
+				</isNotEmpty>		
+				<include refid="BINOLCMINC99.updateSql" />		
+		<![CDATA[					
+			WHERE				
+				BIN_OrganizationID = #organizationId# AND			
+				UpdateTime = #modifyTime# AND		
+				ModifyCount = #modifyCount#					
+		]]>
+    </update>
+    
+    <!-- 更新部门地址 -->
+    <update id="updateAddress" parameterClass="java.util.HashMap">
+    	<![CDATA[
+			UPDATE Basis.BIN_AddressInfo		
+			SET				
+				AddressLine1 = #addressLine1#,				
+				AddressLine2 = #addressLine2#,				
+				City = #city#,				
+				Province = #province#,
+				ZipCode = #zipCode#,
+				LocationGPS = #locationGPS#,
+		]]>
+				<include refid="BINOLCMINC99.updateSql" />		
+		<![CDATA[					
+			WHERE				
+				BIN_AddressInfoID = #addressInfoId# AND			
+				ValidFlag='1' 			
+		]]>
+    </update>
+    
+    <!-- 更新下属机构地址 -->
+    <update id="updateSubordinateAddress" parameterClass="java.util.HashMap">
+    	<![CDATA[
+			UPDATE Basis.BIN_SubordinateAddress		
+			SET				
+				BIN_AddressTypeID = #addressTypeId#,				
+				DefaultFlag = #defaultFlag#,				
+		]]>
+				<include refid="BINOLCMINC99.updateSql" />		
+		<![CDATA[					
+			WHERE				
+				BIN_OrganizationID = #organizationId# AND	
+				BIN_AddressInfoID = #addressInfoId# AND		
+				ValidFlag='1' 			
+		]]>
+    </update>
+    
+    <!-- 伦理删除部门地址 -->
+    <update id="deleteAddress" parameterClass="java.util.HashMap">
+    	<![CDATA[
+			UPDATE Basis.BIN_AddressInfo		
+			SET				
+				ValidFlag='0',
+		]]>
+				<include refid="BINOLCMINC99.updateSql" />		
+		<![CDATA[					
+			WHERE				
+				BIN_AddressInfoID = #addressInfoId# AND			
+				ValidFlag='1' 			
+		]]>
+    </update>
+    
+    <!-- 伦理删除下属机构地址 -->
+    <update id="deleteSubordinateAddress" parameterClass="java.util.HashMap">
+    	<![CDATA[
+			UPDATE Basis.BIN_SubordinateAddress		
+			SET				
+				ValidFlag='0',
+		]]>
+				<include refid="BINOLCMINC99.updateSql" />		
+		<![CDATA[					
+			WHERE				
+				BIN_OrganizationID = #organizationId# AND	
+				BIN_AddressInfoID = #addressInfoId# AND		
+				ValidFlag='1' 			
+		]]>
+    </update>
+    
+    <!-- 更新部门联系人 -->
+    <update id="updateContactInfo" parameterClass="java.util.HashMap">
+    	<![CDATA[
+			UPDATE Basis.BIN_ContactInfo		
+			SET				
+				DefaultFlag = #defaultFlag#,				
+		]]>
+				<include refid="BINOLCMINC99.updateSql" />		
+		<![CDATA[					
+			WHERE				
+				BIN_OrganizationID = #organizationId# AND	
+				BIN_EmployeeID = #employeeId# AND		
+				ValidFlag='1' 	
+		]]>
+    </update>
+    
+    <!-- 伦理删除部门联系人 -->
+    <update id="deleteContactInfo" parameterClass="java.util.HashMap">
+    	<![CDATA[
+			UPDATE Basis.BIN_ContactInfo	
+			SET				
+				ValidFlag='0',
+		]]>
+				<include refid="BINOLCMINC99.updateSql" />		
+		<![CDATA[					
+			WHERE				
+				BIN_OrganizationID = #organizationId# AND	
+				BIN_EmployeeID = #employeeId# AND		
+				ValidFlag='1' 			
+		]]>
+    </update>
+    
+    <!-- 组织结构节点移动 -->
+    <update id="updateOrganizationNode" parameterClass="java.util.HashMap">
+    	<![CDATA[
+			UPDATE Basis.BIN_Organization		
+			SET				
+				NodeID = NodeID.GetReparentedValue(#departPath#, #newNodeId#),
+		]]>
+				<include refid="BINOLCMINC99.updateSql" />		
+		<![CDATA[					
+			WHERE				
+				NodeID.IsDescendantOf(#departPath#) = 1		
+		]]>
+    </update>
+    
+</sqlMap>

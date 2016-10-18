@@ -1,0 +1,110 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sqlMap PUBLIC "-//iBATIS.com//DTD SQL Map 2.0//EN" "http://ibatis.apache.org/dtd/sql-map-2.dtd">
+<sqlMap namespace="BINOLWRKRP99">	
+	<sql id="queryProStockList">
+		<![CDATA[
+			SELECT
+				N.BIN_PrtCatPropValueID AS bigClassId,
+				N.PropValue AS bigClassCode,
+				N.PropValueChinese AS bigClassName,
+				N1.BIN_PrtCatPropValueID AS smallClassId,
+				N1.PropValue AS smallClassCode,
+				N1.PropValueChinese AS smallClassName,
+				T.BIN_ProductVendorID AS productVendorId,
+				X.BarCode AS barCode,
+				Y.UnitCode AS unitCode,
+				Y.NameTotal AS productName,
+				T.Quantity AS quantity
+			FROM
+				(SELECT
+					B.BIN_ProductVendorID AS BIN_ProductVendorID,
+					SUM(B.Quantity) AS Quantity
+				FROM
+					Basis.BIN_InventoryInfo A WITH(NOLOCK)
+					LEFT JOIN Inventory.BIN_ProductStock B WITH(NOLOCK) ON A.BIN_InventoryInfoID = B.BIN_InventoryInfoID
+					
+					LEFT JOIN Basis.BIN_ProductVendor C WITH(NOLOCK) ON B.BIN_ProductVendorID = C.BIN_ProductVendorID
+					
+					JOIN Basis.BIN_PrtCategory D WITH(NOLOCK) ON C.BIN_ProductID = D.BIN_ProductID
+					JOIN Basis.BIN_PrtCatPropValue E WITH(NOLOCK) ON D.BIN_PrtCatPropValueID = E.BIN_PrtCatPropValueID
+					JOIN Basis.BIN_PrtCatProperty F WITH(NOLOCK) ON E.BIN_PrtCatPropertyID = F.BIN_PrtCatPropertyID AND F.TeminalFlag='1'
+					
+					JOIN Basis.BIN_PrtCategory D1 WITH(NOLOCK) ON C.BIN_ProductID = D1.BIN_ProductID
+					JOIN Basis.BIN_PrtCatPropValue E1 WITH(NOLOCK) ON D1.BIN_PrtCatPropValueID = E1.BIN_PrtCatPropValueID
+					JOIN Basis.BIN_PrtCatProperty F1 WITH(NOLOCK) ON E1.BIN_PrtCatPropertyID = F1.BIN_PrtCatPropertyID AND F1.TeminalFlag='2'
+				WHERE
+					A.BIN_OrganizationID = #organizationId#
+			]]>
+				<isNotEmpty property="logicInventoryInfoId" prepend="AND">
+					B.BIN_LogicInventoryInfoID = #logicInventoryInfoId#
+				</isNotEmpty>
+				<isNotEmpty property="validFlag" prepend="AND">
+					C.ValidFlag = #validFlag#
+				</isNotEmpty>
+            	<isNotEmpty property="bigClassId" prepend="AND">
+					E.BIN_PrtCatPropValueID = #bigClassId#
+            	</isNotEmpty>
+            	<isNotEmpty property="smallClassId" prepend="AND">
+					E1.BIN_PrtCatPropValueID = #smallClassId#
+            	</isNotEmpty>
+            	<isNotEmpty property="prtVendorId" prepend="AND">
+					B.BIN_ProductVendorID = #prtVendorId#
+            	</isNotEmpty>
+			<![CDATA[		
+				GROUP BY
+					B.BIN_ProductVendorID) T
+					
+				LEFT JOIN Basis.BIN_ProductVendor X WITH(NOLOCK) ON T.BIN_ProductVendorID = X.BIN_ProductVendorID
+					
+				JOIN Basis.BIN_Product Y WITH(NOLOCK) ON X.BIN_ProductID = Y.BIN_ProductID
+				
+				JOIN Basis.BIN_PrtCategory M WITH(NOLOCK) ON X.BIN_ProductID = M.BIN_ProductID
+				JOIN Basis.BIN_PrtCatPropValue N WITH(NOLOCK) ON M.BIN_PrtCatPropValueID = N.BIN_PrtCatPropValueID
+				JOIN Basis.BIN_PrtCatProperty L WITH(NOLOCK) ON N.BIN_PrtCatPropertyID = L.BIN_PrtCatPropertyID AND L.TeminalFlag='1'
+				
+				JOIN Basis.BIN_PrtCategory M1 WITH(NOLOCK) ON X.BIN_ProductID = M1.BIN_ProductID
+				JOIN Basis.BIN_PrtCatPropValue N1 WITH(NOLOCK) ON M1.BIN_PrtCatPropValueID = N1.BIN_PrtCatPropValueID
+				JOIN Basis.BIN_PrtCatProperty L1 WITH(NOLOCK) ON N1.BIN_PrtCatPropertyID = L1.BIN_PrtCatPropertyID AND L1.TeminalFlag='2'
+		]]>
+	</sql>
+	
+	<!-- 获取产品库存数量  -->
+    <select id="getProStockCount" parameterClass="java.util.HashMap" resultClass="java.lang.Integer">
+    	<![CDATA[
+			SELECT 
+				COUNT(1) AS count 
+			FROM (]]><include refid="BINOLWRKRP99.queryProStockList" /><![CDATA[) T
+		]]>
+    </select>
+    
+    <!-- 获取产品库存统计信息 -->
+	<select id="getProStockCountInfo" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+		<![CDATA[
+            SELECT 
+				ISNULL(SUM(T.quantity), 0) AS sumQuantity
+			FROM 
+				(]]><include refid="BINOLWRKRP99.queryProStockList" /><![CDATA[) T
+		]]>
+	</select>
+	
+	<!-- 获取产品库存List -->
+    <select id="getProStockList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+       	<include refid="BINOLCMINC99.pageheader" />
+		<include refid="BINOLWRKRP99.queryProStockList" />
+		<include refid="BINOLCMINC99.pagefooter" />
+    </select>
+    
+    <!-- 根据部门ID取得柜台信息  -->
+    <select id="getCouInfoByCouId" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+       	<![CDATA[
+            SELECT 
+				A.BIN_OrganizationID AS organizationId,
+				A.CounterKind AS counterKind
+        	FROM 
+        		Basis.BIN_CounterInfo A
+            WHERE 
+				A.BIN_OrganizationID = #organizationId#
+		]]>
+    </select>
+    
+</sqlMap>

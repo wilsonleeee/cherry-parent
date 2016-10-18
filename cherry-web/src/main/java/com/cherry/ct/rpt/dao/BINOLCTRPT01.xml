@@ -1,0 +1,153 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sqlMap PUBLIC "-//iBATIS.com//DTD SQL Map 2.0//EN" "http://ibatis.apache.org/dtd/sql-map-2.dtd">
+<sqlMap namespace="BINOLCTRPT01">
+	<!-- 沟通计划运行记录查询sql  -->
+	<sql id="planRunDetailQuery">
+		<![CDATA[
+			SELECT 
+				min(tr.BIN_CommRunLogID) as runId,
+				tr.BIN_BrandInfoID as brandInfoId,
+				tr.BIN_OrganizationInfoID as organizationInfoId,
+				tr.BatchID as batchId,
+				tr.Bin_PlanCode as planCode,
+				tp.PlanName as planName,
+				ta.BIN_ActivityCode as activityCode,
+				tb.CampaignName as activityName,
+				tr.BIN_CommunicationCode as communicationCode,
+				tc.Name as communicationName,
+				tp.ChannelId as channelId,
+				tn.ChannelName as channelName,
+				tp.CounterCode as counterCode,
+				tt.CounterNameIF as counterName,
+				tr.CommType as commType,
+				tr.RunType as runType,
+				min(tr.RunBeginTime) as runBeginTime,
+				sum(tr.SendMsgNum) as sendMsgNum,
+				isnull(sum(tr.NotReceiveNum),0)+isnull(sum(tr.CodeIllegalNum),0)+isnull(sum(tr.NotCreateMsgNum),0)+isnull(sum(tr.SendErrorNum),0) as sendErrorNum,
+				tr.RunStatus as runStatus,
+				max(tr.RunError) as runError
+			FROM Communication.BIN_CommRunLog as tr with(nolock) 
+				Inner join Communication.BIN_Communicationplan as tp with(nolock) on tr.Bin_PlanCode=tp.Bin_PlanCode 
+		]]>
+			<isNotEmpty property="privilegeFlag">
+			<isEqual property="privilegeFlag" compareValue="1">			
+			<![CDATA[			
+				Inner join (]]><include refid="BINOLCMINC99.departPrivilegeSql" /><![CDATA[) A99 
+				on tp.BIN_OrganizationID = A99.BIN_OrganizationID
+			]]>
+			</isEqual>
+			</isNotEmpty>
+		<![CDATA[
+				Left join Communication.BIN_Communication as tc with(nolock) on tr.BIN_CommunicationCode=tc.BIN_CommunicationCode 
+				Left join Communication.BIN_ActivityCommPlan as ta with(nolock) on tr.Bin_PlanCode = ta.Bin_PlanCode 
+				Left join Campaign.BIN_Campaign as tb with(nolock) on ta.BIN_ActivityCode = tb.CampaignCode 
+				Left join Basis.BIN_Channel as tn on tp.ChannelId = tn.BIN_ChannelID 
+				Left join Basis.BIN_CounterInfo as tt on tp.CounterCode = tt.CounterCode 
+			Where 
+				tr.BIN_BrandInfoID = #brandInfoId# AND 
+				tr.BIN_OrganizationInfoID = #organizationInfoId# AND 
+				tr.RunType = 1 
+		]]>
+		<dynamic>
+			<!-- 参数中存在沟通方式查询条件时  -->
+			<isNotEmpty prepend="AND" property="commType" >
+				tr.CommType = #commType# 
+			</isNotEmpty>
+			<!-- 参数中存在沟通计划名称查询条件时  -->
+			<isNotEmpty prepend="AND" property="planName" >
+				<![CDATA[
+					(tr.Bin_PlanCode = #planName# OR 
+					tp.PlanName LIKE '%' + #planName# + '%')
+				]]>	
+			</isNotEmpty>
+			<!-- 参数中存在沟通名称查询条件时  -->
+			<isNotEmpty prepend="AND" property="communicationName" >
+				<![CDATA[
+					(tr.BIN_CommunicationCode = #communicationName# OR 
+					tc.Name LIKE '%' + #communicationName# + '%')
+				]]>
+			</isNotEmpty>
+			<!-- 参数中存在活动名称查询条件时  -->
+			<isNotEmpty prepend="AND" property="campaignName" >
+				<![CDATA[
+					(ISNULL(ta.BIN_ActivityCode,'') like '%' + #campaignName# + '%' OR 
+					ISNULL(tb.CampaignName,'') like '%' + #campaignName# + '%')
+				]]>
+			</isNotEmpty>
+			<isNotEmpty prepend="AND" property="startTime">
+				<![CDATA[ tr.RunBeginTime >= #startTime#]]>
+			</isNotEmpty>
+			<isNotEmpty prepend="AND" property="endTime">
+				<![CDATA[ tr.RunBeginTime <= #endTime#]]>
+			</isNotEmpty>
+			<isNotEmpty prepend="AND" property="channelId" >
+				tp.channelId = #channelId# 
+			</isNotEmpty>
+			<isNotEmpty prepend="AND" property="counterCode" >
+				tp.counterCode = #counterCode# 
+			</isNotEmpty>
+			<isNotEmpty prepend="AND" property="mobilePhone">
+				<![CDATA[ 
+					Exists (
+						SELECT 1 
+						FROM 
+							Communication.BIN_SmsSendDetail as ts 
+						WHERE 
+							ts.BIN_OrganizationInfoID = #organizationInfoId# AND 
+							ts.BIN_BrandInfoID = #brandInfoId# AND 
+							ts.Mobilephone = #mobilePhone# AND
+							ts.BatchID = tr.BatchID
+					)
+				]]>
+			</isNotEmpty>
+		</dynamic>
+		<![CDATA[
+			Group by
+				tr.BIN_BrandInfoID,
+				tr.BIN_OrganizationInfoID,
+				tr.BatchID,
+				tr.Bin_PlanCode,
+				tp.PlanName,
+				ta.BIN_ActivityCode,
+				tb.CampaignName,
+				tr.BIN_CommunicationCode,
+				tc.Name,
+				tp.channelId,
+				tn.ChannelName,
+				tp.counterCode,
+				tt.CounterNameIF,
+				tr.CommType,
+				tr.RunType,
+				tr.RunStatus
+		]]>	
+	</sql>
+	
+	<!-- 获取沟通计划运行记录总数  -->
+    <select id="getPlanRunDetailCount" parameterClass="java.util.HashMap" resultClass="java.lang.Integer">
+    	<![CDATA[
+			SELECT	COUNT(SORT_T1.runId) AS count FROM (
+		]]>	
+		<include refid="BINOLCTRPT01.planRunDetailQuery" />	
+		<![CDATA[	
+			)SORT_T1
+		]]>
+    </select>
+	
+	<!-- 获取沟通计划运行记录List -->
+    <select id="getPlanRunDetailList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+       	<include refid="BINOLCMINC99.pageheader" />
+		<include refid="BINOLCTRPT01.planRunDetailQuery" />
+		<include refid="BINOLCMINC99.pagefooter" />
+    </select>
+    
+    <select id="getPlanRunTotalInfo" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+		select 
+			isnull(sum(DETAIL_TABLE.sendMsgNum),0) as totalSendNum,
+			isnull(sum(DETAIL_TABLE.sendErrorNum),0) as totalSendErrorNum
+		from(
+			<include refid="BINOLCTRPT01.planRunDetailQuery" />
+		)DETAIL_TABLE
+    </select>
+    
+</sqlMap>
+

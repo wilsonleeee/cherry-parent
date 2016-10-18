@@ -1,0 +1,103 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sqlMap PUBLIC "-//iBATIS.com//DTD SQL Map 2.0//EN" "http://ibatis.apache.org/dtd/sql-map-2.dtd">
+<sqlMap namespace="BINOLBSWEM05">
+	
+	<!-- 返点分成列表查询Sql  -->
+	<sql id="bonusQuery">
+		<![CDATA[
+			SELECT 
+				tp.BIN_ProfitRebateID as profitRebateId,
+				tp.CommissionEmployeeCode as employeeCode,
+				te.EmployeeName as employeeName,
+				CONVERT(varchar(30),tp.SaleTime,20) as saleTime,
+				(case when tp.BIN_OrganizationID=tp.CommissionOrganizationID then 'C' else 'L' end) as levelType,
+				tp.SaleEmployeeCode as saleEmployeeCode,
+				tp.SaleEmployeeName as saleEmployeeName,
+				tp.RoyaltyAmount as incomeAmount,
+				tp.Amount as saleAmount,
+				tp.SaleCount as quantity,
+				tp.BillCode as billCode,
+				tp.SaleType as saleType
+			FROM 
+				Sale.BIN_ProfitRebate as tp 
+				left join Basis.BIN_Employee as te on tp.CommissionEmployeeCode = te.EmployeeCode 
+				left join basis.BIN_Organization as oz on tp.CommissionEmployeeCode=oz.DepartCode
+		]]>
+        <isNotEmpty property="privilegeFlag">
+        	<!-- 只看当前账号有权限的部门的员工的收益情况 -->
+			<isEqual property="privilegeFlag" compareValue="1">			
+			<![CDATA[			
+				JOIN (]]><include refid="BINOLCMINC99.departPrivilegeSql" /><![CDATA[) A99 
+				ON tp.CommissionOrganizationID=A99.BIN_OrganizationID
+			]]>
+			</isEqual>
+		</isNotEmpty>
+		<![CDATA[
+			WHERE 
+				tp.ValidFlag = 1 AND 
+				tp.BIN_OrganizationInfoID = #organizationInfoId# AND 
+				tp.BIN_BrandInfoID = #brandInfoId# 
+		]]>
+		<dynamic>
+			<!-- 参数中存在日期（起始）条件时  -->
+			<isNotEmpty prepend="AND" property="startDate">
+				<![CDATA[ tp.SaleTime >= #startDate#]]>
+			</isNotEmpty>
+			<!-- 参数中存在日期（截止）条件时  -->
+			<isNotEmpty prepend="AND" property="endDate">
+				<![CDATA[ tp.SaleTime < #endDate#]]>
+			</isNotEmpty>
+            <isNotEmpty prepend="AND" property="employeeCode">
+                <![CDATA[
+                	(tp.SaleEmployeeCode like '%'+#employeeCode#+'%' OR
+                	tp.SaleEmployeeName like '%'+#employeeCode#+'%')
+				]]>
+            </isNotEmpty>
+            <isNotEmpty prepend="AND" property="commissionEmployeeCode">
+                <![CDATA[
+                	(tp.CommissionEmployeeCode like '%'+#commissionEmployeeCode#+'%' OR
+                	tp.CommissionEmployeeName like '%'+#commissionEmployeeCode#+'%')
+				]]>
+            </isNotEmpty>
+            <isNotEmpty prepend="AND" property="billCode">
+            	<![CDATA[
+                	tp.BillCode like '%' + #billCode# + '%'
+				]]>
+            </isNotEmpty>
+            <isNotEmpty prepend="AND" property="commissionEmployeeLevel">
+            	<![CDATA[
+                	oz.Type  = #commissionEmployeeLevel#
+				]]>
+            </isNotEmpty>
+			<isNotEmpty prepend="AND" property="memCode">
+				<![CDATA[
+					EXISTS(
+						SELECT 1 FROM 
+							Sale.BIN_SaleRecord S WITH(NOLOCK)
+						WHERE
+							S.MemberCode like '%'+#memCode#+'%' AND S.BillCode=tp.BillCode
+					)
+				]]>
+            </isNotEmpty>
+		</dynamic>
+	</sql>
+	
+	<!-- 获取分成微商数量  -->
+    <select id="getBonusCount" parameterClass="java.util.HashMap" resultClass="java.lang.Integer">
+    	<![CDATA[
+			SELECT	COUNT(SORT_T1.profitRebateId) AS count FROM (
+		]]>	
+		<include refid="BINOLBSWEM05.bonusQuery" />	
+		<![CDATA[	
+			)SORT_T1
+		]]>
+    </select>
+	
+	<!-- 获取分成统计List -->
+    <select id="getBonusList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+       	<include refid="BINOLCMINC99.pageheader" />
+		<include refid="BINOLBSWEM05.bonusQuery" />
+		<include refid="BINOLCMINC99.pagefooter" />
+    </select>
+	
+</sqlMap>

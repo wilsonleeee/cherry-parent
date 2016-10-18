@@ -1,0 +1,104 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sqlMap PUBLIC "-//iBATIS.com//DTD SQL Map 2.0//EN" "http://ibatis.apache.org/dtd/sql-map-2.dtd">
+<sqlMap namespace="BINOLSSPRM76">
+	
+	<!-- 已使用券查询sql -->
+	<sql id="UsedCouponQuery">
+		SELECT
+			DISTINCT
+			MC.CouponNo AS couponNo,
+			MC.RuleCode AS ruleCode,
+			MC.CouponType AS couponType,
+			MC.CouponCode AS couponCode,
+			MC.RelatedNoA AS relationBill,
+			MC.UserBP AS userBP,
+			MC.BPCode AS bpCode,
+			MC.Status AS status,
+			G.MemberCode AS userMemCode,
+			G.MemberPhone AS userMobile,
+			CONVERT(VARCHAR, MC.StartTime, 23) AS startTime,
+			CONVERT(VARCHAR, MC.EndTime, 23) AS endTime,
+			MC.ValidFlag AS validFlag,
+			CONVERT(VARCHAR,MC.FinshTime , 20) AS useTime,
+			G.TradeNoIF AS billCode,
+			G.CounterCode AS counterCode,
+			CI.CounterNameIF AS counterName,
+			G.MemberName AS memberName
+		FROM 
+			Promotion.BIN_MemberCoupon MC WITH(NOLOCK)
+			JOIN Campaign.BIN_GetIntelligentResultMain G
+			ON (MC.RelatedNoB=G.TradeNoIF 
+			AND MC.BIN_OrganizationInfoID = G.BIN_OrganizationInfoID)
+			LEFT JOIN Members.BIN_MemCardInfo MCI WITH(NOLOCK)
+			ON G.MemberCode = MCI.MemCode
+			LEFT JOIN Members.BIN_MemberInfo MI WITH(NOLOCK)
+			ON MCI.BIN_MemberInfoID = MI.BIN_MemberInfoID		
+			LEFT JOIN Basis.BIN_CounterInfo CI WITH(NOLOCK)
+			ON G.CounterCode=CI.CounterCode
+		WHERE
+			MC.BIN_OrganizationInfoID = #organizationInfoId#
+			AND (MC.Status = 'OK' or MC.Status = 'CK')
+		<isNotEmpty prepend="AND" property="couponNo">
+			<![CDATA[ MC.CouponNo = #couponNo#]]>
+		</isNotEmpty>
+		<isNotEmpty prepend="AND" property="couponType">
+			<![CDATA[ MC.CouponType = #couponType#]]>
+		</isNotEmpty>
+		<isNotEmpty prepend="AND" property="searchBillCode">
+			<![CDATA[ G.TradeNoIF = #searchBillCode#]]>
+		</isNotEmpty>
+		<isNotEmpty prepend="AND" property="searchMemberCode">
+			<![CDATA[ G.MemberCode = #searchMemberCode#]]>
+		</isNotEmpty>
+		<isNotEmpty prepend="AND" property="searchMobile">
+			<![CDATA[ G.MemberPhone = #searchMobile#]]>
+		</isNotEmpty>
+		<isNotEmpty prepend="AND" property="prmCounterId">
+			<![CDATA[ CI.BIN_OrganizationID = #prmCounterId#]]>
+		</isNotEmpty>
+		<isNotEmpty prepend="AND" property="startTime">
+			<![CDATA[CONVERT(DATE, MC.FinshTime) >= CONVERT(DATE, #startTime#)]]>
+		</isNotEmpty>
+		<isNotEmpty prepend="AND" property="endTime">
+			<![CDATA[CONVERT(DATE, MC.FinshTime) <= CONVERT(DATE, #endTime#)]]>
+		</isNotEmpty>
+		<isNotEmpty prepend="AND" property="relationBill">
+		<![CDATA[ MC.RelatedNoA = #relationBill#]]>
+		</isNotEmpty>
+		<isNotEmpty prepend="AND" property="bpCode">
+		<![CDATA[ MC.UserBP = #bpCode# ]]>
+		</isNotEmpty>
+		<isNotEmpty prepend="AND" property="validFlag">
+			<![CDATA[ MC.ValidFlag = #validFlag#]]>
+		</isNotEmpty>
+		<isEmpty prepend="AND" property="validFlag">
+			<![CDATA[MC.ValidFlag = '1']]>
+		</isEmpty>
+		<isNotEmpty prepend="AND" property="couponRule">
+	       <![CDATA[MC.RuleCode = #couponRule#]]>
+	    </isNotEmpty>
+	</sql>
+	
+	<!-- 取得优惠券总数  -->
+    <select id="getCouponInfoCount" parameterClass="java.util.HashMap" resultClass="java.lang.Integer">
+    	<![CDATA[
+			SELECT	COUNT(SORT_T1.couponNo) AS count FROM (
+		]]>	
+		<include refid="BINOLSSPRM76.UsedCouponQuery" />	
+		<![CDATA[	
+			)SORT_T1
+		]]>										
+    </select>
+    
+    <!-- 取得优惠券规则List  -->
+    <select id="getCouponInfoList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+       	<include refid="BINOLCMINC99.pageheader" />
+		<include refid="BINOLSSPRM76.UsedCouponQuery" />
+		<include refid="BINOLCMINC99.pagefooter" />
+    </select>
+    
+    <select id="getCouponInfoListForExport" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+    	<include refid="BINOLSSPRM76.UsedCouponQuery" />
+    </select>
+    
+</sqlMap>

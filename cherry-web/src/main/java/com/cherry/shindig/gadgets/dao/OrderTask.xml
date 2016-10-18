@@ -1,0 +1,211 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sqlMap PUBLIC "-//iBATIS.com//DTD SQL Map 2.0//EN" "http://ibatis.apache.org/dtd/sql-map-2.dtd">
+<sqlMap namespace="OrderTask">
+    
+    
+    <!-- 预约任务查询  --><!--  
+	<sql id="orderTaskQuery">
+	 	<![CDATA[
+	 		SELECT
+				CONVERT(varchar(30),A.BookDate,23) AS bookDate,
+				A.BookTimeRange AS bookTimeRange,
+				CASE WHEN A.BIN_MemberInfoID IS NULL THEN A.Name ELSE B.Name END AS name,
+				CASE WHEN A.BIN_MemberInfoID IS NULL THEN A.Mobile ELSE B.MobilePhone END AS mobilePhone,
+				C.CampaignName AS campaignName
+			FROM
+				Campaign.BIN_CampaignOrder A WITH(NOLOCK)
+				JOIN Basis.BIN_Organization D WITH(NOLOCK) ON A.CounterGot = D.DepartCode
+				JOIN (]]><include refid="BINOLCMINC99.departPrivilegeSql" /><![CDATA[) A99 
+				ON D.BIN_OrganizationID=A99.BIN_OrganizationID
+				LEFT JOIN Members.BIN_MemberInfo B WITH(NOLOCK) ON A.BIN_MemberInfoID = B.BIN_MemberInfoID
+				LEFT JOIN Campaign.BIN_Campaign C WITH(NOLOCK) ON A.CampaignCode = C.CampaignCode
+			WHERE
+				A.State = 'AR' AND
+				A.BookDate = #bookDate# AND
+				A.BIN_OrganizationInfoID = #organizationInfoId# AND
+				A.BIN_BrandInfoID = #brandInfoId#
+			UNION
+			SELECT
+				CONVERT(varchar(30),A.BookDate,23) AS bookDate,
+				A.BookTimeRange AS bookTimeRange,
+				CASE WHEN A.BIN_MemberInfoID IS NULL THEN A.Name ELSE B.Name END AS name,
+				CASE WHEN A.BIN_MemberInfoID IS NULL THEN A.Mobile ELSE B.MobilePhone END AS mobilePhone,
+				C.CampaignName AS campaignName
+			FROM
+				Campaign.BIN_CampaignOrder A WITH(NOLOCK)
+				LEFT JOIN Members.BIN_MemberInfo B WITH(NOLOCK) ON A.BIN_MemberInfoID = B.BIN_MemberInfoID
+				LEFT JOIN Campaign.BIN_Campaign C WITH(NOLOCK) ON A.CampaignCode = C.CampaignCode
+			WHERE
+				A.State = 'AR' AND
+				A.CounterGot = 'ALL' AND
+				A.BookDate = #bookDate# AND
+				A.BIN_OrganizationInfoID = #organizationInfoId# AND
+				A.BIN_BrandInfoID = #brandInfoId#	
+		]]>
+	</sql>-->
+	
+	<!-- 查询预约任务总件数 --><!--  
+    <select id="getOrderTaskCount" parameterClass="java.util.HashMap" resultClass="java.lang.Integer">
+    	<![CDATA[
+			SELECT COUNT(1) AS count 
+			FROM (]]><include refid="OrderTask.orderTaskQuery" /><![CDATA[) T
+		]]>										
+    </select>-->
+	
+	<!-- 查询预约任务List  --><!--  
+    <select id="getOrderTaskList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+       	<include refid="BINOLCMINC99.pageheader" />
+		<include refid="OrderTask.orderTaskQuery" />
+		<include refid="BINOLCMINC99.pagefooter" />
+    </select>-->
+    
+    <!-- 统计预约任务在不同状态下的数量  -->
+    <select id="getOrderTaskCountList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+       	<![CDATA[
+	 		SELECT
+	 			T.State AS state,
+	 			COUNT(1) AS count
+	 		FROM
+		 		(SELECT
+					A.State
+				FROM
+					Campaign.BIN_CampaignOrder A WITH(NOLOCK)
+					JOIN Basis.BIN_Organization D WITH(NOLOCK) ON A.CounterGot = D.DepartCode
+					JOIN (]]><include refid="BINOLCMINC99.departPrivilegeSql" /><![CDATA[) A99 
+					ON D.BIN_OrganizationID=A99.BIN_OrganizationID
+				WHERE
+					A.BookDate = #bookDate# AND
+					A.BIN_OrganizationInfoID = #organizationInfoId# AND
+					A.BIN_BrandInfoID = #brandInfoId#
+				UNION	
+				SELECT
+					A.State
+				FROM
+					Campaign.BIN_CampaignOrder A WITH(NOLOCK)
+				WHERE
+					A.CounterGot = 'ALL' AND
+					A.BookDate = #bookDate# AND
+					A.BIN_OrganizationInfoID = #organizationInfoId# AND
+					A.BIN_BrandInfoID = #brandInfoId#) T
+			GROUP BY
+				T.State	
+		]]>
+    </select>
+    
+    <!-- 预约完成查询  -->
+	<sql id="giftDrawQuery">
+	 	<![CDATA[
+	 		SELECT
+				CONVERT(varchar(30),A.TradeDateTime,120) AS tradeDateTime,
+				B.Name AS name,
+				C.CampaignName AS campaignName,
+				D.DepartName AS departName,
+				E.EmployeeName AS employeeName,
+				F.CategoryName AS categoryName,
+				A.Amount AS amount,
+				A.Quantity AS quantity
+			FROM
+				Inventory.BIN_GiftDraw A WITH(NOLOCK)
+				JOIN Campaign.BIN_CampaignOrder M WITH(NOLOCK) ON A.RelevanceNo = M.TradeNoIF
+				JOIN (]]><include refid="BINOLCMINC99.departPrivilegeSql" /><![CDATA[) A99 
+				ON A.BIN_OrganizationID=A99.BIN_OrganizationID
+				LEFT JOIN Members.BIN_MemberInfo B WITH(NOLOCK) ON A.BIN_MemberInfoID = B.BIN_MemberInfoID
+				LEFT JOIN Campaign.BIN_Campaign C WITH(NOLOCK) ON A.CampaignCode = C.CampaignCode
+				LEFT JOIN Basis.BIN_Organization D WITH(NOLOCK) ON A.BIN_OrganizationID = D.BIN_OrganizationID
+				LEFT JOIN Basis.BIN_Employee E WITH(NOLOCK) ON A.BIN_EmployeeID = E.BIN_EmployeeID
+				LEFT JOIN Privilege.BIN_PositionCategory F WITH(NOLOCK) ON E.BIN_PositionCategoryID = F.BIN_PositionCategoryID
+			WHERE
+				M.BookDate = #bookDate# AND
+				M.BIN_OrganizationInfoID = #organizationInfoId# AND
+				M.BIN_BrandInfoID = #brandInfoId#
+		]]>
+	</sql>
+	
+	<!-- 查询预约完成List  -->
+    <select id="getGiftDrawList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+       	<include refid="BINOLCMINC99.pageheader" />
+		<include refid="OrderTask.giftDrawQuery" />
+		<include refid="BINOLCMINC99.pagefooter" />
+    </select>
+    
+    
+    <!-- 查询活动List  -->
+    <select id="getCampaignList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+       	<![CDATA[
+	 		SELECT 
+				A.CampaignCode AS campaignCode,
+				A.CampaignName AS campaignName,
+				CONVERT(varchar(30),A.CampaignFromDate,23) AS campaignFromDate,
+				CONVERT(varchar(30),A.CampaignToDate,23) AS campaignToDate
+			FROM
+				Campaign.BIN_Campaign A
+			WHERE
+				A.ManageGift = '1' AND
+				A.BIN_OrganizationInfoID = #organizationInfoId# AND
+				A.BIN_BrandInfoID = #brandInfoId# AND
+				EXISTS (
+					SELECT 1
+					FROM
+						Promotion.BIN_ActivityTransHis B
+					WHERE
+						(B.BIN_OrganizationID = #organizationId# OR 
+						(B.BIN_OrganizationID = '-8888' AND 
+						B.BIN_OrganizationInfoID = #organizationInfoId# AND
+						B.BIN_BrandInfoID = #brandInfoId#)) AND 
+						A.CampaignCode = B.SubjectCode
+				)
+		]]>
+    </select>
+    
+    <!-- 查询活动库存数量  -->
+    <select id="getCampaignStockCount" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+       	<![CDATA[
+	 		SELECT
+				ISNULL(SUM(A.TotalQuantity), 0) AS totalQuantity,
+				ISNULL(SUM(A.CurrentQuantity), 0) AS currentQuantity
+			FROM
+				Campaign.BIN_CampaignStock A
+			WHERE
+				A.CampaignCode = #campaignCode# AND 
+				A.BIN_OrganizationID = #organizationId#
+		]]>
+    </select>
+    
+    <!-- 预约任务查询  -->
+	<sql id="orderTaskQuery">
+	 	<![CDATA[
+	 		SELECT
+				CONVERT(varchar(30),A.CampaignOrderTime,120) AS campaignOrderTime,
+				CASE WHEN A.BIN_MemberInfoID IS NULL THEN A.Name ELSE B.Name END AS name,
+				CASE WHEN A.BIN_MemberInfoID IS NULL THEN A.Mobile ELSE B.MobilePhone END AS mobilePhone,
+				A.State AS state,
+				CONVERT(varchar(30),A.FinishTime,120) AS finishTime
+			FROM
+				Campaign.BIN_CampaignOrder A WITH(NOLOCK)
+				LEFT JOIN Basis.BIN_Organization D WITH(NOLOCK) ON A.CounterGot = D.DepartCode
+				LEFT JOIN Members.BIN_MemberInfo B WITH(NOLOCK) ON A.BIN_MemberInfoID = B.BIN_MemberInfoID
+			WHERE
+				A.CampaignCode = #campaignCode# AND
+				A.State = #state# AND
+				(A.CounterGot = 'ALL' OR D.BIN_OrganizationID = #organizationId#) AND
+				A.BIN_OrganizationInfoID = #organizationInfoId# AND
+				A.BIN_BrandInfoID = #brandInfoId#
+		]]>
+	</sql>
+	
+	<!-- 查询预约任务总件数 -->
+    <select id="getOrderTaskCount" parameterClass="java.util.HashMap" resultClass="java.lang.Integer">
+    	<![CDATA[
+			SELECT COUNT(1) AS count 
+			FROM (]]><include refid="OrderTask.orderTaskQuery" /><![CDATA[) T
+		]]>										
+    </select>
+	
+	<!-- 查询预约任务List  -->
+    <select id="getOrderTaskList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+       	<include refid="BINOLCMINC99.pageheader" />
+		<include refid="OrderTask.orderTaskQuery" />
+		<include refid="BINOLCMINC99.pagefooter" />
+    </select>
+    
+</sqlMap>

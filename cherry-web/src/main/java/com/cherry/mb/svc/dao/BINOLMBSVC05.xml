@@ -1,0 +1,67 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sqlMap PUBLIC "-//iBATIS.com//DTD SQL Map 2.0//EN" "http://ibatis.apache.org/dtd/sql-map-2.dtd">
+<sqlMap namespace="BINOLMBSVC05">
+	
+	<!-- 查询储值卡规则概览 -->
+	<sql id="queryTradeList">
+		<![CDATA[
+			SELECT
+				t.BillCode as billCode,
+				Convert(nvarchar,t.TransactionTime,120) as transactionTime,
+				t.TransactionType as transactionType,
+				t.TotalAmount as totalAmount,
+				t.Memo as memo,
+				c.CardCode as cardCode,
+				c.MobilePhone as mobilePhone
+			FROM
+				Members.BIN_StoredValueCard c
+			JOIN (]]><include refid="BINOLCMINC99.departPrivilegeSql" /><![CDATA[) A99 
+				ON c.BIN_OrganizationID=A99.BIN_OrganizationID
+			JOIN
+				Members.BIN_CardTransaction t
+			ON
+				(c.BIN_CardId=t.BIN_CardId)
+			WHERE
+				c.BIN_BrandInfoID=#brandInfoId# AND
+				c.BIN_OrganizationInfoID=#organizationInfoId# AND
+				c.ValidFlag='1'
+			]]>
+			<isNotEmpty prepend="AND" property="cardCode">
+				<![CDATA[c.CardCode = #cardCode#]]>
+			</isNotEmpty>
+			<isNotEmpty prepend="AND" property="startDate">
+				<![CDATA[t.TransactionTime >= #startDate#+' 00:00:00.000']]>
+			</isNotEmpty>
+			<isNotEmpty prepend="AND" property="endDate">
+				<![CDATA[t.TransactionTime <= #endDate#+' 23:59:59.000']]>
+			</isNotEmpty>
+			<isNotEmpty prepend="AND" property="transactionType">
+				<![CDATA[t.transactionType = #transactionType#]]>
+			</isNotEmpty>
+			<isNotEmpty prepend="AND" property="state">
+				<![CDATA[c.State = #state#]]>
+			</isNotEmpty>
+			<isNotEmpty prepend="AND" property="mobilePhone">
+				<![CDATA[c.MobilePhone = #mobilePhone#]]>
+			</isNotEmpty>
+	</sql>
+	
+	<!-- 查询规则概览信息List -->	
+	<select id="getTradeList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+       	<include refid="BINOLCMINC99.pageheader" />
+		<include refid="BINOLMBSVC05.queryTradeList" />
+		<include refid="BINOLCMINC99.pagefooter" />
+	</select>
+	
+	
+	<!-- 获取规则概览统计信息 -->
+	<select id="getTradeCountInfo" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+    	<![CDATA[
+			SELECT 
+				COUNT(1) AS count 
+			FROM 
+				(]]><include refid="BINOLMBSVC05.queryTradeList" /><![CDATA[) T
+		]]>
+    </select>
+	
+</sqlMap>

@@ -1,0 +1,176 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sqlMap PUBLIC "-//iBATIS.com//DTD SQL Map 2.0//EN" "http://ibatis.apache.org/dtd/sql-map-2.dtd">
+<sqlMap namespace="BINOLPTRPS06">	
+	<!-- 调拨记录查询sql文  -->
+	<sql id="AllocationSQL">
+		<![CDATA[SELECT]]>	
+		<isEmpty property="prtVendorId">
+			<isEmpty property="nameTotal">
+				DISTINCT
+			</isEmpty>
+		</isEmpty>
+		<![CDATA[				
+			A.BIN_ProductAllocationInID AS proAllocationId,							
+			A.AllocationInNoIF AS allocationNo,													
+			A.VerifiedFlag AS verifiedFlag,						
+			A.Date AS allocationDate,
+			E.DepartCode as bin_OrganizationIDOut,
+			F.DepartCode as bin_OrganizationIDIn,
+		]]>
+		<dynamic>
+			<isNotEmpty property="language">
+				<isEqual property="language" compareValue="en_US">
+					E.NameForeign AS sendDepart,							
+					F.NameForeign AS receiveDepart,							
+					G.EmployeeNameForeign AS employeeName
+				</isEqual>
+				<isEqual property="language" compareValue="zh_CN">	
+					E.DepartName AS sendDepart,							
+					F.DepartName AS receiveDepart,							
+					G.EmployeeName AS employeeName	
+				</isEqual>								
+			</isNotEmpty>
+			<isEmpty property="language">
+				E.DepartName AS sendDepart,							
+				F.DepartName AS receiveDepart,							
+				G.EmployeeName AS employeeName	
+			</isEmpty>
+		</dynamic>
+		<isEmpty property="prtVendorId">
+				<isNotEmpty property="nameTotal">
+				,ISNULL(D.Quantity,0) AS totalQuantity
+				,ISNULL(D.Quantity,0) * ISNULL(D.Price,0)  AS totalAmount
+				</isNotEmpty>
+				<isEmpty property="nameTotal">
+				,ISNULL(A.TotalQuantity,0) AS totalQuantity
+				,ISNULL(A.TotalAmount,0) AS totalAmount
+				</isEmpty>
+		</isEmpty>
+		<isNotEmpty property="prtVendorId">
+				,ISNULL(D.Quantity,0) AS totalQuantity
+				,ISNULL(D.Quantity,0) * ISNULL(D.Price,0)  AS totalAmount
+		</isNotEmpty>
+	<![CDATA[						
+		FROM								
+			Inventory.BIN_ProductAllocationIn A
+			LEFT JOIN Basis.BIN_Organization E
+			ON (A.BIN_OrganizationIDIn = E.BIN_OrganizationID
+				AND	E.ValidFlag = '1')
+			LEFT JOIN Basis.BIN_Organization F
+			ON (A.BIN_OrganizationIDOut= F.BIN_OrganizationID
+				AND	F.ValidFlag = '1')
+			LEFT JOIN Basis.BIN_Employee G
+			ON (A.BIN_EmployeeID = G.BIN_EmployeeID
+				AND G.ValidFlag = '1')
+			join Inventory.BIN_ProductAllocationInDetail D
+			on(A.BIN_ProductAllocationInID=D.BIN_ProductAllocationInID)
+			]]>
+		<isEmpty property="prtVendorId">
+			<isNotEmpty property="nameTotal" >
+				JOIN Basis.BIN_ProductVendor H
+				ON(D.BIN_ProductVendorID = H.BIN_ProductVendorID)
+				JOIN Basis.BIN_Product C
+				ON(H.BIN_ProductID = C.BIN_ProductID
+				AND C.NameTotal like '%' + #nameTotal# + '%')
+			</isNotEmpty>
+		</isEmpty>
+		<![CDATA[	
+		WHERE
+			A.ValidFlag = '1'						
+	 	]]>
+		<![CDATA[AND EXISTS (]]>
+		<include refid="BINOLCMINC99.getDepartList" />
+		<![CDATA[AND A.BIN_OrganizationIDIn = A99.BIN_OrganizationID)]]>
+		<isNotEmpty prepend="AND" property="allocationNo" >
+			A.AllocationInNoIF Like '%' + #allocationNo# + '%'
+		</isNotEmpty>
+		<isNotEmpty prepend="AND" property="startDate" >
+			<![CDATA[ A.Date >= #startDate# ]]>
+		</isNotEmpty>
+		<isNotEmpty prepend="AND" property="endDate" >
+			<![CDATA[ A.Date <= #endDate# ]]>
+		</isNotEmpty>
+		<isNotEmpty prepend="AND" property="verifiedFlag" >
+			A.VerifiedFlag = #verifiedFlag#
+		</isNotEmpty>
+       <isNotEmpty prepend="AND" property="prtVendorId">
+		 		D.BIN_ProductVendorID = #prtVendorId#
+		</isNotEmpty>
+		<isNotEmpty prepend="AND" property="depotId">
+		 		D.BIN_InventoryInfoID = #depotId#
+		</isNotEmpty>
+	</sql>
+	
+	<!-- 取得调拨记录总数  -->
+    <select id="getAllocationCount" parameterClass="java.util.HashMap" resultClass="java.lang.Integer">
+    	<![CDATA[
+			SELECT	COUNT(SORT_T1.proAllocationId) AS count FROM (
+		]]>	
+		<include refid="BINOLPTRPS06.AllocationSQL" />
+		<![CDATA[	
+			)SORT_T1
+		]]>										
+    </select>
+	<!-- 取得调拨记录LIST  -->
+	<select id="getAllocationList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+		<include refid="BINOLCMINC99.pageheader" />
+		<include refid="BINOLPTRPS06.AllocationSQL" />
+		<include refid="BINOLCMINC99.pagefooter" />
+    </select>
+    
+    <!-- 取得出入库汇总信息【产品作为检索条件】  -->
+    <select id="getSumInfo" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+       	<![CDATA[
+		SELECT
+			ISNULL(SUM(ISNULL(D.Quantity,0)),0) AS sumQuantity,
+			ISNULL(SUM(ISNULL(D.Quantity,0) * ISNULL(D.Price,0)),0) AS sumAmount					
+		FROM								
+			Inventory.BIN_ProductAllocationIn A
+			LEFT JOIN Basis.BIN_Organization E
+			ON (A.BIN_OrganizationIDIn = E.BIN_OrganizationID
+				AND	E.ValidFlag = '1')
+			LEFT JOIN Basis.BIN_Organization F
+			ON (A.BIN_OrganizationIDOut= F.BIN_OrganizationID
+				AND	F.ValidFlag = '1')
+			LEFT JOIN Basis.BIN_Employee G
+			ON (A.BIN_EmployeeID = G.BIN_EmployeeID
+				AND G.ValidFlag = '1')
+			join Inventory.BIN_ProductAllocationInDetail D
+			on(A.BIN_ProductAllocationInID=D.BIN_ProductAllocationInID)
+			]]>
+		<isEmpty property="prtVendorId">
+			<isNotEmpty property="nameTotal" >
+				JOIN Basis.BIN_ProductVendor H
+				ON(D.BIN_ProductVendorID = H.BIN_ProductVendorID)
+				JOIN Basis.BIN_Product C
+				ON(H.BIN_ProductID = C.BIN_ProductID
+				AND C.NameTotal like '%' + #nameTotal# + '%')
+			</isNotEmpty>
+		</isEmpty>
+		<![CDATA[	
+		WHERE
+			A.ValidFlag = '1'						
+	 	]]>
+		<![CDATA[AND EXISTS (]]>
+		<include refid="BINOLCMINC99.getDepartList" />
+		<![CDATA[AND A.BIN_OrganizationIDIn = A99.BIN_OrganizationID)]]>
+		<isNotEmpty prepend="AND" property="allocationNo" >
+			A.AllocationInNoIF Like '%' + #allocationNo# + '%'
+		</isNotEmpty>
+		<isNotEmpty prepend="AND" property="startDate" >
+			<![CDATA[ A.Date >= #startDate# ]]>
+		</isNotEmpty>
+		<isNotEmpty prepend="AND" property="endDate" >
+			<![CDATA[ A.Date <= #endDate# ]]>
+		</isNotEmpty>
+		<isNotEmpty prepend="AND" property="verifiedFlag" >
+			A.VerifiedFlag = #verifiedFlag#
+		</isNotEmpty>
+        <isNotEmpty prepend="AND" property="prtVendorId">
+		 		D.BIN_ProductVendorID = #prtVendorId#
+		</isNotEmpty>
+		<isNotEmpty prepend="AND" property="depotId">
+		 		D.BIN_InventoryInfoID = #depotId#
+		</isNotEmpty>
+	</select>
+</sqlMap>

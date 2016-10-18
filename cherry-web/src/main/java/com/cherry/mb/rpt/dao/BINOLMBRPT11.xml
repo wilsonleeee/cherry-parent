@@ -1,0 +1,186 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sqlMap PUBLIC "-//iBATIS.com//DTD SQL Map 2.0//EN" "http://ibatis.apache.org/dtd/sql-map-2.dtd">
+<sqlMap namespace="BINOLMBRPT11">
+
+	<sql id="query">
+		<![CDATA[
+			SELECT 
+				A.OpenID,
+				A.SubscribeEventKey,
+				A.SubscribeTime,
+				A.FirstFlag,
+				B.BIN_OrganizationID,
+				B.CounterCode,
+				B.CounterName,
+				B.AgencyName,
+				B.Channel,
+				B.QRCodeName,
+				B.QRCodeImageUrl,
+				D.EmployeeCode,
+				D.MobilePhone,
+		]]>
+		<dynamic>
+			<isNotEmpty property="language">
+				<isEqual property="language" compareValue="en_US">
+					D.EmployeeNameForeign AS EmployeeName
+				</isEqual>
+				<isEqual property="language" compareValue="zh_CN">	
+					D.EmployeeName AS EmployeeName
+				</isEqual>								
+			</isNotEmpty>
+			<isEmpty property="language">
+				D.EmployeeName AS EmployeeName
+			</isEmpty>
+		</dynamic>
+		<![CDATA[
+			FROM
+				Wechat.BIN_SubscribeEventInfo A WITH(NOLOCK)
+			LEFT JOIN Wechat.BIN_SubscribeCntInfo B ON A.SubscribeEventKey = B.SubscribiEventKey 
+			LEFT JOIN Privilege.BIN_EmployeeDepart C 
+				JOIN Basis.BIN_Employee D ON C.BIN_EmployeeID = D.BIN_EmployeeID AND D.ValidFlag = '1'
+				ON B.BIN_OrganizationID = C.BIN_OrganizationID AND C.ManageType = '1'
+		]]>
+		<isNotEmpty property="privilegeFlag">
+			<isEqual property="privilegeFlag" compareValue="1">			
+			<![CDATA[			
+				JOIN (
+			]]>
+			<include refid="BINOLCMINC99.departPrivilegeSql" />
+			<![CDATA[
+				) A99 ON B.BIN_OrganizationID=A99.BIN_OrganizationID
+			]]>
+			</isEqual>
+		</isNotEmpty>
+		<![CDATA[
+			WHERE 
+				A.BIN_OrganizationInfoID = #organizationInfoId#
+			AND A.BIN_BrandInfoID = #brandInfoId#
+			AND A.SubscribeTime BETWEEN #StartDate# AND #EndDate#
+		]]>
+		<dynamic>
+			<isNotEmpty prepend="AND" property="SubscribeEventKey">
+				A.SubscribeEventKey LIKE '%' + #SubscribeEventKey# +'%'
+			</isNotEmpty>
+			<isNotEmpty prepend="AND" property="OpenID">
+				A.OpenID LIKE '%' + #OpenID# +'%'
+			</isNotEmpty>
+			<isNotEmpty prepend="AND" property="AgencyName">
+				B.AgencyName LIKE '%'+ #AgencyName# +'%'
+			</isNotEmpty>
+			<isNotEmpty prepend="AND" property="counter">
+				(
+					B.CounterCode LIKE '%'+ #counter# +'%'
+				OR	B.CounterName LIKE '%'+ #counter# +'%'
+				)
+			</isNotEmpty>
+			<isNotEmpty prepend="AND" property="counterBAS">
+				<isNotEmpty property="language">
+					<isEqual property="language" compareValue="en_US">
+						D.EmployeeNameForeign LIKE '%' + #counterBAS# + '%'
+					</isEqual>
+					<isEqual property="language" compareValue="zh_CN">
+						D.EmployeeName LIKE '%' + #counterBAS# + '%'
+					</isEqual>
+				</isNotEmpty>
+				<isEmpty property="language">
+					D.EmployeeName LIKE '%' + #counterBAS# + '%'
+				</isEmpty>
+			</isNotEmpty>
+			<isNotEmpty prepend="AND" property="FirstFlag">
+				<isEqual property="FirstFlag" compareValue="1">	
+					A.FirstFlag = '1'
+				</isEqual>
+			</isNotEmpty>
+			<isNotEmpty prepend="AND" property="KeyFlag">
+				<isEqual property="KeyFlag" compareValue="1">	
+					(
+						A.SubscribeEventKey IS NOT NULL 
+					AND A.SubscribeEventKey != ''
+					)
+				</isEqual>
+			</isNotEmpty>
+		</dynamic>
+	</sql>
+    
+    <!-- 取得扫码关注数量  -->
+    <select id="getSubscribeCount" parameterClass="java.util.HashMap" resultClass="java.lang.Integer">
+    	<![CDATA[
+			SELECT COUNT(1) AS count
+			FROM (
+		]]>
+		<include refid="BINOLMBRPT11.query" />
+		<![CDATA[
+			) T
+		]]>										
+    </select>
+    
+    <!-- 取得扫码关注List  -->
+    <select id="getSubscribeList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+       	<include refid="BINOLCMINC99.pageheader" />
+		<include refid="BINOLMBRPT11.query" />
+		<include refid="BINOLCMINC99.pagefooter" />
+    </select>
+    
+    <!-- 取得柜台主管名称List -->
+    <select id="getCounterBAS" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+    	<![CDATA[
+			SELECT TOP $number$
+				 A.BIN_EmployeeID AS id,
+				 A.EmployeeCode AS code,
+		]]>
+		<dynamic>
+			<isNotEmpty property="language">
+				<isEqual property="language" compareValue="en_US">
+					A.EmployeeNameForeign AS name
+				</isEqual>
+				<isEqual property="language" compareValue="zh_CN">	
+					A.EmployeeName AS name
+				</isEqual>								
+			</isNotEmpty>
+			<isEmpty property="language">
+				A.EmployeeName AS name
+			</isEmpty>
+		</dynamic>
+		<![CDATA[			
+			FROM
+			    Basis.BIN_Employee A
+			    LEFT JOIN Basis.BIN_Organization B
+				ON (A.BIN_OrganizationID = B.BIN_OrganizationID AND B.ValidFlag = '1')	
+				LEFT JOIN Privilege.BIN_PositionCategory C
+				ON (A.BIN_PositionCategoryID = C.BIN_PositionCategoryID AND C.ValidFlag = '1')	
+		]]>
+			<isNotEmpty property="privilegeFlag">
+			<isEqual property="privilegeFlag" compareValue="1">			
+		<![CDATA[		
+				JOIN (]]><include refid="BINOLCMINC99.employeePrivilegeSql" /><![CDATA[) A99 
+				ON A.BIN_EmployeeID=A99.BIN_SubEmployeeID
+		]]>
+			</isEqual>
+			</isNotEmpty>
+		<![CDATA[				
+			WHERE
+				A.BIN_OrganizationInfoID = #organizationInfoId# AND
+				A.ValidFlag = '1'
+			]]>
+		<dynamic>
+			<isNotEmpty prepend="AND" property="brandInfoId">
+				<![CDATA[(A.BIN_BrandInfoID=#brandInfoId# OR A.BIN_BrandInfoID='-9999')]]>
+			</isNotEmpty>
+			<isNotEmpty prepend="AND" property="counterBAS">
+				<![CDATA[(A.EmployeeCode LIKE '%' + #counterBAS# + '%']]>
+				<isNotEmpty prepend="OR" property="language">
+					<isEqual property="language" compareValue="en_US">
+						A.EmployeeNameForeign LIKE '%' + #counterBAS# + '%'
+					</isEqual>
+					<isEqual property="language" compareValue="zh_CN">
+						A.EmployeeName LIKE '%' + #counterBAS# + '%'
+					</isEqual>
+				</isNotEmpty>
+				<isEmpty prepend="OR" property="language">
+					A.EmployeeName LIKE '%' + #counterBAS# + '%'
+				</isEmpty>
+				<![CDATA[ ) ]]>
+			</isNotEmpty>
+		</dynamic>	
+    </select>
+</sqlMap>

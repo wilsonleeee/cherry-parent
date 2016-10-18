@@ -1,0 +1,288 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sqlMap PUBLIC "-//iBATIS.com//DTD SQL Map 2.0//EN" "http://ibatis.apache.org/dtd/sql-map-2.dtd">
+<sqlMap namespace="BINOLBSCNT04">
+	
+	<!-- 添加柜台信息 -->
+    <insert id="addCounterInfo" parameterClass="java.util.HashMap">
+    	<selectKey resultClass="java.lang.Integer" type="post" keyProperty="BIN_CounterInfoID" >
+    	
+    	<![CDATA[
+    		INSERT INTO Basis.BIN_CounterInfo					
+			(					
+				BIN_OrganizationInfoID,				
+				BIN_BrandInfoID,				
+				BIN_RegionID,				
+				BIN_MallInfoID,
+				BIN_ChannelID,
+				BIN_ResellerInfoID,
+				BIN_OrganizationID,
+				CounterAddress,
+				CounterCategory,
+				CounterCode,
+				CounterNameIF,
+				CounterNameShort,
+				NameForeign,
+				CounterTelephone,
+				CounterSpace,
+				CounterKind,
+				CounterLevel,
+				Status,
+				ResellerDepartID,
+				CounterSynergyFlag,
+				PassWord,
+				longitude,
+				latitude,
+				PosFlag,
+				BelongFaction,
+				OperateMode,
+				InvoiceCompany,
+				EmployeeNum,
+				BusDistrict,
+				BusniessPrincipal,
+				EquipmentCode,
+				ManagingType2,
+		]]>
+				<include refid="BINOLCMINC99.insertKeySql" />		
+		<![CDATA[						
+			)					
+			VALUES					
+			(					
+				#organizationInfoId#,				
+				#brandInfoId#,				
+				#regionId#,				
+				#mallInfoId#,
+				#channelId#,
+				#resellerInfoId#,
+				#organizationId#,
+				#counterAddress#,
+				#counterCategory#,
+				#counterCode#,
+				#counterNameIF#,
+				#counterNameShort#,
+				#nameForeign#,
+				#counterTelephone#,
+				#counterSpace#,
+				#counterKind#,
+				#counterLevel#,
+				#status#,
+				#resellerDepartId#,
+				#counterSynergyFlag#,
+				#passWord#,
+				#longitude#,
+				#latitude#,
+				#posFlag#,
+				#belongFaction#,
+				#operateMode#,
+				#invoiceCompany#,
+				#employeeNum#,
+				#busDistrict#,
+				#busniessPrincipal#,
+				#equipmentCode#,
+				#managingType2#,
+		]]>
+				<include refid="BINOLCMINC99.insertValueSql" />		
+		<![CDATA[							
+			)	
+			select SCOPE_IDENTITY() as value				
+    	]]>
+    	</selectKey>   
+    </insert>
+    
+    <!-- 添加柜台事件 -->
+    <insert id="addCounterEvent" parameterClass="java.util.HashMap">
+    	<![CDATA[
+    		INSERT INTO Basis.BIN_CounterEvent					
+			(					
+				BIN_CounterInfoID,				
+				EventNameID,				
+				FromDate,				
+				ToDate,
+				EventReason,
+		]]>
+				<include refid="BINOLCMINC99.insertKeySql" />		
+		<![CDATA[						
+			)					
+			VALUES					
+			(					
+				#counterInfoId#,				
+				#eventNameId#,				
+				#fromDate#,				
+				#toDate#,
+				#eventReason#,
+		]]>
+				<include refid="BINOLCMINC99.insertValueSql" />		
+		<![CDATA[							
+			)					
+    	]]>
+    </insert>
+    
+    <!-- 柜台号唯一验证 -->
+	<select id="getCounterInfoId" parameterClass="java.util.HashMap" resultClass="java.lang.String">
+		<![CDATA[
+			SELECT 
+				BIN_CounterInfoID
+        	FROM 
+        		Basis.BIN_CounterInfo
+            WHERE 
+				BIN_OrganizationInfoID = #organizationInfoId# AND
+				BIN_BrandInfoID = #brandInfoId# AND
+				counterCode = #counterCode#
+		]]>
+    </select>
+    
+    <!-- 取得品牌的顶层节点 -->
+	<select id="getFirstPath" parameterClass="java.util.HashMap" resultClass="java.lang.String">
+		<![CDATA[
+			SELECT				
+				MIN(A.Path) as path			
+			FROM				
+				Basis.BIN_Organization A		
+			WHERE	
+				A.BIN_OrganizationInfoID=#organizationInfoId# AND
+				A.BIN_BrandInfoID=#brandInfoId# AND
+				A.ValidFlag='1'
+		]]>
+    </select>
+    
+    <!-- 取得品牌下的未知节点 -->
+	<select id="getUnknownPath" parameterClass="java.util.HashMap" resultClass="java.lang.String">
+		<![CDATA[
+			SELECT				
+				A.Path as path			
+			FROM				
+				Basis.BIN_Organization A		
+			WHERE	
+				A.BIN_OrganizationInfoID=#organizationInfoId# AND
+				A.BIN_BrandInfoID=#brandInfoId# AND
+				A.Type = 'Z' AND
+				A.ValidFlag = '1'
+		]]>
+    </select>
+    
+    <!-- 取得柜台主管的所属部门 -->
+	<select id="getCounterHeaderDep" parameterClass="java.util.HashMap" resultClass="java.lang.String">
+		<![CDATA[
+			SELECT 
+				B.Path
+        	FROM 
+        		Basis.BIN_Employee A
+        		JOIN Basis.BIN_Organization B ON A.BIN_OrganizationID = B.BIN_OrganizationID
+            WHERE 
+				A.BIN_EmployeeID = #counterHead#
+		]]>
+    </select>
+    
+    <!-- 取得柜台信息(新老后台交互时使用)  -->
+    <select id="getCounterInfo" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+    	<![CDATA[
+			SELECT 
+				Z.BrandCode AS BrandCode,
+				X.CounterCode AS CounterCode,
+				X.CounterNameIF AS CounterName,
+				X.CounterKind AS counterKind,
+				X.[PassWord] AS PassWord,
+				X.CounterAddress AS CounterAddress,
+				X.CounterTelephone AS CounterTelephone,
+				O.OrgSynergyFlag AS CounterSynergyFlag,
+				X.ValidFlag AS ValidFlag,
+				R.RegionCode AS RegionCode,
+				CC.RegionCode AS Citycode,
+				N.ResellerCode AS AgentCode,
+				N.ResellerName AS AgentName,
+				convert(varchar(30),O.ExpiringDate,120) AS ExpiringDate,
+		]]>	
+		<isNotEmpty property="language">
+			<isEqual property="language" compareValue="en_US">										
+				L.ChannelNameForeign AS Channel,
+				R.RegionNameForeign AS RegionName,
+				CC.RegionNameForeign AS CityName
+			</isEqual>
+			<isEqual property="language" compareValue="zh_CN">										
+				L.ChannelName AS Channel,
+				R.RegionNameChinese AS RegionName,
+				CC.RegionNameChinese AS CityName
+			</isEqual>								
+		</isNotEmpty>
+		<isEmpty property="language">
+			L.ChannelName AS Channel,
+			R.RegionNameChinese AS RegionName,
+			CC.RegionNameChinese AS CityName
+		</isEmpty>
+		<![CDATA[		
+			FROM
+				Basis.BIN_CounterInfo X
+				JOIN Basis.BIN_Organization O ON (O.BIN_OrganizationID = X.BIN_OrganizationID )
+				LEFT JOIN Basis.BIN_Region R ON (O.BIN_RegionID = R.BIN_RegionID AND R.ValidFlag = '1')
+				LEFT JOIN Basis.BIN_Region CC ON (O.BIN_CityID = CC.BIN_RegionID AND CC.ValidFlag = '1')
+				LEFT JOIN Basis.BIN_BrandInfo Z ON (X.BIN_BrandInfoID = Z.BIN_BrandInfoID AND Z.ValidFlag = '1')
+				LEFT JOIN Basis.BIN_Channel L ON (X.BIN_ChannelID = L.BIN_ChannelID AND L.ValidFlag = '1')
+				LEFT JOIN Basis.BIN_ResellerInfo N ON (X.BIN_ResellerInfoID = N.BIN_ResellerInfoID AND N.ValidFlag = '1')
+			WHERE
+				X.BIN_CounterInfoID = #counterInfoId#
+		]]>									
+    </select>	
+    
+    <!-- 根据员工ID取得U盘序列号  -->
+    <select id="getUdiskSNList" parameterClass="java.util.HashMap" resultClass="java.lang.String">
+    	<![CDATA[
+			SELECT	
+				A.UdiskSN AS udiskSN 
+			FROM 
+				Monitor.BIN_UdiskInfo A
+			WHERE
+				A.BIN_EmployeeID IN
+		]]>				
+			<iterate property="employeeList" open="(" close=")" conjunction=","> 
+				#employeeList[]#
+			</iterate>
+		<![CDATA[
+				AND A.ValidFlag = '1'
+		]]>										
+    </select>
+    
+    <!-- 根据品牌ID取得品牌code  -->
+    <select id="getBrandCode" parameterClass="java.util.HashMap" resultClass="java.lang.String">
+    	<![CDATA[
+			SELECT	
+				A.BrandCode AS brandCode
+			FROM 
+				Basis.BIN_BrandInfo A
+			WHERE
+				A.BIN_BrandInfoID = #brandInfoId#
+		]]>						
+    </select>
+    
+	<!-- 员工信息查询sql文  -->
+	<select id="getEmployeeInfo" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+		SELECT
+			A.EmployeeCode AS employeeCode,
+			A.ValidFlag AS validFlag
+		FROM
+			Basis.BIN_Employee A
+		WHERE 
+			A.BIN_EmployeeID = #employeeId#
+	</select>
+    
+	<!-- 取得城市区号  -->
+	<select id="getCntTeleCode" parameterClass="java.util.HashMap" resultClass="java.lang.String">
+		SELECT  
+			REPLICATE('0',4-LEN(TeleCode))+CAST(TeleCode as varchar) AS TeleCode
+		FROM 
+			Basis.BIN_Region 
+		WHERE
+			BIN_OrganizationInfoID=#organizationInfoId#
+		AND	BIN_BrandInfoID=#brandInfoId# 
+		AND BIN_RegionID = #cityId#
+	</select>
+    
+	<!-- 取得自增的柜台编号右3位  -->
+	<select id="getCntCodeRightTree" parameterClass="java.util.HashMap" resultClass="java.lang.String">
+		SELECT 
+			REPLICATE('0',3-LEN(ISNULL(CAST(MAX(right(RTRIM(Countercode),3)) as varchar)+1,1)))+ CAST(ISNULL(CAST(MAX(RIGHT(RTRIM(Countercode),3)) as int)+1,1) as varchar) AS seq
+		FROM Basis.BIN_CounterInfo
+		WHERE 
+			BIN_OrganizationInfoID = #organizationInfoId# 
+		AND	BIN_BrandInfoID = #brandInfoId# 
+		AND	CounterCode LIKE #cntCodePreFive# + '%'
+	</select>
+</sqlMap>

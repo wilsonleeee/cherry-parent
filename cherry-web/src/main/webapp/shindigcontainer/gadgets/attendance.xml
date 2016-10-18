@@ -1,0 +1,170 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Module>
+    <ModulePrefs
+            title="attendance">
+       		<Require feature="settitle"/>
+            <Require feature="dynamic-height" /> 
+			<Optional feature="content-rewrite">
+			  <Param name="exclude-urls">.*</Param>
+			</Optional>
+			<Require feature="oauthpopup" />
+			<Require feature="cherryOpenSocial"/>
+			<Require feature="opensocial-i18n"/> 
+			<Locale messages="../i18n/zh_CN_ALL.xml"/>
+			<Locale lang="zh_CN" messages="../i18n/zh_CN_ALL.xml"/>
+			<Locale lang="zh_TW" messages="../i18n/zh_TW_ALL.xml"/>
+    </ModulePrefs>
+    <Content type="html" ><![CDATA[
+    <style type="text/css">
+    	#baAttendance {
+    		padding: 2px 10px 10px 10px;
+    		font-size: 14px;
+    	}
+	  	#baAttendance ul {
+	    	list-style:none;
+	    	margin: 0 0 10px 0;
+	    	padding: 0;
+	  	}
+	  	#baAttendance ul li {
+	    	padding: 10px 0 5px 0;
+	    	border-bottom: 1px solid #E5E5E5;
+	  	}
+	  	#baAttendance ul li:hover {
+	    	background-color: #FFFEDD;
+	  	}
+	  	#baAttendance a {
+	  		color: #3366FF;
+    		text-decoration: none;
+	  	}
+	  	#baAttendance a:hover {
+	  		color: #FF6D06;
+    		text-decoration: underline;
+	  	}
+	  	#waiting {
+	  		height:200px;
+	  	}
+	  	#waiting div {
+	  		background-image: url("/Cherry/css/common/blueprint/images/loading.gif");
+		    background-position: 20px center;
+		    background-repeat: no-repeat;
+		    height: 50px;
+		    width: 50px;
+		    left: 40%;
+		    top: 20%;
+		    position: absolute;
+		    z-index: 100;
+	  	}
+	</style>
+    
+	
+	
+    
+    
+	<script type='text/javascript'>
+	
+	var baseUrl = window.parent.getBaseUrl();
+	var gadgetPrefs = new gadgets.Prefs();
+	
+	function getContext(dataObj) {
+		var content;
+		if(dataObj.Content == "1") {
+			content = gadgetPrefs.getMsg("arrive");
+		} else if(dataObj.Content == "0") {
+			content = gadgetPrefs.getMsg("leave");
+		}
+		var context = '<li>'+dataObj.UserPost+
+			'<a href="'+baseUrl+'/basis/BINOLBSEMP02_init?employeeCode='+dataObj.UserCode+'" onclick="window.parent.openWin(this);return false;">'+dataObj.UserName+'</a>'+
+			content+
+			(dataObj.DeptCode ? '<a href="'+baseUrl+'/basis/BINOLBSCNT02_init?counterCode='+dataObj.DeptCode+'" onclick="window.parent.openWin(this);return false;">'+dataObj.DeptName+'</a>' : '<a href="#">'+gadgetPrefs.getMsg("unKnownCouName")+'</a>')+
+			'<br/><span style="color:#999999;">'+dataObj.OccurTime+'</span></li>';
+		return 	context;
+	}
+	
+	function subscribeResponse(data) {
+		if(data.indexOf('<!-- EOD -->') > -1) {
+			return false;
+		}
+		var dataObj = eval('('+data+')');
+		var context = getContext(dataObj);
+		var $li = $('#baAttendance').find('li');
+		if($li.length > 0) {
+			$li.first().before(context);
+           	if($li.length >= 10) {
+           		$li.last().remove();
+           	}
+       	} else {
+       		$("#baAttendance").find("ul").html(context);
+       	}
+        gadgets.window.adjustHeight();
+        $li = $('#baAttendance').find('li');
+		$li.first().hide().slideDown('5000');
+	}
+	
+	function render(data) {
+		$("#waiting").hide();
+		$("#baAttendance").show();
+		data = data.entry;
+		var $ul = $("#baAttendance").find("ul");
+		if(data.attendanceMes) {
+			for(var i = 0; i < data.attendanceMes.length; i++) {
+				var dataObj = data.attendanceMes[i];
+				var context = getContext(dataObj);
+				$ul.append(context);
+			}
+		}
+		$ul.next().remove();
+		if(data.pageNo) {
+			$ul.after('<span><a href="#" onclick="fetchAttendanceInfo({pageNo:\''+data.pageNo+'\'}, false);return false;">'+gadgetPrefs.getMsg("moreButton")+'</a></span>');
+		}
+	    gadgets.window.adjustHeight();
+	    subscribeRequest(baseUrl + '/pubsub/attendance', subscribeResponse);
+	}
+	
+	function renderMore(data) {
+		data = data.entry;
+		var $ul = $("#baAttendance").find("ul");
+		if(data.attendanceMes) {
+			for(var i = 0; i < data.attendanceMes.length; i++) {
+				var dataObj = data.attendanceMes[i];
+				var context = getContext(dataObj);
+				$ul.append(context);
+			}
+		}
+		$ul.next().remove();
+		if(data.pageNo) {
+			$ul.after('<span><a href="#" onclick="fetchAttendanceInfo({pageNo:\''+data.pageNo+'\'}, false);return false;">'+gadgetPrefs.getMsg("moreButton")+'</a></span>');
+		}
+	    gadgets.window.adjustHeight();
+	}
+	
+	function fetchAttendanceInfo(param, flag) {
+	   	var url = baseUrl + "/social/rest/attendance";
+	   	param.userInfo = window.parent.getUserInfo();
+		if(flag) {
+	   		sendRequestToServer(url, 'POST', param, render, false);
+	   	} else {
+	   		sendRequestToServer(url, 'POST', param, renderMore, false);
+	   	}
+	}
+	
+	function init() {
+		$("#baAttendance").hide();
+		$("#waiting").show();
+	   	gadgets.window.adjustHeight();
+		fetchAttendanceInfo({pageNo:'1'}, true);
+	}
+	
+    gadgets.util.registerOnLoadHandler(init);
+	
+	</script>
+	
+	<div id="waiting"><div></div></div>
+	<div id="baAttendance" style="display:none">
+      <div class="section">
+      <div class="section-content">
+        <ul></ul>
+      </div>
+      </div>
+    </div>
+	]]></Content>
+</Module>

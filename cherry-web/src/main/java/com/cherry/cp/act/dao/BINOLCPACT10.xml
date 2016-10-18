@@ -1,0 +1,171 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sqlMap PUBLIC "-//iBATIS.com//DTD SQL Map 2.0//EN" "http://ibatis.apache.org/dtd/sql-map-2.dtd">
+<sqlMap namespace="BINOLCPACT10">
+<!-- 兑换结果Sql -->
+<sql id="exChangeQuery">
+	<![CDATA[		
+	SELECT
+			DISTINCT
+				A.BIN_SaleRecordID AS saleRecordId,
+				A.BillCode AS billCode,
+				'(' + A.MemberCode + ')' + E.Name AS memNameCode,
+				A.MemberCode AS memberCode,
+				D.DepartName AS counterName,
+				E.Name AS memName,
+				E.MobilePhone AS mobilePhone,
+				D.DepartCode AS departCode,
+				A.SaleType AS saleType,
+				A.SaleDate AS saleDate,
+				CASE
+					WHEN A.BIN_MemberInfoID IS NOT NULL THEN ISNULL(E.TestType, 1) ELSE NULL
+				END AS testType,
+				ISNULL(A.Amount, 0) AS amount,
+				ISNULL(A.Quantity, 0) AS quantity,
+				CONVERT(varchar(30), A.SaleTime, 120) AS saleTime,
+				A.SaleTime AS saleProductTime,
+				A.BIN_EmployeeID AS employeeId,
+		 ]]>	
+		<dynamic>
+            <isNotEmpty property="language">
+                <isEqual property="language" compareValue="en_US">
+                   '('+D.DepartCode+')' +  D.NameForeign AS departName
+                </isEqual>
+                <isEqual property="language" compareValue="zh_CN">
+                   '('+D.DepartCode+')' +  D.DepartName AS departName
+                </isEqual>
+            </isNotEmpty>
+            <isEmpty property="language">
+              '('+D.DepartCode+')' +  D.DepartName AS departName
+            </isEmpty>
+        </dynamic>
+        <![CDATA[	
+	FROM 
+			Sale.BIN_SaleRecord A WITH(NOLOCK)
+			JOIN Sale.BIN_SaleRecordDetail B WITH(NOLOCK)
+			ON (A.BIN_SaleRecordID = B.BIN_SaleRecordID
+			AND B.ValidFlag='1' )
+			JOIN Campaign.BIN_CampaignRule C  WITH(NOLOCK)
+			ON (B.MainCode = C.SubCampaignCode 
+			AND C.BIN_CampaignID = #campaignId#)
+			JOIN Basis.BIN_Organization D  WITH(NOLOCK)
+			ON (A.BIN_OrganizationID=D.BIN_OrganizationID)
+			JOIN Members.BIN_MemberInfo E WITH(NOLOCK)
+			ON(A.BIN_MemberInfoID=E.BIN_MemberInfoID)
+	WHERE 
+			A.BIN_BrandInfoID=#brandInfoId#
+			AND A.SaleType = 'PX'
+			AND A.ValidFlag='1'
+	]]>		
+		<isNotEmpty property="billCode" prepend="AND">															
+			<![CDATA[A.BillCode = #billCode#]]>															
+		</isNotEmpty>													
+		<isNotEmpty property="memberCode" prepend="AND">															
+			<![CDATA[A.MemberCode = #memberCode#]]>															
+		</isNotEmpty>	
+		<isNotEmpty prepend="AND" property="startDate">
+	        <![CDATA[A.SaleDate >= #startDate#]]>
+        </isNotEmpty>
+        <isNotEmpty prepend="AND" property="endDate">
+            <![CDATA[A.SaleDate <= #endDate#]]>
+        </isNotEmpty>
+		<isNotEmpty property="departCode" prepend="AND">															
+			<![CDATA[D.DepartCode = #departCode#]]>															
+		</isNotEmpty>	
+		<isNotEmpty property="testType" prepend="AND">		
+				<![CDATA[A.BIN_MemberInfoID IS NOT NULL ]]>
+			<isEqual property="testType" compareValue="0" prepend="AND">												
+				<![CDATA[E.TestType = #testType# ]]>															
+			</isEqual>	
+			<isEqual property="testType" compareValue="1" prepend="AND">
+				<![CDATA[(E.TestType = #testType# OR E.TestType IS NULL)]]>	
+			</isEqual>
+		</isNotEmpty>	
+		<isNotEmpty property="mobilePhone" prepend="AND">															
+			<![CDATA[E.MobilePhone = #mobilePhone#]]>															
+		</isNotEmpty>		
+	</sql>
+	<!-- 兑换结果List  -->
+	<select id="getExchangeList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+	   <include refid="BINOLCMINC99.pageheader" />
+	   <include refid="BINOLCPACT10.exChangeQuery" />
+	   <include refid="BINOLCMINC99.pagefooter" />
+	</select>
+	
+	<!-- 兑换结果Count-->
+    <select id="getExchangeCount" parameterClass="java.util.HashMap" resultClass="java.lang.Integer">
+        <![CDATA[
+            SELECT  COUNT(SORT_T1.saleRecordId) AS count FROM (
+        ]]>
+        <include refid="BINOLCPACT10.exChangeQuery" />
+        <![CDATA[
+            )SORT_T1
+        ]]>
+    </select>
+    <!-- 兑换结果Sql -->
+<sql id="getExcelQuery">
+	 <![CDATA[
+		SELECT 
+		   DISTINCT
+		   T0.saleRecordId,
+		   T0.billCode,
+		   T0.memberCode,
+		   T0.memName,
+		   T0.mobilePhone,
+		   T0.testType,
+		   T0.departCode,
+		   T0.counterName,
+		   T1.UnitCode,
+		   T1.BarCode,
+		   CASE T1.SaleType WHEN 'N' THEN '1' WHEN 'P' THEN '2'  ELSE '' END AS prtType,
+		   T0.saleType,
+		   I.SubCampaignCode,
+		   I.SubCampaignName,
+		   ISNULL(D.NameTotal,F.NameTotal) AS nameTotal,
+		   FLOOR(T1.Quantity) AS buyQuantity,
+		   CASE WHEN D.PromotionCateCD = 'DHCP' OR D.PromotionCateCD = 'TZZK' OR D.PromotionCateCD = 'DHMY'
+		   THEN CAST(ROUND(T1.PricePay,2) AS NUMERIC(32,2)) 
+		   ELSE CAST(ROUND(T1.PricePay * T1.Quantity,2) AS NUMERIC(32,2)) 
+		   END AS buyAmount,
+		   T0.saleDate AS saleDate,
+		   CONVERT(varchar(12) ,T0.saleProductTime,108) AS saleProductTime,
+		   T3.EmployeeCode AS employeeCode,
+		   T3.EmployeeName AS employeeName
+	   ]]>
+	 <![CDATA[FROM (]]>
+	 <include refid="BINOLCPACT10.exChangeQuery" />
+	 <![CDATA[)T0
+	 		LEFT JOIN Basis.BIN_Employee T3 WITH(NOLOCK)
+	 		ON(T0.employeeId = T3.BIN_EmployeeID)
+			LEFT JOIN Sale.BIN_SaleRecordDetail T1 WITH(NOLOCK) 
+			ON(T0.saleRecordId=T1.BIN_SaleRecordID)
+			LEFT JOIN Basis.BIN_PromotionProductVendor C WITH(NOLOCK)
+			ON(T1.BIN_ProductVendorID=C.BIN_PromotionProductVendorID
+			AND T1.SaleType = 'P')
+			LEFT JOIN Basis.BIN_PromotionProduct D WITH(NOLOCK)
+			ON (C.BIN_PromotionProductID=D.BIN_PromotionProductID)
+			LEFT JOIN Basis.BIN_ProductVendor E WITH(NOLOCK)
+			ON(T1.BIN_ProductVendorID=E.BIN_ProductVendorID
+			AND T1.SaleType  = 'N')
+			LEFT JOIN Basis.BIN_Product F WITH(NOLOCK)
+			ON (E.BIN_ProductID=F.BIN_ProductID)
+			LEFT JOIN Campaign.BIN_CampaignRule I
+			ON(T1.MainCode = I.SubCampaignCode)
+	 ]]>
+</sql>
+ <!-- Excel导出结果List  -->
+	<select id="getExcelResultList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+	   <include refid="BINOLCMINC99.pageheader" />
+	   <include refid="BINOLCPACT10.getExcelQuery"/>		
+	   <include refid="BINOLCMINC99.pagefooter" />
+	</select>
+	<!-- 活动Excel结果Count-->
+    <select id="getExcelCount" parameterClass="java.util.HashMap" resultClass="java.lang.Integer">
+        <![CDATA[
+            SELECT  COUNT(SORT_T1.saleRecordId) AS count FROM (
+        ]]>
+          <include refid="BINOLCPACT10.getExcelQuery"/>
+        <![CDATA[
+            )SORT_T1
+        ]]>
+    </select>
+</sqlMap>

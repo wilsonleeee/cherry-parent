@@ -1,0 +1,93 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sqlMap PUBLIC "-//iBATIS.com//DTD SQL Map 2.0//EN" "http://ibatis.apache.org/dtd/sql-map-2.dtd">
+<sqlMap namespace="BINOLPTRPS37">
+
+	<!-- 符合预警规则的产品仓库库存sql文  -->
+	<sql id="ProStockMinLimitSQL">
+		<![CDATA[
+		SELECT 
+			PSK.BIN_ProductVendorID,
+			PSK.BIN_InventoryInfoID
+		FROM 
+			Inventory.BIN_ProductStock PSK WITH(NOLOCK)
+			JOIN T99 ON (PSK.BIN_InventoryInfoID = T99.BIN_InventoryInfoID)
+		WHERE
+			EXISTS(
+				SELECT 1
+				from 
+					Basis.BIN_ProductVendor PV1 WITH(NOLOCK)
+				where 
+					PSK.BIN_ProductVendorID=PV1.BIN_ProductVendorID
+					AND PV1.ValidFlag='1'
+			)
+		GROUP BY 
+			PSK.BIN_ProductVendorID
+			,PSK.BIN_InventoryInfoID
+		HAVING SUM(convert(bigint,PSK.Quantity))<=#minLimit#
+		]]>
+	</sql>
+	
+	<!-- 产品仓库的库存合计 -->
+	<sql id="ProStockSQL">
+		<![CDATA[
+			SELECT 
+				PT.NameTotal AS productName,
+				PT.UnitCode AS unitCode,
+				PT.ModuleCode AS moduleCode,
+				PV.BarCode AS barCode,
+				ISNULL(E.DepartCode,'') AS departCode,
+				ISNULL(E.DepartName,'') as departName,
+				ISNULL(IV.DepotCode,'') as depotCode,
+				ISNULL(IV.DepotNameCN,'') AS depotName,
+				ISNULL(LIV.LogicInventoryCode,'') as logicDepotCode,
+				ISNULL(LIV.InventoryNameCN,'') AS logicDepotName,
+				CONVERT(BIGINT,A.Quantity) as stockQuantity
+			FROM (
+		]]>
+		<include refid="BINOLPTRPS37.ProStockMinLimitSQL" />
+		<![CDATA[) T0
+				LEFT JOIN Inventory.BIN_ProductStock A WITH(NOLOCK)
+				ON(T0.BIN_ProductVendorID=A.BIN_ProductVendorID AND T0.BIN_InventoryInfoID=A.BIN_InventoryInfoID)
+				JOIN Basis.BIN_ProductVendor PV WITH(NOLOCK)
+				ON(T0.BIN_ProductVendorID = PV.BIN_ProductVendorID
+					AND PV.ValidFlag = '1')
+				JOIN Basis.BIN_Product PT WITH(NOLOCK)
+				ON(PV.BIN_ProductID = PT.BIN_ProductID AND PT.IsStock='1')
+				LEFT JOIN Basis.BIN_DepotInfo IV WITH(NOLOCK)
+				ON(T0.BIN_InventoryInfoID=IV.BIN_DepotInfoID)
+				LEFT JOIN Basis.BIN_LogicInventory LIV WITH(NOLOCK)
+				ON(A.BIN_LogicInventoryInfoID=LIV.BIN_LogicInventoryInfoID)
+				JOIN Basis.BIN_InventoryInfo D WITH(NOLOCK)
+				ON(A.BIN_InventoryInfoID=D.BIN_InventoryInfoID)
+				JOIN Basis.BIN_Organization E WITH(NOLOCK)
+				ON(D.BIN_OrganizationID=E.BIN_OrganizationID)
+				JOIN Basis.BIN_CounterInfo F WITH(NOLOCK)
+				ON(E.BIN_OrganizationID=F.BIN_OrganizationID AND F.BelongFaction='1')
+		]]>
+		<dynamic prepend="WHERE">
+			<isNotEmpty prepend="AND" property="prtVendorId">
+				T0.BIN_ProductVendorID = #prtVendorId#
+			</isNotEmpty>
+		</dynamic>
+	</sql>
+	
+	<!-- 取得实时库存预警记录总数  -->
+    <select id="getProStockCount" parameterClass="java.util.HashMap" resultClass="java.lang.Integer">
+    	<include refid="BINOLCMINC99.getInventoryList" />
+    	<![CDATA[
+			SELECT	COUNT(1) AS count FROM (
+		]]>	
+		<include refid="BINOLPTRPS37.ProStockSQL" />
+		<![CDATA[
+			)SORT_T1
+		]]>										
+    </select>
+    
+	<!-- 取得实时库存预警记录LIST  -->
+	<select id="getProStockList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap" remapResults="true">
+		<include refid="BINOLCMINC99.getInventoryList" />
+		<include refid="BINOLCMINC99.pageheader" />
+		<include refid="BINOLPTRPS37.ProStockSQL" />
+		<include refid="BINOLCMINC99.pagefooter" />
+    </select>
+</sqlMap>

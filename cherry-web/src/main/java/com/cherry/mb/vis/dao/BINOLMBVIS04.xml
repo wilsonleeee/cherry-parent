@@ -1,0 +1,115 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sqlMap PUBLIC "-//iBATIS.com//DTD SQL Map 2.0//EN" "http://ibatis.apache.org/dtd/sql-map-2.dtd">
+<sqlMap namespace="BINOLMBVIS04">
+
+	<sql id="VisitTaskQuery">
+		<![CDATA[
+			SELECT 
+				A.BIN_VisitTaskID AS visitTaskId,
+				A.VisitType AS visitType,
+				E.VisitTypeName AS visitTypeName,
+				CONVERT(varchar(30), A.StartTime, 23) AS startTime,
+				CONVERT(varchar(30), A.EndTime, 23) AS endTime,
+				C.CounterCode AS counterCode,
+				C.CounterNameIF AS counterName,
+				D.EmployeeCode AS employeeCode,
+				D.EmployeeName AS employeeName,
+				A.MemberCode AS memCode,
+				A.MemberName AS memName,
+				SUBSTRING(A.BirthDay,5,4) AS birthDay,
+				CONVERT(varchar(30), A.JoinTime, 23) AS joinTime,
+				A.FirstBillNS AS firstBillNS,
+				A.LastBillNS AS lastBillNS,
+				A.TaskState AS taskState,
+				A.SynchroFlag AS synchroFlag,
+				CONVERT(varchar(30), B.VisitTime, 120) AS visitTime,
+				B.VisitFlag AS visitFlag
+			FROM
+				Members.BIN_VisitTask A WITH(NOLOCK)
+		]]>	
+		<![CDATA[
+		JOIN (]]><include refid="BINOLCMINC99.departPrivilegeSql" /><![CDATA[) A99 
+				ON A.BIN_OrganizationID=A99.BIN_OrganizationID
+		]]>
+		<![CDATA[	
+				LEFT JOIN Members.BIN_MemberVisit B WITH(NOLOCK) ON A.BIN_VisitTaskID = B.BIN_VisitTaskID
+				LEFT JOIN Basis.BIN_CounterInfo C WITH(NOLOCK) ON A.BIN_OrganizationID = C.BIN_OrganizationID
+				LEFT JOIN Basis.BIN_Employee D WITH(NOLOCK) ON A.BIN_EmployeeID = D.BIN_EmployeeID
+				LEFT JOIN Members.BIN_VisitCategory E WITH(NOLOCK) ON A.VisitType = E.VisitTypeCode
+			WHERE 
+				A.BIN_OrganizationInfoID = #organizationInfoId#
+		]]>
+			<isNotEmpty prepend="AND" property="brandInfoId">
+				A.BIN_BrandInfoID = #brandInfoId#
+			</isNotEmpty>
+			<isNotEmpty prepend="AND" property="visitType">
+				A.VisitType = #visitType#
+			</isNotEmpty>
+			<isNotEmpty prepend="AND" property="startDate">
+	            <![CDATA[A.StartTime >= #startDate#]]>
+			</isNotEmpty>
+			<isNotEmpty prepend="AND" property="endDate">
+	           <![CDATA[A.EndTime <= #endDate#]]>
+	        </isNotEmpty>
+	        <isNotEmpty prepend="AND" property="memCode">
+				A.MemberCode  like '%'+#memCode#+'%'
+			</isNotEmpty>
+	        <isNotEmpty prepend="AND" property="birthDayMonth">
+				SUBSTRING(A.BirthDay,5,2) = #birthDayMonth#
+			</isNotEmpty>
+			<isNotEmpty prepend="AND" property="birthDayDate">
+				SUBSTRING(A.BirthDay,7,2) = #birthDayDate#
+			</isNotEmpty>
+			<isNotEmpty prepend="AND" property="counterCode">
+				C.CounterCode = #counterCode#
+			</isNotEmpty>
+			<isNotEmpty prepend="AND" property="employeeCode">
+				D.EmployeeCode = #employeeCode#
+			</isNotEmpty>
+			<isNotEmpty prepend="AND" property="visitTimeStart">
+	            <![CDATA[B.VisitTime >= #visitTimeStart#]]>
+			</isNotEmpty>
+			<isNotEmpty prepend="AND" property="visitTimeEnd">
+	           <![CDATA[B.VisitTime <= #visitTimeEnd#]]>
+	        </isNotEmpty>
+	        <isNotEmpty prepend="AND" property="visitResult">
+	        	<isEqual property="visitResult" compareValue="VISIT_RESULT001">
+	        		(B.VisitFlag = 'VISIT_RESULT001' OR B.VisitFlag IS NULL)
+	        	</isEqual>
+	        	<isNotEqual property="visitResult" compareValue="VISIT_RESULT001">
+	        		B.VisitFlag = #visitResult#
+	        	</isNotEqual>
+			</isNotEmpty>
+	</sql>
+	
+	<!-- 取得回访信息总数  -->
+    <select id="getVisitTaskCount" parameterClass="java.util.HashMap" resultClass="java.lang.Integer">
+    	<![CDATA[
+			SELECT COUNT(1) AS count FROM (]]><include refid="BINOLMBVIS04.VisitTaskQuery" /><![CDATA[) T
+		]]>										
+    </select>
+    
+    <!-- 取得回访信息List  -->
+    <select id="getVisitTaskList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+       	<include refid="BINOLCMINC99.pageheader" />
+		<include refid="BINOLMBVIS04.VisitTaskQuery" />
+		<include refid="BINOLCMINC99.pagefooter" />
+    </select>
+    
+    <!-- 取消回访任务 -->
+	<update id="updateVisitTaskState" parameterClass="java.util.HashMap">
+    <![CDATA[		
+        UPDATE 
+        	Members.BIN_VisitTask
+        SET 
+      		TaskState = '1',
+      		SynchroFlag = '0',
+    ]]>				
+		<include refid="BINOLCMINC99.updateSql" />		
+	<![CDATA[		
+		WHERE 
+			BIN_VisitTaskID = #visitTaskId# AND
+			TaskState = '0'     
+	]]>	   
+    </update>
+</sqlMap>

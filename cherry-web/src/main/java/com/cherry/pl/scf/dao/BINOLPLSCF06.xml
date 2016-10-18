@@ -1,0 +1,153 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sqlMap PUBLIC "-//iBATIS.com//DTD SQL Map 2.0//EN" "http://ibatis.apache.org/dtd/sql-map-2.dtd">
+<sqlMap namespace="BINOLPLSCF06">
+	
+	<sql id="getCodeManager">
+		<![CDATA[
+			SELECT
+				A.BIN_CodeManagerID AS u_codeManagerId,
+				A.BrandCode AS u_brandCode,
+				A.OrgCode AS u_orgCode,
+				A.CodeType AS u_codeType,
+				A.CodeName AS u_codeName,
+				A.KeyDescription AS u_keyDescription,
+				A.Value1Description AS u_value1Description,
+				A.Value2Description AS u_value2Description,
+				A.Value3Description AS u_value3Description,
+				B.BIN_CodeManagerID AS s_codeManagerId,
+				B.BrandCode AS s_brandCode,
+				B.OrgCode AS s_orgCode,
+				B.CodeType AS s_codeType,
+				B.CodeName AS s_codeName,
+				B.KeyDescription AS s_keyDescription,
+				B.Value1Description AS s_value1Description,
+				B.Value2Description AS s_value2Description,
+				B.Value3Description AS s_value3Description
+			FROM
+				Tools.BIN_CodeManager A
+				LEFT JOIN Tools.BIN_CodeManager B
+				ON(
+					A.CodeType = B.CodeType
+					AND B.OrgCode = #orgCode#
+			]]>
+					<dynamic>
+						<isNotEmpty prepend="AND" property="brandCode">
+							B.BrandCode=#brandCode#
+						</isNotEmpty>
+					</dynamic>
+		<![CDATA[
+				)
+			WHERE
+				A.OrgCode = '-9999'
+				AND A.BrandCode = '-9999'
+				AND A.ValidFlag = '1'
+		]]>
+		<dynamic>
+			<isNotEmpty prepend="AND" property="codeType">
+				A.CodeType LIKE '%'+#codeType#+'%'
+			</isNotEmpty>
+			<isNotEmpty prepend="AND" property="codeName">
+				A.CodeName LIKE '%'+#codeName#+'%'
+			</isNotEmpty>
+		</dynamic>
+	</sql>
+	<!-- 组织信息 -->
+	<resultMap id="BINOLPLSCF06.orgInfoList" class="java.util.HashMap">
+		<result property="orgCode" column="OrgCode"/>					<!-- 组织Code -->
+		<result property="orgName" column="OrgNameChinese"/>			<!-- 组织名称 -->
+	</resultMap>
+	<!-- 取得品牌信息  -->
+    <select id="getOrgInfoList" parameterClass="java.util.HashMap" resultMap="BINOLPLSCF06.orgInfoList">
+       	<![CDATA[
+			SELECT DISTINCT
+				OrgCode,
+				OrgNameChinese											
+			FROM
+				dbo.BIN_BrandDataSourceConfig
+			WHERE
+				ValidFlag = '1'
+		]]>
+    </select>	
+	
+	<!-- 品牌信息 -->
+	<resultMap id="BINOLPLSCF06.brandCodeList" class="java.util.HashMap">
+		<result property="brandCode" column="BrandCode"/>					<!-- 品牌Code -->
+		<result property="brandName" column="BrandName"/>					<!-- 品牌名称 -->
+	</resultMap>
+	<!-- 取得品牌信息  -->
+    <select id="getBrandCodeList" parameterClass="java.util.HashMap" resultMap="BINOLPLSCF06.brandCodeList">
+       	<![CDATA[
+			SELECT DISTINCT
+				BrandCode,
+				BrandName											
+			FROM
+				dbo.BIN_BrandDataSourceConfig
+			WHERE
+				OrgCode = #orgCode# AND
+				ValidFlag = '1'
+		]]>
+    </select>
+    
+	<resultMap id="BINOLPLSCF06.codeM" class="java.util.HashMap">
+		<result property="codeManagerID" column="BIN_CodeManagerID"/>		
+		<result property="codeType" column="CodeType"/>
+		<result property="codeName" column="CodeName"/>
+		<result property="keyDescription" column="KeyDescription"/>
+		<result property="value1Description" column="Value1Description"/>
+		<result property="value2Description" column="Value2Description"/>
+		<result property="value3Description" column="Value3Description"/>
+	</resultMap>
+	
+	<!-- 查询code管理表List -->
+	<select id="getCodeMList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+		<include refid="BINOLCMINC99.pageheader" />
+		<include refid="BINOLPLSCF06.getCodeManager" />
+		<include refid="BINOLCMINC99.pagefooter" />
+    </select>
+	
+	 <!-- 查询code管理表信息总数 -->
+	<select id="getCodeMCount" parameterClass="java.util.HashMap" resultClass="java.lang.Integer">
+		<![CDATA[SELECT COUNT(SORT_1.u_codeManagerId) AS count
+			FROM (]]>
+				<include refid="BINOLPLSCF06.getCodeManager" />
+			<![CDATA[
+			)AS SORT_1
+		]]>
+    </select>
+	
+    <!-- 插入code管理表 -->
+    <insert id="insertCodeM" parameterClass="java.util.HashMap">
+    	<![CDATA[
+    		INSERT INTO Tools.BIN_CodeManager			
+			(				
+				OrgCode,			
+				BrandCode,			
+				CodeType,
+				CodeName,
+				KeyDescription,
+				Value1Description,
+				Value2Description,
+				Value3Description,
+		]]>
+				<include refid="BINOLCMINC99.insertKeySql" />		
+		<![CDATA[				
+			)				
+			VALUES				
+			(				
+				#orgCode#,			
+				#brandCode#,			
+				#codeType#,
+				#codeName#,
+				#keyDescription#,
+				#value1Description#,
+				#value2Description#,
+				#value3Description#,
+		]]>
+				<include refid="BINOLCMINC99.insertValueSql" />		
+		<![CDATA[	
+			)				
+    	]]>
+    </insert>	
+	
+	
+</sqlMap>

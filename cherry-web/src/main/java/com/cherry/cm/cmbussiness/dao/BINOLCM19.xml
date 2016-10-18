@@ -1,0 +1,501 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sqlMap PUBLIC "-//iBATIS.com//DTD SQL Map 2.0//EN" "http://ibatis.apache.org/dtd/sql-map-2.dtd">
+<sqlMap namespace="BINOLCM19">
+       <!--查询出系统中所有未完成的工作流的相关信息-->
+	<select id="getUnfinishedEntry" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+  with t1 as(
+	  select 
+	  A.ID ,  B.GLOBAL_KEY,B.ITEM_KEY,  B.STRING_VALUE
+	  from 
+	  [dbo].[OS_WFENTRY] A WITH(NOLOCK),
+	  dbo.OS_PROPERTYENTRY B WITH(NOLOCK)
+	  where A.STATE !=4
+	  and B.GLOBAL_KEY = N'os_'+convert(nvarchar(10),A.ID)
+	  and B.ITEM_KEY =N'OS_Current_Operate'),
+	  t2 as (
+	    select 
+	  A.ID ,  B.ITEM_KEY,  B.STRING_VALUE
+	  from 
+	  [dbo].[OS_WFENTRY] A WITH(NOLOCK),
+	  dbo.OS_PROPERTYENTRY B WITH(NOLOCK) 
+	  where A.STATE !=4
+	  and B.GLOBAL_KEY = N'os_'+convert(nvarchar(10),A.ID)
+	  and B.ITEM_KEY =N'OS_BillType'
+	  ),
+	  t3 as (
+	    select 
+	  A.ID ,  B.ITEM_KEY,  B.STRING_VALUE
+	  from 
+	  [dbo].[OS_WFENTRY] A WITH(NOLOCK),
+	  dbo.OS_PROPERTYENTRY B WITH(NOLOCK) 
+	  where A.STATE !=4
+	  and B.GLOBAL_KEY = N'os_'+convert(nvarchar(10),A.ID)
+	  and B.ITEM_KEY =N'OS_BillID'
+	  ),
+	  t5 as ( select 
+	  A.ID ,  B.ITEM_KEY,  B.STRING_VALUE
+	  from 
+	  [dbo].[OS_WFENTRY] A WITH(NOLOCK),
+	  dbo.OS_PROPERTYENTRY B WITH(NOLOCK) 
+	  where A.STATE !=4
+	  and B.GLOBAL_KEY = N'os_'+convert(nvarchar(10),A.ID)
+	  and B.ITEM_KEY =N'OS_BillCreator'
+	  ),
+	  t6 as ( select 
+	  A.ID ,  B.ITEM_KEY,  B.STRING_VALUE
+	  from 
+	  [dbo].[OS_WFENTRY] A WITH(NOLOCK),
+	  dbo.OS_PROPERTYENTRY B  WITH(NOLOCK)
+	  where A.STATE !=4
+	  and B.GLOBAL_KEY = N'os_'+convert(nvarchar(10),A.ID)
+	  and B.ITEM_KEY =N'OS_ProType'
+	  )
+	  select 
+	  t1.ID,
+	  t1.ITEM_KEY,
+	  t1.STRING_VALUE   as OS_Current_Operate,
+	  t2.ITEM_KEY,
+	  t2.STRING_VALUE as OS_BillType,
+	  t3.ITEM_KEY,
+	  t3.STRING_VALUE as OS_BillID,
+	  t5.STRING_VALUE as OS_BillCreator,
+	  t6.STRING_VALUE as OS_ProType
+	  from 
+	    t1 left join t2 on t1.ID =t2.ID 
+	    left join t3 on t1.ID = t3.ID
+	    left join t5 on t1.ID = t5.ID
+	    left join t6 on t1.ID = t6.ID
+	</select>
+	
+	 <select id="getChildEmployee" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+        <![CDATA[
+        select  
+	        A.BIN_SubEmployeeID 
+        from 
+            (]]><include refid="BINOLCMINC99.employeePLJoinSql" /><![CDATA[) A   
+		]]>		
+    </select>
+	
+    <select id="getBossByEmployeeID" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+        <![CDATA[
+            SELECT
+                C.BIN_EmployeeID,
+				B.BIN_UserID,
+				B.BIN_SubEmployeeID,
+				'('+C.EmployeeCode+')'+C.EmployeeName AS EmployeeCodeName
+            FROM
+                Basis.BIN_Employee C
+                JOIN (]]><include refid="BINOLCMINC99.employeePLJoinSql" /><![CDATA[) B
+                ON C.BIN_EmployeeID = B.BIN_EmployeeID
+            WHERE
+                C.BIN_PositionCategoryID = #BIN_PositionCategoryID#
+        ]]>
+		<isNotEmpty property="PrivilegeFlag" prepend="AND">
+			<![CDATA[B.PrivilegeFlag = #PrivilegeFlag#]]>
+		</isNotEmpty>
+    </select>
+	
+    <select id="getBossListByEmployeeID" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+        <![CDATA[
+            SELECT
+                C.BIN_EmployeeID,
+                B.BIN_UserID,
+                B.BIN_SubEmployeeID,
+                B.PrivilegeFlag
+            FROM
+                Basis.BIN_Employee C
+                JOIN (]]><include refid="BINOLCMINC99.employeePLJoinSql" /><![CDATA[) B
+                ON C.BIN_EmployeeID = B.BIN_EmployeeID
+            WHERE
+                C.BIN_PositionCategoryID = #BIN_PositionCategoryID# AND
+                B.BIN_EmployeeID <> B.BIN_SubEmployeeID
+        ]]>
+    </select>
+
+    <select id="getChildUserByEmployeeID" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+        <![CDATA[
+            SELECT
+                B.BIN_SubEmployeeID
+            FROM
+                (]]><include refid="BINOLCMINC99.employeePLJoinSql" /><![CDATA[) B
+            WHERE 
+                B.BIN_EmployeeID <> B.BIN_SubEmployeeID
+        ]]>
+        <isNotEmpty property="PrivilegeFlag" prepend="AND">
+            <![CDATA[B.PrivilegeFlag = #PrivilegeFlag#]]>
+        </isNotEmpty>
+    </select>
+
+    <select id="getChildUserListByEmployeeID" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+        <![CDATA[
+            SELECT
+                B.BIN_SubEmployeeID,
+                B.PrivilegeFlag
+            FROM
+                (]]><include refid="BINOLCMINC99.employeePLJoinSql" /><![CDATA[) B
+        ]]>
+    </select>
+
+     <select id="getMenuTarget" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+        <![CDATA[
+        	    select 
+				   A.MENU_INDICATION_TARGET
+				  from
+				   [Privilege].[BIN_Menu] A 
+				   where A.MENU_ID = #MENU_ID#
+		]]>		
+    </select>
+    
+    <!--插入【库存业务用户任务表】-->
+    <sql id="insertInventoryUserTaskSQL">
+        <![CDATA[
+            INSERT INTO Inventory.BIN_InventoryUserTask(
+                BIN_OrganizationInfoID,
+                BIN_BrandInfoID,
+                WorkFlowID,
+        ]]>
+        <dynamic>
+            <isNotEmpty property="RelevanceTableName">
+                <![CDATA[RelevanceTableName,]]>
+            </isNotEmpty>
+            <isNotEmpty property="BillID">
+                <![CDATA[BillID,]]>
+            </isNotEmpty>
+            <isNotEmpty property="BillNo">
+                <![CDATA[BillNo,]]>
+            </isNotEmpty>
+            <isNotEmpty property="BillCreator">
+                <![CDATA[BillCreator,]]>
+            </isNotEmpty>
+            <isNotEmpty property="BIN_OrganizationIDF">
+                <![CDATA[BIN_OrganizationIDF,]]>
+            </isNotEmpty>
+            <isNotEmpty property="BIN_OrganizationIDT">
+                <![CDATA[BIN_OrganizationIDT,]]>
+            </isNotEmpty>
+            <isNotEmpty property="TotalQuantity">
+                <![CDATA[TotalQuantity,]]>
+            </isNotEmpty>
+            <isNotEmpty property="TotalAmount">
+                <![CDATA[TotalAmount,]]>
+            </isNotEmpty>
+            <isNotEmpty property="ProType">
+                <![CDATA[ProType,]]>
+            </isNotEmpty>
+            <isNotEmpty property="CurrentOperate">
+                <![CDATA[CurrentOperate,]]>
+            </isNotEmpty>
+            <isNotEmpty property="CurrentParticipant">
+                <![CDATA[CurrentParticipant,]]>
+            </isNotEmpty>
+            <isNotEmpty property="ParticipantLimit">
+                <![CDATA[ParticipantLimit,]]>
+            </isNotEmpty>
+        </dynamic>
+        <![CDATA[
+                ValidFlag,
+                CreateTime,
+                CreatedBy,
+                CreatePGM,
+                UpdateTime,
+                UpdatedBy,
+                UpdatePGM,
+                ModifyCount
+            )VALUES(
+                #BIN_OrganizationInfoID#,
+                #BIN_BrandInfoID#,
+                #WorkFlowID#,
+        ]]>
+        <dynamic>
+            <isNotEmpty property="RelevanceTableName">
+                <![CDATA[#RelevanceTableName#,]]>
+            </isNotEmpty>
+            <isNotEmpty property="BillID">
+                <![CDATA[#BillID#,]]>
+            </isNotEmpty>
+            <isNotEmpty property="BillNo">
+                <![CDATA[#BillNo#,]]>
+            </isNotEmpty>
+            <isNotEmpty property="BillCreator">
+                <![CDATA[#BillCreator#,]]>
+            </isNotEmpty>
+            <isNotEmpty property="BIN_OrganizationIDF">
+                <![CDATA[#BIN_OrganizationIDF#,]]>
+            </isNotEmpty>
+            <isNotEmpty property="BIN_OrganizationIDT">
+                <![CDATA[#BIN_OrganizationIDT#,]]>
+            </isNotEmpty>
+            <isNotEmpty property="TotalQuantity">
+                <![CDATA[#TotalQuantity#,]]>
+            </isNotEmpty>
+            <isNotEmpty property="TotalAmount">
+                <![CDATA[#TotalAmount#,]]>
+            </isNotEmpty>
+            <isNotEmpty property="ProType">
+                <![CDATA[#ProType#,]]>
+            </isNotEmpty>
+            <isNotEmpty property="CurrentOperate">
+                <![CDATA[#CurrentOperate#,]]>
+            </isNotEmpty>
+            <isNotEmpty property="CurrentParticipant">
+                <![CDATA[#CurrentParticipant#,]]>
+            </isNotEmpty>
+            <isNotEmpty property="ParticipantLimit">
+                <![CDATA[#ParticipantLimit#,]]>
+            </isNotEmpty>
+        </dynamic>
+        <![CDATA[
+                '1',
+                GETDATE(),
+                #CreatedBy#,
+                #CreatePGM#,
+                GETDATE(),
+                #UpdatedBy#,
+                #UpdatePGM#,
+                '0'
+                )
+        ]]>
+    </sql>
+    <insert id="insertInventoryUserTask" parameterClass="java.util.HashMap">
+        <selectKey resultClass="java.lang.Integer" type="post" keyProperty="BIN_InventoryUserTaskID" >
+            <include refid="BINOLCM19.insertInventoryUserTaskSQL" />
+            <![CDATA[SELECT SCOPE_IDENTITY() AS value]]>
+        </selectKey>
+    </insert>
+
+    <!--更新【库存业务用户任务表】-->
+    <update id="updateInventoryUserTask" parameterClass="java.util.HashMap">
+        <![CDATA[
+            UPDATE
+                Inventory.BIN_InventoryUserTask
+            SET
+                UpdateTime = GETDATE()
+                ,UpdatedBy = #UpdatedBy#
+                ,UpdatePGM = #UpdatePGM#
+                ,ModifyCount = ModifyCount+1
+        ]]>
+        <dynamic>
+            <isNotEmpty property="RelevanceTableName">
+                <![CDATA[,RelevanceTableName = #RelevanceTableName#]]>
+            </isNotEmpty>
+            <isNotEmpty property="BillID">
+                 <![CDATA[,BillID = #BillID#]]>
+            </isNotEmpty>
+            <isNotEmpty property="BillNo">
+                <![CDATA[,BillNo = #BillNo#]]>
+            </isNotEmpty>
+            <isNotEmpty property="BillCreator">
+                <![CDATA[,BillCreator = #BillCreator#]]>
+            </isNotEmpty>
+            <isNotEmpty property="BIN_OrganizationIDF">
+                <![CDATA[,BIN_OrganizationIDF = #BIN_OrganizationIDF#]]>
+            </isNotEmpty>
+            <isNotEmpty property="BIN_OrganizationIDT">
+                <![CDATA[,BIN_OrganizationIDT = #BIN_OrganizationIDT#]]>
+            </isNotEmpty>
+            <isNotEmpty property="TotalQuantity">
+                <![CDATA[,TotalQuantity = #TotalQuantity#]]>
+            </isNotEmpty>
+            <isNotEmpty property="TotalAmount">
+                <![CDATA[,TotalAmount = #TotalAmount#]]>
+            </isNotEmpty>
+            <isNotEmpty property="CurrentOperate">
+                <![CDATA[,CurrentOperate = #CurrentOperate#]]>
+            </isNotEmpty>
+            <isNotEmpty property="CurrentParticipant">
+                <![CDATA[,CurrentParticipant = #CurrentParticipant#]]>
+            </isNotEmpty>
+            <isEmpty property="CurrentParticipant">
+                <![CDATA[,CurrentParticipant = NULL]]>
+            </isEmpty>
+            <isNotEmpty property="ParticipantLimit">
+                <![CDATA[,ParticipantLimit = #ParticipantLimit#]]>
+            </isNotEmpty>
+            <isEmpty property="ParticipantLimit">
+                <![CDATA[,ParticipantLimit = NULL]]>
+            </isEmpty>
+        </dynamic>
+        <![CDATA[
+            WHERE
+                WorkFlowID = #WorkFlowID#
+        ]]>
+    </update>
+    
+    <!--删除【库存业务用户任务表】 -->
+    <update id="deleteInventoryUserTask" parameterClass="java.util.HashMap">
+        <![CDATA[
+            DELETE FROM
+                Inventory.BIN_InventoryUserTask
+            WHERE
+                WorkFlowID = #WorkFlowID#
+        ]]>
+    </update>
+    
+    <!-- 根据工作流ID查询【库存业务用户任务表】  -->
+    <select id="getInventoryUserTaskByOSID" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+        <![CDATA[
+            SELECT
+                CurrentOperate,
+                CurrentParticipant,
+                ParticipantLimit,
+                RelevanceTableName
+            FROM
+                Inventory.BIN_InventoryUserTask WITH(NOLOCK)
+            WHERE 
+                WorkFlowID = #WorkFlowID#
+        ]]>
+    </select>
+    
+    <!-- 查询【库存业务用户任务表】取出登录用户需处理的任务  -->
+    <select id="getInventoryUserTask" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+        <![CDATA[
+            SELECT
+                WorkFlowID,
+                RelevanceTableName,
+                BillID,
+                BillNo,
+                BillCreator,
+                BIN_OrganizationIDF,
+                BIN_OrganizationIDT,
+                TotalQuantity,
+                TotalAmount,
+                ProType,
+                CurrentOperate,
+                CurrentParticipant,
+                ParticipantLimit,
+        ]]>
+        <dynamic>
+            <isNotEmpty property="language">
+                <isEqual property="language" compareValue="en_US">
+                    <![CDATA[
+                        '('+B.DepartCode+')'+B.NameForeign AS DepartCodeNameFrom,
+                        '('+C.EmployeeCode+')'+C.EmployeeNameForeign AS EmployeeCodeName,
+                        '('+D.DepartCode+')'+D.NameForeign AS DepartCodeNameTo
+                    ]]>
+                </isEqual>
+                <isEqual property="language" compareValue="zh_CN">
+                    <![CDATA[
+                        '('+B.DepartCode+')'+B.DepartName AS DepartCodeNameFrom,
+                        '('+C.EmployeeCode+')'+C.EmployeeName AS EmployeeCodeName,
+                        '('+D.DepartCode+')'+D.DepartName AS DepartCodeNameTo
+                    ]]>
+                </isEqual>
+            </isNotEmpty>
+            <isEmpty property="language">
+                <![CDATA[
+                    '('+B.DepartCode+')'+B.DepartName AS DepartCodeNameFrom,
+                    '('+C.EmployeeCode+')'+C.EmployeeName AS EmployeeCodeName,
+                    '('+D.DepartCode+')'+D.DepartName AS DepartCodeNameTo
+                ]]>
+            </isEmpty>
+        </dynamic>
+        <![CDATA[
+            FROM
+                Inventory.BIN_InventoryUserTask A WITH(NOLOCK)
+            LEFT JOIN Basis.BIN_Organization B WITH(NOLOCK) ON A.BIN_OrganizationIDF = B.BIN_OrganizationID
+            LEFT JOIN Basis.BIN_Employee C WITH(NOLOCK) ON A.BillCreator = C.BIN_EmployeeID
+            LEFT JOIN Basis.BIN_Organization D WITH(NOLOCK) ON A.BIN_OrganizationIDT = D.BIN_OrganizationID
+            WHERE
+                A.BIN_OrganizationInfoID = #BIN_OrganizationInfoID#
+                AND A.BIN_BrandInfoID = #BIN_BrandInfoID#
+                AND (A.CurrentParticipant + ',' like '%'+#userID#+',%'
+                OR A.CurrentParticipant + ',' like '%'+#positionID#+',%'
+                OR A.CurrentParticipant + ',' like '%'+#organizationID#+',%')
+                AND A.ValidFlag = '1'
+            ORDER BY A.BIN_InventoryUserTaskID
+        ]]>
+    </select>
+    
+    <!-- 取得柜台详细信息  -->
+    <select id="getCounterInfo" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+        <![CDATA[
+            SELECT
+                A.BIN_CounterInfoID AS counterInfoId,
+                A.BIN_BrandInfoID AS brandInfoId,
+                A.CounterCode AS counterCode,
+                A.CounterNameIF AS counterNameIF,
+                A.ValidFlag AS validFlag,
+                A.CounterSynergyFlag AS counterSynergyFlag,
+                A.PosFlag AS posFlag
+            FROM
+                Basis.BIN_CounterInfo A
+            WHERE
+                A.BIN_OrganizationID = #organizationId#
+        ]]>
+    </select>
+    
+    
+    <!-- 取得柜台详细信息  -->
+    <select id="getOrganizationInfo" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+        <![CDATA[
+            SELECT
+            	A.BIN_OrganizationInfoID,
+            	A.BIN_BrandInfoID,
+                A.ValidFlag AS validFlag,
+                A.OrgSynergyFlag AS orgSynergyFlag
+            FROM
+                Basis.BIN_Organization A
+            WHERE
+                A.BIN_OrganizationID = #organizationId#                
+        ]]>
+    </select>
+    
+    <!-- 取得管辖或关注指定部门的人员  -->
+    <select id="getBossByOrganizationID" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+        <![CDATA[
+            SELECT
+                C.BIN_EmployeeID,
+                B.BIN_UserID,
+                B.BIN_OrganizationID,
+                '('+C.EmployeeCode+')'+C.EmployeeName AS EmployeeCodeName
+            FROM
+                Basis.BIN_Employee C
+                JOIN (]]><include refid="BINOLCMINC99.departPLSql" /><![CDATA[) B 
+				ON C.BIN_EmployeeID=B.BIN_EmployeeID
+            WHERE
+                C.BIN_PositionCategoryID = #BIN_PositionCategoryID#
+        ]]>
+        <isNotEmpty property="PrivilegeFlag">
+            <![CDATA[AND B.PrivilegeFlag = #PrivilegeFlag#]]>
+        </isNotEmpty>
+    </select>
+    
+    <!-- 取得用户的部门权限List -->
+    <select id="getChildDepartListByUserID" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+        <![CDATA[
+            SELECT
+                B.BIN_OrganizationID,
+                B.PrivilegeFlag
+            FROM
+                (]]><include refid="BINOLCMINC99.departPLJoinSql" /><![CDATA[) B
+        ]]>
+    </select>
+    
+    <!-- 取得所属部门的员工 -->
+    <select id="getEmployeeInDepartList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+        <![CDATA[
+            SELECT 
+                A.BIN_EmployeeID,
+                '('+A.EmployeeCode+')'+A.EmployeeName AS EmployeeCodeName
+            FROM
+                Basis.BIN_Employee A
+            WHERE
+                A.BIN_OrganizationID = #BIN_OrganizationID#
+                AND A.ValidFlag = '1'
+        ]]>
+    </select>
+    
+    <!-- 取得所属岗位的员工 -->
+    <select id="getEmployeeInPositionCategoryList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+        <![CDATA[
+            SELECT 
+                A.BIN_EmployeeID,
+                '('+A.EmployeeCode+')'+A.EmployeeName AS EmployeeCodeName
+            FROM
+                Basis.BIN_Employee A
+            WHERE
+                A.BIN_PositionCategoryID = #BIN_PositionCategoryID#
+                AND A.ValidFlag = '1'
+        ]]>
+    </select>
+</sqlMap>

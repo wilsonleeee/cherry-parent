@@ -1,0 +1,193 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sqlMap PUBLIC "-//iBATIS.com//DTD SQL Map 2.0//EN" "http://ibatis.apache.org/dtd/sql-map-2.dtd">
+<sqlMap namespace="BINOLSSPRM26">
+	
+	<!-- 盘点单信息 -->
+	<resultMap id="BINOLSSPRM26.TakingInfo" class="java.util.HashMap">
+		<result property="stockTakingNo" column="StockTakingNo"/>
+		<result property="stockTakingNoIF" column="StockTakingNoIF"/>
+		<result property="relevanceNo" column="RelevanceNo"/>
+		<result property="verifiedFlag" column="VerifiedFlag"/>
+		<result property="takingType" column="Type"/>
+		<result property="stockTakingDate" column="StockTakingDate"/>
+		<result property="tradeDateTime" column="TradeDateTime"/>
+		<result property="reason" column="Reason"/>
+		<result property="employeeName" column="EmployeeName"/>
+		<result property="departName" column="DepartName"/>
+		<result property="inventoryName" column="InventoryName"/>
+	</resultMap>
+	<!-- 取得盘点单信息  -->
+    <select id="getTakingInfo" parameterClass="java.util.HashMap" resultMap="BINOLSSPRM26.TakingInfo">
+       	<![CDATA[
+			SELECT
+			 DISTINCT		
+				A.StockTakingNo,																			
+				A.StockTakingNoIF,
+				A.RelevanceNo,											
+				A.VerifiedFlag,																		
+				A.Type,												
+				A.StockTakingDate,
+				CONVERT(VARCHAR(10),A.StockTakingDate,120) + ' ' + A.TradeTime AS TradeDateTime,
+				A.Reason AS reason,
+				E.EmployeeName																	
+			]]>
+		<dynamic>
+		<isNotEmpty property="language">
+			<isEqual property="language" compareValue="en_US">
+			,'(' + B.DepartCode + ')' + B.NameForeign AS DepartName										
+			,D.DepotNameEN AS InventoryName
+			</isEqual>
+			<isEqual property="language" compareValue="zh_CN">	
+			,'(' + B.DepartCode + ')' + B.DepartName AS DepartName						
+			,D.DepotNameCN AS InventoryName
+			</isEqual>								
+		</isNotEmpty>
+		<isEmpty property="language">
+			,'(' + B.DepartCode + ')' + B.DepartName AS DepartName
+			,D.DepotNameCN AS InventoryName
+		</isEmpty>
+		</dynamic>
+		 <![CDATA[															
+			FROM																					
+				Inventory.BIN_PromotionStockTaking A	
+				LEFT JOIN Inventory.BIN_PromotionTakingDetail C
+				ON (A.BIN_PromotionStockTakingID = C.BIN_PromotionStockTakingID AND	
+					C.ValidFlag = '1' )
+				LEFT JOIN Basis.BIN_Employee E																				
+				ON (A.BIN_EmployeeID = E.BIN_EmployeeID)																	
+				LEFT JOIN Basis.BIN_Organization B
+				ON (A.BIN_OrganizationID = B.BIN_OrganizationID)
+				LEFT JOIN Basis.BIN_DepotInfo D																																					
+				ON (C.BIN_InventoryInfoID = D.BIN_DepotInfoID)
+			WHERE
+				A.BIN_PromotionStockTakingID = #stockTakingId#
+		]]>
+    </select>
+	
+	<!-- 盘点单明细 -->
+	<resultMap id="BINOLSSPRM26.TakingDetailList" class="java.util.HashMap">
+		<result property="quantity" column="Quantity"/>
+		<result property="price" column="Price"/>
+		<result property="gainQuantity" column="GainQuantity"/>
+		<result property="reason" column="Reason"/>
+		<result property="handleType" column="HandleType"/>
+		<result property="realQuantity" column="RealQuantity"/>
+		<result property="detailAmount" column="DetailAmount"/>
+		<result property="barCode" column="BarCode"/>
+		<result property="unitCode" column="UnitCode"/>
+		<result property="nameTotal" column="NameTotal"/>
+		<result property="packageName" column="PackageName"/>
+		<result property="PrimaryCategoryName" column="PrimaryCategoryName"/>
+		<result property="SecondCategoryName" column="SecondCategoryName"/>
+		<result property="SmallCategoryName" column="SmallCategoryName"/>
+	</resultMap>
+	<sql id="TakingDetailList">
+			<![CDATA[
+			SELECT	 																	
+				A.Quantity,																					
+				A.Price,																					
+				A.GainQuantity,																					
+				A.Reason,																					
+				A.HandleType,																					
+				(A.Quantity + A.GainQuantity) AS RealQuantity,																					
+				(A.Price * A.GainQuantity) AS DetailAmount,																					
+				B.BarCode,																					
+				C.UnitCode
+			]]>
+		<dynamic>
+			<isNotEmpty property="language">
+				<isEqual property="language" compareValue="en_US">
+					,C.NameForeign AS NameTotal
+					,D.PackageNameForeign AS PackageName
+				</isEqual>
+				<isEqual property="language" compareValue="zh_CN">	
+					,C.NameTotal
+					,D.PackageName
+				</isEqual>								
+			</isNotEmpty>
+			<isEmpty property="language">
+					,C.NameTotal
+					,D.PackageName
+			</isEmpty>
+			
+		<!-- 大中小分类 -->
+			<isNotEmpty property = "language">
+				<isEqual property="language" compareValue="zh_CN">										
+					,E.PrimaryCategoryNameChinese as PrimaryCategoryName
+					,E.SecondryCategoryNameChinese as SecondCategoryName
+					,E.SmallCategoryNameChinese as SmallCategoryName
+				</isEqual>
+				<isEqual property="language" compareValue="en_US">										
+					,E.PrimaryCategoryNameForeign as PrimaryCategoryName
+					,E.SecondryCategoryNameForeign as SecondCategoryName
+					,E.SmallCategoryNameForeign as SmallCategoryName
+				</isEqual>
+			</isNotEmpty>
+			<isEmpty property = "language">
+					,E.PrimaryCategoryNameChinese as PrimaryCategoryName
+					,E.SecondryCategoryNameChinese as SecondCategoryName
+					,E.SmallCategoryNameChinese as SmallCategoryName
+			</isEmpty>
+		</dynamic>
+		<![CDATA[
+			FROM																						
+				Inventory.BIN_PromotionTakingDetail A
+				LEFT JOIN Basis.BIN_PromotionProductVendor B
+				JOIN Basis.BIN_PromotionProduct C
+				ON(B.BIN_PromotionProductID = C.BIN_PromotionProductID)
+				LEFT JOIN Basis.BIN_PackageType D
+				ON (C.ModuleCode = D.BIN_PackageTypeID)	
+				ON (A.BIN_PromotionProductVendorID = B.BIN_PromotionProductVendorID)
+				LEFT JOIN Basis.BIN_PromotionPrtType E
+				ON(C.BIN_PromotionPrtTypeID = E.BIN_PromotionPrtTypeID)
+			WHERE																						
+				A.BIN_PromotionStockTakingID = #stockTakingId# AND																			
+				A.ValidFlag = '1' AND
+				C.IsStock = '1'
+			]]>
+			</sql>
+	<!-- 取得盘点单明细信息 -->
+    <select id="getTakingDetailList" parameterClass="java.util.HashMap" resultMap="BINOLSSPRM26.TakingDetailList">
+    		 <include refid="BINOLSSPRM26.TakingDetailList" />
+			 <dynamic>
+				<isNotEmpty property="profitKbn">	
+					<isEqual property="profitKbn" compareValue="0">											
+							ORDER BY A.GainQuantity DESC
+					</isEqual>	
+					<isEqual property="profitKbn" compareValue="1">											
+							ORDER BY A.GainQuantity ASC
+					</isEqual>									
+				</isNotEmpty>
+				<isEmpty property="profitKbn">
+					<isNotEmpty property="detailOrderBy">
+		            	<isEqual property="detailOrderBy" compareValue="0">
+		            		ORDER BY
+								C.UnitCode  ASC
+		            	</isEqual>
+		            	<isEqual property="detailOrderBy" compareValue="1">
+		            		ORDER BY
+								B.BarCode  ASC
+		            	</isEqual>
+		            </isNotEmpty>
+				</isEmpty>
+			</dynamic>
+    </select>
+	<!-- 取得盘点明细汇总信息  -->
+    <select id="getSumInfo" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+    	<![CDATA[
+			SELECT	
+			 	ISNULL(SUM(ISNULL(SORT_T1.Quantity, 0)),0) AS Sumquantity,
+                ISNULL(SUM(ISNULL(SORT_T1.RealQuantity,0)),0) AS SumrealQuantity,
+				ISNULL(SUM(case when ISNULL(SORT_T1.GainQuantity, 0) >= 0 then 0 else ISNULL(SORT_T1.GainQuantity, 0) end),0) AS ShortQuantity,
+				ISNULL(SUM(case when ISNULL(SORT_T1.GainQuantity, 0) >= 0 then 0 else ISNULL(SORT_T1.GainQuantity, 0) * ISNULL(SORT_T1.Price, 0) end),0) AS ShortAmount,
+				ISNULL(SUM(case when ISNULL(SORT_T1.GainQuantity, 0) < 0 then 0 else ISNULL(SORT_T1.GainQuantity, 0) end),0) AS OverQuantity,
+				ISNULL(SUM(case when ISNULL(SORT_T1.GainQuantity, 0) < 0 then 0 else ISNULL(SORT_T1.GainQuantity, 0) * ISNULL(SORT_T1.Price, 0) end),0) AS OverAmount
+			FROM (
+		]]>	
+		<include refid="BINOLSSPRM26.TakingDetailList" />
+		<![CDATA[	
+			)SORT_T1
+		]]>		
+    </select>
+
+</sqlMap>

@@ -1,0 +1,122 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sqlMap PUBLIC "-//iBATIS.com//DTD SQL Map 2.0//EN" "http://ibatis.apache.org/dtd/sql-map-2.dtd">
+<sqlMap namespace="BINOLMOMAN08">
+
+      <!-- POS终端配置查询sql文  新数据-->
+     <sql id="posConfigNew">
+     
+     		SELECT 
+			CASE WHEN (B.BIN_PosConfigID IS NULL) THEN A.BIN_PosConfigID	ELSE B.BIN_PosConfigID END AS BIN_PosConfigID,
+			CASE WHEN (B.BIN_OrganizationInfoID IS NULL) THEN A.BIN_OrganizationInfoID	ELSE B.BIN_OrganizationInfoID END AS BIN_OrganizationInfoID,
+			CASE WHEN (B.BIN_BrandInfoID IS NULL) THEN A.BIN_BrandInfoID	ELSE B.BIN_BrandInfoID END AS BIN_BrandInfoID,
+			A.ConfigCode,
+			A.ConfigNote,
+			CASE WHEN (B.ConfigValue IS NULL) THEN A.ConfigValue	ELSE B.ConfigValue END AS ConfigValue,
+			A.ConfigType,
+			A.ValidFlag
+			 <![CDATA[
+			 FROM
+			 	Monitor.BIN_PosConfig A 
+				LEFT JOIN Monitor.BIN_PosConfig B on A.ConfigCode = B.ConfigCode 
+				AND A.ConfigType = B.ConfigType AND B.BIN_OrganizationInfoID= #organizationInfoId# 
+				AND B.BIN_BrandInfoID=#brandInfoId#
+				WHERE A.BIN_OrganizationInfoID ='-9999' 
+			  ]]>
+			  <dynamic>
+			   <isNotEmpty prepend="AND" property="configCode">
+                A.ConfigCode  LIKE '%'+#configCode#+'%'
+               </isNotEmpty>
+               <isNotEmpty prepend="AND" property="configNote">
+                A.ConfigNote  LIKE '%'+#configNote#+'%'
+               </isNotEmpty>
+			  </dynamic> 
+			  
+     </sql>
+     
+     	<!-- POS终端配置总数  -->
+    <select id="getConfigInfoCount" parameterClass="java.util.HashMap" resultClass="java.lang.Integer">
+        <![CDATA[
+            SELECT COUNT(SORT_T1.ConfigCode) AS count FROM (
+        ]]>
+        <include refid="BINOLMOMAN08.posConfigNew" />
+        <![CDATA[
+            )SORT_T1
+        ]]>
+    </select>
+    
+    	<!--POS终端配置List  -->
+	<select id="getConfigNewInfoList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+        <include refid="BINOLCMINC99.pageheader" />
+        <include refid="BINOLMOMAN08.posConfigNew" />
+        <include refid="BINOLCMINC99.pagefooter" />
+    </select>
+    
+        	<!--根据ID取得POS配置项INFO -->
+	<select id="getPosConfig" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+      <![CDATA[
+      
+      		SELECT 
+      		BIN_PosConfigID,
+      		BIN_OrganizationInfoID,
+      		BIN_BrandInfoID,
+      		ConfigCode,
+      		ConfigNote,
+      		ConfigValue,
+      		ConfigType,
+      		ValidFlag
+      		FROM Monitor.BIN_PosConfig
+      		WHERE BIN_PosConfigID =#posConfigID#
+       ]]>
+    </select>
+        
+   	<!-- 新增POS配置项  -->
+	<insert id="addPosConfig" parameterClass="java.util.HashMap"  >
+	<selectKey resultClass="java.lang.Integer" type="post" keyProperty="BIN_PosConfigID" > 
+        <![CDATA[
+            INSERT INTO Monitor.BIN_PosConfig(
+      		BIN_OrganizationInfoID,
+      		BIN_BrandInfoID,
+      		ConfigCode,
+      		ConfigNote,
+      		ConfigValue,
+      		ConfigType,
+      		ValidFlag
+            )VALUES(
+                #organizationInfoId#,
+                #brandInfoId#,
+                #configCode#,
+                #configNote#,                
+                #configValue#,
+                #configType#,
+                #validFlag#
+            )
+           SELECT SCOPE_IDENTITY() AS value
+        ]]>
+   	</selectKey>
+    </insert>
+    
+    <!-- 修改POS配置项  -->
+	<update id="updatePosConfig" parameterClass="java.util.HashMap">
+        UPDATE 
+        Monitor.BIN_PosConfig 
+        SET 
+        ConfigValue =  #configValue#
+		WHERE 
+		BIN_PosConfigID = #posConfigID# 
+          
+    </update>
+    
+    <!-- 取得POS配置项List(WS结构组装使用)  -->
+    <select id="getPosConfigWithWS" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+    	<![CDATA[
+           SELECT 
+      		ConfigCode,
+      		ConfigNote,
+      		ConfigValue,
+      		ConfigType,
+      		ValidFlag
+      		FROM Monitor.BIN_PosConfig
+      		WHERE BIN_PosConfigID =#posConfigID#
+		]]>								
+    </select>
+</sqlMap>

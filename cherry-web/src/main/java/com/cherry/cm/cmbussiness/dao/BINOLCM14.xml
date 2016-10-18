@@ -1,0 +1,133 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sqlMap PUBLIC "-//iBATIS.com//DTD SQL Map 2.0//EN" "http://ibatis.apache.org/dtd/sql-map-2.dtd">
+<sqlMap namespace="BINOLCM14">    
+    <!-- 取得系统配置项 -->
+	<select id="getConfigValue" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+        <![CDATA[
+        	SELECT 
+				A.ConfigValue
+			  FROM 
+			  	Tools.BIN_SystemConfig A  
+			  where 
+			  		A.BIN_OrganizationInfoID = #BIN_OrganizationInfoID#
+				AND A.BIN_BrandInfoID = #BIN_BrandInfoID#
+				AND A.ConfigCode = #ConfigCode#
+				AND A.ConfigEfficient = '1'
+				AND A.ValidFlag='1'
+				
+		]]>		
+    </select>
+     <!-- 取得系统配置项 -->
+	<select id="getConfigValueEfficient" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+        <![CDATA[
+        	SELECT 
+        		A.ConfigEfficient
+			  FROM 
+			  	Tools.BIN_SystemConfig A  
+			  where 
+			  		A.BIN_OrganizationInfoID = #BIN_OrganizationInfoID#
+				AND A.BIN_BrandInfoID = #BIN_BrandInfoID#
+				AND A.ConfigCode = #ConfigCode#
+				AND A.ConfigValue = #ConfigValue#
+				AND A.ValidFlag='1'
+				
+		]]>		
+    </select>
+	
+	<!--根据组号取得有效的系统配置项-->
+	<select id="getConfigValueByGroupNo" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+		<![CDATA[
+			SELECT 
+				A.ConfigValue,
+				A.ConfigCode,
+				A.DetailNo
+			FROM 
+			  	Tools.BIN_SystemConfig A  
+			where 
+			  	A.BIN_OrganizationInfoID = #BIN_OrganizationInfoID#
+				AND A.BIN_BrandInfoID = #BIN_BrandInfoID#
+				AND A.GroupNo = #GroupNo#
+				AND A.ConfigEfficient = '1'
+				AND A.ValidFlag='1'
+				ORDER BY A.ConfigCode,A.DetailNo ASC
+		]]>
+	</select>
+             <!-- 取得审核者 -->
+	<select id="getActorsAllType" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+        <![CDATA[
+        	
+		]]>
+		<dynamic>
+			<isNotEmpty property="InitiatorID1">
+				SELECT 
+					A.AuditorType,
+					A.AuditorID
+				FROM 
+				  Privilege.BIN_AuditPrivilege A  
+				where 
+				  A.BussinessTypeCode=#BussinessTypeCode#
+				and A.ValidFlag='1'
+			  	and A.InitiatorType =#InitiatorType1#
+				and A.InitiatorID = #InitiatorID1#
+				and A.BIN_BrandInfoID = #BIN_BrandInfoID#
+			</isNotEmpty>
+			<isNotEmpty property="InitiatorID2">
+				union all
+				SELECT 
+					A.AuditorType,
+					A.AuditorID
+				FROM 
+				  Privilege.BIN_AuditPrivilege A  
+				where 
+				  A.BussinessTypeCode=#BussinessTypeCode#
+				and A.ValidFlag='1'
+			  	and A.InitiatorType =#InitiatorType2#
+				and A.InitiatorID = #InitiatorID2#
+				and A.BIN_BrandInfoID = #BIN_BrandInfoID#
+			</isNotEmpty>
+			<isNotEmpty property="InitiatorID3">
+				union all
+				SELECT 
+					A.AuditorType,
+					A.AuditorID
+				FROM 
+				  Privilege.BIN_AuditPrivilege A  
+				where 
+				  A.BussinessTypeCode=#BussinessTypeCode#
+				and A.ValidFlag='1'
+			  	and A.InitiatorType =#InitiatorType3#
+				and A.InitiatorID = #InitiatorID3#
+				and A.BIN_BrandInfoID = #BIN_BrandInfoID#
+			</isNotEmpty>
+		</dynamic>	
+				
+    </select>
+        	<select id="getChildEmployee" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+        <![CDATA[
+        	  select distinct 
+	              BIN_SubEmployeeID 
+              from 
+                  [Privilege].[BIN_EmployeePrivilege]
+             where 
+                  BIN_UserID =#BIN_UserID#
+              and BIN_EmployeeID <> BIN_SubEmployeeID
+				
+		]]>		
+    </select>
+    <!-- 取得Webpos配置项 -->
+	<select id="getWebposConfigValue" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+        <![CDATA[
+        	SELECT 
+				A.ConfigValue 
+			  FROM 
+			  	Tools.BIN_WebPosSysConfig A  
+			  where 
+			  		A.BIN_OrganizationInfoID = #BIN_OrganizationInfoID#
+				AND A.BIN_BrandInfoID = #BIN_BrandInfoID#
+				AND A.ConfigCode = #ConfigCode#
+				AND A.ConfigEfficient = '1'
+				AND A.ValidFlag = '1'
+				AND A.ModuleCode = 'WEBPOS'
+		]]>		
+    </select>
+</sqlMap>

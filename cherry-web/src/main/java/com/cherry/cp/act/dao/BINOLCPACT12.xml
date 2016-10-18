@@ -1,0 +1,306 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sqlMap PUBLIC "-//iBATIS.com//DTD SQL Map 2.0//EN" "http://ibatis.apache.org/dtd/sql-map-2.dtd">
+<sqlMap namespace="BINOLCPACT12">
+<sql id="CampaignStockQuery">
+	<![CDATA[
+		SELECT
+			A.BIN_BrandInfoID AS brandInfoId,
+			A.CampaignCode AS campaignCode,
+			A.SubCampCode AS subCampCode,
+			CASE ISNULL(B.CampaignName,'') WHEN '' THEN A.CampaignCode ELSE
+				'('+A.CampaignCode+')' + B.CampaignName END AS campaign,
+			CASE ISNULL(C.SubCampaignName,'') WHEN '' THEN A.SubCampCode ELSE
+				'('+A.SubCampCode+')' + C.SubCampaignName END AS subcamp,
+			A.BIN_OrganizationID AS organizationId,
+			B.CampaignName AS campaignName,
+			C.SubCampaignName AS subCampName,
+			CASE ISNULL(CNT.CounterNameIF,'') WHEN '' THEN CNT.CounterCode ELSE
+				'('+CNT.CounterCode+')' + CNT.CounterNameIF END AS counter,
+			CNT.CounterCode AS counterCode,
+			CNT.CounterNameIF AS counterName,
+			SUM(A.CurrentQuantity) AS currentQuantity,
+			SUM(A.SafeQuantity) AS safeQuantity,
+			SUM(A.TotalQuantity) AS totalQuantity
+		FROM 
+			Campaign.BIN_CampaignStock A WITH(NOLOCK)
+			LEFT JOIN Campaign.BIN_Campaign B WITH(NOLOCK)
+			ON(A.CampaignCode=B.CampaignCode)
+			LEFT JOIN Campaign.BIN_CampaignRule C WITH(NOLOCK)
+			ON(A.SubCampCode=C.SubCampaignCode)
+			LEFT JOIN Basis.BIN_CounterInfo CNT WITH(NOLOCK)
+			ON(A.BIN_OrganizationID=CNT.BIN_OrganizationID)
+		]]>		
+		<![CDATA[		
+		WHERE 
+			A.ValidFlag ='1' AND
+			B.ManageGift = '1'
+	    ]]>
+	    <![CDATA[AND EXISTS (]]>
+			<include refid="BINOLCMINC99.getDepartList" />
+		<![CDATA[AND A.BIN_OrganizationID = A99.BIN_OrganizationID )]]>
+		<dynamic>
+			<isNotEmpty prepend="AND" property="organizationInfoId">	
+				<![CDATA[A.BIN_OrganizationInfoID = #organizationInfoId#]]>
+			</isNotEmpty>
+			<isNotEmpty prepend="AND" property="brandInfoId">	
+				<![CDATA[A.BIN_BrandInfoID = #brandInfoId#]]>
+			</isNotEmpty>
+			<isNotEmpty prepend="AND" property="campaignCode">	
+				<![CDATA[A.CampaignCode = #campaignCode#]]>
+			</isNotEmpty>	
+			<isNotEmpty prepend="AND" property="subCampCode">	
+				<![CDATA[A.SubCampCode = #subCampCode#]]>
+			</isNotEmpty>
+			<isNotEmpty prepend="AND" property="organizationId">	
+				<![CDATA[A.BIN_OrganizationID = #organizationId#]]>
+			</isNotEmpty>
+		</dynamic>
+		<![CDATA[
+			GROUP BY 
+				A.BIN_BrandInfoID,
+				A.CampaignCode,
+				A.SubCampCode,
+				A.BIN_OrganizationID,
+				B.CampaignName,
+				C.SubCampaignName,
+				CNT.CounterCode,
+				CNT.CounterNameIF
+		]]>
+	</sql>
+	
+	<!-- 活动产品库存List  -->
+	<select id="getCampaignStockList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+	   <include refid="BINOLCMINC99.pageheader" />
+	   <include refid="BINOLCPACT12.CampaignStockQuery" />
+	   <include refid="BINOLCMINC99.pagefooter" />
+	</select>
+	
+	<!-- 活动产品库存Count-->
+    <select id="getCampaignStockCount" parameterClass="java.util.HashMap" resultClass="java.lang.Integer">
+        <![CDATA[
+            SELECT  COUNT(1) AS count FROM (
+        ]]>
+        <include refid="BINOLCPACT12.CampaignStockQuery" />
+        <![CDATA[
+            )SORT_T1
+        ]]>
+    </select>
+    <!-- 查询指定活动柜台的库存主信息 -->
+    <select id="getCampaignStockDetail" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+	    <![CDATA[
+		   SELECT
+				CASE ISNULL(B.CampaignName,'') WHEN '' THEN A.CampaignCode ELSE
+					'('+A.CampaignCode+')' + B.CampaignName END AS campaign,
+				CASE ISNULL(C.SubCampaignName,'') WHEN '' THEN A.SubCampCode ELSE
+					'('+A.SubCampCode+')' + C.SubCampaignName END AS subcamp,
+				CASE ISNULL(CNT.CounterNameIF,'') WHEN '' THEN CNT.CounterCode ELSE
+					'('+CNT.CounterCode+')' + CNT.CounterNameIF END AS counter,
+				SUM(A.CurrentQuantity) AS sumCurrentQuantity,
+				SUM(A.SafeQuantity) AS sumSafeQuantity,
+				SUM(A.TotalQuantity) AS sumTotalQuantity
+			FROM 
+				Campaign.BIN_CampaignStock A WITH(NOLOCK)
+				LEFT JOIN Campaign.BIN_Campaign B WITH(NOLOCK)
+				ON(A.CampaignCode=B.CampaignCode)
+				LEFT JOIN Campaign.BIN_CampaignRule C WITH(NOLOCK)
+				ON(A.SubCampCode=C.SubCampaignCode)
+				LEFT JOIN Basis.BIN_CounterInfo CNT WITH(NOLOCK)
+				ON(A.BIN_OrganizationID=CNT.BIN_OrganizationID)
+			]]>		
+			<![CDATA[		
+			WHERE 
+				A.ValidFlag ='1'
+		    ]]>
+			<dynamic>
+				<isNotEmpty prepend="AND" property="organizationInfoId">	
+					<![CDATA[A.BIN_OrganizationInfoID = #organizationInfoId#]]>
+				</isNotEmpty>
+				<isNotEmpty prepend="AND" property="brandInfoId">	
+					<![CDATA[A.BIN_BrandInfoID = #brandInfoId#]]>
+				</isNotEmpty>
+				<isNotEmpty prepend="AND" property="campaignCode">	
+					<![CDATA[A.CampaignCode = #campaignCode#]]>
+				</isNotEmpty>	
+				<isNotEmpty prepend="AND" property="subCampCode">	
+					<![CDATA[A.SubCampCode = #subCampCode#]]>
+				</isNotEmpty>
+				<isNotEmpty prepend="AND" property="organizationId">	
+					<![CDATA[A.BIN_OrganizationID = #organizationId#]]>
+				</isNotEmpty>
+			</dynamic>
+			<![CDATA[
+				GROUP BY 
+					A.CampaignCode,
+					A.SubCampCode,
+					B.CampaignName,
+					C.SubCampaignName,
+					CNT.CounterCode,
+					CNT.CounterNameIF
+			]]>
+	</select>
+	
+	<!-- 查询指定活动柜台的库存详细 -->
+	<select id="getCampaignStockProductDetail" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+		<![CDATA[
+			SELECT
+				A.BIN_ProductVendorID AS BIN_ProductVendorID,
+				PV.BarCode AS barCode,
+				PT.UnitCode AS unitCode,
+				A.PrtType AS prtType,
+				A.TotalQuantity AS totalQuantity,
+				A.CurrentQuantity AS currentQuantity,
+				A.SafeQuantity AS safeQuantity,
+		]]>
+		<isNotEmpty property="language">
+			<isEqual property="language" compareValue="en_US">
+				<![CDATA[PT.NameForeign AS productName]]>
+			</isEqual>
+			<isEqual property="language" compareValue="zh_CN">
+				<![CDATA[PT.NameTotal AS productName]]>
+			</isEqual>
+		</isNotEmpty>
+		<isEmpty property="language">
+			<![CDATA[PT.NameTotal AS productName]]>
+		</isEmpty>
+		<![CDATA[
+			FROM
+				Campaign.BIN_CampaignStock A WITH(NOLOCK)
+				LEFT JOIN Basis.BIN_ProductVendor PV WITH(NOLOCK)
+				ON(A.BIN_ProductVendorID=PV.BIN_ProductVendorID AND PV.ValidFlag='1')
+				LEFT JOIN Basis.BIN_Product PT WITH(NOLOCK)
+				ON(PV.BIN_ProductID=PT.BIN_ProductID AND PT.ValidFlag='1')
+			WHERE
+				A.ValidFlag='1' AND
+				A.PrtType='N'
+		]]>
+		<isNotEmpty prepend="AND" property="organizationInfoId">	
+			<![CDATA[A.BIN_OrganizationInfoID = #organizationInfoId#]]>
+		</isNotEmpty>
+		<isNotEmpty prepend="AND" property="brandInfoId">	
+			<![CDATA[A.BIN_BrandInfoID = #brandInfoId#]]>
+		</isNotEmpty>
+		<isNotEmpty prepend="AND" property="subCampCode">	
+			<![CDATA[A.SubCampCode = #subCampCode#]]>
+		</isNotEmpty>
+		<isNotEmpty prepend="AND" property="organizationId">	
+			<![CDATA[A.BIN_OrganizationID = #organizationId#]]>
+		</isNotEmpty>
+		<![CDATA[
+			UNION
+			SELECT
+				A.BIN_ProductVendorID AS BIN_ProductVendorID,
+				PPV.BarCode AS barCode,
+				PPT.UnitCode AS unitCode,
+				A.PrtType AS prtType,
+				A.TotalQuantity AS totalQuantity,
+				A.CurrentQuantity AS currentQuantity,
+				A.SafeQuantity AS safeQuantity,
+		]]>
+		<isNotEmpty property="language">
+			<isEqual property="language" compareValue="en_US">
+				<![CDATA[PPT.NameForeign AS productName]]>
+			</isEqual>
+			<isEqual property="language" compareValue="zh_CN">
+				<![CDATA[PPT.NameTotal AS productName]]>
+			</isEqual>
+		</isNotEmpty>
+		<isEmpty property="language">
+			<![CDATA[PPT.NameTotal AS productName]]>
+		</isEmpty>
+		<![CDATA[
+			FROM
+				Campaign.BIN_CampaignStock A WITH(NOLOCK)
+				LEFT JOIN Basis.BIN_PromotionProductVendor PPV WITH(NOLOCK)
+				ON(A.BIN_ProductVendorID=PPV.BIN_PromotionProductVendorID AND PPV.ValidFlag='1')
+				LEFT JOIN Basis.BIN_PromotionProduct PPT WITH(NOLOCK)
+				ON(PPV.BIN_PromotionProductID=PPT.BIN_PromotionProductID AND PPT.ValidFlag='1')
+			WHERE
+				A.ValidFlag='1' AND
+				A.PrtType='P'
+		]]>
+		<isNotEmpty prepend="AND" property="organizationInfoId">	
+			<![CDATA[A.BIN_OrganizationInfoID = #organizationInfoId#]]>
+		</isNotEmpty>
+		<isNotEmpty prepend="AND" property="brandInfoId">	
+			<![CDATA[A.BIN_BrandInfoID = #brandInfoId#]]>
+		</isNotEmpty>
+		<isNotEmpty prepend="AND" property="subCampCode">	
+			<![CDATA[A.SubCampCode = #subCampCode#]]>
+		</isNotEmpty>
+		<isNotEmpty prepend="AND" property="organizationId">	
+			<![CDATA[A.BIN_OrganizationID = #organizationId#]]>
+		</isNotEmpty>
+	</select>
+	
+	<!--根据输入字符串模糊查询会员活动名称-->
+	<select id="getCampName" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+		<![CDATA[
+			SELECT
+				BIN_CampaignID AS id,
+				CampaignCode AS code,
+				CampaignName AS name
+			FROM 
+				Campaign.BIN_Campaign WITH(NOLOCK)
+			WHERE
+				BIN_OrganizationInfoID = #organizationInfoId#
+				AND BIN_BrandInfoID = #brandInfoId#
+				AND CampaignTypeFlag = '1' AND
+				ManageGift = '1'
+		]]>
+		<isNotEmpty property="campInfoStr" prepend="AND">
+			(
+			<![CDATA[CampaignName like '%'+ #campInfoStr# +'%']]>
+			<![CDATA[OR CampaignCode like '%'+ #campInfoStr# +'%']]>
+			)
+		</isNotEmpty>
+	</select>
+	
+	<!--根据输入字符串模糊查询会员活动名称-->
+	<select id="getSubCampName" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+		<![CDATA[
+			SELECT 
+				A.BIN_CampaignID AS id,	
+				A.SubCampaignCode AS code,	 
+				A.SubCampaignName  AS name
+			FROM 
+				Campaign.BIN_CampaignRule A WITH(NOLOCK)
+				LEFT JOIN Campaign.BIN_Campaign B WITH(NOLOCK)
+				ON(A.BIN_CampaignID=B.BIN_CampaignID)
+		    WHERE
+				A.SubCampaignName is not null
+				and A.SubCampaignCode is not null
+				AND B.ManageGift='1'
+		]]>
+		<isNotEmpty property="campaignCode" prepend="AND">
+			<![CDATA[ B.CampaignCode=#campaignCode#]]>
+		</isNotEmpty>
+		<isNotEmpty property="subCampInfoStr" prepend="AND">
+			(
+			<![CDATA[ A.SubCampaignName like '%'+ #subCampInfoStr# +'%']]>
+			<![CDATA[OR A.SubCampaignCode like '%'+ #subCampInfoStr# +'%']]>
+			)
+		</isNotEmpty>
+	</select>
+	
+	<!-- 更新活动柜台产品库存信息 -->
+	<!-- 更新会员活动规则结果明细表  -->
+	<update id="updateCampaignStock" parameterClass="java.util.HashMap">
+		<![CDATA[
+	      UPDATE
+	               Campaign.BIN_CampaignStock
+		  SET
+				   TotalQuantity = #totalQuantity#,
+				   SafeQuantity = #safeQuantity#,
+				   CurrentQuantity = CurrentQuantity+(convert(INT,#totalQuantity#)-TotalQuantity),
+		]]>
+			<include refid="BINOLCMINC99.updateSql" />	
+		<![CDATA[	   		
+		  WHERE									
+				  SubCampCode = #subCampCode# AND
+				  BIN_ProductVendorID = #productVendorId# AND
+				  BIN_OrganizationID = #organizationId# AND
+				  BIN_OrganizationInfoID = #organizationInfoId#
+				  AND BIN_BrandInfoID = #brandInfoId#
+		]]>
+	</update>
+</sqlMap>

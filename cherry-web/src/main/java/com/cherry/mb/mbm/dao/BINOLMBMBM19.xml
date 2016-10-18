@@ -1,0 +1,454 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sqlMap PUBLIC "-//iBATIS.com//DTD SQL Map 2.0//EN" "http://ibatis.apache.org/dtd/sql-map-2.dtd">
+<sqlMap namespace="BINOLMBMBM19">
+ <!-- 会员卡号唯一验证 -->
+	<select id="getMemberInfoId" parameterClass="java.util.HashMap" resultClass="java.lang.String">
+		<![CDATA[
+			SELECT 
+				A.BIN_MemberInfoID
+        	FROM 
+        		Members.BIN_MemberInfo A WITH(NOLOCK) 
+        		JOIN Members.BIN_MemCardInfo B WITH(NOLOCK) 
+        		ON A.BIN_MemberInfoID = B.BIN_MemberInfoID
+            WHERE 
+				B.MemCode = #referrer# AND
+				A.BIN_OrganizationInfoID = #organizationInfoId# AND
+				A.BIN_BrandInfoID = #brandInfoId#
+		]]>
+    </select>
+    <!-- 发卡柜台是否存在 -->
+    <select id="getCounterList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+		<![CDATA[
+			SELECT 
+				A.CounterCode,
+				A.CounterKind
+        	FROM 
+        		Basis.BIN_CounterInfo A WITH(NOLOCK) 
+            WHERE 
+				A.BIN_OrganizationInfoID = #organizationInfoId# AND
+				A.BIN_BrandInfoID = #brandInfoId#
+		]]>
+    </select>
+    <!-- 发卡柜台是否存在 -->
+    <select id="getBaCodeList" parameterClass="java.util.HashMap" resultClass="java.lang.String">
+		<![CDATA[
+			SELECT 
+				A.EmployeeCode
+        	FROM 
+        		Basis.BIN_Employee A WITH(NOLOCK) 
+            WHERE 
+				A.BIN_OrganizationInfoID = #organizationInfoId# AND
+				A.BIN_BrandInfoID = #brandInfoId#
+		]]>
+    </select>
+    <!-- 发卡柜台ID -->
+    <select id="getCounterInfoId" parameterClass="java.util.HashMap" resultClass="java.lang.String">
+		<![CDATA[
+			SELECT 
+				A.BIN_OrganizationID
+        	FROM 
+        		Basis.BIN_CounterInfo A WITH(NOLOCK) 
+            WHERE 
+				A.CounterCode = #organizationCode# AND
+				A.BIN_OrganizationInfoID = #organizationInfoId# AND
+				A.BIN_BrandInfoID = #brandInfoId#
+		]]>
+    </select>
+    <!-- 发卡BAId -->
+    <select id="getBaCodeId" parameterClass="java.util.HashMap" resultClass="java.lang.String">
+		<![CDATA[
+			SELECT 
+				A.BIN_EmployeeID
+        	FROM 
+        		Basis.BIN_Employee A WITH(NOLOCK) 
+            WHERE 
+				A.EmployeeCode = #employeeCode# AND
+				A.BIN_OrganizationInfoID = #organizationInfoId# AND
+				A.BIN_BrandInfoID = #brandInfoId#
+		]]>
+    </select>
+    <!-- 会员等级Id -->
+    <select id="getLevelId" parameterClass="java.util.HashMap" resultClass="java.lang.String">
+		<![CDATA[
+			SELECT 
+				A.BIN_MemberLevelID
+        	FROM 
+        		Members.BIN_MemberLevel A WITH(NOLOCK) 
+            WHERE 
+				A.LevelCode = #memLevel# AND
+				A.BIN_OrganizationInfoID = #organizationInfoId# AND
+				A.BIN_BrandInfoID = #brandInfoId#
+		]]>
+    </select>
+   <!--取得导入明细表是否相同会员数据-->
+    <select id="getImpMemCount" parameterClass="java.util.HashMap" resultClass="java.lang.String">
+		<![CDATA[
+		SELECT 
+				COUNT(1)
+		 FROM
+		      Members.BIN_MemProfileImportDetail
+		WHERE
+              MemberCode=#memCode#
+	          AND(ResultFlag = '2' OR ResultFlag = '1')
+		]]>
+    </select>
+     <!-- 更新导入明细表，相同会员卡号不导入  -->
+	<update id="updateImportDetail" parameterClass="java.util.HashMap">
+	<![CDATA[
+	UPDATE Members.BIN_MemProfileImportDetail 
+		     SET ResultFlag = '0',
+		         ImportResults = #importResults#
+		  FROM 
+			  (SELECT 
+			  		MemberCode AS TMemberCode
+			  FROM
+			  		Members.BIN_MemProfileImportDetail
+			  WHERE
+			  		BIN_MemberProfileImportID = #memImportId#
+			  		AND LEN(MemberCode)>0
+			  GROUP BY MemberCode
+			  		HAVING COUNT(1) > 1
+		  ) T
+	  		  WHERE BIN_MemberProfileImportID = #memImportId#
+		  		    AND MemberCode = T.TMemberCode
+	]]>
+	</update> 
+	 <!-- 更新导入明细表SendFlag=1 -->
+	<update id="updateSendflag" parameterClass="java.util.HashMap">
+	<![CDATA[
+		  UPDATE Members.BIN_MemProfileImportDetail 
+		     SET SendFlag = '1'
+	  	   WHERE 
+	  	        BIN_MemberProfileImportID = #memImportId# 
+		  		AND ResultFlag = '2'
+	]]>
+	</update> 
+	 <!-- 更新导入明细表ResultFlag=0 -->
+	<update id="updateResultFlag" parameterClass="java.util.HashMap">
+	<![CDATA[
+		  UPDATE Members.BIN_MemProfileImportDetail 
+		     SET ResultFlag = '0',
+		     ImportResults = #importResults#
+	  	   WHERE 
+	  	        BIN_MemberProfileImportID = #memImportId# 
+	]]>
+	</update> 
+      <!--插入【会员档案导入主表】-->
+	<sql id="insertMemberImportSQL">
+        <![CDATA[
+            INSERT INTO Members.BIN_MemberProfileImport(
+                BIN_OrganizationInfoID,
+			    BIN_BrandInfoID,
+			    ProfileBillNo,
+			    ImportName,
+			    ImportTime,
+			    ImportReason,
+			    BIN_EmployeeID,
+			    ValidFlag,
+			    CreateTime,
+			    CreatedBy,
+			    CreatePGM,
+			    UpdateTime,
+			    UpdatedBy,
+			    UpdatePGM,
+			    ModifyCount,
+			    ImportType
+            )VALUES(
+                #organizationInfoId#,
+                #brandInfoId#,
+                #billNo#,
+                #importName#,
+      			#importTime#,
+      			#importReason#,
+      			#employeeId#,
+                '1',
+                GETDATE(),
+                #CreatedBy#,
+                #CreatePGM#,
+                GETDATE(),
+                #UpdatedBy#,
+                #UpdatePGM#,
+                '0',
+                #importType#
+            )
+        ]]>
+	</sql>
+    <insert id="insertMemberImport" parameterClass="java.util.HashMap">
+        <selectKey resultClass="java.lang.Integer" type="post" keyProperty="BIN_MemPointImportID" >
+            <include refid="BINOLMBMBM19.insertMemberImportSQL" />
+            <![CDATA[SELECT SCOPE_IDENTITY() AS value]]>
+        </selectKey>
+    </insert>
+    <!--插入【会员档案导入明细表】-->
+	<insert id="insertMemberImportDetail" parameterClass="java.util.HashMap">
+	<![CDATA[
+			INSERT INTO Members.BIN_MemProfileImportDetail(
+			  BIN_MemberProfileImportID,
+			  MemberCode,
+			  MemName,
+			  Nickname,
+			  MemPhone,
+			  MobilePhone,
+			  MemSex,
+			  MemProvince,
+			  MemCity,
+			  MemCounty,
+			  MemAddress,
+			  MemPostcode,
+			  MemBirthday,
+			  MemAgeGetMethod,
+			  MemMail,
+			  MemGranddate,
+			  Bacode,
+			  CardCounter,
+			  MemLevel,
+			  CreditRating,
+			  InitTotalAmount,
+			  Referrer,
+			  Memo1,
+			  IsReceiveMsg,
+			  TestMemFlag,
+			  ResultFlag,
+			  ImportResults,
+			  SendFlag,
+			  ChannelCode,
+			  ValidFlag,
+			  CreateTime,
+			  CreatedBy,
+			  CreatePGM,
+			  UpdateTime,
+			  UpdatedBy,
+			  UpdatePGM,
+			  ModifyCount
+			)VALUES(
+				#memImportId#,
+				#memCode#,
+				#memName#,
+				#nickname#,
+				#telephone#,
+				#mobilePhone#,
+				#gender#,
+				#memProvince#,
+				#memCity#,
+				#memCounty#,
+				#address#,
+				#postcode#,
+				#birth#,
+				#memAgeGetMethod#,
+				#memMail#,
+				#memGranddate#,
+				#baCodeBelong#,
+				#counterCodeBelong#,
+				#memLevel#,
+				#creditRating#,
+				#initTotalAmount#,
+				#referrer#,
+				#memo1#,
+				#isReceiveMsg#,
+				#testMemFlag#,
+				#resultFlag#,
+				#importResults#,
+				#sendFlag#,
+				#channelCode#,
+				'1',
+				GETDATE(),
+				#CreatedBy#,
+				#CreatePGM#,
+				GETDATE(),
+				#UpdatedBy#,
+				#UpdatePGM#,
+				'0'
+				)
+	]]>
+    </insert>
+    <!-- 查询会员等级List -->
+	<select id="getLevelList" parameterClass="java.util.HashMap" resultClass="java.lang.String">
+		<![CDATA[
+			SELECT
+				A.LevelCode AS levelCode
+			FROM
+				Members.BIN_MemberLevel A
+			WHERE
+				A.BIN_BrandInfoID = #brandInfoId#
+				AND A.ToDate >= #busDate#
+				AND A.ValidFlag = '1'
+		]]>	
+    </select>
+    	<!-- 查询区域省ID和市ID -->
+	<select id="selProvinceCityID" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+		<![CDATA[
+		SELECT
+			A.BIN_RegionID AS provinceId,
+			A.RegionNameChinese AS provinceName,
+			B.BIN_RegionID AS cityId,
+			B.RegionNameChinese AS cityName
+		FROM
+			Basis.BIN_StandardRegion A
+			JOIN Basis.BIN_StandardRegion B ON B.NodeID.IsDescendantOf(A.NodeID) = 1
+		WHERE
+		]]>	
+		<isNotEmpty property="memProvince">	
+			A.RegionNameChinese LIKE '%' + #memProvince# + '%' AND
+		</isNotEmpty>	
+		<![CDATA[
+			B.RegionNameChinese LIKE '%' + #memCity# + '%' AND
+			A.NodeID != B.NodeID AND
+			A.RegionType = '1' AND
+			A.ValidFlag = '1' AND
+			B.ValidFlag = '1'
+		]]>	
+	</select>
+	
+	<!-- 查询区域省ID -->
+	<select id="selProvinceID" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+		<![CDATA[
+		SELECT
+			A.RegionNameChinese AS provinceName,
+			A.BIN_RegionID AS provinceID
+		FROM
+			Basis.BIN_StandardRegion A
+		WHERE
+			A.RegionNameChinese LIKE '%' + #memProvince# + '%' AND
+			A.RegionType = '1' AND
+			A.ValidFlag = '1'
+		]]>		
+	</select>
+	
+	<!-- 查询省、城市名称 -->
+	<select id="getProvinceCityName" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+		<![CDATA[
+		SELECT
+			A.BIN_RegionID AS provinceId,
+			B.BIN_RegionID AS cityId,
+		]]>	
+		<dynamic>
+			<isNotEmpty property="language">
+				<isEqual property="language" compareValue="en_US">
+					A.RegionNameForeign AS provinceName,
+					B.RegionNameForeign AS cityName
+				</isEqual>
+				<isEqual property="language" compareValue="zh_CN">						
+					A.RegionNameChinese AS provinceName,												
+					B.RegionNameChinese AS cityName
+				</isEqual>								
+			</isNotEmpty>
+			<isEmpty property="language">						
+				A.RegionNameChinese AS provinceName,												
+				B.RegionNameChinese AS cityName
+			</isEmpty>
+		</dynamic>	
+		<![CDATA[
+		FROM
+			Basis.BIN_StandardRegion A
+			JOIN Basis.BIN_StandardRegion B ON B.NodeID.IsDescendantOf(A.NodeID) = 1
+			WHERE
+			A.NodeID != B.NodeID AND
+			A.RegionType = '1' AND
+			A.ValidFlag = '1' AND
+			B.ValidFlag = '1'
+		]]>		
+	</select>
+     <!--取得成功的会员档案List-->
+     <select id="getImportSucList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+     	<include refid="BINOLCMINC99.pageheader" />
+    	<![CDATA[
+	    	SELECT
+	    		   BIN_MemberProfileImportID
+			      ,MemberCode AS memberCode
+			      ,MemName AS memName
+			      ,Nickname AS nickname
+			      ,MemPhone AS telephone
+			      ,MobilePhone as mobilePhone
+			      ,MemSex as gender
+			      ,MemProvince AS memProvince
+			      ,MemCity AS memCity
+			      ,MemCounty AS memCounty
+			      ,MemAddress AS address
+			      ,MemPostcode AS postcode
+			      ,MemBirthday AS birth
+			      ,MemAgeGetMethod AS memAgeGetMethod
+			      ,MemMail AS email
+			      ,MemGranddate AS memGranddate
+			      ,Bacode AS baCodeBelong
+			      ,CardCounter AS counterCodeBelong
+			      ,InitTotalAmount AS initTotalAmount
+			      ,MemLevel AS memLevel
+			      ,CreditRating AS creditRating
+			      ,Referrer AS referrer
+			      ,Memo1 AS memo1
+			      ,IsReceiveMsg AS isReceiveMsg
+			      ,TestMemFlag AS testMemFlag
+			      ,ChannelCode AS channelCode
+  			FROM             
+  				  Members.BIN_MemProfileImportDetail
+  			WHERE 
+  				  BIN_MemberProfileImportID=#memImportId# AND
+  				  SendFlag ='1'
+    	]]>
+    	<include refid="BINOLCMINC99.pagefooter" />
+    </select>
+    
+    <!-- 更新导入明细表  -->
+	<update id="updateMemImportDetail" parameterClass="java.util.HashMap">
+       <![CDATA[
+         UPDATE Members.BIN_MemProfileImportDetail
+		     SET   
+		]]>
+		     <isNotEmpty  property="errorFlag">	
+			 <![CDATA[	
+			 		ResultFlag = '0',
+   		        	ImportResults=#importResults#,
+   		        ]]>
+			</isNotEmpty> 
+		      <isNotEmpty  property="successFlag">	
+				 <![CDATA[	
+			 		ResultFlag = '1',
+   		        	ImportResults=#importResults#,
+   		        ]]>
+			</isNotEmpty>
+	  	    <include refid="BINOLCMINC99.updateSql" />								
+	      <![CDATA[
+	      	WHERE  MemberCode = #memCode#
+		 	  AND ResultFlag='2'
+		  ]]>
+	</update> 
+	 <!-- 通过会员卡号查询会员信息 -->
+	<select id="getMemberInfoByMemCode" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+		<![CDATA[
+			SELECT 
+				A.BIN_MemberInfoID AS memberInfoId,
+				A.MemInfoRegFlg AS memInfoRegFlg,
+				A.MemberLevel AS memberLevel,
+				A.ReferrerID AS referrerIdOld,
+				A.Version AS version,
+				A.TestType AS testType,
+				A.BirthYear AS birthYear,
+     			A.BirthDay  AS birthDay,
+				A.JoinDate AS joinDate,
+				C.LevelName AS levelName,
+				D.BIN_AddressInfoID AS addressInfoId,
+				E.InitTotalAmount AS initTotalAmountOld
+        	FROM 
+        		Members.BIN_MemberInfo A
+        		JOIN Members.BIN_MemCardInfo B ON A.BIN_MemberInfoID = B.BIN_MemberInfoID
+        		LEFT JOIN Members.BIN_MemberLevel C ON A.MemberLevel = C.BIN_MemberLevelID
+        		LEFT JOIN Members.BIN_MemberAddress D ON A.BIN_MemberInfoID = D.BIN_MemberInfoID
+        		LEFT JOIN Members.BIN_MemberExtInfo E ON A.BIN_MemberInfoID= E.BIN_MemberInfoID AND E.ValidFlag = '1'
+            WHERE 
+				B.MemCode = #memCode# AND
+				A.BIN_OrganizationInfoID = #organizationInfoId# AND
+				A.BIN_BrandInfoID = #brandInfoId#
+		]]>
+    </select>
+     <!--取得会员卡号是否有效-->
+    <select id="getCardValidFlag" parameterClass="java.util.HashMap" resultClass="java.lang.String">
+		<![CDATA[
+		  SELECT 
+				CardValidFlag
+ 		   FROM 
+ 				Members.BIN_MemCardInfo
+ 		  WHERE 
+ 				MemCode=#memCode#
+		]]>
+    </select>
+</sqlMap>

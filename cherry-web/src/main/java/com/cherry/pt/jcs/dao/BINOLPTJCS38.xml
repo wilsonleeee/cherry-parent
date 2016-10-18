@@ -1,0 +1,87 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sqlMap PUBLIC "-//iBATIS.com//DTD SQL Map 2.0//EN" "http://ibatis.apache.org/dtd/sql-map-2.dtd">
+<sqlMap namespace="BINOLPTJCS38">
+	<sql id="prtFunQuery">
+		<![CDATA[
+		
+			SELECT
+					BIN_ProductFunctionID AS productFunctionID,
+					PrtFunDateCode AS prtFunDateCode,
+					PrtFunDateName AS prtFunDateName,
+			        PrtFunType AS prtFunType,
+					convert(varchar(30),StartDate,120) AS startDate,
+					convert(varchar(30),EndDate,120) AS endDate,
+			        ValidFlag AS validFlag
+			  FROM 
+			  	  Basis.BIN_ProductFunction
+			  WHERE
+				  BIN_OrganizationInfoID = #organizationInfoId#					
+			  AND BIN_BrandInfoID=#brandInfoId#
+		]]>
+			<isNotEmpty prepend="AND" property="validFlag" >
+				ValidFlag = #validFlag#
+			</isNotEmpty>
+			<isNotEmpty prepend="AND" property="prtFunType" >
+				PrtFunType = #prtFunType#
+			</isNotEmpty>
+			<isNotEmpty prepend="AND" property="prtFunType" >
+				PrtFunType = #prtFunType#
+			</isNotEmpty>
+            <isNotEmpty prepend="AND" property="startDate" open="">
+                <![CDATA[
+					(#startDate# between StartDate and EndDate ) 
+				]]>
+	            <isNotEmpty prepend="OR" property="endDate">
+	                <![CDATA[
+						(#endDate# between StartDate  and EndDate)
+					]]>
+	            </isNotEmpty>
+            </isNotEmpty>
+            <isNotEmpty prepend="AND" property="endDate">
+                <![CDATA[
+					(#endDate# between StartDate  and EndDate)
+				]]>
+	            <isNotEmpty prepend="OR" property="startDate" open="">
+	                <![CDATA[
+						(#startDate# between StartDate and EndDate ) 
+					]]>
+	            </isNotEmpty>
+            </isNotEmpty>
+            
+	</sql>
+	
+	<!-- 取得方案总数  -->
+    <select id="getPrtFunCount" parameterClass="java.util.HashMap" resultClass="java.lang.Integer">
+    	<![CDATA[
+			SELECT	COUNT(SORT_T1.productFunctionID) AS count FROM (
+		]]>	
+		<include refid="BINOLPTJCS38.prtFunQuery" />	
+		<![CDATA[	
+			)SORT_T1
+		]]>										
+    </select>
+	
+	<!-- 产品功能开启时间 停用/启用 -->
+    <update id="disOrEnablePrtFun" parameterClass="java.util.HashMap">     
+    <![CDATA[
+        UPDATE
+            Basis.BIN_ProductFunction
+        SET
+            ValidFlag = #validFlag#,
+    ]]>
+	<include refid="BINOLCMINC99.updateSql" />
+    <![CDATA[
+        WHERE 
+            BIN_ProductFunctionID IN
+    ]]>
+	<iterate conjunction="," open="(" close=")" property="prtFunIdArr">  
+        #prtFunIdArr[]#
+    </iterate>
+    </update>
+
+    <select id="getPrtFunList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+       	<include refid="BINOLCMINC99.pageheader" />
+		<include refid="BINOLPTJCS38.prtFunQuery" />
+		<include refid="BINOLCMINC99.pagefooter" />
+    </select>
+</sqlMap>

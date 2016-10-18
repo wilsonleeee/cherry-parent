@@ -1,0 +1,828 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sqlMap PUBLIC "-//iBATIS.com//DTD SQL Map 2.0//EN" "http://ibatis.apache.org/dtd/sql-map-2.dtd">
+<sqlMap namespace="BINOLCMINC99">
+	<sql id="pageheader">
+	 	<![CDATA[
+			SELECT * FROM(SELECT ROW_NUMBER() OVER(ORDER BY $SORT_ID$) AS RowNumber, * FROM ( 
+		]]>
+	</sql>
+	<sql id="pagefooter">
+	 	<![CDATA[	
+			)SORT_T1)SORT_T2 WHERE RowNumber BETWEEN  #START# AND #END#
+		]]>
+	</sql>
+	
+	<sql id="insertKeySql">
+	<![CDATA[
+		CreateTime,
+		UpdateTime,
+		CreatedBy,
+		CreatePGM,
+		UpdatedBy,
+		UpdatePGM,
+		ValidFlag,
+		ModifyCount
+	]]>
+	</sql>			
+	
+	<sql id="insertValueSql">
+		<isNotEmpty property="createTime">
+			#createTime#,
+		</isNotEmpty>
+		<isEmpty property="createTime">
+			GETDATE(),
+		</isEmpty>
+		<isNotEmpty property="createTime">
+			#createTime#,
+		</isNotEmpty>
+		<isEmpty property="createTime">
+			GETDATE(),
+		</isEmpty>
+	<![CDATA[
+		#createdBy#,
+		#createPGM#,
+		#updatedBy#,
+		#updatePGM#,
+		'1',
+		'0'
+	]]>
+	</sql>		
+	
+	<sql id="updateSql">
+		<isNotEmpty property="updateTime">
+			UpdateTime=#updateTime#,
+		</isNotEmpty>
+		<isEmpty property="updateTime">
+			UpdateTime=GETDATE(),
+		</isEmpty>
+	<![CDATA[
+		UpdatedBy=#updatedBy#,
+		UpdatePGM=#updatePGM#,
+		ModifyCount=ModifyCount+1
+	]]>
+	</sql>
+	
+	<!-- 数据过滤查询 -->
+	<sql id ="filterSql">
+		<isNotNull property="FILTER_VALUE" >
+			<iterate property="filterList" conjunction="OR" prepend="AND" close=")" open="(" >
+			$filterList[]$ Like '%' + #FILTER_VALUE# + '%'
+			</iterate>
+		</isNotNull>
+	</sql>
+	
+	<!-- 取得系统时间  -->
+    <select id="getSYSDate" resultClass="java.lang.String">
+    	<![CDATA[
+			SELECT GETDATE() AS sysDate
+		]]>										
+    </select>
+    
+    <!-- 取得系统时间(yyyy-MM-dd HH:mm:ss)  -->
+    <select id="getSYSDateTime" resultClass="java.lang.String">
+    	<![CDATA[
+			SELECT CONVERT(varchar(100), GETDATE(),120) AS sysDate
+		]]>										
+    </select>
+    
+	<!-- 取得系统时间(年月日) -->
+    <select id="getDateYMD" resultClass="java.lang.String">
+    	<![CDATA[
+			SELECT CONVERT(varchar(10), GETDATE(), 120) AS sysDate
+		]]>										
+    </select>
+    
+    <!-- 查询假日 -->
+	<resultMap id="BINOLCMINC99.Holiday" class="java.util.HashMap">
+		<result property="date" column="date"/>
+		<result property="holidayName" column="HolidayName"/>
+	</resultMap>
+    <select id="getHolidays" parameterClass="java.util.HashMap" resultMap="BINOLCMINC99.Holiday">
+    	<![CDATA[
+			SELECT
+				CONVERT(varchar(10),A.DateValue) as date,
+				B.HolidayName
+			FROM	
+				Tools.BIN_Calendar A left join Tools.BIN_HolidayType B 
+				on A.BIN_HolidayTypeID = B.BIN_HolidayTypeID AND B.ValidFlag = '1'
+			WHERE
+				A.BIN_OrganizationInfoID = #organizationInfoId# AND
+				A.HolidayFlag = '1' 
+		]]>										
+    </select>
+	<!-- 财务日查询 -->
+	<select id="getFiscalDate" parameterClass="java.util.HashMap" resultClass="java.lang.String">
+    	<![CDATA[
+			SELECT
+				B.DateValue
+			FROM
+				Tools.BIN_Calendar A
+				JOIN Tools.BIN_Calendar B
+				ON(A.Year = B.Year and A.Month = B.Month and B.Day = 1)
+			WHERE
+				A.BIN_OrganizationInfoID = #organizationInfoId#
+				AND A.Year = #year#
+				AND A.Month = #month#
+				AND A.Day = #day#
+		]]>										
+    </select>
+	<!-- 促销品库存历史截止日期查询 -->
+	<select id="getPrmCutOfDate" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+    	<![CDATA[
+			SELECT TOP 1 
+				A.CutOfDate AS cutOfDate,
+				ABS(DATEDIFF(DD,#date#,A.CutOfDate)) as days,
+				case 
+					when DATEDIFF(DD,#date#,A.CutOfDate) >= 0 then -1
+					when DATEDIFF(DD,#date#,A.CutOfDate) < 0 then 1
+				end flag
+			FROM
+				Inventory.BIN_PrmStockHistory A
+			WHERE
+				BIN_OrganizationInfoID = #organizationInfoId#
+			ORDER BY days
+		]]>										
+    </select>
+    <!-- 产品库存历史截止日期查询 -->
+	<select id="getProCutOfDate" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+    	<![CDATA[
+			SELECT TOP 1 
+				A.CutOfDate AS cutOfDate,
+				ABS(DATEDIFF(DD,#date#,A.CutOfDate)) as days,
+				case 
+					when DATEDIFF(DD,#date#,A.CutOfDate) >= 0 then -1
+					when DATEDIFF(DD,#date#,A.CutOfDate) < 0 then 1
+				end flag
+			FROM
+				Inventory.BIN_ProStockHistory A
+			WHERE
+				BIN_OrganizationInfoID = #organizationInfoId#
+			ORDER BY days
+		]]>										
+    </select>
+	<!-- CODE值一览 -->
+	<resultMap id="codeList" class="java.util.HashMap">
+		<result property="orgCode" column="OrgCode"/>									<!-- 组织Code -->	
+		<result property="brandCode" column="BrandCode"/>								<!-- 品牌代码 -->	
+		<result property="codeType" column="CodeType"/>									<!-- Code类别 -->
+		<result property="codeKey" column="CodeKey"/>									<!-- Key -->
+		<result property="value1" column="Value1"/>										<!-- 值1 -->
+		<result property="value2" column="Value2"/>										<!-- 值2 -->
+		<result property="value3" column="Value3"/>										<!-- 值3 -->
+		<result property="grade" column="Grade"/>										<!-- 级别 -->
+	</resultMap>
+	<!-- 取得CODE值一览 -->
+    <select id="getCodeList" parameterClass="java.util.HashMap" resultMap="codeList">
+		<![CDATA[
+			SELECT
+				OrgCode,
+				BrandCode,
+				CodeType,
+				CodeKey,
+				Value1,
+				Value2,
+				Value3,
+				Grade
+			FROM
+				Tools.BIN_Coder
+			WHERE
+				ValidFlag = '1'
+			ORDER BY
+				CodeType,
+				BrandCode,
+				OrgCode,
+				CodeOrder,
+				Value1
+		]]>
+    </select>
+	<!-- 取得权限部门List -->
+	<sql id="getDepartList">
+        <![CDATA[
+			SELECT
+				1	
+			FROM	
+				Privilege.BIN_DepartPrivilege A99 WITH(NOLOCK)
+				JOIN Basis.BIN_Organization B99 WITH(NOLOCK)
+				ON(A99.BIN_OrganizationID = B99.BIN_OrganizationID)
+		]]>
+		<!-- 取得所有下属部门 -->
+		<isNotEmpty property="departId">
+			JOIN Privilege.BIN_DepartRelation C99 WITH(NOLOCK)
+			ON(B99.BIN_OrganizationID = C99.BIN_OrganizationIDRel
+				AND C99.BIN_OrganizationID = #departId#)
+		</isNotEmpty>
+		<!-- 某渠道下的柜台 -->
+		<isNotEmpty property="channelId">
+		<![CDATA[
+			JOIN Basis.BIN_CounterInfo F99
+			ON(A99.BIN_OrganizationID = F99.BIN_OrganizationID
+				AND F99.BIN_ChannelID = #channelId#)
+		]]>
+		</isNotEmpty>
+		<![CDATA[
+			WHERE
+				A99.BIN_UserID = #userId#
+				AND(A99.BusinessType = 'A' OR A99.BusinessType = #businessType#)
+		]]>
+		<isNotEmpty property="departType" prepend="AND">
+			A99.DepartType IN
+			<iterate property="departType" open="(" close=")" conjunction=",">
+				#departType[]#
+			</iterate>
+		</isNotEmpty>
+       	<isEmpty property="orgValid" prepend="AND">
+			<isNotEmpty property="orgValidAll">
+       			<!-- 包含停用部门 -->
+		       	<isEqual property="orgValidAll" compareValue="1">
+		       		B99.ValidFlag IN('1','0')
+		       	</isEqual>
+		       	<isNotEqual property="orgValidAll" compareValue="1">
+			       	B99.ValidFlag = '1'
+			    </isNotEqual>
+	       	</isNotEmpty>
+	       	<isEmpty property="orgValidAll">
+	       		B99.ValidFlag = '1'
+	       	</isEmpty>
+		</isEmpty>
+		<isNotEmpty property="orgValid" prepend="AND">
+       		<isNotEmpty property="orgValidAll">
+       			<!-- 包含停用部门 -->
+		       	<isEqual property="orgValidAll" compareValue="1">
+		       		(B99.ValidFlag=#orgValid# OR B99.ValidFlag = '0')
+		       	</isEqual>
+		       	<isNotEqual property="orgValidAll" compareValue="1">
+			       	B99.ValidFlag = #orgValid#
+			    </isNotEqual>
+	       	</isNotEmpty>
+	       	<isEmpty property="orgValidAll">
+	       		B99.ValidFlag = #orgValid#
+	       	</isEmpty>
+       	</isNotEmpty>
+		<isEmpty property="testType" prepend="AND">
+			B99.TestType = 0
+		</isEmpty>
+		<isNotEmpty property="testType" prepend="AND">
+			B99.TestType = #testType#
+		</isNotEmpty>
+		<isNotEmpty property="regionId" prepend="AND">
+        	B99.BIN_RegionID = #regionId#
+        </isNotEmpty>
+        <isNotEmpty property="provinceId" prepend="AND">
+        	B99.BIN_ProvinceID = #provinceId#
+        </isNotEmpty>
+        <isNotEmpty property="cityId" prepend="AND">
+        	B99.BIN_CityID = #cityId#
+        </isNotEmpty>
+        <isNotEmpty property="countyId" prepend="AND">
+        	B99.BIN_CountyID = #countyId#
+        </isNotEmpty>
+    </sql>
+    <!-- 取得权限仓库List -->
+	<sql id="getInventoryList">
+        <![CDATA[
+        WITH T99 AS(
+			SELECT
+				DISTINCT
+				C99.BIN_InventoryInfoID	
+			FROM	
+				Privilege.BIN_DepartPrivilege A99 WITH(NOLOCK)
+				JOIN Basis.BIN_Organization B99 WITH(NOLOCK)
+				ON(A99.BIN_OrganizationID = B99.BIN_OrganizationID)
+				JOIN Basis.BIN_InventoryInfo C99 WITH(NOLOCK)
+				ON(A99.BIN_OrganizationID = C99.BIN_OrganizationID)
+		]]>
+		<!-- 取得所有下属部门 -->
+		<isNotEmpty property="departId">
+			JOIN Privilege.BIN_DepartRelation D99 WITH(NOLOCK)
+			ON(B99.BIN_OrganizationID = D99.BIN_OrganizationIDRel
+				AND D99.BIN_OrganizationID = #departId#)	
+		</isNotEmpty>
+		<!-- 某渠道下的柜台 -->
+		<isNotEmpty property="channelId">
+		<![CDATA[
+			JOIN Basis.BIN_CounterInfo F99
+			ON(A99.BIN_OrganizationID = F99.BIN_OrganizationID
+				AND F99.BIN_ChannelID = #channelId#)
+		]]>
+		</isNotEmpty>
+		<![CDATA[
+			WHERE
+				A99.BIN_UserID = #userId#
+				AND(A99.BusinessType = 'A' OR A99.BusinessType = #businessType#)
+		]]>
+		<isNotEmpty property="departType" prepend="AND">
+			A99.DepartType IN
+			<iterate property="departType" open="(" close=")" conjunction=",">
+				#departType[]#
+			</iterate>
+		</isNotEmpty>
+       	<isEmpty property="orgValid" prepend="AND">
+			<isNotEmpty property="orgValidAll">
+       			<!-- 包含停用部门 -->
+		       	<isEqual property="orgValidAll" compareValue="1">
+		       		B99.ValidFlag IN('1','0')
+		       	</isEqual>
+		       	<isNotEqual property="orgValidAll" compareValue="1">
+			       	B99.ValidFlag = '1'
+			    </isNotEqual>
+	       	</isNotEmpty>
+	       	<isEmpty property="orgValidAll">
+	       		B99.ValidFlag = '1'
+	       	</isEmpty>
+		</isEmpty>
+		<isNotEmpty property="orgValid" prepend="AND">
+       		<isNotEmpty property="orgValidAll">
+       			<!-- 包含停用部门 -->
+		       	<isEqual property="orgValidAll" compareValue="1">
+		       		(B99.ValidFlag=#orgValid# OR B99.ValidFlag = '0')
+		       	</isEqual>
+		       	<isNotEqual property="orgValidAll" compareValue="1">
+			       	B99.ValidFlag = #orgValid#
+			    </isNotEqual>
+	       	</isNotEmpty>
+	       	<isEmpty property="orgValidAll">
+	       		B99.ValidFlag = #orgValid#
+	       	</isEmpty>
+       	</isNotEmpty>
+		<isEmpty property="testType" prepend="AND">
+			B99.TestType = 0
+		</isEmpty>
+		<isNotEmpty property="testType" prepend="AND">
+			B99.TestType = #testType#
+		</isNotEmpty>
+		<isNotEmpty property="regionId" prepend="AND">
+        	B99.BIN_RegionID = #regionId#
+        </isNotEmpty>
+        <isNotEmpty property="provinceId" prepend="AND">
+        	B99.BIN_ProvinceID = #provinceId#
+        </isNotEmpty>
+        <isNotEmpty property="cityId" prepend="AND">
+        	B99.BIN_CityID = #cityId#
+        </isNotEmpty>
+        <isNotEmpty property="countyId" prepend="AND">
+        	B99.BIN_CountyID = #countyId#
+        </isNotEmpty>
+        <![CDATA[)]]>
+    </sql>
+    <!-- 取得业务日期  -->
+    <select id="getBussinessDate" resultClass="java.lang.String">
+    	<![CDATA[
+			SELECT
+				ControlDate AS controlDate
+			FROM 
+				Tools.BIN_BussinessDate
+			WHERE
+				BIN_OrganizationInfoID = #organizationInfoId# AND
+				BIN_BrandInfoID = #brandInfoId# AND
+				ValidFlag = '1'
+		]]>										
+    </select>
+    <!-- 取得业务日期Map  -->
+    <select id="getBussinessDateMap" resultClass="java.util.HashMap">
+    	<![CDATA[
+			SELECT
+				ControlDate AS businessDate,
+				CloseFlag AS closeFlag
+			FROM 
+				Tools.BIN_BussinessDate
+			WHERE
+				BIN_OrganizationInfoID = #organizationInfoId# AND
+				BIN_BrandInfoID = #brandInfoId# AND
+				ValidFlag = '1'
+		]]>										
+    </select>
+    
+    <!-- 部门权限（控制权限用） -->
+    <sql id="departPrivilegeSql">
+    	<![CDATA[
+		    SELECT DISTINCT
+				BIN_OrganizationID
+			FROM
+				Privilege.BIN_DepartPrivilege WITH(NOLOCK)
+			WHERE
+		]]>
+			<isNotEmpty property="userId">
+        		BIN_UserID = #userId# AND
+        	</isNotEmpty>
+        	<isNotEmpty property="employeeId">
+        		BIN_EmployeeID = #employeeId# AND
+        	</isNotEmpty>
+		<![CDATA[																		
+				(BusinessType = 'A' OR BusinessType = #businessType#)
+		]]>
+			<isNotEmpty property="DEPARTTYPE" prepend="AND">
+        		DepartType = #DEPARTTYPE#
+        	</isNotEmpty>
+        	<isNotEmpty property="orgValid" prepend="AND">
+	       		<isNotEmpty property="orgValidAll">
+	       			<!-- 包含停用部门 -->
+			       	<isEqual property="orgValidAll" compareValue="1">
+			       		(OrgValidFlag=#orgValid# OR OrgValidFlag = '0')
+			       	</isEqual>
+			       	<isNotEqual property="orgValidAll" compareValue="1">
+			       		OrgValidFlag = #orgValid#
+			       	</isNotEqual>
+		       	</isNotEmpty>
+		       	<isEmpty property="orgValidAll">
+		       		OrgValidFlag = #orgValid#
+		       	</isEmpty>
+	       	</isNotEmpty>
+        	<isNotEmpty property="counterKind" prepend="AND">
+        		CounterKind = #counterKind#
+        	</isNotEmpty>
+    </sql>
+    
+    <!-- 部门权限（查询权限信息用） -->
+    <sql id="departPLJoinSql">
+    	<![CDATA[
+		    SELECT DISTINCT
+		    	BIN_EmployeeID,
+				BIN_OrganizationID,
+				DepartType,
+				CounterKind,
+				PrivilegeFlag
+			FROM
+				Privilege.BIN_DepartPrivilege WITH(NOLOCK)
+			WHERE
+		]]>
+			<isNotEmpty property="userId">
+        		BIN_UserID = #userId# AND
+        	</isNotEmpty>
+        	<isNotEmpty property="employeeId">
+        		BIN_EmployeeID = #employeeId# AND
+        	</isNotEmpty>
+		<![CDATA[																		
+				(BusinessType = 'A' OR BusinessType = #businessType#)
+		]]>
+			<isNotEmpty property="DEPARTTYPE" prepend="AND">
+        		DepartType = #DEPARTTYPE#
+        	</isNotEmpty>
+        	<isNotEmpty property="orgValid" prepend="AND">
+        		OrgValidFlag = #orgValid#
+        	</isNotEmpty>
+        	<isNotEmpty property="counterKind" prepend="AND">
+        		CounterKind = #counterKind#
+        	</isNotEmpty>
+    </sql>
+    
+    <!-- 部门权限（根据部门查询有权限员工） -->
+    <sql id="departPLSql">
+    	<![CDATA[
+		    SELECT DISTINCT
+		    	BIN_UserID,
+		    	BIN_EmployeeID,
+		    	BIN_OrganizationID,
+				PrivilegeFlag
+			FROM
+				Privilege.BIN_DepartPrivilege WITH(NOLOCK)
+			WHERE	
+		]]>	
+			<isNotEmpty property="organizationId">
+        		BIN_OrganizationID = #organizationId# AND		
+        	</isNotEmpty>
+		<![CDATA[													
+				(BusinessType = 'A' OR BusinessType = #businessType#)
+		]]>
+    </sql>
+    
+    <!-- 人员权限（权限控制用） -->
+    <sql id="employeePrivilegeSql">
+    	<isNotEmpty property="userId">
+    	<![CDATA[
+    		SELECT 
+				X.BIN_EmployeeID AS BIN_SubEmployeeID
+			FROM 
+				Basis.BIN_Employee X
+			WHERE
+				X.CreatedBy = CONVERT(varchar(25),#userId#)
+    		UNION
+    	]]>	
+    	</isNotEmpty>	
+    	<![CDATA[	
+		    SELECT DISTINCT
+				BIN_SubEmployeeID
+			FROM
+				Privilege.BIN_EmployeePrivilege WITH(NOLOCK)
+			WHERE
+		]]>
+			<isNotEmpty property="userId">
+        		BIN_UserID = #userId# AND
+        	</isNotEmpty>
+        	<isNotEmpty property="employeeId">
+        		BIN_EmployeeID = #employeeId# AND
+        	</isNotEmpty>
+		<![CDATA[																						
+				(BusinessType = 'A' OR BusinessType = #businessType#)
+		]]>
+    </sql>
+    
+    <!-- 人员权限（查询权限信息用） -->
+    <sql id="employeePLJoinSql">
+    	<![CDATA[	
+		    SELECT DISTINCT
+		    	BIN_UserID,
+		    	BIN_EmployeeID,
+				BIN_SubEmployeeID,
+				PrivilegeFlag
+			FROM
+				Privilege.BIN_EmployeePrivilege WITH(NOLOCK)
+			WHERE
+		]]>
+			<isNotEmpty property="userId">
+        		BIN_UserID = #userId# AND
+        	</isNotEmpty>
+        	<isNotEmpty property="employeeId">
+        		BIN_EmployeeID = #employeeId# AND
+        	</isNotEmpty>
+        	<isNotEmpty property="subEmployeeId">
+        		BIN_SubEmployeeID = #subEmployeeId# AND		
+        	</isNotEmpty>
+		<![CDATA[																						
+				(BusinessType = 'A' OR BusinessType = #businessType#)
+		]]>
+    </sql>
+	
+	<!--取得员工权限下的指定部门类型部门总数-->
+	<sql id="departNumPrivilegeSql">
+		<![CDATA[
+			SELECT 
+			  		COUNT(DISTINCT B99.BIN_OrganizationID) AS departNum,
+			  		B99.BIN_EmployeeID
+			FROM
+					Privilege.BIN_DepartPrivilege B99
+					JOIN Basis.BIN_Organization A99
+					ON(A99.BIN_OrganizationID = B99.BIN_OrganizationID
+					AND A99.ValidFlag = '1')
+			WHERE
+				(B99.BusinessType = 'A' OR B99.BusinessType = #businessType#)
+			]]>
+	        	<isNotEmpty property="employeeId">
+	        		 AND B99.BIN_EmployeeID = #employeeId#
+	        	</isNotEmpty>
+				<isNotEmpty property="DEPARTTYPE">
+	        		 AND B99.DepartType = #DEPARTTYPE#
+	        	</isNotEmpty>
+				<isNotEmpty property="counterKind">
+	        		 AND B99.CounterKind = #counterKind#
+	        	</isNotEmpty>
+				<isEmpty  property="counterKind">
+					 AND B99.CounterKind = '0'
+				</isEmpty>
+			<![CDATA[
+				group by B99.BIN_EmployeeID
+		]]>
+	</sql>
+	<!-- 取得品牌数据库对应关系一览 -->
+    <select id="getBrandDBList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+		<![CDATA[
+		SELECT
+			OrgCode AS orgCode,
+			BrandCode AS brandCode
+		FROM 
+			dbo.BIN_BrandDataSourceConfig
+		WHERE
+			ValidFlag = '1'
+			AND BrandCode <> '-9999'
+		]]>
+    </select>
+    <!-- 取得品牌当前数据库版本 -->
+    <select id="getDBVersion" parameterClass="java.util.HashMap" resultClass="java.lang.String">
+		<![CDATA[
+		SELECT
+			CurrentSchemaVersion AS version
+		FROM 
+			Tools.BIN_SchemaVersion
+		WHERE
+			OrgCode = #orgCode# 
+			AND	BrandCode = #brandCode#
+		]]>
+    </select>
+    <!-- 保存品牌当前数据库版本 -->
+    <insert id="insertDBVersion" parameterClass="java.util.HashMap">
+    <![CDATA[
+    		INSERT INTO Tools.BIN_SchemaVersion(					
+				OrgCode,
+      			BrandCode,
+      			CurrentSchemaVersion,
+      			CreateTime,
+				UpdateTime,
+				CreatedBy,
+				CreatePGM,
+				UpdatedBy,
+				UpdatePGM,
+				ModifyCount
+			)VALUES(					
+				#orgCode#,				
+				#brandCode#,				
+				#version#,
+				#createTime#,
+				#updateTime#,
+				#createdBy#,
+				#createPGM#,
+				#updatedBy#,
+				#updatePGM#,
+				'0'
+			)	
+		]]>
+    </insert>
+    <!-- 更新品牌当前数据库版本  -->
+    <update id="updateDBVersion" parameterClass="java.util.HashMap">
+    	<![CDATA[
+			UPDATE Tools.BIN_SchemaVersion		
+			SET				
+				CurrentSchemaVersion = #version#,			
+		]]>
+		<include refid="BINOLCMINC99.updateSql" />		
+		<![CDATA[					
+			WHERE
+				OrgCode = #orgCode# 
+				AND	BrandCode = #brandCode#
+		]]>
+    </update>
+    <!-- 取得产品信息  -->
+    <sql id="getProList">
+    	<![CDATA[SELECT]]>  
+		<dynamic>
+			<isNotEmpty property="language">
+				<isEqual property="language" compareValue="en_US">
+					A.NameForeign AS nameTotal,
+				</isEqual>
+				<isEqual property="language" compareValue="zh_CN">
+					A.NameTotal AS nameTotal,
+				</isEqual>
+			</isNotEmpty>	
+			<isEmpty property="language">
+				A.NameTotal AS nameTotal,
+			</isEmpty>
+		</dynamic>
+		<![CDATA[			
+				A.UnitCode AS unitCode,
+				B.BarCode AS barCode,
+				B.BIN_ProductVendorID AS id,
+				'N' AS type
+			FROM
+				Basis.BIN_Product A
+				JOIN Basis.BIN_ProductVendor B
+				ON(A.BIN_ProductID = B.BIN_ProductID)
+			WHERE 
+				A.BIN_OrganizationInfoID = #organizationInfoId#
+    	]]>
+    	<dynamic>
+		 	<isNotEmpty property="brandInfoId" prepend="AND">
+				A.BIN_BrandInfoID = #brandInfoId#		
+			</isNotEmpty>	
+		</dynamic>
+    </sql>
+    <!-- 取得促销品信息  -->
+    <sql id="getPrmList">
+    	<![CDATA[SELECT]]>  
+		<dynamic>
+			<isNotEmpty property="language">
+				<isEqual property="language" compareValue="en_US">
+					A.NameForeign AS nameTotal,
+				</isEqual>
+				<isEqual property="language" compareValue="zh_CN">
+					A.NameTotal AS nameTotal,
+				</isEqual>
+			</isNotEmpty>	
+			<isEmpty property="language">
+				A.NameTotal AS nameTotal,
+			</isEmpty>
+		</dynamic>
+		<![CDATA[
+				A.UnitCode AS unitCode,
+				B.BarCode AS barCode,
+				B.BIN_PromotionProductVendorID AS id,
+				'P' AS type
+			FROM
+				Basis.BIN_PromotionProduct A
+				JOIN Basis.BIN_PromotionProductVendor B
+				ON(A.BIN_PromotionProductID = B.BIN_PromotionProductID)
+			WHERE 
+				A.BIN_OrganizationInfoID = #organizationInfoId#
+    	]]>
+    	<dynamic>
+		 	<isNotEmpty property="brandInfoId">
+				AND A.BIN_BrandInfoID = #brandInfoId#		
+			</isNotEmpty>	
+		</dynamic>
+    </sql>
+    <!-- 取得产品+促销品信息  -->
+    <sql id="getProPrmList">
+    	<![CDATA[SELECT T.* FROM(]]>
+    	<include refid="BINOLCMINC99.getProList" />	
+		<![CDATA[UNION]]>	
+		<include refid="BINOLCMINC99.getPrmList" />
+		<![CDATA[)T]]>
+    </sql>
+    
+    <!-- 查询指定日期所在的财务年月 -->
+	<select id="getFiscalMonth" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+		<![CDATA[
+			SELECT 
+				FiscalYear AS fiscalYear,
+				FiscalMonth AS fiscalMonth
+			FROM 		
+				Tools.BIN_Calendar
+			WHERE		
+				BIN_OrganizationInfoID = #organizationInfoId# AND
+				DateValue = #dateValue#
+		]]>
+    </select>
+    <!-- 根据指定的自然日，返回该自然日所属财物月对应的日期序列(自然日) -->
+    <select id="getFiscalPeriodByNatural" parameterClass="java.util.HashMap" resultClass="java.lang.String">
+    	<![CDATA[
+    		SELECT 
+				A.DateValue  
+			FROM 
+				Tools.BIN_Calendar A, Tools.BIN_Calendar B
+			WHERE 
+				A.FiscalYear = B.FiscalYear
+				AND A.FiscalMonth = B.FiscalMonth
+				AND A.BIN_OrganizationInfoID = B.BIN_OrganizationInfoID
+				AND A.BIN_OrganizationInfoID = #organizationInfoId#
+				AND B.DateValue = #dateValue#
+			ORDER BY 
+				A.DateValue ASC
+    	]]>
+    </select>
+    <!-- 查询指定财务月的最小最大自然日 -->
+	<select id="getMinMaxDateValue" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+		<![CDATA[
+			SELECT 
+				MIN(DateValue) AS minDateValue,
+				MAX(DateValue) AS maxDateValue
+			FROM 		
+				Tools.BIN_Calendar
+			WHERE		
+				BIN_OrganizationInfoID = #organizationInfoId# AND
+				FiscalYear = #fiscalYear# AND
+				FiscalMonth = #fiscalMonth#
+		]]>		
+    </select>
+    <!-- 取得所有产品、促销品信息 -->
+    <sql id="getAllProPrmInfo">
+    <![CDATA[
+    	SELECT
+			A.UnitCode AS unitCode,
+			B.BarCode AS barCode,
+			B.BIN_ProductVendorID AS proId
+		FROM
+			Basis.BIN_Product A
+			JOIN Basis.BIN_ProductVendor B
+			ON(A.BIN_ProductID = B.BIN_ProductID)
+		UNION
+		SELECT
+			A.OldUnitCode AS unitCode,
+			A.OldBarCode AS barCode,
+			A.BIN_ProductVendorID AS proId
+		FROM
+			Basis.BIN_PrtBarCode A
+		WHERE
+			A.ClosingTime IS NOT NULL
+		UNION
+		SELECT
+			A.UnitCode AS unitCode,
+			B.BarCode AS barCode,
+			B.BIN_PromotionProductVendorID AS proId
+		FROM
+			Basis.BIN_PromotionProduct A
+			JOIN Basis.BIN_PromotionProductVendor B
+			ON(A.BIN_PromotionProductID = B.BIN_PromotionProductID)
+		UNION
+		SELECT
+			A.OldUnitCode AS unitCode,
+			A.OldBarCode AS barCode,
+			A.BIN_PromotionProductVendorID AS proId
+		FROM
+			Basis.BIN_PromotionPrtBarCode A
+		WHERE
+			A.ClosingTime IS NOT NULL
+    ]]>
+    </sql>
+    <!-- COMMIT 	-->
+	<statement id="commit">
+		<![CDATA[COMMIT]]>
+	</statement>
+	
+	<!-- ROLLBACK 	-->
+	<statement id="rollback">
+		<![CDATA[ROLLBACK]]>
+	</statement>
+	
+	<!-- 密钥获取 -->
+	<select id="getCherrySecret" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+    	<![CDATA[
+			SELECT
+				OrgCode,
+				BrandCode,
+				SecretKey,
+				PublicKey,
+				PrivateKey
+			FROM
+				Tools.BIN_CherrySecret 
+			WHERE
+				ValidFlag = '1'
+		]]>
+    </select>
+</sqlMap>

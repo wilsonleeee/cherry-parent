@@ -1,0 +1,644 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sqlMap PUBLIC "-//iBATIS.com//DTD SQL Map 2.0//EN" "http://ibatis.apache.org/dtd/sql-map-2.dtd">
+<sqlMap namespace="BINOLPTRPS31">
+	<!-- 代理商提成统计信息SQL -->
+	<sql id="BaCommissionQuery">
+		<![CDATA[
+			SELECT
+				#startDate# AS startDate,
+				#endDate# AS endDate,
+				T0.BIN_BrandInfoID AS brandInfoId,
+				T1.BIN_BaInfoID AS baInfoIdForMember,
+				T2.BIN_BaInfoID AS baInfoIdForSale,
+				T0.ResellerCode AS resellerCode,
+				CONVERT(INT,ISNULL(T1.memberBuyQuantity,0)) AS memberBuyQuantity,
+				CONVERT(int,ISNULL(T1.memberBuyOrderCount,0)) AS memberBuyOrderCount,
+				CONVERT(decimal(32,2),ISNULL(T1.memberBuyAmount,0)) AS memberBuyAmount,
+				CONVERT(INT,ISNULL(T2.baSaleQuantity,0)) AS baSaleQuantity,
+				CONVERT(int,ISNULL(T2.baSaleCount,0)) AS baSaleCount,
+				CONVERT(decimal(32,2),ISNULL(T2.baSaleAmount,0)) AS baSaleAmount,
+				CASE ISNULL(T0.ResellerCode,'') WHEN '' THEN ISNULL(T0.ResellerName,'null') 
+					ELSE '('+T0.ResellerCode+')'+ISNULL(T0.ResellerName,'null') 
+				END AS resellerName,
+				CASE ISNULL(T0.ParentResellerCode,'') WHEN '' THEN ISNULL(PT0.ResellerName,'null') 
+					ELSE '('+T0.ParentResellerCode+')'+ISNULL(PT0.ResellerName,'null')
+				END AS parentResellerName
+			FROM 
+				Basis.BIN_ResellerInfo T0 WITH(NOLOCK)
+				LEFT JOIN Basis.BIN_ResellerInfo PT0 WITH(NOLOCK)
+				ON(T0.ParentResellerCode=PT0.ResellerCode AND PT0.LevelCode='1')
+				LEFT JOIN(
+					SELECT
+						C.BIN_BaInfoID,
+						C.BaCode,
+						COUNT(A.BIN_SaleRecordID) AS memberBuyOrderCount,
+						SUM(A.Quantity) AS memberBuyQuantity,
+						SUM(A.Amount) AS memberBuyAmount
+					FROM 
+						Sale.BIN_SaleRecord A WITH(NOLOCK)
+						JOIN Members.BIN_MemberInfo B WITH(NOLOCK)
+						ON(A.BIN_MemberInfoID=B.BIN_MemberInfoID AND B.ValidFlag='1')
+						JOIN Basis.BIN_BaInfo C WITH(NOLOCK)
+						ON(B.BIN_EmployeeID=C.BIN_EmployeeID)
+					WHERE
+						A.BIN_OrganizationInfoID=#organizationInfoId# AND
+						A.BIN_BrandInfoID=#brandInfoId# AND
+						A.ValidFlag='1' AND 
+						NOT EXISTS(
+							SELECT 
+								1
+							FROM
+								Sale.BIN_SaleRecordDetail SD WITH(NOLOCK)
+							WHERE
+								SD.UnitCode='BACOUPON' AND
+								SD.BarCode='BACOUPON' AND 
+								SD.UniqueCode IS NOT NULL AND
+								A.BIN_SaleRecordID=SD.BIN_SaleRecordID
+						)
+		]]>
+			<isNotEmpty prepend="AND" property="startDate">
+				<![CDATA[A.SaleTime >= #startDate#]]>
+			</isNotEmpty>
+			<isNotEmpty prepend="AND" property="endDate">
+				<![CDATA[A.SaleTime <= dateadd(day,1,#endDate#)]]>
+			</isNotEmpty>
+		<![CDATA[
+					GROUP BY C.BIN_BaInfoID,C.BaCode
+				) T1
+				ON(T0.ResellerCode=T1.BaCode)
+				LEFT JOIN(
+					SELECT
+						B.BIN_BaInfoID,
+						B.BaCode,
+						COUNT(A.BIN_SaleRecordID) AS baSaleCount,
+						SUM(A.Quantity) AS baSaleQuantity,
+						SUM(A.Amount) AS baSaleAmount
+					FROM
+						Sale.BIN_SaleRecord A WITH(NOLOCK)
+						JOIN Basis.BIN_BaInfo B WITH(NOLOCK)
+						ON(A.BIN_EmployeeID=B.BIN_EmployeeID)
+					WHERE
+						A.BIN_OrganizationInfoID=#organizationInfoId# AND
+						A.BIN_BrandInfoID=#brandInfoId# AND
+						A.ValidFlag='1' AND 
+						EXISTS(
+							SELECT 
+								1
+							FROM 
+								Sale.BIN_SaleRecordDetail SD WITH(NOLOCK)
+							WHERE
+								SD.UnitCode='BACOUPON' AND
+								SD.BarCode='BACOUPON' AND 
+								SD.UniqueCode IS NOT NULL AND
+								A.BIN_SaleRecordID=SD.BIN_SaleRecordID
+						)
+		]]>
+			<isNotEmpty prepend="AND" property="startDate">
+				<![CDATA[A.SaleTime >= #startDate#]]>
+			</isNotEmpty>
+			<isNotEmpty prepend="AND" property="endDate">
+				<![CDATA[A.SaleTime <= dateadd(day,1,#endDate#)]]>
+			</isNotEmpty>
+		<![CDATA[
+					GROUP BY B.BIN_BaInfoID,B.BaCode
+				) T2
+				ON(T0.ResellerCode=T2.BaCode)
+			WHERE
+				T0.ValidFlag='1' AND
+				T0.BIN_OrganizationInfoID=#organizationInfoId# AND
+				T0.BIN_BrandInfoID=#brandInfoId# AND
+				T0.LevelCode='2'
+		]]>
+		<isNotEmpty prepend="AND" property="parentResellerCode">
+			<![CDATA[T0.ParentResellerCode = #parentResellerCode#]]>
+		</isNotEmpty>
+		<isNotEmpty prepend="AND" property="resellerCode">
+			<![CDATA[T0.ResellerCode = #resellerCode#]]>
+		</isNotEmpty>
+		<isNotEmpty prepend="AND" property="resellerType">
+			<![CDATA[T0.Type = #resellerType#]]>
+		</isNotEmpty>
+		<isNotEmpty prepend="AND" property="provinceId">
+			<![CDATA[T0.BIN_ProvinceID = #provinceId#]]>
+		</isNotEmpty>
+		<isNotEmpty prepend="AND" property="cityId">
+			<![CDATA[T0.BIN_CityID = #cityId# ]]>
+		</isNotEmpty>
+	</sql>
+	
+	<!-- 取得代理商提成统计信息LIST的行数 -->
+    <select id="getBaCommissionCount" parameterClass="java.util.HashMap" resultClass="java.lang.Integer">
+        <![CDATA[
+            SELECT COUNT(1) AS count FROM (
+        ]]>
+        <include refid="BINOLPTRPS31.BaCommissionQuery" />
+        <![CDATA[
+            )SORT_T1
+        ]]>
+    </select>
+    
+    <!-- 取得代理商提成统计信息LIST  -->
+    <select id="getBaCommissionList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+        <include refid="BINOLCMINC99.pageheader" />
+        <include refid="BINOLPTRPS31.BaCommissionQuery" />
+        <include refid="BINOLCMINC99.pagefooter" />
+    </select>
+    
+    <!-- 取得汇总信息  -->
+    <select id="getSumInfo" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+    	<![CDATA[
+			SELECT
+				COUNT(SORT_T1.resellerCode) AS count,
+				ISNULL(SUM(convert(bigint,SORT_T1.memberBuyOrderCount)),0) AS sumMemberBuyOrderCount,
+				ISNULL(SUM(convert(decimal(32,2),SORT_T1.memberBuyAmount)),0) AS sumMemberBuyAmount,
+				ISNULL(SUM(convert(bigint,SORT_T1.baSaleCount)),0) AS sumBaSaleCount,
+				ISNULL(SUM(convert(decimal(32,2),SORT_T1.baSaleAmount)),0) AS sumBaSaleAmount
+			FROM(
+		]]>	
+		<include refid="BINOLPTRPS31.BaCommissionQuery" />
+		<![CDATA[	
+			)SORT_T1
+		]]>		
+    </select>
+    
+    <!-- 根据BAID取得代理商名称 -->
+    <select id="getBaNameFromId" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+    	<![CDATA[
+    		SELECT
+				CASE ISNULL(B.ResellerCode,'') WHEN '' THEN ISNULL(B.ResellerName,'null') ELSE '('+B.ResellerCode+')'+ISNULL(B.ResellerName,'null') END AS baName 
+			FROM 
+				Basis.BIN_BaInfo A WITH(NOLOCK)
+				JOIN Basis.BIN_ResellerInfo B WITH(NOLOCK)
+				ON(A.BaCode=B.ResellerCode)
+			WHERE
+				A.BIN_BaInfoID=#baInfoId# AND
+				A.BIN_OrganizationInfoID=#organizationInfoId# AND
+				A.BIN_BrandInfoID=#brandInfoId#
+    	]]>
+    </select>
+    
+    <!-- 指定代理商的关联购买【指定代理商推荐入会且未使用优惠券的单据】信息SQL -->
+    <sql id="memberBuyInfoQuery">
+    	<![CDATA[
+    		SELECT
+    			A.BillCode AS billCode,
+				RI.ResellerCode AS baCode,
+				A.SaleDate AS memberBuyDate,
+				CONVERT(INT,ISNULL(E.Quantity,0)) AS memberBuyQuantity,
+				CONVERT(decimal(16,2),ISNULL(E.Quantity,0) * ISNULL(E.PricePay,0)) AS memberBuyAmount,
+				B.MobilePhone AS mobilePhone,
+				B.Name AS memberNameOnly,
+				D.MemCode AS memberCode,
+				CASE ISNULL(D.MemCode,'') WHEN '' THEN ISNULL(B.Name,'null') ELSE '('+D.MemCode+')'+ISNULL(B.Name,'null') end AS memberName,
+				F.BarCode AS barCode,
+				G.UnitCode AS unitCode,
+				RI.ResellerName AS baNameOnly,
+				RI.ParentResellerCode AS parentResellerCode,
+				PRI.ResellerName AS parentResellerName,
+				CASE ISNULL(RI.ResellerCode,'') WHEN '' THEN ISNULL(RI.ResellerName,'null') 
+				ELSE '('+RI.ResellerCode+')'+ISNULL(RI.ResellerName,'null') end AS baName,
+		]]>
+		<dynamic>
+		<isNotEmpty property="language">
+			<isEqual property="language" compareValue="en_US">
+				<![CDATA[
+					G.NameForeign AS productName
+				]]>
+			</isEqual>
+			<isEqual property="language" compareValue="zh_CN">
+				<![CDATA[
+					G.NameTotal AS productName
+				]]>
+			</isEqual>
+		</isNotEmpty>
+		<isEmpty property="language">
+			<![CDATA[
+				G.NameTotal AS productName
+			]]>
+		</isEmpty>
+		</dynamic>
+		<![CDATA[
+			FROM
+				Sale.BIN_SaleRecord A WITH(NOLOCK)
+				JOIN Members.BIN_MemberInfo B WITH(NOLOCK)
+				ON(A.BIN_MemberInfoID=B.BIN_MemberInfoID AND B.ValidFlag='1')
+				JOIN Basis.BIN_BaInfo C WITH(NOLOCK)
+				ON(B.BIN_EmployeeID=C.BIN_EmployeeID)
+				JOIN Basis.BIN_ResellerInfo RI WITH(NOLOCK)
+					ON(C.BaCode=RI.ResellerCode)
+				LEFT JOIN Basis.BIN_ResellerInfo PRI WITH(NOLOCK)
+					ON(RI.ParentResellerCode=PRI.ResellerCode AND PRI.LevelCode='1')
+				LEFT JOIN Members.BIN_MemCardInfo D WITH(NOLOCK)
+				ON(B.BIN_MemberInfoID=D.BIN_MemberInfoID AND D.CardValidFlag='1' AND D.ValidFlag='1')
+				JOIN Sale.BIN_SaleRecordDetail E WITH(NOLOCK)
+				ON(A.BIN_SaleRecordID=E.BIN_SaleRecordID AND
+					E.ValidFlag = '1' AND A.ModifiedTimes = E.ModifiedTimes)
+				LEFT JOIN Basis.BIN_ProductVendor F WITH(NOLOCK)
+				ON(E.BIN_ProductVendorID=F.BIN_ProductVendorID)
+				LEFT JOIN Basis.BIN_Product G WITH(NOLOCK)
+				ON(F.BIN_ProductID=G.BIN_ProductID)
+			WHERE
+				E.SaleType='N' AND
+				A.BIN_OrganizationInfoID=#organizationInfoId# AND
+				A.BIN_BrandInfoID=#brandInfoId# AND
+				A.ValidFlag = '1' AND
+				RI.ValidFlag = '1' AND 
+				NOT EXISTS(
+					SELECT 
+						1
+					FROM
+						Sale.BIN_SaleRecordDetail SD WITH(NOLOCK)
+					WHERE
+						SD.UnitCode='BACOUPON' AND
+						SD.BarCode='BACOUPON' AND 
+						SD.UniqueCode IS NOT NULL AND
+						A.BIN_SaleRecordID=SD.BIN_SaleRecordID
+				)
+    	]]>
+    	<isNotEmpty prepend="AND" property="baInfoId">
+			<![CDATA[C.BIN_BaInfoID = #baInfoId#]]>
+		</isNotEmpty>
+		<isNotEmpty prepend="AND" property="parentResellerCode">
+			<![CDATA[RI.ParentResellerCode = #parentResellerCode#]]>
+		</isNotEmpty>
+		<isNotEmpty prepend="AND" property="resellerCode">
+			<![CDATA[RI.ResellerCode = #resellerCode#]]>
+		</isNotEmpty>
+		<isNotEmpty prepend="AND" property="resellerType">
+			<![CDATA[RI.Type = #resellerType#]]>
+		</isNotEmpty>
+		<isNotEmpty prepend="AND" property="startDate">
+			<![CDATA[A.SaleTime >= #startDate#]]>
+		</isNotEmpty>
+		<isNotEmpty prepend="AND" property="endDate">
+			<![CDATA[A.SaleTime <= dateadd(day,1,#endDate#)]]>
+		</isNotEmpty>
+		<isNotEmpty prepend="AND" property="mobilePhone">
+			<![CDATA[B.MobilePhone LIKE '%' + #mobilePhone# + '%']]>
+		</isNotEmpty>
+		<isNotEmpty prepend="AND" property="memberCode">
+			<![CDATA[D.MemCode LIKE '%' + #memberCode# + '%']]>
+		</isNotEmpty>
+		<isNotEmpty prepend="AND" property="prtVendorId">
+			<![CDATA[E.BIN_ProductVendorID = #prtVendorId#]]>
+		</isNotEmpty>
+		<![CDATA[
+			UNION
+    		SELECT
+    			A.BillCode AS billCode,
+				C.BaCode AS baCode,
+				A.SaleDate AS memberBuyDate,
+				CONVERT(INT,ISNULL(E.Quantity,0)) AS memberBuyQuantity,
+				CONVERT(decimal(16,2),ISNULL(E.Quantity,0) * ISNULL(E.PricePay,0)) AS memberBuyAmount,
+				B.MobilePhone AS mobilePhone,
+				B.Name AS memberNameOnly,
+				D.MemCode AS memberCode,
+				CASE ISNULL(D.MemCode,'') WHEN '' THEN ISNULL(B.Name,'null') ELSE '('+D.MemCode+')'+ISNULL(B.Name,'null') end AS memberName,
+				F.BarCode AS barCode,
+				G.UnitCode AS unitCode,
+				RI.ResellerName AS baNameOnly,
+				RI.ParentResellerCode AS parentResellerCode,
+				PRI.ResellerName AS parentResellerName,
+				CASE ISNULL(RI.ResellerCode,'') WHEN '' THEN ISNULL(RI.ResellerName,'null') 
+				ELSE '('+RI.ResellerCode+')'+ISNULL(RI.ResellerName,'null') end AS baName,
+		]]>
+		<dynamic>
+		<isNotEmpty property="language">
+			<isEqual property="language" compareValue="en_US">
+				<![CDATA[
+					G.NameForeign AS productName
+				]]>
+			</isEqual>
+			<isEqual property="language" compareValue="zh_CN">
+				<![CDATA[
+					G.NameTotal AS productName
+				]]>
+			</isEqual>
+		</isNotEmpty>
+		<isEmpty property="language">
+			<![CDATA[
+				G.NameTotal AS productName
+			]]>
+		</isEmpty>
+		</dynamic>
+		<![CDATA[
+			FROM
+				Sale.BIN_SaleRecord A WITH(NOLOCK)
+				JOIN Members.BIN_MemberInfo B WITH(NOLOCK)
+				ON(A.BIN_MemberInfoID=B.BIN_MemberInfoID AND B.ValidFlag='1')
+				JOIN Basis.BIN_BaInfo C WITH(NOLOCK)
+				ON(B.BIN_EmployeeID=C.BIN_EmployeeID)
+				JOIN Basis.BIN_ResellerInfo RI WITH(NOLOCK)
+					ON(C.BaCode=RI.ResellerCode)
+				LEFT JOIN Basis.BIN_ResellerInfo PRI WITH(NOLOCK)
+					ON(RI.ParentResellerCode=PRI.ResellerCode AND PRI.LevelCode='1')
+				LEFT JOIN Members.BIN_MemCardInfo D WITH(NOLOCK)
+				ON(B.BIN_MemberInfoID=D.BIN_MemberInfoID AND D.CardValidFlag='1' AND D.ValidFlag='1')
+				JOIN Sale.BIN_SaleRecordDetail E WITH(NOLOCK)
+				ON(A.BIN_SaleRecordID=E.BIN_SaleRecordID AND
+					E.ValidFlag = '1' AND A.ModifiedTimes = E.ModifiedTimes)
+				LEFT JOIN Basis.BIN_PromotionProductVendor F WITH (NOLOCK)
+				ON (E.BIN_ProductVendorID = F.BIN_PromotionProductVendorID)
+				LEFT JOIN Basis.BIN_PromotionProduct G WITH (NOLOCK)
+				ON (F.BIN_PromotionProductID = G.BIN_PromotionProductID)
+			WHERE
+				E.SaleType='P' AND
+				A.BIN_OrganizationInfoID=#organizationInfoId# AND
+				A.BIN_BrandInfoID=#brandInfoId# AND
+				A.ValidFlag = '1' AND
+				RI.ValidFlag = '1' AND 
+				NOT EXISTS(
+					SELECT 
+						1
+					FROM
+						Sale.BIN_SaleRecordDetail SD WITH(NOLOCK)
+					WHERE
+						SD.UnitCode='BACOUPON' AND
+						SD.BarCode='BACOUPON' AND 
+						SD.UniqueCode IS NOT NULL AND
+						A.BIN_SaleRecordID=SD.BIN_SaleRecordID
+				)
+    	]]>
+    	<isNotEmpty prepend="AND" property="baInfoId">
+			<![CDATA[C.BIN_BaInfoID = #baInfoId#]]>
+		</isNotEmpty>
+		<isNotEmpty prepend="AND" property="parentResellerCode">
+			<![CDATA[RI.ParentResellerCode = #parentResellerCode#]]>
+		</isNotEmpty>
+		<isNotEmpty prepend="AND" property="resellerCode">
+			<![CDATA[RI.ResellerCode = #resellerCode#]]>
+		</isNotEmpty>
+		<isNotEmpty prepend="AND" property="resellerType">
+			<![CDATA[RI.Type = #resellerType#]]>
+		</isNotEmpty>
+		<isNotEmpty prepend="AND" property="startDate">
+			<![CDATA[A.SaleTime >= #startDate#]]>
+		</isNotEmpty>
+		<isNotEmpty prepend="AND" property="endDate">
+			<![CDATA[A.SaleTime <= dateadd(day,1,#endDate#)]]>
+		</isNotEmpty>
+		<isNotEmpty prepend="AND" property="mobilePhone">
+			<![CDATA[B.MobilePhone LIKE '%' + #mobilePhone# + '%']]>
+		</isNotEmpty>
+		<isNotEmpty prepend="AND" property="memberCode">
+			<![CDATA[D.MemCode LIKE '%' + #memberCode# + '%']]>
+		</isNotEmpty>
+		<isNotEmpty prepend="AND" property="prtVendorId">
+			<![CDATA[E.BIN_ProductVendorID = #prtVendorId#]]>
+		</isNotEmpty>
+    </sql>
+    
+    <!-- 取得指定代理商的推荐会员购买信息的行数 -->
+    <select id="getMemberBuyInfoCount" parameterClass="java.util.HashMap" resultClass="java.lang.Integer">
+        <![CDATA[
+            SELECT COUNT(1) AS count FROM (
+        ]]>
+        <include refid="BINOLPTRPS31.memberBuyInfoQuery" />
+        <![CDATA[
+            )SORT_T1
+        ]]>
+    </select>
+    
+    <!-- 取得指定代理商的推荐会员购买信息LIST  -->
+    <select id="getMemberBuyInfoList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+        <include refid="BINOLCMINC99.pageheader" />
+        <include refid="BINOLPTRPS31.memberBuyInfoQuery" />
+        <include refid="BINOLCMINC99.pagefooter" />
+    </select>
+    
+    <!-- 代理商推荐购买信息SQL -->
+    <sql id="baSaleInfoQuery">
+    	<![CDATA[
+    		SELECT
+    			A.BillCode AS billCode,
+				B.BaCode AS baCode,
+				A.SaleDate AS baSaleDate,
+				CONVERT(int, ISNULL(E.Quantity, 0)) AS baSaleQuantity,
+				CONVERT(decimal(16, 2), ISNULL(E.Quantity, 0) * ISNULL(E.PricePay, 0)) AS baSaleAmount,
+				C.MobilePhone AS mobilePhone,
+				C.Name AS memberNameOnly,
+				D.MemCode AS memberCode,
+				CASE ISNULL(D.MemCode, '')
+					WHEN '' THEN ISNULL(C.Name, '') ELSE '(' + D.MemCode + ')' + ISNULL(C.Name, '')
+				END AS memberName,
+				F.BarCode AS barCode,
+				G.UnitCode AS unitCode,
+				RI.ResellerName AS baNameOnly,
+				RI.ParentResellerCode AS parentResellerCode,
+				PRI.ResellerName AS parentResellerName,
+				CASE ISNULL(RI.ResellerCode,'') WHEN '' THEN ISNULL(RI.ResellerName,'null') 
+					ELSE '('+RI.ResellerCode+')'+ISNULL(RI.ResellerName,'null') 
+				END AS baName,
+		]]>
+		<dynamic>
+			<isNotEmpty property="language">
+				<isEqual property="language" compareValue="en_US">
+					<![CDATA[
+						G.NameForeign AS productName
+					]]>
+				</isEqual>
+				<isEqual property="language" compareValue="zh_CN">
+					<![CDATA[
+						G.NameTotal AS productName
+					]]>
+				</isEqual>
+			</isNotEmpty>
+			<isEmpty property="language">
+				<![CDATA[
+					G.NameTotal AS productName
+				]]>
+			</isEmpty>
+		</dynamic>
+		<![CDATA[
+			FROM 
+				Sale.BIN_SaleRecord A WITH (NOLOCK)
+			JOIN Basis.BIN_BaInfo B WITH (NOLOCK)
+				ON (A.BIN_EmployeeID = B.BIN_EmployeeID)
+			JOIN Basis.BIN_ResellerInfo RI WITH(NOLOCK)
+				ON(B.BaCode=RI.ResellerCode)
+			LEFT JOIN Basis.BIN_ResellerInfo PRI WITH(NOLOCK)
+				ON(RI.ParentResellerCode=PRI.ResellerCode AND PRI.LevelCode='1')
+			LEFT JOIN Members.BIN_MemberInfo C WITH(NOLOCK)
+				ON(A.BIN_MemberInfoID=C.BIN_MemberInfoID AND C.ValidFlag='1')
+			LEFT JOIN Members.BIN_MemCardInfo D WITH (NOLOCK)
+				ON (C.BIN_MemberInfoID = D.BIN_MemberInfoID AND D.CardValidFlag='1' AND D.ValidFlag='1')
+			JOIN Sale.BIN_SaleRecordDetail E WITH (NOLOCK)
+				ON (A.BIN_SaleRecordID = E.BIN_SaleRecordID AND
+					E.ValidFlag = '1' AND A.ModifiedTimes = E.ModifiedTimes)
+			LEFT JOIN Basis.BIN_ProductVendor F WITH (NOLOCK)
+				ON (E.BIN_ProductVendorID = F.BIN_ProductVendorID)
+			LEFT JOIN Basis.BIN_Product G WITH (NOLOCK)
+				ON (F.BIN_ProductID = G.BIN_ProductID)
+			WHERE
+				E.SaleType='N' AND
+				A.BIN_OrganizationInfoID=#organizationInfoId# AND
+				A.BIN_BrandInfoID=#brandInfoId# AND
+				A.ValidFlag = '1' AND 
+				RI.ValidFlag = '1' AND 
+				EXISTS(
+					SELECT 
+						1
+					FROM 
+						Sale.BIN_SaleRecordDetail SD WITH(NOLOCK)
+					WHERE
+						SD.UnitCode='BACOUPON' AND
+						SD.BarCode='BACOUPON' AND 
+						SD.UniqueCode IS NOT NULL AND
+						A.BIN_SaleRecordID=SD.BIN_SaleRecordID
+				)
+    	]]>
+    	<isNotEmpty prepend="AND" property="baInfoId">
+			<![CDATA[B.BIN_BaInfoID = #baInfoId#]]>
+		</isNotEmpty>
+		<isNotEmpty prepend="AND" property="parentResellerCode">
+			<![CDATA[RI.ParentResellerCode = #parentResellerCode#]]>
+		</isNotEmpty>
+		<isNotEmpty prepend="AND" property="resellerCode">
+			<![CDATA[RI.ResellerCode = #resellerCode#]]>
+		</isNotEmpty>
+		<isNotEmpty prepend="AND" property="resellerType">
+			<![CDATA[RI.Type = #resellerType#]]>
+		</isNotEmpty>
+		<isNotEmpty prepend="AND" property="startDate">
+			<![CDATA[A.SaleTime >= #startDate#]]>
+		</isNotEmpty>
+		<isNotEmpty prepend="AND" property="endDate">
+			<![CDATA[A.SaleTime <= dateadd(day,1,#endDate#)]]>
+		</isNotEmpty>
+		<isNotEmpty prepend="AND" property="mobilePhone">
+			<![CDATA[C.MobilePhone LIKE '%' + #mobilePhone# + '%']]>
+		</isNotEmpty>
+		<isNotEmpty prepend="AND" property="memberCode">
+			<![CDATA[D.MemCode LIKE '%' + #memberCode# + '%']]>
+		</isNotEmpty>
+		<isNotEmpty prepend="AND" property="prtVendorId">
+			<![CDATA[E.BIN_ProductVendorID = #prtVendorId#]]>
+		</isNotEmpty>
+		<![CDATA[
+			UNION ALL
+    		SELECT
+    			A.BillCode AS billCode,
+				B.BaCode AS baCode,
+				A.SaleDate AS baSaleDate,
+				CONVERT(int, ISNULL(E.Quantity, 0)) AS baSaleQuantity,
+				CONVERT(decimal(16, 2), ISNULL(E.Quantity, 0) * ISNULL(E.PricePay, 0)) AS baSaleAmount,
+				C.MobilePhone AS mobilePhone,
+				C.Name AS memberNameOnly,
+				D.MemCode AS memberCode,
+				CASE ISNULL(D.MemCode, '')
+					WHEN '' THEN ISNULL(C.Name, '') ELSE '(' + D.MemCode + ')' + ISNULL(C.Name, '')
+				END AS memberName,
+				F.BarCode AS barCode,
+				G.UnitCode AS unitCode,
+				RI.ResellerName AS baNameOnly,
+				RI.ParentResellerCode AS parentResellerCode,
+				PRI.ResellerName AS parentResellerName,
+				CASE ISNULL(RI.ResellerCode,'') WHEN '' THEN ISNULL(RI.ResellerName,'null') 
+					ELSE '('+RI.ResellerCode+')'+ISNULL(RI.ResellerName,'null') 
+				END AS baName,
+		]]>
+		<dynamic>
+			<isNotEmpty property="language">
+				<isEqual property="language" compareValue="en_US">
+					<![CDATA[
+						G.NameForeign AS productName
+					]]>
+				</isEqual>
+				<isEqual property="language" compareValue="zh_CN">
+					<![CDATA[
+						G.NameTotal AS productName
+					]]>
+				</isEqual>
+			</isNotEmpty>
+			<isEmpty property="language">
+				<![CDATA[
+					G.NameTotal AS productName
+				]]>
+			</isEmpty>
+		</dynamic>
+		<![CDATA[
+			FROM 
+				Sale.BIN_SaleRecord A WITH (NOLOCK)
+			JOIN Basis.BIN_BaInfo B WITH (NOLOCK)
+				ON (A.BIN_EmployeeID = B.BIN_EmployeeID)
+			JOIN Basis.BIN_ResellerInfo RI WITH(NOLOCK)
+				ON(B.BaCode=RI.ResellerCode)
+			LEFT JOIN Basis.BIN_ResellerInfo PRI WITH(NOLOCK)
+				ON(RI.ParentResellerCode=PRI.ResellerCode AND PRI.LevelCode='1')
+			LEFT JOIN Members.BIN_MemberInfo C WITH(NOLOCK)
+				ON(A.BIN_MemberInfoID=C.BIN_MemberInfoID AND C.ValidFlag='1')
+			LEFT JOIN Members.BIN_MemCardInfo D WITH (NOLOCK)
+				ON (C.BIN_MemberInfoID = D.BIN_MemberInfoID AND D.CardValidFlag='1' AND D.ValidFlag='1')
+			JOIN Sale.BIN_SaleRecordDetail E WITH (NOLOCK)
+				ON (A.BIN_SaleRecordID = E.BIN_SaleRecordID AND
+					E.ValidFlag = '1' AND A.ModifiedTimes = E.ModifiedTimes)
+			LEFT JOIN Basis.BIN_PromotionProductVendor F WITH (NOLOCK)
+				ON (E.BIN_ProductVendorID = F.BIN_PromotionProductVendorID)
+			LEFT JOIN Basis.BIN_PromotionProduct G WITH (NOLOCK)
+				ON (F.BIN_PromotionProductID = G.BIN_PromotionProductID)
+			WHERE
+				E.SaleType='P' AND
+				A.BIN_OrganizationInfoID=#organizationInfoId# AND
+				A.BIN_BrandInfoID=#brandInfoId# AND
+				A.ValidFlag = '1' AND 
+				RI.ValidFlag = '1' AND 
+				EXISTS(
+					SELECT 
+						1
+					FROM 
+						Sale.BIN_SaleRecordDetail SD WITH(NOLOCK)
+					WHERE
+						SD.UnitCode='BACOUPON' AND
+						SD.BarCode='BACOUPON' AND 
+						SD.UniqueCode IS NOT NULL AND
+						A.BIN_SaleRecordID=SD.BIN_SaleRecordID
+				)
+    	]]>
+    	<isNotEmpty prepend="AND" property="baInfoId">
+			<![CDATA[B.BIN_BaInfoID = #baInfoId#]]>
+		</isNotEmpty>
+		<isNotEmpty prepend="AND" property="parentResellerCode">
+			<![CDATA[RI.ParentResellerCode = #parentResellerCode#]]>
+		</isNotEmpty>
+		<isNotEmpty prepend="AND" property="resellerCode">
+			<![CDATA[RI.ResellerCode = #resellerCode#]]>
+		</isNotEmpty>
+		<isNotEmpty prepend="AND" property="resellerType">
+			<![CDATA[RI.Type = #resellerType#]]>
+		</isNotEmpty>
+		<isNotEmpty prepend="AND" property="startDate">
+			<![CDATA[A.SaleTime >= #startDate#]]>
+		</isNotEmpty>
+		<isNotEmpty prepend="AND" property="endDate">
+			<![CDATA[A.SaleTime <= dateadd(day,1,#endDate#)]]>
+		</isNotEmpty>
+		<isNotEmpty prepend="AND" property="mobilePhone">
+			<![CDATA[C.MobilePhone LIKE '%' + #mobilePhone# + '%']]>
+		</isNotEmpty>
+		<isNotEmpty prepend="AND" property="memberCode">
+			<![CDATA[D.MemCode LIKE '%' + #memberCode# + '%']]>
+		</isNotEmpty>
+		<isNotEmpty prepend="AND" property="prtVendorId">
+			<![CDATA[E.BIN_ProductVendorID = #prtVendorId#]]>
+		</isNotEmpty>
+    </sql>
+    
+    <!-- 取得代理商推荐购买信息的行数 -->
+    <select id="getBaSaleInfoCount" parameterClass="java.util.HashMap" resultClass="java.lang.Integer">
+        <![CDATA[
+            SELECT COUNT(1) AS count FROM (
+        ]]>
+        <include refid="BINOLPTRPS31.baSaleInfoQuery" />
+        <![CDATA[
+            )SORT_T1
+        ]]>
+    </select>
+    
+    <!-- 取得代理商推荐购买信息LIST  -->
+    <select id="getBaSaleInfoList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+        <include refid="BINOLCMINC99.pageheader" />
+        <include refid="BINOLPTRPS31.baSaleInfoQuery" />
+        <include refid="BINOLCMINC99.pagefooter" />
+    </select>
+ 
+</sqlMap>

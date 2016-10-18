@@ -1,0 +1,149 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sqlMap PUBLIC "-//iBATIS.com//DTD SQL Map 2.0//EN" "http://ibatis.apache.org/dtd/sql-map-2.dtd">
+<sqlMap namespace="BINOLSTSFH11">
+    <!-- 发货单查询sql文  -->
+    <sql id="deliverQuery">
+        <![CDATA[
+            SELECT
+                DISTINCT
+                A.BIN_ProductDeliverID AS deliverId
+                ,A.DeliverNoIF AS deliverNo
+                ,A.BIN_OrganizationID AS deliverDepId
+                ,A.BIN_OrganizationIDReceive AS receiveDepId
+                ,A.WorkFlowID
+        ]]>
+        <isEmpty property="prtVendorId">
+            <isNotEmpty property="productName">
+                ,ISNULL(C.Quantity,0) AS totalQuantity
+                ,ISNULL(C.Quantity,0) * ISNULL(C.Price,0)  AS totalAmount
+            </isNotEmpty>
+            <isEmpty property="productName">
+                ,ISNULL(A.TotalQuantity,0) AS totalQuantity
+                ,ISNULL(A.TotalAmount,0) AS totalAmount
+            </isEmpty>
+        </isEmpty>
+        <isNotEmpty property="prtVendorId">
+            ,ISNULL(C.Quantity,0) AS totalQuantity
+            ,ISNULL(C.Quantity,0) * ISNULL(C.Price,0)  AS totalAmount
+        </isNotEmpty>
+        <![CDATA[
+            ,A.VerifiedFlag AS verifiedFlag
+            ,A.Date AS deliverDate
+            ,A.CreatedBy AS createdBy
+            ,CONVERT(VARCHAR(30),A.UpdateTime,121) AS deliverUpdateTime
+            ,DATEDIFF(day,A.Date,getdate())as DateRange
+            ,A.ModifyCount AS modifyCount
+        ]]>
+        <dynamic>
+        <isNotEmpty property="language">
+            <isEqual property="language" compareValue="en_US">
+                ,'('+B.DepartCode+')'+B.NameForeign AS departName
+                ,'('+G.DepartCode+')'+G.NameForeign AS departNameReceive
+            </isEqual>
+            <isEqual property="language" compareValue="zh_CN">
+                ,'('+B.DepartCode+')'+B.DepartName AS departName
+                ,'('+G.DepartCode+')'+G.DepartName AS departNameReceive
+            </isEqual>
+        </isNotEmpty>
+        <isEmpty property="language">
+            ,'('+B.DepartCode+')'+B.DepartName AS departName
+            ,'('+G.DepartCode+')'+G.DepartName AS departNameReceive
+        </isEmpty>
+        </dynamic>
+        <![CDATA[
+            FROM
+                Inventory.BIN_ProductDeliver A WITH(NOLOCK)
+                LEFT JOIN Basis.BIN_Organization B WITH(NOLOCK) ON A.BIN_OrganizationID = B.BIN_OrganizationID
+                LEFT JOIN Basis.BIN_Organization G WITH(NOLOCK) ON A.BIN_OrganizationIDReceive = G.BIN_OrganizationID
+                LEFT JOIN Inventory.BIN_ProductDeliverDetail C WITH(NOLOCK) ON A.BIN_ProductDeliverID = C.BIN_ProductDeliverID
+                LEFT JOIN
+                (
+                    SELECT
+                        DISTINCT
+                        PE1.GLOBAL_KEY,
+                        PE2.STRING_VALUE AS osRule
+                    FROM
+                        dbo.OS_PROPERTYENTRY PE1 WITH(NOLOCK)
+                    LEFT JOIN dbo.OS_PROPERTYENTRY PE2 WITH(NOLOCK) ON PE1.GLOBAL_KEY = PE2.GLOBAL_KEY
+                        AND PE2.ITEM_KEY = #participantID#
+                    WHERE PE1.ITEM_KEY = 'BIN_ProductDeliverID'
+                )PE ON 'os_'+ convert(varchar(20),A.WorkFlowID) = PE.GLOBAL_KEY
+        ]]>
+        <isEmpty property="prtVendorId">
+            <isNotEmpty property="productName">
+                JOIN Basis.BIN_ProductVendor D WITH(NOLOCK)
+                ON(C.BIN_ProductVendorID = D.BIN_ProductVendorID)
+                JOIN Basis.BIN_Product E WITH(NOLOCK)
+                ON(D.BIN_ProductID = E.BIN_ProductID
+                AND E.NameTotal like '%' + #productName# + '%')
+            </isNotEmpty>
+        </isEmpty>
+        <![CDATA[
+            WHERE
+                A.ValidFlag = '1'
+                AND A.TradeStatus = '12'
+                AND G.Type <> '4'
+        ]]>
+        <![CDATA[AND EXISTS ( ]]>
+        <include refid="BINOLCMINC99.getDepartList" />
+        <![CDATA[
+            AND (A.BIN_OrganizationIDReceive = A99.BIN_OrganizationID))
+        ]]>
+        <dynamic>
+            <isNotEmpty prepend="AND" property="deliverNo">
+                (A.DeliverNoIF LIKE '%' + #deliverNo# + '%')
+            </isNotEmpty>
+            <isNotEmpty prepend="AND" property="startDate">
+            <![CDATA[
+                A.Date >= #startDate#
+            ]]>
+            </isNotEmpty>
+            <isNotEmpty prepend="AND" property="endDate">
+            <![CDATA[
+                A.Date <= #endDate#
+            ]]>
+            </isNotEmpty>
+            <![CDATA[
+                AND (PE.osRule LIKE '%userID'+#LoginUserID#+'%' 
+                    OR PE.osRule LIKE '%positionID'+#LoginPositionID#+'%' 
+                    OR PE.osRule LIKE '%organizationID'+#LoginOrganizationID#+'%'
+                )
+            ]]>
+            <isNotEmpty prepend="AND" property="prtVendorId">
+                <![CDATA[C.BIN_ProductVendorID = #prtVendorId#]]>
+            </isNotEmpty>
+        </dynamic>
+    </sql>
+    
+    <!-- 取得发货单总数  -->
+    <select id="getDeliverCount" parameterClass="java.util.HashMap" resultClass="java.lang.Integer">
+        <![CDATA[
+            SELECT COUNT(SORT_T1.deliverId) AS count FROM (
+        ]]>    
+        <include refid="BINOLSTSFH11.deliverQuery" />
+        <![CDATA[
+            )SORT_T1
+        ]]>
+    </select>
+    
+    <!-- 取得发货单List  -->
+    <select id="getDeliverList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+           <include refid="BINOLCMINC99.pageheader" />
+        <include refid="BINOLSTSFH11.deliverQuery" />
+        <include refid="BINOLCMINC99.pagefooter" />
+    </select>
+    
+     <!-- 取得发货汇总信息【产品作为检索条件】  -->
+    <select id="getSumInfo" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+        <![CDATA[
+            SELECT  
+                ISNULL(SUM(SORT_T1.totalQuantity),0) AS sumQuantity,
+                ISNULL(SUM(SORT_T1.totalAmount),0) AS sumAmount
+            FROM (
+        ]]> 
+        <include refid="BINOLSTSFH11.deliverQuery" />
+        <![CDATA[
+            )SORT_T1
+        ]]>
+    </select>
+</sqlMap>

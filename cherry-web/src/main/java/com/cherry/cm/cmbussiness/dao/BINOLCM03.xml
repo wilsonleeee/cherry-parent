@@ -1,0 +1,69 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sqlMap PUBLIC "-//iBATIS.com//DTD SQL Map 2.0//EN" "http://ibatis.apache.org/dtd/sql-map-2.dtd">
+<sqlMap namespace="BINOLCM03">
+
+    <!-- 取得业务单据号 -->
+    <select id="getTicketNumber" parameterClass="java.util.HashMap" resultClass="java.lang.Integer">
+    <![CDATA[
+   MERGE  [Tools].[BIN_TicketNumber] WITH (HOLDLOCK) AS TGT
+                USING (select #BIN_OrganizationInfoID# as BIN_OrganizationInfoID,#BIN_BrandInfoID# as BIN_BrandInfoID,#ControlDate# as ControlDate,#Type# as Type2
+				) as SRC
+                ON TGT.BIN_OrganizationInfoID = SRC.BIN_OrganizationInfoID and 
+                    TGT.BIN_BrandInfoID = SRC.BIN_BrandInfoID and 
+                    TGT.ControlDate = SRC.ControlDate and 
+                    TGT.Type = SRC.Type2
+            WHEN MATCHED THEN 
+                UPDATE SET TGT.TicketNo = TGT.TicketNo+1
+            WHEN NOT MATCHED THEN 
+                INSERT (BIN_OrganizationInfoID,BIN_BrandInfoID,ControlDate,Type,TicketNo,[PrefixCode])
+                    values(SRC.BIN_OrganizationInfoID,SRC.BIN_BrandInfoID,SRC.ControlDate,SRC.Type2,'1',#PrefixCode#)
+            OUTPUT inserted.TicketNo;
+    ]]>
+    </select>
+    <!-- 取得业务单据号 -->
+    <select id="getTicketNumbers" parameterClass="java.util.HashMap" resultClass="java.lang.Integer">
+    <![CDATA[
+   MERGE  [Tools].[BIN_TicketNumber] WITH (HOLDLOCK) AS TGT
+                USING (select #BIN_OrganizationInfoID# as BIN_OrganizationInfoID,#BIN_BrandInfoID# as BIN_BrandInfoID,#ControlDate# as ControlDate,#Type# as Type2
+				) as SRC
+                ON TGT.BIN_OrganizationInfoID = SRC.BIN_OrganizationInfoID and 
+                    TGT.BIN_BrandInfoID = SRC.BIN_BrandInfoID and 
+                    TGT.ControlDate = SRC.ControlDate and 
+                    TGT.Type = SRC.Type2
+            WHEN MATCHED THEN 
+                UPDATE SET TGT.TicketNo = TGT.TicketNo+#numcounts#
+            WHEN NOT MATCHED THEN 
+                INSERT (BIN_OrganizationInfoID,BIN_BrandInfoID,ControlDate,Type,TicketNo,[PrefixCode])
+                    values(SRC.BIN_OrganizationInfoID,SRC.BIN_BrandInfoID,SRC.ControlDate,SRC.Type2,#numcounts#,#PrefixCode#)
+            OUTPUT inserted.TicketNo;
+    ]]>
+    </select>
+	  
+	  <select id="getSequenceCode" parameterClass="java.util.HashMap" resultClass="java.lang.Integer">
+    	<![CDATA[
+            MERGE  Tools.BIN_SequenceCode AS TGT
+                USING (select #BIN_OrganizationInfoID# as BIN_OrganizationInfoID,#BIN_BrandInfoID# as BIN_BrandInfoID,#Type# as Type2
+                       ) AS SRC
+                ON TGT.BIN_OrganizationInfoID = SRC.BIN_OrganizationInfoID and 
+                    TGT.BIN_BrandInfoID = SRC.BIN_BrandInfoID and 
+                    TGT.Type = SRC.Type2
+            WHEN MATCHED THEN 
+                UPDATE SET TGT.TicketNo = TGT.TicketNo+#numcounts#
+            WHEN NOT MATCHED THEN 
+                INSERT (BIN_OrganizationInfoID,BIN_BrandInfoID,Type,TicketNo)
+                    values(SRC.BIN_OrganizationInfoID,SRC.BIN_BrandInfoID,SRC.Type2,#numcounts#)
+            OUTPUT inserted.TicketNo;
+    	]]>
+    	</select>
+    	
+		<select id="getBussinessDate" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+     	<![CDATA[
+			SELECT	
+				CONVERT(varchar(100), ControlDate, 112) as BussinessDate			
+			FROM [Tools].[BIN_BussinessDate]
+			WHERE BIN_OrganizationInfoID =#BIN_OrganizationInfoID#
+			and BIN_BrandInfoID =#BIN_BrandInfoID#
+			and ValidFlag ='1'
+		]]>				
+     </select>
+</sqlMap>

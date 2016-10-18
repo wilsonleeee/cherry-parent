@@ -1,0 +1,85 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sqlMap PUBLIC "-//iBATIS.com//DTD SQL Map 2.0//EN" "http://ibatis.apache.org/dtd/sql-map-2.dtd">
+<sqlMap namespace="BINOLJNMAN05">
+
+<!-- 取得规则配置List  -->
+    <sql id="getCampGrp">
+       	<![CDATA[
+				SELECT 
+					BIN_CampaignGrpID AS campaignGrpId,
+					GroupName AS groupName,
+					DescriptionDtl AS descriptionDtl,
+					ValidFlag AS validFlag
+				FROM
+					Campaign.BIN_CampaignGrp
+				WHERE
+					BIN_BrandInfoID = #brandInfoId# AND
+					BIN_OrganizationInfoID = #organizationInfoId# AND
+					CampaignType = #campaignType#
+			]]>
+			<dynamic>
+				<isNotEmpty prepend="AND" property="memberClubId">
+					BIN_MemberClubID = #memberClubId#
+				</isNotEmpty>
+					<isNotEmpty property="groupName">
+						AND GroupName LIKE '%' + #groupName# + '%'
+					</isNotEmpty>
+				</dynamic>
+    </sql>
+	
+	<!-- 取得规则配置List  -->
+	<select id="getCampGrpList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+		<include refid="BINOLCMINC99.pageheader" />
+		<include refid="BINOLJNMAN05.getCampGrp" />
+		<include refid="BINOLCMINC99.pagefooter" />
+	</select>
+	
+	 <!-- 取得规则配置件数  -->
+    <select id="getCampGrpCount" parameterClass="java.util.HashMap" resultClass="java.lang.Integer">
+       	<![CDATA[
+			SELECT	COUNT(SORT_T1.campaignGrpId) AS count FROM (
+		]]>	
+		<include refid="BINOLJNMAN05.getCampGrp" />	
+		<![CDATA[	
+			)SORT_T1
+		]]>	
+    </select>
+    
+    <!-- 停用或者启用配置  -->
+	<update id="updateValidConfig" parameterClass="java.util.HashMap">
+		<![CDATA[
+       UPDATE 
+       		Campaign.BIN_CampaignGrp
+		SET 
+			ValidFlag = #validFlag#,
+		]]>
+		<include refid="BINOLCMINC99.updateSql" />		
+    <![CDATA[
+       WHERE 
+			BIN_CampaignGrpID = #campaignGrpId#
+    ]]>
+    </update>
+    
+    <!-- 更新规则的配置ID  -->
+	<update id="updateRuleGrpId" parameterClass="java.util.HashMap">
+		<![CDATA[
+       UPDATE 
+       		Campaign.BIN_Campaign
+		SET 
+			BIN_CampaignGrpID = #campaignGrpId#,
+		]]>
+		<include refid="BINOLCMINC99.updateSql" />		
+    <![CDATA[
+       WHERE 
+			BIN_BrandInfoID = #brandInfoId# AND
+			BIN_OrganizationInfoID = #organizationInfoId# AND
+	]]>
+	<isNotEmpty property="memberClubId">
+			BIN_MemberClubID = #memberClubId# AND
+	</isNotEmpty>
+	<![CDATA[
+			CampaignType = #campaignType# AND
+			ValidFlag = '1'
+    ]]>
+    </update>
+</sqlMap>

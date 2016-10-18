@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sqlMap PUBLIC "-//iBATIS.com//DTD SQL Map 2.0//EN" "http://ibatis.apache.org/dtd/sql-map-2.dtd">
+<sqlMap namespace="BINOLMOWAT10">
+    <!-- Job运行履历查询sql文  -->
+	<sql id="jobRunQuery">
+		<![CDATA[
+			SELECT
+			    A.BIN_BrandInfoID AS brandInfoId,
+			    B.BrandCode AS brandCode,
+			    A.JobCode AS jobCode,
+			    A.Result AS result,
+			    A.Comments AS comments,
+			    convert(varchar(30),A.RunStartTime,120) AS runStartTime,
+			    convert(varchar(30),A.RunEndTime,120) AS runEndTime
+			FROM
+				Tools.BIN_JobRunHistory A
+                join  Basis.BIN_BrandInfo B 
+            ON  A.BIN_BrandInfoID = B.BIN_BrandInfoID
+		]]>
+			WHERE
+				A.ValidFlag = '1'
+			<dynamic>
+			<isNotEmpty prepend="AND" property="brandCode" >
+				B.BrandCode LIKE '%' + #brandCode# + '%'
+			</isNotEmpty>
+			<isNotEmpty prepend="AND" property="jobCode" >
+				A.JobCode LIKE '%' + #jobCode# + '%'
+			</isNotEmpty>
+			<isNotEmpty prepend="AND" property="result" >
+				A.Result = #result#
+			</isNotEmpty>
+			<isNotEmpty prepend="AND" property="runEndTime" >
+			   <![CDATA[
+				A.RunStartTime <= #runEndTime#
+			   ]]>
+			</isNotEmpty>
+			<isNotEmpty prepend="AND" property="runStartTime" >
+			   <![CDATA[
+				A.RunEndTime >= #runStartTime#
+				]]>
+			</isNotEmpty>
+		</dynamic>
+	</sql>
+	
+	<!-- 取得Job运行履历表信息总数  -->
+    <select id="getCountJobRun" parameterClass="java.util.HashMap" resultClass="java.lang.Integer">
+    	<![CDATA[
+			SELECT	COUNT(1) AS count FROM (
+		]]>	
+		<include refid="BINOLMOWAT10.jobRunQuery" />
+		<![CDATA[	
+			)SORT_T1
+		]]>										
+    </select>
+    
+    <!-- 取得Job运行履历表信息List -->
+	<select id="getJobRunList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap" >
+		<include refid="BINOLCMINC99.pageheader" />
+		<include refid="BINOLMOWAT10.jobRunQuery"/>
+		<include refid="BINOLCMINC99.pagefooter" />
+    </select>
+
+</sqlMap>

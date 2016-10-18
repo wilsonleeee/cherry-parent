@@ -1,0 +1,154 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sqlMap PUBLIC "-//iBATIS.com//DTD SQL Map 2.0//EN" "http://ibatis.apache.org/dtd/sql-map-2.dtd">
+<sqlMap namespace="MqSA">
+
+	<!-- 根据单号取得预付单信息 -->
+	<select id ="getSaleRecordInfo" parameterClass="java.util.HashMap" resultClass ="java.util.HashMap">
+		<![CDATA[
+			SELECT 
+				A.BIN_SaleRecordID
+			FROM
+				Sale.BIN_SaleRecord A
+			WHERE
+				A.ValidFlag = '1' AND
+				A.BillCode = #tradeNoIF#
+		]]>	
+	</select>													
+	
+	<!-- 插入提货主表数据 -->
+	<insert id="insertSaleRetrunReqMain" parameterClass="java.util.HashMap">	
+		<selectKey resultClass="java.lang.Integer" type="post" keyProperty="BIN_PickupBillMainID" >
+		<![CDATA[
+			INSERT INTO Sale.BIN_SaleReturnRequest(
+				BIN_OrganizationInfoID, 
+				BIN_BrandInfoID, 
+				BIN_OrganizationID, 
+				BIN_EmployeeID, 
+				EmployeeCode, 
+				CounterCode,
+				BIN_MemberInfoID,
+				MemberCode, 
+				BillCode,
+				BillNoIF,
+				RelevanceNo, 
+				TotalQuantity, 
+				TotalAmount, 
+				VerifiedFlag, 
+				Comments, 
+				TradeDate, 
+				TradeTime,
+				TradeType, 
+				SynchFlag, 	
+		]]>
+		<include refid="BINOLCMINC99.insertKeySql" />									
+		<![CDATA[								
+			)VALUES(
+				#BIN_OrganizationInfoID#,
+				#BIN_BrandInfoID#,
+				#BIN_OrganizationID#,
+				#BIN_EmployeeID#,
+				#EmployeeCode#,
+				#CounterCode#,
+				#BIN_MemberInfoID#,
+				#MemberCode#,
+				#BillCode#,
+				#BillNoIF#,
+				#RelevanceNo#,				
+				#TotalQuantity#,
+				#TotalAmount#,
+				#VerifiedFlag#,
+				#Comments#,
+				#TradeDate#,
+				#TradeTime#,
+				#TradeType#,
+				#SynchFlag#,
+		]]>
+		<include refid="BINOLCMINC99.insertValueSql" />
+		<![CDATA[ 
+			) 
+			select SCOPE_IDENTITY() as value
+		]]>
+	    </selectKey>
+	</insert> 
+	
+	<!-- 插入退货明细表数据 -->
+	<insert id="insertSaleRetrunReqDetail" parameterClass="java.util.HashMap">	
+		<![CDATA[
+			INSERT INTO Sale.BIN_SaleReturnRequestDetail(
+				BIN_SaleReturnRequestID,
+				BIN_ProductVendorID,
+				UnitCode,
+				BarCode,
+				DetailNo,
+				InventoryTypeCode,
+				Price,
+				Quantity,
+				SaleType,
+				Comments,
+				EmployeeCode,
+				Discount,
+			    ActivityMainCode,
+			    ActivityCode,
+			    OrderID,
+			    CouponCode,
+			    SaleReason,
+			    TagPrice,
+		]]>
+		<include refid="BINOLCMINC99.insertKeySql" />									
+		<![CDATA[								
+			)VALUES(
+				#saleRetrunReqMainID#,
+				#productId#,
+				#unitcode#,
+				#barcode#,
+				#detailNo#,
+				#logicInventoryCode#,
+				#price#,
+				#quantity#,
+				#detailType#,
+				#comments#,
+				#employeeCode#,
+				#discount#,
+				#activityMainCode#,
+				#activityCode#,
+				#orderID#,
+				#couponCode,#,
+				#saleReason#,
+				#tagPrice#,
+		]]>
+		<include refid="BINOLCMINC99.insertValueSql" />
+		<![CDATA[)]]>
+	</insert>
+	
+	<insert id="addSaleReturnPayList" parameterClass="java.util.HashMap">	
+		<![CDATA[
+			INSERT INTO Sale.BIN_SaleReturnRequestPayList
+        (
+            BIN_SaleReturnRequestID,
+            DetailNo,
+            PayTypeCode,
+            PayAmount,
+            SerialNumber,
+		]]>
+		<isNotEmpty property="comment">
+				Comment,
+		</isNotEmpty>
+		<include refid="BINOLCMINC99.insertKeySql" />									
+		<![CDATA[								
+			)
+        VALUES
+        (
+            #saleRetrunReqMainID#,
+            #detailNo#,
+            #payTypeCode#,
+            #payAmount#,
+            #serialNumber#,
+		]]>
+		<isNotEmpty property="comment">
+				#comment#,
+		</isNotEmpty>
+		<include refid="BINOLCMINC99.insertValueSql" />
+		<![CDATA[)]]>
+	</insert>
+	
+</sqlMap>

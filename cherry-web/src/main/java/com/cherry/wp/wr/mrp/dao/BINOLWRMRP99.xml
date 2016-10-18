@@ -1,0 +1,353 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sqlMap PUBLIC "-//iBATIS.com//DTD SQL Map 2.0//EN" "http://ibatis.apache.org/dtd/sql-map-2.dtd">
+<sqlMap namespace="BINOLWRMRP99">	
+	<sql id="queryMemList">
+		<![CDATA[
+			SELECT 
+				A.BIN_MemberInfoID AS memberInfoId,
+				B.MemCode AS memberCode,
+				A.Name AS memberName,
+				A.MobilePhone AS mobilePhone,
+				A.BirthYear AS birthYear,
+				SUBSTRING(A.BirthDay,1,2) AS birthMonth,
+				SUBSTRING(A.BirthDay,3,2) AS birthDay,
+				A.Gender AS gender,
+				A.JoinDate AS joinDate,
+				A.MemberLevel AS memberLevel,
+				D.LevelName AS levelName,
+				C.TotalPoint AS totalPoint,
+				C.ChangablePoint AS changablePoint,
+				E.EmployeeName AS employeeName
+			FROM 
+				Members.BIN_MemberInfo A WITH(NOLOCK) 
+				LEFT JOIN Members.BIN_MemCardInfo B WITH(NOLOCK) ON A.BIN_MemberInfoID = B.BIN_MemberInfoID AND B.validFlag = '1' AND B.CardValidFlag = '1' 
+				LEFT JOIN Members.BIN_MemberPoint C WITH(NOLOCK) ON A.BIN_MemberInfoID = C.BIN_MemberInfoID
+				LEFT JOIN Members.BIN_MemberLevel D WITH(NOLOCK) ON A.MemberLevel = D.BIN_MemberLevelID
+				LEFT JOIN Basis.BIN_Employee E WITH(NOLOCK) ON A.BIN_EmployeeID = E.BIN_EmployeeID
+			WHERE 
+				A.MemInfoRegFlg = 0 AND 
+				A.ValidFlag = '1' AND 
+				A.BIN_OrganizationID = #organizationId# AND
+				A.BIN_OrganizationInfoID = #organizationInfoId# AND 
+				A.BIN_BrandInfoID = #brandInfoId# 
+		]]>
+		<dynamic>
+			<isNotEmpty prepend="AND" property="joinDateStart">
+				<![CDATA[ A.JoinDate >= #joinDateStart# ]]>	
+			</isNotEmpty>
+			<isNotEmpty prepend="AND" property="joinDateEnd">
+				<![CDATA[ A.JoinDate <= #joinDateEnd# ]]>	
+			</isNotEmpty>
+			<isNotEmpty prepend="AND" property="memberLevel" >
+				A.MemberLevel = #memberLevel#
+			</isNotEmpty>
+			<isNotEmpty prepend="AND" property="employeeId">
+				A.BIN_EmployeeID = #employeeId#
+			</isNotEmpty>
+			<isNotEmpty property="birthDayStart">
+				<isNotEmpty prepend="AND" property="birthDayEnd">
+					<isGreaterThan property="birthDayStart" compareProperty="birthDayEnd">
+						<![CDATA[(A.BirthDay >= #birthDayStart# OR A.BirthDay <= #birthDayEnd#)]]>
+					</isGreaterThan>
+					<isLessEqual property="birthDayStart" compareProperty="birthDayEnd">
+						<![CDATA[(A.BirthDay >= #birthDayStart# AND A.BirthDay <= #birthDayEnd#)]]>
+					</isLessEqual>
+				</isNotEmpty>
+				<isEmpty prepend="AND" property="birthDayEnd">
+					A.BirthDay >= #birthDayStart#
+				</isEmpty>
+			</isNotEmpty>
+			<isEmpty property="birthDayStart">
+				<isNotEmpty prepend="AND" property="birthDayEnd">
+					<![CDATA[A.BirthDay <= #birthDayEnd#]]>
+				</isNotEmpty>
+			</isEmpty>
+		</dynamic>
+	</sql>
+	
+	<!-- 获取会员数量  -->
+    <select id="getMemberCount" parameterClass="java.util.HashMap" resultClass="java.lang.Integer">
+    	<![CDATA[
+			SELECT COUNT(1) AS memberCount FROM (
+		]]>	
+		<include refid="BINOLWRMRP99.queryMemList" />	
+		<![CDATA[	
+			)SORT_T1
+		]]>
+    </select>
+	
+	<!-- 获取会员列表List -->
+    <select id="getMemberList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+       	<include refid="BINOLCMINC99.pageheader" />
+		<include refid="BINOLWRMRP99.queryMemList" />
+		<include refid="BINOLCMINC99.pagefooter" />
+    </select>
+    
+    <!-- 获取会员销售统计信息  -->
+    <select id="getSaleCountInfo" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+    	<![CDATA[
+			SELECT
+				ISNULL(SUM(CASE WHEN T.saleType = 'SR' THEN -T.quantity ELSE T.quantity END), 0) AS sumQuantity,
+				ISNULL(SUM(CASE WHEN T.saleType = 'SR' THEN -T.amount ELSE T.amount END), 0) AS sumAmount
+			FROM
+				Sale.BIN_SaleRecord T WITH(NOLOCK)
+			WHERE
+				EXISTS(
+					SELECT 1
+					FROM
+						Members.BIN_MemberInfo A WITH(NOLOCK) 
+					WHERE
+						A.MemInfoRegFlg = 0 AND 
+						A.ValidFlag = '1' AND 
+						A.BIN_OrganizationID = #organizationId# AND
+						A.BIN_OrganizationInfoID = #organizationInfoId# AND 
+						A.BIN_BrandInfoID = #brandInfoId# 
+		]]>
+					<dynamic>
+						<isNotEmpty prepend="AND" property="joinDateStart">
+							<![CDATA[ A.JoinDate >= #joinDateStart# ]]>	
+						</isNotEmpty>
+						<isNotEmpty prepend="AND" property="joinDateEnd">
+							<![CDATA[ A.JoinDate <= #joinDateEnd# ]]>	
+						</isNotEmpty>
+						<isNotEmpty prepend="AND" property="memberLevel" >
+							A.MemberLevel = #memberLevel#
+						</isNotEmpty>
+						<isNotEmpty prepend="AND" property="employeeId">
+							A.BIN_EmployeeID = #employeeId#
+						</isNotEmpty>
+						<isNotEmpty property="birthDayStart">
+							<isNotEmpty prepend="AND" property="birthDayEnd">
+								<isGreaterThan property="birthDayStart" compareProperty="birthDayEnd">
+									<![CDATA[(A.BirthDay >= #birthDayStart# OR A.BirthDay <= #birthDayEnd#)]]>
+								</isGreaterThan>
+								<isLessEqual property="birthDayStart" compareProperty="birthDayEnd">
+									<![CDATA[(A.BirthDay >= #birthDayStart# AND A.BirthDay <= #birthDayEnd#)]]>
+								</isLessEqual>
+							</isNotEmpty>
+							<isEmpty prepend="AND" property="birthDayEnd">
+								A.BirthDay >= #birthDayStart#
+							</isEmpty>
+						</isNotEmpty>
+						<isEmpty property="birthDayStart">
+							<isNotEmpty prepend="AND" property="birthDayEnd">
+								<![CDATA[A.BirthDay <= #birthDayEnd#]]>
+							</isNotEmpty>
+						</isEmpty>
+					</dynamic>	
+		<![CDATA[
+						AND T.BIN_MemberInfoID = A.BIN_MemberInfoID
+					)
+		]]>	
+    </select>
+    
+    <sql id="queryGiftDrawList">
+		<![CDATA[
+			SELECT
+				A.BIN_GiftDrawID AS giftDrawId,
+				A.BillNo AS billNo,
+				CONVERT(varchar(30), A.TradeDateTime, 120) AS tradeDateTime,
+				C.EmployeeName AS employeeName,
+				B.Name AS memName,
+				B.BIN_MemberInfoID AS memberInfoId,
+				A.MemberCode AS memCode,
+				A.Amount AS amount,
+				A.Quantity AS quantity
+			FROM
+				Inventory.BIN_GiftDraw A WITH(NOLOCK) 
+				LEFT JOIN Members.BIN_MemberInfo B WITH(NOLOCK) ON A.BIN_MemberInfoID = B.BIN_MemberInfoID
+				LEFT JOIN Basis.BIN_Employee C WITH(NOLOCK) ON A.BIN_EmployeeID = C.BIN_EmployeeID
+			WHERE
+				A.BIN_OrganizationID = #organizationId#
+		]]>
+		<dynamic>
+			<isNotEmpty prepend="AND" property="startDate">
+				<![CDATA[ A.TradeDate >= #startDate# ]]>	
+			</isNotEmpty>
+			<isNotEmpty prepend="AND" property="endDate">
+				<![CDATA[ A.TradeDate <= #endDate# ]]>	
+			</isNotEmpty>
+			<isNotEmpty prepend="AND" property="employeeId">
+				A.BIN_EmployeeID = #employeeId#
+			</isNotEmpty>
+			<isNotEmpty prepend="AND" property="mobilePhone">
+				B.MobilePhone = #mobilePhone#
+			</isNotEmpty>
+			<isNotEmpty prepend="AND" property="memCode">
+				EXISTS (
+					SELECT 1
+					FROM
+						Members.BIN_MemberInfo X WITH(NOLOCK)
+						JOIN Members.BIN_MemCardInfo Y WITH(NOLOCK) ON X.BIN_MemberInfoID = Y.BIN_MemberInfoID
+					WHERE
+						Y.MemCode = #memCode# AND A.BIN_MemberInfoID = X.BIN_MemberInfoID
+				)
+			</isNotEmpty>
+		</dynamic>
+	</sql>
+	
+	<!-- 获取礼券使用数量  -->
+    <select id="getGiftDrawCount" parameterClass="java.util.HashMap" resultClass="java.lang.Integer">
+    	<![CDATA[
+			SELECT COUNT(1) AS count FROM (]]><include refid="BINOLWRMRP99.queryMemList" /><![CDATA[) T
+		]]>
+    </select>
+	
+	<!-- 获取礼券使用统计信息  -->
+    <select id="getGiftDrawCountInfo" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+    	<![CDATA[
+			SELECT 
+				COUNT(1) AS count,
+				ISNULL(SUM(T.amount), 0) AS sumAmount,
+				ISNULL(SUM(T.quantity), 0) AS sumQuantity
+			FROM (]]><include refid="BINOLWRMRP99.queryGiftDrawList" /><![CDATA[) T
+		]]>
+    </select>
+	
+	<!-- 获取礼券使用信息List -->
+    <select id="getGiftDrawList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+       	<include refid="BINOLCMINC99.pageheader" />
+		<include refid="BINOLWRMRP99.queryGiftDrawList" />
+		<include refid="BINOLCMINC99.pagefooter" />
+    </select>
+    
+    <sql id="querySaleList">
+		<![CDATA[
+			SELECT 
+				A.BIN_SaleRecordID AS saleRecordId,
+				A.BillCode AS billCode,
+				CONVERT(varchar(30), A.SaleTime, 120) AS saleTime,
+				A.MemberCode AS memCode,
+				B.EmployeeName AS employeeName,
+				A.Amount AS amount,
+				A.Quantity AS quantity
+			FROM
+				Sale.BIN_SaleRecord A WITH(NOLOCK)
+				LEFT JOIN Basis.BIN_Employee B WITH(NOLOCK) ON A.BIN_EmployeeID = B.BIN_EmployeeID
+			WHERE
+				A.BIN_OrganizationID = #organizationId# AND
+				EXISTS (
+					SELECT 1
+					FROM
+						Members.BIN_MemberInfo X WITH(NOLOCK)
+						LEFT JOIN Members.BIN_MemCardInfo Y WITH(NOLOCK) ON X.BIN_MemberInfoID = Y.BIN_MemberInfoID AND Y.CardValidFlag = '1'
+					WHERE
+						X.MemInfoRegFlg = '1' AND
+		]]>	
+					<isNotEmpty property="memCode">
+						Y.MemCode = #memCode# AND
+					</isNotEmpty>	
+		<![CDATA[
+						A.BIN_MemberInfoID = X.BIN_MemberInfoID			
+					)
+		]]>
+		<dynamic>
+			<isNotEmpty prepend="AND" property="startDate">
+				<![CDATA[ A.SaleDate >= #startDate# ]]>	
+			</isNotEmpty>
+			<isNotEmpty prepend="AND" property="endDate">
+				<![CDATA[ A.SaleDate <= #endDate# ]]>	
+			</isNotEmpty>
+			<isNotEmpty prepend="AND" property="employeeId">
+				A.BIN_EmployeeID = #employeeId#
+			</isNotEmpty>
+		</dynamic>
+	</sql>
+	
+	<!-- 获取无会员资料的销售记录总数  -->
+    <select id="getMemSaleCount" parameterClass="java.util.HashMap" resultClass="java.lang.Integer">
+    	<![CDATA[
+			SELECT COUNT(1) AS count FROM (]]><include refid="BINOLWRMRP99.querySaleList" /><![CDATA[) T
+		]]>
+    </select>
+	
+	<!-- 获取无会员资料的销售统计信息  -->
+    <select id="getMemSaleCountInfo" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+    	<![CDATA[
+			SELECT 
+				COUNT(1) AS count,
+				ISNULL(SUM(T.amount), 0) AS sumAmount,
+				ISNULL(SUM(T.quantity), 0) AS sumQuantity
+			FROM (]]><include refid="BINOLWRMRP99.querySaleList" /><![CDATA[) T
+		]]>
+    </select>
+	
+	<!-- 获取无会员资料的销售记录List -->
+    <select id="getMemSaleList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+       	<include refid="BINOLCMINC99.pageheader" />
+		<include refid="BINOLWRMRP99.querySaleList" />
+		<include refid="BINOLCMINC99.pagefooter" />
+    </select>
+    
+    <sql id="queryPxInfoList">
+		<![CDATA[
+			SELECT 
+				A.BIN_SaleRecordID AS saleRecordId,
+				A.BillCode AS billCode,
+				CONVERT(varchar(30), A.SaleTime, 120) AS saleTime,
+				A.MemberCode AS memCode,
+				B.Name AS memName,
+				B.BIN_MemberInfoID AS memberInfoId,
+				C.EmployeeName AS employeeName,
+				A.Amount AS amount,
+				A.Quantity AS quantity
+			FROM
+				Sale.BIN_SaleRecord A WITH(NOLOCK)
+				LEFT JOIN Members.BIN_MemberInfo B WITH(NOLOCK) ON A.BIN_MemberInfoID = B.BIN_MemberInfoID
+				LEFT JOIN Basis.BIN_Employee C WITH(NOLOCK) ON A.BIN_EmployeeID = C.BIN_EmployeeID
+			WHERE
+				A.BIN_OrganizationID = #organizationId# AND
+				A.SaleType = 'PX'
+		]]>
+		<dynamic>
+			<isNotEmpty prepend="AND" property="startDate">
+				<![CDATA[ A.SaleDate >= #startDate# ]]>	
+			</isNotEmpty>
+			<isNotEmpty prepend="AND" property="endDate">
+				<![CDATA[ A.SaleDate <= #endDate# ]]>	
+			</isNotEmpty>
+			<isNotEmpty prepend="AND" property="employeeId">
+				A.BIN_EmployeeID = #employeeId#
+			</isNotEmpty>
+			<isNotEmpty prepend="AND" property="mobilePhone">
+				B.MobilePhone = #mobilePhone#
+			</isNotEmpty>
+			<isNotEmpty prepend="AND" property="memCode">
+				EXISTS (
+					SELECT 1
+					FROM
+						Members.BIN_MemberInfo X WITH(NOLOCK)
+						JOIN Members.BIN_MemCardInfo Y WITH(NOLOCK) ON X.BIN_MemberInfoID = Y.BIN_MemberInfoID
+					WHERE
+						Y.MemCode = #memCode# AND A.BIN_MemberInfoID = X.BIN_MemberInfoID
+				)
+			</isNotEmpty>
+		</dynamic>
+	</sql>
+	
+	<!-- 获取会员积分兑换记录总数  -->
+    <select id="getPxCount" parameterClass="java.util.HashMap" resultClass="java.lang.Integer">
+    	<![CDATA[
+			SELECT COUNT(1) AS count FROM (]]><include refid="BINOLWRMRP99.queryPxInfoList" /><![CDATA[) T
+		]]>
+    </select>
+	
+	<!-- 获取会员积分兑换统计信息  -->
+    <select id="getPxCountInfo" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+    	<![CDATA[
+			SELECT 
+				COUNT(1) AS count,
+				ISNULL(SUM(T.amount), 0) AS sumAmount,
+				ISNULL(SUM(T.quantity), 0) AS sumQuantity
+			FROM (]]><include refid="BINOLWRMRP99.queryPxInfoList" /><![CDATA[) T
+		]]>
+    </select>
+	
+	<!-- 获取会员积分兑换记录List -->
+    <select id="getPxInfoList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+       	<include refid="BINOLCMINC99.pageheader" />
+		<include refid="BINOLWRMRP99.queryPxInfoList" />
+		<include refid="BINOLCMINC99.pagefooter" />
+    </select>
+    
+</sqlMap>

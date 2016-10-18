@@ -1,0 +1,616 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE sqlMap PUBLIC "-//iBATIS.com//DTD SQL Map 2.0//EN" "http://ibatis.apache.org/dtd/sql-map-2.dtd">
+
+<sqlMap namespace="BINOLMBMBM06">
+    
+    <!-- 更新会员基本信息 -->
+	<update id="updMemberInfo" parameterClass="java.util.HashMap">
+		<![CDATA[
+			UPDATE
+				Members.BIN_MemberInfo
+			SET
+				Name = #memName#,
+				Nickname = #nickname#,
+				CreditRating = #creditRating#,
+				TencentQQ = #tencentQQ#,
+				Email = #email#,
+				MobilePhone = #mobilePhone#,
+				Telephone = #telephone#,
+				JoinDate = #joinDate#,
+				BirthYear = #birthYear#,
+				BirthDay = #birthDay#,
+				BIN_EmployeeID = #employeeId#,
+				BaCodeBelong = #employeeCode#,
+				BIN_OrganizationID = #organizationId#,
+				CounterCodeBelong = #organizationCode#,
+				Gender = #gender#,
+				IdentityCard = #identityCard#,
+				MaritalStatus = #maritalStatus#,
+				ReferrerID = #referrerId#,
+				Memo1 = #memo1#,
+				Memo2 = #memo2#,
+				MemInfoRegFlg = '0',
+				ChannelCode = #channelCode#,
+				IsReceiveMsg = #isReceiveMsg#,
+				Active = #active#,
+		]]>		
+			<isNotEmpty property="activeDate">	
+				ActiveDate = #activeDate#,
+			</isNotEmpty>
+			<isNotEmpty property="profession">	
+				Profession = #profession#,
+			</isNotEmpty>
+			<isNotEmpty property="interests">	
+				interests = #interests#,
+			</isNotEmpty>
+			<isNotEmpty property="tmallMixMobile">
+				TmallMixMobile = #tmallMixMobile#,
+			</isNotEmpty>
+			<isNotEmpty property="isSameMobile">
+				IsSameMobile = #isSameMobile#,
+			</isNotEmpty>
+		<![CDATA[			
+				MemType = #memType#,
+				BlogId = #blogId#,
+				MessageId = #messageId#,
+				TestType = #testType#,
+				ConnectTime = #connectTime#,
+				Version = #version#,
+		]]>
+		<include refid="BINOLCMINC99.updateSql" />
+		<![CDATA[		
+			WHERE
+				BIN_MemberInfoID = #memberInfoId#
+		]]>	
+			<isEmpty property="synMemMode" prepend="AND">
+				UpdateTime = #modifyTime# AND
+				ModifyCount = #modifyCount#
+			</isEmpty>
+    </update>
+    
+    <!-- 更新会员卡信息 -->
+	<update id="updMemCardInfo" parameterClass="java.util.HashMap">
+		<![CDATA[
+			UPDATE
+				Members.BIN_MemCardInfo
+			SET
+				GrantDate = #grantDate#,
+		]]>
+		<include refid="BINOLCMINC99.updateSql" />
+		<![CDATA[		
+			WHERE
+				MemCode = #memCode# AND
+				BIN_MemberInfoID = #memberInfoId#
+		]]>
+    </update>
+    
+    <!-- 会员老卡停用处理 -->
+	<update id="delMemCardInfo" parameterClass="java.util.HashMap">
+		<![CDATA[
+			UPDATE
+				Members.BIN_MemCardInfo
+			SET
+				CardValidFlag = '0',
+		]]>
+		<include refid="BINOLCMINC99.updateSql" />
+		<![CDATA[		
+			WHERE
+				MemCode = #memCodeOld# AND
+				BIN_MemberInfoID = #memberInfoId#
+		]]>
+    </update>
+    
+    <!-- 启用会员卡信息 -->
+	<update id="updMemCardValidFlag" parameterClass="java.util.HashMap">
+		<![CDATA[
+			UPDATE
+				Members.BIN_MemCardInfo
+			SET
+				CardValidFlag = '1',
+		]]>
+		<include refid="BINOLCMINC99.updateSql" />
+		<![CDATA[		
+			WHERE
+				MemCode = #memCode# AND
+				BIN_MemberInfoID = #memberInfoId#
+		]]>
+    </update>
+    
+    <!-- 更新会员地址信息 -->
+	<update id="updAddressInfo" parameterClass="java.util.HashMap">
+		<![CDATA[
+			UPDATE
+				Basis.BIN_AddressInfo
+			SET
+				AddressLine1 = #address#,
+				StandardCity = #cityId#,
+				StandardProvince = #provinceId#,
+				StandardCounty = #countyId#,
+				ZipCode = #postcode#,
+		]]>
+		<include refid="BINOLCMINC99.updateSql" />
+		<![CDATA[		
+			WHERE
+				BIN_AddressInfoID = #addressInfoId#
+		]]>
+    </update>
+    
+    <!-- 删除会员地址信息 -->
+	<delete id="delAddressInfo" parameterClass="java.util.HashMap">
+		<![CDATA[
+			DELETE FROM
+				Basis.BIN_AddressInfo
+			WHERE
+				BIN_AddressInfoID = #addressInfoId#
+		]]>
+    </delete>
+    
+    <!-- 删除会员地址关系 -->
+	<delete id="delMemberAddress" parameterClass="java.util.HashMap">
+		<![CDATA[
+			DELETE FROM
+				Members.BIN_MemberAddress
+			WHERE
+				BIN_MemberInfoID = #memberInfoId# AND
+				BIN_AddressInfoID = #addressInfoId#
+		]]>
+    </delete>
+    
+    <!-- 删除答卷信息 -->
+	<delete id="delPaperAnswer" parameterClass="java.util.HashMap">
+		<![CDATA[
+			DELETE FROM
+				Monitor.BIN_PaperAnswer
+			WHERE
+				BIN_PaperAnswerID = #paperAnswerId#
+		]]>
+    </delete>
+    
+    <!-- 删除答卷明细信息 -->
+	<delete id="delPaperAnswerDetail" parameterClass="java.util.HashMap">
+		<![CDATA[
+			DELETE FROM
+				Monitor.BIN_PaperAnswerDetail
+			WHERE
+				BIN_PaperAnswerID = #paperAnswerId#
+		]]>
+    </delete>
+    
+    <!-- 查询会员答卷ID -->
+	<select id="getPaperAnswerId" parameterClass="java.util.HashMap" resultClass="java.lang.String">
+		<![CDATA[
+			SELECT 
+				BIN_PaperAnswerID AS paperAnswerId
+        	FROM 
+        		Monitor.BIN_PaperAnswer
+            WHERE 
+				BIN_PaperID = #paperId# AND
+				BIN_MemberInfoID = #memberInfoId# AND
+				ValidFlag = '1'
+		]]>
+    </select>
+    
+    <!-- 更新会员扩展信息 -->
+	<update id="updMemberExtInfo" parameterClass="java.util.HashMap">
+		<![CDATA[
+			UPDATE
+				Members.BIN_MemberExtInfo
+			SET
+				InitTotalAmount = #initTotalAmount#,
+		]]>
+		<include refid="BINOLCMINC99.updateSql" />
+		<![CDATA[		
+			WHERE
+				BIN_MemberInfoID = #memberInfoId#
+		]]>
+    </update>
+	  <!-- 批量更新会员基本信息 -->
+	<update id="batchUpdMemInfo" parameterClass="java.util.HashMap">
+			UPDATE 
+				Members.BIN_MemberInfo 
+			SET
+				<isNotEmpty property="memName">	
+					<isEqual property="memName" compareValue="cherry_clear">
+						Name = NULL, 
+					</isEqual>
+					<isNotEqual property="memName" compareValue="cherry_clear">
+						Name = #memName#,
+					</isNotEqual>
+				</isNotEmpty>
+				<isNotEmpty property="nickname">	
+					<isEqual property="nickname" compareValue="cherry_clear">
+						Nickname = NULL, 
+					</isEqual>
+					<isNotEqual property="nickname" compareValue="cherry_clear">
+						Nickname = #nickname#,
+					</isNotEqual>
+				</isNotEmpty>
+				<isNotEmpty property="creditRating">	
+					<isEqual property="creditRating" compareValue="cherry_clear">
+						CreditRating = NULL, 
+					</isEqual>
+					<isNotEqual property="creditRating" compareValue="cherry_clear">
+						CreditRating = #creditRating#,
+					</isNotEqual>
+				</isNotEmpty>
+				<isNotEmpty property="email">	
+					<isEqual property="email" compareValue="cherry_clear">
+						Email = NULL, 
+					</isEqual>
+					<isNotEqual property="email" compareValue="cherry_clear">
+						Email = #email#, 
+					</isNotEqual>					
+				</isNotEmpty>	
+				<isNotEmpty property="mobilePhone">	
+					<isEqual property="mobilePhone" compareValue="cherry_clear">
+						MobilePhone = NULL, 
+					</isEqual>
+					<isNotEqual property="mobilePhone" compareValue="cherry_clear">
+						MobilePhone = #mobilePhone#,
+					</isNotEqual>
+				</isNotEmpty>	
+				
+				<isNotEmpty property="tmallMixMobile">	
+					<isEqual property="tmallMixMobile" compareValue="cherry_clear">
+						TmallMixMobile = NULL, 
+					</isEqual>
+					<isNotEqual property="tmallMixMobile" compareValue="cherry_clear">
+						TmallMixMobile = #tmallMixMobile#,
+					</isNotEqual>
+				</isNotEmpty>									
+				<isNotEmpty property="telephone">	
+					<isEqual property="telephone" compareValue="cherry_clear">
+						Telephone = NULL, 
+					</isEqual>
+					<isNotEqual property="telephone" compareValue="cherry_clear">
+						Telephone = #telephone#,
+					</isNotEqual>
+				</isNotEmpty>	
+				
+				<isNotEmpty property="birthYear">	
+					<isEqual property="birthYear" compareValue="cherry_clear">
+						BirthYear = NULL, 
+					</isEqual>
+					<isNotEqual property="birthYear" compareValue="cherry_clear">
+						BirthYear = #birthYear#,
+					</isNotEqual>
+				</isNotEmpty>	
+
+				<isNotEmpty property="birthDay">	
+					<isEqual property="birthDay" compareValue="cherry_clear">
+						BirthDay = NULL, 
+					</isEqual>
+					<isNotEqual property="birthDay" compareValue="cherry_clear">
+						BirthDay = #birthDay#,
+					</isNotEqual>
+				</isNotEmpty>
+
+				<isNotEmpty property="employeeCode">	
+					<isEqual property="employeeCode" compareValue="cherry_clear">
+						BaCodeBelong = NULL, 
+						BIN_EmployeeID = NULL, 
+					</isEqual>
+					<isNotEqual property="employeeCode" compareValue="cherry_clear">
+						BaCodeBelong = #employeeCode#,
+						BIN_EmployeeID = #employeeId#,
+					</isNotEqual>
+				</isNotEmpty>
+				
+				<isNotEmpty property="organizationCode">	
+					<isEqual property="organizationCode" compareValue="cherry_clear">
+						CounterCodeBelong = NULL, 
+						BIN_OrganizationID = NULL, 
+					</isEqual>
+					<isNotEqual property="organizationCode" compareValue="cherry_clear">
+						CounterCodeBelong = #organizationCode#,
+						BIN_OrganizationID = #organizationId#,
+					</isNotEqual>
+				</isNotEmpty>
+				
+				<isNotEmpty property="gender">	
+					<isEqual property="gender" compareValue="cherry_clear">
+						Gender = NULL, 
+					</isEqual>
+					<isNotEqual property="gender" compareValue="cherry_clear">
+						Gender = #gender#,
+					</isNotEqual>
+				</isNotEmpty>
+
+				<isNotEmpty property="referrerId">	
+					<isEqual property="referrerId" compareValue="cherry_clear">
+						ReferrerID = NULL, 
+					</isEqual>
+					<isNotEqual property="referrerId" compareValue="cherry_clear">
+						ReferrerID = #referrerId#,
+					</isNotEqual>
+				</isNotEmpty>
+				
+				<isNotEmpty property="isReceiveMsg">	
+					<isEqual property="isReceiveMsg" compareValue="cherry_clear">
+						IsReceiveMsg = NULL, 
+					</isEqual>
+					<isNotEqual property="isReceiveMsg" compareValue="cherry_clear">
+						IsReceiveMsg = #isReceiveMsg#,
+					</isNotEqual>
+				</isNotEmpty>
+				
+				<isNotEmpty property="testType">	
+					<isEqual property="testType" compareValue="cherry_clear">
+						TestType = NULL, 
+					</isEqual>
+					<isNotEqual property="testType" compareValue="cherry_clear">
+						TestType = #testType#,
+					</isNotEqual>
+				</isNotEmpty>
+				
+				<isNotEmpty property="memType">	
+					<isEqual property="memType" compareValue="cherry_clear">
+						MemType = NULL, 
+					</isEqual>
+					<isNotEqual property="memType" compareValue="cherry_clear">
+						MemType = #memType#,
+					</isNotEqual>
+				</isNotEmpty>
+				Version = #version#,
+				<isNotEmpty property="memo1">	
+					<isEqual property="memo1" compareValue="cherry_clear">
+						Memo1 = NULL, 
+					</isEqual>
+					<isNotEqual property="memo1" compareValue="cherry_clear">
+						Memo1 = #memo1#,
+					</isNotEqual>
+				</isNotEmpty>
+				<isNotEmpty property="channelCode">	
+					<isEqual property="channelCode" compareValue="cherry_clear">
+						ChannelCode = NULL, 
+					</isEqual>
+					<isNotEqual property="channelCode" compareValue="cherry_clear">
+						ChannelCode = #channelCode#,
+					</isNotEqual>
+				</isNotEmpty>
+				<isNotEmpty property="messageId">	
+					<isEqual property="messageId" compareValue="cherry_clear">
+						MessageId = NULL, 
+					</isEqual>
+					<isNotEqual property="messageId" compareValue="cherry_clear">
+						MessageId = #messageId#,
+					</isNotEqual>
+				</isNotEmpty>
+				<isNotEmpty property="joinDate">	
+					<isEqual property="joinDate" compareValue="cherry_clear">
+						JoinDate = NULL, 
+					</isEqual>
+					<isNotEqual property="joinDate" compareValue="cherry_clear">
+						JoinDate = #joinDate#,
+					</isNotEqual>
+				</isNotEmpty>
+				<isNotEmpty property="joinTime">	
+					<isEqual property="joinTime" compareValue="cherry_clear">
+						JoinTime = NULL, 
+					</isEqual>
+					<isNotEqual property="joinTime" compareValue="cherry_clear">
+						JoinTime = #joinTime#,
+					</isNotEqual>
+				</isNotEmpty>
+				<isNotEmpty property="memAgeGetMethod">	
+					<isEqual property="memAgeGetMethod" compareValue="cherry_clear">
+						BirthYearGetType = NULL, 
+					</isEqual>
+					<isNotEqual property="memAgeGetMethod" compareValue="cherry_clear">
+						BirthYearGetType = #memAgeGetMethod#,
+					</isNotEqual>
+				</isNotEmpty>
+				<isNotEmpty property="active">	
+					<isEqual property="active" compareValue="cherry_clear">
+						Active = NULL, 
+					</isEqual>
+					<isNotEqual property="active" compareValue="cherry_clear">
+						Active = #active#,
+					</isNotEqual>
+				</isNotEmpty>
+				<isNotEmpty property="activeDate">	
+					<isEqual property="activeDate" compareValue="cherry_clear">
+						ActiveDate = NULL, 
+					</isEqual>
+					<isNotEqual property="activeDate" compareValue="cherry_clear">
+						ActiveDate = #activeDate#,
+					</isNotEqual>
+				</isNotEmpty>
+				<isNotEmpty property="activeChannel">	
+					<isEqual property="activeChannel" compareValue="cherry_clear">
+						ActiveChannel = NULL, 
+					</isEqual>
+					<isNotEqual property="activeChannel" compareValue="cherry_clear">
+						ActiveChannel = #activeChannel#,
+					</isNotEqual>
+				</isNotEmpty>
+				<isNotEmpty property="memberPassword">	
+					<isEqual property="memberPassword" compareValue="cherry_clear">
+						MemberPassword = NULL, 
+					</isEqual>
+					<isNotEqual property="memberPassword" compareValue="cherry_clear">
+						MemberPassword = #memberPassword#,
+					</isNotEqual>
+				</isNotEmpty>
+				<isNotEmpty property="dataSource1">	
+					<isEqual property="dataSource1" compareValue="cherry_clear">
+						DataSource1 = NULL, 
+					</isEqual>
+					<isNotEqual property="dataSource1" compareValue="cherry_clear">
+						DataSource1 = #dataSource1#,
+					</isNotEqual>
+				</isNotEmpty>
+				<isNotEmpty property="dataSource2">	
+					<isEqual property="dataSource2" compareValue="cherry_clear">
+						DataSource2 = NULL, 
+					</isEqual>
+					<isNotEqual property="dataSource2" compareValue="cherry_clear">
+						DataSource2 = #dataSource2#,
+					</isNotEqual>
+				</isNotEmpty>
+				<isNotEmpty property="dataSource3">	
+					<isEqual property="dataSource3" compareValue="cherry_clear">
+						DataSource3 = NULL, 
+					</isEqual>
+					<isNotEqual property="dataSource3" compareValue="cherry_clear">
+						DataSource3 = #dataSource3#,
+					</isNotEqual>
+				</isNotEmpty>
+				<isNotEmpty property="memo3">	
+					<isEqual property="memo3" compareValue="cherry_clear">
+						Memo3 = NULL, 
+					</isEqual>
+					<isNotEqual property="memo3" compareValue="cherry_clear">
+						Memo3 = #memo3#,
+					</isNotEqual>
+				</isNotEmpty>
+				<isNotEmpty property="profession">	
+						profession = #profession#,
+				</isNotEmpty>
+				<isNotEmpty property="interests">	
+						interests = #interests#,
+				</isNotEmpty>
+		<include refid="BINOLCMINC99.updateSql" />
+		<![CDATA[		
+			WHERE
+				BIN_MemberInfoID = #memberInfoId#
+		]]>	
+			<isEmpty property="synMemMode" prepend="AND">
+				UpdateTime = #modifyTime# AND
+				ModifyCount = #modifyCount#
+			</isEmpty>
+    </update>
+     <!-- 批量更新会员地址信息 -->
+	<update id="batchUpdAddressInfo" parameterClass="java.util.HashMap">
+			UPDATE 
+				Basis.BIN_AddressInfo 
+			SET 
+				<isNotEmpty property="address">	
+					<isEqual property="address" compareValue="cherry_clear">
+						AddressLine1 = NULL, 
+					</isEqual>
+					<isNotEqual property="address" compareValue="cherry_clear">
+						AddressLine1 = #address#,
+					</isNotEqual>
+				</isNotEmpty>
+				<isNotEmpty property="cityId">	
+					<isEqual property="cityId" compareValue="cherry_clear">
+						StandardCity = NULL, 
+					</isEqual>
+					<isNotEqual property="cityId" compareValue="cherry_clear">
+						StandardCity = #cityId#,
+					</isNotEqual>
+				</isNotEmpty>
+				<isNotEmpty property="provinceId">	
+					<isEqual property="provinceId" compareValue="cherry_clear">
+						StandardProvince = NULL, 
+					</isEqual>
+					<isNotEqual property="provinceId" compareValue="cherry_clear">
+						StandardProvince = #provinceId#,
+					</isNotEqual>
+				</isNotEmpty>
+				<isNotEmpty property="countyId">	
+					<isEqual property="countyId" compareValue="cherry_clear">
+						StandardCounty = NULL, 
+					</isEqual>
+					<isNotEqual property="countyId" compareValue="cherry_clear">
+						StandardCounty = #countyId#,
+					</isNotEqual>
+				</isNotEmpty>
+				<isNotEmpty property="postcode">	
+					<isEqual property="postcode" compareValue="cherry_clear">
+						ZipCode = NULL, 
+					</isEqual>
+					<isNotEqual property="postcode" compareValue="cherry_clear">
+						ZipCode = #postcode#,
+					</isNotEqual>
+				</isNotEmpty>
+		<include refid="BINOLCMINC99.updateSql" />
+		<![CDATA[		
+			WHERE
+				BIN_AddressInfoID = #addressInfoId#
+		]]>
+    </update>
+    
+     <!--批量更新会员扩展信息 -->
+	<update id="batchUpdMemberExtInfo" parameterClass="java.util.HashMap">
+			UPDATE
+				Members.BIN_MemberExtInfo
+			SET
+			<isNotEmpty property="initTotalAmount">	
+				<isEqual property="initTotalAmount" compareValue="cherry_clear">
+					InitTotalAmount = '0.00',
+				</isEqual>
+				<isNotEqual property="initTotalAmount" compareValue="cherry_clear">
+					InitTotalAmount = #initTotalAmount#,
+				</isNotEqual>
+			</isNotEmpty>
+		<include refid="BINOLCMINC99.updateSql" />
+		<![CDATA[		
+			WHERE
+				BIN_MemberInfoID = #memberInfoId#
+		]]>
+    </update>
+    
+     <!-- 会员id查询会员卡号 -->
+	<select id="getMemberCode" parameterClass="java.util.HashMap" resultClass="java.lang.String">
+		<![CDATA[
+			SELECT 
+				B.MemCode
+        	FROM 
+        		Members.BIN_MemberInfo A WITH(NOLOCK) 
+        		JOIN Members.BIN_MemCardInfo B WITH(NOLOCK) 
+        		ON A.BIN_MemberInfoID = B.BIN_MemberInfoID AND B.CardValidFlag='1'
+            WHERE 
+				A.BIN_MemberInfoID = #memberInfoId#
+		]]>
+    </select>
+    
+     <!-- 员工id查询卡号 -->
+	<select id="getEmployeeCode" parameterClass="java.util.HashMap" resultClass="java.lang.String">
+		<![CDATA[
+			SELECT 
+ 				 EmployeeCode
+  			FROM 
+  				Basis.BIN_Employee
+ 		   WHERE 
+ 		   		BIN_EmployeeID = #employeeId#
+		]]>
+    </select>
+    
+     <!-- 组织id查询卡号 -->
+	<select id="getOrganizationCode" parameterClass="java.util.HashMap" resultClass="java.lang.String">
+		<![CDATA[
+			
+			 SELECT 
+					DepartCode
+			  FROM
+					Basis.BIN_Organization
+ 			  WHERE 
+ 			        BIN_OrganizationID =#organizationId#
+		]]>
+    </select>
+    
+    <!-- 更新会员手机号 -->
+	<update id="updMemberMobile" parameterClass="java.util.HashMap">
+		<![CDATA[
+			UPDATE
+				Members.BIN_MemberInfo
+			SET
+				MobilePhone = #mobilePhone#,
+				Version = #version#,
+				
+		]]>
+			<isNotEmpty property="tmallMixMobile">
+				TmallMixMobile = #tmallMixMobile#,
+			</isNotEmpty>
+			<isNotEmpty property="isSameMobile">
+				IsSameMobile = #isSameMobile#,
+			</isNotEmpty>
+		<include refid="BINOLCMINC99.updateSql" />
+		<![CDATA[		
+			WHERE
+				BIN_MemberInfoID = #memberInfoId#
+		]]>	
+    </update>
+</sqlMap>

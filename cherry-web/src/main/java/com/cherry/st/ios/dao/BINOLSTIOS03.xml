@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sqlMap PUBLIC "-//iBATIS.com//DTD SQL Map 2.0//EN" "http://ibatis.apache.org/dtd/sql-map-2.dtd">
+<sqlMap namespace="BINOLSTIOS03">
+<!--根据产品条码以及厂商编码获取产品厂商ID以及对应的库存-->
+	<select id="getPrtVenIdAndStock" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+		SELECT
+			A.BIN_ProductVendorID AS productVendorId,
+			A.Quantity AS quantity
+		FROM
+			Inventory.BIN_ProductStock A
+			JOIN Basis.BIN_ProductVendor B
+			ON(A.BIN_ProductVendorID = B.BIN_ProductVendorID
+			AND B.ValidFlag = 1)
+			JOIN Basis.BIN_Product C
+			ON(B.BIN_ProductID = C.BIN_ProductID
+			AND C.ValidFlag = 1)
+		WHERE
+			A.ValidFlag = 1
+			AND B.BarCode = #barCode#
+			AND C.UnitCode = #unitCode#
+			AND C.BIN_OrganizationInfoID = #organizationInfoId#
+			AND C.BIN_BrandInfoID = #brandInfoId#
+			AND A.BIN_InventoryInfoID = #inventoryInfoId#
+			AND A.BIN_LogicInventoryInfoID = #logicInventoryInfoId#
+	</select>
+	
+	<select id="getOrganIdByDepotInfoID" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+    <![CDATA[
+        SELECT
+            BIN_OrganizationID
+        FROM
+            Basis.BIN_DepotInfo
+        WHERE
+            BIN_DepotInfoID = #depotInfoId#
+			AND ValidFlag = '1'
+    ]]>
+    </select>
+	
+	<select id="getDepart" parameterClass="java.util.HashMap" resultClass="java.lang.String">
+        <![CDATA[
+            SELECT
+               '('+DepartCode+')'+DepartName
+            FROM
+                Basis.BIN_Organization
+            WHERE
+                BIN_OrganizationID=#BIN_OrganizationID#
+        ]]>
+    </select>
+</sqlMap>

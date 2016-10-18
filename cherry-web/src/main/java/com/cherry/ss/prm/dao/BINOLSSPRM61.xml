@@ -1,0 +1,164 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sqlMap PUBLIC "-//iBATIS.com//DTD SQL Map 2.0//EN" "http://ibatis.apache.org/dtd/sql-map-2.dtd">
+<sqlMap namespace="BINOLSSPRM61">
+    <sql id="shiftQuery">
+        <![CDATA[
+            SELECT
+                DISTINCT      
+                A.BIN_BrandInfoID,
+                A.BIN_PromotionShiftID as promotionShiftID,
+                A.BillNo as billNo,
+                A.BillNoIF as billNoIF,
+                A.RelevanceNo as relevanceNo,
+                A.BIN_EmployeeID as employeeID,
+                A.BIN_EmployeeIDAudit as employeeIDAudit,
+                A.VerifiedFlag as verifiedFlag,
+                A.Comments as comments,
+                A.OperateDate as operateDate,
+                B.DepartCode as departCode,
+                F.DepotCode as fromDepotCode,
+                F.DepotNameCN as fromDepot,
+                G.LogicInventoryCode as fromLogicInventoryCode,
+                G.InventoryNameCN as fromLogicInventory,
+                H.LogicInventoryCode as toLogicInventoryCode,
+                H.InventoryNameCN as toLogicInventory
+        ]]>
+        <dynamic>
+            <isNotEmpty property="language">
+                <isEqual property="language" compareValue="en_US">
+                    ,B.NameForeign AS departName
+            </isEqual>
+                <isEqual property="language" compareValue="zh_CN">
+                    ,B.DepartName AS departName     
+            </isEqual>
+            </isNotEmpty>
+            <isEmpty property="language">
+                ,B.DepartName AS departName
+        </isEmpty>
+        </dynamic>
+        <isNotEmpty property="prmVendorId">
+            <![CDATA[
+                ,ISNULL(SUM(ISNULL(C.Quantity,0)),0) AS totalQuantity
+                ,ISNULL(SUM(ISNULL(C.Quantity,0)*ISNULL(C.Price,0)),0) AS totalAmount
+            ]]>
+        </isNotEmpty>
+        <isEmpty property="prmVendorId">
+            <![CDATA[
+                ,ISNULL(A.TotalQuantity,0) AS totalQuantity
+                ,ISNULL(A.TotalAmount,0) AS totalAmount
+            ]]>
+        </isEmpty>
+        <![CDATA[
+            FROM                
+                Inventory.BIN_PromotionShift A
+                LEFT JOIN Basis.BIN_Organization B ON(A.BIN_OrganizationID = B.BIN_OrganizationID)
+                JOIN Inventory.BIN_PromotionShiftDetail C ON(A.BIN_PromotionShiftID = C.BIN_PromotionShiftID)
+                LEFT JOIN Basis.BIN_DepotInfo F ON(C.FromDepotInfoID=F.BIN_DepotInfoID)
+                LEFT JOIN Basis.BIN_LogicInventory G ON (C.FromLogicInventoryInfoID = G.BIN_LogicInventoryInfoID)
+                LEFT JOIN Basis.BIN_LogicInventory H ON (C.ToLogicInventoryInfoID = H.BIN_LogicInventoryInfoID)
+            ]]>
+        <![CDATA[       
+            WHERE
+                A.ValidFlag = '1'
+                AND A.BIN_OrganizationInfoID = #organizationInfoId#     
+        ]]>
+        <![CDATA[AND EXISTS (]]>
+        <include refid="BINOLCMINC99.getDepartList" />
+        <![CDATA[AND A.BIN_OrganizationID = A99.BIN_OrganizationID)]]>
+        <isNotEmpty prepend="AND" property="brandInfoId">
+            A.BIN_BrandInfoID = #brandInfoId#
+        </isNotEmpty>
+        <isNotEmpty prepend="AND" property="startDate">
+            <![CDATA[ A.OperateDate >= #startDate# ]]>
+        </isNotEmpty>
+        <isNotEmpty prepend="AND" property="endDate">
+            <![CDATA[ A.OperateDate <= #endDate# ]]>
+        </isNotEmpty>
+        <isNotEmpty prepend="AND" property="billNo">
+            (A.BillNoIF LIKE '%' + #billNo# + '%')
+        </isNotEmpty>
+        <isNotEmpty prepend="AND" property="verifiedFlag">
+            <![CDATA[A.VerifiedFlag = #verifiedFlag#]]>
+        </isNotEmpty>
+        <isNotEmpty prepend="AND" property="depotId">
+            (C.FromDepotInfoID = #depotId#)
+        </isNotEmpty>
+        <isNotEmpty prepend="AND" property="prmVendorId">
+            <![CDATA[
+                C.BIN_PromotionProductVendorID = #prmVendorId#
+                GROUP BY
+                    A.BIN_BrandInfoID,
+                    A.BIN_PromotionShiftID,
+                    A.BillNo,
+                    A.BillNoIF,
+                    A.RelevanceNo,
+                    A.BIN_EmployeeID,
+                    A.BIN_EmployeeIDAudit,
+                    A.VerifiedFlag,
+                    A.Comments,
+                    A.OperateDate,
+                    B.DepartCode,
+                    F.DepotCode,
+                    F.DepotNameCN,
+                    G.LogicInventoryCode,
+                    G.InventoryNameCN,
+                    H.LogicInventoryCode,
+                    H.InventoryNameCN,   
+            ]]>
+            <isNotEmpty property="language">
+                <isEqual property="language" compareValue="en_US">
+                    B.NameForeign
+                </isEqual>
+                <isEqual property="language" compareValue="zh_CN">
+                    B.DepartName
+                </isEqual>
+            </isNotEmpty>
+            <isEmpty property="language">
+                B.DepartName
+            </isEmpty>
+        </isNotEmpty>
+    </sql>
+
+    <!-- 取得移库单总数  -->
+    <select id="getShiftCount" parameterClass="java.util.HashMap" resultClass="java.lang.Integer">
+        <![CDATA[
+            SELECT COUNT(SORT_T1.promotionShiftID) AS count FROM (
+        ]]>
+        <include refid="BINOLSSPRM61.shiftQuery" /> 
+        <![CDATA[   
+            )SORT_T1
+        ]]>
+    </select>
+
+    <select id="getShiftList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+        <include refid="BINOLCMINC99.pageheader" />
+        <![CDATA[
+            SELECT  
+                T20.*, 
+                CASE WHEN EXISTS(SELECT 1 FROM Basis.BIN_PrintLog T10 WHERE 
+                                    T20.BIN_BrandInfoID = T10.BIN_BrandInfoID 
+                                    AND T20.billNoIF = T10.BillNo) 
+                THEN 1 ELSE 0 END AS printStatus
+            FROM (
+        ]]> 
+        <include refid="BINOLSSPRM61.shiftQuery" /> 
+        <![CDATA[   
+            )T20
+        ]]> 
+        <include refid="BINOLCMINC99.pagefooter" />
+    </select>
+    
+     <!-- 取得移库单汇总信息【促销品作为检索条件】  -->
+    <select id="getSumInfo" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+        <![CDATA[
+            SELECT  
+                ISNULL(SUM(SORT_T1.totalQuantity),0) AS sumQuantity,
+                ISNULL(SUM(SORT_T1.totalAmount),0) AS sumAmount
+            FROM (
+        ]]> 
+        <include refid="BINOLSSPRM61.shiftQuery" />
+        <![CDATA[
+            )SORT_T1
+        ]]>
+      </select>
+</sqlMap>

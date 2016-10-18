@@ -1,0 +1,1468 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sqlMap PUBLIC "-//iBATIS.com//DTD SQL Map 2.0//EN" "http://ibatis.apache.org/dtd/sql-map-2.dtd">
+<sqlMap namespace="BINOLPTJCS17">
+
+	<!-- 取得方案对应的配置信息 -->
+    <select id="getDPConfigDetailBySolu" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+	  SELECT 
+	  	  DPCD.PlaceType,
+		  DPCD.SaveJson,
+		  PPS.ValidFlag AS ppsValidFlag
+	  FROM 
+		  Basis.BIN_DepartProductConfigDetail DPCD
+	  JOIN 
+	  	  Basis.BIN_ProductPriceSolution PPS ON PPS.BIN_ProductPriceSolutionID = DPCD.BIN_SolutionId
+	  WHERE
+	  		DPCD.BIN_OrganizationInfoID = #organizationInfoId#
+	  AND	DPCD.BIN_BrandInfoID = #brandInfoId# 
+	  AND   DPCD.BIN_SolutionId = #productPriceSolutionID#
+    </select>
+
+	<!-- 取得产品方案配置信息List -->
+    <select id="getDPConfigDetailList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+		SELECT 
+			BIN_SolutionId AS productPriceSolutionID,
+	  		PlaceType,
+			SaveJson
+		FROM 
+			Basis.BIN_DepartProductConfigDetail
+	  	WHERE
+			BIN_OrganizationInfoID = #organizationInfoId#
+		AND	BIN_BrandInfoID = #brandInfoId# 
+		<isNotEmpty property="palceTypeList" prepend="AND">
+			PlaceType IN
+			<iterate conjunction="," open="(" close=")" property="palceTypeList">  
+		        #palceTypeList[]#
+		    </iterate>
+		</isNotEmpty> 
+	  	ORDER BY UpdateTime ASC
+    </select>
+    
+    <!-- 取得区域信息 -->
+	<select id="getRegionInfoListOld" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+		<![CDATA[											
+			SELECT DISTINCT											
+				A.BIN_RegionID AS cityId,	
+				 ]]>
+    			<dynamic>
+					<isNotEmpty property="language">
+						<isEqual property="language" compareValue="en_US">										
+							A.RegionNameForeign AS cityName,
+						</isEqual>
+						<isEqual property="language" compareValue="zh_CN">										
+							A.RegionNameChinese AS cityName,
+						</isEqual>								
+					</isNotEmpty>
+					<isEmpty property="language">
+						A.RegionNameChinese AS cityName,
+					</isEmpty>
+				</dynamic>
+    			<![CDATA[										
+				B.BIN_RegionID AS provinceId,
+				]]>
+    			<dynamic>
+					<isNotEmpty property="language">
+						<isEqual property="language" compareValue="en_US">										
+							B.RegionNameForeign AS provinceName,
+						</isEqual>
+						<isEqual property="language" compareValue="zh_CN">										
+							B.RegionNameChinese AS provinceName,
+						</isEqual>								
+					</isNotEmpty>
+					<isEmpty property="language">
+						B.RegionNameChinese AS provinceName,
+					</isEmpty>
+				</dynamic>
+    			<![CDATA[
+				C.BIN_RegionID AS regionId
+				]]>
+    			<dynamic>
+					<isNotEmpty property="language">
+						<isEqual property="language" compareValue="en_US">										
+							,C.RegionNameForeign AS regionName
+						</isEqual>
+						<isEqual property="language" compareValue="zh_CN">										
+							,C.RegionNameChinese AS regionName
+						</isEqual>								
+					</isNotEmpty>
+					<isEmpty property="language">
+						,C.RegionNameChinese AS regionName
+					</isEmpty>
+					<isNotEmpty property="city_counter">	
+						,D.CounterCode AS counterCode
+						,oz.DepartName + '(' +D.CounterCode+ ')' AS counterName						
+					</isNotEmpty>
+					<isEmpty property="city_counter">	
+						,null AS counterCode
+						,null AS counterName						
+					</isEmpty>
+				</dynamic>
+    			<![CDATA[			
+			FROM												
+				Basis.BIN_Region A,
+				Basis.BIN_Region B,
+				Basis.BIN_Region C,
+				Basis.BIN_Region AD
+				]]>
+				<![CDATA[	
+				JOIN Basis.BIN_CounterInfo D
+				ON(D.BIN_RegionID = AD.BIN_RegionID)
+				JOIN Basis.BIN_Organization oz
+				ON(D.BIN_OrganizationID = oz.BIN_OrganizationID)
+				]]>
+				JOIN(
+				<include refid="BINOLCMINC99.departPrivilegeSql" />
+				)dp
+				ON(dp.BIN_OrganizationID = oz.BIN_OrganizationID)
+				<![CDATA[
+			WHERE
+				C.BIN_OrganizationInfoID = #organizationInfoId#  AND 
+				]]>
+					<isNotEmpty property="brandInfoId">
+	    				C.BIN_BrandInfoID = #brandInfoId# AND
+	    			</isNotEmpty>
+					<isNotEmpty property="city_counter">
+						D.ValidFlag='1' AND
+						oz.ValidFlag='1' AND 	
+					</isNotEmpty>
+				<![CDATA[
+				C.RegionType = '0' AND											
+				A.NodeID.GetAncestor(1) = B.NodeID AND	
+				B.NodeID.GetAncestor(1) = C.NodeID AND
+				AD.NodeID.IsDescendantOf(A.NodeID)=1 AND				
+				A.ValidFlag = '1' AND
+				B.ValidFlag = '1' AND
+				C.ValidFlag = '1' 
+		]]>
+    </select>
+    
+    <!-- 取得渠道信息 -->
+    <select id="getChannelInfoListOld" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+    	<![CDATA[
+    		SELECT DISTINCT
+    			bc.BIN_ChannelID AS id
+    			]]>
+    			<dynamic>
+					<isNotEmpty property="language">
+						<isEqual property="language" compareValue="en_US">										
+							,bc.ChannelNameForeign AS name
+						</isEqual>
+						<isEqual property="language" compareValue="zh_CN">										
+							,bc.ChannelName AS name
+						</isEqual>								
+					</isNotEmpty>
+					<isEmpty property="language">
+						,bc.ChannelName AS name
+					</isEmpty>
+					<isNotEmpty property="channel_counter">	
+    					,ci.CounterCode AS counterCode
+						,oz.DepartName + '(' +ci.CounterCode+ ')' AS counterName							
+					</isNotEmpty>
+					<isEmpty property="channel_counter">	
+    					,null AS counterCode
+						,null AS counterName							
+					</isEmpty>
+				</dynamic>
+    			<![CDATA[
+    		FROM
+    		    Basis.BIN_Channel bc
+	    		]]>
+    				<![CDATA[
+   					JOIN Basis.BIN_CounterInfo ci
+					ON(bc.BIN_ChannelID = ci.BIN_ChannelID)
+    				JOIN Basis.BIN_Organization oz
+	    			ON(ci.BIN_OrganizationID = oz.BIN_OrganizationID)
+					]]>
+					JOIN (
+					<include refid="BINOLCMINC99.departPrivilegeSql" />
+					)dp	
+					ON(dp.BIN_OrganizationID = oz.BIN_OrganizationID)
+				<![CDATA[
+    		WHERE 
+    			bc.BIN_OrganizationInfoID = #organizationInfoId#  AND 
+	    		]]>
+					<isNotEmpty property="brandInfoId">
+	    				bc.BIN_BrandInfoID = #brandInfoId# AND
+	    			</isNotEmpty>
+					<isNotEmpty property="channel_counter">
+						ci.ValidFlag = '1' AND
+						oz.ValidFlag = '1' AND	
+					</isNotEmpty>
+				<![CDATA[
+				bc.ValidFlag = '1'
+    	]]>			
+    </select>
+    
+    <!-- 取得区域信息 -->
+	<select id="getRegionInfoList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+		<![CDATA[											
+			SELECT DISTINCT											
+				A.BIN_RegionID AS cityId,	
+				 ]]>
+    			<dynamic>
+					<isNotEmpty property="language">
+						<isEqual property="language" compareValue="en_US">										
+							A.RegionNameForeign AS cityName,
+						</isEqual>
+						<isEqual property="language" compareValue="zh_CN">										
+							A.RegionNameChinese AS cityName,
+						</isEqual>								
+					</isNotEmpty>
+					<isEmpty property="language">
+						A.RegionNameChinese AS cityName,
+					</isEmpty>
+				</dynamic>
+    			<![CDATA[										
+				B.BIN_RegionID AS provinceId,
+				]]>
+    			<dynamic>
+					<isNotEmpty property="language">
+						<isEqual property="language" compareValue="en_US">										
+							B.RegionNameForeign AS provinceName,
+						</isEqual>
+						<isEqual property="language" compareValue="zh_CN">										
+							B.RegionNameChinese AS provinceName,
+						</isEqual>								
+					</isNotEmpty>
+					<isEmpty property="language">
+						B.RegionNameChinese AS provinceName,
+					</isEmpty>
+				</dynamic>
+    			<![CDATA[
+				C.BIN_RegionID AS regionId
+				]]>
+    			<dynamic>
+					<isNotEmpty property="language">
+						<isEqual property="language" compareValue="en_US">										
+							,C.RegionNameForeign AS regionName
+						</isEqual>
+						<isEqual property="language" compareValue="zh_CN">										
+							,C.RegionNameChinese AS regionName
+						</isEqual>								
+					</isNotEmpty>
+					<isEmpty property="language">
+						,C.RegionNameChinese AS regionName
+					</isEmpty>
+					<isNotEmpty property="city_counter">	
+						,D.CounterCode AS counterCode
+						,oz.DepartName + '(' +D.CounterCode+ ')' AS counterName						
+					</isNotEmpty>
+					<isEmpty property="city_counter">	
+						,null AS counterCode
+						,null AS counterName						
+					</isEmpty>
+				</dynamic>
+    			<![CDATA[			
+			FROM												
+				Basis.BIN_Region A,
+				Basis.BIN_Region B,
+				Basis.BIN_Region C,
+				Basis.BIN_Region AD
+				]]>
+				<![CDATA[	
+				JOIN Basis.BIN_CounterInfo D
+				ON(D.BIN_RegionID = AD.BIN_RegionID)
+				JOIN Basis.BIN_Organization oz
+				ON(D.BIN_OrganizationID = oz.BIN_OrganizationID)
+				]]>
+				JOIN(
+				<include refid="BINOLCMINC99.departPrivilegeSql" />
+				)dp
+				ON(dp.BIN_OrganizationID = oz.BIN_OrganizationID)
+				<![CDATA[
+			WHERE
+				C.BIN_OrganizationInfoID = #organizationInfoId#  AND 
+				]]>
+					<isNotEmpty property="brandInfoId">
+	    				C.BIN_BrandInfoID = #brandInfoId# 
+	    			</isNotEmpty>
+	    			
+	    			<isNotEmpty property="detailFlg">
+	    				<isNotEmpty property="leftTree">
+		    				<isEqual property="detailFlg" compareValue="city">
+		    					<isNotEmpty property="saveJsonList" prepend="AND">
+			    					A.BIN_RegionID NOT IN
+									<iterate conjunction="," open="(" close=")" property="saveJsonList">  
+								        #saveJsonList[]#
+								    </iterate>
+							    </isNotEmpty>
+		    				</isEqual>
+		    				<isEqual property="detailFlg" compareValue="counter">
+		    					<isNotEmpty property="saveJsonList" prepend="AND">
+			    					D.CounterCode NOT IN 
+									<iterate conjunction="," open="(" close=")" property="saveJsonList">  
+								        #saveJsonList[]#
+								    </iterate>
+							    </isNotEmpty>
+		    				</isEqual>
+	    					 
+    					</isNotEmpty>
+	    				<isNotEmpty property="rightTree">
+		    				<isEqual property="detailFlg" compareValue="city">
+		    					<isNotEmpty property="saveJsonList" prepend="AND">
+			    					A.BIN_RegionID IN 
+									<iterate conjunction="," open="(" close=")" property="saveJsonList">  
+								        #saveJsonList[]#
+								    </iterate>
+							    </isNotEmpty>
+		    					 
+		    				</isEqual>
+		    				<isEqual property="detailFlg" compareValue="counter">
+		    					<isNotEmpty property="saveJsonList" prepend="AND">
+		    						D.CounterCode IN 
+									<iterate conjunction="," open="(" close=")" property="saveJsonList">  
+								        #saveJsonList[]#
+								    </iterate>
+		    					</isNotEmpty>
+		    					 
+		    				</isEqual>
+    					</isNotEmpty>
+	    				AND
+	    			</isNotEmpty>
+					<isNotEmpty property="city_counter">
+						D.ValidFlag='1' AND
+						oz.ValidFlag='1' AND 	
+					</isNotEmpty>
+				<![CDATA[
+				C.RegionType = '0' AND											
+				A.NodeID.GetAncestor(1) = B.NodeID AND	
+				B.NodeID.GetAncestor(1) = C.NodeID AND
+				AD.NodeID.IsDescendantOf(A.NodeID)=1 AND				
+				A.ValidFlag = '1' AND
+				B.ValidFlag = '1' AND
+				C.ValidFlag = '1' 
+		]]>
+    </select>
+    
+    <!-- 取得(门店用)区域信息 -->
+	<select id="getRegionInfoListCnt" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+		<![CDATA[											
+			SELECT DISTINCT											
+				A.BIN_RegionID AS cityId,	
+				 ]]>
+    			<dynamic>
+					<isNotEmpty property="language">
+						<isEqual property="language" compareValue="en_US">										
+							A.RegionNameForeign AS cityName,
+						</isEqual>
+						<isEqual property="language" compareValue="zh_CN">										
+							A.RegionNameChinese AS cityName,
+						</isEqual>								
+					</isNotEmpty>
+					<isEmpty property="language">
+						A.RegionNameChinese AS cityName,
+					</isEmpty>
+				</dynamic>
+    			<![CDATA[										
+				B.BIN_RegionID AS provinceId,
+				]]>
+    			<dynamic>
+					<isNotEmpty property="language">
+						<isEqual property="language" compareValue="en_US">										
+							B.RegionNameForeign AS provinceName,
+						</isEqual>
+						<isEqual property="language" compareValue="zh_CN">										
+							B.RegionNameChinese AS provinceName,
+						</isEqual>								
+					</isNotEmpty>
+					<isEmpty property="language">
+						B.RegionNameChinese AS provinceName,
+					</isEmpty>
+				</dynamic>
+    			<![CDATA[
+				C.BIN_RegionID AS regionId
+				]]>
+    			<dynamic>
+					<isNotEmpty property="language">
+						<isEqual property="language" compareValue="en_US">										
+							,C.RegionNameForeign AS regionName
+						</isEqual>
+						<isEqual property="language" compareValue="zh_CN">										
+							,C.RegionNameChinese AS regionName
+						</isEqual>								
+					</isNotEmpty>
+					<isEmpty property="language">
+						,C.RegionNameChinese AS regionName
+					</isEmpty>
+					<isNotEmpty property="city_counter">	
+						,D.CounterCode AS counterCode
+						,oz.DepartName + '(' +D.CounterCode+ ')' AS counterName						
+					</isNotEmpty>
+					<isEmpty property="city_counter">	
+						,null AS counterCode
+						,null AS counterName						
+					</isEmpty>
+				</dynamic>
+    			<![CDATA[			
+				FROM  
+					 Basis.BIN_CounterInfo D   
+				JOIN Basis.BIN_Organization oz ON(D.BIN_OrganizationID = oz.BIN_OrganizationID)    
+				LEFT JOIN Basis.BIN_Region A ON A.BIN_RegionID = oz.BIN_CityID
+				LEFT JOIN Basis.BIN_Region B ON B.BIN_RegionID = oz.BIN_ProvinceID
+				LEFT JOIN Basis.BIN_Region C ON C.BIN_RegionID = oz.BIN_RegionID  
+				]]>
+				JOIN(
+				<include refid="BINOLCMINC99.departPrivilegeSql" />
+				)dp
+				ON(dp.BIN_OrganizationID = oz.BIN_OrganizationID)
+				<![CDATA[
+			WHERE
+				D.BIN_OrganizationInfoID = #organizationInfoId#   
+				]]>
+					<isNotEmpty property="brandInfoId" prepend="AND">
+	    				D.BIN_BrandInfoID = #brandInfoId# 
+	    			</isNotEmpty>
+	    			
+	    			<isNotEmpty property="detailFlg">
+	    				<isNotEmpty property="leftTree">
+		    				<isEqual property="detailFlg" compareValue="city">
+		    					<isNotEmpty property="saveJsonList" prepend="AND">
+			    					A.BIN_RegionID NOT IN
+									<iterate conjunction="," open="(" close=")" property="saveJsonList">  
+								        #saveJsonList[]#
+								    </iterate>
+							    </isNotEmpty>
+		    				</isEqual>
+		    				<isEqual property="detailFlg" compareValue="counter">
+		    					<isNotEmpty property="saveJsonList" prepend="AND">
+			    					D.CounterCode NOT IN 
+									<iterate conjunction="," open="(" close=")" property="saveJsonList">  
+								        #saveJsonList[]#
+								    </iterate>
+							    </isNotEmpty>
+		    				</isEqual>
+	    					 
+    					</isNotEmpty>
+	    				<isNotEmpty property="rightTree">
+		    				<isEqual property="detailFlg" compareValue="city">
+		    					<isNotEmpty property="saveJsonList" prepend="AND">
+			    					A.BIN_RegionID IN 
+									<iterate conjunction="," open="(" close=")" property="saveJsonList">  
+								        #saveJsonList[]#
+								    </iterate>
+							    </isNotEmpty>
+		    					 
+		    				</isEqual>
+		    				<isEqual property="detailFlg" compareValue="counter">
+		    					<isNotEmpty property="saveJsonList" prepend="AND">
+		    						D.CounterCode IN 
+									<iterate conjunction="," open="(" close=")" property="saveJsonList">  
+								        #saveJsonList[]#
+								    </iterate>
+		    					</isNotEmpty>
+		    					 
+		    				</isEqual>
+    					</isNotEmpty>
+	    			</isNotEmpty>
+					<isNotEmpty property="city_counter" prepend="AND">
+						D.ValidFlag='1' AND
+						oz.ValidFlag='1' 	
+					</isNotEmpty>
+	</select>
+    
+    <!-- 取得渠道信息 -->
+    <select id="getChannelInfoList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+    	<![CDATA[
+    		SELECT DISTINCT
+    			bc.BIN_ChannelID AS id
+    			]]>
+    			<dynamic>
+					<isNotEmpty property="language">
+						<isEqual property="language" compareValue="en_US">										
+							,bc.ChannelNameForeign AS name
+						</isEqual>
+						<isEqual property="language" compareValue="zh_CN">										
+							,bc.ChannelName AS name
+						</isEqual>								
+					</isNotEmpty>
+					<isEmpty property="language">
+						,bc.ChannelName AS name
+					</isEmpty>
+					<isNotEmpty property="channel_counter">	
+    					,ci.CounterCode AS counterCode
+						,oz.DepartName + '(' +ci.CounterCode+ ')' AS counterName							
+					</isNotEmpty>
+					<isEmpty property="channel_counter">	
+    					,null AS counterCode
+						,null AS counterName							
+					</isEmpty>
+				</dynamic>
+    			<![CDATA[
+    		FROM
+    		    Basis.BIN_Channel bc
+	    		]]>
+    				<![CDATA[
+   					JOIN Basis.BIN_CounterInfo ci
+					ON(bc.BIN_ChannelID = ci.BIN_ChannelID)
+    				JOIN Basis.BIN_Organization oz
+	    			ON(ci.BIN_OrganizationID = oz.BIN_OrganizationID)
+					]]>
+					JOIN (
+					<include refid="BINOLCMINC99.departPrivilegeSql" />
+					)dp	
+					ON(dp.BIN_OrganizationID = oz.BIN_OrganizationID)
+				<![CDATA[
+    		WHERE 
+    			bc.BIN_OrganizationInfoID = #organizationInfoId#  AND 
+	    		]]>
+					<isNotEmpty property="brandInfoId">
+	    				bc.BIN_BrandInfoID = #brandInfoId#
+	    			</isNotEmpty>
+	    			<isNotEmpty property="detailFlg">
+	    				<isNotEmpty property="leftTree">
+		    				<isEqual property="detailFlg" compareValue="channel">
+		    					<isNotEmpty property="saveJsonList" prepend="AND">
+		    					bc.BIN_ChannelID NOT IN
+								<iterate conjunction="," open="(" close=")" property="saveJsonList">  
+							        #saveJsonList[]#
+							    </iterate>
+							    </isNotEmpty>
+		    					 
+		    				</isEqual>
+		    				<isEqual property="detailFlg" compareValue="counter">
+		    					<isNotEmpty property="saveJsonList" prepend="AND">
+		    					ci.CounterCode NOT IN
+								<iterate conjunction="," open="(" close=")" property="saveJsonList">  
+							        #saveJsonList[]#
+							    </iterate>
+							    </isNotEmpty>
+		    					 
+		    				</isEqual>
+    					</isNotEmpty>
+	    				<isNotEmpty property="rightTree">
+		    				<isEqual property="detailFlg" compareValue="channel">
+		    					<isNotEmpty property="saveJsonList" prepend="AND">
+			    					bc.BIN_ChannelID IN
+									<iterate conjunction="," open="(" close=")" property="saveJsonList">  
+								        #saveJsonList[]#
+								    </iterate>
+							    </isNotEmpty>
+		    					 
+		    				</isEqual>
+		    				<isEqual property="detailFlg" compareValue="counter">
+		    					<isNotEmpty property="saveJsonList" prepend="AND">
+			    					ci.CounterCode IN
+									<iterate conjunction="," open="(" close=")" property="saveJsonList">  
+								        #saveJsonList[]#
+								    </iterate>
+							    </isNotEmpty>
+		    					 
+		    				</isEqual>
+    					</isNotEmpty>
+	    				AND
+	    			</isNotEmpty>
+					<isNotEmpty property="channel_counter">
+						ci.ValidFlag = '1' AND
+						oz.ValidFlag = '1' AND	
+					</isNotEmpty>
+				<![CDATA[
+				bc.ValidFlag = '1'
+    	]]>			
+    </select>
+    
+	<!-- 取得方案明细与关联柜台List -->
+    <select id="getSoluDetailProductDepartPriceList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+    <![CDATA[
+ 		SELECT 
+  			PPSD.BIN_ProductID,
+  			DPCD.PlaceType,
+  			DPCD.SaveJson,
+  			PPSD.PriceJson,
+  			PPS.StartDate,
+  			PPS.EndDate,
+  			A.ValidFlag,
+  			ISNULL(A.Status,'E') AS Status,
+			CASE 
+				WHEN (A.SellStartDate IS NOT NULL AND A.SellEndDate IS NULL AND #priceDate# >= A.SellStartDate) 
+				  OR (A.SellEndDate IS NOT NULL AND A.SellStartDate IS NULL AND #priceDate# <= A.SellEndDate)
+			      OR (A.SellStartDate IS NOT NULL AND A.SellEndDate IS NOT NULL AND A.SellStartDate <= #priceDate# AND #priceDate# <= A.SellEndDate) 
+			      OR (A.SellStartDate IS NULL AND A.SellEndDate IS NULL)
+			    THEN '0' ELSE '1' END AS SellDateFlag
+  		FROM 
+			 Basis.BIN_DepartProductConfigDetail DPCD
+		JOIN Basis.BIN_ProductPriceSolution PPS ON PPS.BIN_ProductPriceSolutionID = DPCD.BIN_SolutionId
+		JOIN Basis.BIN_ProductPriceSolutionDetail PPSD ON PPSD.BIN_ProductPriceSolutionID = PPS.BIN_ProductPriceSolutionID
+		JOIN Basis.BIN_Product A ON A.BIN_ProductID = PPSD.BIN_ProductID
+		WHERE 
+			PPS.BIN_ProductPriceSolutionID = #productPriceSolutionID#
+		AND	DPCD.BIN_OrganizationInfoID = #organizationInfoId#
+		AND DPCD.BIN_BrandInfoID =#brandInfoId#
+	]]>
+    </select>
+    
+    <!-- 根据城市ID或区域ID 取得权限内的柜台号 -->
+    <select id="getCounterInfoList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+     <![CDATA[
+		SELECT D.CounterCode
+		FROM Basis.BIN_CounterInfo D
+		JOIN Basis.BIN_Organization oz ON(D.BIN_OrganizationID = oz.BIN_OrganizationID)
+		]]>
+		<!-- 暂时取消权限
+		JOIN (
+		<include refid="BINOLCMINC99.departPrivilegeSql" />
+		)dp ON(dp.BIN_OrganizationID = oz.BIN_OrganizationID)
+		-->
+		WHERE
+			D.BIN_OrganizationInfoID = #organizationInfoId#
+			AND D.BIN_BrandInfoID = #brandInfoId# 
+			<isNotEmpty property="city" >
+				<isNotEmpty property="cityList" prepend="AND">
+				oz.BIN_CityID IN
+				<iterate conjunction="," open="(" close=")" property="cityList">  
+			        #cityList[]#
+			    </iterate>
+			    </isNotEmpty>
+			    AND oz.ValidFlag = '1'
+			</isNotEmpty>
+			<isNotEmpty property="channel">
+				<isNotEmpty property="channelList" prepend="AND">
+				D.BIN_ChannelID IN 
+				<iterate conjunction="," open="(" close=")" property="channelList">  
+			        #channelList[]#
+			    </iterate>
+			    </isNotEmpty>
+			    AND D.ValidFlag = '1'
+			</isNotEmpty>
+		
+    </select>
+    
+   	<!-- 将方案绑定柜台对应的部门产品表的数据无效  -->
+	<update id="updProductDepart" parameterClass="java.util.HashMap">
+		<![CDATA[	
+			UPDATE PD
+				SET 
+				PD.ValidFlag = '0',
+				Version = #tVersion# + 1,
+		]]>
+		<include refid="BINOLCMINC99.updateSql" />
+		<![CDATA[	
+			FROM Basis.BIN_ProductDepart PD
+			WHERE
+				BIN_OrganizationInfoID = #organizationInfoId#
+			AND	BIN_BrandInfoID = #brandInfoId#
+			AND DepartCode = #CounterCode#
+		]]>
+		 AND BIN_ProductID = #BIN_ProductID# 
+	</update>
+    
+   	<!-- 将产品方案部门关系表的数据无效  -->
+	<update id="updPrtSoluDepartRelation" parameterClass="java.util.HashMap">
+		<![CDATA[	
+			UPDATE PSD
+				SET 
+				PSD.ValidFlag = (CASE WHEN (#psdValidFlag# = 1 AND oz.ValidFlag = '1' AND PPSD.ValidFlag = '1' ) THEN '1' ELSE '0' END),
+				PSD.Version = #tVersion# + 1,
+				
+				PSD.UpdateTime=GETDATE(),
+				PSD.UpdatedBy=#updatedBy#,
+				PSD.UpdatePGM=#updatePGM#,
+				PSD.ModifyCount=PSD.ModifyCount+1
+		]]>
+		<![CDATA[	
+			FROM Basis.BIN_PrtSoluDepartRelation PSD,
+			Basis.BIN_Organization oz ,
+			Basis.BIN_ProductPriceSolutionDetail PPSD
+			WHERE
+				oz.DepartCode = PSD.DepartCode
+			AND	PSD.BIN_OrganizationInfoID = #organizationInfoId#
+			AND	PSD.BIN_BrandInfoID = #brandInfoId#
+			AND PSD.DepartCode = #CounterCode#
+			AND PSD.BIN_SolutionId = #productPriceSolutionID#
+		]]>
+	</update>
+	
+	<!-- 删除方案绑定柜台对应的部门产品价格 -->
+	<delete id="delProductDepartPrice" parameterClass="java.util.HashMap">
+	<![CDATA[
+		DELETE  
+		FROM Basis.BIN_ProductPrice 
+		WHERE BIN_BrandInfoID = #brandInfoId# 
+		AND Type = '3'
+		AND DepartCode = #CounterCode#
+		]]>
+		AND BIN_ProductID = #BIN_ProductID#
+    </delete>
+    
+    <!-- 更新柜台产品配置明细表的数据  -->
+   	<select id="mergeDepartProductConfigDetail" parameterClass="java.util.HashMap" resultClass="java.lang.Integer">
+   	<![CDATA[
+		MERGE  Basis.BIN_DepartProductConfigDetail AS TGT
+		    USING (select #organizationInfoId# as orgId,#brandInfoId# as brandInfoId,#productPriceSolutionID# as productPriceSolutionID
+		           ) AS SRC
+		    ON TGT.BIN_OrganizationInfoID = SRC.orgId and 
+			    TGT.BIN_BrandInfoID = SRC.brandInfoId and
+		        TGT.BIN_SolutionId = SRC.productPriceSolutionID
+		WHEN MATCHED THEN 
+		    UPDATE SET PlaceType = #locationType#, SaveJson = #locationArr#,
+    ]]>
+		    <include refid="BINOLCMINC99.updateSql" />
+		WHEN NOT MATCHED THEN 
+		    INSERT (BIN_OrganizationInfoID,BIN_BrandInfoID,BIN_SolutionId,PlaceType,SaveJson,<include refid="BINOLCMINC99.insertKeySql" />)
+		        values(SRC.orgId,SRC.brandInfoId,SRC.productPriceSolutionID,#locationType#,#locationArr#,<include refid="BINOLCMINC99.insertValueSql" />)
+		OUTPUT inserted.BIN_DepartProductConfigDetailID;
+   	</select>
+   	
+    <!-- 更新部门产品表的数据  -->
+   	<select id="mergeProductDepartInfo" parameterClass="java.util.HashMap" resultClass="java.lang.Integer">
+		MERGE  Basis.BIN_ProductDepart AS TGT
+		    USING (select #organizationInfoId# as orgId,#brandInfoId# as brandInfoId,#BIN_ProductID# as productId, #CounterCode# as departCode
+		           ) AS SRC
+		    ON TGT.BIN_OrganizationInfoID = SRC.orgId and 
+			    TGT.BIN_BrandInfoID = SRC.brandInfoId and
+		        TGT.BIN_ProductId = SRC.productId and
+		        TGT.DepartCode = SRC.departCode
+		WHEN MATCHED THEN 
+		    UPDATE SET TGT.BIN_ProductId = SRC.productId,DepartCode = SRC.departCode,Version = #tVersion# + 1,ValidFlag = #ValidFlag#,
+		    <include refid="BINOLCMINC99.updateSql" />
+		WHEN NOT MATCHED THEN 
+		    INSERT (BIN_OrganizationInfoID,BIN_BrandInfoID,BIN_ProductID,DepartCode,Version,ValidFlag,
+		    		CreateTime,UpdateTime, CreatedBy, CreatePGM,UpdatedBy, UpdatePGM,ModifyCount)
+		        values(SRC.orgId,SRC.brandInfoId,SRC.productId,SRC.departCode, #tVersion# + 1,#ValidFlag#,
+		        GETDATE(),GETDATE(),#createdBy#,#createPGM#,#updatedBy#,#updatePGM#,0)
+		OUTPUT inserted.BIN_ProductDepartID;
+   	</select>
+   	
+    <!-- merge产品方案部门关系表-->
+   	<select id="mergePrtSoluDepartRelation" parameterClass="java.util.HashMap" resultClass="java.lang.Integer">
+		MERGE  Basis.BIN_PrtSoluDepartRelation AS TGT
+		    USING (select #organizationInfoId# as orgId,#brandInfoId# as brandInfoId,#productPriceSolutionID# as productPriceSolutionID, #CounterCode# as departCode
+		           ) AS SRC
+		    ON TGT.BIN_OrganizationInfoID = SRC.orgId and 
+			    TGT.BIN_BrandInfoID = SRC.brandInfoId and
+		        TGT.DepartCode = SRC.departCode
+		WHEN MATCHED THEN 
+		    UPDATE SET TGT.BIN_SolutionId = SRC.productPriceSolutionID,DepartCode = SRC.departCode,Version = #tVersion# + 1,ValidFlag = #ValidFlag#,
+		    <include refid="BINOLCMINC99.updateSql" />
+		WHEN NOT MATCHED THEN 
+		    INSERT (BIN_OrganizationInfoID,BIN_BrandInfoID,BIN_SolutionId,DepartCode,Version,ValidFlag,
+		    		CreateTime,UpdateTime, CreatedBy, CreatePGM,UpdatedBy, UpdatePGM,ModifyCount)
+		        values(SRC.orgId,SRC.brandInfoId,SRC.productPriceSolutionID,SRC.departCode, #tVersion# + 1,#ValidFlag#,
+		        GETDATE(),GETDATE(),#createdBy#,#createPGM#,#updatedBy#,#updatePGM#,0)
+		OUTPUT inserted.BIN_ProductSoluDepartID;
+   	</select>
+    
+	<!-- 查询新后台柜台产品数据list -->
+	<select id="getCouProductList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+		<![CDATA[
+			SELECT 
+				PD.DepartCode,
+				PD.BIN_ProductID,
+				PV.BIN_ProductVendorID,
+				P.UnitCode,
+				PV.BarCode,
+				PP.StartDate,
+				PP.EndDate,
+				P.NameTotal,
+				CONVERT(Decimal(16,2),PP.SalePrice) AS SalePrice,
+				CONVERT(Decimal(16,2),PP.MemPrice) AS MemPrice,
+				PD.Version,
+				PV.ValidFlag AS prtValidFlag,
+				O.ValidFlag AS cntValidFlag,
+				PD.ValidFlag AS pdValidFlag,
+				ISNULL(P.Status,'E') AS prtStatus,
+			CASE 
+				WHEN (P.SellStartDate IS NOT NULL AND P.SellEndDate IS NULL AND #priceDate# >= P.SellStartDate) 
+				  OR (P.SellEndDate IS NOT NULL AND P.SellStartDate IS NULL AND #priceDate# <= P.SellEndDate)
+			      OR (P.SellStartDate IS NOT NULL AND P.SellEndDate IS NOT NULL AND P.SellStartDate <= #priceDate# AND #priceDate# <= P.SellEndDate) 
+			      OR (P.SellStartDate IS NULL AND P.SellEndDate IS NULL)
+			    THEN '0' ELSE '1' END AS prtSellDateFlag
+			FROM 
+				Basis.BIN_ProductDepart PD
+			JOIN 
+				Basis.BIN_Organization O ON O.DepartCode = PD.DepartCode
+			JOIN 
+				Basis.BIN_Product P ON PD.BIN_ProductID = P.BIN_ProductID
+			JOIN 
+				Basis.BIN_ProductVendor PV ON (P.BIN_ProductID = PV.BIN_ProductID)
+			LEFT JOIN 
+				Basis.BIN_ProductPrice PP 
+				ON (	PD.BIN_ProductID = PP.BIN_ProductID 
+				    AND PP.Type = '3' 
+					AND PD.DepartCode = PP.DepartCode 
+					AND PP.BIN_BrandInfoID = PD.BIN_BrandInfoID 
+				    AND PP.StartDate <=#priceDate# AND PP.EndDate >= #priceDate#
+			    )
+
+			WHERE 
+			O.Type = '4'
+			AND PD.BIN_OrganizationInfoID = #organizationInfoId#
+			AND PD.BIN_BrandInfoID = #brandInfoId#
+			AND PD.Version > #tVersion#
+
+		]]>
+    </select>
+    
+	<!-- 查询新后台产品方案柜台关联数据list -->
+	<select id="getPrtSoluCouList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+		<![CDATA[
+			SELECT
+				C.BrandCode, 
+				PSDR.DepartCode,
+				PPS.SolutionCode,
+				PSDR.Version,
+				O.ValidFlag AS cntValidFlag,
+				PSDR.ValidFlag AS psdValidFlag,
+				PPS.ValidFlag AS ppsValidFlag,
+				convert(varchar(30),PPS.StartDate,120) AS StartDate,	
+				convert(varchar(30),PPS.EndDate,120) AS EndDate
+			FROM 
+				Basis.BIN_PrtSoluDepartRelation PSDR
+			JOIN 
+				Basis.BIN_Organization O ON O.DepartCode = PSDR.DepartCode
+			JOIN Basis.BIN_BrandInfo C ON(PSDR.BIN_BrandInfoID = C.BIN_BrandInfoID AND C.ValidFlag = '1')
+			JOIN Basis.BIN_ProductPriceSolution PPS ON PPS.BIN_ProductPriceSolutionID = PSDR.BIN_SolutionId
+			WHERE 
+			O.Type = '4'
+			AND PSDR.BIN_OrganizationInfoID = #organizationInfoId#
+			AND PSDR.BIN_BrandInfoID = #brandInfoId#
+			AND PSDR.Version > #tVersion#
+		]]>
+    </select>
+    
+	<!-- 取得方案对应的原柜台List -->
+	<select id="getPrtSoluWithDepartHis" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+		<![CDATA[
+			select
+				a.BIN_SolutionId,
+				a.PlaceType,
+				a.place,
+				SUBSTRING(b.counterCode,2,LEN(b.counterCode)-2) AS CounterCode
+			from (
+
+				select 
+					BIN_SolutionId, PlaceType , place,
+					counterCode=convert(xml,'<root><v>'+replace(SUBSTRING(DepartCodeJson,2,LEN(DepartCodeJson)-2),',','</v><v>')+'</v></root>') 
+				from Basis.BIN_PrtSoluWithDepartHis
+				where BIN_SolutionId = #productPriceSolutionID# and BIN_OrganizationInfoID = #organizationInfoId# AND BIN_BrandInfoID = #brandInfoId#)a
+				outer apply(
+					select 
+						counterCode=C.v.value('.','nvarchar(max)') 
+					from 
+						a.counterCode.nodes('/root/v')C(v)
+				)b
+		]]>
+    </select>
+    
+    <!-- 根据指定Version取方案明细的产品信息List -->
+    <select id="getPrtSoluDetailByVersionList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+		SELECT
+			C.BrandCode,
+			S.SolutionCode,
+			PV.BIN_ProductVendorID,
+			PV.BarCode,
+			P.UnitCode,
+			PPSD.SalePrice,
+			PPSD.MemPrice,
+			PPSD.PlatinumPrice,
+			PPSD.Version,
+			
+  			PPSD.ValidFlag AS soluPrtValidFlag,
+  			PV.ValidFlag AS prtVendorValidFlag,
+			PPSD.BIN_ProductPriceSolutionDetailID AS productPriceSolutionDetailID,
+		    PPSD.BIN_ProductID,
+  			S.StartDate,
+  			S.EndDate,
+ 			ISNULL(P.Status,'E') AS prtStatus,
+ 			<![CDATA[
+			CASE 
+				WHEN (P.SellStartDate IS NOT NULL AND P.SellEndDate IS NULL AND #priceDate# >= P.SellStartDate) 
+				  OR (P.SellEndDate IS NOT NULL AND P.SellStartDate IS NULL AND #priceDate# <= P.SellEndDate)
+			      OR (P.SellStartDate IS NOT NULL AND P.SellEndDate IS NOT NULL AND P.SellStartDate <= #priceDate# AND #priceDate# <= P.SellEndDate) 
+			      OR (P.SellStartDate IS NULL AND P.SellEndDate IS NULL)
+			    THEN '0' ELSE '1' END AS prtSellDateFlag
+		    ]]>	
+
+		FROM  
+			Basis.BIN_ProductPriceSolutionDetail PPSD
+		JOIN 
+			Basis.BIN_ProductPriceSolution S ON S.BIN_ProductPriceSolutionID = PPSD.BIN_ProductPriceSolutionID
+		JOIN Basis.BIN_Product P ON P.BIN_ProductID = PPSD.BIN_ProductID
+		JOIN Basis.BIN_BrandInfo C ON(P.BIN_BrandInfoID = C.BIN_BrandInfoID AND C.ValidFlag = '1')
+		JOIN Basis.BIN_ProductVendor PV ON PV.BIN_ProductID = PPSD.BIN_ProductID
+		WHERE
+			S.BIN_OrganizationInfoID = #organizationInfoId#
+		AND S.BIN_BrandInfoID = #brandInfoId#
+		AND PPSD.Version > #tVersion# 
+    </select>
+    
+    <!-- 删除接口数据库产品信息  -->
+    <delete id="delIFProductWithCounter" parameterClass="java.util.HashMap">
+    	<![CDATA[
+    		delete from 
+    			dbo.WITPOSA_product_with_counter 
+    		where 
+    			brand = #brandCode#
+    		and ProductId = #BIN_ProductVendorID#
+    		and counter = #DepartCode#
+		]]>	
+    </delete>
+    
+    <!-- 删除产品方案柜台接口表  -->
+    <delete id="delIFPrtSoluWithCounter" parameterClass="java.util.HashMap">
+    	<![CDATA[
+    		delete from 
+    			dbo.WITPOSA_prtsolu_with_counter 
+    		where 
+    			brandAbbr = #brandCode#
+    		and counterCode = #DepartCode#
+		]]>	
+    </delete>
+    
+    <!-- 删除接口数据库产品方案明细数据 -->
+    <delete id="delIFPrtSoluSCS" parameterClass="java.util.HashMap">
+    	<![CDATA[
+    		DELETE FROM 
+    			dbo.WITPOSA_product_price_solution_detail
+    		WHERE
+    			brandAbbr = #brandCode#
+    		AND prtSolutionCode = #SolutionCode#
+    		AND prt_id = #BIN_ProductVendorID#
+		]]>	
+    </delete>
+	<!-- 插入柜台产品接口数据库 -->
+	<insert id="addProductWithCounter" parameterClass="java.util.HashMap">
+		<![CDATA[
+			INSERT INTO dbo.WITPOSA_product_with_counter(	
+				brand,
+				counter,
+				ProductId,
+				barcode,
+				unitcode,
+				price,
+				MemberPrice,
+				version,
+				status
+			)VALUES(
+				#brandCode#,
+				#DepartCode#,
+				#BIN_ProductVendorID#,
+				#BarCode#,
+				#UnitCode#,
+				#SalePrice#,
+				#MemPrice#,
+				#Version#,
+				#prtWithCnt_status#
+			)
+		]]>				
+    </insert>
+    
+	<!-- 插入柜台产品接口数据库 -->
+	<insert id="addIFPrtSoluWithCounter" parameterClass="java.util.HashMap">
+		<![CDATA[
+			INSERT INTO dbo.WITPOSA_prtsolu_with_counter(	
+				brandAbbr,
+				counterCode,
+				prtSolutionCode,
+				startTime,
+				endTime,
+				version,
+				status
+			)VALUES(
+				#brandCode#,
+				#DepartCode#,
+				#SolutionCode#,
+				#StartDate#,
+				#EndDate#,
+				#Version#,
+				#prtSoluWithCnt_status#
+			)
+		]]>				
+    </insert>
+    
+	<!-- 插入产品方案明细接口数据库 -->
+	<insert id="addIFPrtSoluSCS" parameterClass="java.util.HashMap">
+		<![CDATA[
+			INSERT INTO dbo.WITPOSA_product_price_solution_detail(	
+				brandAbbr,
+				prtSolutionCode,
+				prt_id,
+				barcode,
+				unitcode,
+				price,
+				MemberPrice,
+				PlatinumPrice,
+				version,
+				status
+			)VALUES(
+				#brandCode#,
+				#SolutionCode#,
+				#BIN_ProductVendorID#,
+				#BarCode#,
+				#UnitCode#,
+				ISNULL(#SalePrice#,0),
+				ISNULL(#MemPrice#,0),
+				ISNULL(#PlatinumPrice#,0),
+				#Version#,
+				#prtSoluDetail_status#
+			)
+		]]>				
+    </insert>
+    
+    <!-- 通过方案柜台配置表的城市/渠道或指定柜台取得系统中的有效柜台用以拼接json以及方案明细产品拼接json -->
+    <sql id="queryDepartCodeJsonAndPrtSoluDetailJsonSql">
+		SELECT 
+			TT.BIN_SolutionId,
+			#placeType# AS PlaceType,
+			#place# AS place,
+			<isEqual property="SaveJson" compareValue="[]">
+				DepartCodeJson = '[]', 
+			</isEqual>
+			<isNotEqual property="SaveJson" compareValue="[]">
+			
+			<isNotEmpty property="placeTypeFlag">
+				DepartCodeJson = '[' + stuff(
+				(select ',' + cast( counterCode as varchar) from 
+					(
+						SELECT 
+						t.BIN_SolutionId,
+						'"'+D.CounterCode +'"' AS counterCode
+						FROM Basis.BIN_CounterInfo D
+						JOIN Basis.BIN_Organization oz ON(D.BIN_OrganizationID = oz.BIN_OrganizationID AND oz.ValidFlag = '1')
+						<!-- 配置的时候有权限
+						JOIN(
+						<include refid="BINOLCMINC99.departPrivilegeSql" />
+						) dp ON(dp.BIN_OrganizationID = oz.BIN_OrganizationID)
+						 -->
+						JOIN (
+							<!-- 将[1,2,3]格式的saveJson变成多行以便与柜台关联 -->
+							<![CDATA[
+							select
+							a.BIN_SolutionId,a.PlaceType,b.place
+							from
+							(select BIN_SolutionId,PlaceType ,place=convert(xml,'<root><v>'+replace(SUBSTRING(SaveJson,2,LEN(SaveJson)-2),',','</v><v>')+'</v></root>') 
+							 from Basis.BIN_DepartProductConfigDetail
+							where BIN_SolutionId = #productPriceSolutionID# and BIN_OrganizationInfoID = #organizationInfoId# and BIN_BrandInfoID = #brandInfoId#)a
+							outer apply
+								(select 
+									place=C.v.value('.','nvarchar(max)') 
+								 from 
+									a.place.nodes('/root/v')C(v)
+							)b
+							]]>	
+						) t on 
+						<!-- 城市/渠道 -->
+						<isEqual property="placeTypeFlag" compareValue="CityOrChannel">
+							<!-- on 条件 根据方案配置表的地点类型，指定区域或指定渠道 -->
+							<isNotEmpty property="city">
+								t.place = oz.BIN_CityID
+							</isNotEmpty>
+							<isNotEmpty property="channel">
+								t.place = D.BIN_ChannelID
+							</isNotEmpty>
+						</isEqual>
+						<!-- 指定柜台(包括导入柜台) -->
+						<isEqual property="placeTypeFlag" compareValue="counter">
+							D.CounterCode = SUBSTRING(t.place,2,LEN(t.place)-2)
+						</isEqual>
+						WHERE
+							D.BIN_OrganizationInfoID = #organizationInfoId#
+						AND D.BIN_BrandInfoID = #brandInfoId#
+						<!-- 城市/渠道 -->
+						<isEqual property="placeTypeFlag" compareValue="CityOrChannel">
+						AND t.place = #place#
+						</isEqual>
+					) T1
+						WHERE TT.BIN_SolutionId = T1.BIN_SolutionId for xml path ('')),
+				1 ,
+				1 ,
+				'') + ']',
+			</isNotEmpty>
+			</isNotEqual>
+			PrtSoluDetailJson = '['
+			<!--
+				 + (
+                stuff(
+                        (
+						SELECT 
+							',' + '{' +cast( PPSD.BIN_ProductID as varchar) + ':' + PPSD.PriceJson  + '}'
+						FROM Basis.BIN_DepartProductConfigDetail DPCD 
+						JOIN Basis.BIN_ProductPriceSolutionDetail PPSD ON DPCD.BIN_SolutionId = PPSD.BIN_ProductPriceSolutionID
+						WHERE 
+							DPCD.BIN_OrganizationInfoID = #organizationInfoId#
+						AND DPCD.BIN_BrandInfoID = #brandInfoId#
+						AND DPCD.BIN_SolutionId = TT.BIN_SolutionId for xml path ('')),
+                        1 ,
+                        1 ,
+                        '')
+                ) 
+             -->
+                + ']'
+		FROM Basis.BIN_DepartProductConfigDetail TT
+		WHERE
+			TT.BIN_OrganizationInfoID = #organizationInfoId#
+		AND TT.BIN_BrandInfoID = #brandInfoId#
+		AND TT.BIN_SolutionId = #productPriceSolutionID#
+    </sql>
+    
+	<!-- 更新产品方案配置履历表  -->
+	<select id="mergePrtSoluWithDepartHis" parameterClass="java.util.HashMap" resultClass="java.lang.Integer">
+		MERGE  Basis.BIN_PrtSoluWithDepartHis AS TGT
+			USING (  
+			<include refid="BINOLPTJCS17.queryDepartCodeJsonAndPrtSoluDetailJsonSql"/>
+		    ) AS SRC
+		    ON TGT.BIN_SolutionId = SRC.BIN_SolutionId AND TGT.PlaceType = SRC.PlaceType AND TGT.place = SRC.place
+		WHEN MATCHED THEN 
+		    UPDATE SET 
+		    	DepartCodeJson = SRC.DepartCodeJson,
+		    	PrtSoluDetailJson = SRC.PrtSoluDetailJson,
+		    	PlaceType=#placeType#,
+		    	Place = #place#,
+		    	<include refid="BINOLCMINC99.updateSql" />
+		WHEN NOT MATCHED THEN 
+		    INSERT (
+		    	BIN_OrganizationInfoID,
+		    	BIN_BrandInfoID,
+		    	BIN_SolutionId,
+		    	DepartCodeJson,
+		    	PrtSoluDetailJson,
+		    	PlaceType,
+		    	Place,
+		    	<include refid="BINOLCMINC99.insertKeySql" />
+		    	)
+	        VALUES(
+	        	#organizationInfoId#,
+	        	#brandInfoId#,
+	        	SRC.BIN_SolutionId,
+	        	SRC.DepartCodeJson,
+	        	SRC.PrtSoluDetailJson,
+	        	#placeType#,
+	        	#place#,
+	        	<include refid="BINOLCMINC99.insertValueSql" />
+	        	)
+		OUTPUT inserted.BIN_PrtSoluWithDepartHisID;
+	</select>
+	
+	<!-- 删除方案配置履历表中指定的方案 -->
+	<delete id="delPrtSoluWithDepartHis" parameterClass="java.util.HashMap">
+	<![CDATA[
+  		DELETE 
+			Basis.BIN_PrtSoluWithDepartHis
+		WHERE 
+			BIN_SolutionId = #productPriceSolutionID#
+		]]>
+    </delete>
+    
+    <!-- 取得方案配置的区域或渠道实际的的柜台与以前配置的差异(区域城市/渠道)List -->
+   	<select id="getCntForPrtSoluCityChannelDiff" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+		;WITH PD AS (
+			 <!--  取得方案配置的区域或渠道实际的的柜台List -->
+			<isNotEqual property="SaveJson" compareValue="[]">
+			SELECT 
+			t.BIN_SolutionId,
+			t.PlaceType,
+			D.CounterCode AS counterCode,
+			<isNotEmpty property="city">
+				oz.BIN_CityID AS place
+			</isNotEmpty>
+			<isNotEmpty property="channel">
+				D.BIN_ChannelID AS place
+			</isNotEmpty>
+			<isNotEmpty property="counter">
+				0 AS place
+			</isNotEmpty>
+			FROM Basis.BIN_CounterInfo D
+			JOIN Basis.BIN_Organization oz ON(D.BIN_OrganizationID = oz.BIN_OrganizationID)
+			<!-- 配置的时候有权限
+			JOIN(
+			<include refid="BINOLCMINC99.departPrivilegeSql" />
+			) dp ON(dp.BIN_OrganizationID = oz.BIN_OrganizationID)
+			-->
+			JOIN (
+					<![CDATA[
+					select
+						a.BIN_SolutionId,
+						a.PlaceType,
+						case when (a.PlaceType = 2 OR a.PlaceType = 4 or a.PlaceType = 6 or a.PlaceType = 7) then SUBSTRING(b.place,2,LEN(b.place)-2) else b.place end AS place
+					from(
+						select BIN_SolutionId,PlaceType ,place=convert(xml,'<root><v>'+replace(SUBSTRING(SaveJson,2,LEN(SaveJson)-2),',','</v><v>')+'</v></root>') 
+					 	from Basis.BIN_DepartProductConfigDetail
+					 	where BIN_SolutionId = #productPriceSolutionID# and BIN_OrganizationInfoID = #organizationInfoId# AND BIN_BrandInfoID = #brandInfoId#
+				 	)a
+					outer apply(
+						select 
+				     		place=C.v.value('.','nvarchar(max)') 
+						from 
+							a.place.nodes('/root/v')C(v)
+					)b
+					]]>
+	
+			) t on 
+			<!-- on 条件 根据方案配置表的地点类型，指定区域或指定渠道或指定柜台  -->
+			<isNotEmpty property="city">
+				t.place = oz.BIN_CityID
+			</isNotEmpty>
+			<isNotEmpty property="channel">
+				t.place = D.BIN_ChannelID
+			</isNotEmpty>
+			<isNotEmpty property="counter">
+				t.place = D.CounterCode
+			</isNotEmpty>
+			
+			WHERE
+				D.BIN_OrganizationInfoID = #organizationInfoId#
+			AND D.BIN_BrandInfoID = #brandInfoId#
+			AND D.ValidFlag = '1'
+		</isNotEqual>
+		<isEqual property="SaveJson" compareValue="[]">
+			SELECT BIN_SolutionId,PlaceType,null as counterCode,  SaveJson AS place
+			from Basis.BIN_DepartProductConfigDetail
+			where BIN_SolutionId = #productPriceSolutionID# and BIN_OrganizationInfoID = #organizationInfoId# AND BIN_BrandInfoID = #brandInfoId#
+		</isEqual>
+		),
+		PDH AS (
+		<!--取得履历表方案配置的区域或渠道的柜台List -->
+			select
+				a.BIN_SolutionId,
+				a.placeType,
+				a.place,
+				SUBSTRING(b.counterCode,2,LEN(b.counterCode)-2) AS counterCode
+			from (
+			<![CDATA[	
+				select BIN_SolutionId,PlaceType ,place,counterCode=convert(xml,'<root><v>'+replace(SUBSTRING(DepartCodeJson,2,LEN(DepartCodeJson)-2),',','</v><v>')+'</v></root>') from Basis.BIN_PrtSoluWithDepartHis
+				where BIN_SolutionId = #productPriceSolutionID# and BIN_OrganizationInfoID = #organizationInfoId# AND BIN_BrandInfoID = #brandInfoId#)a
+				outer apply(
+					select 
+						counterCode=C.v.value('.','nvarchar(max)') 
+					from 
+						a.counterCode.nodes('/root/v')C(v)
+				)b
+			]]>
+		)
+		
+		SELECT 
+			T.BIN_SolutionId,
+			T.placePD,
+			T.placePDH,
+			T.CntPD,
+			T.CntPDH,
+			<!-- modifyFlag  add 增加的柜台 、sub减少的柜台 -->
+			CASE WHEN ( CntPDH IS NULL and CntPD IS NOT NULL) THEN 'add' 
+		     	WHEN ( CntPDH IS NOT NULL and CntPD IS NULL) THEN 'sub'
+	         	ELSE '-' END AS 'modifyFlag' 
+		          
+		FROM (
+			<!-- 减少的柜台 -->
+			select  A.BIN_SolutionId,A.counterCode AS CntPDH,B.counterCode AS CntPD,A.place AS placePDH,B.place AS placePD
+			from PDH A 
+			left join PD B on A.BIN_SolutionId = B.BIN_SolutionId AND A.placeType = B.PlaceType AND A.place = B.place AND A.counterCode = B.counterCode
+			union
+			<!--  增加的柜台 -->
+			select B.BIN_SolutionId,A.counterCode AS CntPDH,B.counterCode AS CntPD,A.place AS placePDH,B.place AS placePD
+			from PDH A 
+			right join PD B on A.BIN_SolutionId = B.BIN_SolutionId AND A.placeType = B.PlaceType AND A.place = B.place AND A.counterCode = B.counterCode
+		) T
+		WHERE
+			(T.CntPD IS NOT NULL AND T.CntPDH IS NULL) OR (T.CntPD IS NULL AND T.CntPDH IS NOT NULL)
+		ORDER BY T.BIN_SolutionId
+   	</select>
+    
+    <!-- 取方案明细的产品信息List -->
+    <select id="getPrtPriceSoluDetailList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+		SELECT
+			SD.BIN_ProductPriceSolutionDetailID AS productPriceSolutionDetailID,
+		    SD.BIN_ProductID,
+		    SD.PriceJson,
+  			S.StartDate,
+  			S.EndDate,
+  			A.ValidFlag,
+  			ISNULL(A.Status,'E') AS Status,
+  			<![CDATA[
+			CASE 
+				WHEN (A.SellStartDate IS NOT NULL AND A.SellEndDate IS NULL AND #priceDate# >= A.SellStartDate) 
+				  OR (A.SellEndDate IS NOT NULL AND A.SellStartDate IS NULL AND #priceDate# <= A.SellEndDate)
+			      OR (A.SellStartDate IS NOT NULL AND A.SellEndDate IS NOT NULL AND A.SellStartDate <= #priceDate# AND #priceDate# <= A.SellEndDate) 
+			      OR (A.SellStartDate IS NULL AND A.SellEndDate IS NULL)
+			    THEN '0' ELSE '1' END AS SellDateFlag
+		    ]]>
+		FROM  
+			Basis.BIN_ProductPriceSolutionDetail SD
+		JOIN 
+			Basis.BIN_ProductPriceSolution S ON S.BIN_ProductPriceSolutionID = SD.BIN_ProductPriceSolutionID
+		JOIN Basis.BIN_Product A ON A.BIN_ProductID = SD.BIN_ProductID
+		WHERE 
+			SD.BIN_ProductPriceSolutionID = #productPriceSolutionID#
+		AND S.BIN_OrganizationInfoID = #organizationInfoId#
+		AND S.BIN_BrandInfoID = #brandInfoId# 
+    </select>
+    
+    <!-- 取得当前方案分配的地点是否已被其他方案分配过的List -->
+    <select id="getExistPrtSoluWithDepartHis" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+		SELECT DISTINCT 
+			a.BIN_SolutionId,
+			PPS.SolutionName,
+			<!-- palceType 为指定柜台时 -->
+			<isNotEmpty property="counter">
+				oz.DepartName AS placeName,
+				SUBSTRING(b.counterCode,2,LEN(b.counterCode)-2) AS counterCode
+			</isNotEmpty>
+			<!-- placeType  为区域城市 -->
+			<isNotEmpty property="city">
+				r.RegionNameChinese AS placeName,
+				a.place
+			</isNotEmpty>
+			<!-- placeTYpe 为渠道 -->
+			<isNotEmpty property="channel">
+				cha.ChannelName AS placeName,
+				a.place
+			</isNotEmpty>
+		FROM
+		<![CDATA[
+		(select BIN_SolutionId,PlaceType ,place,counterCode=convert(xml,'<root><v>'+replace(SUBSTRING(DepartCodeJson,2,LEN(DepartCodeJson)-2),',','</v><v>')+'</v></root>') 
+		 from Basis.BIN_PrtSoluWithDepartHis
+		 where  BIN_OrganizationInfoID = #organizationInfoId# AND BIN_BrandInfoID = #brandInfoId#)a
+		 outer apply
+			(select 
+				counterCode=C.v.value('.','nvarchar(max)') 
+			 from 
+				a.counterCode.nodes('/root/v')C(v)
+		 )b
+		JOIN Basis.BIN_ProductPriceSolution PPS on PPS.BIN_ProductPriceSolutionID = a.BIN_SolutionId
+		]]>
+		<!-- palceType 为指定柜台时 -->
+		<isNotEmpty property="counter">
+			JOIN Basis.BIN_Organization oz ON oz.DepartCode = SUBSTRING(b.counterCode,2,LEN(b.counterCode)-2)
+		</isNotEmpty>
+		<!-- placeType 为区域城市 -->
+		<isNotEmpty property="city">
+			JOIN Basis.BIN_Region r ON r.BIN_RegionID = a.place
+		</isNotEmpty>
+		<!-- placeTYpe 为渠道 -->
+		<isNotEmpty property="channel">
+			JOIN Basis.BIN_Channel cha ON cha.BIN_ChannelID = a.place
+		</isNotEmpty>
+		WHERE
+		<![CDATA[ a.BIN_SolutionId <> #productPriceSolutionID# ]]>
+		<!-- palceType 为指定柜台时 -->
+		<isNotEmpty property="counter" prepend="AND">
+			placeType IN (2,4,6,7) AND SUBSTRING(b.counterCode,2,LEN(b.counterCode)-2) IN
+			<iterate conjunction="," open="(" close=")" property="locationList"> 
+				#locationList[]#
+			</iterate>
+		</isNotEmpty>
+		<!-- placeType 为区域城市 -->
+		<isNotEmpty property="city" prepend="AND">
+			placeType = 1 AND a.place IN
+			<iterate conjunction="," open="(" close=")" property="locationList"> 
+				#locationList[]#
+			</iterate>
+		</isNotEmpty>
+		<!-- placeTYpe 为渠道 -->
+		<isNotEmpty property="channel" prepend="AND">
+			placeType = 3 and a.place IN
+			<iterate conjunction="," open="(" close=")" property="locationList"> 
+				#locationList[]#
+			</iterate>
+		</isNotEmpty>
+    
+    </select>
+    
+    <!-- 取得当前方案分配的地点(柜台)是否已被其他方案分配过SQL -->
+    <sql id="getExistCntForPrtSoluWithDepartHisSQL">
+		select
+			a.BIN_SolutionId,
+			PPS.SolutionName,
+			a.PlaceType,
+			SUBSTRING(b.counterCode,2,LEN(b.counterCode)-2) AS counterCode,
+			oz.DepartName,
+			r.RegionNameChinese,
+			cha.ChannelName,
+			a.place,
+			
+			T.curPlaceName,
+			#placeType# AS curPlaceType
+	
+		from
+		<![CDATA[
+		(select BIN_SolutionId,PlaceType ,place,counterCode=convert(xml,'<root><v>'+replace(SUBSTRING(DepartCodeJson,2,LEN(DepartCodeJson)-2),',','</v><v>')+'</v></root>') from Basis.BIN_PrtSoluWithDepartHis
+		where  BIN_OrganizationInfoID = #organizationInfoId# AND BIN_BrandInfoID = #brandInfoId#)a
+		outer apply
+			(select 
+				counterCode=C.v.value('.','nvarchar(max)') 
+			 from 
+				a.counterCode.nodes('/root/v')C(v)
+		)b
+		JOIN Basis.BIN_ProductPriceSolution PPS on PPS.BIN_ProductPriceSolutionID = a.BIN_SolutionId
+		]]>
+		LEFT JOIN Basis.BIN_Organization oz ON oz.DepartCode = SUBSTRING(b.counterCode,2,LEN(b.counterCode)-2)
+		LEFT JOIN Basis.BIN_Region r ON r.BIN_RegionID = a.place
+		LEFT JOIN Basis.BIN_Channel cha ON cha.BIN_ChannelID = a.place
+		JOIN (
+			SELECT 
+				D.CounterCode AS counterCode
+			<isNotEmpty property="channel" prepend=",">
+				cha.ChannelName AS curPlaceName
+			</isNotEmpty>
+			<isNotEmpty property="city"  prepend=",">
+				r1.RegionNameChinese AS curPlaceName
+			</isNotEmpty>
+			<isNotEmpty property="counter"  prepend=",">
+				D.CounterNameIF AS curPlaceName 
+			</isNotEmpty>
+			FROM Basis.BIN_CounterInfo D
+			JOIN Basis.BIN_Organization oz ON(D.BIN_OrganizationID = oz.BIN_OrganizationID)
+			<!-- placeType 为区域城市 -->
+			<isNotEmpty property="city">
+				LEFT JOIN Basis.BIN_Region r1 ON r1.BIN_RegionID = oz.BIN_CityID
+			</isNotEmpty>
+			<!-- placeTYpe 为渠道 -->
+			<isNotEmpty property="channel">
+				LEFT JOIN Basis.BIN_Channel cha ON cha.BIN_ChannelID = D.BIN_ChannelID
+			</isNotEmpty>
+			WHERE
+				D.BIN_OrganizationInfoID = #organizationInfoId#
+			AND D.BIN_BrandInfoID = #brandInfoId#
+			<!-- placeType 为区域城市 -->
+			<isNotEmpty property="city" prepend="AND">
+				oz.BIN_CityID IN 
+				<iterate conjunction="," open="(" close=")" property="locationList"> 
+					#locationList[]#
+				</iterate>
+			</isNotEmpty>
+			<!-- placeTYpe 为渠道 -->
+			<isNotEmpty property="channel" prepend="AND">
+				 D.BIN_ChannelID IN 
+				<iterate conjunction="," open="(" close=")" property="locationList"> 
+					#locationList[]#
+				</iterate>
+			</isNotEmpty>
+			<!-- palceType 为指定柜台时 -->
+			<isNotEmpty property="counter" prepend="AND">
+				D.CounterCode IN 
+				<iterate conjunction="," open="(" close=")" property="locationList"> 
+					#locationList[]#
+				</iterate>
+			</isNotEmpty>
+		) T ON T.counterCode = SUBSTRING(b.counterCode,2,LEN(b.counterCode)-2)
+		<dynamic prepend="WHERE" >
+			<isNotEmpty property="productPriceSolutionID" prepend="AND">
+				<![CDATA[ a.BIN_SolutionId <> #productPriceSolutionID# ]]>
+			</isNotEmpty>
+		</dynamic>
+		
+    </sql>
+    
+    <!-- 取得当前方案分配的地点(柜台)是否已被其他方案分配过的List -->
+    <select id="getExistCntForPrtSoluWithDepartHis" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+    	<include refid="BINOLPTJCS17.getExistCntForPrtSoluWithDepartHisSQL"/>
+    </select>
+    
+   	<!-- 更新柜台产品配置主表信息  -->
+	<update id="updDepartProductConfig" parameterClass="java.util.HashMap">	
+		UPDATE
+			Basis.BIN_DepartProductConfig
+		SET
+			<isNotEmpty property="configName">
+				ConfigName = #configName#,
+			</isNotEmpty>
+			<isNotEmpty property="placeJson">
+				PlaceJson = #placeJson#,
+			</isNotEmpty>
+			<isNotEmpty property="saveJson">
+				SaveJson = #saveJson#,
+			</isNotEmpty>
+			<include refid="BINOLCMINC99.updateSql" />
+		WHERE 
+			BIN_DepartProductConfigID = #departProductConfigID#
+	</update>
+    
+ </sqlMap>

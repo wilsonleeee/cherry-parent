@@ -1,0 +1,89 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE sqlMap PUBLIC "-//iBATIS.com//DTD SQL Map 2.0//EN" "http://ibatis.apache.org/dtd/sql-map-2.dtd">
+<sqlMap namespace="BINOLMORPT01">
+    <!-- 考核答卷查询SQL文  -->
+    <sql id="CheckAnswerQuery">
+        <![CDATA[
+            SELECT
+				A.BIN_CheckAnswerID AS checkAnswerId,
+				CONVERT(varchar(30),A.CheckDate,120) AS checkDate,
+				A.TotalPoint AS totalPoint,
+				A.PointLevel AS pointLevel,
+				A.OwnerName AS ownerName,
+				B.PaperName AS paperName,
+				C.DepartCode AS departCode,
+				D.EmployeeCode AS employeeCode,
+		]]>
+		<dynamic>
+			<isNotEmpty property="language">
+				<isEqual property="language" compareValue="en_US">
+					C.NameForeign AS departName,
+					D.EmployeeNameForeign AS employeeName
+				</isEqual>
+				<isEqual property="language" compareValue="zh_CN">	
+					C.DepartName AS departName,
+					D.EmployeeName AS employeeName
+				</isEqual>								
+			</isNotEmpty>
+			<isEmpty property="language">
+				C.DepartName AS departName,
+				D.EmployeeName AS employeeName
+			</isEmpty>
+		</dynamic>
+		<![CDATA[			
+			FROM
+				Monitor.BIN_CheckAnswer A
+				JOIN Monitor.BIN_CheckPaper B ON A.BIN_CheckPaperID = B.BIN_CheckPaperID
+				LEFT JOIN Basis.BIN_Organization C ON A.BIN_OrganizationID = C.BIN_OrganizationID AND C.ValidFlag = '1'
+				LEFT JOIN Basis.BIN_Employee D ON A.EmployeeCode = D.EmployeeCode AND D.ValidFlag = '1'
+			WHERE
+				B.BIN_OrganizationInfoID = #organizationInfoId# AND
+				A.ValidFlag = '1' AND
+				B.ValidFlag = '1'
+        ]]>
+        <dynamic>
+            <isNotEmpty prepend="AND" property="brandInfoId">
+                <![CDATA[B.BIN_BrandInfoID = #brandInfoId#]]>
+            </isNotEmpty>
+            <isNotEmpty prepend="AND" property="checkPaperId">
+                <![CDATA[B.BIN_CheckPaperID = #checkPaperId#]]>
+            </isNotEmpty>
+            <isNotEmpty prepend="AND" property="departName">
+                <![CDATA[(C.DepartCode LIKE '%'+#departName#+'%' OR C.DepartName LIKE '%'+#departName#+'%')]]>
+            </isNotEmpty>
+            <isNotEmpty prepend="AND" property="employeeName">
+                <![CDATA[(D.EmployeeCode LIKE '%'+#employeeName#+'%' OR D.EmployeeName LIKE '%'+#employeeName#+'%')]]>
+            </isNotEmpty>
+            <isNotEmpty prepend="AND" property="checkDateStart">
+                <![CDATA[CONVERT(varchar(30),A.CheckDate,23) >= #checkDateStart#]]>
+            </isNotEmpty>
+			<isNotEmpty prepend="AND" property="checkDateEnd">
+                <![CDATA[CONVERT(varchar(30),A.CheckDate,23) <= #checkDateEnd#]]>
+            </isNotEmpty>
+        </dynamic>
+    </sql>
+	
+	<!-- 取得考核答卷信息总数  -->
+    <select id="getCheckAnswerCount" parameterClass="java.util.HashMap" resultClass="java.lang.Integer">
+        <![CDATA[
+            SELECT COUNT(SORT_T1.checkAnswerId) AS count FROM (
+        ]]>
+        <include refid="BINOLMORPT01.CheckAnswerQuery" />
+        <![CDATA[
+            )SORT_T1
+        ]]>
+    </select>
+    
+    <!-- 取得考核答卷信息List  -->
+    <select id="getCheckAnswerList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+        <include refid="BINOLCMINC99.pageheader" />
+        <include refid="BINOLMORPT01.CheckAnswerQuery" />
+        <include refid="BINOLCMINC99.pagefooter" />
+    </select>
+
+    <!-- 取得考核答卷信息(Excel)  -->
+    <select id="getCheckAnswerListExcel" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+        <include refid="BINOLMORPT01.CheckAnswerQuery" />
+        <![CDATA[ORDER BY A.BIN_CheckAnswerID]]>
+    </select>
+</sqlMap>
