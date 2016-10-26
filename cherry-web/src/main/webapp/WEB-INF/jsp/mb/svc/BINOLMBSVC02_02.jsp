@@ -10,6 +10,9 @@
 <s:url id="viewUrl" action="BINOLMBSVC02_viewSaleDetailInit" namespace="/mb">
 			<s:param name="billCode">${sale.billCode}</s:param>
 </s:url>
+	<s:url id="detailsUrl" value="/pt/BINOLPTRPS14_init">
+		<s:param name="saleRecordId">${saleRecordId}</s:param>
+	</s:url>
 <ul>
 <li><s:property value="RowNumber"/></li>
 <li><s:property value="cardCode"/></li>
@@ -18,6 +21,11 @@
 <li><s:property value="transactionTime" /></li>
 <li><s:property value="billCode" /></li>
 <li><s:property value="relevantCode" /></li>
+<li>
+		<a href="${detailsUrl}" class="popup" onclick="javascript:openWin(this);return false;">
+			<s:property value="rechargeSaleBillCode"/>
+		</a>
+</li>
 <li><s:property value="transactionType" /></li>
 <li><s:property value="amount" /></li>
 <li><s:property value="giftAmount" /></li>

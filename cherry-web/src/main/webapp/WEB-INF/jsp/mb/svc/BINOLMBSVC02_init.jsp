@@ -103,6 +103,7 @@
 								<th><s:text name="SVC02_transactionTime" /></th>
 								<th><s:text name="SVC02_billCode" /></th>
 								<th><s:text name="SVC02_relevantCode" /></th>
+								<th><s:text name="SVC02_rechargeSaleBillCode" /></th>
 								<th><s:text name="SVC02_transactionType" /></th>
 								<th><s:text name="SVC02_transactionAmount" /></th>
 								<th><s:text name="SVC02_giftAmount" /></th>

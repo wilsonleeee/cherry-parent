@@ -63,6 +63,10 @@ BINOLMBSVC02_init.prototype = {
 					"bSortable" : true,
 					"bVisible" : false
 				} ,{
+					"sName" : "rechargeSaleBillCode",
+					"sWidth" : "15%",
+					"bSortable" : true
+				} ,{
 					"sName" : "transactionType",
 					"sWidth" : "15%",
 					"bSortable" : true
