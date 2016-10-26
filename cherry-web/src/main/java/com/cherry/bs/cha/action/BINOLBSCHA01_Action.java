@@ -70,7 +70,8 @@ ModelDriven<BINOLBSCHA01_Form>{
 	 * 画面初期显示
 	 * </p>
 	 * 
-	 *
+	 * 
+	 * @param 无
 	 * @return String 跳转页面
 	 * @throws JSONException 
 	 * 
@@ -178,7 +179,9 @@ ModelDriven<BINOLBSCHA01_Form>{
 		// 结束日
 		map.put("endDate", form.getEndDate());
 		// 渠道类型
-		map.put("status", form.getStatus());	
+		map.put("status", form.getStatus());
+		//渠道名称
+        map.put("channelCode", form.getChannelCode().trim());
 		//渠道名称
         map.put("channelName", form.getChannelName().trim());
 		//制单人

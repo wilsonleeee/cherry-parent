@@ -152,8 +152,8 @@ ModelDriven<BINOLSTIOS04_Form>{
         }
         form.setPrtCategoryList(prtCategoryList);
         
-        //数量允许负号
-        String allowNegativeFlag = CherryConstants.SYSTEM_CONFIG_ENABLE;
+        //实盘数量是否允许负号
+        String allowNegativeFlag = binOLCM14_BL.getConfigValue("1388",ConvertUtil.getString(userInfo.getBIN_OrganizationInfoID()),ConvertUtil.getString(userInfo.getBIN_BrandInfoID()));
         form.setAllowNegativeFlag(allowNegativeFlag);
 		} catch (Exception e) {	
 				this.addActionError(getText("ECM00036"));

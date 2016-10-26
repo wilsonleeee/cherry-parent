@@ -574,13 +574,20 @@ ModelDriven<BINOLMBSVC02_Form>{
 		map.put("brandCode", userInfo.getBrandCode());
 		map.put(CherryConstants.BRANDINFOID, userInfo.getBIN_BrandInfoID());
 		map.put(CherryConstants.ORGANIZATIONINFOID, userInfo.getBIN_OrganizationInfoID());
+		map.put("counterCode", userInfo.getDepartCode());
 		Map<String, Object> retMap = binOLMBSVC02_IF.getNewPassword(map);
+		String errorCode = ConvertUtil.getString(retMap.get("ERRORCODE"));
+		if ("0".equals(errorCode)) {
+			//执行发送短信
+			retMap = binOLMBSVC02_IF.sendResetMessage(map);
+		}
 		ConvertUtil.setResponseByAjax(response, retMap);	
 	}
 	
 	/**
 	 * 储值卡修改密码确认
 	 */
+	@SuppressWarnings("unchecked")
 	public void passwordConfirm() throws Exception{
 		// 登陆用户信息
 		UserInfo userInfo = (UserInfo) session.get(CherryConstants.SESSION_USERINFO);
@@ -588,6 +595,7 @@ ModelDriven<BINOLMBSVC02_Form>{
 		map.put("brandCode", userInfo.getBrandCode());
 		map.put(CherryConstants.BRANDINFOID, userInfo.getBIN_BrandInfoID());
 		map.put(CherryConstants.ORGANIZATIONINFOID, userInfo.getBIN_OrganizationInfoID());
+		map.put("counterCode", userInfo.getDepartCode());
 		Map<String, Object> retMap = binOLMBSVC02_IF.getNewPassword(map);
 		String errorCode = ConvertUtil.getString(retMap.get("ERRORCODE"));
 		if(!"0".equals(errorCode)){

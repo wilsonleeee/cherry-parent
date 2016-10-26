@@ -6,7 +6,8 @@
 		SELECT distinct
 			vc.BIN_CardId as cardId,
 			vc.CardCode as cardCode,
-			vc.CardType as cardType,
+			CASE WHEN vc.CardType='2' THEN  '普通储值卡' 
+			     WHEN vc.CardType='3' THEN  '销售储值卡'  END  AS cardType ,
 			vc.MobilePhone as mobilePhone,
 			vc.Amount as amount,
 			vc.DepositAmount as depositAmount,
@@ -368,5 +369,21 @@
 			CardCode = #cardCode# AND
 			BillCode = #billCode# AND
 			ServiceType IS NOT NULL
+    </select>
+    <!-- 查询当前数据库中有没有相同的卡号 -->
+    <select id="checkCard" parameterClass="java.util.HashMap" resultClass="java.lang.Integer">
+    	<![CDATA[
+			SELECT 
+				COUNT(1) AS count 
+			FROM 
+				(
+				select 
+					BIN_CardId 
+				from 
+					Members.BIN_StoredValueCard 
+				where 
+					CardCode=#cardCode#
+				) T
+		]]>
     </select>
 </sqlMap>

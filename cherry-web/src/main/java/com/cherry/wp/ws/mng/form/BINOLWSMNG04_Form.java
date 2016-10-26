@@ -117,6 +117,9 @@ public class BINOLWSMNG04_Form extends BINOLCM13_Form{
     /**调入审核状态是否可见*/
     private String inputStockState;
     
+    /**云POS调入是否存在编辑操作*/
+    private String inputEditFlag;
+    
     public String getEmployeeId() {
         return employeeId;
     }
@@ -355,6 +358,14 @@ public class BINOLWSMNG04_Form extends BINOLCM13_Form{
 
 	public void setInputStockState(String inputStockState) {
 		this.inputStockState = inputStockState;
+	}
+
+	public String getInputEditFlag() {
+		return inputEditFlag;
+	}
+
+	public void setInputEditFlag(String inputEditFlag) {
+		this.inputEditFlag = inputEditFlag;
 	}
     
     

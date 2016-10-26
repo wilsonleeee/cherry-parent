@@ -68,7 +68,7 @@ public class BINOLSTBIL19_BL extends SsBaseBussinessLogic implements BINOLSTBIL1
 		{ "detailQuantity", "BIL19_Quantity", "", "", "" },// 退货数量
 		{ "detailPrice", "BIL19_price", "", "", "" },// 退货金额
 //		{ "saleType", "BIL19_saleType", "", "", "1055" },// 销售类型
-//		{ "productType", "BIL19_productType", "", "", "1136" },// 产品类型
+		{ "verifiedFlag", "BIL19_verifiedFlag", "", "", "1411" },// 产品类型
 		{ "employeeNameAudit", "BIL19_employeeAuditName", "30", "", "" },// 审核者
 		{ "tradeDate", "BIL19_tradeDate", "10", "", "" },// 日期
 //		{ "saleProductTime", "BIL19_saleTime", "10", "", "" }, // 时间

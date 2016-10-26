@@ -318,22 +318,25 @@ function getDepartBar(mode,showType,orgValidType){
 	var commParams = getCommParams();
 	var $showLgcDepot = $("#LGCINVENTORY");
 	commParams += "&mode=" + mode + "&showType=" + showType + "&orgValidType="+orgValidType;
-	if($("#testType").prop("checked")){
-		commParams += "&testType=1";
-	}else{
+
+	if($("#testType").val()=="0"){
 		commParams += "&testType=0";
+	}else if ($("#testType").val()=="1"){
+		commParams += "&testType=1";
 	}
-	if($("#orgValid").prop("checked")){
+
+	if($("#orgValid").val()=="0"){
 		commParams += "&orgValid=0";
-	}else{
+	}else if($("#orgValid").val()=="1"){
 		commParams += "&orgValid=1";
 	}
+	
 	if($("#orgValidAll").prop("checked")) {
 		commParams += "&orgValidAll=1";
 	}else {
 		commParams += "&orgValidAll=0";
 	}
-	
+
 	if($showLgcDepot.length > 0){
 		commParams += "&showLgcDepot=1";
 	}

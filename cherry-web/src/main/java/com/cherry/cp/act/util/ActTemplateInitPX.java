@@ -192,14 +192,26 @@ public class ActTemplateInitPX extends ActTemplateInit {
 		// 虚拟促销品生成方式
 		String virtPrmFlag = ConvertUtil.getString(tempMap
 				.get(CampConstants.VIRT_PRM_FLAG));
+		// 活动奖励【虚拟促销品DTO】
+		CampRuleResultDTO dto = null;
 		// 虚拟促销品生成方式：用户选择
 		if (CampConstants.VIRT_PRM_FLAG_3.equals(virtPrmFlag)) {
 			List<Map<String, Object>> list = getAllPrtList(rewardInfo,
 					campDTO.getGroupFlag());
 			getProDtoList(list, ruleResultList);
+//			if(null != list){
+//				for(Map<String, Object> prt : list){
+//					String unitCode = ConvertUtil.getString(prt.get("unitCode"));
+//					if(unitCode.startsWith("DH")){
+//						dto = new CampRuleResultDTO();
+//						dto.setBarCode(ConvertUtil.getString(prt.get("barCode")));
+//						dto.setUnitCode(unitCode);
+//						dto.setPrice(ConvertUtil.getFloat(prt.get("price")));
+//						break;
+//					}
+//				}
+//			}
 		} else {
-			// 活动奖励【虚拟促销品DTO】
-			CampRuleResultDTO dto = null;
 			// 指定礼品
 			if (CampConstants.REWARD_TYPE_1.equals(rewardType)) {
 				List<Map<String, Object>> list = getAllPrtList(rewardInfo,
@@ -220,13 +232,17 @@ public class ActTemplateInitPX extends ActTemplateInit {
 				dto = getVirtualPro(paramMap, tempMap,
 						PromotionConstants.PROMOTION_DHCP_TYPE_CODE,
 						couponPrice);
-			}
+			}	
 			// 加入虚拟促销品
 			if (null != dto) {
 				dto.setRewardType(rewardType);
 				ruleResultList.add(dto);
 			}
 		}
+//		// 拼装成PromotionRule表需要的条件
+//		convertRuleCondInfo(campaignRule,rewardType);
+//		// 拼装成PromotionRule表需要的结果
+//		convertRuleResultInfo(campaignRule,rewardInfo, dto,rewardType,campDTO.getGroupFlag());
 		// 保存活动奖励段条件
 		saveRuleResults(ruleResultList, paramMap, campaignRule);
 	}

@@ -112,6 +112,15 @@ public class CampaignRuleDTO extends BaseDTO{
 	/** COUPON类型 */
 	private String couponType;
 	
+	/** 存入到PromotionRule表的RuleResult内容 */
+	private String prmRule;
+	
+	private String prmConRule;
+	
+	private String memberType;
+	
+	private String prmRuleCate;
+	
 	/** COUPON批量号码 */
 	private String couponBatchNo;
 	
@@ -412,6 +421,38 @@ public class CampaignRuleDTO extends BaseDTO{
 
 	public void setExtendInfo(String extendInfo) {
 		this.extendInfo = extendInfo;
+	}
+
+	public String getPrmRule() {
+		return prmRule;
+	}
+
+	public void setPrmRule(String prmRule) {
+		this.prmRule = prmRule;
+	}
+
+	public String getPrmConRule() {
+		return prmConRule;
+	}
+
+	public void setPrmConRule(String prmConRule) {
+		this.prmConRule = prmConRule;
+	}
+
+	public String getMemberType() {
+		return memberType;
+	}
+
+	public void setMemberType(String memberType) {
+		this.memberType = memberType;
+	}
+
+	public String getPrmRuleCate() {
+		return prmRuleCate;
+	}
+
+	public void setPrmRuleCate(String prmRuleCate) {
+		this.prmRuleCate = prmRuleCate;
 	}
 	
 }

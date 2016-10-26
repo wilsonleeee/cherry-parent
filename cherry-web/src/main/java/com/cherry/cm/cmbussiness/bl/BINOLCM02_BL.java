@@ -438,6 +438,10 @@ public class BINOLCM02_BL {
 							}
 						}				
 						tempMap.put("stockAmount", stockAmount);
+						// stockAmount不为零，表示获取到金蝶库存跳出循环
+						if(0!=stockAmount){
+							break;
+						}
 					}
 				}else{//库存集合为空的情况
 					tempMap.put("stockAmount", 0);

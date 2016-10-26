@@ -641,19 +641,19 @@ public class BINOLSSPRM74_BL implements BINOLSSPRM74_IF {
 	public List<Map<String, Object>> getShoppingCartByTradeNo(
 			Map<String, Object> param) {
 		
-		//合并购物车
-		List<Map<String, Object>> result_list=new ArrayList<Map<String,Object>>();
+		//合并操作废弃
+//		List<Map<String, Object>> result_list=new ArrayList<Map<String,Object>>();
 		List<Map<String, Object>> cart_list=binOLSSPRM74_Service.getShoppingCartByTradeNo(param);
-		List<Map<String, Object>> order_list=ConvertUtil.listGroup(cart_list, "unitcode", "order_list");
-		for(Map<String,Object> order:order_list){
-			List<Map<String,Object>> cartOrder_list=(List<Map<String,Object>>)order.get("order_list");
-			Map<String,Object> cart0=cartOrder_list.get(0);
-			Map<String,Object> order_map=new HashMap<String, Object>();
-			order_map.putAll(cart0);
-			order_map.put("quantity", cartOrder_list.size());
-			result_list.add(order_map);
-		}
-		return result_list;
+//		List<Map<String, Object>> order_list=ConvertUtil.listGroup(cart_list, "unitcode", "order_list");
+//		for(Map<String,Object> order:order_list){
+//			List<Map<String,Object>> cartOrder_list=(List<Map<String,Object>>)order.get("order_list");
+//			Map<String,Object> cart0=cartOrder_list.get(0);
+//			Map<String,Object> order_map=new HashMap<String, Object>();
+//			order_map.putAll(cart0);
+//			order_map.put("quantity", cartOrder_list.size());
+//			result_list.add(order_map);
+//		}
+		return cart_list;
 				
 	}
 
@@ -747,18 +747,36 @@ public class BINOLSSPRM74_BL implements BINOLSSPRM74_IF {
 			List<Map<String, Object>> rule_list,
 			List<Map<String, Object>> promotionRule_list,
 			List<Map<String, Object>> pointRule_list) {
+		//对所有P类型的数据的扣减价格进行价格乘以数量的操作，与之后N类型活动的拆单逻辑吻合
+		if(null != promotionRule_list){
+			for(Map<String,Object> promotion_info:promotionRule_list){
+				double salePrice=Double.parseDouble(ConvertUtil.getString(promotion_info.get("salePrice")));
+				double price=Double.parseDouble(ConvertUtil.getString(promotion_info.get("price")));
+				int quantity=Integer.parseInt(ConvertUtil.getString(promotion_info.get("quantity")));
+				promotion_info.put("salePrice",salePrice*quantity);
+				promotion_info.put("price",price*quantity);
+			}
+		}
+		
 		//替换3中的数据入2中
-		for(Map<String,Object> pointRule :pointRule_list){
-			String point_maincode=ConvertUtil.getString(pointRule.get("maincode"));
-			for(int i=0;i<promotionRule_list.size();i++){
-				String promotionRule_maincode=ConvertUtil.getString(promotionRule_list.get(i).get("maincode"));
-				if(point_maincode.equals(promotionRule_maincode)){
-					promotionRule_list.set(i, pointRule);
+		if(null != pointRule_list){
+			for(Map<String,Object> pointRule :pointRule_list){
+				String point_maincode=ConvertUtil.getString(pointRule.get("maincode"));
+				if(null != promotionRule_list){
+					for(int i=0;i<promotionRule_list.size();i++){
+						String promotionRule_maincode=ConvertUtil.getString(promotionRule_list.get(i).get("maincode"));
+						if(point_maincode.equals(promotionRule_maincode)){
+							promotionRule_list.set(i, pointRule);
+						}
+					}
 				}
 			}
 		}
 		
 		//合并1与上面的结果
+		if(null==promotionRule_list){
+			promotionRule_list = new ArrayList<Map<String, Object>>();
+		}
 		promotionRule_list.addAll(rule_list);
 		//对没有积分的数据进行补0操作
 		for(Map<String,Object> promotion_rule:promotionRule_list){

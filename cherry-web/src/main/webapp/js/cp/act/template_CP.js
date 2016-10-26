@@ -13,6 +13,9 @@ ACT.openDialog = function(targetId, prtType,prmCate,index){
 			return ACT.getHtmlFun(info,prtType,prmCate,true);
 	   	}
     };
+	if(!isEmpty(prmCate)){
+		option.prmCate = prmCate;
+	}
 	if(prtType == 'N'){
 		popAjaxPrtDialog(option);
 	}else{

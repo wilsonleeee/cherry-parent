@@ -72,7 +72,7 @@
 	 </div>
     <div style="display: none" id="EBS00146"><!-- 新建订单不能使用款已付功能 -->
 	    <div class="actionError">
-	       <ul><li><span><s:text name=" SFH23_EBS00146"/></span></li></ul>         
+	       <ul><li><span><s:text name="SFH23_EBS00146"/></span></li></ul>         
 	    </div>
 	 </div>
     <div style="display: none" id="EBS00147"><!-- 只能选择一条订单进行订单复制操作-->

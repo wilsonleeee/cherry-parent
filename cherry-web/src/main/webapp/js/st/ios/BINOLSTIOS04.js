@@ -200,7 +200,7 @@ BINOLSTIOS04.prototype = {
 		
 		var count = parseInt($(thisObj).val(),10);
 		var allowNegativeFlag = $("#allowNegativeFlag").val();
-		if(allowNegativeFlag != "1"){
+		if(allowNegativeFlag != "0"){
 			count = Math.abs(count);
 		}
 		if(isNaN(count)){		

@@ -25,6 +25,7 @@ import com.cherry.cm.core.CherryConstants;
 import com.cherry.cm.core.CherryException;
 import com.cherry.cm.util.Bean2Map;
 import com.cherry.cm.util.CherryUtil;
+import com.cherry.cm.util.ConvertUtil;
 import com.opensymphony.xwork2.ModelDriven;
 
 @SuppressWarnings("unchecked")
@@ -94,11 +95,24 @@ public class BINOLBSCHA03_Action extends BaseAction implements ModelDriven<BINOL
 			UserInfo userInfo = (UserInfo) session
 			.get(CherryConstants.SESSION_USERINFO);
 			map.put(CherryConstants.BRANDINFOID, userInfo.getBIN_BrandInfoID());
-			map.put("channelName", form.getChannelName().trim());
 			map.put("channelId", form.getChannelId());
-			String count=binolbscha03if.getCount(map);
-			if(count.equals("1")) {
-				this.addFieldError("channelName",getText("ECM00032",new String[]{getText("PBS00050"),"20"}));
+			
+			if(!ConvertUtil.isBlank(form.getChannelCode())){
+				map.put("channelCode", form.getChannelCode().trim());
+				String count=binolbscha03if.getCount(map);
+				if(count.equals("1")) {
+					this.addFieldError("channelCode",getText("ECM00032",new String[]{getText("PBS00102"),"20"}));
+				}
+				map.remove("channelCode");
+			}
+			
+			if(!ConvertUtil.isBlank(form.getChannelName())){
+				map.put("channelName", form.getChannelName().trim());
+				String count=binolbscha03if.getCount(map);
+				if(count.equals("1")) {
+					this.addFieldError("channelName",getText("ECM00032",new String[]{getText("PBS00050"),"20"}));
+				}
+				map.remove("channelName");
 			}
 		}
 	

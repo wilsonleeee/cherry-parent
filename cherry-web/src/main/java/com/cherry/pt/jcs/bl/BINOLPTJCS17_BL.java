@@ -1043,6 +1043,76 @@ public class BINOLPTJCS17_BL implements BINOLPTJCS17_IF {
 		return result;
 	}
 	
+	
+
+	/**
+	 * 柜台方案实时下发
+	 * @param map
+	 * @throws Exception
+	 */
+	@SuppressWarnings("unchecked")
+	@CacheEvict(value="CherryProductCache",allEntries=true,beforeInvocation=false)
+	public Map<String,Object> tran_issuedCntPrtYT(Map<String, Object> map) throws Exception{
+		
+		Map<String, Object> result = new HashMap<String, Object>();
+		
+		// 取得当前柜台产品表版本号
+		Map<String, Object> seqMap = new HashMap<String, Object>();
+		seqMap.putAll(map);
+		seqMap.put("type", "F");
+		String tVersion = binOLCM15_BL.getCurrentSequenceId(seqMap);
+		map.put("tVersion", tVersion);
+		
+		try{
+			// Step0: 取得方案配置的区域或渠道实际的的柜台与以前配置的差异(区域城市/渠道)List
+			updPrtSoluCityChannelDiff(map);
+			
+			// Step1: 更新接口数据库
+			int updResult = updIFDatabaseYT(map);
+			
+			// Step2: 发送MQ通知
+			if(updResult > 0){
+				// 产品表的表版本号在下发成功后+1
+				String newTVersion = binOLCM15_BL.getNoPadLeftSequenceId(seqMap);
+				map.put("newTVersion", newTVersion);
+				
+				Map<String,Object> MQMap = binOLBSCOM01_BL.getPrtNoticeMqMap(map, MessageConstants.MSG_SPRT_DPRT);
+				if(MQMap.isEmpty()){
+					throw new Exception("柜台产品实时下发通知组装异常");
+				}
+				
+				//设定MQInfoDTO
+				MQInfoDTO mqDTO = binOLBSCOM01_BL.setMQInfoDTO(MQMap,map);
+				//调用共通发送MQ消息
+				mqDTO.setMsgQueueName(CherryConstants.cherryToPosCMD);
+				binOLMQCOM01_BL.sendMQMsg(mqDTO,false);
+				
+			}
+		}catch(Exception e){
+			
+			logger.error(e.getMessage(),e);
+			e.printStackTrace();
+			
+			try{
+				// 所有数据回滚，否则版本号无法控制
+				binOLPTJCS17_Service.manualRollback();
+				binOLPTJCS17_Service.ifManualRollback();
+				throw new Exception(e);
+			} catch(Exception ee){
+				logger.error(ee.getMessage(),ee);
+				ee.printStackTrace();
+				throw new Exception(ee);
+				
+			}
+			
+		}
+			
+		// 成功
+		result.put("result", "0");
+		
+		return result;
+	}
+	
 	/**
 	 * 处理方案配置的区域或渠道实际的的柜台与以前配置的差异
 	 * Step1 : 比较方案案配置的区域或渠道实际的的柜台与以前配置的差异
@@ -1408,7 +1478,134 @@ public class BINOLPTJCS17_BL implements BINOLPTJCS17_IF {
 		
 		return result;
 	}
-	
+
+	/**
+	 * 更新接口数据库
+	 * 编码条码历史
+	 * WITPOSA_ProductSetting编码条码变更记录
+	 * 
+	 * @param list
+	 * @throws Exception 
+	 */
+	@SuppressWarnings("unchecked")
+	private int updIFDatabaseYT(Map<String, Object> paraMap) throws CherryException,Exception {
+		
+		// 定义新后台数据是否有写入接口表
+		int result = 0;
+		
+		// 保存接口产品方案柜台关系表
+			try {
+				// Step1.1  取得新后台产品方案柜台关联数据版本号version大于tVersion的list(新增/修改/停用/启用等)
+				List<Map<String, Object>> prtSoluCouList = binOLPTJCS17_Service.getPrtSoluCouList(paraMap);
+				// 保存接口产品方案柜台关系表 
+				if (!CherryUtil.isBlankList(prtSoluCouList)) {
+					result++;
+					for (Map<String, Object> prtSoluCouItemMap : prtSoluCouList) {
+						try {
+							prtSoluCouItemMap.putAll(paraMap);
+							// 设置产品方案柜台接口表的状态值
+							getPrtSoluCntSCSStatus(prtSoluCouItemMap);
+							// 删除产品方案柜台接口表(根据brand、prtSolutionCode、counter)
+							binOLPTJCS17_Service.delIFPrtSoluWithCounter(prtSoluCouItemMap);
+							// 插入柜台产品接口表
+		//					productMap.put(CherryConstants.UNITCODE, "444444444444444444444444444444444444444444ssssssssssssssssssssssssssss");
+							binOLPTJCS17_Service.addIFPrtSoluWithCounter(prtSoluCouItemMap);
+							// 插入件数加一
+		//					insertCount += 1;
+						} catch (Exception e) {
+							logger.error(e.getMessage(),e);
+							String departCode = ConvertUtil.getString(prtSoluCouItemMap.get("DepartCode"));
+							String solutionCode = ConvertUtil.getString(prtSoluCouItemMap.get("SolutionCode"));
+							
+							throw new CherryException("EBS00135",new String[]{solutionCode,departCode},e);
+						}
+					}
+				}
+				// Step1.2 取得新后台产品方案明细表数据版本号version大于tVersion的list(新增/修改/停用/启用等)
+				
+				/*String config = binOLCM14_BL.getConfigValue("1288", String.valueOf(paraMap.get("organizationInfoId")), String.valueOf(paraMap.get("brandInfoId")));
+				paraMap.put("soluAddModeConf", config);
+				if(ProductConstants.SOLU_ADD_MODE_CONFIG_2.equals(config) 
+						|| ProductConstants.SOLU_ADD_MODE_CONFIG_3.equals(config)){*/
+					
+				// Step1.2.1取得系统配置项产品方案添加模式,为颖通模式时，检查方案明细添加的分类是否有动态添加减少产品的变动情况
+				// 所有产品价格方案
+				List<Map<String, Object>> prtPriceSolutionList = binOLPTJCS16_Service.getPrtPriceSolutionList(paraMap);
+				if (!CherryUtil.isBlankList(prtPriceSolutionList)) {
+					for(Map<String, Object> soluMap : prtPriceSolutionList){
+						paraMap.put("productPriceSolutionID", soluMap.get("solutionID"));
+						// 取得当前产品方案明细表的产品与以前配置的差异List
+						List<Map<String, Object>> prtForPrtSoluDetailDiff = binOLPTJCS19_Service.getPrtForPrtSoluDetailDiffYT(paraMap);
+						if (!CherryUtil.isBlankList(prtForPrtSoluDetailDiff)) {
+							for(Map<String, Object> diffMap : prtForPrtSoluDetailDiff){
+								// 将差异更新到产品方案明细表
+								diffMap.putAll(paraMap);
+								String modifyFlag = (String)diffMap.get("modifyFlag"); // modifyFlag  add 增加的柜台 、sub减少的柜台
+								
+								// 取得当前方案及增加的产品,merge到产品方案明细表 validFlag = 1,version = tversion +1,isCate =1
+								if("add".equals(modifyFlag)){
+									diffMap.put("ValidFlag", CherryConstants.VALIDFLAG_ENABLE);
+									diffMap.put("productId", diffMap.get("prtPD"));
+									// 1: 插入产品方案明细表
+									binOLPTJCS19_Service.mergeProductPriceSolutionDetail(diffMap);
+									
+								}
+								// 取得当前方案明细减少的产品,merge到产品方案部门关系表 validFlag = 0,version = tversion +1
+								else if ("sub".equals(modifyFlag)){
+									
+									diffMap.put("ValidFlag", CherryConstants.VALIDFLAG_DISABLE);
+									diffMap.put("productId", diffMap.get("prtPDH"));
+									// 1: 将方案明细表的产品数据无效掉
+									binOLPTJCS19_Service.updPrtSoluDetail(diffMap);
+								}
+							}
+							
+						}
+					}
+				}
+				
+				// Step1.2.2 颖通模式时，方案价格根据当前标准产品当前业务日期的价格
+				binOLPTJCS19_Service.mergePPSDPrice(paraMap);
+				//}
+				
+				
+				
+				List<Map<String, Object>> prtSoluDetailByVersionList = binOLPTJCS17_Service.getPrtSoluDetailByVersionList(paraMap);
+				// 保存接口产品方案柜台关系表 
+				if (!CherryUtil.isBlankList(prtSoluDetailByVersionList)) {
+					result++;
+					for (Map<String, Object> prtSoluDetailItemMap : prtSoluDetailByVersionList) {
+						try{
+							prtSoluDetailItemMap.putAll(paraMap);
+							// 设置产品方案柜台接口表的状态值
+							getPrtSoluSCSStatus(prtSoluDetailItemMap);
+							// 删除产品方案柜台接口表(根据brand、prtSolutionCode、产品厂商ID)
+							binOLPTJCS17_Service.delIFPrtSoluSCS(prtSoluDetailItemMap);
+							// 插入产品方案明细接口表
+							binOLPTJCS17_Service.addIFPrtSoluSCS(prtSoluDetailItemMap);
+							
+						} catch(Exception e){
+							logger.error(e.getMessage(),e);
+							String solutionCode = ConvertUtil.getString(prtSoluDetailItemMap.get("SolutionCode"));
+							String productVendorID = ConvertUtil.getString(prtSoluDetailItemMap.get("BIN_ProductVendorID"));
+							String unitCode = ConvertUtil.getString(prtSoluDetailItemMap.get("UnitCode"));
+							String barCode = ConvertUtil.getString(prtSoluDetailItemMap.get("BarCode"));
+							
+							throw new CherryException("EBS00136",new String[]{solutionCode,productVendorID,unitCode,barCode},e);
+						}
+					}
+				}
+				
+			} catch(CherryException ce){
+				logger.error(ce.getErrMessage(),ce);
+				throw new Exception(ce);
+			} catch (Exception e) {
+				logger.error(e.getMessage(),e);
+				throw new Exception(e);
+			}
+		
+		return result;
+	}
 	/**
 	 * 废除 -- 在柜台实时下发时，还会做一次的，这里做也可能不准。所以这里没有必要做。
 	 * 设置部门产品表相关属性(status、validFlag)

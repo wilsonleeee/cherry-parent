@@ -15,6 +15,7 @@ $(function(){
 		formId: "add",		
 		rules: {
 			brandInfoId: {required: true},
+			channelCode: {required: true,maxlength: 50},	//渠道代码
 		    channelName: {required: true,maxlength: 50},	//渠道名称
 		    channelNameForeign: {maxlength: 50},
 		    joinDate: {dateValid: true}

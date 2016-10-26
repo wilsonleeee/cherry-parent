@@ -322,10 +322,10 @@ BINOLSTIOS05.prototype = {
 		var $tr_obj = $this.parent().parent().parent();
 		var quantity = parseInt($(thisObj).val(),10);
 		var allowNegativeFlag = $("#allowNegativeFlag").val();
-		if(allowNegativeFlag != "1"){
-			count = Math.abs(count);
+		if(allowNegativeFlag != "0"){
+			quantity = Math.abs(quantity);
 		}
-		if(isNaN(quantity)){		
+		if(isNaN(quantity)){
 			$(thisObj).val("");
 			//清空盘差
 			$tr_obj.find('#gainCount').html("");

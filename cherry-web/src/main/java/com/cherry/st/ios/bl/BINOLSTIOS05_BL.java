@@ -21,6 +21,7 @@ import javax.annotation.Resource;
 
 import com.cherry.cm.core.CherryChecker;
 import com.cherry.cm.cmbeans.UserInfo;
+import com.cherry.cm.cmbussiness.bl.BINOLCM14_BL;
 import com.cherry.cm.core.CherryConstants;
 import com.cherry.cm.core.CherryException;
 import com.cherry.cm.util.CherryUtil;
@@ -53,6 +54,10 @@ public class BINOLSTIOS05_BL  extends SsBaseBussinessLogic implements BINOLSTIOS
     @Resource
     private BINOLSTIOS05_Service binOLSTIOS05_Service;
 
+    /** 共通BL */
+    @Resource
+    private BINOLCM14_BL binOLCM14_BL;
+    
     /**
      * 保存盘点信息
      * @param map
@@ -66,11 +71,15 @@ public class BINOLSTIOS05_BL  extends SsBaseBussinessLogic implements BINOLSTIOS
         //从list中获取各种参数数组
         String[] productVendorIdArr = list.get(0);
         String[] batchNoArr = list.get(1);
+        String[] quantityArr = list.get(2);
         String[] reasonArr = list.get(3);
         String[] priceArr = list.get(4);
         String[] gainCountArr = list.get(5);
         String[] bookCountArr = list.get(6);
         String[] htArr = list.get(7);
+        
+        //实盘数量是否允许负号
+        String allowNegativeFlag = binOLCM14_BL.getConfigValue("1388",ConvertUtil.getString(userinfo.getBIN_OrganizationInfoID()),ConvertUtil.getString(userinfo.getBIN_BrandInfoID()));
         
         for(int i = 0 ; i < productVendorIdArr.length ; i++){
         	
@@ -88,6 +97,15 @@ public class BINOLSTIOS05_BL  extends SsBaseBussinessLogic implements BINOLSTIOS
         	if(CherryChecker.isNullOrEmpty(gainCountArr[i], true)){
             	throw new CherryException("EST00026",new String[]{ProductionConstants.ProductTaking_Quantity});
             }
+        	
+        	// 实盘数量不允许为负时，需校验
+        	if("1".equals(allowNegativeFlag)){
+        		int gainCount =  Integer.parseInt(quantityArr[i]);
+        		if (gainCount<0){
+        			throw new CherryException("EST00049");
+        			}
+        	}
+        	
         }
         
         //申明sessionMap并在其中放入数据

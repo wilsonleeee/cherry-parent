@@ -35,17 +35,29 @@
 		        </#list>
 		    </ul>
 		    <div class="right">
-		    	<#if orgValidType ?? && orgValidType == "1">
+		    	<#--<#if orgValidType ?? && orgValidType == "1">
 			    	<input type="checkbox"<#if orgValidAll == "1"> checked="checked"</#if>
 			    		name="orgValidAll" id="orgValidAll" value="1" onclick="getDepartBar('${modeStr}','${showType}','${(orgValidType)!0}');">
 			    	<span><@s.text name="global.page.orgValidAll"/></span>
-		    	</#if>
-	    		<input type="checkbox"<#if orgValid == "0"> checked="checked"</#if>
+		    	</#if>-->
+		    	<span><@s.text name="global.page.departStatus"/>:</span>
+		    	<select id="orgValid" name="orgValid" onChange="getDepartBar('${modeStr}','${showType}','${(orgValidType)!0}');">
+		    	<option value="" <#if orgValid == ""> selected="selected"</#if>><@s.text name="global.page.all"/></option>
+		    	<option value="1" <#if orgValid == "1"> selected="selected"</#if>><@s.text name="global.page.validDepart"/></option>
+		    	<option value="0" <#if orgValid == "0"> selected="selected"</#if>><@s.text name="global.page.remainDepart"/></option>
+		    	</select>
+		    	<span><@s.text name="global.page.departType"/>:</span>
+		    	<select id="testType" name="testType" onChange="getDepartBar('${modeStr}','${showType}','${(orgValidType)!0}');">
+		    	<option value="" <#if testType == ""> selected="selected"</#if>><@s.text name="global.page.all"/></option>
+		    	<option value="0" <#if testType == "0"> selected="selected"</#if>><@s.text name="global.page.formalDepart"/></option>
+		    	<option value="1" <#if testType == "1"> selected="selected"</#if>><@s.text name="global.page.testDepart"/></option>
+		    	</select>
+	    		<#--<input type="checkbox"<#if orgValid == "0"> checked="checked"</#if>
 		    		name="orgValid" id="orgValid" value="0" onclick="getDepartBar('${modeStr}','${showType}','${(orgValidType)!0}');">
 		    	<span><@s.text name="global.page.orgValid"/></span>
-		    	<input type="checkbox"<#if testType== "1"> checked="checked"</#if>
+		    	<input type="checkbox"<#if == "1"> checked="checked"</#if>
 		    		name="testType" id="testType" value="1" onclick="getDepartBar('${modeStr}','${showType}','${(orgValidType)!0}');">
-		    	<span><@s.text name="global.page.testType"/></span>
+		    	<span><@s.text name="global.page.testType"/></span>-->
 		    </div>
 		    <#list modeArr as mode>
 				<#if mode == 'dpat'><#if gradeList!?size gt 0><div id="tabs-dpatMode" style="padding:5px 0;"><@getDepart list=gradeList/></div></#if>

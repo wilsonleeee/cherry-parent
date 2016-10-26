@@ -185,7 +185,7 @@ public class BINOLSSPRM98_BL implements Rule_IF{
 			}
 			
 		} else {
-			int rst = couponResultSetting(contentInfo, couponComb.getCouponInfo(), billInfo, couponComb.getActList());
+			int rst = couponResultSetting(contentInfo, couponComb.getCouponInfo(), billInfo, couponComb.getActList(), useCondInfo);
 			if (-1 == rst) {
 				logger.error("checkUseParams method no content, rulecode:" + couponRule.getRuleCode());
 				setErrorMsg(result, CouponConstains.IF_ERROR_CONTENT_CODE, CouponConstains.IF_ERROR_CONTENT);
@@ -319,7 +319,115 @@ public class BINOLSSPRM98_BL implements Rule_IF{
 	
 	}
 	
-	private int couponResultSetting(Map<String, Object> contentInfo, CouponInfo couponInfo, BillInfo billInfo, List<Map<String, Object>> actList) {
+	private double actualDiscountPrice(double planDiscountPrice, BillInfo billInfo, Map<String, Object> condInfo) {
+		// 支付金额
+		double totalAmount = billInfo.getAmount();
+		// 实际优惠金额
+		if (totalAmount < -planDiscountPrice) {
+			return -totalAmount;
+		} else {
+			List<Map<String, Object>> proList = (List<Map<String, Object>>) condInfo.get("proList");
+			List<Map<String, Object>> proTypeList = (List<Map<String, Object>>) condInfo.get("proTypeList");
+			boolean isPro = null != proList && !proList.isEmpty();
+			boolean isProType = null != proTypeList && !proTypeList.isEmpty();
+			if (isPro || isProType) {
+				// 订单明细
+				List<Map<String, Object>> detailList = (List<Map<String, Object>>) billInfo.getDetailList();
+				if (isProType) {
+					for (Map<String, Object> cartMap : detailList) {
+						if (!cartMap.containsKey("prtCateList")) {
+							int prtVendorId = Integer.parseInt(String.valueOf(cartMap.get("prtVendorId")));
+							List<Map<String, Object>> prtCateList = binOLSSPRM73_Service.selPrtCateList(prtVendorId);
+							cartMap.put("prtCateList", prtCateList);
+						}
+					}
+					totalAmount = 0;
+					String relation = (String) condInfo.get("relationUse");
+					// 和
+					if ("1".equals(relation)) {
+						if (isPro) {
+							for (Map<String, Object> cartMap : detailList) {
+								String prtVendorId = String.valueOf(cartMap.get("prtVendorId"));
+								for (Map<String, Object> proMap : proList) {
+									String prtVendId = String.valueOf(proMap.get("prtVendorId"));
+									if (prtVendorId.equals(prtVendId)) {
+										totalAmount = addDetailAmount(totalAmount, cartMap);
+										cartMap.put("DJQLZ", "1");
+									}
+								}
+							}
+						}
+						if (isProType) {
+							for (Map<String, Object> proTypeMap : proTypeList) {
+								String cateId = String.valueOf(proTypeMap.get("cateValId"));
+								for (Map<String, Object> cartMap : detailList) {
+									if ("1".equals(cartMap.get("DJQLZ"))) {
+										continue;
+									}
+									List<Map<String, Object>> prtCateList = (List<Map<String, Object>>) cartMap.get("prtCateList");
+									if (null != prtCateList) {
+										for (Map<String, Object> prtCateMap : prtCateList) {
+											String prtCateId = String.valueOf(prtCateMap.get("prtCateId"));
+											if (cateId.equals(prtCateId)) {
+												totalAmount = addDetailAmount(totalAmount, cartMap);
+												break;
+											}
+										}
+									}
+								}
+							}
+						}
+						// 或
+					} else {
+						if (isPro) {
+							for (Map<String, Object> proMap : proList) {
+								String prtVendId = String.valueOf(proMap.get("prtVendorId"));
+								double tempAmount = 0;
+								for (Map<String, Object> cartMap : detailList) {
+									String prtVendorId = String.valueOf(cartMap.get("prtVendorId"));
+									if (prtVendorId.equals(prtVendId)) {
+										tempAmount = addDetailAmount(tempAmount, cartMap);
+									}
+								}
+								if (totalAmount < tempAmount) {
+									totalAmount = tempAmount;
+								}
+							}
+						}
+						if (isProType) {
+							for (Map<String, Object> proTypeMap : proTypeList) {
+								String cateId = String.valueOf(proTypeMap.get("cateValId"));
+								double tempAmount = 0;
+								for (Map<String, Object> cartMap : detailList) {
+									List<Map<String, Object>> prtCateList = (List<Map<String, Object>>) cartMap.get("prtCateList");
+									if (null != prtCateList) {
+										for (Map<String, Object> prtCateMap : prtCateList) {
+											String prtCateId = String.valueOf(prtCateMap.get("prtCateId"));
+											if (cateId.equals(prtCateId)) {
+												tempAmount = addDetailAmount(tempAmount, cartMap);
+												break;
+											}
+										}
+									}
+								}
+								if (totalAmount < tempAmount) {
+									totalAmount = tempAmount;
+								}
+							}
+						}
+					}
+					if (totalAmount == 0) {
+						return 0;
+					} else if (totalAmount < -planDiscountPrice) {
+						return -totalAmount;
+					}
+				}
+			}
+		}
+		return planDiscountPrice;
+	}
+	
+	private int couponResultSetting(Map<String, Object> contentInfo, CouponInfo couponInfo, BillInfo billInfo, List<Map<String, Object>> actList, Map<String, Object> useCondInfo) {
 		CouponBaseInfo couponBaseInfo = couponInfo.getCouponBaseInfo();
 		String couponType = (String) contentInfo.get("couponType");
 		// 厂商编码
@@ -333,11 +441,8 @@ public class BINOLSSPRM98_BL implements Rule_IF{
 		// 代金券
 		if (CouponConstains.COUPONTYPE_1.equals(couponType)) {
 			// 实际优惠金额
-			if (totalAmount < -couponBaseInfo.getPlanDiscountPrice()) {
-				couponBaseInfo.setActualDiscountPrice(-totalAmount);
-			} else {
-				couponBaseInfo.setActualDiscountPrice(couponBaseInfo.getPlanDiscountPrice());
-			}
+			couponBaseInfo.setActualDiscountPrice(
+					actualDiscountPrice(couponBaseInfo.getPlanDiscountPrice(), billInfo, useCondInfo));
 			return 0;
 			// 折扣券
 		} else if (CouponConstains.COUPONTYPE_5.equals(couponType)){
@@ -567,6 +672,12 @@ public class BINOLSSPRM98_BL implements Rule_IF{
 		if (!CherryChecker.isNullOrEmpty(minAmountStr)) {
 			if (billInfo.getAmount() < Double.parseDouble(minAmountStr)) {
 				return false;
+			} else {
+				double calcuAmount = calcuAmount(condInfo, billInfo, kbn);
+				logger.info("***************************计算后的金额为：" + calcuAmount + " 单号为：" + billInfo.getBillCode());
+				if (calcuAmount < Double.parseDouble(minAmountStr)) {
+					return false;
+				}
 			}
 			if (map != null) {
 				map.put("amount", minAmountStr);
@@ -575,6 +686,120 @@ public class BINOLSSPRM98_BL implements Rule_IF{
 		return true;
 	}
 	
+	private double calcuAmount(Map<String, Object> condInfo, BillInfo billInfo, String kbn) {
+		// 总金额
+		double calcuAmount = billInfo.getAmount();
+		// 用券
+		if (CouponConstains.CONDITIONTYPE_2.equals(kbn)) {
+			return calcuAmount;
+		}
+		// 正价金额
+		boolean iszj = "1".equals(condInfo.get("amountCondition"));
+		// 正价金额并且参加过整单类促销活动
+		if (iszj && "1".equals(billInfo.getZdFlag())) {
+			return 0;
+		}
+		List<Map<String, Object>> proList = (List<Map<String, Object>>) condInfo.get("proList");
+		List<Map<String, Object>> proTypeList = (List<Map<String, Object>>) condInfo.get("proTypeList");
+		// 产品
+		boolean isPro = null != proList && !proList.isEmpty();
+		// 分类
+		boolean isProType = null != proTypeList && !proTypeList.isEmpty();
+		// 订单明细
+		List<Map<String, Object>> detailList = (List<Map<String, Object>>) billInfo.getDetailList();
+		if (isPro || isProType) {
+			calcuAmount = 0;
+			if (isProType) {
+				for (Map<String, Object> cartMap : detailList) {
+					// 正价时排出参加过促销的产品
+					if (iszj && !CherryChecker.isNullOrEmpty(cartMap.get("maincode"))) {
+						continue;
+					}
+					if (!cartMap.containsKey("prtCateList")) {
+						int prtVendorId = Integer.parseInt(String.valueOf(cartMap.get("prtVendorId")));
+						List<Map<String, Object>> prtCateList = binOLSSPRM73_Service.selPrtCateList(prtVendorId);
+						cartMap.put("prtCateList", prtCateList);
+					}
+				}
+			}
+			boolean isPrt = false;
+			if (isPro) {
+				for (Map<String, Object> cartMap : detailList) {
+					// 正价时排出参加过促销的产品
+					if (iszj && !CherryChecker.isNullOrEmpty(cartMap.get("maincode"))) {
+						continue;
+					}
+					String prtVendorId = String.valueOf(cartMap.get("prtVendorId"));
+					for (Map<String, Object> proMap : proList) {
+						String prtVendId = String.valueOf(proMap.get("prtVendorId"));
+						if (prtVendorId.equals(prtVendId)) {
+							isPrt = true;
+							calcuAmount = addDetailAmount(calcuAmount, cartMap);
+							cartMap.put("ISPRTZ", "1");
+						}
+					}
+				}
+			}
+			if (isProType) {
+				for (Map<String, Object> proTypeMap : proTypeList) {
+					String cateId = String.valueOf(proTypeMap.get("cateValId"));
+					for (Map<String, Object> cartMap : detailList) {
+						if ("1".equals(cartMap.get("ISPRTZ"))) {
+							continue;
+						}
+						// 正价时排出参加过促销的产品
+						if (iszj && !CherryChecker.isNullOrEmpty(cartMap.get("maincode"))) {
+							continue;
+						}
+						List<Map<String, Object>> prtCateList = (List<Map<String, Object>>) cartMap.get("prtCateList");
+						if (null != prtCateList) {
+							for (Map<String, Object> prtCateMap : prtCateList) {
+								String prtCateId = String.valueOf(prtCateMap.get("prtCateId"));
+								if (cateId.equals(prtCateId)) {
+									isPrt = true;
+									calcuAmount = addDetailAmount(calcuAmount, cartMap);
+									cartMap.put("ISPRTZ", "1");
+									break;
+								}
+							}
+						}
+					}
+				}
+			}
+			if (isPrt) {
+				boolean amountFlag = false;
+				for (Map<String, Object> cartMap : detailList) {
+					if (!amountFlag && !"1".equals(cartMap.get("ISPRTZ"))) {
+						amountFlag = true;
+					}
+					cartMap.remove("ISPRTZ");
+				}
+				return amountFlag? calcuAmount : billInfo.getAmount();
+			}
+			return 0;
+		} else if (iszj) {
+			calcuAmount = 0;
+			boolean amountFlag = false;
+			for (Map<String, Object> cartMap : detailList) {
+				// 正价时排出参加过促销的产品
+				if (!CherryChecker.isNullOrEmpty(cartMap.get("maincode"))) {
+					amountFlag = true;
+					continue;
+				}
+				calcuAmount = addDetailAmount(calcuAmount, cartMap);
+			}
+			return amountFlag? calcuAmount : billInfo.getAmount();
+		}
+		return calcuAmount;
+	}
+	
+	private double addDetailAmount(double calcuAmount, Map<String, Object> cartMap) {
+		// 销售价格
+		double salePrice = Double.parseDouble(String.valueOf(cartMap.get("salePrice")));
+		// 数量
+		double quantity = Double.parseDouble(String.valueOf(cartMap.get("quantity")));
+		return DoubleUtil.add(calcuAmount, DoubleUtil.mul(salePrice, quantity));
+	}
 	private boolean checkMember(Map<String, Object> condInfo, BillInfo billInfo, String ruleCode) {
 		// 会员区分
 		String memberKbn = (String) condInfo.get("memberKbn");
@@ -687,9 +912,11 @@ public class BINOLSSPRM98_BL implements Rule_IF{
 				if (!CherryChecker.isNullOrEmpty(cartMap.get("maincode"))) {
 					continue;
 				}
-				int prtVendorId = Integer.parseInt(String.valueOf(cartMap.get("prtVendorId")));
-				List<Map<String, Object>> prtCateList = binOLSSPRM73_Service.selPrtCateList(prtVendorId);
-				cartMap.put("prtCateList", prtCateList);
+				if (!cartMap.containsKey("prtCateList")) {
+					int prtVendorId = Integer.parseInt(String.valueOf(cartMap.get("prtVendorId")));
+					List<Map<String, Object>> prtCateList = binOLSSPRM73_Service.selPrtCateList(prtVendorId);
+					cartMap.put("prtCateList", prtCateList);
+				}
 			}
 		}
 		String relationKey = null;
@@ -1493,6 +1720,17 @@ public class BINOLSSPRM98_BL implements Rule_IF{
 		}
 		Map<String, Object> sendCondInfo = ruleEngine.getSendCondInfo();
 		if (null != sendCondInfo && !sendCondInfo.isEmpty()) {
+			if (null != actList && !actList.isEmpty()) {
+				for (Map<String, Object> actMap : actList) {
+					// 活动类型
+					String ruleType = (String) actMap.get("ruleType");
+					// 整单折扣或整单减现
+					if ("ZDZK".equals(ruleType) || "ZDYH".equals(ruleType)) {
+						billInfo.setZdFlag("1");
+						break;
+					}
+				}
+			}
 			String ruleCode = ruleEngine.getRuleCode();
 			boolean isSend = null != sendMap;
 			if (!isSend && !checkCounter(sendCondInfo, billInfo.getCounterCode(), ruleCode, CouponConstains.CONDITIONTYPE_1)) {
@@ -1500,6 +1738,7 @@ public class BINOLSSPRM98_BL implements Rule_IF{
 				return result;
 			}
 			Map<String, Object> amountInfo = new HashMap<String, Object>();
+			logger.info("******************券活动名称：" + ruleName);
 			if (!checkAmount(sendCondInfo, billInfo, CouponConstains.CONDITIONTYPE_1, amountInfo)) {
 //				if (isSend) {
 //					sendMap.put("AMOUNT_CHECK", "1");

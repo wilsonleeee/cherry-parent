@@ -1030,8 +1030,8 @@ public class BINBEMQMES01_BL implements AnalyzeMessage_IF{
             detailNo = CherryUtil.obj2int(maxDetailList.get(0).get("MaxDetailNo"));
         }else{
             // 生日礼领用单据采番
-            //stockBirPresent_no = binOLCM03_BL.getTicketNumber(organizationInfoID, brandInfoID, "BINBEMQMES01", cherry_tradeType);
-            map.put("stockBirPresent_no", map.get("tradeNoIF"));
+        	stockBirPresent_no = binOLCM03_BL.getTicketNumber(organizationInfoID, brandInfoID, "BINBEMQMES01", cherry_tradeType);
+        	map.put("stockBirPresent_no", stockBirPresent_no);
         }
 
 		// 设定入出库关联单据号(生日礼领用单)

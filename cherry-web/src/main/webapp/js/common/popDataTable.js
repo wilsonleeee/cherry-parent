@@ -2215,10 +2215,10 @@ function popProductDialogTwo(option){
 							{ "sName": "unitCode"},                     // 1
 							{ "sName": "barCode"},                      // 2
 							{ "sName": "originalBrand"},                // 3
-							{ "sName": "nameTotal"},                    // 4
+							{ "sName": "nameTotal"}, 
+							{ "sName": "salePrice","bSortable": false}, // 4
 							{ "sName": "primaryCategoryBig"},           // 5
 							{ "sName": "primaryCategorySmall"},         // 6
-							{ "sName": "salePrice"},
 							{ "sName": "distributionPrice"}],  				// 7
 /*							{ "sName": "memPrice"},						// 8
 							{ "sName": "standardCost"},					// 9

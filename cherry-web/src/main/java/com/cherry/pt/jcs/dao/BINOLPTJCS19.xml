@@ -254,6 +254,168 @@
 		WHERE (T.prtPD IS NOT NULL AND T.prtPDH IS NULL) OR (T.prtPD IS NULL AND T.prtPDH IS NOT NULL)
    	</select>
    	
+   	
+    <!-- 取得产品方案明细表的产品与以前配置的差异List （WITPOSQA-23079 颖通香港新增需求）-->
+    
+    
+	<!-- 方案明细 -->
+	<sql id="productCategoryQuery">
+		 <!-- 大分类 -->
+				SELECT 
+					 distinct PC.BIN_ProductID,'LargeCate' AS CateType
+				FROM Basis.BIN_Product P WITH(NOLOCK) 
+				JOIN Basis.BIN_PrtCategory PC WITH(NOLOCK) ON PC.BIN_ProductID = P.BIN_ProductID
+				JOIN Basis.BIN_PrtCatPropValue PCPV WITH(NOLOCK) ON PCPV.BIN_PrtCatPropValueID = PC.BIN_PrtCatPropValueID
+				JOIN Basis.BIN_PrtCatProperty PCP WITH(NOLOCK) ON PCP.BIN_PrtCatPropertyID = PCPV.BIN_PrtCatPropertyID
+				
+				WHERE 
+					P.BIN_OrganizationInfoID = #organizationInfoId#
+				AND P.BIN_BrandInfoID = #brandInfoId#
+				AND P.ValidFlag = 1
+				AND PCP.TeminalFlag = '1'
+				AND EXISTS (
+					SELECT 1 
+					FROM Basis.BIN_ProductPriceSolutionCateDetail cateDetail WITH(NOLOCK) 
+					JOIN Basis.BIN_ProductPriceSolution PPS WITH(NOLOCK) ON cateDetail.BIN_ProductPriceSolutionID = PPS.BIN_ProductPriceSolutionID
+					WHERE 
+						PPS.BIN_OrganizationInfoID = #organizationInfoId#
+					AND PPS.BIN_BrandInfoID = #brandInfoId#
+					AND PPS.BIN_ProductPriceSolutionID = #productPriceSolutionID# AND cateDetail.BIN_PrtCatPropValueID = PC.BIN_PrtCatPropValueID
+				)
+				UNION
+				<!-- 中分类 -->
+				SELECT 
+					 distinct PC.BIN_ProductID,'MediumCate' AS CateType
+				FROM Basis.BIN_Product P WITH(NOLOCK) 
+				JOIN Basis.BIN_PrtCategory PC WITH(NOLOCK) ON PC.BIN_ProductID = P.BIN_ProductID
+				JOIN Basis.BIN_PrtCatPropValue PCPV WITH(NOLOCK) ON PCPV.BIN_PrtCatPropValueID = PC.BIN_PrtCatPropValueID
+				JOIN Basis.BIN_PrtCatProperty PCP WITH(NOLOCK) ON PCP.BIN_PrtCatPropertyID = PCPV.BIN_PrtCatPropertyID
+				
+				WHERE 
+					P.BIN_OrganizationInfoID = #organizationInfoId#
+				AND P.BIN_BrandInfoID = #brandInfoId#
+				AND P.ValidFlag = 1
+				AND PCP.TeminalFlag = '3'
+				AND EXISTS (
+					SELECT 1 
+					FROM Basis.BIN_ProductPriceSolutionCateDetail cateDetail WITH(NOLOCK) 
+					JOIN Basis.BIN_ProductPriceSolution PPS WITH(NOLOCK) ON cateDetail.BIN_ProductPriceSolutionID = PPS.BIN_ProductPriceSolutionID
+					WHERE 
+						PPS.BIN_OrganizationInfoID = #organizationInfoId#
+					AND PPS.BIN_BrandInfoID = #brandInfoId#
+					AND PPS.BIN_ProductPriceSolutionID = #productPriceSolutionID# AND cateDetail.BIN_PrtCatPropValueID = PC.BIN_PrtCatPropValueID
+				)
+				UNION
+				<!-- 小分类 -->
+				SELECT 
+					 distinct PC.BIN_ProductID,'SmallCate' AS CateType
+				FROM Basis.BIN_Product P WITH(NOLOCK) 
+				JOIN Basis.BIN_PrtCategory PC WITH(NOLOCK) ON PC.BIN_ProductID = P.BIN_ProductID
+				JOIN Basis.BIN_PrtCatPropValue PCPV WITH(NOLOCK) ON PCPV.BIN_PrtCatPropValueID = PC.BIN_PrtCatPropValueID
+				JOIN Basis.BIN_PrtCatProperty PCP WITH(NOLOCK) ON PCP.BIN_PrtCatPropertyID = PCPV.BIN_PrtCatPropertyID
+				
+				WHERE 
+					P.BIN_OrganizationInfoID = #organizationInfoId#
+				AND P.BIN_BrandInfoID = #brandInfoId#
+				AND P.ValidFlag = 1
+				AND PCP.TeminalFlag = '2'
+				AND EXISTS (
+					SELECT 1 
+					FROM Basis.BIN_ProductPriceSolutionCateDetail cateDetail WITH(NOLOCK) 
+					JOIN Basis.BIN_ProductPriceSolution PPS WITH(NOLOCK) ON cateDetail.BIN_ProductPriceSolutionID = PPS.BIN_ProductPriceSolutionID
+					WHERE 
+						PPS.BIN_OrganizationInfoID = #organizationInfoId#
+					AND PPS.BIN_BrandInfoID = #brandInfoId#
+					AND PPS.BIN_ProductPriceSolutionID = #productPriceSolutionID# AND cateDetail.BIN_PrtCatPropValueID = PC.BIN_PrtCatPropValueID
+				)
+	</sql>
+    
+   	<select id="getPrtForPrtSoluDetailDiffYT" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+		 ;WITH PD AS (
+			<!-- 产品方案中产品分类对应的产品  -->
+			SELECT 
+				DISTINCT P.BIN_ProductID 
+			FROM Basis.BIN_Product P WITH(NOLOCK) 
+			JOIN Basis.BIN_PrtCategory PC WITH(NOLOCK) ON PC.BIN_ProductID = P.BIN_ProductID
+			WHERE 
+				P.BIN_OrganizationInfoID = #organizationInfoId#
+			AND P.BIN_BrandInfoID = #brandInfoId#
+			AND P.ValidFlag = 1
+			AND EXISTS (
+				SELECT 1 
+				FROM Basis.BIN_ProductPriceSolutionCateDetail cateDetail WITH(NOLOCK) 
+				JOIN Basis.BIN_ProductPriceSolution PPS WITH(NOLOCK) ON cateDetail.BIN_ProductPriceSolutionID = PPS.BIN_ProductPriceSolutionID
+				WHERE 
+					PPS.BIN_OrganizationInfoID = #organizationInfoId#
+				AND PPS.BIN_BrandInfoID = #brandInfoId#
+				AND PPS.BIN_ProductPriceSolutionID = #productPriceSolutionID# AND cateDetail.BIN_PrtCatPropValueID = PC.BIN_PrtCatPropValueID
+			)
+			UNION 
+			 SELECT t2.BIN_ProductID
+			  FROM (SELECT PC1.BIN_ProductID,
+			           COUNT(DISTINCT PC1.CateType) gcount
+			      FROM ( <include refid="BINOLPTJCS19.productCategoryQuery" /> ) PC1
+			  GROUP BY PC1.BIN_ProductID) t2, 
+			  (
+			  	SELECT COUNT(DISTINCT PC2.CateType) gcount
+			      FROM ( <include refid="BINOLPTJCS19.productCategoryQuery" /> ) PC2			  
+			  )  t3
+			 WHERE t2.gcount = t3.gcount
+		)	
+		,PDH AS (
+			<!-- 产品方案中的通过产品分类添加的产品 -->
+			SELECT PPSD.BIN_ProductID,PPS.IsSynchProductPrice,PPSD.SalePrice,PPSD.MemPrice
+			FROM Basis.BIN_ProductPriceSolutionDetail PPSD 
+			JOIN Basis.BIN_ProductPriceSolution PPS ON PPSD.BIN_ProductPriceSolutionID = PPS.BIN_ProductPriceSolutionID
+			WHERE 
+				PPS.BIN_OrganizationInfoID = #organizationInfoId#
+			AND PPS.BIN_BrandInfoID = #brandInfoId#
+			AND PPS.BIN_ProductPriceSolutionID = #productPriceSolutionID# 
+			AND PPSD.ValidFlag = 1
+			AND PPSD.isCate IS NOT NULL
+		)
+		
+		SELECT
+			 CASE WHEN ( prtPDH IS null and prtPD IS not null)  THEN 'add' 
+		     	  WHEN ( prtPDH IS not null and prtPD IS null) THEN 'sub'
+		     	  ELSE '-' END AS 'modifyFlag' ,
+	     	  prtPD,
+	     	  prtPDH,
+	     	  (CASE WHEN T.isSynchProductPrice = '1' OR T.SalePrice IS NULL  THEN PP.SalePrice
+	     	  	ELSE T.SalePrice END
+	     	  ) AS salePrice,
+	     	  (CASE WHEN T.isSynchProductPrice = '1' OR T.MemPrice IS NULL THEN PP.MemPrice
+	     	  	ELSE T.MemPrice END
+	     	  ) AS  memPrice
+		FROM
+		(
+		<!-- 分类中添加的产品的merge -->
+		select  A.BIN_ProductID AS prtPDH,B.BIN_ProductID AS prtPD,
+				case when ( A.BIN_ProductID IS null and B.BIN_ProductID IS not null) then B.BIN_ProductID 
+				when ( A.BIN_ProductID IS not null and B.BIN_ProductID IS null) then A.BIN_ProductID
+				else B.BIN_ProductID end as productId,
+				A.IsSynchProductPrice as isSynchProductPrice,
+				A.SalePrice,
+				A.MemPrice
+		from PDH A 
+		left join PD B on A.BIN_ProductID = B.BIN_ProductID
+		union
+		<!-- 分类中减少的产品update isCate设为null -->
+		select  A.BIN_ProductID AS prtPDH,B.BIN_ProductID AS prtPD,
+				case when ( A.BIN_ProductID IS null and B.BIN_ProductID IS not null)  then B.BIN_ProductID 
+		 		when ( A.BIN_ProductID IS not null and B.BIN_ProductID IS null) then A.BIN_ProductID
+				else B.BIN_ProductID end as productId,
+				A.IsSynchProductPrice as isSynchProductPrice,
+				A.SalePrice,
+				A.MemPrice
+		from PDH A 
+		right join PD B on A.BIN_ProductID = B.BIN_ProductID	
+		) T
+		LEFT JOIN Basis.BIN_ProductPrice PP WITH(NOLOCK) 
+			<![CDATA[ON (PP.BIN_ProductID = T.productId AND PP.Type = '2' AND PP.EndDate >= #businessDate# AND PP.StartDate <= #businessDate#) ]]>
+		WHERE (T.prtPD IS NOT NULL AND T.prtPDH IS NULL) OR (T.prtPD IS NULL AND T.prtPDH IS NOT NULL)
+   	</select>
+   	
     <!-- 更新产品方案明细表  -->
    	<select id="mergeProductPriceSolutionDetail" parameterClass="java.util.HashMap" resultClass="java.lang.Integer">
 		MERGE  Basis.BIN_ProductPriceSolutionDetail AS TGT
@@ -346,8 +508,12 @@
 				SELECT 
 					 PPS.BIN_ProductPriceSolutionID,
 					 PPSD.BIN_ProductID, 
-					 CONVERT(Decimal(16,2),PP.SalePrice) AS salePrice,
-					 CONVERT(Decimal(16,2),PP.MemPrice) AS memPrice
+					 CONVERT(Decimal(16,2),(CASE WHEN PPS.isSynchProductPrice = '1' OR PPSD.SalePrice IS NULL  THEN PP.SalePrice
+			     	  	ELSE PPSD.SalePrice END
+			     	  )) AS salePrice,
+			     	  CONVERT(Decimal(16,2),(CASE WHEN PPS.isSynchProductPrice = '1' OR PPSD.MemPrice IS NULL THEN PP.MemPrice
+			     	  	ELSE PPSD.MemPrice END
+			     	  )) AS  memPrice	     	  
 				FROM Basis.BIN_ProductPriceSolutionDetail PPSD 
 				JOIN Basis.BIN_ProductPriceSolution PPS ON PPSD.BIN_ProductPriceSolutionID = PPS.BIN_ProductPriceSolutionID
 				LEFT JOIN Basis.BIN_ProductPrice PP WITH(NOLOCK) ON 

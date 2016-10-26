@@ -527,6 +527,10 @@ input.date {
     	<div class="ui-icon icon-arrow-crm"></div><label class="bg_title">购买金额
 		</label></div>
 		<div style="width:88%;float:left;">
+			金额条件:<select name="amountCondition" class="z-param" style="width:80px;">
+				<option <s:if test='%{sendCondInfo.amountCondition == "0"}'>selected</s:if> value="0">实付金额</option>
+				<option <s:if test='%{sendCondInfo.amountCondition == "1"}'>selected</s:if> value="1">正价金额</option>
+			</select>
 			满 <input type="text" name ="sendMinAmount" class="number z-param" style="width:60px;" maxlength="9" value="<s:property value='sendCondInfo.sendMinAmount'/>"/> 元
 		</div>
 		  </div>

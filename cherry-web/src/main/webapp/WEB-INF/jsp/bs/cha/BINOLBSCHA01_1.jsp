@@ -20,6 +20,7 @@
             </li>
 			<%-- No. --%>
 			<li><s:property value="RowNumber" /></li>
+			<li><s:property value="channelCode" /></li>
 			<li><%-- 渠道名称  --%> <a href="${detailsUrl}" class="left"
 				onclick="javascript:openWin(this);return false;"> <s:property
 				value="channelName" /></a></li>

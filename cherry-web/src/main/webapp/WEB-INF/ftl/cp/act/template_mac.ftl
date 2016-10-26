@@ -417,6 +417,8 @@
 					<input type="hidden" name="<#if prt.prtType! == 'P' >prmVendorId<#else>prtVendorId</#if>" value="${(prt.proId)!}"/>
 					<input type="hidden" name="prmCate" value="${(prt.prmCate)!?html}"/>
 					<input type="hidden" name="price" value="${(prt.price)!'0'}"/>
+					<input type="hidden" name="unitCode" value="${(prt.unitCode)!?html}"/>
+					<input type="hidden" name="barCode" value="${(prt.barCode)!?html}"/>
 				</td>
 				<td>${(prt.unitCode)!?html}</td>
 				<td style="white-space:normal">${(prt.nameTotal)!?html}</td>
@@ -647,23 +649,20 @@
 		<@getCouponSetting index=index camp=camp enEditFlag=enEditFlag showCoupon=showCoupon/>
 		<#--购买金额 -->
 		<@getPriceControl priceControl=(camp.priceControl)! saleBatchNo=(camp.saleBatchNo)! needBuyFlag=needBuyFlag/>
-		<#if virtPrmFlag != '3'>
-			<#-- 奖励方式 -->
-			<div style="margin-top:0px;" class="relation clearfix UN_SAME">
-				<span class="left" style="margin-left:5px">
-					<@s.text name="cp.campReward" />
-					<select id="rewardType_${index}" name="rewardType" onchange="ACT.changeRewardType(this,${index});" 
-						<#if !enEditFlag>disabled="disabled"</#if> style="margin-left:10px;width:140px;">
-						<#list application.CodeTable.getCodes("1226") as code>
-							<option <#if code.CodeKey==rewardType >selected="true"</#if> value="${code.CodeKey!?html}">${code.Value!?html}</option>
-					  	</#list>
-					</select>
-					<#if !enEditFlag><input type="hidden" id="rewardType_${index}" name="rewardType" value="${rewardType!}" /></#if>
-				</span>
-			</div>
-		<#else>
-			<input type="hidden" name="rewardType" id="rewardType_${index}" value="1" />
-		</#if>
+		<#-- 奖励方式 -->
+		<div style="margin-top:0px;" class="relation clearfix UN_SAME">
+			<span class="left" style="margin-left:5px">
+				<@s.text name="cp.campReward" />
+				<select id="rewardType_${index}" name="rewardType" onchange="ACT.changeRewardType(this,${index});" 
+					<#if !enEditFlag>disabled="disabled"</#if> style="margin-left:10px;width:140px;">
+					<#list application.CodeTable.getCodes("1226") as code>
+						<option <#if code.CodeKey==rewardType >selected="true"</#if> value="${code.CodeKey!?html}">${code.Value!?html}</option>
+				  	</#list>
+				</select>
+				<#if !enEditFlag><input type="hidden" id="rewardType_${index}" name="rewardType" value="${rewardType!}" /></#if>
+			</span>
+		</div>
+		
 		<div id="barCode_${index}" <#if rewardType !="2">class="hide"</#if>>
 		<#-- 虚拟促销品生成方式 -->
 		<@getBarCodeDiv camp=camp index=index virtPrmFlag=virtPrmFlag prmCate='TZZK'/>

@@ -9,7 +9,7 @@
 <script type="text/javascript" src="/${CHERRY_CONTEXT_PATH}/plugins/chart/jquery.flot.pie.min.js"></script>
 <script type="text/javascript" src="/${CHERRY_CONTEXT_PATH}/plugins/chart/jquery.flot.stack.min.js"></script>
 <script type="text/javascript" src="/${CHERRY_CONTEXT_PATH}/plugins/chart/excanvas.min.js"></script>
-<script type="text/javascript" src="/${CHERRY_CONTEXT_PATH}/js/wp/mbm/BINOLWPMBM01.js"></script>
+<script type="text/javascript" src="/${CHERRY_CONTEXT_PATH}/js/wp/mbm/BINOLWPMBM01.js?V=20161020"></script>
 <link rel="stylesheet" href="/${CHERRY_CONTEXT_PATH}/css/cherry/cherry_timepicker.css" type="text/css">
 <script type="text/javascript">
 $(function(){

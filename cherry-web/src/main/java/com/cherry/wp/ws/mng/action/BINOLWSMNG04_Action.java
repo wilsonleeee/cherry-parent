@@ -272,6 +272,7 @@ public class BINOLWSMNG04_Action extends BaseAction implements ModelDriven<BINOL
         String brandInfoId = String.valueOf(userInfo.getBIN_BrandInfoID());
         String language = ConvertUtil.getString(session.get(CherryConstants.SESSION_LANGUAGE));
         productAllocationID = CherryUtil.string2int(form.getProductAllocationID());
+        String organizationInfoId=String.valueOf(userInfo.getBIN_OrganizationInfoID());
         
         //取得调拨申请单概要信息 和详细信息
         Map<String,Object> mainDataMap = binOLSTCM16_BL.getProductAllocationMainData(productAllocationID,language);
@@ -355,6 +356,12 @@ public class BINOLWSMNG04_Action extends BaseAction implements ModelDriven<BINOL
         if(null != counterInfo){
             form.setCounterCode(ConvertUtil.getString(counterInfo.get("counterCode")));
         }
+        // 云POS调入是否存在编辑操作
+		String inputEditFlag = binOLCM14_BL.getWebposConfigValue("9048", organizationInfoId, brandInfoId);
+		if(null == inputEditFlag || "".equals(inputEditFlag)){
+			inputEditFlag = "Y";
+		}
+		form.setInputEditFlag(inputEditFlag);
         
         return "BINOLWSMNG04_02";
     }

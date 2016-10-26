@@ -66,11 +66,12 @@ public class TmUpdRegMemberMobleLogic implements TmUpdRegMemberMobleService_IF {
 	private Map<String, Object> processMemberInfo(Map map) throws Exception {
 		Map<String, Object> paramMap = MapBuilder.newInstance().put("tmallMixMobile", map.get("MobileEncryption")).build();
 		paramMap.putAll(commonParam(map));
-		Map onlineMemberMap = processOnlineMemberBusiness(map,paramMap);
-		if(null != onlineMemberMap && !onlineMemberMap.isEmpty()){
-			return onlineMemberMap;
+		Map<String, Object> onlineMemberMap = tmUpdRegMemberMobleService.getOnlineMemberInfo(paramMap);
+		Map onlineMemberResultMap = processOnlineMemberBusiness(map,onlineMemberMap);
+		if(null != onlineMemberResultMap && !onlineMemberResultMap.isEmpty()){
+			return onlineMemberResultMap;
 		}
-		Map lineMemberMap = processLineMemberBusiness(map,paramMap);
+		Map lineMemberMap = processLineMemberBusiness(map,paramMap,onlineMemberMap);
 		if(null != lineMemberMap && !lineMemberMap.isEmpty()){
 			return lineMemberMap;
 		}
@@ -83,8 +84,8 @@ public class TmUpdRegMemberMobleLogic implements TmUpdRegMemberMobleService_IF {
 	 * @return
 	 * @throws Exception
 	 */
-	private Map processOnlineMemberBusiness(Map map,Map onlineMap) throws Exception{
-		Map<String, Object> onlineMemberMap = tmUpdRegMemberMobleService.getOnlineMemberInfo(onlineMap);
+	private Map processOnlineMemberBusiness(Map map,Map onlineMemberMap) throws Exception{
+//		Map<String, Object> onlineMemberMap = tmUpdRegMemberMobleService.getOnlineMemberInfo(onlineMap);
 		if (null != onlineMemberMap && !onlineMemberMap.isEmpty()) {
 			// 比较线上会员天猫Nick和传输参数天猫Nick是否一致
 			if ("2".equals(onlineMemberMap.get("BindFlag"))) {
@@ -110,31 +111,38 @@ public class TmUpdRegMemberMobleLogic implements TmUpdRegMemberMobleService_IF {
 	 * @return
 	 * @throws Exception
 	 */
-	private Map processLineMemberBusiness(Map map,Map lineMap) throws Exception{
+	private Map processLineMemberBusiness(Map map,Map lineMap,Map onlineMemberMap) throws Exception{
 		Map<String, Object> memberMap = tmUpdRegMemberMobleService.getMemberInfo(lineMap);
-		if ((null == memberMap || memberMap.isEmpty()) || "2".equals(memberMap.get("BindFlag")) ) {
-			String memberId = "";
-			String sourceFlag = "";
-			if((null == memberMap || memberMap.isEmpty())){
-				//新增线上会员信息
-				memberId = binOLMBMBM11_BL.tran_addMemberInfo(assembleMemberInfo(map));
-				sourceFlag = "2";
-			}else{
-				//获得已有会员信息的ID
-				memberId = ConvertUtil.getString(memberMap.get("memberId"));
-				// 比较线上会员天猫Nick和传输参数天猫Nick是否一致
-				if (!map.get("NickName").equals(memberMap.get("TaobaoNick"))) {
-					return MapBuilder.newInstance().put("ERRORCODE", "EMB06006").put("ERRORMSG", "该会员已被使用").build();
-				}
+		String memberId = "";
+		String sourceFlag = "";
+		if ((null == memberMap || memberMap.isEmpty())) {
+			// 新增线上会员信息
+			memberId = binOLMBMBM11_BL.tran_addMemberInfo(assembleMemberInfo(map));
+			sourceFlag = "2";
+		} else {
+			// 获得已有会员信息的ID
+			memberId = ConvertUtil.getString(memberMap.get("memberId"));
+			// 比较线上会员天猫Nick和传输参数天猫Nick是否一致
+			if (!map.get("NickName").equals(memberMap.get("TaobaoNick")) && "2".equals(memberMap.get("BindFlag"))) {
+				return MapBuilder.newInstance().put("ERRORCODE", "EMB06006").put("ERRORMSG", "该会员已被使用").build();
 			}
-			// 更信息线下会员信息
-			Map<String, Object> memberInfoMap = MapBuilder.newInstance().put("tmallMixMobile", map.get("MobileEncryption"))
-			.put("taobaonick", map.get("NickName")).put("mixBuyerNick",DESPlus.md5Encrypt(ConvertUtil.getString(map.get("NickName")),CherryConstants.TMALLENCRYPT))
-			.put("mobile",CherrySecret.encryptData(ConvertUtil.getString(map.get("BrandCode")),ConvertUtil.getString(map.get("Mobile"))))
-			.put("tmallBindTime", map.get("CreateTime")).put("memberId", memberId).put("sourceFlag", sourceFlag).build();
-			memberInfoMap.putAll(commonParam(map));
-			tmUpdRegMemberMobleService.updateMemberInfoByTmMixMobile(memberInfoMap);
 		}
+		Map<String, Object> memberInfoMap = new HashMap<String, Object>();
+		if (!"2".equals(onlineMemberMap.get("BindFlag"))) {
+			memberInfoMap = MapBuilder.newInstance().put("tmallMixMobile", map.get("MobileEncryption")).put("taobaonick", "").put("mixBuyerNick","")
+					.put("mobile",CherrySecret.encryptData(ConvertUtil.getString(map.get("BrandCode")),ConvertUtil.getString(map.get("Mobile"))))
+					.put("tmallBindTime","").put("memberId", memberId).put("sourceFlag", sourceFlag)
+					.put("bindFlag", onlineMemberMap.get("BindFlag")).put("isSameMobile", "1").build();
+		} else {
+			memberInfoMap = MapBuilder.newInstance().put("tmallMixMobile", map.get("MobileEncryption")).put("taobaonick", map.get("NickName"))
+					.put("mixBuyerNick",DESPlus.md5Encrypt(ConvertUtil.getString(map.get("NickName")),CherryConstants.TMALLENCRYPT))
+					.put("mobile",CherrySecret.encryptData(ConvertUtil.getString(map.get("BrandCode")),ConvertUtil.getString(map.get("Mobile"))))
+					.put("tmallBindTime", map.get("CreateTime")).put("memberId", memberId).put("sourceFlag", sourceFlag)
+					.put("bindFlag", onlineMemberMap.get("BindFlag")).put("isSameMobile", "1").build();
+		}
+		// 更信息线下会员信息
+		memberInfoMap.putAll(commonParam(map));
+		tmUpdRegMemberMobleService.updateMemberInfoByTmMixMobile(memberInfoMap);
 		return null;
 	}
 

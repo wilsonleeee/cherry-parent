@@ -222,6 +222,8 @@ public class BINOLPTJCS05_BL implements BINOLPTJCS05_IF {
 			paramMap.put(ProductConstants.PROPNAME_2, propName2);
 			paramMap.put(ProductConstants.PROPNAME_3, propName3);
 			
+			boolean isAddFlag = true;
+			
 			if (CherryConstants.BLANK.equals(brandCode)) {
 				// 单元格为空
 				throw new CherryException("EBS00031", new String[] {
@@ -286,6 +288,11 @@ public class BINOLPTJCS05_BL implements BINOLPTJCS05_IF {
 					// 更新情景
 					// 已存在的unitCode数量
 					prtMap.put("productId", productId);
+					// 更新的场合
+					isAddFlag = false;
+				} else {
+					// 增加的场合
+					isAddFlag = true;
 				}
 				int unitCodeCount = binOLCM05_BL.getExistUnitCodeForPrtAndProm(prtMap);	
 				
@@ -296,8 +303,9 @@ public class BINOLPTJCS05_BL implements BINOLPTJCS05_IF {
 				}
 				
 				// ********************** unitCode唯一性验证   **********************
+				
 			}
-			if (CherryConstants.BLANK.equals(chineseName)) {
+			if (isAddFlag && CherryConstants.BLANK.equals(chineseName)) {
 				// 单元格为空
 				throw new CherryException("EBS00031", new String[] {
 						ProductConstants.DATE_SHEET_NAME, "D" + (r + 1) });
@@ -396,28 +404,28 @@ public class BINOLPTJCS05_BL implements BINOLPTJCS05_IF {
 				throw new CherryException("EBS00095", new String[] {
 						ProductConstants.DATE_SHEET_NAME, "J" + (r + 1), "20" });
 			}
-			if(CherryConstants.BLANK.equals(price)){
+			if(isAddFlag && CherryConstants.BLANK.equals(price)){
 				price = ProductConstants.DEF_PRICE;
 			}else if (!CherryChecker.isFloatValid(price, 12, 2)) {
 				// 产品价格格式有误
 				throw new CherryException("EBS00034", new String[] {
 						ProductConstants.DATE_SHEET_NAME, "K" + (r + 1) });
 			}
-			if(CherryConstants.BLANK.equals(standardCost)){
+			if(isAddFlag && CherryConstants.BLANK.equals(standardCost)){
 				standardCost = ProductConstants.DEF_PRICE;
 			}else if (!CherryChecker.isFloatValid(standardCost, 12, 2)) {
 				// 成本价格格式有误
 				throw new CherryException("EBS00034", new String[] {
 						ProductConstants.DATE_SHEET_NAME, "L" + (r + 1) });
 			}
-			if(CherryConstants.BLANK.equals(orderPrice)){
+			if(isAddFlag && CherryConstants.BLANK.equals(orderPrice)){
 				orderPrice = ProductConstants.DEF_PRICE;
 			}else if (!CherryChecker.isFloatValid(orderPrice, 12, 2)) {
 				// 采购价格格式有误
 				throw new CherryException("EBS00034", new String[] {
 						ProductConstants.DATE_SHEET_NAME, "M" + (r + 1) });
 			}
-			if(CherryConstants.BLANK.equals(memPrice)){
+			if(isAddFlag && CherryConstants.BLANK.equals(memPrice)){
 				
 				// *****************  WITPOSQA-15895 票 START  ***************** 
 				// 会员价不填写时， 默认使用销售价代替
@@ -431,7 +439,7 @@ public class BINOLPTJCS05_BL implements BINOLPTJCS05_IF {
 				throw new CherryException("EBS00034", new String[] {
 						ProductConstants.DATE_SHEET_NAME, "N" + (r + 1) });
 			}
-			if (CherryConstants.BLANK.equals(status)) {
+			if (isAddFlag && CherryConstants.BLANK.equals(status)) {
 				// 产品状态初始化
 				status = ProductConstants.PRODUCT_DEF_STATUS;
 			} else if (status.length() > 1) {
@@ -439,7 +447,7 @@ public class BINOLPTJCS05_BL implements BINOLPTJCS05_IF {
 				throw new CherryException("EBS00033", new String[] {
 						ProductConstants.DATE_SHEET_NAME, "O" + (r + 1), "1" });
 			}
-			if (CherryConstants.BLANK.equals(mode)) {
+			if (isAddFlag && CherryConstants.BLANK.equals(mode)) {
 				// 产品类型初始化
 				mode = ProductConstants.MODE_0;
 			} else if (status.length() > 10) {

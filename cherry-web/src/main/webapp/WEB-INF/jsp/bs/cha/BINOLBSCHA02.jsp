@@ -28,15 +28,19 @@
   <div class="section-content" id="detail">
  <table class="detail" cellpadding="0" cellspacing="0">
   	  <tr>
+  	  	  <th><s:text name="channelCode"></s:text></th>
+          <td><span><s:property value="channelDetail.channelCode"/></span></td>
           <th><s:text name="channelName"></s:text></th>
           <td><span><s:property value="channelDetail.channelName"/></span></td>
-          <th><s:text name="channelNameForeign"></s:text></th>
-          <td><span><s:property value="channelDetail.channelNameForeign"/></span></td>
       </tr>
       <tr>
+      	  <th><s:text name="channelNameForeign"></s:text></th>
+          <td><span><s:property value="channelDetail.channelNameForeign"/></span></td>
           <th><s:text name="status"></s:text></th>
           <td><span><s:property value='#application.CodeTable.getVal("1121",channelDetail.status)' /></span></td> 
-          <th><s:text name="joinDate"></s:text></th>
+      </tr>
+      <tr>
+      	  <th><s:text name="joinDate"></s:text></th>
           <td><span><s:property value="channelDetail.joinDate"/></span></td>
       </tr>
     </table>    

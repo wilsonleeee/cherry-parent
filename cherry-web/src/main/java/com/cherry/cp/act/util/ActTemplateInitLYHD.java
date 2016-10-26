@@ -189,6 +189,10 @@ public class ActTemplateInitLYHD extends ActTemplateInit {
 			dto = getVirtualPro(paramMap, tempMap,
 					PromotionConstants.PROMOTION_TZZK_TYPE_CODE, couponPrice);
 		}
+		// 拼装成PromotionRule表需要的条件
+		convertRuleCondInfo(campaignRule,rewardType);
+		// 拼装成PromotionRule表需要的结果
+		convertRuleResultInfo(campaignRule,rewardInfo, dto,rewardType,campDTO.getGroupFlag());
 		// 加入虚拟促销品
 		if (null != dto) {
 			dto.setRewardType(rewardType);

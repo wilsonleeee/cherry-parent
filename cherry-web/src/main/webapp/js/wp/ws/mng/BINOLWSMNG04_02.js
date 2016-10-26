@@ -621,4 +621,8 @@ $(document).ready(function() {
 	}else if(operateType == "2"){
 		binOLWSMNG04_02.bindInput();
 	}
+	var inputEditFlag=$("#inputEditFlag").val();
+	if(inputEditFlag == "N"){
+		$("#btn-icon-edit-big").hide();
+	}
 } );

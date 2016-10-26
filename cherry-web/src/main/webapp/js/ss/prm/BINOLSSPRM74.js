@@ -670,7 +670,9 @@ BINOLSSPRM74.prototype = {
 			//页面上没有选中的状态获取原始购物车数据,有存在优惠券选中的情况，获取计算完成的购物和数据
 			var shoppingcart_json="";
 			var id=BINOLSSPRM74.getId();
-			if(coupon_all.length >0 || rule_all.length >0){
+			var coupon_all_length=$("#coupon_table input[type='checkbox']:checked").length;
+			var rule_all_length=$("#rule_table input[type='checkbox']:checked").length;
+			if(coupon_all_length >0 || rule_all_length >0){
 				var id=BINOLSSPRM74.getId();
 				shoppingcart_json=$("#"+id+"cart").val();
 			}else{

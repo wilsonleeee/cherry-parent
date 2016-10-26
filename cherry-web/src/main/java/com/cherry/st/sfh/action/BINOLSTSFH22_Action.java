@@ -38,9 +38,11 @@ import com.cherry.cm.util.ConvertUtil;
 import com.cherry.pt.common.ProductConstants;
 import com.cherry.pt.rps.service.BINOLPTRPS39_Service;
 import com.cherry.st.common.interfaces.BINOLSTCM02_IF;
+import com.cherry.st.common.service.BINOLSTCM02_Service;
 import com.cherry.st.sfh.form.BINOLSTSFH22_Form;
 import com.cherry.st.sfh.interfaces.BINOLSTSFH22_IF;
 import com.cherry.webservice.client.WebserviceClient;
+import com.dianping.zebra.shard.parser.qlParser.MySQLParserParser.fromClause_return;
 import com.googlecode.jsonplugin.JSONUtil;
 import com.opensymphony.workflow.WorkflowException;
 import com.opensymphony.xwork2.ModelDriven;
@@ -86,6 +88,9 @@ public class BINOLSTSFH22_Action extends BaseAction implements ModelDriven<BINOL
 	@Resource(name="binOLPTRPS39_Service")
 	private BINOLPTRPS39_Service binOLPTRPS39_Service;
 	
+    @Resource(name="binOLSTCM02_Service")
+    private BINOLSTCM02_Service binOLSTCM02_Service;
+	
 	private static final Logger logger = LoggerFactory.getLogger(BINOLSTSFH22_Action.class);
 	
     /**
@@ -111,6 +116,10 @@ public class BINOLSTSFH22_Action extends BaseAction implements ModelDriven<BINOL
         param.put("brandInfoId", brandInfoId);
         String bussinessDate = BINOLSTSFH22_BL.getBusinessDate(param);
         form.setDate(bussinessDate);
+        
+    	// 获取当前日期
+    	String date=binOLSTCM02_Service.getDateYMD();
+        form.setExpectDeliverDate(date);
         
         String isAllowNegativeInventory = binOLCM14_BL.getConfigValue("1109",ConvertUtil.getString(userInfo.getBIN_OrganizationInfoID()),ConvertUtil.getString(userInfo.getBIN_BrandInfoID()));
         form.setIsAllowNegativeInventory(isAllowNegativeInventory);
@@ -189,10 +198,10 @@ public class BINOLSTSFH22_Action extends BaseAction implements ModelDriven<BINOL
                     Map<String,Object> mainMap = binOLSTCM02_BL.getProductOrderMainData(billId,language);
                     //申明一个Map用来存放要返回的ActionMessage
                     Map<String,Object> messageMap = new HashMap<String,Object>();
-                    //是否要显示工作流程图标志：设置为true
-                    messageMap.put("ShowWorkFlow",true);
-                    //工作流ID
-                    messageMap.put("WorkFlowID", mainMap.get("WorkFlowID"));
+//                    //是否要显示工作流程图标志：设置为true
+//                    messageMap.put("ShowWorkFlow",true);
+//                    //工作流ID
+//                    messageMap.put("WorkFlowID", mainMap.get("WorkFlowID"));
                     //消息：操作已成功！
                     messageMap.put("MessageBody", getText("ICM00002"));
                     //将messageMap转化成json格式字符串然后添加到ActionMessage中
@@ -405,6 +414,10 @@ public class BINOLSTSFH22_Action extends BaseAction implements ModelDriven<BINOL
 							}
 						}				
 						productMap.put("stockAmount", stockAmount);
+						// stockAmount不为零，表示获取到金蝶库存跳出循环
+						if(0!=stockAmount){
+							break;
+						}
 					}
 				}else{//库存集合为空的情况
 					productMap.put("stockAmount", 0);
@@ -452,6 +465,19 @@ public class BINOLSTSFH22_Action extends BaseAction implements ModelDriven<BINOL
         }
     }
     
+    public void validateSave() throws Exception {
+        if(null == form.getDeliverAddress() || "".equals(form.getDeliverAddress())){
+            this.addFieldError("deliverAddress", "送货地址不能为空");
+        }
+    	
+    }
+    
+    public void validateSubmit() throws Exception {
+        if(null == form.getDeliverAddress() || "".equals(form.getDeliverAddress())){
+            this.addFieldError("deliverAddress", "送货地址不能为空");
+        }
+    	
+    }
     /**
      * 通过Ajax取得指定部门所拥有的仓库
      * @throws Exception 

@@ -17,6 +17,9 @@ public class BINOLBSCHA03_Form{
 	/** 渠道ID */
 	private String channelId;
 	
+	/** 渠道代码 */	
+	private String channelCode;
+	
 	/** 渠道名称 */	
 	private String channelName;
 	
@@ -52,6 +55,14 @@ public class BINOLBSCHA03_Form{
 
 	public void setModifyCount(String modifyCount) {
 		this.modifyCount = modifyCount;
+	}
+
+	public String getChannelCode() {
+		return channelCode;
+	}
+
+	public void setChannelCode(String channelCode) {
+		this.channelCode = channelCode;
 	}
 
 	public String getChannelName() {

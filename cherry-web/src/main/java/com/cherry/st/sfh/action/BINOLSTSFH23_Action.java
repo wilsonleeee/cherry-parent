@@ -40,6 +40,7 @@ import com.cherry.cm.util.ConvertUtil;
 import com.cherry.mo.common.interfaces.BINOLMOCOM01_IF;
 import com.cherry.pt.rps.service.BINOLPTRPS39_Service;
 import com.cherry.st.common.interfaces.BINOLSTCM02_IF;
+import com.cherry.st.common.service.BINOLSTCM02_Service;
 import com.cherry.st.sfh.form.BINOLSTSFH23_Form;
 import com.cherry.st.sfh.interfaces.BINOLSTSFH22_IF;
 import com.cherry.st.sfh.interfaces.BINOLSTSFH23_IF;
@@ -106,6 +107,9 @@ public class BINOLSTSFH23_Action extends BaseAction implements ModelDriven<BINOL
 	@Resource(name="binOLPTRPS39_Service")
 	private BINOLPTRPS39_Service binOLPTRPS39_Service;
 	
+    @Resource(name="binOLSTCM02_Service")
+    private BINOLSTCM02_Service binOLSTCM02_Service;
+	
 	private static final Logger logger = LoggerFactory.getLogger(BINOLSTSFH23_Action.class);
 
 	/** 汇总信息 */
@@ -117,6 +121,10 @@ public class BINOLSTSFH23_Action extends BaseAction implements ModelDriven<BINOL
      * @throws Exception 
      */	
     public String init() throws Exception{
+    	// 获取当前日期
+    	String date=binOLSTCM02_Service.getDateYMD();
+    	form.setFromDate(date);
+    	form.setToDate(date);
    
         return SUCCESS;
     }
@@ -127,8 +135,10 @@ public class BINOLSTSFH23_Action extends BaseAction implements ModelDriven<BINOL
 	 * @return
 	 */
 	public String initSearch() throws Exception {
+    	// 获取当前日期  binOLSTCM02_Service.getDateYMD()
 		
 		Map<String, Object> map = getSearchMap();
+		
 		// 初始化时，查询不出参数，将所属品牌和和组织ID设为-100
 		map.put("brandInfoId", -100);
 		map.put("organizationInfoId", -100);
@@ -231,6 +241,10 @@ public class BINOLSTSFH23_Action extends BaseAction implements ModelDriven<BINOL
 	        form.setDate(bussinessDate);
 	        param.put("bussinessDate", bussinessDate);
 	        
+	    	// 获取当前日期
+	    	String date=binOLSTCM02_Service.getDateYMD();
+	        form.setExpectDeliverDate(date);
+	        
 	        // 根据订单号获取订单信息
 	         orderInfoList = BINOLSTSFH23_BL.getOrderInfoByOrder(param);
 	         List<Map<String, Object>> tempList = new ArrayList<Map<String,Object>>(); 
@@ -275,6 +289,10 @@ public class BINOLSTSFH23_Action extends BaseAction implements ModelDriven<BINOL
 								}
 							}				
 							productMap.put("stockAmount", stockAmount);
+							// stockAmount不为零，表示获取到金蝶库存跳出循环
+							if(0!=stockAmount){
+								break;
+							}
 						}
 					}else{//库存集合为空的情况
 						productMap.put("stockAmount", 0);

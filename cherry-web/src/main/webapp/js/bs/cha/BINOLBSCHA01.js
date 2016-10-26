@@ -37,6 +37,7 @@ function search(){
 	
 	var aoColumnsArr = [	{ "sName": "checkbox", "sWidth": "1%", "bSortable": false}, // 0
 	                    	{ "sName": "no","sWidth": "1%","bSortable": false},			// 1
+	                    	{ "sName": "channelCode","sWidth": "20%"},	                // 2							
 							{ "sName": "channelName","sWidth": "20%"},	                // 2							
 							{ "sName": "status","sWidth": "15%"},						// 3
 							{ "sName": "joinDate","sWidth": "10%"},  					// 4

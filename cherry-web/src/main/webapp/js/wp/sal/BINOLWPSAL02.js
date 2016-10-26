@@ -4520,7 +4520,6 @@ $(document).ready(function(){
 	if(mobilePhoneQ){
 		$("#searchStr").val(mobilePhoneQ);
 		$("#btnSearch").click();
-		$("#searchStr").val("");
 	}
 	$("#btnCollect").attr("disabled",true);
 	$("#btnDiscount").attr("disabled",true);

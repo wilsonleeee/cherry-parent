@@ -293,6 +293,6 @@ public class CouponEngine implements InitializingBean{
 	
 	@Override
 	public void afterPropertiesSet() throws Exception {
-		//readKnowledgeBaseDB();
+		readKnowledgeBaseDB();
 	}
 }

@@ -152,6 +152,7 @@
 								<th><s:text name="SVC02_lastDepositTime"></s:text></th>
 								<th><s:text name="SVC02_cardState" /></th>
 								<th><s:text name="SVC02_departName" /></th>
+								<th><s:text name="SVC02_cardStyle" /></th>
 								<th><s:text name="SVC02_operator" /></th>
 							</tr>
 						</thead>

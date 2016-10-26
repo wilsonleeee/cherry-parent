@@ -32,7 +32,7 @@ import com.cherry.pl.rlm.service.BINOLPLRLM99_Service;
 public class BINOLPLRLM03_BL {
 	
 	/** 角色管理Service */
-	@Resource
+	@Resource(name="binOLPLRLM99_Service")
 	private BINOLPLRLM99_Service binOLPLRLM99_Service;
 	
 	/**

@@ -821,6 +821,10 @@ public class BINOLCM02_Action extends BaseAction implements ModelDriven<BINOLCM0
 							}
 						}				
 						productMap.put("amount", amount);
+						// amount不为零，表示获取到金蝶库存跳出循环
+						if(0!=amount){
+							break;
+						}
 					}
 				}else{//库存集合为空的情况
 					productMap.put("amount", 0);

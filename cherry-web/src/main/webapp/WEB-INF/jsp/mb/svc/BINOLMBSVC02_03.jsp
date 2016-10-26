@@ -86,7 +86,7 @@
     		<tr>
 				<td>
 					<span>
-						<input name="cardCode" class="text" onfocus="BINOLMBSVC02_03.checkCounter();return false;" onblur="BINOLMBSVC02_03.checkCard(this);return false;" style="width: 90px" >
+						<input name="cardCode" class="text" onfocus="BINOLMBSVC02_03.checkCard();return false;" onblur="BINOLMBSVC02_03.checkCard(this);return false;" style="width: 90px" >
 					</span>
 				</td>
 				<td>

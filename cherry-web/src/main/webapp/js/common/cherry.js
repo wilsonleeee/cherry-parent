@@ -1235,6 +1235,9 @@ function productBinding(options){
 			validFlag : function() { 
 					if(options.validFlag){
 						 var $validFlag = $('input[name='+options.validFlag+']:checked').val();
+						 if (!$validFlag){//如果是下拉框，则取下拉框中的值
+							 $validFlag=  $('#'+options.validFlag).val();
+						 }
 						 return $validFlag;
 					} else {
 						return 1;
@@ -1457,7 +1460,7 @@ function nzdmProductBinding(options){
 		}else{
 			if((!$('#'+options.elementId).data("flag"))&&(!$('#'+options.elementId).data("change"))&&($('#'+options.elementId).val() != $('#'+options.elementId).data("prtName"))){
 //				alert($('#'+options.elementId).val()+","+$('#'+options.elementId).data("prtName"));
-				$("#"+targetId).val("");
+//				$("#"+targetId).val("");
 			}else if($('#'+options.elementId).val() == $('#'+options.elementId).data("prtName")){
 				$('#'+options.elementId).data("change",true);
 				$('#'+options.elementId).data("flag",true);

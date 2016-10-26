@@ -20,6 +20,7 @@ import java.util.Map;
 import javax.annotation.Resource;
 
 import com.cherry.cm.cmbeans.UserInfo;
+import com.cherry.cm.cmbussiness.bl.BINOLCM14_BL;
 import com.cherry.cm.core.CherryConstants;
 import com.cherry.cm.core.CherryException;
 import com.cherry.cm.util.CherryUtil;
@@ -50,7 +51,12 @@ public class BINOLSTIOS04_BL  extends SsBaseBussinessLogic implements BINOLSTIOS
     
     @Resource
     private BINOLSTIOS04_Service binOLSTIOS04_Service;
-
+    
+    /** 共通BL */
+    @Resource
+    private BINOLCM14_BL binOLCM14_BL;
+    
+    
     /**
      * 保存盘点信息
      * @param map
@@ -85,14 +91,22 @@ public class BINOLSTIOS04_BL  extends SsBaseBussinessLogic implements BINOLSTIOS
         //品牌ID
         sessionMap.put("BIN_BrandInfoID", map.get(CherryConstants.BRANDINFOID));
         
-        //盘点开始记录
+        // 盘点开始记录
         int startIndex = 0;
-        
-        //总数量
+        // 总数量
         int totalQuantity = 0;
-        //总金额
+        // 总金额
         double totalAmount = 0.0;
+        // 实盘数量是否允许负号
+        String allowNegativeFlag = binOLCM14_BL.getConfigValue("1388",ConvertUtil.getString(userinfo.getBIN_OrganizationInfoID()),ConvertUtil.getString(userinfo.getBIN_BrandInfoID()));
         for(int i = startIndex ; i < productVendorIdArr.length ; i++){
+        	// 实盘数量不允许为负时，需校验
+        	if("1".equals(allowNegativeFlag)){
+        		int gainCount =  Integer.parseInt(quantityArr[i]);
+        		if (gainCount<0){
+        			throw new CherryException("EST00049");
+        			}
+        	}
             int tempCount = CherryUtil.string2int(quantityArr[i])-CherryUtil.string2int(bookCountArr[i]);
             double money = CherryUtil.string2double(priceArr[i])*tempCount;
             totalQuantity += tempCount;
@@ -255,7 +269,16 @@ public class BINOLSTIOS04_BL  extends SsBaseBussinessLogic implements BINOLSTIOS
         int totalQuantity = 0;
         //总金额
         double totalAmount = 0.0;
+     // 实盘数量是否允许负号
+        String allowNegativeFlag = binOLCM14_BL.getConfigValue("1388",ConvertUtil.getString(userinfo.getBIN_OrganizationInfoID()),ConvertUtil.getString(userinfo.getBIN_BrandInfoID()));
         for(int i = startIndex ; i < productVendorIdArr.length ; i++){
+        	// 实盘数量不允许为负时，需校验
+        	if("1".equals(allowNegativeFlag)){
+        		int gainCount =  Integer.parseInt(quantityArr[i]);
+        		if (gainCount<0){
+        			throw new CherryException("EST00049");
+        			}
+        	}
             int tempCount = CherryUtil.string2int(quantityArr[i])-CherryUtil.string2int(bookCountArr[i]);
             double money = CherryUtil.string2double(priceArr[i])*tempCount;
             totalQuantity += tempCount;

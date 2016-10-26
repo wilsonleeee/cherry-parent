@@ -34,17 +34,21 @@
 	<s:hidden name="modifyCount" value="%{channelDetail.modifyCount}"></s:hidden>
     <table class="detail" cellpadding="0" cellspacing="0">
   	  <tr>
+  	    <th><s:text name="CHA03_channelCode"></s:text><span class="highlight"><s:text name="global.page.required"></s:text></span></th>
+        <td><span><s:textfield name="channelCode" cssClass="text" value="%{channelDetail.channelCode}" maxlength="50"/></span></td>
         <th><s:text name="CHA03_channelName"></s:text><span class="highlight"><s:text name="global.page.required"></s:text></span></th>
         <td><span><s:textfield name="channelName" cssClass="text" value="%{channelDetail.channelName}" maxlength="50"/></span></td>
-        <th><s:text name="CHA03_channelNameForeign"></s:text></th>
-        <td><span><s:textfield name="channelNameForeign" cssClass="text" value="%{channelDetail.channelNameForeign}" maxlength="50"></s:textfield></span></td>  
       </tr>
       <tr>
+        <th><s:text name="CHA03_channelNameForeign"></s:text></th>
+        <td><span><s:textfield name="channelNameForeign" cssClass="text" value="%{channelDetail.channelNameForeign}" maxlength="50"></s:textfield></span></td>  
         <th><s:text name="CHA03_status"></s:text></th>
         <td><span><s:select name="status" list='#application.CodeTable.getCodes("1121")' 
 	                 	listKey="CodeKey" listValue="Value" headerKey="" headerValue="%{global.select}" value="channelDetail.status"/></span></td>
-      <th><s:text name="CHA03_joinDate"></s:text></th>
-	  <td><span><s:textfield name="joinDate" cssClass="date" value="%{channelDetail.joinDate}"></s:textfield></span></td>
+      </tr>
+      <tr>
+	    <th><s:text name="CHA03_joinDate"></s:text></th>
+		<td><span><s:textfield name="joinDate" cssClass="date" value="%{channelDetail.joinDate}"></s:textfield></span></td>
 	  </tr>
     </table>    
  </cherry:form>  

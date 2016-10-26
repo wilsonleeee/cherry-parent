@@ -255,10 +255,23 @@ public class BINOLCM13_Action extends BaseAction implements
 		// 包含启用停用部门
 		String orgValidAll = ConvertUtil.getString(map.get("orgValidAll"));
 		if("".equals(testType)){
+			map.put("testType", "");
+			form.setTestType("");
+		}else if ("0".equals(testType)){
 			map.put("testType", "0");
 			form.setTestType("0");
+		}else if("1".equals(testType)){
+			map.put("testType", "1");
+			form.setTestType("1");
 		}
-		if("".equals(orgValid)){
+		
+		if("".equals(orgValid)){ 
+			map.put("orgValid", "");
+			form.setOrgValid("");
+		}else if("0".equals(orgValid)){
+			map.put("orgValid", "0");
+			form.setOrgValid("0");
+		}else if("1".equals(orgValid)){
 			map.put("orgValid", "1");
 			form.setOrgValid("1");
 		}

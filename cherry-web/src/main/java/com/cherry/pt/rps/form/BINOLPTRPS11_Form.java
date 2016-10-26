@@ -61,6 +61,28 @@ public class BINOLPTRPS11_Form extends BINOLCM13_Form{
 	/** 产品分类 */
 	private String cateInfo;
 	
+	/**是否排除该渠道*/
+	private String excludeFlag;
+	
+	/**主页面上的用于是否排除的渠道ID*/
+	private String channelIdClude;
+	
+	public String getExcludeFlag() {
+		return excludeFlag;
+	}
+
+	public void setExcludeFlag(String excludeFlag) {
+		this.excludeFlag = excludeFlag;
+	}
+
+	public String getChannelIdClude() {
+		return channelIdClude;
+	}
+
+	public void setChannelIdClude(String channelIdClude) {
+		this.channelIdClude = channelIdClude;
+	}
+
 	public String getNameTotal() {
 		return nameTotal;
 	}

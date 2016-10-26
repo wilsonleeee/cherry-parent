@@ -5,10 +5,11 @@
 <%@ taglib prefix="cherry" uri="/cherry-tags"%> 
 <%@ page import="com.cherry.cm.core.CherryConstants" %>
 <jsp:include page="/WEB-INF/jsp/common/popHead.ieCssRepair.jsp" flush="true"></jsp:include>
-<script type="text/javascript" src="/Cherry/js/common/cherryDate.js?V20160927"></script>
-<script type="text/javascript" src="/Cherry/js/lib/jquery-ui-i18n.js?V20160927"></script>
-<script type="text/javascript" src="/Cherry/js/common/popOSDialog.js?V20160927"></script>
+<script type="text/javascript" src="/Cherry/js/common/cherryDate.js"></script>
+<script type="text/javascript" src="/Cherry/js/lib/jquery-ui-i18n.js"></script>
+<script type="text/javascript" src="/Cherry/js/common/popOSDialog.js"></script>
 <script type="text/javascript" src="/Cherry/js/st/sfh/BINOLSTSFH22.js?V20160927"></script>
+
 <s:i18n name="i18n.st.BINOLSTSFH22">
 <cherry:form id="mainForm" class="inline" onsubmit="return false;">
     <div class="hide">
@@ -44,6 +45,7 @@
         </div>
     </div>
     <div id="actionResultDisplay"></div>
+    <div id="errorMessage1"></div> 
     <%-- ==================隐藏域参数======================= --%>
     <div id ="123" style="display:none">
            <input type="hidden" name="inOrganizationId" id="inOrganizationId" value='${initInfoMap.defaultDepartID}'>
@@ -72,6 +74,11 @@
             <li><span id="errorMessage1">操作失败</span></li>
         </ul>
     </div>
+    <div style="display: none" id="EBS00145"><!-- 请选择需要删除的订单行 -->
+	    <div class="actionError">
+	       <ul><li><span><s:text name="SFH22_EBS00145"/></span></li></ul>         
+	    </div>
+	 </div>
     <%-- ================== 错误信息提示   END  ======================= --%>
     <s:if test="hasActionErrors()">
         <div class="actionError" id="actionResultDiv">
@@ -105,8 +112,9 @@
                     </tr>
                     <tr>
                         <th> <s:text name="SFH22_deliverAddress"/></th>
-                        <td colspan=1>
-                            <input class="text" type="text" name="deliverAddress" id="deliverAddress" maxlength="200" value="${initInfoMap.defaultAddress}" style="width:95%;" />
+                        <td>
+                        	
+                           <span><input class="text" type="text" name="deliverAddress" id="deliverAddress" maxlength="200" value="${initInfoMap.defaultAddress}"/></span>
                         </td>
                         <th><s:text name="SFH22_orderStatus"/></th>
                         <td><span  id="orderStatus"><s:property value="#application.CodeTable.getVal('1146',initInfoMap.defaultVerifiedFlag)"/></span>

@@ -38,6 +38,15 @@ public class BillInfo {
 	private List<Map<String, Object>> detailList;
 	/** 会员BP号*/
 	private String bpCode;
+	/** 是否参与过整单类促销*/
+	private String zdFlag;
+	
+	public String getZdFlag() {
+		return zdFlag;
+	}
+	public void setZdFlag(String zdFlag) {
+		this.zdFlag = zdFlag;
+	}
 	public String getBillCode() {
 		return billCode;
 	}

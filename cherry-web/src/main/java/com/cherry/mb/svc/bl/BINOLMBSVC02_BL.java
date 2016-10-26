@@ -2,7 +2,6 @@ package com.cherry.mb.svc.bl;
 
 import java.io.File;
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -10,6 +9,7 @@ import java.util.Map;
 import javax.annotation.Resource;
 import javax.ws.rs.core.MultivaluedMap;
 
+import com.cherry.cm.cmbussiness.bl.BINOLCM14_BL;
 import com.cherry.cm.cmbussiness.bl.BINOLCM27_BL;
 import com.cherry.cm.cmbussiness.bl.BINOLCM37_BL;
 import com.cherry.cm.core.CherryAESCoder;
@@ -42,6 +42,10 @@ public class BINOLMBSVC02_BL implements BINOLMBSVC02_IF {
 	@Resource(name="thirdPartyConfig")
 	private ThirdPartyConfig thirdPartyConfig;
 	
+	/** 系统配置项 共通BL */
+	@Resource
+	private BINOLCM14_BL binOLCM14_BL;
+	
 	@Resource(name ="binOLMBSVC02_1_IF")  
 	private BINOLMBSVC02_1_IF binOLMBSVC02_1_IF;
 	
@@ -62,7 +66,7 @@ public class BINOLMBSVC02_BL implements BINOLMBSVC02_IF {
 	public List<Map<String, Object>> getCardList(Map<String, Object> map) {
 		List<Map<String, Object>> cardList = binOLMBSVC02_Service.getCardList(map);
 		for(Map<String,Object> m:cardList){
-			m.put("cardType", code.getVal("1336", m.get("cardType")));
+//			m.put("cardType", code.getVal("1336", m.get("cardType")));
 			m.put("discountType", code.getVal("1337", m.get("discountType")));
 			m.put("serviceType", code.getVal("1338", m.get("serviceType")));
 			m.put("state", code.getVal("1339", m.get("state")));
@@ -297,6 +301,7 @@ public class BINOLMBSVC02_BL implements BINOLMBSVC02_IF {
 	    return null;
 	}
 	
+	@SuppressWarnings("rawtypes")
 	@Override
 	public Map getSaleCountInfo(Map<String, Object> map) {
 		return binOLMBSVC02_Service.getSaleCountInfo(map);
@@ -389,11 +394,11 @@ public class BINOLMBSVC02_BL implements BINOLMBSVC02_IF {
 
 	@Override
 	public Map<String,Object> getNewPassword(Map<String, Object> map) throws Exception {
-		boolean retPassword = false;
 		String brandCode = ConvertUtil.getString(map.get("brandCode"));
 		Map<String,Object> data=new HashMap<String, Object>();
 		data.put("TradeType", "SavingsCardPasswordChange");
 		data.put("CardCode", map.get("cardCode"));
+		data.put("CounterCode", map.get("counterCode"));
 		//如果有验证码则为验证码+卡号验证
 		if(!CherryChecker.isNull(map.get("verificationCode"))){
 			data.put("VerificationType", 2);
@@ -407,9 +412,9 @@ public class BINOLMBSVC02_BL implements BINOLMBSVC02_IF {
 		//判断是否有新密码
 		if(CherryChecker.isNull(map.get("newPassword"))){
 			//设置一个新密码
-			String newPassword = CherryUtil.generateSalt(8);
+			String newPassword =  CherryUtil.generateSalt(8);
 			data.put("NewPassword", newPassword);
-			retPassword =true;
+			map.put("newPassword", newPassword);
 		}else{
 			data.put("NewPassword", map.get("newPassword"));
 		}
@@ -420,14 +425,6 @@ public class BINOLMBSVC02_BL implements BINOLMBSVC02_IF {
 		WebResource wr= bINOLCM27_BL.getWebResource(SavingscardWebServiceUrl);
 		String  result_json=wr.queryParams(queryParams).get(String.class);
 		Map<String,Object> result_map=ConvertUtil.json2Map(result_json);
-		String resultStr = getResultMapMessage(result_map);
-		if(retPassword){
-			if("0".equals(resultStr)){
-				String message = ConvertUtil.getString(data.get("NewPassword"));
-				result_map.put("ERRORMSG",message);
-			}
-			
-		}
 		return result_map;
 	}
 	
@@ -451,6 +448,24 @@ public class BINOLMBSVC02_BL implements BINOLMBSVC02_IF {
 	@Override
 	public int abandonCard(Map<String, Object> map) {
 		return binOLMBSVC02_Service.updateCardStateAndVaild(map);
+	}
+
+	@Override
+	public Map<String,Object> sendResetMessage(Map<String, Object> map) throws Exception{
+		String brandCode = ConvertUtil.getString(map.get("brandCode"));
+		Map<String,Object> data=new HashMap<String, Object>();
+		data.put("TradeType", "SavingsCardSendResetPassword");
+		data.put("CardCode", map.get("cardCode"));
+		data.put("Password", map.get("newPassword"));
+		data.put("CounterCode", map.get("counterCode"));
+		MultivaluedMap<String, String> queryParams = new MultivaluedMapImpl();
+		queryParams.add("brandCode", brandCode);
+		queryParams.add("appID", SavingscardAppID + "_" + brandCode);
+		queryParams.add("paramData", CherryAESCoder.encrypt(CherryUtil.map2Json(data), thirdPartyConfig.getDynamicAESKey(SavingscardAppID,brandCode)));
+		WebResource wr= bINOLCM27_BL.getWebResource(SavingscardWebServiceUrl);
+		String  result_json=wr.queryParams(queryParams).get(String.class);
+		Map<String,Object> result_map=ConvertUtil.json2Map(result_json);
+		return result_map;
 	}
 
 }

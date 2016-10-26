@@ -229,17 +229,21 @@ public class ActTemplateInitCP extends ActTemplateInit {
 		}else if (CampConstants.REWARD_TYPE_2.equals(rewardType)) {// 抵用券
 			// 抵用券金额
 			float couponPrice = ConvertUtil.getFloat(rewardInfo);
-			if("3".equals(virtPrmFlag)){
-				List<Map<String, Object>> list = getAllPrtList(rewardInfo,"0");
-				// 取得礼品List
-				getProDtoList(list, ruleResultList);
-			}else{
+//			if("3".equals(virtPrmFlag)){
+//				List<Map<String, Object>> list = getAllPrtList(rewardInfo,"0");
+//				// 取得礼品List
+//				getProDtoList(list, ruleResultList);
+//			}else{
 				// 生成TZZK类型的虚拟促销品
 				dto = getVirtualPro(paramMap, tempMap,
 						PromotionConstants.PROMOTION_TZZK_TYPE_CODE, couponPrice);
-			}
+//			}
 			
 		}
+		// 拼装成PromotionRule表需要的条件
+		convertRuleCondInfo(campaignRule,rewardType);
+		// 拼装成PromotionRule表需要的结果
+		convertRuleResultInfo(campaignRule,rewardInfo, dto,rewardType,campDTO.getGroupFlag());
 		// 加入虚拟促销品
 		if (null != dto) {
 			dto.setRewardType(rewardType);

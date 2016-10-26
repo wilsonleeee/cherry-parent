@@ -11,6 +11,7 @@ BINOLSTSFH22.prototype = {
 	"clearActionMsg":function(){
 		$('#actionResultDisplay').html("");
 		$('#errorDiv2').attr("style",'display:none');
+		$('#errorMessage1').html("");
 	},
 
 	/**
@@ -395,6 +396,7 @@ BINOLSTSFH22.prototype = {
 		this.clearActionMsg();
 		var checked = $("#databody").find(":checked");
 		if(checked.length == 0){
+			$("#errorMessage1").html($("#EBS00145").html());
 			return false;
 		}else{
 		$("#databody :checkbox").each(function(){
@@ -589,24 +591,28 @@ BINOLSTSFH22.prototype = {
 		var url = document.getElementById("submitURL").innerHTML;
 		var param = $("#mainForm").serialize();
 		var callback = function(msg){
-			// 提交成功后，使暂存，提交按钮失效
-			 $("#save").hide(); 
-			 $("#sumbit").hide(); 
-			 $("#btnSendMsm").show(); 
-			 $("#spanBtnadd").hide(); 
-			 $("#spanBtdelete").hide();  
-			 $("#spanBtnaddP").hide();  
-			 $("#suggestProduct").hide();  
-			 $("#deliverAddress").attr("disabled", true); 
-			 $("#reasonAll").attr("disabled", true); 
-			 $("#orderStatus").html("已提交");
-				//提交后订货数量和备注不可修改
-			$.each($('#databody >tr'), function(i){	
-				if(i>=0){
-				 $(this).find("#quantityArr").attr("disabled", true); 
-				 $(this).find("#reasonArr").attr("disabled", true); 
-				}
-			});	
+             if(msg.indexOf("fieldErrorDiv")>-1){
+            	 
+             }else{
+             	// 提交成功后，使暂存，提交按钮失效
+    			 $("#save").hide(); 
+    			 $("#sumbit").hide(); 
+    			 $("#btnSendMsm").show(); 
+    			 $("#spanBtnadd").hide(); 
+    			 $("#spanBtdelete").hide();  
+    			 $("#spanBtnaddP").hide();  
+    			 $("#suggestProduct").hide();  
+    			 $("#deliverAddress").attr("disabled", true); 
+    			 $("#reasonAll").attr("disabled", true); 
+    			 $("#orderStatus").html("已提交");
+    				//提交后订货数量和备注不可修改
+    			$.each($('#databody >tr'), function(i){	
+    				if(i>=0){
+    				 $(this).find("#quantityArr").attr("disabled", true); 
+    				 $(this).find("#reasonArr").attr("disabled", true); 
+    				}
+    			});	
+             }
 				
 		};
 		cherryAjaxRequest({
@@ -1007,33 +1013,22 @@ function isPositiveFloat(s){
 
 $(document).ready(function(){
 	// 产品popup初始化
-//	BINOLSTSFH22.STIOS01_dialogBody = $('#productDialog').html();
 	if($("#inOrganizationId").val() != null && $("#inOrganizationId").val() !=""){
 		$("#inDepotId").attr("disabled",false);
 		$("#inLogicDepotId").attr("disabled",false);
 	}
 	// 页面初始化时，款已付按钮不可用
 	 $("#btnSendMsm").hide(); 
-	// 日期控件
+//	// 日期控件
 	$("#expectDeliverDate").cherryDate({
 	    minDate : new Date()
 	});
-	//默认日期及当前日期，得到当前日期并转换成yyyy-MM-dd格式
-	var date=new Date();    
-	var datetime = date.getFullYear()
-    + "-"// "年"
-    + ((date.getMonth() + 1) > 9 ? (date.getMonth() + 1) : "0"
-            + (date.getMonth() + 1))
-    + "-"// "月"
-    + (date.getDate() < 10 ? "0" + date.getDate() : date
-            .getDate());
-	$('#expectDeliverDate').val(datetime);
 	
-	// 日期校验
+	// 日期校验和发货地址校验
 	cherryValidate({
 		formId: "mainForm",		
 		rules: {
-			expectDeliverDate: {dateValid: true}
+	        deliverAddress: {required: true,maxlength: 200}
 	   }		
 	});
 	

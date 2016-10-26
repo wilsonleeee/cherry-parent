@@ -80,13 +80,15 @@
 				                </p>
 			                </td>
 		                </tr>
-		                <tr>
+		                 <tr>
 		                	<%-- 产品有效状态 --%>
 		                  	<th><s:text name="RPS11_validFlag"/></th>
 		                  	<td>
-			                  	<s:iterator value='#application.CodeTable.getCodes("1137")'>
+<%-- 			                  	<s:iterator value='#application.CodeTable.getCodes("1137")'>
 				                	<input type="radio" name="validFlag" value='<s:property value="CodeKey" />' <s:if test="1 == CodeKey">checked</s:if>/><s:property value="Value" />
-				                </s:iterator>
+				                </s:iterator> --%>
+				                <s:select name="validFlag" list='#application.CodeTable.getCodes("1137")' listKey="CodeKey" listValue="Value"
+	                  			headerKey="" headerValue="%{selectAll}" onchange="getProductBindingFunction()" />
 			                </td>
 			                <%-- 品牌 --%>
 		                  	<th><s:text name="RPS11_originalBrand"/></th>
@@ -94,6 +96,19 @@
 	                  		<s:select name="originalBrand" list='#application.CodeTable.getCodes("1299")' listKey="CodeKey" listValue="Value"
 	                  			headerKey="" headerValue="%{selectAll}" />
 	                  		</td>
+		                </tr>
+		                <tr>
+		                <th><label><s:text name="RPS11_channel"/></label></th>
+		                	<td>
+			            	<s:if test="%{channelList != null && !channelList.isEmpty()}">
+			               		<s:select list="channelList" listKey="channelId" listValue="channelName" name="channelIdClude" headerKey="" headerValue="%{#selectAll}"></s:select>
+			               	</s:if>
+			               	<s:else>
+			               		<select name="channelIdClude" id="channelIdClude"><option value="">${selectAll }</option></select>
+			               	</s:else>
+			            	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+							<input type="checkbox" id="excludeFlag" name="excludeFlag" value="1"><s:text name="RPS11_exclude" />
+			            </td>
 		                </tr>
 			            <tr>
 							<td colspan="4" id="dynamicShowHideCate">

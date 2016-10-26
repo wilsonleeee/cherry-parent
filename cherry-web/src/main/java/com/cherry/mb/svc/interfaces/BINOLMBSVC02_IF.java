@@ -81,4 +81,10 @@ public interface BINOLMBSVC02_IF extends BINOLCM37_IF{
 	 * 废弃储值卡
 	 */
 	public int abandonCard(Map<String, Object> map);
+	
+	/**
+	 * 发送储值卡重置密码短信
+	 * @throws Exception 
+	 */
+	public Map<String, Object> sendResetMessage(Map<String, Object> map) throws Exception;
 }

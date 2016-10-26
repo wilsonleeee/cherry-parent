@@ -152,10 +152,10 @@ BINOLWPMBM01.prototype = {
 			var wmFlag = $("#wmFlag").val();
 			if(wmFlag == '1') {
 				var url = $("#counterSaleBtn").attr('href') + '&' + getSerializeToken();
-				var param = $("#result").find(':input[name=memberInfoId]').serialize();
-				if(param) {
-					url = url + "&" + param;	
-					url += "&mobilePhoneQ="+$("#mobilePhoneQ").val();
+				var checkedLength = $("#result").find(':input[type="radio"]:checked').length;
+				if(checkedLength >0) {
+					var memberCode=$("#result").find(':input[type="radio"]:checked').parents("tr").find("td:eq(2) span").html();
+					url += "&mobilePhoneQ="+memberCode;
 				}
 				popup(url, {width:window.screen.width-10,height:window.screen.height-35});
 				return false;
@@ -181,6 +181,7 @@ BINOLWPMBM01.prototype = {
 							// 查询结果为单条记录的情况下显示记录详细内容
 							var memberInfo = eval("("+data+")");
 							$('#memberInfoId').val(memberInfo.memberInfoId);
+							$('#searchStr').val(memberInfo.memberCode);
 							$('#memberCode').val(memberInfo.memberCode);
 							$('#memberName').val(memberInfo.memberName);
 							$('#memberLevel').val(memberInfo.memberLevel);

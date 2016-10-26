@@ -26,6 +26,9 @@ public class BINOLBSCHA01_Form extends DataTable_BaseForm{
 	/** 渠道类型 */	
 	private String status;
 	
+	/** 渠道代码 */	
+	private String channelCode;	
+	
 	/** 渠道名称 */	
 	private String channelName;
 	
@@ -74,6 +77,14 @@ public class BINOLBSCHA01_Form extends DataTable_BaseForm{
 
 	public String getHolidays() {
 		return holidays;
+	}
+
+	public String getChannelCode() {
+		return channelCode;
+	}
+
+	public void setChannelCode(String channelCode) {
+		this.channelCode = channelCode;
 	}
 
 	public void setChannelName(String channelName) {

@@ -26,6 +26,7 @@ import com.cherry.cm.cmbussiness.bl.BINOLCM05_BL;
 import com.cherry.cm.core.BaseAction;
 import com.cherry.cm.core.CherryConstants;
 import com.cherry.cm.util.CherryUtil;
+import com.cherry.cm.util.ConvertUtil;
 import com.opensymphony.xwork2.ModelDriven;
 
 
@@ -108,6 +109,8 @@ public class BINOLBSCHA04_Action extends BaseAction implements ModelDriven<BINOL
 				.getSysDateTime(CherryConstants.DATE_PATTERN));
 		map.put("brandInfoId", form.getBrandInfoId());
 		
+		map.put("channelCode", form.getChannelCode().trim());
+
 		map.put("channelName", form.getChannelName().trim());
 
 		map.put("channelNameForeign", form.getChannelNameForeign());
@@ -125,12 +128,24 @@ public class BINOLBSCHA04_Action extends BaseAction implements ModelDriven<BINOL
 	public void validateSave() throws Exception {
 		Map<String, Object> map = new HashMap<String, Object>();
 		map.put("brandInfoId", form.getBrandInfoId());
-		map.put("channelName", form.getChannelName().trim());
-        String count=binOLBSCHA04_IF.getCount(map);
-		if(count.equals("1")) {
-			this.addFieldError("channelName",getText("ECM00032",new String[]{getText("PBS00050"),"20"}));
+		if(!ConvertUtil.isBlank(form.getChannelCode())){
+			map.put("channelCode", form.getChannelCode().trim());
+			String count=binOLBSCHA04_IF.getCount(map);
+			if(count.equals("1")) {
+				this.addFieldError("channelCode",getText("ECM00032",new String[]{getText("PBS00102"),"20"}));
+			}
+			map.remove("channelCode");
 		}
-	}
+		
+		if(!ConvertUtil.isBlank(form.getChannelName())){
+			map.put("channelName", form.getChannelName().trim());
+			String count=binOLBSCHA04_IF.getCount(map);
+			if(count.equals("1")) {
+				this.addFieldError("channelName",getText("ECM00032",new String[]{getText("PBS00050"),"20"}));
+			}
+			map.remove("channelName");
+		}
+	} 
 	
 	@Override
 	public BINOLBSCHA04_Form getModel() {

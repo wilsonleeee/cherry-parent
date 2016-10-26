@@ -105,6 +105,13 @@ public interface BINOLPTJCS17_IF extends ICherryInterface {
 	 */
 	public Map<String,Object> tran_issuedCntPrt(Map<String, Object> map) throws Exception;
 	
+	/**
+	 * 柜台产品实时下发(WITPOSQA-23079 颖通香港新增需求)
+	 * @param map
+	 * @throws Exception
+	 */
+	public Map<String,Object> tran_issuedCntPrtYT(Map<String, Object> map) throws Exception;
+	
 	
 	/**
 	 * 取得业务日期

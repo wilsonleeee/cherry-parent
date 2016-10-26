@@ -142,4 +142,10 @@ public class BINOLMBSVC02_Service extends BaseService{
 		paramMap.put(CherryConstants.IBATIS_SQL_ID, "BINOLMBSVC02.getSaleDetailCountInfo");
 		return (Map)baseServiceImpl.get(paramMap);
 	}
+	public int checkCard(Map<String, Object> map) {
+		Map<String, Object> paramMap = new HashMap<String, Object>();
+		paramMap.putAll(map);
+		paramMap.put(CherryConstants.IBATIS_SQL_ID, "BINOLMBSVC02.checkCard");
+		return baseServiceImpl.getSum(paramMap);
+	}
 }

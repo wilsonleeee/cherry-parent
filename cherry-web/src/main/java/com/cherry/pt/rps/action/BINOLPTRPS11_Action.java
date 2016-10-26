@@ -76,6 +76,9 @@ public class BINOLPTRPS11_Action extends BaseAction implements
 	/** 取得产品分类List */
 	@Resource(name = "binOLPTJCS03_IF")
 	private BINOLPTJCS03_IF binOLPTJCS03_IF;
+	
+	@Resource(name="binOLCM00_BL")
+	private BINOLCM00_BL binOLCM00_BL;
 
 	/** 参数FORM */
 	private BINOLPTRPS11_Form form = new BINOLPTRPS11_Form();
@@ -94,6 +97,9 @@ public class BINOLPTRPS11_Action extends BaseAction implements
 
 	/** 导出文件名 */
 	private String exportName;
+	
+	/** 渠道List */
+	private List<Map<String, Object>> channelList;
 	
 	public Map<String, Object> getSumInfo() {
 		return sumInfo;
@@ -182,6 +188,9 @@ public class BINOLPTRPS11_Action extends BaseAction implements
 		cateList = binOLPTJCS03_IF.getCategoryList(map);
 		// 查询假日
 		holidays = binolcm00BL.getHolidays(map);
+		
+		// 取得渠道List
+		channelList=binOLCM00_BL.getChannelList(map);
 		// 库存统计方式，1：厂商编码；2：产品条码
 		String type = cm14bl.getConfigValue("1095",
 				userInfo.getBIN_OrganizationInfoID()+"",
@@ -415,6 +424,9 @@ public class BINOLPTRPS11_Action extends BaseAction implements
 		// 逻辑仓库
 		map.put("lgcInventoryId", form.getLgcInventoryId());
 		
+		map.put("excludeFlag", form.getExcludeFlag());
+		map.put("channelIdClude", form.getChannelIdClude());
+		
 		// 共通条参数
 		Map<String, Object> paramsMap = (Map<String, Object>) JSONUtil.deserialize(form.getParams());
 		map.putAll(paramsMap);
@@ -526,4 +538,13 @@ public class BINOLPTRPS11_Action extends BaseAction implements
 	public void setCateList(List<Map<String, Object>> cateList) {
 		this.cateList = cateList;
 	}
+
+	public List<Map<String, Object>> getChannelList() {
+		return channelList;
+	}
+
+	public void setChannelList(List<Map<String, Object>> channelList) {
+		this.channelList = channelList;
+	}
+	
 }

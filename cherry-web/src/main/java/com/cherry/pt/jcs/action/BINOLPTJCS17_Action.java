@@ -380,6 +380,46 @@ ModelDriven<BINOLPTJCS14_Form>{
 			ConvertUtil.setResponseByAjax(response, resultMap);
 		}
 	}
+
+	/**
+	 * 产品实时下发（颖通）
+	 * @throws Exception 
+	 */
+	@SuppressWarnings("unchecked")
+	public void issuePrtYT() throws Exception{
+		
+		Map<String, Object> resultMap = new HashMap<String, Object>();
+		
+		// 登录用户参数MAP
+		Map<String, Object> sessionMap = this.getSessionInfo();
+		Map<String, Object> map = new HashMap<String, Object>();
+//		map = CherryUtil.remEmptyVal(map);
+		map.putAll(sessionMap);
+		
+		// 实时下发
+		try{
+			
+			// 品牌是否支持产品下发
+			boolean isPrtIss = binOLCM14_BL.isConfigOpen("1295", String.valueOf(map.get("organizationInfoId")), String.valueOf(map.get("brandInfoId")));
+			if(isPrtIss){
+				// 产品实时下发
+//				resultMap = binolptjcs04_IF.tran_issuedPrt(map);
+				
+				//通过WebService进行产品实时下发
+				resultMap = binolptjcs04_IF.tran_issuedPrtByWS(map);
+			}
+			
+//			String result = ConvertUtil.getString(resultMap.get("result"));
+//			if("0".equals(result)){
+			resultMap = binOLPTJCS17_IF.tran_issuedCntPrtYT(map);
+//			}
+			
+			ConvertUtil.setResponseByAjax(response, resultMap);
+		} catch(Exception e){
+			resultMap.put("result", "1");
+			ConvertUtil.setResponseByAjax(response, resultMap);
+		}
+	}
 	
 	/**
 	 * 验证提交的参数

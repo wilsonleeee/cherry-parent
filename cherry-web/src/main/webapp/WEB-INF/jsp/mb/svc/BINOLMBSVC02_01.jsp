@@ -22,6 +22,7 @@
 <li><s:property value="lastDepositTime" /></li>
 <li><s:property value="state" /></li>
 <li><s:property value="departName" /></li>
+<li><s:property value="cardType" /></li>
 <li>
 	<a href="${viewUrl}" class="edit" onclick="javascript:openWin(this);return false;">
 					<span class="ui-icon ui-icon-document"></span>

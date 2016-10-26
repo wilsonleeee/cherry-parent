@@ -267,7 +267,8 @@ public class ProductConstants {
 	/** 产品方案添加产品模式 3：颖通模式(分类交集) */
 	public static final String SOLU_ADD_MODE_CONFIG_3 = "3";
 	
-	
+	/** 是否更新产品表价格 是 */
+	public static final String IS_SYNCH_PRODUCT_PRICE_YES = "1";
 	
 	
 }

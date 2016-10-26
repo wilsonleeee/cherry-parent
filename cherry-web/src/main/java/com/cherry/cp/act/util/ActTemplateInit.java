@@ -14,6 +14,7 @@ package com.cherry.cp.act.util;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -26,6 +27,7 @@ import com.cherry.cm.core.CherryChecker;
 import com.cherry.cm.core.CherryConstants;
 import com.cherry.cm.core.CherryException;
 import com.cherry.cm.core.CodeTable;
+import com.cherry.cm.util.CherryUtil;
 import com.cherry.cm.util.ConvertUtil;
 import com.cherry.cm.util.DateUtil;
 import com.cherry.cp.common.CampConstants;
@@ -453,6 +455,7 @@ public class ActTemplateInit extends TemplateInit {
 		List<CampRuleConditionDTO> ruleConditonList = new ArrayList<CampRuleConditionDTO>();
 		CampRuleConditionDTO ruleCondetion = new CampRuleConditionDTO();
 		ruleCondetion.setPropertyName(CampUtil.BASEPROP_CUSTOMER);
+		campaignRule.setMemberType(campMebType);
 		if (CampConstants.CAMP_MEB_TYPE_0.equals(campMebType)
 				|| CampConstants.CAMP_MEB_TYPE_5.equals(campMebType)
 				|| CampConstants.CAMP_MEB_TYPE_6.equals(campMebType)) {// 全部会员或不限
@@ -1044,5 +1047,128 @@ public class ActTemplateInit extends TemplateInit {
 		} catch (JSONException e) {
 		}
 		campaignRule.setExtendInfo(info);
+	}
+	
+	/**
+	 * 拼装促销条件json
+	 * @param dto
+	 * @return 
+	 * @throws Exception 
+	 */
+	protected void convertRuleCondInfo(CampaignRuleDTO campaignRule,String rewardType) throws Exception{
+		Map<String,Object> prmRuleMap = new HashMap<String, Object>();
+		Map<String,Object> condMap = new HashMap<String, Object>();
+		//{"Version":"RV.01.0001","Compatible":"1","Type":"1","Content":{"condType":"0"}}
+		//{"Version":"RV.01.0001","Compatible":"1","Type":"1","Content":{"condType":"1","propName":"SUMAMOUNT","propOpt":"GT","propValue":"0","minPrice":"","maxPrice":"","isAll":"1"}}
+		if (CampConstants.REWARD_TYPE_1.equals(rewardType)  && campaignRule.getPriceControl() == 0 ) {// 指定礼品
+			condMap.put("condType", "0");
+		} else {
+			condMap.put("condType", "1");
+			condMap.put("propName", "SUMAMOUNT");
+			condMap.put("isAll", "1");
+			condMap.put("propValue", campaignRule.getPriceControl() + "");
+			if(campaignRule.getPriceControl() == 0){
+				condMap.put("propOpt", "GT");
+			}else{
+				condMap.put("propOpt", "GE");
+			}
+		}
+		prmRuleMap.put("Version", "RV.01.0001");
+		prmRuleMap.put("Compatible", "1");
+		prmRuleMap.put("Type", "1");
+		prmRuleMap.put("Content", condMap);
+		campaignRule.setPrmConRule(CherryUtil.map2Json(prmRuleMap));
+	}
+	
+	/**
+	 * 拼装RwardInfo为promotionRule的RuleResult
+	 * @param rewardInfo
+	 * @param dto
+	 * @return 
+	 * @throws Exception 
+	 */
+	protected void convertRuleResultInfo(CampaignRuleDTO campaignRule, String rewardInfo,CampRuleResultDTO dto, String rewardType,String groupFlag) throws Exception{
+		
+		Map<String,Object> prmRuleMap = new HashMap<String, Object>();
+		Map<String,Object> contentMap = new HashMap<String, Object>();
+		Map<String,Object> rewardMap = new HashMap<String, Object>();
+		List<Map<String,Object>> rewardArr = new ArrayList<Map<String,Object>>();
+		contentMap.put("logicOpt", "AND"); // 这个需要
+		contentMap.put("logicObjArr", rewardArr);
+		if(dto == null){
+			contentMap.put("unitCodeTzzk", "CXLP999999");
+			contentMap.put("barCodeTzzk", "CXLP999999");
+		}else{
+			contentMap.put("unitCodeTzzk", dto.getUnitCode());
+			contentMap.put("barCodeTzzk", dto.getBarCode());
+		}
+		if(CampConstants.REWARD_TYPE_1.equals(rewardType) ){//赠送礼品
+			List<Map<String,Object>> rewardArr2 = new ArrayList<Map<String,Object>>();
+			
+			if("1".equals(groupFlag)){// 开启组合模式
+				Map<String,Object> rewardInfoMap = ConvertUtil.json2Map( ActUtil.replaceJson(rewardInfo));
+				if(null != rewardInfoMap){
+					// 组合框数组
+					List<Map<String,Object>> itemList = (List<Map<String,Object>>)rewardInfoMap.get("logicOptArr");
+					if(null != itemList){
+						for(Map<String,Object> item : itemList){
+							List<Map<String,Object>> rewardArr3 = new ArrayList<Map<String,Object>>();
+							Map<String,Object> rewardMap2 = new HashMap<String, Object>();
+							// 礼品数组
+							List<Map<String,Object>> prtList = (List<Map<String,Object>>)item.get("logicOptArr");
+							if(null != prtList){
+								for(Map<String,Object> prt : prtList){
+									Map<String,Object> prtMap = new HashMap<String, Object>();
+									prtMap.put("rangeType", "PRODUCT");
+									prtMap.put("rangeOpt", "EQUAL");
+									prtMap.put("rangeVal", ConvertUtil.getString(prt.get("unitCode")) + "+" + ConvertUtil.getString(prt.get("barCode")));
+									prtMap.put("quantity", ConvertUtil.getString(prt.get("quantity")));
+									prtMap.put("price", ConvertUtil.getString(prt.get("price")));
+									rewardArr3.add(prtMap);
+								}
+							}
+							rewardMap2.put("logicOpt", item.get("logicOpt"));
+							rewardMap2.put("logicObjArr", rewardArr3);
+							rewardArr2.add(rewardMap2);
+						}
+					}
+					rewardMap.put("logicOpt", rewardInfoMap.get("logicOpt"));
+					rewardMap.put("rewardType", "GIFT");
+					rewardMap.put("logicObjArr", rewardArr2);
+					rewardArr.add(rewardMap);
+				}
+			}else{
+				List<Map<String,Object>> rewardArr3 = new ArrayList<Map<String,Object>>();
+				Map<String,Object> rewardMap2 = new HashMap<String, Object>();
+				List<Map<String,Object>> prtList = ConvertUtil.json2List(rewardInfo);
+				for(Map<String,Object> prt : prtList){
+					Map<String,Object> prtMap = new HashMap<String, Object>();
+					prtMap.put("rangeType", "PRODUCT");
+					prtMap.put("rangeOpt", "EQUAL");
+					prtMap.put("rangeVal", ConvertUtil.getString(prt.get("unitCode")) + "+" + ConvertUtil.getString(prt.get("barCode")));
+					prtMap.put("quantity", ConvertUtil.getString(prt.get("quantity")));
+					prtMap.put("price", ConvertUtil.getString(prt.get("price")));
+					rewardArr3.add(prtMap);
+				}
+				rewardMap2.put("logicOpt", "AND");
+				rewardMap2.put("logicObjArr", rewardArr3);
+				rewardArr2.add(rewardMap2);
+				rewardMap.put("logicOpt", "AND");
+				rewardMap.put("rewardType", "GIFT");
+				rewardMap.put("logicObjArr", rewardArr2);
+				rewardArr.add(rewardMap);
+			}
+			campaignRule.setPrmRuleCate("GIFT");
+		}else{// 电子券
+			rewardMap.put("rewardType", "ZDYH");
+			rewardMap.put("rewardVal", dto.getPrice() + "");
+			rewardArr.add(rewardMap);
+			campaignRule.setPrmRuleCate("ZDYH");
+		}
+		prmRuleMap.put("Version", "RV.01.0001");
+		prmRuleMap.put("Compatible", "1");
+		prmRuleMap.put("Type", "2");
+		prmRuleMap.put("Content", contentMap);
+		campaignRule.setPrmRule(CherryUtil.map2Json(prmRuleMap));
 	}
 }

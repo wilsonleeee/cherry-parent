@@ -42,6 +42,10 @@ public class BaseService {
 	@Resource
 	protected BaseServiceImpl baseServiceImpl;
 	
+
+//	@Resource
+//	protected BaseWitServiceImpl baseWitServiceImpl;
+	
 	@Resource
 	protected BaseConfServiceImpl baseConfServiceImpl;
 	
@@ -101,6 +105,7 @@ public class BaseService {
 	/**
 	 * 查询假日
 	 * 
+	 * @param Map
 	 * @return List
 	 */
 	@SuppressWarnings("unchecked")
@@ -116,6 +121,8 @@ public class BaseService {
 	 * 
 	 * @param orgInfoId
 	 * 			组织ID
+	 * @param cal
+	 * 			日期
 	 * @return String
 	 */
 	public String getFiscalDate(int orgInfoId, Date date){
@@ -229,9 +236,11 @@ public class BaseService {
 	
 	/**
 	 * 手动提交事务
-	 *
+	 * 
+	 * @param 无
+	 * 
 	 * @return 无
-	 *
+	 * 
 	 */
 	public void manualCommit() {
 		Map<String, Object> paramMap = new HashMap<String, Object>();
@@ -241,6 +250,8 @@ public class BaseService {
 
 	/**
 	 * 手动回滚事务
+	 * 
+	 * @param 无
 	 * 
 	 * @return 无
 	 * 

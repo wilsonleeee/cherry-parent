@@ -32,15 +32,17 @@
         <td><span><s:textfield name="channelName" cssClass="text" maxlength="50"></s:textfield></span></td>
      </tr>
 	 <tr> 
-        <th><s:text name="CHA04_channelNameForeign"></s:text></th>
-        <td><span><s:textfield name="channelNameForeign" cssClass="text" maxlength="50"></s:textfield></span></td>  
+	 	<th><s:text name="CHA04_channelCode"></s:text><span class="highlight"><s:text name="global.page.required"></s:text></span></th>
+        <td><span><s:textfield name="channelCode" cssClass="text" maxlength="50"></s:textfield></span></td>
         <th><s:text name="CHA04_status"></s:text></th>
         <td><span><s:select name="status" list='#application.CodeTable.getCodes("1121")' 
 	                 	listKey="CodeKey" listValue="Value" headerKey="" headerValue="%{CHA04_select}"/></span></td>
       </tr>
       <tr>
-      <th><s:text name="CHA04_joinDate"></s:text></th>
-	  <td><span><s:textfield name="joinDate" cssClass="date" value="%{endDate}"></s:textfield></span></td>
+        <th><s:text name="CHA04_channelNameForeign"></s:text></th>
+        <td><span><s:textfield name="channelNameForeign" cssClass="text" maxlength="50"></s:textfield></span></td>
+     	<th><s:text name="CHA04_joinDate"></s:text></th>
+	  	<td><span><s:textfield name="joinDate" cssClass="date" value="%{endDate}"></s:textfield></span></td>
 	  </tr>
     </table>    
  </cherry:form>  

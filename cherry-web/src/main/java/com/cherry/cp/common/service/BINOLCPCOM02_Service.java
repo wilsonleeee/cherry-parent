@@ -885,5 +885,57 @@ public class BINOLCPCOM02_Service extends BaseService{
     	map.put(CherryConstants.IBATIS_SQL_ID, "BINOLCPCOM02.getActIdByName");
     	return baseServiceImpl.getList(map);
     }
+    /**
+	 * 取得子活动信息
+	 * @param campaignRuleDTO
+	 * @return
+	 */
+	public CampaignRuleDTO getCampaignRuleInfo(CampaignRuleDTO campaignRuleDTO){
+        return (CampaignRuleDTO) baseServiceImpl.get(campaignRuleDTO,"BINOLCPCOM02.getCampaignRuleInfo");
+	}
+	
     
+    /**
+	 * 
+	 * 物理删除会员活动规则结果明细表
+	 * 
+	 * @param campaignRuleDTO
+	 * 			会员子活动信息
+	 * 
+	 */
+	public int delPromotionRule(Map<String,Object> map) {
+		return baseServiceImpl.remove(map, "BINOLCPCOM02.delPromotionRule");
+	}
+	
+	/**
+	 * 插入会员活动规则结果明细表
+	 * 
+	 * @param ruleDTO
+	 * @return int
+	 */
+	public void addPromotionRule(Map<String,Object> map) {
+		baseServiceImpl.save(map, "BINOLCPCOM02.insertPromotionRule");
+	}
+	
+	/**
+	 * 
+	 * 物理删除会员活动规则分类
+	 * 
+	 * @param campaignRuleDTO
+	 * 			会员子活动信息
+	 * 
+	 */
+	public int delPromotionRuleCate(Map<String,Object> map) {
+		return baseServiceImpl.remove(map, "BINOLCPCOM02.delPromotionRuleCate");
+	}
+	
+	/**
+	 * 插入会员活动规则分类
+	 * 
+	 * @param ruleDTO
+	 * @return int
+	 */
+	public void addPromotionRuleCate(Map<String,Object> map) {
+		baseServiceImpl.save(map, "BINOLCPCOM02.insertPromotionRuleCate");
+	}
 }

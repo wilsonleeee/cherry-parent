@@ -147,7 +147,9 @@ ACT.prototype = {
 				html += '<input type="hidden" name="prmCate" value="' + prmCate + '"/>';
 			}
 			
-			html += '<input type="hidden" name="'+name+'" value="' + info.proId + '"/></td>';
+			html += '<input type="hidden" name="'+name+'" value="' + info.proId + '"/>';
+			html += '<input type="hidden" name="unitCode" value="' + info.unitCode + '"/>';
+			html += '<input type="hidden" name="barCode" value="' + info.barCode + '"/></td>';
 			html += '<td>' + info.unitCode + '</td>';
 			html += '<td style="white-space:normal">' + info.nameTotal + '</td>';
 			html += '<td>' + info.barCode + '</td>';

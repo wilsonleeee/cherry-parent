@@ -5,7 +5,13 @@
     
     <!-- 取得扫码积分报表汇总 -->
     <select id="getScanQRPointsReportSummary" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">        
-		SELECT COUNT(distinct A.MemberID) AS memberTotal,
+		SELECT 
+		COUNT(DISTINCT 
+			CASE WHEN 
+				B.JoinDate &lt;= Convert(Datetime,#endDate#)
+			THEN B.BIN_MemberInfoID
+			END
+		) AS memberTotal,
 		COUNT(DISTINCT 
 			CASE WHEN 
 			B.JoinDate &gt;= Convert(Datetime,#startDate#) 
@@ -33,11 +39,16 @@
 		) AS oldMemberQRPointsTotal
 		FROM Basis.BIN_PrtUniqueCodeDetail A 
 		JOIN Members.BIN_MemberInfo B
-		ON A.MemberID IS NOT NULL AND A.MemberID = B.BIN_MemberInfoID
+		ON A.MemberID IS NOT NULL 
+			AND A.MemberID = B.BIN_MemberInfoID
+			AND B.JoinDate IS NOT NULL
 		WHERE 
-			A.ValidFlag = '1' AND 
 			A.ActivationStatus = '1' AND
-			A.UseStatus = '1' AND 
+			A.UseStatus = '1'
+			<isNotEmpty property="endDate" prepend="AND">
+			    A.UseTime &lt;= Convert(Datetime,#endDate#)
+			</isNotEmpty>
+			 
     </select>
     
     <!-- 积分信息查询sql文  -->
@@ -89,12 +100,16 @@
 			LEFT JOIN Basis.BIN_Region Y ON O.BIN_ProvinceID = Y.BIN_RegionID
 			LEFT JOIN Basis.BIN_Region Z ON O.BIN_CityID = Z.BIN_RegionID			
 			LEFT JOIN Members.BIN_MemCardInfo C
-			ON C.BIN_MemberInfoID = A.MemberID	
-				AND C.MemCode=A.MemberCode
+			ON C.BIN_MemberInfoID = A.MemberID
 			WHERE 
-				A.ValidFlag = '1' AND 
 				A.ActivationStatus = '1' AND
-				A.UseStatus = '1' 
+				A.UseStatus = '1'   
+				<isNotEmpty property="startDate" prepend="AND">
+				    A.UseTime &gt;= Convert(Datetime,#startDate#)
+				</isNotEmpty>
+				<isNotEmpty property="endDate" prepend="AND">
+				    A.UseTime &lt;= Convert(Datetime,#endDate#)
+				</isNotEmpty>
 			</sql>
 	
 	<!-- 取得积分信息总数  -->

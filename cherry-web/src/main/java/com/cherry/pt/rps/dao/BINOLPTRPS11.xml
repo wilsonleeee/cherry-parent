@@ -111,7 +111,7 @@
 		</isNotEmpty>
 	</sql>
 	<!-- 月度库存历史到集结日点延迟上传数据（入库）  -->
-	<sql id="ProStockHistoryDelayInSQL">
+	<!-- <sql id="ProStockHistoryDelayInSQL">
 		<![CDATA[
 		SELECT
 			A1.BIN_InventoryInfoID,
@@ -144,9 +144,9 @@
 		<isNotEmpty property="lgcInventoryId" prepend="AND">
 			A1.BIN_LogicInventoryInfoID = #lgcInventoryId#
 		</isNotEmpty>
-	</sql>	
+	</sql>	 -->
 	<!-- 月度库存历史到集结日点延迟上传数据（出库）  -->
-	<sql id="ProStockHistoryDelayOutSQL">
+<!-- 	<sql id="ProStockHistoryDelayOutSQL">
 		<![CDATA[
 		SELECT
 			A1.BIN_InventoryInfoID,
@@ -179,9 +179,9 @@
 		<isNotEmpty property="lgcInventoryId" prepend="AND">
 			A1.BIN_LogicInventoryInfoID = #lgcInventoryId#
 		</isNotEmpty>
-	</sql>	
+	</sql>	 -->
 	<!-- 月度库存历史到集结日时间段的收入变化统计sql文  -->
-	<sql id="ProStockHistoryInSQL">
+<!-- 	<sql id="ProStockHistoryInSQL">
 		<![CDATA[
 		SELECT
 			A1.BIN_InventoryInfoID,
@@ -215,9 +215,9 @@
 		<isNotEmpty property="lgcInventoryId" prepend="AND">
 			A1.BIN_LogicInventoryInfoID = #lgcInventoryId#
 		</isNotEmpty>
-	</sql>	
+	</sql>	 -->
 	<!-- 月度库存历史到集结日时间段的发出变化统计sql文  -->
-	<sql id="ProStockHistoryOutSQL">
+<!-- 	<sql id="ProStockHistoryOutSQL">
 		<![CDATA[
 		SELECT
 			A1.BIN_InventoryInfoID,
@@ -251,9 +251,9 @@
 		<isNotEmpty property="lgcInventoryId" prepend="AND">
 			A1.BIN_LogicInventoryInfoID = #lgcInventoryId#
 		</isNotEmpty>
-	</sql>	
+	</sql>	 -->
 	<!-- 本期发出变化统计sql文  -->
-	<sql id="ProStockOutSQL">
+<!-- 	<sql id="ProStockOutSQL">
 		<![CDATA[
 		SELECT		
 			A1.BIN_InventoryInfoID,
@@ -287,32 +287,41 @@
 		<isNotEmpty property="lgcInventoryId" prepend="AND">
 			A1.BIN_LogicInventoryInfoID = #lgcInventoryId#
 		</isNotEmpty>
-	</sql>
+	</sql> -->
 	<!-- 本期收入变化统计sql文  -->
-	<sql id="ProStockInSQL">
+	<sql id="ProStockInOutSQL">
 		<![CDATA[
 		SELECT		
 			A1.BIN_InventoryInfoID,
 			A1.BIN_ProductVendorID,
 			0 AS hQuantity,
-			ISNULL(A1.Quantity,0) AS inQuantity,
-			0 AS outQuantity,
-			0 AS hDinQuantity,
-			0 AS hDoutQuantity,
-			0 AS hinQuantity,
-			0 AS houtQuantity
+			 CASE WHEN A1.StockType = '0' and H.StockInOutDate >= CONVERT(date,#startDate#)
+		           AND H.StockInOutDate <= CONVERT(date,#endDate#)
+			THEN ISNULL(A1.Quantity,0) else 0 end AS inQuantity,
+		    CASE WHEN A1.StockType = '1' and H.StockInOutDate >= CONVERT(date,#startDate#)
+		           AND H.StockInOutDate <= CONVERT(date,#endDate#)
+			THEN ISNULL(A1.Quantity,0) else 0 end AS outQuantity,
+		    CASE WHEN A1.StockType = '0' and H.StockInOutDate <= CONVERT(date,#cutOfDate#)
+				AND H.ValidFlag = '1' AND H.CloseFlag = '0'
+			THEN ISNULL(A1.Quantity,0) else 0 end AS hDinQuantity,
+		    CASE WHEN A1.StockType = '1' and H.StockInOutDate <= CONVERT(date,#cutOfDate#)
+				AND H.ValidFlag = '1' AND H.CloseFlag = '0'
+			THEN ISNULL(A1.Quantity,0) else 0 end AS hDoutQuantity,
+			CASE WHEN A1.StockType = '0' and H.StockInOutDate > CONVERT(date,#date1#)
+		           AND H.StockInOutDate <= CONVERT(date,#date2#)
+			THEN ISNULL(A1.Quantity,0) else 0 end AS hinQuantity,
+		    CASE WHEN A1.StockType = '1' and H.StockInOutDate > CONVERT(date,#date1#)
+		           AND H.StockInOutDate <= CONVERT(date,#date2#)
+			THEN ISNULL(A1.Quantity,0) else 0 end AS houtQuantity 
 		FROM
 			Inventory.BIN_ProductInOut H WITH(NOLOCK)
 			JOIN Inventory.BIN_ProductInOutDetail A1 WITH(NOLOCK)
 			ON(H.BIN_ProductInOutID = A1.BIN_ProductInOutID
-				AND A1.StockType = '0'
 				AND A1.ValidFlag = '1')
 			JOIN T99
 			ON(A1.BIN_InventoryInfoID = T99.BIN_InventoryInfoID)
 		WHERE
-			H.StockInOutDate >= CONVERT(date,#startDate#)
-			AND H.StockInOutDate <= CONVERT(date,#endDate#)
-			AND H.ValidFlag = '1'
+			 H.ValidFlag = '1'
 		]]>
 		<isNotEmpty property="prtVendorId" prepend="AND">
 			A1.BIN_ProductVendorID = #prtVendorId#
@@ -381,23 +390,19 @@
 		<![CDATA[ FROM( ]]>
 			<include refid="BINOLPTRPS11.ProStockHistorySQL" />
 			<![CDATA[ UNION ALL ]]>
-			<include refid="BINOLPTRPS11.ProStockHistoryDelayInSQL" />
-			<![CDATA[ UNION ALL ]]>
-			<include refid="BINOLPTRPS11.ProStockHistoryDelayOutSQL" />
-			<![CDATA[ UNION ALL ]]>
-			<include refid="BINOLPTRPS11.ProStockHistoryInSQL" />
-			<![CDATA[ UNION ALL ]]>
-			<include refid="BINOLPTRPS11.ProStockHistoryOutSQL" />
-			<![CDATA[ UNION ALL ]]>
-			<include refid="BINOLPTRPS11.ProStockInSQL" />
-			<![CDATA[ UNION ALL ]]>
-			<include refid="BINOLPTRPS11.ProStockOutSQL" />
+			<include refid="BINOLPTRPS11.ProStockInOutSQL" />
 		<![CDATA[ ) T0
 				JOIN Basis.BIN_ProductVendor D WITH(NOLOCK)
 				ON(T0.BIN_ProductVendorID = D.BIN_ProductVendorID
-					AND D.ValidFlag = #validFlag#)
+				]]>
+				<isNotEmpty property="validFlag" prepend="AND">
+					D.ValidFlag = #validFlag#
+				</isNotEmpty>
+			<![CDATA[)
 				JOIN Basis.BIN_Product E WITH(NOLOCK)
 				ON(D.BIN_ProductID = E.BIN_ProductID AND E.IsStock='1')
+				JOIN Basis.BIN_InventoryInfo Z WITH(NOLOCK)
+				ON(T0.BIN_InventoryInfoID = Z.BIN_InventoryInfoID)
 				LEFT JOIN Basis.BIN_ProductPrice F WITH(NOLOCK)
                 ON (E.BIN_ProductID = F.BIN_ProductID AND F.Type = '2' AND #businessDate# BETWEEN F.StartDate AND F.EndDate AND F.ValidFlag = '1')
 		]]>
@@ -416,6 +421,32 @@
 			<isNotEmpty property="originalBrand" prepend="AND">
 				E.OriginalBrand = #originalBrand#
 			</isNotEmpty>
+			<isNotEmpty property="channelIdClude">
+				<isNotEmpty property="excludeFlag" prepend="AND">
+					<![CDATA[NOT EXISTS(
+							SELECT 
+								1 
+							FROM
+								Basis.BIN_CounterInfo CNT WITH(NOLOCK)
+							WHERE 
+								CNT.BIN_ChannelID=#channelIdClude# AND 
+								Z.BIN_OrganizationID=CNT.BIN_OrganizationID
+						)
+					]]>
+				</isNotEmpty>
+				<isEmpty property="excludeFlag" prepend="AND">
+					<![CDATA[EXISTS(
+							SELECT 
+								1 
+							FROM
+								Basis.BIN_CounterInfo CNT WITH(NOLOCK)
+							WHERE 
+								CNT.BIN_ChannelID=#channelIdClude# AND 
+								Z.BIN_OrganizationID=CNT.BIN_OrganizationID
+						)
+					]]>
+				</isEmpty>
+			</isNotEmpty>	
 		</dynamic>
 		<![CDATA[
 			GROUP BY

@@ -39,6 +39,7 @@ import com.cherry.cm.core.CherryChecker;
 import com.cherry.cm.core.CherryConstants;
 import com.cherry.cm.core.CherryException;
 import com.cherry.cm.core.CodeTable;
+import com.cherry.cm.util.CherryUtil;
 import com.cherry.cm.util.ConvertUtil;
 import com.cherry.cm.util.PropertiesUtil;
 import com.cherry.cp.act.util.ActUtil;
@@ -674,7 +675,7 @@ public class BINOLCPCOM02_BL implements BINOLCPCOM02_IF{
 						// 非停用的情况
 						if (!"-1".equals(upKbn)) {
 							// 保存活动条件和结果
-							saveConditonResult(campaignRuleDTO);
+							saveConditonResult(campaignRuleDTO,campaignDTO);
 						}
 					}
 					campSaveMap.put("campRuleList", ruleSaveList);
@@ -890,7 +891,7 @@ public class BINOLCPCOM02_BL implements BINOLCPCOM02_IF{
 				// 保存子活动内容
 				saveSubCampaign(map,campaignRule, campRuleList);
 				// 保存活动条件和结果
-				saveConditonResult(campaignRule);
+				saveConditonResult(campaignRule,campaignDTO);
 			}
 			// 会员子活动保存信息
 			campSaveMap.put("campRuleList", campRuleList);
@@ -911,7 +912,7 @@ public class BINOLCPCOM02_BL implements BINOLCPCOM02_IF{
 	 * @throws Exception 
 	 * 
 	 */
-	private void saveConditonResult(CampaignRuleDTO campaignRule) throws Exception {
+	private void saveConditonResult(CampaignRuleDTO campaignRule, CampaignDTO campaignDTO) throws Exception {
 		// 更新子活动
 		if ("1".equals(campaignRule.getUpKbn())) {
 			// 停用会员活动规则条件明细
@@ -981,6 +982,72 @@ public class BINOLCPCOM02_BL implements BINOLCPCOM02_IF{
 //				// 更新会员活动规则结果明细表
 //				binolcpcom02_Service.updateRuleResults(updateResultList);
 //			}
+			
+			if (!CherryChecker.isNullOrEmpty(campaignRule.getPrmRule())) {
+		
+				Map<String,Object> promotionRuleMap = new HashMap<String,Object>();
+				
+				promotionRuleMap.put("RuleCode",campaignRule.getSubCampaignCode()); // 子活动码
+				promotionRuleMap.put("RuleName",campaignRule.getSubCampaignName()); // 子活动名称
+				promotionRuleMap.put("BIN_BrandInfoID",campaignDTO.getBrandInfoId());
+				promotionRuleMap.put("BIN_OrganizationInfoID",campaignDTO.getOrganizationInfoId());
+				
+				promotionRuleMap.put("RuleCate",campaignRule.getPrmRuleCate());
+				promotionRuleMap.put("RuleCond",campaignRule.getPrmConRule());
+				promotionRuleMap.put("RuleResult",campaignRule.getPrmRule());
+				promotionRuleMap.put("StartTime",campaignDTO.getCampaignFromDate() + " 00:00:00");
+				promotionRuleMap.put("EndTime",campaignDTO.getCampaignToDate()  + " 23:59:59");
+				if("0".equals(campaignDTO.getSubCampaignValid())){
+					promotionRuleMap.put("SubCampaignValid","4");// 手机号校验
+				}else {
+					promotionRuleMap.put("SubCampaignValid",campaignDTO.getSubCampaignValid());
+				}
+				promotionRuleMap.put("SubCampaignValid",campaignDTO.getSubCampaignValid());
+				int memType = ConvertUtil.getInt(campaignRule.getMemberType());
+				if(memType < 4){
+					promotionRuleMap.put("MemberType","0");
+				}else if(memType == 4){
+					promotionRuleMap.put("MemberType","5");
+				}else {
+					promotionRuleMap.put("MemberType",campaignRule.getMemberType());
+				}
+				List<Map<String,String>> timeList = new ArrayList<Map<String,String>>();
+				Map<String,String> time = new HashMap<String,String>();
+				time.put("startDate", campaignDTO.getCampaignFromDate());
+				time.put("endDate", campaignDTO.getCampaignFromDate());
+				time.put("startTime", "00:00:00");
+				time.put("endTime", "23:59:59");
+				timeList.add(time);
+				promotionRuleMap.put("MaxExecCount","1");
+				promotionRuleMap.put("RuleType","1");
+				promotionRuleMap.put("TimeJson",CherryUtil.obj2Json(timeList));
+				promotionRuleMap.put("PlaceJson","[]");
+				promotionRuleMap.put("PlaceType","0");
+				promotionRuleMap.put("ExecFlag","1");
+				
+				promotionRuleMap.put("createdBy", baseDto.getCreatedBy());
+				promotionRuleMap.put("createPGM", campaignRule.getCreatePGM());
+				promotionRuleMap.put("createTime", campaignRule.getCreateTime());
+				promotionRuleMap.put("updatedBy", campaignRule.getUpdatedBy());
+				promotionRuleMap.put("updatePGM", campaignRule.getUpdatePGM());
+				promotionRuleMap.put("updateTime", campaignRule.getUpdateTime());
+				
+				// 修改活动时,取得子活动码，并作为PromotionRule表的RuleCode字段使用
+				if(CherryChecker.isNullOrEmpty(campaignRule.getSubCampaignCode()) && !CherryChecker.isNullOrEmpty(campaignRule.getCampaignRuleId())){
+					CampaignRuleDTO newCamRuleDTO = binolcpcom02_Service.getCampaignRuleInfo(campaignRule);
+					promotionRuleMap.put("RuleCode",newCamRuleDTO.getSubCampaignCode()); // 子活动码
+				}
+				
+				// 清除在PromotionRule表中原来的子活动信息
+				binolcpcom02_Service.delPromotionRule(promotionRuleMap);
+				// 添加会员子活动奖励结果到PromotionRule
+				binolcpcom02_Service.addPromotionRule(promotionRuleMap);
+				
+				// 删除促销规则分类表
+				binolcpcom02_Service.delPromotionRuleCate(promotionRuleMap);
+				// 添加促销规则分类表
+				binolcpcom02_Service.addPromotionRuleCate(promotionRuleMap);
+			}
 		}
 	}
 	/**

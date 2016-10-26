@@ -6,7 +6,7 @@
 <jsp:include page="/WEB-INF/jsp/common/popHead.ieCssRepair.jsp" flush="true"></jsp:include>
 <script type="text/javascript" src="/Cherry/js/common/popOSDialog.js"></script>
 <script type="text/javascript" src="/Cherry/js/st/bil/BINOLSTBIL18.js"></script>
-<script type="text/javascript" src="/Cherry/js/wp/ws/mng/BINOLWSMNG04_02.js?V=20160913"></script>
+<script type="text/javascript" src="/Cherry/js/wp/ws/mng/BINOLWSMNG04_02.js?V=20161018"></script>
 <s:i18n name="i18n.wp.BINOLWSMNG04">
 <div class="main container clearfix">
 	<div class="hide">
@@ -26,6 +26,8 @@
 	    <s:text name="global.page.select" id="globalSelect"/>
 	    <!-- 系统配置项产品入库使用价格 -->
         <input type="hidden" id="sysConfigUsePrice" value='<s:property value='sysConfigUsePrice'/>'>
+        <!-- 云POS调入是否存在编辑操作 -->
+        <input type="hidden" id="inputEditFlag" value='<s:property value='inputEditFlag'/>'>
 	</div>
     <div id="div_main" class="panel ui-corner-all">
         <div class="panel-header">

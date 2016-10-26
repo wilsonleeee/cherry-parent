@@ -19,6 +19,7 @@ import com.cherry.cm.util.Bean2Map;
 import com.cherry.cm.util.ConvertUtil;
 import com.cherry.mb.svc.form.BINOLMBSVC03_Form;
 import com.cherry.mb.svc.interfaces.BINOLMBSVC03_IF;
+import com.cherry.mb.svc.service.BINOLMBSVC02_Service;
 import com.opensymphony.xwork2.ModelDriven;
 
 public class BINOLMBSVC03_Action extends BaseAction implements
@@ -33,6 +34,9 @@ ModelDriven<BINOLMBSVC03_Form>{
 	
 	@Resource(name="binOLMBSVC03_IF")
 	private BINOLMBSVC03_IF binOLMBSVC03_IF;
+	
+	@Resource
+	private BINOLMBSVC02_Service binOLMBSVC02_Service;
 	
 	/** 系统配置项 共通BL */
 	@Resource
@@ -135,17 +139,23 @@ ModelDriven<BINOLMBSVC03_Form>{
 				// 所属品牌
 				map.put(CherryConstants.BRANDINFOID, userInfo.getBIN_BrandInfoID());
 			}
-			//后期调用储值卡信息查询接口
-			Map result_map=binOLMBSVC03_IF.getCard(map);
-			if("0".equals(ConvertUtil.getString(result_map.get("ERRORCODE")))){
-				if(null == result_map.get("ResultContent")){
-					ConvertUtil.setResponseByAjax(response, 1);
-					return;
-				}
-				ConvertUtil.setResponseByAjax(response, 0);
+			//后期调用储值卡信息查询接口（废弃），现在改用直接查询数据库中是否有相同卡号的操作
+//			Map result_map=binOLMBSVC03_IF.getCard(map);
+//			if("0".equals(ConvertUtil.getString(result_map.get("ERRORCODE")))){
+//				if(null == result_map.get("ResultContent")){
+//					ConvertUtil.setResponseByAjax(response, 1);
+//					return;
+//				}
+//				ConvertUtil.setResponseByAjax(response, 0);
+//			}else{
+//				ConvertUtil.setResponseByAjax(response, 1);
+//				logger.error(ConvertUtil.getString(getText("SVC00011")+result_map.get("ERRORMSG")));
+//			}
+			int result=binOLMBSVC02_Service.checkCard(map);
+			if(result > 0){
+				ConvertUtil.setResponseByAjax(response, "0");
 			}else{
-				ConvertUtil.setResponseByAjax(response, 1);
-				logger.error(ConvertUtil.getString(getText("SVC00011")+result_map.get("ERRORMSG")));
+				ConvertUtil.setResponseByAjax(response, "1");
 			}
 		} catch (Exception e) {
 			logger.error(e.getMessage(), e);

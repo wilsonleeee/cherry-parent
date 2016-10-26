@@ -66,6 +66,17 @@ public class BINOLPTJCS19_Service extends BaseService{
 		parameterMap.put(CherryConstants.IBATIS_SQL_ID, "BINOLPTJCS19.getPrtForPrtSoluDetailDiff");
 		return baseServiceImpl.getList(parameterMap);
 	}
+	/**
+	 * 取得产品方案明细表的产品与以前配置的差异List（WITPOSQA-23079 颖通香港新增需求）
+	 * @param map
+	 * @return
+	 */
+	public List getPrtForPrtSoluDetailDiffYT(Map<String, Object> map) {
+		Map<String, Object> parameterMap = new HashMap<String, Object>();
+		parameterMap.putAll(map);
+		parameterMap.put(CherryConstants.IBATIS_SQL_ID, "BINOLPTJCS19.getPrtForPrtSoluDetailDiffYT");
+		return baseServiceImpl.getList(parameterMap);
+	}
 	
 	/**
 	 * merge产品方案明细表  

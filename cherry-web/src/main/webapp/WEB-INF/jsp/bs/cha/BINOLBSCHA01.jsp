@@ -58,7 +58,7 @@
 	               </div>
 	            <div class="box-content clearfix">
 	            <%-- 总部或者办事处用户登录 --%>
-	              <div class="column" style="width:50%;height:55px;">
+	              <div class="column" style="width:50%;height:85px;">
 	              <p>
                 	<%-- 所属品牌 --%>
                 	<s:if test="%{brandInfoList.size()> 1}">
@@ -71,13 +71,18 @@
                     	<s:select name="brandInfoId" list="brandInfoList" listKey="brandInfoId" listValue="brandName" cssStyle="width:100px;"></s:select>      	
                 	</s:else>
                 	</p>
+                	<p>
+	               	<%-- 渠道代码 --%>
+	                  <label><s:text name="CHA01_channelCode"/></label>
+	                  <s:textfield name="channelCode" cssClass="text" maxlength="16" />
+	                </p>
 	                <p>
 	               	<%-- 渠道名称 --%>
 	                  <label><s:text name="CHA01_channelName"/></label>
 	                  <s:textfield name="channelName" cssClass="text" maxlength="16" />
 	                </p>
 	              </div>
-	              <div class="column last" style="width:49%;height:55px;">            
+	              <div class="column last" style="width:49%;height:85px;">            
 	               <p>
 	               	<%-- 渠道类型 --%>
 	                  <label><s:text name="CHA01_status"/></label>
@@ -141,6 +146,7 @@
 	                <tr>	             
 	                  <th><s:checkbox name="allSelect" id="allSelect" onclick="checkSelectAll(this)"/></th><%-- 选择 --%>  
 	                  <th><s:text name="CHA01_num"/></th><%-- No. --%>
+	                  <th><s:text name="CHA01_channelCode"/></th><%-- 渠道代码 --%>
 	                  <th><s:text name="CHA01_channelName"/></th><%-- 渠道名称 --%>
 	                  <th><s:text name="CHA01_status"/></th><%-- 渠道类型 --%>
 	                  <th><s:text name="CHA01_joinDate"/></th><%-- 加入日期 --%>

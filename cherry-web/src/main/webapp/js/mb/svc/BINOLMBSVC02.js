@@ -141,6 +141,10 @@ BINOLMBSVC02.prototype = {
 					"sWidth" : "15%",
 					"bSortable" : true
 				} ,{
+					"sName" : "cardType",
+					"sWidth" : "15%",
+					"bSortable" : true
+				} ,{
 					"sName" : "operator",
 					"sWidth" : "15%",
 					"bSortable" : true
@@ -284,7 +288,7 @@ BINOLMBSVC02.prototype = {
 										//修改成功
 										//移除验证窗口
 										removeDialog("#" + dialogId);
-										BINOLMBSVC02.successShow("重置密码操作成功！新密码："+resultMessage);
+										BINOLMBSVC02.successShow("重置密码操作成功！");
 									}else{
 										$("#errorMessageDiv span").text(resultMessage);
 										$("#errorMessageDiv").removeClass("hide");

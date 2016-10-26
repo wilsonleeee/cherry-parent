@@ -17,6 +17,16 @@ $(function(){
 	});
 });
 
+function getProductBindingFunction(){
+	if($('#productId').length > 0){
+		// 产品选择绑定
+		productBinding({elementId:"nameTotal",showNum:20,targetId:'productId',validFlag:'validFlag'});
+	}else{
+		// 产品选择绑定
+		productBinding({elementId:"nameTotal",showNum:20,validFlag:'validFlag'});
+	}
+}
+
 //对象JSON化
 function toJSON(obj) {
 	var JSON = [];
