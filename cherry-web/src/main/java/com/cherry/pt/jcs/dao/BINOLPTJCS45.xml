@@ -1,0 +1,120 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sqlMap PUBLIC "-//iBATIS.com//DTD SQL Map 2.0//EN" "http://ibatis.apache.org/dtd/sql-map-2.dtd">
+<sqlMap namespace="BINOLPTJCS45">
+	<sql id="solutionQuery">
+		<![CDATA[
+			SELECT 
+				A.BIN_ProductPriceSolutionID as productPriceSolutionID,
+				A.SolutionName AS solutionName,
+				A.SolutionCode AS solutionCode,
+				convert(varchar(30),A.StartDate,120) AS startDate,
+				convert(varchar(30),A.EndDate,120) AS endDate,
+				A.Comments AS comments,
+				A.ValidFlag AS validFlag
+			FROM Basis.BIN_ProductPriceSolution A WITH(NOLOCK)
+			
+			]]>   
+			<!--
+			JOIN Privilege.BIN_User U WITH(NOLOCK) ON A.CreatedBy = U.BIN_UserID
+			JOIN (
+			 <include refid="BINOLCMINC99.employeePrivilegeSql" />  ) A99 ON U.BIN_EmployeeID = A99.BIN_SubEmployeeID
+		 	-->
+			<![CDATA[
+		WHERE	
+			A.BIN_OrganizationInfoID = #organizationInfoId#					
+		]]>
+		<isNotEmpty prepend = "AND" property = "brandInfoId">
+				A.BIN_BrandInfoID=#brandInfoId#
+		</isNotEmpty>
+		<isNotEmpty prepend="AND" property="solutionName" >
+           (A.SolutionName LIKE '%' + #solutionName# + '%')
+	    </isNotEmpty>
+		<isNotEmpty prepend="AND" property="solutionCode" >
+           (A.SolutionCode LIKE '%' + #solutionCode# + '%')
+	    </isNotEmpty>
+		<isNotEmpty prepend="AND" property="validFlag" >
+			A.ValidFlag = #validFlag#
+		</isNotEmpty>
+	</sql>
+	
+	<!-- 取得方案总数  -->
+    <select id="getSolutionCount" parameterClass="java.util.HashMap" resultClass="java.lang.Integer">
+    	<![CDATA[
+			SELECT	COUNT(SORT_T1.productPriceSolutionID) AS count FROM (
+		]]>	
+		<include refid="BINOLPTJCS45.solutionQuery" />	
+		<!-- 是否有品牌分配给柜台的方案 -->
+		<isNotEmpty property="isCntDepart" prepend="UNION">
+			SELECT 
+				C_PPS.BIN_ProductPriceSolutionID as productPriceSolutionID,
+				C_PPS.SolutionName AS solutionName,
+				C_PPS.SolutionCode AS solutionCode,
+				convert(varchar(30),C_PPS.StartDate,120) AS startDate,
+				convert(varchar(30),C_PPS.EndDate,120) AS endDate,
+				C_PPS.Comments AS comments,
+				C_PPS.ValidFlag AS validFlag
+			FROM Basis.BIN_ProductPriceSolution C_PPS WITH(NOLOCK)
+			JOIN (
+				<include refid="BINOLPTJCS17.getExistCntForPrtSoluWithDepartHisSQL"/>
+			) CE ON CE.BIN_SolutionId = C_PPS.BIN_ProductPriceSolutionID
+			<![CDATA[
+			WHERE	
+				C_PPS.BIN_OrganizationInfoID = #organizationInfoId#					
+			]]>
+			<isNotEmpty prepend = "AND" property = "brandInfoId">
+					C_PPS.BIN_BrandInfoID=#brandInfoId#
+			</isNotEmpty>
+			<isNotEmpty prepend="AND" property="solutionName" >
+	           (C_PPS.SolutionName LIKE '%' + #solutionName# + '%')
+		    </isNotEmpty>
+			<isNotEmpty prepend="AND" property="solutionCode" >
+	           (C_PPS.SolutionCode LIKE '%' + #solutionCode# + '%')
+		    </isNotEmpty>
+			<isNotEmpty prepend="AND" property="validFlag" >
+				C_PPS.ValidFlag = #validFlag#
+			</isNotEmpty>
+		</isNotEmpty>
+		<![CDATA[	
+			)SORT_T1
+		]]>										
+    </select>
+	
+	<!-- 方案停用/启用 -->
+    <update id="disOrEnableSolu" parameterClass="java.util.HashMap">     
+    <![CDATA[
+        UPDATE
+            Basis.BIN_ProductPriceSolution
+        SET
+            ValidFlag = #validFlag#,
+    ]]>
+	<include refid="BINOLCMINC99.updateSql" />
+    <![CDATA[
+        WHERE 
+            BIN_ProductPriceSolutionID IN
+    ]]>
+	<iterate conjunction="," open="(" close=")" property="solutionIdArr">  
+        #solutionIdArr[]#
+    </iterate>
+    </update>
+
+    <select id="getSolutionList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+       	<include refid="BINOLCMINC99.pageheader" />
+		<include refid="BINOLPTJCS45.solutionQuery" />
+		<!-- 是否有品牌分配给柜台的方案 -->
+		<isNotEmpty property="isCntDepart" prepend="UNION">
+			SELECT 
+				C_PPS.BIN_ProductPriceSolutionID as productPriceSolutionID,
+				C_PPS.SolutionName AS solutionName,
+				C_PPS.SolutionCode AS solutionCode,
+				convert(varchar(30),C_PPS.StartDate,120) AS startDate,
+				convert(varchar(30),C_PPS.EndDate,120) AS endDate,
+				C_PPS.Comments AS comments,
+				C_PPS.ValidFlag AS validFlag
+			FROM Basis.BIN_ProductPriceSolution C_PPS WITH(NOLOCK)
+			JOIN (
+				<include refid="BINOLPTJCS17.getExistCntForPrtSoluWithDepartHisSQL"/>
+			) CE ON CE.BIN_SolutionId = C_PPS.BIN_ProductPriceSolutionID
+		</isNotEmpty>
+		<include refid="BINOLCMINC99.pagefooter" />
+    </select>
+</sqlMap>
