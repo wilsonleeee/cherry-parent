@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sqlMap PUBLIC "-//iBATIS.com//DTD SQL Map 2.0//EN" "http://ibatis.apache.org/dtd/sql-map-2.dtd">
+<sqlMap namespace="BINOLMOMUP02">
+
+	<!-- 获取盘点机软件版本信息 -->
+	<select id="getSoftVersionInfoById" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+
+		SELECT
+		BIN_SoftwareVersionInfoID
+		,Version
+		,DownloadURL
+		,replace(convert(varchar(30),OpenUpdateTime, 111), '/', '-') AS OpenUpdateTime
+		,MD5Key
+		,ValidFlag
+		FROM
+		Inventory.BIN_STMachineSoftwareVersionInfo
+		WHERE
+		BIN_OrganizationInfoID = #organizationInfoId#
+		AND BIN_BrandInfoID = #brandInfoId#
+		AND BIN_SoftwareVersionInfoID = #softwareVersionInfoId#
+
+	</select>
+
+	<!-- 更新版本信息 -->
+	<update id="updateSoftVersionInfo" parameterClass="java.util.HashMap">
+		UPDATE
+			Inventory.BIN_STMachineSoftwareVersionInfo
+		SET
+			Version = #version#
+			,DownloadURL = #downloadUrl#
+			,OpenUpdateTime = #openUpdateTime#
+			,MD5Key = #md5Key#
+			<isNotEmpty property="validFlag">
+				,ValidFlag = #validFlag#
+			</isNotEmpty>
+			,<include refid="BINOLCMINC99.updateSql"/>
+		WHERE
+			BIN_SoftwareVersionInfoID = #softwareVersionInfoId#
+	</update>
+
+
+
+</sqlMap>
