@@ -761,7 +761,7 @@ $(function(){
 			"couponRule.sumQuantity": {number:true, min:1},
 			"couponRule.limitQuantity": {number:true, min:1},
 			"couponRule.quantity": {required: true,number:true, min:1},
-			faceValue: {required: true, number:true, min:1}
+			faceValue: {required: true, floatValid:[6,2]}
 		}
 	});
 });

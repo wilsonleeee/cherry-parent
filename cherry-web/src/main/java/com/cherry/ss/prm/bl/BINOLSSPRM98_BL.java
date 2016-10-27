@@ -690,9 +690,9 @@ public class BINOLSSPRM98_BL implements Rule_IF{
 		// 总金额
 		double calcuAmount = billInfo.getAmount();
 		// 用券
-		if (CouponConstains.CONDITIONTYPE_2.equals(kbn)) {
-			return calcuAmount;
-		}
+//		if (CouponConstains.CONDITIONTYPE_2.equals(kbn)) {
+//			return calcuAmount;
+//		}
 		// 正价金额
 		boolean iszj = "1".equals(condInfo.get("amountCondition"));
 		// 正价金额并且参加过整单类促销活动

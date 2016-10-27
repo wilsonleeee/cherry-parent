@@ -85,7 +85,7 @@ input.date {
 		</label></div>
 		<div style="width:88%;float:left;">
 			<input type="hidden" name ="couponType" value="1">
-			抵扣金额&nbsp;<input type="text" name ="faceValue" class="number" maxlength="3" /> 元
+			抵扣金额&nbsp;<input type="text" name ="faceValue" class="number" maxlength="10" /> 元
 		</div>
 		 <span onclick="binolssprm7302.delCoupon(this)" class="icon_del right" style="display:none"></span>
 		  </div>
@@ -103,7 +103,7 @@ input.date {
 			</select>
 			<span id="zkType0">
 			折扣率&nbsp;<input type="text" name ="zkValue" class="number" maxlength="3" /> % 
-			折扣金额上限&nbsp;<input type="text" name ="zkAmountLimt" class="number" maxlength="3" />元
+			折扣金额上限&nbsp;<input type="text" name ="zkAmountLimt" class="number" maxlength="8" />元
 			</span>
 			<span id="zkType1" class="hide">
 			折扣率&nbsp;<input type="text" name ="zkValue2" class="number" maxlength="3" /> % 
@@ -313,7 +313,7 @@ input.date {
 		</label></div>
 		<div style="width:88%;float:left;">
 			<input type="hidden" name ="couponType" value="1">
-			抵扣金额&nbsp;<input type="text" name ="faceValue" class="number" maxlength="3" /> 元
+			抵扣金额&nbsp;<input type="text" name ="faceValue" class="number" maxlength="10" /> 元
 		</div>
 		  </div>
 	 </s:if>
@@ -330,7 +330,7 @@ input.date {
 				 <input type="hidden" name ="unitCode" value="<s:property value='#contentInfo.unitCode'/>">
 				 <input type="hidden" name ="barCode" value="<s:property value='#contentInfo.barCode'/>">
 				 <input type="hidden" name ="contentNo" value="<s:property value='#contentInfo.contentNo'/>">
-					抵扣金额&nbsp;<input type="text" name ="faceValue" class="number" maxlength="3" value="<s:property value='#contentInfo.faceValue'/>"/> 元
+					抵扣金额&nbsp;<input type="text" name ="faceValue" class="number" maxlength="10" value="<s:property value='#contentInfo.faceValue'/>"/> 元
 		 </div>
 		 <s:if test='%{couponRule.couponFlag == "9"}'><span onclick="binolssprm7302.delCoupon(this)" class="icon_del right"></span></s:if>
 		 </div>
@@ -352,7 +352,7 @@ input.date {
 			</select>
 			<span id="zkType0" <s:if test='#contentInfo.zkType != null && #contentInfo.zkType != "0"'> class="hide" </s:if>>
 			折扣率&nbsp;<input type="text" name ="zkValue" class="number" maxlength="3" value="<s:property value='#contentInfo.zkValue'/>" /> % 
-			折扣金额上限&nbsp;<input type="text" name ="zkAmountLimt" class="number" maxlength="3" value="<s:property value='#contentInfo.zkAmountLimt'/>"/>元
+			折扣金额上限&nbsp;<input type="text" name ="zkAmountLimt" class="number" maxlength="8" value="<s:property value='#contentInfo.zkAmountLimt'/>"/>元
 			</span>
 			<span id="zkType1" <s:if test='#contentInfo.zkType == null || #contentInfo.zkType != "1"'> class="hide" </s:if>>
 			折扣率&nbsp;<input type="text" name ="zkValue2" class="number" maxlength="3" value="<s:property value='#contentInfo.zkValue2'/>" /> % 
@@ -728,6 +728,10 @@ input.date {
     	<div class="ui-icon icon-arrow-crm"></div><label class="bg_title">购买金额
 		</label></div>
 		<div style="width:88%;float:left;">
+			金额条件:<select name="amountCondition" class="z-param" style="width:80px;">
+				<option <s:if test='%{useCondInfo.amountCondition == "0"}'>selected</s:if> value="0">实付金额</option>
+				<option <s:if test='%{useCondInfo.amountCondition == "1"}'>selected</s:if> value="1">正价金额</option>
+			</select>
 			满 <input type="text" name ="useMinAmount" class="number z-param" style="width:60px;" maxlength="9" value="<s:property value='useCondInfo.useMinAmount'/>"/> 元
 		</div>
 		  </div>
