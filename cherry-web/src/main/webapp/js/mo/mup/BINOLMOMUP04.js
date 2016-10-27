@@ -10,12 +10,15 @@ $(function(){
 	if (window.opener) {
     	window.opener.lockParentWindow();
 	}
-	
+
+	$('#openUpdateTime').cherryDate();
+
 	cherryValidate({			
 		formId: "add",		
 		rules: {
 			version: {required: true},
-			downloadUrl: {required: true,maxlength: 50}
+			downloadUrl: {required: true,maxlength: 100},
+			md5Key:{required: true,maxlength: 125}
 	   }		
 	});
 });
