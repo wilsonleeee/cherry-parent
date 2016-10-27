@@ -29,6 +29,7 @@ import javax.xml.transform.TransformerFactory;
 import javax.xml.transform.dom.DOMSource;
 import javax.xml.transform.stream.StreamResult;
 
+import com.cherry.cm.core.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.w3c.dom.Document;
@@ -38,11 +39,6 @@ import org.w3c.dom.NodeList;
 import com.cherry.cm.cmbeans.ControlOrganization;
 import com.cherry.cm.cmbeans.RoleInfo;
 import com.cherry.cm.cmbeans.UserInfo;
-import com.cherry.cm.core.CherryConstants;
-import com.cherry.cm.core.CherryException;
-import com.cherry.cm.core.CherryMenu;
-import com.cherry.cm.core.DESPlus;
-import com.cherry.cm.core.JsclPBKDF2WithHMACSHA256;
 import com.cherry.cm.util.CherryUtil;
 import com.cherry.cm.util.ConvertUtil;
 import com.cherry.lg.lgn.service.LoginService;
@@ -313,6 +309,94 @@ public class LoginBusinessLogic {
 			throw new CherryException("ECM00013");
 		}
 		
+		return userID;
+	}
+
+
+	/**
+	 * 专供winPOS弹出Cherry的画面使用
+	 * token = MD5（用户名+密码）
+	 * @param name
+	 * @param token
+	 * @return
+	 * @throws Exception
+     */
+	public String  checkUserForWinPOS(String name,String token)throws Exception{
+		//为了实现出错X次后锁定账号等相关的系列的功能，不能简单的在一个SQL文里完成账号验证，
+		//分成了多步来进行操作，为了尽可能减少SQL执行次数，密码的验证也交由Java代码来实现
+
+		//检查账号是否存在
+		List list = loginservice.checkAccount(name);
+		if(list==null||list.size()==0){
+			//账号不存在
+			throw new CherryException("ECM00013");
+		}
+		//账号存在,取得账号标识ID
+		String userID = String.valueOf(((HashMap)list.get(0)).get("BIN_UserID"));
+
+		//确定账号存在后，取得安全配置信息
+		list = loginservice.getUserSecurityInfo(userID);
+		HashMap map = (HashMap)list.get(0);
+
+		//密码
+		String password = String.valueOf(map.get("PassWord"));
+
+		//将账号和密码拼接再MD5
+		String ap = CherryMD5Coder.encryptMD5(name+ password);
+
+		//失败次数
+		int failurecount = CherryUtil.string2int(String.valueOf(map.get("FailureCount")));
+		//可重试的次数
+		int retrytimes = CherryUtil.string2int(String.valueOf(map.get("RetryTimes")));
+
+		if(token.equals(ap)) {
+			//密码正确
+			if(failurecount!=0){
+				//如果失败的次数不为0，则将其清0
+				Map<String, Object> inmap = new HashMap<String, Object>();
+				inmap.put("BIN_UserID", userID);
+				// 更新者
+				inmap.put("updatedBy", userID);
+				// 更新时间
+				inmap.put("updateTime", new Date());
+				// 更新模块
+				inmap.put("updatePGM", "Login");
+
+				loginservice.unLockUser(inmap);
+			}
+		}else{
+			//密码不正确次数超过上限，并且安全配置中设定了锁定时间
+			if(failurecount+1>=retrytimes){
+				//若果失败的次数>=可重试次数,则要求输入验证码
+				Map<String, Object> inmap = new HashMap<String, Object>();
+				inmap.put("BIN_UserID", userID);
+				// 更新者
+				inmap.put("updatedBy", userID);
+				// 更新时间
+				inmap.put("updateTime", new Date());
+				// 更新模块
+				inmap.put("updatePGM", "Login");
+				loginservice.lockUser(inmap);
+				//抛出异常，要求输入验证码
+				logger.error("异常登录，错误的账号密码:"+name);
+				throw new CherryException("ECM00015");
+			}else if(failurecount<retrytimes){
+				//更新失败次数
+				Map<String, Object> inmap = new HashMap<String, Object>();
+				inmap.put("FailureCount", failurecount+1);
+				inmap.put("BIN_UserID", userID);
+				// 更新者
+				inmap.put("updatedBy", userID);
+				// 更新时间
+				inmap.put("updateTime", new Date());
+				// 更新模块
+				inmap.put("updatePGM", "Login");
+				loginservice.updateFailureCount(inmap);
+			}
+			logger.error("异常登录，错误的账号密码:"+name);
+			throw new CherryException("ECM00013");
+		}
+
 		return userID;
 	}
 	

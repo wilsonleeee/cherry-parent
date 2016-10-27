@@ -11,17 +11,6 @@
  * with SHANGHAI BINGKUN.       
  */
 package com.cherry.lg.lgn.action;
-import java.net.URLEncoder;
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.UUID;
-
-import javax.annotation.Resource;
-import javax.servlet.http.Cookie;
-import javax.servlet.http.HttpSession;
 
 import com.cherry.cm.cmbeans.CounterInfo;
 import com.cherry.cm.cmbeans.RoleInfo;
@@ -30,16 +19,7 @@ import com.cherry.cm.cmbussiness.bl.BINOLCM00_BL;
 import com.cherry.cm.cmbussiness.bl.BINOLCM10_BL;
 import com.cherry.cm.cmbussiness.bl.BINOLCM14_BL;
 import com.cherry.cm.cmbussiness.bl.BINOLCM19_BL;
-import com.cherry.cm.core.BaseAction;
-import com.cherry.cm.core.CherryChecker;
-import com.cherry.cm.core.CherryConstants;
-import com.cherry.cm.core.CherryException;
-import com.cherry.cm.core.CherryMD5Coder;
-import com.cherry.cm.core.CherryMenu;
-import com.cherry.cm.core.CustomerContextHolder;
-import com.cherry.cm.core.DESPlus;
-import com.cherry.cm.core.OnlineUserBindingListener;
-import com.cherry.cm.core.PropertiesUtil;
+import com.cherry.cm.core.*;
 import com.cherry.cm.gadget.interfaces.GadgetIf;
 import com.cherry.cm.gadget.interfaces.GadgetPrivilegeIf;
 import com.cherry.cm.util.CherryUtil;
@@ -51,6 +31,12 @@ import com.cherry.mq.mes.atmosphere.JQueryPubSubPush;
 import com.cherry.pl.upm.bl.BINOLPLUPM04_BL;
 import com.googlecode.jsonplugin.JSONUtil;
 import com.octo.captcha.service.image.ImageCaptchaService;
+
+import javax.annotation.Resource;
+import javax.servlet.http.Cookie;
+import javax.servlet.http.HttpSession;
+import java.net.URLEncoder;
+import java.util.*;
 
 @SuppressWarnings("serial")
 public  class LoginAction extends BaseAction {
@@ -343,7 +329,7 @@ public  class LoginAction extends BaseAction {
 	}
 
 	/**
-	 * 第三方登录当前系统
+	 * 第三方登录当前系统(winPOS专用)
 	 * @return
 	 * @throws Exception
 	 */
@@ -371,7 +357,7 @@ public  class LoginAction extends BaseAction {
 
 			// 对登录账户做一系列的检查,通过则返回账户ID，不通过则会抛出多种错误信息
 			CustomerContextHolder.setCustomerDataSourceType(dbname);
-			String userID = loginbusinesslogic.checkUserThirdParty(txtname, txtpsd);
+			String userID = loginbusinesslogic.checkUserForWinPOS(txtname, token);
 
 			//存放在用户其他的信息(如密码过期日期、开始提醒修改密码日、上次登录时间、IP)
 			Map<String,Object> otherInfo = new HashMap<String,Object>();
@@ -1090,6 +1076,16 @@ public  class LoginAction extends BaseAction {
     private String logoutFlag;
     
     private String wcaid;
+
+	public String getToken() {
+		return token;
+	}
+
+	public void setToken(String token) {
+		this.token = token;
+	}
+
+	private String token;
     
     public String getCode() {
 		return code;
@@ -1171,21 +1167,7 @@ public  class LoginAction extends BaseAction {
     public void setTxtname(String txtname) {
         this.txtname = txtname;
     }
-  
-//    private List<TaskSummary> taskList;
-//    
-//    /**
-//	 * @return the taskList
-//	 */
-//	public List<TaskSummary> getTaskList() {
-//		return taskList;
-//	}
-//	/**
-//	 * @param taskList the taskList to set
-//	 */
-//	public void setTaskList(List<TaskSummary> taskList) {
-//		this.taskList = taskList;
-//	}
+
 
 	/**
 	 * @return the codeText
