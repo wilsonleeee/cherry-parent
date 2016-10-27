@@ -1,19 +1,17 @@
-/**
- * @author zgl
- *
- */
-var BINOLMOMUP01 = function () {};
+$(function(){
 
-BINOLMOMUP01.prototype = {
-	
-	"getSoftVersionInfoList":function(){
+	search();
+
+});
+
+function search(){
 		if (!$('#mainForm1').valid()) {
 			return false;
 		};
 		$("#mainForm1").find(":input").each(function() {
 			$(this).val($.trim(this.value));
 		});
-		 var url = $("#getSoftVersionInfoListUrl").attr("href");
+		 var url = $("#searchUrl").attr("href");
          // 查询参数序列化
          var params= $("#mainForm1").find(":input").serialize();
          params = params + "&csrftoken=" +$("#csrftoken").val();
@@ -32,6 +30,7 @@ BINOLMOMUP01.prototype = {
 				 aoColumns : [	{ "sName": "BIN_SoftwareVersionInfoID","bSortable": false},
 								{ "sName": "Version"},
 								{ "sName": "DownloadURL"},
+								{ "sName": "MD5Key"},
 								{ "sName": "OpenUpdateTime"}
 							],
 								
@@ -47,13 +46,3 @@ BINOLMOMUP01.prototype = {
 		 // 调用获取表格函数
 		 getTable(tableSetting);
 	}
-};
-
-var BINOLMOMUP01 = new BINOLMOMUP01();
-
-$(function(){
-	
-	BINOLMOMUP01.getSoftVersionInfoList();
-
-	
-});

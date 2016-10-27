@@ -9,24 +9,34 @@
 <%-- ======================此段代码固定 结束======================= --%>
 <s:i18n name="i18n.mo.BINOLMOMUP01">
     <div id="aaData">
-    <s:iterator value="softVersionInfoList" id="softVersionInfo">
-    <ul>
-        <li>
-            <%-- No. --%>
-            <s:property value="#softVersionInfo.BIN_SoftwareVersionInfoID"/>
-        </li>
-        <li>
-        	<s:property value="#softVersionInfo.Version"/>
-        </li>
-        <li>
-            <%-- 下载地址  --%>
-            <s:property value="#softVersionInfo.DownloadURL"/>
-        </li>
-        <li>
-            <%-- 放开更新时间 --%>
-            <s:property value="#softVersionInfo.OpenUpdateTime"/>
-        </li>
-    </ul>
-    </s:iterator>
+        <s:iterator value="softVersionInfoList" id="softVersionInfo">
+            <s:url id="updateUrl" action="BINOLMOMUP02_init">
+                <%-- 渠道名称   --%>
+                <s:param name="softwareVersionInfoId">${softVersionInfo.BIN_SoftwareVersionInfoID}</s:param>
+            </s:url>
+            <ul>
+                <li>
+                        <%-- No. --%>
+                    <s:property value="#softVersionInfo.BIN_SoftwareVersionInfoID"/>
+                </li>
+                <li>
+                    <a href="${updateUrl}" class="left" onclick="javascript:openWin(this);return false;">
+                            <s:property value="#softVersionInfo.Version"/>
+                    </a>
+                </li>
+                <li>
+                        <%-- 下载地址  --%>
+                    <s:property value="#softVersionInfo.DownloadURL"/>
+                </li>
+                <li>
+                        <%-- MD5Key  --%>
+                    <s:property value="#softVersionInfo.MD5Key"/>
+                </li>
+                <li>
+                        <%-- 放开更新时间 --%>
+                    <s:property value="#softVersionInfo.OpenUpdateTime"/>
+                </li>
+            </ul>
+        </s:iterator>
     </div>
 </s:i18n>

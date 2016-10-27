@@ -53,21 +53,29 @@
 										</th>
 										<td>
 											<span>
-												<s:textfield name="downloadUrl" cssClass="text" maxlength="50"></s:textfield>
+												<s:textfield name="downloadUrl" cssClass="text" maxlength="100"></s:textfield>
 											</span>
 										</td>
 									</tr>
 									<tr>
 										<th>
+											<s:text name="MUP04_md5Key"></s:text>
+										</th>
+										<td>
+											<span>
+												<s:textfield name="md5Key" cssClass="text" maxlength="125"></s:textfield>
+											</span>
+										</td>
+										<th>
 											<s:text name="MUP04_openUpdateTime"></s:text>
 										</th>
-	  									<td>
-	  										<p class="date">
+										<td>
+											<p class="date">
 			  									<span>
 			  										<s:textfield name="openUpdateTime" cssClass="date" value="%{endDate}"></s:textfield>
 			  									</span>
-		  									</p>
-	  									</td>
+											</p>
+										</td>
 									</tr>
 								</table>
 							</cherry:form>
@@ -76,15 +84,15 @@
 					<hr class="space" />
 					<div class="center">
 						<s:a action="BINOLMOMUP04_save" id="MUP04_save"
-							cssStyle="display: none;"></s:a>
+							 cssStyle="display: none;"></s:a>
 						<button class="save" onclick="save();return false;">
 							<span class="ui-icon icon-save"></span><span class="button-text"><s:text
-									name="global.page.save"></s:text></span>
+								name="global.page.save"></s:text></span>
 						</button>
 						<button class="close" type="button"
-							onclick="window.close();return false;">
+								onclick="window.close();return false;">
 							<span class="ui-icon icon-close"></span><span class="button-text"><s:text
-									name="global.page.close" /></span>
+								name="global.page.close" /></span>
 						</button>
 					</div>
 				</div>
