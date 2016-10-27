@@ -13,37 +13,27 @@
 package com.cherry.ss.prm.action;
 
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-
-import javax.annotation.Resource;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import com.cherry.cm.cmbussiness.bl.BINOLCM14_BL;
 import com.cherry.cm.cmbussiness.bl.BINOLCM44_BL;
-import com.cherry.cm.core.BaseAction;
-import com.cherry.cm.core.CherryConstants;
-import com.cherry.cm.core.CherryException;
-import com.cherry.cm.core.CustomerContextHolder;
-import com.cherry.cm.core.DESPlus;
+import com.cherry.cm.core.*;
 import com.cherry.cm.util.CherryUtil;
 import com.cherry.cm.util.ConvertUtil;
 import com.cherry.ss.prm.form.BINOLSSPRM74_Form;
 import com.cherry.ss.prm.interfaces.BINOLSSPRM74_IF;
 import com.cherry.ss.prm.interfaces.Coupon_IF;
 import com.cherry.ss.prm.service.BINOLSSPRM74_Service;
-import com.cherry.wp.common.entity.SaleActivityDetailEntity;
-import com.cherry.wp.common.entity.SaleDetailEntity;
-import com.cherry.wp.common.entity.SaleMainEntity;
-import com.cherry.wp.common.entity.SaleProductDetailEntity;
-import com.cherry.wp.common.entity.SaleRuleResultEntity;
+import com.cherry.wp.common.entity.*;
 import com.dianping.cat.Cat;
 import com.dianping.cat.message.Transaction;
 import com.opensymphony.xwork2.ModelDriven;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import javax.annotation.Resource;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 
 public class BINOLSSPRM74_Action extends BaseAction implements ModelDriven<BINOLSSPRM74_Form> {
@@ -287,7 +277,7 @@ public class BINOLSSPRM74_Action extends BaseAction implements ModelDriven<BINOL
 			//记录日志
 			smartLog(result,2);
 			//封装促销引擎计算出的TZZK与DH的数据，后续直接写表
-			List<Map<String,Object>> computedRule=binOLSSPRM74_IF.detail2RuleList(saledetail_out);
+			List<Map<String,Object>> computedRule=binOLSSPRM74_IF.detail2RuleList(saledetail_out,saleresult_out);
 			//封装优惠券与促销引擎计算完成的购物车相关信息
 			List<Map<String,Object>> computedCart=binOLSSPRM74_IF.detail2ComputedList(saledetail_out);
 			//封装页面需要的参数,其中有2部分

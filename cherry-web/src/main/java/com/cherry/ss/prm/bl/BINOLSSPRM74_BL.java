@@ -13,26 +13,19 @@
 package com.cherry.ss.prm.bl;
 
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-
-import javax.annotation.Resource;
-
-
-
 import com.cherry.cm.util.CherryUtil;
 import com.cherry.cm.util.ConvertUtil;
 import com.cherry.ss.prm.interfaces.BINOLSSPRM74_IF;
 import com.cherry.ss.prm.service.BINOLSSPRM74_Service;
 import com.cherry.webserviceout.jahwa.ZSAL_MEMINFO;
 import com.cherry.webserviceout.jahwa.common.JahwaWebServiceProxy;
-import com.cherry.wp.common.entity.SaleActivityDetailEntity;
-import com.cherry.wp.common.entity.SaleDetailEntity;
-import com.cherry.wp.common.entity.SaleMainEntity;
-import com.cherry.wp.common.entity.SaleProductDetailEntity;
-import com.cherry.wp.common.entity.SaleRuleResultEntity;
+import com.cherry.wp.common.entity.*;
+
+import javax.annotation.Resource;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 public class BINOLSSPRM74_BL implements BINOLSSPRM74_IF {
 
@@ -587,7 +580,7 @@ public class BINOLSSPRM74_BL implements BINOLSSPRM74_IF {
 	}
 
 	@Override
-	public List<Map<String,Object>> detail2RuleList(ArrayList<SaleDetailEntity> detail_list) throws Exception {
+	public List<Map<String,Object>> detail2RuleList(ArrayList<SaleDetailEntity> detail_list,ArrayList<SaleRuleResultEntity> result_list) throws Exception {
 		List<Map<String,Object>> detail_all=new ArrayList<Map<String,Object>>();
 		for(SaleDetailEntity detail:detail_list){
 			//去除TZZK明细行
@@ -609,6 +602,14 @@ public class BINOLSSPRM74_BL implements BINOLSSPRM74_IF {
 				detail_map.put("nameTotal", detail.getProname());
 				detail_map.put("mainitem_tag", detail.getMainitem_tag());
 				detail_map.put("new_flag", detail.getNew_flag());
+				//通过Maincode匹配活动类型写入数据中
+				String ruleType = null;
+				for(SaleRuleResultEntity result:result_list){
+					if(result.getMaincode().equals(detail.getMaincode())){
+						ruleType=result.getActivityType();
+					}
+				}
+				detail_map.put("ruleType", ruleType);
 				detail_all.add(detail_map);
 			}
 		}

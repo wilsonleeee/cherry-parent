@@ -2,7 +2,7 @@
 	pageEncoding="utf-8"%>
 <%@ taglib prefix="s" uri="/struts-tags"%>
 <%@ taglib prefix="cherry" uri="/cherry-tags"%>
-<script type="text/javascript" src="/Cherry/js/ss/prm/BINOLSSPRM74.js"></script>
+<script type="text/javascript" src="/Cherry/js/ss/prm/BINOLSSPRM74.js?V=20161027"></script>
 <s:i18n name="i18n.ss.BINOLSSPRM74">
 	<div class="hide">
 		<s:url value="/ss/BINOLSSPRM74_init" id="init_BINOLSSPRM74">

@@ -603,6 +603,7 @@ BINOLSSPRM74.prototype = {
 					var barcode=$this.find("input[name='barcode']").val();
 					var times=$this.find("input[name='times']").val();
 					var computePoint=$this.find("input[name='computePoint']").val();
+					var activityType=$this.find("input[name='activityType']").val();
 					var RuleDetailType;
 					if(flag == 0){
 						RuleDetailType="P";
@@ -635,7 +636,8 @@ BINOLSSPRM74.prototype = {
 									"quantity":quantity_pro,
 									"salePrice":price_pro,
 									"computePoint":computePoint,
-									"flag":flag
+									"flag":flag,
+									"ruleType":activityType
 								};
 							rule_all.push(map);
 						});
@@ -653,7 +655,8 @@ BINOLSSPRM74.prototype = {
 									"quantity":times,
 									"salePrice":price,
 									"computePoint":computePoint,
-									"flag":flag
+									"flag":flag,
+									"ruleType":activityType
 							};
 							pointRule_all.push(map);
 						}

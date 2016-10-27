@@ -13,15 +13,15 @@
 package com.cherry.ss.prm.interfaces;
 
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-
 import com.cherry.cm.core.ICherryInterface;
 import com.cherry.wp.common.entity.SaleActivityDetailEntity;
 import com.cherry.wp.common.entity.SaleDetailEntity;
 import com.cherry.wp.common.entity.SaleProductDetailEntity;
 import com.cherry.wp.common.entity.SaleRuleResultEntity;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
 
 public interface BINOLSSPRM74_IF extends ICherryInterface {
 
@@ -124,7 +124,7 @@ public interface BINOLSSPRM74_IF extends ICherryInterface {
 	 * @return
 	 * @throws Exception
 	 */
-	public List<Map<String,Object>> detail2RuleList(ArrayList<SaleDetailEntity> detail_list) throws Exception ;
+	public List<Map<String,Object>> detail2RuleList(ArrayList<SaleDetailEntity> detail_list,ArrayList<SaleRuleResultEntity> sale_result_out) throws Exception ;
 	/**
 	 * 转换购物车添加产商ID字段
 	 * @return
