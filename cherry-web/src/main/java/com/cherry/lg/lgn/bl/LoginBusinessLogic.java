@@ -339,7 +339,7 @@ public class LoginBusinessLogic {
 		HashMap map = (HashMap)list.get(0);
 
 		//密码
-		String password = String.valueOf(map.get("PassWord"));
+		String password = decryptPwd(String.valueOf(map.get("PassWord")));
 
 		//将账号和密码拼接再MD5
 		String ap = CherryMD5Coder.encryptMD5(name+ password);
