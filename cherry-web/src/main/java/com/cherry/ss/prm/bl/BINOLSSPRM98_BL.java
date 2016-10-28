@@ -341,86 +341,86 @@ public class BINOLSSPRM98_BL implements Rule_IF{
 							cartMap.put("prtCateList", prtCateList);
 						}
 					}
-					totalAmount = 0;
-					String relation = (String) condInfo.get("relationUse");
-					// 和
-					if ("1".equals(relation)) {
-						if (isPro) {
-							for (Map<String, Object> cartMap : detailList) {
-								String prtVendorId = String.valueOf(cartMap.get("prtVendorId"));
-								for (Map<String, Object> proMap : proList) {
-									String prtVendId = String.valueOf(proMap.get("prtVendorId"));
-									if (prtVendorId.equals(prtVendId)) {
-										totalAmount = addDetailAmount(totalAmount, cartMap);
-										cartMap.put("DJQLZ", "1");
-									}
-								}
-							}
-						}
-						if (isProType) {
-							for (Map<String, Object> proTypeMap : proTypeList) {
-								String cateId = String.valueOf(proTypeMap.get("cateValId"));
-								for (Map<String, Object> cartMap : detailList) {
-									if ("1".equals(cartMap.get("DJQLZ"))) {
-										continue;
-									}
-									List<Map<String, Object>> prtCateList = (List<Map<String, Object>>) cartMap.get("prtCateList");
-									if (null != prtCateList) {
-										for (Map<String, Object> prtCateMap : prtCateList) {
-											String prtCateId = String.valueOf(prtCateMap.get("prtCateId"));
-											if (cateId.equals(prtCateId)) {
-												totalAmount = addDetailAmount(totalAmount, cartMap);
-												break;
-											}
-										}
-									}
-								}
-							}
-						}
-						// 或
-					} else {
-						if (isPro) {
+				}
+				totalAmount = 0;
+				String relation = (String) condInfo.get("relationUse");
+				// 和
+				if ("1".equals(relation)) {
+					if (isPro) {
+						for (Map<String, Object> cartMap : detailList) {
+							String prtVendorId = String.valueOf(cartMap.get("prtVendorId"));
 							for (Map<String, Object> proMap : proList) {
 								String prtVendId = String.valueOf(proMap.get("prtVendorId"));
-								double tempAmount = 0;
-								for (Map<String, Object> cartMap : detailList) {
-									String prtVendorId = String.valueOf(cartMap.get("prtVendorId"));
-									if (prtVendorId.equals(prtVendId)) {
-										tempAmount = addDetailAmount(tempAmount, cartMap);
-									}
-								}
-								if (totalAmount < tempAmount) {
-									totalAmount = tempAmount;
+								if (prtVendorId.equals(prtVendId)) {
+									totalAmount = addDetailAmount(totalAmount, cartMap);
+									cartMap.put("DJQLZ", "1");
 								}
 							}
 						}
-						if (isProType) {
-							for (Map<String, Object> proTypeMap : proTypeList) {
-								String cateId = String.valueOf(proTypeMap.get("cateValId"));
-								double tempAmount = 0;
-								for (Map<String, Object> cartMap : detailList) {
-									List<Map<String, Object>> prtCateList = (List<Map<String, Object>>) cartMap.get("prtCateList");
-									if (null != prtCateList) {
-										for (Map<String, Object> prtCateMap : prtCateList) {
-											String prtCateId = String.valueOf(prtCateMap.get("prtCateId"));
-											if (cateId.equals(prtCateId)) {
-												tempAmount = addDetailAmount(tempAmount, cartMap);
-												break;
-											}
+					}
+					if (isProType) {
+						for (Map<String, Object> proTypeMap : proTypeList) {
+							String cateId = String.valueOf(proTypeMap.get("cateValId"));
+							for (Map<String, Object> cartMap : detailList) {
+								if ("1".equals(cartMap.get("DJQLZ"))) {
+									continue;
+								}
+								List<Map<String, Object>> prtCateList = (List<Map<String, Object>>) cartMap.get("prtCateList");
+								if (null != prtCateList) {
+									for (Map<String, Object> prtCateMap : prtCateList) {
+										String prtCateId = String.valueOf(prtCateMap.get("prtCateId"));
+										if (cateId.equals(prtCateId)) {
+											totalAmount = addDetailAmount(totalAmount, cartMap);
+											break;
 										}
 									}
 								}
-								if (totalAmount < tempAmount) {
-									totalAmount = tempAmount;
-								}
 							}
 						}
 					}
-					if (totalAmount == 0) {
-						return 0;
-					} else if (totalAmount < -planDiscountPrice) {
-						return -totalAmount;
+					// 或
+				} else {
+					if (isPro) {
+						for (Map<String, Object> proMap : proList) {
+							String prtVendId = String.valueOf(proMap.get("prtVendorId"));
+							double tempAmount = 0;
+							for (Map<String, Object> cartMap : detailList) {
+								String prtVendorId = String.valueOf(cartMap.get("prtVendorId"));
+								if (prtVendorId.equals(prtVendId)) {
+									tempAmount = addDetailAmount(tempAmount, cartMap);
+								}
+							}
+							if (totalAmount < tempAmount) {
+								totalAmount = tempAmount;
+							}
+						}
 					}
+					if (isProType) {
+						for (Map<String, Object> proTypeMap : proTypeList) {
+							String cateId = String.valueOf(proTypeMap.get("cateValId"));
+							double tempAmount = 0;
+							for (Map<String, Object> cartMap : detailList) {
+								List<Map<String, Object>> prtCateList = (List<Map<String, Object>>) cartMap.get("prtCateList");
+								if (null != prtCateList) {
+									for (Map<String, Object> prtCateMap : prtCateList) {
+										String prtCateId = String.valueOf(prtCateMap.get("prtCateId"));
+										if (cateId.equals(prtCateId)) {
+											tempAmount = addDetailAmount(tempAmount, cartMap);
+											break;
+										}
+									}
+								}
+							}
+							if (totalAmount < tempAmount) {
+								totalAmount = tempAmount;
+							}
+						}
+					}
+				}
+				if (totalAmount == 0) {
+					return 0;
+				} else if (totalAmount < -planDiscountPrice) {
+					return -totalAmount;
 				}
 			}
 		}
