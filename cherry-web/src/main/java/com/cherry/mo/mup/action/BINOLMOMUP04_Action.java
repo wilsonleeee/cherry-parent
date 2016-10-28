@@ -3,6 +3,7 @@ package com.cherry.mo.mup.action;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.regex.Pattern;
 
 import javax.annotation.Resource;
 
@@ -69,7 +70,37 @@ public class BINOLMOMUP04_Action extends BaseAction
 		return CherryConstants.GLOBAL_ACCTION_RESULT_BODY;
 	
 	}
-	
+
+	/**
+	 * 添加验证
+	 * @throws Exception
+     */
+	public void validateSave() throws Exception {
+
+		//版本号验证
+		if(ConvertUtil.isBlank(form.getVersion())){
+
+			this.addFieldError("version",getText("EMO00108"));
+		}else{
+
+			String version = form.getVersion();
+			String regex = "([1-9]\\d*(\\.[1-9]\\d*){2})";
+			boolean flg = Pattern.matches(regex, version);
+			if (!flg){
+				this.addFieldError("version",getText("EMO00107"));
+			}
+		}
+		//下载地址验证
+		if(ConvertUtil.isBlank(form.getDownloadUrl())){
+			this.addFieldError("downloadUrl",getText("ACT000100"));
+		}
+		//md5Key验证
+		if(ConvertUtil.isBlank(form.getMd5Key())){
+			this.addFieldError("md5Key",getText("ACT000100"));
+		}
+
+
+	}
 	
 	@Override
 	public BINOLMOMUP04_Form getModel() {

@@ -36,6 +36,14 @@
                         <%-- 放开更新时间 --%>
                     <s:property value="#softVersionInfo.OpenUpdateTime"/>
                 </li>
+                <li>
+                    <s:if test='"1".equals(ValidFlag)'>
+                        <span class='ui-icon icon-valid'></span>
+                    </s:if><%-- 有效区分 --%>
+                    <s:else>
+                        <span class='ui-icon icon-invalid'></span>
+                    </s:else>
+                </li>
             </ul>
         </s:iterator>
     </div>

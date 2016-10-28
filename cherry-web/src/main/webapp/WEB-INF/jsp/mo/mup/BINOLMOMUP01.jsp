@@ -81,6 +81,8 @@
 						<th><s:text name="MUP01_md5Key" /></th>
 							<%-- 放开更新时间  --%>
 						<th><s:text name="MUP01_openUpdateTime" /></th>
+							<%-- 放开更新时间  --%>
+						<th><s:text name="MUP01_validFlag" /></th>
 					</tr>
 					</thead>
 				</table>

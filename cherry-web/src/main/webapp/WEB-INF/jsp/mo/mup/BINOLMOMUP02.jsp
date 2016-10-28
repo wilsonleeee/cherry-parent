@@ -8,7 +8,6 @@
 <script type="text/javascript" src="/Cherry/js/lib/jquery-ui-i18n.js"></script>
 <s:i18n name="i18n.mo.BINOLMOMUP02">
     <s:text id="global.select" name="global.page.select"/>
-    <s:text name="MUP02_select" id="MUP02_select"/>
     <div class="main container clearfix">
         <div class="panel ui-corner-all">
             <div id="div_main">
@@ -18,7 +17,7 @@
                         <input type="hidden" name="csrftoken" id="parentCsrftoken"/>
                     </cherry:form>
                     <div class="clearfix">
-                        <span class="breadcrumb left"> <span class="ui-icon icon-breadcrumb"></span><s:text name="MUP02_title1" />&nbsp;&gt;&nbsp;<s:text name="MUP02_edit"></s:text></span>
+                        <span class="breadcrumb left"> <span class="ui-icon icon-breadcrumb"></span><s:text name="MUP02_title1" />&nbsp;&gt;&nbsp;<s:text name="MUP02_update"></s:text></span>
                     </div>
                 </div>
                 <div id="actionResultDisplay"></div>
@@ -34,11 +33,11 @@
                                     <tr>
                                         <th><s:text name="MUP02_version"></s:text><span class="highlight"><s:text name="global.page.required"></s:text></span></th>
                                         <td><span><s:textfield name="version" cssClass="text" value="%{softVersionInfoDetail.Version}" maxlength="50"/></span></td>
-                                        <th><s:text name="MUP02_downloadUrl"></s:text></th>
+                                        <th><s:text name="MUP02_downloadUrl"></s:text><span class="highlight"><s:text name="global.page.required"></s:text></span></th>
                                         <td><span><s:textfield name="downloadUrl" cssClass="text" value="%{softVersionInfoDetail.DownloadURL}" maxlength="100"></s:textfield></span></td>
                                     </tr>
                                     <tr>
-                                        <th><s:text name="MUP02_md5Key"></s:text></th>
+                                        <th><s:text name="MUP02_md5Key"></s:text><span class="highlight"><s:text name="global.page.required"></s:text></span></th>
                                         <td><span><s:textfield name="md5Key" cssClass="text" value="%{softVersionInfoDetail.MD5Key}" maxlength="125"></s:textfield></span></td>
                                         <th><s:text name="MUP02_openUpdateTime"></s:text></th>
                                         <td><span><s:textfield name="openUpdateTime" cssClass="date" value="%{softVersionInfoDetail.OpenUpdateTime}"></s:textfield></span></td>

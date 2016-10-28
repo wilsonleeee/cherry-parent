@@ -36,7 +36,7 @@
 									<tr>
 										<th>
 											<s:text name="MUP04_version"></s:text>
-												<span class="highlight">
+											<span class="highlight">
 												<s:text name="global.page.required"></s:text>
 											</span>
 										</th>
@@ -60,6 +60,9 @@
 									<tr>
 										<th>
 											<s:text name="MUP04_md5Key"></s:text>
+											<span class="highlight">
+												<s:text name="global.page.required"></s:text>
+											</span>
 										</th>
 										<td>
 											<span>

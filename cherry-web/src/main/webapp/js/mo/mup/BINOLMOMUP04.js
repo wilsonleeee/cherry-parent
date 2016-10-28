@@ -16,7 +16,7 @@ $(function(){
 	cherryValidate({			
 		formId: "add",		
 		rules: {
-			version: {required: true},
+			version: {required: true,maxlength: 50},
 			downloadUrl: {required: true,maxlength: 100},
 			md5Key:{required: true,maxlength: 125}
 	   }		

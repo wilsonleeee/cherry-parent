@@ -20,9 +20,9 @@ $(document).ready(function() {
     cherryValidate({
         formId: "update",
         rules: {
+            version:{required: true,maxlength: 50},
             downloadUrl: {required: true,maxlength: 100},	//渠道名称
-            md5Key: {maxlength: 125},
-            openUpdateTime: {dateValid: true}
+            md5Key: {required: true,maxlength: 125}
         }
     });
 });

@@ -25,13 +25,14 @@ function search(){
 				 // 数据URL
 				 url : url,
 				 // 表格默认排序
-				 aaSorting : [[ 1, "asc" ]],
+				 aaSorting : [[1,"desc"],[4,"desc"]],//
 				 // 表格列属性设置
 				 aoColumns : [	{ "sName": "BIN_SoftwareVersionInfoID","bSortable": false},
 								{ "sName": "Version"},
 								{ "sName": "DownloadURL"},
 								{ "sName": "MD5Key"},
-								{ "sName": "OpenUpdateTime"}
+								{ "sName": "OpenUpdateTime"},
+					 			{ "sName": "ValidFlag"}
 							],
 								
 				// 不可设置显示或隐藏的列	
