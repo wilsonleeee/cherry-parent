@@ -453,6 +453,9 @@ public class BINOLSSPRM74_Action extends BaseAction implements ModelDriven<BINOL
                 //在写入主表数据之前先调用发券查询接口判断此单是否可以发券
                 //转换购物车添加产商ID字段
 				List<Map<String,Object>> cartConvert=binOLSSPRM74_IF.collect2pro(cart_list);
+				main_map.put("TT",main_map.get("tradeTime"));
+				main_map.put("brandInfoID",main_map.get("brandInfoId"));
+				main_map.put("TotalAmount",main_map.get("totalAmount"));
                 Map<String,Object> coupon_input=new HashMap<String, Object>();
                 coupon_input.put("Main_map", main_map);
                 coupon_input.put("cart_map", cartConvert);
