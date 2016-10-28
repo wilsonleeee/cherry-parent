@@ -117,10 +117,10 @@ public class BINOLSTSFH22_Action extends BaseAction implements ModelDriven<BINOL
         String bussinessDate = BINOLSTSFH22_BL.getBusinessDate(param);
         form.setDate(bussinessDate);
         
-    	// 获取当前日期
-    	String date=binOLSTCM02_Service.getDateYMD();
-        form.setExpectDeliverDate(date);
-        
+//    	// 获取当前日期
+//    	String date=binOLSTCM02_Service.getDateYMD();
+//        form.setExpectDeliverDate(date);
+
         String isAllowNegativeInventory = binOLCM14_BL.getConfigValue("1109",ConvertUtil.getString(userInfo.getBIN_OrganizationInfoID()),ConvertUtil.getString(userInfo.getBIN_BrandInfoID()));
         form.setIsAllowNegativeInventory(isAllowNegativeInventory);
         //订货方
@@ -469,14 +469,19 @@ public class BINOLSTSFH22_Action extends BaseAction implements ModelDriven<BINOL
         if(null == form.getDeliverAddress() || "".equals(form.getDeliverAddress())){
             this.addFieldError("deliverAddress", "送货地址不能为空");
         }
-    	
+
+        if(null == form.getExpectDeliverDate() || "".equals(form.getExpectDeliverDate())){
+            this.addFieldError("expectDeliverDate", "期望发货日期不能为空");
+        }
     }
     
     public void validateSubmit() throws Exception {
         if(null == form.getDeliverAddress() || "".equals(form.getDeliverAddress())){
             this.addFieldError("deliverAddress", "送货地址不能为空");
         }
-    	
+        if(null == form.getExpectDeliverDate() || "".equals(form.getExpectDeliverDate())){
+            this.addFieldError("expectDeliverDate", "期望发货日期不能为空");
+        }
     }
     /**
      * 通过Ajax取得指定部门所拥有的仓库
@@ -654,7 +659,7 @@ public class BINOLSTSFH22_Action extends BaseAction implements ModelDriven<BINOL
     /**
      * 验证提交的参数
      * 
-     * @param 无
+     * @param methodName
      * @return boolean
      *          验证结果
      * 

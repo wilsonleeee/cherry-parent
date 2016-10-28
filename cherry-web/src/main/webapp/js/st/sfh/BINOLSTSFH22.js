@@ -12,6 +12,7 @@ BINOLSTSFH22.prototype = {
 		$('#actionResultDisplay').html("");
 		$('#errorDiv2').attr("style",'display:none');
 		$('#errorMessage1').html("");
+		$('#successMessage1').html("");
 	},
 
 	/**
@@ -631,6 +632,7 @@ BINOLSTSFH22.prototype = {
 				$("#btnSendMsm").hide(); 
 				$("#orderStatus").html("款已付");
 				BINOLSTSFH22.clearActionMsg(true);
+				$("#successMessage").show();
 				// 显示操作成功
 			}else{
 				BINOLSTSFH22.clearActionMsg(true);
@@ -1028,7 +1030,8 @@ $(document).ready(function(){
 	cherryValidate({
 		formId: "mainForm",		
 		rules: {
-	        deliverAddress: {required: true,maxlength: 200}
+	        deliverAddress: {required: true,maxlength: 200},
+			expectDeliverDate:{required: true}
 	   }		
 	});
 	
