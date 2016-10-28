@@ -20,6 +20,7 @@ import java.util.Map;
 import javax.annotation.Resource;
  
 import com.cherry.cm.cmbeans.UserInfo;
+import com.cherry.cm.cmbussiness.bl.BINOLCM14_BL;
 import com.cherry.cm.core.CherryConstants;
 import com.cherry.cm.core.CherryException;
 import com.cherry.cm.util.CherryUtil;
@@ -54,6 +55,10 @@ public class BINOLSTBIL10_BL extends SsBaseBussinessLogic implements BINOLSTBIL1
     
 	@Resource
 	private BINOLSTBIL10_Service binOLSTBIL10_Service;
+
+    /** 共通BL */
+    @Resource
+    private BINOLCM14_BL binOLCM14_BL;
 	
 	/**
 	 * 取得盘点单信息
@@ -138,8 +143,9 @@ public class BINOLSTBIL10_BL extends SsBaseBussinessLogic implements BINOLSTBIL1
      * @param userInfo
      * @param flag
      * @return
+     * @throws CherryException
      */
-    private int saveForm(BINOLSTBIL10_Form form, UserInfo userInfo){
+    private int saveForm(BINOLSTBIL10_Form form, UserInfo userInfo) throws CherryException{
         Map<String,Object> param = new HashMap<String,Object>();
         int stockTakingId = CherryUtil.obj2int(form.getStockTakingId());
         param.put("BIN_ProductTakingID", stockTakingId);//产品盘点id
@@ -162,7 +168,17 @@ public class BINOLSTBIL10_BL extends SsBaseBussinessLogic implements BINOLSTBIL1
         String[] priceUnitArr = form.getPriceUnitArr();//从表价格
         String[] commentsArr = form.getCommentsArr();//从表备注
         String[] htArr = form.getHtArr();//盘点处理方式
+        String[] quantityArr = form.getQuantityArr();// 编辑页面输入的盘点数量
+        // 实盘数量是否允许负号
+        String allowNegativeFlag = binOLCM14_BL.getConfigValue("1388",ConvertUtil.getString(userInfo.getBIN_OrganizationInfoID()),ConvertUtil.getString(userInfo.getBIN_BrandInfoID()));
         for(int i=0;i<productVendorIDArr.length;i++){
+            // 实盘数量不允许为负时，需校验
+            if("1".equals(allowNegativeFlag)){
+                int quantityNum =  Integer.parseInt(quantityArr[i]);
+                if (quantityNum<0){
+                    throw new CherryException("EST00049");
+                }
+            }
             if(i == 0 && ConvertUtil.getString(productVendorIDArr[0]).equals("") ){
                 continue;
             }

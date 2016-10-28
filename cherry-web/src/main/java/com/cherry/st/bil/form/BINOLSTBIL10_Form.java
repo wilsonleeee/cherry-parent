@@ -100,6 +100,16 @@ public class BINOLSTBIL10_Form {
     
     /**品牌ID*/
     private String brandInfoId;
+    /**数量允许负号标志*/
+    private String allowNegativeFlag;
+
+    public String getAllowNegativeFlag() {
+        return allowNegativeFlag;
+    }
+
+    public void setAllowNegativeFlag(String allowNegativeFlag) {
+        this.allowNegativeFlag = allowNegativeFlag;
+    }
 
     public String getEntryID() {
         return entryID;

@@ -27,6 +27,7 @@
     <a id="saveUrl" href="${save_url}"></a>
     <a id="submitUrl" href="${submit_url}"></a>
     <a id="deleteUrl" href="${delete_url}"></a>
+    <input type="hidden" id="allowNegativeFlag" name="allowNegativeFlag" value='<s:property value="allowNegativeFlag" />'/>
 </div>
     <div class="panel-header">
         <div class="clearfix">

@@ -153,7 +153,11 @@ public class BINOLSTBIL10_Action extends BaseAction
 		takingDetailList = binOLSTBIL10_BL.searchTakingDetailList(map);
 		//汇总信息sumInfo
 		sumInfo = binOLSTBIL10_BL.getSumInfo(map);
-		
+
+        //实盘数量是否允许负号
+        String allowNegativeFlag = binOLCM14_BL.getConfigValue("1388",ConvertUtil.getString(userInfo.getBIN_OrganizationInfoID()),ConvertUtil.getString(userInfo.getBIN_BrandInfoID()));
+        form.setAllowNegativeFlag(allowNegativeFlag);
+
 		//工作流相关操作  决定画面以哪种模式展现
         String workFlowID = ConvertUtil.getString(takingInfo.get("WorkFlowID"));
         String operateFlag = getPageOperateFlag(workFlowID,takingInfo);
