@@ -29,7 +29,7 @@ BINOLPTJCS44.prototype = {
 									{ "sName": "nameTotal"},
 									{ "sName": "barCode"},
 									{ "sName": "spec"},
-									{ "sName": "memprice"},	
+									{ "sName": "memPrice"},
 									{ "sName": "salePrice"}
 									//,
 									//{ "sName": "printStatus","sClass":"center"}

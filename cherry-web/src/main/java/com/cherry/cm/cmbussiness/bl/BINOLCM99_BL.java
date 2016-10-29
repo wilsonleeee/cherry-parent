@@ -12,29 +12,6 @@
  */
 package com.cherry.cm.cmbussiness.bl;
 
-import java.io.File;
-import java.io.UnsupportedEncodingException;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
-
-import javax.annotation.Resource;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
-
-import net.sf.jasperreports.engine.JRAbstractExporter;
-import net.sf.jasperreports.engine.JRException;
-import net.sf.jasperreports.engine.JasperFillManager;
-import net.sf.jasperreports.engine.JasperPrint;
-import net.sf.jasperreports.engine.data.JRBeanCollectionDataSource;
-import net.sf.jasperreports.engine.export.JRHtmlExporter;
-import net.sf.jasperreports.engine.export.JRHtmlExporterParameter;
-import net.sf.jasperreports.engine.export.JRPdfExporter;
-import net.sf.jasperreports.engine.export.JRXlsExporter;
-import net.sf.jasperreports.engine.export.JRXmlExporter;
-
 import com.cherry.cm.cmbussiness.service.BINOLCM99_Service;
 import com.cherry.cm.core.CherryConstants;
 import com.cherry.cm.core.CodeTable;
@@ -44,6 +21,19 @@ import com.cherry.cm.util.ConvertUtil;
 import com.cherry.cm.util.FileUtil;
 import com.cherry.mo.common.interfaces.BINOLMOCOM01_IF;
 import com.cherry.pt.common.ProductConstants;
+import net.sf.jasperreports.engine.JRAbstractExporter;
+import net.sf.jasperreports.engine.JRException;
+import net.sf.jasperreports.engine.JasperFillManager;
+import net.sf.jasperreports.engine.JasperPrint;
+import net.sf.jasperreports.engine.data.JRBeanCollectionDataSource;
+import net.sf.jasperreports.engine.export.*;
+
+import javax.annotation.Resource;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+import java.io.File;
+import java.io.UnsupportedEncodingException;
+import java.util.*;
 
 /**
  * 共通报表导出BL
@@ -838,7 +828,7 @@ public class BINOLCM99_BL {
 						returnMap.put("barCode_"+i, productInfo.get("barCode"));
 						returnMap.put("spec_"+i, productInfo.get("spec"));
 						returnMap.put("salePrice_"+i, productInfo.get("salePrice"));
-						returnMap.put("memprice_"+i, productInfo.get("memprice"));
+						returnMap.put("memprice_"+i, productInfo.get("memPrice"));
 					}
 					result_list.add(returnMap);
 				}
@@ -854,7 +844,7 @@ public class BINOLCM99_BL {
 							date.put("barCode_"+index, productInfo.get("barCode"));
 							date.put("spec_"+index, productInfo.get("spec"));
 							date.put("salePrice_"+index, productInfo.get("salePrice"));
-							date.put("memprice_"+index, productInfo.get("memprice"));
+							date.put("memprice_"+index, productInfo.get("memPrice"));
 						}
 					}
 					if(index == 0 && i != 1){
@@ -864,7 +854,7 @@ public class BINOLCM99_BL {
 							result_map.put("barCode_"+z, date.get("barCode_"+z));
 							result_map.put("spec_"+z, date.get("spec_"+z));
 							result_map.put("salePrice_"+z, date.get("salePrice_"+z));
-							result_map.put("memprice_"+z, date.get("memprice_"+z));
+							result_map.put("memprice_"+z, date.get("memPrice_"+z));
 						}
 						result_list.add(result_map);
 						date.clear();

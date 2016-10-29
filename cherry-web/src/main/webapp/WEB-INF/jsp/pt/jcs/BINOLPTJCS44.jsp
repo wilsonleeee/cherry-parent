@@ -7,7 +7,7 @@
 <script type="text/javascript" src="/${CHERRY_CONTEXT_PATH}/js/common/cherryDate.js"></script>
 <script type="text/javascript" src="/${CHERRY_CONTEXT_PATH}/js/common/popDataTable.js"></script>
 <script type="text/javascript" src="/${CHERRY_CONTEXT_PATH}/js/lib/jquery-ui-i18n.js"></script>
-<script type="text/javascript" src="/${CHERRY_CONTEXT_PATH}/js/pt/jcs/BINOLPTJCS44.js"></script>
+<script type="text/javascript" src="/${CHERRY_CONTEXT_PATH}/js/pt/jcs/BINOLPTJCS44.js?V=20161029"></script>
 <style>
 div#DEPART_DIV hr {display:none;}
 </style>

@@ -15,7 +15,7 @@
 <li><s:property value="nameTotal"/></li>
 <li><s:property value="barCode"/></li>
 <li><s:property value="spec"/></li>
-<li><s:property value="memprice" /></li>
+<li><s:property value="memPrice" /></li>
 <li><s:property value="salePrice"/></li>
 </ul>
 </s:iterator>
