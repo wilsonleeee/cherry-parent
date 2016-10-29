@@ -854,7 +854,7 @@ public class BINOLCM99_BL {
 							result_map.put("barCode_"+z, date.get("barCode_"+z));
 							result_map.put("spec_"+z, date.get("spec_"+z));
 							result_map.put("salePrice_"+z, date.get("salePrice_"+z));
-							result_map.put("memprice_"+z, date.get("memPrice_"+z));
+							result_map.put("memprice_"+z, date.get("memprice_"+z));
 						}
 						result_list.add(result_map);
 						date.clear();
