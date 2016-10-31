@@ -32,7 +32,7 @@ $(function() {
 		<%-- 编辑或添加区分 --%>
 		<input type="hidden" id="flag" value="0"></input>
 		<div class="clearfix"> 
-		    <span class="breadcrumb left"> <span class="ui-icon icon-breadcrumb"></span><s:text name="solu_title1" />&nbsp;&gt;&nbsp;<s:text name="JCS19_detail"></s:text></span> 
+		    <span class="breadcrumb left"> <span class="ui-icon icon-breadcrumb"></span><s:text name="solu_title1" />&nbsp;&gt;&nbsp;<s:text name="JCS49_detail"></s:text></span> 
 		</div>
 		</div>
 		<div class="panel-content clearfix">

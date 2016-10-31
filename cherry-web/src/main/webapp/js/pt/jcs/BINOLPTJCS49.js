@@ -460,7 +460,7 @@ BINOLPTJCS49.prototype={
 				cancel: $("#dialogCancel").text(),
 				confirmEvent: function(){
 					$obj.remove();
-					JCS50_cate.addCate();
+					JCS49_cate.addCate();
 					removeDialog("#dialogInit");
 				},
 				cancelEvent: function(){
@@ -490,12 +490,12 @@ BINOLPTJCS49.prototype={
  	           cateInfo :cateInfo,
  	           mode : 2,
  	           click:function(){
- 	      		JCS50_cate.addCate();
+ 	      		JCS49_cate.addCate();
  	           },
  		       getHtmlFun:function(info){
 		       			var html = '<tr><td><span class="list_normal">';
 		       			html += '<span class="text" style="line-height:19px;">' + info.cateValName + '</span>';
-		       			html += '<span class="close" style="margin: 4px 0 0 6px;" onclick="BINOLPTJCS50.removeCate(this);return false;"><span class="ui-icon ui-icon-close"></span></span>';
+		       			html += '<span class="close" style="margin: 4px 0 0 6px;" onclick="BINOLPTJCS49.removeCate(this);return false;"><span class="ui-icon ui-icon-close"></span></span>';
   		       			html += '<input type="hidden" name="cateValId" value="' + info.cateValId + '"/>';
   		       			html += '<input type="hidden" name="propValId" value="' + info.cateValId + '"/>';
   		       			html += '</span></td></tr>';
@@ -525,7 +525,43 @@ BINOLPTJCS49.prototype={
 };
 
 
+/**
+ * 产品方案明细添加分类相关
+ * @returns
+ */
+function BINOLPTJCS49_cate(){
+};
+BINOLPTJCS49_cate.prototype={
+	/**
+	 * 方案明细添加产品分类
+	 */
+	"addCate" : function(){
+   		// 产品分类
+   		var param  = "cateInfo=" + BINOLPTJCS49.toJSONArr($("#cateInfo").find(".detail").children().children());
+//   		alert("分类值: "+param);
+   		
+		var url = $("#addCate_Url").attr("href");
+		param += "&productPriceSolutionID="+ $("#productPriceSolutionID").val();
+		param += "&csrftoken="+parentTokenVal();
+		var callback = function(msg){
+			BINOLPTJCS49.search();
+//			if(msg.indexOf("actionMessage") > -1){
+//				alert('添加成功');
+////				BINOLSTSFH01.clearPage(true);
+//			}
+		};
+		cherryAjaxRequest({
+			url:url,
+			param:param,
+			callback:callback,
+			coverId : "#div_main"
+		});
+	}	
+}
+
+
 var BINOLPTJCS49 = new BINOLPTJCS49();
+var JCS49_cate = new BINOLPTJCS49_cate();
 $(document).ready(function() {
 	if (window.opener) {
 		window.opener.lockParentWindow();
@@ -588,6 +624,8 @@ $(document).ready(function() {
 	 });
 	 */
 });
+
+
 window.onbeforeunload = function(){
 	if (BINOLPTJCS49.needUnlock ) {
 		if (window.opener) {

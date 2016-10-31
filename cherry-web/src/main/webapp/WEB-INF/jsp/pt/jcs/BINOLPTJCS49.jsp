@@ -358,7 +358,10 @@ $(function() {
 	<s:url action="BINOLPTJCS49_addRow" id="addRowUrl" />
 	<a href="${addRowUrl}" id="addRow_Url"></a>
 	<s:url action="BINOLPTJCS49_editRow" id="editRowUrl" />
-	<a href="${editRowUrl}" id="editRow_Url"></a>
+	<a href="${editRowUrl}" id="editRow_Url"></a>	
+	<!-- 产品方案明细添加产品分类 -->
+	<s:url action="BINOLPTJCS49_addCate" id="addCateUrl" />
+	<a href="${addCateUrl}" id="addCate_Url"></a>
 	
 	<div id="dialogConfirm"><s:text name="global.page.ok" /></div>
     <div id="dialogCancel"><s:text name="global.page.cancle" /></div>
