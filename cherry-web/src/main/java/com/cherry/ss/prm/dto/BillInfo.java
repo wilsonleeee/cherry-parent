@@ -30,6 +30,8 @@ public class BillInfo {
 	private int levelId;
 	/** 整单金额 */
 	private double amount;
+	/** 实付金额 */
+	private double actualAmount;
 	/** 订单是否用券 */
 	private boolean isUseCoupon;
 	/** 本次订单生成的所有券 */
@@ -118,6 +120,12 @@ public class BillInfo {
 	}
 	public void setAmount(double amount) {
 		this.amount = amount;
+	}
+	public double getActualAmount() {
+		return actualAmount;
+	}
+	public void setActualAmount(double actualAmount) {
+		this.actualAmount = actualAmount;
 	}
 	public int getLevelId() {
 		return levelId;

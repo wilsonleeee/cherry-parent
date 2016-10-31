@@ -1,15 +1,5 @@
 package com.cherry.ss.prm.bl;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-
-import javax.annotation.Resource;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import com.cherry.cm.activemq.dto.MQInfoDTO;
 import com.cherry.cm.activemq.interfaces.BINOLMQCOM01_IF;
 import com.cherry.cm.cmbussiness.bl.BINOLCM03_BL;
@@ -24,11 +14,7 @@ import com.cherry.cm.util.DateUtil;
 import com.cherry.dr.cmbussiness.util.DoubleUtil;
 import com.cherry.mq.mes.common.MessageConstants;
 import com.cherry.ss.prm.core.CouponConstains;
-import com.cherry.ss.prm.dto.BillInfo;
-import com.cherry.ss.prm.dto.CouponBaseInfo;
-import com.cherry.ss.prm.dto.CouponCombDTO;
-import com.cherry.ss.prm.dto.CouponInfo;
-import com.cherry.ss.prm.dto.ResultDTO;
+import com.cherry.ss.prm.dto.*;
 import com.cherry.ss.prm.interfaces.Coupon_IF;
 import com.cherry.ss.prm.interfaces.Rule_IF;
 import com.cherry.ss.prm.service.BINOLSSPRM73_Service;
@@ -39,6 +25,14 @@ import com.cherry.webserviceout.jahwa.sms.Dt_SMSInsert_res;
 import com.cherry.webserviceout.jahwa.sms.SMS_ITEM;
 import com.mongodb.BasicDBObject;
 import com.mongodb.DBObject;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import javax.annotation.Resource;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 public class BINOLSSPRM99_BL implements Coupon_IF {
 	
@@ -250,7 +244,9 @@ public class BINOLSSPRM99_BL implements Coupon_IF {
 		if (null != detailList) {
 			billInfo.setDetailList((List<Map<String, Object>>) ConvertUtil.byteClone(detailList));
 			if (!CherryChecker.isNullOrEmpty(mainMap.get("TotalAmount"))) {
-				billInfo.setAmount(Double.parseDouble(String.valueOf(mainMap.get("TotalAmount"))));
+				double amount = Double.parseDouble(String.valueOf(mainMap.get("TotalAmount")));
+				billInfo.setAmount(amount);
+				billInfo.setActualAmount(amount);
 			} else {
 				// 订单总金额
 				double totalAmount = 0;
@@ -262,6 +258,7 @@ public class BINOLSSPRM99_BL implements Coupon_IF {
 					totalAmount = DoubleUtil.add(totalAmount, DoubleUtil.mul(salePrice, quantity));
 				}
 				billInfo.setAmount(totalAmount);
+				billInfo.setActualAmount(totalAmount);
 			}
 		}
 		return billInfo;
