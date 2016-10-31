@@ -1,28 +1,20 @@
 package com.cherry.webservice.promotion.bl;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-
-import javax.annotation.Resource;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import com.cherry.cm.cmbussiness.bl.BINOLCM44_BL;
-import com.cherry.cm.core.CherryConstants;
-import com.cherry.cm.core.CustomerContextHolder;
 import com.cherry.cm.util.ConvertUtil;
 import com.cherry.ss.prm.interfaces.BINOLSSPRM74_IF;
 import com.cherry.ss.prm.interfaces.Coupon_IF;
 import com.cherry.webservice.promotion.interfaces.CheckIntelligent_IF;
 import com.cherry.webservice.promotion.service.CheckIntelligentService;
-import com.cherry.wp.common.entity.SaleActivityDetailEntity;
-import com.cherry.wp.common.entity.SaleDetailEntity;
-import com.cherry.wp.common.entity.SaleMainEntity;
-import com.cherry.wp.common.entity.SaleProductDetailEntity;
-import com.cherry.wp.common.entity.SaleRuleResultEntity;
+import com.cherry.wp.common.entity.*;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import javax.annotation.Resource;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 /**
  * 预判智能促销（家化专用） 接口BL
@@ -161,7 +153,7 @@ public class CheckIntelligentLogic implements CheckIntelligent_IF {
             }else{
             	main_map.put("SendFlag", 0);
             }
-            
+			main_map.put("createPGM","CheckIntelligentLogic");
 			binOLSSPRM74_IF.insertMain(main_map);
 			binOLSSPRM74_IF.insertCart(cart_list, TN);
 		}

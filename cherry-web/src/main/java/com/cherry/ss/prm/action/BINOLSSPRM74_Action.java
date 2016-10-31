@@ -472,6 +472,7 @@ public class BINOLSSPRM74_Action extends BaseAction implements ModelDriven<BINOL
                 	main_map.put("MP", memberPhone);
                 }
                 //打印智能促销页面写入的主单数据
+				main_map.put("createPGM","BINOLSSPRM74_1");
     			logger.error("打印智能促销页面写入的主单数据：",main_map);
 				binOLSSPRM74_IF.insertMain(main_map);
 				
@@ -655,6 +656,7 @@ public class BINOLSSPRM74_Action extends BaseAction implements ModelDriven<BINOL
                }
                 //打印代物券写表的主单数据
     			logger.error("打印代物券写表的主单数据：",main_map);
+				main_map.put("createPGM","BINOLSSPRM74_2");
 				binOLSSPRM74_IF.insertMain(main_map);
 				
 				if(cart_list != null){

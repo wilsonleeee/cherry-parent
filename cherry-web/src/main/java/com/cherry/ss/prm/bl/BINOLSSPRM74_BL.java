@@ -492,11 +492,11 @@ public class BINOLSSPRM74_BL implements BINOLSSPRM74_IF {
 
 	@Override
 	public void checkMain(Map<String, Object> param) {
-		int result=binOLSSPRM74_Service.checkMain(param);
-		if(result > 0){
+//		int result=binOLSSPRM74_Service.checkMain(param);
+//		if(result > 0){
 			//物理删除全表
 			binOLSSPRM74_Service.delmain_all(param);
-		}
+//		}
 	}
 
 	
