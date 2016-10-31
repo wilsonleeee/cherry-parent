@@ -775,9 +775,9 @@ public class BINOLSSPRM98_BL implements Rule_IF{
 								// 整单优惠金额
 								double zkAmount = DoubleUtil.sub(tAmount, actualAmount);
 								// 优惠分摊金额
-								double partAmount = DoubleUtil.mul(zkAmount, DoubleUtil.round(DoubleUtil.div(calcuAmount, tAmount), 2));
+								double partAmount = DoubleUtil.round(DoubleUtil.mul(zkAmount, DoubleUtil.round(DoubleUtil.div(calcuAmount, tAmount), 2)), 0);
 								// 白名单总金额 - 优惠分摊金额并取整数
-								actualAmount = DoubleUtil.round(DoubleUtil.sub(actualAmount, partAmount), 0);
+								calcuAmount = DoubleUtil.sub(calcuAmount, partAmount);
 							}
 //						}
 					}
