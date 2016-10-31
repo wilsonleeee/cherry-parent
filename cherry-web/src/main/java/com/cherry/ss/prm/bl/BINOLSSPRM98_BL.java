@@ -763,12 +763,14 @@ public class BINOLSSPRM98_BL implements Rule_IF{
 				if (amountFlag) {
 					if (CouponConstains.CONDITIONTYPE_1.equals(kbn)) {
 						double actualAmount = billInfo.getActualAmount();
-						if (calcuAmount > actualAmount) {
+						logger.info("*********************实付金额：" + actualAmount);
+//						if (calcuAmount > actualAmount) {
 							// 所有明细累加之和
 							double tAmount = 0;
 							for (Map<String, Object> cartMap : detailList) {
 								tAmount = addDetailAmount(tAmount, cartMap);
 							}
+							logger.info("*********************明细金额之和：" + actualAmount);
 							if (calcuAmount < tAmount && tAmount > actualAmount) {
 								// 整单优惠金额
 								double zkAmount = DoubleUtil.sub(tAmount, actualAmount);
@@ -777,7 +779,7 @@ public class BINOLSSPRM98_BL implements Rule_IF{
 								// 白名单总金额 - 优惠分摊金额并取整数
 								actualAmount = DoubleUtil.round(DoubleUtil.sub(actualAmount, partAmount), 0);
 							}
-						}
+//						}
 					}
 					return calcuAmount;
 				} else {
