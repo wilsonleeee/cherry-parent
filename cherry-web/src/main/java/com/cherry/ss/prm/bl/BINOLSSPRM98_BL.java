@@ -770,7 +770,7 @@ public class BINOLSSPRM98_BL implements Rule_IF{
 							for (Map<String, Object> cartMap : detailList) {
 								tAmount = addDetailAmount(tAmount, cartMap);
 							}
-							logger.info("*********************明细金额之和：" + actualAmount);
+							logger.info("*********************明细金额之和：" + tAmount);
 							if (calcuAmount < tAmount && tAmount > actualAmount) {
 								// 整单优惠金额
 								double zkAmount = DoubleUtil.sub(tAmount, actualAmount);
