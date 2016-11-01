@@ -43,7 +43,7 @@
 					</span>&nbsp;&nbsp;
 					<s:text name="WRSRP09_grossMargin"/>
 					<span class="<s:if test='saleCountInfo.grossMargin < 0'>highlight</s:if><s:else>green</s:else>" style='margin-left:0px;margin-right:2px;'>
-					<strong><s:text name="format.percent"><s:param value="saleCountInfo.grossMargin"></s:param></s:text></strong>
+					<strong><s:text name="format.price"><s:param value="saleCountInfo.grossMargin"></s:param></s:text>%</strong>
 					</span>
 				</span>
 			</div>

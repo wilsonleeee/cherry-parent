@@ -56,7 +56,7 @@ public class BINOLWRSRP09_BL implements BINOLWRSRP09_IF {
 
 			/*毛利率=毛利额/销售额*/
 			if(amount.doubleValue() != 0) {
-				saleCountInfo.put("grossMargin", grossProfitAmount.divide(amount,4).multiply(new BigDecimal(100)));
+				saleCountInfo.put("grossMargin", grossProfitAmount.divide(amount,4,BigDecimal.ROUND_HALF_UP).multiply(new BigDecimal(100)));
 			} else {
 				saleCountInfo.put("grossMargin", 0);
 			}
