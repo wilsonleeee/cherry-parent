@@ -4,6 +4,7 @@ import com.cherry.cm.cmbussiness.bl.BINOLCM03_BL;
 import com.cherry.cm.core.CherryChecker;
 import com.cherry.cm.core.CherryConstants;
 import com.cherry.cm.core.CherryException;
+import com.cherry.cm.util.CherryUtil;
 import com.cherry.cm.util.ConvertUtil;
 import com.cherry.cm.util.DateUtil;
 import com.cherry.cp.common.CampConstants;
@@ -65,7 +66,7 @@ public class BINOLSSPRM98_BL implements Rule_IF{
 				setErrorMsg(result, CouponConstains.IF_ERROR_AMOUNT_CODE, CouponConstains.IF_ERROR_AMOUNT);
 				return result;
 			}
-			if (!checkPrt(useCondInfo, billInfo, ruleCode, CouponConstains.CONDITIONTYPE_2, zwFlag) ) {
+			if (!checkPrt(useCondInfo, billInfo, ruleCode, CouponConstains.CONDITIONTYPE_2, 0) ) {
 				setErrorMsg(result, CouponConstains.IF_ERROR_PRT_CODE, CouponConstains.IF_ERROR_PRT);
 				return result;
 			}
@@ -1499,6 +1500,7 @@ public class BINOLSSPRM98_BL implements Rule_IF{
 		boolean isMp = !CherryChecker.isNullOrEmpty(billInfo.getMobile());
 		boolean isBp = !CherryChecker.isNullOrEmpty(billInfo.getBpCode());
 		double totalAmount = billInfo.getAmount();
+		logger.info("产生券createCoupon订单号：" + billCode );
 		for (Map<String, Object> ruleMap : calculatedRule) {
 			String ruleCode = (String) ruleMap.get("maincode");
 			CouponEngineDTO couponRule = coupEngine.getRule(billInfo.getOrgCode(), billInfo.getBrandCode(), ruleCode);
@@ -1672,6 +1674,12 @@ public class BINOLSSPRM98_BL implements Rule_IF{
 					}
 				}
 			}
+			if(couponList != null && couponList.size() > 0){
+				logger.info("新增优惠券活动内容：" + CherryUtil.obj2Json(couponList));
+			}else{
+				logger.info("新增优惠券活动内容：null");
+			}
+
 			// 新增优惠券记录(批量)
 			binOLSSPRM73_Service.addMemberCouponList(couponList);
 			StringBuilder builder = new StringBuilder();
@@ -1744,6 +1752,7 @@ public class BINOLSSPRM98_BL implements Rule_IF{
 			String ruleCode = ruleEngine.getRuleCode();
 			boolean isSend = null != sendMap;
 			if (!isSend && !checkCounter(sendCondInfo, billInfo.getCounterCode(), ruleCode, CouponConstains.CONDITIONTYPE_1)) {
+				logger.info("*******checkCounter 失败***");
 				setError(result);
 				return result;
 			}
@@ -1753,32 +1762,39 @@ public class BINOLSSPRM98_BL implements Rule_IF{
 //				if (isSend) {
 //					sendMap.put("AMOUNT_CHECK", "1");
 //				}
+				logger.info("*******checkAmount 失败***");
 				setErrorMsg(result, CouponConstains.IF_ERROR_CREATE_AMOUNT_CODE, CouponConstains.IF_ERROR_CREATE_AMOUNT);
 				return result;
 			}
 			if (!isSend && !checkMember(sendCondInfo, billInfo, ruleCode)) {
 				setError(result);
+				logger.info("*******checkMember 失败***");
 				return result;
 			}
 			if (!isSend && !checkCamp(sendCondInfo, actList, ruleCode)) {
 				setError(result);
+				logger.info("*******checkCamp 失败***");
 				return result;
 			}
 			if (!isSend && !checkBillCoupon(sendCondInfo, billInfo)) {
 				setError(result);
+				logger.info("*******checkBillCoupon 失败***");
 				return result;
 			}
 			List<Map<String, Object>> cartList = billInfo.getDetailList();
 			if (!checkPrt(sendCondInfo, billInfo, ruleCode, CouponConstains.CONDITIONTYPE_1, 0) ) {
 				billInfo.setDetailList(cartList);
+				logger.info("*******checkPrt 失败***");
 				setErrorMsg(result, CouponConstains.IF_ERROR_CREATE_PRT_CODE, CouponConstains.IF_ERROR_CREATE_PRT + ruleName);
 				return result;
 			}
 			int limitResult = checkSendLimit(ruleEngine, billInfo);
 			if (limitResult == -1) {
+				logger.info("*******checkSendLimit==-1 失败***");
 				setErrorMsg(result, CouponConstains.IF_ERROR_MAX_NUM_CODE, CouponConstains.IF_ERROR_MAX_NUM + ruleName);
 				return result;
 			} else if (limitResult == -2) {
+				logger.info("*******checkSendLimit==-2 失败***");
 				setErrorMsg(result, CouponConstains.IF_ERROR_MEM_MAX_NUM_CODE, CouponConstains.IF_ERROR_MEM_MAX_NUM + ruleName);
 				return result;
 			}

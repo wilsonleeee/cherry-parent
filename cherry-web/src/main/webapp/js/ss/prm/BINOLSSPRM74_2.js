@@ -1,5 +1,5 @@
 function BINOLSSPRM74_2() {};
-
+var submitable = true;
 BINOLSSPRM74_2.prototype = {
 		"showhidediv":function(id){
 			var display =$('#'+id).css('display');
@@ -35,6 +35,11 @@ BINOLSSPRM74_2.prototype = {
 			      BINOLSSPRM74_2.showErrorMessage("您输入的手机号码有误，请确认后再提交");
 			      return false;
 			 }
+			if(submitable==false){
+				return;
+			}else{
+				submitable=false;
+			}
 			var competedRule=new Array();
 			$("#rule_table tr:gt(0)").each(function(){
 				var $this=$(this);
@@ -61,6 +66,7 @@ BINOLSSPRM74_2.prototype = {
 			var promotionSendUrl=$("#promotionSendUrl").attr("href");
 			var datasourceName=$("#datasourceName").val();
 			var params="memberPhone="+mobileNo+"&main_json="+main_map_json+"&rule_json="+rule_list_json+"&competedRule_json="+competedRule_json+"&shoppingcart_json="+cart_list_json+"&datasourceName="+datasourceName;
+			setTimeout("submitable=true",5000)
 			$.ajax({
 				url: promotionSendUrl,
 				data: params,

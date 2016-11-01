@@ -571,10 +571,13 @@ public class BINOLSSPRM99_BL implements Coupon_IF {
 	public List<Map<String, Object>> getCouponRuleList(Map<String, Object> map) throws Exception {
 		// 将订单信息转换成bean
 		BillInfo billInfo = getBillInfo(map);
+
 		if (null == billInfo) {
 			// 参数不正确
 			throw new Exception(CouponConstains.IF_ERROR_PARAM);
 		}
+		logger.info("获取优惠券活动getCouponRuleList订单号：" + billInfo.getBillCode() );
+
 		// 已经参加的活动的列表
 		List<Map<String,Object>> campainList = (List<Map<String,Object>>) map.get("completedRule");
 		// 已经使用的券
@@ -582,7 +585,9 @@ public class BINOLSSPRM99_BL implements Coupon_IF {
 		if (null != couponList && !couponList.isEmpty()) {
 			billInfo.setUseCoupon(true);
 		}
-		return rule_IF.getCouponRuleList(billInfo, campainList);
+		List<Map<String, Object>> list = rule_IF.getCouponRuleList(billInfo, campainList);
+		logger.info("获取优惠券活动内容：" + CherryUtil.obj2Json(list));
+		return list;
 	}
 	
 	/**
@@ -869,7 +874,7 @@ public class BINOLSSPRM99_BL implements Coupon_IF {
 	/**
 	 * 设置共通的参数
 	 * 
-	 * @param baseDTO 基础DTO
+	 * @param map 基础DTO
 	 * 
 	 * @return
 	 * 
