@@ -71,7 +71,7 @@
     </div>
     <div id="errorMessage"  class="actionError" style="display:none" >     
         <ul>
-            <li><span id="errorMessage1">操作失败</span></li>
+            <li><span id="errorMessage2">操作失败</span></li>
         </ul>
     </div>
     <div id="successMessage"  class="actionSuccess" style="display:none" >

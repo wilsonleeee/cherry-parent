@@ -241,9 +241,9 @@ public class BINOLSTSFH23_Action extends BaseAction implements ModelDriven<BINOL
 	        form.setDate(bussinessDate);
 	        param.put("bussinessDate", bussinessDate);
 	        
-	    	// 获取当前日期
-	    	String date=binOLSTCM02_Service.getDateYMD();
-	        form.setExpectDeliverDate(date);
+//	    	// 获取当前日期
+//	    	String date=binOLSTCM02_Service.getDateYMD();
+//	        form.setExpectDeliverDate(date);
 	        
 	        // 根据订单号获取订单信息
 	         orderInfoList = BINOLSTSFH23_BL.getOrderInfoByOrder(param);

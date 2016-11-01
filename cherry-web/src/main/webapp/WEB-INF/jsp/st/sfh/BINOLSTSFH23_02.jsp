@@ -73,10 +73,15 @@
     </div>
     <div id="errorMessage"  class="actionError" style="display:none" >     
         <ul>
-            <li><span id="errorMessage1">操作失败</span></li>
+            <li><span id="errorMessage2">操作失败</span></li>
         </ul>
     </div>
-        <div style="display: none" id="EBS00145"><!-- 请选择需要删除的订单行 -->
+    <div id="successMessage"  class="actionSuccess" style="display:none" >
+        <ul>
+            <li><span id="successMessage1">操作已成功</span></li>
+        </ul>
+    </div>
+    <div style="display: none" id="EBS00145"><!-- 请选择需要删除的订单行 -->
 	    <div class="actionError">
 	       <ul><li><span><s:text name="SFH22_EBS00145"/></span></li></ul>         
 	    </div>
@@ -103,7 +108,7 @@
                          <td> <span class="left"><s:property value='initInfoMap.defaultOrderNo'/></span>
                           <input type="hidden" name="orderNum" id="orderNum" value='${initInfoMap.defaultOrderNo}'>
                          </td>
-                        <th><s:text name="SFH22_expectDeliverDate"/></th>
+                        <th><s:text name="SFH22_expectDeliverDate"/><span class="highlight">*</span></th>
                         <td><span><s:textfield name="expectDeliverDate" id="expectDeliverDate" cssClass="date" readOnly="readOnly"></s:textfield></span> </td>
                     </tr>
                     <tr>
@@ -113,7 +118,7 @@
                         <td><s:property value="#session.userinfo.employeeName"/></td>
                     </tr>
                     <tr>
-                        <th> <s:text name="SFH22_deliverAddress"/></th>
+                        <th> <s:text name="SFH22_deliverAddress"/><span class="highlight">*</span></th>
                         <td colspan=1>
                             <span> <input class="text" type="text" name="deliverAddress" id="deliverAddress" maxlength="200" value="${initInfoMap.defaultAddress}" /></span>
                         </td>
