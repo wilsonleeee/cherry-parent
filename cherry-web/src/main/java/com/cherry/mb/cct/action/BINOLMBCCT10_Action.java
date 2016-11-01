@@ -2,6 +2,7 @@ package com.cherry.mb.cct.action;
 
 import java.io.ByteArrayInputStream;
 import java.io.InputStream;
+import java.io.UnsupportedEncodingException;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -20,36 +21,37 @@ import com.cherry.cm.core.CherryException;
 import com.cherry.cm.util.CherryUtil;
 import com.cherry.cm.util.ConvertUtil;
 import com.cherry.cm.util.DateUtil;
+import com.cherry.cm.util.FileUtil;
 import com.cherry.mb.cct.form.BINOLMBCCT10_Form;
 import com.cherry.mb.cct.interfaces.BINOLMBCCT10_IF;
 import com.cherry.mq.mes.atmosphere.JQueryPubSubPush;
 import com.opensymphony.xwork2.ModelDriven;
 
 public class BINOLMBCCT10_Action extends BaseAction implements ModelDriven<BINOLMBCCT10_Form>{
-	
+
 	/**
-	 * 
+	 *
 	 */
 	private static final long serialVersionUID = 1L;
-	
+
 	private BINOLMBCCT10_Form form = new BINOLMBCCT10_Form();
 
 	private static final Logger logger = LoggerFactory.getLogger(BINOLMBCCT10_Action.class);
-	
+
 	@Resource
 	private BINOLMBCCT10_IF binolmbcct10_IF;
-	
+
 	@Resource(name="binOLCM37_BL")
 	private BINOLCM37_BL binOLCM37_BL;
-	
+
 	private List<Map<String, Object>> issueList;
-	
+
 	/** Excel输入流 */
-    private InputStream excelStream;
-    
+	private InputStream excelStream;
+
 	/** 下载文件名 */
-    private String downloadFileName;
-	
+	private String downloadFileName;
+
 	public List<Map<String, Object>> getIssueList() {
 		return issueList;
 	}
@@ -66,8 +68,9 @@ public class BINOLMBCCT10_Action extends BaseAction implements ModelDriven<BINOL
 		this.excelStream = excelStream;
 	}
 
-	public String getDownloadFileName() {
-		return downloadFileName;
+	public String getDownloadFileName() throws UnsupportedEncodingException {
+		//转码下载文件名 Content-Disposition
+		return FileUtil.encodeFileName(request,downloadFileName);
 	}
 
 	public void setDownloadFileName(String downloadFileName) {
@@ -88,11 +91,11 @@ public class BINOLMBCCT10_Action extends BaseAction implements ModelDriven<BINOL
 				CherryException temp = (CherryException)e;
 				this.addActionError(temp.getErrMessage());
 				return CherryConstants.GLOBAL_ACCTION_RESULT_PAGE;
-			 }else{
+			}else{
 				//系统发生异常，请联系管理人员。
 				this.addActionError(getText("ECM00036"));
 				return CherryConstants.GLOBAL_ACCTION_RESULT_PAGE;
-			 }
+			}
 		}
 		return SUCCESS;
 	}
@@ -104,7 +107,7 @@ public class BINOLMBCCT10_Action extends BaseAction implements ModelDriven<BINOL
 			// form参数设置到map中
 			ConvertUtil.setForm(form, map);
 			// 用户信息
-			UserInfo userInfo = (UserInfo) session     
+			UserInfo userInfo = (UserInfo) session
 					.get(CherryConstants.SESSION_USERINFO);
 			// 所属组织
 			map.put(CherryConstants.ORGANIZATIONINFOID, userInfo
@@ -113,7 +116,7 @@ public class BINOLMBCCT10_Action extends BaseAction implements ModelDriven<BINOL
 			if(form.getBrandInfoId() == null || "".equals(form.getBrandInfoId())) {
 				// 不是总部的场合
 				if(userInfo.getBIN_BrandInfoID() != CherryConstants.BRAND_INFO_ID_VALUE) {
-				// 所属品牌
+					// 所属品牌
 					map.put(CherryConstants.BRANDINFOID, userInfo.getBIN_BrandInfoID());
 				}
 			} else {
@@ -166,26 +169,26 @@ public class BINOLMBCCT10_Action extends BaseAction implements ModelDriven<BINOL
 				CherryException temp = (CherryException)e;
 				this.addActionError(temp.getErrMessage());
 				return CherryConstants.GLOBAL_ACCTION_RESULT_PAGE;
-			 }else{
+			}else{
 				//系统发生异常，请联系管理人员。
 				this.addActionError(getText("ECM00036"));
 				return CherryConstants.GLOBAL_ACCTION_RESULT_PAGE;
-			 }
+			}
 		}
 		return SUCCESS;
 	}
-	
+
 	/**
 	 * 查询结果Excel导出
 	 * @return
 	 */
 	public String export() {
-        try {
-        	Map<String, Object> map = new HashMap<String, Object>();
+		try {
+			Map<String, Object> map = new HashMap<String, Object>();
 			// form参数设置到map中
 			ConvertUtil.setForm(form, map);
 			// 用户信息
-			UserInfo userInfo = (UserInfo) session     
+			UserInfo userInfo = (UserInfo) session
 					.get(CherryConstants.SESSION_USERINFO);
 			// 所属组织
 			map.put(CherryConstants.ORGANIZATIONINFOID, userInfo
@@ -194,7 +197,7 @@ public class BINOLMBCCT10_Action extends BaseAction implements ModelDriven<BINOL
 			if(form.getBrandInfoId() == null || "".equals(form.getBrandInfoId())) {
 				// 不是总部的场合
 				if(userInfo.getBIN_BrandInfoID() != CherryConstants.BRAND_INFO_ID_VALUE) {
-				// 所属品牌
+					// 所属品牌
 					map.put(CherryConstants.BRANDINFOID, userInfo.getBIN_BrandInfoID());
 				}
 			} else {
@@ -223,37 +226,37 @@ public class BINOLMBCCT10_Action extends BaseAction implements ModelDriven<BINOL
 			map.put("issueType", form.getIssueType());
 			// 处理结果
 			map.put("resolution", form.getResolution());
-            
-            Map<String, Object> exportMap = binolmbcct10_IF.getExportMap(map);
-            String zipName = ConvertUtil.getString(exportMap.get("downloadFileName"));
-            downloadFileName = zipName + ".zip";
-            if(form.getExportFormat() != null && "0".equals(form.getExportFormat())) {
-            	 byte[] byteArray = binOLCM37_BL.exportExcel(exportMap,binolmbcct10_IF);
-            	 excelStream = new ByteArrayInputStream(binOLCM37_BL.fileCompression(byteArray, zipName+".xls"));
-            }else{
-            	//CSV导出
-        		exportMap.put("sessionId", request.getSession().getId());
-        		String tempFilePath = binolmbcct10_IF.exportCsv(exportMap);
-        		Map<String, Object> msgParam = new HashMap<String, Object>();
-            	msgParam.put("TradeType", "exportMsg");
-        		msgParam.put("SessionID", userInfo.getSessionID());
-        		msgParam.put("LoginName", userInfo.getLoginName());
-        		msgParam.put("OrgCode", userInfo.getOrgCode());
-        		msgParam.put("BrandCode", userInfo.getBrandCode());
-        		if(tempFilePath != null) {
-        			msgParam.put("exportStatus", "1");
-        			msgParam.put("message", getText("ECM00096"));
-        			msgParam.put("tempFilePath", tempFilePath);
-        		} else {
-        			msgParam.put("exportStatus", "0");
-        			msgParam.put("message", getText("ECM00094"));
-        		}
-        		//导出完成推送导出信息
-        		JQueryPubSubPush.pushMsg(msgParam, "pushMsg", 1);
-            	return null;
-            }
-            return SUCCESS;
-        } catch (Exception e) {
+
+			Map<String, Object> exportMap = binolmbcct10_IF.getExportMap(map);
+			String zipName = ConvertUtil.getString(exportMap.get("downloadFileName"));
+			downloadFileName = zipName + ".zip";
+			if(form.getExportFormat() != null && "0".equals(form.getExportFormat())) {
+				byte[] byteArray = binOLCM37_BL.exportExcel(exportMap,binolmbcct10_IF);
+				excelStream = new ByteArrayInputStream(binOLCM37_BL.fileCompression(byteArray, zipName+".xls"));
+			}else{
+				//CSV导出
+				exportMap.put("sessionId", request.getSession().getId());
+				String tempFilePath = binolmbcct10_IF.exportCsv(exportMap);
+				Map<String, Object> msgParam = new HashMap<String, Object>();
+				msgParam.put("TradeType", "exportMsg");
+				msgParam.put("SessionID", userInfo.getSessionID());
+				msgParam.put("LoginName", userInfo.getLoginName());
+				msgParam.put("OrgCode", userInfo.getOrgCode());
+				msgParam.put("BrandCode", userInfo.getBrandCode());
+				if(tempFilePath != null) {
+					msgParam.put("exportStatus", "1");
+					msgParam.put("message", getText("ECM00096"));
+					msgParam.put("tempFilePath", tempFilePath);
+				} else {
+					msgParam.put("exportStatus", "0");
+					msgParam.put("message", getText("ECM00094"));
+				}
+				//导出完成推送导出信息
+				JQueryPubSubPush.pushMsg(msgParam, "pushMsg", 1);
+				return null;
+			}
+			return SUCCESS;
+		} catch (Exception e) {
 			logger.error(e.getMessage(),e);
 			if(e instanceof CherryException){
 				this.addActionError(((CherryException)e).getErrMessage());
@@ -261,9 +264,9 @@ public class BINOLMBCCT10_Action extends BaseAction implements ModelDriven<BINOL
 				this.addActionError(getText("ECM00094"));
 			}
 			return CherryConstants.GLOBAL_ACCTION_RESULT;
-        }
+		}
 	}
-	
+
 	@Override
 	public BINOLMBCCT10_Form getModel() {
 		return form;
