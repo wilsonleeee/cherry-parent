@@ -1195,4 +1195,70 @@
 				(]]><include refid="BINOLWRSRP99.queryHeroList" /><![CDATA[) T
 		]]>
     </select>
+	<!-- 获取支付构成报表List -->
+	<select id="getPayTypeSaleList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+	<![CDATA[
+		SELECT
+			PL.PayTypeCode AS payType,
+			ISNULL(SUM(CASE WHEN B.SaleType = 'SR' THEN -PL.PayAmount ELSE PL.PayAmount END),0) AS totalPayAmount
+		FROM Sale.BIN_SalePayList PL WITH(NOLOCK)
+		INNER JOIN
+		(
+			SELECT
+				BIN_SaleRecordID,
+				SaleType
+			FROM
+				Sale.BIN_SaleRecord A WITH(NOLOCK)
+			WHERE
+				A.BIN_OrganizationID = #organizationId# AND
+				A.BIN_OrganizationInfoID = #organizationInfoId# AND
+				A.BIN_BrandInfoID = #brandInfoId# AND
+				A.ValidFlag = '1'
+				]]>
+				<isNotEmpty prepend="AND" property="saleDateStart">
+					A.SaleDate &gt;= #saleDateStart#
+				</isNotEmpty>
+				<isNotEmpty prepend="AND" property="saleDateEnd">
+					A.SaleDate &lt;= #saleDateEnd#
+				</isNotEmpty>
+				<isNotEmpty prepend="AND" property="employeeId">
+					A.BIN_EmployeeID = #employeeId#
+				</isNotEmpty>
+		<![CDATA[
+		) B
+		ON PL.BIN_SaleRecordID = B.BIN_SaleRecordID
+		GROUP BY PL.PayTypeCode
+		ORDER BY totalPayAmount DESC
+		]]>
+	</select>
+
+	<!-- 获取支付构成报表List -->
+	<select id="getPayTypeCountInfo" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+		<![CDATA[
+		SELECT
+			ISNULL(SUM(CASE WHEN A.SaleType = 'SR' THEN -A.Amount ELSE A.Amount END),0) AS amount,
+			ISNULL(SUM(CASE WHEN A.SaleType = 'SR' THEN -A.Quantity ELSE A.Quantity END),0) AS quantity,
+			ISNULL(SUM(CASE WHEN A.SaleType = 'NS' THEN 1 ELSE 0 END),0) AS saleCount,
+			ISNULL(SUM(CASE WHEN A.SaleType = 'SR' THEN -ISNULL(F.TotalCostPrice,0) ELSE ISNULL(F.TotalCostPrice,0) END),0) AS totalCostPrice
+		FROM
+			Sale.BIN_SaleRecord A WITH(NOLOCK)
+		LEFT JOIN Inventory.BIN_ProductBatchInOut F WITH(NOLOCK)
+		ON(A.BillCode = F.RelevanceNo)
+		WHERE
+			A.BIN_OrganizationID = #organizationId# AND
+			A.BIN_OrganizationInfoID = #organizationInfoId# AND
+			A.BIN_BrandInfoID = #brandInfoId# AND
+			A.ValidFlag = '1'
+				]]>
+		<isNotEmpty prepend="AND" property="saleDateStart">
+			A.SaleDate &gt;= #saleDateStart#
+		</isNotEmpty>
+		<isNotEmpty prepend="AND" property="saleDateEnd">
+			A.SaleDate &lt;= #saleDateEnd#
+		</isNotEmpty>
+		<isNotEmpty prepend="AND" property="employeeId">
+			A.BIN_EmployeeID = #employeeId#
+		</isNotEmpty>
+	</select>
+
 </sqlMap>

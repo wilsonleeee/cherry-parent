@@ -1,11 +1,11 @@
 package com.cherry.wp.wr.srp.service;
 
+import com.cherry.cm.core.CherryConstants;
+import com.cherry.cm.service.BaseService;
+
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-
-import com.cherry.cm.core.CherryConstants;
-import com.cherry.cm.service.BaseService;
 
 /**
  * 销售报表Service
@@ -268,7 +268,33 @@ public class BINOLWRSRP99_Service extends BaseService {
 		paramMap.put(CherryConstants.IBATIS_SQL_ID, "BINOLWRSRP99.getSaleByDayCountInfo");
 		return (Map)baseServiceImpl.get(paramMap);
 	}
-	
+
+	/**
+	 * 获取支付构成报表List
+	 *
+	 * @param map 查询条件
+	 * @return 支付构成报表List
+	 */
+	public List<Map<String, Object>> getPayTypeSaleList(Map<String, Object> map) {
+		Map<String, Object> paramMap = new HashMap<String, Object>();
+		paramMap.putAll(map);
+		paramMap.put(CherryConstants.IBATIS_SQL_ID, "BINOLWRSRP99.getPayTypeSaleList");
+		return baseServiceImpl.getList(paramMap);
+	}
+
+	/**
+	 * 获取支付构成报表统计信息
+	 *
+	 * @param map 查询条件
+	 * @return 支付构成报表统计信息
+	 */
+	public Map<String, Object> getPayTypeCountInfo(Map<String, Object> map) {
+		Map<String, Object> paramMap = new HashMap<String, Object>();
+		paramMap.putAll(map);
+		paramMap.put(CherryConstants.IBATIS_SQL_ID, "BINOLWRSRP99.getPayTypeCountInfo");
+		return (Map)baseServiceImpl.get(paramMap);
+	}
+
 	/**
 	 * 获取柜台每天的销售统计信息List
 	 * 
