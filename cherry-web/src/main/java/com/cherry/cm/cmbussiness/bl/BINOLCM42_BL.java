@@ -31,9 +31,9 @@ import com.cherry.cm.util.ConvertUtil;
 
 /**
  * 组织结构共通BL
- * 
+ *
  * @author lipc
- * 
+ *
  */
 public class BINOLCM42_BL {
 	private static final Logger logger = LoggerFactory.getLogger(BINOLCM42_BL.class);
@@ -42,10 +42,10 @@ public class BINOLCM42_BL {
 
 	@Resource
 	private BINOLCM42_Service binOLCM42_Service;
-	
+
 	/**
 	 * 取得柜台信息Info
-	 * 
+	 *
 	 * @param paramMap
 	 * @return
 	 */
@@ -71,7 +71,7 @@ public class BINOLCM42_BL {
 
 	/**
 	 * 取得渠道List
-	 * 
+	 *
 	 * @param paramMap
 	 * @return
 	 */
@@ -82,7 +82,7 @@ public class BINOLCM42_BL {
 
 	/**
 	 * 取得实体仓库List
-	 * 
+	 *
 	 * @param paramMap
 	 * @return
 	 */
@@ -105,10 +105,10 @@ public class BINOLCM42_BL {
 		}
 		return sb.toString();
 	}
-	
+
 	/**
 	 * 取得逻辑仓库List
-	 * 
+	 *
 	 * @param paramMap
 	 * @return
 	 */
@@ -116,11 +116,11 @@ public class BINOLCM42_BL {
 		return binOLCM42_Service.getLgcInventoryList(paramMap);
 	}
 
-	
+
 
 	/**
 	 * 取得部门显示等级list
-	 * 
+	 *
 	 * @param codeKey
 	 * @return
 	 */
@@ -158,8 +158,8 @@ public class BINOLCM42_BL {
 		}
 		return gradeList;
 	}
-	
-	
+
+
 	private void filterGradeList(List<Map<String, Object>> gradeList,
 			Map<String, Object> map) {
 		// 权限部门类型
@@ -190,7 +190,7 @@ public class BINOLCM42_BL {
 
 	/**
 	 * 取得部门显示等级list
-	 * 
+	 *
 	 * @param codeKey
 	 * @return
 	 */
@@ -224,7 +224,7 @@ public class BINOLCM42_BL {
 		}
 		return nextList;
 	}
-	
+
 	private Map<String, Object> getNode(Map<String, Object> node, int departId){
 		Map<String, Object> returnNode = null;
 		int departId_n = ConvertUtil.getInt(node.get("departId"));
@@ -278,20 +278,23 @@ public class BINOLCM42_BL {
 	private void filterDepartList(List<Map<String, Object>> departList,Map<String, Object> map){
 		// 部门过滤
 		if(null != departList && departList.size() > 0){
-			int testType_p = ConvertUtil.getInt(map.get("testType"));
-			int orgValid_p = ConvertUtil.getInt(map.get("orgValid"));
-			for(int j=0; j<departList.size(); j++){
-				Map<String, Object> depart = departList.get(j);
-				int testType = ConvertUtil.getInt(depart.get("testType"));
-				int orgValid = ConvertUtil.getInt(depart.get("orgValid"));
-				if(testType_p != testType || orgValid_p != orgValid){
-					departList.remove(j);
-					j--;
+			String testType_p = ConvertUtil.getString(map.get("testType"));
+			String orgValid_p = ConvertUtil.getString(map.get("orgValid"));
+
+				for(int j=0; j<departList.size(); j++){
+					Map<String, Object> depart = departList.get(j);
+					String testType = ConvertUtil.getString(depart.get("testType"));
+					String orgValid = ConvertUtil.getString(depart.get("orgValid"));
+					if (!testType_p.equals("")&&!orgValid_p.equals("")){
+					if(!testType_p.equals(testType) || !orgValid_p.equals(orgValid)){
+						departList.remove(j);
+						j--;
+					}
 				}
 			}
 		}
 	}
-	
+
 	/**
 	 * 部门等级处理
 	 * @return
@@ -310,7 +313,7 @@ public class BINOLCM42_BL {
 		}
 		return list;
 	}
-	
+
 	private	List<Map<String, Object>> getTreeList(Map<String, Object> map){
 		List<Map<String, Object>> treeList = null;
 		int brandInfoId = ConvertUtil.getInt(map.get(CherryConstants.BRANDINFOID));
@@ -330,10 +333,10 @@ public class BINOLCM42_BL {
 		}
 		return treeList;
 	}
-	
+
 	/**
 	 * 取得查询模式
-	 * 
+	 *
 	 * @param paramMap
 	 * @return
 	 */
@@ -357,10 +360,10 @@ public class BINOLCM42_BL {
 			return defMode;
 		}
 	}
-	
+
 	/**
 	 * list 比较器
-	 * 
+	 *
 	 */
 	public class MyComparator implements Comparator<Map<String, Object>> {
 		String orderKey = null;

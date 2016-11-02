@@ -11,7 +11,7 @@
 			)SORT_T1)SORT_T2 WHERE RowNumber BETWEEN  #START# AND #END#
 		]]>
 	</sql>
-	
+
 	<sql id="insertKeySql">
 	<![CDATA[
 		CreateTime,
@@ -23,8 +23,8 @@
 		ValidFlag,
 		ModifyCount
 	]]>
-	</sql>			
-	
+	</sql>
+
 	<sql id="insertValueSql">
 		<isNotEmpty property="createTime">
 			#createTime#,
@@ -46,8 +46,8 @@
 		'1',
 		'0'
 	]]>
-	</sql>		
-	
+	</sql>
+
 	<sql id="updateSql">
 		<isNotEmpty property="updateTime">
 			UpdateTime=#updateTime#,
@@ -61,7 +61,7 @@
 		ModifyCount=ModifyCount+1
 	]]>
 	</sql>
-	
+
 	<!-- 数据过滤查询 -->
 	<sql id ="filterSql">
 		<isNotNull property="FILTER_VALUE" >
@@ -70,28 +70,28 @@
 			</iterate>
 		</isNotNull>
 	</sql>
-	
+
 	<!-- 取得系统时间  -->
     <select id="getSYSDate" resultClass="java.lang.String">
     	<![CDATA[
 			SELECT GETDATE() AS sysDate
 		]]>										
     </select>
-    
+
     <!-- 取得系统时间(yyyy-MM-dd HH:mm:ss)  -->
     <select id="getSYSDateTime" resultClass="java.lang.String">
     	<![CDATA[
 			SELECT CONVERT(varchar(100), GETDATE(),120) AS sysDate
 		]]>										
     </select>
-    
+
 	<!-- 取得系统时间(年月日) -->
     <select id="getDateYMD" resultClass="java.lang.String">
     	<![CDATA[
 			SELECT CONVERT(varchar(10), GETDATE(), 120) AS sysDate
 		]]>										
     </select>
-    
+
     <!-- 查询假日 -->
 	<resultMap id="BINOLCMINC99.Holiday" class="java.util.HashMap">
 		<result property="date" column="date"/>
@@ -162,8 +162,8 @@
     </select>
 	<!-- CODE值一览 -->
 	<resultMap id="codeList" class="java.util.HashMap">
-		<result property="orgCode" column="OrgCode"/>									<!-- 组织Code -->	
-		<result property="brandCode" column="BrandCode"/>								<!-- 品牌代码 -->	
+		<result property="orgCode" column="OrgCode"/>									<!-- 组织Code -->
+		<result property="brandCode" column="BrandCode"/>								<!-- 品牌代码 -->
 		<result property="codeType" column="CodeType"/>									<!-- Code类别 -->
 		<result property="codeKey" column="CodeKey"/>									<!-- Key -->
 		<result property="value1" column="Value1"/>										<!-- 值1 -->
@@ -230,31 +230,37 @@
 				#departType[]#
 			</iterate>
 		</isNotEmpty>
-<!--        	<isEmpty property="orgValid" prepend="AND">
-			<isNotEmpty property="orgValidAll">
-       			包含停用部门
-		       	<isEqual property="orgValidAll" compareValue="1">
-		       		B99.ValidFlag IN('1','0')
-		       	</isEqual>
-		       	<isNotEqual property="orgValidAll" compareValue="1">
-			       	B99.ValidFlag = '1'
-			    </isNotEqual>
-	       	</isNotEmpty>
-	       	<isEmpty property="orgValidAll">
-	       		B99.ValidFlag = '1'
-	       	</isEmpty>
-		</isEmpty> -->
-		<isNotEmpty property="orgValid" prepend="AND">
-       			B99.ValidFlag = #orgValid#       			
-       	</isNotEmpty>
-       	<isNotEmpty property="testType" prepend="AND">
-       			B99.TestType = #testType#       			
-       	</isNotEmpty>
+		<!--        	<isEmpty property="orgValid" prepend="AND">
+                    <isNotEmpty property="orgValidAll">
+                           包含停用部门
+                           <isEqual property="orgValidAll" compareValue="1">
+                               B99.ValidFlag IN('1','0')
+                           </isEqual>
+                           <isNotEqual property="orgValidAll" compareValue="1">
+                               B99.ValidFlag = '1'
+                        </isNotEqual>
+                       </isNotEmpty>
+                       <isEmpty property="orgValidAll">
+                           B99.ValidFlag = '1'
+                       </isEmpty>
+                </isEmpty> -->
+		<!-- 		<isNotEmpty property="orgValid" prepend="AND">
+                           B99.ValidFlag = #orgValid#
+                   </isNotEmpty>
+                   <isNotEmpty property="testType" prepend="AND">
+                           B99.TestType = #testType#
+                   </isNotEmpty> -->
+		<isNotEqual property="orgValid" compareValue="ALL" prepend="AND">
+			B99.ValidFlag = #orgValid#
+		</isNotEqual>
+		<isNotEqual property="testType" compareValue="ALL" prepend="AND">
+			B99.TestType = #testType#
+		</isNotEqual>
 		<!-- <isEmpty property="testType" prepend="AND">
 			B99.TestType = 0
 		</isEmpty>
 		<isNotEmpty property="testType" prepend="AND">
-			B99.TestType = #testType# 
+			B99.TestType = #testType#
 		</isNotEmpty>-->
 		<isNotEmpty property="regionId" prepend="AND">
         	B99.BIN_RegionID = #regionId#
@@ -276,7 +282,7 @@
 			SELECT
 				DISTINCT
 				C99.BIN_InventoryInfoID
-			FROM	
+			FROM
 				Privilege.BIN_DepartPrivilege A99 WITH(NOLOCK)
 				JOIN Basis.BIN_Organization B99 WITH(NOLOCK)
 				ON(A99.BIN_OrganizationID = B99.BIN_OrganizationID)
@@ -287,7 +293,7 @@
 		<isNotEmpty property="departId">
 			JOIN Privilege.BIN_DepartRelation D99 WITH(NOLOCK)
 			ON(B99.BIN_OrganizationID = D99.BIN_OrganizationIDRel
-				AND D99.BIN_OrganizationID = #departId#)	
+				AND D99.BIN_OrganizationID = #departId#)
 		</isNotEmpty>
 		<!-- 某渠道下的柜台 -->
 		<isNotEmpty property="channelId">
@@ -308,46 +314,52 @@
 				#departType[]#
 			</iterate>
 		</isNotEmpty>
-<!--        	<isEmpty property="orgValid" prepend="AND">
-			<isNotEmpty property="orgValidAll">
-       			包含停用部门
-		       	<isEqual property="orgValidAll" compareValue="1">
-		       		B99.ValidFlag IN('1','0')
-		       	</isEqual>
-		       	<isNotEqual property="orgValidAll" compareValue="1">
-			       	B99.ValidFlag = '1'
-			    </isNotEqual>
-	       	</isNotEmpty>
-	       	<isEmpty property="orgValidAll">
-	       		B99.ValidFlag = '1'
-	       	</isEmpty>
-		</isEmpty>
-		<isNotEmpty property="orgValid" prepend="AND">
-       		<isNotEmpty property="orgValidAll">
-       			包含停用部门
-		       	<isEqual property="orgValidAll" compareValue="1">
-		       		(B99.ValidFlag=#orgValid# OR B99.ValidFlag = '0')
-		       	</isEqual>
-		       	<isNotEqual property="orgValidAll" compareValue="1">
-			       	B99.ValidFlag = #orgValid#
-			    </isNotEqual>
-	       	</isNotEmpty>
-	       	<isEmpty property="orgValidAll">
-	       		B99.ValidFlag = #orgValid#
-	       	</isEmpty>
-       	</isNotEmpty> -->
-       	<isNotEmpty property="orgValid" prepend="AND">
-       			B99.ValidFlag = #orgValid#       			
-       	</isNotEmpty>
-       	<isNotEmpty property="testType" prepend="AND">
-       			B99.TestType = #testType#       			
-       	</isNotEmpty>
-<!-- 		<isEmpty property="testType" prepend="AND">
-			B99.TestType = 0
-		</isEmpty>
-		<isNotEmpty property="testType" prepend="AND">
+		<!--        	<isEmpty property="orgValid" prepend="AND">
+                    <isNotEmpty property="orgValidAll">
+                           包含停用部门
+                           <isEqual property="orgValidAll" compareValue="1">
+                               B99.ValidFlag IN('1','0')
+                           </isEqual>
+                           <isNotEqual property="orgValidAll" compareValue="1">
+                               B99.ValidFlag = '1'
+                        </isNotEqual>
+                       </isNotEmpty>
+                       <isEmpty property="orgValidAll">
+                           B99.ValidFlag = '1'
+                       </isEmpty>
+                </isEmpty>
+                <isNotEmpty property="orgValid" prepend="AND">
+                       <isNotEmpty property="orgValidAll">
+                           包含停用部门
+                           <isEqual property="orgValidAll" compareValue="1">
+                               (B99.ValidFlag=#orgValid# OR B99.ValidFlag = '0')
+                           </isEqual>
+                           <isNotEqual property="orgValidAll" compareValue="1">
+                               B99.ValidFlag = #orgValid#
+                        </isNotEqual>
+                       </isNotEmpty>
+                       <isEmpty property="orgValidAll">
+                           B99.ValidFlag = #orgValid#
+                       </isEmpty>
+                   </isNotEmpty> -->
+		<isNotEqual property="orgValid" compareValue="ALL" prepend="AND">
+			B99.ValidFlag = #orgValid#
+		</isNotEqual>
+		<!--       	<isNotEmpty property="orgValid" prepend="AND">
+                          B99.ValidFlag = #orgValid#
+                  </isNotEmpty> -->
+		<isNotEqual property="testType" compareValue="ALL" prepend="AND">
 			B99.TestType = #testType#
-		</isNotEmpty> -->
+		</isNotEqual>
+		<!--   	<isNotEmpty property="testType" prepend="AND">
+                      B99.TestType = #testType#
+              </isNotEmpty -->
+		<!-- 		<isEmpty property="testType" prepend="AND">
+                    B99.TestType = 0
+                </isEmpty>
+                <isNotEmpty property="testType" prepend="AND">
+                    B99.TestType = #testType#
+                </isNotEmpty> -->
 		<isNotEmpty property="regionId" prepend="AND">
         	B99.BIN_RegionID = #regionId#
         </isNotEmpty>
@@ -367,13 +379,13 @@
     	<![CDATA[
 			SELECT
 				ControlDate AS controlDate
-			FROM 
+			FROM
 				Tools.BIN_BussinessDate
 			WHERE
 				BIN_OrganizationInfoID = #organizationInfoId# AND
 				BIN_BrandInfoID = #brandInfoId# AND
 				ValidFlag = '1'
-		]]>										
+		]]>
     </select>
     <!-- 取得业务日期Map  -->
     <select id="getBussinessDateMap" resultClass="java.util.HashMap">
@@ -381,15 +393,15 @@
 			SELECT
 				ControlDate AS businessDate,
 				CloseFlag AS closeFlag
-			FROM 
+			FROM
 				Tools.BIN_BussinessDate
 			WHERE
 				BIN_OrganizationInfoID = #organizationInfoId# AND
 				BIN_BrandInfoID = #brandInfoId# AND
 				ValidFlag = '1'
-		]]>										
+		]]>
     </select>
-    
+
     <!-- 部门权限（控制权限用） -->
     <sql id="departPrivilegeSql">
     	<![CDATA[
@@ -405,37 +417,39 @@
         	<isNotEmpty property="employeeId">
         		BIN_EmployeeID = #employeeId# AND
         	</isNotEmpty>
-		<![CDATA[																		
+		<![CDATA[
 				(BusinessType = 'A' OR BusinessType = #businessType#)
 		]]>
-			<isNotEmpty property="DEPARTTYPE" prepend="AND">
-        		DepartType = #DEPARTTYPE#
-        	</isNotEmpty>
-        	<isNotEmpty property="orgValid" prepend="AND">
-       			OrgValidFlag = #orgValid#       			
-       		</isNotEmpty>
-<!--         	<isNotEmpty property="orgValid" prepend="AND">
-	       		<isNotEmpty property="orgValidAll">
-	       			包含停用部门
-			       	<isEqual property="orgValidAll" compareValue="1">
-			       		(OrgValidFlag=#orgValid# OR OrgValidFlag = '0')
-			       	</isEqual>
-			       	<isNotEqual property="orgValidAll" compareValue="1">
-			       		OrgValidFlag = #orgValid#
-			       	</isNotEqual>
-		       	</isNotEmpty>
-		       	<isEmpty property="orgValidAll">
-		       		OrgValidFlag = #orgValid#
-		       	</isEmpty>
-	       	</isNotEmpty> -->
-        	<isNotEmpty property="counterKind" prepend="AND">
-        		CounterKind = #counterKind#
-        	</isNotEmpty>
-    </sql>
-    
-    <!-- 部门权限（查询权限信息用） -->
-    <sql id="departPLJoinSql">
-    	<![CDATA[
+		<isNotEmpty property="DEPARTTYPE" prepend="AND">
+			DepartType = #DEPARTTYPE#
+		</isNotEmpty>
+		<isNotEmpty property="orgValid" prepend="AND">
+			<isNotEqual property="orgValid" compareValue="ALL">
+				OrgValidFlag = #orgValid#
+			</isNotEqual>
+		</isNotEmpty>
+		<!--         	<isNotEmpty property="orgValid" prepend="AND">
+                           <isNotEmpty property="orgValidAll">
+                               包含停用部门
+                               <isEqual property="orgValidAll" compareValue="1">
+                                   (OrgValidFlag=#orgValid# OR OrgValidFlag = '0')
+                               </isEqual>
+                               <isNotEqual property="orgValidAll" compareValue="1">
+                                   OrgValidFlag = #orgValid#
+                               </isNotEqual>
+                           </isNotEmpty>
+                           <isEmpty property="orgValidAll">
+                               OrgValidFlag = #orgValid#
+                           </isEmpty>
+                       </isNotEmpty> -->
+		<isNotEmpty property="counterKind" prepend="AND">
+			CounterKind = #counterKind#
+		</isNotEmpty>
+	</sql>
+
+	<!-- 部门权限（查询权限信息用） -->
+	<sql id="departPLJoinSql">
+		<![CDATA[
 		    SELECT DISTINCT
 		    	BIN_EmployeeID,
 				BIN_OrganizationID,
@@ -465,7 +479,7 @@
         		CounterKind = #counterKind#
         	</isNotEmpty>
     </sql>
-    
+
     <!-- 部门权限（根据部门查询有权限员工） -->
     <sql id="departPLSql">
     	<![CDATA[
@@ -477,15 +491,15 @@
 			FROM
 				Privilege.BIN_DepartPrivilege WITH(NOLOCK)
 			WHERE	
-		]]>	
+		]]>
 			<isNotEmpty property="organizationId">
-        		BIN_OrganizationID = #organizationId# AND		
+        		BIN_OrganizationID = #organizationId# AND
         	</isNotEmpty>
 		<![CDATA[													
 				(BusinessType = 'A' OR BusinessType = #businessType#)
 		]]>
     </sql>
-    
+
     <!-- 人员权限（权限控制用） -->
     <sql id="employeePrivilegeSql">
     	<isNotEmpty property="userId">
@@ -497,9 +511,9 @@
 			WHERE
 				X.CreatedBy = CONVERT(varchar(25),#userId#)
     		UNION
-    	]]>	
-    	</isNotEmpty>	
-    	<![CDATA[	
+    	]]>
+    	</isNotEmpty>
+    	<![CDATA[
 		    SELECT DISTINCT
 				BIN_SubEmployeeID
 			FROM
@@ -516,10 +530,10 @@
 				(BusinessType = 'A' OR BusinessType = #businessType#)
 		]]>
     </sql>
-    
+
     <!-- 人员权限（查询权限信息用） -->
     <sql id="employeePLJoinSql">
-    	<![CDATA[	
+    	<![CDATA[
 		    SELECT DISTINCT
 		    	BIN_UserID,
 		    	BIN_EmployeeID,
@@ -536,13 +550,13 @@
         		BIN_EmployeeID = #employeeId# AND
         	</isNotEmpty>
         	<isNotEmpty property="subEmployeeId">
-        		BIN_SubEmployeeID = #subEmployeeId# AND		
+        		BIN_SubEmployeeID = #subEmployeeId# AND
         	</isNotEmpty>
 		<![CDATA[																						
 				(BusinessType = 'A' OR BusinessType = #businessType#)
 		]]>
     </sql>
-	
+
 	<!--取得员工权限下的指定部门类型部门总数-->
 	<sql id="departNumPrivilegeSql">
 		<![CDATA[
@@ -633,7 +647,7 @@
 			SET				
 				CurrentSchemaVersion = #version#,			
 		]]>
-		<include refid="BINOLCMINC99.updateSql" />		
+		<include refid="BINOLCMINC99.updateSql" />
 		<![CDATA[					
 			WHERE
 				OrgCode = #orgCode# 
@@ -642,7 +656,7 @@
     </update>
     <!-- 取得产品信息  -->
     <sql id="getProList">
-    	<![CDATA[SELECT]]>  
+    	<![CDATA[SELECT]]>
 		<dynamic>
 			<isNotEmpty property="language">
 				<isEqual property="language" compareValue="en_US">
@@ -651,7 +665,7 @@
 				<isEqual property="language" compareValue="zh_CN">
 					A.NameTotal AS nameTotal,
 				</isEqual>
-			</isNotEmpty>	
+			</isNotEmpty>
 			<isEmpty property="language">
 				A.NameTotal AS nameTotal,
 			</isEmpty>
@@ -670,13 +684,13 @@
     	]]>
     	<dynamic>
 		 	<isNotEmpty property="brandInfoId" prepend="AND">
-				A.BIN_BrandInfoID = #brandInfoId#		
-			</isNotEmpty>	
+				A.BIN_BrandInfoID = #brandInfoId#
+			</isNotEmpty>
 		</dynamic>
     </sql>
     <!-- 取得促销品信息  -->
     <sql id="getPrmList">
-    	<![CDATA[SELECT]]>  
+    	<![CDATA[SELECT]]>
 		<dynamic>
 			<isNotEmpty property="language">
 				<isEqual property="language" compareValue="en_US">
@@ -685,7 +699,7 @@
 				<isEqual property="language" compareValue="zh_CN">
 					A.NameTotal AS nameTotal,
 				</isEqual>
-			</isNotEmpty>	
+			</isNotEmpty>
 			<isEmpty property="language">
 				A.NameTotal AS nameTotal,
 			</isEmpty>
@@ -704,19 +718,19 @@
     	]]>
     	<dynamic>
 		 	<isNotEmpty property="brandInfoId">
-				AND A.BIN_BrandInfoID = #brandInfoId#		
-			</isNotEmpty>	
+				AND A.BIN_BrandInfoID = #brandInfoId#
+			</isNotEmpty>
 		</dynamic>
     </sql>
     <!-- 取得产品+促销品信息  -->
     <sql id="getProPrmList">
     	<![CDATA[SELECT T.* FROM(]]>
-    	<include refid="BINOLCMINC99.getProList" />	
-		<![CDATA[UNION]]>	
+    	<include refid="BINOLCMINC99.getProList" />
+		<![CDATA[UNION]]>
 		<include refid="BINOLCMINC99.getPrmList" />
 		<![CDATA[)T]]>
     </sql>
-    
+
     <!-- 查询指定日期所在的财务年月 -->
 	<select id="getFiscalMonth" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
 		<![CDATA[
@@ -805,12 +819,12 @@
 	<statement id="commit">
 		<![CDATA[COMMIT]]>
 	</statement>
-	
+
 	<!-- ROLLBACK 	-->
 	<statement id="rollback">
 		<![CDATA[ROLLBACK]]>
 	</statement>
-	
+
 	<!-- 密钥获取 -->
 	<select id="getCherrySecret" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
     	<![CDATA[

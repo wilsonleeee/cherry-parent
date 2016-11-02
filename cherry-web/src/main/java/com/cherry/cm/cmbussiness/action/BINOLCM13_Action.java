@@ -32,9 +32,9 @@ import com.opensymphony.xwork2.ModelDriven;
 
 /**
  * 选择范围共通Action
- * 
+ *
  * @author lipc
- * 
+ *
  */
 public class BINOLCM13_Action extends BaseAction implements
 		ModelDriven<BINOLCM13_Form> {
@@ -43,10 +43,10 @@ public class BINOLCM13_Action extends BaseAction implements
 
 	@Resource
 	private BINOLCM00_BL binOLCM00_BL;
-	
+
 	@Resource
 	private BINOLCM42_BL binOLCM42_BL;
-	
+
 	/** 参数FORM */
 	private BINOLCM13_Form form = new BINOLCM13_Form();
 
@@ -59,13 +59,13 @@ public class BINOLCM13_Action extends BaseAction implements
 
 	/** 部门等级List */
 	private List<Map<String, Object>> gradeList;
-	
+
 	/** 实体仓库List */
 	private List<Map<String, Object>> depotList;
-	
+
 	/** 逻辑仓库List */
 	private List<Map<String, Object>> lgcInventoryList;
-	
+
 	/** 区域List */
 	private List<Map<String, Object>> areaList;
 
@@ -133,7 +133,7 @@ public class BINOLCM13_Action extends BaseAction implements
 
 	/**
 	 * 取得部门联动画面
-	 * 
+	 *
 	 * @return
 	 * @throws Exception
 	 */
@@ -166,7 +166,7 @@ public class BINOLCM13_Action extends BaseAction implements
 
 	/**
 	 * AJAX 取得部门List
-	 * 
+	 *
 	 * @throws Exception
 	 */
 	public void queryDepartBINOLCM13() throws Exception {
@@ -176,7 +176,7 @@ public class BINOLCM13_Action extends BaseAction implements
 	}
 	/**
 	 * AJAX 取得部门List
-	 * 
+	 *
 	 * @throws Exception
 	 */
 	public void queryDepart2BINOLCM13() throws Exception {
@@ -188,7 +188,7 @@ public class BINOLCM13_Action extends BaseAction implements
 
 	/**
 	 * AJAX 取得实体仓库List
-	 * 
+	 *
 	 * @throws Exception
 	 */
 	public void queryDepotBINOLCM13() throws Exception {
@@ -198,10 +198,10 @@ public class BINOLCM13_Action extends BaseAction implements
 		// 响应JSON对象
 		ConvertUtil.setResponseByAjax(response, depotInfo);
 	}
-	
+
 	/**
 	 * AJAX 取得逻辑仓库List
-	 * 
+	 *
 	 * @throws Exception
 	 */
 	public void queryLgcDepotBINOLCM13() throws Exception {
@@ -213,7 +213,7 @@ public class BINOLCM13_Action extends BaseAction implements
 
 	/**
 	 * 取得共通参数Map
-	 * 
+	 *
 	 * @return
 	 */
 	@SuppressWarnings("unchecked")
@@ -254,32 +254,32 @@ public class BINOLCM13_Action extends BaseAction implements
 		String orgValid = ConvertUtil.getString(map.get("orgValid"));
 		// 包含启用停用部门
 		String orgValidAll = ConvertUtil.getString(map.get("orgValidAll"));
-		if("".equals(testType)){
-			map.put("testType", "");
-			form.setTestType("");
-		}else if ("0".equals(testType)){
+		if("".equals(testType)||"0".equals(testType)){
 			map.put("testType", "0");
 			form.setTestType("0");
 		}else if("1".equals(testType)){
 			map.put("testType", "1");
 			form.setTestType("1");
+		}else if ("ALL".equals(testType)){
+			map.put("testType", "");
+			form.setTestType("ALL");
 		}
-		
-		if("".equals(orgValid)){ 
-			map.put("orgValid", "");
-			form.setOrgValid("");
+
+		if("".equals(orgValid)||"1".equals(orgValid)){
+			map.put("orgValid", "1");
+			form.setOrgValid("1");
 		}else if("0".equals(orgValid)){
 			map.put("orgValid", "0");
 			form.setOrgValid("0");
-		}else if("1".equals(orgValid)){
-			map.put("orgValid", "1");
-			form.setOrgValid("1");
+		}else if("ALL".equals(orgValid)){
+			map.put("orgValid", "");
+			form.setOrgValid("ALL");
 		}
 		if("".equals(orgValidAll)) {
 			map.put("orgValidAll", "0");
 			form.setOrgValidAll("0");
 		}
-		
+
 		return map;
 	}
 }

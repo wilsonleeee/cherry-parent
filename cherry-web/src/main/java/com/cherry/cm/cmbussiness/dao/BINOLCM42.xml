@@ -42,18 +42,18 @@
 		]]>
 		<dynamic>
 			<isNotEmpty property="language">
-				<isEqual property="language" compareValue="en_US">										
+				<isEqual property="language" compareValue="en_US">
 					,ISNULL(A.ChannelNameForeign,A.ChannelName) AS channelName
 				</isEqual>
-				<isEqual property="language" compareValue="zh_CN">										
+				<isEqual property="language" compareValue="zh_CN">
 					,A.ChannelName AS channelName
-				</isEqual>							
+				</isEqual>
 			</isNotEmpty>
 			<isEmpty property="language">
 				,A.ChannelName AS channelName
 			</isEmpty>
 		</dynamic>
-		 <![CDATA[		
+		 <![CDATA[
 		 FROM
 			Basis.BIN_Channel A WITH(NOLOCK)
 		WHERE
@@ -64,7 +64,7 @@
 			A.ChannelName
 		]]>
     </select>
-    
+
     <!-- 取得仓库 -->
 	<select id="getDepotList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
         <![CDATA[
@@ -76,12 +76,12 @@
 		]]>
 		<dynamic>
 			<isNotEmpty property="language">
-				<isEqual property="language" compareValue="en_US">										
+				<isEqual property="language" compareValue="en_US">
 					,E.DepotNameEN AS depotName
 				</isEqual>
-				<isEqual property="language" compareValue="zh_CN">										
+				<isEqual property="language" compareValue="zh_CN">
 					,E.DepotNameCN AS depotName
-				</isEqual>								
+				</isEqual>
 			</isNotEmpty>
 			<isEmpty property="language">
 				,E.DepotNameCN AS depotName
@@ -96,17 +96,21 @@
 					AND	(B.BusinessType = 'A' OR B.BusinessType = #businessType#))
 				JOIN Basis.BIN_DepotInfo E WITH(NOLOCK)
 				ON(A.BIN_InventoryInfoID = E.BIN_DepotInfoID
-					AND E.TestType = #testType#
-					AND E.ValidFlag = '1')
+				]]>
+		<isNotEmpty property="testType"  prepend="AND">
+			E.TestType = #testType#
+		</isNotEmpty>
+		<![CDATA[
+				AND E.ValidFlag = '1')
 			WHERE A.ValidFlag = '1'
 		]]>
 		<isNotEmpty property="depotInfoStr" prepend="AND">
 			(E.DepotCode Like '%' + #depotInfoStr# + '%'
 				<isNotEmpty property="language">
-					<isEqual property="language" compareValue="zh_CN" prepend="OR">										
+					<isEqual property="language" compareValue="zh_CN" prepend="OR">
 						E.DepotNameCN Like '%' + #depotInfoStr# + '%'
 					</isEqual>
-					<isEqual property="language" compareValue="en_US" prepend="OR">										
+					<isEqual property="language" compareValue="en_US" prepend="OR">
 						E.DepotNameEN Like '%' + #depotInfoStr# + '%'
 					</isEqual>
 				</isNotEmpty>
@@ -137,12 +141,12 @@
 		]]>
 		<dynamic>
 			<isNotEmpty property="language">
-				<isEqual property="language" compareValue="en_US">										
+				<isEqual property="language" compareValue="en_US">
 					,'('+T.LogicInventoryCode+')'+ T.InventoryNameEN AS lgcInventoryName
 				</isEqual>
-				<isEqual property="language" compareValue="zh_CN">										
+				<isEqual property="language" compareValue="zh_CN">
 					,'('+T.LogicInventoryCode+')'+ T.InventoryNameCN AS lgcInventoryName
-				</isEqual>								
+				</isEqual>
 			</isNotEmpty>
 			<isEmpty property="language">
 				,'('+T.LogicInventoryCode+')'+ T.InventoryNameCN AS lgcInventoryName
@@ -163,7 +167,7 @@
 		<![CDATA[)]]>
 		</isNotEmpty>
     </select>
-    
+
     <!-- 取得柜台信息List  -->
     <select id="getCounterList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
        	<![CDATA[
@@ -172,15 +176,15 @@
         	TOP $number$
 			A.BIN_OrganizationID AS departId,
 			A.DepartCode AS departCode
-		]]>	
+		]]>
 		<dynamic>
 			<isNotEmpty property="language">
-				<isEqual property="language" compareValue="en_US">										
+				<isEqual property="language" compareValue="en_US">
 					,A.NameForeign AS departName
 				</isEqual>
-				<isEqual property="language" compareValue="zh_CN">										
+				<isEqual property="language" compareValue="zh_CN">
 					,A.DepartName AS departName
-				</isEqual>								
+				</isEqual>
 			</isNotEmpty>
 			<isEmpty property="language">
 				,A.DepartName AS departName
@@ -194,72 +198,49 @@
 				AND B.BIN_UserID = #userId#
 				AND	(B.BusinessType = 'A' OR B.BusinessType = #businessType#))
 		]]>
-		<isNotEmpty property="channelId">									
+		<isNotEmpty property="channelId">
 			JOIN Basis.BIN_CounterInfo C WITH(NOLOCK)
 			ON(A.BIN_OrganizationID = C.BIN_OrganizationID
-				and C.BIN_ChannelID = #channelId#)					
+				and C.BIN_ChannelID = #channelId#)
 		</isNotEmpty>
 		<!-- 取得所有下属部门 -->
 		<isNotEmpty property="departId">
 			JOIN Privilege.BIN_DepartRelation C99 WITH(NOLOCK)
 			ON(A.BIN_OrganizationID = C99.BIN_OrganizationIDRel
-				AND C99.BIN_OrganizationID = #departId#)	
+				AND C99.BIN_OrganizationID = #departId#)
 		</isNotEmpty>
-		<![CDATA[	
+		<![CDATA[
 		WHERE
 			A.BIN_BrandInfoID = #brandInfoId#
-			AND A.TestType = #testType#
         ]]>
-         <isNotEmpty property="departType" prepend="AND">
-        	A.Type = #departType#
-        </isNotEmpty>
-        <isNotEmpty property="regionId" prepend="AND">
-        	A.BIN_RegionID = #regionId#
-        </isNotEmpty>
-        <isNotEmpty property="provinceId" prepend="AND">
-        	A.BIN_ProvinceID = #provinceId#
-        </isNotEmpty>
-        <isNotEmpty property="cityId" prepend="AND">
-        	A.BIN_CityID = #cityId#
-        </isNotEmpty>
-        <isNotEmpty property="countyId" prepend="AND">
-        	A.BIN_CountyID = #countyId#
-        </isNotEmpty>
-        <isEmpty property="orgValid" prepend="AND">
-			<isNotEmpty property="orgValidAll">
-       			<!-- 包含停用部门 -->
-		       	<isEqual property="orgValidAll" compareValue="1">
-		       		A.ValidFlag IN('1','0')
-		       	</isEqual>
-		       	<isNotEqual property="orgValidAll" compareValue="1">
-			       	A.ValidFlag = '1'
-			    </isNotEqual>
-	       	</isNotEmpty>
-	       	<isEmpty property="orgValidAll">
-	       		A.ValidFlag = '1'
-	       	</isEmpty>
-		</isEmpty>
-       	<isNotEmpty property="orgValid" prepend="AND">
-       		<isNotEmpty property="orgValidAll">
-       			<!-- 包含停用部门 -->
-		       	<isEqual property="orgValidAll" compareValue="1">
-		       		(A.ValidFlag=#orgValid# OR A.ValidFlag = '0')
-		       	</isEqual>
-		       	<isNotEqual property="orgValidAll" compareValue="1">
-			       	A.ValidFlag = #orgValid#
-			    </isNotEqual>
-	       	</isNotEmpty>
-	       	<isEmpty property="orgValidAll">
-	       		A.ValidFlag = #orgValid#
-	       	</isEmpty>
-       	</isNotEmpty>
-        <isNotEmpty property="departInfoStr" prepend="AND">
+		<isNotEmpty property="testType" prepend="AND">
+			A.TestType = #testType#
+		</isNotEmpty>
+		<isNotEmpty property="departType" prepend="AND">
+			A.Type = #departType#
+		</isNotEmpty>
+		<isNotEmpty property="regionId" prepend="AND">
+			A.BIN_RegionID = #regionId#
+		</isNotEmpty>
+		<isNotEmpty property="provinceId" prepend="AND">
+			A.BIN_ProvinceID = #provinceId#
+		</isNotEmpty>
+		<isNotEmpty property="cityId" prepend="AND">
+			A.BIN_CityID = #cityId#
+		</isNotEmpty>
+		<isNotEmpty property="countyId" prepend="AND">
+			A.BIN_CountyID = #countyId#
+		</isNotEmpty>
+		<isNotEmpty property="orgValid" prepend="AND">
+			A.ValidFlag = #orgValid#
+		</isNotEmpty>
+		<isNotEmpty property="departInfoStr" prepend="AND">
 			(A.DepartCode Like '%' + #departInfoStr# + '%'
 				<isNotEmpty property="language">
-					<isEqual property="language" compareValue="zh_CN" prepend="OR">										
+					<isEqual property="language" compareValue="zh_CN" prepend="OR">
 						A.DepartName Like '%' + #departInfoStr# + '%'
 					</isEqual>
-					<isEqual property="language" compareValue="en_US" prepend="OR">										
+					<isEqual property="language" compareValue="en_US" prepend="OR">
 						A.NameForeign Like '%' + #departInfoStr# + '%'
 					</isEqual>
 				</isNotEmpty>
@@ -283,35 +264,10 @@
 				AND (A.BusinessType = 'A' OR A.BusinessType = #businessType#) 
 				AND A.ValidFlag = '1'
 		]]>
-       	<isEmpty property="orgValid" prepend="AND">
-			<isNotEmpty property="orgValidAll">
-       			<!-- 包含停用部门 -->
-		       	<isEqual property="orgValidAll" compareValue="1">
-		       		A.OrgValidFlag IN('1','0')
-		       	</isEqual>
-		       	<isNotEqual property="orgValidAll" compareValue="1">
-			       	A.OrgValidFlag = '1'
-			    </isNotEqual>
-	       	</isNotEmpty>
-	       	<isEmpty property="orgValidAll">
-	       		A.OrgValidFlag = '1'
-	       	</isEmpty>
-		</isEmpty>
-       	<isNotEmpty property="orgValid" prepend="AND">
-       		<isNotEmpty property="orgValidAll">
-       			<!-- 包含停用部门 -->
-		       	<isEqual property="orgValidAll" compareValue="1">
-		       		(A.OrgValidFlag=#orgValid# OR A.OrgValidFlag = '0')
-		       	</isEqual>
-		       	<isNotEqual property="orgValidAll" compareValue="1">
-			       	A.OrgValidFlag = #orgValid#
-			    </isNotEqual>
-	       	</isNotEmpty>
-	       	<isEmpty property="orgValidAll">
-	       		A.OrgValidFlag = #orgValid#
-	       	</isEmpty>
-       	</isNotEmpty>
-       	<isEmpty property="testType" prepend="AND">
+		<isNotEmpty property="orgValid" prepend="AND">
+			A.OrgValidFlag = #orgValid#
+		</isNotEmpty>
+		<isEmpty property="testType" prepend="AND">
 			A.CounterKind = 0
 		</isEmpty>
 		<isNotEmpty property="testType" prepend="AND">

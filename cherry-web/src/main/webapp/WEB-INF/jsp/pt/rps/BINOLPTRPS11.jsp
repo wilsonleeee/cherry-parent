@@ -88,7 +88,7 @@
 				                	<input type="radio" name="validFlag" value='<s:property value="CodeKey" />' <s:if test="1 == CodeKey">checked</s:if>/><s:property value="Value" />
 				                </s:iterator> --%>
 				                <s:select name="validFlag" list='#application.CodeTable.getCodes("1137")' listKey="CodeKey" listValue="Value"
-	                  			headerKey="" headerValue="%{selectAll}" onchange="getProductBindingFunction()" />
+	                  			headerKey="" headerValue="%{selectAll}"  value="1" onchange="getProductBindingFunction()" />
 			                </td>
 			                <%-- 品牌 --%>
 		                  	<th><s:text name="RPS11_originalBrand"/></th>

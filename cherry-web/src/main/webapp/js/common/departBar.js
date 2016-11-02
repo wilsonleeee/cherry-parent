@@ -43,7 +43,7 @@ function setDepartDisable(_this){
 			var $that = $(this);
 			var thisId = $that.prop("id");
 			$that.prop("disabled",disFlag);
-			
+
 			if(thisId.indexOf("DEPART_") > -1){
 				thisId = thisId.substring("DEPART_".length);
 			}else{
@@ -102,7 +102,7 @@ function setDepart(msgJson,$departs){
 	    // 目标部门下拉框控件添加元素
 	    if($depart !=null && $depart != undefined){
 	    	var str = '<option value="'+ departId + '">[' + escapeHTMLHandle(departCode) + ']' + escapeHTMLHandle(departName) + '</option>';
-	        $depart.append(str); 
+	        $depart.append(str);
 	    }
     }
 	// 下拉框解锁
@@ -178,7 +178,7 @@ function getRangeParams(){
  * 				String:options.selected 参数可选，希望被选中的部分，"name":表示要选中部门名称；"code":表示要选中的是部门CODE，默认是"name"
  * 				String:options.includeCounter 参数可选，查询结果中是否包含柜台，只要提供该参数就表示包含柜台信息，默认是不包含
  * 				String:options.privilegeFlag 参数可选，是否带权限查询（0：不带权限，1：带权限）为空的场合默认不带权限
- * 
+ *
  * */
 function departInfoBinding(options){
 	var url = "/Cherry/common/BINOLCM13_queryDepart2.action";
@@ -201,19 +201,34 @@ function departInfoBinding(options){
 			},
 			testType:function() {
 				var $testType = $("#testType");
-				if($testType.prop("checked")){
-					return 1;
-				}else{
+				if ($("#testType").val()=="0"){
 					return 0;
+				}else if($("#testType").val()=="1"){
+					return 1;
+				}else if ($("#testType").val()=="ALL"){
+					return "ALL";
 				}
+
+				//if($testType.prop("checked")){
+				//	return 1;
+				//}else{
+				//	return 0;
+				//}
 			},
 			orgValid:function() {
 				var $orgValid = $("#orgValid");
-				if($orgValid.prop("checked")){
+				if ($("#orgValid").val()=="0"){
 					return 0;
-				}else{
+				}else if($("#orgValid").val()=="1"){
 					return 1;
+				}else if ($("#orgValid").val()=="ALL"){
+					return "ALL";
 				}
+				//if($orgValid.prop("checked")){
+				//	return 0;
+				//}else{
+				//	return 1;
+				//}
 			},
 			orgValidAll:function() {
 				var $orgValidAll = $("#orgValidAll");
@@ -224,7 +239,7 @@ function departInfoBinding(options){
 				}
 			},
 			params:function() {
-				$next.val("");	
+				$next.val("");
 				return "{"+ Obj2JSON($("div.tabs > div:visible").find("table")) + "}" ;
 			}
 		},
@@ -262,18 +277,22 @@ function depotInfoBinding(options){
 			number:options.showNum ? options.showNum : 50,
 			testType:function() {
 				var $testType = $("#testType");
-				if($testType.prop("checked")){
-					return 1;
-				}else{
+				if ($("#testType").val()=="0"){
 					return 0;
+				}else if($("#testType").val()=="1"){
+					return 1;
+				}else if ($("#testType").val()=="ALL"){
+					return "ALL";
 				}
 			},
 			orgValid:function() {
 				var $orgValid = $("#orgValid");
-				if($orgValid.prop("checked")){
+				if ($("#orgValid").val()=="0"){
 					return 0;
-				}else{
+				}else if($("#orgValid").val()=="1"){
 					return 1;
+				}else if ($("#orgValid").val()=="ALL"){
+					return "ALL";
 				}
 			},
 			orgValidAll:function() {
@@ -310,7 +329,7 @@ function depotInfoBinding(options){
 			$input.val("");
 		}
 	});
-	
+
 }
 // ajax 刷新共通条
 function getDepartBar(mode,showType,orgValidType){
@@ -323,14 +342,18 @@ function getDepartBar(mode,showType,orgValidType){
 		commParams += "&testType=0";
 	}else if ($("#testType").val()=="1"){
 		commParams += "&testType=1";
+	}else if ($("#testType").val()=="ALL"){
+		commParams += "&testType=ALL";
 	}
 
 	if($("#orgValid").val()=="0"){
 		commParams += "&orgValid=0";
 	}else if($("#orgValid").val()=="1"){
 		commParams += "&orgValid=1";
+	}else if($("#orgValid").val()=="ALL"){
+		commParams += "&orgValid=ALL";
 	}
-	
+
 	if($("#orgValidAll").prop("checked")) {
 		commParams += "&orgValidAll=1";
 	}else {

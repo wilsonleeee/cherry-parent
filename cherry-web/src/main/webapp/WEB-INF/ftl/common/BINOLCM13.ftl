@@ -42,13 +42,13 @@
 		    	</#if>-->
 		    	<span><@s.text name="global.page.departStatus"/>:</span>
 		    	<select id="orgValid" name="orgValid" onChange="getDepartBar('${modeStr}','${showType}','${(orgValidType)!0}');">
-		    	<option value="" <#if orgValid == ""> selected="selected"</#if>><@s.text name="global.page.all"/></option>
+		    	<option value="ALL" <#if orgValid == "ALL"> selected="selected"</#if>><@s.text name="global.page.all"/></option>
 		    	<option value="1" <#if orgValid == "1"> selected="selected"</#if>><@s.text name="global.page.validDepart"/></option>
 		    	<option value="0" <#if orgValid == "0"> selected="selected"</#if>><@s.text name="global.page.remainDepart"/></option>
 		    	</select>
 		    	<span><@s.text name="global.page.departType"/>:</span>
 		    	<select id="testType" name="testType" onChange="getDepartBar('${modeStr}','${showType}','${(orgValidType)!0}');">
-		    	<option value="" <#if testType == ""> selected="selected"</#if>><@s.text name="global.page.all"/></option>
+		    	<option value="ALL" <#if testType == "ALL"> selected="selected"</#if>><@s.text name="global.page.all"/></option>
 		    	<option value="0" <#if testType == "0"> selected="selected"</#if>><@s.text name="global.page.formalDepart"/></option>
 		    	<option value="1" <#if testType == "1"> selected="selected"</#if>><@s.text name="global.page.testDepart"/></option>
 		    	</select>
