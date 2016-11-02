@@ -81,9 +81,6 @@ public class CampBaseAction extends BaseAction{
 	
 	/**
 	 * 首页模板
-	 * 
-	 * @param Map
-	 *            模板提交的参数
 	 * @return boolean 验证结果
 	 * @throws Exception 
 	 * 
@@ -97,6 +94,9 @@ public class CampBaseAction extends BaseAction{
 			result = false;
 		} else if(dto.getCampaignName().length() > 50){
 			this.addFieldError("campInfo.campaignName",getText("ECM00020",new String[]{getText("PMB00017"),"50"}));
+			result = false;
+		} else if (dto.getCampaignName().contains("\t")||dto.getCampaignName().contains("\n")||dto.getCampaignName().contains("\r")){
+			this.addFieldError("campInfo.campaignName",getText("ECM00109",new String[]{getText("PMB00017")}));
 			result = false;
 		}
 		if(!CherryChecker.isNullOrEmpty(dto.getDescriptionDtl(), true) && dto.getDescriptionDtl().length() > 300){

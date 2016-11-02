@@ -218,6 +218,9 @@ public class BINOLSSPRM13_Action extends BaseAction implements ModelDriven<BINOL
 		}else if(form.getPrmActiveName().length() > 20){
 			// 活动名长度不能超过20字节
 			this.addFieldError("prmActiveName", getText("ECM00020",new String[]{getText("ESS00035"),"20"}));
+		}else if(form.getPrmActiveName().contains("\t")||form.getPrmActiveName().contains("\n")||form.getPrmActiveName().contains("\r")){
+			//活动名含有特殊字符串
+			this.addFieldError("prmActiveName", getText("ECM00109",new String[]{getText("ESS00035")}));
 		}else{
 			// 去除前后空格
 			form.setPrmActiveName(form.getPrmActiveName().trim());

@@ -405,6 +405,13 @@ public class BINOLSSPRM68_Action extends BaseAction{
 			}else if(pageA.get("prmActiveName").length() > 20){ //规则名称不能超过20个字符
 				this.addFieldError("pageA.prmActiveName", getText("ECM00020", new String[]{getText("ESS00065"),"20"}));
 				result = false;
+			}else{
+				//验证规则名中是否包含特殊字符串
+				String prmActiveName = ConvertUtil.getString(pageA.get("prmActiveName"));
+				if(prmActiveName.contains("\t")||prmActiveName.contains("\n")||prmActiveName.contains("\r")){
+					this.addFieldError("pageA.prmActiveName", getText("ECM00109",new String[]{getText("ESS00065")}));
+					result= false;
+				}
 			}
 			String validFlag = binOLCM14_BL.getConfigValue("1284", 
 					ConvertUtil.getString(map.get(CherryConstants.ORGANIZATIONINFOID)), 
