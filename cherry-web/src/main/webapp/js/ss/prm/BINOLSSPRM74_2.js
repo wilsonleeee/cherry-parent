@@ -28,6 +28,7 @@ BINOLSSPRM74_2.prototype = {
 			}else{
 				submitable=false;
 			}
+			setTimeout("submitable=true",10000)
 			var memberCode=$("#memberCode").html();
 			var mobileNo;
 			if(memberCode == "VBC000000001"){
@@ -67,7 +68,7 @@ BINOLSSPRM74_2.prototype = {
 			var promotionSendUrl=$("#promotionSendUrl").attr("href");
 			var datasourceName=$("#datasourceName").val();
 			var params="memberPhone="+mobileNo+"&main_json="+main_map_json+"&rule_json="+rule_list_json+"&competedRule_json="+competedRule_json+"&shoppingcart_json="+cart_list_json+"&datasourceName="+datasourceName;
-			setTimeout("submitable=true",10000)
+
 			$.ajax({
 				url: promotionSendUrl,
 				data: params,
