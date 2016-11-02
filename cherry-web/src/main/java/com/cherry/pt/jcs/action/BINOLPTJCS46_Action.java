@@ -163,6 +163,7 @@ public class BINOLPTJCS46_Action extends BaseAction implements ModelDriven<BINOL
 		}else {
 			map.put("endDate", DateUtil.suffixDate( form.getEndDate(), 1));
 		}
+		map.put("isSynchProductPrice", form.getIsSynchProductPrice());
 		
 		binOLPTJCS46_IF.tran_addPrtPriceSolu(map);
 //		
