@@ -697,7 +697,7 @@ BINOLSSPRM74.prototype = {
 			}else{
 				submitable=false;
 			}
-			setTimeout("submitable=true",5000);
+			setTimeout("submitable=true",10000);
 			$.ajax({
 				url: collectUrl,
 				data: params,
