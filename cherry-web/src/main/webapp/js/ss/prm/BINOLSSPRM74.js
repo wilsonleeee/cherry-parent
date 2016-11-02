@@ -1,5 +1,5 @@
 function BINOLSSPRM74() {};
-
+var submitable = true;
 BINOLSSPRM74.prototype = {
 		"changeCheck":function(obj){
 			var maincode_check=$(obj).parents("tr").find("input[name='maincode']").val();
@@ -691,6 +691,13 @@ BINOLSSPRM74.prototype = {
 			+receivableTotal+"&discountTotal="+discountTotal+"&actualTotal="+actualTotal+"&closeFlag=0"+"&datasourceName="+datasourceName+"&memberPhone="+memberPhone_param
 			+"&promotionRule_json="+promotionRule_json+"&pointRule_json="+pointRule_json;
 			BINOLSSPRM74.changeStateButton(0);
+			if(submitable==false){
+				BINOLSSPRM74.changeStateButton(1);
+				return;
+			}else{
+				submitable=false;
+			}
+			setTimeout("submitable=true",5000);
 			$.ajax({
 				url: collectUrl,
 				data: params,
