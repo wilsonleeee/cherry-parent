@@ -14,6 +14,7 @@ package com.cherry.ss.prm.interfaces;
 
 
 import com.cherry.cm.core.ICherryInterface;
+import com.cherry.ss.prm.form.BINOLSSPRM74_Form;
 import com.cherry.wp.common.entity.SaleActivityDetailEntity;
 import com.cherry.wp.common.entity.SaleDetailEntity;
 import com.cherry.wp.common.entity.SaleProductDetailEntity;
@@ -27,8 +28,6 @@ public interface BINOLSSPRM74_IF extends ICherryInterface {
 
 	/**
 	 * 封装传入的参数
-	 * @param param
-	 * @return
 	 */
 	public Map<String,Object> convert2Entity(Map<String,Object> main_map,List<Map<String,Object>> cart_list,List<Map<String,Object>> coupon_list);
 	/**
@@ -179,8 +178,6 @@ public interface BINOLSSPRM74_IF extends ICherryInterface {
 	public void updateProCoupon(Map<String,Object> param);
 	/**
 	 * 获取无门槛券个数
-	 * @param param
-	 * @return
 	 */
 	public int getNoMemberCouponCount();
 	/**
@@ -191,5 +188,9 @@ public interface BINOLSSPRM74_IF extends ICherryInterface {
 	 * @return
 	 */
 	public List<Map<String, Object>> convertRuleList(List<Map<String,Object>>  rule_list,List<Map<String,Object>>  promotionRule_list,List<Map<String,Object>>  pointRule_list);
-	
+
+
+	public  void tran_collect(BINOLSSPRM74_Form form) throws Exception;
+
+	public  void tran_collectPro(BINOLSSPRM74_Form form) throws Exception;
 }

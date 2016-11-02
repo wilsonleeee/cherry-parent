@@ -989,6 +989,8 @@ BINOLSSPRM74.prototype = {
 				BINOLSSPRM74.showErrorMessage("请输入电子优惠券号");
 				return false;
 			}
+			//对券号进行转成大写操作
+			couponCode_input=couponCode_input.toUpperCase();
 			//券号长度校验
 //			if(couponCode_input.length != 15){
 //				BINOLSSPRM74.showErrorMessage("请输入正确的电子优惠券号");

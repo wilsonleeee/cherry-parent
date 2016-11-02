@@ -15,11 +15,15 @@ package com.cherry.ss.prm.bl;
 
 import com.cherry.cm.util.CherryUtil;
 import com.cherry.cm.util.ConvertUtil;
+import com.cherry.ss.prm.form.BINOLSSPRM74_Form;
 import com.cherry.ss.prm.interfaces.BINOLSSPRM74_IF;
+import com.cherry.ss.prm.interfaces.Coupon_IF;
 import com.cherry.ss.prm.service.BINOLSSPRM74_Service;
 import com.cherry.webserviceout.jahwa.ZSAL_MEMINFO;
 import com.cherry.webserviceout.jahwa.common.JahwaWebServiceProxy;
 import com.cherry.wp.common.entity.*;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javax.annotation.Resource;
 import java.util.ArrayList;
@@ -29,8 +33,13 @@ import java.util.Map;
 
 public class BINOLSSPRM74_BL implements BINOLSSPRM74_IF {
 
+	private static Logger logger = LoggerFactory.getLogger(BINOLSSPRM74_BL.class);
+
 	@Resource(name="binOLSSPRM74_Service")
 	private BINOLSSPRM74_Service binOLSSPRM74_Service;
+
+	@Resource
+	private Coupon_IF coupon_IF;
 
 	@Override
 	public Map<String, Object> convert2Entity(Map<String,Object> main_map,List<Map<String,Object>> cart_list,List<Map<String,Object>> coupon_list) {
@@ -791,5 +800,192 @@ public class BINOLSSPRM74_BL implements BINOLSSPRM74_IF {
 		return promotionRule_list;
 	}
 
+	@Override
+	public  void tran_collect(BINOLSSPRM74_Form form) throws Exception {
+		//主单信息
+		Map<String, Object> main_map = ConvertUtil.json2Map(form.getMain_json());
+//		if(1 == ConvertUtil.getInt(form.getCloseFlag())){
+//			//取消按钮触发，删除该单据号所有的数据
+//			this.checkMain(main_map);
+//			logger.info("取消按钮触发，删除该单据号所有的数据成功");
+//			ConvertUtil.setResponseByAjax(response, "0");
+//			return;
+//		}
+		logger.info("数据录入开始");
+		String TN = ConvertUtil.getString(main_map.get("TN"));
+		//如果主单中已经存在有其单据号的情况，先做物理删除再进行插入
+		this.checkMain(main_map);
+		//购物车信息
+		List<Map<String, Object>> cart_list = ConvertUtil.json2List(form.getShoppingcart_json());
+		//1、计算完毕的规则（N类型）
+		List<Map<String, Object>> rule_list = ConvertUtil.json2List(form.getRule_json());
+		//2、计算完毕的规则（P类型）
+		List<Map<String, Object>> promotionRule_list = ConvertUtil.json2List(form.getPromotionRule_json());
+		//3、计算完毕的P类型积分兑换活动(和2数据进行合并用)
+		List<Map<String, Object>> pointRule_list = ConvertUtil.json2List(form.getPointRule_json());
 
+		//合并完整的促销活动 1+（2&3）
+		List<Map<String, Object>> result_rule = this.convertRuleList(rule_list, promotionRule_list, pointRule_list);
+
+		//计算完毕的优惠券信息
+		List<Map<String, Object>> coupon_list = ConvertUtil.json2List(form.getCoupon_json());
+		if (main_map != null && cart_list != null) {
+			//获得累计优惠金额
+			double discountTotal = 0;
+			if (form.getDiscountTotal() == null || "".equals(form.getDiscountTotal())) {
+				discountTotal = 0;
+			} else {
+				discountTotal = Double.parseDouble(form.getDiscountTotal());
+			}
+			main_map.put("discountAmount", discountTotal);
+			//实际销售价
+			double actualTotal = 0;
+			if (form.getActualTotal() == null || "".equals(form.getActualTotal())) {
+				actualTotal = 0;
+			} else {
+				actualTotal = Double.parseDouble(form.getActualTotal());
+			}
+			//折前金额
+			double receivableTotal = 0;
+			if (form.getReceivableTotal() == null || "".equals(form.getReceivableTotal())) {
+				receivableTotal = 0;
+			} else {
+				receivableTotal = Double.parseDouble(form.getReceivableTotal());
+			}
+			//计算完毕的积分
+			double computedPoint = 0;
+			for (Map<String, Object> rule : result_rule) {
+				double rulepoint = Double.parseDouble("".equals(ConvertUtil.getString(rule.get("computePoint"))) ? "0" : ConvertUtil.getString(rule.get("computePoint")));
+				computedPoint += rulepoint;
+			}
+			int totalQuantity = 0;
+			for (Map<String, Object> cart : cart_list) {
+				int quantity = Integer.parseInt("".equals(ConvertUtil.getString(cart.get("quantity"))) ? "0" : ConvertUtil.getString(cart.get("quantity")));
+				totalQuantity += quantity;
+			}
+			main_map.put("originalAmount", receivableTotal);//折前金额
+			main_map.put("totalQuantity", totalQuantity);//商品总数量
+			main_map.put("totalAmount", actualTotal);//应收总金额
+			main_map.put("computedPoint", computedPoint);//已经使用的积分
+			//如果memberLevel为空的话，不写入memberCode
+			if ("".equals(ConvertUtil.getString(main_map.get("ML")))) {
+				main_map.put("MC", "");
+			}
+			//在写入主表数据之前先调用发券查询接口判断此单是否可以发券
+			//转换购物车添加产商ID字段
+			List<Map<String, Object>> cartConvert = this.collect2pro(cart_list);
+			main_map.put("TT", main_map.get("tradeTime"));
+			main_map.put("brandInfoID", main_map.get("brandInfoId"));
+			main_map.put("TotalAmount", main_map.get("totalAmount"));
+			Map<String, Object> coupon_input = new HashMap<String, Object>();
+			coupon_input.put("Main_map", main_map);
+			coupon_input.put("cart_map", cartConvert);
+			coupon_input.put("completedRule", result_rule);
+			coupon_input.put("completedCoupon", coupon_list);
+			List<Map<String, Object>> couponResult = coupon_IF.getCouponRuleList(coupon_input);
+			if (couponResult != null && couponResult.size() > 0) {
+				main_map.put("SendFlag", 1);
+			} else {
+				main_map.put("SendFlag", 0);
+			}
+			if (form.getMemberPhone() != null && form.getMemberPhone().length() == 11) {
+				String memberPhone = form.getMemberPhone().trim();
+				main_map.put("MP", memberPhone);
+			}
+			//打印智能促销页面写入的主单数据
+			main_map.put("createPGM", "BINOLSSPRM74_1");
+			logger.error("打印智能促销页面写入的主单数据：", main_map);
+			this.insertMain(main_map);
+
+			if (coupon_list != null) {
+				this.insertCoupon(coupon_list, TN);
+			}
+			if (rule_list != null) {
+				this.insertRule(result_rule, TN);
+			}
+			if (cart_list != null) {
+				this.insertCart(cart_list, TN);
+			} else {
+				logger.info("智能促销录入数据购物车信息为空");
+			}
+		}
+
+	}
+
+	@Override
+	public void tran_collectPro(BINOLSSPRM74_Form form) throws Exception {
+//主单信息
+		Map<String, Object> main_map = ConvertUtil.json2Map(form.getMain_json());
+		String TN = ConvertUtil.getString(main_map.get("TN"));
+//			if(1 == ConvertUtil.getInt(form.getCloseFlag())){
+//				//取消按钮触发，删除该单据号所有的数据
+//				binOLSSPRM74_IF.checkMain(main_map);
+//				logger.info("取消按钮触发，删除该单据号所有的数据成功");
+//				ConvertUtil.setResponseByAjax(response, "0");
+//				return;
+//			}
+		logger.info("代物券数据录入开始");
+		//如果主单中已经存在有其单据号的情况，先做物理删除再进行插入
+		this.checkMain(main_map);
+		//计算完毕的优惠券信息
+		List<Map<String, Object>> coupon_list = ConvertUtil.json2List(form.getCoupon_json());
+		List<Map<String, Object>> cart_list = ConvertUtil.json2List(form.getShoppingcart_json());
+		double amount = 0;
+		int totalQuantity = 0;
+		if (cart_list != null) {
+			for (Map<String, Object> coupon : cart_list) {
+				double price = Double.parseDouble(ConvertUtil.getString(coupon.get("price")));
+				int quantity = Integer.parseInt(ConvertUtil.getString(coupon.get("quantity")));
+				totalQuantity += quantity;
+				amount += price * quantity;
+			}
+		}
+		if (main_map != null) {
+			main_map.put("MP", form.getMemberPhone());
+			main_map.put("originalAmount", amount);//折前金额
+			main_map.put("totalQuantity", totalQuantity);//商品总数量
+			main_map.put("totalAmount", 0);//应收总金额
+			main_map.put("discountAmount", -amount);//总优惠金额
+			//代物券暂时没有与积分挂钩默认写入0
+			main_map.put("computedPoint", 0);
+			//如果memberLevel为空的话，不写入memberCode
+			if ("".equals(ConvertUtil.getString(main_map.get("ML")))) {
+				main_map.put("MC", "");
+			}
+			//打印代物券写表的主单数据
+			logger.error("打印代物券写表的主单数据：", main_map);
+			main_map.put("createPGM", "BINOLSSPRM74_2");
+			this.insertMain(main_map);
+
+			if (cart_list != null) {
+				this.insertCart(cart_list, TN);
+			}
+			List<Map<String, Object>> order_list = new ArrayList<Map<String, Object>>();
+			if (coupon_list != null) {
+				this.insertCoupon(coupon_list, TN);
+				//写入规则表之前进行分组
+				List<Map<String, Object>> group_list = ConvertUtil.listGroup(coupon_list, "maincode", "rule_list");
+				for (Map<String, Object> group : group_list) {
+					List<Map<String, Object>> product_list = (List<Map<String, Object>>) group.get("rule_list");
+					Map<String, Object> result_map = new HashMap<String, Object>();
+					result_map.putAll(product_list.get(0));
+					result_map.put("Quantity", product_list.size());
+					result_map.put("mainCode", result_map.get("Maincode"));
+					order_list.add(result_map);
+				}
+				this.insertRule(order_list, TN);
+			}
+			String MemberCode = ConvertUtil.getString(main_map.get("MC"));
+			String MemberPhone = ConvertUtil.getString(main_map.get("MP"));
+			String bpCode = ConvertUtil.getString(main_map.get("BP"));
+			//代物券核券操作
+			for (Map<String, Object> coupon : coupon_list) {
+				coupon.put("TradeNoIF", TN);
+				coupon.put("MemberCode", MemberCode);
+				coupon.put("MemberPhone", MemberPhone);
+				coupon.put("bpCode", bpCode);
+				this.updateProCoupon(coupon);
+			}
+		}
+	}
 }
