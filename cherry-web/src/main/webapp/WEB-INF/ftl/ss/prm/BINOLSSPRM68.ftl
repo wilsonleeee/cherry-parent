@@ -34,8 +34,9 @@
 							{'CodeKey':'PRICERANGE','Value':'rangeType_price'},
 							{'CodeKey':'BCLASS','Value':'rangeType_b'},
 							{'CodeKey':'MCLASS','Value':'rangeType_m'},
-							{'CodeKey':'LCLASS','Value':'rangeType_l'}]/>							
-							
+							{'CodeKey':'LCLASS','Value':'rangeType_l'}]/>
+
+<#assign rangeOptList_DNZK = [{'CodeKey':'EQ','Value':'rangeOpt_EQ'},{'CodeKey':'GE','Value':'rangeOpt_GE'}]/>
 <#assign rangeOptList = [{'CodeKey':'','Value':''},{'CodeKey':'EQUAL','Value':'rangeOpt_e'},{'CodeKey':'LIKE','Value':'rangeOpt_l'}]/>
 <#assign propNameList = [{'CodeKey':'QUANTITY','Value':'global.page.quantity'},{'CodeKey':'AMOUNT','Value':'global.page.amount'}]/>
 <#assign propNameList2 = [{'CodeKey':'SUMAMOUNT','Value':'global.page.sumAmount'},{'CodeKey':'SUMQUANTITY','Value':'global.page.sumQuantity'}]/>

@@ -656,6 +656,9 @@
 <#macro rewardItemDetail_DNZK item={} index=1>
 <li style="margin-bottom:10px;" class="sortsubbox">
     <@rangeItemDetail item=item index=index rangeTypeList=rangeTypeList />
+    <select style="margin:0px;width:60px;" name="propOpt" disabled="true">
+		<@getOptionList list=rangeOptList_DNZK val= item.propOpt! />
+    </select>
    	<label><@s.text name="sortNo" /></label>
     <input value="${item.quantity!}" name="quantity" class="number" style="margin-bottom:0px;" disabled="true">
     <label><@s.text name="item" /></label>
