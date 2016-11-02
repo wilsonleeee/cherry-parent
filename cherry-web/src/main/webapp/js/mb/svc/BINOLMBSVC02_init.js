@@ -75,11 +75,6 @@ BINOLMBSVC02_init.prototype = {
 					"sWidth" : "15%",
 					"bSortable" : true
 				} ,{
-					"sName" : "frozenFlag",
-					"sWidth" : "15%",
-					"bSortable" : true,
-					"bVisible" : false
-				} ,{
 					"sName" : "giftAmount",
 					"sWidth" : "15%",
 					"bSortable" : true,

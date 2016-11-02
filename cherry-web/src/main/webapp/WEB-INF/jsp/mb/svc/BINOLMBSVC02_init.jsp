@@ -106,7 +106,6 @@
 								<th><s:text name="SVC02_rechargeSaleBillCode" /></th>
 								<th><s:text name="SVC02_transactionType" /></th>
 								<th><s:text name="SVC02_transactionAmount" /></th>
-								<th><s:text name="SVC02_frozenFlag" /></th>
 								<th><s:text name="SVC02_giftAmount" /></th>
 								<th><s:text name="SVC02_transactionTotalAmount" /></th>
 								<th><s:text name="SVC02_discount" /></th>

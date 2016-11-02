@@ -28,11 +28,6 @@
 </li>
 <li><s:property value="transactionType" /></li>
 <li><s:property value="amount" /></li>
-<li><s:if test="frozenFlag==null"><s:text name="SVC02_no" /></s:if>
-	<s:elseif test="frozenFlag==0"><s:text name="SVC02_no" /></s:elseif>
-	<s:elseif test="frozenFlag==1"><s:text name="SVC02_yes" /></s:elseif>
-	<s:else><s:text name="SVC02_other" /></s:else>
-</li>
 <li><s:property value="giftAmount" /></li>
 <li><s:property value="totalAmount" /></li>
 <li><s:property value="discount" /></li>
