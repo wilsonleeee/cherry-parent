@@ -529,6 +529,14 @@ BINOLSSPRM74.prototype = {
 			return id;
 		},
 		"collect":function(){
+			BINOLSSPRM74.changeStateButton(0);
+			if(submitable==false){
+				BINOLSSPRM74.changeStateButton(1);
+				return;
+			}else{
+				submitable=false;
+			}
+			setTimeout("submitable=true",5000);
 			//校验存在资格券情况下是否存在没有选取对应活动的情况，并给予提示
 			var ZGQFlag=0;
 			var ZGQRuleFlag=0;
@@ -556,7 +564,7 @@ BINOLSSPRM74.prototype = {
 				BINOLSSPRM74.showErrorMessage("您选择了资格券但没有选择对应的资格券活动，请同时勾选资格券对应的活动");
 				return false;
 			}
-			
+
 			var collectUrl=$("#collectUrl").attr("href");
 			var coupon_all=new Array();
 			//获取已经计算完毕的优惠券(最后选中的优惠券)
@@ -690,18 +698,10 @@ BINOLSSPRM74.prototype = {
 			var params="main_json="+main_json+"&shoppingcart_json="+shoppingcart_json+"&rule_json="+rule_json+"&coupon_json="+coupon_json+"&receivableTotal="
 			+receivableTotal+"&discountTotal="+discountTotal+"&actualTotal="+actualTotal+"&closeFlag=0"+"&datasourceName="+datasourceName+"&memberPhone="+memberPhone_param
 			+"&promotionRule_json="+promotionRule_json+"&pointRule_json="+pointRule_json;
-			BINOLSSPRM74.changeStateButton(0);
-			if(submitable==false){
-				BINOLSSPRM74.changeStateButton(1);
-				return;
-			}else{
-				submitable=false;
-			}
-			setTimeout("submitable=true",10000);
 			$.ajax({
 				url: collectUrl,
 				data: params,
-				timeout: 3000,
+				//timeout: 3000,
 				type :'post',
 				success: function(data) {
 				    BINOLSSPRM74.changeStateButton(1);
@@ -713,22 +713,23 @@ BINOLSSPRM74.prototype = {
 					}else if(data == 1){
 						BINOLSSPRM74.showErrorMessage($("#collectErr").val());
 					}
-				},
-				complete : function(XMLHttpRequest,status){
-					var connectTimes=Number($("#connectTimes").val());
-					if(status=='timeout' ){//超时,status还有success,error等值的情况
-			　　　　　  	if(connectTimes <=0){
-			　　　　　  		$("#connectTimes").val("1");
-			　　　　　  		BINOLSSPRM74.showErrorMessage($("#connectNetErr").val());
-			　　　　　  		BINOLSSPRM74.changeStateButton(1);
-			　　　　　  	}else{
-			　　　　　  		for(connectTimes;connectTimes>0;connectTimes--){
-			　　　　　  			$("#connectTimes").val(0);
-			　　　　　  			BINOLSSPRM74.collect();
-			　　　　　  		}
-			　　　　　  	}
-			　　　　}
 				}
+			//	,
+			//	complete : function(XMLHttpRequest,status){
+			//		var connectTimes=Number($("#connectTimes").val());
+			//		if(status=='timeout' ){//超时,status还有success,error等值的情况
+			//　　　　　  	if(connectTimes <=0){
+			//　　　　　  		$("#connectTimes").val("1");
+			//　　　　　  		BINOLSSPRM74.showErrorMessage($("#connectNetErr").val());
+			//　　　　　  		BINOLSSPRM74.changeStateButton(1);
+			//　　　　　  	}else{
+			//　　　　　  		for(connectTimes;connectTimes>0;connectTimes--){
+			//　　　　　  			$("#connectTimes").val(0);
+			//　　　　　  			BINOLSSPRM74.collect();
+			//　　　　　  		}
+			//　　　　　  	}
+			//　　　　}
+			//	}
 			});
 		},
 		"closeWindow":function(){
