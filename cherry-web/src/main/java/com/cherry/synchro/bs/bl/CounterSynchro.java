@@ -190,6 +190,8 @@ public class CounterSynchro implements CounterSynchro_IF {
 			//区域名称
 			param.put("RegionName", ConvertUtil.getString(counterInfo.get("RegionName")));
 			//渠道名称
+			param.put("ChannelCode", ConvertUtil.getString(counterInfo.get("ChannelCode")));
+			//渠道名称
 			param.put("Channel", ConvertUtil.getString(counterInfo.get("Channel")));
 			//城市代码
 			param.put("Citycode", ConvertUtil.getString(counterInfo.get("Citycode")));
