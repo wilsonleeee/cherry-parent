@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sqlMap PUBLIC "-//iBATIS.com//DTD SQL Map 2.0//EN" "http://ibatis.apache.org/dtd/sql-map-2.dtd">
+<sqlMap namespace="BINBETLBAT01">
+
+	<!-- 清空采番表 -->
+	<delete id="clearTicketNumber" parameterClass="java.util.HashMap">
+		<![CDATA[
+			DELETE FROM 
+				Tools.BIN_TicketNumber
+			WHERE
+				BIN_OrganizationInfoID = #organizationInfoId# AND
+				BIN_BrandInfoID = #brandInfoId#
+				AND ControlDate < #ControlDate#
+		]]>
+    </delete>
+    
+    <!-- 从各类编号取号表中取得每种类型的最大番号 -->
+    <select id="getMaxSequenceCode" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+		<![CDATA[
+			SELECT 
+				Type AS type,
+				MAX(TicketNo) AS ticketNo
+			FROM 
+				Tools.BIN_SequenceCode
+			WHERE
+				BIN_OrganizationInfoID = #organizationInfoId# AND
+				BIN_BrandInfoID = #brandInfoId#
+			GROUP BY
+				Type
+		]]>
+    </select>
+    
+    <!--删除各类编号取号表中小于最大番号的数据-->
+	<delete id="clearSequenceCode" parameterClass="java.util.HashMap">
+		<![CDATA[
+			DELETE FROM 
+				Tools.BIN_SequenceCode
+			WHERE
+				BIN_OrganizationInfoID = #organizationInfoId# AND
+				BIN_BrandInfoID = #brandInfoId# AND
+				Type = #type# AND
+				TicketNo < #ticketNo#
+		]]>
+    </delete>
+    
+    <!-- 清空OS_STEPIDS表 -->
+	<update id="clearOsStepIds" parameterClass="java.util.HashMap">
+		<![CDATA[
+			DELETE FROM  dbo.OS_STEPIDS
+		]]>
+    </update>
+    
+    <!-- 清空OS_ENTRYIDS表 -->
+	<update id="clearOsEntryIds" parameterClass="java.util.HashMap">
+		<![CDATA[
+			DELETE FROM  dbo.OS_ENTRYIDS
+		]]>
+    </update>
+
+</sqlMap>

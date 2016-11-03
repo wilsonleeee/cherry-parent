@@ -1,0 +1,589 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sqlMap PUBLIC "-//iBATIS.com//DTD SQL Map 2.0//EN" "http://ibatis.apache.org/dtd/sql-map-2.dtd">
+<sqlMap namespace="BINBAT152">
+
+
+	<!-- 根据调入业务的单据号找到调出的入出库批次明细数据 -->
+    <select id="getProductBatchInOutDetailByBgRelevanceNo" parameterClass="java.util.HashMap" resultClass="java.util.HashMap"> 
+		SELECT
+			PBIOD.BIN_ProductInOutDetailID,
+			PBIOD.BIN_ProductBatchInOutID,
+			PBIO.TradeType,
+			PBIOD.RelevanceNo,
+			PBIOD.BIN_ProductVendorID,
+			PBIOD.DetailNo,
+			PBIOD.Quantity,
+			PBIOD.Price,
+			PBIOD.BIN_ProductBatchStockID,
+			PBIOD.CostPrice,
+			PBIOD.StockType,
+			PBIOD.StockInOutTime,
+			PBIOD.BIN_InventoryInfoID,
+			PBIOD.BIN_LogicInventoryInfoID
+		FROM
+			  Inventory.BIN_ProductAllocationOUT PAout
+		JOIN  Inventory.BIN_ProductBatchInOutDetail PBIOD ON PBIOD.RelevanceNo = PAout.RelevanceNo
+		JOIN  Inventory.BIN_ProductBatchInOut PBIO ON PBIO.RelevanceNo = PBIOD.RelevanceNo
+		WHERE 
+			PAout.AllocationOutNoIF = #RelevanceNo#
+    </select>
+	
+	<!-- 根据接收退库(AR)的单据号找到退库(RR)的入出库批次明细数据 -->
+    <select id="getProductBatchInOutDetailByARRelevanceNo" parameterClass="java.util.HashMap" resultClass="java.util.HashMap"> 
+		SELECT
+			PBIOD.BIN_ProductInOutDetailID,
+			PBIOD.BIN_ProductBatchInOutID,
+			PBIO.TradeType,
+			PBIOD.RelevanceNo,
+			PBIOD.BIN_ProductVendorID,
+			PBIOD.DetailNo,
+			PBIOD.Quantity,
+			PBIOD.Price,
+			PBIOD.BIN_ProductBatchStockID,
+			PBIOD.CostPrice,
+			PBIOD.StockType,
+			PBIOD.StockInOutTime,
+			PBIOD.BIN_InventoryInfoID,
+			PBIOD.BIN_LogicInventoryInfoID
+		FROM
+			  Inventory.BIN_ProductBatchInOutDetail PBIOD
+		JOIN  
+		      Inventory.BIN_ProductBatchInOut PBIO ON PBIO.RelevanceNo = PBIOD.RelevanceNo
+		WHERE 
+			PBIOD.RelevanceNo = #RelevanceNo#
+		AND PBIOD.StockType = '1'
+		AND PBIO.TradeType = 'RR'
+    </select>
+    
+	<!-- 插入【产品批次库存表(新建)】SQL -->
+    <sql id="insertProductNewBatchStockSQL">
+    
+        <![CDATA[
+            INSERT INTO Inventory.BIN_ProductNewBatchStock(
+                BIN_OrganizationInfoID,
+                BIN_BrandInfoID,
+                
+				BIN_InventoryInfoID,
+				BIN_LogicInventoryInfoID,
+				TradeNoIF,
+				BIN_ProductVendorID,
+				InQuantity,
+				StockInTime,
+				StockQuantity,
+				CostPrice,
+        ]]>
+        <![CDATA[
+                ValidFlag,
+                CreateTime,
+                CreatedBy,
+                CreatePGM,
+				UpdateTime,
+                UpdatedBy,
+                UpdatePGM,
+                ModifyCount
+            )VALUES(
+                #BIN_OrganizationInfoID#,
+                #BIN_BrandInfoID#,
+				#BIN_InventoryInfoID#,
+				#BIN_LogicInventoryInfoID#,
+				#TradeNoIF#,
+				#BIN_ProductVendorID#,
+				#InQuantity#,
+				GETDATE(),
+				#StockQuantity#,
+				#CostPrice#,
+		]]>
+		<![CDATA[
+                '1',
+                GETDATE(),
+                #CreatedBy#,
+                #CreatePGM#,
+                GETDATE(),
+                #UpdatedBy#,
+                #UpdatePGM#,
+                '0'
+				)
+		]]>
+    </sql>
+    
+    
+    <!--插入【产品批次库存表(新建)】-->
+    <insert id="insertProductNewBatchStock" parameterClass="java.util.HashMap">
+    	<selectKey resultClass="java.lang.Integer" type="post" keyProperty="BIN_ProductBatchStockID" >
+    	<include refid="BINBAT152.insertProductNewBatchStockSQL" />
+        <![CDATA[SELECT SCOPE_IDENTITY() AS value]]>
+        </selectKey>
+    </insert>
+    
+	<!-- 取得产品库存表指定仓库产品的首末次信息 -->
+    <select id="getProductNewBatchStock" parameterClass="java.util.HashMap" resultClass="java.util.HashMap"> 
+		SELECT TOP(1)
+			BIN_ProductBatchStockID,
+			BIN_InventoryInfoID,
+			BIN_LogicInventoryInfoID,
+			TradeNoIF,
+			BIN_ProductVendorID,
+			InQuantity,
+			StockQuantity,
+			CostPrice,
+			StockInTime
+		FROM
+			Inventory.BIN_ProductNewBatchStock
+		WHERE
+			BIN_InventoryInfoID = #BIN_InventoryInfoID#
+		AND BIN_LogicInventoryInfoID = #BIN_LogicInventoryInfoID#
+		AND BIN_ProductVendorID = #BIN_ProductVendorID#
+		AND StockQuantity > 0
+		ORDER BY StockInTime 
+		<isNotEmpty property="stockInTimeSorting">
+			$stockInTimeSorting$,BIN_ProductBatchStockID $stockInTimeSorting$
+		</isNotEmpty>
+    </select>
+    
+    
+    <!-- 根据原始单据号及仓库产品信息取得产品入出库明细记录 -->
+    <select id="getProductBatchInOutDetailByRelevanceNoAndPrt" parameterClass="java.util.HashMap" resultClass="java.util.HashMap"> 
+		SELECT
+			BIN_ProductInOutDetailID,
+			BIN_ProductBatchInOutID,
+			RelevanceNo,
+			BIN_ProductVendorID,
+			DetailNo,
+			Quantity,
+			Price,
+			BIN_ProductBatchStockID,
+			CostPrice,
+			StockType,
+			StockInOutTime,
+			RelSrResidualQuantity,
+			BIN_InventoryInfoID,
+			BIN_LogicInventoryInfoID
+		FROM
+			Inventory.BIN_ProductBatchInOutDetail
+		WHERE
+			RelevanceNo = #BillCodePre#
+		AND BIN_InventoryInfoID = #BIN_InventoryInfoID#
+		AND BIN_LogicInventoryInfoID = #BIN_LogicInventoryInfoID#
+		AND BIN_ProductVendorID = #BIN_ProductVendorID#
+		AND CostPrice is not null 
+		AND RelSrResidualQuantity > 0
+		ORDER BY BIN_ProductBatchStockID ASC
+    </select>
+    
+	<!--根据批次库存id得到对应的批次库存明细中成本价为空的数量  -->
+	<select id="getCostPriceIsNullAmount" parameterClass="java.util.HashMap" resultClass="java.lang.Integer">
+		select 
+		 count(1) 
+		from 
+			Inventory.BIN_ProductBatchInOutDetail 
+		where BIN_ProductBatchInOutID = #BIN_ProductBatchInOutID# and
+			CostPrice is  null 		
+	</select>
+	
+	<!--根据批次库存id得到对应的总成本价  -->
+	<select id="getTotalCostPrice" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+		select 
+		 SUM(CostPrice*Quantity) as TotalCostPrice
+		from 
+			Inventory.BIN_ProductBatchInOutDetail 
+		where BIN_ProductBatchInOutID = #BIN_ProductBatchInOutID#		
+	</select>
+	
+	
+	<!-- 根据批次库存id修改对应的总成本价 -->
+	<update id="updateTotalCostPrice" parameterClass="java.util.HashMap">
+		update
+			Inventory.BIN_ProductBatchInOut
+		set
+			TotalCostPrice = #TotalCostPrice#,
+			UpdateTime = GETDATE(),
+			ModifyCount = ModifyCount+1
+		where 		
+			BIN_ProductBatchInOutID = #BIN_ProductBatchInOutID#
+	</update>
+	
+	<!-- 根据入出库明细id修改对应的成本价 -->
+	<update id="updateCostPriceByDetails" parameterClass="java.util.HashMap">
+		update
+			Inventory.BIN_ProductBatchInOutDetail
+		set
+			BIN_ProductBatchStockID = #BIN_ProductBatchStockID#,
+			CostPrice = #CostPrice#,
+			UpdateTime = GETDATE(),
+			ModifyCount = ModifyCount+1
+		where 		
+			BIN_ProductInOutDetailID = #BIN_ProductInOutDetailID#
+	</update>
+	
+	<!--查询产品入出库批次表的数据（即明细中有成本价为空，且是出库类型的数据）  -->
+	<select id="getProBatchInOutList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+		select 
+			A.BIN_OrganizationInfoID,
+			A.BIN_BrandInfoID,
+			A.BIN_ProductBatchInOutID,
+			A.RelevanceNo,
+			A.TradeType,
+			A.StockType,
+			B.BillCodePre,
+			A.StockInOutTime
+			
+		from 
+			Inventory.BIN_ProductBatchInOut A
+			LEFT JOIN Sale.BIN_SaleRecord B
+			ON A.RelevanceNo = B.BillCode
+		where 
+			A.BIN_ProductBatchInOutID  in(
+			select 
+				distinct BIN_ProductBatchInOutID
+			from 
+				Inventory.BIN_ProductBatchInOutDetail
+			where 
+				StockType = #StockType# and CostPrice is null
+			)
+			and A.BIN_OrganizationInfoID = #organizationInfoId#
+			and A.BIN_BrandInfoID = #brandInfoId#
+		order by A.StockInOutTime		
+	</select>
+	
+	
+	<!--根据产品入出库批次表ID 查询产品入出库批次记录明细表数据  -->
+	<select id="getProBatchInOutDetailList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+	select
+		*
+	from
+	Inventory.BIN_ProductBatchInOutDetail
+	where
+	BIN_ProductBatchInOutID = #BIN_ProductBatchInOutID#
+	order by StockInOutTime
+	</select>
+	
+	<!--查询产品批次库存表数据（根据产品厂商ID，实体仓库ID，逻辑仓库ID，出库数量，排序方式  查询）  -->
+	<select id="getProNewBatchStockList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+		select * from cherry_base_getProductBatchInOut(#BIN_ProductVendorID#,#BIN_InventoryInfoID#,#BIN_LogicInventoryInfoID#,#Quantity#,#Sort#)<!-- get_ProductBatchInOut 为自定义函数，只取满足条件的满足条件的数据条数 -->
+				
+	</select>
+	
+	<!--  根据明细ID删除产品入出库批次记录明细表 -->
+	<delete id="deleteProBatchInOutDetail" parameterClass="java.util.HashMap" >
+		delete from 
+			Inventory.BIN_ProductBatchInOutDetail 
+		where BIN_ProductInOutDetailID = #BIN_ProductInOutDetailID#
+	</delete>
+	
+	
+	<!--  根据产品入出库批次ID删除对应的产品入出库批次记录明细 -->
+	<delete id="deleteProBatchInOutDetailByMainId" parameterClass="java.util.HashMap" >
+		delete from 
+			Inventory.BIN_ProductBatchInOutDetail 
+		where BIN_ProductBatchInOutID = #BIN_ProductBatchInOutID#
+	</delete>
+
+	<!-- 修改产品批次库存表库存数 -->
+	<update id="updateProNewBatchStock" parameterClass="java.util.HashMap">
+		update
+			Inventory.BIN_ProductNewBatchStock
+		set
+			StockQuantity = StockQuantity - #StockQuantity#,
+			UpdateTime = GETDATE(),
+			ModifyCount = ModifyCount+1
+		where 
+			BIN_ProductBatchStockID = #BIN_ProductBatchStockID# and 
+			StockQuantity = #oldStockQuantity#
+	</update>
+	
+	
+	<!-- 修改关联退货后剩余数量 -->
+	<update id="updateRelSrResidualQuantity" parameterClass="java.util.HashMap">
+		update
+			Inventory.BIN_ProductBatchInOutDetail
+		set
+			RelSrResidualQuantity = RelSrResidualQuantity - #Quantity#
+		where 
+			BIN_ProductInOutDetailID = #BIN_ProductInOutDetailID#
+	</update>
+	
+	
+	
+	<!-- 插入产品入出库批次记录明细表 -->
+	<insert id="insertProBatchInOutDetail" parameterClass="java.util.HashMap">
+		<isEqual property="isNewFlag" compareValue ="1"><!-- 表示拆分后的新数据 -->			
+			INSERT INTO Inventory.BIN_ProductBatchInOutDetail
+				(
+					<isNotEmpty property="BIN_ProductBatchInOutID">
+						BIN_ProductBatchInOutID,
+					</isNotEmpty>
+					<isNotEmpty property="RelevanceNo">
+						RelevanceNo,
+					</isNotEmpty>
+					<isNotEmpty property="BIN_ProductVendorID">
+						BIN_ProductVendorID,
+					</isNotEmpty>
+					<isNotEmpty property="DetailNo">
+						DetailNo,
+					</isNotEmpty>
+					<isNotEmpty property="Quantity">
+						Quantity,
+					</isNotEmpty>
+					<isNotEmpty property="Price">
+						Price,
+					</isNotEmpty>
+					<isNotEmpty property="BIN_ProductBatchStockID">
+						BIN_ProductBatchStockID,
+					</isNotEmpty>
+					<isNotEmpty property="CostPrice">
+						CostPrice,
+					</isNotEmpty>
+					<isNotEmpty property="StockType">
+						StockType,
+					</isNotEmpty>
+					<isNotEmpty property="StockInOutTime">
+						StockInOutTime,
+					</isNotEmpty>
+					<isNotEmpty property="BIN_InventoryInfoID">
+						BIN_InventoryInfoID,
+					</isNotEmpty>
+					<isNotEmpty property="BIN_LogicInventoryInfoID">
+						BIN_LogicInventoryInfoID,
+					</isNotEmpty>
+					<isNotEmpty property="BIN_StorageLocationInfoID">
+						BIN_StorageLocationInfoID,
+					</isNotEmpty>
+					<isNotEmpty property="Comments">
+						Comments,
+					</isNotEmpty>
+					<isNotEmpty property="RelSrResidualQuantity">
+						RelSrResidualQuantity,
+					</isNotEmpty>
+						ValidFlag,
+						CreateTime,
+					<isNotEmpty property="CreatedBy">
+						CreatedBy,
+					</isNotEmpty>
+					<isNotEmpty property="CreatePGM">
+						CreatePGM,
+					</isNotEmpty>
+						UpdateTime,
+					<isNotEmpty property="UpdatedBy">
+						UpdatedBy,
+					</isNotEmpty>
+					<isNotEmpty property="UpdatePGM">
+						UpdatePGM,
+					</isNotEmpty>
+						ModifyCount
+
+				)
+	     	VALUES
+	           (
+	           		<isNotEmpty property="BIN_ProductBatchInOutID">
+						#BIN_ProductBatchInOutID#,
+					</isNotEmpty>
+					<isNotEmpty property="RelevanceNo">
+						#RelevanceNo#,
+					</isNotEmpty>
+					<isNotEmpty property="BIN_ProductVendorID">
+						#BIN_ProductVendorID#,
+					</isNotEmpty>
+					<isNotEmpty property="DetailNo">
+						#DetailNo#,
+					</isNotEmpty>
+					<isNotEmpty property="Quantity">
+						#Quantity#,
+					</isNotEmpty>
+					<isNotEmpty property="Price">
+						#Price#,
+					</isNotEmpty>
+					<isNotEmpty property="BIN_ProductBatchStockID">
+						#BIN_ProductBatchStockID#,
+					</isNotEmpty>
+					<isNotEmpty property="CostPrice">
+						#CostPrice#,
+					</isNotEmpty>
+					<isNotEmpty property="StockType">
+						#StockType#,
+					</isNotEmpty>
+					<isNotEmpty property="StockInOutTime">
+						#StockInOutTime#,
+					</isNotEmpty>
+					<isNotEmpty property="BIN_InventoryInfoID">
+						#BIN_InventoryInfoID#,
+					</isNotEmpty>
+					<isNotEmpty property="BIN_LogicInventoryInfoID">
+						#BIN_LogicInventoryInfoID#,
+					</isNotEmpty>
+					<isNotEmpty property="BIN_StorageLocationInfoID">
+						#BIN_StorageLocationInfoID#,
+					</isNotEmpty>
+					<isNotEmpty property="Comments">
+						#Comments#,
+					</isNotEmpty>
+					<isNotEmpty property="RelSrResidualQuantity">
+						#RelSrResidualQuantity#,
+					</isNotEmpty>
+						1,
+						GETDATE(),
+					<isNotEmpty property="CreatedBy">
+						#CreatedBy#,
+					</isNotEmpty>
+					<isNotEmpty property="CreatePGM">
+						#CreatePGM#,
+					</isNotEmpty>
+						GETDATE(),
+					<isNotEmpty property="UpdatedBy">
+						#UpdatedBy#,
+					</isNotEmpty>
+					<isNotEmpty property="UpdatePGM">
+						#UpdatePGM#,
+					</isNotEmpty>
+						0
+				)
+		</isEqual>
+		<isEqual property="isNewFlag" compareValue ="0"><!-- 表示原来的数据 -->			
+			INSERT INTO Inventory.BIN_ProductBatchInOutDetail
+				(
+					<isNotEmpty property="BIN_ProductBatchInOutID">
+						BIN_ProductBatchInOutID,
+					</isNotEmpty>
+					<isNotEmpty property="RelevanceNo">
+						RelevanceNo,
+					</isNotEmpty>
+					<isNotEmpty property="BIN_ProductVendorID">
+						BIN_ProductVendorID,
+					</isNotEmpty>
+					<isNotEmpty property="DetailNo">
+						DetailNo,
+					</isNotEmpty>
+					<isNotEmpty property="Quantity">
+						Quantity,
+					</isNotEmpty>
+					<isNotEmpty property="Price">
+						Price,
+					</isNotEmpty>
+					<isNotEmpty property="BIN_ProductBatchStockID">
+						BIN_ProductBatchStockID,
+					</isNotEmpty>
+					<isNotEmpty property="CostPrice">
+						CostPrice,
+					</isNotEmpty>
+					<isNotEmpty property="StockType">
+						StockType,
+					</isNotEmpty>
+					<isNotEmpty property="StockInOutTime">
+						StockInOutTime,
+					</isNotEmpty>
+					<isNotEmpty property="BIN_InventoryInfoID">
+						BIN_InventoryInfoID,
+					</isNotEmpty>
+					<isNotEmpty property="BIN_LogicInventoryInfoID">
+						BIN_LogicInventoryInfoID,
+					</isNotEmpty>
+					<isNotEmpty property="BIN_StorageLocationInfoID">
+						BIN_StorageLocationInfoID,
+					</isNotEmpty>
+					<isNotEmpty property="Comments">
+						Comments,
+					</isNotEmpty>
+					<isNotEmpty property="RelSrResidualQuantity">
+						RelSrResidualQuantity,
+					</isNotEmpty>
+					<isNotEmpty property="ValidFlag">
+						ValidFlag,
+					</isNotEmpty>
+					<isNotEmpty property="CreateTime">
+						CreateTime,
+					</isNotEmpty>
+					<isNotEmpty property="CreatedBy">
+						CreatedBy,
+					</isNotEmpty>
+					<isNotEmpty property="CreatePGM">
+						CreatePGM,
+					</isNotEmpty>
+					<isNotEmpty property="UpdateTime">
+						UpdateTime,
+					</isNotEmpty>
+					<isNotEmpty property="UpdatedBy">
+						UpdatedBy,
+					</isNotEmpty>
+					<isNotEmpty property="UpdatePGM">
+						UpdatePGM,
+					</isNotEmpty>
+					<isNotEmpty property="ModifyCount">
+						ModifyCount
+					</isNotEmpty>
+
+				)
+	     	VALUES
+	           (
+	           		<isNotEmpty property="BIN_ProductBatchInOutID">
+						#BIN_ProductBatchInOutID#,
+					</isNotEmpty>
+					<isNotEmpty property="RelevanceNo">
+						#RelevanceNo#,
+					</isNotEmpty>
+					<isNotEmpty property="BIN_ProductVendorID">
+						#BIN_ProductVendorID#,
+					</isNotEmpty>
+					<isNotEmpty property="DetailNo">
+						#DetailNo#,
+					</isNotEmpty>
+					<isNotEmpty property="Quantity">
+						#Quantity#,
+					</isNotEmpty>
+					<isNotEmpty property="Price">
+						#Price#,
+					</isNotEmpty>
+					<isNotEmpty property="BIN_ProductBatchStockID">
+						#BIN_ProductBatchStockID#,
+					</isNotEmpty>
+					<isNotEmpty property="CostPrice">
+						#CostPrice#,
+					</isNotEmpty>
+					<isNotEmpty property="StockType">
+						#StockType#,
+					</isNotEmpty>
+					<isNotEmpty property="StockInOutTime">
+						#StockInOutTime#,
+					</isNotEmpty>
+					<isNotEmpty property="BIN_InventoryInfoID">
+						#BIN_InventoryInfoID#,
+					</isNotEmpty>
+					<isNotEmpty property="BIN_LogicInventoryInfoID">
+						#BIN_LogicInventoryInfoID#,
+					</isNotEmpty>
+					<isNotEmpty property="BIN_StorageLocationInfoID">
+						#BIN_StorageLocationInfoID#,
+					</isNotEmpty>
+					<isNotEmpty property="Comments">
+						#Comments#,
+					</isNotEmpty>
+					<isNotEmpty property="RelSrResidualQuantity">
+						#RelSrResidualQuantity#,
+					</isNotEmpty>
+					<isNotEmpty property="ValidFlag">
+						#ValidFlag#,
+					</isNotEmpty>
+					<isNotEmpty property="CreateTime">
+						#CreateTime#,
+					</isNotEmpty>
+					<isNotEmpty property="CreatedBy">
+						#CreatedBy#,
+					</isNotEmpty>
+					<isNotEmpty property="CreatePGM">
+						#CreatePGM#,
+					</isNotEmpty>
+					<isNotEmpty property="UpdateTime">
+						#UpdateTime#,
+					</isNotEmpty>
+					<isNotEmpty property="UpdatedBy">
+						#UpdatedBy#,
+					</isNotEmpty>
+					<isNotEmpty property="UpdatePGM">
+						#UpdatePGM#,
+					</isNotEmpty>
+					<isNotEmpty property="ModifyCount">
+						#ModifyCount#
+					</isNotEmpty>
+				)
+		</isEqual>
+	</insert>
+
+</sqlMap>

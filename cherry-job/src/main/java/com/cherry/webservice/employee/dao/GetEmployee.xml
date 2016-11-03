@@ -1,0 +1,99 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sqlMap PUBLIC "-//iBATIS.com//DTD SQL Map 2.0//EN" "http://ibatis.apache.org/dtd/sql-map-2.dtd">
+<sqlMap namespace="GetEmployee">
+
+	<resultMap id="GetEmployee.empMap" class="java.util.HashMap">
+		<result property="BIN_EmployeeID" column="BIN_EmployeeID"/>
+		<result property="EmployeeCode" column="EmployeeCode"/>
+		<result property="EmployeeName" column="EmployeeName"/>
+		<result property="BIN_OrganizationID" column="BIN_OrganizationID"/>
+		<result property="DepartCode" column="DepartCode"/>
+		<result property="MobilePhone" column="MobilePhone"/>
+		<result property="OpenID" column="OpenID"/>
+		<result property="ValidFlag" column="ValidFlag"/>
+		<result property="ParentEmployeeCode" column="ParentEmployeeCode"/>
+		<result property="EmployeeType" column="EmployeeType"/>
+		<result property="MemberClubList" column="BIN_EmployeeID" select="GetEmployee.getEmpMemClubList" javaType="java.util.List"/>
+	</resultMap>
+	
+	<!--取得员工对应的会员俱乐部 -->
+	<select id="getEmpMemClubList" parameterClass="java.lang.Integer" resultClass="java.util.HashMap">
+			SELECT DISTINCT
+				MC.ClubCode,
+				MC.ClubName
+			FROM 
+			( 
+				SELECT DISTINCT
+					BIN_OrganizationID
+				FROM 
+					Privilege.BIN_DepartPrivilege WITH(NOLOCK)
+				WHERE
+					(BusinessType = 'A' OR BusinessType = '0')
+		        AND BIN_EmployeeID = #BIN_EmployeeID#
+			 ) A99  
+			JOIN Basis.BIN_Organization O WITH(NOLOCK) ON A99.BIN_OrganizationID = O.BIN_OrganizationID
+			JOIN Members.BIN_MemClubCounter MCC WITH(NOLOCK) ON MCC.CounterCode = O.DepartCode
+			JOIN Members.BIN_MemberClub MC WITH(NOLOCK) ON MCC.ClubCode = MCC.ClubCode 
+			WHERE
+				O.Type = '4'
+    </select>
+	
+	<!-- 取得所有员工数据 -->
+	<select id="getEmployeeList" parameterClass="java.util.HashMap" resultMap="GetEmployee.empMap">
+	<![CDATA[
+			SELECT
+				A.BIN_EmployeeID,
+				A.EmployeeCode,
+				A.EmployeeName,
+				A.BIN_OrganizationID,
+				B.DepartCode,
+				A.MobilePhone,
+				A.OpenID,
+				A.ValidFlag,
+				C.EmployeeCode ParentEmployeeCode,
+				b.Type AS EmployeeType 
+			FROM Basis.BIN_Employee A WITH (NOLOCK)
+			LEFT JOIN Basis.BIN_Employee C WITH (NOLOCK) ON (A.NodeID.GetAncestor(1) = C.NodeID)
+			LEFT JOIN Basis.BIN_Organization B WITH (NOLOCK) ON A.BIN_OrganizationID = B.BIN_OrganizationID
+			WHERE
+			A.BIN_BrandInfoID = #BIN_BrandInfoID#
+			AND A.BIN_OrganizationInfoID = #BIN_OrganizationInfoID#
+		]]>
+		<isNotEmpty property="CounterCode">
+			<![CDATA[
+				AND A.BIN_OrganizationID = (
+				SELECT 
+					BIN_OrganizationID 
+				FROM
+					Basis.BIN_CounterInfo
+				WHERE
+				 	BIN_BrandInfoID = #BIN_BrandInfoID#
+				AND BIN_OrganizationInfoID = #BIN_OrganizationInfoID#
+				AND CounterCode = #CounterCode#	
+				)
+			]]>
+		</isNotEmpty>	
+		<isEqual property="SubType" compareValue="F">
+			<isNotEmpty property="EmployeeCode" prepend="AND">
+				A.EmployeeCode LIKE '%'+ #EmployeeCode# + '%'
+			</isNotEmpty>
+			<isNotEmpty property="MobilePhone" prepend="AND">
+				A.MobilePhone LIKE '%'+ #MobilePhone# + '%'
+			</isNotEmpty>
+			<isNotEmpty property="OpenID" prepend="AND">
+				A.OpenID LIKE '%'+ #OpenID# + '%'
+			</isNotEmpty>
+		</isEqual>
+		<isEqual property="SubType" compareValue="P">
+			<isNotEmpty property="EmployeeCode" prepend="AND">
+				A.EmployeeCode = #EmployeeCode#
+			</isNotEmpty>
+			<isNotEmpty property="MobilePhone" prepend="AND">
+				A.MobilePhone = #MobilePhone#
+			</isNotEmpty>
+			<isNotEmpty property="OpenID" prepend="AND">
+				A.OpenID = #OpenID#
+			</isNotEmpty>
+		</isEqual>
+	</select>
+</sqlMap>

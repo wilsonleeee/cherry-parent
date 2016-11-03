@@ -1,0 +1,267 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sqlMap PUBLIC "-//iBATIS.com//DTD SQL Map 2.0//EN" "http://ibatis.apache.org/dtd/sql-map-2.dtd">
+<sqlMap namespace="BINBESSRPS01">
+
+	<sql id="SaleCount">
+    	<![CDATA[
+			SELECT 
+				A.BIN_OrganizationID AS organizationId,
+				B.BIN_ProductVendorID AS productVendorId,
+				B.SaleType AS saleType,
+				SUM(CASE 
+						WHEN A.SaleType = 'SR' THEN CASE WHEN B.SaleType = 'N' THEN -B.PricePay*B.Quantity ELSE -B.PricePay END
+						ELSE CASE WHEN B.SaleType = 'N' THEN B.PricePay*B.Quantity ELSE B.PricePay END
+					END) AS amount,
+				SUM(CASE 
+						WHEN A.SaleType = 'SR' THEN CASE WHEN B.SaleType = 'N' THEN -B.Quantity ELSE 0 END
+						ELSE CASE WHEN B.SaleType = 'N' THEN B.Quantity ELSE 0 END
+					END) AS quantity
+			FROM
+				Sale.BIN_SaleRecord A
+				JOIN Sale.BIN_SaleRecordDetail B ON A.BIN_SaleRecordID = B.BIN_SaleRecordID
+			WHERE
+				A.SaleDate >= #saleCountStartDate# AND
+				A.SaleDate <= #saleCountEndDate# AND
+				A.BIN_OrganizationInfoID = #organizationInfoId# AND
+				A.BIN_BrandInfoID = #brandInfoId# AND
+				A.SaleCountFlag = '2' AND
+				A.ValidFlag = '1'
+			GROUP BY
+				A.BIN_OrganizationID,
+				B.BIN_ProductVendorID,
+				B.SaleType
+		]]>
+    </sql>
+    
+    <!-- 查询销售统计信息 -->
+	<select id="getSaleCountInfoList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+		<include refid="BINOLCMINC99.pageheader" />
+		<include refid="BINBESSRPS01.SaleCount" />
+		<include refid="BINOLCMINC99.pagefooter" />
+    </select>
+    
+    <!-- 添加销售月度统计信息 -->
+    <insert id="addSaleCountHistory" parameterClass="java.util.HashMap">
+    	<![CDATA[
+    		INSERT INTO Sale.BIN_SaleCountHistory
+			(		
+				BIN_OrganizationInfoID,		
+				BIN_BrandInfoID,			
+				BIN_OrganizationID,	
+				BIN_ProductVendorID,	
+				SaleType,	
+				Amount,
+				Quantity,
+				SaleYearMonth,
+		]]>
+				<include refid="BINBECMINC99.insertKeySql" />		
+		<![CDATA[				
+			)		
+			VALUES		
+			(		
+				#organizationInfoId#,	
+				#brandInfoId#,					
+				#organizationId#,			
+				#productVendorId#,
+				#saleType#,
+				#amount#,
+				#quantity#,
+				#saleYearMonth#,
+		]]>
+				<include refid="BINBECMINC99.insertValueSql" />		
+		<![CDATA[			
+			)		
+    	]]>
+    </insert>
+    
+    <!-- 更新销售月度统计信息 -->
+	<update id="updateSaleCountHistory" parameterClass="java.util.HashMap">
+		<![CDATA[
+			UPDATE 		
+				Sale.BIN_SaleCountHistory
+			SET		
+				Amount = Amount + #amount#,
+				Quantity = Quantity + #quantity#,
+		]]>
+			<include refid="BINBECMINC99.updateSql" />	
+		<![CDATA[				
+			WHERE
+				SaleYearMonth = #saleYearMonth# AND
+				BIN_OrganizationID = #organizationId# AND
+				BIN_ProductVendorID = #productVendorId# AND
+				SaleType = #saleType#
+		]]>
+    </update>
+    
+    <!-- 删除销售月度统计信息 -->
+	<delete id="deleteSaleCountHistory" parameterClass="java.util.HashMap">
+		<![CDATA[
+			DELETE FROM 
+				Sale.BIN_SaleCountHistory
+			WHERE
+				SaleYearMonth = #saleYearMonth#	AND
+				BIN_OrganizationInfoID = #organizationInfoId# AND
+				BIN_BrandInfoID = #brandInfoId#
+		]]>
+	</delete>
+	
+	<!-- 把销售统计区分更新为待处理状态 -->
+	<update id="updateSaleCountFlagWait" parameterClass="java.util.HashMap">
+		<![CDATA[
+			UPDATE 		
+				Sale.BIN_SaleRecord
+			SET		
+				SaleCountFlag = '2',
+		]]>
+			<include refid="BINBECMINC99.updateSql" />	
+		<![CDATA[				
+			WHERE
+				SaleDate >= #saleCountStartDate# AND
+				SaleDate <= #saleCountEndDate# AND
+				BIN_OrganizationInfoID = #organizationInfoId# AND
+				BIN_BrandInfoID = #brandInfoId# AND
+		]]>		
+			<isNotEmpty property="saleCountPatchFlag">
+				SaleCountFlag IS NULL AND
+			</isNotEmpty>		
+		<![CDATA[		
+				ValidFlag = '1'
+		]]>
+    </update>
+    
+    <!-- 把销售统计区分更新为处理完成状态 -->
+	<update id="updateSaleCountFlagEnd" parameterClass="java.util.HashMap">
+		<![CDATA[
+			UPDATE 		
+				Sale.BIN_SaleRecord
+			SET		
+				SaleCountFlag = '1',
+		]]>
+			<include refid="BINBECMINC99.updateSql" />	
+		<![CDATA[				
+			WHERE
+				SaleDate >= #saleCountStartDate# AND
+				SaleDate <= #saleCountEndDate# AND
+				BIN_OrganizationInfoID = #organizationInfoId# AND
+				BIN_BrandInfoID = #brandInfoId# AND
+				SaleCountFlag = '2' AND
+				ValidFlag = '1'
+		]]>
+    </update>
+    
+    <!-- 查询未进行销售月度统计的最小时间 -->
+	<select id="getMinSaleDate" parameterClass="java.util.HashMap" resultClass="java.lang.String">
+		<![CDATA[
+			SELECT 
+				MIN(SaleDate) AS saleDate
+			FROM 		
+				Sale.BIN_SaleRecord
+			WHERE		
+				SaleDate <= #bussinessDate# AND
+				BIN_OrganizationInfoID = #organizationInfoId# AND
+				BIN_BrandInfoID = #brandInfoId# AND
+				SaleCountFlag IS NULL AND
+				ValidFlag = '1'
+		]]>
+    </select>
+    
+    <!-- 查询指定日期所在的财务年月 -->
+	<select id="getFiscalMonth" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+		<![CDATA[
+			SELECT 
+				FiscalYear AS fiscalYear,
+				FiscalMonth AS fiscalMonth
+			FROM 		
+				Tools.BIN_Calendar
+			WHERE		
+				BIN_OrganizationInfoID = #organizationInfoId# AND
+				DateValue = #dateValue#
+		]]>
+    </select>
+    
+    <!-- 查询指定财务月的最小最大自然日 -->
+	<select id="getMinMaxDateValue" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+		<![CDATA[
+			SELECT 
+				MIN(DateValue) AS minDateValue,
+				MAX(DateValue) AS maxDateValue
+			FROM 		
+				Tools.BIN_Calendar
+			WHERE		
+				BIN_OrganizationInfoID = #organizationInfoId# AND
+				FiscalYear = #fiscalYear# AND
+				FiscalMonth = #fiscalMonth#
+		]]>		
+    </select>
+    
+    <!-- 添加销售月度统计信息 -->
+    <insert id="addSaleCountHistoryAll" parameterClass="java.util.HashMap">
+    	<![CDATA[
+    		INSERT INTO Sale.BIN_SaleCountHistory
+			(		
+				BIN_OrganizationInfoID,		
+				BIN_BrandInfoID,			
+				BIN_OrganizationID,	
+				BIN_ProductVendorID,
+				SaleType,		
+				Amount,
+				Quantity,
+				SaleYearMonth,
+		]]>		
+			<include refid="BINBECMINC99.insertKeySql" />	
+		<![CDATA[				
+			)
+			SELECT 
+				#organizationInfoId#,
+				#brandInfoId#,
+				A.BIN_OrganizationID,
+				B.BIN_ProductVendorID,
+				B.SaleType,
+				SUM(CASE 
+						WHEN A.SaleType = 'SR' THEN CASE WHEN B.SaleType = 'N' THEN -B.PricePay*B.Quantity ELSE -B.PricePay END
+						ELSE CASE WHEN B.SaleType = 'N' THEN B.PricePay*B.Quantity ELSE B.PricePay END
+					END),
+				SUM(CASE 
+						WHEN A.SaleType = 'SR' THEN CASE WHEN B.SaleType = 'N' THEN -B.Quantity ELSE 0 END
+						ELSE CASE WHEN B.SaleType = 'N' THEN B.Quantity ELSE 0 END
+					END),
+				#saleYearMonth#,
+		]]>		
+			<include refid="BINBECMINC99.insertValueSql" />	
+		<![CDATA[		
+			FROM
+				Sale.BIN_SaleRecord A
+				JOIN Sale.BIN_SaleRecordDetail B ON A.BIN_SaleRecordID = B.BIN_SaleRecordID
+			WHERE
+				A.SaleDate >= #saleCountStartDate# AND
+				A.SaleDate <= #saleCountEndDate# AND
+				A.BIN_OrganizationInfoID = #organizationInfoId# AND
+				A.BIN_BrandInfoID = #brandInfoId# AND
+				A.SaleCountFlag = '2' AND
+				A.ValidFlag = '1'
+			GROUP BY
+				A.BIN_OrganizationID,
+				B.BIN_ProductVendorID,
+				B.SaleType
+		]]>
+    </insert>
+    
+    <!-- 查询未进行销售统计且为销售记录修改的记录数 -->
+	<select id="getModifiedSaleCount" parameterClass="java.util.HashMap" resultClass="java.lang.Integer">
+		<![CDATA[
+			SELECT 
+				COUNT(1)
+			FROM
+				Sale.BIN_SaleRecord A
+			WHERE
+				A.SaleDate >= #saleCountStartDate# AND
+				A.SaleDate <= #saleCountEndDate# AND
+				A.BIN_OrganizationInfoID = #organizationInfoId# AND
+				A.BIN_BrandInfoID = #brandInfoId# AND
+				A.ModifiedTimes > 0 AND
+				A.SaleCountFlag = '2' AND
+				A.ValidFlag = '1'
+		]]>		
+    </select>
+		
+</sqlMap>

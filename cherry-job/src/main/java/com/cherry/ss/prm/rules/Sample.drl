@@ -1,0 +1,100 @@
+package com.cherry.bat
+import com.cherry.ss.prm.dto.*
+import com.cherry.cm.util.RuleUtil;
+import java.util.ArrayList;
+import java.util.List;
+rule "23"
+salience 0 
+	 when 
+		 $s:SaleRecordDTO ((((saleTime>="2011-05-11" &&  saleTime<="2011-05-12") && ( channelID == "4" || channelID == "3"))) 
+
+ 		 && (eval(RuleUtil.compareListKey($s.getSaleRecordDetailList(),"045003",1,4)) || eval(RuleUtil.compareListKey($s.getSaleRecordDetailList(),"045006",2,4)) || eval(RuleUtil.compareListKey($s.getSaleRecordDetailList(),"045011",2,4)))
+ )
+ then 
+ 		 List commodityDTOList = new ArrayList(); 
+RuleUtil.setPromotionReward($s,0,commodityDTOList,drools.getRule().getName()); 
+
+ end 
+
+rule "25"
+salience 0 
+	 when 
+		 $s:SaleRecordDTO ((((saleTime>="2011-05-11" &&  saleTime<="2020-01-01") && ( counterCode == "A10002" || counterCode == "A10003"))) 
+
+ 		 && (eval(RuleUtil.compareListKey($s.getSaleRecordDetailList(),"045001",1,0)) || eval(RuleUtil.compareListKey($s.getSaleRecordDetailList(),"045003",1,0)))
+ )
+ then 
+ 		 List commodityDTOList = new ArrayList(); 
+RuleUtil.setPromotionReward($s,-100,commodityDTOList,drools.getRule().getName()); 
+
+ end 
+
+rule "26"
+salience 0 
+	 when 
+		 $s:SaleRecordDTO ((((saleTime>="2011-05-20" &&  saleTime<="2011-05-21") && counterCode == "CNT00000000023")) 
+
+ 		 && (amount>100 || (eval(RuleUtil.compareListKey($s.getSaleRecordDetailList(),"045000",1,5)) && eval(RuleUtil.compareListKey($s.getSaleRecordDetailList(),"045001",1,5))))
+ )
+ then 
+ 		 List commodityDTOList = new ArrayList(); 
+CommodityDTO commodityDTO0 = new CommodityDTO(); 
+commodityDTO0.setUnitCode("1212121111111"); 
+commodityDTO0.setBarCode("121"); 
+commodityDTO0.setQuantity(1); 
+commodityDTOList.add(commodityDTO0);CommodityDTO commodityDTO1 = new CommodityDTO(); 
+commodityDTO1.setUnitCode("1212121212121"); 
+commodityDTO1.setBarCode("22222222222"); 
+commodityDTO1.setQuantity(1); 
+commodityDTOList.add(commodityDTO1);RuleUtil.setPromotionReward($s,20,commodityDTOList,drools.getRule().getName()); 
+
+ end 
+
+rule "27"
+salience 0 
+	 when 
+		 $s:SaleRecordDTO ((((saleTime>="2011-05-25" &&  saleTime<="2011-05-28") && counterCode == "CNT00000000023") || ((saleTime>="2011-05-27" &&  saleTime<="2011-05-28") && cityID == "16")) 
+
+ 		 && (eval(RuleUtil.compareListKey($s.getSaleRecordDetailList(),"045001",1,5)) || eval(RuleUtil.compareListKey($s.getSaleRecordDetailList(),"045003",1,5)) || eval(RuleUtil.compareListKey($s.getSaleRecordDetailList(),"045006",1,5)))
+ )
+ then 
+ 		 List commodityDTOList = new ArrayList(); 
+CommodityDTO commodityDTO0 = new CommodityDTO(); 
+commodityDTO0.setUnitCode("CX001"); 
+commodityDTO0.setBarCode("CX0001"); 
+commodityDTO0.setQuantity(1); 
+commodityDTOList.add(commodityDTO0); 
+CommodityDTO commodityDTO1 = new CommodityDTO(); 
+commodityDTO1.setUnitCode("CX52820020012"); 
+commodityDTO1.setBarCode("CX52820020012"); 
+commodityDTO1.setQuantity(1); 
+commodityDTOList.add(commodityDTO1); 
+RuleUtil.setPromotionReward($s,-100,commodityDTOList,drools.getRule().getName()); 
+
+ end 
+
+rule "28"
+salience 0 
+	 when 
+		 $s:SaleRecordDTO ((((saleTime>="2011-05-26" &&  saleTime<="2011-05-28") && channelID == "3")) 
+
+ 		 && amount>100
+ )
+ then 
+ 		 List commodityDTOList = new ArrayList(); 
+CommodityDTO commodityDTO0 = new CommodityDTO(); 
+commodityDTO0.setUnitCode("CX52820020012"); 
+commodityDTO0.setBarCode("CX52820020012"); 
+commodityDTO0.setQuantity(1); 
+commodityDTOList.add(commodityDTO0); 
+RuleUtil.setPromotionReward($s,0,commodityDTOList,drools.getRule().getName()); 
+
+ end 
+
+rule "promotionCompare" 
+		 salience -1 
+when 
+	 $s:SaleRecordDTO();
+then 
+RuleUtil.comparePromotionStockInOut($s); 
+end 

@@ -1,0 +1,117 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sqlMap PUBLIC "-//iBATIS.com//DTD SQL Map 2.0//EN" "http://ibatis.apache.org/dtd/sql-map-2.dtd">
+<sqlMap namespace="BINOLCM06">
+	<!-- 配置数据库品牌信息 -->
+	<resultMap id="ConfBrandInfoList" class="java.util.HashMap">
+		<result property="orgCode" column="OrgCode"/>							<!-- 组织Code -->
+		<result property="brandCode" column="BrandCode"/>						<!-- 品牌code -->
+		<result property="dataSourceName" column="DataSourceName"/>				<!-- 数据源名 -->
+		<result property="oldDataSourceName" column="OldDataSourceName"/>		<!-- 老后台数据源名 -->
+		<result property="ifDataSourceName" column="IFDataSourceName"/>			<!-- 第三方接口数据源名 -->
+		<result property="SMSDataSourceName" column="SMSDataSourceName"/>			<!-- 第三方接口数据源名 -->
+		<result property="BrandName" column="BrandName"/>			<!-- 品牌名称 -->
+	</resultMap>
+	<!-- 取得配置数据库品牌信息  -->
+    <select id="getConfBrandInfoList" parameterClass="java.util.HashMap" resultMap="ConfBrandInfoList">
+       	<![CDATA[
+			SELECT
+				OrgCode,
+				BrandCode,
+				DataSourceName,
+				OldDataSourceName,
+				IFDataSourceName,
+				SMSDataSourceName,
+				BrandName
+			FROM
+				dbo.BIN_BrandDataSourceConfig
+			WHERE
+				ValidFlag = '1' AND
+				OrgCode <> '-9999' AND
+				BrandCode <> '-9999'
+			ORDER BY BrandCode DESC
+		]]>
+    </select>
+	
+	<!-- 品牌信息 -->
+	<resultMap id="OSBrandInfo" class="java.util.HashMap">
+		<result property="organizationInfoId" column="BIN_OrganizationInfoID"/>			<!-- 组织ID -->
+		<result property="brandInfoId" column="BIN_BrandInfoID"/>						<!-- 品牌ID -->
+	</resultMap>
+	<!-- 取得品牌信息  -->
+    <select id="getOSBrandInfo" parameterClass="java.util.HashMap" resultMap="OSBrandInfo">
+       	<![CDATA[
+			SELECT
+				A.BIN_OrganizationInfoID,
+				B.BIN_BrandInfoID										
+			FROM
+				Basis.BIN_OrganizationInfo A,
+				Basis.BIN_BrandInfo B
+			WHERE
+				A.OrgCode = #orgCode# AND
+				A.ValidFlag = '1' AND
+				A.BIN_OrganizationInfoID = B.BIN_OrganizationInfoID AND
+				B.BrandCode = #brandCode# AND
+				B.ValidFlag = '1'
+		]]>
+    </select>
+
+	<!-- 取得品牌Code -->
+	<select id="getBrandCode" parameterClass="java.util.HashMap"
+		resultClass="java.lang.String">
+       <![CDATA[
+			SELECT
+				BrandCode AS brandCode
+			FROM
+				Basis.BIN_BrandInfo
+			WHERE
+				BIN_BrandInfoID = #brandInfoId#
+		]]>
+	</select>
+	
+	<!-- 插入文件储存表  -->
+	<insert id="insertFileStore" parameterClass="java.util.HashMap">
+        <![CDATA[ 
+		INSERT INTO Tools.BIN_FileStore							
+           (OrgCode,					
+            BrandCode,					
+            FileCategory,
+			FileName,
+			FileCode,
+			FileContent,
+			FileType,
+			DescriptionDtl,
+		]]>
+			<include refid="BINBECMINC99.insertKeySql" />		
+		<![CDATA[			
+        )VALUES	(
+			#orgCode#,
+			#brandCode#,					
+            #fileCategory#,					
+            #fileName#,
+			#fileCode#,
+			#fileContent#,
+			#fileType#,
+			#descriptionDtl#,
+		]]>
+			<include refid="BINBECMINC99.insertValueSql" />		
+		<![CDATA[
+				)
+    	]]>
+    </insert>
+    
+    <!-- 查询指定工作流文件的件数 -->	
+	<select id="getBrandJobCount" parameterClass="java.util.HashMap" resultClass="java.lang.Integer">
+		<![CDATA[
+		SELECT
+			COUNT(1)
+		FROM 
+			Tools.BIN_FileStore WITH(NOLOCK)
+		WHERE 
+			FileCode = #fileCode# AND
+			((BrandCode = #brandCode# AND OrgCode = #orgCode#) OR
+			(BrandCode = '-9999' AND OrgCode = #orgCode#) OR
+			(BrandCode = '-9999' AND OrgCode = '-9999')) AND
+			ValidFlag='1'
+		]]>	
+    </select>
+</sqlMap>

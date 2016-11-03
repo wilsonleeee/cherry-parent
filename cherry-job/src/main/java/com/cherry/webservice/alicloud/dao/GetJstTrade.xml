@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sqlMap PUBLIC "-//iBATIS.com//DTD SQL Map 2.0//EN" "http://ibatis.apache.org/dtd/sql-map-2.dtd">
+<sqlMap namespace="GetJstTrade">
+	
+	<!-- trade信息查询sql文  -->
+	<sql id="tradeQuery">
+		SELECT 
+			tid,
+			status,
+			type,
+			seller_nick,
+			buyer_nick,
+			created,
+			modified,
+			jdp_created,
+			jdp_modified,
+			jdp_response
+		FROM
+			dbo.JDP_TB_TRADE
+		WHERE
+			seller_nick = #Nick#
+		<isNotEmpty property="SearchType" >
+			<!-- 通过开始时间/结束时间控制程序整体处理数据量  -->
+			<isEqual property="SearchType" compareValue="crt" prepend="AND">
+			 (created BETWEEN #StartTime# AND #EndTime#)
+			</isEqual> 
+			<isEqual property="SearchType" compareValue="upd" prepend="AND">
+			    (jdp_modified BETWEEN #StartTime# AND #EndTime#)
+			</isEqual> 
+		</isNotEmpty>	
+	</sql>
+	
+	<!-- 取得JST订单信息List -->
+	<select id="getJstTradeList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+       	<include refid="BINBECMINC99.pageheader" />
+		<include refid="GetJstTrade.tradeQuery" />
+		<include refid="BINBECMINC99.pagefooter" />
+	</select>
+	
+	<!-- 取得JST订单信息总数  -->
+    <select id="getJstTradeCount" parameterClass="java.util.HashMap" resultClass="java.lang.Integer">
+    	<![CDATA[
+			SELECT	COUNT(SORT_T1.tid) AS count FROM (
+		]]>	
+		<include refid="GetJstTrade.tradeQuery" />	
+		<![CDATA[	
+			)SORT_T1
+		]]>										
+    </select>
+	
+	
+	
+</sqlMap>

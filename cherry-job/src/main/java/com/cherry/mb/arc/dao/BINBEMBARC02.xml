@@ -1,0 +1,647 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sqlMap PUBLIC "-//iBATIS.com//DTD SQL Map 2.0//EN" "http://ibatis.apache.org/dtd/sql-map-2.dtd">
+<sqlMap namespace="BINBEMBARC02">
+	
+	<!-- 取得品牌数据库中最近几天有变化的会员积分信息  -->
+	<sql id="WitMemLastQuery">
+		<![CDATA[
+			SELECT
+				ID,
+				memcode,
+				curpoints,
+				ChangablePoint,
+				FreezePoint,
+				TotalDisablePoint,
+				lastdate,
+				ExchangeTotal,
+				PreCardPoint,
+				point_toclear,
+				cur_clean_date,
+				status
+			FROM
+				dbo.mempoints
+			WHERE
+				lastdate IS NOT NULL AND
+				lastdate >= #befDate# AND
+		]]>
+			<isNotEmpty property="mptIdStart">
+				<![CDATA[ID >= #mptIdStart# AND
+				]]>
+			</isNotEmpty>
+			<isNotEmpty property="mptIdEnd">
+				<![CDATA[ID <= #mptIdEnd# AND
+				]]>
+			</isNotEmpty>
+	<![CDATA[
+				bak_int2 = '1'
+		]]>
+	</sql>
+	
+	<!-- 取得最近几天有变化的会员积分总数  -->
+    <select id="getWitMemLastCount" parameterClass="java.util.HashMap" resultClass="java.lang.Integer">
+    	<![CDATA[
+			SELECT	COUNT(SORT_T1.ID) AS count FROM (
+		]]>	
+		<include refid="BINBEMBARC02.WitMemLastQuery" />	
+		<![CDATA[	
+			)SORT_T1
+		]]>										
+    </select>
+	
+	<!-- 最近几天有变化的会员积分信息 -->
+	<resultMap id="BINBEMBARC02.WitMemLastList" class="java.util.HashMap">
+		<result property="id" column="ID"/>									
+		<result property="memcode" column="memcode"/>										
+		<result property="curpoints" column="curpoints"/>								
+		<result property="changablePoint" column="ChangablePoint"/>							
+		<result property="freezePoint" column="FreezePoint"/>					
+		<result property="totalDisablePoint" column="TotalDisablePoint"/>									
+		<result property="lastdate" column="lastdate"/>									
+		<result property="exchangeTotal" column="ExchangeTotal"/>		
+		<result property="preCardPoint" column="PreCardPoint"/>
+		<result property="pointToclear" column="point_toclear"/>
+		<result property="curCleanDate" column="cur_clean_date"/>
+		<result property="ptStatus" column="status"/>
+	</resultMap>
+    <select id="getWitMemLastList" parameterClass="java.util.HashMap" resultMap="BINBEMBARC02.WitMemLastList">
+    	<include refid="BINBECMINC99.pageheader" />	
+       	<include refid="BINBEMBARC02.WitMemLastQuery" />
+		<include refid="BINBECMINC99.pagefooter" />			
+    </select>
+	
+	<!-- 取得品牌数据库中会员积分信息总数  -->
+    <select id="getWitMemPointCount" parameterClass="java.util.HashMap" resultClass="java.lang.Integer">
+    	<![CDATA[
+			SELECT COUNT(ID)
+			FROM
+				dbo.mempoints
+			WHERE
+		]]>
+			<isNotEmpty property="mptIdStart">
+				<![CDATA[ID >= #mptIdStart# AND
+				]]>
+			</isNotEmpty>
+			<isNotEmpty property="mptIdEnd">
+				<![CDATA[ID <= #mptIdEnd# AND
+				]]>
+			</isNotEmpty>
+			<isEmpty property="zflag">
+				<![CDATA[
+				bak_int2 IS NULL
+				]]>
+			</isEmpty>
+			<isNotEmpty property="zflag">
+				<![CDATA[bak_int2 = 99
+				]]>
+			</isNotEmpty>
+    </select>
+    
+    <!-- 取得品牌数据库中会员积分变化主表信息总数  -->
+    <select id="getWitPointChangeCount" parameterClass="java.util.HashMap" resultClass="java.lang.Integer">
+    	<![CDATA[
+			SELECT COUNT(id)
+			FROM
+				dbo.WITPOSB_points_change_mains
+			WHERE
+		]]>
+			<isNotEmpty property="dtlIdStart">
+				<![CDATA[id >= #dtlIdStart# AND
+				]]>
+			</isNotEmpty>
+			<isNotEmpty property="dtlIdEnd">
+				<![CDATA[id <= #dtlIdEnd# AND
+				]]>
+			</isNotEmpty>
+	<![CDATA[
+				status = 'OK' AND
+		]]>
+		<isEmpty property="zflag">
+			<![CDATA[
+			bak_int2 IS NULL
+			]]>
+		</isEmpty>
+		<isNotEmpty property="zflag">
+			<![CDATA[bak_int2 = 99
+			]]>
+		</isNotEmpty>					
+    </select>
+    
+	<!-- 会员积分信息 -->
+	<resultMap id="BINBEMBARC02.WitMemPointList" class="java.util.HashMap">
+		<result property="id" column="ID"/>														<!-- 自动增长列 -->	
+		<result property="memcode" column="memcode"/>											<!-- 会员号 -->			
+		<result property="curpoints" column="curpoints"/>										<!-- 会员当前总积分 -->	
+		<result property="changablePoint" column="ChangablePoint"/>								<!-- 可兑换积分 -->
+		<result property="freezePoint" column="FreezePoint"/>									<!-- 冻结积分 -->
+		<result property="totalDisablePoint" column="TotalDisablePoint"/>						<!-- 累计失效积分 -->
+		<result property="lastdate" column="lastdate"/>											<!-- 最后一次变化日 -->
+		<result property="exchangeTotal" column="ExchangeTotal"/>								<!-- 积分兑换使用的总积分 -->
+		<result property="preCardPoint" column="PreCardPoint"/>									<!-- 前卡的积分 -->
+		<result property="pointToclear" column="point_toclear"/>								<!-- 即将失效积分 -->
+		<result property="curCleanDate" column="cur_clean_date"/>								<!-- 即将失效日期 -->
+		<result property="ptStatus" column="status"/>											<!-- 有效区分 -->
+	</resultMap>
+	<!-- 从品牌数据库中查询会员积分信息  -->
+    <select id="getWitMemPointList" parameterClass="java.util.HashMap" resultMap="BINBEMBARC02.WitMemPointList">
+    	<![CDATA[
+			SELECT TOP $COUNT$
+				ID,
+				memcode,
+				curpoints,
+				ChangablePoint,
+				FreezePoint,
+				TotalDisablePoint,
+				lastdate,
+				ExchangeTotal,
+				PreCardPoint,
+				point_toclear,
+				cur_clean_date,
+				status
+			FROM
+				dbo.mempoints
+			WHERE
+		]]>
+			<isNotEmpty property="mptIdStart">
+				<![CDATA[ID >= #mptIdStart# AND
+				]]>
+			</isNotEmpty>
+			<isNotEmpty property="mptIdEnd">
+				<![CDATA[ID <= #mptIdEnd# AND
+				]]>
+			</isNotEmpty>
+			<isEmpty property="zflag">
+				<![CDATA[
+				bak_int2 IS NULL
+				]]>
+			</isEmpty>
+			<isNotEmpty property="zflag">
+				<![CDATA[bak_int2 = 99
+				]]>
+			</isNotEmpty>
+	<![CDATA[
+			ORDER BY ID
+		]]>
+    </select>
+    
+    <!-- 会员积分变化主表信息 -->
+	<resultMap id="BINBEMBARC02.WitPointChangeList" class="java.util.HashMap">
+		<result property="id" column="id"/>													<!-- 自动增长列 -->	
+		<result property="billid" column="billid"/>											<!-- 单据号 -->			
+		<result property="tradeType" column="TradeType"/>									<!-- 交易类型 -->	
+		<result property="memcode" column="member_code"/>									<!-- 会员卡号 -->
+		<result property="changeTime" column="change_time"/>								<!-- 交易完成时间 -->
+		<result property="status" column="status"/>											<!-- 该数据状态标志 -->
+		<result property="point" column="Point"/>											<!-- 该单产生积分 -->
+		<result property="amount" column="amount"/>											<!-- 整单金额 -->
+		<result property="quantity" column="quantity"/>										<!-- 销售数量 -->
+		<result property="reCalcCount" column="ReCalcCount"/>								<!-- 重算次数 -->
+	</resultMap>
+	<!-- 从品牌数据库中查询会员积分变化主表信息  -->
+    <select id="getWitPointChangeList" parameterClass="java.util.HashMap" resultMap="BINBEMBARC02.WitPointChangeList">
+    	<![CDATA[
+			SELECT TOP $COUNT$
+				id,
+				billid,
+				TradeType,
+				member_code,
+				change_time,
+				Point,
+				status,
+				amount,
+				quantity,
+				ReCalcCount
+			FROM
+				dbo.WITPOSB_points_change_mains
+			WHERE
+		]]>
+			<isNotEmpty property="dtlIdStart">
+				<![CDATA[id >= #dtlIdStart# AND
+				]]>
+			</isNotEmpty>
+			<isNotEmpty property="dtlIdEnd">
+				<![CDATA[id <= #dtlIdEnd# AND
+				]]>
+			</isNotEmpty>
+	<![CDATA[
+				status = 'OK' AND
+		]]>
+		<isEmpty property="zflag">
+			<![CDATA[
+			bak_int2 IS NULL
+			]]>
+		</isEmpty>
+		<isNotEmpty property="zflag">
+			<![CDATA[bak_int2 = 99
+			]]>
+		</isNotEmpty>
+		<![CDATA[
+			ORDER BY id
+		]]>
+    </select>
+    
+    <!-- 标记品牌会员积分信息表中已导入的数据 -->
+	<update id="updateWitMempoints" parameterClass="java.util.HashMap">
+		<![CDATA[
+			UPDATE 		
+				dbo.mempoints	
+			SET		
+				bak_int2 = 1
+			WHERE
+				ID >= #startID# AND
+				ID <= #endID# AND
+		]]>	
+		<isEmpty property="zflag">
+			<![CDATA[
+			bak_int2 IS NULL
+			]]>
+		</isEmpty>	
+		<isNotEmpty property="zflag">
+			<![CDATA[bak_int2 = 99
+			]]>
+		</isNotEmpty>
+    </update>
+    
+    <!-- 导入失败的记录去除标记(积分信息表) -->
+	<update id="updateFailWitMempoints" parameterClass="java.util.HashMap">
+		<![CDATA[
+			UPDATE 		
+				dbo.mempoints	
+			SET		
+				
+	]]>
+	<isEmpty property="zflag">
+		<![CDATA[
+		bak_int2 = NULL
+		]]>
+	</isEmpty>
+	<isNotEmpty property="zflag">
+		<![CDATA[bak_int2 = 99
+		]]>
+	</isNotEmpty>
+	<![CDATA[
+			WHERE
+				ID = #id#
+		]]>
+    </update>
+    
+    <!-- 导入失败的记录去除标记 (积分变化主表)-->
+	<update id="updateFailWitPointChange" parameterClass="java.util.HashMap">
+		<![CDATA[
+			UPDATE 		
+				dbo.WITPOSB_points_change_mains	
+			SET
+	]]>
+	<isEmpty property="zflag">
+		<![CDATA[
+		bak_int2 = NULL
+		]]>
+	</isEmpty>
+	<isNotEmpty property="zflag">
+		<![CDATA[bak_int2 = 99
+		]]>
+	</isNotEmpty>
+	<![CDATA[
+			WHERE
+				ID = #id#
+		]]>
+    </update>
+    
+    <!-- 标记品牌会员积分变化主表中已导入的数据 -->
+	<update id="updateWitPointChange" parameterClass="java.util.HashMap">
+		<![CDATA[
+			UPDATE 		
+				dbo.WITPOSB_points_change_mains	
+			SET		
+				bak_int2 = 1
+			WHERE
+				id >= #startID# AND
+				id <= #endID# AND
+				status = 'OK' AND
+		]]>
+		<isEmpty property="zflag">
+			<![CDATA[
+			bak_int2 IS NULL
+			]]>
+		</isEmpty>
+		<isNotEmpty property="zflag">
+			<![CDATA[bak_int2 = 99
+			]]>
+		</isNotEmpty>
+    </update>
+    
+    <!-- 插入会员积分信息表  -->
+	<insert id="insertMemPoint" parameterClass="java.util.HashMap">
+        <![CDATA[ 
+		INSERT INTO Members.BIN_MemberPoint							
+		           (BIN_OrganizationInfoID,					
+		            BIN_BrandInfoID,					
+		            BIN_MemberInfoID,
+		            TotalPoint,
+		            TotalChanged,
+		            ChangablePoint,
+		            FreezePoint,
+		            TotalDisablePoint,
+		            PreCardPoint,
+		            InitialPoint,
+		            InitChangablePoint,
+		            InitTotalChanged,
+		            InitPreCardPoint,
+		            InitialLastdate,
+		            InitialID,
+		            CurDisablePoint,
+		            CurDealDate,
+		]]>	
+		    <include refid="BINBECMINC99.insertKeySql" />	
+		<![CDATA[			
+        )VALUES							
+		           (#organizationInfoId#,					
+		            #brandInfoId#,					
+		            #memberInfoId#,	
+		            #curpoints#,
+		            #exchangeTotal#,
+		            #changablePoint#,
+		            #freezePoint#,
+		            #totalDisablePoint#,
+		            #preCardPoint#,
+		            #curpoints#,
+		            #changablePoint#,
+		            #exchangeTotal#,
+		            #preCardPoint#,
+		            #lastdate#,
+		            #id#,
+		            #pointToclear#,
+		            #curCleanDate#,		
+       ]]>
+	        <include refid="BINBECMINC99.insertValueSql" />
+		<![CDATA[
+		)
+		]]>
+    </insert>
+    
+    <!-- 取得会员积分信息表中最近几天有变化的会员积分信息  -->
+    <select id="getArcMemLastList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+    	<![CDATA[
+			SELECT
+				BIN_MemberPointID AS memberPointId,
+				InitialLastdate AS initialLastdate,
+				InitialID AS initialId
+			FROM
+				Members.BIN_MemberPoint
+			WHERE
+				BIN_BrandInfoID = #brandInfoId# AND
+				BIN_OrganizationInfoID = #organizationInfoId# AND
+				InitialLastdate IS NOT NULL AND A.InitialLastdate >= #befDate# AND
+				InitialID IS NOT NULL AND
+				ValidFlag = '1'
+			ORDER BY BIN_MemberPointID
+		]]>								
+    </select>
+    
+    <!-- 更新会员积分信息 -->
+	<update id="updateArcMemPointList" parameterClass="java.util.HashMap">
+		<![CDATA[
+			UPDATE 		
+				Members.BIN_MemberPoint
+			SET		
+				TotalPoint = #curpoints#,
+				TotalChanged = #exchangeTotal#,
+				ChangablePoint = #changablePoint#,
+				FreezePoint = #freezePoint#,
+				TotalDisablePoint = #totalDisablePoint#,
+				PreCardPoint = #preCardPoint#,
+				InitialPoint = #curpoints#,
+				InitChangablePoint = #changablePoint#,
+				InitTotalChanged = #exchangeTotal#,
+				InitPreCardPoint = #preCardPoint#,
+				InitialLastdate = #lastdate#,
+				InitialID = #id#,
+				CurDisablePoint = #pointToclear#,
+				CurDealDate = #curCleanDate#,
+			]]>
+			<include refid="BINBECMINC99.updateSql" />	
+		<![CDATA[
+			WHERE
+				BIN_MemberInfoID = #memberInfoId#
+		]]>
+    </update>
+    
+    <!-- 插入会员积分变化主表  -->
+	<insert id="insertArcPointChange" parameterClass="java.util.HashMap">
+        <![CDATA[
+		INSERT INTO Members.BIN_PointChange(
+					BIN_OrganizationInfoID,
+					BIN_BrandInfoID,
+					TradeNoIF,
+					TradeType,
+					BIN_MemberInfoID,
+					MemCode,
+					ChangeDate,
+					Point,
+					Amount,
+					Quantity,
+					ReCalcCount,
+		            InitialID,
+		            BIN_OrganizationID,
+		            BIN_EmployeeID,
+		]]>	
+		    <include refid="BINBECMINC99.insertKeySql" />	
+		<![CDATA[			
+        	)VALUES							
+		           (#organizationInfoId#,
+					#brandInfoId#,
+					#billid#,
+					#tradeType#,
+					#memberInfoId#,
+					#memcode#,
+					#changeTime#,
+					#point#,
+					#amount#,
+					#quantity#,
+					#reCalcCount#,
+					#id#,
+					#organizationId#,
+					#employeeId#,
+       ]]>
+	        <include refid="BINBECMINC99.insertValueSql" />
+	   <![CDATA[)
+			]]>
+    </insert>
+    
+    <!-- 插入会员积分变化主表  -->
+	<insert id="insertArcChangeDetail" parameterClass="java.util.HashMap">
+        <![CDATA[ 
+		INSERT INTO Members.BIN_PointChangeDetail(
+					BIN_PointChangeID,
+					UnitCode,
+					BarCode,
+					BIN_PrmPrtVendorID,
+					SaleType,
+					Point,
+					Price,
+					Quantity,
+					PointType,
+					Reason,
+		]]>	
+		    <include refid="BINBECMINC99.insertKeySql" />	
+		<![CDATA[			
+		        )VALUES(
+					#pointChangeId#,
+					#unitCode#,
+					#barCode#,
+					#prmPrtVendorId#,
+					#saleType#,
+					#point#,
+					#price#,
+					#quantity#,
+					#pointType#,
+					#reason#,
+       ]]>
+	        <include refid="BINBECMINC99.insertValueSql" />
+		<![CDATA[)
+			]]>
+    </insert>
+    
+    <!-- 取得积分变化主表信息  -->
+    <select id="getArcChangeInfo" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+    	<![CDATA[
+			SELECT	
+				BIN_PointChangeID AS pointChangeId
+			FROM
+				Members.BIN_PointChange
+			WHERE
+				TradeNoIF = #billid# AND
+				BIN_MemberInfoID = #memberInfoId#
+		]]>							
+    </select>
+    
+    <!-- 取得积分变化主表ID列表  -->
+    <select id="getArcChangeIdList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+    	<![CDATA[
+			SELECT	
+				BIN_PointChangeID AS pointChangeId,
+				InitialID AS initialId
+			FROM
+				Members.BIN_PointChange
+			WHERE
+				CreateTime = #sysdate# AND
+				InitialID >= #startID# AND
+				InitialID <= #endID#
+			ORDER BY
+				BIN_PointChangeID
+		]]>							
+    </select>
+    
+    <!-- 删除已存在的主表记录 -->
+	<delete id="clearArcMemPointChange" parameterClass="java.util.HashMap">
+		<![CDATA[  
+			DELETE FROM 
+				Members.BIN_PointChange
+			WHERE
+				BIN_PointChangeID = #pointChangeId#
+		]]>
+	</delete>
+	
+	<!-- 删除已存在的明细记录 -->
+	<delete id="clearArcChangeDetail" parameterClass="java.util.HashMap">
+		<![CDATA[  
+			DELETE FROM 
+				Members.BIN_PointChangeDetail
+			WHERE
+				BIN_PointChangeID = #pointChangeId#
+		]]>
+	</delete>
+    
+    
+    <!-- 通过卡号取得会员ID  -->
+    <select id="getArcMemCardInfo" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+    	<![CDATA[
+			SELECT	
+				BIN_MemberInfoID AS memberInfoId
+			FROM
+				Members.BIN_MemCardInfo
+			WHERE
+				MemCode = #memcode# AND
+				ValidFlag = '1'
+		]]>							
+    </select>
+    
+     <!-- 取得积分明细(品牌业务表)  -->
+    <select id="getWitChangeLogList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+    	<![CDATA[
+			SELECT
+				points_change_main_id AS id,
+				Barcode AS barCode,
+				Unitcode AS unitCode,
+				Quantity AS quantity,
+				Price AS price,
+				Type AS saleType,
+				Pointvalue AS point,
+				Bak_int1 AS pointType,
+				CouponCode AS reason,
+				bacode AS employeeCode,
+				countercode AS counterCode,
+				txdtype AS txdtype
+			FROM
+				dbo.transactionlogofpoints
+			WHERE
+				points_change_main_id = #id#
+		]]>							
+    </select>
+    
+     <!-- 取得积分明细(品牌维护表)  -->
+    <select id="getWitPointmaintList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+    	<![CDATA[
+			SELECT
+				points_change_main_id AS id,
+				PointChange AS point,
+				Bak_int1 AS pointType,
+				ChangeReason AS reason
+			FROM
+				dbo.pointmaintenance
+			WHERE
+				points_change_main_id = #id#
+		]]>							
+    </select>
+    
+     <!-- 根据会员ID取得会员积分信息总数  -->
+    <select id="getArcMemPointCount" parameterClass="java.util.HashMap" resultClass="java.lang.Integer">
+    	<![CDATA[
+			SELECT	
+				COUNT(BIN_MemberInfoID)
+			FROM
+				Members.BIN_MemberPoint
+			WHERE
+				BIN_MemberInfoID = #memberInfoId#
+		]]>
+    </select>
+    
+    <!-- 取得柜台信息 -->
+    <select id="getArcCounterInfo" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+    	<![CDATA[
+			SELECT TOP 1
+				BIN_OrganizationID AS organizationId
+			FROM
+				Basis.BIN_CounterInfo WITH(nolock)
+			WHERE
+				CounterCode = #counterCode# AND
+				BIN_BrandInfoID = #brandInfoId# AND
+				BIN_OrganizationInfoID = #organizationInfoId#
+			ORDER BY ValidFlag DESC
+		]]>
+    </select>
+    
+    <!-- 取得员工信息 -->
+    <select id="getArcEmployeeInfo" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+    	<![CDATA[
+			SELECT TOP 1
+				BIN_EmployeeID AS employeeId
+			FROM
+				Basis.BIN_Employee WITH(nolock)
+			WHERE
+				EmployeeCode = #employeeCode# AND
+				BIN_BrandInfoID = #brandInfoId# AND
+				BIN_OrganizationInfoID = #organizationInfoId#
+			ORDER BY ValidFlag DESC
+		]]>
+    </select>
+</sqlMap>

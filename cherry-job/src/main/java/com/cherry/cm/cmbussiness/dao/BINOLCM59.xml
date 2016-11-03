@@ -1,0 +1,365 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sqlMap PUBLIC "-//iBATIS.com//DTD SQL Map 2.0//EN" "http://ibatis.apache.org/dtd/sql-map-2.dtd">
+<sqlMap namespace="BINOLCM59">
+	<!-- 清除促销规则表（接口表） -->
+	<delete id="delProRuleSCS" parameterClass="java.util.HashMap">
+	<![CDATA[DELETE FROM WITPOSA_PromotionRule WHERE BrandAbbr = #brandCode#]]>
+	</delete>
+	<!-- 清除促销规则分类表（接口表） -->
+	<delete id="delProRuleCateSCS" parameterClass="java.util.HashMap">
+	<![CDATA[DELETE FROM WITPOSA_PromotionRuleCate WHERE BrandAbbr = #brandCode#]]>
+	</delete>
+	<!-- 清除促销规则排他关系表（接口表） -->
+	<delete id="delProRuleRelationSCS" parameterClass="java.util.HashMap">
+	<![CDATA[DELETE FROM WITPOSA_PromotionRuleRelation WHERE BrandAbbr = #brandCode#]]>
+	</delete>
+	<!-- 清除促销分类属性表（接口表） -->
+	<delete id="delProRuleCateBaseSCS" parameterClass="java.util.HashMap">
+	<![CDATA[DELETE FROM WITPOSA_promotion_rule_cate_base WHERE BrandAbbr = #brandCode#]]>
+	</delete>
+	<!-- 获取促销规则信息 -->
+	<select id="getProRule" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+		<![CDATA[
+			SELECT
+				A.RuleCode as ruleCode,
+				A.RuleCodeShort as ruleCodeShort,
+				A.RuleName as ruleName,
+				A.RuleCond as ruleCond,
+				A.RuleResult as ruleResult,
+				A.RuleType as ruleCondType,
+				CONVERT(VARCHAR,A.StartTime,120) AS startTime,
+				CONVERT(VARCHAR,A.EndTime,120) AS endTime,
+				A.PlaceJson as placeJson,
+				A.PlaceType as placeType,
+				CASE WHEN A.MemberType ='3' THEN '5' WHEN A.MemberType IN('1','2') THEN '0' ELSE A.MemberType END as memberType,
+				isNull(A.SubCampaignValid,'0') as subCampaignValid,
+				isNull(A.ExecFlag,'0') as execFlag,
+				isNull(A.EnableMessage,'0') as enableMessage,
+				isNull(A.IsMust,'0') as isMust,
+				isNull(A.Level,0) as level,
+				isNull(A.EnableContinue,'1') as enableContinue,
+				A.MaxExecCount as maxExecCount,
+				A.SubBrandCode as subBrandCode,
+				B.CateValue as cateValue,
+				C.ConditionInfo as memberJson
+			FROM
+				Promotion.BIN_PromotionRule A
+				join Promotion.BIN_PromotionRuleCate B 
+				on A.RuleCode = B.RuleCode and A.BIN_BrandInfoID = B.BIN_BrandInfoID and B.ValidFlag = '1'
+				LEFT JOIN Members.BIN_SearchLog C
+				on(A.SearchCode = C.BIN_SearchCode
+					and C.ValidFlag = '1')
+			WHERE 
+				A.BIN_BrandInfoID = #brandInfoId#
+				and A.BIN_OrganizationInfoID = #organizationInfoId#
+				and A.ValidFlag = '1'
+				and CONVERT(nvarchar(10),A.StartTime,23) <= #bussinessDate#
+				and CONVERT(nvarchar(10),A.EndTime,23) >= #bussinessDate#
+				and (A.Status is null OR A.Status = '1')
+			ORDER BY
+				A.Level DESC,A.CreateTime ASC
+		]]>
+	</select>
+	
+	<!-- 获取促销规则信息 -->
+	<select id="getProRule2" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+		<![CDATA[
+			SELECT
+				A.RuleCode as ruleCode,
+				A.RuleCodeShort as ruleCodeShort,
+				A.RuleName as ruleName,
+				A.RuleCond as ruleCond,
+				A.RuleResult as ruleResult,
+				A.RuleType as ruleCondType,
+				CONVERT(VARCHAR,A.StartTime,120) AS startTime,
+				CONVERT(VARCHAR,A.EndTime,120) AS endTime,
+				A.TimeJson as timeJson,
+				A.PlaceJson as placeJson,
+				A.PlaceType as placeType,
+				CASE WHEN (A.MemberType IS NULL OR A.MemberType ='3') THEN '5' WHEN A.MemberType IN('1','2') THEN '0' ELSE A.MemberType END as memberType,
+				isNull(A.SubCampaignValid,'0') as subCampaignValid,
+				isNull(A.ExecFlag,'0') as execFlag,
+				isNull(A.EnableMessage,'0') as enableMessage,
+				isNull(A.IsMust,'0') as isMust,
+				isNull(D.LevelA,0) as level,
+				isNull(D.LevelB,0) as level2,
+				isNull(A.EnableContinue,'1') as enableContinue,
+				A.MaxExecCount as maxExecCount,
+				A.SubBrandCode as subBrandCode,
+				E.BrandCode as brandCode,
+				H.ConditionInfo as memberJson
+			FROM
+				Promotion.BIN_PromotionRule A
+				join Promotion.BIN_PromotionRuleCate B 
+				on (A.RuleCode = B.RuleCode and A.BIN_BrandInfoID = B.BIN_BrandInfoID 
+				and (B.CateValType IS NULL OR B.CateValType = 3) and B.ValidFlag = '1') JOIN
+				Promotion.BIN_PromotionRuleCate C
+				ON (A.RuleCode = C.RuleCode and A.BIN_BrandInfoID = C.BIN_BrandInfoID 
+				and C.CateValType = 2 and C.ValidFlag = '1') JOIN
+				Promotion.BIN_PromotionRuleCateLevel D
+				ON (B.CateValue = D.CateValue AND C.CateValue = D.ParentCateVal and D.ValidFlag = '1') JOIN
+				Basis.BIN_BrandInfo E
+				ON (A.BIN_BrandInfoID = E.BIN_BrandInfoID)
+				join Promotion.BIN_PromotionActivity F
+				on(A.RuleCode = F.ActivityCode
+					and (F.TemplateFlag IS NULL OR F.TemplateFlag='0' OR F.TemplateFlag ='')
+				)
+				LEFT JOIN Members.BIN_SearchLog H
+				on(A.SearchCode = H.BIN_SearchCode
+					and H.ValidFlag = '1')
+			WHERE 
+				A.BIN_BrandInfoID = #brandInfoId#
+				and A.BIN_OrganizationInfoID = #organizationInfoId#
+				and A.ValidFlag = '1'
+				AND (A.Status is null OR A.Status = '1')
+		]]>
+	</select>
+	
+	<!-- 获取促销规则分类信息 -->
+	<select id="getProRuleCate" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+		<![CDATA[	
+		select 
+			A.RuleCode AS ruleCode,
+			A.CateValue AS cateValue,
+			A.CateValType AS cateValType,
+			E.BrandCode AS brandCode
+		from 
+			Promotion.BIN_PromotionRuleCate A JOIN
+			Basis.BIN_BrandInfo E
+			ON (A.BIN_BrandInfoID = E.BIN_BrandInfoID)
+		where
+			A.BIN_BrandInfoID = #brandInfoId#
+			and A.BIN_OrganizationInfoID = #organizationInfoId#
+			and A.ValidFlag = '1'
+		]]>
+	</select>
+
+	<!-- 获取促销规则排他关系信息 -->
+	<select id="getProRuleRelation" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+		<![CDATA[	
+		select 
+			A.RelationTypeA as relationTypeA,
+			A.RelationValueA as relationValueA,
+			A.RelationTypeB as relationTypeB,
+			A.RelationValueB as relationValueB
+		from 
+			Promotion.BIN_PromotionRuleRelation A
+			join Promotion.BIN_PromotionRuleRelationGroup B 
+			on A.GroupNo = B.GroupNo and A.BIN_BrandInfoID = B.BIN_BrandInfoID and B.ValidFlag = '1'
+		where
+			A.BIN_BrandInfoID = #brandInfoId#
+			and A.BIN_OrganizationInfoID = #organizationInfoId#
+			and A.ValidFlag = '1'
+		]]>
+	</select>
+	
+	<!-- 获取促销分类属性信息 -->
+	<select id="getProRuleCateBase" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+		<![CDATA[	
+		select 
+			A.CateName AS cateName,
+			A.CateValue AS cateValue,
+			A.CateValType AS cateValType,
+			A.CatePolicy AS catePolicy,
+			A.ValidFlag AS validFlag,
+			B.BrandCode AS brandCode
+		from 
+			Promotion.BIN_PromotionRuleCateBase A JOIN
+			Basis.BIN_BrandInfo B
+			ON (A.BIN_BrandInfoID = B.BIN_BrandInfoID)
+		where
+			A.BIN_BrandInfoID = #brandInfoId#
+			and A.BIN_OrganizationInfoID = #organizationInfoId#
+		]]>
+	</select>
+	
+	<!-- 添加促销规则记录（接口表） -->
+	<insert id="insertProRuleSCS" parameterClass="java.util.HashMap">
+		<![CDATA[
+		insert into WITPOSA_PromotionRule(
+			RuleCode,
+			RuleName,
+			RuleCodeShort,
+			BrandAbbr,
+			RuleCond,
+			RuleResult,
+			RuleCondType,
+			TimeJson,
+			MemberType,
+			SubCampaignValid,
+			ExecFlag,
+			EnableMessage,
+			IsMust,
+			Level,
+			EnableContinue,
+			MaxExecCount,
+			created,
+			modified,
+			memberJson,
+			SubBrandCode
+		)
+		values(
+			#ruleCode#,
+			#ruleName#,
+			#ruleCodeShort#,
+			#brandCode#,
+			#ruleCond#,
+			#ruleResult#,
+			#ruleCondType#,
+			#timeJson#,
+			#memberType#,
+			#subCampaignValid#,
+			#execFlag#,
+			#enableMessage#,
+			#isMust#,
+			#level#,
+			#enableContinue#,
+			#maxExecCount#,
+			getDate(),
+			getDate(),
+			#memberJson#,
+			#subBrandCode#
+		)
+		]]>
+	</insert>
+	
+	<!-- 添加促销规则分类记录（接口表） -->
+	<insert id="insertProRuleCateSCS" parameterClass="java.util.HashMap">
+		<![CDATA[
+		insert into WITPOSA_PromotionRuleCate(
+			BrandAbbr,
+			RuleCode,
+			CateValue,
+			created,
+			modified
+		)
+		values(
+			#brandCode#,
+			#ruleCode#,
+			#cateValue#,
+			getdate(),
+			getdate()
+		)
+		]]>
+	</insert>
+	
+	<!-- 添加促销规则记录（接口表） -->
+	<insert id="insertProRuleSCS2" parameterClass="java.util.HashMap">
+		<![CDATA[
+		insert into WITPOSA_PromotionRule(
+			RuleCode,
+			RuleName,
+			RuleCodeShort,
+			BrandAbbr,
+			RuleCond,
+			RuleResult,
+			RuleCondType,
+			TimeJson,
+			MemberType,
+			SubCampaignValid,
+			ExecFlag,
+			EnableMessage,
+			IsMust,
+			Level,
+			Level2,
+			EnableContinue,
+			MaxExecCount,
+			created,
+			modified
+		)
+		values(
+			#ruleCode#,
+			#ruleName#,
+			#ruleCodeShort#,
+			#brandCode#,
+			#ruleCond#,
+			#ruleResult#,
+			#ruleCondType#,
+			#timeJson#,
+			#memberType#,
+			#subCampaignValid#,
+			#execFlag#,
+			#enableMessage#,
+			#isMust#,
+			#level#,
+			#level2#,
+			#enableContinue#,
+			#maxExecCount#,
+			getDate(),
+			getDate()
+		)
+		]]>
+	</insert>
+	
+	<!-- 添加促销规则分类记录（接口表） -->
+	<insert id="insertProRuleCateSCS2" parameterClass="java.util.HashMap">
+		<![CDATA[
+		insert into WITPOSA_PromotionRuleCate(
+			BrandAbbr,
+			RuleCode,
+			CateValue,
+			CateType,
+			created,
+			modified
+		)
+		values(
+			#brandCode#,
+			#ruleCode#,
+			#cateValue#,
+			#cateValType#,
+			getdate(),
+			getdate()
+		)
+		]]>
+	</insert>
+	
+	<!-- 添加促销分类属性记录（接口表） -->
+	<insert id="insertProRuleCateBaseSCS" parameterClass="java.util.HashMap">
+		<![CDATA[
+		insert into WITPOSA_promotion_rule_cate_base(
+			BrandAbbr,
+			cate_name,
+			cate_value,
+			cate_type,
+			cate_policy,
+			validflag,
+			created,
+			modified
+		)
+		values(
+			#brandCode#,
+			#cateName#,
+			#cateValue#,
+			#cateValType#,
+			#catePolicy#,
+			#validFlag#,
+			getdate(),
+			getdate()
+		)
+		]]>
+	</insert>
+	
+	<!-- 添加促销规则排他关系记录（接口表） -->
+	<insert id="insertProRuleRelationSCS" parameterClass="java.util.HashMap">
+		<![CDATA[
+		insert into WITPOSA_PromotionRuleRelation(
+			BrandAbbr,
+			RelationValueA,
+			RelationTypeA,
+			RelationValueB,
+			RelationTypeB,
+			created,
+			modified
+		)
+		values(
+			#brandCode#,
+			#relationValueA#,
+			#relationTypeA#,
+			#relationValueB#,
+			#relationTypeB#,
+			getdate(),
+			getdate()
+		)
+		]]>
+	</insert>
+</sqlMap>

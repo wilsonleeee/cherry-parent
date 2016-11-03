@@ -1,0 +1,151 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sqlMap PUBLIC "-//iBATIS.com//DTD SQL Map 2.0//EN" "http://ibatis.apache.org/dtd/sql-map-2.dtd">
+<sqlMap namespace="BINBEMBLEL01">
+	<!-- 查询新后台等级信息 -->
+	<select id ="getlevelList" parameterClass="java.util.HashMap" resultClass ="java.util.HashMap">
+	<![CDATA[
+		SELECT 
+			A.BIN_MemberLevelID AS memberId,
+			A.LevelCode AS levelCode,
+			A.LevelName AS levelName,
+			A.Description	AS description,
+			B.DefaultFlag AS defaultFlag,
+			B.Grade AS grade
+		FROM
+			Members.BIN_MemberLevel A,
+			Members.BIN_MemberLevelDetail B
+		WHERE
+			A.BIN_BrandInfoID = #brandInfoId# AND
+			A.BIN_OrganizationInfoID = #organizationInfoId# AND
+			A.BIN_MemberLevelID = B.BIN_MemberLevelID AND
+			A.ValidFlag = '1' AND
+			B.ValidFlag = '1'
+	]]> 
+	</select>
+	
+	<!-- 查询接口表中等级件数 -->
+	<select id ="getlevelCount" parameterClass="java.util.HashMap" resultClass ="java.lang.Integer">
+	<![CDATA[
+		SELECT
+			COUNT(MemberLevelCode) AS count
+		FROM
+			dbo.WITPOSB_MemberLevelDefine
+		WHERE
+			BrandAbbr = #brandCode# AND
+			MemberLevelCode = #levelCode#
+	]]> 
+	</select>
+	
+	<!-- 查询接口表等级信息 -->
+	<select id ="getIFlevelList" parameterClass="java.util.HashMap" resultClass ="java.util.HashMap">
+	<![CDATA[
+		SELECT
+			BrandAbbr AS brandCode,
+			MemberLevelCode AS levelCode
+		FROM
+			dbo.WITPOSB_MemberLevelDefine
+		WHERE
+			mem_level_flag = '1'
+	]]> 
+	</select>
+	
+	<!-- 查询会员等级表中等级件数 -->
+	<select id ="getlevelValidCount" parameterClass="java.util.HashMap" resultClass ="java.lang.Integer">
+	<![CDATA[
+		SELECT
+			COUNT(BIN_MemberLevelID)
+		FROM
+			Members.BIN_MemberLevel
+		WHERE
+			LevelCode = #levelCode# AND
+			ValidFlag = '1'
+	]]> 
+	</select>
+	
+	<!-- 取得品牌中文名 -->
+	<select id ="getBrandName" parameterClass="java.util.HashMap" resultClass ="java.lang.String">
+	<![CDATA[
+		SELECT 
+			BrandNameChinese AS brandName
+		FROM
+			Basis.BIN_BrandInfo
+		WHERE 
+			BIN_BrandInfoID = #brandId# AND
+			ValidFlag = '1'
+	]]> 
+	</select>
+	
+	<!-- 插入会员等级表 -->
+	<insert id="InsertMemLevelInfo" parameterClass="java.util.HashMap">
+		<![CDATA[
+		   INSERT INTO  dbo.WITPOSB_MemberLevelDefine(
+		       BrandName
+		      ,MemberLevelCode
+		      ,MemberLevelName
+		      ,MemberLevelDescriptions
+			  ,BrandAbbr
+		      ,mem_level_type
+		      ,mem_level_flag
+		      ,mem_level_order
+		      ,created
+		      ,modified
+	        )
+			VALUES
+			(
+				#brandName#,
+				#levelCode#,
+				#levelName#,
+				#description#,
+				#brandCode#,
+				#defaultFlag#,
+				'1',
+				#grade#,
+				GETDATE(),
+				GETDATE() 
+			)
+		]]>
+	</insert>
+	
+	<!--更新会员等级表  接口表-->
+	<update id="updateIFLevel" parameterClass="java.util.HashMap">
+		<![CDATA[
+			UPDATE
+			      dbo.WITPOSB_MemberLevelDefine
+			SET
+				]]>
+        <isEmpty property="validFlag">
+            <![CDATA[
+                  MemberLevelName = #levelName#,
+				  MemberLevelDescriptions = #description#,
+				  BrandName = #brandName#,
+				  mem_level_type = #defaultFlag#,
+				  mem_level_flag = '1',
+				  mem_level_order = #grade#,
+			      modified=GETDATE() 
+            ]]>
+        </isEmpty>
+        <isNotEmpty property="validFlag">
+            <![CDATA[
+				  mem_level_flag = #validFlag#
+            ]]>
+        </isNotEmpty>
+		<![CDATA[
+			WHERE 
+			      BrandAbbr = #brandCode# AND
+				  MemberLevelCode = #levelCode#
+		]]>
+    </update>	
+	
+	<!--更新会员等级表中下发标志 -->
+	<update id="updateLevelSendFlag" parameterClass="java.util.HashMap">
+		<![CDATA[
+			UPDATE
+				Members.BIN_MemberLevel
+			SET
+				SendFlag = '1'
+			WHERE
+				BIN_MemberLevelID = #memberId# AND
+				ValidFlag = '1'
+		]]>
+    </update>	
+</sqlMap>

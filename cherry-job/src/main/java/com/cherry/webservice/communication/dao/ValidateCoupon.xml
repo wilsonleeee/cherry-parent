@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sqlMap PUBLIC "-//iBATIS.com//DTD SQL Map 2.0//EN" "http://ibatis.apache.org/dtd/sql-map-2.dtd">
+<sqlMap namespace="VALIDATECOUPON">
+    <!-- 验证coupon -->
+	<select id="checkCoupon" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+    	<![CDATA[
+			SELECT TOP (1)
+				A.BIN_CouponID as couponId,
+				A.MemberCode,
+				A.CustomerSysID,
+				isnull(DateDiff(ss,A.ExpiredTime,GETDATE()),0) AS Seconds
+			FROM 
+				[Communication].[BIN_CouponCreateLog] A WITH(NOLOCK)
+			WHERE 
+				A.CampaignCode = #campaignCode# AND 
+				A.CouponCode = #couponCode# AND 
+				A.ReceiverCode = #mobilePhone#
+		    ORDER BY 
+		    	A.ExpiredTime DESC
+		]]>
+	</select>
+	
+	<update id="updateExpiredTime" parameterClass="java.util.HashMap">
+		<![CDATA[
+			UPDATE 
+				Communication.BIN_CouponCreateLog 
+			SET 
+				ExpiredTime = GETDATE() 
+			WHERE 
+				BIN_CouponID = #couponId# 
+		]]>
+    </update>
+</sqlMap>

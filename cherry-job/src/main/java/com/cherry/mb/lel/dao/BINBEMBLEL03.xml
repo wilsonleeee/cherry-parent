@@ -1,0 +1,749 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sqlMap PUBLIC "-//iBATIS.com//DTD SQL Map 2.0//EN" "http://ibatis.apache.org/dtd/sql-map-2.dtd">
+<sqlMap namespace="BINBEMBLEL03">
+	
+	<!--更新执行标识(导入初始等级) -->
+	<update id="updateLE03ExecFlag" parameterClass="java.util.HashMap">
+		<![CDATA[
+			UPDATE 		
+				Members.BIN_MemberInfo
+			SET	
+				BatchExecFlag = 1
+			FROM
+				(SELECT
+					A.BIN_MemberInfoID AS MemberId
+				FROM
+					Members.BIN_MemberInfo A WITH(nolock)
+					LEFT JOIN Members.BIN_MemCurLevelInfo C WITH(nolock)
+					ON (A.BIN_MemberInfoID = C.BIN_MemberInfoID)
+				WHERE
+		]]>
+		<isNotEmpty property="memIdStr">
+			<![CDATA[A.BIN_MemberInfoID >= #memIdStr# AND
+			]]>
+		</isNotEmpty>
+		<isNotEmpty property="memIdEnd">
+			<![CDATA[A.BIN_MemberInfoID <= #memIdEnd# AND
+			]]>
+		</isNotEmpty>
+	<![CDATA[
+				A.BIN_BrandInfoID = #brandInfoId# AND
+				A.BIN_OrganizationInfoID = #organizationInfoId# AND
+				C.BIN_MemCurLevelID IS NULL)T
+		WHERE
+				BIN_MemberInfoID = T.MemberId
+		]]>
+    </update>
+    
+    <!-- 取得需要处理的会员信息  -->
+    <select id="getLE03MemList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+    	<![CDATA[
+			SELECT TOP $COUNT$
+				A.BIN_MemberInfoID AS memberInfoId,
+				A.BIN_OrganizationInfoID AS organizationInfoId,
+				A.BIN_BrandInfoID AS brandInfoId,
+				CONVERT(VARCHAR, A.JoinDate, 23) AS joinDate,
+				A.BIN_OrganizationID AS organizationId,
+				D.BIN_MemberLevelID AS memberLevel,
+				CONVERT(VARCHAR, C.LevelStartdate,120) AS levelStartDate,
+				CONVERT(VARCHAR, C.LevelEnddate,120) AS levelEndDate,
+				B.MemCode AS memCode
+			FROM
+				Members.BIN_MemberInfo A WITH(nolock)
+				LEFT JOIN (SELECT
+								BIN_MemberInfoID AS MemberInfoID,
+								MAX(MemCode) AS MemCode
+							FROM
+								Members.BIN_MemCardInfo WITH(nolock)
+							WHERE
+								]]>
+							<isNotEmpty property="memIdStr">
+								<![CDATA[BIN_MemberInfoID >= #memIdStr# AND
+								]]>
+							</isNotEmpty>
+							<isNotEmpty property="memIdEnd">
+								<![CDATA[BIN_MemberInfoID <= #memIdEnd# AND
+								]]>
+							</isNotEmpty>
+						<![CDATA[
+								CardValidFlag = '1'
+							GROUP BY
+								BIN_MemberInfoID) B
+				ON (A.BIN_MemberInfoID = B.MemberInfoID)
+				LEFT JOIN Members.BIN_MemLevel_Impt C WITH(nolock)
+				ON (A.BIN_MemberInfoID = C.BIN_MemberInfoID)
+				LEFT JOIN Members.BIN_MemberLevel D WITH(nolock)
+				ON (C.CurMemberLevelCode = D.LevelCode)
+			WHERE
+				A.BIN_BrandInfoID = #brandInfoId# AND
+				A.BIN_OrganizationInfoID = #organizationInfoId# AND
+				A.BatchExecFlag = 1
+			ORDER BY A.BIN_MemberInfoID
+		]]>
+    </select>
+    
+    <!-- 插入会员当前等级表  -->
+	<insert id="addMemCurLevelInfo" parameterClass="java.util.HashMap">
+		<![CDATA[
+		INSERT Members.BIN_MemCurLevelInfo(
+			BIN_OrganizationInfoID,
+			BIN_BrandInfoID,
+			BIN_MemberInfoID,
+			MemCode,
+			MemberLevel,
+			InitialMemLevel,
+			InitialDate,
+			LevelStartDate,
+			LevelEndDate,
+			InitLevelStartDate,
+			InitLevelEndDate,
+			LastBusiTime,
+			InitLastBusiTime,
+			CalcTime,
+		]]>	
+			<include refid="BINOLCMINC99.insertKeySql" />									
+		<![CDATA[	
+		)VALUES(
+			#organizationInfoId#,
+			#brandInfoId#,
+			#memberInfoId#,
+			#memCode#,
+			#memberLevel#,
+			#initialMemLevel#,
+			#initialTime#,
+			#levelStartDate#,
+			#levelEndDate#,
+			#initLevelStartDate#,
+			#initLevelEndDate#,
+			#lastBusiTime#,
+			#initlastBusiTime#,
+			GETDATE(),
+		]]>
+		<include refid="BINOLCMINC99.insertValueSql" />
+		<![CDATA[
+		)
+		]]>
+	</insert>
+	
+	<!-- 查询会员初始导入之前的销售数量 -->
+    <select id="getLE03SaleCount" parameterClass="java.util.HashMap" resultClass="java.lang.Integer">	
+		<![CDATA[
+			SELECT
+				COUNT(1)
+			FROM	
+				Sale.BIN_SaleRecord WITH(nolock)
+			WHERE
+				BIN_MemberInfoID = #memberInfoId# AND
+				SaleDate <= #limitTime# AND
+				ValidFlag = '1'
+		]]>
+    </select>
+    
+    <!-- 取得已经导入的会员列表  -->
+    <select id="getImptedMemList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+    	<![CDATA[
+			SELECT
+				BIN_MemberInfoID AS memberInfoId
+			FROM
+				Members.BIN_MemCurLevelInfo
+			WHERE
+				BIN_MemberInfoID >= #startId# AND
+				BIN_MemberInfoID <= #endId# AND
+				BIN_BrandInfoID = #brandInfoId# AND
+				BIN_OrganizationInfoID = #organizationInfoId#
+			ORDER BY BIN_MemberInfoID
+		]]>
+    </select>
+    
+    <!--更新执行标识(会员等级计算) -->
+	<update id="updateLE03ExecFlag01" parameterClass="java.util.HashMap">
+		<![CDATA[
+			UPDATE 		
+				Members.BIN_MemberInfo
+			SET	
+				BatchExecFlag = 1
+			WHERE
+			]]>
+			<isNotEmpty property="memIdStr">
+				<![CDATA[BIN_MemberInfoID >= #memIdStr# AND
+				]]>
+			</isNotEmpty>
+			<isNotEmpty property="memIdEnd">
+				<![CDATA[BIN_MemberInfoID <= #memIdEnd# AND
+				]]>
+			</isNotEmpty>
+		<![CDATA[
+				BIN_BrandInfoID = #brandInfoId# AND
+				BIN_OrganizationInfoID = #organizationInfoId#
+		]]>
+    </update> 
+    
+     <!-- 取得需要处理的会员信息(计算等级)  -->
+    <select id="getLE03CurLevelList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+    	<![CDATA[
+			SELECT TOP $COUNT$
+				A.BIN_MemberInfoID AS memberInfoId,
+				A.BIN_OrganizationInfoID AS organizationInfoId,
+				A.BIN_BrandInfoID AS brandInfoId,
+				CONVERT(VARCHAR, A.JoinDate, 23) AS joinDate,
+				A.BIN_OrganizationID AS organizationId,
+				B.MemCode AS memCode,
+				C.BIN_MemCurLevelID AS memCurLevelId,
+				ISNULL(C.MemberLevel, 0) AS memberLevel,
+				CONVERT(VARCHAR, C.LevelStartDate,120) AS levelStartDate,
+				CONVERT(VARCHAR, C.LevelEndDate,120) AS levelEndDate,
+				ISNULL(C.InitialMemLevel, 0) AS initialMemLevel,
+				CONVERT(VARCHAR, C.InitLevelStartDate,120) AS initLevelStartDate,
+				CONVERT(VARCHAR, C.InitLevelEndDate,120) AS initLevelEndDate,
+				CONVERT(VARCHAR, C.InitialDate,120) AS initialDate,
+				CONVERT(VARCHAR, C.LastBusiTime,120) AS lastBusiTime,
+				CONVERT(VARCHAR, C.InitLastBusiTime,120) AS initLastBusiTime
+			FROM
+				Members.BIN_MemberInfo A WITH(nolock)
+				LEFT JOIN (SELECT
+								BIN_MemberInfoID AS MemberInfoID,
+								MAX(MemCode) AS MemCode
+							FROM
+								Members.BIN_MemCardInfo WITH(nolock)
+							WHERE
+								]]>
+							<isNotEmpty property="memIdStr">
+								<![CDATA[BIN_MemberInfoID >= #memIdStr# AND
+								]]>
+							</isNotEmpty>
+							<isNotEmpty property="memIdEnd">
+								<![CDATA[BIN_MemberInfoID <= #memIdEnd# AND
+								]]>
+							</isNotEmpty>
+						<![CDATA[
+								CardValidFlag = '1'
+							GROUP BY
+								BIN_MemberInfoID) B
+				ON (A.BIN_MemberInfoID = B.MemberInfoID)
+				LEFT JOIN Members.BIN_MemCurLevelInfo C WITH(nolock)
+				ON (A.BIN_MemberInfoID = C.BIN_MemberInfoID)
+			WHERE
+				A.BIN_BrandInfoID = #brandInfoId# AND
+				A.BIN_OrganizationInfoID = #organizationInfoId# AND
+				A.BatchExecFlag = 1
+			ORDER BY A.BIN_MemberInfoID
+		]]>
+    </select>
+    
+    <!-- 取得导入时间 -->
+	<select id="getMaxInitTime" parameterClass="java.util.HashMap" resultClass="java.lang.String">
+		<![CDATA[
+			SELECT TOP 1
+				CONVERT(VARCHAR, InitialDate,120) AS initialDate
+			FROM
+				Members.BIN_MemCurLevelInfo
+			WHERE
+				BIN_BrandInfoID = #brandInfoId# AND
+				BIN_OrganizationInfoID = #organizationInfoId# AND
+				ValidFlag = '1'
+			ORDER BY
+				InitialDate DESC
+		]]>	
+    </select>
+    
+     <!-- 插入会员等级计算错误日志表  -->
+	<insert id="addLevelCalcErrorInfo" parameterClass="java.util.HashMap">
+		<![CDATA[
+		INSERT Members.BIN_LevelCalcErrorInfo(
+			BIN_OrganizationInfoID,
+			BIN_BrandInfoID,
+			BIN_MemberInfoID,
+			MemCode,
+			ErrorMsg,
+			CalcTime,
+		]]>	
+			<include refid="BINOLCMINC99.insertKeySql" />									
+		<![CDATA[	
+		)VALUES(
+			#organizationInfoId#,
+			#brandInfoId#,
+			#memberInfoId#,
+			#memCode#,
+			#errorMsg#,
+			GETDATE(),
+		]]>
+		<include refid="BINOLCMINC99.insertValueSql" />
+		<![CDATA[
+		)
+		]]>
+	</insert>
+    
+    <!--查询需要计算的销售记录 -->
+	<select id="getLE03SaleRecordList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+		<![CDATA[
+			SELECT 						
+				BIN_MemberInfoID AS memberInfoId,
+				CONVERT(varchar,SaleDate,23) AS ticketDay,
+				CONVERT(varchar,SaleDate,23) + ' 23:59:59' AS ticketDate,
+				SUM(ISNULL(CASE WHEN SaleType <> 'SR' THEN Amount ELSE -Amount END, 0)) AS amount					
+			FROM						
+				Sale.BIN_SaleRecord
+			WHERE
+				BIN_MemberInfoID = #memberInfoId# AND
+				BIN_BrandInfoID = #brandInfoId# AND
+				BIN_OrganizationInfoID = #organizationInfoId# AND
+				]]>
+		<isNotEmpty property="fromTime">
+			<![CDATA[SaleTime > CONVERT(DATETIME,#fromTime#,120) AND
+			]]>
+		</isNotEmpty>
+		<isNotEmpty property="toTime">
+			<![CDATA[SaleTime <= CONVERT(DATETIME,#toTime#,120) AND
+			]]>
+		</isNotEmpty>
+	<![CDATA[
+				SaleDate IS NOT NULL AND
+				ValidFlag = '1'
+			GROUP BY 
+				BIN_MemberInfoID, SaleDate
+			ORDER BY
+				BIN_MemberInfoID, SaleDate
+		]]>
+    </select>
+    
+    <!-- 取得期间内的会员购买金额  -->
+    <select id="getLE03TtlAmount" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+       	<![CDATA[
+				SELECT
+					SUM(ISNULL(CASE WHEN SaleType <> 'SR' THEN Amount ELSE -Amount END, 0)) AS ttlAmount
+				FROM
+					Sale.BIN_SaleRecord WITH(nolock)
+				WHERE
+					BIN_MemberInfoID = #memberInfoId# AND
+				]]>
+		<isNotEmpty property="fromTime">
+			<![CDATA[SaleTime > CONVERT(DATETIME,#fromTime#,120) AND
+			]]>
+		</isNotEmpty>
+		<isNotEmpty property="toTime">
+			<![CDATA[SaleTime <= CONVERT(DATETIME,#toTime#,120) AND
+			]]>
+		</isNotEmpty>
+		<![CDATA[
+				ValidFlag = '1'	
+		]]>
+    </select>
+    
+    <!--更新会员当前等级表 -->
+	<update id="updateMemCurLevelInfo" parameterClass="java.util.HashMap">
+		<![CDATA[
+			UPDATE 		
+				Members.BIN_MemCurLevelInfo
+			SET	
+				MemCode = #memCode#,
+				MemberLevel = #memberLevel#,
+				LevelStartDate = #levelStartDate#,
+				LevelEndDate = #levelEndDate#,
+				LastBusiTime = #lastBusiTime#,
+				CalcTime = GETDATE(),
+		]]>
+			<include refid="BINBECMINC99.updateSql" />	
+		<![CDATA[
+			WHERE
+				BIN_MemCurLevelID = #memCurLevelId#
+		]]>
+    </update>
+    
+    <!--更新执行标识(记录某个时间点的会员等级) -->
+	<update id="updateLE03ExecFlag02" parameterClass="java.util.HashMap">
+		<![CDATA[
+			UPDATE 		
+				Members.BIN_MemberInfo
+			SET	
+				BatchExecFlag = 1
+			FROM
+				(SELECT
+					A.BIN_MemberInfoID AS MemberId
+				FROM
+					Members.BIN_MemberInfo A WITH(nolock)
+					JOIN Members.BIN_MemCurLevelInfo C WITH(nolock)
+					ON (A.BIN_MemberInfoID = C.BIN_MemberInfoID)
+					LEFT JOIN Members.BIN_LevelHistoryInfo D WITH(nolock)
+					ON (A.BIN_MemberInfoID = D.BIN_MemberInfoID AND
+					]]>
+								<isNotEmpty property="memIdStr">
+									<![CDATA[D.BIN_MemberInfoID >= #memIdStr# AND
+									]]>
+								</isNotEmpty>
+								<isNotEmpty property="memIdEnd">
+									<![CDATA[D.BIN_MemberInfoID <= #memIdEnd# AND
+									]]>
+								</isNotEmpty>
+							<![CDATA[
+							D.LevelDate = #levelDate# AND
+							D.DateFlag = #dateKbn# AND
+							D.ValidFlag = '1'
+					)
+				WHERE
+			]]>
+			<isNotEmpty property="memIdStr">
+				<![CDATA[A.BIN_MemberInfoID >= #memIdStr# AND
+				]]>
+			</isNotEmpty>
+			<isNotEmpty property="memIdEnd">
+				<![CDATA[A.BIN_MemberInfoID <= #memIdEnd# AND
+				]]>
+			</isNotEmpty>
+		<![CDATA[
+					A.BIN_BrandInfoID = #brandInfoId# AND
+					A.BIN_OrganizationInfoID = #organizationInfoId# AND
+		]]>
+			<isNotEmpty property="joinFlag">
+				<![CDATA[A.JoinDate <= #joinDateLimit# AND
+				]]>
+			</isNotEmpty>
+		<![CDATA[
+					D.BIN_LevelHistoryID IS NULL)T
+		WHERE
+				BIN_MemberInfoID = T.MemberId
+		]]>
+    </update>
+    
+    <!-- 取得需要记录等级的会员信息  -->
+    <select id="getLE03LevelRecordList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+    	<![CDATA[
+			SELECT TOP $COUNT$
+				A.BIN_MemberInfoID AS memberInfoId,
+				A.BIN_OrganizationInfoID AS organizationInfoId,
+				A.BIN_BrandInfoID AS brandInfoId,
+				A.BIN_OrganizationID AS organizationId,
+				B.MemCode AS memCode,
+				ISNULL(C.InitialMemLevel, 0) AS initialMemLevel
+			FROM
+				Members.BIN_MemberInfo A WITH(nolock)
+				LEFT JOIN (SELECT
+								BIN_MemberInfoID AS MemberInfoID,
+								MAX(MemCode) AS MemCode
+							FROM
+								Members.BIN_MemCardInfo WITH(nolock)
+							WHERE
+								]]>
+							<isNotEmpty property="memIdStr">
+								<![CDATA[BIN_MemberInfoID >= #memIdStr# AND
+								]]>
+							</isNotEmpty>
+							<isNotEmpty property="memIdEnd">
+								<![CDATA[BIN_MemberInfoID <= #memIdEnd# AND
+								]]>
+							</isNotEmpty>
+						<![CDATA[
+								CardValidFlag = '1'
+							GROUP BY
+								BIN_MemberInfoID) B
+				ON (A.BIN_MemberInfoID = B.MemberInfoID)
+				JOIN Members.BIN_MemCurLevelInfo C WITH(nolock)
+					ON (A.BIN_MemberInfoID = C.BIN_MemberInfoID)
+			WHERE
+				A.BIN_BrandInfoID = #brandInfoId# AND
+				A.BIN_OrganizationInfoID = #organizationInfoId# AND
+				A.BatchExecFlag = 1
+			ORDER BY A.BIN_MemberInfoID
+		]]>
+    </select>
+    
+     <!-- 取得会员等级变化信息  -->
+    <select id="getLevelChangeInfo" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+       	<![CDATA[
+				SELECT TOP 1
+					EndLevel AS memLevel
+				FROM
+					Members.BIN_LevelChangeReport
+				WHERE
+					BIN_MemberInfoID = #memberInfoId# AND
+					ChangeDate < #joinDateLimit# AND
+					ValidFlag = '1'
+				ORDER BY ChangeDate DESC
+			]]>
+    </select>
+    
+    <!--更新执行标识(等级重算) -->
+	<update id="updateLE03ExecFlag03" parameterClass="java.util.HashMap">
+		<![CDATA[
+			UPDATE 		
+				Members.BIN_MemberInfo
+			SET	
+				BatchExecFlag = 1
+			FROM
+				(SELECT
+					A.BIN_MemberInfoID AS MemberId
+				FROM
+					Members.BIN_MemberInfo A WITH(nolock)
+					JOIN Members.BIN_MemCurLevelInfo C WITH(nolock)
+					ON (A.BIN_MemberInfoID = C.BIN_MemberInfoID)
+				WHERE
+			]]>
+			<isNotEmpty property="memIdStr">
+				<![CDATA[A.BIN_MemberInfoID >= #memIdStr# AND
+				]]>
+			</isNotEmpty>
+			<isNotEmpty property="memIdEnd">
+				<![CDATA[A.BIN_MemberInfoID <= #memIdEnd# AND
+				]]>
+			</isNotEmpty>
+		<![CDATA[
+					A.BIN_BrandInfoID = #brandInfoId# AND
+					A.BIN_OrganizationInfoID = #organizationInfoId#)T
+		WHERE
+				BIN_MemberInfoID = T.MemberId
+		]]>
+    </update>
+    
+    <!-- 删除会员等级履历 -->
+	<delete id="delLE03LevelHistory" parameterClass="java.util.HashMap">
+		<![CDATA[
+			DELETE FROM			
+				Members.BIN_LevelHistoryInfo						
+			WHERE					
+				BIN_MemberInfoID = #memberInfoId#
+		]]>
+    </delete>	
+    
+    <!-- 删除会员等级变化履历 -->
+	<delete id="delLE03LevelChange" parameterClass="java.util.HashMap">
+		<![CDATA[
+			DELETE FROM			
+				Members.BIN_LevelChangeReport						
+			WHERE					
+				BIN_MemberInfoID = #memberInfoId#
+		]]>
+    </delete>	
+    
+    <!-- 铂金会员购买情况查询sql  -->
+	<sql id="vipPlusBuyQuery">
+		<![CDATA[
+		SELECT distinct
+				C.MemberCode AS memberCode,
+				C.BillCode AS billCode,
+				B.Name AS name,
+				CONVERT(VARCHAR, C.SaleTime,120) AS saleTime,
+				G.DepartCode AS departCode,
+				G.DepartName AS departName,
+				E.RegionNameChinese AS regionName,
+				F.RegionNameChinese AS cityName,
+				C.Quantity AS quantity,
+				C.Amount AS amount,
+				CASE WHEN C.SaleType= 'SR' THEN '退货' ELSE '销售' end AS saletype
+		FROM
+			[Members].[BIN_LevelHistoryInfo] A WITH(nolock) JOIN
+			[Members].BIN_MemberInfo B WITH(nolock)
+			ON (A.LevelDate = #reportStartDate# AND
+			A.MemLevel = 6 AND
+			A.DateFlag = 1 AND
+			A.BIN_MemberInfoID = B.BIN_MemberInfoID)
+			JOIN Sale.BIN_SaleRecord C WITH(nolock)
+			ON (B.BIN_MemberInfoID = C.BIN_MemberInfoID AND
+			C.SaleDate >= #reportStartDate# AND
+			C.SaleDate <= #reportEndDate# AND
+			C.ValidFlag = '1') 
+			LEFT JOIN Basis.BIN_Organization G WITH(nolock)
+			ON (C.BIN_OrganizationID = G.BIN_OrganizationID)
+			LEFT JOIN [Basis].[BIN_Region] E WITH(nolock)
+			ON (G.BIN_RegionID = E.BIN_RegionID)
+			LEFT JOIN [Basis].[BIN_Region] F WITH(nolock)
+			ON (G.BIN_CityID = F.BIN_RegionID)
+		union
+			SELECT distinct
+				C.MemberCode AS memberCode,
+				C.BillCode AS billCode,
+				TT.TName AS name,
+				CONVERT(VARCHAR, C.SaleTime, 120) AS saleTime,
+				G.DepartCode AS departCode,
+				G.DepartName AS departName,
+				E.RegionNameChinese AS regionName,
+				F.RegionNameChinese AS cityName,
+				C.Quantity AS quantity,
+				C.Amount AS amount,
+				CASE WHEN C.SaleType= 'SR' THEN '退货' ELSE '销售' end AS saletype
+			FROM
+				(SELECT 
+					TA.BIN_MemberInfoID AS TmemberID,
+					TA.Name AS TName
+				 FROM
+				 Members.BIN_MemberInfo TA WITH(nolock) LEFT JOIN
+				 Members.BIN_LevelHistoryInfo TB WITH(nolock)
+				 ON (TA.BIN_MemberInfoID = TB.BIN_MemberInfoID)
+				 WHERE TA.MemberLevel = 6 AND
+				 TA.LevelStartDate <= #reportEndDate# AND
+				 TA.BIN_MemberInfoID = TB.BIN_MemberInfoID AND
+				 TB.LevelDate = #reportStartDate# AND
+				 TB.DateFlag = 1 AND
+				 (TB.MemLevel IS NULL OR TB.MemLevel <> 6)
+				 ) TT
+				JOIN Sale.BIN_SaleRecord C WITH(nolock)
+				ON (TT.TmemberID = C.BIN_MemberInfoID AND
+				C.SaleDate >= #reportStartDate# AND
+				C.SaleDate <= #reportEndDate# AND
+				C.ValidFlag = '1') 
+				LEFT JOIN Basis.BIN_Organization G WITH(nolock)
+				ON (C.BIN_OrganizationID = G.BIN_OrganizationID)
+				LEFT JOIN [Basis].[BIN_Region] E WITH(nolock)
+				ON (G.BIN_RegionID = E.BIN_RegionID)
+				LEFT JOIN [Basis].[BIN_Region] F WITH(nolock)
+				ON (G.BIN_CityID = F.BIN_RegionID)
+		]]>
+	</sql>
+	
+	<!-- 取得铂金会员购买总数  -->
+    <select id="getVipPlusBuyCount" parameterClass="java.util.HashMap" resultClass="java.lang.Integer">
+    	<![CDATA[
+			SELECT	COUNT(SORT_T1.memberCode) AS count FROM (
+		]]>	
+		<include refid="BINBEMBLEL03.vipPlusBuyQuery" />	
+		<![CDATA[	
+			)SORT_T1
+		]]>										
+    </select>
+    
+    <!-- 取得铂金会员购买信息  -->
+    <select id="getVipPlusBuyList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+    	<include refid="BINBECMINC99.pageheader" />	
+       	<include refid="BINBEMBLEL03.vipPlusBuyQuery" />
+		<include refid="BINBECMINC99.pagefooter" />
+    </select>
+    
+    <!--更新执行标识(从老后台导入会员等级) -->
+	<update id="updateLE03ExecFlag04" parameterClass="java.util.HashMap">
+		<![CDATA[
+			UPDATE 		
+				Members.BIN_MemLevel_Impt
+			SET	
+				bak_int4 = 1
+			WHERE
+		]]>
+		<isNotEmpty property="memIdStr">
+			<![CDATA[BIN_MemberInfoID >= #memIdStr# AND
+			]]>
+		</isNotEmpty>
+		<isNotEmpty property="memIdEnd">
+			<![CDATA[BIN_MemberInfoID <= #memIdEnd# AND
+			]]>
+		</isNotEmpty>
+		<![CDATA[
+				bak_int4 IS NULL
+		]]>
+    </update>
+    
+    <!-- 取得需要处理的会员信息(从老后台导入会员等级及有效期处理)  -->
+    <select id="getLE03ImptLevelList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+    	<![CDATA[
+			SELECT TOP $COUNT$
+				BIN_MemberInfoID AS memberInfoId,
+				memcode AS memCode,
+				CurMemberLevelCode AS imptLevel
+			FROM
+				Members.BIN_MemLevel_Impt
+			WHERE
+				bak_int4 = 1
+			ORDER BY BIN_MemberInfoID
+		]]>
+    </select>
+    
+    <!-- 取得需要处理的会员件数(手动设定的会员)  -->
+    <select id="getMemExecCount01" parameterClass="java.util.HashMap" resultClass="java.lang.Integer">
+    	<![CDATA[
+			SELECT 
+				COUNT(1)
+			FROM
+				Members.BIN_MemLevel_Impt
+			WHERE
+				bak_int4 = 1
+		]]>
+    </select>
+    
+    <!--去除执行标识 -->
+	<update id="updateBTExecFlagNl04" parameterClass="java.util.HashMap">
+		<![CDATA[
+			UPDATE 		
+				Members.BIN_MemLevel_Impt
+			SET	
+				bak_int4 = NULL
+			WHERE
+				BIN_MemberInfoID = #memberInfoId#
+		]]>
+    </update>
+    
+     <!-- 取得会员卡号列表 -->
+	<select id="getLE03MemCardList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+		<![CDATA[
+			SELECT
+				MemCode AS memCode
+			FROM
+				Members.BIN_MemCardInfo WITH(nolock)
+			WHERE
+				BIN_MemberInfoID = #memberInfoId# AND
+				ValidFlag = '1'
+			ORDER BY
+				CardValidFlag DESC,
+				CardCount DESC
+		]]>	
+    </select>
+    
+    <!-- 从老后台取得会员等级列表 -->
+	<select id="getLE03WitLevelList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+		<![CDATA[
+			SELECT
+				MemCode AS memCode,
+				CurMemberLevelCode AS curLevel,
+				CONVERT(VARCHAR, LevelStartdate,120) AS levelStartDate,
+				CONVERT(VARCHAR, LevelEnddate,120) AS levelEndDate,
+				CONVERT(VARCHAR, insertdate,23) AS insertday
+			FROM
+				dbo.WItposB_member_U WITH(nolock)
+			WHERE
+		]]>	
+		<dynamic>
+			<isEmpty property="cardArr" >
+				<![CDATA[memcode = #memCode# ]]>
+			</isEmpty>
+			<isNotEmpty property="cardArr" >
+				 memcode IN
+			<iterate conjunction="," open="(" close=")" property="cardArr">  
+		        #cardArr[]#
+		    </iterate>							
+			</isNotEmpty>
+		</dynamic>
+		<![CDATA[
+		AND insertdate >= '2013-12-25'
+			ORDER BY
+				insertdate
+		]]>	
+    </select>
+    
+    <!--更新会员等级有效期 -->
+	<update id="updateLE03LevelDateInfo" parameterClass="java.util.HashMap">
+		<![CDATA[
+			UPDATE 		
+				Members.BIN_MemLevel_Impt
+			SET	
+				CurMemberLevelCode = #curLevel#,
+				LevelStartdate = #levelStartDate#,
+				LevelEnddate = #levelEndDate#,
+				bak_varchar5 = null,
+		]]>
+			<include refid="BINBECMINC99.updateSql" />	
+		<![CDATA[
+			WHERE
+				BIN_MemberInfoID = #memberInfoId#
+		]]>
+    </update>
+    
+     <!--记录错误信息 -->
+	<update id="updateLE03LevelErrInfo" parameterClass="java.util.HashMap">
+		<![CDATA[
+			UPDATE 		
+				Members.BIN_MemLevel_Impt
+			SET	
+				bak_varchar5 = #errorMsg#,
+		]]>
+			<include refid="BINBECMINC99.updateSql" />	
+		<![CDATA[
+			WHERE
+				BIN_MemberInfoID = #memberInfoId#
+		]]>
+    </update>
+</sqlMap>

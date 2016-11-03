@@ -1,0 +1,328 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sqlMap PUBLIC "-//iBATIS.com//DTD SQL Map 2.0//EN" "http://ibatis.apache.org/dtd/sql-map-2.dtd">
+<sqlMap namespace="BINBEIFEMP01">
+	
+	<!-- 备份营业员信息表 -->
+	<insert id="backupBaInfo" parameterClass="java.util.HashMap">
+		<![CDATA[
+			INSERT INTO
+				Basis.BIN_BaInfo_Backup
+				   (BIN_BaInfoID,
+					BIN_OrganizationInfoID,
+					BIN_BrandInfoID,
+					BIN_EmployeeID,
+					BIN_OrganizationID,
+					BaCode,
+					BaName,
+					BaNameForeign,
+					BaType,
+					IdentityCard,
+					Phone,
+					MobilePhone,
+					Email,
+					Address,
+					Academic,
+					BirthDay,
+					Gender,
+					MaritalStatus,
+					OriginFlag,
+					ValidFlag,
+					CreateTime,
+					CreatedBy,
+					CreatePGM,
+					UpdateTime,
+					UpdatedBy,
+					UpdatePGM,
+					ModifyCount
+					)
+			    SELECT 
+					BIN_BaInfoID,
+					BIN_OrganizationInfoID,
+					BIN_BrandInfoID,
+					BIN_EmployeeID,
+					BIN_OrganizationID,
+					BaCode,
+					BaName,
+					BaNameForeign,
+					BaType,
+					IdentityCard,
+					Phone,
+					MobilePhone,
+					Email,
+					Address,
+					Academic,
+					BirthDay,
+					Gender,
+					MaritalStatus,
+					OriginFlag,
+					ValidFlag,
+					CreateTime,
+					CreatedBy,
+					CreatePGM,
+					UpdateTime,
+					UpdatedBy,
+					UpdatePGM,
+					ModifyCount
+				FROM 
+					Basis.BIN_BaInfo
+				WHERE
+					BIN_OrganizationInfoID = #organizationInfoId# AND
+					BIN_BrandInfoID = #brandInfoId#
+	]]>	
+    </insert>	
+	
+	<!--清理营业员备份表-->
+	<delete id="clearBackupData" parameterClass="java.util.HashMap">
+		<![CDATA[
+			DELETE FROM
+				Basis.BIN_BaInfo_Backup
+			WHERE 
+				BIN_OrganizationInfoID = #organizationInfoId# AND
+				BIN_BrandInfoID = #brandInfoId# AND
+				Count >= #count#
+		]]>
+    </delete>
+	
+	<!--更新备份表世代数 -->
+	<update id="updateBackupCount" parameterClass="java.util.HashMap">
+		<![CDATA[
+			UPDATE
+				Basis.BIN_BaInfo_Backup
+			SET 
+				Count = Count+1
+			WHERE
+				BIN_OrganizationInfoID = #organizationInfoId# AND
+				BIN_BrandInfoID = #brandInfoId#	
+		]]>
+    </update>
+	
+	<!-- 从接口数据库中查询营业员数据-->
+	<select id="getBaInfoList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+			<include refid="BINBECMINC99.pageheader" />		
+		<![CDATA[
+				SELECT 	
+					ltrim(rtrim(A.bacode)) AS bacode,
+					ltrim(rtrim(A.baname)) AS baname,
+					ltrim(rtrim(A.countercode)) AS counterCode,
+					A.flag AS flag
+				FROM	
+					dbo.BAINFO A,
+					dbo.brandinfo B
+				WHERE
+					A.Brand = B.brandid AND
+					B.abbr = #brandCode# AND
+					A.flag <> '2'	
+		]]>
+			<include refid="BINBECMINC99.pagefooter" />		
+    </select>
+    
+    <!--查询营业员信息 -->
+	<select id="getBaInfo" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+		<![CDATA[
+			SELECT 						
+				A.BIN_BaInfoID AS baInfoId,
+				A.BIN_EmployeeID AS employeeId,
+				B.BIN_PositionCategoryID AS positionCategoryId,
+				B.NodeID.GetAncestor(1).ToString() AS higher	
+			FROM						
+				Basis.BIN_BaInfo A
+				JOIN Basis.BIN_Employee B ON A.BIN_EmployeeID = B.BIN_EmployeeID			
+			WHERE						
+				A.BIN_OrganizationInfoID = #organizationInfoId# AND
+				A.BIN_BrandInfoID = #brandInfoId# AND
+				A.BaCode = #bacode#
+		]]>
+    </select>
+    
+    <!--更新营业员信息表 -->
+	<update id="updateBaInfo" parameterClass="java.util.HashMap">
+		<![CDATA[
+			UPDATE				
+				Basis.BIN_BaInfo			
+			SET				
+				BaCode = #bacode#,
+				BaName = #baname#,
+				BIN_OrganizationID = #organizationId#,
+				ValidFlag = #validFlagVal#,
+		]]>
+			<include refid="BINBECMINC99.updateSql" />		
+		<![CDATA[				
+			WHERE					
+				BIN_BaInfoID = #baInfoId#
+		]]>
+    </update>	
+    
+    <!-- 插入营业员信息 -->
+	<insert id="insertBaInfo" parameterClass="java.util.HashMap">
+		<![CDATA[
+			INSERT INTO	
+				Basis.BIN_BaInfo
+				(
+					BIN_OrganizationInfoID,
+					BIN_BrandInfoID,
+					BIN_EmployeeID,
+					BIN_OrganizationID,
+					BaCode,
+					BaName,
+					BaType,
+		]]>
+			<include refid="BINBECMINC99.insertKeySql" />		
+		<![CDATA[
+				)VALUES
+				(		
+					#organizationInfoId#,
+					#brandInfoId#,
+					#employeeId#,
+					#organizationId#,
+					#bacode#,
+					#baname#,
+					'1',
+		]]>
+			<include refid="BINBECMINC99.insertValueSql" />		
+		<![CDATA[
+				)
+    	]]>   				
+    </insert>	
+	
+	<!--更新员工信息表 -->
+	<update id="updateEmployee" parameterClass="java.util.HashMap">
+		<![CDATA[
+			UPDATE				
+				Basis.BIN_Employee			
+			SET				
+				EmployeeCode = #bacode#,
+				EmployeeName = #baname#,
+				BIN_OrganizationID = #organizationId#,
+		]]>
+			<isNotEmpty property="nodeId">
+				NodeID = #nodeId#,
+			</isNotEmpty>
+		<![CDATA[		
+				ValidFlag = #validFlagVal#,
+		]]>
+			<include refid="BINBECMINC99.updateSql" />		
+		<![CDATA[				
+			WHERE					
+				BIN_EmployeeID = #employeeId#
+		]]>
+    </update>	
+	
+	<!-- 插入员工信息 -->
+	<insert id="insertEmployee" parameterClass="java.util.HashMap">
+		<selectKey resultClass="java.lang.Integer" type="post" keyProperty="BIN_EmployeeID" >
+		<![CDATA[
+			INSERT INTO	
+				Basis.BIN_Employee
+				(
+					BIN_OrganizationInfoID,
+					BIN_BrandInfoID,
+					BIN_OrganizationID,
+					BIN_PositionCategoryID,
+					NodeID,
+					EmployeeCode,
+					EmployeeName,
+		]]>
+			<include refid="BINBECMINC99.insertKeySql" />		
+		<![CDATA[
+				)VALUES
+				(		
+					#organizationInfoId#,
+					#brandInfoId#,
+					#organizationId#,
+					#positionCategoryId#,
+					#nodeId#,
+					#bacode#,
+					#baname#,
+		]]>
+			<include refid="BINBECMINC99.insertValueSql" />		
+		<![CDATA[
+				)
+				select SCOPE_IDENTITY() as value
+    	]]>
+    	</selectKey>   				
+    </insert>	
+    
+    <!-- 查询营业员所在部门ID-->
+	<select id="getOrganizationId" parameterClass="java.util.HashMap" resultClass="java.lang.Integer">
+		<![CDATA[
+			SELECT 	
+				BIN_OrganizationID AS organizationId
+			FROM	
+				Basis.BIN_Organization
+			WHERE	
+				BIN_OrganizationInfoID = #organizationInfoId# AND
+				BIN_BrandInfoID = #brandInfoId# AND
+				DepartCode = #counterCode#
+		]]>
+    </select>		
+    
+    <!-- 查询营业员所在柜台的柜台主管 -->
+	<select id="getHigherPath" parameterClass="java.util.HashMap" resultClass="java.lang.String">
+		<![CDATA[
+			SELECT 
+				B.Path
+			FROM 
+				Privilege.BIN_EmployeeDepart A,
+				Basis.BIN_Employee B
+			WHERE
+				A.BIN_EmployeeID = B.BIN_EmployeeID AND
+				A.ManageType = '1' AND
+				A.BIN_OrganizationID = #organizationId#
+		]]>
+    </select>		
+    
+    <!-- 查询营业员岗位类别ID-->
+	<select id="getPositionCategoryId" parameterClass="java.util.HashMap" resultClass="java.lang.Integer">
+		<![CDATA[
+			SELECT 	
+				BIN_PositionCategoryID
+			FROM	
+				Privilege.BIN_PositionCategory
+			WHERE	
+				BIN_OrganizationInfoID = #organizationInfoId# AND
+				BIN_BrandInfoID = #brandInfoId# AND
+				CategoryCode = #positionCode#
+		]]>
+    </select>	
+    
+    <!-- 查询需要伦理删除的营业员数据-->
+	<select id="getDelList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+		<![CDATA[
+				SELECT 	
+					A.BIN_BaInfoID AS baInfoId,
+					A.BIN_EmployeeID AS employeeId,
+					A.BaCode AS baCode,
+					A.BaName AS baName
+				FROM	
+					Basis.BIN_BaInfo A,
+					Basis.BIN_BaInfo_Backup B
+				WHERE
+					A.BIN_OrganizationInfoID = #organizationInfoId# AND 
+					A.BIN_BrandInfoID = #brandInfoId# AND
+					B.BIN_OrganizationInfoID = #organizationInfoId# AND 
+					B.BIN_BrandInfoID = #brandInfoId# AND	
+					A.BIN_BaInfoID = B.BIN_BaInfoID AND
+					A.ModifyCount = B.ModifyCount AND
+					A.UpdateTime = B.UpdateTime AND
+					B.Count = 1 AND
+					A.ValidFlag='1'
+		]]>
+    </select>
+	
+	<!--删除无效的营业员数据 -->
+	<update id="delInvalidBaInfo" parameterClass="java.util.HashMap">
+		<![CDATA[
+			UPDATE	
+				Basis.BIN_BaInfo
+			SET	
+				ValidFlag = '0',
+		]]>
+			<include refid="BINBECMINC99.updateSql" />		
+		<![CDATA[				
+			WHERE					
+				BIN_BaInfoID  = #baInfoId# AND
+				ValidFlag='1'		
+		]]>
+    </update>
+    
+</sqlMap>

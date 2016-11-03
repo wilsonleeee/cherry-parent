@@ -1,0 +1,385 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sqlMap PUBLIC "-//iBATIS.com//DTD SQL Map 2.0//EN" "http://ibatis.apache.org/dtd/sql-map-2.dtd">
+<sqlMap namespace="MaintenEmployee">
+	<!-- 根据coder类型取得coder值 -->
+	<select id="getCoderByCodeType" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+       <![CDATA[
+			SELECT
+				Value1,
+				Value2
+			FROM Tools.BIN_Coder WITH(NOLOCK)
+			WHERE OrgCode = #orgCode#
+			AND BrandCode = #brandCode#
+			AND CodeType = #CodeType#
+			AND CodeKey = #CodeKey#
+			AND ValidFlag = '1'
+		]]>
+	</select>
+	<!-- 取得新节点 -->
+	<select id="getNewEmpNodeId" parameterClass="java.util.HashMap" resultClass="java.lang.String">
+		<![CDATA[
+			SELECT 
+				CONVERT(hierarchyid,#path#).GetDescendant(max(NodeID), NULL).ToString() AS newNodeId
+        	FROM 
+        		Basis.BIN_Employee
+            WHERE NodeID.GetAncestor(1)=#path#
+		]]>
+	</select>
+	<!-- 取得上级员工的path -->
+	<select id="getNodeEmployeePathByCode" parameterClass="java.util.HashMap" resultClass="java.lang.String">
+		<![CDATA[
+	           SELECT 
+	           		Path path
+	           FROM Basis.BIN_Employee WITH(NOLOCK)
+	           WHERE BIN_BrandInfoID=#BIN_BrandInfoID#
+	           AND BIN_OrganizationInfoID=#BIN_OrganizationInfoID#
+	           AND EmployeeCode=#ParentEmployeeCode#
+		]]>
+	</select>
+	<!-- 根据部门代码取得部门ID -->
+	<select id="getOrganizationId" parameterClass="java.util.HashMap" resultClass="java.lang.String">
+       <![CDATA[
+			SELECT
+				A.BIN_OrganizationID 
+			FROM Basis.BIN_Organization A WITH(NOLOCK)
+			WHERE A.DepartCode = #DepartCode#
+			AND A.BIN_BrandInfoID =#BIN_BrandInfoID#
+			AND A.BIN_OrganizationInfoID=#BIN_OrganizationInfoID#	
+			AND A.ValidFlag='1'				
+		]]>
+	</select>
+	<!-- 根据唯一性参数员工代码，公众号和手机号查询员工数据是否存在 -->
+	<select id="getEmployeeNum" parameterClass="java.util.HashMap" resultClass="java.lang.Integer">
+       <![CDATA[
+           SELECT 
+           		COUNT(*)
+           FROM Basis.BIN_Employee WITH(NOLOCK)
+           WHERE BIN_BrandInfoID=#BIN_BrandInfoID#
+           AND BIN_OrganizationInfoID=#BIN_OrganizationInfoID#
+           ]]>
+		<isNotEmpty property="EmployeeCode" prepend="AND">
+			EmployeeCode=#EmployeeCode#
+		</isNotEmpty>
+		<isNotEmpty property="OpenID" prepend="OR">
+			OpenID=#OpenID#
+		</isNotEmpty>
+		<isNotEmpty property="MobilePhone" prepend="OR">
+			MobilePhone=#MobilePhone#
+		</isNotEmpty>
+	</select>
+	<!--【更新员工 || 逻辑删除员工】 根据唯一性参数员工代码，公众号和手机号查询员工数据是否存在 -->
+	<select id="getEmployeeCode" parameterClass="java.util.HashMap" resultClass="java.lang.String">
+       <![CDATA[
+           SELECT
+           		 EmployeeCode 
+           FROM Basis.BIN_Employee WITH(NOLOCK)
+           WHERE BIN_BrandInfoID=#BIN_BrandInfoID#
+           AND BIN_OrganizationInfoID=#BIN_OrganizationInfoID#
+           ]]>
+		<isNotEmpty property="EmployeeCode" prepend="AND">
+			EmployeeCode=#EmployeeCode#
+		</isNotEmpty>
+		<isNotEmpty property="openID" prepend="AND">
+		     <![CDATA[
+			     EmployeeCode<>#existsEmployeeCodes# 
+			     AND OpenID=#openID#
+			  ]]>
+		</isNotEmpty>
+		<isNotEmpty property="mobilePhone" prepend="AND">
+		    <![CDATA[
+			    EmployeeCode<>#existsEmployeeCodes#
+			    AND MobilePhone=#mobilePhone#
+			]]>
+		</isNotEmpty>
+		<isNotEmpty property="mobilePhones" prepend="AND">
+		    <![CDATA[
+			    EmployeeCode<>#existsEmployeeCodes#
+			    AND (OpenID<>#openIds# OR  OpenID IS NULL)
+			    AND MobilePhone=#mobilePhones#
+			]]>
+		</isNotEmpty>
+		<!-- 查询的员工代码为空 -->
+		<isEmpty property="existsEmployeeCode">
+			<isNotEmpty property="openId" prepend="AND">
+		     	<![CDATA[
+					 OpenId=#openId#
+			  	]]>
+			</isNotEmpty>
+			<isNotEmpty property="existsMobilePhone" prepend="AND">
+		    	<![CDATA[
+			    	(OpenID<>#existsOpenId# OR OpenID IS NUll)
+			    	AND MobilePhone=#existsMobilePhone#
+				]]>
+			</isNotEmpty>
+			<isNotEmpty property="existsSingleMobilePhone" prepend="AND">
+			    	MobilePhone=#existsSingleMobilePhone#
+			</isNotEmpty>
+		</isEmpty>
+		<!-- 查询的员工代码不为空 -->
+		<isNotEmpty property="existsEmployeeCode">
+			<isNotEmpty property="openId" prepend="AND">
+		     	<![CDATA[
+		     		EmployeeCode<>#existsEmployeeCode#
+					AND OpenId=#openId#
+			  	]]>
+			</isNotEmpty>
+			<isNotEmpty property="existsOpenId" prepend="AND">
+		    	<![CDATA[
+		    		EmployeeCode<>#existsEmployeeCode#
+			    	AND (OpenID<>#existsOpenId# OR OpenID IS NULL)
+			    	AND MobilePhone=#existsMobilePhone#
+				]]>
+			</isNotEmpty>
+			<isNotEmpty property="singleMobilePhone" prepend="AND">
+				<![CDATA[
+					EmployeeCode<>#existsEmployeeCode#
+			    	AND MobilePhone=#singleMobilePhone#
+			    	]]>
+			</isNotEmpty>
+		</isNotEmpty>
+	</select>
+	<!-- 根据岗位代码查询员工岗位ID -->
+	<select id="getCategoryCodeByCategoryID" parameterClass="java.util.HashMap"  resultClass="java.lang.String">
+            <![CDATA[
+           		SELECT 
+           			BIN_PositionCategoryID positionCategoryId
+           		FROM Privilege.BIN_PositionCategory WITH(NOLOCK)
+           		WHERE CategoryCode=#PositionCode# 
+           		AND BIN_BrandInfoID=#BIN_BrandInfoID#
+           		AND BIN_OrganizationInfoID=#BIN_OrganizationInfoID#
+           		AND ValidFlag='1'
+           		]]>
+	</select>
+	<!-- 根据员工代码查询已有员工信息 -->
+	<select id="getEmployeeByEmployeeCode" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+            <![CDATA[
+			    SELECT
+           			A.BIN_EmployeeID employeeID,
+					B.CategoryCode CategoryCode,
+					C.BIN_BaInfoID baInfoId,
+					B.BIN_PositionCategoryID positionCategoryId
+				FROM Basis.BIN_Employee A WITH (NOLOCK)
+				LEFT JOIN Privilege.BIN_PositionCategory B WITH (NOLOCK)
+					ON A.BIN_PositionCategoryID = B.BIN_PositionCategoryID
+				LEFT JOIN Basis.BIN_BaInfo C WITH(NOLOCK)
+					ON A.BIN_EmployeeID=C.BIN_EmployeeID
+				WHERE
+				]]>
+			<![CDATA[
+					A.BIN_BrandInfoID=#BIN_BrandInfoID#
+					AND A.BIN_OrganizationInfoID=#BIN_OrganizationInfoID#
+				]]>
+				<dynamic prepend="AND">
+					<![CDATA[
+					 (
+					]]>
+					<isNotEmpty property="EmployeeCode" prepend="AND">
+							A.EmployeeCode = #EmployeeCode#
+					</isNotEmpty>
+					<isNotEmpty property="MobilePhone" prepend="OR">
+							A.MobilePhone = #MobilePhone#
+					</isNotEmpty>
+					<isNotEmpty property="OpenID" prepend="OR">
+							A.OpenID = #OpenID#
+					</isNotEmpty>
+					<![CDATA[
+					 )
+					]]>
+				</dynamic>
+	</select>
+	<!-- 插入员工信息表 -->
+	<insert id="insertEmployee" parameterClass="java.util.HashMap"> 
+	<selectKey resultClass="java.lang.Integer" type="post" keyProperty="BIN_EmployeeID">
+		<![CDATA[
+	    INSERT INTO Basis.BIN_Employee (
+	   		BIN_OrganizationInfoID,				
+			BIN_BrandInfoID,
+			BIN_OrganizationID,
+			BIN_PositionCategoryID,	
+			EmployeeCode,			
+			EmployeeName,							
+			MobilePhone,						
+			EmployeeStatus,	
+			OpenID,
+			NodeID,
+			IdentityCard,
+		]]>
+			<include refid="BINBECMINC99.insertKeySql" />									
+		<![CDATA[								
+		)VALUES (
+			#BIN_OrganizationInfoID#,
+			#BIN_BrandInfoID#,		
+			#organizationId#,
+			#positionCategoryId#,		
+			#EmployeeCode#,			
+			#EmployeeName#,								
+			#MobilePhone#,					
+			#employeeStatus#,
+			#OpenID#,
+			#NodeID#,
+			#IdentityCard#,
+		]]>
+			<include refid="BINBECMINC99.insertValueSql" />
+		<![CDATA[ 
+			) 
+			select SCOPE_IDENTITY() as value
+		]]>
+		</selectKey>
+	</insert>
+	<!-- 插入营业员信息 -->
+	<insert id="insertBaInfo" parameterClass="java.util.HashMap">
+		<![CDATA[
+			INSERT INTO	
+				Basis.BIN_BaInfo
+				(
+					BIN_OrganizationInfoID,
+					BIN_BrandInfoID,
+					BIN_EmployeeID,
+					BaCode,
+					BaType,
+					BIN_OrganizationID,
+					BaName,
+					MobilePhone,
+					OriginFlag,
+		]]>
+		<include refid="BINBECMINC99.insertKeySql" />		
+		<![CDATA[
+				)VALUES
+				(		
+					#BIN_OrganizationInfoID#,
+					#BIN_BrandInfoID#,
+					#employeeID#,
+					#EmployeeCode#,
+					'1',
+					#organizationId#,
+					#EmployeeName#,
+					#MobilePhone#,
+					'0',
+		]]>
+		<include refid="BINBECMINC99.insertValueSql" />		
+		<![CDATA[
+				)
+    	]]>
+	</insert>
+	<!--更新营业员信息表 -->
+	<update id="updateBaInfo" parameterClass="java.util.HashMap">
+		<![CDATA[
+			UPDATE				
+				Basis.BIN_BaInfo			
+			SET
+			BIN_OrganizationInfoID=#BIN_OrganizationInfoID#,
+			BIN_BrandInfoID=#BIN_BrandInfoID#,				
+		]]>
+		<isNotEmpty property="EmployeeCode">
+			<isEqual property="EmployeeCode" compareValue="cherry_clear">
+				BaCode = NULL,
+			</isEqual>
+			<isNotEqual property="EmployeeCode" compareValue="cherry_clear">
+				BaCode = #EmployeeCode#,
+			</isNotEqual>
+		</isNotEmpty>
+		<isNotEmpty property="EmployeeName">
+			<isEqual property="EmployeeName" compareValue="cherry_clear">
+				BaName = NULL,
+			</isEqual>
+			<isNotEqual property="EmployeeName" compareValue="cherry_clear">
+				BaName = #EmployeeName#,
+			</isNotEqual>
+		</isNotEmpty>
+		<isNotEmpty property="organizationId">
+			<isEqual property="organizationId" compareValue="0">
+				BIN_OrganizationID = NULL,
+			</isEqual>
+			<isNotEqual property="organizationId" compareValue="0">
+				BIN_OrganizationID = #organizationId#,
+			</isNotEqual>
+		</isNotEmpty>
+		<isNotEmpty property="MobilePhone">
+			<isEqual property="MobilePhone" compareValue="cherry_clear">
+				MobilePhone = NULL,
+			</isEqual>
+			<isNotEqual property="MobilePhone" compareValue="cherry_clear">
+				MobilePhone = #MobilePhone#,
+			</isNotEqual>
+		</isNotEmpty>
+		<isNotEmpty property="validFlag">
+			ValidFlag = #validFlag#,
+		</isNotEmpty>
+		<include refid="BINBECMINC99.updateSql" />		
+		<![CDATA[				
+			WHERE					
+				BIN_BaInfoID = #baInfoId#
+		]]>
+	</update>
+	<!-- 更新员工信息 -->
+	<update id="updateEmployee" parameterClass="java.util.HashMap">
+    	<![CDATA[
+		   UPDATE 
+		   		Basis.BIN_Employee
+		   SET 
+		   	BIN_OrganizationInfoID = #BIN_OrganizationInfoID#,
+		   	BIN_BrandInfoID = #BIN_BrandInfoID#,
+		   ]]>
+		<isNotEmpty property="organizationId">
+			<isEqual property="organizationId" compareValue="0">
+				BIN_OrganizationID = NULL,
+			</isEqual>
+			<isNotEqual property="organizationId" compareValue="0">
+				BIN_OrganizationID = #organizationId#,
+			</isNotEqual>
+		</isNotEmpty>
+		<isNotEmpty property="positionCategoryId">
+			<isEqual property="positionCategoryId" compareValue="0">
+				BIN_PositionCategoryID = NULL,
+			</isEqual>
+			<isNotEqual property="positionCategoryId" compareValue="0">
+				BIN_PositionCategoryID = #positionCategoryId#,
+			</isNotEqual>
+		</isNotEmpty>
+		<isNotEmpty property="NodeID">
+			<isEqual property="NodeID" compareValue="cherry_clear">
+				NodeID = NULL,
+			</isEqual>
+			<isNotEqual property="NodeID" compareValue="cherry_clear">
+				NodeID = #NodeID#,
+			</isNotEqual>
+		</isNotEmpty>
+		<isNotEmpty property="EmployeeName">
+			<isEqual property="EmployeeName" compareValue="cherry_clear">
+				EmployeeName = NULL,
+			</isEqual>
+			<isNotEqual property="EmployeeName" compareValue="cherry_clear">
+				EmployeeName = #EmployeeName#,
+			</isNotEqual>
+		</isNotEmpty>
+		<isNotEmpty property="MobilePhone">
+			<isEqual property="MobilePhone" compareValue="cherry_clear">
+				MobilePhone = NULL,
+			</isEqual>
+			<isNotEqual property="MobilePhone" compareValue="cherry_clear">
+				MobilePhone = #MobilePhone#,
+			</isNotEqual>
+		</isNotEmpty>
+		<isNotEmpty property="OpenID">
+			<isEqual property="OpenID" compareValue="cherry_clear">
+				OpenID = NULL,
+			</isEqual>
+			<isNotEqual property="OpenID" compareValue="cherry_clear">
+				OpenID = #OpenID#,
+			</isNotEqual>
+		</isNotEmpty>
+		<isNotEmpty property="employeeStatus">
+				EmployeeStatus = #employeeStatus#,
+		</isNotEmpty>
+		<isNotEmpty property="IdentityCard">
+			IdentityCard = #IdentityCard#,
+		</isNotEmpty>
+		<isNotEmpty property="validFlag">
+			ValidFlag = #validFlag#,
+		</isNotEmpty>
+		<include refid="BINBECMINC99.updateSql" />		
+	  <![CDATA[
+		 WHERE EmployeeCode = #EmployeeCode#
+		 ]]>
+	</update>
+</sqlMap>

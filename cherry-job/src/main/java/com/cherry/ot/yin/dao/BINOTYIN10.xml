@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sqlMap PUBLIC "-//iBATIS.com//DTD SQL Map 2.0//EN" "http://ibatis.apache.org/dtd/sql-map-2.dtd">
+<sqlMap namespace="BINOTYIN10">
+	<!-- 取得接口表中的支付方式 -->
+	<select id="getPayTypeIFList" parameterClass="java.util.HashMap"
+		resultClass="java.util.HashMap">
+		<![CDATA[
+			SELECT 
+				GroupNum AS payTypeCode,
+				PymntGroup AS payTypeDesc
+			FROM 
+				CPS_EXPORT_PAYMETHOD
+		]]>
+	</select>
+	<!-- 取得新后台的已经存在的支付方式 的数量-->
+	<select id="getHvPayTypeCount" parameterClass="java.util.HashMap"
+		resultClass="java.lang.Integer">
+		<![CDATA[
+			SELECT 
+				COUNT(1) AS hvPayTypeCount
+			FROM
+				Basis.BIN_PayType
+			WHERE 
+				PayTypeCode=#payTypeCode#
+		]]>
+	</select>
+	<!-- 更新新后台中已经存在的支付方式 -->
+	<update id="updateOldPayType" parameterClass="java.util.HashMap">
+	<![CDATA[
+		UPDATE 
+			Basis.BIN_PayType
+		SET
+			PayTypeDescCN = #payTypeDesc#,
+			PayTypeDescEN = #payTypeDesc#,
+	]]>	
+	<include refid="BINBECMINC99.updateSql" />		
+	<![CDATA[
+		WHERE
+			PayTypeCode = #payTypeCode#
+	]]>
+	</update>
+	<!-- 插入新后台中不存在的支付方式 -->
+	<insert id="insertNewPayType" parameterClass="java.util.HashMap">
+		<![CDATA[
+			INSERT INTO Basis.BIN_PayType(
+				BIN_OrganizationInfoID,
+				BIN_BrandInfoID,
+				PayTypeCode,
+				PayTypeDescCN,
+				PayTypeDescEN,
+		]]>
+		<include refid="BINBECMINC99.insertKeySql" />									
+		<![CDATA[
+			)VALUES (
+			#organizationInfoId#,
+			#brandInfoId#,
+			#payTypeCode#,
+			#payTypeDesc#,
+			#payTypeDesc#,
+		]]>
+		<include refid="BINBECMINC99.insertValueSql" />
+		<![CDATA[ ) ]]>
+	</insert>
+</sqlMap>

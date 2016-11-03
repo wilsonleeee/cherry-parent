@@ -1,0 +1,314 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sqlMap PUBLIC "-//iBATIS.com//DTD SQL Map 2.0//EN" "http://ibatis.apache.org/dtd/sql-map-2.dtd">
+<sqlMap namespace="SynchCampaignInfo">
+	<!-- 插入活动同步明细表  -->
+	<insert id="insertCampaignSynchDetailInfo" parameterClass="java.util.HashMap">		
+				<![CDATA[
+				INSERT INTO Campaign.BIN_CampaignSynchDetailInfo (
+				   		BIN_OrganizationInfoID,				
+						BIN_BrandInfoID,		
+						BIN_CampaignSynchInfoID,			
+						BIN_ProductVendorID,			
+						ActivityQty,			
+						Price,
+				]]>
+				<dynamic>
+		            <isNotEmpty property="Point">
+		                <![CDATA[Point,]]>
+		            </isNotEmpty>		            
+		        </dynamic>
+		        <include refid="BINBECMINC99.insertKeySql"/>																				
+	            <![CDATA[    																		
+				)VALUES (
+					#BIN_OrganizationInfoID#,
+                	#BIN_BrandInfoID#,
+					#campaignSynchInfoId#,
+					#proVendorId#,
+					#ActivityQty#,
+					#Price#,
+				 ]]>
+				<dynamic>
+		            <isNotEmpty property="Point">
+		                <![CDATA[#Point#,]]>
+		            </isNotEmpty>		            
+		        </dynamic>																					
+				<include refid="BINBECMINC99.insertValueSql"/>
+				<![CDATA[
+			)
+			 ]]>
+	</insert>
+	
+	<!-- 插入活动同步主表  -->
+	<insert id="insertCampaignSynchInfo" parameterClass="java.util.HashMap" >
+		<selectKey resultClass="java.lang.Integer" type="post" keyProperty="BIN_CampaignSynchInfoID" >			
+			<![CDATA[
+			INSERT INTO Campaign.BIN_CampaignSynchInfo (
+			   		BIN_OrganizationInfoID,				
+					BIN_BrandInfoID,		
+					SubjectCode,			
+					SubjectName,			
+					MainCode,			
+					MainName,						
+					ActivityCode,
+					ActivityName,				
+					StartTime,				
+					EndTime,				
+					DataSource,
+					Issued,
+				]]>												
+				<include refid="BINBECMINC99.insertKeySql"/>
+				<![CDATA[															
+				)VALUES (
+					#BIN_OrganizationInfoID#,
+					#BIN_BrandInfoID#,
+					#SubjectCode#,
+					#SubjectName#,
+					#MainCode#,
+					#MainName#,	
+					#ActivityCode#,
+					#ActivityName#,				
+					#StartTime#,				
+					#EndTime#,				
+					#DataSource#,
+					'0',
+				]]>														
+				<include refid="BINBECMINC99.insertValueSql"/>
+				<![CDATA[)
+					select SCOPE_IDENTITY() as value
+				]]>	
+		</selectKey>
+	</insert>
+
+	 <select id="getProductVendorId" parameterClass="java.util.HashMap" resultClass="java.lang.String">
+        <![CDATA[
+            SELECT               
+                A.BIN_ProductVendorID AS proVendorId              
+            FROM 
+                Basis.BIN_ProductVendor A           
+            INNER JOIN Basis.BIN_Product B
+            ON A.BIN_ProductID = B.BIN_ProductID          
+            WHERE
+                B.BIN_OrganizationInfoID = #BIN_OrganizationInfoID#
+                AND B.BIN_BrandInfoID = #BIN_BrandInfoID#
+                AND A.BarCode = #Barcode#
+                AND B.UnitCode = #Unitcode#
+        ]]>
+    </select>
+    
+     <select id="getPromotionProduct" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+        <![CDATA[
+            SELECT               
+                A.ExPoint AS Point               
+            FROM 
+                Basis.BIN_PromotionProduct A           
+            INNER JOIN Basis.BIN_PromotionProductVendor B
+            ON A.BIN_PromotionProductID = B.BIN_PromotionProductID          
+            WHERE
+                A.BIN_OrganizationInfoID = #BIN_OrganizationInfoID#
+                AND A.BIN_BrandInfoID = #BIN_BrandInfoID#
+                AND B.BarCode = #Barcode#
+                AND A.UnitCode = #Unitcode#
+        ]]>
+    </select>
+    <!-- 插入活动信息接口主表  -->
+	<insert id="insertActivitySubject" parameterClass="java.util.HashMap" >
+		INSERT INTO dbo.ActivityAssociateSubject_SCS
+					(
+							Brand,
+							subject_code,
+							name,
+							status,
+							pos_modify,
+							data_source,
+							type,
+							created,
+							modified
+					)
+					VALUES
+					(
+							#Brand#,
+							#subject_code#,
+							#name#,
+							#status#,
+							#pos_modify#,
+							#data_source#,
+							#type#,
+							#created#,
+							#modified#
+					)
+	</insert>
+      <!-- 插入子活动表接口表 -->
+	<insert id="insertActivityAssociateTable" parameterClass="java.util.HashMap" >
+			INSERT INTO dbo.ActivityAssociateTable_SCS
+			           (
+							Brand,
+							subject_code,
+							MainCode,
+							MainName,
+							[Function],
+							MaxReceiveQty,
+							MainModify,
+							type,
+							pos_modify,
+							status,
+							type_sub,
+							created,
+							modified
+			           )
+			     VALUES
+			           (
+							#Brand#,
+						   #subject_code#,
+				           #MainCode#,
+				           #MainName#,
+				           #Function#,
+				           #MaxReceiveQty#,
+				           #MainModify#,
+				           #type#,
+				           #pos_modify#,
+				           #status#,
+				           #type_sub#,
+				           #created#,
+				           #modified#
+			           )
+	</insert>
+	      <!-- 插入促销活动接口表  -->
+	<insert id="insertActivityTable" parameterClass="java.util.HashMap" >
+		INSERT INTO dbo.ActivityTable_SCS
+		           (
+						Brand,
+						ActivityCode,
+						ActivityName,
+						StartTime,
+						EndTime,
+						Barcode,
+						Unitcode,
+						Price,
+						ActivityQty,
+						ActCounter,
+						Status,
+						Puttime,
+						CHYFlag
+		           )
+		     VALUES
+		           (
+			           #Brand#,
+			           #ActivityCode#,
+			           #ActivityName#,
+			           #StartTime#,
+			           #EndTime#,
+			           #Barcode#,
+			           #Unitcode#,
+			           #Price#,
+			           #ActivityQty#,
+			           #ActCounter#,
+			           #Status#,
+			           #Puttime#,
+			           #CHYFlag#
+		           )
+	</insert>
+		<!-- 插入促销产品表  -->
+	<insert id="insertPromotionProductBackId" parameterClass="java.util.HashMap">	
+	<selectKey resultClass="java.lang.Integer" type="post" keyProperty="BIN_PromotionProductID" >
+		   <![CDATA[
+		   INSERT INTO Basis.BIN_PromotionProduct
+				      (
+				       BIN_OrganizationInfoID,
+					   BIN_BrandInfoID,
+					   UnitCode,												
+				       NameTotal,
+				       IsBOMCompatible,												
+				       IsReplenish,												
+				       Status,
+				       Mode,
+				       IsExchanged,
+					   PromotionCateCD,
+					   IsStock,
+					   Version,
+					   IsPosIss,
+					   ExPoint,	
+			]]>	
+			<include refid="BINBECMINC99.insertKeySql" />									
+			<![CDATA[								
+			)VALUES									
+					 ( 
+					   #organizationInfoId#,
+					   #brandInfoId#,
+					   #unitCode#,												
+				       #nameTotal#,
+				       #isBOMCompatible#,												
+				       #isReplenish#,												
+				       #status#,
+				       #mode#,
+				       #isExchanged#,
+					   #promotionCateCD#,
+					   #isStock#,
+					   #tVersion# + 1,
+					   #isPosIss#,
+					   #point#,
+			]]>
+			 <include refid="BINBECMINC99.insertValueSql" />
+			<![CDATA[)
+			select SCOPE_IDENTITY() as value
+			]]> 
+	    </selectKey>
+	</insert> 
+		<!-- 插入促销产品厂商表  -->
+	<insert id="insertPromProductVendor" parameterClass="java.util.HashMap">
+	<selectKey resultClass="java.lang.Integer" type="post" keyProperty="BIN_PromotionProductVendorID" >
+        <![CDATA[ 
+		INSERT INTO Basis.BIN_PromotionProductVendor							
+		           (BIN_PromotionProductID,					
+		            BIN_ManufacturerInfoID,					
+		            BarCode,
+		]]>	
+		    <include refid="BINBECMINC99.insertKeySql" />	
+		<![CDATA[			
+        )VALUES							
+		           (
+		           #promProductId#,					
+		            #manuFactId#,					
+		            #barCode#,					
+       ]]>
+	        <include refid="BINBECMINC99.insertValueSql" />
+		<![CDATA[
+		)
+		select SCOPE_IDENTITY() as value
+		]]>
+	</selectKey>
+    </insert>
+	<!-- 更新下发状态 -->
+	<update id="updateIssued" parameterClass="java.util.HashMap">
+			UPDATE 
+				Campaign.BIN_CampaignSynchInfo
+			SET 
+				Issued = #issued#
+			WHERE
+				BIN_CampaignSynchInfoID = #campaignSynchInfoId#
+				AND BIN_OrganizationInfoID = #BIN_OrganizationInfoID#
+				AND BIN_BrandInfoID = #BIN_BrandInfoID#
+	</update>
+	<!-- 查找员工信息  -->
+    <select id="getEmployeeInfo" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+        <![CDATA[
+            SELECT
+                A.BIN_EmployeeID
+            FROM 
+                Basis.BIN_Employee A
+            WHERE
+                A.BIN_OrganizationInfoID = #organizationInfoId#
+                AND A.BIN_BrandInfoID = #brandInfoId#
+                AND A.EmployeeCode = #EmployeeCode#
+        ]]>
+    </select>
+    	<!-- 查找主活动信息是否已存在  -->
+    <select id="getActivityAssociateSubjectInfo" parameterClass="java.util.HashMap" resultClass="java.lang.Integer">
+        <![CDATA[
+			SELECT
+				COUNT(*)
+			FROM ActivityAssociateSubject_SCS
+			WHERE Brand = #Brand#
+			AND subject_code = #subject_code#
+        ]]>
+    </select>
+</sqlMap>

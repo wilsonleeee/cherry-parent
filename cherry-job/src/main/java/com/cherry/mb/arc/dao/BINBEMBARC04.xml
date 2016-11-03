@@ -1,0 +1,249 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sqlMap PUBLIC "-//iBATIS.com//DTD SQL Map 2.0//EN" "http://ibatis.apache.org/dtd/sql-map-2.dtd">
+<sqlMap namespace="BINBEMBARC04">
+	
+	<!-- 把会员接口表中状态为处理中的数据全部更新成未处理状态 -->
+	<update id="updateGetStatusNull" parameterClass="java.util.HashMap">
+		<![CDATA[
+			UPDATE
+				dbo.WItposB_member_U
+			SET
+				getstatus = NULL
+			WHERE
+				getstatus = '1'
+		]]>
+    </update>	
+	
+	<!-- 查询需要处理数据的日期List -->
+	<select id ="getInsertdateList" parameterClass="java.util.HashMap" resultClass ="java.util.HashMap">
+	<![CDATA[
+		SELECT DISTINCT
+			insertdate
+		FROM
+			dbo.WItposB_member_U
+		WHERE
+			getstatus IS NULL
+		ORDER BY
+			insertdate	
+	]]> 
+	</select>
+	
+	<!-- 按日期把会员接口表中未处理的数据全部更新成处理中状态 -->
+	<update id="updateGetStatus" parameterClass="java.util.HashMap">
+		<![CDATA[
+			UPDATE
+				dbo.WItposB_member_U
+			SET
+				getstatus = '1'
+			WHERE
+				insertdate = #insertdate# AND
+				getstatus IS NULL
+		]]>
+    </update>	
+	
+	<!-- 查询未换过卡的会员数据List -->
+	<select id ="getMemberInfoList" parameterClass="java.util.HashMap" resultClass ="java.util.HashMap">
+	<![CDATA[
+		SELECT TOP $COUNT$
+			memcode AS memcode,
+			name AS name,
+			telephone AS telephone,
+			mobilephone AS mobilephone,
+			sex AS sex,
+			province AS province,
+			city AS city,
+			address AS address,
+			zip AS zip,
+			birthday AS birthday,
+			mail AS mail,
+			granttime AS granttime,
+			bacode AS bacode,
+			countercode AS countercode,
+			bak_int2 AS status,
+			bak_char1 AS oldMemCode,
+			CONVERT(varchar(30),GETDATE(),120) AS changCardTime,
+			bak_varchar1 AS memo1,
+			CurMemberLevelCode AS memberLevel,
+			CONVERT(varchar(30),LevelStartdate,120) AS levelStartdate,
+			CONVERT(varchar(30),LevelEnddate,120) AS levelEnddate,
+			CASE WHEN bak_varchar3 = 'ACT' THEN '1' ELSE '0' END AS active,
+			CONVERT(varchar(30),activate_time,120) AS activeDate,
+			MemberPassword AS memberPassword,
+			bak_varchar5 AS memo2
+		FROM
+			dbo.WItposB_member_U
+		WHERE
+			getstatus = '1' AND
+			isnull(bak_char1, '') = ''	
+	]]> 
+	</select>
+	
+	<!-- 查询换过卡的会员数据List -->
+	<select id ="getMemberChangeInfoList" parameterClass="java.util.HashMap" resultClass ="java.util.HashMap">
+	<![CDATA[
+		SELECT
+			memcode AS memcode,
+			name AS name,
+			telephone AS telephone,
+			mobilephone AS mobilephone,
+			sex AS sex,
+			province AS province,
+			city AS city,
+			address AS address,
+			zip AS zip,
+			birthday AS birthday,
+			mail AS mail,
+			granttime AS granttime,
+			bacode AS bacode,
+			countercode AS countercode,
+			bak_int2 AS status,
+			bak_char1 AS oldMemCode,
+			CONVERT(varchar(30),GETDATE(),120) AS changCardTime,
+			bak_varchar1 AS memo1,
+			CurMemberLevelCode AS memberLevel,
+			CONVERT(varchar(30),LevelStartdate,120) AS levelStartdate,
+			CONVERT(varchar(30),LevelEnddate,120) AS levelEnddate,
+			CASE WHEN bak_varchar3 = 'ACT' THEN '1' ELSE '0' END AS active,
+			CONVERT(varchar(30),activate_time,120) AS activeDate,
+			MemberPassword AS memberPassword,
+			bak_varchar5 AS memo2
+		FROM
+			dbo.WItposB_member_U
+		WHERE
+			getstatus = '1' AND
+			isnull(bak_char1, '') <> ''
+		ORDER BY
+			puttime	
+	]]> 
+	</select>
+	
+	<!-- 把换过卡的会员数据按换卡顺序写入到临时表 -->
+	<update id="updateMemTemp" parameterClass="java.util.HashMap">
+		<![CDATA[
+			IF OBJECT_ID('dbo.WItposB_member_U_temp') IS NOT NULL
+  			DROP TABLE dbo.WItposB_member_U_temp
+			
+			WITH MemTemp(level, memcode)
+			AS (
+				SELECT 
+					1,
+					A.memcode
+				FROM 
+					dbo.WItposB_member_U A LEFT JOIN dbo.WItposB_member_U B
+					ON A.bak_char1 = B.memcode AND B.getstatus = '1' AND B.bak_char1 IS NOT NULL
+				WHERE
+					A.getstatus = '1' AND
+					A.bak_char1 IS NOT NULL AND
+					B.memcode IS NULL
+				
+				UNION ALL 
+				SELECT 
+					P.level+1, 
+					A.memcode
+				FROM 
+					dbo.WItposB_member_U A JOIN MemTemp P
+					ON A.bak_char1 = P.memcode
+				WHERE
+					A.getstatus = '1' AND
+					A.bak_char1 IS NOT NULL AND
+					P.level < 20
+			)
+			
+			SELECT
+				A.memcode AS memcode,
+				A.name AS name,
+				A.telephone AS telephone,
+				A.mobilephone AS mobilephone,
+				A.sex AS sex,
+				A.province AS province,
+				A.city AS city,
+				A.address AS address,
+				A.zip AS zip,
+				A.birthday AS birthday,
+				A.mail AS mail,
+				A.granttime AS granttime,
+				A.bacode AS bacode,
+				A.countercode AS countercode,
+				A.bak_int2 AS status,
+				A.bak_char1 AS oldMemCode,
+				CONVERT(varchar(30),GETDATE(),120) AS changCardTime,
+				A.bak_varchar1 AS memo1,
+				A.CurMemberLevelCode AS memberLevel,
+				CASE WHEN A.bak_varchar3 = 'ACT' THEN '1' ELSE '0' END AS active,
+				CONVERT(varchar(30),A.activate_time,120) AS activeDate,
+				P.level AS level
+			INTO dbo.WItposB_member_U_temp	
+			FROM
+				dbo.WItposB_member_U A JOIN MemTemp P
+				ON A.memcode = P.memcode
+			WHERE
+				A.getstatus = '1' AND
+				A.bak_char1 IS NOT NULL
+		]]>
+    </update>
+    
+    <!-- 取得临时表中的会员数据List -->
+	<select id ="getMemTempList" parameterClass="java.util.HashMap" resultClass ="java.util.HashMap">
+	<![CDATA[
+		SELECT TOP $COUNT$
+			memcode,
+			name,
+			telephone,
+			mobilephone,
+			sex,
+			province,
+			city,
+			address,
+			zip,
+			birthday,
+			mail,
+			granttime,
+			bacode,
+			countercode,
+			status,
+			oldMemCode,
+			changCardTime,
+			memo1,
+			memberLevel,
+			active,
+			activeDate
+		FROM
+			dbo.WItposB_member_U_temp
+		ORDER BY
+			level	
+	]]> 
+	</select>
+	
+	<!-- 删除临时表的数据 -->
+	<delete id="delMemTemp" parameterClass="java.util.HashMap">
+		<![CDATA[
+			DELETE FROM
+				dbo.WItposB_member_U_temp 
+			WHERE
+				memcode = #memcode#
+		]]> 
+	</delete>
+	
+	<!-- 更新处理过的会员数据的状态 -->
+	<update id="updateGetStatusEnd" parameterClass="java.util.HashMap">
+		<![CDATA[
+			UPDATE
+				dbo.WItposB_member_U
+			SET
+                getstatus = #getStatus#,
+                getdate = GETDATE()
+			WHERE 
+			    memcode = #memcode# AND
+			    getstatus = '1'
+		]]>
+    </update>
+    
+    <!-- 删除临时表 -->
+	<delete id="dropMemTemp" parameterClass="java.util.HashMap">
+		<![CDATA[
+			IF OBJECT_ID('dbo.WItposB_member_U_temp') IS NOT NULL
+  			DROP TABLE dbo.WItposB_member_U_temp
+		]]> 
+	</delete>
+	
+</sqlMap>

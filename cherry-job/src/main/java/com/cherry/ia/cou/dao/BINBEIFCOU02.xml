@@ -1,0 +1,163 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sqlMap PUBLIC "-//iBATIS.com//DTD SQL Map 2.0//EN" "http://ibatis.apache.org/dtd/sql-map-2.dtd">
+<sqlMap namespace="BINBEIFCOU02">
+
+	
+	<!--取得过期柜台组织结构ID -->
+	<select id="getExpiredOrganization" resultClass="java.util.HashMap">
+		<![CDATA[
+			SELECT 
+				O.BIN_OrganizationID
+			FROM 
+				Basis.BIN_Organization O
+			WHERE 
+				O.Type = '4'
+			AND	O.ExpiringDate IS NOT NULL AND O.ExpiringDate <> ''
+			AND O.ExpiringDate <= GETDATE()
+			AND	O.BIN_OrganizationInfoID = #organizationInfoId# 
+			AND	O.BIN_BrandInfoID = #brandInfoId# 
+			AND O.ValidFlag = '1'
+				
+		]]>
+    </select>
+    <!-- 将到期的柜台无效掉 -->
+	<update id="updateExpiredOrg" parameterClass="java.util.HashMap">
+		UPDATE
+			Basis.BIN_Organization
+		SET ValidFlag = '0',
+			Status = '4',
+		<include refid="BINBECMINC99.updateSql" />
+		WHERE 
+			BIN_OrganizationID IN
+			<iterate property="expiredOrgList" open="(" close=")" conjunction=",">
+				#expiredOrgList[].BIN_OrganizationID#
+			</iterate>
+	</update>
+    <!-- 将到期的柜台无效掉 -->
+	<update id="updateExpiredCnt" parameterClass="java.util.HashMap">
+		UPDATE
+			Basis.BIN_CounterInfo
+		SET ValidFlag = '0',
+			Status = '4',
+		<include refid="BINBECMINC99.updateSql" />
+		WHERE 
+			BIN_OrganizationID IN
+			<iterate property="expiredOrgList" open="(" close=")" conjunction=",">
+				#expiredOrgList[].BIN_OrganizationID#
+			</iterate>
+	</update>
+	
+	<!-- 删除柜台接口表 -->
+	<delete id="clearCounterSCS" parameterClass="java.util.HashMap">
+		<![CDATA[
+			DELETE FROM 
+					dbo.Counter_SCS
+			WHERE 
+				brand = #branCode#
+		]]>
+    </delete>
+    
+   <!-- 取得柜台信息(新老后台交互时使用)  -->
+    <select id="getCounterInfo" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+    	<![CDATA[
+			SELECT 
+				Z.BrandCode AS BrandCode,
+				X.CounterCode AS CounterCode,
+				X.CounterNameIF AS CounterName,
+				X.CounterKind AS counterKind,
+				X.[PassWord] AS PassWord,
+				X.CounterSynergyFlag AS CounterSynergyFlag,
+				X.ValidFlag AS ValidFlag,
+				R.RegionCode AS RegionCode,
+				CC.RegionCode AS Citycode,
+				N.ResellerCode AS AgentCode,
+				N.ResellerName AS AgentName,
+				O.ExpiringDate,
+				X.CounterAddress,
+				X.CounterTelephone,
+				L.ChannelCode,
+		]]>	
+		<isNotEmpty property="language">
+			<isEqual property="language" compareValue="en_US">										
+				L.ChannelNameForeign AS Channel,
+				R.RegionNameForeign AS RegionName,
+				CC.RegionNameForeign AS CityName
+			</isEqual>
+			<isEqual property="language" compareValue="zh_CN">										
+				L.ChannelName AS Channel,
+				R.RegionNameChinese AS RegionName,
+				CC.RegionNameChinese AS CityName
+			</isEqual>								
+		</isNotEmpty>
+		<isEmpty property="language">
+			L.ChannelName AS Channel,
+			R.RegionNameChinese AS RegionName,
+			CC.RegionNameChinese AS CityName
+		</isEmpty>
+		<![CDATA[		
+			FROM
+				Basis.BIN_CounterInfo X
+				JOIN Basis.BIN_Organization O ON (O.BIN_OrganizationID = X.BIN_OrganizationID)
+				LEFT JOIN Basis.BIN_Region R ON (O.BIN_RegionID = R.BIN_RegionID AND R.ValidFlag = '1')
+				LEFT JOIN Basis.BIN_Region CC ON (O.BIN_CityID = CC.BIN_RegionID AND CC.ValidFlag = '1')
+				LEFT JOIN Basis.BIN_BrandInfo Z ON (X.BIN_BrandInfoID = Z.BIN_BrandInfoID AND Z.ValidFlag = '1')
+				LEFT JOIN Basis.BIN_Channel L ON (X.BIN_ChannelID = L.BIN_ChannelID AND L.ValidFlag = '1')
+				LEFT JOIN Basis.BIN_ResellerInfo N ON (X.BIN_ResellerInfoID = N.BIN_ResellerInfoID AND N.ValidFlag = '1')
+			WHERE
+				X.ValidFlag ='1'
+			AND X.BIN_BrandInfoID = #brandInfoId#
+		]]>									
+    </select>
+    
+   	<insert id="insertCounterSCS" parameterClass="java.util.HashMap">
+		<![CDATA[
+			INSERT INTO	
+				dbo.Counter_SCS
+				(
+					brand,
+					countercode,
+					countername,
+					regionname,
+					channel,
+					channelcode,
+					citycode,
+					agent_code,
+					region_code,
+					counter_kind,
+					SynergyFlag,
+					CounterAddress,
+					CounterTelephone,
+					ExpiringDate
+				)VALUES
+				(		
+					#BrandCode#,
+					#CounterCode#,
+					#CounterName#,
+					#RegionName#,
+					#Channel#,
+					#ChannelCode#,
+					#Citycode#,
+					#AgentCode#,
+					#RegionCode#,
+					#counterKind#,
+					#CounterSynergyFlag#,
+					#CounterAddress#,
+					#CounterTelephone#,
+					#ExpiringDate#
+				)
+	   	]]>	
+   	</insert>
+   	
+    <!-- 取得品牌Code  -->
+    <select id="getBrandCode" parameterClass="java.util.HashMap" resultClass="java.lang.String">
+       <![CDATA[
+			SELECT
+				BrandCode AS brandCode
+			FROM
+				Basis.BIN_BrandInfo
+			WHERE
+				BIN_BrandInfoID = #brandInfoId#
+		]]>	
+    </select>
+    
+</sqlMap>

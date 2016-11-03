@@ -1,0 +1,207 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sqlMap PUBLIC "-//iBATIS.com//DTD SQL Map 2.0//EN" "http://ibatis.apache.org/dtd/sql-map-2.dtd">
+<sqlMap namespace="SaleReport">
+    
+    <!-- 统计柜台的销售金额和数量  -->
+    <select id="getSaleCountByCou" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+       	<![CDATA[
+            SELECT
+            	SUM(CASE WHEN A.SaleType = 'SR' THEN -A.Amount ELSE A.Amount END) AS TotalAmount,
+            	SUM(CASE WHEN A.SaleType = 'SR' THEN -A.Quantity ELSE A.Quantity END) AS TotalQuantity
+			FROM
+				Sale.BIN_SaleRecord A WITH(NOLOCK)
+			WHERE
+				A.SaleDate >= #StartDate# AND
+				A.SaleDate <= #EndDate# AND
+				A.BIN_OrganizationID = #organizationId# AND
+				A.ValidFlag = '1'
+		]]>
+    </select>
+    
+    <!-- 统计柜台的销售金额和数量（指定产品或者产品分类）  -->
+    <select id="getSaleCountByCouPrt" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+       	<![CDATA[
+            SELECT
+				SUM(CASE 
+					WHEN A.SaleType = 'SR' THEN CASE WHEN B.SaleType = 'N' THEN -B.PricePay*B.Quantity ELSE -B.PricePay END
+					ELSE CASE WHEN B.SaleType = 'N' THEN B.PricePay*B.Quantity ELSE B.PricePay END
+				END) AS SpecialAmount,
+				SUM(CASE 
+					WHEN A.SaleType = 'SR' THEN CASE WHEN B.SaleType = 'N' THEN -B.Quantity ELSE 0 END
+					ELSE CASE WHEN B.SaleType = 'N' THEN B.Quantity ELSE 0 END
+				END) AS SpecialCount
+			FROM
+				Sale.BIN_SaleRecord A WITH(NOLOCK)
+				JOIN Sale.BIN_SaleRecordDetail B WITH(NOLOCK) ON A.BIN_SaleRecordID = B.BIN_SaleRecordID
+				JOIN Basis.BIN_ProductVendor C WITH(NOLOCK) ON B.BIN_ProductVendorID = C.BIN_ProductVendorID AND B.SaleType = 'N'
+		]]>	
+			<isNotEmpty property="prtCodelist">
+				JOIN Basis.BIN_Product D WITH(NOLOCK) ON C.BIN_ProductID = D.BIN_ProductID
+			</isNotEmpty>
+			<isNotEmpty property="categoryCodeA">
+				JOIN Basis.BIN_PrtCategory X1 WITH(NOLOCK) ON C.BIN_ProductID = X1.BIN_ProductID
+				JOIN Basis.BIN_PrtCatPropValue Y1 WITH(NOLOCK) ON X1.BIN_PrtCatPropValueID = Y1.BIN_PrtCatPropValueID
+				JOIN Basis.BIN_PrtCatProperty Z1 WITH(NOLOCK) ON Y1.BIN_PrtCatPropertyID = Z1.BIN_PrtCatPropertyID AND Z1.TeminalFlag='1'
+			</isNotEmpty>
+			<isNotEmpty property="categoryCodeB">
+				JOIN Basis.BIN_PrtCategory X2 WITH(NOLOCK) ON C.BIN_ProductID = X2.BIN_ProductID
+				JOIN Basis.BIN_PrtCatPropValue Y2 WITH(NOLOCK) ON X2.BIN_PrtCatPropValueID = Y2.BIN_PrtCatPropValueID
+				JOIN Basis.BIN_PrtCatProperty Z2 WITH(NOLOCK) ON Y2.BIN_PrtCatPropertyID = Z2.BIN_PrtCatPropertyID AND Z2.TeminalFlag='3'
+			</isNotEmpty>
+			<isNotEmpty property="categoryCodeC">
+				JOIN Basis.BIN_PrtCategory X3 WITH(NOLOCK) ON C.BIN_ProductID = X3.BIN_ProductID
+				JOIN Basis.BIN_PrtCatPropValue Y3 WITH(NOLOCK) ON X3.BIN_PrtCatPropValueID = Y3.BIN_PrtCatPropValueID
+				JOIN Basis.BIN_PrtCatProperty Z3 WITH(NOLOCK) ON Y3.BIN_PrtCatPropertyID = Z3.BIN_PrtCatPropertyID AND Z3.TeminalFlag='2'
+			</isNotEmpty>
+		<![CDATA[	
+			WHERE
+				A.SaleDate >= #StartDate# AND
+				A.SaleDate <= #EndDate# AND
+				A.BIN_OrganizationID = #organizationId# AND
+				A.ValidFlag = '1'
+		]]>
+			<isNotEmpty property="prtCodelist" prepend="AND">
+			<iterate property="prtCodelist" open="(" close=")" conjunction="OR">
+				C.BarCode = #prtCodelist[].barCode# AND D.UnitCode = #prtCodelist[].unitCode#
+			</iterate>
+			</isNotEmpty>
+			<isNotEmpty property="categoryCodeA" prepend="AND">
+			Y1.PropValue IN
+			<iterate property="categoryCodeA" open="(" close=")" conjunction=",">
+				#categoryCodeA[]#
+			</iterate>
+			</isNotEmpty>
+			<isNotEmpty property="categoryCodeB" prepend="AND">
+			Y2.PropValue IN
+			<iterate property="categoryCodeB" open="(" close=")" conjunction=",">
+				#categoryCodeB[]#
+			</iterate>
+			</isNotEmpty>
+			<isNotEmpty property="categoryCodeC" prepend="AND">
+			Y3.PropValue IN
+			<iterate property="categoryCodeC" open="(" close=")" conjunction=",">
+				#categoryCodeC[]#
+			</iterate>
+			</isNotEmpty>
+    </select>
+    
+    <!-- 统计柜台的发展会员数  -->
+    <select id="getMemCountByCou" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+    	<![CDATA[
+			SELECT 
+				COUNT(1) AS MemberCount
+			FROM
+				Members.BIN_MemberInfo A WITH(NOLOCK) JOIN Members.BIN_MemCardInfo B WITH(NOLOCK) 
+				ON A.BIN_MemberInfoID = B.BIN_MemberInfoID AND B.CardValidFlag = '1'
+			WHERE
+				A.JoinDate >= #StartDate# AND
+				A.JoinDate <= #EndDate# AND
+				A.BIN_OrganizationID = #organizationId# AND
+				A.MemInfoRegFlg = '0'
+		]]>
+    </select>
+      
+    <!-- 根据柜台号取得部门ID  -->
+    <select id="getOrganizationId" parameterClass="java.util.HashMap" resultClass="java.lang.String">
+       	<![CDATA[
+            SELECT
+            	A.BIN_OrganizationID AS organizationId
+			FROM
+				Basis.BIN_Organization A WITH(NOLOCK)
+			WHERE
+				A.BIN_OrganizationInfoID = #organizationInfoId# AND
+				A.BIN_BrandInfoID = #brandInfoId# AND
+				A.DepartCode = #CounterCode# AND
+				A.ValidFlag='1'
+		]]>
+    </select>
+
+    <!-- ***************************zcf -->
+      
+    <!-- 根据柜台号取得品牌ID -->
+    <select id="getBrandInfoId" parameterClass="java.util.HashMap" resultClass="java.lang.String">
+       	<![CDATA[
+            SELECT
+            	A.BIN_BrandInfoID AS brandInfoId
+			FROM
+				Basis.BIN_BrandInfo A WITH(NOLOCK)
+			WHERE
+				A.BrandCode = #BrandCode# 							
+		]]>		
+	</select>
+	
+	<!-- 根据柜台号查询柜台销售数据list -->
+	  <resultMap id="SaleReport.proMap" class="java.util.HashMap">
+		  <result property="BillCode" column="BillCode"/>
+		  <result property="CounterCode" column="CounterCode"/>
+		  <result property="SaleType" column="SaleType"/>
+		  <result property="Amount" column="Amount"/>
+		  <result property="Quantity" column="Quantity"/>		
+		  <result property="DetailList" column="BIN_SaleRecordID" select="SaleReport.getSaleDetail" javaType="java.util.List"/>
+	  </resultMap>
+	
+	<select id="getSaleRecordDetailList" parameterClass="java.util.HashMap" resultMap="SaleReport.proMap">
+	   <![CDATA[
+	       SELECT
+	           A.BIN_SaleRecordID,
+	           #CounterCode# AS CounterCode,
+	           A.BillCode,
+	           A.SaleType,
+	           Convert(decimal(18,2), A.Amount) AS Amount,
+	           Convert(decimal(18,2), A.Quantity) AS Quantity  
+	       FROM
+	          Sale.BIN_SaleRecord A WITH(NOLOCK)
+	       WHERE
+	           A.BIN_OrganizationInfoID = #organizationInfoId# AND
+			   A.BIN_BrandInfoID = #brandInfoId# AND
+		       A.SaleDate >= #StartDate# AND
+			   A.SaleDate <= #EndDate# AND
+			   A.BIN_OrganizationID = #organizationId# AND
+			   A.ValidFlag='1'
+	   ]]>
+	</select>
+	
+	<!-- 根据销售主单ID查询明细 -->
+	<select id="getSaleDetail" parameterClass="java.lang.Integer" resultClass="java.util.HashMap">
+		<![CDATA[
+		  SELECT
+			   D.BIN_ProductVendorID AS ProductVendorID,
+			   F.NameTotal AS ProductName,
+	           D.UnitCode,
+	           D.BarCode,
+	           Convert(decimal(18,2), D.PricePay) AS PricePay,
+	           D.SaleType,
+	           Convert(decimal(18,2), D.Quantity) AS Quantity
+		   FROM
+			   Sale.BIN_SaleRecordDetail D WITH(NOLOCK),
+			   Basis.BIN_ProductVendor E WITH(NOLOCK),
+			   Basis.BIN_Product F WITH(NOLOCK)  
+		   WHERE 
+		       D.BIN_ProductVendorID = E.BIN_ProductVendorID AND
+		       E.BIN_ProductID = F.BIN_ProductID AND
+		       D.BIN_SaleRecordID = #saleRecordID#		    
+		]]>
+    </select>
+	
+	<!-- 根据柜台号查询柜台销售记录 -->
+	<select id="getSaleRecordList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+	   <![CDATA[
+	       SELECT           
+	           #CounterCode# AS CounterCode,
+	           A.BillCode,
+	           A.SaleType,
+	           Convert(decimal(18,2), A.Amount) AS Amount,
+	           Convert(decimal(18,2), A.Quantity) AS Quantity
+	       FROM
+	           Sale.BIN_SaleRecord A WITH(NOLOCK)
+	       WHERE
+	           A.BIN_OrganizationInfoID = #organizationInfoId# AND
+		       A.BIN_BrandInfoID = #brandInfoId# AND
+			   A.SaleDate >= #StartDate# AND
+			   A.SaleDate <= #EndDate# AND
+			   A.BIN_OrganizationID = #organizationId# AND
+			   A.ValidFlag='1'
+	   ]]>
+	</select>
+		
+</sqlMap>

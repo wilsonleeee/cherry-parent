@@ -1,0 +1,210 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sqlMap PUBLIC "-//iBATIS.com//DTD SQL Map 2.0//EN" "http://ibatis.apache.org/dtd/sql-map-2.dtd">
+<sqlMap namespace="BINOTCOU02">
+	<!-- 查询电商接口信息  -->
+    <select id="getESInterfaceInfo" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+        <![CDATA[
+	        SELECT
+                A.BIN_ESInterfaceInfoID,
+	            A.TradeCode,
+	            A.URL,
+	            A.MethodName,
+	            A.AccountName,
+	            A.AccountPWD,
+	            CONVERT(varchar(30),A.LastAccessTime,120) AS LastAccessTime,
+	            CONVERT(varchar(30),A.GetDataEndTime,120) AS GetDataEndTime,
+	            A.TimeStep
+	        FROM 
+	            Tools.BIN_ESInterfaceInfo A
+	        WHERE
+	            A.BIN_OrganizationInfoID = #BIN_OrganizationInfoID#
+	            AND A.BIN_BrandInfoID = #BIN_BrandInfoID#
+	            AND A.ESCode = #ESCode#
+	            AND A.ValidFlag = '1'
+        ]]>
+        <isNotEmpty property="TradeCode">
+            <![CDATA[
+                AND A.TradeCode = #TradeCode#
+            ]]>
+        </isNotEmpty>
+        <isNotEmpty property="AccountName">
+            <![CDATA[
+                AND A.AccountName = #AccountName#
+            ]]>
+        </isNotEmpty>
+    </select>
+    
+    <!-- 更新电商接口信息表  -->
+    <update id="updateESInterfaceInfoLastTime" parameterClass="java.util.HashMap" >
+	    <![CDATA[
+	        UPDATE
+	            Tools.BIN_ESInterfaceInfo
+	        SET
+	    ]]>
+	    <isNotEmpty property="LastAccessTime">
+		    <![CDATA[
+	           LastAccessTime = #LastAccessTime#,
+		    ]]>
+	    </isNotEmpty>
+        <isNotEmpty property="GetDataEndTime">
+            <![CDATA[
+               GetDataEndTime = #GetDataEndTime#,
+            ]]>
+        </isNotEmpty>
+	    <include refid="BINBECMINC99.updateSql" />      
+	    <![CDATA[               
+            WHERE                   
+                BIN_OrganizationInfoID = #BIN_OrganizationInfoID#
+                AND BIN_BrandInfoID = #BIN_BrandInfoID#
+                AND BIN_ESInterfaceInfoID = #BIN_ESInterfaceInfoID#
+	    ]]>
+    </update>
+
+	<!-- 插入或者更新优惠券信息 -->
+	<select id="mergeCouponInfo" parameterClass="java.util.HashMap" resultClass="java.lang.Integer">
+		<![CDATA[
+			MERGE  Basis.BIN_BaCoupon AS TGT
+			USING (select #BIN_OrganizationInfoID# as BIN_OrganizationInfoID,#BIN_BrandInfoID# as BIN_BrandInfoID,#CouponCode# as CouponCode
+			) AS SRC
+		    ON (
+		    	TGT.BIN_OrganizationInfoID=SRC.BIN_OrganizationInfoID AND
+		    	TGT.BIN_BrandInfoID=SRC.BIN_BrandInfoID AND
+		        TGT.CouponCode = SRC.CouponCode
+		        )
+		    WHEN MATCHED THEN
+		    	UPDATE SET
+		    		]]>
+		    <isNotEmpty property="StartDate">
+					TGT.StartDate=#StartDate#,
+			</isNotEmpty>
+			<isNotEmpty property="EndDate">
+					TGT.EndDate=#EndDate#,
+			</isNotEmpty>
+			<isNotEmpty property="BatchName">
+					TGT.BatchName=#BatchName#,
+			</isNotEmpty>
+			<isNotEmpty property="ParValue">
+					TGT.ParValue=#ParValue#,
+			</isNotEmpty>
+			<isNotEmpty property="CouponType">
+					TGT.CouponType=#CouponType#,
+			</isNotEmpty>
+			<isNotEmpty property="UseTimes">
+					TGT.UseTimes=#UseTimes#,
+			</isNotEmpty>
+			<isNotEmpty property="AmountCondition">
+					TGT.AmountCondition=#AmountCondition#,
+			</isNotEmpty>
+			<isNotEmpty property="ResellerCode">
+					TGT.ResellerCode=#ResellerCode#,
+			</isNotEmpty>
+			<isNotEmpty property="CreateTime">
+					TGT.BatchDate=CONVERT(date,#CreateTime#,120)
+			</isNotEmpty>
+		    <![CDATA[
+		    WHEN NOT MATCHED THEN
+				INSERT(
+					BIN_OrganizationInfoID,
+			      	BIN_BrandInfoID,
+			      	BatchCode,
+			      	CouponCode,
+			      	UseFlag,
+			      	SynchFlag,
+			]]>
+			<isNotEmpty property="BIN_ResellerInfoID">
+					BIN_ResellerInfoID,
+			</isNotEmpty>
+			<isNotEmpty property="baInfoId">
+					BIN_BaInfoID,
+			</isNotEmpty>
+			<isNotEmpty property="StartDate">
+					StartDate,
+			</isNotEmpty>
+			<isNotEmpty property="EndDate">
+					EndDate,
+			</isNotEmpty>
+			<isNotEmpty property="BatchName">
+					BatchName,
+			</isNotEmpty>
+			<isNotEmpty property="ParValue">
+					ParValue,
+			</isNotEmpty>
+			<isNotEmpty property="CouponType">
+					CouponType,
+			</isNotEmpty>
+			<isNotEmpty property="UseTimes">
+					UseTimes,
+			</isNotEmpty>
+			<isNotEmpty property="AmountCondition">
+					AmountCondition,
+			</isNotEmpty>
+			<isNotEmpty property="ResellerCode">
+					ResellerCode,
+			</isNotEmpty>
+			<isNotEmpty property="CreateTime">
+					BatchDate,
+			</isNotEmpty>
+			<![CDATA[
+					CreateTime,
+					UpdateTime,
+					CreatedBy,
+					CreatePGM,
+					UpdatedBy,
+					UpdatePGM,
+					ValidFlag,
+					ModifyCount
+				) VALUES (
+					#BIN_OrganizationInfoID#,
+					#BIN_BrandInfoID#,
+					#BatchCode#,
+					#CouponCode#,
+					'0',
+					'2',
+			]]>
+			<isNotEmpty property="BIN_ResellerInfoID">
+					#BIN_ResellerInfoID#,
+			</isNotEmpty>
+			<isNotEmpty property="baInfoId">
+					#baInfoId#,
+			</isNotEmpty>
+			<isNotEmpty property="StartDate">
+					#StartDate#,
+			</isNotEmpty>
+			<isNotEmpty property="EndDate">
+					#EndDate#,
+			</isNotEmpty>
+			<isNotEmpty property="BatchName">
+					#BatchName#,
+			</isNotEmpty>
+			<isNotEmpty property="ParValue">
+					#ParValue#,
+			</isNotEmpty>
+			<isNotEmpty property="CouponType">
+					#CouponType#,
+			</isNotEmpty>
+			<isNotEmpty property="UseTimes">
+					#UseTimes#,
+			</isNotEmpty>
+			<isNotEmpty property="AmountCondition">
+					#AmountCondition#,
+			</isNotEmpty>
+			<isNotEmpty property="ResellerCode">
+					#ResellerCode#,
+			</isNotEmpty>
+			<isNotEmpty property="CreateTime">
+					convert(date,#CreateTime#,120),
+			</isNotEmpty>
+			<![CDATA[
+				GETDATE(),
+				GETDATE(),
+				NULL,
+				'BINOTCOU02',
+				NULL,
+				'BINOTCOU02',
+				'1',
+				'0'
+				)
+			OUTPUT inserted.BIN_BaCouponID;
+			]]>
+	</select>
+</sqlMap>

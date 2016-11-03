@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sqlMap PUBLIC "-//iBATIS.com//DTD SQL Map 2.0//EN" "http://ibatis.apache.org/dtd/sql-map-2.dtd">
+<sqlMap namespace="BINBEMBARC01">
+	
+	<!-- 把会员接口表中数据读取状态为未处理的数据全部更新成即将处理状态 -->
+	<update id="updateGetStatus" parameterClass="java.util.HashMap">
+		<![CDATA[
+			UPDATE
+				dbo.I_PVWEB_members
+			SET
+				GetStatus = '1'
+			WHERE
+				GetStatus = '0'
+		]]>
+    </update>	
+	
+	<!-- 查询会员接口表中数据读取状态为即将处理的会员数据 -->
+	<select id ="getMemberInfoList" parameterClass="java.util.HashMap" resultClass ="java.util.HashMap">
+	<![CDATA[
+		SELECT TOP $COUNT$
+			Memcode AS memcode,
+			Name AS name,
+			Telephone AS telephone,
+			Mobilephone AS mobilephone,
+			Mail AS mail,
+			Province AS province,
+			City AS city,
+			Address AS address,
+			Zip AS zip,
+			Birthday AS birthday,
+			Bacode AS bacode,
+			Countercode AS countercode,
+			CONVERT(varchar,Granttime,121) AS granttime,
+			Sex AS sex,
+			Status AS status,
+			oldMemCode AS oldMemCode,
+			CONVERT(varchar,changCardTime,121) AS changCardTime,
+			CONVERT(varchar,modified,120) AS modified,
+			password AS password
+		FROM
+			dbo.I_PVWEB_members
+		WHERE
+			GetStatus = '1'
+		ORDER BY
+			modified
+	]]> 
+	</select>
+	
+	<!-- 更新处理过的会员数据的状态 -->
+	<update id="updateGetStatusEnd" parameterClass="java.util.HashMap">
+		<![CDATA[
+			UPDATE
+				dbo.I_PVWEB_members
+			SET
+                GetStatus = #getStatus#,
+                Gettime = GETDATE()
+			WHERE 
+			    Memcode = #memcode#
+		]]>
+    </update>
+	
+</sqlMap>

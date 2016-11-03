@@ -1,0 +1,273 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sqlMap PUBLIC "-//iBATIS.com//DTD SQL Map 2.0//EN" "http://ibatis.apache.org/dtd/sql-map-2.dtd">
+<sqlMap namespace="BINCPMEACT02">
+	<sql id="getAllPrtList">
+	<![CDATA[
+	SELECT
+		A.NameTotal AS prtNameCN,
+		A.NameForeign AS prtNameEN,
+		B.BIN_ProductVendorID AS prmPrtVendorId,
+		'N' AS prtType
+	FROM
+		Basis.BIN_Product A
+		JOIN Basis.BIN_ProductVendor B
+		ON(A.BIN_ProductID = B.BIN_ProductID)
+	WHERE
+		A.BIN_BrandInfoID = #brandInfoId#
+	UNION
+	SELECT
+		A.NameTotal AS prtNameCN,
+		A.NameForeign AS prtNameEN,
+		B.BIN_PromotionProductVendorID AS prmPrtVendorId,
+		'P' AS prtType
+	FROM
+		Basis.BIN_PromotionProduct A
+		JOIN Basis.BIN_PromotionProductVendor B
+		ON(A.BIN_PromotionProductID = B.BIN_PromotionProductID)
+	WHERE
+		A.BIN_BrandInfoID = #brandInfoId#
+	]]>
+	</sql>
+	<!-- 取得需要下发的预约主单据_SQL  -->
+	<sql id="getOrderMainList_SQL">
+	<include refid="BINBECMINC99.pageheader" />
+	<![CDATA[
+		SELECT
+			A.BIN_CampaignOrderID AS orderId,
+			A.TradeNoIF AS orderNo,
+			A.SubType AS subCampType,
+			A.CampaignCode AS subjectCode,
+			SUBSTRING(A.Mobile,1,15) AS mobilePhone,
+			SUBSTRING(A.Telephone,1,20) AS telephone,
+			A.CouponCode AS couponCode,
+			A.DeliveryMothod AS deliveryMothod,
+			A.CounterGot AS counterCode,
+			A.PointRequired AS sumPoints,
+			A.CampaignOrderTime AS orderTime,
+			A.GetFromTime AS getBeginTime,
+			A.GetToTime AS getEndTime,
+			A.Quantity AS sumQuantity,
+			A.Amout AS sumAmount,
+			A.Remark AS remark,
+			A.InformType AS informType,
+			A.PriceControl AS priceControl,
+			A.SaleBatchNo AS saleBatchNo,
+			A.State AS status,
+			A.IsStock AS isStock,
+			A.NeedBuyFlag AS needBuyFlag,
+			A.SubCampaignValid AS subCampaignValid,
+			A.MemCode AS memCode,
+			A.SendFlag AS sendFlag,
+			A.MessageId AS weiXin,
+			A.ModifyCount AS modifyCount,
+			A.DeliveryState AS deliveryState,
+			ISNULL(A.DeliveryMothod,'2') AS deliveryType,
+			A.DeliveryAddress AS deliveryAddress,
+			A.ReceiverName AS receiverName,
+      		A.ReceiverMobile AS receiverMobile,
+      		A.DeliveryProvince AS deliveryProvince,
+      		A.DeliveryCity AS deliveryCity,
+      		A.DeliveryCounty AS deliveryCounty,
+			A.RelationNo AS relationNo,
+			CASE A.DataChannel WHEN '0' THEN 'BPOS' WHEN '1' THEN 'BPOS' WHEN '2' THEN 'BCHERRY' WHEN '3' THEN 'WEIXIN' ELSE 'OTHER' END AS supplierCode
+		FROM
+			Campaign.BIN_CampaignOrder A
+		WHERE
+			A.BIN_BrandInfoID = #brandInfoId#
+			AND (A.SendFlag IN('0','2') OR A.SendFlag IS NULL)
+			AND A.ValidFlag = '1'
+		]]>
+		<isNotEmpty property="campCodeArr" prepend="AND">
+			<![CDATA[A.CampaignCode IN]]>
+				<iterate conjunction="," open="(" close=")" property="campCodeArr">  
+	       <![CDATA[#campCodeArr[]#]]>
+	    </iterate>
+	</isNotEmpty>
+		<include refid="BINBECMINC99.pagefooter" />
+	</sql>
+	<!-- 取得需要下发的预约主单据  -->
+    <select id="getOrderList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+       <![CDATA[
+       		SELECT
+       			T.*,
+       			B.MainCode AS mainCode,   
+				B.BarCode AS barCode,       
+				B.UnitCode AS unitCode,    
+		   		B.Amout AS price,
+		    	B.PointRequired AS points,
+				B.Quantity AS quantity,
+				PRT.prtNameCN,
+				PRT.prtNameEN
+       		FROM
+       		(	
+       ]]>
+       <include refid="BINCPMEACT02.getOrderMainList_SQL" />
+       <![CDATA[
+       		) T
+       		JOIN Campaign.BIN_CampaignOrderDetail B
+       		ON(T.orderId = B.BIN_CampaignOrderID
+       			AND B.ValidFlag = '1')
+       		JOIN(
+       ]]>
+       <include refid="BINCPMEACT02.getAllPrtList" />
+       <![CDATA[
+			) PRT 
+			ON(B.GiftType = PRT.prtType AND B.BIN_ProductVendorID = PRT.prmPrtVendorId)
+		]]>
+    </select>
+    <!-- 更新预约单据下发区分 -->
+	<update id="updCampOrder" parameterClass="java.util.HashMap">
+	<![CDATA[
+	UPDATE
+		Campaign.BIN_CampaignOrder
+	SET
+		SendFlag = '1'
+	WHERE
+		BIN_CampaignOrderID = #orderId#
+	]]>
+	</update>
+	<!-- 删除活动预约信息(接口主表)数据 -->
+	<delete id="delCouponMain" parameterClass="java.util.HashMap">
+		<![CDATA[  
+			DELETE FROM dbo.WITPOSA_member_coupon_main
+			WHERE
+				order_id = #orderNo#
+				AND supplier_code=#supplierCode#
+				AND brand_abbr = #brandCode#
+		]]>
+	</delete>
+	<!-- 删除活动预约信息(接口明细表)数据 -->
+	<delete id="delCouponDetail" parameterClass="java.util.HashMap">
+		<![CDATA[  
+			DELETE FROM dbo.WITPOSA_member_coupon_detail 
+			WHERE
+				order_id = #orderNo#
+				AND supplier_code=#supplierCode#
+				AND brand_abbr = #brandCode#
+		]]>
+	</delete>
+	<!-- 新增活动预约信息(接口主表)数据 -->
+	<insert id="addCouponMain" parameterClass="java.util.HashMap">
+	<![CDATA[
+	INSERT INTO dbo.WITPOSA_member_coupon_main(
+      	order_id
+      	,supplier_code
+      	,brand_abbr
+      	,subject_code
+      	,member_code
+      	,member_mobile
+      	,member_telephone
+      	,counter_code
+      	,member_level
+      	,points_value
+      	,deduct_point_mode
+      	,IsStock
+      	,NeedBuyFlag
+      	,status
+      	,order_time
+      	,get_begin_time
+      	,get_end_time
+      	,coupon_code
+      	,quantity
+      	,amount
+      	,synch_flag
+      	,remark
+      	,import_result
+      	,created
+      	,modified
+      	,member_wechat
+      	,modified_times
+      	,price_control
+      	,saleBatchNo
+      	,deliveryState
+      	,deliveryType
+      	,deliveryAddress
+      	,relationNo
+      	,receiverName
+	    ,receiverMobile
+	    ,deliveryProvince
+	    ,deliveryCity
+	    ,deliveryCounty
+	)VALUES(
+		#orderNo#
+      	,#supplierCode#
+      	,#brandCode#
+     	,#subjectCode#
+	    ,#memCode#
+	    ,#mobilePhone#
+	    ,#telephone#
+	    ,#counterCode#
+	    ,#memLevel#
+	    ,#sumPoints#
+	    ,0
+	    ,#isStock#
+	    ,#needBuyFlag#
+	    ,#status#
+	    ,#orderTime#
+	    ,#getBeginTime#
+	    ,#getEndTime#
+	    ,#couponCode#
+	    ,#sumQuantity#
+	    ,#sumAmount#
+	    ,0
+	    ,#remark#
+	    ,'WAIT'
+	    ,#creatTime#
+	    ,#modifyTime#
+	    ,#weiXin#
+	    ,#modifyCount#
+	    ,#priceControl#
+	    ,#saleBatchNo#
+	    ,#deliveryState#
+	    ,#deliveryType#
+	    ,#deliveryAddress#
+	    ,#relationNo#
+	    ,#receiverName#
+	    ,#receiverMobile#
+	    ,#deliveryProvince#
+	    ,#deliveryCity#
+	    ,#deliveryCounty#
+	)
+	]]>
+	</insert>
+	<!-- 新增活动预约信息(接口明细表)数据 -->
+	<insert id="addCouponDetail" parameterClass="java.util.HashMap">
+	<![CDATA[
+	INSERT INTO dbo.WITPOSA_member_coupon_detail(
+		order_id
+		,brand_abbr
+	    ,supplier_code
+	    ,main_code
+	    ,type
+	    ,gift_barcode
+	    ,gift_unitcode
+	    ,gift_name_cn
+	    ,gift_name_en
+	    ,price
+	    ,real_price
+	    ,points_value
+	    ,quantity
+	    ,real_quantity
+	    ,created
+	    ,modified
+	 )VALUES(
+		#orderNo#
+		,#brandCode#
+	    ,#supplierCode#
+	    ,#mainCode#
+	    ,#subCampType#
+	    ,#barCode#
+	    ,#unitCode#
+	    ,#prtNameCN#
+	    ,#prtNameEN#
+	    ,#price#
+	    ,#price#
+	    ,#points#
+	    ,#quantity#
+	    ,#realQuantity#
+	    ,#creatTime#
+	    ,#modifyTime#
+	 )
+	]]>
+	</insert>
+</sqlMap>

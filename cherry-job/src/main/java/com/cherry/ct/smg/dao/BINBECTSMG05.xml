@@ -1,0 +1,810 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sqlMap PUBLIC "-//iBATIS.com//DTD SQL Map 2.0//EN" "http://ibatis.apache.org/dtd/sql-map-2.dtd">
+<sqlMap namespace="BINBECTSMG05">
+
+	<!--查询沟通触发事件设置信息 -->
+	<select id="getEventSetList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+		<![CDATA[
+			SELECT BIN_EventSetId as eventSetId
+				  ,EventTypeId As eventId
+				  ,SearchCode as searchCode
+				  ,IsTemplate As isTemplate
+				  ,TemplateCode As templateCode
+				  ,MessageInfo As messageInfo
+				  ,CommType As commType
+				  ,GroupNo as relationActivity 
+				  ,SmsChannel As smsChannel
+			FROM 
+				  Communication.BIN_CommEventSet 
+			WHERE 
+				  ValidFlag = 1 AND 
+				  BIN_BrandInfoID = #brandInfoId# AND 
+				  BIN_OrganizationInfoID = #organizationInfoId# AND 
+				  EventTypeId = #eventType# 
+		]]>
+    </select>
+    
+    <!-- 通过批次号查询活动参与客户 -->
+	<sql id="getActivityCustomerQuery">
+		<![CDATA[
+			SELECT distinct
+			       tt.BIN_MemberInfoID As memId 
+				  ,tt.MemCode As memCode 
+				  ,tm.Name As memName 
+				  ,tm.MemberPassword as memberPassword 
+				  ,tm.Gender As gender 
+				  ,tt.Mobile As mobilePhone 
+				  ,tm.Email As email 
+				  ,tt.Telephone As telephone 
+				  ,tp.TotalPoint As totalPoint 
+				  ,tp.ChangablePoint As changablePoint 
+				  ,tm.CounterCodeBelong As counterCode 
+				  ,tb.CounterNameIF As counterName 
+				  ,tt.OrderCounterCode As reCounter 
+				  ,(Case tt.OrderCounterCode when 'ALL' then '任意柜台' 
+	  				else tr.CounterNameIF end) As reCounterName 
+				  ,tt.CounterGot As getCounter 
+				  ,(Case tt.CounterGot when 'ALL' then '任意柜台' 
+				  	else tc.CounterNameIF end) As getCounterName 
+				  ,tm.IsReceiveMsg As receiveMsgFlg 
+				  ,1 As customerType 
+				  ,tt.CouponCode As couponCode 
+				  ,tt.TradeNoIF As orderId 
+				  ,tt.CampaignOrderTime As orderTime 
+				  ,tt.PointRequired As pointsUsed 
+				  ,th.CampaignCode As campaignCode 
+				  ,tg.CampaignName AS campName 
+				  ,tg.CampaignOrderFromDate AS orderFromDate 
+				  ,tg.CampaignOrderToDate AS orderToDate 
+				  ,tg.ObtainFromDate AS campFromDate 
+				  ,tg.ObtainToDate AS campToDate 
+			FROM 
+				  Campaign.BIN_CampaignHistory As th with(nolock) 
+				  Inner Join Campaign.BIN_CampaignOrder As tt with(nolock) on th.TradeNoIF = tt.TradeNoIF 
+				  Left Join Members.BIN_MemberInfo As tm with(nolock) on tt.BIN_MemberInfoID = tm.BIN_MemberInfoID 
+				  Left Join Members.BIN_MemberPoint As tp with(nolock) on tt.BIN_MemberInfoID = tp.BIN_MemberInfoID 
+				  Left Join Campaign.BIN_Campaign As tg with(nolock) on tt.CampaignCode = tg.CampaignCode AND tg.CampaignTypeFlag=1 
+				  Left Join Basis.BIN_CounterInfo As tb with(nolock) on tm.CounterCodeBelong = tb.CounterCode 
+				  Left Join Basis.BIN_CounterInfo As tc with(nolock) on tt.CounterGot = tc.CounterCode 
+				  Left Join Basis.BIN_CounterInfo As tr with(nolock) on tt.OrderCounterCode = tr.CounterCode 
+			WHERE 
+				  th.BatchNo = #eventId#  AND
+				  tt.ValidFlag = 1 AND 
+				  th.State = #orderState# AND 
+				  tt.BIN_BrandInfoID = #brandInfoId# AND 
+				  tt.BIN_OrganizationInfoID = #organizationInfoId#
+		]]>
+		<dynamic>
+			<!-- 参数中存在测试会员标示信息时  -->
+			<isNotEmpty prepend="AND" property="testType" >
+				tm.TestType = #testType# 
+			</isNotEmpty>
+		</dynamic>
+    </sql>
+    
+    <!-- 通过批次号查询活动参与客户总数  -->
+    <select id="getActivityCustomerCount" parameterClass="java.util.HashMap" resultClass="java.lang.Integer">
+    	<![CDATA[
+			SELECT COUNT(SORT_T1.memId) AS count FROM (
+		]]>	
+		<include refid="BINBECTSMG05.getActivityCustomerQuery" />	
+		<![CDATA[	
+			)SORT_T1
+		]]>
+    </select>
+	
+	<!-- 通过批次号查询活动参与客户列表 -->
+    <select id="getActivityCustomerList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+       	<include refid="BINBECMINC99.pageheader" />
+		<include refid="BINBECTSMG05.getActivityCustomerQuery" />
+		<include refid="BINBECMINC99.pagefooter" />
+    </select>
+    
+    <!-- 增加短信沟通明细记录  -->
+	<insert id="addDelayEventInfo" parameterClass="java.util.HashMap">
+		<![CDATA[
+		INSERT INTO Communication.BIN_DelayEventInfo(
+			BIN_OrganizationInfoID,
+			BIN_BrandInfoID,
+			OrganizationCode,
+			BrandCode,
+			EventTypeId,
+			EventId,
+			EventDate,
+			CouponCode,
+			CouponExpireTime,
+			MessageInfo,
+			CampaignCode,
+			DataSourse,
+			RunStatus,
+			ValidFlag,
+			CreateTime,
+			CreatedBy,
+			CreatePGM,
+			UpdateTime,
+			UpdatedBy,
+			UpdatePGM,
+			ModifyCount 
+		)VALUES(
+			#organizationInfoId#,
+			#brandInfoId#,
+			#orgCode#,
+			#brandCode#,
+			#eventType#,
+			#eventId#,
+			#eventDate#,
+			#couponCode#,
+			#couponExpireTime#,
+			#messageContents#,
+			#campaignCode#,
+			#dataSourse#,
+			#runStatus#,
+			1,
+			GETDATE(),
+			#createBy#,
+			#createPGM#,
+			GETDATE(),
+			#updateBy#,
+			#updatePGM#,
+			0 
+		)
+		]]>
+	</insert>
+	
+	<!--查询事件延时设置信息 -->
+	<select id="getDelaySetList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+		<![CDATA[
+			SELECT EventTypeId as eventType 
+			      ,Frequency as frequency 
+			      ,DateBegin as dateBegin 
+			      ,DateEnd as dateEnd 
+			      ,TimeBegin as timeBegin 
+			      ,TimeEnd as timeEnd 
+			FROM 
+				  Communication.BIN_DelaySetInfo 
+			WHERE 
+				  ValidFlag = 1 AND 
+				  BIN_BrandInfoID = #brandInfoId# AND 
+				  BIN_OrganizationInfoID = #organizationInfoId# AND 
+				  EventTypeId = #eventType# 
+		]]>
+    </select>
+    
+    <!--查询延时事件列表 -->
+	<select id="getEventTypeList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+		<![CDATA[
+			SELECT DISTINCT 
+				 BIN_OrganizationInfoID as organizationInfoId
+				,BIN_BrandInfoID as brandInfoId
+				,EventTypeId as eventType 
+			FROM 
+				 Communication.BIN_CommEventSet 
+			WHERE 
+				 ValidFlag = 1 
+		]]>
+    </select>
+    
+    <!--查询延时事件信息 -->
+	<select id="getDelayEventInfoList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+		<![CDATA[
+			SELECT BIN_EventInfoId as eventInfoId 
+				  ,BIN_OrganizationInfoID as organizationInfoId 
+				  ,BIN_BrandInfoID as brandInfoId 
+				  ,OrganizationCode organizationCode 
+				  ,BrandCode as brandCode 
+				  ,EventTypeId as eventType 
+			      ,EventId as eventId 
+			      ,EventDate as eventDate 
+			      ,CouponCode as couponCode 
+			      ,CouponExpireTime as couponExpireTime 
+			      ,MessageInfo as messageContents 
+			      ,CampaignCode as campaignCode 
+			      ,DataSourse as dataSourse 
+			FROM 
+				  Communication.BIN_DelayEventInfo 
+			WHERE 
+				  ValidFlag = 1 AND 
+				  RunStatus = 1 AND 
+				  BIN_BrandInfoID = #brandInfoId# AND 
+				  BIN_OrganizationInfoID = #organizationInfoId# AND 
+				  EventTypeId = #eventType# AND 
+				  EventDate >= #eventDate# 
+		]]>
+    </select>
+    
+    <!--更新延时事件运行信息-->
+    <update id="updateDelayEventRunInfo" parameterClass="java.util.HashMap">
+		<![CDATA[
+			UPDATE 
+				Communication.BIN_DelayEventInfo 
+			SET 
+				RunStatus  = #runStatus#,
+				RunBeginTime = #runBeginTime#, 
+				RunEndTime = #runEndTime#, 
+		]]>
+			<include refid="BINBECMINC99.updateSql" />
+		<![CDATA[				
+			WHERE 
+				BIN_EventInfoId = #eventInfoId#
+		]]>
+    </update>
+    
+    <!-- 根据会员号查询入会会员信息 -->
+	<sql id="getJoinMemberInfoQuery">
+		<![CDATA[
+			select tm.BIN_MemberInfoID As memId 
+				  ,tc.MemCode As memCode 
+				  ,tm.Name As memName 
+				  ,tm.MemberPassword as memberPassword 
+				  ,tm.Gender As gender 
+				  ,tm.MobilePhone As mobilePhone 
+				  ,tm.Email As email 
+				  ,tm.Telephone As telephone 
+				  ,tp.TotalPoint As totalPoint 
+				  ,tp.ChangablePoint As changablePoint 
+				  ,tm.CounterCodeBelong As counterCode 
+				  ,tb.CounterNameIF As counterName 
+				  ,tm.IsReceiveMsg As receiveMsgFlg 
+				  ,1 As customerType 
+			FROM 
+				  Members.BIN_MemberInfo As tm with(nolock) 
+				  Left Join Members.BIN_MemCardInfo as tc with(nolock) on tm.BIN_MemberInfoID = tc.BIN_MemberInfoID and tc.ValidFlag = 1 
+				  Left Join Members.BIN_MemberPoint As tp with(nolock) on tm.BIN_MemberInfoID = tp.BIN_MemberInfoID 
+				  Left Join Basis.BIN_CounterInfo As tb with(nolock) on tm.CounterCodeBelong = tb.CounterCode 
+			WHERE 
+				  tm.ValidFlag = 1 AND 
+				  tm.BIN_BrandInfoID = #brandInfoId# AND 
+				  tm.BIN_OrganizationInfoID = #organizationInfoId# AND 
+				  tm.BIN_MemberInfoID = #eventId#
+		]]>
+		<dynamic>
+			<!-- 参数中存在测试会员标示信息时  -->
+			<isNotEmpty prepend="AND" property="testType" >
+				tm.TestType = #testType# 
+			</isNotEmpty>
+		</dynamic>
+    </sql>
+    
+    <!-- 根据会员号查询入会会员总数  -->
+    <select id="getJoinMemberInfoCount" parameterClass="java.util.HashMap" resultClass="java.lang.Integer">
+    	<![CDATA[
+			SELECT COUNT(SORT_T1.memId) AS count FROM (
+		]]>	
+		<include refid="BINBECTSMG05.getJoinMemberInfoQuery" />	
+		<![CDATA[	
+			)SORT_T1
+		]]>
+    </select>
+	
+	<!-- 根据会员号查询入会会员列表 -->
+    <select id="getJoinMemberInfoList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+       	<include refid="BINBECMINC99.pageheader" />
+		<include refid="BINBECTSMG05.getJoinMemberInfoQuery" />
+		<include refid="BINBECMINC99.pagefooter" />
+    </select>
+    
+    <!-- 通过批次号查询转柜会员 -->
+	<sql id="getChangeCounterMemberQuery">
+		<![CDATA[
+			select tr.BIN_MemberInfoID As memId 
+				  ,tr.MemCode As memCode 
+				  ,tm.Name As memName 
+				  ,tm.MemberPassword as memberPassword 
+				  ,tm.Gender As gender 
+				  ,tm.MobilePhone As mobilePhone 
+				  ,tm.Email As email 
+				  ,tm.Telephone As telephone 
+				  ,td.OldValue As oldCounterCode 
+				  ,td.NewValue As counterCode 
+				  ,tb1.CounterNameIF As oldCounterName 
+				  ,tb2.CounterNameIF As counterName 
+				  ,tm.IsReceiveMsg As receiveMsgFlg 
+				  ,1 As customerType 
+			FROM 
+				  Members.BIN_MemInfoRecord  As tr with(nolock) 
+				  Inner Join Members.BIN_MemInfoRecordDetail As td with(nolock) on tr.BIN_MemInfoRecordID = td.BIN_MemInfoRecordID 
+					and tr.BatchNo = #eventId# and tr.ModifyType = 4 and td.ModifyField = 13 
+				  Inner Join Members.BIN_MemberInfo As tm with(nolock) on tr.BIN_MemberInfoID = tm.BIN_MemberInfoID 
+				  Left Join Basis.BIN_CounterInfo As tb1 with(nolock) on td.OldValue = cast(tb1.BIN_OrganizationID as varchar) 
+				  Left Join Basis.BIN_CounterInfo As tb2 with(nolock) on td.NewValue = cast(tb2.BIN_OrganizationID as varchar) 
+			WHERE 
+				  tm.ValidFlag = 1 AND 
+				  tr.BIN_BrandInfoID = #brandInfoId# AND 
+				  tr.BIN_OrganizationInfoID = #organizationInfoId# AND 
+				  tr.BatchNo = #eventId# 
+		]]>
+		<dynamic>
+			<!-- 参数中存在测试会员标示信息时  -->
+			<isNotEmpty prepend="AND" property="testType" >
+				tm.TestType = #testType# 
+			</isNotEmpty>
+		</dynamic>
+    </sql>
+    
+    <!-- 通过批次号查询转柜客户总数  -->
+    <select id="getChangeCounterMemberCount" parameterClass="java.util.HashMap" resultClass="java.lang.Integer">
+    	<![CDATA[
+			SELECT COUNT(SORT_T1.memId) AS count FROM (
+		]]>	
+		<include refid="BINBECTSMG05.getChangeCounterMemberQuery" />	
+		<![CDATA[	
+			)SORT_T1
+		]]>
+    </select>
+	
+	<!-- 通过批次号查询转柜客户列表 -->
+    <select id="getChangeCounterMemberList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+       	<include refid="BINBECMINC99.pageheader" />
+		<include refid="BINBECTSMG05.getChangeCounterMemberQuery" />
+		<include refid="BINBECMINC99.pagefooter" />
+    </select>
+    
+    <!--查询导致积分变化的业务类型 -->
+	<select id="getPointChangeTypeList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+		<![CDATA[
+			SELECT 
+				TradeType as tradeType,
+				Point as point 
+			FROM 
+				Members.BIN_PointChange with(nolock) 
+			WHERE 
+				BIN_BrandInfoID = #brandInfoId# AND 
+	  			BIN_OrganizationInfoID = #organizationInfoId# AND 
+	  			BIN_MemberInfoID = #eventId# AND 
+	  			TradeNoIF = #messageContents# 
+		]]>
+    </select>
+    
+    <!-- 根据会员号和交易单据号查询积分变化的会员信息 -->
+	<select id="getPointChangeMemberList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+		<![CDATA[
+			SELECT 
+				tc.BIN_MemberInfoID as memId,
+				tc.MemCode as memCode,
+				tm.Name as memName,
+				tm.Gender As gender,
+				tm.MobilePhone As mobilePhone,
+				tm.Email As email,
+				tm.Telephone As telephone, 
+				tm.CounterCodeBelong As counterCode,
+				tl.LevelName as memberLevel,
+				(select top 1 tlb.LevelName from Members.BIN_MemberLevelDetail as tmb with(nolock)
+					inner join Members.BIN_MemberLevel  as tlb with(nolock) on tmb.BIN_MemberLevelID=tlb.BIN_MemberLevelID 
+					where tmb.BIN_MemberLevelID > tm.MemberLevel order by tmb.Grade
+				) as nextMemberLevel,
+				tp.TotalPoint As totalPoint,
+				tp.ChangablePoint As changablePoint,
+				ts.SaleDate as saleDate,
+				tc.ChangeDate as changeDate,
+				tc.Amount as tradeAmount,
+				tc.Amount as salePoint,
+				tc.Point as tradePoint,
+				(tc.Point-tc.Amount) as awardPoint,
+				te.UpLevelAmount as upLevelAmount,
+				tm.IsReceiveMsg As receiveMsgFlg,
+				1 as customerType 
+			FROM 
+				Members.BIN_PointChange as tc with(nolock) 
+				Inner join Members.BIN_MemberInfo as tm with(nolock) on tc.BIN_MemberInfoID=tm.BIN_MemberInfoID 
+				Left join Members.BIN_MemberPoint as tp with(nolock) on tc.BIN_MemberInfoID=tp.BIN_MemberInfoID 
+				Left join Sale.BIN_SaleRecord as ts with(nolock) on tc.TradeNoIF = ts.BillCode 
+				Left join Members.BIN_MemberLevel as tl with(nolock) on tm.MemberLevel=tl.BIN_MemberLevelID and tl.ValidFlag = 1 
+				Left join Members.BIN_MemberExtInfo as te with(nolock) on tc.BIN_MemberInfoID=te.BIN_MemberInfoID 
+			WHERE 
+				tm.ValidFlag = 1 AND 
+				tc.BIN_BrandInfoID = #brandInfoId# AND 
+	  			tc.BIN_OrganizationInfoID = #organizationInfoId# AND 
+	  			tc.BIN_MemberInfoID = #eventId# AND 
+	  			tc.TradeNoIF = #messageContents# 
+		]]>
+		<dynamic>
+			<!-- 参数中存在测试会员标示信息时  -->
+			<isNotEmpty prepend="AND" property="testType" >
+				tm.TestType = #testType# 
+			</isNotEmpty>
+		</dynamic>
+    </select>
+    
+    <!-- 通过批次号查询资料变更会员 -->
+	<sql id="getChangeInfoMemberQuery">
+		<![CDATA[
+			SELECT tr.BIN_MemberInfoID As memId 
+				  ,tr.MemCode As memCode 
+				  ,tm.Name As memName 
+				  ,tm.MemberPassword as memberPassword 
+				  ,tm.Gender As gender 
+				  ,LEFT(tm.Birthday,2) as birthMonth 
+				  ,RIGHT(tm.Birthday,2) as birthDay 
+				  ,tm.MobilePhone As mobilePhone 
+				  ,tm.Email As email 
+				  ,tm.Telephone As telephone 
+				  ,tm.CounterCodeBelong as counterCode
+				  ,tc.CounterNameIF As counterName 
+				  ,tp.TotalPoint as totalPoint
+				  ,tp.ChangablePoint as changablePoint
+				  ,tl.LevelName as memberLevel
+				  ,tm.IsReceiveMsg As receiveMsgFlg 
+				  ,1 As customerType 
+			FROM 
+				  Members.BIN_MemInfoRecord  As tr with(nolock) 
+				  Inner Join Members.BIN_MemberInfo As tm with(nolock) on tr.BIN_MemberInfoID = tm.BIN_MemberInfoID 
+				  Left join Members.BIN_MemberPoint as tp with(nolock) on tr.BIN_MemberInfoID = tp.BIN_MemberInfoID 
+				  Left join Members.BIN_MemberLevel as tl with(nolock) on tm.MemberLevel=tl.BIN_MemberLevelID and tl.ValidFlag = 1 
+				  Left Join Basis.BIN_CounterInfo As tc with(nolock) on tm.CounterCodeBelong = tc.CounterCode 
+			WHERE 
+				  tr.ModifyType = 1 AND 
+				  tm.ValidFlag = 1 AND 
+				  tr.BIN_BrandInfoID = #brandInfoId# AND 
+				  tr.BIN_OrganizationInfoID = #organizationInfoId# AND 
+				  tr.BatchNo = #eventId# 
+		]]>
+		<dynamic>
+			<!-- 参数中存在测试会员标示信息时  -->
+			<isNotEmpty prepend="AND" property="testType" >
+				tm.TestType = #testType# 
+			</isNotEmpty>
+		</dynamic>
+    </sql>
+    
+    <!-- 通过批次号查询资料变更会员总数  -->
+    <select id="getChangeInfoMemberCount" parameterClass="java.util.HashMap" resultClass="java.lang.Integer">
+    	<![CDATA[
+			SELECT COUNT(SORT_T1.memId) AS count FROM (
+		]]>	
+		<include refid="BINBECTSMG05.getChangeInfoMemberQuery" />	
+		<![CDATA[	
+			)SORT_T1
+		]]>
+    </select>
+	
+	<!-- 通过批次号查询资料变更客户列表 -->
+    <select id="getChangeInfoMemberList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+       	<include refid="BINBECMINC99.pageheader" />
+		<include refid="BINBECTSMG05.getChangeInfoMemberQuery" />
+		<include refid="BINBECMINC99.pagefooter" />
+    </select>
+    
+    <!--根据信息发送编号查询信息内容 -->
+	<select id="getRetransmissionMsg" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+		<![CDATA[
+			SELECT Top 1 
+				BIN_MessageCode as messageSendCode,
+				[Message] As message,
+				CouponCode as couponCode 
+			FROM 
+				Communication.BIN_SmsSendDetail 
+			WHERE 
+			  	BIN_BrandInfoID = #brandInfoId# AND 
+				BIN_OrganizationInfoID = #organizationInfoId# AND 
+				BIN_MessageCode = #eventId# 
+			ORDER BY
+				SendTime DESC
+		]]>
+    </select>
+    
+    <!--根据信息发送编号查询会员信息 -->
+	<select id="getRetransmissionMsgMember" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+		<![CDATA[
+			SELECT Top 1 
+				 ts.CustomerSysID as memId 
+				,tc.MemCode as memCode 
+				,ts.MobilePhone As mobilePhone 
+				,tm.Email As email 
+				,tm.Telephone As telephone 
+				,isnull(tm.IsReceiveMsg,'1') As receiveMsgFlg 
+				,1 As customerType 
+				,ts.PlanCode as hisPlan 
+			FROM 
+				Communication.BIN_SmsSendDetail as ts 
+				Left Join Members.BIN_MemberInfo as tm on cast(ts.CustomerSysID as bigint)=tm.BIN_MemberInfoID 
+				Left Join Members.BIN_MemCardInfo as tc with(nolock) on tm.BIN_MemberInfoID = tc.BIN_MemberInfoID and tc.ValidFlag = 1 
+			WHERE 
+			  	ts.BIN_BrandInfoID = #brandInfoId# AND 
+				ts.BIN_OrganizationInfoID = #organizationInfoId# AND 
+				ts.BIN_MessageCode = #eventId# 
+			ORDER BY
+				ts.SendTime DESC
+		]]>
+    </select>
+    
+    <!--根据会员手机号和参与活动相关信息查询已发送信息内容 -->
+	<select id="getRessMsgByMobile" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+		<![CDATA[
+			SELECT Top 1 
+				ts.BIN_MessageCode as messageSendCode,
+				ts.[Message] As message,
+				ts.CouponCode as couponCode,
+				ts.PlanCode as hisPlan 
+			FROM 
+				Communication.BIN_SmsSendDetail as ts with(nolock) 
+			WHERE 
+			  	ts.BIN_BrandInfoID = #brandInfoId# AND 
+				ts.BIN_OrganizationInfoID = #organizationInfoId# AND 
+				exists (
+					SELECT 1 
+					FROM Members.BIN_MemberInfo as tm with(nolock) 
+					WHERE tm.MobilePhone = #eventId# AND 
+						tm.ValidFlag=1 AND 
+						ts.CustomerSysID = cast(tm.BIN_MemberInfoID as varchar)
+				) 
+		]]>
+		<dynamic>
+			<!-- 参数中存在活动相关信息时  -->
+			<isNotEmpty prepend="AND" property="campaignCode" >
+				(
+					ts.PlanCode = (
+						SELECT Top 1 BIN_PlanCode 
+						FROM Communication.BIN_ActivityCommPlan as ta with(nolock) 
+						inner join Campaign.BIN_Campaign as tc with(nolock) on ta.BIN_ActivityCode = tc.CampaignCode 
+						inner join Campaign.BIN_CampaignRule as tr with(nolock) on tc.BIN_CampaignID = tr.BIN_CampaignID 
+						WHERE tr.SubCampaignCode = #campaignCode# and ta.ValidFlag = 1
+					) 
+					OR 
+					ts.BIN_CommunicationCode = (
+						SELECT Top 1 th.BatchNo 
+						FROM Campaign.BIN_CampaignHistory as th with(nolock) 
+						WHERE th.MainCode = #campaignCode# and th.BIN_MemberInfoID = ts.CustomerSysID
+					)
+				)
+			</isNotEmpty>
+		</dynamic>
+		<![CDATA[
+			ORDER BY ts.SendTime DESC 
+		]]>
+    </select>
+    
+    <!--根据会员手机号和参与活动相关信息查询会员信息 -->
+	<select id="getRessMsgMemberByMobile" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+		<![CDATA[
+			SELECT Top 1 
+				 tm.BIN_MemberInfoID as memId 
+				,tc.MemCode as memCode 
+				,tm.MobilePhone As mobilePhone 
+				,tm.Email As email 
+				,tm.Telephone As telephone 
+				,isnull(tm.IsReceiveMsg,'1') As receiveMsgFlg 
+				,1 As customerType 
+			FROM 
+				Members.BIN_MemberInfo as tm with(nolock) 
+				Left Join Members.BIN_MemCardInfo as tc with(nolock) on tm.BIN_MemberInfoID = tc.BIN_MemberInfoID and tc.ValidFlag = 1 
+			WHERE 
+				tm.BIN_BrandInfoID = #brandInfoId# AND 
+				tm.BIN_OrganizationInfoID = #organizationInfoId# AND 
+				tm.MobilePhone = #eventId# AND 
+				tm.ValidFlag = 1 
+		]]>
+		<dynamic>
+			<!-- 参数中存在活动相关信息时  -->
+			<isNotEmpty prepend="AND" property="campaignCode" >
+				exists (
+					SELECT Top 1 CustomerSysID 
+					FROM Communication.BIN_SmsSendDetail as ts with(nolock) 
+					WHERE 
+					(
+						ts.PlanCode = (
+							SELECT Top 1 BIN_PlanCode 
+							FROM Communication.BIN_ActivityCommPlan as ta with(nolock) 
+							inner join Campaign.BIN_Campaign as tc with(nolock) on ta.BIN_ActivityCode = tc.CampaignCode 
+							inner join Campaign.BIN_CampaignRule as tr with(nolock) on tc.BIN_CampaignID = tr.BIN_CampaignID 
+							WHERE tr.SubCampaignCode = #campaignCode# and ta.ValidFlag = 1
+						) 
+						OR 
+						ts.BIN_CommunicationCode = (
+							SELECT Top 1 th.BatchNo 
+							FROM Campaign.BIN_CampaignHistory as th with(nolock) 
+							WHERE th.MainCode = #campaignCode# and th.BIN_MemberInfoID = ts.CustomerSysID
+						)
+					) AND 
+					ts.CustomerSysID = cast(tm.BIN_MemberInfoID as varchar) 
+					ORDER BY ts.SendTime desc
+				)
+			</isNotEmpty>
+		</dynamic>
+    </select>
+    
+    <!--根据信息发送编号从Coupon生成记录表中获取前一条信息对应的活动编号 -->
+	<select id="getCampCodeFromCreateCouponLog" parameterClass="java.util.HashMap" resultClass="java.lang.String">
+		<![CDATA[
+			SELECT Top 1 
+				CampaignCode as campCode 
+			FROM 
+				Communication.BIN_CouponCreateLog 
+			WHERE 
+				CommCode = #messageSendCode#
+		]]>
+    </select>
+    
+    <!-- 根据会员ID查询升级会员的信息 -->
+	<sql id="getLevelUpMemberInfoQuery">
+		<![CDATA[
+			SELECT 
+				tm.BIN_MemberInfoID As memId, 
+				tc.MemCode As memCode, 
+				tm.Name As memName, 
+				tm.MemberPassword as memberPassword,
+				tm.Gender As gender, 
+				tm.MobilePhone As mobilePhone, 
+				tm.Email As email, 
+				tm.Telephone As telephone, 
+				tp.TotalPoint As totalPoint, 
+				tp.ChangablePoint As changablePoint, 
+				tm.CounterCodeBelong As counterCode, 
+				tb.CounterNameIF As counterName, 
+				tl.LevelName as memberLevel, 
+				(select top 1 tlb.LevelName from Members.BIN_MemberLevelDetail as tmb with(nolock)
+					inner join Members.BIN_MemberLevel  as tlb with(nolock) on tmb.BIN_MemberLevelID=tlb.BIN_MemberLevelID 
+					where tmb.BIN_MemberLevelID > tm.MemberLevel order by tmb.Grade
+				) as nextMemberLevel, 
+				te.UpLevelAmount as upLevelAmount, 
+				tm.IsReceiveMsg As receiveMsgFlg, 
+				1 As customerType 
+			FROM 
+				Members.BIN_MemberInfo As tm with(nolock) 
+				Left Join Members.BIN_MemCardInfo as tc with(nolock) on tm.BIN_MemberInfoID = tc.BIN_MemberInfoID and tc.ValidFlag = 1 
+				Left Join Members.BIN_MemberPoint As tp with(nolock) on tm.BIN_MemberInfoID = tp.BIN_MemberInfoID 
+				Left Join Basis.BIN_CounterInfo As tb with(nolock) on tm.CounterCodeBelong = tb.CounterCode 
+				Left join Members.BIN_MemberLevel as tl with(nolock) on tm.MemberLevel=tl.BIN_MemberLevelID and tl.ValidFlag = 1 
+				Left join Members.BIN_MemberExtInfo as te with(nolock) on tc.BIN_MemberInfoID=te.BIN_MemberInfoID 
+			WHERE 
+				tm.ValidFlag = 1 AND 
+				tm.BIN_BrandInfoID = #brandInfoId# AND 
+				tm.BIN_OrganizationInfoID = #organizationInfoId# AND 
+				tm.BIN_MemberInfoID = #eventId#  
+		]]>
+		<dynamic>
+			<!-- 参数中存在测试会员标示信息时  -->
+			<isNotEmpty prepend="AND" property="testType" >
+				tm.TestType = #testType# 
+			</isNotEmpty>
+		</dynamic>
+    </sql>
+    
+    <!-- 根据会员ID查询升级会员的总数  -->
+    <select id="getLevelUpMemberInfoCount" parameterClass="java.util.HashMap" resultClass="java.lang.Integer">
+    	<![CDATA[
+			SELECT COUNT(SORT_T1.memId) AS count FROM (
+		]]>	
+		<include refid="BINBECTSMG05.getLevelUpMemberInfoQuery" />	
+		<![CDATA[	
+			)SORT_T1
+		]]>
+    </select>
+	
+	<!-- 根据会员ID查询升级会员列表 -->
+    <select id="getLevelUpMemberInfoList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+       	<include refid="BINBECMINC99.pageheader" />
+		<include refid="BINBECTSMG05.getLevelUpMemberInfoQuery" />
+		<include refid="BINBECMINC99.pagefooter" />
+    </select>
+    
+    <!--根据搜索编号和手机号查询客户数量 -->
+	<select id="getSearchResultCountByCode" parameterClass="java.util.HashMap" resultClass="java.lang.Integer">
+		<![CDATA[
+			SELECT 
+				count(1) As memberCount 
+			FROM 
+				Members.BIN_CustomerInfo As tt with(nolock) 
+			WHERE 
+				tt.BIN_BrandInfoID = #brandInfoId# AND 
+				tt.BIN_OrganizationInfoID = #organizationInfoId# AND 
+				tt.BIN_SearchCode = #searchCode# AND 
+				tt.Mobilephone = #phoneNum# 
+		]]>
+    </select>
+    
+    <!-- 根据手机号查询员工的信息 -->
+	<sql id="getUserInfoByMobileQuery">
+		<![CDATA[
+			SELECT Top 1 
+				tu.BIN_UserID As memId,
+				te.EmployeeCode as employeeCode,
+				te.EmployeeName as employeeName,
+				te.Gender as gender,
+				tu.LonginName as longinName,
+				tu.[PassWord] as longinPassword,
+				1 As receiveMsgFlg,
+				3 As customerType 
+			FROM 
+				Privilege.BIN_User as tu with(nolock) 
+				INNER JOIN Basis.BIN_Employee as te with(nolock) ON tu.BIN_EmployeeID = te.BIN_EmployeeID 
+			WHERE 
+				te.BIN_BrandInfoID = #brandInfoId# AND 
+				te.BIN_OrganizationInfoID = #organizationInfoId# AND 
+				te.MobilePhone = #eventId# 
+		]]>
+    </sql>
+    
+    <!-- 根据登陆用户的手机号查询登陆用户 -->
+    <select id="getUserInfoByMobileCount" parameterClass="java.util.HashMap" resultClass="java.lang.Integer">
+    	<![CDATA[
+			SELECT COUNT(SORT_T1.memId) AS count FROM (
+		]]>	
+		<include refid="BINBECTSMG05.getUserInfoByMobileQuery" />	
+		<![CDATA[	
+			)SORT_T1
+		]]>
+    </select>
+	
+	<!-- 根据登陆用户的手机号查询登陆用户 -->
+    <select id="getUserInfoByMobileList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+       	<include refid="BINBECMINC99.pageheader" />
+		<include refid="BINBECTSMG05.getUserInfoByMobileQuery" />
+		<include refid="BINBECMINC99.pagefooter" />
+    </select>
+    
+    <!-- 查询领取生日礼的相应手机号的最近时间会员信息 -->
+    <select id="getMemInfoByMobile" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+    	<![CDATA[
+			SELECT DISTINCT TOP 1
+			       tt.BIN_MemberInfoID As memId 
+				  ,tt.MemCode As memCode 
+				  ,tm.Name As memName 
+				  ,tm.MemberPassword as memberPassword 
+				  ,tm.Gender As gender 
+				  ,tt.Mobile As mobilePhone 
+				  ,tm.Email As email 
+				  ,tt.Telephone As telephone 
+				  ,tp.TotalPoint As totalPoint 
+				  ,tp.ChangablePoint As changablePoint 
+				  ,tm.CounterCodeBelong As counterCode 
+				  ,tb.CounterNameIF As counterName 
+				  ,tt.OrderCounterCode As reCounter 
+				  ,(Case tt.OrderCounterCode when 'ALL' then '任意柜台' 
+	  				else tr.CounterNameIF end) As reCounterName 
+				  ,tt.CounterGot As getCounter 
+				  ,(Case tt.CounterGot when 'ALL' then '任意柜台' 
+				  	else tc.CounterNameIF end) As getCounterName 
+				  ,tm.IsReceiveMsg As receiveMsgFlg 
+				  ,1 As customerType 
+				  ,tt.CouponCode As couponCode 
+				  ,tt.TradeNoIF As orderId 
+				  ,tt.CampaignOrderTime As orderTime 
+				  ,tt.PointRequired As pointsUsed 
+				  ,tt.CampaignCode As campaignCode 
+				  ,tg.CampaignName AS campName 
+				  ,tg.CampaignOrderFromDate AS orderFromDate 
+				  ,tg.CampaignOrderToDate AS orderToDate 
+				  ,tg.ObtainFromDate AS campFromDate 
+				  ,tg.ObtainToDate AS campToDate 
+			FROM 
+				  Campaign.BIN_CampaignOrder As tt with(nolock)
+				  Left Join Members.BIN_MemberInfo As tm with(nolock) on tt.BIN_MemberInfoID = tm.BIN_MemberInfoID 
+				  Left Join Members.BIN_MemberPoint As tp with(nolock) on tt.BIN_MemberInfoID = tp.BIN_MemberInfoID 
+				  Left Join Campaign.BIN_Campaign As tg with(nolock) on tt.CampaignCode = tg.CampaignCode AND tg.CampaignTypeFlag=1 
+				  Left Join Basis.BIN_CounterInfo As tb with(nolock) on tm.CounterCodeBelong = tb.CounterCode 
+				  Left Join Basis.BIN_CounterInfo As tc with(nolock) on tt.CounterGot = tc.CounterCode 
+				  Left Join Basis.BIN_CounterInfo As tr with(nolock) on tt.OrderCounterCode = tr.CounterCode 
+			WHERE 
+				  tt.ValidFlag = 1 AND
+				  tt.GetToTime > GETDATE() AND
+				  tt.Mobile = #eventId# AND
+				  tt.SubType = #SubType# AND
+				  tt.CampaignCode = #CampaignCode# AND
+				  tt.BIN_BrandInfoID = #brandInfoId# AND 
+				  tt.BIN_OrganizationInfoID = #organizationInfoId#
+		]]>
+		<dynamic>
+			<!-- 参数中存在测试会员标示信息时  -->
+			<isNotEmpty prepend="AND" property="testType" >
+				tm.TestType = #testType# 
+			</isNotEmpty>
+		</dynamic>
+		<![CDATA[
+			ORDER BY orderTime DESC
+		]]>
+    </select>
+    
+    <!-- 通过手机号来查看memberInfo表中是否存在该会员  -->
+    <select id="checkMemExistByMobilePhone" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+    	<![CDATA[
+    		SELECT 
+    			count(1) as num
+			FROM 
+				Members.BIN_MemberInfo
+			WHERE 
+				MobilePhone = #MobilePhone# AND
+			  	BIN_BrandInfoID = #BIN_BrandInfoID# AND 
+			  	BIN_OrganizationInfoID = #BIN_OrganizationInfoID#
+    	]]>
+    </select>
+</sqlMap>

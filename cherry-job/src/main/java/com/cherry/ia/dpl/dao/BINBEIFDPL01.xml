@@ -1,0 +1,96 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sqlMap PUBLIC "-//iBATIS.com//DTD SQL Map 2.0//EN" "http://ibatis.apache.org/dtd/sql-map-2.dtd">
+<sqlMap namespace="BINBEIFDPL01">
+	
+	<!-- 从接口数据库中查询员工管辖部门对应关系 -->
+	<select id="getEmpDepartList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">	
+		<![CDATA[
+			SELECT
+				EmployeeCode AS employeeCode,
+				DepartCode AS departCode
+			FROM
+				dbo.BIN_EmployeeDepart_SCS
+			WHERE
+				ValidFlag = '1'
+			ORDER BY
+				EmployeeCode		
+		]]>	
+    </select>
+	
+	<!--查询部门信息 -->
+	<select id="getDepartInfo" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+		<![CDATA[
+			SELECT 						
+				BIN_OrganizationID AS organizationId,
+				Type AS departType					
+			FROM						
+				Basis.BIN_Organization				
+			WHERE						
+				BIN_OrganizationInfoID = #organizationInfoId# AND
+				BIN_BrandInfoID = #brandInfoId# AND
+				DepartCode = #departCode#
+		]]>
+    </select>
+    
+    <!--查询员工信息 -->
+	<select id="getEmpInfo" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+		<![CDATA[
+			SELECT 						
+				BIN_EmployeeID AS employeeId				
+			FROM						
+				Basis.BIN_Employee		
+			WHERE						
+				BIN_OrganizationInfoID = #organizationInfoId# AND
+				BIN_BrandInfoID = #brandInfoId# AND
+				EmployeeCode = #employeeCode#
+		]]>
+    </select>
+    
+    <!-- 删除员工管辖部门对应关系  -->
+	<delete id="delEmployeeDepart" parameterClass="java.util.HashMap">
+		<![CDATA[
+		DELETE FROM
+			Privilege.BIN_EmployeeDepart
+		WHERE
+			BIN_EmployeeID = #employeeId# AND
+			ManageType = #manageType#
+		]]>
+	</delete>
+    
+    <!-- 插入员工管辖部门对应表  -->
+	<insert id="insertEmployeeDepart" parameterClass="java.util.HashMap">	
+		<![CDATA[
+	   INSERT INTO Privilege.BIN_EmployeeDepart (			
+			BIN_EmployeeID,		
+			BIN_OrganizationID,		
+			DepartType,
+			ManageType,	
+		]]>
+		<include refid="BINBECMINC99.insertKeySql" />									
+		<![CDATA[								
+		)VALUES (
+			#employeeId#,		
+			#organizationId#,		
+			#departType#,
+			#manageType#,
+		]]>
+		<include refid="BINBECMINC99.insertValueSql" />
+		<![CDATA[ ) ]]>
+	</insert>
+	
+	<!-- 删除指定部门的员工管辖部门对应关系  -->
+	<delete id="delEmployeeDepartByOrg" parameterClass="java.util.HashMap">
+		<![CDATA[
+		DELETE FROM
+			Privilege.BIN_EmployeeDepart
+		WHERE
+			ManageType = '1' AND
+			BIN_OrganizationID IN
+		]]>
+		<iterate property="organizationIdList" open="(" close=")" conjunction=","> 
+			 #organizationIdList[].organizationId#
+		</iterate>
+	</delete>
+   
+	
+</sqlMap>

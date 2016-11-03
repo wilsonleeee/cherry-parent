@@ -1,0 +1,375 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sqlMap PUBLIC "-//iBATIS.com//DTD SQL Map 2.0//EN" "http://ibatis.apache.org/dtd/sql-map-2.dtd">
+<sqlMap namespace="BINBECMINC99">
+	<sql id="pageheader">
+	 	<![CDATA[
+			SELECT * FROM(SELECT ROW_NUMBER() OVER(ORDER BY $SORT_ID$) AS RowNumber, * FROM ( 
+		]]>
+	</sql>
+	<sql id="pagefooter">
+	 	<![CDATA[	
+			)SORT_T1)SORT_T2 WHERE RowNumber BETWEEN  #START# AND #END#
+		]]>
+	</sql>
+	
+	<sql id="insertKeySql">
+	<![CDATA[
+		CreateTime,
+		UpdateTime,
+		CreatedBy,
+		CreatePGM,
+		UpdatedBy,
+		UpdatePGM,
+		ValidFlag,
+		ModifyCount
+	]]>
+	</sql>			
+	
+	<sql id="insertValueSql">
+		<isNotEmpty property="createTime">
+			#createTime#,
+		</isNotEmpty>
+		<isEmpty property="createTime">
+			GETDATE(),
+		</isEmpty>
+		<isNotEmpty property="createTime">
+			#createTime#,
+		</isNotEmpty>
+		<isEmpty property="createTime">
+			GETDATE(),
+		</isEmpty>
+	<![CDATA[
+		#createdBy#,
+		#createPGM#,
+		#updatedBy#,
+		#updatePGM#,
+	]]>
+		<isNotEmpty property="validFlagVal">
+			#validFlagVal#,
+		</isNotEmpty>
+		<isEmpty property="validFlagVal">
+			'1',
+		</isEmpty>
+	<![CDATA[
+		'0'
+	]]>
+	</sql>		
+	
+	<sql id="updateSql">
+		<isNotEmpty property="updateTime">
+			UpdateTime=#updateTime#,
+		</isNotEmpty>
+		<isEmpty property="updateTime">
+			UpdateTime=GETDATE(),
+		</isEmpty>
+	<![CDATA[
+		UpdatedBy=#updatedBy#,
+		UpdatePGM=#updatePGM#,
+		ModifyCount=ModifyCount+1
+	]]>
+	</sql>
+	
+	<!-- 取得系统时间  -->
+    <select id="getSYSDate" resultClass="java.lang.String">
+    	<![CDATA[
+			SELECT GETDATE() AS sysDate
+		]]>										
+    </select>
+    
+    <!-- 取得系统时间(yyyy-MM-dd HH:mm:ss)  -->
+    <select id="getSYSDateTime" resultClass="java.lang.String">
+    	<![CDATA[
+			SELECT CONVERT(varchar(100), GETDATE(),120) AS sysDate
+		]]>										
+    </select>
+	
+	<!-- 取得系统时间(年月日) -->
+    <select id="getDateYMD" resultClass="java.lang.String">
+    	<![CDATA[
+			SELECT CONVERT(varchar(10), GETDATE(), 120) AS sysDate
+		]]>										
+    </select>
+	
+	<!-- COMMIT 	-->
+	<statement id="updateCOMMIT">
+		<![CDATA[  
+		COMMIT
+		]]>
+	</statement>
+	
+	<!-- ROLLBACK 	-->
+	<statement id="updateROLLBACK">
+		<![CDATA[  
+		ROLLBACK
+		]]>
+	</statement>
+	
+	<!-- 取得业务日期  -->
+    <select id="getBussinessDate" resultClass="java.lang.String">
+    	<![CDATA[
+			SELECT
+				ControlDate AS controlDate
+			FROM 
+				Tools.BIN_BussinessDate
+			WHERE
+				BIN_BrandInfoID = #brandInfoId# AND
+				ValidFlag = '1'
+		]]>										
+    </select>
+	<!-- 取得业务日期Map  -->
+    <select id="getBussinessDateMap" resultClass="java.util.HashMap">
+    	<![CDATA[
+			SELECT
+				ControlDate AS businessDate,
+				CloseFlag AS closeFlag
+			FROM 
+				Tools.BIN_BussinessDate
+			WHERE
+				BIN_BrandInfoID = #brandInfoId# AND
+				ValidFlag = '1'
+		]]>										
+    </select>
+       
+   <!-- 取得产品信息  -->
+    <sql id="getProList">
+    	<![CDATA[SELECT]]>  
+		<dynamic>
+			<isNotEmpty property="language">
+				<isEqual property="language" compareValue="en_US">
+					A.NameForeign AS nameTotal,
+				</isEqual>
+				<isEqual property="language" compareValue="zh_CN">
+					A.NameTotal AS nameTotal,
+				</isEqual>
+			</isNotEmpty>	
+			<isEmpty property="language">
+				A.NameTotal AS nameTotal,
+			</isEmpty>
+		</dynamic>
+		<![CDATA[			
+				A.UnitCode AS unitCode,
+				B.BarCode AS barCode,
+				B.BIN_ProductVendorID AS id,
+				'N' AS type,
+				A.ItemCode,
+				NULL AS promotionCateCD,
+				ISNULL(CONVERT(Decimal(16,2),C.SalePrice),0) AS price
+			FROM
+				Basis.BIN_Product A WITH(NOLOCK)
+				JOIN Basis.BIN_ProductVendor B WITH(NOLOCK) ON(A.BIN_ProductID = B.BIN_ProductID)
+				LEFT JOIN Basis.BIN_ProductPrice C WITH(NOLOCK) ON (A.BIN_ProductID = C.BIN_ProductID  AND C.Type = '2' AND C.StartDate <= #businessDate# AND C.endDate >= #businessDate# )    
+			WHERE 
+				A.BIN_OrganizationInfoID = #organizationInfoId#
+    	]]>
+    	<dynamic>
+		 	<isNotEmpty property="brandInfoId" prepend="AND">
+				A.BIN_BrandInfoID = #brandInfoId#		
+			</isNotEmpty>	
+		</dynamic>
+    </sql>
+    <!-- 取得促销品信息  -->
+    <sql id="getPrmList">
+    	<![CDATA[SELECT]]>  
+		<dynamic>
+			<isNotEmpty property="language">
+				<isEqual property="language" compareValue="en_US">
+					A.NameForeign AS nameTotal,
+				</isEqual>
+				<isEqual property="language" compareValue="zh_CN">
+					A.NameTotal AS nameTotal,
+				</isEqual>
+			</isNotEmpty>	
+			<isEmpty property="language">
+				A.NameTotal AS nameTotal,
+			</isEmpty>
+		</dynamic>
+		<![CDATA[
+				A.UnitCode AS unitCode,
+				B.BarCode AS barCode,
+				B.BIN_PromotionProductVendorID AS id,
+				'P' AS type,
+				A.ItemCode,
+				A.PromotionCateCD AS promotionCateCD,
+				ISNULL(CONVERT(Decimal(16,2),A.StandardCost),0) AS price
+			FROM
+				Basis.BIN_PromotionProduct A WITH(NOLOCK)
+				JOIN Basis.BIN_PromotionProductVendor B WITH(NOLOCK)
+				ON(A.BIN_PromotionProductID = B.BIN_PromotionProductID)
+			WHERE 
+				A.BIN_OrganizationInfoID = #organizationInfoId#
+    	]]>
+    	<dynamic>
+		 	<isNotEmpty property="brandInfoId">
+				AND A.BIN_BrandInfoID = #brandInfoId#		
+			</isNotEmpty>	
+		</dynamic>
+    </sql>
+    <!-- 取得产品+促销品信息  -->
+    <sql id="getProPrmList">
+    	<![CDATA[SELECT T.* FROM(]]>
+    	<include refid="BINBECMINC99.getProList" />	
+		<![CDATA[UNION]]>	
+		<include refid="BINBECMINC99.getPrmList" />
+		<![CDATA[)T]]>
+    </sql>
+
+	<!-- 根据是否测试模式取得柜台的单据(注意：关联单据表的别名设为"A") -->
+	<sql id="getBillByTestModList">
+        <![CDATA[
+        	SELECT 
+        		1 
+       		FROM
+       			Basis.BIN_CounterInfo C99 
+        	WHERE
+        		C99.ValidFlag IS NOT NULL 
+		]]>
+		<isNotEmpty property="testMod" prepend="AND">
+			<!-- 非测试模式:正式部门的业务数据 -->
+			<isEqual property="testMod" compareValue="0">
+		  		(C99.CounterKind = 0 OR C99.CounterKind = 2)
+		  	</isEqual>
+		  	<!-- 测试模式:则导出所有正式部门和【柜台协同区分】为1的测试柜台业务单据 -->
+		  	<isEqual property="testMod" compareValue="1">
+		  		(C99.CounterKind = 0 OR C99.CounterKind = 2 OR (C99.CounterKind = 1 AND C99.CounterSynergyFlag = '1') )
+		  	</isEqual>
+		</isNotEmpty>
+    </sql>
+    <!-- 根据是否测试模式取得部门的单据(注意：关联单据表的别名设为"A"，暂时只针对标准接口使用) -->
+	<sql id="getBillByTestModStandList">
+        <![CDATA[
+        	SELECT 
+        		1 
+       		FROM
+       			Basis.BIN_Organization C99 
+        	WHERE
+        		C99.ValidFlag IS NOT NULL 
+		]]>
+		<isNotEmpty property="testMod" prepend="AND">
+			<!-- 非测试模式:正式部门的业务数据 -->
+			<isEqual property="testMod" compareValue="0">
+		  		C99.TestType = '0'
+		  	</isEqual>
+		  	<!-- 测试模式:则导出所有正式部门和测试部门的所有数据 -->
+		  	<isEqual property="testMod" compareValue="1">
+		  		(C99.TestType = '1' OR C99.TestType = '0')
+		  	</isEqual>
+		</isNotEmpty>
+    </sql>
+    	<!-- 密钥获取 -->
+	<select id="getCherrySecret" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+    	<![CDATA[
+			SELECT
+				OrgCode,
+				BrandCode,
+				SecretKey,
+				PublicKey,
+				PrivateKey
+			FROM
+				Tools.BIN_CherrySecret 
+			WHERE
+				ValidFlag = '1'
+		]]>
+    </select>
+    
+    <!-- 员工权限配置查询共通  -->
+    <sql id="empPLTypeSql">
+    	<![CDATA[
+    		SELECT 
+				x.PrivilegeFlag
+			FROM
+				Privilege.BIN_EmpPLType x WITH(NOLOCK)
+			WHERE
+		]]>		
+			<isNotEmpty property="userId">
+        		x.BIN_UserID = #userId# AND
+        	</isNotEmpty>
+        	<isNotEmpty property="employeeId">
+        		x.BIN_EmployeeID = #employeeId# AND
+        	</isNotEmpty>
+       	<![CDATA[		
+				x.OperationType = #operationType# AND
+				(x.BusinessType = 'A' OR x.BusinessType = #businessType#)
+		]]>			
+    </sql>
+    
+    <!-- 员工权限配置查询共通（在EXISTS语句中使用）  -->
+    <sql id="empPLTypeExistsSql">
+    	<![CDATA[
+    		SELECT 
+				1
+			FROM
+				Privilege.BIN_EmpPLType empPLType WITH(NOLOCK)
+			WHERE
+		]]>		
+			<isNotEmpty property="userId">
+        		empPLType.BIN_UserID = #userId# AND
+        	</isNotEmpty>
+        	<isNotEmpty property="employeeId">
+        		empPLType.BIN_EmployeeID = #employeeId# AND
+        	</isNotEmpty>
+       	<![CDATA[		
+				empPLType.OperationType = #operationType# AND
+				(empPLType.BusinessType = 'A' OR empPLType.BusinessType = #businessType#)
+		]]>			
+    </sql>
+    
+    <!-- 部门权限（控制权限用） -->
+    <sql id="departPrivilegeSql">
+    	<![CDATA[
+		    SELECT DISTINCT
+				BIN_OrganizationID
+			FROM
+				Privilege.BIN_DepartPrivilege WITH(NOLOCK)
+			WHERE
+		]]>
+			<isNotEmpty property="userId">
+        		BIN_UserID = #userId# AND
+        	</isNotEmpty>
+        	<isNotEmpty property="employeeId">
+        		BIN_EmployeeID = #employeeId# AND
+        	</isNotEmpty>
+		<![CDATA[																		
+				(BusinessType = 'A' OR BusinessType = #businessType#)
+		]]>
+			<isNotEmpty property="DEPARTTYPE" prepend="AND">
+        		DepartType = #DEPARTTYPE#
+        	</isNotEmpty>
+        	
+        	<isNotEmpty property="orgValid" prepend="AND">
+        		OrgValidFlag = #orgValid#
+        	</isNotEmpty>
+        	<isNotEmpty property="counterKind" prepend="AND">
+        		CounterKind = #counterKind#
+        	</isNotEmpty>
+    </sql>
+    
+    <!-- 部门权限（需要通过员工关联权限表时用） -->
+    <sql id="departPLJoinSql">
+    	<![CDATA[
+		    SELECT DISTINCT
+				A.BIN_EmployeeID,
+				A.BIN_UserID,
+				A.BIN_OrganizationID,
+				A.PrivilegeFlag
+			FROM
+				Privilege.BIN_DepartPrivilege A WITH(NOLOCK)
+			WHERE
+				(A.BusinessType = 'A' OR A.BusinessType = #businessType#)
+		]]>
+			<isNotEmpty property="userId" prepend="AND">
+        		A.BIN_UserID = #userId#
+        	</isNotEmpty>
+        	<isNotEmpty property="employeeId" prepend="AND">
+        		A.BIN_EmployeeID = #employeeId#
+        	</isNotEmpty>
+        	<isNotEmpty property="organizationId" prepend="AND">
+        		A.BIN_OrganizationID = #organizationId#	
+        	</isNotEmpty>
+        	<isNotEmpty property="orgValid" prepend="AND">
+        		A.OrgValidFlag = #orgValid#
+        	</isNotEmpty>
+        	<isNotEmpty property="counterKind" prepend="AND">
+        		A.CounterKind = #counterKind#
+        	</isNotEmpty>
+    </sql>
+</sqlMap>

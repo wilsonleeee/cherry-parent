@@ -1,0 +1,181 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sqlMap PUBLIC "-//iBATIS.com//DTD SQL Map 2.0//EN" "http://ibatis.apache.org/dtd/sql-map-2.dtd">
+<sqlMap namespace="GetEntitySaleRecord">
+
+	<!-- 查询指定柜台code对应的BIN_OrganizationID -->
+	<select id="getCounterByCode" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+		<![CDATA[
+	        SELECT 
+	        	BIN_OrganizationID 
+	        FROM 
+	        	Basis.BIN_CounterInfo WITH (NOLOCK)
+	        WHERE
+	        	BIN_OrganizationInfoID = #BIN_OrganizationInfoID# AND
+	        	BIN_BrandInfoID = #BIN_BrandInfoID# AND
+	            CounterCode = #counterCode#
+        ]]>
+	</select>
+	
+	<!-- 销售主单查询(排除线上订单) -->
+	<sql id="SaleRecordQuery">
+		<![CDATA[
+			SELECT
+			    A.BIN_SaleRecordID,
+			    B.CounterCode,
+			    ISNULL(B.CounterNameIF,'') AS CounterName,
+			    B.OperateMode AS OperateMode,
+			    B.BelongFaction AS BelongFaction,
+			    B.InvoiceCompany AS InvoiceCompany,
+				E.ChannelName AS Channel,
+			    A.BillCode,
+			    ISNULL(D.MemCode,ISNULL(A.MemberCode,'')) AS MemberCode,
+			    ISNULL(C.Name,'') AS MemberName,
+				CASE WHEN A.SensitiveSuggestVersion IS NULL AND A.DrySuggestVersion IS NULL
+				THEN ISNULL(C.SensitiveSuggestVersion,'') ELSE ISNULL(A.SensitiveSuggestVersion,'') END as VersionA,
+			    CASE WHEN A.SensitiveSuggestVersion IS NULL AND A.DrySuggestVersion IS NULL
+				THEN ISNULL(C.DrySuggestVersion,'') ELSE ISNULL(A.DrySuggestVersion,'') END as VersionB,
+			    A.SaleType,
+			    Convert(decimal(18,2), A.Amount) AS Amount,
+				Convert(decimal(18,2), A.Quantity) AS Quantity,
+				convert(nvarchar,A.SaleTime,120) as SaleTime,
+				convert(nvarchar,A.UpdateTime,120) as UpdateTime
+			FROM
+				Sale.BIN_SaleRecord A WITH(NOLOCK)
+				LEFT JOIN Basis.BIN_CounterInfo B WITH(NOLOCK)
+				ON(A.BIN_OrganizationID=B.BIN_OrganizationID)
+				LEFT JOIN Members.BIN_MemberInfo C WITH(NOLOCK)
+				ON(A.BIN_MemberInfoID=C.BIN_MemberInfoID)
+				LEFT JOIN Members.BIN_MemCardInfo D WITH(NOLOCK)
+				ON(C.BIN_MemberInfoID=D.BIN_MemberInfoID AND D.ValidFlag='1' AND D.CardValidFlag='1')
+				LEFT JOIN Basis.BIN_Channel E WITH(NOLOCK)
+				ON(B.BIN_ChannelID=E.BIN_ChannelID)
+			WHERE
+				A.BIN_OrganizationInfoID = #BIN_OrganizationInfoID# AND
+				A.BIN_BrandInfoID = #BIN_BrandInfoID# AND
+				A.ValidFlag='1' AND 
+				NOT EXISTS(
+					SELECT 1 FROM Sale.BIN_ESOrderMain B WITH(NOLOCK)
+					WHERE A.BillCode=B.BillCode
+				) AND  A.EmployeeCode <> 'G00001'
+				AND (ISNULL(A.SensitiveSuggestVersion,ISNULL(C.SensitiveSuggestVersion,'')) <> '' OR ISNULL(A.DrySuggestVersion,ISNULL(C.DrySuggestVersion,'')) <> '' )
+		]]>
+		<isNotEmpty prepend="AND" property="QueryType">
+			<!-- 创建时间筛选数据 -->
+			<isEqual property="QueryType" compareValue="crt">
+				<![CDATA[
+					A.SaleTime >= #StartTime# AND
+			   		A.SaleTime <= #EndTime#
+			   	]]>
+			</isEqual>
+			<isEqual property="QueryType" compareValue="upd">
+				<![CDATA[
+					A.UpdateTime >= #StartTime# AND
+			   		A.UpdateTime <= #EndTime#
+			   	]]>
+			</isEqual>
+		</isNotEmpty>
+		<isNotEmpty prepend="AND" property="BIN_OrganizationID">
+			<![CDATA[
+				A.BIN_OrganizationID = #BIN_OrganizationID#
+			]]>
+		</isNotEmpty>
+	</sql>
+	
+	<!-- 查询指定时间段内的销售主单总数 -->
+	<select id="getSaleRecordMainCount" parameterClass="java.util.HashMap" resultClass="java.lang.Integer">
+		<![CDATA[
+            SELECT COUNT(1) AS count FROM (
+        ]]>
+        <include refid="GetEntitySaleRecord.SaleRecordQuery" />
+        <![CDATA[
+            )SORT_T1
+        ]]>
+	</select>
+	
+	<!-- 根据时间段及可能的柜台号查询线下销售数据list -->
+	<resultMap id="GetEntitySaleRecord.proMap" class="java.util.HashMap">
+		<result property="CounterCode" column="CounterCode"/>
+		<result property="CounterName" column="CounterName"/>
+		<result property="OperateMode" column="OperateMode"/>
+		<result property="BelongFaction" column="BelongFaction"/>
+		<result property="InvoiceCompany" column="InvoiceCompany"/>
+		<result property="Channel" column="Channel"/>		
+		<result property="BillCode" column="BillCode"/>
+		<result property="MemberCode" column="MemberCode"/>
+		<result property="MemberName" column="MemberName"/>
+		<result property="VersionA" column="VersionA"/>
+		<result property="VersionB" column="VersionB"/>
+		<result property="Amount" column="Amount"/>
+		<result property="Quantity" column="Quantity"/>	
+		<result property="SaleType" column="SaleType"/>
+		<result property="SaleTime" column="SaleTime"/>
+		<result property="UpdateTime" column="UpdateTime"/>
+		<result property="DetailList" column="BIN_SaleRecordID" select="GetEntitySaleRecord.getSaleDetail" javaType="java.util.List"/>
+	</resultMap>
+	<select id="getSaleRecordDetailList" parameterClass="java.util.HashMap" resultMap="GetEntitySaleRecord.proMap">
+		<include refid="BINOLCMINC99.pageheader" />
+		<include refid="GetEntitySaleRecord.SaleRecordQuery" />
+		<include refid="BINOLCMINC99.pagefooter" />
+	</select>
+	
+	<!-- 根据销售主单ID查询明细 -->
+	<select id="getSaleDetail" parameterClass="java.lang.Integer" resultClass="java.util.HashMap">
+		<![CDATA[
+		  SELECT
+			   D.BIN_ProductVendorID AS ProductVendorID,
+			   D.UnitCode,
+	           D.BarCode,
+			   F.NameTotal AS ProductName,
+			   Convert(decimal(18,2), D.Quantity) AS Quantity,
+	           Convert(decimal(18,2), D.PricePay) AS PricePay,
+	           Convert(decimal(18,2),ISNULL(D.PricePay,0.0)*ISNULL(D.Quantity,0)) AS AmountPay,
+	           D.SaleType
+		   FROM
+			   Sale.BIN_SaleRecordDetail D WITH(NOLOCK)
+			   JOIN Basis.BIN_ProductVendor E WITH(NOLOCK)
+			   ON(D.BIN_ProductVendorID = E.BIN_ProductVendorID)
+			   JOIN Basis.BIN_Product F WITH(NOLOCK)  
+			   ON(E.BIN_ProductID = F.BIN_ProductID) 
+		   WHERE 
+		       D.SaleType='N' AND
+		       D.BIN_SaleRecordID = #BIN_SaleRecordID#	
+		UNION ALL 
+			SELECT
+				D.BIN_ProductVendorID AS ProductVendorID,
+				D.UnitCode,
+				D.BarCode,
+				F.NameTotal AS ProductName,
+				Convert(decimal(18,2), ISNULL(D.Quantity,0)) AS Quantity,
+				Convert(decimal(18,2), ISNULL(D.PricePay,0)) AS PricePay,
+				Convert(decimal(18,2),ISNULL(D.PricePay,0.0)*ISNULL(D.Quantity,0)) AS AmountPay,
+				D.SaleType
+			FROM
+				Sale.BIN_SaleRecordDetail D WITH(NOLOCK)
+				JOIN Basis.BIN_PromotionProductVendor E WITH(NOLOCK)
+				ON(D.BIN_ProductVendorID = E.BIN_PromotionProductVendorID)
+				JOIN Basis.BIN_PromotionProduct F WITH(NOLOCK)  
+				ON(E.BIN_PromotionProductID = F.BIN_PromotionProductID)
+			WHERE 
+				D.SaleType='P' AND	  
+				D.BIN_SaleRecordID = #BIN_SaleRecordID#  
+		]]>
+    </select>
+    
+    <!-- 查询指定code对应的value -->
+	<select id="getCodeValue" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+		<![CDATA[
+	        SELECT 
+	        		CodeKey,
+					Value1,
+					Value2,
+					Value3
+		  	FROM 	
+		  			CherryConfig.Tools.BIN_Coder A
+		  	WHERE 
+		  			A.CodeType= #CodeType#   AND
+		  			A.OrgCode= #OrgCode# AND
+		  			A.BrandCode= #BrandCode#
+        ]]>
+	</select>
+    
+</sqlMap>

@@ -1,0 +1,1089 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sqlMap PUBLIC "-//iBATIS.com//DTD SQL Map 2.0//EN" "http://ibatis.apache.org/dtd/sql-map-2.dtd">
+<sqlMap namespace="BINBEPTRPS01">
+	<!-- 柜台数据查询SQL文 -->
+	<sql id="querySQL">
+		<![CDATA[
+			select 
+				#date# as date,
+				A.BIN_OrganizationInfoID as organizationInfoId,
+				A.BIN_BrandInfoID as brandInfoId,																																						
+				A.BIN_OrganizationID as organizationId,																																						
+				A.DepartName as departName,																																								
+				ISNULL(B.COPC,0) as COPC,																																
+				ISNULL(B.COPQ,0) as COPQ,																												
+				ISNULL(C.CDPC,0) as CDPC,																																		
+				ISNULL(C.CDPQ,0) as CDPQ,																																
+				ISNULL(D.CSPC,0) as CSPC,																																							
+				ISNULL(D.CSPM,0) as CSPM,																																						
+				ISNULL(D.CSPQ,0) as CSPQ,																																					
+				ISNULL(E.CRPC,0) as CRPC,																																					
+				ISNULL(E.CRPM,0) as CRPM,																																					
+				ISNULL(E.CRPQ,0) as CRPQ,																																				
+				ISNULL(F.CRIC,0) as CRIC,																																		
+				ISNULL(F.CRIQ,0) as CRIQ,																																	
+				ISNULL(G.CAIC,0) as CAIC,																															
+				ISNULL(G.CAIQ,0) as CAIQ,																														
+				ISNULL(H.CAOC,0) as CAOC,																															
+				ISNULL(H.CAOQ,0) as CAOQ,																													
+				ISNULL(I.CTMC,0) as CTMC,																																				
+				ISNULL(J.CZMC,0) as CZMC,																																				
+				ISNULL(K.CSSC,0) as CSSC,																																			
+				ISNULL(K.CSSQ,0) as CSSQ,																																					
+				ISNULL(K.CSCC,0) as CSCC,																																					
+				ISNULL(K.CSCM,0) as CSCM,		
+				ISNULL(L.CDPS,0) as CDPS,	
+				ISNULL(M.CPDC,0) as CPDC,																																			
+				ISNULL(M.CPDQ,0) as CPDQ,																																					
+				ISNULL(M.CPCC,0) as CPCC,																																					
+				ISNULL(M.CPCM,0) as CPCM,
+				ISNULL(N.CRAC,0) as CRAC,	
+				ISNULL(N.CRAQ,0) as CRAQ,	
+				ISNULL(O.CPXC,0) as CPXC,																																							
+				ISNULL(O.CPXM,0) as CPXM,																																						
+				ISNULL(O.CPXQ,0) as CPXQ,
+				ISNULL(P.CSQC,0) as CSQC,
+				ISNULL(Q.CSQS,0) as CSQS,	
+				ISNULL(R.CRQC,0) as CRQC,	
+				ISNULL(S.CRQS,0) as CRQS													
+			from
+				Basis.BIN_Organization A WITH(NOLOCK)
+				left join(
+					select 														
+						T1.BIN_OrganizationID,													
+						COUNT(T2.BIN_ProductOrderID) as COPC,													
+						SUM(T2.TotalQuantity) as COPQ													
+					from 														
+						Basis.BIN_Organization T1 WITH(NOLOCK)													
+						left join Inventory.BIN_ProductOrder T2 WITH(NOLOCK) on T1.BIN_OrganizationID = T2.BIN_OrganizationID and T2.ValidFlag = '1' and T2.Date = #date#													
+					group by T1.BIN_OrganizationID														
+				)B on A.BIN_OrganizationID = B.BIN_OrganizationID
+				left join(
+					select 						
+						T1.BIN_OrganizationID,					
+						COUNT(T2.BIN_OrganizationIDReceive) as CDPC,					
+						SUM(T2.TotalQuantity) as CDPQ					
+					from 						
+						Basis.BIN_Organization T1 WITH(NOLOCK)					
+						left join Inventory.BIN_ProductReceive  T2 WITH(NOLOCK) on T1.BIN_OrganizationID = T2.BIN_OrganizationID and T2.TradeStatus = '12' and T2.ValidFlag = '1' and T2.ReceiveDate = #date#					
+					group by T1.BIN_OrganizationID						
+				)C on A.BIN_OrganizationID = C.BIN_OrganizationID
+				left join(
+					select 				
+						T1.BIN_OrganizationID,			
+						COUNT(T2.BIN_SaleRecordID) as CSPC,			
+						SUM(T2.Amount) as CSPM,			
+						SUM(T2.Quantity) as CSPQ			
+					from 				
+						Basis.BIN_Organization T1 WITH(NOLOCK)			
+						left join Sale.BIN_SaleRecord  T2 WITH(NOLOCK) on T1.BIN_OrganizationID = T2.BIN_OrganizationID and T2.SaleType = 'NS' and T2.ValidFlag = '1' and T2.SaleDate = #date#		
+					group by T1.BIN_OrganizationID				
+				)D on A.BIN_OrganizationID = D.BIN_OrganizationID
+				left join(
+					select 					
+						T1.BIN_OrganizationID,				
+						COUNT(T2.BIN_SaleRecordID) as CRPC,				
+						SUM(T2.Amount) as CRPM,				
+						SUM(T2.Quantity) as CRPQ				
+					from 					
+						Basis.BIN_Organization T1 WITH(NOLOCK)				
+						left join Sale.BIN_SaleRecord T2 WITH(NOLOCK) on T1.BIN_OrganizationID = T2.BIN_OrganizationID and T2.SaleType = 'SR' and T2.ValidFlag = '1' and T2.SaleDate = #date#				
+					group by T1.BIN_OrganizationID					
+				)E on A.BIN_OrganizationID = E.BIN_OrganizationID
+				left join(
+					select 					
+						T1.BIN_OrganizationID,				
+						COUNT(T2.BIN_ProductReturnID) as CRIC,				
+						SUM(T2.TotalQuantity) as CRIQ				
+					from 					
+						Basis.BIN_Organization T1 WITH(NOLOCK)				
+						left join Inventory.BIN_ProductReturn  T2 WITH(NOLOCK) on T1.BIN_OrganizationID = T2.BIN_OrganizationID and T2.TradeType = 'RR' and T2.ValidFlag = '1' and T2.ReturnDate = #date#				
+					group by T1.BIN_OrganizationID					
+				)F on A.BIN_OrganizationID = F.BIN_OrganizationID
+				left join(
+					select 				
+						T1.BIN_OrganizationID,			
+						COUNT(T2.BIN_ProductAllocationInID) as CAIC,			
+						SUM(T2.TotalQuantity) as CAIQ			
+					from 				
+						Basis.BIN_Organization T1 WITH(NOLOCK)			
+						left join Inventory.BIN_ProductAllocationIn T2 WITH(NOLOCK) on T1.BIN_OrganizationID = T2.BIN_OrganizationIDIn and T2.ValidFlag = '1' and T2.Date = #date#			
+					group by T1.BIN_OrganizationID				
+				)G on A.BIN_OrganizationID = G.BIN_OrganizationID
+				left join(
+					select 					
+						T1.BIN_OrganizationID,				
+						COUNT(T2.BIN_ProductAllocationOutID) as CAOC,				
+						SUM(T2.TotalQuantity) as CAOQ				
+					from 					
+						Basis.BIN_Organization T1 WITH(NOLOCK)				
+						left join Inventory.BIN_ProductAllocationOut T2 WITH(NOLOCK) on T1.BIN_OrganizationID = T2.BIN_OrganizationIDOut and T2.ValidFlag = '1' and T2.Date = #date#				
+					group by T1.BIN_OrganizationID					
+				)H on A.BIN_OrganizationID = H.BIN_OrganizationID
+				left join(
+					select 							
+						COUNT(T1.BIN_MemberInfoID) as CTMC,						
+						T2.BIN_OrganizationID						
+					from 							
+						Members.BIN_MemberInfo T1 WITH(NOLOCK)						
+						left join Basis.BIN_Organization T2 WITH(NOLOCK) on T1.CounterCodeBelong = T2.DepartCode						
+					where							
+						T1.ValidFlag = '1' and T1.JoinDate <= #date#							
+					group by T2.BIN_OrganizationID							
+				)I on A.BIN_OrganizationID = I.BIN_OrganizationID
+				left join(
+					select 						
+						COUNT(T1.BIN_MemberInfoID) as CZMC,					
+						T2.BIN_OrganizationID					
+					from 						
+						Members.BIN_MemberInfo T1 WITH(NOLOCK)					
+						left join Basis.BIN_Organization T2 WITH(NOLOCK) on T1.CounterCodeBelong = T2.DepartCode					
+					where						
+						T1.ValidFlag = '1' and T1.JoinDate = #date#					
+					group by T2.BIN_OrganizationID						
+				)J on A.BIN_OrganizationID = J.BIN_OrganizationID
+				left join(
+					select 					
+						T1.BIN_OrganizationID,				
+						COUNT(T2.BIN_ProStocktakeRequestID) as CSSC,				
+						SUM(T3.checkQuantity) as CSSQ,				
+						SUM(T3.gainQuantity)as CSCC,				
+						SUM(T3.gainAmount) as CSCM				
+					from					
+						Basis.BIN_Organization T1 WITH(NOLOCK)				
+						left join Inventory.BIN_ProStocktakeRequest T2 WITH(NOLOCK) on T1.BIN_OrganizationID = T2.BIN_OrganizationID and T2.ValidFlag = '1' and T2.Date = #date#				
+						left join(				
+							select 			
+								BIN_ProStocktakeRequestID,		
+								SUM(CheckQuantity) as checkQuantity,		
+								SUM(GainQuantity) as gainQuantity,		
+								SUM(GainQuantity*Price) as gainAmount 		
+							from 			
+								Inventory.BIN_ProStocktakeRequestDetail  WITH(NOLOCK)		
+							group by BIN_ProStocktakeRequestID			
+						)T3 on T2.BIN_ProStocktakeRequestID = T3.BIN_ProStocktakeRequestID				
+					group by T1.BIN_OrganizationID					
+				)K on A.BIN_OrganizationID = K.BIN_OrganizationID
+				left join(
+					select 
+						BIN_OrganizationIDT,
+						COUNT(BillID) as CDPS
+					from 
+						Inventory.BIN_InventoryUserTask  WITH(NOLOCK)
+					where 
+						CurrentOperate = '50'
+						and ValidFlag = '1'
+					group by BIN_OrganizationIDT 
+				)L on A.BIN_OrganizationID = L.BIN_OrganizationIDT
+				left join(
+					select 				
+						T1.BIN_OrganizationID,			
+						COUNT(T2.BIN_ProductStockTakingID) as CPDC,			
+						SUM(T3.checkQuantity) as CPDQ,			
+						SUM(T3.gainQuantity)as CPCC,			
+						SUM(T3.gainAmount) as CPCM			
+					from				
+						Basis.BIN_Organization T1 WITH(NOLOCK)			
+						left join Inventory.BIN_ProductStockTaking T2 WITH(NOLOCK) on T1.BIN_OrganizationID = T2.BIN_OrganizationID and T2.ValidFlag = '1' and T2.Date = #date#			
+						left join(			
+							select 		
+								BIN_ProductTakingID,	
+								SUM(Quantity)+SUM(GainQuantity) as checkQuantity,	
+								SUM(GainQuantity) as gainQuantity,	
+								SUM(GainQuantity*Price) as gainAmount 	
+							from 		
+								Inventory.BIN_ProductTakingDetail WITH(NOLOCK) 	
+							group by BIN_ProductTakingID		
+						)T3 on T2.BIN_ProductStockTakingID = T3.BIN_ProductTakingID			
+					group by T1.BIN_OrganizationID	
+				)M on A.BIN_OrganizationID = M.BIN_OrganizationID
+				left join(
+					select 			
+						T1.BIN_OrganizationID,		
+						COUNT(T2.BIN_ProReturnRequestID) as CRAC,		
+						SUM(T2.TotalQuantity) as CRAQ		
+					from 			
+						Basis.BIN_Organization T1 WITH(NOLOCK)		
+						left join Inventory.BIN_ProReturnRequest  T2 WITH(NOLOCK) on T1.BIN_OrganizationID = T2.BIN_OrganizationID and T2.TradeType = 'RA' and T2.ValidFlag = '1' and T2.TradeDate = #date#		
+					group by T1.BIN_OrganizationID		
+				)N on A.BIN_OrganizationID = N.BIN_OrganizationID
+				left join(
+					select 				
+						T1.BIN_OrganizationID,			
+						COUNT(T2.BIN_SaleRecordID) as CPXC,			
+						SUM(T2.Amount) as CPXM,			
+						SUM(T2.Quantity) as CPXQ			
+					from 				
+						Basis.BIN_Organization T1 WITH(NOLOCK)			
+						left join Sale.BIN_SaleRecord  T2 WITH(NOLOCK) on T1.BIN_OrganizationID = T2.BIN_OrganizationID and T2.SaleType = 'PX' and T2.ValidFlag = '1' and T2.SaleDate = #date#		
+					group by T1.BIN_OrganizationID	
+				)O on  A.BIN_OrganizationID = O.BIN_OrganizationID
+				left join(
+					select 
+						 T1.BIN_OrganizationID,
+						 COUNT(T1.BillID) as CSQC
+					from 
+						Inventory.BIN_InventoryOpLog T1 WITH(NOLOCK)
+					where T1.OpCode = '144' and CONVERT(nvarchar(10),T1.OpDate,23) = #date#
+					group by T1.BIN_OrganizationID				
+				)P on  A.BIN_OrganizationID = P.BIN_OrganizationID
+				left join(
+					select
+						T1.BIN_OrganizationIDF,
+						COUNT(T1.BillID) as CSQS
+					from 
+						Inventory.BIN_InventoryUserTask T1 WITH(NOLOCK)
+					where T1.CurrentOperate = '144'
+					group by T1.BIN_OrganizationIDF				
+				)Q on  A.BIN_OrganizationID = Q.BIN_OrganizationIDF
+				left join(
+					select 
+						 T1.BIN_OrganizationID,
+						 COUNT(T1.BillID) as CRQC
+					from 
+						Inventory.BIN_InventoryOpLog T1 WITH(NOLOCK)
+					where T1.OpCode = '134' and CONVERT(nvarchar(10),T1.OpDate,23) = #date#
+					group by T1.BIN_OrganizationID			
+				)R on  A.BIN_OrganizationID = R.BIN_OrganizationID
+				left join(
+					select
+						T1.BIN_OrganizationIDF,
+						COUNT(T1.BillID) as CRQS
+					from 
+						Inventory.BIN_InventoryUserTask T1 WITH(NOLOCK)
+					where T1.CurrentOperate = '134'
+					group by T1.BIN_OrganizationIDF		
+				)S on  A.BIN_OrganizationID = S.BIN_OrganizationIDF
+		]]>
+		<dynamic prepend="WHERE">
+			<isNotEmpty prepend="AND" property="organizationInfoId">
+				A.BIN_OrganizationInfoID = #organizationInfoId#	
+			</isNotEmpty>
+			<isNotEmpty prepend="AND" property="brandInfoId">
+				A.BIN_BrandInfoID = #brandInfoId#
+			</isNotEmpty>
+		</dynamic>
+	</sql>
+	
+	<!-- 取得柜台操作数据List -->
+	<select id="getList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap" remapResults="true">
+		<include refid="BINBEPTRPS01.querySQL"/>
+	</select>
+	 
+	<!-- 柜台主管操作数据查询SQL文 -->
+	<sql id="queryBASDataSQL">
+		<![CDATA[
+			select 
+				#date# as date,
+				A.BIN_OrganizationInfoID as organizationInfoId,
+				A.BIN_BrandInfoID as brandInfoId,																																						
+				A.BIN_OrganizationID as organizationId,																																						
+				A.DepartName as departName,																																																																							
+				B.BASM as BASM,																																										
+				ISNULL(C.SFAC,0) as SFAC,																															
+				ISNULL(D.SFAS,0) as SFAS,																											
+				ISNULL(E.OFAC,0) as OFAC,																															
+				ISNULL(F.OFAS,0) as OFAS,
+				ISNULL(G.RFAC,0) as RFAC,	
+				ISNULL(H.RFAS,0) as RFAS														
+			from
+				Basis.BIN_Organization A
+				left join(
+					select 						
+						T1.BIN_OrganizationID,					
+						T2.BIN_EmployeeID as BASM			
+					from 						
+						Basis.BIN_Organization T1 WITH(NOLOCK)					
+						left join Privilege.BIN_EmployeeDepart T2 WITH(NOLOCK) on T1.BIN_OrganizationID = T2.BIN_OrganizationID and T2.ManageType = 1									
+				)B on A.BIN_OrganizationID = B.BIN_OrganizationID
+				left join(
+					select 					
+						T1.BIN_OrganizationID,				
+						COUNT(T2.BIN_ProStocktakeRequestID) as SFAC				
+					from 					
+						Basis.BIN_Organization T1 WITH(NOLOCK)
+						join Inventory.BIN_ProStocktakeRequest T2 WITH(NOLOCK) on T1.BIN_OrganizationID = T2.BIN_OrganizationID and T2.ValidFlag = '1'				
+						join Inventory.BIN_InventoryOpLog T3 WITH(NOLOCK) on T2.BIN_ProStocktakeRequestID = T3.BillID and T3.OpCode = '141' and T2.ValidFlag = '1' and CONVERT(varchar(10), T3.OpDate, 23) = #date#
+						join Basis.BIN_Organization T4 WITH(NOLOCK) on T3.BIN_OrganizationID = T4.BIN_OrganizationID and T4.Type = '6'
+					group by T1.BIN_OrganizationID					
+				)C on A.BIN_OrganizationID = C.BIN_OrganizationID
+				left join(
+					select 
+						BIN_OrganizationIDF as BIN_OrganizationID,				
+						COUNT(BIN_InventoryUserTaskID) as SFAS
+					from (
+						SELECT	
+							distinct			
+							T2.*		
+						FROM 					
+							(				
+								(		
+									select 
+										'P'+cast(BIN_PositionCategoryID as nvarchar) as participant 	
+									from 
+										Privilege.BIN_PositionCategory WITH(NOLOCK)
+									where 
+										CategoryCode = '02'	
+								)			
+								union			
+								(			
+									select 
+										'U'+cast(T3.BIN_UserID as nvarchar) as participant 	
+									from 
+										Basis.BIN_Employee T1
+										left join Privilege.BIN_PositionCategory T2 WITH(NOLOCK) on T1.BIN_PositionCategoryID = T2.BIN_PositionCategoryID
+										left join Privilege.BIN_User T3 WITH(NOLOCK) on T1.BIN_EmployeeID = T3.BIN_EmployeeID 	
+									where T2.CategoryCode = '02' and T1.ValidFlag = '1'		
+								)	
+								union			
+								(			
+									select 
+										'D'+cast(T1.BIN_OrganizationID as nvarchar) as participant 	
+									from 
+										Basis.BIN_Organization T1 WITH(NOLOCK)
+									where Type = '6' and ValidFlag = '1'
+										
+								)					
+							)T1 				
+							JOIN Inventory.BIN_InventoryUserTask T2 WITH(NOLOCK)  				
+							ON T2.CurrentParticipant LIKE  '%'  +  T1.participant  + ',%'	
+							join Inventory.BIN_ProStocktakeRequest T3 WITH(NOLOCK) 
+							on T2.BillID = T3.BIN_ProStocktakeRequestID and T3.VerifiedFlag = '5' and T3.ValidFlag = '1' 								
+						WHERE 					
+							T2.CurrentOperate = '141' and T2.ValidFlag = '1'							
+					)T
+					GROUP BY T.BIN_OrganizationIDF		
+				)D on A.BIN_OrganizationID = D.BIN_OrganizationID
+				left join(
+					select 
+						T1.BIN_OrganizationID,
+						COUNT(T2.BIN_ProductOrderID) as OFAC
+					from 
+						Basis.BIN_Organization T1 WITH(NOLOCK)
+						join Inventory.BIN_ProductOrder T2 WITH(NOLOCK) on T1.BIN_OrganizationID = T2.BIN_OrganizationID and T2.ValidFlag = '1'
+						join Inventory.BIN_InventoryOpLog T3 WITH(NOLOCK) on T2.BIN_ProductOrderID = T3.BillID and T3.OpCode = '31' and CONVERT(varchar(10), T3.OpDate, 23) = #date# 
+						join Basis.BIN_Organization T4 WITH(NOLOCK) on T3.BIN_OrganizationID = T4.BIN_OrganizationID and T4.Type = '6'
+					group by T1.BIN_OrganizationID					
+				)E on A.BIN_OrganizationID = E.BIN_OrganizationID
+				left join(
+					select 
+						BIN_OrganizationIDF as BIN_OrganizationID,				
+						COUNT(BIN_InventoryUserTaskID) as OFAS
+					from (
+						SELECT	
+							distinct			
+							T2.*		
+						FROM 					
+							(				
+								(			
+									select 
+										'P'+cast(BIN_PositionCategoryID as nvarchar) as participant 	
+									from 
+										Privilege.BIN_PositionCategory  WITH(NOLOCK)
+									where 
+										CategoryCode = '02'	
+								)			
+								union			
+								(			
+									select 
+										'U'+cast(T3.BIN_UserID as nvarchar) as participant 	
+									from 
+										Basis.BIN_Employee T1 WITH(NOLOCK)
+										left join Privilege.BIN_PositionCategory T2 WITH(NOLOCK) on T1.BIN_PositionCategoryID = T2.BIN_PositionCategoryID
+										left join Privilege.BIN_User T3 WITH(NOLOCK) on T1.BIN_EmployeeID = T3.BIN_EmployeeID 	
+									where T2.CategoryCode = '02' and T1.ValidFlag = '1'		
+								)
+								union			
+								(			
+									select 
+										'D'+cast(T1.BIN_OrganizationID as nvarchar) as participant 	
+									from 
+										Basis.BIN_Organization T1 WITH(NOLOCK)
+									where Type = '6' and ValidFlag = '1'
+										
+								)						
+							)T1 				
+							JOIN Inventory.BIN_InventoryUserTask T2 WITH(NOLOCK)  				
+							ON T2.CurrentParticipant LIKE  '%'  +  T1.participant  + ',%'	
+							join Inventory.BIN_ProductOrder T3 WITH(NOLOCK) 
+							on T2.BillID = T3.BIN_ProductOrderID and T3.VerifiedFlag = '5' and T3.ValidFlag = '1'					
+								
+						WHERE 					
+							T2.CurrentOperate = '31' and T2.ValidFlag = '1'							
+					)T
+					GROUP BY T.BIN_OrganizationIDF	
+				)F on A.BIN_OrganizationID = F.BIN_OrganizationID
+				left join(
+					select 					
+						T1.BIN_OrganizationID,
+						T1.DepartName,				
+						COUNT(T2.BIN_ProReturnRequestID) as RFAC				
+					from 					
+						Basis.BIN_Organization T1 WITH(NOLOCK)
+						join Inventory.BIN_ProReturnRequest T2 WITH(NOLOCK) on T1.BIN_OrganizationID = T2.BIN_OrganizationID and T2.ValidFlag = '1'				
+						join Inventory.BIN_InventoryOpLog T3 WITH(NOLOCK) on T2.BIN_ProReturnRequestID = T3.BillID and T3.OpCode = '131' and T2.ValidFlag = '1' and CONVERT(varchar(10), T3.OpDate, 23) = #date#
+						join Basis.BIN_Organization T4 WITH(NOLOCK) on T3.BIN_OrganizationID = T4.BIN_OrganizationID and T4.Type = '6'
+					group by T1.DepartName,T1.BIN_OrganizationID			
+				)G on A.BIN_OrganizationID = G.BIN_OrganizationID
+				left join(
+					select 
+						BIN_OrganizationIDF as BIN_OrganizationID,				
+						COUNT(BIN_InventoryUserTaskID) as RFAS	
+					from (
+						SELECT	
+							distinct			
+							T2.*		
+						FROM 					
+							(				
+								(			
+									select 
+										'P'+cast(BIN_PositionCategoryID as nvarchar) as participant 	
+									from 
+										Privilege.BIN_PositionCategory  WITH(NOLOCK)
+									where 
+										CategoryCode = '02'	
+								)			
+								union			
+								(			
+									select 
+										'U'+cast(T3.BIN_UserID as nvarchar) as participant 	
+									from 
+										Basis.BIN_Employee T1 WITH(NOLOCK)
+										left join Privilege.BIN_PositionCategory T2 WITH(NOLOCK) on T1.BIN_PositionCategoryID = T2.BIN_PositionCategoryID
+										left join Privilege.BIN_User T3 WITH(NOLOCK) on T1.BIN_EmployeeID = T3.BIN_EmployeeID 	
+									where T2.CategoryCode = '02' and T1.ValidFlag = '1'		
+								)
+								union			
+								(			
+									select 
+										'D'+cast(T1.BIN_OrganizationID as nvarchar) as participant 	
+									from 
+										Basis.BIN_Organization T1 WITH(NOLOCK)
+									where Type = '6' and ValidFlag = '1'
+										
+								)						
+							)T1 				
+							JOIN Inventory.BIN_InventoryUserTask T2 WITH(NOLOCK)  				
+							ON T2.CurrentParticipant LIKE  '%'  +  T1.participant  + ',%'	
+							join Inventory.BIN_ProReturnRequest T3 WITH(NOLOCK) 
+							on T2.BillID = T3.BIN_ProReturnRequestID and VerifiedFlag = '5' and T3.ValidFlag = '1'			
+						WHERE 					
+							T2.CurrentOperate = '131' and T2.ValidFlag = '1'							
+					)T
+					GROUP BY T.BIN_OrganizationIDF		
+				)H on A.BIN_OrganizationID = H.BIN_OrganizationID
+		]]>
+		<dynamic prepend="WHERE">
+			<isNotEmpty prepend="AND" property="organizationInfoId">
+				A.BIN_OrganizationInfoID = #organizationInfoId#	
+			</isNotEmpty>
+			<isNotEmpty prepend="AND" property="brandInfoId">
+				A.BIN_BrandInfoID = #brandInfoId#
+			</isNotEmpty>
+		</dynamic>
+	</sql> 
+    
+    <!-- 取得柜台主管操作数据List -->
+	<select id="getBASDataList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap" remapResults="true">
+		<include refid="BINBEPTRPS01.queryBASDataSQL"/>
+	</select>
+    
+    <!--部门操作数据查询SQL文  -->
+    <sql id="queryDepartDataSQL">
+    	<![CDATA[
+    		select 
+				#date# as date,
+				A.BIN_OrganizationInfoID as organizationInfoId,
+				A.BIN_BrandInfoID as brandInfoId,																																												
+				A.BIN_OrganizationID as organizationId,																																						
+				A.DepartName as departName,
+				ISNULL(B.DSSC,0) as DSSC,							
+				ISNULL(C.DOSC,0) as DOSC,							
+				ISNULL(D.DDSC,0) as DDSC,
+				E.DSEM as DSEM,
+				ISNULL(F.DSSS,0) as DSSS,
+				ISNULL(G.DOSS,0) as DOSS,
+				ISNULL(H.DDSS,0) as DDSS,
+				ISNULL(I.DRSC,0) as DRSC,
+				ISNULL(J.DRSS,0) as DRSS			
+			from
+				Basis.BIN_Organization A
+				left join(
+					select 					
+						T1.BIN_OrganizationID,				
+						COUNT(T2.BIN_ProStocktakeRequestID) as DSSC		
+					from					
+						Basis.BIN_Organization T1 WITH(NOLOCK) 				
+						join Inventory.BIN_ProStocktakeRequest T2 WITH(NOLOCK)  on T1.BIN_OrganizationID = T2.BIN_OrganizationID and T2.ValidFlag = '1'				
+						join Inventory.BIN_InventoryOpLog T3 WITH(NOLOCK) on T3.BillID = T2.BIN_ProStocktakeRequestID and T3.OpCode = '145' and CONVERT(varchar(10), T3.OpDate, 23) = #date#	and T3.BIN_OrganizationID = #departId#								
+					group by T1.BIN_OrganizationID							
+				)B on A.BIN_OrganizationID = B.BIN_OrganizationID
+				left join(
+					select 				
+						T1.BIN_OrganizationID,			
+						COUNT(T2.BIN_ProductOrderID) as DOSC			
+					from				
+						Basis.BIN_Organization T1 WITH(NOLOCK)			
+						join Inventory.BIN_ProductOrder T2 WITH(NOLOCK) on T1.BIN_OrganizationID = T2.BIN_OrganizationID and T2.ValidFlag = '1'			
+						join Inventory.BIN_InventoryOpLog T3 WITH(NOLOCK) on T2.BIN_ProductOrderID = T3.BillID and T3.OpCode = '34' and CONVERT(varchar(10), T3.OpDate, 23) = #date# 	and T3.BIN_OrganizationID = #departId#			
+					group by T1.BIN_OrganizationID				
+				)C on A.BIN_OrganizationID = C.BIN_OrganizationID
+				left join(
+					select 			
+						T1.BIN_OrganizationID,		
+						COUNT(T2.BIN_ProductDeliverID) as DDSC		
+					from 			
+						Basis.BIN_Organization T1 WITH(NOLOCK)	
+						join Inventory.BIN_ProductDeliver T2 WITH(NOLOCK) on T1.BIN_OrganizationID = T2.BIN_OrganizationIDReceive and T2.TradeStatus = '12' and T2.Date = #date#		
+						left join Basis.BIN_Employee T3 WITH(NOLOCK) on T2.BIN_EmployeeIDAudit = T3.BIN_EmployeeID 		
+						left join Basis.BIN_Employee T4 WITH(NOLOCK) on T2.BIN_EmployeeID = T4.BIN_EmployeeID			
+					where (T4.BIN_OrganizationID = #departId# and T2.BIN_EmployeeIDAudit is null)or T3.BIN_OrganizationID = #departId#				
+					group by T1.BIN_OrganizationID			
+				)D on A.BIN_OrganizationID = D.BIN_OrganizationID
+				left join(
+					SELECT 
+						T.BIN_OrganizationIDF,
+						COUNT(T.BIN_InventoryUserTaskID) as DSSS
+					FROM(
+						SELECT
+							DISTINCT
+							T2.*
+						FROM 
+							(
+								(
+									select 
+										'U'+cast(T2.BIN_UserID as nvarchar) as participant 
+									from 
+										Basis.BIN_Employee T1 WITH(NOLOCK)
+										left join Privilege.BIN_User T2 WITH(NOLOCK) on T1.BIN_EmployeeID = T2.BIN_EmployeeID 
+									where 
+										BIN_OrganizationID = #departId#
+								)
+								union
+								(
+									select 
+										'D'+cast(BIN_OrganizationID as nvarchar) as participant
+									from 
+										Basis.BIN_Employee WITH(NOLOCK)
+									where 
+										BIN_OrganizationID = #departId#
+								)
+								union
+								(
+									select 
+										'P'+cast(BIN_PositionCategoryID as nvarchar) as participant 
+									from 
+										Basis.BIN_Employee WITH(NOLOCK) 
+									where 
+										BIN_OrganizationID = #departId#
+								)
+							)T1 
+							JOIN Inventory.BIN_InventoryUserTask T2 WITH(NOLOCK)  
+							ON T2.CurrentParticipant LIKE  '%'  +  T1.participant  + ',%'
+						WHERE 
+							T2.CurrentOperate = '145' and T2.ValidFlag = '1'
+					)T
+					GROUP BY T.BIN_OrganizationIDF
+				)F  on A.BIN_OrganizationID = F.BIN_OrganizationIDF
+				left join(
+					SELECT 
+						T.BIN_OrganizationIDF,
+						COUNT(T.BIN_InventoryUserTaskID) as DOSS
+					FROM(	
+						SELECT
+							DISTINCT
+							T2.*
+						FROM 
+							(
+								(
+									select 
+										'U'+cast(T2.BIN_UserID as nvarchar) as participant 
+									from 
+										Basis.BIN_Employee T1 WITH(NOLOCK)
+										left join Privilege.BIN_User T2 WITH(NOLOCK) on T1.BIN_EmployeeID = T2.BIN_EmployeeID 
+									where 
+										BIN_OrganizationID = #departId#
+								)
+								union
+								(
+									select 
+										'D'+cast(BIN_OrganizationID as nvarchar) as participant
+									from 
+										Basis.BIN_Employee WITH(NOLOCK) 
+									where 
+										BIN_OrganizationID = #departId#
+								)
+								union
+								(
+									select 
+										'P'+cast(BIN_PositionCategoryID as nvarchar) as participant 
+									from 
+										Basis.BIN_Employee  WITH(NOLOCK)
+									where 
+										BIN_OrganizationID = #departId#
+								)
+							)T1 
+							JOIN Inventory.BIN_InventoryUserTask T2  WITH(NOLOCK) 
+							ON T2.CurrentParticipant LIKE  '%'  +  T1.participant  + ',%'
+						WHERE 
+							T2.CurrentOperate = '34' and T2.ValidFlag = '1'
+					) T
+					GROUP BY T.BIN_OrganizationIDF					
+				)G  on A.BIN_OrganizationID = G.BIN_OrganizationIDF
+				left join(
+					SELECT 
+						T.BIN_OrganizationIDT,
+						COUNT(T.BIN_InventoryUserTaskID) as DDSS
+					FROM(
+						SELECT
+							DISTINCT
+							T2.*
+						FROM 
+							(
+								(
+									select 
+										'U'+cast(T2.BIN_UserID as nvarchar) as participant 
+									from 
+										Basis.BIN_Employee T1 WITH(NOLOCK)
+										left join Privilege.BIN_User T2 WITH(NOLOCK) on T1.BIN_EmployeeID = T2.BIN_EmployeeID 
+									where 
+										BIN_OrganizationID = #departId#
+								)
+								union
+								(
+									select 
+										'D'+cast(BIN_OrganizationID as nvarchar) as participant
+									from 
+										Basis.BIN_Employee WITH(NOLOCK) 
+									where 
+										BIN_OrganizationID = #departId#
+								)
+								union
+								(
+									select 
+										'P'+cast(BIN_PositionCategoryID as nvarchar) as participant 
+									from 
+										Basis.BIN_Employee WITH(NOLOCK) 
+									where 
+										BIN_OrganizationID = #departId#
+								)
+							)T1 
+							JOIN Inventory.BIN_InventoryUserTask T2  WITH(NOLOCK) 
+							ON T2.CurrentParticipant LIKE  '%'  +  T1.participant  + ',%'
+						WHERE 
+							T2.CurrentOperate = '40' and T2.ValidFlag = '1'
+					)T
+					GROUP BY T.BIN_OrganizationIDT					
+				)H  on A.BIN_OrganizationID = H.BIN_OrganizationIDT
+				left join(
+					select 					
+						T1.BIN_OrganizationID,				
+						COUNT(T2.BIN_ProReturnRequestID) as DRSC		
+					from					
+						Basis.BIN_Organization T1 WITH(NOLOCK) 				
+						join Inventory.BIN_ProReturnRequest T2 WITH(NOLOCK)  on T1.BIN_OrganizationID = T2.BIN_OrganizationID and T2.ValidFlag = '1'				
+						join Inventory.BIN_InventoryOpLog T3 WITH(NOLOCK) on T3.BillID = T2.BIN_ProReturnRequestID and T3.OpCode = '137' and CONVERT(varchar(10), T3.OpDate, 23) = #date#	and T3.BIN_OrganizationID = #departId#								
+					group by T1.BIN_OrganizationID	
+				)I on A.BIN_OrganizationID = I.BIN_OrganizationID
+				left join(
+					SELECT 
+						T.BIN_OrganizationIDF,
+						COUNT(T.BIN_InventoryUserTaskID) as DRSS
+					FROM(
+						SELECT
+							DISTINCT
+							T2.*
+						FROM 
+							(
+								(
+									select 
+										'U'+cast(T2.BIN_UserID as nvarchar) as participant 
+									from 
+										Basis.BIN_Employee T1 WITH(NOLOCK)
+										left join Privilege.BIN_User T2 WITH(NOLOCK) on T1.BIN_EmployeeID = T2.BIN_EmployeeID 
+									where 
+										BIN_OrganizationID = #departId#
+								)
+								union
+								(
+									select 
+										'D'+cast(BIN_OrganizationID as nvarchar) as participant
+									from 
+										Basis.BIN_Employee  WITH(NOLOCK)
+									where 
+										BIN_OrganizationID = #departId#
+								)
+								union
+								(
+									select 
+										'P'+cast(BIN_PositionCategoryID as nvarchar) as participant 
+									from 
+										Basis.BIN_Employee WITH(NOLOCK) 
+									where 
+										BIN_OrganizationID = #departId#
+								)
+							)T1 
+							JOIN Inventory.BIN_InventoryUserTask T2  WITH(NOLOCK) 
+							ON T2.CurrentParticipant LIKE  '%'  +  T1.participant  + ',%'
+						WHERE 
+							T2.CurrentOperate = '137' and T2.ValidFlag = '1'
+					)T
+					GROUP BY T.BIN_OrganizationIDF				
+				)J  on A.BIN_OrganizationID = J.BIN_OrganizationIDF
+				left join
+				(
+					select 					
+						T1.BIN_OrganizationID, 				
+						T1.BIN_EmployeeID as DSEM				
+					from 					
+						Privilege.BIN_EmployeeDepart T1 WITH(NOLOCK)							
+					where T1.ManageType = '1' and T1.BIN_OrganizationID = #departId#							
+				)E on E.BIN_OrganizationID = #departId#
+    	]]>
+    	<dynamic prepend="WHERE">
+    		<isNotEmpty prepend="AND" property="organizationInfoId">
+				A.BIN_OrganizationInfoID = #organizationInfoId#
+			</isNotEmpty>
+			<isNotEmpty prepend="AND" property="brandInfoId">
+				A.BIN_BrandInfoID = #brandInfoId#
+			</isNotEmpty>
+		</dynamic>
+    </sql>
+    
+    <!-- 取得部门操作数据List -->
+	<select id="getDepartDataList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap" remapResults="true">
+		<include refid="BINBEPTRPS01.queryDepartDataSQL"/>
+	</select>
+	
+    <!--工作流状态数据查询SQL文  -->
+    <sql id="queryOFWDataSQL">
+    	<![CDATA[
+			select 
+				#date# as date,
+				A.BIN_OrganizationInfoID as organizationInfoId,
+				A.BIN_BrandInfoID as brandInfoId,																																						
+				A.BIN_OrganizationID as organizationId,																																						
+				A.DepartName as departName,	
+				ISNULL(B.OSFC,0) as OSFC,
+				ISNULL(C.OSFS,0) as OSFS,
+				ISNULL(D.OSSC,0) as OSSC,
+				ISNULL(E.OSSS,0) as OSSS,
+				ISNULL(F.OOFC,0) as OOFC,
+				ISNULL(G.OOFS,0) as OOFS,
+				ISNULL(H.OOSC,0) as OOSC,
+				ISNULL(I.OOSS,0) as OOSS,
+				ISNULL(J.ODFC,0) as ODFC,
+				ISNULL(K.ODFS,0) as ODFS,
+				ISNULL(L.ORFC,0) as ORFC,
+				ISNULL(M.ORFS,0) as ORFS,
+				ISNULL(N.ORSC,0) as ORSC,
+				ISNULL(O.ORSS,0) as ORSS
+			from
+				Basis.BIN_Organization A
+				left join(						
+					select 									
+						 T2.BIN_OrganizationID,								
+						 COUNT(T1.BillID) as OSFC								
+					from 
+						Inventory.BIN_ProStocktakeRequest T2  WITH(NOLOCK)							
+						join Inventory.BIN_InventoryOpLog T1 WITH(NOLOCK) on T1.BillID = T2.BIN_ProStocktakeRequestID 					
+					where 
+						T1.OpCode = '141' and CONVERT(nvarchar(10),T1.OpDate,23) = #date# and T2.ValidFlag = '1'							
+					group by T2.BIN_OrganizationID									
+				) B on A.BIN_OrganizationID = B.BIN_OrganizationID
+				left join(																	
+					select									
+						T1.BIN_OrganizationIDF,								
+						COUNT(T1.BillID) as OSFS								
+					from
+						Inventory.BIN_ProStocktakeRequest T2 WITH(NOLOCK)									
+						join Inventory.BIN_InventoryUserTask T1 WITH(NOLOCK) on T1.BillID = T2.BIN_ProStocktakeRequestID								
+					where T1.CurrentOperate = '141' and T2.ValidFlag = '1'								
+					group by T1.BIN_OrganizationIDF									
+				) C on A.BIN_OrganizationID = C.BIN_OrganizationIDF
+				left join(					
+					select 									
+						 T2.BIN_OrganizationID,								
+						 COUNT(T1.BillID) as OSSC								
+					from 
+						Inventory.BIN_ProStocktakeRequest T2 WITH(NOLOCK) 							
+						join Inventory.BIN_InventoryOpLog T1 WITH(NOLOCK) on T1.BillID = T2.BIN_ProStocktakeRequestID					
+					where 
+						T1.OpCode = '145' and CONVERT(nvarchar(10),T1.OpDate,23) = #date# and T2.ValidFlag = '1'								
+					group by T2.BIN_OrganizationID									
+				) D on A.BIN_OrganizationID = D.BIN_OrganizationID
+				left join(															
+					select									
+						T1.BIN_OrganizationIDF,								
+						COUNT(T1.BillID) as OSSS								
+					from
+						Inventory.BIN_ProStocktakeRequest T2 WITH(NOLOCK)		 									
+						join Inventory.BIN_InventoryUserTask T1 WITH(NOLOCK) on T1.BillID = T2.BIN_ProStocktakeRequestID								
+					where T1.CurrentOperate = '145' and T2.ValidFlag = '1'									
+					group by T1.BIN_OrganizationIDF			
+				) E on A.BIN_OrganizationID = E.BIN_OrganizationIDF
+				left join(						
+					select 									
+						 T2.BIN_OrganizationID,								
+						 COUNT(T1.BillID) as OOFC								
+					from 
+						Inventory.BIN_ProductOrder T2  WITH(NOLOCK)							
+						join Inventory.BIN_InventoryOpLog T1 WITH(NOLOCK) on T1.BillID = T2.BIN_ProductOrderID					
+					where 
+						T1.OpCode = '31' and CONVERT(nvarchar(10),T1.OpDate,23) = #date# and T2.ValidFlag = '1'									
+					group by T2.BIN_OrganizationID									
+				) F on A.BIN_OrganizationID = F.BIN_OrganizationID
+				left join(																
+					select									
+						T1.BIN_OrganizationIDF,								
+						COUNT(T1.BillID) as OOFS								
+					from 
+						Inventory.BIN_ProductOrder T2  WITH(NOLOCK)									
+						join Inventory.BIN_InventoryUserTask T1 WITH(NOLOCK) on T1.BillID = T2.BIN_ProductOrderID									
+					where T1.CurrentOperate = '31' and T2.ValidFlag = '1'										
+					group by T1.BIN_OrganizationIDF	
+				) G on A.BIN_OrganizationID = G.BIN_OrganizationIDF
+				left join(						
+					select 									
+						 T2.BIN_OrganizationID,								
+						 COUNT(T1.BillID) as OOSC								
+					from 
+						Inventory.BIN_ProductOrder T2 WITH(NOLOCK) 							
+						join Inventory.BIN_InventoryOpLog T1 WITH(NOLOCK) on T1.BillID = T2.BIN_ProductOrderID					
+					where 
+						T1.OpCode = '34' and CONVERT(nvarchar(10),T1.OpDate,23) = #date# and T2.ValidFlag = '1'									
+					group by T2.BIN_OrganizationID									
+				) H on A.BIN_OrganizationID = H.BIN_OrganizationID
+				left join(																
+					select									
+						T1.BIN_OrganizationIDF,								
+						COUNT(T1.BillID) as OOSS								
+					from
+						Inventory.BIN_ProductOrder T2 WITH(NOLOCK) 	 									
+						join Inventory.BIN_InventoryUserTask T1 WITH(NOLOCK) on T1.BillID = T2.BIN_ProductOrderID										
+					where T1.CurrentOperate = '34' and T2.ValidFlag = '1'										
+					group by T1.BIN_OrganizationIDF	
+				) I on A.BIN_OrganizationID = I.BIN_OrganizationIDF
+				left join(					
+					select 									
+						 T2.BIN_OrganizationIDReceive,								
+						 COUNT(T1.BillID) as ODFC								
+					from 
+						Inventory.BIN_ProductDeliver T2 WITH(NOLOCK) 							
+						join Inventory.BIN_InventoryOpLog T1 WITH(NOLOCK) on T1.BillID = T2.BIN_ProductDeliverID				
+					where 
+						T1.OpCode = '40' and CONVERT(nvarchar(10),T1.OpDate,23) = #date# and T2.ValidFlag = '1'									
+					group by T2.BIN_OrganizationIDReceive									
+				) J on A.BIN_OrganizationID = J.BIN_OrganizationIDReceive
+				left join(																
+					select									
+						T1.BIN_OrganizationIDT,								
+						COUNT(T1.BillID) as ODFS								
+					from
+						Inventory.BIN_ProductDeliver T2 WITH(NOLOCK) 	 									
+						join Inventory.BIN_InventoryUserTask T1 WITH(NOLOCK) on T1.BillID = T2.BIN_ProductDeliverID								
+					where T1.CurrentOperate = '40' and T2.ValidFlag = '1'												
+					group by T1.BIN_OrganizationIDT	
+				) K on A.BIN_OrganizationID = K.BIN_OrganizationIDT
+				left join(						
+					select 									
+						 T2.BIN_OrganizationID,								
+						 COUNT(T1.BillID) as ORFC								
+					from 
+						Inventory.BIN_ProReturnRequest T2 WITH(NOLOCK) 							
+						join Inventory.BIN_InventoryOpLog T1 WITH(NOLOCK) on T1.BillID = T2.BIN_ProReturnRequestID				
+					where 
+						T1.OpCode = '131' and CONVERT(nvarchar(10),T1.OpDate,23) = #date# and T2.ValidFlag = '1'											
+					group by T2.BIN_OrganizationID									
+				) L on A.BIN_OrganizationID = L.BIN_OrganizationID		
+				left join(													
+					select									
+						T1.BIN_OrganizationIDF,								
+						COUNT(T1.BillID) as ORFS								
+					from 	
+						Inventory.BIN_ProReturnRequest T2 WITH(NOLOCK) 								
+						join Inventory.BIN_InventoryUserTask T1 WITH(NOLOCK) on T1.BillID = T2.BIN_ProReturnRequestID								
+					where T1.CurrentOperate = '131' and T2.ValidFlag = '1'												
+					group by T1.BIN_OrganizationIDF	
+				) M on A.BIN_OrganizationID = M.BIN_OrganizationIDF
+				left join(						
+					select 									
+						 T2.BIN_OrganizationID,								
+						 COUNT(T1.BillID) as ORSC								
+					from 
+						Inventory.BIN_ProReturnRequest T2 WITH(NOLOCK) 							
+						join Inventory.BIN_InventoryOpLog T1 WITH(NOLOCK) on T1.BillID = T2.BIN_ProReturnRequestID				
+					where 
+						T1.OpCode = '137' and CONVERT(nvarchar(10),T1.OpDate,23) = #date# and T2.ValidFlag = '1'								
+					group by T2.BIN_OrganizationID									
+				) N on A.BIN_OrganizationID = N.BIN_OrganizationID
+				left join(																	
+					select									
+						T1.BIN_OrganizationIDF,								
+						COUNT(T1.BillID) as ORSS								
+					from 
+						Inventory.BIN_ProReturnRequest T2 WITH(NOLOCK)									
+						join Inventory.BIN_InventoryUserTask T1 WITH(NOLOCK) on T1.BillID = T2.BIN_ProReturnRequestID 										
+					where T1.CurrentOperate = '137' and T2.ValidFlag = '1'									
+					group by T1.BIN_OrganizationIDF	
+				) O on A.BIN_OrganizationID = O.BIN_OrganizationIDF
+    	]]>
+    	<dynamic prepend="WHERE">
+    		<isNotEmpty prepend="AND" property="organizationInfoId">
+				A.BIN_OrganizationInfoID = #organizationInfoId#
+			</isNotEmpty>
+			<isNotEmpty prepend="AND" property="brandInfoId">
+				A.BIN_BrandInfoID = #brandInfoId#
+			</isNotEmpty>
+		</dynamic>
+    </sql>    
+ 
+     <!-- 取得工作流状态数据List -->
+	<select id="getOFWDataList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap" remapResults="true">
+		<include refid="BINBEPTRPS01.queryOFWDataSQL"/>
+	</select>   
+    
+    <!-- 取得统计的参数 -->
+    <select id="getInventoryOperationParameter" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+    	select 
+			A.BIN_InventoryOperationParamID ,
+			A.ParameterData,
+			B.BIN_OrganizationID as departId,
+			'('+B.DepartCode+')'+B.DepartName  as departCodeName,
+			B.DepartName as departName
+		from 
+			Inventory.BIN_InventoryOperationParam A
+			left join  Basis.BIN_Organization B on A.ParameterData = B.BIN_OrganizationID
+		<dynamic prepend="WHERE">
+			<isNotEmpty prepend="AND" property="parameterType">
+				A.ParameterType = #parameterType#
+			</isNotEmpty>
+			<isNotEmpty prepend="AND" property="organizationInfoId">
+				A.BIN_OrganizationInfoID = #organizationInfoId#
+			</isNotEmpty>
+			<isNotEmpty prepend="AND" property="brandInfoId">
+				A.BIN_BrandInfoID = #brandInfoId#
+			</isNotEmpty>
+		</dynamic>
+    </select>
+    
+	<!-- 添加统计数据 -->
+	<insert id="insertInventoryOperation" parameterClass="java.util.HashMap">
+		<![CDATA[
+			insert into Inventory.BIN_InventoryOperationStatistic(
+				BIN_OrganizationInfoID,
+				BIN_BrandInfoID,
+				StatisticDate,
+				BIN_OrganizationID,
+				StatisticType,
+				StatisticData,
+		]]>
+			<isNotEmpty  property="departIdOperate">
+				BIN_OrganizationIDOperate,
+			</isNotEmpty>	
+		<![CDATA[
+				CreateTime,
+				UpdateTime,
+				CreatedBy,
+				CreatePGM,
+				UpdatedBy,
+				UpdatePGM,
+				ValidFlag,
+				ModifyCount
+			)
+			values(
+				#organizationInfoId#,
+				#brandInfoId#,
+				#date#,
+				#departId#,
+				#type#,
+				#data#,
+		]]>
+			<isNotEmpty  property="departIdOperate">
+				#departIdOperate#,	
+			</isNotEmpty>
+		<![CDATA[		
+				GETDATE(),
+				GETDATE(),
+				#createdBy#,
+				#createPGM#,
+				#updatedBy#,
+				#updatePGM#,
+				'1',
+				0
+			)
+		]]>
+	</insert>
+	
+	<!-- 删除某个时间点以前的进销存操作统计数据 -->
+	<delete id="delStatisticData" parameterClass="java.util.HashMap">
+		<![CDATA[
+			delete from 
+				Inventory.BIN_InventoryOperationStatistic 
+		]]>
+		<dynamic prepend="where">
+			<isNotEmpty prepend="AND" property="delDate">
+				<![CDATA[StatisticDate < #delDate#]]>
+			</isNotEmpty>
+			<isNotEmpty prepend="AND" property="nowDate">
+				<![CDATA[StatisticDate = #nowDate#]]>
+			</isNotEmpty>
+			<isNotEmpty prepend="AND" property="organizationInfoId">
+				BIN_OrganizationInfoID = #organizationInfoId#
+			</isNotEmpty>
+			<isNotEmpty prepend="AND" property="brandInfoId">
+				BIN_BrandInfoID = #brandInfoId#
+			</isNotEmpty>
+		</dynamic>
+	</delete>
+	
+	<!-- 取得统计的业务参数 -->
+	<select id="getBussnissParameter" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+    	<![CDATA[
+    	select 
+			A.ParameterData as parameterData
+		from 
+			Inventory.BIN_InventoryOperationParam A
+		]]>
+		<dynamic prepend="WHERE">
+			<isNotEmpty prepend="AND" property="organizationInfoId">
+				A.BIN_OrganizationInfoID = #organizationInfoId#
+			</isNotEmpty>
+			<isNotEmpty prepend="AND" property="brandInfoId">
+				A.BIN_BrandInfoID = #brandInfoId#
+			</isNotEmpty>
+			<isNotEmpty prepend="AND" property="parameterType">
+				A.ParameterType = #parameterType#
+			</isNotEmpty>
+			<isNotEmpty prepend="AND" property="parameterParent">
+				A.ParameterParent != #parameterParent#
+				and A.ParameterParent like #parameterParent# +'%'
+			</isNotEmpty>
+			<isNotEmpty prepend="AND" property="validFlag">
+				A.ValidFlag = #validFlag#
+			</isNotEmpty>
+			<isEqual prepend="AND" compareValue="1" property="isRoot">
+				A.ParameterParent = A.ParameterData
+			</isEqual>
+		</dynamic>
+		order by A.ParameterSortNo
+    </select>
+    
+    <!-- 取得统计的部门 -->
+    <select id="getDepartParameter" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+    	<![CDATA[
+    	select 
+			A.BIN_OrganizationID as organizationId
+		from 
+			Basis.BIN_Organization A
+		where 
+			A.Type not in('4','6')
+		]]>
+		<isNotEmpty prepend="AND" property="organizationInfoId">
+			A.BIN_OrganizationInfoID = #organizationInfoId#
+		</isNotEmpty>
+		<isNotEmpty prepend="AND" property="brandInfoId">
+			A.BIN_BrandInfoID = #brandInfoId#
+		</isNotEmpty>
+    </select>
+</sqlMap>

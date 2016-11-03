@@ -1,0 +1,256 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sqlMap PUBLIC "-//iBATIS.com//DTD SQL Map 2.0//EN" "http://ibatis.apache.org/dtd/sql-map-2.dtd">
+<sqlMap namespace="BINBEMBARC07">
+	
+	<!-- 需要处理的会员查询sql  -->
+	<sql id="AdjustExecQuery">
+		<![CDATA[
+		SELECT
+			A.BIN_AdjustRecordID AS adjustRecordId,
+			A.BIN_MemberInfoID AS memberInfoId,
+			A.BIN_OrganizationInfoID AS organizationInfoId,
+			A.BIN_BrandInfoID AS brandInfoId,
+			C.MemInfoRegFlg AS memInfoRegFlg,
+			convert(varchar, C.LevelStartDate, 23) AS lelStartDate,
+			C.LevelStatus AS lelStatus,
+			ISNULL(C.GrantMemberLevel, 0) AS graMemLevel,
+			B.MemCode AS memberCode,
+			'BINBEMBARC07' AS createdBy,
+			'BINBEMBARC07' AS createPGM,
+			'BINBEMBARC07' AS updatedBy,
+			'BINBEMBARC07' AS updatePGM
+		FROM
+			Members.BIN_MemLevelAdjustRecord A JOIN 
+			Members.BIN_MemberInfo C 
+			ON (A.BIN_MemberInfoID = C.BIN_MemberInfoID) LEFT JOIN
+			Members.BIN_MemCardInfo B
+			ON (A.BIN_MemberInfoID = B.BIN_MemberInfoID AND B.CardValidFlag = '1')
+		WHERE
+			A.ExecFlag = 1 AND
+			A.BIN_BrandInfoID = #brandInfoId# AND
+			A.BIN_OrganizationInfoID = #organizationInfoId#
+		]]>
+	</sql>
+	
+	<!-- 需要调整等级的会员查询sql  -->
+	<sql id="LevelAdjustQuery">
+		<![CDATA[
+		SELECT
+			BIN_MemberInfoID AS memberInfoId,
+			BIN_OrganizationInfoID AS organizationInfoId,
+			BIN_BrandInfoID AS brandInfoId,
+			'BINBEMBARC07' AS createdBy,
+			'BINBEMBARC07' AS createPGM,
+			'BINBEMBARC07' AS updatedBy,
+			'BINBEMBARC07' AS updatePGM
+		FROM
+			Members.BIN_MemberInfo
+		WHERE
+		]]>
+		<isNotEmpty property="mebIdStart">
+			<![CDATA[BIN_MemberInfoID >= #mebIdStart# AND
+			]]>
+		</isNotEmpty>
+		<isNotEmpty property="mebIdEnd">
+			<![CDATA[BIN_MemberInfoID <= #mebIdEnd# AND
+			]]>
+		</isNotEmpty>
+	<![CDATA[
+			BIN_BrandInfoID = #brandInfoId# AND
+			BIN_OrganizationInfoID = #organizationInfoId# AND
+			ValidFlag = '1'
+		]]>
+	</sql>
+	
+	<!-- 需要调整等级的会员List -->
+	<select id="getLevelAdjustList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+		<include refid="BINBECMINC99.pageheader" />
+		<include refid="BINBEMBARC07.LevelAdjustQuery" />
+		<include refid="BINBECMINC99.pagefooter" />
+    </select>
+    
+    <!-- 需要处理的会员List -->
+	<select id="getAdjustExecList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+		<include refid="BINBECMINC99.pageheader" />
+		<include refid="BINBEMBARC07.AdjustExecQuery" />
+		<include refid="BINBECMINC99.pagefooter" />
+    </select>
+    
+    <!-- 取得需要处理的会员总数  -->
+    <select id="getAdjustExecCount" parameterClass="java.util.HashMap" resultClass="java.lang.Integer">
+    	<![CDATA[
+			SELECT	COUNT(SORT_T1.adjustRecordId) AS count FROM (
+		]]>	
+		<include refid="BINBEMBARC07.AdjustExecQuery" />
+		<![CDATA[	
+			)SORT_T1
+		]]>										
+    </select>
+    
+    <!-- 需要调整等级的会员(增量查询)List -->
+	<select id="getLevelAdjustIncreList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+		<![CDATA[
+		SELECT
+			A.BIN_MemberInfoID AS memberInfoId,
+			A.BIN_OrganizationInfoID AS organizationInfoId,
+			A.BIN_BrandInfoID AS brandInfoId,
+			'BINBEMBARC07' AS createdBy,
+			'BINBEMBARC07' AS createPGM,
+			'BINBEMBARC07' AS updatedBy,
+			'BINBEMBARC07' AS updatePGM
+		FROM
+			Members.BIN_MemberInfo A LEFT JOIN
+			Members.BIN_MemLevelAdjustRecord B
+			ON(A.BIN_MemberInfoID = B.BIN_MemberInfoID)
+		WHERE
+		]]>
+		<isNotEmpty property="mebIdStart">
+			<![CDATA[A.BIN_MemberInfoID >= #mebIdStart# AND
+			]]>
+		</isNotEmpty>
+		<isNotEmpty property="mebIdEnd">
+			<![CDATA[A.BIN_MemberInfoID <= #mebIdEnd# AND
+			]]>
+		</isNotEmpty>
+	<![CDATA[
+			A.BIN_BrandInfoID = #brandInfoId# AND
+			A.BIN_OrganizationInfoID = #organizationInfoId# AND
+			A.ValidFlag = '1' AND
+			B.AdjustStatus IS NULL
+		]]>
+    </select>
+    
+     <!-- 插入会员等级调整履历表  -->
+	<insert id="addLevelAdjustRecord" parameterClass="java.util.HashMap">
+		<![CDATA[
+		INSERT Members.BIN_MemLevelAdjustRecord(
+			BIN_OrganizationInfoID,
+			BIN_BrandInfoID,
+			BIN_MemberInfoID,
+			AdjustStatus,
+		]]>	
+			<include refid="BINOLCMINC99.insertKeySql" />									
+		<![CDATA[	
+		)VALUES(
+			#organizationInfoId#,
+			#brandInfoId#,
+			#memberInfoId#,
+			0,
+		]]>
+		<include refid="BINOLCMINC99.insertValueSql" />
+		<![CDATA[
+		)
+		]]>
+	</insert>
+	
+	<!--去除执行标识 -->
+	<update id="updateRecordExecFlagNl" parameterClass="java.util.HashMap">
+		<![CDATA[
+			UPDATE 		
+				Members.BIN_MemLevelAdjustRecord
+			SET	
+				ExecFlag = NULL
+			WHERE
+				ExecFlag = 1 AND
+				AdjustStatus <> 1 AND
+				BIN_BrandInfoID = #brandInfoId# AND
+				BIN_OrganizationInfoID = #organizationInfoId#	
+		]]>
+    </update>
+    
+    <!--更新执行标识 -->
+	<update id="updateRecordExecFlagDo" parameterClass="java.util.HashMap">
+		<![CDATA[
+			UPDATE 		
+				Members.BIN_MemLevelAdjustRecord
+			SET	
+				AdjustStatus = 1,
+				ExecFlag = 1
+			WHERE 
+				AdjustStatus = 0 AND
+				BIN_BrandInfoID = #brandInfoId# AND
+				BIN_OrganizationInfoID = #organizationInfoId#
+		]]>
+    </update>
+    
+    <!--更新等级调整状态 -->
+	<update id="updateAdjustStatus" parameterClass="java.util.HashMap">
+		<![CDATA[
+			UPDATE 		
+				Members.BIN_MemLevelAdjustRecord
+			SET	
+				AdjustStatus = #adjustStatus#,
+		]]>
+		<include refid="BINOLCMINC99.updateSql" />
+		<![CDATA[
+			WHERE 
+				BIN_AdjustRecordID = #adjustRecordId#
+		]]>
+    </update>
+    
+    <!-- 插入规则执行履历表 -->
+    <insert id="addMSRuleExecRecord" parameterClass="java.util.HashMap">
+    <![CDATA[
+    	INSERT INTO Members.BIN_RuleExecRecord
+    	(
+    		BIN_OrganizationInfoID,													
+			BIN_BrandInfoID,													
+			BIN_MemberInfoID,
+			MemCode,
+			BillID,
+			TradeType,
+			RecordKbn,
+			newValue,
+			TicketDate,
+			CalcDate,
+			ReCalcCount,
+			ChangeType,
+			Reason,
+	]]>								
+		<include refid="BINOLCMINC99.insertKeySql" />		
+	<![CDATA[																									
+    	)
+    	VALUES
+    	(
+    		#organizationInfoId#,
+    		#brandInfoId#,
+    		#memberInfoId#,
+    		#memberCode#,
+    		#BTbillId#,
+    		#tradeType#,
+    		#recordKbn#,
+    		#newValue#,
+    		#businessTime#,
+    		#calcDate#,
+    		0,
+    		#changeType#,
+    		0,
+	]]>
+		<include refid="BINOLCMINC99.insertValueSql" />		
+	<![CDATA[
+    	)
+    ]]>		
+    </insert>
+    
+     <!--更新会员信息 -->
+	<update id="updateMemberLevelInfo" parameterClass="java.util.HashMap">
+		<![CDATA[
+			UPDATE				
+				Members.BIN_MemberInfo			
+			SET	
+				MemberLevel  = #NEW_LEVEL#,
+				LevelStatus = '2',
+				LevelStartDate = #levelStartDate#,
+				LevelEndDate = #levelEndDate#,
+				LevelChangeType = #changeType#,
+				FirstBillID = #BTbillId#,
+				LevelAdjustDay = #businessTime#,	
+		]]>	
+				<include refid="BINOLCMINC99.updateSql" />		
+		<![CDATA[				
+			WHERE					
+				BIN_MemberInfoID = #memberInfoId#
+		]]>
+    </update>
+    
+</sqlMap>

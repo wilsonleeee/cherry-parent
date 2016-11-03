@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sqlMap PUBLIC "-//iBATIS.com//DTD SQL Map 2.0//EN" "http://ibatis.apache.org/dtd/sql-map-2.dtd">
+<sqlMap namespace="MemberNextAmount">
+	
+	<select id="getMemberLevelList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+		SELECT
+			A.BIN_MemberLevelID AS levelId,
+			A.LevelCode AS levelCode,
+			B.Grade AS grade,
+			A.Periodvalidity AS periodValidity,
+			A.LevelName AS levelName
+		FROM 
+			Members.BIN_MemberLevel A
+		JOIN Members.BIN_MemberLevelDetail B
+			ON (A.BIN_MemberLevelID = B.BIN_MemberLevelID 
+			AND B.ValidFlag= '1')
+		WHERE 
+			A.BIN_BrandInfoID = #brandInfoId#
+			AND A.BIN_OrganizationInfoID = #organizationInfoId#
+			AND A.ValidFlag = '1'
+	</select>
+	
+	<select id="getMemberInfoMap" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+		SELECT
+			A.BIN_MemberInfoID AS memberInfoId,
+			A.MemCode AS memberCode,
+			B.MemberLevel AS memberLevel,
+			C.Grade AS grade,
+			CONVERT(varchar(100), GETDATE(), 20) AS saleTime
+		FROM 
+			Members.BIN_MemCardInfo A WITH(NOLOCK)
+		JOIN 
+			Members.BIN_Memberinfo B WITH(NOLOCK) 
+			ON (A.MemCode = #memCode#
+				AND A.BIN_MemberInfoID = B.BIN_MemberInfoID 
+				AND A.CardValidFlag = '1')
+		LEFT JOIN 
+			Members.BIN_MemberLevelDetail C WITH(NOLOCK) 
+			ON(C.BIN_MemberLevelID = B.MemberLevel)
+		WHERE 
+			B.BIN_BrandInfoID = #brandInfoId#
+			AND B.BIN_OrganizationInfoID = #organizationInfoId#
+			
+	</select>
+</sqlMap>

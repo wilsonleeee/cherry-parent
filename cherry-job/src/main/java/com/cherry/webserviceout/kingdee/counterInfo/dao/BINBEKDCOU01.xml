@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sqlMap PUBLIC "-//iBATIS.com//DTD SQL Map 2.0//EN" "http://ibatis.apache.org/dtd/sql-map-2.dtd">
+<sqlMap namespace="BINBEKDCOU01">
+  <!-- 根据同步时间取得柜台信息 -->
+   <select id="getCounterInfo" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+       <![CDATA[
+           SELECT TOP (#batchSize#)
+               A.CounterNameIF AS FStockName,
+               A.CounterCode AS FStockNumber,
+               '0' AS FUnderStock,
+               '0' AS FIsStockMgr,
+               A.CounterAddress AS FStockAddress,
+               (case when A.ValidFlag = '1' then '0' when A.ValidFlag = '0' then '1' end ) AS FStockDelete
+		   FROM
+			   Basis.BIN_CounterInfo A WITH(NOLOCK)
+		   WHERE
+		       A.BIN_OrganizationInfoId = #organizationInfoId# AND 
+		       A.BIN_BrandInfoId = #brandInfoId# AND
+			   (A.UpdateTime >= A.SynchTime OR
+			   A.SynchTime is null)	
+		  ]]>           
+		  <isNotEmpty property="bathLastCounterCode" prepend="AND">
+		       A.CounterCode > #bathLastCounterCode#
+		  </isNotEmpty>
+		   ORDER BY A.CounterCode
+		</select>
+		<!--更新同步时间 -->
+	<update id="updateSynchTime" parameterClass="java.util.HashMap">
+		<![CDATA[
+		   UPDATE				
+			   Basis.BIN_CounterInfo			
+		   SET
+			   SynchTime = getDate()
+		   Where
+		       BIN_OrganizationInfoId = #organizationInfoId# AND 
+		       BIN_BrandInfoId = #brandInfoId# AND
+		       CounterCode=#counterCode# 
+		]]>	
+	</update>
+	
+</sqlMap>

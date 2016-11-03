@@ -1,0 +1,225 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sqlMap PUBLIC "-//iBATIS.com//DTD SQL Map 2.0//EN" "http://ibatis.apache.org/dtd/sql-map-2.dtd">
+<sqlMap namespace="BINBAT125">
+	<!-- 查询调出主单详细数据 -->
+	<select id="getPrtAllocatOut" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+	<![CDATA[
+			SELECT
+				#brandCode#  brandCode,
+				A.BIN_ProductAllocationOutID allocationOutID,
+				A.AllocationOutNo  billCode,
+				A.Date  businessDate,
+				A.CreateTime  billCreateTime,
+				'DBQR' billType,
+				A.RelevanceNo relateBillCode,
+				B.DepartCode  inDepartCode,
+				B.DepartName  inDepartName,
+				C.DepartCode  outDepartCode,
+				C.DepartName outDepartName,
+				A.TotalQuantity totalQuantity,
+				A.TotalAmount totalAmount,
+				D.EmployeeCode operatorCode,
+				D.EmployeeName operatorName,
+				A.Comments comment
+			FROM Inventory.BIN_ProductAllocationOut A WITH (NOLOCK)
+			LEFT JOIN Basis.BIN_Organization B WITH (NOLOCK)
+				ON (A.BIN_OrganizationIDIn = B.BIN_OrganizationID)
+			LEFT JOIN Basis.BIN_Organization C WITH (NOLOCK)
+				ON (A.BIN_OrganizationIDOut = C.BIN_OrganizationID)
+			LEFT JOIN Basis.BIN_Employee D WITH (NOLOCK)
+				ON (A.BIN_EmployeeID = D.BIN_EmployeeID)
+			WHERE A.BIN_BrandInfoID = #brandInfoId#
+			AND A.BIN_OrganizationInfoID = #organizationInfoId#
+			AND A.SynchFlag = '2'
+			AND A.ValidFlag = '1'
+			AND A.TotalQuantity <> 0
+		]]>
+		<![CDATA[AND EXISTS ( ]]>
+			<include refid="BINBECMINC99.getBillByTestModStandList" />
+	  	<![CDATA[ AND A.BIN_OrganizationIDOut = C99.BIN_OrganizationID ) ]]>
+		<![CDATA[
+			ORDER BY
+				A.AllocationOutNo
+		]]>
+	</select>
+	<!-- 查询调出明细单详细数据 -->
+	<select id="getPrtAllocatOutDetail" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+	<![CDATA[
+			SELECT
+				#brandCode# brandCode,
+				A.AllocationOutNo billCode,
+				D.ItemCode IFProductId,
+				D.UnitCode  unitCode,
+				C.BarCode barCode,
+				B.Quantity quantity,
+				B.Price price,
+				B.Quantity * B.Price AS lineAmount,
+				B.Comments comment
+			FROM Inventory.BIN_ProductAllocationOut A WITH (NOLOCK)
+			JOIN Inventory.BIN_ProductAllocationOutDetail B WITH (NOLOCK)
+				ON (A.BIN_ProductAllocationOutID = B.BIN_ProductAllocationOutID)
+			LEFT JOIN Basis.BIN_ProductVendor C WITH (NOLOCK)
+				ON (B.BIN_ProductVendorID = C.BIN_ProductVendorID)
+			LEFT JOIN Basis.BIN_Product D WITH (NOLOCK)
+				ON (C.BIN_ProductID = D.BIN_ProductID)
+			WHERE A.BIN_BrandInfoID = #brandInfoId#
+			AND A.BIN_OrganizationInfoID = #organizationInfoId#
+			AND A.ValidFlag = '1'
+			AND A.TotalQuantity <> 0
+		]]>
+		<isNotEmpty property="allocatiobIdArr" prepend="AND">
+			B.BIN_ProductAllocationOutID IN
+			<iterate property="allocatiobIdArr" open="(" close=")" conjunction=",">
+				#allocatiobIdArr[]#
+			</iterate>
+		</isNotEmpty>
+		<![CDATA[AND EXISTS ( ]]>
+			<include refid="BINBECMINC99.getBillByTestModStandList" />
+	  	<![CDATA[ AND A.BIN_OrganizationIDOut = C99.BIN_OrganizationID ) ]]>
+		<![CDATA[
+			ORDER BY
+				A.AllocationOutNo
+		]]>
+	</select>
+	<!-- SynchFlag状态更新 -->
+	<update id="updateSynchFlag" parameterClass="java.util.HashMap">
+		<![CDATA[
+			UPDATE
+		]]>
+		<isNotEmpty property="batchSize">
+				TOP(#batchSize#)
+		</isNotEmpty>
+		<![CDATA[
+				Inventory.BIN_ProductAllocationOut
+			SET
+				SynchFlag = #synchFlag_New#
+			FROM
+				Inventory.BIN_ProductAllocationOut A WITH(NOLOCK)
+			WHERE
+				A.ValidFlag ='1'
+				AND A.TotalQuantity <> 0
+				AND A.BIN_BrandInfoID = #brandInfoId#
+				AND A.BIN_OrganizationInfoID = #organizationInfoId#
+		]]>
+		<![CDATA[AND EXISTS ( ]]>
+			<include refid="BINBECMINC99.getBillByTestModStandList" />
+	  	<![CDATA[ AND A.BIN_OrganizationIDOut = C99.BIN_OrganizationID ) ]]>
+	  	
+		<isNotEmpty property="synchFlag_Old" prepend="AND">
+			A.SynchFlag = #synchFlag_Old#
+		</isNotEmpty>
+		<isNotEmpty property="billCode" prepend="AND">
+	  		A.AllocationOutNo = #billCode#
+	  	</isNotEmpty>
+	</update>
+
+
+	<!-- 取得指定导出状态的订单号List -->
+	<select id="getPrtAllocatOutListBySynch" parameterClass="java.util.HashMap" resultClass="java.lang.String">
+		<![CDATA[
+			SELECT
+				AllocationOutNo AS allocationOutNoIF
+			FROM 
+				Inventory.BIN_ProductAllocationOut A WITH(NOLOCK)
+			WHERE
+				A.SynchFlag = #synchFlag#
+				AND A.TotalQuantity  <> 0
+				AND A.ValidFlag = '1'
+				AND A.BIN_OrganizationInfoID = #organizationInfoId#
+				AND A.BIN_BrandInfoID = #brandInfoId#
+		]]>
+		<![CDATA[AND EXISTS ( ]]>
+			<include refid="BINBECMINC99.getBillByTestModStandList" />
+	  	<![CDATA[ AND A.BIN_OrganizationIDOut = C99.BIN_OrganizationID ) ]]>
+	</select>
+
+	<!-- 根据新后台的单据号->查询柜台调拨单据标准接口表的单据号List -->
+	<select id="getExistsPrtAllocatOutList" parameterClass="java.util.HashMap" resultClass="java.lang.String">
+		<![CDATA[
+			SELECT 
+				DISTINCT
+				BillCode
+			FROM 
+				IF_Allocation
+			WHERE
+			 	BillCode IN 
+	  	]]>
+		<iterate property="allocationOutNoIFList" open="(" close=")" conjunction=",">
+			#allocationOutNoIFList[]#
+		</iterate>
+		<isNotEmpty property="brandCode" prepend="AND">
+			BrandCode = #brandCode#
+		</isNotEmpty>
+	</select>
+		<!-- 数据插入标准调拨单主表 -->
+	<insert id="insertIFAllocation" parameterClass="java.util.HashMap">
+        <![CDATA[ 
+		INSERT INTO IF_Allocation ( 
+				BrandCode,
+				BillCode,
+				BusinessDate,
+				BillCreateTime,
+				BillType,
+				InDepartCode,
+				InDepartName,
+				OutDepartCode,
+				OutDepartName,
+				TotalQuantity,
+				TotalAmount,
+				OperatorCode,
+				OperatorName,
+				RelateBillCode,
+				Comment,
+				PuttingTime
+           ) VALUES (
+	           	#brandCode#,
+				#billCode#,
+				#businessDate#,
+				#billCreateTime#,
+				#billType#,
+				#inDepartCode#,
+				#inDepartName#,
+				#outDepartCode#,
+				#outDepartName#,
+				#totalQuantity#,
+				#totalAmount#,
+				#operatorCode#,
+				#operatorName#,
+				#relateBillCode#,
+				#comment#,
+				GETDATE()
+           )
+
+    	]]>
+	</insert>
+	<!-- 数据插入标准调拨单明细接口表 -->
+	<insert id="insertIFAllocationDetail" parameterClass="java.util.HashMap">
+        <![CDATA[ 
+		INSERT INTO IF_AllocationDetail (
+					BrandCode,
+					BillCode,
+					IFProductId,
+					UnitCode,
+					BarCode,
+					Quantity,
+					Price,
+					ReferencePrice,
+					LineAmount,
+					Comment,
+					PuttingTime
+		       ) VALUES (
+		           	#brandCode#,
+					#billCode#,
+					#IFProductId#,
+					#unitCode#,
+					#barCode#,
+					#quantity#,
+					#price#,
+					#price#,
+					#lineAmount#,
+					#comment#,
+					GETDATE()
+		           )
+    	]]>
+	</insert>
+</sqlMap>

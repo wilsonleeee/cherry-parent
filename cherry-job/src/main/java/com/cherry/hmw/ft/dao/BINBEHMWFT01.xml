@@ -1,0 +1,243 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sqlMap PUBLIC "-//iBATIS.com//DTD SQL Map 2.0//EN" "http://ibatis.apache.org/dtd/sql-map-2.dtd">
+<sqlMap namespace="BINBEHMWFT01">
+
+	<!-- 查询返利百分比 -->
+	<select id="getRebateDivideList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+		<![CDATA[
+			SELECT
+				DividePer
+			FROM
+				Basis.BIN_RebateDivide WITH(NOLOCK)
+			WHERE
+				BIN_RebateDivideID!=1
+			ORDER BY
+				BIN_RebateDivideID asc
+		]]>
+    </select>
+	<!-- 取出销售数据(海名微模式) -->
+	<select id="getSalList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+		<![CDATA[
+			SELECT 
+				a.BIN_OrganizationID,
+				a.BIN_EmployeeID,
+				a.BIN_OrganizationInfoID,
+				a.BIN_BrandInfoID,
+				a.SaleRecordCode,
+				a.BillCodePre,
+				a.BillCode,
+				a.SaleType,
+				a.SaleTime,
+				a.EmployeeCode as SaleEmployeeCode,
+				a.Quantity as SaleCount,
+				f.salePrice as Amount,
+				e.EmployeeName as SaleEmployeeName,
+				o.Type as CodeKey,
+				f.salePrice-f.StandardCost as SaleProfit,
+				a.Channel,
+				el.BIN_EmployeeID AS SupervisorID
+			FROM Sale.BIN_SaleRecord a WITH(NOLOCK)
+			LEFT JOIN Basis.BIN_Employee e WITH(NOLOCK) on a.BIN_EmployeeID = e.BIN_EmployeeID 
+				AND a.BIN_OrganizationInfoID=e.BIN_OrganizationInfoID AND a.BIN_BrandInfoID=e.BIN_BrandInfoID 
+			LEFT JOIN Basis.BIN_Organization o WITH(NOLOCK) on
+				 a.BIN_OrganizationInfoID=o.BIN_OrganizationInfoID AND a.BIN_BrandInfoID=o.BIN_BrandInfoID AND e.BIN_OrganizationID=o.BIN_OrganizationID  
+			LEFT JOIN Basis.BIN_Employee el WITH(NOLOCK) ON e.NodeID.GetAncestor(1) = el.NodeID
+			LEFT JOIN (select d.BIN_SaleRecordID,f.BIN_BrandInfoID,f.BIN_OrganizationInfoID,sum(f.StandardCost*d.Quantity) as StandardCost,sum(d.PricePay*d.Quantity) as salePrice
+						from Sale.BIN_SaleRecordDetail d WITH(NOLOCK) 
+						left join Basis.BIN_ProductVendor m WITH(NOLOCK) on d.BIN_ProductVendorID = m.BIN_ProductVendorID
+						left join Basis.BIN_Product f WITH(NOLOCK) on m.BIN_ProductID = f.BIN_ProductID 
+						left join Basis.BIN_ProductPrice p WITH(NOLOCK) on f.BIN_BrandInfoID = p.BIN_BrandInfoID and f.BIN_ProductID = p.BIN_ProductID 
+						WHERE d.SaleType='N' AND f.StandardCost<d.PricePay
+						GROUP BY d.BIN_SaleRecordID,f.BIN_BrandInfoID,f.BIN_OrganizationInfoID
+						)f on
+			a.BIN_BrandInfoID=f.BIN_BrandInfoID AND f.BIN_OrganizationInfoID = a.BIN_OrganizationInfoID AND a.BIN_SaleRecordID = f.BIN_SaleRecordID
+			WHERE 
+				a.BIN_OrganizationInfoID = #organizationInfoId# AND
+				a.BIN_BrandInfoID = #brandInfoId# AND
+				a.ValidFlag='1' AND
+				f.salePrice IS NOT NULL AND
+				(RebateFlag=0 or RebateFlag IS NULL)
+		]]>
+    </select>
+    <!-- 取出销售数据(爱沐空间模式) -->
+	<select id="getSalList2" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+		<![CDATA[
+			SELECT 
+				a.BIN_OrganizationID,
+				a.BIN_EmployeeID,
+				a.BIN_OrganizationInfoID,
+				a.BIN_BrandInfoID,
+				a.SaleRecordCode,
+				a.BillCodePre,
+				a.BillCode,
+				a.SaleType,
+				a.SaleTime,
+				a.EmployeeCode as SaleEmployeeCode,
+				a.Quantity as SaleCount,
+				f.salePrice as Amount,
+				e.EmployeeName as SaleEmployeeName,
+				o.Type as CodeKey,
+				f.salePrice-f.StandardCost as SaleProfit,
+				a.Channel,
+				el.BIN_EmployeeID AS SupervisorID,
+				a.DeliveryModel
+			FROM Sale.BIN_SaleRecord a WITH(NOLOCK)
+			LEFT JOIN Basis.BIN_Employee e WITH(NOLOCK) on a.BIN_EmployeeID = e.BIN_EmployeeID 
+				AND a.BIN_OrganizationInfoID=e.BIN_OrganizationInfoID AND a.BIN_BrandInfoID=e.BIN_BrandInfoID 
+			LEFT JOIN Basis.BIN_Organization o WITH(NOLOCK) on
+				 a.BIN_OrganizationInfoID=o.BIN_OrganizationInfoID AND a.BIN_BrandInfoID=o.BIN_BrandInfoID AND e.BIN_OrganizationID=o.BIN_OrganizationID  
+			LEFT JOIN Basis.BIN_Employee el WITH(NOLOCK) ON e.NodeID.GetAncestor(1) = el.NodeID
+			LEFT JOIN (select d.BIN_SaleRecordID,f.BIN_BrandInfoID,f.BIN_OrganizationInfoID,sum(f.StandardCost*d.Quantity) as StandardCost,sum(d.PricePay*d.Quantity) as salePrice
+						from Sale.BIN_SaleRecordDetail d WITH(NOLOCK) 
+						left join Basis.BIN_ProductVendor m WITH(NOLOCK) on d.BIN_ProductVendorID = m.BIN_ProductVendorID
+						left join Basis.BIN_Product f WITH(NOLOCK) on m.BIN_ProductID = f.BIN_ProductID 
+						left join Basis.BIN_ProductPrice p WITH(NOLOCK) on f.BIN_BrandInfoID = p.BIN_BrandInfoID and f.BIN_ProductID = p.BIN_ProductID 
+						WHERE d.SaleType='N' 
+						GROUP BY d.BIN_SaleRecordID,f.BIN_BrandInfoID,f.BIN_OrganizationInfoID
+						)f on
+			a.BIN_BrandInfoID=f.BIN_BrandInfoID AND f.BIN_OrganizationInfoID = a.BIN_OrganizationInfoID AND a.BIN_SaleRecordID = f.BIN_SaleRecordID
+			WHERE 
+				a.BIN_OrganizationInfoID = #organizationInfoId# AND
+				a.BIN_BrandInfoID = #brandInfoId# AND
+				a.ValidFlag='1' AND
+				a.DeliveryModel in ('1','2') AND
+				f.salePrice IS NOT NULL AND
+				(RebateFlag=0 or RebateFlag IS NULL)
+		]]>
+    </select>
+    
+	<!-- 插入分摊信息 -->
+	<insert id="InsertRebateDivideList" parameterClass="java.util.HashMap">
+		<![CDATA[
+			INSERT INTO	
+				Sale.BIN_ProfitRebate
+				(
+					BIN_OrganizationInfoID,
+					BIN_BrandInfoID,
+					BIN_OrganizationID,
+					CommissionOrganizationID,
+					SaleRecordCode,
+					BillCodePre,
+					BillCode,
+					SaleType,
+					SaleTime,
+					SaleEmployeeCode,
+					SaleEmployeeName,
+					SaleEmployeeLevel,
+					CommissionEmployeeCode,
+					CommissionEmployeeName,
+					CommissionEmployeeLevel,
+					SaleCount,
+					Amount,
+					SaleProfit,
+					CommissionProportion,
+					RoyaltyAmount,
+					BatchNo,
+					RebateTime,
+					Channel,
+		]]>
+			<include refid="BINBECMINC99.insertKeySql" />		
+		<![CDATA[
+				)VALUES
+				(		
+					#BIN_OrganizationInfoID#,
+					#BIN_BrandInfoID#,
+					#BIN_OrganizationID#,
+					#CommissionOrganizationID#,
+					#SaleRecordCode#,
+					#BillCodePre#,
+					#BillCode#,
+					#SaleType#,
+					#SaleTime#,
+					#SaleEmployeeCode#,
+					#SaleEmployeeName#,
+					#SaleEmployeeLevel#,
+					#CommissionEmployeeCode#,
+					#CommissionEmployeeName#,
+					#CommissionEmployeeLevel#,
+					#SaleCount#,
+					#Amount#,
+					#SaleProfit#,
+					#CommissionProportion#,
+					#RoyaltyAmount#,
+					#BatchNo#,
+					getdate(),
+					#Channel#,
+		]]>
+			<include refid="BINBECMINC99.insertValueSql" />		
+		<![CDATA[
+				)
+    	]]>
+    </insert>	
+		<!-- 查询上级员工信息 -->
+	<select id="getEmployee" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+		<![CDATA[
+			SELECT
+				a.BIN_OrganizationID,
+				a.EmployeeCode,
+				a.EmployeeName,
+				o.Type as CodeKey,
+				a.BIN_EmployeeID,
+				b.BIN_EmployeeID AS SupervisorID
+			FROM
+				Basis.BIN_Employee a 
+			LEFT JOIN Basis.BIN_Employee b WITH(NOLOCK) ON a.NodeID.GetAncestor(1) = b.NodeID
+			LEFT JOIN 
+				Basis.BIN_Organization o
+			ON o.BIN_OrganizationInfoID = a.BIN_OrganizationInfoID and o.BIN_OrganizationID = a.BIN_OrganizationID 
+				and o.BIN_BrandInfoID = a.BIN_BrandInfoID 
+			WHERE
+				a.BIN_OrganizationInfoID = #organizationInfoId# AND
+				a.BIN_BrandInfoID  = #brandInfoId# AND
+				a.BIN_EmployeeID = #SupervisorID#
+		]]>
+    </select>
+    
+    <!-- 将已分摊利润的销售数据标识改为1 -->
+    <update id="updSaleRecord" parameterClass="java.util.HashMap">
+    <![CDATA[
+    	UPDATE 
+    		Sale.BIN_SaleRecord 
+    	SET
+    		RebateFlag ='1',
+    	]]>
+			<include refid="BINBECMINC99.updateSql" />	
+		<![CDATA[
+     	WHERE 
+     		BIN_OrganizationID = #BIN_OrganizationID# AND 
+     		BIN_OrganizationInfoID = #BIN_OrganizationInfoID# AND 
+    		BIN_BrandInfoID = #BIN_BrandInfoID# AND 
+    		(BIN_EmployeeID = #BIN_EmployeeID# OR
+    		BIN_EmployeeID IS NULL) AND
+    		BillCode = #BillCode#
+    ]]>
+    </update>
+    <!-- 查询员工所属等级 -->
+    <select id="getLevel" parameterClass="java.util.HashMap" resultClass="int">
+		<![CDATA[
+			SELECT
+				Grade
+			FROM 
+				Tools.BIN_Coder 
+			WHERE
+				CodeType = #CodeType# AND
+				CodeKey = #CodeKey# AND
+				BrandCode = #brandCode# 
+		]]>
+    </select>
+	<!-- 修改利润分摊表出现的重复数据【将数据置为无效】 -->
+	<update id="updateProfitRebate" parameterClass="java.util.HashMap">
+		<![CDATA[
+			UPDATE
+				Sale.BIN_ProfitRebate
+			SET
+				ValidFlag='0',
+		]]>
+		<include refid="BINBECMINC99.updateSql" />	
+		<![CDATA[
+			WHERE
+				SaleRecordCode=#SaleRecordCode# AND
+				ValidFlag='1'
+		]]>
+    </update>
+</sqlMap>

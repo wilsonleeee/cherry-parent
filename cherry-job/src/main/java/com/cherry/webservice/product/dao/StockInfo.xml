@@ -1,0 +1,239 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sqlMap PUBLIC "-//iBATIS.com//DTD SQL Map 2.0//EN" "http://ibatis.apache.org/dtd/sql-map-2.dtd">
+<sqlMap namespace="StockInfo">
+
+    <!-- 查找部门信息  -->
+    <select id="getDepartInfo" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+        <![CDATA[
+            SELECT
+                BIN_OrganizationID,
+                DepartCode,
+                DepartName
+            FROM 
+                Basis.BIN_Organization
+            WHERE
+                BIN_OrganizationInfoID = #BIN_OrganizationInfoID#
+                AND BIN_BrandInfoID = #BIN_BrandInfoID#
+                AND DepartCode = #DepartCode#
+        ]]>
+    </select>
+
+    <!-- 外接连产品分类用于查询产品对应的大中小分类 -->
+    <sql id="joinCateSql">
+        <![CDATA[
+            LEFT JOIN (
+                    SELECT
+                        pc.BIN_ProductID,
+                        pcv.PropValue,
+                        pcv.PropValueChinese,
+                        pcv.PropValueForeign
+                    FROM
+                        Basis.BIN_PrtCategory pc,
+                        Basis.BIN_PrtCatProperty pcp,
+                        Basis.BIN_PrtCatPropValue pcv
+                    WHERE
+                        pc.BIN_PrtCatPropValueID = pcv.BIN_PrtCatPropValueID AND
+                        pcv.BIN_PrtCatPropertyID = pcp.BIN_PrtCatPropertyID AND
+                        pcp.TeminalFlag = '1' AND
+                        pc.ValidFlag = '1' AND
+                        pcv.ValidFlag = '1' AND
+                        pcp.ValidFlag = '1'
+                ) PC1 ON (PC1.BIN_ProductID = PRO.BIN_ProductID)
+            LEFT JOIN (
+                SELECT
+                    pc.BIN_ProductID,
+                    pcv.PropValue,
+                    pcv.PropValueChinese,
+                    pcv.PropValueForeign
+                FROM
+                    Basis.BIN_PrtCategory pc,
+                    Basis.BIN_PrtCatProperty pcp,
+                    Basis.BIN_PrtCatPropValue pcv
+                WHERE
+                    pc.BIN_PrtCatPropValueID = pcv.BIN_PrtCatPropValueID AND
+                    pcv.BIN_PrtCatPropertyID = pcp.BIN_PrtCatPropertyID AND
+                    pcp.TeminalFlag = '2' AND
+                    pc.ValidFlag = '1' AND
+                    pcv.ValidFlag = '1' AND
+                    pcp.ValidFlag = '1'
+            ) PC2 ON (PC2.BIN_ProductID = PRO.BIN_ProductID)
+            LEFT JOIN (
+                SELECT
+                    pc.BIN_ProductID,
+                    pcv.PropValue,
+                    pcv.PropValueChinese,
+                    pcv.PropValueForeign
+                FROM
+                    Basis.BIN_PrtCategory pc,
+                    Basis.BIN_PrtCatProperty pcp,
+                    Basis.BIN_PrtCatPropValue pcv
+                WHERE
+                    pc.BIN_PrtCatPropValueID = pcv.BIN_PrtCatPropValueID AND
+                    pcv.BIN_PrtCatPropertyID = pcp.BIN_PrtCatPropertyID AND
+                    pcp.TeminalFlag = '3' AND
+                    pc.ValidFlag = '1' AND
+                    pcv.ValidFlag = '1' AND
+                    pcp.ValidFlag = '1'
+            ) PC3 ON (PC3.BIN_ProductID = PRO.BIN_ProductID)
+            ]]>
+    </sql>
+
+	<select id="getStockListTotalCNT" parameterClass="java.util.HashMap" resultClass="java.lang.Integer">
+		<![CDATA[
+            SELECT
+                COUNT(*) AS ResultTotalCNT
+            FROM (
+            	SELECT 
+	            	'$DepartCode$' AS DepartCode,
+	                ISNULL(PRO.UnitCode,'') AS UnitCode,
+	                ISNULL(PV.BarCode,'') AS BarCode,
+	                ISNULL(LI.LogicInventoryCode,'') AS LogicDepotCode,
+	                CONVERT(varchar(50),ISNULL(SUM(CAST(PS.Quantity AS bigint)),0)) AS Quantity
+	            FROM Inventory.BIN_ProductStock PS
+	            LEFT JOIN Basis.BIN_ProductVendor PV
+	            ON PS.BIN_ProductVendorID = PV.BIN_ProductVendorID
+	            LEFT JOIN Basis.BIN_Product PRO
+	            ON PV.BIN_ProductID = PRO.BIN_ProductID
+	            LEFT JOIN Basis.BIN_LogicInventory LI
+	            ON PS.BIN_LogicInventoryInfoID = LI.BIN_LogicInventoryInfoID
+        ]]>
+        <include refid="StockInfo.joinCateSql"/>
+        <![CDATA[
+	            WHERE
+	                PS.ValidFlag = '1'
+	                AND PS.BIN_InventoryInfoID IN (
+	                    SELECT
+	                        DI.BIN_DepotInfoID
+	                    FROM Basis.BIN_InventoryInfo II
+	                    LEFT JOIN Basis.BIN_DepotInfo DI
+	                    ON II.BIN_InventoryInfoID = DI.BIN_DepotInfoID
+	                    LEFT JOIN Basis.BIN_Organization ORG
+	                    ON DI.BIN_OrganizationID = ORG.BIN_OrganizationID
+	                    WHERE
+	                        ORG.BIN_OrganizationInfoID =#BIN_OrganizationInfoID#
+	                        AND ORG.BIN_BrandInfoID = #BIN_BrandInfoID#
+	                        AND ORG.DepartCode = #DepartCode#
+	                )
+        ]]>
+        <isNotEmpty property="LogicDepotCode">
+            <![CDATA[
+	                AND PS.BIN_LogicInventoryInfoID = 
+	                    (SELECT
+	                        BIN_LogicInventoryInfoID
+	                    FROM Basis.BIN_LogicInventory
+	                    WHERE
+	                        BIN_OrganizationInfoID = #BIN_OrganizationInfoID#
+	                        AND BIN_BrandInfoID = #BIN_BrandInfoID#
+	                        AND LogicInventoryCode = #LogicDepotCode#
+	                    )
+            ]]>
+        </isNotEmpty>
+        <isNotEmpty property="ProductVendorIDList">
+            <![CDATA[AND PS.BIN_ProductVendorID IN]]>
+            <iterate property="ProductVendorIDList" open="(" close=")" conjunction=","> 
+                #ProductVendorIDList[]#
+            </iterate>
+        </isNotEmpty>
+        <isEmpty property="ProductVendorIDList">
+            <isNotEmpty property="CategoryCodeA">
+                <![CDATA[AND PC1.PropValue = #CategoryCodeA#]]>
+            </isNotEmpty>
+            <isNotEmpty property="CategoryCodeB">
+                <![CDATA[AND PC2.PropValue = #CategoryCodeB#]]>
+            </isNotEmpty>
+            <isNotEmpty property="CategoryCodeC">
+                <![CDATA[AND PC3.PropValue = #CategoryCodeC#]]>
+            </isNotEmpty>
+        </isEmpty>
+        <![CDATA[
+            GROUP BY
+                PRO.UnitCode,
+                PV.BarCode,
+                LI.LogicInventoryCode
+        ]]>
+        ) AS TEMP
+	</select>
+
+    <!--查询库存List 合并同一仓库-->
+    <select id="getStockList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+        <![CDATA[
+        SELECT SORT_T3.DepartCode AS DepartCode,SORT_T3.UnitCode AS UnitCode,SORT_T3.BarCode AS BarCode,SORT_T3.LogicDepotCode AS LogicDepotCode,SORT_T3.Quantity AS Quantity
+        FROM(
+        SELECT * FROM(SELECT ROW_NUMBER() OVER(ORDER BY #SORT_ID#) AS RowNumber, * FROM (
+        ]]>
+        <![CDATA[
+            SELECT
+                '$DepartCode$' AS DepartCode,
+                ISNULL(PRO.UnitCode,'') AS UnitCode,
+                ISNULL(PV.BarCode,'') AS BarCode,
+                ISNULL(LI.LogicInventoryCode,'') AS LogicDepotCode,
+                CONVERT(varchar(50),ISNULL(SUM(CAST(PS.Quantity AS bigint)),0)) AS Quantity
+            FROM Inventory.BIN_ProductStock PS
+            LEFT JOIN Basis.BIN_ProductVendor PV
+            ON PS.BIN_ProductVendorID = PV.BIN_ProductVendorID
+            LEFT JOIN Basis.BIN_Product PRO
+            ON PV.BIN_ProductID = PRO.BIN_ProductID
+            LEFT JOIN Basis.BIN_LogicInventory LI
+            ON PS.BIN_LogicInventoryInfoID = LI.BIN_LogicInventoryInfoID
+        ]]>
+        <include refid="StockInfo.joinCateSql"/>
+        <![CDATA[
+            WHERE
+                PS.ValidFlag = '1'
+                AND PS.BIN_InventoryInfoID IN (
+                    SELECT
+                        DI.BIN_DepotInfoID
+                    FROM Basis.BIN_InventoryInfo II
+                    LEFT JOIN Basis.BIN_DepotInfo DI
+                    ON II.BIN_InventoryInfoID = DI.BIN_DepotInfoID
+                    LEFT JOIN Basis.BIN_Organization ORG
+                    ON DI.BIN_OrganizationID = ORG.BIN_OrganizationID
+                    WHERE
+                        ORG.BIN_OrganizationInfoID =#BIN_OrganizationInfoID#
+                        AND ORG.BIN_BrandInfoID = #BIN_BrandInfoID#
+                        AND ORG.DepartCode = #DepartCode#
+                )
+        ]]>
+        <isNotEmpty property="LogicDepotCode">
+            <![CDATA[
+                AND PS.BIN_LogicInventoryInfoID = 
+                    (SELECT
+                        BIN_LogicInventoryInfoID
+                    FROM Basis.BIN_LogicInventory
+                    WHERE
+                        BIN_OrganizationInfoID = #BIN_OrganizationInfoID#
+                        AND BIN_BrandInfoID = #BIN_BrandInfoID#
+                        AND LogicInventoryCode = #LogicDepotCode#
+                    )
+            ]]>
+        </isNotEmpty>
+        <isNotEmpty property="ProductVendorIDList">
+            <![CDATA[AND PS.BIN_ProductVendorID IN]]>
+            <iterate property="ProductVendorIDList" open="(" close=")" conjunction=","> 
+                #ProductVendorIDList[]#
+            </iterate>
+        </isNotEmpty>
+        <isEmpty property="ProductVendorIDList">
+            <isNotEmpty property="CategoryCodeA">
+                <![CDATA[AND PC1.PropValue = #CategoryCodeA#]]>
+            </isNotEmpty>
+            <isNotEmpty property="CategoryCodeB">
+                <![CDATA[AND PC2.PropValue = #CategoryCodeB#]]>
+            </isNotEmpty>
+            <isNotEmpty property="CategoryCodeC">
+                <![CDATA[AND PC3.PropValue = #CategoryCodeC#]]>
+            </isNotEmpty>
+        </isEmpty>
+        <![CDATA[
+            GROUP BY
+                PRO.UnitCode,
+                PV.BarCode,
+                LI.LogicInventoryCode
+        ]]>
+        <![CDATA[
+        )SORT_T1)SORT_T2 WHERE RowNumber BETWEEN #START# AND #END#
+        )SORT_T3
+        ]]>
+    </select>
+    
+</sqlMap>

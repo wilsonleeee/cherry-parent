@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sqlMap PUBLIC "-//iBATIS.com//DTD SQL Map 2.0//EN" "http://ibatis.apache.org/dtd/sql-map-2.dtd">
+<sqlMap namespace="BINBEDRHAN02">
+    <!-- 取得会员信息List -->
+	<resultMap id="BINBEDRHAN02.CampBaseDTOList" class="com.cherry.dr.cmbussiness.dto.core.CampBaseDTO">
+		<result property="organizationInfoId" column="BIN_OrganizationInfoID"/>
+		<result property="brandInfoId" column="BIN_BrandInfoID"/>
+		<result property="brandCode" column="BrandCode"/>
+		<result property="memberInfoId" column="BIN_MemberInfoID"/>
+		<result property="joinDate" column="JoinDate"/>
+		<result property="levelAdjustDay" column="LevelAdjustDay"/>
+		<result property="curLevelId" column="MemberLevel"/>
+		<result property="orgCode" column="OrgCode"/>
+	</resultMap>
+	<select id="getCampBaseDTOList" parameterClass="java.util.HashMap" resultMap="BINBEDRHAN02.CampBaseDTOList">
+		<include refid="BINBECMINC99.pageheader" />
+		<![CDATA[
+		SELECT
+				A.BIN_OrganizationInfoID AS BIN_OrganizationInfoID,
+				A.BIN_BrandInfoID AS BIN_BrandInfoID,
+				A.BIN_MemberInfoID AS BIN_MemberInfoID,
+				convert(varchar, A.JoinDate, 121) AS JoinDate,
+				convert(varchar, A.LevelAdjustDay, 121) AS LevelAdjustDay,
+				ISNULL(A.MemberLevel, 0) AS MemberLevel,
+				B.BrandCode AS BrandCode,
+				C.OrgCode AS OrgCode
+		FROM
+				Members.BIN_MemberInfo A
+				LEFT JOIN Basis.BIN_BrandInfo B
+				ON(A.BIN_BrandInfoID = B.BIN_BrandInfoID)
+				LEFT JOIN Basis.BIN_OrganizationInfo C
+				ON(A.BIN_OrganizationInfoID = C.BIN_OrganizationInfoID)
+		WHERE
+				A.BIN_BrandInfoID = #brandInfoId# AND
+				A.BIN_OrganizationInfoID = #organizationInfoId# AND
+				A.MemberLevel = #memberLevel#
+		]]>
+		<include refid="BINBECMINC99.pagefooter" />
+    </select>
+	
+	<!-- 取得规则执行记录数 -->
+	<select id="getRuleExecCountDTO" parameterClass="java.util.HashMap" resultClass="java.lang.Integer">
+		<![CDATA[
+			SELECT
+				COUNT(BIN_MemberInfoID)
+			FROM
+				Members.BIN_RuleExecRecord
+			WHERE
+				BIN_BrandInfoID = #brandInfoId# AND
+				BIN_OrganizationInfoID = #organizationInfoId# AND
+				BIN_MemberInfoID = #memberInfoId# AND
+				TicketDate > convert(datetime, #ticketDate#, 121) AND
+				TradeType <> 'MB' AND
+				ValidFlag = '1'
+		]]>	
+    </select>
+</sqlMap>

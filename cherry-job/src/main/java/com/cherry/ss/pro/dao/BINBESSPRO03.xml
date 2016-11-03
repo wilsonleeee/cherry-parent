@@ -1,0 +1,505 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sqlMap PUBLIC "-//iBATIS.com//DTD SQL Map 2.0//EN" "http://ibatis.apache.org/dtd/sql-map-2.dtd">
+<sqlMap namespace="BINBESSPRO03">
+
+    <!--取得柜台仓库List--> 
+    <select id="getCounterInfoList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+        <![CDATA[
+            SELECT
+                A.BIN_CounterInfoID AS counterInfoId,
+                A.CounterCode AS counterCode,
+                A.CounterNameIF AS counterName,
+                A.BIN_OrganizationID AS organizationId,
+                B.BIN_InventoryInfoID AS inventoryInfoId,
+                B.InventoryCode AS inventoryCode,
+                B.InventoryNameCN AS inventoryName,
+                E.BIN_LogicInventoryInfoID AS logicInventoryInfoId,
+                E.LogicInventoryCode AS logicInventoryCode,
+                E.InventoryNameCN AS logicInventoryName,
+                F.BrandCode AS brandCode
+            FROM
+                Basis.BIN_CounterInfo A
+                LEFT JOIN Basis.BIN_InventoryInfo B
+                ON A.BIN_OrganizationID=B.BIN_OrganizationID
+                LEFT JOIN Basis.BIN_BrandInfo F
+                ON A.BIN_BrandInfoID=F.BIN_BrandInfoID,
+                (SELECT 
+                    DISTINCT BIN_InventoryInfoID,
+                    BIN_LogicInventoryInfoID
+                FROM Inventory.BIN_ProductStock C 
+                WHERE
+                     C.ValidFlag='1')D
+                LEFT JOIN Basis.BIN_LogicInventory E
+                ON D.BIN_LogicInventoryInfoID = E.BIN_LogicInventoryInfoID
+            WHERE
+                A.BIN_OrganizationInfoID = #organizationInfoId#
+                AND A.BIN_BrandInfoID = #brandInfoId#
+                AND B.BIN_InventoryInfoID = D.BIN_InventoryInfoID
+        ]]>
+        <dynamic>
+            <isNotEmpty prepend="AND" property="counterInfoId">
+                <![CDATA[A.BIN_CounterInfoID=#counterInfoId#]]>
+            </isNotEmpty>
+            <isNotEmpty prepend="AND" property="inventoryInfoId">
+                <![CDATA[B.BIN_InventoryInfoID=#inventoryInfoId#]]>
+            </isNotEmpty>
+            <isNotEmpty prepend="AND" property="logicInventoryInfoId">
+                <![CDATA[E.BIN_LogicInventoryInfoID=#logicInventoryInfoId#]]>
+            </isNotEmpty>
+        </dynamic>
+    </select>
+    
+    <!--查询柜台的产品--> 
+    <select id="getProductList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+        <![CDATA[
+            SELECT
+                A.BIN_ProductVendorID AS productVendorId,
+                D.Quantity AS quantity,
+                A.BarCode AS barCode,
+                E.UnitCode AS unitCode,
+                ISNULL(C.SalePrice,0) AS salePrice,
+                E.NameTotal as productName,
+                D.BIN_InventoryInfoID AS inventoryInfoId,
+                D.BIN_LogicInventoryInfoID AS logicInventoryInfoId,
+                D.BIN_ProductStockID AS productStockId
+            FROM
+                Basis.BIN_ProductVendor A
+                LEFT JOIN Basis.BIN_ProductPrice C
+                ON A.BIN_ProductID = C.BIN_ProductID
+                    AND C.ValidFlag = '1'
+                    AND C.Type = '2'
+                    AND GETDATE() BETWEEN C.StartDate AND C.EndDate
+                LEFT JOIN Inventory.BIN_ProductStock D
+                ON A.BIN_ProductVendorID=D.BIN_ProductVendorID
+                    AND D.BIN_InventoryInfoID = #inventoryInfoId#
+        ]]>
+        <dynamic>
+            <isNotEmpty prepend="AND" property="logicInventoryInfoId">
+                <![CDATA[D.BIN_LogicInventoryInfoID =#logicInventoryInfoId#]]>
+            </isNotEmpty>
+        </dynamic>
+        <![CDATA[
+                ,Basis.BIN_Product E
+            WHERE
+                A.BIN_ProductID =E.BIN_ProductID
+                AND A.ValidFlag='1'
+                AND D.Quantity IS NOT NULL
+				AND E.ValidFlag = '1'
+				AND E.BIN_OrganizationInfoID = #organizationInfoId#
+				AND E.BIN_BrandInfoID = #brandInfoId#
+        ]]>
+    </select>
+    
+    <!--以增量的方式修改产品库存表 -->
+    <update id="updateProductStockByIncrement" parameterClass="java.util.HashMap">
+        <![CDATA[
+            UPDATE
+                Inventory.BIN_ProductStock
+            SET     
+                Quantity = ISNULL(Quantity,0) + #gainQuantity#,
+        ]]>
+        <include refid="BINBECMINC99.updateSql" />
+        <![CDATA[
+            WHERE
+                BIN_ProductVendorID = #productVendorId#
+                AND BIN_InventoryInfoID = #inventoryInfoId#
+        ]]>
+        <dynamic>
+            <isNotEmpty prepend="AND" property="logicInventoryInfoId">
+                <![CDATA[BIN_LogicInventoryInfoID = #logicInventoryInfoId#]]>
+            </isNotEmpty>
+        </dynamic>
+    </update>
+    
+    <!--插入【产品库存表】-->
+    <insert id="insertProductStock" parameterClass="java.util.HashMap">
+        <![CDATA[
+            INSERT INTO Inventory.BIN_ProductStock(       
+                BIN_ProductVendorID,
+                BIN_InventoryInfoID,
+                Quantity,
+        ]]>
+        <dynamic>
+            <isNotEmpty property="logicInventoryInfoId">
+                <![CDATA[BIN_LogicInventoryInfoID,]]>
+            </isNotEmpty>
+            <isNotEmpty property="storageLocationInfoId">
+                <![CDATA[BIN_StorageLocationInfoID,]]>
+            </isNotEmpty>
+            <isNotEmpty property="productVendorPackageId">
+                <![CDATA[BIN_ProductVendorPackageID,]]>
+            </isNotEmpty>
+        </dynamic>
+        <![CDATA[
+                ValidFlag,
+                CreateTime,
+                CreatedBy,
+                CreatePGM,
+                UpdateTime,
+                UpdatedBy,
+                UpdatePGM,
+                ModifyCount
+            )VALUES(   
+                #productVendorId#,
+                #inventoryInfoId#,
+                #gainQuantity#,
+        ]]>
+        <dynamic>
+            <isNotEmpty property="logicInventoryInfoId">
+                <![CDATA[#logicInventoryInfoId#,]]>
+            </isNotEmpty>
+            <isNotEmpty property="storageLocationInfoId">
+                <![CDATA[#storageLocationInfoId#,]]>
+            </isNotEmpty>
+            <isNotEmpty property="productVendorPackageId">
+                <![CDATA[#productVendorPackageId#,]]>
+            </isNotEmpty>
+        </dynamic>
+        <![CDATA[
+                '1',
+                GETDATE(),
+                #createdBy#,
+                #createPGM#,
+                GETDATE(),
+                #updatedBy#,
+                #updatePGM#,
+                '0'
+            )
+        ]]>
+    </insert>
+	
+    <!--插入【产品盘点单据概要表】-->
+	<sql id="insertProductStockTakingSQL">
+        <![CDATA[
+            INSERT INTO Inventory.BIN_ProductStockTaking(
+                BIN_OrganizationInfoID,
+                BIN_BrandInfoID,
+                StockTakingNo,
+                StockTakingNoIF,
+                RelevanceNo,
+                BIN_OrganizationID,
+                BIN_EmployeeID,
+                TotalQuantity,
+                TotalAmount,
+                VerifiedFlag,
+                Type,
+                IsBatch,
+                Comments,
+                Date,
+        ]]>
+        <include refid="BINBECMINC99.insertKeySql" />
+        <![CDATA[
+            )VALUES(
+                #organizationInfoId#,
+                #brandInfoId#,
+                #stockTakingNo#,
+                #stockTakingNoIF#,
+                #relevanceNo#,
+                #organizationId#,
+                #employeeId#,
+                #totalQuantity#,
+                #totalAmount#,
+                #verifiedFlag#,
+                #type#,
+                #isBatch#,
+                #comments#,
+                #date#,
+        ]]>
+        <include refid="BINBECMINC99.insertValueSql" />
+        <![CDATA[)]]>
+	</sql>
+    <insert id="insertProductStockTaking" parameterClass="java.util.HashMap">
+        <selectKey resultClass="java.lang.Integer" type="post" keyProperty="BIN_ProductStockTakingID" >
+            <include refid="BINBESSPRO03.insertProductStockTakingSQL" />
+            <![CDATA[SELECT SCOPE_IDENTITY() AS value]]>
+        </selectKey>
+    </insert>
+    
+    <!--插入【产品盘点单据明细表】-->
+    <insert id="insertProductTakingDetail" parameterClass="java.util.HashMap">
+        <![CDATA[
+            INSERT INTO Inventory.BIN_ProductTakingDetail(
+                BIN_ProductTakingID,
+                BIN_ProductVendorID,
+				BIN_ProductBatchID,
+                DetailNo,
+                Quantity,
+                Price,
+                BIN_ProductVendorPackageID,
+                GainQuantity,
+                BIN_InventoryInfoID,
+                BIN_LogicInventoryInfoID,
+                BIN_StorageLocationInfoID,
+                Comments,
+                HandleType,
+        ]]>
+        <include refid="BINBECMINC99.insertKeySql" />
+        <![CDATA[
+            )VALUES(
+                #productStockTakingId#,
+                #productVendorId#,
+				#productBatchId#,
+                #detailNo#,
+                #quantity#,
+                #price#,
+                #productVendorPackageId#,
+                #gainQuantity#,
+                #inventoryInfoId#,
+                #logicInventoryInfoId#,
+                #storageLocationInfoId#,
+                #comments#,
+                #handleType#,
+        ]]>
+        <include refid="BINBECMINC99.insertValueSql" />
+        <![CDATA[)]]>
+    </insert>
+
+    <!-- 取得指定ID的盘点单据及其详细信息 -->
+    <select id="getStockTakingInfoByID" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+        <![CDATA[
+            SELECT  
+                A.StockTakingNo AS stockTakingNo,
+                A.StockTakingNoIF AS stockTakingNoIF,
+                A.BIN_OrganizationID AS organizationId,
+                A.BIN_EmployeeID AS employeeId,
+                A.TotalQuantity AS totalQuantity,
+                A.TotalAmount AS totalAmount,
+                A.VerifiedFlag AS verifiedFlag,
+                A.Type AS type,
+                A.RelevanceNo AS relevanceNo,
+                A.Comments as reasonAll,
+                B.BIN_ProductVendorID AS productVendorId,
+                B.DetailNo AS detailNo,
+                B.Quantity AS quantity,
+                B.Price AS price,
+                B.BIN_ProductVendorPackageID AS productVendorPackageId,
+                B.GainQuantity AS gainQuantity,
+                B.BIN_InventoryInfoID AS inventoryInfoId,
+                B.BIN_LogicInventoryInfoID AS logicInventoryInfoId,
+                B.BIN_StorageLocationInfoID AS storageLocationInfoId,
+                B.Comments AS comments,
+                B.HandleType AS handleType
+            FROM 
+                Inventory.BIN_ProductStockTaking A,
+                Inventory.BIN_ProductTakingDetail B
+            WHERE 
+                A.BIN_ProductStockTakingID = #productStockTakingId#
+                AND A.BIN_ProductStockTakingID = B.BIN_ProductTakingID
+                AND A.ValidFlag ='1'
+                AND B.ValidFlag ='1'
+            ORDER BY B.DetailNo ASC
+        ]]>
+    </select> 
+
+    <!--插入【产品入出库表】-->
+	<sql id="insertProductStockInOutSQL">
+        <![CDATA[
+            INSERT INTO Inventory.BIN_ProductInOut(
+                BIN_OrganizationInfoID,
+                BIN_BrandInfoID,
+                TradeNo,
+                TradeNoIF,
+                RelevanceNo,
+                BIN_OrganizationID,
+                BIN_EmployeeID,
+                TotalQuantity,
+                TotalAmount,
+                StockType,
+                TradeType,
+                BIN_LogisticInfoID,
+                Comments,
+                StockInOutDate,
+                StockInOutTime,
+                VerifiedFlag,
+                TotalAmountBefore,
+                TotalAmountAfter,
+        ]]>
+        <include refid="BINBECMINC99.insertKeySql" />
+        <![CDATA[
+            )VALUES(
+                #organizationInfoId#,
+                #brandInfoId#,
+                #tradeNo#,
+                #tradeNoIF#,
+                #relevanceNo#,
+                #organizationId#,
+                #employeeId#,
+                #totalQuantity#,
+                #totalAmount#,
+                #stockType#,
+                #tradeType#,
+                #logisticInfoId#,
+                #comments#,
+                #stockInOutDate#,
+                #stockInOutTime#,
+                #verifiedFlag#,
+                #totalAmountBefore#,
+                #totalAmountAfter#,
+        ]]>
+        <include refid="BINBECMINC99.insertValueSql" />
+        <![CDATA[)]]>
+	</sql>
+    <insert id="insertProductStockInOut" parameterClass="java.util.HashMap">
+        <selectKey resultClass="java.lang.Integer" type="post" keyProperty="BIN_ProductInOutID" >
+            <include refid="BINBESSPRO03.insertProductStockInOutSQL" />
+            <![CDATA[SELECT SCOPE_IDENTITY() AS value]]>
+        </selectKey>
+    </insert>
+    
+    <!--插入【产品入出库明细表】-->
+    <insert id="insertProductStockDetail" parameterClass="java.util.HashMap">
+        <![CDATA[
+            INSERT INTO Inventory.BIN_ProductInOutDetail(
+                BIN_ProductInOutID,
+                BIN_ProductVendorID,
+                DetailNo,
+                Quantity,
+                Price,
+                BIN_ProductVendorPackageID,
+                StockType,
+                BIN_InventoryInfoID,
+                BIN_LogicInventoryInfoID,
+                BIN_StorageLocationInfoID,
+                Comments,
+        ]]>
+        <include refid="BINBECMINC99.insertKeySql" />
+        <![CDATA[
+            )VALUES(
+                #productStockInOutId#,
+                #productVendorId#,
+                #detailNo#,
+                #quantity#,
+                #price#,
+                #productVendorPackageId#,
+                #stockType#,
+                #inventoryInfoId#,
+                #logicInventoryInfoId#,
+                #storageLocationInfoId#,
+                #comments#,
+        ]]>
+        <include refid="BINBECMINC99.insertValueSql" />
+        <![CDATA[)]]>
+    </insert>
+
+    <!--查询老后台产品库存-->
+    <select id="getOldStockList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+        <![CDATA[
+            SELECT
+                A.unitcode AS unitCode,
+                A.barcode AS barCode,
+                A.quantity AS quantity,
+				B.chinesename AS productName
+            FROM
+                dbo.WITPOSB_stock A
+				JOIN dbo.product B
+				ON (A.unitcode = B.unitcode AND A.barcode = B.barcode)
+            WHERE
+                A.counter_code = #counterCode#
+				AND A.inventory_type_code = #logicInventoryCode#
+        ]]>
+    </select>
+
+    <!--取得老后台柜台List-->
+    <select id="getOldCounterInfoList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+        <![CDATA[
+            SELECT
+                DISTINCT A.counter_code AS counterCode,
+				A.inventory_type_code AS logicInventoryCode
+            FROM
+                dbo.WITPOSB_stock A
+				JOIN dbo.product B
+				ON (A.unitcode = B.unitcode AND A.barcode = B.barcode)
+			WHERE
+                A.inventory_type_code != '' AND A.inventory_type_code IS NOT NULL
+		]]>
+        <isNotEmpty property="counterCode">
+            AND A.counter_code = #counterCode#
+        </isNotEmpty>
+    </select>
+	
+    <!--取得新后台柜台的实体仓库InfoList-->
+    <select id="getNewCounterDepotInfoList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+        <![CDATA[
+            SELECT
+                A.BIN_DepotInfoID,
+				B.BIN_CounterInfoID,
+				B.BIN_OrganizationID,
+				A.DepotCode,
+				A.DepotNameCN,
+				A.DepotNameEN,
+				B.CounterCode,
+				B.CounterNameIF
+            FROM
+                Basis.BIN_DepotInfo A
+            JOIN Basis.BIN_CounterInfo B
+			ON A.BIN_OrganizationID = B.BIN_OrganizationID
+			WHERE
+                A.BIN_OrganizationInfoID = #organizationInfoId#
+				AND B.BIN_OrganizationInfoID = #organizationInfoId#
+				AND B.BIN_BrandInfoID = #brandInfoId#
+				AND B.CounterCode = #counterCode#
+        ]]>
+    </select>
+
+    <!--取得新后台柜台的逻辑仓库InfoList-->
+    <select id="getNewCounterLogicInfoList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+        <![CDATA[
+            SELECT
+                A.BIN_LogicInventoryInfoID,
+				A.LogicInventoryCode,
+				A.InventoryNameCN,
+				A.InventoryNameEN
+            FROM
+                Basis.BIN_LogicInventory A
+            WHERE
+                A.BIN_OrganizationInfoID = #organizationInfoId#
+				AND A.BIN_BrandInfoID = #brandInfoId#
+				AND A.Type = '1'
+		]]>
+		<isNotEmpty prepend="AND" property="logicInventoryCode">
+	        <![CDATA[
+                A.LogicInventoryCode = #logicInventoryCode#
+	        ]]>
+		</isNotEmpty>
+
+    </select>
+	
+	<!--取得品牌InfoList-->
+    <select id="getBrandInfoList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+        <![CDATA[
+            SELECT
+                A.BrandCode
+            FROM
+                Basis.BIN_BrandInfo A
+            WHERE
+                A.ValidFlag = '1'
+                AND BIN_BrandInfoID = #BIN_BrandInfoID#
+        ]]>
+    </select>
+	
+	<!--查询柜台的产品--> 
+    <select id="getNewProductList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+        <![CDATA[
+            SELECT
+                A.BIN_ProductVendorID AS productVendorId,
+                A.BarCode AS barCode,
+                E.UnitCode AS unitCode,
+                ISNULL(C.SalePrice,0) AS salePrice,
+                E.NameTotal as productName
+            FROM
+                Basis.BIN_ProductVendor A
+                LEFT JOIN Basis.BIN_ProductPrice C
+                ON A.BIN_ProductID = C.BIN_ProductID
+                    AND C.ValidFlag = '1'
+                    AND C.Type = '2'
+                    AND GETDATE() BETWEEN C.StartDate AND C.EndDate
+                ,Basis.BIN_Product E
+            WHERE
+                A.BIN_ProductID =E.BIN_ProductID
+                AND A.ValidFlag='1'
+                AND E.ValidFlag = '1'
+				AND A.BarCode = #barCode#
+				AND E.UnitCode = #unitCode#
+        ]]>
+    </select>
+</sqlMap>

@@ -1,0 +1,138 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sqlMap PUBLIC "-//iBATIS.com//DTD SQL Map 2.0//EN" "http://ibatis.apache.org/dtd/sql-map-2.dtd">
+<sqlMap namespace="BINBEIFCON01">
+	
+	<!--查询job_date字段值 -->
+	<select id="getJobDate" parameterClass="java.util.HashMap" resultClass="java.lang.Integer">
+		<![CDATA[
+			SELECT 						
+				ID					
+			FROM						
+				dbo.WITPOSA_job_order					
+			WHERE						
+				table_name = #tableName# AND
+				brand_code = #brandCode# AND
+				DATEDIFF(D,GETDATE(),job_date) = 0
+		]]>
+    </select>
+			
+	<!--更新job时序表job_date -->
+	<update id="updateJobDate" parameterClass="java.util.HashMap">
+		<![CDATA[
+			UPDATE				
+				dbo.WITPOSA_job_order			
+			SET				
+				job_date = GETDATE()
+			WHERE					
+				table_name = #tableName# AND
+				brand_code = #brandCode#
+		]]>
+    </update>	
+	
+	<!-- 查询flag字段值 -->
+	<select id="getFlag" parameterClass="java.util.HashMap" resultClass="java.lang.Integer">
+		<![CDATA[
+			SELECT 						
+				flag					
+			FROM						
+				dbo.WITPOSA_job_order					
+			WHERE						
+				table_name = #tableName# AND
+				brand_code = #brandCode#
+		]]>
+    </select>
+
+	<!--更新job时序表flag为2，modified时间为当前时间 -->
+	<update id="updateFlmo" parameterClass="java.util.HashMap">
+		<![CDATA[
+			UPDATE				
+				dbo.WITPOSA_job_order			
+			SET				
+				flag = 2,
+				modified = GETDATE()
+			WHERE					
+				table_name = #tableName# AND
+				brand_code = #brandCode#
+		]]>
+    </update>		
+	
+	<!--更新柜台，省，市job时序表job_date -->
+	<update id="updateCouJobDate" parameterClass="java.util.HashMap">
+		<![CDATA[
+			UPDATE				
+				dbo.WITPOSA_job_order			
+			SET				
+				job_date = GETDATE()
+			WHERE					
+				table_name = 'Counters' OR
+				table_name = 'Province' OR
+				table_name = 'City' AND
+				brand_code = '1'
+		]]>
+    </update>
+
+	<!-- 查询柜台，省，市flag字段值 -->
+	<select id="getCouFlag" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+		<![CDATA[
+			SELECT 						
+				flag				
+			FROM						
+				dbo.WITPOSA_job_order					
+			WHERE						
+				table_name = 'Counters' OR
+				table_name = 'Province' OR
+				table_name = 'City' AND
+				brand_code = '1'
+		]]>
+    </select>
+	
+	<!--更新柜台，省，市job时序表flag为2，modified时间为当前时间 -->
+	<update id="updateCouFlmo" parameterClass="java.util.HashMap">
+		<![CDATA[
+			UPDATE				
+				dbo.WITPOSA_job_order			
+			SET				
+				flag = 2,
+				modified = GETDATE()
+			WHERE					
+				table_name = 'Counters' OR
+				table_name = 'Province' OR
+				table_name = 'City' AND
+				brand_code = '1'
+		]]>
+    </update>		
+
+	<!--设置成功标志 -->
+	<update id="updateSucFlag" parameterClass="java.util.HashMap">
+		<![CDATA[
+			UPDATE				
+				dbo.WITPOSA_job_order			
+			SET				
+				flag = 3,
+				modified = GETDATE(),
+				extraction_date = GETDATE()
+			WHERE					
+				table_name = #tableName# AND
+				brand_code = #brandCode#
+		]]>
+    </update>		
+	
+	<!--设置柜台，省，市成功标志 -->
+	<update id="updateCouSucFlag" parameterClass="java.util.HashMap">
+		<![CDATA[
+			UPDATE				
+				dbo.WITPOSA_job_order			
+			SET				
+				flag = 3,
+				modified = GETDATE(),
+				extraction_date = GETDATE()
+			WHERE					
+				table_name = 'Counters' OR
+				table_name = 'Province' OR
+				table_name = 'City' AND
+				brand_code = '1'
+		]]>
+    </update>		
+
+	
+</sqlMap>

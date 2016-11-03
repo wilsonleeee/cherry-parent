@@ -1,0 +1,180 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sqlMap PUBLIC "-//iBATIS.com//DTD SQL Map 2.0//EN" "http://ibatis.apache.org/dtd/sql-map-2.dtd">
+<sqlMap namespace="BINBEDRHAN03">
+	 <!-- 取得需要降级处理的会员信息List -->
+	<resultMap id="BINBEDRHAN03.LevelDownList" class="com.cherry.dr.cmbussiness.dto.core.CampBaseDTO">
+		<result property="organizationInfoId" column="BIN_OrganizationInfoID"/>
+		<result property="orgCode" column="OrgCode"/>
+		<result property="brandInfoId" column="BIN_BrandInfoID"/>
+		<result property="brandCode" column="BrandCode"/>
+		<result property="memberInfoId" column="BIN_MemberInfoID"/>
+		<result property="joinDate" column="JoinDate"/>
+		<result property="levelAdjustDay" column="LevelAdjustDay"/>
+		<result property="curLevelId" column="MemberLevel"/>
+		<result property="grantMemberLevel" column="GrantMemberLevel"/>
+		<result property="levelStartDate" column="LevelStartDate"/>
+		<result property="levelEndDate" column="LevelEndDate"/>
+		<result property="firstBillId" column="FirstBillID"/>
+	</resultMap>
+	<select id="getLevelDownList" parameterClass="java.util.HashMap" resultMap="BINBEDRHAN03.LevelDownList">
+		<include refid="BINBECMINC99.pageheader" />
+		<![CDATA[
+		SELECT
+				A.BIN_OrganizationInfoID AS BIN_OrganizationInfoID,
+				A.BIN_BrandInfoID AS BIN_BrandInfoID,
+				A.BIN_MemberInfoID AS BIN_MemberInfoID,
+				convert(varchar, A.JoinDate, 121) AS JoinDate,
+				convert(varchar, A.LevelAdjustDay, 121) AS LevelAdjustDay,
+				convert(varchar, A.LevelStartDate, 121) AS LevelStartDate,
+				convert(varchar, A.LevelEndDate, 121) AS LevelEndDate,
+				A.FirstBillID AS FirstBillID,
+				ISNULL(A.MemberLevel, 0) AS MemberLevel,
+				ISNULL(A.GrantMemberLevel, 0) AS GrantMemberLevel,
+				B.BrandCode AS BrandCode,
+				C.OrgCode AS OrgCode
+		FROM
+				Members.BIN_MemberInfo A
+				LEFT JOIN Basis.BIN_BrandInfo B
+				ON(A.BIN_BrandInfoID = B.BIN_BrandInfoID)
+				LEFT JOIN Basis.BIN_OrganizationInfo C
+				ON(A.BIN_OrganizationInfoID = C.BIN_OrganizationInfoID)
+		WHERE
+				A.BIN_BrandInfoID = #brandInfoId# AND
+				A.BIN_OrganizationInfoID = #organizationInfoId# AND
+				A.BatchExecFlag = 1
+		]]>
+		<include refid="BINBECMINC99.pagefooter" />
+    </select>
+    
+    <select id="getClubLevelDownList" parameterClass="java.util.HashMap" resultClass="com.cherry.dr.cmbussiness.dto.core.CampBaseDTO">
+		<include refid="BINBECMINC99.pageheader" />
+		<![CDATA[
+		SELECT
+				A.BIN_OrganizationInfoID AS organizationInfoId,
+				A.BIN_BrandInfoID AS brandInfoId,
+				A.BIN_MemberInfoID AS memberInfoId,
+				D.BIN_ClubLevelID AS memClubLeveId,
+				convert(varchar, D.JoinTime, 121) AS joinDate,
+				convert(varchar, D.LevelAdjustDay, 121) AS levelAdjustDay,
+				convert(varchar, D.LevelStartDate, 121) AS levelStartDate,
+				convert(varchar, D.LevelEndDate, 121) AS levelEndDate,
+				D.FirstBillID AS firstBillId,
+				ISNULL(D.MemberLevel, 0) AS curLevelId,
+				ISNULL(D.GrantMemberLevel, 0) AS grantMemberLevel,
+				B.BrandCode AS brandCode,
+				C.OrgCode AS orgCode
+		FROM
+				Members.BIN_MemberInfo A JOIN
+				Members.BIN_MemClubLevel D
+				ON(A.BIN_MemberInfoID = D.BIN_MemberInfoID AND D.BIN_MemberClubID = #memberClubId#)
+				LEFT JOIN Basis.BIN_BrandInfo B
+				ON(A.BIN_BrandInfoID = B.BIN_BrandInfoID)
+				LEFT JOIN Basis.BIN_OrganizationInfo C
+				ON(A.BIN_OrganizationInfoID = C.BIN_OrganizationInfoID)
+		WHERE
+				A.BIN_BrandInfoID = #brandInfoId# AND
+				A.BIN_OrganizationInfoID = #organizationInfoId# AND
+				A.BatchExecFlag = 1
+		]]>
+		<include refid="BINBECMINC99.pagefooter" />
+    </select>
+    
+    <!--更新会员BATCH执行状态 -->
+	<update id="updateMemDGBatchExec" parameterClass="java.util.HashMap">
+		<![CDATA[
+			UPDATE 		
+				Members.BIN_MemberInfo
+			SET	
+				BatchExecFlag = 1
+			WHERE
+				BIN_BrandInfoID = #brandInfoId# AND
+				BIN_OrganizationInfoID = #organizationInfoId# AND
+				convert(DATE, LevelEndDate, 121) = convert(DATE, #busDate#, 121) AND
+				LevelStatus = '2'
+		]]>
+    </update>
+    
+    <!--更新会员BATCH执行状态 -->
+	<update id="updateClubMemDGBatchExec" parameterClass="java.util.HashMap">
+		<![CDATA[
+		UPDATE 		
+				Members.BIN_MemberInfo
+			SET	
+				BatchExecFlag = 1
+			From Members.BIN_MemberInfo A,
+			 Members.BIN_MemClubLevel B
+			WHERE
+				A.BIN_BrandInfoID = #brandInfoId#  AND
+				A.BIN_OrganizationInfoID = #organizationInfoId# AND
+				A.BIN_MemberInfoID = B.BIN_MemberInfoID AND
+				B.BIN_MemberClubID = #memberClubId# AND
+				convert(DATE, B.LevelEndDate, 121) = convert(DATE, #busDate#, 121)
+		]]>
+    </update>
+    
+    <!--去除会员BATCH执行状态 -->
+	<update id="updateClearDGBatchExec" parameterClass="java.util.HashMap">
+		<![CDATA[
+			UPDATE 		
+				Members.BIN_MemberInfo
+			SET	
+				BatchExecFlag = NULL
+			WHERE
+				BIN_BrandInfoID = #brandInfoId# AND
+				BIN_OrganizationInfoID = #organizationInfoId# AND
+				BatchExecFlag = 1
+		]]>
+    </update>
+	
+	<!--更新会员等级有效期 -->
+	<update id="updateLevelValidity" parameterClass="com.cherry.dr.cmbussiness.dto.core.CampBaseDTO">
+		<![CDATA[
+			UPDATE 		
+				Members.BIN_MemberInfo
+			SET	
+			]]>
+			<isNotEmpty property="levelStartDate">
+					<![CDATA[LevelStartDate = CONVERT(DATETIME, #levelStartDate#, 121),]]>
+			</isNotEmpty>
+			<isEmpty property="levelStartDate">
+					<![CDATA[LevelStartDate = null,]]>
+			</isEmpty>
+			<isNotEmpty property="levelEndDate">
+					<![CDATA[LevelEndDate = CONVERT(DATETIME, #levelEndDate#, 121),]]>
+			</isNotEmpty>
+			<isEmpty property="levelEndDate">
+					<![CDATA[levelEndDate = null,]]>
+			</isEmpty>
+			<include refid="BINBEDRCOM01.updateSql" />									
+		<![CDATA[
+			WHERE					
+				BIN_MemberInfoID = #memberInfoId#
+		]]>
+    </update>
+    <!--更新会员等级有效期 -->
+	<update id="updateClubLevelValidity" parameterClass="com.cherry.dr.cmbussiness.dto.core.CampBaseDTO">
+		<![CDATA[
+			UPDATE 		
+				Members.BIN_MemClubLevel
+			SET	
+			]]>
+			<isNotEmpty property="levelStartDate">
+					<![CDATA[LevelStartDate = CONVERT(DATETIME, #levelStartDate#, 121),]]>
+			</isNotEmpty>
+			<isEmpty property="levelStartDate">
+					<![CDATA[LevelStartDate = null,]]>
+			</isEmpty>
+			<isNotEmpty property="levelEndDate">
+					<![CDATA[LevelEndDate = CONVERT(DATETIME, #levelEndDate#, 121),]]>
+			</isNotEmpty>
+			<isEmpty property="levelEndDate">
+					<![CDATA[levelEndDate = null,]]>
+			</isEmpty>
+			<include refid="BINBEDRCOM01.updateSql" />									
+		<![CDATA[
+			WHERE					
+				BIN_MemberInfoID = #memberInfoId# AND
+				BIN_MemberClubID = #memberClubId#
+		]]>
+    </update>
+</sqlMap>

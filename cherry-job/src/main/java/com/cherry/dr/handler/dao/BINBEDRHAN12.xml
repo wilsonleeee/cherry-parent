@@ -1,0 +1,266 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sqlMap PUBLIC "-//iBATIS.com//DTD SQL Map 2.0//EN" "http://ibatis.apache.org/dtd/sql-map-2.dtd">
+<sqlMap namespace="BINBEDRHAN12">
+
+	<!-- 把所有规则履历的数据状态更新成未处理 -->
+    <update id="updAllDataStatus" parameterClass="java.util.HashMap">
+		<![CDATA[
+			UPDATE
+				Members.BIN_RuleExecRecord
+			SET
+				DataStatus = '0'
+		]]>
+    </update>
+	
+	<!-- 把规则履历的数据状态更新成处理中 -->
+    <update id="updDataStatus" parameterClass="java.util.HashMap">
+		<![CDATA[
+			UPDATE
+				Members.BIN_RuleExecRecord
+			SET
+				DataStatus = '1'
+			WHERE
+				BIN_OrganizationInfoID = #organizationInfoId# AND
+				BIN_BrandInfoID = #brandInfoId# AND
+				TicketDate < CONVERT(DATETIME, #ticketDate#, 121)
+		]]>
+    </update>
+    
+    <!-- 更新需要保留的规则履历 -->
+    <update id="updKeepRuleRecord" parameterClass="java.util.HashMap">
+		<![CDATA[
+			UPDATE
+				Members.BIN_RuleExecRecord
+			SET
+				DataStatus = '0'
+			FROM
+				Members.BIN_RuleExecRecord A,
+				(SELECT
+					BIN_MemberInfoID,
+					RecordKbn,
+					MAX(TicketDate) AS TicketDate
+				FROM
+					Members.BIN_RuleExecRecord
+				WHERE
+					BIN_OrganizationInfoID = #organizationInfoId# AND
+					BIN_BrandInfoID = #brandInfoId# AND
+					TicketDate < CONVERT(DATETIME, #ticketDate#, 121) AND
+					DataStatus = '1' AND
+					ValidFlag = '1'
+				GROUP BY
+					BIN_MemberInfoID,
+					RecordKbn
+				) B
+			WHERE
+				A.BIN_OrganizationInfoID = #organizationInfoId# AND
+				A.BIN_BrandInfoID = #brandInfoId# AND
+				A.BIN_MemberInfoID = B.BIN_MemberInfoID AND
+				A.RecordKbn = B.RecordKbn AND
+				A.TicketDate = B.TicketDate
+		]]>
+    </update>
+    
+    <!-- 查询会员规则履历List -->
+    <select id="getMemRuleRecordList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">	
+		<include refid="BINOLCMINC99.pageheader" />
+		<![CDATA[
+			SELECT
+				A.BIN_OrganizationInfoID AS organizationInfoId,
+		        A.BIN_BrandInfoID AS brandInfoId,
+		        A.BIN_MemberInfoID AS memberInfoId,
+		      	A.MemCode AS memCode,
+		      	A.BillID AS billId,
+		      	A.TradeType AS tradeType,
+		      	A.RecordKbn AS recordKbn,
+		      	A.OldValue AS oldValue,
+		      	A.NewValue AS newValue,
+		      	CONVERT(varchar(30), A.TicketDate, 121) AS ticketDate,
+		      	CONVERT(varchar(30), A.CalcDate, 121) AS calcDate,
+		      	A.BIN_RuleIDs AS ruleIDs,
+		      	A.ReCalcCount AS reCalcCount,
+		      	A.Reason AS reason,
+		      	A.ChangeType AS changeType,
+		      	A.SubCampaignCodes AS subCampaignCodes,
+		      	A.BIN_OrganizationID AS organizationId,
+		      	A.CounterCode AS counterCode,
+		      	A.BIN_EmployeeID AS employeeId,
+		      	A.EmployeeCode AS employeeCode,
+		      	A.Channel AS channel,
+		      	A.ValidFlag AS validFlag,
+		      	CONVERT(varchar(30), A.CreateTime, 121) AS createTime,
+		      	A.CreatedBy AS createdBy,
+		      	A.CreatePGM AS createPGM,
+		      	CONVERT(varchar(30), A.UpdateTime, 121) AS updateTime,
+		      	A.UpdatedBy AS updatedBy,
+		      	A.UpdatePGM AS updatePGM,
+		      	A.ModifyCount AS modifyCount
+			FROM	
+				Members.BIN_RuleExecRecord A
+			WHERE
+				A.BIN_OrganizationInfoID = #organizationInfoId# AND
+				A.BIN_BrandInfoID = #brandInfoId# AND
+				A.TicketDate < CONVERT(DATETIME, #ticketDate#, 121) AND
+				DataStatus = '1'
+		]]>
+		<include refid="BINOLCMINC99.pagefooter" />
+    </select>
+    
+    <!--删除会员规则履历 -->
+	<delete id="delMemRuleRecord" parameterClass="java.util.HashMap">
+		<![CDATA[									
+			DELETE FROM						
+				Members.BIN_RuleExecRecord		
+			WHERE						
+				BIN_OrganizationInfoID = #organizationInfoId# AND
+				BIN_BrandInfoID = #brandInfoId# AND
+				TicketDate < CONVERT(DATETIME, #ticketDate#, 121) AND
+				DataStatus = '1'
+		]]>															
+    </delete>
+    
+    <!-- 把旧的规则履历迁移到规则履历历史表 -->
+	<insert id="memRuleRecordMove" parameterClass="java.util.HashMap">
+		<![CDATA[
+			INSERT INTO 
+				Members.BIN_RuleExecRecordHistory
+				   (BIN_OrganizationInfoID,
+					BIN_BrandInfoID,
+					BIN_MemberInfoID,
+					MemCode,
+					BillID,
+					TradeType,
+					RecordKbn,
+					OldValue,
+					NewValue,
+					TicketDate,
+					CalcDate,
+					BIN_RuleIDs,
+					ReCalcCount,
+					Reason,
+					ChangeType,
+					SubCampaignCodes,
+					BIN_OrganizationID,
+					CounterCode,
+					BIN_EmployeeID,
+					EmployeeCode,
+					Channel,
+					DataStatus,
+					ValidFlag,
+					CreateTime,
+					CreatedBy,
+					CreatePGM,
+					UpdateTime,
+					UpdatedBy,
+					UpdatePGM,
+					ModifyCount)
+				SELECT
+					BIN_OrganizationInfoID,
+					BIN_BrandInfoID,
+					BIN_MemberInfoID,
+					MemCode,
+					BillID,
+					TradeType,
+					RecordKbn,
+					OldValue,
+					NewValue,
+					TicketDate,
+					CalcDate,
+					BIN_RuleIDs,
+					ReCalcCount,
+					Reason,
+					ChangeType,
+					SubCampaignCodes,
+					BIN_OrganizationID,
+					CounterCode,
+					BIN_EmployeeID,
+					EmployeeCode,
+					Channel,
+					'0',
+					ValidFlag,
+					CreateTime,
+					CreatedBy,
+					CreatePGM,
+					UpdateTime,
+					UpdatedBy,
+					UpdatePGM,
+					ModifyCount
+				FROM	
+					Members.BIN_RuleExecRecord
+				WHERE
+					BIN_OrganizationInfoID = #organizationInfoId# AND
+					BIN_BrandInfoID = #brandInfoId# AND
+					TicketDate < CONVERT(DATETIME, #ticketDate#, 121) AND
+					DataStatus = '1'
+	]]>	
+    </insert>	
+    
+    <!-- 插入规则执行履历表  -->
+	<insert id="addRuleExecRecord" parameterClass="java.util.HashMap">
+		<![CDATA[
+		INSERT INTO Members.BIN_RuleExecRecord(
+			BIN_OrganizationInfoID,
+			BIN_BrandInfoID,
+			BIN_MemberInfoID,
+			MemCode,
+			BillID,
+			TradeType,
+			RecordKbn,
+			OldValue,
+			NewValue,
+			TicketDate,
+			CalcDate,
+			BIN_RuleIDs,
+			ReCalcCount,
+			Reason,
+			ChangeType,
+			SubCampaignCodes,
+			BIN_OrganizationID,
+			CounterCode,
+			BIN_EmployeeID,
+			EmployeeCode,
+			Channel,
+			DataStatus,
+			ValidFlag,
+			CreateTime,
+      		CreatedBy,
+      		CreatePGM,
+      		UpdateTime,
+      		UpdatedBy,
+      		UpdatePGM,
+      		ModifyCount
+		)VALUES(
+			#organizationInfoId#,
+			#brandInfoId#,
+			#memberInfoId#,
+			#memCode#,
+			#billCode#,
+			#billType#,
+			#recordKbn#,
+			#oldValue#,
+			#newValue#,
+			#ticketDate#,
+			#calcDate#,
+			#ruleIds#,
+			#reCalcCount#,
+			#reason#,
+			#changeType#,
+			#subCampCodes#,
+			#organizationId#,
+			#counterCode#,
+			#employeeId#,
+			#baCode#,
+			#channel#,
+			'9',
+			#validFlag#,
+			#createTime#,
+      		#createdBy#,
+      		#createPGM#,
+      		#updateTime#,
+      		#updatedBy#,
+      		#updatePGM#,
+      		#modifyCount#
+		)
+		]]>
+	</insert>
+    
+</sqlMap>

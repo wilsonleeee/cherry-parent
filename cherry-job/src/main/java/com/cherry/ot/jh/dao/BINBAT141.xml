@@ -1,0 +1,393 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sqlMap PUBLIC "-//iBATIS.com//DTD SQL Map 2.0//EN" "http://ibatis.apache.org/dtd/sql-map-2.dtd">
+<sqlMap namespace="BINBAT141">
+	<!-- 新增促销活动 -->
+	<insert id="addPromotionActivity" parameterClass="java.util.HashMap">
+	<selectKey resultClass="java.lang.Integer" type="post" keyProperty="BIN_PromotionActivityID" > 
+	    	<![CDATA[
+	    		INSERT INTO Promotion.BIN_PromotionActivity			
+				(				
+					ActivityName,
+					ActivityCode,
+					Times,
+					BIN_BrandInfoID,
+					BIN_OrganizationInfoID,
+					BIN_PromotionActGrpID,
+					ChangeableFlag,
+					DescriptionDtl,
+					ActivitySetBy,
+					ActivityType,
+					TemplateFlag,
+					Status,
+			]]>
+					<include refid="BINOLCMINC99.insertKeySql" />		
+			<![CDATA[				
+				)				
+				VALUES				
+				(				
+					#prmActiveName#,
+					#activityCode#,
+					#maxReceiveQty#,
+					#brandInfoId#,
+					#organizationInfoId#,
+					#prmActGrp#,
+					#mainModify#,
+					#descriptionDtl#,
+					#userID#,
+					#activityType#,
+					#templateFlag#,
+					#status#,
+			]]>
+					<include refid="BINOLCMINC99.insertValueSql" />		
+			<![CDATA[	
+				)			
+			  	select SCOPE_IDENTITY() as value 	
+	    	]]>
+	    	</selectKey>   
+	    </insert>
+	    <!-- 新增促销规则明细 -->
+		<insert id="addPromotionActivityRule" parameterClass="java.util.HashMap">
+		<selectKey resultClass="java.lang.Integer" type="post" keyProperty="BIN_PromotionActivityRuleID" > 
+	    	<![CDATA[
+	    		INSERT INTO Promotion.BIN_PromotionActivityRule
+				(				
+					BIN_PromotionActivityID,
+					RuleFileName,
+					ActivityRule,
+					Description,
+					RuleDetail,
+			]]>
+					<include refid="BINOLCMINC99.insertKeySql" />		
+			<![CDATA[				
+				)				
+				VALUES				
+				(				
+					#bin_PromotionActivityID#,
+					#ruleFileName#,
+					#activityRule#,
+					#description#,
+					#ruleHTML#,
+			]]>
+					<include refid="BINOLCMINC99.insertValueSql" />		
+			<![CDATA[	
+				)		
+			  	select SCOPE_IDENTITY() as value  		
+	    	]]>
+	    	</selectKey>   
+	    </insert>
+	    <!-- 新增促销规则表 -->
+	<insert id="addActRuleInfo" parameterClass="java.util.HashMap">
+		<![CDATA[
+			INSERT INTO Promotion.BIN_PromotionRule(	
+				RuleCode
+	           ,RuleCodeShort
+	           ,RuleName
+	           ,BIN_BrandInfoID
+	           ,BIN_OrganizationInfoID
+	           ,RuleCond
+	           ,RuleResult
+	           ,RuleType
+	           ,StartTime
+	           ,EndTime
+	           ,TimeJson
+	           ,PlaceJson
+	           ,PlaceType
+	           ,SearchCode
+	           ,MemberType
+	           ,SubCampaignValid
+	           ,ExecFlag
+	           ,IsMust
+	           ,Level
+	           ,EnableContinue
+	           ,EnableMessage
+	           ,SubBrandCode
+	           ,UseCoupon
+	           ,Status
+	           ,MaxExecCount,
+		]]>
+		<include refid="BINOLCMINC99.insertKeySql" />		
+		<![CDATA[)VALUES(
+				#activityCode#
+	           ,#shortCode#
+	           ,#prmActiveName#
+	           ,#brandInfoId#
+	           ,#organizationInfoId#
+	           ,#ruleCondJson#
+	           ,#ruleResultJson#
+	           ,#ruleType#
+	           ,#startTime#
+	           ,#endTime#
+	           ,#timeJson#
+	           ,#placeJson#
+	           ,#locationType#
+	           ,#searchCode#
+	           ,#memberType#
+	           ,#subCampValid#
+	           ,#execFlag#
+	           ,#isMust#
+	           ,#level#
+	           ,#enContinue#
+	           ,#enMessage#
+	           ,#subBrandCode#
+	           ,#useCoupon#
+	           ,#status#
+	           ,#maxExecCount#,
+		]]>
+		<include refid="BINOLCMINC99.insertValueSql" />
+		<![CDATA[)]]>
+	</insert>
+	<!-- 新增促销规则条件表 -->
+    <insert id="addPromotionRuleCondition" parameterClass="java.util.HashMap">
+   		<![CDATA[
+    		INSERT INTO Promotion.BIN_PromotionRuleCondition
+			(				
+				BIN_PromotionActivityRuleID,
+				BIN_PromotionBasePropID,
+				BasePropValue1,
+				BasePropValue2,
+				ConditionGrpID,
+				ActLocationType,
+
+		]]>
+				<include refid="BINOLCMINC99.insertKeySql" />		
+		<![CDATA[				
+			)				
+			VALUES				
+			(				
+				#bin_PromotionActivityRuleID#,
+				#basePropId#,
+				#basePropValue#,
+				#basePropValue2#,
+				#conditionGrpId#,
+				#locationType#,
+		]]>
+				<include refid="BINOLCMINC99.insertValueSql" />		
+		<![CDATA[	
+			)				
+    	]]>
+    </insert>
+    <!-- 取得规则基础属性 -->
+    <select id="getPrmBasePropInfoList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+    	<![CDATA[
+    		SELECT
+    			A.BIN_PromotionBasePropID AS bin_PromotionBasePropID,
+    			A.PropertyName AS propertyName
+    		FROM
+    			Promotion.BIN_PromotionBaseProp A
+    		WHERE 
+    			A.ValidFlag = '1'
+    	]]>	
+    </select>
+    <!-- 取得柜台属性 -->
+    <select id="getCntList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+    	<![CDATA[
+    	select
+			counterCode as code,
+			CounterNameIF as name
+		from
+			Basis.BIN_CounterInfo
+		where
+			BIN_BrandInfoID = #brandInfoId#
+    		and ValidFlag = '1'
+    	]]>	
+    </select>
+    <!-- 取得渠道属性 -->
+    <select id="getChannelList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+    	<![CDATA[
+    	select
+			ChannelName name,
+			BIN_ChannelID AS id,
+			ChannelCode AS code
+		from
+			Basis.BIN_Channel
+		where
+			BIN_BrandInfoID = #brandInfoId#
+			and ChannelCode is not null
+			and ValidFlag = '1'
+    	]]>	
+    </select>
+    <!-- 取得会员等级属性 -->
+    <select id="getMemLevelList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+    	<![CDATA[
+    	select
+			BIN_MemberLevelID as id,
+			LevelCode as code
+		from
+			[Members].[BIN_MemberLevel]
+	 	where
+			BIN_BrandInfoID = #brandInfoId#
+    		and ValidFlag = '1'
+    	]]>	
+    </select>
+     <!-- 取得活动RULEID -->
+    <select id="getRuleId" parameterClass="java.util.HashMap" resultClass="java.lang.Integer">
+    	<![CDATA[
+    	select
+			b.BIN_PromotionActivityRuleID as ruleID
+		from
+		Promotion.BIN_PromotionActivity a
+		join Promotion.BIN_PromotionActivityRule b
+		on(a.BIN_PromotionActivityID = b.BIN_PromotionActivityID)
+		where
+			a.ActivityCode = #activityCode#
+			and a.BIN_BrandInfoID = #brandInfoId#
+    	]]>	
+    </select>
+    
+    <!-- 删除促销活动表 -->
+	<delete id="delPrmActivity">
+	<![CDATA[DELETE FROM Promotion.BIN_PromotionActivity WHERE ActivityCode = #activityCode# and BIN_BrandInfoID = #brandInfoId#]]>
+	</delete>
+    <!-- 删除促销活动关联表 -->
+	<delete id="delPrmActivityRule">
+	<![CDATA[DELETE FROM Promotion.BIN_PromotionActivityRule WHERE BIN_PromotionActivityRuleID = #ruleID#]]>
+	</delete>
+	<!-- 删除促销条件表 -->
+	<delete id="delPrmActCondition">
+	<![CDATA[DELETE FROM Promotion.BIN_PromotionRuleCondition WHERE BIN_PromotionActivityRuleID = #ruleID#]]>
+	</delete>
+	<!-- 删除促销结果表 -->
+	<delete id="delPrmActResult">
+	<![CDATA[DELETE FROM Promotion.BIN_PromotionRuleResult WHERE BIN_PromotionActivityRuleID = #ruleID#]]>
+	</delete>
+	<!-- 删除促销规则表 -->
+	<delete id="delPrmActRule">
+	<![CDATA[DELETE FROM Promotion.BIN_PromotionRule WHERE RuleCode = #activityCode# AND BIN_BrandInfoID=#brandInfoId#]]>
+	</delete>
+	<!-- 删除促销规则表 -->
+	<delete id="delPrmActRuleCate">
+	<![CDATA[DELETE FROM Promotion.BIN_PromotionRuleCate WHERE RuleCode = #activityCode# AND BIN_BrandInfoID=#brandInfoId#]]>
+	</delete>
+	
+	<!-- 新增沟通对象 -->
+    <insert id="addCustomerInfo" parameterClass="java.util.HashMap">
+    <![CDATA[
+    	INSERT INTO Members.BIN_CustomerInfo(
+				BIN_SearchCode,
+		      	BIN_CustomerCode,
+		      	BIN_OrganizationInfoID,
+		      	BIN_BrandInfoID,
+		      	CustomerType,
+		      	CustomerName,
+		      	Mobilephone,
+		      	Telephone,
+		      	Email,
+		      	IsReceiveMsg,
+		      	Birthday,
+	     	 	CounterCode,
+		      	UseFlag,
+		]]>	
+		<include refid="BINOLCMINC99.insertKeySql" />									
+		<![CDATA[
+		  )VALUES(
+				#searchCode#,
+				#memCode#,
+				#organizationInfoId#,
+				#brandInfoId#,
+				#customerType#,
+				#memName#,
+				#mobilePhone#,
+				#telephone#,
+				#email#,
+				#receiveMsgFlg#,
+				#birthDay#,
+				#counterCode#,
+				#useFlag#,
+		]]>
+		<include refid="BINOLCMINC99.insertValueSql" />
+		<![CDATA[)]]>
+    </insert>
+    
+    <!-- 新增沟通对象搜索记录 -->
+    <insert id="addMemSearchLog" parameterClass="java.util.HashMap">
+	    <![CDATA[
+	    	INSERT INTO Members.BIN_SearchLog(
+				BIN_SearchCode,
+				BIN_OrganizationInfoID,
+				BIN_BrandInfoID,
+				BIN_OrganizationID,
+				RecordName,
+				CustomerType,
+				RecordType,
+				RecordCount,
+				ConditionInfo,
+				Comments,
+				FromType,
+				UseFlag,
+				OwnerUser,
+		]]>	
+		<include refid="BINOLCMINC99.insertKeySql" />									
+		<![CDATA[	
+		  	)VALUES(
+				#searchCode#,
+				#organizationInfoId#,
+				#brandInfoId#,
+				#organizationId#,
+		]]>	
+		<isNotEmpty property="recordName">
+			#recordName#,
+		</isNotEmpty>
+		<isEmpty property="recordName">
+			#searchCode#,
+		</isEmpty>					
+		<![CDATA[		
+				#customerType#,
+				#recordType#,
+				#recordCount#,
+				#conditionInfo#,
+				#comments#,
+				#fromType#,
+				#useFlag#,
+				#ownerUser#,
+		]]>
+		<include refid="BINOLCMINC99.insertValueSql" />
+		<![CDATA[)]]>
+    </insert>
+
+    <!-- 新增优惠券活动 -->
+     <insert id="addPromotionCouponRule" parameterClass="java.util.HashMap">
+    	MERGE Promotion.BIN_PromotionCouponRule AS BK
+    		USING(
+    			SELECT
+    				#RuleCode# AS RuleCode
+    		) AS SRC
+    		ON(
+    			BK.RuleCode=SRC.RuleCode AND
+				BK.ValidFlag='1'
+    		)
+    		WHEN MATCHED THEN	
+	    		UPDATE SET	
+		            RuleCode=#RuleCode#,
+					RuleName=#RuleName#,
+					BIN_BrandInfoID=#brandInfoId#,
+					BIN_OrganizationInfoID=#organizationInfoId#,
+					SendStartTime=#SendStartTime#,
+					SendEndTime=#SendEndTime#,
+					Description=#Description#,
+					<include refid="BINOLCMINC99.updateSql" />
+			WHEN NOT MATCHED THEN 
+			INSERT(
+					RuleCode,
+					RuleName,
+					BIN_BrandInfoID,
+					BIN_OrganizationInfoID,
+					SendStartTime,
+					SendEndTime,
+					Description,
+					Status,
+			<include refid="BINOLCMINC99.insertKeySql" />
+				)
+				VALUES
+				(
+					#RuleCode#,
+					#RuleName#,
+					#brandInfoId#,
+					#organizationInfoId#,
+					#SendStartTime#,
+					#SendEndTime#,
+					#Description#,
+					#Status#,
+			<include refid="BINOLCMINC99.insertValueSql" />
+				);
+	</insert>
+</sqlMap>

@@ -1,0 +1,476 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sqlMap PUBLIC "-//iBATIS.com//DTD SQL Map 2.0//EN" "http://ibatis.apache.org/dtd/sql-map-2.dtd">
+<sqlMap namespace="BINBEMQSYN01">
+
+	<!-- 查询POS品牌数据库MQ日志表 --><!-- 
+	<resultMap id="BINBEMQSYN01.WitposMQLog" class="java.util.HashMap">
+		<result property="id" column="ID"/>
+		<result property="billType" column="BillType"/>
+		<result property="billCode" column="BillCode"/>
+		<result property="modifyCounts" column="ModifyCounts"/>
+		<result property="originalMsg" column="OriginalMsg"/>
+	</resultMap>
+	<select id ="getWitposMQLogList" parameterClass="java.util.HashMap" resultMap="BINBEMQSYN01.WitposMQLog">
+		<![CDATA[
+			SELECT										
+				ID,								
+				BillType,									
+				BillCode,									
+				ModifyCounts,
+				OriginalMsg							
+			FROM										
+				dbo.MQ_Log									
+			WHERE										
+				SendOrRece=#sendOrRece#	AND
+				BillCode IS NOT NULL AND
+				BillCode <> ''
+			ORDER BY
+				Txddate,Txdtime
+		]]>																					
+	</select> -->
+	
+	<!-- 查询cherry的MQ日志表 --><!-- 
+	<resultMap id="BINBEMQSYN01.CherryMQLog" class="java.util.HashMap">
+		<result property="id" column="BIN_MQLogID"/>
+		<result property="billType" column="BillType"/>
+		<result property="billCode" column="BillCode"/>
+		<result property="modifyCounts" column="SaleRecordModifyCount"/>
+		<result property="data" column="Data"/>
+		<result property="msgQueueName" column="MsgQueueName"/>
+	</resultMap>
+	<select id ="getCherryMQLogList" parameterClass="java.util.HashMap" resultMap="BINBEMQSYN01.CherryMQLog">
+		<![CDATA[
+			SELECT		
+				BIN_MQLogID,		
+				BillType,					
+				BillCode,					
+				SaleRecordModifyCount,
+				Data,
+				MsgQueueName						
+			FROM									
+				Interfaces.BIN_MQLog								
+			WHERE									
+				BillCode IS NOT NULL AND
+				BillCode <> '' AND
+				BIN_OrganizationInfoID=#organizationInfoId# AND								
+				BIN_BrandInfoID=#brandInfoId# AND								
+				SendOrRece=#sendOrRece# AND								
+				ValidFlag='1'	
+		]]>		
+			<dynamic>
+				<isNotEmpty prepend="AND" property="receiveFlag">
+					ReceiveFlag=#receiveFlag#
+				</isNotEmpty>
+			</dynamic>	
+		<![CDATA[	
+			ORDER BY
+				BIN_MQLogID		
+		]]>																		
+	</select> -->
+	
+	<!-- 查询POS品牌数据库MQ日志表（销售/退货业务） --><!-- 
+	<resultMap id="BINBEMQSYN01.WitposMQLogNS" class="java.util.HashMap">
+		<result property="id" column="ID"/>
+		<result property="billType" column="BillType"/>
+		<result property="billCode" column="BillCode"/>
+		<result property="modifyCounts" column="ModifyCounts"/>
+		<result property="originalMsg" column="OriginalMsg"/>
+	</resultMap>
+	<select id ="getWitposMQLogNSList" parameterClass="java.util.HashMap" resultMap="BINBEMQSYN01.WitposMQLogNS">
+		<![CDATA[
+			SELECT 
+				B.ID,								
+				B.BillType,									
+				B.BillCode,									
+				B.ModifyCounts,
+				B.OriginalMsg	
+			FROM 
+				(SELECT
+					BillCode,								
+					max(ModifyCounts) AS ModifyCounts
+				FROM
+					dbo.MQ_Log	
+				WHERE										
+					SendOrRece=#sendOrRece#	AND
+					BillType='NS' AND
+					BillCode is not null		
+				GROUP BY
+					BillCode) A,
+				dbo.MQ_Log B
+			WHERE
+				A.BillCode = B.BillCode	AND
+				A.ModifyCounts = B.ModifyCounts AND
+				B.SendOrRece=#sendOrRece# AND
+				B.BillType='NS' AND
+				B.BillCode is not null
+			ORDER BY
+				B.ID	
+		]]>																					
+	</select> -->
+	
+	<!-- 查询cherry的MQ日志表（销售/退货业务） --><!-- 
+	<resultMap id="BINBEMQSYN01.CherryMQLogNS" class="java.util.HashMap">
+		<result property="id" column="BIN_MQLogID"/>
+		<result property="billType" column="BillType"/>
+		<result property="billCode" column="BillCode"/>
+		<result property="modifyCounts" column="SaleRecordModifyCount"/>
+		<result property="data" column="Data"/>
+	</resultMap>
+	<select id ="getCherryMQLogNSList" parameterClass="java.util.HashMap" resultMap="BINBEMQSYN01.CherryMQLogNS">
+		<![CDATA[
+			SELECT		
+				B.BIN_MQLogID,		
+				B.BillType,					
+				B.BillCode,					
+				B.SaleRecordModifyCount,
+				B.Data,
+				B.ReceiveFlag										
+			FROM									
+				(SELECT 
+					BillCode,					
+					MAX(SaleRecordModifyCount) AS SaleRecordModifyCount
+				FROM
+					Interfaces.BIN_MQLog
+				WHERE
+					BIN_OrganizationInfoID=#organizationInfoId# AND								
+					BIN_BrandInfoID=#brandInfoId# AND								
+					SendOrRece=#sendOrRece# AND			
+					BillType='NS' AND						
+					ValidFlag='1'	
+			]]>		
+			<dynamic>
+				<isNotEmpty prepend="AND" property="receiveFlag">
+					ReceiveFlag=#receiveFlag#
+				</isNotEmpty>
+			</dynamic>	
+			<![CDATA[			
+				GROUP BY
+					BillCode) A,				
+				Interfaces.BIN_MQLog B								
+			WHERE									
+				A.BillCode = B.BillCode AND
+				A.SaleRecordModifyCount = B.SaleRecordModifyCount AND
+				B.BIN_OrganizationInfoID=#organizationInfoId# AND								
+				B.BIN_BrandInfoID=#brandInfoId# AND								
+				B.SendOrRece=#sendOrRece# AND			
+				B.BillType='NS' AND						
+				B.ValidFlag='1'
+		]]>		
+		<dynamic>
+			<isNotEmpty prepend="AND" property="receiveFlag">
+				B.ReceiveFlag=#receiveFlag#
+			</isNotEmpty>
+		</dynamic>	
+		<![CDATA[
+			ORDER BY
+				B.BIN_MQLogID
+		]]>																							
+	</select> -->
+    
+    <!--删除cherry数据库MQ收发日志表中标记已接收成功的日志 --><!-- 
+	<delete id="deleteSuccessCherryMQLog" parameterClass="java.util.HashMap">
+		<![CDATA[													
+			DELETE FROM										
+				Interfaces.BIN_MQLog									
+			WHERE										
+				BIN_OrganizationInfoID=#organizationInfoId# AND								
+				BIN_BrandInfoID=#brandInfoId# AND								
+				SendOrRece='S' AND	
+				ReceiveFlag='1'									
+		]]>											
+    </delete> -->
+    
+    <!--删除POS品牌数据库MQ日志表(删除销售/退货业务时修改回数小于最大修改回数的数据) --><!-- 
+	<delete id="deleteWitposMQLogNS" parameterClass="java.util.HashMap">
+		<![CDATA[									
+			DELETE FROM						
+				dbo.MQ_Log					
+			WHERE						
+				SendOrRece=#sendOrRece# AND
+				BillCode=#billCode# AND
+				BillType=#billType# AND
+				ModifyCounts<#modifyCounts#									
+		]]>															
+    </delete>	 -->
+    
+    <!--删除cherry数据库MQ收发日志表(删除销售/退货业务时修改回数小于最大修改回数的数据) --><!-- 
+	<delete id="deleteCherryMQLogNS" parameterClass="java.util.HashMap">
+		<![CDATA[													
+			DELETE FROM										
+				Interfaces.BIN_MQLog									
+			WHERE										
+				SendOrRece=#sendOrRece# AND
+				BillCode=#billCode# AND
+				BillType=#billType# AND
+				SaleRecordModifyCount<#modifyCounts#							
+		]]>											
+    </delete>	 -->
+    
+
+    
+    
+    
+    <!-- 查询POS品牌数据库MQ日志List -->
+	<select id="getWitposMQLogPagingList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+		<![CDATA[
+			SELECT TOP $COUNT$										
+				ID AS id,								
+				BillType AS billType,									
+				BillCode AS billCode,									
+				ModifyCounts AS modifyCounts			
+			FROM										
+				dbo.MQ_Log									
+			WHERE										
+				SendOrRece = #sendOrRecePOS# AND
+				Flag = '9' AND
+				BillCode IS NOT NULL AND
+				BillCode <> ''
+			ORDER BY
+				billType ASC,
+				billCode ASC,
+				modifyCounts ASC
+		]]>																					
+	</select>
+	
+	<!-- 查询Cherry的MQ日志List -->
+	<select id="getCherryMQLogPagintList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+		<![CDATA[
+			SELECT TOP $COUNT$		
+				BIN_MQLogID AS mqLogId,		
+				BillType AS billType,					
+				BillCode AS billCode,					
+				SaleRecordModifyCount AS modifyCounts					
+			FROM									
+				Interfaces.BIN_MQLog								
+			WHERE									
+				BIN_OrganizationInfoID = #organizationInfoId# AND								
+				BIN_BrandInfoID = #brandInfoId# AND						
+				SendOrRece = #sendOrReceCherry# AND
+				ReceiveFlag = '9' AND
+				BillCode IS NOT NULL AND
+				BillCode <> '' AND								
+				ValidFlag='1'	
+			ORDER BY
+				billType ASC,
+				billCode ASC,
+				modifyCounts ASC	
+		]]>																					
+	</select>
+	
+	<!-- 判断JMSXGroupID字段是否存在 -->
+	<select id="getJMSXGroupIDCol" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+		<![CDATA[
+			select * from syscolumns where id=object_id('dbo.MQ_Log') and name='JMSXGroupID'
+		]]>																				
+	</select>
+	
+	<!-- 查询POS品牌需要重新发送的MQ日志List（带有JMSXGroupID的查询） -->
+	<select id="getWitposMQLogSendGroupIDList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+		<include refid="BINBECMINC99.pageheader" />		
+		<![CDATA[
+			SELECT										
+				ID AS id,															
+				BillType AS billType,									
+				BillCode AS billCode,									
+				ModifyCounts AS modifyCounts,						
+				OriginalMsg AS originalMsg,
+				JMSXGroupID AS jMSXGroupID,
+				Txddate,
+				Txdtime,
+				InsertTime			
+			FROM										
+				dbo.MQ_Log									
+			WHERE										
+				SendOrRece = 'S' AND
+				Flag = '2'
+		]]>				
+		<include refid="BINBECMINC99.pagefooter" />																		
+	</select>
+	
+	<!-- 查询POS品牌需要重新发送的MQ日志List -->
+	<select id="getWitposMQLogSendList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+		<include refid="BINBECMINC99.pageheader" />		
+		<![CDATA[
+			SELECT										
+				ID AS id,															
+				BillType AS billType,									
+				BillCode AS billCode,									
+				ModifyCounts AS modifyCounts,						
+				OriginalMsg AS originalMsg,
+				Txddate,
+				Txdtime,
+				InsertTime			
+			FROM										
+				dbo.MQ_Log									
+			WHERE										
+				SendOrRece = 'S' AND
+				Flag = '2'
+		]]>				
+		<include refid="BINBECMINC99.pagefooter" />																		
+	</select>
+	
+	<!-- 查询Cherry需要重新发送的MQ日志List -->
+	<select id="getCherryMQLogSendList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+		<include refid="BINBECMINC99.pageheader" />	
+		<![CDATA[
+			SELECT		
+				BIN_MQLogID AS mqLogId,		
+				BillCode AS billCode,	
+				MsgQueueName AS msgQueueName,				
+				Data AS data					
+			FROM									
+				Interfaces.BIN_MQLog								
+			WHERE									
+				BIN_OrganizationInfoID = #organizationInfoId# AND								
+				BIN_BrandInfoID = #brandInfoId# AND						
+				SendOrRece = 'S' AND
+				ReceiveFlag = '2' AND
+				ValidFlag='1'	
+		]]>	
+		<include refid="BINBECMINC99.pagefooter" />																					
+	</select>
+	
+	<!--更新cherry的MQ日志状态 -->
+	<update id="updateCherryMQLog" parameterClass="java.util.HashMap">
+		<![CDATA[
+			UPDATE				
+				Interfaces.BIN_MQLog			
+			SET				
+				ReceiveFlag = #receiveFlag#			
+			WHERE					
+				BIN_MQLogID = #mqLogId#
+		]]>
+    </update>	
+    
+    <!--更新POS品牌的MQ日志状态 -->
+	<update id="updateWitposMQLog" parameterClass="java.util.HashMap">
+		<![CDATA[
+			UPDATE				
+				dbo.MQ_Log			
+			SET				
+				Flag = #receiveFlag#			
+			WHERE					
+				ID = #id#
+		]]>
+    </update>	
+    
+    <!--删除POS品牌数据库MQ日志 -->
+	<delete id="deleteWitposMQLog" parameterClass="java.util.HashMap">
+		<![CDATA[									
+			DELETE FROM						
+				dbo.MQ_Log					
+			WHERE						
+				ID = #id#					
+		]]>															
+    </delete>	
+    
+    <!--删除cherry数据库MQ收发日志 -->
+	<delete id="deleteCherryMQLog" parameterClass="java.util.HashMap">
+		<![CDATA[													
+			DELETE FROM										
+				Interfaces.BIN_MQLog									
+			WHERE										
+				BIN_MQLogID = #mqLogId#									
+		]]>											
+    </delete>
+    
+    <!-- 把Cherry的MQ日志更新成待处理状态 -->
+	<update id="updateMQLogStatusCherry" parameterClass="java.util.HashMap">
+		<![CDATA[
+			UPDATE				
+				Interfaces.BIN_MQLog			
+			SET				
+				ReceiveFlag='9'				
+			WHERE					
+				BIN_OrganizationInfoID = #organizationInfoId# AND								
+				BIN_BrandInfoID = #brandInfoId# AND
+				SendOrRece = #sendOrReceCherry# AND
+				ValidFlag='1'
+		]]>
+    </update>	
+    
+    <!-- 把POS品牌的MQ日志更新成待处理状态 -->
+	<update id="updateMQLogStatusPOS" parameterClass="java.util.HashMap">
+		<![CDATA[
+			UPDATE				
+				dbo.MQ_Log			
+			SET				
+				Flag='9'
+			WHERE					
+				SendOrRece = #sendOrRecePOS#
+		]]>
+    </update>	
+    
+    <!--把Cherry接收失败的MQ日志更新成未比对状态 -->
+	<update id="updateCherryReceiveFlag" parameterClass="java.util.HashMap">
+		<![CDATA[
+			UPDATE				
+				Interfaces.BIN_MQLog			
+			SET				
+				ReceiveFlag = '0'			
+			WHERE					
+				BIN_OrganizationInfoID = #organizationInfoId# AND								
+				BIN_BrandInfoID = #brandInfoId# AND
+				ReceiveFlag = '2' AND		
+				SendOrRece = 'S' AND
+				ValidFlag='1'
+		]]>
+    </update>
+    
+    <!--把POS品牌接收失败的MQ日志更新成未比对状态 -->
+	<update id="updateWitReceiveFlag" parameterClass="java.util.HashMap">
+		<![CDATA[
+			UPDATE				
+				dbo.MQ_Log			
+			SET				
+				Flag = '0'			
+			WHERE					
+				Flag = '2' AND		
+				SendOrRece = 'S'
+		]]>
+    </update>
+    
+    <!--删除重复接收的MQ收发日志 -->
+	<delete id="deleteCherryMQLogRe" parameterClass="java.util.HashMap">
+		<![CDATA[													
+			DELETE FROM										
+				Interfaces.BIN_MQLog									
+			WHERE										
+				BillCode = #billCode# AND
+				BillType = #billType# AND
+		]]>
+			<isNotEmpty property="modifyCounts">
+				SaleRecordModifyCount = #modifyCounts# AND
+			</isNotEmpty>
+		<![CDATA[
+				BIN_BrandInfoID = #brandInfoId# AND	
+				BIN_OrganizationInfoID = #organizationInfoId#							
+		]]>											
+    </delete>
+    
+    <!--删除POS品牌数据库多余的接收日志 -->
+	<delete id="deleteLeftWitposMQLog" parameterClass="java.util.HashMap">
+		<![CDATA[									
+			DELETE FROM						
+				dbo.MQ_Log					
+			WHERE						
+				Flag = '9' AND		
+				SendOrRece = 'R'		
+		]]>															
+    </delete>	
+    
+    <!--删除cherry数据库多余的接收日志 -->
+	<delete id="deleteLeftCherryMQLog" parameterClass="java.util.HashMap">
+		<![CDATA[													
+			DELETE FROM										
+				Interfaces.BIN_MQLog									
+			WHERE										
+				BIN_OrganizationInfoID = #organizationInfoId# AND								
+				BIN_BrandInfoID = #brandInfoId# AND
+				ReceiveFlag = '9' AND		
+				SendOrRece = 'R' AND
+				ValidFlag='1'						
+		]]>											
+    </delete>
+    
+</sqlMap>

@@ -1,0 +1,69 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sqlMap PUBLIC "-//iBATIS.com//DTD SQL Map 2.0//EN" "http://ibatis.apache.org/dtd/sql-map-2.dtd">
+
+<!--新后台与金蝶K3发货单/退库单数据同步-->
+
+<sqlMap namespace="BINBESTIOS01">
+<!--取出WITPOSA_invoice中Flag为1的数据-->
+<!-- Direction = 0 发货，= 1 退库，=2 订货拒绝，=3 退库申请拒绝 -->
+<select id="getInvoiceMain" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+	<![CDATA[
+	SELECT
+		[brand_abbr]
+      	,[ERPTicketCode]
+      	,[TotalQuantity]
+      	,[TotalAmount]
+      	,[Direction]
+      	,[CounterCode]
+	    ,[Dealer]
+	    ,[GenerateTime]
+	    ,[DisCode]
+	    ,[PreTicketCode]
+	    ,[Flag]
+	    ,[created]
+	    ,[modified]
+	FROM
+		[dbo].[WITPOSA_invoice]
+	WHERE
+		[brand_abbr] = #brandCode#
+		AND [Flag] = 1
+		AND [Direction] IN (0,1,2,3)
+	]]>
+</select>
+
+<!--将WITPOSA_invoice中的取出的数据废弃-->
+<update id="updateInvoiceMain" parameterClass="java.util.HashMap">
+	<![CDATA[
+	Update 
+		[dbo].[WITPOSA_invoice]
+	SET
+		[Flag] = 0,
+		[modified] = GETDATE()
+	WHERE
+		[brand_abbr] = #brand_abbr#
+		AND [ERPTicketCode] = #ERPTicketCode#
+	]]>
+</update>
+
+<!--从WITPOSA_invoice_detail表中取出指定的数据-->
+<select id="getInvoiceDetail" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+	<![CDATA[
+	SELECT 
+	   [brand_abbr]
+      ,[ERPTicketCode]
+      ,[Barcode]
+      ,[Unitcode]
+      ,[Quantity]
+      ,[Price]
+      ,[DisCode]
+      ,[created]
+      ,[modified]
+      ,inventory_type_code AS InventoryTypeCode
+   FROM 
+	  [dbo].[WITPOSA_invoice_detail]
+   WHERE
+      [brand_abbr] = #brand_abbr#
+	  AND [ERPTicketCode] = #ERPTicketCode#
+	  ]]>
+</select>
+</sqlMap>

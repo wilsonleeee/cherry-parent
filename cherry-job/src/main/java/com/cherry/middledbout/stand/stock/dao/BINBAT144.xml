@@ -1,0 +1,67 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sqlMap PUBLIC "-//iBATIS.com//DTD SQL Map 2.0//EN" "http://ibatis.apache.org/dtd/sql-map-2.dtd">
+<sqlMap namespace="BINBAT144">
+	<select id="getProductStockList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+		SELECT
+			TOP (#batchSize#)
+			#brandCode# AS brandCode,
+			O.DepartCode AS departCode,
+			II.InventoryCode AS depotCode,
+			LI.LogicInventoryCode AS logicDepotCode,
+			P.ItemCode AS iFProductId,
+			P.UnitCode AS unitCode,
+			PV.BarCode AS barCode,
+			PS.Quantity AS quantity,
+			PS.BIN_ProductStockID AS productStockId
+		FROM Inventory.BIN_ProductStock PS
+		LEFT JOIN Basis.BIN_ProductVendor PV
+			ON PS.BIN_ProductVendorID = PV.BIN_ProductVendorID
+		LEFT JOIN Basis.BIN_Product P
+			ON PV.BIN_ProductID = P.BIN_ProductID
+		LEFT JOIN Basis.BIN_InventoryInfo II
+			ON PS.BIN_InventoryInfoID = II.BIN_InventoryInfoID
+		LEFT JOIN Basis.BIN_Organization O
+			ON II.BIN_OrganizationID = O.BIN_OrganizationID
+		LEFT JOIN Basis.BIN_LogicInventory LI
+			ON PS.BIN_LogicInventoryInfoID = LI.BIN_LogicInventoryInfoID
+		WHERE
+		<![CDATA[EXISTS ( ]]>
+			<include refid="BINBECMINC99.getBillByTestModStandList" />
+	  	<![CDATA[ AND II.BIN_OrganizationID = C99.BIN_OrganizationID ) ]]>
+	  	<isNotEmpty property="lastProductStockId" prepend="AND">
+	    	PS.BIN_ProductStockID > #lastProductStockId#
+		</isNotEmpty> 
+			ORDER BY PS.BIN_ProductStockID
+	</select>
+	<!-- 插入标准接口库存表 -->
+	<insert id="insertIFStock" parameterClass="java.util.HashMap">
+		<![CDATA[
+			INSERT INTO dbo.IF_Stock (
+				BrandCode,
+				DepartCode,
+				DepotCode,
+				LogicDepotCode,
+				IFProductId,
+				UnitCode,
+				BarCode,
+				Quantity,
+				PuttingTime
+				)
+			VALUES (
+				#brandCode#,
+				#departCode#,
+				#depotCode#,
+				#logicDepotCode#,
+				#iFProductId#,
+				#unitCode#,
+				#barCode#,
+				#quantity#,
+				GETDATE()
+				)
+		]]>
+	</insert>
+	<!-- 删除实时库存标准接口表数据  -->
+    <delete id="delIFStock" parameterClass="java.util.HashMap">
+    	<![CDATA[DELETE FROM dbo.IF_Stock]]>	
+    </delete>
+</sqlMap>

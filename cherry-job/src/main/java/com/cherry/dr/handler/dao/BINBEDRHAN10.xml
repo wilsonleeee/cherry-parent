@@ -1,0 +1,235 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sqlMap PUBLIC "-//iBATIS.com//DTD SQL Map 2.0//EN" "http://ibatis.apache.org/dtd/sql-map-2.dtd">
+<sqlMap namespace="BINBEDRHAN10">
+    
+    <!-- 查询会员信息List -->
+    <select id="getMemberInfoList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+		<![CDATA[
+			SELECT TOP $COUNT$
+				A.BIN_MemberInfoID AS memberInfoId,
+				A.Name AS memName,
+				A.MemberLevel AS memberLevel,
+				A.GrantMemberLevel AS grantMemberLevel,
+				A.UpgradeFromLevel AS upgradeFromLevel,
+				CONVERT(varchar(30),A.LevelAdjustDay,121) AS levelAdjustDay,
+				CONVERT(VARCHAR, A.JoinDate, 121) AS joinDate,
+				B.MemCode AS memCode
+			FROM	
+				Members.BIN_MemberInfo A
+				JOIN Members.BIN_MemCardInfo B ON A.BIN_MemberInfoID = B.BIN_MemberInfoID AND B.CardValidFlag = '1'
+				JOIN 
+				(SELECT DISTINCT
+					C.BIN_MemberInfoID
+				FROM	
+					Members.BIN_RuleExecRecord C
+				WHERE
+					C.BIN_OrganizationInfoID = #organizationInfoId# AND
+					C.BIN_BrandInfoID = #brandInfoId# AND
+					C.CalcDate < CONVERT(DATETIME,#bussinessDate#,121) AND
+					C.Status IS NULL) T ON A.BIN_MemberInfoID = T.BIN_MemberInfoID
+		]]>
+    </select>
+    
+    <!-- 查询会员规则履历List -->
+    <select id="getMemRuleRecordList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">	
+		<![CDATA[
+			SELECT
+				A.BIN_MemberInfoID AS memberInfoId,
+				A.MemCode AS memCode,
+				A.BillID AS billId,
+				A.TradeType AS tradeType,
+				A.RecordKbn AS recordKbn,
+				A.OldValue AS oldValue,
+				A.NewValue AS newValue,
+				CONVERT(varchar(30),A.TicketDate,121) AS ticketDate,
+				CONVERT(varchar(30),A.CalcDate,121) AS calcDate,
+				A.BIN_RuleIDs AS ruleIDs,
+				A.ReCalcCount AS reCalcCount,
+				A.Reason AS reason
+			FROM	
+				Members.BIN_RuleExecRecord A
+			WHERE
+				A.BIN_OrganizationInfoID = #organizationInfoId# AND
+				A.BIN_BrandInfoID = #brandInfoId# AND
+				A.BIN_MemberInfoID = #memberInfoId# AND
+				A.CalcDate < CONVERT(DATETIME,#bussinessDate#,121) AND
+				A.BillID IS NOT NULL AND
+				A.BillID <> ''
+			ORDER BY 
+				A.CalcDate DESC,
+				A.TicketDate DESC
+		]]>
+    </select>
+    
+    <!-- 更新已经处理过的规则履历记录 -->
+	<update id="updateCompleteRuleRecord" parameterClass="java.util.HashMap">
+		<![CDATA[
+			UPDATE				
+				Members.BIN_RuleExecRecord			
+			SET				
+				Status=#status#,
+		]]>
+			<include refid="BINBECMINC99.updateSql" />		
+		<![CDATA[				
+			WHERE					
+				BIN_OrganizationInfoID = #organizationInfoId# AND
+				BIN_BrandInfoID = #brandInfoId# AND
+				BIN_MemberInfoID = #memberInfoId# AND
+				CalcDate < CONVERT(DATETIME,#bussinessDate#,121) AND
+				Status IS NULL
+		]]>
+    </update>	
+    
+    <!-- 查询会员信息 -->
+    <select id="getMemberInfo" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">	
+		<![CDATA[
+			SELECT
+				A.Name AS memName,
+				A.MemberLevel AS memberLevel,
+				A.GrantMemberLevel AS grantMemberLevel,
+				A.UpgradeFromLevel AS upgradeFromLevel,
+				CONVERT(varchar(30),A.LevelAdjustDay,121) AS levelAdjustDay,
+				B.MemCode AS memCode
+			FROM	
+				Members.BIN_MemberInfo A
+				JOIN Members.BIN_MemCardInfo B ON A.BIN_MemberInfoID = B.BIN_MemberInfoID AND B.CardValidFlag = '1'
+			WHERE
+				A.BIN_MemberInfoID = #memberInfoId#
+		]]>
+    </select>
+    
+    <!-- 查询会员等级信息List -->
+    <select id="getMemberLevelInfoList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">	
+		<![CDATA[
+			SELECT
+				A.BIN_MemberLevelID AS memberLevelId,
+				A.LevelCode AS levelCode,
+				B.Grade AS grade
+			FROM	
+				Members.BIN_MemberLevel A JOIN Members.BIN_MemberLevelDetail B ON A.BIN_MemberLevelID = B.BIN_MemberLevelID
+		]]>
+    </select>
+    
+    <!--查询会员规则履历中关联单号对应的销售记录List -->
+	<select id="getSaleRecordList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+		<![CDATA[
+			SELECT DISTINCT
+				A.BillCode AS billId,
+				A.Channel AS channel,
+				B.DepartCode AS countercode,
+				C.EmployeeCode AS baCode						
+			FROM						
+				Sale.BIN_SaleRecord A LEFT JOIN Basis.BIN_Organization B
+				ON A.BIN_OrganizationID=B.BIN_OrganizationID 
+				JOIN (SELECT 
+						X.BIN_SaleRecordID,
+						MAX(Y.EmployeeCode) AS EmployeeCode
+					FROM 
+						Sale.BIN_SaleRecord X LEFT JOIN Sale.BIN_SaleRecordDetail Y
+						ON X.BIN_SaleRecordID=Y.BIN_SaleRecordID
+					GROUP BY
+						X.BIN_SaleRecordID) C ON A.BIN_SaleRecordID=C.BIN_SaleRecordID
+			WHERE						
+				A.BIN_OrganizationInfoID = #organizationInfoId# AND
+				A.BIN_BrandInfoID = #brandInfoId# AND
+				A.BIN_MemberInfoID = #memberInfoId# AND
+				A.BillCode IN
+		]]>				
+			<iterate property="billIdList" open="(" close=")" conjunction=","> 
+				#billIdList[]#
+			</iterate>
+		<![CDATA[
+				AND A.ValidFlag = '1'		
+		]]>
+    </select>
+    
+    <!--查询会员规则履历中关联单号对应的化妆次数积分使用记录List -->
+	<select id="getMemUsedCountList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+		<![CDATA[
+			SELECT 						
+				A.TradeNoIF AS billId,
+				A.Channel AS channel,
+				A.Countercode AS countercode,
+				A.BaCode AS baCode						
+			FROM						
+				Members.BIN_MemUsedInfo A,
+				Members.BIN_MemUsedDetail B
+			WHERE
+				A.BIN_MemUsedInfoID = B.BIN_MemUsedInfoID AND						
+				A.BIN_OrganizationInfoID = #organizationInfoId# AND
+				A.BIN_BrandInfoID = #brandInfoId# AND
+				B.BIN_MemberInfoID = #memberInfoId# AND
+				A.TradeNoIF IN
+		]]>				
+			<iterate property="billIdList" open="(" close=")" conjunction=","> 
+				#billIdList[]#
+			</iterate>
+		<![CDATA[
+				AND A.ValidFlag = '1' AND
+				B.ValidFlag = '1'
+		]]>
+    </select>
+    
+    <!-- 插入规则执行履历表  -->
+	<insert id="addRuleExecRecord" parameterClass="java.util.HashMap">
+		<![CDATA[
+		INSERT Members.BIN_RuleExecRecord(
+			BIN_OrganizationInfoID,
+			BIN_BrandInfoID,
+			BIN_MemberInfoID,
+			MemCode,
+			BillID,
+			TradeType,
+			RecordKbn,
+			OldValue,
+			NewValue,
+			TicketDate,
+			CalcDate,
+			BIN_RuleIDs,
+			ReCalcCount,
+			Reason,
+			ChangeType,
+			SubCampaignCodes,
+		]]>	
+			<include refid="BINBECMINC99.insertKeySql" />									
+		<![CDATA[	
+		)VALUES(
+			#organizationInfoId#,
+			#brandInfoId#,
+			#memberInfoId#,
+			#memCode#,
+			#billId#,
+			#tradeType#,
+			#recordKbn#,
+			#oldValue#,
+			#newValue#,
+			#ticketDate#,
+			#calcDate#,
+			#ruleIds#,
+			#reCalcCount#,
+			#reason#,
+			#changeType#,
+			#subCampCodes#,
+		]]>
+		<include refid="BINBECMINC99.insertValueSql" />
+		<![CDATA[
+		)
+		]]>
+	</insert>
+	
+	<!-- 查询会员信息List -->
+    <select id="getAllMemberInfoList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+		<include refid="BINBECMINC99.pageheader" />
+		<![CDATA[
+			SELECT
+				A.BIN_MemberInfoID AS memberInfoId,
+				A.Name AS memName
+			FROM	
+				Members.BIN_MemberInfo A
+			WHERE
+				A.BIN_OrganizationInfoID = #organizationInfoId# AND
+				A.BIN_BrandInfoID = #brandInfoId#
+		]]>
+		<include refid="BINBECMINC99.pagefooter" />
+    </select>
+</sqlMap>

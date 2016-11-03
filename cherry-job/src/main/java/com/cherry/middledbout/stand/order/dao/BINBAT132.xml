@@ -1,0 +1,229 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sqlMap PUBLIC "-//iBATIS.com//DTD SQL Map 2.0//EN" "http://ibatis.apache.org/dtd/sql-map-2.dtd">
+<sqlMap namespace="BINBAT132">
+	<!-- 产品订单信息查询sql -->
+	<sql id="PrtOrderQuery">
+		<![CDATA[
+			SELECT
+				DISTINCT 
+				A.OrderNoIF AS BillCode,
+				A.Date AS BusinessDate,
+				A.OrderTime AS BillCreateTime,
+				#brandCode# AS brandCode,
+				C.DepartCode AS InDepartCode,
+				C.DepartName AS InDepartName,
+				F.DepartCode AS OutDepartCode,
+				A.TotalQuantity AS TotalQuantity,
+				A.TotalAmount AS TotalAmount,
+				G.EmployeeCode AS OperatorCode,
+				A.RelevanceNo AS RelateBillCode,
+				C.Address AS ConsigneeAddress,
+				A.Comments AS Comment,
+				CASE  WHEN H.ManagingType='2' THEN  'JMS' 
+			          ELSE   C.Type  END  AS  InDepartType
+
+		]]>
+		<![CDATA[
+			FROM 
+				Inventory.BIN_ProductOrder A WITH(NOLOCK)
+				LEFT JOIN Basis.BIN_Organization C WITH(NOLOCK)
+				ON(A.BIN_OrganizationID = C.BIN_OrganizationID)
+				LEFT JOIN Basis.BIN_Organization F WITH(NOLOCK)
+				ON(A.BIN_OrganizationIDAccept = F.BIN_OrganizationID)
+				LEFT JOIN Basis.BIN_Employee G WITH(NOLOCK)
+				ON(A.BIN_EmployeeID = G.BIN_EmployeeID)
+				LEFT JOIN Basis.BIN_CounterInfo H WITH(NOLOCK)
+				ON(A.BIN_OrganizationID = H.BIN_OrganizationID)
+			WHERE
+				A.BIN_BrandInfoID = #brandInfoId# AND 
+				A.BIN_OrganizationInfoID = #organizationInfoId# AND
+				A.SynchFlag = '2' AND
+				A.ValidFlag = '1'
+		]]>
+		<![CDATA[AND EXISTS ( ]]>
+			<include refid="BINBECMINC99.getBillByTestModStandList" />
+	  	<![CDATA[ AND A.BIN_OrganizationID = C99.BIN_OrganizationID ) ]]>
+		<![CDATA[
+			ORDER BY
+				A.OrderNoIF
+		]]>
+	</sql>
+
+	
+	<select id="getPrtOrderList" parameterClass="java.util.HashMap"
+		resultClass="java.util.HashMap">
+		<include refid="BINBAT132.PrtOrderQuery" />
+	</select>
+	
+	
+	<select id="getPrtOrderDetailList" parameterClass="java.util.HashMap"
+		resultClass="java.util.HashMap">
+		<![CDATA[
+			SELECT	
+				#brandCode# AS brandCode,
+				A.OrderNoIF AS BillCode,			
+				B.Quantity AS Quantity,
+				B.Price AS Price,
+				ISNULL(E.ItemCode,D.BIN_ProductVendorID)  AS IFProductId,				
+				D.BarCode AS BarCode,
+				E.UnitCode AS UnitCode		
+		]]>
+		<![CDATA[
+			FROM 
+				Inventory.BIN_ProductOrder A WITH(NOLOCK)
+				LEFT JOIN Inventory.BIN_ProductOrderDetail B WITH(NOLOCK)
+				ON(A.BIN_ProductOrderID = B.BIN_ProductOrderID )
+				LEFT JOIN Basis.BIN_ProductVendor D WITH(NOLOCK)
+				ON(B.BIN_ProductVendorID = D.BIN_ProductVendorID)
+				LEFT JOIN Basis.BIN_Product E WITH(NOLOCK)
+				ON(D.BIN_ProductID = E.BIN_ProductID)
+			WHERE
+				A.OrderNoIF IN
+		]]>
+		<iterate conjunction="," open="(" close=")" property="stockBillCodeArr">  
+	        	#stockBillCodeArr[]#
+	    </iterate>
+	</select>
+
+	<!-- 取得指定导出状态的订单号List -->
+	<select id="getPrtOrderListBySynch" parameterClass="java.util.HashMap"
+		resultClass="java.lang.String">
+		<![CDATA[
+			SELECT
+				OrderNoIF AS orderNoIF	
+			FROM 
+				Inventory.BIN_ProductOrder A WITH(NOLOCK)
+			WHERE
+				A.SynchFlag = #synchFlag#
+				AND A.ValidFlag = '1'
+				AND A.BIN_OrganizationInfoID = #organizationInfoId#
+				AND A.BIN_BrandInfoID = #brandInfoId#
+		]]>
+		<![CDATA[AND EXISTS ( ]]>
+			<include refid="BINBECMINC99.getBillByTestModStandList" />
+	  	<![CDATA[ AND A.BIN_OrganizationID = C99.BIN_OrganizationID )]]>
+	</select>
+	
+	<!-- SynchFlag状态更新 -->
+	<update id="updateSynchFlag" parameterClass="java.util.HashMap">
+		<![CDATA[
+			UPDATE
+		]]>
+		<isNotEmpty property="batchSize">
+				TOP(#batchSize#)
+		</isNotEmpty>
+		<![CDATA[
+				Inventory.BIN_ProductOrder
+			SET
+				SynchFlag = #synchFlag_New#
+			FROM
+				Inventory.BIN_ProductOrder A WITH(NOLOCK)
+			WHERE
+				A.ValidFlag ='1'
+				AND A.BIN_BrandInfoID = #brandInfoId#
+				AND A.BIN_OrganizationInfoID = #organizationInfoId#
+		]]>
+		<isNotEmpty property="synchFlag_Old" prepend="AND">
+			A.SynchFlag =
+			#synchFlag_Old#
+		</isNotEmpty>
+		<isNotEmpty property="orderNoIFList" prepend="AND">
+	  		A.OrderNoIF IN
+			<iterate property="orderNoIFList" open="(" close=")" conjunction=",">
+				#orderNoIFList[]#
+			</iterate>
+	  	</isNotEmpty>
+		<![CDATA[AND EXISTS ( ]]>
+			<include refid="BINBECMINC99.getBillByTestModStandList" />
+	  	<![CDATA[ AND A.BIN_OrganizationID = C99.BIN_OrganizationID) ]]>
+	</update>
+
+	<!-- 根据新后台的单据号->查询标准产品订单接口表的单据号List -->
+	<select id="getListFromPrtOrder" parameterClass="java.util.HashMap"
+		resultClass="java.lang.String">
+		<![CDATA[
+			SELECT
+				DISTINCT
+				BillCode AS orderNoIF
+			FROM 
+				IF_Orders WITH(NOLOCK)
+			WHERE				
+				BillCode IN
+	  	]]>
+		<iterate property="orderNoIFList" open="(" close=")" conjunction=",">
+			#orderNoIFList[]#
+		</iterate>
+		<isNotEmpty property="brandCode" prepend="AND">
+			BrandCode = #brandCode#
+		</isNotEmpty>
+	</select>
+
+	<!-- 数据插入标准接口表主表 -->
+	<insert id="insertOrders" parameterClass="java.util.HashMap">
+        <![CDATA[ 
+		INSERT INTO IF_Orders(
+			BillCode,
+			BusinessDate,
+			BillCreateTime,
+			brandCode,			
+			InDepartCode,
+			InDepartName,
+			InDepartType,
+			OutDepartCode,
+			TotalQuantity,
+			TotalAmount,
+			OperatorCode,
+			PuttingTime,
+			RelateBillCode,	
+			ConsigneeAddress,
+			Comment		
+        )
+        VALUES	
+        (									
+            #BillCode#,
+            #BusinessDate#,					
+            #BillCreateTime#,
+            #brandCode#,           
+            #InDepartCode#,
+            #InDepartName#,
+			#InDepartType#,
+            #OutDepartCode#,
+            #TotalQuantity#,		
+			#TotalAmount#,
+			#OperatorCode#,	
+			GETDATE(),
+			#RelateBillCode#,
+			#ConsigneeAddress#,
+			#Comment#
+		)
+    	]]>
+	</insert>
+	
+	
+	<!-- 数据插入标准接口表明细表 -->
+	<insert id="insertOrderDeatils" parameterClass="java.util.HashMap">
+        <![CDATA[ 
+		INSERT INTO IF_OrdersDetail(
+			BrandCode,
+			BillCode,
+			UnitCode,
+			BarCode,			
+			Quantity,
+			PuttingTime,
+			Price,	
+			IFProductId	
+        )
+        VALUES	
+        (									
+            #brandCode#,
+            #BillCode#,					
+            #UnitCode#,
+            #BarCode#,           
+            #Quantity#,           
+			GETDATE(),
+			#Price#,
+			#IFProductId#
+		)
+    	]]>
+	</insert>
+</sqlMap>

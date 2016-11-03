@@ -1,0 +1,94 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sqlMap PUBLIC "-//iBATIS.com//DTD SQL Map 2.0//EN" "http://ibatis.apache.org/dtd/sql-map-2.dtd">
+<sqlMap namespace="ActivityInfo">
+    
+    <!-- 在dbo.IF_Activity中查询促销活动信息 -->
+	<select id="getActivity" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+		<![CDATA[
+				SELECT 	
+					*
+				FROM	
+					dbo.IF_Activity
+		]]>
+    </select>
+    
+    <!-- 删除表中数据  -->
+	<delete id="deleteActivityInfo" parameterClass="java.util.HashMap">
+		<![CDATA[
+			DELETE FROM
+				dbo.IF_Activity
+			WHERE BrandCode = #brandCode#
+		]]>
+    </delete>
+    
+    <!-- 在BIN_PromotionActivity中查询促销活动信息 -->
+	<select id="getActivityInfo" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+		<![CDATA[
+			SELECT 	
+					B.BrandCode AS brandCode,
+					F.GroupCode AS activityMainCode, 
+					A.ActivityCode AS activityCode,
+					A.ActivityName AS activityName,
+					A.DescriptionDtl AS description,
+					D.BasePropValue1 AS startTime,
+					D.BasePropValue2 AS endTime
+			FROM	
+					Promotion.BIN_PromotionActivity A WITH(NOLOCK)
+			   JOIN Promotion.BIN_PromotionActivityRule C WITH(NOLOCK)
+					ON(A.BIN_PromotionActivityID = C.BIN_PromotionActivityID
+						AND C.ValidFlag = '1')
+			   JOIN Promotion.BIN_PromotionRuleCondition D WITH(NOLOCK)
+					ON(C.BIN_PromotionActivityRuleID = D.BIN_PromotionActivityRuleID
+						AND D.ValidFlag = '1')
+			   JOIN Promotion.BIN_PromotionBaseProp E WITH(NOLOCK)
+					ON(D.BIN_PromotionBasePropID = E.BIN_PromotionBasePropID
+						AND E.PropertyName = 'baseProp_time'),
+					Basis.BIN_BrandInfo B WITH(NOLOCK),
+					Promotion.BIN_PromotionActGrp F WITH(NOLOCK)
+			WHERE
+					A.BIN_OrganizationInfoID = #organizationInfoId# AND 
+					(A.TemplateFlag IS NULL OR A.TemplateFlag='0' OR A.TemplateFlag ='') AND
+					A.BIN_BrandInfoID = #brandInfoId# AND
+					B.BIN_BrandInfoID = A.BIN_BrandInfoID AND		
+					F.BIN_PromotionActGrpID = A.BIN_PromotionActGrpID
+		]]>
+    </select>
+    
+    <!-- 导入信息到IF_Activity中 -->
+    <insert id="insertActivityInfo" parameterClass="java.util.HashMap">
+		<![CDATA[
+			INSERT INTO	
+				dbo.IF_Activity
+				(
+				   BrandCode,
+				   ActivityMainCode,
+				   ActivityCode,
+			       ActivityName,
+				   Description,
+				   StartTime,
+				   EndTime,
+				   PuttingTime
+				)VALUES(
+				    #brandCode#,
+					#activityMainCode#, 
+					#activityCode#,
+					#activityName#,
+					#description#,
+					#startTime#,
+					#endTime#,
+					GETDATE()
+				)
+    	]]>
+    </insert>	
+    	    <!-- 取得品牌Code  -->
+    <select id="getBrandCode" parameterClass="java.util.HashMap" resultClass="java.lang.String">
+       <![CDATA[
+			SELECT
+				BrandCode AS brandCode
+			FROM
+				Basis.BIN_BrandInfo
+			WHERE
+				BIN_BrandInfoID = #brandInfoId#
+		]]>	
+    </select>
+</sqlMap>

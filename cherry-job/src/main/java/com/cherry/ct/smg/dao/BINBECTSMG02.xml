@@ -1,0 +1,128 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sqlMap PUBLIC "-//iBATIS.com//DTD SQL Map 2.0//EN" "http://ibatis.apache.org/dtd/sql-map-2.dtd">
+<sqlMap namespace="BINBECTSMG02">
+    
+    <!--查询已过期非运行状态的沟通调度信息List -->
+	<select id="getExpiredSchedulesList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+		<![CDATA[
+			(SELECT 
+				BIN_SchedulesID AS schedulesId
+			FROM
+				Communication.BIN_Schedules
+			WHERE 
+				Status <> 2 AND
+				EndDate < #endDate# AND
+			  	BIN_BrandInfoID = #brandInfoId# AND
+				BIN_OrganizationInfoID = #organizationInfoId#)
+			UNION	
+			(SELECT 
+				BIN_SchedulesID AS schedulesId
+			FROM
+				Communication.BIN_Schedules
+			WHERE
+				Status <> 2 AND
+				ValidFlag = '0')		
+		]]>
+    </select>
+    
+    <!-- 删除已过期非运行状态的沟通调度信息 -->
+	<delete id="delExpiredSchedules" parameterClass="java.util.HashMap">
+		<![CDATA[													
+			DELETE FROM										
+				Communication.BIN_Schedules						
+			WHERE										
+				BIN_SchedulesID = #schedulesId#		
+		]]>											
+    </delete>
+    
+    <!--查询未过期未加载的沟通调度信息List -->
+	<select id="getSchedulesList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+		<![CDATA[
+			SELECT 
+				BIN_SchedulesID AS schedulesId,
+				RunTime AS runTime
+			FROM
+				Communication.BIN_Schedules
+			WHERE 
+				LoadFlag = 0 AND
+				Status <> 2 AND 
+				(EndDate >= #endDate# OR EndDate IS NULL) AND
+			  	BIN_BrandInfoID = #brandInfoId# AND
+				BIN_OrganizationInfoID = #organizationInfoId# AND
+				ValidFlag = '1'
+		]]>
+    </select>
+    
+    <!--把未过期未加载的沟通调度信息更新已加载-->
+	<update id="updSchedules" parameterClass="java.util.HashMap">
+		<![CDATA[
+			UPDATE
+				Communication.BIN_Schedules
+			SET
+				LoadFlag = 1
+			WHERE
+				BIN_SchedulesID = #schedulesId#
+		]]>
+    </update>	
+    
+    <!--初次加载沟通任务时把所有的沟通任务更新成未加载状态-->
+	<update id="updSchedulesInit" parameterClass="java.util.HashMap">
+		<![CDATA[
+			UPDATE
+				Communication.BIN_Schedules
+			SET
+				LoadFlag = 0 
+			WHERE
+				BIN_BrandInfoID = #brandInfoId# AND
+				BIN_OrganizationInfoID = #organizationInfoId# AND
+				ValidFlag = '1' 
+		]]>
+    </update>
+
+	<!--初次加载沟通任务时把所有正在运行的沟通任务更新成待运行状态-->
+	<update id="updSchedulesStatusInit" parameterClass="java.util.HashMap">
+		<![CDATA[
+			UPDATE
+				Communication.BIN_Schedules
+			SET
+				Status = 1 
+			WHERE
+				BIN_BrandInfoID = #brandInfoId# AND
+				BIN_OrganizationInfoID = #organizationInfoId# AND
+				ValidFlag = '1' AND
+				Status = 2
+		]]>
+    </update>
+    
+    <!--初次加载沟通任务时把所有的正在运行状态的沟通计划更新成待运行状态-->
+	<update id="updCommPlanInit" parameterClass="java.util.HashMap">
+		<![CDATA[
+			UPDATE
+				Communication.BIN_Communicationplan 
+			SET
+				Status = 1 
+			WHERE
+				BIN_BrandInfoID = #brandInfoId# AND
+				BIN_OrganizationInfoID = #organizationInfoId# AND
+				Status = 2
+		]]>
+    </update>
+    
+    <!-- 查询调度信息List -->
+	<select id="getMemorySchedulesList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+		<![CDATA[
+			SELECT 
+				BIN_SchedulesID AS schedulesId,
+				RunTime AS runTime,
+				TaskType AS taskType,
+				Status AS status
+			FROM
+				Communication.BIN_Schedules
+			WHERE 
+				BIN_SchedulesID IN
+		]]>
+			<iterate property="jobNames" open="(" close=")" conjunction=",">
+				#jobNames[]#
+			</iterate>
+    </select>
+</sqlMap>

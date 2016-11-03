@@ -1,0 +1,196 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sqlMap PUBLIC "-//iBATIS.com//DTD SQL Map 2.0//EN" "http://ibatis.apache.org/dtd/sql-map-2.dtd">
+<sqlMap namespace="BINOTYIN06">
+	<!-- 产品退库申请明细查询sql -->
+	<sql id="PrtReturnRequestQuery">
+		<![CDATA[
+			SELECT
+				DISTINCT 
+				A.BillNoIF AS DocEntry,
+				A.TradeDate AS DocDate,
+				C.DetailNo AS LineNum,
+				B.DepartCode AS Shop,
+				A.Reason AS Remarks,
+				E.ItemCode AS ItemCode,
+				C.Quantity AS Quantity,
+				#brandCode# AS brandCode,
+				'RS'+A.Reason AS ReasonCode,
+				A.Comment AS ReasonManual,
+				A.RelevanceNo AS Reason,
+		]]>
+		<dynamic>
+			<isNotEmpty property="language">
+				<isEqual property="language" compareValue="en_US">
+					E.NameForeign AS
+					ItemDesc
+				</isEqual>
+				<isEqual property="language" compareValue="zh_CN">
+					E.NameTotal AS
+					ItemDesc
+				</isEqual>
+			</isNotEmpty>
+			<isEmpty property="language">
+				E.NameTotal AS ItemDesc
+			</isEmpty>
+		</dynamic>
+		<![CDATA[
+			FROM
+				Inventory.BIN_ProReturnRequest A WITH(NOLOCK)
+				LEFT JOIN Basis.BIN_Organization B WITH(NOLOCK)
+				ON(A.BIN_OrganizationID = B.BIN_OrganizationID )
+				LEFT JOIN Inventory.BIN_ProReturnReqDetail C WITH(NOLOCK)
+				ON(A.BIN_ProReturnRequestID = C.BIN_ProReturnRequestID )
+				LEFT JOIN Basis.BIN_ProductVendor D WITH(NOLOCK)
+				ON(C.BIN_ProductVendorID = D.BIN_ProductVendorID)
+				LEFT JOIN Basis.BIN_Product E WITH(NOLOCK)
+				ON(D.BIN_ProductID = E.BIN_ProductID)
+			WHERE
+				A.BIN_BrandInfoID = #brandInfoId# AND 
+				A.BIN_OrganizationInfoID = #organizationInfoId# AND
+				A.SynchFlag = '2' AND 
+				A.ValidFlag = '1'
+		]]>
+		<![CDATA[AND EXISTS ( ]]>
+			<include refid="BINBECMINC99.getBillByTestModList" />
+	  	<![CDATA[ AND A.BIN_OrganizationID = C99.BIN_OrganizationID ) ]]>
+		<![CDATA[
+			ORDER BY
+				A.BillNoIF
+		]]>
+	</sql>
+
+	<select id="getPrtReturnReqDetail" parameterClass="java.util.HashMap"
+		resultClass="java.util.HashMap">
+		<include refid="BINOTYIN06.PrtReturnRequestQuery" />
+	</select>
+
+	<!-- SynchFlag状态更新 -->
+	<update id="updateSynchFlag" parameterClass="java.util.HashMap">
+		<![CDATA[
+			UPDATE
+		]]>
+		<isNotEmpty property="batchSize">
+				TOP(#batchSize#)
+		</isNotEmpty>
+		<![CDATA[
+				Inventory.BIN_ProReturnRequest
+			SET
+				SynchFlag = #synchFlag_New#
+			FROM
+				Inventory.BIN_ProReturnRequest A WITH(NOLOCK)
+			WHERE
+				A.ValidFlag ='1'
+				AND A.BIN_BrandInfoID = #brandInfoId#
+				AND A.BIN_OrganizationInfoID = #organizationInfoId#
+		]]>
+		<![CDATA[AND EXISTS ( ]]>
+			<include refid="BINBECMINC99.getBillByTestModList" />
+	  	<![CDATA[ AND A.BIN_OrganizationID = C99.BIN_OrganizationID ) ]]>
+		<isNotEmpty property="synchFlag_Old" prepend="AND">
+			A.SynchFlag =
+			#synchFlag_Old#
+		</isNotEmpty>
+		<isNotEmpty property="billNoIFList" prepend="AND">
+	  		A.BillNoIF IN
+			<iterate property="billNoIFList" open="(" close=")" conjunction=",">
+				#billNoIFList[]#
+			</iterate>
+	  	</isNotEmpty>
+	</update>
+	
+	<!-- 取得指定导出状态的订单号List -->
+	<select id="getPrtReturnReqListBySynch" parameterClass="java.util.HashMap"
+		resultClass="java.lang.String">
+		<![CDATA[
+		SELECT
+			BillNoIF AS billNoIF	
+		FROM 
+			Inventory.BIN_ProReturnRequest A WITH(NOLOCK)
+		WHERE
+			A.SynchFlag = #synchFlag#
+			AND A.ValidFlag = '1'
+			AND A.BIN_OrganizationInfoID = #organizationInfoId#
+			AND A.BIN_BrandInfoID = #brandInfoId#
+		]]>
+		<![CDATA[AND EXISTS ( ]]>
+			<include refid="BINBECMINC99.getBillByTestModList" />
+	  	<![CDATA[ AND A.BIN_OrganizationID = C99.BIN_OrganizationID ) ]]>
+	</select>
+	
+	<!-- 根据新后台的单据号->查询颖通接口表的单据号List -->
+	<select id="getOTIFListFromPrtReturnReq" parameterClass="java.util.HashMap"
+		resultClass="java.lang.String">
+		<![CDATA[
+			SELECT
+				DISTINCT
+				DocEntry AS billNoIF
+			FROM 
+				CPS_IMPORT_TRANSFER WITH(NOLOCK)
+			WHERE
+				InvType = 'TRR5' AND
+				DocEntry IN
+	  	]]>
+		<iterate property="billNoIFList" open="(" close=")" conjunction=",">
+			#billNoIFList[]#
+		</iterate>
+		<isNotEmpty property="brandCode" prepend="AND">
+			Brand = #brandCode#
+		</isNotEmpty>
+		<![CDATA[
+			UNION
+			SELECT
+				DISTINCT
+				DocEntry AS billNoIF
+			FROM 
+				CPS_IMPORT_TRANSFER_SUC WITH(NOLOCK)
+			WHERE
+				InvType = 'TRR5' AND
+				DocEntry IN
+		]]>
+		<iterate property="billNoIFList" open="(" close=")" conjunction=",">
+			#billNoIFList[]#
+		</iterate>
+		<isNotEmpty property="brandCode" prepend="AND">
+			Brand = #brandCode#
+		</isNotEmpty>
+	</select>
+
+	<!-- 退库申请单数据插入颖通接口表 -->
+	<insert id="insertOTYINIFDb" parameterClass="java.util.HashMap">
+        <![CDATA[ 
+		INSERT INTO CPS_IMPORT_TRANSFER(
+			InvType,					
+            DocEntry,					
+            DocDate,
+            LineNum,					
+            Shop,
+            Remarks,
+            ItemCode,
+            ItemDesc,
+            Quantity,
+			CreateDate,
+			Brand,
+			ReasonCode,
+			ReasonManual,
+			Reason
+        )
+        VALUES	
+        (
+			'TRR5',										
+            #DocEntry#,
+            #DocDate#,					
+            #LineNum#,
+            #Shop#,
+            #Remarks#,
+            #ItemCode#,
+            #ItemDesc#,
+            #Quantity#,
+			GETDATE(),
+			#brandCode#,
+			#ReasonCode#,
+			#ReasonManual#,
+			#Reason#
+		)
+    	]]>
+	</insert>
+</sqlMap>

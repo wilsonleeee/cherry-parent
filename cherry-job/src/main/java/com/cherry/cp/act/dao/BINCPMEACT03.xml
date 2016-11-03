@@ -1,0 +1,761 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sqlMap PUBLIC "-//iBATIS.com//DTD SQL Map 2.0//EN" "http://ibatis.apache.org/dtd/sql-map-2.dtd">
+<sqlMap namespace="BINCPMEACT03">	
+	<!-- 从会员活动接口表取得未下发的活动记录  -->
+    <select id="getCampaignImport" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+		<![CDATA[
+			SELECT 
+				CampaignCode AS campaignCode,
+				CampaignName AS campaignName,
+				CampaignType AS campaignType,
+				SubCampaignCode AS subCampaignCode,
+				SubCampaignName AS subCampaignName,
+				SubCampaignType AS subCampaignType,
+				PrtType AS prtType,
+				UnitCode AS unitCode,
+				BarCode AS barCode,
+				Quantity AS quantity,
+				ObtainFromDate AS obtainFromDate,
+				ObtainToDate AS obtainToDate,
+				CampaignOrderFromDate AS campaignOrderFromDate,
+				CampaignOrderToDate AS campaignOrderToDate,
+				IsCollectInfo AS isCollectInfo,
+				SubCampaignValid AS subCampaignValid,
+				LocalValidRule AS localValidRule,
+				NeedBuyFlag AS needBuyFlag,
+				Point AS point
+			FROM 
+				Interfaces.BIN_CampaignImport
+			WHERE
+				BrandCode = #brandCode#	AND
+				SendFlag = '0'
+			ORDER BY
+				CampaignCode,
+				SubCampaignCode
+		]]>
+    </select>
+    
+    <!-- 取得活动ID -->
+    <select id="getCampaignId" parameterClass="java.util.HashMap" resultClass="java.lang.String">
+       <![CDATA[
+			SELECT
+				BIN_CampaignID AS campaignId
+			FROM
+				Campaign.BIN_Campaign
+			WHERE
+				CampaignCode = #campaignCode# AND
+				BIN_BrandInfoID = #brandInfoId# AND
+				BIN_OrganizationInfoID = #organizationInfoId#
+		]]>
+    </select>
+    
+    <!-- 添加活动 -->
+	<insert id="addCampaign" parameterClass="java.util.HashMap">
+		<selectKey resultClass="java.lang.Integer" type="post" keyProperty="BIN_CampaignID" >
+		<![CDATA[
+			INSERT INTO Campaign.BIN_Campaign (
+				CampaignCode,
+				CampaignType,
+	      		CampaignTypeFlag,
+	      		CampaignName,
+	      		BIN_OrganizationInfoID,
+	      		BIN_BrandInfoID,
+	      		CampaignOrderFromDate,
+	      		CampaignOrderToDate,
+	      		ObtainFromDate,
+	      		ObtainToDate,
+	      		CampaignFromDate,
+	      		CampaignToDate,
+	      		DescriptionDtl,
+	      		CampaignSetBy,
+	     	 	CampaignLeader,
+	      		State,
+	      		SaveStatus,
+	      		NeedBuyFlag,
+	      		SendFlag,
+		]]>
+			<include refid="BINBECMINC99.insertKeySql" />		
+		<![CDATA[      		
+	      	) VALUES (
+	      		#campaignCode#,
+	      		#campaignType#,
+	      		'1',
+	      		#campaignName#,
+	      		#organizationInfoId#,
+	      		#brandInfoId#,
+	      		#campaignOrderFromDate#,
+	      		#campaignOrderToDate#,
+	      		#obtainFromDate#,
+	      		#obtainToDate#,
+	      		#campaignFromDate#,
+	      		#campaignToDate#,
+	      		'BATCH',
+	      		'0',
+	      		'0',
+	      		'1',
+	      		'1',
+	      		#needBuyFlag#,
+	      		#needBuyFlag#,
+		]]>
+			<include refid="BINBECMINC99.insertValueSql" />		
+		<![CDATA[)
+			SELECT SCOPE_IDENTITY() AS value
+	    ]]>
+    	</selectKey>   		
+	</insert>
+    
+    <!-- 更新活动  -->
+	<update id="updCampaign" parameterClass="java.util.HashMap">
+	<![CDATA[
+		UPDATE
+			Campaign.BIN_Campaign
+		SET
+			CampaignCode = #campaignCode#,
+			CampaignType = #campaignType#,
+      		CampaignTypeFlag = '1',
+      		CampaignName = #campaignName#,
+      		BIN_OrganizationInfoID = #organizationInfoId#,
+      		BIN_BrandInfoID = #brandInfoId#,
+      		CampaignOrderFromDate = #campaignOrderFromDate#,
+      		CampaignOrderToDate = #campaignOrderToDate#,
+      		ObtainFromDate = #obtainFromDate#,
+      		ObtainToDate = #obtainToDate#,
+      		CampaignFromDate = #campaignFromDate#,
+      		CampaignToDate = #campaignToDate#,
+      		DescriptionDtl = 'BATCH',
+      		CampaignSetBy = '0',
+     	 	CampaignLeader = '0',
+      		State = '1',
+      		SaveStatus = '1',
+      		SendFlag = #needBuyFlag#,
+	]]>
+		<include refid="BINBECMINC99.updateSql" />	
+	<![CDATA[
+		WHERE
+			BIN_CampaignID = #campaignId#	
+	]]>
+	</update>
+	
+	<!-- 取得子活动ID -->
+    <select id="getSubCampaignId" parameterClass="java.util.HashMap" resultClass="java.lang.String">
+       <![CDATA[
+			SELECT
+				BIN_CampaignRuleID AS subCampaignId
+			FROM
+				Campaign.BIN_CampaignRule
+			WHERE
+				SubCampaignCode = #subCampaignCode# AND
+				BIN_CampaignID = #campaignId#
+		]]>
+    </select>
+	
+	<!-- 添加子活动 -->
+	<insert id="addSubCampaign" parameterClass="java.util.HashMap">
+		<selectKey resultClass="java.lang.Integer" type="post" keyProperty="BIN_CampaignRuleID" >
+		<![CDATA[
+			INSERT INTO Campaign.BIN_CampaignRule (
+				SubCampaignCode,
+				BIN_CampaignID,
+	      		SubCampaignType,
+	      		SubCampaignName,
+	      		SubCampaignValid,
+	      		LocalValidRule,
+	      		IsCollectInfo,
+	      		State,
+		]]>
+			<include refid="BINBECMINC99.insertKeySql" />		
+		<![CDATA[      		
+	      	) VALUES (
+	      		#subCampaignCode#,
+	      		#campaignId#,
+	      		#subCampaignType#,
+	      		#subCampaignName#,
+	      		#subCampaignValid#,
+	      		#localValidRule#,
+	      		#isCollectInfo#,
+	      		'1',
+		]]>
+			<include refid="BINBECMINC99.insertValueSql" />
+		<![CDATA[)
+			SELECT SCOPE_IDENTITY() AS value
+	    ]]>	
+		</selectKey>	
+	</insert>
+    
+    <!-- 更新子活动  -->
+	<update id="updSubCampaign" parameterClass="java.util.HashMap">
+	<![CDATA[
+		UPDATE
+			Campaign.BIN_CampaignRule
+		SET
+			SubCampaignCode = #subCampaignCode#,
+			BIN_CampaignID = #campaignId#,
+      		SubCampaignType = #subCampaignType#,
+      		SubCampaignName = #subCampaignName#,
+      		SubCampaignValid = #subCampaignValid#,
+      		LocalValidRule = #localValidRule#,
+      		IsCollectInfo = #isCollectInfo#,
+      		State = '1',
+	]]>
+		<include refid="BINBECMINC99.updateSql" />	
+	<![CDATA[
+		WHERE
+			BIN_CampaignRuleID = #subCampaignId#	
+	]]>
+	</update>
+	
+	<!-- 删除会员活动规则条件明细 -->
+	<delete id="delCamRuleCondition" parameterClass="java.util.HashMap">
+		<![CDATA[  
+			DELETE FROM 
+				Campaign.BIN_CamRuleCondition
+			WHERE
+				BIN_CampaignRuleID = #subCampaignId#
+		]]>
+	</delete>
+	
+	<!-- 添加会员活动规则条件明细 -->
+	<insert id="addCamRuleCondition" parameterClass="java.util.HashMap">
+		<![CDATA[
+			INSERT INTO Campaign.BIN_CamRuleCondition (
+				BIN_CampaignRuleID,
+				BIN_CampaignBasePropID,
+	      		BasePropValue1,
+	      		BasePropValue2,
+	      		ActLocationType,
+		]]>
+			<include refid="BINBECMINC99.insertKeySql" />		
+		<![CDATA[      		
+	      	) VALUES (
+	      		#subCampaignId#,
+	      		#campaignBasePropId#,
+	      		#basePropValue1#,
+	      		#basePropValue2#,
+	      		#actLocationType#,
+		]]>
+			<include refid="BINBECMINC99.insertValueSql" />
+		<![CDATA[
+			)
+		]]>
+	</insert>
+	
+	<!-- 删除会员活动规则结果明细 -->
+	<delete id="delCampaignRuleResult" parameterClass="java.util.HashMap">
+		<![CDATA[  
+			DELETE FROM 
+				Campaign.BIN_CampaignRuleResult
+			WHERE
+				BIN_CampaignRuleID = #subCampaignId#
+		]]>
+	</delete>
+	
+	<!-- 添加会员活动规则结果明细 -->
+	<insert id="addCampaignRuleResult" parameterClass="java.util.HashMap">
+		<![CDATA[
+			INSERT INTO Campaign.BIN_CampaignRuleResult (
+				BIN_CampaignRuleID,
+				BIN_ProductVendorID,
+	      		BarCode,
+	      		UnitCode,
+	      		SaleType,
+	      		Price,
+	      		Quantity,
+		]]>
+			<include refid="BINBECMINC99.insertKeySql" />		
+		<![CDATA[      		
+	      	) VALUES (
+	      		#subCampaignId#,
+	      		#productVendorId#,
+	      		#barCode#,
+	      		#unitCode#,
+	      		#prtType#,
+	      		#price#,
+	      		#quantity#,
+		]]>
+			<include refid="BINBECMINC99.insertValueSql" />
+		<![CDATA[
+			)
+		]]>	
+	</insert>
+    
+    <!-- 取得未下发的会员活动预约记录  -->
+    <select id="getCampaignOrderImport" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+		<![CDATA[
+			SELECT
+				Y.OrderID AS orderId,
+				Y.CampaignCode AS campaignCode,
+				Y.SubType AS subType,
+				Y.CampaignName AS campaignName,
+				Y.IsCollectInfo AS isCollectInfo,
+				Y.SubCampaignValid AS subCampaignValid,
+				Y.LocalValidRule AS localValidRule,
+				Y.Memcode AS memcode,
+				Y.MobilePhone AS mobilePhone,
+				Y.CouponCode AS couponCode,
+				Y.NeedBuyFlag AS needBuyFlag,
+				Y.TradeType AS tradeType,
+				Y.CounterCode AS counterCode,
+				Y.OrderDate AS orderDate,
+				Y.GetStartDate AS getStartDate,
+				Y.GetEndDate AS getEndDate,
+				Y.Quantity AS totalQuantity,
+				Y.PointRequired AS pointRequired,
+				Y.DeliveryMothod AS deliveryMothod,
+				Y.DeliveryAddress AS deliveryAddress,
+				Y.Remark AS remark,
+				Y.DataSource AS dataSource,
+				Y.BIN_MemberInfoID AS memberInfoId,
+				X.CampSubCode AS campSubCode,
+				X.GiftType AS giftType,
+				X.UnitCode AS unitCode,
+				X.BarCode AS barCode,
+				X.Quantity AS quantity
+			FROM 
+				(SELECT TOP $COUNT$
+					A.OrderID,
+					A.CampaignCode,
+					A.SubType,
+					A.CampaignName,
+					A.IsCollectInfo,
+					A.SubCampaignValid,
+					A.LocalValidRule,
+					A.Memcode,
+					A.MobilePhone,
+					A.CouponCode,
+					A.NeedBuyFlag,
+					A.TradeType,
+					A.CounterCode,
+					A.OrderDate,
+					A.GetStartDate,
+					A.GetEndDate,
+					A.Quantity,
+					A.PointRequired,
+					A.DeliveryMothod,
+					A.DeliveryAddress,
+					A.Remark,
+					A.DataSource,
+					C.BIN_MemberInfoID
+				FROM 
+					Interfaces.BIN_CampaignOrderImport A WITH(NOLOCK)
+					LEFT JOIN Members.BIN_MemCardInfo B WITH(NOLOCK)
+						JOIN Members.BIN_MemberInfo C WITH(NOLOCK) ON B.BIN_MemberInfoID = C.BIN_MemberInfoID AND 
+						C.BIN_OrganizationInfoID = #organizationInfoId# AND
+						C.BIN_BrandInfoID = #brandInfoId#
+					ON A.Memcode = B.MemCode
+				WHERE
+					A.BrandCode = #brandCode# AND
+					A.GetStatus = '0' AND
+					A.ValidFlag = '1') Y 
+				LEFT JOIN Interfaces.BIN_CampaignOrderDetailImport X WITH(NOLOCK)
+				ON Y.OrderID = X.OrderID AND X.GetStatus = '0' AND X.ValidFlag = '1'
+			ORDER BY Y.OrderID		
+		]]>
+    </select>
+    
+    <!-- 取得会员活动预约信息 -->
+    <select id="getCampaignOrderInfo" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+       <![CDATA[
+			SELECT
+				BIN_CampaignOrderID  AS campaignOrderId,
+				SendFlag AS sendFlag,
+				State AS state
+			FROM
+				Campaign.BIN_CampaignOrder
+			WHERE
+				TradeNoIF = #orderId# AND
+				BIN_BrandInfoID = #brandInfoId# AND
+				BIN_OrganizationInfoID = #organizationInfoId#
+		]]>
+    </select>
+    
+    <!-- 添加会员活动预约信息 -->
+	<insert id="addCampaignOrder" parameterClass="java.util.HashMap">
+		<![CDATA[
+			INSERT INTO Campaign.BIN_CampaignOrder (
+				BIN_OrganizationInfoID,
+				BIN_BrandInfoID,
+				TradeNoIF,
+				TradeType,
+				SubType,
+	      		CampaignCode,
+	      		BIN_MemberInfoID,
+	      		MemCode,
+	      		Mobile,
+	      		CouponCode,
+	      		SubCampaignValid,
+	      		LocalValidRule,
+	      		IsCollectInfo,
+	      		SendFlag,
+	      		DeliveryMothod,
+	      		CounterGot,
+	      		DeliveryAddress,
+	      		PointRequired,
+	      		CampaignOrderTime,
+	     	 	GetFromTime,
+	      		GetToTime,
+	      		Quantity,
+	      		DataChannel,
+	      		Remark,
+	      		State,
+	      		IsStock,
+	      		NeedBuyFlag,
+		]]>
+			<include refid="BINBECMINC99.insertKeySql" />		
+		<![CDATA[      		
+	      	) VALUES (
+	      		#organizationInfoId#,
+	      		#brandInfoId#,
+	      		#orderId#,
+	      		#tradeType#,
+	      		#subType#,
+	      		#campaignCode#,
+	      		#memberInfoId#,
+	      		#memcode#,
+	      		#mobilePhone#,
+	      		#couponCode#,
+	      		#subCampaignValid#,
+	      		#localValidRule#,
+	      		#isCollectInfo#,
+	      		'3',
+	      		#deliveryMothod#,
+	      		#counterCode#,
+	      		#deliveryAddress#,
+	      		#pointRequired#,
+	      		#orderDate#,
+	      		#getStartDate#,
+	      		#getEndDate#,
+	      		#totalQuantity#,
+	      		#dataSource#,
+	      		#remark#,
+	      		'AR',
+	      		'1',
+	      		#needBuyFlag#,
+	      	
+		]]>
+			<include refid="BINBECMINC99.insertValueSql" />		
+		<![CDATA[
+			)
+	    ]]>		
+	</insert>
+	
+	<!-- 取得会员活动预约信息IDList -->
+    <select id="getCampaignOrderIdList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+       <![CDATA[
+			SELECT
+				BIN_CampaignOrderID  AS campaignOrderId,
+				TradeNoIF AS orderId
+			FROM
+				Campaign.BIN_CampaignOrder
+			WHERE
+				SendFlag = '3'
+		]]>
+    </select>
+    
+    <!-- 更新会员活动预约信息下发状态  -->
+	<update id="updCampaignOrderSendFlag" parameterClass="java.util.HashMap">
+	<![CDATA[
+		UPDATE
+			Campaign.BIN_CampaignOrder
+		SET
+			SendFlag = '0'
+		WHERE
+			SendFlag = '3'
+	]]>
+	</update>
+	
+	<!-- 更新会员活动预约信息  -->
+	<update id="updCampaignOrder" parameterClass="java.util.HashMap">
+	<![CDATA[
+		UPDATE
+			Campaign.BIN_CampaignOrder
+		SET
+			BIN_OrganizationInfoID = #organizationInfoId#,
+			BIN_BrandInfoID = #brandInfoId#,
+			TradeNoIF = #orderId#,
+			TradeType = #tradeType#,
+			SubType = #subType#,
+      		CampaignCode = #campaignCode#,
+      		BIN_MemberInfoID = #memberInfoId#,
+      		MemCode = #memcode#,
+      		Mobile = #mobilePhone#,
+      		CouponCode = #couponCode#,
+      		SubCampaignValid = #subCampaignValid#,
+	      	LocalValidRule = #localValidRule#,
+	      	IsCollectInfo = #isCollectInfo#,
+      	]]>		
+      	<isNotEmpty property="sendFlag">
+      		SendFlag = #sendFlag#,
+      	</isNotEmpty>
+      	<![CDATA[		
+      		DeliveryMothod = #deliveryMothod#,
+      		CounterGot = #counterCode#,
+      		DeliveryAddress = #deliveryAddress#,
+      		PointRequired = #pointRequired#,
+      		CampaignOrderTime = #orderDate#,
+     	 	GetFromTime = #getStartDate#,
+      		GetToTime = #getEndDate#,
+      		Quantity = #totalQuantity#,
+      		DataChannel = #dataSource#,
+      		Remark = #remark#,
+      		IsStock = '1',
+      		NeedBuyFlag = #needBuyFlag#,
+	]]>
+		<include refid="BINBECMINC99.updateSql" />	
+	<![CDATA[
+		WHERE
+			BIN_CampaignOrderID = #campaignOrderId#	
+	]]>
+	</update>
+	
+	<!-- 删除会员活动预约明细信息 -->
+	<delete id="delCampaignOrderDetail" parameterClass="java.util.HashMap">
+		<![CDATA[  
+			DELETE FROM 
+				Campaign.BIN_CampaignOrderDetail
+			WHERE
+				BIN_CampaignOrderID = #campaignOrderId#
+		]]>
+	</delete>
+	
+	<!-- 添加会员活动预约明细信息 -->
+	<insert id="addCampaignOrderDetail" parameterClass="java.util.HashMap">
+		<![CDATA[
+			INSERT INTO Campaign.BIN_CampaignOrderDetail (
+				BIN_CampaignOrderID,
+				MainCode,
+	      		BIN_ProductVendorID,
+	      		GiftType,
+	      		UnitCode,
+	      		BarCode,
+	      		Quantity,
+		]]>
+			<include refid="BINBECMINC99.insertKeySql" />		
+		<![CDATA[      		
+	      	) VALUES (
+	      		#campaignOrderId#,
+	      		#campSubCode#,
+	      		#productVendorId#,
+	      		#giftType#,
+	      		#unitCode#,
+	      		#barCode#,
+	      		#quantity#,
+		]]>
+			<include refid="BINBECMINC99.insertValueSql" />		
+		<![CDATA[    	
+			)
+		]]>		
+	</insert>
+	
+	<!-- 更新会员活动接口表为下发失败状态  -->
+	<update id="updCampaignImportError" parameterClass="java.util.HashMap">
+	<![CDATA[
+		UPDATE
+			Interfaces.BIN_CampaignImport
+		SET
+			SendFlag = '2'
+		WHERE
+			CampaignCode = #campaignCode# AND
+			BrandCode = #brandCode# AND
+			SendFlag = '0'
+	]]>
+	</update>
+	
+	<!-- 更新会员活动接口表为下发成功状态  -->
+	<update id="updCampaignImportSuccess" parameterClass="java.util.HashMap">
+	<![CDATA[
+		UPDATE
+			Interfaces.BIN_CampaignImport
+		SET
+			SendFlag = '1'
+		WHERE
+			BrandCode = #brandCode# AND
+			SendFlag = '0'
+	]]>
+	</update>
+	
+	<!-- 更新会员活动接口表把下发失败的数据更新成未下发状态  -->
+	<update id="updCampaignImportWait" parameterClass="java.util.HashMap">
+	<![CDATA[
+		UPDATE
+			Interfaces.BIN_CampaignImport
+		SET
+			SendFlag = '0'
+		WHERE
+			BrandCode = #brandCode# AND
+			SendFlag = '2'
+	]]>
+	</update>
+	
+	<!-- 更新会员活动预约接口表主表为下发成功状态  -->
+	<update id="updCampOrderSuccess" parameterClass="java.util.HashMap">
+	<![CDATA[
+		UPDATE
+			Interfaces.BIN_CampaignOrderImport
+		SET
+			GetStatus = '1',
+			GetTime = GETDATE()
+		WHERE
+			OrderID = #orderId# AND
+			GetStatus = '0' AND
+			ValidFlag = '1'
+	]]>
+	</update>
+	
+	<!-- 更新会员活动预约接口表明细表为下发成功状态  -->
+	<update id="updCampOrderDetailSuccess" parameterClass="java.util.HashMap">
+	<![CDATA[
+		UPDATE
+			Interfaces.BIN_CampaignOrderDetailImport
+		SET
+			GetStatus = '1',
+			GetTime = GETDATE()
+		WHERE
+			OrderID = #orderId# AND
+			GetStatus = '0' AND
+			ValidFlag = '1'
+	]]>
+	</update>
+	
+	<!-- 更新会员活动预约接口表主表为下发失败状态  -->
+	<update id="updCampOrderErrorTxt" parameterClass="java.util.HashMap">
+	<![CDATA[
+		UPDATE
+			Interfaces.BIN_CampaignOrderImport
+		SET
+			GetStatus = '2',
+			GetTime = GETDATE(),
+			GetError = #errorTxt#
+		WHERE
+			OrderID = #orderId# AND
+			GetStatus = '0' AND
+			ValidFlag = '1'
+	]]>
+	</update>
+	
+	<!-- 更新会员活动预约接口表明细表为下发失败状态  -->
+	<update id="updCampOrderDetailErrorTxt" parameterClass="java.util.HashMap">
+	<![CDATA[
+		UPDATE
+			Interfaces.BIN_CampaignOrderDetailImport
+		SET
+			GetStatus = '2',
+			GetTime = GETDATE(),
+			GetError = #errorTxt#
+		WHERE
+			OrderID = #orderId# AND
+			GetStatus = '0' AND
+			ValidFlag = '1'
+	]]>
+	</update>
+	
+	<!-- 更新会员活动预约接口表主表为下发失败状态  -->
+	<update id="updCampOrderError" parameterClass="java.util.HashMap">
+	<![CDATA[
+		UPDATE
+			Interfaces.BIN_CampaignOrderImport
+		SET
+			GetStatus = '3',
+			GetTime = GETDATE()
+		WHERE
+			OrderID = #orderId# AND
+			GetStatus = '0' AND
+			ValidFlag = '1'
+	]]>
+	</update>
+	
+	<!-- 更新会员活动预约接口表明细表为下发失败状态  -->
+	<update id="updCampOrderDetailError" parameterClass="java.util.HashMap">
+	<![CDATA[
+		UPDATE
+			Interfaces.BIN_CampaignOrderDetailImport
+		SET
+			GetStatus = '3',
+			GetTime = GETDATE()
+		WHERE
+			OrderID = #orderId# AND
+			GetStatus = '0' AND
+			ValidFlag = '1'
+	]]>
+	</update>
+	
+	<!-- 更新会员活动预约接口表主表为待下发状态  -->
+	<update id="updCampOrderWait" parameterClass="java.util.HashMap">
+	<![CDATA[
+		UPDATE
+			Interfaces.BIN_CampaignOrderImport
+		SET
+			GetStatus = '0',
+			GetTime = GETDATE()
+		WHERE
+			GetStatus = '3'
+	]]>
+	</update>
+	
+	<!-- 更新会员活动预约接口表明细表为待下发状态  -->
+	<update id="updCampOrderDetailWait" parameterClass="java.util.HashMap">
+	<![CDATA[
+		UPDATE
+			Interfaces.BIN_CampaignOrderDetailImport
+		SET
+			GetStatus = '0',
+			GetTime = GETDATE()
+		WHERE
+			GetStatus = '3'
+	]]>
+	</update>
+	
+	<!-- 取得所有会员活动基础属性ID -->
+    <select id="getCampaignBasePropId" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+       <![CDATA[
+			SELECT
+				BIN_CampaignBasePropID AS campaignBasePropId,
+				PropertyName AS propertyName
+			FROM
+				Campaign.BIN_CampaignBaseProp
+			WHERE
+				PropertyName IN ('baseProp_rese_time','baseProp_obtain_time','baseProp_city','baseProp_customer')
+		]]>
+    </select>
+	
+	<!-- 取得所有活动代码 -->
+    <select id="getCampaignCodeList" parameterClass="java.util.HashMap" resultClass="java.lang.String">
+       <![CDATA[
+			SELECT
+				CampaignCode AS campaignCode
+			FROM
+				Campaign.BIN_Campaign
+			WHERE
+				BIN_OrganizationInfoID = #organizationInfoId# AND
+				BIN_BrandInfoID = #brandInfoId#
+		]]>
+    </select>
+    
+    <!-- 取得产品厂商ID -->
+    <select id="getProductVendorId" parameterClass="java.util.HashMap" resultClass="java.lang.String">
+       <![CDATA[
+			SELECT
+				BIN_ProductVendorID AS productVendorId
+			FROM
+				Basis.BIN_PrtBarCode
+			WHERE
+				OldUnitCode = #unitCode# AND
+				OldBarCode = #barCode# AND
+				ValidFlag = '1'
+		]]>
+    </select>
+    
+    <!-- 取得促销品厂商ID -->
+    <select id="getPromotionProductVendorId" parameterClass="java.util.HashMap" resultClass="java.lang.String">
+       <![CDATA[
+			SELECT
+				BIN_PromotionProductVendorID AS promotionProductVendorId
+			FROM
+				Basis.BIN_PromotionPrtBarCode
+			WHERE
+				OldUnitCode = #unitCode# AND
+				OldBarCode = #barCode# AND
+				ValidFlag = '1'
+		]]>
+    </select>
+    
+</sqlMap>

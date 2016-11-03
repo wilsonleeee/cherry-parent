@@ -1,0 +1,361 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sqlMap PUBLIC "-//iBATIS.com//DTD SQL Map 2.0//EN" "http://ibatis.apache.org/dtd/sql-map-2.dtd">
+<sqlMap namespace="login">
+
+	<select id="getDBByName" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+	<![CDATA[ 
+		select
+			A.DataBaseName
+		from 
+			dbo.BIN_LoginConfig A 
+		where
+			A.LonginName =#InputName#
+		and A.ValidFlag = '1'
+	]]>
+	</select>
+
+	<select id="checkAccount" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+	<![CDATA[ 
+		select
+			A.BIN_UserID,
+			A.BIFlag,
+			A.BIN_OrganizationInfoID,
+			B.OrgCode
+		from 
+			Privilege.BIN_User A  left join Basis.BIN_OrganizationInfo B on A.BIN_OrganizationInfoID = B.BIN_OrganizationInfoID
+		where
+			 A.LonginName =#InputName#
+		 and A.PassWord=#InputPsd#
+		 and A.ValidFlag = '1'
+	]]>
+	</select>
+	
+	<select id="getUserSecurityInfo" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+	<![CDATA[ 
+		select 
+			A.LonginName,
+			A.PassWord,
+			A.FailureCount,
+			A.LockTime,
+			C.RetryTimes,
+			C.LockPeriod,
+			C.IsEncryption,
+			datediff(SECOND,A.LockTime,GETDATE()) as LockedSecond	
+		from
+			Privilege.BIN_User A left join Basis.BIN_Employee B on 
+			B.ValidFlag ='1' and A.BIN_EmployeeID = B.BIN_EmployeeID
+			left join Privilege.BIN_PasswordConfig C on
+			B.BIN_OrganizationInfoID = C.BIN_OrganizationInfoID
+			and B.BIN_BrandInfoID = C.BIN_BrandInfoID
+			and C.ValidFlag='1'
+		where A.BIN_UserID = #BIN_UserID# 
+			and A.ValidFlag='1' 
+	]]>
+	</select>
+	
+	<update id="unLockUser" parameterClass="java.util.HashMap" >
+	<![CDATA[
+			UPDATE								
+				Privilege.BIN_User							
+			SET								
+				FailureCount = 0,	
+				LockTime = NULL,						
+		]]>	
+			<include refid="BINOLCMINC99.updateSql" />									
+		<![CDATA[						
+			WHERE								
+				BIN_UserID = #BIN_UserID# 
+		]]>
+	</update>
+	
+	<update id="lockUser" parameterClass="java.util.HashMap" >
+	<![CDATA[
+			UPDATE								
+				Privilege.BIN_User							
+			SET	
+			    FailureCount = FailureCount+1,	
+				LockTime = getDate(),						
+		]]>	
+			<include refid="BINOLCMINC99.updateSql" />									
+		<![CDATA[						
+			WHERE								
+				BIN_UserID = #BIN_UserID# 
+		]]>
+	</update>
+	
+
+	
+	<update id="updateFailureCount" parameterClass="java.util.HashMap" >
+	<![CDATA[
+			UPDATE								
+				Privilege.BIN_User							
+			SET		
+				FailureCount = #FailureCount#,						
+		]]>	
+			<include refid="BINOLCMINC99.updateSql" />									
+		<![CDATA[						
+			WHERE								
+				BIN_UserID = #BIN_UserID# 
+		]]>
+	</update>
+	
+	<select id="getUserInfo" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+	<![CDATA[ 
+		select			
+			A.BIN_UserID,
+			B.BIN_EmployeeID,
+			B.EmployeeCode,
+			B.EmployeeName,
+			B.BIN_OrganizationID,
+			B.BIN_PositionCategoryID,
+			A.BIN_OrganizationInfoID,
+			ISNULL(B.BIN_BrandInfoID,'-9999') as BIN_BrandInfoID,
+			E.DepartCode,
+			E.Type as DepartType,
+			F.CategoryCode,
+			F.Grade as CategoryGrade,
+		]]>	
+		<isEqual property="language" compareValue="en_US">	
+		case  when C.BIN_OrganizationInfoID ='-9999' or C.BIN_OrganizationInfoID IS NULL then 'SuperOrg' else C.OrgNameChinese end as OrgName,
+		E.DepartName as DepartName,
+		F.CategoryName as CategoryName,
+		case  when B.BIN_BrandInfoID ='-9999' or B.BIN_BrandInfoID IS NULL then 'SuperBrand' else D.BrandNameForeign end as BrandName,
+		</isEqual>
+		<isEqual property="language" compareValue="zh_CN">	
+		case  when C.BIN_OrganizationInfoID ='-9999' or C.BIN_OrganizationInfoID IS NULL then '超组织' else C.OrgNameChinese end as OrgName,
+		E.NameForeign as DepartName,
+		F.CategoryNameForeign as CategoryName,
+		case  when B.BIN_BrandInfoID ='-9999' or B.BIN_BrandInfoID IS NULL then '超品牌' else D.BrandNameChinese end as BrandName,
+		</isEqual>
+		<![CDATA[	
+		case  when C.OrgCode ='-9999' or C.OrgCode IS NULL then '-9999' else C.OrgCode end as OrgCode,
+		case  when B.BIN_BrandInfoID ='-9999' or B.BIN_BrandInfoID IS NULL then '-9999' else D.BrandCode end as	BrandCode	
+		from 
+			Privilege.BIN_User A 
+		left join Basis.BIN_Employee B 
+		on A.BIN_EmployeeID = B.BIN_EmployeeID  and B.ValidFlag='1'
+		left join Basis.BIN_OrganizationInfo C
+		on A.BIN_OrganizationInfoID = C.BIN_OrganizationInfoID and C.ValidFlag='1'
+		left join Basis.BIN_BrandInfo D
+		on B.BIN_BrandInfoID = D.BIN_BrandInfoID and D.ValidFlag='1'
+		left join Basis.BIN_Organization E on B.BIN_OrganizationID = E.BIN_OrganizationID and E.ValidFlag='1'
+		left join Privilege.BIN_PositionCategory F on B.BIN_PositionCategoryID = F.BIN_PositionCategoryID and F.ValidFlag='1'
+		where
+			A.BIN_UserID =#BIN_UserID#	and A.ValidFlag='1'
+	]]>
+	</select>
+	
+	<select id="getControlOrganizationList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+	<![CDATA[ 
+	select
+		A.BIN_OrganizationID,
+		A.ManageType,
+		B.DepartCode,
+		]]>	
+		<isEqual property="language" compareValue="en_US">		
+		B.NameForeign as DepartName		
+		</isEqual>
+		<isEqual property="language" compareValue="zh_CN">	
+		B.DepartName as DepartName,
+		</isEqual>
+		<![CDATA[ 
+		B.Type as DepartType	
+	from 
+			[Privilege].[BIN_EmployeeDepart] A 
+		join [Basis].BIN_Organization B 
+		on A.BIN_OrganizationID = B.BIN_OrganizationID and B.ValidFlag ='1'
+	where
+		A.BIN_EmployeeID =#BIN_EmployeeID# and A.ValidFlag = '1'
+	]]>
+	</select>
+	
+<select id="getRoleList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+	<![CDATA[ 
+		select
+			B.BIN_RoleID,
+			B.RoleName,
+			B.RoleKind,
+			A.PrivilegeFlag as PrivilegeFlag
+		from 
+			Privilege.BIN_UserRole A,
+			Privilege.BIN_Role B
+		where
+			A.BIN_UserID =#BIN_UserID#
+		and A.ValidFlag ='1'
+		and A.StartDate <=GETDATE()
+		and A.ExpireDate >=GETDATE()
+		and A.BIN_RoleID =B.BIN_RoleID
+		and B.ValidFlag ='1'
+		union all
+		select
+			B.BIN_RoleID,
+			B.RoleName,
+			B.RoleKind,
+			'1' as PrivilegeFlag
+		from 
+			Privilege.BIN_OrganizationRole A,
+			Privilege.BIN_Role B		
+		where
+			A.BIN_OrganizationID = #BIN_OrganizationID#
+		and A.ValidFlag ='1'
+		and A.StartDate <=GETDATE()
+		and A.ExpireDate >=GETDATE()
+		and A.BIN_RoleID =B.BIN_RoleID
+		and B.ValidFlag ='1'
+		union all
+		select
+			B.BIN_RoleID,
+			B.RoleName,
+			B.RoleKind,
+			'1' as PrivilegeFlag
+		from 
+			Privilege.BIN_PositionCategoryRole A,
+			Privilege.BIN_Role B
+		where
+			A.BIN_PositionCategoryID =#BIN_PositionCategoryID#
+		and A.ValidFlag ='1'
+		and A.StartDate <=GETDATE()
+		and A.ExpireDate >=GETDATE()
+		and A.BIN_RoleID =B.BIN_RoleID
+		and B.ValidFlag ='1'
+	]]>
+</select>	
+	
+		<select id="getPrivilege" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">	
+		select 
+			A.BIN_RoleID,
+			A.BIN_ResourceID,
+			A.ResourceType,
+			B.PrivilegeFlag,
+			case when A.ResourceType ='0' then C.SubSysID 
+				 when A.ResourceType ='1' then C.ModuleID 
+				 when A.ResourceType ='2' then C.FunctionID 
+				 when A.ResourceType ='3' then C.PageID
+				 when A.ResourceType ='4' then C.ControlID		 
+				 end AS unitid
+		from
+			Privilege.BIN_RoleResource A left join Privilege.BIN_UserRole B
+			on A.BIN_RoleID = B.BIN_RoleID and B.BIN_UserID = #BIN_UserID# and B.ValidFlag='1'
+			inner join	Privilege.BIN_Resource C on
+			A.BIN_ResourceID = C.BIN_ResourceID and C.ValidFlag='1'
+		where A.BIN_RoleID in 
+			<iterate property="BIN_RoleID" conjunction="," close=")" open="(" > 
+					#BIN_RoleID[]# 
+			</iterate>
+	
+	</select>
+	
+	<select id="getTopMenu" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">	
+		SELECT 
+				distinct A.MENU_ID ,
+				A.MENU_NM ,
+				A.MENU_URL,
+				A.MENU_SORT_NO
+		FROM 
+				privilege.BIN_Menu A,
+				Privilege.BIN_RoleResource B		
+		WHERE 
+					A.MENU_ID=B.MENU_ID
+			and B.BIN_RoleID IN 
+		<iterate property="BIN_RoleID" conjunction="," close=")" open="(" > 
+			#BIN_RoleID[]# 
+		</iterate>
+			AND A.MENU_TYPE = '1'
+			AND A.ValidFlag = 1
+		ORDER By A.MENU_SORT_NO ASC
+	</select>
+	
+<select id="getLeftMenu" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+	with t0 as
+		( 
+		select 
+		distinct 
+		A.MENU_ID ,
+		A.MENU_NM,
+		A.MENU_URL,
+		A.PARENT_MENU_ID,
+		A.MENU_SORT_NO,
+		A.MENU_TYPE
+		from
+		Privilege.BIN_Menu A,
+		Privilege.BIN_RoleResource B
+		where 
+		A.MENU_ID = B.MENU_ID
+		and A.ValidFlag='1'	
+		and B.ValidFlag='1'
+		and B.BIN_RoleID IN		
+		<iterate property="BIN_RoleID" conjunction="," close=")" open="(" > 
+				#BIN_RoleID[]# 
+		</iterate>			
+		),
+	 t1 as
+		( 
+		select 
+		t0.MENU_ID ,
+		t0.MENU_NM,
+		t0.MENU_URL,
+		t0.PARENT_MENU_ID,
+		t0.MENU_SORT_NO,
+		t0.MENU_TYPE
+		from
+		t0
+		where 	
+		 t0.PARENT_MENU_ID=#TopMenuID#	
+		),
+	t2 as(
+		select 
+		t0.MENU_ID ,
+		t0.MENU_NM,
+		t0.MENU_URL,
+		t0.PARENT_MENU_ID,
+		t0.MENU_SORT_NO,
+		t0.MENU_TYPE
+		from	
+		t0,
+		t1
+		where 
+		t0.PARENT_MENU_ID =t1.MENU_ID
+	),
+	t3 as(
+		select 
+		t0.MENU_ID ,
+		t0.MENU_NM,
+		t0.MENU_URL,
+		t0.PARENT_MENU_ID,
+		t0.MENU_SORT_NO,
+		t0.MENU_TYPE
+		from
+		t0,
+		t2
+		where 
+		 t0.PARENT_MENU_ID =t2.MENU_ID
+	),
+	tall as(
+	select * from t1 
+	union 
+	select * from t2
+	union 
+	select * from t3
+	)
+	select 
+	MENU_ID,MENU_NM,MENU_URL,PARENT_MENU_ID,MENU_SORT_NO,MENU_TYPE
+	from tall order By MENU_TYPE,PARENT_MENU_ID,MENU_SORT_NO asc
+	
+	</select>	
+	
+	<select id="getUserInfoByName" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+	<![CDATA[ 
+		select
+			A.BIN_UserID,
+			A.PassWord,
+			A.BIFlag,
+			A.BIN_OrganizationInfoID,
+			B.OrgCode
+		from 
+			Privilege.BIN_User A  left join Basis.BIN_OrganizationInfo B on A.BIN_OrganizationInfoID = B.BIN_OrganizationInfoID
+		where
+			 A.LonginName =#InputName#
+		 and A.ValidFlag = '1'
+	]]>
+	</select>
+</sqlMap>

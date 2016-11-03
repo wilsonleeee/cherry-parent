@@ -1,0 +1,141 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sqlMap PUBLIC "-//iBATIS.com//DTD SQL Map 2.0//EN" "http://ibatis.apache.org/dtd/sql-map-2.dtd">
+<sqlMap namespace="BINBEMBVIS04">
+
+    <!-- 取得会员回访计划List  -->
+    <select id="getVisitPlanList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+    	<![CDATA[
+			SELECT 
+				A.BIN_VisitPlanID AS visitPlanId,
+				B.VisitTypeCode AS visitTypeCode,
+				B.VisitTypeName AS visitTypeName,
+				A.VisitDes AS visitDes,
+				A.VisitObjType AS visitObjType,
+				A.VisitObjJson AS visitObjJson,
+				A.VisitObjCode AS visitObjCode,
+				A.VisitObjName AS visitObjName,
+				A.VisitDateJson AS visitDateJson,
+				A.PaperID AS paperId
+			FROM
+				Members.BIN_VisitPlan A
+				LEFT JOIN Members.BIN_VisitCategory B ON A.BIN_VisitCategoryID = B.BIN_VisitCategoryID
+			WHERE
+				A.BIN_OrganizationInfoID = #organizationInfoId# AND
+				A.BIN_BrandInfoID = #brandInfoId# AND
+				A.StartDate <= #businessDate# AND 
+				(A.EndDate IS NULL OR A.EndDate >= #businessDate#) AND
+				A.ValidFlag = '1'
+		]]>										
+    </select>
+    
+    <sql id="queryVisitObj">
+		<![CDATA[
+			SELECT 
+				B.BIN_MemberInfoID AS memId,
+				A.MemCode AS memCode,
+				A.Name AS memName,
+				A.MobilePhone AS mobilePhone,
+				CONVERT(varchar(10),A.JoinDate,120) AS joinDate,
+				A.BirthYear AS birthYear,
+				SUBSTRING(A.BirthDay,1,2) AS birthMonth,
+				SUBSTRING(A.BirthDay,3,2) AS birthDay,
+				CASE WHEN M.BIN_OrganizationID IS NOT NULL THEN M.BIN_OrganizationID ELSE D.BIN_OrganizationID END AS organizationId,
+				CASE WHEN M.BIN_OrganizationID IS NOT NULL THEN M.DepartCode ELSE D.DepartCode END AS counterCode,
+				CONVERT(varchar(30),F.FirstSaleDate,120) AS firstSaleDate,
+				Z1.BillCode AS firstBillCode,
+				Z2.BillCode AS lastBillCode,
+				F.SkinType AS skinType
+			FROM
+				Members.BIN_VisitObj A WITH(NOLOCK)
+				JOIN Members.BIN_MemCardInfo B WITH(NOLOCK) ON A.MemCode = B.MemCode
+				JOIN Members.BIN_MemberInfo C WITH(NOLOCK) ON B.BIN_MemberInfoID = C.BIN_MemberInfoID
+				LEFT JOIN Basis.BIN_Organization D WITH(NOLOCK) ON C.BIN_OrganizationID = D.BIN_OrganizationID
+				LEFT JOIN Members.BIN_MemberExtInfo F WITH(NOLOCK) ON C.BIN_MemberInfoID = F.BIN_MemberInfoID
+				LEFT JOIN Sale.BIN_SaleRecord Z1 WITH(NOLOCK) ON C.BIN_MemberInfoID = Z1.BIN_MemberInfoID AND Z1.SaleTime = F.FirstSaleDate
+				LEFT JOIN Sale.BIN_SaleRecord Z2 WITH(NOLOCK) ON C.BIN_MemberInfoID = Z2.BIN_MemberInfoID AND Z2.SaleTime = F.LastSaleDate
+				LEFT JOIN Basis.BIN_Organization M WITH(NOLOCK) ON A.CounterCode = M.DepartCode
+			WHERE
+				A.VisitObjCode = #visitObjCode#
+		]]>
+			<isNotEmpty prepend="AND" property="visitPlanId">
+			<![CDATA[
+				NOT EXISTS(SELECT 1 FROM Members.BIN_VisitTask T WITH(NOLOCK) 
+					WHERE
+						T.BIN_VisitPlanID = #visitPlanId# AND 
+			]]>	
+					<isNotEmpty property="visitTaskTime">
+						T.VisitTaskTime = #visitTaskTime# AND
+					</isNotEmpty>
+			<![CDATA[		
+						C.BIN_MemberInfoID = T.BIN_MemberID)
+			]]>
+			</isNotEmpty>
+	</sql>
+	
+	<!-- 取得会员回访对象List  -->
+    <select id="getVisitObjList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+       	<include refid="BINOLCMINC99.pageheader" />
+		<include refid="BINBEMBVIS04.queryVisitObj" />
+		<include refid="BINOLCMINC99.pagefooter" />
+    </select>
+    
+    <!-- 添加会员回访任务 -->
+	<insert id="insertVisitTask" parameterClass="java.util.HashMap">
+		<![CDATA[
+		   INSERT INTO Members.BIN_VisitTask (
+		        BIN_OrganizationInfoID,
+		        BIN_BrandInfoID,
+		        BIN_VisitPlanID,
+		        VisitType,
+		        VisitTaskCreateTime,
+		        StartTime,
+		        EndTime,
+		        VisitTaskTime,
+		        BIN_OrganizationID,
+		        CounterCode,
+		        BIN_MemberID,
+		        MemberCode,
+		        MemberName,
+		        JoinTime,
+		        MobilePhone,
+		        BirthDay,
+		        PaperID,
+		        FirstBillNS,
+			    LastBillNS,
+			    SkinType,
+		        SynchroFlag,
+		        TaskState,
+        ]]>
+			<include refid="BINBECMINC99.insertKeySql" />
+		<![CDATA[        
+	        )
+			VALUES
+			(
+				#organizationInfoId#,
+				#brandInfoId#,
+				#visitPlanId#,
+				#visitType#,
+				GETDATE(),
+				#startTime#,
+				#endTime#,
+				#visitTaskTime#,
+				#organizationId#,
+				#counterCode#,
+				#memId#,
+				#memCode#,
+				#memName#,
+				#joinDate#,
+				#mobilePhone#,
+				#birth#,
+				#paperId#,
+				#firstBillCode#,
+				#lastBillCode#,
+				#skinType#,
+				'0',
+				'0',
+		]]>
+			<include refid="BINBECMINC99.insertValueSql" />
+			)
+	</insert>
+	
+</sqlMap>

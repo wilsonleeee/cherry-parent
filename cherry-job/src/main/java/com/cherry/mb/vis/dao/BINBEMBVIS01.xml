@@ -1,0 +1,198 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sqlMap PUBLIC "-//iBATIS.com//DTD SQL Map 2.0//EN" "http://ibatis.apache.org/dtd/sql-map-2.dtd">
+<sqlMap namespace="BINBEMBVIS01">
+
+    <!--取得需更新的会员回访信息（分页）    从POS品牌-->
+	<select id ="getWitMemVitInfo" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+		<include refid="BINBECMINC99.pageheader" />
+		<![CDATA[
+			SELECT
+			      ID AS witMemVitInfoID,
+			      visit_code AS visitCode,
+			      visit_type_code AS visitTypeCode,
+			      counter_code AS counterCode,
+			      member_code AS memberCode,
+			      visit_begin_date AS visitBeginDate,
+			      visit_end_date AS visitEndDate,
+			      visit_BA_code AS BAcode,
+			      visit_datetime AS visitDatetime,
+			      visit_flag AS visitFlag,
+			      sale_date_last AS saleDateLast,
+			      flag AS flag      
+			FROM 
+			      dbo.WITPOSB_will_visit_member
+			WHERE 
+                  flag > 0
+                  AND ID > #witMemVitInfoID#
+		]]>
+		<include refid="BINBECMINC99.pagefooter" />
+	</select>
+
+    <!--更新会员回访信息      新后台-->
+	<update id="updateMemVitInfo" parameterClass="java.util.HashMap">
+		<![CDATA[
+			UPDATE
+			      Members.BIN_MemberVisit
+			SET
+			      BIN_OrganizationID=#organizationID#,
+			      BIN_EmployeeID=#employeeID#,
+			      VisitBeginTime=#visitBeginDate#,
+			      VisitEndTime=#visitEndDate#,
+			      VisitTime=#visitDatetime#,
+			      VisitFlag=#visitFlag#,
+			      VisitTypeCode=#visitTypeCode#,
+			      UpdateTime=GETDATE(),
+			      UpdatedBy='BATCH',
+			      UpdatePGM='BATCH',
+			      ModifyCount=ModifyCount+1
+			WHERE 
+				  BIN_MemberInfoID=#memberInfoID# AND
+				  VisitCode = #visitCode# AND
+		]]>
+        <isEmpty property="visitTypeCode">
+            <![CDATA[
+                  VisitTypeCode IS NULL AND
+            ]]>
+        </isEmpty>
+        <isNotEmpty property="visitTypeCode">
+            <![CDATA[
+                  VisitTypeCode = #visitTypeCode# AND
+            ]]>
+        </isNotEmpty>
+		<![CDATA[
+				  BIN_BrandInfoID=#brandInfoId# AND
+				  BIN_OrganizationInfoID=#organizationInfoId#							
+		]]>
+    </update>
+	<!--更新会员回访信息将同步表示设为0  POS品牌-->
+	<update id="updateWitMemVitFlag" parameterClass="java.util.HashMap">
+		<![CDATA[
+			UPDATE
+			      dbo.WITPOSB_will_visit_member
+			SET
+			      flag =0,
+			      modified=GETDATE() 
+			WHERE 
+			      visit_code = #visitCode# AND
+				  member_code=#memberCode# AND
+		]]>
+        <isEmpty property="visitTypeCode">
+            <![CDATA[
+                  visit_type_code IS NULL
+            ]]>
+        </isEmpty>
+        <isNotEmpty property="visitTypeCode">
+            <![CDATA[
+                  visit_type_code = #visitTypeCode#
+            ]]>
+        </isNotEmpty>
+    </update>	
+	
+	<!-- 查询会员信息 -->
+	<select id ="selMemberInfo" parameterClass="java.util.HashMap" resultClass ="java.util.HashMap">
+	<![CDATA[
+        SELECT
+			A.BIN_MemberInfoID AS memberInfoID
+		FROM
+			Members.BIN_MemberInfo A,
+			Members.BIN_MemCardInfo B
+		WHERE
+			B.MemCode = #memberCode# AND
+			A.BIN_MemberInfoID = B.BIN_MemberInfoID AND 
+			A.BIN_OrganizationInfoID = #organizationInfoId# AND
+			A.BIN_BrandInfoID = #brandInfoId# AND
+	    	B.ValidFlag = '1'
+	]]>
+	</select>
+	
+	<!-- 查询柜台部门信息 -->
+	<select id ="selCounterDepartmentInfo" parameterClass="java.util.HashMap" resultClass ="java.util.HashMap">
+	<![CDATA[
+		SELECT		
+			A.BIN_OrganizationID AS organizationID
+		FROM
+			Basis.BIN_CounterInfo A
+		WHERE
+			A.CounterCode = #counterCode# AND
+			A.BIN_BrandInfoID = #brandInfoId# AND		    
+			A.BIN_OrganizationInfoID = #organizationInfoId#
+	]]> 
+	</select>
+	
+		<!-- 查询员工信息 -->
+	<select id ="selEmployeeInfo" parameterClass="java.util.HashMap" resultClass ="java.util.HashMap">
+		SELECT
+			A.BIN_EmployeeID AS employeeID
+		FROM
+			Basis.BIN_Employee A
+		WHERE
+		    A.EmployeeCode = #BAcode# AND
+			A.BIN_BrandInfoID = #brandInfoId# AND
+			A.BIN_OrganizationInfoID = #organizationInfoId# 
+	</select>
+	
+	<!-- 插入会员回访信息表 -->
+	<insert id="InsertMemVisitInfo" parameterClass="java.util.HashMap">
+		<![CDATA[
+		   INSERT INTO  Members.BIN_MemberVisit(
+		        BIN_OrganizationInfoID,
+		        BIN_BrandInfoID,
+	 	        BIN_OrganizationID,
+		        BIN_EmployeeID,
+		        BIN_MemberInfoID,
+		        VisitBeginTime,
+		        VisitEndTime,
+		        VisitTime,
+		        VisitFlag,
+		        VisitCode,
+		        VisitTypeCode,
+		        VisitWay,
+		        Sourse,
+		        Comments,
+				CreateTime,
+				UpdateTime,
+				CreatedBy,
+				CreatePGM,
+				UpdatedBy,
+				UpdatePGM,
+				ModifyCount
+	        )
+			VALUES
+			(
+				#organizationInfoId#,
+				#brandInfoId#,
+				#organizationID#,
+				#employeeID#,
+				#memberInfoID#,
+				#visitBeginDate#,
+				#visitEndDate#,
+				#visitDatetime#,
+				#visitFlag#,
+				#visitCode#,
+				#visitTypeCode#,
+				#visitWay#,
+				#sourse#,
+				#comments#,
+				]]>
+				<isNotEmpty property="createTime">
+					#createTime#,
+				</isNotEmpty>
+				<isEmpty property="createTime">
+					GETDATE(),
+				</isEmpty>
+				<isNotEmpty property="createTime">
+					#createTime#,
+				</isNotEmpty>
+				<isEmpty property="createTime">
+					GETDATE(),
+				</isEmpty>
+			   <![CDATA[
+				'BATCH',
+				'BATCH',
+				'BATCH',
+				'BATCH',
+				'0'
+			)
+		]]>
+	</insert>
+</sqlMap>

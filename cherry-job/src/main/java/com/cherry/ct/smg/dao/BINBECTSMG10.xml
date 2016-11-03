@@ -1,0 +1,110 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sqlMap PUBLIC "-//iBATIS.com//DTD SQL Map 2.0//EN" "http://ibatis.apache.org/dtd/sql-map-2.dtd">
+<sqlMap namespace="BINBECTSMG10">
+	
+	<!-- 取得短信模板列表 -->
+	<select id="getSmsTemplateList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+		<![CDATA[
+			SELECT DISTINCT
+				0 AS templateId,
+				B.BrandCode AS brandCode,
+				A.MessageInfo AS content,
+				NULL AS tempCode,
+				GETDATE() AS updateTime
+			FROM 
+				Communication.BIN_CommEventSet A WITH(NOLOCK)
+				LEFT JOIN Basis.BIN_BrandInfo B WITH(NOLOCK)
+				ON (A.BIN_BrandInfoID = B.BIN_BrandInfoID)
+			WHERE 
+				A.BIN_BrandInfoID = #brandInfoId# AND
+				A.CommType = '1' AND
+				A.ValidFlag = '1' AND
+			NOT EXISTS
+			(	SELECT 1
+				FROM
+					Communication.BIN_SmsTemplateInfo Z WITH(NOLOCK)
+				WHERE
+					A.MessageInfo = Z.Content AND
+					B.BrandCode = Z.BrandCode
+			)
+			UNION
+			SELECT
+				BIN_SmsTemplateID AS templateId,
+				BrandCode AS brandCode,
+				Content AS content,
+				TemplateCode AS tempCode,
+				UpdateTime as updateTime
+			FROM
+				Communication.BIN_SmsTemplateInfo WITH(NOLOCK)
+			WHERE
+				BrandCode = #brandCode# AND
+				ValidFlag = '1'
+			ORDER BY updateTime  DESC
+			
+		]]>
+    </select>
+    
+    <!-- 取得品牌的短信模板编号 -->
+	<select id="getSmsTemplateCode" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+		<![CDATA[
+			SELECT TOP 1 
+				TemplateCode AS tempCode
+			FROM 
+				Communication.BIN_SmsTemplateInfo
+			WHERE 
+				Content = #content# AND
+				BrandCode = #brandCode#
+		]]>
+    </select>
+    
+    <!-- 取得品牌所有的短信模板 -->
+	<select id="getBrandTemplateList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+		<![CDATA[
+			SELECT 
+				TemplateCode AS tempCode,
+				Content AS content
+			FROM 
+				Communication.BIN_SmsTemplateInfo
+			WHERE
+				BrandCode = #brandCode# AND
+				TemplateCode IS NOT NULL
+		]]>
+    </select>
+    
+    <!--更新短信模板 -->
+	<update id="updateTemplateInfo" parameterClass="java.util.HashMap">
+		<![CDATA[
+			UPDATE 		
+				Communication.BIN_SmsTemplateInfo
+			SET	
+	      		TemplateCode = #tempCode#,
+		]]>
+		<include refid="BINOLCMINC99.updateSql" />
+		<![CDATA[
+			WHERE 
+				BIN_SmsTemplateID = #templateId#
+		]]>
+    </update>
+    
+    <!-- 插入短信模板表  -->
+	<insert id="addTemplateInfo" parameterClass="java.util.HashMap">
+		<![CDATA[
+		INSERT Communication.BIN_SmsTemplateInfo(
+			BrandCode,
+			Content,
+			TemplateCode,
+		]]>	
+			<include refid="BINOLCMINC99.insertKeySql" />									
+		<![CDATA[	
+		)VALUES(
+			#brandCode#,
+			#content#,
+			#tempCode#,
+		]]>
+		<include refid="BINOLCMINC99.insertValueSql" />
+		<![CDATA[
+		)
+		]]>
+	</insert>
+    
+</sqlMap>

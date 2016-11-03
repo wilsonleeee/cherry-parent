@@ -1,0 +1,351 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sqlMap PUBLIC "-//iBATIS.com//DTD SQL Map 2.0//EN" "http://ibatis.apache.org/dtd/sql-map-2.dtd">
+<sqlMap namespace="BINOTYIN01">
+	
+	<!-- 取得指定同步状态的销售数据总数  -->
+    <select id="getSRCountBySync" parameterClass="java.util.HashMap" resultClass="java.lang.Integer">
+	  <![CDATA[
+		  SELECT
+			COUNT(1) AS count
+		  FROM 
+			 Sale.BIN_SaleRecord WITH(NOLOCK)
+		  WHERE
+			  SynchFlag = #synchFlag#
+		  AND ValidFlag = '1'
+		  AND BIN_OrganizationInfoID = #organizationInfoId#
+		  AND BIN_BrandInfoID = #brandInfoId#
+		]]>
+    </select>
+    
+	<!-- 取得指定同步状态的销售单据号List  -->
+    <select id="getBillCodeOfSRListBySync" parameterClass="java.util.HashMap" resultClass="java.lang.String">
+	  <![CDATA[
+		  SELECT
+			A.BillCode as billCode	
+		  FROM 
+			 Sale.BIN_SaleRecord A WITH(NOLOCK)
+		  WHERE
+			  A.SynchFlag = #synchFlag#
+		  AND A.ValidFlag = '1'
+		  AND A.BIN_OrganizationInfoID = #organizationInfoId#
+		  AND A.BIN_BrandInfoID = #brandInfoId#
+		]]>
+		<![CDATA[AND EXISTS ( ]]>
+			<include refid="BINBECMINC99.getBillByTestModList" />
+		<![CDATA[  
+		    AND A.BIN_OrganizationID = C99.BIN_OrganizationID)
+		]]> 
+    </select>
+    
+	<!-- 根据新后台billCode查询颖通销售接口表的单据号List  -->
+    <select id="getSRListByBillCodeForOT" parameterClass="java.util.HashMap" resultClass="java.lang.String">
+      <![CDATA[
+		SELECT
+			DISTINCT
+			DocEntry AS billCode
+		FROM 
+			dbo.CPS_IMPORT_SALES WITH(NOLOCK)
+		WHERE
+			DocEntry IN
+	  ]]>
+			<iterate property="billCodeList" open="(" close=")" conjunction=",">
+				#billCodeList[]#
+			</iterate>
+		<isNotEmpty property="brandCode" prepend="AND">
+			Brand = #brandCode#
+		</isNotEmpty>
+      <![CDATA[
+      UNION
+		SELECT
+			DISTINCT
+			DocEntry AS billCode
+		FROM 
+			dbo.CPS_IMPORT_SALES_SUC WITH(NOLOCK)
+		WHERE
+			DocEntry IN
+	  ]]>
+			<iterate property="billCodeList" open="(" close=")" conjunction=",">
+				#billCodeList[]#
+			</iterate>
+		<isNotEmpty property="brandCode" prepend="AND">
+			Brand = #brandCode#
+		</isNotEmpty>
+    </select>
+    
+    <!-- 更新销售数据的同步状态 -->
+    <update id="updSaleRecordBySync" parameterClass="java.util.HashMap">
+	  UPDATE 
+	  <isNotEmpty property="upCount">
+	  	TOP(#upCount#) 
+	  </isNotEmpty> 
+	  A
+	  SET 
+		A.SynchFlag = #synchFlag_New#,
+		<isNotEmpty property="updateTime">
+			A.UpdateTime=#updateTime#,
+		</isNotEmpty>
+		<isEmpty property="updateTime">
+			A.UpdateTime=GETDATE(),
+		</isEmpty>
+		<![CDATA[
+			A.UpdatedBy=#updatedBy#,
+			A.UpdatePGM=#updatePGM#,
+			A.ModifyCount=A.ModifyCount+1
+	  FROM 
+	      Sale.BIN_SaleRecord A
+	  WHERE
+	      A.ValidFlag = '1'
+		]]>
+	  	<isNotEmpty property="synchFlag_Old" prepend="AND">
+		 A.SynchFlag = #synchFlag_Old#
+	  	</isNotEmpty>
+	  	<isNotEmpty property="billCodeList" prepend="AND">
+	  		A.BillCode IN
+			<iterate property="billCodeList" open="(" close=")" conjunction=",">
+				#billCodeList[]#
+			</iterate>
+	  	</isNotEmpty>
+	  AND A.BIN_OrganizationInfoID = #organizationInfoId#
+	  AND A.BIN_BrandInfoID = #brandInfoId#
+		<![CDATA[AND EXISTS ( ]]>
+			<include refid="BINBECMINC99.getBillByTestModList" />
+		<![CDATA[  
+		    AND A.BIN_OrganizationID = C99.BIN_OrganizationID)
+		]]> 
+    </update>
+    
+    <!-- 取得新后台同步状态为"同步处理中"[syncFlag=2]销售数据（主数据、明细数据） -->
+    <select id="getSRListBySyncFlag" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+      <![CDATA[
+		  SELECT 
+			CASE WHEN (A.SaleType = 'NS' OR A.SaleType = 'PX') THEN 'SA' WHEN A.SaleType = 'SR' THEN 'CM' END AS InvType,
+			A.BillCode AS DocEntry,
+			A.SaleTime AS DocDate,
+			B.DetailNo AS LineNum,
+			C.DepartCode AS Shop,
+			CASE A.OriginalAmount WHEN 0 THEN 100 ELSE Convert(decimal(19,6), (A.OriginalAmount - A.Amount) / A.OriginalAmount * 100) END AS DocDisc,
+			Convert(decimal(19,6),(A.OriginalAmount - A.Amount)) AS DocDiscAmt,
+			A.Amount AS DocTotal,
+			#curType# AS DocCurr,
+			T10.ItemCode  AS ItemCode,
+			T10.nameTotal AS ItemDesc,
+			CASE WHEN SIGN(B.PricePay) = -1 THEN (0-B.Quantity) ELSE B.Quantity END AS Quantity,
+			0 AS DiscPerc,
+			CASE WHEN B.SaleType = 'N' or B.Quantity=0 THEN ABS(B.PricePay) ELSE ABS(B.PricePay) / B.Quantity END AS UnitPrice,
+			CASE WHEN B.SaleType = 'N' THEN ABS(B.PricePay) * B.Quantity ELSE ABS(B.PricePay) END AS LineTotal,
+			BillCodePre AS BaseEntry,
+			A.BIN_MemberInfoID,
+			A.EmployeeCode,
+			A.Comments AS Remarks,			
+			
+			MI.BIN_MemberInfoID,
+			A.MemberCode AS MemCode,
+			MI.Name,
+			MI.JoinDate,
+			MI.CounterCodeBelong,
+			MI.BaCodeBelong,
+			
+			#brandCode# AS brandCode,
+			B.Price
+			
+		  FROM Sale.BIN_SaleRecord A WITH(NOLOCK)
+		  JOIN Sale.BIN_SaleRecordDetail B WITH(NOLOCK) ON B.BIN_SaleRecordID = A.BIN_SaleRecordID
+		  JOIN Basis.BIN_Organization C WITH(NOLOCK) ON (A.BIN_OrganizationID = C.BIN_OrganizationID) 
+		  JOIN (
+		]]>
+		  		<include refid="BINBECMINC99.getProPrmList" />
+		<![CDATA[
+		       ) T10 ON ( B.BIN_ProductVendorID = T10.id AND B.SaleType = T10.type ) 
+	       LEFT JOIN Members.BIN_MemberInfo MI ON (MI.BIN_MemberInfoID = A.BIN_MemberInfoID)
+		  WHERE
+		  	  A.BIN_OrganizationInfoID = #organizationInfoId#
+		  AND A.BIN_BrandInfoID = #brandInfoId#
+		  AND A.ValidFlag = '1'
+		  AND A.SynchFlag = #synchFlag#
+		  AND T10.unitCode NOT IN ('ZDTC-IPOS3','ZDZK-IPOS3')
+		]]>
+		<![CDATA[AND EXISTS ( ]]>
+			<include refid="BINBECMINC99.getBillByTestModList" />
+		<![CDATA[  
+		    AND A.BIN_OrganizationID = C99.BIN_OrganizationID)
+		]]> 
+		  ORDER BY A.BIN_SaleRecordID,T10.nameTotal
+    </select>
+    
+    <!-- 插入颖通销售接口表 -->
+   	<insert id="insertCpsImportSales" parameterClass="java.util.HashMap">
+   	<![CDATA[
+		INSERT INTO dbo.CPS_IMPORT_SALES(
+			InvType,
+			DocEntry,
+			DocDate,
+			LineNum,
+			Shop,
+			DocDisc,
+			DocDiscAmt,
+			DocTotal,
+			DocCurr,
+			ItemCode,
+			ItemDesc,
+			Quantity,
+			DiscPerc,
+			UnitPrice,
+			LineTotal,
+			BaseEntry,
+			CreateDate,
+			MemberID,
+			BaCode,
+			Remarks,
+			Brand,
+			Price
+		)
+		VALUES
+		(
+			#InvType#,
+			#DocEntry#,
+			#DocDate#,
+			#LineNum#,
+			#Shop#,
+			#DocDisc#,
+			#DocDiscAmt#,
+			#DocTotal#,
+			#DocCurr#,
+			#ItemCode#,
+			#ItemDesc#,
+			#Quantity#,
+			#DiscPerc#,
+			#UnitPrice#,
+			#LineTotal#,
+			#BaseEntry#,
+			GETDATE(),
+			#BIN_MemberInfoID#,
+			#EmployeeCode#,
+			#Remarks#,
+			#brandCode#,
+			#Price#
+		)
+	]]>
+   	</insert>
+    
+    <!-- 插入颖通会员信息接口表 -->
+   	<insert id="insertCpsImportMemberInfo" parameterClass="java.util.HashMap">
+   		MERGE dbo.CPS_IMPORT_MemberInfo AS TGT
+		USING ( 
+			SELECT #BIN_MemberInfoID# AS BIN_MemberInfoID, #brandCode# AS brandCode
+        ) AS SRC 
+        ON TGT.MemberID = SRC.BIN_MemberInfoID AND TGT.Brand = SRC.brandCode
+        WHEN MATCHED THEN 
+        UPDATE SET 
+        	TGT.MemberCode = #MemCode#,
+        	TGT.MemberName = #Name#,
+			TGT.JoinDate = #JoinDate#,
+			TGT.CounterCodeBelong = #CounterCodeBelong#,
+			TGT.BaCodeBelong = #BaCodeBelong#,
+			TGT.UpdateTime = GETDATE(),
+			SynFlag = null,
+			Brand = #brandCode#
+        
+        WHEN NOT MATCHED THEN
+		INSERT(
+			MemberID,
+			MemberCode,
+			MemberName,
+			JoinDate,
+			CounterCodeBelong,
+			BaCodeBelong,
+			UpdateTime,
+			SynFlag,
+			Brand
+		)
+		VALUES
+		(
+			#BIN_MemberInfoID#,
+			#MemCode#,
+			#Name#,
+			#JoinDate#,
+			#CounterCodeBelong#,
+			#BaCodeBelong#,
+			GETDATE(),
+			null,
+			#brandCode#
+		);
+   	</insert>
+   	
+   	<!-- 取得新后台同步状态为"同步处理中"[syncFlag=2]销售支付数据 -->
+   	<select id="getSalePayListBySyncFlag" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+	  <![CDATA[	
+		SELECT 
+			CASE WHEN (A.SaleType = 'NS' OR A.SaleType = 'PX') THEN 'SA' WHEN A.SaleType = 'SR' THEN 'CM' END AS InvType,
+			A.BillCode AS DocEntry,
+			A.SaleTime AS DocDate,
+			B.DetailNo AS LineNum,
+			C.DepartCode AS Shop,
+			B.PayTypeCode AS PayCode,
+   	  ]]>
+		<isNotEmpty property="language">
+			<isEqual property="language" compareValue="en_US">
+				D.PayTypeDescEN AS PayDesc,
+			</isEqual>
+			<isEqual property="language" compareValue="zh_CN">	
+				D.PayTypeDescCN AS PayDesc,
+			</isEqual>								
+		</isNotEmpty>
+		<isEmpty property="language">
+			D.PayTypeDescCN AS PayDesc,
+		</isEmpty>
+	  <![CDATA[	
+			B.PayAmount AS PayAmount,
+			#curType# AS DocCurr,
+			
+			#brandCode# AS brandCode
+			
+		FROM Sale.BIN_SalePayList B WITH(NOLOCK)
+		JOIN Sale.BIN_SaleRecord A WITH(NOLOCK) ON (B.BIN_SaleRecordID = A.BIN_SaleRecordID AND A.ValidFlag = '1')
+		JOIN Basis.BIN_Organization C WITH(NOLOCK) ON (A.BIN_OrganizationID = C.BIN_OrganizationID) 
+		LEFT JOIN Basis.BIN_PayType D WITH(NOLOCK) ON (B.PayTypeCode = D.PayTypeCode)
+		WHERE
+			  A.SynchFlag = #synchFlag#
+		  AND A.BIN_OrganizationInfoID = #organizationInfoId#
+		  AND A.BIN_BrandInfoID = #brandInfoId#
+   	  ]]>
+	  <![CDATA[AND EXISTS ( ]]>
+			<include refid="BINBECMINC99.getBillByTestModList" />
+		<![CDATA[  
+		    AND A.BIN_OrganizationID = C99.BIN_OrganizationID)
+		]]> 
+		ORDER BY B.BIN_SaleRecordID
+   	</select>
+   	
+   	<!-- 插入颖通支付构成接口表 -->
+   	<insert id="insertCpsImportPayment">
+	  <![CDATA[	
+		INSERT INTO dbo.CPS_IMPORT_PAYMENT(
+			InvType,
+			DocEntry,
+			DocDate,
+			LineNum,
+			Shop,
+			PayCode,
+			PayDesc,
+			PayAmount,
+			DocCurr,
+			CreateDate,
+			Brand
+		)
+		VALUES
+		(
+			#InvType#,
+			#DocEntry#,
+			#DocDate#,
+			#LineNum#,
+			#Shop#,
+			#PayCode#,
+			#PayDesc#,
+			#PayAmount#,
+			#DocCurr#,
+			GETDATE(),
+			#brandCode#
+		)
+   	  ]]>
+   	</insert>
+</sqlMap>

@@ -1,0 +1,132 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sqlMap PUBLIC "-//iBATIS.com//DTD SQL Map 2.0//EN" "http://ibatis.apache.org/dtd/sql-map-2.dtd">
+<sqlMap namespace="BINBESSPRM04">
+	<!-- 取得销售数据主表  -->
+    <select id="getSaleRecordList" parameterClass="java.util.HashMap" resultClass="com.cherry.ss.prm.dto.SaleRecordDTO">
+    <![CDATA[
+    	SELECT 
+    		A.BIN_SaleRecordID AS saleRecordID,
+    		A.Quantity AS quantity,
+    		A.SaleDate AS saleTime,
+    		A.MemberCode AS memberCode,
+    		B.counterCode AS counterCode,
+    		A.BillCode AS saleNo,
+    		A.PayAmount As amount,
+    		B.BIN_OrganizationID AS organizationID,
+    		B.BIN_OrganizationInfoID AS organizationInfoID,
+    		B.BIN_BrandInfoID AS brandInfoID,
+    		B.BIN_ChannelID AS channelID,
+    		B.BIN_RegionID AS cityID
+    	FROM
+    	    Sale.BIN_SaleRecord A,
+    	    Basis.BIN_CounterInfo B,
+    	    Basis.BIN_Region C,
+    	    Basis.BIN_Region D
+    	WHERE
+    		A.SaleDate >= #saleTimeStart# AND
+    	    A.SaleDate <= #saleTimeEnd# AND
+    	    A.ValidFlag = '1' AND
+    	    B.BIN_OrganizationID = A.BIN_OrganizationID AND
+    	    B.ValidFlag = '1' AND 
+    	    B.BIN_RegionID = C.BIN_RegionID AND 
+    	    C.NodeID.IsDescendantOf(D.NodeID)=1 AND 
+    	    (D.RegionType = '2' OR D.RegionType = '3')
+
+    ]]>
+    </select>
+    
+    <!-- 取得销售数据明细表  -->
+    <select id="getSaleRecordDetailList" parameterClass="java.util.HashMap" resultClass="com.cherry.ss.prm.dto.SaleRecordDetailDTO">
+    	SELECT 
+    		A.UnitCode AS unitCode,
+    		A.BarCode AS barCode,
+    		A.PricePay AS price,
+    		A.Quantity AS quantity,
+    		A.SaleType AS saleType,
+    		A.EmployeeCode AS employeeCode
+    	FROM
+    		Sale.BIN_SaleRecordDetail A
+    	WHERE
+    		A.ValidFlag = '1' AND
+    		A.BIN_SaleRecordID = #saleRecordID# 
+
+    </select>
+    
+    
+    <!-- 插入促销品入出库差异主表 -->
+    <insert id="addPromotionStockDiffInOut" parameterClass="java.util.HashMap">
+    <selectKey resultClass="java.lang.Integer" type="post" keyProperty="BIN_PromotionStockDiffInOutID" >  
+    	<![CDATA[
+    		INSERT INTO Inventory.BIN_PromotionStockDiffInOut
+    		(
+    			BIN_OrganizationInfoID,
+				BIN_BrandInfoID,
+				BIN_OrganizationID,
+				ActualTotalQuantity,
+				ActualTotalAmount,
+				TheoryTotalQuantity,
+				TheoryTotalAmount,
+				RelevantNo,
+				StockInOutDate,
+				]]>
+					<include refid="BINOLCMINC99.insertKeySql" />		
+				<![CDATA[
+    		)
+    		VALUES
+    		(
+    			#organizationInfoID#,
+				#brandInfoID#,
+				#organizationID#,
+				#quantity#,
+				#amount#,
+				#quantityOther#,
+				#amountOther#,
+				#saleNo#,
+				#saleTime#,
+    		    ]]>		
+					<include refid="BINOLCMINC99.insertValueSql" />		
+				<![CDATA[
+    		)
+    		select SCOPE_IDENTITY() as value  
+    	]]>
+	    </selectKey>
+    </insert>
+    
+    <!-- 插入促销品入出库差异明细表  -->
+    <insert id="addPromotionStockDiffDetail" parameterClass="java.util.HashMap">
+     	<![CDATA[
+     		INSERT INTO Inventory.BIN_PromotionStockDiffDetail
+     		(
+				RelevantNo,
+				UnitCode,
+				BarCode,
+				ActualQuantity,
+				TheoryQuantity,
+				Price,
+				TheoryPrice,
+				StockType,
+				EmployeeCode,
+				BIN_PromotionActivityID,
+				]]>
+					<include refid="BINOLCMINC99.insertKeySql" />		
+				<![CDATA[
+     		)
+     		VALUES
+     		(
+     			#relevantNo#,
+				#unitCode#,
+				#barCode#,
+				#quantity#,
+				#quantityOther#,
+				#price#,
+				#priceOther#,
+				'1',
+				#employeeCode#,
+				#activeID#,
+     			]]>	
+					<include refid="BINOLCMINC99.insertValueSql" />		
+				<![CDATA[
+     		)
+     	]]>
+    </insert>
+</sqlMap>

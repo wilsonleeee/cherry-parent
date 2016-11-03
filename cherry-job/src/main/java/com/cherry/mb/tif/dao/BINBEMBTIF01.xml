@@ -1,0 +1,964 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sqlMap PUBLIC "-//iBATIS.com//DTD SQL Map 2.0//EN" "http://ibatis.apache.org/dtd/sql-map-2.dtd">
+<sqlMap namespace="BINBEMBTIF01">
+
+	<!-- 取得需要同步的会员信息List -->
+	<select id="getMemSyncList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+		<![CDATA[
+		SELECT TOP $COUNT$
+				BIN_MemberInfoID AS memberInfoId
+		FROM
+				Members.BIN_MemberInfo
+		WHERE
+		]]>
+	<isEmpty property="mebIdMin">
+	<isNotEmpty property="mebIdStart">
+		<![CDATA[BIN_MemberInfoID >= #mebIdStart# AND
+		]]>
+	</isNotEmpty>
+	</isEmpty>
+	<isNotEmpty property="mebIdMin">
+		<![CDATA[BIN_MemberInfoID > #mebIdMin# AND
+		]]>
+	</isNotEmpty>
+	<isNotEmpty property="mebIdEnd">
+		<![CDATA[BIN_MemberInfoID <= #mebIdEnd# AND
+		]]>
+	</isNotEmpty>
+	<![CDATA[
+				TmallSyncFlg = 2 AND
+				TmallMixMobile IS NOT NULL AND
+				TmallBindTime IS NOT NULL
+		ORDER BY BIN_MemberInfoID
+		]]>
+    </select>
+    
+    <!-- 取得需要手机加密的会员信息List -->
+	<select id="getMemMixPhoneList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+		<include refid="BINBECMINC99.pageheader" />
+		<![CDATA[
+		SELECT
+				BIN_MemberInfoID AS memberInfoId,
+				MobilePhone AS mobilePhone
+		FROM
+				Members.BIN_MemberInfo
+		WHERE
+				BIN_BrandInfoID = #brandInfoId# AND
+				BIN_OrganizationInfoID = #organizationInfoId# AND
+				BatchExecFlag = 1
+		]]>
+		<include refid="BINBECMINC99.pagefooter" />
+    </select>
+    
+    <!-- 取得需要手机加密的会员信息List -->
+	<select id="getMemPhoneList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+		<include refid="BINBECMINC99.pageheader" />
+		<![CDATA[
+		SELECT
+				BIN_MemberInfoID AS memberInfoId,
+				MobilePhone AS mobilePhone,
+				TmallMixMobile AS tmallMixMobile
+		FROM
+				Members.BIN_MemberInfo
+		WHERE
+				BIN_BrandInfoID = #brandInfoId# AND
+				BIN_OrganizationInfoID = #organizationInfoId# 
+		]]>
+		<include refid="BINBECMINC99.pagefooter" />
+    </select>
+    
+    <!-- 取得需要绑定的新会员信息List -->
+	<select id="getMemRegisterList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+		<include refid="BINBECMINC99.pageheader" />
+		<![CDATA[
+		SELECT
+				A.BIN_MemRegisterID AS memRegisterId,
+				A.ValidFlag AS vaFlag,
+				convert(varchar, ISNULL(A.UpdateTime, getdate()), 120) AS regBindTime,
+				B.BIN_MemberInfoID AS memberInfoId,
+				convert(varchar, B.TmallBindTime, 120) AS tmallBindTime
+		FROM
+				Members.BIN_MemRegisterInfo A,
+				Members.BIN_MemberInfo B
+		WHERE
+				A.BIN_BrandInfoID = #brandInfoId# AND
+				A.BIN_OrganizationInfoID = #organizationInfoId# AND
+				A.BatchExecFlag = 1 AND
+				A.TmallMixMobile = B.TmallMixMobile
+		]]>
+		<isNotEmpty property="tmallCounterArr" >
+				AND B.CounterCodeBelong IN
+			<iterate conjunction="," open="(" close=")" property="tmallCounterArr">  
+		        #tmallCounterArr[]#
+		    </iterate>							
+			</isNotEmpty>
+		<include refid="BINBECMINC99.pagefooter" />
+    </select>
+    
+    
+    <!-- 取得历史注册的新会员信息List -->
+	<select id="getHisMemRegisterList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+		<include refid="BINBECMINC99.pageheader" />
+		<![CDATA[
+		SELECT
+				BIN_MemRegisterID AS memRegisterId,
+				TmallMixMobile AS mix_mobile,
+				ValidFlag AS vaFlag,
+				convert(varchar, ISNULL(UpdateTime, getdate()), 120) AS regBindTime
+		FROM
+				Members.BIN_MemRegisterInfo
+		WHERE
+				BIN_BrandInfoID = #brandInfoId# AND
+				BIN_OrganizationInfoID = #organizationInfoId# AND
+				BatchExecFlag = 1
+		]]>
+		<include refid="BINBECMINC99.pagefooter" />
+    </select>
+    
+     <!-- 取得需要合并的会员信息List -->
+	<select id="getMemMergeList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+		<include refid="BINBECMINC99.pageheader" />
+		<![CDATA[
+		SELECT
+				A.BIN_TmallMergeID AS tmallMergeId,
+				A.BIN_MemberInfoID AS memberInfoId,
+				A.MixMobile AS mixMobile,
+				B.BIN_MemberInfoID AS preMemId,
+				B.TmallBindTime AS tmallBindTime,
+				B.TaobaoNick AS taobaoNick,
+				B.HisTaobaoNick AS hisTaobaoNick,
+				B.HisTmallBindTime AS hisTmallBindTime,
+				B.TmallUnbindTime AS tmallUnbindTime,
+				C.MemCode AS preMemCode
+		FROM
+				Members.BIN_TmallMemMergeInfo A JOIN
+				Members.BIN_MemberInfo B
+				ON (A.MixMobile = B.TmallMixMobile) JOIN
+				Members.BIN_MemCardInfo C
+				ON (B.BIN_MemberInfoID = C.BIN_MemberInfoID AND C.CardValidFlag = '1')
+		WHERE
+				A.BIN_BrandInfoID = #brandInfoId# AND
+				A.BIN_OrganizationInfoID = #organizationInfoId# AND
+				A.BatchExecFlag = 1 AND
+				B.MemInfoRegFlg = '1'
+		]]>
+		<isNotEmpty property="tmallCounterArr" >
+				AND B.CounterCodeBelong IN
+			<iterate conjunction="," open="(" close=")" property="tmallCounterArr">  
+		        #tmallCounterArr[]#
+		    </iterate>							
+			</isNotEmpty>
+		<![CDATA[
+				
+		]]>
+		<include refid="BINBECMINC99.pagefooter" />
+    </select>
+    
+    <resultMap id="TmallPointList" class="java.util.HashMap">
+		<result property="detailList" column="BIN_MemberInfoID" select="BINBEMBTIF01.getPointDetailList" javaType="java.util.List" />
+		<result property="memberInfoId" column="memberInfoId"/>
+		<result property="memCode" column="MemCode"/>
+		<result property="totalPoint" column="TotalPoint"/>
+	</resultMap>
+    <!-- 查询积分兑换的会员 -->
+    <sql id="QueryTmallPoint">
+    	SELECT
+			A.BIN_MemberInfoID AS BIN_MemberInfoID,
+			A.BIN_MemberInfoID AS memberInfoId,
+			B.MemCode,
+			ISNULL(C.TotalPoint, 0) AS TotalPoint
+		FROM 
+			Members.BIN_MemberInfo A
+			LEFT JOIN Members.BIN_MemCardInfo B
+			ON (A.BIN_MemberInfoID = B.BIN_MemberInfoID AND B.CardValidFlag = '1')
+			LEFT JOIN Members.BIN_MemberPoint C
+			ON (A.BIN_MemberInfoID = C.BIN_MemberInfoID)
+		WHERE
+			A.BIN_BrandInfoID = #brandInfoId# AND
+			A.BIN_OrganizationInfoID = #organizationInfoId# AND
+			A.BatchExecFlag = 1
+    </sql>
+    
+    <!-- 取得积分兑换信息  -->
+    <select id="getPointDetailList" parameterClass="java.lang.Integer" resultClass="java.util.HashMap">
+    	<![CDATA[
+		SELECT
+			BIN_TmallPointID AS tmallPointId,
+			CASE WHEN Type = 1 THEN -Point ELSE Point END AS point,
+			OrderId AS orderId,
+			convert(varchar, PointTime, 120) AS pointTime,
+			RecordId AS recordId,
+			BIN_MemberInfoID AS memberInfoId,
+			Type AS type,
+			BizType AS bizType,
+			TmallMixMobile AS tmallMixMobile
+		FROM 
+			Members.BIN_TmallPointInfo
+		WHERE
+			BIN_MemberInfoID = #memberInfoId# AND
+			PTFlag = 0 AND
+			ValidFlag = '1'
+		ORDER BY PointTime
+		]]>								
+    </select>
+    
+    <!-- 取得需要处理天猫积分的会员List -->
+	<select id="getMemPointList" parameterClass="java.util.HashMap" resultMap="TmallPointList">
+    	<include refid="BINBECMINC99.pageheader" />
+		<include refid="BINBEMBTIF01.QueryTmallPoint" />
+		<include refid="BINBECMINC99.pagefooter" />
+	</select>
+    
+    <!--更新会员BATCH执行状态 -->
+	<update id="updateMixMobileBatchExec" parameterClass="java.util.HashMap">
+		<![CDATA[
+			UPDATE 		
+				Members.BIN_MemberInfo
+			SET	
+				BatchExecFlag = 1
+			WHERE
+				NOT EXISTS 
+			(SELECT 1
+				FROM
+				(
+					SELECT 
+						MobilePhone AS Mobile
+					FROM 
+						Members.BIN_MemberInfo
+					WHERE MobilePhone IS NOT NULL
+					AND MemInfoRegFlg = '0'
+		]]>
+			<isNotEmpty property="tmallCounterArr" >
+				AND CounterCodeBelong IN
+			<iterate conjunction="," open="(" close=")" property="tmallCounterArr">  
+		        #tmallCounterArr[]#
+		    </iterate>							
+			</isNotEmpty>
+		<![CDATA[
+					GROUP BY MobilePhone
+					HAVING COUNT(1) > 1
+				) T
+			WHERE MobilePhone = T.Mobile) AND
+		]]>
+	<isNotEmpty property="mebIdStart">
+		<![CDATA[BIN_MemberInfoID >= #mebIdStart# AND
+		]]>
+	</isNotEmpty>
+	<isNotEmpty property="mebIdEnd">
+		<![CDATA[BIN_MemberInfoID <= #mebIdEnd# AND
+		]]>
+	</isNotEmpty>
+	<![CDATA[
+			BIN_BrandInfoID = #brandInfoId# AND
+			BIN_OrganizationInfoID = #organizationInfoId# AND
+			MemInfoRegFlg = '0' AND
+			TmallMixMobile IS NULL AND
+			MobilePhone IS NOT NULL
+		]]>
+		<isNotEmpty property="tmallCounterArr" >
+				AND CounterCodeBelong IN
+		<iterate conjunction="," open="(" close=")" property="tmallCounterArr">  
+	        #tmallCounterArr[]#
+	    </iterate>							
+		</isNotEmpty>
+    </update>
+    
+    <!--更新会员BATCH执行状态(新会员注册) -->
+	<update id="updateRegisterBatchExec" parameterClass="java.util.HashMap">
+		<![CDATA[
+			UPDATE 		
+				Members.BIN_MemRegisterInfo
+			SET	
+				BatchExecFlag = 1
+			FROM
+				Members.BIN_MemRegisterInfo A,
+				Members.BIN_MemberInfo B
+			WHERE
+		]]>
+	<isNotEmpty property="mebIdStart">
+		<![CDATA[A.BIN_MemRegisterID >= #mebIdStart# AND
+		]]>
+	</isNotEmpty>
+	<isNotEmpty property="mebIdEnd">
+		<![CDATA[A.BIN_MemRegisterID <= #mebIdEnd# AND
+		]]>
+	</isNotEmpty>
+	<![CDATA[
+			A.BIN_BrandInfoID = #brandInfoId# AND
+			A.BIN_OrganizationInfoID = #organizationInfoId# AND
+			A.ConvertFlag = 0 AND
+			A.TmallMixMobile = B.TmallMixMobile
+		]]>
+		<isNotEmpty property="tmallCounterArr" >
+				AND B.CounterCodeBelong IN
+			<iterate conjunction="," open="(" close=")" property="tmallCounterArr">  
+		        #tmallCounterArr[]#
+		    </iterate>							
+			</isNotEmpty>
+    </update>
+    
+    <!--更新会员BATCH执行状态(历史注册会员) -->
+	<update id="updateHisRegBatchExec" parameterClass="java.util.HashMap">
+		<![CDATA[
+			UPDATE 		
+				Members.BIN_MemRegisterInfo
+			SET	
+				BatchExecFlag = 1
+			WHERE
+		]]>
+	<isNotEmpty property="mebIdStart">
+		<![CDATA[BIN_MemRegisterID >= #mebIdStart# AND
+		]]>
+	</isNotEmpty>
+	<isNotEmpty property="mebIdEnd">
+		<![CDATA[BIN_MemRegisterID <= #mebIdEnd# AND
+		]]>
+	</isNotEmpty>
+	<![CDATA[
+			BIN_BrandInfoID = #brandInfoId# AND
+			BIN_OrganizationInfoID = #organizationInfoId# AND
+			ConvertFlag = 0
+		]]>
+    </update>
+    
+     <!--更新会员BATCH执行状态(天猫会员合并) -->
+	<update id="updateMergeBatchExec" parameterClass="java.util.HashMap">
+		<![CDATA[
+			UPDATE 		
+				Members.BIN_TmallMemMergeInfo
+			SET	
+				BatchExecFlag = 1
+			FROM
+				Members.BIN_TmallMemMergeInfo A,
+				Members.BIN_MemberInfo B
+			WHERE
+		]]>
+	<isNotEmpty property="mebIdStart">
+		<![CDATA[A.BIN_TmallMergeID >= #mebIdStart# AND
+		]]>
+	</isNotEmpty>
+	<isNotEmpty property="mebIdEnd">
+		<![CDATA[A.BIN_TmallMergeID <= #mebIdEnd# AND
+		]]>
+	</isNotEmpty>
+	<![CDATA[
+			A.BIN_BrandInfoID = #brandInfoId# AND
+			A.BIN_OrganizationInfoID = #organizationInfoId# AND
+			A.MergeFlag = 0 AND
+			A.MixMobile = B.TmallMixMobile
+		]]>
+		<isNotEmpty property="tmallCounterArr" >
+				AND B.CounterCodeBelong IN
+			<iterate conjunction="," open="(" close=")" property="tmallCounterArr">  
+		        #tmallCounterArr[]#
+		    </iterate>							
+			</isNotEmpty>
+    </update>
+    
+    <!--更新会员BATCH执行状态 (积分兑换)-->
+	<update id="updatePointBatchExec" parameterClass="java.util.HashMap">
+		<![CDATA[
+			UPDATE 		
+				Members.BIN_MemberInfo
+			SET	
+				BatchExecFlag = 1
+			FROM
+				Members.BIN_MemberInfo A, 
+				Members.BIN_TmallPointInfo B
+			WHERE
+		]]>
+	<isNotEmpty property="mebIdStart">
+		<![CDATA[A.BIN_MemberInfoID >= #mebIdStart# AND
+		]]>
+	</isNotEmpty>
+	<isNotEmpty property="mebIdEnd">
+		<![CDATA[A.BIN_MemberInfoID <= #mebIdEnd# AND
+		]]>
+	</isNotEmpty>
+	<![CDATA[
+			A.BIN_BrandInfoID = #brandInfoId# AND
+			A.BIN_OrganizationInfoID = #organizationInfoId# AND
+			A.BIN_MemberInfoID = B.BIN_MemberInfoID
+		]]>
+	<isNotEmpty property="tmallCounterArr" >
+			AND A.CounterCodeBelong IN
+		<iterate conjunction="," open="(" close=")" property="tmallCounterArr">  
+	        #tmallCounterArr[]#
+	    </iterate>							
+		</isNotEmpty>
+		<![CDATA[
+			AND B.PTFlag = 0
+		]]>
+    </update>
+    
+     <!--去除会员BATCH执行状态 -->
+	<update id="updateClearBatchExec" parameterClass="java.util.HashMap">
+		<![CDATA[
+			UPDATE 		
+				Members.BIN_MemberInfo
+			SET	
+				BatchExecFlag = NULL
+			WHERE
+				BIN_BrandInfoID = #brandInfoId# AND
+				BIN_OrganizationInfoID = #organizationInfoId# AND
+				BatchExecFlag = 1
+		]]>
+    </update>
+    
+     <!--去除会员BATCH执行状态(新会员注册表) -->
+	<update id="updateClearRegisterExec" parameterClass="java.util.HashMap">
+		<![CDATA[
+			UPDATE 		
+				Members.BIN_MemRegisterInfo
+			SET	
+				BatchExecFlag = NULL
+			WHERE
+				BIN_BrandInfoID = #brandInfoId# AND
+				BIN_OrganizationInfoID = #organizationInfoId# AND
+				BatchExecFlag = 1
+		]]>
+    </update>
+    
+    <!--去除会员BATCH执行状态(天猫会员合并表) -->
+	<update id="updateClearMergeExec" parameterClass="java.util.HashMap">
+		<![CDATA[
+			UPDATE 		
+				Members.BIN_TmallMemMergeInfo
+			SET	
+				BatchExecFlag = NULL
+			WHERE
+				BIN_BrandInfoID = #brandInfoId# AND
+				BIN_OrganizationInfoID = #organizationInfoId# AND
+				BatchExecFlag = 1
+		]]>
+    </update>
+    
+    <!-- 取得天猫加密秘钥 -->
+	<select id="getTmMixKey" parameterClass="java.util.HashMap" resultClass="java.lang.String" >
+		<![CDATA[
+			SELECT
+				TmMixKey AS tmMixKey															
+			FROM
+				Basis.BIN_BrandInfo
+			WHERE
+				BIN_BrandInfoID = #brandInfoId# AND
+				ValidFlag='1'
+		]]>
+    </select>
+    
+     <!--更新会员加密手机号 -->
+	<update id="updateMemMixMobile" parameterClass="java.util.HashMap">
+		<![CDATA[
+			UPDATE 		
+				Members.BIN_MemberInfo
+			SET	
+				TmallMixMobile = #mix_mobile#,
+		]]>
+		<include refid="BINOLCMINC99.updateSql" />
+		<![CDATA[
+			WHERE 
+				BIN_MemberInfoID = #memberInfoId#
+		]]>
+    </update>
+    
+     <!--更新新会员注册表 -->
+	<update id="updateMemRegister" parameterClass="java.util.HashMap">
+		<![CDATA[
+			UPDATE 		
+				Members.BIN_MemRegisterInfo
+			SET	
+				BIN_MemberInfoID = #memberInfoId#,
+				ConvertFlag = #convertFlag#,
+		]]>
+		<include refid="BINOLCMINC99.updateSql" />
+		<![CDATA[
+			WHERE 
+				BIN_MemRegisterID = #memRegisterId#
+		]]>
+    </update>
+    
+     <!--更新天猫积分兑换履历表 -->
+	<update id="updateTmallPointMemId" parameterClass="java.util.HashMap">
+		<![CDATA[
+			UPDATE 		
+				Members.BIN_TmallPointInfo
+			SET	
+				BIN_MemberInfoID = #memberInfoId#,
+		]]>
+		<include refid="BINOLCMINC99.updateSql" />
+		<![CDATA[
+			WHERE 
+				BIN_MemRegisterID = #memRegisterId# AND
+				BIN_MemberInfoID IS NULL
+		]]>
+    </update>
+    
+    <!--更新天猫积分兑换同步结果-->
+	<update id="updateTmallPointPTFlag" parameterClass="java.util.HashMap">
+		<![CDATA[
+			UPDATE 		
+				Members.BIN_TmallPointInfo
+			SET	
+				PTFlag = #ptFlag#,
+				PTResult = #ptResult#,
+				ErrorCode = #errorCode#,
+		]]>
+		<include refid="BINOLCMINC99.updateSql" />
+		<![CDATA[
+			WHERE 
+				BIN_TmallPointID = #tmallPointId#
+		]]>
+    </update>
+    
+    <!-- 获取假登陆的会员数 -->
+	<select id ="getTempMemCount" parameterClass="java.util.HashMap" resultClass ="java.lang.Integer">
+	<![CDATA[
+			SELECT
+				COUNT(1)
+			FROM
+				Members.BIN_MemberInfo
+			WHERE
+				TmallMixMobile = #mix_mobile# AND
+				MemInfoRegFlg = '1'
+	]]>
+	</select>
+	
+	<!--更新天猫会员合并表-->
+	<update id="updateTmallMemMergeInfo" parameterClass="java.util.HashMap">
+		<![CDATA[
+			UPDATE 		
+				Members.BIN_TmallMemMergeInfo
+			SET	
+				BIN_MemberInfoID = #memberInfoId#,
+				MergeFlag = #mergeFlag#,
+		]]>
+		<include refid="BINOLCMINC99.updateSql" />
+		<![CDATA[
+			WHERE 
+				MixMobile = #mix_mobile# AND
+				BIN_BrandInfoID = #brandInfoId# AND
+				BIN_OrganizationInfoID = #organizationInfoId# AND
+				MergeFlag = 0
+		]]>
+    </update>
+    
+    <!-- 插入天猫会员合并表  -->
+	<insert id="addTmallMemMergeInfo" parameterClass="java.util.HashMap">
+		<![CDATA[
+		INSERT INTO Members.BIN_TmallMemMergeInfo(
+			BIN_MemberInfoID,
+			BIN_OrganizationInfoID,
+			BIN_BrandInfoID,
+			MixMobile,
+			MergeFlag,
+		]]>	
+			<include refid="BINOLCMINC99.insertKeySql" />									
+		<![CDATA[	
+		)VALUES(
+			#memberInfoId#,
+			#organizationInfoId#,
+			#brandInfoId#,
+			#mix_mobile#,
+			#mergeFlag#,
+		]]>
+		<include refid="BINOLCMINC99.insertValueSql" />
+		<![CDATA[
+		)
+		]]>
+	</insert>
+	
+	 <!--更新注册会员绑定时间 -->
+	<update id="updateRegMemBindTime" parameterClass="java.util.HashMap">
+		<![CDATA[
+			UPDATE 		
+				Members.BIN_MemberInfo
+			SET	
+				TmallBindTime = #regBindTime#
+			WHERE
+				BIN_MemberInfoID = #memberInfoId# AND
+				TmallBindTime IS NULL
+		]]>
+    </update>
+    
+    <!-- 取得会员信息  -->
+    <select id="getNewMemberInfo" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+    	<![CDATA[
+		SELECT
+			A.MobilePhone AS mobilePhone,
+			A.TmallMixMobile AS tmallMixMobile,
+			B.BIN_MemberPointID AS memberPointId,
+			ISNULL(B.TotalPoint, 0) AS totalPoint,
+			ISNULL(B.ChangablePoint, 0) AS changablePoint
+		FROM 
+			Members.BIN_MemberInfo A LEFT JOIN
+			Members.BIN_MemberPoint B
+			ON (A.BIN_MemberInfoID = B.BIN_MemberInfoID)
+		WHERE
+			A.BIN_MemberInfoID = #memberInfoId#
+		]]>								
+    </select>
+    
+    <!-- 取得假登陆会员积分信息  -->
+    <select id="getPrePointInfo" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+    	<![CDATA[
+		SELECT
+			BIN_MemberPointID AS prePointId,
+			ISNULL(TotalPoint, 0) AS totalPoint,
+			ISNULL(ChangablePoint, 0) AS changablePoint
+		FROM 
+			Members.BIN_MemberPoint
+		WHERE
+			BIN_MemberInfoID = #preMemId#
+		]]>								
+    </select>
+    
+     <!-- 删除假登陆会员信息 -->
+	<delete id="delPreMemberInfo" parameterClass="java.util.HashMap">
+	<![CDATA[
+		DELETE FROM
+			Members.BIN_MemberInfo
+		WHERE
+			BIN_MemberInfoID = #preMemId#
+	]]>
+	</delete>
+	 <!-- 删除假登陆会员卡信息 -->
+	<delete id="delPreMemCode" parameterClass="java.util.HashMap">
+	<![CDATA[
+		DELETE FROM
+			Members.BIN_MemCardInfo
+		WHERE
+			BIN_MemberInfoID = #preMemId#
+	]]>
+	</delete>
+	
+	<!-- 删除假登陆会员积分信息 -->
+	<delete id="delPreMemPoint" parameterClass="java.util.HashMap">
+	<![CDATA[
+		DELETE FROM
+			Members.BIN_MemberPoint
+		WHERE
+			BIN_MemberInfoID = #preMemId#
+	]]>
+	</delete>
+	
+	<!--更新新会员信息-->
+	<update id="updateNewMemInfo" parameterClass="java.util.HashMap">
+		<![CDATA[
+			UPDATE 		
+				Members.BIN_MemberInfo
+			SET	
+				TmallMixMobile = #mixMobile#,
+				TmallBindTime = #tmallBindTime#,
+				TaobaoNick = #taobaoNick#,
+				HisTaobaoNick = #hisTaobaoNick#,
+				HisTmallBindTime = #hisTmallBindTime#,
+				TmallUnbindTime = #tmallUnbindTime#,
+		]]>
+		<include refid="BINOLCMINC99.updateSql" />
+		<![CDATA[
+			WHERE 
+				BIN_MemberInfoID = #memberInfoId#
+		]]>
+    </update>
+    
+    <!--变更积分表中假登陆会员的ID-->
+	<update id="updatePointMemId" parameterClass="java.util.HashMap">
+		<![CDATA[
+			UPDATE 		
+				Members.BIN_MemberPoint
+			SET	
+				BIN_MemberInfoID = #memberInfoId#,
+		]]>
+		<include refid="BINOLCMINC99.updateSql" />
+		<![CDATA[
+			WHERE 
+				BIN_MemberInfoID = #preMemId#
+		]]>
+    </update>
+    
+    <!--更新新会员的积分值-->
+	<update id="updateNewMemPoint" parameterClass="java.util.HashMap">
+		<![CDATA[
+			UPDATE 		
+				Members.BIN_MemberPoint
+			SET	
+				TotalPoint = #newTotalPoint#,
+				ChangablePoint = #newChangePoint#,
+		]]>
+		<include refid="BINOLCMINC99.updateSql" />
+		<![CDATA[
+			WHERE 
+				BIN_MemberInfoID = #memberInfoId#
+		]]>
+    </update>
+    
+    <!--变更会员使用化妆次数积分明细记录的假登陆会员的ID-->
+	<update id="updateTmMemUsedMemId" parameterClass="java.util.HashMap">
+		<![CDATA[
+			UPDATE
+				Members.BIN_MemUsedDetail
+			SET
+				BIN_MemberInfoID=#memberInfoId#,
+			]]>
+				<include refid="BINOLCMINC99.updateSql" />
+			<![CDATA[	      
+			WHERE 
+				BIN_MemberInfoID=#preMemId#							
+		]]>
+    </update>
+    <!--变更规则执行履历记录的假登陆会员的ID-->
+    <update id="updateTmRuleRecordMemId" parameterClass="java.util.HashMap">
+		<![CDATA[
+			UPDATE
+				Members.BIN_RuleExecRecord
+			SET
+				BIN_MemberInfoID=#memberInfoId#,
+			]]>
+				<include refid="BINOLCMINC99.updateSql" />
+			<![CDATA[	      
+			WHERE 
+				BIN_MemberInfoID = #preMemId#							
+		]]>
+    </update>
+    
+     <!--变更积分变化记录的假登陆会员的ID-->
+	<update id="updateTmPointChangeMemId" parameterClass="java.util.HashMap">
+		<![CDATA[
+			UPDATE
+				Members.BIN_PointChange
+			SET
+				BIN_MemberInfoID=#memberInfoId#,
+			]]>
+				<include refid="BINOLCMINC99.updateSql" />
+			<![CDATA[	      
+			WHERE 
+				BIN_MemberInfoID = #preMemId#							
+		]]>
+    </update>
+    
+    <!--变更新会员注册表的假登陆会员的ID -->
+	<update id="updatePreMemRegister" parameterClass="java.util.HashMap">
+		<![CDATA[
+			UPDATE 		
+				Members.BIN_MemRegisterInfo
+			SET	
+				BIN_MemberInfoID = #memberInfoId#,
+		]]>
+		<include refid="BINOLCMINC99.updateSql" />
+		<![CDATA[
+			WHERE 
+				BIN_MemberInfoID = #preMemId#
+		]]>
+    </update>
+    
+     <!--变更天猫积分兑换履历表 的假登陆会员的ID-->
+	<update id="updatePreTmallPointMemId" parameterClass="java.util.HashMap">
+		<![CDATA[
+			UPDATE 		
+				Members.BIN_TmallPointInfo
+			SET	
+				BIN_MemberInfoID = #memberInfoId#,
+		]]>
+		<include refid="BINOLCMINC99.updateSql" />
+		<![CDATA[
+			WHERE 
+				BIN_MemberInfoID = #preMemId#
+		]]>
+    </update>
+    
+    <!--更新天猫会员合并表执行结果-->
+	<update id="updateMemMergeResult" parameterClass="java.util.HashMap">
+		<![CDATA[
+			UPDATE 		
+				Members.BIN_TmallMemMergeInfo
+			SET	
+				PreMemCode = #preMemCode#,
+				PreMemID = #preMemId#,
+				MergeFlag = #mergeFlag#,
+		]]>
+		<include refid="BINOLCMINC99.updateSql" />
+		<![CDATA[
+			WHERE 
+				BIN_TmallMergeID = #tmallMergeId#
+		]]>
+    </update>
+    
+    <!-- 查询会员产生的最早业务时间 -->
+	<select id="getMinBillDate" parameterClass="java.util.HashMap" resultClass="java.lang.String">
+		<![CDATA[
+			SELECT TOP 1
+				CONVERT(varchar, ChangeDate, 120)
+			FROM
+				Members.BIN_PointChange
+			WHERE
+				BIN_MemberInfoID = #memberInfoId#
+			 ORDER BY
+			 	ChangeDate 
+		]]>	
+    </select>
+    
+     <!-- 获取加密手机号对应的会员数 -->
+	<select id ="getMixMemCount" parameterClass="java.util.HashMap" resultClass ="java.lang.Integer">
+	<![CDATA[
+			SELECT
+				COUNT(1)
+			FROM
+				Members.BIN_MemberInfo
+			WHERE
+				TmallMixMobile = #mix_mobile#
+	]]>
+	</select>
+	
+	 <!-- 临时会员绑定处理 -->
+	<update id="updateBETempMemRegInfo" parameterClass="java.util.HashMap">
+		
+		<![CDATA[
+	      UPDATE 
+	      	  Members.BIN_MemRegisterInfo
+	      SET
+		     ConvertFlag = 1,
+		     BIN_MemberInfoID = #memberInfoId#,
+		]]>
+			<include refid="BINOLCMINC99.updateSql" />									
+		<![CDATA[								
+		  WHERE									
+			BIN_MemRegisterID = #memRegisterId#
+		]]>
+		   
+	</update> 
+	
+	<!-- 插入会员信息表 -->
+	<insert id="addBETmallMemInfo" parameterClass="java.util.HashMap">
+	    <selectKey resultClass="java.lang.Integer" type="post" keyProperty="BIN_MemberInfoID" >      
+	       <![CDATA[
+			INSERT INTO Members.BIN_MemberInfo
+			(
+				BIN_OrganizationInfoID,
+				BIN_BrandInfoID,
+				MemInfoRegFlg,
+				TmallMixMobile,
+				CounterCodeBelong,
+				TmallBindTime,
+				]]>
+					<include refid="BINOLCMINC99.insertKeySql" />
+				<![CDATA[
+			)
+			VALUES
+			(
+				#organizationInfoId#,
+				#brandInfoId#,
+				#memInfoRegFlg#,
+				#mix_mobile#,
+				#counterCodeBelong#,
+				#tmBindTime#,
+				]]>
+					<include refid="BINOLCMINC99.insertValueSql" />
+				<![CDATA[
+			)
+			  	select SCOPE_IDENTITY() as value     
+			]]> 
+	    </selectKey>
+	</insert>
+	
+	<!-- 插入会员持卡信息表 -->
+	<insert id="addBETmallMemCardInfo" parameterClass="java.util.HashMap">
+	<![CDATA[
+		INSERT INTO Members.BIN_MemCardInfo
+		(
+			BIN_MemberInfoID,
+			MemCode,
+			CardValidFlag,
+			CardCount,
+			]]>
+				<include refid="BINOLCMINC99.insertKeySql" />
+			<![CDATA[
+		)
+		VALUES
+		(
+			#memberInfoId#,
+			#memberCode#,
+			'1',
+			'1',
+			]]>
+				<include refid="BINOLCMINC99.insertValueSql" />
+			<![CDATA[
+		)
+	]]>
+	</insert>
+	
+	<!-- 取得回调天猫积分信息  -->
+    <select id="getRecallPointList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+    	<![CDATA[
+			SELECT
+				A.BIN_MemUsedInfoID AS memUsedInfoId,
+				A.TmRecordId AS recordId,
+				B.TmallMixMobile AS tmallMixMobile,
+				B.ErrorCode AS errorCode
+			FROM
+				Members.BIN_MemUsedInfo A WITH(NOLOCK) JOIN
+				Members.BIN_TmallPointInfo B WITH(NOLOCK)
+				ON (A.BIN_BrandInfoID = #brandInfoId# AND 
+				A.BIN_OrganizationInfoID = #organizationInfoId# AND 
+				A.TmRecordId IS NOT NULL AND A.TmRecallFlag = 2 AND
+				A.TmRecordId = B.RecordId)
+			ORDER BY A.BIN_MemUsedInfoID
+		]]>
+    </select>
+    
+    <!-- 取得回调失败的天猫积分信息  -->
+    <select id="getFailPointList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+    	<![CDATA[
+			SELECT
+				BIN_TmallPointID AS tmallPointId,
+				RecordId AS recordId,
+				TmallMixMobile AS tmallMixMobile,
+				ErrorCode AS errorCode
+			FROM
+				Members.BIN_TmallPointInfo WITH(NOLOCK)
+			WHERE 
+				BIN_BrandInfoID = #brandInfoId# AND 
+				BIN_OrganizationInfoID = #organizationInfoId# AND 
+				PTFlag = 9
+		]]>
+    </select>
+    
+    <!-- 取得回调天猫积分信息总数  -->
+    <select id="getRecallPointCount" parameterClass="java.util.HashMap" resultClass="java.lang.Integer">
+    	<![CDATA[
+			SELECT COUNT(1)
+			FROM
+				Members.BIN_MemUsedInfo A WITH(NOLOCK) JOIN
+				Members.BIN_TmallPointInfo B WITH(NOLOCK)
+				ON (A.BIN_BrandInfoID = #brandInfoId# AND 
+				A.BIN_OrganizationInfoID = #organizationInfoId# AND 
+				A.TmRecordId IS NOT NULL AND A.TmRecallFlag = 2 AND
+				A.TmRecordId = B.RecordId)
+		]]>
+    </select>
+    
+    <!-- 更新积分变化主表 -->
+    <update id="updateTIFTMUsedInfo" parameterClass="java.util.HashMap">
+    <![CDATA[
+    	UPDATE Members.BIN_MemUsedInfo
+    	SET TmRecallFlag = #tmallRecallFlag#,
+    ]]>
+    	<include refid="BINOLCMINC99.updateSql" />		
+    <![CDATA[					
+		WHERE				
+			BIN_MemUsedInfoID = #memUsedInfoId#		
+	]]>	
+    </update>
+    
+    <!-- 更新天猫积分表 -->
+    <update id="updateFailPointInfo" parameterClass="java.util.HashMap">
+    <![CDATA[
+    	UPDATE Members.BIN_TmallPointInfo
+    	SET PTFlag = #ptFlag#,
+    ]]>
+    	<include refid="BINOLCMINC99.updateSql" />		
+    <![CDATA[					
+		WHERE				
+			BIN_TmallPointID = #tmallPointId#
+	]]>	
+    </update>
+</sqlMap>

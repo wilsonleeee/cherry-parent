@@ -1,0 +1,249 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sqlMap PUBLIC "-//iBATIS.com//DTD SQL Map 2.0//EN" "http://ibatis.apache.org/dtd/sql-map-2.dtd">
+<sqlMap namespace="BINBAT119">
+<!-- 取得产品分类 -->
+	<sql id="joinCateSql">
+		LEFT JOIN (
+				SELECT
+					A.BIN_ProductID AS BIN_ProductID,
+					C.TeminalFlag AS cateType,
+					B.PropValueCherry AS cateCode,
+					B.PropValueChinese AS cateName
+				FROM Basis.BIN_PrtCategory A
+				JOIN Basis.BIN_PrtCatPropValue B
+					ON (A.BIN_PrtCatPropValueID = B.BIN_PrtCatPropValueID
+					AND B.ValidFlag = '1')
+				JOIN Basis.BIN_PrtCatProperty C
+					ON (B.BIN_PrtCatPropertyID = C.BIN_PrtCatPropertyID
+					AND C.TeminalFlag = '1'
+					AND C.ValidFlag = '1')
+				) AS bigCate ON (bigCate.BIN_ProductID = A.BIN_ProductID)
+		LEFT JOIN (
+				SELECT
+					A.BIN_ProductID AS BIN_ProductID,
+					C.TeminalFlag AS cateType,
+					B.PropValueCherry AS cateCode,
+					B.PropValueChinese AS cateName
+				FROM Basis.BIN_PrtCategory A
+				JOIN Basis.BIN_PrtCatPropValue B
+					ON (A.BIN_PrtCatPropValueID = B.BIN_PrtCatPropValueID
+					AND B.ValidFlag = '1')
+				JOIN Basis.BIN_PrtCatProperty C
+					ON (B.BIN_PrtCatPropertyID = C.BIN_PrtCatPropertyID
+					AND C.TeminalFlag = '2'
+					AND C.ValidFlag = '1')
+				) AS smallCate ON (smallCate.BIN_ProductID = A.BIN_ProductID)
+		LEFT JOIN (
+				SELECT
+					A.BIN_ProductID AS BIN_ProductID,
+					C.TeminalFlag AS cateType,
+					B.PropValueCherry AS cateCode,
+					B.PropValueChinese AS cateName
+				FROM Basis.BIN_PrtCategory A
+				JOIN Basis.BIN_PrtCatPropValue B
+					ON (A.BIN_PrtCatPropValueID = B.BIN_PrtCatPropValueID
+					AND B.ValidFlag = '1')
+				JOIN Basis.BIN_PrtCatProperty C
+					ON (B.BIN_PrtCatPropertyID = C.BIN_PrtCatPropertyID
+					AND C.TeminalFlag = '3'
+					AND C.ValidFlag = '1')
+				) AS mediumCate ON (mediumCate.BIN_ProductID = A.BIN_ProductID)
+		LEFT JOIN (
+				SELECT
+				    TOP 1
+					A.BIN_ProductID AS BIN_ProductID,
+					C.TeminalFlag AS cateType,
+					B.PropValueCherry AS cateCode,
+					B.PropValueChinese AS cateName
+				FROM Basis.BIN_PrtCategory A
+				JOIN Basis.BIN_PrtCatPropValue B
+					ON (A.BIN_PrtCatPropValueID = B.BIN_PrtCatPropValueID
+					AND B.ValidFlag = '1')
+				JOIN Basis.BIN_PrtCatProperty C
+					ON (B.BIN_PrtCatPropertyID = C.BIN_PrtCatPropertyID
+					AND C.TeminalFlag NOT IN('1','3','2')
+					AND C.ValidFlag = '1') ORDER BY C.ViewSeq
+				) AS otherCate ON otherCate.BIN_ProductID = A.BIN_ProductID
+	</sql>
+	<!-- 取得所在业务日期内的产品数据 -->
+	<select id="getProductList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+	<![CDATA[
+		SELECT
+				TOP (#batchSize#)
+				#brandCode# brandCode,
+				B.BIN_ProductVendorID IFProductId,
+				A.Mode mode,
+				A.UnitCode unitCode,
+				B.BarCode barCode,
+				A.NameTotal productNameCN,
+				ISNULL(D.SalePrice,0) salePrice,
+				ISNULL(D.MemPrice, ISNULL(D.SalePrice,0)) memPrice,
+				A.ValidFlag validFlag,
+				A.IsStock stockFlag,
+			 	ISNULL(A.IsExchanged,1) isExchanged,
+				bigCate.cateCode classCode1,
+				bigCate.cateName className1,
+				mediumCate.cateCode classCode2,
+				mediumCate.cateName className2,
+				smallCate.cateCode classCode3,
+				smallCate.cateName className3,
+				otherCate.cateCode classCode4,
+				otherCate.cateName className4,
+				A.Color color,
+				A.Grade grade,
+				A.SecQty secQty,
+				A.DisplayQty displayQty,
+				A.OriginalBrand originalBrand,
+				A.SaleFlag saleFlag,
+				A.StockTakingFlag stockTakingFlag,
+				A.OrderFlag orderFlag,
+				A.ReturnFlag returnFlag,
+				A.Spec spec,
+				A.SaleStyle saleStyle,
+				ISNULL(A.StandardCost,0) costPrice
+			FROM Basis.BIN_Product A WITH(NOLOCK)
+			JOIN Basis.BIN_ProductVendor B WITH(NOLOCK)
+				ON (A.BIN_ProductID = B.BIN_ProductID)
+			JOIN(
+				SELECT 
+					T20.BIN_ProductID,
+					CASE WHEN  T20.EndDate >= #priceDate# THEN T20.SalePrice ELSE 0 END AS SalePrice,
+					CASE WHEN  T20.EndDate >= #priceDate# THEN T20.MemPrice ELSE 0 END AS MemPrice
+				FROM
+					(
+						SELECT
+							BIN_ProductID,
+							MAX(StartDate) AS startDate
+						FROM
+							Basis.BIN_ProductPrice
+						WHERE
+							StartDate <= #priceDate#
+						AND Type = '2'
+						GROUP BY
+							BIN_ProductID
+					) T10
+					JOIN Basis.BIN_ProductPrice T20
+					ON(T10.BIN_ProductID = T20.BIN_ProductID
+						AND T10.startDate = T20.StartDate 
+						AND T20.Type = '2'
+					)
+				)D ON(A.BIN_ProductID = D.BIN_ProductID)
+			]]>
+			<include refid="BINBAT119.joinCateSql"/>
+	<![CDATA[
+				WHERE A.BIN_BrandInfoID = #brandInfoId#
+				AND ISNULL(A.Status, 'E') != 'D'
+				AND ( 
+					(A.SellStartDate IS NOT NULL AND A.SellEndDate IS NULL AND #businessDate# >= A.SellStartDate)
+				OR (A.SellEndDate IS NOT NULL AND A.SellStartDate IS NULL AND #businessDate# <= A.SellEndDate)
+				OR (A.SellStartDate IS NOT NULL AND A.SellEndDate IS NOT NULL AND A.SellStartDate <= #businessDate# AND #businessDate# <= A.SellEndDate)
+				OR (A.SellStartDate IS NULL AND A.SellEndDate IS NULL) 
+				)
+			]]>
+		<isNotEmpty property="bathLastRowID" prepend="AND">
+	    	B.BIN_ProductVendorID > #bathLastRowID#
+		</isNotEmpty>
+			 ORDER BY B.BIN_ProductVendorID
+	</select>
+	<!-- 插入标准接口产品表 -->
+	<insert id="insertIFProduct" parameterClass="java.util.HashMap">
+		<![CDATA[
+			INSERT INTO dbo.IF_Product(
+						BrandCode,
+		           		IFProductId,
+		           		Mode,
+		           		UnitCode,
+		           		BarCode,
+		           		ProductNameCN,
+		           		SalePrice,
+		           		MemPrice,
+		           		ValidFlag,
+		           		StockFlag,
+		           		isExchanged,
+		           		ClassCode1,
+		           		ClassName1,
+		           		ClassCode2,
+		           		ClassName2,
+		           		ClassCode3,
+		           		ClassName3,
+		           		ClassCode4,
+		           		ClassName4,
+		           		PuttingTime,
+		           		Color,
+		           		Grade,
+						SecQty,
+						DisplayQty,
+						OriginalBrand,
+						SaleFlag,
+						StockTakingFlag,
+						OrderFlag,
+						ReturnFlag,
+						Spec,
+						SaleStyle,
+						CostPrice
+		          	)
+		    VALUES(
+		     			#brandCode#,
+		           		#IFProductId#,
+		           		#mode#,
+		           		#unitCode#,
+		           		#barCode#,
+		           		#productNameCN#,
+		           		#salePrice#,
+		           		#memPrice#, 
+		           		#validFlag#,
+		           		#stockFlag#,
+		           		#isExchanged#,
+		           		#classCode1#,
+		           		#className1#,
+		           		#classCode2#,
+		           		#className2#,
+		           		#classCode3#,
+		           		#className3#,
+		           		#classCode4#,
+		           		#className4#,
+		           		GETDATE(),
+		           		#color#,
+		           		#grade#,
+		           		#secQty#,
+		           		#displayQty#,
+		           		#originalBrand#,
+						#saleFlag#,
+						#stockTakingFlag#,
+						#orderFlag#,
+						#returnFlag#,
+						#spec#,
+						#saleStyle#,
+						#costPrice#
+		           )
+		]]>
+	</insert>
+	<!-- 取得品牌Code  -->
+    <select id="getBrandCode" parameterClass="java.util.HashMap" resultClass="java.lang.String">
+       <![CDATA[
+			SELECT
+				BrandCode AS brandCode
+			FROM
+				Basis.BIN_BrandInfo
+			WHERE
+				BIN_BrandInfoID = #brandInfoId#
+		]]>	
+    </select>
+    <!-- 查询大中小分类终端类型顺序是否为前三位  -->
+    <select id="getTeminalFlag" parameterClass="java.util.HashMap" resultClass="java.lang.String">
+       <![CDATA[
+			SELECT
+				TOP 3
+				TeminalFlag
+			FROM Basis.BIN_PrtCatProperty
+			WHERE ValidFlag = '1'
+			AND BIN_OrganizationInfoID = #organizationInfoId#
+			AND BIN_BrandInfoID = #brandInfoId#
+			ORDER BY ViewSeq
+		]]>	
+    </select>
+    <!-- 删除产品标准接口表数据  -->
+    <delete id="delIFProduct" parameterClass="java.util.HashMap">
+    	<![CDATA[DELETE FROM dbo.IF_Product]]>	
+    </delete>
+</sqlMap>

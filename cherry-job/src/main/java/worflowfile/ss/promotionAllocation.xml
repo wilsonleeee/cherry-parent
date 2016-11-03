@@ -1,0 +1,187 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE workflow PUBLIC "-//OpenSymphony Group//DTD OSWorkflow 2.8//EN" "http://www.opensymphony.com/osworkflow/workflow_2_8.dtd">
+<!-- 促销品调入申请-审核-调出确认流程 -->
+<workflow>
+	<initial-actions>
+		<action id="1" name="Start Workflow">
+			<pre-functions>
+				<function type="beanshell">
+					<arg name="script">
+				<![CDATA[
+				         
+				]]>
+					</arg>
+				</function>
+				<function type="class">
+					<arg name="class.name">com.opensymphony.workflow.util.Caller</arg>
+				</function>
+			</pre-functions>
+			<results>
+				<!-- 开始工作流程 -->
+				<unconditional-result old-status="Finished"
+					status="Underway" step="20">
+						<post-functions>
+				            <function type="spring">
+								<arg name="bean.name">promotionAllocation_FN</arg>
+								<arg name="method">startFlow</arg>
+							</function>
+			          	</post-functions>
+				</unconditional-result>
+			</results>
+		</action>
+	</initial-actions>
+	<steps>
+		<step id="20" name="提交调入单">
+			<actions>
+				<action id="21" name="提交调入单" auto="true">
+					<pre-functions>
+						<function type="spring">
+								<arg name="bean.name">promotionAllocation_FN</arg>
+								<arg name="method">BG_submitAllocation</arg>
+						</function>
+					</pre-functions>
+					<results>
+						<!-- 跳转向  审核判定 -->			
+						<unconditional-result old-status="Finished"	status="Underway" step="30">
+						</unconditional-result>
+					</results>
+				</action>
+			</actions>
+		</step>
+		<step id="30" name="调入单审核判定 ">
+			<actions>
+				<action id="31" name="判断审核与否" auto="true">
+					<pre-functions>
+						<function type="spring">
+								<arg name="bean.name">promotionAllocation_FN</arg>
+								<arg name="method">BG_auditHandle</arg>
+						</function>
+					</pre-functions>
+					<results>
+						<!-- 自动审核 -->
+					  	<result old-status="Finished" status="Underway" step="80">
+							<conditions type="AND">
+								<condition type="beanshell">
+									<arg name="script">
+										return "".equals(propertySet.getString("participant71"))
+									</arg>									
+								</condition>
+							</conditions>
+							<post-functions>
+						         <function type="spring">
+									<arg name="bean.name">promotionAllocation_FN</arg>
+									<arg name="method">BG_auditAgreeAuto</arg>
+								</function>
+					         </post-functions>
+						</result>
+						<!-- 跳转向   手动审核 -->				
+						<unconditional-result old-status="Finished"	status="Underway" step="50">
+						</unconditional-result>
+					</results>
+				</action>
+			</actions>
+		</step>
+		<step id="50" name="人工审核 ">	
+		    <!-- 将工作流的当前业务状态设置为      调入单审核 -->	
+			<pre-functions>
+				<function type="beanshell">
+					<arg name="script">				
+				         propertySet.setString("OS_Current_Operate","71")	
+					</arg>
+				</function>
+			</pre-functions>		
+			<actions>
+				<action id="501" name="os.agree_confirm">	
+					<pre-functions>
+						<function type="spring">
+							<arg name="bean.name">promotionAllocation_FN</arg>
+							<arg name="method">BG_auditAgreeHand</arg>
+						</function>
+					</pre-functions>		
+					<results>
+						<unconditional-result old-status="Finished"	status="Underway" step="80">
+						</unconditional-result>
+					</results>
+				</action>
+				<action id="502" name="os.inhibit_inhibit">
+					<results>
+						<unconditional-result old-status="Finished"	status="Underway" step="60">
+								<post-functions>
+						            <function type="spring">
+										<arg name="bean.name">promotionAllocation_FN</arg>
+										<arg name="method">BG_auditDisAgreeHand</arg>
+									</function>
+					          	</post-functions>
+						</unconditional-result>
+					</results>
+				</action>
+			</actions>
+		</step>
+		<step id="60" name="调入单编辑">	
+		    <!-- 将工作流的当前业务状态设置为        调入单编辑 -->	
+			<pre-functions>
+				<function type="beanshell">
+					<arg name="script">				
+				         propertySet.setString("OS_Current_Operate","72")	
+					</arg>
+				</function>
+			</pre-functions>		
+			<actions>
+				<action id="61" name="os.submit_confirm">				
+					<results>
+						<unconditional-result old-status="Finished"	status="Underway" step="20">
+						</unconditional-result>
+					</results>
+				</action>
+				<!--
+				<action id="62" name="os.delete_close">				
+					<results>
+						<unconditional-result old-status="Finished"	status="Underway" step="999">
+								<post-functions>
+						            <function type="spring">
+										<arg name="bean.name">promotionAllocation_FN</arg>
+										<arg name="method">BG_deleteAllocation</arg>
+									</function>
+					          	</post-functions>
+						</unconditional-result>
+					</results>
+				</action>
+				-->
+			</actions>
+		</step>
+		<step id="80" name="调出">
+			<pre-functions>
+				<function type="beanshell">
+					<arg name="script">				
+				         propertySet.setString("OS_Current_Operate","80")	
+					</arg>
+				</function>
+			</pre-functions>
+			<actions>
+				<action id="81" name="os.allocationout_confirm">
+					<results>						
+						<unconditional-result old-status="Finished"	status="Underway" step="999" >
+								<post-functions>
+						            <function type="spring">
+										<arg name="bean.name">promotionAllocation_FN</arg>
+										<arg name="method">BG_allocationSend</arg>
+									</function>
+					          	</post-functions>
+						</unconditional-result>
+					</results>
+				</action>
+			</actions>
+		</step>
+		<step id="999" name="Flow over">
+			<!-- 将工作流的当前业务状态设置为       工作流结束 -->
+			<pre-functions>
+				<function type="beanshell">
+					<arg name="script">
+				         propertySet.setString("OS_Current_Operate","999")
+					</arg>
+				</function>
+			</pre-functions>
+		</step>
+	</steps>
+</workflow>
+

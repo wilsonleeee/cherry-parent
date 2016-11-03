@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sqlMap PUBLIC "-//iBATIS.com//DTD SQL Map 2.0//EN" "http://ibatis.apache.org/dtd/sql-map-2.dtd">
+<sqlMap namespace="BINBETLBAT08">
+	<!-- 判断加密解密标识列是否存在 -->
+	<select id="getTableColumn" parameterClass="java.util.Map" resultClass="java.util.HashMap"  remapResults="true">
+		<![CDATA[
+			SELECT * FROM syscolumns WHERE id=object_id(#tableName#) and name=#encryptFlagColumn#
+		]]>
+	</select>
+	<!-- 取得待处理（加密、解密）数据 -->
+	<select id="getPreHandleData" parameterClass="java.util.Map" resultClass="java.util.HashMap"  remapResults="true">
+		<![CDATA[
+			SELECT 
+				TOP(#batchSize#)
+				$identityColumn$,
+				$tableColumn$
+			FROM
+				 $tableName$
+			WHERE
+				$encryptFlagColumn$ = #flag#
+		]]>
+	</select>
+	<!-- 更新待处理（加密、解密）数据 -->
+	<update id="updateHandleData" parameterClass="java.util.HashMap">
+		<![CDATA[
+			UPDATE
+				$tableName$
+			SET
+				$tableColumn$ = #handleColumn#,
+				$encryptFlagColumn$ = #flag#
+			WHERE
+				$identityColumn$ = #handleID#
+		]]>
+	</update>
+</sqlMap>

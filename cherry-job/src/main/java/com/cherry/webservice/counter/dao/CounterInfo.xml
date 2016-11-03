@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sqlMap PUBLIC "-//iBATIS.com//DTD SQL Map 2.0//EN" "http://ibatis.apache.org/dtd/sql-map-2.dtd">
+<sqlMap namespace="CounterInfo">
+
+   <!-- 根据柜台号取得品牌ID -->
+   <select id="getBrandInfoId" parameterClass="java.util.HashMap" resultClass="java.lang.String">
+       <![CDATA[
+           SELECT
+               A.BIN_BrandInfoID AS brandInfoId
+		   FROM
+			   Basis.BIN_BrandInfo A WITH(NOLOCK)
+		   WHERE
+			   A.BrandCode = #BrandCode# 							
+		]]>		
+	</select>
+
+   <!-- 根据品牌ID查询柜台信息 -->  
+	<select id="getCounterList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+	   <![CDATA[
+	       SELECT
+	           #BrandCode# AS BrandCode,
+	           A.CounterCode,
+	           A.CounterNameIF AS CounterName,
+	           A.CounterKind,
+	           A.CounterAddress,
+	           A.CounterTelephone,
+	           A.ValidFlag,
+	           A.PassWord AS CounterPassWord,
+	           A.ManagingType AS ManagingType,
+	           A.ManagingType2 AS ManagingType2,
+	           A.BelongFaction AS BelongFaction,
+	           A.InvoiceCompany AS InvoiceCompany,
+			   C.ChannelName AS Channel,
+			   D.ResellerName AS Agent,
+			   R1.RegionNameChinese AS Province,
+			   R1.RegionCode AS ProvinceCode,
+	           R2.RegionCode AS CityCode,
+			   R2.RegionNameChinese AS CityName,
+	           R3.RegionNameChinese AS County,
+	           R3.RegionCode AS CountyCode
+	       FROM
+	           Basis.BIN_CounterInfo A WITH(NOLOCK)
+			JOIN Basis.BIN_Organization O ON O.BIN_OrganizationID = A.BIN_OrganizationID	           
+	        LEFT JOIN Basis.BIN_Region R1 WITH(NOLOCK) ON R1.BIN_RegionID = O.BIN_ProvinceID
+	        LEFT JOIN Basis.BIN_Region R2 WITH(NOLOCK) ON R2.BIN_RegionID = O.BIN_CityID
+	        LEFT JOIN Basis.BIN_Region R3 WITH(NOLOCK) ON R3.BIN_RegionID = O.BIN_CountyID
+		    LEFT JOIN Basis.BIN_Channel C WITH(NOLOCK) ON C.BIN_ChannelID = A.BIN_ChannelID
+		    LEFT JOIN Basis.BIN_ResellerInfo D WITH(NOLOCK) ON D.BIN_ResellerInfoID = A.BIN_ResellerInfoID
+	   ]]>
+	   	   WHERE
+			   A.BIN_BrandInfoID = #brandInfoId#	
+		   <isNotEmpty property="CounterCode" prepend="AND">
+		   		A.CounterCode = #CounterCode#
+		   </isNotEmpty>
+	</select>	
+</sqlMap>

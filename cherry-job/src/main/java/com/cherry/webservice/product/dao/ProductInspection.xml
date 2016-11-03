@@ -1,0 +1,174 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sqlMap PUBLIC "-//iBATIS.com//DTD SQL Map 2.0//EN" "http://ibatis.apache.org/dtd/sql-map-2.dtd">
+<sqlMap namespace="ProductInspection">
+
+    <!-- 查找产品信息二维码表  -->
+    <select id="getProductQRCode" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+        <![CDATA[
+            SELECT
+                A.BIN_ProductVendorID,
+                A.BIN_ResellerInfoID,
+                B.BarCode,
+                C.UnitCode,
+                C.NameTotal AS ProductName,
+                D.ResellerName,
+                CONVERT(VARCHAR(30),GETDATE(),120) AS Time
+            FROM 
+                Basis.BIN_ProductQRCode A
+            LEFT JOIN Basis.BIN_ProductVendor B
+            ON A.BIN_ProductVendorID = B.BIN_ProductVendorID
+            LEFT JOIN Basis.BIN_Product C
+            ON B.BIN_ProductID = C.BIN_ProductID
+            LEFT JOIN Basis.BIN_ResellerInfo D
+            ON A.BIN_ResellerInfoID = D.BIN_ResellerInfoID
+            WHERE
+                A.BIN_OrganizationInfoID = #BIN_OrganizationInfoID#
+                AND A.BIN_BrandInfoID = #BIN_BrandInfoID#
+                AND A.QRCodeCiphertext = #QRCodeCiphertext#
+        ]]>
+    </select>
+
+    <!--插入【产品信息二维码扫描记录表】-->
+    <insert id="insertProductQRCodeRecord" parameterClass="java.util.HashMap">
+        <![CDATA[
+            INSERT INTO Basis.BIN_ProductQRCodeRecord(
+                BIN_OrganizationInfoID,
+                BIN_BrandInfoID,
+        ]]>
+        <dynamic>
+            <isNotEmpty property="AC">
+                <![CDATA[AC,]]>
+            </isNotEmpty>
+            <isNotEmpty property="ProductType">
+                <![CDATA[ProductType,]]>
+            </isNotEmpty>
+            <isNotEmpty property="BIN_ProductVendorID">
+                <![CDATA[BIN_ProductVendorID,]]>
+            </isNotEmpty>
+            <isNotEmpty property="BIN_ResellerInfoID">
+                <![CDATA[BIN_ResellerInfoID,]]>
+            </isNotEmpty>
+            <isNotEmpty property="ChannelName">
+                <![CDATA[ChannelName,]]>
+            </isNotEmpty>
+            <isNotEmpty property="BIN_EmployeeID">
+                <![CDATA[BIN_EmployeeID,]]>
+            </isNotEmpty>
+            <isNotEmpty property="ScanTime">
+                <![CDATA[ScanTime,]]>
+            </isNotEmpty>
+        </dynamic>
+        <![CDATA[
+                ValidFlag,
+                CreateTime,
+                CreatedBy,
+                CreatePGM,
+                UpdateTime,
+                UpdatedBy,
+                UpdatePGM,
+                ModifyCount
+            )VALUES(   
+                #BIN_OrganizationInfoID#,
+                #BIN_BrandInfoID#,
+        ]]>
+        <dynamic>
+            <isNotEmpty property="AC">
+                <![CDATA[#AC#,]]>
+            </isNotEmpty>
+            <isNotEmpty property="ProductType">
+                <![CDATA[#ProductType#,]]>
+            </isNotEmpty>
+            <isNotEmpty property="BIN_ProductVendorID">
+                <![CDATA[#BIN_ProductVendorID#,]]>
+            </isNotEmpty>
+            <isNotEmpty property="BIN_ResellerInfoID">
+                <![CDATA[#BIN_ResellerInfoID#,]]>
+            </isNotEmpty>
+            <isNotEmpty property="ChannelName">
+                <![CDATA[#ChannelName#,]]>
+            </isNotEmpty>
+            <isNotEmpty property="BIN_EmployeeID">
+                <![CDATA[#BIN_EmployeeID#,]]>
+            </isNotEmpty>
+            <isNotEmpty property="ScanTime">
+                <![CDATA[#ScanTime#,]]>
+            </isNotEmpty>
+        </dynamic>
+        <![CDATA[
+                '1',
+                GETDATE(),
+                #CreatedBy#,
+                #CreatePGM#,
+                GETDATE(),
+                #UpdatedBy#,
+                #UpdatePGM#,
+                '0'
+            )
+        ]]>
+    </insert>
+
+    <!-- 查找产品信息二维码扫描记录表  -->
+    <select id="getProductQRCodeRecord" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+        <![CDATA[
+            SELECT
+                A.BIN_ProductQRCodeRecordID,
+                A.ChannelName,
+                CONVERT(VARCHAR(30),A.ScanTime,120) AS Time,
+                B.BarCode,
+                C.UnitCode,
+                C.NameTotal AS ProductName,
+                D.ResellerName,
+                E.EmployeeName
+            FROM 
+                Basis.BIN_ProductQRCodeRecord A
+            LEFT JOIN Basis.BIN_ProductVendor B
+            ON A.BIN_ProductVendorID = B.BIN_ProductVendorID
+            LEFT JOIN Basis.BIN_Product C
+            ON B.BIN_ProductID = C.BIN_ProductID
+            LEFT JOIN Basis.BIN_ResellerInfo D
+            ON A.BIN_ResellerInfoID = D.BIN_ResellerInfoID
+            LEFT JOIN Basis.BIN_Employee E
+            ON A.BIN_EmployeeID = E.BIN_EmployeeID
+            WHERE
+                A.BIN_OrganizationInfoID = #BIN_OrganizationInfoID#
+                AND A.BIN_BrandInfoID = #BIN_BrandInfoID#
+                AND A.ScanTime >= #StartTime#
+                AND A.ScanTime <= #EndTime#
+                AND A.ChannelName = #ChannelName#
+        ]]>
+        <isNotEmpty property="EmployeeCode">
+            <![CDATA[
+                AND E.EmployeeCode = #EmployeeCode#
+            ]]>
+        </isNotEmpty>
+        <![CDATA[
+            ORDER BY A.ScanTime DESC
+        ]]>
+    </select>
+    
+    <!-- 查找产品信息二维码扫描记录表的工作日报  -->
+    <select id="getProductQRCodeRecordReport" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+        <![CDATA[
+            SELECT
+                A.ChannelName,
+                COUNT(1) AS SumQuantity
+            FROM 
+                Basis.BIN_ProductQRCodeRecord A
+            LEFT JOIN Basis.BIN_Employee E
+            ON A.BIN_EmployeeID = E.BIN_EmployeeID
+            WHERE
+                A.BIN_OrganizationInfoID = #BIN_OrganizationInfoID#
+                AND A.BIN_BrandInfoID = #BIN_BrandInfoID#
+                AND A.ScanTime >= #StartTime#
+                AND A.ScanTime <= #EndTime#
+        ]]>
+        <isNotEmpty property="EmployeeCode">
+            <![CDATA[
+                AND E.EmployeeCode = #EmployeeCode#
+            ]]>
+        </isNotEmpty>
+        <![CDATA[
+            GROUP BY A.ChannelName
+        ]]>
+    </select>
+</sqlMap>

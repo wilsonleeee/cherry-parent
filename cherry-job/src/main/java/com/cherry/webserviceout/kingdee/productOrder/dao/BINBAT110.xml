@@ -1,0 +1,188 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sqlMap PUBLIC "-//iBATIS.com//DTD SQL Map 2.0//EN" "http://ibatis.apache.org/dtd/sql-map-2.dtd">
+<sqlMap namespace="BINBAT110">
+
+    <!-- 更新产品订单的同步状态 -->
+    <update id="updPrtOrderBySyncNew" parameterClass="java.util.HashMap">
+	  UPDATE 
+	  	A
+	  SET 
+		A.SynchFlag = #synchFlag_New#,
+		<isNotEmpty property="updateTime">
+			A.UpdateTime=#updateTime#,
+		</isNotEmpty>
+		<isEmpty property="updateTime">
+			A.UpdateTime=GETDATE(),
+		</isEmpty>
+		<![CDATA[
+			A.UpdatedBy=#updatedBy#,
+			A.UpdatePGM=#updatePGM#,
+			A.ModifyCount=A.ModifyCount+1
+	  FROM 
+	      Inventory.BIN_ProductOrder A
+	  WHERE
+	      A.ValidFlag = '1'
+		]]>
+	  	<isNotEmpty property="synchFlag_Old" prepend="AND">
+			 A.SynchFlag = #synchFlag_Old#
+			<![CDATA[AND EXISTS ( ]]>
+				<include refid="BINBECMINC99.getBillByTestModList" />
+			<![CDATA[  
+			    AND A.BIN_OrganizationID = C99.BIN_OrganizationID)
+			]]> 
+	  	</isNotEmpty>
+	  	<!-- 推送成功的订单号 -->
+	  	<isNotEmpty property="FSourceBillNo" prepend="AND">
+		 A.OrderNoIF = #FSourceBillNo#
+	  	</isNotEmpty>
+	  AND A.BIN_OrganizationInfoID = #organizationInfoId#
+	  AND A.BIN_BrandInfoID = #brandInfoId#
+    </update>
+
+    <!-- 更新产品订单的同步状态 -->
+    <update id="updPrtOrderBySync" parameterClass="java.util.HashMap">
+	  UPDATE 
+	  <isNotEmpty property="upCount">
+	  	TOP(#upCount#) 
+	  </isNotEmpty> 
+	  A
+	  SET 
+		A.SynchFlag = #synchFlag_New#,
+		<isNotEmpty property="updateTime">
+			A.UpdateTime=#updateTime#,
+		</isNotEmpty>
+		<isEmpty property="updateTime">
+			A.UpdateTime=GETDATE(),
+		</isEmpty>
+		<![CDATA[
+			A.UpdatedBy=#updatedBy#,
+			A.UpdatePGM=#updatePGM#,
+			A.ModifyCount=A.ModifyCount+1
+	  FROM 
+	      Inventory.BIN_ProductOrder A
+	  WHERE
+	      A.ValidFlag = '1'
+		]]>
+	  	<isNotEmpty property="synchFlag_Old" prepend="AND">
+		 A.SynchFlag = #synchFlag_Old#
+	  	</isNotEmpty>
+	  	<!-- 包括的订单号 -->
+	  	<isNotEmpty property="orderNoIFList" prepend="AND">
+	  		A.OrderNoIF IN
+			<iterate property="orderNoIFList" open="(" close=")" conjunction=",">
+				#orderNoIFList[]#
+			</iterate>
+	  	</isNotEmpty>
+	  	<!-- 不包括的订单号 -->
+	  	<isNotEmpty property="ignoreOrderNoIFList" prepend="AND">
+	  		A.OrderNoIF NOT IN
+			<iterate property="ignoreOrderNoIFList" open="(" close=")" conjunction=",">
+				#ignoreOrderNoIFList[]#
+			</iterate>
+	  	</isNotEmpty>
+	  AND A.BIN_OrganizationInfoID = #organizationInfoId#
+	  AND A.BIN_BrandInfoID = #brandInfoId#
+		<![CDATA[AND EXISTS ( ]]>
+			<include refid="BINBECMINC99.getBillByTestModList" />
+		<![CDATA[  
+		    AND A.BIN_OrganizationID = C99.BIN_OrganizationID)
+		]]> 
+    </update>
+    
+	<!-- 取得指定同步状态的产品订单数据List  -->
+    <select id="getOrderNoIFOfPrtOrderListBySync" parameterClass="java.util.HashMap" resultClass="java.lang.String">
+	  <![CDATA[
+		  SELECT
+			A.OrderNoIF 
+		  FROM 
+			 Inventory.BIN_ProductOrder A WITH(NOLOCK)
+		  WHERE
+			  A.SynchFlag = #synchFlag#
+		  AND A.ValidFlag = '1'
+		  AND A.BIN_OrganizationInfoID = #organizationInfoId#
+		  AND A.BIN_BrandInfoID = #brandInfoId#
+		]]>
+		<![CDATA[AND EXISTS ( ]]>
+			<include refid="BINBECMINC99.getBillByTestModList" />
+		<![CDATA[  
+		    AND A.BIN_OrganizationID = C99.BIN_OrganizationID)
+		]]> 
+    </select> 
+
+	<!-- 产品订单返回 列(resultMap)  -->
+    <resultMap id="BINBAT110.prtOrderMap" class="java.util.HashMap">
+        <result property="FSourceBillNo" column="FSourceBillNo"/>
+        <result property="FStockNumber" column="FStockNumber"/>
+        <result property="body" column="BIN_ProductOrderID" select="BINBAT110.getPrtOrderDetailList" javaType="java.util.List"/>
+    </resultMap>
+    <select id="getPrtOrderDetailList" parameterClass="java.lang.Integer" resultClass="java.util.HashMap">
+		<![CDATA[
+		  SELECT 
+				E.ItemCode AS FItemID,
+				CAST(B.Quantity as varchar) AS FDistQty
+		  FROM 
+		  	   Inventory.BIN_ProductOrderDetail B WITH(NOLOCK)
+		  LEFT JOIN Basis.BIN_ProductVendor D WITH(NOLOCK) ON(B.BIN_ProductVendorID = D.BIN_ProductVendorID)
+		  LEFT JOIN Basis.BIN_Product E WITH(NOLOCK) ON(D.BIN_ProductID = E.BIN_ProductID)
+		  WHERE 
+		  	  B.BIN_ProductOrderID = #BIN_ProductOrderID#
+		  ORDER BY B.DetailNo
+		  ]]>
+    </select>
+    
+	<!-- 取得产品订单数据 -->
+	<select id="getPrtOrderList" parameterClass="java.util.HashMap" resultMap="BINBAT110.prtOrderMap">
+		<![CDATA[
+		SELECT TOP (#batchSize#)
+			A.OrderNoIF AS FSourceBillNo,
+			C.DepartCode AS FStockNumber,
+			A.BIN_ProductOrderID
+		FROM 
+			Inventory.BIN_ProductOrder A WITH(NOLOCK)
+		LEFT JOIN Basis.BIN_Organization C WITH(NOLOCK) ON(A.BIN_OrganizationID = C.BIN_OrganizationID)
+		]]>
+		WHERE
+			A.BIN_BrandInfoID = #brandInfoId# 
+		AND A.BIN_OrganizationInfoID = #organizationInfoId#
+		AND A.ValidFlag = '1'
+		AND A.SynchFlag = #synchFlag#
+		<isNotEmpty property="bathLastRowID" prepend="AND">
+	    	A.OrderNoIF > #bathLastRowID#
+		</isNotEmpty>
+		ORDER BY A.OrderNoIF
+	</select>
+	
+	<!-- 取得失败的产品订单数据  -->
+	<select id="getFaildProductOrderList" resultMap="BINBAT110.prtOrderMap">
+			<![CDATA[
+				SELECT TOP (#batchSize#) 
+					A.OrderNoIF AS FSourceBillNo,
+					C.DepartCode AS FStockNumber,
+			]]>
+			<![CDATA[
+				FROM 
+					Inventory.BIN_ProductOrder A WITH(NOLOCK)
+				LEFT JOIN Basis.BIN_Organization C WITH(NOLOCK) ON(A.BIN_OrganizationID = C.BIN_OrganizationID)
+				WHERE
+					A.BIN_BrandInfoID = #brandInfoId# 
+				AND A.BIN_OrganizationInfoID = #organizationInfoId#
+				AND A.ValidFlag = '1'
+			]]>
+				<!-- 取得失败的产品订单数据 -->
+				AND EXISTS(
+					SELECT 1 FROM Tools.BIN_JobRunFaildHistory JFH WITH(NOLOCK)
+					WHERE 				
+						JFH.BIN_OrganizationInfoID = #organizationInfoId# 
+					AND JFH.BIN_BrandInfoID = #brandInfoId# 
+					AND JFH.JobCode = #JobCode#
+					
+					AND JFH.UnionIndex = A.OrderNoIF
+				)
+			<!-- 大于上一批最后一个数据 -->
+			<isNotEmpty property="bathLastRowID" prepend="AND">
+		    	A.OrderNoIF > #bathLastRowID#
+			</isNotEmpty>
+		ORDER BY A.OrderNoIF	
+	</select>
+   	
+</sqlMap>

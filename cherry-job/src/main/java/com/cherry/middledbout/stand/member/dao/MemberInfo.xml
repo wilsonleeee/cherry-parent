@@ -1,0 +1,138 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sqlMap PUBLIC "-//iBATIS.com//DTD SQL Map 2.0//EN" "http://ibatis.apache.org/dtd/sql-map-2.dtd">
+<sqlMap namespace="MemberInfo">
+	<!-- 取得所有有效的会员数据 -->
+	<select id="getMemberList" parameterClass="java.util.HashMap"
+		resultClass="java.util.HashMap">
+	<![CDATA[
+		SELECT TOP (#batchSize#)
+				#brandCode# BrandCode,
+				CAST(A.BIN_MemberInfoID as VARCHAR) IFMemberId,
+				C.MemCode MemberCode,
+				A.Name MemName,
+				A.Gender,
+				A.MobilePhone,  
+				A.Email,
+				A.IdentityCard,
+				A.BirthYear,
+				A.BirthDay,
+				A.CounterCodeBelong,
+				A.BaCodeBelong,
+				A.JoinDate,
+				A.JoinTime,
+				D.TotalPoint,
+				A.ChannelCode DataSource,
+				E.LevelCode MemberLevelCode
+			FROM Members.BIN_MemberInfo A WITH(NOLOCK)
+			LEFT JOIN Members.BIN_MemCardInfo C WITH(NOLOCK)
+			ON( A.BIN_MemberInfoID = C.BIN_MemberInfoID AND C.ValidFlag=1 AND C.CardValidFlag=1)
+			LEFT JOIN Members.BIN_MemberPoint D WITH(NOLOCK)
+			ON A.BIN_MemberInfoID = D.BIN_MemberInfoID
+			LEFT JOIN Members.BIN_MemberLevel E WITH(NOLOCK) 
+			ON A.MemberLevel=E.BIN_MemberLevelID
+			WHERE A.ValidFlag=1
+			AND  A.BIN_OrganizationInfoID = #organizationInfoId#
+		  	AND A.BIN_BrandInfoID = #brandInfoId#
+		]]>
+		  AND ((A.UpdateTime BETWEEN #TargetDataStartTime# AND #TargetDataEndTime#)
+			OR (C.UpdateTime BETWEEN #TargetDataStartTime# AND #TargetDataEndTime#)
+			OR (D.UpdateTime BETWEEN #TargetDataStartTime# AND #TargetDataEndTime#)
+			OR (E.UpdateTime BETWEEN #TargetDataStartTime# AND #TargetDataEndTime#))
+		<isNotEmpty property="lastMemberInfoID" prepend="AND">
+			A.BIN_MemberInfoID > #lastMemberInfoID#
+		</isNotEmpty>
+			ORDER BY A.BIN_MemberInfoID
+	</select>
+	<!-- 查询会员数据是否存在 -->
+	<select id="getMemberByIFMemberId" parameterClass="java.util.HashMap"
+		resultClass="java.util.HashMap">
+	   <![CDATA[
+			SELECT
+			    BrandCode,
+				IFMemberId
+			FROM dbo.IF_MemberInfo WITH(NOLOCK)
+			WHERE IFMemberId=#IFMemberId#
+			  AND BrandCode=#BrandCode#
+		]]>
+	</select>
+	<!-- 更新已存在的会员数据 -->
+	<update id="updMemberInfoByIFmemberId" parameterClass="java.util.HashMap">
+		UPDATE
+			dbo.IF_MemberInfo
+		SET
+			MemberCode=#MemberCode#,
+			MemName=#MemName#,
+			Gender=#Gender#,
+			MobilePhone=#MobilePhone#,
+			Email=#Email#,
+			IdentityCard=#IdentityCard#,
+			BirthYear=#BirthYear#,
+			BirthDay=#BirthDay#,
+			CounterCodeBelong=#CounterCodeBelong#,
+			BaCodeBelong=#BaCodeBelong#,
+			JoinDate=#JoinDate#,
+			JoinTime=#JoinTime#,
+			TotalPoint=#TotalPoint#,
+			MemberLevelCode=#MemberLevelCode#,
+			DataSource=#DataSource#,
+			SynchFlag = '0'
+		WHERE 
+			IFMemberId=#IFMemberId# 
+		AND BrandCode=#BrandCode#
+	</update>
+	<!-- 插入标准接口会员表 -->
+	<insert id="insertIFMember" parameterClass="java.util.HashMap">
+		<![CDATA[
+		INSERT INTO dbo.IF_MemberInfo (
+					BrandCode,
+					IFMemberId,
+					MemberCode,
+					MemName,
+					Gender,
+					MobilePhone,
+					Email,
+					IdentityCard,
+					BirthYear,
+					BirthDay,
+					CounterCodeBelong,
+					BaCodeBelong,
+					JoinDate,
+					JoinTime,
+					TotalPoint,
+					MemberLevelCode,
+					DataSource,
+					SynchFlag
+					) VALUES  (
+					#BrandCode#,
+					#IFMemberId#,
+					#MemberCode#,
+					#MemName#,
+					#Gender#,
+					#MobilePhone#,
+					#Email#,
+					#IdentityCard#,
+					#BirthYear#,
+					#BirthDay#,
+					#CounterCodeBelong#,
+					#BaCodeBelong#,
+					#JoinDate#,
+					#JoinTime#,
+					#TotalPoint#,
+					#MemberLevelCode#,
+					#DataSource#,
+					0
+					   )
+		]]>
+	</insert>
+	<!-- 取得品牌Code  -->
+    <select id="getBrandCode" parameterClass="java.util.HashMap" resultClass="java.lang.String">
+       <![CDATA[
+			SELECT
+				BrandCode AS brandCode
+			FROM
+				Basis.BIN_BrandInfo
+			WHERE
+				BIN_BrandInfoID = #brandInfoId#
+		]]>	
+    </select>
+</sqlMap>

@@ -1,0 +1,172 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sqlMap PUBLIC "-//iBATIS.com//DTD SQL Map 2.0//EN" "http://ibatis.apache.org/dtd/sql-map-2.dtd">
+<sqlMap namespace="BINBAT117">
+	<!-- 取得所有柜台数据 -->
+	<select id="getCounterInfo" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+	<![CDATA[
+		SELECT TOP (#batchSize#)
+				C.BrandCode AS Brand,
+				A.CounterCode,
+				A.CounterNameIF AS CounterName,
+				A.CounterKind,
+				A.Status AS CounterStatus,
+				D.RegionCode,
+				D.RegionNameChinese AS RegionName,
+				D1.RegionCode AS ProvinceCode,
+				D1.RegionNameChinese AS ProvinceName,
+				D2.RegionCode AS CityCode,
+				D2.RegionNameChinese AS CityName,
+				E.ChannelName AS Channel,
+				convert(varchar(30),B.ExpiringDate,120) AS EndYMD,
+				A.CounterAddress AS Address,
+				A.ValidFlag AS ValidFlag,
+				A.CounterTelephone AS Phone,
+				A.BusDistrict AS busDistrict,
+				A.longitude AS longitude,
+				A.latitude AS  latitude,
+				A.CounterLevel AS counterLevel
+		FROM Basis.BIN_CounterInfo A WITH(NOLOCK)
+			JOIN Basis.BIN_Organization B ON B.BIN_OrganizationID = A.BIN_OrganizationID
+			LEFT JOIN Basis.BIN_BrandInfo C WITH(NOLOCK) ON C.BIN_BrandInfoID=A.BIN_BrandInfoID
+			LEFT JOIN Basis.BIN_Region D WITH(NOLOCK) ON D.BIN_RegionID = B.BIN_RegionID
+			LEFT JOIN Basis.BIN_Region D1 WITH(NOLOCK) ON D1.BIN_RegionID = B.BIN_ProvinceID
+			LEFT JOIN Basis.BIN_Region D2 WITH(NOLOCK) ON D2.BIN_RegionID = B.BIN_CityID
+			LEFT JOIN Basis.BIN_Channel E WITH(NOLOCK) ON E.BIN_ChannelID = A.BIN_ChannelID
+		WHERE 
+			A.BIN_OrganizationInfoID = #organizationInfoId#
+		AND A.BIN_BrandInfoID = #brandInfoId#
+		AND (A.UpdateTime >= A.SynchTime OR
+			  A.SynchTime is null)	
+		]]>
+		<isNotEmpty property="bathLastCounterCode" prepend="AND">
+		       A.CounterCode > #bathLastCounterCode#
+		  </isNotEmpty>
+		   ORDER BY A.CounterCode
+	</select>
+	
+	<!-- 查询柜台数据是否存在 -->
+	<select id="getCounterCode" parameterClass="java.util.HashMap"
+		resultClass="java.util.HashMap">
+	   <![CDATA[
+			SELECT
+			     CounterCode
+			FROM dbo.IF_Counters WITH(NOLOCK)
+			WHERE 
+			     CounterCode = #CounterCode#
+			 AND Brand = #Brand#    
+		]]>
+	</select>
+	
+	 <!-- 删除表中数据  -->
+	<delete id="deleteCounterInfo" parameterClass="java.util.HashMap">
+		<![CDATA[
+			DELETE FROM
+				dbo.IF_Counters
+			WHERE 
+			     CounterCode = #CounterCode#
+			 AND Brand = #Brand#     
+		]]>
+    </delete>
+	
+	<!-- 更新已存在的柜台数据 -->
+	<update id="updateCounterInfo" parameterClass="java.util.HashMap">
+		UPDATE
+			dbo.IF_Counters
+		SET
+			CounterName	= #CounterName#,
+			CounterKind = #CounterKind#,
+			CounterStatus = #CounterStatus#,
+			RegionCode = #RegionCode#,
+			RegionName = #RegionName#,
+			ProvinceCode = #ProvinceCode#,
+			ProvinceName = #ProvinceName#,
+			CityCode = #CityCode#,
+			CityName = #CityName#,
+			Channel = #Channel#,
+			EndYMD = #EndYMD#,
+			Address = #Address#,
+			Phone = #Phone#,
+			ValidFlag = #ValidFlag#,
+			PuttingTime = GETDATE(),
+			BusDistrict	= #busDistrict#,
+			Longitude = #longitude#,
+			Latitude = #latitude#,
+			CounterLevel = #counterLevel#,
+			SynchFlag = '0',
+			SynchMsg = #synchMsg#,
+			SynchTime = #synchTime#
+		WHERE 
+			CounterCode=#CounterCode# 
+		AND Brand = #Brand# 	
+	</update>
+	
+	<!-- 插入标准接口柜台表 -->
+	<insert id="insertCounterInfo" parameterClass="java.util.HashMap">
+		<![CDATA[
+		INSERT INTO dbo.IF_Counters (
+					Brand,
+					CounterCode,
+					CounterName,
+					CounterKind,
+					CounterStatus,
+					RegionCode,
+					RegionName,
+					ProvinceCode,
+					ProvinceName,
+					CityCode,
+					CityName,
+					Channel,
+					EndYMD,
+					Address,
+					Phone,
+					ValidFlag,
+					PuttingTime,
+					BusDistrict,
+					Longitude,
+					Latitude,
+					CounterLevel,
+					SynchMsg,
+					SynchTime
+					) VALUES  (
+					#Brand#,
+					#CounterCode#,
+					#CounterName#,
+					#CounterKind#,
+					#CounterStatus#,
+					#RegionCode#,
+					#RegionName#,
+					#ProvinceCode#,
+					#ProvinceName#,
+					#CityCode#,
+					#CityName#,
+					#Channel#,
+					#EndYMD#,
+					#Address#,
+					#Phone#,
+					#ValidFlag#,
+					GETDATE(),
+					#busDistrict#,
+					#longitude#,
+					#latitude#,
+					#counterLevel#,
+					#synchMsg#,
+					#synchTime#
+					)
+		]]>
+	</insert>
+	
+    <!--更新同步时间 -->
+	<update id="updateSynchTime" parameterClass="java.util.HashMap">
+		<![CDATA[
+		   UPDATE				
+			   Basis.BIN_CounterInfo			
+		   SET
+			   SynchTime = GETDATE()
+		   Where
+		       CounterCode = #CounterCode# 
+		   AND BIN_OrganizationInfoID = #organizationInfoId#
+		   AND BIN_BrandInfoID = #brandInfoId#    
+		]]>	
+	</update>
+	
+</sqlMap>

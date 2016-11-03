@@ -1,0 +1,116 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE workflow PUBLIC "-//OpenSymphony Group//DTD OSWorkflow 2.8//EN" "http://www.opensymphony.com/osworkflow/workflow_2_8.dtd">
+<workflow>
+	<registers>
+		<register type="class" variable-name="logger">
+			<arg name="class.name">com.cherry.cm.core.CherryFlowLogRegister</arg>
+			<arg name="addInstanceId">true</arg>
+		</register>
+	</registers>
+	<initial-actions>
+		<action id="100" name="Start Workflow">
+			<pre-functions>
+				<function type="beanshell">
+					<arg name="script">
+				<![CDATA[
+				         batchDate = new Date();
+	                     transientVars.get("logger").info("###########################BATCH任务于"+batchDate+"开始处理#####################################");
+				]]>
+					</arg>
+				</function>
+				<function type="class">
+					<arg name="class.name">com.opensymphony.workflow.util.Caller</arg>
+				</function>
+			</pre-functions>
+			<results>
+				<unconditional-result old-status="Finished"
+					status="Underway" step="10" owner="${caller}" />
+			</results>
+		</action>
+	</initial-actions>
+	<steps>
+		<step id="10" name="第一步">
+			<actions>
+			<!--  <common-action id="9000"/> -->
+				<action id="1" name="第一个动作">
+					<!--
+						<restrict-to> <conditions type="AND"> <condition type="class">
+						<arg name="status">Underway</arg> <arg
+						name="class.name">com.opensymphony.workflow.util.StatusCondition</arg>
+						</condition> </conditions> </restrict-to>
+					-->
+					<pre-functions>
+						<function type="spring">
+							<arg name="bean.name">binbedrjon01FN</arg>
+						</function>
+					</pre-functions>
+					<results>
+						<result old-status="Finished" status="Finished" step="30">
+							<conditions type="AND">
+								<condition type="class">
+									<arg name="class.name">com.cherry.cm.core.CherryResultCondition</arg>
+									<arg name="Cherry_status">-1</arg>
+								</condition>
+							</conditions>
+						</result>
+						<unconditional-result old-status="Finished"
+							status="Queued" step="20" />
+					</results>
+					<post-functions>
+						<function type="class">
+							<arg name="class.name">com.cherry.cm.core.CherryFlowResultLog</arg>
+						</function>
+					</post-functions>
+				</action>
+				
+				<!--
+					<action id="2" name="The second action" auto="true"> <restrict-to>
+					<conditions type="AND"> <condition type="class"> <arg
+					name="status">Underway</arg> <arg
+					name="class.name">com.opensymphony.workflow.util.StatusCondition</arg>
+					</condition> </conditions> </restrict-to> <results>
+					<unconditional-result old-status="Finished" status="Queued"
+					step="2"/> </results> </action>
+				-->
+			</actions>
+		</step>
+
+		<step id="20" name="第二步">
+			<actions>
+			
+				<action id="3" name="第3个动作" auto="true">
+					<restrict-to>
+						<conditions type="AND">
+							<condition type="class">
+								<arg name="status">Queued</arg>
+								<arg name="class.name">com.opensymphony.workflow.util.StatusCondition</arg>
+							</condition>
+						</conditions>
+					</restrict-to>
+					<pre-functions>
+						<function type="beanshell">
+							<arg name="script">
+								<![CDATA[
+	                                transientVars.get("logger").info("$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$result:");
+								]]>
+							</arg>
+						</function>
+					</pre-functions>
+					<results>
+						<unconditional-result old-status="Finished"
+							status="Finished" step="30" />
+					</results>
+					<post-functions>
+						<function type="class">
+							<arg name="class.name">com.cherry.cm.core.CherryFlowResultLog</arg>
+						</function>
+					</post-functions>
+				</action>
+				
+			</actions>
+		</step>
+		<step id="30" name="Flow over">
+		</step>
+	</steps>
+</workflow>
+

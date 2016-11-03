@@ -1,0 +1,140 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sqlMap PUBLIC "-//iBATIS.com//DTD SQL Map 2.0//EN" "http://ibatis.apache.org/dtd/sql-map-2.dtd">
+<sqlMap namespace="BINBAT111">
+
+    <!-- 更新销售单据的同步状态 -->
+    <update id="updSaleBillBySyncNew" parameterClass="java.util.HashMap">
+	  UPDATE 
+	  	A
+	  SET 
+		A.SynchFlag = #synchFlag_New#,
+		<isNotEmpty property="updateTime">
+			A.UpdateTime=#updateTime#,
+		</isNotEmpty>
+		<isEmpty property="updateTime">
+			A.UpdateTime=GETDATE(),
+		</isEmpty>
+		<![CDATA[
+			A.UpdatedBy=#updatedBy#,
+			A.UpdatePGM=#updatePGM#,
+			A.ModifyCount=A.ModifyCount+1
+	  FROM 
+	      Sale.BIN_SaleRecord A
+	  WHERE
+	      A.ValidFlag = '1'
+		]]>
+	  	<isNotEmpty property="synchFlag_Old" prepend="AND">
+			 A.SynchFlag = #synchFlag_Old#
+			<![CDATA[AND EXISTS ( ]]>
+				<include refid="BINBECMINC99.getBillByTestModList" />
+			<![CDATA[  
+			    AND A.BIN_OrganizationID = C99.BIN_OrganizationID)
+			]]> 
+	  	</isNotEmpty>
+	  	<!-- 推送成功的订单号 -->
+	  	<isNotEmpty property="FSourceBillNo" prepend="AND">
+		 A.BillCode = #FSourceBillNo#
+	  	</isNotEmpty>
+	  AND A.BIN_OrganizationInfoID = #organizationInfoId#
+	  AND A.BIN_BrandInfoID = #brandInfoId#
+    </update>
+
+	<!-- 取得指定同步状态的销售单据数据List  -->
+    <select id="getOrderNoIFOfSaleBillListBySync" parameterClass="java.util.HashMap" resultClass="java.lang.String">
+	  <![CDATA[
+		  SELECT
+			A.OrderNoIF 
+		  FROM 
+			 Inventory.BIN_ProductOrder A WITH(NOLOCK)
+		  WHERE
+			  A.SynchFlag = #synchFlag#
+		  AND A.ValidFlag = '1'
+		  AND A.BIN_OrganizationInfoID = #organizationInfoId#
+		  AND A.BIN_BrandInfoID = #brandInfoId#
+		]]>
+		<![CDATA[AND EXISTS ( ]]>
+			<include refid="BINBECMINC99.getBillByTestModList" />
+		<![CDATA[  
+		    AND A.BIN_OrganizationID = C99.BIN_OrganizationID)
+		]]> 
+    </select> 
+
+	<!-- 销售单据返回 列(resultMap)  -->
+    <resultMap id="BINBAT111.saleRecordMap" class="java.util.HashMap">
+        <result property="BillCode" column="BillCode"/>
+        <result property="SaleRecordDetailList" column="BillCode" select="BINBAT111.getSaleRecordDetailList" javaType="java.util.List"/>
+    </resultMap>
+    <select id="getSaleRecordDetailList" parameterClass="java.lang.String" resultClass="java.util.HashMap">
+		<![CDATA[
+			SELECT  
+				A.BillCode AS FSourceBillNo,
+				convert(varchar(30),A.SaleTicketTime,120) AS FDateTime,
+				CASE WHEN (A.SaleType = 'NS' OR A.SaleType = 'PX') THEN '1' WHEN A.SaleType = '-1' THEN 'CM' END AS FBOR,
+				C.DepartCode AS FStockNumber,
+				P.ItemCode AS FItemID,
+				B.Quantity AS FQty,
+				B.PricePay AS FPrice
+			FROM 
+				 Sale.BIN_SaleRecord A WITH(NOLOCK)
+		    JOIN Sale.BIN_SaleRecordDetail B WITH(NOLOCK) ON B.BIN_SaleRecordID = A.BIN_SaleRecordID
+		    JOIN Basis.BIN_Organization C WITH(NOLOCK) ON (A.BIN_OrganizationID = C.BIN_OrganizationID) 
+		    JOIN Basis.BIN_ProductVendor PV WITH(NOLOCK) ON (PV.BIN_ProductVendorID = B.BIN_ProductVendorID AND B.SaleType = 'N')
+		    JOIN Basis.BIN_Product P WITH(NOLOCK) ON (P.BIN_ProductID = PV.BIN_ProductID)
+		    WHERE
+		    	A.BillCode = #BillCode#
+		  ]]>
+    </select>
+    
+	<!-- 取得销售单据数据 -->
+	<select id="getSaleRecordList" parameterClass="java.util.HashMap" resultMap="BINBAT111.saleRecordMap">
+		<![CDATA[
+		SELECT TOP (#batchSize#)
+			A.BillCode
+		FROM 
+			 Sale.BIN_SaleRecord A WITH(NOLOCK)
+		]]>
+		WHERE
+			A.BIN_BrandInfoID = #brandInfoId# 
+		AND A.BIN_OrganizationInfoID = #organizationInfoId#
+		AND A.ValidFlag = '1'
+		AND A.SynchFlag = #synchFlag#
+		<isNotEmpty property="bathLastRowID" prepend="AND">
+	    	A.BillCode > #bathLastRowID#
+		</isNotEmpty>
+		ORDER BY A.BillCode
+	</select>
+	
+	<!-- 取得失败的销售单据数据  -->
+	<select id="getFaildProductOrderList" resultMap="BINBAT110.prtOrderMap">
+			<![CDATA[
+				SELECT TOP (#batchSize#) 
+					A.OrderNoIF AS FSourceBillNo,
+					C.DepartCode AS FStockNumber,
+			]]>
+			<![CDATA[
+				FROM 
+					Inventory.BIN_ProductOrder A WITH(NOLOCK)
+				LEFT JOIN Basis.BIN_Organization C WITH(NOLOCK) ON(A.BIN_OrganizationID = C.BIN_OrganizationID)
+				WHERE
+					A.BIN_BrandInfoID = #brandInfoId# 
+				AND A.BIN_OrganizationInfoID = #organizationInfoId#
+				AND A.ValidFlag = '1'
+			]]>
+				<!-- 取得失败的销售单据数据 -->
+				AND EXISTS(
+					SELECT 1 FROM Tools.BIN_JobRunFaildHistory JFH WITH(NOLOCK)
+					WHERE 				
+						JFH.BIN_OrganizationInfoID = #organizationInfoId# 
+					AND JFH.BIN_BrandInfoID = #brandInfoId# 
+					AND JFH.JobCode = #JobCode#
+					
+					AND JFH.UnionIndex = A.OrderNoIF
+				)
+			<!-- 大于上一批最后一个数据 -->
+			<isNotEmpty property="bathLastRowID" prepend="AND">
+		    	A.OrderNoIF > #bathLastRowID#
+			</isNotEmpty>
+		ORDER BY A.OrderNoIF	
+	</select>
+   	
+</sqlMap>

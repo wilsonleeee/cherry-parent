@@ -1,0 +1,449 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sqlMap PUBLIC "-//iBATIS.com//DTD SQL Map 2.0//EN" "http://ibatis.apache.org/dtd/sql-map-2.dtd">
+<sqlMap namespace="BINBAT153">
+
+	<!-- 取得没有成本的单据号List  -->
+    <select id="getBillCodeOfNullCostPrice" parameterClass="java.util.HashMap" resultClass="java.lang.String">
+	  <![CDATA[
+		  SELECT
+			DISTINCT A.BIN_ProductBatchInOutID 	
+		  FROM 
+			 Inventory.BIN_ProductBatchInOutDetail A WITH(NOLOCK)
+		  WHERE
+			  A.ValidFlag = '1'
+		  AND CostPrice IS NULL
+		]]>
+    </select>
+	<!-- 取得指定同步状态为空同步异常（3）的List（主数据） -->
+    <select id="getBillCodeOfSy3" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+	  <![CDATA[
+		  SELECT
+			  A.RelevanceNo,
+			  A.TradeNoIF,
+			  A.BIN_ProductBatchInOutID	
+		  FROM 
+			 Inventory.BIN_ProductBatchInOut A WITH(NOLOCK)
+		  WHERE not exists ( SELECT
+			DISTINCT B.BIN_ProductBatchInOutID 	
+		  FROM 
+			 Inventory.BIN_ProductBatchInOutDetail B WITH(NOLOCK)
+		  WHERE A.BIN_ProductBatchInOutID =B.BIN_ProductBatchInOutID 
+		  AND   B.ValidFlag = '1'
+		  AND   B.CostPrice IS NULL)
+		  AND   A.SynchFlag = #synchFlag#
+		  AND   A.ValidFlag = '1'
+		  AND   A.BIN_OrganizationInfoID = #organizationInfoId#
+		  AND   A.BIN_BrandInfoID = #brandInfoId#
+		]]>
+	   	
+    </select>
+	
+		<!-- 根据产品入出库批次主表中同步状态为同步异常（3）billCode查询接口表的单据号List -->
+	<select id="getListByBillCodeForOT" parameterClass="java.util.HashMap" resultClass="java.lang.String">
+      <![CDATA[
+		SELECT
+			RelevanceNo 
+		FROM 
+			dbo.IF_ProductBatchInOut(NOLOCK)
+		WHERE
+			RelevanceNo=#RelevanceNo#
+		AND TradeNoIF=#TradeNoIF#
+	  ]]>
+    </select>
+	
+	
+	 <!-- 更新入出库批次主表的同步状态 -->
+    <update id="updProBatBySync" parameterClass="java.util.HashMap">
+	  UPDATE 
+	  A
+	  SET 
+		A.SynchFlag = #synchFlag_New#,
+		<isNotEmpty property="updateTime">
+			A.UpdateTime=#updateTime#,
+		</isNotEmpty>
+		<isEmpty property="updateTime">
+			A.UpdateTime=GETDATE(),
+		</isEmpty>
+		<![CDATA[
+			A.UpdatedBy=#updatedBy#,
+			A.UpdatePGM=#updatePGM#,
+			A.ModifyCount=A.ModifyCount+1
+	  FROM 
+	        Inventory.BIN_ProductBatchInOut A
+	  WHERE
+	        A.ValidFlag = '1'
+	  AND	A.RelevanceNo=#RelevanceNo#
+	  AND   A.TradeNoIF=#TradeNoIF#
+	]]>
+
+    </update>
+	
+	
+	
+   <!-- 更新入出库批次主表的同步状态 （由NULL改为1）-->
+    <update id="updProBatBySynNull" parameterClass="java.util.HashMap">
+	  UPDATE  
+	  A
+	  SET 
+		A.SynchFlag = #synchFlag_New#,
+		<isNotEmpty property="updateTime">
+			A.UpdateTime=#updateTime#,
+		</isNotEmpty>
+		<isEmpty property="updateTime">
+			A.UpdateTime=GETDATE(),
+		</isEmpty>
+		<![CDATA[
+			A.UpdatedBy=#updatedBy#,
+			A.UpdatePGM=#updatePGM#,
+			A.ModifyCount=A.ModifyCount+1
+	  FROM 
+	      Inventory.BIN_ProductBatchInOut A
+	  WHERE not exists ( SELECT
+			    DISTINCT B.BIN_ProductBatchInOutID 	
+		  FROM 
+			    Inventory.BIN_ProductBatchInOutDetail B WITH(NOLOCK)
+		  WHERE A.BIN_ProductBatchInOutID =B.BIN_ProductBatchInOutID 
+		  AND   B.ValidFlag = '1'
+		  AND  B.CostPrice IS NULL)
+	  AND      A.ValidFlag = '1'
+	  AND      A.SynchFlag IS NULL     
+		]]>
+	  	<isNotEmpty property="billCodeListOfNullSynArr" prepend="AND">
+	  		A.BIN_ProductBatchInOutID  IN
+			<iterate property="billCodeListOfNullSynArr" open="(" close=")" conjunction=",">
+				#billCodeListOfNullSynArr[]#
+			</iterate>
+	  	</isNotEmpty>
+	  AND A.BIN_OrganizationInfoID = #organizationInfoId#
+	  AND A.BIN_BrandInfoID = #brandInfoId#
+    </update>
+	
+	   <!-- 更新入出库批次明细表的同步状态 （由NULL改为1）-->
+    <update id="updDetailProBatBySynNull" parameterClass="java.util.HashMap">
+	  UPDATE 
+	  A
+	  SET 
+		A.SynchFlag = #synchFlag_New#,
+		<isNotEmpty property="updateTime">
+			A.UpdateTime=#updateTime#,
+		</isNotEmpty>
+		<isEmpty property="updateTime">
+			A.UpdateTime=GETDATE(),
+		</isEmpty>
+		<![CDATA[
+			A.UpdatedBy=#updatedBy#,
+			A.UpdatePGM=#updatePGM#,
+			A.ModifyCount=A.ModifyCount+1
+	  FROM 
+	      Inventory.BIN_ProductBatchInOutDetail A
+	  WHERE not exists ( SELECT
+			DISTINCT B.BIN_ProductBatchInOutID 	
+		  FROM 
+			 Inventory.BIN_ProductBatchInOutDetail B WITH(NOLOCK)
+		  WHERE  A.BIN_ProductBatchInOutID =B.BIN_ProductBatchInOutID 
+		  AND    B.ValidFlag = '1'
+		  AND    B.CostPrice IS NULL)
+		  AND    A.ValidFlag = '1'
+		  AND    A.SynchFlag IS NULL     
+		]]>
+	  	<isNotEmpty property="billCodeListOfNullSynArr" prepend="AND">
+	  		A.BIN_ProductBatchInOutID  IN
+			<iterate property="billCodeListOfNullSynArr" open="(" close=")" conjunction=",">
+				#billCodeListOfNullSynArr[]#
+			</iterate>
+	  	</isNotEmpty>
+    </update>
+    
+    
+    <!-- 取得指定同步状态为空的产品入出库批次IDList （主数据） -->
+    <select id="getBillCodeListOfNullSyn" parameterClass="java.util.HashMap" resultClass="java.lang.String">
+	  <![CDATA[
+		  SELECT
+		  ]]>
+	  <isNotEmpty property="upCount">
+	  	TOP(#upCount#) 
+	  </isNotEmpty>
+	   <![CDATA[
+			  A.BIN_ProductBatchInOutID 	
+		  FROM 
+			 Inventory.BIN_ProductBatchInOut A WITH(NOLOCK)
+		  WHERE not exists ( SELECT
+			DISTINCT B.BIN_ProductBatchInOutID 	
+		  FROM 
+			 Inventory.BIN_ProductBatchInOutDetail B WITH(NOLOCK)
+		  WHERE A.BIN_ProductBatchInOutID =B.BIN_ProductBatchInOutID 
+		  AND  B.ValidFlag = '1'
+		  AND B.CostPrice IS NULL)
+		  AND	 A.SynchFlag IS NULL
+		  AND A.ValidFlag = '1'
+		  AND A.BIN_OrganizationInfoID = #organizationInfoId#
+		  AND A.BIN_BrandInfoID = #brandInfoId#
+		]]>
+   	
+    </select>
+    
+     <!-- 取得指定同步状态为同步中或者同步异常的数据list （主数据） (类型为LG和AR的除外)-->
+    <select id="getProBatList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+	  <![CDATA[
+		  SELECT
+		      A.BIN_ProductBatchInOutID,
+			  A.RelevanceNo,
+			  A.TradeNoIF, 
+			  A.BIN_OrganizationID,
+			  A.TotalQuantity,
+			  A.TotalAmount,
+			  A.Amount,
+			  A.StockType,
+			  A.TradeType,
+			  A.StockInOutDate,
+			  A.StockInOutTime,
+			  C.DepartCode,
+			  CASE WHEN A.TradeType='BG' THEN  E.departcode 
+			       WHEN A.TradeType='RR' THEN  G.departcode  END  AS InDepartCode ,
+			  CASE WHEN A.TradeType='BG' THEN  E.DepartName 
+			       WHEN A.TradeType='RR' THEN  G.DepartName  END  AS InDepartName ,
+			  CASE WHEN A.TradeType='BG' THEN  H.departcode 
+			       WHEN A.TradeType='RR' THEN  I.departcode   END  AS  OutDepartCode , 
+			  CASE WHEN A.TradeType='BG' THEN  H.DepartName 
+			       WHEN A.TradeType='RR' THEN  I.DepartName  END  AS OutDepartName
+		  FROM 
+			 Inventory.BIN_ProductBatchInOut A WITH(NOLOCK)
+		  LEFT JOIN  Basis.BIN_Organization C
+		  ON A.BIN_OrganizationID=C.BIN_OrganizationID	
+		  LEFT JOIN  Inventory.BIN_ProductAllocationIn D
+		  ON  A.RelevanceNo=D.RelevanceNo
+		  LEFT JOIN Basis.BIN_Organization E
+		  ON  D.BIN_OrganizationIDIn=E.BIN_OrganizationID	
+		  LEFT JOIN  Inventory.BIN_ProductReturn F
+		  ON  A.RelevanceNo=F.ReturnNo
+		  LEFT JOIN Basis.BIN_Organization G
+		  ON  F.BIN_OrganizationIDReceive=G.BIN_OrganizationID	
+		  LEFT JOIN Basis.BIN_Organization H
+		  ON  D.BIN_OrganizationIDOut=H.BIN_OrganizationID	
+		  LEFT JOIN Basis.BIN_Organization I
+		  ON  F.BIN_OrganizationID=I.BIN_OrganizationID	
+		  WHERE not exists ( SELECT
+			DISTINCT B.BIN_ProductBatchInOutID 	
+		  FROM 
+			 Inventory.BIN_ProductBatchInOutDetail B WITH(NOLOCK)
+		  WHERE A.BIN_ProductBatchInOutID =B.BIN_ProductBatchInOutID 
+		  AND   B.ValidFlag = '1'
+		  AND   B.CostPrice IS NULL)
+		  AND   (A.SynchFlag = '1' OR A.SynchFlag = '3')
+		  AND   A.ValidFlag = '1'
+		  AND   A.BIN_OrganizationInfoID = #organizationInfoId#
+		  AND   A.BIN_BrandInfoID = #brandInfoId#
+		  AND   A.TradeType NOT IN ('AR','LG')
+		]]>	
+   	
+    </select>
+    
+    <!-- 插入入出库批次主表接口表 -->
+   	<insert id="insertProBat" parameterClass="java.util.HashMap">
+   	<![CDATA[
+		INSERT INTO dbo.IF_ProductBatchInOut(
+			BrandCode,
+			RelevanceNo,
+			TradeNoIF,
+			CounterCode,
+			TotalQuantity,
+			TotalAmount,
+			Amount,
+			StockType,
+			TradeType,
+			StockInOutDate,
+			StockInOutTime,
+			PuttingTime,
+			InDepartCode,
+			InDepartName,
+			OutDepartCode,
+			OutDepartName
+			
+		)
+		VALUES
+		(
+			#brandCode#,
+			#RelevanceNo#,
+			#TradeNoIF#,
+			#DepartCode#,
+			#TotalQuantity#,
+			#TotalAmount#,
+			#Amount#,
+			#StockType#,
+			#TradeType#,
+			#StockInOutDate#,
+			#StockInOutTime#,
+			GETDATE(),
+			#InDepartCode#,
+			#InDepartName#,
+			#OutDepartCode#,
+			#OutDepartName#
+			
+		)
+	]]>
+   	</insert>
+   	
+   	
+   	<!-- 修改成功插入到接口表的入出库批次数据的同步状态  -->
+    <update id="updIFProBat" parameterClass="java.util.HashMap">
+	  UPDATE 
+	  A
+	  SET 
+		A.SynchFlag = #synchFlag_New#,
+		<isNotEmpty property="updateTime">
+			A.UpdateTime=#updateTime#,
+		</isNotEmpty>
+		<isEmpty property="updateTime">
+			A.UpdateTime=GETDATE(),
+		</isEmpty>
+		<![CDATA[
+			A.UpdatedBy=#updatedBy#,
+			A.UpdatePGM=#updatePGM#,
+			A.ModifyCount=A.ModifyCount+1
+	  FROM 
+	      Inventory.BIN_ProductBatchInOut A
+	  WHERE
+	      A.ValidFlag = '1'
+	  AND A.BIN_OrganizationInfoID = #organizationInfoId#
+	  AND A.BIN_BrandInfoID = #brandInfoId#
+	  ]]>
+	  <isNotEmpty property="BIN_ProductBatchInOutID"  prepend="AND" >
+			A.BIN_ProductBatchInOutID=#BIN_ProductBatchInOutID#
+		</isNotEmpty>
+    </update>
+    
+    
+    	 <!-- 更新入出库批次主表（明细）的同步状态（有三改为二） -->
+    <update id="updProBatDeatilBySync" parameterClass="java.util.HashMap">
+	  UPDATE 
+	  A
+	  SET 
+		A.SynchFlag = #synchFlag_New#,
+		<isNotEmpty property="updateTime">
+			A.UpdateTime=#updateTime#,
+		</isNotEmpty>
+		<isEmpty property="updateTime">
+			A.UpdateTime=GETDATE(),
+		</isEmpty>
+		<![CDATA[
+			A.UpdatedBy=#updatedBy#,
+			A.UpdatePGM=#updatePGM#,
+			A.ModifyCount=A.ModifyCount+1
+	  FROM 
+	        Inventory.BIN_ProductBatchInOutDetail  A
+	  WHERE
+	        A.ValidFlag = '1'	
+		]]>
+	    <isNotEmpty property="BIN_ProductBatchInOutID"  prepend="AND" >
+			A.BIN_ProductBatchInOutID=#BIN_ProductBatchInOutID#
+		</isNotEmpty>
+
+    </update>
+    
+    <!-- 取得指定同步状态为同步中或者同步异常的数据号List （明细数据） -->
+    <select id="getBatDetailListNew" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+	  <![CDATA[
+		  SELECT
+		      A.BIN_ProductInOutDetailID,
+		      A.StockType,
+			  A.RelevanceNo,
+			  A.DetailNo ,
+			  C.DepartCode,
+			  A.BIN_LogicInventoryInfoID,
+			  P.ItemCode  IFProductId,
+			  A.Quantity,
+			  A.Price,
+			  A.CostPrice,
+			  A.StockType,
+			  A.Comments,
+			  A.ChangeCount,
+			  Y.Quantity  BookQuantity,
+			  A.CreateTime
+		  FROM 
+			  Inventory.BIN_ProductBatchInOutDetail A WITH(NOLOCK)
+		  LEFT JOIN Basis.BIN_ProductVendor PV ON A.BIN_ProductVendorID = PV.BIN_ProductVendorID
+		  LEFT JOIN Basis.BIN_Product P ON PV.BIN_ProductID = P.BIN_ProductID 
+		  LEFT JOIN BASIS.BIN_InventoryInfo B ON A.BIN_InventoryInfoID=B.BIN_InventoryInfoID
+		  LEFT JOIN Basis.BIN_Organization C ON B.BIN_OrganizationID=C.BIN_OrganizationID
+		  LEFT JOIN Inventory.BIN_ProductStockTaking X ON A.RelevanceNo=X.StockTakingNoIF
+		  LEFT JOIN Inventory.BIN_ProductTakingDetail Y ON X.BIN_ProductStockTakingID=Y.BIN_ProductTakingID AND A.BIN_ProductVendorID=Y.BIN_ProductVendorID AND A.BIN_InventoryInfoID=Y.BIN_InventoryInfoID AND A.BIN_LogicInventoryInfoID=Y.BIN_LogicInventoryInfoID	
+		  WHERE
+			  (A.SynchFlag = '1' OR A.SynchFlag = '3')
+		  AND A.ValidFlag = '1'
+		]]>	
+		<isNotEmpty property="BIN_ProductBatchInOutID"  prepend="AND" >
+			A.BIN_ProductBatchInOutID=#BIN_ProductBatchInOutID#
+		</isNotEmpty>
+    </select>
+    
+     <!-- 插入入出库批次明细表接口表 -->
+   	<insert id="insertProBatDetailNew" parameterClass="java.util.HashMap">
+   	<![CDATA[
+		INSERT INTO dbo.IF_ProductBatchInOutDetail(
+			BrandCode,
+			StockType,
+			RelevanceNo,
+			DetailNo,
+			TradeNoIF,
+			CounterCode,
+			LogicInventoryCode,
+			IFProductId,
+			Quantity,
+			Price,
+			CostPrice,
+			Comments,
+			ChangeCount,
+			PuttingTime,
+			BookQuantity,
+			ReceiptCreateTime
+		)
+		VALUES
+		(
+			#brandCode#,
+			#StockType#,
+			#RelevanceNo#,
+			#DetailNo#,
+			#TradeNoIF#,
+			#DepartCode#,
+			#BIN_LogicInventoryInfoID#,
+			#IFProductId#,
+			#Quantity#,
+			#Price#,
+			#CostPrice#,
+			#Comments#,
+			#ChangeCount#,
+			GETDATE(),
+			#BookQuantity#,
+			#CreateTime#
+		)
+	]]>
+   	</insert>
+    
+    
+     	<!-- 修改成功插入到接口表的入出库批次数据的同步状态  -->
+    <update id="updIFProBatDetailNew" parameterClass="java.util.HashMap">
+	  UPDATE 
+	  A
+	  SET 
+		A.SynchFlag = #synchFlag_New#,
+		<isNotEmpty property="updateTime">
+			A.UpdateTime=#updateTime#,
+		</isNotEmpty>
+		<isEmpty property="updateTime">
+			A.UpdateTime=GETDATE(),
+		</isEmpty>
+		<![CDATA[
+			A.UpdatedBy=#updatedBy#,
+			A.UpdatePGM=#updatePGM#,
+			A.ModifyCount=A.ModifyCount+1
+	  FROM 
+	      Inventory.BIN_ProductBatchInOutDetail A
+	  WHERE
+	      A.ValidFlag = '1'
+		]]>
+	 	<isNotEmpty property="BIN_ProductBatchInOutID"  prepend="AND" >
+			A.BIN_ProductBatchInOutID=#BIN_ProductBatchInOutID#
+		</isNotEmpty>
+    </update>
+    
+</sqlMap>

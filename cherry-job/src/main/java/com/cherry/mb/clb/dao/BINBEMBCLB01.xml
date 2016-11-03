@@ -1,0 +1,311 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sqlMap PUBLIC "-//iBATIS.com//DTD SQL Map 2.0//EN" "http://ibatis.apache.org/dtd/sql-map-2.dtd">
+<sqlMap namespace="BINBEMBCLB01">
+	
+	<!-- 取得需要下发的会员俱乐部列表  -->
+    <select id="getClubList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+    	<![CDATA[
+			SELECT
+				BIN_MemberClubID AS memberClubId,
+				BIN_OrganizationInfoID AS organizationInfoId,
+				BIN_BrandInfoID AS brandInfoId,
+				ClubCode AS clubCode,
+				ClubName AS clubName,
+				ClubNameForeign AS clubNameForeign,
+				LocationType AS locationType,
+				SaveJson AS saveJson,
+				SendFlag AS sendFlag,
+				ValidFlag AS validFlag,
+				ISNULL(ClubSetBy, 0) AS userID
+			FROM
+				Members.BIN_MemberClub
+			WHERE
+				BIN_BrandInfoID = #brandInfoId# AND
+				BIN_OrganizationInfoID = #organizationInfoId# AND
+				BatchFlag = '1'
+		]]>							
+    </select>
+    
+    <!-- 取得已下发的会员俱乐部柜台关系列表  -->
+    <select id="getClubCounterList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+    	<![CDATA[
+			SELECT
+				A.BIN_ClubCounterID AS clubCounterId,
+				A.ClubCode AS clubCode,
+				A.BIN_OrganizationInfoID AS organizationInfoId,
+				A.BIN_BrandInfoID AS brandInfoId,
+				A.CounterCode AS counterID,
+				A.ValidFlag AS validFlag,
+				B.BrandCode AS brandCode,
+				'BINBEMBARC02' AS createdBy,
+				'BINBEMBARC02' AS createPGM,
+				'BINBEMBARC02' AS updatedBy,
+				'BINBEMBARC02' AS updatePGM
+			FROM
+				Members.BIN_MemClubCounter A left join
+				Basis.BIN_BrandInfo B WITH(NOLOCK)
+				on (A.BIN_BrandInfoID = B.BIN_BrandInfoID)
+			WHERE
+				A.ClubCode = #clubCode# AND
+				A.BIN_BrandInfoID = #brandInfoId# AND
+				A.BIN_OrganizationInfoID = #organizationInfoId#
+		]]>
+			<isNotEmpty property="vdFlag">
+				<![CDATA[ AND A.ValidFlag = '1'
+				]]>
+			</isNotEmpty>
+	<![CDATA[
+		]]>							
+    </select>
+    
+    <!-- 取得已失效的会员俱乐部柜台关系列表  -->
+    <select id="getInvaildClubCounterList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+    	<![CDATA[
+			SELECT
+				A.BIN_ClubCounterID AS clubCounterId,
+				A.ClubCode AS clubCode,
+				A.BIN_OrganizationInfoID AS organizationInfoId,
+				A.BIN_BrandInfoID AS brandInfoId,
+				A.CounterCode AS counterID,
+				A.ValidFlag AS validFlag,
+				B.BrandCode AS brandCode,
+				'BINBEMBARC02' AS createdBy,
+				'BINBEMBARC02' AS createPGM,
+				'BINBEMBARC02' AS updatedBy,
+				'BINBEMBARC02' AS updatePGM
+			FROM
+				Members.BIN_MemClubCounter A left join
+				Basis.BIN_BrandInfo B WITH(NOLOCK)
+				on (A.BIN_BrandInfoID = B.BIN_BrandInfoID) left join
+				Members.BIN_MemberClub C
+				ON (A.ClubCode = C.ClubCode)
+			WHERE
+				A.BIN_BrandInfoID = #brandInfoId# AND
+				A.BIN_OrganizationInfoID = #organizationInfoId# AND 
+				A.ValidFlag = '1' AND
+				C.ClubCode IS NULL
+		]]>							
+    </select>
+    
+    <!-- 插入会员俱乐部与柜台对应关系表  -->
+	<insert id="insertClubCounter" parameterClass="java.util.HashMap">
+        <![CDATA[ 
+		INSERT INTO Members.BIN_MemClubCounter(
+					BIN_OrganizationInfoID,
+					BIN_BrandInfoID,
+					ClubCode,
+					CounterCode,
+					SendTime,
+					
+		]]>	
+		    <include refid="BINBECMINC99.insertKeySql" />	
+		<![CDATA[			
+		        )VALUES(
+					#organizationInfoId#,
+					#brandInfoId#,
+					#clubCode#,
+					#counterID#,
+					GETDATE(),
+       ]]>
+	        <include refid="BINBECMINC99.insertValueSql" />
+		<![CDATA[)
+			]]>
+    </insert>
+    
+    <!-- 插入会员俱乐部与柜台对应关系表(品牌数据库)  -->
+	<insert id="insertWitCounterClub" parameterClass="java.util.HashMap">
+        <![CDATA[ 
+		INSERT INTO dbo.WITPOSB_counter_memclub(
+					brandAbbr,
+					CounterCode,
+					ClubCode,
+					ValidFlag,
+					created,
+					modified
+		)VALUES(
+					#brandCode#,
+					#counterID#,
+					#clubCode#,
+					'1',
+					GETDATE(),
+					GETDATE()
+		)
+					
+		]]>	
+    </insert>
+    
+    <!-- 删除会员俱乐部与柜台对应关系(品牌数据库) -->
+	<delete id="delWitmemclub" parameterClass="java.util.HashMap">
+		<![CDATA[
+			DELETE FROM
+				dbo.WITPOSB_counter_memclub 
+			WHERE
+				CounterCode = #counterID# AND
+				brandAbbr = #brandCode#
+		]]> 
+	</delete>
+	
+	<!--启用会员俱乐部与柜台对应关系 (品牌数据库)-->
+	<update id="updateWitClubCounterValid" parameterClass="java.util.HashMap">
+		<![CDATA[
+			UPDATE 		
+				dbo.WITPOSB_counter_memclub
+			SET	
+				ValidFlag = '1',
+				modified = GETDATE()
+			WHERE 
+				CounterCode = #counterID# AND
+				ClubCode = #clubCode# AND
+				ValidFlag = '0'
+		]]>
+    </update>
+	
+	<!--停用会员俱乐部与柜台对应关系 (品牌数据库)-->
+	<update id="updateWitClubCounterDel" parameterClass="java.util.HashMap">
+		<![CDATA[
+			UPDATE 		
+				dbo.WITPOSB_counter_memclub
+			SET	
+				ValidFlag = '0',
+				modified = GETDATE()
+			WHERE 
+				CounterCode = #counterID# AND
+				ClubCode = #clubCode# AND
+				ValidFlag = '1'
+		]]>
+    </update>
+    
+    <!--更新俱乐部信息 (品牌数据库)-->
+	<update id="updateWitClubInfo" parameterClass="java.util.HashMap">
+		<![CDATA[
+			UPDATE 		
+				dbo.WITPOSB_member_club
+			SET	
+				brandAbbr = #brandCode#,
+				ClubCode = #clubCode#,
+				ClubName = #clubName#,
+				ClubNameForeign = #clubNameForeign#,
+				ValidFlag = #validFlag#,
+				modified = GETDATE()
+			WHERE 
+				ClubID = #memberClubId#
+		]]>
+    </update>
+    
+     <!-- 插入俱乐部信息 (品牌数据库)  -->
+	<insert id="insertWitClubInfo" parameterClass="java.util.HashMap">
+        <![CDATA[ 
+		INSERT INTO dbo.WITPOSB_member_club(
+					brandAbbr,
+					ClubCode,
+					ClubName,
+					ClubNameForeign,
+					created,
+					modified,
+					ClubID,
+					ValidFlag
+		        )VALUES(
+					#brandCode#,
+					#clubCode#,
+					#clubName#,
+					#clubNameForeign#,
+					GETDATE(),
+					GETDATE(),
+					#memberClubId#,
+					#validFlag#
+				)
+			]]>
+    </insert>
+    
+    <!--更新会员俱乐部与柜台对应关系 -->
+	<update id="updateClubCounter" parameterClass="java.util.HashMap">
+		<![CDATA[
+			UPDATE 		
+				Members.BIN_MemClubCounter
+			SET	
+				ValidFlag = '1',
+				InvalidTime = null,
+				SendTime = GETDATE(),
+				
+		]]>
+		<include refid="BINOLCMINC99.updateSql" />
+		<![CDATA[
+			WHERE 
+				BIN_ClubCounterID = #clubCounterId#
+		]]>
+    </update>
+    
+     <!--停用会员俱乐部与柜台对应关系 -->
+	<update id="updateClubCounterDel" parameterClass="java.util.HashMap">
+		<![CDATA[
+			UPDATE 		
+				Members.BIN_MemClubCounter
+			SET	
+				ValidFlag = '0',
+				InvalidTime = GETDATE(),
+		]]>
+		<include refid="BINOLCMINC99.updateSql" />
+		<![CDATA[
+			WHERE 
+				BIN_ClubCounterID = #clubCounterId# AND
+				ValidFlag = '1'
+		]]>
+    </update>
+    
+    <!--更新会员俱乐部下发标识 -->
+	<update id="updateClubSendFlag" parameterClass="java.util.HashMap">
+		<![CDATA[
+			UPDATE 		
+				Members.BIN_MemberClub
+			SET	
+				SendFlag = CASE WHEN (LocationType = '1' OR LocationType = '3') THEN '2' ELSE '1' END,
+		]]>
+		<include refid="BINOLCMINC99.updateSql" />
+		<![CDATA[
+			WHERE 
+				BIN_MemberClubID = #memberClubId#
+		]]>
+    </update>
+    
+    <!--更新会员俱乐部BATCH执行标识-->
+	<update id="updateClubBatchFlag" parameterClass="java.util.HashMap">
+		<![CDATA[
+			UPDATE 		
+				Members.BIN_MemberClub
+			SET	
+				BatchFlag = '1'
+			WHERE 
+				BIN_BrandInfoID = #brandInfoId# AND
+				BIN_OrganizationInfoID = #organizationInfoId# AND
+				SendFlag IN ('0','2')
+		]]>
+    </update>
+    
+    <!--清除会员俱乐部BATCH执行标识-->
+	<update id="updateClubBatchFlagClear" parameterClass="java.util.HashMap">
+		<![CDATA[
+			UPDATE 		
+				Members.BIN_MemberClub
+			SET	
+				BatchFlag = '0'
+			WHERE 
+				BIN_BrandInfoID = #brandInfoId# AND
+				BIN_OrganizationInfoID = #organizationInfoId# AND
+				BatchFlag = '1'
+		]]>
+    </update>
+    
+    <!-- 取得品牌数据源信息  -->
+    <select id="getOldDataSourceName" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+       	<![CDATA[
+			SELECT
+				OldDataSourceName AS oldDataSourceName
+			FROM
+				dbo.BIN_BrandDataSourceConfig
+			WHERE
+				BrandCode = #brandCode# AND
+				ValidFlag = '1'
+		]]>
+    </select>
+    
+</sqlMap>

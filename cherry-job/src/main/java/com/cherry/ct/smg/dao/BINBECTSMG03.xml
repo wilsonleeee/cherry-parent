@@ -1,0 +1,257 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sqlMap PUBLIC "-//iBATIS.com//DTD SQL Map 2.0//EN" "http://ibatis.apache.org/dtd/sql-map-2.dtd">
+<sqlMap namespace="BINBECTSMG03">
+
+	<!-- 增加短信沟通明细记录  -->
+	<insert id="addSmsSendDetail" parameterClass="java.util.HashMap">
+		<![CDATA[
+		INSERT INTO Communication.BIN_SmsSendDetail(
+			BIN_MessageCode,
+			BIN_OrganizationInfoID,
+			BIN_BrandInfoID,
+			BatchID,
+			CustomerType,
+			CustomerSysID,
+			Mobilephone,
+			Message,
+			PlanCode,
+			BIN_CommunicationCode,
+			CouponCode,
+			DataSource,
+			SendPriority,
+			Status,
+			VerifiedFlag,
+			SendTime,
+			Comments,
+			Expansion,
+			CreateTime,
+			CreatedBy,
+			CreatePGM,
+			UpdateTime,
+			UpdatedBy,
+			UpdatePGM,
+			ModifyCount 
+		)VALUES(
+			#messageCode#,
+			#organizationInfoId#,
+			#brandInfoId#,
+			#batchId#,
+			#customerType#,
+			#customerSysId#,
+			#mobilePhone#,
+			#message#,
+			#planCode#,
+			#communicationCode#,
+			#couponCode#,
+			#dataSource#,
+			#sendPriority#,
+			#sendStatus#,
+			#verifiedFlag#,
+			#sendTime#,
+			#comments#,
+			#expansion#,
+			GETDATE(),
+			#createBy#,
+			#createPGM#,
+			GETDATE(),
+			#updateBy#,
+			#updatePGM#,
+			#modifyCount# 
+		)
+		]]>
+	</insert>
+
+	<!-- 记录客户沟通日志  -->
+	<insert id="addCommunicationLog" parameterClass="java.util.HashMap">
+		<![CDATA[
+		INSERT INTO Communication.BIN_CommunicationLog(
+			BIN_OrganizationInfoID,
+			BIN_BrandInfoID,
+			CommType,
+			CommCode,
+			CustomerType,
+			CustomerSysID,
+			ReceiverCode,
+			BatchID,
+			VerifyCode,
+			PlanCode,
+			PhaseNum,
+			BIN_CommunicationCode,
+			CommSetID,
+			CommTime,
+			Status,
+			DataSource,
+			CreateTime,
+			CreatedBy,
+			CreatePGM,
+			UpdateTime,
+			UpdatedBy,
+			UpdatePGM,
+			ModifyCount 
+		)VALUES(
+			#organizationInfoId#,
+			#brandInfoId#,
+			#commType#,
+			#commCode#,
+			#customerType#,
+			#customerSysId#,
+			#receiverCode#,
+			#batchId#,
+			#verifyCode#,
+			#planCode#,
+			#phaseNum#,
+			#communicationCode#,
+			#commSetId#,
+			#sendTime#,
+			#resultStatus#,
+			#dataSource#,
+			GETDATE(),
+			#createBy#,
+			#createPGM#,
+			GETDATE(),
+			#updateBy#,
+			#updatePGM#,
+			#modifyCount# 
+		)
+		]]>
+	</insert>
+
+    <!--根据品牌ID获取短信接口表 -->
+	<select id="getSmsSendTable" parameterClass="java.util.HashMap" resultClass="java.lang.String">
+		<![CDATA[
+			SELECT TOP 1 
+				content as smsSendTable  
+			FROM 
+				dbo.witpos_sms_configs 
+			WHERE 
+				brand_abbr = #brandCode# AND 
+				config_code = 'SMS_SENDTABLE' 
+		]]>
+    </select>
+
+	<!-- 向短信接口写入信息  -->
+	<insert id="addMsgtoSmsInterface" parameterClass="java.util.HashMap">
+		<![CDATA[
+		INSERT INTO dbo.$smsSendTable$(
+			SmsSPhone,
+			SmsSMessage,
+			SmsSSendTime,
+			SmsSPolice,
+			Sms_id,
+			BatchID,
+			EventType,
+		]]>
+        <dynamic>
+            <isNotEmpty property="groupNumber">
+                <![CDATA[GroupNumber,]]>
+            </isNotEmpty>
+		</dynamic>
+        <![CDATA[
+			SmsSBakInt1,
+			SmsSBakChar1 
+		)VALUES(
+			#mobilePhone#,
+			#message#,
+			#sendTime#,
+			0,
+			#messageCode#,
+			#messageGroupCode#,
+			#eventCode#,
+		]]>
+        <dynamic>
+            <isNotEmpty property="groupNumber">
+                <![CDATA[#groupNumber#,]]>
+            </isNotEmpty>
+		</dynamic>
+        <![CDATA[
+			#smsType#,
+			#memCode#
+		)
+		]]>
+	</insert>
+
+	<!-- 写入异常信息日志记录  -->
+	<insert id="addErrorMsgLog" parameterClass="java.util.HashMap">
+		<![CDATA[
+		INSERT INTO Communication.BIN_ErrorMessageLog(
+			BIN_OrganizationInfoID,
+			BIN_BrandInfoID,
+			RunCode,
+			BatchID,
+			Bin_PlanCode,
+			BIN_CommunicationCode,
+			CustomerType,
+			CustomerSysID,
+			ReceiverCode,
+			Message,
+			SendTime,
+			CommType,
+			DataSource,
+			ErrorType,
+			ErrorText,
+			CreateTime,
+			CreatedBy,
+			CreatePGM,
+			UpdateTime,
+			UpdatedBy,
+			UpdatePGM,
+			ModifyCount 
+		)VALUES(
+			#organizationInfoId#,
+			#brandInfoId#,
+			#runCode#,
+			#batchId#,
+			#planCode#,
+			#communicationCode#,
+			#customerType#,
+			#customerSysId#,
+			#receiverCode#,
+			#message#,
+			#sendTime#,
+			#commType#,
+			#dataSource#,
+			#errorType#,
+			#errorText#,
+			GETDATE(),
+			#createBy#,
+			#createPGM#,
+			GETDATE(),
+			#updateBy#,
+			#updatePGM#,
+			#modifyCount# 
+		)
+		]]>
+	</insert>
+	
+	<!-- 记录沟通程序生成的Coupon信息  -->
+	<insert id="addCouponCreateLog" parameterClass="java.util.HashMap">
+		<![CDATA[
+		INSERT INTO Communication.BIN_CouponCreateLog(
+			BatchID,
+			CommCode,
+			CampaignCode,
+			CustomerSysID,
+			MemberCode,
+			ReceiverCode,
+			CouponCode,
+			ExpiredTime,
+			CreateTime,
+			CreatedBy,
+			CreatePGM 
+		)VALUES(
+			#batchId#,
+			#commCode#,
+			#campCode#,
+			#customerSysId#,
+			#memCode#,
+			#receiverCode#,
+			#couponCode#,
+			#expiredTime#,
+			GETDATE(),
+			#createBy#,
+			#createPGM# 
+		)
+		]]>
+	</insert>
+	
+</sqlMap>

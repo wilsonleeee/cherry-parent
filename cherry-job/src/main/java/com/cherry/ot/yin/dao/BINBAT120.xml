@@ -1,0 +1,151 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sqlMap PUBLIC "-//iBATIS.com//DTD SQL Map 2.0//EN" "http://ibatis.apache.org/dtd/sql-map-2.dtd">
+<sqlMap namespace="BINBAT120">
+    <!-- 更新颖通货单接口表的TrxStatus字段[TrxStatus=null]变更为[TrxStatus=1] -->
+    <update id="updTrxStatusNullTo1ForOT" parameterClass="java.util.HashMap">
+	<![CDATA[  
+	  WITH S AS (
+		SELECT 
+		    TOP (#upCount#) T.DocEntry 
+		FROM 
+		  (SELECT DISTINCT DocEntry FROM dbo.CPS_FEEDBACK_TRANSFER WHERE TrxStatus IS NULL AND Brand = #brandCode#) T
+	    )
+	 ]]> 
+	<![CDATA[  
+	  UPDATE A 
+	  	  SET A.TrxStatus ='1'
+	  FROM 
+		  dbo.CPS_FEEDBACK_TRANSFER A,S
+	  WHERE 
+		  A.DocEntry = S.DocEntry 
+	  AND A.TrxStatus IS NULL
+	  AND A.Brand = #brandCode#
+	 ]]> 
+    </update>
+    
+    <!-- 取得颖通发货单接口表TrxStatus字段为null的数据(V2.0) -->
+    <select id="getDocEntryListForOT" parameterClass="java.util.HashMap" resultClass="java.lang.String">
+	<![CDATA[  
+		SELECT 
+		    TOP (#upCount#) T.DocEntry 
+		FROM 
+		  (SELECT DISTINCT DocEntry FROM dbo.CPS_FEEDBACK_TRANSFER WHERE TrxStatus IS NULL AND Brand = #brandCode#) T
+	 ]]> 
+	 <dynamic prepend="WHERE">
+	 	<!-- 排除失败的发货单据 -->
+		<isNotEmpty property="falidDocEntryList" >
+			T.DocEntry NOT IN
+			<iterate property="falidDocEntryList" open="(" close=")" conjunction=","> 
+				#falidDocEntryList[]#
+			</iterate>
+		</isNotEmpty>
+		
+	 </dynamic>
+    </select>
+    
+    <!-- 更新颖通货单接口表的TrxStatus字段 -->
+    <update id="updTrxStatusForOT" parameterClass="java.util.HashMap">
+	  UPDATE 
+		dbo.CPS_FEEDBACK_TRANSFER
+	  SET 
+		TrxStatus = #trxStatus_New#
+	  <dynamic prepend="WHERE">
+	  	<isNotEmpty property="trxStatus_Old" prepend="AND">
+	  		<isEqual property="trxStatus_Old" compareValue="isNull">
+	  			TrxStatus IS NULL
+	  		</isEqual>
+	  		<isNotEqual property="trxStatus_Old" compareValue="isNull">
+			 	TrxStatus = #trxStatus_Old#
+	  		</isNotEqual>
+	  	</isNotEmpty>
+	  	<isNotEmpty property="brandCode" prepend="AND">
+		 	Brand = #brandCode#
+	  	</isNotEmpty>
+	  	<isNotEmpty property="docEntry"  prepend="AND">
+	  	 	DocEntry=#docEntry#
+	  	</isNotEmpty>
+	  </dynamic>
+    </update>
+    
+    <!-- 取得颖通发货单接口表数据 -->
+    <select id="getExportTransListForOT" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+		SELECT
+			CASE A.InvType WHEN 'TODE' THEN '2' WHEN 'FRDE' THEN '3' END AS InvType,
+		    A.DocEntry AS DocEntry_OLD,
+		    CASE A.InvType WHEN 'TODE' THEN A.DocEntry + A.ToShop WHEN 'FRDE' THEN A.DocEntry + A.Shop END AS DocEntry,
+		    A.DocDate,
+		    CONVERT(varchar(100), A.DocDate, 23) AS TradeDate,
+		    CONVERT(varchar(100), A.DocDate, 108) AS TradeTime,
+		    A.Shop,
+		    A.ItemCode,
+		    A.Barcode,
+		    A.ItemDesc,
+		    A.Quantity,
+		    A.BaseEntry,
+		    A.CreateDateB,
+		    A.ToShop,
+		    A.TrxStatus,
+		    A.CreateDate,
+		    A.ErrCode,
+		    A.Brand
+		FROM 
+		  	dbo.CPS_FEEDBACK_TRANSFER A WITH(NOLOCK)
+		<dynamic prepend="WHERE">
+		  	<isNotEmpty property="trxStatus" prepend="AND">
+			 A.TrxStatus = #trxStatus#
+		  	</isNotEmpty>
+		  	<isNotEmpty property="brandCode" prepend="AND">
+			 A.Brand = #brandCode#
+		  	</isNotEmpty>
+		  	<isNotEmpty property="docEntry"  prepend="AND">
+		  	 A.DocEntry=#docEntry#
+		  	</isNotEmpty>
+		  	
+		</dynamic>
+    </select>
+    
+    <!-- 根据itemCode取得price(产品为产品价格表的"销售价格"、促销品为"促销品的标准成本") -->
+    <select id="getProPrmPriceByUB" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+     <![CDATA[
+		SELECT
+			A.UnitCode AS unitCode,
+			PV.BarCode AS barCode,
+			ISNULL(CONVERT(Decimal(16,2),B.SalePrice),0) AS price
+		FROM Basis.BIN_Product A WITH(NOLOCK)
+		JOIN Basis.BIN_ProductVendor PV WITH(NOLOCK) ON (A.BIN_ProductID = PV.BIN_ProductID)
+		LEFT JOIN Basis.BIN_ProductPrice B WITH(NOLOCK) ON (A.BIN_ProductID = B.BIN_ProductID AND B.Type = '2' AND B.StartDate <= #businessDate# AND B.endDate >= #businessDate# ) 
+	 ]]>
+     <![CDATA[
+		WHERE 
+		A.BIN_OrganizationInfoID = #organizationInfoId#
+		AND A.BIN_BrandInfoID = #brandInfoId#
+		AND A.ItemCode =#itemCode#
+	  UNION
+		SELECT
+		A.UnitCode AS unitCode,
+		PPV.BarCode AS barCode,
+		ISNULL(CONVERT(Decimal(16,2),A.StandardCost),0) AS price
+		FROM
+		Basis.BIN_PromotionProduct A WITH(NOLOCK)
+		JOIN Basis.BIN_PromotionProductVendor PPV WITH(NOLOCK) ON (A.BIN_PromotionProductID = PPV.BIN_PromotionProductID)
+		WHERE 
+		A.BIN_OrganizationInfoID = #organizationInfoId#
+		AND A.BIN_BrandInfoID = #brandInfoId#
+		AND A.ItemCode = #itemCode#
+	 ]]>
+    </select>
+    
+    <!-- 取得品牌Code  -->
+    <select id="getBrandCode" parameterClass="java.util.HashMap" resultClass="java.lang.String">
+       <![CDATA[
+			SELECT
+				BrandCode AS brandCode
+			FROM
+				Basis.BIN_BrandInfo
+			WHERE
+				BIN_BrandInfoID = #brandInfoId#
+		]]>	
+    </select>
+    
+    
+</sqlMap>

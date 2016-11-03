@@ -1,0 +1,107 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sqlMap PUBLIC "-//iBATIS.com//DTD SQL Map 2.0//EN" "http://ibatis.apache.org/dtd/sql-map-2.dtd">
+<sqlMap namespace="BINBAT135">
+    
+    <!-- 取得标准退库单接口表SynchFlag字段为null并且BillType=TKSH的单据号 -->
+    <select id="getBillCodeList" parameterClass="java.util.HashMap" resultClass="java.lang.String">
+	<![CDATA[  
+		SELECT 
+		    TOP (#upCount#) T.BillCode 
+		FROM 
+		  (SELECT DISTINCT BillCode FROM dbo.IF_OutStorage WHERE SynchFlag IS NULL AND BrandCode = #brandCode# AND BillType='TKSH') T
+	 ]]> 
+	 <dynamic prepend="WHERE">
+	 	<!-- 排除失败的退库单据 -->
+		<isNotEmpty property="falidBillCodeList" >
+			T.BillCode NOT IN
+			<iterate property="falidBillCodeList" open="(" close=")" conjunction=","> 
+				#falidBillCodeList[]#
+			</iterate>
+		</isNotEmpty>		
+	 </dynamic>
+    </select>
+    
+    <!-- 更新标准退库单接口表的SynchFlag字段(BillType='TKSH') -->
+    <update id="updateSynchFlag" parameterClass="java.util.HashMap">
+	  UPDATE 
+		dbo.IF_OutStorage
+	  SET 
+		SynchFlag = #synchFlag_New#,
+		SynchTime=GETDATE()
+	  <dynamic prepend="WHERE">
+	  	<isEmpty property="synchFlag_Old" prepend="AND">
+	  		SynchFlag IS NULL
+	  	</isEmpty>
+	  	<isNotEmpty property="synchFlag_Old" prepend="AND">
+	  		SynchFlag=#synchFlag_Old#
+	  	</isNotEmpty>
+	  	<isNotEmpty property="brandCode" prepend="AND">
+		 	BrandCode = #brandCode#
+	  	</isNotEmpty>
+	  	<isNotEmpty property="billCode"  prepend="AND">
+	  	 	BillCode=#billCode#
+	  	</isNotEmpty>
+	  		AND BillType='TKSH'
+	  </dynamic>
+    </update>
+    
+    <!-- 取得标准退库单接口表数据 (主数据)(BillType='TKSH')-->
+    <select id="getExportTransList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+		SELECT
+			A.BrandCode,
+		    A.BillCode,
+		    A.BillType,
+		    CONVERT(varchar(100), A.BusinessDate, 23) AS TradeDate,
+		    CONVERT(varchar(100), A.BillCreateTime, 108) AS TradeTime,
+		    A.BillStatus,
+		    A.OutDepartCode,
+		    A.InDepartCode,
+		    A.TotalQuantity,
+		    A.TotalAmount,
+		    A.OperatorCode,		    
+		    A.RelateBillCode,
+		    A.Comment,
+		    A.PuttingTime
+		FROM 
+		  	dbo.IF_OutStorage A WITH(NOLOCK)
+		WHERE	A.BillType='TKSH'	
+		  	<isNotEmpty property="synchFlag" prepend="AND">
+			 A.SynchFlag = #synchFlag#
+		  	</isNotEmpty>
+		  	<isNotEmpty property="brandCode" prepend="AND">
+			 A.BrandCode = #brandCode#
+		  	</isNotEmpty>	  		   	
+    </select>
+    
+    
+    <!-- 取得标准退库单接口表数据 (单据明细)-->
+    <select id="getExportTransListdeatils" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+		SELECT
+			A.BrandCode,
+		    A.BillCode,
+		    A.IFProductId,		    
+		    A.UnitCode,
+		    A.BarCode,
+		    A.Quantity,
+		    A.Price,
+		    A.ReferencePrice,
+		    A.PuttingTime
+		FROM 
+		  	dbo.IF_OutStorageDetail A WITH(NOLOCK)		
+		  	where A.BillCode=#BillCode#
+    </select>
+   
+    
+    <!-- 取得品牌Code  -->
+    <select id="getBrandCode" parameterClass="java.util.HashMap" resultClass="java.lang.String">
+       <![CDATA[
+			SELECT
+				BrandCode AS brandCode
+			FROM
+				Basis.BIN_BrandInfo
+			WHERE
+				BIN_BrandInfoID = #brandInfoId#
+		]]>	
+    </select>
+    
+</sqlMap>

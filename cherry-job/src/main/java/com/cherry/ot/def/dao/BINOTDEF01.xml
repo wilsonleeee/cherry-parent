@@ -1,0 +1,188 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sqlMap PUBLIC "-//iBATIS.com//DTD SQL Map 2.0//EN" "http://ibatis.apache.org/dtd/sql-map-2.dtd">
+<sqlMap namespace="BINOTDEF01">
+	
+	<!-- 取得指定同步状态的销售单据号List  -->
+    <select id="getBillCodeOfSRListBySync" parameterClass="java.util.HashMap" resultClass="java.lang.String">
+	  <![CDATA[
+		  SELECT
+			BillCode as billCode	
+		  FROM 
+			 Sale.BIN_SaleRecord WITH(NOLOCK)
+		  WHERE
+			  SynchFlag = #synchFlag#
+		  AND ValidFlag = '1'
+		  AND BIN_OrganizationInfoID = #organizationInfoId#
+		  AND BIN_BrandInfoID = #brandInfoId#
+		]]>
+		<![CDATA[AND EXISTS ( ]]>
+			<include refid="BINBECMINC99.getBillByTestModList" />
+		<![CDATA[  
+		    AND A.BIN_OrganizationID = C99.BIN_OrganizationID)
+		]]> 
+    </select>
+    
+	<!-- 根据新后台billCode查询销售数据接口表[Interfaces.BIN_Sale]的单据号List  -->
+    <select id="getSRListByBillCodeForOT" parameterClass="java.util.HashMap" resultClass="java.lang.String">
+      <![CDATA[
+		SELECT
+			DISTINCT
+			BillCode AS billCode
+		FROM 
+			Interfaces.BIN_Sale WITH(NOLOCK)
+		WHERE
+			BillCode IN
+	  ]]>
+			<iterate property="billCodeList" open="(" close=")" conjunction=",">
+				#billCodeList[]#
+			</iterate>
+		AND BrandCode = #brandCode#
+    </select>
+    
+    <!-- 更新销售数据的同步状态 -->
+    <update id="updSaleRecordBySync" parameterClass="java.util.HashMap">
+	  UPDATE 
+	  <isNotEmpty property="upCount">
+	  	TOP(#upCount#) 
+	  </isNotEmpty> 
+	  A
+	  SET 
+		A.SynchFlag = #synchFlag_New#,
+		<isNotEmpty property="updateTime">
+			A.UpdateTime=#updateTime#,
+		</isNotEmpty>
+		<isEmpty property="updateTime">
+			A.UpdateTime=GETDATE(),
+		</isEmpty>
+		<![CDATA[
+			A.UpdatedBy=#updatedBy#,
+			A.UpdatePGM=#updatePGM#,
+			A.ModifyCount=A.ModifyCount+1
+	  FROM 
+	      Sale.BIN_SaleRecord A
+	  WHERE
+	      A.ValidFlag = '1'
+		]]>
+	  	<isNotEmpty property="synchFlag_Old" prepend="AND">
+		 A.SynchFlag = #synchFlag_Old#
+	  	</isNotEmpty>
+	  	<isNotEmpty property="billCodeList" prepend="AND">
+	  		A.BillCode IN
+			<iterate property="billCodeList" open="(" close=")" conjunction=",">
+				#billCodeList[]#
+			</iterate>
+	  	</isNotEmpty>
+	  AND A.BIN_OrganizationInfoID = #organizationInfoId#
+	  AND A.BIN_BrandInfoID = #brandInfoId#
+		<![CDATA[AND EXISTS ( ]]>
+			<include refid="BINBECMINC99.getBillByTestModList" />
+		<![CDATA[  
+		    AND A.BIN_OrganizationID = C99.BIN_OrganizationID)
+		]]> 
+    </update>
+    
+    <!-- 取得新后台同步状态为"同步处理中"[syncFlag=2]销售数据（主数据、明细数据） -->
+    <select id="getSRListBySynchFlag" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+      <![CDATA[
+		  SELECT 
+		    #brandCode# AS BrandCode,
+			A.SaleType,
+			A.BillCode,
+			CASE WHEN A.SaleType = 'SR' THEN A.BillCodePre ELSE null END AS RelevanceBillCode,
+			B.EmployeeCode AS BACode,
+			C.DepartCode AS CounterCode,
+			A.MemberCode,
+			A.OriginalAmount,
+			A.Discount,
+			A.PayAmount,
+			A.DecreaseAmount,
+			A.SaleDate,
+			A.SaleTime,
+			B.DetailNo,
+			B.SaleType AS ProductType,
+			B.UnitCode,
+			B.BarCode,
+			B.PricePay,
+			B.Quantity
+		  FROM Sale.BIN_SaleRecord A WITH(NOLOCK)
+		  JOIN Sale.BIN_SaleRecordDetail B WITH(NOLOCK) ON B.BIN_SaleRecordID = A.BIN_SaleRecordID
+		  JOIN Basis.BIN_Organization C WITH(NOLOCK) ON (A.BIN_OrganizationID = C.BIN_OrganizationID) 
+		  WHERE
+		  	  A.BIN_OrganizationInfoID = #organizationInfoId#
+		  AND A.BIN_BrandInfoID = #brandInfoId#
+		  AND A.ValidFlag = '1'
+		  AND A.SynchFlag = #synchFlag#
+		]]>
+		<![CDATA[AND EXISTS ( ]]>
+			<include refid="BINBECMINC99.getBillByTestModList" />
+		<![CDATA[  
+		    AND A.BIN_OrganizationID = C99.BIN_OrganizationID)
+		]]>
+		  ORDER BY A.BIN_SaleRecordID
+    </select>
+    
+    <!-- 插入销售数据接口表[Interfaces.BIN_Sale] -->
+   	<insert id="insertBinSales" parameterClass="java.util.HashMap">
+   	<![CDATA[
+		INSERT INTO Interfaces.BIN_Sale(
+		    BrandCode,
+			SaleType,
+			BillCode,
+			RelevanceBillCode,
+			BACode,
+			CounterCode,
+			MemberCode,
+			OriginalAmount,
+			Discount,
+			PayAmount,
+			DecreaseAmount,
+			SaleDate,
+			SaleTime,
+			DetailNo,
+			ProductType,
+			UnitCode,
+			BarCode,
+			PricePay,
+			Quantity,
+			TrxStatus,
+			CreateTime
+		)
+		VALUES
+		(
+		    #BrandCode#,
+			#SaleType#,
+			#BillCode#,
+			#RelevanceBillCode#,
+			#BACode#,
+			#CounterCode#,
+			#MemberCode#,
+			#OriginalAmount#,
+			#Discount#,
+			#PayAmount#,
+			#DecreaseAmount#,
+			#SaleDate#,
+			#SaleTime#,
+			#DetailNo#,
+			#ProductType#,
+			#UnitCode#,
+			#BarCode#,
+			#PricePay#,
+			#Quantity#,
+			'0',
+			GETDATE()
+		)
+	]]>
+   	</insert>
+   	
+    <!-- 取得品牌Code  -->
+    <select id="getBrandCode" parameterClass="java.util.HashMap" resultClass="java.lang.String">
+       <![CDATA[
+			SELECT
+				BrandCode AS brandCode
+			FROM
+				Basis.BIN_BrandInfo
+			WHERE
+				BIN_BrandInfoID = #brandInfoId#
+		]]>	
+    </select>
+</sqlMap>

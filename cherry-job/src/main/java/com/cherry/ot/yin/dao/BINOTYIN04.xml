@@ -1,0 +1,177 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sqlMap PUBLIC "-//iBATIS.com//DTD SQL Map 2.0//EN" "http://ibatis.apache.org/dtd/sql-map-2.dtd">
+<sqlMap namespace="BINOTYIN04">
+	<!-- 产品入库单明细查询sql -->
+	<sql id="PrtReceiveQuery">
+		<![CDATA[
+			SELECT 
+				DISTINCT
+				A.ReceiveNoIF AS DocEntry,
+				A.ReceiveDate AS DocDate,
+				C.DetailNo AS LineNum,
+				B.DepartCode AS Shop,
+				A.Comments AS Remarks,
+				E.ItemCode AS ItemCode,
+				C.Quantity AS Quantity,
+				A.RelevanceNo AS BaseEntry,
+				#brandCode# AS brandCode,
+		]]>
+		<dynamic>
+			<isNotEmpty property="language">
+				<isEqual property="language" compareValue="en_US">
+					E.NameForeign AS
+					ItemDesc
+				</isEqual>
+				<isEqual property="language" compareValue="zh_CN">
+					E.NameTotal AS
+					ItemDesc
+				</isEqual>
+			</isNotEmpty>
+			<isEmpty property="language">
+				E.NameTotal AS ItemDesc
+			</isEmpty>
+		</dynamic>
+		<![CDATA[
+			FROM
+				Inventory.BIN_ProductReceive A WITH(NOLOCK)
+				LEFT JOIN Basis.BIN_Organization B WITH(NOLOCK)
+				ON(A.BIN_OrganizationIDReceive = B.BIN_OrganizationID )
+				LEFT JOIN Inventory.BIN_ProductReceiveDetail C WITH(NOLOCK)
+				ON(A.BIN_ProductReceiveID = C.BIN_ProductReceiveID )
+				LEFT JOIN Basis.BIN_ProductVendor D
+				ON(C.BIN_ProductVendorID = D.BIN_ProductVendorID )
+				LEFT JOIN Basis.BIN_Product E
+				ON(D.BIN_ProductID = E.BIN_ProductID )
+			WHERE
+				A.BIN_BrandInfoID = #brandInfoId# AND 
+				A.BIN_OrganizationInfoID = #organizationInfoId# AND
+				A.SynchFlag = '2' AND 
+				A.ValidFlag = '1'
+			ORDER BY 
+				A.ReceiveNoIF
+		]]>
+	</sql>
+
+	<select id="getPrtReceiveDetail" parameterClass="java.util.HashMap"
+		resultClass="java.util.HashMap">
+		<include refid="BINOTYIN04.PrtReceiveQuery" />
+	</select>
+
+	<!-- SynchFlag状态更新 -->
+	<update id="updateSynchFlag" parameterClass="java.util.HashMap">
+		<![CDATA[
+			UPDATE
+		]]>
+		<isNotEmpty property="batchSize">
+				TOP(#batchSize#)
+		</isNotEmpty>
+		<![CDATA[
+				Inventory.BIN_ProductReceive
+			SET
+				SynchFlag = #synchFlag_New#
+			WHERE
+				ValidFlag ='1'
+		]]>
+		<isNotEmpty property="synchFlag_Old" prepend="AND">
+			SynchFlag =
+			#synchFlag_Old#
+		</isNotEmpty>
+		<isNotEmpty property="receiveNoIFList" prepend="AND">
+	  		ReceiveNoIF IN
+			<iterate property="receiveNoIFList" open="(" close=")" conjunction=",">
+				#receiveNoIFList[]#
+			</iterate>
+	  	</isNotEmpty>
+		<![CDATA[
+				AND BIN_BrandInfoID = #brandInfoId#
+				AND BIN_OrganizationInfoID = #organizationInfoId#
+		]]>
+	</update>
+	
+	<!-- 取得指定导出状态的订单号List -->
+	<select id="getPrtReceiveListBySynch" parameterClass="java.util.HashMap"
+		resultClass="java.lang.String">
+		SELECT
+			ReceiveNoIF AS receiveNoIF	
+		FROM 
+			Inventory.BIN_ProductReceive WITH(NOLOCK)
+		WHERE
+			SynchFlag = #synchFlag#
+			AND ValidFlag = '1'
+			AND BIN_OrganizationInfoID = #organizationInfoId#
+			AND BIN_BrandInfoID = #brandInfoId#
+	</select>
+	
+	<!-- 根据新后台的单据号->查询颖通接口表的单据号List -->
+	<select id="getOTIFListFromPrtReceive" parameterClass="java.util.HashMap"
+		resultClass="java.lang.String">
+		<![CDATA[
+			SELECT
+				DISTINCT
+				DocEntry AS receiveNoIF
+			FROM 
+				CPS_IMPORT_TRANSFER WITH(NOLOCK)
+			WHERE
+				InvType = 'TRT4' AND
+				DocEntry IN
+	  	]]>
+		<iterate property="receiveNoIFList" open="(" close=")" conjunction=",">
+			#receiveNoIFList[]#
+		</iterate>
+		<isNotEmpty property="brandCode" prepend="AND">
+			Brand = #brandCode#
+		</isNotEmpty>
+		<![CDATA[
+			UNION
+			SELECT
+				DISTINCT
+				DocEntry AS receiveNoIF
+			FROM 
+				CPS_IMPORT_TRANSFER_SUC WITH(NOLOCK)
+			WHERE
+				InvType = 'TRT4' AND
+				DocEntry IN
+		]]>
+		<iterate property="receiveNoIFList" open="(" close=")" conjunction=",">
+			#receiveNoIFList[]#
+		</iterate>
+		<isNotEmpty property="brandCode" prepend="AND">
+			Brand = #brandCode#
+		</isNotEmpty>
+	</select>
+
+	<!--产品入库单数据插入颖通接口表 -->
+	<insert id="insertOTYINIFDb" parameterClass="java.util.HashMap">
+        <![CDATA[ 
+		INSERT INTO CPS_IMPORT_TRANSFER(
+			InvType,					
+            DocEntry,					
+            DocDate,
+            LineNum,					
+            Shop,
+            Remarks,
+            ItemCode,
+            ItemDesc,
+            Quantity,
+            BaseEntry,
+			CreateDate,
+			Brand		
+        )
+        VALUES	
+        (
+			'TRT4',										
+            #DocEntry#,
+            #DocDate#,					
+            #LineNum#,
+            #Shop#,
+            #Remarks#,
+            #ItemCode#,
+            #ItemDesc#,
+            #Quantity#,
+            #BaseEntry#,
+			GETDATE(),
+			#brandCode#
+		)
+    	]]>
+	</insert>
+</sqlMap>

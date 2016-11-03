@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sqlMap PUBLIC "-//iBATIS.com//DTD SQL Map 2.0//EN" "http://ibatis.apache.org/dtd/sql-map-2.dtd">
+<sqlMap namespace="VersionInfo">
+
+	<!-- 删除销售版本号M,G表数据 -->
+	<delete id="deleteVersion" parameterClass="java.util.HashMap">
+		<![CDATA[  
+			DELETE FROM dbo.WITPOSB_Sales_Version_Detail
+			WHERE 
+				  year = #Year# AND
+				  month =  #Month# AND
+				  type =  #Type# AND
+				  counterCode =  #CounterCode# 
+		]]>
+	</delete>
+	<!--更新销售版本号M,G表 -->
+		<insert id="insertVersion" parameterClass="java.util.HashMap">
+		MERGE dbo.WITPOSB_Sales_Version_Detail AS TGT
+		    USING (select #Year# as year,
+		                  #Month# as month,
+		                  #Type# as type,
+		                  #CounterCode# as counterCode
+		    ) AS SRC
+		     ON (
+		        TGT.year = SRC.year and
+		        TGT.month = SRC.month and
+		        TGT.type = SRC.type and
+		        TGT.counterCode = SRC.counterCode
+		        )
+		WHEN MATCHED THEN	
+		    UPDATE SET
+					modified =GETDATE()
+		WHEN NOT MATCHED THEN 
+			INSERT(	
+					year,
+					month,
+					type,
+					counterCode,
+					ValidFlag,
+					Created,
+					Modified
+			)VALUES(
+				  #Year#,
+				  #Month#,
+				  #Type#,
+				  #CounterCode#,
+				  '1',
+                  GETDATE(),
+                  GETDATE()
+			);
+	
+	</insert>
+
+</sqlMap>

@@ -1,0 +1,96 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sqlMap PUBLIC "-//iBATIS.com//DTD SQL Map 2.0//EN" "http://ibatis.apache.org/dtd/sql-map-2.dtd">
+<sqlMap namespace="BINBEKDCPI01">
+
+    <!-- 取得产品库存数据 -->
+    <select id="getProductStockList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+		SELECT TOP (#batchSize#)
+			T.FStockNumber,
+			T.FStockName,
+			T.FItemID,
+			T.FQty,
+			T.RowID
+		FROM (
+			SELECT 
+				O.DepartCode AS FStockNumber,
+				O.DepartName AS FStockName,
+				P.ItemCode AS FItemID,
+				SUM(PS.Quantity) AS FQty,
+				ROW_NUMBER() over(order by DepartCode) as RowID
+			FROM Inventory.BIN_ProductStock PS WITH(NOLOCK)
+			
+			JOIN Basis.BIN_ProductVendor PV WITH(NOLOCK) ON PV.BIN_ProductVendorID = PS.BIN_ProductVendorID
+			JOIN Basis.BIN_Product P WITH(NOLOCK) ON PV.BIN_ProductID = P.BIN_ProductID
+			JOIN Basis.BIN_InventoryInfo I WITH(NOLOCK) ON I.BIN_InventoryInfoID = PS.BIN_InventoryInfoID
+			JOIN Basis.BIN_Organization O WITH(NOLOCK) ON I.BIN_OrganizationID = O.BIN_OrganizationID AND O.Type = '4'
+			WHERE
+				O.BIN_OrganizationInfoID = #organizationInfoId#
+			AND O.BIN_BrandInfoID = #brandInfoId#
+			AND P.ItemCode IS NOT NULL
+			<isNotEmpty property="TargetDataStartTime">
+				<!-- 通过Job控制表控制程序整体处理数据的数量  -->
+				AND EXISTS(
+					SELECT 1 
+					FROM Inventory.BIN_ProductStock PS2 WITH(NOLOCK)
+					WHERE 
+						PS2.BIN_InventoryInfoID = PS.BIN_InventoryInfoID 
+					AND PS2.BIN_ProductVendorID = PS.BIN_ProductVendorID 
+					AND (PS2.UpdateTime BETWEEN #TargetDataStartTime# AND #TargetDataEndTime#)
+				)
+			</isNotEmpty>
+			GROUP BY O.DepartCode,O.DepartName,P.ItemCode
+		) T
+		<dynamic prepend="WHERE">
+			<isNotEmpty property="bathLastRowID" prepend="AND">
+		    	T.RowID > #bathLastRowID#
+			</isNotEmpty>
+		</dynamic>	
+		ORDER BY T.RowID
+    </select>
+
+    <!-- 取得失败的产品库存数据 -->
+    <select id="getFaildProductStockList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+		SELECT TOP (#batchSize#)
+			T.FStockNumber,
+			T.FStockName,
+			T.FItemID,
+			T.FQty,
+			T.RowID
+		FROM (
+			SELECT 
+				O.DepartCode AS FStockNumber,
+				O.DepartName AS FStockName,
+				P.ItemCode AS FItemID,
+				SUM(PS.Quantity) AS FQty,
+				ROW_NUMBER() over(order by DepartCode) as RowID
+			FROM Inventory.BIN_ProductStock PS WITH(NOLOCK)
+			
+			JOIN Basis.BIN_ProductVendor PV WITH(NOLOCK) ON PV.BIN_ProductVendorID = PS.BIN_ProductVendorID
+			JOIN Basis.BIN_Product P WITH(NOLOCK) ON PV.BIN_ProductID = P.BIN_ProductID
+			JOIN Basis.BIN_InventoryInfo I WITH(NOLOCK) ON I.BIN_InventoryInfoID = PS.BIN_InventoryInfoID
+			JOIN Basis.BIN_Organization O WITH(NOLOCK) ON I.BIN_OrganizationID = O.BIN_OrganizationID AND O.Type = '4'
+			WHERE
+				O.BIN_OrganizationInfoID = #organizationInfoId#
+			AND O.BIN_BrandInfoID = #brandInfoId#
+			AND P.ItemCode IS NOT NULL
+			AND EXISTS(
+				SELECT 1 FROM Tools.BIN_JobRunFaildHistory JFH WITH(NOLOCK)
+				WHERE 				
+					JFH.BIN_OrganizationInfoID = #organizationInfoId# 
+				AND JFH.BIN_BrandInfoID = #brandInfoId# 
+				AND JFH.JobCode = #JobCode#
+				
+				AND JFH.UnionIndex = O.DepartCode
+				AND JFH.UnionIndex1 = P.ItemCode
+			)
+			GROUP BY O.DepartCode,O.DepartName,P.ItemCode
+		) T
+		<dynamic prepend="WHERE">
+			<isNotEmpty property="bathLastRowID" prepend="AND">
+		    	T.RowID > #bathLastRowID#
+			</isNotEmpty>
+		</dynamic>	
+		ORDER BY T.RowID
+    </select>
+   	
+</sqlMap>

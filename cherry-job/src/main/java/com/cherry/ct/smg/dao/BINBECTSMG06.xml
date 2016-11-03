@@ -1,0 +1,125 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sqlMap PUBLIC "-//iBATIS.com//DTD SQL Map 2.0//EN" "http://ibatis.apache.org/dtd/sql-map-2.dtd">
+<sqlMap namespace="BINBECTSMG06">
+	<!--根据会员ID查询会员信息 -->
+	<select id="getMemberInfoById" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+		<![CDATA[
+			SELECT top 1 tm.BIN_MemberInfoID As memId 
+				  ,tt.MemCode as memCode 
+				  ,tm.Name As memName 
+				  ,tm.MemberPassword as memberPassword 
+				  ,tm.Gender As gender 
+				  ,LEFT(tm.Birthday,2) as birthMonth 
+				  ,RIGHT(tm.Birthday,2) as birthDay 
+				  ,tm.MobilePhone As mobilePhone 
+				  ,tm.Email As email 
+				  ,tm.Telephone As telephone 
+				  ,tm.CounterCodeBelong as counterCode 
+				  ,tc.CounterNameIF As counterName 
+				  ,tp.TotalPoint as totalPoint
+				  ,tp.ChangablePoint as changablePoint
+				  ,tl.LevelName as memberLevel
+				  ,tm.IsReceiveMsg As receiveMsgFlg 
+				  ,1 As customerType 
+			FROM 
+				  Members.BIN_MemberInfo As tm with(nolock) 
+				  Left join Members.BIN_MemberPoint as tp with(nolock) on tm.BIN_MemberInfoID = tp.BIN_MemberInfoID 
+				  Left Join Members.BIN_MemCardInfo as tt with(nolock) on tm.BIN_MemberInfoID = tt.BIN_MemberInfoID and tt.ValidFlag = 1 and CardValidFlag = 1 
+				  Left join Members.BIN_MemberLevel as tl with(nolock) on tm.MemberLevel=tl.BIN_MemberLevelID and tl.ValidFlag = 1 
+				  Left Join Basis.BIN_CounterInfo As tc with(nolock) on tm.CounterCodeBelong = tc.CounterCode 
+			WHERE 
+				  tm.ValidFlag = 1 AND 
+				  tm.BIN_BrandInfoID = #brandInfoId# AND 
+				  tm.BIN_OrganizationInfoID = #organizationInfoId# AND 
+				  tm.BIN_MemberInfoID = #memberInfoId# 
+		]]>
+    </select>
+    
+    <!--查询沟通信息是否已经发送过 -->
+	<select id="getSmsSendFlag" parameterClass="java.util.HashMap" resultClass="java.lang.Integer">
+		<![CDATA[
+			SELECT 
+				count(1) As sendCount 
+			FROM 
+				Communication.BIN_CommunicationLog with(nolock) 
+			WHERE 
+				BIN_BrandInfoID = #brandInfoId# AND 
+				BIN_OrganizationInfoID = #organizationInfoId# AND 
+				CommType = 1 AND 
+				ReceiverCode = #receiverCode# 
+		]]>
+		<dynamic>
+			<!-- 参数中存在批次号时  -->
+			<isNotEmpty prepend="AND" property="batchId" >
+				BatchID = #batchId# 
+			</isNotEmpty>
+			<!-- 参数中存在信息编号时  -->
+			<isNotEmpty prepend="AND" property="messageCode" >
+				CommCode = #messageCode# 
+			</isNotEmpty>
+			<!-- 参数中存在沟通计划编号时  -->
+			<isNotEmpty prepend="AND" property="planCode" >
+				PlanCode = #planCode# 
+			</isNotEmpty>
+			<!-- 参数中存在沟通次数标识时  -->
+			<isNotEmpty prepend="AND" property="phaseNum" >
+				PhaseNum = #phaseNum# 
+			</isNotEmpty>
+			<!-- 参数中存在沟通编号时  -->
+			<isNotEmpty prepend="AND" property="communicationCode" >
+				BIN_CommunicationCode = #communicationCode# 
+			</isNotEmpty>
+			<!-- 参数中存在发送时间时  -->
+			<isNotEmpty prepend="AND" property="repeatBeginTime" >
+				CommTime > #repeatBeginTime# 
+			</isNotEmpty>
+			<!-- 参数中存在设置ID时  -->
+			<isNotEmpty prepend="AND" property="commSetId" >
+				CommSetID = #commSetId# 
+			</isNotEmpty>
+		</dynamic>
+    </select>
+    
+    <!--获取信息发送接口配置 -->
+	<select id="getConfigInfo" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+		<![CDATA[
+			SELECT tc.BrandCode As brandCode 
+				  ,tc.ParamCode as paramCode 
+				  ,tc.ConfigGroup As configGroup 
+				  ,tc.ParamKey As paramKey 
+				  ,tc.ParamValue As paramValue 
+				  ,tp.SupplierType As supplierType 
+				  ,tp.ParamType As paramType 
+				  ,tp.IsBasicFlag As isBasicFlag 
+			FROM 
+				  Communication.BIN_CommIntelfacesConfig As tc 
+				  Inner join Communication.BIN_CommIntelfacesParam As tp on tc.ParamCode = tp.ParamCode 
+			WHERE 
+				  tc.ValidFlag = 1 AND 
+				  tc.BIN_BrandInfoID = #brandInfoId# AND 
+				  tc.BIN_OrganizationInfoID = #organizationInfoId# AND 
+				  tc.ConfigGroup = #commInterface# 
+		]]>
+    </select>
+    
+    <!--根据搜索记录编号查询搜索记录详细信息 -->
+	<select id="getSearchInfo" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+		<![CDATA[
+			select BIN_SearchCode As searchCode 
+				  ,RecordName As recordName 
+				  ,ISNULL(CustomerType,'4') As customerType 
+				  ,RecordType As recordType 
+				  ,ConditionInfo As conditionInfo 
+				  ,FromType As fromType 
+				  ,UseFlag As useFlag 
+			FROM 
+				  Members.BIN_SearchLog with(nolock) 
+			WHERE 
+				  BIN_BrandInfoID = #brandInfoId# AND 
+				  BIN_OrganizationInfoID = #organizationInfoId# AND 
+				  BIN_SearchCode = #searchCode# 
+		]]>
+    </select>
+    
+    
+</sqlMap>

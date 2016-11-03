@@ -1,0 +1,485 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sqlMap PUBLIC "-//iBATIS.com//DTD SQL Map 2.0//EN" "http://ibatis.apache.org/dtd/sql-map-2.dtd">
+<sqlMap namespace="BINOTHONG01">
+    <!-- 查询电商接口信息  -->
+    <select id="getESInterfaceInfo" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+        <![CDATA[
+	        SELECT
+                A.BIN_ESInterfaceInfoID,
+	            A.TradeCode,
+	            A.URL,
+	            A.MethodName,
+	            A.AccountName,
+	            A.AccountPWD,
+	            CONVERT(varchar(30),A.LastAccessTime,120) AS LastAccessTime,
+	            CONVERT(varchar(30),A.GetDataEndTime,120) AS GetDataEndTime,
+	            A.TimeStep
+	        FROM 
+	            Tools.BIN_ESInterfaceInfo A
+	        WHERE
+	            A.BIN_OrganizationInfoID = #BIN_OrganizationInfoID#
+	            AND A.BIN_BrandInfoID = #BIN_BrandInfoID#
+	            AND A.ESCode = #ESCode#
+	            AND A.ValidFlag = '1'
+        ]]>
+        <isNotEmpty property="TradeCode">
+            <![CDATA[
+                AND A.TradeCode = #TradeCode#
+            ]]>
+        </isNotEmpty>
+        <isNotEmpty property="AccountName">
+            <![CDATA[
+                AND A.AccountName = #AccountName#
+            ]]>
+        </isNotEmpty>
+    </select>
+    
+    <!-- 更新电商接口信息表  -->
+    <update id="updateESInterfaceInfoLastTime" parameterClass="java.util.HashMap" >
+	    <![CDATA[
+	        UPDATE
+	            Tools.BIN_ESInterfaceInfo
+	        SET
+	    ]]>
+	    <isNotEmpty property="LastAccessTime">
+		    <![CDATA[
+	           LastAccessTime = #LastAccessTime#,
+		    ]]>
+	    </isNotEmpty>
+        <isNotEmpty property="GetDataEndTime">
+            <![CDATA[
+               GetDataEndTime = #GetDataEndTime#,
+            ]]>
+        </isNotEmpty>
+	    <include refid="BINBECMINC99.updateSql" />      
+	    <![CDATA[               
+            WHERE                   
+                BIN_OrganizationInfoID = #BIN_OrganizationInfoID#
+                AND BIN_BrandInfoID = #BIN_BrandInfoID#
+                AND BIN_ESInterfaceInfoID = #BIN_ESInterfaceInfoID#
+	    ]]>
+    </update>
+    
+    <!-- 查找电商订单信息  -->
+    <select id="getESOrderMain" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+        <![CDATA[
+            SELECT
+                A.BIN_ESOrderMainID,
+                A.BillState,
+                A.BillPayTime,
+                A.ModifiedTimes
+            FROM 
+                Sale.BIN_ESOrderMain A
+            WHERE
+                A.BIN_OrganizationInfoID = #BIN_OrganizationInfoID#
+                AND A.BIN_BrandInfoID = #BIN_BrandInfoID#
+                AND A.BillCode = #orderNumber#
+        ]]>
+    </select>
+    
+    <!-- 通过电商订单号查询对应的销售单是否存在  -->
+    <select id="getSaleRecordbByOrderCode" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+        <![CDATA[
+            SELECT top(1)
+                A.BIN_SaleRecordID
+            FROM 
+                Sale.BIN_SaleRecord A
+            WHERE
+                A.BIN_OrganizationInfoID = #BIN_OrganizationInfoID#
+                AND A.BIN_BrandInfoID = #BIN_BrandInfoID#
+                AND A.BillCode = #orderNumber#
+        ]]>
+    </select>
+    
+    <!-- 查找部门信息  -->
+    <select id="getDepartInfo" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+        <![CDATA[
+            SELECT
+                A.BIN_OrganizationID,
+                A.DepartCode
+            FROM 
+                Basis.BIN_Organization A
+            WHERE
+                A.BIN_OrganizationInfoID = #BIN_OrganizationInfoID#
+                AND A.BIN_BrandInfoID = #BIN_BrandInfoID#
+                AND A.DepartName = #DepartName#
+        ]]>
+    </select>
+    
+    <!-- 查找员工信息  -->
+    <select id="getEmployeeInfo" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+        <![CDATA[
+            SELECT
+                A.BIN_EmployeeID
+            FROM 
+                Basis.BIN_Employee A
+            WHERE
+                A.BIN_OrganizationInfoID = #BIN_OrganizationInfoID#
+                AND A.BIN_BrandInfoID = #BIN_BrandInfoID#
+                AND A.EmployeeCode = #EmployeeCode#
+        ]]>
+    </select>
+    
+    <!-- 查找会员信息  -->
+    <select id="getMemberInfo" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+        <![CDATA[
+            SELECT
+                A.BIN_MemberInfoID AS BIN_MemberInfoID,
+                A.Name AS MemberName,
+                A.MemberLevel AS MemberLevel,
+                B.MemCode AS MemberCode
+            FROM 
+                Members.BIN_MemberInfo A
+            LEFT JOIN Members.BIN_MemCardInfo B
+            ON A.BIN_MemberInfoID = B.BIN_MemberInfoID
+            WHERE
+                A.BIN_OrganizationInfoID = #BIN_OrganizationInfoID#
+                AND A.BIN_BrandInfoID = #BIN_BrandInfoID#
+                AND A.MobilePhone = #MobilePhone#
+        ]]>
+        <isNotEmpty property="MemberName">
+        	<![CDATA[AND A.Name = #MemberName#]]>
+        </isNotEmpty>
+        <isNotEmpty property="DataSource">
+            <![CDATA[AND A.ChannelCode = #DataSource#]]>
+        </isNotEmpty>
+    </select>
+    
+    <!-- 插入会员信息表 -->
+    <insert id="addMemberInfo" parameterClass="java.util.HashMap" >
+    <selectKey resultClass="java.lang.Integer" type="post" keyProperty="BIN_MemberInfoID" >      
+        <![CDATA[
+            INSERT INTO Members.BIN_MemberInfo(
+                BIN_OrganizationInfoID,
+                BIN_BrandInfoID,
+                BIN_EmployeeID,
+                BaCodeBelong,
+                BIN_OrganizationID,
+                CounterCodeBelong,
+                MemInfoRegFlg,
+                Name,
+                Nickname,
+                Telephone,
+                MobilePhone,
+                ChannelCode,
+                JoinDate,
+                JoinTime,
+                MemberLevel,
+        ]]>
+        <include refid="BINOLCMINC99.insertKeySql" />       
+        <![CDATA[       
+            )   
+            VALUES
+            (
+                #BIN_OrganizationInfoID#,
+                #BIN_BrandInfoID#,
+                #BIN_EmployeeID#,
+                #BAcode#,
+                #BIN_OrganizationID#,
+                #CounterCode#,
+                '0',
+                #MemberName#,
+                #MemberNickName#,
+                #Telephone#,
+                #MobilePhone#,
+                #DataSource#,
+                #JoinDate#,
+                #JoinTime#,
+                '1',
+        ]]>
+        <include refid="BINOLCMINC99.insertValueSql" />     
+        <![CDATA[   
+            )
+            select SCOPE_IDENTITY() as value   
+        ]]> 
+    </selectKey> 
+    </insert>
+    
+    <!-- 插入会员持卡信息表 -->
+    <insert id="addMemCardInfo" parameterClass="java.util.HashMap" >
+        <![CDATA[
+            INSERT INTO Members.BIN_MemCardInfo(
+                BIN_MemberInfoID,
+                MemCode,
+                BaCode,
+                CounterCode,
+                GrantDate,
+                GrantTime,
+                CardValidFlag,
+                CardCount,
+        ]]>
+        <include refid="BINOLCMINC99.insertKeySql" />       
+        <![CDATA[
+            )
+            VALUES
+            (
+                #BIN_MemberInfoID#,
+                #MemberCode#,
+                #BAcode#,
+                #CounterCode#,
+                #GrantDate#,
+                #GrantTime#,
+                '1',
+                '1',
+        ]]>
+        <include refid="BINOLCMINC99.insertValueSql" />     
+        <![CDATA[
+            )
+        ]]>
+    </insert>
+    
+    <!-- 查找产品信息  -->
+    <select id="getProductInfo" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+        <![CDATA[
+            SELECT
+                B.BIN_ProductVendorID,
+                A.UnitCode,
+                B.BarCode
+            FROM Basis.BIN_Product A
+            LEFT JOIN Basis.BIN_ProductVendor B 
+            ON A.BIN_ProductID = B.BIN_ProductID
+            WHERE
+                BIN_OrganizationInfoID = #BIN_OrganizationInfoID#
+                AND BIN_BrandInfoID = #BIN_BrandInfoID#
+                
+        ]]>
+        <isNotEmpty property="BarCode">
+        	AND B.BarCode = #BarCode#
+        </isNotEmpty>
+        <isNotEmpty property="UnitCode">
+        	AND A.UnitCode = #UnitCode#
+        </isNotEmpty>
+    </select>
+    
+    <!-- 查找促销品信息  -->
+    <select id="getPrmProductInfo" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+        <![CDATA[
+            SELECT
+                B.BIN_PromotionProductVendorID,
+                A.UnitCode,
+                B.BarCode
+            FROM Basis.BIN_PromotionProduct A
+            LEFT JOIN Basis.BIN_PromotionProductVendor B 
+            ON A.BIN_PromotionProductID = B.BIN_PromotionProductID
+            WHERE
+                BIN_OrganizationInfoID = #BIN_OrganizationInfoID#
+                AND BIN_BrandInfoID = #BIN_BrandInfoID#
+                AND B.BarCode = #BarCode#
+        ]]>
+    </select>
+    
+    <!-- 添加地址信息 -->
+    <insert id="addAddressInfo" parameterClass="java.util.HashMap">
+        <selectKey resultClass="java.lang.Integer" type="post" keyProperty="BIN_AddressInfoID" >
+        <![CDATA[
+            INSERT INTO Basis.BIN_AddressInfo                   
+            (                               
+                AddressLine1,               
+                StandardCity,               
+                StandardProvince,
+                ZipCode,
+        ]]>
+                <include refid="BINOLCMINC99.insertKeySql" />       
+        <![CDATA[                       
+            )                   
+            VALUES                  
+            (                   
+                #address#,              
+                #cityId#,               
+                #provinceId#,               
+                #postcode#,
+        ]]>
+                <include refid="BINOLCMINC99.insertValueSql" />
+        <![CDATA[                           
+            )   
+            select SCOPE_IDENTITY() as value                
+        ]]>
+        </selectKey>
+    </insert>
+    
+    <!-- 添加会员地址 -->
+    <insert id="addMemberAddress" parameterClass="java.util.HashMap">
+        <![CDATA[
+            INSERT INTO Members.BIN_MemberAddress                   
+            (                               
+                BIN_MemberInfoID,               
+                BIN_AddressInfoID,      
+                BIN_AddressTypeID,
+                DefaultFlag,        
+        ]]>
+                <include refid="BINOLCMINC99.insertKeySql" />       
+        <![CDATA[                       
+            )                   
+            VALUES                  
+            (                   
+                #memberInfoId#,             
+                #addressInfoId#,    
+                '2',
+                '1',            
+        ]]>
+                <include refid="BINOLCMINC99.insertValueSql" />
+        <![CDATA[                           
+            )           
+        ]]>
+    </insert>
+     <!-- 查找电商产品对应关系表  -->
+    <select id="getUnitCodeByTradeTime" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+        <![CDATA[
+				SELECT
+				BIN_ESProductRelationID AS productRelationId,
+				UnitCode,
+				GetDate,
+				IsRelationChange
+				FROM Sale.BIN_ESProductRelation
+		]]>
+		<dynamic prepend="WHERE">
+			<isNotEmpty property="skuCode" prepend="AND">
+				SkuCode = #skuCode#
+			</isNotEmpty>
+			<isNotEmpty property="outCode" prepend="AND">
+						OutCode = #outCode#
+			</isNotEmpty>
+			<isNotEmpty property="unitCode" prepend="AND">
+					UnitCode = #unitCode#
+			</isNotEmpty>
+			<isNotEmpty property="TradeDateTime" prepend="AND">
+				<![CDATA[
+					GetDate <= #TradeDateTime# ORDER BY GetDate DESC
+				]]>
+			</isNotEmpty>
+			<isNotEmpty property="exeistsTradeDateTime" prepend="AND">
+				<![CDATA[
+					GetDate > #exeistsTradeDateTime# ORDER BY GetDate
+				]]>
+			</isNotEmpty>
+				<isNotEmpty property="compareSkuCode" prepend="AND">
+						SkuCode = #compareSkuCode# ORDER BY GetDate DESC
+				</isNotEmpty>
+				<isNotEmpty property="compareOutCode" prepend="AND">
+						OutCode = #compareOutCode# ORDER BY GetDate DESC
+				</isNotEmpty>
+		</dynamic>
+    </select>
+        <!-- 添加电商产品对应关系 -->
+    <insert id="addEsProductRelation" parameterClass="java.util.HashMap">
+		INSERT INTO Sale.BIN_ESProductRelation 
+		(
+               BIN_OrganizationInfoID,
+               BIN_BrandInfoID,
+            <isNotEmpty property="taoBaoIID">
+                <![CDATA[TaoBaoIID,]]>
+            </isNotEmpty>
+            <isNotEmpty property="outCode">
+                <![CDATA[OutCode,]]>
+            </isNotEmpty>
+            <isNotEmpty property="skuCode">
+                <![CDATA[SkuCode,]]>
+            </isNotEmpty>
+            <isNotEmpty property="esProductTitleName">
+            	<![CDATA[EsProductTitleName,]]>
+            </isNotEmpty>
+            <isNotEmpty property="isRelationChange">
+            <![CDATA[IsRelationChange,]]>
+            </isNotEmpty>
+			UnitCode,
+			BarCode,
+			GetDate,
+               <include refid="BINBECMINC99.insertKeySql" />
+		)
+			VALUES (
+               #BIN_OrganizationInfoID#,
+               #BIN_BrandInfoID#,
+            <isNotEmpty property="taoBaoIID">
+                <![CDATA[#taoBaoIID#,]]>
+            </isNotEmpty>
+            <isNotEmpty property="outCode">
+                <![CDATA[#outCode#,]]>
+            </isNotEmpty>
+            <isNotEmpty property="skuCode">
+                <![CDATA[#skuCode#,]]>
+            </isNotEmpty>
+            <isNotEmpty property="esProductTitleName">
+            	<![CDATA[#esProductTitleName#,]]>
+            </isNotEmpty>
+            <isNotEmpty property="isRelationChange">
+            <![CDATA[#isRelationChange#,]]>
+            </isNotEmpty>
+			#unitCode#,
+			#barCode#,
+			#getDate#,
+			<include refid="BINBECMINC99.insertValueSql" />
+		)       
+    </insert>
+        <!-- 更新电商接口信息表  -->
+    <update id="updateProductRelation" parameterClass="java.util.HashMap" >
+	    <![CDATA[
+	        UPDATE
+	            Sale.BIN_ESProductRelation
+	        SET
+	    ]]>
+	    <isNotEmpty property="tradeDate">
+		    <![CDATA[
+	           GetDate = #tradeDate#,
+		    ]]>
+	    </isNotEmpty>
+    	    <include refid="BINBECMINC99.updateSql" />   
+	    <![CDATA[               
+            WHERE                   
+                BIN_ESProductRelationID = #productRelationId#
+	    ]]>
+    </update>
+    
+    <!-- 取得失败的订单数据 -->
+    <select id="getFaildOrderNoList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+		SELECT 
+			TOP (#batchSize#)
+				UnionIndex1 AS orderNumber,
+				JFH.JobCode
+		FROM 
+			Tools.BIN_JobRunFaildHistory JFH WITH(NOLOCK)
+		WHERE 				
+			JFH.BIN_OrganizationInfoID = #organizationInfoId# 
+		AND JFH.BIN_BrandInfoID = #brandInfoId# 
+		<isNotEmpty property="JobCodes" prepend="AND">
+			JFH.JobCode IN  
+		<iterate property="JobCodes" open="(" close=")" conjunction="," > 
+			#JobCodes[]# 
+		</iterate>
+		</isNotEmpty>
+		AND JFH.UnionIndex = #AccountName#
+		<isNotEmpty property="bathLastVal" prepend="AND">
+	    	JFH.UnionIndex1 > #bathLastVal#
+		</isNotEmpty>
+		ORDER BY JFH.UnionIndex,JFH.UnionIndex1
+    </select>
+    
+    <!-- 取得没有产品的订单数据 -->
+    <select id="getNoPrtOrderNoList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+		 SELECT 
+		 	TOP (#batchSize#)
+				ESM.BillCode AS orderNumber
+		 FROM 
+			Sale.BIN_ESOrderMain ESM WITH(NOLOCK)
+		 WHERE
+			EXISTS(
+				SELECT 1 
+				FROM Sale.BIN_ESOrderDetail ESD WITH(NOLOCK) 
+				JOIN Sale.BIN_ESOrderMain ESM2 WITH(NOLOCK) ON ESD.BIN_ESOrderMainID = ESM2.BIN_ESOrderMainID
+				WHERE 
+					ESD.BIN_ESOrderMainID = ESM.BIN_ESOrderMainID 
+				AND ESD.IsExistsPos = '0'
+				AND ESM2.BIN_OrganizationInfoID = #organizationInfoId#
+				AND ESM2.BIN_BrandInfoID = #brandInfoId#
+			)
+			<isNotEmpty property="TargetDataStartTime" prepend="AND">
+				<!-- 通过Job控制表控制程序整体处理数据的数量  -->
+					(ESM.UpdateTime BETWEEN #TargetDataStartTime# AND #TargetDataEndTime#)
+			</isNotEmpty>
+			AND ESM.BIN_OrganizationInfoID = #organizationInfoId#
+			AND ESM.BIN_BrandInfoID = #brandInfoId#
+		<isNotEmpty property="bathLastVal" prepend="AND">
+	    	ESM.BillCode > #bathLastVal#
+		</isNotEmpty>
+		ORDER BY ESM.BillCode
+    </select>
+</sqlMap>

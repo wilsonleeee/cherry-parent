@@ -1,0 +1,405 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sqlMap PUBLIC "-//iBATIS.com//DTD SQL Map 2.0//EN" "http://ibatis.apache.org/dtd/sql-map-2.dtd">
+<sqlMap namespace="BINBEMBLEL02">
+
+	<!-- 取得BATCH执行记录数 -->
+	<select id="getBTExecCount" parameterClass="java.util.HashMap" resultClass="java.lang.Integer">
+		<![CDATA[
+			SELECT
+				COUNT(1)
+			FROM
+				Members.BIN_MemberInfo
+			WHERE
+		]]>
+		<isNotEmpty property="memIdStr">
+			<![CDATA[BIN_MemberInfoID >= #memIdStr# AND
+			]]>
+		</isNotEmpty>
+		<isNotEmpty property="memIdEnd">
+			<![CDATA[BIN_MemberInfoID <= #memIdEnd# AND
+			]]>
+		</isNotEmpty>
+	<![CDATA[ 
+				BIN_BrandInfoID = #brandInfoId# AND
+				BIN_OrganizationInfoID = #organizationInfoId# AND
+				BatchExecFlag IS NOT NULL
+		]]>	
+    </select>
+    
+    <!--更新执行标识 -->
+	<update id="updateBTExecFlag" parameterClass="java.util.HashMap">
+		<![CDATA[
+			UPDATE 		
+				Members.BIN_MemberInfo
+			SET	
+				BatchExecFlag = 1
+			WHERE
+		]]>
+		<isNotEmpty property="memIdStr">
+			<![CDATA[BIN_MemberInfoID >= #memIdStr# AND
+			]]>
+		</isNotEmpty>
+		<isNotEmpty property="memIdEnd">
+			<![CDATA[BIN_MemberInfoID <= #memIdEnd# AND
+			]]>
+		</isNotEmpty>
+	<![CDATA[ 
+				BIN_BrandInfoID = #brandInfoId# AND
+				BIN_OrganizationInfoID = #organizationInfoId# AND
+	]]>
+		<isNotEmpty property="joinDateLimit">
+			<![CDATA[JoinDate <= #joinDateLimit# AND
+			]]>
+		</isNotEmpty>
+	<![CDATA[ 
+				ValidFlag = '1'
+		]]>
+    </update>
+    
+    <!--更新执行标识(仅新增) -->
+	<update id="updateBTExecFlagOnlyAD" parameterClass="java.util.HashMap">
+		<![CDATA[
+			UPDATE 
+				Members.BIN_MemberInfo
+			SET
+				BatchExecFlag = 1
+			FROM
+			(	SELECT
+					A.BIN_MemberInfoID AS MemberId
+				FROM
+					Members.BIN_MemberInfo A LEFT JOIN
+					Members.BIN_LevelHistoryInfo B
+				ON(
+					A.BIN_MemberInfoID = B.BIN_MemberInfoID AND
+					B.LevelDate = #endDate# AND 
+					B.DateFlag = #dateKbn# AND
+					B.ValidFlag = '1')
+				WHERE
+		]]>
+		<isNotEmpty property="memIdStr">
+			<![CDATA[A.BIN_MemberInfoID >= #memIdStr# AND
+			]]>
+		</isNotEmpty>
+		<isNotEmpty property="memIdEnd">
+			<![CDATA[A.BIN_MemberInfoID <= #memIdEnd# AND
+			]]>
+		</isNotEmpty>
+	<![CDATA[
+					A.BIN_BrandInfoID = #brandInfoId# AND
+					A.BIN_OrganizationInfoID = #organizationInfoId# AND
+		]]>
+		<isNotEmpty property="joinDateLimit">
+			<![CDATA[A.JoinDate <= #joinDateLimit# AND
+			]]>
+		</isNotEmpty>
+	<![CDATA[
+					A.ValidFlag = '1' AND
+					B.BIN_LevelHistoryID IS NULL)T
+			WHERE
+				BIN_MemberInfoID = T.MemberId
+		]]>
+    </update>
+    
+     <!--更新执行标识(仅新增)生成明细用 -->
+	<update id="updateFlagDetailOnlyAD" parameterClass="java.util.HashMap">
+		<![CDATA[
+			UPDATE 
+				Members.BIN_MemberInfo
+			SET
+				BatchExecFlag = 1
+			FROM
+			(	SELECT
+					A.BIN_MemberInfoID AS MemberId
+				FROM
+					Members.BIN_MemberInfo A LEFT JOIN
+					Members.BIN_LevelChangeReport B
+				ON(
+					A.BIN_MemberInfoID = B.BIN_MemberInfoID AND
+					B.BeginDate = #beginDate# AND 
+					B.EndDate = #endDate# AND
+					B.ValidFlag = '1')
+				WHERE
+		]]>
+		<isNotEmpty property="memIdStr">
+			<![CDATA[A.BIN_MemberInfoID >= #memIdStr# AND
+			]]>
+		</isNotEmpty>
+		<isNotEmpty property="memIdEnd">
+			<![CDATA[A.BIN_MemberInfoID <= #memIdEnd# AND
+			]]>
+		</isNotEmpty>
+	<![CDATA[
+					A.BIN_BrandInfoID = #brandInfoId# AND
+					A.BIN_OrganizationInfoID = #organizationInfoId# AND
+		]]>
+		<isNotEmpty property="joinDateLimit">
+			<![CDATA[A.JoinDate <= #joinDateLimit# AND
+			]]>
+		</isNotEmpty>
+	<![CDATA[
+					A.ValidFlag = '1' AND
+					B.BIN_LevelReportID IS NULL)T
+			WHERE
+				BIN_MemberInfoID = T.MemberId
+		]]>
+    </update>
+    
+	<!-- 取得需要处理的会员信息  -->
+    <select id="getMemList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+    	<![CDATA[
+			SELECT TOP $COUNT$
+				A.BIN_MemberInfoID AS memberInfoId,
+				A.BIN_OrganizationInfoID AS organizationInfoId,
+				A.BIN_BrandInfoID AS brandInfoId,
+				A.JoinDate AS joinDate,
+				A.BIN_OrganizationID AS organizationId,
+				B.MemCode AS memCode
+			FROM
+				Members.BIN_MemberInfo A
+				LEFT JOIN Members.BIN_MemCardInfo B
+				ON (A.BIN_MemberInfoID = B.BIN_MemberInfoID AND B.CardValidFlag = '1')
+			WHERE
+		]]>
+		<isNotEmpty property="memIdStr">
+			<![CDATA[A.BIN_MemberInfoID >= #memIdStr# AND
+			]]>
+		</isNotEmpty>
+		<isNotEmpty property="memIdEnd">
+			<![CDATA[A.BIN_MemberInfoID <= #memIdEnd# AND
+			]]>
+		</isNotEmpty>
+	<![CDATA[
+				A.BIN_BrandInfoID = #brandInfoId# AND
+				A.BIN_OrganizationInfoID = #organizationInfoId# AND
+				A.BatchExecFlag = 1
+			ORDER BY A.BIN_MemberInfoID
+		]]>
+    </select>
+    
+    <!-- 取得需要处理的会员件数(手动设定的会员)  -->
+    <select id="getMemExecCount" parameterClass="java.util.HashMap" resultClass="java.lang.Integer">
+    	<![CDATA[
+			SELECT 
+				COUNT(1)
+			FROM
+				Members.BIN_MemberInfo
+			WHERE
+				BIN_BrandInfoID = #brandInfoId# AND
+				BIN_OrganizationInfoID = #organizationInfoId# AND
+				BatchExecFlag = 1
+		]]>
+    </select>
+    
+    <!-- 取得等级列表  -->
+    <select id="getLevelList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+       	<![CDATA[
+				SELECT
+					BIN_MemberLevelID AS memberLevelId,
+					LevelCode AS levelCode
+				FROM
+					Members.BIN_MemberLevel
+				WHERE
+					BIN_BrandInfoID = #brandInfoId# AND
+					BIN_OrganizationInfoID = #organizationInfoId# AND
+					ValidFlag = '1'
+			]]>
+    </select>
+    
+     <!-- 取得期间内的会员购买金额  -->
+    <select id="getTtlAmount" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+       	<![CDATA[
+				SELECT
+					SUM(CASE WHEN SaleType <> 'SR' THEN Amount ELSE -Amount END) AS ttlAmount
+				FROM
+					Sale.BIN_SaleRecord WITH(nolock)
+				WHERE
+					BIN_MemberInfoID = #memberInfoId# AND
+					SaleDate >= #startDate# AND
+					SaleDate < #limitDate# AND
+					ValidFlag = '1'
+			]]>
+    </select>
+    
+    <!-- 取得期间内的会员购买记录  -->
+    <select id="getBTBuyList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+       	<![CDATA[
+				SELECT
+					ISNULL((CASE WHEN SaleType <> 'SR' THEN Amount ELSE -Amount END), 0) AS amount,
+					SaleType AS saleType,
+					CONVERT(VARCHAR, SaleTime,120) AS saleTime,
+					CONVERT(VARCHAR, SaleTime, 23) AS saleDate
+				FROM
+					Sale.BIN_SaleRecord WITH(nolock)
+				WHERE
+					BIN_MemberInfoID = #memberInfoId# AND
+					SaleDate >= #startDate# AND
+					SaleDate < #limitDate# AND
+					ValidFlag = '1'
+				order by SaleTime desc
+			]]>
+    </select>
+    
+    <!-- 取得会员历史等级  -->
+    <select id="getHistoryLevelInfo" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+       	<![CDATA[
+				SELECT TOP 1
+					MemLevel AS memLevel
+				FROM
+					Members.BIN_LevelHistoryInfo
+				WHERE
+					BIN_MemberInfoID = #memberInfoId# AND
+					LevelDate = #levelDate# AND
+					DateFlag = #dateFlag# AND
+					ValidFlag = '1'
+			]]>
+    </select>
+    
+    <!-- 查询会员期初之前的销售数量 -->
+    <select id="getBTSaleCount" parameterClass="java.util.HashMap" resultClass="java.lang.Integer">	
+		<![CDATA[
+			SELECT
+				COUNT(1)
+			FROM	
+				Sale.BIN_SaleRecord WITH(nolock)
+			WHERE
+				BIN_MemberInfoID = #memberInfoId# AND
+				SaleDate < #limitDate# AND
+				ValidFlag = '1'
+		]]>
+    </select>
+    
+    <!-- 查询区间内会员等级履历数量 -->
+    <select id="getLevelHistCount" parameterClass="java.util.HashMap" resultClass="java.lang.Integer">	
+		<![CDATA[
+			SELECT
+				COUNT(1)
+			FROM	
+				Members.BIN_LevelHistoryInfo
+			WHERE
+				BIN_MemberInfoID >= #startId# AND
+				BIN_MemberInfoID <= #endId# AND
+				LevelDate = #endDate# AND
+				DateFlag = #dateKbn#
+		]]>
+    </select>
+    
+    <!-- 查询区间内会员等级变化年度统计数量 -->
+    <select id="getBTLevelChangeCount" parameterClass="java.util.HashMap" resultClass="java.lang.Integer">	
+		<![CDATA[
+			SELECT
+				COUNT(1)
+			FROM	
+				Members.BIN_LevelChangeReport
+			WHERE
+				BIN_MemberInfoID >= #startId# AND
+				BIN_MemberInfoID <= #endId# AND
+				BeginDate = #beginDate# AND
+				EndDate = #endDate#
+		]]>
+    </select>
+    
+    <!-- 删除会员等级履历 -->
+	<delete id="delLevelHistory" parameterClass="java.util.HashMap">
+		<![CDATA[
+			DELETE FROM			
+				Members.BIN_LevelHistoryInfo						
+			WHERE					
+				BIN_MemberInfoID = #memberInfoId# AND
+				LevelDate = #levelDate# AND
+				DateFlag = #dateFlag#
+		]]>
+    </delete>	
+    
+    <!-- 删除会员等级变化履历 -->
+	<delete id="delLevelChange" parameterClass="java.util.HashMap">
+		<![CDATA[
+			DELETE FROM			
+				Members.BIN_LevelChangeReport						
+			WHERE					
+				BIN_MemberInfoID = #memberInfoId# AND
+				BeginDate = #beginDate# AND
+				EndDate = #endDate#
+		]]>
+    </delete>	
+    
+    <!-- 插入会员等级履历历史表  -->
+	<insert id="addLevelHistoryInfo" parameterClass="java.util.HashMap">
+		<![CDATA[
+		INSERT Members.BIN_LevelHistoryInfo(
+			BIN_OrganizationInfoID,
+			BIN_BrandInfoID,
+			BIN_OrganizationID,
+			BIN_MemberInfoID,
+			MemCode,
+			LevelDate,
+			MemLevel,
+			DateFlag,
+		]]>	
+			<include refid="BINOLCMINC99.insertKeySql" />									
+		<![CDATA[	
+		)VALUES(
+			#organizationInfoId#,
+			#brandInfoId#,
+			#organizationId#,
+			#memberInfoId#,
+			#memCode#,
+			#levelDate#,
+			#memLevel#,
+			#dateFlag#,
+		]]>
+		<include refid="BINOLCMINC99.insertValueSql" />
+		<![CDATA[
+		)
+		]]>
+	</insert>
+	
+	<!-- 插入会员等级变化年度统计表  -->
+	<insert id="addLevelChangeReport" parameterClass="java.util.HashMap">
+		<![CDATA[
+		INSERT Members.BIN_LevelChangeReport(
+			BIN_OrganizationInfoID,
+			BIN_BrandInfoID,
+			BIN_OrganizationID,
+			BIN_MemberInfoID,
+			MemCode,
+			BeginDate,
+			EndDate,
+			BeginLevel,
+			EndLevel,
+			ChangeType,
+			ChangeDate,
+		]]>	
+			<include refid="BINOLCMINC99.insertKeySql" />									
+		<![CDATA[	
+		)VALUES(
+			#organizationInfoId#,
+			#brandInfoId#,
+			#organizationId#,
+			#memberInfoId#,
+			#memCode#,
+			#beginDate#,
+			#endDate#,
+			#beginLevel#,
+			#endLevel#,
+			#changeType#,
+			#changeDate#,
+		]]>
+		<include refid="BINOLCMINC99.insertValueSql" />
+		<![CDATA[
+		)
+		]]>
+	</insert>
+	
+	<!--去除执行标识 -->
+	<update id="updateBTExecFlagNl" parameterClass="java.util.HashMap">
+		<![CDATA[
+			UPDATE 		
+				Members.BIN_MemberInfo
+			SET	
+				BatchExecFlag = NULL
+			WHERE
+				BIN_MemberInfoID = #memberInfoId#
+		]]>
+    </update>
+	
+</sqlMap>

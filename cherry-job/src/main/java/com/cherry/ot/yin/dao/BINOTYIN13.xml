@@ -1,0 +1,838 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sqlMap PUBLIC "-//iBATIS.com//DTD SQL Map 2.0//EN" "http://ibatis.apache.org/dtd/sql-map-2.dtd">
+<sqlMap namespace="BINOTYIN13">
+    <!-- 取得颖产品接口表数据 -->
+    <select id="getItemListForOT" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+		SELECT TOP (#batchSize#)
+			EI.ItemCode,
+		    EI.ItemDesc,
+		    ISNULL(Price_Sales,0) AS Price_Sales,
+		    EI.Price_Sales AS Price_Sales_Original,
+		    CASE WHEN BarCode IS NULL THEN RIGHT(EI.U_OldItemNo,13) ELSE RIGHT(EI.BarCode,13) END BarCode,
+		    EI.BarCode AS BarCode_Original,
+		    EI.SalUnitMsr,
+		    EI.CreateDateB,
+		    EI.LastUpdate,
+		    EI.StockItem AS StockItem_Original,
+		    CASE WHEN EI.StockItem = 'N' THEN '0' ELSE '1' END StockItem,
+		    EI.ItemGroup,
+		    EI.U_OldItemNo,
+		    EI.U_ProductType,
+		    EI.U_Brand AS U_Brand_Original,
+		    EI.BrandName,
+		    EI.U_Category,
+		    EI.Original_Brand,
+		    
+			EI.U_LineCode,
+			EI.LineName,
+			EI.U_LineHeadcode ,
+			EI.U_LineHeaddesc ,
+			
+			<!-- 小分类 -->
+			ISNULL(CR2.POS_CateCode,ISNULL(EI.U_LineCategory,'NA')) AS U_LineCategory,
+			ISNULL(CR2.POS_CateName,ISNULL(EI.U_LineCategory,'NA')) AS U_LineCategoryName,
+			
+		 	<!-- 中分类 -->
+			ISNULL(CR3.POS_CateCode,ISNULL(EI.U_LineMF,'NA')) AS U_LineMF,
+			ISNULL(CR3.POS_CateName,ISNULL(EI.U_LineMF,'NA')) AS U_LineMFName,
+			
+		 	<!-- 大分类  -->
+			ISNULL(CR1.POS_CateCode,ISNULL(EI.U_Brand,'NA')) AS U_Brand,
+			ISNULL(CR1.POS_CateName,ISNULL(EI.U_Brand,'NA')) AS U_BrandName,
+		    
+		    EI.U_SubCategory,
+		    EI.U_Size,
+		    EI.VatSales_Rate,
+		    EI.Status,
+		    EI.Coupon,
+		    EI.U_LineMF AS U_LineMF_Original,
+		    EI.U_LineCategory AS U_LineCategory_Original,
+		    EI.TrxStatus,
+		    EI.CreateDate,
+		    EI.ErrCode,
+		    
+   			#organizationInfoId# AS organizationInfoId,
+			#brandInfoId# AS brandInfoId,
+			#createTime# AS createTime,
+		    #updatePGM# AS updatePGM,
+		    #createPGM# AS createPGM,
+		    #createdBy# AS createdBy,
+		    #updatedBy# AS updatedBy
+		  FROM 
+		  		dbo.CPS_EXPORT_ITEM EI
+		  JOIN dbo.POS_UBrand_Relation UR ON EI.Original_Brand = UR.U_Brand
+		  <!-- 大分类  -->
+		  LEFT JOIN dbo.POS_CateRelation CR1 ON (CR1.POS_Brand = UR.POS_Brand AND CR1.CateType = '1' AND EI.U_Brand = CR1.SAP_CateCode)  
+		  <!-- 中分类 -->
+		  LEFT JOIN dbo.POS_CateRelation CR3 ON (CR3.POS_Brand = UR.POS_Brand AND CR3.CateType = '3' AND EI.U_LineMF = CR3.SAP_CateCode)  
+		  <!-- 小分类 -->
+		  LEFT JOIN dbo.POS_CateRelation CR2 ON (CR2.POS_Brand = UR.POS_Brand AND CR2.CateType = '2' AND EI.U_LineCategory = CR2.SAP_CateCode)  
+		  WHERE
+		  	  UR.POS_Brand = #brandCode#				
+		  AND EI.U_OldItemNo IS NOT NULL    
+		  AND <![CDATA[ LEN(EI.U_OldItemNo) <= 20   ]]>    
+		  AND EI.Coupon IS NOT NULL  
+		  AND EI.Status IS NOT NULL  
+	   <isNotEmpty property="TargetDataStartTime" prepend="AND">
+			<!-- 通过Job控制表控制程序整体处理数据的数量  -->
+			<![CDATA[EI.CreateDate >= #TargetDataStartTime# ]]> 
+	  </isNotEmpty>
+	  <isNotEmpty property="bathLastItemCode" prepend="AND">
+	      EI.ItemCode > #bathLastItemCode#
+	  </isNotEmpty>
+		ORDER BY EI.ItemCode
+    </select>
+    
+	<!-- 备份产品信息表 -->
+	<insert id="backupItems" parameterClass="java.util.HashMap">
+	<![CDATA[
+	INSERT INTO Interfaces.BIN_InterfaceProductBackup(
+		BIN_OrganizationInfoID,
+		BIN_BrandInfoID,
+		ItemCode,
+	    ItemDesc,
+	    Price_Sales,
+	    BarCode,
+	    SalUnitMsr,
+	    CreateDateB,
+	    LastUpdate,
+	    StockItem,
+	    ItemGroup,
+	    U_OldItemNo,
+	    U_ProductType,
+	    U_Brand,
+	    BrandName,
+	    U_Category,
+	    U_LineCode,
+	    LineName,
+	    U_LineHeadcode,
+	    U_LineHeaddesc,
+	    U_SubCategory,
+	    U_Size,
+	    VatSales_Rate,
+	    Status,
+	    Coupon,
+	    U_LineMF,
+	    U_LineCategory,
+	    TrxStatus,
+	    CreateDate,
+	    ErrCode,
+	    BackupDate,
+      ]]>
+	    <include refid="BINBECMINC99.insertKeySql" />
+    <![CDATA[
+	)VALUES(
+		#organizationInfoId#,
+		#brandInfoId#,
+		#ItemCode#,
+	    #ItemDesc#,
+	    #Price_Sales_Original#,
+	    #BarCode_Original#,
+	    #SalUnitMsr#,
+	    #CreateDateB#,
+	    #LastUpdate#,
+	    #StockItem_Original#,
+	    #ItemGroup#,
+	    #U_OldItemNo#,
+	    #U_ProductType#,
+	    #U_Brand_Original#,
+	    #BrandName#,
+	    #U_Category#,
+	    #U_LineCode#,
+	    #LineName#,
+	    #U_LineHeadcode#,
+	    #U_LineHeaddesc#,
+	    #U_SubCategory#,
+	    #U_Size#,
+	    #VatSales_Rate#,
+	    #Status#,
+	    #Coupon#,
+	    #U_LineMF_Original#,
+	    #U_LineCategory_Original#,
+	    #TrxStatus#,
+	    #CreateDate#,
+	    #ErrCode#,
+	    #createTime#,
+	  ]]>  
+	    <include refid="BINBECMINC99.insertValueSql" />	
+	  <![CDATA[ ) ]]> 
+    </insert>
+    
+	<!--更新颖通产品接口表导入失败的产品信息的CreateDate -->
+	<update id="updateOtItem" parameterClass="java.util.HashMap">
+		UPDATE
+			dbo.CPS_EXPORT_ITEM
+		SET 
+			CreateDate = DATEADD(HH,12,#tpifRunStartTime#)
+		WHERE
+			ItemCode = #ItemCode#
+	</update>
+    
+   	<!--查询产品信息 -->
+	<select id="searchProductId" parameterClass="java.util.HashMap" resultClass="java.lang.Integer">
+		<![CDATA[
+			SELECT
+				BIN_ProductID					
+			FROM
+				Basis.BIN_Product
+			WHERE
+				BIN_BrandInfoID = #brandInfoId#
+			AND ItemCode = #ItemCode#
+		]]>
+    </select>
+    
+   	<!--查询产品信息 -->
+	<select id="searchProductIdByUnitCode" parameterClass="java.util.HashMap" resultClass="java.lang.Integer">
+		<![CDATA[
+			SELECT
+				BIN_ProductID					
+			FROM
+				Basis.BIN_Product
+			WHERE
+				BIN_BrandInfoID = #brandInfoId#
+			AND UnitCode = #U_OldItemNo#
+		]]>
+    </select>
+    
+   	<!--查询产品信息 -->
+	<select id="searchPromProductId" parameterClass="java.util.HashMap" resultClass="java.lang.Integer">
+		<![CDATA[
+  			SELECT
+				BIN_PromotionProductID					
+			FROM
+				Basis.BIN_PromotionProduct
+			WHERE
+				BIN_BrandInfoID = #brandInfoId#
+			AND ItemCode = #ItemCode#		
+		]]>
+    </select>
+    
+    <!--删除已成功导入到新后的接口产品数据 -->
+	<delete id="deleteItemForOT" parameterClass="java.util.HashMap">
+		<![CDATA[													
+			DELETE FROM										
+				dbo.CPS_EXPORT_ITEM						
+			WHERE										
+				ItemCode = #ItemCode#
+		]]>
+	</delete>
+	
+	<!-- 插入产品信息 -->
+	<insert id="insertProductInfo" parameterClass="java.util.HashMap">
+		<selectKey resultClass="java.lang.Integer" type="post" keyProperty="BIN_ProductID" >
+			<![CDATA[
+				INSERT INTO	Basis.BIN_Product(
+					BIN_OrganizationInfoID,
+					BIN_BrandInfoID,
+					ItemCode,
+					NameTotal,
+					UnitCode,
+					SaleRate,
+					Spec,
+					SaleUnit,
+					ItemGroup,  
+					ItemType,
+					Status,
+					CategorySAP,
+					OriginalBrand,
+					IsStock,
+					Version,
+					IsExchanged,
+			]]>
+			<include refid="BINBECMINC99.insertKeySql" />		
+			<![CDATA[)VALUES(
+					#organizationInfoId#,
+					#brandInfoId#,
+					#ItemCode#,
+					#ItemDesc#,
+					#U_OldItemNo#,
+					#VatSales_Rate#,
+					#U_Size#,
+					#SalUnitMsr#,
+					#ItemGroup#,
+					#U_ProductType#,
+					#Status#,
+					#U_Category#,
+					#Original_Brand#,
+					#StockItem#,
+					#prtTVersion#+1,
+					'1',
+			]]>
+			<include refid="BINBECMINC99.insertValueSql" />		
+			<![CDATA[)
+				select SCOPE_IDENTITY() as value
+			]]> 
+    	</selectKey>   				
+    </insert>
+    
+	<!-- 插入促销产品信息 -->
+	<insert id="insertPromProductInfo" parameterClass="java.util.HashMap">
+		<selectKey resultClass="java.lang.Integer" type="post" keyProperty="BIN_PromotionProductID" >
+			<![CDATA[
+				INSERT INTO	Basis.BIN_PromotionProduct(
+					BIN_OrganizationInfoID,
+					BIN_BrandInfoID,
+					PromotionCateCD,
+					ItemCode,
+					NameTotal,
+					UnitCode,
+					StandardCost,
+					Version,
+			]]>
+			<include refid="BINBECMINC99.insertKeySql" />		
+			<![CDATA[)VALUES(
+					#organizationInfoId#,
+					#brandInfoId#,
+					'TZZK',
+					#ItemCode#,
+					#ItemDesc#,
+					#U_OldItemNo#,
+					Convert(decimal(16,4),#Price_Sales#),
+					#promTVersion#+1,
+			]]>
+			<include refid="BINBECMINC99.insertValueSql" />		
+			<![CDATA[)
+				select SCOPE_IDENTITY() as value
+			]]> 
+    	</selectKey>   				
+    </insert>
+    
+	<!--更新产品信息表 -->
+	<update id="updateProductInfo" parameterClass="java.util.HashMap">
+		<![CDATA[
+			UPDATE					
+				Basis.BIN_Product				
+			SET
+				BIN_OrganizationInfoID = #organizationInfoId#,
+				BIN_BrandInfoID = #brandInfoId#,
+				NameTotal = #ItemDesc#,
+				UnitCode = #U_OldItemNo#,
+				SaleRate = #VatSales_Rate#,
+				Spec = #U_Size#,
+				SaleUnit = #SalUnitMsr#,
+				ItemGroup = #ItemGroup#,
+				ItemType = #U_ProductType#,
+				Status = #Status#,
+				ValidFlag = #validFlag#,
+				Version = #prtTVersion# + 1,
+				IsStock = #StockItem#,
+				CategorySAP = #U_Category#,
+				OriginalBrand = #Original_Brand#,
+				IsExchanged = '1',
+		]]>
+		<include refid="BINBECMINC99.updateSql" />		
+		<![CDATA[				
+			WHERE					
+				BIN_ProductID = #productId# 
+		]]>
+    </update>
+    
+	<!--更新促销产品信息表 -->
+	<update id="updatePromProductInfo" parameterClass="java.util.HashMap">
+		<![CDATA[
+			UPDATE					
+				Basis.BIN_PromotionProduct				
+			SET
+				BIN_OrganizationInfoID = #organizationInfoId#,
+				BIN_BrandInfoID = #brandInfoId#,
+				PromotionCateCD = 'TZZK',
+				NameTotal = #ItemDesc#,
+				UnitCode = #U_OldItemNo#,
+				StandardCost = Convert(decimal(16,4),#Price_Sales#),
+				ValidFlag = #validFlag#,
+				Version = #promTVersion#+1,
+		]]>
+		<include refid="BINBECMINC99.updateSql" />		
+		<![CDATA[				
+			WHERE					
+				BIN_PromotionProductID = #prmProductId# 
+		]]>
+    </update>
+    
+	<!-- 删除产品价格信息 -->
+	<delete id="delProductPrice" parameterClass="java.util.HashMap">
+		<![CDATA[
+			DELETE 
+				FROM Basis.BIN_ProductPrice 
+			WHERE 
+				BIN_ProductID = #productId# 
+			AND Type = '2'
+		]]>
+    </delete>
+    
+    <!-- 更新当前在业务日期内的产品价格的结束日期  -->
+	<update id="updatePrtPrice" parameterClass="java.util.HashMap">
+		<![CDATA[
+			UPDATE	
+				Basis.BIN_ProductPrice
+			SET	
+				EndDate = #businessDate#,
+		]]>
+			<include refid="BINBECMINC99.updateSql" />		
+		<![CDATA[				
+			WHERE					
+				BIN_ProductID  = #productId# 
+			AND Type = '2'
+			AND StartDate <= #businessDate# 
+			AND EndDate >= #businessDate#		
+		]]>
+    </update>
+    
+    <!-- 插入产品价格表  -->
+	<insert id="insertProductPrice" parameterClass="java.util.HashMap">
+        <![CDATA[ 
+		INSERT INTO Basis.BIN_ProductPrice(	
+			BIN_ProductID,
+			SalePrice,
+			MemPrice,
+			StartDate,
+			EndDate,	
+			Type,	
+		]]>	
+		<include refid="BINBECMINC99.insertKeySql" />	
+		<![CDATA[			
+        )VALUES	(
+			#productId#,
+			Convert(decimal(16,4),#Price_Sales#),
+			Convert(decimal(16,4),#Price_Sales#),
+			#startDate#,
+			#endDate#,	
+			'2',		
+       	]]>
+	   	<include refid="BINBECMINC99.insertValueSql" />
+		<![CDATA[ ) ]]>
+    </insert>
+    
+	<!-- 查询产品价格信息 -->
+	<select id="selProductPrice" parameterClass="java.util.HashMap" resultClass="java.lang.String">
+	<![CDATA[
+		SELECT 
+			BIN_ProductPriceID
+		FROM 
+			Basis.BIN_ProductPrice 
+		WHERE 
+			BIN_ProductID = #productId#
+		AND Type = '2'
+		AND	SalePrice = #Price_Sales#
+	]]>
+    </select>
+    
+    <!--更新产品价格数据 -->
+	<update id="updProductPrice" parameterClass="java.util.HashMap">
+		<![CDATA[
+			UPDATE	
+				Basis.BIN_ProductPrice
+			SET	
+				SalePrice = #Price_Sales#,
+				MemPrice = #Price_Sales#,
+				StartDate = #startDate#,
+		]]>
+			<include refid="BINBECMINC99.updateSql" />		
+		<![CDATA[				
+			WHERE					
+				BIN_ProductID  = #productId#
+			AND Type = '2'
+		]]>
+    </update>
+
+	<!-- ##################################################更新产品条码信息 start###################################################################### -->
+	
+	<!-- 插入产品厂商信息 -->
+	<insert id="insertProductVendor" parameterClass="java.util.HashMap">
+		<selectKey resultClass="java.lang.Integer" type="post" keyProperty="BIN_ProductVendorID" >
+		<![CDATA[
+			INSERT INTO Basis.BIN_ProductVendor(
+				BIN_ProductID,
+				BarCode,
+		]]>
+		<include refid="BINBECMINC99.insertKeySql" />		
+		<![CDATA[)VALUES(
+			#productId#,
+			#BarCode#,
+		]]>
+		<include refid="BINBECMINC99.insertValueSql" />		
+		<![CDATA[)
+			SELECT SCOPE_IDENTITY() AS value
+		]]>
+		</selectKey>
+    </insert>
+	
+	<!-- 插入促销产品厂商信息 -->
+	<insert id="insertPrmProductVendor" parameterClass="java.util.HashMap">
+		<selectKey resultClass="java.lang.Integer" type="post" keyProperty="BIN_PromotionProductVendorID" >
+		<![CDATA[
+			INSERT INTO Basis.BIN_PromotionProductVendor(
+				BIN_PromotionProductID,
+				BarCode,
+				BIN_ManufacturerInfoID,
+		]]>
+		<include refid="BINBECMINC99.insertKeySql" />		
+		<![CDATA[)VALUES(
+			#prmProductId#,
+			#BarCode#,
+			0,
+		]]>
+		<include refid="BINBECMINC99.insertValueSql" />		
+		<![CDATA[)
+			SELECT SCOPE_IDENTITY() AS value
+		]]>
+		</selectKey>
+    </insert>
+    
+    <!-- 查询有效产品厂商条码信息 -->
+	<select id="getProductVendorInfo" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+		<![CDATA[
+		SELECT 	
+			BIN_ProductVendorID AS proVendorId,
+			BarCode AS barCode,
+			ValidFlag AS validFlag
+		FROM
+			Basis.BIN_ProductVendor
+		WHERE
+			BIN_ProductID = #productId#
+		]]>
+    </select>
+    
+    <!-- 查询促销产品厂商条码信息 -->
+	<select id="getPrmProductVendorInfo" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+		<![CDATA[
+		SELECT 	
+			BIN_PromotionProductVendorID AS prmVendorId,
+			BarCode AS barCode,
+			ValidFlag AS validFlag
+		FROM
+			Basis.BIN_PromotionProductVendor
+		WHERE
+			BIN_PromotionProductID = #prmProductId#
+		]]>
+    </select>
+    
+   	<!-- 更新产品厂商  -->
+	<update id="updPrtVendor" parameterClass="java.util.HashMap">
+		<![CDATA[
+		UPDATE
+			Basis.BIN_ProductVendor
+		SET
+		]]>
+		<isNotEmpty property="BarCode">
+			BarCode = #BarCode#,
+		</isNotEmpty>
+			ValidFlag = #validFlag#,
+		<include refid="BINBECMINC99.updateSql" />
+		<![CDATA[
+		WHERE
+			BIN_ProductVendorID = #prtVendorId#
+		]]>
+	</update>
+    
+   	<!-- 更新产品厂商  -->
+	<update id="updPrmVendor" parameterClass="java.util.HashMap">
+		<![CDATA[
+		UPDATE
+			Basis.BIN_PromotionProductVendor
+		SET
+		]]>
+		<isNotEmpty property="BarCode">
+			BarCode = #BarCode#,
+		</isNotEmpty>
+			ValidFlag = #validFlag#,
+		<include refid="BINBECMINC99.updateSql" />
+		<![CDATA[
+		WHERE
+			BIN_PromotionProductVendorID = #prmVendorId#
+		]]>
+	</update>
+	
+	<!-- 更新产品条码对应关系表  -->
+	<update id="updPrtBarCode" parameterClass="java.util.HashMap">
+        <![CDATA[ 
+		  UPDATE   
+		       		Basis.BIN_PrtBarCode						
+		  SET				
+	          		UnitCode = #U_OldItemNo#,
+					BarCode = #BarCode#,
+					ValidFlag = '1',
+		]]>	
+	    	<include refid="BINOLCMINC99.updateSql" />	
+		<![CDATA[			
+       	  WHERE									
+		      BIN_ProductVendorID = #prtVendorId#
+		  AND ClosingTime IS NULL
+		  AND (OldUnitCode != #U_OldItemNo# OR OldBarCode != #BarCode#)
+       ]]>
+	        
+    </update>
+	
+	<!-- 更新促销产品条码对应关系表  -->
+	<update id="updPrmBarCode" parameterClass="java.util.HashMap">
+        <![CDATA[ 
+		  UPDATE   
+		       		Basis.BIN_PromotionPrtBarCode						
+		  SET				
+	          		UnitCode = #U_OldItemNo#,
+					BarCode = #BarCode#,
+					ValidFlag = '1',
+		]]>	
+	    	<include refid="BINBECMINC99.updateSql" />	
+		<![CDATA[			
+       	  WHERE									
+		      BIN_PromotionProductVendorID = #prmVendorId#
+		  AND ClosingTime IS NULL
+		  AND (OldUnitCode != #U_OldItemNo# OR OldBarCode != #BarCode#)
+       ]]>
+	        
+    </update>
+    
+	<!--更新促销品停用日时 -->
+	<update id="updatePrmClosingTime" parameterClass="java.util.HashMap">
+		<![CDATA[
+			UPDATE 		
+				Basis.BIN_PromotionPrtBarCode	
+			SET		
+				ClosingTime = #closingTime#,
+				UpdateFlag = '0',
+		]]>
+			<include refid="BINBECMINC99.updateSql" />	
+		<![CDATA[				
+			WHERE					
+				BIN_PromotionProductVendorID = #prmVendorId# AND
+				ClosingTime IS NULL
+		]]>
+    </update>
+    
+    
+	<!--更新停用日时 -->
+	<update id="updatePrtClosingTime" parameterClass="java.util.HashMap">
+		<![CDATA[
+			UPDATE 		
+				Basis.BIN_PrtBarCode	
+			SET		
+				ClosingTime = #closingTime#,
+				UpdateFlag = '0',
+		]]>
+			<include refid="BINBECMINC99.updateSql" />
+		<![CDATA[				
+			WHERE					
+				BIN_ProductVendorID = #prtVendorId# AND
+				ClosingTime IS NULL
+		]]>
+    </update>
+    
+	<!-- ################################################## 更新产品条码信息 end ######################################################################## -->
+
+	<!-- ################################################## 更新产品分类 start  ######################################################################## -->
+
+	<!-- 根据分类名查询分类Id -->
+	<select id="getCatPropId1" parameterClass="java.util.HashMap" resultClass="java.lang.Integer">
+		<![CDATA[
+		SELECT
+			BIN_PrtCatPropertyID
+		FROM
+			Basis.BIN_PrtCatProperty
+		WHERE
+			BIN_BrandInfoID = #brandInfoId#
+			AND PropertyNameChinese = #propNameCN#
+		]]>
+    </select>
+	<!-- 根据分类终端显示区分查询分类Id -->
+	<select id="getCatPropId2" parameterClass="java.util.HashMap" resultClass="java.lang.Integer">
+		<![CDATA[
+		SELECT
+			BIN_PrtCatPropertyID
+		FROM
+			Basis.BIN_PrtCatProperty
+		WHERE
+			BIN_BrandInfoID = #brandInfoId#
+			AND TeminalFlag = #teminalFlag#
+		]]>
+    </select>
+	<!-- 根据分类类别属性查询分类Id -->
+	<select id="getCatPropId3" parameterClass="java.util.HashMap" resultClass="java.lang.Integer">
+		<![CDATA[
+		SELECT
+			BIN_PrtCatPropertyID
+		FROM
+			Basis.BIN_PrtCatProperty
+		WHERE
+			BIN_BrandInfoID = #brandInfoId#
+			AND Property = #property#
+		]]>
+    </select>
+    
+   	<!-- 添加分类  -->
+	<insert id="addCatProperty" parameterClass="java.util.HashMap">
+		<selectKey resultClass="java.lang.Integer" type="post" keyProperty="BIN_PrtCatPropertyID" >
+			<![CDATA[
+			INSERT Basis.BIN_PrtCatProperty(
+				BIN_OrganizationInfoID,
+				BIN_BrandInfoID,
+				PropertyNameChinese,
+				PropertyNameForeign,
+				ViewSeq,
+				TeminalFlag,
+				Property,
+			]]>
+			<include refid="BINBECMINC99.insertKeySql" />
+			<![CDATA[)VALUES(
+				#organizationInfoId#,
+				#brandInfoId#,
+				#propNameCN#,
+				#propNameEN#,
+				IDENT_CURRENT('Basis.BIN_PrtCatProperty'),
+				#teminalFlag#,
+				#property#,
+			]]>
+			<include refid="BINBECMINC99.insertValueSql" />
+			<![CDATA[ )
+				select SCOPE_IDENTITY() as value
+			]]>
+	    </selectKey>
+	</insert>
+	
+	<!-- 分类终端下发区分更新  -->
+	<update id="updProp" parameterClass="java.util.HashMap">
+		<![CDATA[
+		UPDATE	
+			Basis.BIN_PrtCatProperty
+		SET
+			TeminalFlag = #teminalFlag#,
+		]]>
+		<include refid="BINOLCMINC99.updateSql" />
+		<![CDATA[
+		WHERE
+			BIN_PrtCatPropertyID = #prtCatPropId#
+		]]>
+	</update>
+	
+	<!--删除产品分类属性对应表  -->
+	<delete id="delPrtCategory" parameterClass="java.util.HashMap">
+		<![CDATA[DELETE FROM Basis.BIN_PrtCategory WHERE BIN_ProductID = #productId#]]>
+    </delete>
+    
+	<!-- 根据属性值查询分类属性值ID -->
+	<select id="getCatPropValId1" parameterClass="java.util.HashMap" resultClass="java.lang.Integer">
+		<![CDATA[
+			SELECT
+				BIN_PrtCatPropValueID AS propValId
+			FROM
+				Basis.BIN_PrtCatPropValue
+			WHERE
+				BIN_PrtCatPropertyID = #prtCatPropId#
+		]]>
+		<isNotEmpty property="propValueCherry" prepend="AND">
+			PropValueCherry = #propValueCherry#
+		</isNotEmpty>
+		<isNotEmpty property="propValue" prepend="AND">
+			PropValue = #propValue#
+		</isNotEmpty>
+    </select>
+    
+	<!-- 根据属性值名称查询分类属性值ID -->
+	<select id="getCatPropValId2" parameterClass="java.util.HashMap" resultClass="java.lang.Integer">
+		<![CDATA[
+			SELECT
+				BIN_PrtCatPropValueID AS propValId
+			FROM
+				Basis.BIN_PrtCatPropValue
+			WHERE
+				BIN_PrtCatPropertyID = #prtCatPropId#
+			AND PropValueChinese = #propValueCN#
+		]]>
+    </select>
+    
+   	<!-- 根据属性名查询分类属性值ID -->
+	<select id="getCateValId1" parameterClass="java.util.HashMap" resultClass="java.lang.String">
+		<![CDATA[
+			SELECT
+				BIN_PrtCatPropValueID AS propValId
+			FROM
+				Basis.BIN_PrtCatPropValue
+			WHERE
+				BIN_PrtCatPropertyID = #prtCatPropId#
+		]]>
+		<isNotEmpty property="propValueCherry" prepend="AND">
+			PropValueCherry = #propValueCherry#
+		</isNotEmpty>
+		<isNotEmpty property="propValue" prepend="AND">
+			PropValue = #propValue#
+		</isNotEmpty>
+    </select>
+    
+	<!-- 添加分类属性选项值  -->
+	<insert id="addPropVal" parameterClass="java.util.HashMap">
+		<selectKey resultClass="java.lang.Integer" type="post" keyProperty="BIN_PrtCatPropValueID" > 
+			<![CDATA[
+			INSERT Basis.BIN_PrtCatPropValue(
+				BIN_PrtCatPropertyID,
+				PropValue,
+				PropValueCherry,
+				PropValueChinese,
+				PropValueForeign,
+			]]>
+			<include refid="BINBECMINC99.insertKeySql" />
+			<![CDATA[
+			)VALUES(
+				#prtCatPropId#,
+				#propValue#,
+				#propValueCherry#,
+				#propValueCN#,
+				#propValueEN#,
+			]]>
+			<include refid="BINBECMINC99.insertValueSql" />
+			<![CDATA[ )
+				select SCOPE_IDENTITY() as value
+			]]> 
+	    </selectKey>
+	</insert>
+	
+	<!--更新分类选项值 -->
+	<update id="updPropVal" parameterClass="java.util.HashMap">
+		<![CDATA[
+			UPDATE	
+				Basis.BIN_PrtCatPropValue
+			SET	
+				PropValueChinese = #propValueCN#,
+				PropValueForeign = #propValueEN#,
+				ValidFlag = '1',
+		]]>
+		<include refid="BINBECMINC99.updateSql" />		
+		<![CDATA[				
+			WHERE					
+				BIN_PrtCatPropValueID = #catPropValId#
+		]]>
+    </update>
+    
+	<!-- 插入产品分类对应表  -->
+	<insert id="insertPrtCategory" parameterClass="java.util.HashMap">
+        <![CDATA[ 
+		INSERT INTO Basis.BIN_PrtCategory(	
+			BIN_ProductID,
+			BIN_PrtCatPropValueID,
+		]]>	
+	    <include refid="BINBECMINC99.insertKeySql" />	
+		<![CDATA[			
+        )VALUES(
+			#productId#,
+			#catPropValId#,							
+       	]]>
+	   	<include refid="BINBECMINC99.insertValueSql" />
+		<![CDATA[ ) ]]>
+    </insert>
+
+	<!-- ################################################## 更新产品分类 start  ######################################################################## -->
+
+    <!-- 取得品牌Code  -->
+    <select id="getBrandCode" parameterClass="java.util.HashMap" resultClass="java.lang.String">
+       <![CDATA[
+			SELECT
+				BrandCode AS brandCode
+			FROM
+				Basis.BIN_BrandInfo
+			WHERE
+				BIN_BrandInfoID = #brandInfoId#
+		]]>	
+    </select>
+
+
+   	
+</sqlMap>

@@ -1,0 +1,230 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sqlMap PUBLIC "-//iBATIS.com//DTD SQL Map 2.0//EN" "http://ibatis.apache.org/dtd/sql-map-2.dtd">
+<sqlMap namespace="BINBAT146">
+	<!-- 收货主单数据查询sql -->
+	<select id="getProductReceiveList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+		<![CDATA[
+			SELECT
+				#brandCode#  brandCode,
+				PR.BIN_ProductReceiveID AS proReceiveId,
+				PR.ReceiveNoIF AS BillCode,
+				PR.ReceiveDate AS BusinessDate,
+				PR.CreateTime AS BillCreateTime,
+				'' AS BillType,
+				PR.TradeStatus AS BillStatus,
+				O.DepartCode AS DepartCode,
+				O.DepartName AS DepartName,
+				PR.TotalQuantity AS TotalQuantity,
+				PR.TotalAmount AS TotalAmount,
+				E.EmployeeCode AS OperatorCode,
+				E.EmployeeName AS OperatorName,
+				PR.RelevanceNo AS RelateBillCode,
+				PR.Comments AS Comment
+			FROM Inventory.BIN_ProductReceive PR WITH (NOLOCK)
+			LEFT JOIN Basis.BIN_Organization O WITH (NOLOCK)
+				ON PR.BIN_OrganizationID = O.BIN_OrganizationID
+			LEFT JOIN Basis.BIN_Employee E WITH (NOLOCK)
+				ON PR.BIN_EmployeeID = E.BIN_EmployeeID
+			WHERE 
+			 PR.BIN_OrganizationInfoID = #organizationInfoId# 
+			 AND PR.BIN_BrandInfoID = #brandInfoId#
+			 AND PR.SynchFlag = '2'
+			 AND PR.ValidFlag = '1'
+		]]>
+		<![CDATA[AND EXISTS ( ]]>
+	<include refid="BINBECMINC99.getBillByTestModStandList" />
+	<![CDATA[ AND PR.BIN_OrganizationID = C99.BIN_OrganizationID ) ]]>
+		<![CDATA[
+			ORDER BY PR.ReceiveNoIF
+		]]>
+	</select>
+	
+	<!-- 收货单据明细数据查询sql -->
+	<select id="getProductReceiveDetailList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+		<![CDATA[			
+			SELECT
+				#brandCode# brandCode,
+				PR.ReceiveNoIF AS BillCode,
+				P.ItemCode AS IFProductId,
+				P.UnitCode AS UnitCode,
+				PV.BarCode AS BarCode,
+				PRD.Quantity AS Quantity,
+				PRD.Price AS Price,
+				PRD.ReferencePrice AS ReferencePrice,
+				PRD.Quantity * PRD.Price AS LineAmount,
+				PRD.Comments AS Comment
+			FROM Inventory.BIN_ProductReceive PR WITH (NOLOCK)
+			LEFT JOIN Inventory.BIN_ProductReceiveDetail PRD WITH (NOLOCK)
+				ON PR.BIN_ProductReceiveID = PRD.BIN_ProductReceiveID
+			LEFT JOIN Basis.BIN_ProductVendor PV WITH (NOLOCK)
+				ON PRD.BIN_ProductVendorID = PV.BIN_ProductVendorID
+			LEFT JOIN Basis.BIN_Product P WITH (NOLOCK)
+				ON PV.BIN_ProductID = P.BIN_ProductID
+			WHERE PR.BIN_BrandInfoID = #brandInfoId#
+			AND PR.BIN_OrganizationInfoID = #organizationInfoId# 
+			AND PR.ValidFlag = '1'
+		]]>
+		<isNotEmpty property="proReceiveIDArr">
+			AND PR.BIN_ProductReceiveID IN
+			<iterate conjunction="," open="(" close=")" property="proReceiveIDArr">
+				#proReceiveIDArr[]#
+			</iterate>
+		</isNotEmpty>
+		<![CDATA[AND EXISTS ( ]]>
+		<include refid="BINBECMINC99.getBillByTestModStandList" />
+		  	<![CDATA[ AND PR.BIN_OrganizationID = C99.BIN_OrganizationID ) ]]>
+			<![CDATA[
+				ORDER BY PR.ReceiveNoIF
+			]]>
+	</select>
+	
+	<!-- SynchFlag状态更新 -->
+	<update id="updateSynchFlag" parameterClass="java.util.HashMap">
+		<![CDATA[
+			UPDATE
+		]]>
+		<isNotEmpty property="batchSize">
+				TOP(#batchSize#)
+		</isNotEmpty>
+		<![CDATA[
+				Inventory.BIN_ProductReceive
+			SET
+				SynchFlag = #synchFlag_New#
+			FROM
+				Inventory.BIN_ProductReceive A WITH(NOLOCK)
+			WHERE
+				A.ValidFlag ='1'
+				AND A.BIN_BrandInfoID = #brandInfoId#
+				AND A.BIN_OrganizationInfoID = #organizationInfoId#
+		]]>
+		<![CDATA[AND EXISTS ( ]]>
+			<include refid="BINBECMINC99.getBillByTestModStandList" />
+	  	<![CDATA[ AND A.BIN_OrganizationID = C99.BIN_OrganizationID ) ]]>
+		<isNotEmpty property="synchFlag_Old" prepend="AND">
+			<isNotEmpty property="identitySynch">
+				(A.SynchFlag = #synchFlag_Old# OR A.SynchFlag IS NULL)
+			</isNotEmpty>
+			<isEmpty property="identitySynch">
+				A.SynchFlag = #synchFlag_Old#
+			</isEmpty>
+		</isNotEmpty>
+		<isNotEmpty property="billNoIFList" prepend="AND">
+	  		A.ReceiveNoIF IN
+			<iterate property="billNoIFList" open="(" close=")" conjunction=",">
+				#billNoIFList[]#
+			</iterate>
+	  	</isNotEmpty>
+	</update>
+	
+	<!-- 取得指定导出状态的订单号List -->
+	<select id="getProductReceiveListByBillNoIF" parameterClass="java.util.HashMap" resultClass="java.lang.String">
+		<![CDATA[
+		SELECT
+			ReceiveNoIF  billNoIF	
+		FROM 
+			Inventory.BIN_ProductReceive A WITH(NOLOCK)
+		WHERE
+			A.SynchFlag = #synchFlag#
+			AND A.ValidFlag = '1'
+			AND A.BIN_OrganizationInfoID = #organizationInfoId#
+			AND A.BIN_BrandInfoID = #brandInfoId#
+		]]>
+		<![CDATA[AND EXISTS ( ]]>
+			<include refid="BINBECMINC99.getBillByTestModStandList" />
+	  	<![CDATA[ AND A.BIN_OrganizationID = C99.BIN_OrganizationID ) ]]>
+	</select>
+	
+	<!-- 根据新后台已存在的单号查询单号数据在标准接口表中是否存在-->
+	<select id="getExistsProductReceiveList" parameterClass="java.util.HashMap" resultClass="java.lang.String">
+		<![CDATA[
+			SELECT 
+				DISTINCT
+				BillCode billNoIF
+			FROM IF_InStorage WITH(NOLOCK)
+			WHERE
+				BillCode IN
+	  	]]>
+		<iterate property="billNoIFList" open="(" close=")" conjunction=",">
+			#billNoIFList[]#
+		</iterate>
+		<isNotEmpty property="brandCode" prepend="AND">
+			BrandCode = #brandCode#
+		</isNotEmpty>
+	</select>
+	
+	<!-- 收货单据主单数据插入标准接口表 -->
+	<insert id="insertIFInStorage" parameterClass="java.util.HashMap">
+        <![CDATA[ 
+			INSERT INTO IF_InStorage
+			        (
+						BrandCode,
+						BillCode,
+						BusinessDate,
+						BillCreateTime,
+						BillType,
+						BillStatus,
+						DepartCode,
+						DepartName,
+						TotalQuantity,
+						TotalAmount,
+						OperatorCode,
+						OperatorName,
+						RelateBillCode,
+						Comment,
+						PuttingTime
+			        )
+			     VALUES
+			       	(
+						#brandCode#,
+			            #BillCode#,
+			            #BusinessDate#,
+			            #BillCreateTime#,
+			            #BillType#,
+			            #BillStatus#,
+			            #DepartCode#,
+			            #DepartName#,
+			            #TotalQuantity#,
+			            #TotalAmount#,
+			            #OperatorCode#,
+			            #OperatorName#,
+			            #RelateBillCode#,
+			            #Comment#,
+			            GETDATE()
+			        )
+    	]]>
+	</insert>
+	
+	<!-- 收货单据明细数据插入标准接口表 -->
+	<insert id="insertIFInStorageDetail" parameterClass="java.util.HashMap">
+        <![CDATA[ 
+			INSERT INTO IF_InStorageDetail
+			        ( 
+						BrandCode,
+						BillCode,
+						IFProductId,
+						UnitCode,
+						BarCode,
+						Quantity,
+						Price,
+						ReferencePrice,
+						LineAmount,
+						Comment,
+						PuttingTime
+			        )
+			     VALUES
+			        (
+			           #brandCode#,
+			           #BillCode#,
+			           #IFProductId#,
+			           #UnitCode#,
+			           #BarCode#,
+			           #Quantity#,
+			           #Price#,
+			           #ReferencePrice#,
+			           #LineAmount#,
+			           #Comment#,
+			           GETDATE()
+			        )
+    	]]>
+	</insert>
+</sqlMap>

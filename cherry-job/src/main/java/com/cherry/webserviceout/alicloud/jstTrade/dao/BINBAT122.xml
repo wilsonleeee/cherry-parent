@@ -1,0 +1,136 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sqlMap PUBLIC "-//iBATIS.com//DTD SQL Map 2.0//EN" "http://ibatis.apache.org/dtd/sql-map-2.dtd">
+<sqlMap namespace="BINBATJST122">
+    <!-- 查询电商接口信息  -->
+    <select id="getESIfConfigInfo" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+        <![CDATA[
+	        SELECT top 1
+                BIN_ESInterfaceInfoID as esInterfaceInfoId,
+	            TradeCode as tradeCode,
+	            URL as url,
+	            MethodName as methodName,
+	            AccountName as accountName,
+	            AccountPWD as accountPWD,
+	            CONVERT(varchar,LastAccessTime,25) as LastAccessTime,
+	            CONVERT(varchar,GetDataEndTime,25) as GetDataEndTime,
+	            TimeStep as timeStep,
+	            ExtJson as extJson,
+	            dataJson as dataJson
+	        FROM 
+	            Tools.BIN_ESInterfaceInfo
+	        WHERE
+	            BIN_OrganizationInfoID = #organizationInfoId#
+	            AND BIN_BrandInfoID = #brandInfoId#
+	            AND ESCode = #esCode#
+	            AND TradeCode = #tradeCode#
+	            AND ValidFlag = '1'
+	            
+        ]]>
+    </select>
+    
+    <!-- 更新电商接口信息表  -->
+    <update id="updateESConfigLastTime" parameterClass="java.util.HashMap" >
+	    <![CDATA[
+	        UPDATE
+	            Tools.BIN_ESInterfaceInfo
+	        SET
+				GetDataEndTime = #GetDataEndTime#,
+				dataJson = #dataJson#,
+          ]]>  
+	    <include refid="BINBECMINC99.updateSql" />      
+	    <![CDATA[               
+            WHERE
+                BIN_ESInterfaceInfoID = #esInterfaceInfoId#
+	    ]]>
+    </update>
+    
+    <!-- 查找员工信息  -->
+    <select id="getEmployeeInfo" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+        <![CDATA[
+            SELECT TOP 1
+                BIN_EmployeeID as employeeId
+            FROM 
+                Basis.BIN_Employee
+            WHERE
+            	EmployeeCode = #employeeCode# AND
+            	BIN_BrandInfoID = #brandInfoId# AND
+                BIN_OrganizationInfoID = #organizationInfoId#
+        ]]>
+    </select>
+    
+    <!-- 查找部门信息  -->
+    <select id="getDepartInfo" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+        <![CDATA[
+            SELECT TOP 1
+                BIN_OrganizationID AS organizationId
+            FROM 
+                Basis.BIN_Organization
+            WHERE
+            	DepartCode = #departCode# AND
+            	BIN_BrandInfoID = #brandInfoId# AND
+                BIN_OrganizationInfoID = #organizationInfoId#
+        ]]>
+    </select>
+    
+    <!-- 查找电商订单信息  -->
+    <select id="getESOrderMain" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+        <![CDATA[
+            SELECT
+                BIN_ESOrderMainID AS esOrderMainId,
+                CONVERT(varchar,BillLastUpdateTime,25) as billLastUpdateTime
+            FROM 
+                Sale.BIN_ESOrderMain
+            WHERE
+                OriginalBillCode = #originalBillCode# AND
+                DataSource = #dataSource#
+        ]]>
+    </select>
+    
+    <!-- 查找会员信息  -->
+    <select id="getMemberInfo" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+        <![CDATA[
+            SELECT
+                A.BIN_MemberInfoID AS BIN_MemberInfoID,
+                A.Name AS MemberName,
+                A.MemberLevel AS MemberLevel,
+                B.MemCode AS MemberCode
+            FROM 
+                Members.BIN_MemberInfo A
+            LEFT JOIN Members.BIN_MemCardInfo B
+            ON (A.BIN_MemberInfoID = B.BIN_MemberInfoID AND 
+            	B.CardValidFlag = '1')
+           	WHERE
+           		A.Nickname = #nickName# 
+        ]]>
+    </select>
+    
+    <!-- 更新订单明细表  -->
+    <update id="updateESOrderDetail" parameterClass="java.util.HashMap" >
+	    <![CDATA[
+	        UPDATE
+	            Sale.BIN_ESOrderDetail
+	        SET
+	        	ConsignTime = #ConsignTime#,
+	         ]]>
+	    <include refid="BINBECMINC99.updateSql" />      
+	    <![CDATA[	
+            WHERE                   
+                BIN_ESOrderDetailID = #esOrderDetailID#
+	    ]]>
+    </update>
+    
+    <!-- 查找订单明细表  -->
+    <select id="getESOrderDetail" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+        <![CDATA[
+            SELECT
+                BIN_ESOrderDetailID AS esOrderDetailID,
+                OrderId AS orderId,
+                CONVERT(varchar,ConsignTime,25) AS ConsignTime
+            FROM 
+                Sale.BIN_ESOrderDetail
+            WHERE
+                BIN_ESOrderMainID = #BIN_ESOrderMainID#
+        ]]>
+    </select>
+    
+</sqlMap>

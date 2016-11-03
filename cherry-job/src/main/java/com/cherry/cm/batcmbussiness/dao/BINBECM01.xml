@@ -1,0 +1,329 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sqlMap PUBLIC "-//iBATIS.com//DTD SQL Map 2.0//EN" "http://ibatis.apache.org/dtd/sql-map-2.dtd">
+<sqlMap namespace="BINBECM01">
+
+	<!-- 插入Job运行日志表  -->
+	<insert id="insertBatchLog" parameterClass="java.util.HashMap">
+        <![CDATA[ 
+		INSERT INTO Tools.BIN_BatchLog						
+           (BIN_OrganizationInfoID,					
+            BIN_BrandInfoID,					
+            JobID,					
+            JobName,
+			StepID,
+			StepName,
+			PGMID,
+			PGMName,
+			StarTime,
+			EndTime,
+			Status,
+		]]>
+			<include refid="BINBECMINC99.insertKeySql" />		
+		<![CDATA[			
+        )VALUES	(
+			#organizationInfoId#,
+			#brandInfoId#,					
+            #jobId#,					
+            #jobName#,
+			#stepId#,
+			#stepName#,
+			#pgmId#,
+			#pgmName#,
+			#starTime#,
+			#endTime#,
+			#status#,
+		]]>
+			<include refid="BINBECMINC99.insertValueSql" />		
+		<![CDATA[
+				)
+    	]]>
+    </insert>
+	
+	<!--更新运行日志表 -->
+	<update id="updateBatchLog" parameterClass="java.util.HashMap">
+		<![CDATA[
+			UPDATE 		
+				Tools.BIN_BatchLog	
+			SET		
+				EndTime = #endTime#,
+				Status = #status#,
+		]]>
+			<include refid="BINBECMINC99.updateSql" />	
+		<![CDATA[				
+			WHERE					
+				JobID = #jobId# AND
+				StepID = #stepId# AND
+				BIN_BrandInfoID = #brandInfoId# AND
+				BIN_OrganizationInfoID = #organizationInfoId# AND
+				ValidFlag = '1'
+		]]>
+    </update>
+	
+	<!-- 删除运行日志表 -->
+	<delete id="delBatchLog" parameterClass="java.util.HashMap">
+		<![CDATA[
+			DELETE FROM			
+				Tools.BIN_BatchLog						
+			WHERE					
+				JobID = #jobId# AND
+				StepID = #stepId# AND
+				BIN_BrandInfoID = #brandInfoId# AND
+				BIN_OrganizationInfoID = #organizationInfoId#
+		]]>
+    </delete>
+	
+	<!-- 取得运行日志状态 -->
+    <select id="getBatchLogStatus" parameterClass="java.util.HashMap" resultClass="java.lang.String">
+    	<![CDATA[
+			SELECT TOP 1
+				Status
+			FROM 
+				Tools.BIN_BatchLog
+			WHERE
+				JobID = #jobId# AND
+				StepID = #stepId# AND
+				BIN_BrandInfoID = #brandInfoId# AND
+				BIN_OrganizationInfoID = #organizationInfoId# AND
+				ValidFlag = '1'
+			order by UpdateTime DESC
+		]]>
+    </select>
+	
+	<!-- 取得Job控制表的程序数据截取开始时间及结束时间  -->
+    <select id="getJobControlInfo" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+    	<![CDATA[
+			SELECT  
+				TargetDataStartTime,
+				SpanTime,
+				ParamJson
+			FROM 
+				Tools.BIN_JobControl
+			WHERE
+				BIN_OrganizationInfoID = #organizationInfoId# 
+			AND	BIN_BrandInfoID = #brandInfoId# 
+			AND JobCode = #JobCode#
+			AND ValidFlag = '1'
+		]]>
+    </select>
+	
+	<!-- 更新Job控制表 -->
+	<update id="updateJobControl" parameterClass="java.util.HashMap">
+			UPDATE 		
+				Tools.BIN_JobControl	
+			SET		
+			<isNotEmpty property="targetDataStartTime">
+				TargetDataStartTime = #targetDataStartTime#,
+			</isNotEmpty>
+			<include refid="BINBECMINC99.updateSql" />	
+		<![CDATA[				
+			WHERE					
+				BIN_OrganizationInfoID = #organizationInfoId# 
+			AND	BIN_BrandInfoID = #brandInfoId# 
+			AND JobCode = #JobCode#
+		]]>
+    </update>
+	
+	<!-- 插入Job运行履历表  -->
+	<insert id="insertJobRunHistory" parameterClass="java.util.HashMap">
+        <![CDATA[ 
+		INSERT INTO Tools.BIN_JobRunHistory						
+           (BIN_OrganizationInfoID,					
+            BIN_BrandInfoID,					
+            JobCode,
+            RunType,					
+			RunStartTime,
+			RunEndTime,
+			Result,
+			Comments,
+		]]>
+			<include refid="BINBECMINC99.insertKeySql" />		
+		<![CDATA[			
+        )VALUES	(
+			#organizationInfoId#,
+			#brandInfoId#,					
+            #JobCode#,					
+            #RunType#,					
+			#RunStartTime#,
+			#RunEndTime#,
+			#Result#,
+			#Comments#,
+		]]>
+			<include refid="BINBECMINC99.insertValueSql" />		
+		<![CDATA[
+				)
+    	]]>
+    </insert>
+    
+	<!-- 插入Job运行数据失败履历表  -->
+	<insert id="insertJobRunFaildHistory" parameterClass="java.util.HashMap">
+        <![CDATA[ 
+		INSERT INTO Tools.BIN_JobRunFaildHistory						
+           (BIN_OrganizationInfoID,					
+            BIN_BrandInfoID,					
+            JobCode,					
+			UnionIndex,
+			UnionIndex1,
+			UnionIndex2,
+			UnionIndex3,
+			ErrorMsg,
+			Comments,
+		]]>
+			<include refid="BINBECMINC99.insertKeySql" />		
+		<![CDATA[			
+        )VALUES	(
+			#organizationInfoId#,
+			#brandInfoId#,					
+            #JobCode#,					
+			#UnionIndex#,
+			#UnionIndex1#,
+			#UnionIndex2#,
+			#UnionIndex3#,
+			#ErrorMsg#,
+			#Comments#,
+		]]>
+			<include refid="BINBECMINC99.insertValueSql" />		
+		<![CDATA[
+				)
+    	]]>
+    </insert>
+    
+	<!-- 删除 Job运行数据失败履历表 -->
+	<delete id="delJobRunFaildHistory" parameterClass="java.util.HashMap">
+			DELETE FROM			
+				Tools.BIN_JobRunFaildHistory						
+			
+			WHERE					
+				BIN_OrganizationInfoID = #organizationInfoId# 
+			AND BIN_BrandInfoID = #brandInfoId# 
+			AND JobCode = #JobCode#
+			AND UnionIndex = #UnionIndex#
+			<isNotEmpty property="UnionIndex1" prepend="AND">
+				UnionIndex1 = #UnionIndex1#
+			</isNotEmpty>
+			<isNotEmpty property="UnionIndex2" prepend="AND">
+				UnionIndex2 = #UnionIndex2#
+			</isNotEmpty>
+			<isNotEmpty property="UnionIndex3" prepend="AND">
+				UnionIndex3 = #UnionIndex3#
+			</isNotEmpty>
+    </delete>
+    
+	<!--更新Job运行数据失败履历表 -->
+	<update id="updJobRunFaildHistory" parameterClass="java.util.HashMap">
+		<![CDATA[
+			UPDATE 		
+				Tools.BIN_JobRunFaildHistory	
+			SET		
+				ErrorMsg = ErrorMsg + #ErrorMsg#,
+				Comments = #Comments#,
+		]]>
+			<include refid="BINBECMINC99.updateSql" />	
+			WHERE					
+				BIN_OrganizationInfoID = #organizationInfoId# 
+			AND BIN_BrandInfoID = #brandInfoId# 
+			AND JobCode = #JobCode#
+			AND UnionIndex = #UnionIndex#
+			<isNotEmpty property="UnionIndex1" prepend="AND">
+				UnionIndex1 = #UnionIndex1#
+			</isNotEmpty>
+			<isNotEmpty property="UnionIndex2" prepend="AND">
+				UnionIndex2 = #UnionIndex2#
+			</isNotEmpty>
+			<isNotEmpty property="UnionIndex3" prepend="AND">
+				UnionIndex3 = #UnionIndex3#
+			</isNotEmpty>
+    </update>
+    
+	<!-- 更新JobRunFaildHistory  -->
+	<select id="mergeJobRunFaildHistory" parameterClass="java.util.HashMap" resultClass="java.util.HashMap" remapResults="true">
+		MERGE Tools.BIN_JobRunFaildHistory AS TGT
+		    USING (select	
+		    		#organizationInfoId# AS orgInfoId, #brandInfoId# AS brandInfoId,#JobCode# AS JobCode,
+		    		#UnionIndex# AS UnionIndex
+					<isNotEmpty property="UnionIndex1" prepend="," >
+						#UnionIndex1# AS UnionIndex1
+					</isNotEmpty>
+					<isNotEmpty property="UnionIndex2" prepend=",">
+						#UnionIndex2# AS UnionIndex2
+					</isNotEmpty>
+					<isNotEmpty property="UnionIndex3" prepend=",">
+						#UnionIndex3# AS UnionIndex3
+					</isNotEmpty>
+		    		
+		    ) AS SRC
+		     ON (
+		        TGT.BIN_OrganizationInfoID = SRC.orgInfoId
+		        AND TGT.BIN_BrandInfoID = SRC.brandInfoId
+		        AND TGT.JobCode = SRC.JobCode
+		        AND TGT.UnionIndex = SRC.UnionIndex
+				<isNotEmpty property="UnionIndex1"  prepend="AND" >
+					TGT.UnionIndex1 = SRC.UnionIndex1
+				</isNotEmpty>
+				<isNotEmpty property="UnionIndex2"  prepend="AND" >
+					TGT.UnionIndex2 = SRC.UnionIndex2
+				</isNotEmpty>
+				<isNotEmpty property="UnionIndex3"  prepend="AND" >
+					TGT.UnionIndex3 = SRC.UnionIndex3
+				</isNotEmpty>
+		        )
+		        
+		WHEN MATCHED THEN	
+		    UPDATE SET 
+			<isNotEmpty property="ErrorMsg" >
+				ErrorMsg = ErrorMsg + #ErrorMsg#,
+			</isNotEmpty>
+			<isNotEmpty property="Comments" >
+				Comments = #Comments#,
+			</isNotEmpty>
+			<isNotEmpty property="UnionIndex" >
+				UnionIndex = SRC.UnionIndex,
+			</isNotEmpty>
+			<isNotEmpty property="UnionIndex1" >
+				UnionIndex1 = SRC.UnionIndex1,
+			</isNotEmpty>
+			<isNotEmpty property="UnionIndex2" >
+				UnionIndex2 = SRC.UnionIndex2,
+			</isNotEmpty>
+			<isNotEmpty property="UnionIndex3" >
+				UnionIndex3 = SRC.UnionIndex3,
+			</isNotEmpty>
+				<include refid="BINOLCMINC99.updateSql" />
+		WHEN NOT MATCHED THEN 
+			INSERT(	
+	            BIN_OrganizationInfoID,					
+	            BIN_BrandInfoID,					
+	            JobCode,					
+				UnionIndex,
+				<isNotEmpty property="UnionIndex1" >
+					UnionIndex1,
+				</isNotEmpty>
+				<isNotEmpty property="UnionIndex2" >
+					UnionIndex2,
+				</isNotEmpty>
+				<isNotEmpty property="UnionIndex3" >
+					UnionIndex3,
+				</isNotEmpty>
+				ErrorMsg,
+				Comments,
+		    <include refid="BINOLCMINC99.insertKeySql" />	
+			)VALUES(
+				#organizationInfoId#,
+				#brandInfoId#,					
+	            #JobCode#,					
+				#UnionIndex#,
+				<isNotEmpty property="UnionIndex1" >
+					#UnionIndex1#,
+				</isNotEmpty>
+				<isNotEmpty property="UnionIndex2" >
+					#UnionIndex2#,
+				</isNotEmpty>
+				<isNotEmpty property="UnionIndex3" >
+					#UnionIndex3#,
+				</isNotEmpty>
+				#ErrorMsg#,
+				#Comments#,
+				<include refid="BINOLCMINC99.insertValueSql" />
+			)
+		OUTPUT $$action AS actionResult,inserted.JobCode AS JobCode;
+	</select>
+</sqlMap>

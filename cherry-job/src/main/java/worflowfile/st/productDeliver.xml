@@ -1,0 +1,229 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE workflow PUBLIC "-//OpenSymphony Group//DTD OSWorkflow 2.8//EN" "http://www.opensymphony.com/osworkflow/workflow_2_8.dtd">
+<!-- 促销品发货-审核-收货流程 -->
+<workflow>
+	<initial-actions>
+		<action id="1" name="Start Workflow">
+			<pre-functions>
+				<function type="beanshell">
+					<arg name="script">
+				<![CDATA[
+				         
+				]]>
+					</arg>
+				</function>
+				<function type="class">
+					<arg name="class.name">com.opensymphony.workflow.util.Caller</arg>
+				</function>
+			</pre-functions>
+			<results>
+				<!-- 开始工作流程 -->
+				<unconditional-result old-status="Finished"
+					status="Underway" step="20">
+						<post-functions>
+				            <function type="spring">
+								<arg name="bean.name">productDeliver_FN</arg>
+								<arg name="method">startFlow</arg>
+							</function>
+			          	</post-functions>
+				</unconditional-result>
+			</results>
+		</action>
+	</initial-actions>
+	<steps>
+		<step id="20" name="提交发货单">
+			<actions>
+				<action id="21" name="提交发货单" auto="true">
+					<pre-functions>
+						<function type="spring">
+								<arg name="bean.name">productDeliver_FN</arg>
+								<arg name="method">submitAudit</arg>
+						</function>
+					</pre-functions>
+					<results>
+						<!-- 跳转向  审核判定 -->			
+						<unconditional-result old-status="Finished"	status="Underway" step="30">
+						</unconditional-result>
+					</results>
+				</action>
+			</actions>
+		</step>
+		<step id="30" name="发货单审核判定 ">
+			<actions>
+				<action id="31" name="判断审核与否" auto="true">
+					<pre-functions>
+						<function type="spring">
+								<arg name="bean.name">productDeliver_FN</arg>
+								<arg name="method">auditHandle</arg>
+						</function>
+					</pre-functions>
+					<results>
+						<!-- 自动审核 -->
+					  	<result old-status="Finished" status="Underway" step="80">
+							<conditions type="AND">
+								<condition type="beanshell">
+									<arg name="script">
+										return "".equals(propertySet.getString("participant41"))
+									</arg>									
+								</condition>
+							</conditions>
+							<post-functions>
+						         <function type="spring">
+									<arg name="bean.name">productDeliver_FN</arg>
+									<arg name="method">auditAgreeAuto</arg>
+								</function>
+					         </post-functions>
+						</result>
+						<!-- 跳转向   手动审核 -->				
+						<unconditional-result old-status="Finished"	status="Underway" step="50">
+						</unconditional-result>
+					</results>
+				</action>
+			</actions>
+		</step>
+		<step id="50" name="人工审核 ">	
+		    <!-- 将工作流的当前业务状态设置为        发货单审核 -->	
+			<pre-functions>
+				<function type="beanshell">
+					<arg name="script">				
+				         propertySet.setString("OS_Current_Operate","41")	
+					</arg>
+				</function>
+			</pre-functions>		
+			<actions>
+				<action id="501" name="os.agree_confirm">	
+					<pre-functions>
+						<function type="spring">
+							<arg name="bean.name">productDeliver_FN</arg>
+							<arg name="method">auditAgreeHand</arg>
+						</function>
+					</pre-functions>		
+					<results>
+						<unconditional-result old-status="Finished"	status="Underway" step="80">
+						</unconditional-result>
+					</results>
+				</action>
+				<action id="502" name="os.inhibit_inhibit">
+					<results>
+						<unconditional-result old-status="Finished"	status="Underway" step="60">
+								<post-functions>
+						            <function type="spring">
+										<arg name="bean.name">productDeliver_FN</arg>
+										<arg name="method">auditDisAgreeHand</arg>
+									</function>
+					          	</post-functions>
+						</unconditional-result>
+					</results>
+				</action>
+			</actions>
+		</step>
+		<step id="60" name="发货单编辑">	
+		    <!-- 将工作流的当前业务状态设置为        订单编辑 -->	
+			<pre-functions>
+				<function type="beanshell">
+					<arg name="script">				
+				         propertySet.setString("OS_Current_Operate","42")	
+					</arg>
+				</function>
+			</pre-functions>		
+			<actions>
+				<action id="61" name="os.submit_confirm">				
+					<results>
+						<unconditional-result old-status="Finished"	status="Underway" step="20">
+						</unconditional-result>
+					</results>
+				</action>
+				<!--
+				<action id="62" name="os.delete_close">				
+					<results>
+						<unconditional-result old-status="Finished"	status="Underway" step="999">
+								<post-functions>
+						            <function type="spring">
+										<arg name="bean.name">promotionDFS_FN</arg>
+										<arg name="method">SD_deleteDeliver</arg>
+									</function>
+					          	</post-functions>
+						</unconditional-result>
+					</results>
+				</action>
+				-->
+			</actions>
+		</step>
+		<step id="80" name="发货">
+			<!-- 将工作流的当前业务状态设置为        发货 （向柜台发货发送MQ）-->	
+			<pre-functions>
+				<function type="beanshell">
+					<arg name="script">				
+				         propertySet.setString("OS_Current_Operate","40")	
+					</arg>
+				</function>
+			</pre-functions>
+			<actions>
+				<action id="81" name="os.send_confirm" auto="true">
+					<results>						
+						<unconditional-result old-status="Finished"	status="Underway" step="90" >
+								<post-functions>
+						            <function type="spring">
+										<arg name="bean.name">productDeliver_FN</arg>
+										<arg name="method">productSend</arg>
+									</function>
+					          	</post-functions>
+						</unconditional-result>
+					</results>
+				</action>
+			</actions>
+		</step>
+		<step id="90" name="发货方更改库存">
+			<actions>
+				<action id="91" name="发货方更改库存" auto="true">
+					<results>						
+						<unconditional-result old-status="Finished"
+							status="Underway" step="100">
+								<post-functions>
+						            <function type="spring">
+										<arg name="bean.name">productDeliver_FN</arg>
+										<arg name="method">stockInOut</arg>
+									</function>
+					          	</post-functions>
+						</unconditional-result>
+					</results>
+				</action>
+			</actions>
+		</step>
+		<step id="100" name="收货">
+		  <!-- 收货是终端完成的，MQ收到消息后要去结束工作流  actionID 暂时被写死在程序中BINOLSTCM00_BL-->
+		  <pre-functions>
+				<function type="beanshell">
+					<arg name="script">				
+				         propertySet.setString("OS_Current_Operate","50")	
+					</arg>
+				</function>
+			</pre-functions>
+			<actions>
+				<action id="101" name="os.receive_confirm">
+					<results>						
+						<unconditional-result old-status="Finished"	status="Underway" step="999">
+							<post-functions>
+						            <function type="spring">
+										<arg name="bean.name">productDeliver_FN</arg>
+										<arg name="method">acceptDeliver</arg>
+									</function>
+					         </post-functions>
+						</unconditional-result>
+					</results>
+				</action>
+			</actions>
+		</step>	
+		<step id="999" name="Flow over">
+			<!-- 将工作流的当前业务状态设置为       工作流结束 -->
+			<pre-functions>
+				<function type="beanshell">
+					<arg name="script">
+				         propertySet.setString("OS_Current_Operate","999")
+					</arg>
+				</function>
+			</pre-functions>
+		</step>
+	</steps>
+</workflow>
+

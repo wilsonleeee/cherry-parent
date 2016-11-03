@@ -1,0 +1,200 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE workflow PUBLIC "-//OpenSymphony Group//DTD OSWorkflow 2.8//EN" "http://www.opensymphony.com/osworkflow/workflow_2_8.dtd">
+<!-- 订货流程 -->
+<workflow>
+	<initial-actions>
+		<action id="1" name="Start Workflow">
+			<pre-functions>
+				<function type="beanshell">
+					<arg name="script">
+				<![CDATA[
+				         
+				]]>
+					</arg>
+				</function>
+				<function type="class">
+					<arg name="class.name">com.opensymphony.workflow.util.Caller</arg>
+				</function>
+			</pre-functions>
+			<results>
+				<!-- 开始工作流程 -->
+				<unconditional-result old-status="Finished"
+					status="Underway" step="20">
+						<post-functions>
+				            <function type="spring">
+								<arg name="bean.name">productShift_FN</arg>
+								<arg name="method">startProductShiftFlow</arg>
+							</function>
+			          	</post-functions>
+				</unconditional-result>
+			</results>
+		</action>
+	</initial-actions>
+	<steps>
+		<step id="20" name="提交审核">
+			<actions>
+				<action id="21" name="提交审核" auto="true">
+					<pre-functions>
+						<function type="spring">
+								<arg name="bean.name">productShift_FN</arg>
+								<arg name="method">submitAudit</arg>
+						</function>
+					</pre-functions>
+					<results>
+						<!-- 跳转向  审核判定 -->			
+						<unconditional-result old-status="Finished"	status="Underway" step="30">
+						</unconditional-result>
+					</results>
+				</action>
+			</actions>
+		</step>
+		<step id="30" name="审核判定">
+			<actions>
+				<action id="31" name="判断审核与否" auto="true">
+					<pre-functions>
+						<function type="spring">
+								<arg name="bean.name">productShift_FN</arg>
+								<arg name="method">auditHandle</arg>
+						</function>
+					</pre-functions>
+					<results>
+						<!-- 跳转向  自动审核 -->
+					  	<result old-status="Finished" status="Underway" step="40">
+							<conditions type="AND">
+								<condition type="beanshell">
+									<arg name="script">
+										return "".equals(propertySet.getString("participant101"))										
+									</arg>									
+								</condition>
+							</conditions>
+						</result>
+						<!-- 跳转向   手动审核 -->				
+						<unconditional-result old-status="Finished"	status="Underway" step="50">
+						</unconditional-result>
+					</results>
+				</action>
+			</actions>
+		</step>
+		<step id="40" name="自动审核">			
+			<actions>
+				<action id="41" name="自动审核" auto="true">				
+					<results>
+						<unconditional-result old-status="Finished"
+							status="Underway" step="60">
+								<post-functions>
+						            <function type="spring">
+										<arg name="bean.name">productShift_FN</arg>
+										<arg name="method">auditAgreeAuto</arg>
+									</function>
+					          	</post-functions>
+						</unconditional-result>
+					</results>
+				</action>
+				
+			</actions>
+		</step>
+		<step id="50" name="人工审核">	
+		    <!-- 将工作流的当前业务状态设置为       报损单审核 -->
+			<pre-functions>
+				<function type="beanshell">
+					<arg name="script">
+				         propertySet.setString("OS_Current_Operate","101")
+					</arg>
+				</function>
+			</pre-functions>	
+			<actions>
+				<action id="51" name="os.agree_confirm">				
+					<results>
+						<unconditional-result old-status="Finished"	status="Underway" step="60">
+								<post-functions>
+						            <function type="spring">
+										<arg name="bean.name">productShift_FN</arg>
+										<arg name="method">auditAgreeHand</arg>
+									</function>
+					          	</post-functions>
+						</unconditional-result>
+					</results>
+				</action>
+				<action id="52" name="os.inhibit_inhibit">				
+					<results>
+						<unconditional-result old-status="Finished"	status="Underway" step="70">
+								<post-functions>
+						            <function type="spring">
+										<arg name="bean.name">productShift_FN</arg>
+										<arg name="method">auditDisAgreeHand</arg>
+									</function>
+					          	</post-functions>
+						</unconditional-result>
+					</results>
+				</action>
+			</actions>
+		</step>
+		<step id="60" name="出入库操作">
+			<actions>
+				<action id="61" name="写出入库表和库存表" auto="true">
+					<results>						
+						<unconditional-result old-status="Finished"
+							status="Underway" step="999">
+								<post-functions>
+						            <function type="spring">
+										<arg name="bean.name">productShift_FN</arg>
+										<arg name="method">stockInOut</arg>
+									</function>
+					          	</post-functions>
+						</unconditional-result>
+					</results>
+				</action>
+			</actions>
+		</step>
+		<step id="70" name="编辑">		
+		   <pre-functions>
+				<function type="beanshell">
+					<arg name="script">
+				         propertySet.setString("OS_Current_Operate","102")
+					</arg>
+				</function>
+			</pre-functions>	
+			<actions>
+				<action id="71" name="os.submit_confirm">				
+					<results>
+						<unconditional-result old-status="Finished"	status="Underway" step="20">
+								<!--
+								<post-functions>
+						            <function type="spring">
+										<arg name="bean.name">productShift_FN</arg>
+										<arg name="method">submitAudit</arg>
+									</function>
+					          	</post-functions>
+								-->
+						</unconditional-result>
+					</results>
+				</action>
+				<!--
+				<action id="72" name="删除">				
+					<results>
+						<unconditional-result old-status="Finished"	status="Underway" step="999">
+								<post-functions>
+						            <function type="spring">
+										<arg name="bean.name">productShift_FN</arg>
+										<arg name="method">auditDisAgreeHand</arg>
+									</function>
+					          	</post-functions>
+						</unconditional-result>
+					</results>
+				</action>
+				-->
+			</actions>
+		</step>
+		<step id="999" name="Flow over">
+			<!-- 将工作流的当前业务状态设置为       工作流结束 -->
+			<pre-functions>
+				<function type="beanshell">
+					<arg name="script">
+				         propertySet.setString("OS_Current_Operate","999")
+					</arg>
+				</function>
+			</pre-functions>
+		</step>
+	</steps>
+</workflow>
+

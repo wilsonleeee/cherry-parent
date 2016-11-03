@@ -1,0 +1,617 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sqlMap PUBLIC "-//iBATIS.com//DTD SQL Map 2.0//EN" "http://ibatis.apache.org/dtd/sql-map-2.dtd">
+<sqlMap namespace="BINOLCM09">
+	<sql id="getAllPrtList">
+	<![CDATA[
+		SELECT
+			A.UnitCode AS promotionPrtUnitCode,
+			SUBSTRING(A.NameTotal,0,21) AS promotionPrtName,
+			B.BarCode AS promotionPrtCode,
+			B.BIN_ProductVendorID AS prmPrtVendorId,
+			'N' AS prtType,
+			A.ValidFlag + B.ValidFlag AS validFlag
+		FROM
+			Basis.BIN_Product A WITH(NOLOCK)
+			JOIN Basis.BIN_ProductVendor B WITH(NOLOCK)
+			ON(A.BIN_ProductID = B.BIN_ProductID)
+		WHERE
+			A.BIN_BrandInfoID = #brandInfoID#
+		UNION
+		SELECT
+			A.UnitCode AS promotionPrtUnitCode,
+			SUBSTRING(A.NameTotal,0,21) AS promotionPrtName,
+			B.BarCode AS promotionPrtCode,
+			B.BIN_PromotionProductVendorID AS prmPrtVendorId,
+			'P' AS prtType,
+			A.ValidFlag + B.ValidFlag AS validFlag
+		FROM
+			Basis.BIN_PromotionProduct A WITH(NOLOCK)
+			JOIN Basis.BIN_PromotionProductVendor B WITH(NOLOCK)
+			ON(A.BIN_PromotionProductID = B.BIN_PromotionProductID)
+		WHERE
+			A.BIN_BrandInfoID = #brandInfoID#
+	]]>  
+	</sql>
+	<!-- 取得无效用户List -->
+    <select id="getInvalidUserList" parameterClass="java.util.HashMap" resultClass="java.lang.Integer">
+    <![CDATA[SELECT BIN_UserID FROM Privilege.BIN_User WITH(NOLOCK) WHERE ValidFlag = '0']]>
+    </select>
+
+	<!-- 删除活动信息主表(接口表)数据 -->
+	<delete id="deleteActivityAssociateSubject" parameterClass="java.util.HashMap">
+		<![CDATA[  
+			DELETE FROM dbo.ActivityAssociateSubject_SCS
+			WHERE 
+				  Brand = #brandCode# AND
+				  subject_code = #subjectCode# AND
+				  data_source = '1'
+		]]>
+	</delete>
+	
+	<!-- 清空活动关联表数据 -->
+	<delete id="clearActivityAssociateTable" parameterClass="java.util.HashMap">
+		<![CDATA[  
+			DELETE FROM ActivityAssociateTable_SCS
+			WHERE 
+				MainCode = #mainCode# AND
+				Brand = #brandCode#
+		]]>
+	</delete>
+	<!-- 停止活动关联表数据 -->
+	<update id="stopActivityAssociateTable" parameterClass="java.util.HashMap">
+		<![CDATA[  
+		update ActivityAssociateTable_SCS set activity_end_date= #stopTime#
+		WHERE 
+			MainCode = #mainCode# AND
+			activity_end_date > #stopTime# AND
+			Brand = #brandCode#
+		]]>
+	</update>
+	
+	<!-- 清空活动表数据 -->
+	<statement id="clearActivityTable">
+		<![CDATA[  
+			DELETE FROM ActivityTable_SCS 
+			WHERE 
+			  Brand = #brandCode# AND
+			  ActivityCode = #activeCode# AND
+			  CHYFlag = '1'
+		]]>
+	</statement>
+	<!-- 无效活动表数据 -->
+	<statement id="stopActivityTable">
+		<![CDATA[update ActivityTable_SCS set EndTime = #stopTime# WHERE Brand = #brandCode#]]>
+		 <isNotEmpty property="mainCode" prepend="AND">
+		 	<![CDATA[MainCode = #mainCode#]]>
+		 </isNotEmpty>
+		  <isNotEmpty property="activeCode" prepend="AND">
+		 	<![CDATA[ActivityCode = #activeCode#]]>
+		 </isNotEmpty>
+		 <![CDATA[AND EndTime > #stopTime# AND CHYFlag = '1']]>
+	</statement>
+     <!-- 查询促销活动表 -->
+     <select id="getActiveInfoList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+     	<![CDATA[
+     	SELECT
+     		DISTINCT
+     		A.ActivityCode AS mainCode,
+     		A.BIN_PromotionActGrpID AS mainClassID,
+			ISNULL(B.GroupCode,'0') AS subjectCode,
+			ISNULL(B.GroupName,'0') AS subjectName,
+     		A.ActivityName AS mainName,
+     		A.Times AS maxReceiveQty,
+     		A.ChangeableFlag AS mainModify,
+     		A.BIN_BrandInfoID AS brandInfoID,
+     		A.BIN_OrganizationInfoID AS bin_OrganizationInfoID,
+     		A.ActivitySetBy AS userID,
+			A.ActivityType AS activityType,
+			A.NeedBuyFlag AS needBuyFlag,
+			B.ActivityType AS activityGrpType,
+			B.ReserveBeginDate AS reserveBeginDate,
+			B.ReserveEndDate AS reserveEndDate,
+			B.ActivityBeginDate AS activityBeginDate,
+			B.ActivityEndDate AS activityEndDate,
+			C.BIN_PromotionActivityRuleID AS prmRuleId,
+			D.BasePropValue1 AS startTime,
+			D.BasePropValue2 AS endTime
+     	FROM
+     		Promotion.BIN_PromotionActivity A WITH(NOLOCK)
+     		Left JOIN Promotion.BIN_PromotionActGrp B WITH(NOLOCK)
+			ON (A.BIN_PromotionActGrpID = B.BIN_PromotionActGrpID)
+			JOIN Promotion.BIN_PromotionActivityRule C WITH(NOLOCK)
+			ON(A.BIN_PromotionActivityID = C.BIN_PromotionActivityID
+				AND C.ValidFlag = '1')
+			JOIN Promotion.BIN_PromotionRuleCondition D WITH(NOLOCK)
+			ON(C.BIN_PromotionActivityRuleID = D.BIN_PromotionActivityRuleID
+				AND D.ValidFlag = '1')
+			JOIN Promotion.BIN_PromotionBaseProp E WITH(NOLOCK)
+			ON(D.BIN_PromotionBasePropID = E.BIN_PromotionBasePropID
+				AND E.PropertyName = 'baseProp_time')
+     	WHERE
+     		A.BIN_OrganizationInfoID = #bin_OrganizationInfoID#
+     		AND A.BIN_BrandInfoID = #brandInfoID#
+     		AND (A.TemplateFlag IS NULL OR A.TemplateFlag='0' OR A.TemplateFlag ='')
+     		AND (A.Status is null OR A.Status = '1')
+     	]]>
+     	<dynamic>
+     		<isNotEmpty property="mainCode" prepend="AND">
+     		<![CDATA[A.ActivityCode = #mainCode#]]>
+     		</isNotEmpty>
+     		<![CDATA[
+     		AND (A.SendFlag = '2' OR (A.SendFlag < '2' AND SUBSTRING(D.BasePropValue1,0,11) <= #busDate# AND SUBSTRING(D.BasePropValue2,0,11) >= #busDate2#))
+     		AND A.ValidFlag = '1'
+     		]]>
+     	</dynamic>
+     </select>
+	 <!-- 查询促销活动礼品 -->
+	 <select id="getGiftList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+	 <![CDATA[
+	 SELECT
+		A.Price AS price,
+		A.Quantity AS activityQty,
+		T.prmPrtVendorId,
+		T.prtType,
+		T.promotionPrtUnitCode,
+		T.promotionPrtCode,
+		t.promotionPrtName
+	FROM
+		Promotion.BIN_PromotionRuleResult A WITH(NOLOCK)
+		JOIN(
+	 ]]>
+	 <include refid="BINOLCM09.getAllPrtList" />
+	  <![CDATA[
+	  	) T
+		ON(A.BIN_ProductVendorID = T.prmPrtVendorId
+			AND A.SaleType = T.prtType
+			AND T.validFlag = '11')
+	WHERE
+		A.BIN_PromotionActivityRuleID = #prmRuleId#
+		AND A.ValidFlag = '1'
+	  ]]>
+	 </select>
+	<!-- 取得活动地点LIST -->
+	<select id="getPlaceList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+    	<![CDATA[
+    	SELECT
+			A.BasePropValue1 AS propVal,
+			B.PropertyName AS propName
+		FROM
+			Promotion.BIN_PromotionRuleCondition A WITH(NOLOCK)
+			JOIN Promotion.BIN_PromotionBaseProp B WITH(NOLOCK)
+			ON(A.BIN_PromotionBasePropID = B.BIN_PromotionBasePropID
+				AND B.PropertyName IN('baseProp_city','baseProp_channal','baseProp_counter','baseProp_faction','baseProp_organization')
+				AND B.ValidFlag = '1')
+		WHERE
+			A.BIN_PromotionActivityRuleID = #prmRuleId#
+			AND A.ValidFlag = '1'
+		]]>
+	</select>
+	 <!-- 根据区域市查询柜台 -->
+	 <select id="getCounterByIdCity" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+	 	<![CDATA[
+		SELECT 
+			oz.DepartCode AS counterID,
+			oz.BIN_OrganizationID AS counterOrgId
+	 	FROM
+			Basis.BIN_Organization oz WITH(NOLOCK)
+			JOIN(
+			]]>
+			<include refid="BINOLCMINC99.departPrivilegeSql" />
+			<![CDATA[
+			)dp
+			ON(dp.BIN_OrganizationID = oz.BIN_OrganizationID)
+			JOIN Basis.BIN_Region B WITH(NOLOCK)
+			ON(oz.BIN_CityID = B.BIN_RegionID 
+				AND B.ValidFlag = '1')
+	 	WHERE 
+			oz.BIN_OrganizationInfoID = #bin_OrganizationInfoID# AND
+			oz.BIN_BrandInfoID = #brandInfoID# AND
+			oz.BIN_CityID = #cityID# AND
+			oz.ValidFlag = '1' 
+		]]>
+	 </select>
+	 <!-- 根据渠道查询柜台 -->
+	 <select id="getCounterByIdChannel" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+	 	<![CDATA[
+		SELECT 
+	 		ci.CounterCode AS counterID,
+			ci.BIN_OrganizationID AS counterOrgId
+	 	FROM
+	 		Basis.BIN_CounterInfo ci WITH(NOLOCK)
+	 		JOIN Basis.BIN_Channel B WITH(NOLOCK)
+	 		ON(ci.BIN_ChannelID = B.BIN_ChannelID 
+	 			AND B.ValidFlag = '1')
+			JOIN(
+			]]>
+			<include refid="BINOLCMINC99.departPrivilegeSql" />
+			<![CDATA[
+			)dp
+			ON(dp.BIN_OrganizationID = ci.BIN_OrganizationID)
+	 	WHERE
+	 		ci.BIN_OrganizationInfoID = #bin_OrganizationInfoID# AND
+	 		ci.BIN_BrandInfoID = #brandInfoID# AND
+	 		ci.BIN_ChannelID = #channelID# AND 
+	 		ci.ValidFlag = '1'
+			]]>
+	 </select>
+	 
+	 <!-- 根据组织查询柜台 -->
+	 <select id="getCounterByIdOrganization" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+	 	<![CDATA[
+			SELECT 
+				CI.CounterCode AS counterID,
+				CI.BIN_OrganizationID AS counterOrgId
+			FROM Privilege.BIN_DepartRelation DR WITH(NOLOCK)
+			JOIN Basis.BIN_CounterInfo CI WITH(NOLOCK)
+			ON DR.BIN_OrganizationIDRel = CI.BIN_OrganizationID
+			JOIN(
+			]]>
+			<include refid="BINOLCMINC99.departPrivilegeSql" />
+			<![CDATA[
+			) A99
+			ON(A99.BIN_OrganizationID = CI.BIN_OrganizationID)
+		 	WHERE
+		 		CI.BIN_OrganizationInfoID = #bin_OrganizationInfoID# AND
+		 		CI.BIN_BrandInfoID = #brandInfoID# AND
+		 		DR.BIN_OrganizationID = #organizationID# AND 
+		 		CI.ValidFlag = '1'
+			]]>
+	 </select>
+	 
+	 <!-- 根据系统查询柜台 -->
+	 <select id="getCounterByIdFaction" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+	 	<![CDATA[
+		SELECT 
+	 		ci.CounterCode AS counterID,
+			ci.BIN_OrganizationID AS counterOrgId
+	 	FROM
+	 		Basis.BIN_CounterInfo ci WITH(NOLOCK)
+			JOIN(
+		]]>
+		<include refid="BINOLCMINC99.departPrivilegeSql" />
+		<![CDATA[
+			)dp
+			ON(dp.BIN_OrganizationID = ci.BIN_OrganizationID)
+	 	WHERE
+	 		ci.BIN_OrganizationInfoID = #bin_OrganizationInfoID# AND
+	 		ci.BIN_BrandInfoID = #brandInfoID# AND
+	 		ci.BelongFaction = #factionID# AND 
+	 		ci.ValidFlag = '1'
+		]]>
+	 </select>
+    
+	<!-- 插入活动信息主表(接口表) -->
+    <insert id="addActivityAssociateSubject_SCS" parameterClass="java.util.HashMap">
+    <![CDATA[
+    	INSERT dbo.ActivityAssociateSubject_SCS
+    	(
+			Brand,
+			subject_code,
+			name,
+			data_source,
+			status,
+			pos_modify,
+			type,
+			reserve_begin_date,
+			reserve_end_date,
+			activity_begin_date,
+			activity_end_date,
+			created,
+			modified
+		]]>
+		<isNotEmpty property="clubCode">
+			,ClubCode
+		</isNotEmpty>
+	<![CDATA[
+    	)
+    	VALUES
+    	(
+    		#brandCode#,
+    		#subjectCode#,
+    		#subjectName#,
+			'1',
+    		'OK',
+    		0,
+			#activityGrpType#,
+			CONVERT(DATETIME,#reserveBeginDate#),
+			CONVERT(DATETIME,#reserveEndDate# +' 23:59:59'),
+			CONVERT(DATETIME,#activityBeginDate#),
+			CONVERT(DATETIME,#activityEndDate# +' 23:59:59'),
+    		GETDATE(),
+			GETDATE()
+		]]>
+		<isNotEmpty property="clubCode">
+			,#clubCode#
+		</isNotEmpty>
+		<![CDATA[
+    	)
+    	]]>
+    </insert>
+	
+	<!-- 插入brand数据库活动关联表 -->
+	<!-- ===============WITPOSQA-6647:2012/09/12 lipc 增加 type字段======================== -->
+	 <insert id="addActivityAssociateTable_CHY" parameterClass="java.util.HashMap">
+	  <![CDATA[
+   		INSERT INTO dbo.ActivityAssociateTable_SCS
+		(				
+			Brand,
+			subject_code,
+			MainCode,
+			MainName,
+			activity_begin_date,
+			activity_end_date,
+			MaxReceiveQty,
+			MainClassID,
+			MainModify,
+			[Function],
+			status,
+			pos_modify,
+			created,
+			modified,
+			type_sub,
+			type,
+			SubCampaignValid,
+      		LocalValidRule,
+      		IsCollectInfo,
+      		deliveryPrice,
+      		deliveryPoints,
+      		times,
+      		isShared,
+      		NeedBuyFlag
+      	]]>
+		<isNotEmpty property="clubCode">
+      		,ClubCode
+      	</isNotEmpty>
+		<![CDATA[
+		)
+		VALUES				
+		(				
+			#brandCode#,
+			#subjectCode#,
+			#mainCode#,
+			#mainName#,
+			CONVERT(DATETIME,#startTime#),
+			CONVERT(DATETIME,#endTime#),
+			-1,
+			#mainClassID#,
+			#mainModify#,
+			-1,
+			'OK',
+    		0,
+    		GETDATE(),
+			GETDATE(),
+			#activityGrpType#,
+			#activityType#,
+			#subCampValid#,
+			#localValidRule#,
+			#isCollectInfo#,
+			#deliveryPrice#,
+      		#deliveryPoints#,
+      		#times#,
+      		#isShared#,
+      		#needBuyFlag#
+		]]>
+		<isNotEmpty property="clubCode">
+			,#clubCode#
+		</isNotEmpty>
+		<![CDATA[
+		)	
+		]]>			
+    </insert>
+	
+    <!-- 插入brand数据库活动表 -->
+    <insert id="addActivityTable_CHY" parameterClass="java.util.HashMap">
+    <![CDATA[
+    	INSERT dbo.ActivityTable_SCS
+    	(
+			Brand,
+			ActivityCode,
+			ActivityName,
+			StartTime,
+			EndTime,
+			Unitcode,
+			Barcode,
+			Price,
+			ActCounter,
+			Status,
+			MainCode,
+			ActivityQty,
+			CHYFlag,
+			GroupNo,
+			GroupType,
+			LogicOpt,
+			DeliveryType,
+			Puttime
+		]]>
+		<isNotEmpty property="clubCode">
+			,ClubCode
+		</isNotEmpty>
+		<![CDATA[
+    	)
+    	VALUES
+    	(
+    		#brandCode#,
+    		#activeCode#,
+    		#promotionPrtName#,
+    		CONVERT(DATETIME,#startTime#),
+    		CONVERT(DATETIME,#endTime#),
+    		#promotionPrtUnitCode#,
+    		#promotionPrtCode#,
+    		#price#,
+    		#counterID#,
+    		'1',
+    		#mainCode#,
+    		#activityQty#,
+    		'1',
+    		#groupNo#,
+			#groupType#,
+			#logicOpt#,
+			#deliveryType#,
+    		GETDATE()
+    	]]>
+		<isNotEmpty property="clubCode">
+    		,#clubCode#
+    	</isNotEmpty>
+		<![CDATA[
+    	)
+    	]]>
+    </insert>
+	
+	<!-- 插入活动下发历史表 -->
+	 <insert id="addActivityTransHis" parameterClass="java.util.HashMap">
+	 	 <![CDATA[
+   		INSERT INTO Promotion.BIN_ActivityTransHis
+		(				
+			SubjectCode,
+			MainCode,
+			ActivityType,
+			CountActCode,
+			BIN_OrganizationID,
+			BIN_PromotionProductVendorID,
+			PrtType,
+			BIN_OrganizationInfoID,
+			BIN_BrandInfoID,
+			ActivityFromDate,
+			ActivityToDate,
+			TransferDate,
+			BIN_MemberClubID,
+			ClubCode,
+	]]>
+			<include refid="BINBECMINC99.insertKeySql" />		
+		<![CDATA[					
+		) VALUES (			
+						
+			#subjectCode#,
+			#mainCode#,
+			#activityTypeFlag#,
+			#activeCode#,
+			#counterOrgId#,
+			#prmPrtVendorId#,
+			#prtType#,
+			#bin_OrganizationInfoID#,
+			#brandInfoID#,
+			CONVERT(DATETIME,#startTime#),
+    		CONVERT(DATETIME,#endTime#),
+			#busDate#,	
+			#memberClubId#,
+			#clubCode#,
+		]]>
+			<include refid="BINBECMINC99.insertValueSql" />		
+		<![CDATA[
+			)
+    	]]>		
+    </insert>
+	
+	<!-- 取得已下发过活动的柜台  -->
+    <select id="getActHisList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+       <![CDATA[
+			SELECT
+				A.CountActCode AS activeCode,
+				A.BIN_OrganizationID AS counterOrgId,
+				A.MainCode AS mainCode,
+				A.BIN_PromotionProductVendorID AS prmPrtVendorId,
+				A.PrtType AS prtType,
+				CONVERT(VARCHAR,A.ActivityToDate,120) AS endTime
+			FROM
+				Promotion.BIN_ActivityTransHis A WITH(NOLOCK)
+			WHERE
+				A.MainCode = #mainCode# AND
+				A.SubjectCode = #subjectCode# AND
+				A.BIN_OrganizationInfoID = #bin_OrganizationInfoID# AND
+				A.BIN_BrandInfoID = #brandInfoID# AND
+				A.ActivityType = '0' AND
+				A.ValidFlag = '1'
+		]]>
+    </select>
+    
+    <!-- 取得需要停用的促销活动  -->
+    <select id="getStopActList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+       <![CDATA[
+		SELECT
+			A.ActivityCode AS mainCode,
+			C.BasePropValue2 AS stopTime
+		FROM
+			Promotion.BIN_PromotionActivity A WITH(NOLOCK)
+			JOIN Promotion.BIN_PromotionActivityRule B WITH(NOLOCK)
+			ON(A.BIN_PromotionActivityID = B.BIN_PromotionActivityID
+				AND B.ValidFlag = '1')
+			JOIN Promotion.BIN_PromotionRuleCondition C WITH(NOLOCK)
+			ON(B.BIN_PromotionActivityRuleID = C.BIN_PromotionActivityRuleID
+				AND C.ValidFlag = '1')
+			JOIN Promotion.BIN_PromotionBaseProp E WITH(NOLOCK)
+			ON(C.BIN_PromotionBasePropID = E.BIN_PromotionBasePropID
+				AND E.PropertyName = 'baseProp_time')
+		WHERE
+			A.BIN_BrandInfoID = #brandInfoID# AND
+			A.SendFlag = '3' AND
+			A.ValidFlag = '1' and
+			(A.TemplateFlag IS NULL OR A.TemplateFlag='0' OR A.TemplateFlag ='')
+		]]>
+    </select>
+    <!-- 取得需要停用的促销活动  -->
+    <update id="updatePrmActivity" parameterClass="java.util.HashMap">
+       <![CDATA[
+		update Promotion.BIN_PromotionActivity set SendFlag = '4'
+		WHERE
+			BIN_BrandInfoID = #brandInfoId# AND
+			SendFlag = '3' AND
+			ValidFlag = '1' and
+			(TemplateFlag IS NULL OR TemplateFlag='0' OR TemplateFlag ='')
+		]]>
+    </update>
+    <!--   -->
+    <update id="updatePrmActivity2" parameterClass="java.util.HashMap">
+       <![CDATA[
+		update Promotion.BIN_PromotionActivity set SendFlag = '1'
+		WHERE
+			BIN_BrandInfoID = #brandInfoId# 
+			AND SendFlag = '2' 
+			AND ValidFlag = '1'
+			and (TemplateFlag IS NULL OR TemplateFlag='0' OR TemplateFlag ='')
+		]]>
+		 <isNotEmpty property="mainCode" prepend="AND">
+	 		<![CDATA[ActivityCode = #mainCode#]]>
+		</isNotEmpty>
+    </update>
+	
+	<!-- 取得全部柜台 -->
+	 <select id="getAllCntList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+	 	<![CDATA[
+	 	SELECT 
+			A.BIN_OrganizationID AS counterOrgId,
+			A.CounterCode AS counterID
+	 	FROM
+			Basis.BIN_CounterInfo A WITH(NOLOCK)
+	 	WHERE
+			A.BIN_BrandInfoID = #brandInfoID#
+			AND A.ValidFlag = '1'
+		]]>
+	 </select>
+	 <!-- 清除柜台活动下发历史 -->
+	 <delete id="clearActivityTransHis" parameterClass="java.util.HashMap">
+	 <![CDATA[
+	 	delete from Promotion.BIN_ActivityTransHis WHERE CountActCode = #activeCode#
+	 	AND BIN_BrandInfoID = #brandInfoID#
+		AND ActivityType = '0'
+		AND ValidFlag = '1'
+	 ]]>
+	 </delete>
+	  <!-- 停止柜台活动下发历史 -->
+	 <update id="stopActivityTransHis" parameterClass="java.util.HashMap">
+	 <![CDATA[
+	 	update Promotion.BIN_ActivityTransHis set ActivityToDate=#stopTime# WHERE 
+	 ]]>
+	 <isNotEmpty property="activeCode">
+	 	<![CDATA[CountActCode = #activeCode# AND]]>
+	 </isNotEmpty>
+	 <isNotEmpty property="mainCode">
+	 	<![CDATA[MainCode = #mainCode# AND]]>
+	 </isNotEmpty>
+	 <![CDATA[
+	 	BIN_BrandInfoID = #brandInfoID# AND
+	 	ActivityToDate > #stopTime# AND
+		ActivityType = '0' AND
+		ValidFlag = '1'
+	 ]]>
+	 </update>
+</sqlMap>

@@ -1,0 +1,394 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sqlMap PUBLIC "-//iBATIS.com//DTD SQL Map 2.0//EN" "http://ibatis.apache.org/dtd/sql-map-2.dtd">
+<sqlMap namespace="BINBEIFEMP04">
+	
+	<!-- 从老后台CPA数据库中查询用户信息List -->
+	<select id="getDAUserList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">	
+		<![CDATA[
+			WITH paths(grade, UserID) AS (
+				SELECT
+				1, A.UserID
+				FROM 
+				$dbName$.dbo.DA_UserList A 
+				LEFT JOIN $dbName$.dbo.DA_UserList B on A.SuperiorID = B.UserID
+				WHERE
+				B.UserID IS NULL
+				
+				UNION ALL 
+				SELECT 
+				p.grade+1,
+				C.UserID
+				FROM 
+				$dbName$.dbo.DA_UserList C 
+				JOIN paths p ON C.SuperiorID = P.UserID)
+			
+			SELECT 
+				A.UserID AS userId,
+				A.Brand AS brand,
+				A.UserName AS userName,
+				A.Password AS password,
+				A.SuperiorID AS superiorId,
+				A.Level AS level,
+				B.NameCN AS name,
+				C.NameCN AS superName,
+				D.Level AS superLevel
+			FROM 
+				$dbName$.dbo.DA_UserList A
+				JOIN Paths P ON A.UserID = P.UserID
+				JOIN $dbName$.dbo.DA_UserInformation B ON A.UserID = B.UserID
+				LEFT JOIN $dbName$.dbo.DA_UserInformation C ON A.SuperiorID = C.UserID
+				LEFT JOIN $dbName$.dbo.DA_UserList D ON A.SuperiorID = D.UserID
+			WHERE 
+				A.State = '1'	
+			ORDER BY 
+				P.grade
+		]]>		
+    </select>
+    
+    <!-- 根据CPA中的用户姓名查询新后台的员工表  -->
+	<select id="getEmployeeList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+		<![CDATA[
+			SELECT
+				A.BIN_EmployeeID AS employeeId,
+				A.Path AS path,
+				A.BIN_OrganizationID AS organizationId,
+				C.Path AS orgPath,
+				B.BIN_EmployeeID AS superEmpId
+			FROM
+				Basis.BIN_Employee A
+				LEFT JOIN Basis.BIN_Organization C ON A.BIN_OrganizationID = C.BIN_OrganizationID
+				LEFT JOIN Basis.BIN_Employee B ON A.NodeID.GetAncestor(1) = B.NodeID
+			WHERE
+				A.BIN_OrganizationInfoID = #organizationInfoId# AND
+				A.BIN_BrandInfoID = #brandInfoId# AND
+				A.BIN_PositionCategoryID = #positionCategoryId# AND
+				A.EmployeeName = #employeeName# AND
+				A.ValidFlag = '1'
+		]]>
+    </select>
+    
+    <!-- 根据CPA中的用户账号查询新后台的用户表  -->
+	<select id="getUserList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+		<![CDATA[
+			SELECT
+				BIN_UserID AS userId
+			FROM
+				Privilege.BIN_User
+			WHERE
+				LonginName = #userName#	
+		]]>
+    </select>
+    
+    <!-- 添加用户信息 -->
+	<insert id="addUser" parameterClass="java.util.HashMap">
+		<![CDATA[
+			INSERT INTO	
+				Privilege.BIN_User
+				(
+					BIN_OrganizationInfoID,
+					BIN_EmployeeID,
+					LonginName,
+					PassWord,
+					BIFlag,
+				
+		]]>
+			<include refid="BINBECMINC99.insertKeySql" />		
+		<![CDATA[
+				)VALUES
+				(		
+					#organizationInfoId#,
+					#employeeId#,
+					#userName#,
+					#passWord#,
+					'1',
+		]]>
+			<include refid="BINBECMINC99.insertValueSql" />		
+		<![CDATA[
+				)
+    	]]>   				
+    </insert>
+    
+    <!-- 添加用户信息(配置表)  -->
+	<insert id="addUserConf" parameterClass="java.util.HashMap">	
+		<![CDATA[
+			INSERT INTO 
+				dbo.BIN_LoginConfig
+                (
+                	LonginName,
+				    DataBaseName,		
+		]]>	
+			<include refid="BINBECMINC99.insertKeySql" />									
+		<![CDATA[								
+			)VALUES									
+				(
+					#userName#,
+				  	#dataBaseName#,			
+		]]>
+		     <include refid="BINBECMINC99.insertValueSql" />
+		<![CDATA[
+				)
+		]]>
+	</insert> 
+    
+    <!-- 取得新节点 -->
+	<select id="getNewEmpNodeId" parameterClass="java.util.HashMap" resultClass="java.lang.String">
+		<![CDATA[
+			SELECT 
+				CONVERT(hierarchyid,#path#).GetDescendant(max(NodeID), NULL).ToString() AS newNodeId
+        	FROM 
+        		Basis.BIN_Employee
+            WHERE 
+            	NodeID.GetAncestor(1)=#path#
+		]]>
+    </select>
+	
+	<!-- 添加员工信息 -->
+	<insert id="addEmployee" parameterClass="java.util.HashMap">
+		<selectKey resultClass="java.lang.Integer" type="post" keyProperty="BIN_EmployeeID" >
+		<![CDATA[
+			INSERT INTO	
+				Basis.BIN_Employee
+				(
+					BIN_OrganizationInfoID,
+					BIN_BrandInfoID,
+					BIN_PositionCategoryID,
+					NodeID,
+					EmployeeCode,
+					EmployeeName,
+					BIN_OrganizationID,
+		]]>
+			<include refid="BINBECMINC99.insertKeySql" />		
+		<![CDATA[
+				)VALUES
+				(		
+					#organizationInfoId#,
+					#brandInfoId#,
+					#positionCategoryId#,
+					#nodeId#,
+					#employeeCode#,
+					#name#,
+					#organizationId#,
+		]]>
+			<include refid="BINBECMINC99.insertValueSql" />		
+		<![CDATA[
+				)
+				select SCOPE_IDENTITY() as value
+    	]]>
+    	</selectKey>   				
+    </insert>
+    
+    <!-- 取得新后台岗位List  -->
+	<select id="getPositionList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+		<![CDATA[
+			SELECT
+				BIN_PositionCategoryID AS positionCategoryId,
+				CategoryCode AS categoryCode,
+				CategoryName AS categoryName
+			FROM
+				Privilege.BIN_PositionCategory
+			WHERE
+				BIN_OrganizationInfoID = #organizationInfoId# AND
+				BIN_BrandInfoID = #brandInfoId# AND
+				ValidFlag = '1'
+			ORDER BY
+				Grade	
+		]]>
+    </select>
+    
+    <!-- 根据CPA中的用户ID查询该用户能访问的柜台  -->
+	<select id="getUserCounterAccess" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+		<![CDATA[
+			SELECT
+				CounterCode AS counterCode
+			FROM
+				$dbName$.dbo.DA_UserCounterAccess
+			WHERE
+				UserID = #userId#
+		]]>
+    </select>
+    
+    <!-- 根据柜台号查询部门ID  -->
+	<select id="getOrganizationIdList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+		<![CDATA[
+			SELECT
+				A.BIN_OrganizationID AS organizationId,
+				A.Path AS nodeId,
+				B.BIN_OrganizationID AS superOrgId,
+				C.BIN_EmployeeID AS superEmpId
+			FROM
+				Basis.BIN_Organization A
+				LEFT JOIN Basis.BIN_Organization B ON A.NodeID.GetAncestor(1) = B.NodeID
+				LEFT JOIN Privilege.BIN_EmployeeDepart C ON A.BIN_OrganizationID = C.BIN_OrganizationID AND C.ManageType = '1'
+			WHERE
+				A.BIN_OrganizationInfoID = #organizationInfoId# AND
+				A.BIN_BrandInfoID = #brandInfoId# AND
+				A.DepartCode IN
+		]]>
+			<iterate property="counterCodeList" open="(" close=")" conjunction=","> 
+				#counterCodeList[].counterCode#
+			</iterate>
+    </select>
+    
+    <!-- 添加员工管辖部门信息 -->
+	<insert id="addEmployeeDepart" parameterClass="java.util.HashMap">
+		<![CDATA[
+			INSERT INTO	
+				Privilege.BIN_EmployeeDepart
+				(
+					BIN_EmployeeID,
+					BIN_OrganizationID,
+					DepartType,
+					ManageType,
+		]]>
+			<include refid="BINBECMINC99.insertKeySql" />		
+		<![CDATA[
+				)VALUES
+				(		
+					#employeeId#,
+					#organizationId#,
+					'4',
+					'1',
+		]]>
+			<include refid="BINBECMINC99.insertValueSql" />		
+		<![CDATA[
+				)
+    	]]>				
+    </insert>
+    
+    <!-- 取得新节点 -->
+	<select id="getNewOrgNodeId" parameterClass="java.util.HashMap" resultClass="java.lang.String">
+		<![CDATA[
+			SELECT 
+				CONVERT(hierarchyid,#path#).GetDescendant(max(NodeID), NULL).ToString() AS newNodeId
+        	FROM 
+        		Basis.BIN_Organization
+            WHERE 
+            	NodeID.GetAncestor(1)=#path#
+		]]>
+    </select>
+    
+    <!-- 添加柜台主管部门 -->
+	<insert id="addOrganization" parameterClass="java.util.HashMap">
+		<selectKey resultClass="java.lang.Integer" type="post" keyProperty="BIN_OrganizationID" >
+		<![CDATA[
+			INSERT INTO	
+				Basis.BIN_Organization
+				(
+					BIN_OrganizationInfoID,
+					BIN_BrandInfoID,
+					NodeID,
+					DepartCode,
+					DepartName,
+					Type,
+					TestType,
+		]]>
+			<include refid="BINBECMINC99.insertKeySql" />		
+		<![CDATA[
+				)VALUES
+				(		
+					#organizationInfoId#,
+					#brandInfoId#,
+					#nodeId#,
+					#departCode#,
+					#departName#,
+					'6',
+					'0',
+		]]>
+			<include refid="BINBECMINC99.insertValueSql" />		
+		<![CDATA[
+				)
+				select SCOPE_IDENTITY() as value
+    	]]>
+    	</selectKey>   			
+    </insert>
+    
+    <!-- 取得员工和部门代码的CodeTable信息 -->
+    <select id="getCodeTabelInfoList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+		<![CDATA[
+			SELECT 
+				OrgCode AS orgCode,
+				BrandCode AS brandCode,
+				CodeKey AS codeKey,
+				Value1 AS header,
+				Value2 AS length
+			FROM 
+				Tools.BIN_Coder
+			WHERE
+				CodeType = '1120' AND
+				(CodeKey = '0' OR CodeKey = '1') AND
+				ValidFlag = '1'
+		]]>
+    </select>
+    
+    <!-- 组织结构节点移动 -->
+    <update id="updateOrganizationNode" parameterClass="java.util.HashMap">
+    	<![CDATA[
+			UPDATE Basis.BIN_Organization		
+			SET				
+				NodeID = NodeID.GetReparentedValue(#nodeId#, #newNodeId#),
+		]]>
+				<include refid="BINOLCMINC99.updateSql" />		
+		<![CDATA[					
+			WHERE				
+				NodeID.IsDescendantOf(#nodeId#) = 1		
+		]]>
+    </update>
+    
+    <!-- 更新员工的所属部门 -->
+    <update id="updateEmployee" parameterClass="java.util.HashMap">
+    	<![CDATA[
+			UPDATE Basis.BIN_Employee
+			SET				
+				BIN_OrganizationID = #organizationId#,
+		]]>
+				<include refid="BINOLCMINC99.updateSql" />		
+		<![CDATA[					
+			WHERE				
+				BIN_EmployeeID = #employeeId#
+		]]>
+    </update>
+    
+    <!-- 根据部门ID取得部门节点 -->
+    <select id="getOrgPath" parameterClass="java.util.HashMap" resultClass="java.lang.String">
+		<![CDATA[
+			SELECT 
+				Path
+			FROM 
+				Basis.BIN_Organization
+			WHERE
+				BIN_OrganizationID = #organizationId#
+		]]>
+    </select>
+    
+    <!-- 更新用户信息 -->
+    <update id="updateUser" parameterClass="java.util.HashMap">
+    	<![CDATA[
+			UPDATE Privilege.BIN_User
+			SET				
+				BIN_EmployeeID = #employeeId#,
+				PassWord = #passWord#,
+				BIFlag = 1,
+				
+		]]>
+				<include refid="BINOLCMINC99.updateSql" />		
+		<![CDATA[					
+			WHERE				
+				BIN_UserID = #userId#
+		]]>
+    </update>
+    
+    <!-- 删除员工管辖部门对应关系  -->
+	<delete id="delEmployeeDepart" parameterClass="java.util.HashMap">
+		<![CDATA[
+		DELETE FROM
+			Privilege.BIN_EmployeeDepart
+		WHERE
+			ManageType = '1' AND
+			BIN_OrganizationID IN
+		]]>
+		<iterate property="organizationIdList" open="(" close=")" conjunction=","> 
+			 #organizationIdList[].organizationId#
+		</iterate>
+	</delete>
+    
+</sqlMap>

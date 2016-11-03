@@ -1,0 +1,176 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sqlMap PUBLIC "-//iBATIS.com//DTD SQL Map 2.0//EN" "http://ibatis.apache.org/dtd/sql-map-2.dtd">
+<sqlMap namespace="BINBESSPRM08">
+
+    <!-- 查询券活动列表 -->
+    <select id="getCouponRuleList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+		<![CDATA[
+			SELECT 
+				RuleCode AS ruleCode,
+				RuleName AS ruleName,
+				CONVERT(varchar,SendStartTime,23) AS sendStartTime,
+				CONVERT(varchar,SendEndTime,23) AS sendEndTime,
+				CouponFlag AS couponType
+			FROM 
+				Promotion.BIN_PromotionCouponRule
+			
+		]]>
+		<isNotEmpty property="ruleCodeArr">
+			WHERE ruleCode IN
+			<iterate  open="(" close=")" conjunction="," property="ruleCodeArr">
+			#ruleCodeArr[]#
+		</iterate>
+		</isNotEmpty>	
+    </select>
+    
+    <!-- 取得优惠券总数  -->
+    <select id="getCouponCount" parameterClass="java.util.HashMap" resultClass="java.lang.Integer">
+    	<![CDATA[
+			SELECT
+				COUNT(1)
+			FROM
+				Promotion.BIN_MemberCoupon
+			WHERE
+				RuleCode = #ruleCode#
+		]]>										
+    </select>
+    
+    <!-- 查询待发送的优惠券列表 -->
+    <select id="getCouponList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+    	<![CDATA[
+    		SELECT TOP $COUNT$
+    			CouponNo AS couponNo,
+    			CouponCode AS couponCode,
+    			CouponType AS couponType,
+    			CONVERT(varchar,StartTime,23)AS useStartTime,
+    			CONVERT(varchar,EndTime,23) AS useEndTime,
+    			Status AS status,
+    			Mobile AS mobile,
+    			MemCode AS memCode,
+    			BPCode AS bpCode,
+    			UserMemCode AS userMemCode,
+    			UserMobile AS userMobile,
+    			CONVERT(varchar,OrderTime,23) AS orderTime,
+    			CONVERT(varchar,CancelTime,23) AS cancelTime,
+    			CONVERT(varchar,FinshTime,23) AS finshTime
+    		FROM
+    			Promotion.BIN_MemberCoupon
+    		WHERE
+    	]]>
+		<dynamic>
+			<isNotEmpty property="couponArr" >
+				CouponNo IN
+			<iterate conjunction="," open="(" close=")" property="couponArr">  
+		        #couponArr[]#
+		    </iterate>		
+		    AND SendFlag IS NULL
+			</isNotEmpty>
+			<isEmpty property="couponArr" >
+			<![CDATA[
+				RuleCode = #ruleCode# AND
+    			SendFlag IS NULL
+			]]>
+			</isEmpty>
+		</dynamic>
+    </select>
+    
+    <!-- 查询待发送的优惠券列表 -->
+    <select id="getCouponUpdateList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+    	<![CDATA[
+    		SELECT
+    			MC.CouponNo AS couponNo,
+    			MC.CouponCode AS couponCode,
+    			MC.CouponType AS couponType,
+    			CONVERT(varchar,MC.StartTime,23)AS useStartTime,
+    			CONVERT(varchar,MC.EndTime,23) AS useEndTime,
+    			MC.Status AS status,
+    			MC.Mobile AS mobile,
+    			MC.MemCode AS memCode,
+    			MC.BPCode AS bpCode,
+    			MC.UserMemCode AS userMemCode,
+    			MC.UserMobile AS userMobile,
+    			MC.UserBP AS userBP,
+    			MC.RelatedNoA AS relatedNoA,
+    			MC.RelatedNoB AS relatedNoB,
+    			convert(varchar(8),MC.OrderTime,112) AS orderTime,
+    			convert(varchar(8),MC.CancelTime,112) AS cancelTime,
+    			convert(varchar(8),MC.FinshTime,112) AS finshTime,
+    			convert(varchar(8),MC.CreateTime,112) AS createTime,
+				CNT.CounterCode counterCode,
+				SR.EmployeeCode employeeCode
+    		FROM
+    			Promotion.BIN_MemberCoupon MC
+			Left Join Sale.BIN_SaleRecord SR ON MC.RelatedNoB = SR.BillCode
+			Left join Basis.BIN_CounterInfo CNT ON SR.BIN_OrganizationID = CNT.BIN_OrganizationID
+    		WHERE
+    	]]>
+		<![CDATA[
+				MC.RuleCode = #ruleCode# AND
+	  			MC.SendFlag IS NOT NULL AND
+	  			MC.SyncFlag IS NULL
+		]]>
+    </select>
+    
+    <!-- 查询待发送的优惠券列表 -->
+    <select id="getCouponRuleDistinctList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+    	<![CDATA[
+    		SELECT DISTINCT 
+    			RuleCode  
+    		FROM 
+    			Promotion.BIN_MemberCoupon
+    		WHERE
+    	]]>
+		<dynamic>
+		<![CDATA[
+				CouponNo IN
+		]]>		
+			<iterate conjunction="," open="(" close=")" property="couponArr">  
+		        #couponArr[]#
+		    </iterate>
+		<![CDATA[		
+		    AND SendFlag IS NULL
+		]]>
+		</dynamic>
+    </select>
+    
+    
+    
+    <!-- 更新传输成功的优惠券发送结果 -->
+    <update id="updateSendResult" parameterClass="java.util.HashMap">
+   		<![CDATA[
+    	UPDATE
+    		Promotion.BIN_MemberCoupon
+    	SET
+    		SendFlag = #sendFlag#,
+    		LastSendTime = GETDATE(),
+    		SyncFlag = #syncFlag#,
+    		LastSyncTime = GETDATE(),
+    	]]>
+    	<include refid="BINBECMINC99.updateSql" />
+		<![CDATA[
+		WHERE
+			CouponNo = #couponNo#
+		]]>
+    </update>
+    
+    <!-- 获取对应到产品的券信息 -->
+    <select id="getCouponBycart" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+    	<![CDATA[
+    		SELECT 
+				 mc.CouponType as couponType,
+				 mc.RuleCode as ruleCode,
+				 sc.Unitcode as unitcode,
+				 sc.Quantity as quantity,
+				 mc.CouponNo as couponNo,
+				 mc.RelatedNoB as relatedNoB
+			FROM 
+				promotion.BIN_MemberCoupon mc
+			JOIN
+				campaign.BIN_IntelligentResultShoppingCart sc
+			ON
+				(mc.RelatedNoB = sc.TradeNoIF and mc.RuleCode=sc.ActivityMainCode)
+			WHERE
+				mc.RelatedNoB = #relatedNoB#
+    	]]>
+    </select>
+</sqlMap>

@@ -1,0 +1,578 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sqlMap PUBLIC "-//iBATIS.com//DTD SQL Map 2.0//EN" "http://ibatis.apache.org/dtd/sql-map-2.dtd">
+<sqlMap namespace="BINBEPLDPL05">
+    
+    <!-- 查询某一用户的所有部门权限 -->
+	<select id="getOrganizationIdList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+		<![CDATA[
+			SELECT
+				T.BIN_OrganizationID AS organizationId,
+				T.Type AS type,
+				T.TestType AS counterKind,
+				T.ValidFlag AS orgValidFlag,
+				MAX(T.PrivilegeFlag) AS privilegeFlag
+			FROM
+			(
+				(SELECT DISTINCT
+					E.BIN_OrganizationID,
+					E.Type,
+					E.TestType,
+					E.ValidFlag,
+					3 AS PrivilegeFlag
+				FROM
+					Basis.BIN_Employee A with(nolock),
+					Basis.BIN_Employee B with(nolock),
+					Privilege.BIN_EmployeeDepart C with(nolock),
+					Basis.BIN_Organization D with(nolock),
+					Basis.BIN_Organization E with(nolock)
+				WHERE
+					B.BIN_EmployeeID = #employeeId# AND
+					A.NodeID.IsDescendantOf(B.NodeID)= 1 AND
+					A.BIN_EmployeeID = C.BIN_EmployeeID AND
+					C.ManageType = '1' AND
+					C.BIN_OrganizationID = D.BIN_OrganizationID AND
+					E.NodeID.IsDescendantOf(D.NodeID) = 1
+				)  UNION
+				(SELECT
+					C.BIN_OrganizationID,
+					C.Type,
+					C.TestType,
+					C.ValidFlag,
+					2 AS PrivilegeFlag
+				FROM
+					Basis.BIN_Employee A with(nolock),
+					Privilege.BIN_EmployeeDepart B with(nolock),
+					Basis.BIN_Organization C with(nolock)
+				WHERE
+					A.BIN_EmployeeID = #employeeId# AND
+					A.BIN_EmployeeID = B.BIN_EmployeeID AND
+					B.ManageType = '0' AND
+					B.BIN_OrganizationID = C.BIN_OrganizationID
+				) UNION
+				(SELECT
+					D.BIN_OrganizationID,
+					D.Type,
+					D.TestType,
+					D.ValidFlag,
+					1 AS PrivilegeFlag
+				FROM
+					Basis.BIN_Employee A with(nolock),
+					Privilege.BIN_EmployeeDepart B with(nolock),
+					Basis.BIN_Organization C with(nolock),
+					Basis.BIN_Organization D with(nolock)
+				WHERE
+					A.BIN_EmployeeID = #employeeId# AND
+					A.BIN_EmployeeID = B.BIN_EmployeeID AND
+					B.ManageType = '0' AND
+					B.BIN_OrganizationID = C.BIN_OrganizationID AND
+					D.NodeID.IsDescendantOf(C.NodeID) = 1	
+				) UNION
+				(SELECT DISTINCT
+					F.BIN_OrganizationID,
+					F.Type,
+					F.TestType,
+					F.ValidFlag,
+					1 AS PrivilegeFlag
+				FROM
+					Basis.BIN_Employee A with(nolock),
+					Basis.BIN_Employee B with(nolock),
+					Privilege.BIN_EmployeeDepart C with(nolock),
+					Privilege.BIN_LikeEmployee D with(nolock),
+					Basis.BIN_Organization E with(nolock),
+					Basis.BIN_Organization F with(nolock)
+				WHERE
+					D.BIN_EmployeeID = #employeeId# AND
+					B.BIN_EmployeeID = D.BIN_LikeEmployeeID AND
+					A.NodeID.IsDescendantOf(B.NodeID)= 1 AND
+					A.BIN_EmployeeID = C.BIN_EmployeeID AND
+					C.ManageType = '1' AND
+					C.BIN_OrganizationID = E.BIN_OrganizationID AND
+					F.NodeID.IsDescendantOf(E.NodeID) = 1
+				) UNION
+				(SELECT
+					B.BIN_OrganizationID,
+					B.Type,
+					B.TestType,
+					B.ValidFlag,
+					0 AS PrivilegeFlag
+				FROM
+					Basis.BIN_Employee A with(nolock),
+					Basis.BIN_Organization B with(nolock)
+				WHERE
+					A.BIN_EmployeeID = #employeeId# AND
+					A.BIN_OrganizationID = B.BIN_OrganizationID
+				)
+			) T
+			GROUP BY
+				T.BIN_OrganizationID,
+				T.Type,
+				T.TestType,
+				T.ValidFlag		
+		]]>					
+    </select>
+
+	<!-- 添加数据过滤权限 -->
+    <insert id="addDataPrivilege" parameterClass="java.util.HashMap">
+    	<![CDATA[
+    		INSERT INTO Privilege.BIN_DepartPrivilege_temp
+			(		
+				BIN_UserID,		
+				BIN_EmployeeID,	
+				BIN_OrganizationID,			
+				DepartType,			
+				CounterKind,
+				PrivilegeFlag,
+				OrgValidFlag,
+		]]>
+				<include refid="BINBECMINC99.insertKeySql" />		
+		<![CDATA[				
+			)		
+			VALUES		
+			(		
+				#userId#,	
+				#employeeId#,		
+				#organizationId#,			
+				#type#,			
+				#counterKind#,
+				#privilegeFlag#,
+				#orgValidFlag#,
+		]]>
+				<include refid="BINBECMINC99.insertValueSql" />		
+		<![CDATA[			
+			)		
+    	]]>
+    </insert>
+    
+    <!-- 把部门权限临时表的数据更新到真实表 -->
+    <update id="updDataPrivilege" parameterClass="java.util.HashMap">
+    	<![CDATA[
+        	MERGE Privilege.BIN_DepartPrivilege AS TGT
+                USING Privilege.BIN_DepartPrivilege_temp AS SRC
+                ON TGT.BIN_EmployeeID = SRC.BIN_EmployeeID AND 
+                    TGT.BIN_OrganizationID = SRC.BIN_OrganizationID AND
+                    ISNULL(TGT.BIN_UserID,'') = ISNULL(SRC.BIN_UserID,'') AND
+                    TGT.PrivilegeFlag = SRC.PrivilegeFlag AND
+                    TGT.DepartType = SRC.DepartType AND
+                    TGT.CounterKind = SRC.CounterKind AND
+                    TGT.OrgValidFlag = SRC.OrgValidFlag
+            WHEN NOT MATCHED THEN 
+                INSERT(BIN_UserID,BIN_EmployeeID,BIN_OrganizationID,DepartType,
+                CounterKind,PrivilegeFlag,OrgValidFlag,ValidFlag,CreateTime,CreatedBy,
+                CreatePGM,UpdateTime,UpdatedBy,UpdatePGM,ModifyCount)
+                VALUES(SRC.BIN_UserID,SRC.BIN_EmployeeID,SRC.BIN_OrganizationID,SRC.DepartType,
+                SRC.CounterKind,SRC.PrivilegeFlag,SRC.OrgValidFlag,SRC.ValidFlag,SRC.CreateTime,SRC.CreatedBy,
+                SRC.CreatePGM,SRC.UpdateTime,SRC.UpdatedBy,SRC.UpdatePGM,SRC.ModifyCount)
+            WHEN NOT MATCHED BY SOURCE
+            THEN DELETE;
+    	]]>
+    </update>
+    
+    <!-- 查询某一用户的所有人员权限 -->
+	<select id="getPositionIDList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+		<![CDATA[
+			SELECT
+				T.BIN_EmployeeID AS subEmployeeId,
+				T.BIN_PositionCategoryID AS positionCategoryId,
+				MAX(T.PrivilegeFlag) AS privilegeFlag
+			FROM
+			(
+				(SELECT					
+					A.BIN_EmployeeID,					
+					A.BIN_PositionCategoryID,
+					3 AS PrivilegeFlag					
+				FROM						
+					Basis.BIN_Employee A WITH(NOLOCK),
+					Basis.BIN_Employee B WITH(NOLOCK)				
+				WHERE						
+					B.BIN_EmployeeID = #employeeId# AND		
+					A.NodeID.IsDescendantOf(B.NodeID)=1	
+				) UNION
+				(SELECT				
+					B.BIN_EmployeeID,					
+					B.BIN_PositionCategoryID,
+					2 AS PrivilegeFlag				
+				FROM						
+					Privilege.BIN_LikeEmployee A WITH(NOLOCK),
+					Basis.BIN_Employee B WITH(NOLOCK)			
+				WHERE						
+					A.BIN_EmployeeID = #employeeId# AND
+					A.BIN_LikeEmployeeID = B.BIN_EmployeeID
+				) UNION				
+				(SELECT	DISTINCT				
+					C.BIN_EmployeeID,					
+					C.BIN_PositionCategoryID,
+					1 AS PrivilegeFlag					
+				FROM						
+					Privilege.BIN_LikeEmployee A WITH(NOLOCK),
+					Basis.BIN_Employee B WITH(NOLOCK),
+					Basis.BIN_Employee C WITH(NOLOCK)
+				WHERE						
+					A.BIN_EmployeeID = #employeeId# AND
+					A.BIN_LikeEmployeeID = B.BIN_EmployeeID AND			
+					C.NodeID.IsDescendantOf(B.NodeID)=1
+				)			
+			) T
+			GROUP BY
+				T.BIN_EmployeeID,
+				T.BIN_PositionCategoryID												
+		]]>
+    </select>
+    
+    <!-- 添加人员数据过滤权限 -->
+    <insert id="addPositionPrivilege" parameterClass="java.util.HashMap">
+    	<![CDATA[
+    		INSERT INTO Privilege.BIN_EmployeePrivilege_temp
+			(		
+				BIN_UserID,			
+				BIN_EmployeeID,	
+				BIN_SubEmployeeID,				
+				PrivilegeFlag,
+		]]>
+				<include refid="BINBECMINC99.insertKeySql" />		
+		<![CDATA[				
+			)		
+			VALUES		
+			(		
+				#userId#,			
+				#employeeId#,	
+				#subEmployeeId#,			
+				#privilegeFlag#,
+		]]>
+				<include refid="BINBECMINC99.insertValueSql" />		
+		<![CDATA[			
+			)		
+    	]]>
+    </insert>
+    
+    <!-- 把人员权限临时表的数据更新到真实表 -->
+    <update id="updPositionPrivilege" parameterClass="java.util.HashMap">
+    	<![CDATA[
+        	MERGE Privilege.BIN_EmployeePrivilege AS TGT
+                USING Privilege.BIN_EmployeePrivilege_temp AS SRC
+                ON TGT.BIN_EmployeeID = SRC.BIN_EmployeeID AND 
+                    TGT.BIN_SubEmployeeID = SRC.BIN_SubEmployeeID AND
+                    ISNULL(TGT.BIN_UserID,'') = ISNULL(SRC.BIN_UserID,'') AND
+                    TGT.PrivilegeFlag = SRC.PrivilegeFlag
+            WHEN NOT MATCHED THEN 
+                INSERT(BIN_UserID,BIN_EmployeeID,BIN_SubEmployeeID,PrivilegeFlag,
+                ValidFlag,CreateTime,CreatedBy,CreatePGM,UpdateTime,UpdatedBy,UpdatePGM,ModifyCount)
+                VALUES(SRC.BIN_UserID,SRC.BIN_EmployeeID,SRC.BIN_SubEmployeeID,SRC.PrivilegeFlag,
+                SRC.ValidFlag,SRC.CreateTime,SRC.CreatedBy,SRC.CreatePGM,SRC.UpdateTime,SRC.UpdatedBy,SRC.UpdatePGM,SRC.ModifyCount)
+            WHEN NOT MATCHED BY SOURCE
+            THEN DELETE;
+    	]]>
+    </update>
+    
+    <!-- 把部门从属权限临时表的数据更新到真实表 -->
+    <update id="updDepartRelation" parameterClass="java.util.HashMap">
+    	<![CDATA[
+        	MERGE Privilege.BIN_DepartRelation AS TGT
+                USING Privilege.BIN_DepartRelation_temp AS SRC
+                ON TGT.BIN_OrganizationID = SRC.BIN_OrganizationID AND 
+                    TGT.BIN_OrganizationIDRel = SRC.BIN_OrganizationIDRel AND
+                    TGT.PrivilegeFlag = SRC.PrivilegeFlag AND
+                    TGT.DepartType = SRC.DepartType AND
+                    TGT.TestType = SRC.TestType
+            WHEN NOT MATCHED THEN 
+                INSERT(BIN_OrganizationID,BIN_OrganizationIDRel,TestType,DepartType,PrivilegeFlag,
+                ValidFlag,CreateTime,CreatedBy,CreatePGM,UpdateTime,UpdatedBy,UpdatePGM,ModifyCount)
+                VALUES(SRC.BIN_OrganizationID,SRC.BIN_OrganizationIDRel,SRC.TestType,SRC.DepartType,SRC.PrivilegeFlag,
+                SRC.ValidFlag,SRC.CreateTime,SRC.CreatedBy,SRC.CreatePGM,SRC.UpdateTime,SRC.UpdatedBy,SRC.UpdatePGM,SRC.ModifyCount)
+            WHEN NOT MATCHED BY SOURCE
+            THEN DELETE;
+    	]]>
+    </update>
+    
+    <!-- 清空员工权限类型临时表数据 -->
+    <update id="truncateEmpPLTypeTemp" parameterClass="java.util.HashMap">
+		<![CDATA[
+			TRUNCATE TABLE Privilege.BIN_EmpPLType_temp
+		]]>	
+    </update>
+    
+    <!-- 添加员工权限类型配置信息 -->
+    <insert id="addEmpPLType" parameterClass="java.util.HashMap">
+    	<![CDATA[
+    		INSERT INTO Privilege.BIN_EmpPLType_temp
+			(		
+				BIN_UserID,			
+				BIN_EmployeeID,	
+				BusinessType,				
+				OperationType,
+				PrivilegeFlag,
+		]]>
+				<include refid="BINBECMINC99.insertKeySql" />		
+		<![CDATA[				
+			)		
+			VALUES		
+			(		
+				#userId#,			
+				#employeeId#,	
+				#businessType#,			
+				#operationType#,
+				#privilegeFlag#,
+		]]>
+				<include refid="BINBECMINC99.insertValueSql" />		
+		<![CDATA[			
+			)		
+    	]]>
+    </insert>
+    
+    <!-- 把员工权限类型临时表的数据更新到真实表 -->
+    <update id="updEmpPLType" parameterClass="java.util.HashMap">
+    	<![CDATA[
+        	MERGE Privilege.BIN_EmpPLType AS TGT
+                USING Privilege.BIN_EmpPLType_temp AS SRC
+                ON TGT.BIN_EmployeeID = SRC.BIN_EmployeeID AND 
+                	ISNULL(TGT.BIN_UserID,'') = ISNULL(SRC.BIN_UserID,'') AND
+                 	TGT.BusinessType = SRC.BusinessType AND
+                    TGT.OperationType = SRC.OperationType AND
+                    TGT.PrivilegeFlag = SRC.PrivilegeFlag
+            WHEN NOT MATCHED THEN 
+                INSERT(BIN_UserID,BIN_EmployeeID,BusinessType,OperationType,PrivilegeFlag,
+                ValidFlag,CreateTime,CreatedBy,CreatePGM,UpdateTime,UpdatedBy,UpdatePGM,ModifyCount)
+                VALUES(SRC.BIN_UserID,SRC.BIN_EmployeeID,SRC.BusinessType,SRC.OperationType,SRC.PrivilegeFlag,
+                SRC.ValidFlag,SRC.CreateTime,SRC.CreatedBy,SRC.CreatePGM,SRC.UpdateTime,SRC.UpdatedBy,SRC.UpdatePGM,SRC.ModifyCount)
+            WHEN NOT MATCHED BY SOURCE
+            THEN DELETE;
+    	]]>
+    </update>
+    
+    
+    <!-- 生成部门从属权限 -->
+    <insert id="addDepartRelationPL" parameterClass="java.util.HashMap">
+    	<![CDATA[
+    		TRUNCATE TABLE Privilege.BIN_EmpPLType_temp
+			INSERT INTO Privilege.BIN_DepartRelation_temp(
+				[BIN_OrganizationID],
+				[BIN_OrganizationIDRel],
+			    [TestType],
+			    [DepartType],
+			    [PrivilegeFlag],
+			    [ValidFlag],
+			    [CreateTime]
+			)
+			SELECT 
+				T.organizationId,
+				T.organizationIdRel,
+				ISNULL(T.testType,'0'),
+				T.type,
+				T.privilegeFlag,
+				'1',
+				GETDATE()
+			FROM
+				(SELECT
+					A.BIN_OrganizationID AS organizationId,
+					B.BIN_OrganizationID AS organizationIdRel,
+					B.Type AS type,
+					ISNULL(B.TestType, 0) AS testType,
+					1 AS privilegeFlag
+				FROM
+					Basis.BIN_Organization A WITH(NOLOCK)
+					JOIN Basis.BIN_Organization B WITH(NOLOCK) ON B.NodeID.IsDescendantOf(A.NodeID)= 1
+				WHERE 
+					A.BIN_OrganizationInfoID = #organizationInfoId# AND
+					A.BIN_BrandInfoID = #brandInfoId# AND
+					A.Type <> 'Z'
+				UNION	
+				SELECT
+					A.BIN_OrganizationID AS organizationId,
+					D.BIN_OrganizationID AS organizationIdRel,
+					D.Type AS type,
+					ISNULL(D.TestType, 0) AS testType,
+					1 AS privilegeFlag
+				FROM
+					Basis.BIN_Organization A WITH(NOLOCK)
+					JOIN Basis.BIN_Organization B WITH(NOLOCK) ON B.NodeID.IsDescendantOf(A.NodeID)= 1	
+					JOIN Basis.BIN_CounterInfo C WITH(NOLOCK) ON B.BIN_OrganizationID=C.ResellerDepartID
+					JOIN Basis.BIN_Organization D WITH(NOLOCK) ON C.BIN_OrganizationID = D.BIN_OrganizationID
+				WHERE
+					A.Type IN ('3','7','8') AND
+					A.BIN_OrganizationInfoID = #organizationInfoId# AND
+					A.BIN_BrandInfoID = #brandInfoId#) T
+			ORDER BY 
+				T.organizationId	
+		]]>
+    </insert>
+    
+    <!-- 生成员工权限 -->
+    <insert id="addEmployeePL" parameterClass="java.util.HashMap">
+    	<![CDATA[
+    		TRUNCATE TABLE [Privilege].[BIN_EmployeePrivilege_temp]
+			INSERT INTO [Privilege].[BIN_EmployeePrivilege_temp](
+				[BIN_UserID],
+				[BIN_EmployeeID],
+				[BIN_SubEmployeeID],
+				[PrivilegeFlag],
+				[ValidFlag],
+				[CreateTime]
+			)
+			SELECT 
+				L.BIN_UserID AS userId,
+				M.employeeId AS employeeId,
+				M.subEmployeeId AS subEmployeeId,
+				M.privilegeFlag AS privilegeFlag,
+				'1',
+				GETDATE()
+			FROM
+				(SELECT
+					T.employeeId,
+					T.subEmployeeId,
+					MAX(T.privilegeFlag) AS privilegeFlag
+				FROM
+				(
+					(SELECT					
+						A.BIN_EmployeeID AS employeeId,
+						B.BIN_EmployeeID AS subEmployeeId,					
+						3 AS privilegeFlag					
+					FROM						
+						Basis.BIN_Employee A WITH(NOLOCK)
+						JOIN Privilege.BIN_PositionCategory C WITH(NOLOCK) ON A.BIN_PositionCategoryID=C.BIN_PositionCategoryID
+						JOIN Basis.BIN_Employee B WITH(NOLOCK) ON B.NodeID.IsDescendantOf(A.NodeID)=1			
+					WHERE						
+						A.BIN_OrganizationInfoID = #organizationInfoId# AND
+						A.BIN_BrandInfoID = #brandInfoId# AND
+						C.CategoryCode <> '01' AND
+						A.ValidFlag = '1') UNION
+					(SELECT				
+						A.BIN_EmployeeID AS employeeId,
+						B.BIN_LikeEmployeeID AS subEmployeeId,					
+						2 AS privilegeFlag				
+					FROM	
+						Basis.BIN_Employee A WITH(NOLOCK)	
+						JOIN Privilege.BIN_PositionCategory C WITH(NOLOCK) ON A.BIN_PositionCategoryID=C.BIN_PositionCategoryID				
+						JOIN Privilege.BIN_LikeEmployee B WITH(NOLOCK) ON A.BIN_EmployeeID = B.BIN_EmployeeID			
+					WHERE						
+						A.BIN_OrganizationInfoID = #organizationInfoId# AND
+						A.BIN_BrandInfoID = #brandInfoId# AND
+						C.CategoryCode <> '01' AND
+						A.ValidFlag = '1') UNION				
+					(SELECT
+						A.BIN_EmployeeID AS employeeId,				
+						E.BIN_EmployeeID AS subEmployeeId,
+						1 AS privilegeFlag					
+					FROM						
+						Basis.BIN_Employee A WITH(NOLOCK)	
+						JOIN Privilege.BIN_PositionCategory C WITH(NOLOCK) ON A.BIN_PositionCategoryID=C.BIN_PositionCategoryID				
+						JOIN Privilege.BIN_LikeEmployee B WITH(NOLOCK) ON A.BIN_EmployeeID = B.BIN_EmployeeID
+						JOIN Basis.BIN_Employee D WITH(NOLOCK) ON B.BIN_LikeEmployeeID = D.BIN_EmployeeID
+						JOIN Basis.BIN_Employee E WITH(NOLOCK) ON E.NodeID.IsDescendantOf(D.NodeID)=1
+					WHERE						
+						A.BIN_OrganizationInfoID = #organizationInfoId# AND
+						A.BIN_BrandInfoID = #brandInfoId# AND
+						C.CategoryCode <> '01' AND
+						A.ValidFlag = '1')			
+				) T
+				GROUP BY
+					T.employeeId,
+					T.subEmployeeId) M
+				
+				LEFT JOIN Privilege.BIN_User L WITH(NOLOCK) ON M.employeeId = L.BIN_EmployeeID
+				
+			ORDER BY
+				M.employeeId
+		]]>
+    </insert>
+    
+    <!-- 生成部门权限 -->
+    <insert id="addDepartPL" parameterClass="java.util.HashMap">
+    	<![CDATA[
+    		TRUNCATE TABLE [Privilege].[BIN_DepartPrivilege_temp]
+			INSERT INTO [Privilege].[BIN_DepartPrivilege_temp](
+				[BIN_UserID],
+				[BIN_EmployeeID],
+				[BIN_OrganizationID],
+				[DepartType],
+				[CounterKind],
+				[PrivilegeFlag],
+				[OrgValidFlag],
+				[ValidFlag],
+				[CreateTime]
+			)
+			SELECT
+				L.BIN_UserID AS userId,
+				M.employeeId AS employeeId,
+				M.organizationId AS organizationId,
+				N.Type AS type,
+				N.TestType AS testType,
+				M.privilegeFlag AS privilegeFlag,
+				N.ValidFlag AS validFlag,
+				'1',
+				GETDATE()
+			FROM
+				(SELECT 
+					T.employeeId,
+					T.organizationId,
+					MAX(T.privilegeFlag) AS privilegeFlag
+				FROM
+			
+					(SELECT 
+						A.BIN_EmployeeID AS employeeId,
+						C.BIN_OrganizationIDRel AS organizationId,
+						CASE WHEN A.PrivilegeFlag='1' THEN '3' ELSE '1' END AS privilegeFlag
+					FROM
+						Privilege.BIN_EmployeePrivilege A WITH(NOLOCK)
+						JOIN Privilege.BIN_EmployeeDepart B WITH(NOLOCK) ON A.BIN_SubEmployeeID=B.BIN_EmployeeID AND B.ManageType='1'
+						JOIN Privilege.BIN_DepartRelation C WITH(NOLOCK) ON B.BIN_OrganizationID=C.BIN_OrganizationID
+						
+					UNION
+					SELECT 
+						A.BIN_EmployeeID AS employeeId,
+						A.BIN_OrganizationID AS organizationId,
+						'2' AS privilegeFlag
+					FROM
+						Basis.BIN_Employee A WITH(NOLOCK)
+						JOIN Privilege.BIN_PositionCategory C WITH(NOLOCK) ON A.BIN_PositionCategoryID=C.BIN_PositionCategoryID
+						JOIN Privilege.BIN_EmployeeDepart B WITH(NOLOCK) ON A.BIN_EmployeeID=B.BIN_EmployeeID
+					WHERE
+						A.BIN_OrganizationInfoID = #organizationInfoId# AND
+						A.BIN_BrandInfoID = #brandInfoId# AND
+						C.CategoryCode <> '01' AND
+						A.ValidFlag = '1' AND
+						B.ManageType='0'
+			
+					UNION
+					SELECT
+						A.BIN_EmployeeID AS employeeId,
+						D.BIN_OrganizationIDRel AS organizationId,
+						'1' as privilegeFlag
+					FROM
+						Basis.BIN_Employee A WITH(NOLOCK)
+						JOIN Privilege.BIN_PositionCategory C WITH(NOLOCK) ON A.BIN_PositionCategoryID=C.BIN_PositionCategoryID
+						JOIN Privilege.BIN_EmployeeDepart B WITH(NOLOCK) ON A.BIN_EmployeeID=B.BIN_EmployeeID
+						JOIN Privilege.BIN_DepartRelation D WITH(NOLOCK) ON B.BIN_OrganizationID=D.BIN_OrganizationID
+					WHERE
+						A.BIN_OrganizationInfoID = #organizationInfoId# AND
+						A.BIN_BrandInfoID = #brandInfoId# AND
+						C.CategoryCode <> '01' AND
+						A.ValidFlag = '1' AND
+						B.ManageType='0'
+			
+					UNION
+					SELECT 
+						A.BIN_EmployeeID AS employeeId,
+						A.BIN_OrganizationID AS organizationId,
+						'0' as privilegeFlag
+					FROM
+						Basis.BIN_Employee A WITH(NOLOCK)
+						JOIN Privilege.BIN_PositionCategory C WITH(NOLOCK) ON A.BIN_PositionCategoryID=C.BIN_PositionCategoryID
+					WHERE
+						A.BIN_OrganizationInfoID = #organizationInfoId# AND
+						A.BIN_BrandInfoID = #brandInfoId# AND
+						C.CategoryCode <> '01' AND
+						A.ValidFlag = '1') T
+			
+				GROUP BY
+					T.employeeId,
+					T.organizationId) M
+				
+				LEFT JOIN Privilege.BIN_User L WITH(NOLOCK) ON M.employeeId = L.BIN_EmployeeID
+				LEFT JOIN Basis.BIN_Organization N WITH(NOLOCK) ON M.organizationId = N.BIN_OrganizationID
+				
+			ORDER BY
+				M.employeeId	
+
+		]]>
+    </insert>
+    
+</sqlMap>

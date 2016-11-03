@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sqlMap PUBLIC "-//iBATIS.com//DTD SQL Map 2.0//EN" "http://ibatis.apache.org/dtd/sql-map-2.dtd">
+<sqlMap namespace="CounterSynchro">
+    <!-- 柜台管理(添加/编辑) -->
+    <parameterMap id="synchroCounterMap" class="java.util.Map">     	   	
+        <parameter property="BrandCode" jdbcType="VARCHAR" javaType="java.lang.String" mode="IN" />
+    	<parameter property="CounterCode" jdbcType="VARCHAR" javaType="java.lang.String" mode="IN" />
+    	<parameter property="CounterName" jdbcType="VARCHAR" javaType="java.lang.String" mode="IN" />
+    	<parameter property="RegionCode" jdbcType="VARCHAR" javaType="java.lang.String" mode="IN" />
+    	<parameter property="RegionName" jdbcType="VARCHAR" javaType="java.lang.String" mode="IN" />
+    	<parameter property="Channel" jdbcType="VARCHAR" javaType="java.lang.String" mode="IN" />
+    	<parameter property="Citycode" jdbcType="VARCHAR" javaType="java.lang.String" mode="IN" />
+    	<parameter property="AgentCode" jdbcType="VARCHAR" javaType="java.lang.String" mode="IN" />
+		<parameter property="CounterKind" jdbcType="SMALLINT" javaType="java.lang.Integer" mode="IN" />
+
+		<parameter property="expiringDate" jdbcType="VARCHAR" javaType="java.lang.String" mode="IN" />
+		<parameter property="counterAddress" jdbcType="VARCHAR" javaType="java.lang.String" mode="IN" />
+		<parameter property="counterTelephone" jdbcType="VARCHAR" javaType="java.lang.String" mode="IN" />
+		<parameter property="status" jdbcType="INT" javaType="java.lang.Integer" mode="IN" />
+		<parameter property="synergyFlag" jdbcType="INT" javaType="java.lang.Integer" mode="IN" />
+		<parameter property="password" jdbcType="VARCHAR" javaType="java.lang.String" mode="IN" />
+		<parameter property="Operate" jdbcType="VARCHAR" javaType="java.lang.String" mode="IN" />
+		
+    	<parameter property="Result" jdbcType="VARCHAR" javaType="java.lang.String" mode="OUT" />  	
+    </parameterMap>
+    <procedure id="synchroCounter" parameterMap="synchroCounterMap">	
+	{call cherry_base_synchroCounter(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)}
+	</procedure>
+	
+    <!-- 取得柜台信息(新老后台交互时使用)  -->
+    <select id="getCounterInfo" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+    	<![CDATA[
+			SELECT 
+				Z.BrandCode AS BrandCode,
+				X.CounterCode AS CounterCode,
+				X.CounterNameIF AS CounterName,
+				X.CounterKind AS counterKind,
+				X.[PassWord] AS PassWord,
+				X.CounterAddress AS CounterAddress,
+				X.CounterTelephone AS CounterTelephone,
+				X.CounterSynergyFlag AS CounterSynergyFlag,
+				X.ValidFlag AS ValidFlag,
+				R.RegionCode AS RegionCode,
+				CC.RegionCode AS Citycode,
+				N.ResellerCode AS AgentCode,
+				N.ResellerName AS AgentName,
+				convert(varchar(30),O.ExpiringDate,120) AS ExpiringDate,
+				L.ChannelName AS Channel,
+				R.RegionNameChinese AS RegionName,
+				CC.RegionNameChinese AS CityName
+			FROM
+				Basis.BIN_CounterInfo X
+				JOIN Basis.BIN_Organization O ON (O.BIN_OrganizationID = X.BIN_OrganizationID )
+				LEFT JOIN Basis.BIN_Region R ON (O.BIN_RegionID = R.BIN_RegionID AND R.ValidFlag = '1')
+				LEFT JOIN Basis.BIN_Region CC ON (O.BIN_CityID = CC.BIN_RegionID AND CC.ValidFlag = '1')
+				LEFT JOIN Basis.BIN_BrandInfo Z ON (X.BIN_BrandInfoID = Z.BIN_BrandInfoID AND Z.ValidFlag = '1')
+				LEFT JOIN Basis.BIN_Channel L ON (X.BIN_ChannelID = L.BIN_ChannelID AND L.ValidFlag = '1')
+				LEFT JOIN Basis.BIN_ResellerInfo N ON (X.BIN_ResellerInfoID = N.BIN_ResellerInfoID AND N.ValidFlag = '1')
+			WHERE
+				X.BIN_CounterInfoID = #counterInfoId#
+		]]>									
+    </select>	
+	
+</sqlMap>

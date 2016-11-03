@@ -1,0 +1,227 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sqlMap PUBLIC "-//iBATIS.com//DTD SQL Map 2.0//EN" "http://ibatis.apache.org/dtd/sql-map-2.dtd">
+<sqlMap namespace="BINCPMEACT04">
+	<!-- 取得需要batch生成单据的活动List  -->
+    <select id="getSubCampList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+    <![CDATA[
+    SELECT
+		'SP' AS tradeType,
+		A.CampaignCode AS campCode,
+		A.CampaignType AS campaignType,
+		A.NeedBuyFlag AS needBuyFlag,
+		A.CampaignSetBy AS userId,
+		A.StockFromDate AS stockFromDate,
+		A.StockToDate AS stockToDate,
+		left(E.BasePropValue1,10) AS obtainFromDate,
+		left(E.BasePropValue2,10) AS obtainToDate,
+		A.CampaignFromDate AS campFromDate,
+		A.CampaignToDate AS campToDate,
+		datediff(day,#sysBusDate#,A.CampaignFromDate) AS differDate,
+		A.ObtainRule AS obtainRule,
+		A.GotCounter AS gotCounter,
+		B.BIN_CampaignRuleID AS campaignRuleId,
+		B.SubCampaignCode AS subCampCode,
+		B.SubCampaignType AS subCampType,
+		B.IsCollectInfo AS isCollectInfo,
+		B.SubCampaignValid AS subCampaignValid,
+		B.LocalValidRule AS localValidRule,
+		B.CouponType AS couponType,
+		B.CouponCount AS couponCount,
+		B.couponBatchNo AS couponBatchNo,
+		B.PriceControl AS priceControl,
+		B.SaleBatchNo AS saleBatchNo,
+		C.ActLocationType AS campMebType,
+		C.BasePropValue1 AS searchCode
+	FROM
+		Campaign.BIN_Campaign A WITH(NOLOCK)
+		JOIN Campaign.BIN_CampaignRule B WITH(NOLOCK)
+		ON(A.BIN_CampaignID = B.BIN_CampaignID
+			AND B.State IN('0','1')
+			AND B.ValidFlag = '1')
+		JOIN Campaign.BIN_CamRuleCondition C WITH(NOLOCK)
+		ON(B.BIN_CampaignRuleID = C.BIN_CampaignRuleID
+ 			AND C.ValidFlag = '1')
+		JOIN Campaign.BIN_CampaignBaseProp D WITH(NOLOCK)
+		ON(C.BIN_CampaignBasePropID = D.BIN_CampaignBasePropID
+			AND D.PropertyName = 'baseProp_customer'
+			AND D.ValidFlag = '1')
+		JOIN Campaign.BIN_CamRuleCondition E WITH(NOLOCK)
+		ON(B.BIN_CampaignRuleID = E.BIN_CampaignRuleID
+ 			AND E.ValidFlag = '1')
+		JOIN Campaign.BIN_CampaignBaseProp F WITH(NOLOCK)
+		ON(E.BIN_CampaignBasePropID = F.BIN_CampaignBasePropID
+			AND F.PropertyName = 'baseProp_obtain_time'
+			AND F.ValidFlag = '1')
+	WHERE
+		A.BIN_BrandInfoID = #brandInfoId#
+	]]>
+	<isEqual prepend="AND" property="closeFlag" compareValue="1">
+	<![CDATA[A.State IN('0','1')]]>
+	</isEqual>
+	<isNotEqual prepend="AND" property="closeFlag" compareValue="1">
+	<![CDATA[A.State = '1']]>
+	</isNotEqual>
+	<isNotEmpty prepend="AND" property="subCampCode">
+	<![CDATA[B.SubCampaignCode = #subCampCode#]]>
+	</isNotEmpty>
+	<isNotEmpty prepend="AND" property="subCampType">
+	<![CDATA[B.SubCampaignType = #subCampType#]]>
+	</isNotEmpty>
+	<isNotEmpty property="subCampTypeArr" prepend="AND">
+		<![CDATA[B.SubCampaignType IN]]>
+		<iterate conjunction="," open="(" close=")" property="subCampTypeArr">  
+	       <![CDATA[#subCampTypeArr[]#]]>
+	    </iterate>
+	</isNotEmpty>
+	<isNotEmpty property="campCodeArr" prepend="AND">
+		<![CDATA[A.CampaignCode IN]]>
+		<iterate conjunction="," open="(" close=")" property="campCodeArr">  
+	       <![CDATA[#campCodeArr[]#]]>
+	    </iterate>
+	</isNotEmpty>
+	<isEmpty property="subCampCode">
+	<![CDATA[
+		AND A.CampaignOrderFromDate IS NULL
+		AND A.CampaignTypeFlag = '1'
+		AND A.ValidFlag = '1'
+		AND A.CampaignSetBy != 0
+	]]>
+	</isEmpty>
+    </select>
+	<!-- 取得会员活动奖励结果 -->
+    <select id="getPrtList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+    	<![CDATA[
+		SELECT
+			A.SubCampaignCode AS subCampCode,
+			B.UnitCode AS unitCode,
+		 	B.BarCode AS barCode,
+			B.BIN_ProductVendorID AS proId,
+			B.SaleType AS prtType,
+			B.Quantity AS quantity,
+			CASE WHEN C.PromotionCateCD IN('TZZK','DHCP','DHMY') THEN ISNULL(B.Price,0) * -1
+			ELSE ISNULL(B.Price,0) END AS price,
+			CASE WHEN C.PromotionCateCD IN('DHCP','DHMY') THEN C.ExPoint ELSE 0 END AS exPoint
+		FROM
+			Campaign.BIN_CampaignRule A WITH(NOLOCK)
+			JOIN Campaign.BIN_CampaignRuleResult B WITH(NOLOCK)
+			ON(A.BIN_CampaignRuleID = B.BIN_CampaignRuleID
+				AND B.ValidFlag = '1')
+			LEFT JOIN Basis.BIN_PromotionProduct C WITH(NOLOCK)
+			ON(B.UnitCode = C.UnitCode)
+		WHERE 
+			A.BIN_CampaignRuleID=#campaignRuleId#
+		]]>
+    </select>
+        <!-- 取得历史预约SQL -->
+    <sql id="getOrderHisSQL">
+    <![CDATA[
+		FROM
+			Campaign.BIN_CampaignOrder A WITH(NOLOCK)
+	]]>
+	<isNotEmpty property="subCampCodeFlag" prepend="JOIN">
+	<![CDATA[
+		Campaign.BIN_CampaignOrderDetail B WITH(NOLOCK)
+		ON(A.BIN_CampaignOrderID = B.BIN_CampaignOrderID
+			AND B.MainCode = #subCampCodeFlag#
+			AND B.ValidFlag = '1')
+	]]>
+	</isNotEmpty>
+	<![CDATA[		
+		WHERE
+			A.BIN_BrandInfoID = #brandInfoId#
+	]]>
+	<isNotEmpty property="memId" prepend="AND">
+	<![CDATA[A.BIN_MemberInfoID = #memId#]]>
+	</isNotEmpty>
+	<isNotEmpty property="campCode" prepend="AND">
+	<![CDATA[A.CampaignCode = #campCode#]]>
+	</isNotEmpty>
+	<isNotEmpty property="optYearParam" prepend="AND">
+	<![CDATA[A.OptYear = #optYearParam#]]>
+	</isNotEmpty>
+	<![CDATA[AND A.ValidFlag = '1']]>
+    </sql>
+    <!-- 取得COUPON -->
+    <select id="getCouponList" parameterClass="java.util.HashMap" resultClass="java.lang.String">
+    	SELECT
+			CouponCode
+		FROM 
+			Communication.BIN_CouponCreateLog
+		where
+			CampaignCode = #campCode#
+			AND BatchID = #couponBatchNo#
+    </select>
+    <!-- 取得历史COUPON -->
+    <select id="getCouponHisList" parameterClass="java.util.HashMap" resultClass="java.lang.String">
+    	<![CDATA[SELECT DISTINCT A.CouponCode]]>
+    	<include refid="BINCPMEACT04.getOrderHisSQL"/>
+    	<![CDATA[AND A.CouponCode IS NOT NULL]]>
+    </select>
+    <!-- 取得历史COUPON大小 -->
+    <select id="getCouponHisSize" parameterClass="java.util.HashMap" resultClass="java.lang.Integer">
+    	<![CDATA[SELECT COUNT(A.BIN_CampaignOrderID)]]>
+    	<include refid="BINCPMEACT04.getOrderHisSQL"/>
+    </select>
+    <!-- 取得历史预约会员 -->
+    <select id="getOrderHisMebList" parameterClass="java.util.HashMap" resultClass="java.lang.Integer">
+    	<![CDATA[SELECT DISTINCT A.BIN_MemberInfoID]]>
+    	<include refid="BINCPMEACT04.getOrderHisSQL"/>
+    	<![CDATA[AND A.BIN_MemberInfoID IS NOT NULL]]>
+    </select>
+    <!-- 取得历史预约非会员 -->
+    <select id="getOrderHisNoMebList" parameterClass="java.util.HashMap" resultClass="java.lang.String">
+    	<![CDATA[SELECT DISTINCT A.Mobile]]>
+    	<include refid="BINCPMEACT04.getOrderHisSQL"/>
+    	<![CDATA[AND A.BIN_MemberInfoID IS NULL]]>
+    </select>
+    <!-- 取得会员活动对象查询条件 -->
+    <select id="getMemConInfo" parameterClass="java.util.HashMap" resultClass="java.lang.String">
+    	<![CDATA[
+		 SELECT
+			ConditionInfo
+		 FROM
+			Members.BIN_SearchLog
+		 WHERE
+			BIN_SearchCode = #searchCode#
+			AND RecordType = '1'
+		]]>
+    </select>
+	<!-- 取得过期未领的单据LIST  -->
+	<select id="getNGBillList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+	<include refid="BINOLCMINC99.pageheader" />
+	<![CDATA[
+	SELECT
+	    A.TradeNoIF AS billNo
+	FROM
+		Campaign.BIN_CampaignOrder A WITH(NOLOCK)
+	WHERE
+		A.BIN_BrandInfoID = #brandInfoId#
+		AND A.State = 'AR'
+		AND A.GetToTime < #businessDate#
+	]]>
+	<include refid="BINOLCMINC99.pagefooter" />
+	</select>
+	 <!-- 更新会员活动预约表 -->
+    <update id="updCampOrderNG" parameterClass="java.util.HashMap">
+    <![CDATA[UPDATE Campaign.BIN_CampaignOrder SET State ='NG' WHERE TradeNoIF = #billNo#]]>
+    </update>
+     <!-- 更新会员活动预约表 -->
+    <update id="updCampOrderHisNG" parameterClass="java.util.HashMap">
+    <![CDATA[UPDATE Campaign.BIN_CampaignHistory SET State ='NG' WHERE TradeNoIF = #billNo#]]>
+    </update>
+    
+     <!-- 取得会员活动预约信息IDList -->
+    <select id="getCampOrderIdList" parameterClass="java.util.HashMap" resultClass="java.lang.Integer">
+       <![CDATA[
+			SELECT
+				BIN_CampaignOrderID
+			FROM
+				Campaign.BIN_CampaignOrder WITH(NOLOCK)
+			WHERE
+				TradeNoIF in
+		]]>
+		<iterate conjunction="," open="(" close=")" property="orderNoList">  
+	       <![CDATA[#orderNoList[]#]]>
+	    </iterate>
+    </select>
+</sqlMap>

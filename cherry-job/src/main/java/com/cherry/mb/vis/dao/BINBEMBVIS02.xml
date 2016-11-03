@@ -1,0 +1,164 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sqlMap PUBLIC "-//iBATIS.com//DTD SQL Map 2.0//EN" "http://ibatis.apache.org/dtd/sql-map-2.dtd">
+<sqlMap namespace="BINBEMBVIS02">
+	<!-- 取得会员销售记录中最早及最晚的柜台销售单据号 -->
+	<sql id="getSaleRecordBymemberId">
+		SELECT 
+			A.BIN_MemberInfoID,
+			B.CounterTicketCode FirstBillNS,
+			C.CounterTicketCode LastBillNS
+		FROM 
+			(
+			 SELECT 
+				BIN_MemberInfoID, MAX(SaleTime) MAX_SaleTime, MIN(SaleTime) MIN_SaleTime 
+			 FROM 
+				Sale.BIN_SaleRecord 
+			 WHERE 
+				 ValidFlag = 1
+			 AND SaleType IN ('NS','PX')
+			 GROUP BY BIN_MemberInfoID
+			 ) A
+		LEFT JOIN Sale.BIN_SaleRecord B 
+			ON (A.BIN_MemberInfoID = B.BIN_MemberInfoID AND A.MIN_SaleTime = B.SaleTime AND B.ValidFlag = 1 AND B.SaleType IN ('NS','PX'))
+		LEFT JOIN Sale.BIN_SaleRecord C 
+			ON (A.BIN_MemberInfoID = C.BIN_MemberInfoID AND A.MAX_SaleTime = C.SaleTime AND C.ValidFlag = 1 AND C.SaleType IN ('NS','PX'))
+	</sql>
+	
+    <!-- 查询会员信息List -->
+	<select id ="getMemberInfoList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+		<include refid="BINBECMINC99.pageheader" />
+			<![CDATA[
+			SELECT
+				  MI.BIN_MemberInfoID AS memberInfoID,
+			      MI.Name AS memName,
+			      MI.MobilePhone AS mobilePhone,
+			      ISNULL(MI.BirthYear,'1900') + MI.BirthDay  AS birthDay,
+			      CASE WHEN MI.JoinDate IS NULL 
+							THEN NULL 
+			           WHEN MI.JoinDate IS NOT NULL AND MI.JoinTime IS NULL 
+			                THEN CONVERT(varchar(100), MI.JoinDate, 120) + ' ' + ISNULL(MI.JoinTime,'00:00:00') 
+			           ELSE CONVERT(varchar(100), MI.JoinDate, 120) + ' ' + MI.JoinTime
+			      END AS joinTime,
+			      MI.BIN_OrganizationID AS organizationID,
+			      MI.CounterCodeBelong AS counterCode,
+			      MC.MemCode AS memCode,
+			      SR.FirstBillNS AS firstBillNS,
+			      SR.LastBillNS AS lastBillNS
+			  FROM Members.BIN_MemberInfo MI
+			  LEFT JOIN Members.BIN_MemCardInfo MC ON (MC.BIN_MemberInfoID = MI.BIN_MemberInfoID AND MC.ValidFlag = 1 AND MC.CardValidFlag = 1)
+			  LEFT JOIN
+				(
+			]]>
+				<include refid="BINBEMBVIS02.getSaleRecordBymemberId" />
+			<![CDATA[
+				) SR ON SR.BIN_MemberInfoID = MI.BIN_MemberInfoID
+			  WHERE 
+			  	  MI.ValidFlag = 1
+			  AND MI.MemInfoRegFlg = 0
+			  AND MI.BIN_OrganizationInfoID = #organizationInfoId#
+			  AND MI.BIN_BrandInfoID = #brandInfoId#
+			  AND MI.BirthDay in ($birthDay$)
+			]]>
+		<include refid="BINBECMINC99.pagefooter" />
+	</select>
+    
+    <!-- 取得柜台的BA  -->
+    <select id="getBAOfCounterList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+		SELECT 
+			A.BIN_EmployeeID AS employeeID,
+			A.EmployeeCode AS baCode,
+			B.DepartCode AS counterCode
+		FROM                     
+			Basis.BIN_Employee A     
+		LEFT JOIN Basis.BIN_Organization B		ON (A.BIN_OrganizationID = B.BIN_OrganizationID AND B.ValidFlag = '1')      
+		LEFT JOIN Privilege.BIN_PositionCategory C		ON (A.BIN_PositionCategoryID = C.BIN_PositionCategoryID AND C.ValidFlag = '1')                         
+		WHERE     
+			A.BIN_OrganizationInfoID = #organizationInfoId#         
+		AND A.BIN_BrandInfoID= #brandInfoId#       
+		AND A.ValidFlag = '1'                                
+		AND C.CategoryCode ='01'  
+		AND B.Type = '4'  
+    </select>
+    
+    <!-- 取得柜台 -->
+    <select id="getCounterList" parameterClass="java.util.HashMap" resultClass="java.lang.String">
+		SELECT 
+			O.DepartCode AS counterCode
+		FROM 
+			Basis.BIN_Organization O
+		WHERE 
+			O.BIN_OrganizationInfoID = #organizationInfoId#
+		AND O.BIN_BrandInfoID = #brandInfoId#
+		AND O.ValidFlag = 1
+		AND O.Type = '4' 
+    </select>
+	
+	<!-- 插入会员回访信息表 -->
+	<insert id="insertMemVisitInfo" parameterClass="java.util.HashMap">
+		<![CDATA[	
+			MERGE  Members.BIN_VisitTask AS TGT
+			USING ( 
+					SELECT #memberInfoID# AS memberInfoID, #visitType# AS visitType, #visitTaskTime# AS visitTaskTime
+			      ) AS SRC
+			      ON TGT.VisitType = SRC.visitType AND
+			         TGT.BIN_MemberID = SRC.memberInfoID AND
+			         TGT.VisitTaskTime = SRC.visitTaskTime
+			WHEN NOT MATCHED THEN
+		]]>
+			<![CDATA[
+			   INSERT (
+			        BIN_OrganizationInfoID,
+			        BIN_BrandInfoID,
+			        VisitType,
+			        VisitTaskCreateTime,
+			        StartTime,
+			        EndTime,
+			        BIN_OrganizationID,
+			        CounterCode,
+			        BIN_EmployeeID,
+			        BACode,
+			        BIN_MemberID,
+			        MemberCode,
+			        MemberName,
+			        JoinTime,
+			        MobilePhone,
+			        VisitTaskTime,
+			        BirthDay,
+			        PaperID,
+			        FirstBillNS,
+			        LastBillNS,
+			        SynchroFlag,
+			        TaskState,
+	        ]]>
+			        <include refid="BINBECMINC99.insertKeySql" />
+			<![CDATA[        
+		        )
+				VALUES
+				(
+					#organizationInfoId#,
+					#brandInfoId#,
+					#visitType#,
+					GETDATE(),
+					#startTime#,
+					#endTime#,
+					#organizationID#,
+					#counterCode#,
+					#employeeID#,
+					#baCode#,
+					#memberInfoID#,
+					#memCode#,
+					#memName#,
+					#joinTime#,
+					#mobilePhone#,
+					#visitTaskTime#,
+					#birthDay#,
+					#paperId#,
+					#firstBillNS#,
+					#lastBillNS#,
+					'0',
+					'0',
+			]]>
+			        <include refid="BINBECMINC99.insertValueSql" />
+				);
+	</insert>
+</sqlMap>

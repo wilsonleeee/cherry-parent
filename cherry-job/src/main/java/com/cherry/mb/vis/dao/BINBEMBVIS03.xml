@@ -1,0 +1,193 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sqlMap PUBLIC "-//iBATIS.com//DTD SQL Map 2.0//EN" "http://ibatis.apache.org/dtd/sql-map-2.dtd">
+<sqlMap namespace="BINBEMBVIS03">
+    
+    <!-- 从会员回访任务接口表中删除已导入到老后台的回访任务 -->
+	<delete id="delWitCancelVisitTask" parameterClass="java.util.HashMap">
+		<![CDATA[
+			DELETE FROM 
+				dbo.WITPOSA_will_visit_member
+			WHERE 
+				SynchroFlag = '1'
+		]]>
+    </delete>
+    
+    <!-- 取得已完成的会员回访任务List -->
+	<select id ="getCompletedVisitTaskList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+		<![CDATA[
+			SELECT TOP $COUNT$
+				#brandCode# AS brandCode,
+				BIN_VisitTaskID AS visitTaskId
+			FROM 
+			    Members.BIN_VisitTask
+			WHERE 
+            	BIN_OrganizationInfoID = #organizationInfoId# AND
+				BIN_BrandInfoID = #brandInfoId# AND
+            	SynchroFlag <> '2' AND
+				TaskState = '2'
+		]]>
+	</select>
+    
+    <!-- 取得进行中的未下发的会员回访任务List -->
+	<select id ="getVisitTaskList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+		<![CDATA[
+			SELECT TOP $COUNT$
+				#brandCode# AS brandCode,
+				BIN_VisitTaskID AS visitTaskId,
+				VisitType AS visitType,
+				VisitTaskName AS visitTaskName,
+				VisitTaskCreateTime AS visitTaskCreateTime,
+				StartTime AS startTime,
+				EndTime AS endTime,
+				CounterCode AS counterCode,
+				BACode AS baCode,
+				MemberCode AS memberCode,
+				MemberName AS memberName,
+				JoinTime AS joinTime,
+				MobilePhone AS mobilePhone,
+				BirthDay AS birthDay,
+				PaperID AS paperId,
+				FirstBillNS AS firstBillNS,
+				LastBillNS AS lastBillNS,
+				SkinType AS skinType
+			FROM 
+			    Members.BIN_VisitTask
+			WHERE 
+            	BIN_OrganizationInfoID = #organizationInfoId# AND
+				BIN_BrandInfoID = #brandInfoId# AND
+            	SynchroFlag = '0' AND
+				TaskState = '0'
+		]]>
+	</select>
+	
+	<!-- 取得已取消的未下发的会员回访任务List -->
+	<select id ="getCancelVisitTaskList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+		<![CDATA[
+			SELECT TOP $COUNT$
+				#brandCode# AS brandCode,
+				BIN_VisitTaskID AS visitTaskId
+			FROM 
+			    Members.BIN_VisitTask
+			WHERE 
+            	BIN_OrganizationInfoID = #organizationInfoId# AND
+				BIN_BrandInfoID = #brandInfoId# AND
+            	SynchroFlag = '0' AND
+				TaskState = '1'
+		]]>
+	</select>
+	
+	<!-- 从会员回访任务接口表中删除已完成的回访任务 -->
+	<delete id="delWitCompletedVisitTask" parameterClass="java.util.HashMap">
+		<![CDATA[
+			DELETE FROM 
+				dbo.WITPOSA_will_visit_member
+			WHERE 
+				brand_abbr = #brandCode# AND
+				VisitTaskID = #visitTaskId#
+		]]>
+    </delete>
+    
+    <!-- 从会员回访任务表中把已完成的回访任务更新成接口表已删除 -->
+	<update id="updateCompletedVisitTask" parameterClass="java.util.HashMap">
+		<![CDATA[
+			UPDATE
+				Members.BIN_VisitTask
+			SET
+			    SynchroFlag = '2'
+			WHERE 
+			    BIN_VisitTaskID = #visitTaskId#
+		]]>
+    </update>
+    
+    <!-- 把进行中的未下发的回访任务下发到会员回访任务接口表中 -->
+	<insert id="insertWitVisitTask" parameterClass="java.util.HashMap">
+		<![CDATA[
+		   INSERT INTO dbo.WITPOSA_will_visit_member(
+		        brand_abbr,
+		        VisitTaskID,
+	 	        visit_type_code,
+		        counter_code,
+		        member_code,
+		        member_name,
+		        member_mobile,
+		        member_birthday,
+		        member_granttime,
+		        visit_begin_date,
+		        visit_end_date,
+		        assigned_BA_code,
+		        PaperID,
+		        FirstBillNS,
+				LastBillNS,
+				TaskState,
+				SynchroFlag,
+				bak_varchar1,
+				created,
+				modified
+	        )
+			VALUES
+			(
+				#brandCode#,
+				#visitTaskId#,
+				#visitType#,
+				#counterCode#,
+				#memberCode#,
+				#memberName#,
+				#mobilePhone#,
+				#birthDay#,
+				#joinTime#,
+				#startTime#,
+				#endTime#,
+				#baCode#,
+				#paperId#,
+				#firstBillNS#,
+				#lastBillNS#,
+				'0',
+				'0',
+				#skinType#,
+				GETDATE(),
+				GETDATE()
+			)
+		]]>
+	</insert>
+    
+    <!-- 把已取消的未下发的回访任务下发到会员回访任务接口表中 -->
+	<update id="updateWitVisitTask" parameterClass="java.util.HashMap">
+		<![CDATA[
+			UPDATE
+				dbo.WITPOSA_will_visit_member
+			SET
+			    SynchroFlag = '0',
+				TaskState = '1',
+				modified = GETDATE()
+			WHERE 
+			    brand_abbr = #brandCode# AND
+				VisitTaskID = #visitTaskId#
+		]]>
+    </update>
+    
+    <!-- 从会员回访任务表中把状态为进行中的未下发的回访任务更新成已下发 -->
+	<update id="updateVisitTask" parameterClass="java.util.HashMap">
+		<![CDATA[
+			UPDATE
+				Members.BIN_VisitTask
+			SET
+			    SynchroFlag = '1',
+				TaskState = '0'
+			WHERE 
+			    BIN_VisitTaskID = #visitTaskId#
+		]]>
+    </update>
+    
+    <!-- 从会员回访任务表中把状态为取消的未下发的回访任务更新成已下发 -->
+	<update id="updateCanlelVisitTask" parameterClass="java.util.HashMap">
+		<![CDATA[
+			UPDATE
+				Members.BIN_VisitTask
+			SET
+			    SynchroFlag = '1',
+				TaskState = '1'
+			WHERE 
+			    BIN_VisitTaskID = #visitTaskId#
+		]]>
+    </update>
+</sqlMap>

@@ -1,0 +1,1369 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sqlMap PUBLIC "-//iBATIS.com//DTD SQL Map 2.0//EN" "http://ibatis.apache.org/dtd/sql-map-2.dtd">
+<sqlMap namespace="SaleInfo">
+
+    <!--判断销售单据号是否存在-->
+    <select id="getSaleRecordInfo" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+        <![CDATA[
+        SELECT
+            BillCode,
+            ModifiedTimes
+        FROM
+            Sale.BIN_SaleRecord WITH (NOLOCK)
+        WHERE
+            SaleRecordCode = #TradeNoIF#
+        ]]>
+    </select>
+
+	<!--取出老后台品牌dbo.MQ_Log数据-->
+	<select id="getMQ_Log" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+	    <![CDATA[
+		    SELECT
+		        BillType,
+		        BillCode,
+		        CounterCode,
+		        OriginalMsg,
+		        ModifyCounts
+		    FROM
+		        dbo.MQ_Log
+	        WHERE
+	            BillCode = #TradeNoIF#
+	            AND BillType = #TradeType#
+	            AND SendOrRece = 'S'
+	        ORDER BY
+	            ID DESC
+	    ]]>
+	</select>
+	
+    <!--取出老后台品牌dbo.MQ_Log数据-->
+    <select id="getMQ_Log_MultiBillType" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+        <![CDATA[
+            SELECT
+                BillType,
+                BillCode,
+                CounterCode,
+                OriginalMsg,
+                ModifyCounts
+            FROM
+                dbo.MQ_Log
+            WHERE
+                BillCode = #TradeNoIF#
+                AND SendOrRece = 'S'
+                AND BillType IN
+        ]]>
+        <iterate conjunction="," open="(" close=")" property="TradeTypeArr">  
+            #TradeTypeArr[]#
+        </iterate>
+        <![CDATA[
+            ORDER BY
+                ID DESC
+        ]]>
+    </select>
+    
+    <!-- 插入 电商订单主表 -->
+    <sql id="insertESOrderMainSQL">
+        <![CDATA[
+            INSERT INTO Sale.BIN_ESOrderMain(
+                BIN_OrganizationInfoID,
+                BIN_BrandInfoID,
+        ]]>
+        <dynamic>
+            <isNotEmpty property="BIN_OrganizationID">
+                <![CDATA[BIN_OrganizationID,]]>
+            </isNotEmpty>
+            <isNotEmpty property="BIN_EmployeeID">
+                <![CDATA[BIN_EmployeeID,]]>
+            </isNotEmpty>
+            <isNotEmpty property="EmployeeCode">
+                <![CDATA[EmployeeCode,]]>
+            </isNotEmpty>
+            <isNotEmpty property="BIN_OrganizationIDDX">
+                <![CDATA[BIN_OrganizationIDDX,]]>
+            </isNotEmpty>
+            <isNotEmpty property="BIN_EmployeeIDDX">
+                <![CDATA[BIN_EmployeeIDDX,]]>
+            </isNotEmpty>
+            <isNotEmpty property="EmployeeCodeDX">
+                <![CDATA[EmployeeCodeDX,]]>
+            </isNotEmpty>
+            <isNotEmpty property="DataSource">
+                <![CDATA[DataSource,]]>
+            </isNotEmpty>
+            <isNotEmpty property="DataSourceCustomer">
+                <![CDATA[DataSourceCustomer,]]>
+            </isNotEmpty>
+            <isNotEmpty property="ShopName">
+                <![CDATA[ShopName,]]>
+            </isNotEmpty>
+            <isNotEmpty property="OrderNo">
+                <![CDATA[OrderNo,]]>
+            </isNotEmpty>
+            <isNotEmpty property="BillCode">
+                <![CDATA[BillCode,]]>
+            </isNotEmpty>
+            <isNotEmpty property="RelevanceBillCode">
+                <![CDATA[RelevanceBillCode,]]>
+            </isNotEmpty>
+            <isNotEmpty property="OriginalBillCode">
+                <![CDATA[OriginalBillCode,]]>
+            </isNotEmpty>
+            <isNotEmpty property="SaleType">
+                <![CDATA[SaleType,]]>
+            </isNotEmpty>
+            <isNotEmpty property="TicketType">
+                <![CDATA[TicketType,]]>
+            </isNotEmpty>
+            <isNotEmpty property="BillType">
+                <![CDATA[BillType,]]>
+            </isNotEmpty>
+            <isNotEmpty property="BillState">
+                <![CDATA[BillState,]]>
+            </isNotEmpty>
+            <isNotEmpty property="ConsumerType">
+                <![CDATA[ConsumerType,]]>
+            </isNotEmpty>
+            <isNotEmpty property="BIN_MemberInfoID">
+                <![CDATA[BIN_MemberInfoID,]]>
+            </isNotEmpty>
+            <isNotEmpty property="MemberCode">
+                <![CDATA[MemberCode,]]>
+            </isNotEmpty>
+            <isNotEmpty property="MemberName">
+                <![CDATA[MemberName,]]>
+            </isNotEmpty>
+            <isNotEmpty property="MemberNickname">
+                <![CDATA[MemberNickname,]]>
+            </isNotEmpty>
+            <isNotEmpty property="BuyerName">
+                <![CDATA[BuyerName,]]>
+            </isNotEmpty>
+            <isNotEmpty property="BuyerMobilePhone">
+                <![CDATA[BuyerMobilePhone,]]>
+            </isNotEmpty>
+            <isNotEmpty property="BuyerIdentifier">
+                <![CDATA[BuyerIdentifier,]]>
+            </isNotEmpty>
+            <isNotEmpty property="ConsigneeName">
+                <![CDATA[ConsigneeName,]]>
+            </isNotEmpty>
+            <isNotEmpty property="ConsigneeMobilePhone">
+                <![CDATA[ConsigneeMobilePhone,]]>
+            </isNotEmpty>
+            <isNotEmpty property="ConsigneeProvince">
+                <![CDATA[ConsigneeProvince,]]>
+            </isNotEmpty>
+            <isNotEmpty property="ConsigneeCity">
+                <![CDATA[ConsigneeCity,]]>
+            </isNotEmpty>
+            <isNotEmpty property="ConsigneeCounty">
+                <![CDATA[ConsigneeCounty,]]>
+            </isNotEmpty>
+            <isNotEmpty property="ConsigneeAddress">
+                <![CDATA[ConsigneeAddress,]]>
+            </isNotEmpty>
+            <isNotEmpty property="BuyerMessage">
+                <![CDATA[BuyerMessage,]]>
+            </isNotEmpty>
+            <isNotEmpty property="SellerMemo">
+                <![CDATA[SellerMemo,]]>
+            </isNotEmpty>
+            <isNotEmpty property="BillCreateTime">
+                <![CDATA[BillCreateTime,]]>
+            </isNotEmpty>
+            <isNotEmpty property="BillPayTime">
+                <![CDATA[BillPayTime,]]>
+            </isNotEmpty>
+            <isNotEmpty property="BillCloseTime">
+                <![CDATA[BillCloseTime,]]>
+            </isNotEmpty>
+              <![CDATA[BillLastUpdateTime,]]>
+            <isNotEmpty property="OriginalAmount">
+                <![CDATA[OriginalAmount,]]>
+            </isNotEmpty>
+            <isNotEmpty property="Discount">
+                <![CDATA[Discount,]]>
+            </isNotEmpty>
+            <isNotEmpty property="PayAmount">
+                <![CDATA[PayAmount,]]>
+            </isNotEmpty>
+            <isNotEmpty property="DecreaseAmount">
+                <![CDATA[DecreaseAmount,]]>
+            </isNotEmpty>
+            <isNotEmpty property="CostPoint">
+                <![CDATA[CostPoint,]]>
+            </isNotEmpty>
+            <isNotEmpty property="CostpointAmount">
+                <![CDATA[CostpointAmount,]]>
+            </isNotEmpty>
+            <isNotEmpty property="Amount">
+                <![CDATA[Amount,]]>
+            </isNotEmpty>
+            <isNotEmpty property="Quantity">
+                <![CDATA[Quantity,]]>
+            </isNotEmpty>
+            <isNotEmpty property="ModifiedTimes">
+                <![CDATA[ModifiedTimes,]]>
+            </isNotEmpty>
+            <isNotEmpty property="ExpressCompanyCode">
+                <![CDATA[ExpressCompanyCode,]]>
+            </isNotEmpty>
+            <isNotEmpty property="ExpressBillCode">
+                <![CDATA[ExpressBillCode,]]>
+            </isNotEmpty>
+            <isNotEmpty property="ExpressCost">
+                <![CDATA[ExpressCost,]]>
+            </isNotEmpty>
+            <isNotEmpty property="WorkFlowID">
+                <![CDATA[WorkFlowID,]]>
+            </isNotEmpty>
+            <isNotEmpty property="SynchFlag">
+                <![CDATA[SynchFlag,]]>
+            </isNotEmpty>
+            <isNotEmpty property="Comments">
+                <![CDATA[Comments,]]>
+            </isNotEmpty>
+            <isNotEmpty property="PreSale">
+                <![CDATA[PreSale,]]>
+            </isNotEmpty>
+            <isNotEmpty property="originalStatus">
+                <![CDATA[OriginalStatus,]]>
+            </isNotEmpty>
+            <isNotEmpty property="ConvertFlag">
+                <![CDATA[ConvertFlag,]]>
+            </isNotEmpty>
+        </dynamic>
+        <![CDATA[
+                ValidFlag,
+                CreateTime,
+                CreatedBy,
+                CreatePGM,
+                UpdateTime,
+                UpdatedBy,
+                UpdatePGM,
+                ModifyCount
+            )VALUES(
+                #BIN_OrganizationInfoID#,
+                #BIN_BrandInfoID#,
+        ]]>
+        <dynamic>
+            <isNotEmpty property="BIN_OrganizationID">
+                <![CDATA[#BIN_OrganizationID#,]]>
+            </isNotEmpty>
+            <isNotEmpty property="BIN_EmployeeID">
+                <![CDATA[#BIN_EmployeeID#,]]>
+            </isNotEmpty>
+            <isNotEmpty property="EmployeeCode">
+                <![CDATA[#EmployeeCode#,]]>
+            </isNotEmpty>
+            <isNotEmpty property="BIN_OrganizationIDDX">
+                <![CDATA[#BIN_OrganizationIDDX#,]]>
+            </isNotEmpty>
+            <isNotEmpty property="BIN_EmployeeIDDX">
+                <![CDATA[#BIN_EmployeeIDDX#,]]>
+            </isNotEmpty>
+            <isNotEmpty property="EmployeeCodeDX">
+                <![CDATA[#EmployeeCodeDX#,]]>
+            </isNotEmpty>
+            <isNotEmpty property="DataSource">
+                <![CDATA[#DataSource#,]]>
+            </isNotEmpty>
+            <isNotEmpty property="DataSourceCustomer">
+                <![CDATA[#DataSourceCustomer#,]]>
+            </isNotEmpty>
+            <isNotEmpty property="ShopName">
+                <![CDATA[#ShopName#,]]>
+            </isNotEmpty>
+            <isNotEmpty property="OrderNo">
+                <![CDATA[#OrderNo#,]]>
+            </isNotEmpty>
+            <isNotEmpty property="BillCode">
+                <![CDATA[#BillCode#,]]>
+            </isNotEmpty>
+            <isNotEmpty property="RelevanceBillCode">
+                <![CDATA[#RelevanceBillCode#,]]>
+            </isNotEmpty>
+            <isNotEmpty property="OriginalBillCode">
+                <![CDATA[#OriginalBillCode#,]]>
+            </isNotEmpty>
+            <isNotEmpty property="SaleType">
+                <![CDATA[#SaleType#,]]>
+            </isNotEmpty>
+            <isNotEmpty property="TicketType">
+                <![CDATA[#TicketType#,]]>
+            </isNotEmpty>
+            <isNotEmpty property="BillType">
+                <![CDATA[#BillType#,]]>
+            </isNotEmpty>
+            <isNotEmpty property="BillState">
+                <![CDATA[#BillState#,]]>
+            </isNotEmpty>
+            <isNotEmpty property="ConsumerType">
+                <![CDATA[#ConsumerType#,]]>
+            </isNotEmpty>
+            <isNotEmpty property="BIN_MemberInfoID">
+                <![CDATA[#BIN_MemberInfoID#,]]>
+            </isNotEmpty>
+            <isNotEmpty property="MemberCode">
+                <![CDATA[#MemberCode#,]]>
+            </isNotEmpty>
+            <isNotEmpty property="MemberName">
+                <![CDATA[#MemberName#,]]>
+            </isNotEmpty>
+            <isNotEmpty property="MemberNickname">
+                <![CDATA[#MemberNickname#,]]>
+            </isNotEmpty>
+            <isNotEmpty property="BuyerName">
+                <![CDATA[#BuyerName#,]]>
+            </isNotEmpty>
+            <isNotEmpty property="BuyerMobilePhone">
+                <![CDATA[#BuyerMobilePhone#,]]>
+            </isNotEmpty>
+            <isNotEmpty property="BuyerIdentifier">
+                <![CDATA[#BuyerIdentifier#,]]>
+            </isNotEmpty>
+            <isNotEmpty property="ConsigneeName">
+                <![CDATA[#ConsigneeName#,]]>
+            </isNotEmpty>
+            <isNotEmpty property="ConsigneeMobilePhone">
+                <![CDATA[#ConsigneeMobilePhone#,]]>
+            </isNotEmpty>
+            <isNotEmpty property="ConsigneeProvince">
+                <![CDATA[#ConsigneeProvince#,]]>
+            </isNotEmpty>
+            <isNotEmpty property="ConsigneeCity">
+                <![CDATA[#ConsigneeCity#,]]>
+            </isNotEmpty>
+            <isNotEmpty property="ConsigneeCounty">
+                <![CDATA[#ConsigneeCounty#,]]>
+            </isNotEmpty>
+            <isNotEmpty property="ConsigneeAddress">
+                <![CDATA[#ConsigneeAddress#,]]>
+            </isNotEmpty>
+            <isNotEmpty property="BuyerMessage">
+                <![CDATA[#BuyerMessage#,]]>
+            </isNotEmpty>
+            <isNotEmpty property="SellerMemo">
+                <![CDATA[#SellerMemo#,]]>
+            </isNotEmpty>
+            <isNotEmpty property="BillCreateTime">
+                <![CDATA[#BillCreateTime#,]]>
+            </isNotEmpty>
+            <isNotEmpty property="BillPayTime">
+                <![CDATA[#BillPayTime#,]]>
+            </isNotEmpty>
+            <isNotEmpty property="BillCloseTime">
+                <![CDATA[#BillCloseTime#,]]>
+            </isNotEmpty>
+            <isNotEmpty property="lastUpdateTime">
+                <![CDATA[#lastUpdateTime#,]]>
+            </isNotEmpty>
+            <isEmpty property="lastUpdateTime">
+            <![CDATA[GETDATE(),]]>
+            </isEmpty>
+            <isNotEmpty property="OriginalAmount">
+                <![CDATA[#OriginalAmount#,]]>
+            </isNotEmpty>
+            <isNotEmpty property="Discount">
+                <![CDATA[#Discount#,]]>
+            </isNotEmpty>
+            <isNotEmpty property="PayAmount">
+                <![CDATA[#PayAmount#,]]>
+            </isNotEmpty>
+            <isNotEmpty property="DecreaseAmount">
+                <![CDATA[#DecreaseAmount#,]]>
+            </isNotEmpty>
+            <isNotEmpty property="CostPoint">
+                <![CDATA[#CostPoint#,]]>
+            </isNotEmpty>
+            <isNotEmpty property="CostpointAmount">
+                <![CDATA[#CostpointAmount#,]]>
+            </isNotEmpty>
+            <isNotEmpty property="Amount">
+                <![CDATA[#Amount#,]]>
+            </isNotEmpty>
+            <isNotEmpty property="Quantity">
+                <![CDATA[#Quantity#,]]>
+            </isNotEmpty>
+            <isNotEmpty property="ModifiedTimes">
+                <![CDATA[#ModifiedTimes#,]]>
+            </isNotEmpty>
+            <isNotEmpty property="ExpressCompanyCode">
+                <![CDATA[#ExpressCompanyCode#,]]>
+            </isNotEmpty>
+            <isNotEmpty property="ExpressBillCode">
+                <![CDATA[#ExpressBillCode#,]]>
+            </isNotEmpty>
+            <isNotEmpty property="ExpressCost">
+                <![CDATA[#ExpressCost#,]]>
+            </isNotEmpty>
+            <isNotEmpty property="WorkFlowID">
+                <![CDATA[#WorkFlowID#,]]>
+            </isNotEmpty>
+            <isNotEmpty property="SynchFlag">
+                <![CDATA[#SynchFlag#,]]>
+            </isNotEmpty>
+            <isNotEmpty property="Comments">
+                <![CDATA[#Comments#,]]>
+            </isNotEmpty>
+            <isNotEmpty property="PreSale">
+                <![CDATA[#PreSale#,]]>
+            </isNotEmpty>
+            <isNotEmpty property="originalStatus">
+                <![CDATA[#originalStatus#,]]>
+            </isNotEmpty>
+            <isNotEmpty property="ConvertFlag">
+                <![CDATA[#ConvertFlag#,]]>
+            </isNotEmpty>
+        </dynamic>
+        <![CDATA[
+                '1',
+                GETDATE(),
+                #CreatedBy#,
+                #CreatePGM#,
+                GETDATE(),
+                #UpdatedBy#,
+                #UpdatePGM#,
+                '0'
+            )
+        ]]>
+    </sql>
+    <insert id="insertESOrderMain" parameterClass="java.util.HashMap">
+        <selectKey resultClass="java.lang.Integer" type="post" keyProperty="BIN_ESOrderMainID" >
+            <include refid="SaleInfo.insertESOrderMainSQL" />
+            <![CDATA[SELECT SCOPE_IDENTITY() AS value]]>
+        </selectKey>
+    </insert>
+    
+    <!-- 插入 电商订单明细表 -->
+    <insert id="insertESOrderDetail" parameterClass="java.util.HashMap">
+        <![CDATA[
+            INSERT INTO Sale.BIN_ESOrderDetail(
+                BIN_ESOrderMainID,
+        ]]>
+        <dynamic>
+            <isNotEmpty property="BIN_ProductVendorID">
+                <![CDATA[BIN_ProductVendorID,]]>
+            </isNotEmpty>
+            <isNotEmpty property="DetailNo">
+                <![CDATA[DetailNo,]]>
+            </isNotEmpty>
+            <isNotEmpty property="UnitCode">
+                <![CDATA[UnitCode,]]>
+            </isNotEmpty>
+            <isNotEmpty property="BarCode">
+                <![CDATA[BarCode,]]>
+            </isNotEmpty>
+            <isNotEmpty property="Quantity">
+                <![CDATA[Quantity,]]>
+            </isNotEmpty>
+            <isNotEmpty property="Price">
+                <![CDATA[Price,]]>
+            </isNotEmpty>
+            <isNotEmpty property="PricePay">
+                <![CDATA[PricePay,]]>
+            </isNotEmpty>
+            <isNotEmpty property="PayableAmount">
+                <![CDATA[PayableAmount,]]>
+            </isNotEmpty>
+            <isNotEmpty property="Discount">
+                <![CDATA[Discount,]]>
+            </isNotEmpty>
+            <isNotEmpty property="AgioAmount">
+                <![CDATA[AgioAmount,]]>
+            </isNotEmpty>
+            <isNotEmpty property="ActualAmount">
+                <![CDATA[ActualAmount,]]>
+            </isNotEmpty>
+            <isNotEmpty property="AmountPortion">
+                <![CDATA[AmountPortion,]]>
+            </isNotEmpty>
+            <isNotEmpty property="InventoryTypeCode">
+                <![CDATA[InventoryTypeCode,]]>
+            </isNotEmpty>
+            <isNotEmpty property="BatchCode">
+                <![CDATA[BatchCode,]]>
+            </isNotEmpty>
+            <isNotEmpty property="UniqueCode">
+                <![CDATA[UniqueCode,]]>
+            </isNotEmpty>
+            <isNotEmpty property="SaleType">
+                <![CDATA[SaleType,]]>
+            </isNotEmpty>
+            <isNotEmpty property="ActivityMainCode">
+                <![CDATA[ActivityMainCode,]]>
+            </isNotEmpty>
+            <isNotEmpty property="ActivityCode">
+                <![CDATA[ActivityCode,]]>
+            </isNotEmpty>
+            <isNotEmpty property="Comment">
+                <![CDATA[Comment,]]>
+            </isNotEmpty>
+            <isNotEmpty property="IsExistsPos">
+                <![CDATA[IsExistsPos,]]>
+            </isNotEmpty>
+            <isNotEmpty property="OriginalCode">
+                <![CDATA[OriginalCode,]]>
+            </isNotEmpty>
+            <isNotEmpty property="OutCode">
+                <![CDATA[OutCode,]]>
+            </isNotEmpty>
+            <isNotEmpty property="EsProductName">
+                <![CDATA[EsProductName,]]>
+            </isNotEmpty>
+            <isNotEmpty property="EsProductTitleName">
+                <![CDATA[EsProductTitleName,]]>
+            </isNotEmpty>
+            <isNotEmpty property="isRelationChange">
+                <![CDATA[IsRelationChange,]]>
+            </isNotEmpty>
+            <isNotEmpty property="OuterIid">
+                <![CDATA[OuterIid,]]>
+            </isNotEmpty>
+            <isNotEmpty property="SkuId">
+                <![CDATA[SkuId,]]>
+            </isNotEmpty>
+            <isNotEmpty property="OuterSkuId">
+                <![CDATA[OuterSkuId,]]>
+            </isNotEmpty>
+            <isNotEmpty property="OrderId">
+                <![CDATA[OrderId,]]>
+            </isNotEmpty>
+            <isNotEmpty property="RemainPayment">
+                <![CDATA[RemainPayment,]]>
+            </isNotEmpty>
+            <isNotEmpty property="HasGoodReturn">
+                <![CDATA[HasGoodReturn,]]>
+            </isNotEmpty>
+           	<isNotEmpty property="ConsignTime">
+                <![CDATA[ConsignTime,]]>
+            </isNotEmpty>
+            <isNotEmpty property="AdjustFee">
+                <![CDATA[AdjustFee,]]>
+            </isNotEmpty>
+            <isNotEmpty property="DiscountFee">
+                <![CDATA[DiscountFee,]]>
+            </isNotEmpty>
+            <isNotEmpty property="PartMjzDiscount">
+                <![CDATA[PartMjzDiscount,]]>
+            </isNotEmpty>
+        </dynamic>
+        <![CDATA[
+                ValidFlag,
+                CreateTime,
+                CreatedBy,
+                CreatePGM,
+                UpdateTime,
+                UpdatedBy,
+                UpdatePGM,
+                ModifyCount
+            )VALUES(
+                #BIN_ESOrderMainID#,
+        ]]>
+        <dynamic>
+            <isNotEmpty property="BIN_ProductVendorID">
+                <![CDATA[#BIN_ProductVendorID#,]]>
+            </isNotEmpty>
+            <isNotEmpty property="DetailNo">
+                <![CDATA[#DetailNo#,]]>
+            </isNotEmpty>
+            <isNotEmpty property="UnitCode">
+                <![CDATA[#UnitCode#,]]>
+            </isNotEmpty>
+            <isNotEmpty property="BarCode">
+                <![CDATA[#BarCode#,]]>
+            </isNotEmpty>
+            <isNotEmpty property="Quantity">
+                <![CDATA[#Quantity#,]]>
+            </isNotEmpty>
+            <isNotEmpty property="Price">
+                <![CDATA[#Price#,]]>
+            </isNotEmpty>
+            <isNotEmpty property="PricePay">
+                <![CDATA[#PricePay#,]]>
+            </isNotEmpty>
+            <isNotEmpty property="PayableAmount">
+                <![CDATA[#PayableAmount#,]]>
+            </isNotEmpty>
+            <isNotEmpty property="Discount">
+                <![CDATA[#Discount#,]]>
+            </isNotEmpty>
+            <isNotEmpty property="AgioAmount">
+                <![CDATA[#AgioAmount#,]]>
+            </isNotEmpty>
+            <isNotEmpty property="ActualAmount">
+                <![CDATA[#ActualAmount#,]]>
+            </isNotEmpty>
+            <isNotEmpty property="AmountPortion">
+                <![CDATA[#AmountPortion#,]]>
+            </isNotEmpty>
+            <isNotEmpty property="InventoryTypeCode">
+                <![CDATA[#InventoryTypeCode#,]]>
+            </isNotEmpty>
+            <isNotEmpty property="BatchCode">
+                <![CDATA[#BatchCode#,]]>
+            </isNotEmpty>
+            <isNotEmpty property="UniqueCode">
+                <![CDATA[#UniqueCode#,]]>
+            </isNotEmpty>
+            <isNotEmpty property="SaleType">
+                <![CDATA[#SaleType#,]]>
+            </isNotEmpty>
+            <isNotEmpty property="ActivityMainCode">
+                <![CDATA[#ActivityMainCode#,]]>
+            </isNotEmpty>
+            <isNotEmpty property="ActivityCode">
+                <![CDATA[#ActivityCode#,]]>
+            </isNotEmpty>
+            <isNotEmpty property="Comment">
+                <![CDATA[#Comment#,]]>
+            </isNotEmpty>
+            <isNotEmpty property="IsExistsPos">
+                <![CDATA[#IsExistsPos#,]]>
+            </isNotEmpty>
+            <isNotEmpty property="OriginalCode">
+                <![CDATA[#OriginalCode#,]]>
+            </isNotEmpty>
+            <isNotEmpty property="OutCode">
+                <![CDATA[#OutCode#,]]>
+            </isNotEmpty>
+            <isNotEmpty property="EsProductName">
+                <![CDATA[#EsProductName#,]]>
+            </isNotEmpty>
+            <isNotEmpty property="EsProductTitleName">
+                <![CDATA[#EsProductTitleName#,]]>
+            </isNotEmpty>
+            <isNotEmpty property="isRelationChange">
+                <![CDATA[#isRelationChange#,]]>
+            </isNotEmpty>
+            <isNotEmpty property="OuterIid">
+                <![CDATA[#OuterIid#,]]>
+            </isNotEmpty>
+            <isNotEmpty property="SkuId">
+                <![CDATA[#SkuId#,]]>
+            </isNotEmpty>
+            <isNotEmpty property="OuterSkuId">
+                <![CDATA[#OuterSkuId#,]]>
+            </isNotEmpty>
+            <isNotEmpty property="OrderId">
+                <![CDATA[#OrderId#,]]>
+            </isNotEmpty>
+            <isNotEmpty property="RemainPayment">
+                <![CDATA[#RemainPayment#,]]>
+            </isNotEmpty>
+            <isNotEmpty property="HasGoodReturn">
+                <![CDATA[#HasGoodReturn#,]]>
+            </isNotEmpty>
+           	<isNotEmpty property="ConsignTime">
+                <![CDATA[#ConsignTime#,]]>
+            </isNotEmpty>
+            <isNotEmpty property="AdjustFee">
+                <![CDATA[#AdjustFee#,]]>
+            </isNotEmpty>
+            <isNotEmpty property="DiscountFee">
+                <![CDATA[#DiscountFee#,]]>
+            </isNotEmpty>
+            <isNotEmpty property="PartMjzDiscount">
+                <![CDATA[#PartMjzDiscount#,]]>
+            </isNotEmpty>
+        </dynamic>
+        <![CDATA[
+                '1',
+                GETDATE(),
+                #CreatedBy#,
+                #CreatePGM#,
+                GETDATE(),
+                #UpdatedBy#,
+                #UpdatePGM#,
+                '0'
+                )
+        ]]>
+    </insert>
+    
+    <!-- 插入 电商订单支付构成表 -->
+    <insert id="insertESOrderPayList" parameterClass="java.util.HashMap">
+        <![CDATA[
+            INSERT INTO Sale.BIN_ESOrderPayList(
+                BIN_ESOrderMainID,
+        ]]>
+        <dynamic>
+            <isNotEmpty property="DetailNo">
+                <![CDATA[DetailNo,]]>
+            </isNotEmpty>
+            <isNotEmpty property="PayTypeCode">
+                <![CDATA[PayTypeCode,]]>
+            </isNotEmpty>
+            <isNotEmpty property="PayAmount">
+                <![CDATA[PayAmount,]]>
+            </isNotEmpty>
+            <isNotEmpty property="SerialNumber">
+                <![CDATA[SerialNumber,]]>
+            </isNotEmpty>
+            <isNotEmpty property="Comment">
+                <![CDATA[Comment,]]>
+            </isNotEmpty>
+        </dynamic>
+        <![CDATA[
+                ValidFlag,
+                CreateTime,
+                CreatedBy,
+                CreatePGM,
+                UpdateTime,
+                UpdatedBy,
+                UpdatePGM,
+                ModifyCount
+            )VALUES(
+                #BIN_ESOrderMainID#,
+        ]]>
+        <dynamic>
+            <isNotEmpty property="DetailNo">
+                <![CDATA[#DetailNo#,]]>
+            </isNotEmpty>
+            <isNotEmpty property="PayTypeCode">
+                <![CDATA[#PayTypeCode#,]]>
+            </isNotEmpty>
+            <isNotEmpty property="PayAmount">
+                <![CDATA[#PayAmount#,]]>
+            </isNotEmpty>
+            <isNotEmpty property="SerialNumber">
+                <![CDATA[#SerialNumber#,]]>
+            </isNotEmpty>
+            <isNotEmpty property="Comment">
+                <![CDATA[#Comment#,]]>
+            </isNotEmpty>
+        </dynamic>
+        <![CDATA[
+                '1',
+                GETDATE(),
+                #CreatedBy#,
+                #CreatePGM#,
+                GETDATE(),
+                #UpdatedBy#,
+                #UpdatePGM#,
+                '0'
+                )
+        ]]>
+    </insert>
+    
+    <!-- 查找电商订单信息  -->
+    <select id="getESOrderMainInfo" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+        <![CDATA[
+            SELECT
+                A.BIN_ESOrderMainID,
+                A.SaleType,
+                A.BillType,
+                A.BillState,
+                A.TicketType,
+                A.ModifiedTimes,
+                B.DepartCode
+            FROM 
+                Sale.BIN_ESOrderMain A
+            LEFT JOIN Basis.BIN_Organization B
+            ON A.BIN_OrganizationID = B.BIN_OrganizationID
+            WHERE
+                A.BIN_OrganizationInfoID = #BIN_OrganizationInfoID#
+                AND A.BIN_BrandInfoID = #BIN_BrandInfoID#
+                AND A.BillCode = #TradeNoIF#
+        ]]>
+    </select>
+    
+    <!-- 更新电商订单主表  -->
+    <update id="updateESOrderMain" parameterClass="java.util.HashMap" >
+        <![CDATA[
+            UPDATE
+                Sale.BIN_ESOrderMain
+            SET
+        ]]>
+        <isNotEmpty property="ModifiedTimes">
+            <![CDATA[ModifiedTimes = #ModifiedTimes#,]]>
+        </isNotEmpty>
+        <isNotEmpty property="lastUpdateTime">
+            <![CDATA[BillLastUpdateTime = #lastUpdateTime#,]]>
+        </isNotEmpty>
+        <isEmpty property="lastUpdateTime">
+            <![CDATA[BillLastUpdateTime = GETDATE(),]]>
+        </isEmpty>
+        <isNotEmpty property="DataSource">
+            <![CDATA[DataSource = #DataSource#,]]>
+        </isNotEmpty>
+        <isNotEmpty property="DataSourceCustomer">
+            <![CDATA[DataSourceCustomer = #DataSourceCustomer#,]]>
+        </isNotEmpty>
+        <isNotEmpty property="ShopName">
+            <![CDATA[ShopName = #ShopName#,]]>
+        </isNotEmpty>
+        <isNotEmpty property="RelevanceBillCode">
+            <![CDATA[RelevanceBillCode = #RelevanceBillCode#,]]>
+        </isNotEmpty>
+        <isNotEmpty property="SaleType">
+            <![CDATA[SaleType = #SaleType#,]]>
+        </isNotEmpty>
+        <isNotEmpty property="TicketType">
+            <![CDATA[TicketType = #TicketType#,]]>
+        </isNotEmpty>
+        <isNotEmpty property="BillState">
+            <![CDATA[BillState = #BillState#,]]>
+        </isNotEmpty>
+        <isNotEmpty property="ConsumerType">
+            <![CDATA[ConsumerType = #ConsumerType#,]]>
+        </isNotEmpty>
+        <isNotEmpty property="BIN_MemberInfoID">
+            <![CDATA[BIN_MemberInfoID = #BIN_MemberInfoID#,]]>
+        </isNotEmpty>
+        <isNotEmpty property="MemberCode">
+            <![CDATA[MemberCode = #MemberCode#,]]>
+        </isNotEmpty>
+        <isNotEmpty property="MemberName">
+            <![CDATA[MemberName = #MemberName#,]]>
+        </isNotEmpty>
+        <isNotEmpty property="MemberNickname">
+            <![CDATA[MemberNickname = #MemberNickname#,]]>
+        </isNotEmpty>
+        <isNotEmpty property="BuyerName">
+            <![CDATA[BuyerName = #BuyerName#,]]>
+        </isNotEmpty>
+        <isNotEmpty property="BuyerMobilePhone">
+            <![CDATA[BuyerMobilePhone = #BuyerMobilePhone#,]]>
+        </isNotEmpty>
+        <isNotEmpty property="BuyerIdentifier">
+            <![CDATA[BuyerIdentifier = #BuyerIdentifier#,]]>
+        </isNotEmpty>
+        <isNotEmpty property="ConsigneeName">
+            <![CDATA[ConsigneeName = #ConsigneeName#,]]>
+        </isNotEmpty>
+        <isNotEmpty property="ConsigneeMobilePhone">
+            <![CDATA[ConsigneeMobilePhone = #ConsigneeMobilePhone#,]]>
+        </isNotEmpty>
+        <isNotEmpty property="ConsigneeProvince">
+            <![CDATA[ConsigneeProvince = #ConsigneeProvince#,]]>
+        </isNotEmpty>
+        <isNotEmpty property="ConsigneeCity">
+            <![CDATA[ConsigneeCity = #ConsigneeCity#,]]>
+        </isNotEmpty>
+        <isNotEmpty property="ConsigneeCounty">
+            <![CDATA[ConsigneeCounty = #ConsigneeCounty#,]]>
+        </isNotEmpty>
+        <isNotEmpty property="ConsigneeAddress">
+            <![CDATA[ConsigneeAddress = #ConsigneeAddress#,]]>
+        </isNotEmpty>
+        <isNotEmpty property="BuyerMessage">
+            <![CDATA[BuyerMessage = #BuyerMessage#,]]>
+        </isNotEmpty>
+        <isNotEmpty property="SellerMemo">
+            <![CDATA[SellerMemo = #SellerMemo#,]]>
+        </isNotEmpty>
+        <isNotEmpty property="BillCreateTime">
+            <![CDATA[BillCreateTime = #BillCreateTime#,]]>
+        </isNotEmpty>
+        <isNotEmpty property="BillPayTime">
+            <![CDATA[BillPayTime = #BillPayTime#,]]>
+        </isNotEmpty>
+        <isNotEmpty property="BillCloseTime">
+            <![CDATA[BillCloseTime = #BillCloseTime#,]]>
+        </isNotEmpty>
+        <isNotEmpty property="OriginalAmount">
+            <![CDATA[OriginalAmount = #OriginalAmount#,]]>
+        </isNotEmpty>
+        <isNotEmpty property="Discount">
+            <![CDATA[Discount = #Discount#,]]>
+        </isNotEmpty>
+        <isNotEmpty property="PayAmount">
+            <![CDATA[PayAmount = #PayAmount#,]]>
+        </isNotEmpty>
+        <isNotEmpty property="DecreaseAmount">
+            <![CDATA[DecreaseAmount = #DecreaseAmount#,]]>
+        </isNotEmpty>
+        <isNotEmpty property="CostPoint">
+            <![CDATA[CostPoint = #CostPoint#,]]>
+        </isNotEmpty>
+        <isNotEmpty property="CostpointAmount">
+            <![CDATA[CostpointAmount = #CostpointAmount#,]]>
+        </isNotEmpty>
+        <isNotEmpty property="Amount">
+            <![CDATA[Amount = #Amount#,]]>
+        </isNotEmpty>
+        <isNotEmpty property="Quantity">
+            <![CDATA[Quantity = #Quantity#,]]>
+        </isNotEmpty>
+        <isNotEmpty property="ExpressCompanyCode">
+            <![CDATA[ExpressCompanyCode = #ExpressCompanyCode#,]]>
+        </isNotEmpty>
+        <isNotEmpty property="ExpressBillCode">
+            <![CDATA[ExpressBillCode = #ExpressBillCode#,]]>
+        </isNotEmpty>
+        <isNotEmpty property="ExpressCost">
+                <![CDATA[ExpressCost = #ExpressCost#, ]]>
+        </isNotEmpty>
+        <isNotEmpty property="SynchFlag">
+            <![CDATA[SynchFlag = #SynchFlag#,]]>
+        </isNotEmpty>
+        <isNotEmpty property="Comments">
+            <![CDATA[Comments = #Comments#,]]>
+        </isNotEmpty>
+        <isNotEmpty property="PreSale">
+            <![CDATA[PreSale = #PreSale#,]]>
+        </isNotEmpty>
+        <isNotEmpty property="originalStatus">
+            <![CDATA[OriginalStatus = #originalStatus#,]]>
+        </isNotEmpty>
+        <include refid="BINBECMINC99.updateSql" />      
+        <![CDATA[               
+            WHERE
+                BIN_ESOrderMainID = #BIN_ESOrderMainID#
+        ]]>
+    </update>
+    
+    <!--删除【电商订单明细表】 -->
+    <update id="deleteESOrderDetail" parameterClass="java.util.HashMap">
+        <![CDATA[
+            DELETE FROM
+                Sale.BIN_ESOrderDetail
+            WHERE
+                BIN_ESOrderMainID = #BIN_ESOrderMainID#
+        ]]>
+    </update>
+    
+    <!-- 根据电商订单ID取得电商订单明细中产品ID为NULL的数据量 -->
+    <select id="getESOrderNonProIDDetailCount" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+    	<![CDATA[
+    		SELECT 
+    			1
+    		FROM 
+    			Sale.BIN_ESOrderDetail 
+			WHERE 
+				BIN_ESOrderMainID=#BIN_ESOrderMainID#
+				AND BIN_ProductVendorID IS NULL
+    	]]>
+    </select>
+    
+    <!--删除【电商订单支付构成表】 -->
+    <update id="deleteESOrderPayList" parameterClass="java.util.HashMap">
+        <![CDATA[
+            DELETE FROM
+                Sale.BIN_ESOrderPayList
+            WHERE
+                BIN_ESOrderMainID = #BIN_ESOrderMainID#
+        ]]>
+    </update>
+    
+    <!-- 查找部门信息  -->
+    <select id="getDepartInfo" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+        <![CDATA[
+            SELECT
+                BIN_OrganizationID,
+                DepartCode,
+                DepartName
+            FROM 
+                Basis.BIN_Organization
+            WHERE
+                BIN_OrganizationInfoID = #BIN_OrganizationInfoID#
+                AND BIN_BrandInfoID = #BIN_BrandInfoID#
+                AND (DepartCode = #DepartCode# OR DepartName = #DepartCode#)
+        ]]>
+    </select>
+    
+    <!-- 查找员工信息  -->
+    <select id="getEmployeeInfo" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+        <![CDATA[
+            SELECT
+                BIN_EmployeeID
+            FROM 
+                Basis.BIN_Employee
+            WHERE
+                BIN_OrganizationInfoID = #BIN_OrganizationInfoID#
+                AND BIN_BrandInfoID = #BIN_BrandInfoID#
+                AND EmployeeCode = #EmployeeCode#
+        ]]>
+    </select>
+    
+    <!-- 查找会员信息  -->
+    <select id="getMemberInfo" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+        <![CDATA[
+            SELECT
+                A.BIN_MemberInfoID AS BIN_MemberInfoID,
+                A.Name AS MemberName,
+                A.MemberLevel AS MemberLevel,
+                B.MemCode AS MemberCode
+            FROM 
+                Members.BIN_MemberInfo A
+            LEFT JOIN Members.BIN_MemCardInfo B
+            ON A.BIN_MemberInfoID = B.BIN_MemberInfoID
+            WHERE
+                A.BIN_OrganizationInfoID = #BIN_OrganizationInfoID#
+                AND A.BIN_BrandInfoID = #BIN_BrandInfoID#
+         ]]>
+         <isNotEmpty property="MemCode">
+            <![CDATA[
+                AND B.MemCode = #MemCode#
+            ]]>
+         </isNotEmpty>
+         <isEmpty property="MemCode">
+            <![CDATA[
+                AND A.MobilePhone = #MobilePhone#
+                AND A.Name = #MemberName#
+                AND A.ChannelCode = #DataSource#
+            ]]>
+        </isEmpty>
+
+    </select>
+    
+    <!-- 插入会员信息表 -->
+    <insert id="addMemberInfo" parameterClass="java.util.HashMap" >
+    <selectKey resultClass="java.lang.Integer" type="post" keyProperty="BIN_MemberInfoID" >      
+        <![CDATA[
+            INSERT INTO Members.BIN_MemberInfo(
+                BIN_OrganizationInfoID,
+                BIN_BrandInfoID,
+                BIN_EmployeeID,
+                BaCodeBelong,
+                BIN_OrganizationID,
+                CounterCodeBelong,
+                MemInfoRegFlg,
+                Name,
+                MobilePhone,
+                ChannelCode,
+        ]]>
+        <include refid="BINOLCMINC99.insertKeySql" />       
+        <![CDATA[       
+            )   
+            VALUES
+            (
+                #BIN_OrganizationInfoID#,
+                #BIN_BrandInfoID#,
+                #BIN_EmployeeID#,
+                #BAcode#,
+                #BIN_OrganizationID#,
+                #CounterCode#,
+                '1',
+                #MemberName#,
+                #MobilePhone#,
+                #DataSource#,
+        ]]>
+        <include refid="BINOLCMINC99.insertValueSql" />     
+        <![CDATA[   
+            )
+            select SCOPE_IDENTITY() as value   
+        ]]> 
+    </selectKey> 
+    </insert>
+    
+    <!-- 插入会员持卡信息表 -->
+    <insert id="addMemCardInfo" parameterClass="java.util.HashMap" >
+        <![CDATA[
+            INSERT INTO Members.BIN_MemCardInfo(
+                BIN_MemberInfoID,
+                MemCode,
+                BaCode,
+                CounterCode,
+                GrantDate,
+                GrantTime,
+                CardValidFlag,
+                CardCount,
+        ]]>
+        <include refid="BINOLCMINC99.insertKeySql" />       
+        <![CDATA[
+            )
+            VALUES
+            (
+                #BIN_MemberInfoID#,
+                #MemberCode#,
+                #BAcode#,
+                #CounterCode#,
+                #GrantDate#,
+                #GrantTime#,
+                '1',
+                '1',
+        ]]>
+        <include refid="BINOLCMINC99.insertValueSql" />     
+        <![CDATA[
+            )
+        ]]>
+    </insert>
+    
+    <sql id="getESOrderMainDataSQL">
+        <![CDATA[
+            SELECT
+                A.BIN_ESOrderMainID,
+                A.BIN_OrganizationInfoID,
+                A.BIN_BrandInfoID,
+                A.BIN_OrganizationID,
+                A.BIN_EmployeeID,
+                A.EmployeeCode,
+                A.BIN_OrganizationIDDX,
+                A.BIN_EmployeeIDDX,
+                A.EmployeeCodeDX,
+                A.DataSource,
+                A.DataSourceCustomer,
+                A.ShopName,
+                A.OrderNo,
+                A.BillCode,
+                A.RelevanceBillCode,
+                A.OriginalBillCode,
+                A.SaleType,
+                A.TicketType,
+                A.BillState,
+                A.ConsumerType,
+                A.BIN_MemberInfoID,
+                A.MemberCode,
+                A.MemberName,
+                A.MemberNickname,
+                A.BuyerName,
+                A.BuyerMobilePhone,
+                A.BuyerIdentifier,
+                A.ConsigneeName,
+                A.ConsigneeMobilePhone,
+                A.ConsigneeProvince,
+                A.ConsigneeCity,
+                A.ConsigneeCounty,
+                A.ConsigneeAddress,
+                A.BuyerMessage,
+                A.SellerMemo,
+                CONVERT(varchar(30),A.BillCreateTime,120) AS BillCreateTime,
+                CONVERT(varchar(30),A.BillPayTime,120) AS BillPayTime,
+                CONVERT(varchar(30),A.BillCloseTime,120) AS BillCloseTime,
+                CONVERT(varchar(30),A.BillLastUpdateTime,120) AS BillLastUpdateTime,
+                A.OriginalAmount,
+                A.Discount,
+                A.PayAmount,
+                A.DecreaseAmount,
+                A.CostPoint,
+                A.CostpointAmount,
+                A.Amount,
+                FLOOR(ISNULL(A.Quantity,0)) AS Quantity,
+                A.ModifiedTimes,
+                A.ExpressCompanyCode,
+                A.ExpressBillCode,
+                A.ExpressCost,
+                A.WorkFlowID,
+                A.SynchFlag,
+                A.Comments,
+                B.BrandCode,
+                C.DepartCode,
+                D.MobilePhone AS MemberMobilePhone,
+                E.LevelCode AS MemberLevel,
+                F.DepartCode AS DepartCodeDX
+            FROM
+                Sale.BIN_ESOrderMain A WITH (NOLOCK)
+                LEFT JOIN Basis.BIN_BrandInfo B WITH (NOLOCK)
+                ON A.BIN_BrandInfoID = B.BIN_BrandInfoID
+                LEFT JOIN Basis.BIN_Organization C WITH (NOLOCK)
+                ON A.BIN_OrganizationID = C.BIN_OrganizationID
+                LEFT JOIN Members.BIN_MemberInfo D WITH (NOLOCK)
+                ON A.BIN_MemberInfoID = D.BIN_MemberInfoID
+                LEFT JOIN Members.BIN_MemberLevel E WITH (NOLOCK)
+                ON D.MemberLevel = E.BIN_MemberLevelID
+                LEFT JOIN Basis.BIN_Organization F WITH (NOLOCK)
+                ON A.BIN_OrganizationIDDX = F.BIN_OrganizationID
+            WHERE
+        ]]>
+        <isNotEmpty property="BIN_ESOrderMainID">
+            <![CDATA[
+                A.BIN_ESOrderMainID = #BIN_ESOrderMainID#
+            ]]>
+        </isNotEmpty>
+        <isEmpty property="BIN_ESOrderMainID">
+            <isNotEmpty property="BillCode">
+                <![CDATA[
+	                A.BIN_OrganizationInfoID = #BIN_OrganizationInfoID#
+	                AND A.BIN_BrandInfoID = #BIN_BrandInfoID#
+	                AND A.BillCode = #BillCode#
+                ]]>
+            </isNotEmpty>
+        </isEmpty>
+    </sql>
+    
+    <!--取得电商订单主表信息-->
+    <select id="getESOrderMainData" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+        <include refid="SaleInfo.getESOrderMainDataSQL" />
+    </select>
+    
+    <sql id="getESOrderDetailDataSQL">
+        <![CDATA[
+            SELECT
+                A.BIN_ProductVendorID,
+                A.DetailNo,
+                A.UnitCode,
+                A.BarCode,
+                FLOOR(ISNULL(A.Quantity,0)) AS Quantity,
+                A.Price,
+                A.PricePay,
+                A.PayableAmount,
+                A.Discount,
+                A.AgioAmount,
+                A.ActualAmount,
+                A.AmountPortion,
+                A.InventoryTypeCode,
+                A.BatchCode,
+                A.UniqueCode,
+                A.SaleType,
+                A.ActivityMainCode,
+                A.ActivityCode,
+                A.Comment
+            FROM
+                Sale.BIN_ESOrderDetail A WITH (NOLOCK)
+            WHERE
+                A.BIN_ESOrderMainID = #BIN_ESOrderMainID#
+        ]]>
+    </sql>
+    
+    <!--取得电商订单明细表信息-->
+    <select id="getESOrderDetailData" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+        <include refid="SaleInfo.getESOrderDetailDataSQL" />
+    </select>
+    
+    <sql id="getESOrderPayListDataSQL">
+        <![CDATA[
+            SELECT
+                A.DetailNo,
+                A.PayTypeCode,
+                A.PayAmount,
+                A.SerialNumber,
+                A.Comment
+            FROM
+                Sale.BIN_ESOrderPayList A WITH (NOLOCK)
+            WHERE
+                A.BIN_ESOrderMainID = #BIN_ESOrderMainID#
+        ]]>
+    </sql>
+    
+    <!--取得电商订单支付明细表信息-->
+    <select id="getESOrderPayListData" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+        <include refid="SaleInfo.getESOrderPayListDataSQL" />
+    </select>
+    
+    <!--取得电商订单主表信息（用于获取电商订单业务接口）-->
+    <select id="getDSOrderInfoMainData" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+        <![CDATA[
+            SELECT
+                T.BIN_ESOrderMainID AS BIN_ESOrderMainID,
+                ISNULL(T.BillCode,'') AS TradeNoIF,
+                CASE
+                    WHEN (T.SaleType = 'SR' AND T.RelevanceBillCode IS NOT NULL AND T.RelevanceBillCode != '') THEN 'SRR'
+                    WHEN (T.SaleType = 'PX' AND T.TicketType = '1') THEN 'PXCX'
+                    ELSE  ISNULL(T.SaleType,'')
+                END AS TradeType,
+                CASE
+                    WHEN T.SaleType = 'PX' THEN ''
+                    ELSE ISNULL(T.TicketType,'')
+                END AS SubType,
+                ISNULL(T.DepartCode,'') AS CounterCode,
+                ISNULL(T.EmployeeCode,'') AS BAcode,
+                ISNULL(T.DepartCodeDX,'') AS CounterCodeDX,
+                ISNULL(T.EmployeeCodeDX,'') AS BAcodeDX,
+                ISNULL(T.RelevanceBillCode,'') AS RelevantNo,
+                ISNULL(T.OriginalBillCode,'') AS OriginalBillCode,
+                ISNULL(T.Comments,'') AS Reason,
+                ISNULL(T.BillState,'') AS BillState,
+                ISNULL(T.ConsumerType,'') AS ConsumerType,
+                ISNULL(T.MemberCode,'') AS MemberCode,
+                ISNULL(T.MemberName,'') AS MemberName,
+                ISNULL(T.MemberNickname,'') AS MemberNickname,
+                ISNULL(T.MemberMobilePhone,'') AS MemberMobilePhone,
+                ISNULL(T.BuyerName,'') AS BuyerName,
+                ISNULL(T.BuyerMobilePhone,'') AS BuyerMobilePhone,
+                ISNULL(T.BuyerIdentifier,'') AS BuyerIdentifier,
+                ISNULL(T.ConsigneeName,'') AS ConsigneeName,
+                ISNULL(T.ConsigneeMobilePhone,'') AS ConsigneeMobilePhone,
+                ISNULL(T.ConsigneeProvince,'') AS ConsigneeProvince,
+                ISNULL(T.ConsigneeCity,'') AS ConsigneeCity,
+                ISNULL(T.ConsigneeCounty,'') AS ConsigneeCounty,
+                ISNULL(T.ConsigneeAddress,'') AS ConsigneeAddress,
+                ISNULL(T.ExpressCompanyCode,'') AS ExpressCompanyCode,
+                ISNULL(T.ExpressBillCode,'') AS ExpressBillCode,
+                ISNULL(CONVERT(varchar(50),T.ExpressCost),'') AS ExpressCost,
+                ISNULL(T.BuyerMessage,'') AS BuyerMessage,
+                ISNULL(T.SellerMemo,'') AS SellerMemo,
+                ISNULL(T.BillCreateTime,'') AS BillCreateTime,
+                ISNULL(T.BillPayTime,'') AS BillPayTime,
+                ISNULL(T.BillCloseTime,'') AS BillCloseTime,
+                ISNULL(CONVERT(varchar(50),T.Quantity),'') AS TotalQuantity,
+                ISNULL(CONVERT(varchar(50),T.OriginalAmount),'') AS OriginalAmount,
+                ISNULL(CONVERT(varchar(50),T.Discount),'') AS Discount,
+                ISNULL(CONVERT(varchar(50),T.PayAmount),'') AS PayAmount,
+                ISNULL(CONVERT(varchar(50),T.DecreaseAmount),'') AS DecreaseAmount,
+                ISNULL(CONVERT(varchar(50),T.Amount),'') AS TotalAmount,
+                ISNULL(CONVERT(varchar(50),T.Costpoint),'') AS Costpoint,
+                ISNULL(CONVERT(varchar(50),T.CostpointAmount),'') AS CostpointAmount,
+                ISNULL(T.DataSource,'') AS DataSource,
+                ISNULL(T.DataSourceCustomer,'') AS DataSourceCustomer,
+                '' AS DataSourceID,
+                ISNULL(T.BillLastUpdateTime,'') AS UpdateTime
+            FROM(
+        ]]>
+        <include refid="SaleInfo.getESOrderMainDataSQL" />
+        <![CDATA[
+            )T
+        ]]>
+    </select>
+    
+    <!--取得电商订单明细表信息（用于获取电商订单业务接口）-->
+    <select id="getDSOrderInfoSaleDetail" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+        <![CDATA[
+            SELECT
+                ISNULL(T.SaleType,'') AS DetailType,
+                ISNULL(T.BarCode,'') AS Barcode,
+                ISNULL(T.UnitCode,'') AS Unitcode,
+                ISNULL(T.InventoryTypeCode,'') AS InventoryTypeCode,
+                ISNULL(CONVERT(varchar(50),T.Quantity),'') AS Quantity,
+                ISNULL(CONVERT(varchar(50),T.PricePay),'') AS Price,
+                ISNULL(T.Comment,'') AS Reason,
+                ISNULL(CONVERT(varchar(50),T.Discount),'') AS Discount,
+                ISNULL(CONVERT(varchar(50),T.AgioAmount),'') AS AgioAmount,
+                ISNULL(CONVERT(varchar(50),T.ActualAmount),'') AS ActualAmount,
+                ISNULL(T.ActivityMainCode,'') AS ActivityMainCode,
+                ISNULL(T.ActivityCode,'') AS ActivityCode,
+                ISNULL(T.UniqueCode,'') AS UniqueCode
+            FROM(
+        ]]>
+        <include refid="SaleInfo.getESOrderDetailDataSQL" />
+        <![CDATA[
+            )T
+        ]]>
+    </select>
+    
+    <!--取得电商订单支付明细表信息（用于获取电商订单业务接口）-->
+    <select id="getDSOrderInfoPayDetail" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+        <![CDATA[
+            SELECT
+                ISNULL(T.PayTypeCode,'') AS PayTypeCode,
+                ISNULL(CONVERT(varchar(50),T.PayAmount),'') AS Amount,
+                ISNULL(T.Comment,'') AS Reason,
+                ISNULL(T.SerialNumber,'') AS PayBillCode
+            FROM(
+        ]]>
+        <include refid="SaleInfo.getESOrderPayListDataSQL" />
+        <![CDATA[
+            )T
+        ]]>
+    </select>
+    
+    <!-- 取得支付方式的CodeTable信息 -->
+    <select id="getCodeTabel_PayTypeList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+        <![CDATA[
+            SELECT 
+                OrgCode AS orgCode,
+                BrandCode AS brandCode,
+                CodeKey AS codeKey,
+                Value1 AS codeValue
+            FROM 
+                Tools.BIN_Coder
+            WHERE
+                OrgCode = '-9999'
+                AND BrandCode = '-9999'
+                AND CodeType = '1175'
+                AND ValidFlag = '1'
+            UNION
+            SELECT 
+                OrgCode AS orgCode,
+                BrandCode AS brandCode,
+                CodeKey AS codeKey,
+                Value1 AS codeValue
+            FROM 
+                Tools.BIN_Coder
+            WHERE
+                OrgCode = #OrgCode#
+                AND BrandCode = #BrandCode#
+                AND CodeType = '1175'
+                AND ValidFlag = '1'
+        ]]>
+    </select>
+</sqlMap>

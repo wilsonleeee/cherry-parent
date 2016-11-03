@@ -1,0 +1,225 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sqlMap PUBLIC "-//iBATIS.com//DTD SQL Map 2.0//EN" "http://ibatis.apache.org/dtd/sql-map-2.dtd">
+<sqlMap namespace="BINBAT116">
+	<!-- 礼品领用单明细查询sql -->
+	<select id="GiftDrawDetailQuery" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+			<![CDATA[
+				SELECT
+					TOP (#batchSize#)
+					B.BillNo AS DocEntry,
+					B.TradeDateTime AS DocDate,
+					A.DetailNo LineNum,
+					O.DepartCode,
+					T10.ItemCode,
+					T10.nameTotal AS ItemDesc,
+					CASE WHEN T10.promotionCateCD = 'TZZK' THEN (0-A.Quantity) ELSE A.Quantity END AS Quantity,
+					B.RelevanceNo AS BaseEntry,
+					B.BIN_MemberInfoID MemberID,
+					B.EmployeeCode BaCode,
+					B.Comments Remarks,
+					#brandCode# AS brandCode
+				FROM Inventory.BIN_GiftDrawDetail A WITH (NOLOCK)
+				JOIN Inventory.BIN_GiftDraw B WITH (NOLOCK) ON (A.BIN_GiftDrawID = B.BIN_GiftDrawID)
+				JOIN Basis.BIN_CounterInfo C WITH (NOLOCK) ON B.BIN_OrganizationID = C.BIN_OrganizationID
+				JOIN Basis.BIN_Organization O WITH (NOLOCK) ON O.BIN_OrganizationID=B.BIN_OrganizationID
+				JOIN (
+			   ]]>
+		<include refid="BINBECMINC99.getProPrmList" />
+	   	<![CDATA[
+	   				) T10 ON ( A.BIN_ProductVendorID = T10.id AND A.GiftType=T10.type)
+	   			WHERE
+	   			B.BIN_OrganizationInfoID=#organizationInfoId#
+	   			AND B.BIN_BrandInfoID=#brandInfoId# 
+				
+				AND A.ValidFlag = '1'
+				AND B.ValidFlag = '1'
+			   ]]>
+		<isNotEmpty property="synchFlag" prepend="AND">
+			B.SynchFlag = #synchFlag#
+		</isNotEmpty>
+		<![CDATA[AND EXISTS ( ]]>
+			<include refid="BINBECMINC99.getBillByTestModList" />
+		<![CDATA[  
+		    AND B.BIN_OrganizationID = C99.BIN_OrganizationID)
+			]]> 
+	</select>
+	<!-- SynchFlag状态更新 -->
+	<update id="updateSynchFlag" parameterClass="java.util.HashMap">
+		<![CDATA[
+			UPDATE
+		]]>
+		<isNotEmpty property="batchSize">
+			TOP(#batchSize#)
+		</isNotEmpty>
+		<![CDATA[
+				Inventory.BIN_GiftDraw
+			SET
+				SynchFlag = #synchFlag_New#,
+			]]>
+		<include refid="BINBECMINC99.updateSql" />	
+		<![CDATA[
+			WHERE
+			ValidFlag ='1'
+			]]>
+		<isNotEmpty property="synchFlag_Old" prepend="AND">
+			 SynchFlag = #synchFlag_Old#
+		</isNotEmpty>
+		<isNotEmpty property="billNoList" prepend="AND">
+			BillNo IN
+			<iterate property="billNoList" open="(" close=")" conjunction=",">
+				#billNoList[]#
+			</iterate>
+		</isNotEmpty>
+		<![CDATA[
+				AND BIN_BrandInfoID = #brandInfoId#
+				AND BIN_OrganizationInfoID = #organizationInfoId#
+			]]>
+		<![CDATA[AND EXISTS ( ]]>
+			<include refid="BINBECMINC99.getBillByTestModList" />
+		<![CDATA[  
+		    AND BIN_OrganizationID = C99.BIN_OrganizationID)
+			]]> 
+	</update>
+	<!-- 根据是否协同区分和SynchFlag状态更新状态 -->
+	<update id="updateSynchFlagByCounterSync" parameterClass="java.util.HashMap">
+		<![CDATA[
+			UPDATE
+		]]>
+		<isNotEmpty property="batchSize">
+			TOP(#batchSize#)
+		</isNotEmpty>
+		<![CDATA[
+				Inventory.BIN_GiftDraw
+			SET
+				SynchFlag = #synchFlag_New#,
+			]]>
+		<isNotEmpty property="updateTime">
+			UpdateTime=#updateTime#,
+		</isNotEmpty>
+		<isEmpty property="updateTime">
+			UpdateTime=GETDATE(),
+		</isEmpty>
+		<![CDATA[
+			UpdatedBy=#updatedBy#,
+			UpdatePGM=#updatePGM#,
+			ModifyCount=A.ModifyCount+1
+			FROM Inventory.BIN_GiftDraw A, Basis.BIN_CounterInfo B
+			WHERE A.BIN_OrganizationID = B.BIN_OrganizationID
+			AND A.SynchFlag IS NULL
+			AND B.CounterSynergyFlag = '1'
+			AND A.ValidFlag ='1'
+			AND B.ValidFlag ='1'
+			AND A.BIN_BrandInfoID = #brandInfoId#
+			AND A.BIN_OrganizationInfoID = #organizationInfoId#
+			]]>
+		<![CDATA[AND EXISTS ( ]]>
+		<include refid="BINBECMINC99.getBillByTestModList" />
+		<![CDATA[  
+		    AND BIN_OrganizationID = C99.BIN_OrganizationID)
+		]]> 
+	</update>
+	<!-- 取得指定导出状态的礼品领用单List -->
+	<select id="getBillNoListBySynch" parameterClass="java.util.HashMap" resultClass="java.lang.String">
+		SELECT
+		BillNo AS billNo
+		FROM
+		Inventory.BIN_GiftDraw WITH(NOLOCK)
+		WHERE
+		SynchFlag = #synchFlag#
+		AND ValidFlag = '1'
+		AND BIN_OrganizationInfoID = #organizationInfoId#
+		AND BIN_BrandInfoID = #brandInfoId#
+		<![CDATA[AND EXISTS ( ]]>
+			<include refid="BINBECMINC99.getBillByTestModList" />
+		<![CDATA[  
+		    AND BIN_OrganizationID = C99.BIN_OrganizationID)
+		]]> 
+	</select>
+	<!-- 根据新后台的礼品领用单单据号->查询SAP销售接口表的礼品领用单List -->
+	<select id="getBillNoFromGiftDraw" parameterClass="java.util.HashMap" resultClass="java.lang.String">
+		<![CDATA[
+			SELECT
+				DISTINCT
+				DocEntry AS billNo
+			FROM 
+				dbo.CPS_IMPORT_SALES WITH(NOLOCK)
+			WHERE
+				DocEntry IN
+	  	]]>
+		<iterate property="billNoList" open="(" close=")" conjunction=",">
+			#billNoList[]#
+		</iterate>
+		<isNotEmpty property="brandCode" prepend="AND">
+			Brand = #brandCode#
+		</isNotEmpty>
+	<![CDATA[
+    	UNION
+		SELECT
+			DISTINCT
+			DocEntry AS billNo
+		FROM 
+			dbo.CPS_IMPORT_SALES_SUC WITH(NOLOCK)
+		WHERE
+			DocEntry IN
+	  ]]>
+		<iterate property="billNoList" open="(" close=")" conjunction=",">
+			#billNoList[]#
+		</iterate>
+		<isNotEmpty property="brandCode" prepend="AND">
+			Brand = #brandCode#
+		</isNotEmpty>
+	</select>
+
+	<!--礼品领用单据数据导出至SAP销售接口 -->
+	<insert id="insertCPSImportSales" parameterClass="java.util.HashMap">
+        <![CDATA[ 
+		INSERT INTO dbo.CPS_IMPORT_SALES(
+		           InvType,
+		           DocEntry,
+		           DocDate,
+		           LineNum,
+		           Shop,
+		           DocDisc,
+		           DocDiscAmt,
+		           DocTotal,
+		           DocCurr,
+		           ItemCode,
+		           ItemDesc,
+		           Quantity,
+		           DiscPerc,
+		           UnitPrice,
+		           LineTotal,
+		           BaseEntry,
+		           CreateDate,
+		           MemberID,
+		           BaCode,
+		           Remarks,
+		           Brand
+		     )
+		     VALUES
+		     (
+		     		'SA',
+		     		#DocEntry#,
+		     		#DocDate#,
+		     		#LineNum#,
+		     		#DepartCode#,
+		     		0,
+		     		0,
+		     		0,
+		     		'HKD',
+		     		#ItemCode#,
+		     		#ItemDesc#,
+		     		#Quantity#,
+		     		0,
+		     		0,
+		     		0,
+		     		#BaseEntry#,
+		     		GETDATE(),
+		     		#MemberID#,
+		     		#BaCode#,
+		     		#Remarks#,
+		     		#brandCode#
+		   )
+    	]]>
+	</insert>
+</sqlMap>

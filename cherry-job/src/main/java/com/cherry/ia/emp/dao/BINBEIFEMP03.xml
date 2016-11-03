@@ -1,0 +1,121 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sqlMap PUBLIC "-//iBATIS.com//DTD SQL Map 2.0//EN" "http://ibatis.apache.org/dtd/sql-map-2.dtd">
+<sqlMap namespace="BINBEIFEMP03">
+	
+	<!-- 从接口数据库中查询营业员数据-->
+	<select id="getBaInfoList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+			<include refid="BINBECMINC99.pageheader" />		
+		<![CDATA[
+				SELECT
+					ltrim(rtrim(A.bacode)) AS bacode,
+					ltrim(rtrim(A.baname)) AS baname,
+					ltrim(rtrim(B.baname)) AS banameNEC,
+					ltrim(rtrim(A.countercode)) AS counterCode,
+					A.flag AS flag
+				FROM
+					dbo.bainfo A
+					LEFT JOIN dbo.NEC_bainfo B ON A.bacode = B.bacode
+				WHERE
+					A.flag <> '2'	
+		]]>
+			<include refid="BINBECMINC99.pagefooter" />		
+    </select>
+    
+    <!--更新营业员信息表 -->
+	<update id="updateBaInfo" parameterClass="java.util.HashMap">
+		<![CDATA[
+			UPDATE				
+				Basis.BIN_BaInfo			
+			SET				
+				BaCode = #bacode#,
+				BaName = #baname#,
+				ValidFlag = #validFlagVal#,
+		]]>
+			<include refid="BINBECMINC99.updateSql" />		
+		<![CDATA[				
+			WHERE					
+				BIN_BaInfoID = #baInfoId#
+		]]>
+    </update>	
+    
+    <!-- 插入营业员信息 -->
+	<insert id="insertBaInfo" parameterClass="java.util.HashMap">
+		<![CDATA[
+			INSERT INTO	
+				Basis.BIN_BaInfo
+				(
+					BIN_OrganizationInfoID,
+					BIN_BrandInfoID,
+					BIN_EmployeeID,
+					BaCode,
+					BaName,
+					BaType,
+		]]>
+			<include refid="BINBECMINC99.insertKeySql" />		
+		<![CDATA[
+				)VALUES
+				(		
+					#organizationInfoId#,
+					#brandInfoId#,
+					#employeeId#,
+					#bacode#,
+					#baname#,
+					'1',
+		]]>
+			<include refid="BINBECMINC99.insertValueSql" />		
+		<![CDATA[
+				)
+    	]]>   				
+    </insert>	
+	
+	<!--更新员工信息表 -->
+	<update id="updateEmployee" parameterClass="java.util.HashMap">
+		<![CDATA[
+			UPDATE				
+				Basis.BIN_Employee			
+			SET				
+				EmployeeCode = #bacode#,
+				EmployeeName = #baname#,
+				ValidFlag = #validFlagVal#,
+		]]>
+			<include refid="BINBECMINC99.updateSql" />		
+		<![CDATA[				
+			WHERE					
+				BIN_EmployeeID = #employeeId#
+		]]>
+    </update>	
+	
+	<!-- 插入员工信息 -->
+	<insert id="insertEmployee" parameterClass="java.util.HashMap">
+		<selectKey resultClass="java.lang.Integer" type="post" keyProperty="BIN_EmployeeID" >
+		<![CDATA[
+			INSERT INTO	
+				Basis.BIN_Employee
+				(
+					BIN_OrganizationInfoID,
+					BIN_BrandInfoID,
+					BIN_PositionCategoryID,
+					NodeID,
+					EmployeeCode,
+					EmployeeName,
+		]]>
+			<include refid="BINBECMINC99.insertKeySql" />		
+		<![CDATA[
+				)VALUES
+				(		
+					#organizationInfoId#,
+					#brandInfoId#,
+					#positionCategoryId#,
+					#nodeId#,
+					#bacode#,
+					#baname#,
+		]]>
+			<include refid="BINBECMINC99.insertValueSql" />		
+		<![CDATA[
+				)
+				select SCOPE_IDENTITY() as value
+    	]]>
+    	</selectKey>   				
+    </insert>
+    
+</sqlMap>

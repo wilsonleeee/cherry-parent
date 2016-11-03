@@ -1,0 +1,65 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sqlMap PUBLIC "-//iBATIS.com//DTD SQL Map 2.0//EN" "http://ibatis.apache.org/dtd/sql-map-2.dtd">
+<sqlMap namespace="GetCouponCode">
+	
+	<select id="getOrderInfoByMobile" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+    <![CDATA[
+		SELECT Top 1 
+			td.TradeNoIF As orderId,
+			td.CampaignOrderTime As orderTime,
+			td.CouponCode As couponCode,
+			CONVERT(nvarchar(20),td.GetFromTime,23) as getFromTime,
+			CONVERT(nvarchar(20),td.GetToTime ,23) as getToTime,
+			CONVERT(nvarchar(20),td.GetToTime ,20) as expiredTime,
+			(Case td.OrderCounterCode when 'ALL' then '任意柜台' 
+			 else ti.CounterNameIF end) As reCounterName,
+			(Case td.CounterGot when 'ALL' then '任意柜台' 
+			 else tc.CounterNameIF end) As getCounterName 
+		FROM 
+			Campaign.BIN_CampaignOrder As td  with(nolock) 
+			Left join Basis.BIN_CounterInfo as tc on td.CounterGot=tc.CounterCode 
+			Left join Basis.BIN_CounterInfo as ti on td.OrderCounterCode=ti.CounterCode 
+		WHERE 
+			td.ValidFlag = 1 AND 
+			td.State not in ('CA','NG') AND 
+			td.BIN_BrandInfoID = #brandInfoId# AND 
+			td.BIN_OrganizationInfoID = #organizationInfoId# AND 
+			td.CampaignCode = #campaignCode# AND 
+			td.Mobile = #mobilePhone# 
+		ORDER BY 
+			td.CampaignOrderTime desc 
+	]]>
+	</select>
+
+	<!-- 记录沟通程序生成的Coupon信息  -->
+	<insert id="addCouponCreateLog" parameterClass="java.util.HashMap">
+		<![CDATA[
+		INSERT INTO Communication.BIN_CouponCreateLog(
+			BatchID,
+			CommCode,
+			CampaignCode,
+			CustomerSysID,
+			MemberCode,
+			ReceiverCode,
+			CouponCode,
+			ExpiredTime,
+			CreateTime,
+			CreatedBy,
+			CreatePGM 
+		)VALUES(
+			#batchId#,
+			#commCode#,
+			#campCode#,
+			#customerSysId#,
+			#memCode#,
+			#receiverCode#,
+			#couponCode#,
+			#expiredTime#,
+			GETDATE(),
+			#createBy#,
+			#createPGM# 
+		)
+		]]>
+	</insert>
+	
+</sqlMap>

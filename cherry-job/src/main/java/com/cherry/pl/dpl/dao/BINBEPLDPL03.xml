@@ -1,0 +1,227 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sqlMap PUBLIC "-//iBATIS.com//DTD SQL Map 2.0//EN" "http://ibatis.apache.org/dtd/sql-map-2.dtd">
+<sqlMap namespace="BINBEPLDPL03">
+    
+    <!-- 重建部门权限表 -->  
+  	<statement id="createDepartPrivilegeTable" timeout="300">  
+  	<![CDATA[
+		IF OBJECT_ID('[Privilege].BIN_DepartPrivilege') IS NOT NULL
+  		DROP TABLE [Privilege].BIN_DepartPrivilege
+		
+		CREATE TABLE [Privilege].BIN_DepartPrivilege (
+			BIN_DepartPrivilegeID int  NOT NULL IDENTITY(1,1),
+			BIN_UserID int,
+			BIN_EmployeeID int  NOT NULL,
+			BIN_OrganizationID int  NOT NULL,
+			DepartType nvarchar(5)  NOT NULL,
+			BusinessType nchar(1)  NOT NULL,
+			OperationType nchar(1)  NOT NULL,
+			CounterKind smallint  default 0,
+			PrivilegeFlag smallint,
+			OrgValidFlag int,
+			ValidFlag char(1),
+			CreateTime datetime,
+			CreatedBy nvarchar(25),
+			CreatePGM nvarchar(30),
+			UpdateTime datetime,
+			UpdatedBy nvarchar(25),
+			UpdatePGM nvarchar(30),
+			ModifyCount int,
+			PRIMARY KEY NONCLUSTERED(BIN_DepartPrivilegeID)	
+		)
+  	]]>
+  	</statement> 
+  	
+  	<!-- 重建部门权限临时表 -->  
+  	<statement id="createDepartPrivilegeTableTemp" timeout="300">  
+  	<![CDATA[
+		IF OBJECT_ID('[Privilege].BIN_DepartPrivilege_temp') IS NOT NULL
+  		DROP TABLE [Privilege].BIN_DepartPrivilege_temp
+		
+		CREATE TABLE [Privilege].BIN_DepartPrivilege_temp (
+			BIN_UserID int,
+			BIN_EmployeeID int  NOT NULL,
+			BIN_OrganizationID int  NOT NULL,
+			DepartType nvarchar(5)  NOT NULL,
+			BusinessType nchar(1)  NOT NULL,
+			OperationType nchar(1)  NOT NULL,
+			CounterKind smallint  default 0,
+			PrivilegeFlag smallint,
+			OrgValidFlag int,
+			ValidFlag char(1),
+			CreateTime datetime,
+			CreatedBy nvarchar(25),
+			CreatePGM nvarchar(30),
+			UpdateTime datetime,
+			UpdatedBy nvarchar(25),
+			UpdatePGM nvarchar(30),
+			ModifyCount int	
+		)
+  	]]>
+  	</statement> 
+  	
+  	<!-- 给部门权限表创建索引 -->  
+  	<statement id="createDepartPrivilegeIndex" timeout="300">  
+  	<![CDATA[
+		IF  EXISTS (SELECT * FROM sys.indexes WHERE object_id = OBJECT_ID(N'[Privilege].[BIN_DepartPrivilege]') AND name = N'CI_BIN_DepartPrivilege_BIN_UserID_DepartType')
+		DROP INDEX [CI_BIN_DepartPrivilege_BIN_UserID_DepartType] ON [Privilege].[BIN_DepartPrivilege] WITH ( ONLINE = OFF )
+		IF  EXISTS (SELECT * FROM sys.indexes WHERE object_id = OBJECT_ID(N'[Privilege].[BIN_DepartPrivilege]') AND name = N'IX_BIN_DepartPrivilege_BIN_EmployeeID_DepartType')
+		DROP INDEX [IX_BIN_DepartPrivilege_BIN_EmployeeID_DepartType] ON [Privilege].[BIN_DepartPrivilege] WITH ( ONLINE = OFF )
+		IF  EXISTS (SELECT * FROM sys.indexes WHERE object_id = OBJECT_ID(N'[Privilege].[BIN_DepartPrivilege]') AND name = N'IXC_BIN_DepartPrivilege_BIN_EmployeeID_BusinessType_CounterKind')
+		DROP INDEX [IXC_BIN_DepartPrivilege_BIN_EmployeeID_BusinessType_CounterKind] ON [Privilege].[BIN_DepartPrivilege] WITH ( ONLINE = OFF )
+		
+		CREATE CLUSTERED INDEX CI_BIN_DepartPrivilege_BIN_UserID_DepartType ON [Privilege].BIN_DepartPrivilege (BIN_UserID,BusinessType,DepartType,OrgValidFlag)
+		CREATE INDEX IX_BIN_DepartPrivilege_BIN_EmployeeID_DepartType ON [Privilege].BIN_DepartPrivilege (BIN_EmployeeID,BusinessType,DepartType,OrgValidFlag)
+		INCLUDE (BIN_OrganizationID)
+		CREATE NONCLUSTERED INDEX [IXC_BIN_DepartPrivilege_BIN_EmployeeID_BusinessType_CounterKind] ON [Privilege].[BIN_DepartPrivilege] ([BIN_EmployeeID] ASC,[BusinessType] ASC,[CounterKind] ASC, [BIN_OrganizationID] ASC )
+  	]]>
+  	</statement> 
+  	
+  	<!-- 重建人员权限表 -->  
+  	<statement id="createEmployeePrivilegeTable" timeout="300">  
+  	<![CDATA[
+		IF OBJECT_ID('[Privilege].BIN_EmployeePrivilege') IS NOT NULL
+  		DROP TABLE [Privilege].BIN_EmployeePrivilege
+		
+		CREATE TABLE [Privilege].BIN_EmployeePrivilege (
+		   BIN_EmployeePrivilegeID int  NOT NULL IDENTITY(1,1),
+			BIN_UserID int,
+			BIN_EmployeeID int  NOT NULL,
+			BIN_SubEmployeeID int  NOT NULL,
+			BusinessType nchar(1)  NOT NULL,
+			OperationType nchar(1)  NOT NULL,
+			PrivilegeFlag smallint,
+			ValidFlag char(1),
+			CreateTime datetime,
+			CreatedBy nvarchar(25),
+			CreatePGM nvarchar(30),
+			UpdateTime datetime,
+			UpdatedBy nvarchar(25),
+			UpdatePGM nvarchar(30),
+			ModifyCount int,
+			PRIMARY KEY NONCLUSTERED(BIN_EmployeePrivilegeID)	
+		)
+  	]]>
+  	</statement> 
+  	
+  	<!-- 重建人员权限临时表 -->  
+  	<statement id="createEmployeePrivilegeTableTemp" timeout="300">  
+  	<![CDATA[
+		IF OBJECT_ID('[Privilege].BIN_EmployeePrivilege_temp') IS NOT NULL
+  		DROP TABLE [Privilege].BIN_EmployeePrivilege_temp
+		
+		CREATE TABLE [Privilege].BIN_EmployeePrivilege_temp (
+			BIN_UserID int,
+			BIN_EmployeeID int  NOT NULL,
+			BIN_SubEmployeeID int  NOT NULL,
+			BusinessType nvarchar(1)  NOT NULL,
+			OperationType nchar(1)  NOT NULL,
+			PrivilegeFlag smallint,
+			ValidFlag char(1),
+			CreateTime datetime,
+			CreatedBy nvarchar(25),
+			CreatePGM nvarchar(30),
+			UpdateTime datetime,
+			UpdatedBy nvarchar(25),
+			UpdatePGM nvarchar(30),
+			ModifyCount int	
+		)
+  	]]>
+  	</statement> 
+  	
+  	<!-- 给人员权限表创建索引 -->  
+  	<statement id="createEmployeePrivilegeIndex" timeout="300">  
+  	<![CDATA[
+		IF  EXISTS (SELECT * FROM sys.indexes WHERE object_id = OBJECT_ID(N'[Privilege].[BIN_EmployeePrivilege]') AND name = N'CI_BIN_EmployeePrivilege_BIN_UserID_BusinessType')
+		DROP INDEX [CI_BIN_EmployeePrivilege_BIN_UserID_BusinessType] ON [Privilege].[BIN_EmployeePrivilege] WITH ( ONLINE = OFF )
+		IF  EXISTS (SELECT * FROM sys.indexes WHERE object_id = OBJECT_ID(N'[Privilege].[BIN_EmployeePrivilege]') AND name = N'IX_BIN_EmployeePrivilege_BIN_EmployeeID_BusinessType')
+		DROP INDEX [IX_BIN_EmployeePrivilege_BIN_EmployeeID_BusinessType] ON [Privilege].[BIN_EmployeePrivilege] WITH ( ONLINE = OFF )
+		
+		CREATE CLUSTERED INDEX CI_BIN_EmployeePrivilege_BIN_UserID_BusinessType ON [Privilege].BIN_EmployeePrivilege (BIN_UserID,OperationType,BusinessType)
+		CREATE INDEX IX_BIN_EmployeePrivilege_BIN_EmployeeID_BusinessType ON [Privilege].BIN_EmployeePrivilege (BIN_EmployeeID,OperationType,BusinessType)
+		INCLUDE (BIN_SubEmployeeID)
+  	]]>
+  	</statement> 
+  	
+  	<!-- 重建部门从属关系表 -->  
+  	<statement id="createDepartRelationTable" timeout="300">  
+  	<![CDATA[
+		IF OBJECT_ID('[Privilege].BIN_DepartRelation') IS NOT NULL
+  		DROP TABLE [Privilege].BIN_DepartRelation
+		
+		CREATE TABLE [Privilege].BIN_DepartRelation (
+		   BIN_DepartRelationID int  NOT NULL IDENTITY(1,1),
+			[BIN_OrganizationID] [int] NOT NULL,
+			[BIN_OrganizationIDRel] [int] NOT NULL,
+			[TestType] [nchar](1) NOT NULL,
+			[DepartType] [nvarchar](5) NOT NULL,
+			[PrivilegeFlag] [smallint] NULL,
+			[ValidFlag] [char](1) NULL,
+			[CreateTime] [datetime] NULL,
+			[CreatedBy] [nvarchar](25) NULL,
+			[CreatePGM] [nvarchar](30) NULL,
+			[UpdateTime] [datetime] NULL,
+			[UpdatedBy] [nvarchar](25) NULL,
+			[UpdatePGM] [nvarchar](30) NULL,
+			[ModifyCount] [int] NULL,
+			PRIMARY KEY NONCLUSTERED(BIN_DepartRelationID)	
+		)
+  	]]>
+  	</statement> 
+  	
+  	<!-- 重建部门从属关系临时表 -->  
+  	<statement id="createDepartRelationTableTemp" timeout="300">  
+  	<![CDATA[
+		IF OBJECT_ID('[Privilege].BIN_DepartRelation_temp') IS NOT NULL
+  		DROP TABLE [Privilege].BIN_DepartRelation_temp
+		
+		CREATE TABLE [Privilege].BIN_DepartRelation_temp (
+			[BIN_OrganizationID] [int] NOT NULL,
+			[BIN_OrganizationIDRel] [int] NOT NULL,
+			[TestType] [nchar](1) NOT NULL,
+			[DepartType] [nvarchar](5) NOT NULL,
+			[PrivilegeFlag] [smallint] NULL,
+			[ValidFlag] [char](1) NULL,
+			[CreateTime] [datetime] NULL,
+			[CreatedBy] [nvarchar](25) NULL,
+			[CreatePGM] [nvarchar](30) NULL,
+			[UpdateTime] [datetime] NULL,
+			[UpdatedBy] [nvarchar](25) NULL,
+			[UpdatePGM] [nvarchar](30) NULL,
+			[ModifyCount] [int] NULL
+		)
+  	]]>
+  	</statement> 
+  	
+  	<!-- 给部门从属关系表创建索引 -->  
+  	<statement id="createDepartRelationIndex" timeout="300">  
+  	<![CDATA[
+		IF  EXISTS (SELECT * FROM sys.indexes WHERE object_id = OBJECT_ID(N'[Privilege].[BIN_DepartRelation]') AND name = N'CI_BIN_DepartRelation_BIN_OrganizationID')
+		DROP INDEX [CI_BIN_DepartRelation_BIN_OrganizationID] ON [Privilege].[BIN_DepartRelation] WITH ( ONLINE = OFF )
+		
+		CREATE CLUSTERED INDEX [CI_BIN_DepartRelation_BIN_OrganizationID] ON [Privilege].[BIN_DepartRelation]([BIN_OrganizationID] ASC)
+  	]]>
+  	</statement> 
+  	
+  	<!-- 清空部门权限表数据 -->
+    <update id="truncateDepartPrivilege" parameterClass="java.util.HashMap" timeout="300">
+		<![CDATA[
+			TRUNCATE TABLE Privilege.BIN_DepartPrivilege
+		]]>	
+    </update>
+    
+    <!-- 清空人员权限表数据 -->
+    <update id="truncateEmployeePrivilege" parameterClass="java.util.HashMap" timeout="300">
+		<![CDATA[
+			TRUNCATE TABLE Privilege.BIN_EmployeePrivilege
+		]]>	
+    </update>
+    
+    <!-- 清空部门从属关系表数据 -->
+    <update id="truncateDepartRelation" parameterClass="java.util.HashMap" timeout="300">
+		<![CDATA[
+			TRUNCATE TABLE Privilege.BIN_DepartRelation
+		]]>	
+    </update>
+	
+</sqlMap>

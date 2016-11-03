@@ -1,0 +1,414 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sqlMap PUBLIC "-//iBATIS.com//DTD SQL Map 2.0//EN" "http://ibatis.apache.org/dtd/sql-map-2.dtd">
+<sqlMap namespace="StandSaleInfo">
+	<!-- 取得指定同步状态的销售单据号List -->
+	<select id="getBillCodeOfSRListBySync" parameterClass="java.util.HashMap"
+		resultClass="java.lang.String">
+	  <![CDATA[
+		  SELECT
+			A.BillCode as billCode	
+		  FROM 
+			 Sale.BIN_SaleRecord A WITH(NOLOCK)
+		  WHERE
+			  A.SynchFlag = #synchFlag#
+		  AND A.ValidFlag = '1'
+		  AND A.BIN_OrganizationInfoID = #organizationInfoId#
+		  AND A.BIN_BrandInfoID = #brandInfoId#
+		]]>
+		<![CDATA[AND EXISTS ( ]]>
+		<include refid="BINBECMINC99.getBillByTestModStandList" />
+		<![CDATA[  
+		    AND A.BIN_OrganizationID = C99.BIN_OrganizationID)
+		]]>
+	</select>
+	<!-- 根据新后台billCode查询销售单接口表的单据号List -->
+	<select id="getBillCodeOfISList" parameterClass="java.util.HashMap"
+		resultClass="java.lang.String">
+      <![CDATA[
+	      SELECT DISTINCT BillCode AS billCode
+	        FROM dbo.IF_Sale  WITH(NOLOCK)
+	        WHERE BillCode IN
+	  ]]>
+		<iterate property="billCodeList" open="(" close=")"
+			conjunction=",">
+			#billCodeList[]#
+		</iterate>
+      <![CDATA[
+      UNION
+      SELECT DISTINCT BillCode AS billCode
+        FROM dbo.IF_SaleDetail WITH(NOLOCK) 
+        WHERE BillCode IN
+	  ]]>
+		<iterate property="billCodeList" open="(" close=")"
+			conjunction=",">
+			#billCodeList[]#
+		</iterate>
+
+	</select>
+	<!-- 更新销售数据的同步状态 -->
+	<update id="upSaleRecordBySync" parameterClass="java.util.HashMap">
+		UPDATE
+		<isNotEmpty property="upCount">
+			TOP(#upCount#)
+		</isNotEmpty>
+		A
+		SET
+		A.SynchFlag = #synchFlag_New#,
+		<isNotEmpty property="updateTime">
+			A.UpdateTime=#updateTime#,
+		</isNotEmpty>
+		<isEmpty property="updateTime">
+			A.UpdateTime=GETDATE(),
+		</isEmpty>
+		<![CDATA[
+			A.UpdatedBy=#updatedBy#,
+			A.UpdatePGM=#updatePGM#,
+			A.ModifyCount=A.ModifyCount+1
+	  FROM 
+	      Sale.BIN_SaleRecord A
+	  WHERE
+	      A.ValidFlag = '1'
+		]]>
+		<isNotEmpty property="synchFlag_Old" prepend="AND">
+			A.SynchFlag =
+			#synchFlag_Old#
+		</isNotEmpty>
+		<isNotEmpty property="billCodeList" prepend="AND">
+			A.BillCode IN
+			<iterate property="billCodeList" open="(" close=")"
+				conjunction=",">
+				#billCodeList[]#
+			</iterate>
+		</isNotEmpty>
+		AND A.BIN_OrganizationInfoID = #organizationInfoId#
+		AND
+		A.BIN_BrandInfoID = #brandInfoId#
+		<![CDATA[AND EXISTS ( ]]>
+		<include refid="BINBECMINC99.getBillByTestModStandList" />
+		<![CDATA[  
+		    AND A.BIN_OrganizationID = C99.BIN_OrganizationID)
+		]]>
+	</update>
+	<!-- 取得新后台销售数据（主数据） -->
+	<select id="getSaleRecordList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+      <![CDATA[
+		SELECT TOP (#batchSize#)
+			#brandCode# BrandCode,
+			A.BillCode BillCode,
+			A.BIN_SaleRecordID,
+			A.SaleDate BusinessDate,
+			A.SaleTime BillCreateTime,
+			A.SaleType AS BillType,
+			C.DepartCode DepartCode,
+			A.EmployeeCode OperatorCode,
+			A.Quantity Quantity,
+			A.OriginalAmount OriginalAmount,
+			A.Discount Discount,
+			A.PayAmount DiscountedAmount,
+			A.DecreaseAmount DecreaseAmount,
+			A.Amount PayAmount,
+			A.BillCodePre RelateBillCode,
+			A.MemberCode MemberCode,
+			A.BIN_MemberInfoID MemberID,
+			A.Comments Comment,
+			A.SynchFlag SynchFlag
+		FROM Sale.BIN_SaleRecord A WITH (NOLOCK)
+		JOIN Basis.BIN_Organization C WITH (NOLOCK) ON (A.BIN_OrganizationID = C.BIN_OrganizationID)
+		]]>
+		<![CDATA[
+		  WHERE
+		  	  A.BIN_OrganizationInfoID = #organizationInfoId#
+		  AND A.BIN_BrandInfoID = #brandInfoId#
+		  AND A.ValidFlag = '1'
+		]]>
+		<![CDATA[AND EXISTS ( ]]>
+		<include refid="BINBECMINC99.getBillByTestModStandList" />
+		<![CDATA[  
+		    AND A.BIN_OrganizationID = C99.BIN_OrganizationID)
+		]]>
+		<isNotEmpty property="TargetDataStartTime">
+			<!-- 通过Job控制表控制程序整体处理数据的数量  -->
+			AND (A.CreateTime BETWEEN #TargetDataStartTime# AND #TargetDataEndTime#)
+		</isNotEmpty>
+		<isNotEmpty property="bathLastRowID" prepend="AND">
+	    	A.BIN_SaleRecordID > #bathLastRowID#
+		</isNotEmpty>
+		ORDER BY A.BIN_SaleRecordID
+	</select>
+	
+	<!-- 取得失败新后台销售数据（主数据） -->
+	<select id="getFaildSaleRecordList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+      <![CDATA[
+		SELECT TOP (#batchSize#)
+			#brandCode# BrandCode,
+			A.BillCode BillCode,
+			A.BIN_SaleRecordID,
+			A.SaleDate BusinessDate,
+			A.SaleTime BillCreateTime,
+			A.SaleType AS BillType,
+			C.DepartCode DepartCode,
+			A.EmployeeCode OperatorCode,
+			A.Quantity Quantity,
+			A.OriginalAmount OriginalAmount,
+			A.Discount Discount,
+			A.PayAmount DiscountedAmount,
+			A.DecreaseAmount DecreaseAmount,
+			A.Amount PayAmount,
+			A.BillCodePre RelateBillCode,
+			A.MemberCode MemberCode,
+			A.BIN_MemberInfoID MemberID,
+			A.Comments Comment,
+			A.SynchFlag SynchFlag
+		FROM Sale.BIN_SaleRecord A WITH (NOLOCK)
+		JOIN Basis.BIN_Organization C WITH (NOLOCK) ON (A.BIN_OrganizationID = C.BIN_OrganizationID)
+		]]>
+		<![CDATA[
+		  WHERE
+		  	  A.BIN_OrganizationInfoID = #organizationInfoId#
+		  AND A.BIN_BrandInfoID = #brandInfoId#
+		  AND A.ValidFlag = '1'
+		]]>
+		<![CDATA[AND EXISTS ( ]]>
+		<include refid="BINBECMINC99.getBillByTestModStandList" />
+		<![CDATA[  
+		    AND A.BIN_OrganizationID = C99.BIN_OrganizationID)
+		]]>
+		<!-- 从 Job运行数据失败履历表中将失败的销售单据取出 -->
+		<![CDATA[
+		AND EXISTS(
+			SELECT 1 FROM Tools.BIN_JobRunFaildHistory JFH WITH(NOLOCK)
+			WHERE 				
+				JFH.BIN_OrganizationInfoID = #organizationInfoId# 
+			AND JFH.BIN_BrandInfoID = #brandInfoId# 
+			AND JFH.JobCode = #JobCode#
+			
+			AND JFH.UnionIndex = A.BillCode
+		)
+		]]>
+		<isNotEmpty property="bathLastRowID" prepend="AND">
+	    	A.BillCode > #bathLastRowID#
+		</isNotEmpty>
+		ORDER BY A.BillCode
+	</select>
+	
+	<!-- 插入销售单接口表 -->
+	<insert id="insertIFSale" parameterClass="java.util.HashMap">
+   	<![CDATA[
+		INSERT INTO dbo.IF_Sale(
+			    BrandCode,
+				BillCode, 
+				BusinessDate, 
+				BillCreateTime, 
+				BillType,  
+				DepartCode,  
+				OperatorCode,  
+				Quantity,  
+				OriginalAmount,  
+				Discount,	 
+				DiscountedAmount,  
+				DecreaseAmount,	 
+				PayAmount,	 
+				RelateBillCode,	 
+				MemberCode,	 
+				Comment,	 
+				PuttingTime,	
+				SynchFlag,
+				MemberID
+		  ) VALUES (
+			    #BrandCode#,
+				#BillCode#, 
+				#BusinessDate#, 
+				#BillCreateTime#, 
+				#BillType#,  
+				#DepartCode#,  
+				#OperatorCode#,  
+				#Quantity#,  
+				#OriginalAmount#,  
+				#Discount#,	 
+				#DiscountedAmount#,  
+				#DecreaseAmount#,	 
+				#PayAmount#,	 
+				#RelateBillCode#,	 
+				#MemberCode#,	 
+				#Comment#,	 
+				GETDATE(),	
+				NULL,
+				#MemberID#
+		 )
+	]]>
+	</insert>
+	
+	<!-- 取得新后台销售数据（明细数据） -->
+	<select id="getSaleRecordDetailList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+	   	<![CDATA[
+	   	SELECT
+			#brandCode#  BrandCode,
+			A.BillCode  BillCode,
+			B.SaleType  SaleType,
+			P.ItemCode  IFProductId,
+			B.UnitCode  UnitCode,
+			B.BarCode  BarCode,
+			B.Quantity  Quantity,
+			B.PricePay  PayPrice,
+			B.CountActCode  ActivityCode,
+			B.Comment  Comment,
+			B.MainCode MainCode,
+			B.Price ReferencePrice,
+			B.Discount Discount,
+			B.UniqueCode UniqueCode,
+			B.DetailNo detailNo,
+			CASE B.SaleType WHEN 'N' THEN CONVERT(DECIMAL(12,2),B.PricePay * B.Quantity)  WHEN 'P' THEN B.PricePay END AS LineAmount
+		FROM Sale.BIN_SaleRecord A WITH (NOLOCK)
+		JOIN Sale.BIN_SaleRecordDetail B WITH (NOLOCK) ON (A.BIN_SaleRecordID = B.BIN_SaleRecordID)
+		LEFT JOIN Basis.BIN_ProductVendor PV ON B.BIN_ProductVendorID = PV.BIN_ProductVendorID
+		LEFT JOIN Basis.BIN_Product P ON PV.BIN_ProductID = P.BIN_ProductID 
+	   	]]>
+		<![CDATA[
+		  WHERE
+		  	  A.BIN_SaleRecordID IN 
+		   ]]>
+		 	<iterate conjunction="," open="(" close=")" property="saleRecordIDArr">  
+        #saleRecordIDArr[]#
+           </iterate>		
+	</select>
+	
+	<!-- 取得新后台失败销售数据（明细数据） -->
+	<select id="getFaildSaleRecordDetailList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+	   	<![CDATA[
+	   	SELECT 
+			#brandCode#  BrandCode,
+			A.BillCode  BillCode,
+			A.BIN_SaleRecordID,
+			B.SaleType  SaleType,
+			P.ItemCode  IFProductId,
+			B.UnitCode  UnitCode,
+			B.BarCode  BarCode,
+			B.Quantity  Quantity,
+			B.PricePay  PayPrice,
+			B.CountActCode  ActivityCode,
+			B.Comment  Comment,
+			B.MainCode MainCode,
+			B.Price ReferencePrice,
+			B.Discount Discount,
+			B.UniqueCode UniqueCode,
+			B.DetailNo detailNo,
+			CASE B.SaleType WHEN 'N' THEN CONVERT(DECIMAL(12,2),B.PricePay * B.Quantity)  WHEN 'P' THEN B.PricePay END AS LineAmount
+		FROM Sale.BIN_SaleRecord A WITH (NOLOCK)
+		JOIN Sale.BIN_SaleRecordDetail B WITH (NOLOCK) ON (A.BIN_SaleRecordID = B.BIN_SaleRecordID)
+		LEFT JOIN Basis.BIN_ProductVendor PV ON B.BIN_ProductVendorID = PV.BIN_ProductVendorID
+		LEFT JOIN Basis.BIN_Product P ON PV.BIN_ProductID = P.BIN_ProductID 
+	    WHERE
+			A.BIN_SaleRecordID IN 
+	   	]]>
+	 	<iterate conjunction="," open="(" close=")" property="saleRecordIDArr">  
+       		#saleRecordIDArr[]#
+        </iterate>	
+		
+	</select>
+	<!-- 取得新后台销售数据（支付数据） -->
+	<select id="getSalePayList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+	   	<![CDATA[
+			 SELECT
+			 	#brandCode#  BrandCode,
+				SR.BillCode,
+				SPL.PayTypeCode,
+				SPL.PayAmount,
+				spl.SerialNumber,
+				SPL.Comment
+			FROM Sale.BIN_SalePayList SPL WITH(NOLOCK)
+			JOIN Sale.BIN_SaleRecord SR WITH(NOLOCK)
+				ON SPL.BIN_SaleRecordID = SR.BIN_SaleRecordID
+			WHERE SPL.BIN_SaleRecordID IN
+	   	]]>
+	 	<iterate conjunction="," open="(" close=")" property="saleRecordIDArr">  
+       		#saleRecordIDArr[]#
+        </iterate>	
+		
+	</select>
+	<!-- 插入销售单明细接口表 -->
+	<insert id="insertIFSaleDetail" parameterClass="java.util.HashMap">
+	<![CDATA[
+	INSERT INTO dbo.IF_SaleDetail(
+			BrandCode,
+			BillCode,
+			SaleType,
+			IFProductId,
+			UnitCode,
+			BarCode,
+			Quantity,
+			PayPrice,
+			ActivityCode,
+			Comment,
+			PuttingTime,
+			SynchFlag,
+			MainCode,
+			ReferencePrice,
+			Discount,
+			UniqueCode,
+			LineAmount,
+			ApportionAmount,
+			DetailNo
+	 ) VALUES (
+			#BrandCode#,
+			#BillCode#,
+			#SaleType#,
+			]]>
+			<isEqual property="SaleType" compareValue="N">
+				#IFProductId#,
+			</isEqual>
+			<isEqual property="SaleType" compareValue="P">
+				NUll,
+			</isEqual>			
+			<![CDATA[
+			#UnitCode#,
+			#BarCode#,
+			#Quantity#,
+			#PayPrice#,
+			#ActivityCode#,
+			#Comment#,
+			GETDATE(),
+			NULL,
+			#MainCode#,
+			#ReferencePrice#,
+			#Discount#,
+			#UniqueCode#,
+			#LineAmount#,
+			#LineAmount#,
+			#detailNo#
+     )
+	]]>
+	</insert>
+	<!-- 插入销售单支付接口表 -->
+	<insert id="insertIFSalePayDetail" parameterClass="java.util.HashMap">
+		<![CDATA[
+		INSERT INTO IF_SalePayDetail(
+				BrandCode,
+				BillCode,
+				PayTypeCode,
+				PayAmount,
+				SerialNumber,
+				Comment,
+				PuttingTime
+		 ) VALUES (
+				#BrandCode#,
+				#BillCode#,
+				#PayTypeCode#,
+				#PayAmount#,
+				#SerialNumber#,
+				#Comment#,
+				GETDATE()
+		)
+		]]>
+	</insert>
+	    <!-- 取得品牌Code  -->
+    <select id="getBrandCode" parameterClass="java.util.HashMap" resultClass="java.lang.String">
+       <![CDATA[
+			SELECT
+				BrandCode AS brandCode
+			FROM
+				Basis.BIN_BrandInfo
+			WHERE
+				BIN_BrandInfoID = #brandInfoId#
+		]]>	
+    </select>
+</sqlMap>

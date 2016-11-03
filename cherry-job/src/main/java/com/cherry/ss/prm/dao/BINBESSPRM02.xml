@@ -1,0 +1,258 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sqlMap PUBLIC "-//iBATIS.com//DTD SQL Map 2.0//EN" "http://ibatis.apache.org/dtd/sql-map-2.dtd">
+<sqlMap namespace="BINBESSPRM02">
+
+	<!-- 查询离业务日期最近的一个截止日期 -->	
+	<select id="getLastPrmStockCloseDay" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+		<![CDATA[
+			SELECT TOP 1	
+				PreCloseDate AS preCloseDate,
+				CloseDate AS closeDate
+			FROM 	
+				Inventory.BIN_PrmStockCloseDay
+			WHERE
+				BIN_OrganizationInfoID = #organizationInfoId# AND
+				CloseDate <= CONVERT(date,#bussinessDate#)
+			ORDER BY
+				CloseDate DESC
+		]]>	
+    </select>
+	
+	<!--判断指定截止日期是否存在月度库存统计信息-->	
+	<select id="getPrmStockHistoryCount" parameterClass="java.util.HashMap" resultClass="java.lang.Integer">
+		<![CDATA[
+			SELECT
+				COUNT(1)
+			FROM
+				Inventory.BIN_PrmStockHistory
+			WHERE
+				CutOfDate = #closeDate# AND
+				BIN_OrganizationInfoID = #organizationInfoId# AND
+				BIN_BrandInfoID = #brandInfoId# AND
+				ValidFlag ='1'
+		]]>	
+    </select>
+	
+	<!--补录的促销产品入出库日期-->	
+	<select id="getStockInOutDateList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+		<![CDATA[
+			SELECT
+				A.StockInOutDate AS stockInOutDate
+			FROM
+				Inventory.BIN_PromotionStockInOut A
+			WHERE
+				A.StockInOutDate <= #closeDate# AND
+				A.BIN_OrganizationInfoID = #organizationInfoId# AND
+				A.BIN_BrandInfoID = #brandInfoId# AND
+				A.CloseFlag = '0' AND
+				A.ValidFlag ='1'
+		]]>	
+    </select>
+	
+	
+	<!--补录的促销产品入出库数据-->
+	<resultMap id="inOutList" class="java.util.HashMap">
+		<result property="prmProVendorId" column="BIN_PromotionProductVendorID"/>
+		<result property="inventoryInfoId" column="BIN_InventoryInfoID"/>
+		<result property="logicInventoryId" column="BIN_LogicInventoryInfoID"/>
+		<result property="vendorPacId" column="BIN_ProductVendorPackageID"/>
+		<result property="storageLocationInfoID" column="BIN_StorageLocationInfoID"/>	
+		<result property="quantity" column="Quantity"/>
+	</resultMap>	
+	<select id="getInOutList" parameterClass="java.util.HashMap" resultMap="inOutList">
+		<include refid="BINBECMINC99.pageheader" />	
+		<![CDATA[
+			SELECT  
+				B.BIN_PromotionProductVendorID,								
+				B.BIN_InventoryInfoID,								
+				B.BIN_LogicInventoryInfoID,													
+				B.BIN_ProductVendorPackageID,								
+				B.BIN_StorageLocationInfoID,
+				SUM(CASE WHEN B.StockType = '1' THEN -ISNULL(B.Quantity,0) ELSE ISNULL(B.Quantity,0) END) AS Quantity
+			FROM	
+				Inventory.BIN_PromotionStockInOut A,
+				Inventory.BIN_PromotionStockDetail B
+			WHERE 
+				A.StockInOutDate = #stockInOutDate# AND
+				A.BIN_OrganizationInfoID = #organizationInfoId# AND
+				A.BIN_BrandInfoID = #brandInfoId# AND
+				A.CloseFlag = '2' AND  
+				A.ValidFlag ='1' AND
+				A.BIN_PromotionStockInOutID = B.BIN_PromotionStockInOutID AND
+				B.ValidFlag ='1'
+			GROUP BY	
+				B.BIN_PromotionProductVendorID,								
+				B.BIN_InventoryInfoID,								
+				B.BIN_LogicInventoryInfoID,															
+				B.BIN_ProductVendorPackageID,								
+				B.BIN_StorageLocationInfoID
+		]]>	
+		<include refid="BINBECMINC99.pagefooter" />	
+    </select>
+	
+	<!--查询要更新的截止日期-->
+	<select id="getEndDateList" parameterClass="java.util.HashMap" resultClass="java.lang.String">
+		<![CDATA[
+			SELECT  
+				CloseDate
+			FROM	
+				Inventory.BIN_PrmStockCloseDay
+			WHERE	
+				CloseDate >= #stockInOutDate# AND
+				CloseDate <= CONVERT(date,#bussinessDate#) AND
+				BIN_OrganizationInfoID = #organizationInfoId#
+			ORDER BY
+				CloseDate
+		]]>	
+    </select>
+	
+	<!--更新促销产品月度库存表 -->
+	<update id="updateHistory" parameterClass="java.util.HashMap">
+		<![CDATA[
+			UPDATE 		
+				Inventory.BIN_PrmStockHistory	
+			SET		
+				RepeatCount = ISNULL(RepeatCount,0)+1,
+				Quantity = Quantity+#quantity#,
+		]]>
+			<include refid="BINBECMINC99.updateSql" />	
+		<![CDATA[				
+			WHERE					
+				BIN_PromotionProductVendorID = #prmProVendorId# AND
+				BIN_InventoryInfoID = #inventoryInfoId# AND
+				CutOfDate = #endDate#
+		]]>
+			<isNotEmpty prepend="AND" property="logicInventoryId">
+				BIN_LogicInventoryInfoID = #logicInventoryId#
+			</isNotEmpty>	
+			<isEmpty prepend="AND" property="logicInventoryId" >
+				(BIN_LogicInventoryInfoID IS NULL OR BIN_LogicInventoryInfoID = 0)
+			</isEmpty>	
+			<isNotEmpty prepend="AND" property="vendorPacId">
+				BIN_ProductVendorPackageID = #vendorPacId#
+			</isNotEmpty>
+			<isEmpty prepend="AND" property="vendorPacId" >
+				(BIN_ProductVendorPackageID IS NULL OR BIN_ProductVendorPackageID = 0)
+			</isEmpty>
+			<isNotEmpty prepend="AND" property="storageLocationInfoID">
+				BIN_StorageLocationInfoID = #storageLocationInfoID#
+			</isNotEmpty>
+			<isEmpty prepend="AND" property="storageLocationInfoID" >
+				(BIN_StorageLocationInfoID IS NULL OR BIN_StorageLocationInfoID = 0)
+			</isEmpty>			
+    </update>
+	
+	<!-- 插入新纪录到促销产品月度库存表-->
+	<insert id="insertHistory" parameterClass="java.util.HashMap">
+		<![CDATA[
+			INSERT INTO 		
+				Inventory.BIN_PrmStockHistory	
+				(	
+					BIN_OrganizationInfoID,
+					BIN_BrandInfoID,
+					BIN_PromotionProductVendorID,
+					BIN_InventoryInfoID,
+					BIN_LogicInventoryInfoID,
+					Quantity,
+					BIN_ProductVendorPackageID,
+					BIN_StorageLocationInfoID,
+					CutOfDate,
+					RepeatCount,
+		]]>
+			<include refid="BINBECMINC99.insertKeySql" />		
+		<![CDATA[					
+				) VALUES 	
+				(	
+					#organizationInfoId#,
+					#brandInfoId#,
+					#prmProVendorId#,
+					#inventoryInfoId#,
+					#logicInventoryId#,
+					#quantity#,
+					#vendorPacId#,
+					#storageLocationInfoID#,
+					#endDate#,
+					0,
+		]]>
+			<include refid="BINBECMINC99.insertValueSql" />		
+		<![CDATA[
+				)
+    	]]>
+    </insert>
+
+	<!-- 把截止计算区分从未反映到历史库存表中状态更新为待处理状态 -->
+	<update id="updateCloseFlagWait" parameterClass="java.util.HashMap">
+		<![CDATA[
+			UPDATE 		
+				Inventory.BIN_PromotionStockInOut	
+			SET		
+				CloseFlag = '2',
+		]]>
+			<include refid="BINBECMINC99.updateSql" />	
+		<![CDATA[				
+			WHERE					
+				BIN_OrganizationInfoID = #organizationInfoId# AND
+				BIN_BrandInfoID = #brandInfoId# AND
+				CloseFlag = '0' AND
+				StockInOutDate = #stockInOutDate# AND
+				ValidFlag = '1'
+		]]>
+    </update>
+    
+    <!-- 把截止计算区分从待处理状态更新为已经反映到历史库存表中状态 -->
+	<update id="updateCloseFlagEnd" parameterClass="java.util.HashMap">
+		<![CDATA[
+			UPDATE 		
+				Inventory.BIN_PromotionStockInOut	
+			SET		
+				CloseFlag = '1',
+		]]>
+			<include refid="BINBECMINC99.updateSql" />	
+		<![CDATA[				
+			WHERE					
+				BIN_OrganizationInfoID = #organizationInfoId# AND
+				BIN_BrandInfoID = #brandInfoId# AND
+				CloseFlag = '2' AND
+				StockInOutDate = #stockInOutDate# AND
+				ValidFlag = '1'
+		]]>
+    </update>
+    
+    <!-- 查询最近一个截止日期的月度库存信息 -->
+	<select id="getLastHistoryInfo" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+		<![CDATA[
+			SELECT TOP 1
+				CutOfDate AS cutOfDate,
+				Quantity AS quantity
+			FROM	
+				Inventory.BIN_PrmStockHistory			
+			WHERE					
+				BIN_PromotionProductVendorID = #prmProVendorId# AND
+				BIN_InventoryInfoID = #inventoryInfoId# AND
+				CutOfDate < CONVERT(date,#endDate#)
+		]]>
+			<isNotEmpty prepend="AND" property="logicInventoryId">
+				BIN_LogicInventoryInfoID = #logicInventoryId#
+			</isNotEmpty>	
+			<isEmpty prepend="AND" property="logicInventoryId" >
+				(BIN_LogicInventoryInfoID IS NULL OR BIN_LogicInventoryInfoID = 0)
+			</isEmpty>	
+			<isNotEmpty prepend="AND" property="vendorPacId">
+				BIN_ProductVendorPackageID = #vendorPacId#
+			</isNotEmpty>
+			<isEmpty prepend="AND" property="vendorPacId" >
+				(BIN_ProductVendorPackageID IS NULL OR BIN_ProductVendorPackageID = 0)
+			</isEmpty>
+			<isNotEmpty prepend="AND" property="storageLocationInfoID">
+				BIN_StorageLocationInfoID = #storageLocationInfoID#
+			</isNotEmpty>
+			<isEmpty prepend="AND" property="storageLocationInfoID" >
+				(BIN_StorageLocationInfoID IS NULL OR BIN_StorageLocationInfoID = 0)
+			</isEmpty>	
+		<![CDATA[
+			ORDER BY
+				CutOfDate DESC
+		]]>
+    </select>
+
+</sqlMap>

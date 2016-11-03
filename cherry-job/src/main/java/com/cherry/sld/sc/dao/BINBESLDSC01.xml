@@ -1,0 +1,433 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sqlMap PUBLIC "-//iBATIS.com//DTD SQL Map 2.0//EN" "http://ibatis.apache.org/dtd/sql-map-2.dtd">
+<sqlMap namespace="BINBESLDSC01">
+
+	<select id="getMessageInfoList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+		<![CDATA[
+		select distinct
+				T.EmployeeName as employeeName,
+				T.BIN_EmployeeID as employeeId,
+				T.BIN_OrganizationID as organizationID,
+				T.BIN_OrganizationInfoID as organizationInfoId,
+				T.BIN_BrandInfoID as brandInfoId,
+				sr.saleAmount,
+				st.TargetMoney as targetMoney,
+				st.CompleteMoney as completeMoney,
+				sbr.BonusRate as bonusRate,
+				sbr2.bonusRate as bonusRate_nor,
+				ass.Score as score,
+				ota.OvertimeHours as specialOvertimeHours,
+				T2.count  as workingDays,
+				T2.workingtime,
+				T2.schedulingDays,
+				T3.promobleDays
+			from
+				(
+					select 
+						ee.EmployeeName,
+						ee.BIN_EmployeeID,
+						ee.BIN_OrganizationID,
+						ee.BIN_OrganizationInfoID,
+						ee.BIN_BrandInfoID,
+						pcg.CategoryCode,
+						oz.DepartCode
+					from 
+						Basis.BIN_Employee ee
+					left join
+						Privilege.BIN_PositionCategory pcg
+					on
+						(ee.BIN_PositionCategoryID=pcg.BIN_PositionCategoryID AND ee.EmployeeName != 'NULL')
+					left join
+						Basis.BIN_Organization oz
+					on
+						(ee.BIN_OrganizationID = oz.BIN_OrganizationID)
+					where
+						ee.EmployeeName != 'NULL' AND
+						ee.BIN_PositionCategoryID=pcg.BIN_PositionCategoryID AND
+						(pcg.CategoryCode='01' or pcg.CategoryCode='02') AND
+						ee.BIN_OrganizationInfoID=#organizationInfoId# AND
+						ee.BIN_BrandInfoID=#brandInfoId# 
+				) T 
+			left join
+				(
+				select
+					  ISNULL(SUM(CASE  when SaleType='SR' then -1*Amount
+					  when SaleType='NS' then  Amount END),'0')  as saleAmount,
+					  BIN_BrandInfoID,
+					  BIN_OrganizationID,
+					  BIN_EmployeeID,
+					  SaleType
+				from
+					Sale.BIN_SaleRecord 
+				where
+					SaleType != 'PX' and
+					SaleTime between #monthStart# and #monthEnd#
+				group by 
+					BIN_BrandInfoID,
+					BIN_OrganizationID,
+					BIN_EmployeeID,
+					SaleType
+				) sr
+			on
+				(T.BIN_EmployeeID=sr.BIN_EmployeeID )
+			left join
+				Monitor.BIN_SaleTarget st
+			on
+				(T.BIN_EmployeeID=st.Parameter and (st.Type = '3' or st.Type = '6') and st.TargetType != 'PRM' and TargetDate=#targetDate#)
+			left join
+				(
+				select distinct
+					pc1.CategoryCode,
+					pc1.BIN_BrandInfoID,
+					sbr_1.BeginAmount,
+					sbr_1.EndAmount,
+					sbr_1.CounterCode,
+					sbr_1.BonusRate as bonusRate,
+					sbr_1.BonusEmployeePosition
+				from
+					Privilege.BIN_PositionCategory pc1
+				left join
+					Basis.BIN_SalesBonusRate sbr_1
+				on
+					(sbr_1.BonusEmployeePosition = pc1.BIN_PositionCategoryID)
+				)sbr	
+			on
+				(
+					sr.BIN_BrandInfoID=sbr.BIN_BrandInfoID AND
+					sbr.BeginAmount <=sr.saleAmount  AND
+					sbr.EndAmount >sr.saleAmount AND
+					sbr.CounterCode = T.DepartCode  
+				)
+			left join
+				(
+				select distinct
+					pc1.CategoryCode,
+					pc1.BIN_BrandInfoID,
+					sbr_1.BeginAmount,
+					sbr_1.EndAmount,
+					sbr_1.CounterCode,
+					sbr_1.BonusRate as bonusRate,
+					sbr_1.BonusEmployeePosition
+				from
+					Privilege.BIN_PositionCategory pc1
+				left join
+					Basis.BIN_SalesBonusRate sbr_1
+				on
+					(sbr_1.BonusEmployeePosition = '-9999')
+				)sbr2	
+			on
+				(
+					sr.BIN_BrandInfoID=sbr2.BIN_BrandInfoID AND
+					sbr2.BeginAmount <=sr.saleAmount  AND
+					sbr2.EndAmount >sr.saleAmount AND
+					sbr2.CounterCode = T.DepartCode  
+				)
+			left join
+				Basis.BIN_AssessmentScore ass
+			on
+				(T.BIN_EmployeeID=ass.BIN_EmployeeID AND
+				 AssessmentYear=#year# AND
+				 AssessmentMonth=#month#)
+			left join
+				(
+					select
+						SUM(OvertimeHours) as overtimeHours,
+						BIN_ApplyEmployee
+					from 
+						Basis.BIN_OvertimeAuditing
+					where
+						OvertimeDate between #monthStart# and #monthEnd#
+					group by
+						BIN_ApplyEmployee
+					) ota
+				on
+				(T.BIN_EmployeeID=ota.BIN_ApplyEmployee)
+			left join
+				(select 
+					SUM(TT.workingtime) as workingtime,
+					TT.count,
+					TT.BIN_EmployeeID ,
+					TT.schedulingDays
+				from 
+					(
+					select 
+						ABS(DATEDIFF(MINUTE,min(a1.AttendanceDateTime),max(a2.AttendanceDateTime))) as workingtime,
+						a3.count,
+						a.BIN_EmployeeID,
+						a.BIN_OrganizationID,
+						a4.schedulingDays
+					from 
+						(
+						select distinct 
+							CONVERT(nvarchar(10),AttendanceDateTime,120) as AttendanceDateTime,
+							BIN_BAAttendanceID,
+							BIN_EmployeeID,
+							BIN_OrganizationID,
+							BIN_BrandInfoID,
+							BIN_OrganizationInfoID
+						from 
+							Monitor.BIN_BAAttendance
+						where
+							AttendanceDateTime between #monthStart# and #monthEnd#
+						) a
+					left join
+						Monitor.BIN_BAAttendance a1
+					on
+						(a.BIN_BAAttendanceID=a1.BIN_BAAttendanceID and a1.AttendanceType='1')
+					left join
+						Monitor.BIN_BAAttendance a2
+					on
+						(a.BIN_BAAttendanceID=a2.BIN_BAAttendanceID and a2.AttendanceType='0')
+					left join
+						(
+							select 
+								count(1) as schedulingDays,
+								ws1.BIN_OrganizationID,
+								ws1.BIN_BrandInfoID,
+								ws1.BIN_OrganizationInfoID
+							from
+								(
+								select
+									BIN_OrganizationID ,
+									BIN_OrganizationInfoID,
+									BIN_BrandInfoID
+								from
+									Basis.BIN_WorkScheduling
+								where
+									ValidFlag='1'
+								)ws1
+							group by
+								ws1.BIN_OrganizationID,
+								ws1.BIN_BrandInfoID,
+								ws1.BIN_OrganizationInfoID
+						)a4
+					on
+					(a.BIN_OrganizationID = a4.BIN_OrganizationID and a.BIN_OrganizationInfoID =a4.BIN_OrganizationInfoID 
+					and a.BIN_BrandInfoID =a4.BIN_BrandInfoID)
+					,
+						(
+						select count(1) as count
+						from
+							(
+								select distinct 
+									CONVERT(nvarchar(10),AttendanceDateTime,120) as AttendanceDateTime 
+								from 
+									Monitor.BIN_BAAttendance
+								where
+								AttendanceDateTime between #monthStart# and #monthEnd#
+							) cc
+						)a3
+					group by 
+						a.AttendanceDateTime,
+						a3.count,
+						a.BIN_EmployeeID,
+						a.BIN_OrganizationID,
+						a4.schedulingDays
+				)TT
+				group by
+				TT.count,
+				TT.BIN_EmployeeID ,
+				TT.schedulingDays
+			) T2
+				on
+				(T.BIN_EmployeeID=T2.BIN_EmployeeID)
+			LEFT JOIN
+				(
+					select distinct
+						S2.BIN_EmployeeID,
+						SUM(S2.promobleDays) as promobleDays
+					from 
+				(	
+						select distinct
+							S1.BIN_EmployeeID,
+							SUM(S1.BAAttendanceCount) as promobleDays,
+							S1.attendanceDateTime
+						from 
+							(
+							select  distinct
+											a.BIN_EmployeeID,
+											CONVERT(nvarchar(10),a.AttendanceDateTime,120) as attendanceDateTime,
+											case when (MIN(a1.AttendanceDateTime) <= ws.WorkBeginTime ) then 1 
+												 when (ws.WorkEndTime <= MAX(a2.AttendanceDateTime) )   then 1
+												 when ((CONVERT(nvarchar(8),a3.AttendanceDateTime,114) between atm1.TimeStart and atm1.TimeEnd))   then 1
+												 when ((CONVERT(nvarchar(8),a3.AttendanceDateTime,114) between atm2.TimeStart and atm2.TimeEnd))   then 1
+												 when ((CONVERT(nvarchar(8),a3.AttendanceDateTime,114) between atm3.TimeStart and atm3.TimeEnd))   then 1
+												 when ((CONVERT(nvarchar(8),a3.AttendanceDateTime,114) between atm4.TimeStart and atm4.TimeEnd))   then 1
+											 else 0 end as BAAttendanceCount
+									from 
+											Monitor.BIN_BAAttendance a
+									left join
+										Monitor.BIN_BAAttendance a1
+									on
+										(a.BIN_BAAttendanceID=a1.BIN_BAAttendanceID and a1.AttendanceType='1')
+									left join
+										Monitor.BIN_BAAttendance a2
+									on
+										(a.BIN_BAAttendanceID=a2.BIN_BAAttendanceID and a2.AttendanceType='0')
+									left join
+										Monitor.BIN_BAAttendance a3									
+									on
+										(a.BIN_BAAttendanceID=a2.BIN_BAAttendanceID and a2.AttendanceType='2')
+									left join
+										Basis.BIN_WorkScheduling ws
+									on
+										(CONVERT(nvarchar(10),a.AttendanceDateTime,120) = CONVERT(nvarchar(10),ws.WorkDate,120))
+									left join
+										Basis.BIN_AttendanceTimeMaintenance atm1
+									on
+										(a.AttendanceType=atm1.Type and atm1.TimeCount='1' and atm1.ValidFlag='1')
+									left join
+										Basis.BIN_AttendanceTimeMaintenance atm2
+									on
+										(a.AttendanceType=atm2.Type and atm2.TimeCount='2' and atm2.ValidFlag='1')
+									left join
+										Basis.BIN_AttendanceTimeMaintenance atm3
+									on
+										(a.AttendanceType=atm3.Type and atm3.TimeCount='3' and atm3.ValidFlag='1')
+									left join
+										Basis.BIN_AttendanceTimeMaintenance atm4
+									on
+										(a.AttendanceType=atm4.Type and atm4.TimeCount='4' and atm4.ValidFlag='1')
+								where
+									a.AttendanceDateTime between #monthStart# and #monthEnd#
+								group by
+									a.BIN_EmployeeID,
+									a.AttendanceDateTime,
+									a1.AttendanceDateTime,
+									a2.AttendanceDateTime,
+									a3.AttendanceDateTime,
+									ws.WorkBeginTime,
+									ws.WorkEndTime,
+									atm1.TimeStart,
+									atm1.TimeEnd,
+									atm2.TimeStart,
+									atm2.TimeEnd,
+									atm3.TimeStart,
+									atm3.TimeEnd,
+									atm4.TimeStart,
+									atm4.TimeEnd
+								) S1
+								where
+								S1.BAAttendanceCount != 0 
+								Group by
+								S1.BIN_EmployeeID,
+								S1.BAAttendanceCount,
+								S1.attendanceDateTime
+								)S2
+								group by
+								S2.BIN_EmployeeID,
+								S2.promobleDays					
+				)T3
+				ON
+					(T.BIN_EmployeeID=T3.BIN_EmployeeID)
+			GROUP BY
+				T.EmployeeName,
+				T.BIN_EmployeeID,
+				T.BIN_OrganizationID,
+				T.BIN_OrganizationInfoID,
+				T.BIN_BrandInfoID,
+				sr.saleAmount,
+				st.TargetMoney,
+				st.CompleteMoney,
+				sbr.BonusRate,
+				sbr2.bonusRate,
+				ass.Score,
+				ota.OvertimeHours,
+				T2.count ,
+				T2.workingtime,
+				T2.schedulingDays,
+				T3.promobleDays
+				
+		]]>
+	</select>
+	
+	<insert id="insertUpdEmpSalary" parameterClass="java.util.HashMap">
+		<![CDATA[
+			MERGE Basis.BIN_EmployeeWages WITH (HOLDLOCK) AS a
+		    USING (
+			select 
+				#brandInfoId# as BIN_BrandInfoID,
+				#organizationInfoId# as BIN_OrganizationInfoID,
+				#employeeId# as BIN_EmployeeID,
+				#month# as WagesMonth,
+				#year# as WagesYear
+	     ) AS b
+		ON	  a.BIN_BrandInfoID = b.BIN_BrandInfoID AND
+        	  a.BIN_OrganizationInfoID=b.BIN_OrganizationInfoID AND
+        	  a.BIN_EmployeeID=b.BIN_EmployeeID AND
+        	  a.WagesMonth =b.WagesMonth AND
+        	  a.WagesYear =b.WagesYear
+       WHEN MATCHED THEN
+		update
+			set 
+			BIN_OrganizationID=#organizationID# ,
+			WorkingHours=#workingHours#,
+			WorkingDays=#workingDays#,
+			UsualOvertime=#usualOvertime#,
+			HolidayOvertime=#holidayOvertime#,
+			SaleTarget=#saleTarget#,
+			AbsenceDays=#absenceDays#,
+			SaleAmount=#saleAmount#,
+			CompletionRate=#completionRate#,
+			Score=#score#,
+			BonusRate=#bonusRate#,
+			BonusAmount=#bonusAmount#,
+			WagesAmount=#wagesAmount#,
+		]]>
+		<include refid="BINBECMINC99.updateSql" />
+		<![CDATA[
+       WHEN NOT MATCHED THEN
+			INSERT 
+           (BIN_OrganizationID
+           ,BIN_BrandInfoID
+           ,BIN_EmployeeID
+           ,BIN_OrganizationInfoID
+           ,WagesYear
+           ,WagesMonth
+           ,WorkingHours
+           ,WorkingDays
+           ,AbsenceDays
+           ,UsualOvertime
+           ,HolidayOvertime
+           ,SaleTarget
+           ,SaleAmount
+           ,CompletionRate
+           ,Score
+           ,BonusRate
+           ,BonusAmount
+           ,WagesAmount
+           ,
+          ]]>
+		<include refid="BINBECMINC99.insertKeySql" />	
+		<![CDATA[
+           )
+     VALUES
+           (#organizationID#
+           ,#brandInfoId#
+           ,#employeeId#
+           ,#organizationInfoId#
+           ,#year#
+           ,#month#
+           ,#workingHours#
+           ,#workingDays#
+           ,#absenceDays#
+           ,#usualOvertime#
+           ,#holidayOvertime#
+           ,#saleTarget#
+           ,#saleAmount#
+           ,#completionRate#
+           ,#score#
+           ,#bonusRate#
+           ,#bonusAmount#
+           ,#wagesAmount#
+           ,
+           ]]>
+		<include refid="BINBECMINC99.insertValueSql" />	
+		<![CDATA[
+           );
+		]]>
+	</insert>
+	
+
+
+</sqlMap>

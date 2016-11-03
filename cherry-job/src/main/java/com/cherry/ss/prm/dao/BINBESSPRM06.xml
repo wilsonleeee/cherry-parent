@@ -1,0 +1,329 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sqlMap PUBLIC "-//iBATIS.com//DTD SQL Map 2.0//EN" "http://ibatis.apache.org/dtd/sql-map-2.dtd">
+<sqlMap namespace="BINBESSPRM06">
+    <!--查询仓库List-->
+    <select id="getDepotInfoList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+        <![CDATA[
+        SELECT
+            C.BIN_InventoryInfoID,
+            C.BIN_LogicInventoryInfoID,
+            '('+D.DepotCode+')'+D.DepotNameCN AS DepotCodeName,
+            '('+E.LogicInventoryCode +')'+E.InventoryNameCN AS LogicCodeName,
+            F.BIN_OrganizationID,
+            '('+F.DepartCode+')'+F.DepartName AS DepartCodeName
+        FROM
+        (
+            SELECT DISTINCT
+                A.BIN_InventoryInfoID,
+                A.BIN_LogicInventoryInfoID
+            FROM
+                Inventory.BIN_PromotionStock A
+            WHERE
+                A.ValidFlag ='1'
+            UNION
+            SELECT DISTINCT
+                B.BIN_InventoryInfoID,
+                B.BIN_LogicInventoryInfoID
+            FROM
+            Inventory.BIN_PromotionStockInOut A WITH(NOLOCK)
+			join Inventory.BIN_PromotionStockDetail B WITH(NOLOCK)
+			on(A.BIN_PromotionStockInOutID = B.BIN_PromotionStockInOutID)
+            WHERE A.ValidFlag = '1'
+        )C
+        JOIN Basis.BIN_DepotInfo D WITH(NOLOCK)
+        ON C.BIN_InventoryInfoID = D.BIN_DepotInfoID AND D.TestType = #TestType#
+        LEFT JOIN Basis.BIN_LogicInventory E WITH(NOLOCK)
+        ON C.BIN_LogicInventoryInfoID = E.BIN_LogicInventoryInfoID
+        JOIN Basis.BIN_Organization F WITH(NOLOCK)
+        ON D.BIN_OrganizationID = F.BIN_OrganizationID
+        WHERE
+            F.BIN_OrganizationInfoID = #BIN_OrganizationInfoID#
+            AND F.BIN_BrandInfoID = #BIN_BrandInfoID#
+        ORDER BY
+            C.BIN_InventoryInfoID,
+            C.BIN_LogicInventoryInfoID
+        ]]>
+    </select>
+
+  	<!--查询实际库存信息--> 
+    <select id="getStockList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+        <![CDATA[
+        SELECT
+            A.BIN_PromotionProductVendorID,
+            A.Quantity,
+            B.BarCode,
+            C.UnitCode,
+            C.NameTotal
+        FROM
+              Inventory.BIN_PromotionStock A WITH(NOLOCK)
+        LEFT JOIN Basis.BIN_PromotionProductVendor B WITH(NOLOCK)
+            ON A.BIN_PromotionProductVendorID = B.BIN_PromotionProductVendorID
+        LEFT JOIN Basis.BIN_PromotionProduct C WITH(NOLOCK)
+            ON B.BIN_PromotionProductID = C.BIN_PromotionProductID
+        WHERE
+            A.BIN_InventoryInfoID = #BIN_InventoryInfoID#
+            AND A.BIN_LogicInventoryInfoID = #BIN_LogicInventoryInfoID#
+            AND A.ValidFlag ='1'
+        ORDER BY A.BIN_PromotionProductVendorID
+        ]]>
+    </select>
+    
+    <!--查询入出库表的库存数量和（按入出库区分统计）-->
+    <select id="getInOutStockList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+        <![CDATA[
+        SELECT
+            C.BIN_PromotionProductVendorID,
+			C.Quantity,
+			D.BarCode,
+			E.UnitCode,
+			E.NameTotal
+		FROM(
+			SELECT
+	            B.BIN_PromotionProductVendorID,
+	            SUM(CASE
+	                    WHEN B.StockType = 0 THEN 0 + B.Quantity 
+	                    WHEN B.StockType = 1 THEN 0 - B.Quantity
+	                END) AS Quantity
+	        FROM
+	           Inventory.BIN_PromotionStockInOut A WITH(NOLOCK)
+			join Inventory.BIN_PromotionStockDetail B WITH(NOLOCK) 
+			on(A.BIN_PromotionStockInOutID = B.BIN_PromotionStockInOutID)
+	         WHERE
+	            A.ValidFlag = '1'
+				AND B.ValidFlag = '1'
+	            AND B.BIN_InventoryInfoID = #BIN_InventoryInfoID#
+	            AND B.BIN_LogicInventoryInfoID = #BIN_LogicInventoryInfoID#
+	        GROUP BY B.BIN_PromotionProductVendorID,B.BIN_InventoryInfoID,B.BIN_LogicInventoryInfoID
+		)C
+		LEFT JOIN Basis.BIN_PromotionProductVendor  D WITH(NOLOCK)
+		ON C.BIN_PromotionProductVendorID = D.BIN_PromotionProductVendorID
+		LEFT JOIN Basis.BIN_PromotionProduct E WITH(NOLOCK)
+		ON D.BIN_PromotionProductID = E.BIN_PromotionProductID
+        ORDER BY C.BIN_PromotionProductVendorID
+        ]]>
+    </select>
+    
+      <!--插入【促销品入出库表】-->
+	<sql id="insertPromotionStockInOutSQL">
+        <![CDATA[
+            INSERT INTO Inventory.BIN_PromotionStockInOut(
+                BIN_OrganizationInfoID,
+                BIN_BrandInfoID,
+                TradeNo,
+        ]]>
+        <dynamic>
+            <isNotEmpty property="TradeNoIF">
+                <![CDATA[TradeNoIF,]]>
+            </isNotEmpty>
+            <isNotEmpty property="RelevanceNo">
+                <![CDATA[RelevantNo,]]>
+            </isNotEmpty>
+            <isNotEmpty property="BIN_OrganizationID">
+                <![CDATA[BIN_OrganizationID,]]>
+            </isNotEmpty>
+            <isNotEmpty property="BIN_EmployeeID">
+                <![CDATA[BIN_EmployeeID,]]>
+            </isNotEmpty>
+            <isNotEmpty property="TotalQuantity">
+                <![CDATA[TotalQuantity,]]>
+            </isNotEmpty>
+            <isNotEmpty property="TotalAmount">
+                <![CDATA[TotalAmount,]]>
+            </isNotEmpty>
+            <isNotEmpty property="StockType">
+                <![CDATA[StockType,]]>
+            </isNotEmpty>
+            <isNotEmpty property="TradeType">
+                <![CDATA[TradeType,]]>
+            </isNotEmpty>
+            <isNotEmpty property="BIN_LogisticInfoID">
+                <![CDATA[BIN_LogisticInfoID,]]>
+            </isNotEmpty>
+            <isNotEmpty property="Comments">
+                <![CDATA[Reason,]]>
+            </isNotEmpty>
+            <isNotEmpty property="StockInOutDate">
+                <![CDATA[StockInOutDate,]]>
+            </isNotEmpty>
+            <isNotEmpty property="StockInOutTime">
+                <![CDATA[StockInOutTime,]]>
+            </isNotEmpty>
+            <isNotEmpty property="VerifiedFlag">
+                <![CDATA[VerifiedFlag,]]>
+            </isNotEmpty>
+            <isNotEmpty property="TotalAmountBefore">
+                <![CDATA[TotalAmountBefore,]]>
+            </isNotEmpty>
+            <isNotEmpty property="TotalAmountAfter">
+                <![CDATA[TotalAmountAfter,]]>
+            </isNotEmpty>
+            <isNotEmpty property="CloseFlag">
+                <![CDATA[CloseFlag,]]>
+            </isNotEmpty>
+            <isNotEmpty property="ChangeCount">
+                <![CDATA[ChangeFlag,]]>
+            </isNotEmpty>
+        </dynamic>
+        <![CDATA[
+                ValidFlag,
+                CreateTime,
+                CreatedBy,
+                CreatePGM,
+                UpdateTime,
+                UpdatedBy,
+                UpdatePGM,
+                ModifyCount
+            )VALUES(
+                #BIN_OrganizationInfoID#,
+                #BIN_BrandInfoID#,
+                #TradeNo#,
+        ]]>
+        <dynamic>
+            <isNotEmpty property="TradeNoIF">
+                <![CDATA[#TradeNoIF#,]]>
+            </isNotEmpty>
+            <isNotEmpty property="RelevanceNo">
+                <![CDATA[#RelevanceNo#,]]>
+            </isNotEmpty>
+            <isNotEmpty property="BIN_OrganizationID">
+                <![CDATA[#BIN_OrganizationID#,]]>
+            </isNotEmpty>
+            <isNotEmpty property="BIN_EmployeeID">
+                <![CDATA[#BIN_EmployeeID#,]]>
+            </isNotEmpty>
+            <isNotEmpty property="TotalQuantity">
+                <![CDATA[#TotalQuantity#,]]>
+            </isNotEmpty>
+            <isNotEmpty property="TotalAmount">
+                <![CDATA[#TotalAmount#,]]>
+            </isNotEmpty>
+            <isNotEmpty property="StockType">
+                <![CDATA[#StockType#,]]>
+            </isNotEmpty>
+            <isNotEmpty property="TradeType">
+                <![CDATA[#TradeType#,]]>
+            </isNotEmpty>
+            <isNotEmpty property="BIN_LogisticInfoID">
+                <![CDATA[#BIN_LogisticInfoID#,]]>
+            </isNotEmpty>
+            <isNotEmpty property="Comments">
+                <![CDATA[#Comments#,]]>
+            </isNotEmpty>
+            <isNotEmpty property="StockInOutDate">
+                <![CDATA[#StockInOutDate#,]]>
+            </isNotEmpty>
+            <isNotEmpty property="StockInOutTime">
+                <![CDATA[#StockInOutTime#,]]>
+            </isNotEmpty>
+            <isNotEmpty property="VerifiedFlag">
+                <![CDATA[#VerifiedFlag#,]]>
+            </isNotEmpty>
+            <isNotEmpty property="TotalAmountBefore">
+                <![CDATA[#TotalAmountBefore#,]]>
+            </isNotEmpty>
+            <isNotEmpty property="TotalAmountAfter">
+                <![CDATA[#TotalAmountAfter#,]]>
+            </isNotEmpty>
+            <isNotEmpty property="CloseFlag">
+                <![CDATA[#CloseFlag#,]]>
+            </isNotEmpty>
+            <isNotEmpty property="ChangeCount">
+                <![CDATA[#ChangeCount#,]]>
+            </isNotEmpty>
+        </dynamic>
+        <![CDATA[
+                '1',
+                GETDATE(),
+                #CreatedBy#,
+                #CreatePGM#,
+                GETDATE(),
+                #UpdatedBy#,
+                #UpdatePGM#,
+                '0'
+            )
+        ]]>
+	</sql>
+	
+      <insert id="insertPromotionStockInOut" parameterClass="java.util.HashMap">
+        <selectKey resultClass="java.lang.Integer" type="post" keyProperty="BIN_PromotionStockInOutID" >
+        	<include refid="BINBESSPRM06.insertPromotionStockInOutSQL" />
+            <![CDATA[SELECT SCOPE_IDENTITY() AS value]]>
+        </selectKey>
+    </insert>
+    
+       <!--插入【促销入出库明细表】-->
+    <insert id="insertPromotionStockDetail" parameterClass="java.util.HashMap">
+        <![CDATA[
+            INSERT INTO Inventory.BIN_PromotionStockDetail(
+                BIN_PromotionStockInOutID,
+                BIN_PromotionProductVendorID,
+                DetailNo,
+                Quantity,
+				StockType,
+				BIN_InventoryInfoID,
+        ]]>
+		<dynamic>
+            <isNotEmpty property="Price">
+                <![CDATA[Price,]]>
+            </isNotEmpty>
+			<isNotEmpty property="BIN_ProductVendorPackageID">
+                <![CDATA[BIN_ProductVendorPackageID,]]>
+            </isNotEmpty>
+		    <isNotEmpty property="Comments">
+                <![CDATA[Reason,]]>
+            </isNotEmpty>
+            <isNotEmpty property="BIN_LogicInventoryInfoID">
+                <![CDATA[BIN_LogicInventoryInfoID,]]>
+            </isNotEmpty>
+            <isNotEmpty property="BIN_StorageLocationInfoID">
+                <![CDATA[BIN_StorageLocationInfoID,]]>
+            </isNotEmpty>
+		</dynamic>
+        <![CDATA[
+                ValidFlag,
+                CreateTime,
+                CreatedBy,
+                CreatePGM,
+				UpdateTime,
+                UpdatedBy,
+                UpdatePGM,
+                ModifyCount
+            )VALUES(
+                #BIN_PromotionStockInOutID#,
+                #BIN_PromotionProductVendorID#,
+                #DetailNo#,
+                #Quantity#,
+				#StockType#,
+				#BIN_InventoryInfoID#,
+		]]>
+        <dynamic>
+            <isNotEmpty property="Price">
+                <![CDATA[#Price#,]]>
+            </isNotEmpty>
+            <isNotEmpty property="BIN_ProductVendorPackageID">
+                <![CDATA[#BIN_ProductVendorPackageID#,]]>
+            </isNotEmpty>
+            <isNotEmpty property="Comments">
+                <![CDATA[#Comments#,]]>
+            </isNotEmpty>
+            <isNotEmpty property="BIN_LogicInventoryInfoID">
+                <![CDATA[#BIN_LogicInventoryInfoID#,]]>
+            </isNotEmpty>
+            <isNotEmpty property="BIN_StorageLocationInfoID">
+                <![CDATA[#BIN_StorageLocationInfoID#,]]>
+            </isNotEmpty>
+        </dynamic>
+		<![CDATA[
+                '1',
+                GETDATE(),
+                #CreatedBy#,
+                #CreatePGM#,
+                GETDATE(),
+                #UpdatedBy#,
+                #UpdatePGM#,
+                '0'
+				)
+		]]>
+    </insert>
+    
+</sqlMap>

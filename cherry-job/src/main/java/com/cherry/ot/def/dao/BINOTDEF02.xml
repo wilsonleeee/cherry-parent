@@ -1,0 +1,239 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sqlMap PUBLIC "-//iBATIS.com//DTD SQL Map 2.0//EN" "http://ibatis.apache.org/dtd/sql-map-2.dtd">
+<sqlMap namespace="BINOTDEF02">
+	
+	<!-- 取得指定同步状态的订单号List -->
+	<select id="getPrtOrderListBySynch" parameterClass="java.util.HashMap" resultClass="java.lang.String">
+		<![CDATA[
+			SELECT
+				OrderNoIF AS orderNoIF	
+			FROM 
+				Inventory.BIN_ProductOrder A WITH(NOLOCK)
+			WHERE
+				A.SynchFlag = #synchFlag#
+				AND A.ValidFlag = '1'
+				AND A.BIN_OrganizationInfoID = #organizationInfoId#
+				AND A.BIN_BrandInfoID = #brandInfoId#
+		]]>
+		<![CDATA[AND EXISTS ( ]]>
+			<include refid="BINBECMINC99.getBillByTestModList" />
+	  	<![CDATA[ AND A.BIN_OrganizationID = C99.BIN_OrganizationID )]]>
+	</select>
+    
+	<!-- 根据新后台orderNo查询订单接口表的单据号List  -->
+    <select id="getPrtOrderListByOrderNoForOT" parameterClass="java.util.HashMap" resultClass="java.lang.String">
+      <![CDATA[
+		SELECT
+			DISTINCT
+			OrderID AS OrderID
+		FROM 
+			I_WITPOS_Orders WITH(NOLOCK)
+		WHERE
+			OrderID IN
+	  ]]>
+		<iterate property="orderNoIFList" open="(" close=")" conjunction=",">
+			#orderNoIFList[]#
+		</iterate>
+    </select>
+    
+	<!-- 更新订单数据主表的同步状态 -->
+	<update id="updPrtOrderBySync" parameterClass="java.util.HashMap">
+		<![CDATA[
+			UPDATE
+		]]>
+		<isNotEmpty property="batchSize">
+				TOP(#batchSize#)
+		</isNotEmpty>
+		<![CDATA[
+				A
+			SET
+				A.SynchFlag = #synchFlag_New#,
+		]]>
+			<isNotEmpty property="updateTime">
+				A.UpdateTime=#updateTime#,
+			</isNotEmpty>
+			<isEmpty property="updateTime">
+				A.UpdateTime=GETDATE(),
+			</isEmpty>
+			<![CDATA[
+				A.UpdatedBy=#updatedBy#,
+				A.UpdatePGM=#updatePGM#,
+				A.ModifyCount=A.ModifyCount+1
+			FROM
+				Inventory.BIN_ProductOrder A WITH(NOLOCK)
+			WHERE
+				A.ValidFlag ='1'
+				AND A.BIN_BrandInfoID = #brandInfoId#
+				AND A.BIN_OrganizationInfoID = #organizationInfoId#
+		]]>
+		<isNotEmpty property="synchFlag_Old" prepend="AND">
+			A.SynchFlag = #synchFlag_Old#
+		</isNotEmpty>
+		<isNotEmpty property="orderNoIFList" prepend="AND">
+	  		A.OrderNoIF IN
+			<iterate property="orderNoIFList" open="(" close=")" conjunction=",">
+				#orderNoIFList[]#
+			</iterate>
+	  	</isNotEmpty>
+		<![CDATA[AND EXISTS ( ]]>
+			<include refid="BINBECMINC99.getBillByTestModList" />
+	  	<![CDATA[ AND A.BIN_OrganizationID = C99.BIN_OrganizationID) ]]>
+	</update>
+    
+    <!-- 取得新后台同步状态为"同步处理中"[syncFlag=2]订单数据（主数据） -->
+    <select id="getPOListBySynchFlag" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+      <![CDATA[
+		  SELECT 
+			A.OrderNoIF AS OrderID,
+			CONVERT(varchar(8), A.Date, 112)AS OrderDate,
+			REPLACE(A.OrderTime,':','') AS OrderTime,
+			B.DepartCode AS CounterCode,
+			C.EmployeeCode AS BACode,
+			CASE WHEN A.OrderType = '1' OR A.OrderType IS NULL THEN 'NM' WHEN A.OrderType = '2' THEN 'TP' WHEN A.OrderType = '3' THEN 'LP' END AS OrderType
+		  FROM Inventory.BIN_ProductOrder A WITH(NOLOCK)
+		  JOIN Basis.BIN_Organization B WITH(NOLOCK) ON (A.BIN_OrganizationID = B.BIN_OrganizationID) 
+		  JOIN Basis.BIN_Employee C WITH(NOLOCK) ON (A.BIN_EmployeeID = C.BIN_EmployeeID)
+		  WHERE
+		  	  A.BIN_OrganizationInfoID = #organizationInfoId#
+		  AND A.BIN_BrandInfoID = #brandInfoId#
+		  AND A.ValidFlag = '1'
+		  AND A.SynchFlag = #synchFlag#
+		]]>
+		<![CDATA[AND EXISTS ( ]]>
+			<include refid="BINBECMINC99.getBillByTestModList" />
+		<![CDATA[  
+		    AND A.BIN_OrganizationID = C99.BIN_OrganizationID)
+		]]>
+		  ORDER BY A.OrderNoIF
+    </select>
+    
+    <!-- 插入订单数据主接口表 -->
+   	<insert id="insertI_WITPOS_Orders" parameterClass="java.util.HashMap">
+   	<![CDATA[
+		INSERT INTO  I_WITPOS_Orders(
+		    OrderID,
+			OrderDate,
+			OrderTime,
+			CounterCode,
+			BACode,
+			OrderType,
+			SynFlag,
+			PutTime
+		)
+		VALUES
+		(
+		    #OrderID#,
+		    #OrderDate#,
+		    #OrderTime#,
+		    #CounterCode#,
+		    #BACode#,
+		    #OrderType#,
+			'0',
+			GETDATE()
+		)
+	]]>
+   	</insert>
+    <!-- 插入订单数据主接口日志表 -->
+   	<insert id="insertI_WITPOS_Orders_Log" parameterClass="java.util.HashMap">
+   	<![CDATA[
+		INSERT INTO  I_WITPOS_Orders_Log(
+		    OrderID,
+			OrderDate,
+			OrderTime,
+			CounterCode,
+			BACode,
+			OrderType,
+			SynFlag,
+			PutTime,
+			InsertTime
+		)
+		VALUES
+		(
+		    #OrderID#,
+		    #OrderDate#,
+		    #OrderTime#,
+		    #CounterCode#,
+		    #BACode#,
+		    #OrderType#,
+			'0',
+			GETDATE(),
+			GETDATE()
+		)
+	]]>
+   	</insert>
+   	
+    <!-- 取得新后台同步状态为"同步处理中"[syncFlag=2]订单数据（明细数据） -->
+    <select id="getPODetailListBySynchFlag" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+      <![CDATA[
+		  SELECT 
+			A.OrderNoIF AS OrderID,
+			D.UnitCode AS Unitcode,
+			C.BarCode AS Barcode,
+			B.Quantity AS Quantity
+			
+		  FROM Inventory.BIN_ProductOrder A WITH(NOLOCK)
+		  JOIN Inventory.BIN_ProductOrderDetail B WITH(NOLOCK) ON (A.BIN_ProductOrderID = B.BIN_ProductOrderID)
+		  JOIN Basis.BIN_ProductVendor C WITH(NOLOCK) ON (C.BIN_ProductVendorID = B.BIN_ProductVendorID)
+		  JOIN Basis.BIN_Product D WITH(NOLOCK) ON (C.BIN_ProductID = D.BIN_ProductID)
+		  WHERE
+		  	  A.BIN_OrganizationInfoID = #organizationInfoId#
+		  AND A.BIN_BrandInfoID = #brandInfoId#
+		  AND A.ValidFlag = '1'
+		  AND A.SynchFlag = #synchFlag#
+		]]>
+		<![CDATA[AND EXISTS ( ]]>
+			<include refid="BINBECMINC99.getBillByTestModList" />
+		<![CDATA[  
+		    AND A.BIN_OrganizationID = C99.BIN_OrganizationID)
+		]]>
+		  ORDER BY A.OrderNoIF
+    </select>
+    
+    <!-- 插入订单数据明细接口表 -->
+   	<insert id="insertI_WITPOS_OrdersDetail" parameterClass="java.util.HashMap">
+   	<![CDATA[
+		INSERT INTO  I_WITPOS_OrdersDetail(
+		    OrderID,
+			Unitcode,
+			Barcode,
+			Quantity,
+			SynFlag,
+			PutTime
+		)
+		VALUES
+		(
+		    #OrderID#,
+		    #Unitcode#,
+		    #Barcode#,
+		    #Quantity#,
+			'0',
+			GETDATE()
+		)
+	]]>
+   	</insert>
+    
+    <!-- 插入订单数据明细接口日志表 -->
+   	<insert id="insertI_WITPOS_OrdersDetail_Log" parameterClass="java.util.HashMap">
+   	<![CDATA[
+		INSERT INTO  I_WITPOS_OrdersDetail_Log(
+		    OrderID,
+			Unitcode,
+			Barcode,
+			Quantity,
+			SynFlag,
+			PutTime,
+			InsertTime
+		)
+		VALUES
+		(
+		    #OrderID#,
+		    #Unitcode#,
+		    #Barcode#,
+		    #Quantity#,
+			'0',
+			GETDATE(),
+			GETDATE()
+		)
+	]]>
+   	</insert>
+</sqlMap>

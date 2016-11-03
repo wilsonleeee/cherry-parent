@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sqlMap PUBLIC "-//iBATIS.com//DTD SQL Map 2.0//EN" "http://ibatis.apache.org/dtd/sql-map-2.dtd">
+<sqlMap namespace="BINBEIFEMP05">
+	
+	<!-- 从新后台取得具有U盘与柜台的关系数据List -->
+	<select id="getUDiskCounterList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">	
+		<include refid="BINBECMINC99.pageheader" />
+		<![CDATA[
+			SELECT DISTINCT
+				UD.UdiskSN AS uDiskSN,
+				C.CounterCode AS counterCode
+			FROM 
+			Monitor.BIN_UdiskInfo UD
+			JOIN (]]><include refid="BINBECMINC99.departPLJoinSql" /><![CDATA[) A99
+			ON UD.BIN_EmployeeID = A99.BIN_EmployeeID
+			JOIN Basis.BIN_CounterInfo C on C.BIN_OrganizationID = A99.BIN_OrganizationID
+			WHERE 
+			C.BIN_BrandInfoID = #brandInfoId# AND C.BIN_OrganizationInfoID = #organizationInfoId#
+		]]>		
+		<include refid="BINBECMINC99.pagefooter" />		
+    </select>
+    
+    <!-- 清空老后台U盘柜台关系表  -->
+	<update id="truncateUDiskCounter" parameterClass="java.util.HashMap" >
+		<![CDATA[
+			TRUNCATE TABLE dbo.UDiskCounter
+		]]>
+    </update>
+    
+    <!-- 添加用户信息 -->
+	<insert id="addUDiskCounter" parameterClass="java.util.HashMap">
+		<![CDATA[
+			INSERT INTO	
+				dbo.UDiskCounter
+				(
+					UDiskSN,
+					CounterCode,
+					InsertDateTime				
+				)VALUES
+				(		
+					#uDiskSN#,
+					#counterCode#,
+					GETDATE()
+				)
+		]]>
+    </insert>
+    
+</sqlMap>

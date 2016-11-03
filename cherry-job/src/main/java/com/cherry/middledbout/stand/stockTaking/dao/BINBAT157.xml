@@ -1,0 +1,218 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sqlMap PUBLIC "-//iBATIS.com//DTD SQL Map 2.0//EN" "http://ibatis.apache.org/dtd/sql-map-2.dtd">
+<sqlMap namespace="BINBAT157">
+	
+	<!-- 取得指定同步状态的盘点申请单据号List  -->
+    <select id="getSTNoIFOfPrtStockTakingRequestListBySync" parameterClass="java.util.HashMap" resultClass="java.lang.String">
+	  <![CDATA[
+		  SELECT
+			A.StockTakingNoIF as stNoIF	
+		  FROM 
+			 Inventory.BIN_ProStocktakeRequest A WITH(NOLOCK)
+		  WHERE
+			  A.SynchFlag = #synchFlag#
+		  AND A.ValidFlag = '1'
+		  AND A.BIN_OrganizationInfoID = #organizationInfoId#
+		  AND A.BIN_BrandInfoID = #brandInfoId#
+		]]>
+	    <![CDATA[AND EXISTS ( ]]>
+			<include refid="BINBECMINC99.getBillByTestModStandList" />
+		<![CDATA[  
+		    AND A.BIN_OrganizationID = C99.BIN_OrganizationID)
+		]]> 
+    </select>
+    
+	<!-- 根据新后台单据号查询标准产品盘点申请接口表的单据号List  -->
+    <select id="getPstrqListBySTNoIFForOT" parameterClass="java.util.HashMap" resultClass="java.lang.String">
+      <![CDATA[
+		SELECT
+			DISTINCT
+			BillCode AS stNoIF
+		FROM 
+			dbo.IF_StockTaking WITH(NOLOCK)
+		WHERE
+			BillCode IN
+	  ]]>
+			<iterate property="stNoIFList" open="(" close=")" conjunction=",">
+				#stNoIFList[]#
+			</iterate>
+		<isNotEmpty property="brandCode" prepend="AND">
+			BrandCode = #brandCode#
+		</isNotEmpty>
+    </select>
+    
+    <!-- 更新盘点申请单据主表的同步状态 -->
+    <update id="updProductStockTakingRequestBySync" parameterClass="java.util.HashMap">
+	  UPDATE 
+	  <isNotEmpty property="upCount">
+	  	TOP(#upCount#)
+	  </isNotEmpty>
+	    A
+	  SET 
+		A.SynchFlag = #synchFlag_New#,
+		<isNotEmpty property="updateTime">
+			A.UpdateTime=#updateTime#,
+		</isNotEmpty>
+		<isEmpty property="updateTime">
+			A.UpdateTime=GETDATE(),
+		</isEmpty>
+		<![CDATA[
+			A.UpdatedBy=#updatedBy#,
+			A.UpdatePGM=#updatePGM#,
+			A.ModifyCount=A.ModifyCount+1
+		]]>
+	  FROM Inventory.BIN_ProStocktakeRequest A
+	  WHERE
+	    A.ValidFlag = '1'
+	    <isNotEmpty property="synchFlag_Null">
+	  		<isNotEmpty property="synchFlag_Old" prepend="AND">
+		 		(A.SynchFlag = #synchFlag_Old# OR A.SynchFlag IS NULl)
+	  		</isNotEmpty>
+	  	</isNotEmpty>
+	  	<isEmpty property="synchFlag_Null">
+		  	<isNotEmpty property="synchFlag_Old" prepend="AND">
+			 A.SynchFlag = #synchFlag_Old#
+		  	</isNotEmpty>
+	  	</isEmpty>
+	  	<isNotEmpty property="stNoIFList" prepend="AND">
+	  		A.StockTakingNoIF IN
+			<iterate property="stNoIFList" open="(" close=")" conjunction=",">
+				#stNoIFList[]#
+			</iterate>
+	  	</isNotEmpty>
+	  AND A.BIN_OrganizationInfoID = #organizationInfoId#
+	  AND A.BIN_BrandInfoID = #brandInfoId#
+	  <![CDATA[
+	  AND ISNULL(A.Comments,'备注为NULL') <> 'BATCH同步库存'
+	  ]]>
+	  <![CDATA[AND EXISTS ( ]]>
+			<include refid="BINBECMINC99.getBillByTestModStandList" />
+      <![CDATA[  
+		  AND A.BIN_OrganizationID = C99.BIN_OrganizationID)
+	  ]]>  
+    </update>
+    
+    <!-- 取得产品盘点申请主表同步状态为"同步处理中"[syncFlag=2]盘点数据（主数据） -->
+    <select id="getProductStockRequestListBySyncFlag" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+        <![CDATA[
+		SELECT
+			#brandCode# AS BrandCode,
+			A.StockTakingNoIF AS BillCode,
+			A.Date AS BusinessDate,
+			A.CreateTime AS BillCreateTime,			
+			'PDSQ' AS BillType,
+			C.DepartCode AS DepartCode,
+			A.TotalQuantity AS TotalQuantity,
+			A.TotalAmount AS TotalAmount,
+			E.EmployeeCode AS OperatorCode,
+			A.Comments AS Comment
+			
+		FROM Inventory.BIN_ProStocktakeRequest A WITH(NOLOCK)
+		JOIN Basis.BIN_Organization C WITH(NOLOCK) ON (A.BIN_OrganizationID = C.BIN_OrganizationID)
+		JOIN Basis.BIN_Employee E WITH(NOLOCK) ON(A.BIN_EmployeeID = E.BIN_EmployeeID)
+		WHERE  
+		  	  A.BIN_OrganizationInfoID = #organizationInfoId#
+		  AND A.BIN_BrandInfoID = #brandInfoId#
+		  AND A.ValidFlag = '1'
+		  AND A.SynchFlag = #synchFlag#
+		]]>  
+	    <![CDATA[AND EXISTS ( ]]>
+			<include refid="BINBECMINC99.getBillByTestModStandList" />
+		<![CDATA[  
+		    AND A.BIN_OrganizationID = C99.BIN_OrganizationID)
+		]]> 
+    </select>
+    
+    <!-- 取得产品盘点申请主表同步状态为"同步处理中"[syncFlag=2]盘点数据（明细数据） -->
+    <select id="getProductStockRequestDetailListBySyncFlag" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+        <![CDATA[
+		SELECT
+			#brandCode# AS BrandCode,
+			A.StockTakingNoIF AS BillCode,
+			P.ItemCode AS IFProductId,
+			P.UnitCode AS UnitCode,
+			PV.BarCode AS BarCode,
+			B.BookQuantity AS AccountsQuantity,
+			B.GainQuantity AS GainQuantity,
+			B.Price AS Price
+					
+		FROM Inventory.BIN_ProStocktakeRequest A WITH(NOLOCK)
+		JOIN Inventory.BIN_ProStocktakeRequestDetail B WITH(NOLOCK) ON A.BIN_ProStocktakeRequestID = B.BIN_ProStocktakeRequestID
+		JOIN Basis.BIN_ProductVendor PV WITH(NOLOCK) ON (PV.BIN_ProductVendorID = B.BIN_ProductVendorID)
+		INNER JOIN Basis.BIN_Product P WITH(NOLOCK) ON(P.BIN_ProductID = PV.BIN_ProductID)
+		     
+		WHERE  
+		  	  A.BIN_OrganizationInfoID = #organizationInfoId#
+		AND A.BIN_BrandInfoID = #brandInfoId#
+		]]>
+		<isNotEmpty property="stockBillCodeArr" prepend="AND">
+			A.StockTakingNoIF IN
+			<iterate conjunction="," open="(" close=")" property="stockBillCodeArr">  
+	        	#stockBillCodeArr[]#
+	        </iterate>	
+		</isNotEmpty>
+    </select>
+    
+    <!-- 插入标准盘点申请单接口表 -->
+   	<insert id="insertIF_StockTaking" parameterClass="java.util.HashMap">
+   	<![CDATA[
+		INSERT INTO dbo.IF_StockTaking (
+			BrandCode,
+			BillCode,
+			BusinessDate,
+			BillCreateTime,
+			BillType,
+			DepartCode,
+			TotalQuantity,
+			TotalAmount,
+			OperatorCode,
+			Comment,
+			PuttingTime
+		)
+		VALUES
+		(
+			#BrandCode#,
+			#BillCode#,
+			#BusinessDate#,
+			#BillCreateTime#,
+			#BillType#,
+			#DepartCode#,
+			#TotalQuantity#,
+			#TotalAmount#,
+			#OperatorCode#,
+			#Comment#,
+			GETDATE()
+		)
+	]]>
+   	</insert>
+    
+    <!-- 插入标准盘点申请单接口表 -->
+   	<insert id="insertIF_StockTakingDetail" parameterClass="java.util.HashMap">
+   	<![CDATA[
+		INSERT INTO dbo.IF_StockTakingDetail (
+			BrandCode,
+			BillCode,
+			IFProductId,
+			UnitCode,
+			BarCode,
+			AccountsQuantity,
+			GainQuantity,
+			Price,
+			PuttingTime
+		)
+		VALUES
+		(
+			#BrandCode#,
+			#BillCode#,
+			#IFProductId#,
+			#UnitCode#,
+			#BarCode#,
+			#AccountsQuantity#,
+			#GainQuantity#,
+			#Price#,
+			GETDATE()
+		)
+	]]>
+   	</insert>
+   	
+</sqlMap>

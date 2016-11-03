@@ -1,0 +1,211 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sqlMap PUBLIC "-//iBATIS.com//DTD SQL Map 2.0//EN" "http://ibatis.apache.org/dtd/sql-map-2.dtd">
+<sqlMap namespace="BINBEMBARC06">
+
+	<!-- 需要下发的清零明细查询sql  -->
+	<sql id="ClearSendQuery">
+		<![CDATA[
+			SELECT
+			BIN_ClearRecordID AS clearRecordId,
+			MemCode AS memCode,
+			ISNULL(AfterPoints, 0) AS afterPoints,
+			ISNULL(ClearedPoints, 0) AS clearedPoints,
+			ClearedTime AS clearedTime,
+			ClearedEndTime AS clearedEndTime,
+			'BINBEMBARC06' AS updatedBy,
+			'BINBEMBARC06' AS updatePGM
+		FROM
+			Members.BIN_PointsClearRecord
+		WHERE	
+			ExecFlag = 1 AND
+			BIN_BrandInfoID = #brandInfoId# AND
+			BIN_OrganizationInfoID = #organizationInfoId#
+		]]>
+	</sql>
+
+	<!-- 取得需要下发的清零明细List -->
+	<select id="getClearSendList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+		<include refid="BINBECMINC99.pageheader" />
+		<include refid="BINBEMBARC06.ClearSendQuery" />
+		<include refid="BINBECMINC99.pagefooter" />
+    </select>
+	
+	<!-- 取得需要下发的清零明细总数  -->
+    <select id="getClearSendCount" parameterClass="java.util.HashMap" resultClass="java.lang.Integer">
+    	<![CDATA[
+			SELECT	COUNT(SORT_T1.clearRecordId) AS count FROM (
+		]]>	
+		<include refid="BINBEMBARC06.ClearSendQuery" />
+		<![CDATA[	
+			)SORT_T1
+		]]>										
+    </select>
+    
+	<!-- 取得需要更新清零记录的会员信息List -->
+	<select id="getUpClearList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+		<![CDATA[
+		SELECT
+			BIN_MemberInfoID AS memberInfoId,
+			ClearedTime AS clearedTime,
+			MAX(ISNULL(ReSendCount, 0)) AS maxSendCount,
+			'BINBEMBARC06' AS updatedBy,
+			'BINBEMBARC06' AS updatePGM
+		FROM
+			Members.BIN_PointsClearRecord
+		WHERE
+			SendStatus = 9 AND
+			BIN_BrandInfoID = #brandInfoId# AND
+			BIN_OrganizationInfoID = #organizationInfoId#
+		GROUP BY
+			BIN_MemberInfoID,
+			ClearedTime
+		]]>
+    </select>
+    
+    <!-- 删除清零记录 -->
+	<delete id="delPointsClearRecord" parameterClass="java.util.HashMap">
+		<![CDATA[
+			DELETE FROM			
+				Members.BIN_PointsClearRecord			
+			WHERE					
+				BIN_MemberInfoID = #memberInfoId# AND
+				ClearedTime = #clearedTime# AND
+				ReSendCount < #maxSendCount#
+		]]>
+    </delete>
+    
+    <!--更新下发状态 -->
+	<update id="updateSendStatus" parameterClass="java.util.HashMap">
+		<![CDATA[
+			UPDATE 		
+				Members.BIN_PointsClearRecord
+			SET	
+				SendStatus = 0,
+		]]>
+		<include refid="BINOLCMINC99.updateSql" />
+		<![CDATA[
+			WHERE 
+				BIN_MemberInfoID = #memberInfoId# AND
+				ClearedTime = #clearedTime# AND
+				ReSendCount = #maxSendCount#
+		]]>
+    </update>
+    
+    <!--更新下发状态(成功) -->
+	<update id="updateStatusSuccess" parameterClass="java.util.HashMap">
+		<![CDATA[
+			UPDATE 		
+				Members.BIN_PointsClearRecord
+			SET	
+				SendStatus = 2,
+		]]>
+		<include refid="BINOLCMINC99.updateSql" />
+		<![CDATA[
+			WHERE 
+				BIN_ClearRecordID = #clearRecordId#
+		]]>
+    </update>
+    
+    <!--更新下发状态(失败) -->
+	<update id="updateStatusFail" parameterClass="java.util.HashMap">
+		<![CDATA[
+			UPDATE 		
+				Members.BIN_PointsClearRecord
+			SET	
+				SendStatus = 3,
+		]]>
+		<include refid="BINOLCMINC99.updateSql" />
+		<![CDATA[
+			WHERE 
+				BIN_ClearRecordID = #clearRecordId#
+		]]>
+    </update>
+    
+    <!--去除执行标识 -->
+	<update id="updateExecFlagNl" parameterClass="java.util.HashMap">
+		<![CDATA[
+			UPDATE 		
+				Members.BIN_PointsClearRecord
+			SET	
+				ExecFlag = NULL
+			WHERE
+				ExecFlag = 1 AND
+				SendStatus <> 1 AND
+				BIN_BrandInfoID = #brandInfoId# AND
+				BIN_OrganizationInfoID = #organizationInfoId#
+				
+		]]>
+    </update>
+    
+    <!--更新执行标识 -->
+	<update id="updateExecFlagDo" parameterClass="java.util.HashMap">
+		<![CDATA[
+			UPDATE 		
+				Members.BIN_PointsClearRecord
+			SET	
+				SendStatus = 1,
+				ExecFlag = 1
+			WHERE 
+				SendStatus = 0 AND
+				BIN_BrandInfoID = #brandInfoId# AND
+				BIN_OrganizationInfoID = #organizationInfoId#
+		]]>
+    </update>
+    
+    <!-- 取得同一会员同一清零时间的记录 -->
+	<select id="getIFDetailCount" parameterClass="java.util.HashMap" resultClass="java.lang.Integer">
+		<![CDATA[
+		SELECT
+			COUNT(1)
+		FROM
+			dbo.I_WITPOS_points_clear_list
+		WHERE	
+			Memcode = #memCode# AND
+			cleared_time = #clearedTime# AND
+			Brand = #brandCode#
+		]]>
+    </select>
+    
+     <!-- 插入积分清零通知清单接口表  -->
+	<insert id="insertIFClearDetail" parameterClass="java.util.HashMap">
+        <![CDATA[ 
+		INSERT INTO dbo.I_WITPOS_points_clear_list(
+					Brand,
+					Memcode,
+					afterPoints,
+					cleared_points,
+					cleared_time,
+					cleared_end_time,
+					PutTime,
+					GetStatus
+		        )VALUES(
+					#brandCode#,
+					#memCode#,
+					#afterPoints#,
+					#clearedPoints#,
+					#clearedTime#,
+					#clearedEndTime#,
+					GETDATE(),
+					'0'
+				)
+			]]>
+    </insert>
+    
+    <!--更新积分清零通知清单接口表 -->
+	<update id="updateIFClearDetail" parameterClass="java.util.HashMap">
+		<![CDATA[
+			UPDATE 		
+				dbo.I_WITPOS_points_clear_list
+			SET	
+				afterPoints = #afterPoints#,
+				cleared_points = #clearedPoints#,
+				PutTime = GETDATE(),
+				GetStatus = '0'
+			WHERE 
+				Memcode = #memCode# AND
+				cleared_time = #clearedTime# AND
+				Brand = #brandCode#
+		]]>
+    </update>
+	
+</sqlMap>

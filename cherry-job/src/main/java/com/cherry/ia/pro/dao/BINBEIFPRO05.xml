@@ -1,0 +1,217 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sqlMap PUBLIC "-//iBATIS.com//DTD SQL Map 2.0//EN" "http://ibatis.apache.org/dtd/sql-map-2.dtd">
+<sqlMap namespace="BINBEIFPRO05">
+	<!--更新特价产品方案中销售日期在业务日期前后1天内的产品的版本号 -->
+	<update id="updSoluDetailVerByPrtSellDate" parameterClass="java.util.HashMap">
+		UPDATE PPSD
+		SET PPSD.Version = #newTVersion#+1
+		FROM Basis.BIN_ProductSpecialOfferSoluDetail PPSD 
+		JOIN Basis.BIN_ProductSpecialOfferSolu  PPS  ON PPS.BIN_ProductSpecialOfferSoluID = PPSD.BIN_ProductSpecialOfferSoluID
+		WHERE
+			PPS.BIN_BrandInfoID = #brandInfoId#
+		AND 
+		(
+			<!-- 销售日期在业务日期前后1天内的产品 -->
+		    EXISTS(
+				SELECT 1
+				FROM Basis.BIN_Product WITH(NOLOCK) 
+				WHERE 
+					BIN_BrandInfoID = #brandInfoId#
+				AND
+				(   SellStartDate = DATEADD(day,1,#priceDate#) 
+				OR  SellStartDate = DATEADD(day,0,#priceDate#) 
+				OR  SellStartDate = DATEADD(day,-1,#priceDate#) 
+				OR  SellEndDate = DATEADD(day,1,#priceDate#) 	
+				OR  SellEndDate = DATEADD(day,0,#priceDate#) 
+				OR  SellEndDate = DATEADD(day,-1,#priceDate#)
+				)
+				AND PPSD.BIN_ProductID = BIN_ProductID
+		    )
+		)
+    </update>
+
+    
+	<!-- 查询新后台特价产品方案柜台关联数据list -->
+	<select id="getPrtSoluCouList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+		<![CDATA[
+			SELECT
+				C.BrandCode, 
+				PSDR.DepartCode,
+				PPS.SpecialOfferSoluCode,
+				PSDR.Version,
+				O.ValidFlag AS cntValidFlag,
+				PSDR.ValidFlag AS psdValidFlag,
+				PPS.ValidFlag AS ppsValidFlag,
+				convert(varchar(30),PPS.SpecialOfferSoluStartDate,120) AS BeginTime,	
+				convert(varchar(30),PPS.SpecialOfferSoluEndDate,120) AS EndTime
+				
+			FROM 
+				Basis.BIN_PrtSpecialOfferSoluDepartRelation PSDR WITH(NOLOCK)
+			JOIN 
+				Basis.BIN_Organization O WITH(NOLOCK) ON O.DepartCode = PSDR.DepartCode
+			JOIN Basis.BIN_BrandInfo C WITH(NOLOCK) ON(PSDR.BIN_BrandInfoID = C.BIN_BrandInfoID AND C.ValidFlag = '1')
+			JOIN Basis.BIN_ProductSpecialOfferSolu PPS WITH(NOLOCK) ON PPS.BIN_ProductSpecialOfferSoluID = PSDR.BIN_SpecialOfferSolutionId
+			WHERE 
+			O.Type = '4'
+			AND PSDR.BIN_OrganizationInfoID = #organizationInfoId#
+			AND PSDR.BIN_BrandInfoID = #brandInfoId#
+			AND PSDR.Version > #tVersion#
+		]]>
+    </select>
+    
+    <!-- 根据指定Version取特价产品方案明细的产品信息List -->
+    <select id="getPrtSoluDetailByVersionList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+		SELECT
+			DISTINCT
+			C.BrandCode,
+			S.SpecialOfferSoluCode,
+			PV.BIN_ProductVendorID,
+			PV.BarCode,
+			P.UnitCode,
+			PPSD.SpecialOfferSalePrice,
+			PPSD.SpecialOfferMemPrice,
+			PPSD.SpecialOfferPlatinumPrice,
+			PPSD.Version,
+			
+  			PPSD.ValidFlag AS soluPrtValidFlag,
+  			PV.ValidFlag AS prtVendorValidFlag,
+			PPSD.BIN_ProductSpecialOfferSoluDetailID AS productSpecialOfferSoluDetailID,
+		    PPSD.BIN_ProductID,
+  			PPSD.SpecialOfferStartDate,
+  			PPSD.SpecialOfferEndDate,
+ 			ISNULL(P.Status,'E') AS prtStatus,
+ 			<![CDATA[
+			CASE 
+				WHEN (P.SellStartDate IS NOT NULL AND P.SellEndDate IS NULL AND #priceDate# >= P.SellStartDate) 
+				  OR (P.SellEndDate IS NOT NULL AND P.SellStartDate IS NULL AND #priceDate# <= P.SellEndDate)
+			      OR (P.SellStartDate IS NOT NULL AND P.SellEndDate IS NOT NULL AND P.SellStartDate <= #priceDate# AND #priceDate# <= P.SellEndDate) 
+			      OR (P.SellStartDate IS NULL AND P.SellEndDate IS NULL)
+			    THEN '0' ELSE '1' END AS prtSellDateFlag
+		    ]]>	
+
+		FROM  
+			Basis.BIN_ProductSpecialOfferSoluDetail PPSD WITH(NOLOCK)
+		JOIN 
+			Basis.BIN_ProductSpecialOfferSolu S WITH(NOLOCK) ON S.BIN_ProductSpecialOfferSoluID = PPSD.BIN_ProductSpecialOfferSoluID
+		JOIN Basis.BIN_Product P WITH(NOLOCK) ON P.BIN_ProductID = PPSD.BIN_ProductID
+		JOIN Basis.BIN_BrandInfo C WITH(NOLOCK) ON(P.BIN_BrandInfoID = C.BIN_BrandInfoID AND C.ValidFlag = '1')
+		JOIN Basis.BIN_ProductVendor PV WITH(NOLOCK) ON PV.BIN_ProductID = PPSD.BIN_ProductID
+		WHERE
+			S.BIN_OrganizationInfoID = #organizationInfoId#
+		AND S.BIN_BrandInfoID = #brandInfoId#
+		AND PPSD.Version > #tVersion# 
+    </select>
+    
+    
+    <!-- 删除特价产品方案柜台接口表  -->
+    <delete id="delIFPrtSoluWithCounter" parameterClass="java.util.HashMap">
+    	<![CDATA[
+    		delete from 
+    			dbo.WITPOSA_Product_SpecialOfferSolu 
+    		where 
+    			brandAbbr = #brandCode#
+    		and counterCode = #DepartCode#
+		]]>	
+    </delete>
+    
+    <!-- 插入特价产品方案接口数据库 -->
+	<insert id="addIFPrtSoluWithCounter" parameterClass="java.util.HashMap">
+		<![CDATA[
+			INSERT INTO dbo.WITPOSA_Product_SpecialOfferSolu(	
+				brandAbbr,
+				CounterCode,
+				SpecialOfferSoluCode,
+				BeginTime,
+				EndTime,
+				Version,
+				Status,
+				CreateTime,
+				CreatePGM,
+				UpdateTime,
+				UpdatePGM
+			)VALUES(
+				#brandCode#,
+				#DepartCode#,
+				#SpecialOfferSoluCode#,
+				#BeginTime#,
+				#EndTime#,
+				#Version#,
+				#prtSoluWithCnt_status#,
+				GETDATE(),
+				#createPGM#,
+				GETDATE(),
+				#updatePGM#
+			)
+		]]>				
+    </insert>
+    
+    <!-- 删除接口数据库产品特价产品方案明细数据 -->
+    <delete id="delIFPrtSoluSCS" parameterClass="java.util.HashMap">
+    	<![CDATA[
+    		DELETE FROM 
+    			dbo.WITPOSA_Product_SpecialOfferSoluDetail
+    		WHERE
+    			brandAbbr = #brandCode#
+    		AND SpecialOfferSoluCode = #SpecialOfferSoluCode#
+    		AND ProductID = #BIN_ProductVendorID#
+		]]>	
+    </delete>
+    
+    
+
+	<!-- 插入特价产品方案明细接口数据库 -->
+	<insert id="addIFPrtSoluSCS" parameterClass="java.util.HashMap">
+		<![CDATA[
+			INSERT INTO dbo.WITPOSA_Product_SpecialOfferSoluDetail(	
+				brandAbbr,
+				SpecialOfferSoluCode,
+				ProductID,
+				Barcode,
+				Unitcode,
+				SpecialOfferSalePrice,
+				SpecialOfferMemPrice,
+				SpecialOfferPlatinumPrice,
+				SpecialOfferStartDate,
+				SpecialOfferEndDate,
+				version,
+				Status,
+				CreateTime,
+				CreatePGM,
+				UpdateTime,
+				UpdatePGM
+			)VALUES(
+				#brandCode#,
+				#SpecialOfferSoluCode#,
+				#BIN_ProductVendorID#,
+				#BarCode#,
+				#UnitCode#,
+				ISNULL(#SpecialOfferSalePrice#,0),
+				ISNULL(#SpecialOfferMemPrice#,0),
+				ISNULL(#SpecialOfferPlatinumPrice#,0),
+				#SpecialOfferStartDate#,
+				#SpecialOfferEndDate#,
+				#Version#,
+				#prtSoluDetail_status#,
+				GETDATE(),
+				#createPGM#,
+				GETDATE(),
+				#updatePGM#
+			)
+		]]>				
+    </insert>
+    
+    
+    <!-- 取得品牌Code  -->
+    <select id="getBrandCode" parameterClass="java.util.HashMap" resultClass="java.lang.String">
+       <![CDATA[
+			SELECT
+				BrandCode AS brandCode
+			FROM
+				Basis.BIN_BrandInfo WITH(NOLOCK)
+			WHERE
+				BIN_BrandInfoID = #brandInfoId#
+		]]>	
+    </select>
+    
+    
+</sqlMap>

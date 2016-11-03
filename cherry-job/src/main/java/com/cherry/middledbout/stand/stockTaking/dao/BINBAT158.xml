@@ -1,0 +1,106 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sqlMap PUBLIC "-//iBATIS.com//DTD SQL Map 2.0//EN" "http://ibatis.apache.org/dtd/sql-map-2.dtd">
+<sqlMap namespace="BINBAT158">
+	
+	<!-- 取得标准审核单接口表SynchFlag字段为null的单据号 -->
+    <select id="getBillCodeList" parameterClass="java.util.HashMap" resultClass="java.lang.String">
+	<![CDATA[  
+		SELECT 
+		    TOP (#upCount#) T.BillCode 
+		FROM 
+		  (SELECT DISTINCT BillCode FROM dbo.IF_StockTaking WHERE SynchFlag IS NULL AND BillType = 'PDSH' AND BrandCode = #brandCode#) T
+	 ]]> 
+	 <dynamic prepend="WHERE">
+	 	<!-- 排除失败的发货单据 -->
+		<isNotEmpty property="failedBillCodeList" >
+			T.BillCode NOT IN
+			<iterate property="failedBillCodeList" open="(" close=")" conjunction=","> 
+				#failedBillCodeList[]#
+			</iterate>
+		</isNotEmpty>		
+	 </dynamic>
+    </select>
+    
+    <!-- 更新标准发货单接口表的SynchFlag字段 -->
+    <update id="updateSynchFlag" parameterClass="java.util.HashMap">
+	  UPDATE 
+		dbo.IF_StockTaking
+	  SET 
+		SynchFlag = #synchFlag_New#,
+		<isNotEmpty property="synchMsg">
+		SynchMsg = #synchMsg#,
+		</isNotEmpty>
+		SynchTime=GETDATE()
+	  WHERE
+	  		BillType = 'PDSH'
+	  	<isEmpty property="synchFlag_Old" prepend="AND">
+	  		SynchFlag IS NULL
+	  	</isEmpty>
+	  	<isNotEmpty property="synchFlag_Old" prepend="AND">
+	  		SynchFlag=#synchFlag_Old#
+	  	</isNotEmpty>
+	  	<isNotEmpty property="brandCode" prepend="AND">
+		 	BrandCode = #brandCode#
+	  	</isNotEmpty>
+	  	<isNotEmpty property="billCode"  prepend="AND">
+	  	 	BillCode=#billCode#
+	  	</isNotEmpty>
+    </update>
+	
+	<!-- 取得标准审核单接口表数据 (主数据)-->
+    <select id="getExportTransList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+		SELECT
+			A.BrandCode,
+		    A.BillCode,
+		    CONVERT(varchar(100), A.BusinessDate, 23) AS TradeDate,
+		    CONVERT(varchar(100), A.BillCreateTime, 108) AS TradeTime,
+		    A.BillStatus,
+		    A.DepartCode,
+		    A.OperatorCode,
+		    A.TotalQuantity,
+		    A.TotalAmount,
+		    A.OperatorCode,		    
+		    A.RelateBillCode,
+		    A.Comment,
+		    A.PuttingTime
+		FROM 
+		  	dbo.IF_StockTaking A WITH(NOLOCK)
+		WHERE
+			A.BillType = 'PDSH'
+		  	<isNotEmpty property="synchFlag" prepend="AND">
+			 A.SynchFlag = #synchFlag#
+		  	</isNotEmpty>
+		  	<isNotEmpty property="brandCode" prepend="AND">
+			 A.BrandCode = #brandCode#
+		  	</isNotEmpty>	  	
+    </select>
+    
+    <!-- 取得标准审核单接口表数据 (单据明细)-->
+    <select id="getExportTransListdeatils" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+		SELECT
+			A.BrandCode,
+		    A.BillCode,
+		    A.IFProductId,		    
+		    A.UnitCode,
+		    A.BarCode,
+		    A.AccountsQuantity,
+		    A.GainQuantity,
+		    A.Price,
+		    A.Comment
+		FROM 
+		  	dbo.IF_StockTakingDetail A WITH(NOLOCK)		
+		  	where A.BillCode=#BillCode#
+    </select>
+	
+	<!-- 取得品牌Code  -->
+    <select id="getBrandCode" parameterClass="java.util.HashMap" resultClass="java.lang.String">
+       <![CDATA[
+			SELECT
+				BrandCode AS brandCode
+			FROM
+				Basis.BIN_BrandInfo
+			WHERE
+				BIN_BrandInfoID = #brandInfoId#
+		]]>	
+    </select>
+</sqlMap>

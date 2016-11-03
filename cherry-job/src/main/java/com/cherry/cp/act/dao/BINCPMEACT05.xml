@@ -1,0 +1,196 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sqlMap PUBLIC "-//iBATIS.com//DTD SQL Map 2.0//EN" "http://ibatis.apache.org/dtd/sql-map-2.dtd">
+<sqlMap namespace="BINCPMEACT05">
+	
+    <!-- 取得等级调整会员所有进行中的会员礼活动 -->
+    <select id="getMemAllCamp" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+    	SELECT
+    		distinct
+			A.BIN_CampaignOrderID AS orderId,
+			A.CampaignCode AS campCode,
+			B.MainCode AS mainCode
+		FROM
+			Campaign.BIN_CampaignOrder A WITH(NOLOCK)
+			join Campaign.BIN_CampaignOrderDetail B WITH(NOLOCK)
+			on(A.BIN_CampaignOrderID = B.BIN_CampaignOrderID
+				and B.ValidFlag = '1')
+		WHERE
+			A.BIN_MemberInfoID = #memberId#
+			AND A.State='AR'
+		 	AND A.OptYear = #optYear#
+		 	AND A.SubType='BIR'
+			AND A.ValidFlag= '1'
+    </select>
+    
+    <!-- 取得主题活动下的所有子活动 -->
+    <select id="getSubCampList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+    	SELECT
+			CR.BIN_CampaignRuleID AS subCampId,
+			CR.SubCampaignCode AS subCampCode,
+			CC.ActLocationType AS condType,
+			D.ConditionInfo AS memJson
+		FROM
+			Campaign.BIN_Campaign C WITH(NOLOCK)
+			JOIN Campaign.BIN_CampaignRule CR WITH(NOLOCK)
+			ON(C.BIN_CampaignID = CR.BIN_CampaignID
+			AND CR.State=1 AND CR.ValidFlag=1)
+			JOIN Campaign.BIN_CamRuleCondition CC WITH(NOLOCK)
+			ON(CR.BIN_CampaignRuleID=CC.BIN_CampaignRuleID
+			AND CC.ValidFlag=1)
+			JOIN Campaign.BIN_CampaignBaseProp CB WITH(NOLOCK)
+			ON(CB.BIN_CampaignBasePropID=CC.BIN_CampaignBasePropID
+			AND CB.PropertyName='baseProp_customer'
+			AND CB.ValidFlag=1)
+			LEFT JOIN Members.BIN_SearchLog D
+			ON(BIN_SearchCode = CC.BasePropValue1)
+		WHERE
+			C.CampaignCode = #campCode#
+    </select>
+    
+    <!-- 取得会员活动对象List（只取会员ID） -->
+    <select id="getCampCustorList" parameterClass="java.util.HashMap" resultClass="java.lang.Integer">
+   		<![CDATA[
+   		SELECT
+			B.BIN_MemberInfoID
+		]]>
+		<include refid="BINOLCPCOM05.getMebSQL" />
+    </select>
+    
+    <!-- 取得会员等级改变表中的所有会员ID -->
+    <select id="getChangeMemIdList" resultClass="java.lang.Integer">
+    	SELECT 
+    		DISTINCT
+    		BIN_MemberInfoID
+    	FROM
+    		Members.BIN_MemberLevelTemp
+    </select>
+    
+    <!-- 删除会员等级调整表中对应的会员 -->
+    <delete id="delMember" parameterClass="java.util.HashMap">
+    	DELETE FROM
+    		Members.BIN_MemberLevelTemp
+    	WHERE
+    		BIN_MemberInfoID = #memberId#
+    </delete>
+    
+    <!-- 更换调整会员的生日礼-->
+ 	<update id="updateCampOrder" parameterClass="java.util.HashMap">
+ 		UPDATE
+ 			Campaign.BIN_CampaignOrderDetail
+ 		SET
+ 			BIN_ProductVendorID = #productVendorId#,
+ 			UnitCode = #unitCode#,
+ 			BarCode = #barCode#,
+ 			Quantity = #quantity#,
+ 			Amout = #price#
+ 		WHERE
+ 			BIN_CampaignOrderID = #campOrderId#
+ 			
+ 		UPDATE
+ 			Campaign.BIN_CampaignOrder
+ 		SET
+ 			SendFlag = 2,
+ 			ModifyCount = ModifyCount+1
+ 		WHERE
+ 			BIN_CampaignOrderID = #campOrderId#
+ 	</update>
+ 	
+ 	<!-- 获取子生日礼活动的所有礼品 -->
+ 	<select id="getPrtList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+ 		SELECT
+			B.BIN_ProductVendorID AS productVendorId,
+			B.BarCode AS barCode,
+			B.UnitCode AS unitCode,
+			B.SaleType AS saleType,
+			CASE WHEN C.PromotionCateCD IN('TZZK','DHCP','DHMY') THEN ISNULL(B.Price,0) * -1
+			ELSE ISNULL(B.Price,0) END AS price,
+			B.Quantity AS quantity	
+		FROM
+			Campaign.BIN_CampaignRuleResult B WITH(NOLOCK)
+			LEFT JOIN Basis.BIN_PromotionProduct C WITH(NOLOCK)
+			ON(B.UnitCode = C.UnitCode)
+		WHERE
+			BIN_CampaignRuleID = #subCampId#
+ 	</select>
+ 	
+ 	<!-- 删除订单号对应明细表中的内容 -->
+ 	<delete id="delOrderInfo" parameterClass="java.util.HashMap">
+ 		DELETE FROM
+ 			Campaign.BIN_CampaignOrderDetail
+ 		WHERE
+ 			BIN_CampaignOrderID = #orderId#
+ 	</delete>
+ 	
+ 	<!-- 插入新明细 -->
+ 	<insert id="insertOrder" parameterClass="java.util.HashMap">
+ 		INSERT INTO
+			Campaign.BIN_CampaignOrderDetail
+			(
+				BIN_CampaignOrderID,
+				MainCode,
+				BIN_ProductVendorID,
+				GiftType,
+				UnitCode,
+				BarCode,
+				Quantity,
+				Amout,
+				PointRequired,
+				ValidFlag,
+				CreateTime,
+				CreatedBy,
+				CreatePGM,
+				UpdateTime,
+				UpdatedBy,
+				UpdatePGM,
+				ModifyCount
+			)
+			VALUES(
+				#orderId#,
+				#mainCode#,
+				#productVendorId#,
+				#saleType#,
+				#unitCode#,
+				#barCode#,
+				#quantity#,
+				#price#,
+				0,
+				'1',
+				GETDATE(),
+				#CreatedBy#,
+				#CreatePGM#,
+				GETDATE(),
+				#UpdatedBy#,
+				#UpdatePGM#,
+				0
+			)
+ 	</insert>
+ 	
+ 	<!-- 更新主单版本 -->
+ 	<update id="updateOrder" parameterClass="java.util.HashMap">
+ 		UPDATE
+ 			Campaign.BIN_CampaignOrder
+ 		SET
+ 			SendFlag = '2',
+ 			ModifyCount = ModifyCount + 1,
+ 			Quantity = #quantity#,
+ 			Amout = #price#
+ 		WHERE
+ 			BIN_CampaignOrderID = #orderId#
+ 	</update>
+ 	
+ 	<!-- 插入历史等级变化调整中 -->
+ 	<insert id="addHisMember" parameterClass="java.util.HashMap">
+ 		INSERT INTO
+ 			Members.BIN_MemberLevelAdjustHistory
+	 		(
+	 			BIN_MemberInfoID,
+	    			CreateTime
+	 		)
+ 		VALUES
+	 		(
+	 			#memberId#,
+	 			GETDATE()
+	 		)
+ 	</insert>
+ 	
+</sqlMap>

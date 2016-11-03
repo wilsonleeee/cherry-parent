@@ -1,0 +1,485 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sqlMap PUBLIC "-//iBATIS.com//DTD SQL Map 2.0//EN" "http://ibatis.apache.org/dtd/sql-map-2.dtd">
+<sqlMap namespace="BINBAT150">    
+	<select id="getCountersList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+		<![CDATA[
+			SELECT TOP (#batchSize#)
+				Brand  brandCode,
+				DepartCode counterCode,
+				DepartName counterName,
+				ValidFlag validFlag, 
+				0  status,
+				PuttingTime,
+				SynchFlag
+			FROM 
+			    dbo.IF_Depart WITH(NOLOCK)
+			WHERE
+			    SynchFlag IS NULL
+			AND DepartType='JMS'
+			AND Brand=#brandCode#
+			]]>
+			<isNotEmpty property="bathLastCounterCode">
+			   AND  DepartCode > #bathLastCounterCode#
+			</isNotEmpty>
+		    ORDER BY DepartCode
+	</select>
+	
+    <!--查询组织结构中的柜台信息 -->
+	<select id="getOrganizationId" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+		<![CDATA[
+			SELECT 						
+				BIN_OrganizationID AS organizationId,
+				NodeID.GetAncestor(1).ToString() AS couHigherPath			
+			FROM						
+				Basis.BIN_Organization		
+			WHERE						
+				BIN_OrganizationInfoID = #organizationInfoId# AND
+				BIN_BrandInfoID = #brandInfoId# AND
+				DepartCode = #counterCode#
+		]]>
+    </select>
+    
+    <!-- 取得品牌下的未知节点 -->
+	<select id="getUnknownPath" parameterClass="java.util.HashMap" resultClass="java.lang.String">
+		<![CDATA[
+			SELECT				
+				Path as path			
+			FROM				
+				Basis.BIN_Organization 		
+			WHERE	
+				BIN_OrganizationInfoID=#organizationInfoId# AND
+				BIN_BrandInfoID=#brandInfoId# AND
+				Type = 'Z' AND
+				ValidFlag = '1'
+		]]>
+    </select>
+    
+    <!-- 取得品牌的顶层节点 -->
+	<select id="getFirstPath" parameterClass="java.util.HashMap" resultClass="java.lang.String">
+		<![CDATA[
+			SELECT				
+				MIN(Path) as path			
+			FROM				
+				Basis.BIN_Organization		
+			WHERE	
+				BIN_OrganizationInfoID=#organizationInfoId# AND
+				BIN_BrandInfoID=#brandInfoId# AND
+				ValidFlag='1'
+		]]>
+    </select>
+    
+    <!-- 取得新节点 -->
+	<select id="getNewDepNodeId" parameterClass="java.util.HashMap" resultClass="java.lang.String">
+		<![CDATA[
+			SELECT 
+				CONVERT(hierarchyid,#path#).GetDescendant(max(NodeID), NULL).ToString() AS newNodeId
+        	FROM 
+        		Basis.BIN_Organization
+            WHERE 
+            	NodeID.GetAncestor(1)=#path#
+		]]>
+    </select>
+    
+    <!-- 插入部门信息 -->
+	<insert id="insertDepart" parameterClass="java.util.HashMap">
+		<selectKey resultClass="java.lang.Integer" type="post" keyProperty="BIN_OrganizationID" >
+		<![CDATA[
+			INSERT INTO	
+				Basis.BIN_Organization
+				(
+					BIN_OrganizationInfoID,
+					BIN_BrandInfoID,
+					DepartCode,
+					DepartName,
+					DepartNameShort,
+					NameForeign,
+					NameShortForeign,
+					Type,
+					NodeID,
+					ExpiringDate,
+		]]>
+			<include refid="BINBECMINC99.insertKeySql" />		
+		<![CDATA[
+				)VALUES
+				(		
+					#organizationInfoId#,
+					#brandInfoId#,
+					#departCode#,
+					#departName#,
+					#departNameShort#,
+					#nameForeign#,
+					#nameShortForeign#,
+					#type#,
+					#nodeId#,
+					#expiringDate#,
+		]]>
+			<include refid="BINBECMINC99.insertValueSql" />		
+		<![CDATA[
+				)
+				select SCOPE_IDENTITY() as value
+    	]]>
+    	</selectKey>   				
+    </insert>
+    
+     <!--查询柜台在组织结构表中的插入位置-->
+	<select id="getCounterNodeId" parameterClass="java.util.HashMap" resultClass="java.lang.String">
+		<![CDATA[
+			SELECT 	
+				CONVERT(hierarchyid,#agencyNodeId#).GetDescendant(max(NodeID), NULL).ToString() AS newNodeId
+			FROM 	
+				Basis.BIN_Organization
+			WHERE 	
+				NodeID.GetAncestor(1)=#agencyNodeId#	
+		]]>
+    </select>	
+    
+    <!-- 在组织结构表中插入柜台节点 -->
+	<insert id="insertCouOrg" parameterClass="java.util.HashMap">
+		<selectKey resultClass="java.lang.Integer" type="post" keyProperty="BIN_OrganizationID" >
+		<![CDATA[
+			INSERT INTO	
+				Basis.BIN_Organization
+				(
+					BIN_OrganizationInfoID,
+					BIN_BrandInfoID,
+					NodeID,
+					DepartCode,
+					DepartName,
+					Type,
+					TestType,
+					ExpiringDate,
+					OrgSynergyFlag,
+		]]>
+			<include refid="BINBECMINC99.insertKeySql" />		
+		<![CDATA[
+				)VALUES
+				(		
+					#organizationInfoId#,
+					#brandInfoId#,
+					#counterNodeId#,
+					#counterCode#,
+					#counterName#,
+					'4',
+					#testType#,	
+					#expiringDate#,
+					#orgSynergyFlag#,
+		]]>
+			<include refid="BINBECMINC99.insertValueSql" />		
+		<![CDATA[
+				)
+				select SCOPE_IDENTITY() as value
+    	]]>
+    	</selectKey>   						
+    </insert>
+    
+     <!-- 取得柜台主管所在部门节点 -->
+	<select id="getCouHeadDepPath" parameterClass="java.util.HashMap" resultClass="java.lang.String">
+		<![CDATA[
+			SELECT 						
+				C.Path AS couHeadDepPath				
+			FROM						
+				Privilege.BIN_EmployeeDepart A
+				JOIN Basis.BIN_Employee B ON A.BIN_EmployeeID = B.BIN_EmployeeID
+				JOIN Basis.BIN_Organization C ON B.BIN_OrganizationID = C.BIN_OrganizationID
+			WHERE						
+				A.BIN_OrganizationID = #organizationId# AND
+				A.ManageType = '1' AND
+				A.ValidFlag = '1'
+		]]>
+    </select>
+    
+    <!--更新在组织结构中的柜台 -->
+	<update id="updateCouOrg" parameterClass="java.util.HashMap">
+		<![CDATA[
+			UPDATE				
+				Basis.BIN_Organization			
+			SET	
+		]]>	
+			<isNotEmpty property="couNodeId">
+				NodeID = #couNodeId#,
+			</isNotEmpty>
+		<![CDATA[		
+				DepartName  = #counterName#,
+				TestType = #testType#,
+				ValidFlag = #validFlag#,
+				Type='4',
+				OrgSynergyFlag=#orgSynergyFlag#,		
+		]]>
+		<isNotEmpty property="departRegionId">
+			BIN_RegionID = #departRegionId#,
+		</isNotEmpty>
+		<isNotEmpty property="departProvinceId">
+			BIN_ProvinceID = #departProvinceId#,
+		</isNotEmpty>
+		<isNotEmpty property="departCityId">
+			BIN_CityID = #departCityId#,
+		</isNotEmpty>
+			<include refid="BINBECMINC99.updateSql" />		
+		<![CDATA[				
+			WHERE					
+				BIN_OrganizationInfoID = #organizationInfoId# AND
+				BIN_BrandInfoID = #brandInfoId# AND
+			 	DepartCode = #counterCode#
+		]]>
+    </update>
+    
+    <!--查询柜台信息 -->
+	<select id="getCounterId" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+		<![CDATA[
+			SELECT 						
+				BIN_CounterInfoID AS counterInfoId,
+				ValidFlag AS validFlag
+			FROM						
+				Basis.BIN_CounterInfo				
+			WHERE						
+				BIN_OrganizationInfoID = #organizationInfoId# AND
+				BIN_BrandInfoID = #brandInfoId# AND
+				CounterCode = #counterCode#
+		]]>
+    </select>
+    
+    <!-- 插入柜台信息 -->
+	<insert id="insertCounterInfo" parameterClass="java.util.HashMap">
+		<selectKey resultClass="java.lang.Integer" type="post" keyProperty="BIN_CounterInfoID" >
+		<![CDATA[
+			INSERT INTO	
+				Basis.BIN_CounterInfo
+				(
+					BIN_OrganizationInfoID,
+					BIN_BrandInfoID,
+					BIN_RegionID,
+					BIN_ChannelID,
+					CounterCode,
+					CounterNameIF,
+					BIN_OrganizationID,
+					Status,
+					ManagingType,
+				    CounterKind,
+				    CounterSynergyFlag,
+		]]>
+			<include refid="BINBECMINC99.insertKeySql" />		
+		<![CDATA[
+				)VALUES
+				(		
+					#organizationInfoId#,
+					#brandInfoId#,
+					#regionId#,
+					#channelId#,
+					#counterCode#,
+					#counterName#,
+					#orgId#,
+					#status#,
+					#ManagingType#,
+					#counterKind#,
+					#counterSynergyFlag#,
+		]]>
+			<include refid="BINBECMINC99.insertValueSql" />		
+		<![CDATA[
+				)
+				select SCOPE_IDENTITY() as value
+    	]]>
+    	</selectKey>   				
+    </insert>
+    
+    <!-- 插入柜台开始事件信息 -->
+	<insert id="insertCounterEvent" parameterClass="java.util.HashMap">
+		<![CDATA[
+			INSERT INTO	
+				Basis.BIN_CounterEvent
+				(
+					BIN_CounterInfoID,
+					EventNameID,
+					FromDate,
+					ToDate,
+		]]>
+			<include refid="BINBECMINC99.insertKeySql" />		
+		<![CDATA[
+				)VALUES
+				(		
+					#counterId#,
+					#eventNameID#,
+		]]>			
+				<isNotEmpty property="endDate">
+					#endDate#,
+					#endDate#,
+				</isNotEmpty>
+				<isEmpty property="endDate">
+					GETDATE(),
+					GETDATE(),
+				</isEmpty>
+			<include refid="BINBECMINC99.insertValueSql" />		
+		<![CDATA[
+				)
+    	]]>
+    </insert>
+    
+    <!--更新柜台信息表 -->
+	<update id="updateCounterInfo" parameterClass="java.util.HashMap">
+		<![CDATA[
+			UPDATE				
+				Basis.BIN_CounterInfo			
+			SET				
+				BIN_RegionID  = #regionId#,
+				BIN_ChannelID = #channelId#,
+				BIN_OrganizationID = #orgId#,
+				CounterNameIF = #counterName#,
+				CounterKind = #counterKind#,
+				Status = #status#,
+				ValidFlag = #validFlag#,	
+				ManagingType = '2',	
+				CounterSynergyFlag=#counterSynergyFlag#,	
+		]]>		
+			<include refid="BINBECMINC99.updateSql" />		
+		<![CDATA[				
+			WHERE					
+				BIN_OrganizationInfoID = #organizationInfoId# AND
+				BIN_BrandInfoID = #brandInfoId# AND
+			 	CounterCode = #counterCode#
+		]]>
+    </update>	
+    
+     <!-- 判断柜台事件信息是否已经存在 -->
+	<select id="getCounterEventId" parameterClass="java.util.HashMap" resultClass="java.lang.String">
+		<![CDATA[
+			SELECT				
+				BIN_CounterEventID
+			FROM				
+				Basis.BIN_CounterEvent	
+			WHERE	
+				BIN_CounterInfoID=#counterId# AND
+				EventNameID=#eventNameID# AND
+				FromDate=CONVERT(varchar(30),#endDate#,121) AND
+				ValidFlag='1'
+		]]>
+    </select>
+    	
+	<!-- 备份标准柜台接口信息表 -->
+	<insert id="backupCounters" parameterClass="java.util.HashMap">
+		<![CDATA[
+		INSERT INTO
+		Interfaces.BIN_StandardCounterImportHis (
+						Brand,
+						CounterCode,
+						CounterName,
+						CounterStatus,
+						Status,
+						PuttingTime,
+						SynchFlag,
+						BackupDate
+					) VALUES(
+						#brandCode#,
+						#counterCode#,
+						#counterName#,
+						#status#,
+						#validFlag#,
+						#PuttingTime#,
+						#SynchFlag#,
+						GETDATE()
+						)
+	]]>
+	</insert>
+	    <!-- 判断仓库编码是否已经存在 -->
+	<select id="getDepotCountByCode" parameterClass="java.util.HashMap" resultClass="java.lang.Integer">
+		<![CDATA[
+			SELECT				
+				COUNT(A.BIN_DepotInfoID)
+			FROM				
+				Basis.BIN_DepotInfo A	
+			WHERE	
+				A.BIN_OrganizationInfoID=#organizationInfoId# AND
+				A.DepotCode=#inventoryCode#
+		]]>
+    </select>
+        <!-- 添加仓库 -->
+    <insert id="addDepotInfo" parameterClass="java.util.HashMap">
+    	<selectKey resultClass="java.lang.Integer" type="post" keyProperty="BIN_DepotInfoID" >
+    	<![CDATA[
+    		INSERT INTO Basis.BIN_DepotInfo				
+			(					
+				BIN_OrganizationInfoID,	
+				BIN_OrganizationID,					
+				BIN_RegionID,				
+				DepotCode,				
+				DepotNameCN,
+				DepotNameEN,
+				DepotType,
+				Address,
+				TestType,
+		]]>
+				<include refid="BINBECMINC99.insertKeySql" />		
+		<![CDATA[						
+			)					
+			VALUES					
+			(					
+				#organizationInfoId#,	
+				#organizationId#,							
+				#regionId#,				
+				#inventoryCode#,				
+				#inventoryNameCN#,
+				#inventoryNameEN#,
+				#depotType#,
+				#address#,
+				#testType#,
+		]]>
+				<include refid="BINBECMINC99.insertValueSql" />		
+		<![CDATA[							
+			)	
+			select SCOPE_IDENTITY() as value				
+    	]]>
+    	</selectKey>   
+    </insert>
+        <!-- 添加部门仓库关系 -->
+    <insert id="addInventoryInfo" parameterClass="java.util.HashMap">
+    	<![CDATA[
+    		INSERT INTO Basis.BIN_InventoryInfo				
+			(					
+				BIN_OrganizationInfoID,				
+				BIN_BrandInfoID,	
+				BIN_InventoryInfoID,			
+				InventoryCode,				
+				InventoryNameCN,
+				InventoryNameEN,
+				BIN_OrganizationID,
+				DefaultFlag,
+		]]>
+				<include refid="BINBECMINC99.insertKeySql" />		
+		<![CDATA[						
+			)					
+			VALUES					
+			(					
+				#organizationInfoId#,				
+				#brandInfoId#,	
+				#depotInfoId#,			
+				#inventoryCode#,				
+				#inventoryNameCN#,
+				#inventoryNameEN#,
+				#organizationId#,
+				#defaultFlag#,
+		]]>
+				<include refid="BINBECMINC99.insertValueSql" />		
+		<![CDATA[							
+			)					
+    	]]>
+    </insert>
+        <!-- 更新柜台仓库名称 -->
+    <update id="updateDepotInfo" parameterClass="java.util.HashMap">
+    	UPDATE
+    		Basis.BIN_DepotInfo
+   		SET 
+   			DepotNameCN = #inventoryNameCN#
+  		WHERE
+  			BIN_OrganizationID = #organizationId#
+  		AND	DepotType = '02'
+    </update>		
+        <!-- 取得品牌节点Path (部门类型为总部的节点) -->
+    <select id="getBrandPath" parameterClass="java.util.HashMap" resultClass="java.lang.String">
+       <![CDATA[
+			SELECT
+				Path
+			FROM
+				Basis.BIN_Organization
+			WHERE
+			    Type='0'
+		]]>	
+    </select>
+</sqlMap>

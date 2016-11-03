@@ -1,0 +1,386 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sqlMap PUBLIC "-//iBATIS.com//DTD SQL Map 2.0//EN" "http://ibatis.apache.org/dtd/sql-map-2.dtd">
+<sqlMap namespace="BINCPMEACT01">
+	<sql id="getAllPrtList">
+	<![CDATA[
+		SELECT
+			A.UnitCode AS promotionPrtUnitCode,
+			SUBSTRING(A.NameTotal,0,21) AS promotionPrtName,
+			B.BarCode AS promotionPrtCode,
+			B.BIN_ProductVendorID AS prmPrtVendorId,
+			'N' AS prtType,
+			A.ValidFlag + B.ValidFlag AS validFlag
+		FROM
+			Basis.BIN_Product A
+			JOIN Basis.BIN_ProductVendor B
+			ON(A.BIN_ProductID = B.BIN_ProductID)
+		WHERE
+			A.BIN_BrandInfoID = #brandInfoId#
+		UNION
+		SELECT
+			A.UnitCode AS promotionPrtUnitCode,
+			SUBSTRING(A.NameTotal,0,21) AS promotionPrtName,
+			B.BarCode AS promotionPrtCode,
+			B.BIN_PromotionProductVendorID AS prmPrtVendorId,
+			'P' AS prtType,
+			A.ValidFlag + B.ValidFlag AS validFlag
+		FROM
+			Basis.BIN_PromotionProduct A
+			JOIN Basis.BIN_PromotionProductVendor B
+			ON(A.BIN_PromotionProductID = B.BIN_PromotionProductID)
+		WHERE
+			A.BIN_BrandInfoID = #brandInfoId#
+	]]>  
+	</sql>
+	<!-- 取得活动时间条件 -->
+	<sql id="getActTimeSQL">
+	<![CDATA[
+		SELECT
+			T1.BIN_CampaignRuleID,
+			CASE WHEN T2.BasePropValue1 IS NOT NULL THEN left(T2.BasePropValue1,10) ELSE left(T1.BasePropValue1,10) END AS startTime,
+			CASE WHEN T2.BasePropValue2 IS NOT NULL THEN left(T2.BasePropValue2,10)+' 23:59:59' ELSE left(T1.BasePropValue2,10)+' 23:59:59' END AS endTime
+		FROM
+		(SELECT
+			A.BIN_CampaignRuleID,
+			A.BasePropValue1,
+			A.BasePropValue2
+		FROM
+			Campaign.BIN_CamRuleCondition A
+			JOIN Campaign.BIN_CampaignBaseProp B
+			ON(A.BIN_CampaignBasePropID = B.BIN_CampaignBasePropID
+				AND B.PropertyName ='baseProp_obtain_time'
+				AND B.ValidFlag = '1')
+		WHERE
+			A.ValidFlag = '1'
+		)T1 
+		LEFT JOIN
+		(SELECT
+			A.BIN_CampaignRuleID,
+			A.BasePropValue1,
+			A.BasePropValue2
+		FROM
+			Campaign.BIN_CamRuleCondition A
+			JOIN Campaign.BIN_CampaignBaseProp B
+			ON(A.BIN_CampaignBasePropID = B.BIN_CampaignBasePropID
+				AND B.PropertyName ='baseProp_rese_time'
+				AND B.ValidFlag = '1')
+		WHERE
+			A.ValidFlag = '1'
+		)T2
+		ON(T1.BIN_CampaignRuleID = T2.BIN_CampaignRuleID)
+	]]>
+	</sql>	
+	<!-- 取得已下发过活动  -->
+    <select id="getActHisList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+       <![CDATA[
+		SELECT
+			A.SubjectCode AS subjectCode,
+			A.MainCode AS mainCode,
+			A.CountActCode AS activeCode,
+			A.BIN_OrganizationID AS counterOrgId,
+			A.BIN_PromotionProductVendorID AS prmPrtVendorId,
+			A.PrtType AS prtType
+		FROM
+			Promotion.BIN_ActivityTransHis A
+		WHERE
+			A.BIN_OrganizationInfoID = #organizationInfoId#
+			AND A.BIN_BrandInfoID = #brandInfoId#
+			AND A.ActivityType = '1'
+			AND A.ValidFlag = '1'	
+		]]>
+    </select>
+    <!-- 查询需要下发的会员活动 -->
+    <select id="getActiveInfoList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+     	<![CDATA[
+     	SELECT
+			A.BIN_CampaignRuleID AS campRuleId, 
+			A.SubCampaignCode AS mainCode,
+			A.SubCampaignName AS mainName,
+			A.SubCampaignType AS activityType,
+			A.SubCampaignValid AS subCampValid,
+			A.LocalValidRule AS localValidRule,
+			A.IsCollectInfo AS isCollectInfo,
+			A.DeliveryPrice AS deliveryPrice,
+			A.DeliveryPoints AS deliveryPoints,
+			A.Times AS times,
+			ISNULL(A.State,'0') AS state,
+			ISNULL(A.Times,0) AS maxReceiveQty,
+			B.BIN_BrandInfoID AS brandInfoId,
+			ISNULL(B.GoodsChangeable,'0') AS mainModify,
+			B.BIN_CampaignID AS mainClassID,
+			B.CampaignCode AS subjectCode,
+			B.CampaignName AS subjectName,
+			B.CampaignType AS activityGrpType,
+			B.CampaignOrderFromDate AS reserveBeginDate,
+			B.CampaignOrderToDate AS reserveEndDate,
+			B.CampaignFromDate AS activityBeginDate,
+			B.CampaignToDate AS activityEndDate,
+			B.CampaignSetBy AS userId,
+			B.NeedBuyFlag AS needBuyFlag,
+			T.startTime,
+			T.endTime,
+			B.BIN_MemberClubID AS memberClubId,
+			B.isShared,
+			Z.ClubCode AS clubCode
+		FROM
+			Campaign.BIN_CampaignRule A
+			JOIN Campaign.BIN_Campaign B
+			ON(A.BIN_CampaignID = B.BIN_CampaignID
+				AND B.CampaignTypeFlag='1'
+				AND B.SaveStatus='1'
+				AND B.ValidFlag='1')
+			JOIN (
+		]]>
+		<include refid="BINCPMEACT01.getActTimeSQL" />
+		<![CDATA[
+		) T
+		ON(A.BIN_CampaignRuleID = T.BIN_CampaignRuleID
+			AND T.startTime <= #busDate# 
+			AND T.endTime >= #busDate#) LEFT JOIN
+			Members.BIN_MemberClub Z
+			ON(B.BIN_MemberClubID = Z.BIN_MemberClubID)
+		WHERE
+			B.BIN_OrganizationInfoID = #organizationInfoId#
+			AND B.BIN_BrandInfoID = #brandInfoId#
+			AND B.SendFlag = '1'
+			AND A.ValidFlag='1'
+     	]]>		
+     </select>
+     <!-- 查询不需要下发的会员活动 -->
+     <select id="getDisSendList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+     	<![CDATA[
+     	SELECT
+			A.BIN_CampaignRuleID AS campRuleId,
+			A.SubCampaignCode AS mainCode,
+			A.State AS state,
+			T.startTime,
+			T.endTime
+		FROM
+			Campaign.BIN_CampaignRule A
+			JOIN Campaign.BIN_Campaign B
+			ON(A.BIN_CampaignID = B.BIN_CampaignID
+				AND B.CampaignTypeFlag='1'
+				AND B.SaveStatus='1'
+				AND B.ValidFlag='1')
+			JOIN (
+		]]>
+		<include refid="BINCPMEACT01.getActTimeSQL" />
+		<![CDATA[
+		) T
+		ON(A.BIN_CampaignRuleID = T.BIN_CampaignRuleID)
+		WHERE
+			B.BIN_OrganizationInfoID = #organizationInfoId#
+			AND B.BIN_BrandInfoID = #brandInfoId#
+			AND B.SendFlag = '0'
+			AND (T.endTime >= #busDate# OR A.State IN('0','1'))
+			AND A.ValidFlag='1'
+     	]]>		
+     </select>
+     <!-- 查询需要下发的会员活动条件与结果 -->
+   	 <select id="getActConResultList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+     	<![CDATA[
+		SELECT
+			A.BIN_CampaignRuleID AS campRuleId,
+			A.SubCampaignCode AS mainCode,
+			A.ValidFlag AS status,
+			PRT.promotionPrtCode,
+			PRT.promotionPrtUnitCode,
+			PRT.promotionPrtName,
+			PRT.prtType,
+			PRT.prmPrtVendorId,
+			C.Quantity AS activityQty,
+			ISNULL(C.Price,0) AS price,
+			C.GroupNo AS groupNo,
+			C.GroupType AS groupType,
+			C.LogicOpt AS logicOpt,
+			C.DeliveryType AS deliveryType
+			,CASE WHEN D.PropertyName = 'baseProp_city' THEN B.BasePropValue1 END AS cityID
+			,CASE WHEN D.PropertyName = 'baseProp_channal' THEN B.BasePropValue1 END AS channelID
+			,CASE WHEN D.PropertyName = 'baseProp_faction' THEN B.BasePropValue1 END AS factionID
+			,CASE WHEN D.PropertyName = 'baseProp_counter' THEN B.BasePropValue1 END AS counterID
+			,CASE WHEN D.PropertyName = 'baseProp_counter' THEN E.BIN_OrganizationID END AS counterOrgId
+		FROM
+			Campaign.BIN_CampaignRule A
+			JOIN Campaign.BIN_CamRuleCondition B
+			ON(A.BIN_CampaignRuleID = B.BIN_CampaignRuleID
+				AND B.ValidFlag = '1')
+			JOIN Campaign.BIN_CampaignRuleResult C
+			ON(A.BIN_CampaignRuleID = C.BIN_CampaignRuleID
+				AND C.ValidFlag = '1')
+			JOIN Campaign.BIN_CampaignBaseProp D
+			ON(B.BIN_CampaignBasePropID = D.BIN_CampaignBasePropID
+				AND D.PropertyName IN('baseProp_city','baseProp_channal','baseProp_counter','baseProp_faction'))
+			LEFT JOIN Basis.BIN_CounterInfo E
+			ON(B.BasePropValue1 = E.CounterCode
+				AND E.BIN_BrandInfoID = #brandInfoId#)	
+			JOIN (
+		]]>
+		<include refid="BINCPMEACT01.getAllPrtList" />
+		<![CDATA[
+			) PRT
+			ON(C.BIN_ProductVendorID = PRT.prmPrtVendorId
+				AND C.SaleType = PRT.prtType
+				AND PRT.validFlag = '11')
+		WHERE
+			A.BIN_CampaignRuleID = #campRuleId#
+	]]>
+     </select>
+    <!-- 更新会员活动状态 -->
+	<update id="updSubCampState" parameterClass="java.util.HashMap">
+	<![CDATA[
+	UPDATE
+		A
+	SET
+		A.State = #state#
+	FROM		
+		Campaign.BIN_CampaignRule A
+		JOIN Campaign.BIN_Campaign B
+		ON(A.BIN_CampaignID = B.BIN_CampaignID)
+	WHERE
+		A.SubCampaignCode = #mainCode#
+		AND B.BIN_BrandInfoID = #brandInfoId#
+	]]>
+	</update>
+	<!-- 更新会员活动状态 -->
+	<update id="updCampState" parameterClass="java.util.HashMap">
+	<![CDATA[
+	UPDATE
+		Campaign.BIN_Campaign
+	SET 
+		State = '1'
+	WHERE
+		BIN_BrandInfoID = #brandInfoId#
+		AND CampaignFromDate <= #busDate#
+		AND CampaignToDate >= #busDate#
+		AND State = '0'
+		AND ValidFlag = '1'
+	;
+	UPDATE
+		Campaign.BIN_Campaign
+	SET 
+		State = '2'
+	WHERE
+		BIN_BrandInfoID = #brandInfoId#
+		AND CampaignToDate < #busDate#
+		AND state in('0','1')
+		AND ValidFlag = '1'
+	]]>
+	</update>
+	<!-- 删除活动信息主表(接口表)数据 -->
+	<delete id="clearActivitySubject" parameterClass="java.util.HashMap">
+		<![CDATA[  
+			DELETE FROM dbo.ActivityAssociateSubject_SCS
+			WHERE 
+				Brand = #brandCode#
+				AND subject_code = #subjectCode#
+				AND data_source = '1'
+		]]>
+	</delete>
+	<!-- 清空活动关联表(接口表)数据 -->
+	<delete id="clearActivityAssociate" parameterClass="java.util.HashMap">
+		<![CDATA[  
+		DELETE 
+			A
+		FROM 
+			dbo.ActivityAssociateTable_SCS  A
+			JOIN dbo.ActivityAssociateSubject_SCS B
+			ON(A.Brand = B.Brand 
+				AND A.subject_code = B.subject_code
+				AND B.data_source = '1')
+		WHERE
+			A.Brand = #brandCode#
+			AND A.MainCode = #mainCode#
+		]]>
+	</delete>
+	<!-- 删除活动表(接口表)数据 -->
+	<delete id="clearActivityCouter" parameterClass="java.util.HashMap">
+		<![CDATA[  
+			DELETE FROM dbo.ActivityTable_SCS
+			WHERE 
+				Brand = #brandCode# 
+				AND MainCode = #mainCode#
+				AND ActivityCode = #activeCode#
+				AND CHYFlag = '1'
+		]]>
+	</delete>
+	<!-- 逻辑删除活动下发历史 -->
+	<update id="setActivityHisDisabled" parameterClass="java.util.HashMap">
+	<![CDATA[ 
+	UPDATE
+		Promotion.BIN_ActivityTransHis
+	SET
+		ValidFlag = '0',
+	]]>
+	<include refid="BINBECMINC99.updateSql" />	
+	<![CDATA[	
+	WHERE
+		BIN_BrandInfoID = #brandInfoId#
+		AND ActivityType = '1'
+		AND CountActCode = #activeCode#
+	]]>
+	</update>
+	<!-- 更新ActivityTable_SCS -->
+	<update id="updCntActivity" parameterClass="java.util.HashMap">
+	<![CDATA[ 
+	UPDATE
+		dbo.ActivityTable_SCS
+	SET
+		ActivityName = #promotionPrtName#,
+		StartTime = CONVERT(DATETIME,#startTime#),
+		EndTime = CONVERT(DATETIME,#endTime#),
+		Price = #price#,
+		ActivityQty = #activityQty#,
+		GroupNo = #groupNo#,
+		GroupType = #groupType#,
+		LogicOpt = #logicOpt#,
+		DeliveryType = #deliveryType#
+	WHERE
+		Brand = #brandCode#
+		AND MainCode = #mainCode#
+		AND ActivityCode = #activeCode#
+		AND CHYFlag = '1'
+	]]>
+	</update>
+	<!-- 更新ActivityAssociateTable_SCS -->
+	<update id="updActivity" parameterClass="java.util.HashMap">
+	<![CDATA[
+	UPDATE
+		A
+	SET
+		A.MainName = #mainName#,
+		A.times = #times#,
+		A.isShared = #isShared#,
+		A.activity_begin_date = CONVERT(DATETIME,#startTime#),
+		A.activity_end_date = CONVERT(DATETIME,#endTime#),
+		A.deliveryPrice = #deliveryPrice#,
+		A.deliveryPoints = #deliveryPoints#,
+		A.NeedBuyFlag = #needBuyFlag#
+	FROM 
+		dbo.ActivityAssociateTable_SCS  A
+		JOIN dbo.ActivityAssociateSubject_SCS B
+		ON(A.Brand = B.Brand 
+			AND A.subject_code = B.subject_code
+			AND B.data_source = '1')
+	WHERE
+		A.Brand = #brandCode#
+		AND A.MainCode = #mainCode#
+	]]>
+	</update>
+	<!-- 更新ActivityAssociateSubject_SCS -->
+	<update id="updActivitySubject" parameterClass="java.util.HashMap">
+	<![CDATA[ 
+	UPDATE
+		dbo.ActivityAssociateSubject_SCS
+	SET
+		name = #subjectName#,
+		reserve_begin_date = CONVERT(DATETIME,#reserveBeginDate#),
+		reserve_end_date = CONVERT(DATETIME,#reserveEndDate# +' 23:59:59'),
+		activity_begin_date = CONVERT(DATETIME,#activityBeginDate#),
+		activity_end_date = CONVERT(DATETIME,#activityEndDate# +' 23:59:59')
+	WHERE
+		Brand = #brandCode#
+		AND subject_code = #subjectCode#
+		AND data_source = '1'
+	]]>
+	</update>
+</sqlMap>

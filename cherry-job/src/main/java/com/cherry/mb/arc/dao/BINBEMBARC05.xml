@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sqlMap PUBLIC "-//iBATIS.com//DTD SQL Map 2.0//EN" "http://ibatis.apache.org/dtd/sql-map-2.dtd">
+<sqlMap namespace="BINBEMBARC05">
+	<!-- 更新同步控制状态 -->
+	<update id="updateGetStatus" parameterClass="java.util.HashMap">
+	<![CDATA[
+		UPDATE
+	]]>
+	<isNotEmpty property="upCount">
+		TOP(#upCount#)
+	</isNotEmpty>
+	<![CDATA[
+			A
+		SET
+			A.GetStatus=#getStatus_New#
+		FROM
+			dbo.I_PVWEB_change_points A
+		WHERE
+			A.GetStatus=#getStatus_Old# AND
+			A.Brand = #brandCode#
+	]]>
+	</update>
+	
+	<!-- 取得接口表中处于处理中的积分奖励数据 -->
+	<select id ="getPointChangeInfo" parameterClass="java.util.HashMap" resultClass ="java.util.HashMap">
+	<![CDATA[
+		SELECT 
+			Brand AS BrandCode
+		    ,Memcode AS MemberCode
+		    ,PointChange AS ModifyPoint
+		    ,ChangeReason AS Reason
+		    ,CONVERT(CHAR(19),changeTime,120) AS BusinessTime
+		FROM 
+			dbo.I_PVWEB_change_points
+		WHERE
+			GetStatus = '1' AND
+			Brand = #brandCode#
+	]]>
+	</select>
+	
+	<!-- 更新处理过的接口表数据的状态与GETTIME,有异常时将异常信息记录到GetError -->
+	<update id="updateGetStatusEnd" parameterClass="java.util.HashMap">
+		<![CDATA[
+			UPDATE
+				dbo.I_PVWEB_change_points
+			SET
+                GetStatus = #getStatus#
+                ,Gettime = GETDATE()
+        ]]>
+        <isNotEmpty property="getError">
+        		,GetError = LEFT(#getError#,500)
+        </isNotEmpty>
+        <![CDATA[
+			WHERE 
+			    Memcode = #MemberCode# AND
+			    GetStatus = '1' AND
+				Brand = #brandCode#
+		]]>
+    </update>
+</sqlMap>

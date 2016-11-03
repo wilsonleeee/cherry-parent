@@ -1,0 +1,188 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sqlMap PUBLIC "-//iBATIS.com//DTD SQL Map 2.0//EN" "http://ibatis.apache.org/dtd/sql-map-2.dtd">
+<sqlMap namespace="BINOTYIN07">
+	
+	<!-- 取得指定同步状态的盘点单据号List  -->
+    <select id="getSTNoIFOfPrtStockTakingListBySync" parameterClass="java.util.HashMap" resultClass="java.lang.String">
+	  <![CDATA[
+		  SELECT
+			A.StockTakingNoIF as stNoIF	
+		  FROM 
+			 Inventory.BIN_ProductStockTaking A WITH(NOLOCK)
+		  WHERE
+			  A.SynchFlag = #synchFlag#
+		  AND A.ValidFlag = '1'
+		  AND A.BIN_OrganizationInfoID = #organizationInfoId#
+		  AND A.BIN_BrandInfoID = #brandInfoId#
+		]]>
+	    <![CDATA[AND EXISTS ( ]]>
+			<include refid="BINBECMINC99.getBillByTestModList" />
+		<![CDATA[  
+		    AND A.BIN_OrganizationID = C99.BIN_OrganizationID)
+		]]> 
+    </select>
+    
+	<!-- 根据新后台单据号查询颖通产品盘点接口表的单据号List  -->
+    <select id="getPstListBySTNoIFForOT" parameterClass="java.util.HashMap" resultClass="java.lang.String">
+      <![CDATA[
+		SELECT
+			DISTINCT
+			DocEntry AS stNoIF
+		FROM 
+			dbo.CPS_IMPORT_STKTAKE WITH(NOLOCK)
+		WHERE
+			DocEntry IN
+	  ]]>
+			<iterate property="stNoIFList" open="(" close=")" conjunction=",">
+				#stNoIFList[]#
+			</iterate>
+		<isNotEmpty property="brandCode" prepend="AND">
+			Brand = #brandCode#
+		</isNotEmpty>
+      <![CDATA[
+      UNION
+		SELECT
+			DISTINCT
+			DocEntry AS stNoIF
+		FROM 
+			dbo.CPS_IMPORT_STKTAKE_SUC WITH(NOLOCK)
+		WHERE
+			DocEntry IN
+	  ]]>
+			<iterate property="stNoIFList" open="(" close=")" conjunction=",">
+				#stNoIFList[]#
+			</iterate>
+		<isNotEmpty property="brandCode" prepend="AND">
+			Brand = #brandCode#
+		</isNotEmpty>
+    </select>
+    
+    <!-- 更新盘点单据主表的同步状态 -->
+    <update id="updProductStockTakingBySync" parameterClass="java.util.HashMap">
+	  UPDATE 
+	  <isNotEmpty property="upCount">
+	  	TOP(#upCount#)
+	  </isNotEmpty>
+	    A
+	  SET 
+		A.SynchFlag = #synchFlag_New#,
+		<isNotEmpty property="updateTime">
+			A.UpdateTime=#updateTime#,
+		</isNotEmpty>
+		<isEmpty property="updateTime">
+			A.UpdateTime=GETDATE(),
+		</isEmpty>
+		<![CDATA[
+			A.UpdatedBy=#updatedBy#,
+			A.UpdatePGM=#updatePGM#,
+			A.ModifyCount=A.ModifyCount+1
+		]]>
+	  FROM Inventory.BIN_ProductStockTaking A
+	  WHERE
+	    A.ValidFlag = '1'
+	  	<isNotEmpty property="synchFlag_Old" prepend="AND">
+		 A.SynchFlag = #synchFlag_Old#
+	  	</isNotEmpty>
+	  	<isNotEmpty property="stNoIFList" prepend="AND">
+	  		A.StockTakingNoIF IN
+			<iterate property="stNoIFList" open="(" close=")" conjunction=",">
+				#stNoIFList[]#
+			</iterate>
+	  	</isNotEmpty>
+	  AND A.BIN_OrganizationInfoID = #organizationInfoId#
+	  AND A.BIN_BrandInfoID = #brandInfoId#
+	  <![CDATA[
+	  AND ISNULL(A.Comments,'备注为NULL') <> 'BATCH同步库存'
+	  ]]>
+	  <![CDATA[AND EXISTS ( ]]>
+			<include refid="BINBECMINC99.getBillByTestModList" />
+      <![CDATA[  
+		  AND A.BIN_OrganizationID = C99.BIN_OrganizationID)
+	  ]]>  
+    </update>
+    
+    <!-- 取得产品盘点主表同步状态为"同步处理中"[syncFlag=2]盘点数据（主数据、明细数据） -->
+    <select id="getProductStockListBySyncFlag" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+        <![CDATA[
+		SELECT
+			A.StockTakingNoIF AS DocEntry,
+			A.Date AS DocDate,
+			B.DetailNo AS LineNum,
+			C.DepartCode AS Shop,
+			P.ItemCode AS ItemCode,
+			B.GainQuantity AS Quantity,
+		]]>	
+		<dynamic>
+			<isNotEmpty property="language">
+				<isEqual property="language" compareValue="en_US">
+					P.NameForeign AS ItemDesc,
+				</isEqual>
+				<isEqual property="language" compareValue="zh_CN">
+					P.NameTotal AS ItemDesc,
+				</isEqual>
+			</isNotEmpty>	
+			<isEmpty property="language">
+				P.NameTotal AS ItemDesc,
+			</isEmpty>
+		</dynamic>
+		<![CDATA[
+			P.UnitCode,
+			PV.BarCode,
+			PV.BIN_ProductVendorID AS ProductVendorID,
+			#brandCode# AS brandCode
+		
+		FROM Inventory.BIN_ProductStockTaking A WITH(NOLOCK)
+		JOIN Inventory.BIN_ProductTakingDetail B WITH(NOLOCK) ON A.BIN_ProductStockTakingID = B.BIN_ProductTakingID
+		JOIN Basis.BIN_Organization C WITH(NOLOCK) ON (A.BIN_OrganizationID = C.BIN_OrganizationID)
+		
+		JOIN Basis.BIN_ProductVendor PV WITH(NOLOCK) ON (PV.BIN_ProductVendorID = B.BIN_ProductVendorID)
+		LEFT JOIN Basis.BIN_Product P WITH(NOLOCK) ON(P.BIN_ProductID = PV.BIN_ProductID)
+		     
+		WHERE  
+		  	  A.BIN_OrganizationInfoID = #organizationInfoId#
+		  AND A.BIN_BrandInfoID = #brandInfoId#
+		  AND A.ValidFlag = '1'
+		  AND A.SynchFlag = #synchFlag#
+		]]>  
+	    <![CDATA[AND EXISTS ( ]]>
+			<include refid="BINBECMINC99.getBillByTestModList" />
+		<![CDATA[  
+		    AND A.BIN_OrganizationID = C99.BIN_OrganizationID)
+		]]> 
+    </select>
+    
+    <!-- 插入颖通盘点单接口表 -->
+   	<insert id="insertCpsImportStktake" parameterClass="java.util.HashMap">
+   	<![CDATA[
+		INSERT INTO dbo.CPS_IMPORT_STKTAKE (
+			DocEntry,
+			DocDate,
+			Shop,
+			ItemCode,
+			Quantity,
+			CreateDate,
+			ItemDesc,
+			UnitCode,
+			BarCode,
+			ProductVendorID,
+			Brand
+		)
+		VALUES
+		(
+			#DocEntry#,
+			#DocDate#,
+			#Shop#,
+			#ItemCode#,
+			#Quantity#,
+			GETDATE(),
+			#ItemDesc#,
+			#UnitCode#,
+			#BarCode#,
+			#ProductVendorID#,
+			#brandCode#
+			
+		)
+	]]>
+   	</insert>
+   	
+</sqlMap>
