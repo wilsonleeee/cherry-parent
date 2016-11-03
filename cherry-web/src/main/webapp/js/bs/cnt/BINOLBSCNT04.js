@@ -202,7 +202,9 @@ BINOLBSCNT04.prototype = {
 			}).result(function(event, data, formatted){
 				$('#belongFactionName').val(data[1]);
 				$('#belongFaction').val(data[0]);
-			});			
+			}).bind("change",function(){
+				$('#belongFaction').val("");
+			});
 		},
 		
 		/**
