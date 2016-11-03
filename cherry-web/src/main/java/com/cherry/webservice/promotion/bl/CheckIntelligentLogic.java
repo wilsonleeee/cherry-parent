@@ -176,19 +176,19 @@ public class CheckIntelligentLogic implements CheckIntelligent_IF {
 			logger.error("调用cloud_MatchRule_JIAHUA  结束，result="+result);
 			Map<String, Object> tmp = new HashMap<String, Object>();
 			if (saleresult_out.size() <= 0) {
-				//调用是否可发券接口
-				Map<String,Object> interface_input=new HashMap<String, Object>();
-				interface_input.put("Main_map", main_map);
-				interface_input.put("cart_map", cart_list);
-				//此处调用接口(会员下所有的券信息)
-				List<Map<String, Object>> coupon_list=coupon_IF.getCouponList(interface_input);
-				//无门槛券所有的信息
-				int noMemberCouponCount=binOLSSPRM74_IF.getNoMemberCouponCount();
-				if((coupon_list != null && coupon_list.size() > 0) || noMemberCouponCount>0){
+//				//调用是否可发券接口
+//				Map<String,Object> interface_input=new HashMap<String, Object>();
+//				interface_input.put("Main_map", main_map);
+//				interface_input.put("cart_map", cart_list);
+//				//此处调用接口(会员下所有的券信息)
+//				List<Map<String, Object>> coupon_list=coupon_IF.getCouponList(interface_input);
+//				//无门槛券所有的信息
+//				int noMemberCouponCount=binOLSSPRM74_IF.getNoMemberCouponCount();
+//				if((coupon_list != null && coupon_list.size() > 0) || noMemberCouponCount>0){
 					tmp.put("HasPromotion", "2");
-				}else{
-					tmp.put("HasPromotion", "0");
-				}
+//				}else{
+//					tmp.put("HasPromotion", "0");
+//				}
 			} else {
 				tmp.put("HasPromotion", "1");
 			}
