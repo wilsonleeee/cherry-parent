@@ -134,7 +134,7 @@ public class CheckIntelligentLogic implements CheckIntelligent_IF {
 			
 			main_map.put("originalAmount", salePrice);//折前金额
 			main_map.put("totalQuantity", totalQuantity);//商品总数量
-			main_map.put("totalAmount", salePrice);//应收总金额
+			main_map.put("TotalAmount", salePrice);//应收总金额
 			main_map.put("computedPoint", "0");//已经使用的积分
 			main_map.put("discountAmount", "0");
 			//如果memberLevel为空的话，不写入memberCode
