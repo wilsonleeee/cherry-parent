@@ -573,14 +573,19 @@ public class BINOLBSCNT04_Action extends BaseAction implements
 			}
 		}
 		// 业务负责人不能超过50位验证
-				if (form.getBusniessPrincipal() != null
-						&& form.getBusniessPrincipal().length() > 50) {
-					this.addFieldError(
-							"busniessPrincipa1",
-							getText("ECM00020", new String[] { getText("PBS00098"),
-									
-									"50" }));
-				}
+		if (form.getBusniessPrincipal() != null
+				&& form.getBusniessPrincipal().length() > 50) {
+			this.addFieldError(
+					"busniessPrincipa1",
+					getText("ECM00020", new String[] { getText("PBS00098"),
+
+							"50" }));
+		}
+
+		//柜台所属名称不存在
+		if(ConvertUtil.isBlank(form.getBelongFaction()) && !ConvertUtil.isBlank(form.getBelongFactionName())){
+			this.addFieldError("belongFactionName", getText("EBS00122"));
+		}
 	}
 
 	/**

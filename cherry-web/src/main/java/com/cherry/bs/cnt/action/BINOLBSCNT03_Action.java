@@ -341,6 +341,11 @@ public class BINOLBSCNT03_Action extends BaseAction implements ModelDriven<BINOL
 							
 							"50" }));
 		}
+
+		//柜台所属名称不存在
+		if(ConvertUtil.isBlank(form.getBelongFaction()) && !ConvertUtil.isBlank(form.getBelongFactionName())){
+			this.addFieldError("belongFactionName", getText("EBS00122"));
+		}
 	}
 	
 	/** 柜台详细信息 */

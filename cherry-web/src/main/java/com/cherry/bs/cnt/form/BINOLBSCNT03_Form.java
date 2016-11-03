@@ -159,6 +159,9 @@ public class BINOLBSCNT03_Form {
 	
 	/** 柜台所属系统*/
 	private String belongFaction;
+
+	/** 柜台所属系统*/
+	private String belongFactionName;
 	
 	/** 运营模式 */
 	private String operateMode;
@@ -603,6 +606,13 @@ public class BINOLBSCNT03_Form {
 	public void setManagingType2(String managingType2) {
 		this.managingType2 = managingType2;
 	}
-	
+
+	public String getBelongFactionName() {
+		return belongFactionName;
+	}
+
+	public void setBelongFactionName(String belongFactionName) {
+		this.belongFactionName = belongFactionName;
+	}
 	
 }
