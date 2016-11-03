@@ -31,6 +31,9 @@ public class TmallKeyDTO {
 	
 	/**合并会员区分*/
 	private String mergeFlag;
+	
+	/**会员模式*/
+	private String memberModel;
 
 	public String getBrandName() {
 		return brandName;
@@ -110,5 +113,13 @@ public class TmallKeyDTO {
 
 	public void setMergeFlag(String mergeFlag) {
 		this.mergeFlag = mergeFlag;
+	}
+
+	public String getMemberModel() {
+		return memberModel;
+	}
+
+	public void setMemberModel(String memberModel) {
+		this.memberModel = memberModel;
 	}
 }

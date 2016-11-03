@@ -237,7 +237,16 @@ public class BINOLMBTIF01_BL implements BINOLMBTIF01_IF {
 					map.put("taobao_nick", bindMap.get("taobaoNick"));
 				}
 				map.put("tmallBindTime", bindMap.get("tmallBindTime"));
+				String memberMode = TmallKeys.getMemberModel(brandCode);
+				// 会员模式：通用版本
+				boolean isCommMem = "1".equals(memberMode);
+				if (isCommMem) {
+					map.put("UPNICKNAME", "1");
+				}
 				int result = binOLMBTIF01_Service.updateBindInfo(map);
+				if (isCommMem) {
+					map.remove("UPNICKNAME");
+				}
 				if (result == 0) {
 					rst.setBind_code("E01");
 					logger.error(MTM00006 + mixMobile);
@@ -371,6 +380,12 @@ public class BINOLMBTIF01_BL implements BINOLMBTIF01_IF {
 			if (!CherryChecker.isNullOrEmpty(tmallCounters)) {
 				String[] arr = tmallCounters.split(",");
 				map.put("counterCodeBelong", arr[0]);
+			}
+			String brandCode = (String) map.get("brandCode");
+			String memberMode = TmallKeys.getMemberModel(brandCode);
+			// 会员模式：通用版本
+			if ("1".equals(memberMode)) {
+				map.put("nickname", taobao_nick);
 			}
 			int memberId = binOLMBTIF01_Service.addMemberInfo(map);
 			map.put("memberInfoId", memberId);

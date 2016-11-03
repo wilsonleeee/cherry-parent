@@ -96,6 +96,17 @@ public class TmallKeys implements InitializingBean{
 		return false;
 	}
 	
+	public static String getMemberModel(String brandCode) {
+		if (null != keyList && !CherryChecker.isNullOrEmpty(brandCode)) {
+			for (TmallKeyDTO tmallKey : keyList) {
+				if (brandCode.trim().equals(tmallKey.getBrandCode())) {
+					return tmallKey.getMemberModel();
+				}
+			}
+		}
+		return null;
+	}
+	
 	/**
 	 * <p>
 	 * 加载所有key
