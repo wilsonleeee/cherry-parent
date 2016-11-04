@@ -137,6 +137,7 @@ public class BINOLSSPRM76_Action extends BaseAction implements ModelDriven<BINOL
 		map.put("bpCode", ConvertUtil.getString(form.getSearchMemberBP()));
 		map.put("relationBill", ConvertUtil.getString(form.getSearchRelationBill()));
 		map.put("couponRule", ConvertUtil.getString(form.getCouponRule()));
+		map.put("couponRuleName", ConvertUtil.getString(form.getCouponRuleName()));
 		// dataTable上传的参数设置到map
 		ConvertUtil.setForm(form, map);
 		map.put("validFlag", ConvertUtil.getString(form.getValidFlag()));	

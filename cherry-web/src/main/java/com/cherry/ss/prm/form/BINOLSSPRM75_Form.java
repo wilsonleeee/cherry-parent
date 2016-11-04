@@ -59,7 +59,18 @@ public class BINOLSSPRM75_Form extends DataTable_BaseForm{
 	
 	/**会员BP号 */
 	private String BPCode;
-	
+
+	/**券规则名称*/
+	private String couponRuleName;
+
+	public String getCouponRuleName() {
+		return couponRuleName;
+	}
+
+	public void setCouponRuleName(String couponRuleName) {
+		this.couponRuleName = couponRuleName;
+	}
+
 	public String getCouponRule() {
 		return couponRule;
 	}

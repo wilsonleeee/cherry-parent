@@ -288,6 +288,7 @@ public class BINOLSSPRM75_Action extends BaseAction implements ModelDriven<BINOL
 		map.put("bpCode", form.getBPCode());
 		map.put("relationBill", form.getRelationBill());
 		map.put("couponRule", form.getCouponRule());
+		map.put("couponRuleName", form.getCouponRuleName());
 		map.put("validFlag", "1");
 		
 		commParams(map);

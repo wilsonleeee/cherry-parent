@@ -30,7 +30,7 @@
 				<%--查询条件 --%>
 	            <div class="box-header"> <strong><span class="ui-icon icon-ttl-search"></span><s:text name="global.page.condition"/></strong><%-- <input id ="ruleValidFlag" type="checkbox" value="1" name="ruleValidFlag">包含停用规则--%></div>
 	            <div class="box-content clearfix">
-	            	<div class="column" style="width:49%; height:160px;">
+	            	<div class="column" style="width:49%; height:180px;">
 	            		<p>
 	            			<label style="width:80px;"><s:text name="CouponNo"/></label>
 	            			<s:textfield name="couponNo" cssClass="text" id="couponNo"/>
@@ -58,9 +58,14 @@
 								<s:select name="couponType"  list='#application.CodeTable.getCodes("1383")' listKey="CodeKey" listValue="Value"
 								headerKey="" headerValue="%{selectAll}" />
 							</span>
-	                	</p> 
+	                	</p>
+						<p>
+								<%--券规则名称--%>
+							<label style="width:80px;"><s:text name="CouponRuleName"/></label>
+							<s:textfield name="couponRuleName" cssClass="text" id="cuponRuleName"/>
+						</p>
 	            	</div>
-	            	<div class="column last" style="width:50%; height:120px;">
+	            	<div class="column last" style="width:50%; height:140px;">
 	            		<p>
 	                  		<%--使用单据号--%>
 	                  		<label style="width:80px;"><s:text name="BillCode"/></label>

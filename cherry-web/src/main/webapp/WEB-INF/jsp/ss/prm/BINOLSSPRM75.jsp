@@ -78,6 +78,10 @@
 	            			<label style="width:80px;"><s:text name="MemberBPCode"/></label>
 	            			<s:textfield name="BPCode" cssClass="text" id="BPCode"/>
 	            		</p>
+						<p>
+							<label style="width:80px;"><s:text name="CouponRuleName"/></label>
+							<s:textfield name="couponRuleName" cssClass="text" id="couponRuleName"/>
+						</p>
 	              	</div>
 	            </div>
         		<div class="clearfix">
