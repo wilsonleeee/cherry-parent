@@ -282,20 +282,16 @@ public class BINBAT148_BL {
 						
 						String cntCodeByIF = ConvertUtil.getString(cntPrtMap.get("CounterCode")); // 柜台号
 						String IFProductId = ConvertUtil.getString(cntPrtMap.get("IFProductId")); // 产品唯一性标识
-						cntPrtMap.putAll(paraMap);
-						
+						//cntPrtMap.putAll(paraMap);
+						cntPrtMap.put("brandInfoId", paraMap.get("brandInfoId"));
+						cntPrtMap.put("pdTVersion", paraMap.get("pdTVersion"));
 						// 查询产品在新后台是否存在
 						int oldPrtId = binBAT148_Service.searchProductId(cntPrtMap);
 						if(oldPrtId == 0){
 							logger.outLog("产品信息不存在，IFProductId(" + IFProductId + ")" , CherryBatchConstants.LOGGER_ERROR);
 							flag = CherryBatchConstants.BATCH_WARNING;
 							failCount++;
-
-							Map<String, Object> sToS3Map = new HashMap<String, Object>();
-							sToS3Map.putAll(paraMap);
-							sToS3Map.put("CounterCode", cntCodeByIF);
-							sToS3Map.put("IFProductId", IFProductId);
-							binBAT148_Service.updIFOffersBySync3(sToS3Map);
+							binBAT148_Service.updIFOffersBySync3(cntPrtMap);
 						}else{
 							
 							// =========== Step2.C --写入柜台对应的默认特价产品方案明细
@@ -305,21 +301,12 @@ public class BINBAT148_BL {
 							try{
 								Map<String, Object> mergeResultMap = binBAT148_Service.mergeProductSpecialOfferSoluDetail(cntPrtMap);
 								
-								Map<String, Object> sToS2Map = new HashMap<String, Object>();
-								sToS2Map.putAll(paraMap);
-								sToS2Map.put("CounterCode", cntCodeByIF);
-								sToS2Map.put("IFProductId", IFProductId);
-								binBAT148_Service.updIFOffersBySync2(sToS2Map);
+								binBAT148_Service.updIFOffersBySync2(cntPrtMap);
 							}catch(Exception ex){
 								
 								flag = CherryBatchConstants.BATCH_WARNING;
-								failCount++;
-								
-								Map<String, Object> sToS3Map = new HashMap<String, Object>();
-								sToS3Map.putAll(paraMap);
-								sToS3Map.put("CounterCode", cntCodeByIF);
-								sToS3Map.put("IFProductId", IFProductId);
-								binBAT148_Service.updIFOffersBySync3(sToS3Map);
+								failCount++;								
+								binBAT148_Service.updIFOffersBySync3(cntPrtMap);
 								
 								// EOT00158=【柜台特价方案导入（标准接口）】处理写入特价产品方案明细表失败。特价产品方案编码：({0})，柜台编码：({1})，IFProductID：({2})。	
 								BatchLoggerDTO batchLoggerDTO = new BatchLoggerDTO();

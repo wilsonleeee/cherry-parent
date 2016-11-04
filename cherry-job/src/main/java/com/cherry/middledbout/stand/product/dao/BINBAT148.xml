@@ -149,7 +149,7 @@
 	      IF_Offers A 
 		  WHERE
 		  	  A.SynchFlag = '1' AND
-		  	  A.BrandCode = #brandCode# AND
+		  	  A.BrandCode = #BrandCode# AND
 	 		  A.CounterCode = #CounterCode# AND
 	 		  A.IFProductId = #IFProductId#	
 		]]>
@@ -165,7 +165,7 @@
 	      IF_Offers A 
 		  WHERE
 		  	  A.SynchFlag = '1' AND
-		  	  A.BrandCode = #brandCode# AND
+		  	  A.BrandCode = #BrandCode# AND
 	 		  A.CounterCode = #CounterCode# AND
 	 		  A.IFProductId = #IFProductId#	
 		]]>
@@ -175,29 +175,31 @@
 	<select id="getStandardProductByOffersList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
 		SELECT 
 		 	TOP (#batchSize#)
-			BrandCode,
-			CounterCode,
-			StartDate,
-			EndDate,
+			A.BrandCode,
+			A.CounterCode,
+			A.StartDate,
+			A.EndDate,
 						
-			IFProductId,
-			UnitCode,
-			BarCode,
-			ProductName,
-			SalePrice,
-			MemPrice,
-			MemPrice2,
-			Comments,
-			
-			PuttingTime,
-			SynchFlag,
-			SynchMsg,
-			SynchTime
+			A.IFProductId,
+			A.UnitCode,
+			A.BarCode,
+			A.ProductName,
+			A.SalePrice,
+			A.MemPrice,
+			A.MemPrice2
 		FROM
-			IF_Offers WITH(NOLOCK)
+			[dbo].[IF_Offers] A WITH(NOLOCK)
 		WHERE
-			BrandCode = #brandCode#
-			AND SynchFlag ='1'
+			EXISTS  (
+				SELECT * FROM [dbo].[IF_Offers] 
+				WHERE 
+					BrandCode = A.BrandCode 
+					AND IFProductId = A.IFProductId 
+					AND CounterCode = A.CounterCode 
+					AND PuttingTime &lt; A.PuttingTime
+			)
+			AND A.BrandCode = #brandCode#
+			AND A.SynchFlag ='1'
 	</select>
 	
    	<!--查询产品信息 -->

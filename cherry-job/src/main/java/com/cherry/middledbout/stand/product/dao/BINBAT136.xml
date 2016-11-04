@@ -151,7 +151,7 @@
 		      dbo.IF_ProductByCounter A 		      
 		  WHERE
 		  	  A.SynchFlag = '1' AND
-		  	  A.BrandCode = #brandCode# AND
+		  	  A.BrandCode = #BrandCode# AND
 	 		  A.CounterCode = #CounterCode# AND
 	 		  A.IFProductId = #IFProductId# 		
 		]]>
@@ -171,7 +171,7 @@
 		      
 		  WHERE
 		  	  A.SynchFlag = '1' AND
-		  	  A.BrandCode = #brandCode# AND
+		  	  A.BrandCode = #BrandCode# AND
 	 		  A.CounterCode = #CounterCode# AND
 	 		  A.IFProductId = #IFProductId# 		
 		]]>
@@ -179,29 +179,32 @@
 
 	<!-- 获取指定写入时间的柜台产品数据 -->
 	<select id="getStandardProductByCounterList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
-		SELECT 
+		SELECT
 		 	TOP (#batchSize#)
-			BrandCode,
-			CounterCode,
-			IFProductId,
-			Mode,
-			Grade,
-			SecQty,
-			DisplayQty,
-			SalePrice,
-			MemPrice,
-			MemPrice2,
-			ValidFlag,
-			Status,
-			PuttingTime,
-			SynchFlag,
-			SynchMsg,
-			SynchTime
+			A.BrandCode,
+			A.CounterCode,
+			A.IFProductId,
+			A.Mode,
+			A.Grade,
+			A.SecQty,
+			A.DisplayQty,
+			A.SalePrice,
+			A.MemPrice,
+			A.MemPrice2,
+			A.ValidFlag
 		FROM
-			IF_ProductByCounter WITH(NOLOCK)
+			[dbo].[IF_ProductByCounter] A WITH(NOLOCK)
 		WHERE
-			BrandCode = #brandCode#
-			AND SynchFlag ='1'
+			EXISTS  (
+				SELECT * FROM [dbo].[IF_ProductByCounter] 
+				WHERE 
+					BrandCode = A.BrandCode 
+					AND IFProductId = A.IFProductId 
+					AND CounterCode = A.CounterCode 
+					AND PuttingTime &lt; A.PuttingTime
+			)
+			AND A.BrandCode = #brandCode#
+			AND A.SynchFlag ='1'
 	</select>
 	
    	<!--查询产品信息 -->
