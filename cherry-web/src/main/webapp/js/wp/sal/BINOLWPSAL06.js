@@ -747,6 +747,7 @@ BINOLWPSAL06_GLOBAL.prototype = {
 				}
 				var param_map = eval("("+data+")");
 				var payState=param_map.payState;
+				var payMessage=param_map.payMessage;
 				if(payState == "SUCCESS"){
 					BINOLWPSAL06.sendMQ(billDetailInfo);
 					// 显示提示信息
@@ -762,7 +763,7 @@ BINOLWPSAL06_GLOBAL.prototype = {
 				}else{
 					// 显示提示信息
 					BINOLWPSAL02.showMessageDialog({
-						message:"操作失败",
+						message:payMessage,
 						type:"MESSAGE",
 						focusEvent:function(){
 							// 最后一行第一个可见的文本框获得焦点

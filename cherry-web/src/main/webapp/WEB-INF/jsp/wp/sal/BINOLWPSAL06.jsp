@@ -2,7 +2,7 @@
 <%@ taglib prefix="s" uri="/struts-tags" %>
 <%@ taglib prefix="cherry" uri="/cherry-tags"%>
 <script type="text/javascript" src="/Cherry/js/lib/jquery-ui-i18n.js"></script>
-<script type="text/javascript" src="/Cherry/js/wp/sal/BINOLWPSAL06.js?V=20161014"></script>
+<script type="text/javascript" src="/Cherry/js/wp/sal/BINOLWPSAL06.js?V=20161107"></script>
 <s:i18n name="i18n.wp.BINOLWPSAL06">
 <div class="hide">
 	<s:url id="s_dgSearchUrl" value="/wp/BINOLWPSAL06_search" />
