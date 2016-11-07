@@ -16,7 +16,7 @@ BINOLWPSAL06_GLOBAL.prototype = {
 		                    {"sName" : "memberCode", "sWidth" : "15%"},
 		                    {"sName" : "baName", "sWidth" : "10%"},
 		                    {"sName" : "quantity", "sWidth" : "8%"},
-		                    {"sName" : "amount", "sWidth" : "12%"},
+		                    {"sName" : "amount", "sWidth" : "10%"},
 		                    {"sName" : "act", "sWidth" : "10%", "bSortable": false}
 		                    ];
 		var counterCode = $("#dgCounterCode").val();
@@ -725,7 +725,54 @@ BINOLWPSAL06_GLOBAL.prototype = {
 				}
 			}
 		});
-    }
+    },
+	"getBillState":function(billDetailInfo){
+		var getPayResultBySendMQUrl=$("#getPayResultBySendMQ").attr("href");
+		var params="billId="+billDetailInfo;
+		cherryAjaxRequest({
+			url: getPayResultBySendMQUrl,
+			param: params,
+			callback: function(data) {
+				if(data == null || data == "" || data == undefined || data == "ERROR"){
+					// 显示提示信息
+					BINOLWPSAL02.showMessageDialog({
+						message:"操作失败",
+						type:"MESSAGE",
+						focusEvent:function(){
+							// 最后一行第一个可见的文本框获得焦点
+							BINOLWPSAL02.firstInputSelect();
+						}
+					});
+					return;
+				}
+				var param_map = eval("("+data+")");
+				var payState=param_map.payState;
+				if(payState == "SUCCESS"){
+					BINOLWPSAL06.sendMQ(billDetailInfo);
+					// 显示提示信息
+					//BINOLWPSAL02.showMessageDialog({
+					//	message:"操作成功",
+					//	type:"MESSAGE",
+					//	focusEvent:function(){
+					//		// 最后一行第一个可见的文本框获得焦点
+					//		BINOLWPSAL02.firstInputSelect();
+					//	}
+					//});
+					//BINOLWPSAL06.search();
+				}else{
+					// 显示提示信息
+					BINOLWPSAL02.showMessageDialog({
+						message:"操作失败",
+						type:"MESSAGE",
+						focusEvent:function(){
+							// 最后一行第一个可见的文本框获得焦点
+							BINOLWPSAL02.firstInputSelect();
+						}
+					});
+				}
+			}
+		});
+	}
 };
 
 var BINOLWPSAL06 = new BINOLWPSAL06_GLOBAL();

@@ -2468,7 +2468,7 @@ BINOLWPSAL02_GLOBAL.prototype = {
 				
 				var dialogSetting = {
 					dialogInit: "#dialogInit",
-					width: 800,
+					width: 900,
 					height: 360,
 					title: $("#hangBillsDialogTitle").text(),
 					closeEvent:function(){

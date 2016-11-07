@@ -1,11 +1,5 @@
 package com.cherry.wp.sal.bl;
 
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-
-import javax.annotation.Resource;
-
 import com.cherry.cm.cmbeans.UserInfo;
 import com.cherry.cm.cmbussiness.bl.BINOLCM14_BL;
 import com.cherry.cm.core.CherryConstants;
@@ -15,6 +9,11 @@ import com.cherry.cm.util.DateUtil;
 import com.cherry.wp.sal.form.BINOLWPSAL05_Form;
 import com.cherry.wp.sal.interfaces.BINOLWPSAL05_IF;
 import com.cherry.wp.sal.service.BINOLWPSAL05_Service;
+
+import javax.annotation.Resource;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 public class BINOLWPSAL05_BL implements BINOLWPSAL05_IF{
 
@@ -166,6 +165,8 @@ public class BINOLWPSAL05_BL implements BINOLWPSAL05_IF{
 			//单据类型
 			mainData.put("billClassify", form.getBillClassify());
 		}
+		//数据写入挂单主表之前先更新之前已有的相同单据号的数据为无效数据
+		binOLWPSAL05_Service.updateBillRecodeValidFlag(mainData);
 		//将数据写入挂单主表
 		hangBillId = binOLWPSAL05_Service.insertHangBillRecord(mainData);
 		if(hangBillId > 0){
@@ -309,7 +310,8 @@ public class BINOLWPSAL05_BL implements BINOLWPSAL05_IF{
 					billDetailMap.put("createdBy", userInfo.getBIN_UserID());
 					// 更新人
 					billDetailMap.put("updatedBy", userInfo.getBIN_UserID());
-					
+					//写入明细之前将所有之前的明细数据更新为无效数据
+					binOLWPSAL05_Service.updateBillRecodeDetailValidFlag(mainData);
 					//写入挂单明细数据
 					binOLWPSAL05_Service.insertHangBillDetail(billDetailMap);
 				}

@@ -1,12 +1,5 @@
 package com.cherry.wp.sal.bl;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-
-import javax.annotation.Resource;
-
 import com.cherry.cm.activemq.interfaces.BINOLMQCOM02_IF;
 import com.cherry.cm.cmbeans.UserInfo;
 import com.cherry.cm.cmbussiness.bl.BINOLCM14_BL;
@@ -19,7 +12,14 @@ import com.cherry.mq.mes.common.MessageConstants;
 import com.cherry.wp.sal.form.BINOLWPSAL03_Form;
 import com.cherry.wp.sal.interfaces.BINOLWPSAL03_IF;
 import com.cherry.wp.sal.service.BINOLWPSAL03_Service;
-import org.slf4j.*;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import javax.annotation.Resource;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 public class BINOLWPSAL03_BL implements BINOLWPSAL03_IF{
 
@@ -1193,5 +1193,10 @@ public class BINOLWPSAL03_BL implements BINOLWPSAL03_IF{
 		form.setGiveChange(ConvertUtil.getString(billInfo.get("giveChange")));
 		form.setMemberLevel(ConvertUtil.getString(billInfo.get("memberLevel")));
 	}
-	
+
+	@Override
+	public Map<String,Object> getHangBillInfo(Map<String, Object> map) {
+		return binOLWPSAL03_Service.getHangBillInfo(map);
+	}
+
 }

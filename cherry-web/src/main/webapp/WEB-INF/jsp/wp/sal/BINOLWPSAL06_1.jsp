@@ -34,6 +34,12 @@
 						<span class="wp_search_text"><s:text name="wpsal06.getBill" /></span>
 					</button>
 				</s:if>
+				<s:elseif test='"2" == collectStatus'>
+					<button id="dgBtnGetBill" class="wp_search_s" type="button" onclick="BINOLWPSAL06.getBillState('${hangBillId}');return false;">
+						<span class="icon_search"></span>
+						<span class="wp_search_text">获取结果重试</span>
+					</button>
+				</s:elseif>
 				<s:else>
 					<button id="dgBtnGetBill" class="wp_search_s" type="button" onclick="BINOLWPSAL06.sendMQ('${hangBillId}');return false;">
 						<span class="icon_search"></span>

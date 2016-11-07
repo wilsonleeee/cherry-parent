@@ -11,6 +11,8 @@
 	<a id="dgGetBillUrl" href="${s_dgGetBillUrl}"></a>
 	<s:url id="s_sendMQCollect" value="/wp/BINOLWPSAL03_sendMQCollect" />
 	<a id="dgSendMQCollect" href="${s_sendMQCollect}"></a>
+    <s:url id="s_getPayResultBySendMQ" value="/wp/BINOLWPSAL12_getPayResultBySendMQ" />
+    <a id="getPayResultBySendMQ" href="${s_getPayResultBySendMQ}"></a>
 </div>
 <div id="getBillsPageDiv" class="hide ui-dialog-content ui-widget-content" style="display: block; width: auto; min-height: 300px;">
     <div class="wpleft_header">

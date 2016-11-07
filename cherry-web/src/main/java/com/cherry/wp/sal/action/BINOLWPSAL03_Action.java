@@ -1,30 +1,10 @@
 package com.cherry.wp.sal.action;
 
-import java.math.BigDecimal;
-import java.text.DecimalFormat;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-
-import javax.annotation.Resource;
-import javax.servlet.http.Cookie;
-import javax.ws.rs.core.MultivaluedMap;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import com.cherry.cm.cmbeans.CounterInfo;
 import com.cherry.cm.cmbeans.UserInfo;
 import com.cherry.cm.cmbussiness.bl.BINOLCM14_BL;
 import com.cherry.cm.cmbussiness.bl.BINOLCM27_BL;
-import com.cherry.cm.core.BaseAction;
-import com.cherry.cm.core.CherryAESCoder;
-import com.cherry.cm.core.CherryConstants;
-import com.cherry.cm.core.CherryException;
-import com.cherry.cm.core.CodeTable;
-import com.cherry.cm.core.PropertiesUtil;
-import com.cherry.cm.core.ThirdPartyConfig;
+import com.cherry.cm.core.*;
 import com.cherry.cm.pay.interfaces.AlipayIf;
 import com.cherry.cm.pay.interfaces.WeChatPayIf;
 import com.cherry.cm.util.CherryUtil;
@@ -38,6 +18,18 @@ import com.cherry.wp.sal.interfaces.BINOLWPSAL07_IF;
 import com.opensymphony.xwork2.ModelDriven;
 import com.sun.jersey.api.client.WebResource;
 import com.sun.jersey.core.util.MultivaluedMapImpl;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import javax.annotation.Resource;
+import javax.servlet.http.Cookie;
+import javax.ws.rs.core.MultivaluedMap;
+import java.math.BigDecimal;
+import java.text.DecimalFormat;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 public class BINOLWPSAL03_Action extends BaseAction implements ModelDriven<BINOLWPSAL03_Form>{
 
@@ -817,11 +809,19 @@ public class BINOLWPSAL03_Action extends BaseAction implements ModelDriven<BINOL
 									logger.info("配置信息存在的情况下调用支付宝1.0接口后的页面返回值"+result);
 									logger.info("配置信息存在的情况下调用支付宝1.0接口结束");
 									//确认成功之后把挂单主表中的支付状态更新为已经支付
+									Map<String,Object> param=new HashMap<String, Object>();
+									param.put(CherryConstants.ORGANIZATIONINFOID, userInfo.getBIN_OrganizationInfoID());
+									param.put(CherryConstants.BRANDINFOID, userInfo.getBIN_BrandInfoID());
+									param.put("billCode", billCode);
 									if("SUCCESS".equals(result)){
-										Map<String,Object> param=new HashMap<String, Object>();
-										param.put(CherryConstants.ORGANIZATIONINFOID, userInfo.getBIN_OrganizationInfoID());
-										param.put(CherryConstants.BRANDINFOID, userInfo.getBIN_BrandInfoID());
-										param.put("billCode", billCode);
+										param.put("collectStatus", 1);
+										try{
+											binOLWPSAL03_IF.updateHangBillCollectState(param);
+										}catch(Exception e){
+											logger.error("更新挂单主表支付状态发生异常，单据号："+billCode+e.getMessage(), e);
+										}
+									}else if("PROCESSING".equals(result)){
+										param.put("collectStatus", 2);
 										try{
 											binOLWPSAL03_IF.updateHangBillCollectState(param);
 										}catch(Exception e){
@@ -837,11 +837,19 @@ public class BINOLWPSAL03_Action extends BaseAction implements ModelDriven<BINOL
 									logger.info("配置信息存在的情况下调用支付宝2.0接口后的页面返回值"+result);
 									logger.info("配置信息存在的情况下调用支付宝2.0接口结束");
 									//确认成功之后把挂单主表中的支付状态更新为已经支付
+									Map<String,Object> param=new HashMap<String, Object>();
+									param.put(CherryConstants.ORGANIZATIONINFOID, userInfo.getBIN_OrganizationInfoID());
+									param.put(CherryConstants.BRANDINFOID, userInfo.getBIN_BrandInfoID());
+									param.put("billCode", billCode);
 									if("SUCCESS".equals(result)){
-										Map<String,Object> param=new HashMap<String, Object>();
-										param.put(CherryConstants.ORGANIZATIONINFOID, userInfo.getBIN_OrganizationInfoID());
-										param.put(CherryConstants.BRANDINFOID, userInfo.getBIN_BrandInfoID());
-										param.put("billCode", billCode);
+										param.put("collectStatus", 1);
+										try{
+											binOLWPSAL03_IF.updateHangBillCollectState(param);
+										}catch(Exception e){
+											logger.error("更新挂单主表支付状态发生异常，单据号："+billCode+e.getMessage(), e);
+										}
+									}else if("PROCESSING".equals(result)){
+										param.put("collectStatus", 2);
 										try{
 											binOLWPSAL03_IF.updateHangBillCollectState(param);
 										}catch(Exception e){
@@ -867,11 +875,19 @@ public class BINOLWPSAL03_Action extends BaseAction implements ModelDriven<BINOL
 										logger.info("配置信息不存在的情况下调用支付宝1.0接口后的页面返回值"+result);
 										logger.info("配置信息不存在的情况下调用支付宝1.0接口结束");
 										//确认成功之后把挂单主表中的支付状态更新为已经支付
+										Map<String,Object> param=new HashMap<String, Object>();
+										param.put(CherryConstants.ORGANIZATIONINFOID, userInfo.getBIN_OrganizationInfoID());
+										param.put(CherryConstants.BRANDINFOID, userInfo.getBIN_BrandInfoID());
+										param.put("billCode", billCode);
 										if("SUCCESS".equals(result)){
-											Map<String,Object> param=new HashMap<String, Object>();
-											param.put(CherryConstants.ORGANIZATIONINFOID, userInfo.getBIN_OrganizationInfoID());
-											param.put(CherryConstants.BRANDINFOID, userInfo.getBIN_BrandInfoID());
-											param.put("billCode", billCode);
+											param.put("collectStatus", 1);
+											try{
+												binOLWPSAL03_IF.updateHangBillCollectState(param);
+											}catch(Exception e){
+												logger.error("更新挂单主表支付状态发生异常，单据号："+billCode+e.getMessage(), e);
+											}
+										}else if("PROCESSING".equals(result)){
+											param.put("collectStatus", 2);
 											try{
 												binOLWPSAL03_IF.updateHangBillCollectState(param);
 											}catch(Exception e){
@@ -887,11 +903,19 @@ public class BINOLWPSAL03_Action extends BaseAction implements ModelDriven<BINOL
 										logger.info("配置信息不存在的情况下调用支付宝2.0接口后的页面返回值"+result);
 										logger.info("配置信息不存在的情况下调用支付宝2.0接口结束");
 										//确认成功之后把挂单主表中的支付状态更新为已经支付
+										Map<String,Object> param=new HashMap<String, Object>();
+										param.put(CherryConstants.ORGANIZATIONINFOID, userInfo.getBIN_OrganizationInfoID());
+										param.put(CherryConstants.BRANDINFOID, userInfo.getBIN_BrandInfoID());
+										param.put("billCode", billCode);
 										if("SUCCESS".equals(result)){
-											Map<String,Object> param=new HashMap<String, Object>();
-											param.put(CherryConstants.ORGANIZATIONINFOID, userInfo.getBIN_OrganizationInfoID());
-											param.put(CherryConstants.BRANDINFOID, userInfo.getBIN_BrandInfoID());
-											param.put("billCode", billCode);
+											param.put("collectStatus", 1);
+											try{
+												binOLWPSAL03_IF.updateHangBillCollectState(param);
+											}catch(Exception e){
+												logger.error("更新挂单主表支付状态发生异常，单据号："+billCode+e.getMessage(), e);
+											}
+										}else if("PROCESSING".equals(result)){
+											param.put("collectStatus", 2);
 											try{
 												binOLWPSAL03_IF.updateHangBillCollectState(param);
 											}catch(Exception e){
@@ -960,11 +984,19 @@ public class BINOLWPSAL03_Action extends BaseAction implements ModelDriven<BINOL
 							String result = getWechatPayResult(returnList);
 							logger.info("微信支付配置存在情况下调用递交被扫接口页面返回结果==="+result);
 							//确认成功之后把挂单主表中的支付状态更新为已经支付
+							Map<String,Object> param=new HashMap<String, Object>();
+							param.put(CherryConstants.ORGANIZATIONINFOID, userInfo.getBIN_OrganizationInfoID());
+							param.put(CherryConstants.BRANDINFOID, userInfo.getBIN_BrandInfoID());
+							param.put("billCode", billCode);
 							if("SUCCESS".equals(result)){
-								Map<String,Object> param=new HashMap<String, Object>();
-								param.put(CherryConstants.ORGANIZATIONINFOID, userInfo.getBIN_OrganizationInfoID());
-								param.put(CherryConstants.BRANDINFOID, userInfo.getBIN_BrandInfoID());
-								param.put("billCode", billCode);
+								param.put("collectStatus", 1);
+								try{
+									binOLWPSAL03_IF.updateHangBillCollectState(param);
+								}catch(Exception e){
+									logger.error("更新挂单主表支付状态发生异常，单据号："+billCode+e.getMessage(), e);
+								}
+							}else if("PROCESSING".equals(result)){
+								param.put("collectStatus", 2);
 								try{
 									binOLWPSAL03_IF.updateHangBillCollectState(param);
 								}catch(Exception e){
@@ -987,11 +1019,19 @@ public class BINOLWPSAL03_Action extends BaseAction implements ModelDriven<BINOL
 								String result = getWechatPayResult(returnList);
 								logger.info("微信支付配置不存在情况下调用递交被扫接口页面返回结果==="+result);
 								//确认成功之后把挂单主表中的支付状态更新为已经支付
+								Map<String,Object> param=new HashMap<String, Object>();
+								param.put(CherryConstants.ORGANIZATIONINFOID, userInfo.getBIN_OrganizationInfoID());
+								param.put(CherryConstants.BRANDINFOID, userInfo.getBIN_BrandInfoID());
+								param.put("billCode", billCode);
 								if("SUCCESS".equals(result)){
-									Map<String,Object> param=new HashMap<String, Object>();
-									param.put(CherryConstants.ORGANIZATIONINFOID, userInfo.getBIN_OrganizationInfoID());
-									param.put(CherryConstants.BRANDINFOID, userInfo.getBIN_BrandInfoID());
-									param.put("billCode", billCode);
+									param.put("collectStatus", 1);
+									try{
+										binOLWPSAL03_IF.updateHangBillCollectState(param);
+									}catch(Exception e){
+										logger.error("更新挂单主表支付状态发生异常，单据号："+billCode+e.getMessage(), e);
+									}
+								}else if("PROCESSING".equals(result)){
+									param.put("collectStatus", 2);
 									try{
 										binOLWPSAL03_IF.updateHangBillCollectState(param);
 									}catch(Exception e){

@@ -1,15 +1,5 @@
 package com.cherry.wp.sal.action;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-
-import javax.annotation.Resource;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import com.cherry.cm.cmbeans.UserInfo;
 import com.cherry.cm.cmbussiness.bl.BINOLCM14_BL;
 import com.cherry.cm.core.BaseAction;
@@ -17,10 +7,19 @@ import com.cherry.cm.core.CherryConstants;
 import com.cherry.cm.core.CherryException;
 import com.cherry.cm.pay.interfaces.AlipayIf;
 import com.cherry.cm.pay.interfaces.WeChatPayIf;
+import com.cherry.cm.util.CherryUtil;
 import com.cherry.cm.util.ConvertUtil;
 import com.cherry.wp.sal.form.BINOLWPSAL12_Form;
 import com.cherry.wp.sal.interfaces.BINOLWPSAL03_IF;
 import com.opensymphony.xwork2.ModelDriven;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import javax.annotation.Resource;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 public class BINOLWPSAL12_Action extends BaseAction implements ModelDriven<BINOLWPSAL12_Form>{
 	
@@ -50,6 +49,228 @@ public class BINOLWPSAL12_Action extends BaseAction implements ModelDriven<BINOL
 	
 	public String init(){
 		return SUCCESS;
+	}
+
+
+	// 查单（用于支付宝/微信在第一次支付时候为等待，并且没有刷新情况后的重发MQ之前的查单操作）
+	public void getPayResultBySendMQ() throws Exception{
+		//获取该单据的所有信息
+		// 用户信息
+		UserInfo userInfo = (UserInfo) session
+				.get(CherryConstants.SESSION_USERINFO);
+		//获取挂单ID
+		String billId=form.getBillId();
+		Map<String,Object> param=new HashMap<String,Object>();
+		//通过挂单ID获取挂单表中相关数据进行SetForm操作
+		param.put("billId", billId);
+		param.put("organizationInfoId", ConvertUtil.getString(userInfo.getBIN_OrganizationInfoID()));
+		param.put("brandInfoId", ConvertUtil.getString(userInfo.getBIN_BrandInfoID()));
+		Map<String,Object> param_info=binOLWPSAL03_IF.getHangBillInfo(param);
+
+		logger.info("补发MQ查单START单据号："+ConvertUtil.getString(param_info.get("billCode")));
+		String counterCode = ConvertUtil.getString(param_info.get("counterCode"));
+		String billCode = ConvertUtil.getString(param_info.get("billCode"));
+		String businessDate = ConvertUtil.getString(param_info.get("businessDate"));
+		String memberCode = ConvertUtil.getString(param_info.get("memberCode"));
+//		String memberName = ConvertUtil.getString(form.getPayMemberName());
+		String payAmount = ConvertUtil.getString(param_info.get("totalAmount"));
+
+		List<Map<String,Object>> payDetail_list= CherryUtil.json2ArryList(ConvertUtil.getString(param_info.get("payDetailStr")));
+		String payType = "";
+		for(Map<String,Object> payDetail_info:payDetail_list){
+			String storePayCode =ConvertUtil.getString(payDetail_info.get("storePayCode"));
+			if("PT".equals(storePayCode) || "WT".equals(storePayCode)){
+				payType=storePayCode;
+			}
+		}
+		int resultCount = 1;
+
+		Map<String,Object> resultMap = new HashMap<String,Object>();
+		List<Map<String, Object>> payResult = new ArrayList<Map<String, Object>>();
+		resultMap.put("billCode", billCode);
+		resultMap.put("businessDate", businessDate);
+		resultMap.put("memberCode", memberCode);
+//		resultMap.put("memberName", memberName);
+		resultMap.put("payAmount", payAmount);
+		try{
+			String brandInfoId = ConvertUtil.getString(userInfo.getBIN_BrandInfoID());
+			String organizationInfoId = ConvertUtil.getString(userInfo.getBIN_OrganizationInfoID());
+			String version = binOLCM14_BL.getWebposConfigValue("9029", ConvertUtil.getString(organizationInfoId), ConvertUtil.getString(brandInfoId));
+			if("".equals(billCode)){
+				// 查单单据号为空的情况
+				resultMap.put("payState", "ERROR");
+				resultMap.put("payMessage", "单据号为空");
+				payResult.add(resultMap);
+				form.setPayResultList(payResult);
+				form.setITotalDisplayRecords(resultCount);
+				form.setITotalRecords(resultCount);
+			}else{
+				if("PT".equals(payType)){
+					// 支付宝支付的情况
+					Map<String, Object> map = new HashMap<String, Object>();
+					map.put("organizationInfoId", organizationInfoId);
+					map.put("brandInfoId", brandInfoId);
+					map.put("counterCode", counterCode);
+					if("1.0".equals(version)){
+						map.put("payType", "ALIPAY");
+					}else if("2.0".equals(version)){
+						map.put("payType", "ALIPAY2");
+					}
+					List<Map<String, Object>> configList = binOLWPSAL03_IF.getPayPartnerConfig(map);
+					if (null != configList && !configList.isEmpty()){
+						// 定义全部柜台收款账户存放Map
+						Map<String, Object> allConfigMap = new HashMap<String, Object>();
+						// 定义单个柜台收款账户存放Map
+						Map<String, Object> counterConfigMap = new HashMap<String, Object>();
+
+						// 从配置列表中获取配置项
+						for(Map<String,Object> configMap : configList){
+							String payCounter = ConvertUtil.getString(configMap.get("counterCode"));
+							if("ALL".equals(payCounter)){
+								// 当配置项为全部柜台情况下获取配置信息放入 allConfigMap 中
+								allConfigMap.put("alipayPartnerId", ConvertUtil.getString(configMap.get("partnerId")));
+								allConfigMap.put("alipaySignKey", ConvertUtil.getString(configMap.get("paternerKey")));
+								allConfigMap.put("alipaySignType", ConvertUtil.getString(configMap.get("keyType")));
+								allConfigMap.put("aliPayInputCharSet", ConvertUtil.getString(configMap.get("inputCharSet")));
+							}else if(counterCode.equals(payCounter)){
+								// 当配置项为指定柜台情况下获取配置信息放入 counterConfigMap 中
+								counterConfigMap.put("alipayPartnerId", ConvertUtil.getString(configMap.get("partnerId")));
+								counterConfigMap.put("alipaySignKey", ConvertUtil.getString(configMap.get("paternerKey")));
+								counterConfigMap.put("alipaySignType", ConvertUtil.getString(configMap.get("keyType")));
+								counterConfigMap.put("aliPayInputCharSet", ConvertUtil.getString(configMap.get("inputCharSet")));
+							}
+						}
+						// 判断指定柜台的支付配置信息是否存在
+						if (null != counterConfigMap && !counterConfigMap.isEmpty()){
+							Map<String, Object> parMap = new HashMap<String, Object>();
+							parMap.putAll(counterConfigMap);
+							parMap.put("strOutTradeNo", billCode);
+							if("1.0".equals(version)){
+								List<Map<String, Object>> returnList = aliPayIF.getAlipayQuery(parMap);
+								payResult = getAliPayQueryResult(returnList, resultMap);
+								resultCount = returnList.size();
+							}else if("2.0".equals(version)){
+								List<Map<String, Object>> returnList = aliPayIF.getAlipayQueryTwo(parMap);
+								payResult = getAliPayQueryResult(returnList, resultMap);
+								resultCount = returnList.size();
+							}
+						}else{
+							if (null != allConfigMap && !allConfigMap.isEmpty()){
+								Map<String, Object> parMap = new HashMap<String, Object>();
+								parMap.putAll(allConfigMap);
+								parMap.put("strOutTradeNo", billCode);
+								if("1.0".equals(version)){
+									List<Map<String, Object>> returnList = aliPayIF.getAlipayQuery(parMap);
+									payResult = getAliPayQueryResult(returnList, resultMap);
+									resultCount = returnList.size();
+								}else if("2.0".equals(version)){
+									List<Map<String, Object>> returnList = aliPayIF.getAlipayQueryTwo(parMap);
+									payResult = getAliPayQueryResult(returnList, resultMap);
+									resultCount = returnList.size();
+								}
+							}else{
+								// 没有给指定柜台配置收款账户信息的情况
+								resultMap.put("payState", "ERROR");
+								resultMap.put("payMessage", "没有给指定柜台配置收款账户信息");
+								payResult.add(resultMap);
+							}
+						}
+					}else{
+						// 没有给指定柜台配置收款账户信息的情况
+						resultMap.put("payState", "ERROR");
+						resultMap.put("payMessage", "没有给指定柜台配置收款账户信息");
+						payResult.add(resultMap);
+					}
+				}else if("WEPAY".equals(payType)){
+					// 微信支付的情况
+					Map<String, Object> map = new HashMap<String, Object>();
+					map.put("organizationInfoId", organizationInfoId);
+					map.put("brandInfoId", brandInfoId);
+					map.put("counterCode", counterCode);
+					map.put("payType", "WECHATPAY");
+					List<Map<String, Object>> configList = binOLWPSAL03_IF.getPayPartnerConfig(map);
+					if (null != configList && !configList.isEmpty()){
+						// 定义全部柜台收款账户存放Map
+						Map<String, Object> allConfigMap = new HashMap<String, Object>();
+						// 定义单个柜台收款账户存放Map
+						Map<String, Object> counterConfigMap = new HashMap<String, Object>();
+
+						// 从配置列表中获取配置项
+						for(Map<String,Object> configMap : configList){
+							String payCounter = ConvertUtil.getString(configMap.get("counterCode"));
+							if("ALL".equals(payCounter)){
+								// 当配置项为全部柜台情况下获取配置信息放入 allConfigMap 中
+								allConfigMap.put("appid", ConvertUtil.getString(configMap.get("appId")));
+								allConfigMap.put("mch_id", ConvertUtil.getString(configMap.get("partnerId")));
+								allConfigMap.put("sub_mch_id", ConvertUtil.getString(configMap.get("subMchId")));
+								allConfigMap.put("paternerKey", ConvertUtil.getString(configMap.get("paternerKey")));
+							}else if(counterCode.equals(payCounter)){
+								// 当配置项为指定柜台情况下获取配置信息放入 counterConfigMap 中
+								counterConfigMap.put("appid", ConvertUtil.getString(configMap.get("appId")));
+								counterConfigMap.put("mch_id", ConvertUtil.getString(configMap.get("partnerId")));
+								counterConfigMap.put("sub_mch_id", ConvertUtil.getString(configMap.get("subMchId")));
+								counterConfigMap.put("paternerKey", ConvertUtil.getString(configMap.get("paternerKey")));
+							}
+						}
+						// 判断指定柜台的支付配置信息是否存在
+						if (null != counterConfigMap && !counterConfigMap.isEmpty()){
+							Map<String, Object> parMap = new HashMap<String, Object>();
+							parMap.putAll(counterConfigMap);
+							parMap.put("out_trade_no", billCode);
+							List<Map<String, Object>> returnList = weChatPayIF.getOrderQuery(parMap);
+							payResult = getWechatPayQueryResult(returnList, resultMap);
+							resultCount = returnList.size();
+						}else{
+							if (null != allConfigMap && !allConfigMap.isEmpty()){
+								Map<String, Object> parMap = new HashMap<String, Object>();
+								parMap.putAll(allConfigMap);
+								parMap.put("out_trade_no", billCode);
+								List<Map<String, Object>> returnList = weChatPayIF.getOrderQuery(parMap);
+								payResult = getWechatPayQueryResult(returnList, resultMap);
+								resultCount = returnList.size();
+							}else{
+								// 没有给指定柜台配置收款账户信息的情况
+								resultMap.put("payState", "ERROR");
+								resultMap.put("payMessage", "没有给指定柜台配置收款账户信息");
+								payResult.add(resultMap);
+							}
+						}
+					}else{
+						// 没有给指定柜台配置收款账户信息的情况
+						resultMap.put("payState", "ERROR");
+						resultMap.put("payMessage", "没有给指定柜台配置收款账户信息");
+						payResult.add(resultMap);
+					}
+				}else{
+					// 支付类型为非支付宝和微信支付时
+					resultMap.put("payState", "ERROR");
+					resultMap.put("payMessage", "支付类型不是支付宝或微信");
+					payResult.add(resultMap);
+				}
+			}
+			logger.info("补发MQ查单END单据号："+billCode+"查单结果为："+ConvertUtil.getString(payResult));
+			ConvertUtil.setResponseByAjax(response, payResult.get(0));
+		}catch(Exception e){
+			logger.info("补发MQ查单ERROR单据号："+billCode);
+			logger.error(e.getMessage(), e);
+			// 自定义异常的场合
+			if(e instanceof CherryException){
+				CherryException temp = (CherryException)e;
+				this.addActionError(temp.getErrMessage());
+				// 返回查单结果为失败
+				resultMap.put("payState", "ERROR");
+				resultMap.put("payMessage", temp.getErrMessage());
+				payResult.add(resultMap);
+			}else{
+				// 系统发生异常，请联系管理人员。
+				this.addActionError(getText("ECM00036"));
+				// 返回查单结果为失败
+				resultMap.put("payState", "ERROR");
+				resultMap.put("payMessage", getText("ECM00036"));
+				payResult.add(resultMap);
+			}
+			ConvertUtil.setResponseByAjax(response, payResult.get(0));
+		}
 	}
 
 	// 查单

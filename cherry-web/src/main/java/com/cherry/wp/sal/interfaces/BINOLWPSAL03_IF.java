@@ -1,10 +1,10 @@
 package com.cherry.wp.sal.interfaces;
 
-import java.util.List;
-import java.util.Map;
-
 import com.cherry.cm.cmbeans.UserInfo;
 import com.cherry.wp.sal.form.BINOLWPSAL03_Form;
+
+import java.util.List;
+import java.util.Map;
 
 public interface BINOLWPSAL03_IF {
 
@@ -19,4 +19,6 @@ public interface BINOLWPSAL03_IF {
 	public void updateHangBillCollectState(Map<String,Object> map) throws Exception;
 	
 	public void getHangBillSetForm(Map<String,Object> param_Map,BINOLWPSAL03_Form form)  throws Exception;
+
+	public  Map<String,Object> getHangBillInfo(Map<String,Object> map);
 }

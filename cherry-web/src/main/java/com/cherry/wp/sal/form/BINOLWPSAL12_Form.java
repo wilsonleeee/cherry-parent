@@ -1,9 +1,9 @@
 package com.cherry.wp.sal.form;
 
+import com.cherry.cm.form.DataTable_BaseForm;
+
 import java.util.List;
 import java.util.Map;
-
-import com.cherry.cm.form.DataTable_BaseForm;
 
 public class BINOLWPSAL12_Form extends DataTable_BaseForm {
 	// 支付类型
@@ -29,6 +29,9 @@ public class BINOLWPSAL12_Form extends DataTable_BaseForm {
 	
 	// 返回结果列表
 	private List<Map<String, Object>> payResultList;
+
+	//单据ID
+	private String billId;
 
 	public String getPayType() {
 		return payType;
@@ -93,5 +96,12 @@ public class BINOLWPSAL12_Form extends DataTable_BaseForm {
 	public void setPayResultList(List<Map<String, Object>> payResultList) {
 		this.payResultList = payResultList;
 	}
-	
+
+	public String getBillId() {
+		return billId;
+	}
+
+	public void setBillId(String billId) {
+		this.billId = billId;
+	}
 }
