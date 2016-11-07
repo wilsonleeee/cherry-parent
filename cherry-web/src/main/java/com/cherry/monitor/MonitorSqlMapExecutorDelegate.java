@@ -1,13 +1,9 @@
 package com.cherry.monitor;
 
+import com.dianping.cat.Cat;
 import com.dianping.zebra.group.util.DaoContextHolder;
-import com.ibatis.common.beans.Probe;
-import com.ibatis.common.beans.ProbeFactory;
-import com.ibatis.common.jdbc.exception.NestedSQLException;
 import com.ibatis.common.util.PaginatedList;
-import com.ibatis.sqlmap.client.SqlMapException;
 import com.ibatis.sqlmap.client.event.RowHandler;
-import com.ibatis.sqlmap.engine.cache.CacheKey;
 import com.ibatis.sqlmap.engine.cache.CacheModel;
 import com.ibatis.sqlmap.engine.exchange.DataExchangeFactory;
 import com.ibatis.sqlmap.engine.execution.BatchException;
@@ -16,23 +12,17 @@ import com.ibatis.sqlmap.engine.impl.SqlMapExecutorDelegate;
 import com.ibatis.sqlmap.engine.mapping.parameter.ParameterMap;
 import com.ibatis.sqlmap.engine.mapping.result.ResultMap;
 import com.ibatis.sqlmap.engine.mapping.result.ResultObjectFactory;
-import com.ibatis.sqlmap.engine.mapping.statement.InsertStatement;
 import com.ibatis.sqlmap.engine.mapping.statement.MappedStatement;
-import com.ibatis.sqlmap.engine.mapping.statement.PaginatedDataList;
-import com.ibatis.sqlmap.engine.mapping.statement.SelectKeyStatement;
 import com.ibatis.sqlmap.engine.scope.SessionScope;
-import com.ibatis.sqlmap.engine.scope.StatementScope;
 import com.ibatis.sqlmap.engine.transaction.Transaction;
-import com.ibatis.sqlmap.engine.transaction.TransactionException;
 import com.ibatis.sqlmap.engine.transaction.TransactionManager;
-import com.ibatis.sqlmap.engine.transaction.TransactionState;
-import com.ibatis.sqlmap.engine.transaction.user.UserProvidedTransaction;
 import com.ibatis.sqlmap.engine.type.TypeHandlerFactory;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javax.sql.DataSource;
 import java.sql.Connection;
 import java.sql.SQLException;
-import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
@@ -45,7 +35,8 @@ public class MonitorSqlMapExecutorDelegate extends SqlMapExecutorDelegate {
 
     SqlMapExecutorDelegate target;
 
-
+    private static final Logger logger = LoggerFactory
+            .getLogger(MonitorSqlMapExecutorDelegate.class);
     public MonitorSqlMapExecutorDelegate(SqlMapExecutorDelegate sqlMapExecutorDelegate){
         this.target = sqlMapExecutorDelegate;
     }
@@ -389,7 +380,12 @@ public class MonitorSqlMapExecutorDelegate extends SqlMapExecutorDelegate {
     public List queryForList(SessionScope sessionScope, String id, Object paramObject) throws SQLException {
         DaoContextHolder.setSqlName(id);
         try {
-            return target.queryForList(sessionScope, id, paramObject);
+            List result = target.queryForList(sessionScope, id, paramObject);
+            if(result!=null&&result.size()>10000){
+                Cat.logEvent("SQL.ResultSize",id);
+                logger.error("检索结果超过10000"+id);
+            }
+            return result;
         } finally {
             DaoContextHolder.clearSqlName();
         }
@@ -409,7 +405,12 @@ public class MonitorSqlMapExecutorDelegate extends SqlMapExecutorDelegate {
     public List queryForList(SessionScope sessionScope, String id, Object paramObject, int skip, int max) throws SQLException {
         DaoContextHolder.setSqlName(id);
         try {
-            return target.queryForList(sessionScope, id, paramObject, skip, max);
+            List result = target.queryForList(sessionScope, id, paramObject, skip, max);
+            if(result!=null&&result.size()>10000){
+                Cat.logEvent("SQL.ResultSize",id);
+                logger.error("检索结果超过10000"+id);
+            }
+            return result;
         } finally {
             DaoContextHolder.clearSqlName();
         }
