@@ -641,7 +641,13 @@ public class MessageConstants {
 	
 	 /** 接收消息错误提示 91 **/
     public static final String MSG_ERROR_91 = "退货审核确认时，关联的退货申请单号不存在！关联的退货申请单号为：";
-    
+
+	/** 接收消息错误提示 92 **/
+	public static final String MSG_ERROR_92 = "单据号合并失败";
+
+	/** 接收消息错误提示 93 **/
+	public static final String MSG_ERROR_93 = "改交易解冻失败";
+
     /** 接收消息提示  01 **/
     public static final String MSG_INFO_01 = "积分兑换预约";
     

@@ -644,19 +644,19 @@ public class BINBEMQMES99_BL {
     public void analyzeSaleReturnStockMessage(Map map) throws Exception {
     	// 由于销售接收处理会删除销售明细信息，所以在进行处理之前备份一下消息明细信息，处理完后把备份的明细信息设置到map中
     	List<Map<String, Object>> detailDataDTOList = (List<Map<String, Object>>)ConvertUtil.byteClone(map.get("detailDataDTOList"));
-    	
+
         // 据MQ消息里的主数据及明细数据查询在新后台对应的数据
         binBEMQMES02_BL.selMessageInfo(map);
-        // 当该值为"1"时，表示不处理库存 
+        // 当该值为"1"时，表示不处理库存
         String stockFlag = ConvertUtil.getString(map.get("stockFlag"));
-        
+
         // 如果是销售数据
         if (map.get("tradeType").equals(MessageConstants.MSG_TRADETYPE_SALE)) {
             // 处理销售/退货消息(新消息体Type=0007)
             binBEMQMES02_BL.analyzeSaleReturnData(map);
         }
         // stockFlag等于1时不处理库存,其他值时处理库存
-        if (!stockFlag.equals("1")){  	
+        if (!stockFlag.equals("1")){
         	// 销售单的原始实付金额
 	        String amount_pay = ConvertUtil.getString(map.get("totalAmount"));
 	        // 处理其他业务类型数据 (需要分促销品和产品模块)
@@ -729,11 +729,11 @@ public class BINBEMQMES99_BL {
 	            map.put("isPromotionFlag", "2");
 	        } else if(messageList.size() == 1){
 	            HashMap messageMap = (HashMap) messageList.get(0);
-	            map.put("isPromotionFlag", messageMap.get("isPromotion"));                   
+	            map.put("isPromotionFlag", messageMap.get("isPromotion"));
 	        }
         }
-       
-        
+
+
         //云POS  销售/积分兑换 接收完更新Sale.BIN_WebPosSaleRecord的MQState
         if(ConvertUtil.getString(map.get("posFlag")).equals("0")){
             if (map.get("tradeType").equals(MessageConstants.MSG_TRADETYPE_SALE) || map.get("tradeType").equals(MessageConstants.MSG_TRADETYPE_PX)) {
@@ -744,7 +744,9 @@ public class BINBEMQMES99_BL {
                 binBEMQMES99_Service.updWebPosSaleRecord(updateParam);
             }
         }
-        
+		//储值卡合并
+		processCard(map);
+
         // 插入MongoDB
         binBEMQMES02_BL.addMongoMsgInfo(map);
         
@@ -2375,6 +2377,49 @@ public class BINBEMQMES99_BL {
 			}
 		} catch(Exception e) {
 			logger.error(e.getMessage(), e);
+		}
+	}
+
+	/**
+	 *储值卡合并模块
+	 * @param map
+     */
+	public void processCard(Map<String, Object> map) throws Exception{
+		//Map中是否存在合并标志呢
+		if(!"".equals(ConvertUtil.getString(map.get("mergeStoredValueFlag")))){
+			//根据单号查询处于冻结状态的交易记录
+			Map<String,Object> transaction = binBEMQMES99_Service.getCardTransactionByBillCode(map);
+			//如果存在处于冻结状态的交易记录的话
+			if(transaction != null){
+				//得到储值卡ID
+				String carId = ConvertUtil.getString(transaction.get("carId"));
+				map.put("carId",carId);
+				//得到运算符号
+				String computeSign = ConvertUtil.getString(transaction.get("computeSign"));
+				map.put("computeSign",computeSign);
+				//得到交易金额
+				BigDecimal totalAmount = (BigDecimal)(transaction.get("totalAmount"));
+				//得到赠送金额
+				BigDecimal giftAmount = (BigDecimal)(transaction.get("giftAmount"));
+				giftAmount = giftAmount.multiply(new BigDecimal(computeSign));
+				map.put("giftAmount",giftAmount);
+				totalAmount = totalAmount.multiply(new BigDecimal(computeSign));
+				map.put("totalAmount",totalAmount);
+				int udpCount = binBEMQMES99_Service.updateCardCash(map);
+				//如果合并成功
+				if(udpCount != 0){
+					//改变冻结状态，将FrozenFlag该为0
+					int dCount = binBEMQMES99_Service.relieveFrozen(map);
+					//如果改变失败
+					if(dCount == 0){
+						//改笔交易解冻失败
+						MessageUtil.addMessageWarning(map,MessageConstants.MSG_ERROR_93);
+					}
+				}else{
+					//合并失败
+					MessageUtil.addMessageWarning(map,MessageConstants.MSG_ERROR_92);
+				}
+			}
 		}
 	}
 }

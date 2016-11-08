@@ -157,8 +157,10 @@ public class SaleReturnMainDataDTO extends MainDataDTO{
     
     /**  销售退货申请单号 **/
     private String SaleReturnRequestCode;
-	
-	
+
+	/** 合并当前销售单关联的储值卡交易金额标志 **/
+	private String MergeStoredValueFlag;
+
 	// MQ接口对应 1.10版 End //
 	/**新销售体的明细*/
 	private List<SaleReturnDetailDataDTO> DetailDataDTOList;
@@ -531,6 +533,12 @@ public class SaleReturnMainDataDTO extends MainDataDTO{
 	public void setSaleReturnRequestCode(String saleReturnRequestCode) {
 		SaleReturnRequestCode = saleReturnRequestCode;
 	}
-	
-	
+
+	public String getMergeStoredValueFlag() {
+		return MergeStoredValueFlag;
+	}
+
+	public void setMergeStoredValueFlag(String mergeStoredValueFlag) {
+		MergeStoredValueFlag = mergeStoredValueFlag;
+	}
 }

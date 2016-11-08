@@ -810,4 +810,35 @@ public class BINBEMQMES99_Service extends BaseService{
 		map.put(CherryConstants.IBATIS_SQL_ID, "BINBEMQMES99.getMemberInfoByCode");
 		return (Map<String, Object>) baseServiceImpl.get(map);
 	}
+
+	/**
+	 * 根据单据号查询出交易记录
+	 * @param map
+	 * @return
+     */
+	public Map<String,Object> getCardTransactionByBillCode(Map<String,Object> map){
+		map.put(CherryConstants.IBATIS_SQL_ID, "BINBEMQMES99.getCardTransactionByBillCode");
+		return (Map<String, Object>) baseServiceImpl.get(map);
+	}
+
+	/**
+	 * 更新储值卡的金额
+	 * @param map
+     * @return
+     */
+	public int updateCardCash(Map<String,Object> map){
+		map.put(CherryConstants.IBATIS_SQL_ID, "BINBEMQMES99.updateCardCash");
+		return baseServiceImpl.update(map);
+	}
+
+
+	/**
+	 * 将该交易记录解除冻结状态
+	 * @param map
+	 * @return
+	 */
+	public int relieveFrozen(Map<String,Object> map){
+		map.put(CherryConstants.IBATIS_SQL_ID, "BINBEMQMES99.relieveFrozen");
+		return baseServiceImpl.update(map);
+	}
 }

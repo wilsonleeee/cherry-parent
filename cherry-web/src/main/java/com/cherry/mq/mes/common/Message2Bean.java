@@ -1405,6 +1405,8 @@ public class Message2Bean {
             case 47:
             	saleReturnMainDataDTO.setSaleReturnRequestCode(mainDataStrArr[i]);
             	break;
+			case 48:
+				saleReturnMainDataDTO.setMergeStoredValueFlag(mainDataStrArr[i]);
             }
         }
     }
