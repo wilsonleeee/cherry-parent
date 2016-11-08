@@ -884,7 +884,7 @@
 		<#if campMap.placeJson?exists && campMap.locationType !='0'>
 			<div style="width:80%;float:left;">
 				<#list campMap.placeJson as placeMap>
-					<#if placeMap.half=false>
+					<#if !placeMap.half && !(placeMap.isParent!false)>
 						<span style="position: relative; margin-right:20px;">
 						<#if placeMap.level=0>
 						 <span style="color:#FF3030;white-space: nowrap;">${(placeMap.name)!?html}</span>

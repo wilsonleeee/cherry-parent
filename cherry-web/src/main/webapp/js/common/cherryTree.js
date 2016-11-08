@@ -263,25 +263,26 @@ cherryTree.prototype = {
 			for(var i=0; i< nodes.length; i++){
 				var node = nodes[i];
 				// 半选
-				if(node.getCheckStatus().half){
+				//if(node.getCheckStatus().half){
 					var obj = {};
 					obj.id = node.id;
-					obj.half = true;
+					obj.half = node.getCheckStatus().half;
+					obj.isParent = node.isParent;
 					obj.name = node.name;
 					obj.level = node.level;
 					checkNodes.push(obj);
-				}else{
-					var pNode = node.getParentNode();
-					// 父节点为null或半选
-					if(isEmpty(pNode) || pNode.getCheckStatus().half){
-						var obj = {};
-						obj.id = node.id;
-						obj.half = false;
-						obj.name = node.name;
-						obj.level = node.level;
-						checkNodes.push(obj);
-					}
-				}
+				//}else{
+				//	var pNode = node.getParentNode();
+				//	// 父节点为null或半选
+				//	if(isEmpty(pNode) || pNode.getCheckStatus().half){
+				//		var obj = {};
+				//		obj.id = node.id;
+				//		obj.half = false;
+				//		obj.name = node.name;
+				//		obj.level = node.level;
+				//		checkNodes.push(obj);
+				//	}
+				//}
 			}
 		}
 		return checkNodes;

@@ -77,7 +77,7 @@
 			<#if temp.placeJson?exists && page.locationType !='0'>
 				<div style="width:85%;float:left;">
 					<#list temp.placeJson as placeMap>
-						<#if placeMap.half=false>
+						<#if !placeMap.half && !(placeMap.isParent!false)>
 							<span style="position: relative; margin-right:20px;">
 							<#if placeMap.level=0>
 							 <span style="color:#FF3030;white-space: nowrap;">${(placeMap.name)!}</span>
