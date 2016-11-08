@@ -1154,8 +1154,7 @@
         ]]>
     </insert>
     
-    
-     <!-- 发货单单据号找到的入出库批次明细成本汇总数据 -->
+    <!-- 发货单单据号找到的入出库批次明细成本汇总数据 -->
     <select id="getProductInfoListByDeliverNum" parameterClass="java.util.HashMap" resultClass="java.util.HashMap"> 
 		SELECT
 		    Y.BIN_ProductDeliverID,
@@ -1171,12 +1170,23 @@
 		ON    X.RelevanceNo=Y.DeliverNoIF  	  
 		WHERE 
 			X.RelevanceNo = #DeliverNoIF#
+        AND NOT EXISTS (
+            SELECT 1
+            FROM Inventory.BIN_ProductBatchInOutDetail E
+			WHERE
+			    E.RelevanceNo  = X.RelevanceNo
+			AND E.BIN_InventoryInfoID = X.BIN_InventoryInfoID
+			AND E.BIN_LogicInventoryInfoID = X.BIN_LogicInventoryInfoID
+            AND E.BIN_ProductVendorID = X.BIN_ProductVendorID
+
+            AND E.CostPrice IS NULL
+        )
 		GROUP BY  Y.BIN_ProductDeliverID,
 			X.RelevanceNo,
 			X.BIN_ProductVendorID,
 			X.BIN_InventoryInfoID,
 			X.BIN_LogicInventoryInfoID	
-	
+
     </select>
      <!-- 修改产品发货单明细表的总成本 -->
      <update id="updateProductDeliverDetail" parameterClass="java.util.HashMap">
@@ -1197,8 +1207,7 @@
           ]]>      
     </update>
      
-     
-      <!-- 退库单单据号找到的入出库批次明细成本汇总数据 -->
+    <!-- 退库单单据号找到的入出库批次明细成本汇总数据 -->
     <select id="getCostPriceByRR" parameterClass="java.util.HashMap" resultClass="java.util.HashMap"> 
 		SELECT
 		    Y.BIN_ProductReturnID,
@@ -1215,6 +1224,17 @@
 		    Inventory.BIN_ProductReturn  Y ON  X.RelevanceNo=Y.ReturnNoIF  	  
 		WHERE 
 			X.RelevanceNo = #ReturnNoIF# and Z.TradeType='RR'
+        AND NOT EXISTS (
+            SELECT 1
+            FROM Inventory.BIN_ProductBatchInOutDetail E
+			WHERE
+			    E.RelevanceNo  = X.RelevanceNo
+			AND E.BIN_InventoryInfoID = X.BIN_InventoryInfoID
+			AND E.BIN_LogicInventoryInfoID = X.BIN_LogicInventoryInfoID
+            AND E.BIN_ProductVendorID = X.BIN_ProductVendorID
+
+            AND E.CostPrice IS NULL
+        )
 		GROUP BY  
 			Y.BIN_ProductReturnID,
 			X.RelevanceNo,
@@ -1258,6 +1278,17 @@
 		ON    X.RelevanceNo=Y.StockTakingNoIF 	  
 		WHERE 
 			X.RelevanceNo = #StockTakingNoIF#
+        AND NOT EXISTS (
+            SELECT 1
+            FROM Inventory.BIN_ProductBatchInOutDetail E
+			WHERE
+			    E.RelevanceNo  = X.RelevanceNo
+			AND E.BIN_InventoryInfoID = X.BIN_InventoryInfoID
+			AND E.BIN_LogicInventoryInfoID = X.BIN_LogicInventoryInfoID
+            AND E.BIN_ProductVendorID = X.BIN_ProductVendorID
+
+            AND E.CostPrice IS NULL
+        )
 		GROUP BY  Y.BIN_ProductStockTakingID,
 			X.RelevanceNo,
 			X.BIN_ProductVendorID,
@@ -1300,6 +1331,17 @@
 		ON    X.RelevanceNo=Y.RelevanceNo 	  
 		WHERE 
 			X.RelevanceNo = #AllocationNoIF#
+        AND NOT EXISTS (
+            SELECT 1
+            FROM Inventory.BIN_ProductBatchInOutDetail E
+			WHERE
+			    E.RelevanceNo  = X.RelevanceNo
+			AND E.BIN_InventoryInfoID = X.BIN_InventoryInfoID
+			AND E.BIN_LogicInventoryInfoID = X.BIN_LogicInventoryInfoID
+            AND E.BIN_ProductVendorID = X.BIN_ProductVendorID
+
+            AND E.CostPrice IS NULL
+        )
 		GROUP BY  Y.BIN_ProductAllocationOutID,
 			X.RelevanceNo,
 			X.BIN_ProductVendorID,
@@ -1342,6 +1384,17 @@
 		ON    X.RelevanceNo=Y.RelevanceNo 	  
 		WHERE 
 			X.RelevanceNo = #AllocationOutNoIF#
+        AND NOT EXISTS (
+            SELECT 1
+            FROM Inventory.BIN_ProductBatchInOutDetail E
+			WHERE
+			    E.RelevanceNo  = X.RelevanceNo
+			AND E.BIN_InventoryInfoID = X.BIN_InventoryInfoID
+			AND E.BIN_LogicInventoryInfoID = X.BIN_LogicInventoryInfoID
+            AND E.BIN_ProductVendorID = X.BIN_ProductVendorID
+
+            AND E.CostPrice IS NULL
+        )
 		GROUP BY  Y.BIN_ProductAllocationInID,
 			X.RelevanceNo,
 			X.BIN_ProductVendorID,

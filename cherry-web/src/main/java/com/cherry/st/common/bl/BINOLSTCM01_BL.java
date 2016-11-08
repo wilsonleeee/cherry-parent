@@ -615,7 +615,7 @@ public class BINOLSTCM01_BL implements BINOLSTCM01_IF {
 
     
     /**
-     * 将单据产品总成本刺入到具体单据单明细表中
+     * 将单据产品总成本写入到具体单据单明细表中
      * @param mainData
      * @param detailList
      * @return
