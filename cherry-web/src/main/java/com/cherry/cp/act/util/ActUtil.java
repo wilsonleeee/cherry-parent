@@ -119,6 +119,34 @@ public class ActUtil {
 	}
 
 	/**
+	 * 设置节点选中状态
+	 *
+	 * @param nodes 节点数组
+	 * @param checkedNode 选中节点
+	 */
+	@SuppressWarnings("unchecked")
+	public static void setNodes2(List<Map<String, Object>> nodes, Map<String, Object> checkedNode) {
+		String checkedId = ConvertUtil.getString(checkedNode.get(CampConstants.ID));
+		boolean half = (Boolean)checkedNode.get(CampConstants.HALF);
+		if (null != nodes && nodes.size() > 0) {
+			for (Map<String, Object> node : nodes) {
+				String nodeId = ConvertUtil.getString(node.get(CampConstants.ID));
+				// 当前节点为选中的节点
+				if (nodeId.equals(checkedId)) {
+					node.put(CampConstants.CHECKED, true);
+					node.put("halfCheck", half);
+				} else {
+					// 当前节点不等选中的节点
+					// 取当前节点的所有子节点
+					List<Map<String, Object>> nodeList = (List<Map<String, Object>>) node
+							.get(CampConstants.NODES);
+					setNodes(nodeList, checkedNode);
+				}
+			}
+		}
+	}
+
+	/**
 	 * 设置节点以及子节点状态
 	 * 
 	 * @param node
