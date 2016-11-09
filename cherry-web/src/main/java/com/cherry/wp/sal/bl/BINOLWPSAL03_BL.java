@@ -258,6 +258,33 @@ public class BINOLWPSAL03_BL implements BINOLWPSAL03_IF{
 						detailDataList.add(billDetailMap);
 					}
 				}
+				String paymentJsonList = form.getPaymentJsonList();
+				if(!"".equals(ConvertUtil.getString(paymentJsonList))){
+					List<Map<String, Object>> payList = ConvertUtil.json2List(paymentJsonList);
+					if(null!=payList && !payList.isEmpty()){
+						for(Map<String, Object> m : payList){
+							String storePayCode = ConvertUtil.getString(m.get("storePayCode"));
+							String storePayCodeValue = ConvertUtil.getString(m.get("storePayCodeValue"));
+							String storePayCodeName = ConvertUtil.getString(m.get("storePayCodeName"));
+							if(!"".equals(storePayCodeValue)){
+								if(storePayCode.equals("cash")){
+									// 当现金支付值存在时
+									// 获取找零金额和现金支付金额
+									double giveChangeValue = CherryUtil.string2double(form.getGiveChange());
+									double cashValue = CherryUtil.string2double(storePayCodeValue);
+									// 计算现金实际支付的金额
+									double cashPayValue = cashValue - giveChangeValue;
+									Map<String,Object> payTypeData = getPayTypeData_map(form, stockType, "CA", storePayCodeName, ConvertUtil.getString(cashPayValue));
+									detailDataList.add(payTypeData);
+								}else {
+									Map<String,Object> payTypeData = getPayTypeData_map(form, stockType, storePayCode, storePayCodeName, storePayCodeValue);
+									detailDataList.add(payTypeData);
+								}
+							}
+						}
+					}
+				}
+
 				Map<String,Object> dataParam = new HashMap<String,Object>();
 				dataParam.put("MainData", mainData);
 				dataParam.put("DetailDataDTOList", detailDataList);
@@ -639,7 +666,35 @@ public class BINOLWPSAL03_BL implements BINOLWPSAL03_IF{
         }
         return payTypeData;
 	}
-	
+
+	private Map<String,Object> getPayTypeData_map(BINOLWPSAL03_Form form,String stockType, String payTypeCode, String payTypeName, String payAmount){
+		String memberCode = ConvertUtil.getString(form.getMemberCode()).trim();
+		if(null == memberCode || "".equals(memberCode)){
+			memberCode = "000000000";
+		}
+		Map<String, Object> payTypeMap = new HashMap<String, Object>();
+		payTypeMap.put("TradeNoIF", form.getBillCode());
+		payTypeMap.put("ModifyCounts", "0");
+		payTypeMap.put("DetailType", "Y");
+		payTypeMap.put("BAcode", "");
+		payTypeMap.put("Unitcode", "");
+		payTypeMap.put("Quantity", 0);
+		payTypeMap.put("Amount", payAmount);
+		payTypeMap.put("ActivityMainCode", "");
+		payTypeMap.put("ActivityCode","");
+		payTypeMap.put("ActivityQuantity", "");
+		payTypeMap.put("InventoryTypeCode", "");
+		payTypeMap.put("IsStock", "");
+		payTypeMap.put("PayTypeCode", payTypeCode);
+		payTypeMap.put("PayTypeID", "");
+		payTypeMap.put("PayTypeName", "");
+		payTypeMap.put("ProductId", "");
+		payTypeMap.put("TagPrice", "");
+		payTypeMap.put("SerialNumber", "");
+
+		return payTypeMap;
+	}
+
 	private int saveSaleBill(BINOLWPSAL03_Form form, UserInfo userInfo, Map<String,Object> map)
 			throws Exception {
 		int i = 0;
