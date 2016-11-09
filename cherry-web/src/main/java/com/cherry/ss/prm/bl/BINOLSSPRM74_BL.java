@@ -501,11 +501,25 @@ public class BINOLSSPRM74_BL implements BINOLSSPRM74_IF {
 
 	@Override
 	public void checkMain(Map<String, Object> param) {
-//		int result=binOLSSPRM74_Service.checkMain(param);
-//		if(result > 0){
-			//物理删除全表
-			binOLSSPRM74_Service.delmain_all(param);
-//		}
+		//删除主表数据
+		binOLSSPRM74_Service.delmain_all(param);
+		//获取Cart单据对应的明细
+		List<Map<String,Object>> cart_list=binOLSSPRM74_Service.getCartDetailByTradeNo(param);
+		//获取Rule单据对应的明细
+		List<Map<String,Object>> rule_list=binOLSSPRM74_Service.getRuleDetailByTradeNo(param);
+		//获取Coupon单据对于的明细
+		List<Map<String,Object>> coupon_list=binOLSSPRM74_Service.getCouponDetailByTradeNo(param);
+		if(cart_list != null && cart_list.size() > 0){
+			binOLSSPRM74_Service.deleteCartDetail(cart_list);
+		}
+
+		if(rule_list != null && rule_list.size() > 0){
+			binOLSSPRM74_Service.deleteRuleDetail(rule_list);
+		}
+
+		if(coupon_list != null && coupon_list.size() > 0){
+			binOLSSPRM74_Service.deleteCouponDetail(coupon_list);
+		}
 	}
 
 	
@@ -877,6 +891,10 @@ public class BINOLSSPRM74_BL implements BINOLSSPRM74_IF {
 			main_map.put("TT", main_map.get("tradeTime"));
 			main_map.put("brandInfoID", main_map.get("brandInfoId"));
 			main_map.put("TotalAmount", main_map.get("totalAmount"));
+			if (form.getMemberPhone() != null ) {
+				String memberPhone = form.getMemberPhone().trim();
+				main_map.put("MP", memberPhone);
+			}
 			Map<String, Object> coupon_input = new HashMap<String, Object>();
 			coupon_input.put("Main_map", main_map);
 			coupon_input.put("cart_map", cartConvert);
@@ -887,10 +905,6 @@ public class BINOLSSPRM74_BL implements BINOLSSPRM74_IF {
 				main_map.put("SendFlag", 1);
 			} else {
 				main_map.put("SendFlag", 0);
-			}
-			if (form.getMemberPhone() != null && form.getMemberPhone().length() == 11) {
-				String memberPhone = form.getMemberPhone().trim();
-				main_map.put("MP", memberPhone);
 			}
 			//打印智能促销页面写入的主单数据
 			main_map.put("createPGM", "BINOLSSPRM74_1");

@@ -13,13 +13,12 @@
 package com.cherry.ss.prm.service;
 
 
+import com.cherry.cm.core.CherryConstants;
+import com.cherry.cm.service.BaseService;
 
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-
-import com.cherry.cm.core.CherryConstants;
-import com.cherry.cm.service.BaseService;
 
 public class BINOLSSPRM74_Service extends BaseService {
 	
@@ -111,10 +110,38 @@ public class BINOLSSPRM74_Service extends BaseService {
 		map.put(CherryConstants.IBATIS_SQL_ID, "BINOLSSPRM74.updateProCoupon");
 		baseServiceImpl.update(map);
 	}
-	
+
 	public int getNoMemberCouponCount(){
 		Map<String,Object> map=new HashMap<String, Object>();
 		map.put(CherryConstants.IBATIS_SQL_ID, "BINOLSSPRM74.getNoMemberCouponCount");
 		return baseServiceImpl.getSum(map);
 	}
+
+	public List<Map<String, Object>> getCartDetailByTradeNo(Map<String, Object> map) {
+		map.put(CherryConstants.IBATIS_SQL_ID, "BINOLSSPRM74.getCartDetailByTradeNo");
+		return baseServiceImpl.getList(map);
+	}
+
+	public List<Map<String, Object>> getRuleDetailByTradeNo(Map<String, Object> map) {
+		map.put(CherryConstants.IBATIS_SQL_ID, "BINOLSSPRM74.getRuleDetailByTradeNo");
+		return baseServiceImpl.getList(map);
+	}
+
+	public List<Map<String, Object>> getCouponDetailByTradeNo(Map<String, Object> map) {
+		map.put(CherryConstants.IBATIS_SQL_ID, "BINOLSSPRM74.getCouponDetailByTradeNo");
+		return baseServiceImpl.getList(map);
+	}
+
+	public void deleteCartDetail(List<Map<String,Object>> coupon_list) {
+		baseServiceImpl.deleteAll(coupon_list,"BINOLSSPRM74.deleteCartDetail");
+	}
+
+	public void deleteRuleDetail(List<Map<String,Object>> coupon_list) {
+		baseServiceImpl.deleteAll(coupon_list,"BINOLSSPRM74.deleteRuleDetail");
+	}
+
+	public void deleteCouponDetail(List<Map<String,Object>> coupon_list) {
+		baseServiceImpl.deleteAll(coupon_list,"BINOLSSPRM74.deleteCouponDetail");
+	}
+
 }
