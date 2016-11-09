@@ -33,7 +33,7 @@ BINOLPTJCS48.prototype={
 						// 根据【是否更新产品表价格】设定模板
 						// 包含价格模板
 						var downloadURL = $("#downLoad_url").attr("href");
-						alert(downloadURL);
+						//alert(downloadURL);
 						if (item.isSynchProductPrice == '1') {
 							// 標準導入模板
 							downloadURL = $("#downLoad_urlOT").attr("href");
