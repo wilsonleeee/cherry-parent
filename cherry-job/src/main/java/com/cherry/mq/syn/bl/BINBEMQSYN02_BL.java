@@ -170,15 +170,21 @@ public class BINBEMQSYN02_BL {
 					if(originalMsg != null && !"".equals(originalMsg)) {
 						try {
 							// 调用共通将消息体解析成Map
-							Map mainDataMap = MessageUtil.message2Map(originalMsg);
-							if(mainDataMap == null) {
-								Object mainDataDTO = Message2Bean.parseMessage(originalMsg);
-								if (mainDataDTO == null) {
-									// 最新的纯JSON格式的MQ，会走进此if
-									mainDataMap = getMessageMainInfo(originalMsg);
-								} else {
-									mainDataMap = (Map) Bean2Map.toHashMap(mainDataDTO);
+							Map mainDataMap = null;
+							if(originalMsg.startsWith("[Version],")){
+								mainDataMap = MessageUtil.message2Map(originalMsg);
+								if(mainDataMap == null) {
+									Object mainDataDTO = Message2Bean.parseMessage(originalMsg);
+									if (mainDataDTO == null) {
+										// 最新的纯JSON格式的MQ，会走进此if
+										mainDataMap = getMessageMainInfo(originalMsg);
+									} else {
+										mainDataMap = (Map) Bean2Map.toHashMap(mainDataDTO);
+									}
+									mainDataMap = CherryUtil.dealMap(mainDataMap);
 								}
+							}else{
+								mainDataMap = getMessageMainInfo(originalMsg);
 							}
 							// 不是重复数据的场合
 							if(binBEMQMES99_BL.judgeIfIsRepeatData(mainDataMap)) {
