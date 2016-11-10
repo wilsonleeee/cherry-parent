@@ -107,4 +107,15 @@ public class MqDG_Service extends BaseService{
 		paramMap.put(CherryConstants.IBATIS_SQL_ID, "MqDG.updateOriginalNSBillDetailInfo");
 		baseServiceImpl.update(paramMap);
 	}
+	
+	/**
+	 * 更新电商订单表相关状态信息
+	 * @param map
+	 */
+	public void updateESOrderMainInfo(Map<String, Object> map) {
+		Map<String, Object> paramMap = new HashMap<String, Object>();
+		paramMap.putAll(map);
+		paramMap.put(CherryConstants.IBATIS_SQL_ID, "MqDG.updateESOrderMainInfo");
+		baseServiceImpl.update(paramMap);
+	}
 }

@@ -28,6 +28,7 @@ import com.cherry.cm.cmbussiness.bl.BINOLCM03_BL;
 import com.cherry.cm.cmbussiness.interfaces.BINOLCM18_IF;
 import com.cherry.cm.core.CherryChecker;
 import com.cherry.cm.core.CherryConstants;
+import com.cherry.cm.core.CherryException;
 import com.cherry.cm.util.CherryUtil;
 import com.cherry.cm.util.ConvertUtil;
 import com.cherry.cm.util.DateUtil;
@@ -40,6 +41,7 @@ import com.cherry.mq.mes.service.MqDG_Service;
 import com.cherry.ss.common.bl.BINOLSSCM01_BL;
 import com.cherry.ss.common.service.BINOLSSCM01_Service;
 import com.cherry.st.common.interfaces.BINOLSTCM01_IF;
+import com.cherry.webservice.client.WebserviceClient;
 import com.mongodb.BasicDBObject;
 import com.mongodb.DBObject;
 
@@ -52,6 +54,8 @@ import com.mongodb.DBObject;
  *
  */
 public class MqDG implements MqReceiver_IF {
+	
+	private static final Logger logger = LoggerFactory.getLogger(MqDG.class);
 	
 	@Resource(name="binBEMQMES96_BL")
 	private BINBEMQMES96_BL binBEMQMES96_BL;
@@ -105,7 +109,16 @@ public class MqDG implements MqReceiver_IF {
         		this.productInOutStock(messageMap);
         	}
         }
-		
+        
+        String pickupMode = ConvertUtil.getString(map.get("pickupMode"));
+		if("1".equals(pickupMode)) {
+			// 微商城模式
+			// 更新订单状态
+			this.transferWebService(map);
+			// 更新电商订单主表信息
+			this.updateESOrderMainInfo(map);
+			
+		}
 		
 		this.addMessageLog(map);
         
@@ -116,6 +129,30 @@ public class MqDG implements MqReceiver_IF {
         map.put("isInsertMongoDBBusLog", "1");
 	}
 	
+	/**
+	 * 更新电商订单主表信息
+	 * @param map
+	 */
+	private void updateESOrderMainInfo(Map<String, Object> map) {
+		// 更新订单相关信息
+		Map<String, Object> updOrderMap = new HashMap<String, Object>();
+		setUpdateInfoMapKey(updOrderMap);
+		updOrderMap.put("brandInfoID", map.get("brandInfoID"));
+		updOrderMap.put("organizationInfoID", map.get("organizationInfoID"));
+		// originalNo:提货时关联的原始销售单
+		updOrderMap.put("billCode", map.get("originalNo"));
+		updOrderMap.put("departCode", map.get("departCode"));
+		updOrderMap.put("employeeCode", map.get("employeeCode"));
+		updOrderMap.put("tradeTime", map.get("tradeTime"));
+		// 订单状态
+		String subType = ConvertUtil.getString(map.get("subType"));
+		// 0：已提货；1：退货
+		updOrderMap.put("orderStatus", "DG".equals(subType) ? "0" : "1");
+		updOrderMap.put("pushFlag", "1");
+		mqDG_Service.updateESOrderMainInfo(updOrderMap);
+		
+	}
+
 	/**
 	 * 更新原始预定单的相关信息
 	 * @param map
@@ -128,10 +165,9 @@ public class MqDG implements MqReceiver_IF {
 		updateNSMap.put("pickupDate",ConvertUtil.getString(map.get("pickupDate")));
 		updateNSMap.put(CherryConstants.UPDATEDBY, "-2");
 		updateNSMap.put(CherryConstants.UPDATEPGM, "MqDG");
-		// 更新原始预定单的状态
+		// 更新原始预定单的状态,在SQL已经对于数量进行了判断
 		mqDG_Service.updateOriginalNSBillInfo(updateNSMap);
 		
-		List<Map<String, Object>> updateNSDetailList = new ArrayList<Map<String, Object>>();
 		List<Map<String, Object>> pickupBillDetailList = (List<Map<String, Object>>)map.get("detailList");
 		for(Map<String, Object> pickupBillDetailMap : pickupBillDetailList) {
 			Map<String, Object> updateNSDetailMap = new HashMap<String, Object>();
@@ -719,6 +755,40 @@ public class MqDG implements MqReceiver_IF {
 			}
 			
 		}
+	}
+	
+	/**
+	 * 调用微商城Webservice并把订单状态信息推送到微商城
+	 * 
+	 * @param map
+	 * @return
+	 * @throws Exception 
+	 */
+	private void transferWebService(Map<String, Object> map) throws Exception {
+		Map<String, Object> wsMap = new HashMap<String, Object>();
+		// 业务类型
+		wsMap.put("TradeType", "UpdateOrderStatus");
+		// 发货柜台
+		wsMap.put("CounterCode", map.get("departCode"));
+		// 发货BA
+		wsMap.put("BaCode", map.get("employeeCode"));
+		// 订单号
+		wsMap.put("OrderSn", map.get("originalNo"));
+		// 发货时间
+		wsMap.put("DeliveryDate", map.get("tradeTime"));
+		// 订单状态
+		String subType = ConvertUtil.getString(map.get("subType"));
+		// 0：已提货；1：退货
+		wsMap.put("OrderStatus", "DG".equals(subType) ? "0" : "1");
+		// 调用微商城接口
+		logger.info("********************执行推送订单至微商城WS处理***************************");
+		Map<String, Object> resultMap = WebserviceClient.accessWeshopWebService(wsMap);
+		String errCode = ConvertUtil.getString(resultMap.get("ERRORCODE"));
+		String errMsg = ConvertUtil.getString(resultMap.get("ERRORMSG"));
+		if (!"0".equals(errCode)) {
+			MessageUtil.addMessageWarning(map,"推送订单至微商城WS处理【UpdateOrderStatus】出现业务问题；订单号\""+map.get("originalNo")+"\";错误信息："+errMsg);
+		}
+		
 	}
 
 }
