@@ -275,7 +275,7 @@ public class MqDG implements MqReceiver_IF {
 	
 	/**
 	 * 分割消息Map(促销品和产品)
-	 * @param 
+	 * @param
 	 * @return 当明细中既有产品也有促销品，将会拆分产品与促销品，用isPromotionFlag字段标记，0：产品；1：促销品；
 	 * 			注：1）盘单业务时，若没有明细，根据SubType判断是产品盘点还是促销品盘点(此时返回的是已经标记了isPromotionFlag字段的数据)，
 	 * 					若不在盘点已定义的类型中则返回new ArrayList();
@@ -781,7 +781,7 @@ public class MqDG implements MqReceiver_IF {
 		// 0：已提货；1：退货
 		wsMap.put("OrderStatus", "DG".equals(subType) ? "0" : "1");
 		// 调用微商城接口
-		logger.info("********************执行推送订单至微商城WS处理***************************");
+		logger.info("********************执行推送订单至微商城WS处理,"+ wsMap.get("CounterCode")+wsMap.get("BaCode")+ wsMap.get("OrderSn")+wsMap.get("OrderStatus") +"***************************");
 		Map<String, Object> resultMap = WebserviceClient.accessWeshopWebService(wsMap);
 		String errCode = ConvertUtil.getString(resultMap.get("ERRORCODE"));
 		String errMsg = ConvertUtil.getString(resultMap.get("ERRORMSG"));
