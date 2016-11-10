@@ -638,8 +638,8 @@ public class BINOLSSPRM74_Action extends BaseAction implements ModelDriven<BINOL
 			String TN=ConvertUtil.getString(main_map.get("TN"));
 			if(httpSession!=null){
 				synchronized (httpSession){
-					String value = (String) httpSession.getAttribute("TN");
-					if(value!=null){
+					String value = ConvertUtil.getString(httpSession.getAttribute("TN"));
+					if(!"".equals(value)){
 						return;
 					}
 					logger.info("智能促销发券操作开始");
