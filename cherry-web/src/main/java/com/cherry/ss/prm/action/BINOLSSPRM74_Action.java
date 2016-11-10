@@ -30,6 +30,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.annotation.Resource;
+import javax.servlet.http.HttpSession;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -630,45 +631,53 @@ public class BINOLSSPRM74_Action extends BaseAction implements ModelDriven<BINOL
 	 * @throws Exception 
 	 */
 	public void promotionSend() throws Exception{
+		HttpSession httpSession = request.getSession();
 		try {
-			logger.info("智能促销发券操作开始");
-			String datasourceName=form.getDatasourceName();
-			session.put(CherryConstants.CHERRY_SECURITY_CONTEXT_KEY,datasourceName);
-			// 对登录账户做一系列的检查,通过则返回账户ID，不通过则会抛出多种错误信息
-			CustomerContextHolder.setCustomerDataSourceType(datasourceName);
 			//主单信息
 			Map<String,Object> main_map=ConvertUtil.json2Map(form.getMain_json());
-			//购物车信息
-			List<Map<String,Object>> shoppongcart_list=ConvertUtil.json2List(form.getShoppingcart_json());
-			//已经享受的促销活动
-			List<Map<String,Object>> rule_list=ConvertUtil.json2List(form.getRule_json());
-			//页面上已经计算完成的促销活动
-			List<Map<String,Object>> competedRule_list=ConvertUtil.json2List(form.getCompetedRule_json());
-			//非会员发券情况添加手机号
-			if(form.getMemberPhone() != null && form.getMemberPhone().length() == 11){
-            	String memberPhone=form.getMemberPhone().trim();
-            	main_map.put("MP", memberPhone);
-            }
-			//打印发券操作调用时传入的主单数据
-			logger.error("打印发券操作调用时传入的主单数据：",main_map);
-			Map<String,Object> coupon_input=new HashMap<String, Object>();
-			coupon_input.put("Main_map", main_map);
-			coupon_input.put("cart_map", shoppongcart_list);
-			coupon_input.put("completedRule", rule_list);
-			coupon_input.put("calculatedRule", competedRule_list);
-			Map<String, Object> result_map=coupon_IF.tran_createCoupon(coupon_input);
-			
-			//测试数据
-//			Map<String,Object> result_map=new HashMap<String, Object>();
-//			result_map.put("ResultCode", 1);
-//			result_map.put("ResultMsg", "核券失败");
-//			logger.error("");
-			ConvertUtil.setResponseByAjax(response, result_map);
-			logger.info("智能促销发券操作正常结束");
+			String TN=ConvertUtil.getString(main_map.get("TN"));
+			if(httpSession!=null){
+				synchronized (httpSession){
+					String value = (String) httpSession.getAttribute("TN");
+					if(value!=null){
+						return;
+					}
+					logger.info("智能促销发券操作开始");
+					String datasourceName=form.getDatasourceName();
+					session.put(CherryConstants.CHERRY_SECURITY_CONTEXT_KEY,datasourceName);
+					// 对登录账户做一系列的检查,通过则返回账户ID，不通过则会抛出多种错误信息
+					CustomerContextHolder.setCustomerDataSourceType(datasourceName);
+					//购物车信息
+					List<Map<String,Object>> shoppongcart_list=ConvertUtil.json2List(form.getShoppingcart_json());
+					//已经享受的促销活动
+					List<Map<String,Object>> rule_list=ConvertUtil.json2List(form.getRule_json());
+					//页面上已经计算完成的促销活动
+					List<Map<String,Object>> competedRule_list=ConvertUtil.json2List(form.getCompetedRule_json());
+					//非会员发券情况添加手机号
+					if(form.getMemberPhone() != null && form.getMemberPhone().length() == 11){
+						String memberPhone=form.getMemberPhone().trim();
+						main_map.put("MP", memberPhone);
+					}
+					//打印发券操作调用时传入的主单数据
+					logger.error("打印发券操作调用时传入的主单数据：",main_map);
+					Map<String,Object> coupon_input=new HashMap<String, Object>();
+					coupon_input.put("Main_map", main_map);
+					coupon_input.put("cart_map", shoppongcart_list);
+					coupon_input.put("completedRule", rule_list);
+					coupon_input.put("calculatedRule", competedRule_list);
+					Map<String, Object> result_map=coupon_IF.tran_createCoupon(coupon_input);
+					ConvertUtil.setResponseByAjax(response, result_map);
+					logger.info("智能促销发券操作正常结束");
+					httpSession.setAttribute("TN",TN);
+				}
+			}
+
 		} catch (Exception e) {
 			logger.error(e.getMessage(), e);
 			logger.error("智能促销发券操作失败");
 			ConvertUtil.setResponseByAjax(response, "1");
+		}finally {
+			httpSession.removeAttribute("TN");
 		}
 		
 		
