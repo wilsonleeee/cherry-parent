@@ -275,7 +275,7 @@ public class MqDG implements MqReceiver_IF {
 	
 	/**
 	 * 分割消息Map(促销品和产品)
-	 * @param map
+	 * @param 
 	 * @return 当明细中既有产品也有促销品，将会拆分产品与促销品，用isPromotionFlag字段标记，0：产品；1：促销品；
 	 * 			注：1）盘单业务时，若没有明细，根据SubType判断是产品盘点还是促销品盘点(此时返回的是已经标记了isPromotionFlag字段的数据)，
 	 * 					若不在盘点已定义的类型中则返回new ArrayList();
@@ -378,7 +378,7 @@ public class MqDG implements MqReceiver_IF {
 	
 	/**
 	 * 促销品库存处理
-	 * @param messageMap
+	 * @param map
 	 */
 	private void promotionInOutStock(Map<String, Object> map) {
 		Map<String,Object> mainData = new HashMap<String,Object>();
