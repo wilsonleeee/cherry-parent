@@ -76,7 +76,8 @@
 		FROM
 			Members.BIN_CustomerInfo A WITH(NOLOCK)
 			LEFT JOIN Members.BIN_MemCardInfo B WITH(NOLOCK)
-			ON(A.BIN_CustomerCode = B.MemCode)
+			ON(A.BIN_CustomerCode = B.MemCode
+				AND A.CustomerType = '1')
 			LEFT JOIN Members.BIN_MemberInfo C WITH(NOLOCK)
 			ON(B.BIN_MemberInfoID = C.BIN_MemberInfoID
 				AND A.BIN_BrandInfoID = C.BIN_BrandInfoID)
@@ -91,13 +92,11 @@
     	<include refid="BINOLCMINC99.pageheader" />
     	<![CDATA[
 		SELECT
-			A.Mobilephone AS mobilePhone,
-			A.Telephone AS telephone,
+			ISNULL(A.Mobilephone,C.MobilePhone) AS mobilePhone,
 			isnull(A.CounterCode,C.CounterCodeBelong) AS counterCode,
-			A.BIN_CustomerCode AS memCode,
-			A.Email AS email,
 			SUBSTRING(A.Birthday,5,2) AS birthMonth,					
 			SUBSTRING(A.Birthday,7,2) AS birthDay,
+			B.MemCode AS memCode,
 			B.BIN_MemberInfoID AS memId,
 			CONVERT(varchar(10),C.LevelAdjustDay,120) AS levelAdjustDay,
 			CONVERT(varchar(10),C.JoinDate,120) AS joinDate,
@@ -111,7 +110,7 @@
     <select id="getMebCount" parameterClass="java.util.HashMap" resultClass="java.lang.Integer">
     	<![CDATA[
 		SELECT
-			COUNT(A.Mobilephone)
+			COUNT(1)
 		]]>
 		<include refid="BINOLCPCOM05.getMebSQL" />
     </select>
