@@ -46,7 +46,10 @@ public class BINOLSSPRM74_Action extends BaseAction implements ModelDriven<BINOL
 	 */
 	private static final long serialVersionUID = -1384075613172435643L;
 
+	//用于控制发券的锁
 	private static final ConcurrentHashMap uniqueKeyMap = new  ConcurrentHashMap();
+	//用于控制画面上点【确定】按钮写入单据的锁
+	private static final ConcurrentHashMap uniqueSaleKeyMap = new  ConcurrentHashMap();
 
 	private static Logger logger = LoggerFactory.getLogger(BINOLSSPRM74_Action.class);
 	
@@ -380,7 +383,19 @@ public class BINOLSSPRM74_Action extends BaseAction implements ModelDriven<BINOL
 	 * @throws Exception 
 	 */
 	public void tran_promotionCollect() throws Exception{
+		Map<String,Object> main_map=ConvertUtil.json2Map(form.getMain_json());
+		String TN=ConvertUtil.getString(main_map.get("TN"));
+		if(StringUtils.isEmpty(TN)){
+			return;
+		}
 		try {
+			//主单信息
+			synchronized (uniqueSaleKeyMap) {
+				Object previousValue = uniqueSaleKeyMap.putIfAbsent(TN, TN);
+				if (previousValue != null) {
+					return;
+				}
+			}
 			String datasourceName=form.getDatasourceName();
 			session.put(CherryConstants.CHERRY_SECURITY_CONTEXT_KEY,datasourceName);
 			// 对登录账户做一系列的检查,通过则返回账户ID，不通过则会抛出多种错误信息
@@ -392,6 +407,8 @@ public class BINOLSSPRM74_Action extends BaseAction implements ModelDriven<BINOL
 			logger.error(e.getMessage(), e);
 			logger.error("智能促销数据录入失败");
 			ConvertUtil.setResponseByAjax(response, "1");
+		}finally {
+			uniqueSaleKeyMap.remove(TN);
 		}
 		
 		
