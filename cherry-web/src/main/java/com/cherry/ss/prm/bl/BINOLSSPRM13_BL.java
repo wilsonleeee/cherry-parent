@@ -64,7 +64,6 @@ public class BINOLSSPRM13_BL {
 	
 	/**
 	 * 取得日历起始日期
-	 * @param map
 	 * @return
 	 */
 	public String getCalendarStartDate(){
@@ -460,13 +459,14 @@ public class BINOLSSPRM13_BL {
 	public Map<String, Object> getActiveGrpTimeInfo(Map<String, Object> map){
 		return binOLSSPRM13_Service.getActiveGrpInfo(map);
 	}
-	
+
 	/**
 	 * 更新活动地点信息
-	 * 
-	 * @param map
-	 * @return
-	 */
+	 * @param ruleId
+	 * @param locList
+	 * @param timeList
+	 * @throws Exception
+     */
 	public void tran_updActLocation(String ruleId,List<Object> locList,List<Map<String, Object>> timeList)throws Exception{
 		Map<String, Object> map = new HashMap<String, Object>();
 		map.put("ruleId", ruleId);

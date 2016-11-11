@@ -11,10 +11,10 @@
 	<s:iterator value="prmActiveGrpList" status="status">
 		<ul>
 			<li>
-			<s:if test='"".equals(prmActGrpID)||null==(prmActGrpID)'>
+			<s:if test='1==delFlag'>
 				<input name="prmActGrps" class="checkbox" value='<s:property value="BIN_PromotionActGrpID"/>'
 				type="<s:if test='%{checkType == null || checkType == "checkbox"}'>checkbox</s:if><s:else>radio</s:else>"/>
-			</s:if>	
+			</s:if>
 			</li>
 			<li><s:property value="GroupCode"/></li>
 			<li>

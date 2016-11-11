@@ -123,7 +123,7 @@ public class BINOLSSPRM68_Action extends BaseAction{
 			if(null == pageA){
 				pageA = (Map<String,String>)session.get(SESSION_KEY + "A");
 			}
-			comMap.put(CherryConstants.BRANDINFOID, pageA.get(CherryConstants.BRANDINFOID));	
+			comMap.put(CherryConstants.BRANDINFOID, pageA.get(CherryConstants.BRANDINFOID));
 			// 前进
 			if(step == 1){
 				// 保存当前页内容
@@ -238,6 +238,7 @@ public class BINOLSSPRM68_Action extends BaseAction{
 	private void initPageA(Map<String,Object> map){
 		// 取得品牌list
 		pageTemp.put("brandList", binolcm05_BL.getBrandList(session));
+
 		pageTemp.put("prmActGrpList", prm68_BL.getActiveGrpList(map));
 	}
 	
@@ -764,6 +765,9 @@ public class BINOLSSPRM68_Action extends BaseAction{
 		map.put("userID", userInfo.getBIN_UserID());
 		map.put(CampConstants.OPT_KBN, opt);
 		map.put("activeID", activeID);
+		// 业务日期
+		String bussiDate = prm68_BL.getBusDate(map);
+		map.put("bussiDate", bussiDate);
 		return map;
 	}
 	
