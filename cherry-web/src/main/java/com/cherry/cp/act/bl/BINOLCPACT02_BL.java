@@ -17,6 +17,7 @@ import com.cherry.cp.common.dto.CampaignDTO;
 import com.cherry.cp.common.interfaces.BINOLCPCOM03_IF;
 import com.cherry.cp.common.service.BINOLCPCOM02_Service;
 import com.cherry.cp.common.util.CampUtil;
+import com.cherry.ss.prm.bl.BINOLSSPRM68_BL;
 import com.googlecode.jsonplugin.JSONUtil;
 
 
@@ -32,6 +33,9 @@ public class BINOLCPACT02_BL {
 	
 	@Resource
     private BINOLCPCOM03_IF binolcpcom03IF;
+
+	@Resource
+	private BINOLSSPRM68_BL binolssprm68Bl;
 	
 	 /**
      * 取得子活动菜单
@@ -246,5 +250,70 @@ public class BINOLCPACT02_BL {
 	
 	public String getBusDate(Map<String,Object> map){
 		return binolcpcom02_Service.getBussinessDate(map);
+	}
+
+	/**
+	 * 获取用户权限地点信息
+	 * @param campInfo
+	 * @param parMap
+     */
+	public void getUserAuthorityPlace(Map<String,Object> campInfo,Map<String,Object> parMap){
+		String placeType = ConvertUtil.getString(campInfo.get("placeType"));
+		parMap.put("locationType",placeType);
+		List<Map<String,Object>> newPlaceList = new ArrayList<Map<String,Object>>();
+		List<Map<String,Object>> userAuthorityList = binolssprm68Bl.getUserAuthorityPlaceList(parMap,placeType);
+		if("0".equals(placeType)){
+			for(Map<String,Object> userPlace : userAuthorityList){
+				Map<String,Object> newPlace = new HashMap<String,Object>();
+				newPlace.put("placeCode",userPlace.get("code"));
+				newPlace.put("placeName",userPlace.get("name"));
+				newPlaceList.add(newPlace);
+			}
+		}else{
+			List<Map<String,Object>> placeList = (List<Map<String,Object>>) campInfo.get("campPlaceList");
+			if(CampConstants.LOTION_TYPE_7.equals(placeType)){
+				for(Map<String,Object> placeInfo : placeList){
+					int code = ConvertUtil.getInt(placeInfo.get("id"));
+					for(Map<String,Object> userPlace : userAuthorityList){
+						int userCode = ConvertUtil.getInt(userPlace.get("code"));
+						if(code==userCode){
+							newPlaceList.add(placeInfo);
+							userAuthorityList.remove(userPlace);
+							break;
+						}
+					}
+				}
+			}else if(CampConstants.LOTION_TYPE_2.equals(placeType)
+					||CampConstants.LOTION_TYPE_4.equals(placeType)
+					||CampConstants.LOTION_TYPE_5.equals(placeType)
+					||CampConstants.LOTION_TYPE_8.equals(placeType)
+					||CampConstants.LOTION_TYPE_10.equals(placeType)){
+				for(Map<String,Object> placeInfo : placeList){
+					String code = ConvertUtil.getString(placeInfo.get("placeCode"));
+					for(Map<String,Object> userPlace : userAuthorityList){
+						String userCode = ConvertUtil.getString(userPlace.get("code"));
+						if(code.equals(userCode)){
+							newPlaceList.add(placeInfo);
+							userAuthorityList.remove(userPlace);
+							break;
+						}
+					}
+				}
+			}else{
+				for(Map<String,Object> placeInfo : placeList){
+					int code = ConvertUtil.getInt(placeInfo.get("placeCode"));
+					for(Map<String,Object> userPlace : userAuthorityList){
+						int userCode = ConvertUtil.getInt(userPlace.get("code"));
+						if(code==userCode){
+							newPlaceList.add(placeInfo);
+							userAuthorityList.remove(userPlace);
+							break;
+						}
+					}
+
+				}
+			}
+		}
+		campInfo.put("campPlaceList",newPlaceList);
 	}
 }

@@ -483,4 +483,67 @@
 		A.RuleCode = #ruleCode# AND A.BIN_BrandInfoID = #brandInfoId#
 	]]>
 	</insert>
+
+	<select id="getUserAuthorityPlaceList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+		SELECT DISTINCT
+		<isNotEmpty property="userCounterFlag">
+			A.CounterCode AS code,
+			A.CounterNameIF AS name
+		</isNotEmpty>
+		<isEmpty property="userCounterFlag">
+			<isEqual property="locationType" compareValue="1">
+				C.BIN_RegionID AS code,
+				C.RegionNameChinese AS name
+			</isEqual>
+			<isEqual property="locationType" compareValue="3">
+				D.BIN_ChannelID AS code,
+				D.ChannelName AS name
+			</isEqual>
+			<isEqual property="locationType" compareValue="7">
+				A.BelongFaction AS code
+			</isEqual>
+			<isEqual property="locationType" compareValue="9">
+				E.BIN_OrganizationID AS code,
+				E.DepartName AS name
+			</isEqual>
+		</isEmpty>
+		FROM
+			Basis.BIN_CounterInfo A WITH(NOLOCK)
+			JOIN Privilege.BIN_DepartPrivilege B WITH(NOLOCK)
+				ON (A.BIN_OrganizationID=B.BIN_OrganizationID AND
+				  B.ValidFlag = 1 AND B.BIN_UserID=#userId#)
+		<isEmpty property="userCounterFlag">
+			<isEqual property="locationType" compareValue="1">
+				JOIN Basis.BIN_Region C WITH(NOLOCK)
+				ON (A.BIN_RegionID = C.BIN_RegionID AND C.ValidFlag = 1)
+			</isEqual>
+			<isEqual property="locationType" compareValue="3">
+				JOIN Basis.BIN_Channel D WITH(NOLOCK)
+				ON (A.BIN_ChannelID = D.BIN_ChannelID AND D.ValidFlag = 1)
+			</isEqual>
+			<isEqual property="locationType" compareValue="9">
+				JOIN Basis.BIN_Organization E WITH(NOLOCK)
+				ON (A.BIN_OrganizationID = E.BIN_OrganizationID AND E.ValidFlag = 1)
+			</isEqual>
+		</isEmpty>
+		WHERE
+			A.BIN_OrganizationInfoID = #organizationInfoId#
+			AND A.BIN_BrandInfoID = #brandInfoId#
+			AND A.ValidFlag = 1
+	</select>
+	
+	<select id="getProRulePlaceList" parameterClass="java.util.HashMap" resultClass="java.lang.Object">
+		SELECT
+			B.BasePropValue1 as code
+		FROM
+			Promotion.BIN_PromotionBaseProp A
+			JOIN Promotion.BIN_PromotionRuleCondition B
+			ON(A.BIN_PromotionBasePropID = B.BIN_PromotionBasePropID AND B.ValidFlag =1)
+			JOIN Promotion.BIN_PromotionActivityRule C
+			ON(B.BIN_PromotionActivityRuleID=C.BIN_PromotionActivityRuleID AND C.ValidFlag = 1)
+		WHERE
+			A.ValidFlag = 1
+			AND A.PropertyName=#basePropName#
+			AND C.BIN_PromotionActivityID=#activeID#
+	</select>
 </sqlMap>

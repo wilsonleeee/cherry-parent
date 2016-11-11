@@ -61,6 +61,14 @@ BINOLSSPRM68.prototype={
 		},
 		"setTemplateFlag":function(val){
 			$('#templateFlag').val(val);
+		},
+		"showMore": function(_this,moreId){
+			var $moreId = $(moreId);
+			if($moreId.is(':visible')){
+				$moreId.hide('slow');
+			}else{
+				$moreId.show('slow');
+			}
 		}
 }
 var PRM68 = new BINOLSSPRM68();

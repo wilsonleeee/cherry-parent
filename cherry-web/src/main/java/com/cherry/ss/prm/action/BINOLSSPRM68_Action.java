@@ -268,13 +268,28 @@ public class BINOLSSPRM68_Action extends BaseAction{
 					}
 				}
 				if(pageNo == 5){
-					String locationType = pageB.get("locationType");
-					if (!CampConstants.LOTION_TYPE_0.equals(locationType)){
+					//opt为空表示为促销活动一览
+					String authorityFlag = binOLCM14_BL.getConfigValue("1352",
+							ConvertUtil.getString(map.get(CherryConstants.ORGANIZATIONINFOID)),
+							ConvertUtil.getString(map.get(CherryConstants.BRANDINFOID)));
+					if(ConvertUtil.isBlank(opt)&&"1".equals(authorityFlag)){
+						String locationType = pageA.get("locationType");
+
+						try {
+							List<Map<String,Object>> resultPlaceList= prm68_BL.getReturnPlaceJson(map,locationType);
+							pageTemp.put(CampConstants.PLACE_JSON, resultPlaceList);
+						} catch (Exception e) {
+							logger.error(e.getMessage(), e);
+							this.addActionError(e.getMessage());
+						}
+
+					}else{
 						String palceJson = pageB.get(CampConstants.PLACE_JSON);
 						List<Map<String, Object>> palceList = (List<Map<String, Object>>) JSONUtil
 								.deserialize(palceJson);
 						pageTemp.put(CampConstants.PLACE_JSON, palceList);
 					}
+
 				}else{
 					String placeJson = prm68_BL.getPlaceJson(pageB, map);
 					pageTemp.put(CampConstants.PLACE_JSON, placeJson);

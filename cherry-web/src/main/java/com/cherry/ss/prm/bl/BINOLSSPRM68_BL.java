@@ -12,10 +12,7 @@
  */
 package com.cherry.ss.prm.bl;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 import javax.annotation.Resource;
 
@@ -25,6 +22,8 @@ import com.cherry.cm.cmbussiness.bl.BINOLCM14_BL;
 import com.cherry.cm.cmbussiness.bl.BINOLCM89_BL;
 import com.cherry.cm.core.CherryConstants;
 import com.cherry.cm.core.CherryException;
+import com.cherry.cm.core.CodeTable;
+import com.cherry.cm.util.CherryUtil;
 import com.cherry.cm.util.ConvertUtil;
 import com.cherry.cp.act.util.ActUtil;
 import com.cherry.cp.common.CampConstants;
@@ -68,6 +67,9 @@ public class BINOLSSPRM68_BL {
 
 	@Resource(name = "binOLSSPRM68_Service")
 	private BINOLSSPRM68_Service prm68Ser;
+
+	@Resource
+	private CodeTable codeTable;
 	
 	public String getBusDate(Map<String, Object> map) {
 		return prm68Ser.getBusDate(map);
@@ -92,8 +94,7 @@ public class BINOLSSPRM68_BL {
 	/**
 	 * 取得活动地点JSON
 	 * 
-	 * @param locationType
-	 * @param palceJson
+	 * @param palceMap
 	 * @param map
 	 * @return
 	 * @throws JSONException
@@ -137,8 +138,7 @@ public class BINOLSSPRM68_BL {
 	}
 	/**
 	 * 保存促销规则
-	 * 
-	 * @param pageMap
+	 *
 	 * @param map
 	 * @return
 	 */
@@ -151,8 +151,7 @@ public class BINOLSSPRM68_BL {
 	}
 	/**
 	 * 保存促销规则
-	 * 
-	 * @param pageMap
+	 *
 	 * @param map
 	 * @return
 	 */
@@ -215,8 +214,7 @@ public class BINOLSSPRM68_BL {
 	
 	/**
 	 * 保存促销规则
-	 * 
-	 * @param pageMap
+	 *
 	 * @param map
 	 * @return
 	 */
@@ -533,7 +531,119 @@ public class BINOLSSPRM68_BL {
 		}
 		return false;
 	}
-	
+
+	/**
+	 * 返回处理后的权限地点JSON
+	 * @param parMap
+	 * @param locationType
+     * @return
+     */
+	public List<Map<String,Object>> getReturnPlaceJson(Map<String,Object> parMap,String locationType) throws Exception{
+		parMap.put("locationType",locationType);
+		List<Map<String,Object>> resultSet = new ArrayList<Map<String,Object>>();
+  		List<Map<String,Object>> userAuthorityPlaceList = getUserAuthorityPlaceList(parMap,locationType);
+		if("0".equals(locationType)){
+			resultSet.addAll(userAuthorityPlaceList);
+		}else{
+			List<Object> activePlaceList = getProRulePlaceList(parMap,locationType);
+			if(CampConstants.LOTION_TYPE_2.equals(locationType)
+					||CampConstants.LOTION_TYPE_4.equals(locationType)
+					||CampConstants.LOTION_TYPE_5.equals(locationType)
+					||CampConstants.LOTION_TYPE_8.equals(locationType)
+					||CampConstants.LOTION_TYPE_10.equals(locationType)){
+				for(Object obj :activePlaceList){
+					String objStr = ConvertUtil.getString(obj);
+					for(Map<String,Object> userMap :userAuthorityPlaceList){
+						if(objStr.equals(ConvertUtil.getString(userMap.get("code")))){
+							userAuthorityPlaceList.remove(userMap);
+							resultSet.add(userMap);
+							break;
+						}
+					}
+				}
+			}else{
+				for(Object obj :activePlaceList){
+					int objInt = ConvertUtil.getInt(obj);
+					for(Map<String,Object> userMap :userAuthorityPlaceList){
+						if(objInt == ConvertUtil.getInt(userMap.get("code"))){
+							userAuthorityPlaceList.remove(userMap);
+							resultSet.add(userMap);
+							break;
+						}
+					}
+				}
+			}
+		}
+		return resultSet;
+	}
+
+	/**
+	 * 获取活动保存的地点
+	 * @param map
+	 * @param locationType
+     * @return
+     */
+	public List<Object> getProRulePlaceList(Map<String,Object> map,String locationType){
+		if(CampConstants.LOTION_TYPE_2.equals(locationType)
+				||CampConstants.LOTION_TYPE_4.equals(locationType)
+				||CampConstants.LOTION_TYPE_5.equals(locationType)
+				||CampConstants.LOTION_TYPE_8.equals(locationType)
+				||CampConstants.LOTION_TYPE_10.equals(locationType)){
+			map.put("basePropName","baseProp_counter");
+		}else if(CampConstants.LOTION_TYPE_1.equals(locationType)){
+			map.put("basePropName","baseProp_city");
+		}else if(CampConstants.LOTION_TYPE_3.equals(locationType)){
+			map.put("basePropName","baseProp_channal");
+		}else if(CampConstants.LOTION_TYPE_7.equals(locationType)){
+			map.put("basePropName","baseProp_faction");
+		}else if(CampConstants.LOTION_TYPE_9.equals(locationType)){
+			map.put("basePropName","baseProp_organization");
+		}
+		return prm68Ser.getProRulePlaceList(map);
+	}
+
+	/**
+	 * 获得用户权限地点List
+	 * @param map
+	 * @param locationType
+     * @return
+     */
+	public List<Map<String,Object>> getUserAuthorityPlaceList(Map<String,Object> map,String locationType){
+		if("0".equals(locationType)
+				||CampConstants.LOTION_TYPE_2.equals(locationType)
+				||CampConstants.LOTION_TYPE_4.equals(locationType)
+				||CampConstants.LOTION_TYPE_5.equals(locationType)
+				||CampConstants.LOTION_TYPE_8.equals(locationType)
+				||CampConstants.LOTION_TYPE_10.equals(locationType)){
+			//取得用户权限柜台
+			map.put("userCounterFlag","1");
+		}
+		List<Map<String,Object>> userAuthorityPlaceList = prm68Ser.getUserAuthorityPlaceList(map);
+		if(CampConstants.LOTION_TYPE_7.equals(locationType)){//所属系统
+			List<Map<String, Object>> list = codeTable.getCodes("1309");
+			if(null != list && list.size() > 0){
+				List<Map<String,Object>> userAuthorityPlaceList2 = new ArrayList<Map<String, Object>>();
+				//获取用户权限柜台所属系统(Factory)
+				for (Map<String, Object> item : list){
+					int itemId = ConvertUtil.getInt(item.get("CodeKey"));
+					for(Map<String, Object> userItem :userAuthorityPlaceList){
+						int userItemId = ConvertUtil.getInt(userItem.get("code"));
+						if(itemId==userItemId){
+							Map<String,Object> retMap = new HashMap<String, Object>();
+							retMap.put("code",userItemId);
+							retMap.put("name",item.get("Value"));
+							userAuthorityPlaceList2.add(retMap);
+							userAuthorityPlaceList.remove(userItem);
+							break;
+						}
+					}
+				}
+				return userAuthorityPlaceList2;
+			}
+		}
+		return userAuthorityPlaceList;
+	}
+
 	/**
 	 * Map添加更新共通信息
 	 * 

@@ -68,32 +68,40 @@
      	</div>
 	</div>
 	<div class="box2 box2-active">
-		<div class="box2-header clearfix"><strong class="left active"><span class="ui-icon icon-flag"></span><@s.text name="rulePlace" /></strong></div>
+		<div class="box2-header clearfix">
+			<strong class="left active"><span class="ui-icon icon-flag"></span><@s.text name="rulePlace" /></strong>
+            <span class="ui-widget breadcrumb" style="position: relative; margin-left:30px;"></span>
+			<#if temp.placeJson?exists>
+				<#if temp.placeJson.size() gt 12>
+                    <a class="right search" onclick="PRM68.showMore(this,'#morePlace');return false;">
+                        <span class="ui-icon icon-search"></span>
+                        <span class="button-text"><@s.text name="showPlace"/></span>
+                    </a>
+				</#if>
+			</#if>
+		</div>
 		<div class="box2-content clearfix" style="padding:1em;">
 			<div style="width:15%;float:left;">
 				<span class="ui-icon icon-arrow-crm"></span>
 				<@s.property value="#application.CodeTable.getVal('1156','${(page.locationType)!}')"/>
 			</div>
-			<#if temp.placeJson?exists && page.locationType !='0'>
+			<#if temp.placeJson?exists>
 				<div style="width:85%;float:left;">
+                    <ul>
 					<#list temp.placeJson as placeMap>
-						<#if !placeMap.half && !(placeMap.isParent!false)>
-							<span style="position: relative; margin-right:20px;">
-							<#if placeMap.level=0>
-							 <span style="color:#FF3030;white-space: nowrap;">${(placeMap.name)!}</span>
-							</#if>
-							<#if placeMap.level=1>
-							 <span style="color:#FF7F24;white-space: nowrap;">${(placeMap.name)!}</span>
-							</#if>
-							<#if placeMap.level=2>
-							 <span style="color:#4876FF;white-space: nowrap;">${(placeMap.name)!}</span>
-							</#if>
-							<#if placeMap.level=3>
-							 <span style="color:#32CD32;white-space: nowrap;">${(placeMap.name)!}</span>
-							</#if>
-							</span>
+						<#if placeMap_index == 12>
+                       		 <ul id="morePlace" class="hide">
 						</#if>
+                        <li class="left" style="width:25%;white-space: nowrap;list-style-type:none;">
+								<span style="margin:5px 0px;width:210px;">
+								${placeMap.name}
+								</span>
+                        </li>
+					<#if (placeMap_index+1 == placeMap.size())||(placeMap_index == 11)>
+                    	</ul>
+					</#if>
 					</#list>
+                    </ul>
 				</div>
 			</#if>
      	</div>

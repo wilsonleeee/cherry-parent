@@ -260,6 +260,12 @@ public class CampConstants {
 	/** 地点类型--所属系统并且指定柜台 */
 	public static final String LOTION_TYPE_8 = "8";
 
+	/** 地点类型--所属组织 */
+	public static final String LOTION_TYPE_9 = "9";
+
+	/** 地点类型--所属组织并且指定柜台 */
+	public static final String LOTION_TYPE_10 = "10";
+
 	/** 活动地点树是否加载柜台 */
 	public static final String LOADING_CNT = "loadingCnt";
 

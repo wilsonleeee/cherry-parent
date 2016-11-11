@@ -108,7 +108,7 @@ public class BINOLSSPRM68_Service extends BaseService {
 	
 	/**
 	 * 新增促销活动分类
-	 * @param map
+	 * @param list
 	 */
 	public void addActRuleCate(List<Map<String, Object>> list){
 		baseServiceImpl.saveAll(list, "BINOLSSPRM68.addActRuleCate");
@@ -203,5 +203,25 @@ public class BINOLSSPRM68_Service extends BaseService {
 	public void addCampRuleConditionCust(Map<String, Object> map) {
 		map.put(CherryConstants.IBATIS_SQL_ID, "BINOLSSPRM68.addCampRuleConditionCust");
 		baseServiceImpl.save(map);
+	}
+
+	/**
+	 * 获取用户权限地点List Service
+	 * @param map
+	 * @return
+     */
+	public List<Map<String,Object>> getUserAuthorityPlaceList(Map<String, Object> map){
+		map.put(CherryConstants.IBATIS_SQL_ID, "BINOLSSPRM68.getUserAuthorityPlaceList");
+		return baseServiceImpl.getList(map);
+	}
+
+	/**
+	 * 获取促销活动地点List Service
+	 * @param map
+	 * @return
+     */
+	public List<Object> getProRulePlaceList(Map<String, Object> map){
+		map.put(CherryConstants.IBATIS_SQL_ID, "BINOLSSPRM68.getProRulePlaceList");
+		return baseServiceImpl.getList(map);
 	}
 }

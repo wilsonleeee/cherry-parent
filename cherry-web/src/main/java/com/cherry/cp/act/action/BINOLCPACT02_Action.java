@@ -9,6 +9,7 @@ import javax.annotation.Resource;
 
 import com.cherry.cm.cmbeans.UserInfo;
 import com.cherry.cm.cmbussiness.bl.BINOLCM05_BL;
+import com.cherry.cm.cmbussiness.bl.BINOLCM14_BL;
 import com.cherry.cm.core.BaseAction;
 import com.cherry.cm.core.CherryChecker;
 import com.cherry.cm.core.CherryConstants;
@@ -33,6 +34,9 @@ public class BINOLCPACT02_Action extends BaseAction{
 	
 	@Resource
 	private BINOLCM05_BL binOLCM05_BL;
+
+	@Resource
+	private BINOLCM14_BL binOLCM14_BL;
 	
 	private String campaignId;
 	
@@ -109,8 +113,7 @@ public class BINOLCPACT02_Action extends BaseAction{
 	 * 画面初期显示(会员活动详细画面)
 	 * </p>
 	 * 
-	 * 
-	 * @param 无
+	 *
 	 * @return String 跳转页面
 	 * 
 	 */
@@ -173,8 +176,7 @@ public class BINOLCPACT02_Action extends BaseAction{
 	 * 画面初期显示(子活动详细画面)
 	 * </p>
 	 * 
-	 * 
-	 * @param 无
+	 *
 	 * @return String 跳转页面
 	 * 
 	 */
@@ -184,6 +186,11 @@ public class BINOLCPACT02_Action extends BaseAction{
 		map.put("subCampId", subCampId);
 		//子活动信息
 		subCampInfo = binOLCPACT02_BL.getSubInfo(map);
+		String userAuthorityFlag = ConvertUtil.getString(binOLCM14_BL.getConfigValue("1352",
+				ConvertUtil.getString(map.get("organizationInfoId")),ConvertUtil.getString(map.get("brandInfoId"))));
+		if ("1".equals(userAuthorityFlag)){
+			binOLCPACT02_BL.getUserAuthorityPlace(subCampInfo,map);
+		}
 		// 会员活动ID
 		map.put("campaignId", campaignId);
 		// 查询会员活动首页内容
@@ -215,8 +222,8 @@ public class BINOLCPACT02_Action extends BaseAction{
 	
 	/**
 	 * 活动初始化信息处理
-	 * 
-	 * @param campDto
+	 *
+	 * @param dto
 	 * @throws ParseException
 	 */
 	
