@@ -12,15 +12,14 @@
  */
 package com.cherry.synchro.bs.bl;
 
-import java.util.HashMap;
-import java.util.Map;
-
-import javax.annotation.Resource;
-
 import com.cherry.cm.core.CherryException;
 import com.cherry.cm.util.ConvertUtil;
 import com.cherry.synchro.bs.interfaces.CounterSynchro_IF;
 import com.cherry.synchro.bs.service.CounterSynchroService;
+
+import javax.annotation.Resource;
+import java.util.HashMap;
+import java.util.Map;
 
 public class CounterSynchro implements CounterSynchro_IF {
 
@@ -32,7 +31,6 @@ public class CounterSynchro implements CounterSynchro_IF {
 	 * 向老后台配置数据库中添加编辑柜台信息
 	 * 
 	 * */
-	@Override
 	public void synchroCounter(Map<String,Object> param) throws CherryException {
 		try {
 			param.put("Result", "OK");
@@ -114,6 +112,8 @@ public class CounterSynchro implements CounterSynchro_IF {
 			param.put("RegionCode", ConvertUtil.getString(counterInfo.get("RegionCode")));
 			//区域名称
 			param.put("RegionName", ConvertUtil.getString(counterInfo.get("RegionName")));
+			//渠道代码
+			param.put("ChannelCode", ConvertUtil.getString(counterInfo.get("ChannelCode")));
 			//渠道名称
 			param.put("Channel", ConvertUtil.getString(counterInfo.get("Channel")));
 			//城市代码

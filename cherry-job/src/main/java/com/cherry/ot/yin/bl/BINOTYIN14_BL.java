@@ -12,24 +12,11 @@
  */
 package com.cherry.ot.yin.bl;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-
-import javax.annotation.Resource;
-
 import com.cherry.cm.batcmbussiness.interfaces.BINBECM01_IF;
 import com.cherry.cm.cmbussiness.bl.BINOLCM14_BL;
 import com.cherry.cm.cmbussiness.bl.BINOLCM15_BL;
 import com.cherry.cm.cmbussiness.bl.BINOLCM27_BL;
-import com.cherry.cm.core.BatchExceptionDTO;
-import com.cherry.cm.core.BatchLoggerDTO;
-import com.cherry.cm.core.CherryBatchConstants;
-import com.cherry.cm.core.CherryBatchException;
-import com.cherry.cm.core.CherryBatchLogger;
-import com.cherry.cm.core.CherryConstants;
-import com.cherry.cm.core.CherryException;
+import com.cherry.cm.core.*;
 import com.cherry.cm.util.CherryBatchUtil;
 import com.cherry.cm.util.ConvertUtil;
 import com.cherry.cm.util.DateUtil;
@@ -38,7 +25,12 @@ import com.cherry.ia.dep.service.BINBEIFDEP01_Service;
 import com.cherry.mq.mes.common.MessageConstants;
 import com.cherry.ot.yin.service.BINOTYIN14_Service;
 import com.cherry.synchro.bs.interfaces.CounterSynchro_IF;
-import com.cherry.synchro.bs.service.CounterSynchroService;
+
+import javax.annotation.Resource;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 /**
  *
@@ -105,7 +97,7 @@ public class BINOTYIN14_BL {
 	/**
 	 * batch处理
 	 * 
-	 * @param 无
+	 * @param map
 	 * 
 	 * @return Map
 	 * @throws CherryBatchException
@@ -152,7 +144,7 @@ public class BINOTYIN14_BL {
 	
 	/**
 	 * 取得香港的城市、省份、大区id
-	 * @param map
+	 * @param
 	 */
 	private Map<String, Object> getCounterRegionId() {
 		Map<String, Object> counterIdMap = new HashMap<String, Object>();
@@ -428,7 +420,7 @@ public class BINOTYIN14_BL {
 	
 	/**
 	 * 是否调用Webservice进行柜台数据同步，是则下发
-	 * @param map
+	 * @param counterMap
 	 * @throws Exception
 	 */
 	private void issued_BL(Map<String,Object> counterMap) throws CherryBatchException {
@@ -581,7 +573,7 @@ public class BINOTYIN14_BL {
 	
 	/**
 	 * 特殊字符处理
-	 * @param itemMap
+	 * @param counterMap
 	 */
 	private void screenMap(Map<String, Object> counterMap){
 		
