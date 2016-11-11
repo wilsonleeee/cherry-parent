@@ -4,7 +4,7 @@
 <%@ taglib prefix="cherry" uri="/cherry-tags"%>
 <jsp:include page="/WEB-INF/jsp/common/popHead.ieCssRepair.jsp" flush="true"></jsp:include>
 <script type="text/javascript" src="/Cherry/js/bs/common/BINOLBSCOM03.js"></script>
-<script type="text/javascript" src="/Cherry/js/bs/cnt/BINOLBSCNT04.js"></script>
+<script type="text/javascript" src="/Cherry/js/bs/cnt/BINOLBSCNT04.js?v=2016001806"></script>
 <script type="text/javascript" src="/Cherry/js/lib/jquery-ui-i18n.js"></script>
 <script type="text/javascript" src="/Cherry/js/common/cherryDate.js"></script>
 <script type="text/javascript" src="/Cherry/js/lib/jquery-ui-timepicker-addon.js"></script>
