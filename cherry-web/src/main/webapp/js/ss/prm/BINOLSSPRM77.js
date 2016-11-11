@@ -35,8 +35,8 @@ BINOLSSPRM77.prototype = {
 									{ "sName": "createTime", "sWidth": "10%" }, 										
 									{ "sName": "endTime", "sWidth": "10%" },  
 									{ "sName": "finishTime", "sWidth": "10%" },  
-									{ "sName": "relationNoA", "sWidth": "8%"}, 
-									{ "sName": "relationNoB", "sWidth": "8%"},
+									{ "sName": "relatedNoA", "sWidth": "8%"},
+									{ "sName": "relatedNoB", "sWidth": "8%"},
 									{ "sName": "operate", "sWidth": "10%","bSortable": false}], 
 					// 不可设置显示或隐藏的列	
 					aiExclude :[0,2,3,4],
