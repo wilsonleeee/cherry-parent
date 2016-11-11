@@ -18,7 +18,7 @@
 	<div class="panel ui-corner-all">
         <div class="panel-header">
         <div class="clearfix">
-            <span class="breadcrumb left"><span class="ui-icon icon-breadcrumb"></span><s:text name="RPS42_title"/>&nbsp;(<s:text name="RPS14_saleRecordCode"/>:<s:property value="getSaleRecordDetail.saleRecordCode"/>)</span>
+            <span class="breadcrumb left"><span class="ui-icon icon-breadcrumb"></span><s:text name="RPS42_title"/>&nbsp;(<s:text name="RPS42_prePayNo"/>:<s:property value="preInfoMap.prePayNo"/>)</span>
         </div>
         </div>
 		<div class="panel-content">
