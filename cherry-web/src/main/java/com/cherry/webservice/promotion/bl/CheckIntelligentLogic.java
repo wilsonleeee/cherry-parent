@@ -5,7 +5,6 @@ import com.cherry.cm.util.ConvertUtil;
 import com.cherry.ss.prm.interfaces.BINOLSSPRM74_IF;
 import com.cherry.ss.prm.interfaces.Coupon_IF;
 import com.cherry.webservice.promotion.interfaces.CheckIntelligent_IF;
-import com.cherry.webservice.promotion.service.CheckIntelligentService;
 import com.cherry.wp.common.entity.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -25,8 +24,6 @@ import java.util.Map;
 public class CheckIntelligentLogic implements CheckIntelligent_IF {
 	/** 打印日志 */
 	private Logger logger = LoggerFactory.getLogger(CheckIntelligentLogic.class);
-	@Resource
-	private CheckIntelligentService checkIntelligentService;
 
 	@Resource
 	private BINOLCM44_BL binOLCM44_BL;
@@ -38,7 +35,7 @@ public class CheckIntelligentLogic implements CheckIntelligent_IF {
     private Coupon_IF coupon_IF;
 
 	public Map<String, Object> tran_CheckIntelligentJH(Map<String, Object> map) throws Exception {
-		logger.error("智能促销预判接口开始：",map);
+		logger.info("智能促销预判接口开始：",map);
 		// 返回值的map
 		Map<String, Object> returnMap = new HashMap<String, Object>();
 		//得到品牌号
@@ -171,9 +168,8 @@ public class CheckIntelligentLogic implements CheckIntelligent_IF {
 			Map<String,Object> organizationID_map=binOLSSPRM74_IF.getOrganizationID(main_map);
 			String organizationID=ConvertUtil.getString(organizationID_map.get("organizationID"));
 			//执行智能促销查询方法
-			logger.error("调用cloud_MatchRule_JIAHUA");
 			int result = binOLCM44_BL.cloud_MatchRule_JIAHUA(brandCode,organizationID, salemain_input, saledetail_input,saleactivity_out,saleresult_out,saleproduct_out);
-			logger.error("调用cloud_MatchRule_JIAHUA  结束，result="+result);
+			logger.info(TN+ "调用cloud_MatchRule_JIAHUA  结束，result="+result);
 			Map<String, Object> tmp = new HashMap<String, Object>();
 			if (saleresult_out.size() <= 0) {
 //				//调用是否可发券接口
@@ -198,7 +194,7 @@ public class CheckIntelligentLogic implements CheckIntelligent_IF {
 			returnMap.put("ERRORCODE", "WSE9999");
 			returnMap.put("ERRORMSG", "处理过程中发生未知异常");
 		}
-		logger.error("智能促销预判接口返回",returnMap);
+		logger.info("智能促销预判接口返回",returnMap);
 		return returnMap;
 	}
 }

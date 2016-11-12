@@ -502,7 +502,8 @@ public class BINOLSSPRM74_BL implements BINOLSSPRM74_IF {
 	@Override
 	public void checkMain(Map<String, Object> param) {
 		//删除主表数据
-		binOLSSPRM74_Service.delmain_all(param);
+		int delcnt = binOLSSPRM74_Service.delmain_all(param);
+		logger.info("从BIN_GetIntelligentResultMain表删除数据条数："+delcnt);
 		//获取Cart单据对应的明细
 		List<Map<String,Object>> cart_list=binOLSSPRM74_Service.getCartDetailByTradeNo(param);
 		//获取Rule单据对应的明细
@@ -511,14 +512,17 @@ public class BINOLSSPRM74_BL implements BINOLSSPRM74_IF {
 		List<Map<String,Object>> coupon_list=binOLSSPRM74_Service.getCouponDetailByTradeNo(param);
 		if(cart_list != null && cart_list.size() > 0){
 			binOLSSPRM74_Service.deleteCartDetail(cart_list);
+			logger.info("从BIN_IntelligentResultShoppingCart表删除数据条数："+cart_list.size());
 		}
 
 		if(rule_list != null && rule_list.size() > 0){
 			binOLSSPRM74_Service.deleteRuleDetail(rule_list);
+			logger.info("从BIN_IntelligentResultRule表删除数据条数："+rule_list.size());
 		}
 
 		if(coupon_list != null && coupon_list.size() > 0){
 			binOLSSPRM74_Service.deleteCouponDetail(coupon_list);
+			logger.info("从BIN_IntelligentResultCoupon表删除数据条数："+coupon_list.size());
 		}
 	}
 
@@ -825,12 +829,14 @@ public class BINOLSSPRM74_BL implements BINOLSSPRM74_IF {
 //			ConvertUtil.setResponseByAjax(response, "0");
 //			return;
 //		}
-		logger.info("数据录入开始");
 		String TN = ConvertUtil.getString(main_map.get("TN"));
 		//如果主单中已经存在有其单据号的情况，先做物理删除再进行插入
 		this.checkMain(main_map);
 		//购物车信息
 		List<Map<String, Object>> cart_list = ConvertUtil.json2List(form.getShoppingcart_json());
+		if(null==cart_list || cart_list.size()==0){
+			logger.error("销售单据录入过程中发生错误，购物车列表转换失败：" + form.getShoppingcart_json());
+		}
 		//1、计算完毕的规则（N类型）
 		List<Map<String, Object>> rule_list = ConvertUtil.json2List(form.getRule_json());
 		//2、计算完毕的规则（P类型）
@@ -908,16 +914,16 @@ public class BINOLSSPRM74_BL implements BINOLSSPRM74_IF {
 			}
 			//打印智能促销页面写入的主单数据
 			main_map.put("createPGM", "BINOLSSPRM74_1");
-			logger.error("打印智能促销页面写入的主单数据：", main_map);
+			logger.info("打印智能促销页面写入的主单数据："+ main_map);
 			this.insertMain(main_map);
 
-			if (coupon_list != null) {
+			if (coupon_list != null && coupon_list.size()>0) {
 				this.insertCoupon(coupon_list, TN);
 			}
-			if (rule_list != null) {
+			if (rule_list != null && rule_list.size()>0) {
 				this.insertRule(result_rule, TN);
 			}
-			if (cart_list != null) {
+			if (cart_list != null && cart_list.size()>0) {
 				this.insertCart(cart_list, TN);
 			} else {
 				logger.info("智能促销录入数据购物车信息为空");

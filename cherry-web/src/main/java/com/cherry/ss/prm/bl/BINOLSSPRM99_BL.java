@@ -180,10 +180,9 @@ public class BINOLSSPRM99_BL implements Coupon_IF {
 	 */
 	private BillInfo getBillInfo(Map<String, Object> map, boolean checkMem) throws Exception {
 		try {
-			logger.info("***************************入参：" + map);
 			logger.info("***************************入参JSON格式：" + CherryUtil.map2Json(map));
 		} catch (Exception e) {
-			logger.error("***************************入参JSON转换失败");
+			logger.error("***************************入参JSON转换失败"+ map);
 		}
 		// 主单信息
 		Map<String, Object> mainMap = (Map<String, Object>) map.get("Main_map");

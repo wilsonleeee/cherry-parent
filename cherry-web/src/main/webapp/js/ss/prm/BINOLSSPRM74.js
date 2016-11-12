@@ -689,6 +689,10 @@ BINOLSSPRM74.prototype = {
 			}else{
 				shoppingcart_json=$("#shoppingcartOrder_json").val();
 			}
+			if(typeof(shoppingcart_json)=="undefined" || shoppingcart_json.length==0){
+				alert("此单销售录入有问题，请关闭促销页面，返回POS界面尝试重新操作");
+				return;
+			}
 			var promotionRule_json=$("#"+id+"Rule").val();
 			var receivableTotal=$("#receivableTotal").html();
 			var discountTotal=$("#discountTotal").html();

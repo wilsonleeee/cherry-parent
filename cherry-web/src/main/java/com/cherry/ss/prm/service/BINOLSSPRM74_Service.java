@@ -66,9 +66,9 @@ public class BINOLSSPRM74_Service extends BaseService {
 		return baseServiceImpl.getSum(map);
 	}
 	
-	public void delmain_all(Map<String,Object> map){
+	public int delmain_all(Map<String,Object> map){
 		map.put(CherryConstants.IBATIS_SQL_ID, "BINOLSSPRM74.delmain_all");
-		baseServiceImpl.remove(map);
+		return baseServiceImpl.remove(map);
 	}
 	
 	public Map<String,Object> getMemberLevel(Map<String,Object> map){

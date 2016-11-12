@@ -127,7 +127,7 @@ public class BINOLSSPRM74_Action extends BaseAction implements ModelDriven<BINOL
 			String contentText_json=dp.decrypt(form.getParamdata());
 			Map<String,Object> param=ConvertUtil.json2Map(contentText_json);
 			//打印POS传入的参数
-			logger.error("智能促销页面初始化参数：",param);
+			logger.info("解密参数为："+contentText_json);
   		    //封装原始购物车数据
 			Map<String,Object> convert_map= binOLSSPRM74_IF.convert2Part(param);
 			if("Pro".equals(ConvertUtil.getString(convert_map.get("errCode")))){
@@ -142,6 +142,9 @@ public class BINOLSSPRM74_Action extends BaseAction implements ModelDriven<BINOL
 			main_map.put("BC", brandCode);
 			String organizationID=ConvertUtil.getString(main_map.get("organizationID"));
 			List<Map<String,Object>> cart_list=(List<Map<String,Object>>) convert_map.get("cart_list");
+			if(null==cart_list || cart_list.size()==0){
+				logger.error("cart_list为空");
+			}
 			List<Map<String,Object>> cartOrder_list=(List<Map<String,Object>>) convert_map.get("cartOrder_list");
 			//之前先调用优惠券查询接口(MP MC 不为NULL时)
 			String MP=ConvertUtil.getString(main_map.get("MP"));
@@ -163,7 +166,7 @@ public class BINOLSSPRM74_Action extends BaseAction implements ModelDriven<BINOL
 			ArrayList<SaleActivityDetailEntity> saleactivity_out=new ArrayList<SaleActivityDetailEntity>();
 			int result=binOLCM44_BL.cloud_MatchRule_JIAHUA(brandCode, organizationID, salemain_input, saledetail_input,saleactivity_out ,saleresult_out,saleproduct_out);
 			//记录日志
-			smartLog(result,1);
+			smartLog(result,1,ConvertUtil.getString(main_map.get("TN")));
 			//封装页面右侧的产品列表，通过maincode进行分组
 			List<Map<String,Object>> product_list=binOLSSPRM74_IF.convertProduct(saleproduct_out);
 			
@@ -188,11 +191,10 @@ public class BINOLSSPRM74_Action extends BaseAction implements ModelDriven<BINOL
 			result_map.put("shoppingcartOrder_json", CherryUtil.obj2Json(cartOrder_list));//分组购物车Json
 			result_map.put("sum_cart", sum_cart);//购物车总金额
 			form.setResult_map(result_map);
-			logger.info("促销页面初始化成功结束");
+			logger.info("促销页面初始化成功结束:"+ConvertUtil.getString(main_map.get("TN")));
 			transaction.setStatus(Transaction.SUCCESS);
 		} catch (Exception e) {
-			logger.error("促销页面初始化失败");
-			logger.error(e.getMessage(), e);
+			logger.error("促销页面初始化失败",e);
 			Map<String,Object> result_map=new HashMap<String, Object>();
 			result_map.put("resultCode", "-9999");
 			result_map.put("resultMessage", "系统发生错误");
@@ -282,7 +284,7 @@ public class BINOLSSPRM74_Action extends BaseAction implements ModelDriven<BINOL
 			ArrayList<SaleDetailEntity> saledetail_out=new ArrayList<SaleDetailEntity>();
 			int result=binOLCM44_BL.cloud_ComputeRule_JIAHUA(brandCode, salemain_input, saledetail_input, saleresult_input, saleresult_out,saledetail_out);
 			//记录日志
-			smartLog(result,2);
+			smartLog(result,2,ConvertUtil.getString(main_map.get("TN")));
 			//封装促销引擎计算出的TZZK与DH的数据，后续直接写表
 			List<Map<String,Object>> computedRule=binOLSSPRM74_IF.detail2RuleList(saledetail_out,saleresult_out);
 			//封装优惠券与促销引擎计算完成的购物车相关信息
@@ -379,12 +381,13 @@ public class BINOLSSPRM74_Action extends BaseAction implements ModelDriven<BINOL
 //		Map<String,Object> map_json=ConvertUtil.json2Map(mima2);
 	}
 	/**
-	 * 写表操作
+	 * 单据录入
 	 * @throws Exception 
 	 */
 	public void tran_promotionCollect() throws Exception{
 		Map<String,Object> main_map=ConvertUtil.json2Map(form.getMain_json());
 		String TN=ConvertUtil.getString(main_map.get("TN"));
+		logger.info("数据录入开始："+TN);
 		if(StringUtils.isEmpty(TN)){
 			return;
 		}
@@ -402,7 +405,7 @@ public class BINOLSSPRM74_Action extends BaseAction implements ModelDriven<BINOL
 			CustomerContextHolder.setCustomerDataSourceType(datasourceName);
 			binOLSSPRM74_IF.tran_collect(form);
 			ConvertUtil.setResponseByAjax(response, "0");
-			logger.info("数据录入成功结束");
+			logger.info("数据录入成功结束："+TN);
 		} catch (Exception e) {
 			logger.error(e.getMessage(), e);
 			logger.error("智能促销数据录入失败");
@@ -709,26 +712,26 @@ public class BINOLSSPRM74_Action extends BaseAction implements ModelDriven<BINOL
 	/**
 	 * 用来打印智能促销查询规则方法返回所对应的日志
 	 */
-	private void smartLog(int num,int type){
+	private void smartLog(int num,int type,String billNo){
 		if(type == 1){
 			if(num == 0){
-				logger.error("智能促销查询方法调用异常");
+				logger.error("智能促销查询方法调用异常"+billNo);
 			}else if(num == 3){
-				logger.error("智能促销查询方法数据库连接异常");
+				logger.error("智能促销查询方法数据库连接异常"+billNo);
 			}else if(num == 4){
-				logger.error("智能促销查询方法更新最新的规则,稍后重试");
+				logger.error("智能促销查询方法更新最新的规则,稍后重试"+billNo);
 			}else if(num == 5){
-				logger.error("智能促销查询方法socket通讯失败");
+				logger.error("智能促销查询方法socket通讯失败"+billNo);
 			}
 		}else if(type == 2){
 			if(num == 0){
-				logger.error("智能促销计算方法调用异常");
+				logger.error("智能促销计算方法调用异常"+billNo);
 			}else if(num == 3){
-				logger.error("智能促销计算方法数据库连接异常");
+				logger.error("智能促销计算方法数据库连接异常"+billNo);
 			}else if(num == 4){
-				logger.error("智能促销计算方法更新最新的规则,稍后重试");
+				logger.error("智能促销计算方法更新最新的规则,稍后重试"+billNo);
 			}else if(num == 5){
-				logger.error("智能促销计算方法socket通讯失败");
+				logger.error("智能促销计算方法socket通讯失败"+billNo);
 			}
 		}
 	}
