@@ -684,13 +684,12 @@ BINOLSSPRM74.prototype = {
 			var coupon_all_length=$("#coupon_table input[type='checkbox']:checked").length;
 			var rule_all_length=$("#rule_table input[type='checkbox']:checked").length;
 			if(coupon_all_length >0 || rule_all_length >0){
-				var id=BINOLSSPRM74.getId();
 				shoppingcart_json=$("#"+id+"cart").val();
 			}else{
 				shoppingcart_json=$("#shoppingcartOrder_json").val();
 			}
 			if(typeof(shoppingcart_json)=="undefined" || shoppingcart_json.length==0){
-				alert("此单销售录入有问题，请关闭促销页面，返回POS界面尝试重新操作");
+				BINOLSSPRM74.showErrorMessage("此单销售录入有问题，请关闭促销页面，返回POS界面尝试重新操作");
 				return;
 			}
 			var promotionRule_json=$("#"+id+"Rule").val();
