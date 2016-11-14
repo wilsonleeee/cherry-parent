@@ -49,31 +49,23 @@ public class BINBAT122_BL {
 	
 	/** 打印当前类的日志信息 **/
 	private static CherryBatchLogger logger = new CherryBatchLogger(BINBAT122_BL.class);
-	
+	/** 每批次(页)处理数量 1000 */
+	private final int BATCH_SIZE = 1000;
 	/** BATCH处理标志 */
 	private int flag = CherryBatchConstants.BATCH_SUCCESS;
-	
 	/** JOB执行相关共通 IF */
 	@Resource(name="binbecm01_IF")
 	private BINBECM01_IF binbecm01_IF;
-	
 	@Resource
 	private BINBAT122_Service binBAT122_Service;
-	
 	/** 各类编号取号共通BL */
 	@Resource(name="binOLCM15_BL")
 	private BINOLCM15_BL binOLCM15_BL;
-	
 	/** 系统配置项 共通BL */
 	@Resource(name="binOLCM14_BL")
 	private BINOLCM14_BL binOLCM14_BL;
-	
 	@Resource(name="binOLCM05_BL")
 	private BINOLCM05_BL binOLCM05_BL;
-	
-	/** 每批次(页)处理数量 1000 */
-	private final int BATCH_SIZE = 1000;
-	
 	private Map<String, Object> comMap;
 	
 	/** 更新添加操作flag */
@@ -950,11 +942,18 @@ public class BINBAT122_BL {
 		if (!CherryBatchUtil.isBlankString(propValueCN)) {			
 			/*// 根据属性【值】查询分类属性值ID
 			catPropValId = binBAT122_Service.getCatPropValId1(map);*/
+			String propValue = getPropValue(map,ProductConstants.PROPVALUE);
 			Map<String, Object>  propValueInfo = null;
 			List<Map<String, Object>> propValueInfoLst = null;
 			Map<String, Object>  propValueParam = new HashMap<String, Object>();
 			propValueParam.put(ProductConstants.PRTCATPROPID, map.get(ProductConstants.PRTCATPROPID));
 			propValueParam.put(ProductConstants.PROPVALUE_CN, propValueCN);
+			// 分类属性值4位【终端用】
+			propValueParam.put(ProductConstants.PROPVALUECHERRY,propValueCherry);
+			// 分类属性值空的场合，用随机生成4位填充【新后台用的属性值】
+			if (CherryBatchUtil.isBlankString(propValueCherry)) {
+				propValueParam.put(ProductConstants.PROPVALUECHERRY, propValue);
+			}
 			// 根据基本属性值ID和属性名称查询属性信息
 			propValueInfoLst = binBAT122_Service.getCatPropValInfo(propValueParam);
 			if(propValueInfoLst != null && !propValueInfoLst.isEmpty()) {
@@ -968,7 +967,6 @@ public class BINBAT122_BL {
 			
 			if (catPropValId == 0) {
 				// 分类属性值4位【终端用】
-				String propValue = getPropValue(map,ProductConstants.PROPVALUE);
 				map.put(ProductConstants.PROPVALUE,propValue);
 				
 				// 分类属性值空的场合，用随机生成4位填充【新后台用的属性值】
