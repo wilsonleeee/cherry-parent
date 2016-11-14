@@ -192,7 +192,11 @@ public class BINBEMQSYN02_BL {
 								if(jMSXGroupID == null || "".equals(jMSXGroupID)) {
 									jMSXGroupID = (String)map.get("brandCode");
 								}
-								messageSender.sendGroupMessage(originalMsg, "posToCherryMsgQueue", jMSXGroupID);
+								String msgQueName = (String)wMQLogMap.get("msgQueueName");
+								if(null==msgQueName||"".equals(msgQueName)){
+									msgQueName="posToCherryMsgQueue";
+								}
+								messageSender.sendGroupMessage(originalMsg, msgQueName, jMSXGroupID);
 								// 重新做接收消息件数加一
 								receMqCount++;
 							} else {
