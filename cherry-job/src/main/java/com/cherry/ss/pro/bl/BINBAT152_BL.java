@@ -14,6 +14,7 @@
 package com.cherry.ss.pro.bl;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -30,6 +31,7 @@ import com.cherry.cm.core.CherryConstants;
 import com.cherry.cm.util.CherryBatchUtil;
 import com.cherry.cm.util.ConvertUtil;
 import com.cherry.ss.pro.service.BINBAT152_Service;
+import com.cherry.st.common.interfaces.BINOLSTCM01_IF;
 
 /**
  * 补录产品入出库成本(标准接口)BL
@@ -53,7 +55,11 @@ public class BINBAT152_BL {
 	/** JOB执行相关共通 IF */
 	@Resource(name="binbecm01_IF")
 	private BINBECM01_IF binbecm01_IF;
-	
+
+	@Resource(name="binOLSTCM01_BL")
+	private BINOLSTCM01_IF binOLSTCM01_BL;
+
+
 	/** BATCH处理标志 */
 	private int flag = CherryBatchConstants.BATCH_SUCCESS;
 	
@@ -96,12 +102,14 @@ public class BINBAT152_BL {
     	// 取得系统配置项是否记录产品入出库成本
     	String config = binOLCM14_BL.getConfigValue("1365", String.valueOf(map.get("organizationInfoId")), String.valueOf(map.get("brandInfoId")));
     	
-    	if(config.equals("1")){
-    		
+		if(CherryBatchConstants.SYS_CONFIG_COSTPRICE_1.equals(config)){
+
+            Map<String, Object> mainData = new HashMap<String, Object>();
+            List<Map<String, Object>> detailList = new ArrayList<Map<String, Object>>();
+
     		map.put("StockType", "0");//表示入库
     		
-    		
-    		////////////////////////////////// 第一步：只处理 接收退库：AR 和 调入申请:BG 的入库业务  ///////////////////////////////////////////////////  
+    		////////////////////////////////// 第一步：只处理 接收退库：AR 和 调入申请:BG 的入库业务  ///////////////////////////////////////////////////
     		
     		//step：1    查询产品入出库批次表的数据（即明细中有成本价为空，且是入库类型的数据）
 	    	List<Map<String, Object>> proBatchInOutList3=binbat152_Service.getProBatchInOutList(map);
@@ -284,6 +292,10 @@ public class BINBAT152_BL {
 								}
 			        		}
 			        	}
+
+                    // 处理各业务的单据号
+//                    mainData.put("RelevanceNo",proBatchInOut.get("RelevanceNo"));
+                    sumProductCost(proBatchInOut);
 	    		}
 	    	}
     		
@@ -319,41 +331,41 @@ public class BINBAT152_BL {
 									String costPrice = ConvertUtil.getString(proBatchInOutDetail.get("CostPrice")); // 明细成本价
 									
 									
-									if(CherryBatchUtil.isBlankString(costPrice)){//成本价为空才会进行处理																
+									if(CherryBatchUtil.isBlankString(costPrice)){//成本价为空才会进行处理
 											List<Map<String,Object>> saleProductBatchInOutDetail = null; // 定义关联退货单
 							            	proBatchInOutDetail.put("BillCodePre", stockInOut_SRrelevantNo);
 							            	saleProductBatchInOutDetail = binbat152_Service.getProductBatchInOutDetailByRelevanceNoAndPrt(proBatchInOutDetail);
-							            										            			
+
 							            	// 关联退货 关联退货可能存在出库时根据库存拆成多个单子的情况，此处也需要如此处理
 							            	if(!CherryBatchUtil.isBlankList(saleProductBatchInOutDetail)){
-							            		
+
 							            		int quantity=ConvertUtil.getInt(proBatchInOutDetail.get("Quantity"));//明细数量
 												int stockQuantity=0;//表示产品的库存数量
-												
+
 												for(Map<String, Object> proNewBatchStock: saleProductBatchInOutDetail){
 													stockQuantity+=ConvertUtil.getInt(proNewBatchStock.get("RelSrResidualQuantity"));
 												}
 												if(stockQuantity<quantity){//表示库存不足，因此不处理
 													proBatchInOutDetail.put("isNewFlag", "0");//区分是否是新数据的
-													proBatchInOutDetail.put("DetailNo", ++detailNo);//明细序号						
+													proBatchInOutDetail.put("DetailNo", ++detailNo);//明细序号
 													binbat152_Service.insertProBatchInOutDetail(proBatchInOutDetail);
 												}
 												else{//剩余库存数满足
 													for(Map<String, Object> proNewBatchStock: saleProductBatchInOutDetail){
 														int amount=ConvertUtil.getInt(proNewBatchStock.get("RelSrResidualQuantity"));//库存数量
-															
+
 															if(quantity==0){
 																break;
 															}
-															
+
 																	proBatchInOutDetail.put("BIN_OrganizationInfoID", proBatchInOut.get("BIN_OrganizationInfoID"));
 																	proBatchInOutDetail.put("BIN_BrandInfoID", proBatchInOut.get("BIN_BrandInfoID"));
 																	proBatchInOutDetail.put("CreatedBy", "BINBAT152");
 																	proBatchInOutDetail.put("CreatePGM", CherryBatchConstants.UPDATE_NAME);
 																	proBatchInOutDetail.put("UpdatedBy", "BINBAT152");
 																	proBatchInOutDetail.put("UpdatePGM", CherryBatchConstants.UPDATE_NAME);
-															
-															if(amount<quantity){//表示库存数小于明细														
+
+															if(amount<quantity){//表示库存数小于明细
 																	quantity=quantity-amount;
 																	proBatchInOutDetail.put("isNewFlag", "1");//区分是否是新数据的
 																	proBatchInOutDetail.put("Quantity",amount);
@@ -364,20 +376,20 @@ public class BINBAT152_BL {
 																	proBatchInOutDetail.put("DetailNo", ++detailNo);//明细序号
 																	proBatchInOutDetail.put("TradeNoIF",proBatchInOutDetail.get("RelevanceNo"));
 																	proNewBatchStock.put("Quantity", amount);
-						
-																	int productBatchStockID=0;//产品批次库存ID	
+
+																	int productBatchStockID=0;//产品批次库存ID
 																	productBatchStockID=binbat152_Service.insertProductNewBatchStock(proBatchInOutDetail);//插入【产品批次库存表(新建)】并返回批次库存表ID
 
-																	proBatchInOutDetail.put("BIN_ProductBatchStockID", productBatchStockID != 0 ? productBatchStockID : null); // 产品库存批次ID 
-																	
+																	proBatchInOutDetail.put("BIN_ProductBatchStockID", productBatchStockID != 0 ? productBatchStockID : null); // 产品库存批次ID
+
 																	binbat152_Service.insertProBatchInOutDetail(proBatchInOutDetail);//插入产品入出库批次记录明细表
 																	binbat152_Service.updateRelSrResidualQuantity(proNewBatchStock);
-																
-		
-															}else{	
-																
-																	
-																	
+
+
+															}else{
+
+
+
 																	proBatchInOutDetail.put("isNewFlag", "1");//区分是否是新数据的
 																	proBatchInOutDetail.put("Quantity",quantity);
 																	proBatchInOutDetail.put("InQuantity",quantity);
@@ -387,12 +399,12 @@ public class BINBAT152_BL {
 																	proBatchInOutDetail.put("DetailNo", ++detailNo);//明细序号
 																	proBatchInOutDetail.put("TradeNoIF",proBatchInOutDetail.get("RelevanceNo"));
 																	proNewBatchStock.put("Quantity", quantity);
-																	
-																	int productBatchStockID=0;//产品批次库存ID	
+
+																	int productBatchStockID=0;//产品批次库存ID
 																	productBatchStockID=binbat152_Service.insertProductNewBatchStock(proBatchInOutDetail);//插入【产品批次库存表(新建)】并返回批次库存表ID
-	
-																	proBatchInOutDetail.put("BIN_ProductBatchStockID", productBatchStockID != 0 ? productBatchStockID : null); // 产品库存批次ID 
-																	
+
+																	proBatchInOutDetail.put("BIN_ProductBatchStockID", productBatchStockID != 0 ? productBatchStockID : null); // 产品库存批次ID
+
 																	binbat152_Service.insertProBatchInOutDetail(proBatchInOutDetail);//插入产品入出库批次记录明细表
 																	binbat152_Service.updateRelSrResidualQuantity(proNewBatchStock);
 																	quantity=0;
@@ -400,13 +412,13 @@ public class BINBAT152_BL {
 															}
 														}
 												}
-							            		
+
 									        }else{
 									        	proBatchInOutDetail.put("isNewFlag", "0");//区分是否是新数据的
-												proBatchInOutDetail.put("DetailNo", ++detailNo);//明细序号	
+												proBatchInOutDetail.put("DetailNo", ++detailNo);//明细序号
 									        	binbat152_Service.insertProBatchInOutDetail(proBatchInOutDetail);
 									        }
-							            		
+
 
 									}else{
 										proBatchInOutDetail.put("isNewFlag", "0");//区分是否是新数据的
@@ -455,6 +467,10 @@ public class BINBAT152_BL {
 						cherryBatchLogger.BatchLogger(batchLoggerDTO1, e);
 						fReason = String.format("补录产品入库成本失败,详细信息查看Log日志", e.getMessage());
 					}
+
+                    // 处理各业务的单据号
+//                    mainData.put("RelevanceNo",proBatchInOut.get("RelevanceNo"));
+                    sumProductCost(proBatchInOut);
 	    		}
 	    	}
 	    	
@@ -467,7 +483,7 @@ public class BINBAT152_BL {
 	    		for(Map<String, Object> proBatchInOut:proBatchInOutList2){ 	    			
 	    			try{
 	    				String tradeType = ConvertUtil.getString(proBatchInOut.get("TradeType")); // 业务类型    		
-	    				
+
 	    				
 	    				//只处理除 接收退库：AR 和 调入申请:BG 以外的其他入库业务
 	    				if(!CherryConstants.BUSINESS_TYPE_AR.equals(tradeType) && !CherryConstants.BUSINESS_TYPE_BG.equals(tradeType)){
@@ -588,7 +604,11 @@ public class BINBAT152_BL {
 						cherryBatchLogger.BatchLogger(batchLoggerDTO1, e);
 						fReason = String.format("补录产品入库成本失败,详细信息查看Log日志", e.getMessage());
 					}
-	    		}
+
+//                    mainData.put("RelevanceNo",proBatchInOut.get("RelevanceNo"));
+                    sumProductCost(proBatchInOut);
+                }
+
 	    	}
     		
     		////////////////////////////////// 第四步： 以下是出库逻辑  ///////////////////////////////////////////////////
@@ -803,7 +823,7 @@ public class BINBAT152_BL {
 								
 							}
 							
-							
+
 							int sum=binbat152_Service.getCostPriceIsNullAmount(proBatchInOut);
 							if(sum==0){//表示该入出库批次下的明细都有成本价
 								Map<String, Object> TotalCostPriceMap=binbat152_Service.getTotalCostPrice(proBatchInOut);//得到某一单的总成本价
@@ -842,18 +862,138 @@ public class BINBAT152_BL {
 						cherryBatchLogger.BatchLogger(batchLoggerDTO1, e);
 						fReason = String.format("补录产品出库成本失败,详细信息查看Log日志", e.getMessage());
 					}
+
+                    // 处理各业务的单据号
+//                    mainData.put("RelevanceNo",proBatchInOut.get("RelevanceNo"));
+                    sumProductCost(proBatchInOut);
 	    		}			
 		}
     	
     	}
+
 		programEnd(map);
 		outMessage();
 		return flag;
 	}
 
-	
+    /**
+     * 处理各业务的单据号
+     * @param mainData
+     */
+    private void sumProductCost(Map<String, Object> mainData) {
 
-	
+        String tradeType = ConvertUtil.getString(mainData.get("TradeType")); // 业务类型
+
+        // 业务类型为发货时，插入到入出库批次表后，将想要成本计算出来更新到产品发货单明细表中
+        if(CherryConstants.BUSINESS_TYPE_SD.equals(tradeType)){
+            mainData.put("DeliverNoIF", mainData.get("RelevanceNo"));
+        }// 根据退库单单号获取带有成本的每单信息（根据退库单单号产品仓库逻辑仓库汇总成本）
+        else if(CherryConstants.BUSINESS_TYPE_RR.equals(tradeType)){
+            mainData.put("ReturnNoIF", mainData.get("RelevanceNo"));
+        }// 业务类型为盘点时，插入到入出库批次表后，将想要成本计算出来更新到产品盘点单明细表中
+        else if(CherryConstants.BUSINESS_TYPE_CA.equals(tradeType)){
+            mainData.put("StockTakingNoIF", mainData.get("RelevanceNo"));
+        }// 业务类型为调拨时（调出确认），插入到入出库批次表后，将想要成本计算出来更新到产品调出单据明细表中
+        else if(CherryConstants.BUSINESS_TYPE_LG.equals(tradeType)){
+            mainData.put("AllocationNoIF", mainData.get("RelevanceNo"));
+        }// 业务类型为调拨时（调入确认），插入到入出库批次表后，将想要成本计算出来更新到产品调入单据明细表中
+        else if (CherryConstants.BUSINESS_TYPE_BG.equals(tradeType)) {
+            mainData.put("AllocationOutNoIF", mainData.get("RelevanceNo"));
+        } else {
+            return;
+        }
+        binOLSTCM01_BL.handleProductCosByProductInOutBatch(mainData,null);
+    }
+
+	/**
+	 * 将单据产品总成本写入到具体单据单明细表中
+	 * @param mainData
+	 * @param detailList
+	 * @return
+	 */
+	public void handleProductCosByProductInOutBatch(Map<String, Object> mainData, List<Map<String, Object>> detailList){
+
+		String tradeType = ConvertUtil.getString(mainData.get("TradeType")); // 业务类型
+		// 业务类型为发货时，插入到入出库批次表后，将想要成本计算出来更新到产品发货单明细表中
+		if(CherryConstants.BUSINESS_TYPE_SD.equals(tradeType)){
+			// 根据单号获取带有成本的每单信息（更具单号产品仓库逻辑仓库汇总成本）
+			List<Map<String,Object>> productInfoList = binbat152_Service.getProductInfoListByDeliverNum(mainData);
+			// 发货单带有成本信息不为空，
+			if(null != productInfoList && productInfoList.size() != 0){
+				for(Map<String, Object> productInfo : productInfoList){
+					productInfo.put("UpdatedBy", "BINOLSTCM01");
+					productInfo.put("UpdatePGM", "BINOLSTCM01");
+					// 更新发货单明细中的总成本
+					binbat152_Service.updateProductDeliverDetail(productInfo);
+				}
+
+			}
+		}
+		else if(CherryConstants.BUSINESS_TYPE_RR.equals(tradeType)){
+			// 根据退库单单号获取带有成本的每单信息（根据退库单单号产品仓库逻辑仓库汇总成本）
+			List<Map<String,Object>> productInfoList = binbat152_Service.getCostPriceByRR(mainData);
+			// 退库单带有成本信息不为空，
+			if(null != productInfoList && productInfoList.size() != 0){
+				for(Map<String, Object> productInfo : productInfoList){
+					productInfo.put("UpdatedBy", "BINOLSTCM01");
+					productInfo.put("UpdatePGM", "BINOLSTCM01");
+					// 更新退库单明细中的总成本
+					binbat152_Service.updateProductReturnDetail(productInfo);
+				}
+
+			}
+		}
+
+		// 业务类型为盘点时，插入到入出库批次表后，将想要成本计算出来更新到产品盘点单明细表中
+		else if(CherryConstants.BUSINESS_TYPE_CA.equals(tradeType)){
+			// 根据单号获取带有成本的每单信息（更具单号产品仓库逻辑仓库汇总成本）
+			List<Map<String,Object>> productInfoList = binbat152_Service.getProductInfoListByStockTakingNum(mainData);
+			// 盘点单单带有成本信息不为空，
+			if(null != productInfoList && productInfoList.size() != 0){
+				for(Map<String, Object> productInfo : productInfoList){
+					productInfo.put("UpdatedBy", "BINOLSTCM01");
+					productInfo.put("UpdatePGM", "BINOLSTCM01");
+					// 更新盘点单明细中的总成本
+					binbat152_Service.updateProductStockTakingDetail(productInfo);
+				}
+
+			}
+		}
+
+		// 业务类型为调拨时（调出确认），插入到入出库批次表后，将想要成本计算出来更新到产品调出单据明细表中
+		else if(CherryConstants.BUSINESS_TYPE_LG.equals(tradeType)){
+			// 根据单号获取带有成本的每单信息（更具单号产品仓库逻辑仓库汇总成本）
+			List<Map<String,Object>> productInfoList = binbat152_Service.getProductInfoListByAllocationOutIDNum(mainData);
+			// 调出单带有成本信息不为空，
+			if(null != productInfoList && productInfoList.size() != 0){
+				for(Map<String, Object> productInfo : productInfoList){
+					productInfo.put("UpdatedBy", "BINOLSTCM01");
+					productInfo.put("UpdatePGM", "BINOLSTCM01");
+					// 更新调出单明细中的总成本
+					binbat152_Service.updateProductAllocationOutDetail(productInfo);
+				}
+
+			}
+		}
+
+		// 业务类型为调拨时（调入确认），插入到入出库批次表后，将想要成本计算出来更新到产品调入单据明细表中
+		else if(CherryConstants.BUSINESS_TYPE_BG.equals(tradeType)){
+			// 根据单号获取带有成本的每单信息（更具单号产品仓库逻辑仓库汇总成本）
+			List<Map<String,Object>> productInfoList = binbat152_Service.getProductInfoListByAllocationInIDNum(mainData);
+			// 调出单带有成本信息不为空，
+			if(null != productInfoList && productInfoList.size() != 0){
+				for(Map<String, Object> productInfo : productInfoList){
+					productInfo.put("UpdatedBy", "BINOLSTCM01");
+					productInfo.put("UpdatePGM", "BINOLSTCM01");
+					// 更新调出单明细中的总成本
+					binbat152_Service.updateProductAllocationInDetail(productInfo);
+				}
+
+			}
+		}
+
+	}
+
 	/**
 	 * 程序结束时，处理Job共通(更新Job控制表 、插入Job运行履历表)
 	 * 

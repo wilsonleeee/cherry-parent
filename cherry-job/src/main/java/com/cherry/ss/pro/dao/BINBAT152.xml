@@ -586,4 +586,273 @@
 		</isEqual>
 	</insert>
 
+	<!-- 发货单单据号找到的入出库批次明细成本汇总数据 -->
+	<select id="getProductInfoListByDeliverNum" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+		SELECT
+		Y.BIN_ProductDeliverID,
+		X.RelevanceNo,
+		X.BIN_ProductVendorID,
+		X.BIN_InventoryInfoID,
+		X.BIN_LogicInventoryInfoID,
+		SUM(X.Quantity*X.CostPrice) AS TotalCostPrice
+		FROM
+		Inventory.BIN_ProductBatchInOutDetail X
+		LEFT JOIN
+		Inventory.BIN_ProductDeliver  Y
+		ON    X.RelevanceNo=Y.DeliverNoIF
+		WHERE
+		X.RelevanceNo = #DeliverNoIF#
+		AND NOT EXISTS (
+			SELECT 1
+			FROM Inventory.BIN_ProductBatchInOutDetail E
+			WHERE
+			E.RelevanceNo  = X.RelevanceNo
+			AND E.BIN_InventoryInfoID = X.BIN_InventoryInfoID
+			AND E.BIN_LogicInventoryInfoID = X.BIN_LogicInventoryInfoID
+			AND E.BIN_ProductVendorID = X.BIN_ProductVendorID
+
+			AND E.CostPrice IS NULL
+		)
+		GROUP BY  Y.BIN_ProductDeliverID,
+		X.RelevanceNo,
+		X.BIN_ProductVendorID,
+		X.BIN_InventoryInfoID,
+		X.BIN_LogicInventoryInfoID
+
+	</select>
+
+	<!-- 修改产品发货单明细表的总成本 -->
+	<update id="updateProductDeliverDetail" parameterClass="java.util.HashMap">
+		<![CDATA[
+            UPDATE
+                 Inventory.BIN_ProductDeliverDetail
+            SET
+                TotalCostPrice=#TotalCostPrice#,
+                UpdateTime = GETDATE(),
+                UpdatedBy = #UpdatedBy#,
+                UpdatePGM = #UpdatePGM#,
+                ModifyCount = ModifyCount+1
+            WHERE
+			    BIN_ProductDeliverID = #BIN_ProductDeliverID#
+                AND BIN_ProductVendorID = #BIN_ProductVendorID#
+                AND BIN_InventoryInfoID = #BIN_InventoryInfoID#
+                AND BIN_LogicInventoryInfoID=#BIN_LogicInventoryInfoID#
+          ]]>
+	</update>
+
+	<!-- 退库单单据号找到的入出库批次明细成本汇总数据 -->
+	<select id="getCostPriceByRR" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+		SELECT
+		Y.BIN_ProductReturnID,
+		X.RelevanceNo,
+		X.BIN_ProductVendorID,
+		X.BIN_InventoryInfoID,
+		X.BIN_LogicInventoryInfoID,
+		SUM(X.Quantity*X.CostPrice) AS TotalCostPrice
+		FROM
+		Inventory.BIN_ProductBatchInOutDetail X
+		inner join
+		Inventory.BIN_ProductBatchInOut Z on X.BIN_ProductBatchInOutID=Z.BIN_ProductBatchInOutID
+		left  join
+		Inventory.BIN_ProductReturn  Y ON  X.RelevanceNo=Y.ReturnNoIF
+		WHERE
+		X.RelevanceNo = #ReturnNoIF# and Z.TradeType='RR'
+		AND NOT EXISTS (
+		SELECT 1
+		FROM Inventory.BIN_ProductBatchInOutDetail E
+		WHERE
+		E.RelevanceNo  = X.RelevanceNo
+		AND E.BIN_InventoryInfoID = X.BIN_InventoryInfoID
+		AND E.BIN_LogicInventoryInfoID = X.BIN_LogicInventoryInfoID
+		AND E.BIN_ProductVendorID = X.BIN_ProductVendorID
+
+		AND E.CostPrice IS NULL
+		)
+		GROUP BY
+		Y.BIN_ProductReturnID,
+		X.RelevanceNo,
+		X.BIN_ProductVendorID,
+		X.BIN_InventoryInfoID,
+		X.BIN_LogicInventoryInfoID
+
+	</select>
+
+	<!-- 修改产品退库单明细表的总成本 -->
+	<update id="updateProductReturnDetail" parameterClass="java.util.HashMap">
+		<![CDATA[
+            UPDATE
+                 Inventory.BIN_ProductReturnDetail
+            SET
+                TotalCostPrice=#TotalCostPrice#,
+                UpdateTime = GETDATE(),
+                UpdatedBy = #UpdatedBy#,
+                UpdatePGM = #UpdatePGM#,
+                ModifyCount = ModifyCount+1
+            WHERE
+			    BIN_ProductReturnID = #BIN_ProductReturnID#
+                AND BIN_ProductVendorID = #BIN_ProductVendorID#
+                AND BIN_InventoryInfoID = #BIN_InventoryInfoID#
+                AND BIN_LogicInventoryInfoID=#BIN_LogicInventoryInfoID#
+          ]]>
+	</update>
+
+	<!-- 盘点单单据号找到的入出库批次明细成本汇总数据 -->
+	<select id="getProductInfoListByStockTakingNum" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+		SELECT
+		Y.BIN_ProductStockTakingID,
+		X.RelevanceNo,
+		X.BIN_ProductVendorID,
+		X.BIN_InventoryInfoID,
+		X.BIN_LogicInventoryInfoID,
+		SUM(X.Quantity*X.CostPrice) AS TotalCostPrice
+		FROM
+		Inventory.BIN_ProductBatchInOutDetail X
+		LEFT JOIN
+		Inventory.BIN_ProductStockTaking  Y
+		ON    X.RelevanceNo=Y.StockTakingNoIF
+		WHERE
+		X.RelevanceNo = #StockTakingNoIF#
+		AND NOT EXISTS (
+		SELECT 1
+		FROM Inventory.BIN_ProductBatchInOutDetail E
+		WHERE
+		E.RelevanceNo  = X.RelevanceNo
+		AND E.BIN_InventoryInfoID = X.BIN_InventoryInfoID
+		AND E.BIN_LogicInventoryInfoID = X.BIN_LogicInventoryInfoID
+		AND E.BIN_ProductVendorID = X.BIN_ProductVendorID
+
+		AND E.CostPrice IS NULL
+		)
+		GROUP BY  Y.BIN_ProductStockTakingID,
+		X.RelevanceNo,
+		X.BIN_ProductVendorID,
+		X.BIN_InventoryInfoID,
+		X.BIN_LogicInventoryInfoID
+	</select>
+
+	<!-- 修改产品盘点单明细表的总成本 -->
+	<update id="updateProductStockTakingDetail" parameterClass="java.util.HashMap">
+		<![CDATA[
+            UPDATE
+                 Inventory.BIN_ProductTakingDetail
+            SET
+                TotalCostPrice=#TotalCostPrice#,
+                UpdateTime = GETDATE(),
+                UpdatedBy = #UpdatedBy#,
+                UpdatePGM = #UpdatePGM#,
+                ModifyCount = ModifyCount+1
+            WHERE
+			    BIN_ProductTakingID = #BIN_ProductStockTakingID#
+                AND BIN_ProductVendorID = #BIN_ProductVendorID#
+                AND BIN_InventoryInfoID = #BIN_InventoryInfoID#
+                AND BIN_LogicInventoryInfoID=#BIN_LogicInventoryInfoID#
+          ]]>
+	</update>
+
+	<!-- 调出单单据号找到的入出库批次明细成本汇总数据 -->
+	<select id="getProductInfoListByAllocationOutIDNum" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+		SELECT
+		Y.BIN_ProductAllocationOutID,
+		X.RelevanceNo,
+		X.BIN_ProductVendorID,
+		X.BIN_InventoryInfoID,
+		X.BIN_LogicInventoryInfoID,
+		SUM(X.Quantity*X.CostPrice) AS TotalCostPrice
+		FROM
+		Inventory.BIN_ProductBatchInOutDetail X
+		LEFT JOIN
+		Inventory.BIN_ProductAllocationOut Y
+		ON    X.RelevanceNo=Y.RelevanceNo
+		WHERE
+		X.RelevanceNo = #AllocationNoIF#
+		AND NOT EXISTS (
+		SELECT 1
+		FROM Inventory.BIN_ProductBatchInOutDetail E
+		WHERE
+		E.RelevanceNo  = X.RelevanceNo
+		AND E.BIN_InventoryInfoID = X.BIN_InventoryInfoID
+		AND E.BIN_LogicInventoryInfoID = X.BIN_LogicInventoryInfoID
+		AND E.BIN_ProductVendorID = X.BIN_ProductVendorID
+
+		AND E.CostPrice IS NULL
+		)
+		GROUP BY  Y.BIN_ProductAllocationOutID,
+		X.RelevanceNo,
+		X.BIN_ProductVendorID,
+		X.BIN_InventoryInfoID,
+		X.BIN_LogicInventoryInfoID
+	</select>
+
+	<!-- 修改调出单单明细表的总成本 -->
+	<update id="updateProductAllocationOutDetail" parameterClass="java.util.HashMap">
+		<![CDATA[
+            UPDATE
+                 Inventory.BIN_ProductAllocationOutDetail
+            SET
+                TotalCostPrice=#TotalCostPrice#,
+                UpdateTime = GETDATE(),
+                UpdatedBy = #UpdatedBy#,
+                UpdatePGM = #UpdatePGM#,
+                ModifyCount = ModifyCount+1
+            WHERE
+			    BIN_ProductAllocationOutID = #BIN_ProductAllocationOutID#
+                AND BIN_ProductVendorID = #BIN_ProductVendorID#
+                AND BIN_InventoryInfoID = #BIN_InventoryInfoID#
+                AND BIN_LogicInventoryInfoID=#BIN_LogicInventoryInfoID#
+          ]]>
+	</update>
+
+	<!-- 调入单单据号找到的入出库批次明细成本汇总数据 -->
+	<select id="getProductInfoListByAllocationInIDNum" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+		SELECT
+		Y.BIN_ProductAllocationInID,
+		X.RelevanceNo,
+		X.BIN_ProductVendorID,
+		X.BIN_InventoryInfoID,
+		X.BIN_LogicInventoryInfoID,
+		SUM(X.Quantity*X.CostPrice) AS TotalCostPrice
+		FROM
+		Inventory.BIN_ProductBatchInOutDetail X
+		LEFT JOIN
+		Inventory.BIN_ProductAllocationIn Y
+		ON    X.RelevanceNo=Y.RelevanceNo
+		WHERE
+		X.RelevanceNo = #AllocationOutNoIF#
+		AND NOT EXISTS (
+		SELECT 1
+		FROM Inventory.BIN_ProductBatchInOutDetail E
+		WHERE
+		E.RelevanceNo  = X.RelevanceNo
+		AND E.BIN_InventoryInfoID = X.BIN_InventoryInfoID
+		AND E.BIN_LogicInventoryInfoID = X.BIN_LogicInventoryInfoID
+		AND E.BIN_ProductVendorID = X.BIN_ProductVendorID
+
+		AND E.CostPrice IS NULL
+		)
+		GROUP BY  Y.BIN_ProductAllocationInID,
+		X.RelevanceNo,
+		X.BIN_ProductVendorID,
+		X.BIN_InventoryInfoID,
+		X.BIN_LogicInventoryInfoID
+	</select>
+
+	<!-- 修改调入单单明细表的总成本 -->
+	<update id="updateProductAllocationInDetail" parameterClass="java.util.HashMap">
+		<![CDATA[
+            UPDATE
+                 Inventory.BIN_ProductAllocationInDetail
+            SET
+                TotalCostPrice=#TotalCostPrice#,
+                UpdateTime = GETDATE(),
+                UpdatedBy = #UpdatedBy#,
+                UpdatePGM = #UpdatePGM#,
+                ModifyCount = ModifyCount+1
+            WHERE
+			    BIN_ProductAllocationInID = #BIN_ProductAllocationInID#
+                AND BIN_ProductVendorID = #BIN_ProductVendorID#
+                AND BIN_InventoryInfoID = #BIN_InventoryInfoID#
+                AND BIN_LogicInventoryInfoID=#BIN_LogicInventoryInfoID#
+          ]]>
+	</update>
+
 </sqlMap>

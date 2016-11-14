@@ -1197,8 +1197,18 @@ public class CherryBatchConstants {
 /**============================================沟通共通字段定义End==========================================*/
 
 	/**============================================利润分摊Start==========================================*/
-	public static final int BATCH_ERROR_PR1 = 1;
 	public static final int BATCH_ERROR_PR2 = 2;
 	public static final int BATCH_ERROR_PR3 = 3;
 	public static final int BATCH_ERROR_PR4 = 4;
+	public static final int BATCH_ERROR_PR1 = 1;
+
+	/**============================================系统配置项 Start==========================================*/
+
+	/** 系统配置项 是否管理成本 0:否 */
+	public static final String SYS_CONFIG_COSTPRICE_0 = "0";
+
+	/** 系统配置项 是否管理成本 1:是 */
+	public static final String SYS_CONFIG_COSTPRICE_1 = "1";
+
+	/**============================================系统配置项 End  ==========================================*/
 }

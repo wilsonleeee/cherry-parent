@@ -114,6 +114,7 @@ public class BINOLSTCM01_BL implements BINOLSTCM01_IF {
      * @return
      * @throws Exception 
      */
+	@Override
     public int handleProductInOutBatch(Map<String, Object> mainData, List<Map<String, Object>> detailList){
     	String tradeType = ConvertUtil.getString(mainData.get("TradeType")); // 业务类型
     	
@@ -620,6 +621,7 @@ public class BINOLSTCM01_BL implements BINOLSTCM01_IF {
      * @param detailList
      * @return
      */
+	@Override
     public void handleProductCosByProductInOutBatch(Map<String, Object> mainData, List<Map<String, Object>> detailList){
     	
     	String tradeType = ConvertUtil.getString(mainData.get("TradeType")); // 业务类型
@@ -633,7 +635,8 @@ public class BINOLSTCM01_BL implements BINOLSTCM01_IF {
     				productInfo.put("UpdatedBy", "BINOLSTCM01");
     				productInfo.put("UpdatePGM", "BINOLSTCM01");
     				// 更新发货单明细中的总成本
-    				binOLSTCM01_Service.updateProductDeliverDetail(productInfo);
+
+					binOLSTCM01_Service.updateProductDeliverDetail(productInfo);
     			}
     			
     		}

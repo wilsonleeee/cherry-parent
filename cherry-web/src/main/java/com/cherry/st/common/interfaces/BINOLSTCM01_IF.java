@@ -56,6 +56,13 @@ public interface BINOLSTCM01_IF extends ICherryInterface{
      * @param detailList
      * @return
      */
-    public int handleProductInOutBatch(Map<String, Object> mainData, List<Map<String, Object>> detailList);    
-  
+    public int handleProductInOutBatch(Map<String, Object> mainData, List<Map<String, Object>> detailList);
+
+    /**
+     * 将单据产品总成本写入到具体单据单明细表中
+     * @param mainData
+     * @param detailList
+     * @return
+     */
+    public void handleProductCosByProductInOutBatch(Map<String, Object> mainData, List<Map<String, Object>> detailList);
 }

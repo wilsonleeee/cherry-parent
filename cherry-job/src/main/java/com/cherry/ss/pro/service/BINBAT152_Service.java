@@ -257,5 +257,131 @@ public class BINBAT152_Service extends BaseService {
     	parameterMap.put(CherryConstants.IBATIS_SQL_ID, "BINBAT152.getProductBatchInOutDetailByBgRelevanceNo");
     	return baseServiceImpl.getList(parameterMap);
     }
-		
+
+	/******* 单据入出库各产品的总成本写入原始交易单据明细  *********/
+
+	/**
+	 * 根据发货单单号，取得发货单相关成本信息。
+	 * @param map
+	 * @return
+	 */
+	public List<Map<String, Object>> getProductInfoListByDeliverNum(Map<String, Object> map) {
+		Map<String, Object> parameterMap = new HashMap<String, Object>();
+		parameterMap.putAll(map);
+		parameterMap.put(CherryConstants.IBATIS_SQL_ID, "BINBAT152.getProductInfoListByDeliverNum");
+		return baseServiceImpl.getList(parameterMap);
+	}
+
+	/**
+	 * 修改发货单明细表中的总成本
+	 * @param map
+	 * @return
+	 */
+	public int updateProductDeliverDetail(Map<String, Object> map) {
+		Map<String, Object> parameterMap = new HashMap<String, Object>();
+		parameterMap.putAll(map);
+		parameterMap.put(CherryConstants.IBATIS_SQL_ID, "BINBAT152.updateProductDeliverDetail");
+		return baseServiceImpl.update(parameterMap);
+
+	}
+
+	/**
+	 * 根据退库单单号，取得退库单相关成本信息。
+	 * @param map
+	 * @return
+	 */
+	public List<Map<String, Object>> getCostPriceByRR(Map<String, Object> map) {
+		Map<String, Object> parameterMap = new HashMap<String, Object>();
+		parameterMap.putAll(map);
+		parameterMap.put(CherryConstants.IBATIS_SQL_ID, "BINBAT152.getCostPriceByRR");
+		return baseServiceImpl.getList(parameterMap);
+	}
+
+	/**
+	 * 修改退库单明细表中的总成本
+	 * @param map
+	 * @return
+	 */
+	public int updateProductReturnDetail(Map<String, Object> map) {
+		Map<String, Object> parameterMap = new HashMap<String, Object>();
+		parameterMap.putAll(map);
+		parameterMap.put(CherryConstants.IBATIS_SQL_ID, "BINBAT152.updateProductReturnDetail");
+		return baseServiceImpl.update(parameterMap);
+
+	}
+
+	/**
+	 * 根据盘点单单号，取得发货单相关成本信息。
+	 * @param map
+	 * @return
+	 */
+	public List<Map<String, Object>> getProductInfoListByStockTakingNum(Map<String, Object> map) {
+		Map<String, Object> parameterMap = new HashMap<String, Object>();
+		parameterMap.putAll(map);
+		parameterMap.put(CherryConstants.IBATIS_SQL_ID, "BINBAT152.getProductInfoListByStockTakingNum");
+		return baseServiceImpl.getList(parameterMap);
+	}
+
+	/**
+	 * 修改盘点单明细表中的总成本
+	 * @param map
+	 * @return
+	 */
+	public int updateProductStockTakingDetail(Map<String, Object> map) {
+		Map<String, Object> parameterMap = new HashMap<String, Object>();
+		parameterMap.putAll(map);
+		parameterMap.put(CherryConstants.IBATIS_SQL_ID, "BINBAT152.updateProductStockTakingDetail");
+		return baseServiceImpl.update(parameterMap);
+
+	}
+
+	/**
+	 * 根据调出单单号，取得调出单相关成本信息。
+	 * @param map
+	 * @return
+	 */
+	public List<Map<String, Object>> getProductInfoListByAllocationOutIDNum(Map<String, Object> map) {
+		Map<String, Object> parameterMap = new HashMap<String, Object>();
+		parameterMap.putAll(map);
+		parameterMap.put(CherryConstants.IBATIS_SQL_ID, "BINBAT152.getProductInfoListByAllocationOutIDNum");
+		return baseServiceImpl.getList(parameterMap);
+	}
+
+	/**
+	 * 修改调出单明细表中的总成本
+	 * @param map
+	 * @return
+	 */
+	public int updateProductAllocationOutDetail(Map<String, Object> map) {
+		Map<String, Object> parameterMap = new HashMap<String, Object>();
+		parameterMap.putAll(map);
+		parameterMap.put(CherryConstants.IBATIS_SQL_ID, "BINBAT152.updateProductAllocationOutDetail");
+		return baseServiceImpl.update(parameterMap);
+
+	}
+
+	/**
+	 * 根据调入单单号，取得调入单相关成本信息。
+	 * @param map
+	 * @return
+	 */
+	public List<Map<String, Object>> getProductInfoListByAllocationInIDNum(Map<String, Object> map) {
+		Map<String, Object> parameterMap = new HashMap<String, Object>();
+		parameterMap.putAll(map);
+		parameterMap.put(CherryConstants.IBATIS_SQL_ID, "BINBAT152.getProductInfoListByAllocationInIDNum");
+		return baseServiceImpl.getList(parameterMap);
+	}
+
+	/**
+	 * 修改调入单明细表中的总成本
+	 * @param map
+	 * @return
+	 */
+	public int updateProductAllocationInDetail(Map<String, Object> map) {
+		Map<String, Object> parameterMap = new HashMap<String, Object>();
+		parameterMap.putAll(map);
+		parameterMap.put(CherryConstants.IBATIS_SQL_ID, "BINBAT152.updateProductAllocationInDetail");
+		return baseServiceImpl.update(parameterMap);
+
+	}
 }
