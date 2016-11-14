@@ -90,7 +90,9 @@
 			H.BIN_ProductVendorID,
 			ISNULL(H.Quantity,0) AS hQuantity,
 			0 AS inQuantity,
+			0 as inAmount,
 			0 AS outQuantity,
+			0 AS outAmount,
 			0 AS hDinQuantity,
 			0 AS hDoutQuantity,
 			0 AS hinQuantity,
@@ -114,8 +116,7 @@
 			H.BIN_LogicInventoryInfoID = #lgcInventoryId#
 		</isNotEmpty>
 	</sql>
-	
-	<!-- 产品库存变化（集结点之后）  -->
+
 	<sql id="ProStockInoutSQL">
 		<![CDATA[
 		SELECT 
@@ -125,11 +126,17 @@
 		    A1.BIN_ProductVendorID,
 		    0 AS hQuantity,
 		    CASE WHEN A1.StockType = '0' and H.StockInOutDate >= CONVERT(date,#startDate#)
-		           AND H.StockInOutDate <= CONVERT(date,#endDate#)
-			THEN ISNULL(A1.Quantity,0) else 0 end AS inQuantity,
+		        AND H.StockInOutDate <= CONVERT(date,#endDate#)
+				THEN ISNULL(A1.Quantity,0) else 0 end AS inQuantity,
+			CASE WHEN A1.StockType = '0' and H.StockInOutDate >= CONVERT(date,#startDate#)
+		        AND H.StockInOutDate <= CONVERT(date,#endDate#)
+            	THEN ISNULL(A1.Quantity,0)*ISNULL(PWAP.AvgPrice, ISNULL(E.StandardCost,0)) else 0 end AS inAmount,
 		    CASE WHEN A1.StockType = '1' and H.StockInOutDate >= CONVERT(date,#startDate#)
-		           AND H.StockInOutDate <= CONVERT(date,#endDate#)
-			THEN ISNULL(A1.Quantity,0) else 0 end AS outQuantity,
+		        AND H.StockInOutDate <= CONVERT(date,#endDate#)
+				THEN ISNULL(A1.Quantity,0) else 0 end AS outQuantity,
+			CASE WHEN A1.StockType = '1' and H.StockInOutDate >= CONVERT(date,#startDate#)
+		      	AND H.StockInOutDate <= CONVERT(date,#endDate#)
+            	THEN ISNULL(A1.Quantity,0)*ISNULL(PWAP.AvgPrice, ISNULL(E.StandardCost,0)) else 0 end AS outAmount,
 		    CASE WHEN A1.StockType = '0' and H.StockInOutDate <= CONVERT(date,#cutOfDate#)
 				AND H.ValidFlag = '1' AND H.CloseFlag = '0'
 			THEN ISNULL(A1.Quantity,0) else 0 end AS hDinQuantity,
@@ -148,6 +155,25 @@
 			ON(H.BIN_ProductInOutID = A1.BIN_ProductInOutID
 		       AND A1.ValidFlag = '1')
 			JOIN T99 ON(A1.BIN_InventoryInfoID = T99.BIN_InventoryInfoID)
+			LEFT JOIN Inventory.BIN_ProductWeightedAvgPrice PWAP WITH(NOLOCK)
+			ON(PWAP.Date <=H.StockInOutDate and A1.BIN_InventoryInfoID=PWAP.BIN_InventoryInfoID
+                    AND A1.BIN_LogicInventoryInfoID=PWAP.BIN_LogicInventoryInfoID
+                    and A1.BIN_ProductVendorID=PWAP.BIN_ProductVendorID
+                    and not EXISTS(
+						select 1
+						from
+							Inventory.BIN_ProductWeightedAvgPrice TP
+                    	where
+                    		PWAP.BIN_ProductVendorID=TP.BIN_ProductVendorID
+                    		AND PWAP.BIN_InventoryInfoID=TP.BIN_InventoryInfoID
+                    		AND PWAP.BIN_LogicInventoryInfoID=TP.BIN_LogicInventoryInfoID
+                    		AND (PWAP.Date<TP.Date or (PWAP.Date=TP.Date and PWAP.UpdateTime<TP.UpdateTime))
+					)
+			)
+			JOIN Basis.BIN_ProductVendor D WITH(NOLOCK)
+			ON(A1.BIN_ProductVendorID = D.BIN_ProductVendorID)
+			JOIN Basis.BIN_Product E WITH(NOLOCK)
+			ON(D.BIN_ProductID = E.BIN_ProductID)
 		WHERE 
 			H.ValidFlag='1'
 		]]>
@@ -176,21 +202,21 @@
 			T00.BIN_InventoryInfoID,
 			T00.nameTotal,
 			sum(isnull(T00.startQuantity,0)) as startQuantity,
-			sum(isnull(T00.startQuantity,0))*T00.startPrice/1.17 as startAmountNet,
+			convert(decimal(32,2),sum(isnull(T00.startQuantity,0))*T00.startPrice/1.17) as startAmountNet,
 			sum(isnull(T00.inQuantity,0)) as inQuantity,
-			(sum(isnull(T00.endQuantity,0))*T00.endPrice
-				-sum(isnull(T00.startQuantity,0))*T00.startPrice
-				-sum(isnull(T00.outQuantity,0))*T00.startPrice)/1.17 as inAmountNet,
+			convert(decimal(32,2),sum(isnull(T00.inAmount,0))/1.17) as inAmountNet,
 			sum(isnull(T00.outQuantity,0)) as outQuantity,
-			sum(isnull(T00.outQuantity,0))*T00.startPrice/1.17 as outAmountNet,
+			convert(decimal(32,2),sum(isnull(T00.outAmount,0))/1.17) as outAmountNet,
 			sum(isnull(T00.endQuantity,0)) as endQuantity,
-			sum(isnull(T00.endQuantity,0))*T00.endPrice/1.17 as endAmountNet
+			convert(decimal(32,2),sum(isnull(T00.endQuantity,0))*T00.endPrice/1.17) as endAmountNet
         FROM (
 		SELECT
 			E.UnitCode AS unitCode,
 			E.OriginalBrand AS originalBrand,
 			SUM(CONVERT(BIGINT,T0.inQuantity)) AS inQuantity,
+			SUM(CONVERT(DECIMAL(32,6),T0.inAmount)) as inAmount,
 			SUM(CONVERT(BIGINT,T0.outQuantity)) AS outQuantity,
+			sum(CONVERT(DECIMAL(32,6),T0.outAmount)) as outAmount,
 			case when TT1.avgPrice is null 
 				then Convert(decimal(32,6),ISNULL(E.StandardCost,0))
 				else Convert(decimal(32,6),TT1.AvgPrice) end as startPrice,
