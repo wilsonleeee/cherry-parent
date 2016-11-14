@@ -1425,6 +1425,8 @@ BINOLSSPRM74.prototype = {
 				var actualDiscountPrice=coupon_list[i].actualDiscountPrice;
 				var checkFlag=coupon_list[i].checkFlag;
 				var couponType=coupon_list[i].couponType;
+				var barcode=coupon_list[i].barcode;
+				var unicode=coupon_list[i].unicode;
 				$("#coupon_table tr").each(function(){
 					var $this=$(this).find("td:last");
 					if($this.find("input[name='couponCode']").val() == couponCode ){
@@ -1437,6 +1439,8 @@ BINOLSSPRM74.prototype = {
 							$this.parents("tr").find("input[type='checkbox']").attr("checked","checked");
 							$this.find("input[name='checkFlag']").attr("checkFlag","1");
 							$this.find("input[name='actualDiscountPrice']").attr("value",actualDiscountPrice);
+							$this.find("input[name='unicode']").attr("value",unicode);
+							$this.find("input[name='barcode']").attr("value",barcode);
 						}else{
 							$this.find("input[name='actualDiscountPrice']").removeAttr("value");
 							$this.find("input[name='checkFlag']").attr("value","0");
