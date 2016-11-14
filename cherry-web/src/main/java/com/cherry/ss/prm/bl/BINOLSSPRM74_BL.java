@@ -819,7 +819,7 @@ public class BINOLSSPRM74_BL implements BINOLSSPRM74_IF {
 	}
 
 	@Override
-	public  void tran_collect(BINOLSSPRM74_Form form) throws Exception {
+	public  int tran_collect(BINOLSSPRM74_Form form) throws Exception {
 		//主单信息
 		Map<String, Object> main_map = ConvertUtil.json2Map(form.getMain_json());
 //		if(1 == ConvertUtil.getInt(form.getCloseFlag())){
@@ -829,14 +829,21 @@ public class BINOLSSPRM74_BL implements BINOLSSPRM74_IF {
 //			ConvertUtil.setResponseByAjax(response, "0");
 //			return;
 //		}
-		String TN = ConvertUtil.getString(main_map.get("TN"));
-		//如果主单中已经存在有其单据号的情况，先做物理删除再进行插入
+		//主单信息非空校验
+		if(null==main_map ){
+			logger.error("销售单据录入过程中发生错误，主单信息转换失败：" + form.getMain_json());
+			return 1;
+		}
 		this.checkMain(main_map);
+
 		//购物车信息
 		List<Map<String, Object>> cart_list = ConvertUtil.json2List(form.getShoppingcart_json());
 		if(null==cart_list || cart_list.size()==0){
 			logger.error("销售单据录入过程中发生错误，购物车列表转换失败：" + form.getShoppingcart_json());
+			return 1;
 		}
+		String TN = ConvertUtil.getString(main_map.get("TN"));
+		//如果主单中已经存在有其单据号的情况，先做物理删除再进行插入
 		//1、计算完毕的规则（N类型）
 		List<Map<String, Object>> rule_list = ConvertUtil.json2List(form.getRule_json());
 		//2、计算完毕的规则（P类型）
@@ -849,7 +856,7 @@ public class BINOLSSPRM74_BL implements BINOLSSPRM74_IF {
 
 		//计算完毕的优惠券信息
 		List<Map<String, Object>> coupon_list = ConvertUtil.json2List(form.getCoupon_json());
-		if (main_map != null && cart_list != null) {
+		if (main_map != null && cart_list != null && cart_list.size() > 0) {
 			//获得累计优惠金额
 			double discountTotal = 0;
 			if (form.getDiscountTotal() == null || "".equals(form.getDiscountTotal())) {
@@ -927,9 +934,10 @@ public class BINOLSSPRM74_BL implements BINOLSSPRM74_IF {
 				this.insertCart(cart_list, TN);
 			} else {
 				logger.info("智能促销录入数据购物车信息为空");
+				return 1;
 			}
 		}
-
+		return 0;
 	}
 
 	@Override

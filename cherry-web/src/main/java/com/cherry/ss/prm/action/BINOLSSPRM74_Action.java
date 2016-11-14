@@ -403,8 +403,8 @@ public class BINOLSSPRM74_Action extends BaseAction implements ModelDriven<BINOL
 			session.put(CherryConstants.CHERRY_SECURITY_CONTEXT_KEY,datasourceName);
 			// 对登录账户做一系列的检查,通过则返回账户ID，不通过则会抛出多种错误信息
 			CustomerContextHolder.setCustomerDataSourceType(datasourceName);
-			binOLSSPRM74_IF.tran_collect(form);
-			ConvertUtil.setResponseByAjax(response, "0");
+			int result=binOLSSPRM74_IF.tran_collect(form);
+			ConvertUtil.setResponseByAjax(response, result);
 			logger.info("数据录入成功结束："+TN);
 		} catch (Exception e) {
 			logger.error(e.getMessage(), e);

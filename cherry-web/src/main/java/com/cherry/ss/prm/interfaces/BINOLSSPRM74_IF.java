@@ -190,7 +190,7 @@ public interface BINOLSSPRM74_IF extends ICherryInterface {
 	public List<Map<String, Object>> convertRuleList(List<Map<String,Object>>  rule_list,List<Map<String,Object>>  promotionRule_list,List<Map<String,Object>>  pointRule_list);
 
 
-	public  void tran_collect(BINOLSSPRM74_Form form) throws Exception;
+	public  int tran_collect(BINOLSSPRM74_Form form) throws Exception;
 
 	public  void tran_collectPro(BINOLSSPRM74_Form form) throws Exception;
 }
