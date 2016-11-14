@@ -31,14 +31,33 @@ public class BINOLSTCM08_Service extends BaseService{
 		map.put(CherryConstants.IBATIS_SQL_ID, "BINOLSTCM08.insertProductInDepot");
 		return baseServiceImpl.saveBackId(map);
 	}
+
+	/**
+	 * 插入入库单主表
+	 *
+	 * @param map
+	 */
+	public int insertProductInDepotForMQ(Map<String,Object> map){
+		map.put(CherryConstants.IBATIS_SQL_ID, "BINOLSTCM08.insertProductInDepotForMQ");
+		return baseServiceImpl.saveBackId(map);
+	}
 	
 	/**
 	 * 插入入库单明细表
 	 * 
-	 * @param map
+	 * @param list
 	 */
 	public void insertProductInDepotDetail(List<Map<String,Object>> list){
 		baseServiceImpl.saveAll(list,"BINOLSTCM08.insertProductInDepotDetail");
+	}
+
+	/**
+	 * 插入入库单明细表
+	 *
+	 * @param list
+	 */
+	public void insertProductInDepotDetailForMQ(List<Map<String,Object>> list){
+		baseServiceImpl.saveAll(list,"BINOLSTCM08.insertProductInDepotDetailForMQ");
 	}
 	
 	/**
@@ -55,7 +74,7 @@ public class BINOLSTCM08_Service extends BaseService{
 	 * 
 	 *取得入库信息
 	 * 
-	 *@param praMap
+	 *@param map
      */
 	 @SuppressWarnings("unchecked")
 	public Map<String, Object> getProductInDepotMainData(Map<String,Object> map) {
@@ -67,7 +86,7 @@ public class BINOLSTCM08_Service extends BaseService{
 	  * 
 	  *取得入库明细信息
 	  * 
-	  *@param praMap
+	  *@param map
 	  */
 	 @SuppressWarnings("unchecked")
 	 public List<Map<String, Object>> getProductInDepotDetailData(Map<String,Object> map) {
@@ -98,4 +117,40 @@ public class BINOLSTCM08_Service extends BaseService{
 	     parameterMap.put(CherryConstants.IBATIS_SQL_ID, "BINOLSTCM08.delProductInDepotDetailData");
 	     return baseServiceImpl.remove(parameterMap);
 	 }
+
+	/**
+	 * 通过CounterCode获取仓库ID
+	 * @param map
+	 * @return
+     */
+	public Map<String,Object> selectInventoryIdByCounterCode(Map<String, Object> map){
+		Map<String, Object> parameterMap = new HashMap<String, Object>();
+		parameterMap.putAll(map);
+		parameterMap.put(CherryConstants.IBATIS_SQL_ID, "BINOLSTCM08.selectInventoryIdByCounterCode");
+		return (Map<String,Object>)baseServiceImpl.get(parameterMap);
+	}
+
+	/**
+	 * 通过BarCode获取ProductVendorID
+	 * @param map
+	 * @return
+	 */
+	public Map<String,Object> selectProductVendorIdByBarCode(Map<String, Object> map){
+		Map<String, Object> parameterMap = new HashMap<String, Object>();
+		parameterMap.putAll(map);
+		parameterMap.put(CherryConstants.IBATIS_SQL_ID, "BINOLSTCM08.selectProductVendorIdByBarCode");
+		return (Map<String,Object>)baseServiceImpl.get(parameterMap);
+	}
+
+	/**
+	 * 通过unitCode获取ProductID
+	 * @param map unitcode
+	 * @return
+	 */
+	public Map<String,Object> selectProductIdByUnitCode(Map<String, Object> map){
+		Map<String, Object> parameterMap = new HashMap<String, Object>();
+		parameterMap.putAll(map);
+		parameterMap.put(CherryConstants.IBATIS_SQL_ID, "BINOLSTCM08.selectProductIdByUnitCode");
+		return (Map<String,Object>)baseServiceImpl.get(parameterMap);
+	}
 }

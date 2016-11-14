@@ -706,6 +706,4 @@ public class BINOLSTCM01_BL implements BINOLSTCM01_IF {
     	
     }
     
-    
-    
 }

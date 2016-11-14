@@ -84,6 +84,60 @@ public class BINOLSTCM08_BL implements BINOLSTCM08_IF{
 		binOLSTCM08_Service.insertProductInDepotDetail(detailList);
 		return productInDepotID;
 	}
+
+	/**
+	 *
+	 *将接收MQ产品入库信息写入入库主从表
+	 *
+	 *@param mainData
+	 *@param detailList
+	 */
+	public int insertProductInDepotAllForMQ(Map<String, Object> mainData,
+									   List<Map<String, Object>> detailList) {
+		String billNo = ConvertUtil.getString(mainData.get("billNo"));
+		//判断单据号是否在参数中存在，如果不存在则生成
+		if("".equals(billNo)){
+			//组织ID
+			String organizationInfoId = ConvertUtil.getString(mainData.get("organizationInfoID"));
+			//品牌ID
+			String brandInfoId = ConvertUtil.getString(mainData.get("brandInfoID"));
+			//程序ID
+			String name = "BINOLSTCM08";
+			//调用共通生成单据号
+			billNo = binOLCM03_BL.getTicketNumber(organizationInfoId, brandInfoId, name, CherryConstants.BUSINESS_TYPE_GR);
+			//将生成的单据号放到mainData中
+			mainData.put("billNo", billNo);
+		}
+		if("".equals(ConvertUtil.getString(mainData.get("billNoIF")))){
+			mainData.put("billNoIF", billNo);
+		}
+
+		if(ConvertUtil.getString(mainData.get("organizationIDDX")).equals("")){
+			mainData.put("organizationIDDX", mainData.get("organizationID"));
+		}
+		if(ConvertUtil.getString(mainData.get("employeeIDDX")).equals("")){
+			mainData.put("employeeIDDX", mainData.get("employeeID"));
+		}
+
+		//插入入库主表数据
+		int productInDepotID = binOLSTCM08_Service.insertProductInDepotForMQ(mainData);
+		for(int i=0;i<detailList.size();i++){
+			Map<String,Object> mapDetail = detailList.get(i);
+			mapDetail.put("productInDepotID", productInDepotID);
+			if(null == mapDetail.get("productVendorPackageID")){
+				mapDetail.put("productVendorPackageID", 0);
+			}
+			if(null == mapDetail.get("logicInventoryInfoID")){
+				mapDetail.put("logicInventoryInfoID", 0);
+			}
+			if(null == mapDetail.get("storageLocationInfoID")){
+				mapDetail.put("storageLocationInfoID", 0);
+			}
+			mapDetail.put("detailNo",i+1);
+		}
+		binOLSTCM08_Service.insertProductInDepotDetailForMQ(detailList);
+		return productInDepotID;
+	}
 	/**
 	 * 
 	 *修改入库单据主表数据。
@@ -175,7 +229,7 @@ public class BINOLSTCM08_BL implements BINOLSTCM08_IF{
 	 * 
 	 *取得入库信息
 	 * 
-	 *@param praMap
+	 *@param productInDepotMainID,language
 	 */
 	public Map<String, Object> getProductInDepotMainData(int productInDepotMainID,String language) {
 		Map<String, Object> map = new HashMap<String,Object>();
@@ -204,7 +258,7 @@ public class BINOLSTCM08_BL implements BINOLSTCM08_IF{
 	 * 
 	 *取得入库明细信息
 	 * 
-	 *@param praMap
+	 *@param productInDepotMainID,language
 	 */
 	public List<Map<String, Object>> getProductInDepotDetailData(int productInDepotMainID,String language) {
 		Map<String, Object> map = new HashMap<String,Object>();
@@ -256,4 +310,34 @@ public class BINOLSTCM08_BL implements BINOLSTCM08_IF{
     public void insertProductInDepotDetail(List<Map<String,Object>> list){
         binOLSTCM08_Service.insertProductInDepotDetail(list);
     }
+
+	/**
+	 * 通过CounterCode获取仓库ID
+	 * @param map
+	 * @return
+	 */
+	@Override
+	public Map<String,Object> selectInventoryIdByCounterCode(Map<String, Object> map){
+
+		return binOLSTCM08_Service.selectInventoryIdByCounterCode(map);
+	}
+
+	/**
+	 * 通过BarCode获取ProductVendorID
+	 * @param map
+	 * @return
+	 */
+	@Override
+	public Map<String,Object> selectProductVendorIdByBarCode(Map<String, Object> map){
+		return binOLSTCM08_Service.selectProductVendorIdByBarCode(map);
+	}
+
+	/**
+	 * 通过unitCode获取ProductID
+	 * @param map unitcode
+	 * @return
+	 */
+	public Map<String,Object> selectProductIdByUnitCode(Map<String, Object> map){
+		return binOLSTCM08_Service.selectProductIdByUnitCode(map);
+	}
 }

@@ -12,9 +12,11 @@
  */
 package com.cherry.st.common.interfaces;
 
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import com.cherry.cm.core.CherryConstants;
 import com.cherry.cm.core.ICherryInterface;
 
 /**
@@ -88,4 +90,25 @@ public interface BINOLSTCM08_IF extends ICherryInterface{
      * @param list
      */
     public void insertProductInDepotDetail(List<Map<String,Object>> list);
+
+	/**
+	 * 通过CounterCode获取仓库ID
+	 * @param map
+	 * @return
+	 */
+	public Map<String,Object> selectInventoryIdByCounterCode(Map<String, Object> map);
+
+	/**
+	 * 通过BarCode获取ProductVendorID
+	 * @param map
+	 * @return
+	 */
+	public Map<String,Object> selectProductVendorIdByBarCode(Map<String, Object> map);
+
+	/**
+	 * 通过unitCode获取ProductID
+	 * @param map unitcode
+	 * @return
+	 */
+	public Map<String,Object> selectProductIdByUnitCode(Map<String, Object> map);
 }

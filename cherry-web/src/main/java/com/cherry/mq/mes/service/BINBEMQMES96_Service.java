@@ -39,6 +39,18 @@ public class BINBEMQMES96_Service extends BaseService{
 		map.put(CherryConstants.IBATIS_SQL_ID, "BINBEMQMES96.getDepartInfo");
         return (Map<String, Object>) baseServiceImpl.get(map);
     }
+
+	/**
+	 * 查询柜台是否有POS机
+	 * @param map
+	 * 		departCode，brandInfoID，organizationInfoID
+	 * @return
+	 *		departCode,posFlag
+	 */
+	public Map<String,Object> getCounterHasPosInfo(Map<String,Object> map){
+		map.put(CherryConstants.IBATIS_SQL_ID, "BINBEMQMES96.getCounterHasPosInfo");
+		return (Map<String, Object>) baseServiceImpl.get(map);
+	}
     
     /**
 	 * 查询员工信息

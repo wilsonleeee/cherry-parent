@@ -648,6 +648,16 @@ public class MessageConstants {
 	/** 接收消息错误提示 93 **/
 	public static final String MSG_ERROR_93 = "改交易解冻失败";
 
+
+	/** 接收消息错误提示 94 **/
+	public static final String  MSG_ERROR_94 = "没有找到相应的柜台信息";
+
+	/** 接收消息错误提示 95 **/
+	public static final String  MSG_ERROR_95 = "没有找到相应的产品厂商信息";
+
+	/** 接收消息错误提示 96 **/
+	public static final String  MSG_ERROR_96 = "没有找到相应的产品信息";
+
     /** 接收消息提示  01 **/
     public static final String MSG_INFO_01 = "积分兑换预约";
     

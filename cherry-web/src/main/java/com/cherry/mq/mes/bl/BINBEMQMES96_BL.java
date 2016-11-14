@@ -55,7 +55,22 @@ public class BINBEMQMES96_BL {
         paramMap.put("organizationInfoID", map.get("organizationInfoID"));
 		return binBEMQMES96_Service.getDepartInfo(paramMap);
 	}
-	
+
+	/**
+	 * 查询柜台是否有POS机
+	 * @param map
+	 * 		departCode，brandInfoID，organizationInfoID
+	 * @return
+	 *		departCode,posFlag
+     */
+	public Map<String,Object> getCounterHasPosInfo(Map<String,Object> map){
+		Map<String,Object> paramMap = new HashMap<String,Object>();
+		paramMap.put("counterCode",map.get("departCode"));
+		paramMap.put("brandInfoID", map.get("brandInfoID"));
+		paramMap.put("organizationInfoID", map.get("organizationInfoID"));
+		return binBEMQMES96_Service.getCounterHasPosInfo(paramMap);
+	}
+
 	/**
 	 * 查询员工信息
 	 * @param map
