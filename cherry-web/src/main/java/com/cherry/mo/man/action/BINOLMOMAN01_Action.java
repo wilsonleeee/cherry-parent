@@ -67,7 +67,7 @@ ModelDriven<BINOLMOMAN01_Form>{
      * 画面初期显示
      * </p>
      * 
-     * @param 无
+     * @param
      * @return String 跳转页面
      * 
      */
@@ -130,7 +130,7 @@ ModelDriven<BINOLMOMAN01_Form>{
     /**
      * 查询参数MAP取得
      * 
-     * @param tableParamsDTO
+     * @param
      */
     private Map<String, Object> getSearchMap() {
         // 参数MAP

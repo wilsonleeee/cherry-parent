@@ -54,7 +54,7 @@ ModelDriven<BINOLMOMAN03_Form>{
      * 画面初期显示
      * </p>
      * 
-     * @param 无
+     * @param
      * @return String 跳转页面
      * 
      */
@@ -78,7 +78,7 @@ ModelDriven<BINOLMOMAN03_Form>{
         /**
          * 新旧机器对照表改用BindCounterInfoID字段用于存放绑定的柜台信息
          */
-        if(null != form.getCounterInfoId()&& "".equals(form.getCounterInfoId())){
+        if("".equals(ConvertUtil.getString(form.getCounterInfoId()))){
             map.put("BindStatus", MonitorConstants.BindStatus_2);//任意柜台
             map.put("machineCode", form.getMachineCode());
             map.put("machineCodeOld", form.getMachineCodeOld());
