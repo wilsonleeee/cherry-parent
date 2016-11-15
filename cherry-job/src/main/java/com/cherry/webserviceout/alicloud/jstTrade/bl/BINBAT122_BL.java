@@ -267,8 +267,9 @@ public class BINBAT122_BL {
 	        		binbat122_Service.manualCommit();
 	        		long bfendTime = System.currentTimeMillis();
 	        		builder.delete(0, builder.length());
+					int size = (null == ordersList || ordersList.isEmpty()) ? 0 : ordersList.size();
 	        		builder.append("******************************第").append(index).append("批处理结束，耗时：").append(bfendTime - bfstartTime)
-	        		.append("ms 件数：").append(ordersList.size());
+	        		.append("ms 件数：").append(size);
 	        		logger.info(builder.toString());
 	        		if (!hasMore) {
 	        			break;
