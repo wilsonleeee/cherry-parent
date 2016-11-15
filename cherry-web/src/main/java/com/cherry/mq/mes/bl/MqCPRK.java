@@ -227,10 +227,7 @@ public class MqCPRK implements MqReceiver_IF {
 		for(int i=0; i < detailDataList.size(); i++) {
 			Map<String, Object> detailDataMap = detailDataList.get(i);
 
-			// 入库单据号
-			if ("".equals(ConvertUtil.getString(detailDataMap.get("billNo")))) {
-				MessageUtil.addMessageWarning(map, String.format(MessageConstants.MSG_ERROR_76, "BillNo"));
-			}
+
 			// 厂商编码
 			if ("".equals(ConvertUtil.getString(detailDataMap.get("unitcode")))) {
 				MessageUtil.addMessageWarning(map, String.format(MessageConstants.MSG_ERROR_76, "Unitcode"));
