@@ -273,7 +273,7 @@ public class MqCPRK implements MqReceiver_IF {
 
 				//获取后台逻辑仓库默认仓库
 				Map<String,Object> mapTemp = new HashMap<String,Object>();
-				mapTemp.put("Type","0");
+				mapTemp.put("Type",map.get("hasPos"));
 				mapTemp.put("OrderBy","1");
 				List<Map<String,Object>> retList = binOLCM18_BL.getLogicDepotList(mapTemp);
 
@@ -281,6 +281,26 @@ public class MqCPRK implements MqReceiver_IF {
 				String defaultLogicDepotID = ConvertUtil.getString(retList.get(0).get("BIN_LogicInventoryInfoID"));
 				detailDataMap.put("logicInventoryCode",defaultLogicDepot);//默认仓库类型
 				detailDataMap.put("logicInventoryInfoID",defaultLogicDepotID);//默认仓库类型
+			}else{
+
+				Map<String, Object> logicInventoryInfoMap = new HashMap<String, Object>();
+				logicInventoryInfoMap.put("BIN_BrandInfoID", map.get("brandInfoID"));
+				logicInventoryInfoMap.put("LogicInventoryCode", detailDataMap.get("logicInventoryCode"));
+
+				logicInventoryInfoMap.put("Type", map.get("hasPos"));//老后台或新后台逻辑仓库
+
+				logicInventoryInfoMap.put("language", null);
+				Map<String, Object> logicInventoryInfo = binOLCM18_BL.getLogicDepotByCode(logicInventoryInfoMap);
+				if (logicInventoryInfo != null && !logicInventoryInfo.isEmpty()) {
+					int logicInventoryInfoID = CherryUtil.obj2int(logicInventoryInfo.get("BIN_LogicInventoryInfoID"));
+					// 设定逻辑仓库ID
+					detailDataMap.put("logicInventoryInfoID", logicInventoryInfoID);
+				} else {
+					// 没有查询到相关逻辑仓库信息
+					MessageUtil.addMessageWarning(map, "逻辑仓库为\"" + detailDataMap.get("logicInventoryCode") + "\"" + MessageConstants.MSG_ERROR_37);
+				}
+
+
 			}
 
 			Map<String,Object> retMap = binOLSTCM08_BL.selectInventoryIdByCounterCode(map);
@@ -288,22 +308,6 @@ public class MqCPRK implements MqReceiver_IF {
 				detailDataMap.put("inventoryInfoID",retMap.get("BIN_InventoryInfoID"));
 			}
 
-			Map<String, Object> logicInventoryInfoMap = new HashMap<String, Object>();
-			logicInventoryInfoMap.put("BIN_BrandInfoID", map.get("brandInfoID"));
-			logicInventoryInfoMap.put("LogicInventoryCode", detailDataMap.get("logicInventoryCode"));
-
-			logicInventoryInfoMap.put("Type", map.get("hasPos"));//老后台或新后台逻辑仓库
-
-			logicInventoryInfoMap.put("language", null);
-			Map<String, Object> logicInventoryInfo = binOLCM18_BL.getLogicDepotByCode(logicInventoryInfoMap);
-			if (logicInventoryInfo != null && !logicInventoryInfo.isEmpty()) {
-				int logicInventoryInfoID = CherryUtil.obj2int(logicInventoryInfo.get("BIN_LogicInventoryInfoID"));
-				// 设定逻辑仓库ID
-				detailDataMap.put("logicInventoryInfoID", logicInventoryInfoID);
-			} else {
-				// 没有查询到相关逻辑仓库信息
-				MessageUtil.addMessageWarning(map, "逻辑仓库为\"" + detailDataMap.get("logicInventoryCode") + "\"" + MessageConstants.MSG_ERROR_37);
-			}
 
 		}
 	}
