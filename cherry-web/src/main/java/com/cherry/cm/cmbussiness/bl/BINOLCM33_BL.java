@@ -628,7 +628,7 @@ public class BINOLCM33_BL {
 			}
 			if((saleCountStart != null && !"".equals(saleCountStart)) 
 					|| (saleCountEnd != null && !"".equals(saleCountEnd))) {
-				if(Integer.parseInt(saleCountStart) > 0) {
+				if(ConvertUtil.getInt(saleCountStart)> 0) {
 					map.put("saleCountTerm", "2");
 				} else {
 					map.put("saleCountTerm", "1");
