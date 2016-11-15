@@ -37,6 +37,7 @@ import com.opensymphony.xwork2.ModelDriven;
 public class BINOLBSEMP50_Action extends BaseAction implements
 		ModelDriven<BINOLBSEMP50_Form> {
 
+
 	private static final long serialVersionUID = -3624242804303068793L;
 
 	private static Logger logger = LoggerFactory
