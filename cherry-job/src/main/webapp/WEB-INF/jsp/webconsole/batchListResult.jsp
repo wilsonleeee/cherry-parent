@@ -19,6 +19,7 @@
         		|| url.indexOf("BINBAT141_init.action")!=-1 || url.indexOf("BINCPMEACT04_init.action")!=-1 || url.indexOf("BINCPMEACT02_init.action")!=-1 
         		|| url.indexOf("BINBAT122_init.action")!=-1
         		|| url.indexOf("BINBAT124_init.action")!=-1
+				|| url.indexOf("BINBAT125_init.action")!=-1
         		|| url.indexOf("BINBECTSMG09_init.action")!=-1 || url.indexOf("BINBECTSMG10_init.action")!=-1
         		|| url.indexOf("BINBESSPRM08_init.action")!=-1) {
         	url = url + "?" + $('#batchListForm').serialize();

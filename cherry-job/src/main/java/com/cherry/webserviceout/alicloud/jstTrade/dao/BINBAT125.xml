@@ -1,0 +1,244 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sqlMap PUBLIC "-//iBATIS.com//DTD SQL Map 2.0//EN" "http://ibatis.apache.org/dtd/sql-map-2.dtd">
+<sqlMap namespace="BINJSTBAT125">
+
+	<!-- 获取需转换的退款单-->
+    <select id="getRefundOrders" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+	  <![CDATA[
+		  SELECT  TOP $count$
+				main.BIN_ESOrderMainID as ESOrderMainID
+		      , main.BIN_OrganizationID  as organizationID
+		      , main.BIN_BrandInfoID as brandInfoId
+			  , main.BIN_OrganizationInfoID as organizationInfoId
+		      , main.BIN_EmployeeID as employeeID
+		      , main.EmployeeCode as employeeCode
+		      , main.BIN_OrganizationIDDX as organizationIDDX
+		      , main.BIN_EmployeeIDDX as employeeIDDX
+		      , main.EmployeeCodeDX as employeeCodeDX
+		      , main.DataSource as dataSource
+		      , main.ShopName as shopName
+		      , main.BillCode as billcode
+		      , main.RelevanceBillCode as relevanceBillCode
+		      , main.OriginalBillCode as originalBillCode
+		      , main.SaleType as saleType
+		      , main.TicketType as ticketType
+		      , main.BillState as billState
+		      , main.ConsumerType as consumerType
+		      , main.BIN_MemberInfoID as memberInfoID
+		      , main.MemberCode as memberCode
+		      , main.MemberName as memberName
+		      , convert(varchar, main.BillCreateTime, 120) as billCreateTime
+		      , main.OriginalAmount as originalAmount
+		      , main.Discount as discount
+		      , main.PayAmount as payAmount
+		      , main.DecreaseAmount as decreaseAmount
+		      , main.CostPoint as costPoint
+		      , main.CostpointAmount as costpointAmount
+		      , main.Amount as amount
+		      , main.Quantity as quantity
+		      , ISNULL(main.ExpressCost, 0) as expressCost
+		      , main.Comments as comments
+		      , main.BillType billType
+		      , o.DepartCode as counterCode
+		      , main.BillLastUpdateTime as billLastUpdateTime
+		  FROM
+			  Sale.BIN_ESOrderMain main
+		  LEFT JOIN
+			  Basis.BIN_Organization o
+		  ON
+			  (main.BIN_OrganizationID=o.BIN_OrganizationID)
+		  WHERE
+		]]> 
+		<isNotEmpty property="startId">
+			<![CDATA[main.BIN_ESOrderMainID >= #startId# AND]]>
+		</isNotEmpty>
+		<isNotEmpty property="endId">
+			<![CDATA[main.BIN_ESOrderMainID <= #endId# AND]]>
+		</isNotEmpty>
+		<![CDATA[
+			  main.BIN_BrandInfoID=#brandInfoId# AND
+			  main.BIN_OrganizationInfoID=#organizationInfoId# AND
+			  main.SaleType='SR' AND
+			  main.OriginalStatus = 'SUCCESS'AND
+			  main.DataSource = 'Tmall' AND
+			  main.ConvertFlag = '0' AND
+			  main.ValidFlag='1'
+			ORDER BY
+				main.BIN_ESOrderMainID
+		]]>
+    </select>
+    
+    <!-- 获取主单明细 -->
+    <select id="getESOrderDetail" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+    	<![CDATA[
+    	SELECT
+    	  	  detail.BIN_ESOrderDetailID as ESOrderDetailID,
+			 detail.BIN_ESOrderMainID as ESOrderMainID,
+			 detail.EsProductName as EsProductName,
+			 Convert(int,detail.Quantity) as quantity,
+			 detail.Discount as discount,
+			 ISNULL(detail.ActualAmount, 0) as actualAmount,
+			 detail.InventoryTypeCode as inventoryTypeCode,
+			 detail.SaleType as saleType,
+			 detail.OriginalCode as originalCode,
+			 detail.OrderId as orderId,
+			 ISNULL(detail.RemainPayment, 0) as remainPayment,
+			 detail.HasGoodReturn as hasGoodReturn,
+			 detail.ConsignTime as consignTime,
+			 main.RefundOrderCode as refundOrderCode
+		FROM 
+			sale.BIN_ESOrderDetail detail
+		INNER JOIN Sale.BIN_ESOrderMain main
+		ON main.BIN_ESOrderMainID = detail.BIN_ESOrderMainID
+		WHERE
+			detail.BIN_ESOrderMainID = #ESOrderMainID#
+    	]]>
+    </select>
+
+	<!-- 查询同一原始订单明细的更早退款单-->
+	<select id="getEarlierRefundOrder" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+		<![CDATA[
+		  SELECT
+				main.BIN_ESOrderMainID as ESOrderMainID
+		      , main.BIN_OrganizationID  as organizationID
+		      , main.BIN_EmployeeID as employeeID
+		      , main.EmployeeCode as employeeCode
+		      , main.BIN_OrganizationIDDX as organizationIDDX
+		      , main.BIN_EmployeeIDDX as employeeIDDX
+		      , main.EmployeeCodeDX as employeeCodeDX
+		      , main.DataSource as dataSource
+		      , main.ShopName as shopName
+		      , main.BillCode as billcode
+		      , main.RelevanceBillCode as relevanceBillCode
+		      , main.OriginalBillCode as originalBillCode
+		      , main.SaleType as saleType
+		      , main.TicketType as ticketType
+		      , main.BillState as billState
+		      , main.ConsumerType as consumerType
+		      , main.BIN_MemberInfoID as memberInfoID
+		      , main.MemberCode as memberCode
+		      , main.MemberName as memberName
+		      , convert(varchar, main.BillCreateTime, 120) as billCreateTime
+		      , main.OriginalAmount as originalAmount
+		      , main.Discount as discount
+		      , main.PayAmount as payAmount
+		      , main.DecreaseAmount as decreaseAmount
+		      , main.CostPoint as costPoint
+		      , main.CostpointAmount as costpointAmount
+		      , main.Amount as amount
+		      , main.Quantity as quantity
+		      , ISNULL(main.ExpressCost, 0) as expressCost
+		      , main.Comments as comments
+		      , main.BillType as billType
+		      , main.ConvertFlag as convertFlag
+		      , o.DepartCode as counterCode
+		  FROM
+			  Sale.BIN_ESOrderMain main
+		  LEFT JOIN
+			  Basis.BIN_Organization o
+		  ON
+			  (main.BIN_OrganizationID=o.BIN_OrganizationID)
+		  WHERE
+			  main.BIN_BrandInfoID=#brandInfoId# AND
+			  main.BIN_OrganizationInfoID=#organizationInfoId# AND
+			  main.SaleType='SR' AND
+			  main.RelevanceBillCode = #relevanceBillCode# AND
+			  main.BillLastUpdateTime < #billLastUpdateTime# AND
+			  main.ValidFlag='1'
+		  ORDER BY main.BillLastUpdateTime
+		]]>
+	</select>
+
+	<!-- 查询退款单对应原始订单 -->
+	<select id="getOriginalOrder" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+		<![CDATA[
+    	SELECT  TOP 1
+			    main.BIN_ESOrderMainID AS ESOrderMainID
+			  , main.BIN_OrganizationID  as organizationID
+		      , main.BIN_EmployeeID as employeeID
+		      , main.EmployeeCode as employeeCode
+		      , main.BIN_OrganizationIDDX as organizationIDDX
+		      , main.BIN_EmployeeIDDX as employeeIDDX
+		      , main.EmployeeCodeDX as employeeCodeDX
+		      , main.DataSource as dataSource
+		      , main.ShopName as shopName
+		      , main.BillCode as billcode
+		      , main.RelevanceBillCode as relevanceBillCode
+		      , main.OriginalBillCode as originalBillCode
+		      , main.SaleType as saleType
+		      , main.TicketType as ticketType
+		      , main.BillState as billState
+		      , main.ConsumerType as consumerType
+		      , main.BIN_MemberInfoID as memberInfoID
+		      , main.MemberCode as memberCode
+		      , main.MemberName as memberName
+		      , convert(varchar, main.BillCreateTime, 120) as billCreateTime
+		      , main.OriginalAmount as originalAmount
+		      , main.Discount as discount
+		      , main.PayAmount as payAmount
+		      , main.DecreaseAmount as decreaseAmount
+		      , main.CostPoint as costPoint
+		      , main.CostpointAmount as costpointAmount
+		      , main.Amount as amount
+		      , main.Quantity as quantity
+		      , ISNULL(main.ExpressCost, 0) as expressCost
+		      , main.Comments as comments
+		      , main.BillType billType
+		      , o.DepartCode as counterCode
+			  , main.ConvertFlag AS convertFlag
+			  , main.ExpressCost AS expressCost
+			  , main.ModifyCount AS modifyCount
+		  FROM
+			  Sale.BIN_ESOrderMain main
+		  LEFT JOIN
+			  Basis.BIN_Organization o
+		  ON
+			  (main.BIN_OrganizationID=o.BIN_OrganizationID)
+		  WHERE
+			  main.BIN_BrandInfoID=#brandInfoId# AND
+			  main.BIN_OrganizationInfoID=#organizationInfoId# AND
+			  main.OriginalBillCode = #relevanceBillCode# AND
+			  main.ValidFlag='1'
+    	]]>
+	</select>
+
+	<!-- 获取产品信息 -->
+	<select id="getPrtInfo" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+		<![CDATA[
+    	SELECT TOP 1
+				p.UnitCode as unitCode,
+				v.BarCode as barCode
+			FROM
+				Basis.BIN_Product p
+			JOIN
+				Basis.BIN_ProductVendor v
+			ON
+				(p.UnitCode = #originalCode# AND
+				p.BIN_ProductID=v.BIN_ProductID)
+    	]]>
+	</select>
+
+   	<update id="updateESOrderState">
+	<![CDATA[
+   			UPDATE
+   				Sale.BIN_ESOrderMain
+   			SET
+   				ConvertFlag = #convertFlag# ,
+   				ConvertErrMsg = #convertErrMsg#
+   			WHERE
+   				BIN_ESOrderMainID=#ESOrderMainID#
+   		]]>
+</update>
+
+	<update id="updateESOrderModifyCount">
+		<![CDATA[
+   			UPDATE
+   				Sale.BIN_ESOrderMain
+   			SET
+   				ModifyCount = #modifyCount#
+   			WHERE
+   				BIN_ESOrderMainID=#ESOrderMainID#
+   		]]>
+	</update>
+   	
+</sqlMap>
