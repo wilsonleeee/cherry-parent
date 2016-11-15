@@ -7,9 +7,9 @@
 <input type="hidden" id="search_url" value="${search_url}" />
 <script type="text/javascript">
 $(function() {
-	productBinding({elementId:"unitCode",showNum:20,targetShow:"unitCode"});//厂商编码
-	productBinding({elementId:"barCode",showNum:20,targetShow:"barCode"});//产品条码
-	productBinding({elementId:"nameTotal",showNum:20,targetShow:"nameTotal"});//产品名称
+	productBindingNew({elementId:"unitCode",showNum:20,targetShow:"unitCode",validFlag:""});//厂商编码
+	productBindingNew({elementId:"barCode",showNum:20,targetShow:"barCode",validFlag:""});//产品条码
+	productBindingNew({elementId:"nameTotal",showNum:20,targetShow:"nameTotal",validFlag:""});//产品名称
 	// 	cntProductBinding({elementId:"nameTotal",showNum:20,targetShow:"nameTotal",counterCode:"NR111908"});//产品名称
 	var url = $("#search_url").val();
 	BINOLPTJCS04.search(url);

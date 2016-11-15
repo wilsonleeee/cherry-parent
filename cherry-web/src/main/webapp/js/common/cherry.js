@@ -4270,3 +4270,150 @@ function regionLinkageInit(regionJson, option) {
 		}
 	}
 }
+
+
+/**
+ * 在产品的text框上绑定下拉框选项
+ * @param Object:options
+ * 				String:options.elementId 元素ID,要绑定下拉框的元素ID
+ * 				String:options.showNum 参数可选，下拉最大的显示个数，默认是50
+ *              String:options.targetId 参数可选，选中下拉列表中的某个值时，需要保存的目标值ID，默认为prtVendorId
+ *              String:options.targetShow 参数可选，选中下拉列表中的某个值时，显示在text框上的值，默认为nameTotal
+ *              String:options.targetDetail 参数可选，选中下拉列表中的某个值时，需要显示到单据明细，用于发货添加新行等，仅当值为true时有效。
+ *              options.afterSelectFun 参数可选，选择产品后需要执行的方法（如判断重复、查询库存），targetDetail=true时调用。
+ *              String:option.proType 参数可选，默认为产品，值为prm时表示促销品
+ *
+ * */
+function productBindingNew(options){
+	var recordPrtName = null;
+	var csrftoken = '';
+	if($("#csrftokenCode").length > 0) {
+		csrftoken = $("#csrftokenCode").serialize();
+		if(!csrftoken) {
+			csrftoken = $('#csrftokenCode',window.opener.document).serialize();
+		}
+	} else {
+		csrftoken = $('#csrftoken').serialize();
+		if(!csrftoken) {
+			csrftoken = $('#csrftoken',window.opener.document).serialize();
+		}
+	}
+	var keycode = [13,37,38,39,40,16,17,9,27,123,18,20,93,91,144];
+	var flag = false;
+	var strPath = window.document.location.pathname;
+	var postPath = strPath.substring(0, strPath.substr(1).indexOf('/') + 1);
+	var url = postPath+"/common/BINOLCM21_getProductInfo.action"+"?"+csrftoken;
+	var targetId = options.targetId ? options.targetId : "prtVendorId";
+	var targetShow = options.targetShow ? options.targetShow : "nameTotal";
+	if(options.proType == "prm"){
+		url = postPath+"/common/BINOLCM21_getPrmProductInfo.action"+"?"+csrftoken;
+	}
+	$('#'+options.elementId).autocompleteCherry(url,{
+		extraParams:{
+			productInfoStr: function() { return $('#'+options.elementId).val();},
+			//默认是最多显示50条
+			number:options.showNum ? options.showNum : 50,
+			validFlag : function() {
+				/*if(options.validFlag){
+				 var $validFlag = $('input[name='+options.validFlag+']:checked').val();
+				 if (!$validFlag){//如果是下拉框，则取下拉框中的值
+				 $validFlag=  $('#'+options.validFlag).val();
+				 }
+				 return $validFlag;
+				 } else {
+				 return 1;
+				 }*/
+				return options.validFlag;
+			}
+		},
+		loadingClass: "ac_loading",
+		minChars:1,
+		matchContains:1,
+		matchContains: true,
+		scroll: false,
+		cacheLength: 0,
+		width:300,
+		max:options.showNum ? options.showNum : 50,
+		formatItem: function(row, i, max) {
+			return escapeHTMLHandle(row[1])+"-"+escapeHTMLHandle(row[2])+" ["+escapeHTMLHandle(row[0])+"]";
+		}
+	}).result(function(event, data, formatted){
+		if(options.targetDetail == null || options.targetDetail == undefined){
+			if(targetId == 'prtVendorId'){
+				$("#"+targetId).val(data[3]);
+			}else if(targetId == 'productId'){
+				$("#"+targetId).val(data[4]);
+			}else if(targetId == 'unitCode'){
+				$("#"+targetId).val(data[1]);
+			}else{
+				$("#"+targetId).val(data[3]);
+			}
+			if(targetShow == 'unitCode'){
+				$('#'+options.elementId).val(data[1]);
+			} else if(targetShow == 'barCode') {
+				$('#'+options.elementId).val(data[2]);
+			} else {
+				$('#'+options.elementId).val(data[0]);
+			}
+			$('#'+options.elementId).data("prtName",$("#"+targetId).val());
+			$('#'+options.elementId).data("change",true);
+		}else if(options.targetDetail == true){
+			var obj = {};
+			obj.elementId = options.elementId;
+			obj.productName = data[0];
+			obj.unitCode = data[1];
+			obj.barCode = data[2];
+			obj.prtVendorId = data[3];
+			obj.prtId = data[4];
+			obj.price = data[5];
+			obj.memPrice = data[6];
+			obj.standardCost = data[7];
+			obj.orderPrice = data[8];
+			obj.IsExchanged = data[9];
+			//选择产品后执行方法
+			if($.isFunction(options.afterSelectFun)){
+				options.afterSelectFun.call(this,obj);
+			}
+		}
+	}).bind("keydown",function(event){
+		for( var i in keycode){
+			if(event.keyCode == keycode[i]){
+				flag = true;
+			}
+		}
+		if(flag){
+			if($('#'+options.elementId).val() == $('#'+options.elementId).data("prtName")){
+				$('#'+options.elementId).data("change",true);
+				$('#'+options.elementId).data("flag",false);
+
+			}else if($('#'+options.elementId).val() != $('#'+options.elementId).data("prtName")){
+				$('#'+options.elementId).data("change",false);
+				$('#'+options.elementId).data("flag",false);
+			}else{
+				$('#'+options.elementId).data("change",false);
+				$('#'+options.elementId).data("flag",true);
+			}
+			flag = false;
+		}else{
+			if((!$('#'+options.elementId).data("flag"))&&(!$('#'+options.elementId).data("change"))&&($('#'+options.elementId).val() != $('#'+options.elementId).data("prtName"))){
+//				alert($('#'+options.elementId).val()+","+$('#'+options.elementId).data("prtName"));
+				$("#"+targetId).val("");
+			}else if($('#'+options.elementId).val() == $('#'+options.elementId).data("prtName")){
+				$('#'+options.elementId).data("change",true);
+				$('#'+options.elementId).data("flag",true);
+			}else if($('#'+options.elementId).val() != $('#'+options.elementId).data("prtName")){
+				$('#'+options.elementId).data("change",false);
+				$('#'+options.elementId).data("flag",true);
+			}else{
+				$('#'+options.elementId).data("change",false);
+				$('#'+options.elementId).data("flag",true);
+			}
+		}
+	}).bind("change",function(){
+		if(!$('#'+options.elementId).data("change")&&($('#'+options.elementId).data("flag"))){
+			$("#"+targetId).val("");
+		}else{
+			$('#'+options.elementId).data("change",false);
+		}
+	}).data("flag",true);
+}
