@@ -320,17 +320,14 @@ public class MqCPRK implements MqReceiver_IF {
 		Map<String, Object> mainMap = new HashMap<String, Object>();
 
 		// 单据号
-		String billNo = ConvertUtil.getString(map.get("billNo"));
-		// 接口单据号
-		String billNoIF = billNo;
+		String tradeNoIF = ConvertUtil.getString(map.get("tradeNoIF"));
 
 		mainMap.put("organizationInfoID",map.get("organizationInfoID"));
 		mainMap.put("brandInfoID",map.get("brandInfoID"));
 		mainMap.put("organizationID",map.get("organizationID"));
 		mainMap.put("employeeID",map.get("employeeID"));
 
-		mainMap.put("billNo", billNo);
-		mainMap.put("billNoIF", billNoIF);
+		mainMap.put("tradeNoIF", tradeNoIF);
 		mainMap.put("inDepotDate",map.get("inDepotDate"));
 
 		int quantityTemp = Math.round(ConvertUtil.getFloat(map.get("totalQuantity")));
@@ -354,10 +351,8 @@ public class MqCPRK implements MqReceiver_IF {
 
 		//工作流
 		Map<String, Object> pramMap = new HashMap<String, Object>();
-		pramMap.put(CherryConstants.OS_MAINKEY_BILLTYPE, CherryConstants.OS_BILLTYPE_GR);
-		pramMap.put(CherryConstants.OS_MAINKEY_BILLID, productInDepotId);
 
-		pramMap.put("CurrentUnit", "MqRK");
+		pramMap.put("CurrentUnit", "MqCPRK");
 
 		map.put("baCode",map.get("employeeCode"));
 		Map<String,Object> employeeInfo = binBEMQMES99_Service.getEmployeeInfoByCode(map);

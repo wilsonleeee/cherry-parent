@@ -94,9 +94,9 @@ public class BINOLSTCM08_BL implements BINOLSTCM08_IF{
 	 */
 	public int insertProductInDepotAllForMQ(Map<String, Object> mainData,
 									   List<Map<String, Object>> detailList) {
-		String billNo = ConvertUtil.getString(mainData.get("billNo"));
+		String tradeNoIF = ConvertUtil.getString(mainData.get("tradeNoIF"));
 		//判断单据号是否在参数中存在，如果不存在则生成
-		if("".equals(billNo)){
+		if("".equals(tradeNoIF)){
 			//组织ID
 			String organizationInfoId = ConvertUtil.getString(mainData.get("organizationInfoID"));
 			//品牌ID
@@ -104,12 +104,9 @@ public class BINOLSTCM08_BL implements BINOLSTCM08_IF{
 			//程序ID
 			String name = "BINOLSTCM08";
 			//调用共通生成单据号
-			billNo = binOLCM03_BL.getTicketNumber(organizationInfoId, brandInfoId, name, CherryConstants.BUSINESS_TYPE_GR);
+			tradeNoIF = binOLCM03_BL.getTicketNumber(organizationInfoId, brandInfoId, name, CherryConstants.BUSINESS_TYPE_GR);
 			//将生成的单据号放到mainData中
-			mainData.put("billNo", billNo);
-		}
-		if("".equals(ConvertUtil.getString(mainData.get("billNoIF")))){
-			mainData.put("billNoIF", billNo);
+			mainData.put("tradeNoIF", tradeNoIF);
 		}
 
 		if(ConvertUtil.getString(mainData.get("organizationIDDX")).equals("")){
