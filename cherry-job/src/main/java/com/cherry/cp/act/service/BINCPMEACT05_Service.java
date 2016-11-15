@@ -31,10 +31,9 @@ public class BINCPMEACT05_Service extends BaseService {
 	 * 取得会员等级改变表中的所有会员ID
 	 * @return
 	 */
-	public List<Integer> getChangeMemIdList(){
-		Map<String, Object> param = new HashMap<String, Object>();
-		param.put(CherryBatchConstants.IBATIS_SQL_ID, "BINCPMEACT05.getChangeMemIdList");
-		return baseServiceImpl.getList(param);
+	public List<Integer> getChangeMemIdList(Map<String, Object> map){
+		map.put(CherryBatchConstants.IBATIS_SQL_ID, "BINCPMEACT05.getChangeMemIdList");
+		return baseServiceImpl.getList(map);
 	}
 	
 	/**
@@ -70,7 +69,7 @@ public class BINCPMEACT05_Service extends BaseService {
 	
 	/**
 	 * 更新主单版本
-	 * @param orderId
+	 * @param map
 	 * @return
 	 */
 	public int updateOrder(Map<String, Object> map){
@@ -112,40 +111,17 @@ public class BINCPMEACT05_Service extends BaseService {
 		map.put(CherryBatchConstants.IBATIS_SQL_ID, "BINCPMEACT05.getPrtList");
 		return baseServiceImpl.getList(map);
 	}
-	
+
 	/**
-	 * 更新会员活动详细单据
+	 * 取得导入会员，搜索结果数量
 	 * @param map
 	 * @return
 	 */
-	public void updateCampOrder(List<Map<String,Object>> list){
-		baseServiceImpl.updateAll(list, "BINCPMEACT05.updateCampOrder");
+	public Integer getCampMemCount(Map<String,Object> map){
+		map.put(CherryBatchConstants.IBATIS_SQL_ID, "BINCPMEACT05.getCampMemCount");
+		return baseServiceImpl.getSum(map);
 	}
-	
-	/**
-	 * 取得会员活动对象(【搜索结果】【导入会员】)
-	 * @param searchCode
-	 * @param memberId
-	 * @return
-	 */
-	public List<Integer> getCampCustorList(String searchCode){
-		Map<String, Object> map = new HashMap<String, Object>();
-		map.put("searchCode", searchCode);
-		map.put(CherryBatchConstants.IBATIS_SQL_ID, "BINCPMEACT05.getCampCustorList");
-		return (List<Integer>) baseServiceImpl.get(map);
-	}
-	
-	/**
-	 * 取得会员活动对象查询条件
-	 * 
-	 * @param map 查询条件
-	 * @return 
-	 */
-	public String getCampCustorList2(Map<String, Object> map) {
-		map.put(CherryBatchConstants.IBATIS_SQL_ID, "BINCPMEACT04.getMemConInfo");
-		return CherryBatchUtil.getString(baseServiceImpl.get(map));
-	}
-	
+
 	public void addHisMember(int memberId){
 		Map<String,Object> map = new HashMap<String,Object>();
 		map.put(CherryBatchConstants.IBATIS_SQL_ID, "BINCPMEACT05.addHisMember");

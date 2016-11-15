@@ -35,26 +35,21 @@ public class BINCPMEACT05_BL {
 	private int optCount = 0;
 	// 设置batch处理标志
 	private	boolean warningFlag = false;
-	
-	private	String CreatedBy = "BATCH";
-	
-	private	String UpdatedBy = "BATCH";
-	
-	private	String CreatePGM = "BINCPMEACT05";
-	
-	private	String UpdatePGM = "BINCPMEACT05";
+
+	private Map<String,List<Map<String,Object>>> subCampMap = new HashMap<>();
+
 	/**
 	 * batch处理会员调整单据
 	 * @return
 	 */
-	public int tran_handleOrder() throws CherryBatchException {
+	public int tran_handleOrder(Map<String,Object> map) throws CherryBatchException {
 //		logger.outLog("**************等级变换会员生日礼替换Batch开始**************");
 		//获取会员等级调整表中所有会员的ID
-		List<Integer> changeMemIdList = ser5.getChangeMemIdList();
+		List<Integer> changeMemIdList = ser5.getChangeMemIdList(map);
 		if(null != changeMemIdList && !changeMemIdList.isEmpty()){
 			sumCount = changeMemIdList.size();
 			//获取操作的年份
-			String sysDate = ser5.getSYSDate();
+			String sysDate = ser5.getBusDate(map);
 			String optYear = sysDate.substring(0,4);
 			//处理每一个会员
 			for(int memberId : changeMemIdList){
@@ -80,11 +75,22 @@ public class BINCPMEACT05_BL {
 			logger.outLog("**************等级变换会员生日礼替换Batch正常结束**************");
 			return 0;
 		}
-
-		
-		
 	}
-	
+
+	/**
+	 * 根据主题活动码获取子活动list
+	 * @param campCode
+	 * @return
+     */
+	private List<Map<String,Object>> getSubCampList(String campCode){
+		List<Map<String,Object>> list = subCampMap.get(campCode);
+		if(null == list){
+			//取得主活动的有效子活动list
+			list = ser5.getSubCampList(campCode);
+			subCampMap.put(campCode,list);
+		}
+		return list;
+	}
 	/**
 	 * 处理等级变化会员生日礼
 	 * @param memberId
@@ -100,7 +106,7 @@ public class BINCPMEACT05_BL {
 				String mainCode = ConvertUtil.getString(order.get("mainCode"));
 				int orderId = ConvertUtil.getInt(order.get("orderId"));
 				//取得主活动的有效子活动list
-				List<Map<String,Object>> subList = ser5.getSubCampList(campCode);
+				List<Map<String,Object>> subList = getSubCampList(campCode);
 				//如果主题活动包含多级条件子活动，则判断是否要替换
 				if(null != subList && subList.size()>1){
 					//循环主题活动下的所有子活动
@@ -132,7 +138,8 @@ public class BINCPMEACT05_BL {
 	/**
 	 * 更换调整会员的生日礼
 	 * @param orderId
-	 * @param subMap
+	 * @param prtList
+	 * @param subCampCode
 	 */
 	private void changeOrderInfo(int orderId,List<Map<String,Object>> prtList,String subCampCode){
 		// 删除订单明细
@@ -158,10 +165,10 @@ public class BINCPMEACT05_BL {
 		for(Map<String,Object> item : prtList){
 			item.put("orderId", orderId);
 			item.put("mainCode", subCampCode);
-			item.put("CreatedBy", CreatedBy);
-			item.put("UpdatedBy", UpdatedBy);
-			item.put("CreatePGM", CreatePGM);
-			item.put("UpdatePGM", UpdatePGM);
+			item.put("CreatedBy", "BATCH");
+			item.put("UpdatedBy", "BATCH");
+			item.put("CreatePGM", "BINCPMEACT05");
+			item.put("UpdatePGM", "BINCPMEACT05");
 			newOrderList.add(item);
 		}
 		return newOrderList;
@@ -171,16 +178,17 @@ public class BINCPMEACT05_BL {
 	 * 生成主订单的新替换项
 	 * @param orderId
 	 * @param prtList
-	 * @param subCampCode
 	 * @return
 	 */
 	private Map<String,Object> makeNewOrder(int orderId,List<Map<String,Object>> prtList){
 		Map<String,Object> map = new HashMap<String,Object>();
-		int quantity = prtList.size();
+		int quantity = 0;
 		float price = 0;
 		for(Map<String,Object> item : prtList){
-			float eachPrice = ConvertUtil.getFloat(item.get("price"));
-			price += eachPrice;
+			float p = ConvertUtil.getFloat(item.get("price"));
+			int q = ConvertUtil.getInt(item.get("quantity"));
+			price += p * q;
+			quantity += q;
 		}
 		map.put("price", price);
 		map.put("quantity", quantity);
@@ -196,11 +204,12 @@ public class BINCPMEACT05_BL {
 	private boolean isContainCouster(Map<String,Object> subMap,int memberId){
 		//取得子活动条件类型
 		String condType = ConvertUtil.getString(subMap.get("condType"));
-		//取得子活动条件
-		String memJson = ConvertUtil.getString(subMap.get("memJson"));
+
 		//如果规则条件为【搜索条件】
 		if(condType.equals(CampConstants.CAMP_MEB_TYPE_1)){
 			try {
+				//取得子活动条件
+				String memJson = ConvertUtil.getString(subMap.get("memJson"));
 				Map<String, Object> conMap = CherryUtil.json2Map(memJson);
 				conMap.put(CherryBatchConstants.START,1);
 				conMap.put(CherryBatchConstants.END,1);
@@ -221,6 +230,19 @@ public class BINCPMEACT05_BL {
 		else if(condType.equals(CampConstants.CAMP_MEB_TYPE_0) || 
 				condType.equals(CampConstants.CAMP_MEB_TYPE_5)){
 			return true;
+		}// 导入或者搜索结果
+		else if(condType.equals(CampConstants.CAMP_MEB_TYPE_2) ||
+				condType.equals(CampConstants.CAMP_MEB_TYPE_3) ){
+			String searchCode = ConvertUtil.getString(subMap.get("searchCode"));
+			if(!"".equals(searchCode)){
+				Map<String,Object> map = new HashMap<>();
+				map.put("searchCode",searchCode);
+				map.put("memberId",memberId);
+				Integer count = ser5.getCampMemCount(map);
+				if(null != count && count > 0){
+					return true;
+				}
+			}
 		}
 		return false;
 	}

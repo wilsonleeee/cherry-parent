@@ -11,6 +11,9 @@ import com.cherry.cm.core.CherryBatchException;
 import com.cherry.cp.act.bl.BINCPMEACT05_BL;
 import com.cherry.ia.pro.action.BINBEIFPRO02_Action;
 
+import java.util.HashMap;
+import java.util.Map;
+
 /**
  * 会员等级变换生日礼替换Action
  * @author GeHequn
@@ -28,6 +31,17 @@ public class BINCPMEACT05_Action extends BaseAction{
 	
 	/** 活动下发batch运行状态0：已停止 ，1：运行中 */
 	private static int status = 0;
+
+	public String getBrandInfoId() {
+		return brandInfoId;
+	}
+
+	public void setBrandInfoId(String brandInfoId) {
+		this.brandInfoId = brandInfoId;
+	}
+
+	/** 品牌Id */
+	private String brandInfoId;
 	
 	private static Logger logger = LoggerFactory
 			.getLogger(BINCPMEACT05_Action.class.getName());
@@ -41,7 +55,10 @@ public class BINCPMEACT05_Action extends BaseAction{
 		if(status == 0){
 			status = 1;
 			try {
-				flag = bincpmeact05_BL.tran_handleOrder();
+				Map<String,Object> map = new HashMap<>();
+				// 品牌信息ID
+				map.put(CherryBatchConstants.BRANDINFOID, brandInfoId);
+				flag = bincpmeact05_BL.tran_handleOrder(map);
 			} catch (CherryBatchException e) {
 				flag = 1;
 				logger.info("=============WARN MSG================");

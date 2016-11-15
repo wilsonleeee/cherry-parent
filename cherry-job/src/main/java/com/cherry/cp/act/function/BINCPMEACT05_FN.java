@@ -38,7 +38,7 @@ public class BINCPMEACT05_FN implements FunctionProvider{
 			// 品牌Code
 			map.put(CherryBatchConstants.BRAND_CODE, transientVars.get(CherryBatchConstants.BRAND_CODE));
 			logger.info("======================会员等级调整单据BATCH处理开始======================");
-			int flag = bincpmeact05_BL.tran_handleOrder();
+			int flag = bincpmeact05_BL.tran_handleOrder(map);
 			ps.setInt("result", flag);
 		} catch (Exception e) {
 			logger.error(e.getMessage(),e);

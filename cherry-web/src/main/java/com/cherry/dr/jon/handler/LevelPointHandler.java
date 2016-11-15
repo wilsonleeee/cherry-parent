@@ -99,7 +99,7 @@ public class LevelPointHandler implements RuleHandler_IF, BaseHandler_IF{
 	/**
 	 * 执行会员等级和化妆次数规则文件
 	 * 
-	 * @param Map
+	 * @param map
 	 *            参数集合
 	 * @throws Exception 
 	 * 
@@ -194,9 +194,9 @@ public class LevelPointHandler implements RuleHandler_IF, BaseHandler_IF{
 						// 品牌ID
 						String brandIdStr = String.valueOf(campBaseDTO.getBrandInfoId());
 						// 升级
-						if (DroolsConstants.UPKBN_1.equals(campBaseDTO.getChangeType()) && 
-								0 != campBaseDTO.getPrevLevel()) {
-							if (binOLCM14_BL.isConfigOpen("1131", orgIdStr, brandIdStr)) {
+						if (DroolsConstants.UPKBN_1.equals(campBaseDTO.getChangeType()) ) {
+							if (binOLCM14_BL.isConfigOpen("1131", orgIdStr, brandIdStr)
+									&& 0 != campBaseDTO.getPrevLevel()) {
 								Map<String, Object> gtMap = new HashMap<String, Object>();
 								// 组织ID
 								gtMap.put("organizationInfoID", orgIdStr);
@@ -221,13 +221,17 @@ public class LevelPointHandler implements RuleHandler_IF, BaseHandler_IF{
 								// 发送MQ消息处理
 								binOLMQCOM01_BL.sendMQMsg(mqInfoDTO, false);
 							}
-							
 							//会员等级调整插入临时表
-							binOLCM31_BL.addTempAdjustMember(campBaseDTO.getMemberInfoId(),campBaseDTO.getOrganizationInfoId(),campBaseDTO.getBrandInfoId());
-							logger.info("@@@会员升级实时生成活动单据@@@" + campBaseDTO.getMemCode());
+							binOLCM31_BL.addTempAdjustMember(campBaseDTO.getMemberInfoId()
+									,campBaseDTO.getOrganizationInfoId(),campBaseDTO.getBrandInfoId());
+							logger.debug("@@@会员升级实时生成活动单据@@@" + campBaseDTO.getMemCode());
 							com05IF.makeOrderMQ(campBaseDTO.getOrganizationInfoId()
 									, campBaseDTO.getBrandInfoId()
 									, orgCode, brandCode,null, campBaseDTO.getMemberInfoId(),"1143");
+							logger.debug("会员升级实时触发生日礼JOB@@@");
+							com05IF.makeOrderMQ(campBaseDTO.getOrganizationInfoId()
+									,campBaseDTO.getBrandInfoId(),orgCode,brandCode
+									, campBaseDTO.getMemberInfoId(), "BIR");
 						}
 					}
 				}
@@ -552,7 +556,7 @@ public class LevelPointHandler implements RuleHandler_IF, BaseHandler_IF{
 	/**
 	 * 处理规则文件
 	 * 
-	 * @param CampBaseDTO
+	 * @param campBaseDTO
 	 * 			会员活动基础 DTO
 	 * 
 	 * @throws Exception
@@ -848,7 +852,7 @@ public class LevelPointHandler implements RuleHandler_IF, BaseHandler_IF{
 	/**
 	 * 执行积分计算前的设置
 	 * 
-	 * @param CampBaseDTO
+	 * @param campBaseDTO
 	 * 			会员活动基础 DTO
 	 * 
 	 * @throws Exception

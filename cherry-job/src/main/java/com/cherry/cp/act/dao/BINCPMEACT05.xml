@@ -28,34 +28,25 @@
 			CR.BIN_CampaignRuleID AS subCampId,
 			CR.SubCampaignCode AS subCampCode,
 			CC.ActLocationType AS condType,
+			CC.BasePropValue1 AS searchCode,
 			D.ConditionInfo AS memJson
 		FROM
 			Campaign.BIN_Campaign C WITH(NOLOCK)
 			JOIN Campaign.BIN_CampaignRule CR WITH(NOLOCK)
 			ON(C.BIN_CampaignID = CR.BIN_CampaignID
-			AND CR.State=1 AND CR.ValidFlag=1)
+			AND CR.ValidFlag='1')
 			JOIN Campaign.BIN_CamRuleCondition CC WITH(NOLOCK)
 			ON(CR.BIN_CampaignRuleID=CC.BIN_CampaignRuleID
-			AND CC.ValidFlag=1)
+			AND CC.ValidFlag='1')
 			JOIN Campaign.BIN_CampaignBaseProp CB WITH(NOLOCK)
 			ON(CB.BIN_CampaignBasePropID=CC.BIN_CampaignBasePropID
-			AND CB.PropertyName='baseProp_customer'
-			AND CB.ValidFlag=1)
+			AND CB.PropertyName='baseProp_customer')
 			LEFT JOIN Members.BIN_SearchLog D
 			ON(BIN_SearchCode = CC.BasePropValue1)
 		WHERE
 			C.CampaignCode = #campCode#
     </select>
-    
-    <!-- 取得会员活动对象List（只取会员ID） -->
-    <select id="getCampCustorList" parameterClass="java.util.HashMap" resultClass="java.lang.Integer">
-   		<![CDATA[
-   		SELECT
-			B.BIN_MemberInfoID
-		]]>
-		<include refid="BINOLCPCOM05.getMebSQL" />
-    </select>
-    
+
     <!-- 取得会员等级改变表中的所有会员ID -->
     <select id="getChangeMemIdList" resultClass="java.lang.Integer">
     	SELECT 
@@ -63,7 +54,24 @@
     		BIN_MemberInfoID
     	FROM
     		Members.BIN_MemberLevelTemp
+		<isNotEmpty property="memberId" prepend="WHERE">
+			BIN_MemberInfoID = #memberId#
+		</isNotEmpty>
     </select>
+
+	<!-- 取得导入会员，搜索结果数量 -->
+	<select id="getCampMemCount" resultClass="java.lang.Integer">
+		SELECT
+			COUNT(1)
+		FROM
+			Members.BIN_CustomerInfo A
+		JOIN Members.BIN_MemCardInfo B ON(A.BIN_CustomerCode = B.MemCode)
+		WHERE
+			A.BIN_SearchCode = #searchCode#
+		AND B.BIN_MemberInfoID = #memberId#
+		AND A.CustomerType = '1'
+		AND A.ValidFlag = '1'
+	</select>
     
     <!-- 删除会员等级调整表中对应的会员 -->
     <delete id="delMember" parameterClass="java.util.HashMap">
@@ -72,28 +80,6 @@
     	WHERE
     		BIN_MemberInfoID = #memberId#
     </delete>
-    
-    <!-- 更换调整会员的生日礼-->
- 	<update id="updateCampOrder" parameterClass="java.util.HashMap">
- 		UPDATE
- 			Campaign.BIN_CampaignOrderDetail
- 		SET
- 			BIN_ProductVendorID = #productVendorId#,
- 			UnitCode = #unitCode#,
- 			BarCode = #barCode#,
- 			Quantity = #quantity#,
- 			Amout = #price#
- 		WHERE
- 			BIN_CampaignOrderID = #campOrderId#
- 			
- 		UPDATE
- 			Campaign.BIN_CampaignOrder
- 		SET
- 			SendFlag = 2,
- 			ModifyCount = ModifyCount+1
- 		WHERE
- 			BIN_CampaignOrderID = #campOrderId#
- 	</update>
  	
  	<!-- 获取子生日礼活动的所有礼品 -->
  	<select id="getPrtList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">

@@ -5,6 +5,7 @@ import java.util.Map;
 
 import javax.annotation.Resource;
 
+import com.cherry.cp.act.bl.BINCPMEACT05_BL;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -39,6 +40,9 @@ public class ActivityLogic implements CherryMessageHandler_IF{
 	
 	@Resource
 	private BINCPMEACT04_BL bincpmeact04_BL;
+
+	@Resource
+	private BINCPMEACT05_BL bincpmeact05_BL;
 	
 	public Map<String,Object> tran_publishActive(Map<String, Object> params){
 		Map<String,Object> resMap = new HashMap<String, Object>();
@@ -131,16 +135,31 @@ public class ActivityLogic implements CherryMessageHandler_IF{
 			String batchNo = ConvertUtil.getString(map.get("batchNo"));
 			String sysTime = ConvertUtil.getString(map.get("sysTime"));
 			String gtType = ConvertUtil.getString(map.get("gtType"));
+			String subCampType = ConvertUtil.getString(map.get("subCampType"));
 			p1.put("BIN_OrganizationInfoID", orgId);
 			p1.put("OrgCode", map.get("orgCode"));
 			p1.put("BIN_BrandInfoID",brandId);
 			p1.put("BrandCode", brandCode);
 			p1.put("BatchNo", batchNo);
 			p1.put("MemId", map.get("memId"));
-			p1.put("SubCampType", map.get("subCampType"));
+			p1.put("SubCampType", subCampType);
 			p1.put("SubCampCode", map.get("subCampCode"));
 			p1.put("RepeatFlag", map.get("repeatFlag"));
 			p1.put("OrderCntCode", map.get("orderCntCode"));
+			if(subCampType.contains("BIR")) {
+				// 修改生日礼单据明细
+				try {
+					Map<String, Object> p2 = new HashMap<String, Object>();
+					// 品牌信息ID
+					p2.put(CherryBatchConstants.BRANDINFOID, brandId);
+					p2.put("memberId", map.get("memId"));
+					bincpmeact05_BL.tran_handleOrder(p2);
+				} catch (Exception e) {
+					logger.info("==修改生日礼单据明细异常==");
+					logger.error("==修改生日礼单据明细异常==" + e.getMessage());
+				}
+			}
+			// 生成单据
 			int[] resFlag = makeOrder(p1);
 			if(null != resFlag){
 				if(resFlag[0] == CherryBatchConstants.BATCH_SUCCESS
