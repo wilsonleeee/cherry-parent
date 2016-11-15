@@ -824,7 +824,7 @@ public class BINCPMEACT04_BL {
 		if (!CherryBatchUtil.isBlankList(orderList)) { 
 			String gotCounter = CherryBatchUtil.getString(subCamp.get("gotCounter"));
 			// 领取柜台：任意柜台
-			if ("1".equals(gotCounter) || !"3".equals(couponType)) {// 导入coupon活动
+			if ("1".equals(gotCounter) || !"2".equals(couponType)) {// 导入coupon活动||最大coupon数
 				for (Map<String, Object> mem : orderList) {
 					mem.put("counterCode", "ALL");
 				}
