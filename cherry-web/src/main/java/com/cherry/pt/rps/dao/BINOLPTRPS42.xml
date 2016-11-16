@@ -182,14 +182,18 @@
 				T.departName AS departName,
 				T.employeeCode AS employeeCode,
 				T.employeeName AS employeeName,
-				ISNULL(B.PickupQuantity,0) AS pickupQuantity,
+				CASE WHEN D.PromotionCateCD='CXLP' THEN
+					ISNULL(B.PickupQuantity,0) ELSE 0 END AS pickupQuantity,
 				T.pickupDate AS pickupDate,
 				D.UnitCode AS unitCode,
 				C.BarCode AS barCode,
 				ISNULL(B.Price,0) AS price,
-				ISNULL(B.Quantity,0) AS quantity,
-				ISNULL(B.Price,0)*ISNULL(B.Quantity,0)  AS deatilAmount,
-				ISNULL(B.Quantity,0)-ISNULL(B.PickupQuantity,0) AS leftQuantity,
+				CASE WHEN D.PromotionCateCD='CXLP' THEN
+					ISNULL(B.Quantity,0) ELSE 0 END AS quantity,
+				CASE WHEN D.PromotionCateCD='CXLP' THEN
+					ISNULL(B.Price,0)*ISNULL(B.Quantity,0) ELSE 0 END AS deatilAmount,
+				CASE WHEN D.PromotionCateCD='CXLP' THEN
+					ISNULL(B.Quantity,0)-ISNULL(B.PickupQuantity,0) ELSE 0 END AS leftQuantity,
 				T.prePayDate AS prePayDate,
 				]]>
 			<dynamic>
@@ -255,12 +259,12 @@
 			    B.DepartName AS departName,
 			    A.MobilePhone AS telephone,
 		      	A.SaleDate AS prePayDate,
-			    A.SaleTime AS prePayTime,
-			    A.Amount AS prePayAmount,
-			    A.Quantity AS buyQuantity,
-			    A.PickupQuantity AS pickupQuantity,
-			    ISNULL(A.Quantity,0)-ISNULL(A.PickupQuantity,0) AS leftQuantity,
-			    A.PickupDate AS pickupDate,
+				convert(varchar(100),A.SaleTime,120) AS prePayTime,
+				isnull(A.Amount,0) AS prePayAmount,
+				isnull(A.Quantity,0) AS buyQuantity,
+				isnull(A.PickupQuantity,0) AS pickupQuantity,
+				ISNULL(A.Quantity,0)-ISNULL(A.PickupQuantity,0) AS leftQuantity,
+				convert(varchar(100),A.PickupDate,120) AS pickupDate,
 			    E.EmployeeCode AS employeeCode,
 			    E.EmployeeName AS employeeName,
 			    A.SaleType AS transactionType,
@@ -279,13 +283,13 @@
     
     <!-- 取得预付单明细list -->
     <select id="getPreDetailInfoList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
-		SELECT 	
+		SELECT
 				D.UnitCode AS unitCode,
 				C.BarCode AS barCode,
-				A.Price*A.Quantity  AS deatilAmount,
-				A.Quantity AS quantity,
-				A.Price AS price,
-				A.PickupQuantity AS pickupQuantity,
+				ISNULL(A.Price, 0)*isnull(A.Quantity,0) AS deatilAmount,
+				isnull(A.Quantity,0) AS quantity,
+				isnull(A.Price,0) AS price,
+				isnull(A.PickupQuantity,0) AS pickupQuantity,
 				ISNULL(A.Quantity,0)-ISNULL(A.PickupQuantity,0) AS leftQuantity,
 				<isNotEmpty property="language">
 	                <isEqual property="language" compareValue="en_US">
@@ -306,15 +310,18 @@
 			WHERE
 				A.SaleType='N' AND 		
 				B.BIN_SaleRecordID=#prePayBillMainId#
-			UNION ALL	
-		SELECT 	
+		UNION ALL
+		SELECT
 				D.UnitCode AS unitCode,
 				C.BarCode AS barCode,
-				A.Price*A.Quantity  AS deatilAmount,
-				ISNULL(A.Quantity,0) AS quantity,
-				A.Price AS price,
-				ISNULL(A.PickupQuantity,0) AS pickupQuantity,
-				ISNULL(A.Quantity,0)-ISNULL(A.PickupQuantity,0) AS leftQuantity,
+				ISNULL(A.Price, 0)*isnull(A.Quantity,0)  AS deatilAmount,
+				CASE WHEN D.PromotionCateCD='CXLP' THEN
+					ISNULL(A.Quantity,0) ELSE 0 END AS quantity,
+				isnull(A.Price,0) AS price,
+				CASE WHEN D.PromotionCateCD='CXLP' THEN
+					ISNULL(A.PickupQuantity,0) ELSE 0 END AS pickupQuantity,
+				CASE WHEN D.PromotionCateCD='CXLP' THEN
+					ISNULL(A.Quantity,0)-ISNULL(A.PickupQuantity,0) ELSE 0 END AS leftQuantity,
 				<isNotEmpty property="language">
 	                <isEqual property="language" compareValue="en_US">
 	                    D.NameForeign AS productName
@@ -344,8 +351,8 @@
 				C.BarCode AS barCode,
 				D.NameTotal AS productName,
 				ISNULL(A.Quantity*B.ComputeSign,0) AS quantity,
-				A.Price AS price,
-				B.PickupTime AS pickupTime,
+				ISNULL(A.Price,0) AS price,
+				CONVERT(VARCHAR(100),B.PickupTime,120) AS pickupTime,
 				ISNULL(B.PickupQuantity,0) AS pickupQuantity
 		FROM 
 				Sale.BIN_PickupBillDetail A WITH(NOLOCK)
@@ -355,15 +362,17 @@
 		WHERE
 				A.DetailType='N' AND 		
 				B.BIN_SaleRecordID=#prePayBillMainId#
-			UNION ALL	
+		UNION ALL
 		SELECT 
 				D.UnitCode AS unitCode,
 				C.BarCode AS barCode,
 				D.NameTotal AS productName,
-				ISNULL(A.Quantity*B.ComputeSign,0) AS quantity,
-				A.Price AS price,
-				B.PickupTime AS pickupTime,
-				ISNULL(B.PickupQuantity,0) AS pickupQuantity
+				CASE WHEN D.PromotionCateCD='CXLP' THEN
+					ISNULL(A.Quantity*B.ComputeSign,0) ELSE 0 END AS quantity,
+				ISNULL(A.Price,0) AS price,
+				CONVERT(VARCHAR(100),B.PickupTime,120) AS pickupTime,
+				CASE WHEN D.PromotionCateCD='CXLP' THEN
+					ISNULL(B.PickupQuantity,0) ELSE 0 END AS pickupQuantity
 		FROM
 				Sale.BIN_PickupBillDetail A WITH(NOLOCK)
 				LEFT JOIN Sale.BIN_PickupBillMain B WITH(NOLOCK) ON (A.BIN_PickupBillMainID = B.BIN_PickupBillMainID)
@@ -378,7 +387,7 @@
     <select id="getPayTypeList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
 		SELECT 
 			PayTypeCode  AS payTypeCode,
-			PayAmount AS payAmount,
+			ISNULL(PayAmount,0) AS payAmount,
 			SerialNumber AS serialNumber
 		FROM 
 			Sale.BIN_SalePayList 

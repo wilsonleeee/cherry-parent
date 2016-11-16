@@ -260,7 +260,7 @@ public class BINBEMQMES99_BL {
 	
 	/**
 	 * 分析消息体数据--事务处理（老的MQ消息体格式的接收）
-	 * @param msg
+	 * @param
 	 * @return
 	 * @throws Exception
 	 */
@@ -271,7 +271,7 @@ public class BINBEMQMES99_BL {
 	
      /**
      * 分析监控类消息体数据--事务处理
-     * @param msg
+     * @param
      * @return
      * @throws Exception
      */
@@ -282,7 +282,7 @@ public class BINBEMQMES99_BL {
 	
 	/**
 	 * 分析规则处理消息体数据--事务处理
-	 * @param msg
+	 * @param
 	 * @return
 	 * @throws Exception
 	 */
@@ -293,7 +293,7 @@ public class BINBEMQMES99_BL {
 	
 	/**
 	 * 分析消息体数据
-	 * @param msg
+	 * @param
 	 * @return
 	 * @throws Exception
 	 */
@@ -345,7 +345,7 @@ public class BINBEMQMES99_BL {
 	
     /**
      * 分析监控类消息体数据
-     * @param msg
+     * @param
      * @return
      * @throws Exception
      */
@@ -843,7 +843,7 @@ public class BINBEMQMES99_BL {
 	
 	/**
 	 * 分割消息Map(促销品和产品)
-	 * @param map
+	 * @param
 	 * @return 当明细中既有产品也有促销品，将会拆分产品与促销品，用isPromotion字段标记，0：产品；1：促销品；
 	 * 			注：1）盘单业务时，若没有明细，根据SubType判断是产品盘点还是促销品盘点(此时返回的是已经标记了isPromotion字段的数据)，
 	 * 					若不在盘点已定义的类型中则返回new ArrayList();

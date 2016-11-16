@@ -52,7 +52,7 @@
           				<tr>
           					<%-- 预付时间 --%>
           					<th><s:text name="RPS42_prePayDate"/></th>
-          					<td><s:property value="preInfoMap.prePayDate"/></td>
+          					<td><s:property value="preInfoMap.prePayTime"/></td>
                             <%-- 下次提货时间 --%>
                             <th><s:text name="RPS42_pickUpDate"/></th>
                             <td><s:property value='preInfoMap.pickupDate'/></td>
@@ -212,7 +212,7 @@
             	
            			</div>
            			<div id="tabs-2" style="overflow-x:auto;overflow-y:hidden">
-		   		<table cellpadding="0" cellspacing="0" border="0" class="jquery_table" width="100%">
+		   				<table cellpadding="0" cellspacing="0" border="0" class="jquery_table" width="100%">
               				<thead>
                 				<tr>
                   					<th class="center"><s:text name="RPS42_num"/></th>          	<%-- 编号 --%>
