@@ -1,15 +1,5 @@
 package com.cherry.wp.sal.action;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-
-import javax.annotation.Resource;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import com.cherry.cm.cmbeans.CounterInfo;
 import com.cherry.cm.cmbeans.UserInfo;
 import com.cherry.cm.cmbussiness.bl.BINOLCM44_BL;
@@ -25,6 +15,14 @@ import com.cherry.wp.common.entity.SaleRuleResultEntity;
 import com.cherry.wp.sal.form.BINOLWPSAL08_Form;
 import com.cherry.wp.sal.interfaces.BINOLWPSAL08_IF;
 import com.opensymphony.xwork2.ModelDriven;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import javax.annotation.Resource;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 public class BINOLWPSAL08_Action extends BaseAction implements ModelDriven<BINOLWPSAL08_Form> {
 

@@ -74,7 +74,7 @@
 								</select>
 							</span>
 			</s:if>
-			
+
 			</span></td>
 			<th><s:text name="binolmbmbm11_telephone"></s:text></th>
 		    <td><span><s:textfield name="telephone" cssClass="text" maxlength="20"></s:textfield></span></td>
@@ -102,9 +102,9 @@
       	  </tr>
 		  <tr>
 		    <th><s:text name="binolmbmbm11_maritalStatus"></s:text></th>
-			<td><span><s:radio list='#application.CodeTable.getCodes("1043")' listKey="CodeKey" listValue="Value" name="maritalStatus" ></s:radio></span></td>	
+			<td><span><s:radio list='#application.CodeTable.getCodes("1043")' listKey="CodeKey" listValue="Value" name="maritalStatus" ></s:radio></span></td>
 			<th><s:text name="binolmbmbm11_messageId"></s:text></th>
-			<td><span><s:textfield name="messageId" cssClass="text" maxlength="30"></s:textfield></span></td>	   
+			<td><span><s:textfield name="messageId" cssClass="text" maxlength="30"></s:textfield></span></td>
 		  </tr>
 		  <tr>
      	    <th><s:text name="binolmbmbm11_memo1"></s:text></th>
@@ -116,7 +116,7 @@
         </cherry:show>
 	  </div>
 	</div>
-	
+
 	<div class="section">
       <div class="section-header">
       	<strong class="left active">
@@ -162,7 +162,7 @@
         </table>
 	  </div>
 	</div>
-	
+
 	<s:if test="%{extendPropertyList != null && !extendPropertyList.isEmpty()}">
     <div class="section">
       <div class="section-header">
@@ -216,22 +216,34 @@
 	</div>
 	</div>
     <div class="center clearfix">
-	  <button class="save">
-    	<span class="ui-icon icon-save"></span>
-    	<span class="button-text"><s:text name="global.page.save"/></span>
-      </button>
       <s:if test='%{isNeedCheck == "Y"}'>
-      <button class="mobileCheck" style="-moz-border-radius: 4px; -webkit-border-radius: 4px; border-radius: 4px;  border: 1px solid #7d8791; background: #ffffff url(images/ui-bg_gloss-wave_60_ffffff_500x100.png) left bottom repeat-x; font-weight: normal; color: #333333;display: inline-block; position: relative; padding: 0; margin-left: .5em; text-decoration: none !important; cursor: pointer; text-align: center; zoom: 1; overflow: visible; vertical-align:middle;">
-   		<span class="ui-icon icon-mover"></span>
-   		<span class="button-text"><s:text name="global.page.moblieCheck"/></span>
-      </button>
+		  <button class="mobileCheck" style="-moz-border-radius: 4px; -webkit-border-radius: 4px; border-radius: 4px;  border: 1px solid #7d8791; background: #ffffff url(images/ui-bg_gloss-wave_60_ffffff_500x100.png) left bottom repeat-x; font-weight: normal; color: #333333;display: inline-block; position: relative; padding: 0; margin-left: .5em; text-decoration: none !important; cursor: pointer; text-align: center; zoom: 1; overflow: visible; vertical-align:middle;">
+			<span class="ui-icon icon-mover"></span>
+			<span class="button-text"><s:text name="global.page.moblieCheck"/></span>
+		  </button>
       </s:if>
+		<s:elseif test='%{isNeedCheck == "N"}'>
+			<button class="save">
+				<span class="ui-icon icon-save"></span>
+				<span class="button-text"><s:text name="global.page.save"/></span>
+			</button>
+		</s:elseif>
+		<s:else>
+			<button class="mobileCheck" style="-moz-border-radius: 4px; -webkit-border-radius: 4px; border-radius: 4px;  border: 1px solid #7d8791; background: #ffffff url(images/ui-bg_gloss-wave_60_ffffff_500x100.png) left bottom repeat-x; font-weight: normal; color: #333333;display: inline-block; position: relative; padding: 0; margin-left: .5em; text-decoration: none !important; cursor: pointer; text-align: center; zoom: 1; overflow: visible; vertical-align:middle;">
+				<span class="ui-icon icon-mover"></span>
+				<span class="button-text"><s:text name="global.page.moblieCheck"/></span>
+			</button>
+			<button class="save">
+				<span class="ui-icon icon-save"></span>
+				<span class="button-text"><s:text name="global.page.save"/></span>
+			</button>
+		</s:else>
       <button type="button" class="back">
    		<span class="ui-icon icon-back"></span>
    		<span class="button-text"><s:text name="global.page.back"/></span>
    	  </button>
     </div>
-    </form>       	
+    </form>
             	
             	
             </div>

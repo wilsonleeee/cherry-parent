@@ -1,41 +1,14 @@
 package com.cherry.wp.mbm.action;
 
-import java.io.ByteArrayInputStream;
-import java.io.InputStream;
-import java.text.DecimalFormat;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-
-import javax.annotation.Resource;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import com.cherry.cm.cmbeans.CounterInfo;
 import com.cherry.cm.cmbeans.UserInfo;
 import com.cherry.cm.cmbussiness.bl.BINOLCM08_BL;
 import com.cherry.cm.cmbussiness.bl.BINOLCM14_BL;
 import com.cherry.cm.cmbussiness.bl.BINOLCM37_BL;
-import com.cherry.cm.core.BaseAction;
-import com.cherry.cm.core.CherryChecker;
-import com.cherry.cm.core.CherryConstants;
-import com.cherry.cm.core.CherryException;
-import com.cherry.cm.core.CherryMenu;
-import com.cherry.cm.core.CherrySecret;
-import com.cherry.cm.util.Bean2Map;
-import com.cherry.cm.util.CherryUtil;
-import com.cherry.cm.util.ConvertUtil;
-import com.cherry.cm.util.DateUtil;
-import com.cherry.cm.util.FileUtil;
+import com.cherry.cm.core.*;
+import com.cherry.cm.util.*;
 import com.cherry.ct.common.interfaces.BINOLCTCOM10_IF;
-import com.cherry.mb.mbm.bl.BINOLMBMBM02_BL;
-import com.cherry.mb.mbm.bl.BINOLMBMBM04_BL;
-import com.cherry.mb.mbm.bl.BINOLMBMBM05_BL;
-import com.cherry.mb.mbm.bl.BINOLMBMBM06_BL;
-import com.cherry.mb.mbm.bl.BINOLMBMBM09_BL;
-import com.cherry.mb.mbm.bl.BINOLMBMBM11_BL;
+import com.cherry.mb.mbm.bl.*;
 import com.cherry.mb.mbm.service.BINOLMBMBM11_Service;
 import com.cherry.mb.ptm.bl.BINOLMBPTM02_BL;
 import com.cherry.mb.ptm.bl.BINOLMBPTM03_BL;
@@ -43,6 +16,17 @@ import com.cherry.wp.common.interfaces.BINOLWPCM01_IF;
 import com.cherry.wp.mbm.form.BINOLWPMBM01_Form;
 import com.cherry.wp.mbm.interfaces.BINOLWPMBM01_IF;
 import com.opensymphony.xwork2.ModelDriven;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import javax.annotation.Resource;
+import java.io.ByteArrayInputStream;
+import java.io.InputStream;
+import java.text.DecimalFormat;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 /**
  * 会员管理Action
@@ -283,7 +267,7 @@ public class BINOLWPMBM01_Action extends BaseAction implements ModelDriven<BINOL
 		}
 		birthFormat = binOLCM14_BL.getWebposConfigValue("9012", organizationInfoId, brandInfoId);
 		//是否需要手机验证
-		isNeedCheck = binOLCM14_BL.getWebposConfigValue("9037", organizationInfoId, brandInfoId);
+		isNeedCheck = binOLCM14_BL.getWebposConfigValue("9049", organizationInfoId, brandInfoId);
 		//是否开启手机卡号同步处理
 		form.setCardMobileSyn(binOLCM14_BL.getWebposConfigValue("9040", organizationInfoId, brandInfoId));
 		//生日是否为必填

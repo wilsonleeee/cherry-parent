@@ -1,14 +1,5 @@
 package com.cherry.wp.sal.action;
 
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-
-import javax.annotation.Resource;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import com.cherry.cm.cmbeans.CounterInfo;
 import com.cherry.cm.cmbeans.UserInfo;
 import com.cherry.cm.cmbussiness.bl.BINOLCM08_BL;
@@ -22,6 +13,13 @@ import com.cherry.wp.common.interfaces.BINOLWPCM01_IF;
 import com.cherry.wp.sal.form.BINOLWPSAL11_Form;
 import com.cherry.wp.sal.interfaces.BINOLWPSAL11_IF;
 import com.opensymphony.xwork2.ModelDriven;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import javax.annotation.Resource;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 public class BINOLWPSAL11_Action extends BaseAction implements ModelDriven<BINOLWPSAL11_Form>{
 	/**
@@ -122,7 +120,7 @@ public class BINOLWPSAL11_Action extends BaseAction implements ModelDriven<BINOL
 			// 手机号校验规则
 			mobileRule = binOLCM14_BL.getConfigValue("1090", organizationInfoId, brandInfoId);
 			//是否需要手机验证
-			isNeedCheck = binOLCM14_BL.getWebposConfigValue("9037", organizationInfoId, brandInfoId);
+			isNeedCheck = binOLCM14_BL.getWebposConfigValue("9049", organizationInfoId, brandInfoId);
 			//是否开启手机卡号同步
 			form.setCardMobileSyn(binOLCM14_BL.getWebposConfigValue("9040", organizationInfoId, brandInfoId));
 			// 生日格式

@@ -79,7 +79,7 @@ public class BINOLWPSAL12_Action extends BaseAction implements ModelDriven<BINOL
 		String payType = "";
 		for(Map<String,Object> payDetail_info:payDetail_list){
 			String storePayCode =ConvertUtil.getString(payDetail_info.get("storePayCode"));
-			if("PT".equals(storePayCode) || "WT".equals(storePayCode)){
+			if("PT".equals(storePayCode) || "WEPAY".equals(storePayCode)){
 				payType=storePayCode;
 			}
 		}

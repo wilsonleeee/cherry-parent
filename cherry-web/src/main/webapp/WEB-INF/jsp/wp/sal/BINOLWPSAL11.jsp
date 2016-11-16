@@ -164,20 +164,37 @@
 	</div>
 	</div>
     <div class="bottom_butbox clearfix">
-    	<button id="btnContinue" class="close" type="button" onclick="BINOLWPSAL11.saleContinue();return false;">
-    		<span class="ui-icon icon-mover"></span>
-            <span class="button-text"><s:text name="wpsal11.Continue"/></span>
-		</button>
-    	<button id="btnSave" class="close" type="button" onclick="BINOLWPSAL11.save();return false;">
-    		<span class="ui-icon icon-save"></span>
-            <span class="button-text"><s:text name="wpsal11.save"/></span>
-		</button>
 		<s:if test='%{isNeedCheck == "Y"}'>
-		<button id="btnMobile" class="close" type="button" onclick="BINOLWPSAL11.sendMessage();return false;">
-    		<span class="ui-icon icon-mover"></span>
-            <span class="button-text"><s:text name="global.page.moblieCheck"/></span>
-		</button>
+			<button id="btnMobile" class="close" type="button" onclick="BINOLWPSAL11.sendMessage();return false;">
+				<span class="ui-icon icon-mover"></span>
+				<span class="button-text"><s:text name="global.page.moblieCheck"/></span>
+			</button>
 		</s:if>
+		<s:elseif test='%{isNeedCheck == "N"}'>
+			<button id="btnContinue" class="close" type="button" onclick="BINOLWPSAL11.saleContinue();return false;">
+				<span class="ui-icon icon-mover"></span>
+				<span class="button-text"><s:text name="wpsal11.Continue"/></span>
+			</button>
+			<button id="btnSave" class="close" type="button" onclick="BINOLWPSAL11.save();return false;">
+				<span class="ui-icon icon-save"></span>
+				<span class="button-text"><s:text name="wpsal11.save"/></span>
+			</button>
+		</s:elseif>
+		<s:else>
+			<button id="btnContinue" class="close" type="button" onclick="BINOLWPSAL11.saleContinue();return false;">
+				<span class="ui-icon icon-mover"></span>
+				<span class="button-text"><s:text name="wpsal11.Continue"/></span>
+			</button>
+			<button id="btnMobile" class="close" type="button" onclick="BINOLWPSAL11.sendMessage();return false;">
+				<span class="ui-icon icon-mover"></span>
+				<span class="button-text"><s:text name="global.page.moblieCheck"/></span>
+			</button>
+			<button id="btnSave" class="close" type="button" onclick="BINOLWPSAL11.save();return false;">
+				<span class="ui-icon icon-save"></span>
+				<span class="button-text"><s:text name="wpsal11.save"/></span>
+			</button>
+		</s:else>
+
 		<s:if test='"COL".equals(viewType) && "Y".equals(isMemberSaleFlag)'>
 			<button id="btnNotJoin" class="close" type="button" onclick="BINOLWPSAL11.notJoinMember();return false;">
 	    		<span class="ui-icon icon-stop"></span>
