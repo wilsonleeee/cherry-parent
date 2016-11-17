@@ -692,7 +692,7 @@ public class LevelPointHandler implements RuleHandler_IF, BaseHandler_IF{
 						String.valueOf(campBaseDTO.getBrandInfoId()));
 				if (!"2".equals(levelCalcKbn)) {
 					// 会员化妆次数规则处理
-					CampRuleExec_IF campRuleExec = binBEMQMES98_BL.getRuleExec(orgCode, brandCode, CherryConstants.HANDLERTYPE_RE03);
+//					CampRuleExec_IF campRuleExec = binBEMQMES98_BL.getRuleExec(orgCode, brandCode, CherryConstants.HANDLERTYPE_RE03);
 					if (campBaseDTO.getAmount() > 0) {
 						// 开始时间
 						long rstartTime = 0;
@@ -718,10 +718,10 @@ public class LevelPointHandler implements RuleHandler_IF, BaseHandler_IF{
 							// 会员入会规则处理
 							binbedrjon01BL.ruleExec(campBaseDTO);
 						} else {
-							campBaseDTO.getExtArgs().remove("BTIMESKBN");
-							if (null != campRuleExec) {
-								campBaseDTO.getExtArgs().put("BTIMESKBN", "1");
-							}
+//							campBaseDTO.getExtArgs().remove("BTIMESKBN");
+//							if (null != campRuleExec) {
+//								campBaseDTO.getExtArgs().put("BTIMESKBN", "1");
+//							}
 							// 会员升降级规则处理
 							binbedrjon02BL.ruleExec(campBaseDTO);
 						}
@@ -768,9 +768,9 @@ public class LevelPointHandler implements RuleHandler_IF, BaseHandler_IF{
 							logger.info(msg);
 						}
 					}
-					if (null != campRuleExec) {
-						campRuleExec.ruleExec(campBaseDTO);
-					}
+//					if (null != campRuleExec) {
+//						campRuleExec.ruleExec(campBaseDTO);
+//					}
 				}
 			}
 		}

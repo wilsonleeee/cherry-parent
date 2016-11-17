@@ -1052,48 +1052,50 @@ public class BINBEDRCOM01_BL implements BINBEDRCOM01_IF{
 //			campBaseDTO.setCurLevelId(Integer.parseInt(levelId));
 //		}
 		// 化妆次数
-		campBaseDTO.setRecordKbn(DroolsConstants.RECORDKBN_2);
-		// 当前化妆次数
-		String btimes = binbedrcom01_Service.getCurNewValue(campBaseDTO);
-		if (null != btimes && !"".equals(btimes)) {
-			campBaseDTO.setCurBtimes(Integer.parseInt(btimes));
-		}
-		boolean amountflag = true;
+//		campBaseDTO.setRecordKbn(DroolsConstants.RECORDKBN_2);
+//		// 当前化妆次数
+//		String btimes = binbedrcom01_Service.getCurNewValue(campBaseDTO);
+//		if (null != btimes && !"".equals(btimes)) {
+//			campBaseDTO.setCurBtimes(Integer.parseInt(btimes));
+//		}
+//		boolean amountflag = true;
 		// 取得会员扩展信息
 		Map<String, Object> memberExtInfo = binbedrcom01_Service.getMemberExtInfo(campBaseDTO);
 		if (null != memberExtInfo && !memberExtInfo.isEmpty()) {
-			if (null != memberExtInfo.get("initTotalAmount")) {
+			//if (null != memberExtInfo.get("initTotalAmount")) {
 				campBaseDTO.setInitAmount(Double.parseDouble(memberExtInfo.get("initTotalAmount").toString()));
-			}
+			//}
 			// 初始导入的会员从扩展表中获取当前累计金额
-			if (null != memberExtInfo.get("initTotalAmount")
-					&& null != memberExtInfo.get("totalAmount")) {
+//			if (null != memberExtInfo.get("initTotalAmount")
+//					&& null != memberExtInfo.get("totalAmount")) {
 				campBaseDTO.setCurTotalAmount(Double.parseDouble(memberExtInfo.get("totalAmount").toString()));
-				amountflag = false;
-			}
+//				amountflag = false;
+			// 首单时间
+			campBaseDTO.setFirstTicketTime((String) memberExtInfo.get("firstSaleDate"));
+//			}
 		}
-		if (amountflag) {
-			// 累计金额
-			campBaseDTO.setRecordKbn(DroolsConstants.RECORDKBN_1);
-			// 当前累计金额
-			String totalAmount = binbedrcom01_Service.getCurNewValue(campBaseDTO);
-			double totalAmountDou = 0;
-			if (null != totalAmount && !"".equals(totalAmount)) {
-				totalAmountDou = Double.parseDouble(totalAmount);
-			}
-			// 当前累计金额
-			campBaseDTO.setCurTotalAmount(totalAmountDou);
-		}
+//		if (amountflag) {
+//			// 累计金额
+//			campBaseDTO.setRecordKbn(DroolsConstants.RECORDKBN_1);
+//			// 当前累计金额
+//			String totalAmount = binbedrcom01_Service.getCurNewValue(campBaseDTO);
+//			double totalAmountDou = 0;
+//			if (null != totalAmount && !"".equals(totalAmount)) {
+//				totalAmountDou = Double.parseDouble(totalAmount);
+//			}
+//			// 当前累计金额
+//			campBaseDTO.setCurTotalAmount(totalAmountDou);
+//		}
 		// 可兑换金额(化妆次数用)
-		campBaseDTO.setRecordKbn(DroolsConstants.RECORDKBN_4);
-		// 当前可兑换金额(化妆次数用)
-		String btimesAmount = binbedrcom01_Service.getCurNewValue(campBaseDTO);
-		double btimesAmountDou = 0;
-		if (null != btimesAmount && !"".equals(btimesAmount)) {
-			btimesAmountDou = Double.parseDouble(btimesAmount);
-		}
-		// 当前的可兑换金额(化妆次数用)
-		campBaseDTO.setCurBtimesAmount(btimesAmountDou);
+//		campBaseDTO.setRecordKbn(DroolsConstants.RECORDKBN_4);
+//		// 当前可兑换金额(化妆次数用)
+//		String btimesAmount = binbedrcom01_Service.getCurNewValue(campBaseDTO);
+//		double btimesAmountDou = 0;
+//		if (null != btimesAmount && !"".equals(btimesAmount)) {
+//			btimesAmountDou = Double.parseDouble(btimesAmount);
+//		}
+//		// 当前的可兑换金额(化妆次数用)
+//		campBaseDTO.setCurBtimesAmount(btimesAmountDou);
 	}
 	
 	/**
@@ -1226,11 +1228,11 @@ public class BINBEDRCOM01_BL implements BINBEDRCOM01_IF{
 		// 改变前的累计金额
 		campBaseDTO.setOldTotalAmount(campBaseDTO.getCurTotalAmount());
 		// 改变前的可兑换金额(化妆次数用)
-		campBaseDTO.setOldBtimesAmount(campBaseDTO.getCurBtimesAmount());
+//		campBaseDTO.setOldBtimesAmount(campBaseDTO.getCurBtimesAmount());
 		// 改变前的会员等级
 		campBaseDTO.setOldLevelId(campBaseDTO.getCurLevelId());
 		// 改变前的化妆次数
-		campBaseDTO.setOldBtimes(campBaseDTO.getCurBtimes());
+//		campBaseDTO.setOldBtimes(campBaseDTO.getCurBtimes());
 		// 柜台号
 		campBaseDTO.setCounterCode((String) map.get("counterCode"));
 		// 员工编号
@@ -1278,12 +1280,12 @@ public class BINBEDRCOM01_BL implements BINBEDRCOM01_IF{
 			// 当前累计金额
 			campBaseDTO.setCurTotalAmount(DoubleUtil.sub(campBaseDTO.getCurTotalAmount(), campBaseDTO.getAmount()));
 			// 当前的可兑换金额(化妆次数用)
-			campBaseDTO.setCurBtimesAmount(DoubleUtil.sub(campBaseDTO.getCurBtimesAmount(), campBaseDTO.getAmount()));
+//			campBaseDTO.setCurBtimesAmount(DoubleUtil.sub(campBaseDTO.getCurBtimesAmount(), campBaseDTO.getAmount()));
 		} else {
 			// 当前累计金额
 			campBaseDTO.setCurTotalAmount(DoubleUtil.add(campBaseDTO.getCurTotalAmount(), campBaseDTO.getAmount()));
 			// 当前的可兑换金额(化妆次数用)
-			campBaseDTO.setCurBtimesAmount(DoubleUtil.add(campBaseDTO.getCurBtimesAmount(), campBaseDTO.getAmount()));
+//			campBaseDTO.setCurBtimesAmount(DoubleUtil.add(campBaseDTO.getCurBtimesAmount(), campBaseDTO.getAmount()));
 		}
 		return campBaseDTO;
 	}

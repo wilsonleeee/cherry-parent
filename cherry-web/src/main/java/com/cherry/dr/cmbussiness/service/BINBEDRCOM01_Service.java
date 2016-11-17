@@ -336,13 +336,18 @@ public class BINBEDRCOM01_Service extends BaseService{
 		paramMap.put(CherryConstants.IBATIS_SQL_ID,
 				"BINBEDRCOM01.getCampBaseDTO");
 		CampBaseDTO campBaseDTO = (CampBaseDTO) baseServiceImpl.get(paramMap);
-		// 会员俱乐部ID
-		paramMap.put("memberClubId", map.get("memberClubId"));
 		if (null != campBaseDTO) {
-			paramMap.put(CherryConstants.IBATIS_SQL_ID,
-					"BINBEDRCOM01.getCMFirstTicketTime");
-			// 查询首单时间
-			campBaseDTO.setFirstTicketTime((String) baseServiceImpl.get(paramMap)) ;
+			// 包含会员俱乐部
+			if (!CherryChecker.isNullOrEmpty(map.get("memberClubId")) &&
+					!"0".equals(String.valueOf(map.get("memberClubId")))) {
+				// 会员俱乐部ID
+				paramMap.put("memberClubId", map.get("memberClubId"));
+
+				paramMap.put(CherryConstants.IBATIS_SQL_ID,
+						"BINBEDRCOM01.getCMFirstTicketTime");
+				// 查询首单时间
+				campBaseDTO.setFirstTicketTime((String) baseServiceImpl.get(paramMap));
+			}
 		}
 		return campBaseDTO;
 	}
