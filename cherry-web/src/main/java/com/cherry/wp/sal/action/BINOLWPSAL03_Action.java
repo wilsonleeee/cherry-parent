@@ -474,7 +474,12 @@ public class BINOLWPSAL03_Action extends BaseAction implements ModelDriven<BINOL
 			// 用户信息
 			UserInfo userInfo = (UserInfo) session
 					.get(CherryConstants.SESSION_USERINFO);
-			DecimalFormat   df   =new   DecimalFormat("#.00");  
+			DecimalFormat   df   =new   DecimalFormat("#.00");
+			//BACode相关校验
+			String baCode=ConvertUtil.getString(form.getBaCode());
+			if("".equals(baCode)){
+				ConvertUtil.setResponseByAjax(response, "SALEBACODEERROR");
+			}
 			// 销售明细校验
 			String saleDetailListData = ConvertUtil.getString(form.getSaleDetailList());
 			if(!"".equals(saleDetailListData)){

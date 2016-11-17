@@ -1027,7 +1027,7 @@ BINOLWPSAL03_GLOBAL.prototype = {
 					// 还原按钮样式
 					$("#btnConfirm").removeAttr("disabled");
 					$("#btnCollect").attr("class","btn_top");
-					if(data != "ERROR" && data != "" && data!="SALEDETAILERROR" && data!="WECHATERROR"){
+					if(data != "ERROR" && data != "" && data!="SALEDETAILERROR" && data!="WECHATERROR"  && data!="SALEBACODEERROR"){
 						// 取得当前销售单ID
 						$("#print_param_hide").find("#billId").val(data);
 						cherryAjaxRequest({
@@ -1400,6 +1400,16 @@ BINOLWPSAL03_GLOBAL.prototype = {
 									BINOLWPSAL02.firstInputSelect();
 								}
 							});
+						}else if(data=="SALEBACODEERROR"){
+							// 显示提示信息
+							BINOLWPSAL02.showMessageDialog({
+								message:"BA号为空，请确认后再试",
+								type:"MESSAGE",
+								focusEvent:function(){
+									// 最后一行第一个可见的文本框获得焦点
+									BINOLWPSAL02.firstInputSelect();
+								}
+							});
 						}else {
 							// 显示提示信息
 							BINOLWPSAL02.showMessageDialog({
@@ -1435,7 +1445,7 @@ BINOLWPSAL03_GLOBAL.prototype = {
 	
 	"setPayment":function(){
 		/*$("#collectPageDiv").hide();
-		$("#setPaymentPageDiv").show();
+		$("#setPaymentPageDiv").show();`
 		$("#webPaymentPageDiv").hide();*/
 		
 		var setPaymentUrl = $("#dgPaymentInitUrl").attr("href");

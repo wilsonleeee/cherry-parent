@@ -3,7 +3,7 @@
 <%@ taglib prefix="cherry" uri="/cherry-tags"%>
 <script type="text/javascript" src="/Cherry/js/lib/jquery-ui-i18n.js"></script>
 <script type="text/javascript" src="/Cherry/js/wp/common/LodopFuncs.js?V=20160913"></script>
-<script type="text/javascript" src="/Cherry/js/wp/sal/BINOLWPSAL03.js?V=20161014"></script>
+<script type="text/javascript" src="/Cherry/js/wp/sal/BINOLWPSAL03.js?V=20161117"></script>
 <s:i18n name="i18n.wp.BINOLWPSAL03">
 
 <div class="hide">
