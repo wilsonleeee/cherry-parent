@@ -12,18 +12,15 @@
  */
 package com.cherry.mb.tif.function;
 
-import java.util.Map;
-
-import javax.annotation.Resource;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-import com.cherry.mb.tif.bl.BINBEMBTIF02_BL;
 import com.cherry.mb.tif.bl.BINBEMBTIF08_BL;
 import com.opensymphony.module.propertyset.PropertySet;
 import com.opensymphony.workflow.FunctionProvider;
 import com.opensymphony.workflow.WorkflowException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import javax.annotation.Resource;
+import java.util.Map;
 
 /**
  * 天猫会员手机加密处理FN
@@ -33,7 +30,7 @@ import com.opensymphony.workflow.WorkflowException;
  */
 public class BINBEMBTIF08_FN implements FunctionProvider{
 	
-	private static Logger logger = LoggerFactory.getLogger(BINBEMBTIF02_FN.class.getName());
+	private static Logger logger = LoggerFactory.getLogger(BINBEMBTIF08_FN.class.getName());
 	
 	/** 天猫会员手机加密处理BL */
 	@Resource
