@@ -464,7 +464,7 @@
 	</resultMap>	
 	<select id="getCampBaseDTO" parameterClass="java.util.HashMap" resultMap="BINBEDRCOM01.CampBaseDTO">
 		<![CDATA[
-			SELECT
+			Select
 				A.BIN_OrganizationInfoID AS BIN_OrganizationInfoID,
 				A.BIN_BrandInfoID AS BIN_BrandInfoID,
 				A.BIN_MemberInfoID AS BIN_MemberInfoID,
@@ -487,14 +487,39 @@
 				A.BirthYear + A.BirthDay AS Birthday,
 				A.ChannelCode AS ChannelCode,
 				convert(varchar, A.WechatBindTime, 120) AS WechatBindTime
+		From
+		(
+			SELECT
+				BIN_OrganizationInfoID,
+				BIN_BrandInfoID,
+				BIN_MemberInfoID,
+				ReferrerID,
+				Name,
+				JoinDate,
+				JoinTime,
+				InitialMemLevel,
+				MemberLevel,
+				LevelStatus,
+				LevelStartDate,
+				LevelEndDate,
+				LevelAdjustDay,
+				GrantMemberLevel,
+				UpgradeFromLevel,
+				FirstBillID,
+				MemInfoRegFlg,
+				BirthYear,
+				BirthDay,
+				ChannelCode,
+				WechatBindTime
 			FROM
-				Members.BIN_MemberInfo A
+				Members.BIN_MemberInfo
+			WHERE
+				BIN_MemberInfoID = #memberInfoId#
+		) A
 				LEFT JOIN Basis.BIN_BrandInfo B
 				ON(A.BIN_BrandInfoID = B.BIN_BrandInfoID)
 				LEFT JOIN Basis.BIN_OrganizationInfo C
 				ON(A.BIN_OrganizationInfoID = C.BIN_OrganizationInfoID)
-			WHERE
-				A.BIN_MemberInfoID = #memberInfoId#
 		]]>	
     </select>
 	
@@ -528,8 +553,7 @@
 				Sale.BIN_SaleRecord WITH(nolock)
 			WHERE
 				BillCode = #billCode# AND
-				BIN_BrandInfoID = #brandInfoId# AND
-				BIN_OrganizationInfoID = #organizationInfoId#
+				BIN_BrandInfoID = #brandInfoId#
 		]]>	
     </select>
     
@@ -904,7 +928,6 @@
 			WHERE
 				A.BillCode = #billId# AND
 				A.BIN_BrandInfoID = #brandInfoId# AND
-				A.BIN_OrganizationInfoID = #organizationInfoId# AND
 				A.BIN_SaleRecordID = B.BIN_SaleRecordID
 			ORDER BY B.DetailNo
 		]]>
@@ -961,7 +984,6 @@
 			WHERE
 				A.BIN_MemberInfoID = #memberInfoId# AND
 				A.BIN_BrandInfoID = #brandInfoId# AND
-				A.BIN_OrganizationInfoID = #organizationInfoId# AND
 				A.BillCodePre = #billId# AND
 				A.BIN_SaleRecordID = B.BIN_SaleRecordID AND
 				A.SaleType = 'SR'
@@ -982,8 +1004,7 @@
 				Sale.BIN_SaleRecord WITH(nolock)
 			WHERE
 				BillCode = #billId# AND
-				BIN_BrandInfoID = #brandInfoId# AND
-				BIN_OrganizationInfoID = #organizationInfoId#
+				BIN_BrandInfoID = #brandInfoId#
 		]]>
     </select>
     
@@ -994,8 +1015,7 @@
 				BIN_OrganizationID AS organizationId,
 				ISNULL(ModifiedTimes, 0) AS modifiedTimes,
 				ISNULL(Amount, 0) AS amount,
-				ISNULL(Quantity, 0) AS quantity,
-				null AS machineCode
+				ISNULL(Quantity, 0) AS quantity
 			FROM 
 				Sale.BIN_ESOrderMain WITH(nolock)
 			WHERE
@@ -1015,8 +1035,7 @@
 				Sale.BIN_SaleRecord WITH(nolock)
 			WHERE
 				BillCode = #relevantNo# AND
-				BIN_BrandInfoID = #brandInfoID# AND
-				BIN_OrganizationInfoID = #organizationInfoID#
+				BIN_BrandInfoID = #brandInfoID#
 		]]>
 		<isNotEmpty property="memberClubId">
 			 AND BIN_MemberClubID = #memberClubId#
