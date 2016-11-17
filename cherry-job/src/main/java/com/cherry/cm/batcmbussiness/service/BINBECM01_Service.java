@@ -195,4 +195,19 @@ public class BINBECM01_Service extends BaseService{
 		map.put(CherryConstants.IBATIS_SQL_ID, "BINBECM01.mergeJobRunFaildHistory");
 		return (Map<String, Object>)baseServiceImpl.get(map);
 	}
+
+
+	/**
+	 *  取得Job运行履历
+	 *
+	 * @param map
+	 * @return List<Map<String,Object>>
+	 * 		运行履历
+	 */
+	public List<Map<String,Object>> getJobFailureRunHistory(Map<String, Object> map) {
+		Map<String, Object> parameterMap = new HashMap<String, Object>();
+		parameterMap.putAll(map);
+		parameterMap.put(CherryConstants.IBATIS_SQL_ID, "BINBECM01.getJobFailureRunHistory");
+		return baseServiceImpl.getList(parameterMap);
+	}
 }

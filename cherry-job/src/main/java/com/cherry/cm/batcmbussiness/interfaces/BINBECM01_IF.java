@@ -179,4 +179,12 @@ public interface BINBECM01_IF {
 	 * @return 
 	 */
 	public Map<String,Object> mergeJobRunFaildHistory(Map<String, Object> map);
+	/**
+	 *  取得Job运行履历
+	 *
+	 * @param map
+	 * @return List<Map<String,Object>>
+	 * 		运行履历
+	 */
+	public List<Map<String,Object>> getJobFailureRunHistory(Map<String, Object> map);
 }

@@ -135,6 +135,7 @@
 			RunEndTime,
 			Result,
 			Comments,
+			DealFlag,
 		]]>
 			<include refid="BINBECMINC99.insertKeySql" />		
 		<![CDATA[			
@@ -147,6 +148,7 @@
 			#RunEndTime#,
 			#Result#,
 			#Comments#,
+			#DealFlag#,
 		]]>
 			<include refid="BINBECMINC99.insertValueSql" />		
 		<![CDATA[
@@ -325,5 +327,29 @@
 				<include refid="BINOLCMINC99.insertValueSql" />
 			)
 		OUTPUT $$action AS actionResult,inserted.JobCode AS JobCode;
+	</select>
+
+
+	<!-- 取得Job运行履历  -->
+	<select id="getJobFailureRunHistory" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+		<![CDATA[
+			SELECT
+		      A.JobCode
+		      ,A.RunType
+		      ,A.RunStartTime
+		      ,A.RunEndTime
+		      ,A.Result
+		      ,A.Comments
+		      ,B.BrandCode
+			  ,B.BrandNameChinese AS BrandName
+			FROM
+				Tools.BIN_JobRunHistory A
+				INNER JOIN Basis.BIN_BrandInfo B
+				ON B.BIN_OrganizationInfoID = A.BIN_OrganizationInfoID
+			WHERE
+				A.BIN_OrganizationInfoID = #organizationInfoId#
+			AND A.DealFlag = '0'
+			AND (A.Result = 'W' OR A.Result = 'E')
+		]]>
 	</select>
 </sqlMap>

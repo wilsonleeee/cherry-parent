@@ -409,4 +409,14 @@ public class BINBECM01_BL implements BINBECM01_IF{
 	public Map<String,Object> mergeJobRunFaildHistory(Map<String, Object> map){
 		return binbecm01_service.mergeJobRunFaildHistory(map);
 	}
+	/**
+	 *  取得Job运行履历
+	 *
+	 * @param map
+	 * @return List<Map<String,Object>>
+	 * 		运行履历
+	 */
+	public List<Map<String,Object>> getJobFailureRunHistory(Map<String, Object> map) {
+		return binbecm01_service.getJobFailureRunHistory(map);
+	}
 }
