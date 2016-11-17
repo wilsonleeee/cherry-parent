@@ -1,23 +1,11 @@
 package com.webconsole.action;
 
-import java.io.IOException;
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 
 import javax.annotation.Resource;
-import javax.management.MBeanServerConnection;
-import javax.management.MBeanServerInvocationHandler;
-import javax.management.ObjectInstance;
-import javax.management.ObjectName;
-import javax.management.remote.JMXConnector;
-import javax.management.remote.JMXConnectorFactory;
-import javax.management.remote.JMXServiceURL;
 
-import org.apache.activemq.broker.jmx.BrokerViewMBean;
-import org.apache.activemq.broker.jmx.QueueViewMBean;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -26,15 +14,12 @@ import com.cherry.cm.batcmbussiness.interfaces.BINBECM01_IF;
 import com.cherry.cm.cmbeans.UserInfo;
 import com.cherry.cm.core.BaseAction;
 import com.cherry.cm.core.CherryBatchConstants;
-import com.cherry.cm.core.CherryException;
-import com.cherry.cm.core.PropertiesUtil;
 import com.cherry.cm.util.ConvertUtil;
 import com.googlecode.jsonplugin.JSONUtil;
-import com.webconsole.bl.BatchListBL;
 
-public class BatchFailRunHistoryAction extends BaseAction{
+public class ViewBatchFailHistoryAction extends BaseAction{
 
-	protected static final Logger logger = LoggerFactory.getLogger(BatchFailRunHistoryAction.class);
+	protected static final Logger logger = LoggerFactory.getLogger(ViewBatchFailHistoryAction.class);
 	/**
 	 * 
 	 */
