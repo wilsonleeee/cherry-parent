@@ -927,7 +927,7 @@ public class BINOLSSPRM74_BL implements BINOLSSPRM74_IF {
 			if (coupon_list != null && coupon_list.size()>0) {
 				this.insertCoupon(coupon_list, TN);
 			}
-			if (rule_list != null && rule_list.size()>0) {
+			if (result_rule != null && result_rule.size()>0) {
 				this.insertRule(result_rule, TN);
 			}
 			if (cart_list != null && cart_list.size()>0) {
