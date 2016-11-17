@@ -635,9 +635,27 @@ public class BINOLCM99_BL {
 				.get(CherryConstants.ORGANIZATIONINFOID));
 		String brandInfoID = ConvertUtil.getString(map
 				.get(CherryConstants.BRANDINFOID));
+		//共同配置项
+		String configCode = "1032";
+		//获得pageId
+		String nowPageId = ConvertUtil.getString(map.get("pageId"));
+		//如果是订货
+		if("BINOLSTSFH03".equals(nowPageId)){
+			configCode = "1392";
+		}else if("BINOLSTSFH05".equals(nowPageId)){
+			//如果是发货
+			configCode="1393";
+		}
 		// 每页显示行数 系统配置
 		int configValue = CherryUtil.obj2int(binOLCM14_BL.getConfigValue(
-				"1032", organizationInfoID, brandInfoID));
+				configCode, organizationInfoID, brandInfoID));
+		//如果是订货单或者发货单的话
+		if("BINOLSTSFH03".equals(nowPageId) || "BINOLSTSFH05".equals(nowPageId)){
+			//判断是否为0
+			if(0 == configValue){
+				return list;
+			}
+		}
 		if (0 == configValue) {
 			configValue = CherryConstants.NUM_OF_PAGE_DEF;
 		}
