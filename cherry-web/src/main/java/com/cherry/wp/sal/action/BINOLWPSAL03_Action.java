@@ -479,6 +479,7 @@ public class BINOLWPSAL03_Action extends BaseAction implements ModelDriven<BINOL
 			String baCode=ConvertUtil.getString(form.getBaCode());
 			if("".equals(baCode)){
 				ConvertUtil.setResponseByAjax(response, "SALEBACODEERROR");
+				return;
 			}
 			// 销售明细校验
 			String saleDetailListData = ConvertUtil.getString(form.getSaleDetailList());
