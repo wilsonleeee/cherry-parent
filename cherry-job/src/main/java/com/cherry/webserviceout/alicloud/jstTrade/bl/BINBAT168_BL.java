@@ -21,7 +21,7 @@ import com.cherry.cm.util.ConvertUtil;
 import com.cherry.dr.cmbussiness.util.DoubleUtil;
 import com.cherry.mq.mes.common.MessageConstants;
 import com.cherry.webservice.sale.bl.SaleInfoLogic;
-import com.cherry.webserviceout.alicloud.jstTrade.service.BINBAT125_Service;
+import com.cherry.webserviceout.alicloud.jstTrade.service.BINBAT168_Service;
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.collections.MapUtils;
 import org.slf4j.Logger;
@@ -43,15 +43,15 @@ import java.util.Map;
  * @author fxb
  * @version 2016-11-04
  */
-public class BINBAT125_BL {
+public class BINBAT168_BL {
 
-    private static Logger logger = LoggerFactory.getLogger(BINBAT125_BL.class.getName());
+    private static Logger logger = LoggerFactory.getLogger(BINBAT168_BL.class.getName());
 
     @Resource(name = "saleInfoLogic")
     private SaleInfoLogic saleInfoLogic;
 
     @Resource
-    private BINBAT125_Service binbat125_Service;
+    private BINBAT168_Service binbat168_Service;
 
     @Resource(name = "binOLCM18_BL")
     private BINOLCM18_BL binOLCM18_BL;
@@ -69,7 +69,7 @@ public class BINBAT125_BL {
      * @return Map
      * @throws CherryBatchException
      */
-    public int tran_batchBat125(Map<String, Object> paraMap) throws Exception {
+    public int tran_batchBat168(Map<String, Object> paraMap) throws Exception {
 
         // 初始化
         try {
@@ -103,7 +103,7 @@ public class BINBAT125_BL {
     private synchronized void refund2Trade(Map<String, Object> paramMap) throws Exception {
         while (true) {
             //获取需转换的退款单
-            List<Map<String, Object>> refundList = binbat125_Service.getRefundOrders(paramMap);
+            List<Map<String, Object>> refundList = binbat168_Service.getRefundOrders(paramMap);
             if (CollectionUtils.isEmpty(refundList)) {
                 break;
             }
@@ -111,7 +111,7 @@ public class BINBAT125_BL {
             for (Map<String, Object> refundInfo : refundList) {
                 try{
                     //根据天猫退款单的关联主单号查询对应原始订单
-                    Map<String, Object> originalOrder = binbat125_Service.getOriginalOrder(refundInfo);
+                    Map<String, Object> originalOrder = binbat168_Service.getOriginalOrder(refundInfo);
                     if (MapUtils.isEmpty(originalOrder)) {
                         updateESOrderState("2", "查询不到关联的原单信息", ConvertUtil.getString(refundInfo.get("ESOrderMainID")));
                         continue;
@@ -125,10 +125,10 @@ public class BINBAT125_BL {
                     boolean isAllTrans = true;
                     //更早退款明细单
                     List<Map<String, Object>> earlierRefundDetailList = new ArrayList<Map<String, Object>>();
-                    List<Map<String, Object>> earlierRefundList = binbat125_Service.getEarlierRefundOrder(refundInfo);
+                    List<Map<String, Object>> earlierRefundList = binbat168_Service.getEarlierRefundOrder(refundInfo);
                     if (CollectionUtils.isNotEmpty(earlierRefundList)) {
                         for (Map<String, Object> earlierRefundInfo : earlierRefundList) {
-                            List<Map<String, Object>> refundDetail = binbat125_Service.getESOrderDetail(earlierRefundInfo);
+                            List<Map<String, Object>> refundDetail = binbat168_Service.getESOrderDetail(earlierRefundInfo);
                             if (CollectionUtils.isNotEmpty(refundDetail)){
                                 earlierRefundDetailList.addAll(refundDetail);
                             }
@@ -142,9 +142,9 @@ public class BINBAT125_BL {
                     }
 
                     //通过主表ID从订单明细表获取数据
-                    List<Map<String, Object>> detailList = binbat125_Service.getESOrderDetail(originalOrder);
+                    List<Map<String, Object>> detailList = binbat168_Service.getESOrderDetail(originalOrder);
                     //通过退款单主表ID获取退款单的明细
-                    List<Map<String, Object>> refundDetailList = binbat125_Service.getESOrderDetail(refundInfo);
+                    List<Map<String, Object>> refundDetailList = binbat168_Service.getESOrderDetail(refundInfo);
                     if (CollectionUtils.isNotEmpty(earlierRefundDetailList)) {
                         refundDetailList.addAll(0, earlierRefundDetailList);
                     }
@@ -172,10 +172,10 @@ public class BINBAT125_BL {
                     //更新转换状态
                     updateESOrderState("1", "", ConvertUtil.getString(refundInfo.get("ESOrderMainID")));
                 } catch (Exception e) {
-                    binbat125_Service.manualRollback();
+                    binbat168_Service.manualRollback();
                     logger.error(e.getMessage(),e);
                     updateESOrderState("2", "程序发生异常", ConvertUtil.getString(refundInfo.get("ESOrderMainID")));
-                    binbat125_Service.manualCommit();
+                    binbat168_Service.manualCommit();
                 }
             }
 
@@ -204,7 +204,7 @@ public class BINBAT125_BL {
         }
         //更新修改次数
         originalOrder.put("modifyCount",Integer.valueOf(String.valueOf(originalOrder.get("modifyCount")))+1);
-        binbat125_Service.updateESOrderModifyCount(originalOrder);
+        binbat168_Service.updateESOrderModifyCount(originalOrder);
 
         paramMap.put("saleSRtype","3");
         paramMap.put("Ticket_type", "MO");
@@ -270,7 +270,7 @@ public class BINBAT125_BL {
         update_map.put("ESOrderMainID", esOrderMainID);
         update_map.put("convertFlag", convertFlag);
         update_map.put("convertErrMsg", convertErrMsg);
-        binbat125_Service.updateESOrderState(update_map);
+        binbat168_Service.updateESOrderState(update_map);
     }
 
 
@@ -289,7 +289,7 @@ public class BINBAT125_BL {
                     return null;
                 }
                 //验证退款单对应产品信息是否存在
-                Map<String, Object> prtInfo = binbat125_Service.getPrtInfo(refundDetailMap);
+                Map<String, Object> prtInfo = binbat168_Service.getPrtInfo(refundDetailMap);
                 if (MapUtils.isEmpty(prtInfo)) {
                     updateESOrderState("2", "查询不到产品信息" , ConvertUtil.getString(refundDetailMap.get("ESOrderMainID")));
                     return null;
@@ -448,7 +448,7 @@ public class BINBAT125_BL {
         for (int i = 0; i < orderDetailList.size(); i++) {
             Map<String, Object> orderDetail = orderDetailList.get(i);
             //添加产品信息
-            Map<String, Object> prtInfo = binbat125_Service.getPrtInfo(orderDetail);
+            Map<String, Object> prtInfo = binbat168_Service.getPrtInfo(orderDetail);
             if (MapUtils.isNotEmpty(prtInfo)){
                 orderDetail.putAll(prtInfo);
             }
@@ -587,9 +587,9 @@ public class BINBAT125_BL {
     private void setComMap(Map<String, Object> map) {
 
         // 更新程序名
-        map.put(CherryBatchConstants.UPDATEPGM, "BINBAT125");
+        map.put(CherryBatchConstants.UPDATEPGM, "BINBAT168");
         // 作成程序名
-        map.put(CherryBatchConstants.CREATEPGM, "BINBAT125");
+        map.put(CherryBatchConstants.CREATEPGM, "BINBAT168");
         // 作成者
         map.put(CherryBatchConstants.CREATEDBY, CherryBatchConstants.UPDATE_NAME);
         // 更新者

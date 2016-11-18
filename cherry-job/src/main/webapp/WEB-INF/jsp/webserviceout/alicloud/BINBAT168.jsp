@@ -55,7 +55,7 @@ function doBatch(url) {
 	  			  <s:hidden name="brandCode"></s:hidden>
 				  <div class="clearfix" style="margin-top:10px;">
 					  <span class="left">订单ID范围：<s:textfield name="startId"></s:textfield> - <s:textfield name="endId"></s:textfield></span>
-					  <s:url action="BINBAT125_exec" id="execUrl"></s:url>
+					  <s:url action="BINBAT168_exec" id="execUrl"></s:url>
 					  <a class="add" onclick="doBatch('${execUrl }');return false;">
 					  	<span class="ui-icon icon-enable"></span><span class="button-text">执行</span>
 					  </a>

@@ -29,7 +29,7 @@ import java.util.Map;
  *
  * @version  2016-11-04
  */
-public class BINBAT125_Service extends BaseService {
+public class BINBAT168_Service extends BaseService {
 	/**
      * 获取需转换的退款单
      * @param map
@@ -38,7 +38,7 @@ public class BINBAT125_Service extends BaseService {
     public List<Map<String, Object>> getRefundOrders(Map<String, Object> map) {
         Map<String, Object> paramMap = new HashMap<String, Object>();
         paramMap.putAll(map);
-        paramMap.put(CherryBatchConstants.IBATIS_SQL_ID, "BINJSTBAT125.getRefundOrders");
+        paramMap.put(CherryBatchConstants.IBATIS_SQL_ID, "BINBAT168.getRefundOrders");
         return baseServiceImpl.getList(paramMap);
     }
     
@@ -50,7 +50,7 @@ public class BINBAT125_Service extends BaseService {
     public List<Map<String, Object>> getESOrderDetail(Map<String, Object> map) {
         Map<String, Object> paramMap = new HashMap<String, Object>();
         paramMap.putAll(map);
-        paramMap.put(CherryBatchConstants.IBATIS_SQL_ID, "BINJSTBAT125.getESOrderDetail");
+        paramMap.put(CherryBatchConstants.IBATIS_SQL_ID, "BINBAT168.getESOrderDetail");
         return baseServiceImpl.getList(paramMap);
     }
 
@@ -62,7 +62,7 @@ public class BINBAT125_Service extends BaseService {
     public Map<String, Object> getOriginalOrder(Map<String, Object> map) {
         Map<String, Object> paramMap = new HashMap<String, Object>();
         paramMap.putAll(map);
-        paramMap.put(CherryBatchConstants.IBATIS_SQL_ID, "BINJSTBAT125.getOriginalOrder");
+        paramMap.put(CherryBatchConstants.IBATIS_SQL_ID, "BINBAT168.getOriginalOrder");
         return (Map<String, Object>) baseServiceImpl.get(paramMap);
     }
 
@@ -74,7 +74,7 @@ public class BINBAT125_Service extends BaseService {
     public List<Map<String, Object>> getEarlierRefundOrder(Map<String, Object> map) {
         Map<String, Object> paramMap = new HashMap<String, Object>();
         paramMap.putAll(map);
-        paramMap.put(CherryBatchConstants.IBATIS_SQL_ID, "BINJSTBAT125.getEarlierRefundOrder");
+        paramMap.put(CherryBatchConstants.IBATIS_SQL_ID, "BINBAT168.getEarlierRefundOrder");
         return baseServiceImpl.getList(paramMap);
     }
 
@@ -86,21 +86,21 @@ public class BINBAT125_Service extends BaseService {
     public Map<String, Object> getPrtInfo(Map<String, Object> map) {
         Map<String, Object> paramMap = new HashMap<String, Object>();
         paramMap.putAll(map);
-        paramMap.put(CherryBatchConstants.IBATIS_SQL_ID, "BINJSTBAT125.getPrtInfo");
+        paramMap.put(CherryBatchConstants.IBATIS_SQL_ID, "BINBAT168.getPrtInfo");
         return (Map<String, Object>) baseServiceImpl.get(paramMap);
     }
 
     public void updateESOrderState(Map<String, Object> map) {
         Map<String, Object> paramMap = new HashMap<String, Object>();
         paramMap.putAll(map);
-        paramMap.put(CherryBatchConstants.IBATIS_SQL_ID, "BINJSTBAT125.updateESOrderState");
+        paramMap.put(CherryBatchConstants.IBATIS_SQL_ID, "BINBAT168.updateESOrderState");
         baseServiceImpl.update(paramMap);
     }
 
     public void updateESOrderModifyCount(Map<String, Object> map) {
         Map<String, Object> paramMap = new HashMap<String, Object>();
         paramMap.putAll(map);
-        paramMap.put(CherryBatchConstants.IBATIS_SQL_ID, "BINJSTBAT125.updateESOrderModifyCount");
+        paramMap.put(CherryBatchConstants.IBATIS_SQL_ID, "BINBAT168.updateESOrderModifyCount");
         baseServiceImpl.update(paramMap);
     }
 }

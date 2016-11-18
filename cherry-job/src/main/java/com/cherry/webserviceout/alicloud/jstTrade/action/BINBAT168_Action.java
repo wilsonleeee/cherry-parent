@@ -17,7 +17,7 @@ import com.cherry.cm.core.BaseAction;
 import com.cherry.cm.core.CherryBatchConstants;
 import com.cherry.cm.core.CherryBatchException;
 import com.cherry.cm.core.CherryChecker;
-import com.cherry.webserviceout.alicloud.jstTrade.bl.BINBAT125_BL;
+import com.cherry.webserviceout.alicloud.jstTrade.bl.BINBAT168_BL;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -34,14 +34,14 @@ import java.util.Map;
  *
  * @version  2016-11-04
  */
-public class BINBAT125_Action extends BaseAction {
+public class BINBAT168_Action extends BaseAction {
 
 	private static final long serialVersionUID = -2353591036927907349L;
 
-	private static Logger logger = LoggerFactory.getLogger(BINBAT125_Action.class.getName());
+	private static Logger logger = LoggerFactory.getLogger(BINBAT168_Action.class.getName());
 	
-	@Resource(name="binbat125_BL")
-	private BINBAT125_BL binbat125_BL;
+	@Resource(name="binbat168_BL")
+	private BINBAT168_BL binbat168_BL;
 
 	/** 组织Id */
 	private String organizationInfoId;
@@ -119,7 +119,7 @@ public class BINBAT125_Action extends BaseAction {
 	 * @return String
 	 *
 	 */
-	public String binbat125Exec() throws Exception {
+	public String binbat168Exec() throws Exception {
 		// 起始ID
 		startId = startId.trim();
 		// 结束ID
@@ -152,7 +152,7 @@ public class BINBAT125_Action extends BaseAction {
 				map.put("endId", endId);
 			}
 
-			flg = binbat125_BL.tran_batchBat125(map);
+			flg = binbat168_BL.tran_batchBat168(map);
 		} catch (CherryBatchException cbx) {
 			flg = CherryBatchConstants.BATCH_WARNING;
 			logger.info("=============WARN MSG================");
