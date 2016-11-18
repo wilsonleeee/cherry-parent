@@ -43,29 +43,21 @@ public class BINBAT148_BL {
 	
 	/** 打印当前类的日志信息 **/
 	private static CherryBatchLogger logger = new CherryBatchLogger(BINBAT148_BL.class);
-	
+	/** 每批次(页)处理数量 1000 */
+	private final int BATCH_SIZE = 1000;
+	/** 销售主数据每次导出数量:2000条 */
+	private final int UPDATE_SIZE = 2000;
 	/** BATCH处理标志 */
 	private int flag = CherryBatchConstants.BATCH_SUCCESS;
-	
 	/** JOB执行相关共通 IF */
 	@Resource(name="binbecm01_IF")
 	private BINBECM01_IF binbecm01_IF;
-	
 	@Resource
 	private BINBAT148_Service binBAT148_Service;
-	
 	/** 各类编号取号共通BL */
 	@Resource(name="binOLCM15_BL")
 	private BINOLCM15_BL binOLCM15_BL;
-	
-	/** 每批次(页)处理数量 1000 */
-	private final int BATCH_SIZE = 1000;
-	
 	private Map<String, Object> comMap;
-	
-	/** 销售主数据每次导出数量:2000条 */
-	private final int UPDATE_SIZE = 2000;
-	
 	/** 处理总条数 */
 	private int totalCount = 0;
 	/** 插入条数 */
@@ -164,6 +156,7 @@ public class BINBAT148_BL {
 						specialOfferSoluName =  ConvertUtil.getString(cntByCherryBrandMap.get(counterCodeByIF)) + "默认特价产品方案(" + counterCodeByIF + ")"; 
 						
 					}else{
+						faildList.add("柜台编号(" + counterCodeByIF + ")");
 						specialOfferSoluName = counterCodeByIF + "默认特价产品方案(" + counterCodeByIF + ")"; 
 						logger.outLog("柜台信息不存在，柜台编号(" + counterCodeByIF + ")" , CherryBatchConstants.LOGGER_ERROR);
 						flag = CherryBatchConstants.BATCH_WARNING;
@@ -187,10 +180,12 @@ public class BINBAT148_BL {
 							}
 						}
 					} catch(Exception e){
+						faildList.add("柜台编号(" + counterCodeByIF + ")");
 						// 【柜台特价方案导入（标准接口）】处理特价产品方案主表失败。特价产品方案编码：{0}！
 						BatchLoggerDTO batchLoggerDTO = new BatchLoggerDTO();
 						batchLoggerDTO.setCode("EOT00156");
-						batchLoggerDTO.addParam(counterCodeByIF);
+						batchLoggerDTO.addParam(CherryBatchUtil.getString(prtSolutionMap.get(counterCodeByIF)));
+						//batchLoggerDTO.addParam(counterCodeByIF);
 						batchLoggerDTO.setLevel(CherryBatchConstants.LOGGER_ERROR);
 						logger.BatchLogger(batchLoggerDTO, e);
 						flag = CherryBatchConstants.BATCH_WARNING;
@@ -206,7 +201,7 @@ public class BINBAT148_BL {
 						// EOT00157=【柜台特价方案导入（标准接口）】处理特价产品方案与部门关联表失败。特价产品方案编码：({0})，柜台编码：({1})。
 						BatchLoggerDTO batchLoggerDTO = new BatchLoggerDTO();
 						batchLoggerDTO.setCode("EOT00157");
-						batchLoggerDTO.addParam(counterCodeByIF);
+						batchLoggerDTO.addParam(CherryBatchUtil.getString(prtSolutionMap.get(counterCodeByIF)));
 						batchLoggerDTO.addParam(counterCodeByIF);
 						batchLoggerDTO.setLevel(CherryBatchConstants.LOGGER_ERROR);
 						logger.BatchLogger(batchLoggerDTO, e);
@@ -288,6 +283,7 @@ public class BINBAT148_BL {
 						// 查询产品在新后台是否存在
 						int oldPrtId = binBAT148_Service.searchProductId(cntPrtMap);
 						if(oldPrtId == 0){
+							faildList.add("产品编号(" + IFProductId + ")");
 							logger.outLog("产品信息不存在，IFProductId(" + IFProductId + ")" , CherryBatchConstants.LOGGER_ERROR);
 							flag = CherryBatchConstants.BATCH_WARNING;
 							failCount++;
@@ -303,7 +299,7 @@ public class BINBAT148_BL {
 								
 								binBAT148_Service.updIFOffersBySync2(cntPrtMap);
 							}catch(Exception ex){
-								
+								faildList.add("产品编号(" + IFProductId + ")");
 								flag = CherryBatchConstants.BATCH_WARNING;
 								failCount++;								
 								binBAT148_Service.updIFOffersBySync3(cntPrtMap);
@@ -311,7 +307,7 @@ public class BINBAT148_BL {
 								// EOT00158=【柜台特价方案导入（标准接口）】处理写入特价产品方案明细表失败。特价产品方案编码：({0})，柜台编码：({1})，IFProductID：({2})。	
 								BatchLoggerDTO batchLoggerDTO = new BatchLoggerDTO();
 								batchLoggerDTO.setCode("EOT00158");
-								batchLoggerDTO.addParam(cntCodeByIF);
+								batchLoggerDTO.addParam(CherryBatchUtil.getString(prtSolutionMap.get(cntCodeByIF)));
 								batchLoggerDTO.addParam(cntCodeByIF);
 								batchLoggerDTO.addParam(IFProductId);
 								batchLoggerDTO.setLevel(CherryBatchConstants.LOGGER_ERROR);
