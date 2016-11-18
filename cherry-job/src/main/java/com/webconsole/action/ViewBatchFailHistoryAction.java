@@ -38,9 +38,13 @@ public class ViewBatchFailHistoryAction extends BaseAction{
 					.get(CherryBatchConstants.SESSION_USERINFO);
 			// 所属组织
 			map.put(CherryBatchConstants.ORGANIZATIONINFOID, userInfo.getBIN_OrganizationInfoID());
-			
+
 			retMapList = binbecm01_IF.getJobFailureRunHistory(map);
-	        ConvertUtil.setResponseByAjax(response, JSONUtil.serialize(retMapList));			
+			if (retMapList == null || retMapList.isEmpty()) {
+				ConvertUtil.setResponseByAjax(response, "所有Batch正常执行成功！");
+			} else {
+				ConvertUtil.setResponseByAjax(response, JSONUtil.serialize(retMapList));
+			}
 		}catch(Exception ex){
 			logger.error("读取Batch失败履历操作出错：",ex);
 		}finally{
