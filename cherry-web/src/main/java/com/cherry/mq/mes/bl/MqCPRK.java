@@ -273,7 +273,7 @@ public class MqCPRK implements MqReceiver_IF {
 
 				//获取后台逻辑仓库默认仓库
 				Map<String,Object> mapTemp = new HashMap<String,Object>();
-				mapTemp.put("Type",map.get("hasPos"));
+				mapTemp.put("Type","1");//yunPos也是终端一种
 				mapTemp.put("OrderBy","1");
 				List<Map<String,Object>> retList = binOLCM18_BL.getLogicDepotList(mapTemp);
 
@@ -287,7 +287,7 @@ public class MqCPRK implements MqReceiver_IF {
 				logicInventoryInfoMap.put("BIN_BrandInfoID", map.get("brandInfoID"));
 				logicInventoryInfoMap.put("LogicInventoryCode", detailDataMap.get("logicInventoryCode"));
 
-				logicInventoryInfoMap.put("Type", map.get("hasPos"));//老后台或新后台逻辑仓库
+				logicInventoryInfoMap.put("Type", "1");//yunPos也是终端一种
 
 				logicInventoryInfoMap.put("language", null);
 				Map<String, Object> logicInventoryInfo = binOLCM18_BL.getLogicDepotByCode(logicInventoryInfoMap);
