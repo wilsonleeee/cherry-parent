@@ -36,7 +36,7 @@ public class BINCPMEACT05_BL {
 	// 设置batch处理标志
 	private	boolean warningFlag = false;
 
-	private Map<String,List<Map<String,Object>>> subCampMap = new HashMap<>();
+	private Map<String,List<Map<String,Object>>> subCampMap = new HashMap<String,List<Map<String,Object>>>();
 
 	/**
 	 * batch处理会员调整单据
@@ -235,7 +235,7 @@ public class BINCPMEACT05_BL {
 				condType.equals(CampConstants.CAMP_MEB_TYPE_3) ){
 			String searchCode = ConvertUtil.getString(subMap.get("searchCode"));
 			if(!"".equals(searchCode)){
-				Map<String,Object> map = new HashMap<>();
+				Map<String,Object> map = new HashMap<String,Object>();
 				map.put("searchCode",searchCode);
 				map.put("memberId",memberId);
 				Integer count = ser5.getCampMemCount(map);

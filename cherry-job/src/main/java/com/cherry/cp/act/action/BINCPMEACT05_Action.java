@@ -55,7 +55,7 @@ public class BINCPMEACT05_Action extends BaseAction{
 		if(status == 0){
 			status = 1;
 			try {
-				Map<String,Object> map = new HashMap<>();
+				Map<String,Object> map = new HashMap<String,Object>();
 				// 品牌信息ID
 				map.put(CherryBatchConstants.BRANDINFOID, brandInfoId);
 				flag = bincpmeact05_BL.tran_handleOrder(map);
