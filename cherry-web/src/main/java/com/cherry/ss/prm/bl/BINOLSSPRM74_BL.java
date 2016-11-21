@@ -610,34 +610,40 @@ public class BINOLSSPRM74_BL implements BINOLSSPRM74_IF {
 	public List<Map<String,Object>> detail2RuleList(ArrayList<SaleDetailEntity> detail_list,ArrayList<SaleRuleResultEntity> result_list) throws Exception {
 		List<Map<String,Object>> detail_all=new ArrayList<Map<String,Object>>();
 		for(SaleDetailEntity detail:detail_list){
-			//去除TZZK明细行
-			String barcode=detail.getBarcode();
-			if(barcode.contains("TZZK") || barcode.contains("DH")){
-				Map<String,Object> detail_map=new HashMap<String, Object>();
-				detail_map.put("barCode", detail.getBarcode());
-				detail_map.put("unitCode", detail.getUnitcode());
-				detail_map.put("quantity", detail.getQuantity());
-				detail_map.put("salePrice", detail.getPrice());
-				detail_map.put("price", "0");
-				detail_map.put("type", detail.getType());
-				detail_map.put("maincode", detail.getMaincode());
-				detail_map.put("activitycode", detail.getActivitycode());
-				detail_map.put("mainname", detail.getMainname());
-				detail_map.put("ItemTag", detail.getItemTag());
-				detail_map.put("discount", detail.getDiscount());
-				detail_map.put("productId", detail.getProductid());
-				detail_map.put("nameTotal", detail.getProname());
-				detail_map.put("mainitem_tag", detail.getMainitem_tag());
-				detail_map.put("new_flag", detail.getNew_flag());
-				//通过Maincode匹配活动类型写入数据中
-				String ruleType = null;
-				for(SaleRuleResultEntity result:result_list){
-					if(result.getMaincode().equals(detail.getMaincode())){
-						ruleType=result.getActivityType();
+			String type=detail.getType();
+			//不处理代金券数据
+			if("P".equals(type) || "N".equals(type)){
+				//去除TZZK明细行
+				String barcode=detail.getBarcode();
+				if(barcode.contains("TZZK") || barcode.contains("DH")){
+					Map<String,Object> detail_map=new HashMap<String, Object>();
+					detail_map.put("barCode", detail.getBarcode());
+					detail_map.put("unitCode", detail.getUnitcode());
+					detail_map.put("quantity", detail.getQuantity());
+					detail_map.put("salePrice", detail.getPrice());
+					detail_map.put("price", "0");
+					detail_map.put("type", detail.getType());
+					detail_map.put("maincode", detail.getMaincode());
+					detail_map.put("activitycode", detail.getActivitycode());
+					detail_map.put("mainname", detail.getMainname());
+					detail_map.put("ItemTag", detail.getItemTag());
+					detail_map.put("discount", detail.getDiscount());
+					detail_map.put("productId", detail.getProductid());
+					detail_map.put("nameTotal", detail.getProname());
+					detail_map.put("mainitem_tag", detail.getMainitem_tag());
+					detail_map.put("new_flag", detail.getNew_flag());
+					//通过Maincode匹配活动类型写入数据中
+					String ruleType = null;
+					for(SaleRuleResultEntity result:result_list){
+						if(result.getMaincode().equals(detail.getMaincode())){
+							ruleType=result.getActivityType();
+						}
 					}
+					detail_map.put("ruleType", ruleType);
+					detail_all.add(detail_map);
 				}
-				detail_map.put("ruleType", ruleType);
-				detail_all.add(detail_map);
+			}else{
+				continue;
 			}
 		}
 		
