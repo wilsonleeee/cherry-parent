@@ -13,10 +13,7 @@
 
 package com.cherry.ss.prm.action;
 
-import java.util.Date;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 import javax.annotation.Resource;
 
@@ -272,7 +269,12 @@ public class BINOLSSPRM68_Action extends BaseAction{
 					String authorityFlag = binOLCM14_BL.getConfigValue("1352",
 							ConvertUtil.getString(map.get(CherryConstants.ORGANIZATIONINFOID)),
 							ConvertUtil.getString(map.get(CherryConstants.BRANDINFOID)));
-					if(ConvertUtil.isBlank(opt)&&"1".equals(authorityFlag)){
+					Integer createUser = ConvertUtil.getInt(pageA.get("createUser"));
+					Integer currentUser = ConvertUtil.getInt(map.get("userID"));
+					//开启活动权限以及当前用户不是创建用户时,一览显示当前用户权限柜台
+					if(ConvertUtil.isBlank(opt)
+							&&"1".equals(authorityFlag)
+							&&(currentUser!=createUser)){
 						String locationType = pageA.get("locationType");
 
 						try {
@@ -287,7 +289,14 @@ public class BINOLSSPRM68_Action extends BaseAction{
 						String palceJson = pageB.get(CampConstants.PLACE_JSON);
 						List<Map<String, Object>> palceList = (List<Map<String, Object>>) JSONUtil
 								.deserialize(palceJson);
-						pageTemp.put(CampConstants.PLACE_JSON, palceList);
+						List<Map<String, Object>> newList = new LinkedList<Map<String, Object>>();
+						for(Map<String, Object> palce : palceList){
+							Object p = palce.get("isParent");
+							if(null == p || !(boolean)p){
+								newList.add(palce);
+							}
+						}
+						pageTemp.put(CampConstants.PLACE_JSON, newList);
 					}
 
 				}else{

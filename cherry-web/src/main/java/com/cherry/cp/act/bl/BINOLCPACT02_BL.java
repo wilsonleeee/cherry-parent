@@ -1,9 +1,6 @@
 package com.cherry.cp.act.bl;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 import javax.annotation.Resource;
 
@@ -260,7 +257,7 @@ public class BINOLCPACT02_BL {
 	public void getUserAuthorityPlace(Map<String,Object> campInfo,Map<String,Object> parMap){
 		String placeType = ConvertUtil.getString(campInfo.get("placeType"));
 		parMap.put("locationType",placeType);
-		List<Map<String,Object>> newPlaceList = new ArrayList<Map<String,Object>>();
+		List<Map<String,Object>> newPlaceList = new LinkedList<Map<String,Object>>();
 		List<Map<String,Object>> userAuthorityList = binolssprm68Bl.getUserAuthorityPlaceList(parMap,placeType);
 		if("0".equals(placeType)){
 			for(Map<String,Object> userPlace : userAuthorityList){
@@ -270,17 +267,27 @@ public class BINOLCPACT02_BL {
 				newPlaceList.add(newPlace);
 			}
 		}else{
+			//将用户权限地点List转为Map
+			Map<Object,Object> userAuthorityMap = new HashMap<Object,Object>();
+			//将userPlace的code,name以key-value放入map
+			for (Map<String,Object> userPlace : userAuthorityList){
+				userAuthorityMap.put(userPlace.get("code"),userPlace.get("name"));
+			}
 			List<Map<String,Object>> placeList = (List<Map<String,Object>>) campInfo.get("campPlaceList");
 			if(CampConstants.LOTION_TYPE_7.equals(placeType)){
 				for(Map<String,Object> placeInfo : placeList){
 					int code = ConvertUtil.getInt(placeInfo.get("id"));
-					for(Map<String,Object> userPlace : userAuthorityList){
-						int userCode = ConvertUtil.getInt(userPlace.get("code"));
-						if(code==userCode){
-							newPlaceList.add(placeInfo);
-							userAuthorityList.remove(userPlace);
-							break;
-						}
+//					for(Map<String,Object> userPlace : userAuthorityList){
+//						int userCode = ConvertUtil.getInt(userPlace.get("code"));
+//						if(code==userCode){
+//							newPlaceList.add(placeInfo);
+//							userAuthorityList.remove(userPlace);
+//							break;
+//						}
+//					}
+					//如果userAuthorityMap包含了地点id,则将该地点信息放入返回List
+					if (userAuthorityMap.containsKey(code)) {
+						newPlaceList.add(placeInfo);
 					}
 				}
 			}else if(CampConstants.LOTION_TYPE_2.equals(placeType)
@@ -290,27 +297,34 @@ public class BINOLCPACT02_BL {
 					||CampConstants.LOTION_TYPE_10.equals(placeType)){
 				for(Map<String,Object> placeInfo : placeList){
 					String code = ConvertUtil.getString(placeInfo.get("placeCode"));
-					for(Map<String,Object> userPlace : userAuthorityList){
-						String userCode = ConvertUtil.getString(userPlace.get("code"));
-						if(code.equals(userCode)){
-							newPlaceList.add(placeInfo);
-							userAuthorityList.remove(userPlace);
-							break;
-						}
+//					for(Map<String,Object> userPlace : userAuthorityList){
+//						String userCode = ConvertUtil.getString(userPlace.get("code"));
+//						if(code.equals(userCode)){
+//							newPlaceList.add(placeInfo);
+//							userAuthorityList.remove(userPlace);
+//							break;
+//						}
+//					}
+					//如果userAuthorityMap包含了地点id,则将该地点信息放入返回List
+					if (userAuthorityMap.containsKey(code)) {
+						newPlaceList.add(placeInfo);
 					}
 				}
 			}else{
 				for(Map<String,Object> placeInfo : placeList){
 					int code = ConvertUtil.getInt(placeInfo.get("placeCode"));
-					for(Map<String,Object> userPlace : userAuthorityList){
-						int userCode = ConvertUtil.getInt(userPlace.get("code"));
-						if(code==userCode){
-							newPlaceList.add(placeInfo);
-							userAuthorityList.remove(userPlace);
-							break;
-						}
+//					for(Map<String,Object> userPlace : userAuthorityList){
+//						int userCode = ConvertUtil.getInt(userPlace.get("code"));
+//						if(code==userCode){
+//							newPlaceList.add(placeInfo);
+//							userAuthorityList.remove(userPlace);
+//							break;
+//						}
+//					}
+					//如果userAuthorityMap包含了地点id,则将该地点信息放入返回List
+					if (userAuthorityMap.containsKey(code)) {
+						newPlaceList.add(placeInfo);
 					}
-
 				}
 			}
 		}

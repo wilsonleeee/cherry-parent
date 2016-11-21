@@ -540,41 +540,54 @@ public class BINOLSSPRM68_BL {
      */
 	public List<Map<String,Object>> getReturnPlaceJson(Map<String,Object> parMap,String locationType) throws Exception{
 		parMap.put("locationType",locationType);
-		List<Map<String,Object>> resultSet = new ArrayList<Map<String,Object>>();
+		List<Map<String,Object>> resultList = new LinkedList<Map<String,Object>>();
   		List<Map<String,Object>> userAuthorityPlaceList = getUserAuthorityPlaceList(parMap,locationType);
 		if("0".equals(locationType)){
-			resultSet.addAll(userAuthorityPlaceList);
+			resultList.addAll(userAuthorityPlaceList);
 		}else{
+			//将用户权限地点list转为map
+			Map<Object,Object> userAuthorityMap = new HashMap<Object,Object>();
+			for (Map<String,Object> userMap :userAuthorityPlaceList){
+				userAuthorityMap.put(userMap.get("code"),userMap.get("name"));
+			}
 			List<Object> activePlaceList = getProRulePlaceList(parMap,locationType);
-			if(CampConstants.LOTION_TYPE_2.equals(locationType)
-					||CampConstants.LOTION_TYPE_4.equals(locationType)
-					||CampConstants.LOTION_TYPE_5.equals(locationType)
-					||CampConstants.LOTION_TYPE_8.equals(locationType)
-					||CampConstants.LOTION_TYPE_10.equals(locationType)){
-				for(Object obj :activePlaceList){
-					String objStr = ConvertUtil.getString(obj);
-					for(Map<String,Object> userMap :userAuthorityPlaceList){
-						if(objStr.equals(ConvertUtil.getString(userMap.get("code")))){
-							userAuthorityPlaceList.remove(userMap);
-							resultSet.add(userMap);
-							break;
-						}
-					}
-				}
-			}else{
-				for(Object obj :activePlaceList){
-					int objInt = ConvertUtil.getInt(obj);
-					for(Map<String,Object> userMap :userAuthorityPlaceList){
-						if(objInt == ConvertUtil.getInt(userMap.get("code"))){
-							userAuthorityPlaceList.remove(userMap);
-							resultSet.add(userMap);
-							break;
-						}
-					}
+//			if(CampConstants.LOTION_TYPE_2.equals(locationType)
+//					||CampConstants.LOTION_TYPE_4.equals(locationType)
+//					||CampConstants.LOTION_TYPE_5.equals(locationType)
+//					||CampConstants.LOTION_TYPE_8.equals(locationType)
+//					||CampConstants.LOTION_TYPE_10.equals(locationType)){
+//				for(Object obj :activePlaceList){
+//					String objStr = ConvertUtil.getString(obj);
+//					for(Map<String,Object> userMap :userAuthorityPlaceList){
+//						if(objStr.equals(ConvertUtil.getString(userMap.get("code")))){
+//							userAuthorityPlaceList.remove(userMap);
+//							resultSet.add(userMap);
+//							break;
+//						}
+//					}
+//				}
+//			}else{
+//				for(Object obj :activePlaceList){
+//					int objInt = ConvertUtil.getInt(obj);
+//					for(Map<String,Object> userMap :userAuthorityPlaceList){
+//						if(objInt == ConvertUtil.getInt(userMap.get("code"))){
+//							userAuthorityPlaceList.remove(userMap);
+//							resultSet.add(userMap);
+//							break;
+//						}
+//					}
+//				}
+//			}
+			for(Object obj :activePlaceList){
+				if (userAuthorityMap.containsKey(obj)){
+					Map<String,Object> userRetMap = new HashMap<String,Object>();
+					userRetMap.put("code",obj);
+					userRetMap.put("name",userAuthorityMap.get(obj));
+					resultList.add(userRetMap);
 				}
 			}
 		}
-		return resultSet;
+		return resultList;
 	}
 
 	/**

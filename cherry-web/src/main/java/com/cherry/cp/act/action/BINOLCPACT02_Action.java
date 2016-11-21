@@ -188,7 +188,13 @@ public class BINOLCPACT02_Action extends BaseAction{
 		subCampInfo = binOLCPACT02_BL.getSubInfo(map);
 		String userAuthorityFlag = ConvertUtil.getString(binOLCM14_BL.getConfigValue("1352",
 				ConvertUtil.getString(map.get("organizationInfoId")),ConvertUtil.getString(map.get("brandInfoId"))));
-		if ("1".equals(userAuthorityFlag)){
+		//活动创建用户Name
+		String createUser = ConvertUtil.getString(subCampInfo.get("createUser"));
+		//当前用户Name
+		String currentUser = ConvertUtil.getString(subCampInfo.get("currentUser"));
+		//活动一览权限开启以及当前用户不是创建用户时
+		if ("1".equals(userAuthorityFlag)
+				&& !currentUser.equals(createUser)){
 			binOLCPACT02_BL.getUserAuthorityPlace(subCampInfo,map);
 		}
 		// 会员活动ID
@@ -217,6 +223,8 @@ public class BINOLCPACT02_Action extends BaseAction{
 		map.put(CherryConstants.BRANDINFOID, userInfo.getBIN_BrandInfoID());
 		// 品牌
 		map.put(CherryConstants.BRAND_NAME, userInfo.getBrandName());
+		// 当前用户Name
+		map.put("currentUser",userInfo.getLoginName());
 		return map;
 	}
 	

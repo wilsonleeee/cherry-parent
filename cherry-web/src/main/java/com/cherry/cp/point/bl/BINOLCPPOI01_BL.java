@@ -147,6 +147,9 @@ public class BINOLCPPOI01_BL {
 			}
 		}else if(PromotionConstants.LOTION_TYPE_ORGANIZATION.equals(locationType) ||
 					PromotionConstants.LOTION_TYPE_ORGANIZATION_COUNTER.equals(locationType)){
+			if(PromotionConstants.LOTION_TYPE_ORGANIZATION_COUNTER.equals(locationType)){//组织并指定柜台
+				map.put("organazition_counter","1");
+			}
 			//取得组织信息
 			List resultList = binOLCPPOI01_Service.getOrganizationInfoList(map);
 			if(null != resultList){
@@ -190,7 +193,7 @@ public class BINOLCPPOI01_BL {
 	/**
 	 * 取得会员等级有效期List
 	 * 
-	 * @param Map
+	 * @param map
 	 *            查询条件
 	 * @return List 会员等级有效期List
 	 */
