@@ -292,7 +292,7 @@ public class BINOLSSPRM68_Action extends BaseAction{
 						List<Map<String, Object>> newList = new LinkedList<Map<String, Object>>();
 						for(Map<String, Object> palce : palceList){
 							Object p = palce.get("isParent");
-							if(null == p || !(boolean)p){
+							if(null == p || !(Boolean)p){
 								newList.add(palce);
 							}
 						}
