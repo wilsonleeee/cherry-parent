@@ -74,7 +74,16 @@ public class BINOLCM02_Service extends BaseService{
 		map.put(CherryConstants.IBATIS_SQL_ID, "BINOLCM02.getProductCount");
 		return baseServiceImpl.getSum(map);
 	}
-	
+
+	/**
+	 * 取得分类树信息
+	 * @param map
+	 * @return
+	 */
+	public List getCategoryTreeInfoList(Map<String, Object> map){
+		map.put(CherryConstants.IBATIS_SQL_ID, "BINOLCM02.getCategoryTreeInfoList");
+		return baseServiceImpl.getList(map);
+	}
 	/**
 	 * 取得产品信息
 	 * @param map

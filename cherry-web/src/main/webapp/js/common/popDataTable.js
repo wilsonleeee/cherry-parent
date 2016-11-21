@@ -1906,6 +1906,7 @@ function popProductDialog(option){
 							{ "sName": "originalBrand"},                // 3
 							{ "sName": "nameTotal"},                    // 4
 							{ "sName": "primaryCategoryBig"},           // 5
+				 			{ "sName": "primaryCategoryMedium"},         // 6
 							{ "sName": "primaryCategorySmall"},         // 6
 							{ "sName": "salePrice"},					// 7
 							{ "sName": "memPrice"},						// 8
@@ -1925,6 +1926,7 @@ function popProductDialog(option){
 					initPopInput(option);
 					bindPopInput(option);
 			}
+
 	 };
 	// 剔除产品方案中的产品时，隐藏barcode列
 
@@ -1972,6 +1974,28 @@ function popProductDialog(option){
 	setDialogSetting($dialog,dialogSetting,option);
 	// 弹出框全选CHECKBOX绑定事件
 	checkAllBind(option);
+	var comboTree;
+	//在这里请求数据就可以了
+	$.ajax({
+		url: "/Cherry/common/BINOLCM02_initTreeCategory?"+getSerializeToken(),
+		type: "post",
+		dataType: "json",
+		success: function (data) {
+			//sourceData = eval("(" + data + ")");
+			comboTree = $('#justAnInputBox').comboTree({
+				source: data,
+				isMultiple: true
+			});
+		},
+		error: function (data) {
+			comboTree = $('#justAnInputBox').comboTree({
+				isMultiple: true
+			});
+		}
+	});
+
+
+
 }
 
 /**

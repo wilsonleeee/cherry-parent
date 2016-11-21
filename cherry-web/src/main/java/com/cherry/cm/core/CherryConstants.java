@@ -419,7 +419,10 @@ public class CherryConstants {
 	
 	/** 弹出datatable 产品信息 **/
 	public static final String POP_PRODUCT_LIST = "popProductInfoList" ;
-	
+
+	/** 分类树 产品信息 **/
+	public static final String CATEGORY_TREE_LIST = "categoryTreeList" ;
+
 	/** 弹出datatable 会员信息 **/
 	public static final String POP_MEMBER_LIST = "popMemberInfoList" ;
 	

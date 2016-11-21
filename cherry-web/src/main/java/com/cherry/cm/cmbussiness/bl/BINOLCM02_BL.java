@@ -173,7 +173,190 @@ public class BINOLCM02_BL {
 		resultMap.put("count", count);
 		return resultMap;
 	}
-	
+
+	public HashMap getCategoryTreeInfoList (Map<String, Object> map) throws Exception{
+		HashMap resultMap = new HashMap();
+		List<Map<String,Object>> categoryTreeResultList = new ArrayList<Map<String, Object>>();
+		List<Map<String,Object>> categoryTreeInfoList = binOLCM02_Service.getCategoryTreeInfoList(map);
+		for (int j = 0; j < categoryTreeInfoList.size(); j++) {
+			Map<String, Object> categoryInfoMap = categoryTreeInfoList.get(j);
+			categoryTreeResultList = initCategoryRelationship(categoryTreeResultList, categoryInfoMap);
+		}
+		resultMap.put(CherryConstants.CATEGORY_TREE_LIST,categoryTreeResultList);
+		return resultMap;
+	}
+	/**
+	 * @param categoryRelationship
+	 * @param productInfo
+	 */
+	public List initCategoryRelationship(List<Map<String, Object>> categoryRelationship, Map<String, Object> productInfo) {
+		Object categoryBigId = productInfo.get("categoryBigId");
+		Object primaryCategoryBig = productInfo.get("primaryCategoryBig");
+		if (categoryBigId != null && primaryCategoryBig != null) {
+			//如果不为空的话,处理该大分类
+			categoryRelationship = initBigCategory(categoryRelationship, productInfo);
+			//得到中分类信息
+			Object categoryMediumId = productInfo.get("categoryMediumId");
+			Object primaryCategoryMedium = productInfo.get("primaryCategoryMedium");
+			if (categoryMediumId != null && primaryCategoryMedium != null) {
+				//如果中分类不为空的话
+				categoryRelationship = initMediumCategory(categoryRelationship, productInfo);
+				Object categorySmallId = productInfo.get("categorySmallId");
+				Object primaryCategorySmall = productInfo.get("primaryCategorySmall");
+				if (categorySmallId != null && primaryCategorySmall != null) {
+					//小分类不为空的话
+					categoryRelationship = initSmallCategory(categoryRelationship, productInfo);
+				}
+			}
+		}
+		return categoryRelationship;
+	}
+	/**
+	 * @param categoryRelationship
+	 * @param productInfo
+	 */
+	public List initBigCategory(List<Map<String, Object>> categoryRelationship, Map<String, Object> productInfo) {
+		Object categoryBigId = productInfo.get("categoryBigId");
+		Object primaryCategoryBig = productInfo.get("primaryCategoryBig");
+		//不为空的话，首先检查是否已经存储了这个大分类
+		if (categoryRelationship != null && categoryRelationship.size() > 0) {
+			//如果存储有大分类的
+			int i = 0;
+			for (i = 0; i < categoryRelationship.size(); i++) {
+				Map<String, Object> relationMap = categoryRelationship.get(i);
+				if (relationMap.get("categoryBigId").toString().equals(categoryBigId.toString())) {
+					//如果已经存储的话，不需要进行存储
+					break;
+				}
+			}
+			if (i == categoryRelationship.size()) {
+				//如果没有这个大分类
+				Map<String, Object> newBigMap = new HashMap<String, Object>();
+				newBigMap.put("categoryBigId", categoryBigId);
+				newBigMap.put("primaryCategoryBig", primaryCategoryBig);
+				categoryRelationship.add(newBigMap);
+			}
+		} else {
+			//如果里面是空的话，直接添加这个大分类就可以了
+			Map<String, Object> newBigMap = new HashMap<String, Object>();
+			newBigMap.put("categoryBigId", categoryBigId);
+			newBigMap.put("primaryCategoryBig", primaryCategoryBig);
+			categoryRelationship = new ArrayList<Map<String, Object>>();
+			categoryRelationship.add(newBigMap);
+		}
+		return categoryRelationship;
+	}
+
+	/**
+	 * @param categoryRelationship
+	 * @param productInfo
+	 */
+	public List initMediumCategory(List<Map<String, Object>> categoryRelationship, Map<String, Object> productInfo) {
+		//得到中分类信息
+		Object categoryMediumId = productInfo.get("categoryMediumId");
+		Object primaryCategoryMedium = productInfo.get("primaryCategoryMedium");
+		//得到大分类信息
+		Object categoryBigId = productInfo.get("categoryBigId");
+		Object primaryBig = productInfo.get("primaryBig");
+		//中分类是不为空的，判断这个中分类是否已经存在于这个大分类下了
+		for (int i = 0; i < categoryRelationship.size(); i++) {
+			Map<String, Object> bigMap = categoryRelationship.get(i);
+			if (bigMap.get("categoryBigId").toString().equals(categoryBigId.toString())) {
+				//找到该中分类所在的大分类,得到大分类下面的中分类
+				List<Map<String, Object>> mediumList = (List) bigMap.get("medium");
+				if (mediumList != null) {
+					//如果里面存储有种分类的话
+					int j = 0;
+					for (j = 0; j < mediumList.size(); j++) {
+						Map<String, Object> mediumMap = mediumList.get(j);
+						if (mediumMap.get("categoryMediumId").toString().equals(categoryMediumId.toString())) {
+							//如果有存储这个中分类的情况下
+							break;
+						}
+					}
+					if (j == mediumList.size()) {
+						//如果没有存储的话
+						Map<String, Object> mediumMap = new HashMap<String, Object>();
+						mediumMap.put("categoryMediumId", categoryMediumId);
+						mediumMap.put("primaryCategoryMedium", primaryCategoryMedium);
+						mediumList.add(mediumMap);
+						//bigMap.put("medium",mediumList);
+					}
+				} else {
+					//如果没有存储的话,直接存储这个中分类
+					Map<String, Object> mediumMap = new HashMap<String, Object>();
+					mediumMap.put("categoryMediumId", categoryMediumId);
+					mediumMap.put("primaryCategoryMedium", primaryCategoryMedium);
+					mediumList = new ArrayList<Map<String, Object>>();
+					mediumList.add(mediumMap);
+					bigMap.put("medium", mediumList);
+				}
+			}
+		}
+		//肯定是可以找得到这个大分类的
+		return categoryRelationship;
+	}
+
+	/**
+	 * @param categoryRelationship
+	 * @param productInfo
+	 */
+	public List initSmallCategory(List<Map<String, Object>> categoryRelationship, Map<String, Object> productInfo) {
+		//得到中分类信息
+		Object categoryMediumId = productInfo.get("categoryMediumId");
+		Object primaryMedium = productInfo.get("primaryMedium");
+		//得到大分类信息
+		Object categoryBigId = productInfo.get("categoryBigId");
+		Object primaryCategoryBig = productInfo.get("primaryCategoryBig");
+		//得到小分类信息
+		Object categorySmallId = productInfo.get("categorySmallId");
+		Object primaryCategorySmall = productInfo.get("primaryCategorySmall");
+		//找到对应的大分类
+		for (int i = 0; i < categoryRelationship.size(); i++) {
+			Map<String, Object> bigMap = categoryRelationship.get(i);
+			if (bigMap.get("categoryBigId").toString().equals(categoryBigId.toString())) {
+				//在该大分类下面，找到对应的中分类
+				List<Map<String, Object>> mediumList = (List) bigMap.get("medium");
+				//mediumList 不可能为空
+				for (int j = 0; j < mediumList.size(); j++) {
+					Map<String, Object> mediumMap = mediumList.get(j);
+					if (mediumMap.get("categoryMediumId").toString().equals(categoryMediumId.toString())) {
+						//找到这个中分类,得到中分类下面的小分类
+						List<Map<String, Object>> smallList = (List) mediumMap.get("small");
+						if (smallList != null && smallList.size() > 0) {
+							//如果里面存储有小分类的话
+							int k = 0;
+							for (k = 0; k < smallList.size(); k++) {
+								Map<String, Object> smallMap = smallList.get(k);
+								if (smallMap.get("categorySmallId").toString().equals(categorySmallId.toString())) {
+									//如果有一样的话,跳过
+									break;
+								}
+							}
+							if (k == smallList.size()) {
+								//如果没有的话
+								Map<String, Object> smallMap = new HashMap<String, Object>();
+								smallMap.put("SmallId", categorySmallId);
+								smallMap.put("primaryCategorySmall", primaryCategorySmall);
+								smallList.add(smallMap);
+							}
+						} else {
+							//如果还没有存储小分类,直接存储即可
+							Map<String, Object> smallMap = new HashMap<String, Object>();
+							smallMap.put("categorySmallId", categorySmallId);
+							smallMap.put("primaryCategorySmall", primaryCategorySmall);
+							smallList = new ArrayList<Map<String, Object>>();
+							smallList.add(smallMap);
+							mediumMap.put("small", smallList);
+						}
+					}
+				}
+				//不存在找到中分类
+			}
+		}
+		//不存在找到大分类的情况
+		return categoryRelationship;
+	}
 	/**
 	 * 取得产品信息
 	 * @param map

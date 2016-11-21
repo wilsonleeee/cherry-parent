@@ -1,10 +1,48 @@
 <%@ page language="java" contentType="text/html; charset=utf-8" pageEncoding="utf-8"%>
 <%@ taglib prefix="s" uri="/struts-tags" %>  
 <s:url id="s_prtSearchUrl" value="/common/BINOLCM02_popPrtDialog" />
+<link rel="stylesheet" href="/Cherry/css/common/combotree.css">
 <script type="text/javascript" src="/Cherry/js/common/popDataTable.js"></script>
+<script type="text/javascript" src="/Cherry/js/common/comboTreePlugin.js"></script>
+<script type="text/javascript" src="/Cherry/js/common/icontains.js"></script>
+<script type="text/javascript">
+
+   /* var comboTree;
+    var sourceData;
+    jQuery(document).ready(function ($) {
+        //在这里请求数据就可以了
+        $.ajax({
+            url: "/Cherry/common/BINOLCM02_initTreeCategory?"+getSerializeToken(),
+            type: "post",
+            dataType: "json",
+            success: function (data) {
+                //sourceData = eval("(" + data + ")");
+                comboTree = $('#justAnInputBox').comboTree({
+                    source: data,
+                    isMultiple: true
+                });
+            },
+            error: function (data) {
+                comboTree = $('#justAnInputBox').comboTree({
+                    isMultiple: true
+                });
+            }
+        });
+    });*/
+
+</script>
 <s:i18n name="">
 
 <div id ="productDialog" class="dialog hide">
+    <div style="width: 50%; float: left;">
+        <div style="width: 20%; float: left;">
+            <s:text name="global.page.categorytree"/>
+        </div>
+        <div style="width: 50%; float: left;">
+            <select id="justAnInputBox" style="width:200px"></select>
+        </div>
+    </div>
+    <div style="width: 50%; float: left;">
 	<input type="text" class="text" value="" id="productDialogSearch"  onKeyup ="datatableFilter(this,22);" maxlength="50"/>
 	<s:if test="param!=null && param!=''">
 		<input class="hide" name="originalBrand" id="param" value="<s:property value='param'/>"/>
@@ -30,6 +68,7 @@
     	<span class="ui-icon icon-search"></span>
     	<span class="button-text"><s:text name="global.page.searchfor"/></span>
     </a>
+    </div>
   	<hr class="space" />
   	<table id="prt_dataTable" cellpadding="0" cellspacing="0" border="0" class="jquery_table2" width="100%">
        <thead>
@@ -45,6 +84,7 @@
                <th><s:text name="global.page.originalBrand"/></th>       <%-- 产品名称--%>
                <th><s:text name="global.page.productname"/></th>       <%-- 产品名称--%>
                <th><s:text name="global.page.classification"/></th>    <%-- 大分类--%>
+               <th><s:text name="global.page.inclassification"/></th><%-- 中分类--%>
                <th><s:text name="global.page.smallclassification"/></th><%-- 小分类--%>
                <th><s:text name="global.page.salePrice"/></th>          <%-- 销售价格--%>
                <th><s:text name="global.page.memPrice"/></th>          <%-- 会员价格--%>

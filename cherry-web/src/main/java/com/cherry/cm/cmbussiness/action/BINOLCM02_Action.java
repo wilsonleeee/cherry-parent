@@ -70,7 +70,8 @@ public class BINOLCM02_Action extends BaseAction implements ModelDriven<BINOLCM0
 	private List<Map<String, Object>> brandCodeListSrh; 
 	/** 分类List */
 	private List<Map<String, Object>> sortListSrh;
-	
+	/**分类树*/
+	private String categoryResult;
 	/**
 	 * 取得促销产品信息
 	 * @return
@@ -495,6 +496,20 @@ public class BINOLCM02_Action extends BaseAction implements ModelDriven<BINOLCM0
 		form.setIsPosCloud(isPosCloud);;
 		return SUCCESS;
 	}
+
+	/**
+	 * 初始化产品分类信息弹出框
+	 * @return
+	 * @throws Exception
+	 */
+	public void initTreeCategory() throws Exception {
+		Map<String,Object> map = getCommMap();
+		Map<String,Object> resultMap = binOLCM02_BL.getCategoryTreeInfoList(map);
+		List<Map<String,Object>>resultList = (List)resultMap.get(CherryConstants.CATEGORY_TREE_LIST);
+		categoryResult = CherryUtil.obj2Json(resultList);
+		ConvertUtil.setResponseByAjax(response, categoryResult);
+	}
+
 	/**
 	 * 取得产品分类信息弹出框
 	 * @return
@@ -1625,5 +1640,12 @@ public class BINOLCM02_Action extends BaseAction implements ModelDriven<BINOLCM0
 	public void setSortListSrh(List<Map<String, Object>> sortListSrh) {
 		this.sortListSrh = sortListSrh;
 	}
-	
+
+	public String getCategoryResult() {
+		return categoryResult;
+	}
+
+	public void setCategoryResult(String categoryResult) {
+		this.categoryResult = categoryResult;
+	}
 }
