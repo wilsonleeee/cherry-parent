@@ -18,6 +18,7 @@
                    		<input type="hidden" name="pageA.enContinue" value="${pageA.enContinue!'1'}"/>
                    		<input type="hidden" name="pageA.OPT_KBN" value="${pageA.OPT_KBN!}"/>
 						<input type="hidden" name="pageA.mainModify" value="0"/>
+                        <input type="hidden" name="pageA.sendFlag" value="${pageA.sendFlag!}"/>
 						<input type="hidden" name="pageA.updTime" value="${pageA.updTime!}"/>
 						<input type="hidden" name="pageA.modCount" value="${pageA.modCount!}"/>
                    </td>

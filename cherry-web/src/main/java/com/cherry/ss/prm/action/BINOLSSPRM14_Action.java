@@ -62,31 +62,31 @@ public class BINOLSSPRM14_Action extends BaseAction implements ModelDriven<BINOL
 	
 	@Resource
 	private BINOLCM44_BL binOLCM44_BL;
-	
+
 	/** 共通 */
     @Resource
     private BINOLMOCOM01_IF binOLMOCOM01_BL;
-    
+
     /** 系统配置项 共通BL */
 	@Resource(name="binOLCM14_BL")
 	private BINOLCM14_BL binOLCM14_BL;
-	
+
 	@Resource
 	private BINOLSSPRM14_BL binOLSSPRM14_BL;
-	
+
 	@Resource
 	private BINOLCM00_BL binOLCM00_BL;
-	
+
 	@Resource(name="binOLPTJCS04_IF")
 	private BINOLPTJCS04_IF binolptjcs04_IF;
-	
+
 	@Resource
 	private BINOLSSPRM01_BL binolssprm01_BL;
-	
+
 	/**
 	 * 页面初始化
 	 * @return
-	 * @throws Exception 
+	 * @throws Exception
 	 */
 	public String init () throws Exception{
 		// 取得session信息
@@ -100,11 +100,11 @@ public class BINOLSSPRM14_Action extends BaseAction implements ModelDriven<BINOL
 //		form.setSearchPrmEndDate(DateUtil.addDateByDays(CherryConstants.DATE_PATTERN, sysDateStr, Integer.parseInt(PromotionConstants.PRM_ACT_SPACE_OF_TIME)));
 		return SUCCESS;
 	}
-	
+
 	/**
 	 * 活动查询
 	 * @return
-	 * @throws Exception 
+	 * @throws Exception
 	 */
 	public String searchActive () throws Exception{
 		// 取得session信息
@@ -144,13 +144,13 @@ public class BINOLSSPRM14_Action extends BaseAction implements ModelDriven<BINOL
 		// 查询促销活动一览
 		List activeList = binOLSSPRM14_BL.getActiveList(map);
 		// 设定活动信息List
-		form.setActiveInfoList(activeList);	
+		form.setActiveInfoList(activeList);
 		// form表单设置
 		form.setITotalDisplayRecords(count);
 		form.setITotalRecords(count);
 		return "BINOLSSPRM14_1";
 	}
-	
+
 	/**
 	 * 查询日期校验
 	 */
@@ -159,7 +159,7 @@ public class BINOLSSPRM14_Action extends BaseAction implements ModelDriven<BINOL
 		String searchPrmStartDate = form.getSearchPrmStartDate();
 		// 结束时间
 		String searchPrmEndDate = form.getSearchPrmEndDate();
-		
+
 		boolean dateFlag = false;
 		// 如果起始日期不为空
 		if (searchPrmStartDate!=null && !"".equals(searchPrmStartDate)){
@@ -169,7 +169,7 @@ public class BINOLSSPRM14_Action extends BaseAction implements ModelDriven<BINOL
 				dateFlag = true;
 			}
 		}
-		
+
 		// 如果结束日期不为空
 		if (searchPrmEndDate!=null && !"".equals(searchPrmEndDate)){
 			// 不符合日期格式
@@ -178,16 +178,16 @@ public class BINOLSSPRM14_Action extends BaseAction implements ModelDriven<BINOL
 				dateFlag = true;
 			}
 		}
-		
-		
-		
+
+
+
 		// 如果结束日期不为空
 		if (!dateFlag && searchPrmStartDate!=null && !"".equals(searchPrmStartDate) && searchPrmEndDate!=null && !"".equals(searchPrmEndDate)){
 			// 结束日期小于起始日期
 			if (CherryChecker.compareDate(searchPrmEndDate, searchPrmStartDate)<0){
 				this.addActionError(getText("ECM00019",new String[]{getText("ESS00037")}));
 			}
-			
+
 			String filterValue = form.getSSearch();
 			if (filterValue.indexOf("not_start")<0 && filterValue.indexOf("in_progress")<0 && filterValue.indexOf("past_due")<0){
 				String maxDate = DateUtil.addDateByDays(CherryConstants.DATE_PATTERN, searchPrmStartDate, Integer.parseInt(PromotionConstants.PRM_ACT_SPACE_OF_TIME));
@@ -198,7 +198,7 @@ public class BINOLSSPRM14_Action extends BaseAction implements ModelDriven<BINOL
 		}
 		return CherryConstants.GLOBAL_ERROR;
 	}
-	
+
 	/**
 	 * 活动下发
 	 * @throws Exception
@@ -206,10 +206,10 @@ public class BINOLSSPRM14_Action extends BaseAction implements ModelDriven<BINOL
 	public void publicActive () throws Exception{
 		Map<String, Object> msgMap = new HashMap<String, Object>();
 		Map<String, Object> result = null;
-		
+
 		Map<String, Object> map  = this.getSessionInfo();
 		map.put(CherryConstants.BRANDINFOID, map.get("brandInfoID"));
-		
+
 //		String language = ConvertUtil.getString(map.get("language"));
 		String errCode = "0";
 		String errMsg = "";
@@ -229,8 +229,8 @@ public class BINOLSSPRM14_Action extends BaseAction implements ModelDriven<BINOL
 			// 基础数据下发
 			try{
 				// 品牌是否支持促销品下发
-				boolean isPrmIss = binOLCM14_BL.isConfigOpen("1296", 
-						String.valueOf(map.get("organizationInfoId")), 
+				boolean isPrmIss = binOLCM14_BL.isConfigOpen("1296",
+						String.valueOf(map.get("organizationInfoId")),
 						String.valueOf(map.get("brandInfoId")));
 				if(isPrmIss){
 					logger.debug("*********促销品webService下发*********");
@@ -240,13 +240,13 @@ public class BINOLSSPRM14_Action extends BaseAction implements ModelDriven<BINOL
 					}
 				}
 				// 品牌是否支持产品下发
-				boolean isPrtIss = binOLCM14_BL.isConfigOpen("1295", 
-						String.valueOf(map.get("organizationInfoId")), 
+				boolean isPrtIss = binOLCM14_BL.isConfigOpen("1295",
+						String.valueOf(map.get("organizationInfoId")),
 						String.valueOf(map.get("brandInfoId")));
 				if(isPrtIss){
 					logger.debug("*********产品webService下发*********");
 //					result = binolptjcs04_IF.tran_issuedPrt(map);
-					
+
 					//通过WebService进行产品实时下发
 					result = binolptjcs04_IF.tran_issuedPrtByWS(map);
 					if(null == result || ConvertUtil.getInt(result.get("result")) != 0){

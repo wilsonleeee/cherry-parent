@@ -70,7 +70,7 @@ public class BINOLSSPRM68_BL {
 
 	@Resource
 	private CodeTable codeTable;
-	
+
 	public String getBusDate(Map<String, Object> map) {
 		return prm68Ser.getBusDate(map);
 	}
@@ -83,7 +83,7 @@ public class BINOLSSPRM68_BL {
 
 	/**
 	 * 取得活动信息
-	 * 
+	 *
 	 * @param map
 	 * @return
 	 */
@@ -93,7 +93,7 @@ public class BINOLSSPRM68_BL {
 
 	/**
 	 * 取得活动地点JSON
-	 * 
+	 *
 	 * @param palceMap
 	 * @param map
 	 * @return

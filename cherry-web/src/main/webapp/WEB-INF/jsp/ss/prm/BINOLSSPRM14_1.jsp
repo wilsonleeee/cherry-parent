@@ -71,7 +71,7 @@
 				</s:if>
 				<s:if test="%{(userId == ActivitySetBy && #active.validFlag ==1) || ActivitySetBy == 0}">
 					<cherry:show domId="SSPRM0214EDIT">
-						<a href ="<s:if test='null == RuleCode'>${prmActiveUrl}&showType=edit</s:if><s:else>${prmRuleUrl}&opt=2</s:else><s:if test="%{actState == 'past_due' || #active.SendFlag >= 2}">&sendFlag=2</s:if>" 
+						<a href ="<s:if test='null == RuleCode'>${prmActiveUrl}&showType=edit</s:if><s:else>${prmRuleUrl}&opt=2</s:else><s:if test="%{actState == 'in_progress' || actState == 'past_due' || #active.SendFlag >= 2}">&sendFlag=2</s:if>"
 						class="delete" onclick="openWin(this);return false;"><span class="ui-icon icon-edit"></span><span class="button-text"><s:text name="prmEdit"/></span></a>
 					</cherry:show>
 				</s:if>
