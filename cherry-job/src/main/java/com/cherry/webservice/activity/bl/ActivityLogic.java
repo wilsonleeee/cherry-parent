@@ -1,7 +1,9 @@
 package com.cherry.webservice.activity.bl;
 
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.Map;
+import java.util.Set;
 
 import javax.annotation.Resource;
 
@@ -147,9 +149,9 @@ public class ActivityLogic implements CherryMessageHandler_IF{
 			p1.put("RepeatFlag", map.get("repeatFlag"));
 			p1.put("OrderCntCode", map.get("orderCntCode"));
 			if(subCampType.contains("BIR")) {
+				Map<String, Object> p2 = new HashMap<String, Object>();
 				// 修改生日礼单据明细
 				try {
-					Map<String, Object> p2 = new HashMap<String, Object>();
 					// 品牌信息ID
 					p2.put(CherryBatchConstants.BRANDINFOID, brandId);
 					p2.put("memberId", map.get("memId"));
@@ -157,6 +159,27 @@ public class ActivityLogic implements CherryMessageHandler_IF{
 				} catch (Exception e) {
 					logger.info("==修改生日礼单据明细异常==");
 					logger.error("==修改生日礼单据明细异常==" + e.getMessage());
+				}
+				Object billNoSetObj = p2.get("billNoSet");
+				// 下发到终端pos
+				if(null != billNoSetObj){
+					Set<String> billNoSet = (Set<String>)billNoSetObj;
+					Iterator<String> it = billNoSet.iterator();
+					while(it.hasNext()){
+						Map<String, Object> p = new HashMap<String, Object>();
+						p.put(CherryConstants.ORGANIZATIONINFOID, orgId);
+						p.put(CherryConstants.ORG_CODE, map.get("orgCode"));
+						p.put(CherryConstants.BRANDINFOID, brandId);
+						p.put(CherryConstants.BRAND_CODE, brandCode);
+						p.put("sysTime", sysTime);
+						p.put("couponFlag", cm14bl.getConfigValue("1138", orgId,brandId));
+						try{
+							// 发送单据MQ
+							com05IF.sendPOSMQ(p,it.next());
+						} catch (Exception e) {
+							logger.error("**********"+e.getMessage()+"**********",e);
+						}
+					}
 				}
 			}
 			// 生成单据

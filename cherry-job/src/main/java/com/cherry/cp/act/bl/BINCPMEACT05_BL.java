@@ -1,9 +1,6 @@
 package com.cherry.cp.act.bl;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import javax.annotation.Resource;
 import com.cherry.cm.cmbussiness.bl.BINOLCM33_BL;
 import com.cherry.cm.core.CherryBatchConstants;
@@ -55,7 +52,8 @@ public class BINCPMEACT05_BL {
 			for(int memberId : changeMemIdList){
 				//处理会员生日礼
 				try {
-					memLevelChange(memberId,optYear);
+					Set<String> billNoSet = memLevelChange(memberId,optYear);
+					map.put("billNoSet",billNoSet);
 					ser5.manualCommit();
 //					logger.outLog("**************会员："+memberId+" 处理完毕**************");
 					optCount++;
@@ -96,10 +94,12 @@ public class BINCPMEACT05_BL {
 	 * @param memberId
 	 * @return
 	 */
-	private void memLevelChange(int memberId,String optYear) throws Exception{
+	private Set<String> memLevelChange(int memberId, String optYear) throws Exception{
+		Set<String> billNoSet = null;
 		//取得每个会员已参加的会员生日礼单据
 		List<Map<String,Object>> campOrderList = ser5.getMemAllCamp(memberId,optYear);
 		if(null != campOrderList && !campOrderList.isEmpty()){
+			billNoSet = new HashSet<String>();
 			for(Map<String,Object> order : campOrderList){
 				//取得每个活动的查询参数
 				String campCode = ConvertUtil.getString(order.get("campCode"));
@@ -121,6 +121,7 @@ public class BINCPMEACT05_BL {
 								if(null !=prtList && !prtList.isEmpty()){
 									// 更换会员生日礼明细
 									changeOrderInfo(orderId,prtList,subCampCode);
+									billNoSet.add(ConvertUtil.getString(order.get("billNo")));
 									break;
 								}
 							};
@@ -133,6 +134,7 @@ public class BINCPMEACT05_BL {
 		ser5.delMember(memberId);
 		// 将会员等级变化需要调整单据的会员插入到历史表
 		ser5.addHisMember(memberId);
+		return billNoSet;
 	}
 	
 	/**
