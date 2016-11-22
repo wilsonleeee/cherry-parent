@@ -406,21 +406,21 @@ public class BINOLPTJCS05_BL implements BINOLPTJCS05_IF {
 			}
 			if(isAddFlag && CherryConstants.BLANK.equals(price)){
 				price = ProductConstants.DEF_PRICE;
-			}else if (!CherryChecker.isFloatValid(price, 12, 2)) {
+			}else if (!CherryConstants.BLANK.equals(price) && !CherryChecker.isFloatValid(price, 12, 2)) {
 				// 产品价格格式有误
 				throw new CherryException("EBS00034", new String[] {
 						ProductConstants.DATE_SHEET_NAME, "K" + (r + 1) });
 			}
 			if(isAddFlag && CherryConstants.BLANK.equals(standardCost)){
 				standardCost = ProductConstants.DEF_PRICE;
-			}else if (!CherryChecker.isFloatValid(standardCost, 12, 2)) {
+			}else if (!CherryConstants.BLANK.equals(standardCost) && !CherryChecker.isFloatValid(standardCost, 12, 2)) {
 				// 成本价格格式有误
 				throw new CherryException("EBS00034", new String[] {
 						ProductConstants.DATE_SHEET_NAME, "L" + (r + 1) });
 			}
 			if(isAddFlag && CherryConstants.BLANK.equals(orderPrice)){
 				orderPrice = ProductConstants.DEF_PRICE;
-			}else if (!CherryChecker.isFloatValid(orderPrice, 12, 2)) {
+			}else if (!CherryConstants.BLANK.equals(orderPrice) && !CherryChecker.isFloatValid(orderPrice, 12, 2)) {
 				// 采购价格格式有误
 				throw new CherryException("EBS00034", new String[] {
 						ProductConstants.DATE_SHEET_NAME, "M" + (r + 1) });
@@ -434,7 +434,7 @@ public class BINOLPTJCS05_BL implements BINOLPTJCS05_IF {
 				
 				// *****************  WITPOSQA-15895 票 END  *****************
 				
-			}else if (!CherryChecker.isFloatValid(memPrice, 12, 2)) {
+			}else if (!CherryConstants.BLANK.equals(memPrice) && !CherryChecker.isFloatValid(memPrice, 12, 2)) {
 				// 产品价格格式有误
 				throw new CherryException("EBS00034", new String[] {
 						ProductConstants.DATE_SHEET_NAME, "N" + (r + 1) });
