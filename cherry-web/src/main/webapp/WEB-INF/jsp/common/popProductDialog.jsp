@@ -7,39 +7,16 @@
 <script type="text/javascript" src="/Cherry/js/common/icontains.js"></script>
 <script type="text/javascript">
 
-   /* var comboTree;
-    var sourceData;
-    jQuery(document).ready(function ($) {
-        //在这里请求数据就可以了
-        $.ajax({
-            url: "/Cherry/common/BINOLCM02_initTreeCategory?"+getSerializeToken(),
-            type: "post",
-            dataType: "json",
-            success: function (data) {
-                //sourceData = eval("(" + data + ")");
-                comboTree = $('#justAnInputBox').comboTree({
-                    source: data,
-                    isMultiple: true
-                });
-            },
-            error: function (data) {
-                comboTree = $('#justAnInputBox').comboTree({
-                    isMultiple: true
-                });
-            }
-        });
-    });*/
-
 </script>
 <s:i18n name="">
 
 <div id ="productDialog" class="dialog hide">
     <div style="width: 50%; float: left;">
-        <div style="width: 20%; float: left;">
+        <div style="width: 12%; float: left;">
             <s:text name="global.page.categorytree"/>
         </div>
         <div style="width: 50%; float: left;">
-            <select id="justAnInputBox" style="width:200px"></select>
+                <input id="justAnInputBox" style="border: 1px solid rgb(204, 204, 204); width: 200px; height: 18px;">
         </div>
     </div>
     <div style="width: 50%; float: left;">

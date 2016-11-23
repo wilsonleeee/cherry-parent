@@ -35,13 +35,27 @@
         if (this._elemInput.attr('id') === undefined)
             this._elemInput.attr('id', this.comboTreeId + 'Input');
         this.elemInputId = this._elemInput.attr('id');
+
+
         //添加了外面一层的大wapper，涵盖input和按钮和dropdown
         this._elemInput.wrap('<div id="' + this.comboTreeId + 'Wrapper" class="comboTreeWrapper"></div>');
         //给input添加div
         this._elemInput.wrap('<div id="' + this.comboTreeId + 'InputWrapper" class="comboTreeInputWrapper"></div>');
         this._elemWrapper = $('#' + this.comboTreeId + 'Wrapper');
-        this._combox = $('#justAnInputBox');
 
+        this._combox = $('#justAnInputBox');
+        this._elemArrowSpan = $('<span id="arrowWrapper" class="arrowWrapper" ' +
+         'style="position: absolute; top: 0px; height: 22px; width: 22px; right: 0px; ' +
+         'border-left: 1px solid rgb(204, 204, 204);"><span id ="arrow" class="arrow" ' +
+         'style="width: 0px; height: 0px; position: absolute; top: 8px; border-left: ' +
+         '7px solid transparent; border-right: 7px solid transparent; left: 3px; ' +
+         'border-top: 8px solid rgb(100, 100, 100);"></span></span>')
+         this._elemInput.after(this._elemArrowSpan);
+        //增加一个隐藏的与，用来存储选择的结果
+        this._eleHiddenSeleItem = $('<input type="hidden" id="selectedItem" >');
+        this._elemArrowSpan.after(this._eleHiddenSeleItem);
+        this._elemArrowWrapper = $('#arrowWrapper');
+        this._elemArrow = $('#arrow');
         this._elemWrapper.css({width: this._elemInput.outerWidth()});
         //添加dropdownArea
         this._elemWrapper.append('<div id="' + this.comboTreeId + 'DropDownContainer" class="comboTreeDropDownContainer"><div class="comboTreeDropDownContent"></div>');
@@ -58,7 +72,7 @@
         // VARIABLES
         this._selectedItem = {};
         this._selectedItems = [];
-        //这是干嘛的？
+
         this.bindings();
     };
 
@@ -160,7 +174,7 @@
     ComboTree.prototype.bindings = function () {
         var _this = this;
 
-        this._combox.on('click', function (e) {
+        this._elemArrow.on('click', function (e) {
             e.stopPropagation();
             _this.toggleDropDown();
         });
@@ -288,7 +302,7 @@
             title: $(ctItem).text()
         };
 
-        //this.refreshInputVal();
+        this.refreshInputVal();
         this.closeDropDownMenu();
     };
     ComboTree.prototype.multiItemClick = function (ctItem) {
@@ -314,6 +328,9 @@
                     //alert(checkbo);
                     checkbo.attr("checked",false);
                 }
+            }else{
+                this._selectedItems.splice(parseInt(index), 1);
+                $(ctItem).find("input").prop('checked', false);
             }
         }
         else {
@@ -322,7 +339,9 @@
                 //得到所有的孩子
                 var childrens = ctItemParent.find(".comboTreeItemTitle");
                 for(var i = 0;i < childrens.length;i++){
-                    var indexItem = this.isItemInArray(this._selectedItem, this._selectedItems);
+                    //得到title下面的checkbox
+                    var childrenTitle = $(childrens[i]);
+                    var indexItem = this.isItemInArray(childrenTitle, this._selectedItems);
                     //得到title下面的checkbox
                     var childrenTitle = $(childrens[i]);
                     var checkbo = childrenTitle.children("input[type='checkbox']");
@@ -330,16 +349,22 @@
                         id: $(childrenTitle).attr("data-id"),
                         title: $(childrenTitle).text()
                     };
-                    this._selectedItems.push(this._selectedItem_1);
+                    var indexTemp = this.isItemInArray(this._selectedItem_1, this._selectedItems);
+                    if(!indexTemp){
+                        //如果不在的话，再推入
+                        this._selectedItems.push(this._selectedItem_1);
+                    }
                     //alert(checkbo);
                     checkbo.attr("checked",true);
                 }
+            }else{
+                this._selectedItems.push(this._selectedItem);
+                $(ctItem).find("input").prop('checked', true);
             }
-
         }
         //页面产品信息的刷新，发送请求传递参数
-
-        //this.refreshInputVal();
+        this.refreshInputVal();
+        datatableFilter(this._eleHiddenSeleItem,22);
     };
 
     ComboTree.prototype.isItemInArray = function (item, arr) {
@@ -353,19 +378,13 @@
 
     ComboTree.prototype.refreshInputVal = function () {
         var tmpTitle = "";
-
-        if (this.options.isMultiple) {
             for (var i = 0; i < this._selectedItems.length; i++) {
                 tmpTitle += this._selectedItems[i].title;
                 if (i < this._selectedItems.length - 1)
                     tmpTitle += ", ";
             }
-        }
-        else {
-            tmpTitle = this._selectedItem.title;
-        }
-
-        this._elemInput.val(tmpTitle);
+        alert("length:"+this._selectedItems.length+"tempTitle"+tmpTitle);
+        this._eleHiddenSeleItem.val(tmpTitle);
     }
 
     ComboTree.prototype.dropDownMenuHover = function (itemSpan, withScroll) {
@@ -456,7 +475,7 @@
 
 
     ComboTree.prototype.unbind = function () {
-        this._combox.off('click');
+        this._elemArrow.off('click');
         this._elemInput.off('click');
         this._elemItems.off('click');
         this._elemItemsTitle.off('click');

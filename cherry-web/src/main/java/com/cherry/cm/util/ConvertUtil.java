@@ -409,9 +409,18 @@ public class ConvertUtil {
 				+ baseForm.getIDisplayLength());
 		// 如果过滤条件不为空
 		if (null!= baseForm.getSSearch() && !"".equals(baseForm.getSSearch())){
-			paramMap.put("FILTER_VALUE", baseForm.getSSearch().trim());
+			String treeSearch[] = baseForm.getSSearch().split(",");
+			if(treeSearch != null && treeSearch.length > 1){
+				List<String> treeSearchList = new ArrayList<String>();
+				for(int i = 0 ;i < treeSearch.length;i++){
+					treeSearchList.add(treeSearch[i]);
+				}
+				paramMap.put("TREE_FILTER",treeSearchList);
+			}else{
+				paramMap.put("FILTER_VALUE", baseForm.getSSearch().trim());
+			}
 		}
-		
+
 	}
 
 	/**
