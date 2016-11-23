@@ -33,13 +33,13 @@ public class BINBEMQMES05_Service extends BaseService{
 		baseServiceImpl.saveAll(detailDataList, "BINBEMQMES05.addPaperAnswerDetail");	
 	}
 
-	/**
-	 * 会员答卷更新会员回访任务表
-	 * @param map
-	 */
-	public void updateVisitTask(Map<String,Object> map){
-		baseServiceImpl.update(map,"BINBEMQMES05.updateVisitTask");
-	}
+//	/**
+//	 * 会员答卷更新会员回访任务表
+//	 * @param map
+//	 */
+//	public void updateVisitTask(Map<String,Object> map){
+//		baseServiceImpl.update(map,"BINBEMQMES05.updateVisitTask");
+//	}
 
 	/**
 	 * 插入考核答卷信息主表
