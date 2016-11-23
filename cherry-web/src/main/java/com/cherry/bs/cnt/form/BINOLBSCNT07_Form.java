@@ -1,4 +1,7 @@
 package com.cherry.bs.cnt.form;
+
+import com.cherry.cm.form.DataTable_BaseForm;
+
 /*
  * @(#)BINOLBSCNT07_Form.java    1.0 2012-7-1
  *
@@ -11,7 +14,7 @@ package com.cherry.bs.cnt.form;
  * accordance with the terms of the license agreement you entered into
  * with SHANGHAI BINGKUN.
  */
-public class BINOLBSCNT07_Form {
+public class BINOLBSCNT07_Form  extends DataTable_BaseForm {
 
 
 	/**柜台积分计划记录ID **/

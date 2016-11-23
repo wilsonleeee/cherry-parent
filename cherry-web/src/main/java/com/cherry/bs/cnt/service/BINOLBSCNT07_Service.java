@@ -12,7 +12,11 @@
  */
 package com.cherry.bs.cnt.service;
 
+import com.cherry.cm.core.CherryConstants;
 import com.cherry.cm.service.BaseService;
+
+import java.util.List;
+import java.util.Map;
 
 
 /**
@@ -22,6 +26,29 @@ import com.cherry.cm.service.BaseService;
  * @author chenkuan
  */
 public class BINOLBSCNT07_Service extends BaseService {
-	
+
+    /**
+     * 取得柜台积分计划总数
+     *
+     * @param map
+     * @return
+     */
+    public int getCounterPointPlanCount(Map<String, Object> map) {
+
+        map.put(CherryConstants.IBATIS_SQL_ID, "BINOLBSCNT07.getCounterPointPlanCount");
+        return baseServiceImpl.getSum(map);
+    }
+
+    /**
+     * 取得柜台积分计划List
+     *
+     * @param map
+     * @return
+     */
+    public List<Map<String, Object>> getCounterPointPlanList (Map<String, Object> map) {
+
+        map.put(CherryConstants.IBATIS_SQL_ID, "BINOLBSCNT07.getCounterPointPlanList");
+        return baseServiceImpl.getList(map);
+    }
 
 }
