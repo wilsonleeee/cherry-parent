@@ -12,20 +12,14 @@
  */
 package com.cherry.bs.cnt.action;
 
-import com.cherry.bs.cnt.bl.BINOLBSCNT01_BL;
-import com.cherry.bs.cnt.bl.BINOLBSCNT06_BL;
-import com.cherry.bs.cnt.form.BINOLBSCNT01_Form;
-import com.cherry.bs.cnt.form.BINOLBSCNT06_Form;
+import com.cherry.bs.cnt.bl.BINOLBSCNT07_BL;
 import com.cherry.bs.cnt.form.BINOLBSCNT07_Form;
-import com.cherry.bs.common.bl.BINOLBSCOM01_BL;
 import com.cherry.cm.cmbeans.UserInfo;
 import com.cherry.cm.cmbussiness.bl.BINOLCM00_BL;
 import com.cherry.cm.cmbussiness.bl.BINOLCM05_BL;
 import com.cherry.cm.cmbussiness.bl.BINOLCM14_BL;
 import com.cherry.cm.core.BaseAction;
 import com.cherry.cm.core.CherryConstants;
-import com.cherry.cm.core.CherryException;
-import com.cherry.cm.util.CherryUtil;
 import com.cherry.cm.util.ConvertUtil;
 import com.cherry.cm.util.FileUtil;
 import com.cherry.mo.common.interfaces.BINOLMOCOM01_IF;
@@ -33,14 +27,9 @@ import com.googlecode.jsonplugin.JSONException;
 import com.opensymphony.xwork2.ModelDriven;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
 import javax.annotation.Resource;
-import java.io.ByteArrayInputStream;
-import java.io.File;
 import java.io.InputStream;
 import java.io.UnsupportedEncodingException;
-import java.net.URLDecoder;
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -53,14 +42,17 @@ import java.util.Map;
  * @version 1.0 2016.11.23
  */
 public class BINOLBSCNT07_Action extends BaseAction implements ModelDriven<BINOLBSCNT07_Form>{
-	private static final long serialVersionUID = 944446482429999813L;
+
+
+	//打印异常日志
+	private static final Logger logger = LoggerFactory.getLogger(BINOLBSCNT07_Action.class);
 
 	/** 积分计划柜台查询画面Form */
 	private BINOLBSCNT07_Form form = new BINOLBSCNT07_Form();
 
 	/** 积分计划柜台查询画面BL */
 	@Resource
-	private BINOLBSCNT01_BL binOLBSCNT01_BL;
+	private BINOLBSCNT07_BL binOLBSCNT07_BL;
 
 	/** 共通BL */
 	@Resource
@@ -80,6 +72,9 @@ public class BINOLBSCNT07_Action extends BaseAction implements ModelDriven<BINOL
 
 	@Resource
 	private BINOLCM14_BL binOLCM14_BL;
+
+	/** 积分计划柜台List */
+	private List<Map<String, Object>> counterPointPlanList;
 
 	/**
 	 *
@@ -111,114 +106,40 @@ public class BINOLBSCNT07_Action extends BaseAction implements ModelDriven<BINOL
 		} else {
 			// 所属品牌
 			map.put(CherryConstants.BRANDINFOID, userInfo.getBIN_BrandInfoID());
-			// 取得区域List
-			reginList = binolcm00BL.getReginList(map);
-			// 取得渠道List
-			channelList = binolcm00BL.getChannelList(map);
 		}
 
-		//是否支持柜台协同
-		form.setMaintainCoutSynergy(binOLCM14_BL.isConfigOpen("1050", userInfo.getBIN_OrganizationInfoID(), userInfo.getBIN_BrandInfoID()));
 		return SUCCESS;
 	}
 
-	/**
-	 * 根据品牌ID筛选下拉列表
-	 *
-	 */
-	public String filterByBrandInfo() throws Exception {
-
-		Map<String, Object> map = new HashMap<String, Object>();
-		// 登陆用户信息
-		UserInfo userInfo = (UserInfo) session
-				.get(CherryConstants.SESSION_USERINFO);
-		// 语言
-		String language = (String)session.get(CherryConstants.SESSION_LANGUAGE);
-		if(language != null) {
-			map.put(CherryConstants.SESSION_LANGUAGE, language);
-		}
-		// 所属组织
-		map.put(CherryConstants.ORGANIZATIONINFOID, userInfo.getBIN_OrganizationInfoID());
-		// 所属品牌
-		map.put(CherryConstants.BRANDINFOID, form.getBrandInfoId());
-
-		Map<String, Object> resultMap = new HashMap<String, Object>();
-		// 取得区域List
-		resultMap.put("reginList", binolcm00BL.getReginList(map));
-		// 取得渠道List
-		resultMap.put("channelList", binolcm00BL.getChannelList(map));
-
-		ConvertUtil.setResponseByAjax(response, resultMap);
-		return null;
-	}
 
 	/**
+	 * <p>
+	 * 取得柜台积分计划List
+	 * </p>
 	 *
-	 * AJAX积分计划柜台查询处理
-	 *
-	 * @return AJAX返回至dataTable结果页面
+	 * @return
 	 */
 	public String search() throws Exception {
-
-		// 取得参数MAP
-		Map<String, Object> map = getSearchMap();
-		// 柜台总数取得
-		int count = binOLBSCNT01_BL.getCounterCount(map);
-		if(count != 0) {
-			// 取得柜台信息List
-			counterList = binOLBSCNT01_BL.getCounterList(map);
+		try {
+			// 取得参数MAP
+			Map<String, Object> searchMap = getSearchMap();
+			// 取得柜台积分计划总数
+			int count = binOLBSCNT07_BL.getCounterPointPlanCount(searchMap);
+			if(count != 0) {
+				// 取得柜台积分计划List
+				counterPointPlanList = binOLBSCNT07_BL.getCounterPointPlanList(searchMap);
+			}
+			// form表单设置
+			form.setITotalDisplayRecords(count);
+			form.setITotalRecords(count);
+		} catch(Exception e) {
+			logger.error(e.getMessage(), e);
+			// 系统发生异常，请联系管理员
+			this.addActionError(getText("ECM00036"));
+			return CherryConstants.GLOBAL_ACCTION_RESULT;
 		}
-		// form表单设置
-		//是否支持柜台协同
-		form.setMaintainCoutSynergy(binOLCM14_BL
-				.isConfigOpen("1050", ConvertUtil.getInt(map
-						.get(CherryConstants.ORGANIZATIONINFOID)), ConvertUtil
-						.getInt(map.get(CherryConstants.BRANDINFOID))));
-		form.setITotalDisplayRecords(count);
-		form.setITotalRecords(count);
 		// AJAX返回至dataTable结果页面
 		return SUCCESS;
-	}
-
-	/**
-	 * 柜台主管模糊查询
-	 * @throws Exception
-	 */
-	public void getCounterBAS() throws Exception {
-		// 参数MAP
-		Map<String, Object> map = new HashMap<String, Object>();
-		// 登陆用户信息
-		UserInfo userInfo = (UserInfo) session
-				.get(CherryConstants.SESSION_USERINFO);
-		// 所属组织
-		map.put(CherryConstants.ORGANIZATIONINFOID, userInfo.getBIN_OrganizationInfoID());
-		// 所属品牌不存在的场合
-		if(form.getBrandInfoId() == null || "".equals(form.getBrandInfoId())) {
-			// 不是总部的场合
-			if(userInfo.getBIN_BrandInfoID() != CherryConstants.BRAND_INFO_ID_VALUE) {
-				// 所属品牌
-				map.put(CherryConstants.BRANDINFOID, userInfo.getBIN_BrandInfoID());
-			}
-		} else {
-			map.put(CherryConstants.BRANDINFOID, form.getBrandInfoId());
-		}
-		// 语言类型
-		map.put(CherryConstants.SESSION_LANGUAGE, session
-				.get(CherryConstants.SESSION_LANGUAGE));
-		// 用户ID
-		map.put("userId", userInfo.getBIN_UserID());
-		// 业务类型
-		map.put("businessType", "0");
-		// 操作类型
-		map.put("operationType", "1");
-		// 是否带权限查询
-		map.put("privilegeFlag", session.get(CherryConstants.SESSION_PRIVILEGE_FLAG));
-		//显示行数
-		map.put("number", form.getNumber());
-		//柜台主管模糊查询
-		map.put("counterBAS", form.getCounterBAS().trim());
-		String resultStr = binOLBSCNT01_BL.getCounterBAS(map);
-		ConvertUtil.setResponseByAjax(response, resultStr);
 	}
 	/**
 	 *
@@ -246,58 +167,15 @@ public class BINOLBSCNT07_Action extends BaseAction implements ModelDriven<BINOL
 			map.put(CherryConstants.BRANDINFOID, form.getBrandInfoId());
 		}
 		// 语言类型
-		map.put(CherryConstants.SESSION_LANGUAGE, session
-				.get(CherryConstants.SESSION_LANGUAGE));
-		// 柜台号
-		map.put("counterCode", form.getCounterCode());
-		// 柜台中文名称
-		map.put("counterNameIF", form.getCounterNameIF());
-		// 渠道ID
-		map.put("channelId", form.getChannelId());
-		// 柜台状态
-		map.put("status", form.getStatus());
-		// 柜台地址
-		map.put("counterAddress", form.getCounterAddress());
-		// 所属省份
-		map.put("provinceId", form.getProvinceId());
-		// 所属城市
-		map.put("cityId", form.getCityId());
-		// 有效区分
-		map.put("validFlag", form.getValidFlag());
-		//柜台主管
-		map.put("counterBAS", form.getCounterBAS().trim());
-
-		// 用户ID
-		map.put("userId", userInfo.getBIN_UserID());
-		// 业务类型
-		map.put("businessType", "0");
-		// 操作类型
-		map.put("operationType", "1");
-		// 是否带权限查询
-		map.put("privilegeFlag", session.get(CherryConstants.SESSION_PRIVILEGE_FLAG));
-		map.put("busniessPrincipal", form.getBusniessPrincipal());
+		map.put(CherryConstants.SESSION_LANGUAGE, session.get(CherryConstants.SESSION_LANGUAGE));
 		return map;
 	}
 
-	/** 柜台信息List */
-	private List<Map<String, Object>> counterList;
 
 	/** 品牌List */
 	private List<Map<String, Object>> brandInfoList;
 
-	/** 区域List */
-	private List<Map<String, Object>> reginList;
 
-	/** 渠道List */
-	private List<Map<String, Object>> channelList;
-
-	public List<Map<String, Object>> getCounterList() {
-		return counterList;
-	}
-
-	public void setCounterList(List<Map<String, Object>> counterList) {
-		this.counterList = counterList;
-	}
 
 	public List<Map<String, Object>> getBrandInfoList() {
 		return brandInfoList;
@@ -307,21 +185,6 @@ public class BINOLBSCNT07_Action extends BaseAction implements ModelDriven<BINOL
 		this.brandInfoList = brandInfoList;
 	}
 
-	public List<Map<String, Object>> getReginList() {
-		return reginList;
-	}
-
-	public void setReginList(List<Map<String, Object>> reginList) {
-		this.reginList = reginList;
-	}
-
-	public List<Map<String, Object>> getChannelList() {
-		return channelList;
-	}
-
-	public void setChannelList(List<Map<String, Object>> channelList) {
-		this.channelList = channelList;
-	}
 	/**
 	 * 导出Excel
 	 * @throws JSONException
@@ -333,7 +196,7 @@ public class BINOLBSCNT07_Action extends BaseAction implements ModelDriven<BINOL
 		try {
 			String language = ConvertUtil.getString(searchMap.get(CherryConstants.SESSION_LANGUAGE));
 			downloadFileName = binOLMOCOM01_BL.getResourceValue("BINOLBSCNT01", language, "downloadFileName");
-			setExcelStream(new ByteArrayInputStream(binOLBSCNT01_BL.exportExcel(searchMap)));
+			//setExcelStream(new ByteArrayInputStream(binOLBSCNT01_BL.exportExcel(searchMap)));
 		} catch (Exception e) {
 			this.addActionError(getText("EMO00022"));
 			e.printStackTrace();
@@ -362,5 +225,13 @@ public class BINOLBSCNT07_Action extends BaseAction implements ModelDriven<BINOL
 	@Override
 	public BINOLBSCNT07_Form getModel() {
 		return form;
+	}
+
+	public List<Map<String, Object>> getCounterPointPlanList() {
+		return counterPointPlanList;
+	}
+
+	public void setCounterPointPlanList(List<Map<String, Object>> counterPointPlanList) {
+		this.counterPointPlanList = counterPointPlanList;
 	}
 }
