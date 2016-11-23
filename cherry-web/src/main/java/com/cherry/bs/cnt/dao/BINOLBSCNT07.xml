@@ -1,7 +1,60 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE sqlMap PUBLIC "-//iBATIS.com//DTD SQL Map 2.0//EN" "http://ibatis.apache.org/dtd/sql-map-2.dtd">
 <sqlMap namespace="BINOLBSCNT07">
-	
+
+
+    <!-- 员工信息查询sql文  -->
+    <sql id="counterPointPlanQuery">
+		  SELECT
+            A.BIN_CounterInfoID,
+            A.CounterCode,
+            B.StartDate,
+            B.EndDate,
+            B.CurrentPointLimit,
+            B,Comment,
+            <dynamic>
+                <isNotEmpty property="language">
+                    <isEqual property="language" compareValue="en_US">
+                        D.EmployeeNameForeign AS employeeName,
+                        A.NameForeign AS counterName
+                    </isEqual>
+                    <isEqual property="language" compareValue="zh_CN">
+                        D.EmployeeName AS employeeName,
+                        A.CounterNameIF AS counterName
+                    </isEqual>
+                </isNotEmpty>
+                <isEmpty property="language">
+                    D.EmployeeName AS employeeName,
+                    A.CounterNameIF AS counterName
+                </isEmpty>
+            </dynamic>
+			FROM
+				Basis.BIN_CounterInfo A WITH(NOLOCK)
+                LEFT JOIN Basis.BIN_CounterPointPlan B WITH(NOLOCK)
+                ON A.BIN_OrganizationID = B.BIN_OrganizationID
+                LEFT JOIN Basis.BIN_Employee D WITH(NOLOCK)
+                ON B.UpdatedBy = CONVERT(NVARCHAR(20),D.BIN_EmployeeID)
+        WHERE
+				A.BIN_OrganizationInfoID = #organizationInfoId#
+    </sql>
+
+    <!-- 取得柜台积分计划总数  -->
+    <select id="getCounterPointPlanCount" parameterClass="java.util.HashMap" resultClass="java.lang.Integer">
+        <![CDATA[
+			SELECT	COUNT(SORT_T1.BIN_CounterInfoID) AS count FROM (
+		]]>
+        <include refid="BINOLBSCNT07.counterPointPlanQuery" />
+        <![CDATA[
+			)SORT_T1
+		]]>
+    </select>
+
+    <!-- 取得柜台积分计划List  -->
+    <select id="getCounterPointPlanList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+        <include refid="BINOLCMINC99.pageheader" />
+        <include refid="BINOLBSCNT07.counterPointPlanQuery" />
+        <include refid="BINOLCMINC99.pagefooter" />
+    </select>
 
 	
 </sqlMap>
