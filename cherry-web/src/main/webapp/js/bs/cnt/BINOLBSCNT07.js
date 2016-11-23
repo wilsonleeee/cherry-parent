@@ -2,9 +2,8 @@
 function BINOLBSCNT07() {};
 
 BINOLBSCNT07.prototype = {
-	// 柜台查询
+	// 积分计划柜台查询
 	"search" : function(){
-		var maintainCoutSynergy=$("#maintainCoutSynergy").val();
 		var url = $("#search_url").val();
 		$('#mainForm :input').each(function(){
 			$(this).val($.trim(this.value));
@@ -24,8 +23,17 @@ BINOLBSCNT07.prototype = {
 			url : url,
 			// 表格列属性设置
 			aoColumns : [
-
-				],
+				{ "sName": "checkbox","bSortable": false},
+				{ "sName": "CounterCode"},
+				{ "sName": "CounterName"},
+				{ "sName": "pointPlan"},
+				{ "sName": "explain"},
+				{ "sName": "StartDate"},
+				{ "sName": "EndDate"},
+				{ "sName": "CurrentPointLimit"},
+				{ "sName": "employeeName"},
+				{ "sName": "Comment"}
+			],
 			// 不可设置显示或隐藏的列
 			aiExclude :[0, 1],
 			// 横向滚动条出现的临界宽度

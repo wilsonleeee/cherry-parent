@@ -6,6 +6,8 @@
 
 
 <s:i18n name="i18n.bs.BINOLBSCNT07">
+	<s:url id="search_url" value="BINOLBSCNT07_search"/>
+	<s:hidden name="search_url" value="%{search_url}"/>
 	<s:text name="global.page.select" id="select_default"/>
 	<div class="panel-header">
 		<div class="clearfix">
@@ -37,9 +39,42 @@
 
 				<div class="box-content clearfix">
 					<div class="column" style="width:50%; height: auto;">
-
+						<%-- 柜台名称 --%>
+						<p>
+							<label><s:text name="CNT07.counterNameIF"/></label>
+							<s:textfield name="counterName" cssClass="text"/>
+						</p>
+						<%-- 柜台号 --%>
+						<p>
+							<label><s:text name="CNT07.counterCode"/></label>
+							<s:textfield name="counterCode" cssClass="text"/>
+						</p>
+						<%-- 积分范围 --%>
+						<p>
+							<label><s:text name="CNT07.pointLimit"/></label>
+							<s:textfield name="pointLimitBegin" cssClass="text"/>-<s:textfield name="pointLimitEnd" cssClass="text"/>
+						</p>
 					</div>
 					<div class="column last" style="width:49%; height: auto;">
+						<p>
+							<%-- 积分计划 --%>
+							<label><s:text name="CNT07.pointPlanStatus"/></label>
+							<select name="pointPlanStatus">
+								<option value="0"><s:text name="CNT07.all"/></option>
+								<option value="1" selected><s:text name="CNT07.yes"/></option>
+								<option value="0"><s:text name="CNT07.no"/></option>
+							</select>
+						</p>
+						<p>
+							<%-- 柜台状态 --%>
+							<label><s:text name="CNT07.counterStatus"/></label>
+							<s:select list='#application.CodeTable.getCodes("1030")' listKey="CodeKey" listValue="Value" name="counterStatus" headerKey="" headerValue="%{#select_default}"></s:select>
+						</p>
+							<%-- 积分日期范围(存在交集就查询) --%>
+						<p>
+							<label><s:text name="CNT07.pointDate"/></label>
+							<s:textfield name="pointDateBegin" cssClass="text"/>-<s:textfield name="pointDateEnd" cssClass="text"/>
+						</p>
 
 					</div>
 				</div>
@@ -95,7 +130,24 @@
 					<thead>
 					<tr>
 						<th><input type="checkbox" id="checkAll" onclick="bscom03_checkRecord(this,'#dataTable_Cloned');"/></th>
-
+						<!-- 柜台编号 -->
+						<th><s:text name="CNT07.counterCode"></s:text></th>
+						<!-- 柜台名称 -->
+						<th><s:text name="CNT07.counterName"></s:text></th>
+						<!-- 积分计划 -->
+						<th><s:text name="CNT07.pointPlan"></s:text></th>
+						<!-- 说明 -->
+						<th><s:text name="CNT07.explain"></s:text></th>
+						<!-- 开始日期 -->
+						<th><s:text name="CNT07.startDate"></s:text></th>
+						<!-- 结束日期 -->
+						<th><s:text name="CNT07.endDate"></s:text></th>
+						<!-- 经销商额度 -->
+						<th><s:text name="CNT07.currentPointLimit"></s:text></th>
+						<!-- 修改者 -->
+						<th><s:text name="CNT07.modifier"></s:text></th>
+						<!-- 备注 -->
+						<th><s:text name="CNT07.comment"></s:text></th>
 					</tr>
 					</thead>
 				</table>
