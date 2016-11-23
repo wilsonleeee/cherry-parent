@@ -40,8 +40,7 @@ BINOLMBSVC02_04.prototype = {
 				}, {
 					"sName" : "departName",
 					"sWidth" : "15%",
-					"bSortable" : true,
-					"bVisible" : false
+					"bSortable" : true
 				}, {
 					"sName" : "transactionTime",
 					"sWidth" : "15%",
