@@ -21,7 +21,7 @@
 				</a>
 			</li>
 			<%-- 柜台名称 --%>
-			<li><span><s:property value="CounterName"/></span></li>
+			<li><span><s:property value="counterName"/></span></li>
 
 			<li><span></span></li>
 			<li><span></span></li>

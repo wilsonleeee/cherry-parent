@@ -25,9 +25,9 @@ BINOLBSCNT07.prototype = {
 			aoColumns : [
 				{ "sName": "checkbox","bSortable": false},
 				{ "sName": "CounterCode"},
-				{ "sName": "CounterName"},
-				{ "sName": "pointPlan"},
-				{ "sName": "explain"},
+				{ "sName": "counterName"},
+				{ "sName": "pointPlan","bSortable": false},
+				{ "sName": "explain","bSortable": false},
 				{ "sName": "StartDate"},
 				{ "sName": "EndDate"},
 				{ "sName": "CurrentPointLimit"},

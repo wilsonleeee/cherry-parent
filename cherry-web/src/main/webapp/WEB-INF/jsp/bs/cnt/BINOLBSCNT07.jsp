@@ -60,7 +60,7 @@
 							<%-- 积分计划 --%>
 							<label><s:text name="CNT07.pointPlanStatus"/></label>
 							<select name="pointPlanStatus">
-								<option value="0"><s:text name="CNT07.all"/></option>
+								<option value=""><s:text name="CNT07.all"/></option>
 								<option value="1" selected><s:text name="CNT07.yes"/></option>
 								<option value="0"><s:text name="CNT07.no"/></option>
 							</select>
