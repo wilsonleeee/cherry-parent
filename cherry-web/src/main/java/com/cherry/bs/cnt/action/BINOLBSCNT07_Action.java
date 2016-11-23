@@ -28,6 +28,7 @@ import com.opensymphony.xwork2.ModelDriven;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import javax.annotation.Resource;
+import java.io.ByteArrayInputStream;
 import java.io.InputStream;
 import java.io.UnsupportedEncodingException;
 import java.text.SimpleDateFormat;
@@ -229,15 +230,15 @@ public class BINOLBSCNT07_Action extends BaseAction implements ModelDriven<BINOL
 		// 取得考勤信息List
 		try {
 			String language = ConvertUtil.getString(searchMap.get(CherryConstants.SESSION_LANGUAGE));
-			downloadFileName = binOLMOCOM01_BL.getResourceValue("BINOLBSCNT01", language, "downloadFileName");
-			//setExcelStream(new ByteArrayInputStream(binOLBSCNT01_BL.exportExcel(searchMap)));
+			downloadFileName = binOLMOCOM01_BL.getResourceValue("BINOLBSCNT07", language, "downloadFileName");
+			setExcelStream(new ByteArrayInputStream(binOLBSCNT07_BL.exportExcel(searchMap)));
 		} catch (Exception e) {
 			this.addActionError(getText("EMO00022"));
 			e.printStackTrace();
 			return CherryConstants.GLOBAL_ACCTION_RESULT;
 		}
 
-		return "BINOLBSCNT01_excel";
+		return "BINOLBSCNT07_excel";
 	}
 	public InputStream getExcelStream() {
 		return excelStream;

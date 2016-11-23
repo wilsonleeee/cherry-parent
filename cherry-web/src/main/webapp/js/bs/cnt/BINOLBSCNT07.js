@@ -48,6 +48,23 @@ BINOLBSCNT07.prototype = {
 
 		// 调用获取表格函数
 		getTable(tableSetting);
+	},
+
+	/*
+	 * 导出Excel
+	 */
+	"exportExcel" : function(){
+		//无数据不导出
+		if($(".dataTables_empty:visible").length==0){
+			if (!$('#mainForm').valid()) {
+				return false;
+			};
+			var url = $("#downUrl").attr("href");
+			var params= $("#mainForm").serialize();
+			params = params + "&csrftoken=" +$("#csrftoken").val();
+			url = url + "?" + params;
+			window.open(url,"_self");
+		}
 	}
 
 };

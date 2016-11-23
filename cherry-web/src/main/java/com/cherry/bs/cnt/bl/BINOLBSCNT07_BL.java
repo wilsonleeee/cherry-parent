@@ -18,6 +18,8 @@ import com.cherry.bs.cnt.service.BINOLBSCNT07_Service;
 import javax.annotation.Resource;
 import java.util.List;
 import java.util.Map;
+import com.cherry.mo.common.interfaces.BINOLMOCOM01_IF;
+
 
 /**
  *
@@ -30,6 +32,8 @@ public class BINOLBSCNT07_BL {
 
     @Resource(name = "binOLBSCNT07_Service")
     private BINOLBSCNT07_Service binolbscnt07Service;
+    @Resource
+    private BINOLMOCOM01_IF binOLMOCOM01_BL;
     /**
      * 取得柜台积分计划总数
      *
@@ -53,5 +57,37 @@ public class BINOLBSCNT07_BL {
         // 取得柜台积分计划List
         List<Map<String, Object>> employeeList = binolbscnt07Service.getCounterPointPlanList(map);
         return employeeList;
+    }
+
+    /**
+     * 导出柜台信息Excel
+     *
+     * @param map
+     * @return 返回导出柜台信息List
+     * @throws Exception
+     */
+    @SuppressWarnings("unchecked")
+    public byte[] exportExcel(Map<String, Object> map) throws Exception {
+        List<Map<String, Object>> dataList = binolbscnt07Service.getCounterPointPlanListExcel(map);
+        String[][] array = {
+                { "Cno", "CNT07.number", "15", "", "" },
+                { "counterCode", "CNT07.counterCode", "15", "", "" },
+                { "CounterNameIF", "CNT07.counterName", "20", "", "" },
+                { "Planstatus", "CNT07.pointPlan", "35", "", "" },
+                { "Explain", "CNT07.explain", "15", "", "" },
+                { "StartDate", "CNT07.startDate", "15", "", "" },
+                { "EndDate", "CNT07.endDate", "15", "", "" },
+                { "CurrentPointLimit", "CNT07.currentPointLimit", "15", "", "" },
+                { "ModifyE", "counter.belongFaction", "15", "", "" },
+                { "Comment", "counter.busDistrict", "15","",""}
+
+        };
+        BINOLMOCOM01_IF.ExcelParam ep = new BINOLMOCOM01_IF.ExcelParam();
+        ep.setMap(map);
+        ep.setArray(array);
+        ep.setBaseName("BINOLBSCNT07");
+        ep.setSheetLabel("sheetName");
+        ep.setDataList(dataList);
+        return binOLMOCOM01_BL.getExportExcel(ep);
     }
 }
