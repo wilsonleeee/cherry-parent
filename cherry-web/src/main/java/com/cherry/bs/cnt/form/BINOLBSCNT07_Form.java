@@ -17,6 +17,33 @@ import com.cherry.cm.form.DataTable_BaseForm;
 public class BINOLBSCNT07_Form  extends DataTable_BaseForm {
 
 
+	/**柜台编号 **/
+	private String counterCode;
+
+	/**柜台名称 **/
+	private String counterName;
+
+
+	/**积分开始范围 **/
+	private String pointLimitBegin;
+
+
+	/**积分结束范围 **/
+	private String pointLimitEnd;
+
+	/**是否积分计划 **/
+	private String pointPlanStatus;
+
+
+	/**柜台状态 **/
+	private String counterStatus;
+
+	/**积分开始日期 **/
+	private String pointDateBegin;
+
+	/**积分结束日期 **/
+	private String pointDateEnd;
+
 	/**柜台积分计划记录ID **/
 	private String counterPointPlanId;
 
@@ -43,6 +70,8 @@ public class BINOLBSCNT07_Form  extends DataTable_BaseForm {
 
 	/**有效区分 **/
 	private String validFlag;
+
+
 
 
 	public String getCounterPointPlanId() {
@@ -115,5 +144,69 @@ public class BINOLBSCNT07_Form  extends DataTable_BaseForm {
 
 	public void setValidFlag(String validFlag) {
 		this.validFlag = validFlag;
+	}
+
+	public String getCounterCode() {
+		return counterCode;
+	}
+
+	public void setCounterCode(String counterCode) {
+		this.counterCode = counterCode;
+	}
+
+	public String getCounterName() {
+		return counterName;
+	}
+
+	public void setCounterName(String counterName) {
+		this.counterName = counterName;
+	}
+
+	public String getPointLimitBegin() {
+		return pointLimitBegin;
+	}
+
+	public void setPointLimitBegin(String pointLimitBegin) {
+		this.pointLimitBegin = pointLimitBegin;
+	}
+
+	public String getPointLimitEnd() {
+		return pointLimitEnd;
+	}
+
+	public void setPointLimitEnd(String pointLimitEnd) {
+		this.pointLimitEnd = pointLimitEnd;
+	}
+
+	public String getPointPlanStatus() {
+		return pointPlanStatus;
+	}
+
+	public void setPointPlanStatus(String pointPlanStatus) {
+		this.pointPlanStatus = pointPlanStatus;
+	}
+
+	public String getCounterStatus() {
+		return counterStatus;
+	}
+
+	public void setCounterStatus(String counterStatus) {
+		this.counterStatus = counterStatus;
+	}
+
+	public String getPointDateBegin() {
+		return pointDateBegin;
+	}
+
+	public void setPointDateBegin(String pointDateBegin) {
+		this.pointDateBegin = pointDateBegin;
+	}
+
+	public String getPointDateEnd() {
+		return pointDateEnd;
+	}
+
+	public void setPointDateEnd(String pointDateEnd) {
+		this.pointDateEnd = pointDateEnd;
 	}
 }

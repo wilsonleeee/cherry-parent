@@ -80,7 +80,7 @@
 				</div>
 				<p class="clearfix">
 					<%-- 积分计划柜台查询按钮 --%>
-					<button class="right search" onclick="return false;">
+					<button class="right search" onclick="binolbscnt07.search();return false;">
 						<span class="ui-icon icon-search-big"></span><span class="button-text"><s:text name="global.page.search"/></span>
 					</button>
 				</p>

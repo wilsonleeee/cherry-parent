@@ -168,6 +168,12 @@ public class BINOLBSCNT07_Action extends BaseAction implements ModelDriven<BINOL
 		}
 		// 语言类型
 		map.put(CherryConstants.SESSION_LANGUAGE, session.get(CherryConstants.SESSION_LANGUAGE));
+		map.put("counterCode",form.getCounterCode());
+		map.put("counterName",form.getCounterName());
+		map.put("pointLimitBegin",form.getPointLimitBegin());
+		map.put("pointLimitEnd",form.getPointLimitEnd());
+		map.put("pointPlanStatus",form.getPointPlanStatus());
+		map.put("counterStatus",form.getCounterStatus());
 		return map;
 	}
 
