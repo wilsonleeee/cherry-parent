@@ -128,6 +128,10 @@ public class BINBEMQMES05_BL implements AnalyzeQuestionMessage_IF {
 //	            }
 //	        }
 //		}
+		//更新回访任务表
+		map.put("BIN_PaperAnswerID",paperAnswerID);
+		map.put("visitResult","VISIT_RESULT003");
+		binBEMQMES05_Service.updateVisitTask(map);
 	}
 
 	@Override
