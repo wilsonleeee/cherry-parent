@@ -1,15 +1,15 @@
 package com.cherry.bs.cnt.form;
-/*  
+/*
  * @(#)BINOLBSCNT07_Form.java    1.0 2012-7-1
- *      
- * Copyright (c) 2010 SHANGHAI BINGKUN DIGITAL TECHNOLOGY CO.,LTD       
- * All rights reserved      
- *      
- * This software is the confidential and proprietary information of         
- * SHANGHAI BINGKUN.("Confidential Information").  You shall not        
- * disclose such Confidential Information and shall use it only in      
- * accordance with the terms of the license agreement you entered into      
- * with SHANGHAI BINGKUN.       
+ *
+ * Copyright (c) 2010 SHANGHAI BINGKUN DIGITAL TECHNOLOGY CO.,LTD
+ * All rights reserved
+ *
+ * This software is the confidential and proprietary information of
+ * SHANGHAI BINGKUN.("Confidential Information").  You shall not
+ * disclose such Confidential Information and shall use it only in
+ * accordance with the terms of the license agreement you entered into
+ * with SHANGHAI BINGKUN.
  */
 public class BINOLBSCNT07_Form {
 
