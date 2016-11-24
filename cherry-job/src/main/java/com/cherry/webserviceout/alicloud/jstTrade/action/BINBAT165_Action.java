@@ -1,5 +1,5 @@
 /*	
- * @(#)BINBAT122_Action.java     1.0 @2016-09-26		
+ * @(#)BINBAT165_Action.java     1.0 @2016-09-26
  * 		
  * Copyright (c) 2010 SHANGHAI BINGKUN DIGITAL TECHNOLOGY CO.,LTD		
  * All rights reserved		
@@ -24,7 +24,7 @@ import com.cherry.cm.cmbeans.UserInfo;
 import com.cherry.cm.core.BaseAction;
 import com.cherry.cm.core.CherryBatchConstants;
 import com.cherry.cm.core.CherryBatchException;
-import com.cherry.webserviceout.alicloud.jstTrade.bl.BINBAT122_BL;
+import com.cherry.webserviceout.alicloud.jstTrade.bl.BINBAT165_BL;
 
 /**
 *
@@ -36,14 +36,14 @@ import com.cherry.webserviceout.alicloud.jstTrade.bl.BINBAT122_BL;
 *
 * @version  2016-09-26
 */
-public class BINBAT122_Action extends BaseAction {
+public class BINBAT165_Action extends BaseAction {
 
 	private static final long serialVersionUID = 6060026620408866818L;
 	
-	private static Logger logger = LoggerFactory.getLogger(BINBAT122_Action.class.getName());
+	private static Logger logger = LoggerFactory.getLogger(BINBAT165_Action.class.getName());
 	
-	@Resource(name="binbat122_BL")
-	private BINBAT122_BL binbat122_BL;
+	@Resource(name="binBAT165_BL")
+	private BINBAT165_BL binBAT165_BL;
 	
 	/** 组织Id */
 	private String organizationInfoId;
@@ -123,7 +123,7 @@ public class BINBAT122_Action extends BaseAction {
 			map.put(CherryBatchConstants.ORGANIZATIONINFOID, userInfo.getBIN_OrganizationInfoID());
 			map.put("tradeId", tradeId);
 			
-			flg = binbat122_BL.tran_getTrade(map);
+			flg = binBAT165_BL.tran_getTrade(map);
 		} catch (CherryBatchException cbx) {
 			flg = CherryBatchConstants.BATCH_WARNING;
 			logger.info("=============WARN MSG================");

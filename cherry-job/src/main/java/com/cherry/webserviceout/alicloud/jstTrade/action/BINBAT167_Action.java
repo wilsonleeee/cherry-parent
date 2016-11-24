@@ -25,7 +25,7 @@ import com.cherry.cm.core.BaseAction;
 import com.cherry.cm.core.CherryBatchConstants;
 import com.cherry.cm.core.CherryBatchException;
 import com.cherry.cm.core.CherryChecker;
-import com.cherry.webserviceout.alicloud.jstTrade.bl.BINBAT124_BL;
+import com.cherry.webserviceout.alicloud.jstTrade.bl.BINBAT167_BL;
 
 /**
  *
@@ -36,14 +36,14 @@ import com.cherry.webserviceout.alicloud.jstTrade.bl.BINBAT124_BL;
  *
  * @version  2016-10-27
  */
-public class BINBAT124_Action extends BaseAction {
+public class BINBAT167_Action extends BaseAction {
 
 	private static final long serialVersionUID = -5818624354784540939L;
 	
-	private static Logger logger = LoggerFactory.getLogger(BINBAT124_Action.class.getName());
+	private static Logger logger = LoggerFactory.getLogger(BINBAT167_Action.class.getName());
 	
-	@Resource(name="binbat124_BL")
-	private BINBAT124_BL binbat124_BL;
+	@Resource(name="binBAT167_BL")
+	private BINBAT167_BL binBAT167_BL;
 	
 	/** 组织Id */
 	private String organizationInfoId;
@@ -149,7 +149,7 @@ public class BINBAT124_Action extends BaseAction {
 			map.put("endId", endId);
 			map.put(CherryBatchConstants.ORGANIZATIONINFOID, userInfo.getBIN_OrganizationInfoID());
 			
-			flg = binbat124_BL.tran_batchBat124(map);
+			flg = binBAT167_BL.tran_batchBat124(map);
 		} catch (CherryBatchException cbx) {
 			flg = CherryBatchConstants.BATCH_WARNING;
 			logger.info("=============WARN MSG================");

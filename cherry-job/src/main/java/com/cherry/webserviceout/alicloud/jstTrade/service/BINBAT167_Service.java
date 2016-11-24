@@ -1,5 +1,5 @@
 /*	
- * @(#)BINBAT121_Service.java     1.0 @2015-9-16
+ * @(#)BINBAT167_Service.java     1.0 @2015-9-16
  * 		
  * Copyright (c) 2010 SHANGHAI BINGKUN DIGITAL TECHNOLOGY CO.,LTD		
  * All rights reserved		
@@ -29,7 +29,7 @@ import com.cherry.cm.service.BaseService;
  *
  * @version  2016-10-27
  */
-public class BINBAT124_Service extends BaseService {
+public class BINBAT167_Service extends BaseService {
 	/**
      * 1.从电商订单主表抽取待转换的数据
      * @param map
@@ -38,7 +38,7 @@ public class BINBAT124_Service extends BaseService {
     public List<Map<String, Object>> ESOrderMain(Map<String, Object> map) {
         Map<String, Object> paramMap = new HashMap<String, Object>();
         paramMap.putAll(map);
-        paramMap.put(CherryBatchConstants.IBATIS_SQL_ID, "BINJSTBAT124.getESOrderMain");
+        paramMap.put(CherryBatchConstants.IBATIS_SQL_ID, "BINBAT167.getESOrderMain");
         return baseServiceImpl.getList(paramMap);
     }
     
@@ -50,7 +50,7 @@ public class BINBAT124_Service extends BaseService {
     public List<Map<String, Object>> getESOrderDetail(Map<String, Object> map) {
         Map<String, Object> paramMap = new HashMap<String, Object>();
         paramMap.putAll(map);
-        paramMap.put(CherryBatchConstants.IBATIS_SQL_ID, "BINJSTBAT124.getESOrderDetail");
+        paramMap.put(CherryBatchConstants.IBATIS_SQL_ID, "BINBAT167.getESOrderDetail");
         return baseServiceImpl.getList(paramMap);
     }
     
@@ -62,14 +62,14 @@ public class BINBAT124_Service extends BaseService {
     public Map<String, Object> getPrtInfo(Map<String, Object> map) {
         Map<String, Object> paramMap = new HashMap<String, Object>();
         paramMap.putAll(map);
-        paramMap.put(CherryBatchConstants.IBATIS_SQL_ID, "BINJSTBAT124.getPrtInfo");
+        paramMap.put(CherryBatchConstants.IBATIS_SQL_ID, "BINBAT167.getPrtInfo");
         return (Map<String, Object>) baseServiceImpl.get(paramMap);
     }
     
     public void updateESOrderState(Map<String, Object> map) {
         Map<String, Object> paramMap = new HashMap<String, Object>();
         paramMap.putAll(map);
-        paramMap.put(CherryBatchConstants.IBATIS_SQL_ID, "BINJSTBAT124.updateESOrderState");
+        paramMap.put(CherryBatchConstants.IBATIS_SQL_ID, "BINBAT167.updateESOrderState");
         baseServiceImpl.update(paramMap);
     }
 }

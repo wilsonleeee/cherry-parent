@@ -56,7 +56,7 @@ function doBatch(url) {
 	  			  <s:hidden name="brandCode"></s:hidden>
 				  <div class="clearfix" style="margin-top:10px;">
 				 	<span class="left">订单号：<s:textfield name="tradeId"></s:textfield></span> 
-				  	<s:url action="BINBAT122_exec" id="execUrl"></s:url>
+				  	<s:url action="BINBAT165_exec" id="execUrl"></s:url>
 				  	<a class="add" onclick="doBatch('${execUrl }');return false;">
 					  <span class="ui-icon icon-enable"></span><span class="button-text">执行</span>
 				    </a>	
