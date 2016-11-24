@@ -19,11 +19,15 @@ BINOLBSCNT07.prototype = {
 		var tableSetting = {
 			// 表格ID
 			tableId : '#dataTable',
+			// 排序列
+			aaSorting : [[2, "desc"]],
 			// 数据URL
 			url : url,
 			// 表格列属性设置
 			aoColumns : [
+
 				{ "sName": "checkbox","bSortable": false},
+				{ "sName": "no","sWidth": "1%","bSortable": false},
 				{ "sName": "CounterCode"},
 				{ "sName": "counterName"},
 				{ "sName": "pointPlan","bSortable": false},
@@ -35,11 +39,11 @@ BINOLBSCNT07.prototype = {
 				{ "sName": "Comment"}
 			],
 			// 不可设置显示或隐藏的列
-			aiExclude :[0, 1],
+			aiExcludeArr :[0, 1],
 			// 横向滚动条出现的临界宽度
 			sScrollX : "100%",
 			// 固定列数
-			fixedColumns : 2
+			fixedColumns : 3
 		};
 
 		// 调用获取表格函数

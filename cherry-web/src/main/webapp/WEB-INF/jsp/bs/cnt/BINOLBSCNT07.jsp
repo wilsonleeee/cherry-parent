@@ -3,7 +3,9 @@
 <%@ taglib prefix="cherry" uri="/cherry-tags"%>
 <script type="text/javascript" src="/Cherry/js/bs/common/BINOLBSCOM03.js"></script>
 <script type="text/javascript" src="/Cherry/js/bs/cnt/BINOLBSCNT07.js"></script>
-
+<script type="text/javascript" src="/Cherry/js/common/cherryDate.js"></script>
+<script type="text/javascript" src="/Cherry/js/common/popDataTable.js"></script>
+<script type="text/javascript" src="/Cherry/js/lib/jquery-ui-i18n.js"></script>
 
 <s:i18n name="i18n.bs.BINOLBSCNT07">
 	<s:url id="search_url" value="BINOLBSCNT07_search"/>
@@ -73,7 +75,7 @@
 							<%-- 积分日期范围(存在交集就查询) --%>
 						<p>
 							<label><s:text name="CNT07.pointDate"/></label>
-							<s:textfield name="pointDateBegin" cssClass="text"/>-<s:textfield name="pointDateEnd" cssClass="text"/>
+							<span><s:textfield name="pointDateBegin" cssClass="date"/></span> - <span><s:textfield name="pointDateEnd" cssClass="date"/></span>
 						</p>
 
 					</div>
@@ -130,6 +132,8 @@
 					<thead>
 					<tr>
 						<th><input type="checkbox" id="checkAll" onclick="bscom03_checkRecord(this,'#dataTable_Cloned');"/></th>
+						<!-- 行号 -->
+						<th><s:text name="CNT07.number"></s:text></th>
 						<!-- 柜台编号 -->
 						<th><s:text name="CNT07.counterCode"></s:text></th>
 						<!-- 柜台名称 -->
@@ -171,3 +175,20 @@
 <%-- ================== dataTable共通导入 START ======================= --%>
 <jsp:include page="/WEB-INF/jsp/common/dataTable_i18n.jsp" flush="true" />
 <%-- ================== dataTable共通导入    END  ======================= --%>
+<script type="text/javascript">
+
+	$('#pointDateBegin').cherryDate({
+		beforeShow: function(input){
+			var value = $('#pointDateEnd').val();
+			return [value,'maxDate'];
+		}
+	});
+	$('#pointDateEnd').cherryDate({
+		beforeShow: function(input){
+			var value = $('#pointDateBegin').val();
+			return [value,'minDate'];
+		}
+	});
+
+
+</script>

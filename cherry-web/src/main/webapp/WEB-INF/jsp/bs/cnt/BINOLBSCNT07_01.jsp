@@ -14,6 +14,8 @@
 				<s:hidden name="counterInfoId" value="%{#counterMap.BIN_CounterInfoID}"></s:hidden>
 				<s:hidden name="counterCode" value="%{#counterMap.counterCode}"></s:hidden>
 			</li>
+			<%-- No. --%>
+			<li><s:property value="RowNumber" /></li>
 			<%-- 柜台号 --%>
 			<li>
 				<a href="" class="popup" onclick="javascript:openWin(this);return false;">
