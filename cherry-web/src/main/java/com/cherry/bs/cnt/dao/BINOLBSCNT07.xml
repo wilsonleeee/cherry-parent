@@ -2,6 +2,160 @@
 <!DOCTYPE sqlMap PUBLIC "-//iBATIS.com//DTD SQL Map 2.0//EN" "http://ibatis.apache.org/dtd/sql-map-2.dtd">
 <sqlMap namespace="BINOLBSCNT07">
 
+    <!--更新柜台积分计划设置表 -->
+    <update id="updateCounterPointPlan" parameterClass="java.util.HashMap">
+        UPDATE
+          Basis.BIN_CounterPointPlan
+        SET
+        <isNotEmpty property="startDate" prepend="AND">
+            StartDate = #tartDate#
+        </isNotEmpty>
+        <isNotEmpty property="endDate" prepend="AND">
+            EndDate = #endDate#
+        </isNotEmpty>
+        <isNotEmpty property="pointChange" prepend="AND">
+            CurrentPointLimit = CurrentPointLimit + #pointChange#
+        </isNotEmpty>
+        <isNotEmpty property="comment" prepend="AND">
+            Comment = #comment#
+        </isNotEmpty>
+        <include refid="BINOLCMINC99.updateSql" />
+        <![CDATA[
+        WHERE
+            BIN_OrganizationInfoID = #organizationInfoId# AND
+            BIN_BrandInfoID = #brandInfoId# AND
+            BIN_OrganizationID = #organizationId#
+		]]>
+    </update>
+
+    <!-- 插入柜台积分计划设置表 -->
+    <insert id="insertCounterPointPlan" parameterClass="java.util.HashMap">
+        <selectKey resultClass="java.lang.Integer" type="post" keyProperty="BIN_CounterPointPlanID" >
+            <![CDATA[
+			INSERT INTO
+				Basis.BIN_CounterPointPlan
+				(
+                BIN_OrganizationInfoID,
+		        BIN_BrandInfoID,
+		        BIN_OrganizationID,
+		        StartDate,
+		        EndDate,
+		        CurrentPointLimit,
+		        Comment,
+			]]>
+            <include refid="BINOLCMINC99.insertKeySql" />
+            <![CDATA[
+                )VALUES
+                (
+                 #organizationInfoId#,
+		         #brandInfoId#,
+                 #organizationId#,
+                 #startDate#,
+                 #endDate#,
+                 #currentPointLimit#,
+                 #comment#,
+            ]]>
+            <include refid="BINOLCMINC99.insertValueSql" />
+            <![CDATA[
+				)
+				select SCOPE_IDENTITY() as value
+    	    ]]>
+        </selectKey>
+    </insert>
+
+    <!--更新柜台积分计划设置履历表 -->
+    <update id="updateCounterPointPlanHistory" parameterClass="java.util.HashMap">
+        UPDATE
+          Basis.BIN_CounterPointPlanHistory
+        SET
+          ActualEndTime = #entDate#
+        <include refid="BINOLCMINC99.updateSql" />
+        <![CDATA[
+        WHERE
+            BIN_OrganizationInfoID = #organizationInfoId# AND
+            BIN_BrandInfoID = #brandInfoId# AND
+            BIN_OrganizationID = #organizationId# AND
+            StartTime = #startDate# AND
+            ActualEndTime > #entDate#
+		]]>
+    </update>
+
+    <!-- 插入柜台积分计划设置履历表 -->
+    <insert id="insertCounterPointPlanHistory" parameterClass="java.util.HashMap">
+        <selectKey resultClass="java.lang.Integer" type="post" keyProperty="BIN_CounterPointPlanHistoryID" >
+            <![CDATA[
+			INSERT INTO
+				Basis.BIN_CounterPointPlanHistory
+				(
+                BIN_OrganizationInfoID,
+		        BIN_BrandInfoID,
+		        BIN_OrganizationID,
+		        ModifiedType,
+		        StartDate,
+		        EndDate,
+		        ActualEndTime,
+		        Comments,
+			]]>
+            <include refid="BINOLCMINC99.insertKeySql" />
+            <![CDATA[
+                )VALUES
+                (
+                 #organizationInfoId#,
+		         #brandInfoId#,
+                 #organizationId#,
+                 #modifiedType#,
+                 #startDate#,
+                 #endDate#,
+                 #actualEndTime#,
+                 #comment#,
+            ]]>
+            <include refid="BINOLCMINC99.insertValueSql" />
+            <![CDATA[
+				)
+				select SCOPE_IDENTITY() as value
+    	    ]]>
+        </selectKey>
+    </insert>
+
+    <!-- 插入柜台积分额度明细表 -->
+    <insert id="insertCounterLimitInfo" parameterClass="java.util.HashMap">
+        <selectKey resultClass="java.lang.Integer" type="post" keyProperty="BIN_CounterPointDetailID" >
+            <![CDATA[
+			INSERT INTO
+				Basis.BIN_CounterLimitInfo
+				(
+				BIN_OrganizationID,
+		        TradeType,
+		        BillNo,
+		        TradeTime,
+		        Amount,
+		        PointChange,
+		        BIN_MemberInfoID,
+		        MemberCode,
+		        Comment,
+			]]>
+            <include refid="BINOLCMINC99.insertKeySql" />
+            <![CDATA[
+                )VALUES
+                (
+                 #organizationId#,
+                 #tradeType#,
+                 #billNo#,
+                 #tradeTime#,
+                 #amount#,
+                 #pointChange#,
+                 #memberInfoId#,
+                 #memberCode#,
+                 #comment#,
+            ]]>
+            <include refid="BINOLCMINC99.insertValueSql" />
+            <![CDATA[
+				)
+				select SCOPE_IDENTITY() as value
+    	    ]]>
+        </selectKey>
+    </insert>
+
 
     <!-- 员工信息查询sql文  -->
     <sql id="counterPointPlanQuery">
@@ -9,6 +163,7 @@
             A.BIN_CounterInfoID,
             A.CounterCode,
             B.StartDate,
+            B.BIN_OrganizationID,
             B.EndDate,
             B.CurrentPointLimit,
             B.Comment,
@@ -98,5 +253,21 @@
         <include refid="BINOLCMINC99.pagefooter" />
     </select>
 
-	
+    <!-- 取得根据柜台编号柜台积分计划 -->
+    <select id="getPointPlanByOrganizationId" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+        SELECT TOP 1
+            BIN_OrganizationID,
+            StartDate,
+            EndDate,
+            CurrentPointLimit,
+            Comment
+        FROM
+          Basis.BIN_CounterPointPlan WITH(NOLOCK)
+        WHERE
+          BIN_OrganizationInfoID = #organizationInfoId# AND
+          BIN_BrandInfoID = #brandInfoId# AND
+          BIN_OrganizationID = #organizationId#
+    </select>
+
+
 </sqlMap>

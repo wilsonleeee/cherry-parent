@@ -48,12 +48,110 @@ BINOLBSCNT07.prototype = {
 
 		// 调用获取表格函数
 		getTable(tableSetting);
-	}
+	},
+	/*"operatePointPlan" : function(param,url) {
+		var callback = function(msg) {
+			removeDialog("#dialogInit");
+		};
+		cherryAjaxRequest({
+			url: url,
+			param: param,
+			callback: callback
+		});
+	},*/
+	"operatePointPlanPop" : function(operateType,url) {
+/*		$("#errorMessage").html("");
+		//判断执行结果div是否隐藏
+		if ($('#actionResultDiv').css('display') == 'block') {
+			$('#actionResultDiv').css('display', 'none');
+		}
 
+		var param = "";
+		if ($('#dataTable_Cloned :input[checked]').length == 0) {
+			$("#errorMessage").html($("#EMO00031").html());
+			return false;
+		}
+
+		var callback = function () {
+			if (oTableArr[0] != null)oTableArr[0].fnDraw();
+		};*/
+		//得到所有被选中的员工ID
+		var obj = document.getElementsByName("validFlag");
+		if(obj.size>1){
+			$("#errorMessage").html($("#ECNT001").html());	//只能选择一个柜台进行该操作，请重新选择！
+			return false;
+		}
+
+		var organizationIdArr = document.getElementsByName("organizationId");
+		var startDateArr = document.getElementsByName("startDate");
+		var organizationId = '';
+		var startDate = '';
+
+		for(var k in obj){
+			if(obj[k].checked){
+				organizationId=organizationIdArr[k].value;
+				startDate=startDateArr[k].value;
+			}
+		}
+		var param = "organizationId="+organizationId;
+		var title = '';
+		var operateInitUrl = '';
+		if (operateType == 'enable'){
+			title = $("#enableTitle").text();
+			operateInitUrl = $("#enableInitUrl").attr("href");
+		}else if(operateType == 'disable'){
+			title = $("#disableTitle").text();
+			operateInitUrl = $("#disableInitUrl").attr("href");
+			param = param+"&startDate="+startDate;
+		}else {
+			title = $("#pointChangeTitle").text();
+			operateInitUrl = $("#pointChangeInitUrl").attr("href");
+			param = param+"&startDate="+startDate;
+		}
+
+		var dialogSetting = {
+			dialogInit: "#dialogInit",
+			width: 	480,
+			height: 300,
+			title: 	title,
+			confirm: $("#dialogConfirm").text(),
+			cancel: $("#dialogCancel").text(),
+			confirmEvent: function(){
+				if (operateType == 'enable'){
+					param = param+"&startDate="+$("#startDate").val();
+					alert(param);
+				}else if(operateType == 'disable'){
+					param = param+"&endDate="+$("#endDate").val();
+				}else {
+					param = param+"&pointChange="+$("#pointChange").val()+"&comment="+$("#comment").val();
+				}
+				var callbackOp = function(msg) {
+					removeDialog("#dialogInit");
+				};
+				cherryAjaxRequest({
+					url: url,
+					param: param,
+					callback: callbackOp
+				});
+			},
+			cancelEvent: function(){
+				removeDialog("#dialogInit");
+			}
+		};
+		openDialog(dialogSetting);
+		var callback = function(msg) {
+			$("#dialogInit").html(msg);
+		};
+		cherryAjaxRequest({
+			url: operateInitUrl,
+			param: null,
+			callback: callback,
+			formId: '#mainForm'
+		});
+	}
 };
 
 var binolbscnt07 =  new BINOLBSCNT07();
-
 
 
 $(document).ready(function() {

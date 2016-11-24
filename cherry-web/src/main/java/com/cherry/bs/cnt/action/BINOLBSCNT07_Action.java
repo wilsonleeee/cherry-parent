@@ -20,6 +20,7 @@ import com.cherry.cm.cmbussiness.bl.BINOLCM05_BL;
 import com.cherry.cm.cmbussiness.bl.BINOLCM14_BL;
 import com.cherry.cm.core.BaseAction;
 import com.cherry.cm.core.CherryConstants;
+import com.cherry.cm.util.Bean2Map;
 import com.cherry.cm.util.ConvertUtil;
 import com.cherry.cm.util.FileUtil;
 import com.cherry.mo.common.interfaces.BINOLMOCOM01_IF;
@@ -27,6 +28,7 @@ import com.googlecode.jsonplugin.JSONException;
 import com.opensymphony.xwork2.ModelDriven;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
 import javax.annotation.Resource;
 import java.io.InputStream;
 import java.io.UnsupportedEncodingException;
@@ -78,6 +80,15 @@ public class BINOLBSCNT07_Action extends BaseAction implements ModelDriven<BINOL
 	/** 积分计划柜台List */
 	private List<Map<String, Object>> counterPointPlanList;
 
+	public String enableInit() throws Exception {
+		return SUCCESS;
+	}
+	public String disableInit() throws Exception {
+		return SUCCESS;
+	}
+	public String pointChangeInit() throws Exception {
+		return SUCCESS;
+	}
 	/**
 	 *
 	 * 画面初期显示
@@ -113,6 +124,28 @@ public class BINOLBSCNT07_Action extends BaseAction implements ModelDriven<BINOL
 		return SUCCESS;
 	}
 
+	/**
+	 * 启用柜台积分计划
+	 */
+	public void enablePointPlan() throws Exception {
+		Map<String, Object> paramMap = commonParam();
+		binOLBSCNT07_BL.tran_enablePointPlan(paramMap);
+	}
+
+	/**
+	 * 停用柜台积分计划
+	 */
+	public void disablePointPlan() throws Exception {
+		Map<String, Object> paramMap = commonParam();
+		binOLBSCNT07_BL.tran_disablePointPlan(paramMap);
+	}
+	/**
+	 * 启用柜台积分计划
+	 */
+	public void pointChange() throws Exception {
+		Map<String, Object> paramMap = commonParam();
+		binOLBSCNT07_BL.tran_pointChange(paramMap);
+	}
 
 	/**
 	 * <p>
@@ -182,6 +215,31 @@ public class BINOLBSCNT07_Action extends BaseAction implements ModelDriven<BINOL
 		return map;
 	}
 
+	private Map<String, Object> commonParam() throws Exception {
+		// 参数MAP
+		Map<String, Object> map = (Map<String, Object>) Bean2Map.toHashMap(form);
+		// form参数设置到map中
+		ConvertUtil.setForm(form, map);
+		// 用户信息
+		UserInfo userInfo = (UserInfo) session.get(CherryConstants.SESSION_USERINFO);
+		// 用户ID
+		map.put(CherryConstants.USERID, userInfo.getBIN_EmployeeID());
+		// 所属组织
+		map.put(CherryConstants.ORGANIZATIONINFOID, userInfo.getBIN_OrganizationInfoID());
+		// 语言
+		map.put(CherryConstants.SESSION_LANGUAGE, session.get(CherryConstants.SESSION_LANGUAGE));
+		// 品牌ID
+		map.put(CherryConstants.BRANDINFOID, userInfo.getBIN_BrandInfoID());
+		// 作成者
+		map.put(CherryConstants.CREATEDBY, userInfo.getBIN_EmployeeID());
+		// 更新者
+		map.put(CherryConstants.UPDATEDBY, userInfo.getBIN_EmployeeID());
+		// 作成模块
+		map.put(CherryConstants.CREATEPGM, "BINOLBSCNT07");
+		// 更新模块
+		map.put(CherryConstants.UPDATEPGM, "BINOLBSCNT07");
+		return map;
+	}
 	public String importLimitPlanCounter(){
 		Map<String, Object> map = new HashMap<String, Object>();
 		// 登陆用户信息
