@@ -78,6 +78,13 @@
    	<span id ="prtSearchUrl" style="display:none">${s_prtSearchUrl}</span>
    	<span id ="global_page_ok" style="display:none"><s:text name="global.page.ok"/></span>
    	<span id ="PopProTitle" style="display:none"><s:text name="global.page.PopProTitle"/></span><%--产品信息 --%>
+    <input type="hidden" id="maxCount" value="<s:property value="form.maxCount"></s:property>">
+</div>
+<div class="dialog2 clearfix" style="display:none" id="send_checkinfo_dialog">
+    <p class="clearfix message">
+        <span></span>
+        <img height="15px" class="hide" src="/Cherry/css/cherry/img/loading.gif"/>
+    </p>
 </div>
 <%-- ================== dataTable共通导入 START ======================= --%>
 <jsp:include page="/WEB-INF/jsp/common/dataTable_i18n.jsp" flush="true" />

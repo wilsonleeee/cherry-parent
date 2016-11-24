@@ -336,7 +336,7 @@ public class BINOLCM02_BL {
 							if (k == smallList.size()) {
 								//如果没有的话
 								Map<String, Object> smallMap = new HashMap<String, Object>();
-								smallMap.put("SmallId", categorySmallId);
+								smallMap.put("categorySmallId", categorySmallId);
 								smallMap.put("primaryCategorySmall", primaryCategorySmall);
 								smallList.add(smallMap);
 							}

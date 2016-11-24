@@ -72,6 +72,9 @@
         // VARIABLES
         this._selectedItem = {};
         this._selectedItems = [];
+        this._selectedItems_big = [];
+        this._selectedItem_medium = [];
+        this.selectedItem_small = [];
 
         this.bindings();
     };
@@ -91,7 +94,7 @@
     };
 
     ComboTree.prototype.createSourceSubItemsHTML = function (subItems) {
-        var subItemsHtml = '<UL>';
+        var subItemsHtml = '<UL class="BigUL">';
 
         for (var i = 0; i < subItems.length; i++) {
             subItemsHtml += this.createBigItemHTML(subItems[i]);
@@ -117,7 +120,7 @@
             itemHtml += '<span data-id="' + sourceItem.categoryMediumId + '" class="comboTreeItemTitle">' + sourceItem.primaryCategoryMedium + '</span>';
 
         if (isThereSmall) {
-            itemHtml += "<UL>";
+            itemHtml += '<UL class="SmallUL">';
             //这里需要循环的
             for (var j = 0; j < sourceItem.small.length; j++) {
                 itemHtml += this.createSmallHTML(sourceItem.small[j]);
@@ -158,7 +161,7 @@
             itemHtml += '<span data-id="' + sourceItem.categoryBigId + '" class="comboTreeItemTitle">' + sourceItem.primaryCategoryBig + '</span>';
         if (isThereMedium) {
             //这里需要循环的
-            itemHtml += "<UL>"
+            itemHtml += '<UL class="MediumUL">';
             for (var i = 0; i < sourceItem.medium.length; i++) {
                 itemHtml += this.createMediumHTML(sourceItem.medium[i]);
             }
@@ -313,27 +316,259 @@
         //是否选中了，下标
         var index = this.isItemInArray(this._selectedItem, this._selectedItems);
         //得到选择item所在的li
-        ctItemParent = $(ctItem).parent("li");
+        var ctItemParent = $(ctItem).parent("li");
         if (index){
+            this._selectedItems.splice(parseInt(index), 1);
+            $(ctItem).find("input").prop('checked', false);
+            //先得到ul,有可能是第三，第二也有可能是第一层的
+            var firstUl = ctItemParent.parent("ul");
+            alert(firstUl.val());
+            var attClass = firstUl.attr("class");
+            if(attClass == 'SmallUL'){
+                //得到小层的兄弟
+                var smallLi = ctItemParent.siblings("li");
+                //得到中层li
+                var mediumLi = firstUl.parent("li");
+                //得到中层ul
+                var mediumUl = mediumLi.parent("ul");
+                //得到大层li
+                var bigLi = mediumUl.parent("li");
+                //得到中层span,大层span
+                var meduiumSpan = $(mediumLi.children("span")[1]);
+                var bigSpan = $(bigLi.children("span")[1]);
+                //得到中的index
+                this._mediumSelected = {
+                    id: $(meduiumSpan).attr("data-id"),
+                    title: $(meduiumSpan).text()
+                };
+                this._bigSelected = {
+                    id: $(bigSpan).attr("data-id"),
+                    title: $(bigSpan).text()
+                };
+
+                var mediumIndex = this.isItemInArray(this._mediumSelected, this._selectedItems);
+                var bigIndex = this.isItemInArray(this._bigSelected, this._selectedItems);
+                //看看兄弟下的checkbox有没有选中的
+                var i = 0;
+                for(i =0 ;i < smallLi.length ;i++){
+                    //得到span,input
+                    var smallSpan = $($(smallLi[i]).children("span")[0]);
+                    var smallInput = $(smallSpan.children("input")[0]);
+                    if(smallInput.prop("checked") == true){
+                        //半选中状态加上
+                        $(meduiumSpan.children("input")[0]) .prop("indeterminate",false);
+                        break;
+                    }
+                }
+                if(i == smallLi.length){
+                    //如果没有的话，要将中层的input去除选中
+                    $(meduiumSpan.children("input")[0]).prop('checked', false);
+                    //半选中状态去除
+                    $(meduiumSpan.children("input")[0]) .prop("indeterminate",false);
+                    this._selectedItems.splice(parseInt(mediumIndex), 1);
+                    //得到中层的li兄弟
+                    var mediumLiSib = mediumLi.siblings("li");
+                    //中层兄弟是否有选中的
+                    var j = 0;
+                    for(j =0 ;j < mediumLiSib.length ;j++){
+                        //得到中层span,input
+                        var mediumSpan = $($(mediumLiSib[j]).children("span")[1]);
+                        var mediumInput = $(mediumSpan.children("input")[0]);
+                        if(mediumInput.prop("checked") == true){
+                            //大层的半选中状态增加
+                            $(bigSpan.children("input")[0]).prop('indeterminate',true);
+                            break;
+                        }
+                    }
+                    //如果没有选中的话，
+                    if(j == mediumLiSib.length){
+                        //得到大层的input
+                        $(bigSpan.children("input")[0]).prop('checked', false);
+                        this._selectedItems.splice(parseInt(bigIndex), 1);
+                        //大层的半选中状态去除
+                        $(bigSpan.children("input")[0]).prop('indeterminate',false);
+                    }
+                }
+            }else if(attClass = 'MediumUL'){
+                //得到中层所有的兄弟
+                var mediumLiSib = ctItemParent.siblings("li");
+                //得到大层li，大层span
+                var bigLi = firstUl.parent("li");
+                var bigSpan =  $(bigLi.children("span")[1]);
+                //得到大层的index
+                this._bigSelected = {
+                    id: $(bigSpan).attr("data-id"),
+                    title: $(bigSpan).text()
+                };
+                var bigIndex = this.isItemInArray(this._bigSelected, this._selectedItems);
+                //便利兄弟
+                var k = 0;
+                for(k = 0; k < mediumLiSib.length;k++){
+                    //得到中层span,input
+                    var mediumSpan = $($(mediumLiSib[k]).children("span")[1]);
+                    var mediumInput = $(mediumSpan.children("input")[0]);
+                    if(mediumInput.prop("checked") == true){
+                        //大层的半选中状态加上
+                        $(bigSpan.children("input")[0]).prop('indeterminate',true);
+                        break;
+                    }
+                }
+                //如果没有选中的话，
+                if(k == mediumLiSib.length){
+                    //得到大层的input
+                    $(bigSpan.children("input")[0]).prop('checked', false);
+                    this._selectedItems.splice(parseInt(bigIndex), 1);
+                    //大层的半选中状态去除
+                    $(bigSpan.children("input")[0]).prop('indeterminate',false);
+                }
+            }else if(attClass = 'BigUL'){
+            }
             //这里需要进行批量操作，将下面所有的孩子都去除选中
             if (ctItemParent.hasClass('ComboTreeItemParent')){
                 //得到所有的孩子
                 var childrens = ctItemParent.find(".comboTreeItemTitle");
-                for(var i = 0;i < childrens.length;i++){
+                for(var i = 1;i < childrens.length;i++){
                     //得到title下面的checkbox
                     var childrenTitle = $(childrens[i]);
-                    var indexItem = this.isItemInArray(childrenTitle, this._selectedItems);
+                    this._selectedChildren = {
+                        id: $(childrenTitle).attr("data-id"),
+                        title: $(childrenTitle).text()
+                    };
+                    var indexItem = this.isItemInArray(this._selectedChildren, this._selectedItems);
                     var checkbo = childrenTitle.children("input[type='checkbox']");
                     this._selectedItems.splice(parseInt(indexItem), 1);
                     //alert(checkbo);
                     checkbo.attr("checked",false);
+                    checkbo.prop("indeterminate", false);
                 }
-            }else{
+            }/*else{
                 this._selectedItems.splice(parseInt(index), 1);
                 $(ctItem).find("input").prop('checked', false);
-            }
+            }*/
         }
         else {
+            //没选中的话，这里要进行选中，要将其父类都要进行选中
+            $(ctItem).find("input").prop('checked', true);
+            this._selectedItems.push(this._selectedItem);
+            //先得到ul,有可能是第三，第二也有可能是第一层的
+            var firstUl = ctItemParent.parent("ul");
+            var attClass = firstUl.attr("class");
+            if(attClass == 'SmallUL'){
+                //得到中层li
+                var mediumLi = firstUl.parent("li");
+                //得到中层ul
+                var mediumUl = mediumLi.parent("ul");
+                //得到大层li
+                var bigLi = mediumUl.parent("li");
+                //得到中层span,大层span
+                var meduiumSpan = $(mediumLi.children("span")[1]);
+                var bigSpan = $(bigLi.children("span")[1]);
+                //得到自己所有兄弟的状态
+                var smallSiblings = ctItemParent.siblings("li");
+                var i = 0;
+                var flag = 0;
+                for(i =0 ;i < smallSiblings.length ;i++){
+                    //得到span,input
+                    var smallSpan = $($(smallSiblings[i]).children("span")[0]);
+                    var smallInput = $(smallSpan.children("input")[0]);
+                    if(smallInput.prop("checked") == false){
+                        flag = 1;
+                        break;
+                    }
+                }
+                //找到中层input,并将其独自选中
+                $(meduiumSpan.children("input")[0]).prop('checked',true);
+                //找到大层input,并将其独自选中
+                $(bigSpan.children("input")[0]).prop('checked',true);
+                if(flag){
+                    //存在未选中的话,中层半选中
+                    $(meduiumSpan.children("input")[0]).prop("indeterminate", true);
+                    //大层半选中
+                    $(bigSpan.children("input")[0]).prop("indeterminate", true);
+                }
+                else{
+                    $(meduiumSpan.children("input")[0]).prop("indeterminate", false);
+                    //查看中层是否全选中，首先找到中层所有的兄弟
+                    //得到中层的li兄弟
+                    var mediumLiSib = mediumLi.siblings("li");
+                    //中层兄弟是否有未选中的
+                    var j = 0;
+                    var flag_1 = 0;
+                    for(j =0 ;j < mediumLiSib.length ;j++){
+                        //得到中层span,input
+                        var mediumSpan = $($(mediumLiSib[j]).children("span")[1]);
+                        var mediumInput = $(mediumSpan.children("input")[0]);
+                        if(mediumInput.prop("checked") == false){
+                            flag_1 = 1;
+                            break;
+                        }
+                    }
+                    if(flag_1){
+                        //如果有未选中的话
+                        //大层半选中
+                        $(bigSpan.children("input")[0]).prop("indeterminate", true);
+                    }
+                    else{
+                        $(bigSpan.children("input")[0]).prop("indeterminate", false);
+                    }
+                }
+                //判断中，大分类是否在选中当中
+                this._selectedMediumSpan = {
+                    id: $(meduiumSpan).attr("data-id"),
+                    title: $(meduiumSpan).text()
+                };
+                this._selectedBigSpan = {
+                    id: $(bigSpan).attr("data-id"),
+                    title: $(bigSpan).text()
+                };
+                var mediumIndex = this.isItemInArray(this._selectedMediumSpan, this._selectedItems);
+                var bigIndex = this.isItemInArray(this._selectedBigSpan, this._selectedItems);
+                if(!mediumIndex){
+                    //如果没选中,将中层span加入进去
+                    this._selectedItems.push(this._selectedMediumSpan);
+                }if(!bigIndex){
+                    //如果没选中,将大层span加入进去
+                    this._selectedItems.push(this._selectedBigSpan);
+                }
+            }else if(attClass == 'MediumUL'){
+                //得到大层的li
+                var bigLi = firstUl.parent("li");
+                //得到大层的span
+                var bigSpan = $(bigLi.children("span")[1]);
+                //找到大层input,并将其独自选中
+                $(bigSpan.children("input")[0]).prop('checked',true);
+                //得到自己所有兄弟的状态
+                var mediumSiblings = ctItemParent.siblings("li");
+                var j = 0;
+                var flag_2 = 0;
+                for(j =0 ;j < mediumSiblings.length ;j++){
+                    //得到中层span,input
+                    var mediumSpan = $($(mediumSiblings[j]).children("span")[1]);
+                    var mediumInput = $(mediumSpan.children("input")[0]);
+                    if(mediumInput.prop("checked") == false){
+                        flag_2 = 1;
+                        break;
+                    }
+                }if(flag_2){
+                    //如果有未选中的话
+                    //大层半选中
+                    $(bigSpan.children("input")[0]).prop("indeterminate", true);
+                }else{
+                    $(bigSpan.children("input")[0]).prop("indeterminate", false);
+                }
+                this._selectedBigSpan = {
+                    id: $(bigSpan).attr("data-id"),
+                    title: $(bigSpan).text()
+                };
+                //大层是否选中
+                var bigIndex = this.isItemInArray(this._selectedBigSpan, this._selectedItems);
+                if(!bigIndex){
+                    //如果没选中,将大层span加入进去
+                    this._selectedItems.push(this._selectedBigSpan);
+                }
+            }else if(attClass == 'BigUL'){
+                //如果是大层直接选中就可以了
+            }
             //这里需要进行批量操作，将下面所有的孩子都选中
             if (ctItemParent.hasClass('ComboTreeItemParent')){
                 //得到所有的孩子
@@ -341,7 +576,11 @@
                 for(var i = 0;i < childrens.length;i++){
                     //得到title下面的checkbox
                     var childrenTitle = $(childrens[i]);
-                    var indexItem = this.isItemInArray(childrenTitle, this._selectedItems);
+                    this._selectedChildren = {
+                        id: $(childrenTitle).attr("data-id"),
+                        title: $(childrenTitle).text()
+                    };
+                    var indexItem = this.isItemInArray(this._selectedChildren, this._selectedItems);
                     //得到title下面的checkbox
                     var childrenTitle = $(childrens[i]);
                     var checkbo = childrenTitle.children("input[type='checkbox']");
@@ -357,10 +596,10 @@
                     //alert(checkbo);
                     checkbo.attr("checked",true);
                 }
-            }else{
+            }/*else{
                 this._selectedItems.push(this._selectedItem);
                 $(ctItem).find("input").prop('checked', true);
-            }
+            }*/
         }
         //页面产品信息的刷新，发送请求传递参数
         this.refreshInputVal();
@@ -376,14 +615,15 @@
         return false;
     }
 
+
     ComboTree.prototype.refreshInputVal = function () {
         var tmpTitle = "";
             for (var i = 0; i < this._selectedItems.length; i++) {
-                tmpTitle += this._selectedItems[i].title;
+                tmpTitle += this._selectedItems[i].id;
                 if (i < this._selectedItems.length - 1)
                     tmpTitle += ", ";
             }
-        alert("length:"+this._selectedItems.length+"tempTitle"+tmpTitle);
+        alert("length is:"+this._selectedItems.length+"????id is:"+tmpTitle);
         this._eleHiddenSeleItem.val(tmpTitle);
     }
 

@@ -1218,15 +1218,44 @@ function exchangeHtml(option,flag){
 	if(!option.bindFlag){
 		// 目标区
 		var $target = $("#" + option.targetId);
+		var $maxCount = $("#maxCount");
 		if(isEmpty(option.targetId)){
 			$target = $(option.target);
 		}
 		// 弹出框目标缓存区
 		var $temp = $("#" + option.dialogId + "_temp");
 		if(flag){
-			// 缓存区到目标区
-			$target.empty();
-			$temp.children().clone(true).appendTo($target);
+			if($temp.children().length > $maxCount.val()){
+				var $p = $("#send_checkinfo_dialog").find('p.message');
+				var $message = $p.find('span');
+				var $loading = $p.find('img');
+				$loading.hide();
+				var option = {
+					autoOpen: false,
+					width: 350,
+					height: 250,
+					title:"提示",
+					zIndex: 1,
+					modal: true,
+					resizable:false,
+					buttons: [
+						{	text:"确定",
+							click: function() {
+								closeCherryDialog("send_checkinfo_dialog");
+							}
+						}],
+					close: function() {
+						closeCherryDialog("send_checkinfo_dialog");
+					}
+				};
+				$message.text("单次盘点产品数不能超过"+$maxCount.val()+"行");
+				$("#send_checkinfo_dialog").dialog(option);
+				$("#send_checkinfo_dialog").dialog("open");
+			}else{
+				// 缓存区到目标区
+				$target.empty();
+				$temp.children().clone(true).appendTo($target);
+			}
 		}else{
 			// 备份目标区到缓存区
 			$temp.empty();

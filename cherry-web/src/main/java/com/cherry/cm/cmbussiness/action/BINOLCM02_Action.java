@@ -594,7 +594,9 @@ public class BINOLCM02_Action extends BaseAction implements ModelDriven<BINOLCM0
 		String isPosCloud = binOLCM14_BL.getConfigValue("1304", String.valueOf(map.get("organizationInfoId")), String.valueOf(map.get("brandInfoId")));
 		isPosCloud = "0";
 		form.setIsPosCloud(isPosCloud);
-		
+		//读取配置项，将最大选择数目读取出来
+		String maxCount = binOLCM14_BL.getConfigValue("1394", String.valueOf(map.get("organizationInfoId")), String.valueOf(map.get("brandInfoId")));
+		form.setMaxCount(Integer.parseInt(maxCount));
 		return SUCCESS;
 	}
 	
@@ -708,6 +710,12 @@ public class BINOLCM02_Action extends BaseAction implements ModelDriven<BINOLCM0
 		
 		// 取得产品信息
 		HashMap resultMap  = binOLCM02_BL.getProductDialogInfoList(map);
+		/*//在这里制造假数据
+		List fakeData = (List)resultMap.get(CherryConstants.POP_PRODUCT_LIST);
+		for(int i = 0; i < 6;i++){
+			fakeData.addAll(fakeData);
+		}
+		form.setPopProductInfoList(fakeData);*/
 		form.setPopProductInfoList((List)resultMap.get(CherryConstants.POP_PRODUCT_LIST));
 		int count = Integer.parseInt((String.valueOf(resultMap.get("count"))));
 		// form表单设置
@@ -1647,5 +1655,13 @@ public class BINOLCM02_Action extends BaseAction implements ModelDriven<BINOLCM0
 
 	public void setCategoryResult(String categoryResult) {
 		this.categoryResult = categoryResult;
+	}
+
+	public BINOLCM02_Form getForm() {
+		return form;
+	}
+
+	public void setForm(BINOLCM02_Form form) {
+		this.form = form;
 	}
 }

@@ -410,8 +410,8 @@ public class ConvertUtil {
 		// 如果过滤条件不为空
 		if (null!= baseForm.getSSearch() && !"".equals(baseForm.getSSearch())){
 			String treeSearch[] = baseForm.getSSearch().split(",");
+			List<String> treeSearchList = new ArrayList<String>();
 			if(treeSearch != null && treeSearch.length > 1){
-				List<String> treeSearchList = new ArrayList<String>();
 				for(int i = 0 ;i < treeSearch.length;i++){
 					treeSearchList.add(treeSearch[i]);
 				}

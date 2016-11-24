@@ -668,9 +668,9 @@ BINOLSTIOS05.prototype = {
 			//chcekbox
 			html.push('<td class="center"><input type="hidden" name="prtVendorId" value=""></input><input id="chkbox" type="checkbox" onclick="BINOLSTIOS05.changechkbox(this);"/></td>');
 			//UnitCode
-			html.push('<td id="dataTd1"><span id="spanUnitCode"></span><input type="text" id="unitCodeBinding_'+nextIndex+'" name="unitCodeBinding"  value=""/></td>');
+			html.push('<td id="dataTd1"><span id="spanUnitCode"></span></td>');
 			//BarCode
-			html.push('<td id="dataTd2"><span id="spanBarCode"></span></td>');
+			html.push('<td id="dataTd2"><span id="spanBarCode"></span><input type="text" id="barCodeBinding_'+nextIndex+'" name="barCodeBinding"  value=""/></td>');
 			//名称
 			html.push('<td id="dataTd3"><span id="spanProductName"></span></td>');
 			//批次号
@@ -700,11 +700,11 @@ BINOLSTIOS05.prototype = {
 			html.push('</tr>');
 			$("#databody").append(html.join(""));
 			
-			var unitCode = "unitCodeBinding_"+nextIndex;
-			BINOLSTIOS05.setProductBinding(unitCode);
-			
-			$("#unitCodeBinding_"+nextIndex).focus();
-			
+			/*var unitCode = "unitCodeBinding_"+nextIndex;
+			BINOLSTIOS05.setProductBinding(unitCode);*/
+			var barCode = "barCodeBinding_"+nextIndex;
+			BINOLSTIOS05.setProductBinding(barCode);
+			$("#barCodeBinding_"+nextIndex).focus();
 			BINOLSTIOS05.bindInput();
 		}
 	},
