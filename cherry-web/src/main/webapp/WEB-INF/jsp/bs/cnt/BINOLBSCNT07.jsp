@@ -1,4 +1,5 @@
 <%@ page language="java" contentType="text/html; charset=utf-8" pageEncoding="utf-8"%>
+<%@ include file="/WEB-INF/jsp/common/head.inc.jsp" %>
 <%@ taglib prefix="s" uri="/struts-tags" %>
 <%@ taglib prefix="cherry" uri="/cherry-tags"%>
 <script type="text/javascript" src="/Cherry/js/bs/common/BINOLBSCOM03.js"></script>
@@ -6,6 +7,9 @@
 <script type="text/javascript" src="/Cherry/js/common/cherryDate.js"></script>
 <script type="text/javascript" src="/Cherry/js/common/popDataTable.js"></script>
 <script type="text/javascript" src="/Cherry/js/lib/jquery-ui-i18n.js"></script>
+
+<%-- 导入经销商额度变更URL --%>
+<s:url id="importInit_url"  action="BINOLBSCNT08_init"/>
 
 <s:i18n name="i18n.bs.BINOLBSCNT07">
 	<s:url id="search_url" value="BINOLBSCNT07_search"/>
@@ -21,7 +25,7 @@
 			<%-- 导入积分计划柜台 --%>
 			<a class="import" href="" onclick="return false;"><span class="ui-icon icon-import"></span><span class="button-text"><s:text name="CTN07.importLimitPlanCounter"></s:text></span></a>
 			<%-- 导入经销商额度变更 --%>
-			<a class="import" href="" onclick="return false;"><span class="ui-icon icon-import"></span><span class="button-text"><s:text name="CNT07.importLimitPointModified"></s:text></span></a>
+			<a  class="import"  href="${importInit_url}" onclick="javascript:openWin(this);return false;"><span class="ui-icon icon-import"></span><span class="button-text"><s:text name="CNT07.importLimitPointModified"></s:text></span></a>
 	    </span>
 
 		</div>
