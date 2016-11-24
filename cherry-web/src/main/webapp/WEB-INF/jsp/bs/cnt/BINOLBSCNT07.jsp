@@ -23,7 +23,8 @@
 
 	    <span class="right">
 			<%-- 导入积分计划柜台 --%>
-			<a class="import" href="" onclick="return false;"><span class="ui-icon icon-import"></span><span class="button-text"><s:text name="CTN07.importLimitPlanCounter"></s:text></span></a>
+			<s:url id="importLimitPlanCounter_url" action="BINOLBSCNT07_importLimitPlanCounter"/>
+			<a class="import" href="${importLimitPlanCounter_url}" onclick="javascript:openWin(this);return false;"><span class="ui-icon icon-import"></span><span class="button-text"><s:text name="CTN07.importLimitPlanCounter"></s:text></span></a>
 			<%-- 导入经销商额度变更 --%>
 			<a  class="import"  href="${importInit_url}" onclick="javascript:openWin(this);return false;"><span class="ui-icon icon-import"></span><span class="button-text"><s:text name="CNT07.importLimitPointModified"></s:text></span></a>
 	    </span>

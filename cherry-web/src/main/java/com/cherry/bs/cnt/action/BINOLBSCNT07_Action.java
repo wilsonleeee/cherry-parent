@@ -182,6 +182,29 @@ public class BINOLBSCNT07_Action extends BaseAction implements ModelDriven<BINOL
 		return map;
 	}
 
+	public String importLimitPlanCounter(){
+		Map<String, Object> map = new HashMap<String, Object>();
+		// 登陆用户信息
+		UserInfo userInfo = (UserInfo) session.get(CherryConstants.SESSION_USERINFO);
+		// 所属组织
+		map.put(CherryConstants.ORGANIZATIONINFOID, userInfo.getBIN_OrganizationInfoID());
+		// 语言
+		String language = (String)session.get(CherryConstants.SESSION_LANGUAGE);
+		if(language != null) {
+			map.put(CherryConstants.SESSION_LANGUAGE, language);
+		}
+		// 总部用户的场合
+		if(userInfo.getBIN_BrandInfoID() == CherryConstants.BRAND_INFO_ID_VALUE) {
+			// 所属品牌
+			map.put(CherryConstants.BRANDINFOID, userInfo.getBIN_BrandInfoID());
+			// 取得品牌List
+			brandInfoList = binOLCM05_BL.getBrandInfoList(map);
+		} else {
+			// 所属品牌
+			map.put(CherryConstants.BRANDINFOID, userInfo.getBIN_BrandInfoID());
+		}
+		return SUCCESS;
+	}
 
 	/** 品牌List */
 	private List<Map<String, Object>> brandInfoList;
