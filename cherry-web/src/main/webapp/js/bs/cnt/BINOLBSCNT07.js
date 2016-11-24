@@ -45,13 +45,12 @@ BINOLBSCNT07.prototype = {
 			// 固定列数
 			fixedColumns : 3
 		};
-
 		// 调用获取表格函数
 		getTable(tableSetting);
 	},
 
 	/*
-	 * 导出Excel
+	 * 积分计划导出Excel
 	 */
 	"exportExcel" : function(){
 		//无数据不导出
@@ -65,7 +64,6 @@ BINOLBSCNT07.prototype = {
 			url = url + "?" + params;
 			window.open(url,"_self");
 		}
-	}
 	},
 	/*"operatePointPlan" : function(param,url) {
 		var callback = function(msg) {

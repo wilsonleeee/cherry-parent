@@ -1,67 +1,84 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE sqlMap PUBLIC "-//iBATIS.com//DTD SQL Map 2.0//EN" "http://ibatis.apache.org/dtd/sql-map-2.dtd">
 <sqlMap namespace="BINOLBSCNT07">
-    <!-- 取得柜台信息(Excel)  -->
+    <!-- 取得积分计划柜台(Excel)  -->
     <select id="getCounterInfoListExcel" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
         <![CDATA[
             SELECT
-            ROW_NUMBER()over(order by BC.countercode) AS Cno
-            ,BC.CounterCode AS counterCode
-            ,case when CONVERT(varchar,GETDATE(),23 )>=CONVERT(varchar,BC.StartDate,23 ) and  CONVERT(varchar,GETDATE(),23 )< CONVERT(varchar,ISNULL(BC.EndDate,'2100-01-01'),23 )
+            ROW_NUMBER()over(order by A.countercode) AS Cno
+            ,A.CounterCode
+            ,case when CONVERT(varchar,GETDATE(),23 )>=CONVERT(varchar,A.StartDate,23 ) and  CONVERT(varchar,GETDATE(),23 )< CONVERT(varchar,ISNULL(A.EndDate,'2100-01-01'),23 )
              then '是' else '否' end  AS Planstatus,
              '' AS Explain ,
-            BC.StartDate AS  StartDate,
-			BC.EndDate AS  EndDate,
-            CAST(BC.CurrentPointLimit AS INT) AS CurrentPointLimit,
-            BC.Comment AS Comment,
-             ]]>
-        <dynamic>
-            <isNotEmpty property="language">
-                <isEqual property="language" compareValue="en_US">
-                    D.EmployeeNameForeign AS employeeName,
-                    A.NameForeign AS counterNameIF
-                </isEqual>
-                <isEqual property="language" compareValue="zh_CN">
-                    D.EmployeeName AS employeeName,
-                    A.CounterNameIF AS counterNameIF
-                </isEqual>
-            </isNotEmpty>
-            <isEmpty property="language">
-                D.EmployeeName AS employeeName,
-                A.CounterNameIF AS counterNameIF
-            </isEmpty>
-        </dynamic>
-        <![CDATA[
+            A.StartDate ,
+			A.EndDate,,
+            CAST(A.CurrentPointLimit AS INT) AS CurrentPointLimit,
+            A.Comment ,
+            D.EmployeeName,
+            A.CounterNameIF
             FROM
-            Basis.BIN_CounterInfo  BC
-            JOIN Basis.BIN_Organization B ON BC.BIN_OrganizationID = B.BIN_OrganizationID
-            LEFT JOIN Basis.BIN_BrandInfo C ON  BC.BIN_BrandInfoID = C.BIN_BrandInfoID
-            LEFT JOIN Basis.BIN_Employee D WITH(NOLOCK)
+            Basis.BIN_CounterInfo  A WITH(NOLOCK)
+            JOIN Basis.BIN_Organization B WITH(NOLOCK) ON A.BIN_OrganizationID = B.BIN_OrganizationID
+            LEFT JOIN Basis.BIN_BrandInfo C WITH(NOLOCK) ON  A.BIN_BrandInfoID = C.BIN_BrandInfoID
+            LEFT JOIN Basis.BIN_Employee D WITH(NOLOCK) WITH(NOLOCK)
                 ON B.UpdatedBy = CONVERT(NVARCHAR(20),D.BIN_EmployeeID)
             LEFT JOIN
-            Basis.BIN_CounterPointPlan BP
-            ON BC.BIN_OrganizationID = BP.BIN_OrganizationID
+            Basis.BIN_CounterPointPlan BP WITH(NOLOCK)
+            ON A.BIN_OrganizationID = BP.BIN_OrganizationID
         ]]>
         <isNotEmpty property="privilegeFlag">
-        <isEqual property="privilegeFlag" compareValue="1">
-            <![CDATA[
+            <isEqual property="privilegeFlag" compareValue="1">
+                <![CDATA[
 				JOIN (]]><include refid="BINOLCMINC99.departPrivilegeSql" /><![CDATA[) A99
 				ON B.BIN_OrganizationID=A99.BIN_OrganizationID
 		]]>
-        </isEqual>
+            </isEqual>
         </isNotEmpty>
         <![CDATA[
 			WHERE
 				A.BIN_OrganizationInfoID = #organizationInfoId#
 		]]>
         <isNotEmpty prepend="AND" property="brandInfoId">
-            BC.BIN_BrandInfoID = #brandInfoId#
+            A.BIN_BrandInfoID = #brandInfoId#
         </isNotEmpty>
         <isNotEmpty prepend="AND" property="counterCode">
-            BC.CounterCode LIKE '%'+#counterCode#+'%'
+            A.CounterCode like  '%'+ #counterCode# +'%'
         </isNotEmpty>
-        <isNotEmpty prepend="AND" property="counterNameIF">
-            BC.CounterNameIF LIKE '%'+#counterNameIF#+'%'
+        <isNotEmpty prepend="AND" property="counterName">
+            A.CounterNameIF like '%'+ #counterName# +'%'
+        </isNotEmpty>
+        <isNotEmpty prepend="AND" property="pointLimitBegin">
+            B.CurrentPointLimit &gt;= #pointLimitBegin#
+        </isNotEmpty>
+        <isNotEmpty prepend="AND" property="pointLimitEnd">
+            B.CurrentPointLimit &lt;= #pointLimitEnd#
+        </isNotEmpty>
+
+        <isNotEmpty property="pointDateBegin">
+            <isNotEmpty prepend="AND" property="pointDateEnd">
+                (( #pointDateBegin# &lt;= B.StartDate AND #pointDateEnd# &gt; B.StartDate )
+                OR ( #pointDateBegin# BETWEEN B.StartDate AND B.EndDate ))
+            </isNotEmpty>
+            <isEmpty prepend="AND" property="pointDateEnd">
+                ( #pointDateBegin# &lt; B.EndDate )
+            </isEmpty>
+        </isNotEmpty>
+        <isEmpty property="pointDateBegin">
+            <isNotEmpty prepend="AND" property="pointDateEnd">
+                ( #pointDateEnd# &gt; B.StartDate )
+            </isNotEmpty>
+        </isEmpty>
+
+        <isNotEmpty prepend="AND" property="pointPlanStatus">
+            <isEqual property="pointPlanStatus"  compareValue="1">
+                B.StartDate  &lt;= convert(varchar(10), getdate(), 120) and convert(varchar(10), getdate(), 120) &lt;= B.EndDate
+            </isEqual>
+            <isEqual  property="pointPlanStatus"  compareValue="0">
+                (B.StartDate  &gt; convert(varchar(10), getdate(), 120) or convert(varchar(10), getdate(), 120) &gt; B.EndDate or  B.StartDate is null)
+            </isEqual>
+        </isNotEmpty>
+        <isNotEmpty prepend="AND" property="counterStatus">
+            A.ValidFlag = #counterStatus#
         </isNotEmpty>
 
     </select>

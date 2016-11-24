@@ -127,14 +127,14 @@ public class BINOLBSCNT07_BL {
         List<Map<String, Object>> dataList = binolbscnt07Service.getCounterPointPlanListExcel(map);
         String[][] array = {
                 { "Cno", "CNT07.number", "15", "", "" },
-                { "counterCode", "CNT07.counterCode", "15", "", "" },
+                { "CounterCode", "CNT07.counterCode", "15", "", "" },
                 { "CounterNameIF", "CNT07.counterName", "20", "", "" },
                 { "Planstatus", "CNT07.pointPlan", "35", "", "" },
                 { "Explain", "CNT07.explain", "15", "", "" },
                 { "StartDate", "CNT07.startDate", "15", "", "" },
                 { "EndDate", "CNT07.endDate", "15", "", "" },
                 { "CurrentPointLimit", "CNT07.currentPointLimit", "15", "", "" },
-                { "employeeName", "CNT07.modifier", "15", "", "" },
+                { "EmployeeName", "CNT07.modifier", "15", "", "" },
                 { "Comment", "CNT07.comment", "15","",""}
 
         };

@@ -126,12 +126,10 @@
 				<!-- 积分计划导出 -->
 				 <s:url id="export" action="BINOLBSCNT07_export" ></s:url>
 				<a id="downUrl" href="${export}"></a>
-				<cherry:show domId="BINOLBSCNT07EXP">
 				   <a id="export" class="export" onclick="binolbscnt07.exportExcel();return false;">
 					   <span class="ui-icon icon-export"></span>
 					   <span class="button-text"><s:text name="global.page.export"/></span>
 				   </a>
-				</cherry:show>
 
 				<!-- 停用 -->
 				<a href="" class="add" onclick="return false;">
