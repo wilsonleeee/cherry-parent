@@ -78,8 +78,8 @@ public class BINOLBSCNT07_BL {
                 { "StartDate", "CNT07.startDate", "15", "", "" },
                 { "EndDate", "CNT07.endDate", "15", "", "" },
                 { "CurrentPointLimit", "CNT07.currentPointLimit", "15", "", "" },
-                { "ModifyE", "counter.belongFaction", "15", "", "" },
-                { "Comment", "counter.busDistrict", "15","",""}
+                { "employeeName", "CNT07.modifier", "15", "", "" },
+                { "Comment", "CNT07.comment", "15","",""}
 
         };
         BINOLMOCOM01_IF.ExcelParam ep = new BINOLMOCOM01_IF.ExcelParam();

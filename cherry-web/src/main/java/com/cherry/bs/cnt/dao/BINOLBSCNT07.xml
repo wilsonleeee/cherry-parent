@@ -13,19 +13,21 @@
             BC.StartDate AS  StartDate,
 			BC.EndDate AS  EndDate,
             CAST(BC.CurrentPointLimit AS INT) AS CurrentPointLimit,
-            '' AS ModifyE,
             BC.Comment AS Comment,
              ]]>
         <dynamic>
             <isNotEmpty property="language">
                 <isEqual property="language" compareValue="en_US">
+                    D.EmployeeNameForeign AS employeeName,
                     A.NameForeign AS counterNameIF
                 </isEqual>
                 <isEqual property="language" compareValue="zh_CN">
+                    D.EmployeeName AS employeeName,
                     A.CounterNameIF AS counterNameIF
                 </isEqual>
             </isNotEmpty>
             <isEmpty property="language">
+                D.EmployeeName AS employeeName,
                 A.CounterNameIF AS counterNameIF
             </isEmpty>
         </dynamic>
@@ -34,6 +36,8 @@
             Basis.BIN_CounterInfo  BC
             JOIN Basis.BIN_Organization B ON BC.BIN_OrganizationID = B.BIN_OrganizationID
             LEFT JOIN Basis.BIN_BrandInfo C ON  BC.BIN_BrandInfoID = C.BIN_BrandInfoID
+            LEFT JOIN Basis.BIN_Employee D WITH(NOLOCK)
+                ON B.UpdatedBy = CONVERT(NVARCHAR(20),D.BIN_EmployeeID)
             LEFT JOIN
             Basis.BIN_CounterPointPlan BP
             ON BC.BIN_OrganizationID = BP.BIN_OrganizationID
