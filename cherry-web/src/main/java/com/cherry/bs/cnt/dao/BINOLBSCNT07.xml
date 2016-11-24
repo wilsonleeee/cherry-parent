@@ -7,20 +7,20 @@
             SELECT
             ROW_NUMBER()over(order by A.countercode) AS Cno
             ,A.CounterCode
-            ,case when CONVERT(varchar,GETDATE(),23 )>=CONVERT(varchar,A.StartDate,23 ) and  CONVERT(varchar,GETDATE(),23 )< CONVERT(varchar,ISNULL(A.EndDate,'2100-01-01'),23 )
+            ,case when CONVERT(varchar,GETDATE(),23 )>=CONVERT(varchar,BP.StartDate,23 ) and  CONVERT(varchar,GETDATE(),23 )< CONVERT(varchar,ISNULL(BP.EndDate,'2100-01-01'),23 )
              then '是' else '否' end  AS Planstatus,
              '' AS Explain ,
-            A.StartDate ,
-			A.EndDate,,
-            CAST(A.CurrentPointLimit AS INT) AS CurrentPointLimit,
-            A.Comment ,
+            BP.StartDate ,
+			BP.EndDate,
+            CAST(BP.CurrentPointLimit AS INT) AS CurrentPointLimit,
+            BP.Comment ,
             D.EmployeeName,
             A.CounterNameIF
             FROM
             Basis.BIN_CounterInfo  A WITH(NOLOCK)
             JOIN Basis.BIN_Organization B WITH(NOLOCK) ON A.BIN_OrganizationID = B.BIN_OrganizationID
             LEFT JOIN Basis.BIN_BrandInfo C WITH(NOLOCK) ON  A.BIN_BrandInfoID = C.BIN_BrandInfoID
-            LEFT JOIN Basis.BIN_Employee D WITH(NOLOCK) WITH(NOLOCK)
+            LEFT JOIN Basis.BIN_Employee D WITH(NOLOCK)
                 ON B.UpdatedBy = CONVERT(NVARCHAR(20),D.BIN_EmployeeID)
             LEFT JOIN
             Basis.BIN_CounterPointPlan BP WITH(NOLOCK)
@@ -48,33 +48,33 @@
             A.CounterNameIF like '%'+ #counterName# +'%'
         </isNotEmpty>
         <isNotEmpty prepend="AND" property="pointLimitBegin">
-            B.CurrentPointLimit &gt;= #pointLimitBegin#
+            BP.CurrentPointLimit &gt;= #pointLimitBegin#
         </isNotEmpty>
         <isNotEmpty prepend="AND" property="pointLimitEnd">
-            B.CurrentPointLimit &lt;= #pointLimitEnd#
+            BP.CurrentPointLimit &lt;= #pointLimitEnd#
         </isNotEmpty>
 
         <isNotEmpty property="pointDateBegin">
             <isNotEmpty prepend="AND" property="pointDateEnd">
-                (( #pointDateBegin# &lt;= B.StartDate AND #pointDateEnd# &gt; B.StartDate )
-                OR ( #pointDateBegin# BETWEEN B.StartDate AND B.EndDate ))
+                (( #pointDateBegin# &lt;= BP.StartDate AND #pointDateEnd# &gt; BP.StartDate )
+                OR ( #pointDateBegin# BETWEEN BP.StartDate AND BP.EndDate ))
             </isNotEmpty>
             <isEmpty prepend="AND" property="pointDateEnd">
-                ( #pointDateBegin# &lt; B.EndDate )
+                ( #pointDateBegin# &lt; BP.EndDate )
             </isEmpty>
         </isNotEmpty>
         <isEmpty property="pointDateBegin">
             <isNotEmpty prepend="AND" property="pointDateEnd">
-                ( #pointDateEnd# &gt; B.StartDate )
+                ( #pointDateEnd# &gt; BP.StartDate )
             </isNotEmpty>
         </isEmpty>
 
         <isNotEmpty prepend="AND" property="pointPlanStatus">
             <isEqual property="pointPlanStatus"  compareValue="1">
-                B.StartDate  &lt;= convert(varchar(10), getdate(), 120) and convert(varchar(10), getdate(), 120) &lt;= B.EndDate
+                BP.StartDate  &lt;= convert(varchar(10), getdate(), 120) and convert(varchar(10), getdate(), 120) &lt;= BP.EndDate
             </isEqual>
             <isEqual  property="pointPlanStatus"  compareValue="0">
-                (B.StartDate  &gt; convert(varchar(10), getdate(), 120) or convert(varchar(10), getdate(), 120) &gt; B.EndDate or  B.StartDate is null)
+                (BP.StartDate  &gt; convert(varchar(10), getdate(), 120) or convert(varchar(10), getdate(), 120) &gt; BP.EndDate or  BP.StartDate is null)
             </isEqual>
         </isNotEmpty>
         <isNotEmpty prepend="AND" property="counterStatus">
