@@ -117,7 +117,9 @@ public class BINOLSTCM01_BL implements BINOLSTCM01_IF {
 	@Override
     public int handleProductInOutBatch(Map<String, Object> mainData, List<Map<String, Object>> detailList){
     	String tradeType = ConvertUtil.getString(mainData.get("TradeType")); // 业务类型
-    	
+		String organizationInfoId = ConvertUtil.getString(mainData.get("BIN_OrganizationInfoID"));
+		String brandInfoId = ConvertUtil.getString(mainData.get("BIN_BrandInfoID"));
+
         //插入【产品入出库批次记录表】
         int productBatchInOutID = binOLSTCM01_Service.insertProductBatchInOut(mainData);
     	
@@ -222,6 +224,7 @@ public class BINOLSTCM01_BL implements BINOLSTCM01_IF {
     			productInOutDetail.put("BIN_OrganizationInfoID", newMainData.get("BIN_OrganizationInfoID"));
     			productInOutDetail.put("BIN_BrandInfoID", newMainData.get("BIN_BrandInfoID"));
     			productInOutDetail.put("StockInOutTime", newMainData.get("StockInOutTime")); // 入出库时间
+				productInOutDetail.put("StockInOutDate", newMainData.get("StockInOutDate"));// 入出库日期
     			
     			String stockType = ConvertUtil.getString(productInOutDetail.get("StockType")); // 明细出入库区分 ( 0：入库 1：出库 )
     			
@@ -232,18 +235,34 @@ public class BINOLSTCM01_BL implements BINOLSTCM01_IF {
     				
     				// 盘点(盘盈)(最后一笔成本价 )
     				if(CherryConstants.BUSINESS_TYPE_CA.equals(tradeType)){
-    					
-    					// 取得产品库存表指定仓库产品的首末次信息
-    					productInOutDetail.put("stockInTimeSorting", "DESC"); // 排序方式 
-    					Map<String,Object> topProductNewBatchStockMap = binOLSTCM01_Service.getProductNewBatchStock(productInOutDetail);
-    					
-    					if(null != topProductNewBatchStockMap && !topProductNewBatchStockMap.isEmpty()){
-    						productInOutDetail.put("CostPrice", topProductNewBatchStockMap.get("CostPrice"));
-    					} else{
-    						productInOutDetail.put("CostPrice", null);
-    						
-    						succDetailCP = false;
-    					}
+
+						String costPriceCA = null;
+						// 取得产品库存表指定仓库产品的首末次信息
+						productInOutDetail.put("stockInTimeSorting", "DESC"); // 排序方式
+						Map<String,Object> topProductNewBatchStockMap = binOLSTCM01_Service.getProductNewBatchStock(productInOutDetail);
+
+						if(null != topProductNewBatchStockMap && !topProductNewBatchStockMap.isEmpty()){
+							costPriceCA = ConvertUtil.getString(topProductNewBatchStockMap.get("CostPrice"));
+							productInOutDetail.put("CostPrice", !"".equals(costPriceCA) ? costPriceCA : null);
+						} else{
+							/**
+							 * 系统配置项[初始盘盈时的入库成本价使用的价格]:'':不处理; 'DistributionPrice':配送价;'StandardCost':结算价;
+							 */
+							String priceConfig = binOLCM14_BL.getConfigValue("1395", organizationInfoId, brandInfoId);
+							// 根据产品厂商ID及入出库日期取得产品的价格想着信息
+							Map<String,Object> productPrice = binOLSTCM01_Service.getProductPriceByID(productInOutDetail);
+							if(!"".equals(priceConfig) && null != productPrice && !productPrice.isEmpty()) {
+								// 取指定价格
+								costPriceCA = ConvertUtil.getString(productPrice.get(priceConfig));
+								productInOutDetail.put("Comments",priceConfig+","+costPriceCA);
+							} else {
+								costPriceCA = "";
+							}
+							productInOutDetail.put("CostPrice", !"".equals(costPriceCA) ? costPriceCA : null);
+
+						}
+						// costPriceCA无值时
+						succDetailCP = !"".equals(costPriceCA);
     					
     				}
     				// 退货

@@ -139,6 +139,28 @@
 			$stockInTimeSorting$,BIN_ProductBatchStockID $stockInTimeSorting$
 		</isNotEmpty>
     </select>
+
+	<!-- 查询产品的价格 -->
+	<select id="getProductPriceByID"  parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+		<![CDATA[
+		select
+			 B.BIN_ProductVendorID,
+			 A.SalePrice,
+			 A.MemPrice,
+			 A.StandardCost,
+			 A.OrderPrice,
+			 C.DistributionPrice
+		from
+			Basis.BIN_Product A WITH(NOLOCK)
+			JOIN Basis.BIN_ProductVendor B WITH(NOLOCK) ON(A.BIN_ProductID = B.BIN_ProductID )
+			LEFT JOIN Basis.BIN_ProductPrice C WITH(NOLOCK)
+			ON (A.BIN_ProductID = C.BIN_ProductID
+					AND C.Type = '2' AND C.StartDate <= #StockInoutDate#
+					AND C.EndDate >= #StockInoutDate# )
+		where
+			B.BIN_ProductVendorID = #BIN_ProductVendorID#
+		]]>
+	</select>
     
     
     <!-- 根据原始单据号及仓库产品信息取得产品入出库明细记录 -->
@@ -204,6 +226,7 @@
 	
 	<!-- 根据入出库明细id修改对应的成本价 -->
 	<update id="updateCostPriceByDetails" parameterClass="java.util.HashMap">
+	<![CDATA[
 		update
 			Inventory.BIN_ProductBatchInOutDetail
 		set
@@ -211,8 +234,14 @@
 			CostPrice = #CostPrice#,
 			UpdateTime = GETDATE(),
 			ModifyCount = ModifyCount+1
-		where 		
+	]]>
+	<isNotEmpty property="Comments">
+		,Comments = #Comments#
+	</isNotEmpty>
+	<![CDATA[
+		where
 			BIN_ProductInOutDetailID = #BIN_ProductInOutDetailID#
+	]]>
 	</update>
 	
 	<!--查询产品入出库批次表的数据（即明细中有成本价为空，且是出库类型的数据）  -->
@@ -249,7 +278,8 @@
 	<!--根据产品入出库批次表ID 查询产品入出库批次记录明细表数据  -->
 	<select id="getProBatchInOutDetailList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
 	select
-		*
+		*,
+		convert(varchar(100),StockInOutTime,23) as StockInoutDate
 	from
 	Inventory.BIN_ProductBatchInOutDetail
 	where

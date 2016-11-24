@@ -208,6 +208,18 @@ public class BINBAT152_Service extends BaseService {
         parameterMap.put(CherryConstants.IBATIS_SQL_ID, "BINBAT152.getProductNewBatchStock");
         return (Map<String, Object>) baseServiceImpl.get(parameterMap);
     }
+
+	/**
+	 * 根据产品厂商ID及入出库日期获取产品的各种价格
+	 * @param map
+	 * @return
+     */
+	public Map<String, Object> getProductPriceByID(Map<String, Object> map) {
+		Map<String, Object> parameterMap = new HashMap<String, Object>();
+		parameterMap.putAll(map);
+		parameterMap.put(CherryConstants.IBATIS_SQL_ID, "BINBAT152.getProductPriceByID");
+		return (Map<String, Object>) baseServiceImpl.get(parameterMap);
+	}
     
     
     /**
