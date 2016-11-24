@@ -1,5 +1,5 @@
 /*	
- * @(#)BINOLBSCNT07_Service.java     1.0 2011/05/09
+ * @(#)BINOLBSCNT07_Service.java     1.0 2016/11/28
  * 		
  * Copyright (c) 2010 SHANGHAI BINGKUN DIGITAL TECHNOLOGY CO.,LTD		
  * All rights reserved		

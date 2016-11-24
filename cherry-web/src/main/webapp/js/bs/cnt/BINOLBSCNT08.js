@@ -50,7 +50,7 @@ BINOLBSCNT08.prototype = {
     	$excelBtn.addClass("ui-state-disabled");
     	var dataArr = {
     			'csrftoken':parentTokenVal(),
-				'reason' : $('#reason').val()
+				'comment' : $('#comment').val()
 			}
 
 		/*
@@ -108,7 +108,7 @@ $(document).ready(function() {
 	cherryValidate({//form表单验证
 		formId: "importForm",		
 		rules: {
-			reason: {required: true}
+			comment: {required: true}
 		}		
 	});
 });
