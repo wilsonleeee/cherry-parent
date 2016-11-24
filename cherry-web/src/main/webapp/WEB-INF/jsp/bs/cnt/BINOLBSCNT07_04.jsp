@@ -1,0 +1,36 @@
+<%@ page language="java" contentType="text/html; charset=utf-8" pageEncoding="utf-8"%>
+<%@ taglib prefix="s" uri="/struts-tags" %>
+<%@ taglib prefix="cherry" uri="/cherry-tags"%>
+<script type="text/javascript" src="/Cherry/js/common/cherryDate.js"></script>
+<script type="text/javascript" src="/Cherry/js/lib/jquery-ui-i18n.js"></script>
+<script type="text/javascript">
+		$(function(){
+			$('#startDate').cherryDate({
+				minDate: new Date()
+			});
+			// 表单验证初期化
+			cherryValidate({
+				formId: 'msgForm',
+				rules: {
+					startDate: {required: true, dateValid: true}   // 开始日期
+				}
+			});
+		});
+
+</script>
+<div id="actionResultDisplay"></div>
+<form id="msgForm">
+	<s:i18n name="i18n.bs.BINOLBSCNT07">
+		<div style='text-align: center;'>
+			<p class="date" style="margin: 50px 0 0 0;">
+				<label><s:text name="CNT07.startDate" /></label>
+				<span><s:textfield id="startDate" name="startDate" cssClass="date" cssStyle="width:80px;"/></span>
+			</p>
+			<p class="message" style="margin: 50px auto 0;">
+				<span style="font-size: 14px;color: #666;">
+					<s:text name="CNT07.enableMessage" />
+				</span>
+			</p>
+		</div>
+	</s:i18n>
+</form>

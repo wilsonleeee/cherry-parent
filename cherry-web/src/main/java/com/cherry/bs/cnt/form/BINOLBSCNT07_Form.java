@@ -65,6 +65,9 @@ public class BINOLBSCNT07_Form  extends DataTable_BaseForm {
 	/** 经销商当前积分额度**/
 	private String currentPointLimit;
 
+	/** 积分变更值**/
+	private String pointChange;
+
 	/** 备注**/
 	private String comment;
 
@@ -75,7 +78,13 @@ public class BINOLBSCNT07_Form  extends DataTable_BaseForm {
 	private String currentDate;
 
 
+	public String getPointChange() {
+		return pointChange;
+	}
 
+	public void setPointChange(String pointChange) {
+		this.pointChange = pointChange;
+	}
 
 	public String getCounterPointPlanId() {
 		return counterPointPlanId;

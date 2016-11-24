@@ -16,6 +16,7 @@ package com.cherry.bs.cnt.bl;
 import com.cherry.bs.cnt.service.BINOLBSCNT07_Service;
 
 import javax.annotation.Resource;
+import java.util.Date;
 import java.util.List;
 import java.util.Map;
 import com.cherry.mo.common.interfaces.BINOLMOCOM01_IF;
@@ -58,6 +59,61 @@ public class BINOLBSCNT07_BL {
         List<Map<String, Object>> employeeList = binolbscnt07Service.getCounterPointPlanList(map);
         return employeeList;
     }
+
+    /**
+     * 柜台启用积分计划
+     * @param map
+     * @throws Exception
+     */
+    public void tran_enablePointPlan(Map<String, Object> map){
+        //查询柜台对应的的积分计划
+        Map<String, Object> pointPlanInfo = binolbscnt07Service.getPointPlanByOrganizationId(map);
+        map.put("modifiedType",'1');
+        map.put("endDate","2100-01-01");
+        map.put("actualEndTime","2100-01-01");
+
+        if (pointPlanInfo == null && pointPlanInfo.isEmpty()){
+            binolbscnt07Service.insertCounterPointPlan(map);
+        }else{
+            binolbscnt07Service.updateCounterPointPlan(map);
+        }
+        //记录柜台积分计划变更履历
+        binolbscnt07Service.insertCounterPointPlanHistory(map);
+    }
+
+    /**
+     * 柜台停用积分计划
+     * @param map
+     * @throws Exception
+     */
+    public void tran_disablePointPlan(Map<String, Object> map){
+        //更新对应柜台积分计划的结束时间
+        binolbscnt07Service.updateCounterPointPlan(map);
+
+        //记录柜台积分计划变更履历
+        map.put("modifiedType",'0');
+        map.put("actualEndTime",map.get("endDate"));
+        binolbscnt07Service.insertCounterPointPlanHistory(map);
+        //更新柜台积分计划设置履历的实际结束时间
+        binolbscnt07Service.updateCounterPointPlanHistory(map);
+    }
+
+    /**
+     * 柜台积分额度变更
+     * @param map
+     * @throws Exception
+     */
+    public void tran_pointChange(Map<String, Object> map){
+        //更新对应柜台的积分额度
+        binolbscnt07Service.updateCounterPointPlan(map);
+        //记录柜台积分额度明细
+        map.put("tradeType","4");
+        map.put("amount",0);
+        map.put("tradeTime",new Date());
+        binolbscnt07Service.insertCounterLimitInfo(map);
+    }
+
+
 
     /**
      * 导出柜台信息Excel

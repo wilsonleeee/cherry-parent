@@ -13,6 +13,8 @@
 				<s:checkbox name="validFlag" fieldValue="%{#counterMap.validFlag}" onclick="bscom03_checkRecord(this,'#dataTable_Cloned');"></s:checkbox>
 				<s:hidden name="counterInfoId" value="%{#counterMap.BIN_CounterInfoID}"></s:hidden>
 				<s:hidden name="counterCode" value="%{#counterMap.counterCode}"></s:hidden>
+				<s:hidden name="organizationId" value="%{#counterMap.BIN_OrganizationID}"></s:hidden>
+				<s:hidden name="startDate" value="%{#counterMap.StartDate}"></s:hidden>
 			</li>
 			<%-- No. --%>
 			<li><s:property value="RowNumber" /></li>

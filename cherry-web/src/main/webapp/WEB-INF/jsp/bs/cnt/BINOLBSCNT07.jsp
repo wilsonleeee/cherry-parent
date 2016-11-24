@@ -3,6 +3,8 @@
 <%@ taglib prefix="s" uri="/struts-tags" %>
 <%@ taglib prefix="cherry" uri="/cherry-tags"%>
 <script type="text/javascript" src="/Cherry/js/bs/common/BINOLBSCOM03.js"></script>
+<script type="text/javascript" src="/Cherry/js/bs/cnt/BINOLBSCNT07.js?v=20161123"></script>
+<script type="text/javascript" src="/Cherry/js/common/cherryDate.js"></script>
 <script type="text/javascript" src="/Cherry/js/bs/cnt/BINOLBSCNT07.js"></script>
 <script type="text/javascript" src="/Cherry/js/common/cherryDate.js"></script>
 <script type="text/javascript" src="/Cherry/js/common/popDataTable.js"></script>
@@ -12,6 +14,19 @@
 <s:url id="importInit_url"  action="BINOLBSCNT08_init"/>
 
 <s:i18n name="i18n.bs.BINOLBSCNT07">
+
+	<%-- 停用/启用 URL --%>
+	<s:url action="BINOLBSCNT07_enablePointPlan" id="enablePointPlan"></s:url>
+	<s:url action="BINOLBSCNT07_disablePointPlan" id="disablePointPlan"></s:url>
+	<s:url action="BINOLBSCNT07_pointChange" id="pointChange"></s:url>
+	<s:url id="enableInit_url" value="/basis/BINOLBSCNT07_enableInit"/>
+	<a id="enableInitUrl" href="${enableInit_url}"></a>
+
+	<s:url id="disableInit_url" value="/basis/BINOLBSCNT07_disableInit"/>
+	<a id="disableInitUrl" href="${disableInit_url}"></a>
+
+	<s:url id="pointChangeInit_url" value="/basis/BINOLBSCNT07_pointChangeInit"/>
+	<a id="pointChangeInitUrl" href="${pointChangeInit_url}"></a>
 	<s:url id="search_url" value="BINOLBSCNT07_search"/>
 	<s:hidden name="search_url" value="%{search_url}"/>
 	<s:text name="global.page.select" id="select_default"/>
@@ -37,6 +52,11 @@
 	<div style="display: none" id="errorMessageTemp">
 		<div class="actionError">
 			<ul><li><span><s:text name="CNT07.errorMessage"/></span></li></ul>
+		</div>
+	</div>
+	<div style="display: none" id="ECNT001"><!--只能选择一个用户进行该操作，请重新选择！ -->
+		<div class="actionError">
+			<ul><li><span><s:text name="CNT07.ECNT001"/></span></li></ul>
 		</div>
 	</div>
 	<%-- ================== 错误信息提示   END  ======================= --%>
@@ -118,13 +138,13 @@
 					<span class="ui-icon icon-enable"></span>
 					<span class="button-text"><s:text name="global.page.enable"/></span>
 				</a>
-				<!-- 启用 -->
-				<a href="" class="delete" onclick="return false;">
+				<!-- 停用 -->
+				<a href="" class="delete" onclick="binolbscnt07.operatePointPlanPop('disable','${disablePointPlan}');return false;">
 					<span class="ui-icon icon-disable"></span>
 					<span class="button-text"><s:text name="global.page.disable"/></span>
 				</a>
 
-				<a href="" class="edit" onclick="return false;">
+				<a href="" class="edit" onclick="binolbscnt07.operatePointPlanPop('pointChange','${pointChange}');return false;">
 					<span class="ui-icon icon-edit"></span>
 					<span class="button-text"><s:text name="CNT07.limitEdit"/></span>
 				</a>
@@ -174,12 +194,21 @@
 		<div id="privileMessage"><p class="message"><span><s:text name="global.page.privileMessage" /></span></p></div>
 		<div id="disableTitle"><s:text name="CNT07.disableTitle" /></div>
 		<div id="enableTitle"><s:text name="CNT07.enableTitle" /></div>
+		<div id="pointChangeTitle"><s:text name="CNT07.pointChangeTitle" /></div>
 		<div id="disableMessage"><p class="message"><span><s:text name="CNT07.disableMessage" /></span></p></div>
 		<div id="enableMessage"><p class="message"><span><s:text name="CNT07.enableMessage" /></span></p></div>
 		<div id="dialogConfirm"><s:text name="global.page.ok" /></div>
 		<div id="dialogCancel"><s:text name="global.page.cancle" /></div>
 		<div id="dialogClose"><s:text name="global.page.close" /></div>
 	</div>
+	<div class="hide" id="dialogInit"></div>
+<%--	<div class="hide" id="dialogDetail">
+		<div style='text-align: center;'>
+			开始时间
+			<s:textfield id="startDate" name="startDate" cssClass="date" readOnly="readOnly"></s:textfield>
+			<p class="message"><s:text name="CNT07.enableMessage" /></p>
+		</div>
+	</div>--%>
 </s:i18n>
 
 <%-- ================== dataTable共通导入 START ======================= --%>

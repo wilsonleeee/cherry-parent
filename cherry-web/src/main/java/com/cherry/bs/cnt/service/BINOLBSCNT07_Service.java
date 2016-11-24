@@ -15,7 +15,6 @@ package com.cherry.bs.cnt.service;
 import com.cherry.cm.core.CherryConstants;
 import com.cherry.cm.service.BaseService;
 
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -53,17 +52,90 @@ public class BINOLBSCNT07_Service extends BaseService {
     }
 
     /**
-     * 取得柜台信息List(Excel)
+     * 取得柜台积分计划List
      *
-     * @param map 查询条件
-     *
+     * @param map
+     * @return
      */
-    @SuppressWarnings("unchecked")
-    public List getCounterPointPlanListExcel(Map<String, Object> map) {
-        Map<String, Object> parameterMap = new HashMap<String, Object>();
-        parameterMap.putAll(map);
-        parameterMap.put(CherryConstants.IBATIS_SQL_ID, "BINOLBSCNT07.getCounterPointPlanListExcel");
-        return baseServiceImpl.getList(parameterMap);
+    public Map<String, Object> getPointPlanByOrganizationId (Map<String, Object> map) {
+        Map<String, Object> paramMap = new HashMap<String, Object>();
+        paramMap.putAll(map);
+        paramMap.put(CherryConstants.IBATIS_SQL_ID, "BINOLBSCNT07.getPointPlanByOrganizationId");
+        return (Map) baseServiceImpl.get(paramMap);
     }
 
+    /**
+     *
+     * 更新柜台积分计划设置表
+     *
+     * @param map
+     * @return
+     *
+     */
+    public int updateCounterPointPlan(Map<String, Object> map) {
+        Map<String, Object> paramMap = new HashMap<String, Object>();
+        paramMap.putAll(map);
+        paramMap.put(CherryConstants.IBATIS_SQL_ID, "BINOLBSCNT07.updateCounterPointPlan");
+        return baseServiceImpl.update(paramMap);
+    }
+
+    /**
+     *
+     * 插入柜台积分计划设置表
+     *
+     * @param map
+     * @return
+     *
+     */
+    public int insertCounterPointPlan(Map<String, Object> map) {
+        Map<String, Object> paramMap = new HashMap<String, Object>();
+        paramMap.putAll(map);
+        paramMap.put(CherryConstants.IBATIS_SQL_ID, "BINOLBSCNT07.insertCounterPointPlan");
+        return baseServiceImpl.saveBackId(paramMap);
+    }
+
+    /**
+     *
+     * 更新柜台积分计划设置履历表
+     *
+     * @param map
+     * @return
+     *
+     */
+    public int updateCounterPointPlanHistory(Map<String, Object> map) {
+        Map<String, Object> paramMap = new HashMap<String, Object>();
+        paramMap.putAll(map);
+        paramMap.put(CherryConstants.IBATIS_SQL_ID, "BINOLBSCNT07.updateCounterPointPlanHistory");
+        return baseServiceImpl.update(paramMap);
+    }
+
+    /**
+     *
+     * 插入柜台积分计划设置履历表
+     *
+     * @param map
+     * @return
+     *
+     */
+    public int insertCounterPointPlanHistory(Map<String, Object> map) {
+        Map<String, Object> paramMap = new HashMap<String, Object>();
+        paramMap.putAll(map);
+        paramMap.put(CherryConstants.IBATIS_SQL_ID, "BINOLBSCNT07.insertCounterPointPlanHistory");
+        return baseServiceImpl.saveBackId(paramMap);
+    }
+
+    /**
+     *
+     * 插入柜台积分额度明细表
+     *
+     * @param map
+     * @return
+     *
+     */
+    public int insertCounterLimitInfo(Map<String, Object> map) {
+        Map<String, Object> paramMap = new HashMap<String, Object>();
+        paramMap.putAll(map);
+        paramMap.put(CherryConstants.IBATIS_SQL_ID, "BINOLBSCNT07.insertCounterLimitInfo");
+        return baseServiceImpl.saveBackId(paramMap);
+    }
 }
