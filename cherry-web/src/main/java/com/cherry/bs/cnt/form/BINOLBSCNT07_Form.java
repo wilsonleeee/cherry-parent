@@ -71,6 +71,9 @@ public class BINOLBSCNT07_Form  extends DataTable_BaseForm {
 	/**有效区分 **/
 	private String validFlag;
 
+	/** 当前日期 **/
+	private String currentDate;
+
 
 
 
@@ -208,5 +211,13 @@ public class BINOLBSCNT07_Form  extends DataTable_BaseForm {
 
 	public void setPointDateEnd(String pointDateEnd) {
 		this.pointDateEnd = pointDateEnd;
+	}
+
+	public String getCurrentDate() {
+		return currentDate;
+	}
+
+	public void setCurrentDate(String currentDate) {
+		this.currentDate = currentDate;
 	}
 }

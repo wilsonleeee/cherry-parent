@@ -131,27 +131,27 @@
 				<table id="dataTable" cellpadding="0" cellspacing="0" border="0" class="jquery_table" width="100%">
 					<thead>
 					<tr>
-						<th><input type="checkbox" id="checkAll" onclick="bscom03_checkRecord(this,'#dataTable_Cloned');"/></th>
+						<th style="text-align: center"><input type="checkbox" id="checkAll" onclick="bscom03_checkRecord(this,'#dataTable_Cloned');"/></th>
 						<!-- 行号 -->
-						<th><s:text name="CNT07.number"></s:text></th>
+						<th style="text-align: center"><s:text name="CNT07.number"></s:text></th>
 						<!-- 柜台编号 -->
-						<th><s:text name="CNT07.counterCode"></s:text></th>
+						<th style="text-align: center"><s:text name="CNT07.counterCode"></s:text></th>
 						<!-- 柜台名称 -->
-						<th><s:text name="CNT07.counterName"></s:text></th>
+						<th style="text-align: center"><s:text name="CNT07.counterName"></s:text></th>
 						<!-- 积分计划 -->
-						<th><s:text name="CNT07.pointPlan"></s:text></th>
+						<th style="text-align: center"><s:text name="CNT07.pointPlan"></s:text></th>
 						<!-- 说明 -->
-						<th><s:text name="CNT07.explain"></s:text></th>
+						<th style="text-align: center"><s:text name="CNT07.explain"></s:text></th>
 						<!-- 开始日期 -->
-						<th><s:text name="CNT07.startDate"></s:text></th>
+						<th style="text-align: center"><s:text name="CNT07.startDate"></s:text></th>
 						<!-- 结束日期 -->
-						<th><s:text name="CNT07.endDate"></s:text></th>
+						<th style="text-align: center"><s:text name="CNT07.endDate"></s:text></th>
 						<!-- 经销商额度 -->
-						<th><s:text name="CNT07.currentPointLimit"></s:text></th>
+						<th style="text-align: center"><s:text name="CNT07.currentPointLimit"></s:text></th>
 						<!-- 修改者 -->
-						<th><s:text name="CNT07.modifier"></s:text></th>
+						<th style="text-align: center"><s:text name="CNT07.modifier"></s:text></th>
 						<!-- 备注 -->
-						<th><s:text name="CNT07.comment"></s:text></th>
+						<th style="text-align: center"><s:text name="CNT07.comment"></s:text></th>
 					</tr>
 					</thead>
 				</table>

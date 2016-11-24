@@ -24,14 +24,51 @@
 			</li>
 			<%-- 柜台名称 --%>
 			<li><span><s:property value="counterName"/></span></li>
-
-			<li><span></span></li>
-			<li><span></span></li>
+			<!-- 积分计划 -->
+			<li>
+				<span>
+					<s:if test=' currentDate >= StartDate && currentDate < EndDate  '>
+						<span class='ui-icon icon-valid center'></span>
+					</s:if>
+					<s:else>
+						&nbsp;
+					</s:else>
+				</span>
+			</li>
+			<!-- 说明 -->
+			<li>
+				<span>
+					<s:if test='  StartDate >= currentDate && EndDate == null  '>
+						<s:text name="CNT07.explainType1"/>
+					</s:if>
+					<s:if test=' StartDate == null || "".equals(StartDate) '>
+						<s:text name="CNT07.explainType2"/>
+					</s:if>
+					<s:if test=' StartDate > currentDate '>
+						<s:text name="CNT07.explainType3"/>
+					</s:if>
+					<s:if test=' StartDate != null && StartDate <= currentDate && EndDate > currentDate '>
+						<s:text name="CNT07.explainType4"/>
+					</s:if>
+					<s:if test=' EndDate != null && EndDate <= currentDate '>
+						<s:text name="CNT07.explainType5"/>
+					</s:if>
+				</span>
+			</li>
 
 			<%-- 开启日期 --%>
 			<li><span><s:property value="StartDate"/></span></li>
 			<%-- 结束日期 --%>
-			<li><span><s:property value="EndDate"/></span></li>
+			<li>
+				<span>
+					<s:if test=' EndDate == null || "2100-01-01".equals(EndDate) '>
+						&nbsp;
+					</s:if>
+					<s:else>
+						<s:property value="EndDate"/>
+					</s:else>
+				</span>
+			</li>
 			<%-- 经销商额度 --%>
 			<li><span><s:property value="CurrentPointLimit"/></span></li>
 			<%-- 修改者 --%>

@@ -26,16 +26,16 @@ BINOLBSCNT07.prototype = {
 			// 表格列属性设置
 			aoColumns : [
 
-				{ "sName": "checkbox","bSortable": false},
-				{ "sName": "no","sWidth": "1%","bSortable": false},
-				{ "sName": "CounterCode"},
-				{ "sName": "counterName"},
-				{ "sName": "pointPlan","bSortable": false},
+				{ "sName": "checkbox","bSortable": false,"sClass":"center"},
+				{ "sName": "no","sWidth": "1%","bSortable": false,"sClass":"center"},
+				{ "sName": "CounterCode","sClass":"center"},
+				{ "sName": "counterName","sClass":"center"},
+				{ "sName": "pointPlan","bSortable": false,"sClass":"center"},
 				{ "sName": "explain","bSortable": false},
-				{ "sName": "StartDate"},
-				{ "sName": "EndDate"},
-				{ "sName": "CurrentPointLimit"},
-				{ "sName": "employeeName"},
+				{ "sName": "StartDate","sClass":"center"},
+				{ "sName": "EndDate","sClass":"center"},
+				{ "sName": "CurrentPointLimit","sClass":"center"},
+				{ "sName": "employeeName","sClass":"center"},
 				{ "sName": "Comment"}
 			],
 			// 不可设置显示或隐藏的列

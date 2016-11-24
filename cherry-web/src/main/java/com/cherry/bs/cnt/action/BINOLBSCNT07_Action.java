@@ -30,6 +30,8 @@ import org.slf4j.LoggerFactory;
 import javax.annotation.Resource;
 import java.io.InputStream;
 import java.io.UnsupportedEncodingException;
+import java.text.SimpleDateFormat;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -129,6 +131,7 @@ public class BINOLBSCNT07_Action extends BaseAction implements ModelDriven<BINOL
 				// 取得柜台积分计划List
 				counterPointPlanList = binOLBSCNT07_BL.getCounterPointPlanList(searchMap);
 			}
+			form.setCurrentDate(new SimpleDateFormat("yyyy-MM-dd").format(new Date()));
 			// form表单设置
 			form.setITotalDisplayRecords(count);
 			form.setITotalRecords(count);
@@ -172,6 +175,8 @@ public class BINOLBSCNT07_Action extends BaseAction implements ModelDriven<BINOL
 		map.put("counterName",form.getCounterName());
 		map.put("pointLimitBegin",form.getPointLimitBegin());
 		map.put("pointLimitEnd",form.getPointLimitEnd());
+		map.put("pointDateBegin",form.getPointDateBegin());
+		map.put("pointDateEnd",form.getPointDateEnd());
 		map.put("pointPlanStatus",form.getPointPlanStatus());
 		map.put("counterStatus",form.getCounterStatus());
 		return map;
