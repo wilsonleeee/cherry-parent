@@ -31,5 +31,68 @@
 				BIN_OrganizationID = #BIN_OrganizationID#
     </select>
 
-	
+
+
+	<!--更新柜台积分计划设置表(批量操作) -->
+	<update id="updateCounterPointPlan" parameterClass="java.util.HashMap">
+		<iterate property="pointPlanList" conjunction="">
+				UPDATE
+					Basis.BIN_CounterPointPlan
+				SET
+					CurrentPointLimit = CurrentPointLimit + #pointPlanList[].pointChange#,
+					Comment = #pointPlanList[].comment#,
+					BIN_EmployeeID = #pointPlanList[].employeeId#,
+					UpdateTime=GETDATE(),
+					UpdatedBy=#pointPlanList[].updatedBy#,
+					UpdatePGM=#pointPlanList[].updatePGM#,
+					ModifyCount=ModifyCount+1
+				WHERE
+				BIN_OrganizationInfoID = #pointPlanList[].organizationInfoId# AND
+				BIN_BrandInfoID = #pointPlanList[].brandInfoId# AND
+				BIN_OrganizationID = #pointPlanList[].organizationId#
+		</iterate>
+	</update>
+
+
+
+	<!-- 插入柜台积分额度明细表 -->
+	<insert id="insertCounterLimitInfo" parameterClass="java.util.HashMap">
+			INSERT INTO
+				Basis.BIN_CounterLimitInfo
+				(
+				BIN_OrganizationID,
+		        TradeType,
+		        TradeTime,
+		        Amount,
+		        PointChange,
+		        Comment,
+				CreateTime,
+				UpdateTime,
+				CreatedBy,
+				CreatePGM,
+				UpdatedBy,
+				UpdatePGM,
+				ValidFlag,
+				ModifyCount
+                )VALUES
+		<iterate property="pointPlanList" conjunction=",">
+				 (#pointPlanList[].organizationId#,
+                 #pointPlanList[].tradeType#,
+                 GETDATE(),
+                 #pointPlanList[].amount#,
+                 #pointPlanList[].pointChange#,
+                 #pointPlanList[].comment#,
+				 GETDATE(),
+				 GETDATE(),
+				 #pointPlanList[].createdBy#,
+				 #pointPlanList[].createPGM#,
+				 #pointPlanList[].updatedBy#,
+				 #pointPlanList[].updatePGM#,
+				 '1',
+				 '0'
+				)
+		</iterate>
+	</insert>
+
+
 </sqlMap>

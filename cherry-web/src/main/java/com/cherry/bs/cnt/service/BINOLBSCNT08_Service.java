@@ -15,6 +15,7 @@ package com.cherry.bs.cnt.service;
 import com.cherry.cm.core.CherryConstants;
 import com.cherry.cm.service.BaseService;
 
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -49,5 +50,35 @@ public class BINOLBSCNT08_Service extends BaseService {
         return (Map)baseServiceImpl.get(map);
     }
 
+
+    /**
+     *
+     * 更新柜台积分计划设置表(批量操作)
+     *
+     * @param pointPlanList
+     * @return
+     *
+     */
+    public int updateCounterPointPlan(List<Map<String, Object>> pointPlanList) {
+        Map<String, Object> paramMap = new HashMap<String, Object>();
+        paramMap.put("pointPlanList",pointPlanList);
+        paramMap.put(CherryConstants.IBATIS_SQL_ID, "BINOLBSCNT08.updateCounterPointPlan");
+        return baseServiceImpl.update(paramMap);
+    }
+
+    /**
+     *
+     * 插入柜台积分额度明细表(批量操作)
+     *
+     * @param pointPlanList
+     * @return
+     *
+     */
+    public void insertCounterLimitInfo(List<Map<String, Object>> pointPlanList) {
+        Map<String, Object> paramMap = new HashMap<String, Object>();
+        paramMap.put("pointPlanList",pointPlanList);
+        paramMap.put(CherryConstants.IBATIS_SQL_ID, "BINOLBSCNT08.insertCounterLimitInfo");
+        baseServiceImpl.save(paramMap);
+    }
 
 }

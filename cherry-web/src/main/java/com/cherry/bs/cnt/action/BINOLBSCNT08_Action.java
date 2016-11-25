@@ -138,14 +138,14 @@ public class BINOLBSCNT08_Action extends BaseAction implements ModelDriven<BINOL
 			msgMap.put("successMsg", getText("ICM00002"));
 			// 经销商额度变更导入处理
 			List<Map<String, Object>> resultList = binOLBSCNT08_BL.ResolveExcel(map);
-			binOLBSCNT08_BL.tran_excelHandle(resultList,map);
+			binOLBSCNT08_BL.tran_excelHandle(resultList);
 
 			List<String> counterList = new ArrayList<String>();
 				for(Map<String, Object> counter:resultList){
-					if(!counterList.contains(ConvertUtil.getString(counter.get("counterName")))){
-						counterList.add(ConvertUtil.getString(counter.get("counterName")));
+					if(!counterList.contains(ConvertUtil.getString(counter.get("counterCode")))){
+						counterList.add(ConvertUtil.getString(counter.get("counterCode")));
 					}else{//导入的时间，就是当前系统时间
-						msgMap.put("successMsg", getText("ICM00002"));
+						msgMap.put("successMsg", getText("ACT000113"));
 					}
 				}
 
@@ -195,10 +195,10 @@ public class BINOLBSCNT08_Action extends BaseAction implements ModelDriven<BINOL
 		map.put(CherryConstants.ORG_CODE, userInfo.getOrganizationInfoCode());
 		// 品牌code
 		map.put(CherryConstants.BRAND_CODE, userInfo.getBrandCode());
-		map.put("CreatedBy", map.get(CherryConstants.USERID));
-		map.put("CreatePGM", "BINOLBSCNT08");
-		map.put("UpdatedBy", map.get(CherryConstants.USERID));
-		map.put("UpdatePGM", "BINOLBSCNT08");
+		map.put("createdBy", map.get(CherryConstants.USERID));
+		map.put("createPGM", "BINOLBSCNT08");
+		map.put("updatedBy", map.get(CherryConstants.USERID));
+		map.put("updatePGM", "BINOLBSCNT08");
 		return map;
 	}
 

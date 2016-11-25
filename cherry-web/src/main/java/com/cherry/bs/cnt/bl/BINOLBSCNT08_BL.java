@@ -97,7 +97,7 @@ public class BINOLBSCNT08_BL {
         }
         int sheetLength = dateSheet.getRows();
         //导入成功结果信息List
-        List<Map<String,Object>> resulList = new ArrayList<Map<String,Object>>();
+        List<Map<String,Object>> resultList = new ArrayList<Map<String,Object>>();
         //逐行遍历Excel
         for (int r = 2; r < sheetLength; r++) {
             Map<String, Object> counterPointPlanMap = new HashMap<String, Object>();
@@ -111,6 +111,12 @@ public class BINOLBSCNT08_BL {
             String pointChange = dateSheet.getCell(2, r).getContents().trim();
             counterPointPlanMap.put("pointChange", pointChange);
             counterPointPlanMap.putAll(map);
+
+            //记录柜台积分额度明细
+            counterPointPlanMap.put("tradeType","5");
+            counterPointPlanMap.put("amount",0);
+
+
             // 整行数据为空，程序认为sheet内有效行读取结束
             if ( CherryChecker.isNullOrEmpty(counterCode)
                     && CherryChecker.isNullOrEmpty(counterName)
@@ -127,6 +133,7 @@ public class BINOLBSCNT08_BL {
                     }else{
                         tempMap.put("organizationInfoId",counterPointPlanMap.get("organizationInfoId"));
                         tempMap.put("brandInfoId",counterPointPlanMap.get("brandInfoId"));
+                        counterPointPlanMap.put("organizationId",tempMap.get("BIN_OrganizationID"));
 
                         //得到柜台对应的积分计划
                         Map<String,Object> planMap = binolbscnt08Service.getCounterPointPlan(tempMap);
@@ -145,15 +152,15 @@ public class BINOLBSCNT08_BL {
                 }
 
             }
-            resulList.add(counterPointPlanMap);
+            resultList.add(counterPointPlanMap);
         }
         //没有数据，不操作
-        if(resulList==null || resulList.isEmpty()){
+        if(resultList==null || resultList.isEmpty()){
             // sheet单元格没有数据，请核查后再操作！
             throw new CherryException("PTM00025", new String[] {
                     dateSheet.getName()});
         }
-        return resulList;
+        return resultList;
     }
 
     /**
@@ -162,34 +169,17 @@ public class BINOLBSCNT08_BL {
      * @return
      * @throws Exception
      */
-    public Map<String, Object>  tran_excelHandle(List<Map<String, Object>> list, Map<String, Object> map) throws Exception {
-        Map<String,Object> mainData = new HashMap<String,Object>();
-        mainData.put("organizationInfoId", map.get("organizationInfoId"));
-        mainData.put("brandInfoId", map.get("brandInfoId"));
-        String memberClubId = (String) map.get("memberClubId");
-        if (!CherryChecker.isNullOrEmpty(memberClubId)) {
-            mainData.put("memberClubId", memberClubId);
-        }
-        //导入原因
-        mainData.put("reason", map.get("reason"));
-        //员工Id
-        mainData.put("employeeId", map.get("employeeId"));
-        //明细     有效区分
-        mainData.put("ValidFlag", "1");
-        //明细     共通字段
-        mainData.put("CreatedBy", map.get(CherryConstants.USERID));
-        mainData.put("CreatePGM", map.get(CherryConstants.CREATEDBY));
-        mainData.put("UpdatedBy", map.get(CherryConstants.USERID));
-        mainData.put("UpdatePGM", map.get(CherryConstants.UPDATEDBY));
+    public void tran_excelHandle(List<Map<String, Object>> list) throws Exception {
         try {
-            //插入主表
-            //int memPointImportId = binOLMBPTM05_Service.insertMemPointImport(mainData);
+            //批量修改柜台对应的积分额度
+            binolbscnt08Service.updateCounterPointPlan(list);
+            //批量插入柜台积分额度明细表
+            binolbscnt08Service.insertCounterLimitInfo(list);
         } catch (Exception e) {
             CherryException CherryException = new CherryException("PTM00024");
             //更新失败的场合，打印错误日志
             logger.error(e.getMessage(), e);
             throw CherryException;
         }
-        return map;
     }
 }
