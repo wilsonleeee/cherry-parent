@@ -66,16 +66,7 @@ BINOLBSCNT07.prototype = {
 			window.open(url,"_self");
 		}
 	},
-	/*"operatePointPlan" : function(param,url) {
-		var callback = function(msg) {
-			removeDialog("#dialogInit");
-		};
-		cherryAjaxRequest({
-			url: url,
-			param: param,
-			callback: callback
-		});
-	},*/
+
 	"operatePointPlanPop" : function(operateType,url) {
 		$("#errorMessage").html("");
 		//判断执行结果div是否隐藏
@@ -111,6 +102,7 @@ BINOLBSCNT07.prototype = {
 			$("#errorMessage").html($("#ECNT001").html());	//只能选择一个柜台进行该操作，请重新选择！
 			return false;
 		}
+
 		var param = "organizationId="+organizationId;
 		var title = '';
 		var operateInitUrl = '';
@@ -131,6 +123,10 @@ BINOLBSCNT07.prototype = {
 				return false;
 			}
 		}else {
+			if(startDate == null || startDate == ''){
+				$("#errorMessage").html($("#ECNT006").html());
+				return false;
+			}
 			title = $("#pointChangeTitle").text();
 			operateInitUrl = $("#pointChangeInitUrl").attr("href");
 			param = param+"&startDate="+startDate;
@@ -157,7 +153,8 @@ BINOLBSCNT07.prototype = {
 					param = param+"&pointChange="+$("#pointChange").val()+"&comment="+$("#comment").val();
 				}
 				var callbackOp = function(msg) {
-					if (oTableArr[0] != null)oTableArr[0].fnDraw();
+					removeDialog("#dialogInit");
+					//if (oTableArr[0] != null)oTableArr[0].fnDraw();
 					var msgJson = eval("("+msg+")");
 					if(msgJson.errorCode == "0"){
 						$("#errorMessage").html($("#ECNT004").html());
@@ -165,7 +162,6 @@ BINOLBSCNT07.prototype = {
 					if(msgJson.errorCode == "1"){
 						$("#errorMessage").html($("#ECNT005").html());
 					}
-					removeDialog("#dialogInit");
 				};
 				cherryAjaxRequest({
 					url: url,

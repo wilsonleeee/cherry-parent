@@ -63,7 +63,7 @@
         UPDATE
           Basis.BIN_CounterPointPlanHistory
         SET
-          ActualEndTime = #entDate#,
+          ActualEndTime = #endDate#,
         <include refid="BINOLCMINC99.updateSql" />
         <![CDATA[
         WHERE
@@ -71,7 +71,22 @@
             BIN_BrandInfoID = #brandInfoId# AND
             BIN_OrganizationID = #organizationId# AND
             StartTime = #startDate# AND
-            ActualEndTime > #entDate#
+            ActualEndTime > #endDate# AND
+            ExecuteFlag = '1'
+		]]>
+    </update>
+    <!--更新柜台积分计划设置履历表执行标志 -->
+    <update id="updateExecuteFlagOfCounterPointPlanHistory" parameterClass="java.util.HashMap">
+        UPDATE
+          Basis.BIN_CounterPointPlanHistory
+        SET
+        ExecuteFlag = #executeFlag#,
+        <include refid="BINOLCMINC99.updateSql" />
+        <![CDATA[
+        WHERE
+            BIN_OrganizationInfoID = #organizationInfoId# AND
+            BIN_BrandInfoID = #brandInfoId# AND
+            BIN_OrganizationID = #organizationId#
 		]]>
     </update>
 
@@ -88,6 +103,7 @@
 		        StartTime,
 		        EndTime,
 		        ActualEndTime,
+		        ExecuteFlag,
 		        Commemts,
 			]]>
             <include refid="BINOLCMINC99.insertKeySql" />
@@ -101,6 +117,7 @@
                  #startDate#,
                  #endDate#,
                  #actualEndTime#,
+                 #executeFlag#,
                  #comment#,
             ]]>
             <include refid="BINOLCMINC99.insertValueSql" />
@@ -316,6 +333,22 @@
         <include refid="BINOLCMINC99.pageheader" />
         <include refid="BINOLBSCNT07.counterPointPlanQuery" />
         <include refid="BINOLCMINC99.pagefooter" />
+    </select>
+
+    <!-- 取得根据柜台编号柜台积分计划 -->
+    <select id="getPointPlanByOrganizationId" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+        SELECT TOP 1
+            BIN_OrganizationID,
+            StartDate,
+            EndDate,
+            CurrentPointLimit,
+            Comment
+        FROM
+          Basis.BIN_CounterPointPlan WITH(NOLOCK)
+        WHERE
+          BIN_OrganizationInfoID = #organizationInfoId# AND
+          BIN_BrandInfoID = #brandInfoId# AND
+          BIN_OrganizationID = #organizationId#
     </select>
 
 

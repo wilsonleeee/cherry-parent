@@ -14,11 +14,12 @@ package com.cherry.bs.cnt.bl;
 
 
 import com.cherry.bs.cnt.service.BINOLBSCNT07_Service;
+import com.cherry.cm.core.CherryConstants;
+import com.cherry.mo.common.interfaces.BINOLMOCOM01_IF;
 
 import javax.annotation.Resource;
 import java.util.List;
 import java.util.Map;
-import com.cherry.mo.common.interfaces.BINOLMOCOM01_IF;
 
 
 /**
@@ -68,8 +69,8 @@ public class BINOLBSCNT07_BL {
         //查询柜台对应的的积分计划
         Map<String, Object> pointPlanInfo = binolbscnt07Service.getPointPlanByOrganizationId(map);
         map.put("modifiedType","1");
-        map.put("endDate","2100-01-01");
-        map.put("actualEndTime","2100-01-01");
+        map.put("endDate", CherryConstants.longLongAfter);
+        map.put("actualEndTime",CherryConstants.longLongAfter);
 
         if (pointPlanInfo == null){
             map.put("currentPointLimit","0");
@@ -77,8 +78,13 @@ public class BINOLBSCNT07_BL {
         }else{
             binolbscnt07Service.updateCounterPointPlan(map);
         }
+        //废弃该柜台未开启的计划
+        map.put("executeFlag","2");
+        binolbscnt07Service.updateExecuteFlagOfCounterPointPlanHistory(map);
         //记录柜台积分计划变更履历
+        map.put("executeFlag",null);
         binolbscnt07Service.insertCounterPointPlanHistory(map);
+
     }
 
     /**
@@ -89,12 +95,13 @@ public class BINOLBSCNT07_BL {
     public void tran_disablePointPlan(Map<String, Object> map){
         //更新对应柜台积分计划的结束时间
         binolbscnt07Service.updateCounterPointPlan(map);
-
         //记录柜台积分计划变更履历
         map.put("modifiedType","0");
+        //柜台已启用，执行标志直接设为1
+        map.put("executeFlag","1");
         map.put("actualEndTime",map.get("endDate"));
         binolbscnt07Service.insertCounterPointPlanHistory(map);
-        //更新柜台积分计划设置履历的实际结束时间
+        //更新该柜台生效过的、实际结束时间大于停用设定时间的记录的实际结束时间为停用设定时间
         binolbscnt07Service.updateCounterPointPlanHistory(map);
     }
 

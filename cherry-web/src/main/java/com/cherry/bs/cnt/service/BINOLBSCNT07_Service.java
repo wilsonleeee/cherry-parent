@@ -109,6 +109,20 @@ public class BINOLBSCNT07_Service extends BaseService {
         paramMap.put(CherryConstants.IBATIS_SQL_ID, "BINOLBSCNT07.updateCounterPointPlanHistory");
         return baseServiceImpl.update(paramMap);
     }
+    /**
+     *
+     * 更新柜台积分计划设置履历表执行标志
+     *
+     * @param map
+     * @return
+     *
+     */
+    public int updateExecuteFlagOfCounterPointPlanHistory(Map<String, Object> map) {
+        Map<String, Object> paramMap = new HashMap<String, Object>();
+        paramMap.putAll(map);
+        paramMap.put(CherryConstants.IBATIS_SQL_ID, "BINOLBSCNT07.updateExecuteFlagOfCounterPointPlanHistory");
+        return baseServiceImpl.update(paramMap);
+    }
 
     /**
      *

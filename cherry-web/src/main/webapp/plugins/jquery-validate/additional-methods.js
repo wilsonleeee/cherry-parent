@@ -387,6 +387,13 @@ jQuery.validator.addMethod("validIntNum", function(value, element) {
 	return this.optional(element) || /^-?\d+$/.test($.trim(value));
 }, "请输入整数");
 
+jQuery.validator.addMethod("validIntNumNotZero", function(value, element) {
+	if(this.optional(element)) {
+		return true;
+	}
+	return this.optional(element) || (/^-?\d+$/.test($.trim(value))&&0!=$.trim(value));
+}, "请输入非0整数");
+
 jQuery.validator.addMethod("timeValid", function(value, element, param) {
 	if(this.optional(element)) {
 		return true;

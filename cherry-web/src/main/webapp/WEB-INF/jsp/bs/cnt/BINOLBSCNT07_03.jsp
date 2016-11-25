@@ -10,7 +10,7 @@
 		cherryValidate({
 			formId: 'msgForm',
 			rules: {
-				pointChange: {required: true,maxlength: 10},
+				pointChange: {required: true,maxlength: 10,validIntNumNotZero:true},
 				comment: {byteLengthValid: [200]},//字节数最大为238（一个中文两个字节）
 			}
 		});

@@ -64,6 +64,11 @@
 			<ul><li><span><s:text name="CNT07.ECNT004"/></span></li></ul>
 		</div>
 	</div>
+	<div style="display: none" id="ECNT006">
+		<div class="actionError">
+			<ul><li><span><s:text name="CNT07.ECNT006"/></span></li></ul>
+		</div>
+	</div>
 	<div style="display: none" id="ECNT001"><!--只能选择一个用户进行该操作，请重新选择！ -->
 		<div class="actionError">
 			<ul><li><span><s:text name="CNT07.ECNT001"/></span></li></ul>
@@ -155,8 +160,8 @@
 					   <span class="button-text"><s:text name="global.page.export"/></span>
 				   </a>
 
-				<!-- 停用 -->
-				<a href="" class="add" onclick="return false;">
+				<!-- 启用 -->
+				<a href="" class="add" onclick="binolbscnt07.operatePointPlanPop('enable','${enablePointPlan}');return false;">
 					<span class="ui-icon icon-enable"></span>
 					<span class="button-text"><s:text name="global.page.enable"/></span>
 				</a>
