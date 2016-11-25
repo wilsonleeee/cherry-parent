@@ -54,8 +54,6 @@ BINOLBSCNT08.prototype = {
 			}
 
 
-		alert(parentTokenVal());
-
     	$.ajaxFileUpload({
 			url : url,
 			secureuri : false,

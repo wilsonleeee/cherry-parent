@@ -48,4 +48,6 @@ public class BINOLBSCNT08_Service extends BaseService {
         map.put(CherryConstants.IBATIS_SQL_ID, "BINOLBSCNT08.getCounterPointPlan");
         return (Map)baseServiceImpl.get(map);
     }
+
+
 }

@@ -21,8 +21,10 @@ import com.cherry.cm.cmbussiness.bl.BINOLCM00_BL;
 import com.cherry.cm.cmbussiness.bl.BINOLCM05_BL;
 import com.cherry.cm.cmbussiness.bl.BINOLCM14_BL;
 import com.cherry.cm.core.BaseAction;
+import com.cherry.cm.core.CherryChecker;
 import com.cherry.cm.core.CherryConstants;
 import com.cherry.cm.core.CherryException;
+import com.cherry.cm.util.CherryUtil;
 import com.cherry.cm.util.ConvertUtil;
 import com.cherry.cm.util.FileUtil;
 import com.cherry.mo.common.interfaces.BINOLMOCOM01_IF;
@@ -35,6 +37,7 @@ import javax.annotation.Resource;
 import java.io.File;
 import java.io.InputStream;
 import java.io.UnsupportedEncodingException;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -132,10 +135,21 @@ public class BINOLBSCNT08_Action extends BaseAction implements ModelDriven<BINOL
 			map.put("upExcel", upExcel);
 			// 导入原因
 			map.put("comment",form.getComment());
+			msgMap.put("successMsg", getText("ICM00002"));
 			// 经销商额度变更导入处理
 			List<Map<String, Object>> resultList = binOLBSCNT08_BL.ResolveExcel(map);
-			//Map<String, Object> infoMap = binOLBSCNT08_BL.tran_excelHandle(resultList,map);
-			msgMap.put("successMsg", getText("ICM00002"));
+			binOLBSCNT08_BL.tran_excelHandle(resultList,map);
+
+			List<String> counterList = new ArrayList<String>();
+				for(Map<String, Object> counter:resultList){
+					if(!counterList.contains(ConvertUtil.getString(counter.get("counterName")))){
+						counterList.add(ConvertUtil.getString(counter.get("counterName")));
+					}else{//导入的时间，就是当前系统时间
+						msgMap.put("successMsg", getText("ICM00002"));
+					}
+				}
+
+
 		} catch (CherryException e) {
 			logger.error(e.getMessage(), e);
 			// 导入失败场合

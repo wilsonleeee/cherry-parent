@@ -9,7 +9,7 @@
 <%-- 导入经销商额度变更下载URL --%>
 <s:url id="downLoad_url" value="/download/导入经销商额度变更模板.xls"/>
 <%-- 经销商额度变更批量导入URL --%>
-<s:url id="import_url" value="/bs/BINOLBSCNT08_importPoint"/>
+<s:url id="import_url" value="/basis/BINOLBSCNT08_importPoint"/>
 <s:text name="global.page.select" id="select_default"/>
 <div class="panel ui-corner-all">
 <div id="div_main">

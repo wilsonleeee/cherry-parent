@@ -118,12 +118,12 @@ public class BINOLBSCNT08_BL {
                 break;
             }else{
                 if (CherryUtil.isEmpty(counterCode)) {// 柜台编号不能为空
-                    throw new CherryException("ACT000108", new String[] { dateSheet.getName(), "" + (r + 1) });
+                    throw new CherryException("ACT000108", new String[] { dateSheet.getName(), "" + (r + 1) ,"柜台编号不能为空"});
                 }
                 else {
                     Map<String,Object> tempMap = binolbscnt08Service.getCounterInfo(counterPointPlanMap);
                     if(tempMap==null){//请输入有效的柜台信息
-                        throw new CherryException("ACT000108", new String[] { dateSheet.getName(), "" + (r + 1) });
+                        throw new CherryException("ACT000108", new String[] { dateSheet.getName(), "" + (r + 1) ,"请输入有效的柜台信息"});
                     }else{
                         tempMap.put("organizationInfoId",counterPointPlanMap.get("organizationInfoId"));
                         tempMap.put("brandInfoId",counterPointPlanMap.get("brandInfoId"));
@@ -131,13 +131,13 @@ public class BINOLBSCNT08_BL {
                         //得到柜台对应的积分计划
                         Map<String,Object> planMap = binolbscnt08Service.getCounterPointPlan(tempMap);
                         if(planMap==null){//柜台没有对应的积分计划
-                            throw new CherryException("ACT000108", new String[] { dateSheet.getName(), "" + (r + 1) });
+                            throw new CherryException("ACT000108", new String[] { dateSheet.getName(), "" + (r + 1) ,"柜台没有对应的积分计划" });
                         }else{
                             if(CherryUtil.isEmpty(pointChange)){//额度变更值不能为空
-                                throw new CherryException("ACT000108", new String[] { dateSheet.getName(), "" + (r + 1) });
+                                throw new CherryException("ACT000108", new String[] { dateSheet.getName(), "" + (r + 1) ,"额度变更值不能为空" });
                             }else{
                                 if(CherryUtil.string2int(pointChange)==0){//额度变更值只能为非零的整数
-                                    throw new CherryException("ACT000108", new String[] { dateSheet.getName(), "" + (r + 1) });
+                                    throw new CherryException("ACT000108", new String[] { dateSheet.getName(), "" + (r + 1) ,"额度变更值只能为非零的整数" });
                                 }
                             }
                         }
