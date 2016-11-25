@@ -125,27 +125,62 @@
 		    A1.BIN_LogicInventoryInfoID,
 		    A1.BIN_ProductVendorID,
 		    0 AS hQuantity,
-		    CASE WHEN A1.StockType = '0' and H.StockInOutDate >= CONVERT(date,#startDate#)
+			CASE WHEN
+				H.TradeType IN('RD','AR','GR','BG','CA') AND A1.StockType = '0'
+				and H.StockInOutDate >= CONVERT(date,#startDate#)
 		        AND H.StockInOutDate <= CONVERT(date,#endDate#)
-				THEN ISNULL(A1.Quantity,0) else 0 end AS inQuantity,
-			CASE WHEN A1.StockType = '0' and H.StockInOutDate >= CONVERT(date,#startDate#)
+		    THEN ISNULL(A1.Quantity,0)
+		    WHEN H.TradeType IN('RR','LG','CA') AND A1.StockType = '1'
+				and H.StockInOutDate >= CONVERT(date,#startDate#)
 		        AND H.StockInOutDate <= CONVERT(date,#endDate#)
-            	THEN ISNULL(A1.Quantity,0)*ISNULL(PWAP.AvgPrice, ISNULL(E.StandardCost,0)) else 0 end AS inAmount,
-		    CASE WHEN A1.StockType = '1' and H.StockInOutDate >= CONVERT(date,#startDate#)
+		    THEN 0-ISNULL(A1.Quantity,0)
+		    ELSE 0 end AS inQuantity,
+
+		    CASE WHEN
+				H.TradeType IN('RD','AR','GR','BG','CA') AND A1.StockType = '0'
+				and H.StockInOutDate >= CONVERT(date,#startDate#)
 		        AND H.StockInOutDate <= CONVERT(date,#endDate#)
-				THEN ISNULL(A1.Quantity,0) else 0 end AS outQuantity,
-			CASE WHEN A1.StockType = '1' and H.StockInOutDate >= CONVERT(date,#startDate#)
-		      	AND H.StockInOutDate <= CONVERT(date,#endDate#)
-            	THEN ISNULL(A1.Quantity,0)*ISNULL(PWAP.AvgPrice, ISNULL(E.StandardCost,0)) else 0 end AS outAmount,
+		    THEN ISNULL(A1.Quantity,0)*ISNULL(PWAP.AvgPrice, ISNULL(E.StandardCost,0))
+		    WHEN H.TradeType IN('RR','LG','CA') AND A1.StockType = '1'
+				and H.StockInOutDate >= CONVERT(date,#startDate#)
+		        AND H.StockInOutDate <= CONVERT(date,#endDate#)
+		    THEN 0-ISNULL(A1.Quantity,0)*ISNULL(PWAP.AvgPrice, ISNULL(E.StandardCost,0))
+		    ELSE 0 end AS inAmount,
+
+			CASE WHEN
+				H.TradeType='NS' AND A1.StockType = '1'
+				and H.StockInOutDate >= CONVERT(date,#startDate#)
+		        AND H.StockInOutDate <= CONVERT(date,#endDate#)
+			THEN ISNULL(A1.Quantity,0)
+			WHEN H.TradeType IN('SR','PX') AND A1.StockType = '0'
+				and H.StockInOutDate >= CONVERT(date,#startDate#)
+		        AND H.StockInOutDate <= CONVERT(date,#endDate#)
+		    THEN 0-ISNULL(A1.Quantity,0)
+			else 0 end AS outQuantity,
+
+			CASE WHEN
+				H.TradeType='NS' AND A1.StockType = '1'
+				and H.StockInOutDate >= CONVERT(date,#startDate#)
+		        AND H.StockInOutDate <= CONVERT(date,#endDate#)
+			THEN ISNULL(A1.Quantity,0)*ISNULL(PWAP.AvgPrice, ISNULL(E.StandardCost,0))
+			WHEN H.TradeType IN('SR','PX') AND A1.StockType = '0'
+				and H.StockInOutDate >= CONVERT(date,#startDate#)
+		        AND H.StockInOutDate <= CONVERT(date,#endDate#)
+		    THEN 0-ISNULL(A1.Quantity,0)*ISNULL(PWAP.AvgPrice, ISNULL(E.StandardCost,0))
+			else 0 end AS outAmount,
+
 		    CASE WHEN A1.StockType = '0' and H.StockInOutDate <= CONVERT(date,#cutOfDate#)
 				AND H.ValidFlag = '1' AND H.CloseFlag = '0'
 			THEN ISNULL(A1.Quantity,0) else 0 end AS hDinQuantity,
+
 		    CASE WHEN A1.StockType = '1' and H.StockInOutDate <= CONVERT(date,#cutOfDate#)
 				AND H.ValidFlag = '1' AND H.CloseFlag = '0'
 			THEN ISNULL(A1.Quantity,0) else 0 end AS hDoutQuantity,
+
 			CASE WHEN A1.StockType = '0' and H.StockInOutDate > CONVERT(date,#date1#)
 		           AND H.StockInOutDate <= CONVERT(date,#date2#)
 			THEN ISNULL(A1.Quantity,0) else 0 end AS hinQuantity,
+
 		    CASE WHEN A1.StockType = '1' and H.StockInOutDate > CONVERT(date,#date1#)
 		           AND H.StockInOutDate <= CONVERT(date,#date2#)
 			THEN ISNULL(A1.Quantity,0) else 0 end AS houtQuantity 
