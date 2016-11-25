@@ -27,5 +27,25 @@ import java.util.Map;
  */
 public class BINOLBSCNT08_Service extends BaseService {
 
+    /**
+     * 根据柜台编码或柜台名称 取得柜台详细信息
+     *
+     * @param  map
+     * @return
+     */
+    public Map<String, Object> getCounterInfo(Map<String, Object> map) {
+        map.put(CherryConstants.IBATIS_SQL_ID, "BINOLBSCNT08.getCounterInfo");
+        return (Map)baseServiceImpl.get(map);
+    }
 
+    /**
+     * 取得柜台对应的积分计划
+     *
+     * @param map
+     * @return
+     */
+    public Map<String, Object> getCounterPointPlan(Map<String, Object> map) {
+        map.put(CherryConstants.IBATIS_SQL_ID, "BINOLBSCNT08.getCounterPointPlan");
+        return (Map)baseServiceImpl.get(map);
+    }
 }

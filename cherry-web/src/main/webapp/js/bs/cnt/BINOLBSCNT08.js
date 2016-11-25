@@ -53,7 +53,9 @@ BINOLBSCNT08.prototype = {
 				'comment' : $('#comment').val()
 			}
 
-		/*
+
+		alert(parentTokenVal());
+
     	$.ajaxFileUpload({
 			url : url,
 			secureuri : false,
@@ -75,16 +77,14 @@ BINOLBSCNT08.prototype = {
 					}else{
 						var  $successDiv =$('#successDiv #successSpan');
 						$('#successDiv').show();
-					    var html='';
-						html+=$('#exportTip1').val();
-						$("#successSpan").html(html);
+						$("#successSpan").html(msgJson.successMsg);
 					//导入成功后刷新父页面
 					if(window.opener.oTableArr[0] != null)window.opener.oTableArr[0].fnDraw();
 					}
 				}
 	        }
 		});
-		*/
+
     },
 	//关闭按钮
     "close":function(){

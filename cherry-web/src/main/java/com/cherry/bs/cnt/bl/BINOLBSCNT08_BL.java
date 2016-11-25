@@ -18,6 +18,7 @@ import com.cherry.bs.cnt.service.BINOLBSCNT08_Service;
 import com.cherry.cm.core.CherryChecker;
 import com.cherry.cm.core.CherryConstants;
 import com.cherry.cm.core.CherryException;
+import com.cherry.cm.util.CherryUtil;
 import com.cherry.cm.util.ConvertUtil;
 import jxl.Sheet;
 import jxl.Workbook;
@@ -99,36 +100,52 @@ public class BINOLBSCNT08_BL {
         List<Map<String,Object>> resulList = new ArrayList<Map<String,Object>>();
         //逐行遍历Excel
         for (int r = 2; r < sheetLength; r++) {
-            Map<String, Object> memInfoMap = new HashMap<String, Object>();
+            Map<String, Object> counterPointPlanMap = new HashMap<String, Object>();
             // 柜台号
             String counterCode = dateSheet.getCell(0, r).getContents().trim();
-            memInfoMap.put("counterCode", counterCode);
+            counterPointPlanMap.put("counterCode", counterCode);
             // 柜台名称
             String counterName = dateSheet.getCell(1, r).getContents().trim();
-            memInfoMap.put("counterName", counterName);
+            counterPointPlanMap.put("counterName", counterName);
             // 额度变更值
             String pointChange = dateSheet.getCell(2, r).getContents().trim();
-            memInfoMap.put("pointChange", pointChange);
-            memInfoMap.putAll(map);
+            counterPointPlanMap.put("pointChange", pointChange);
+            counterPointPlanMap.putAll(map);
             // 整行数据为空，程序认为sheet内有效行读取结束
             if ( CherryChecker.isNullOrEmpty(counterCode)
                     && CherryChecker.isNullOrEmpty(counterName)
                     && CherryChecker.isNullOrEmpty(pointChange)) {
                 break;
             }else{
-                int memberId=0;
-                //int memberId = ConvertUtil.getInt(binOLMBPTM05_Service.getMemberId(memInfoMap));
-                // 验证会员是否存在
-                if (memberId > 0) {
-                    memInfoMap.put("memberInfoId", memberId);
-                } else {
-                    // 柜台不存在
-                    throw new CherryException("ACT00025", new String[] {
-                            dateSheet.getName(), "A" + (r + 1) });
+                if (CherryUtil.isEmpty(counterCode)) {// 柜台编号不能为空
+                    throw new CherryException("ACT000108", new String[] { dateSheet.getName(), "" + (r + 1) });
+                }
+                else {
+                    Map<String,Object> tempMap = binolbscnt08Service.getCounterInfo(counterPointPlanMap);
+                    if(tempMap==null){//请输入有效的柜台信息
+                        throw new CherryException("ACT000108", new String[] { dateSheet.getName(), "" + (r + 1) });
+                    }else{
+                        tempMap.put("organizationInfoId",counterPointPlanMap.get("organizationInfoId"));
+                        tempMap.put("brandInfoId",counterPointPlanMap.get("brandInfoId"));
+
+                        //得到柜台对应的积分计划
+                        Map<String,Object> planMap = binolbscnt08Service.getCounterPointPlan(tempMap);
+                        if(planMap==null){//柜台没有对应的积分计划
+                            throw new CherryException("ACT000108", new String[] { dateSheet.getName(), "" + (r + 1) });
+                        }else{
+                            if(CherryUtil.isEmpty(pointChange)){//额度变更值不能为空
+                                throw new CherryException("ACT000108", new String[] { dateSheet.getName(), "" + (r + 1) });
+                            }else{
+                                if(CherryUtil.string2int(pointChange)==0){//额度变更值只能为非零的整数
+                                    throw new CherryException("ACT000108", new String[] { dateSheet.getName(), "" + (r + 1) });
+                                }
+                            }
+                        }
+                    }
                 }
 
             }
-            resulList.add(memInfoMap);
+            resulList.add(counterPointPlanMap);
         }
         //没有数据，不操作
         if(resulList==null || resulList.isEmpty()){

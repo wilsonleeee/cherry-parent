@@ -134,9 +134,8 @@ public class BINOLBSCNT08_Action extends BaseAction implements ModelDriven<BINOL
 			map.put("comment",form.getComment());
 			// 经销商额度变更导入处理
 			List<Map<String, Object>> resultList = binOLBSCNT08_BL.ResolveExcel(map);
-			Map<String, Object> infoMap = binOLBSCNT08_BL.tran_excelHandle(resultList,map);
-			msgMap.put("suessMsg", getText("ICM00002"));
-			msgMap.put("totalCount", resultList.size());
+			//Map<String, Object> infoMap = binOLBSCNT08_BL.tran_excelHandle(resultList,map);
+			msgMap.put("successMsg", getText("ICM00002"));
 		} catch (CherryException e) {
 			logger.error(e.getMessage(), e);
 			// 导入失败场合

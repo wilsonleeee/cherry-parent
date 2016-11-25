@@ -55,8 +55,8 @@ public class BINOLBSCNT07_BL {
     public List<Map<String, Object>> getCounterPointPlanList(Map<String, Object> map) throws Exception {
 
         // 取得柜台积分计划List
-        List<Map<String, Object>> employeeList = binolbscnt07Service.getCounterPointPlanList(map);
-        return employeeList;
+        List<Map<String, Object>> counterPointPlanList = binolbscnt07Service.getCounterPointPlanList(map);
+        return counterPointPlanList;
     }
 
     /**
