@@ -2,14 +2,23 @@
 <!DOCTYPE sqlMap PUBLIC "-//iBATIS.com//DTD SQL Map 2.0//EN" "http://ibatis.apache.org/dtd/sql-map-2.dtd">
 <sqlMap namespace="BINOLBSCNT07">
     <!-- 取得积分计划柜台(Excel)  -->
-    <select id="getCounterInfoListExcel" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+    <select id="getCounterPointPlanListExcel" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
         <![CDATA[
             SELECT
             ROW_NUMBER()over(order by A.countercode) AS Cno
             ,A.CounterCode
             ,case when CONVERT(varchar,GETDATE(),23 )>=CONVERT(varchar,BP.StartDate,23 ) and  CONVERT(varchar,GETDATE(),23 )< CONVERT(varchar,ISNULL(BP.EndDate,'2100-01-01'),23 )
              then '是' else '否' end  AS Planstatus,
-             '' AS Explain ,
+            case when CONVERT(varchar,GETDATE(),23 )<CONVERT(varchar,BP.StartDate,23 ) then
+					'将要启用'
+				 when CONVERT(varchar,GETDATE(),23 )>=CONVERT(varchar,BP.EndDate,23 )  then
+					'已经停用'
+				 when CONVERT(varchar,GETDATE(),23 )>CONVERT(varchar,BP.StartDate,23 ) and BP.EndDate='2100-01-01'   then
+					'正在积分'
+				  when CONVERT(varchar,GETDATE(),23 )>CONVERT(varchar,BP.StartDate,23 ) and  CONVERT(varchar,GETDATE(),23 )<CONVERT(varchar,BP.EndDate,23 ) and BP.EndDate<>'2100-01-01'   then
+					'将要停用'
+			end
+			 AS Explain ,
             BP.StartDate ,
 			BP.EndDate,
             CAST(BP.CurrentPointLimit AS INT) AS CurrentPointLimit,

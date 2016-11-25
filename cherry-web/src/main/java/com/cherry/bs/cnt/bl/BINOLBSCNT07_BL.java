@@ -129,7 +129,7 @@ public class BINOLBSCNT07_BL {
                 { "Cno", "CNT07.number", "15", "", "" },
                 { "CounterCode", "CNT07.counterCode", "15", "", "" },
                 { "CounterNameIF", "CNT07.counterName", "20", "", "" },
-                { "Planstatus", "CNT07.pointPlan", "35", "", "" },
+                { "Planstatus", "CNT07.pointPlan", "15", "", "" },
                 { "Explain", "CNT07.explain", "15", "", "" },
                 { "StartDate", "CNT07.startDate", "15", "", "" },
                 { "EndDate", "CNT07.endDate", "15", "", "" },
