@@ -322,7 +322,6 @@
             $(ctItem).find("input").prop('checked', false);
             //先得到ul,有可能是第三，第二也有可能是第一层的
             var firstUl = ctItemParent.parent("ul");
-            alert(firstUl.val());
             var attClass = firstUl.attr("class");
             if(attClass == 'SmallUL'){
                 //得到小层的兄弟
@@ -593,7 +592,6 @@
                         //如果不在的话，再推入
                         this._selectedItems.push(this._selectedItem_1);
                     }
-                    //alert(checkbo);
                     checkbo.attr("checked",true);
                 }
             }/*else{
@@ -623,7 +621,6 @@
                 if (i < this._selectedItems.length - 1)
                     tmpTitle += ", ";
             }
-        alert("length is:"+this._selectedItems.length+"????id is:"+tmpTitle);
         this._eleHiddenSeleItem.val(tmpTitle);
     }
 

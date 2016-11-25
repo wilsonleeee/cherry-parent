@@ -93,6 +93,9 @@ public class BINOLSTIOS05_Form extends DataTable_BaseForm{
     
     /**是否开启批次盘点*/
     private String batchFlag;
+
+    /***最大盘点数目*/
+    private String maxCount;
     
     public String getDepartInit() {
 		return departInit;
@@ -276,5 +279,13 @@ public class BINOLSTIOS05_Form extends DataTable_BaseForm{
 
     public void setBatchFlag(String batchFlag) {
         this.batchFlag = batchFlag;
+    }
+
+    public String getMaxCount() {
+        return maxCount;
+    }
+
+    public void setMaxCount(String maxCount) {
+        this.maxCount = maxCount;
     }
 }

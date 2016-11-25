@@ -710,12 +710,6 @@ public class BINOLCM02_Action extends BaseAction implements ModelDriven<BINOLCM0
 		
 		// 取得产品信息
 		HashMap resultMap  = binOLCM02_BL.getProductDialogInfoList(map);
-		/*//在这里制造假数据
-		List fakeData = (List)resultMap.get(CherryConstants.POP_PRODUCT_LIST);
-		for(int i = 0; i < 6;i++){
-			fakeData.addAll(fakeData);
-		}
-		form.setPopProductInfoList(fakeData);*/
 		form.setPopProductInfoList((List)resultMap.get(CherryConstants.POP_PRODUCT_LIST));
 		int count = Integer.parseInt((String.valueOf(resultMap.get("count"))));
 		// form表单设置
