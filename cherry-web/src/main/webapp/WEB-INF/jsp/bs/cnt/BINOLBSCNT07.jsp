@@ -95,7 +95,11 @@
 						<p>
 							<%-- 柜台状态 --%>
 							<label><s:text name="CNT07.counterStatus"/></label>
-							<s:select list='#application.CodeTable.getCodes("1030")' listKey="CodeKey" listValue="Value" name="counterStatus" headerKey="" headerValue="%{#select_default}"></s:select>
+							<select name="counterStatus">
+								<option value="" selected><s:text name="CNT07.all"/></option>
+								<option value="1"><s:text name="CNT07.using"/></option>
+								<option value="0"><s:text name="CNT07.unused"/></option>
+							</select>
 						</p>
 							<%-- 积分日期范围(存在交集就查询) --%>
 						<p>
