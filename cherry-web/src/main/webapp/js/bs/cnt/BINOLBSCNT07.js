@@ -49,6 +49,7 @@ BINOLBSCNT07.prototype = {
 		getTable(tableSetting);
 	},
 
+
 	/*
 	 * 积分计划导出Excel
 	 */
@@ -76,38 +77,39 @@ BINOLBSCNT07.prototype = {
 		});
 	},*/
 	"operatePointPlanPop" : function(operateType,url) {
-/*		$("#errorMessage").html("");
+		$("#errorMessage").html("");
 		//判断执行结果div是否隐藏
 		if ($('#actionResultDiv').css('display') == 'block') {
 			$('#actionResultDiv').css('display', 'none');
 		}
-
-		var param = "";
-		if ($('#dataTable_Cloned :input[checked]').length == 0) {
-			$("#errorMessage").html($("#EMO00031").html());
+		if($('#dataTable_Cloned :input[checked]').length == 0) {
+			$("#errorMessage").html($("#errorMessageTemp").html());
 			return false;
 		}
 
-		var callback = function () {
-			if (oTableArr[0] != null)oTableArr[0].fnDraw();
-		};*/
 		//得到所有被选中的员工ID
 		var obj = document.getElementsByName("validFlag");
-		if(obj.size>1){
-			$("#errorMessage").html($("#ECNT001").html());	//只能选择一个柜台进行该操作，请重新选择！
-			return false;
-		}
-
 		var organizationIdArr = document.getElementsByName("organizationId");
 		var startDateArr = document.getElementsByName("startDate");
+		var endDateArr = document.getElementsByName("endDate");
+		var currentDateArr = document.getElementsByName("currentDate");
 		var organizationId = '';
 		var startDate = '';
-
+		var endDate = '';
+		var currentDate = '';
+		var count = 0;
 		for(var k in obj){
 			if(obj[k].checked){
+				count = count + 1;
 				organizationId=organizationIdArr[k].value;
 				startDate=startDateArr[k].value;
+				endDate=endDateArr[k].value;
+				currentDate=currentDateArr[k].value;
 			}
+		}
+		if(count>1){
+			$("#errorMessage").html($("#ECNT001").html());	//只能选择一个柜台进行该操作，请重新选择！
+			return false;
 		}
 		var param = "organizationId="+organizationId;
 		var title = '';
@@ -115,10 +117,19 @@ BINOLBSCNT07.prototype = {
 		if (operateType == 'enable'){
 			title = $("#enableTitle").text();
 			operateInitUrl = $("#enableInitUrl").attr("href");
+
+			if (currentDate >= startDate && currentDate<endDate){
+				$("#errorMessage").html($("#ECNT002").html());	//已经启用，不能再启用。
+				return false;
+			}
 		}else if(operateType == 'disable'){
 			title = $("#disableTitle").text();
 			operateInitUrl = $("#disableInitUrl").attr("href");
 			param = param+"&startDate="+startDate;
+			if (currentDate < startDate || currentDate>=endDate){
+				$("#errorMessage").html($("#ECNT003").html());	//已经停用，不能再停用。
+				return false;
+			}
 		}else {
 			title = $("#pointChangeTitle").text();
 			operateInitUrl = $("#pointChangeInitUrl").attr("href");
@@ -133,15 +144,27 @@ BINOLBSCNT07.prototype = {
 			confirm: $("#dialogConfirm").text(),
 			cancel: $("#dialogCancel").text(),
 			confirmEvent: function(){
+				var $form = $("#msgForm");
+				// 表单验证
+				if(!$form.valid()){
+					return;
+				}
 				if (operateType == 'enable'){
-					param = param+"&startDate="+$("#startDate").val();
-					alert(param);
+					param = param+"&startDate="+$("#startSetDate").val();
 				}else if(operateType == 'disable'){
-					param = param+"&endDate="+$("#endDate").val();
+					param = param+"&endDate="+$("#endSetDate").val();
 				}else {
 					param = param+"&pointChange="+$("#pointChange").val()+"&comment="+$("#comment").val();
 				}
 				var callbackOp = function(msg) {
+					if (oTableArr[0] != null)oTableArr[0].fnDraw();
+					var msgJson = eval("("+msg+")");
+					if(msgJson.errorCode == "0"){
+						$("#errorMessage").html($("#ECNT004").html());
+					}
+					if(msgJson.errorCode == "1"){
+						$("#errorMessage").html($("#ECNT005").html());
+					}
 					removeDialog("#dialogInit");
 				};
 				cherryAjaxRequest({

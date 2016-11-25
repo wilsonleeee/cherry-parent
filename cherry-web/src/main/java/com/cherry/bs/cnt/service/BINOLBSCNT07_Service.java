@@ -88,11 +88,11 @@ public class BINOLBSCNT07_Service extends BaseService {
      * @return
      *
      */
-    public int insertCounterPointPlan(Map<String, Object> map) {
+    public void insertCounterPointPlan(Map<String, Object> map) {
         Map<String, Object> paramMap = new HashMap<String, Object>();
         paramMap.putAll(map);
         paramMap.put(CherryConstants.IBATIS_SQL_ID, "BINOLBSCNT07.insertCounterPointPlan");
-        return baseServiceImpl.saveBackId(paramMap);
+        baseServiceImpl.save(paramMap);
     }
 
     /**
@@ -118,11 +118,11 @@ public class BINOLBSCNT07_Service extends BaseService {
      * @return
      *
      */
-    public int insertCounterPointPlanHistory(Map<String, Object> map) {
+    public void insertCounterPointPlanHistory(Map<String, Object> map) {
         Map<String, Object> paramMap = new HashMap<String, Object>();
         paramMap.putAll(map);
         paramMap.put(CherryConstants.IBATIS_SQL_ID, "BINOLBSCNT07.insertCounterPointPlanHistory");
-        return baseServiceImpl.saveBackId(paramMap);
+        baseServiceImpl.save(paramMap);
     }
 
     /**
@@ -133,11 +133,11 @@ public class BINOLBSCNT07_Service extends BaseService {
      * @return
      *
      */
-    public int insertCounterLimitInfo(Map<String, Object> map) {
+    public void insertCounterLimitInfo(Map<String, Object> map) {
         Map<String, Object> paramMap = new HashMap<String, Object>();
         paramMap.putAll(map);
         paramMap.put(CherryConstants.IBATIS_SQL_ID, "BINOLBSCNT07.insertCounterLimitInfo");
-        return baseServiceImpl.saveBackId(paramMap);
+        baseServiceImpl.save(paramMap);
     }
 
     /**

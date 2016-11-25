@@ -15,6 +15,8 @@
 				<s:hidden name="counterCode" value="%{#counterMap.counterCode}"></s:hidden>
 				<s:hidden name="organizationId" value="%{#counterMap.BIN_OrganizationID}"></s:hidden>
 				<s:hidden name="startDate" value="%{#counterMap.StartDate}"></s:hidden>
+				<s:hidden name="endDate" value="%{#counterMap.EndDate}"></s:hidden>
+				<s:hidden name="currentDate" value="%{currentDate}"></s:hidden>
 			</li>
 			<%-- No. --%>
 			<li><s:property value="RowNumber" /></li>

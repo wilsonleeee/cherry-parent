@@ -5,14 +5,17 @@
 <script type="text/javascript" src="/Cherry/js/lib/jquery-ui-i18n.js"></script>
 <script type="text/javascript">
 		$(function(){
-			$('#endDate').cherryDate({
-				minDate : new Date()
+			var currentDay = new Date();
+			currentDay.setDate(currentDay.getDate()+1);//
+
+			$('#endSetDate').cherryDate({
+				minDate : currentDay
 			});
 			// 表单验证初期化
 			cherryValidate({
 				formId: 'msgForm',
 				rules: {
-					endDate: {required:true,dateValid:true}   // 开始日期
+					endSetDate: {required:true,dateValid:true}   // 开始日期
 				}
 			});
 
@@ -24,7 +27,7 @@
 		<div style='text-align: center;'>
 			<p class="date" style="margin: 50px 0 0 0;">
 				<label><s:text name="CNT07.endDate" /></label>
-				<span><s:textfield id="endDate" name="endDate" cssClass="date" cssStyle="width:80px;"/></span>
+				<span><s:textfield id="endSetDate" name="endSetDate" cssClass="date" cssStyle="width:80px;" readonly="true"/></span>
 			</p>
 			<p class="message" style="margin: 50px auto 0;">
 				<span style="font-size: 14px;color: #666;">

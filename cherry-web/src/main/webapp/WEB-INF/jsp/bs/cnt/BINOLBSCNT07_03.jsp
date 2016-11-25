@@ -10,8 +10,8 @@
 		cherryValidate({
 			formId: 'msgForm',
 			rules: {
-				messageTitle: {required: true,maxlength: 10},
-				messageBody: {required: false,byteLengthValid: [200]},//字节数最大为238（一个中文两个字节）
+				pointChange: {required: true,maxlength: 10},
+				comment: {byteLengthValid: [200]},//字节数最大为238（一个中文两个字节）
 			}
 		});
 	});

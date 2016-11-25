@@ -1,6 +1,106 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE sqlMap PUBLIC "-//iBATIS.com//DTD SQL Map 2.0//EN" "http://ibatis.apache.org/dtd/sql-map-2.dtd">
 <sqlMap namespace="BINOLBSCNT07">
+
+    <!--更新柜台积分计划设置表 -->
+    <update id="updateCounterPointPlan" parameterClass="java.util.HashMap">
+        UPDATE
+          Basis.BIN_CounterPointPlan
+        SET
+        <isNotEmpty property="startDate">
+            StartDate = #startDate#,
+        </isNotEmpty>
+        <isNotEmpty property="endDate">
+            EndDate = #endDate#,
+        </isNotEmpty>
+        <isNotEmpty property="pointChange">
+            CurrentPointLimit = CurrentPointLimit + #pointChange#,
+        </isNotEmpty>
+        <isNotEmpty property="comment">
+            Comment = #comment#,
+        </isNotEmpty>
+        <include refid="BINOLCMINC99.updateSql" />
+        WHERE
+            BIN_OrganizationInfoID = #organizationInfoId# AND
+            BIN_BrandInfoID = #brandInfoId# AND
+            BIN_OrganizationID = #organizationId#
+    </update>
+
+    <!-- 插入柜台积分计划设置表 -->
+    <insert id="insertCounterPointPlan" parameterClass="java.util.HashMap">
+            <![CDATA[
+			INSERT INTO
+				Basis.BIN_CounterPointPlan
+				(
+                BIN_OrganizationInfoID,
+		        BIN_BrandInfoID,
+		        BIN_OrganizationID,
+		        StartDate,
+		        EndDate,
+		        CurrentPointLimit,
+		        Comment,
+			]]>
+            <include refid="BINOLCMINC99.insertKeySql" />
+            <![CDATA[
+                )VALUES
+                (
+                 #organizationInfoId#,
+		         #brandInfoId#,
+                 #organizationId#,
+                 #startDate#,
+                 #endDate#,
+                 #currentPointLimit#,
+                 #comment#,
+            ]]>
+            <include refid="BINOLCMINC99.insertValueSql" />
+            <![CDATA[
+            )
+            ]]>
+    </insert>
+
+    <!--更新柜台积分计划设置履历表 -->
+    <update id="updateCounterPointPlanHistory" parameterClass="java.util.HashMap">
+        UPDATE
+          Basis.BIN_CounterPointPlanHistory
+        SET
+          ActualEndTime = #entDate#,
+        <include refid="BINOLCMINC99.updateSql" />
+    </update>
+
+    <!-- 插入柜台积分计划设置履历表 -->
+    <insert id="insertCounterPointPlanHistory" parameterClass="java.util.HashMap">
+            <![CDATA[
+			INSERT INTO
+				Basis.BIN_CounterPointPlanHistory
+				(
+                BIN_OrganizationInfoID,
+		        BIN_BrandInfoID,
+		        BIN_OrganizationID,
+		        ModifiedType,
+		        StartTime,
+		        EndTime,
+		        ActualEndTime,
+		        Commemts,
+			]]>
+            <include refid="BINOLCMINC99.insertKeySql" />
+            <![CDATA[
+                )VALUES
+                (
+                 #organizationInfoId#,
+		         #brandInfoId#,
+                 #organizationId#,
+                 #modifiedType#,
+                 #startDate#,
+                 #endDate#,
+                 #actualEndTime#,
+                 #comment#,
+            ]]>
+            <include refid="BINOLCMINC99.insertValueSql" />
+            <![CDATA[
+            )
+            ]]>
+    </insert>
+
     <!-- 取得积分计划柜台(Excel)  -->
     <select id="getCounterPointPlanListExcel" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
         <![CDATA[
@@ -62,7 +162,6 @@
         <isNotEmpty prepend="AND" property="pointLimitEnd">
             BP.CurrentPointLimit &lt;= #pointLimitEnd#
         </isNotEmpty>
-
         <isNotEmpty property="pointDateBegin">
             <isNotEmpty prepend="AND" property="pointDateEnd">
                 (( #pointDateBegin# &lt;= BP.StartDate AND #pointDateEnd# &gt; BP.StartDate )
@@ -89,8 +188,45 @@
         <isNotEmpty prepend="AND" property="counterStatus">
             A.ValidFlag = #counterStatus#
         </isNotEmpty>
-
     </select>
+
+    <!-- 插入柜台积分额度明细表 -->
+    <insert id="insertCounterLimitInfo" parameterClass="java.util.HashMap">
+            <![CDATA[
+			INSERT INTO
+				Basis.BIN_CounterLimitInfo
+				(
+				BIN_OrganizationID,
+		        TradeType,
+		        BillNo,
+		        TradeTime,
+		        Amount,
+		        PointChange,
+		        BIN_MemberInfoID,
+		        MemberCode,
+		        Comment,
+			]]>
+            <include refid="BINOLCMINC99.insertKeySql" />
+        <![CDATA[
+                )VALUES
+                (
+                 #organizationId#,
+                 #tradeType#,
+                 #billNo#,
+                 GETDATE(),
+                 #amount#,
+                 #pointChange#,
+                 #memberInfoId#,
+                 #memberCode#,
+                 #comment#,
+        ]]>
+        <include refid="BINOLCMINC99.insertValueSql"/>
+        <![CDATA[
+        )
+        ]]>
+    </insert>
+
+
 
     <!-- 柜台积分计划信息查询sql文  -->
     <sql id="counterPointPlanQuery">
@@ -98,6 +234,7 @@
             A.BIN_CounterInfoID,
             A.CounterCode,
             B.StartDate,
+            A.BIN_OrganizationID,
             B.EndDate,
             B.CurrentPointLimit,
             B.Comment,

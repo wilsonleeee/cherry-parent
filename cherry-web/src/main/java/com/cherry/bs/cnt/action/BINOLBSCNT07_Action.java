@@ -129,23 +129,44 @@ public class BINOLBSCNT07_Action extends BaseAction implements ModelDriven<BINOL
 	 * 启用柜台积分计划
 	 */
 	public void enablePointPlan() throws Exception {
-		Map<String, Object> paramMap = commonParam();
-		binOLBSCNT07_BL.tran_enablePointPlan(paramMap);
+		Map<String, Object> resultMap = new HashMap<String, Object>();
+		try {
+			Map<String, Object> paramMap = commonParam();
+			binOLBSCNT07_BL.tran_enablePointPlan(paramMap);
+			resultMap.put("errorCode", "0");
+		} catch (Exception e) {
+			resultMap.put("errorCode", "1");
+		}
+		ConvertUtil.setResponseByAjax(response, resultMap);
 	}
 
 	/**
 	 * 停用柜台积分计划
 	 */
 	public void disablePointPlan() throws Exception {
-		Map<String, Object> paramMap = commonParam();
-		binOLBSCNT07_BL.tran_disablePointPlan(paramMap);
+		Map<String, Object> resultMap = new HashMap<String, Object>();
+		try {
+			Map<String, Object> paramMap = commonParam();
+			binOLBSCNT07_BL.tran_disablePointPlan(paramMap);
+			resultMap.put("errorCode", "0");
+		} catch (Exception e) {
+			resultMap.put("errorCode", "1");
+		}
+		ConvertUtil.setResponseByAjax(response, resultMap);
 	}
 	/**
-	 * 启用柜台积分计划
+	 * 柜台积分额度变更
 	 */
 	public void pointChange() throws Exception {
-		Map<String, Object> paramMap = commonParam();
-		binOLBSCNT07_BL.tran_pointChange(paramMap);
+		Map<String, Object> resultMap = new HashMap<String, Object>();
+		try {
+			Map<String, Object> paramMap = commonParam();
+			binOLBSCNT07_BL.tran_pointChange(paramMap);
+			resultMap.put("errorCode", "0");
+		} catch (Exception e) {
+			resultMap.put("errorCode", "1");
+		}
+		ConvertUtil.setResponseByAjax(response, resultMap);
 	}
 
 	/**

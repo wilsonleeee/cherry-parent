@@ -54,9 +54,29 @@
 			<ul><li><span><s:text name="CNT07.errorMessage"/></span></li></ul>
 		</div>
 	</div>
+	<div style="display: none" id="ECNT005">
+		<div class="actionError">
+			<ul><li><span><s:text name="CNT07.ECNT005"/></span></li></ul>
+		</div>
+	</div>
+	<div style="display: none" id="ECNT004">
+		<div class="actionSuccess">
+			<ul><li><span><s:text name="CNT07.ECNT004"/></span></li></ul>
+		</div>
+	</div>
 	<div style="display: none" id="ECNT001"><!--只能选择一个用户进行该操作，请重新选择！ -->
 		<div class="actionError">
 			<ul><li><span><s:text name="CNT07.ECNT001"/></span></li></ul>
+		</div>
+	</div>
+	<div style="display: none" id="ECNT002"><!--已经启用，不能再启用 -->
+		<div class="actionError">
+			<ul><li><span><s:text name="CNT07.ECNT002"/></span></li></ul>
+		</div>
+	</div>
+	<div style="display: none" id="ECNT003"><!--已经停用，不能再停用 -->
+		<div class="actionError">
+			<ul><li><span><s:text name="CNT07.ECNT003"/></span></li></ul>
 		</div>
 	</div>
 	<%-- ================== 错误信息提示   END  ======================= --%>
