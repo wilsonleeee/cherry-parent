@@ -1,5 +1,5 @@
 /*	
- * @(#)BINOLBSCNT08_Service.java     1.0 2011/05/09
+ * @(#)BINOLBSCNT08_Service.java     1.0 2016/11/24
  * 		
  * Copyright (c) 2010 SHANGHAI BINGKUN DIGITAL TECHNOLOGY CO.,LTD		
  * All rights reserved		
@@ -27,28 +27,5 @@ import java.util.Map;
  */
 public class BINOLBSCNT08_Service extends BaseService {
 
-    /**
-     * 取得柜台积分计划总数
-     *
-     * @param map
-     * @return
-     */
-    public int getCounterPointPlanCount(Map<String, Object> map) {
-
-        map.put(CherryConstants.IBATIS_SQL_ID, "BINOLBSCNT08.getCounterPointPlanCount");
-        return baseServiceImpl.getSum(map);
-    }
-
-    /**
-     * 取得柜台积分计划List
-     *
-     * @param map
-     * @return
-     */
-    public List<Map<String, Object>> getCounterPointPlanList (Map<String, Object> map) {
-
-        map.put(CherryConstants.IBATIS_SQL_ID, "BINOLBSCNT08.getCounterPointPlanList");
-        return baseServiceImpl.getList(map);
-    }
 
 }

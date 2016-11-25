@@ -22,6 +22,7 @@ import com.cherry.cm.cmbussiness.bl.BINOLCM05_BL;
 import com.cherry.cm.cmbussiness.bl.BINOLCM14_BL;
 import com.cherry.cm.core.BaseAction;
 import com.cherry.cm.core.CherryConstants;
+import com.cherry.cm.core.CherryException;
 import com.cherry.cm.util.ConvertUtil;
 import com.cherry.cm.util.FileUtil;
 import com.cherry.mo.common.interfaces.BINOLMOCOM01_IF;
@@ -119,42 +120,74 @@ public class BINOLBSCNT08_Action extends BaseAction implements ModelDriven<BINOL
 
 
 	/**
-	 *
-	 * 查询参数MAP取得
-	 *
+	 * 积分Excel导入
+	 * @return
+	 * @throws Exception
 	 */
-	private Map<String, Object> getSearchMap() {
-		// 参数MAP
-		Map<String, Object> map = new HashMap<String, Object>();
-		// 登陆用户信息
-		UserInfo userInfo = (UserInfo) session
-				.get(CherryConstants.SESSION_USERINFO);
-		// form参数设置到map中
-		ConvertUtil.setForm(form, map);
-		// 所属组织
-		map.put(CherryConstants.ORGANIZATIONINFOID, userInfo.getBIN_OrganizationInfoID());
-		// 所属品牌不存在的场合
-		if(form.getBrandInfoId() == null || "".equals(form.getBrandInfoId())) {
-			// 不是总部的场合
-			if(userInfo.getBIN_BrandInfoID() != CherryConstants.BRAND_INFO_ID_VALUE) {
-				// 所属品牌
-				map.put(CherryConstants.BRANDINFOID, userInfo.getBIN_BrandInfoID());
+	public void importPoint() throws Exception{
+		Map<String, Object> map = getSessionInfo();
+		Map<String, Object> msgMap = getSessionInfo();
+		try {
+			// 上传的文件
+			map.put("upExcel", upExcel);
+			// 导入原因
+			map.put("comment",form.getComment());
+			// 经销商额度变更导入处理
+			List<Map<String, Object>> resultList = binOLBSCNT08_BL.ResolveExcel(map);
+			Map<String, Object> infoMap = binOLBSCNT08_BL.tran_excelHandle(resultList,map);
+			msgMap.put("suessMsg", getText("ICM00002"));
+			msgMap.put("totalCount", resultList.size());
+		} catch (CherryException e) {
+			logger.error(e.getMessage(), e);
+			// 导入失败场合
+			if(e instanceof CherryException){
+				CherryException temp = (CherryException)e;
+				msgMap.put("errorMsg", temp.getErrMessage());
+			}else{
+				msgMap.put("errorMsg", getText("PTM00024"));
 			}
-		} else {
-			map.put(CherryConstants.BRANDINFOID, form.getBrandInfoId());
 		}
-		// 语言类型
-		map.put(CherryConstants.SESSION_LANGUAGE, session.get(CherryConstants.SESSION_LANGUAGE));
-		map.put("counterCode",form.getCounterCode());
-		map.put("counterName",form.getCounterName());
-		map.put("pointLimitBegin",form.getPointLimitBegin());
-		map.put("pointLimitEnd",form.getPointLimitEnd());
-		map.put("pointPlanStatus",form.getPointPlanStatus());
-		map.put("counterStatus",form.getCounterStatus());
-		return map;
+		ConvertUtil.setResponseByAjax(response, msgMap);
 	}
 
 
+
+	/**
+	 * 取得session的信息
+	 * @param
+	 * @throws Exception
+	 */
+	private Map<String, Object> getSessionInfo() throws Exception{
+		// 登陆用户信息
+		UserInfo userInfo = (UserInfo) session.get(CherryConstants.SESSION_USERINFO);
+		Map<String, Object> map = new HashMap<String, Object>();
+		// 取得所属组织
+		map.put("organizationInfoId", userInfo.getBIN_OrganizationInfoID());
+		String brandInfoID = (String.valueOf(userInfo.getBIN_BrandInfoID()));
+		if (!brandInfoID.equals("-9999")){
+			// 取得所属品牌
+			map.put("brandInfoId", brandInfoID);
+		}else{
+			map.put("brandInfoId",userInfo.getCurrentBrandInfoID());
+		}
+		map.put("language", userInfo.getLanguage());
+		map.put("userID", userInfo.getBIN_UserID());
+		map.put(CherryConstants.USERID, userInfo.getBIN_UserID());
+		map.put("userName", userInfo.getLoginName());
+		//员工ID
+		map.put("employeeId",userInfo.getBIN_EmployeeID());
+		//员工code
+		map.put("employeeCode",userInfo.getEmployeeCode());
+		// 组织code
+		map.put(CherryConstants.ORG_CODE, userInfo.getOrganizationInfoCode());
+		// 品牌code
+		map.put(CherryConstants.BRAND_CODE, userInfo.getBrandCode());
+		map.put("CreatedBy", map.get(CherryConstants.USERID));
+		map.put("CreatePGM", "BINOLBSCNT08");
+		map.put("UpdatedBy", map.get(CherryConstants.USERID));
+		map.put("UpdatePGM", "BINOLBSCNT08");
+		return map;
+	}
 
 
 	public List<Map<String, Object>> getBrandInfoList() {

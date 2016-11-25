@@ -3,7 +3,7 @@ package com.cherry.bs.cnt.form;
 import com.cherry.cm.form.DataTable_BaseForm;
 
 /*
- * @(#)BINOLBSCNT07_Form.java    1.0 2012-7-1
+ * @(#)BINOLBSCNT07_Form.java    1.0 2016-11-24
  *
  * Copyright (c) 2010 SHANGHAI BINGKUN DIGITAL TECHNOLOGY CO.,LTD
  * All rights reserved

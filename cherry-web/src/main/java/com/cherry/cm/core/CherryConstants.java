@@ -656,6 +656,9 @@ public class CherryConstants {
 
 	/** 积分数据sheet名  */
 	public static final String POINT_SHEET_NAME = "积分数据";
+
+	/** 经销商额度变更数据sheet名  */
+	public static final String COUNTER_POINT_SHEET_NAME = "经销商额度变更数据";
 	
 	/**销售目标数据sheet名*/
 	public static final String SALETARGET_SHEET_NAME = "销售目标数据";

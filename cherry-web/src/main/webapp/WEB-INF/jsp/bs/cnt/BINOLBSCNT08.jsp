@@ -9,7 +9,7 @@
 <%-- 导入经销商额度变更下载URL --%>
 <s:url id="downLoad_url" value="/download/导入经销商额度变更模板.xls"/>
 <%-- 经销商额度变更批量导入URL --%>
-<s:url id="import_url" value="/mb/BINOLBSCNT08_importPoint"/>
+<s:url id="import_url" value="/bs/BINOLBSCNT08_importPoint"/>
 <s:text name="global.page.select" id="select_default"/>
 <div class="panel ui-corner-all">
 <div id="div_main">
@@ -74,7 +74,7 @@
 			<th style="width: 5%;"><s:text name="binolbscnt08_reason" /><span class="highlight">*</span></th>
 			<td style="word-wrap: break-word; word-break: break-all"  colspan="3" >
 				<span style="width:75%">
-					<input  id="reason" style="height:45px;width:100%;" class="text" maxlength="100"  name="reason">
+					<input  id="comment" style="height:45px;width:100%;" class="text" maxlength="100"  name="comment">
 				</span>
 			</td>
 		</tr>

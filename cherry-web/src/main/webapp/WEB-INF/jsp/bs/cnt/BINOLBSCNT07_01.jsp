@@ -40,18 +40,21 @@
 			<!-- 说明 -->
 			<li>
 				<span>
-					<s:if test='  StartDate >= currentDate && EndDate == null  '>
+					<s:if test='  StartDate <= currentDate && (EndDate == null || "2100-01-01".equals(EndDate)) '>
 						<s:text name="CNT07.explainType1"/>
 					</s:if>
+					<s:else>
+						<s:if test=' StartDate != null && StartDate <= currentDate && EndDate > currentDate '>
+							<s:text name="CNT07.explainType4"/>
+						</s:if>
+					</s:else>
 					<s:if test=' StartDate == null || "".equals(StartDate) '>
 						<s:text name="CNT07.explainType2"/>
 					</s:if>
 					<s:if test=' StartDate > currentDate '>
 						<s:text name="CNT07.explainType3"/>
 					</s:if>
-					<s:if test=' StartDate != null && StartDate <= currentDate && EndDate > currentDate '>
-						<s:text name="CNT07.explainType4"/>
-					</s:if>
+
 					<s:if test=' EndDate != null && EndDate <= currentDate '>
 						<s:text name="CNT07.explainType5"/>
 					</s:if>
