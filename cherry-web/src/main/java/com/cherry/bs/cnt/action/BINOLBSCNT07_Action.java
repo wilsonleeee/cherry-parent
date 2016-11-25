@@ -81,6 +81,8 @@ public class BINOLBSCNT07_Action extends BaseAction implements ModelDriven<BINOL
 	/** 积分计划柜台List */
 	private List<Map<String, Object>> counterPointPlanList;
 
+	private Map<String,Object> counterPointPlanInfo;
+
 	public String enableInit() throws Exception {
 		return SUCCESS;
 	}
@@ -226,6 +228,7 @@ public class BINOLBSCNT07_Action extends BaseAction implements ModelDriven<BINOL
 		}
 		// 语言类型
 		map.put(CherryConstants.SESSION_LANGUAGE, session.get(CherryConstants.SESSION_LANGUAGE));
+		map.put("counterInfoId",form.getCounterInfoId());
 		map.put("counterCode",form.getCounterCode());
 		map.put("counterName",form.getCounterName());
 		map.put("pointLimitBegin",form.getPointLimitBegin());
@@ -285,6 +288,30 @@ public class BINOLBSCNT07_Action extends BaseAction implements ModelDriven<BINOL
 		}
 		return SUCCESS;
 	}
+
+	/**
+	 * 积分计划柜台履历详情初始化
+	 */
+	public String counterPointPlanDetail_init() throws Exception {
+
+		// 取得参数MAP
+		Map<String, Object> searchMap = getSearchMap();
+
+		// 取得柜台积分计划List
+		counterPointPlanList = binOLBSCNT07_BL.getCounterPointPlanAllList(searchMap);
+
+		if(counterPointPlanList.size() > 0){
+
+			counterPointPlanInfo = (Map<String, Object>)ConvertUtil.byteClone(counterPointPlanList.get(0));
+			form.setCurrentDate(new SimpleDateFormat("yyyy-MM-dd").format(new Date()));
+		}
+
+		counterPointPlanList.clear();
+		counterPointPlanList = null;
+
+		return SUCCESS;
+	}
+
 
 	/** 品牌List */
 	private List<Map<String, Object>> brandInfoList;
@@ -347,5 +374,13 @@ public class BINOLBSCNT07_Action extends BaseAction implements ModelDriven<BINOL
 
 	public void setCounterPointPlanList(List<Map<String, Object>> counterPointPlanList) {
 		this.counterPointPlanList = counterPointPlanList;
+	}
+
+	public Map<String, Object> getCounterPointPlanInfo() {
+		return counterPointPlanInfo;
+	}
+
+	public void setCounterPointPlanInfo(Map<String, Object> counterPointPlanInfo) {
+		this.counterPointPlanInfo = counterPointPlanInfo;
 	}
 }

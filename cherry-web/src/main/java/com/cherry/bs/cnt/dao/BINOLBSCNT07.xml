@@ -264,7 +264,8 @@
             B.CurrentPointLimit,
             B.Comment,
             D.EmployeeName AS employeeName,
-            A.CounterNameIF AS counterName
+            A.CounterNameIF AS counterName,
+            CONVERT(VARCHAR(100),B.UpdateTime,20) AS updateTime
 			FROM
 				Basis.BIN_CounterInfo A WITH(NOLOCK)
                 LEFT JOIN Basis.BIN_CounterPointPlan B WITH(NOLOCK)
@@ -275,6 +276,11 @@
 				A.BIN_OrganizationInfoID = #organizationInfoId#
                 <isNotEmpty prepend="AND" property="brandInfoId">
                     A.BIN_BrandInfoID = #brandInfoId#
+                </isNotEmpty>
+                <isNotEmpty property="counterInfoId">
+                    <isNotEqual prepend="AND" property="counterInfoId" compareValue="0">
+                        A.BIN_CounterInfoID = #counterInfoId#
+                    </isNotEqual>
                 </isNotEmpty>
                 <isNotEmpty prepend="AND" property="counterCode">
                     A.CounterCode like  '%'+ #counterCode# +'%'
@@ -316,6 +322,13 @@
                     A.ValidFlag = #counterStatus#
                 </isNotEmpty>
     </sql>
+
+    <!-- 取得所有柜台积分计划 -->
+    <select id="getCounterPointPlanAllList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+
+        <include refid="BINOLBSCNT07.counterPointPlanQuery"/>
+
+    </select>
 
     <!-- 取得柜台积分计划总数  -->
     <select id="getCounterPointPlanCount" parameterClass="java.util.HashMap" resultClass="java.lang.Integer">

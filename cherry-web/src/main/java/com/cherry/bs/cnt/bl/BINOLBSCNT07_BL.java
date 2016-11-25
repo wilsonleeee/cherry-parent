@@ -61,6 +61,14 @@ public class BINOLBSCNT07_BL {
     }
 
     /**
+     * 取得所有柜台积分计划
+     */
+    public List<Map<String,Object>> getCounterPointPlanAllList(Map<String,Object> map){
+        // 取得柜台积分计划所有List
+        return binolbscnt07Service.getCounterPointPlanAllList(map);
+    }
+
+    /**
      * 柜台启用积分计划
      * @param map
      * @throws Exception

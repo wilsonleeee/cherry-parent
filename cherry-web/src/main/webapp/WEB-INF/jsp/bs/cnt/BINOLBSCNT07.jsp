@@ -1,5 +1,5 @@
 <%@ page language="java" contentType="text/html; charset=utf-8" pageEncoding="utf-8"%>
-<%@ include file="/WEB-INF/jsp/common/head.inc.jsp" %>
+<%--<%@ include file="/WEB-INF/jsp/common/head.inc.jsp" %>--%>
 <%@ taglib prefix="s" uri="/struts-tags" %>
 <%@ taglib prefix="cherry" uri="/cherry-tags"%>
 <script type="text/javascript" src="/Cherry/js/bs/common/BINOLBSCOM03.js"></script>

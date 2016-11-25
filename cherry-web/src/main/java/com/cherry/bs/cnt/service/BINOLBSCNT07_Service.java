@@ -66,6 +66,16 @@ public class BINOLBSCNT07_Service extends BaseService {
     }
 
     /**
+     * 取得所有柜台积分计划
+     */
+    public List<Map<String,Object>> getCounterPointPlanAllList(Map<String,Object> map){
+
+        map.put(CherryConstants.IBATIS_SQL_ID, "BINOLBSCNT07.getCounterPointPlanAllList");
+        return baseServiceImpl.getList(map);
+
+    }
+
+    /**
      *
      * 更新柜台积分计划设置表
      *

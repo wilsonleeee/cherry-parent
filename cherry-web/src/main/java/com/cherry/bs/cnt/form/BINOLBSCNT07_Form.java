@@ -2,6 +2,8 @@ package com.cherry.bs.cnt.form;
 
 import com.cherry.cm.form.DataTable_BaseForm;
 
+import java.util.Map;
+
 /*
  * @(#)BINOLBSCNT07_Form.java    1.0 2016-11-24
  *
@@ -16,6 +18,8 @@ import com.cherry.cm.form.DataTable_BaseForm;
  */
 public class BINOLBSCNT07_Form  extends DataTable_BaseForm {
 
+	/**柜台编号Id**/
+	private int counterInfoId;
 
 	/**柜台编号 **/
 	private String counterCode;
@@ -77,6 +81,13 @@ public class BINOLBSCNT07_Form  extends DataTable_BaseForm {
 	/** 当前日期 **/
 	private String currentDate;
 
+	public int getCounterInfoId() {
+		return counterInfoId;
+	}
+
+	public void setCounterInfoId(int counterInfoId) {
+		this.counterInfoId = counterInfoId;
+	}
 
 	public String getPointChange() {
 		return pointChange;
@@ -229,4 +240,5 @@ public class BINOLBSCNT07_Form  extends DataTable_BaseForm {
 	public void setCurrentDate(String currentDate) {
 		this.currentDate = currentDate;
 	}
+
 }

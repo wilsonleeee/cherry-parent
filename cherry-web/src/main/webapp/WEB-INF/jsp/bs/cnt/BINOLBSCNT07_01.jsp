@@ -7,6 +7,7 @@
 <%-- ======================此段代码固定 结束======================= --%>
 <s:i18n name="i18n.bs.BINOLBSCNT07">
 <div id="aaData">
+
 	<s:iterator value="counterPointPlanList" id="counterMap">
 		<ul>
 			<li>
@@ -22,7 +23,10 @@
 			<li><s:property value="RowNumber" /></li>
 			<%-- 柜台号 --%>
 			<li>
-				<a href="" class="popup" onclick="javascript:openWin(this);return false;">
+				<s:url id="counterPointPlanDetail_url" action="BINOLBSCNT0701_counterPointPlanDetail_init">
+					<s:param name="counterInfoId" value="%{#counterMap.BIN_CounterInfoID}"></s:param>
+				</s:url>
+				<a href="${counterPointPlanDetail_url}" class="popup" onclick="javascript:openWin(this);return false;">
 					<s:property value="CounterCode"/>
 				</a>
 			</li>
