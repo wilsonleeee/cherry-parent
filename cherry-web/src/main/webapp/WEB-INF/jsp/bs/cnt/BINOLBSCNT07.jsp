@@ -5,8 +5,6 @@
 <script type="text/javascript" src="/Cherry/js/bs/common/BINOLBSCOM03.js"></script>
 <script type="text/javascript" src="/Cherry/js/bs/cnt/BINOLBSCNT07.js?v=20161123"></script>
 <script type="text/javascript" src="/Cherry/js/common/cherryDate.js"></script>
-<script type="text/javascript" src="/Cherry/js/bs/cnt/BINOLBSCNT07.js"></script>
-<script type="text/javascript" src="/Cherry/js/common/cherryDate.js"></script>
 <script type="text/javascript" src="/Cherry/js/common/popDataTable.js"></script>
 <script type="text/javascript" src="/Cherry/js/lib/jquery-ui-i18n.js"></script>
 

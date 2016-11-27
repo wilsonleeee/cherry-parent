@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sqlMap PUBLIC "-//iBATIS.com//DTD SQL Map 2.0//EN" "http://ibatis.apache.org/dtd/sql-map-2.dtd">
+<sqlMap namespace="BINOLBSCNT10">
+
+    <!-- 柜台积分计划信息查询sql文  -->
+    <sql id="counterPointPlanDetailQuery">
+		 SELECT
+		    CPPH.BIN_CounterPointPlanHistoryID,
+            CONVERT(VARCHAR(100),CPPH.UpdateTime,20) AS UpdateTime,
+            CPPH.ModifiedType,
+            EMP.EmployeeName,
+            CONVERT(VARCHAR(100),CPPH.StartTime,20) AS StartTime,
+            CONVERT(VARCHAR(100),CPPH.EndTime,20) AS EndTime,
+            CPPH.Commemts
+        FROM
+            Basis.BIN_CounterPointPlanHistory CPPH
+        LEFT JOIN
+            Basis.BIN_CounterInfo CI
+        ON
+            CPPH.BIN_OrganizationID = CI.BIN_OrganizationID AND CPPH.ValidFlag = 1
+        LEFT JOIN
+            Basis.BIN_Employee EMP
+        ON
+            CPPH.BIN_EmployeeID = EMP.BIN_EmployeeID AND EMP.ValidFlag = 1
+        WHERE
+            CI.BIN_CounterInfoID = #counterInfoId#
+    </sql>
+
+    <!-- 取得柜台积分计划总数  -->
+    <select id="getCounterPointPlanDetailCount" parameterClass="java.util.HashMap" resultClass="java.lang.Integer">
+        <![CDATA[
+			SELECT	COUNT(SORT_T1.BIN_CounterPointPlanHistoryID) AS count FROM (
+		]]>
+        <include refid="BINOLBSCNT10.counterPointPlanDetailQuery" />
+        <![CDATA[
+			)SORT_T1
+		]]>
+    </select>
+
+    <!-- 取得柜台积分计划List  -->
+    <select id="getCounterPointPlanDetailList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+        <include refid="BINOLCMINC99.pageheader" />
+        <include refid="BINOLBSCNT10.counterPointPlanDetailQuery" />
+        <include refid="BINOLCMINC99.pagefooter" />
+    </select>
+
+
+</sqlMap>

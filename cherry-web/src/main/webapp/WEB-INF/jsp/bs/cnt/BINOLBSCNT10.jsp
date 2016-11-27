@@ -4,7 +4,7 @@
 <%@ include file="/WEB-INF/jsp/common/head.inc.jsp" %>
 <jsp:include page="/WEB-INF/jsp/common/popHead.ieCssRepair.jsp" flush="true"></jsp:include>
 <script type="text/javascript" src="/Cherry/js/common/ajaxfileupload.js"></script>
-<script type="text/javascript" src="/Cherry/js/mb/mbm/BINOLBSCNT10.js"></script>
+<script type="text/javascript" src="/Cherry/js/bs/cnt/BINOLBSCNT10.js"></script>
 
 <s:i18n name="i18n.bs.BINOLBSCNT10">
     <s:text name="global.page.select" id="select_default"/>
@@ -22,8 +22,8 @@
 
                     <div class="clearfix">
                         <ul class ="ui-tabs-nav left" id="tabSelect">
-                            <li id="0" class="ui-tabs-selected" onclick="binolbscnt10.changeTab(this);"><a><s:text name="binolbscnt10_memSaleDisplayMode0"/></a></li>
-                            <li id="1" onclick="binolbscnt10.changeTab(this);"><a><s:text name="binolbscnt10_memSaleDisplayMode1"/></a></li>
+                            <li id="0" class="ui-tabs-selected" onclick="binolbscnt10.changeTab(this);"><a><s:text name="binolbscnt10_counterInfoMode"/></a></li>
+                            <li id="1" onclick="binolbscnt10.changeTab(this);"><a><s:text name="binolbscnt10_limitDetailMode"/></a></li>
                         </ul>
                     </div>
 
@@ -71,32 +71,23 @@
                                 <span class="ui-icon icon-ttl-section-info"></span><s:text name="binolbscnt10_historyInfo" />
                             </strong>
                         </div>
-
+                        <a href="BINOLBSCNT10_counterPointPlanDetail_search?counterInfoId=${counterPointPlanInfo.BIN_CounterInfoID}" id="searchPointCounterDetail" ></a>
                         <div>
-                            <table id="dataTable" cellpadding="0" cellspacing="0" border="0" class="jquery_table" width="100%">
+                            <table id="dataTable_pointPlanCounterDetail" cellpadding="0" cellspacing="0" border="0" class="jquery_table" width="100%">
                                 <thead>
                                 <tr>
-                                    <th style="text-align: center"><input type="checkbox" id="checkAll" onclick="bscom03_checkRecord(this,'#dataTable_Cloned');"/></th>
-                                    <!-- 行号 -->
-                                    <th style="text-align: center"><s:text name="CNT07.number"></s:text></th>
-                                    <!-- 柜台编号 -->
-                                    <th style="text-align: center"><s:text name="CNT07.counterCode"></s:text></th>
-                                    <!-- 柜台名称 -->
-                                    <th style="text-align: center"><s:text name="CNT07.counterName"></s:text></th>
-                                    <!-- 积分计划 -->
-                                    <th style="text-align: center"><s:text name="CNT07.pointPlan"></s:text></th>
-                                    <!-- 说明 -->
-                                    <th style="text-align: center"><s:text name="CNT07.explain"></s:text></th>
-                                    <!-- 开始日期 -->
-                                    <th style="text-align: center"><s:text name="CNT07.startDate"></s:text></th>
-                                    <!-- 结束日期 -->
-                                    <th style="text-align: center"><s:text name="CNT07.endDate"></s:text></th>
-                                    <!-- 经销商额度 -->
-                                    <th style="text-align: center"><s:text name="CNT07.currentPointLimit"></s:text></th>
+                                    <!-- 修改时间 -->
+                                    <th style="text-align: center"><s:text name="binolbscnt10_updateTime"></s:text></th>
+                                    <!-- 修改类型 -->
+                                    <th style="text-align: center"><s:text name="binolbscnt10_modifyType"></s:text></th>
                                     <!-- 修改者 -->
-                                    <th style="text-align: center"><s:text name="CNT07.modifier"></s:text></th>
+                                    <th style="text-align: center"><s:text name="binolbscnt10_modifyer"></s:text></th>
+                                    <!-- 开始日期 -->
+                                    <th style="text-align: center"><s:text name="binolbscnt10_startDate"></s:text></th>
+                                    <!-- 结束日期 -->
+                                    <th style="text-align: center"><s:text name="binolbscnt10_endDate"></s:text></th>
                                     <!-- 备注 -->
-                                    <th style="text-align: center"><s:text name="CNT07.comment"></s:text></th>
+                                    <th style="text-align: center"><s:text name="binolbscnt10_comment"></s:text></th>
                                 </tr>
                                 </thead>
                             </table>
