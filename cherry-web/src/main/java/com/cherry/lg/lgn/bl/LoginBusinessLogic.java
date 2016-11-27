@@ -12,13 +12,18 @@
  */
 package com.cherry.lg.lgn.bl;
 
-import java.io.ByteArrayOutputStream;
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
+import com.cherry.cm.cmbeans.ControlOrganization;
+import com.cherry.cm.cmbeans.RoleInfo;
+import com.cherry.cm.cmbeans.UserInfo;
+import com.cherry.cm.core.*;
+import com.cherry.cm.util.CherryUtil;
+import com.cherry.cm.util.ConvertUtil;
+import com.cherry.lg.lgn.service.LoginService;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.w3c.dom.Document;
+import org.w3c.dom.Element;
+import org.w3c.dom.NodeList;
 
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletRequest;
@@ -28,21 +33,8 @@ import javax.xml.transform.Transformer;
 import javax.xml.transform.TransformerFactory;
 import javax.xml.transform.dom.DOMSource;
 import javax.xml.transform.stream.StreamResult;
-
-import com.cherry.cm.core.*;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.w3c.dom.Document;
-import org.w3c.dom.Element;
-import org.w3c.dom.NodeList;
-
-import com.cherry.cm.cmbeans.ControlOrganization;
-import com.cherry.cm.cmbeans.RoleInfo;
-import com.cherry.cm.cmbeans.UserInfo;
-import com.cherry.cm.util.CherryUtil;
-import com.cherry.cm.util.ConvertUtil;
-import com.cherry.lg.lgn.service.LoginService;
-import com.cherry.webservice.common.WebserviceEntrance;
+import java.io.ByteArrayOutputStream;
+import java.util.*;
 @SuppressWarnings("unchecked")
 public class LoginBusinessLogic {
 	private static Logger logger = LoggerFactory.getLogger(LoginBusinessLogic.class.getName());
@@ -349,7 +341,7 @@ public class LoginBusinessLogic {
 		//可重试的次数
 		int retrytimes = CherryUtil.string2int(String.valueOf(map.get("RetryTimes")));
 
-		if(token.equals(ap)) {
+		if(token.equalsIgnoreCase(ap)) {
 			//密码正确
 			if(failurecount!=0){
 				//如果失败的次数不为0，则将其清0
@@ -514,9 +506,9 @@ public class LoginBusinessLogic {
 	/**
 	 * 取得用户的角色信息
 	 * 1用户角色      2部门角色    3岗位类别角色
-	 * @param useID
+	 * @param userID
 	 * @param organizationID
-	 * @param PositionCategoryID
+	 * @param positionCategoryID
 	 * @return
 	 * @throws Exception
 	 */
