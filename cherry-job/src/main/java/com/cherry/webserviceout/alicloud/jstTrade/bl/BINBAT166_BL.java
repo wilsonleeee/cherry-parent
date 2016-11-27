@@ -324,7 +324,7 @@ public class BINBAT166_BL {
     			Map<String, Object> billInfo = binBAT165_Service.getESOrderMain(searchMap);
     			boolean isExist = false;
     			Map<String, Object> orderMainMap = new HashMap<String, Object>();
-    			String modifiedTime = (String) ordersMap.get("ModifiedTime");
+    			String modifiedTime = (String) ordersMap.get("JdpModified");
     			if (null != billInfo && !billInfo.isEmpty()) {
     				String billLastUpdateTime = (String) billInfo.get("billLastUpdateTime");
     				// 最近一次修改时间一致，无须处理
