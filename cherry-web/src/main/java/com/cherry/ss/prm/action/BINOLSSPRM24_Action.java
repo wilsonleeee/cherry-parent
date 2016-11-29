@@ -113,10 +113,10 @@ public class BINOLSSPRM24_Action extends BaseAction implements ModelDriven<BINOL
 	        map.put("organizationid", list.get(0).get("OrganizationID"));
 	        List<Map<String,Object>> logicDepotList = getLogicDepotList(map);
 	        form.setLogicDepotList(logicDepotList);
-	        
-	        //数量允许负号
-            String allowNegativeFlag = CherryConstants.SYSTEM_CONFIG_ENABLE;
-            form.setAllowNegativeFlag(allowNegativeFlag);
+
+			//数量允许负号; 0:允许负值;1:不允许
+			String allowNegativeFlag = binOLCM14_BL.getConfigValue("1388",organizationId,brandInfoId);
+			form.setAllowNegativeFlag(allowNegativeFlag);
     	}catch(Exception ex){
     		this.addActionError(getText("ECM00036"));
     	}
