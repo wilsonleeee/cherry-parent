@@ -23,6 +23,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import com.dianping.cat.Cat;
+import com.dianping.cat.message.Transaction;
 import javax.annotation.Resource;
 
 import org.slf4j.Logger;
@@ -1454,21 +1456,8 @@ public class BINBEDRCOM03_BL implements BINBEDRCOM03_IF{
 			throw e;
 		}
 	}
-	
-	/**
-	 * 
-	 * 验证累计金额
-	 * 
-	 * 
-	 * @param c
-	 *            验证对象
-	 * @param params
-	 *            验证参数
-	 * @return boolean 验证结果
-	 * @throws Exception 
-	 * 
-	 */
-	public boolean checkTotalAmount(CampBaseDTO c, Map<String, Object> params) throws Exception {
+
+	private boolean totalAmountValidate (CampBaseDTO c, Map<String, Object> params) throws Exception {
 		// 最低消费
 		String minAmount = (String)params.get("minAmount");
 		// 累积时间区分
@@ -1529,7 +1518,7 @@ public class BINBEDRCOM03_BL implements BINBEDRCOM03_IF{
 					} catch (Exception e) {
 						throw new Exception("error level start month and day");
 					}
-					
+
 				} else {
 					// 等级初始日期
 					String zdate = (String) c.getExtArgs().get("ZDL");
@@ -1610,16 +1599,16 @@ public class BINBEDRCOM03_BL implements BINBEDRCOM03_IF{
 				boolean isFmKbn = false;
 				// 会员有效期内
 				if ("0".equals(plusChoice)) {
-	//				if (!CherryChecker.isNullOrEmpty(c.getLevelStartDate())) {
-	//					// 等级有效期开始日
-	//					fromTime = c.getLevelStartDate();
-	//				} else if (!CherryChecker.isNullOrEmpty(c.getLevelAdjustDay())) {
-	//					// 会员等级调整日
-	//					fromTime = c.getLevelAdjustDay();
-	//				} else {
-	//					// 入会日期
-	//					fromTime = DateUtil.suffixDate(c.getJoinDate(), 0);
-	//				}
+					//				if (!CherryChecker.isNullOrEmpty(c.getLevelStartDate())) {
+					//					// 等级有效期开始日
+					//					fromTime = c.getLevelStartDate();
+					//				} else if (!CherryChecker.isNullOrEmpty(c.getLevelAdjustDay())) {
+					//					// 会员等级调整日
+					//					fromTime = c.getLevelAdjustDay();
+					//				} else {
+					//					// 入会日期
+					//					fromTime = DateUtil.suffixDate(c.getJoinDate(), 0);
+					//				}
 					// 开始时间
 					long rstartTime1 = 0;
 					// 结束时间
@@ -1651,16 +1640,16 @@ public class BINBEDRCOM03_BL implements BINBEDRCOM03_IF{
 						throw new Exception("Do not have date number exception!");
 					}
 					int dateNumber = Integer.parseInt(dateNum);
-	//				if (!CherryChecker.isNullOrEmpty(c.getLevelAdjustDay())) {
-	//					// 会员等级调整日
-	//					fromTime = c.getLevelAdjustDay();
-	//				} else {
-	//					// 入会日期
-	//					fromTime = DateUtil.suffixDate(c.getJoinDate(), 0);
-	//				}
-	//				if (CherryChecker.isNullOrEmpty(fromTime)) {
-	//					throw new Exception("No fromTime exception!");
-	//				}
+					//				if (!CherryChecker.isNullOrEmpty(c.getLevelAdjustDay())) {
+					//					// 会员等级调整日
+					//					fromTime = c.getLevelAdjustDay();
+					//				} else {
+					//					// 入会日期
+					//					fromTime = DateUtil.suffixDate(c.getJoinDate(), 0);
+					//				}
+					//				if (CherryChecker.isNullOrEmpty(fromTime)) {
+					//					throw new Exception("No fromTime exception!");
+					//				}
 					Calendar cal = Calendar.getInstance();
 					cal.setTime(DateUtil.coverString2Date(DateUtil.coverTime2YMD(fromTime, DateUtil.DATETIME_PATTERN)));
 					// 开始日年份
@@ -1745,7 +1734,7 @@ public class BINBEDRCOM03_BL implements BINBEDRCOM03_IF{
 							if (mflag || isFmKbn || DateUtil.compareDate(tempDate, fmDay) > 0) {
 								fromTime = DateUtil.suffixDate(tempDate, 0);
 							}
-							
+
 							// 多少个自然年内
 						} else if ("2".equals(plusTime)) {
 							dateNumber--;
@@ -1851,7 +1840,7 @@ public class BINBEDRCOM03_BL implements BINBEDRCOM03_IF{
 					DroolsMessageUtil.IDR00010, new String[] {String.valueOf(subTime)});
 			logger.info(msg);
 		}
-		
+
 		// 累计金额下限
 		double minTotalAmount = Double.parseDouble(minAmount);
 		boolean minBool = false;
@@ -1913,6 +1902,33 @@ public class BINBEDRCOM03_BL implements BINBEDRCOM03_IF{
 			}
 		}
 		return true;
+	}
+	/**
+	 * 
+	 * 验证累计金额
+	 * 
+	 * 
+	 * @param c
+	 *            验证对象
+	 * @param params
+	 *            验证参数
+	 * @return boolean 验证结果
+	 * @throws Exception 
+	 * 
+	 */
+	public boolean checkTotalAmount(CampBaseDTO c, Map<String, Object> params) throws Exception {
+		Transaction transaction = Cat.newTransaction("BINBEDRCOM03_BL", "checkTotalAmount");
+		try {
+			boolean result = totalAmountValidate(c, params);
+			transaction.setStatus(Transaction.SUCCESS);
+			return result;
+		} catch (Exception e) {
+			transaction.setStatus(e);
+			Cat.logError(e);
+			throw e;
+		} finally {
+			transaction.complete();
+		}
 	}
 	
 	/**

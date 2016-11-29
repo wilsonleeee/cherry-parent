@@ -12,19 +12,20 @@
  */
 package com.cherry.mq.mes.bl;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-
-import javax.annotation.Resource;
-
 import com.cherry.dr.cmbussiness.interfaces.RuleHandler_IF;
 import com.cherry.mq.mes.common.MessageConstants;
 import com.cherry.mq.mes.common.MessageUtil;
 import com.cherry.mq.mes.interfaces.CherryMessageHandler_IF;
 import com.mongodb.BasicDBObject;
 import com.mongodb.DBObject;
+
+import com.dianping.cat.Cat;
+import com.dianping.cat.message.Transaction;
+import javax.annotation.Resource;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 /**
  * 处理规则消息 BL
@@ -65,8 +66,18 @@ public class BINBEMQMES07_BL implements CherryMessageHandler_IF{
 					Map<String, Object> ruleMap = new HashMap<String, Object>();
 					ruleMap.put("brandCode", map.get("brandCode"));
 					ruleMap.putAll(_map);
-					// 执行会员等级和化妆次数规则文件
-					ruleHandlerIF.executeRule(ruleMap);
+					Transaction transaction = Cat.newTransaction("BINBEMQMES07_BL", "handleMessage");
+					try {
+						// 执行会员等级和化妆次数规则文件
+						ruleHandlerIF.executeRule(ruleMap);
+						transaction.setStatus(Transaction.SUCCESS);
+					} catch (Exception e) {
+						transaction.setStatus(e);
+						Cat.logError(e);
+						throw e;
+					} finally {
+						transaction.complete();
+					}
 					if (ruleMap.containsKey("pointRuleCalInfo")) {
 						map.put("pointRuleCalInfo", ruleMap.get("pointRuleCalInfo"));
 					}
