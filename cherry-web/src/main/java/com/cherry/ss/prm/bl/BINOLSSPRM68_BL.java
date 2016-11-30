@@ -127,7 +127,7 @@ public class BINOLSSPRM68_BL {
 					if (null != checkedNodes) {
 						for (int i = 0; i < checkedNodes.size(); i++) {
 							Map<String, Object> checkedNode = checkedNodes.get(i);
-							ActUtil.setNodes2(nodeList, checkedNode);
+							ActUtil.setNodes(nodeList, checkedNode);
 						}
 					}
 					res = JSONUtil.serialize(nodeList);
