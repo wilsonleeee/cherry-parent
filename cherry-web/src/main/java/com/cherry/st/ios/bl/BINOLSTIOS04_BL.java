@@ -102,7 +102,7 @@ public class BINOLSTIOS04_BL  extends SsBaseBussinessLogic implements BINOLSTIOS
         for(int i = startIndex ; i < productVendorIdArr.length ; i++){
         	// 实盘数量不允许为负时，需校验
         	if("1".equals(allowNegativeFlag)){
-        		int gainCount =  Integer.parseInt(quantityArr[i]);
+        		int gainCount =  ConvertUtil.getInt(quantityArr[i]);
         		if (gainCount<0){
         			throw new CherryException("EST00049");
         			}
@@ -274,7 +274,7 @@ public class BINOLSTIOS04_BL  extends SsBaseBussinessLogic implements BINOLSTIOS
         for(int i = startIndex ; i < productVendorIdArr.length ; i++){
         	// 实盘数量不允许为负时，需校验
         	if("1".equals(allowNegativeFlag)){
-        		int gainCount =  Integer.parseInt(quantityArr[i]);
+        		int gainCount =  ConvertUtil.getInt(quantityArr[i]);
         		if (gainCount<0){
         			throw new CherryException("EST00049");
         			}
