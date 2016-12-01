@@ -221,7 +221,18 @@ public class BINOTYIN14_BL {
 			counterMap.put("counterKind", 0);
 			counterMap.put("testType", 0);
 		};
-		
+		// 取得柜台信息(新老后台交互时使用)【增加了柜台地址与柜台电话】
+		Map<String, Object> counterInfo = binOTYIN14_Service.getCounterInfo(counterMap);
+		if(counterInfo != null && !counterInfo.isEmpty()){
+			//柜台协同区分
+			String counterSynergyFlag =ConvertUtil.getString(counterInfo.get("CounterSynergyFlag"));
+			if(ConvertUtil.isBlank(counterSynergyFlag)) {
+				counterSynergyFlag ="1";
+			}
+			counterMap.put("counterSynergyFlag", counterSynergyFlag);
+		} else {
+			counterMap.put("counterSynergyFlag", "1");
+		}
 		// 查询组织结构中的柜台信息
 		Map<String, Object> organizationInfo = binOTYIN14_Service.getOrganizationId(counterMap);
 		Object organizationId = null;
@@ -346,16 +357,6 @@ public class BINOTYIN14_BL {
 						counterMap.put("couNodeId", binOTYIN14_Service.getCounterNodeId(counterMap));
 					}
 				}
-				// 取得柜台信息(新老后台交互时使用)【增加了柜台地址与柜台电话】
-				Map<String, Object> counterInfo = binOTYIN14_Service.getCounterInfo(counterMap);
-				if(counterInfo != null && !counterInfo.isEmpty()){
-					//柜台协同区分
-					String counterSynergyFlag =ConvertUtil.getString(counterInfo.get("CounterSynergyFlag"));
-					if(ConvertUtil.isBlank(counterSynergyFlag)) {
-						counterSynergyFlag ="1";
-					}
-					counterMap.put("counterSynergyFlag", counterSynergyFlag);
-				}
 				// 更新在组织结构中的柜台
 				binOTYIN14_Service.updateCouOrg(counterMap);
 			} catch (Exception e) {
@@ -375,10 +376,13 @@ public class BINOTYIN14_BL {
 		counterMap.put("orgId", organizationId);	
 		
 		// 查询柜台ID
-		Object counterId = binOTYIN14_Service.getCounterId(counterMap);
+		//Object counterId = binOTYIN14_Service.getCounterId(counterMap);
+		int counterId = 0;
+
 		// 柜台数据不存在时，插入柜台信息
-		if (null == counterId) {
+		if (null == counterInfo || counterInfo.isEmpty()) {
 			try {
+				counterMap.put("counterSynergyFlag", "1");
 				// 插入柜台信息
 				counterId = binOTYIN14_Service.insertCounterInfo(counterMap);
 				// 插入件数加一
@@ -397,6 +401,8 @@ public class BINOTYIN14_BL {
 			}
 		} else {
 			try {
+				// 柜台信息表ID，用于webservice下发
+				counterId = counterInfo.get("counterInfoId") != null ? Integer.parseInt(counterInfo.get("counterInfoId").toString()):counterId;
 				// 更新柜台信息表
 				binOTYIN14_Service.updateCounterInfo(counterMap);
 				// 更新件数加一
