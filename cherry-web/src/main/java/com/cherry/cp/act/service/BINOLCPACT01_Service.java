@@ -96,4 +96,14 @@ public class BINOLCPACT01_Service {
 		map.put(CherryConstants.IBATIS_SQL_ID, "BINOLCPACT01.stopSubCampaign");
 		return baseServiceImpl.update(map);
 	}
+
+	/**
+	 * 伦理删除活动
+	 * @param map
+	 * @return
+	 */
+	public int stopSubCampaignPrmRule (Map<String, Object> map){
+		map.put(CherryConstants.IBATIS_SQL_ID, "BINOLCPACT01.stopSubCampaignPrmRule");
+		return baseServiceImpl.update(map);
+	}
 }

@@ -103,6 +103,7 @@ public class BINOLCPACT01_BL {
 	public void tran_stopCampaign (Map<String, Object> map) throws Exception{
 		binOLCPACT01_Service.stopCampaign(map);
 		binOLCPACT01_Service.stopSubCampaign(map);
+		binOLCPACT01_Service.stopSubCampaignPrmRule(map);
 	}
 	/**
 	 * 伦理删除活动
@@ -111,5 +112,6 @@ public class BINOLCPACT01_BL {
 	 */
 	public void tran_stopSubCampaign (Map<String, Object> map) throws Exception{
 		binOLCPACT01_Service.stopSubCampaign(map);
+		binOLCPACT01_Service.stopSubCampaignPrmRule(map);
 	}
 }
