@@ -250,8 +250,11 @@ public class BINOLCM02_Form extends DataTable_BaseForm{
 	private int pageSize;
 
 	/** 最大盘点数 */
-	private int maxCount;
-	
+	private String maxCount;
+
+	/**自由盘点的标志*/
+	private String freeCount;
+
 	public List<Map<String, Object>> getPopProductInfoTwoList() {
 		return popProductInfoTwoList;
 	}
@@ -895,11 +898,19 @@ public class BINOLCM02_Form extends DataTable_BaseForm{
 		this.pageSize = pageSize;
 	}
 
-	public int getMaxCount() {
+	public String getMaxCount() {
 		return maxCount;
 	}
 
-	public void setMaxCount(int maxCount) {
+	public void setMaxCount(String maxCount) {
 		this.maxCount = maxCount;
+	}
+
+	public String getFreeCount() {
+		return freeCount;
+	}
+
+	public void setFreeCount(String freeCount) {
+		this.freeCount = freeCount;
 	}
 }

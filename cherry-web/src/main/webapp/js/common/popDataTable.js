@@ -1218,14 +1218,22 @@ function exchangeHtml(option,flag){
 	if(!option.bindFlag){
 		// 目标区
 		var $target = $("#" + option.targetId);
-		var $maxCount = $("#maxCount");
 		if(isEmpty(option.targetId)){
 			$target = $(option.target);
 		}
 		// 弹出框目标缓存区
 		var $temp = $("#" + option.dialogId + "_temp");
+		var flag_1 = 0;
+		if(option.freeCount == 1){
+			var $maxCount = $("#maxCount");
+			var maxCount = $maxCount.val();
+			if(maxCount == null || maxCount == "")
+				flag_1 = 0;
+			else if($temp.children().length> maxCount)
+				flag_1 = 1;
+		}
 		if(flag){
-			if($temp.children().length > $maxCount.val()){
+			if(flag_1){
 				var $p = $("#send_checkinfo_dialog").find('p.message');
 				var $message = $p.find('span');
 				var $loading = $p.find('img');
@@ -1565,7 +1573,7 @@ function setDialogSetting($dialog,dialogSetting, option){
 					if($.isFunction(option.exchangeHtml)){
 						option.exchangeHtml(option);
 					}else{
-						exchangeHtml(option,true);	
+						exchangeHtml(option,true);
 					}
 				}
 				if($.isFunction(option.click)) {

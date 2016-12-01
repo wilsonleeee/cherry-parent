@@ -2,7 +2,7 @@
 <%@ taglib prefix="s" uri="/struts-tags" %>  
 <s:url id="s_prtSearchUrl" value="/common/BINOLCM02_popPrtDialog" />
 <link rel="stylesheet" href="/Cherry/css/common/combotree.css">
-<script type="text/javascript" src="/Cherry/js/common/popDataTable.js"></script>
+<script type="text/javascript" src="/Cherry/js/common/popDataTable.js?version=201612011416"></script>
 <script type="text/javascript" src="/Cherry/js/common/comboTreePlugin.js"></script>
 <script type="text/javascript" src="/Cherry/js/common/icontains.js"></script>
 <script type="text/javascript">
@@ -11,15 +11,17 @@
 <s:i18n name="">
 
 <div id ="productDialog" class="dialog hide">
-    <div style="width: 50%; float: left;">
-        <div style="width: 12%; float: left;">
-            <s:text name="global.page.categorytree"/>
+    <s:if test="freeCount==1">
+        <div style="width: 50%; float: left;">
+            <div style="width: 12%; float: left;">
+                <s:text name="global.page.categorytree"/>
+            </div>
+            <div style="width: 50%; float: left;">
+                <input id="justAnInputBox" style="border: 1px solid rgb(204, 204, 204); width: 200px; height: 18px;">
+            </div>
         </div>
         <div style="width: 50%; float: left;">
-                <input id="justAnInputBox" style="border: 1px solid rgb(204, 204, 204); width: 200px; height: 18px;">
-        </div>
-    </div>
-    <div style="width: 50%; float: left;">
+    </s:if>
 	<input type="text" class="text" value="" id="productDialogSearch"  onKeyup ="datatableFilter(this,22);" maxlength="50"/>
 	<s:if test="param!=null && param!=''">
 		<input class="hide" name="originalBrand" id="param" value="<s:property value='param'/>"/>
@@ -45,7 +47,9 @@
     	<span class="ui-icon icon-search"></span>
     	<span class="button-text"><s:text name="global.page.searchfor"/></span>
     </a>
-    </div>
+    <s:if test="freeCount==1">
+        </div>
+     </s:if>
   	<hr class="space" />
   	<table id="prt_dataTable" cellpadding="0" cellspacing="0" border="0" class="jquery_table2" width="100%">
        <thead>

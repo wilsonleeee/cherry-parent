@@ -3062,6 +3062,11 @@ function popAjaxPrtDialog (option){
 			// 自选有效区分
 			url += "&param2=" + option.optionalValidFlag;
 		}
+		//增加自由盘点的标志
+		if(!isEmpty(option.freeCount)){
+			// 自选有效区分
+			url += "&freeCount=" + option.freeCount;
+		}
 		$.ajax({
 	        url: url, 
 	        type: 'post',

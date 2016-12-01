@@ -596,7 +596,7 @@ public class BINOLCM02_Action extends BaseAction implements ModelDriven<BINOLCM0
 		form.setIsPosCloud(isPosCloud);
 		//读取配置项，将最大选择数目读取出来
 		String maxCount = binOLCM14_BL.getConfigValue("1394", String.valueOf(map.get("organizationInfoId")), String.valueOf(map.get("brandInfoId")));
-		form.setMaxCount(Integer.parseInt(maxCount));
+		form.setMaxCount(maxCount);
 		return SUCCESS;
 	}
 	
@@ -1621,6 +1621,7 @@ public class BINOLCM02_Action extends BaseAction implements ModelDriven<BINOLCM0
 			}
 		}
 		map.put("param", ConvertUtil.getString(form.getParam()));
+		map.put("freeCount",ConvertUtil.getString(form.getFreeCount()));
 		map.put(CherryConstants.SESSION_LANGUAGE, session.get(CherryConstants.SESSION_LANGUAGE));
 		// dataTable上传的参数设置到map
 		ConvertUtil.setForm(form, map);

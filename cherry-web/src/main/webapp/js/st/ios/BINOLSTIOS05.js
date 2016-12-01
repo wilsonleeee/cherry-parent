@@ -35,6 +35,7 @@ BINOLSTIOS05.prototype = {
  	           mode : 2,
  	           brandInfoId : $("#brandInfoId").val(),
  		       getHtmlFun:that.getHtmlFun,// 选择产品后填充明细数据
+			   freeCount:1,//自由盘点的标志
  		       click : function(){
 					that.changeOddEvenColor();
 					that.getStocks();
@@ -648,7 +649,14 @@ BINOLSTIOS05.prototype = {
 		}
 		// 设置全选状态
 		$('#allSelect').prop("checked",false);
+		var nowRows = $('#databody >tr').length;
 		var maxCount = $('#maxCount').val();
+		var flag = 0;
+		if(maxCount == null || maxCount == "")
+			flag = 0;
+		else if(nowRows >= maxCount){
+			flag = 1;
+		}
 		//已有空行不新增一行
 		var addNewLineFlag = true;
 		$.each($('#databody >tr'), function(i){
@@ -658,7 +666,7 @@ BINOLSTIOS05.prototype = {
 				$(this).find("[name='unitCodeBinding']").focus();
 				return;
 			}
-			if(nextIndex >= maxCount) {
+			if(flag) {
 				addNewLineFlag = false;
 				var $p = $('#send_selectinfo_1_dialog').find('p.message');
 				var $message = $p.find('span');
