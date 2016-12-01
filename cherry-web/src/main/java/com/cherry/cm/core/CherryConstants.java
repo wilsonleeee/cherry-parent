@@ -1733,7 +1733,7 @@ public class CherryConstants {
 	/** MQ消息发送日志表 **/
 	public static final String MGO_MQSENDLOG = "MGO_MQSendLog";
 	
-	/** MQ收发日志表（新后台内部发送消息用） **/
+	/** MQ收发日志表（新后台内部发送消息用，消息同步时要用的） **/
 	public static final String MGO_MQLOG = "MGO_MQLog";
 	
 	/** 尝试插入MongoDB的最大次数 **/

@@ -12,16 +12,15 @@
  */
 package com.cherry.cm.activemq.service;
 
-import java.util.Map;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import com.cherry.cm.activemq.dto.MQInfoDTO;
 import com.cherry.cm.core.CherryConstants;
 import com.cherry.cm.mongo.MongoDB;
 import com.cherry.cm.service.BaseService;
 import com.mongodb.DBObject;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import java.util.Map;
 
 /**
  * 发送MQ消息共通处理 Service
@@ -42,6 +41,11 @@ public class BINOLMQCOM01_Service extends BaseService {
 	public void insertMQLog(MQInfoDTO mqInfoDTO) {
 		
 		baseServiceImpl.save(mqInfoDTO, "BINOLMQCOM01.insertMQLog");
+	}
+
+	public void insertSqlMQLog(MQInfoDTO mqInfoDTO) {
+
+		baseServiceImpl.save(mqInfoDTO, "BINOLMQCOM01.insertSqlMQLog");
 	}
 	
 	/**

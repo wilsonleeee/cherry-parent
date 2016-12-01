@@ -6,6 +6,8 @@ import com.cherry.cm.core.CustomerContextHolder;
 import com.cherry.cm.core.PropertiesUtil;
 import com.cherry.cm.util.CherryUtil;
 import com.cherry.cm.util.DateUtil;
+import com.dianping.cat.Cat;
+import com.dianping.cat.message.Transaction;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.BeansException;
@@ -215,7 +217,17 @@ public class WebserviceEntrance implements ApplicationContextAware{
 			webserviceDataSource.getBrandInfo(brandMap);
 
 			// AES解密,将解密后的JSON字符串转换成Map
-			paramData = CherryAESCoder.decrypt(paramData, AESKEY);
+			Transaction transaction = Cat.newTransaction("WebService", "decrypt");
+			try{
+				paramData = CherryAESCoder.decrypt(paramData, AESKEY);
+				transaction.setStatus(Transaction.SUCCESS);
+			}catch (Exception t){
+				transaction.setStatus(t);
+				Cat.logError(t);
+				throw t;
+			}finally {
+				transaction.complete();
+			}
 			Map<String, Object> paramMap = new HashMap<String, Object>();
 			paramMap.putAll(CherryUtil.json2Map(paramData));
 			// 检测 TradeType参数
