@@ -1,5 +1,5 @@
 /*	
- * @(#)BINBAT121_BL.java     1.0 @2015-9-16
+ * @(#)BINBAT167_BL.java     1.0 @2015-9-16
  * 		
  * Copyright (c) 2010 SHANGHAI BINGKUN DIGITAL TECHNOLOGY CO.,LTD		
  * All rights reserved		
@@ -33,7 +33,7 @@ import com.cherry.cm.util.ConvertUtil;
 import com.cherry.dr.cmbussiness.util.DoubleUtil;
 import com.cherry.mq.mes.common.MessageConstants;
 import com.cherry.webservice.sale.bl.SaleInfoLogic;
-import com.cherry.webserviceout.alicloud.jstTrade.service.BINBAT124_Service;
+import com.cherry.webserviceout.alicloud.jstTrade.service.BINBAT167_Service;
 
 
 /**
@@ -45,15 +45,15 @@ import com.cherry.webserviceout.alicloud.jstTrade.service.BINBAT124_Service;
  *
  * @version  2016-10-27
  */
-public class BINBAT124_BL {
+public class BINBAT167_BL {
 	
-	private static Logger logger = LoggerFactory.getLogger(BINBAT124_BL.class.getName());
+	private static Logger logger = LoggerFactory.getLogger(BINBAT167_BL.class.getName());
 	
     @Resource(name="saleInfoLogic")
     private SaleInfoLogic saleInfoLogic;
 	
 	@Resource
-	private BINBAT124_Service binbat124_Service;
+	private BINBAT167_Service binBAT167_Service;
 	
 	/** JOB执行相关共通 IF */
 	@Resource(name="binbecm01_IF")
@@ -108,7 +108,7 @@ public class BINBAT124_BL {
 	private synchronized void sendTradeByMQ(Map<String, Object> paramMap)throws Exception {
 		while(true) {
 			//1.从电商订单主表抽取待转换的数据
-			List<Map<String,Object>> order_list = binbat124_Service.ESOrderMain(paramMap);
+			List<Map<String,Object>> order_list = binBAT167_Service.ESOrderMain(paramMap);
 			if (null == order_list || order_list.isEmpty()) {
 				break;
 			}
@@ -119,7 +119,7 @@ public class BINBAT124_BL {
 						.get("ESOrderMainID"));
 				try {
 					//2-1.通过主表ID从订单明细表获取数据
-					List<Map<String, Object>> detail_list = binbat124_Service
+					List<Map<String, Object>> detail_list = binBAT167_Service
 							.getESOrderDetail(orderInfo);
 					//2-2-1 通过明细的OutCode到产品表查询产品信息（对应产品表的unitcode）
 					if (detail_list == null || detail_list.size() == 0) {//没有找到相对应的产品信息，直接更新主表数据
@@ -130,14 +130,14 @@ public class BINBAT124_BL {
 						//对不能整除的明细进行拆分处理
 						for (Map<String, Object> detail_info : detail_list) {
 							// 获取产品信息
-							Map<String, Object> prtInfo = binbat124_Service.getPrtInfo(detail_info);
+							Map<String, Object> prtInfo = binBAT167_Service.getPrtInfo(detail_info);
 							if (null == prtInfo || prtInfo.isEmpty()) {
 								Map<String, Object> update_map = new HashMap<String, Object>();
 								update_map.put("ESOrderMainID", ESOrderMainID);
 								update_map.put("convertFlag", "2");
 								update_map.put("convertErrMsg", "查询不到产品信息");
-								binbat124_Service.updateESOrderState(update_map);
-								binbat124_Service.manualCommit();
+								binBAT167_Service.updateESOrderState(update_map);
+								binBAT167_Service.manualCommit();
 								isExec = false;
 								break;
 							}
@@ -168,12 +168,12 @@ public class BINBAT124_BL {
 						Map<String, Object> update_map = new HashMap<String, Object>();
 						update_map.put("ESOrderMainID", ESOrderMainID);
 						update_map.put("convertFlag", "1");
-						binbat124_Service.updateESOrderState(update_map);
-						binbat124_Service.manualCommit();
+						binBAT167_Service.updateESOrderState(update_map);
+						binBAT167_Service.manualCommit();
 					}
 				} catch (Exception e) {
 					try {
-						binbat124_Service.manualRollback();
+						binBAT167_Service.manualRollback();
 					} catch (Exception ex) {
 						
 					}
@@ -183,12 +183,12 @@ public class BINBAT124_BL {
 					update_map.put("convertFlag", "2");
 					update_map.put("convertErrMsg", "程序发生异常");
 					try {
-						binbat124_Service.updateESOrderState(update_map);
-						binbat124_Service.manualCommit();
+						binBAT167_Service.updateESOrderState(update_map);
+						binBAT167_Service.manualCommit();
 					} catch (Exception ex) {
 						logger.error("*******************更新转换标志发生异常：" + e.getMessage(),e);
 						try {
-							binbat124_Service.manualRollback();
+							binBAT167_Service.manualRollback();
 						} catch (Exception exp) {
 							
 						}

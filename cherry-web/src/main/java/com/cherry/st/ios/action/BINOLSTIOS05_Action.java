@@ -138,6 +138,9 @@ ModelDriven<BINOLSTIOS05_Form>{
         //实盘数量是否允许负号
         String allowNegativeFlag = binOLCM14_BL.getConfigValue("1388",ConvertUtil.getString(userInfo.getBIN_OrganizationInfoID()),ConvertUtil.getString(userInfo.getBIN_BrandInfoID()));
         form.setAllowNegativeFlag(allowNegativeFlag);
+        //在这里需要读取最大盘点数
+        String maxCount = binOLCM14_BL.getConfigValue("1394",ConvertUtil.getString(userInfo.getBIN_OrganizationInfoID()),ConvertUtil.getString(userInfo.getBIN_BrandInfoID()));
+        form.setMaxCount(ConvertUtil.getString(maxCount));
 		} catch (Exception e) {
 				this.addActionError(getText("ECM00036"));
 		}
@@ -464,7 +467,12 @@ ModelDriven<BINOLSTIOS05_Form>{
 	public void setLogicDepotsList(List<Map<String, Object>> logicDepotsList) {
 		this.logicDepotsList = logicDepotsList;
 	}
-    
-    
-    
+
+    public BINOLSTIOS05_Form getForm() {
+        return form;
+    }
+
+    public void setForm(BINOLSTIOS05_Form form) {
+        this.form = form;
+    }
 }

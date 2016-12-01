@@ -478,6 +478,7 @@ public class BINOLBSEMP04_Service extends BaseService {
 			}
 		} catch (Exception exception) {	
 			logger.error("BIError:",exception);
+			logger.error("BIError:",exception.getMessage());
 			throw new CherryException("EBS00060");
 		} finally {
 			if (oCon != null) {

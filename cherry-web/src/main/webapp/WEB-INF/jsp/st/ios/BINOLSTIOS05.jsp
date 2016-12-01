@@ -190,6 +190,13 @@
     </s:else>
     </cherry:form>
 </s:i18n>
+<input type="hidden" id="maxCount" value="<s:property value="form.maxCount"></s:property>">
+<div class="dialog2 clearfix" style="display:none" id="send_selectinfo_1_dialog">
+    <p class="clearfix message">
+        <span></span>
+        <img height="15px" class="hide" src="/Cherry/css/cherry/img/loading.gif"/>
+    </p>
+</div>
 <%-- ================== dataTable共通导入 START ======================= --%>
 <jsp:include page="/WEB-INF/jsp/common/dataTable_i18n.jsp" flush="true" />
 <%-- ================== dataTable共通导入    END  ======================= --%>

@@ -120,7 +120,7 @@ public class BINOLWPSAL11_Action extends BaseAction implements ModelDriven<BINOL
 			// 手机号校验规则
 			mobileRule = binOLCM14_BL.getConfigValue("1090", organizationInfoId, brandInfoId);
 			//是否需要手机验证
-			isNeedCheck = binOLCM14_BL.getWebposConfigValue("9049", organizationInfoId, brandInfoId);
+			isNeedCheck = "".equals(ConvertUtil.getString(binOLCM14_BL.getWebposConfigValue("9049", organizationInfoId, brandInfoId)))?"N":binOLCM14_BL.getWebposConfigValue("9049", organizationInfoId, brandInfoId);
 			//是否开启手机卡号同步
 			form.setCardMobileSyn(binOLCM14_BL.getWebposConfigValue("9040", organizationInfoId, brandInfoId));
 			// 生日格式

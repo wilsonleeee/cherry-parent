@@ -17,6 +17,7 @@
 			<li><s:property value="#application.CodeTable.getVal('1299',#productMap0.originalBrand)"/>   </li>
 			<li><s:property value="#productMap0.nameTotal"/></li>
 			<li><s:property value="#productMap0.primaryCategoryBig"/></li>
+			<li><s:property value="#productMap0.primaryCategoryMedium"/></li>
 			<li><s:property value="#productMap0.primaryCategorySmall"/></li>
 			<li><s:text name="format.price"><s:param value="#productMap0.salePrice"></s:param></s:text></li>
 			<li><s:text name="format.price"><s:param value="#productMap0.memPrice"></s:param></s:text></li>

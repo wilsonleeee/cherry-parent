@@ -56,7 +56,7 @@ function doBatch(url) {
 	  			  <s:hidden name="brandCode"></s:hidden>
 				  <div class="clearfix" style="margin-top:10px;">
 				 	<span class="left">退款单号：<s:textfield name="refundId"></s:textfield></span> 
-				  	<s:url action="BINBAT123_exec" id="execUrl"></s:url>
+				  	<s:url action="BINBAT166_exec" id="execUrl"></s:url>
 				  	<a class="add" onclick="doBatch('${execUrl }');return false;">
 					  <span class="ui-icon icon-enable"></span><span class="button-text">执行</span>
 				    </a>	

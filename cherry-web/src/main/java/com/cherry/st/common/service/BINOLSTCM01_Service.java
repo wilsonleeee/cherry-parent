@@ -91,6 +91,18 @@ public class BINOLSTCM01_Service extends BaseService {
         parameterMap.put(CherryConstants.IBATIS_SQL_ID, "BINOLSTCM01.getProductNewBatchStock");
         return (Map<String, Object>) baseServiceImpl.get(parameterMap);
     }
+
+    /**
+     * 根据产品厂商ID及入出库日期获取产品的各种价格
+     * @param map
+     * @return
+     */
+    public Map<String, Object> getProductPriceByID(Map<String, Object> map) {
+        Map<String, Object> parameterMap = new HashMap<String, Object>();
+        parameterMap.putAll(map);
+        parameterMap.put(CherryConstants.IBATIS_SQL_ID, "BINOLSTCM01.getProductPriceByID");
+        return (Map<String, Object>) baseServiceImpl.get(parameterMap);
+    }
     
     /**
      * 根据原始单据号及仓库产品信息,取得产品入出库明细记录。

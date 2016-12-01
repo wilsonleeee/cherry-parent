@@ -521,6 +521,28 @@
 			$stockInTimeSorting$,BIN_ProductBatchStockID $stockInTimeSorting$
 		</isNotEmpty>
     </select>
+
+    <!-- 查询产品的价格 -->
+    <select id="getProductPriceByID"  parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+        <![CDATA[
+		select
+			 B.BIN_ProductVendorID,
+			 A.SalePrice,
+			 A.MemPrice,
+			 A.StandardCost,
+			 A.OrderPrice,
+			 C.DistributionPrice
+		from
+			Basis.BIN_Product A WITH(NOLOCK)
+			JOIN Basis.BIN_ProductVendor B WITH(NOLOCK) ON(A.BIN_ProductID = B.BIN_ProductID )
+			LEFT JOIN Basis.BIN_ProductPrice C WITH(NOLOCK)
+			ON (A.BIN_ProductID = C.BIN_ProductID
+					AND C.Type = '2' AND C.StartDate <= #StockInOutDate#
+					AND C.EndDate >= #StockInOutDate# )
+		where
+			B.BIN_ProductVendorID = #BIN_ProductVendorID#
+		]]>
+    </select>
     
     <!-- 检查出库要求的批次库存是否满足 -->
     <select id="checkProductNewBatchStock" parameterClass="java.util.HashMap" resultClass="java.util.HashMap"> 

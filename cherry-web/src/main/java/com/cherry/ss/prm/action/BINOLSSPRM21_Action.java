@@ -114,8 +114,8 @@ public class BINOLSSPRM21_Action extends BaseAction implements ModelDriven<BINOL
 	    	//取得大分类列表
 	    	form.setLargeCategoryList(binolsscm02BL.getPrimaryCategory(userInfo));
 	    	
-            //数量允许负号
-            String allowNegativeFlag = CherryConstants.SYSTEM_CONFIG_ENABLE;
+            //数量允许负号; 0:允许负值;1:不允许
+            String allowNegativeFlag = binOLCM14_BL.getConfigValue("1388",organizationId,brandInfoId);
             form.setAllowNegativeFlag(allowNegativeFlag);
     	}catch(Exception ex){
     		this.addActionError(getText("ECM00036"));

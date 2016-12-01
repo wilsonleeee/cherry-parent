@@ -156,7 +156,28 @@
 	        		</iterate>
    			</isNotEmpty>
 	 </sql>
-	 
+	<sql id="treeFilterSql">
+		<isNotNull property="TREE_FILTER" >
+		<![CDATA[
+			AND  D.BIN_PrtCatPropValueID IN
+		]]>
+			<iterate property="TREE_FILTER" open="(" close=")" conjunction=",">
+				#TREE_FILTER[]#
+			</iterate>
+		<![CDATA[
+			AND E.BIN_PrtCatPropValueID IN
+		]]>
+			<iterate property="TREE_FILTER" open="(" close=")" conjunction=",">
+				#TREE_FILTER[]#
+			</iterate>
+		<![CDATA[
+			AND F.BIN_PrtCatPropValueID IN
+		]]>
+			<iterate property="TREE_FILTER" open="(" close=")" conjunction=",">
+				#TREE_FILTER[]#
+			</iterate>
+		</isNotNull>
+	</sql>
 	 <!-- 产品信息查询sql -->
 	 <sql id="productQuery">
 	 	<![CDATA[
@@ -172,6 +193,9 @@
 				ISNULL(CONVERT(Decimal(16,2),A.MaxSalePrice),0) AS maxSalePrice,
     			ISNULL(A.OriginalBrand,'') AS originalBrand,
     			C.ValidFlag AS validFlag,
+    			D.BIN_PrtCatPropValueID AS categoryBigId,
+    			E.BIN_PrtCatPropValueID AS categorySmallId,
+    			F.BIN_PrtCatPropValueID AS categoryMediumId,
     			]]>
     			<dynamic>
 					<isNotEmpty property="language">
@@ -179,17 +203,20 @@
 							A.NameTotal AS nameTotal,
 							D.PropValueChinese AS primaryCategoryBig,
 							E.PropValueChinese AS primaryCategorySmall,
+							F.PropValueChinese AS primaryCategoryMedium,
 						</isEqual>
 						<isEqual property="language" compareValue="en_US">										
 							A.NameForeign AS nameTotal,
 							D.PropValueForeign AS primaryCategoryBig,
 							E.PropValueForeign AS primaryCategorySmall,
+							F.PropValueForeign AS primaryCategoryMedium,
 						</isEqual>
 					</isNotEmpty>
 					<isEmpty property="language">
 							A.NameTotal AS nameTotal,
 							D.PropValueChinese AS primaryCategoryBig,
 							E.PropValueChinese AS primaryCategorySmall,
+							F.PropValueChinese AS primaryCategoryMedium,
 					</isEmpty>
 					ISNULL(CONVERT(Decimal(16,2),B.SalePrice),0) AS salePrice,
                     ISNULL(CONVERT(Decimal(16,2),B.MemPrice),0) AS memPrice,
@@ -211,7 +238,8 @@
     				SELECT
     					pc.BIN_ProductID,
     					pcv.PropValueChinese,
-    					pcv.PropValueForeign
+    					pcv.PropValueForeign,
+    					pcv.BIN_PrtCatPropValueID
     				FROM
     					Basis.BIN_PrtCategory pc WITH(NOLOCK),
     					Basis.BIN_PrtCatProperty pcp WITH(NOLOCK),
@@ -234,7 +262,32 @@
     				SELECT
     					pc.BIN_ProductID,
     					pcv.PropValueChinese,
-    					pcv.PropValueForeign
+    					pcv.PropValueForeign,
+    					pcv.BIN_PrtCatPropValueID
+    				FROM
+    					Basis.BIN_PrtCategory pc WITH(NOLOCK),
+    					Basis.BIN_PrtCatProperty pcp WITH(NOLOCK),
+    					Basis.BIN_PrtCatPropValue pcv WITH(NOLOCK)
+    				WHERE
+    					pc.BIN_PrtCatPropValueID = pcv.BIN_PrtCatPropValueID AND
+    					pcv.BIN_PrtCatPropertyID = pcp.BIN_PrtCatPropertyID AND
+    					pcp.TeminalFlag = '3' AND
+    					pcp.BIN_OrganizationInfoID = #organizationInfoId#  AND
+    					]]>
+		 <isNotEmpty property="brandInfoId">
+			 pcp.BIN_BrandInfoID = #brandInfoId# AND
+		 </isNotEmpty>
+		 <![CDATA[
+						pc.ValidFlag = '1' AND
+						pcv.ValidFlag = '1' AND
+						pcp.ValidFlag = '1'
+    			) F ON (F.BIN_ProductID = A.BIN_ProductID)
+    			LEFT JOIN (
+    				SELECT
+    					pc.BIN_ProductID,
+    					pcv.PropValueChinese,
+    					pcv.PropValueForeign,
+    					pcv.BIN_PrtCatPropValueID
     				FROM
     					Basis.BIN_PrtCategory pc WITH(NOLOCK),
     					Basis.BIN_PrtCatProperty pcp WITH(NOLOCK),
@@ -916,10 +969,15 @@
      <select id="getProductShortInfoList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
     	<include refid="BINOLCMINC99.pageheader" />
 		<include refid="BINOLCM02.productQuery" />
+		<include refid="BINOLCM02.treeFilterSql" />
 		<include refid="BINOLCMINC99.filterSql" />
     	<include refid="BINOLCMINC99.pagefooter" />
     </select>
-    
+
+	<!-- 查询分类树信息 -->
+	<select id="getCategoryTreeInfoList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+		<include refid="BINOLCM02.productQuery" />
+	</select>
      <!-- 查询产品信息 （带图片模式）-->
      <select id="getProductImageDInfoList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
 		<include refid="BINOLCM02.productImageQuery" />
@@ -1002,6 +1060,7 @@
 			SELECT	COUNT(SORT_T1.bin_ProductID) AS count FROM (
 		]]>	
 		<include refid="BINOLCM02.productQuery" />
+		<include refid="BINOLCM02.treeFilterSql" />
 		<include refid="BINOLCMINC99.filterSql" /> 
 		<![CDATA[	
 			)SORT_T1

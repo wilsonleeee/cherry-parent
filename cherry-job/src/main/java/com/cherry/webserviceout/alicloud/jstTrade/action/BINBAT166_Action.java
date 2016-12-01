@@ -1,5 +1,5 @@
 /*	
- * @(#)BINBAT123_Action.java     1.0 @2016-09-26		
+ * @(#)BINBAT166_Action.java     1.0 @2016-09-26
  * 		
  * Copyright (c) 2010 SHANGHAI BINGKUN DIGITAL TECHNOLOGY CO.,LTD		
  * All rights reserved		
@@ -12,19 +12,17 @@
  */
 package com.cherry.webserviceout.alicloud.jstTrade.action;
 
-import java.util.HashMap;
-import java.util.Map;
-
-import javax.annotation.Resource;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import com.cherry.cm.cmbeans.UserInfo;
 import com.cherry.cm.core.BaseAction;
 import com.cherry.cm.core.CherryBatchConstants;
 import com.cherry.cm.core.CherryBatchException;
-import com.cherry.webserviceout.alicloud.jstTrade.bl.BINBAT123_BL;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import com.cherry.webserviceout.alicloud.jstTrade.bl.BINBAT166_BL;
+
+import javax.annotation.Resource;
+import java.util.HashMap;
+import java.util.Map;
 
 /**
 *
@@ -35,14 +33,14 @@ import com.cherry.webserviceout.alicloud.jstTrade.bl.BINBAT123_BL;
 *
 * @version  2016-09-26
 */
-public class BINBAT123_Action extends BaseAction {
+public class BINBAT166_Action extends BaseAction {
 
 	private static final long serialVersionUID = 7070355030398328620L;
 	
-	private static Logger logger = LoggerFactory.getLogger(BINBAT123_Action.class.getName());
-	
-	@Resource(name="binbat123_BL")
-	private BINBAT123_BL binbat123_BL;
+	private static Logger logger = LoggerFactory.getLogger(BINBAT166_Action.class.getName());
+
+	@Resource(name="binBAT166_BL")
+	private BINBAT166_BL binBAT166_BL;
 	
 	/** 组织Id */
 	private String organizationInfoId;
@@ -122,7 +120,7 @@ public class BINBAT123_Action extends BaseAction {
 			map.put(CherryBatchConstants.ORGANIZATIONINFOID, userInfo.getBIN_OrganizationInfoID());
 			map.put("refundId", refundId);
 			
-			flg = binbat123_BL.tran_getRefund(map);
+			flg = binBAT166_BL.tran_getRefund(map);
 		} catch (CherryBatchException cbx) {
 			flg = CherryBatchConstants.BATCH_WARNING;
 			logger.info("=============WARN MSG================");

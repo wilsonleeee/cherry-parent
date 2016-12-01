@@ -267,7 +267,7 @@ public class BINOLWPMBM01_Action extends BaseAction implements ModelDriven<BINOL
 		}
 		birthFormat = binOLCM14_BL.getWebposConfigValue("9012", organizationInfoId, brandInfoId);
 		//是否需要手机验证
-		isNeedCheck = binOLCM14_BL.getWebposConfigValue("9049", organizationInfoId, brandInfoId);
+		isNeedCheck = "".equals(ConvertUtil.getString(binOLCM14_BL.getWebposConfigValue("9049", organizationInfoId, brandInfoId)))?"N":binOLCM14_BL.getWebposConfigValue("9049", organizationInfoId, brandInfoId);
 		//是否开启手机卡号同步处理
 		form.setCardMobileSyn(binOLCM14_BL.getWebposConfigValue("9040", organizationInfoId, brandInfoId));
 		//生日是否为必填

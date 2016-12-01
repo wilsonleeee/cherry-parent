@@ -248,6 +248,9 @@ public class BINOLCM02_Form extends DataTable_BaseForm{
 	
 	/** 当前是每页多少条 */
 	private int pageSize;
+
+	/** 最大盘点数 */
+	private int maxCount;
 	
 	public List<Map<String, Object>> getPopProductInfoTwoList() {
 		return popProductInfoTwoList;
@@ -891,6 +894,12 @@ public class BINOLCM02_Form extends DataTable_BaseForm{
 	public void setPageSize(int pageSize) {
 		this.pageSize = pageSize;
 	}
-	
-	
+
+	public int getMaxCount() {
+		return maxCount;
+	}
+
+	public void setMaxCount(int maxCount) {
+		this.maxCount = maxCount;
+	}
 }

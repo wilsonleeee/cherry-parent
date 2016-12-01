@@ -508,14 +508,27 @@ public class BINBAT152_BL {
 							        		
 							            	// 盘点(盘盈)(最后一笔成本价 )
 							            	if(CherryConstants.BUSINESS_TYPE_CA.equals(tradeType)){
-		
+												// 盘点(盘盈)
+												String costPriceCA = null;
 							            		// 取得产品库存表指定仓库产品的首末次信息
-							            		proBatchInOutDetail.put("stockInTimeSorting", "DESC"); // 排序方式 
+							            		proBatchInOutDetail.put("stockInTimeSorting", "DESC"); // 排序方式
 							            		Map<String,Object> topProductNewBatchStockMap = binbat152_Service.getProductNewBatchStock(proBatchInOutDetail);
-							            		
-												proBatchInOutDetail.put("CostPrice",
-																					(null != topProductNewBatchStockMap && !topProductNewBatchStockMap.isEmpty()) 
-																					? topProductNewBatchStockMap.get("CostPrice") : null); // 成本价
+							            		if(null != topProductNewBatchStockMap && topProductNewBatchStockMap.isEmpty()) {
+													costPriceCA = ConvertUtil.getString(topProductNewBatchStockMap.get("CostPrice"));
+												} else {
+													/**
+													 * 系统配置项[初始盘盈时的入库成本价使用的价格]:'':不处理; 'DistributionPrice':配送价;'StandardCost':结算价;
+													 */
+													String priceConfig = binOLCM14_BL.getConfigValue("1395", String.valueOf(map.get("organizationInfoId")), String.valueOf(map.get("brandInfoId")));
+													// 根据产品厂商ID及入出库日期取得产品的价格想着信息
+													Map<String,Object> productPrice = binbat152_Service.getProductPriceByID(proBatchInOutDetail);
+													if(!"".equals(priceConfig) && null != productPrice && !productPrice.isEmpty()) {
+														// 取指定价格
+														costPriceCA = ConvertUtil.getString(productPrice.get(priceConfig));
+														proBatchInOutDetail.put("Comments",priceConfig+","+costPriceCA);
+													}
+												}
+												proBatchInOutDetail.put("CostPrice","".equals(costPriceCA) ? null : costPriceCA); // 成本价
 							            	}
 							            	// 退货
 							            	else if (CherryConstants.BUSINESS_TYPE_SR.equals(tradeType)){

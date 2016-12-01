@@ -74,15 +74,21 @@ public class BINOLMBPTM06_Action extends BaseAction implements ModelDriven<BINOL
 	private List<Map<String, Object>> clubList;
 	
 	private String clubMod;
-	
+	/** 积分信息List */
+	private Map<String, Object> pointInfoSummy;
+	/** 积分信息List */
+	private List<Map<String, Object>> pointInfoList;
+	/** 查询积分信息Form */
+	private BINOLMBPTM06_Form form = new BINOLMBPTM06_Form();
+
 	public String getClubMod() {
 		return clubMod;
 	}
-
+	
 	public void setClubMod(String clubMod) {
 		this.clubMod = clubMod;
 	}
-
+	
 	public List<Map<String, Object>> getClubList() {
 		return clubList;
 	}
@@ -93,11 +99,11 @@ public class BINOLMBPTM06_Action extends BaseAction implements ModelDriven<BINOL
 	
 	/**
 	 * 查询积分信息画面初期处理
-	 * 
+	 *
 	 * @return 查询积分信息画面
 	 */
 	public String init() throws Exception {
-		
+
 		Map<String, Object> map = new HashMap<String, Object>();
 		// 登陆用户信息
 		UserInfo userInfo = (UserInfo) session
@@ -111,34 +117,34 @@ public class BINOLMBPTM06_Action extends BaseAction implements ModelDriven<BINOL
 		}
 		String sysDateTime = CherryUtil.getSysDateTime("yyyy-MM-dd");
 		// 扫描开始日期初期值
-		form.setStartDate(DateUtil.suffixDate(CherryUtil.getMinMonthDate(sysDateTime), 0));
+		form.setStartDate(DateUtil.suffixDate(CherryUtil.getMinMonthDate(sysDateTime), 0).substring(0, 10));
 		// 扫描开始日期初期值
-		form.setEndDate(DateUtil.suffixDate(sysDateTime, 1));
+		form.setEndDate(DateUtil.suffixDate(sysDateTime, 1).substring(0, 10));
 		return SUCCESS;
 	}
 	
 	/**
 	 * AJAX查询积分信息
-	 * 
+	 *
 	 * @return 查询积分信息画面
 	 */
 	@SuppressWarnings("unchecked")
 	public String searchReportSummy() throws Exception {
-		
+
 		Map<String, Object> map = getSearchMap();
 		// 取得积分统计信息
 		pointInfoSummy = binOLMBPTM06_BL.getScanQRPointsReportSummary(map);
 		return SUCCESS;
 	}
-
+	
 	/**
 	 * AJAX查询积分信息
-	 * 
+	 *
 	 * @return 查询积分信息画面
 	 */
 	@SuppressWarnings("unchecked")
 	public String searchReportDetailList() throws Exception {
-		
+
 		Map<String, Object> map = getSearchMap();
 		// 取得积分信息总数
 		int count = binOLMBPTM06_BL.getDetailCount(map);
@@ -151,11 +157,10 @@ public class BINOLMBPTM06_Action extends BaseAction implements ModelDriven<BINOL
 		return SUCCESS;
 	}
 	
-
 	/**
-	 * 
+	 *
 	 * 查询前字段验证处理
-	 * 
+	 *
 	 */
 	@SuppressWarnings("unchecked")
 	public void validateSearchReportSummy() throws Exception {
@@ -173,7 +178,7 @@ public class BINOLMBPTM06_Action extends BaseAction implements ModelDriven<BINOL
 		Map<String, Object> msgParam = new HashMap<String, Object>();
 		msgParam.put("exportStatus", "1");
 		Map<String, Object> map = getSearchMap();
-		
+
 		int count = binOLMBPTM06_BL.getDetailCount(map);
 		// Excel导出最大数据量
 		int maxCount = CherryConstants.EXPORTEXCEL_MAXCOUNT;
@@ -183,7 +188,7 @@ public class BINOLMBPTM06_Action extends BaseAction implements ModelDriven<BINOL
 		}
 		ConvertUtil.setResponseByAjax(response, msgParam);
 	}
-	
+
 	/**
 	 * 一览excel导出
 	 * @return
@@ -206,33 +211,35 @@ public class BINOLMBPTM06_Action extends BaseAction implements ModelDriven<BINOL
 		}
 		return "BINOLMBPTM06_excel";
 	}
-	
-	
+
 	/**
 	 * 查询参数MAP取得
-	 * 
+	 *
 	 * @return
-	 * @throws Exception 
+	 * @throws Exception
 	 */
 	private Map<String, Object> getSearchMap() throws Exception {
 		Map<String, Object> map = (Map)Bean2Map.toHashMap(form);
 		// 登陆用户信息
 		UserInfo userInfo = (UserInfo) session
 				.get(CherryConstants.SESSION_USERINFO);
-		
+
+		// 当前语言
+		map.put(CherryConstants.SESSION_LANGUAGE, session
+				.get(CherryConstants.SESSION_LANGUAGE));
 		// 所属组织
 		map.put(CherryConstants.ORGANIZATIONINFOID, userInfo.getBIN_OrganizationInfoID());
 		// 不是总部的场合
 		if(userInfo.getBIN_BrandInfoID() != CherryConstants.BRAND_INFO_ID_VALUE) {
 			// 所属品牌
 			map.put(CherryConstants.BRANDINFOID, userInfo.getBIN_BrandInfoID());
-		}		
+		}
 		if(!CherryChecker.isNullOrEmpty(form.getStartDate())) {
 			map.put("startDate", DateUtil.suffixDate(form.getStartDate(), 0));
 			// 用于导出时显示查询条件
 			map.put("startDateShow", form.getStartDate());
 		}
-		
+
 		if(!CherryChecker.isNullOrEmpty(form.getEndDate())) {
 			map.put("endDate", DateUtil.suffixDate(form.getEndDate(), 1));
 			// 用于导出时显示查询条件
@@ -242,7 +249,7 @@ public class BINOLMBPTM06_Action extends BaseAction implements ModelDriven<BINOL
 			// 用于导出时显示查询条件
 			map.put("endDateShow", form.getEndDate());
 		}
-		
+
 		// 用户ID
 		map.put("userId", userInfo.getBIN_UserID());
 		// 业务类型
@@ -254,28 +261,18 @@ public class BINOLMBPTM06_Action extends BaseAction implements ModelDriven<BINOL
 		// dataTable上传的参数设置到map
 		ConvertUtil.setForm(form, map);
 //		map = CherryUtil.removeEmptyVal(map);
-		
+
 		return map;
 	}
-	
-	
-	
-	/** 积分信息List */
-	private Map<String, Object> pointInfoSummy;
 
 	public Map<String, Object> getPointInfoSummy() {
 		return pointInfoSummy;
 	}
-
+	
 	public void setPointInfoSummy(Map<String, Object> pointInfoSummy) {
 		this.pointInfoSummy = pointInfoSummy;
 	}
 
-
-
-	/** 积分信息List */
-	private List<Map<String, Object>> pointInfoList;
-	
 	public List<Map<String, Object>> getPointInfoList() {
 		return pointInfoList;
 	}
@@ -283,9 +280,6 @@ public class BINOLMBPTM06_Action extends BaseAction implements ModelDriven<BINOL
 	public void setPointInfoList(List<Map<String, Object>> pointInfoList) {
 		this.pointInfoList = pointInfoList;
 	}
-
-	/** 查询积分信息Form */
-	private BINOLMBPTM06_Form form = new BINOLMBPTM06_Form();
 
 	@Override
 	public BINOLMBPTM06_Form getModel() {

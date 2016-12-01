@@ -648,21 +648,52 @@ BINOLSTIOS05.prototype = {
 		}
 		// 设置全选状态
 		$('#allSelect').prop("checked",false);
-				
+		var maxCount = $('#maxCount').val();
 		//已有空行不新增一行
 		var addNewLineFlag = true;
 		$.each($('#databody >tr'), function(i){
+			var nextIndex = parseInt($("#rowNumber").val())+1;
 			if($(this).find("[name='unitCodeBinding']").is(":visible")){
 				addNewLineFlag = false;
 				$(this).find("[name='unitCodeBinding']").focus();
+				return;
+			}
+			if(nextIndex >= maxCount) {
+				addNewLineFlag = false;
+				var $p = $('#send_selectinfo_1_dialog').find('p.message');
+				var $message = $p.find('span');
+				var $loading = $p.find('img');
+				$loading.hide();
+				var option = {
+					autoOpen: false,
+					width: 350,
+					height: 250,
+					title: "提示",
+					zIndex: 1,
+					modal: true,
+					resizable: false,
+					buttons: [
+						{
+							text: "确定",
+							click: function () {
+								closeCherryDialog("send_selectinfo_1_dialog");
+							}
+						}],
+					close: function () {
+						closeCherryDialog("send_selectinfo_1_dialog");
+					}
+				};
+				$message.text("单次盘点产品数不能超过"+maxCount+"行");
+				$("#send_selectinfo_1_dialog").dialog(option);
+				$("#send_selectinfo_1_dialog").dialog("open");
 				return;
 			}
 		});
 		
 		if(addNewLineFlag){
 			var nextIndex = parseInt($("#rowNumber").val())+1;
+
 			$("#rowNumber").val(nextIndex);
-			
 			var html = [];
 			html.push('<tr id="tr_'+nextIndex+'">');
 			//chcekbox
@@ -702,9 +733,9 @@ BINOLSTIOS05.prototype = {
 			
 			var unitCode = "unitCodeBinding_"+nextIndex;
 			BINOLSTIOS05.setProductBinding(unitCode);
-			
+			/*var barCode = "barCodeBinding_"+nextIndex;
+			BINOLSTIOS05.setProductBinding(barCode);*/
 			$("#unitCodeBinding_"+nextIndex).focus();
-			
 			BINOLSTIOS05.bindInput();
 		}
 	},

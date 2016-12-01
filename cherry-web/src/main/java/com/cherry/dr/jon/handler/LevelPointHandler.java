@@ -20,6 +20,8 @@ import java.util.Map;
 
 import javax.annotation.Resource;
 
+import com.dianping.cat.Cat;
+import com.dianping.cat.message.Transaction;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -180,120 +182,98 @@ public class LevelPointHandler implements RuleHandler_IF, BaseHandler_IF{
 			if (0 == execFlag) {
 				// 处理规则文件
 				executeRuleFile(campBaseDTO);
-				// 需要下发等级MQ
-				if (!DroolsConstants.NO_LEVEL_MQ.equals(
+				Transaction transaction = Cat.newTransaction("LevelPointHandler", "sendLevelMQ");
+				try {
+					// 需要下发等级MQ
+					if (!DroolsConstants.NO_LEVEL_MQ.equals(
 						campBaseDTO.getExtArgs().get(DroolsConstants.LEVEL_MQ_KBN))) {
-					// 取得等级MQ消息体
-					mqInfoDTO = binbedrcom01BL.getLevelMQMessage(campBaseDTO);
-					if(mqInfoDTO != null) {
-						syncFlag = true;
-						// 发送MQ消息处理
-						binOLMQCOM01_BL.sendMQMsg(mqInfoDTO);
-						// 组织ID
-						String orgIdStr = String.valueOf(campBaseDTO.getOrganizationInfoId());
-						// 品牌ID
-						String brandIdStr = String.valueOf(campBaseDTO.getBrandInfoId());
-						// 升级
-						if (DroolsConstants.UPKBN_1.equals(campBaseDTO.getChangeType()) ) {
-							if (binOLCM14_BL.isConfigOpen("1131", orgIdStr, brandIdStr)
-									&& 0 != campBaseDTO.getPrevLevel()) {
-								Map<String, Object> gtMap = new HashMap<String, Object>();
-								// 组织ID
-								gtMap.put("organizationInfoID", orgIdStr);
-								// 品牌ID
-								gtMap.put("brandInfoID", brandIdStr);
-								// 组织代码
-								gtMap.put("orgCode", campBaseDTO.getOrgCode());
-								// 品牌代码
-								gtMap.put("brandCode", campBaseDTO.getBrandCode());
-								// 事件ID
-								gtMap.put("eventId", campBaseDTO.getMemberInfoId());
-								// 事件类型:会员升级
-								gtMap.put("eventType", "12");
-								// 事件发生时间 
-								gtMap.put("eventDate", campBaseDTO.getTicketDate());
-								// 信息内容:关联单号
-								gtMap.put("messageContents", "");
-								// 事件来源
-								gtMap.put("sourse", "LevelPointHandler");
-								// 取得沟通短信消息体(实时)
-								mqInfoDTO = binOLCM31_BL.getGTMQMessage(gtMap);
-								// 发送MQ消息处理
-								binOLMQCOM01_BL.sendMQMsg(mqInfoDTO, false);
+						// 取得等级MQ消息体
+						mqInfoDTO = binbedrcom01BL.getLevelMQMessage(campBaseDTO);
+						if(mqInfoDTO != null) {
+							syncFlag = true;
+							// 发送MQ消息处理
+							binOLMQCOM01_BL.sendMQMsg(mqInfoDTO);
+							// 组织ID
+							String orgIdStr = String.valueOf(campBaseDTO.getOrganizationInfoId());
+							// 品牌ID
+							String brandIdStr = String.valueOf(campBaseDTO.getBrandInfoId());
+							// 升级
+							if (DroolsConstants.UPKBN_1.equals(campBaseDTO.getChangeType()) ) {
+								if (binOLCM14_BL.isConfigOpen("1131", orgIdStr, brandIdStr)
+										&& 0 != campBaseDTO.getPrevLevel()) {
+									Map<String, Object> gtMap = new HashMap<String, Object>();
+									// 组织ID
+									gtMap.put("organizationInfoID", orgIdStr);
+									// 品牌ID
+									gtMap.put("brandInfoID", brandIdStr);
+									// 组织代码
+									gtMap.put("orgCode", campBaseDTO.getOrgCode());
+									// 品牌代码
+									gtMap.put("brandCode", campBaseDTO.getBrandCode());
+									// 事件ID
+									gtMap.put("eventId", campBaseDTO.getMemberInfoId());
+									// 事件类型:会员升级
+									gtMap.put("eventType", "12");
+									// 事件发生时间
+									gtMap.put("eventDate", campBaseDTO.getTicketDate());
+									// 信息内容:关联单号
+									gtMap.put("messageContents", "");
+									// 事件来源
+									gtMap.put("sourse", "LevelPointHandler");
+									// 取得沟通短信消息体(实时)
+									mqInfoDTO = binOLCM31_BL.getGTMQMessage(gtMap);
+									// 发送MQ消息处理
+									binOLMQCOM01_BL.sendMQMsg(mqInfoDTO, false);
+								}
+								//会员等级调整插入临时表
+								binOLCM31_BL.addTempAdjustMember(campBaseDTO.getMemberInfoId()
+										,campBaseDTO.getOrganizationInfoId(),campBaseDTO.getBrandInfoId());
+								logger.debug("@@@会员升级实时生成活动单据@@@" + campBaseDTO.getMemCode());
+								com05IF.makeOrderMQ(campBaseDTO.getOrganizationInfoId()
+										, campBaseDTO.getBrandInfoId()
+										, orgCode, brandCode,null, campBaseDTO.getMemberInfoId(),"1143");
+								logger.debug("会员升级实时触发生日礼JOB@@@");
+								com05IF.makeOrderMQ(campBaseDTO.getOrganizationInfoId()
+										,campBaseDTO.getBrandInfoId(),orgCode,brandCode
+										, campBaseDTO.getMemberInfoId(), "BIR");
 							}
-							//会员等级调整插入临时表
-							binOLCM31_BL.addTempAdjustMember(campBaseDTO.getMemberInfoId()
-									,campBaseDTO.getOrganizationInfoId(),campBaseDTO.getBrandInfoId());
-							logger.debug("@@@会员升级实时生成活动单据@@@" + campBaseDTO.getMemCode());
-							com05IF.makeOrderMQ(campBaseDTO.getOrganizationInfoId()
-									, campBaseDTO.getBrandInfoId()
-									, orgCode, brandCode,null, campBaseDTO.getMemberInfoId(),"1143");
-							logger.debug("会员升级实时触发生日礼JOB@@@");
-							com05IF.makeOrderMQ(campBaseDTO.getOrganizationInfoId()
-									,campBaseDTO.getBrandInfoId(),orgCode,brandCode
-									, campBaseDTO.getMemberInfoId(), "BIR");
 						}
 					}
-				}
-				// 取得化妆次数MQ消息体
-				mqInfoDTO = binbedrcom01BL.getBtimesMQMessage(campBaseDTO);
-				if(mqInfoDTO != null) {
-					// 发送MQ消息处理
-					binOLMQCOM01_BL.sendMQMsg(mqInfoDTO);
-				}
-				boolean amountFlag = campBaseDTO.getOldTotalAmount() != campBaseDTO.getCurTotalAmount();
-				boolean btimesFlag = campBaseDTO.getOldBtimes() != campBaseDTO.getCurBtimes();
-				// 累计金额或者化妆次数发生变化
-				if (amountFlag || btimesFlag) {
-					Map<String, Object> updateMap = new HashMap<String, Object>();
-					// 会员信息ID
-					updateMap.put("memberInfoId", campBaseDTO.getMemberInfoId());
-					if (amountFlag) {
-						updateMap.put("totalAmounts", campBaseDTO.getCurTotalAmount());
-					}
-					// 升级所需金额
-					if ("1".equals(campBaseDTO.getExtArgs().get("CALCUPATKBN"))) {
-						updateMap.put("upLevelAmount", campBaseDTO.getUpLevelAmount());
-					}
-					if (0 == campBaseDTO.getMemberClubId()) {
-						if (btimesFlag) {
-							updateMap.put("curBtimes", campBaseDTO.getCurBtimes());
+					boolean amountFlag = campBaseDTO.getOldTotalAmount() != campBaseDTO.getCurTotalAmount();
+					boolean btimesFlag = campBaseDTO.getOldBtimes() != campBaseDTO.getCurBtimes();
+					// 累计金额或者化妆次数发生变化
+					if (amountFlag || btimesFlag) {
+						Map<String, Object> updateMap = new HashMap<String, Object>();
+						// 会员信息ID
+						updateMap.put("memberInfoId", campBaseDTO.getMemberInfoId());
+						if (amountFlag) {
+							updateMap.put("totalAmounts", campBaseDTO.getCurTotalAmount());
 						}
-						// 更新会员信息扩展表
-						binOLCM31_BL.updateMemberExtInfo(updateMap);
-					} else {
-						// 会员俱乐部ID
-						updateMap.put("memberClubId", campBaseDTO.getMemberClubId());
-						// 更新会员俱乐部等级扩展信息
-						binOLCM31_BL.updateMemberClubExtInfo(updateMap);
+						// 升级所需金额
+						if ("1".equals(campBaseDTO.getExtArgs().get("CALCUPATKBN"))) {
+							updateMap.put("upLevelAmount", campBaseDTO.getUpLevelAmount());
+						}
+						if (0 == campBaseDTO.getMemberClubId()) {
+							if (btimesFlag) {
+								updateMap.put("curBtimes", campBaseDTO.getCurBtimes());
+							}
+							// 更新会员信息扩展表
+							binOLCM31_BL.updateMemberExtInfo(updateMap);
+						} else {
+							// 会员俱乐部ID
+							updateMap.put("memberClubId", campBaseDTO.getMemberClubId());
+							// 更新会员俱乐部等级扩展信息
+							binOLCM31_BL.updateMemberClubExtInfo(updateMap);
+						}
 					}
+					transaction.setStatus(Transaction.SUCCESS);
+				} catch (Exception e) {
+					transaction.setStatus(e);
+					Cat.logError(e);
+					throw e;
+				} finally {
+					transaction.complete();
 				}
-//				if (0 != campBaseDTO.getMemberClubId() && 1 != campBaseDTO.getMemRegFlg()) {
-//					// 取得会员俱乐部当前等级信息
-//					Map<String, Object> clubLevelMap = binOLCM31_BL.getClubCurLevelInfo(map);
-//					if (null != clubLevelMap && !clubLevelMap.isEmpty() &&
-//							0 == Integer.parseInt(clubLevelMap.get("organizationId").toString())) {
-//						Map<String, Object> mzMap = new HashMap<String, Object>();
-//						mzMap.put("memberInfoId", campBaseDTO.getMemberInfoId());
-//						mzMap.put("memberClubId", campBaseDTO.getMemberClubId());
-//						mzMap.put("mzClubId", campBaseDTO.getMemberClubId());
-//						mzMap.put("employeeID", campBaseDTO.getEmployeeId());
-//						mzMap.put("BAcode", campBaseDTO.getEmployeeCode());
-//						mzMap.put("organizationID", campBaseDTO.getOrganizationId());
-//						mzMap.put("counterCode", campBaseDTO.getCounterCode());
-//						mzMap.put("joinTime", campBaseDTO.getTicketDate());
-//						// 更新会员俱乐部扩展属性
-//						binOLCM31_BL.updateClubExtInfo(mzMap);
-//						mzMap.put("organizationInfoId", campBaseDTO.getOrganizationInfoId());
-//						mzMap.put("brandInfoId", campBaseDTO.getBrandInfoId());
-//						// 组织代码
-//						mzMap.put("orgCode", campBaseDTO.getOrgCode());
-//						// 品牌代码
-//						mzMap.put("brandCode", campBaseDTO.getBrandCode());
-//						// 发送会员扩展信息MQ消息(全部记录)
-//						binOLCM31_BL.sendAllMZMQMsg(mzMap);
-//					}
-//				}
 			} else if (1 == execFlag) {
 				// 是否进行历史积分调整处理判断
 				binbedrpoi03BL.beforExec(campBaseDTO);
@@ -337,212 +317,222 @@ public class LevelPointHandler implements RuleHandler_IF, BaseHandler_IF{
 					binbedrpoi03BL.ruleExec(campBaseDTO);
 				}
 			}
-			if (null != campRuleExecPT01) {
-				// 积分信息
-				PointDTO pointDTO = campBaseDTO.getPointInfo();
-				if (null != pointDTO) {
-					// 单据的积分情况
-					PointChangeDTO pointChange = pointDTO.getPointChange();
-					if (null != pointChange) {
-						if (0 == execFlag) {
-							if ("1".equals(pointChange.getMatchKbn())) {
-								// 取得积分MQ消息体
-								mqInfoDTO = binOLCM31_BL.getPointMQMessage(campBaseDTO);
+			Transaction pointTransaction = Cat.newTransaction("LevelPointHandler", "sendPointMQ");
+			try {
+				if (null != campRuleExecPT01) {
+					// 积分信息
+					PointDTO pointDTO = campBaseDTO.getPointInfo();
+					if (null != pointDTO) {
+						// 单据的积分情况
+						PointChangeDTO pointChange = pointDTO.getPointChange();
+						if (null != pointChange) {
+							if (0 == execFlag) {
+								if ("1".equals(pointChange.getMatchKbn())) {
+									// 取得积分MQ消息体
+									mqInfoDTO = binOLCM31_BL.getPointMQMessage(campBaseDTO);
+								}
+							} else {
+								// 取得积分MQ消息体(历史积分)
+								mqInfoDTO = binOLCM31_BL.getPointMQMessageHist(campBaseDTO);
 							}
-						} else {
-							// 取得积分MQ消息体(历史积分)
-							mqInfoDTO = binOLCM31_BL.getPointMQMessageHist(campBaseDTO);
-						}
-						if(mqInfoDTO != null) {
-							// 发送MQ消息处理
-							binOLMQCOM01_BL.sendMQMsg(mqInfoDTO);
-						}
-						if (0 == execFlag) {
-							if ("1".equals(pointChange.getMatchKbn())) {
-								syncFlag = true;
-								Map<String, Object> pointRuleCalInfo = new HashMap<String, Object>();
-								// 组织代码
-								pointRuleCalInfo.put("OrgCode", campBaseDTO.getOrgCode());
-								// 品牌代码
-								pointRuleCalInfo.put("BrandCode", campBaseDTO.getBrandCode());
-								// 业务类型
-								pointRuleCalInfo.put("TradeType", "RU");
-								// 会员积分变化主ID
-								pointRuleCalInfo.put("pointChangeId", pointChange.getPointChangeId());
-								// 计算日期
-								pointRuleCalInfo.put("changeDate", pointChange.getChangeDate());
-								// 引起积分计算的单据号
-								pointRuleCalInfo.put("billCode", pointChange.getTradeNoIF());
-								// 引起积分计算的业务类型
-								pointRuleCalInfo.put("billType", pointChange.getTradeType());
-								// 购买金额
-								pointRuleCalInfo.put("amount", pointChange.getAmount());
-								// 购买数量
-								pointRuleCalInfo.put("quantity", pointChange.getQuantity());
-								// 获得积分
-								pointRuleCalInfo.put("point", pointChange.getPoint());
-								// 会员ID
-								pointRuleCalInfo.put("memberInfoId", pointChange.getMemberInfoId());
-								// 会员名称
-								pointRuleCalInfo.put("name", campBaseDTO.getMemName());
-								// 部门ID
-								pointRuleCalInfo.put("organizationId", campBaseDTO.getOrganizationId());
-								// 部门名称
-								pointRuleCalInfo.put("departName", campBaseDTO.getDepartName());
-								// 所属柜台ID
-								pointRuleCalInfo.put("MemOrganizationID", campBaseDTO.getBelDepartId());
-								// 会员积分变化明细List
-								List<PointChangeDetailDTO> changeDetailList = pointChange.getChangeDetailList();
-								if (null != changeDetailList) {
-									List<String> subRuleIds = new ArrayList<String>();
-									for (PointChangeDetailDTO changeDetail : changeDetailList) {
-										// 子活动ID
-										Integer subId = changeDetail.getSubCampaignId();
-										if (null == subId) {
-											continue;
-										}
-										String ruleId = String.valueOf(subId);
-										// 主规则ID
-										Integer mainRuleId = changeDetail.getMainRuleId();
-										if (null != mainRuleId) {
-											ruleId = ruleId + "_" + String.valueOf(mainRuleId);
-										}
-										boolean flag = true;
-										// 判断ID是否已经存在
-										for (String subRuleId : subRuleIds) {
-											if (subRuleId.equals(ruleId)) {
-												flag = false;
+							if(mqInfoDTO != null) {
+								// 发送MQ消息处理
+								binOLMQCOM01_BL.sendMQMsg(mqInfoDTO);
+							}
+							if (0 == execFlag) {
+								if ("1".equals(pointChange.getMatchKbn())) {
+									syncFlag = true;
+									Map<String, Object> pointRuleCalInfo = new HashMap<String, Object>();
+									// 组织代码
+									pointRuleCalInfo.put("OrgCode", campBaseDTO.getOrgCode());
+									// 品牌代码
+									pointRuleCalInfo.put("BrandCode", campBaseDTO.getBrandCode());
+									// 业务类型
+									pointRuleCalInfo.put("TradeType", "RU");
+									// 会员积分变化主ID
+									pointRuleCalInfo.put("pointChangeId", pointChange.getPointChangeId());
+									// 计算日期
+									pointRuleCalInfo.put("changeDate", pointChange.getChangeDate());
+									// 引起积分计算的单据号
+									pointRuleCalInfo.put("billCode", pointChange.getTradeNoIF());
+									// 引起积分计算的业务类型
+									pointRuleCalInfo.put("billType", pointChange.getTradeType());
+									// 购买金额
+									pointRuleCalInfo.put("amount", pointChange.getAmount());
+									// 购买数量
+									pointRuleCalInfo.put("quantity", pointChange.getQuantity());
+									// 获得积分
+									pointRuleCalInfo.put("point", pointChange.getPoint());
+									// 会员ID
+									pointRuleCalInfo.put("memberInfoId", pointChange.getMemberInfoId());
+									// 会员名称
+									pointRuleCalInfo.put("name", campBaseDTO.getMemName());
+									// 部门ID
+									pointRuleCalInfo.put("organizationId", campBaseDTO.getOrganizationId());
+									// 部门名称
+									pointRuleCalInfo.put("departName", campBaseDTO.getDepartName());
+									// 所属柜台ID
+									pointRuleCalInfo.put("MemOrganizationID", campBaseDTO.getBelDepartId());
+									// 会员积分变化明细List
+									List<PointChangeDetailDTO> changeDetailList = pointChange.getChangeDetailList();
+									if (null != changeDetailList) {
+										List<String> subRuleIds = new ArrayList<String>();
+										for (PointChangeDetailDTO changeDetail : changeDetailList) {
+											// 子活动ID
+											Integer subId = changeDetail.getSubCampaignId();
+											if (null == subId) {
+												continue;
+											}
+											String ruleId = String.valueOf(subId);
+											// 主规则ID
+											Integer mainRuleId = changeDetail.getMainRuleId();
+											if (null != mainRuleId) {
+												ruleId = ruleId + "_" + String.valueOf(mainRuleId);
+											}
+											boolean flag = true;
+											// 判断ID是否已经存在
+											for (String subRuleId : subRuleIds) {
+												if (subRuleId.equals(ruleId)) {
+													flag = false;
+												}
+											}
+											if (flag) {
+												subRuleIds.add(ruleId);
 											}
 										}
-										if (flag) {
-											subRuleIds.add(ruleId);
+										if (!subRuleIds.isEmpty()) {
+											pointRuleCalInfo.put("subCampaignId", subRuleIds);
 										}
 									}
-									if (!subRuleIds.isEmpty()) {
-										pointRuleCalInfo.put("subCampaignId", subRuleIds);
-									}
-								}
-								map.put("pointRuleCalInfo", pointRuleCalInfo);
-								// 组织ID
-								String orgIdStr = String.valueOf(campBaseDTO.getOrganizationInfoId());
-								// 品牌ID
-								String brandIdStr = String.valueOf(campBaseDTO.getBrandInfoId());
-								// 积分变化需要发送沟通MQ
-								if(1 != campBaseDTO.getMemRegFlg() && pointChange.getPoint() != 0) {
-									if (binOLCM14_BL.isConfigOpen("1088", orgIdStr, brandIdStr)) {
-										// 发送积分变化沟通MQ的最低阀值
-										String minPointStr = binOLCM14_BL.getConfigValue("1089", orgIdStr, brandIdStr);
-										boolean gtFlag = true;
-										if (!CherryChecker.isNullOrEmpty(minPointStr, true)) {
-											minPointStr = minPointStr.trim();
-											try {
-												double minPoint = Double.parseDouble(minPointStr);
-												// 当前积分小于最低阈值不发送沟通MQ
-												if (pointDTO.getCurTotalPoint() < minPoint) {
+									map.put("pointRuleCalInfo", pointRuleCalInfo);
+									// 组织ID
+									String orgIdStr = String.valueOf(campBaseDTO.getOrganizationInfoId());
+									// 品牌ID
+									String brandIdStr = String.valueOf(campBaseDTO.getBrandInfoId());
+									// 积分变化需要发送沟通MQ
+									if(1 != campBaseDTO.getMemRegFlg() && pointChange.getPoint() != 0) {
+										if (binOLCM14_BL.isConfigOpen("1088", orgIdStr, brandIdStr)) {
+											// 发送积分变化沟通MQ的最低阀值
+											String minPointStr = binOLCM14_BL.getConfigValue("1089", orgIdStr, brandIdStr);
+											boolean gtFlag = true;
+											if (!CherryChecker.isNullOrEmpty(minPointStr, true)) {
+												minPointStr = minPointStr.trim();
+												try {
+													double minPoint = Double.parseDouble(minPointStr);
+													// 当前积分小于最低阈值不发送沟通MQ
+													if (pointDTO.getCurTotalPoint() < minPoint) {
+														gtFlag = false;
+													}
+												} catch (Exception e) {
 													gtFlag = false;
 												}
-											} catch (Exception e) {
-												gtFlag = false;
+											}
+											if (gtFlag) {
+												Map<String, Object> gtMap = new HashMap<String, Object>();
+												// 组织ID
+												gtMap.put("organizationInfoID", campBaseDTO.getOrganizationInfoId());
+												// 品牌ID
+												gtMap.put("brandInfoID", campBaseDTO.getBrandInfoId());
+												// 组织代码
+												gtMap.put("orgCode", campBaseDTO.getOrgCode());
+												// 品牌代码
+												gtMap.put("brandCode", campBaseDTO.getBrandCode());
+												// 事件ID
+												gtMap.put("eventId", campBaseDTO.getMemberInfoId());
+												// 事件类型:积分变化
+												gtMap.put("eventType", "7");
+												// 事件发生时间
+												gtMap.put("eventDate", pointChange.getChangeDate());
+												// 信息内容:关联单号
+												gtMap.put("messageContents", pointChange.getTradeNoIF());
+												// 事件来源
+												gtMap.put("sourse", "LevelPointHandler");
+												// 取得沟通短信消息体(实时)
+												mqInfoDTO = binOLCM31_BL.getGTMQMessage(gtMap);
+												// 发送MQ消息处理
+												binOLMQCOM01_BL.sendMQMsg(mqInfoDTO, false);
 											}
 										}
-										if (gtFlag) {
-											Map<String, Object> gtMap = new HashMap<String, Object>();
+										// 微信事件处理器
+										if (null != binBEMQMES98_BL.getMessageHandler(orgCode, brandCode, CherryConstants.MESSAGE_TYPE_WP)) {
+											Map<String, Object> wxMap = new HashMap<String, Object>();
 											// 组织ID
-											gtMap.put("organizationInfoID", campBaseDTO.getOrganizationInfoId());
+											wxMap.put("organizationInfoID", campBaseDTO.getOrganizationInfoId());
 											// 品牌ID
-											gtMap.put("brandInfoID", campBaseDTO.getBrandInfoId());
+											wxMap.put("brandInfoID", campBaseDTO.getBrandInfoId());
 											// 组织代码
-											gtMap.put("orgCode", campBaseDTO.getOrgCode());
+											wxMap.put("orgCode", campBaseDTO.getOrgCode());
 											// 品牌代码
-											gtMap.put("brandCode", campBaseDTO.getBrandCode());
-											// 事件ID
-											gtMap.put("eventId", campBaseDTO.getMemberInfoId());
-											// 事件类型:积分变化
-											gtMap.put("eventType", "7");
-											// 事件发生时间 
-											gtMap.put("eventDate", pointChange.getChangeDate());
-											// 信息内容:关联单号
-											gtMap.put("messageContents", pointChange.getTradeNoIF());
-											// 事件来源
-											gtMap.put("sourse", "LevelPointHandler");
-											// 取得沟通短信消息体(实时)
-											mqInfoDTO = binOLCM31_BL.getGTMQMessage(gtMap);
+											wxMap.put("brandCode", campBaseDTO.getBrandCode());
+											// 时间
+											wxMap.put("changeTime", pointChange.getChangeDate());
+											// 积分类型
+											wxMap.put("pointType", pointChange.getPoint() >= 0? "1" : "2");
+											// 变动积分
+											wxMap.put("newPoint", pointChange.getPoint());
+											// 总可用积分
+											wxMap.put("totalPoint", pointDTO.getCurTotalPoint());
+											// 柜台名称
+											wxMap.put("counterName", campBaseDTO.getDepartName());
+											// 会员卡号
+											wxMap.put("memberCode", campBaseDTO.getMemCode());
+											// 会员姓名
+											wxMap.put("memName", campBaseDTO.getMemName());
+											// 交易类型
+											wxMap.put("saleType", pointChange.getTradeType());
+											// 交易金额
+											wxMap.put("saleAmount", pointChange.getAmount());
+											// 取得微信短信消息体(实时)
+											mqInfoDTO = binOLCM31_BL.getWXMQMessage(wxMap);
 											// 发送MQ消息处理
 											binOLMQCOM01_BL.sendMQMsg(mqInfoDTO, false);
 										}
 									}
-									// 微信事件处理器
-									if (null != binBEMQMES98_BL.getMessageHandler(orgCode, brandCode, CherryConstants.MESSAGE_TYPE_WP)) {
-										Map<String, Object> wxMap = new HashMap<String, Object>();
-										// 组织ID
-										wxMap.put("organizationInfoID", campBaseDTO.getOrganizationInfoId());
-										// 品牌ID
-										wxMap.put("brandInfoID", campBaseDTO.getBrandInfoId());
-										// 组织代码
-										wxMap.put("orgCode", campBaseDTO.getOrgCode());
-										// 品牌代码
-										wxMap.put("brandCode", campBaseDTO.getBrandCode());
-										// 时间
-										wxMap.put("changeTime", pointChange.getChangeDate());
-										// 积分类型
-										wxMap.put("pointType", pointChange.getPoint() >= 0? "1" : "2");
-										// 变动积分
-										wxMap.put("newPoint", pointChange.getPoint());
-										// 总可用积分
-										wxMap.put("totalPoint", pointDTO.getCurTotalPoint());
-										// 柜台名称
-										wxMap.put("counterName", campBaseDTO.getDepartName());
-										// 会员卡号
-										wxMap.put("memberCode", campBaseDTO.getMemCode());
-										// 会员姓名
-										wxMap.put("memName", campBaseDTO.getMemName());
-										// 交易类型
-										wxMap.put("saleType", pointChange.getTradeType());
-										// 交易金额
-										wxMap.put("saleAmount", pointChange.getAmount());
-										// 取得微信短信消息体(实时)
-										mqInfoDTO = binOLCM31_BL.getWXMQMessage(wxMap);
-										// 发送MQ消息处理
-										binOLMQCOM01_BL.sendMQMsg(mqInfoDTO, false);
-									}
 								}
+							} else {
+								Map<String, Object> reCalcMap = new HashMap<String, Object>();
+								// 组织代码
+								reCalcMap.put("orgCode", orgCode);
+								// 品牌代码
+								reCalcMap.put("brandCode", brandCode);
+								// 组织ID
+								reCalcMap.put("organizationInfoID", campBaseDTO.getOrganizationInfoId());
+								// 品牌ID
+								reCalcMap.put("brandInfoID", campBaseDTO.getBrandInfoId());
+								// 会员信息ID
+								reCalcMap.put("memberInfoId", campBaseDTO.getMemberInfoId());
+								// 会员卡号
+								reCalcMap.put("memberCode", campBaseDTO.getMemCode());
+								// 重算区分
+								reCalcMap.put("reCalcType", DroolsConstants.RECALCTYPE0);
+								// 重算时间
+								reCalcMap.put("reCalcDate", campBaseDTO.getTicketDate());
+								if (campBaseDTO.getMemberClubId() > 0) {
+									reCalcMap.put("memberClubId", campBaseDTO.getMemberClubId());
+								}
+								// 插入重算信息表
+								binbedrcom01BL.insertReCalcInfo(reCalcMap);
+								// 发送MQ重算消息进行实时重算
+								binbedrcom01BL.sendReCalcMsg(reCalcMap);
 							}
-						} else {
-							Map<String, Object> reCalcMap = new HashMap<String, Object>();
-							// 组织代码
-							reCalcMap.put("orgCode", orgCode);
-							// 品牌代码
-							reCalcMap.put("brandCode", brandCode);
-							// 组织ID
-							reCalcMap.put("organizationInfoID", campBaseDTO.getOrganizationInfoId());
-							// 品牌ID
-							reCalcMap.put("brandInfoID", campBaseDTO.getBrandInfoId());
-							// 会员信息ID
-							reCalcMap.put("memberInfoId", campBaseDTO.getMemberInfoId());
-							// 会员卡号
-							reCalcMap.put("memberCode", campBaseDTO.getMemCode());
-							// 重算区分
-							reCalcMap.put("reCalcType", DroolsConstants.RECALCTYPE0);
-							// 重算时间
-							reCalcMap.put("reCalcDate", campBaseDTO.getTicketDate());
-							if (campBaseDTO.getMemberClubId() > 0) {
-								reCalcMap.put("memberClubId", campBaseDTO.getMemberClubId());
-							}
-							// 插入重算信息表
-							binbedrcom01BL.insertReCalcInfo(reCalcMap);
-							// 发送MQ重算消息进行实时重算
-							binbedrcom01BL.sendReCalcMsg(reCalcMap);
 						}
 					}
 				}
-			}
-			// 是否需要同步天猫会员
-			if (syncFlag && campBaseDTO.getMemberClubId() == 0
-					&& binOLCM31_BL.needSync(campBaseDTO.getMemberInfoId(), brandCode)) {
-				Map<String, Object> tmSyncInfo = new HashMap<String, Object>();
-				tmSyncInfo.put("memberInfoId", campBaseDTO.getMemberInfoId());
-				tmSyncInfo.put("brandCode", brandCode);
-				map.put("TmSyncInfo", tmSyncInfo);
+				// 是否需要同步天猫会员
+				if (syncFlag && campBaseDTO.getMemberClubId() == 0
+						&& binOLCM31_BL.needSync(campBaseDTO.getMemberInfoId(), brandCode)) {
+					Map<String, Object> tmSyncInfo = new HashMap<String, Object>();
+					tmSyncInfo.put("memberInfoId", campBaseDTO.getMemberInfoId());
+					tmSyncInfo.put("brandCode", brandCode);
+					map.put("TmSyncInfo", tmSyncInfo);
+				}
+				pointTransaction.setStatus(Transaction.SUCCESS);
+			} catch (Exception e) {
+				pointTransaction.setStatus(e);
+				Cat.logError(e);
+				throw e;
+			} finally {
+				pointTransaction.complete();
 			}
 		} catch (Exception e) {
 			// 会员卡号
@@ -563,12 +553,26 @@ public class LevelPointHandler implements RuleHandler_IF, BaseHandler_IF{
 	 */
 	@Override
 	public void executeRuleFile(CampBaseDTO campBaseDTO) throws Exception {
+		Transaction transaction = Cat.newTransaction("LevelPointHandler", "executeRuleFile");
+		try {
+			memRuleExec(campBaseDTO);
+			transaction.setStatus(Transaction.SUCCESS);
+		} catch (Exception e) {
+			transaction.setStatus(e);
+			Cat.logError(e);
+			throw e;
+		} finally {
+			transaction.complete();
+		}
+	}
+
+	private void memRuleExec(CampBaseDTO campBaseDTO) throws Exception {
 		campBaseDTO.initFact(null);
 		// 组织代码
 		String orgCode = campBaseDTO.getOrgCode();
 		// 品牌代码
 		String brandCode = campBaseDTO.getBrandCode();
-		if (!campBaseDTO.getExtArgs().containsKey("BDKBN") 
+		if (!campBaseDTO.getExtArgs().containsKey("BDKBN")
 				&& "ysl".equalsIgnoreCase(brandCode.trim())) {
 			campBaseDTO.getExtArgs().put("BDKBN", "1");
 		}
@@ -604,9 +608,9 @@ public class LevelPointHandler implements RuleHandler_IF, BaseHandler_IF{
 			zdate = (String) campBaseDTO.getExtArgs().get("ZDL");
 		}
 		// 比较单据时间和等级初始日期
-		if (null != zdate 
+		if (null != zdate
 				&& DateUtil.compareDate(
-						DateUtil.coverTime2YMD(campBaseDTO.getTicketDate(), DateUtil.DATE_PATTERN), zdate) < 0) {
+				DateUtil.coverTime2YMD(campBaseDTO.getTicketDate(), DateUtil.DATE_PATTERN), zdate) < 0) {
 			// 早于初始日期的单据无需计算等级
 			lelExec = false;
 		}
@@ -629,8 +633,8 @@ public class LevelPointHandler implements RuleHandler_IF, BaseHandler_IF{
 				boolean flg = true;
 				if (!CherryChecker.isNullOrEmpty(counterBelong)) {
 					String noExecCounters = TmallKeys.getNoExecCounters(brandCode);
-					if (!CherryChecker.isNullOrEmpty(noExecCounters) 
-							&& ConvertUtil.isContain(noExecCounters.split(","), counterBelong))  {
+					if (!CherryChecker.isNullOrEmpty(noExecCounters)
+							&& ConvertUtil.isContain(noExecCounters.split(","), counterBelong)) {
 						campBaseDTO.getExtArgs().put("NOECT", "0");
 						campRuleExecPT1 = null;
 						flg = false;
@@ -639,7 +643,7 @@ public class LevelPointHandler implements RuleHandler_IF, BaseHandler_IF{
 				if (flg) {
 					campBaseDTO.getExtArgs().put("NOECT", "1");
 				}
-			} else if ("0".equals(campBaseDTO.getExtArgs().get("NOECT"))){
+			} else if ("0".equals(campBaseDTO.getExtArgs().get("NOECT"))) {
 				campRuleExecPT1 = null;
 			}
 		}
@@ -659,7 +663,7 @@ public class LevelPointHandler implements RuleHandler_IF, BaseHandler_IF{
 			binbedrcom01BL.addRuleExecRecord(campBaseDTO, DroolsConstants.RECORDKBN_1, true);
 			if (lelExec) {
 				// 非关联退货处理区分
-				String srExecKbn = binOLCM14_BL.getConfigValue("1073", String.valueOf(campBaseDTO.getOrganizationInfoId()), 
+				String srExecKbn = binOLCM14_BL.getConfigValue("1073", String.valueOf(campBaseDTO.getOrganizationInfoId()),
 						String.valueOf(campBaseDTO.getBrandInfoId()));
 				// 需要进行降级判断处理
 				if (!"1".equals(srExecKbn) && DroolsConstants.NOT_MEMBER != campBaseDTO.getCurLevelId()) {
@@ -687,12 +691,12 @@ public class LevelPointHandler implements RuleHandler_IF, BaseHandler_IF{
 				double subTime = bfendTime - bfstartTime;
 				// 运行时间日志内容
 				String msg = DroolsMessageUtil.getMessage(
-						DroolsMessageUtil.IDR00006, new String[] {String.valueOf(subTime)});
+						DroolsMessageUtil.IDR00006, new String[]{String.valueOf(subTime)});
 				logger.info(msg);
 			}
 			if (lelExec) {
 				// 会员等级计算方式
-				String levelCalcKbn = binOLCM14_BL.getConfigValue("1101", String.valueOf(campBaseDTO.getOrganizationInfoId()), 
+				String levelCalcKbn = binOLCM14_BL.getConfigValue("1101", String.valueOf(campBaseDTO.getOrganizationInfoId()),
 						String.valueOf(campBaseDTO.getBrandInfoId()));
 				if (!"2".equals(levelCalcKbn)) {
 					// 会员化妆次数规则处理
@@ -719,15 +723,35 @@ public class LevelPointHandler implements RuleHandler_IF, BaseHandler_IF{
 						int curLevelId = campBaseDTO.getCurLevelId();
 						// 非会员
 						if (DroolsConstants.NOT_MEMBER == curLevelId) {
-							// 会员入会规则处理
-							binbedrjon01BL.ruleExec(campBaseDTO);
+							Transaction joinTransaction = Cat.newTransaction("executeRuleFile", "joinRule");
+							try {
+								// 会员入会规则处理
+								binbedrjon01BL.ruleExec(campBaseDTO);
+								joinTransaction.setStatus(Transaction.SUCCESS);
+							} catch (Exception e) {
+								joinTransaction.setStatus(e);
+								Cat.logError(e);
+								throw e;
+							} finally {
+								joinTransaction.complete();
+							}
 						} else {
 //							campBaseDTO.getExtArgs().remove("BTIMESKBN");
 //							if (null != campRuleExec) {
 //								campBaseDTO.getExtArgs().put("BTIMESKBN", "1");
 //							}
-							// 会员升降级规则处理
-							binbedrjon02BL.ruleExec(campBaseDTO);
+							Transaction upTransaction = Cat.newTransaction("executeRuleFile", "uplevelRule");
+							try {
+								// 会员升降级规则处理
+								binbedrjon02BL.ruleExec(campBaseDTO);
+								upTransaction.setStatus(Transaction.SUCCESS);
+							} catch (Exception e) {
+								upTransaction.setStatus(e);
+								Cat.logError(e);
+								throw e;
+							} finally {
+								upTransaction.complete();
+							}
 						}
 						if ("1".equals(calcKbn)) {
 							double upLevelAmount = 0;
@@ -768,7 +792,7 @@ public class LevelPointHandler implements RuleHandler_IF, BaseHandler_IF{
 							double subTime = rendTime - rstartTime;
 							// 运行时间日志内容
 							String msg = DroolsMessageUtil.getMessage(
-									DroolsMessageUtil.IDR00007, new String[] {String.valueOf(subTime)});
+									DroolsMessageUtil.IDR00007, new String[]{String.valueOf(subTime)});
 							logger.info(msg);
 						}
 					}
@@ -787,7 +811,7 @@ public class LevelPointHandler implements RuleHandler_IF, BaseHandler_IF{
 		if (null != campRuleExecPT1) {
 			String initialTime = (String) campBaseDTO.getExtArgs().get("INITIALTIME");
 			// 重算的时候
-			if (campBaseDTO.getReCalcFlg() == DroolsConstants.RECALCFLG_1 
+			if (campBaseDTO.getReCalcFlg() == DroolsConstants.RECALCFLG_1
 					&& null != initialTime) {
 				Calendar cal1 = Calendar.getInstance();
 				String ticketDate = campBaseDTO.getTicketDate();
@@ -828,7 +852,17 @@ public class LevelPointHandler implements RuleHandler_IF, BaseHandler_IF{
 			if (isLog) {
 				startTime = System.currentTimeMillis();
 			}
-			campRuleExecPT1.ruleExec(campBaseDTO);
+			Transaction pointTransaction = Cat.newTransaction("executeRuleFile", "pointRule");
+			try {
+				campRuleExecPT1.ruleExec(campBaseDTO);
+				pointTransaction.setStatus(Transaction.SUCCESS);
+			} catch (Exception e) {
+				pointTransaction.setStatus(e);
+				Cat.logError(e);
+				throw e;
+			} finally {
+				pointTransaction.complete();
+			}
 			// 非退货
 			if (isExecRef) {
 				// 推荐会员积分奖励
@@ -843,12 +877,11 @@ public class LevelPointHandler implements RuleHandler_IF, BaseHandler_IF{
 				double subTime = endTime - startTime;
 				// 运行时间日志内容
 				String msg = DroolsMessageUtil.getMessage(
-						DroolsMessageUtil.IDR00002, new String[] {String.valueOf(subTime)});
+						DroolsMessageUtil.IDR00002, new String[]{String.valueOf(subTime)});
 				logger.info(msg);
 			}
 		}
 	}
-	
 	/**
 	 * 执行积分计算前的设置
 	 * 

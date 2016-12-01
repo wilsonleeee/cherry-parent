@@ -4,7 +4,7 @@
 <%@ taglib prefix="ct" uri="/cherry-tags"%> 
 <%@ page import="java.text.SimpleDateFormat" %>
 <script type="text/javascript" src="/Cherry/js/common/cherry.js"></script>
-<script type="text/javascript" src="/Cherry/js/ss/prm/BINOLSSPRM22.js"></script>
+<script type="text/javascript" src="/Cherry/js/ss/prm/BINOLSSPRM22.js?v=20161129"></script>
 <script language="javascript">
 </script>
 <script type="text/javascript">

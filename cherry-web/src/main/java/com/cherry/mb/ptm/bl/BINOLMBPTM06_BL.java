@@ -37,16 +37,8 @@ import com.cherry.mo.common.interfaces.BINOLMOCOM01_IF;
  */
 public class BINOLMBPTM06_BL implements BINOLCM37_IF{
 	
-	/** 查询积分信息Service */
-	@Resource
-	private BINOLMBPTM06_Service binOLMBPTM06_Service;
-	
-	@Resource(name="binOLMOCOM01_BL")
-	private BINOLMOCOM01_IF binOLMOCOM01_BL;	
-	
 	// Excel导出数据查询条件数组
 	private final static String[] proCondition = { "startDateShow", "endDateShow" };
-	
 	// Excel导出列数组
 	private final static String[][] proArray = {
 		{ "memberCode", "BINOLMBPTM06_memberCode", "20", "", "" },// 会员卡号
@@ -54,14 +46,19 @@ public class BINOLMBPTM06_BL implements BINOLCM37_IF{
 		{ "mobile", "BINOLMBPTM06_mobile", "15", "", "" },// 手机号码
 		{ "grantCardTime", "BINOLMBPTM06_grantCardTime", "20", "", "" },// 发卡时间
 		{ "grantPoints", "BINOLMBPTM06_grantPoints", "15", "", "" },// 奖励积分
-		{ "grantPointTime", "BINOLMBPTM06_grantPointTime", "20", "", "" },// 奖励时间 
+		{ "grantPointTime", "BINOLMBPTM06_grantPointTime", "20", "", "" },// 奖励时间
 		{ "newOldMemberFlag", "BINOLMBPTM06_newOldMemberFlag", "15", "1414", "" },// 新老会员区分
-		{ "region", "BINOLMBPTM06_region", "50", "", "" },// 区		
-		{ "province", "BINOLMBPTM06_province", "50", "", "" },// 省		
-		{ "city", "BINOLMBPTM06_city", "50", "", "" },// 城市		
-		{ "counterCode", "BINOLMBPTM06_counterCode", "15", "", "" },// 柜台编号		
-		{ "counterName", "BINOLMBPTM06_counterName", "50", "", "" }// 柜台名称		
+		{ "region", "BINOLMBPTM06_region", "50", "", "" },// 区
+		{ "province", "BINOLMBPTM06_province", "50", "", "" },// 省
+		{ "city", "BINOLMBPTM06_city", "50", "", "" },// 城市
+		{ "counterCode", "BINOLMBPTM06_counterCode", "15", "", "" },// 柜台编号
+		{ "counterName", "BINOLMBPTM06_counterName", "50", "", "" }// 柜台名称
 	};
+	/** 查询积分信息Service */
+	@Resource
+	private BINOLMBPTM06_Service binOLMBPTM06_Service;
+	@Resource(name="binOLMOCOM01_BL")
+	private BINOLMOCOM01_IF binOLMOCOM01_BL;
 	
 	/**
 	 * 取得积分信息List
@@ -120,11 +117,11 @@ public class BINOLMBPTM06_BL implements BINOLCM37_IF{
 			if (!"".equals(paramValue)) {
 				// 条件名
 				String paramName = "";
-				if ("startDate".equals(con)) {
+				if ("startDateShow".equals(con)) {
 					// 开始日期
 					paramName = binOLMOCOM01_BL.getResourceValue(
 							"BINOLMBPTM06", language, "BINOLMBPTM06_startDate");
-				} else if ("endDate".equals(con)) {
+				} else if ("endDateShow".equals(con)) {
 					// 结束日期
 					paramName = binOLMOCOM01_BL.getResourceValue(
 							"BINOLMBPTM06", language, "BINOLMBPTM06_endDate");

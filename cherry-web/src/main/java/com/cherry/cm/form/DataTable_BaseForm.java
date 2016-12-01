@@ -52,7 +52,10 @@ public class DataTable_BaseForm extends BaseForm {
 	 
 	/** 过滤查询 */
 	private String sSearch;
-	
+
+	/**树过滤*/
+	private String sTreeSearch;
+
 	/** 弹出datatable 促销产品信息 **/
 	private List popPrmProductInfoList; 
 	
@@ -197,5 +200,12 @@ public class DataTable_BaseForm extends BaseForm {
 	public void setPopProductInfoOneList(List popProductInfoOneList) {
 		this.popProductInfoOneList = popProductInfoOneList;
 	}
-	
+
+	public String getsTreeSearch() {
+		return sTreeSearch;
+	}
+
+	public void setsTreeSearch(String sTreeSearch) {
+		this.sTreeSearch = sTreeSearch;
+	}
 }

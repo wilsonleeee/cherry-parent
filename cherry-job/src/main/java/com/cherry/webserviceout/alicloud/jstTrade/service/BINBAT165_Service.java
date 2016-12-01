@@ -1,5 +1,5 @@
 /*	
- * @(#)BINBATJST122_Service.java     1.0 @2016-09-26
+ * @(#)BINBAT165_Service.java     1.0 @2016-09-26
  * 		
  * Copyright (c) 2010 SHANGHAI BINGKUN DIGITAL TECHNOLOGY CO.,LTD		
  * All rights reserved		
@@ -28,7 +28,7 @@ import com.cherry.cm.service.BaseService;
 *
 * @version  2016-09-26
 */
-public class BINBAT122_Service extends BaseService {
+public class BINBAT165_Service extends BaseService {
 	
 	/**
      * 查询电商接口配置信息
@@ -36,7 +36,7 @@ public class BINBAT122_Service extends BaseService {
      * @return
      */
     public Map<String, Object> getESInterfaceInfo(Map<String, Object> map) {
-    	map.put(CherryBatchConstants.IBATIS_SQL_ID, "BINBATJST122.getESIfConfigInfo");
+    	map.put(CherryBatchConstants.IBATIS_SQL_ID, "BINBAT165.getESIfConfigInfo");
         return (Map<String, Object>) baseServiceImpl.get(map);
     }
     
@@ -46,7 +46,7 @@ public class BINBAT122_Service extends BaseService {
      * @return
      */
     public Map<String,Object> getEmployeeInfo(Map<String,Object> map){
-    	map.put(CherryBatchConstants.IBATIS_SQL_ID, "BINBATJST122.getEmployeeInfo");
+    	map.put(CherryBatchConstants.IBATIS_SQL_ID, "BINBAT165.getEmployeeInfo");
     	return (Map<String, Object>) baseServiceImpl.get(map);
     }
     
@@ -56,7 +56,7 @@ public class BINBAT122_Service extends BaseService {
      * @return
      */
     public Map<String, Object> getDepartInfo(Map<String, Object> map) {
-        map.put(CherryBatchConstants.IBATIS_SQL_ID, "BINBATJST122.getDepartInfo");
+        map.put(CherryBatchConstants.IBATIS_SQL_ID, "BINBAT165.getDepartInfo");
         return (Map<String, Object>) baseServiceImpl.get(map);
     }
     
@@ -66,7 +66,7 @@ public class BINBAT122_Service extends BaseService {
      * @return
      */
     public Map<String, Object> getESOrderMain(Map<String, Object> map) {
-        map.put(CherryBatchConstants.IBATIS_SQL_ID, "BINBATJST122.getESOrderMain");
+        map.put(CherryBatchConstants.IBATIS_SQL_ID, "BINBAT165.getESOrderMain");
         return (Map<String, Object>) baseServiceImpl.get(map);
     }
     
@@ -76,7 +76,7 @@ public class BINBAT122_Service extends BaseService {
      * @return
      */
     public Map<String, Object> getMemberInfo(Map<String, Object> map) {
-        map.put(CherryBatchConstants.IBATIS_SQL_ID, "BINBATJST122.getMemberInfo");
+        map.put(CherryBatchConstants.IBATIS_SQL_ID, "BINBAT165.getMemberInfo");
         return (Map<String, Object>) baseServiceImpl.get(map);
     }
     
@@ -86,7 +86,7 @@ public class BINBAT122_Service extends BaseService {
      * @return
      */
     public List<Map<String, Object>> getESOrderDetail(Map<String, Object> map) {
-        map.put(CherryBatchConstants.IBATIS_SQL_ID, "BINBATJST122.getESOrderDetail");
+        map.put(CherryBatchConstants.IBATIS_SQL_ID, "BINBAT165.getESOrderDetail");
         return baseServiceImpl.getList(map);
     }
     
@@ -96,7 +96,7 @@ public class BINBAT122_Service extends BaseService {
      * @return
      */
     public void updateESOrderDetail(List<Map<String,Object>> list){
-        baseServiceImpl.updateAll(list,"BINBATJST122.updateESOrderDetail");
+        baseServiceImpl.updateAll(list,"BINBAT165.updateESOrderDetail");
     }
     
     /**
@@ -105,7 +105,7 @@ public class BINBAT122_Service extends BaseService {
      * @return
      */
     public int updateESConfigLastTime(Map<String, Object> map){
-    	map.put(CherryBatchConstants.IBATIS_SQL_ID, "BINBATJST122.updateESConfigLastTime");
+    	map.put(CherryBatchConstants.IBATIS_SQL_ID, "BINBAT165.updateESConfigLastTime");
         return baseServiceImpl.update(map);
     }
     

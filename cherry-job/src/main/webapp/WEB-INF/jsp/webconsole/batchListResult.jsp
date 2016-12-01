@@ -17,9 +17,9 @@
         		|| url.indexOf("BINBEMBTIF01_init.action")!=-1 || url.indexOf("BINBEMBTIF02_init.action")!=-1 || url.indexOf("BINBEMBTIF03_init.action")!=-1
         		|| url.indexOf("BINBEMBTIF04_init.action")!=-1 || url.indexOf("BINBEMBTIF05_init.action")!=-1 || url.indexOf("BINBEMBTIF06_init.action")!=-1
         		|| url.indexOf("BINBAT141_init.action")!=-1 || url.indexOf("BINCPMEACT04_init.action")!=-1 || url.indexOf("BINCPMEACT02_init.action")!=-1 
-        		|| url.indexOf("BINBAT122_init.action")!=-1
-        		|| url.indexOf("BINBAT123_init.action")!=-1
-        		|| url.indexOf("BINBAT124_init.action")!=-1
+        		|| url.indexOf("BINBAT165_init.action")!=-1
+        		|| url.indexOf("BINBAT166_init.action")!=-1
+        		|| url.indexOf("BINBAT167_init.action")!=-1
 				|| url.indexOf("BINBAT168_init.action")!=-1
         		|| url.indexOf("BINBECTSMG09_init.action")!=-1 || url.indexOf("BINBECTSMG10_init.action")!=-1
         		|| url.indexOf("BINBESSPRM08_init.action")!=-1) {

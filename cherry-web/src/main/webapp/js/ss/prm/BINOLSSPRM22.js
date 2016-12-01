@@ -179,7 +179,8 @@ function SSPRM22_changeCount(thisObj){
 	var $tr_obj = $(thisObj).parent().parent().parent();
 	var count = parseInt($(thisObj).val(),10);
 	var allowNegativeFlag = $("#allowNegativeFlag").val();
-	if(allowNegativeFlag != "1"){
+	// 数量允许负号; 0:允许负值;1:不允许
+	if(allowNegativeFlag != "0"){
 		count = Math.abs(count);
 	}
 	if($tr_obj.find('#promotionProductVendorIDArr').val()=="" || isNaN(count)){

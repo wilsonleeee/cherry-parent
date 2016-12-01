@@ -1,10 +1,25 @@
 <%@ page language="java" contentType="text/html; charset=utf-8" pageEncoding="utf-8"%>
 <%@ taglib prefix="s" uri="/struts-tags" %>  
 <s:url id="s_prtSearchUrl" value="/common/BINOLCM02_popPrtDialog" />
+<link rel="stylesheet" href="/Cherry/css/common/combotree.css">
 <script type="text/javascript" src="/Cherry/js/common/popDataTable.js"></script>
+<script type="text/javascript" src="/Cherry/js/common/comboTreePlugin.js"></script>
+<script type="text/javascript" src="/Cherry/js/common/icontains.js"></script>
+<script type="text/javascript">
+
+</script>
 <s:i18n name="">
 
 <div id ="productDialog" class="dialog hide">
+    <div style="width: 50%; float: left;">
+        <div style="width: 12%; float: left;">
+            <s:text name="global.page.categorytree"/>
+        </div>
+        <div style="width: 50%; float: left;">
+                <input id="justAnInputBox" style="border: 1px solid rgb(204, 204, 204); width: 200px; height: 18px;">
+        </div>
+    </div>
+    <div style="width: 50%; float: left;">
 	<input type="text" class="text" value="" id="productDialogSearch"  onKeyup ="datatableFilter(this,22);" maxlength="50"/>
 	<s:if test="param!=null && param!=''">
 		<input class="hide" name="originalBrand" id="param" value="<s:property value='param'/>"/>
@@ -30,6 +45,7 @@
     	<span class="ui-icon icon-search"></span>
     	<span class="button-text"><s:text name="global.page.searchfor"/></span>
     </a>
+    </div>
   	<hr class="space" />
   	<table id="prt_dataTable" cellpadding="0" cellspacing="0" border="0" class="jquery_table2" width="100%">
        <thead>
@@ -45,6 +61,7 @@
                <th><s:text name="global.page.originalBrand"/></th>       <%-- 产品名称--%>
                <th><s:text name="global.page.productname"/></th>       <%-- 产品名称--%>
                <th><s:text name="global.page.classification"/></th>    <%-- 大分类--%>
+               <th><s:text name="global.page.inclassification"/></th><%-- 中分类--%>
                <th><s:text name="global.page.smallclassification"/></th><%-- 小分类--%>
                <th><s:text name="global.page.salePrice"/></th>          <%-- 销售价格--%>
                <th><s:text name="global.page.memPrice"/></th>          <%-- 会员价格--%>
@@ -61,6 +78,13 @@
    	<span id ="prtSearchUrl" style="display:none">${s_prtSearchUrl}</span>
    	<span id ="global_page_ok" style="display:none"><s:text name="global.page.ok"/></span>
    	<span id ="PopProTitle" style="display:none"><s:text name="global.page.PopProTitle"/></span><%--产品信息 --%>
+    <input type="hidden" id="maxCount" value="<s:property value="form.maxCount"></s:property>">
+</div>
+<div class="dialog2 clearfix" style="display:none" id="send_checkinfo_dialog">
+    <p class="clearfix message">
+        <span></span>
+        <img height="15px" class="hide" src="/Cherry/css/cherry/img/loading.gif"/>
+    </p>
 </div>
 <%-- ================== dataTable共通导入 START ======================= --%>
 <jsp:include page="/WEB-INF/jsp/common/dataTable_i18n.jsp" flush="true" />

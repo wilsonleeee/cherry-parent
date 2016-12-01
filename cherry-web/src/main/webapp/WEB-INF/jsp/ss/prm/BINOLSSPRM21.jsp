@@ -3,7 +3,7 @@
 <%@ taglib prefix="s" uri="/struts-tags" %>
 <%@ taglib prefix="cherry" uri="/cherry-tags"%> 
 <%@ page import="java.text.SimpleDateFormat" %>
-<script type="text/javascript" src="/Cherry/js/ss/prm/BINOLSSPRM21.js"></script>
+<script type="text/javascript" src="/Cherry/js/ss/prm/BINOLSSPRM21.js?v=20161129"></script>
 <script language="javascript">
 </script>	
 				<s:i18n name="i18n.ss.BINOLSSPRM21">
