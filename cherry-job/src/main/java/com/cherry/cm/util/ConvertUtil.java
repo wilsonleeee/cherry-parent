@@ -34,6 +34,7 @@ import com.cherry.cm.core.CherryBatchConstants;
 import com.cherry.cm.core.CherryChecker;
 import com.cherry.cm.core.CherryConstants;
 import com.cherry.cm.form.DataTable_BaseForm;
+import com.googlecode.jsonplugin.JSONException;
 import com.googlecode.jsonplugin.JSONUtil;
 
 /**
@@ -894,5 +895,52 @@ public class ConvertUtil {
 		}else{
 			return 0;
 		}
+	}
+
+	/**
+	 * JSON字符串转List
+	 * @param json
+	 * @return
+	 */
+	public static List<Map<String, Object>> json2List(String json){
+		List<Map<String, Object>> list = null;
+		if(null != json && !"".equals(json.trim())){
+			try {
+				list = (List<Map<String, Object>>)JSONUtil.deserialize(json);
+			} catch (JSONException e) {
+			}
+		}
+		return list;
+	}
+
+	/**
+	 * JSON字符串转Map
+	 * @param json
+	 * @return
+	 */
+	public static Map<String, Object> json2Map(String json){
+		Map<String, Object> map = null;
+		if(null != json && !"".equals(json.trim())){
+			try {
+				map = (Map<String, Object>)JSONUtil.deserialize(json);
+			} catch (JSONException e) {
+			}
+		}
+		return map;
+	}
+	/**
+	 * map转list
+	 * @param map
+	 * @return
+	 */
+	public static List<Map<String, Object>> map2List(Map<String, Object> map){
+		List<Map<String, Object>> list = new ArrayList<Map<String,Object>>();
+		if(null != map){
+			for(Map.Entry<String,Object> en: map.entrySet()){
+				Map<String, Object> temp = (Map<String, Object>)en.getValue();
+				list.add(new HashMap<String,Object>(temp));
+			}
+		}
+		return list;
 	}
 }

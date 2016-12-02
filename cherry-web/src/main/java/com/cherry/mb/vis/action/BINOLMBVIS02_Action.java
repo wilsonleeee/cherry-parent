@@ -139,6 +139,8 @@ public class BINOLMBVIS02_Action extends BaseAction implements ModelDriven<BINOL
 			map.put("employeeId", userInfo.getBIN_EmployeeID());
 			// 创建时间
 			map.put("planDateTime", binOLMBVIS02_Service.getSYSDateTime());
+			map.put("brandCode",userInfo.getBrandCode());
+			map.put("orgCode",userInfo.getOrganizationInfoCode());
 			
 			// 作成者
 			map.put(CherryConstants.CREATEDBY, userInfo.getLoginName());
@@ -241,6 +243,8 @@ public class BINOLMBVIS02_Action extends BaseAction implements ModelDriven<BINOL
 			map.put(CherryConstants.ORGANIZATIONINFOID, userInfo.getBIN_OrganizationInfoID());
 			// 所属品牌
 			map.put(CherryConstants.BRANDINFOID, userInfo.getBIN_BrandInfoID());
+			map.put("brandCode",userInfo.getBrandCode());
+			map.put("orgCode",userInfo.getOrganizationInfoCode());
 			
 			// 更新者
 			map.put(CherryConstants.UPDATEDBY, userInfo.getLoginName());

@@ -10,6 +10,7 @@ import java.util.Map;
 
 import javax.annotation.Resource;
 
+import com.googlecode.jsonplugin.JSONUtil;
 import jxl.Sheet;
 import jxl.Workbook;
 import jxl.WorkbookSettings;
@@ -168,6 +169,13 @@ public class BINOLMBVIS02_BL {
 		if(visitObjType != null) {
 			if("1".equals(visitObjType)) {
 				map.remove("visitObjCode");
+				String visitObjJson = (String)map.get("visitObjJson");
+				Map<String, Object> visitObjMap = ConvertUtil.json2Map(visitObjJson);
+				visitObjMap.put("organizationInfoId", map.get("organizationInfoId"));
+				visitObjMap.put("brandInfoId", map.get("brandInfoId"));
+				visitObjMap.put("orgCode", map.get("orgCode"));
+				visitObjMap.put("brandCode", map.get("brandCode"));
+				map.put("visitObjJson", JSONUtil.serialize(visitObjMap));
 			} else if("2".equals(visitObjType)) {
 				map.remove("visitObjJson");
 			}

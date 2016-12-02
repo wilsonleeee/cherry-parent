@@ -298,7 +298,16 @@ public class BINBEMBVIS04_BL {
 					batchLoggerDTO.setLevel(CherryBatchConstants.LOGGER_ERROR);
 					CherryBatchLogger cherryBatchLogger = new CherryBatchLogger(this.getClass());
 					cherryBatchLogger.BatchLogger(batchLoggerDTO, e);
+				} catch (Throwable t) {
+					flag = CherryBatchConstants.BATCH_WARNING;
+					BatchLoggerDTO batchLoggerDTO = new BatchLoggerDTO();
+					batchLoggerDTO.setCode("EMB00063");
+					batchLoggerDTO.addParam(visitTypeName);
+					batchLoggerDTO.setLevel(CherryBatchConstants.LOGGER_ERROR);
+					CherryBatchLogger cherryBatchLogger = new CherryBatchLogger(this.getClass());
+					cherryBatchLogger.BatchLogger(batchLoggerDTO, null);
 				}
+
 				
 			}
 		}
