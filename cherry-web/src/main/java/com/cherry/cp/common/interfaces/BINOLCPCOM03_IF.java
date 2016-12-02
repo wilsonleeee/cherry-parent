@@ -49,6 +49,14 @@ public interface BINOLCPCOM03_IF {
      * 		取得会员信息List
      */
     public List<Map<String, Object>> getMemInfoList(Map<String, Object> map);
+	/**
+	 * 取得会员信息总数
+	 *
+	 * @param map
+	 * @return
+	 * 		会员信息总数
+	 */
+	public int getMemInfoCount(Map<String, Object> map);
     /**
      * 取得导入成功会员数量
      * @param map

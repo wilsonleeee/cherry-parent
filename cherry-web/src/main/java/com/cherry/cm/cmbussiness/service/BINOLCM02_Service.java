@@ -736,5 +736,25 @@ public class BINOLCM02_Service extends BaseService{
 		paramMap.put(CherryConstants.IBATIS_SQL_ID, "BINOLCM02.getSortListSrh");
 		return baseServiceImpl.getList(paramMap);
 	}
+
+	/**
+	 * 查询活动对象为搜索结果的活动List
+	 * @param map
+	 * @return
+	 */
+	public List<Map<String, Object>> getCampObjList(Map<String, Object> map){
+		map.put(CherryConstants.IBATIS_SQL_ID, "BINOLCM02.getCampObjList");
+		return baseServiceImpl.getList(map);
+	}
+
+	/**
+	 * 查询活动对象为搜索结果的活动总数
+	 * @param map
+	 * @return
+	 */
+	public int getCampObjCount (Map<String, Object> map){
+		map.put(CherryConstants.IBATIS_SQL_ID, "BINOLCM02.getCampObjCount");
+		return baseServiceImpl.getSum(map);
+	}
 	
 }

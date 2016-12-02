@@ -38,13 +38,16 @@ document.onkeydown = function(e){
 }
 
 //form表单转json函数
-$.fn.serializeForm2Json = function(submitBlank) {
+$.fn.serializeForm2Json = function(submitBlank, filter) {
     var o = {};
     var a = this.serializeArray();
     if(isEmpty(submitBlank)){
     	submitBlank = true;
     }
     $.each(a, function() {
+		if(filter && filter.indexOf(this.name) > -1) {
+			return true;
+		}
         if (o[this.name]) {
             if (!o[this.name].push) {
                 o[this.name] = [ o[this.name] ];
@@ -4276,7 +4279,6 @@ function regionLinkageInit(regionJson, option) {
 	}
 }
 
-
 /**
  * 在产品的text框上绑定下拉框选项
  * @param Object:options
@@ -4421,4 +4423,88 @@ function productBindingNew(options){
 			$('#'+options.elementId).data("change",false);
 		}
 	}).data("flag",true);
+}
+
+function getMemCommonSearchJson(id) {
+	var $id = $("#"+id);
+	var joinDateRanges = [];
+	$id.find("#joinDateRangeDiv").find("li").each(function(){
+		var start = $(this).find(":input[name=joinDateStart]").val();
+		var end = $(this).find(":input[name=joinDateEnd]").val();
+		if(start != '' || end != '') {
+			var joinDateRange = {
+				"joinDateStart":start,
+				"joinDateEnd":end
+			}
+			joinDateRanges.push(joinDateRange);
+		}
+	});
+	if(joinDateRanges.length > 0) {
+		$id.find("#joinDateRangeJson").val(JSON.stringify(joinDateRanges));
+	}
+
+	var memPointRanges = [];
+	$id.find("#memPointRangeDiv").find("li").each(function(){
+		var start = $(this).find(":input[name=memberPointStart]").val();
+		var end = $(this).find(":input[name=memberPointEnd]").val();
+		if(start != '' || end != '') {
+			var memPointRange = {
+				"memberPointStart":start,
+				"memberPointEnd":end
+			}
+			memPointRanges.push(memPointRange);
+		}
+	});
+	if(memPointRanges.length > 0) {
+		$id.find("#memPointRangeJson").val(JSON.stringify(memPointRanges));
+	}
+
+	var changablePointRanges = [];
+	$id.find("#changablePointRangeDiv").find("li").each(function(){
+		var start = $(this).find(":input[name=changablePointStart]").val();
+		var end = $(this).find(":input[name=changablePointEnd]").val();
+		if(start != '' || end != '') {
+			var changablePointRange = {
+				"changablePointStart":start,
+				"changablePointEnd":end
+			}
+			changablePointRanges.push(changablePointRange);
+		}
+	});
+	if(changablePointRanges.length > 0) {
+		$id.find("#changablePointRangeJson").val(JSON.stringify(changablePointRanges));
+	}
+
+	var lastSaleTimeRanges = [];
+	$id.find("#lastSaleTimeRangeDiv").find("li").each(function(){
+		var start = $(this).find(":input[name=lastSaleDateStart]").val();
+		var end = $(this).find(":input[name=lastSaleDateEnd]").val();
+		if(start != '' || end != '') {
+			var lastSaleTimeRange = {
+				"lastSaleDateStart":start,
+				"lastSaleDateEnd":end
+			}
+			lastSaleTimeRanges.push(lastSaleTimeRange);
+		}
+	});
+	if(lastSaleTimeRanges.length > 0) {
+		$id.find("#lastSaleTimeRangeJson").val(JSON.stringify(lastSaleTimeRanges));
+	}
+
+	var firstSaleTimeRanges = [];
+	$id.find("#firstSaleTimeRangeDiv").find("li").each(function(){
+		var start = $(this).find(":input[name=firstStartDay]").val();
+		var end = $(this).find(":input[name=firstEndDay]").val();
+		if(start != '' || end != '') {
+			var firstSaleTimeRange = {
+				"firstStartDay":start,
+				"firstEndDay":end
+			}
+			firstSaleTimeRanges.push(firstSaleTimeRange);
+		}
+	});
+	if(firstSaleTimeRanges.length > 0) {
+		$id.find("#firstSaleTimeRangeJson").val(JSON.stringify(firstSaleTimeRanges));
+	}
+	return $id.find(":input").serializeForm2Json(false, "joinDateStart,joinDateEnd,memberPointStart,memberPointEnd,changablePointStart,changablePointEnd,lastSaleDateStart,lastSaleDateEnd,firstStartDay,firstEndDay");
 }

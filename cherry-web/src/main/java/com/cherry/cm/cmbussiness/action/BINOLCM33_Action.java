@@ -73,7 +73,7 @@ public class BINOLCM33_Action extends BaseAction implements ModelDriven<BINOLCM3
 	 * 会员检索画面初期化
 	 * 
 	 */
-	public String memSearchInit() {
+	public String memSearchInit() throws Exception {
 		
 		Map<String, Object> map = new HashMap<String, Object>();
 		// 登陆用户信息
@@ -174,6 +174,18 @@ public class BINOLCM33_Action extends BaseAction implements ModelDriven<BINOLCM3
 			String memCode = (String)reqContentMap.get("memCode");
 			if(memCode != null && !"".equals(memCode)) {
 				form.setMemCode(memCode);
+			}
+			String name = (String)reqContentMap.get("name");
+			if(name != null && !"".equals(name)) {
+				form.setName(name);
+			}
+			String mobilePhone = (String)reqContentMap.get("mobilePhone");
+			if(mobilePhone != null && !"".equals(mobilePhone)) {
+				form.setMobilePhone(mobilePhone);
+			}
+			String email = (String)reqContentMap.get("email");
+			if(email != null && !"".equals(email)) {
+				form.setEmail(email);
 			}
 			Object memType = (Object)reqContentMap.get("memType");
 			if(memType != null) {
@@ -358,13 +370,10 @@ public class BINOLCM33_Action extends BaseAction implements ModelDriven<BINOLCM3
 						form.setJoinDateUnitFlag(joinDateUnitFlag);
 					}
 				} else {
-					String joinDateStart = (String)reqContentMap.get("joinDateStart");
-					if(joinDateStart != null && !"".equals(joinDateStart)) {
-						form.setJoinDateStart(joinDateStart);
-					}
-					String joinDateEnd = (String)reqContentMap.get("joinDateEnd");
-					if(joinDateEnd != null && !"".equals(joinDateEnd)) {
-						form.setJoinDateEnd(joinDateEnd);
+					String joinDateRangeJson = (String)reqContentMap.get("joinDateRangeJson");
+					if(joinDateRangeJson != null && !"".equals(joinDateRangeJson)) {
+						form.setJoinDateRangeJson(joinDateRangeJson);
+						form.setJoinDateRangeList(ConvertUtil.json2List(joinDateRangeJson));
 					}
 				}
 			}
@@ -860,6 +869,26 @@ public class BINOLCM33_Action extends BaseAction implements ModelDriven<BINOLCM3
 					mostCateMClassList = binOLCM33_Service.getProTypeInfoList(reqContentMap);
 				}
 			}
+			String memPointRangeJson = (String)reqContentMap.get("memPointRangeJson");
+			if(memPointRangeJson != null && !"".equals(memPointRangeJson)) {
+				form.setMemPointRangeList(ConvertUtil.json2List(memPointRangeJson));
+				form.setMemPointRangeJson(memPointRangeJson);
+			}
+			String changablePointRangeJson = (String)reqContentMap.get("changablePointRangeJson");
+			if(changablePointRangeJson != null && !"".equals(changablePointRangeJson)) {
+				form.setChangablePointRangeList(ConvertUtil.json2List(changablePointRangeJson));
+				form.setChangablePointRangeJson(changablePointRangeJson);
+			}
+			String lastSaleTimeRangeJson = (String)reqContentMap.get("lastSaleTimeRangeJson");
+			if(lastSaleTimeRangeJson != null && !"".equals(lastSaleTimeRangeJson)) {
+				form.setLastSaleTimeRangeJson(lastSaleTimeRangeJson);
+				form.setLastSaleTimeRangeList(ConvertUtil.json2List(lastSaleTimeRangeJson));
+			}
+			String firstSaleTimeRangeJson = (String)reqContentMap.get("firstSaleTimeRangeJson");
+			if(firstSaleTimeRangeJson != null && !"".equals(firstSaleTimeRangeJson)) {
+				form.setFirstSaleTimeRangeJson(firstSaleTimeRangeJson);
+				form.setFirstSaleTimeRangeList(ConvertUtil.json2List(firstSaleTimeRangeJson));
+			}
 		}
 		
 		// 存在禁止修改条件的场合
@@ -968,6 +997,15 @@ public class BINOLCM33_Action extends BaseAction implements ModelDriven<BINOLCM3
 		if(form.getMemCode() != null && !"".equals(form.getMemCode())) {
 			reqContent.put("memCode", form.getMemCode());
 		}
+		if(form.getName() != null && !"".equals(form.getName())) {
+			reqContent.put("name", form.getName());
+		}
+		if(form.getMobilePhone() != null && !"".equals(form.getMobilePhone())) {
+			reqContent.put("mobilePhone", form.getMobilePhone());
+		}
+		if(form.getEmail() != null && !"".equals(form.getEmail())) {
+			reqContent.put("email", form.getEmail());
+		}
 		if(form.getMemType() != null && !form.getMemType().isEmpty()) {
 			reqContent.put("memType", form.getMemType());
 		}
@@ -1063,11 +1101,8 @@ public class BINOLCM33_Action extends BaseAction implements ModelDriven<BINOLCM3
 					reqContent.put("joinDateUnitFlag", form.getJoinDateUnitFlag());
 				}
 			} else if("9".equals(form.getJoinDateMode())) {
-				if(form.getJoinDateStart() != null && !"".equals(form.getJoinDateStart())) {
-					reqContent.put("joinDateStart", form.getJoinDateStart());
-				}
-				if(form.getJoinDateEnd() != null && !"".equals(form.getJoinDateEnd())) {
-					reqContent.put("joinDateEnd", form.getJoinDateEnd());
+				if(form.getJoinDateRangeJson() != null && !"".equals(form.getJoinDateRangeJson())) {
+					reqContent.put("joinDateRangeJson", form.getJoinDateRangeJson());
 				}
 			}
 		}
@@ -1380,6 +1415,18 @@ public class BINOLCM33_Action extends BaseAction implements ModelDriven<BINOLCM3
 		}
 		if(form.getPrivilegeFlag() != null && !"".equals(form.getPrivilegeFlag())) {
 			reqContent.put("privilegeFlag", form.getPrivilegeFlag());
+		}
+		if(form.getMemPointRangeJson() != null && !"".equals(form.getMemPointRangeJson())) {
+			reqContent.put("memPointRangeJson", form.getMemPointRangeJson());
+		}
+		if(form.getChangablePointRangeJson() != null && !"".equals(form.getChangablePointRangeJson())) {
+			reqContent.put("changablePointRangeJson", form.getChangablePointRangeJson());
+		}
+		if(form.getLastSaleTimeRangeJson() != null && !"".equals(form.getLastSaleTimeRangeJson())) {
+			reqContent.put("lastSaleTimeRangeJson", form.getLastSaleTimeRangeJson());
+		}
+		if(form.getFirstSaleTimeRangeJson() != null && !"".equals(form.getFirstSaleTimeRangeJson())) {
+			reqContent.put("firstSaleTimeRangeJson", form.getFirstSaleTimeRangeJson());
 		}
 		
 		map.put("reqContent", JSONUtil.serialize(reqContent));

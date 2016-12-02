@@ -2610,4 +2610,27 @@ public class BINOLCPCOM02_BL implements BINOLCPCOM02_IF{
 		map.put(CampConstants.CAMP_NAME, name);
 		return binolcpcom02_Service.getActIdByName(map);
 	}
+
+	@Override
+	public Map<String, Object> campObjGroup(Map<String, Object> map) {
+		Map<String, Object> result = new HashMap<String, Object>();
+		try {
+			String campObjGroupType = (String)map.get("campObjGroupType");
+			String campObjGroupValue = (String)map.get("campObjGroupValue");
+			if(campObjGroupType != null && "1".equals(campObjGroupType)) {
+				int count = binolcpcom02_Service.getCustomerCount(map);
+				map.put("TOP", count*Integer.parseInt(campObjGroupValue)/100);
+			} else {
+				map.put("TOP", Integer.parseInt(campObjGroupValue));
+			}
+			binolcpcom02_Service.updAllCampObjGroupType(map);
+			binolcpcom02_Service.updCampObjGroupType(map);
+			result.put("errorcode", "0");
+		} catch (Exception e) {
+			logger.error(e.getMessage(), e);
+			result.put("errorcode", "-1");
+			result.put("errormsg", "分组失败，请重试！");
+		}
+		return result;
+	}
 }

@@ -74,6 +74,18 @@ public class BINOLCPCOM03_Service extends BaseService {
 		map.put(CherryConstants.IBATIS_SQL_ID, "BINOLCPCOM03.getMemInfoList");
 		return baseServiceImpl.getList(map);
 	}
+
+	/**
+	 * 取得会员信息总数
+	 *
+	 * @param map
+	 *
+	 * @return
+	 */
+	public int getMemInfoCount(Map<String, Object> map) {
+		map.put(CherryConstants.IBATIS_SQL_ID, "BINOLCPCOM03.getMemInfoCount");
+		return baseServiceImpl.getSum(map);
+	}
     /**
      * 总数
      * 

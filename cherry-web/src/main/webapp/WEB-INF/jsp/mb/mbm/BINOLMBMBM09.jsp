@@ -134,13 +134,23 @@
 				</select>
 				</span>
 				<span class='<s:if test="%{joinDateMode != 9}">hide</s:if>'>
-				<span><s:textfield name="joinDateStart" cssClass="date"/></span><span>-<s:textfield name="joinDateEnd" cssClass="date"/></span>
+                    <div id="joinDateRangeDiv">
+                        <ul>
+                            <li>
+                                <span><s:textfield name="joinDateStart" id="joinDateStart0_0" cssClass="date" cssStyle="width:80px" /></span><span>-<s:textfield name="joinDateEnd" id="joinDateEnd0_0" cssClass="date" cssStyle="width:80px" /></span>
+                                <a class="add" onclick="binolmbmbm09.addJoinDateRange('0');return false;"><span class="ui-icon icon-add"></span><span class="button-text">添加</span></a>
+                            </li>
+                        </ul>
+                        <s:hidden name="joinDateRangeJson" id="joinDateRangeJson"/>
+                    </div>
 				</span>
-				<span style="margin-left:20px;" class='<s:if test="%{joinDateMode == null || joinDateMode == -1}">hide</s:if>'>
+				<!--
+                <span style="margin-left:20px;" class='<s:if test="%{joinDateMode == null || joinDateMode == -1}">hide</s:if>'>
 				<s:text name="global.page.joinDateSaleDateRel" />
 				<input id="joinDateSaleDateRel1" type="radio" name="joinDateSaleDateRel" value="1" <s:if test="%{joinDateSaleDateRel == 1}">checked</s:if>><label for="joinDateSaleDateRel1"><s:text name="global.page.and" /></label>
 				<input id="joinDateSaleDateRel2" type="radio" name="joinDateSaleDateRel" value="2" <s:if test="%{joinDateSaleDateRel == 2}">checked</s:if>><label for="joinDateSaleDateRel2"><s:text name="global.page.or" /></label>
 				</span>
+				-->
               </td>
             </tr>
             <tr>
@@ -210,7 +220,17 @@
               <s:if test='%{"3".equals(clubMod)}'>
               <th><s:text name="binolmbmbm09_memberPoint" /></th>
               <td>
-                <span><s:textfield name="memberPointStart" cssClass="text" cssStyle="width:75px;"></s:textfield></span><span>-<s:textfield name="memberPointEnd" cssClass="text" cssStyle="width:75px;"></s:textfield></span>
+                  <span>
+                  <div id="memPointRangeDiv">
+                      <ul>
+                          <li>
+                              <span><s:textfield name="memberPointStart" cssClass="text" cssStyle="width:75px;"/></span><span>-<s:textfield name="memberPointEnd" cssClass="text" cssStyle="width:75px;"/></span>
+                              <a class="add" onclick="binolmbmbm09.addMemPointRange();return false;"><span class="ui-icon icon-add"></span><span class="button-text">添加</span></a>
+                          </li>
+                      </ul>
+                      <s:hidden name="memPointRangeJson" id="memPointRangeJson"/>
+                  </div>
+                  </span>
               </td> 
               </s:if>
             </tr>
@@ -222,7 +242,17 @@
 			  <s:if test='%{"3".equals(clubMod)}'>
               <th><s:text name="binolmbmbm09_changablePoint" /></th>
               <td>
-                <span><s:textfield name="changablePointStart" cssClass="text" cssStyle="width:75px;"></s:textfield></span><span>-<s:textfield name="changablePointEnd" cssClass="text" cssStyle="width:75px;"></s:textfield></span>
+                  <span>
+                  <div id="changablePointRangeDiv">
+                      <ul>
+                          <li>
+                              <span><s:textfield name="changablePointStart" cssClass="text" cssStyle="width:75px;"/></span><span>-<s:textfield name="changablePointEnd" cssClass="text" cssStyle="width:75px;" /></span>
+                              <a class="add" onclick="binolmbmbm09.addChangablePointRange();return false;"><span class="ui-icon icon-add"></span><span class="button-text">添加</span></a>
+                          </li>
+                      </ul>
+                      <s:hidden name="changablePointRangeJson" id="changablePointRangeJson"/>
+                  </div>
+                  </span>
               </td>
               </s:if>
             </tr>
@@ -301,17 +331,25 @@
               <td>
                 <span><s:textfield name="wechatBindTimeStart" cssClass="text" cssStyle="width:75px;"></s:textfield></span><span>-<s:textfield name="wechatBindTimeEnd" cssClass="text" cssStyle="width:75px;"></s:textfield></span>
               </td>  
-            </tr>    
-            <tr>     
-             <s:if test='%{"3".equals(clubMod)}'>
-              <th><s:text name="binolmbmbm09_referFlag" /></th>
-              <td>
+            </tr>
+            <tr>
+                <th><s:text name="global.page.email" /></th>
+                <td colspan="3">
+                <span>
+                    <s:textfield name="email" cssClass="text"/>
+                </span>
+                </td>
+            </tr>
+            <s:if test='%{"3".equals(clubMod)}'>
+                <tr>
+                    <th><s:text name="binolmbmbm09_referFlag" /></th>
+                    <td colspan="3">
                   <span>
                   <select name="referFlag" onchange="binolmbmbm09.selectReferFlag(this);" style="width:135px;">
-					<option value="-1" <s:if test="%{referFlag == -1}">selected</s:if>><s:text name="global.page.select"/></option>
-					<option value="1" <s:if test="%{referFlag == 1}">selected</s:if>><s:text name="global.page.referFlag1"/></option>
-					<option value="2" <s:if test="%{referFlag == 2}">selected</s:if>><s:text name="global.page.referFlag2"/></option>
-				  </select>
+                      <option value="-1" <s:if test="%{referFlag == -1}">selected</s:if>><s:text name="global.page.select"/></option>
+                      <option value="1" <s:if test="%{referFlag == 1}">selected</s:if>><s:text name="global.page.referFlag1"/></option>
+                      <option value="2" <s:if test="%{referFlag == 2}">selected</s:if>><s:text name="global.page.referFlag2"/></option>
+                  </select>
 				  </span>
 				  <span class='<s:if test="%{referFlag != 1}">hide</s:if>'>
 					<s:text name="global.page.referredMemCode" />：<s:textfield name="referredMemCode"  cssClass="text" cssStyle="width:100px"/>
@@ -319,14 +357,10 @@
                   <span class='<s:if test="%{referFlag != 2}">hide</s:if>'>
 					<s:text name="global.page.referrerMemCode" />：<s:textfield name="referrerMemCode"  cssClass="text" cssStyle="width:100px"/>
 				  </span>
-              </td>
-               </s:if>
-              <th><s:text name="binolmbmbm09_lastSaleDate" /></th>
-              <td <s:if test='%{!"3".equals(clubMod)}'> colspan="3" </s:if>>
-              	<span><s:textfield name="lastSaleDateStart" cssClass="date" cssStyle="width:75px;"/></span><span>-<s:textfield name="lastSaleDateEnd" cssClass="date" cssStyle="width:75px;"/></span>
-              </td>
-            </tr> 
-             <s:if test='%{"3".equals(clubMod)}'>
+                    </td>
+                </tr>
+            </s:if>
+            <s:if test='%{"3".equals(clubMod)}'>
             <tr>
               <th><s:text name="global.page.levelAdjustDay" /></th>
               <td colspan="3">
@@ -356,6 +390,56 @@
               </td>
             </tr>       
             </s:if>
+            <tr>
+                <th><s:text name="binolmbmbm09_lastSaleDate" /></th>
+                <td colspan="3">
+                  <span>
+                  <div id="lastSaleTimeRangeDiv">
+                      <ul>
+                          <li>
+                              <span><s:textfield name="lastSaleDateStart" cssClass="date" id="lastSaleDateStart0_0" cssStyle="width:80px"/></span>
+                              <span>-<s:textfield name="lastSaleDateEnd" cssClass="date" id="lastSaleDateEnd0_0" cssStyle="width:80px"/></span>
+                              <a class="add" onclick="binolmbmbm09.addLastSaleTimeRange('0');return false;"><span class="ui-icon icon-add"></span><span class="button-text">添加</span></a>
+                          </li>
+                      </ul>
+                      <s:hidden name="lastSaleTimeRangeJson" id="lastSaleTimeRangeJson"/>
+                  </div>
+                  </span>
+                </td>
+            </tr>
+            <tr>
+                <th><s:text name="global.page.notSaleDays" /></th>
+                <td colspan="3">
+	               		<span>
+		                <select name="noSaleDaysMode" onchange="binolmbmbm09.selectFirstDayMode(this);" >
+                            <option value="1" <s:if test="%{noSaleDaysMode == 1}">selected</s:if>><s:text name="global.page.noSaleDaysMode1" /></option>
+                            <option value="2" <s:if test="%{noSaleDaysMode == 2}">selected</s:if>><s:text name="global.page.noSaleDaysMode2" /></option>
+                        </select>
+						</span>
+						<span class='<s:if test="%{noSaleDaysMode == 2}">hide</s:if>' id="spanNoSaleDaysMode1">
+							<s:text name="global.page.afterFirstBuy" />
+							<s:textfield name="notSaleDays" cssClass="text" cssStyle="width:30px;"></s:textfield>
+							<s:text name="global.page.notSaleDays1" />&nbsp;&nbsp;
+							<label class="gray"><s:text name="global.page.nsdMode1Txt" /></label>
+						</span>
+						<span class='<s:if test="%{noSaleDaysMode != 2}">hide</s:if>' id="spanNoSaleDaysMode2">
+							<s:text name="global.page.firstBuyDayRange" />
+							<div id="firstSaleTimeRangeDiv">
+                                <ul>
+                                    <li>
+                                        <span><s:textfield name="firstStartDay" cssClass="date" id="firstStartDay0_0" cssStyle="width:80px"/></span>
+                                        <span>-<s:textfield name="firstEndDay" cssClass="date" id="firstEndDay0_0" cssStyle="width:80px"/></span>
+                                        <a class="add" onclick="binolmbmbm09.addFirstSaleTimeRange('0');return false;"><span class="ui-icon icon-add"></span><span class="button-text">添加</span></a>
+                                    </li>
+                                </ul>
+                                <s:hidden name="firstSaleTimeRangeJson" id="firstSaleTimeRangeJson"/>
+                            </div>
+							<s:text name="global.page.afterFirstBuy" />
+							<s:textfield name="notSaleDaysRange" cssClass="text" cssStyle="width:30px;"></s:textfield>
+							<s:text name="global.page.notSaleDays1" />
+						</span>
+                </td>
+            </tr>
           </tbody>
         </table>
       </div>

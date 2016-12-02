@@ -117,7 +117,10 @@ public class BINOLCPCOM02_Form {
 	
 	/** 子活动菜单 */
 	private List<Map<String, Object>> subMenuList;
-	
+
+	private String searchCode;
+	private String campObjGroupType;
+	private String campObjGroupValue;
 	public long getWfId() {
 		return wfId;
 	}
@@ -364,5 +367,29 @@ public class BINOLCPCOM02_Form {
 
 	public void setBrandCode(String brandCode) {
 		this.brandCode = brandCode;
+	}
+
+	public String getSearchCode() {
+		return searchCode;
+	}
+
+	public void setSearchCode(String searchCode) {
+		this.searchCode = searchCode;
+	}
+
+	public String getCampObjGroupType() {
+		return campObjGroupType;
+	}
+
+	public void setCampObjGroupType(String campObjGroupType) {
+		this.campObjGroupType = campObjGroupType;
+	}
+
+	public String getCampObjGroupValue() {
+		return campObjGroupValue;
+	}
+
+	public void setCampObjGroupValue(String campObjGroupValue) {
+		this.campObjGroupValue = campObjGroupValue;
 	}
 }

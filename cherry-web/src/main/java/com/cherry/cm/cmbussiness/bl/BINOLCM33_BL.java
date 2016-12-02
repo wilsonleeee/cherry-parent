@@ -274,12 +274,10 @@ public class BINOLCM33_BL {
 		
 		// 入会日期处理
 		String joinDateMode = (String)map.get("joinDateMode");
+		List<Map<String, Object>> joinDateRangeList = new ArrayList<Map<String, Object>>();
 		// 存在入会时间模式查询的场合，按入会时间模式设置入会时间查询条件
 		if(joinDateMode != null && !"".equals(joinDateMode)) {
-			if(!"9".equals(joinDateMode)) {
-				map.remove("joinDateStart");
-				map.remove("joinDateEnd");
-			}
+			Map<String, Object> joinDateeRangeMap = new HashMap<String, Object>();
 			if("0".equals(joinDateMode)) {// 入会时间模式为动态模式（例如：几年、几月、几天内入会的会员）
 				String joinDateRange = (String)map.get("joinDateRange");
 				if(joinDateRange != null && !"".equals(joinDateRange)) {
@@ -288,43 +286,48 @@ public class BINOLCM33_BL {
 					if("0".equals(joinDateUnit)) {
 						String preJoinDate = DateUtil.addDateByYears("yyyy-MM-dd", sysDate.substring(0,10), -Integer.parseInt(joinDateRange));
 						if("1".equals(joinDateUnitFlag)) {
-							map.put("joinDateStart", preJoinDate);
-							map.put("joinDateEnd", sysDate.substring(0,10));
+							joinDateeRangeMap.put("joinDateStart", preJoinDate);
+							joinDateeRangeMap.put("joinDateEnd", sysDate.substring(0,10));
 						} else {
-							map.put("joinDateStart", preJoinDate);
-							map.put("joinDateEnd", preJoinDate);
+							joinDateeRangeMap.put("joinDateStart", preJoinDate);
+							joinDateeRangeMap.put("joinDateEnd", preJoinDate);
 						}
 					} else if("1".equals(joinDateUnit)) {
 						String preJoinDate = DateUtil.addDateByMonth("yyyy-MM-dd", sysDate.substring(0,10), -Integer.parseInt(joinDateRange));
 						if("1".equals(joinDateUnitFlag)) {
-							map.put("joinDateStart", preJoinDate);
-							map.put("joinDateEnd", sysDate.substring(0,10));
+							joinDateeRangeMap.put("joinDateStart", preJoinDate);
+							joinDateeRangeMap.put("joinDateEnd", sysDate.substring(0,10));
 						} else {
-							map.put("joinDateStart", preJoinDate);
-							map.put("joinDateEnd", preJoinDate);
+							joinDateeRangeMap.put("joinDateStart", preJoinDate);
+							joinDateeRangeMap.put("joinDateEnd", preJoinDate);
 						}
 					} else if("2".equals(joinDateUnit)) {
 						String preJoinDate = DateUtil.addDateByDays("yyyy-MM-dd", sysDate.substring(0,10), 1-Integer.parseInt(joinDateRange));
 						if("1".equals(joinDateUnitFlag)) {
-							map.put("joinDateStart", preJoinDate);
-							map.put("joinDateEnd", sysDate.substring(0,10));
+							joinDateeRangeMap.put("joinDateStart", preJoinDate);
+							joinDateeRangeMap.put("joinDateEnd", sysDate.substring(0,10));
 						} else {
-							map.put("joinDateStart", preJoinDate);
-							map.put("joinDateEnd", preJoinDate);
+							joinDateeRangeMap.put("joinDateStart", preJoinDate);
+							joinDateeRangeMap.put("joinDateEnd", preJoinDate);
 						}
 					}
 				}
+				joinDateRangeList.add(joinDateeRangeMap);
 			} else if("1".equals(joinDateMode)) {// 入会时间模式为当月入会
 				// 系统时间所在月份的第一天
-				map.put("joinDateStart", DateUtil.getFirstOrLastDateYMD(sysDate.substring(0,10), 0));
+				joinDateeRangeMap.put("joinDateStart", DateUtil.getFirstOrLastDateYMD(sysDate.substring(0,10), 0));
 				// 系统时间所在月份的最后天
-				map.put("joinDateEnd", DateUtil.getFirstOrLastDateYMD(sysDate.substring(0,10), 1));
+				joinDateeRangeMap.put("joinDateEnd", DateUtil.getFirstOrLastDateYMD(sysDate.substring(0,10), 1));
+				joinDateRangeList.add(joinDateeRangeMap);
+			} else if("9".equals(joinDateMode)) {
+				String joinDateRangeJson = (String)map.get("joinDateRangeJson");
+				if(joinDateRangeJson != null && !"".equals(joinDateRangeJson)) {
+					joinDateRangeList = ConvertUtil.json2List(joinDateRangeJson);
+				}
 			}
 		}
-		String joinDateStart = (String)map.get("joinDateStart");
-		String joinDateEnd = (String)map.get("joinDateEnd");
-		if((joinDateStart != null && !"".equals(joinDateStart)) 
-				|| (joinDateEnd != null && !"".equals(joinDateEnd))) {
+		if(!joinDateRangeList.isEmpty()) {
+			map.put("joinDateRangeList", joinDateRangeList);
 			map.put("joinDateTerm", "1");
 		}
 		
@@ -1013,14 +1016,14 @@ public class BINOLCM33_BL {
 		map.remove("employeeId");
 		
 		// 最近一次购买时间
-		String lastSaleDateStart = (String)map.get("lastSaleDateStart");
-		String lastSaleDateEnd = (String)map.get("lastSaleDateEnd");
-		if(lastSaleDateStart != null && !"".equals(lastSaleDateStart)) {
-			map.put("lastSaleDateStart", DateUtil.suffixDate(lastSaleDateStart, 0));
-		}
-		if(lastSaleDateEnd != null && !"".equals(lastSaleDateEnd)) {
-			map.put("lastSaleDateEnd", DateUtil.suffixDate(lastSaleDateEnd, 1));
-		}
+//		String lastSaleDateStart = (String)map.get("lastSaleDateStart");
+//		String lastSaleDateEnd = (String)map.get("lastSaleDateEnd");
+//		if(lastSaleDateStart != null && !"".equals(lastSaleDateStart)) {
+//			map.put("lastSaleDateStart", DateUtil.suffixDate(lastSaleDateStart, 0));
+//		}
+//		if(lastSaleDateEnd != null && !"".equals(lastSaleDateEnd)) {
+//			map.put("lastSaleDateEnd", DateUtil.suffixDate(lastSaleDateEnd, 1));
+//		}
 		String firstSaleDayFlag = null;
 		String noSaleDaysMode = (String) map.get("noSaleDaysMode");
 		if ("2".equals(noSaleDaysMode)) {
@@ -1044,7 +1047,44 @@ public class BINOLCM33_BL {
 		if (null != firstSaleDayFlag) {
 			map.put("firstSaleDayFlag", firstSaleDayFlag);
 		}
-		
+		String memPointRangeJson = (String)map.get("memPointRangeJson");
+		if(memPointRangeJson != null && !"".equals(memPointRangeJson)) {
+			map.put("memPointRangeList",ConvertUtil.json2List(memPointRangeJson));
+		}
+		String changablePointRangeJson = (String)map.get("changablePointRangeJson");
+		if(changablePointRangeJson != null && !"".equals(changablePointRangeJson)) {
+			map.put("changablePointRangeList",ConvertUtil.json2List(changablePointRangeJson));
+		}
+		String lastSaleTimeRangeJson = (String)map.get("lastSaleTimeRangeJson");
+		if(lastSaleTimeRangeJson != null && !"".equals(lastSaleTimeRangeJson)) {
+			List<Map<String, Object>> lastSaleTimeRangeList = ConvertUtil.json2List(lastSaleTimeRangeJson);
+			for(Map<String, Object> lastSaleTimeRangeMap: lastSaleTimeRangeList) {
+				String _lastSaleDateStart = (String)lastSaleTimeRangeMap.get("lastSaleDateStart");
+				String _lastSaleDateEnd = (String)lastSaleTimeRangeMap.get("lastSaleDateEnd");
+				if(_lastSaleDateStart != null && !"".equals(_lastSaleDateStart)) {
+					lastSaleTimeRangeMap.put("lastSaleDateStart", DateUtil.suffixDate(_lastSaleDateStart, 0));
+				}
+				if(_lastSaleDateEnd != null && !"".equals(_lastSaleDateEnd)) {
+					lastSaleTimeRangeMap.put("lastSaleDateEnd", DateUtil.suffixDate(_lastSaleDateEnd, 1));
+				}
+			}
+			map.put("lastSaleTimeRangeList",lastSaleTimeRangeList);
+		}
+		String firstSaleTimeRangeJson = (String)map.get("firstSaleTimeRangeJson");
+		if(firstSaleTimeRangeJson != null && !"".equals(firstSaleTimeRangeJson)) {
+			List<Map<String, Object>> firstSaleTimeRangeList = ConvertUtil.json2List(firstSaleTimeRangeJson);
+			for(Map<String, Object> firstSaleTimeRangeMap: firstSaleTimeRangeList) {
+				String firstStartDay = (String)firstSaleTimeRangeMap.get("firstStartDay");
+				String firstEndDay = (String)firstSaleTimeRangeMap.get("firstEndDay");
+				if(firstStartDay != null && !"".equals(firstStartDay)) {
+					firstSaleTimeRangeMap.put("firstStartDay", DateUtil.suffixDate(firstStartDay, 0));
+				}
+				if(firstEndDay != null && !"".equals(firstEndDay)) {
+					firstSaleTimeRangeMap.put("firstEndDay", DateUtil.suffixDate(firstEndDay, 1));
+				}
+			}
+			map.put("firstSaleTimeRangeList",firstSaleTimeRangeList);
+		}
 	}
 	
 	/**

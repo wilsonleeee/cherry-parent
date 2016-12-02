@@ -262,7 +262,8 @@ BINOLCTPLN02_GLOBAL.prototype = {
 	},
 	
 	"searchObjRequest" : function(obj){
-		var searchValue = $("#objDialogInit").find(":input").serializeForm2Json();
+		var searchValue = getMemCommonSearchJson("objDialogInit");
+		//var searchValue = $("#objDialogInit").find(":input").serializeForm2Json();
 		var searchName = $("#objDialogInit").find("#searchName").val();
 		// 判断用户是否输入了搜索记录名称
 		if(searchName != undefined && null != searchName && searchName != ""){

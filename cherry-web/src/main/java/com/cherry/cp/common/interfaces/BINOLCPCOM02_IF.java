@@ -356,4 +356,6 @@ public interface BINOLCPCOM02_IF {
 	public String getMainCampainCode(Map<String, Object> map) throws Exception;
 	
 	public List<Integer> getActIdByName(String name, String brandInfoId);
+
+	public Map<String, Object> campObjGroup(Map<String, Object> map);
 }

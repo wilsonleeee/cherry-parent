@@ -403,6 +403,55 @@
 					NOT EXISTS (<include refid="BINOLCM33.ClubCounterTermSql" /> AND CL.BIN_OrganizationID = orgTable9.BIN_OrganizationID)
 				</isEqual>	
 				</isNotEmpty>
+				<isNotEmpty prepend="AND" property="memPointRangeList" open="(" close=")">
+					<iterate property="memPointRangeList" open="(" close=")" conjunction="OR">
+						<isNotEmpty property="memPointRangeList[].memberPointStart">
+							<isNotEmpty property="memPointRangeList[].memberPointEnd">
+								<![CDATA[
+								ISNULL(D.TotalPoint,0) >= #memPointRangeList[].memberPointStart# AND
+								ISNULL(D.TotalPoint,0) <= #memPointRangeList[].memberPointEnd#
+							]]>
+							</isNotEmpty>
+							<isEmpty property="memPointRangeList[].memberPointEnd">
+								<![CDATA[
+								ISNULL(D.TotalPoint,0) >= #memPointRangeList[].memberPointStart#
+							]]>
+							</isEmpty>
+						</isNotEmpty>
+						<isEmpty property="memPointRangeList[].memberPointStart">
+							<isNotEmpty property="memPointRangeList[].memberPointEnd">
+								<![CDATA[
+								ISNULL(D.TotalPoint,0) <= #memPointRangeList[].memberPointEnd#
+							]]>
+							</isNotEmpty>
+						</isEmpty>
+					</iterate>
+				</isNotEmpty>
+				<isNotEmpty prepend="AND" property="changablePointRangeList" open="(" close=")">
+					<iterate property="changablePointRangeList" open="(" close=")" conjunction="OR">
+						<isNotEmpty property="changablePointRangeList[].changablePointStart">
+							<isNotEmpty property="changablePointRangeList[].changablePointEnd">
+								<![CDATA[
+								ISNULL(D.ChangablePoint,0) >= #changablePointRangeList[].changablePointStart# AND
+								ISNULL(D.ChangablePoint,0) <= #changablePointRangeList[].changablePointEnd#
+							]]>
+							</isNotEmpty>
+							<isEmpty property="changablePointRangeList[].changablePointEnd">
+								<![CDATA[
+								ISNULL(D.ChangablePoint,0) >= #changablePointRangeList[].changablePointStart#
+							]]>
+							</isEmpty>
+						</isNotEmpty>
+						<isEmpty property="changablePointRangeList[].changablePointStart">
+							<isNotEmpty property="changablePointRangeList[].changablePointEnd">
+								<![CDATA[
+								ISNULL(D.ChangablePoint,0) <= #changablePointRangeList[].changablePointEnd#
+							]]>
+							</isNotEmpty>
+						</isEmpty>
+					</iterate>
+				</isNotEmpty>
+				<!--
 				<isNotEmpty prepend="AND" property="memberPointStart">
 				ISNULL(D.TotalPoint,0) >= #memberPointStart#
 				</isNotEmpty>
@@ -415,6 +464,7 @@
 				<isNotEmpty prepend="AND" property="changablePointEnd">
 					<![CDATA[ISNULL(D.ChangablePoint,0) <= #changablePointEnd#]]>
 				</isNotEmpty>
+				-->
 				<isNotEmpty prepend="AND" property="curDealDateStart">
 				CONVERT(VARCHAR(30), D.CurDealDate, 23) >= #curDealDateStart#
 				</isNotEmpty>
@@ -445,6 +495,9 @@
 			</isNotEmpty>
 			<isNotEmpty prepend="AND" property="name">
 				A.Name LIKE '%'+#name#+'%'
+			</isNotEmpty>
+			<isNotEmpty prepend="AND" property="email">
+				A.Email LIKE '%'+#email#+'%'
 			</isNotEmpty>
 			<isNotEmpty prepend="AND" property="nickname">
 				A.Nickname LIKE '%'+#nickname#+'%'
@@ -512,7 +565,40 @@
 			<isNotEmpty prepend="AND" property="birthYearEnd">
 				<![CDATA[ A.BirthYear <= #birthYearEnd# ]]>	
 			</isNotEmpty>
-			
+
+			<isNotEmpty prepend="AND" property="joinDateRangeList" open="(" close=")">
+				<iterate property="joinDateRangeList" open="(" close=")" conjunction="OR">
+					<isNotEmpty property="joinDateRangeList[].joinDateStart">
+						<isNotEmpty property="joinDateRangeList[].joinDateEnd">
+							<![CDATA[
+									A.JoinDate >= #joinDateRangeList[].joinDateStart# AND
+									A.JoinDate <= #joinDateRangeList[].joinDateEnd#
+								]]>
+						</isNotEmpty>
+						<isEmpty property="joinDateRangeList[].joinDateEnd">
+							<![CDATA[
+									A.JoinDate >= #joinDateRangeList[].joinDateStart#
+								]]>
+						</isEmpty>
+					</isNotEmpty>
+					<isEmpty property="joinDateRangeList[].joinDateStart">
+						<isNotEmpty property="joinDateRangeList[].joinDateEnd">
+							<![CDATA[
+									A.JoinDate <= #joinDateRangeList[].joinDateEnd#
+								]]>
+						</isNotEmpty>
+					</isEmpty>
+				</iterate>
+			</isNotEmpty>
+			<isNotEmpty property="saleCountTerm">
+				<isNotEmpty prepend="AND" property="saleCountStart">
+					ISNULL(L.saleCount,0) >= #saleCountStart#
+				</isNotEmpty>
+				<isNotEmpty prepend="AND" property="saleCountEnd">
+					<![CDATA[ISNULL(L.saleCount,0) <= #saleCountEnd#]]>
+				</isNotEmpty>
+			</isNotEmpty>
+			<!--
 			<isNotEqual property="joinDateSaleDateRel" compareValue="2">
 				<isNotEmpty prepend="AND" property="joinDateStart">
 					<![CDATA[ A.JoinDate >= #joinDateStart# ]]>
@@ -580,6 +666,7 @@
 					</isNotEmpty>
 				</isEmpty>
 			</isEqual>
+			-->
 			<isNotEmpty property="modeFlag" prepend="AND">
 			<isEqual property="exclusiveFlag" compareValue="1">
 				EXISTS (<include refid="BINOLCM33.CounterTermSql" /> AND A.BIN_OrganizationID = orgTable.BIN_OrganizationID)
@@ -745,12 +832,38 @@
 			<isNotEmpty prepend="AND" property="wechatBindTimeEnd">
 				<![CDATA[CONVERT(VARCHAR(30), A.WechatBindTime, 23) <= #wechatBindTimeEnd#]]>
 			</isNotEmpty>
+			<isNotEmpty prepend="AND" property="lastSaleTimeRangeList" open="(" close=")">
+				<iterate property="lastSaleTimeRangeList" open="(" close=")" conjunction="OR">
+					<isNotEmpty property="lastSaleTimeRangeList[].lastSaleDateStart">
+						<isNotEmpty property="lastSaleTimeRangeList[].lastSaleDateEnd">
+							<![CDATA[
+									F.LastSaleDate >= #lastSaleTimeRangeList[].lastSaleDateStart# AND
+									F.LastSaleDate <= #lastSaleTimeRangeList[].lastSaleDateEnd#
+								]]>
+						</isNotEmpty>
+						<isEmpty property="lastSaleTimeRangeList[].lastSaleDateEnd">
+							<![CDATA[
+									F.LastSaleDate >= #lastSaleTimeRangeList[].lastSaleDateStart#
+								]]>
+						</isEmpty>
+					</isNotEmpty>
+					<isEmpty property="lastSaleTimeRangeList[].lastSaleDateStart">
+						<isNotEmpty property="lastSaleTimeRangeList[].lastSaleDateEnd">
+							<![CDATA[
+									F.LastSaleDate <= #lastSaleTimeRangeList[].lastSaleDateEnd#
+								]]>
+						</isNotEmpty>
+					</isEmpty>
+				</iterate>
+			</isNotEmpty>
+			<!--
 			<isNotEmpty prepend="AND" property="lastSaleDateStart">
 				F.LastSaleDate >= #lastSaleDateStart#
 			</isNotEmpty>
 			<isNotEmpty prepend="AND" property="lastSaleDateEnd">
 				<![CDATA[F.LastSaleDate <= #lastSaleDateEnd#]]>
 			</isNotEmpty>
+			-->
 			<isNotEmpty prepend="AND" property="campaignCodeNot">
 				<![CDATA[
 					NOT EXISTS(SELECT 1 FROM Campaign.BIN_CampaignOrder T WITH(NOLOCK) 
@@ -795,6 +908,31 @@
 				]]>
 				</isNotEmpty>
 			</isNotEmpty>
+			<isNotEmpty prepend="AND" property="firstSaleTimeRangeList" open="(" close=")">
+				<iterate property="firstSaleTimeRangeList" open="(" close=")" conjunction="OR">
+					<isNotEmpty property="firstSaleTimeRangeList[].firstStartDay">
+						<isNotEmpty property="firstSaleTimeRangeList[].firstEndDay">
+							<![CDATA[
+										F.FirstSaleDate >= #firstSaleTimeRangeList[].firstStartDay# AND
+										F.FirstSaleDate <= #firstSaleTimeRangeList[].firstEndDay#
+									]]>
+						</isNotEmpty>
+						<isEmpty property="firstSaleTimeRangeList[].firstEndDay">
+							<![CDATA[
+										F.FirstSaleDate >= #firstSaleTimeRangeList[].firstStartDay#
+									]]>
+						</isEmpty>
+					</isNotEmpty>
+					<isEmpty property="firstSaleTimeRangeList[].firstStartDay">
+						<isNotEmpty property="firstSaleTimeRangeList[].firstEndDay">
+							<![CDATA[
+										F.FirstSaleDate <= #firstSaleTimeRangeList[].firstEndDay#
+									]]>
+						</isNotEmpty>
+					</isEmpty>
+				</iterate>
+			</isNotEmpty>
+			<!--
 			<isNotEmpty prepend="AND" property="firstStartDay">
 			<![CDATA[
 				F.FirstSaleDate >= #firstStartDay#
@@ -805,6 +943,7 @@
 				convert(date,F.FirstSaleDate) <= #firstEndDay#
 			]]>
 			</isNotEmpty>
+			-->
 			<isNotEmpty prepend="AND" property="notSaleLastTime">
 				F.LastSaleDate is not null AND convert(date, F.LastSaleDate) = #notSaleLastTime#
 			</isNotEmpty>
@@ -820,6 +959,36 @@
 			<![CDATA[		
 						A.BIN_MemberInfoID = T.BIN_MemberID)
 			]]>
+			</isNotEmpty>
+			<isNotEmpty property="campaignRuleID" prepend="AND">
+				<![CDATA[
+				EXISTS(SELECT 1 FROM
+				(SELECT E.BIN_MemberInfoID
+					FROM
+						Campaign.BIN_CampaignRule A
+						JOIN Campaign.BIN_CamRuleCondition B ON A.BIN_CampaignRuleID=B.BIN_CampaignRuleID
+						JOIN Campaign.BIN_CampaignBaseProp C
+						ON(B.BIN_CampaignBasePropID = C.BIN_CampaignBasePropID
+						AND C.PropertyName ='baseProp_customer'
+						AND C.ValidFlag = '1')
+						JOIN Members.BIN_CustomerInfo D ON B.BasePropValue1=D.BIN_SearchCode
+						JOIN Members.BIN_MemCardInfo E ON D.BIN_CustomerCode=E.MemCode
+					WHERE
+						A.BIN_CampaignRuleID = #campaignRuleID# AND
+						B.ActLocationType='2' AND
+						B.ValidFlag='1'
+				]]>
+					<isNotEmpty property="campObjGroupType" prepend="AND">
+						<isEqual property="campObjGroupType" compareValue="1">
+							(D.GroupType = #campObjGroupType# or D.GroupType is null)
+						</isEqual>
+						<isNotEqual property="campObjGroupType" compareValue="1">
+							D.GroupType = #campObjGroupType#
+						</isNotEqual>
+					</isNotEmpty>
+				<![CDATA[) T
+					WHERE A.BIN_MemberInfoID=T.BIN_MemberInfoID)
+				]]>
 			</isNotEmpty>
     </sql>
     
@@ -2253,6 +2422,9 @@
 			<isNotEmpty prepend="AND" property="name">
 				A.Name LIKE '%'+#name#+'%'
 			</isNotEmpty>
+			<isNotEmpty prepend="AND" property="email">
+				A.Email LIKE '%'+#email#+'%'
+			</isNotEmpty>
 			<isNotEmpty prepend="AND" property="nickname">
 				A.Nickname LIKE '%'+#nickname#+'%'
 			</isNotEmpty>
@@ -2319,74 +2491,108 @@
 			<isNotEmpty prepend="AND" property="birthYearEnd">
 				<![CDATA[ A.BirthYear <= #birthYearEnd# ]]>	
 			</isNotEmpty>
-			
-			<isNotEqual property="joinDateSaleDateRel" compareValue="2">
-				<isNotEmpty prepend="AND" property="joinDateStart">
-					<![CDATA[ A.JoinDate >= #joinDateStart# ]]>
-				</isNotEmpty>	
-				<isNotEmpty prepend="AND" property="joinDateEnd">
-					<![CDATA[ A.JoinDate <= #joinDateEnd# ]]>
-				</isNotEmpty>
-				<isNotEmpty property="saleCountTerm">
-				<isNotEmpty prepend="AND" property="saleCountStart">	
-		    		ISNULL(L.saleCount,0) >= #saleCountStart#
-		    	</isNotEmpty>
-		    	<isNotEmpty prepend="AND" property="saleCountEnd">	
-		    		<![CDATA[ISNULL(L.saleCount,0) <= #saleCountEnd#]]>
-		    	</isNotEmpty>
-				</isNotEmpty>
-			</isNotEqual>
-			<isEqual property="joinDateSaleDateRel" compareValue="2">
-				<isNotEmpty property="joinDateTerm">
-					<isNotEmpty prepend="AND" property="saleCountTerm">
-						(<isNotEmpty property="joinDateStart">
-						<isNotEmpty property="joinDateEnd">
-							<![CDATA[ (A.JoinDate >= #joinDateStart# AND A.JoinDate <= #joinDateEnd#) ]]>
+
+			<isNotEmpty prepend="AND" property="joinDateRangeList" open="(" close=")">
+				<iterate property="joinDateRangeList" open="(" close=")" conjunction="OR">
+					<isNotEmpty property="joinDateRangeList[].joinDateStart">
+						<isNotEmpty property="joinDateRangeList[].joinDateEnd">
+							<![CDATA[
+								A.JoinDate >= #joinDateRangeList[].joinDateStart# AND
+								A.JoinDate <= #joinDateRangeList[].joinDateEnd#
+							]]>
 						</isNotEmpty>
-						<isEmpty property="joinDateEnd">
-							<![CDATA[ (A.JoinDate >= #joinDateStart#) ]]>
+						<isEmpty property="joinDateRangeList[].joinDateEnd">
+							<![CDATA[
+								A.JoinDate >= #joinDateRangeList[].joinDateStart#
+							]]>
 						</isEmpty>
-						</isNotEmpty>	
-						<isEmpty property="joinDateStart">
-						<isNotEmpty property="joinDateEnd">
-							<![CDATA[ (A.JoinDate <= #joinDateEnd#) ]]>
-						</isNotEmpty>
-						</isEmpty>
-						OR
-						<isNotEmpty property="saleCountStart">	
-				    	<isNotEmpty property="saleCountEnd">	
-				    		<![CDATA[ (ISNULL(L.saleCount,0) >= #saleCountStart# AND ISNULL(L.saleCount,0) <= #saleCountEnd#) ]]>
-				    	</isNotEmpty>
-				    	<isEmpty property="saleCountEnd">	
-				    		<![CDATA[ (ISNULL(L.saleCount,0) >= #saleCountStart#) ]]>
-				    	</isEmpty>
-				    	</isNotEmpty>
-				    	<isEmpty property="saleCountStart">	
-				    	<isNotEmpty property="saleCountEnd">	
-				    		<![CDATA[ (ISNULL(L.saleCount,0) <= #saleCountEnd#) ]]>
-				    	</isNotEmpty>
-				    	</isEmpty>)
 					</isNotEmpty>
-					<isEmpty property="saleCountTerm">
-						<isNotEmpty prepend="AND" property="joinDateStart">
-							<![CDATA[ A.JoinDate >= #joinDateStart# ]]>
-						</isNotEmpty>	
-						<isNotEmpty prepend="AND" property="joinDateEnd">
-							<![CDATA[ A.JoinDate <= #joinDateEnd# ]]>
+					<isEmpty property="joinDateRangeList[].joinDateStart">
+						<isNotEmpty property="joinDateRangeList[].joinDateEnd">
+							<![CDATA[
+								A.JoinDate <= #joinDateRangeList[].joinDateEnd#
+							]]>
 						</isNotEmpty>
 					</isEmpty>
+				</iterate>
+			</isNotEmpty>
+			<isNotEmpty property="saleCountTerm">
+				<isNotEmpty prepend="AND" property="saleCountStart">
+					ISNULL(L.saleCount,0) >= #saleCountStart#
 				</isNotEmpty>
-				<isEmpty property="joinDateTerm">
-					<isNotEmpty property="saleCountTerm">
-						<isNotEmpty prepend="AND" property="saleCountStart">	
-				    		ISNULL(L.saleCount,0) >= #saleCountStart#
-				    	</isNotEmpty>
-				    	<isNotEmpty prepend="AND" property="saleCountEnd">	
-				    		<![CDATA[ISNULL(L.saleCount,0) <= #saleCountEnd#]]>
-				    	</isNotEmpty>
-					</isNotEmpty>
-				</isEmpty>
-			</isEqual>
+				<isNotEmpty prepend="AND" property="saleCountEnd">
+					<![CDATA[ISNULL(L.saleCount,0) <= #saleCountEnd#]]>
+				</isNotEmpty>
+			</isNotEmpty>
+		<!--
+        <isNotEqual property="joinDateSaleDateRel" compareValue="2">
+            <isNotEmpty prepend="AND" property="joinDateStart">
+                <![CDATA[ A.JoinDate >= #joinDateStart# ]]>
+            </isNotEmpty>
+            <isNotEmpty prepend="AND" property="joinDateEnd">
+                <![CDATA[ A.JoinDate <= #joinDateEnd# ]]>
+            </isNotEmpty>
+            <isNotEmpty property="saleCountTerm">
+            <isNotEmpty prepend="AND" property="saleCountStart">
+                ISNULL(L.saleCount,0) >= #saleCountStart#
+            </isNotEmpty>
+            <isNotEmpty prepend="AND" property="saleCountEnd">
+                <![CDATA[ISNULL(L.saleCount,0) <= #saleCountEnd#]]>
+            </isNotEmpty>
+            </isNotEmpty>
+        </isNotEqual>
+        <isEqual property="joinDateSaleDateRel" compareValue="2">
+            <isNotEmpty property="joinDateTerm">
+                <isNotEmpty prepend="AND" property="saleCountTerm">
+                    (<isNotEmpty property="joinDateStart">
+                    <isNotEmpty property="joinDateEnd">
+                        <![CDATA[ (A.JoinDate >= #joinDateStart# AND A.JoinDate <= #joinDateEnd#) ]]>
+                    </isNotEmpty>
+                    <isEmpty property="joinDateEnd">
+                        <![CDATA[ (A.JoinDate >= #joinDateStart#) ]]>
+                    </isEmpty>
+                    </isNotEmpty>
+                    <isEmpty property="joinDateStart">
+                    <isNotEmpty property="joinDateEnd">
+                        <![CDATA[ (A.JoinDate <= #joinDateEnd#) ]]>
+                    </isNotEmpty>
+                    </isEmpty>
+                    OR
+                    <isNotEmpty property="saleCountStart">
+                    <isNotEmpty property="saleCountEnd">
+                        <![CDATA[ (ISNULL(L.saleCount,0) >= #saleCountStart# AND ISNULL(L.saleCount,0) <= #saleCountEnd#) ]]>
+                    </isNotEmpty>
+                    <isEmpty property="saleCountEnd">
+                        <![CDATA[ (ISNULL(L.saleCount,0) >= #saleCountStart#) ]]>
+                    </isEmpty>
+                    </isNotEmpty>
+                    <isEmpty property="saleCountStart">
+                    <isNotEmpty property="saleCountEnd">
+                        <![CDATA[ (ISNULL(L.saleCount,0) <= #saleCountEnd#) ]]>
+                    </isNotEmpty>
+                    </isEmpty>)
+                </isNotEmpty>
+                <isEmpty property="saleCountTerm">
+                    <isNotEmpty prepend="AND" property="joinDateStart">
+                        <![CDATA[ A.JoinDate >= #joinDateStart# ]]>
+                    </isNotEmpty>
+                    <isNotEmpty prepend="AND" property="joinDateEnd">
+                        <![CDATA[ A.JoinDate <= #joinDateEnd# ]]>
+                    </isNotEmpty>
+                </isEmpty>
+            </isNotEmpty>
+            <isEmpty property="joinDateTerm">
+                <isNotEmpty property="saleCountTerm">
+                    <isNotEmpty prepend="AND" property="saleCountStart">
+                        ISNULL(L.saleCount,0) >= #saleCountStart#
+                    </isNotEmpty>
+                    <isNotEmpty prepend="AND" property="saleCountEnd">
+                        <![CDATA[ISNULL(L.saleCount,0) <= #saleCountEnd#]]>
+                    </isNotEmpty>
+                </isNotEmpty>
+            </isEmpty>
+        </isEqual>
+        -->
 			
 			<isNotEmpty property="modeFlag" prepend="AND">
 			<isEqual property="exclusiveFlag" compareValue="1">
@@ -2396,7 +2602,55 @@
 				NOT EXISTS (<include refid="BINOLCM33.CounterTermSql" /> AND A.BIN_OrganizationID = orgTable.BIN_OrganizationID)
 			</isEqual>	
 			</isNotEmpty>
-			
+			<isNotEmpty prepend="AND" property="memPointRangeList" open="(" close=")">
+				<iterate property="memPointRangeList" open="(" close=")" conjunction="OR">
+					<isNotEmpty property="memPointRangeList[].memberPointStart">
+						<isNotEmpty property="memPointRangeList[].memberPointEnd">
+							<![CDATA[
+								ISNULL(D.TotalPoint,0) >= #memPointRangeList[].memberPointStart# AND
+								ISNULL(D.TotalPoint,0) <= #memPointRangeList[].memberPointEnd#
+							]]>
+						</isNotEmpty>
+						<isEmpty property="memPointRangeList[].memberPointEnd">
+							<![CDATA[
+								ISNULL(D.TotalPoint,0) >= #memPointRangeList[].memberPointStart#
+							]]>
+						</isEmpty>
+					</isNotEmpty>
+					<isEmpty property="memPointRangeList[].memberPointStart">
+						<isNotEmpty property="memPointRangeList[].memberPointEnd">
+							<![CDATA[
+								ISNULL(D.TotalPoint,0) <= #memPointRangeList[].memberPointEnd#
+							]]>
+						</isNotEmpty>
+					</isEmpty>
+				</iterate>
+			</isNotEmpty>
+			<isNotEmpty prepend="AND" property="changablePointRangeList" open="(" close=")">
+				<iterate property="changablePointRangeList" open="(" close=")" conjunction="OR">
+					<isNotEmpty property="changablePointRangeList[].changablePointStart">
+						<isNotEmpty property="changablePointRangeList[].changablePointEnd">
+							<![CDATA[
+								ISNULL(D.ChangablePoint,0) >= #changablePointRangeList[].changablePointStart# AND
+								ISNULL(D.ChangablePoint,0) <= #changablePointRangeList[].changablePointEnd#
+							]]>
+						</isNotEmpty>
+						<isEmpty property="changablePointRangeList[].changablePointEnd">
+							<![CDATA[
+								ISNULL(D.ChangablePoint,0) >= #changablePointRangeList[].changablePointStart#
+							]]>
+						</isEmpty>
+					</isNotEmpty>
+					<isEmpty property="changablePointRangeList[].changablePointStart">
+						<isNotEmpty property="changablePointRangeList[].changablePointEnd">
+							<![CDATA[
+								ISNULL(D.ChangablePoint,0) <= #changablePointRangeList[].changablePointEnd#
+							]]>
+						</isNotEmpty>
+					</isEmpty>
+				</iterate>
+			</isNotEmpty>
+			<!--
 			<isNotEmpty prepend="AND" property="memberPointStart">
 				ISNULL(D.TotalPoint,0) >= #memberPointStart#
 			</isNotEmpty>
@@ -2409,7 +2663,7 @@
 			<isNotEmpty prepend="AND" property="changablePointEnd">
 				<![CDATA[ISNULL(D.ChangablePoint,0) <= #changablePointEnd#]]>
 			</isNotEmpty>
-			
+			-->
 			<isNotEmpty prepend="AND" property="addrNotEmpty">
 				EXISTS (SELECT 1 FROM Members.BIN_MemberAddress G WITH(NOLOCK) JOIN Basis.BIN_AddressInfo I WITH(NOLOCK) 
 				ON G.BIN_AddressInfoID = I.BIN_AddressInfoID WHERE I.AddressLine1 IS NOT NULL AND I.AddressLine1 != '' AND
@@ -2610,12 +2864,38 @@
 			<isNotEmpty prepend="AND" property="wechatBindTimeEnd">
 				<![CDATA[CONVERT(VARCHAR(30), A.WechatBindTime, 23) <= #wechatBindTimeEnd#]]>
 			</isNotEmpty>
+			<isNotEmpty prepend="AND" property="lastSaleTimeRangeList" open="(" close=")">
+				<iterate property="lastSaleTimeRangeList" open="(" close=")" conjunction="OR">
+					<isNotEmpty property="lastSaleTimeRangeList[].lastSaleDateStart">
+						<isNotEmpty property="lastSaleTimeRangeList[].lastSaleDateEnd">
+							<![CDATA[
+								F.LastSaleDate >= #lastSaleTimeRangeList[].lastSaleDateStart# AND
+								F.LastSaleDate <= #lastSaleTimeRangeList[].lastSaleDateEnd#
+							]]>
+						</isNotEmpty>
+						<isEmpty property="lastSaleTimeRangeList[].lastSaleDateEnd">
+							<![CDATA[
+								F.LastSaleDate >= #lastSaleTimeRangeList[].lastSaleDateStart#
+							]]>
+						</isEmpty>
+					</isNotEmpty>
+					<isEmpty property="lastSaleTimeRangeList[].lastSaleDateStart">
+						<isNotEmpty property="lastSaleTimeRangeList[].lastSaleDateEnd">
+							<![CDATA[
+								F.LastSaleDate <= #lastSaleTimeRangeList[].lastSaleDateEnd#
+							]]>
+						</isNotEmpty>
+					</isEmpty>
+				</iterate>
+			</isNotEmpty>
+			<!--
 			<isNotEmpty prepend="AND" property="lastSaleDateStart">
 				F.LastSaleDate >= #lastSaleDateStart#
 			</isNotEmpty>
 			<isNotEmpty prepend="AND" property="lastSaleDateEnd">
 				<![CDATA[F.LastSaleDate <= #lastSaleDateEnd#]]>
 			</isNotEmpty>
+			-->
 			<isNotEmpty prepend="AND" property="campaignCodeNot">
 				<![CDATA[
 					NOT EXISTS(SELECT 1 FROM Campaign.BIN_CampaignOrder T WITH(NOLOCK) 
@@ -2660,6 +2940,32 @@
 					]]>
 				</isNotEmpty>
 			</isNotEmpty>
+
+			<isNotEmpty prepend="AND" property="firstSaleTimeRangeList" open="(" close=")">
+				<iterate property="firstSaleTimeRangeList" open="(" close=")" conjunction="OR">
+					<isNotEmpty property="firstSaleTimeRangeList[].firstStartDay">
+						<isNotEmpty property="firstSaleTimeRangeList[].firstEndDay">
+							<![CDATA[
+									F.FirstSaleDate >= #firstSaleTimeRangeList[].firstStartDay# AND
+									F.FirstSaleDate <= #firstSaleTimeRangeList[].firstEndDay#
+								]]>
+						</isNotEmpty>
+						<isEmpty property="firstSaleTimeRangeList[].firstEndDay">
+							<![CDATA[
+									F.FirstSaleDate >= #firstSaleTimeRangeList[].firstStartDay#
+								]]>
+						</isEmpty>
+					</isNotEmpty>
+					<isEmpty property="firstSaleTimeRangeList[].firstStartDay">
+						<isNotEmpty property="firstSaleTimeRangeList[].firstEndDay">
+							<![CDATA[
+									F.FirstSaleDate <= #firstSaleTimeRangeList[].firstEndDay#
+								]]>
+						</isNotEmpty>
+					</isEmpty>
+				</iterate>
+			</isNotEmpty>
+			<!--
 			<isNotEmpty prepend="AND" property="firstStartDay">
 			<![CDATA[
 				F.FirstSaleDate >= #firstStartDay#
@@ -2670,6 +2976,7 @@
 				convert(date,F.FirstSaleDate) <= #firstEndDay#
 			]]>
 			</isNotEmpty>
+			-->
 			<isNotEmpty prepend="AND" property="notSaleLastTime">
 				F.LastSaleDate is not null AND convert(date, F.LastSaleDate) = #notSaleLastTime#
 			</isNotEmpty>
@@ -2685,6 +2992,36 @@
 			<![CDATA[		
 						A.BIN_MemberInfoID = T.BIN_MemberID)
 			]]>
+			</isNotEmpty>
+			<isNotEmpty property="campaignRuleID" prepend="AND">
+				<![CDATA[
+				EXISTS(SELECT 1 FROM
+				(SELECT E.BIN_MemberInfoID
+					FROM
+						Campaign.BIN_CampaignRule A
+						JOIN Campaign.BIN_CamRuleCondition B ON A.BIN_CampaignRuleID=B.BIN_CampaignRuleID
+						JOIN Campaign.BIN_CampaignBaseProp C
+						ON(B.BIN_CampaignBasePropID = C.BIN_CampaignBasePropID
+						AND C.PropertyName ='baseProp_customer'
+						AND C.ValidFlag = '1')
+						JOIN Members.BIN_CustomerInfo D ON B.BasePropValue1=D.BIN_SearchCode
+						JOIN Members.BIN_MemCardInfo E ON D.BIN_CustomerCode=E.MemCode
+					WHERE
+						A.BIN_CampaignRuleID = #campaignRuleID# AND
+						B.ActLocationType='2' AND
+						B.ValidFlag='1'
+				]]>
+				<isNotEmpty property="campObjGroupType" prepend="AND">
+					<isEqual property="campObjGroupType" compareValue="1">
+						(D.GroupType = #campObjGroupType# or D.GroupType is null)
+					</isEqual>
+					<isNotEqual property="campObjGroupType" compareValue="1">
+						D.GroupType = #campObjGroupType#
+					</isNotEqual>
+				</isNotEmpty>
+				<![CDATA[) T
+					WHERE A.BIN_MemberInfoID=T.BIN_MemberInfoID)
+				]]>
 			</isNotEmpty>
 			<isNotEmpty property="memTag">
 				<isEqual property="memTag" compareValue="1">

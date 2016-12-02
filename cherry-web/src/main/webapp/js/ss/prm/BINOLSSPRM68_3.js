@@ -124,7 +124,8 @@ BINOLSSPRM68_3.prototype={
 				confirmEvent: function(){
 					$('#conInfoDiv_' + index).hide();
 					//将搜索条件弹出框信息json格式化
-					var searchParam = $("#searchCondialogInit").find(":input").serializeForm2Json(false);
+					var searchParam = getMemCommonSearchJson("searchCondialogInit");
+					//var searchParam = $("#searchCondialogInit").find(":input").serializeForm2Json(false);
 					if(searchParam != undefined && null != searchParam && searchParam != ""){
 						$("#memberJson_"+index).val(searchParam);
 						that.getConInfo(searchParam,index);

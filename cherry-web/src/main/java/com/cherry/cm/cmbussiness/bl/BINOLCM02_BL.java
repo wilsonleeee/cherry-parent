@@ -1857,4 +1857,26 @@ public class BINOLCM02_BL {
 	public List<Map<String, Object>> getSortListSrh(Map<String, Object> map) {
 		return binOLCM02_Service. getSortListSrh(map);
 	}
+
+	/**
+	 * 查询活动对象为搜索结果的活动总数
+	 *
+	 * @param map 查询条件
+	 * @return 活动对象为搜索结果的活动总数
+	 */
+	public int getCampObjCount(Map<String, Object> map) {
+
+		// 取得子品牌总数
+		return binOLCM02_Service.getCampObjCount(map);
+	}
+
+	/**
+	 * 查询活动对象为搜索结果的活动List
+	 *
+	 * @param map 查询条件
+	 * @return 活动对象为搜索结果的活动List
+	 */
+	public List<Map<String, Object>> getCampObjList(Map<String, Object> map) {
+		return binOLCM02_Service.getCampObjList(map);
+	}
 }

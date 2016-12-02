@@ -100,7 +100,8 @@ BINOLCPACT05.prototype = {
 				//确认按钮
 				confirmEvent: function(){
 					//将搜索条件弹出框信息json格式化
-					var campMebInfo = $("#searchCondialogInit").find(":input").serializeForm2Json(false);
+					var campMebInfo = getMemCommonSearchJson("searchCondialogInit");
+					//var campMebInfo = $("#searchCondialogInit").find(":input").serializeForm2Json(false);
 					if(!isEmpty(campMebInfo)){
 						$("#campMebJson").val(campMebInfo);
 						// 关闭搜索条件弹出框

@@ -1600,6 +1600,37 @@ public class BINOLCM02_Action extends BaseAction implements ModelDriven<BINOLCM0
 		form.setITotalRecords(count);		
 		return SUCCESS;
 	}
+	/**
+	 * 初始化促销品信息弹出框(薇诺娜，合并)
+	 * @return
+	 * @throws Exception
+	 */
+	public String initCampObjDialog() throws Exception {
+		return SUCCESS;
+	}
+	/**
+	 * 取得促销品信息弹出框
+	 * @return
+	 * @throws Exception
+	 */
+	public String popCampObjDialog() throws Exception {
+		Map<String,Object> map = getCommMap();
+		// 画面查询条件
+		if(form.getSSearch() != null && !"".equals(form.getSSearch())) {
+			map.put("keyword", form.getSSearch());
+		}
+		// 取得活动对象是搜索结果的活动总数
+		int count  = binOLCM02_BL.getCampObjCount(map);
+		// form表单设置
+		form.setITotalDisplayRecords(count);
+		form.setITotalRecords(count);
+		if(count > 0) {
+			// 取得活动对象是搜索结果的活动List
+			form.setPopCampObjList(binOLCM02_BL.getCampObjList(map));
+		}
+		return SUCCESS;
+	}
+
 	private Map<String,Object> getCommMap() throws Exception{
 		Map<String, Object> map = (Map<String, Object>) Bean2Map.toHashMap(form);
 		// 登陆用户信息

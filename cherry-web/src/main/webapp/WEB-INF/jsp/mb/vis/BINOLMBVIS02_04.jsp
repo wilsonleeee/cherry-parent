@@ -38,6 +38,21 @@
 				      	<s:property value="visitPlanInfo.visitTypeName"/>
 				      </span></td>
 				    </tr>
+					<s:if test="%{visitPlanInfo.visitTypeCode == 'VISIT_TYPE_ACT'}">
+					<tr>
+						<th>活动名称</th>
+						<td>
+							<span>
+							  <span id="campObjCampDiv">
+								  (${visitPlanInfo.subCampaignCode})${visitPlanInfo.subCampaignName}
+							  </span>
+							  <span>
+								  <s:if test="%{visitPlanInfo.campObjGroupType == 1}">&nbsp;&nbsp;&nbsp;&nbsp;仅沟通对象</s:if>&nbsp;
+							  </span>
+							</span>
+						</td>
+					</tr>
+					</s:if>
 				    <tr>
 				      <th><s:text name="mbvis02_visitObjType" /></th>
 					  <td colspan="3">

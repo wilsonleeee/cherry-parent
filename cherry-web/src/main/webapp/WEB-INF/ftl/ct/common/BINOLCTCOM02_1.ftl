@@ -35,7 +35,7 @@
 					</span>
 					<input id="templateCode" value="${(templateInfo.templateCode)!?html}" class="hide" type="text" />
 					<input id="contents" value="${(templateInfo.contents)!?html}" class="hide" type="text" />
-				</a>				
+				</a>
 			</li>
 		</ul>
 	</#list>

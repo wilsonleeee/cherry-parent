@@ -1670,4 +1670,50 @@
 		    <include refid="BINOLCMINC99.insertValueSql"/>
 		)
 	</insert>
+
+	<!--  取得活动对象总数 -->
+	<select id="getCustomerCount" parameterClass="java.util.HashMap" resultClass="java.lang.Integer">
+		<![CDATA[
+		 SELECT
+		   	COUNT(1)
+		 FROM
+			Members.BIN_CustomerInfo
+		 WHERE
+		  	BIN_BrandInfoID=#brandInfoId# AND
+		  	BIN_SearchCode=#searchCode# AND
+			ValidFlag='1'
+		]]>
+	</select>
+	<!-- 活动对象分组  -->
+	<update id="updCampObjGroupType" parameterClass="java.util.HashMap">
+		<![CDATA[
+	    	UPDATE Members.BIN_CustomerInfo SET GroupType = '1',
+		]]>
+			<include refid="BINOLCMINC99.updateSql" />
+		<![CDATA[
+		  	WHERE
+		  		BIN_BrandInfoID=#brandInfoId# AND
+			 	BIN_SearchCode=#searchCode# AND
+			 	ValidFlag='1' AND
+			  	BIN_CustomerCode IN (SELECT TOP $TOP$ BIN_CustomerCode
+					FROM Members.BIN_CustomerInfo
+					WHERE
+						BIN_BrandInfoID=#brandInfoId# AND
+						BIN_SearchCode=#searchCode# AND
+						ValidFlag='1'
+					ORDER BY NEWID())
+		]]>
+	</update>
+	<!-- 活动对象分组  -->
+	<update id="updAllCampObjGroupType" parameterClass="java.util.HashMap">
+		<![CDATA[
+	    	UPDATE Members.BIN_CustomerInfo SET GroupType = '0',
+		]]>
+		<include refid="BINOLCMINC99.updateSql" />
+		<![CDATA[
+		  	WHERE
+		  		BIN_BrandInfoID=#brandInfoId# AND
+			 	BIN_SearchCode=#searchCode#
+		]]>
+	</update>
 </sqlMap>

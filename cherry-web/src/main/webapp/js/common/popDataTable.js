@@ -3835,3 +3835,81 @@ function popDialog(option){
 	// 设置Dialog共通属性
 	setDialogSetting($dialog,dialogSetting,option);
 }
+
+//活动对象为搜索结果的活动
+function popCampObjList(url, param, value, callback) {
+	if($("#popCampObjListDialog").length == 0) {
+		$("body").append('<div style="display:none" id="popCampObjListDialog"></div>');
+	} else {
+		$("#popCampObjListDialog").empty();
+	}
+	var searchInitCallback = function(msg) {
+		$("#popCampObjListDialog").html(msg);
+		var dialogSetting = {
+			dialogInit: "#popCampObjListDialog",
+			text: msg,
+			bgiframe: true,
+			width:600,
+			height:"auto",
+			minWidth:600,
+			zIndex: 9999,
+			modal: true,
+			resizable: false,
+			title: 	$("#popCampObjListDialog").find("#dialogTitle").text(),
+			confirm: $("#popCampObjListDialog").find("#dialogConfirm").text(),
+			cancel: $("#popCampObjListDialog").find("#dialogCancel").text(),
+			confirmEvent: function(){
+				if(typeof(callback) == "function") {
+					callback("popCampObjListDialog");
+				}
+				removeDialog("#popCampObjListDialog");
+			},
+			cancelEvent: function(){removeDialog("#popCampObjListDialog");}
+		};
+		openDialog(dialogSetting);
+
+		if(oTableArr[100]) {
+			oTableArr[100] = null;
+		}
+		var searchUrl = $("#searchCampObjListUrl").attr("href")+"?"+getSerializeToken();
+		if(param) {
+			searchUrl += "&" + param;
+		}
+		var tableSetting = {
+			// 表格ID
+			tableId : '#searchCampObjDataTable',
+			// 一页显示页数
+			iDisplayLength:5,
+			// 数据URL
+			url : searchUrl,
+			// 表格默认排序
+			aaSorting : [[ 1, "desc" ]],
+			// 表格列属性设置
+			aoColumns : [  { "sName": "", "sWidth": "1%", "bSortable": false},
+				{ "sName": "SubCampaignCode"},
+				{ "sName": "SubCampaignName"}
+			],
+			index:100,
+			colVisFlag:false,
+			// 横向滚动条出现的临界宽度
+			sScrollX : "100%",
+			fnDrawCallback : function() {
+				if(value) {
+					$('#searchCampObjDataTable').find(':input').each(function() {
+						if($(this).val() == value) {
+							$(this).prop('checked', true);
+							return false;
+						}
+					});
+				}
+			}
+		};
+		// 调用获取表格函数
+		getTable(tableSetting);
+	};
+	cherryAjaxRequest({
+		url: url,
+		param: null,
+		callback: searchInitCallback
+	});
+}

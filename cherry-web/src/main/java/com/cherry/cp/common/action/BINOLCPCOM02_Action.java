@@ -1840,4 +1840,13 @@ ModelDriven<BINOLCPCOM02_Form>, ApplicationContextAware{
 			e.printStackTrace();
 		}
 	}
+
+	public void campObjGroup() throws Exception {
+		Map<String, Object> map = new HashMap<String, Object>();
+		map.put("brandInfoId",form.getBrandInfoId());
+		map.put("searchCode",form.getSearchCode());
+		map.put("campObjGroupValue",form.getCampObjGroupValue());
+		map.put("campObjGroupType",form.getCampObjGroupType());
+		ConvertUtil.setResponseByAjax(response, binolcpcom02IF.campObjGroup(map));
+	}
 }

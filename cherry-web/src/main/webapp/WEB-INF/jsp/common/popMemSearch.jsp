@@ -10,18 +10,22 @@
 <script type="text/javascript">
 $(document).ready(function() {
 	var index = '${index}';
-	$('#joinDateStart'+index).cherryDate({
-		beforeShow: function(input){
-			var value = $('#joinDateEnd'+index).val();
-			return [value,'maxDate'];
-		}
+	$("#joinDateRangeDiv").find('li').each(function(i){
+		var that = this;
+		$(that).find('#joinDateStart'+index+'_'+i).cherryDate({
+			beforeShow: function(input){
+				var value = $(that).find('#joinDateEnd'+index+'_'+i).val();
+				return [value,'maxDate'];
+			}
+		});
+		$(that).find('#joinDateEnd'+index+'_'+i).cherryDate({
+			beforeShow: function(input){
+				var value = $(that).find('#joinDateStart'+index+'_'+i).val();
+				return [value,'minDate'];
+			}
+		});
 	});
-	$('#joinDateEnd'+index).cherryDate({
-		beforeShow: function(input){
-			var value = $('#joinDateStart'+index).val();
-			return [value,'minDate'];
-		}
-	});
+
 	$('#saleTimeStart'+index).cherryDate({
 		beforeShow: function(input){
 			var value = $('#saleTimeEnd'+index).val();
@@ -70,36 +74,37 @@ $(document).ready(function() {
 			return [value,'minDate'];
 		}
 	});
-	
-	if ($('#lastSaleDateStart'+index).length > 0) {
-		$('#lastSaleDateStart'+index).cherryDate({
+
+	$("#lastSaleTimeRangeDiv").find('li').each(function(i){
+		var that = this;
+		$(that).find('#lastSaleDateStart'+index+'_'+i).cherryDate({
 			beforeShow: function(input){
-				var value = $('#lastSaleDateEnd'+index).val();
+				var value = $(that).find('#lastSaleDateEnd'+index+'_'+i).val();
 				return [value,'maxDate'];
 			}
 		});
-		$('#lastSaleDateEnd'+index).cherryDate({
+		$(that).find('#lastSaleDateEnd'+index+'_'+i).cherryDate({
 			beforeShow: function(input){
-				var value = $('#lastSaleDateStart'+index).val();
+				var value = $(that).find('#lastSaleDateStart'+index+'_'+i).val();
 				return [value,'minDate'];
 			}
 		});
-	}
-	
-	if ($('#firstStartDay'+index).length > 0) {
-		$('#firstStartDay'+index).cherryDate({
+	});
+	$("#firstSaleTimeRangeDiv").find('li').each(function(i){
+		var that = this;
+		$(that).find('#firstStartDay'+index+'_'+i).cherryDate({
 			beforeShow: function(input){
-				var value = $('#firstEndDay'+index).val();
+				var value = $(that).find('#firstEndDay'+index+'_'+i).val();
 				return [value,'maxDate'];
 			}
 		});
-		$('#firstEndDay'+index).cherryDate({
+		$(that).find('#firstEndDay'+index+'_'+i).cherryDate({
 			beforeShow: function(input){
-				var value = $('#firstStartDay'+index).val();
+				var value = $(that).find('#firstStartDay'+index+'_'+i).val();
 				return [value,'minDate'];
 			}
 		});
-	}
+	});
 	
 	if ($('#clubJoinTimeStart').length > 0) {
 		$('#clubJoinTimeStart').cherryDate({
@@ -284,16 +289,25 @@ $(document).ready(function() {
 				<s:hidden name="joinDateUnitFlag"></s:hidden>
 				</span>
 				<span class='<s:if test="%{joinDateMode != 9}">hide</s:if>'>
-				<s:textfield name="joinDateStart" cssClass="date" id="joinDateStartTemp%{index}" cssStyle="width:80px" disabled="true"/>-<s:textfield name="joinDateEnd" cssClass="date" id="joinDateEndTemp%{index}" cssStyle="width:80px" disabled="true"/>
-				<s:hidden name="joinDateStart" id="joinDateStartTemp%{index}"></s:hidden>
-				<s:hidden name="joinDateEnd" id="joinDateEndTemp%{index}"></s:hidden>
+					<div id="joinDateRangeDiv">
+						<ul>
+							<s:iterator value="joinDateRangeList" id="joinDateRangeMap" status="status">
+								<li>
+									<s:textfield name="joinDateStart" cssClass="date" id="joinDateStartTemp%{index}_%{#status.index}" cssStyle="width:80px" value="%{#joinDateRangeMap.joinDateStart}" disabled="true"/>-<s:textfield name="joinDateEnd" cssClass="date" id="joinDateEndTemp%{index}_%{#status.index}" cssStyle="width:80px" value="%{#joinDateRangeMap.joinDateEnd}" disabled="true"/>
+								</li>
+							</s:iterator>
+						</ul>
+						<s:hidden name="joinDateRangeJson" id="joinDateRangeJson"/>
+					</div>
 				</span>
+				<!--
 				<span style="margin-left:20px;" class='<s:if test="%{joinDateMode == null || joinDateMode == -1}">hide</s:if>'>
 				<s:text name="global.page.joinDateSaleDateRel" />
 				<input id="joinDateSaleDateRel1" type="radio" name="joinDateSaleDateRel" value="1" <s:if test="%{joinDateSaleDateRel == 1}">checked</s:if> disabled="disabled"><label for="joinDateSaleDateRel1"><s:text name="global.page.and" /></label>
 				<input id="joinDateSaleDateRel2" type="radio" name="joinDateSaleDateRel" value="2" <s:if test="%{joinDateSaleDateRel == 2}">checked</s:if> disabled="disabled"><label for="joinDateSaleDateRel2"><s:text name="global.page.or" /></label>
 				<s:hidden name="joinDateSaleDateRel"></s:hidden>
 				</span>
+				-->
 				</s:if>
 				<s:else>
 				<span>
@@ -314,13 +328,38 @@ $(document).ready(function() {
 				</select>
 				</span>
 				<span class='<s:if test="%{joinDateMode != 9}">hide</s:if>'>
-				<s:textfield name="joinDateStart" cssClass="date" id="joinDateStart%{index}" cssStyle="width:80px"/>-<s:textfield name="joinDateEnd" cssClass="date" id="joinDateEnd%{index}" cssStyle="width:80px"/>
+					<div id="joinDateRangeDiv">
+						<ul>
+							<s:if test="%{joinDateRangeList != null}">
+								<s:iterator value="joinDateRangeList" id="joinDateRangeMap" status="status">
+									<li>
+										<s:textfield name="joinDateStart" cssClass="date" id="joinDateStart%{index}_%{#status.index}" cssStyle="width:80px" value="%{#joinDateRangeMap.joinDateStart}"/>-<s:textfield name="joinDateEnd" cssClass="date" id="joinDateEnd%{index}_%{#status.index}" cssStyle="width:80px" value="%{#joinDateRangeMap.joinDateEnd}"/>
+										<s:if test="#status.index == 0">
+											<a class="add" onclick="popmemsearch.addJoinDateRange('${index}');return false;"><span class="ui-icon icon-add"></span><span class="button-text">添加</span></a>
+										</s:if>
+										<s:else>
+											<a href="#" class="right" onclick="$(this).parent().remove(); return false;" role="button"><span class="ui-icon icon-delete-big">close</span></a>
+										</s:else>
+									</li>
+								</s:iterator>
+							</s:if>
+							<s:else>
+								<li>
+									<s:textfield name="joinDateStart" cssClass="date" id="joinDateStart%{index}_0" cssStyle="width:80px"/>-<s:textfield name="joinDateEnd" cssClass="date" id="joinDateEnd%{index}_0" cssStyle="width:80px"/>
+									<a class="add" onclick="popmemsearch.addJoinDateRange('${index}');return false;"><span class="ui-icon icon-add"></span><span class="button-text">添加</span></a>
+								</li>
+							</s:else>
+						</ul>
+						<s:hidden name="joinDateRangeJson" id="joinDateRangeJson"/>
+					</div>
 				</span>
+				<!--
 				<span style="margin-left:20px;" class='<s:if test="%{joinDateMode == null || joinDateMode == -1}">hide</s:if>'>
 				<s:text name="global.page.joinDateSaleDateRel" />
 				<input id="joinDateSaleDateRel1" type="radio" name="joinDateSaleDateRel" value="1" <s:if test="%{joinDateSaleDateRel == 1}">checked</s:if>><label for="joinDateSaleDateRel1"><s:text name="global.page.and" /></label>
 				<input id="joinDateSaleDateRel2" type="radio" name="joinDateSaleDateRel" value="2" <s:if test="%{joinDateSaleDateRel == 2}">checked</s:if>><label for="joinDateSaleDateRel2"><s:text name="global.page.or" /></label>
 				</span>
+				-->
 				</s:else>
 	   		  </td>
             </tr>
@@ -468,9 +507,103 @@ $(document).ready(function() {
                 </s:else>
               </td>
             </tr>
+			<s:if test='%{"3".equals(clubMod)}'>
+			<tr>
+				<th><s:text name="global.page.memberPoint" /></th>
+				<td colspan="3">
+                <span>
+                <s:if test="%{disableConditionMap.memPointRangeJson != null}">
+					<div id="memPointRangeDiv">
+						<ul>
+							<s:iterator value="memPointRangeList" id="memPointRangeMap" status="status">
+								<li>
+									<s:textfield name="memberPointStart" cssClass="text" cssStyle="width:75px;" value="%{#memPointRangeMap.memberPointStart}" disabled="true"/>-<s:textfield name="memberPointEnd" cssClass="text" cssStyle="width:75px;" value="%{#memPointRangeMap.memberPointEnd}" disabled="true"/>
+								</li>
+							</s:iterator>
+						</ul>
+						<s:hidden name="memPointRangeJson" id="memPointRangeJson"/>
+					</div>
+				</s:if>
+                <s:else>
+					<div id="memPointRangeDiv">
+						<ul>
+							<s:if test="%{memPointRangeList != null}">
+								<s:iterator value="memPointRangeList" id="memPointRangeMap" status="status">
+									<li>
+										<s:textfield name="memberPointStart" cssClass="text" cssStyle="width:75px;" value="%{#memPointRangeMap.memberPointStart}"/>-<s:textfield name="memberPointEnd" cssClass="text" cssStyle="width:75px;" value="%{#memPointRangeMap.memberPointEnd}"/>
+										<s:if test="#status.index == 0">
+											<a class="add" onclick="popmemsearch.addMemPointRange();return false;"><span class="ui-icon icon-add"></span><span class="button-text">添加</span></a>
+										</s:if>
+										<s:else>
+											<a href="#" class="right" onclick="$(this).parent().remove(); return false;" role="button"><span class="ui-icon icon-delete-big">close</span></a>
+										</s:else>
+									</li>
+								</s:iterator>
+							</s:if>
+							<s:else>
+								<li>
+									<s:textfield name="memberPointStart" cssClass="text" cssStyle="width:75px;"/>-<s:textfield name="memberPointEnd" cssClass="text" cssStyle="width:75px;"/>
+									<a class="add" onclick="popmemsearch.addMemPointRange();return false;"><span class="ui-icon icon-add"></span><span class="button-text">添加</span></a>
+								</li>
+							</s:else>
+						</ul>
+						<s:hidden name="memPointRangeJson" id="memPointRangeJson"/>
+					</div>
+				</s:else>
+                </span>
+				</td>
+			</tr>
+			</s:if>
+			<s:if test='%{"3".equals(clubMod)}'>
+			<tr>
+				<th><s:text name="global.page.changablePoint" /></th>
+				<td colspan="3">
+                <span>
+                <s:if test="%{disableConditionMap.changablePointRangeJson != null}">
+					<div id="changablePointRangeDiv">
+						<ul>
+							<s:iterator value="changablePointRangeList" id="changablePointRangeMap" status="status">
+								<li>
+									<s:textfield name="changablePointStart" cssClass="text" cssStyle="width:75px;" value="%{#changablePointRangeMap.changablePointStart}" disabled="true"/>-<s:textfield name="changablePointEnd" cssClass="text" cssStyle="width:75px;" value="%{#changablePointRangeMap.changablePointEnd}" disabled="true"/>
+								</li>
+							</s:iterator>
+						</ul>
+						<s:hidden name="changablePointRangeJson" id="changablePointRangeJson"/>
+					</div>
+				</s:if>
+                <s:else>
+					<div id="changablePointRangeDiv">
+						<ul>
+							<s:if test="%{changablePointRangeList != null}">
+								<s:iterator value="changablePointRangeList" id="changablePointRangeMap" status="status">
+									<li>
+										<s:textfield name="changablePointStart" cssClass="text" cssStyle="width:75px;" value="%{#changablePointRangeMap.changablePointStart}"/>-<s:textfield name="changablePointEnd" cssClass="text" cssStyle="width:75px;" value="%{#changablePointRangeMap.changablePointEnd}"/>
+										<s:if test="#status.index == 0">
+											<a class="add" onclick="popmemsearch.addChangablePointRange();return false;"><span class="ui-icon icon-add"></span><span class="button-text">添加</span></a>
+										</s:if>
+										<s:else>
+											<a href="#" class="right" onclick="$(this).parent().remove(); return false;" role="button"><span class="ui-icon icon-delete-big">close</span></a>
+										</s:else>
+									</li>
+								</s:iterator>
+							</s:if>
+							<s:else>
+								<li>
+									<s:textfield name="changablePointStart" cssClass="text" cssStyle="width:75px;"/>-<s:textfield name="changablePointEnd" cssClass="text" cssStyle="width:75px;" />
+									<a class="add" onclick="popmemsearch.addChangablePointRange();return false;"><span class="ui-icon icon-add"></span><span class="button-text">添加</span></a>
+								</li>
+							</s:else>
+						</ul>
+						<s:hidden name="changablePointRangeJson" id="changablePointRangeJson"/>
+					</div>
+				</s:else>
+                </span>
+				</td>
+			</tr>
+			</s:if>
             <tr>
 			  <th><s:text name="global.page.memCode" /></th>
-              <td <s:if test='%{"1".equals(clubMod)}'> colspan="3" </s:if>>
+              <td>
                 <span>
                 <s:if test="%{disableConditionMap.memCode != null}">
                 <s:textfield name="memCode" cssClass="text" disabled="true"/>
@@ -481,25 +614,22 @@ $(document).ready(function() {
                 </s:else>
                 </span>
 			  </td>
-			  <s:if test='%{"3".equals(clubMod)}'>
-              <th><s:text name="global.page.memberPoint" /></th>
-              <td>
+				<th><s:text name="global.page.memName" /></th>
+				<td>
                 <span>
-                <s:if test="%{disableConditionMap.memberPointStart != null || disableConditionMap.memberPointEnd != null}">
-                <s:textfield name="memberPointStart" cssClass="text" cssStyle="width:75px;" disabled="true"/>-<s:textfield name="memberPointEnd" cssClass="text" cssStyle="width:75px;" disabled="true"/>
-                <s:hidden name="memberPointStart"></s:hidden>
-                <s:hidden name="memberPointEnd"></s:hidden>
-                </s:if>
+                <s:if test="%{disableConditionMap.name != null}">
+					<s:textfield name="name" cssClass="text" disabled="true"/>
+					<s:hidden name="name"></s:hidden>
+				</s:if>
                 <s:else>
-                <s:textfield name="memberPointStart" cssClass="text" cssStyle="width:75px;"/>-<s:textfield name="memberPointEnd" cssClass="text" cssStyle="width:75px;" />
-                </s:else>
+					<s:textfield name="name" cssClass="text"/>
+				</s:else>
                 </span>
-			  </td>
-			  </s:if>
+				</td>
             </tr>
             <tr>
               <th><s:text name="global.page.memCounter" /></th>
-			  <td <s:if test='%{"1".equals(clubMod)}'> colspan="3" </s:if>>
+			  <td>
                 <span>
                 <s:hidden name="regionId"></s:hidden>
 			    <s:hidden name="provinceId"></s:hidden>
@@ -528,21 +658,18 @@ $(document).ready(function() {
                 </s:else>
               	</span>
               </td>
-              <s:if test='%{"3".equals(clubMod)}'>
-              <th><s:text name="global.page.changablePoint" /></th>
-              <td>
+				<th><s:text name="global.page.mobilePhone" /></th>
+				<td>
                 <span>
-                <s:if test="%{disableConditionMap.changablePointStart != null || disableConditionMap.changablePointEnd != null}">
-                <s:textfield name="changablePointStart" cssClass="text" cssStyle="width:75px;" disabled="true"/>-<s:textfield name="changablePointEnd" cssClass="text" cssStyle="width:75px;" disabled="true"/>
-                <s:hidden name="changablePointStart"></s:hidden>
-                <s:hidden name="changablePointEnd"></s:hidden>
-                </s:if>
+                <s:if test="%{disableConditionMap.mobilePhone != null}">
+					<s:textfield name="mobilePhone" cssClass="text" disabled="true"/>
+					<s:hidden name="mobilePhone"></s:hidden>
+				</s:if>
                 <s:else>
-                <s:textfield name="changablePointStart" cssClass="text" cssStyle="width:75px;"/>-<s:textfield name="changablePointEnd" cssClass="text" cssStyle="width:75px;" />
-                </s:else>
+					<s:textfield name="mobilePhone" cssClass="text"/>
+				</s:else>
                 </span>
-			  </td>
-			  </s:if>
+				</td>
             </tr>
             <tr>
 			  <th><s:text name="global.page.mebSex" /></th>
@@ -572,7 +699,21 @@ $(document).ready(function() {
                 </s:else>
                 </span>
               </td>
-			</tr>  
+			</tr>
+			<tr>
+				<th><s:text name="global.page.email" /></th>
+				<td colspan="3">
+                <span>
+                <s:if test="%{disableConditionMap.email != null}">
+					<s:textfield name="email" cssClass="text" disabled="true"/>
+					<s:hidden name="email"></s:hidden>
+				</s:if>
+                <s:else>
+					<s:textfield name="email" cssClass="text"/>
+				</s:else>
+                </span>
+				</td>
+			</tr>
 			<s:if test='%{"3".equals(clubMod)}'>
 			<tr>
               <th><s:text name="global.page.referFlag" /></th>
@@ -677,15 +818,48 @@ $(document).ready(function() {
               <th><s:text name="global.page.lastSaleDate" /></th>
               <td colspan="3">
               	<span>
-              	<s:if test="%{disableConditionMap.lastSaleDateStart != null || disableConditionMap.lastSaleDateEnd != null}">
-                <s:textfield name="lastSaleDateStart" cssClass="date" id="lastSaleDateStart%{index}" cssStyle="width:80px" disabled="true"/>
-              	-<s:textfield name="lastSaleDateEnd" cssClass="date" id="lastSaleDateEnd%{index}" cssStyle="width:80px" disabled="true"/>
-                <s:hidden name="lastSaleDateStart" id="lastSaleDateStart%{index}"></s:hidden>
-                <s:hidden name="lastSaleDateEnd" id="lastSaleDateEnd%{index}"></s:hidden>
+              	<s:if test="%{disableConditionMap.lastSaleTimeRangeJson != null}">
+					<div id="lastSaleTimeRangeDiv">
+						<ul>
+							<s:if test="%{lastSaleTimeRangeList != null}">
+								<s:iterator value="lastSaleTimeRangeList" id="lastSaleTimeRangeMap" status="status">
+									<li>
+										<s:textfield name="lastSaleDateStart" cssClass="date" id="lastSaleDateStart%{index}_%{#status.index}" cssStyle="width:80px" value="%{#lastSaleTimeRangeMap.lastSaleDateStart}" disabled="true"/>-
+										<s:textfield name="lastSaleDateEnd" cssClass="date" id="lastSaleDateEnd%{index}_%{#status.index}" cssStyle="width:80px" value="%{#lastSaleTimeRangeMap.lastSaleDateEnd}" disabled="true"/>
+									</li>
+								</s:iterator>
+							</s:if>
+						</ul>
+						<s:hidden name="lastSaleTimeRangeJson" id="lastSaleTimeRangeJson"/>
+					</div>
                 </s:if>
                 <s:else>
-                <s:textfield name="lastSaleDateStart" cssClass="date" id="lastSaleDateStart%{index}" cssStyle="width:80px"/>
-              	-<s:textfield name="lastSaleDateEnd" cssClass="date" id="lastSaleDateEnd%{index}" cssStyle="width:80px"/>
+					<div id="lastSaleTimeRangeDiv">
+						<ul>
+							<s:if test="%{lastSaleTimeRangeList != null}">
+								<s:iterator value="lastSaleTimeRangeList" id="lastSaleTimeRangeMap" status="status">
+									<li>
+										<s:textfield name="lastSaleDateStart" cssClass="date" id="lastSaleDateStart%{index}_%{#status.index}" cssStyle="width:80px" value="%{#lastSaleTimeRangeMap.lastSaleDateStart}"/>-
+										<s:textfield name="lastSaleDateEnd" cssClass="date" id="lastSaleDateEnd%{index}_%{#status.index}" cssStyle="width:80px" value="%{#lastSaleTimeRangeMap.lastSaleDateEnd}"/>
+										<s:if test="#status.index == 0">
+											<a class="add" onclick="popmemsearch.addLastSaleTimeRange('${index}');return false;"><span class="ui-icon icon-add"></span><span class="button-text">添加</span></a>
+										</s:if>
+										<s:else>
+											<a href="#" class="right" onclick="$(this).parent().remove(); return false;" role="button"><span class="ui-icon icon-delete-big">close</span></a>
+										</s:else>
+									</li>
+								</s:iterator>
+							</s:if>
+							<s:else>
+								<li>
+									<s:textfield name="lastSaleDateStart" cssClass="date" id="lastSaleDateStart%{index}_0" cssStyle="width:80px"/>-
+									<s:textfield name="lastSaleDateEnd" cssClass="date" id="lastSaleDateEnd%{index}_0" cssStyle="width:80px"/>
+									<a class="add" onclick="popmemsearch.addLastSaleTimeRange('${index}');return false;"><span class="ui-icon icon-add"></span><span class="button-text">添加</span></a>
+								</li>
+							</s:else>
+						</ul>
+						<s:hidden name="lastSaleTimeRangeJson" id="lastSaleTimeRangeJson"/>
+					</div>
                 </s:else>
                  </span>
               </td>
@@ -694,71 +868,42 @@ $(document).ready(function() {
             <tr>
               <th><s:text name="global.page.notSaleDays" /></th>
               <td colspan="3">
-               <s:if test="%{disableConditionMap.noSaleDaysMode == null && disableConditionMap.notSaleDays != null}">
-               	<span>
-                <select name="noSaleDaysMode"  disabled="disabled">
-					<option value="1" <s:if test="%{noSaleDaysMode == 1}">selected</s:if>><s:text name="global.page.noSaleDaysMode1" /></option>
-					<option value="2" <s:if test="%{noSaleDaysMode == 2}">selected</s:if>><s:text name="global.page.noSaleDaysMode2" /></option>
-				</select>
-				<s:hidden name="noSaleDaysMode" value="1"></s:hidden>
-				</span>
-				<span>
-				<s:text name="global.page.afterFirstBuy" />
-				 <s:textfield name="notSaleDays" cssClass="text" cssStyle="width:30px;" disabled="true"></s:textfield>
-                  <s:hidden name="notSaleDays"></s:hidden>
-                  <s:text name="global.page.notSaleDays1" />
-                   &nbsp;&nbsp;
-			       <label class="gray"><s:text name="global.page.nsdMode1Txt" /></label>
-				</span>
-               </s:if>
-               <s:else>
-	               <s:if test="%{disableConditionMap.noSaleDaysMode != null && (disableConditionMap.notSaleDays != null || disableConditionMap.firstStartDay != null || disableConditionMap.firstEndDay != null)}">
-	               <span>
+				  <s:if test="%{disableConditionMap.noSaleDaysMode != null && (disableConditionMap.notSaleDays != null || disableConditionMap.firstSaleTimeRangeJson != null)}">
+				  <span>
 	                <select name="noSaleDaysMode" disabled="disabled">
 						<option value="1" <s:if test="%{noSaleDaysMode == 1}">selected</s:if>><s:text name="global.page.noSaleDaysMode1" /></option>
 						<option value="2" <s:if test="%{noSaleDaysMode == 2}">selected</s:if>><s:text name="global.page.noSaleDaysMode2" /></option>
 					</select>
 					<s:hidden name="noSaleDaysMode"></s:hidden>
-					</span>
-					<span>
-						<s:if test="%{disableConditionMap.noSaleDaysMode == 1}">
-							 <s:text name="global.page.afterFirstBuy" />
-							<s:if test="%{disableConditionMap.notSaleDays != null}">
-			                  <s:textfield name="notSaleDays" cssClass="text" cssStyle="width:30px;" disabled="true"></s:textfield>
-			                  <s:hidden name="notSaleDays"></s:hidden>
-			                  <s:text name="global.page.notSaleDays1" />
-			                  </s:if>
-			                  <s:else>
-			                  <s:textfield name="notSaleDays" cssClass="text" cssStyle="width:30px;"></s:textfield>
-			                  <s:text name="global.page.notSaleDays1" />
-			                  </s:else>
-			                  &nbsp;&nbsp;
-			                   <label class="gray"><s:text name="global.page.nsdMode1Txt" /></label>
-						</s:if>
-						<s:else>
-							<s:text name="global.page.firstBuyDayRange" />
-							<s:if test="%{disableConditionMap.firstStartDay != null || disableConditionMap.firstEndDay != null}">
-			                <s:textfield name="firstStartDay" cssClass="date" id="firstStartDay%{index}" cssStyle="width:80px" disabled="true"/>
-			              	-<s:textfield name="firstEndDay" cssClass="date" id="firstEndDay%{index}" cssStyle="width:80px" disabled="true"/>
-			                <s:hidden name="firstStartDay" id="firstStartDay%{index}"></s:hidden>
-			                <s:hidden name="firstEndDay" id="firstEndDay%{index}"></s:hidden>
-			                </s:if>
-			                <s:else>
-			                <s:textfield name="firstStartDay" cssClass="date" id="firstStartDay%{index}" cssStyle="width:80px"/>
-			              	-<s:textfield name="firstEndDay" cssClass="date" id="firstEndDay%{index}" cssStyle="width:80px"/>
-			                </s:else>
-			                &nbsp;&nbsp;
-			                 	<s:text name="global.page.afterFirstBuy" />
-			                <s:if test="%{disableConditionMap.notSaleDays != null}">
-			                  <s:textfield name="notSaleDaysRange" cssClass="text" cssStyle="width:30px;" disabled="true"></s:textfield>
-			                  <s:hidden name="notSaleDaysRange"></s:hidden>
-			                  <s:text name="global.page.notSaleDays1" />
-			                  </s:if>
-			                  <s:else>
-			                  <s:textfield name="notSaleDaysRange" cssClass="text" cssStyle="width:30px;"></s:textfield>
-			                  <s:text name="global.page.notSaleDays1" />
-			                  </s:else>
-						</s:else>
+				  </span>
+				  <span>
+					  <s:if test="%{disableConditionMap.noSaleDaysMode == 1}">
+						  <s:text name="global.page.afterFirstBuy" />
+						  <s:textfield name="notSaleDays" cssClass="text" cssStyle="width:30px;" disabled="true"></s:textfield>
+						  <s:hidden name="notSaleDays"></s:hidden>
+						  <s:text name="global.page.notSaleDays1" />&nbsp;&nbsp;
+						  <label class="gray"><s:text name="global.page.nsdMode1Txt" /></label>
+					  </s:if>
+					  <s:else>
+						  <s:text name="global.page.firstBuyDayRange" />
+						  <div id="firstSaleTimeRangeDiv">
+							  <ul>
+								  <s:if test="%{firstSaleTimeRangeList != null}">
+									  <s:iterator value="firstSaleTimeRangeList" id="firstSaleTimeRangeMap" status="status">
+										  <li>
+											  <s:textfield name="firstStartDay" cssClass="date" id="firstStartDay%{index}_%{#status.index}" cssStyle="width:80px" value="%{#firstSaleTimeRangeMap.firstStartDay}" disabled="true"/>-
+											  <s:textfield name="firstEndDay" cssClass="date" id="firstEndDay%{index}_%{#status.index}" cssStyle="width:80px" value="%{#firstSaleTimeRangeMap.firstEndDay}" disabled="true"/>
+										  </li>
+									  </s:iterator>
+								  </s:if>
+							  </ul>
+							  <s:hidden name="firstSaleTimeRangeJson" id="firstSaleTimeRangeJson"/>
+						  </div>
+						  <s:text name="global.page.afterFirstBuy" />
+						  <s:textfield name="notSaleDaysRange" cssClass="text" cssStyle="width:30px;" disabled="true"></s:textfield>
+						  <s:hidden name="notSaleDaysRange"></s:hidden>
+						  <s:text name="global.page.notSaleDays1" />
+					  </s:else>
 					</span>
 	               </s:if>
 	               <s:else>
@@ -770,22 +915,43 @@ $(document).ready(function() {
 						</span>
 						<span class='<s:if test="%{noSaleDaysMode == 2}">hide</s:if>' id="spanNoSaleDaysMode1">
 							<s:text name="global.page.afterFirstBuy" />
-			              	 <s:textfield name="notSaleDays" cssClass="text" cssStyle="width:30px;"></s:textfield>
-			                  <s:text name="global.page.notSaleDays1" />
-			                   &nbsp;&nbsp;
-			                   <label class="gray"><s:text name="global.page.nsdMode1Txt" /></label>
+							<s:textfield name="notSaleDays" cssClass="text" cssStyle="width:30px;"></s:textfield>
+							<s:text name="global.page.notSaleDays1" />&nbsp;&nbsp;
+							<label class="gray"><s:text name="global.page.nsdMode1Txt" /></label>
 						</span>
 						<span class='<s:if test="%{noSaleDaysMode != 2}">hide</s:if>' id="spanNoSaleDaysMode2">
 							<s:text name="global.page.firstBuyDayRange" />
-							 <s:textfield name="firstStartDay" cssClass="date" id="firstStartDay%{index}" cssStyle="width:80px"/>
-			              	-<s:textfield name="firstEndDay" cssClass="date" id="firstEndDay%{index}" cssStyle="width:80px"/>
-			              	 &nbsp;&nbsp;
-			              	 <s:text name="global.page.afterFirstBuy" />
-			              	 <s:textfield name="notSaleDaysRange" cssClass="text" cssStyle="width:30px;"></s:textfield>
-			                  <s:text name="global.page.notSaleDays1" />
+							<div id="firstSaleTimeRangeDiv">
+								<ul>
+									<s:if test="%{firstSaleTimeRangeList != null}">
+										<s:iterator value="firstSaleTimeRangeList" id="firstSaleTimeRangeMap" status="status">
+											<li>
+												<s:textfield name="firstStartDay" cssClass="date" id="firstStartDay%{index}_%{#status.index}" cssStyle="width:80px" value="%{#firstSaleTimeRangeMap.firstStartDay}"/>-
+												<s:textfield name="firstEndDay" cssClass="date" id="firstEndDay%{index}_%{#status.index}" cssStyle="width:80px" value="%{#firstSaleTimeRangeMap.firstEndDay}"/>
+												<s:if test="#status.index == 0">
+													<a class="add" onclick="popmemsearch.addFirstSaleTimeRange('${index}');return false;"><span class="ui-icon icon-add"></span><span class="button-text">添加</span></a>
+												</s:if>
+												<s:else>
+													<a href="#" class="right" onclick="$(this).parent().remove(); return false;" role="button"><span class="ui-icon icon-delete-big">close</span></a>
+												</s:else>
+											</li>
+										</s:iterator>
+									</s:if>
+									<s:else>
+										<li>
+											<s:textfield name="firstStartDay" cssClass="date" id="firstStartDay%{index}_0" cssStyle="width:80px"/>-
+											<s:textfield name="firstEndDay" cssClass="date" id="firstEndDay%{index}_0" cssStyle="width:80px"/>
+											<a class="add" onclick="popmemsearch.addFirstSaleTimeRange('${index}');return false;"><span class="ui-icon icon-add"></span><span class="button-text">添加</span></a>
+										</li>
+									</s:else>
+								</ul>
+								<s:hidden name="firstSaleTimeRangeJson" id="firstSaleTimeRangeJson"/>
+							</div>
+							<s:text name="global.page.afterFirstBuy" />
+							<s:textfield name="notSaleDaysRange" cssClass="text" cssStyle="width:30px;"></s:textfield>
+							<s:text name="global.page.notSaleDays1" />
 						</span>
 	               </s:else>
-               </s:else>
               </td>
             </tr>              
           </tbody>

@@ -13,6 +13,7 @@
 package com.cherry.mb.mbm.form;
 
 import java.util.List;
+import java.util.Map;
 
 import com.cherry.cm.dto.ExtendPropertyDto;
 import com.cherry.cm.form.DataTable_BaseForm;
@@ -558,6 +559,44 @@ public class BINOLMBMBM09_Form extends DataTable_BaseForm {
 	
 	/** 会员标签是否显示*/
 	private String tagFlag;
+
+	/** 多个入会时间段JSON **/
+	private String joinDateRangeJson;
+
+	/** 多个入会时间段List **/
+	private List<Map<String, Object>> joinDateRangeList;
+
+	/** 多个总积分JSON **/
+	private String memPointRangeJson;
+
+	/** 多个总积分List **/
+	private List<Map<String, Object>> memPointRangeList;
+
+	/** 多个可兑换积分JSON **/
+	private String changablePointRangeJson;
+
+	/** 多个可兑换积分List **/
+	private List<Map<String, Object>> changablePointRangeList;
+
+	/** 多个最近购买时间段JSON **/
+	private String lastSaleTimeRangeJson;
+
+	/** 多个最近购买时间段List **/
+	private List<Map<String, Object>> lastSaleTimeRangeList;
+
+	/** 多个首次购买时间段JSON **/
+	private String firstSaleTimeRangeJson;
+
+	/** 多个首次购买时间段List **/
+	private List<Map<String, Object>> firstSaleTimeRangeList;
+
+	private String notSaleDays;
+
+	private String notSaleDaysRange;
+
+	private String noSaleDaysMode;
+
+	private String email;
 	
 	public String getTagFlag() {
 		return tagFlag;
@@ -1717,5 +1756,117 @@ public class BINOLMBMBM09_Form extends DataTable_BaseForm {
 
 	public void setPctEnd(String pctEnd) {
 		this.pctEnd = pctEnd;
+	}
+
+	public String getJoinDateRangeJson() {
+		return joinDateRangeJson;
+	}
+
+	public void setJoinDateRangeJson(String joinDateRangeJson) {
+		this.joinDateRangeJson = joinDateRangeJson;
+	}
+
+	public List<Map<String, Object>> getJoinDateRangeList() {
+		return joinDateRangeList;
+	}
+
+	public void setJoinDateRangeList(List<Map<String, Object>> joinDateRangeList) {
+		this.joinDateRangeList = joinDateRangeList;
+	}
+
+	public String getMemPointRangeJson() {
+		return memPointRangeJson;
+	}
+
+	public void setMemPointRangeJson(String memPointRangeJson) {
+		this.memPointRangeJson = memPointRangeJson;
+	}
+
+	public List<Map<String, Object>> getMemPointRangeList() {
+		return memPointRangeList;
+	}
+
+	public void setMemPointRangeList(List<Map<String, Object>> memPointRangeList) {
+		this.memPointRangeList = memPointRangeList;
+	}
+
+	public String getChangablePointRangeJson() {
+		return changablePointRangeJson;
+	}
+
+	public void setChangablePointRangeJson(String changablePointRangeJson) {
+		this.changablePointRangeJson = changablePointRangeJson;
+	}
+
+	public List<Map<String, Object>> getChangablePointRangeList() {
+		return changablePointRangeList;
+	}
+
+	public void setChangablePointRangeList(List<Map<String, Object>> changablePointRangeList) {
+		this.changablePointRangeList = changablePointRangeList;
+	}
+
+	public String getLastSaleTimeRangeJson() {
+		return lastSaleTimeRangeJson;
+	}
+
+	public void setLastSaleTimeRangeJson(String lastSaleTimeRangeJson) {
+		this.lastSaleTimeRangeJson = lastSaleTimeRangeJson;
+	}
+
+	public List<Map<String, Object>> getLastSaleTimeRangeList() {
+		return lastSaleTimeRangeList;
+	}
+
+	public void setLastSaleTimeRangeList(List<Map<String, Object>> lastSaleTimeRangeList) {
+		this.lastSaleTimeRangeList = lastSaleTimeRangeList;
+	}
+
+	public String getFirstSaleTimeRangeJson() {
+		return firstSaleTimeRangeJson;
+	}
+
+	public void setFirstSaleTimeRangeJson(String firstSaleTimeRangeJson) {
+		this.firstSaleTimeRangeJson = firstSaleTimeRangeJson;
+	}
+
+	public List<Map<String, Object>> getFirstSaleTimeRangeList() {
+		return firstSaleTimeRangeList;
+	}
+
+	public void setFirstSaleTimeRangeList(List<Map<String, Object>> firstSaleTimeRangeList) {
+		this.firstSaleTimeRangeList = firstSaleTimeRangeList;
+	}
+
+	public String getNotSaleDays() {
+		return notSaleDays;
+	}
+
+	public void setNotSaleDays(String notSaleDays) {
+		this.notSaleDays = notSaleDays;
+	}
+
+	public String getNotSaleDaysRange() {
+		return notSaleDaysRange;
+	}
+
+	public void setNotSaleDaysRange(String notSaleDaysRange) {
+		this.notSaleDaysRange = notSaleDaysRange;
+	}
+
+	public String getNoSaleDaysMode() {
+		return noSaleDaysMode;
+	}
+
+	public void setNoSaleDaysMode(String noSaleDaysMode) {
+		this.noSaleDaysMode = noSaleDaysMode;
+	}
+
+	public String getEmail() {
+		return email;
+	}
+
+	public void setEmail(String email) {
+		this.email = email;
 	}
 }

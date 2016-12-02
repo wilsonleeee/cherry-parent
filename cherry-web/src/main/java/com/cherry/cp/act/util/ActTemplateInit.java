@@ -465,19 +465,19 @@ public class ActTemplateInit extends TemplateInit {
 					.get(CampConstants.SEARCH_CODE));
 			ruleCondetion.setBasePropValue1(searchCode);
 			if (CampConstants.CAMP_MEB_TYPE_2.equals(campMebType)) {// 搜索结果
-				// 查询参数objComMap
-				Map<String, Object> objComMap = getComMap(paramMap);
-				objComMap.put(CampConstants.SEARCH_CODE, searchCode);
-				// 查询searchLog表活动对象总数
-				Map<String, Object> searchMap = binolcpcom03IF
-						.getRecordCount(objComMap);
-				String recordCount = ConvertUtil.getString(searchMap
-						.get("RecordCount"));
-				if ("0".equals(recordCount)) {
-					// 根据搜索条件查询活动对象保存到[BIN_CustomerInfo]表
-					// 分批查询
-					saveMemResult(paramMap, searchCode, campMebInfo);
-				}
+//				// 查询参数objComMap
+//				Map<String, Object> objComMap = getComMap(paramMap);
+//				objComMap.put(CampConstants.SEARCH_CODE, searchCode);
+//				// 查询searchLog表活动对象总数
+//				Map<String, Object> searchMap = binolcpcom03IF
+//						.getRecordCount(objComMap);
+//				String recordCount = ConvertUtil.getString(searchMap
+//						.get("RecordCount"));
+//				if ("0".equals(recordCount)) {
+//					// 根据搜索条件查询活动对象保存到[BIN_CustomerInfo]表
+//					// 分批查询
+//					saveMemResult(paramMap, searchCode, campMebInfo);
+//				}
 			}
 		}
 		ruleCondetion.setActLocationType(campMebType);

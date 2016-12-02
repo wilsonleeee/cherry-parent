@@ -25,6 +25,7 @@ import com.cherry.cm.core.CherryChecker;
 import com.cherry.cm.core.CherryConstants;
 import com.cherry.cm.core.CodeTable;
 import com.cherry.cm.util.CherryUtil;
+import com.cherry.cm.util.ConvertUtil;
 
 /**
  * 会员检索条件转换共通BL
@@ -188,18 +189,31 @@ public class BINOLCM39_BL {
 			} else if("1".equals(joinDateMode)) {
 				joinDateCondition.append(CherryUtil.getResourceValue(null, language, "global.page.curJoinDate"));
 			} else if("9".equals(joinDateMode)) {
-				String joinDateStart = (String)map.get("joinDateStart");
-				String joinDateEnd = (String)map.get("joinDateEnd");
-				if(joinDateStart != null && !"".equals(joinDateStart)) {
-					if(joinDateEnd != null && !"".equals(joinDateEnd)) {
-						joinDateCondition.append(CherryUtil.getResourceValue(null, language, "global.page.joinDate")+":"+joinDateStart+"-"+joinDateEnd);
-					} else {
-						joinDateCondition.append(CherryUtil.getResourceValue(null, language, "global.page.joinDate")+":"+joinDateStart+"-"+notLimit);
+				String joinDateRangeJson = (String)map.get("joinDateRangeJson");
+				if(joinDateRangeJson != null && !"".equals(joinDateRangeJson)) {
+					List<Map<String, Object>> joinDateRangeList = ConvertUtil.json2List(joinDateRangeJson);
+					StringBuffer joinDateRangeCondition = new StringBuffer();
+					joinDateRangeCondition.append("("+CherryUtil.getResourceValue(null, language, "global.page.joinDate")+":");
+					for(int i = 0; i < joinDateRangeList.size(); i++) {
+						if(i > 0) {
+							joinDateRangeCondition.append(orJoin);
+						}
+						String joinDateStart = (String)joinDateRangeList.get(i).get("joinDateStart");
+						String joinDateEnd = (String)joinDateRangeList.get(i).get("joinDateEnd");
+						if(joinDateStart != null && !"".equals(joinDateStart)) {
+							if(joinDateEnd != null && !"".equals(joinDateEnd)) {
+								joinDateRangeCondition.append(joinDateStart+"-"+joinDateEnd);
+							} else {
+								joinDateRangeCondition.append(joinDateStart+"-"+notLimit);
+							}
+						} else {
+							if(joinDateEnd != null && !"".equals(joinDateEnd)) {
+								joinDateRangeCondition.append(notLimit+"-"+joinDateEnd);
+							}
+						}
 					}
-				} else {
-					if(joinDateEnd != null && !"".equals(joinDateEnd)) {
-						joinDateCondition.append(CherryUtil.getResourceValue(null, language, "global.page.joinDate")+":"+notLimit+"-"+joinDateEnd);
-					}
+					joinDateRangeCondition.append(")");
+					joinDateCondition.append(joinDateRangeCondition.toString());
 				}
 			}
 		}
@@ -1145,33 +1159,64 @@ public class BINOLCM39_BL {
 		if(mobilePhone != null && !"".equals(mobilePhone)) {
 			conditionList.add(CherryUtil.getResourceValue(null, language, "global.page.memMobilePhone")+":"+mobilePhone);
 		}
+		// 会员邮箱
+		String email = (String)map.get("email");
+		if(email != null && !"".equals(email)) {
+			conditionList.add(CherryUtil.getResourceValue(null, language, "global.page.email")+":"+email);
+		}
 		// 会员积分
-		String memberPointStart = (String)map.get("memberPointStart");
-		String memberPointEnd = (String)map.get("memberPointEnd");
-		if(memberPointStart != null && !"".equals(memberPointStart)) {
-			if(memberPointEnd != null && !"".equals(memberPointEnd)) {
-				conditionList.add(CherryUtil.getResourceValue(null, language, "global.page.memberPoint")+":"+memberPointStart+"-"+memberPointEnd);
-			} else {
-				conditionList.add(CherryUtil.getResourceValue(null, language, "global.page.memberPoint")+":"+memberPointStart+"-"+notLimit);
+		String memPointRangeJson = (String)map.get("memPointRangeJson");
+		if(memPointRangeJson != null && !"".equals(memPointRangeJson)) {
+			List<Map<String, Object>> memPointRangeList = ConvertUtil.json2List(memPointRangeJson);
+			StringBuffer memPointRangeCondition = new StringBuffer();
+			memPointRangeCondition.append("("+CherryUtil.getResourceValue(null, language, "global.page.memberPoint")+":");
+			for(int i = 0; i < memPointRangeList.size(); i++) {
+				if(i > 0) {
+					memPointRangeCondition.append(orJoin);
+				}
+				String memberPointStart = (String)memPointRangeList.get(i).get("memberPointStart");
+				String memberPointEnd = (String)memPointRangeList.get(i).get("memberPointEnd");
+				if(memberPointStart != null && !"".equals(memberPointStart)) {
+					if(memberPointEnd != null && !"".equals(memberPointEnd)) {
+						memPointRangeCondition.append(memberPointStart+"-"+memberPointEnd);
+					} else {
+						memPointRangeCondition.append(memberPointStart+"-"+notLimit);
+					}
+				} else {
+					if(memberPointEnd != null && !"".equals(memberPointEnd)) {
+						memPointRangeCondition.append(notLimit+"-"+memberPointEnd);
+					}
+				}
 			}
-		} else {
-			if(memberPointEnd != null && !"".equals(memberPointEnd)) {
-				conditionList.add(CherryUtil.getResourceValue(null, language, "global.page.memberPoint")+":"+notLimit+"-"+memberPointEnd);
-			}
+			memPointRangeCondition.append(")");
+			conditionList.add(memPointRangeCondition.toString());
 		}
 		// 可兑换积分
-		String changablePointStart = (String)map.get("changablePointStart");
-		String changablePointEnd = (String)map.get("changablePointEnd");
-		if(changablePointStart != null && !"".equals(changablePointStart)) {
-			if(changablePointEnd != null && !"".equals(changablePointEnd)) {
-				conditionList.add(CherryUtil.getResourceValue(null, language, "global.page.changablePoint")+":"+changablePointStart+"-"+changablePointEnd);
-			} else {
-				conditionList.add(CherryUtil.getResourceValue(null, language, "global.page.changablePoint")+":"+changablePointStart+"-"+notLimit);
+		String changablePointRangeJson = (String)map.get("changablePointRangeJson");
+		if(changablePointRangeJson != null && !"".equals(changablePointRangeJson)) {
+			List<Map<String, Object>> changablePointRangeList = ConvertUtil.json2List(changablePointRangeJson);
+			StringBuffer changablePointRangeCondition = new StringBuffer();
+			changablePointRangeCondition.append("("+CherryUtil.getResourceValue(null, language, "global.page.changablePoint")+":");
+			for(int i = 0; i < changablePointRangeList.size(); i++) {
+				if(i > 0) {
+					changablePointRangeCondition.append(orJoin);
+				}
+				String changablePointStart = (String)changablePointRangeList.get(i).get("changablePointStart");
+				String changablePointEnd = (String)changablePointRangeList.get(i).get("changablePointEnd");
+				if(changablePointStart != null && !"".equals(changablePointStart)) {
+					if(changablePointEnd != null && !"".equals(changablePointEnd)) {
+						changablePointRangeCondition.append(changablePointStart+"-"+changablePointEnd);
+					} else {
+						changablePointRangeCondition.append(changablePointStart+"-"+notLimit);
+					}
+				} else {
+					if(changablePointEnd != null && !"".equals(changablePointEnd)) {
+						changablePointRangeCondition.append(notLimit+"-"+changablePointEnd);
+					}
+				}
 			}
-		} else {
-			if(changablePointEnd != null && !"".equals(changablePointEnd)) {
-				conditionList.add(CherryUtil.getResourceValue(null, language, "global.page.changablePoint")+":"+notLimit+"-"+changablePointEnd);
-			}
+			changablePointRangeCondition.append(")");
+			conditionList.add(changablePointRangeCondition.toString());
 		}
 		// 积分到期日
 		String curDealDateStart = (String)map.get("curDealDateStart");
@@ -1446,32 +1491,58 @@ public class BINOLCM39_BL {
 		}
 		
 		// 最近一次购买时间
-		String lastSaleDateStart = (String)map.get("lastSaleDateStart");
-		String lastSaleDateEnd = (String)map.get("lastSaleDateEnd");
-		if(lastSaleDateStart != null && !"".equals(lastSaleDateStart)) {
-			if(lastSaleDateEnd != null && !"".equals(lastSaleDateEnd)) {
-				conditionList.add(CherryUtil.getResourceValue(null, language, "global.page.lastSaleDate")+":"+lastSaleDateStart+"-"+lastSaleDateEnd);
-			} else {
-				conditionList.add(CherryUtil.getResourceValue(null, language, "global.page.lastSaleDate")+":"+lastSaleDateStart+"-"+notLimit);
+		String lastSaleTimeRangeJson = (String)map.get("lastSaleTimeRangeJson");
+		if(lastSaleTimeRangeJson != null && !"".equals(lastSaleTimeRangeJson)) {
+			List<Map<String, Object>> lastSaleTimeRangeList = ConvertUtil.json2List(lastSaleTimeRangeJson);
+			StringBuffer lastSaleTimeRangeCondition = new StringBuffer();
+			lastSaleTimeRangeCondition.append("("+CherryUtil.getResourceValue(null, language, "global.page.lastSaleDate")+":");
+			for(int i = 0; i < lastSaleTimeRangeList.size(); i++) {
+				if(i > 0) {
+					lastSaleTimeRangeCondition.append(orJoin);
+				}
+				String lastSaleDateStart = (String)lastSaleTimeRangeList.get(i).get("lastSaleDateStart");
+				String lastSaleDateEnd = (String)lastSaleTimeRangeList.get(i).get("lastSaleDateEnd");
+				if(lastSaleDateStart != null && !"".equals(lastSaleDateStart)) {
+					if(lastSaleDateEnd != null && !"".equals(lastSaleDateEnd)) {
+						lastSaleTimeRangeCondition.append(lastSaleDateStart+"-"+lastSaleDateEnd);
+					} else {
+						lastSaleTimeRangeCondition.append(lastSaleDateStart+"-"+notLimit);
+					}
+				} else {
+					if(lastSaleDateEnd != null && !"".equals(lastSaleDateEnd)) {
+						lastSaleTimeRangeCondition.append(notLimit+"-"+lastSaleDateEnd);
+					}
+				}
 			}
-		} else {
-			if(lastSaleDateEnd != null && !"".equals(lastSaleDateEnd)) {
-				conditionList.add(CherryUtil.getResourceValue(null, language, "global.page.lastSaleDate")+":"+notLimit+"-"+lastSaleDateEnd);
-			}
+			lastSaleTimeRangeCondition.append(")");
+			conditionList.add(lastSaleTimeRangeCondition.toString());
 		}
-		
-		String firstStartDay = (String)map.get("firstStartDay");
-		String firstEndDay = (String)map.get("firstEndDay");
-		if(firstStartDay != null && !"".equals(firstStartDay)) {
-			if(firstEndDay != null && !"".equals(firstEndDay)) {
-				conditionList.add(CherryUtil.getResourceValue(null, language, "global.page.firstBuyDayRange")+":"+firstStartDay+"-"+firstEndDay);
-			} else {
-				conditionList.add(CherryUtil.getResourceValue(null, language, "global.page.firstBuyDayRange")+":"+firstStartDay+"-"+notLimit);
+
+		String firstSaleTimeRangeJson = (String)map.get("firstSaleTimeRangeJson");
+		if(firstSaleTimeRangeJson != null && !"".equals(firstSaleTimeRangeJson)) {
+			List<Map<String, Object>> firstSaleTimeRangeList = ConvertUtil.json2List(firstSaleTimeRangeJson);
+			StringBuffer firstSaleTimeRangeCondition = new StringBuffer();
+			firstSaleTimeRangeCondition.append("("+CherryUtil.getResourceValue(null, language, "global.page.firstBuyDayRange")+":");
+			for(int i = 0; i < firstSaleTimeRangeList.size(); i++) {
+				if(i > 0) {
+					firstSaleTimeRangeCondition.append(orJoin);
+				}
+				String firstStartDay = (String)firstSaleTimeRangeList.get(i).get("firstStartDay");
+				String firstEndDay = (String)firstSaleTimeRangeList.get(i).get("firstEndDay");
+				if(firstStartDay != null && !"".equals(firstStartDay)) {
+					if(firstEndDay != null && !"".equals(firstEndDay)) {
+						firstSaleTimeRangeCondition.append(firstStartDay+"-"+firstEndDay);
+					} else {
+						firstSaleTimeRangeCondition.append(firstStartDay+"-"+notLimit);
+					}
+				} else {
+					if(firstEndDay != null && !"".equals(firstEndDay)) {
+						firstSaleTimeRangeCondition.append(notLimit+"-"+firstEndDay);
+					}
+				}
 			}
-		} else {
-			if(firstEndDay != null && !"".equals(firstEndDay)) {
-				conditionList.add(CherryUtil.getResourceValue(null, language, "global.page.firstBuyDayRange")+":"+notLimit+"-"+firstEndDay);
-			}
+			firstSaleTimeRangeCondition.append(")");
+			conditionList.add(firstSaleTimeRangeCondition.toString());
 		}
 		
 		// 首次购买多少天内未购买

@@ -822,7 +822,8 @@ BINOLCTCOM02_GLOBAL.prototype = {
 	"searchObjRequest" : function(obj){
 		var userId = $("#userId").val();
 		var privilegeFlag = $("#privilegeFlag").val();
-		var searchValue = $("#dialogInit").find(":input").serializeForm2Json();
+		var searchValue = getMemCommonSearchJson("dialogInit");
+		// searchValue = $("#dialogInit").find(":input").serializeForm2Json();
 		var searchName = $("#dialogInit").find("#searchName").val();
 		var commBox=$("#commNameList .MENUTEXT.on #commBoxId").val();
 		var timeType=$('#'+'commBox_'+commBox).find('select[name="timeType"]').val();

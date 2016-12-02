@@ -244,6 +244,8 @@ ACT.prototype = {
 			var $linkMebSearch = $("#linkMebSearch_" + index);
 			// 选择EXCEL文件
 			var $linkExcel = $("#linkExcel_" + index);
+			// 活动对象分组
+			var $groupMeb= $("#groupMeb_" + index);
 			// 查询活动对象
 			var $searchMeb= $("#searchMeb_" + index);
 			// 活动对象一览
@@ -259,6 +261,7 @@ ACT.prototype = {
 			$("#searchCode_" + index).val("");
 			$('#conInfoDiv_' + index).hide();
 			$('#memCountShow_' + index).hide();
+			$groupMeb.hide();
 			if($this.val() == '0' || $this.val() == '5'|| $this.val() == '6'){// 全部会员,不限对象,非会员
 				$linkSearchCode.hide();
 				$linkMebSearch.hide();
@@ -290,6 +293,7 @@ ACT.prototype = {
 					$yugu.show();
 				}else{
 					$yugu.hide();
+					$groupMeb.show();
 				}
 			}else if($this.val() == '3'){// excel导入
 				$searchMeb.show();
@@ -326,22 +330,31 @@ ACT.prototype = {
 			popAjaxCouponDialog(option);
 		},
 		// 活动对象查询
-		"memSearch" : function(index) {
+		"memSearch" : function(index, groupType) {
 			var url = '/Cherry/cp/BINOLCPCOM03_memInfosearch';
 			var searchCode= $("#searchCode_" + index).val();
 			if(!isEmpty(searchCode)){
+				var campMebType = $("#campMebType_"+index).val();
 				var params= getSerializeToken();
 				var brandInfoId=$("#brandInfoId").val();
-				params +="&brandInfoId="+brandInfoId+"&searchCode="+searchCode;
+				params +="&brandInfoId="+brandInfoId+"&searchCode="+searchCode+"&groupType="+groupType;
 				url = url + "?" + params;
 				// 显示结果一览
 				$("#mebResult_div_"+index).show();
-				$("#memberInfo_"+index).show();
+				if(campMebType == '2') {
+					$("#mebResult_div_"+index).find("li").removeClass("ui-tabs-selected");
+					$("#mebResult_div_"+index).find("li[id='"+groupType+"']").addClass("ui-tabs-selected");
+					$("#memberInfo_" + index).hide();
+					$("#memberInfoTab_"+index).show();
+				} else {
+					$("#memberInfoTab_"+index).hide();
+					$("#memberInfo_" + index).show();
+				}
 				// 表格设置
 				var tableSetting = {
-						 index: 100000 + index,
+						 index: (campMebType == '2' ? 200000:100000) + index,
 						 // 表格ID
-						 tableId : '#memberDataTable_' + index,
+						 tableId : '#memberDataTable'+ (campMebType == '2' ? "Tab":"") + "_" + index,
 						 // 数据URL
 						 url : url,
 						 iDisplayLength:5,
@@ -362,7 +375,6 @@ ACT.prototype = {
 				getTable(tableSetting);
 			}
 	    },
-	    
 		// Coupon查询
 		"couponSearch" : function(index) {
 			var url = '/Cherry/cp/BINOLCPCOM03_couponsearch';
@@ -448,7 +460,8 @@ ACT.prototype = {
 				confirmEvent: function(){
 					$('#conInfoDiv_' + index).hide();
 					//将搜索条件弹出框信息json格式化
-					var searchParam = $("#searchCondialogInit").find(":input").serializeForm2Json(false);
+					var searchParam = getMemCommonSearchJson("searchCondialogInit");
+					//var searchParam = $("#searchCondialogInit").find(":input").serializeForm2Json(false);
 					if(searchParam != undefined && null != searchParam && searchParam != ""){
 						$("#campMebInfo_"+index).val(searchParam);
 						that.getConInfo(searchParam,index);
@@ -556,7 +569,7 @@ ACT.prototype = {
 			if(campMebType=='1'){//动态搜索条件
 				params+="&recordType=1";
 			}else if(campMebType=='2'){//当前搜索结果
-				params+="&recordType=2";
+				params+="&recordType=2&saveFlag=1";
 			}
 			cherryAjaxRequest({
 				url: url,
@@ -768,6 +781,91 @@ ACT.prototype = {
 			"BASE000061":{
 				quantity:{integerValid: true,maxlength: 10}
 			}
+		},
+		"groupMeb": function(index){
+			var searchCode= $("#searchCode_" + index).val();
+			var campMebInfo = $("#campMebInfo_"+index).val();
+			var campMebInfoJson = eval("("+campMebInfo+")");
+			if(!searchCode){
+				alert("请先选择活动对象");
+				return;
+			}
+			if($("#groupMebdialogInit").length == 0) {
+				$("body").append('<div style="display:none" id="groupMebdialogInit"></div>');
+			} else {
+				$("#groupMebdialogInit").empty();
+			}
+			var dialogSetting = {
+				dialogInit: "#groupMebdialogInit",
+				width: 500,
+				height: 300,
+				title: '活动对象分组',
+				confirm: $("#dialogConfirm").text(),
+				cancel: $("#dialogCancel").text(),
+				//确认按钮
+				confirmEvent: function(){
+					var campObjGroupValue = $("#groupMebdialogInit").find(":input[name='campObjGroupValue']").val();
+					if(campObjGroupValue && /^\d+$/.test(campObjGroupValue)) {
+
+					} else {
+						return;
+					}
+					var groupParams = $("#groupMebdialogInit").find(":input").serialize();
+					campMebInfoJson.campObjGroupType=$("#groupMebdialogInit").find(":input[name='campObjGroupType']").val();
+					campMebInfoJson.campObjGroupValue=$("#groupMebdialogInit").find(":input[name='campObjGroupValue']").val();
+					$("#campMebInfo_"+index).val(JSON.stringify(campMebInfoJson));
+					$("#groupMebdialogInit").html('处理中...');
+					$("#groupMebdialogInit").dialog( "option", {
+						buttons: [{
+							text: "关闭",
+							click: function(){removeDialog("#groupMebdialogInit");ACT.memSearch(index, "1")}
+						}],
+						closeEvent: function(){removeDialog("#groupMebdialogInit");}
+					});
+					var url = '/Cherry/cp/BINOLCPCOM02_campObjGroup';
+					var params = getSerializeToken();
+					var brandInfoId=$("#brandInfoId").val();
+					params +="&brandInfoId="+brandInfoId+"&searchCode="+searchCode+"&"+groupParams;
+					cherryAjaxRequest({
+						url:url,
+						param:params,
+						isResultHandle:false,
+						callback: function(msg) {
+							var result = eval('('+msg+")");
+							if(result.errorcode == '0') {
+								$("#groupMebdialogInit").html('分组成功');
+							} else {
+								$("#groupMebdialogInit").html(result.errormsg);
+							}
+						}
+					});
+				},
+				//关闭按钮
+				cancelEvent: function(){removeDialog("#groupMebdialogInit");}
+			};
+			openDialog(dialogSetting);
+			var content = '<table class="detail"><tbody>'
+				+'<tr>'
+				+'<th>进行沟通计划分组</th>'
+				+'<td>'
+				+'<span><select name="campObjGroupType" value="'+(campMebInfoJson.campObjGroupType?campMebInfoJson.campObjGroupType:'')+'"><option value="1" '+(campMebInfoJson.campObjGroupType==1?'selected':'')+'>按百分比</option><option value="2" '+(campMebInfoJson.campObjGroupType==2?'selected':'')+'>按人数</option></select></span>'
+				+'<span><input name="campObjGroupValue" value="'+(campMebInfoJson.campObjGroupValue?campMebInfoJson.campObjGroupValue:'')+'" style="width:80px;"/></span><span><span id="campObjGroupUnit">%</span>&nbsp;&nbsp;参与沟通计划</span>'
+				+'</td>'
+				+'</tr>'
+				+'<tr>'
+				+'<th>不进行沟通机会分组</th>'
+				+'<td><span>剩余人数不参与沟通计划</span></td>'
+				+'</tr>'
+				+'</tbody></table>';
+			$("#groupMebdialogInit").html(content);
+			$("#groupMebdialogInit").find(":input[name='campObjGroupType']").change(function(){
+				$("#groupMebdialogInit").find(":input[name='campObjGroupValue']").val('');
+				if(this.value == '1') {
+					$("#groupMebdialogInit").find("#campObjGroupUnit").show();
+				} else {
+					$("#groupMebdialogInit").find("#campObjGroupUnit").hide();
+				}
+			});
 		}
 };
 var ACT = new ACT();

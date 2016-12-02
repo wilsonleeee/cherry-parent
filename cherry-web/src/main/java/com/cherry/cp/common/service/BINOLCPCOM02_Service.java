@@ -938,4 +938,44 @@ public class BINOLCPCOM02_Service extends BaseService{
 	public void addPromotionRuleCate(Map<String,Object> map) {
 		baseServiceImpl.save(map, "BINOLCPCOM02.insertPromotionRuleCate");
 	}
+
+	/**
+	 * 取得活动对象总数
+	 *
+	 * @param map
+	 * @return 活动对象总数
+	 */
+	public int getCustomerCount(Map<String, Object> map){
+		Map<String, Object> paramMap = new HashMap<String, Object>();
+		paramMap.putAll(map);
+		paramMap.put(CherryConstants.IBATIS_SQL_ID, "BINOLCPCOM02.getCustomerCount");
+		return baseServiceImpl.getSum(paramMap);
+	}
+
+	/**
+	 * 活动对象分组
+	 *
+	 * @param map
+	 * @return 更新件数
+	 */
+	public int updCampObjGroupType(Map<String, Object> map){
+		Map<String, Object> paramMap = new HashMap<String, Object>();
+		paramMap.putAll(map);
+		paramMap.put(CherryConstants.IBATIS_SQL_ID, "BINOLCPCOM02.updCampObjGroupType");
+		return baseServiceImpl.update(paramMap);
+	}
+
+	/**
+	 * 活动对象分组
+	 *
+	 * @param map
+	 * @return 更新件数
+	 */
+	public int updAllCampObjGroupType(Map<String, Object> map){
+		Map<String, Object> paramMap = new HashMap<String, Object>();
+		paramMap.putAll(map);
+		paramMap.put(CherryConstants.IBATIS_SQL_ID, "BINOLCPCOM02.updAllCampObjGroupType");
+		return baseServiceImpl.update(paramMap);
+	}
+
 }

@@ -64,6 +64,10 @@ public class BINOLMBVIS02_Form extends DataTable_BaseForm {
 	/** 上传类型(1:累加 2:覆盖) */
 	private String importType;
 
+	private String campaignRuleID;
+
+	private String campObjGroupType;
+
 	public String getVisitCategoryId() {
 		return visitCategoryId;
 	}
@@ -264,4 +268,19 @@ public class BINOLMBVIS02_Form extends DataTable_BaseForm {
 		this.importType = importType;
 	}
 
+	public String getCampaignRuleID() {
+		return campaignRuleID;
+	}
+
+	public void setCampaignRuleID(String campaignRuleID) {
+		this.campaignRuleID = campaignRuleID;
+	}
+
+	public String getCampObjGroupType() {
+		return campObjGroupType;
+	}
+
+	public void setCampObjGroupType(String campObjGroupType) {
+		this.campObjGroupType = campObjGroupType;
+	}
 }

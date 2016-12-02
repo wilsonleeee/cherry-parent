@@ -309,10 +309,16 @@
 		</p>
 	</div>
 	<div id="mebResult_div_${camp_index}" class="group-content box2-active hide">
-        <div class="section hide" id="memberInfo_${camp_index}">
+		<div class="ui-tabs hide" id="memberInfoTab_${camp_index}">
+		<ul class="ui-tabs-nav clearfix">
+            <li id="1" class="ui-tabs-selected" onclick="ACT.memSearch(${camp_index}, '1');"><a>参与沟通会员</a></li>
+            <li id="0" onclick="ACT.memSearch(${camp_index}, '0');"><a>不参与沟通会员</a></li>
+        </ul>
+		<div class="ui-tabs-panel">
+		<div class="section">
 		  <div class="section-content">
 		    <table cellpadding="0" cellspacing="0" border="0" class="jquery_table"
-		    width="100%" id="memberDataTable_${camp_index}">
+		    width="100%" id="memberDataTableTab_${camp_index}">
 		      <thead>
 		        <tr>
 		          <th><@s.text name="cp.memObjectType" /></th>
@@ -330,6 +336,30 @@
 		    </table>
 		  </div>
 		</div>
+		</div>
+        </div>
+
+        <div class="section hide" id="memberInfo_${camp_index}">
+            <div class="section-content">
+                <table cellpadding="0" cellspacing="0" border="0" class="jquery_table"
+                       width="100%" id="memberDataTable_${camp_index}">
+                    <thead>
+                    <tr>
+                        <th><@s.text name="cp.memObjectType" /></th>
+                        <th><@s.text name="cp.memCardCode" /></th>
+                        <th><@s.text name="cp.memName" /></th>
+                        <th><@s.text name="cp.memMobile" /></th>
+                        <th><@s.text name="cp.brithDay" /></th>
+                        <th><@s.text name="global.page.joinDate" /></th>
+                        <th><@s.text name="global.page.changablePoint" /></th>
+                        <th class="center"><@s.text name="cp.isReceiveMsg" /></th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    </tbody>
+                </table>
+            </div>
+        </div>
 	</div>
 </div>
 </#list>
@@ -372,9 +402,15 @@
 	</span>
 	<#-- 查询活动对象-->
 	<span id="searchMeb_${index}" class="right <#if campMebType == '0' || campMebType == '5' || campMebType =='6'>hide</#if>">
-		<a onclick="ACT.memSearch(${index});return false;" class="search" style="margin: 3px 0 0 20px;">
+		<a onclick="ACT.memSearch(${index},'1');return false;" class="search" style="margin: 3px 0 0 20px;">
       		<span class="ui-icon icon-search"></span><span class="button-text"><@s.text name="cp.memSearch" /></span>
     	</a>
+	</span>
+	<#-- 活动对象分组-->
+	<span id="groupMeb_${index}" class="right <#if campMebType != '2'>hide</#if>">
+		<a onclick="ACT.groupMeb(${index});return false;" class="search" style="margin: 3px 0 0 20px;">
+            <span class="ui-icon icon-search"></span><span class="button-text"><@s.text name="活动对象沟通分组" /></span>
+        </a>
 	</span>
 	<#-- 活动对象JSON-->
 	<input type="hidden" id="campMebInfo_${index}" name="campMebInfo" value="${(camp.campMebInfo)!?html}"/>
@@ -917,7 +953,7 @@
 		<#if campMap.campMebType == '1'><span class="red">[<@s.text name="global.page.estimate" />]</span></#if>
 	</span>
 	<input type="hidden" id="searchCode_${campIndex}" name="searchCode" value="${campMap.searchCode!}"/>
-	<a onclick="ACT.memSearch(${campIndex});return false;" class="right search">
+	<a onclick="ACT.memSearch(${campIndex},'1');return false;" class="right search">
         <span class="ui-icon icon-search"></span><span class="button-text"><@s.text name="cp.memSearch" /></span>
     </a>
     </#if>
@@ -938,7 +974,7 @@
 	     </div>
      <#--查询活动对象结果-->
 	 <div>
-        <div class="section hide" id="memberInfo_${campIndex}">
+		 <div class="section hide" id="memberInfo_${campIndex}">
 		  <div class="section-content">
 		    <table cellpadding="0" cellspacing="0" border="0" class="jquery_table"
 		    width="100%" id="memberDataTable_${campIndex}">

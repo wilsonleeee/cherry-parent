@@ -5,6 +5,7 @@
 <script type="text/javascript" src="/Cherry/js/lib/jquery-ui-i18n.js"></script>
 <script type="text/javascript" src="/Cherry/js/common/cherryDate.js"></script>
 <script type="text/javascript" src="/Cherry/js/common/ajaxfileupload.js"></script>
+<script type="text/javascript" src="/Cherry/js/common/popDataTable.js"></script>
 
 <s:i18n name="i18n.mb.BINOLMBVIS02">
 <s:text name="global.page.select" id="select_default"/>
@@ -34,8 +35,23 @@
 				      <th style="width: 15%"><s:text name="mbvis02_visitCategoryId"></s:text><span class="highlight"><s:text name="global.page.required"></s:text></span></th>
 				      <td style="width: 85%"><span>
 				      	<s:select name="visitCategoryId" list="visitCategoryList" listKey="visitCategoryId" listValue="visitTypeName" headerKey="" headerValue="%{#select_default}"></s:select>
-				      </span></td>
+				      </span>
+					  </td>
 				    </tr>
+					<tr class="hide">
+						<th>活动名称<span class="highlight"><s:text name="global.page.required"></s:text></span></th>
+						<td style="line-height: inherit;">
+							<span>
+							  <input name="campaignRuleID" type="hidden" id="campaignRuleID"/>
+							  <span id="campObjCampDiv"></span>
+							  <span class="hide"><input type="checkbox" name="campObjGroupType" value="1" id="campObjGroupType" checked/>仅沟通对象</span>
+							  <a class="add" id="campObjButton">
+								  <span class="ui-icon icon-search"></span><span class="button-text"><s:text name="global.page.Popselect" /></span>
+							  </a>
+							  <span class="error" id="campObjErrorDiv" style="color: red;margin-left: 5px;float: right;"></span>
+							</span>
+						</td>
+					</tr>
 				    <tr>
 				      <th><s:text name="mbvis02_visitObjType"></s:text><span class="highlight"><s:text name="global.page.required"></s:text></span></th>
 					  <td colspan="3">
@@ -168,6 +184,7 @@
 
 <div class="hide">
 <s:a action="BINOLMBVIS02_add" id="addUrl"></s:a>
+<s:a action="BINOLCM02_initCampObjDialog" id="initCampObjDialogUrl" namespace="/common"></s:a>
 
 <div id="dialogConfirm"><s:text name="global.page.dialogConfirm" /></div>
 <div id="dialogCancel"><s:text name="global.page.dialogCancel" /></div>
@@ -178,7 +195,7 @@
 
 <ul id="visitCategoryJson">
 <s:iterator value="visitCategoryList">
-<li value='<s:property value="visitCategoryId"/>'><s:property value="visitObjJson"/></li>
+<li value='<s:property value="visitCategoryId"/>' data='<s:property value="visitTypeCode"/>'><s:property value="visitObjJson"/></li>
 </s:iterator>
 </ul>
 </div>
@@ -186,6 +203,7 @@
 
 <script type="text/javascript">
 $(function(){
+	var visitTypeCodeCamp = "VISIT_TYPE_ACT";
 	
 	$('#startDate').cherryDate({
 		minDate:'${sysDate}',
@@ -230,6 +248,12 @@ $(function(){
 				$("#visitObjType").change();
 				$("#visitObjJson").val(visitObjJson);
 				getConInfo(visitObjJson);
+			}
+			var visitTypeCode = $("#visitCategoryJson").find('li[value='+value+']').attr("data");
+			if(visitTypeCode == visitTypeCodeCamp) {
+				$(this).parents("tr").next().show();
+			} else {
+				$(this).parents("tr").next().hide();
 			}
 		}
 	});
@@ -298,7 +322,8 @@ $(function(){
 			//确认按钮
 			confirmEvent: function(){
 				//将搜索条件弹出框信息json格式化
-				var searchParam = $("#searchConDialog").find(":input").serializeForm2Json(false);
+				var searchParam = getMemCommonSearchJson("searchConDialog");
+				//var searchParam = $("#searchConDialog").find(":input").serializeForm2Json(false);
 				if(searchParam){
 					$("#visitObjJson").val(searchParam);
 					getConInfo(searchParam);
@@ -394,6 +419,7 @@ $(function(){
 	
 	// 查询回访对象
 	$("#searchVisitObj").click(function(){
+		setVisitObjJson();
 		var visitObjType = $("#visitObjType").val();
 		var visitObjJson = $("#visitObjJson").val();
 		var visitObjCode = $("#visitObjCode").val();
@@ -504,6 +530,20 @@ $(function(){
 		}
 		return true;
 	}
+
+	function checkCampObj() {
+		var value = $("#visitCategoryId").val();
+		var visitTypeCode = $("#visitCategoryJson").find('li[value='+value+']').attr("data");
+		if(visitTypeCode == visitTypeCodeCamp) {
+			var campaignRuleID = $("#campaignRuleID").val();
+			if(campaignRuleID) {
+				return true;
+			} else {
+				return false;
+			}
+		}
+		return true;
+	}
 	
 	$("#saveButton").click(function(){
 		$("#execDateErrorDiv").empty();
@@ -514,11 +554,43 @@ $(function(){
 			$("#execDateErrorDiv").html($("#execDateError").html());
 			return false;
 		}
+		if(!checkCampObj()) {
+			$("#campObjErrorDiv").html("必须选择一个活动");
+			return false;
+		}
 		save();
 		return false;
 	});
+
+	function setVisitObjJson() {
+		var value = $("#visitCategoryId").val();
+		var visitTypeCode = $("#visitCategoryJson").find('li[value='+value+']').attr("data");
+		if(visitTypeCode == visitTypeCodeCamp) {
+			var visitObjJsonObj = {};
+			var visitObjJson = $("#visitObjJson").val();
+			if(visitObjJson) {
+				visitObjJsonObj = eval("("+visitObjJson+")");
+			}
+			visitObjJsonObj.campaignRuleID = $("#campaignRuleID").val();
+			if($("#campObjGroupType").is(':checked')) {
+				visitObjJsonObj.campObjGroupType = $("#campObjGroupType").val();
+			} else {
+				visitObjJsonObj.campObjGroupType = '';
+			}
+			$("#visitObjJson").val(JSON.stringify(visitObjJsonObj));
+		} else {
+			var visitObjJson = $("#visitObjJson").val();
+			if(visitObjJson) {
+				var visitObjJsonObj = eval("("+visitObjJson+")");
+				visitObjJsonObj.campaignRuleID = '';
+				visitObjJsonObj.campObjGroupType = '';
+				$("#visitObjJson").val(JSON.stringify(visitObjJsonObj));
+			}
+		}
+	}
 	
 	function save() {
+		setVisitObjJson();
 		var url = $("#addUrl").attr("href");
 		var params = $("#saveForm").serialize();
 		var callback = function(msg) {
@@ -532,6 +604,28 @@ $(function(){
 			callback: callback
 		});
 	}
+
+	$("#campObjButton").click(function(){
+		var callback = function(tableId) {
+			var $checkedRadio = $("#"+tableId).find(":input[checked]");
+			if($checkedRadio.length > 0) {
+				$("#campaignRuleID").val($checkedRadio.val());
+				var html = '(' + $checkedRadio.parent().next().text() + ')' + $checkedRadio.parent().next().next().text();
+				html += '<span class="close" style="margin: 0 10px 2px 5px;" id="campObjCampClose"><span class="ui-icon ui-icon-close" style="background-position: -80px -129px;"></span></span>';
+				$("#campObjCampDiv").html(html);
+				$("#campObjCampDiv").next().show();
+				$("#campObjCampClose").click(function(){
+					$("#campaignRuleID").val("");
+					$("#campObjCampDiv").empty();
+					$("#campObjCampDiv").next().hide();
+				});
+			}
+		}
+		var url = $("#initCampObjDialogUrl").attr("href");
+		var value = $("#campaignRuleID").val();
+		popCampObjList(url, null, value, callback);
+		return false;
+	});
 });
 
 </script>

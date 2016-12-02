@@ -5,6 +5,7 @@
 <script type="text/javascript" src="/Cherry/js/lib/jquery-ui-i18n.js"></script>
 <script type="text/javascript" src="/Cherry/js/common/cherryDate.js"></script>
 <script type="text/javascript" src="/Cherry/js/common/ajaxfileupload.js"></script>
+<script type="text/javascript" src="/Cherry/js/common/popDataTable.js"></script>
 
 <s:i18n name="i18n.mb.BINOLMBVIS02">
 <s:text name="global.page.select" id="select_default"/>
@@ -36,9 +37,29 @@
 	                <tr>
 				      <th style="width: 15%"><s:text name="mbvis02_visitCategoryId"></s:text><span class="highlight"><s:text name="global.page.required"></s:text></span></th>
 				      <td style="width: 85%"><span>
-				      	<s:property value="visitPlanInfo.visitTypeName"/>
+				      	  <s:hidden name="visitTypeCode" value="%{visitPlanInfo.visitTypeCode}" id="visitTypeCode"/>
+						  <s:property value="visitPlanInfo.visitTypeName"/>
 				      </span></td>
 				    </tr>
+					<s:if test="%{visitPlanInfo.visitTypeCode == 'VISIT_TYPE_ACT'}">
+					<tr>
+						<th>活动名称<span class="highlight"><s:text name="global.page.required"></s:text></span></th>
+						<td style="line-height: inherit;">
+							<span>
+							  <input name="campaignRuleID" type="hidden" id="campaignRuleID" value="${visitPlanInfo.campaignRuleID}"/>
+							  <span id="campObjCampDiv">
+								  (${visitPlanInfo.subCampaignCode})${visitPlanInfo.subCampaignName}
+								  <span class="close" style="margin: 0 10px 2px 5px;" id="campObjCampClose"><span class="ui-icon ui-icon-close" style="background-position: -80px -129px;"></span></span>
+							  </span>
+							  <span><s:checkbox name="campObjGroupType" fieldValue="1" value="%{visitPlanInfo.campObjGroupType}"/>仅沟通对象</span>
+							  <a class="add" id="campObjButton">
+								  <span class="ui-icon icon-search"></span><span class="button-text"><s:text name="global.page.Popselect" /></span>
+							  </a>
+							  <span class="error" id="campObjErrorDiv" style="color: red;margin-left: 5px;float: right;"></span>
+							</span>
+						</td>
+					</tr>
+					</s:if>
 				    <tr>
 				      <th><s:text name="mbvis02_visitObjType" /><span class="highlight"><s:text name="global.page.required"></s:text></span></th>
 					  <td colspan="3">
@@ -178,6 +199,7 @@
 
 <div class="hide">
 <s:a action="BINOLMBVIS02_update" id="updateUrl"></s:a>
+<s:a action="BINOLCM02_initCampObjDialog" id="initCampObjDialogUrl" namespace="/common"></s:a>
 
 <div id="dialogConfirm"><s:text name="global.page.dialogConfirm" /></div>
 <div id="dialogCancel"><s:text name="global.page.dialogCancel" /></div>
@@ -288,7 +310,8 @@ $(function(){
 			//确认按钮
 			confirmEvent: function(){
 				//将搜索条件弹出框信息json格式化
-				var searchParam = $("#searchConDialog").find(":input").serializeForm2Json(false);
+				var searchParam = getMemCommonSearchJson("searchConDialog");
+				//var searchParam = $("#searchConDialog").find(":input").serializeForm2Json(false);
 				if(searchParam){
 					$("#visitObjJson").val(searchParam);
 					getConInfo(searchParam);
@@ -384,6 +407,7 @@ $(function(){
 	
 	// 查询回访对象
 	$("#searchVisitObj").click(function(){
+		setVisitObjJson();
 		var visitObjType = $("#visitObjType").val();
 		var visitObjJson = $("#visitObjJson").val();
 		var visitObjCode = $("#visitObjCode").val();
@@ -493,6 +517,20 @@ $(function(){
 		}
 		return true;
 	}
+
+	var visitTypeCodeCamp = "VISIT_TYPE_ACT";
+	function checkCampObj() {
+		var visitTypeCode = $("#visitTypeCode").val();
+		if(visitTypeCode == visitTypeCodeCamp) {
+			var campaignRuleID = $("#campaignRuleID").val();
+			if(campaignRuleID) {
+				return true;
+			} else {
+				return false;
+			}
+		}
+		return true;
+	}
 	
 	$("#saveButton").click(function(){
 		$("#execDateErrorDiv").empty();
@@ -503,11 +541,42 @@ $(function(){
 			$("#execDateErrorDiv").html($("#execDateError").html());
 			return false;
 		}
+		if(!checkCampObj()) {
+			$("#campObjErrorDiv").html("必须选择一个活动");
+			return false;
+		}
 		save();
 		return false;
 	});
+
+	function setVisitObjJson() {
+		var visitTypeCode = $("#visitTypeCode").val();
+		if(visitTypeCode == visitTypeCodeCamp) {
+			var visitObjJsonObj = {};
+			var visitObjJson = $("#visitObjJson").val();
+			if(visitObjJson) {
+				visitObjJsonObj = eval("("+visitObjJson+")");
+			}
+			visitObjJsonObj.campaignRuleID = $("#campaignRuleID").val();
+			if($("#campObjGroupType").is(':checked')) {
+				visitObjJsonObj.campObjGroupType = $("#campObjGroupType").val();
+			} else {
+				visitObjJsonObj.campObjGroupType = '';
+			}
+			$("#visitObjJson").val(JSON.stringify(visitObjJsonObj));
+		} else {
+			var visitObjJson = $("#visitObjJson").val();
+			if(visitObjJson) {
+				var visitObjJsonObj = eval("("+visitObjJson+")");
+				visitObjJsonObj.campaignRuleID = '';
+				visitObjJsonObj.campObjGroupType = '';
+				$("#visitObjJson").val(JSON.stringify(visitObjJsonObj));
+			}
+		}
+	}
 	
 	function save() {
+		setVisitObjJson();
 		var url = $("#updateUrl").attr("href");
 		var params = $("#saveForm").serialize();
 		var callback = function(msg) {
@@ -521,6 +590,27 @@ $(function(){
 			callback: callback
 		});
 	}
+	$("#campObjButton").click(function(){
+		var callback = function(tableId) {
+			var $checkedRadio = $("#"+tableId).find(":input[checked]");
+			if($checkedRadio.length > 0) {
+				$("#campaignRuleID").val($checkedRadio.val());
+				var html = '(' + $checkedRadio.parent().next().text() + ')' + $checkedRadio.parent().next().next().text();
+				html += '<span class="close" style="margin: 0 10px 2px 5px;" id="campObjCampClose"><span class="ui-icon ui-icon-close" style="background-position: -80px -129px;"></span></span>';
+				$("#campObjCampDiv").html(html);
+				$("#campObjCampDiv").next().show();
+				$("#campObjCampClose").click(function(){
+					$("#campaignRuleID").val("");
+					$("#campObjCampDiv").empty();
+					$("#campObjCampDiv").next().hide();
+				});
+			}
+		}
+		var url = $("#initCampObjDialogUrl").attr("href");
+		var value = $("#campaignRuleID").val();
+		popCampObjList(url, null, value, callback);
+		return false;
+	});
 	
 	$("#visitObjType").change();
 	$("#visitDateType").change();
@@ -531,6 +621,11 @@ $(function(){
 	$("#visitObjName").find(".close").click(function(){
 		$("#visitObjName").empty();
 		$("#visitObjCode").val('');
+	});
+	$("#campObjCampClose").click(function(){
+		$("#campaignRuleID").val("");
+		$("#campObjCampDiv").empty();
+		$("#campObjCampDiv").next().hide();
 	});
 });
 

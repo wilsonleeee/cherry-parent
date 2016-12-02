@@ -33,30 +33,33 @@
 		<![CDATA[
 			SELECT TOP $COUNT$
 				#brandCode# AS brandCode,
-				BIN_VisitTaskID AS visitTaskId,
-				VisitType AS visitType,
-				VisitTaskName AS visitTaskName,
-				VisitTaskCreateTime AS visitTaskCreateTime,
-				StartTime AS startTime,
-				EndTime AS endTime,
-				CounterCode AS counterCode,
-				BACode AS baCode,
-				MemberCode AS memberCode,
-				MemberName AS memberName,
-				JoinTime AS joinTime,
-				MobilePhone AS mobilePhone,
-				BirthDay AS birthDay,
-				PaperID AS paperId,
-				FirstBillNS AS firstBillNS,
-				LastBillNS AS lastBillNS,
-				SkinType AS skinType
+				A.BIN_VisitTaskID AS visitTaskId,
+				A.VisitType AS visitType,
+				A.VisitTaskName AS visitTaskName,
+				A.VisitTaskCreateTime AS visitTaskCreateTime,
+				A.StartTime AS startTime,
+				A.EndTime AS endTime,
+				A.CounterCode AS counterCode,
+				A.BACode AS baCode,
+				A.MemberCode AS memberCode,
+				A.MemberName AS memberName,
+				A.JoinTime AS joinTime,
+				A.MobilePhone AS mobilePhone,
+				A.BirthDay AS birthDay,
+				A.PaperID AS paperId,
+				A.FirstBillNS AS firstBillNS,
+				A.LastBillNS AS lastBillNS,
+				A.SkinType AS skinType,
+				C.SubCampaignCode AS mainCode,
 			FROM 
-			    Members.BIN_VisitTask
+			    Members.BIN_VisitTask A
+			    LEFT JOIN Members.BIN_VisitPlan B ON A.BIN_VisitTaskID = B.BIN_VisitTaskID
+			    LEFT JOIN Campaign.BIN_CampaignRule C ON B.BIN_CampaignRuleID = C.BIN_CampaignRuleID
 			WHERE 
-            	BIN_OrganizationInfoID = #organizationInfoId# AND
-				BIN_BrandInfoID = #brandInfoId# AND
-            	SynchroFlag = '0' AND
-				TaskState = '0'
+            	A.BIN_OrganizationInfoID = #organizationInfoId# AND
+				A.BIN_BrandInfoID = #brandInfoId# AND
+            	A.SynchroFlag = '0' AND
+				A.TaskState = '0'
 		]]>
 	</select>
 	
@@ -121,6 +124,7 @@
 				TaskState,
 				SynchroFlag,
 				bak_varchar1,
+				main_code,
 				created,
 				modified
 	        )
@@ -144,6 +148,7 @@
 				'0',
 				'0',
 				#skinType#,
+				#mainCode#,
 				GETDATE(),
 				GETDATE()
 			)

@@ -242,6 +242,9 @@ public class BINOLCM02_Form extends DataTable_BaseForm{
 	
 	/** 浓妆淡抹产品弹出框List */
 	private List<Map<String, Object>> popProductInfoTwoList;
+
+	/** 活动对象是搜索结果的活动List */
+	private List<Map<String, Object>> popCampObjList;
 	
 	/** 当前是第几页 */
 	private int pageNo;
@@ -880,6 +883,14 @@ public class BINOLCM02_Form extends DataTable_BaseForm{
 
 	public void setProductCategoryTemp(String productCategoryTemp) {
 		this.productCategoryTemp = productCategoryTemp;
+	}
+
+	public List<Map<String, Object>> getPopCampObjList() {
+		return popCampObjList;
+	}
+
+	public void setPopCampObjList(List<Map<String, Object>> popCampObjList) {
+		this.popCampObjList = popCampObjList;
 	}
 
 	public int getPageNo() {

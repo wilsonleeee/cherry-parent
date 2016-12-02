@@ -513,6 +513,45 @@ public class BINOLCM33_Form extends DataTable_BaseForm {
 	
 	/** 最近一次购买时间结束 **/
 	private String lastSaleDateEnd;
+
+	/** 多个入会时间段JSON **/
+	private String joinDateRangeJson;
+
+	/** 多个入会时间段List **/
+	private List<Map<String, Object>> joinDateRangeList;
+
+	/** 多个总积分JSON **/
+	private String memPointRangeJson;
+
+	/** 多个总积分List **/
+	private List<Map<String, Object>> memPointRangeList;
+
+	/** 多个可兑换积分JSON **/
+	private String changablePointRangeJson;
+
+	/** 多个可兑换积分List **/
+	private List<Map<String, Object>> changablePointRangeList;
+
+	/** 多个最近购买时间段JSON **/
+	private String lastSaleTimeRangeJson;
+
+	/** 多个最近购买时间段List **/
+	private List<Map<String, Object>> lastSaleTimeRangeList;
+
+	/** 多个首次购买时间段JSON **/
+	private String firstSaleTimeRangeJson;
+
+	/** 多个首次购买时间段List **/
+	private List<Map<String, Object>> firstSaleTimeRangeList;
+
+	/** 会员邮箱 */
+	private String email;
+
+	/** 会员手机 */
+	private String mobilePhone;
+
+	/** 会员姓名 */
+	private String name;
 	
 	public int getBigPropId() {
 		return bigPropId;
@@ -1776,5 +1815,109 @@ public class BINOLCM33_Form extends DataTable_BaseForm {
 
 	public void setNotSaleDaysRange(String notSaleDaysRange) {
 		this.notSaleDaysRange = notSaleDaysRange;
+	}
+
+	public String getJoinDateRangeJson() {
+		return joinDateRangeJson;
+	}
+
+	public void setJoinDateRangeJson(String joinDateRangeJson) {
+		this.joinDateRangeJson = joinDateRangeJson;
+	}
+
+	public List<Map<String, Object>> getJoinDateRangeList() {
+		return joinDateRangeList;
+	}
+
+	public void setJoinDateRangeList(List<Map<String, Object>> joinDateRangeList) {
+		this.joinDateRangeList = joinDateRangeList;
+	}
+
+	public String getMemPointRangeJson() {
+		return memPointRangeJson;
+	}
+
+	public void setMemPointRangeJson(String memPointRangeJson) {
+		this.memPointRangeJson = memPointRangeJson;
+	}
+
+	public List<Map<String, Object>> getMemPointRangeList() {
+		return memPointRangeList;
+	}
+
+	public void setMemPointRangeList(List<Map<String, Object>> memPointRangeList) {
+		this.memPointRangeList = memPointRangeList;
+	}
+
+	public String getChangablePointRangeJson() {
+		return changablePointRangeJson;
+	}
+
+	public void setChangablePointRangeJson(String changablePointRangeJson) {
+		this.changablePointRangeJson = changablePointRangeJson;
+	}
+
+	public List<Map<String, Object>> getChangablePointRangeList() {
+		return changablePointRangeList;
+	}
+
+	public void setChangablePointRangeList(List<Map<String, Object>> changablePointRangeList) {
+		this.changablePointRangeList = changablePointRangeList;
+	}
+
+	public String getLastSaleTimeRangeJson() {
+		return lastSaleTimeRangeJson;
+	}
+
+	public void setLastSaleTimeRangeJson(String lastSaleTimeRangeJson) {
+		this.lastSaleTimeRangeJson = lastSaleTimeRangeJson;
+	}
+
+	public List<Map<String, Object>> getLastSaleTimeRangeList() {
+		return lastSaleTimeRangeList;
+	}
+
+	public void setLastSaleTimeRangeList(List<Map<String, Object>> lastSaleTimeRangeList) {
+		this.lastSaleTimeRangeList = lastSaleTimeRangeList;
+	}
+
+	public List<Map<String, Object>> getFirstSaleTimeRangeList() {
+		return firstSaleTimeRangeList;
+	}
+
+	public void setFirstSaleTimeRangeList(List<Map<String, Object>> firstSaleTimeRangeList) {
+		this.firstSaleTimeRangeList = firstSaleTimeRangeList;
+	}
+
+	public String getFirstSaleTimeRangeJson() {
+		return firstSaleTimeRangeJson;
+	}
+
+	public void setFirstSaleTimeRangeJson(String firstSaleTimeRangeJson) {
+		this.firstSaleTimeRangeJson = firstSaleTimeRangeJson;
+	}
+
+	public String getEmail() {
+		return email;
+	}
+
+	public void setEmail(String email) {
+		this.email = email;
+	}
+
+	public String getMobilePhone() {
+		return mobilePhone;
+	}
+
+	public void setMobilePhone(String mobilePhone) {
+		this.mobilePhone = mobilePhone;
+	}
+
+	public String getName() {
+		return name;
+	}
+
+	public void setName(String name) {
+		this.name = name;
 	}
 }

@@ -2820,4 +2820,44 @@
 		
     </select>
 
+	<sql id="queryCampObjList">
+		<![CDATA[
+		SELECT
+			A.BIN_CampaignRuleID AS campaignRuleID,
+			A.SubCampaignCode AS subCampaignCode,
+			A.SubCampaignName AS subCampaignName
+		FROM
+			Campaign.BIN_Campaign X
+			JOIN Campaign.BIN_CampaignRule A ON X.BIN_CampaignID=A.BIN_CampaignID
+			JOIN Campaign.BIN_CamRuleCondition B ON A.BIN_CampaignRuleID=B.BIN_CampaignRuleID
+			JOIN Campaign.BIN_CampaignBaseProp C
+			ON(B.BIN_CampaignBasePropID = C.BIN_CampaignBasePropID
+				AND C.PropertyName ='baseProp_customer'
+				AND C.ValidFlag = '1')
+		WHERE
+			X.BIN_BrandInfoID = #brandInfoId# AND
+			X.BIN_OrganizationInfoID = #organizationInfoId# AND
+			A.ValidFlag = '1' AND
+			A.State = '1' AND
+			B.ActLocationType='2' AND
+			B.ValidFlag='1'
+		]]>
+		<isNotEmpty property="keyword" prepend="AND">
+			(A.SubCampaignCode like '%'+#keyword#+'%' OR
+			A.SubCampaignName like '%'+#keyword#+'%')
+		</isNotEmpty>
+	</sql>
+
+	<!-- 查询活动对象为搜索结果的活动List -->
+	<select id="getCampObjList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+		<include refid="BINOLCMINC99.pageheader" />
+		<include refid="BINOLCM02.queryCampObjList" />
+		<include refid="BINOLCMINC99.pagefooter" />
+	</select>
+
+	<!-- 查询活动对象为搜索结果的活动总数 -->
+	<select id="getCampObjCount" parameterClass="java.util.HashMap" resultClass="java.lang.Integer">
+		<![CDATA[SELECT COUNT(1) FROM (]]><include refid="BINOLCM02.queryCampObjList" /><![CDATA[) T]]>
+	</select>
+
 </sqlMap>

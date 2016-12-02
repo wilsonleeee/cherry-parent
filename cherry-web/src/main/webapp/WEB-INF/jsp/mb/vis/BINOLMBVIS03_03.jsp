@@ -100,7 +100,8 @@ $(function(){
 	function save() {
 		var url = $("#updateUrl").attr("href");
 		var params = $("#saveForm").serialize();
-		var searchParam = $("#visitObjJson").find(":input").serializeForm2Json(false);
+		var searchParam = getMemCommonSearchJson("visitObjJson");
+		//var searchParam = $("#visitObjJson").find(":input").serializeForm2Json(false);
 		if(searchParam) {
 			params = params + "&visitObjJson=" + searchParam;
 		}

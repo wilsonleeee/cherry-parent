@@ -90,6 +90,8 @@ public class BINOLCPCOM03_Action extends BaseAction implements ModelDriven<BINOL
     
     /**导入couponlist*/
     private List<Map<String,Object>> couponList;
+
+	private String groupType;
 	
 	public List<Map<String, Object>> getMemList() {
 		return memList;
@@ -203,6 +205,14 @@ public class BINOLCPCOM03_Action extends BaseAction implements ModelDriven<BINOL
 
 	public void setCampaignCode(String campaignCode) {
 		this.campaignCode = campaignCode;
+	}
+
+	public String getGroupType() {
+		return groupType;
+	}
+
+	public void setGroupType(String groupType) {
+		this.groupType = groupType;
 	}
 
 	/**
@@ -364,9 +374,11 @@ public class BINOLCPCOM03_Action extends BaseAction implements ModelDriven<BINOL
 	    	// form参数设置到map中
 	    	ConvertUtil.setForm(form, map);
 	    	int total = 0;
+			int totalCount = 0;
 	    	if(!CherryChecker.isNullOrEmpty(searchCode)){
 	    		// 会员信息搜索条件
 		        map.put(CampConstants.SEARCH_CODE, searchCode);
+				map.put("groupType", groupType);
 		        // 取得searchLog信息
 				Map<String, Object> searchLogMap = binolcpcom03IF.getMemberInfo(map);
 				if(null!=searchLogMap){
@@ -374,6 +386,7 @@ public class BINOLCPCOM03_Action extends BaseAction implements ModelDriven<BINOL
 					if(total == 0){
 						campMebInfo = ConvertUtil.getString(searchLogMap.get("conditionInfo"));
 					}else{
+						totalCount = binolcpcom03IF.getMemInfoCount(map);
 						//会员信息list
 						memList=binolcpcom03IF.getMemInfoList(map);
 					}
@@ -381,7 +394,7 @@ public class BINOLCPCOM03_Action extends BaseAction implements ModelDriven<BINOL
 	    	}
 	    	if(total == 0){
 	    		// 会员共通查询
-				total = searchMemList(map,campMebInfo);
+				totalCount = searchMemList(map,campMebInfo);
 	    	}
 	    	if(null != memList){
 	    		for(Map<String,Object> mem : memList){
@@ -397,8 +410,8 @@ public class BINOLCPCOM03_Action extends BaseAction implements ModelDriven<BINOL
 	    		}
 	    	}
 			// form表单设置
-			form.setITotalDisplayRecords(total);
-			form.setITotalRecords(total);
+			form.setITotalDisplayRecords(totalCount);
+			form.setITotalRecords(totalCount);
 			
 			return "BINOLCPACT03";
 	    }

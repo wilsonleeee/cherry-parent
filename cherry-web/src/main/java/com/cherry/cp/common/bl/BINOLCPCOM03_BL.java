@@ -41,7 +41,7 @@ import com.cherry.cp.common.service.BINOLCPCOM03_Service;
  * @version 1.0 2011.7.18
  */
 public class BINOLCPCOM03_BL implements BINOLCPCOM03_IF{
-	
+
 	private static final Logger logger = LoggerFactory
 			.getLogger(BINOLCPCOM03_BL.class);
 	
@@ -245,6 +245,10 @@ public class BINOLCPCOM03_BL implements BINOLCPCOM03_IF{
     public List<Map<String, Object>> getMemInfoList(Map<String, Object> map) {
 		// 取得会员信息List
 		return binolcpcom03_Service.getMemInfoList(map);
+	}
+	@Override
+	public int getMemInfoCount(Map<String, Object> map) {
+		return binolcpcom03_Service.getMemInfoCount(map);
 	}
 	 /**
      * 总数

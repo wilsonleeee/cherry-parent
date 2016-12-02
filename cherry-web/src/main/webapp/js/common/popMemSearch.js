@@ -92,6 +92,7 @@ POPMEMSEARCH.prototype = {
 		},
 		// 添加搜索条件初始画面
 		"addSearchRequestInit": function(addInitUrl, object) {
+			popmemsearch.setJsonParam(object);
 			var reqContent = $(object).parents("div[id^=memSearchRequestDiv]").find(":input").serialize();
 			if(!reqContent) {
 				return;
@@ -208,42 +209,51 @@ POPMEMSEARCH.prototype = {
 				var callback = function(msg) {
 					removeDialog("#searchRequestDialog");
 					$div.html($("#"+$div.attr("id"),msg).html());
-					
-					$div.find(':input[name=joinDateStart]').cherryDate({
-						beforeShow: function(input){
-							var value = $div.find(':input[name=joinDateEnd]').val();
-							return [value,'maxDate'];
-						}
+
+					$div.find("#joinDateRangeDiv").find('li').each(function(){
+						var that = this;
+						$(that).find(':input[name=joinDateStart]').cherryDate({
+							beforeShow: function(input){
+								var value = $(that).find(':input[name=joinDateEnd]').val();
+								return [value,'maxDate'];
+							}
+						});
+						$(that).find(':input[name=joinDateEnd]').cherryDate({
+							beforeShow: function(input){
+								var value = $(that).find(':input[name=joinDateStart]').val();
+								return [value,'minDate'];
+							}
+						});
 					});
-					$div.find(':input[name=joinDateEnd]').cherryDate({
-						beforeShow: function(input){
-							var value = $div.find(':input[name=joinDateStart]').val();
-							return [value,'minDate'];
-						}
+					$div.find("#lastSaleTimeRangeDiv").find('li').each(function(){
+						var that = this;
+						$(that).find(':input[name=lastSaleDateStart]').cherryDate({
+							beforeShow: function(input){
+								var value = $(that).find(':input[name=lastSaleDateEnd]').val();
+								return [value,'maxDate'];
+							}
+						});
+						$(that).find(':input[name=lastSaleDateEnd]').cherryDate({
+							beforeShow: function(input){
+								var value = $(that).find(':input[name=lastSaleDateStart]').val();
+								return [value,'minDate'];
+							}
+						});
 					});
-					$div.find(':input[name=lastSaleDateStart]').cherryDate({
-						beforeShow: function(input){
-							var value = $div.find(':input[name=lastSaleDateEnd]').val();
-							return [value,'maxDate'];
-						}
-					});
-					$div.find(':input[name=lastSaleDateEnd]').cherryDate({
-						beforeShow: function(input){
-							var value = $div.find(':input[name=lastSaleDateStart]').val();
-							return [value,'minDate'];
-						}
-					});
-					$div.find(':input[name=firstStartDay]').cherryDate({
-						beforeShow: function(input){
-							var value = $div.find(':input[name=firstEndDay]').val();
-							return [value,'maxDate'];
-						}
-					});
-					$div.find(':input[name=firstEndDay]').cherryDate({
-						beforeShow: function(input){
-							var value = $div.find(':input[name=firstStartDay]').val();
-							return [value,'minDate'];
-						}
+					$div.find("#firstSaleTimeRangeDiv").find('li').each(function(){
+						var that = this;
+						$(that).find(':input[name=firstStartDay]').cherryDate({
+							beforeShow: function(input){
+								var value = $(that).find(':input[name=firstEndDay]').val();
+								return [value,'maxDate'];
+							}
+						});
+						$(that).find(':input[name=firstEndDay]').cherryDate({
+							beforeShow: function(input){
+								var value = $(that).find(':input[name=firstStartDay]').val();
+								return [value,'minDate'];
+							}
+						});
 					});
 					$div.find(':input[name=saleTimeStart]').cherryDate({
 						beforeShow: function(input){
@@ -338,6 +348,7 @@ POPMEMSEARCH.prototype = {
 		},
 		// 查询会员一览
 		"searchMemInit": function(searchMemInitUrl, object) {
+			popmemsearch.setJsonParam(object);
 			var reqContent = $(object).parents("div[id^=memSearchRequestDiv]").find(":input").serialize();
 			if($("#searchMemDialog").length == 0) {
 				$("body").append('<div style="display:none" id="searchMemDialog"></div>');
@@ -1001,57 +1012,66 @@ POPMEMSEARCH.prototype = {
 			var callback = function(msg) {
 				removeDialog("#searchRequestDialog");
 				$div.html($("#"+$div.attr("id"),msg).html());
-				
-				if($div.find(':input[name=joinDateStart]').is(':enabled')) {
-					$div.find(':input[name=joinDateStart]').cherryDate({
-						beforeShow: function(input){
-							var value = $div.find(':input[name=joinDateEnd]').val();
-							return [value,'maxDate'];
-						}
-					});
-				}
-				if($div.find(':input[name=joinDateEnd]').is(':enabled')) {
-					$div.find(':input[name=joinDateEnd]').cherryDate({
-						beforeShow: function(input){
-							var value = $div.find(':input[name=joinDateStart]').val();
-							return [value,'minDate'];
-						}
-					});
-				}
-				
-				if($div.find(':input[name=lastSaleDateStart]').is(':enabled')) {
-					$div.find(':input[name=lastSaleDateStart]').cherryDate({
-						beforeShow: function(input){
-							var value = $div.find(':input[name=lastSaleDateEnd]').val();
-							return [value,'maxDate'];
-						}
-					});
-				}
-				if($div.find(':input[name=lastSaleDateEnd]').is(':enabled')) {
-					$div.find(':input[name=lastSaleDateEnd]').cherryDate({
-						beforeShow: function(input){
-							var value = $div.find(':input[name=lastSaleDateStart]').val();
-							return [value,'minDate'];
-						}
-					});
-				}
-				
-				if($div.find(':input[name=firstStartDay]').is(':enabled')) {
-					$div.find(':input[name=firstStartDay]').cherryDate({
-						beforeShow: function(input){
-							var value = $div.find(':input[name=firstEndDay]').val();
-							return [value,'maxDate'];
-						}
-					});
-				}
-				if($div.find(':input[name=firstEndDay]').is(':enabled')) {
-					$div.find(':input[name=firstEndDay]').cherryDate({
-						beforeShow: function(input){
-							var value = $div.find(':input[name=firstStartDay]').val();
-							return [value,'minDate'];
-						}
-					});
-				}
+
+				$div.find("#joinDateRangeDiv").find('li').each(function(){
+					var that = this;
+					if($(that).find(':input[name=joinDateStart]').is(':enabled')) {
+						$(that).find(':input[name=joinDateStart]').cherryDate({
+							beforeShow: function(input){
+								var value = $(that).find(':input[name=joinDateEnd]').val();
+								return [value,'maxDate'];
+							}
+						});
+					}
+					if($(that).find(':input[name=joinDateEnd]').is(':enabled')) {
+						$(that).find(':input[name=joinDateEnd]').cherryDate({
+							beforeShow: function(input){
+								var value = $(that).find(':input[name=joinDateStart]').val();
+								return [value,'minDate'];
+							}
+						});
+					}
+				});
+
+				$div.find("#lastSaleTimeRangeDiv").find('li').each(function(){
+					var that = this;
+					if($(that).find(':input[name=lastSaleDateStart]').is(':enabled')) {
+						$(that).find(':input[name=lastSaleDateStart]').cherryDate({
+							beforeShow: function(input){
+								var value = $(that).find(':input[name=lastSaleDateEnd]').val();
+								return [value,'maxDate'];
+							}
+						});
+					}
+					if($(that).find(':input[name=lastSaleDateEnd]').is(':enabled')) {
+						$(that).find(':input[name=lastSaleDateEnd]').cherryDate({
+							beforeShow: function(input){
+								var value = $(that).find(':input[name=lastSaleDateStart]').val();
+								return [value,'minDate'];
+							}
+						});
+					}
+				});
+
+				$div.find("#firstSaleTimeRangeDiv").find('li').each(function(){
+					var that = this;
+					if($(that).find(':input[name=firstStartDay]').is(':enabled')) {
+						$(that).find(':input[name=firstStartDay]').cherryDate({
+							beforeShow: function(input){
+								var value = $(that).find(':input[name=firstEndDay]').val();
+								return [value,'maxDate'];
+							}
+						});
+					}
+					if($(that).find(':input[name=firstEndDay]').is(':enabled')) {
+						$(that).find(':input[name=firstEndDay]').cherryDate({
+							beforeShow: function(input){
+								var value = $(that).find(':input[name=firstStartDay]').val();
+								return [value,'minDate'];
+							}
+						});
+					}
+				});
 				
 				if($div.find(':input[name=saleTimeStart]').is(':enabled')) {
 					$div.find(':input[name=saleTimeStart]').cherryDate({
@@ -1467,6 +1487,157 @@ POPMEMSEARCH.prototype = {
 			$("#spanNoSaleDaysMode1,#spanNoSaleDaysMode2").hide();
 			$("#spanNoSaleDaysMode1,#spanNoSaleDaysMode2").find(":input").val("");
 			$("#spanNoSaleDaysMode" + mode).show();
+		},
+		"addJoinDateRange":function(index) {
+			var length = $("#joinDateRangeDiv").find('ul').find('li').length;
+			$("#joinDateRangeDiv").find('ul').append('<li>'
+				+'<input name="joinDateStart" class="date" id="joinDateStart'+index+'_'+length+'" style="width:80px"/>-<input name="joinDateEnd" class="date" id="joinDateEnd'+index+'_'+length+'" style="width:80px"/>'
+				+'<a href="#" class="right" onclick="$(this).parent().remove(); return false;" role="button"><span class="ui-icon icon-delete-big">close</span></a>'
+				+'</li>');
+			$('#joinDateStart'+index+'_'+length).cherryDate({
+				beforeShow: function(input){
+					var value = $('#joinDateEnd'+index+'_'+length).val();
+					return [value,'maxDate'];
+				}
+			});
+			$('#joinDateEnd'+index+'_'+length).cherryDate({
+				beforeShow: function(input){
+					var value = $('#joinDateStart'+index+'_'+length).val();
+					return [value,'minDate'];
+				}
+			});
+		},
+		"addMemPointRange":function() {
+			$("#memPointRangeDiv").find('ul').append('<li>'
+				+'<input name="memberPointStart" class="text" style="width:75px"/>-<input name="memberPointEnd" class="text" style="width:75px"/>'
+				+'<a href="#" class="right" onclick="$(this).parent().remove(); return false;" role="button"><span class="ui-icon icon-delete-big">close</span></a>'
+				+'</li>');
+		},
+		"addChangablePointRange":function() {
+			$("#changablePointRangeDiv").find('ul').append('<li>'
+				+'<input name="changablePointStart" class="text" style="width:75px"/>-<input name="changablePointEnd" class="text" style="width:75px"/>'
+				+'<a href="#" class="right" onclick="$(this).parent().remove(); return false;" role="button"><span class="ui-icon icon-delete-big">close</span></a>'
+				+'</li>');
+		},
+		"addLastSaleTimeRange":function(index) {
+			var length = $("#lastSaleTimeRangeDiv").find('ul').find('li').length;
+			$("#lastSaleTimeRangeDiv").find('ul').append('<li>'
+				+'<input name="lastSaleDateStart" class="date" id="lastSaleDateStart'+index+'_'+length+'" style="width:80px"/>-<input name="lastSaleDateEnd" class="date" id="lastSaleDateEnd'+index+'_'+length+'" style="width:80px"/>'
+				+'<a href="#" class="right" onclick="$(this).parent().remove(); return false;" role="button"><span class="ui-icon icon-delete-big">close</span></a>'
+				+'</li>');
+			$('#lastSaleDateStart'+index+'_'+length).cherryDate({
+				beforeShow: function(input){
+					var value = $('#lastSaleDateEnd'+index+'_'+length).val();
+					return [value,'maxDate'];
+				}
+			});
+			$('#lastSaleDateEnd'+index+'_'+length).cherryDate({
+				beforeShow: function(input){
+					var value = $('#lastSaleDateStart'+index+'_'+length).val();
+					return [value,'minDate'];
+				}
+			});
+		},
+		"addFirstSaleTimeRange":function(index) {
+			var length = $("#firstSaleTimeRangeDiv").find('ul').find('li').length;
+			$("#firstSaleTimeRangeDiv").find('ul').append('<li>'
+				+'<input name="firstStartDay" class="date" id="firstStartDay'+index+'_'+length+'" style="width:80px"/>-<input name="firstEndDay" class="date" id="firstEndDay'+index+'_'+length+'" style="width:80px"/>'
+				+'<a href="#" class="right" onclick="$(this).parent().remove(); return false;" role="button"><span class="ui-icon icon-delete-big">close</span></a>'
+				+'</li>');
+			$('#firstStartDay'+index+'_'+length).cherryDate({
+				beforeShow: function(input){
+					var value = $('#firstEndDay'+index+'_'+length).val();
+					return [value,'maxDate'];
+				}
+			});
+			$('#firstEndDay'+index+'_'+length).cherryDate({
+				beforeShow: function(input){
+					var value = $('#firstStartDay'+index+'_'+length).val();
+					return [value,'minDate'];
+				}
+			});
+		},
+		"setJsonParam":function(obj){
+			var $obj = $(obj).parents("div[id^=memSearchRequestDiv]");
+			var joinDateRanges = [];
+			$obj.find("#joinDateRangeDiv").find("li").each(function(){
+				var start = $(this).find(":input[name=joinDateStart]").val();
+				var end = $(this).find(":input[name=joinDateEnd]").val();
+				if(start != '' || end != '') {
+					var joinDateRange = {
+						"joinDateStart":start,
+						"joinDateEnd":end
+					}
+					joinDateRanges.push(joinDateRange);
+				}
+			});
+			if(joinDateRanges.length > 0) {
+				$obj.find("#joinDateRangeJson").val(JSON.stringify(joinDateRanges));
+			}
+
+			var memPointRanges = [];
+			$obj.find("#memPointRangeDiv").find("li").each(function(){
+				var start = $(this).find(":input[name=memberPointStart]").val();
+				var end = $(this).find(":input[name=memberPointEnd]").val();
+				if(start != '' || end != '') {
+					var memPointRange = {
+						"memberPointStart":start,
+						"memberPointEnd":end
+					}
+					memPointRanges.push(memPointRange);
+				}
+			});
+			if(memPointRanges.length > 0) {
+				$obj.find("#memPointRangeJson").val(JSON.stringify(memPointRanges));
+			}
+
+			var changablePointRanges = [];
+			$obj.find("#changablePointRangeDiv").find("li").each(function(){
+				var start = $(this).find(":input[name=changablePointStart]").val();
+				var end = $(this).find(":input[name=changablePointEnd]").val();
+				if(start != '' || end != '') {
+					var changablePointRange = {
+						"changablePointStart":start,
+						"changablePointEnd":end
+					}
+					changablePointRanges.push(changablePointRange);
+				}
+			});
+			if(changablePointRanges.length > 0) {
+				$obj.find("#changablePointRangeJson").val(JSON.stringify(changablePointRanges));
+			}
+
+			var lastSaleTimeRanges = [];
+			$obj.find("#lastSaleTimeRangeDiv").find("li").each(function(){
+				var start = $(this).find(":input[name=lastSaleDateStart]").val();
+				var end = $(this).find(":input[name=lastSaleDateEnd]").val();
+				if(start != '' || end != '') {
+					var lastSaleTimeRange = {
+						"lastSaleDateStart":start,
+						"lastSaleDateEnd":end
+					}
+					lastSaleTimeRanges.push(lastSaleTimeRange);
+				}
+			});
+			if(lastSaleTimeRanges.length > 0) {
+				$obj.find("#lastSaleTimeRangeJson").val(JSON.stringify(lastSaleTimeRanges));
+			}
+
+			var firstSaleTimeRanges = [];
+			$obj.find("#firstSaleTimeRangeDiv").find("li").each(function(){
+				var start = $(this).find(":input[name=firstStartDay]").val();
+				var end = $(this).find(":input[name=firstEndDay]").val();
+				if(start != '' || end != '') {
+					var firstSaleTimeRange = {
+						"firstStartDay":start,
+						"firstEndDay":end
+					}
+					firstSaleTimeRanges.push(firstSaleTimeRange);
+				}
+			});
+			if(firstSaleTimeRanges.length > 0) {
+				$obj.find("#firstSaleTimeRangeJson").val(JSON.stringify(firstSaleTimeRanges));
+			}
 		}
 }
 var popmemsearch = new POPMEMSEARCH();
