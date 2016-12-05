@@ -394,7 +394,7 @@ public class BINOLBSEMP03_Action extends BaseAction implements
 		Map<String,Object> positionInfo = binolbsemp04BL.getPositionCategoryInfo(valiMap);
 		// 岗位编号
 		String categoryCode = null;
-		if(positionInfo == null || positionInfo.isEmpty() || !CherryConstants.CATRGORY_CODE_BA.equals(categoryCode)){
+		if(positionInfo == null || positionInfo.isEmpty() || !CherryConstants.CATRGORY_CODE_BA.equals(positionInfo.get("categoryCode"))){
 			categoryCode = ConvertUtil.getString(positionInfo.get("categoryCode"));
 			if(!"02".equals(categoryCode)) {
 				form.setCreatOrgFlag(null);
