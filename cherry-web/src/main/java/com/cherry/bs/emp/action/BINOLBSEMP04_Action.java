@@ -494,7 +494,7 @@ public class BINOLBSEMP04_Action extends BaseAction implements
 		String categoryCode = null;
 		//如果添加的员工是营业员，则部门不是必须的，否则部门必填
 		if(positionInfo == null || positionInfo.isEmpty() || !CherryConstants.CATRGORY_CODE_BA.equals(positionInfo.get("categoryCode"))){
-			categoryCode = (String)positionInfo.get("categoryCode");
+			categoryCode = ConvertUtil.getString(positionInfo.get("categoryCode"));
 			if(!"02".equals(categoryCode)) {
 				form.setCreatOrgFlag(null);
 			}
@@ -505,6 +505,8 @@ public class BINOLBSEMP04_Action extends BaseAction implements
 							new String[] { getText("PBS00049") }));
 				}
 			}
+		} else {
+			categoryCode = (String)positionInfo.get("categoryCode");
 		}
 		
 		// 登录帐号必须验证

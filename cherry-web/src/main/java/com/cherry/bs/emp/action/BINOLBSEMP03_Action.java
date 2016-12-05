@@ -406,6 +406,8 @@ public class BINOLBSEMP03_Action extends BaseAction implements
 							new String[] { getText("PBS00049") }));
 				}
 			}
+		} else {
+			categoryCode = (String)positionInfo.get("categoryCode");
 		}
 		
 		if(!CherryChecker.isNullOrEmpty(form.getUserId())) {
