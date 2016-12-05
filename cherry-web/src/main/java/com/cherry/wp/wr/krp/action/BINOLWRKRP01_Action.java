@@ -94,8 +94,8 @@ public class BINOLWRKRP01_Action extends BaseAction implements ModelDriven<BINOL
 			params.put("businessType", "1");
 			params.put("operationType", "1");
 			params.put("departId", counterInfo.getOrganizationId());
-			Integer counterKind = (Integer)couInfo.get("counterKind");
-			if(counterKind != null && counterKind == 1) {
+			String counterKind = ConvertUtil.getString(couInfo.get("counterKind"));
+			if("1".equals(counterKind)) {
 				params.put("testType", counterKind);
 			}
 			form.setParams(JSONUtil.serialize(params));
