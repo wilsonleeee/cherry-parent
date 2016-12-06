@@ -205,7 +205,7 @@ public class BINOLWSMNG06_Action extends BaseAction implements ModelDriven<BINOL
      * </p>
      * 
      * 
-     * @param 无
+     * @param
      * @return String 跳转页面
      * @throws JSONException 
      * 
@@ -434,21 +434,17 @@ public class BINOLWSMNG06_Action extends BaseAction implements ModelDriven<BINOL
                 form_STBIL10.setPriceUnitArr(form.getPriceArr());
                 form_STBIL10.setHtArr(form.getHtArr());
                 int length = form.getProductVendorIDArr().length;
-                String[] inventoryInfoIDArr = new String[length];
-                String[] logicInventoryInfoIDArr = new String[length];
                 String[] productVendorPackageIDArr = new String[length];
                 String[] storageLocationInfoIDArr = new String[length];
-                for(int i=0;i<inventoryInfoIDArr.length;i++){
-                    inventoryInfoIDArr[i] = form.getDepotId();
-                    logicInventoryInfoIDArr[i] = form.getLogicinventId();
+                for(int i=0;i<productVendorPackageIDArr.length;i++){
                     productVendorPackageIDArr[i] = "0";
                     storageLocationInfoIDArr[i] = "0";
                 }
                 form_STBIL10.setProductVendorPackageIDArr(productVendorPackageIDArr);
                 // 主表仓库ID
                 form_STBIL10.setDepotInfoID(form.getDepotId());
-                form_STBIL10.setInventoryInfoIDArr(inventoryInfoIDArr);
-                form_STBIL10.setLogicInventoryInfoIDArr(logicInventoryInfoIDArr);
+                // 逻辑仓库ID
+                form_STBIL10.setLogicInventoryInfoID(form.getLogicinventId());
                 form_STBIL10.setStorageLocationInfoIDArr(storageLocationInfoIDArr);
                 form_STBIL10.setCommentsArr(form.getCommentsArr());
                 binOLSTBIL10_BL.tran_save(form_STBIL10, userInfo);
@@ -570,21 +566,17 @@ public class BINOLWSMNG06_Action extends BaseAction implements ModelDriven<BINOL
                 form_STBIL10.setPriceUnitArr(form.getPriceArr());
                 form_STBIL10.setHtArr(form.getHtArr());
                 int length = form.getProductVendorIDArr().length;
-                String[] inventoryInfoIDArr = new String[length];
-                String[] logicInventoryInfoIDArr = new String[length];
                 String[] productVendorPackageIDArr = new String[length];
                 String[] storageLocationInfoIDArr = new String[length];
-                for(int i=0;i<inventoryInfoIDArr.length;i++){
-                    inventoryInfoIDArr[i] = form.getDepotId();
-                    logicInventoryInfoIDArr[i] = form.getLogicinventId();
+                for(int i=0;i<productVendorPackageIDArr.length;i++){
                     productVendorPackageIDArr[i] = "0";
                     storageLocationInfoIDArr[i] = "0";
                 }
                 form_STBIL10.setProductVendorPackageIDArr(productVendorPackageIDArr);
                 // 主表仓库ID
                 form_STBIL10.setDepotInfoID(form.getDepotId());
-                form_STBIL10.setInventoryInfoIDArr(inventoryInfoIDArr);
-                form_STBIL10.setLogicInventoryInfoIDArr(logicInventoryInfoIDArr);
+                // 逻辑仓库ID
+                form_STBIL10.setLogicInventoryInfoID(form.getLogicinventId());
                 form_STBIL10.setStorageLocationInfoIDArr(storageLocationInfoIDArr);
                 form_STBIL10.setCommentsArr(form.getCommentsArr());
                 binOLSTBIL10_BL.tran_submit(form_STBIL10, userInfo);
@@ -705,7 +697,7 @@ public class BINOLWSMNG06_Action extends BaseAction implements ModelDriven<BINOL
     /**
      * 查询参数MAP取得
      * 
-     * @param tableParamsDTO
+     * @param
      * @throws JSONException 
      */
     private Map<String, Object> getSearchMap() throws JSONException {
@@ -748,7 +740,7 @@ public class BINOLWSMNG06_Action extends BaseAction implements ModelDriven<BINOL
     /**
      * 验证提交的参数
      * 
-     * @param 无
+     * @param
      * @return boolean
      *          验证结果
      * 
