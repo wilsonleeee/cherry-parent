@@ -16,6 +16,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import com.cherry.cm.core.CherryBatchConstants;
+import com.cherry.cm.core.CherryChecker;
 import com.cherry.cm.core.CherryConstants;
 import com.cherry.cm.service.BaseService;
 import com.cherry.cm.util.CherryUtil;
@@ -327,6 +329,22 @@ public class BINBECTSMG01_Service extends BaseService{
 	public Map<String, Object> getOrderInfoByMember(Map<String, Object> map) {
 		Map<String, Object> paramMap = new HashMap<String, Object>();
 		paramMap.putAll(map);
+		String activityCode = (String) paramMap.get("activityCode");
+		// 检查是否是生日礼类型的活动并且未设置年份限制的话,需要增加年份限制
+		if (!CherryChecker.isNullOrEmpty(activityCode) &&
+				CherryChecker.isNullOrEmpty(paramMap.get("repeatBeginTime"))) {
+			paramMap.put(CherryConstants.IBATIS_SQL_ID, "BINBECTSMG01.getSubCampaignType");
+			// 查询子活动类型
+			String subCampainType = (String) baseServiceImpl.get(paramMap);
+			// 生日礼
+			if ("BIR".equals(subCampainType)) {
+				String nowDateTime = (String) paramMap.get("NOWDATETIME");
+				if (CherryChecker.isNullOrEmpty(nowDateTime)) {
+					nowDateTime = CherryUtil.getSysDateTime(CherryBatchConstants.DF_TIME_PATTERN);
+				}
+				paramMap.put("repeatBeginTime", nowDateTime.substring(0,5) + CherryBatchConstants.FIRSTDAYOFYEAR + " " + CherryBatchConstants.STARTTIMEOFDAY);
+			}
+		}
 		paramMap.put(CherryConstants.IBATIS_SQL_ID, "BINBECTSMG01.getOrderInfoByMember");
         return (Map<String, Object>) baseServiceImpl.get(paramMap);
     }

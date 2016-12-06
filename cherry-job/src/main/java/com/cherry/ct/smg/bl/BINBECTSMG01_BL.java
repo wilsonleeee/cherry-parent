@@ -1804,6 +1804,7 @@ public class BINBECTSMG01_BL implements BINBECTSMG01_IF{
 														mbParamMap.put("orderId", ConvertUtil.getString(ctMap.get("orderId")));
 														mbParamMap.put("memCode", ConvertUtil.getString(memberMap.get("memCode")));
 														mbParamMap.put("repeatBeginTime", ctMap.get("repeatBeginTime"));
+														mbParamMap.put("NOWDATETIME", ctMap.get("nowTime"));
 														// 获取会员参与活动的单据信息
 														Map<String, Object> orderMap = binBECTSMG01_Service.getOrderInfoByMember(mbParamMap);
 														if(orderMap != null && !orderMap.isEmpty()){
@@ -2509,6 +2510,7 @@ public class BINBECTSMG01_BL implements BINBECTSMG01_IF{
 																mbParamMap.put("orderId", ConvertUtil.getString(ctMap.get("orderId")));
 																mbParamMap.put("memCode", ConvertUtil.getString(memberMap.get("memCode")));
 																mbParamMap.put("repeatBeginTime", ctMap.get("repeatBeginTime"));
+																mbParamMap.put("NOWDATETIME", ctMap.get("nowTime"));
 																// 获取会员参与活动的单据信息
 																Map<String, Object> orderMap = binBECTSMG01_Service.getOrderInfoByMember(mbParamMap);
 																if(orderMap != null && !orderMap.isEmpty()){
