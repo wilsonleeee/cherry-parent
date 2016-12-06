@@ -61,6 +61,8 @@ public class BINOLCM39_BL {
 		
 		Map<String, Object> map = new HashMap<String, Object>();
 		map.putAll(conditionMap);
+
+		binOLCM33_BL.setConditionJR(map);
 		
 		String language = (String)map.get(CherryConstants.SESSION_CHERRY_LANGUAGE);
 		

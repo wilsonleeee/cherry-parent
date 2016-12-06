@@ -151,6 +151,7 @@ public class BINOLCM33_Action extends BaseAction implements ModelDriven<BINOLCM3
 		// 会员检索画面存在初始值的场合
 		if(form.getReqContent() != null && !"".equals(form.getReqContent())) {
 			Map<String, Object> reqContentMap = ConvertUtil.json2Map(form.getReqContent());
+			binOLCM33_BL.setConditionJR(reqContentMap);
 			String addrNotEmpty = (String)reqContentMap.get("addrNotEmpty");
 			if(addrNotEmpty != null && !"".equals(addrNotEmpty)) {
 				form.setAddrNotEmpty(addrNotEmpty);

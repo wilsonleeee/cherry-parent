@@ -20,6 +20,7 @@ import java.util.Map;
 
 import javax.annotation.Resource;
 
+import com.googlecode.jsonplugin.JSONUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -95,6 +96,112 @@ public class BINOLCM33_BL {
 		// 删除会员搜索条件
 		return binOLCM33_Service.deleteSearchRequest(map);
 	}
+
+	public void setConditionJR(Map<String, Object> map) {
+		try {
+			String memberPointStart = (String)map.get("memberPointStart");
+			String memberPointEnd = (String)map.get("memberPointEnd");
+			String memPointRangeJson = (String)map.get("memPointRangeJson");
+			if(memPointRangeJson == null || "".equals(memPointRangeJson)) {
+				if((memberPointStart != null && !"".equals(memberPointStart))
+						|| (memberPointEnd != null && !"".equals(memberPointEnd))) {
+					List<Map<String, Object>> jsonList = new ArrayList<Map<String, Object>>();
+					Map<String, Object> jsonMap = new HashMap<String, Object>();
+					if(memberPointStart != null && !"".equals(memberPointStart)) {
+						jsonMap.put("memberPointStart",memberPointStart);
+					}
+					if(memberPointEnd != null && !"".equals(memberPointEnd)) {
+						jsonMap.put("memberPointEnd",memberPointEnd);
+					}
+					jsonList.add(jsonMap);
+					map.put("memPointRangeJson", JSONUtil.serialize(jsonList));
+				}
+			}
+
+
+			String changablePointStart = (String)map.get("changablePointStart");
+			String changablePointEnd = (String)map.get("changablePointEnd");
+			String changablePointRangeJson = (String)map.get("changablePointRangeJson");
+			if(changablePointRangeJson == null || "".equals(changablePointRangeJson)) {
+				if((changablePointStart != null && !"".equals(changablePointStart))
+						|| (changablePointEnd != null && !"".equals(changablePointEnd))) {
+					List<Map<String, Object>> jsonList = new ArrayList<Map<String, Object>>();
+					Map<String, Object> jsonMap = new HashMap<String, Object>();
+					if(changablePointStart != null && !"".equals(changablePointStart)) {
+						jsonMap.put("changablePointStart",changablePointStart);
+					}
+					if(changablePointEnd != null && !"".equals(changablePointEnd)) {
+						jsonMap.put("changablePointEnd",changablePointEnd);
+					}
+					jsonList.add(jsonMap);
+					map.put("changablePointRangeJson", JSONUtil.serialize(jsonList));
+				}
+			}
+
+
+			String joinDateStart = (String)map.get("joinDateStart");
+			String joinDateEnd = (String)map.get("joinDateEnd");
+			String joinDateRangeJson = (String)map.get("joinDateRangeJson");
+			if(joinDateRangeJson == null || "".equals(joinDateRangeJson)) {
+				if((joinDateStart != null && !"".equals(joinDateStart))
+						|| (joinDateEnd != null && !"".equals(joinDateEnd))) {
+					List<Map<String, Object>> jsonList = new ArrayList<Map<String, Object>>();
+					Map<String, Object> jsonMap = new HashMap<String, Object>();
+					if(joinDateStart != null && !"".equals(joinDateStart)) {
+						jsonMap.put("joinDateStart",joinDateStart);
+					}
+					if(joinDateEnd != null && !"".equals(joinDateEnd)) {
+						jsonMap.put("joinDateEnd",joinDateEnd);
+					}
+					jsonList.add(jsonMap);
+					map.put("joinDateRangeJson", JSONUtil.serialize(jsonList));
+				}
+			}
+
+
+			String lastSaleDateStart = (String)map.get("lastSaleDateStart");
+			String lastSaleDateEnd = (String)map.get("lastSaleDateEnd");
+			String lastSaleTimeRangeJson = (String)map.get("lastSaleTimeRangeJson");
+			if(lastSaleTimeRangeJson == null || "".equals(lastSaleTimeRangeJson)) {
+				if((lastSaleDateStart != null && !"".equals(lastSaleDateStart))
+						|| (lastSaleDateEnd != null && !"".equals(lastSaleDateEnd))) {
+					List<Map<String, Object>> jsonList = new ArrayList<Map<String, Object>>();
+					Map<String, Object> jsonMap = new HashMap<String, Object>();
+					if(lastSaleDateStart != null && !"".equals(lastSaleDateStart)) {
+						jsonMap.put("lastSaleDateStart",lastSaleDateStart);
+					}
+					if(lastSaleDateEnd != null && !"".equals(lastSaleDateEnd)) {
+						jsonMap.put("lastSaleDateEnd",lastSaleDateEnd);
+					}
+					jsonList.add(jsonMap);
+					map.put("lastSaleTimeRangeJson", JSONUtil.serialize(jsonList));
+				}
+			}
+
+
+			String firstStartDay = (String)map.get("firstStartDay");
+			String firstEndDay = (String)map.get("firstEndDay");
+			String firstSaleTimeRangeJson = (String)map.get("firstSaleTimeRangeJson");
+			if(firstSaleTimeRangeJson == null || "".equals(firstSaleTimeRangeJson)) {
+				if((firstStartDay != null && !"".equals(firstStartDay))
+						|| (firstEndDay != null && !"".equals(firstEndDay))) {
+					List<Map<String, Object>> jsonList = new ArrayList<Map<String, Object>>();
+					Map<String, Object> jsonMap = new HashMap<String, Object>();
+					if(firstStartDay != null && !"".equals(firstStartDay)) {
+						jsonMap.put("firstStartDay",firstStartDay);
+					}
+					if(firstEndDay != null && !"".equals(firstEndDay)) {
+						jsonMap.put("firstEndDay",firstEndDay);
+					}
+					jsonList.add(jsonMap);
+					map.put("firstSaleTimeRangeJson", JSONUtil.serialize(jsonList));
+				}
+			}
+
+		} catch (Exception e) {
+			logger.error("setConditionJR error", e);
+		}
+	}
 	
 	/**
 	 * 会员搜索条件设定
@@ -102,6 +209,8 @@ public class BINOLCM33_BL {
 	 * @param map 会员搜索条件
 	 */
 	public void setCondition(Map<String, Object> map) {
+
+		setConditionJR(map);
 		
 		// 取得 日结状态确定的业务日期
 		String sysDate = binOLCM33_Service.getBusDate(map);
@@ -1031,8 +1140,23 @@ public class BINOLCM33_BL {
 			if(notSaleDays != null && !"".equals(notSaleDays)) {
 				map.put("notSaleDaysTemp", Integer.parseInt(notSaleDays));
 				firstSaleDayFlag = "1";
-			} else if (!CherryChecker.isNullOrEmpty(map.get("firstStartDay")) 
-					|| !CherryChecker.isNullOrEmpty(map.get("firstEndDay"))) {
+			}
+			if (!CherryChecker.isNullOrEmpty(map.get("firstSaleTimeRangeJson"))) {
+				String firstSaleTimeRangeJson = (String)map.get("firstSaleTimeRangeJson");
+				if(firstSaleTimeRangeJson != null && !"".equals(firstSaleTimeRangeJson)) {
+					List<Map<String, Object>> firstSaleTimeRangeList = ConvertUtil.json2List(firstSaleTimeRangeJson);
+					for(Map<String, Object> firstSaleTimeRangeMap: firstSaleTimeRangeList) {
+						String firstStartDay = (String)firstSaleTimeRangeMap.get("firstStartDay");
+						String firstEndDay = (String)firstSaleTimeRangeMap.get("firstEndDay");
+						if(firstStartDay != null && !"".equals(firstStartDay)) {
+							firstSaleTimeRangeMap.put("firstStartDay", DateUtil.suffixDate(firstStartDay, 0));
+						}
+						if(firstEndDay != null && !"".equals(firstEndDay)) {
+							firstSaleTimeRangeMap.put("firstEndDay", DateUtil.suffixDate(firstEndDay, 1));
+						}
+					}
+					map.put("firstSaleTimeRangeList",firstSaleTimeRangeList);
+				}
 				firstSaleDayFlag = "1";
 			}
 		} else {
@@ -1070,21 +1194,6 @@ public class BINOLCM33_BL {
 			}
 			map.put("lastSaleTimeRangeList",lastSaleTimeRangeList);
 		}
-		String firstSaleTimeRangeJson = (String)map.get("firstSaleTimeRangeJson");
-		if(firstSaleTimeRangeJson != null && !"".equals(firstSaleTimeRangeJson)) {
-			List<Map<String, Object>> firstSaleTimeRangeList = ConvertUtil.json2List(firstSaleTimeRangeJson);
-			for(Map<String, Object> firstSaleTimeRangeMap: firstSaleTimeRangeList) {
-				String firstStartDay = (String)firstSaleTimeRangeMap.get("firstStartDay");
-				String firstEndDay = (String)firstSaleTimeRangeMap.get("firstEndDay");
-				if(firstStartDay != null && !"".equals(firstStartDay)) {
-					firstSaleTimeRangeMap.put("firstStartDay", DateUtil.suffixDate(firstStartDay, 0));
-				}
-				if(firstEndDay != null && !"".equals(firstEndDay)) {
-					firstSaleTimeRangeMap.put("firstEndDay", DateUtil.suffixDate(firstEndDay, 1));
-				}
-			}
-			map.put("firstSaleTimeRangeList",firstSaleTimeRangeList);
-		}
 	}
 	
 	/**
@@ -1094,7 +1203,6 @@ public class BINOLCM33_BL {
 	 * @return 查询结果
 	 */
 	public Map<String, Object> searchMemList(Map<String, Object> map) {
-		
 		// 查询结果
 		Map<String, Object> resultMap = new HashMap<String, Object>();
 		try {
