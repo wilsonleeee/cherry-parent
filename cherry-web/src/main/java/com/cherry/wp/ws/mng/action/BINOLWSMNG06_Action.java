@@ -445,6 +445,8 @@ public class BINOLWSMNG06_Action extends BaseAction implements ModelDriven<BINOL
                     storageLocationInfoIDArr[i] = "0";
                 }
                 form_STBIL10.setProductVendorPackageIDArr(productVendorPackageIDArr);
+                // 主表仓库ID
+                form_STBIL10.setDepotInfoID(form.getDepotId());
                 form_STBIL10.setInventoryInfoIDArr(inventoryInfoIDArr);
                 form_STBIL10.setLogicInventoryInfoIDArr(logicInventoryInfoIDArr);
                 form_STBIL10.setStorageLocationInfoIDArr(storageLocationInfoIDArr);
@@ -579,6 +581,8 @@ public class BINOLWSMNG06_Action extends BaseAction implements ModelDriven<BINOL
                     storageLocationInfoIDArr[i] = "0";
                 }
                 form_STBIL10.setProductVendorPackageIDArr(productVendorPackageIDArr);
+                // 主表仓库ID
+                form_STBIL10.setDepotInfoID(form.getDepotId());
                 form_STBIL10.setInventoryInfoIDArr(inventoryInfoIDArr);
                 form_STBIL10.setLogicInventoryInfoIDArr(logicInventoryInfoIDArr);
                 form_STBIL10.setStorageLocationInfoIDArr(storageLocationInfoIDArr);
