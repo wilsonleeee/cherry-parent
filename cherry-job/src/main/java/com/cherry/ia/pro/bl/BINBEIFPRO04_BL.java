@@ -106,6 +106,68 @@ public class BINBEIFPRO04_BL {
 
 	/**
 	 * 产品列表的batch处理
+	 *
+	 * @param 无
+	 *
+	 * @return Map
+	 * @throws CherryBatchException
+	 * @throws CherryException,Exception
+	 */
+	public Map<String,Object> tran_batchProductsMQSend(Map<String, Object> map)
+			throws CherryBatchException, CherryException,Exception {
+
+		Map<String,Object> resMap=new HashMap<String, Object>();
+
+		try {
+			// 备份产品下发数据
+			map.remove("validFlagVal");
+			binbeifpro04_Service.backProductIssue(map);
+
+			// 产品表的表版本号在下发成功后+1
+			Map<String, Object> seqMap = new HashMap<String, Object>();
+			seqMap.putAll(map);
+			seqMap.put("type", "E");
+			String newTVersion = binOLCM15_BL.getNoPadLeftSequenceId(seqMap);
+			map.put("newTVersion", newTVersion);
+			// 发送MQ
+//					String isSendMQ = ConvertUtil.getString(map.get("IsSendMQ"));
+//					if(!CherryBatchUtil.isBlankString(isSendMQ)){
+			// Step5: 调用MQHelper接口进行数据发送
+			Map<String,Object> MQMap = getPrtNoticeMqMap(map, MessageConstants.MSG_SPRT_PRT);
+			if(MQMap.isEmpty()){
+				resMap.put("ERRORMSG", "产品实时下发通知组装异常");
+				throw new Exception("产品实时下发通知组装异常");
+			}
+
+			//设定MQInfoDTO
+			MQInfoDTO mqDTO = setMQInfoDTO(MQMap,map);
+			mqDTO.setMsgQueueName("cherryToPosCMD");
+			//调用共通发送MQ消息
+			binOLMQCOM01_BL.sendMQMsg(mqDTO,false);
+//					}
+
+		} catch (Exception e) {
+			logger.outExceptionLog(e);
+			flag=CherryBatchConstants.BATCH_ERROR;
+			resMap.put("ERRORMSG", e.getMessage());
+			try {
+				binbeifpro04_Service.manualRollback();
+				binbeifpro04_Service.ifManualRollback();
+			} catch (Exception ex) {
+				resMap.put("ERRORMSG", ex.getMessage());
+				logger.outExceptionLog(ex);
+			}
+		}
+		// 输出处理结果信息
+		outMessage();
+
+		// 程序结束时，处理Job共通(插入Job运行履历表)
+		programEnd(map);
+		resMap.put("flag", flag);
+		return resMap;
+	}
+	/**
+	 * 产品列表的batch处理
 	 * 
 	 * @param 无
 	 * 
@@ -222,9 +284,17 @@ public class BINBEIFPRO04_BL {
 				}
 			}
 		}
-		
+
+		map.putAll(comMap);
+		if(totalCount > 0 || prtFunTotalCount > 0) {
+			if (failCount == 0 && prtFunFailCount == 0) {
+				// 备份产品下发数据
+				map.putAll(comMap);
+				map.put("IsSendMQ","1");
+			}
+		}
 //		failCount = 1;
-		// 
+	/*	//
 		if(totalCount > 0 || prtFunTotalCount > 0){
 			if(failCount == 0 && prtFunFailCount == 0){
 				try {
@@ -281,6 +351,7 @@ public class BINBEIFPRO04_BL {
 		
 		// 程序结束时，处理Job共通(插入Job运行履历表)
 		programEnd(map);
+		*/
 		resMap.put("flag", flag);
 		return resMap;
 	}

@@ -17,6 +17,7 @@ import java.util.Map;
 
 import javax.annotation.Resource;
 
+import com.cherry.cm.util.CherryBatchUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -95,6 +96,16 @@ public class BINBEIFPRO04_Action extends BaseAction {
 			map.put("language", userInfo.getLanguage());
 //			map.put(CherryBatchConstants.ORGANIZATIONINFOID, organizationInfoId);
 			Map<String,Object> flagMap = binbeifpro04_BL.tran_batchProducts(map);
+
+
+			// 发送MQ
+			String isSendMQ = ConvertUtil.getString(map.get("IsSendMQ"));
+			flg=ConvertUtil.getInt(flagMap.get("flag"));
+			if(flg == CherryBatchConstants.BATCH_SUCCESS && !CherryBatchUtil.isBlankString(isSendMQ)) {
+				// 备份产品下发数据/MQ下发
+				Map<String, Object> flagMapMQ = binbeifpro04_BL.tran_batchProductsMQSend(map);
+				flagMap.putAll(flagMapMQ);
+			}
 			flg=ConvertUtil.getInt(flagMap.get("flag"));
 		} catch (CherryBatchException cbx) {
 			flg = CherryBatchConstants.BATCH_WARNING;
