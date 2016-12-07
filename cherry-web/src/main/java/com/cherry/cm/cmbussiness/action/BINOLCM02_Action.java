@@ -1653,6 +1653,16 @@ public class BINOLCM02_Action extends BaseAction implements ModelDriven<BINOLCM0
 		}
 		map.put("param", ConvertUtil.getString(form.getParam()));
 		map.put("freeCount",ConvertUtil.getString(form.getFreeCount()));
+		if(form.getTreeSearch() != null && !"".equals(form.getTreeSearch().toString().trim())){
+			String treeSearch[] = form.getTreeSearch().split(",");
+			if(treeSearch != null && treeSearch.length > 0){
+				List<String> treeSearchList = new ArrayList<String>();
+				for(int i = 0 ;i < treeSearch.length;i++){
+					treeSearchList.add(treeSearch[i]);
+				}
+				map.put("TREE_FILTER",treeSearchList);
+			}
+		}
 		map.put(CherryConstants.SESSION_LANGUAGE, session.get(CherryConstants.SESSION_LANGUAGE));
 		// dataTable上传的参数设置到map
 		ConvertUtil.setForm(form, map);

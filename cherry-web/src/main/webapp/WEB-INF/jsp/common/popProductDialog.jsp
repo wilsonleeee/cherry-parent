@@ -12,7 +12,7 @@
 
 <div id ="productDialog" class="dialog hide">
     <s:if test="freeCount==1">
-        <div style="width: 50%; float: left;">
+        <div style="width: 45%; float: left;">
             <div style="width: 12%; float: left;">
                 <s:text name="global.page.categorytree"/>
             </div>

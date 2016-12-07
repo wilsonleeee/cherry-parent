@@ -601,7 +601,46 @@
         }
         //页面产品信息的刷新，发送请求传递参数
         this.refreshInputVal();
-        datatableFilter(this._eleHiddenSeleItem,22);
+        var $sSearch = $("#productDialogSearch");
+        //在这里发出调用函数
+        var url = $('#prtSearchUrl').html();
+        url += "?" + getSerializeToken();
+        url += "&treeSearch="+this._eleHiddenSeleItem.val();
+        var index = 22;
+        var tableSetting = {
+            // 表格ID
+            tableId : '#prt_dataTable',
+            // 一页显示页数
+            iDisplayLength:10,
+            // 数据URL
+            url : url,
+            // 表格列属性设置
+            aoColumns : [  { "sName": "checkbox","bSortable": false}, 	// 0
+                { "sName": "unitCode"},                     // 1
+                { "sName": "barCode"},                      // 2
+                { "sName": "originalBrand"},                // 3
+                { "sName": "nameTotal"},                    // 4
+                { "sName": "primaryCategoryBig"},           // 5
+                { "sName": "primaryCategoryMedium"},         // 6
+                { "sName": "primaryCategorySmall"},         // 6
+                { "sName": "salePrice"},					// 7
+                { "sName": "memPrice"},						// 8
+                { "sName": "standardCost"},					// 9
+                { "sName": "orderPrice"},					// 10
+
+                { "sName": "platinumPrice","bVisible" : false},					// 11
+                { "sName": "tagPrice","bVisible" : false},	 					// 12
+                { "sName": "validFlag" ,"bVisible" : false}
+            ],
+            index:index,
+            colVisFlag: false,
+            // 横向滚动条出现的临界宽度
+            //sScrollX : "100%",
+
+        };
+        // 调用获取表格函数
+        getTable(tableSetting);
+        //datatableFilter(this._eleHiddenSeleItem,22);
     };
 
     ComboTree.prototype.isItemInArray = function (item, arr) {

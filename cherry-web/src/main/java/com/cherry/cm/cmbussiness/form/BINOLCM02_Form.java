@@ -326,6 +326,8 @@ public class BINOLCM02_Form extends DataTable_BaseForm{
 	
 	/** 会员名称*/
 	private String departName;
+
+	private String treeSearch;
 	
 	public String getTestType() {
 		return testType;
@@ -923,5 +925,13 @@ public class BINOLCM02_Form extends DataTable_BaseForm{
 
 	public void setFreeCount(String freeCount) {
 		this.freeCount = freeCount;
+	}
+
+	public String getTreeSearch() {
+		return treeSearch;
+	}
+
+	public void setTreeSearch(String treeSearch) {
+		this.treeSearch = treeSearch;
 	}
 }
