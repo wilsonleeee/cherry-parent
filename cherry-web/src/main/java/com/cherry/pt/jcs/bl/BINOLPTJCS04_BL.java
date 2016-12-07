@@ -591,10 +591,10 @@ public class BINOLPTJCS04_BL implements BINOLPTJCS04_IF {
 						"viewSeq"));
 				String cateName = ConvertUtil.getString(cateList.get(j).get(
 						"propValCN"));
+				/*String propValue = ConvertUtil.getString(cateList.get(j).get(
+						"propValue"));*/
 				String propValue = ConvertUtil.getString(cateList.get(j).get(
-						"propValue"));
-//				String propValue = ConvertUtil.getString(cateList.get(j).get(
-//						"propValueCherry")); 
+						"propValueCherry"));
 				dataList.get(i).put("viewSeq-code" + viewSeq, propValue);
 				dataList.get(i).put("viewSeq-name" + viewSeq, cateName);
 			}
