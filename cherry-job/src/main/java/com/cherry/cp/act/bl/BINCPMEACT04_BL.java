@@ -403,6 +403,7 @@ public class BINCPMEACT04_BL {
 			}
 		} catch (Exception e) {
 			flag[0] = CherryBatchConstants.BATCH_WARNING;
+			logger.outExceptionLog(e);
 			logger.outLog("警告：批量插入活动单据失败！");
 			logger.outLog(e.getMessage(), CherryBatchConstants.LOGGER_ERROR);
 		}
@@ -808,6 +809,7 @@ public class BINCPMEACT04_BL {
 					}
 				} catch (Exception e) {
 					pageNo++;
+					logger.outExceptionLog(e);
 					logger.outLog(e.getMessage());
 				}
 			} else {
@@ -908,6 +910,7 @@ public class BINCPMEACT04_BL {
 						bincpmeact06_BL.tran_saveCampOrder(comMap, subCamp, tempList, prtList);
 					} catch (Exception e) {
 						flag[0] = CherryBatchConstants.BATCH_WARNING;
+						logger.outExceptionLog(e);
 						logger.outLog("警告：批量插入活动单据失败！");
 						logger.outLog(e.getMessage(), CherryBatchConstants.LOGGER_ERROR);
 					}
