@@ -101,101 +101,86 @@ public class BINOLCM33_BL {
 		try {
 			String memberPointStart = (String)map.get("memberPointStart");
 			String memberPointEnd = (String)map.get("memberPointEnd");
-			String memPointRangeJson = (String)map.get("memPointRangeJson");
-			if(memPointRangeJson == null || "".equals(memPointRangeJson)) {
-				if((memberPointStart != null && !"".equals(memberPointStart))
-						|| (memberPointEnd != null && !"".equals(memberPointEnd))) {
-					List<Map<String, Object>> jsonList = new ArrayList<Map<String, Object>>();
-					Map<String, Object> jsonMap = new HashMap<String, Object>();
-					if(memberPointStart != null && !"".equals(memberPointStart)) {
-						jsonMap.put("memberPointStart",memberPointStart);
-					}
-					if(memberPointEnd != null && !"".equals(memberPointEnd)) {
-						jsonMap.put("memberPointEnd",memberPointEnd);
-					}
-					jsonList.add(jsonMap);
-					map.put("memPointRangeJson", JSONUtil.serialize(jsonList));
+			if((memberPointStart != null && !"".equals(memberPointStart))
+					|| (memberPointEnd != null && !"".equals(memberPointEnd))) {
+				List<Map<String, Object>> jsonList = new ArrayList<Map<String, Object>>();
+				Map<String, Object> jsonMap = new HashMap<String, Object>();
+				if(memberPointStart != null && !"".equals(memberPointStart)) {
+					jsonMap.put("memberPointStart",memberPointStart);
 				}
+				if(memberPointEnd != null && !"".equals(memberPointEnd)) {
+					jsonMap.put("memberPointEnd",memberPointEnd);
+				}
+				jsonList.add(jsonMap);
+				map.put("memPointRangeJson", JSONUtil.serialize(jsonList));
 			}
 
 
 			String changablePointStart = (String)map.get("changablePointStart");
 			String changablePointEnd = (String)map.get("changablePointEnd");
-			String changablePointRangeJson = (String)map.get("changablePointRangeJson");
-			if(changablePointRangeJson == null || "".equals(changablePointRangeJson)) {
-				if((changablePointStart != null && !"".equals(changablePointStart))
-						|| (changablePointEnd != null && !"".equals(changablePointEnd))) {
-					List<Map<String, Object>> jsonList = new ArrayList<Map<String, Object>>();
-					Map<String, Object> jsonMap = new HashMap<String, Object>();
-					if(changablePointStart != null && !"".equals(changablePointStart)) {
-						jsonMap.put("changablePointStart",changablePointStart);
-					}
-					if(changablePointEnd != null && !"".equals(changablePointEnd)) {
-						jsonMap.put("changablePointEnd",changablePointEnd);
-					}
-					jsonList.add(jsonMap);
-					map.put("changablePointRangeJson", JSONUtil.serialize(jsonList));
+			if((changablePointStart != null && !"".equals(changablePointStart))
+					|| (changablePointEnd != null && !"".equals(changablePointEnd))) {
+				List<Map<String, Object>> jsonList = new ArrayList<Map<String, Object>>();
+				Map<String, Object> jsonMap = new HashMap<String, Object>();
+				if(changablePointStart != null && !"".equals(changablePointStart)) {
+					jsonMap.put("changablePointStart",changablePointStart);
 				}
+				if(changablePointEnd != null && !"".equals(changablePointEnd)) {
+					jsonMap.put("changablePointEnd",changablePointEnd);
+				}
+				jsonList.add(jsonMap);
+				map.put("changablePointRangeJson", JSONUtil.serialize(jsonList));
 			}
 
 
 			String joinDateStart = (String)map.get("joinDateStart");
 			String joinDateEnd = (String)map.get("joinDateEnd");
-			String joinDateRangeJson = (String)map.get("joinDateRangeJson");
-			if(joinDateRangeJson == null || "".equals(joinDateRangeJson)) {
-				if((joinDateStart != null && !"".equals(joinDateStart))
-						|| (joinDateEnd != null && !"".equals(joinDateEnd))) {
-					List<Map<String, Object>> jsonList = new ArrayList<Map<String, Object>>();
-					Map<String, Object> jsonMap = new HashMap<String, Object>();
-					if(joinDateStart != null && !"".equals(joinDateStart)) {
-						jsonMap.put("joinDateStart",joinDateStart);
-					}
-					if(joinDateEnd != null && !"".equals(joinDateEnd)) {
-						jsonMap.put("joinDateEnd",joinDateEnd);
-					}
-					jsonList.add(jsonMap);
-					map.put("joinDateRangeJson", JSONUtil.serialize(jsonList));
+			if((joinDateStart != null && !"".equals(joinDateStart))
+					|| (joinDateEnd != null && !"".equals(joinDateEnd))) {
+				List<Map<String, Object>> jsonList = new ArrayList<Map<String, Object>>();
+				Map<String, Object> jsonMap = new HashMap<String, Object>();
+				if(joinDateStart != null && !"".equals(joinDateStart)) {
+					jsonMap.put("joinDateStart",joinDateStart);
 				}
+				if(joinDateEnd != null && !"".equals(joinDateEnd)) {
+					jsonMap.put("joinDateEnd",joinDateEnd);
+				}
+				jsonList.add(jsonMap);
+				map.put("joinDateRangeJson", JSONUtil.serialize(jsonList));
 			}
 
 
 			String lastSaleDateStart = (String)map.get("lastSaleDateStart");
 			String lastSaleDateEnd = (String)map.get("lastSaleDateEnd");
-			String lastSaleTimeRangeJson = (String)map.get("lastSaleTimeRangeJson");
-			if(lastSaleTimeRangeJson == null || "".equals(lastSaleTimeRangeJson)) {
-				if((lastSaleDateStart != null && !"".equals(lastSaleDateStart))
-						|| (lastSaleDateEnd != null && !"".equals(lastSaleDateEnd))) {
-					List<Map<String, Object>> jsonList = new ArrayList<Map<String, Object>>();
-					Map<String, Object> jsonMap = new HashMap<String, Object>();
-					if(lastSaleDateStart != null && !"".equals(lastSaleDateStart)) {
-						jsonMap.put("lastSaleDateStart",lastSaleDateStart);
-					}
-					if(lastSaleDateEnd != null && !"".equals(lastSaleDateEnd)) {
-						jsonMap.put("lastSaleDateEnd",lastSaleDateEnd);
-					}
-					jsonList.add(jsonMap);
-					map.put("lastSaleTimeRangeJson", JSONUtil.serialize(jsonList));
+			if((lastSaleDateStart != null && !"".equals(lastSaleDateStart))
+					|| (lastSaleDateEnd != null && !"".equals(lastSaleDateEnd))) {
+				List<Map<String, Object>> jsonList = new ArrayList<Map<String, Object>>();
+				Map<String, Object> jsonMap = new HashMap<String, Object>();
+				if(lastSaleDateStart != null && !"".equals(lastSaleDateStart)) {
+					jsonMap.put("lastSaleDateStart",lastSaleDateStart);
 				}
+				if(lastSaleDateEnd != null && !"".equals(lastSaleDateEnd)) {
+					jsonMap.put("lastSaleDateEnd",lastSaleDateEnd);
+				}
+				jsonList.add(jsonMap);
+				map.put("lastSaleTimeRangeJson", JSONUtil.serialize(jsonList));
 			}
 
 
 			String firstStartDay = (String)map.get("firstStartDay");
 			String firstEndDay = (String)map.get("firstEndDay");
-			String firstSaleTimeRangeJson = (String)map.get("firstSaleTimeRangeJson");
-			if(firstSaleTimeRangeJson == null || "".equals(firstSaleTimeRangeJson)) {
-				if((firstStartDay != null && !"".equals(firstStartDay))
-						|| (firstEndDay != null && !"".equals(firstEndDay))) {
-					List<Map<String, Object>> jsonList = new ArrayList<Map<String, Object>>();
-					Map<String, Object> jsonMap = new HashMap<String, Object>();
-					if(firstStartDay != null && !"".equals(firstStartDay)) {
-						jsonMap.put("firstStartDay",firstStartDay);
-					}
-					if(firstEndDay != null && !"".equals(firstEndDay)) {
-						jsonMap.put("firstEndDay",firstEndDay);
-					}
-					jsonList.add(jsonMap);
-					map.put("firstSaleTimeRangeJson", JSONUtil.serialize(jsonList));
+			if((firstStartDay != null && !"".equals(firstStartDay))
+					|| (firstEndDay != null && !"".equals(firstEndDay))) {
+				List<Map<String, Object>> jsonList = new ArrayList<Map<String, Object>>();
+				Map<String, Object> jsonMap = new HashMap<String, Object>();
+				if(firstStartDay != null && !"".equals(firstStartDay)) {
+					jsonMap.put("firstStartDay",firstStartDay);
 				}
+				if(firstEndDay != null && !"".equals(firstEndDay)) {
+					jsonMap.put("firstEndDay",firstEndDay);
+				}
+				jsonList.add(jsonMap);
+				map.put("firstSaleTimeRangeJson", JSONUtil.serialize(jsonList));
 			}
 
 		} catch (Exception e) {

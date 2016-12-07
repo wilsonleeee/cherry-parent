@@ -148,18 +148,18 @@ public class BINOLCM33_Form extends DataTable_BaseForm {
 	/** 会员性别 **/
 	private List<String> mebSex;
 	
-	/** 会员积分上限 **/
-	private String memberPointStart;
-	
-	/** 会员积分下限 **/
-	private String memberPointEnd;
-	
-	/** 可兑换积分上限 **/
-	private String changablePointStart;
-	
-	/** 可兑换积分下限 **/
-	private String changablePointEnd;
-	
+//	/** 会员积分上限 **/
+//	private String memberPointStart;
+//
+//	/** 会员积分下限 **/
+//	private String memberPointEnd;
+//
+//	/** 可兑换积分上限 **/
+//	private String changablePointStart;
+//
+//	/** 可兑换积分下限 **/
+//	private String changablePointEnd;
+//
 	/** 入会时间模式 **/
 	private String joinDateMode;
 	
@@ -172,11 +172,11 @@ public class BINOLCM33_Form extends DataTable_BaseForm {
 	/** 入会时间范围单位（1：一段时间内，2：满一段时间） **/
 	private String joinDateUnitFlag;
 	
-	/** 入会时间上限 **/
-	private String joinDateStart;
-	
-	/** 入会时间下限 **/
-	private String joinDateEnd;
+//	/** 入会时间上限 **/
+//	private String joinDateStart;
+//
+//	/** 入会时间下限 **/
+//	private String joinDateEnd;
 	
 	/** 入会时间和购买时间条件之间的关系（1：AND，2：OR） **/
 	private String joinDateSaleDateRel;
@@ -395,9 +395,9 @@ public class BINOLCM33_Form extends DataTable_BaseForm {
 	
 	private String noSaleDaysMode;
 	
-	private String firstStartDay;
-	
-	private String firstEndDay;
+//	private String firstStartDay;
+//
+//	private String firstEndDay;
 	
 	private String privilegeFlag;
 	
@@ -508,11 +508,11 @@ public class BINOLCM33_Form extends DataTable_BaseForm {
 	/** 会员标签是否显示*/
 	private String tagFlag;
 	
-	/** 最近一次购买时间开始 **/
-	private String lastSaleDateStart;
-	
-	/** 最近一次购买时间结束 **/
-	private String lastSaleDateEnd;
+//	/** 最近一次购买时间开始 **/
+//	private String lastSaleDateStart;
+//
+//	/** 最近一次购买时间结束 **/
+//	private String lastSaleDateEnd;
 
 	/** 多个入会时间段JSON **/
 	private String joinDateRangeJson;
@@ -961,37 +961,37 @@ public class BINOLCM33_Form extends DataTable_BaseForm {
 		this.mebSex = mebSex;
 	}
 
-	public String getMemberPointStart() {
-		return memberPointStart;
-	}
-
-	public void setMemberPointStart(String memberPointStart) {
-		this.memberPointStart = memberPointStart;
-	}
-
-	public String getMemberPointEnd() {
-		return memberPointEnd;
-	}
-
-	public void setMemberPointEnd(String memberPointEnd) {
-		this.memberPointEnd = memberPointEnd;
-	}
-
-	public String getChangablePointStart() {
-		return changablePointStart;
-	}
-
-	public void setChangablePointStart(String changablePointStart) {
-		this.changablePointStart = changablePointStart;
-	}
-
-	public String getChangablePointEnd() {
-		return changablePointEnd;
-	}
-
-	public void setChangablePointEnd(String changablePointEnd) {
-		this.changablePointEnd = changablePointEnd;
-	}
+//	public String getMemberPointStart() {
+//		return memberPointStart;
+//	}
+//
+//	public void setMemberPointStart(String memberPointStart) {
+//		this.memberPointStart = memberPointStart;
+//	}
+//
+//	public String getMemberPointEnd() {
+//		return memberPointEnd;
+//	}
+//
+//	public void setMemberPointEnd(String memberPointEnd) {
+//		this.memberPointEnd = memberPointEnd;
+//	}
+//
+//	public String getChangablePointStart() {
+//		return changablePointStart;
+//	}
+//
+//	public void setChangablePointStart(String changablePointStart) {
+//		this.changablePointStart = changablePointStart;
+//	}
+//
+//	public String getChangablePointEnd() {
+//		return changablePointEnd;
+//	}
+//
+//	public void setChangablePointEnd(String changablePointEnd) {
+//		this.changablePointEnd = changablePointEnd;
+//	}
 
 	public String getJoinDateMode() {
 		return joinDateMode;
@@ -1025,21 +1025,21 @@ public class BINOLCM33_Form extends DataTable_BaseForm {
 		this.joinDateUnitFlag = joinDateUnitFlag;
 	}
 
-	public String getJoinDateStart() {
-		return joinDateStart;
-	}
-
-	public void setJoinDateStart(String joinDateStart) {
-		this.joinDateStart = joinDateStart;
-	}
-
-	public String getJoinDateEnd() {
-		return joinDateEnd;
-	}
-
-	public void setJoinDateEnd(String joinDateEnd) {
-		this.joinDateEnd = joinDateEnd;
-	}
+//	public String getJoinDateStart() {
+//		return joinDateStart;
+//	}
+//
+//	public void setJoinDateStart(String joinDateStart) {
+//		this.joinDateStart = joinDateStart;
+//	}
+//
+//	public String getJoinDateEnd() {
+//		return joinDateEnd;
+//	}
+//
+//	public void setJoinDateEnd(String joinDateEnd) {
+//		this.joinDateEnd = joinDateEnd;
+//	}
 	
 	public String getJoinDateSaleDateRel() {
 		return joinDateSaleDateRel;
@@ -1769,21 +1769,21 @@ public class BINOLCM33_Form extends DataTable_BaseForm {
 		this.tagFlag = tagFlag;
 	}
 
-	public String getLastSaleDateStart() {
-		return lastSaleDateStart;
-	}
-
-	public void setLastSaleDateStart(String lastSaleDateStart) {
-		this.lastSaleDateStart = lastSaleDateStart;
-	}
-
-	public String getLastSaleDateEnd() {
-		return lastSaleDateEnd;
-	}
-
-	public void setLastSaleDateEnd(String lastSaleDateEnd) {
-		this.lastSaleDateEnd = lastSaleDateEnd;
-	}
+//	public String getLastSaleDateStart() {
+//		return lastSaleDateStart;
+//	}
+//
+//	public void setLastSaleDateStart(String lastSaleDateStart) {
+//		this.lastSaleDateStart = lastSaleDateStart;
+//	}
+//
+//	public String getLastSaleDateEnd() {
+//		return lastSaleDateEnd;
+//	}
+//
+//	public void setLastSaleDateEnd(String lastSaleDateEnd) {
+//		this.lastSaleDateEnd = lastSaleDateEnd;
+//	}
 
 	public String getNoSaleDaysMode() {
 		return noSaleDaysMode;
@@ -1793,21 +1793,21 @@ public class BINOLCM33_Form extends DataTable_BaseForm {
 		this.noSaleDaysMode = noSaleDaysMode;
 	}
 
-	public String getFirstStartDay() {
-		return firstStartDay;
-	}
-
-	public void setFirstStartDay(String firstStartDay) {
-		this.firstStartDay = firstStartDay;
-	}
-
-	public String getFirstEndDay() {
-		return firstEndDay;
-	}
-
-	public void setFirstEndDay(String firstEndDay) {
-		this.firstEndDay = firstEndDay;
-	}
+//	public String getFirstStartDay() {
+//		return firstStartDay;
+//	}
+//
+//	public void setFirstStartDay(String firstStartDay) {
+//		this.firstStartDay = firstStartDay;
+//	}
+//
+//	public String getFirstEndDay() {
+//		return firstEndDay;
+//	}
+//
+//	public void setFirstEndDay(String firstEndDay) {
+//		this.firstEndDay = firstEndDay;
+//	}
 
 	public String getNotSaleDaysRange() {
 		return notSaleDaysRange;

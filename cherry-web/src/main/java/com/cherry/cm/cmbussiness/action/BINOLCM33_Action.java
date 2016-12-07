@@ -245,22 +245,22 @@ public class BINOLCM33_Action extends BaseAction implements ModelDriven<BINOLCM3
 					form.setMebSex(_mebSex);
 				}
 			}
-			String memberPointStart = (String)reqContentMap.get("memberPointStart");
-			if(memberPointStart != null && !"".equals(memberPointStart)) {
-				form.setMemberPointStart(memberPointStart);
-			}
-			String memberPointEnd = (String)reqContentMap.get("memberPointEnd");
-			if(memberPointEnd != null && !"".equals(memberPointEnd)) {
-				form.setMemberPointEnd(memberPointEnd);
-			}
-			String changablePointStart = (String)reqContentMap.get("changablePointStart");
-			if(changablePointStart != null && !"".equals(changablePointStart)) {
-				form.setChangablePointStart(changablePointStart);
-			}
-			String changablePointEnd = (String)reqContentMap.get("changablePointEnd");
-			if(changablePointEnd != null && !"".equals(changablePointEnd)) {
-				form.setChangablePointEnd(changablePointEnd);
-			}
+//			String memberPointStart = (String)reqContentMap.get("memberPointStart");
+//			if(memberPointStart != null && !"".equals(memberPointStart)) {
+//				form.setMemberPointStart(memberPointStart);
+//			}
+//			String memberPointEnd = (String)reqContentMap.get("memberPointEnd");
+//			if(memberPointEnd != null && !"".equals(memberPointEnd)) {
+//				form.setMemberPointEnd(memberPointEnd);
+//			}
+//			String changablePointStart = (String)reqContentMap.get("changablePointStart");
+//			if(changablePointStart != null && !"".equals(changablePointStart)) {
+//				form.setChangablePointStart(changablePointStart);
+//			}
+//			String changablePointEnd = (String)reqContentMap.get("changablePointEnd");
+//			if(changablePointEnd != null && !"".equals(changablePointEnd)) {
+//				form.setChangablePointEnd(changablePointEnd);
+//			}
 			String birthDayMode = (String)reqContentMap.get("birthDayMode");
 			if(birthDayMode != null && !"".equals(birthDayMode)) {
 				form.setBirthDayMode(birthDayMode);
@@ -773,22 +773,22 @@ public class BINOLCM33_Action extends BaseAction implements ModelDriven<BINOLCM3
 			if(noSaleDaysMode != null && !"".equals(noSaleDaysMode)) {
 				form.setNoSaleDaysMode(noSaleDaysMode);
 			}
-			String firstStartDay = (String)reqContentMap.get("firstStartDay");
-			if(firstStartDay != null && !"".equals(firstStartDay)) {
-				form.setFirstStartDay(firstStartDay);
-			}
-			String firstEndDay = (String)reqContentMap.get("firstEndDay");
-			if(firstEndDay != null && !"".equals(firstEndDay)) {
-				form.setFirstEndDay(firstEndDay);
-			}
-			String lastSaleDateStart = (String) reqContentMap.get("lastSaleDateStart");
-			if(lastSaleDateStart != null && !"".equals(lastSaleDateStart)) {
-				form.setLastSaleDateStart(lastSaleDateStart);
-			}
-			String lastSaleDateEnd = (String) reqContentMap.get("lastSaleDateEnd");
-			if(lastSaleDateEnd != null && !"".equals(lastSaleDateEnd)) {
-				form.setLastSaleDateEnd(lastSaleDateEnd);
-			}
+//			String firstStartDay = (String)reqContentMap.get("firstStartDay");
+//			if(firstStartDay != null && !"".equals(firstStartDay)) {
+//				form.setFirstStartDay(firstStartDay);
+//			}
+//			String firstEndDay = (String)reqContentMap.get("firstEndDay");
+//			if(firstEndDay != null && !"".equals(firstEndDay)) {
+//				form.setFirstEndDay(firstEndDay);
+//			}
+//			String lastSaleDateStart = (String) reqContentMap.get("lastSaleDateStart");
+//			if(lastSaleDateStart != null && !"".equals(lastSaleDateStart)) {
+//				form.setLastSaleDateStart(lastSaleDateStart);
+//			}
+//			String lastSaleDateEnd = (String) reqContentMap.get("lastSaleDateEnd");
+//			if(lastSaleDateEnd != null && !"".equals(lastSaleDateEnd)) {
+//				form.setLastSaleDateEnd(lastSaleDateEnd);
+//			}
 			String isNewMember = (String)reqContentMap.get("isNewMember");
 			if(isNewMember != null && !"".equals(isNewMember)) {
 				form.setIsNewMember(isNewMember);
@@ -1022,18 +1022,18 @@ public class BINOLCM33_Action extends BaseAction implements ModelDriven<BINOLCM3
 		if(form.getMebSex() != null && !form.getMebSex().isEmpty()) {
 			reqContent.put("mebSex", form.getMebSex());
 		}
-		if(form.getMemberPointStart() != null && !"".equals(form.getMemberPointStart())) {
-			reqContent.put("memberPointStart", form.getMemberPointStart());
-		}
-		if(form.getMemberPointEnd() != null && !"".equals(form.getMemberPointEnd())) {
-			reqContent.put("memberPointEnd", form.getMemberPointEnd());
-		}
-		if(form.getChangablePointStart() != null && !"".equals(form.getChangablePointStart())) {
-			reqContent.put("changablePointStart", form.getChangablePointStart());
-		}
-		if(form.getChangablePointEnd() != null && !"".equals(form.getChangablePointEnd())) {
-			reqContent.put("changablePointEnd", form.getChangablePointEnd());
-		}
+//		if(form.getMemberPointStart() != null && !"".equals(form.getMemberPointStart())) {
+//			reqContent.put("memberPointStart", form.getMemberPointStart());
+//		}
+//		if(form.getMemberPointEnd() != null && !"".equals(form.getMemberPointEnd())) {
+//			reqContent.put("memberPointEnd", form.getMemberPointEnd());
+//		}
+//		if(form.getChangablePointStart() != null && !"".equals(form.getChangablePointStart())) {
+//			reqContent.put("changablePointStart", form.getChangablePointStart());
+//		}
+//		if(form.getChangablePointEnd() != null && !"".equals(form.getChangablePointEnd())) {
+//			reqContent.put("changablePointEnd", form.getChangablePointEnd());
+//		}
 		if(form.getBirthDayMode() != null && !"".equals(form.getBirthDayMode())) {
 			reqContent.put("birthDayMode", form.getBirthDayMode());
 			if("0".equals(form.getBirthDayMode())) {
@@ -1399,21 +1399,21 @@ public class BINOLCM33_Action extends BaseAction implements ModelDriven<BINOLCM3
 		if(form.getNotSaleDaysRange() != null && !"".equals(form.getNotSaleDaysRange())) {
 			reqContent.put("notSaleDaysRange", form.getNotSaleDaysRange());
 		}
-		if(form.getFirstStartDay() != null && !"".equals(form.getFirstStartDay())) {
-			reqContent.put("firstStartDay", form.getFirstStartDay());
-		}
-		if(form.getFirstEndDay() != null && !"".equals(form.getFirstEndDay())) {
-			reqContent.put("firstEndDay", form.getFirstEndDay());
-		}
+//		if(form.getFirstStartDay() != null && !"".equals(form.getFirstStartDay())) {
+//			reqContent.put("firstStartDay", form.getFirstStartDay());
+//		}
+//		if(form.getFirstEndDay() != null && !"".equals(form.getFirstEndDay())) {
+//			reqContent.put("firstEndDay", form.getFirstEndDay());
+//		}
 		if(form.getNoSaleDaysMode() != null && !"".equals(form.getNoSaleDaysMode())) {
 			reqContent.put("noSaleDaysMode", form.getNoSaleDaysMode());
 		}
-		if (form.getLastSaleDateStart() != null && !"".equals(form.getLastSaleDateStart())) {
-			reqContent.put("lastSaleDateStart", form.getLastSaleDateStart());
-		}
-		if (form.getLastSaleDateEnd() != null && !"".equals(form.getLastSaleDateEnd())) {
-			reqContent.put("lastSaleDateEnd", form.getLastSaleDateEnd());
-		}
+//		if (form.getLastSaleDateStart() != null && !"".equals(form.getLastSaleDateStart())) {
+//			reqContent.put("lastSaleDateStart", form.getLastSaleDateStart());
+//		}
+//		if (form.getLastSaleDateEnd() != null && !"".equals(form.getLastSaleDateEnd())) {
+//			reqContent.put("lastSaleDateEnd", form.getLastSaleDateEnd());
+//		}
 		if(form.getPrivilegeFlag() != null && !"".equals(form.getPrivilegeFlag())) {
 			reqContent.put("privilegeFlag", form.getPrivilegeFlag());
 		}

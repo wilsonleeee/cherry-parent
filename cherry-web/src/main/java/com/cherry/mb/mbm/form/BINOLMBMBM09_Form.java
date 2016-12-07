@@ -137,26 +137,26 @@ public class BINOLMBMBM09_Form extends DataTable_BaseForm {
 	/** 入会时间范围单位（1：一段时间内，2：满一段时间） **/
 	private String joinDateUnitFlag;
 	
-	/** 入会时间上限 **/
-	private String joinDateStart;
-	
-	/** 入会时间下限 **/
-	private String joinDateEnd;
+//	/** 入会时间上限 **/
+//	private String joinDateStart;
+//
+//	/** 入会时间下限 **/
+//	private String joinDateEnd;
 	
 	/** 入会时间和购买时间条件之间的关系（1：AND，2：OR） **/
 	private String joinDateSaleDateRel;
 	
-	/** 积分上限 */
-	private String memberPointStart;
-	
-	/** 积分下限 */
-	private String memberPointEnd;
-	
-	/** 可兑换积分上限 **/
-	private String changablePointStart;
-	
-	/** 可兑换积分下限 **/
-	private String changablePointEnd;
+//	/** 积分上限 */
+//	private String memberPointStart;
+//
+//	/** 积分下限 */
+//	private String memberPointEnd;
+//
+//	/** 可兑换积分上限 **/
+//	private String changablePointStart;
+//
+//	/** 可兑换积分下限 **/
+//	private String changablePointEnd;
 	
 	/** 发卡柜台所在区域ID **/
 	private String regionId;
@@ -407,11 +407,11 @@ public class BINOLMBMBM09_Form extends DataTable_BaseForm {
 	/** 等级调整日期相对范围单位 **/
 	private String levelAdjustDayUnit;
 	
-	/** 最近一次购买时间开始 **/
-	private String lastSaleDateStart;
-	
-	/** 最近一次购买时间结束 **/
-	private String lastSaleDateEnd;
+//	/** 最近一次购买时间开始 **/
+//	private String lastSaleDateStart;
+//
+//	/** 最近一次购买时间结束 **/
+//	private String lastSaleDateEnd;
 	
 	/** 会员俱乐部ID */
 	private String memberClubId;
@@ -878,21 +878,21 @@ public class BINOLMBMBM09_Form extends DataTable_BaseForm {
 		this.joinDateUnitFlag = joinDateUnitFlag;
 	}
 
-	public String getJoinDateStart() {
-		return joinDateStart;
-	}
-
-	public void setJoinDateStart(String joinDateStart) {
-		this.joinDateStart = joinDateStart;
-	}
-
-	public String getJoinDateEnd() {
-		return joinDateEnd;
-	}
-
-	public void setJoinDateEnd(String joinDateEnd) {
-		this.joinDateEnd = joinDateEnd;
-	}
+//	public String getJoinDateStart() {
+//		return joinDateStart;
+//	}
+//
+//	public void setJoinDateStart(String joinDateStart) {
+//		this.joinDateStart = joinDateStart;
+//	}
+//
+//	public String getJoinDateEnd() {
+//		return joinDateEnd;
+//	}
+//
+//	public void setJoinDateEnd(String joinDateEnd) {
+//		this.joinDateEnd = joinDateEnd;
+//	}
 
 	public String getJoinDateSaleDateRel() {
 		return joinDateSaleDateRel;
@@ -902,37 +902,37 @@ public class BINOLMBMBM09_Form extends DataTable_BaseForm {
 		this.joinDateSaleDateRel = joinDateSaleDateRel;
 	}
 
-	public String getMemberPointStart() {
-		return memberPointStart;
-	}
-
-	public void setMemberPointStart(String memberPointStart) {
-		this.memberPointStart = memberPointStart;
-	}
-
-	public String getMemberPointEnd() {
-		return memberPointEnd;
-	}
-
-	public void setMemberPointEnd(String memberPointEnd) {
-		this.memberPointEnd = memberPointEnd;
-	}
-
-	public String getChangablePointStart() {
-		return changablePointStart;
-	}
-
-	public void setChangablePointStart(String changablePointStart) {
-		this.changablePointStart = changablePointStart;
-	}
-
-	public String getChangablePointEnd() {
-		return changablePointEnd;
-	}
-
-	public void setChangablePointEnd(String changablePointEnd) {
-		this.changablePointEnd = changablePointEnd;
-	}
+//	public String getMemberPointStart() {
+//		return memberPointStart;
+//	}
+//
+//	public void setMemberPointStart(String memberPointStart) {
+//		this.memberPointStart = memberPointStart;
+//	}
+//
+//	public String getMemberPointEnd() {
+//		return memberPointEnd;
+//	}
+//
+//	public void setMemberPointEnd(String memberPointEnd) {
+//		this.memberPointEnd = memberPointEnd;
+//	}
+//
+//	public String getChangablePointStart() {
+//		return changablePointStart;
+//	}
+//
+//	public void setChangablePointStart(String changablePointStart) {
+//		this.changablePointStart = changablePointStart;
+//	}
+//
+//	public String getChangablePointEnd() {
+//		return changablePointEnd;
+//	}
+//
+//	public void setChangablePointEnd(String changablePointEnd) {
+//		this.changablePointEnd = changablePointEnd;
+//	}
 
 	public String getRegionId() {
 		return regionId;
@@ -1478,21 +1478,21 @@ public class BINOLMBMBM09_Form extends DataTable_BaseForm {
 		this.levelAdjustDayUnit = levelAdjustDayUnit;
 	}
 
-	public String getLastSaleDateStart() {
-		return lastSaleDateStart;
-	}
-
-	public void setLastSaleDateStart(String lastSaleDateStart) {
-		this.lastSaleDateStart = lastSaleDateStart;
-	}
-
-	public String getLastSaleDateEnd() {
-		return lastSaleDateEnd;
-	}
-
-	public void setLastSaleDateEnd(String lastSaleDateEnd) {
-		this.lastSaleDateEnd = lastSaleDateEnd;
-	}
+//	public String getLastSaleDateStart() {
+//		return lastSaleDateStart;
+//	}
+//
+//	public void setLastSaleDateStart(String lastSaleDateStart) {
+//		this.lastSaleDateStart = lastSaleDateStart;
+//	}
+//
+//	public String getLastSaleDateEnd() {
+//		return lastSaleDateEnd;
+//	}
+//
+//	public void setLastSaleDateEnd(String lastSaleDateEnd) {
+//		this.lastSaleDateEnd = lastSaleDateEnd;
+//	}
 
 	public String getMemberClubId() {
 		return memberClubId;
