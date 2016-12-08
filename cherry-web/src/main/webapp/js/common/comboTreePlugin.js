@@ -177,7 +177,7 @@
     ComboTree.prototype.bindings = function () {
         var _this = this;
 
-        this._elemArrow.on('click', function (e) {
+        this._elemArrowWrapper.on('click', function (e) {
             e.stopPropagation();
             _this.toggleDropDown();
         });
@@ -655,12 +655,20 @@
 
     ComboTree.prototype.refreshInputVal = function () {
         var tmpTitle = "";
+        var tmpTitle_2 = "";
             for (var i = 0; i < this._selectedItems.length; i++) {
                 tmpTitle += this._selectedItems[i].id;
+                if(i == 0){
+                    tmpTitle_2 = this._selectedItems[0].title;
+                }else{
+                    tmpTitle_2 = this._selectedItems[0].title+'...';
+                }
                 if (i < this._selectedItems.length - 1)
                     tmpTitle += ", ";
             }
         this._eleHiddenSeleItem.val(tmpTitle);
+        //需要在input中显示
+        this._combox.val(tmpTitle_2);
     }
 
     ComboTree.prototype.dropDownMenuHover = function (itemSpan, withScroll) {

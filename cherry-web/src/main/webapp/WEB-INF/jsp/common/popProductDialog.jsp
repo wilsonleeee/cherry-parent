@@ -3,7 +3,7 @@
 <s:url id="s_prtSearchUrl" value="/common/BINOLCM02_popPrtDialog" />
 <link rel="stylesheet" href="/Cherry/css/common/combotree.css">
 <script type="text/javascript" src="/Cherry/js/common/popDataTable.js?version=201612011416"></script>
-<script type="text/javascript" src="/Cherry/js/common/comboTreePlugin.js"></script>
+<script type="text/javascript" src="/Cherry/js/common/comboTreePlugin.js?version=201612081128"></script>
 <script type="text/javascript" src="/Cherry/js/common/icontains.js"></script>
 <script type="text/javascript">
 
