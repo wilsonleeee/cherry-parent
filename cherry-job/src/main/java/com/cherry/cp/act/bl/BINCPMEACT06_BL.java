@@ -99,33 +99,35 @@ public class BINCPMEACT06_BL {
 	 */
 	private void saveCampOrder(Map<String, Object> comMap, Map<String, Object> subCamp,
 			List<Map<String, Object>> orderList, List<Map<String, Object>> prtList, List<String> couponList) {
-		long start = System.currentTimeMillis();
-		String tradeType = ConvertUtil.getString(subCamp.get("tradeType"));
-		// 批量生成单据号
-		List<String> orderNoList = cm03_bl.getTicketNumberList(comMap, tradeType, orderList.size());
-		// 设置单据号及coupon码
-		setOrder(orderList, orderNoList, comMap,subCamp, couponList);
-		// 插入活动预约主单据
-		comSer5.addCampOrder(orderList);
-		List<Integer> campOrderIdList = ser4.getCampOrderIdList(orderNoList);
-		List<Map<String, Object>> detailList = new ArrayList<Map<String, Object>>();
-		// 明细追加主单据ID
-		for (Integer id : campOrderIdList) {
-			for (Map<String, Object> prt : prtList) {
-				Map<String, Object> detail = new HashMap<String, Object>(prt);
-				detail.put("campOrderId", id);
-				detail.put("subCampCode", subCamp.get("subCampCode"));
-				detailList.add(detail);
+		if(null != orderList && orderList.size() > 0) {
+			long start = System.currentTimeMillis();
+			String tradeType = ConvertUtil.getString(subCamp.get("tradeType"));
+			// 批量生成单据号
+			List<String> orderNoList = cm03_bl.getTicketNumberList(comMap, tradeType, orderList.size());
+			// 设置单据号及coupon码
+			setOrder(orderList, orderNoList, comMap, subCamp, couponList);
+			// 插入活动预约主单据
+			comSer5.addCampOrder(orderList);
+			List<Integer> campOrderIdList = ser4.getCampOrderIdList(orderNoList);
+			List<Map<String, Object>> detailList = new ArrayList<Map<String, Object>>();
+			// 明细追加主单据ID
+			for (Integer id : campOrderIdList) {
+				for (Map<String, Object> prt : prtList) {
+					Map<String, Object> detail = new HashMap<String, Object>(prt);
+					detail.put("campOrderId", id);
+					detail.put("subCampCode", subCamp.get("subCampCode"));
+					detailList.add(detail);
+				}
 			}
+			// 插入活动预约明细数据
+			comSer5.addCampOrdDetail(detailList);
+			// 备份单据
+			comSer5.addCampHistory(orderList);
+			orderNoList = null;
+			detailList = null;
+			campOrderIdList = null;
+			logger.outLog("＊＊＊＊＊saveCampOrder执行时间［" + (System.currentTimeMillis() - start) + "］毫秒＊＊＊＊＊");
 		}
-		// 插入活动预约明细数据
-		comSer5.addCampOrdDetail(detailList);
-		// 备份单据
-		comSer5.addCampHistory(orderList);
-		orderNoList = null;
-		detailList = null;
-		campOrderIdList = null;
-		logger.outLog("＊＊＊＊＊saveCampOrder执行时间［" + (System.currentTimeMillis() - start) + "］毫秒＊＊＊＊＊");
 	}
 
 	/**
