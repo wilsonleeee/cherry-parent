@@ -1,19 +1,17 @@
 package com.cherry.cm.pay.bl;
 
-import java.io.UnsupportedEncodingException;
-import java.net.URLEncoder;
-import java.text.SimpleDateFormat;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
-import java.util.Map.Entry;
-import java.util.TreeMap;
-
-import javax.annotation.Resource;
-import javax.ws.rs.core.MultivaluedMap;
-
+import com.cherry.cm.core.CherryAESCoder;
+import com.cherry.cm.pay.dto.AlipayResponseDTO;
+import com.cherry.cm.pay.interfaces.AlipayIf;
+import com.cherry.cm.pay.service.AliPayService;
+import com.cherry.cm.util.CherryUtil;
+import com.cherry.cm.util.ConvertUtil;
+import com.sun.jersey.api.client.Client;
+import com.sun.jersey.api.client.WebResource;
+import com.sun.jersey.api.client.config.ClientConfig;
+import com.sun.jersey.client.apache4.ApacheHttpClient4;
+import com.sun.jersey.client.apache4.config.DefaultApacheHttpClient4Config;
+import com.sun.jersey.core.util.MultivaluedMapImpl;
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;
 import org.apache.http.NameValuePair;
@@ -36,18 +34,13 @@ import org.json.JSONObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.cherry.cm.core.CherryAESCoder;
-import com.cherry.cm.pay.dto.AlipayResponseDTO;
-import com.cherry.cm.pay.interfaces.AlipayIf;
-import com.cherry.cm.pay.service.AliPayService;
-import com.cherry.cm.util.CherryUtil;
-import com.cherry.cm.util.ConvertUtil;
-import com.sun.jersey.api.client.Client;
-import com.sun.jersey.api.client.WebResource;
-import com.sun.jersey.api.client.config.ClientConfig;
-import com.sun.jersey.client.apache4.ApacheHttpClient4;
-import com.sun.jersey.client.apache4.config.DefaultApacheHttpClient4Config;
-import com.sun.jersey.core.util.MultivaluedMapImpl;
+import javax.annotation.Resource;
+import javax.ws.rs.core.MultivaluedMap;
+import java.io.UnsupportedEncodingException;
+import java.net.URLEncoder;
+import java.text.SimpleDateFormat;
+import java.util.*;
+import java.util.Map.Entry;
 
 
 public class AliPayBL implements AlipayIf {
@@ -177,7 +170,8 @@ public class AliPayBL implements AlipayIf {
 		String p_strBaCode = (String)paramMap.get("strBaCode");
 		String p_strOutRequestNo = (String)paramMap.get("strOutRequestNo");
 		List<Map<String, Object>> list = getAlipayQuery(paramMap);
-
+		logger.info("调用支付宝1.0退款查询接口，销售单据号为："+ConvertUtil.getString(paramMap.get("strOutTradeNo"))+" 退货单据号为："+ConvertUtil.getString(paramMap.get("strOutRequestNo"))
+				+"返回值:"+ConvertUtil.getString(list));
 		if ("SUCCESS".equals(list.get(0).get("result_code"))) {
 			if ("WAIT_BUYER_PAY".equals(list.get(0).get("trade_status"))) {// 已付款成功，不允许退款
 				list.get(0).put("result_code", "REFUND_FAIL_WAIT_BUYER_PAY");
@@ -1410,6 +1404,8 @@ public class AliPayBL implements AlipayIf {
 	@Override
 	public List<Map<String, Object>> getAlipayQueryAndRefundTwo(Map paramMap) {
 		List<Map<String, Object>> list = getAlipayQueryTwo(paramMap);
+		logger.info("调用支付宝2.0退款查询接口，销售单据号为："+ConvertUtil.getString(paramMap.get("strOutTradeNo"))+" 退货单据号为："+ConvertUtil.getString(paramMap.get("strOutRequestNo"))
+				+"返回值:"+ConvertUtil.getString(list));
 		if ("10000".equals(list.get(0).get("result_code"))) {
 			if ("WAIT_BUYER_PAY".equals(list.get(0).get("trade_status"))) {// 已付款成功，不允许退款
 				list.get(0).put("result_code", "REFUND_FAIL_WAIT_BUYER_PAY");

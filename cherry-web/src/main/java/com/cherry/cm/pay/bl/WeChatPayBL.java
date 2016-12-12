@@ -1,25 +1,13 @@
 package com.cherry.cm.pay.bl;
 
-import java.io.DataOutputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.UnsupportedEncodingException;
-import java.net.HttpURLConnection;
-import java.net.InetAddress;
-import java.net.URL;
-import java.net.URLEncoder;
-import java.net.UnknownHostException;
-import java.security.KeyStore;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
-import java.util.Map.Entry;
-import java.util.TreeMap;
-
-import javax.net.ssl.SSLContext;
-
+import com.cherry.cm.pay.dto.WeChatpayResponseDTO;
+import com.cherry.cm.pay.interfaces.WeChatPayIf;
+import com.cherry.cm.util.ConvertUtil;
+import com.sun.jersey.api.client.Client;
+import com.sun.jersey.api.client.WebResource;
+import com.sun.jersey.api.client.config.ClientConfig;
+import com.sun.jersey.client.apache4.ApacheHttpClient4;
+import com.sun.jersey.client.apache4.config.DefaultApacheHttpClient4Config;
 import org.apache.http.HttpEntity;
 import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpPost;
@@ -38,14 +26,15 @@ import org.dom4j.io.SAXReader;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.cherry.cm.pay.dto.WeChatpayResponseDTO;
-import com.cherry.cm.pay.interfaces.WeChatPayIf;
-import com.cherry.cm.util.ConvertUtil;
-import com.sun.jersey.api.client.Client;
-import com.sun.jersey.api.client.WebResource;
-import com.sun.jersey.api.client.config.ClientConfig;
-import com.sun.jersey.client.apache4.ApacheHttpClient4;
-import com.sun.jersey.client.apache4.config.DefaultApacheHttpClient4Config;
+import javax.net.ssl.SSLContext;
+import java.io.DataOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.UnsupportedEncodingException;
+import java.net.*;
+import java.security.KeyStore;
+import java.util.*;
+import java.util.Map.Entry;
 
 
 public class WeChatPayBL implements WeChatPayIf{
@@ -271,6 +260,8 @@ public class WeChatPayBL implements WeChatPayIf{
 		mapQuery.put("paternerKey", paternerKey);
 		
 		List<Map<String, Object>> orderQueryList = getOrderQuery(mapQuery);
+		logger.info("调用微信退款查询接口，销售单据号为："+out_trade_no+" 退货单据号为："+out_refund_no
+				+"返回值:"+ConvertUtil.getString(orderQueryList));
 		if (orderQueryList.size() > 0) {
 			if("SUCCESS".equals(orderQueryList.get(0).get("return_code"))){
 				if("SUCCESS".equals(orderQueryList.get(0).get("result_code"))){
