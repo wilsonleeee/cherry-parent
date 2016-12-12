@@ -3,7 +3,7 @@
 <%@ taglib prefix="cherry" uri="/cherry-tags"%>
 <script type="text/javascript" src="/Cherry/js/common/cherryDate.js"></script>
 <script type="text/javascript" src="/Cherry/js/lib/jquery-ui-i18n.js"></script>
-<script type="text/javascript" src="/Cherry/js/ss/prm/BINOLSSPRM75.js?V=20160730"></script>
+<script type="text/javascript" src="/Cherry/js/ss/prm/BINOLSSPRM75.js?V=20161212"></script>
 <s:i18n name="i18n.ss.BINOLSSPRM75">
 <s:text id="selectAll" name="global.page.all"/>
 	<div class="panel-header">

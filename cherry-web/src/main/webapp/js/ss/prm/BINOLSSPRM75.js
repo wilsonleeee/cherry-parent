@@ -72,7 +72,7 @@ BINOLSSPRM75.prototype = {
 										{ "sName": "ruleCode", "sWidth": "10%", "bVisible" : false},   //2
 										{ "sName": "couponCode", "sWidth": "5%", "bVisible" : false},  //3
 										{ "sName": "bpCode", "sWidth": "5%","bSortable": false},  //4
-										{ "sName": "memberCode", "sWidth": "5%" },  //5
+										{ "sName": "memCode", "sWidth": "5%" },  //5
 										{ "sName": "memberMobile", "sWidth": "5%" }, //6										
 										{ "sName": "startTime", "sWidth": "10%", "bVisible" : false},  //7
 										{ "sName": "endTime", "sWidth": "10%" },  //8
