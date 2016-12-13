@@ -12,6 +12,7 @@
  */
 package com.cherry.mq.mes.service;
 
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -36,5 +37,28 @@ public class BINBEMQMES98_Service extends BaseService{
 	public List<Map<String, Object>> getHandlerNameList(Map<String, Object> map) {
 		map.put(CherryConstants.IBATIS_SQL_ID, "BINBEMQMES98.getHandlerNameList");
 		return baseConfServiceImpl.getList(map);
+	}
+
+	/**
+	 * 通过会员卡号取得会员ID
+	 *
+	 * @param memberCode
+	 * 			会员卡号
+	 * @return String
+	 * 			会员ID
+	 *
+	 */
+	public String getMemberId(String memberCode) {
+		Map<String, Object> paramMap = new HashMap<String, Object>();
+		// 所属品牌ID
+		paramMap.put("memberCode", memberCode);
+		paramMap.put(CherryConstants.IBATIS_SQL_ID,
+				"BINBEMQMES98.getMemberId");
+		String memberInfoId = null;
+		Object memberInfoIdObj = baseServiceImpl.get(paramMap);
+		if (null != memberInfoIdObj) {
+			memberInfoId = String.valueOf(memberInfoIdObj);
+		}
+		return memberInfoId;
 	}
 }

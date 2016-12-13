@@ -19,6 +19,7 @@ import java.util.Map;
 
 import javax.annotation.Resource;
 
+import com.cherry.cm.core.CherryChecker;
 import org.springframework.beans.BeansException;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.ApplicationContextAware;
@@ -191,5 +192,24 @@ public class BINBEMQMES98_BL implements ApplicationContextAware{
 	 */
 	public void refreshHandler() {
 		initHandlerFactory();
+	}
+
+	/**
+	 * 获取会员对象锁的Key
+	 *
+	 * @param brandCode
+	 * 			品牌代码
+	 * @param memberCode
+	 * 			会员卡号
+	 * @return String
+	 * 			会员对象锁的Key
+	 */
+	public String getMemberLockKey(String brandCode, String memberCode) {
+		// 会员ID
+		String memberInfoId = binBEMQMES98_Service.getMemberId(memberCode);
+		if (null == memberInfoId) {
+			return null;
+		}
+		return brandCode + "_" + memberInfoId;
 	}
 }

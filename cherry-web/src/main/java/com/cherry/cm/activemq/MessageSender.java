@@ -142,7 +142,9 @@ public class MessageSender {
 		}
 		public Message createMessage(Session session) throws JMSException {  
 			TextMessage message = session.createTextMessage(msgStr);
-			message.setStringProperty("JMSXGroupID", null==group||"".equals(group)?"000000000":group);
+			if (!"NOGROUP".equals(group)) {
+				message.setStringProperty("JMSXGroupID", null == group || "".equals(group) ? "000000000" : group);
+			}
 			return message; 
 		}
 	}

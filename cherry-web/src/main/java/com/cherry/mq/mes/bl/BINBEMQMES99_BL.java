@@ -1264,7 +1264,25 @@ public class BINBEMQMES99_BL {
 			messageSender.sendMessage(JSONUtil.serialize(dbObject), MessageConstants.CHERRY4PUBMSGQUEUE);
 		}
 	}
-	
+
+	/**
+	 * 获取会员对象锁的Key
+	 *
+	 * @param brandCode
+	 * 			品牌代码
+	 * @param memberInfoId
+	 * 			会员ID
+	 * @return String
+	 * 			会员对象锁的Key
+	 */
+	private String getMemberLockKey(String brandCode, String memberInfoId) {
+		if (!CherryChecker.isNullOrEmpty(brandCode)
+				&& !CherryChecker.isNullOrEmpty(memberInfoId)) {
+			return brandCode + "_" + memberInfoId;
+		}
+		return null;
+	}
+
 	/**
 	 * 将消息发送到规则处理的MQ队列里
 	 * 
@@ -1279,6 +1297,7 @@ public class BINBEMQMES99_BL {
 		List<Map<String,Object>> detailDataList = new ArrayList<Map<String,Object>>();
 		// 会员ID
 		String memberInfoId = null;
+		String brandCode = (String) map.get("brandCode");
 		if(map.get("tradeType")!=null){
 			String tradeType = (String)map.get("tradeType");
 		    if(tradeType.equals(MessageConstants.MSG_MEMBER)){
@@ -1302,9 +1321,10 @@ public class BINBEMQMES99_BL {
 		    	ruleMap.put("sourse", map.get("sourse"));
 		    	ruleMap.put("counterCode", map.get("counterCode"));
 		    	ruleMap.put("orgCode", map.get("orgCode"));
-		    	ruleMap.put("brandCode", map.get("brandCode"));
+		    	ruleMap.put("brandCode", brandCode);
 		    	ruleMap.put("isMBRuleExec", map.get("isMBRuleExec"));
 		    	ruleMap.put("isMBPointExec", map.get("isMBPointExec"));
+				ruleMap.put("MEMBER_LOCK_KEY", getMemberLockKey(brandCode, memberInfoId));
 		    	detailDataList.add(ruleMap);
 		    	flag = true;
 		    }else if(tradeType.equals(MessageConstants.MSG_TRADETYPE_SALE)){
@@ -1316,12 +1336,17 @@ public class BINBEMQMES99_BL {
 		    	if ("2".equals(billMode)) {
 		    		return;
 		    	}
+
 		    	if(map.get("memberInfoID") != null) {
 		    		memberInfoId = map.get("memberInfoID").toString();
 		    	}
 		    	// 同一销售单据中的所有不同会员卡号List
 		    	List<String> memCodeList = new ArrayList<String>();
 		    	String memberCode = (String)map.get("memberCode");
+				// 非会员
+				if (MessageConstants.ON_MEMBER_CARD.equals(memberCode)) {
+					return;
+				}
 		    	memCodeList.add(memberCode);
 		    	// 取得销售明细数据
 		    	List<Map<String,Object>> detailDataDTOList = (List<Map<String,Object>> ) map.get("detailDataDTOList");
@@ -1335,6 +1360,8 @@ public class BINBEMQMES99_BL {
 		    			}
 		    		}
 		    	}
+				Map<String, Object> memberIdMap = new HashMap<String, Object>();
+				memberIdMap.put(memberCode, memberInfoId);
 		    	// 同一销售单据中存在不同卡号时，相同会员的卡号从卡号list中去除
 		    	if(memCodeList.size() > 1) {
 		    		String memberInfoID = map.get("memberInfoID").toString();
@@ -1343,17 +1370,20 @@ public class BINBEMQMES99_BL {
 		    		paramMap.put("memCodeList", memCodeList);
 		    		List<Map<String, Object>> memIdList = binBEMQMES99_Service.getMemberIdList(paramMap);
 		    		for(int i = 0; i < memIdList.size(); i++) {
-		    			String memId = memIdList.get(i).get("memberInfoId").toString();
-		    			String memCode = memIdList.get(i).get("memCode").toString();
+						Map<String, Object> memIdInfo = memIdList.get(i);
+		    			String memId = memIdInfo.get("memberInfoId").toString();
+		    			String memCode = memIdInfo.get("memCode").toString();
 		    			if(memId.equals(memberInfoID) && !memCode.equals(memberCode)) {
 		    				memCodeList.remove(memCode);
 		    			}
+						memberIdMap.put(memCode, memId);
 		    		}
 		    	}
 		    	// 生成规则执行的明细行数据
 		    	for(int i = 0; i < memCodeList.size(); i++) {
 		    		Map<String,Object> ruleMap = new HashMap<String,Object>();
-			    	ruleMap.put("memberCode", memCodeList.get(i));
+					String memCode = memCodeList.get(i);
+			    	ruleMap.put("memberCode", memCode);
 			    	ruleMap.put("brandInfoID", map.get("brandInfoID"));
 			    	ruleMap.put("organizationInfoID", map.get("organizationInfoID"));
 			    	ruleMap.put("memberClubId", map.get("memberClubId"));
@@ -1367,9 +1397,10 @@ public class BINBEMQMES99_BL {
 			    	ruleMap.put("BAcode", map.get("BAcode"));
 			    	ruleMap.put("tradeType", tradeType);
 			    	ruleMap.put("orgCode", map.get("orgCode"));
-			    	ruleMap.put("brandCode", map.get("brandCode"));
+			    	ruleMap.put("brandCode", brandCode);
 			    	ruleMap.put("billModifyCounts", map.get("modifyCounts"));
 			    	ruleMap.put("oldClubId", map.get("oldClubId"));
+					ruleMap.put("MEMBER_LOCK_KEY", getMemberLockKey(brandCode, String.valueOf(memberIdMap.get(memCode))));
 			    	if(memberCode.equals(memCodeList.get(i))) {
 						Map<String,Object> saleMap = new HashMap<String,Object>();
 						saleMap.put("EventType", "1");
@@ -1455,6 +1486,7 @@ public class BINBEMQMES99_BL {
 		    	ruleMap.put("data_source", map.get("data_source"));
 		    	ruleMap.put("counterCode", map.get("counterCode"));
 		    	ruleMap.put("BAcode", map.get("BAcode"));
+				ruleMap.put("MEMBER_LOCK_KEY", getMemberLockKey(brandCode, memberInfoId));
 		    	detailDataList.add(ruleMap);
 		    	flag = true;
 		    }
@@ -1466,7 +1498,7 @@ public class BINBEMQMES99_BL {
 				// 设定MQ消息DTO
 				MQInfoDTO mqInfoDTO = new MQInfoDTO();
 				// 品牌代码
-				String brandCode = (String)map.get("brandCode");
+				//String brandCode = (String)map.get("brandCode");
 				mqInfoDTO.setBrandCode(brandCode);
 				// 组织代码
 				mqInfoDTO.setOrgCode((String)map.get("orgCode"));
@@ -1483,10 +1515,10 @@ public class BINBEMQMES99_BL {
 				mqInfoDTO.setBillCode(billCode);
 				// 消息发送队列名
 				mqInfoDTO.setMsgQueueName(MessageConstants.CHERRY_RULE_MSGQUEUE);
-				if(memberInfoId != null && !"".equals(memberInfoId)) {
+				//if(memberInfoId != null && !"".equals(memberInfoId)) {
 					// JMS协议头中的JMSGROUPID
-					mqInfoDTO.setJmsGroupId(brandCode+String.valueOf(Integer.parseInt(memberInfoId)/10000));
-				}
+					mqInfoDTO.setJmsGroupId("NOGROUP");
+				//}
 				
 				// 设定消息内容
 				Map<String,Object> msgDataMap = new HashMap<String,Object>();

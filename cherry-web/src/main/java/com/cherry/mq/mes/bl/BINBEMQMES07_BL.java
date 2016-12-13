@@ -21,11 +21,15 @@ import com.mongodb.DBObject;
 
 import com.dianping.cat.Cat;
 import com.dianping.cat.message.Transaction;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import javax.annotation.Resource;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * 处理规则消息 BL
@@ -38,7 +42,11 @@ public class BINBEMQMES07_BL implements CherryMessageHandler_IF{
 	/** 管理MQ消息处理器和规则计算处理器共通 BL **/
 	@Resource
 	private BINBEMQMES98_BL binBEMQMES98_BL;
-	
+
+	// 正在执行计算的会员ID集合
+	private static final ConcurrentHashMap memberIdMap = new ConcurrentHashMap();
+
+	private static final Logger logger = LoggerFactory.getLogger(BINBEMQMES07_BL.class);
 	
 	/**
 	 * 接收MQ消息处理
@@ -68,8 +76,40 @@ public class BINBEMQMES07_BL implements CherryMessageHandler_IF{
 					ruleMap.putAll(_map);
 					Transaction transaction = Cat.newTransaction("BINBEMQMES07_BL", "handleMessage");
 					try {
-						// 执行会员等级和化妆次数规则文件
-						ruleHandlerIF.executeRule(ruleMap);
+						// 会员ID的对象锁
+						Object lock = null;
+						// 会员ID
+						String memberLockKey = (String) _map.get("MEMBER_LOCK_KEY");
+						if (null == memberLockKey) {
+							memberLockKey = binBEMQMES98_BL.getMemberLockKey(brandCode, (String) _map.get("memberCode"));
+						}
+						if (null == memberLockKey) {
+							// 创建会员ID的对象锁失败
+							MessageUtil.addMessageWarning(map, "创建会员ID的对象锁失败");
+						}
+						//同步块一
+						// 从集合中获取会员ID对应的对象锁
+						synchronized (memberIdMap) {
+							lock = memberIdMap.get(memberLockKey);
+							if (lock == null) {
+								lock = memberLockKey;
+								memberIdMap.put(memberLockKey, memberLockKey);
+							}
+						}
+						// 同步块二
+						synchronized (lock) {
+							try {
+								// 执行会员等级和化妆次数规则文件
+								ruleHandlerIF.executeRule(ruleMap);
+							} catch (Exception e) {
+								throw e;
+							} catch (Throwable t) {
+								logger.error(t.getMessage(), t);
+								throw new Exception("******************* rule handleMessage throwable *******************");
+							} finally {
+								memberIdMap.remove(memberLockKey);
+							}
+						}
 						transaction.setStatus(Transaction.SUCCESS);
 					} catch (Exception e) {
 						transaction.setStatus(e);
