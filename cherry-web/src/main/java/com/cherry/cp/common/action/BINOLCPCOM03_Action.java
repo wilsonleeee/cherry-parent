@@ -294,20 +294,22 @@ public class BINOLCPCOM03_Action extends BaseAction implements ModelDriven<BINOL
 			String memSearchCode = binolcpcom03IF.addMemSearchLog(map, recordType);
 			if("1".equals(saveFlag) && CampConstants.CAMP_MEB_TYPE_2.equals(recordType)){
 				List<Map<String, Object>> memberList = (List<Map<String, Object>>)resMap.get("list");
-				Map<String, Object> comMap = new HashMap<String, Object>();
-				comMap.put(CherryConstants.ORGANIZATIONINFOID, map.get(CherryConstants.ORGANIZATIONINFOID));
-				comMap.put(CherryConstants.BRANDINFOID, map.get(CherryConstants.BRANDINFOID));
-				comMap.put(CampConstants.SEARCH_CODE, memSearchCode);
-				comMap.put(CampConstants.CUSTOMER_TYPE, CampConstants.CUSTOMER_TYPE_1);
-				
-				for(Map<String, Object> mem : memberList){
-					String birthYear = ConvertUtil.getString(mem.get(CampConstants.BIRTHYEAR));
-					String birthMonth = ConvertUtil.getString(mem.get(CampConstants.BIRTHMONTH));
-					String birthDay = ConvertUtil.getString(mem.get(CampConstants.BIRTHDAY));
-					mem.put(CampConstants.BIRTHDAY, birthYear + birthMonth + birthDay);
-					mem.putAll(comMap);
+				if(memberList != null && !memberList.isEmpty()) {
+					Map<String, Object> comMap = new HashMap<String, Object>();
+					comMap.put(CherryConstants.ORGANIZATIONINFOID, map.get(CherryConstants.ORGANIZATIONINFOID));
+					comMap.put(CherryConstants.BRANDINFOID, map.get(CherryConstants.BRANDINFOID));
+					comMap.put(CampConstants.SEARCH_CODE, memSearchCode);
+					comMap.put(CampConstants.CUSTOMER_TYPE, CampConstants.CUSTOMER_TYPE_1);
+
+					for(Map<String, Object> mem : memberList){
+						String birthYear = ConvertUtil.getString(mem.get(CampConstants.BIRTHYEAR));
+						String birthMonth = ConvertUtil.getString(mem.get(CampConstants.BIRTHMONTH));
+						String birthDay = ConvertUtil.getString(mem.get(CampConstants.BIRTHDAY));
+						mem.put(CampConstants.BIRTHDAY, birthYear + birthMonth + birthDay);
+						mem.putAll(comMap);
+					}
+					binolcpcom03IF.addCustomerInfo(memberList);
 				}
-				binolcpcom03IF.addCustomerInfo(memberList);
 			}
 			if(null!=memSearchCode && !"".equals(memSearchCode)){
 				// 响应JSON对象
