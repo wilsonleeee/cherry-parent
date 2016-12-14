@@ -12,9 +12,7 @@
  */
 package com.cherry.bs.cnt.action;
 
-import com.cherry.bs.cnt.bl.BINOLBSCNT07_BL;
 import com.cherry.bs.cnt.bl.BINOLBSCNT08_BL;
-import com.cherry.bs.cnt.form.BINOLBSCNT07_Form;
 import com.cherry.bs.cnt.form.BINOLBSCNT08_Form;
 import com.cherry.cm.cmbeans.UserInfo;
 import com.cherry.cm.cmbussiness.bl.BINOLCM00_BL;
@@ -24,11 +22,8 @@ import com.cherry.cm.core.BaseAction;
 import com.cherry.cm.core.CherryChecker;
 import com.cherry.cm.core.CherryConstants;
 import com.cherry.cm.core.CherryException;
-import com.cherry.cm.util.CherryUtil;
 import com.cherry.cm.util.ConvertUtil;
-import com.cherry.cm.util.FileUtil;
 import com.cherry.mo.common.interfaces.BINOLMOCOM01_IF;
-import com.googlecode.jsonplugin.JSONException;
 import com.opensymphony.xwork2.ModelDriven;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -36,7 +31,6 @@ import org.slf4j.LoggerFactory;
 import javax.annotation.Resource;
 import java.io.File;
 import java.io.InputStream;
-import java.io.UnsupportedEncodingException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -88,6 +82,15 @@ public class BINOLBSCNT08_Action extends BaseAction implements ModelDriven<BINOL
 	/** 上传的文件 */
 	private File upExcel;
 
+	private List errorCounterList;
+
+	public List getErrorCounterList() {
+		return errorCounterList;
+	}
+
+	public void setErrorCounterList(List errorCounterList) {
+		this.errorCounterList = errorCounterList;
+	}
 	/**
 	 *
 	 * 画面初期显示
@@ -127,43 +130,83 @@ public class BINOLBSCNT08_Action extends BaseAction implements ModelDriven<BINOL
 	 * @return
 	 * @throws Exception
 	 */
-	public void importPoint() throws Exception{
+	public String importPoint() throws Exception{
 		Map<String, Object> map = getSessionInfo();
-		Map<String, Object> msgMap = getSessionInfo();
 		try {
 			// 上传的文件
 			map.put("upExcel", upExcel);
 			// 导入原因
 			map.put("comment",form.getComment());
-			msgMap.put("successMsg", getText("ICM00002"));
 			// 经销商额度变更导入处理
-			List<Map<String, Object>> resultList = binOLBSCNT08_BL.ResolveExcel(map);
-			binOLBSCNT08_BL.tran_excelHandle(resultList);
+			Map<String, Object> resultMap = binOLBSCNT08_BL.ResolveExcel(map);
 
-			List<String> counterList = new ArrayList<String>();
-				for(Map<String, Object> counter:resultList){
-					if(!counterList.contains(ConvertUtil.getString(counter.get("counterCode")))){
-						counterList.add(ConvertUtil.getString(counter.get("counterCode")));
-					}else{//导入的时间，就是当前系统时间
-						msgMap.put("successMsg", getText("ACT000113"));
-					}
+			List<Map<String, Object>> successCounterList =(List)(resultMap.get("successCounterList"));
+			errorCounterList = (List)(resultMap.get("errorCounterList"));
+
+			if(errorCounterList == null || errorCounterList.size()==0){
+				if(successCounterList!=null && successCounterList.size()>0){
+					//若所有数据都正确，导入数据
+					binOLBSCNT08_BL.tran_excelHandle(successCounterList);
 				}
-
-
-		} catch (CherryException e) {
-			logger.error(e.getMessage(), e);
-			// 导入失败场合
-			if(e instanceof CherryException){
-				CherryException temp = (CherryException)e;
-				msgMap.put("errorMsg", temp.getErrMessage());
+				this.addActionMessage(getText("STM00014"));
+				return CherryConstants.GLOBAL_ACCTION_RESULT;
 			}else{
-				msgMap.put("errorMsg", getText("PTM00024"));
+				//提示导入失败
+				form.setMessage(getText("PCP00041"));
 			}
+
+			/*List<String> counterList = new ArrayList<String>();
+			for(Map<String, Object> counter:resultList){
+				if(!counterList.contains(ConvertUtil.getString(counter.get("counterCode")))){
+					counterList.add(ConvertUtil.getString(counter.get("counterCode")));
+				}else{//导入的时间，就是当前系统时间
+					msgMap.put("successMsg", getText("ACT000113"));
+				}
+			}*/
+		} catch (CherryException e) {
+			// 导入失败场合
+			logger.error(e.getMessage(),e);
+			form.setMessage(getText("PTM00024"));
 		}
-		ConvertUtil.setResponseByAjax(response, msgMap);
+		return SUCCESS;
 	}
 
+	/**
+	 * 导入积分计划柜台
+	 * @return
+	 * @throws Exception
+	 */
+	public String importPointPlanCounter() throws Exception{
+		Map<String, Object> map = getSessionInfo();
 
+		try {
+			// 上传的文件
+			map.put("upExcel", upExcel);
+			// 导入原因
+			map.put("comment",form.getComment());
+			// 积分计划柜台导入Excel解析
+			Map<String, Object> resultMap = binOLBSCNT08_BL.resolvePointPlanCounterExcel(map);
+
+			errorCounterList = (List)resultMap.get("errorCounterList");
+			List<Map<String, Object>> successCounterList = (List)(resultMap.get("successCounterList"));
+
+			if(errorCounterList == null || errorCounterList.isEmpty()){
+				if(!CherryChecker.isNullOrEmpty(successCounterList)){
+					//若所有数据都正确，导入数据
+					binOLBSCNT08_BL.tran_excelPointPlanCounterHandle(successCounterList,map);
+				}
+				this.addActionMessage(getText("STM00014"));
+				return CherryConstants.GLOBAL_ACCTION_RESULT;
+			}else{
+				//提示导入失败
+				form.setMessage(getText("PCP00041"));
+			}
+		} catch (CherryException e) {
+			logger.error(e.getMessage(),e);
+			form.setMessage(getText("PTM00024"));
+		}
+		return SUCCESS;
+	}
 
 	/**
 	 * 取得session的信息

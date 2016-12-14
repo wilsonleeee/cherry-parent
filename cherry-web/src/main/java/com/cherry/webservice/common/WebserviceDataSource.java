@@ -12,14 +12,15 @@
  */
 package com.cherry.webservice.common;
 
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
-
+import com.cherry.cm.core.CherryChecker;
 import com.cherry.cm.core.CherryConstants;
 import com.cherry.cm.core.CustomerContextHolder;
 import com.cherry.cm.service.BaseService;
+import com.cherry.cm.util.CherryUtil;
+
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 
 /**
@@ -40,7 +41,7 @@ public class WebserviceDataSource extends BaseService {
 	 * 
 	 * 设定数据源
 	 * 
-	 * @param map 
+	 * @param brandCode
 	 * @throws Exception 
 	 */
 	public boolean setBrandDataSource(String brandCode) throws Exception {
@@ -80,12 +81,48 @@ public class WebserviceDataSource extends BaseService {
 	private synchronized void setDatasourceList() throws Exception {
 		Map<String,Object> map = new HashMap();
 		map.put(CherryConstants.IBATIS_SQL_ID, "WebserviceDataSource.getBrandDataSourceConfigList");		
-		List resultList = baseConfServiceImpl.getList(map);
+		List<Map<String,Object>> resultList = baseConfServiceImpl.getList(map);
 		if (null==resultList || resultList.isEmpty()){
 			throw new Exception("找不到数据源");
 		}else{
+			for(Map<String,Object> tmp :resultList){
+				if(!CherryChecker.isEmptyString(tmp.get("ExtConfigJson"))){
+					tmp.put("ExtConfigMap", CherryUtil.json2Map(String.valueOf(tmp.get("ExtConfig"))));
+				}
+
+			}
 			datasourceList = resultList;
 		}
+	}
+
+	public Map<String,Object> getBrandInfoByDuibaAppKey(String duibaAPPKey)throws Exception{
+		if(datasourceList==null||datasourceList.size()<1){
+			setDatasourceList();
+		}
+		for (int i=0;i<datasourceList.size();i++){
+			Map datasourceMap = (Map)datasourceList.get(i);
+			String key = (String)datasourceMap.get("DuibaAppKey");
+			if (duibaAPPKey.equalsIgnoreCase(key)){
+				return datasourceMap;
+			}
+		}
+		//return null;
+		throw new Exception("未知的duibaAPPKey："+duibaAPPKey);
+	}
+
+	public Map<String,Object> getBrandConfigByBrandCode(String brandCode)throws Exception{
+		if(datasourceList==null||datasourceList.size()<1){
+			setDatasourceList();
+		}
+		for (int i=0;i<datasourceList.size();i++){
+			Map datasourceMap = (Map)datasourceList.get(i);
+			String key = (String)datasourceMap.get("brandCode");
+			if (brandCode.equalsIgnoreCase(key)){
+				return datasourceMap;
+			}
+		}
+		//return null;
+		throw new Exception("未找到对应的品牌配置信息："+brandCode);
 	}
 	
 	public void getBrandInfo(Map map) throws Exception{

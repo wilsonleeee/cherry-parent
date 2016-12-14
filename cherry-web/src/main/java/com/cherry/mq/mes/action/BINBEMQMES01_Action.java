@@ -12,15 +12,9 @@
  */
 package com.cherry.mq.mes.action;
 
-import java.util.Map;
-
-import javax.annotation.Resource;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import com.cherry.cm.core.CherryChecker;
 import com.cherry.cm.core.CustomerContextHolder;
+import com.cherry.cm.core.TransRepeaterManager;
 import com.cherry.cm.util.Bean2Map;
 import com.cherry.cm.util.ConvertUtil;
 import com.cherry.dr.cmbussiness.interfaces.RuleHandler_IF;
@@ -31,10 +25,15 @@ import com.cherry.mq.mes.common.Message2Bean;
 import com.cherry.mq.mes.common.MessageConstants;
 import com.cherry.mq.mes.common.MessageUtil;
 import com.cherry.mq.mes.interfaces.CherryMessageHandler_IF;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import javax.annotation.Resource;
+import java.util.Map;
 
 /**
  * 接收MQ消息处理类
- * 
+ *
  * @author WangCT
  * @version 1.0 2012.04.28
  */
@@ -43,22 +42,25 @@ public class BINBEMQMES01_Action {
 	/** 接收MQ消息共通 BL **/
 	@Resource
 	private BINBEMQMES99_BL binBEMQMES99_BL;
-	
+
 	/** 管理MQ消息处理器和规则计算处理器共通 BL **/
 	@Resource(name="binBEMQMES98_BL")
 	private BINBEMQMES98_BL binBEMQMES98_BL;
 
+	@Resource(name="transRepeaterManager")
+	private TransRepeaterManager transRepeaterManager;
+
 	private static final Logger logger = LoggerFactory.getLogger(BINBEMQMES01_Action.class);
-	
+
 	/**
 	 * 接收消息，老的MQ消息体格式的接收
-	 * 
+	 *
 	 * @param msg
 	 * @throws Exception
 	 */
 	@SuppressWarnings("unchecked")
 	public void receiveMessage(String msg) throws Exception {
-		
+
 		Map<String, Object> map = null;
 		Object mainDataDTO = null;
 		boolean isOldMsg = true;
@@ -155,6 +157,36 @@ public class BINBEMQMES01_Action {
 				logger.error("******************************实时生成会员单据失败***************************");
 				logger.error(e.getMessage(), e);
 			}
+
+			//经销商额度变更
+			try {
+				// 组织代码
+				String orgCode = (String)map.get("orgCode");
+				// 品牌代码
+				String brandCode = (String)map.get("brandCode");
+				// 业务类型
+				//String tradeType = MessageConstants.MESSAGE_TYPE_GTED;
+				// 业务类型
+				String tradeType =  ConvertUtil.getString(map.get("tradeType"));
+				// 是否算积分字段
+				String ispoint = ConvertUtil.getString(map.get("isPoint"));
+				// 总金额字段
+				double totalamount = Double.valueOf(ConvertUtil.getString(map.get("totalAmount")));
+				// 取得刷新索引处理器
+				//CherryMessageHandler_IF cherryMessageHandler = binBEMQMES98_BL.getMessageHandler(orgCode, brandCode, tradeType);
+				// 存在刷新索引处理器的场合
+				if( tradeType.equals("NS") && !(ispoint != null && "0".equals(ispoint.trim())) && totalamount !=0 ) {
+
+					// 发送经销商额度变更MQ消息
+					transRepeaterManager.doRepeate(brandCode,"NS",map);
+
+				}
+			} catch (Exception e) {
+				logger.error("******************************发送经销商额度变更MQ消息失败***************************");
+				logger.error(e.getMessage(), e);
+			}
+
+
 		}catch(Exception e) {
 			String addMongoDBFlag = ConvertUtil.getString(map.get("addMongoDBFlag"));
 			if("1".equals(addMongoDBFlag)) {
@@ -186,10 +218,10 @@ public class BINBEMQMES01_Action {
 			CustomerContextHolder.clearCustomerDataSourceType();
 		}
 	}
-	
+
 	/**
      * 接收消息（监控类）
-     * 
+     *
      * @param msg
      * @throws Exception
      */

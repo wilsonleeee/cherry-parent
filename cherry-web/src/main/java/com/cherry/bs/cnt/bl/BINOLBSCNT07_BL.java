@@ -120,6 +120,7 @@ public class BINOLBSCNT07_BL {
      */
     public void tran_pointChange(Map<String, Object> map){
         //更新对应柜台的积分额度
+        map.put("changeType","pointChange");
         binolbscnt07Service.updateCounterPointPlan(map);
         //记录柜台积分额度明细
         map.put("tradeType","5");
@@ -130,10 +131,10 @@ public class BINOLBSCNT07_BL {
 
 
     /**
-     * 导出柜台信息Excel
+     * 导出柜台积分计划信息Excel
      *
      * @param map
-     * @return 返回导出柜台信息List
+     * @return 导出柜台积分计划信息List
      * @throws Exception
      */
     @SuppressWarnings("unchecked")
@@ -159,5 +160,15 @@ public class BINOLBSCNT07_BL {
         ep.setSheetLabel("sheetName");
         ep.setDataList(dataList);
         return binOLMOCOM01_BL.getExportExcel(ep);
+    }
+
+    /**
+     * 取得系统时间
+     *
+     * @param
+     * @return String
+     */
+    public String getSYSDate(){
+        return binolbscnt07Service.getSYSDate();
     }
 }

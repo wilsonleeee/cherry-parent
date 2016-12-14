@@ -71,8 +71,16 @@ public class BINOLBSCNT08_Form extends DataTable_BaseForm {
 	/**有效区分 **/
 	private String validFlag;
 
+	/** 导入未全部成功时的提示信息 */
+	private String message;
 
+	public String getMessage() {
+		return message;
+	}
 
+	public void setMessage(String message) {
+		this.message = message;
+	}
 
 	public String getCounterPointPlanId() {
 		return counterPointPlanId;

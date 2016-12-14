@@ -52,5 +52,59 @@ public class BINOLBSCNT10_Service extends BaseService {
         return baseServiceImpl.getList(map);
     }
 
+    /**
+     * 查询柜台积分额度变更明细总数
+     *
+     * @param map
+     * @return
+     */
+    public int getCounterPointLimitDetailCount(Map<String, Object> map) {
+
+        map.put(CherryConstants.IBATIS_SQL_ID, "BINOLBSCNT10.getCounterPointLimitDetailCount");
+        return baseServiceImpl.getSum(map);
+    }
+
+    /**
+     * 查询柜台积分额度变更明细List
+     *
+     * @param map
+     * @return
+     */
+    public List<Map<String, Object>> getCounterPointLimitDetailList (Map<String, Object> map) {
+
+        map.put(CherryConstants.IBATIS_SQL_ID, "BINOLBSCNT10.getCounterPointLimitDetailList");
+        return baseServiceImpl.getList(map);
+    }
+    /**
+     * 取得柜台积分额度明细List(Excel)
+     *
+     * @param map 查询条件
+     *
+     */
+    @SuppressWarnings("unchecked")
+    public List getCounterPointLimitDetailListExcel(Map<String, Object> map) {
+        Map<String, Object> parameterMap = new HashMap<String, Object>();
+        parameterMap.putAll(map);
+        parameterMap.put(CherryConstants.IBATIS_SQL_ID, "BINOLBSCNT10.getCounterPointLimitDetailListExcel");
+        return baseServiceImpl.getList(parameterMap);
+    }
+
+    /**
+     * 取得销售信息
+     * @param map
+     * @return
+     */
+    public Map<String,Object> getSaleRecordInfo(Map<String,Object> map){
+        return (Map<String,Object>)baseServiceImpl.get(map,"BINOLBSCNT10.getSaleRecordInfo");
+    }
+
+    /**
+     * 取得销售明细信息
+     * @param map
+     * @return
+     */
+    public List<Map<String,Object>> getSaleRecordDetailInfo(Map<String,Object> map){
+        return baseServiceImpl.getList(map,"BINOLBSCNT10.getSaleRecordDetailInfo");
+    }
 
 }

@@ -402,6 +402,8 @@ BINOLSTIOS05.prototype = {
 		var callback=function(msg){
 			if((msg.indexOf('errorMessage') == -1) && (msg.indexOf('hidFieldErrorMsg') == -1)){
 				BINOLSTIOS05.clearDetailData();
+				//在这里将checkbox去除选中
+				$("#allSelect").attr("checked",false);
 			}
 		};
 		cherryAjaxRequest({
@@ -424,6 +426,8 @@ BINOLSTIOS05.prototype = {
 		var callback=function(msg){
 			if((msg.indexOf('errorMessage') == -1) && (msg.indexOf('hidFieldErrorMsg') == -1)){
 				BINOLSTIOS05.clearDetailData();
+				//在这里将checkbox去除选中状态
+				$("#allSelect").attr("checked",false);
 			}
 		};
 		cherryAjaxRequest({
@@ -431,6 +435,7 @@ BINOLSTIOS05.prototype = {
 			param:param,
 			callback:callback
 		});
+
 	},
 	
 	/**

@@ -26,4 +26,6 @@ public interface MemberInfo_IF {
 	Map memActive(Map map);
 	Map getMemSaleList(Map map);
 	Map getMemInfoList(Map map);
+	Map tran_memberPaperAnswer(Map map);
+	Map getMemberPaperAnswer(Map map);
 }

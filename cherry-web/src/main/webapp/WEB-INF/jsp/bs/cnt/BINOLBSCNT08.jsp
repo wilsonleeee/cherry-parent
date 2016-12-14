@@ -19,7 +19,7 @@
   </div>
 </div>
   <%-- ================== 信息提示区 START ======================= --%>
-   <div id="actionDisplay">
+<%--   <div id="actionDisplay">
 	<div id="errorDiv" class="actionError" style="display:none;">
 		<ul>
 		    <li><span id="errorSpan"></span></li>
@@ -30,7 +30,7 @@
 	  		<li><span id="successSpan"></span></li>
 	 	</ul>
 	</div>
-	</div>
+	</div>--%>
 	<div id="errorMessage"></div>
 	<%-- ================== 信息提示区   END  ======================= --%>
 <div class="panel-content clearfix">
@@ -62,6 +62,13 @@
 					</div>
 					  <div class="line"></div>
            		 </div>
+				<div class="step-content">
+					<label  style="margin:1px 0 0 0px;">4</label>
+					<div class="step">
+						<s:text name="binolbscnt08_explanation4"/>
+					</div>
+					<div class="line"></div>
+				</div>
        		 </div>
  </div>
   </div>
@@ -105,6 +112,40 @@
 	        </div>
        </div>
        </div>
+
+	<div id="errorCountersShow" style="display:none;">
+		<div id="section" class="section">
+			<div class="section-header">
+				<strong>
+					<span class="ui-icon icon-ttl-section-search-result"></span>
+					<s:text name="CNT08_warm1"/><span class="highlight" id="showBasError"><s:text name="CNT08_warm2"/></span><s:text name="CNT08_warm3"/>
+				</strong>
+			</div>
+			<div class="section-content" style="overflow-x:auto;width:100%;">
+				<table id="dataTable" cellpadding="0" cellspacing="0" border="0" style="width:100%;">
+					<thead>
+					<tr>
+					<tr>
+							<%-- 编号--%>
+						<th><s:text name="counter.number"/></th>
+							<%-- 柜台编码 --%>
+						<th><s:text name="counter.counterCode"/></th>
+							<%-- 柜台名称 --%>
+						<th><s:text name="counter.counterName"/></th>
+							<%-- 额度变更值 --%>
+						<th><s:text name="counter.changePoint"/></th>
+							<%-- 错误原因 --%>
+						<th><s:text name="counter.error"/></th>
+					</tr>
+					</thead>
+					<tbody id="errorCounters">
+					</tbody>
+				</table>
+			</div>
+		</div>
+	</div>
+	<div id="hiddenTable" class="">
+	</div>
 	<div class="center clearfix" id="closeButton">
             <button onclick="BINOLBSCNT08.close();return false;" type="button" class="close" id="close">
            		<span class="ui-icon icon-close"></span>

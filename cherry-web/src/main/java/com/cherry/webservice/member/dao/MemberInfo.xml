@@ -872,7 +872,7 @@
 				B.MemCode = #memCode#
 		]]>
 	</select>
-	
+
 	<!-- 更新会员激活状态 -->
 	<update id="updateMemActive" parameterClass="java.util.HashMap">
     	<![CDATA[
@@ -948,7 +948,25 @@
 			SELECT COUNT(1) FROM (]]><include refid="MemberInfo.MemSaleListSql" /><![CDATA[) T
 		]]>										
     </select>
-    
+
+	<!-- 获取指定问卷的答案  -->
+    <select id="getPaperAnswerByPaperId" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+    	<![CDATA[
+			SELECT
+				A.BIN_PaperAnswerID,
+				A.BIN_PaperAnswerDetailID,
+				A.BIN_PaperQuestionID,
+				C.QuestionType,
+				C.DisplayOrder AS QuestionNo,
+				A.Answer
+			FROM Monitor.BIN_PaperAnswerDetail A
+			LEFT JOIN Monitor.BIN_PaperQuestion C ON A.BIN_PaperQuestionID = C.BIN_PaperQuestionID
+			LEFT JOIN Monitor.BIN_PaperAnswer B ON A.BIN_PaperAnswerID = B.BIN_PaperAnswerID
+			WHERE B.BIN_PaperID = #PaperID#
+				AND B.BIN_MemberInfoID = #memberInfoId#
+		]]>
+    </select>
+
     <!-- 取得销售明细信息  -->
     <select id="getSaleDetail" parameterClass="java.lang.Integer" resultClass="java.util.HashMap">
     	<![CDATA[
@@ -1213,7 +1231,19 @@
 			 AND A.MobilePhone=#MobilePhone#
 		]]>
 	</select>
-	
+
+	<select id="getPaperQuestion" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+    	<![CDATA[
+			SELECT	TOP 1
+				QuestionType,
+				BIN_PaperQuestionID
+			FROM [Monitor].[BIN_PaperQuestion] WITH(NOLOCK)
+			WHERE
+			 BIN_PaperID = #PaperID#
+			 AND DisplayOrder = #QuestionNo#
+		]]>
+	</select>
+
 	<!-- 添加潜在会员 -->
     <insert id="addPotentialMemInfo" parameterClass="java.util.HashMap">
     	<![CDATA[
@@ -1257,7 +1287,90 @@
 		)			
     	]]> 
     </insert>
-    
+
+	<!-- 插入答卷明细表  -->
+	<insert id="insertPaperAnswerDetail" parameterClass="java.util.HashMap">
+		<![CDATA[
+			INSERT INTO Monitor.BIN_PaperAnswerDetail
+			(
+				BIN_PaperAnswerID,
+				BIN_PaperQuestionID,
+				Answer,
+				]]>
+		<include refid="BINOLCMINC99.insertKeySql" />
+		<![CDATA[
+			)
+			VALUES
+			(
+				#paperAnswerId#,
+				#paperQuestionId#,
+				#answer#,
+				]]>
+		<include refid="BINOLCMINC99.insertValueSql" />
+		<![CDATA[
+			)
+		]]>
+	</insert>
+
+	<!-- 插入答卷主表 -->
+    <insert id="insertPaperAnswer" parameterClass="java.util.HashMap">
+		<selectKey resultClass="java.lang.Integer" type="post" keyProperty="BIN_PaperAnswerID" >
+		<![CDATA[
+    	insert into Monitor.BIN_PaperAnswer(
+		  BIN_PaperID,
+		  BIN_OrganizationID,
+		  PaperType,
+		  BIN_MemberInfoID,
+		  CheckDate,
+		]]>
+			<include refid="BINOLCMINC99.insertKeySql" />
+		<![CDATA[
+		)
+		values(
+			#PaperID#,
+			#organizationId#,
+			#paperType#,
+			#memberInfoId#,
+			GETDATE(),
+		]]>
+			<include refid="BINOLCMINC99.insertValueSql" />
+		<![CDATA[
+			)
+			select SCOPE_IDENTITY() as value
+    	]]>
+		</selectKey>
+    </insert>
+
+	<!--更新会员答卷主表-->
+	<update id="updatePaperAnswer" parameterClass="java.util.HashMap">
+		UPDATE
+			Monitor.BIN_PaperAnswer
+		SET
+			BIN_OrganizationID = #organizationId#,
+			PaperType = #paperType#,
+			CheckDate = GETDATE(),
+		<include refid="BINOLCMINC99.updateSql" />
+		<![CDATA[
+        WHERE
+			BIN_PaperAnswerID = #paperAnswerId#
+		]]>
+	</update>
+
+	<!--批量更新会员答卷明细-->
+	<update id="updatePaperAnswerDetail" parameterClass="java.util.HashMap">
+		UPDATE
+			Monitor.BIN_PaperAnswerDetail
+		SET
+			BIN_PaperAnswerID = #paperAnswerId#,
+			BIN_PaperQuestionID = #paperQuestionId#,
+			Answer = #answer#,
+		<include refid="BINOLCMINC99.updateSql" />
+		<![CDATA[
+        WHERE
+			 BIN_PaperAnswerDetailID = #BIN_PaperAnswerDetailID#
+		]]>
+	</update>
+
     <!-- 通过手机号查询潜在会员 -->
     <select id="getPotentialMemInfoCountByMobile" parameterClass="java.util.HashMap" resultClass="java.lang.Integer">
     	<![CDATA[

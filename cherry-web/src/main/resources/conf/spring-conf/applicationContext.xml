@@ -205,6 +205,12 @@
 		<constructor-arg index="0" value="posToCherryMsgQueueJSON" />
 	</bean>
 
+	<!-- 发送消息的目的地（队列,新后台 ->新后台(纯JSON格式MQ)） -->
+	<bean id="cherryToCherryMsgQueueJSON" class="org.apache.activemq.command.ActiveMQQueue">
+		<!-- 设置消息队列的名字 -->
+		<constructor-arg index="0" value="cherryToCherryMsgQueueJSON" />
+	</bean>
+
 	<!-- 发送消息的目的地（实时推送的消息） -->
 	<bean id="cherry4PubMsgQueue" class="org.apache.activemq.command.ActiveMQQueue">
 		<!-- 设置消息队列的名字 -->
@@ -277,6 +283,23 @@
 	<bean id="jsonMqMessageListener" class="org.springframework.jms.listener.adapter.MessageListenerAdapter">
 		<constructor-arg>
 			<bean class="com.cherry.mq.mes.common.CherryMqMsgReceiverImpl" />
+		</constructor-arg>
+		<property name="defaultListenerMethod" value="handleMessage" />
+	</bean>
+
+	<!-- cherryToCherry业务消息的MQ监听(纯JSON格式MQ) -->
+	<bean id="cherryToCherryJsonMqMessagelistenerContainer" class="org.springframework.jms.listener.DefaultMessageListenerContainer">
+		<property name="concurrentConsumers" value="1" />
+		<property name="idleConsumerLimit" value="1" />
+		<property name="connectionFactory" ref="JmsConnectionFactory" />
+		<property name="destination" ref="cherryToCherryMsgQueueJSON" />
+		<property name="messageListener" ref="cherryToCherryJsonMqMessageListener" />
+	</bean>
+
+	<!-- cherryToCherry业务消息的MQ监听器(纯JSON格式MQ) -->
+	<bean id="cherryToCherryJsonMqMessageListener" class="org.springframework.jms.listener.adapter.MessageListenerAdapter">
+		<constructor-arg>
+			<bean class="com.cherry.mq.mes.common.CherryMqMsgStandardReceiverImpl" />
 		</constructor-arg>
 		<property name="defaultListenerMethod" value="handleMessage" />
 	</bean>

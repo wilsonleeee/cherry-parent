@@ -1,0 +1,85 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sqlMap PUBLIC "-//iBATIS.com//DTD SQL Map 2.0//EN" "http://ibatis.apache.org/dtd/sql-map-2.dtd">
+<sqlMap namespace="StandardMq_DAO">
+
+    <!-- 查询品牌数据库对应表获取所有品牌的数据源 -->
+    <select id ="getBrandDataSourceConfigList" parameterClass="java.util.HashMap" resultClass ="java.util.HashMap">
+        SELECT
+            BrandCode,
+            DataSourceName
+        FROM
+            dbo.BIN_BrandDataSourceConfig
+        WHERE
+            ValidFlag = '1'
+    </select>
+
+    <!-- 查询品牌信息 -->
+    <select id ="selBrandInfo" parameterClass="java.util.HashMap" resultClass ="java.util.HashMap">
+        SELECT
+        A.BIN_BrandInfoID,
+        A.BIN_OrganizationInfoID,
+        B.OrgCode
+        FROM
+        Basis.BIN_BrandInfo A,
+        Basis.BIN_OrganizationInfo B
+        WHERE
+        A.BIN_OrganizationInfoID=B.BIN_OrganizationInfoID AND
+        A.BrandCode = #BrandCode#
+    </select>
+
+    <!-- 插入mq收发日志表 -->
+    <insert id="addMQLog" parameterClass="java.util.HashMap">
+        <selectKey resultClass="java.lang.Integer" type="post" keyProperty="BIN_MQLogID" >
+            <![CDATA[
+	    	INSERT INTO Interfaces.BIN_MQLog
+			(
+				SendOrRece,
+				BIN_OrganizationInfoID,
+				BIN_BrandInfoID,
+				BillType,
+				BillCode,
+				SaleRecordModifyCount,
+				CounterCode,
+				ReceiveFlag,
+				isPromotionFlag,
+				]]>
+            <include refid="BINOLCMINC99.insertKeySql" />
+            <![CDATA[
+			)
+			VALUES
+			(
+				'R',
+				#BIN_OrganizationInfoID#,
+				#BIN_BrandInfoID#,
+				#TradeType#,
+				#TradeNoIF#,
+				#ModifyCounts#,
+				#CounterCode#,
+				'1',
+				#IsPromotionFlag#,
+				]]>
+            <include refid="BINOLCMINC99.insertValueSql" />
+            <![CDATA[
+			)
+		  	select SCOPE_IDENTITY() as value
+		]]>
+        </selectKey>
+    </insert>
+
+    <!-- 查询柜台部门信息 -->
+    <select id ="selCounterDepartmentInfo" parameterClass="java.util.HashMap" resultClass ="java.util.HashMap">
+        <![CDATA[
+		SELECT
+			A.BIN_OrganizationID,
+			A.BIN_CounterInfoID,
+			A.CounterNameIF
+		FROM
+			Basis.BIN_CounterInfo A
+		WHERE
+			A.CounterCode = #CounterCode#
+            AND A.BIN_BrandInfoID = #BIN_BrandInfoID#
+            AND A.BIN_OrganizationInfoID = #BIN_OrganizationInfoID#
+	]]>
+    </select>
+
+</sqlMap>

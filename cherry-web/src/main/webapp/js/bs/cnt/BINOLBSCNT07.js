@@ -4,6 +4,12 @@ function BINOLBSCNT07() {};
 BINOLBSCNT07.prototype = {
 	// 积分计划柜台查询
 	"search" : function(){
+		$("#errorMessage").empty();
+		//判断执行结果div是否隐藏
+		if ($('#actionResultDiv').css('display') == 'block') {
+			$('#actionResultDiv').css('display', 'none');
+		}
+
 		var url = $("#search_url").val();
 		$('#mainForm :input').each(function(){
 			$(this).val($.trim(this.value));
@@ -26,20 +32,20 @@ BINOLBSCNT07.prototype = {
 			// 表格列属性设置
 			aoColumns : [
 
-				{ "sName": "checkbox","bSortable": false,"sClass":"center"},
-				{ "sName": "no","sWidth": "1%","bSortable": false,"sClass":"center"},
-				{ "sName": "CounterCode","sClass":"center"},
-				{ "sName": "counterName","sClass":"center"},
-				{ "sName": "pointPlan","bSortable": false,"sClass":"center"},
+				{ "sName": "checkbox","bSortable": false},
+				{ "sName": "no","sWidth": "1%","bSortable": false},
+				{ "sName": "CounterCode"},
+				{ "sName": "counterName"},
+				{ "sName": "pointPlan","bSortable": false},
 				{ "sName": "explain","bSortable": false},
-				{ "sName": "StartDate","sClass":"center"},
-				{ "sName": "EndDate","sClass":"center"},
-				{ "sName": "CurrentPointLimit","sClass":"center"},
-				{ "sName": "employeeName","sClass":"center"},
+				{ "sName": "StartDate"},
+				{ "sName": "EndDate"},
+				{ "sName": "CurrentPointLimit"},
+				{ "sName": "employeeName"},
 				{ "sName": "Comment"}
 			],
 			// 不可设置显示或隐藏的列
-			aiExcludeArr :[0, 1],
+			aiExclude :[0, 1, 2],
 			// 横向滚动条出现的临界宽度
 			sScrollX : "100%",
 			// 固定列数
@@ -49,6 +55,28 @@ BINOLBSCNT07.prototype = {
 		getTable(tableSetting);
 	},
 
+	// 选择记录
+	"checkRecord" : function(object, id){
+	$("#errorMessage").empty();
+	//判断执行结果div是否隐藏
+	if ($('#actionResultDiv').css('display') == 'block') {
+		$('#actionResultDiv').css('display', 'none');
+	}
+	var $id = $(id);
+	if($(object).attr('id') == "checkAll") {
+		if(object.checked) {
+			$id.find(':checkbox').prop("checked",true);
+		} else {
+			$id.find(':checkbox').prop("checked",false);
+		}
+	} else {
+		if($id.find(':checkbox:not([checked])').length == 0) {
+			$id.prev().find('#checkAll').prop("checked",true);
+		} else {
+			$id.prev().find('#checkAll').prop("checked",false);
+		}
+	}
+},
 
 	/*
 	 * 积分计划导出Excel
@@ -118,7 +146,7 @@ BINOLBSCNT07.prototype = {
 			title = $("#disableTitle").text();
 			operateInitUrl = $("#disableInitUrl").attr("href");
 			param = param+"&startDate="+startDate;
-			if (currentDate < startDate || currentDate>=endDate){
+			if (currentDate < startDate || currentDate>endDate){
 				$("#errorMessage").html($("#ECNT003").html());	//已经停用，不能再停用。
 				return false;
 			}
@@ -154,14 +182,7 @@ BINOLBSCNT07.prototype = {
 				}
 				var callbackOp = function(msg) {
 					removeDialog("#dialogInit");
-					//if (oTableArr[0] != null)oTableArr[0].fnDraw();
-					var msgJson = eval("("+msg+")");
-					if(msgJson.errorCode == "0"){
-						$("#errorMessage").html($("#ECNT004").html());
-					}
-					if(msgJson.errorCode == "1"){
-						$("#errorMessage").html($("#ECNT005").html());
-					}
+					if (oTableArr[0] != null)oTableArr[0].fnDraw();
 				};
 				cherryAjaxRequest({
 					url: url,
@@ -193,6 +214,15 @@ var binolbscnt07 =  new BINOLBSCNT07();
 $(document).ready(function() {
 
 	binolbscnt07.search();
+
+	// 表单验证配置
+	cherryValidate({
+		formId: 'mainForm',
+		rules: {
+			pointDateBegin: {dateValid: true},
+			pointDateEnd: {dateValid: true}
+		}
+	});
 
 });
 

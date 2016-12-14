@@ -1175,4 +1175,8 @@ public class LoginBusinessLogic {
         
         loginservice.updateLoginInfo(updateMap);
 	}
+
+	public Map getMemberInfoByOpenID(Map<String,Object> map){
+		return loginservice.getMemberInfoByOpenID(map);
+	}
 }

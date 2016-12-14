@@ -4517,7 +4517,19 @@ public class BINBEMQMES02_BL implements AnalyzeMessage_IF{
 			// 没有查询到相关部门信息
 			MessageUtil.addMessageWarning(map,"柜台号为\""+map.get("counterCode")+"\""+MessageConstants.MSG_ERROR_06);
 		}
-		
+
+
+        //是否启用柜台积分计划，默认为否
+        String isOpenSysConfig = binOLCM14_BL.getConfigValue("1396", ConvertUtil.getString(map.get("organizationInfoID")),  ConvertUtil.getString(map.get("brandInfoID")));
+        if(isOpenSysConfig.equals("1")){//启用
+            HashMap pointPlanMap =  binBEMQMES99_Service.getCounterPointPlan(map);//判断是否有正在进行的柜台积分计划
+            if(pointPlanMap!=null){//需要算积分
+                map.put("isPoint","");
+            }else{
+                map.put("isPoint","0");//不需要算积分
+            }
+        }
+
 		// 取得关联部门信息
 		if (map.get("relevantCounterCode")!=null && !"".equals(map.get("relevantCounterCode"))){
 			HashMap parameterMap = new HashMap();

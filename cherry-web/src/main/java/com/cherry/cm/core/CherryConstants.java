@@ -662,7 +662,10 @@ public class CherryConstants {
 
 	/** 经销商额度变更数据sheet名  */
 	public static final String COUNTER_POINT_SHEET_NAME = "经销商额度变更数据";
-	
+
+	/** 积分计划柜台数据sheet名  */
+	public static final String COUNTER_POINT_PLAN_SHEET_NAME = "积分计划柜台数据";
+
 	/**销售目标数据sheet名*/
 	public static final String SALETARGET_SHEET_NAME = "销售目标数据";
 	
@@ -1756,7 +1759,10 @@ public class CherryConstants {
 	
 	/** 新后台 ->witpos队列名 */
 	public static final String CHERRYTOPOSMSGQUEUE = "cherryToPosMsgQueue";
-	
+
+	/** 新后台 ->新后台队列名 */
+	public static final String CHERRYTOCHERRYJSONMSGQUEUE = "cherryToCherryMsgQueueJSON";
+
 	/** 新后台 ->witpos队列名 */
 	public static final String CHERRYTOPOSMEMBER = "cherryToPosMEMBER";
 	

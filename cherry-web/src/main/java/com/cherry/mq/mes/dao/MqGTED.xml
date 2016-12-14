@@ -1,0 +1,107 @@
+<?xml version="1.0" encoding="UTF-8"?><!--Converted at: Fri Dec 04 20:17:52 CST 2015-->
+<!DOCTYPE sqlMap PUBLIC "-//iBATIS.com//DTD SQL Map 2.0//EN" "http://ibatis.apache.org/dtd/sql-map-2.dtd">
+<sqlMap namespace="MqGTED">
+
+	<!-- 会员持卡信息表 -->
+	<select id ="getMemCardInfo" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+		SELECT
+			BIN_MemberInfoID
+		FROM
+			Members.BIN_MemCardInfo A WITH(NOLOCK)
+		WHERE
+		    MemCode = #MemberCode#
+	</select>
+
+
+	<!-- 根据DepartCode得到对应的柜台信息 -->
+	<select id ="getCounterByCode" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+		SELECT
+			A.BIN_OrganizationID
+		FROM
+			Basis.BIN_Organization A WITH(NOLOCK)
+		WHERE
+			A.DepartCode = #DepartCode# AND
+			A.BIN_BrandInfoID = #BIN_BrandInfoID# AND
+			A.BIN_OrganizationInfoID = #BIN_OrganizationInfoID#
+	</select>
+
+	<!--  插入柜台积分额度明细表 -->
+    <insert id="insertCounterLimitInfo" parameterClass="java.util.HashMap">
+	      INSERT INTO Basis.BIN_CounterLimitInfo(
+			<isNotEmpty property="BIN_OrganizationID">
+					BIN_OrganizationID,
+			</isNotEmpty>
+			<isNotEmpty property="SubType">
+					TradeType,
+			</isNotEmpty>
+			<isNotEmpty property="TradeNoIF">
+					BillNo,
+			</isNotEmpty>
+			<isNotEmpty property="TradeTime">
+					TradeTime,
+			</isNotEmpty>
+			<isNotEmpty property="Amount">
+					Amount,
+			</isNotEmpty>
+			<isNotEmpty property="PointChange">
+					PointChange,
+			</isNotEmpty>
+			<isNotEmpty property="BIN_MemberInfoID">
+					BIN_MemberInfoID,
+			</isNotEmpty>
+			<isNotEmpty property="MemberCode">
+					MemberCode,
+			</isNotEmpty>
+			<isNotEmpty property="Comment">
+					Comment,
+			</isNotEmpty>
+            <include refid="BINOLCMINC99.insertKeySql"/>		
+	    	)
+			VALUES(
+			<isNotEmpty property="BIN_OrganizationID">
+					#BIN_OrganizationID#,
+			</isNotEmpty>
+			<isNotEmpty property="SubType">
+					#SubType#,
+			</isNotEmpty>
+			<isNotEmpty property="TradeNoIF">
+					#TradeNoIF#,
+			</isNotEmpty>
+			<isNotEmpty property="TradeTime">
+					#TradeTime#,
+			</isNotEmpty>
+			<isNotEmpty property="Amount">
+					#Amount#,
+			</isNotEmpty>
+			<isNotEmpty property="PointChange">
+					#PointChange#,
+			</isNotEmpty>
+			<isNotEmpty property="BIN_MemberInfoID">
+					#BIN_MemberInfoID#,
+			</isNotEmpty>
+			<isNotEmpty property="MemberCode">
+					#MemberCode#,
+			</isNotEmpty>
+			<isNotEmpty property="Comment">
+					#Comment#,
+			</isNotEmpty>
+            <include refid="BINOLCMINC99.insertValueSql"/>	
+			)	
+    </insert>
+
+	<!-- 修改柜台积分计划设置表-->
+	<update  id ="updateCounterPointPlan"  parameterClass="java.util.HashMap">
+		UPDATE
+			Basis.BIN_CounterPointPlan
+ 		SET
+		<isNotEmpty property="PointChange">
+			CurrentPointLimit = ISNULL(CurrentPointLimit,0) + #PointChange#,
+		</isNotEmpty>
+		<include refid="BINOLCMINC99.updateSql" />
+		WHERE
+			BIN_OrganizationInfoID = #BIN_OrganizationInfoID# AND
+			BIN_BrandInfoID = #BIN_BrandInfoID# AND
+			BIN_OrganizationID = #BIN_OrganizationID#
+	</update>
+
+</sqlMap>

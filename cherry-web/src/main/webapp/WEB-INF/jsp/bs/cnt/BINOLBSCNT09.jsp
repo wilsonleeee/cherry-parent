@@ -9,7 +9,7 @@
     <%-- 积分模板下载URL --%>
     <s:url id="downLoad_url" value="/download/积分计划柜台导入模板.xls"/>
     <%-- 积分批量导入URL --%>
-    <s:url id="import_url" value=""/>
+    <s:url id="import_url" value="BINOLBSCNT08_importPointPlanCounter"/>
     <s:text name="global.page.select" id="select_default"/>
     <div class="panel ui-corner-all">
         <div id="div_main">
@@ -19,7 +19,7 @@
                 </div>
             </div>
                 <%-- ================== 信息提示区 START ======================= --%>
-            <div id="actionDisplay">
+ <%--           <div id="actionDisplay">
                 <div id="errorDiv" class="actionError" style="display:none;">
                     <ul>
                         <li><span id="errorSpan"></span></li>
@@ -30,7 +30,7 @@
                         <li><span id="successSpan"></span></li>
                     </ul>
                 </div>
-            </div>
+            </div>--%>
             <div id="errorMessage"></div>
                 <%-- ================== 信息提示区   END  ======================= --%>
             <div class="panel-content clearfix">
@@ -76,6 +76,13 @@
                                 </div>
                                 <div class="line"></div>
                             </div>
+                            <div class="step-content">
+                                <label  style="margin:1px 0 0 0px;">6</label>
+                                <div class="step">
+                                    <s:text name="binolbscnt09_explanation6"/>
+                                </div>
+                                <div class="line"></div>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -84,14 +91,11 @@
                         <div class="box2-header clearfix"><strong class="active left"><span class="ui-icon icon-ttl-section-info"></span><s:text name="binolbscnt09_importExcel_con" /></strong></div>
                         <div class="box2-content clearfix">
                             <table class="detail" cellpadding="0" cellspacing="0">
-
-
                                 <tr>
-
                                     <th><s:text name="binolbscnt09_reason" /><span class="highlight">*</span></th>
                                     <td style="word-wrap: break-word; word-break: break-all" colspan="3">
                                         <span style="width:75%">
-                                            <input  id="reason" style="height:45px;width:100%;" class="text" maxlength="100"  name="reason">
+                                            <input  id="comment" style="height:45px;width:100%;" class="text" maxlength="100"  name="comment">
                                         </span>
                                     </td>
                                 </tr>
@@ -121,6 +125,42 @@
                             <hr class="space">
                         </div>
                     </div>
+                </div>
+
+                <div id="errorCountersShow" style="display:none;">
+                    <div id="section" class="section">
+                        <div class="section-header">
+                            <strong>
+                                <span class="ui-icon icon-ttl-section-search-result"></span>
+                                <s:text name="CNT09_warm1"/><span class="highlight" id="showBasError"><s:text name="CNT09_warm2"/></span><s:text name="CNT09_warm3"/>
+                            </strong>
+                        </div>
+                        <div class="section-content" style="overflow-x:auto;width:100%;">
+                            <table id="dataTable" cellpadding="0" cellspacing="0" border="0" style="width:100%;">
+                                <thead>
+                                <tr>
+                                <tr>
+                                        <%-- 编号--%>
+                                    <th><s:text name="counter.number"/></th>
+                                        <%-- 柜台编码 --%>
+                                    <th><s:text name="counter.counterCode"/></th>
+                                        <%-- 柜台名称 --%>
+                                    <th><s:text name="counter.counterName"/></th>
+                                        <%-- 开始时间 --%>
+                                    <th><s:text name="counter.startDate"/></th>
+                                        <%-- 结束时间 --%>
+                                    <th><s:text name="counter.endDate"/></th>
+                                        <%-- 错误原因 --%>
+                                    <th><s:text name="counter.error"/></th>
+                                </tr>
+                                </thead>
+                                <tbody id="errorCounters">
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+                <div id="hiddenTable" class="">
                 </div>
                 <div class="center clearfix" id="closeButton">
                     <button onclick="BINOLBSCNT09.close();return false;" type="button" class="close" id="close">
