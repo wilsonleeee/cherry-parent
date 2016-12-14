@@ -28,6 +28,7 @@ import com.cherry.cm.activemq.MessageSender;
 import com.cherry.cm.activemq.dto.MQInfoDTO;
 import com.cherry.cm.activemq.interfaces.BINOLMQCOM01_IF;
 import com.cherry.cm.cmbussiness.bl.BINOLCM03_BL;
+import com.cherry.cm.cmbussiness.bl.BINOLCM04_BL;
 import com.cherry.cm.cmbussiness.bl.BINOLCM14_BL;
 import com.cherry.cm.cmbussiness.bl.BINOLCM36_BL;
 import com.cherry.cm.cmbussiness.bl.BINOLCM98_BL;
@@ -136,7 +137,10 @@ public class BINBEMQMES99_BL {
 	
 	@Resource(name="binOLCM03_BL")
 	private BINOLCM03_BL binOLCM03_BL;
-	
+
+	@Resource(name="binOLCM04_BL")
+	private BINOLCM04_BL binOLCM04_BL;
+
 	@Resource(name="binOLCM98_BL")
 	private BINOLCM98_BL binOLCM98_BL;
 	
@@ -1805,7 +1809,7 @@ public class BINBEMQMES99_BL {
 		}
 		
 	}
-	
+
 	/**
 	 * 是否在BIN_MQLog写日志标志
      * 如果需要写日志，当map里的modifyCounts不存在或为空时，把modifyCounts置为0。

@@ -11,7 +11,7 @@
 	<s:iterator value="counterPointPlanDetailList" id="counterDetailMap">
 		<ul>
 			<%-- 最后变更时间 --%>
-			<li><span><s:property value="UpdateTime"/></span></li>
+			<li><span><s:property value="CreateTime"/></span></li>
 			<!-- 变更情况 -->
 			<li>
 				<span>
@@ -31,15 +31,15 @@
 			</li>
 
 			<%-- 开启日期 --%>
-			<li><span><s:property value="StartTime"/></span></li>
+			<li><span><s:property value="StartDate"/></span></li>
 			<%-- 结束日期 --%>
 			<li>
 				<span>
-					<s:if test=' EndTime == null || "2100-01-01".equals(EndTime) '>
+					<s:if test=' EndDate == null || "2100-01-01".equals(EndDate) '>
 						<s:text name="binolbscnt10_notHave"/>
 					</s:if>
 					<s:else>
-						<s:property value="EndTime"/>
+						<s:property value="EndDate"/>
 					</s:else>
 				</span>
 			</li>

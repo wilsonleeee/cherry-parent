@@ -6,11 +6,11 @@
     <sql id="counterPointPlanDetailQuery">
 		 SELECT
 		    CPPH.BIN_CounterPointPlanHistoryID,
-            CONVERT(VARCHAR(100),CPPH.UpdateTime,20) AS UpdateTime,
+            CONVERT(VARCHAR(100),CPPH.CreateTime,20) AS CreateTime,
             CPPH.ModifiedType,
             EMP.EmployeeName,
-            CONVERT(VARCHAR(100),CPPH.StartTime,20) AS StartTime,
-            CONVERT(VARCHAR(100),CPPH.EndTime,20) AS EndTime,
+            CONVERT(VARCHAR(100),CPPH.StartTime,23) AS StartDate,
+            CONVERT(VARCHAR(100),CPPH.EndTime,23) AS EndDate,
             CPPH.Commemts
         FROM
             Basis.BIN_CounterPointPlanHistory CPPH
@@ -44,5 +44,125 @@
         <include refid="BINOLCMINC99.pagefooter" />
     </select>
 
+    <!-- 查询柜台积分额度变更明细 -->
+    <sql id="counterPointLimitDetailQuery">
+        SELECT
+            CLI.BIN_CounterPointDetailID,
+            CLI.TradeType,
+            CLI.BillNo,
+            CONVERT(VARCHAR(100),CLI.TradeTime,20) AS TradeTime,
+            CLI.Amount,
+            CLI.PointChange,
+            CLI.MemberCode,
+            CLI.Comment
+        FROM
+            [Basis].[BIN_CounterLimitInfo] CLI
+        LEFT JOIN
+            [Basis].[BIN_CounterInfo] CI
+        ON
+            CLI.BIN_OrganizationID = CI.BIN_OrganizationID AND CLI.ValidFlag = 1
+        WHERE
+            CI.BIN_CounterInfoID = #counterInfoId#
+    </sql>
 
+    <!-- 取得柜台积分额度变更明细总数  -->
+    <select id="getCounterPointLimitDetailCount" parameterClass="java.util.HashMap" resultClass="java.lang.Integer">
+        <![CDATA[
+			SELECT	COUNT(SORT_T1.BIN_CounterPointDetailID ) AS count FROM (
+		]]>
+        <include refid="BINOLBSCNT10.counterPointLimitDetailQuery" />
+        <![CDATA[
+			)SORT_T1
+		]]>
+    </select>
+
+    <!-- 取得柜台积分计划List  -->
+    <select id="getCounterPointLimitDetailList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+        <include refid="BINOLCMINC99.pageheader" />
+        <include refid="BINOLBSCNT10.counterPointLimitDetailQuery" />
+        <include refid="BINOLCMINC99.pagefooter" />
+    </select>
+
+    <!-- 取得柜台积分额度明细Excel导出List  -->
+    <select id="getCounterPointLimitDetailListExcel" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+        <![CDATA[
+			SELECT	 ROW_NUMBER()over(order by A.TradeTime desc) AS Cno,
+			        A.TradeType,
+                    A.BillNo,
+                    A.TradeTime,
+                    A.Amount,
+                    A.PointChange,
+                    A.MemberCode,
+                    A.Comment
+			 FROM (
+		]]>
+        <include refid="BINOLBSCNT10.counterPointLimitDetailQuery" />
+        <![CDATA[
+			)A
+		]]>
+    </select>
+
+
+    <!-- 取得销售信息  -->
+    <select id="getSaleRecordInfo" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+        <![CDATA[
+			 SELECT
+                SR.BIN_SaleRecordID,
+                SR.BIN_OrganizationID,
+                CI.CounterCode,
+                CI.CounterNameIF,
+                SR.BIN_EmployeeID,
+                SR.EmployeeCode,
+                SR.BillCode,
+                SR.SaleType,
+                CONVERT(VARCHAR(100),SR.SaleTime,20) AS SaleTime,
+                SR.BIN_MemberInfoID,
+                MCI.BIN_MemCardInfoID,
+                MCI.MemCode,
+                SR.Amount,
+                SR.Quantity
+            FROM
+                Sale.BIN_SaleRecord SR
+            LEFT JOIN
+                Basis.BIN_CounterInfo CI
+            ON
+                SR.BIN_OrganizationID = CI.BIN_OrganizationID AND CI.ValidFlag = 1
+            LEFT JOIN
+                Members.BIN_MemCardInfo MCI
+            ON
+                SR.BIN_MemberInfoID = MCI.BIN_MemberInfoID AND MCI.ValidFlag = 1 AND MCI.CardValidFlag = 1
+            WHERE
+                SR.ValidFlag = 1
+                AND SR.BillCode = #billNo#
+		]]>
+    </select>
+
+    <!-- 取得销售明细信息  -->
+    <select id="getSaleRecordDetailInfo" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+        <![CDATA[
+            SELECT
+                SRD.BIN_SaleRecordDetailID,
+                SRD.BIN_SaleRecordID,
+                SRD.BarCode,
+                SRD.UnitCode,
+                SRD.BIN_ProductVendorID,
+                PRO.NameTotal,
+                SRD.SaleType,
+                SRD.PricePay,
+                SRD.Quantity
+            FROM
+                Sale.BIN_SaleRecordDetail SRD
+            LEFT JOIN
+                Basis.BIN_ProductVendor PV
+            ON
+                SRD.BIN_ProductVendorID = PV.BIN_ProductVendorID AND PV.ValidFlag = 1
+            LEFT JOIN
+                Basis.BIN_Product PRO
+            ON
+                PV.BIN_ProductID = PRO.BIN_ProductID AND PRO.ValidFlag = 1
+            WHERE
+                SRD.ValidFlag = 1
+                AND SRD.BIN_SaleRecordID = #saleRecordId#
+        ]]>
+    </select>
 </sqlMap>

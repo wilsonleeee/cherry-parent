@@ -81,7 +81,12 @@ public class BINOLBSCNT10_Action extends BaseAction implements ModelDriven<BINOL
 	/** 积分计划柜台List */
 	private List<Map<String, Object>> counterPointPlanDetailList;
 
+	/** 积分计划柜台额度List */
+	private List<Map<String, Object>> counterPointLimitDetailList;
+
 	private Map<String,Object> counterPointPlanInfo;
+
+	private Map<String,Object> saleRecordInfo;
 
 	/**
 	 *
@@ -127,6 +132,7 @@ public class BINOLBSCNT10_Action extends BaseAction implements ModelDriven<BINOL
 	 */
 	public String counterPointPlanDetailSearch() throws Exception {
 		try {
+
 			// 取得参数MAP
 			Map<String, Object> searchMap = getSearchMap();
 			// 取得柜台积分计划总数
@@ -146,6 +152,57 @@ public class BINOLBSCNT10_Action extends BaseAction implements ModelDriven<BINOL
 			return CherryConstants.GLOBAL_ACCTION_RESULT;
 		}
 		// AJAX返回至dataTable结果页面
+		return SUCCESS;
+	}
+
+	/**
+	 * 取得柜台积分额度变化履历List
+	 * @return
+	 * @throws Exception
+     */
+	public String counterPointLimitDetailSearch()throws Exception{
+		try {
+
+			// 取得参数MAP
+			Map<String, Object> searchMap = getSearchMap();
+			// 取得柜台积分计划总数
+			int count = binOLBSCNT10_BL.getCounterPointLimitDetailCount(searchMap);
+			if(count != 0) {
+				// 取得柜台积分计划List
+				counterPointLimitDetailList = binOLBSCNT10_BL.getCounterPointLimitDetailList(searchMap);
+
+			}
+			// form表单设置
+			form.setITotalDisplayRecords(count);
+			form.setITotalRecords(count);
+		} catch(Exception e) {
+			logger.error(e.getMessage(), e);
+			// 系统发生异常，请联系管理员
+			this.addActionError(getText("ECM00036"));
+			return CherryConstants.GLOBAL_ACCTION_RESULT;
+		}
+		// AJAX返回至dataTable结果页面
+		return SUCCESS;
+	}
+
+	/**
+	 * 取得柜台积分额度变化履历中会员销售或退货的详情
+	 * @return
+	 * @throws Exception
+	 */
+	public String saleRecordSearch()throws Exception{
+		try {
+			// 取得参数MAP
+			Map<String, Object> searchMap = getSearchMap();
+			saleRecordInfo = binOLBSCNT10_BL.getSaleRecordInfoDetail(searchMap);
+
+		} catch(Exception e) {
+			logger.error(e.getMessage(), e);
+			// 系统发生异常，请联系管理员
+			this.addActionError(getText("ECM00036"));
+			return CherryConstants.GLOBAL_ACCTION_RESULT;
+		}
+
 		return SUCCESS;
 	}
 
@@ -177,6 +234,7 @@ public class BINOLBSCNT10_Action extends BaseAction implements ModelDriven<BINOL
 		// 语言类型
 		map.put(CherryConstants.SESSION_LANGUAGE, session.get(CherryConstants.SESSION_LANGUAGE));
 		map.put("counterInfoId",form.getCounterInfoId());
+		map.put("billNo",form.getBillNo());
 
 		return map;
 	}
@@ -225,6 +283,33 @@ public class BINOLBSCNT10_Action extends BaseAction implements ModelDriven<BINOL
 		this.brandInfoList = brandInfoList;
 	}
 
+	/**
+	 * 导出Excel
+	 * @throws JSONException
+	 */
+	public String export() throws JSONException{
+		// 取得参数MAP
+		Map<String, Object> searchMap = getSearchMap();
+		// 取得考勤信息List
+		try {
+			String language = ConvertUtil.getString(searchMap.get(CherryConstants.SESSION_LANGUAGE));
+			downloadFileName = binOLMOCOM01_BL.getResourceValue("BINOLBSCNT10", language, "downloadFileName");
+			setExcelStream(new ByteArrayInputStream(binOLBSCNT10_BL.exportExcel(searchMap)));
+		} catch (Exception e) {
+			this.addActionError(getText("EMO00022"));
+			e.printStackTrace();
+			return CherryConstants.GLOBAL_ACCTION_RESULT;
+		}
+
+		return "BINOLBSCNT10_excel";
+	}
+
+	public InputStream getExcelStream() {
+		return excelStream;
+	}
+	public void setExcelStream(InputStream excelStream) {
+		this.excelStream = excelStream;
+	}
 	@Override
 	public BINOLBSCNT10_Form getModel() {
 		return form;
@@ -238,4 +323,19 @@ public class BINOLBSCNT10_Action extends BaseAction implements ModelDriven<BINOL
 		this.counterPointPlanDetailList = counterPointPlanDetailList;
 	}
 
+	public List<Map<String, Object>> getCounterPointLimitDetailList() {
+		return counterPointLimitDetailList;
+	}
+
+	public void setCounterPointLimitDetailList(List<Map<String, Object>> counterPointLimitDetailList) {
+		this.counterPointLimitDetailList = counterPointLimitDetailList;
+	}
+
+	public Map<String, Object> getSaleRecordInfo() {
+		return saleRecordInfo;
+	}
+
+	public void setSaleRecordInfo(Map<String, Object> saleRecordInfo) {
+		this.saleRecordInfo = saleRecordInfo;
+	}
 }

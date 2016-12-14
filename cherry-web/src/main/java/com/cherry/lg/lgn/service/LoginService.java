@@ -217,4 +217,9 @@ public class LoginService {
         map.put(CherryConstants.IBATIS_SQL_ID, "login.updateLoginInfo");
         return baseServeceImpl.update(map);
     }
+
+	public Map getMemberInfoByOpenID (Map<String, Object> map) {
+		map.put(CherryConstants.IBATIS_SQL_ID, "login.getMemberInfoByOpenID");
+		return (Map)baseServeceImpl.get(map);
+	}
 }

@@ -852,6 +852,9 @@ public class MessageConstants {
 	
 	/** 刷新索引消息业务类型 */
 	public static final String MESSAGE_TYPE_IR = "IR";
+
+	/** 经销商额度变更消息业务类型 */
+	public static final String MESSAGE_TYPE_GTED = "GTED";
 	
 	/** 活动类型 促销活动*/
     public static final String ACTIVITYTYPE_PROM = "0";

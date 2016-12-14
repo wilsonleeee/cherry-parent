@@ -1,11 +1,12 @@
 package com.cherry.webservice.member.service;
 
+import com.cherry.cm.core.CherryConstants;
+import com.cherry.cm.service.BaseService;
+import com.cherry.webservice.member.resource.MemberInfo;
+
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-
-import com.cherry.cm.core.CherryConstants;
-import com.cherry.cm.service.BaseService;
 
 public class MemberInfoService extends BaseService {
 	
@@ -63,7 +64,7 @@ public class MemberInfoService extends BaseService {
 		map.put(CherryConstants.IBATIS_SQL_ID, "MemberInfo.getMemberCoupon");
 		return (Map)baseServiceImpl.get(map);
 	}
-	
+
 	public List getCouponProduct(Map<String,Object> map){
 		map.put(CherryConstants.IBATIS_SQL_ID, "MemberInfo.getCouponProduct");
 		return baseServiceImpl.getList(map);
@@ -108,7 +109,19 @@ public class MemberInfoService extends BaseService {
 		map.put(CherryConstants.IBATIS_SQL_ID, "MemberInfo.getCampaignOrderList");
 		return baseServiceImpl.getList(map);
 	}
-	
+
+	/**
+	 * 根据问卷Id和会员Id获取答卷
+	 * @param map
+	 * @return
+     */
+	public List getPaperAnswerByPaperId(Map<String,Object> map){
+		Map paramMap = new HashMap();
+		paramMap.putAll(map);
+		paramMap.put(CherryConstants.IBATIS_SQL_ID, "MemberInfo.getPaperAnswerByPaperId");
+		return baseServiceImpl.getList(paramMap);
+	}
+
 	public int unbindMessageId(Map<String,Object> map){
 		map.put(CherryConstants.IBATIS_SQL_ID, "MemberInfo.unbindMessageId");
 		return baseServiceImpl.update(map);
@@ -129,7 +142,60 @@ public class MemberInfoService extends BaseService {
 		map.put(CherryConstants.IBATIS_SQL_ID, "MemberInfo.addMemBindRecord");
 		baseServiceImpl.save(map);
 	}
-	
+
+	/**
+	 * 插入答卷主表
+	 * @param map
+     */
+	public int insertPaperAnswer(Map<String,Object> map){
+		Map<String, Object> paramMap = new HashMap<String, Object>();
+		paramMap.putAll(map);
+		paramMap.put(CherryConstants.IBATIS_SQL_ID, "MemberInfo.insertPaperAnswer");
+		return baseServiceImpl.saveBackId(paramMap);
+	}
+
+	/**
+	 * 获取问卷问题
+	 * @param map
+	 * @return
+     */
+	public Map getPaperQuestion(Map<String,Object> map){
+		Map<String, Object> paramMap = new HashMap<String, Object>();
+		paramMap.putAll(map);
+		paramMap.put(CherryConstants.IBATIS_SQL_ID, "MemberInfo.getPaperQuestion");
+		return (Map) baseServiceImpl.get(paramMap);
+	}
+
+	/**
+	 * 插入答卷信息明细表
+	 * @param
+	 * @return
+	 */
+	public void insertPaperAnswerDetail(List detailDataList){
+		// 批量插入
+		baseServiceImpl.saveAll(detailDataList, "MemberInfo.insertPaperAnswerDetail");
+	}
+
+	/**
+	 * 更新答卷主表
+	 * @param map
+	 * @return
+     */
+	public void updatePaperAnswer(Map<String,Object> map){
+		Map<String, Object> paramMap = new HashMap<String, Object>();
+		paramMap.putAll(map);
+		paramMap.put(CherryConstants.IBATIS_SQL_ID, "MemberInfo.updatePaperAnswer");
+		baseServiceImpl.update(paramMap);
+	}
+
+	/**
+	 * 批量更新答卷明细
+	 * @param
+	 * @return
+     */
+	public void updatePaperAnswerDetail(List<Map<String,Object>> list){
+		baseServiceImpl.updateAll(list, "MemberInfo.updatePaperAnswerDetail");
+	}
 	public void addMemBindRelation(Map<String,Object> map){
 		map.put(CherryConstants.IBATIS_SQL_ID, "MemberInfo.addMemBindRelation");
 		baseServiceImpl.save(map);

@@ -1056,5 +1056,41 @@ public class ConvertUtil {
 		}
 		return md5StrBuff.toString();
 	}
-	
+
+	/**
+	 * 将由含前20个大写字母组成String(由逗号隔开)转成20位的二进制数
+	 * @param letters
+	 * @return
+     */
+	public static String letterToBinary(String letters){
+		String resultString = "";
+		String[] chs = letters.split(",");
+		for(int i = (int)'A'; i < 'A'+20; i++){
+			for (String ch : chs){
+				if (ch.equals(String.valueOf((char)i))){
+					resultString = resultString + "1";
+					break;
+				}
+			}
+			if ((int)'A' + resultString.length() == i){
+				resultString = resultString + "0";
+			}
+		}
+		return resultString;
+	}
+
+	/**
+	 * 将20位的二进制数转成由含前20个大写字母组成String(由逗号隔开)
+	 * @param binaryStr
+	 * @return
+     */
+	public static String binaryToLetter(String binaryStr){
+		String resultString = "";
+		for (int i = 0; i < binaryStr.length(); i++){
+			if ("1".equals(binaryStr.substring(i,i+1))){
+				resultString = resultString + String.valueOf((char)('A'+i)) + ",";
+			}
+		}
+		return resultString.substring(0,resultString.length()-1);
+	}
 }

@@ -6,7 +6,7 @@
 <script type="text/javascript">
 		$(function(){
 			var currentDay = new Date();
-			currentDay.setDate(currentDay.getDate()+1);//
+			currentDay.setDate(currentDay.getDate());//
 
 			$('#endSetDate').cherryDate({
 				minDate : currentDay

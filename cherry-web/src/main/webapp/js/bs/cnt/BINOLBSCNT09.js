@@ -1,4 +1,4 @@
-var BINOLBSCNT09 = function () {
+ var BINOLBSCNT09 = function () {
 	this.needUnlock = true;
 };
 BINOLBSCNT09.prototype = {
@@ -53,7 +53,7 @@ BINOLBSCNT09.prototype = {
 				'brandInfoId' : $('#brandInfoId').val(),
 				'pointType' : $('#pointType').val(),
 				'importType' : $('#importType').val(),
-				'reason' : $('#reason').val(),
+				'comment' : $('#comment').val(),
 				'importName' : $('#importName').val()
 			}
     	if ($('#memberClubId').length > 0) {
@@ -65,30 +65,19 @@ BINOLBSCNT09.prototype = {
 			data : dataArr,
 			fileElementId : 'upExcel',
 			dataType : 'html',
-			success: function (msg){
+			success: function (data){
 				//释放按钮
 				$excelBtn.removeAttr("disabled",false);
 				$excelBtn.removeClass("ui-state-disabled");
-				if(msg.indexOf('id="actionResultDiv"') > -1){
-					$errorMessage.html(msg);
-				}else{
-					var msgJson = window.JSON.parse(msg);
-					if(msgJson.errorMsg!=undefined){
-						var  $errorDiv =$('#errorDiv #errorSpan');
-						$errorDiv.html(msgJson.errorMsg)
-						$('#errorDiv').show();
-					}else{
-						var  $successDiv =$('#successDiv #successSpan');
-						$('#successDiv').show();
-						var urlDetail = '/Cherry/mb/BINOLMBPTM04_detailInit.action';
-					    urlDetail = urlDetail + '?' + "memPointImportId="+msgJson.memPointImportId + '&pointImportCode='+msgJson.billNo;
-					    var html='';
-						html+=$('#exportTip1').val()+'<a  id="htmlShow" onclick="BINOLBSCNT09.openDetailPage(this);return false;">'+"【"+msgJson.billNo+"】"+'</a>'+$('#exportTip2').val();
-						$("#successSpan").html(html);
-						$("#htmlShow").attr("href",urlDetail); 
-					//导入成功后刷新父页面
-					if(window.opener.oTableArr[0] != null)window.opener.oTableArr[0].fnDraw();
-					}
+				$("#errorCounters").html("");
+				if(data.indexOf("actionMessage")>-1){
+					$errorMessage.html(data);
+				} else {
+					$("#errorCountersShow").show();
+					$("#hiddenTable").html(data);
+					$("#errorMessage").html($("#hiddenTable #errorDiv").html());
+					$("#errorCounters").html($("#hiddenTable tbody").html());
+					$("#hiddenTable").html("");
 				}
 	        }
 		});
@@ -144,7 +133,7 @@ $(document).ready(function() {
 	cherryValidate({//form表单验证
 		formId: "importForm",		
 		rules: {
-			reason: {required: true}
+			comment: {required: true}
 		}		
 	});
 });

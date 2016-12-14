@@ -20,6 +20,7 @@ import com.cherry.cm.cmbussiness.bl.BINOLCM05_BL;
 import com.cherry.cm.cmbussiness.bl.BINOLCM14_BL;
 import com.cherry.cm.core.BaseAction;
 import com.cherry.cm.core.CherryConstants;
+import com.cherry.cm.core.CherryException;
 import com.cherry.cm.util.Bean2Map;
 import com.cherry.cm.util.ConvertUtil;
 import com.cherry.cm.util.FileUtil;
@@ -130,31 +131,41 @@ public class BINOLBSCNT07_Action extends BaseAction implements ModelDriven<BINOL
 	/**
 	 * 启用柜台积分计划
 	 */
-	public void enablePointPlan() throws Exception {
+	public String enablePointPlan() throws Exception {
 		Map<String, Object> resultMap = new HashMap<String, Object>();
 		try {
 			Map<String, Object> paramMap = commonParam();
 			binOLBSCNT07_BL.tran_enablePointPlan(paramMap);
-			resultMap.put("errorCode", "0");
+			this.addActionMessage(getText("ICM00002"));
 		} catch (Exception e) {
-			resultMap.put("errorCode", "1");
+			if(e instanceof CherryException){
+				this.addActionError(((CherryException)e).getErrMessage());
+			}else{
+				this.addActionError(e.getMessage());
+			}
+			return CherryConstants.GLOBAL_ACCTION_RESULT;
 		}
-		ConvertUtil.setResponseByAjax(response, resultMap);
+		return CherryConstants.GLOBAL_ACCTION_RESULT;
 	}
 
 	/**
 	 * 停用柜台积分计划
 	 */
-	public void disablePointPlan() throws Exception {
+	public String disablePointPlan() throws Exception {
 		Map<String, Object> resultMap = new HashMap<String, Object>();
 		try {
 			Map<String, Object> paramMap = commonParam();
 			binOLBSCNT07_BL.tran_disablePointPlan(paramMap);
-			resultMap.put("errorCode", "0");
+			this.addActionMessage(getText("ICM00002"));
 		} catch (Exception e) {
-			resultMap.put("errorCode", "1");
+			if(e instanceof CherryException){
+				this.addActionError(((CherryException)e).getErrMessage());
+			}else{
+				this.addActionError(e.getMessage());
+			}
+			return CherryConstants.GLOBAL_ACCTION_RESULT;
 		}
-		ConvertUtil.setResponseByAjax(response, resultMap);
+		return CherryConstants.GLOBAL_ACCTION_RESULT;
 	}
 	/**
 	 * 柜台积分额度变更
@@ -188,7 +199,9 @@ public class BINOLBSCNT07_Action extends BaseAction implements ModelDriven<BINOL
 				// 取得柜台积分计划List
 				counterPointPlanList = binOLBSCNT07_BL.getCounterPointPlanList(searchMap);
 			}
-			form.setCurrentDate(new SimpleDateFormat("yyyy-MM-dd").format(new Date()));
+
+			String currentDate = binOLBSCNT07_BL.getSYSDate();
+			form.setCurrentDate(currentDate);
 			// form表单设置
 			form.setITotalDisplayRecords(count);
 			form.setITotalRecords(count);
@@ -259,6 +272,7 @@ public class BINOLBSCNT07_Action extends BaseAction implements ModelDriven<BINOL
 		map.put(CherryConstants.CREATEDBY, userInfo.getBIN_EmployeeID());
 		// 更新者
 		map.put(CherryConstants.UPDATEDBY, userInfo.getBIN_EmployeeID());
+		map.put("employeeId",userInfo.getBIN_EmployeeID());
 		// 作成模块
 		map.put(CherryConstants.CREATEPGM, "BINOLBSCNT07");
 		// 更新模块
@@ -292,7 +306,7 @@ public class BINOLBSCNT07_Action extends BaseAction implements ModelDriven<BINOL
 	/**
 	 * 积分计划柜台履历详情初始化
 	 */
-	public String counterPointPlanDetail_init() throws Exception {
+	public String counterPointPlanDetailInit() throws Exception {
 
 		// 取得参数MAP
 		Map<String, Object> searchMap = getSearchMap();

@@ -64,21 +64,20 @@ BINOLBSCNT08.prototype = {
 				//释放按钮
 				$excelBtn.removeAttr("disabled",false);
 				$excelBtn.removeClass("ui-state-disabled");
-				if(msg.indexOf('id="actionResultDiv"') > -1){
+
+				$("#errorCounters").html("");
+				if(msg.indexOf("actionMessage") > -1){
 					$errorMessage.html(msg);
-				}else{
-					var msgJson = window.JSON.parse(msg);
-					if(msgJson.errorMsg!=undefined){
-						var  $errorDiv =$('#errorDiv #errorSpan');
-						$errorDiv.html(msgJson.errorMsg)
-						$('#errorDiv').show();
-					}else{
-						var  $successDiv =$('#successDiv #successSpan');
-						$('#successDiv').show();
-						$("#successSpan").html(msgJson.successMsg);
+					$("#errorCountersShow").hide();//隐藏错误柜台显示区域
 					//导入成功后刷新父页面
 					if(window.opener.oTableArr[0] != null)window.opener.oTableArr[0].fnDraw();
-					}
+
+				}else{
+					$("#errorCountersShow").show();
+					$("#hiddenTable").html(msg);
+					$("#errorMessage").html($("#hiddenTable #errorDiv").html());
+					$("#errorCounters").html($("#hiddenTable tbody").html());
+					$("#hiddenTable").html("");
 				}
 	        }
 		});

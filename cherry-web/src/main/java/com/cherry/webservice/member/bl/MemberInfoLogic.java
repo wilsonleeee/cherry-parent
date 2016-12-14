@@ -1,23 +1,11 @@
 package com.cherry.webservice.member.bl;
 
-import java.text.SimpleDateFormat;
-import java.util.ArrayList;
-import java.util.Calendar;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-
-import javax.annotation.Resource;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import com.cherry.bs.emp.bl.BINOLBSEMP02_BL;
 import com.cherry.cm.activemq.dto.MQInfoDTO;
 import com.cherry.cm.activemq.interfaces.BINOLMQCOM01_IF;
 import com.cherry.cm.cmbussiness.bl.BINOLCM03_BL;
 import com.cherry.cm.cmbussiness.bl.BINOLCM08_BL;
+import com.cherry.cm.cmbussiness.bl.BINOLCM14_BL;
 import com.cherry.cm.core.CherryChecker;
 import com.cherry.cm.core.CherryConstants;
 import com.cherry.cm.core.CherrySecret;
@@ -34,6 +22,12 @@ import com.cherry.webservice.member.interfaces.MemberInfo_IF;
 import com.cherry.webservice.member.service.MemberInfoService;
 import com.mongodb.BasicDBObject;
 import com.mongodb.DBObject;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import javax.annotation.Resource;
+import java.text.SimpleDateFormat;
+import java.util.*;
 
 public class MemberInfoLogic implements MemberInfo_IF {
 
@@ -62,7 +56,10 @@ public class MemberInfoLogic implements MemberInfo_IF {
 	/** 会员资料修改画面BL **/
 	@Resource
 	private BINOLMBMBM06_BL binOLMBMBM06_BL;
-	
+
+	@Resource(name = "binOLCM14_BL")
+	private BINOLCM14_BL binOLCM14_BL;
+
 	/** 会员属性调整BL */
 	@Resource
 	private BINOLMBMBM03_BL binOLMBMBM03_BL;
@@ -1821,8 +1818,8 @@ public class MemberInfoLogic implements MemberInfo_IF {
 	
 	/**
 	 * 根据秒钟添加日期
-	 * @param date
-	 * @param formatType
+	 * @param dateTime
+	 * @param second
 	 * @return
 	 */
 	public String addDateSecond (String dateTime,int second){
@@ -2707,7 +2704,7 @@ public class MemberInfoLogic implements MemberInfo_IF {
 		}
 		return retMap;
 	}
-	
+
 	/**
 	 * 绑定或新增会员（珀莱雅需求）
 	 * @param paramMap
@@ -2985,5 +2982,259 @@ public class MemberInfoLogic implements MemberInfo_IF {
 		
 		retMap.put("ERRORCODE", "0");
 		return retMap;
+	}
+
+	@SuppressWarnings("unchecked")
+	@Override
+	public Map tran_memberPaperAnswer(Map map) {
+		Map<String,Object> resultMap = new HashMap<String, Object>();
+		try {
+			//验证传输参数有效性
+			resultMap = validMemberPaperAnswerParam(map);
+			if(!CherryChecker.isNullOrEmpty(resultMap) && !resultMap.isEmpty()){
+				return resultMap;
+			}
+			getParam(map);
+			//检索会员，并获取Id
+			Map<String, Object> memMap = memberInfoService.getMemInfoByMemCode(map);
+			if (memMap == null || memMap.isEmpty()){
+				resultMap.put("ERRORCODE", "EMB1807");
+				resultMap.put("ERRORMSG", "未找到指定的会员");
+				return resultMap;
+			}
+			map.put("memberInfoId",memMap.get("memberInfoId"));
+
+			//检索柜台，并获取组织Id
+			if (!CherryChecker.isNullOrEmpty(map.get("CounterCode"))){
+				map.put("organizationCode",map.get("CounterCode"));
+				Map<String, Object> counterMap = memberInfoService.selCounterInfo(map);
+				if (counterMap == null || counterMap.isEmpty()){
+					resultMap.put("ERRORCODE", "EMB1808");
+					resultMap.put("ERRORMSG", "未找到指定的柜台");
+					return resultMap;
+				}
+				map.put("organizationId",counterMap.get("organizationId"));
+			}
+
+			//根据会员Id和问卷Id查询答案记录
+			List<Map<String,Object>> answerList = memberInfoService.getPaperAnswerByPaperId(map);
+			int paperAnswerId = 0;
+			map.put("paperType","1");
+
+			List<Map<String,Object>> detailList = (List) map.get("DetailList");
+			if (CherryUtil.isBlankList(answerList)){
+				//插入答卷主表
+				paperAnswerId = memberInfoService.insertPaperAnswer(map);
+				map.put("paperAnswerId",paperAnswerId);
+				//转换答案List
+				for (Map detailMap : detailList){
+					detailMap.putAll(map);
+					//获取答案对应的问题ID
+					Map paperQuestionMap = memberInfoService.getPaperQuestion(detailMap);
+					if (paperQuestionMap == null || paperQuestionMap.isEmpty()){
+						resultMap.put("ERRORCODE", "EMB1809");
+						resultMap.put("ERRORMSG", "题号为" + detailMap.get("QuestionNo") + "的问题不存在！");
+						return resultMap;
+					}
+					detailMap.put("paperQuestionId",paperQuestionMap.get("BIN_PaperQuestionID"));
+					//将选择题的字母转成20位的二进制字符串
+					if ("1".equals(paperQuestionMap.get("QuestionType")) || "2".equals(paperQuestionMap.get("QuestionType"))){
+						detailMap.put("answer",ConvertUtil.letterToBinary((String)detailMap.get("Answer")));
+					}else {
+						detailMap.put("answer",detailMap.get("Answer"));
+					}
+				}
+				//批量插入问卷答案
+				memberInfoService.insertPaperAnswerDetail(detailList);
+
+				//会员第一次填写问卷，奖励积分
+				String businessTime = memberInfoService.getSYSDate();
+				String point = binOLCM14_BL.getConfigValue("1397",String.valueOf(map.get(CherryConstants.ORGANIZATIONINFOID)), String.valueOf(map.get(CherryConstants.BRANDINFOID)));
+				map.put("MaintType","2");
+				map.put("MaintPoint",point);
+				map.put("MaintainType","1");
+				map.put("BusinessTime",businessTime);
+				map.put("Comment","微信会员完善信息问卷奖励积分");
+				modifyMemberPoint(map);
+			}else{
+				paperAnswerId = Integer.valueOf(String.valueOf(answerList.get(0).get("BIN_PaperAnswerID")));
+				//该问卷已被该会员完成过，更新答卷主表
+				map.put("paperAnswerId",paperAnswerId);
+				memberInfoService.updatePaperAnswer(map);
+
+				for (Map detailMap : detailList){
+					detailMap.putAll(map);
+					//获取答案对应的问题ID
+					Map paperQuestionMap = memberInfoService.getPaperQuestion(detailMap);
+					if (paperQuestionMap == null || paperQuestionMap.isEmpty()){
+						resultMap.put("ERRORCODE", "EMB1809");
+						resultMap.put("ERRORMSG", "题号为" + detailMap.get("QuestionNo") + "的问题不存在！");
+						return resultMap;
+					}
+					detailMap.put("paperQuestionId",paperQuestionMap.get("BIN_PaperQuestionID"));
+					//获取答案对应的BIN_PaperAnswerDetailID
+					for (Map answerMap : answerList){
+						if (answerMap.get("BIN_PaperQuestionID").equals(paperQuestionMap.get("BIN_PaperQuestionID"))){
+							detailMap.put("BIN_PaperAnswerDetailID",answerMap.get("BIN_PaperAnswerDetailID"));
+						}
+					}
+					//将选择题的字母转成20位的二进制字符串
+					if ("1".equals(paperQuestionMap.get("QuestionType")) || "2".equals(paperQuestionMap.get("QuestionType"))){
+						detailMap.put("answer",ConvertUtil.letterToBinary((String)detailMap.get("Answer")));
+					}else {
+						detailMap.put("answer",detailMap.get("Answer"));
+					}
+				}
+				//批量更新问卷答案
+				memberInfoService.updatePaperAnswerDetail(detailList);
+			}
+		} catch (Exception e) {
+			logger.error("会员答卷接口执行失败。",e);
+			logger.error(e.getMessage(),e);
+			logger.error("WS ERROR TradeType:"+ ConvertUtil.getString(map.get("TradeType")));
+			logger.error("WS ERROR paramData:"+ map.toString());
+			resultMap.put("ERRORCODE", "WSE9999");
+			resultMap.put("ERRORMSG", "处理过程中发生未知异常");
+			return resultMap;
+		}
+		return resultMap;
+	}
+
+	@Override
+	public Map getMemberPaperAnswer(Map map) {
+		Map<String,Object> resultMap = new HashMap<String, Object>();
+		try {
+			//验证传输参数有效性
+			resultMap = validGetMemberPaperAnswerParam(map);
+			if(!CherryChecker.isNullOrEmpty(resultMap) && !resultMap.isEmpty()){
+				return resultMap;
+			}
+			map.put("memCode",map.get("MemberCode"));
+			map.put(CherryConstants.ORGANIZATIONINFOID, map.get("BIN_OrganizationInfoID"));
+			map.put(CherryConstants.BRANDINFOID, map.get("BIN_BrandInfoID"));
+			//检索会员，并获取Id
+			Map<String, Object> memMap = memberInfoService.getMemInfoByMemCode(map);
+			if (memMap == null || memMap.isEmpty()){
+				resultMap.put("ERRORCODE", "EMB1903");
+				resultMap.put("ERRORMSG", "未找到指定的会员");
+				return resultMap;
+			}
+			map.put("memberInfoId",memMap.get("memberInfoId"));
+			//根据会员Id和问卷Id查询答案记录
+			List<Map<String,Object>> answerList = memberInfoService.getPaperAnswerByPaperId(map);
+			if (CherryUtil.isBlankList(answerList)){
+				resultMap.put("ERRORCODE", "EMB1904");
+				resultMap.put("ERRORMSG", "未找到对应的答案");
+				return resultMap;
+			}else{
+				List<Map<String,Object>> answers = new ArrayList<Map<String, Object>>();
+				for (Map answerMap : answerList){
+					Map<String,Object> resMap = new HashMap<String, Object>();
+					resMap.put("QuestionNo",answerMap.get("QuestionNo"));
+					if ("1".equals(answerMap.get("QuestionType")) || "2".equals(answerMap.get("QuestionType"))){
+						resMap.put("Answer",ConvertUtil.binaryToLetter((String)answerMap.get("Answer")));
+					}else {
+						resMap.put("Answer",answerMap.get("Answer"));
+					}
+					answers.add(resMap);
+				}
+				resultMap.put("ResultContent", answers);
+				return resultMap;
+			}
+		} catch (Exception e) {
+			logger.error("获取会员答卷接口执行失败。",e);
+			logger.error(e.getMessage(),e);
+			logger.error("WS ERROR TradeType:"+ ConvertUtil.getString(map.get("TradeType")));
+			logger.error("WS ERROR paramData:"+ map.toString());
+			resultMap.put("ERRORCODE", "WSE9999");
+			resultMap.put("ERRORMSG", "处理过程中发生未知异常");
+			return resultMap;
+		}
+	}
+
+	private Map<String,Object> validGetMemberPaperAnswerParam(Map map) {
+		Map<String,Object> resultMap=new HashMap<String, Object>();
+		//验证会员卡号是否为空
+		if(CherryChecker.isNullOrEmpty(map.get("MemberCode"))){
+			resultMap.put("ERRORCODE", "EMB1901");
+			resultMap.put("ERRORMSG", "参数MemberCode是必须的！");
+			return resultMap;
+		}
+		//验证PaperID是否为空
+		if(CherryChecker.isNullOrEmpty(map.get("PaperID"))){
+			resultMap.put("ERRORCODE", "EMB1902");
+			resultMap.put("ERRORMSG", "参数PaperID是必须的！");
+			return resultMap;
+		}
+		return resultMap;
+	}
+
+	private void getParam(Map map) {
+		map.put("memCode",map.get("MemberCode"));
+		map.put(CherryConstants.ORGANIZATIONINFOID, map.get("BIN_OrganizationInfoID"));
+		map.put(CherryConstants.BRANDINFOID, map.get("BIN_BrandInfoID"));
+		// 作成者
+		map.put(CherryConstants.CREATEDBY, "cherryws");
+		// 作成程序名
+		map.put(CherryConstants.CREATEPGM, "MemberPaperAnswer");
+		// 更新者
+		map.put(CherryConstants.UPDATEDBY, "cherryws");
+		// 更新程序名
+		map.put(CherryConstants.UPDATEPGM, "MemberPaperAnswer");
+	}
+
+	private Map<String,Object> validMemberPaperAnswerParam(Map map) {
+		Map<String,Object> resultMap=new HashMap<String, Object>();
+		//验证会员卡号是否为空
+		if(CherryChecker.isNullOrEmpty(map.get("MemberCode"))){
+			resultMap.put("ERRORCODE", "EMB1801");
+			resultMap.put("ERRORMSG", "参数MemberCode是必须的！");
+			return resultMap;
+		}
+		//验证PaperID是否为空
+		if(CherryChecker.isNullOrEmpty(map.get("PaperID"))){
+			resultMap.put("ERRORCODE", "EMB1802");
+			resultMap.put("ERRORMSG", "参数PaperID是必须的！");
+			return resultMap;
+		}
+		//验证Sourse是否为空
+		if(CherryChecker.isNullOrEmpty(map.get("Sourse"))){
+			resultMap.put("ERRORCODE", "EMB1803");
+			resultMap.put("ERRORMSG", "参数Sourse是必须的！");
+			return resultMap;
+		}
+
+		List<Map<String,Object>> detailList = null;
+		try{
+			detailList = (List) map.get("DetailList");
+		}catch(Exception ex){
+			//数据格式错误
+			resultMap.put("ERRORCODE", "EMB1804_0");
+			resultMap.put("ERRORMSG", "参数DetailList是格式错误！");
+			return resultMap;
+		}
+
+		//验证DetailList是否为空
+		if(CherryUtil.isBlankList(detailList)){
+			resultMap.put("ERRORCODE", "EMB1804");
+			resultMap.put("ERRORMSG", "参数DetailList是必须的！");
+			return resultMap;
+		}
+
+		for (Map detailMap : detailList){
+			//验证QuestionNo是否为空
+			if(CherryChecker.isNullOrEmpty(detailMap.get("QuestionNo"))){
+				resultMap.put("ERRORCODE", "EMB1805");
+				resultMap.put("ERRORMSG", "参数QuestionNo是必须的！");
+				return resultMap;
+			}
+			//验证Answer是否为空
+			if(CherryChecker.isNullOrEmpty(detailMap.get("Answer"))){
+				resultMap.put("ERRORCODE", "EMB1806");
+				resultMap.put("ERRORMSG", "参数Answer是必须的！");
+				return resultMap;
+			}
+		}
+		return resultMap;
 	}
 }

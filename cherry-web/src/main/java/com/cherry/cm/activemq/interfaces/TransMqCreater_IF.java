@@ -7,5 +7,5 @@ import com.cherry.cm.activemq.dto.MQBaseDTO;
  */
 public interface TransMqCreater_IF {
 
-    MQBaseDTO createTransMqByTrade(Object ob);
+    MQBaseDTO createTransMqByTrade(Object ob) throws Exception;
 }

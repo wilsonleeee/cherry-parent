@@ -11,7 +11,7 @@
 	<s:iterator value="counterPointPlanList" id="counterMap">
 		<ul>
 			<li>
-				<s:checkbox name="validFlag" fieldValue="%{#counterMap.validFlag}" onclick="bscom03_checkRecord(this,'#dataTable_Cloned');"></s:checkbox>
+				<s:checkbox name="validFlag" fieldValue="%{#counterMap.validFlag}" onclick="binolbscnt07.checkRecord(this,'#dataTable_Cloned');"></s:checkbox>
 				<s:hidden name="counterInfoId" value="%{#counterMap.BIN_CounterInfoID}"></s:hidden>
 				<s:hidden name="counterCode" value="%{#counterMap.counterCode}"></s:hidden>
 				<s:hidden name="organizationId" value="%{#counterMap.BIN_OrganizationID}"></s:hidden>
@@ -23,7 +23,7 @@
 			<li><s:property value="RowNumber" /></li>
 			<%-- 柜台号 --%>
 			<li>
-				<s:url id="counterPointPlanDetail_url" action="BINOLBSCNT0701_counterPointPlanDetail_init">
+				<s:url id="counterPointPlanDetail_url" action="BINOLBSCNT07_counterPointPlanDetail_init">
 					<s:param name="counterInfoId" value="%{#counterMap.BIN_CounterInfoID}"></s:param>
 				</s:url>
 				<a href="${counterPointPlanDetail_url}" class="popup" onclick="javascript:openWin(this);return false;">
@@ -35,7 +35,7 @@
 			<!-- 积分计划 -->
 			<li>
 				<span>
-					<s:if test=' currentDate >= StartDate && currentDate < EndDate  '>
+					<s:if test=' currentDate >= StartDate && currentDate <= EndDate  '>
 						<span class='ui-icon icon-valid center'></span>
 					</s:if>
 					<s:else>
@@ -50,7 +50,7 @@
 						<s:text name="CNT07.explainType1"/>
 					</s:if>
 					<s:else>
-						<s:if test=' StartDate != null && StartDate <= currentDate && EndDate > currentDate '>
+						<s:if test=' StartDate != null && StartDate <= currentDate && EndDate >= currentDate '>
 							<s:text name="CNT07.explainType4"/>
 						</s:if>
 					</s:else>
@@ -61,7 +61,7 @@
 						<s:text name="CNT07.explainType3"/>
 					</s:if>
 
-					<s:if test=' EndDate != null && EndDate <= currentDate '>
+					<s:if test=' EndDate != null && EndDate < currentDate '>
 						<s:text name="CNT07.explainType5"/>
 					</s:if>
 				</span>

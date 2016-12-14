@@ -1,0 +1,82 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sqlMap PUBLIC "-//iBATIS.com//DTD SQL Map 2.0//EN" "http://ibatis.apache.org/dtd/sql-map-2.dtd">
+<sqlMap namespace="BINOLDUIBA01">
+
+    <!-- 根据OpenID查询会员基本信息 -->
+    <select id="getMemberInfoByOpenID" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+        <![CDATA[
+		  select
+		  B.MemCode
+		  from [Members].[BIN_MemberInfo] A
+		  JOIN Members.BIN_MemCardInfo B on A.BIN_MemberInfoID= B.BIN_MemberInfoID and B.CardValidFlag='1' and B.ValidFlag='1'
+		  where A.MessageId=#openid#
+		]]>
+    </select>
+
+
+    <!--更新兑换请求记录表-->
+    <update id="updateExchangeRequest" parameterClass="java.util.HashMap">
+        <![CDATA[
+        UPDATE
+        [Members].[BIN_DuiBaExchangeRequest]
+        SET
+        ExchangeStatus = #exchangeStatus#,
+        UpdateTime=getdate(),
+        UpdatePGM =#updatePGM#
+        WHERE
+			OrderNum = #orderNum#
+		 AND ExchangeStatus IS NULL
+		]]>
+    </update>
+
+    <!-- 查询兑换请求记录表的卡号和兑换积分 -->
+    <select id="getBIN_ExchangeRequest" parameterClass="java.util.HashMap"  resultClass="java.util.HashMap">
+        <![CDATA[
+			SELECT
+			    top 1
+			    MemberCode,
+				Point
+			FROM
+				 [Members].[BIN_DuiBaExchangeRequest] A WITH(NOLOCK)
+			 WHERE
+                OrderNum = #orderNum#
+             AND ExchangeStatus IS NULL
+		]]>
+    </select>
+    <!-- 插入兑吧兑换请求记录表 -->
+    <insert id="insertDuiBaExchangeRequest" parameterClass="java.util.HashMap">
+        <![CDATA[
+			INSERT INTO
+				Members.BIN_DuiBaExchangeRequest
+				(
+                BIN_OrganizationInfoID,
+		        BIN_BrandInfoID,
+		        OrderNum,
+		        BIN_MemberInfoID,
+		        MemberCode,
+		        Point,
+		        ExchangeType,
+		        ExchangeParams,
+		        ExchangeStatus,
+			]]>
+        <include refid="BINOLCMINC99.insertKeySql" />
+        <![CDATA[
+                )VALUES
+                (
+                 #BIN_OrganizationInfoID#,
+		         #BIN_BrandInfoID#,
+                 #OrderNum#,
+                 #BIN_MemberInfoID#,
+                 #MemberCode#,
+                 #Point#,
+                 #ExchangeType#,
+                 #ExchangeParams#,
+                 #ExchangeStatus#,
+            ]]>
+        <include refid="BINOLCMINC99.insertValueSql" />
+        <![CDATA[
+            )
+            ]]>
+    </insert>
+
+</sqlMap>

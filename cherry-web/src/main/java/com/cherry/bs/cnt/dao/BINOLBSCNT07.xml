@@ -17,8 +17,11 @@
             CurrentPointLimit = CurrentPointLimit + #pointChange#,
         </isNotEmpty>
         <isNotEmpty property="comment">
-            Comment = #comment#,
+            <isNotEqual property="changeType" compareValue="pointChange">
+                Comment = #comment#,
+            </isNotEqual>
         </isNotEmpty>
+            BIN_EmployeeID = #employeeId#,
         <include refid="BINOLCMINC99.updateSql" />
         WHERE
             BIN_OrganizationInfoID = #organizationInfoId# AND
@@ -39,6 +42,7 @@
 		        EndDate,
 		        CurrentPointLimit,
 		        Comment,
+		        BIN_EmployeeID,
 			]]>
             <include refid="BINOLCMINC99.insertKeySql" />
             <![CDATA[
@@ -51,6 +55,7 @@
                  #endDate#,
                  #currentPointLimit#,
                  #comment#,
+                 #employeeId#,
             ]]>
             <include refid="BINOLCMINC99.insertValueSql" />
             <![CDATA[
@@ -64,6 +69,7 @@
           Basis.BIN_CounterPointPlanHistory
         SET
           ActualEndTime = #endDate#,
+          Commemts = #comment#,
         <include refid="BINOLCMINC99.updateSql" />
         <![CDATA[
         WHERE
@@ -136,11 +142,11 @@
              then '是' else '否' end  AS Planstatus,
             case when CONVERT(varchar,GETDATE(),23 )<CONVERT(varchar,BP.StartDate,23 ) then
 					'将要启用'
-				 when CONVERT(varchar,GETDATE(),23 )>=CONVERT(varchar,BP.EndDate,23 )  then
+				 when CONVERT(varchar,GETDATE(),23 )>CONVERT(varchar,BP.EndDate,23 )  then
 					'已经停用'
-				 when CONVERT(varchar,GETDATE(),23 )>CONVERT(varchar,BP.StartDate,23 ) and BP.EndDate='2100-01-01'   then
+				 when CONVERT(varchar,GETDATE(),23 )>=CONVERT(varchar,BP.StartDate,23 ) and BP.EndDate='2100-01-01'   then
 					'正在积分'
-				  when CONVERT(varchar,GETDATE(),23 )>CONVERT(varchar,BP.StartDate,23 ) and  CONVERT(varchar,GETDATE(),23 )<CONVERT(varchar,BP.EndDate,23 ) and BP.EndDate<>'2100-01-01'   then
+				  when CONVERT(varchar,GETDATE(),23 )>=CONVERT(varchar,BP.StartDate,23 ) and  CONVERT(varchar,GETDATE(),23 )<=CONVERT(varchar,BP.EndDate,23 ) and BP.EndDate<>'2100-01-01'   then
 					'将要停用'
 			end
 			 AS Explain ,
@@ -189,16 +195,16 @@
         </isNotEmpty>
         <isNotEmpty property="pointDateBegin">
             <isNotEmpty prepend="AND" property="pointDateEnd">
-                (( #pointDateBegin# &lt;= BP.StartDate AND #pointDateEnd# &gt; BP.StartDate )
+                (( #pointDateBegin# &lt;= BP.StartDate AND #pointDateEnd# &gt;= BP.StartDate )
                 OR ( #pointDateBegin# BETWEEN BP.StartDate AND BP.EndDate ))
             </isNotEmpty>
             <isEmpty prepend="AND" property="pointDateEnd">
-                ( #pointDateBegin# &lt; BP.EndDate )
+                ( #pointDateBegin# &lt;= BP.EndDate )
             </isEmpty>
         </isNotEmpty>
         <isEmpty property="pointDateBegin">
             <isNotEmpty prepend="AND" property="pointDateEnd">
-                ( #pointDateEnd# &gt; BP.StartDate )
+                ( #pointDateEnd# &gt;= BP.StartDate )
             </isNotEmpty>
         </isEmpty>
 
@@ -268,6 +274,7 @@
             CONVERT(VARCHAR(100),B.UpdateTime,20) AS updateTime
 			FROM
 				Basis.BIN_CounterInfo A WITH(NOLOCK)
+                JOIN Basis.BIN_Organization E WITH(NOLOCK) ON A.BIN_OrganizationID = E.BIN_OrganizationID
                 LEFT JOIN Basis.BIN_CounterPointPlan B WITH(NOLOCK)
                 ON A.BIN_OrganizationID = B.BIN_OrganizationID
                 LEFT JOIN Basis.BIN_Employee D WITH(NOLOCK)

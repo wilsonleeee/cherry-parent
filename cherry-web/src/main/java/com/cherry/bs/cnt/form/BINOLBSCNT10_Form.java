@@ -12,6 +12,8 @@ public class BINOLBSCNT10_Form extends DataTable_BaseForm {
 
 	private String brandInfoId;
 
+	private String billNo;
+
 	public int getCounterInfoId() {
 		return counterInfoId;
 	}
@@ -26,5 +28,13 @@ public class BINOLBSCNT10_Form extends DataTable_BaseForm {
 
 	public void setBrandInfoId(String brandInfoId) {
 		this.brandInfoId = brandInfoId;
+	}
+
+	public String getBillNo() {
+		return billNo;
+	}
+
+	public void setBillNo(String billNo) {
+		this.billNo = billNo;
 	}
 }

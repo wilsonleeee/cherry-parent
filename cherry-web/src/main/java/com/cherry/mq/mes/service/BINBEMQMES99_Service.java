@@ -125,6 +125,16 @@ public class BINBEMQMES99_Service extends BaseService{
 	    cacheMap.put("organizationInfoID", map.get("organizationInfoID"));
 	    return binBEMQMES99_Service_Cache.selEmployeeInfo_c(cacheMap);
 	}
+
+	/**
+	 * 查询柜台积分计划信息
+	 * @param map
+	 * @return
+	 */
+	public HashMap getCounterPointPlan (Map map){
+		map.put(CherryConstants.IBATIS_SQL_ID, "BINBEMQMES99.getCounterPointPlan");
+		return (HashMap)baseServiceImpl.get(map);
+	}
 	
 	/**
 	 * 查询会员信息
