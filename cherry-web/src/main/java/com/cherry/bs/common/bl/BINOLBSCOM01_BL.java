@@ -357,6 +357,8 @@ public class BINOLBSCOM01_BL {
 			String phone = ConvertUtil.getString(employeeInfoMap.get("phone"));
 			//手机
 			String mobilePhone = ConvertUtil.getString(employeeInfoMap.get("mobilePhone"));
+			//身份证
+			String identityCard = ConvertUtil.getString(employeeInfoMap.get("identityCard"));
 //			//柜台主管code
 //			String basCode = "";
 //			//柜台主管名称
@@ -428,6 +430,7 @@ public class BINOLBSCOM01_BL {
 
 			mainData.put("Phone", phone);
 			mainData.put("Mobilephone", mobilePhone);
+			mainData.put("IdentityCard", identityCard);
 			
 			//一直向前增长的系统时间
 			mainData.put("Time", binOLBSCOM01_Service.getForwardSYSDate());
