@@ -29,7 +29,6 @@ import com.cherry.lg.lgn.bl.LoginBusinessLogic;
 import com.cherry.lg.lgn.service.LoginService;
 import com.cherry.mq.mes.atmosphere.JQueryPubSubPush;
 import com.cherry.pl.upm.bl.BINOLPLUPM04_BL;
-import com.cherry.webservice.common.WebserviceDataSource;
 import com.googlecode.jsonplugin.JSONUtil;
 import com.octo.captcha.service.image.ImageCaptchaService;
 import org.slf4j.Logger;
@@ -64,9 +63,6 @@ public  class LoginAction extends BaseAction {
 	GadgetIf gadgetBL;
 	@Resource
 	GadgetPrivilegeIf gadgetPrivilegeBL;
-
-	@Resource(name = "webserviceDataSource")
-	private WebserviceDataSource webserviceDataSource;
 
     @Resource(name="binOLPLUPM04_BL")
     private BINOLPLUPM04_BL binOLPLUPM04_BL;
@@ -661,65 +657,6 @@ public  class LoginAction extends BaseAction {
 		}
 	}
 
-	/**
-	 * 第三方借道跳转至兑吧时使用的方法
-	 * 针对会员，在此方法中验证会员信息，返回redirect的URL
-	 * @return
-	 * @throws Exception
-	 */
-	public String memberRedirectDuiba() throws Exception {
-		try {
-			String dbname = loginbusinesslogic.userLogin(txtname);
-
-			Map retMap = new HashMap<String,String>();
-			String retString="";
-			//检查品牌代码，设定数据源
-			if(!webserviceDataSource.setBrandDataSource(brandCode)){
-				retMap.put("ERRORMSG", "参数brandCode错误。brandCode=" + brandCode);
-				//retString = CherryUtil.map2Json(retMap);
-				//logger.error(retString);
-				return retString;
-			}
-			//解密参数
-			String aeskey = webserviceDataSource.getAESKey(brandCode);
-			Map<String,Object> paramMap = null;
-			try{
-				paramMap = CherryUtil.json2Map(CherryAESCoder.decrypt(paramJson, aeskey));
-			}catch (Exception e){
-				retMap.put("ERRORMSG", "参数paramJson错误。paramJson=" + paramJson);
-				retString = CherryUtil.map2Json(retMap);
-				this.addActionError(CherryUtil.map2Json(retMap));
-				logger.error(retString);
-			}
-
-			Map membermap = loginbusinesslogic.getMemberInfoByOpenID(paramMap);
-			if(null==membermap || CherryChecker.isNullOrEmpty(membermap.get("MemCode"))){
-				retMap.put("ERRORMSG", "参数paramJson错误,未找到对应的会员信息。paramJson=" + paramJson);
-				retString = CherryUtil.map2Json(retMap);
-				this.addActionError(CherryUtil.map2Json(retMap));
-				logger.error(retString);
-			}
-			//TODO:
-//
-//			redirectURL = redirectURL+"?code="+csrftoken+"&brandCode="+userinfo.getBrandCode() + "&userId="+userinfo.getBIN_UserID()+"&csrftoken="+csrftoken
-//					+ "&employeeName="+ URLEncoder.encode(userinfo.getEmployeeName(), "utf-8") + "&categoryCode="+userinfo.getCategoryCode()
-//					+"&employeeCode="+userinfo.getEmployeeCode()+"&txtname="+txtname+"&wcaid="+wcaid;
-//			request.getSession().setAttribute("hiscsrftoken",csrftoken+",");
-//			request.getSession().setAttribute("csrftoken",csrftoken);
-//			request.getSession().setAttribute("code",csrftoken);
-
-			return "OK";
-
-		} catch (Exception ex) {
-			if (ex instanceof CherryException) {
-				CherryException temp = (CherryException) ex;
-				redirectURL = redirectURL+"?errorCode="+temp.getErrCode();
-			} else {
-				redirectURL = redirectURL+"?errorCode=ECM00036";
-			}
-			return "OK";
-		}
-	}
 	// 呼叫中心登陆
 	public String callCenterLogin() throws Exception {
 		try {

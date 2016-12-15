@@ -1,49 +1,20 @@
 package com.cherry.tp.duiba.action;
 
+import cn.com.duiba.credits.sdk.CreditConsumeParams;
+import cn.com.duiba.credits.sdk.CreditConsumeResult;
+import cn.com.duiba.credits.sdk.CreditNotifyParams;
+import cn.com.duiba.credits.sdk.CreditTool;
 import com.cherry.cm.cmbussiness.bl.BINOLCM00_BL;
 import com.cherry.cm.core.*;
 import com.cherry.cm.util.CherryUtil;
 import com.cherry.cm.util.ConvertUtil;
-import com.cherry.cm.util.SignTool;
-import cn.com.duiba.credits.sdk.CreditNotifyParams;
-import cn.com.duiba.credits.sdk.CreditTool;
-import cn.com.duiba.credits.sdk.CreditConsumeParams;
-import cn.com.duiba.credits.sdk.CreditConsumeResult;
-import cn.com.duiba.credits.sdk.CreditTool;
-import com.cherry.cm.core.BaseAction;
-import com.cherry.cm.util.CherryUtil;
-import com.cherry.cm.util.ConvertUtil;
-import com.cherry.cm.core.CherryChecker;
-import com.cherry.cm.util.CherryUtil;
-import com.cherry.cm.util.ConvertUtil;
 import com.cherry.mb.mbm.bl.BINOLMBMBM03_BL;
 import com.cherry.tp.duiba.bl.BINOLDUIBA01_BL;
-import com.cherry.webservice.common.WebserviceDataSource;
 import com.cherry.webservice.member.bl.MemberInfoLogic;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.annotation.Resource;
-import javax.servlet.http.HttpServletRequest;
-import java.net.URLDecoder;
-import java.util.HashMap;
-import java.util.Map;
-import com.cherry.webservice.member.bl.MemberInfoLogic;
-import com.cherry.webservice.common.WebserviceDataSource;
-import com.cherry.cm.service.BaseService  ;
-import javax.servlet.http.HttpServletRequest;
-import java.io.IOException;
-import java.io.PrintWriter;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.Map;
-import java.text.SimpleDateFormat;
-import java.util.*;
-import javax.servlet.http.HttpServletRequest;
-import java.io.IOException;
-import java.io.PrintWriter;
-import java.text.SimpleDateFormat;
-import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -61,9 +32,6 @@ public class BINOLDUIBA01_Action extends BaseAction {
 	private BINOLDUIBA01_BL binOLDUIBA01_BL;
 	@Resource
 	private MemberInfoLogic memberInfoLogic;
-	@Resource
-	private WebserviceDataSource webserviceDataSource;
-
 	@Resource
 	private BINOLCM00_BL binOLCM00_BL;
 
@@ -93,21 +61,21 @@ public class BINOLDUIBA01_Action extends BaseAction {
 		CreditConsumeResult result=new CreditConsumeResult();
 		try {
 			String duiBaAppKey = request.getParameter("appKey");
-			Map<String,Object> brandMap = webserviceDataSource.getBrandInfoByDuibaAppKey(duiBaAppKey);//得到品牌Code
-			if(brandMap!=null){
-				webserviceDataSource.setBrandDataSource(brandMap.get("brandCode").toString());
-				webserviceDataSource.getBrandInfo(brandMap);//根据品牌Code得到相关的品牌和组织信息
+			SystemConfigDTO configDTO = SystemConfigManager.getSystemConfigByDuibaAppkey(duiBaAppKey);
+			Map<String,Object> searchMap = new HashMap<String, Object>();
+			if(configDTO!=null){
+				SystemConfigManager.setBrandDataSource(configDTO.getBrandCode());
 
-				brandMap.put("BIN_OrganizationInfoID",brandMap.get("organizationInfoID"));
-				brandMap.put("BIN_BrandInfoID",brandMap.get("brandInfoID"));
-				brandMap.put("OrgCode",brandMap.get("orgCode"));
-				brandMap.put("OrganizationCode",brandMap.get("orgCode"));
-				brandMap.put("BrandCode",brandMap.get("brandCode"));
-				brandMap.put("brandInfoId",brandMap.get("brandInfoID"));
-				brandMap.put("organizationInfoId",brandMap.get("organizationInfoID"));
-				brandMap.put("TradeType","GetMemberInfo");//获取会员信息
-				brandMap.put("ConditionType","MemberCode");
-				brandMap.put("IsDimensionCode","1");
+				searchMap.put("BIN_OrganizationInfoID",configDTO.getOrganizationInfoID());
+				searchMap.put("BIN_BrandInfoID",configDTO.getBrandInfoID());
+				searchMap.put("OrgCode",configDTO.getOrgCode());
+				searchMap.put("OrganizationCode",configDTO.getOrgCode());
+				searchMap.put("BrandCode",configDTO.getBrandCode());
+				searchMap.put("brandInfoId",configDTO.getBrandInfoID());
+				searchMap.put("organizationInfoId",configDTO.getOrganizationInfoID());
+				searchMap.put("TradeType","GetMemberInfo");//获取会员信息
+				searchMap.put("ConditionType","MemberCode");
+				searchMap.put("IsDimensionCode","1");
 
 				if(CherryChecker.isNullOrEmpty(request.getParameter("uid"))){
 					throw new Exception("参数uid不能为空");
@@ -119,15 +87,15 @@ public class BINOLDUIBA01_Action extends BaseAction {
 					throw new Exception("参数orderNum不能为空");
 				}
 
-				CreditTool tool=new CreditTool(duiBaAppKey, ConvertUtil.getString(brandMap.get("DuibaAppSecret")));
+				CreditTool tool=new CreditTool(duiBaAppKey, configDTO.getDuibaAppSecret());
 				CreditConsumeParams params= tool.parseCreditConsume(request);//利用tool来解析这个请求
 
-				brandMap.put("Condition",params.getUid());
-				brandMap.put("OrderNum",params.getOrderNum());
-				brandMap.put("Point",params.getCredits());
-				brandMap.put("ExchangeType",params.getType());
-				brandMap.put("ExchangeParams",params.getParams());
-				brandMap.put("MemberCode",params.getUid());
+				searchMap.put("Condition",params.getUid());
+				searchMap.put("OrderNum",params.getOrderNum());
+				searchMap.put("Point",params.getCredits());
+				searchMap.put("ExchangeType",params.getType());
+				searchMap.put("ExchangeParams",params.getParams());
+				searchMap.put("MemberCode",params.getUid());
 
 				String uid=params.getUid();//用户id
 				Long credits=params.getCredits();//消耗积分
@@ -135,7 +103,7 @@ public class BINOLDUIBA01_Action extends BaseAction {
 
 
 				//得到会员卡号对应的会员积分和会员ID
-				Map<String,Object> memberInfoMap = memberInfoLogic.getMemberInfo(brandMap);
+				Map<String,Object> memberInfoMap = memberInfoLogic.getMemberInfo(searchMap);
 					List<Map<String,Object>> memberInfoList =  (List<Map<String,Object>>)memberInfoMap.get("ResultContent");
 
 				if(memberInfoList==null || memberInfoList.size()==0){
@@ -152,7 +120,7 @@ public class BINOLDUIBA01_Action extends BaseAction {
 					return;
 				}
 
-				brandMap.put("BIN_MemberInfoID", ConvertUtil.getString(memberInfoList.get(0).get("MemberID")));
+				searchMap.put("BIN_MemberInfoID", ConvertUtil.getString(memberInfoList.get(0).get("MemberID")));
 				double currentPoint = Double.valueOf(ConvertUtil.getString(memberInfoList.get(0).get("CurrentPoint")));//当前积分
 				double creditsPoint = Double.valueOf(request.getParameter("credits")); //本次兑换扣减的积分
 
@@ -165,20 +133,20 @@ public class BINOLDUIBA01_Action extends BaseAction {
 				}
 
 				//TODO 开发者系统对uid用户扣除credits个积分,同时记录该兑换请求
-				brandMap.put("BrandCode", ConvertUtil.getString(brandMap.get("brandCode")));
-				brandMap.put("TradeType", "PointMaintenance");//维护会员积分
-				brandMap.put("MaintType", "2");//1：修改积分总值，2：修改积分差值
-				brandMap.put("MaintPoint", "-" + String.valueOf(creditsPoint));
+				searchMap.put("BrandCode", configDTO.getBrandCode());
+				searchMap.put("TradeType", "PointMaintenance");//维护会员积分
+				searchMap.put("MaintType", "2");//1：修改积分总值，2：修改积分差值
+				searchMap.put("MaintPoint", "-" + String.valueOf(creditsPoint));
 				/*SimpleDateFormat dateFormater = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
 				Date date = new Date();*/
 				String sysDateTime = binOLCM00_BL.getSYSDateTime();
-				brandMap.put("BusinessTime", sysDateTime);
-				brandMap.put("Sourse", "Other");
+				searchMap.put("BusinessTime", sysDateTime);
+				searchMap.put("Sourse", "Other");
 
 				try {
-					initMap(brandMap);
-					binOLDUIBA01_BL.insertDuiBaExchangeRequest(brandMap);
-					memberInfoLogic.modifyMemberPoint(brandMap);
+					initMap(searchMap);
+					binOLDUIBA01_BL.insertDuiBaExchangeRequest(searchMap);
+					memberInfoLogic.modifyMemberPoint(searchMap);
 				} catch (Exception e) {
 					logger.error(e.getMessage(), e);
 					throw new Exception("维护积分失败");
@@ -232,32 +200,24 @@ public class BINOLDUIBA01_Action extends BaseAction {
 
 		try {
 
-			String appKey = "";
-			String appSecret="";
+			SystemConfigDTO configDTO = SystemConfigManager.getSystemConfig(brandCode);
 
-			Map<String,Object> brandInfoMap = webserviceDataSource.getBrandConfigByBrandCode(brandCode);
+			String organizationInfoId = ConvertUtil.getString(configDTO.getOrganizationInfoID());
+			String brandInfoId = ConvertUtil.getString(configDTO.getBrandInfoID());
 
-			Map<String,Object> tMap = new HashMap<String,Object>();
-			tMap.put("brandCode",brandCode);
-			webserviceDataSource.setBrandDataSource(brandCode);
-			webserviceDataSource.getBrandInfo(tMap);
-
-			String organizationInfoId = ConvertUtil.getString(tMap.get("organizationInfoID"));
-			String brandInfoId = ConvertUtil.getString(tMap.get("brandInfoID"));
-
-			appKey = ConvertUtil.getString(brandInfoMap.get("DuibaAppKey"));
-			appSecret = ConvertUtil.getString(brandInfoMap.get("DuibaAppSecret"));
+			String appKey = configDTO.getDuibaAppKey();
+			String appSecret = configDTO.getDuibaAppSecret();
 
 
 			//检查品牌代码，设定数据源
-			if(!webserviceDataSource.setBrandDataSource(brandCode)){
+			if(!SystemConfigManager.setBrandDataSource(brandCode)){
 				retMap.put("ERRORMSG", "参数brandCode错误。brandCode=" + brandCode);
 				retString = CherryUtil.map2Json(retMap);
 				this.addActionError(retString);
 				return ERROR;
 			}
 			//解密参数
-			String aeskey = webserviceDataSource.getAESKey(brandCode);
+			String aeskey = configDTO.getAesKey();
 
 			Map<String,Object> paramMap = null;
 			try{
@@ -336,9 +296,9 @@ public class BINOLDUIBA01_Action extends BaseAction {
 		response.setContentType("text/html;charset=utf-8");
 		String orderNum = "";
 		try {
-			Map<String, Object> appmap = webserviceDataSource.getBrandInfoByDuibaAppKey(request.getParameter("appKey"));
+			SystemConfigDTO configDTO = SystemConfigManager.getSystemConfigByDuibaAppkey(request.getParameter("appKey"));
 			Map<String, Object> map = new HashMap<String, Object>();
-			CreditTool tool = new CreditTool(appmap.get("DuibaAppKey").toString(), appmap.get("DuibaAppSecret").toString());
+			CreditTool tool = new CreditTool(configDTO.getDuibaAppKey(), configDTO.getDuibaAppSecret());
 
 			boolean isSuccess = false;
 			String errmsg = "";
@@ -349,7 +309,7 @@ public class BINOLDUIBA01_Action extends BaseAction {
 			isSuccess = params.isSuccess();
 			errmsg = params.getErrorMessage();
 
-			webserviceDataSource.setBrandDataSource(appmap.get("brandCode").toString());
+			SystemConfigManager.setBrandDataSource(configDTO.getBrandCode());
 			map.put("orderNum", orderNum);
 
 			if (isSuccess) {
@@ -361,7 +321,6 @@ public class BINOLDUIBA01_Action extends BaseAction {
 				//兑换失败，根据orderNum，对用户的积分进行返还，回滚操作
 				Map<String, Object> membermap = new HashMap<String, Object>();
 				membermap = binOLDUIBA01_BL.getBIN_ExchangeRequest(map);
-				webserviceDataSource.getBrandInfo(appmap);
 				if (!CherryUtil.isEmpty(ConvertUtil.getString(membermap.get("MemberCode")))) {
 					map.put("exchangeStatus", "0");
 					map.put("updatePGM", "BINOLDUIBA01");
@@ -369,11 +328,11 @@ public class BINOLDUIBA01_Action extends BaseAction {
 					int result = binOLDUIBA01_BL.updateExchangeRequest(map);
 					//发送积分维护的MQ
 					if (result == 1) {
-						map.put("BIN_OrganizationInfoID", appmap.get("organizationInfoID"));
-						map.put("BIN_BrandInfoID", appmap.get("brandInfoID"));
-						map.put("OrganizationCode", appmap.get("orgCode"));
-						map.put("OrgCode", appmap.get("orgCode"));
-						map.put("BrandCode", appmap.get("brandCode"));
+						map.put("BIN_OrganizationInfoID",configDTO.getOrganizationInfoID());
+						map.put("BIN_BrandInfoID", configDTO.getBrandInfoID());
+						map.put("OrganizationCode", configDTO.getOrgCode());
+						map.put("OrgCode", configDTO.getOrgCode());
+						map.put("BrandCode", configDTO.getBrandCode());
 						map.put("TradeType", "PointMaintenance");
 						map.put("BillCode", orderNum);
 						map.put("MemberCode", membermap.get("MemberCode"));

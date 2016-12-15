@@ -50,12 +50,14 @@ public class SystemConfigManager implements InitializingBean {
         }
     }
 
-    public static void setBrandDataSource(String brandCode) throws Exception{
+    public static boolean setBrandDataSource(String brandCode){
         SystemConfigDTO dto = getSystemConfig(brandCode);
         if(null==dto){
-            throw new Exception("setBrandDataSource未查找到对应的品牌的配置信息:"+brandCode);
+            logger.error("setBrandDataSource未查找到对应的品牌的配置信息:"+brandCode);
+            return false;
         }
         CustomerContextHolder.setCustomerDataSourceType(dto.getDataSourceName());
+        return true;
     }
 
     public static void clearBrandDataSource(){
@@ -88,11 +90,26 @@ public class SystemConfigManager implements InitializingBean {
         return dto.getOrgCode();
     }
 
+    public static String getAesKey(String brandCode) {
+        SystemConfigDTO dto = getSystemConfig(brandCode);
+        return dto.getAesKey();
+    }
+
     public static int getBrandInfoID(String brandCode) throws Exception{
         SystemConfigDTO dto = getSystemConfig(brandCode);
         if(null==dto){
             throw new Exception("未查找到对应的品牌的配置信息:"+brandCode);
         }
         return dto.getBrandInfoID();
+    }
+
+    public static SystemConfigDTO getSystemConfigByDuibaAppkey(String duibaAppkey){
+        for (SystemConfigDTO dto : brandList) {
+            if(duibaAppkey.equals(dto.getDuibaAppKey())) {
+                return dto;
+            }
+        }
+        logger.error("未查找到对应的品牌的配置信息duibaAppkey:"+duibaAppkey);
+        return null;
     }
 }
