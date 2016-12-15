@@ -22,4 +22,42 @@
 				and BrandCode <> '-9999'
 		]]>
 	</select>
+
+	<!-- 查询品牌数据源等配置信息 -->
+	<resultMap id="SystemInitialize.BrandConfigList" class="com.cherry.cm.core.SystemConfigDTO">
+		<result property="orgCode" column="OrgCode"/>
+		<result property="brandCode" column="BrandCode"/>
+		<result property="dataSourceName" column="DataSourceName"/>
+		<result property="aesKey" column="AESKey"/>
+		<result property="duibaAppKey" column="DuibaAppKey"/>
+		<result property="duibaAppSecret" column="DuibaAppSecret"/>
+	</resultMap>
+	<select id="getBrandDataSourceConfigList" parameterClass="java.util.HashMap" resultMap="SystemInitialize.BrandConfigList">
+		<![CDATA[
+		SELECT
+		  OrgCode,
+		  BrandCode,
+		  DataSourceName,
+		  AESKey,
+		  DuibaAppKey,
+		  DuibaAppSecret
+		FROM
+		dbo.BIN_BrandDataSourceConfig
+		WHERE
+		ValidFlag = '1' and BrandCode<>'-9999'
+		]]>
+	</select>
+
+	<!-- 在品牌数据库中查询品牌信息 -->
+	<select id="getBrandInfo" parameterClass="com.cherry.cm.core.SystemConfigDTO" resultClass="com.cherry.cm.core.SystemConfigDTO">
+		SELECT
+		A.BIN_BrandInfoID AS brandInfoID,
+		A.BIN_OrganizationInfoID AS organizationInfoID
+		FROM
+		Basis.BIN_BrandInfo A,
+		Basis.BIN_OrganizationInfo B
+		WHERE
+		A.BIN_OrganizationInfoID=B.BIN_OrganizationInfoID AND
+		A.BrandCode = #brandCode#
+	</select>
 </sqlMap>
