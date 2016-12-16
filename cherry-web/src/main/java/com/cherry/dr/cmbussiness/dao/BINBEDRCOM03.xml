@@ -81,20 +81,22 @@
 		<result property="grpValidFlag" column="ValidFlag"/>					<!-- 有效区分 -->
 		<result property="grpConfDetail" column="RuleDetail"/>					<!-- 规则配置内容 -->
 		<result property="memberClubId" column="BIN_MemberClubID"/>				<!-- 会员俱乐部ID -->
+		<result property="brandInfoId" column="BIN_BrandInfoID"/>				<!-- 品牌ID -->
 	</resultMap>
 	<!-- 取得会员活动组List  -->
     <select id="getCampaignGrpRuleList" parameterClass="java.util.HashMap" resultMap="BINBEDRCOM03.CampaignGrpRuleList">
        	<![CDATA[
 			SELECT
-				A.BIN_CampaignGrpID,
-				A.CampaignType,
-				A.RuleFileContent,
-				A.PriorityRuleDetail,
-				A.ModifyCount,
-				A.ValidFlag,
-				A.RuleDetail,
-				B.BrandCode,
-				C.OrgCode,
+				A.BIN_CampaignGrpID AS BIN_CampaignGrpID,
+				A.CampaignType AS CampaignType,
+				A.RuleFileContent AS RuleFileContent,
+				A.PriorityRuleDetail AS PriorityRuleDetail,
+				A.ModifyCount AS ModifyCount,
+				A.ValidFlag AS ValidFlag,
+				A.RuleDetail AS RuleDetail,
+				A.BIN_BrandInfoID AS BIN_BrandInfoID,
+				B.BrandCode AS BrandCode,
+				C.OrgCode AS OrgCode,
 				ISNULL(BIN_MemberClubID, 0) AS BIN_MemberClubID
 			FROM 
 				Campaign.BIN_CampaignGrp A
@@ -154,22 +156,24 @@
 		<result property="modifyCount" column="ModifyCount"/>					<!-- 修改回数 -->
 		<result property="priorityRuleDetail" column="PriorityRuleDetail"/>		<!-- 规则优先级 -->
 		<result property="validFlag" column="ValidFlag"/>						<!-- 有效区分 -->
+		<result property="brandInfoId" column="BIN_BrandInfoID"/>					<!-- 品牌ID -->
 		<result property="memberClubId" column="BIN_MemberClubID"/>				<!-- 会员俱乐部ID -->
 	</resultMap>
 	<!-- 取得单个活动的规则内容信息  -->
     <select id="getRuleCampaignInfo" parameterClass="java.util.HashMap" resultMap="BINBEDRCOM03.RuleCampaignInfo">
        	<![CDATA[
 			SELECT
-				A.RuleFileContent,
-				A.BIN_CampaignID,
-				A.BIN_CampaignGrpID,
-				A.RuleFilter,
-				A.CampaignType,
-				A.ModifyCount,
-				A.ValidFlag,
-				B.BrandCode,
-				C.OrgCode,
-				D.PriorityRuleDetail,
+				A.RuleFileContent AS RuleFileContent,
+				A.BIN_CampaignID AS BIN_CampaignID,
+				A.BIN_CampaignGrpID AS BIN_CampaignGrpID,
+				A.RuleFilter AS RuleFilter,
+				A.CampaignType AS CampaignType,
+				A.ModifyCount AS ModifyCount,
+				A.ValidFlag AS ValidFlag,
+				A.BIN_BrandInfoID AS BIN_BrandInfoID,
+				B.BrandCode AS BrandCode,
+				C.OrgCode AS OrgCode,
+				D.PriorityRuleDetail AS PriorityRuleDetail,
 				ISNULL(D.BIN_MemberClubID, 0) AS BIN_MemberClubID
 			FROM 
 				Campaign.BIN_Campaign A 
@@ -501,4 +505,39 @@
 			  ) T
 		]]>	
     </select>
+
+	<!-- 取得规则刷新通知表记录数 -->
+	<select id="getRuleRefreshCount" parameterClass="java.util.HashMap" resultClass="java.lang.Integer">
+		<![CDATA[
+			SELECT
+				COUNT(1)
+			FROM
+				Campaign.BIN_RuleRefreshNotice
+			WHERE
+				BIN_BrandInfoID = #brandInfoId#
+		]]>
+	</select>
+
+	<!-- 插入规则刷新通知表  -->
+	<insert id="insertRuleRefresh" parameterClass="java.util.HashMap">
+		<![CDATA[
+	   INSERT INTO Campaign.BIN_RuleRefreshNotice
+			      (BIN_BrandInfoID,
+				   CreateTime
+		)VALUES
+				 (#brandInfoId#,
+				 GETDATE()
+				 )
+		]]>
+	</insert>
+
+	<!-- 删除规则刷新通知表 -->
+	<delete id="delRuleRefresh" parameterClass="java.util.HashMap">
+		<![CDATA[
+			DELETE FROM
+				Campaign.BIN_RuleRefreshNotice
+			WHERE
+				BIN_BrandInfoID = #brandInfoId#
+		]]>
+	</delete>
 </sqlMap>

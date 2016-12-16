@@ -342,5 +342,56 @@ public class BINBEDRCOM03_Service extends BaseService{
     	map.put(CherryConstants.IBATIS_SQL_ID, "BINBEDRCOM03.getYanqiPT");
 		return baseServiceImpl.getSum(map);
     }
-    
+
+	/**
+	 * 取得规则刷新通知表记录数
+	 *
+	 * @param brandInfoId
+	 * 			品牌ID
+	 * @return int
+	 * 			规则刷新通知表记录数
+	 *
+	 */
+	public int getRuleRefreshCount(int brandInfoId) {
+		Map<String, Object> paramMap = new HashMap<String, Object>();
+		// 所属品牌ID
+		paramMap.put("brandInfoId", brandInfoId);
+		paramMap.put(CherryConstants.IBATIS_SQL_ID,
+				"BINBEDRCOM03.getRuleRefreshCount");
+		return baseServiceImpl.getSum(paramMap);
+	}
+
+	/**
+	 * 插入规则刷新通知表
+	 *
+	 * @param brandInfoId
+	 * 			品牌ID
+	 *
+	 */
+	public void insertRuleRefresh(int brandInfoId) {
+		Map<String, Object> paramMap = new HashMap<String, Object>();
+		// 所属品牌ID
+		paramMap.put("brandInfoId", brandInfoId);
+		paramMap.put(CherryConstants.IBATIS_SQL_ID,
+				"BINBEDRCOM03.insertRuleRefresh");
+		baseServiceImpl.save(paramMap);
+	}
+
+	/**
+	 *
+	 * 删除规则刷新通知表
+	 *
+	 * @param brandInfoId
+	 * 			品牌ID
+	 * @return int
+	 * 			删除件数
+	 *
+	 */
+	public int delRuleRefresh(int brandInfoId) {
+		Map<String, Object> paramMap = new HashMap<String, Object>();
+		// 所属品牌ID
+		paramMap.put("brandInfoId", brandInfoId);
+		paramMap.put(CherryConstants.IBATIS_SQL_ID, "BINBEDRCOM03.delRuleRefresh");
+		return baseServiceImpl.remove(paramMap);
+	}
 }

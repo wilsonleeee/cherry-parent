@@ -200,10 +200,39 @@ public class KnowledgeEngine implements InitializingBean {
 //						}
 					}
 				}
+				addRuleRefreshNotice(Integer.parseInt(String.valueOf(ruleInfo.get("brandInfoId"))));
 			}
 		}
 	}
-	
+
+	/**
+	 * 刷新一组规则
+	 *
+	 * @param orgCode
+	 * 			组织代码
+	 * @param brandCode
+	 * 			品牌代码
+	 * @throws Exception
+	 *
+	 */
+	public synchronized void refreshGrpRule(int campaignGrpId) throws Exception {
+		refreshGrpRuleIsWrite(campaignGrpId, true);
+	}
+
+	/**
+	 * 刷新一组规则
+	 *
+	 * @param orgCode
+	 * 			组织代码
+	 * @param brandCode
+	 * 			品牌代码
+	 * @throws Exception
+	 *
+	 */
+	public synchronized void refreshGrpRuleReadonly(int campaignGrpId) throws Exception {
+		refreshGrpRuleIsWrite(campaignGrpId, false);
+	}
+
 	/**
 	 * 刷新一组规则
 	 * 
@@ -214,7 +243,7 @@ public class KnowledgeEngine implements InitializingBean {
 	 * @throws Exception 
 	 * 
 	 */
-	public synchronized void refreshGrpRule(int campaignGrpId) throws Exception {
+	private void refreshGrpRuleIsWrite(int campaignGrpId, boolean isWrite) throws Exception {
 		Map<String, Object> searchMap = new HashMap<String, Object>();
 		searchMap.put("campaignGrpId", campaignGrpId);
 		// 取得会员活动组List
@@ -391,6 +420,9 @@ public class KnowledgeEngine implements InitializingBean {
 	//					changeCampGrpRule(orgCode, brandCode, DroolsConstants.CAMPAIGN_TYPE9999, campaignGrpId, downCampGrpRuleNew);
 	//				}
 				}
+			}
+			if (isWrite) {
+				addRuleRefreshNotice(Integer.parseInt(String.valueOf(campGrp.get("brandInfoId"))));
 			}
 		}
 			
@@ -1174,14 +1206,26 @@ public class KnowledgeEngine implements InitializingBean {
 		searchMap.put("organizationInfoId", organizationInfoId);
 		// 品牌ID
 		searchMap.put("brandInfoId", brandInfoId);
-		// 取得会员活动组List
-		List<Map<String, Object>> campGrpList = binbedrcom03_Service.getCampaignGrpRuleList(searchMap);
-		if (null != campGrpList) {
-			for (Map<String, Object> campGrpMap : campGrpList) {
-				// 会员活动组ID
-				int campaignGrpId = Integer.parseInt(campGrpMap.get("campaignGrpId").toString());
-				// 刷新一组规则
-				refreshGrpRule(campaignGrpId);
+		// 需要刷新规则
+		if (binbedrcom03_Service.getRuleRefreshCount(brandInfoId) > 0) {
+			// 删除规则刷新通知表
+			binbedrcom03_Service.delRuleRefresh(brandInfoId);
+			try {
+				// 取得会员活动组List
+				List<Map<String, Object>> campGrpList = binbedrcom03_Service.getCampaignGrpRuleList(searchMap);
+				if (null != campGrpList) {
+					for (Map<String, Object> campGrpMap : campGrpList) {
+						// 会员活动组ID
+						int campaignGrpId = Integer.parseInt(campGrpMap.get("campaignGrpId").toString());
+						// 刷新一组规则
+						refreshGrpRuleReadonly(campaignGrpId);
+					}
+				}
+			} catch (Exception e) {
+				// 重新添加刷新通知
+				addRuleRefreshNotice(brandInfoId);
+				logger.error(e.getMessage(), e);
+				throw e;
 			}
 		}
 	}
@@ -1234,6 +1278,14 @@ public class KnowledgeEngine implements InitializingBean {
 					}
 				}
 			}
+		}
+	}
+
+	private void addRuleRefreshNotice(int brandInfoId) {
+		// 取得规则刷新通知表记录数
+		if (binbedrcom03_Service.getRuleRefreshCount(brandInfoId) == 0) {
+			// 如果通知表没有记录,则添加一条记录
+			binbedrcom03_Service.insertRuleRefresh(brandInfoId);
 		}
 	}
 

@@ -2229,10 +2229,10 @@ public class BINOLCPCOM02_BL implements BINOLCPCOM02_IF{
 				if (0 == result) {
 					throw new CherryException("ECM00005");
 				}
+			}
 		}
-			// 刷新单个规则文件
-			knowledgeEngine.refreshRule(Integer.parseInt(campaignId));
-		}
+		// 刷新单个规则文件
+		knowledgeEngine.refreshRule(Integer.parseInt(campaignId));
 	}
     
     /**
