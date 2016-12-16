@@ -264,6 +264,9 @@ public class BINOLDUIBA01_Action extends BaseAction {
 			String credits = ConvertUtil.getString(memberPointMap.get("CurrentPoint"));
 			String uid = ConvertUtil.getString(memberPointMap.get("MemberCode"));
 
+			if(null==credits || "".equals(credits)){
+				credits="0";
+			}
 			Map<String, String> signParams=new HashMap<String, String>();
 			signParams.put("uid",uid);
 			signParams.put("credits", String.valueOf(Math.round(Double.parseDouble(credits))));
