@@ -907,7 +907,26 @@
 				td.BillCode = #billCode# 
     	]]>
     </insert>
-    
+
+	<!-- 更新单据信息前先查询出对应的Id -->
+	<select id="getSaleBillInfoBeforeUpdate" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+		<![CDATA[
+			Select
+				BIN_SaleId as saleId
+			from
+				Sale.BIN_WebPosSaleRecord WITH(NOLOCK)
+			WHERE
+				ValidFlag = '1' AND
+				SaleType in ('NS','PN') AND
+				DataState != 1 AND
+				BIN_OrganizationInfoID = #organizationInfoId# AND
+		  		BIN_BrandInfoID = #brandInfoId# AND
+		  		BillCode = #billCode#
+		]]>
+	</select>
+
+
+
     <!-- 更新单据信息 -->
 	<update id="updateSaleBillInfo" parameterClass="java.util.HashMap">
 		<![CDATA[
@@ -920,12 +939,7 @@
 			<include refid="BINOLCMINC99.updateSql" />
 		<![CDATA[
 			WHERE 
-				ValidFlag = '1' AND 
-				SaleType in ('NS','PN') AND 
-				DataState != 1 AND 
-				BIN_OrganizationInfoID = #organizationInfoId# AND 
-		  		BIN_BrandInfoID = #brandInfoId# AND 
-		  		BillCode = #billCode# 
+				BIN_SaleId = #saleId#
 		]]>
     </update>
     

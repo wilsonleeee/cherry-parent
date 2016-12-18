@@ -1,15 +1,10 @@
 package com.cherry.wp.sal.bl;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import javax.annotation.Resource;
-
 import com.cherry.cm.activemq.interfaces.BINOLMQCOM02_IF;
 import com.cherry.cm.cmbussiness.bl.BINOLCM14_BL;
 import com.cherry.cm.cmbussiness.bl.BINOLCM18_BL;
 import com.cherry.cm.core.CherryConstants;
+import com.cherry.cm.core.CherryException;
 import com.cherry.cm.util.CherryUtil;
 import com.cherry.cm.util.ConvertUtil;
 import com.cherry.cm.util.DateUtil;
@@ -17,8 +12,19 @@ import com.cherry.mq.mes.common.MessageConstants;
 import com.cherry.wp.sal.interfaces.BINOLWPSAL07_IF;
 import com.cherry.wp.sal.service.BINOLWPSAL03_Service;
 import com.cherry.wp.sal.service.BINOLWPSAL07_Service;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import javax.annotation.Resource;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 public class BINOLWPSAL07_BL implements BINOLWPSAL07_IF{
+
+	/**异常日志*/
+	private static final Logger logger = LoggerFactory.getLogger(BINOLWPSAL07_BL.class);
 	
 	@Resource
 	private BINOLCM14_BL binOLCM14_BL;
@@ -84,6 +90,7 @@ public class BINOLWPSAL07_BL implements BINOLWPSAL07_IF{
 		String brandInfoId = ConvertUtil.getString(map.get("brandInfoId"));
 		String saleType = ConvertUtil.getString(map.get("saleType"));
 		String srBillCode = ConvertUtil.getString(map.get("srBillCode"));
+		String billCode = ConvertUtil.getString(map.get("billCode"));
 		
 		String sysDateTime = binOLWPSAL07_Service.getSYSDate();
 		String businessDate = binOLWPSAL07_Service.getBussinessDate(map);
@@ -161,18 +168,15 @@ public class BINOLWPSAL07_BL implements BINOLWPSAL07_IF{
 		paramMap.put(CherryConstants.CREATEPGM, "BINOLWPSAL07");
 		// 更新程序
 		paramMap.put(CherryConstants.UPDATEPGM, "BINOLWPSAL07");
-		
-		boolean sendFlag = sendSrBillMQ(paramMap);
-		if(sendFlag){
-			// 插入退单单据信息
-			int saleId = binOLWPSAL07_Service.insertSrBill(paramMap);
-			if(saleId > 0){
-				paramMap.put("saleId", saleId);
-				binOLWPSAL07_Service.insertSrBillDetail(paramMap);
-				// 插入支付方式
-				binOLWPSAL07_Service.insertSrPayment(paramMap);
-			}
-			
+
+		// 插入退单单据信息
+		int saleId = binOLWPSAL07_Service.insertSrBill(paramMap);
+		if(saleId >0){
+			paramMap.put("saleId", saleId);
+			binOLWPSAL07_Service.insertSrBillDetail(paramMap);
+			// 插入支付方式
+			binOLWPSAL07_Service.insertSrPayment(paramMap);
+
 			Map<String, Object> parMap = new HashMap<String, Object>();
 			parMap.put(CherryConstants.BRANDINFOID, map.get("brandInfoId"));
 			parMap.put(CherryConstants.ORGANIZATIONINFOID, map.get("organizationInfoId"));
@@ -184,7 +188,13 @@ public class BINOLWPSAL07_BL implements BINOLWPSAL07_IF{
 			// 更新销售单据信息
 			binOLWPSAL07_Service.updateSaleBillInfo(parMap);
 			// 发送MQ
-			return ConvertUtil.getString(saleId);
+			boolean sendFlag = sendSrBillMQ(paramMap);
+			if(sendFlag){
+				return ConvertUtil.getString(saleId);
+			}else{
+				logger.error("发送退货MQ失败，销售单据号为:"+billCode+"退货单号为:"+srBillCode);
+				throw new CherryException("发送退货MQ失败，销售单据号为:"+billCode+"退货单号为:"+srBillCode);
+			}
 		}else{
 			return CherryConstants.WP_ERROR_STATUS;
 		}
@@ -195,7 +205,8 @@ public class BINOLWPSAL07_BL implements BINOLWPSAL07_IF{
 		String organizationInfoId = ConvertUtil.getString(map.get("organizationInfoId"));
 		String brandInfoId = ConvertUtil.getString(map.get("brandInfoId"));
 		String srBillCode = ConvertUtil.getString(map.get("srBillCode"));
-		
+		String billCode = ConvertUtil.getString(map.get("billCode"));
+
 		String sysDateTime = binOLWPSAL07_Service.getSYSDate();
 		String businessDate = binOLWPSAL07_Service.getBussinessDate(map);
 		//补登退货日期部分
@@ -290,25 +301,31 @@ public class BINOLWPSAL07_BL implements BINOLWPSAL07_IF{
 		parMap.put("roundingAmount", roundingAmount);
 		
 		// 保存退货记录
-		boolean sendFlag = sendSrBillMQ(parMap);
-		if(sendFlag){
-			Map<String, Object> paramMap = new HashMap<String, Object>();
-			paramMap.put("returnsFlag", "DETAIL");
-			paramMap.put("srBillCode", srBillCode);
-			//补登销售时间的日期部分以补登销售时间为准，时间部分以当前系统时间为准
-			if("".equals(returnbussinessDate)){
-				// 销售时间
-				paramMap.put("sysDateTime", sysDateTime);
+		Map<String, Object> paramMap = new HashMap<String, Object>();
+		paramMap.put("returnsFlag", "DETAIL");
+		paramMap.put("srBillCode", srBillCode);
+		//补登销售时间的日期部分以补登销售时间为准，时间部分以当前系统时间为准
+		if("".equals(returnbussinessDate)){
+			// 销售时间
+			paramMap.put("sysDateTime", sysDateTime);
+		}else{
+			paramMap.put("sysDateTime", returnbussinessDate+returnbussinessTime);
+		}
+		paramMap.put("businessDate", businessDate);
+		paramMap.put("totalQuantity", totalQuantity);
+		paramMap.put("totalAmount", totalAmount);
+		paramMap.put("totalOriginalAmount", totalOriginalAmount);
+		paramMap.put("totalDiscountRate", totalDiscountRate);
+		paramMap.putAll(map);
+		int saleId =Integer.parseInt(saveSrBill(paramMap)) ;
+		if(saleId >0){
+			boolean sendFlag = sendSrBillMQ(parMap);
+			if(sendFlag){
+				return ConvertUtil.getString(saleId);
 			}else{
-				paramMap.put("sysDateTime", returnbussinessDate+returnbussinessTime);
+				logger.error("发送退货MQ失败，销售单据号为:"+billCode+"退货单号为:"+srBillCode);
+				throw new CherryException("发送退货MQ失败，销售单据号为:"+billCode+"退货单号为:"+srBillCode);
 			}
-			paramMap.put("businessDate", businessDate);
-			paramMap.put("totalQuantity", totalQuantity);
-			paramMap.put("totalAmount", totalAmount);
-			paramMap.put("totalOriginalAmount", totalOriginalAmount);
-			paramMap.put("totalDiscountRate", totalDiscountRate);
-			paramMap.putAll(map);
-			return saveSrBill(paramMap);
 		}else{
 			return CherryConstants.WP_ERROR_STATUS;
 		}
@@ -332,7 +349,7 @@ public class BINOLWPSAL07_BL implements BINOLWPSAL07_IF{
         if((null == memberCode || "".equals(memberCode)) && "NP".equals(customerType)){
 			memberCode = "000000000";
 		}
-        
+
         // 获取正常产品逻辑仓库类型
 		String productIvtTypeCode = "DF01";
 		String productType = "1";
@@ -603,7 +620,7 @@ public class BINOLWPSAL07_BL implements BINOLWPSAL07_IF{
 				parMap.put(CherryConstants.ORGANIZATIONINFOID, map.get("organizationInfoId"));
 				parMap.put("billCode", map.get("billCode"));
 				//获取明细数据
-				billSrDetailList = binOLWPSAL07_Service.getBillDetailListByCode(parMap);
+				billSrDetailList = binOLWPSAL07_Service.getSrBillDetailByCode(parMap);
 			}else{
 				//获取明细数据
 				String srDetailStr = ConvertUtil.getString(map.get("srDetailStr"));

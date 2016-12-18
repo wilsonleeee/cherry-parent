@@ -1,12 +1,12 @@
 package com.cherry.wp.sal.service;
 
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-
 import com.cherry.cm.core.CherryConstants;
 import com.cherry.cm.service.BaseService;
 import com.cherry.cm.util.CherryUtil;
+
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 public class BINOLWPSAL07_Service extends BaseService{
 
@@ -61,7 +61,7 @@ public class BINOLWPSAL07_Service extends BaseService{
 		paramMap.put(CherryConstants.IBATIS_SQL_ID, "BINOLWPSAL07.getBillDetailListByCode");
         return baseServiceImpl.getList(paramMap);
     }
-	
+
 	@SuppressWarnings("unchecked")
     public List<Map<String, Object>> getReturnDetailListByCode(Map<String, Object> map) {
 		Map<String, Object> paramMap = new HashMap<String, Object>();
@@ -115,11 +115,21 @@ public class BINOLWPSAL07_Service extends BaseService{
         paramMap.put(CherryConstants.IBATIS_SQL_ID, "BINOLWPSAL07.insertSrPayment");
         baseServiceImpl.save(paramMap);
     }
-	
+
 	// 更新单据
-	public int updateSaleBillInfo(Map<String, Object> map) {
+	public Map<String,Object> getSaleBillInfoBeforeUpdate(Map<String, Object> map) {
 		Map<String, Object> paramMap = new HashMap<String, Object>();
 		paramMap.putAll(map);
+		paramMap.put(CherryConstants.IBATIS_SQL_ID, "BINOLWPSAL07.getSaleBillInfoBeforeUpdate");
+		return (Map<String,Object>)baseServiceImpl.get(paramMap);
+	}
+
+	// 更新单据
+	public int updateSaleBillInfo(Map<String, Object> map) {
+		Map<String,Object> billInfo=this.getSaleBillInfoBeforeUpdate(map);
+		Map<String, Object> paramMap = new HashMap<String, Object>();
+		paramMap.putAll(map);
+		paramMap.putAll(billInfo);
 		paramMap.put(CherryConstants.IBATIS_SQL_ID, "BINOLWPSAL07.updateSaleBillInfo");
 		return baseServiceImpl.update(paramMap);
 	}
