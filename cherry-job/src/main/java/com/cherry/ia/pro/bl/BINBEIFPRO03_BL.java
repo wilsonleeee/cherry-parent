@@ -13,6 +13,7 @@
 package com.cherry.ia.pro.bl;
 
 import java.math.BigDecimal;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -21,6 +22,7 @@ import javax.annotation.Resource;
 
 import com.cherry.cm.activemq.dto.MQInfoDTO;
 import com.cherry.cm.activemq.interfaces.BINOLMQCOM01_IF;
+import com.cherry.cm.batcmbussiness.interfaces.BINBECM01_IF;
 import com.cherry.cm.cmbussiness.bl.BINOLCM03_BL;
 import com.cherry.cm.cmbussiness.bl.BINOLCM14_BL;
 import com.cherry.cm.cmbussiness.bl.BINOLCM15_BL;
@@ -52,13 +54,21 @@ import com.mongodb.DBObject;
  */
 public class BINBEIFPRO03_BL {
 
+
+	/** 每批次(页)处理数量 2000 */
+	private final int BATCH_SIZE = 2000;
+
 	/** BATCH LOGGER */
 	private static CherryBatchLogger logger = new CherryBatchLogger(
 			BINBEIFPRO03_BL.class);
 	
 	@Resource
 	private BINBEIFPRO03_Service binbeifpro03Service;
-	
+
+
+	/** JOB执行相关共通 IF */
+	@Resource(name="binbecm01_IF")
+	private BINBECM01_IF binbecm01_IF;
 	
 	/** 各类编号取号共通BL */
 	@Resource(name="binOLCM15_BL")
@@ -85,13 +95,16 @@ public class BINBEIFPRO03_BL {
 	private int updateCount = 0;
 	/** 失败条数 */
 	private int failCount = 0;
+
+	/** 失败的主要原因，受字段长度限制，这里只要记录主要原因即可 */
+	private String fReason = "";
 	/** 共通map */
 	private Map<String, Object> comMap;
 
 	/**
 	 * 柜台产品列表的batch处理
 	 * 
-	 * @param 无
+	 * @param map
 	 * 
 	 * @return Map
 	 * @throws Exception 
@@ -127,10 +140,10 @@ public class BINBEIFPRO03_BL {
 //					break;
 //				}
 			if(result > 0){
-				
 				if(failCount == 0){
+					/*
 					try {
-						/*  Batch暂不发送MQ
+						// Batch暂不发送MQ
 						// 发送MQ
 						// Step5: 调用MQHelper接口进行数据发送
 						Map<String,Object> MQMap = getPrtNoticeMqMap(map, MessageConstants.MSG_SPRT_DPRT);
@@ -143,20 +156,24 @@ public class BINBEIFPRO03_BL {
 						mqDTO.setMsgQueueName("cherryToPosCMD");
 						//调用共通发送MQ消息
 						binOLMQCOM01_BL.sendMQMsg(mqDTO,false);
-						*/
+
 					} catch (Exception e) {
 //						logger.outLog(e.getMessage(), CherryBatchConstants.LOGGER_ERROR);
 						logger.outExceptionLog(e);
 						binbeifpro03Service.manualRollback();
 						binbeifpro03Service.ifManualRollback();
 					}
+					*/
 				}else {
 					try{
+						fReason = "部分柜台产品下发失败，详细日志文件。";
+						flag = CherryBatchConstants.BATCH_ERROR;
 						// 失败后，全部回滚（保证版本号正确）
 						binbeifpro03Service.manualRollback();
 						binbeifpro03Service.ifManualRollback();
 						
 					}catch(Exception e){
+						flag = CherryBatchConstants.BATCH_ERROR;
 //						logger.outLog(e.getMessage(), CherryBatchConstants.LOGGER_ERROR);
 						logger.outExceptionLog(e);
 					}
@@ -164,6 +181,8 @@ public class BINBEIFPRO03_BL {
 			}
 			
 		}catch(Exception e){
+			fReason = "柜台产品下发失败，详细日志文件。";
+			flag = CherryBatchConstants.BATCH_ERROR;
 			logger.outExceptionLog(e);
 //			logger.outLog(e.getMessage(), CherryBatchConstants.LOGGER_ERROR);
 			// 失败后，全部回滚（保证版本号正确）
@@ -171,10 +190,68 @@ public class BINBEIFPRO03_BL {
 			binbeifpro03Service.ifManualRollback();
 		}
 		// 输出处理结果信息
-		outMessage();
+		//outMessage();
 		return flag;
 	}
-	
+
+	/**
+	 * 产品列表的batch处理
+	 *
+	 * @param map
+	 *
+	 * @return Map
+	 * @throws CherryBatchException
+	 * @throws CherryException,Exception
+	 */
+	public Map<String,Object> tran_batchCntProductsMQSend(Map<String, Object> map)
+			throws CherryBatchException, CherryException,Exception {
+
+		Map<String,Object> resMap=new HashMap<String, Object>();
+
+		try {
+
+			// 取得当前柜台产品表版本号
+			Map<String, Object> seqMap = new HashMap<String, Object>();
+			seqMap.putAll(map);
+			seqMap.put("type", "F");
+			String tVersion = binOLCM15_BL.getCurrentSequenceId(seqMap);
+			map.put("tVersion", tVersion);
+			// 产品表的表版本号在下发成功后+1
+			String newTVersion = binOLCM15_BL.getNoPadLeftSequenceId(seqMap);
+			map.put("newTVersion", newTVersion);
+
+			// 发送MQ
+			// Step5: 调用MQHelper接口进行数据发送
+			Map<String,Object> MQMap = getPrtNoticeMqMap(map, MessageConstants.MSG_SPRT_DPRT);
+			if(MQMap.isEmpty()){
+				throw new Exception("柜台产品实时下发通知组装异常");
+			}
+
+			//设定MQInfoDTO
+			MQInfoDTO mqDTO = setMQInfoDTO(MQMap,map);
+			mqDTO.setMsgQueueName("cherryToPosCMD");
+			//调用共通发送MQ消息
+			binOLMQCOM01_BL.sendMQMsg(mqDTO,false);
+
+		} catch (Exception e) {
+			logger.outExceptionLog(e);
+			flag=CherryBatchConstants.BATCH_ERROR;
+			resMap.put("ERRORMSG", e.getMessage());
+			try {
+				// 失败后，全部回滚（保证版本号正确）
+				binbeifpro03Service.manualRollback();
+				binbeifpro03Service.ifManualRollback();
+			} catch (Exception ex) {
+				resMap.put("ERRORMSG", ex.getMessage());
+				logger.outExceptionLog(ex);
+			}
+		}
+		// 输出处理结果信息
+		//outMessage();
+		resMap.put("flag", flag);
+		return resMap;
+	}
+
 	/**
 	 * 处理方案配置的区域或渠道实际的的柜台与以前配置的差异
 	 * Step1 : 比较方案案配置的区域或渠道实际的的柜台与以前配置的差异
@@ -258,7 +335,7 @@ public class BINBEIFPRO03_BL {
 	 * 
 	 * 删除方案对应的履历数据，并将最新的方案配置信息插入到履历表
 	 * 
-     * @param praMap
+     * @param map
      * praMap参数说明：productPriceSolutionID （方案ID）,
      * praMap参数说明：placeType（地点类型）,
      * praMap参数说明：SaveJson（地点集合）,
@@ -377,7 +454,7 @@ public class BINBEIFPRO03_BL {
 	/**
 	 * 更新接口数据库
 	 * 
-	 * @param list
+	 * @param map
 	 */
 	private int updIFDatabase(Map<String, Object> map) {
 		
@@ -477,22 +554,26 @@ public class BINBEIFPRO03_BL {
 				// Step1.2.2 颖通模式时，方案价格根据当前标准产品当前业务日期的价格
 				binbeifpro03Service.mergePPSDPrice(map);
 			}
+
 			List<Map<String, Object>> prtSoluDetailByVersionList = binbeifpro03Service.getPrtSoluDetailByVersionList(map);
-			// 保存接口产品方案柜台关系表 
+			List<Map<String, Object>> prtUpdList = new ArrayList<Map<String, Object>>();
 			if (!CherryBatchUtil.isBlankList(prtSoluDetailByVersionList)) {
-				result++;
-				for (Map<String, Object> prtSoluDetailItemMap : prtSoluDetailByVersionList) {
+				for (int i = 0;i<prtSoluDetailByVersionList.size();i++) {
+					// 保存接口产品方案柜台关系表
+//					for (Map<String, Object> prtSoluDetailItemMap : prtSoluDetailByVersionList) {
+					result++;
+					Map<String, Object> prtSoluDetailItemMap = prtSoluDetailByVersionList.get(i);
 					try{
 						prtSoluDetailItemMap.putAll(map);
 						// 设置产品方案柜台接口表的状态值
 						getPrtSoluSCSStatus(prtSoluDetailItemMap);
-						// 删除产品方案柜台接口表(根据brand、prtSolutionCode、产品厂商ID)
+						/*// 删除产品方案柜台接口表(根据brand、prtSolutionCode、产品厂商ID)
 						binbeifpro03Service.delIFPrtSoluSCS(prtSoluDetailItemMap);
 						// 插入产品方案明细接口表
-						binbeifpro03Service.addIFPrtSoluSCS(prtSoluDetailItemMap);
-						
+						binbeifpro03Service.addIFPrtSoluSCS(prtSoluDetailItemMap);*/
+						prtUpdList.add(prtSoluDetailItemMap);
 					} catch(Exception e){
-						
+
 						// 插入柜台产品接口表(WITPOSA_product_with_counter)时发生异常。品牌Code:{0}，柜台Code:{1}，产品ID:{2}({3})，产品编码：{4}，产品条码：{5}。
 						BatchExceptionDTO batchExceptionDTO = new BatchExceptionDTO();
 						batchExceptionDTO.setBatchName(this.getClass());
@@ -504,12 +585,20 @@ public class BINBEIFPRO03_BL {
 						batchExceptionDTO.addErrorParam(CherryBatchUtil.getString(prtSoluDetailItemMap.get("BIN_ProductVendorID")));
 						batchExceptionDTO.addErrorParam(CherryBatchUtil.getString(prtSoluDetailItemMap.get("UnitCode")));
 						batchExceptionDTO.addErrorParam(CherryBatchUtil.getString(prtSoluDetailItemMap.get("BarCode")));
-						
+
 						batchExceptionDTO.setException(e);
 						throw new CherryBatchException(batchExceptionDTO);
 					}
+					if(i>0 && i%BATCH_SIZE==0 || i == prtSoluDetailByVersionList.size()-1) {
+						// 删除产品方案柜台接口表(根据brand、prtSolutionCode、产品厂商ID)
+						binbeifpro03Service.delIFPrtSoluSCS(prtUpdList);
+						// 插入产品方案明细接口表
+						binbeifpro03Service.addIFPrtSoluSCS(prtUpdList);
+						prtUpdList = new ArrayList<Map<String, Object>>();
+					}
 				}
 			}
+//			}
 		} catch (Exception e) {
 			// 失败件数加一
 			failCount += 1;
@@ -525,7 +614,7 @@ public class BINBEIFPRO03_BL {
 	/**
 	 * 插入接口数据库柜台产品配置表(WITPOSA_product_with_counter)
 	 * 
-	 * @param map
+	 * @param couProductMap
 	 * @return
 	 */
 	@Deprecated
@@ -569,10 +658,30 @@ public class BINBEIFPRO03_BL {
 			throw new CherryBatchException(batchExceptionDTO);
 		}
 	}
-	
+
+	/**
+	 * 程序结束时，处理Job共通( 插入Job运行履历表)
+	 * @param paraMap
+	 * @throws Exception
+	 */
+	public void tran_programEnd(Map<String,Object> paraMap) throws Exception{
+
+		// 程序结束时，插入Job运行履历表
+		paraMap.putAll(comMap);
+		paraMap.put("flag", flag);
+		paraMap.put("TargetDataCNT", totalCount);
+		paraMap.put("SCNT", totalCount - failCount);
+		paraMap.put("FCNT", failCount);
+		paraMap.put("UCNT", updateCount);
+		paraMap.put("ICNT", insertCount);
+		paraMap.put("FReason", fReason);
+		paraMap.remove("validFlagVal");
+		binbecm01_IF.insertJobRunHistory(paraMap);
+	}
+
 	/**
 	 * 设置柜台产品接口表的状态值
-	 * @param map
+	 * @param productMap
 	 */
 	private void getPrtSoluCntSCSStatus(Map<String, Object> productMap){
 		
@@ -762,7 +871,7 @@ public class BINBEIFPRO03_BL {
 	 * 
 	 * @throws CherryBatchException
 	 */
-	private void outMessage() throws CherryBatchException {
+	public void outMessage() throws CherryBatchException {
 		// 总件数
 		BatchLoggerDTO batchLoggerDTO1 = new BatchLoggerDTO();
 		batchLoggerDTO1.setCode("IIF00001");
@@ -829,9 +938,9 @@ public class BINBEIFPRO03_BL {
 		// 新产品生效日期
 //		String enable_time = DateUtil.suffixDate(businessDate, 1);
 //		comMap.put("enable_time", enable_time);
-		
+
 //		binbeifpro03Service.delIFCouProduct(comMap);
-		
+
 		// 取得当前产品表版本号
 		Map<String, Object> seqMap = new HashMap<String, Object>();
 		seqMap.putAll(map);

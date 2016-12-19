@@ -1,9 +1,12 @@
 package com.cherry.ia.pro.function;
 
+import java.util.HashMap;
 import java.util.Map;
 
 import javax.annotation.Resource;
 
+import com.cherry.cm.core.CherryBatchConstants;
+import com.cherry.cm.util.ConvertUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -27,7 +30,16 @@ public class BINBEIFPRO03_FN implements FunctionProvider{
 			throws WorkflowException {
 		logger.info("******************************柜台产品下发BATCH处理开始***************************");
 		try {
+			Map<String, Object> resMap = new HashMap<String, Object>();
 			int result = binbeifpro03BL.tran_batchCouProducts(transientVars);
+			if(result == CherryBatchConstants.BATCH_SUCCESS) {
+				// 备份产品下发数据/MQ下发
+				Map<String, Object> flagMapMQ = binbeifpro03BL.tran_batchCntProductsMQSend(transientVars);
+				resMap.putAll(flagMapMQ);
+				result= ConvertUtil.getInt(resMap.get("flag"));
+			}
+			binbeifpro03BL.outMessage();
+			binbeifpro03BL.tran_programEnd(transientVars);
 			ps.setInt("result", result);
 		} catch (CherryBatchException e) {
 			logger.error(e.toString(),e);

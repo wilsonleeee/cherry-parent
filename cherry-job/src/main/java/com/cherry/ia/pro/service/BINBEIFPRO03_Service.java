@@ -34,7 +34,7 @@ public class BINBEIFPRO03_Service extends BaseService {
 	/**
 	 * 查询新后台柜台产品数据list
 	 * 
-	 * @param int
+	 * @param map
 	 * 
 	 * @return List
 	 */
@@ -82,7 +82,7 @@ public class BINBEIFPRO03_Service extends BaseService {
 	/**
 	 * 插入柜台产品接口数据库(WITPOSA_product_with_counter)
 	 * 
-	 * @param Map
+	 * @param map
 	 * 
 	 * @return int
 	 */
@@ -94,7 +94,7 @@ public class BINBEIFPRO03_Service extends BaseService {
 	/**
 	 * 插入柜台产品接口数据库(WITPOSA_product_with_counter)
 	 * 
-	 * @param Map
+	 * @param map
 	 * 
 	 * @return int
 	 */
@@ -106,13 +106,23 @@ public class BINBEIFPRO03_Service extends BaseService {
 	/**
 	 * 插入产品方案明细接口表
 	 * 
-	 * @param Map
+	 * @param map
 	 * 
 	 * @return int
 	 */
 	public void addIFPrtSoluSCS(Map<String, Object> map) {
 		map.put(CherryConstants.IBATIS_SQL_ID,"BINBEIFPRO03.addIFPrtSoluSCS");
 		ifServiceImpl.save(map);
+	}
+	/**
+	 * 插入产品方案明细接口表
+	 *
+	 * @param mapList
+	 *
+	 * @return int
+	 */
+	public void addIFPrtSoluSCS(List<Map<String, Object>> mapList) {
+		ifServiceImpl.saveAll(mapList,"BINBEIFPRO03.addIFPrtSoluSCS");
 	}
 	
 	/**
@@ -158,6 +168,17 @@ public class BINBEIFPRO03_Service extends BaseService {
 	public int delIFPrtSoluSCS(Map<String, Object> map){
 		map.put(CherryConstants.IBATIS_SQL_ID, "BINBEIFPRO03.delIFPrtSoluSCS");
 		return ifServiceImpl.remove(map);
+	}
+
+
+	/**
+	 * 物理删除产品方案明细接口表
+	 *
+	 * @param mapList
+	 * @return
+	 */
+	public void delIFPrtSoluSCS(List<Map<String, Object>> mapList){
+		ifServiceImpl.deleteAll(mapList, "BINBEIFPRO03.delIFPrtSoluSCS");
 	}
 	
 	/**

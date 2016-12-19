@@ -4,6 +4,8 @@ import java.util.Map;
 
 import javax.annotation.Resource;
 
+import com.cherry.cm.core.CherryBatchConstants;
+import com.cherry.cm.util.CherryBatchUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -30,7 +32,20 @@ public class BINBEIFPRO04_FN implements FunctionProvider{
 		try {
 			transientVars.put("RunType", "AT");
 			Map<String,Object> resMap= binbeifpro04BL.tran_batchProducts(transientVars);
+
+			// 发送MQ
+			String isSendMQ = ConvertUtil.getString(transientVars.get("IsSendMQ"));
 			int result=ConvertUtil.getInt(resMap.get("flag"));
+			if(result == CherryBatchConstants.BATCH_SUCCESS && !CherryBatchUtil.isBlankString(isSendMQ)) {
+				// 备份产品下发数据/MQ下发
+				Map<String, Object> flagMapMQ = binbeifpro04BL.tran_batchProductsMQSend(transientVars);
+				resMap.putAll(flagMapMQ);
+			}
+			result=ConvertUtil.getInt(resMap.get("flag"));
+
+			binbeifpro04BL.outMessage();
+			binbeifpro04BL.tran_programEnd(transientVars);
+
 			ps.setInt("result", result);
 		} catch (CherryBatchException e) {
 			logger.error(e.toString(),e);

@@ -96,8 +96,6 @@ public class BINBEIFPRO04_Action extends BaseAction {
 			map.put("language", userInfo.getLanguage());
 //			map.put(CherryBatchConstants.ORGANIZATIONINFOID, organizationInfoId);
 			Map<String,Object> flagMap = binbeifpro04_BL.tran_batchProducts(map);
-
-
 			// 发送MQ
 			String isSendMQ = ConvertUtil.getString(map.get("IsSendMQ"));
 			flg=ConvertUtil.getInt(flagMap.get("flag"));
@@ -107,6 +105,9 @@ public class BINBEIFPRO04_Action extends BaseAction {
 				flagMap.putAll(flagMapMQ);
 			}
 			flg=ConvertUtil.getInt(flagMap.get("flag"));
+
+			binbeifpro04_BL.outMessage();
+			binbeifpro04_BL.tran_programEnd(map);
 		} catch (CherryBatchException cbx) {
 			flg = CherryBatchConstants.BATCH_WARNING;
 			logger.error("=============WARN MSG================");

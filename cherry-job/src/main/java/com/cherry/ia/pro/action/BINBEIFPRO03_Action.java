@@ -17,6 +17,8 @@ import java.util.Map;
 
 import javax.annotation.Resource;
 
+import com.cherry.cm.util.CherryBatchUtil;
+import com.cherry.cm.util.ConvertUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -67,6 +69,7 @@ public class BINBEIFPRO03_Action extends BaseAction {
 		logger.info("******************************BINBEIFPRO03处理开始***************************");
 		// 设置batch处理标志
 		int flg = CherryBatchConstants.BATCH_SUCCESS;
+		Map<String, Object> resMap = new HashMap<String, Object>();
 		try {
 			Map<String, Object> map = new HashMap<String, Object>();
 			map.put(CherryBatchConstants.BRANDINFOID, brandInfoId);
@@ -76,6 +79,14 @@ public class BINBEIFPRO03_Action extends BaseAction {
 			map.put(CherryBatchConstants.ORGANIZATIONINFOID, userInfo.getBIN_OrganizationInfoID());
 			map.put("userID", userInfo.getBIN_UserID());
 			flg = binbeifpro03BL.tran_batchCouProducts(map);
+			if(flg == CherryBatchConstants.BATCH_SUCCESS) {
+				// 备份产品下发数据/MQ下发
+				Map<String, Object> flagMapMQ = binbeifpro03BL.tran_batchCntProductsMQSend(map);
+				resMap.putAll(flagMapMQ);
+				flg= ConvertUtil.getInt(resMap.get("flag"));
+			}
+			binbeifpro03BL.outMessage();
+			binbeifpro03BL.tran_programEnd(map);
 		} catch (CherryBatchException cbx) {
 			flg = CherryBatchConstants.BATCH_WARNING;
 			logger.info("=============WARN MSG================");

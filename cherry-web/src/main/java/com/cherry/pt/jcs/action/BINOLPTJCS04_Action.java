@@ -505,14 +505,15 @@ public class BINOLPTJCS04_Action extends BaseAction implements
 		
 		// 实时下发
 		try{
-			// 柜台产品下发
-			resultMap = binOLPTJCS17_IF.tran_issuedCntPrt(map);
-			String result = ConvertUtil.getString(resultMap.get("result"));
+			// 柜台产品下发  @该处理移入到Batch产品实时下发
+//			resultMap = binOLPTJCS17_IF.tran_issuedCntPrt(map);
+//			String result = ConvertUtil.getString(resultMap.get("result"));
 			//  产品实时下发
 //			resultMap = binolptjcs04_IF.tran_issuedPrt(map);
 			
 			//通过WebService进行产品实时下发
 			resultMap = binolptjcs04_IF.tran_issuedPrtByWS(map);
+
 			ConvertUtil.setResponseByAjax(response, resultMap);
 		} catch(Exception e){
 			logger.error(e.getMessage(), e);

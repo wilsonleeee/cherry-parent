@@ -104,6 +104,7 @@ public class BINBEIFPRO04_BL {
 	/** 失败的主要原因，受字段长度限制，这里只要记录主要原因即可 */
 	private String fReason = "";
 
+
 	/**
 	 * 产品列表的batch处理
 	 *
@@ -159,10 +160,10 @@ public class BINBEIFPRO04_BL {
 			}
 		}
 		// 输出处理结果信息
-		outMessage();
+		//outMessage();
 
 		// 程序结束时，处理Job共通(插入Job运行履历表)
-		programEnd(map);
+		//tran_programEnd(map);
 		resMap.put("flag", flag);
 		return resMap;
 	}
@@ -350,7 +351,7 @@ public class BINBEIFPRO04_BL {
 		outMessage();
 		
 		// 程序结束时，处理Job共通(插入Job运行履历表)
-		programEnd(map);
+		tran_programEnd(map);
 		*/
 		resMap.put("flag", flag);
 		return resMap;
@@ -903,7 +904,7 @@ public class BINBEIFPRO04_BL {
 	 * 
 	 * @throws CherryBatchException
 	 */
-	private void outMessage() throws CherryBatchException {
+	public void outMessage() throws CherryBatchException {
 		// 总件数
 		BatchLoggerDTO batchLoggerDTO1 = new BatchLoggerDTO();
 		batchLoggerDTO1.setCode("IIF00001");
@@ -957,7 +958,7 @@ public class BINBEIFPRO04_BL {
 	 * @param paraMap
 	 * @throws Exception
 	 */
-	private void programEnd(Map<String,Object> paraMap) throws Exception{
+	public void tran_programEnd(Map<String,Object> paraMap) throws Exception{
 		 
 		// 程序结束时，插入Job运行履历表
 		paraMap.putAll(comMap);
