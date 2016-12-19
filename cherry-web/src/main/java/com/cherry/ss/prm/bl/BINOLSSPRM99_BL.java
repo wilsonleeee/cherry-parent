@@ -292,7 +292,7 @@ public class BINOLSSPRM99_BL implements Coupon_IF {
 			List<Map<String, Object>> checkedCouponList = new ArrayList<Map<String, Object>>();
 			for (int i = 0; i < couponList.size(); i++) {
 				Map<String,Object> couponMap = couponList.get(i);
-				Map<String, Object> checkedMap = checkSingleCoupon(couponMap, couponComb);
+				Map<String, Object> checkedMap = checkSingleCoupon(couponMap, couponComb,false);
 				String resultCode = (String) checkedMap.get("ResultCode");
 				if (!CouponConstains.RESULT_SUCCESS.equals(resultCode)) {
 					// 失败
@@ -316,9 +316,6 @@ public class BINOLSSPRM99_BL implements Coupon_IF {
 			// 接口发生异常
 			return getResult(CouponConstains.IF_ERROR_EXCEPTION_CODE, CouponConstains.IF_ERROR_EXCEPTION);
 		}
-	}
-	private Map<String, Object> checkSingleCoupon(Map<String, Object> couponMap, CouponCombDTO couponComb) throws Exception{
-		return checkSingleCoupon(couponMap, couponComb, false);
 	}
 	
 	private Map<String, Object> checkSingleCoupon(Map<String, Object> couponMap, CouponCombDTO couponComb, boolean isDwq) throws Exception{
@@ -432,6 +429,18 @@ public class BINOLSSPRM99_BL implements Coupon_IF {
 		CouponBaseInfo baseInfo = couponInfo.getCouponBaseInfo();
 		couponComb.setCouponInfo(couponInfo);
 		ResultDTO result = null;
+		// 当前销售单已参加的活动合并
+		if(null == couponComb.getActList()){
+			couponComb.setActList(new ArrayList<Map<String, Object>>());
+		}
+		if(null != couponComb.getCouponList()){
+			for(Map<String,Object> couponAct : couponComb.getCouponList()){
+				Map<String,Object> act = new HashMap<String,Object>();
+				act.put("ruleType",couponAct.get("couponType"));
+				act.put("maincode",couponAct.get("ActivityMainCode"));
+				couponComb.getActList().add(act);
+			}
+		}
 		if (isDwq) {
 			result = rule_IF.checkDwqUseParams(couponComb);
 		} else {
@@ -583,6 +592,11 @@ public class BINOLSSPRM99_BL implements Coupon_IF {
 		List<Map<String,Object>> couponList = (List<Map<String,Object>>) map.get("completedCoupon");
 		if (null != couponList && !couponList.isEmpty()) {
 			billInfo.setUseCoupon(true);
+			// 获取coupon对应的电子券活动
+			List<Map<String,Object>> couponActList =binOLSSPRM73_Service.getRuleListByCouponNo(couponList);
+			if(null != couponActList){
+				campainList.addAll(couponActList);
+			}
 		}
 		List<Map<String, Object>> list = rule_IF.getCouponRuleList(billInfo, campainList);
 		logger.info("获取优惠券活动内容：" + CherryUtil.obj2Json(list));

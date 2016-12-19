@@ -239,10 +239,10 @@ public class BINOLSSPRM01_BL {
 	    };
 	    BINOLMOCOM01_IF.ExcelParam ep = new BINOLMOCOM01_IF.ExcelParam();
 	    ep.setMap(map);
-	    ep.setArray(array);
-	    ep.setBaseName("BINOLSSPRM01");
-	    ep.setSheetLabel("sheetName");
-	    ep.setDataList(dataList);
+		ep.setArray(array);
+		ep.setBaseName("BINOLSSPRM01");
+		ep.setSheetLabel("sheetName");
+		ep.setDataList(dataList);
 	    return binOLMOCOM01_BL.getExportExcel(ep);
 	}
 }

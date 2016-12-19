@@ -5,7 +5,7 @@
 <script type="text/javascript" src="/${CHERRY_CONTEXT_PATH}/js/lib/jquery-1.7.1.min.js"></script>
 <script type="text/javascript" src="/${CHERRY_CONTEXT_PATH}/js/lib/json2.js"></script>
 <script type="text/javascript" src="/${CHERRY_CONTEXT_PATH}/js/common/commonAjax.js"></script>
-<script type="text/javascript" src="/${CHERRY_CONTEXT_PATH}/js/ss/prm/BINOLSSPRM74.js?v=20161117"></script>
+<script type="text/javascript" src="/${CHERRY_CONTEXT_PATH}/js/ss/prm/BINOLSSPRM74.js?v=20161218"></script>
 <link rel="stylesheet" href="/${CHERRY_CONTEXT_PATH}/css/jiahua/jiahua.css?v=20160811" type="text/css">
 <s:i18n name="i18n.ss.BINOLSSPRM74">
 <html>
@@ -339,7 +339,7 @@
 		<div class="dzqbox">
 			<%-- <div class="dzqsubbox"><label><s:text name="PRM74.couponActivity"/></label><span id="couponName2"></span></div> --%>
 			<s:if test="result_map.main_map.ML.isEmpty() ||null == result_map.main_map.ML">
-				<div class="dzqsubbox"><label><s:text name="PRM74.memPhone"/></label><span id="mobileNo"><input maxlength="11" class="dzq_input" onblur="BINOLSSPRM74.checkMobile(this);return false;"  placeholder='<s:property value="PRM74.phoneCheckCodeTitle"/>'/></span></div>
+				<div class="dzqsubbox"><label><s:text name="PRM74.memPhone"/></label><span><input id="mobileNo" maxlength="11" class="dzq_input" onblur="BINOLSSPRM74.checkMobile(this);return false;"  placeholder='<s:property value="PRM74.phoneCheckCodeTitle"/>'/></span></div>
 			</s:if>
 			<s:else>
 				<div class="dzqsubbox"><label><s:text name="PRM74.couponMemberCode"/></label><span><s:property value="%{result_map.main_map.MC}"/></span></div>

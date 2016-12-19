@@ -1686,7 +1686,51 @@ public class BINOLCM02_BL {
 		// 查询会员活动信息List
 		return binOLCM02_Service.getMemCampaignList(map);
 	}
-	
+
+	/**
+	 * 查询会员活动信息总数
+	 *
+	 * @param map 查询条件
+	 * @return 会员活动信息总数
+	 */
+	public int getMemCampaignCount2 (Map<String, Object> map){
+		// 查询会员活动信息总数
+		return binOLCM02_Service.getMemCampaignCount2(map);
+	}
+
+	/**
+	 * 查询会员活动信息List
+	 *
+	 * @param map 查询条件
+	 * @return 会员活动信息List
+	 */
+	public List<Map<String, Object>> getMemCampaignList2(Map<String, Object> map){
+		// 查询会员活动信息List
+		return binOLCM02_Service.getMemCampaignList2(map);
+	}
+
+	/**
+	 * 查询会员活动信息总数
+	 *
+	 * @param map 查询条件
+	 * @return 会员活动信息总数
+	 */
+	public int getCouponRuleCount(Map<String, Object> map){
+		// 查询会员活动信息总数
+		return binOLCM02_Service.getCouponRuleCount(map);
+	}
+
+	/**
+	 * 查询优惠券会员活动信息List
+	 *
+	 * @param map 查询条件
+	 * @return 会员活动信息List
+	 */
+	public List<Map<String, Object>> getCouponRuleList(Map<String, Object> map){
+		// 查询会员活动信息List
+		return binOLCM02_Service.getCouponRuleList(map);
+	}
+
 	/**
 	 * 查询促销活动信息总数
 	 * 
@@ -1707,6 +1751,28 @@ public class BINOLCM02_BL {
 	public List<Map<String, Object>> getPrmCampaignList(Map<String, Object> map){
 		// 查询促销活动信息List
 		return binOLCM02_Service.getPrmCampaignList(map);
+	}
+
+	/**
+	 * 查询促销活动信息总数(JH)
+	 *
+	 * @param map 查询条件
+	 * @return 促销活动信息总数
+	 */
+	public int getPrmCampaignCount2 (Map<String, Object> map){
+		// 查询会员活动信息总数
+		return binOLCM02_Service.getPrmCampaignCount2(map);
+	}
+
+	/**
+	 * 查询促销活动信息List(JH)
+	 *
+	 * @param map 查询条件
+	 * @return 促销活动信息List
+	 */
+	public List<Map<String, Object>> getPrmCampaignList2(Map<String, Object> map){
+		// 查询促销活动信息List
+		return binOLCM02_Service.getPrmCampaignList2(map);
 	}
 	
 	/**

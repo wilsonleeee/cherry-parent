@@ -19,7 +19,10 @@ public class CouponRuleDTO extends BaseDTO{
 	private String isGive;
 	private String couponFlag;
 	private int maxContentNo;
-	
+	private String sendCondPrt;
+	private String sendCondCnt;
+	private String isSameFlag;
+
 	public String getRuleCode() {
 		return ruleCode;
 	}
@@ -130,5 +133,19 @@ public class CouponRuleDTO extends BaseDTO{
 	}
 	public void setMaxContentNo(int maxContentNo) {
 		this.maxContentNo = maxContentNo;
+	}
+	public String getSendCondPrt() {return sendCondPrt;}
+	public void setSendCondPrt(String sendCondPrt) {this.sendCondPrt = sendCondPrt;}
+	public String getSendCondCnt() {
+		return sendCondCnt;
+	}
+	public void setSendCondCnt(String sendCondCnt) {
+		this.sendCondCnt = sendCondCnt;
+	}
+	public String getIsSameFlag() {
+		return isSameFlag;
+	}
+	public void setIsSameFlag(String isSameFlag) {
+		this.isSameFlag = isSameFlag;
 	}
 }

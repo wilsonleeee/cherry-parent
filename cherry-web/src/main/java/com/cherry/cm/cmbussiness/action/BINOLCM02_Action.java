@@ -148,7 +148,6 @@ public class BINOLCM02_Action extends BaseAction implements ModelDriven<BINOLCM0
 	
 	/**
 	 * 取得session的信息
-	 * @param map
 	 * @throws Exception 
 	 */
 	private Map getSessionInfo() throws Exception{
@@ -1492,6 +1491,16 @@ public class BINOLCM02_Action extends BaseAction implements ModelDriven<BINOLCM0
 	public String initCampaignDialog() throws Exception {
 		return SUCCESS;
 	}
+
+	/**
+	 * 初始化活动信息弹出框2
+	 * @return
+	 * @throws Exception
+	 */
+	public String initCampaignDialog_2() throws Exception {
+		return SUCCESS;
+	}
+
 	/**
 	 * 取得活动信息弹出框
 	 * @return
@@ -1529,6 +1538,92 @@ public class BINOLCM02_Action extends BaseAction implements ModelDriven<BINOLCM0
 		}
 		return SUCCESS;
 	}
+
+	/**
+	 * 取得活动信息弹出框(JH黑名单)
+	 * @return
+	 * @throws Exception
+	 */
+	public String popCampaignDialog2() throws Exception {
+		Map<String,Object> map = getCommMap();
+		// 画面查询条件
+		if(form.getSSearch() != null && !"".equals(form.getSSearch())) {
+			map.put("campaignKw", form.getSSearch());
+		}
+		// 活动类型为促销活动的场合
+		if(form.getCampaignMode() != null && "1".equals(form.getCampaignMode())
+				|| "CXHD".equals(form.getParam2())) {
+			// 取得促销活动总数
+			int count  = binOLCM02_BL.getPrmCampaignCount2(map);
+			// form表单设置
+			form.setITotalDisplayRecords(count);
+			form.setITotalRecords(count);
+			if(count > 0) {
+				// 取得促销活动List
+				form.setCampaignList(binOLCM02_BL.getPrmCampaignList2(map));
+			}
+		} else if("0".equals(form.getCampaignMode())||form.getCampaignMode()==null){// 活动类型为会员活动的场合
+			// 取得会员活动总数
+			int count  = binOLCM02_BL.getMemCampaignCount2(map);
+			// form表单设置
+			form.setITotalDisplayRecords(count);
+			form.setITotalRecords(count);
+			if(count > 0) {
+				// 取得会员活动List
+				form.setCampaignList(binOLCM02_BL.getMemCampaignList2(map));
+			}
+		} else{// 活动类型为优惠券活动
+			// 取得会员活动总数
+			int count  = binOLCM02_BL.getCouponRuleCount(map);
+			// form表单设置
+			form.setITotalDisplayRecords(count);
+			form.setITotalRecords(count);
+			if(count > 0) {
+				// 取得会员活动List
+				form.setCampaignList(binOLCM02_BL.getCouponRuleList(map));
+			}
+		}
+		return SUCCESS;
+	}
+
+	/**
+	 * 取得活动信息弹出框(JH白名单活动)
+	 * @return
+	 * @throws Exception
+	 */
+	public String popCampaignDialog3() throws Exception {
+		Map<String,Object> map = getCommMap();
+		// 画面查询条件
+		if(form.getSSearch() != null && !"".equals(form.getSSearch())) {
+			map.put("campaignKw", form.getSSearch());
+		}
+		// 活动类型为促销活动的场合
+		if(form.getCampaignMode() != null && "1".equals(form.getCampaignMode())
+				|| "CXHD".equals(form.getParam2())) {
+			// 取得促销活动总数
+			int count  = binOLCM02_BL.getPrmCampaignCount2(map);
+			// form表单设置
+			form.setITotalDisplayRecords(count);
+			form.setITotalRecords(count);
+			if(count > 0) {
+				// 取得促销活动List
+				form.setCampaignList(binOLCM02_BL.getPrmCampaignList2(map));
+			}
+		} else {// 活动类型为会员活动的场合
+			form.setCampaignMode("0");
+			// 取得会员活动总数
+			int count  = binOLCM02_BL.getMemCampaignCount2(map);
+			// form表单设置
+			form.setITotalDisplayRecords(count);
+			form.setITotalRecords(count);
+			if(count > 0) {
+				// 取得会员活动List
+				form.setCampaignList(binOLCM02_BL.getMemCampaignList2(map));
+			}
+		}
+		return SUCCESS;
+	}
+
 	/**
 	 * 初始化销售信息信息弹出框
 	 * @return

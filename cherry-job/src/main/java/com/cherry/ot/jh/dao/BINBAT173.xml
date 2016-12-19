@@ -1,0 +1,210 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sqlMap PUBLIC "-//iBATIS.com//DTD SQL Map 2.0//EN" "http://ibatis.apache.org/dtd/sql-map-2.dtd">
+<sqlMap namespace="BINBAT173">
+
+    <select id="getRuleCodeList" parameterClass="java.util.HashMap" resultClass="java.lang.String">
+        SELECT
+            RuleCode AS ruleCode
+        FROM
+             Promotion.BIN_PromotionCouponRule
+        WHERE
+            BIN_OrganizationInfoID = #organizationInfoId#
+            AND BIN_BrandInfoID = #brandInfoId#
+            AND ValidFlag = '1'
+            AND Status = '1'
+    </select>
+
+    <select id="getRuleConditionMap" parameterClass="java.lang.String" resultClass="java.util.HashMap">
+        SELECT
+            Content AS content,
+            UseTimeJson AS useTimeJson,
+            SendCond AS sendCond,
+            UseCond AS useCond,
+            CouponFlag AS couponFlag
+        FROM
+            Promotion.BIN_PromotionCouponRule
+        WHERE
+            RuleCode = #ruleCode#
+    </select>
+
+    <select id="getCounterCodeByChannelID" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+        SELECT
+            CounterCode AS counterCode,
+            BIN_OrganizationID AS organizationID,
+            #ruleCode# AS ruleCode,
+            #contentNo# AS contentNo,
+            #filterType# AS filterType,
+            #conditionType# AS conditionType
+        FROM
+            Basis.BIN_CounterInfo
+        WHERE
+            BIN_ChannelID IN
+            <iterate conjunction="," open="(" close=")" property="channelArr">
+                #channelArr[]#
+            </iterate>
+            AND ValidFlag = '1'
+    </select>
+
+    <select id="getCounterCodeByOrganizationID" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+        SELECT
+            CounterCode AS counterCode,
+            BIN_OrganizationID AS organizationID,
+            #ruleCode# AS ruleCode,
+            #contentNo# AS contentNo,
+            #filterType# AS filterType,
+            #conditionType# AS conditionType
+        FROM
+            Basis.BIN_CounterInfo
+        WHERE
+            BIN_OrganizationID IN
+            <iterate conjunction="," open="(" close=")" property="counterArr">
+                #counterArr[]#
+            </iterate>
+            AND ValidFlag = '1'
+    </select>
+    
+    <insert id="addCounterList" parameterClass="java.util.HashMap">
+        INSERT INTO
+            Promotion.BIN_CouponCounterDetail
+            (
+                RuleCode,
+                BIN_OrganizationID,
+                CounterCode,
+                ConditionType,
+                ValidFlag,
+                FilterType,
+                ContentNo,
+                IsTemp)
+        VALUES
+            (
+                #ruleCode#,
+                #organizationID#,
+                #counterCode#,
+                #conditionType#,
+                '1',
+                #filterType#,
+                #contentNo#,
+                '1'
+            )
+    </insert>
+
+    <insert id="addProductDetail" parameterClass="java.util.HashMap">
+         INSERT INTO
+            Promotion.BIN_CouponProductDetail
+            (
+                RuleCode,
+                ConditionType,
+                FilterType,
+                PrtObjType,
+                PrtObjId,
+                PrtObjNum,
+                ContentNo,
+                ValidFlag,
+                IsTemp
+            )
+        VALUES
+            (
+                #ruleCode#,
+                #conditionType#,
+                #filterType#,
+                #prtObjType#,
+            <isEqual property="prtObjType" compareValue="1">
+                #prtVendorId#,
+                #proNum#,
+            </isEqual>
+            <isEqual property="prtObjType" compareValue="2">
+                #cateValId#,
+                #cateNum#,
+            </isEqual>
+                #contentNo#,
+                '1',
+                '1'
+            )
+    </insert>
+
+    <select id="getProductListByCateID" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+        SELECT DISTINCT
+            C.BIN_ProductVendorID AS prtVendorId,
+            #cateNum# AS proNum
+        FROM
+            Basis.BIN_PrtCatPropValue A WITH(NOLOCK)
+            JOIN Basis.BIN_PrtCategory B WITH(NOLOCK)
+            ON (A.BIN_PrtCatPropValueID = B.BIN_PrtCatPropValueID AND B.ValidFlag = '1')
+            JOIN Basis.BIN_ProductVendor C WITH(NOLOCK)
+            ON (B.BIN_ProductID = C.BIN_ProductID AND C.ValidFlag = '1')
+        WHERE
+            A.BIN_PrtCatPropValueID = #cateValId#
+    </select>
+
+    <update id="updateCounterDetail" parameterClass="java.util.HashMap">
+        UPDATE
+            Promotion.BIN_CouponCounterDetail
+        SET
+            FilterType = #filterType#,
+            ContentNo = #contentNo#,
+            isTemp = '1'
+        WHERE
+            RuleCode = #ruleCode#
+            AND ConditionType = #conditionType#
+    </update>
+
+    <update id="updateMemberDetail" parameterClass="java.util.HashMap">
+        UPDATE
+            Promotion.BIN_CouponMemeberDetail
+        SET
+            FilterType = #filterType#,
+            ContentNo = #contentNo#,
+            isTemp = '1'
+        WHERE
+            RuleCode = #ruleCode#
+            AND ConditionType = #conditionType#
+    </update>
+
+    <select id="getCouponRule" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+        <![CDATA[
+        SELECT
+            RuleCode AS campaignCode,
+            '2' AS campaignMode
+        FROM
+            Promotion.BIN_PromotionCouponRule
+        ]]>
+        <isNotEmpty property="ruleCode">
+        <![CDATA[
+        WHERE
+            RuleCode <> #ruleCode#
+        ]]>
+        </isNotEmpty>
+    </select>
+
+    <update id="updatePromotionRule" parameterClass="java.util.HashMap">
+        UPDATE
+            Promotion.BIN_PromotionCouponRule
+        SET
+            SendCond = #sendCond#,
+            UseCond = #useCond#,
+            UseTimeJson = null
+        WHERE
+            RuleCode = #ruleCode#
+    </update>
+
+    <select id="getUploadMemberCount" parameterClass="java.util.HashMap" resultClass="java.lang.Integer">
+        SELECT
+            COUNT(*) AS count
+        FROM
+            Promotion.BIN_CouponMemeberDetail
+        WHERE
+            RuleCode = #ruleCode#
+            AND ConditionType = #conditionType#
+    </select>
+
+    <select id="getUploadCounterCount" parameterClass="java.util.HashMap" resultClass="java.lang.Integer">
+        SELECT
+            COUNT(*) AS count
+        FROM
+            Promotion.BIN_CouponCounterDetail
+        WHERE
+            RuleCode = #ruleCode#
+            AND ConditionType = #conditionType#
+    </select>
+
+</sqlMap>

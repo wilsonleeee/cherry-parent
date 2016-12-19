@@ -102,17 +102,18 @@ public class BINOLSSPRM74_Action extends BaseAction implements ModelDriven<BINOL
 			logger.info("促销页面初始化开始");
 			Map<String,Object> result_map=new HashMap<String, Object>();
 			String brandCode=form.getBrandCode();
-			Map<String,Object> dataSource_map=new HashMap<String, Object>();
-			dataSource_map.put("brandCode", brandCode);
-			Map<String,Object> datasource=binOLSSPRM74_IF.getDateSourceName(dataSource_map);
-			if(datasource == null){
+//			Map<String,Object> dataSource_map=new HashMap<String, Object>();
+//			dataSource_map.put("brandCode", brandCode);
+			SystemConfigDTO sysDTO = SystemConfigManager.getSystemConfig(brandCode);
+			//Map<String,Object> datasource=binOLSSPRM74_IF.getDateSourceName(dataSource_map);
+			if(sysDTO == null){
 				result_map.put("resultCode", "-7777");
 				result_map.put("resultMessage", "输入的品牌代码有误");
 				form.setResult_map(result_map);
 				transaction.addData("输入的品牌代码有误");
 				return SUCCESS;
 			}
-			String datasourceName=ConvertUtil.getString(datasource.get("dataSourceName"));
+			String datasourceName=sysDTO.getDataSourceName();
 			form.setDatasourceName(datasourceName);
 			session.put(CherryConstants.CHERRY_SECURITY_CONTEXT_KEY,datasourceName);
 			// 对登录账户做一系列的检查,通过则返回账户ID，不通过则会抛出多种错误信息
@@ -334,13 +335,13 @@ public class BINOLSSPRM74_Action extends BaseAction implements ModelDriven<BINOL
 //		jiahua_input.put("ML", "ZBCCJ0103");
 		List<Map<String,Object>> jiahua_cart=new ArrayList<Map<String,Object>>();
 		jiahua_input.put("TN", "TN0003");
-		jiahua_input.put("TD", "20160905");
-		jiahua_input.put("TT", "11:30:33");
+		jiahua_input.put("TD", "20161218");
+		jiahua_input.put("TT", "18:19:33");
 		jiahua_input.put("CC", "ZZSN2");
-		jiahua_input.put("MC", "18916142988");
-		jiahua_input.put("MN", "小龙人");
-		jiahua_input.put("MP", "18916142988");
-		jiahua_input.put("ML", "ZBCCJ0101");
+		jiahua_input.put("MC", "");
+		jiahua_input.put("MN", "");
+		jiahua_input.put("MP", "");
+		jiahua_input.put("ML", "");
 		jiahua_input.put("SC", jiahua_cart);
 		Map<String,Object> cart1=new HashMap<String, Object>();
 		cart1.put("B", "28666");
@@ -362,16 +363,16 @@ public class BINOLSSPRM74_Action extends BaseAction implements ModelDriven<BINOL
 		cart4.put("Q", "1");
 		cart4.put("P", "320");
 		jiahua_cart.add(cart4);
-//		Map<String,Object> cart5=new HashMap<String, Object>();
-//		cart5.put("B", "75001");
-//		cart5.put("Q", "1");
-//		cart5.put("P", "30");
-//		jiahua_cart.add(cart5);
-//		Map<String,Object> cart6=new HashMap<String, Object>();
-//		cart6.put("B", "75008");
-//		cart6.put("Q", "1");
-//		cart6.put("P", "30");
-//		jiahua_cart.add(cart6);
+		Map<String,Object> cart5=new HashMap<String, Object>();
+		cart5.put("B", "75001");
+		cart5.put("Q", "1");
+		cart5.put("P", "30");
+		jiahua_cart.add(cart5);
+		Map<String,Object> cart6=new HashMap<String, Object>();
+		cart6.put("B", "75008");
+		cart6.put("Q", "1");
+		cart6.put("P", "30");
+		jiahua_cart.add(cart6);
 		String jiahua_json=CherryUtil.map2Json(jiahua_input);
 		//加密字符串
 		String mima1=dp.encrypt(jiahua_json);
@@ -429,15 +430,18 @@ public class BINOLSSPRM74_Action extends BaseAction implements ModelDriven<BINOL
 			String brandCode=form.getBrandCode();
 			Map<String,Object> dataSource_map=new HashMap<String, Object>();
 			dataSource_map.put("brandCode", brandCode);
-			Map<String,Object> datasource=binOLSSPRM74_IF.getDateSourceName(dataSource_map);
-			if(datasource == null){
+//			Map<String,Object> dataSource_map=new HashMap<String, Object>();
+//			dataSource_map.put("brandCode", brandCode);
+			SystemConfigDTO sysDTO = SystemConfigManager.getSystemConfig(brandCode);
+			//Map<String,Object> datasource=binOLSSPRM74_IF.getDateSourceName(dataSource_map);
+			if(sysDTO == null){
 				result_map.put("resultCode", "-7777");
 				result_map.put("resultMessage", "输入的品牌代码有误");
 				form.setResult_map(result_map);
 				transaction.addData("输入的品牌代码有误");
 				return SUCCESS;
 			}
-			String datasourceName=ConvertUtil.getString(datasource.get("dataSourceName"));
+			String datasourceName=sysDTO.getDataSourceName();
 			form.setDatasourceName(datasourceName);
 			session.put(CherryConstants.CHERRY_SECURITY_CONTEXT_KEY,datasourceName);
 			// 对登录账户做一系列的检查,通过则返回账户ID，不通过则会抛出多种错误信息

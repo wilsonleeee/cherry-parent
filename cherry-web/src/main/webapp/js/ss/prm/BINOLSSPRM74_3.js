@@ -137,7 +137,7 @@ BINOLSSPRM74_3.prototype = {
 				});
 			}else if(sumlength > maxcount){
 				$(obj).attr("checked",false);
-				BINOLSSPRM74_3.showErrorMessage("当前您至多可以选择"+maxCount+"个产品，请重新勾选");
+				BINOLSSPRM74_3.showErrorMessage("当前您至多可以选择"+maxcount+"个产品，请重新勾选");
 			}
 		},
 		"appendCoupon":function(){
@@ -336,7 +336,7 @@ BINOLSSPRM74_3.prototype = {
 					if(data == 0){
 						window.close();
 					}else if(data == 1){
-						BINOLSSPRM74.showErrorMessage($("#closeWindowErr").val());
+						BINOLSSPRM74_3.showErrorMessage($("#closeWindowErr").val());
 					}
 				},
 				complete : function(XMLHttpRequest,status){

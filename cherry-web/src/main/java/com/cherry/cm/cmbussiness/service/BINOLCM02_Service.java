@@ -623,10 +623,76 @@ public class BINOLCM02_Service extends BaseService{
 		map.put(CherryConstants.IBATIS_SQL_ID, "BINOLCM02.getMemCampaignList");
 		return baseServiceImpl.getList(map);
 	}
+
+	/**
+	 * 查询会员活动信息总数
+	 *
+	 * @param map 查询条件
+	 * @return 会员活动信息总数
+	 */
+	public int getMemCampaignCount2 (Map<String, Object> map){
+		map.put(CherryConstants.IBATIS_SQL_ID, "BINOLCM02.getMemCampaignCount2");
+		return baseServiceImpl.getSum(map);
+	}
+
+	/**
+	 * 查询会员活动信息List
+	 *
+	 * @param map 查询条件
+	 * @return 会员活动信息List
+	 */
+	public List<Map<String, Object>> getMemCampaignList2(Map<String, Object> map){
+		map.put(CherryConstants.IBATIS_SQL_ID, "BINOLCM02.getMemCampaignList2");
+		return baseServiceImpl.getList(map);
+	}
+
+	/**
+	 * 查询优惠券活动信息总数
+	 *
+	 * @param map 查询条件
+	 * @return 会员活动信息总数
+	 */
+	public int getCouponRuleCount(Map<String, Object> map){
+		map.put(CherryConstants.IBATIS_SQL_ID, "BINOLCM02.getCouponRuleCount");
+		return baseServiceImpl.getSum(map);
+	}
+
+	/**
+	 * 查询优惠券活动信息List(JH)
+	 *
+	 * @param map 查询条件
+	 * @return 会员活动信息List
+	 */
+	public List<Map<String, Object>> getCouponRuleList(Map<String, Object> map){
+		map.put(CherryConstants.IBATIS_SQL_ID, "BINOLCM02.getCouponRuleList");
+		return baseServiceImpl.getList(map);
+	}
 	
 	/**
+	 * 查询促销活动信息总数(JH)
+	 *
+	 * @param map 查询条件
+	 * @return 促销活动信息总数
+	 */
+	public int getPrmCampaignCount2 (Map<String, Object> map){
+		map.put(CherryConstants.IBATIS_SQL_ID, "BINOLCM02.getPrmCampaignCount2");
+		return baseServiceImpl.getSum(map);
+	}
+
+	/**
+	 * 查询促销活动信息List
+	 *
+	 * @param map 查询条件
+	 * @return 促销活动信息List
+	 */
+	public List<Map<String, Object>> getPrmCampaignList(Map<String, Object> map){
+		map.put(CherryConstants.IBATIS_SQL_ID, "BINOLCM02.getPrmCampaignList");
+		return baseServiceImpl.getList(map);
+	}
+
+	/**
 	 * 查询促销活动信息总数
-	 * 
+	 *
 	 * @param map 查询条件
 	 * @return 促销活动信息总数
 	 */
@@ -634,15 +700,15 @@ public class BINOLCM02_Service extends BaseService{
 		map.put(CherryConstants.IBATIS_SQL_ID, "BINOLCM02.getPrmCampaignCount");
 		return baseServiceImpl.getSum(map);
 	}
-	
+
 	/**
 	 * 查询促销活动信息List
-	 * 
+	 *
 	 * @param map 查询条件
 	 * @return 促销活动信息List
 	 */
-	public List<Map<String, Object>> getPrmCampaignList(Map<String, Object> map){
-		map.put(CherryConstants.IBATIS_SQL_ID, "BINOLCM02.getPrmCampaignList");
+	public List<Map<String, Object>> getPrmCampaignList2(Map<String, Object> map){
+		map.put(CherryConstants.IBATIS_SQL_ID, "BINOLCM02.getPrmCampaignList2");
 		return baseServiceImpl.getList(map);
 	}
 	

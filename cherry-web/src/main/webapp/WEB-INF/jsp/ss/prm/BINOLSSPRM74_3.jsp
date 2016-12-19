@@ -5,7 +5,7 @@
 <script type="text/javascript" src="/${CHERRY_CONTEXT_PATH}/js/lib/jquery-1.7.1.min.js"></script>
 <script type="text/javascript" src="/${CHERRY_CONTEXT_PATH}/js/lib/json2.js"></script>
 <script type="text/javascript" src="/${CHERRY_CONTEXT_PATH}/js/common/commonAjax.js"></script>
-<script type="text/javascript" src="/${CHERRY_CONTEXT_PATH}/js/ss/prm/BINOLSSPRM74_3.js?V=20160816"></script>
+<script type="text/javascript" src="/${CHERRY_CONTEXT_PATH}/js/ss/prm/BINOLSSPRM74_3.js?V=20161218"></script>
 <link rel="stylesheet" href="/${CHERRY_CONTEXT_PATH}/css/jiahua/style2.css?V=20160811" type="text/css">
 <s:i18n name="i18n.ss.BINOLSSPRM74_3">
 <html>

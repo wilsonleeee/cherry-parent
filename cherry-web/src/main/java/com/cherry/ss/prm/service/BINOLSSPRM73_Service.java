@@ -12,15 +12,18 @@
  */	
 package com.cherry.ss.prm.service;
 
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-
 import com.cherry.cm.core.CherryConstants;
 import com.cherry.cm.service.BaseService;
+import com.cherry.cm.util.ConvertUtil;
 import com.cherry.ss.prm.core.CouponConstains;
 import com.cherry.ss.prm.dto.CouponDTO;
 import com.cherry.ss.prm.dto.CouponRuleDTO;
+import com.cherry.ss.prm.dto.FailUploadDataDTO;
+
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 /**
  * 优惠券规则Service
@@ -93,7 +96,7 @@ public class BINOLSSPRM73_Service extends BaseService{
 	/**
 	 * 更新优惠券规则信息
 	 * 
-	 * @param CampaignRuleDTO
+	 * @param couponRule
 	 * @return int
 	 */
 	public int updateCouponRuleInfo(CouponRuleDTO couponRule){
@@ -103,8 +106,7 @@ public class BINOLSSPRM73_Service extends BaseService{
 	
 	/**
 	 * 更新优惠券规则信息
-	 * 
-	 * @param CampaignRuleDTO
+	 *
 	 * @return int
 	 */
 	public int updateCouponRuleStatus(Map<String, Object> map){
@@ -115,8 +117,7 @@ public class BINOLSSPRM73_Service extends BaseService{
 	
 	/**
 	 * 更新优惠券条件
-	 * 
-	 * @param CampaignRuleDTO
+	 *
 	 * @return int
 	 */
 	public int updateCouponCondition(Map<String, Object> map){
@@ -321,8 +322,7 @@ public class BINOLSSPRM73_Service extends BaseService{
 	
 	/**
 	 * 查询产品信息
-	 * 
-	 * @param map 查询条件
+	 *
 	 * @return 产品信息
 	 */
 	public Map<String, Object> getProInfo(int prtVendorId) {
@@ -334,8 +334,7 @@ public class BINOLSSPRM73_Service extends BaseService{
 	
 	/**
 	 * 查询产品价格信息
-	 * 
-	 * @param map 查询条件
+	 *
 	 * @return 产品价格信息
 	 */
 	public Map<String, Object> getProPriceInfo(int prtVendorId, String saleDate) {
@@ -348,8 +347,7 @@ public class BINOLSSPRM73_Service extends BaseService{
 	
 	/**
 	 * 查询产品分类信息
-	 * 
-	 * @param map 查询条件
+	 *
 	 * @return 产品分类信息
 	 */
 	public Map<String, Object> getProTypeInfo(int cateValId) {
@@ -361,8 +359,7 @@ public class BINOLSSPRM73_Service extends BaseService{
 	
 	/**
 	 * 查询促销活动信息
-	 * 
-	 * @param map 查询条件
+	 *
 	 * @return 促销活动信息
 	 */
 	public Map<String, Object> getPromActivityInfo(String campaignCode, int brandInfoId) {
@@ -375,8 +372,7 @@ public class BINOLSSPRM73_Service extends BaseService{
 	
 	/**
 	 * 查询会员活动信息
-	 * 
-	 * @param map 查询条件
+	 *
 	 * @return 会员活动信息
 	 */
 	public Map<String, Object> getMemActivityInfo(String campaignCode, int brandInfoId) {
@@ -386,12 +382,23 @@ public class BINOLSSPRM73_Service extends BaseService{
 		paramMap.put(CherryConstants.IBATIS_SQL_ID, "BINOLSSPRM73.getMemActivityInfo");
 		return (Map<String, Object>) baseServiceImpl.get(paramMap);
 	}
-	
+
+	/**
+	 * 查询优惠券活动信息
+	 *
+	 * @return 会员活动信息
+	 */
+	public Map<String, Object> getCouponActivityInfo(String campaignCode, int brandInfoId) {
+		Map<String, Object> paramMap = new HashMap<String, Object>();
+		paramMap.put("campaignCode", campaignCode);
+		paramMap.put("brandInfoId", brandInfoId);
+		paramMap.put(CherryConstants.IBATIS_SQL_ID, "BINOLSSPRM73.getCouponActivityInfo");
+		return (Map<String, Object>) baseServiceImpl.get(paramMap);
+	}
+
 	/**
 	 * 取得配置数据库品牌List
-	 * 
-	 * @param Map
-	 *			查询条件
+	 *
 	 * @return List
 	 *			配置数据库品牌List
 	 */
@@ -403,9 +410,7 @@ public class BINOLSSPRM73_Service extends BaseService{
 	
 	/**
 	 * 取得品牌信息
-	 * 
-	 * @param Map
-	 *			查询条件
+	 *
 	 * @return Map
 	 *			品牌信息
 	 */
@@ -432,8 +437,7 @@ public class BINOLSSPRM73_Service extends BaseService{
 	
 	/**
 	 * 取得优惠券规则执行
-	 * 
-	 * @param map 检索条件
+	 *
 	 * @return 优惠券规则执行
 	 */
 	public Map<String, Object> getCouponRuleExecInfo(String ruleCode) {
@@ -479,8 +483,7 @@ public class BINOLSSPRM73_Service extends BaseService{
 	
 	/**
 	 * 取得活动发券总数
-	 * 
-	 * @param map 检索条件
+	 *
 	 * @return 会员总数
 	 */
 	public int getAllSendCount(String ruleCode) {
@@ -492,8 +495,7 @@ public class BINOLSSPRM73_Service extends BaseService{
 	
 	/**
 	 * 取得会员发券总数
-	 * 
-	 * @param map 检索条件
+	 *
 	 * @return 会员总数
 	 */
 	public int getAllMemSendCount(String ruleCode, String memCode, String mobile,String bpCode) {
@@ -508,7 +510,7 @@ public class BINOLSSPRM73_Service extends BaseService{
 	
 	/**
 	 * 查询产品分类信息
-	 * @param map
+	 * @param prtVendorId
 	 * @return
 	 */
 	public List<Map<String, Object>> selPrtCateList(int prtVendorId){
@@ -521,7 +523,7 @@ public class BINOLSSPRM73_Service extends BaseService{
 	/**
 	 * 取得等级ID
 	 * 
-	 * @param map 检索条件
+	 * @param levelCode 检索条件
 	 * @return 等级ID
 	 */
 	public int getLevelId(String levelCode) {
@@ -534,11 +536,24 @@ public class BINOLSSPRM73_Service extends BaseService{
 		}
 		return 0;
 	}
-	
+
+
+	/**
+	 * 查询产品分类信息
+	 * @param levelArr
+	 * @return
+	 */
+	public List<Map<String, Object>> getLevelNameList(String[] levelArr){
+		Map<String, Object> map = new HashMap<String, Object>();
+		map.put("levelArr", levelArr);
+		map.put(CherryConstants.IBATIS_SQL_ID, "BINOLSSPRM73.getLevelNameList");
+		return baseServiceImpl.getList(map);
+	}
+
 	/**
 	 * 取得券类型
 	 * 
-	 * @param map
+	 * @param couponNo
 	 * 			查询参数
 	 * @return String
 	 * 			券类型
@@ -567,7 +582,7 @@ public class BINOLSSPRM73_Service extends BaseService{
 	/**
 	 * 更新短信发送记录
 	 * 
-	 * @param 短信发送记录
+	 * @param map
 	 * @return int
 	 */
 	public int updateCouponSmsInfo(Map<String, Object> map){
@@ -607,6 +622,414 @@ public class BINOLSSPRM73_Service extends BaseService{
 	 */
 	public List<Map<String, Object>> getChannelList(Map<String, Object> map){
 		map.put(CherryConstants.IBATIS_SQL_ID, "BINOLSSPRM73.getChannelList");
+		return baseServiceImpl.getList(map);
+	}
+
+
+	/**
+	 * 取得产品名单
+	 * @param map
+	 * @return
+	 */
+	public List<Map<String, Object>> getCouponProductList(Map<String, Object> map){
+		map.put(CherryConstants.IBATIS_SQL_ID, "BINOLSSPRM73.getCouponProductList");
+		return baseServiceImpl.getList(map);
+	}
+
+	/**
+	 * 取得产品分类名单
+	 * @param map
+	 * @return
+	 */
+	public List<Map<String, Object>> getCouponProductCateList(Map<String, Object> map){
+		map.put(CherryConstants.IBATIS_SQL_ID, "BINOLSSPRM73.getCouponProductCateList");
+		return baseServiceImpl.getList(map);
+	}
+
+	/**
+	 * 取得产品ID名单
+	 * @param map
+	 * @return
+	 */
+	public List<Integer> getCouponProductIdList(Map<String, Object> map){
+		map.put(CherryConstants.IBATIS_SQL_ID, "BINOLSSPRM73.getCouponProductIdList");
+		return baseServiceImpl.getList(map);
+	}
+
+	/**
+	 * 获取品牌Code
+	 * @param map
+	 * @return
+     */
+	public String getBrandCode(Map<String,Object> map){
+		map.put(CherryConstants.IBATIS_SQL_ID, "BINOLSSPRM73.getBrandCode");
+		return (String) baseServiceImpl.get(map);
+	}
+
+	/**
+	 * 删除已经导入的柜台
+	 * @param map
+     */
+	public void deleteUploadCounter(Map<String,Object> map){
+		baseServiceImpl.remove(map,"BINOLSSPRM73.deleteUploadCounter");
+	}
+
+	/**
+	 * 插入导入的柜台
+	 * @param list
+     */
+	public void insertUploadCounter(List<Map<String,Object>> list){
+		baseServiceImpl.saveAll(list,"BINOLSSPRM73.insertUploadCounter");
+	}
+
+	/**
+	 * 删除已经导入的会员
+	 * @param map
+	 */
+	public void deleteUploadMember(Map<String,Object> map){
+		baseServiceImpl.remove(map,"BINOLSSPRM73.deleteUploadMember");
+	}
+
+	/**
+	 * 插入导入的柜台
+	 * @param list
+	 */
+	public void insertUploadMember(List<Map<String,Object>> list){
+		baseServiceImpl.saveAll(list,"BINOLSSPRM73.insertUploadMember");
+	}
+
+	/**
+	 * 获取产品厂商ID
+	 * @return
+     */
+	public Integer getProductVenderID(Map<String,Object> map){
+		return (Integer) baseServiceImpl.get(map,"BINOLSSPRM73.getProductVenderID");
+	}
+
+	/**
+	 * 删除已经导入的产品
+	 * @param map
+     */
+	public void deleteUploadProduct(Map<String,Object> map){
+		baseServiceImpl.remove(map,"BINOLSSPRM73.deleteUploadProduct");
+	}
+
+	/**
+	 * 插入导入的柜台
+	 * @param list
+     */
+	public void insertUploadProduct(List<Map<String,Object>> list){
+		baseServiceImpl.saveAll(list,"BINOLSSPRM73.insertUploadProduct");
+	}
+
+	/**
+	 * 插入失败数据
+	 * @param faillist
+     */
+	public void insertFailDataList(List<FailUploadDataDTO> faillist){
+		baseServiceImpl.saveAllObjs(faillist,"BINOLSSPRM73.insertFailDataList");
+	}
+
+	/**
+	 * 获取失败导入总数
+	 * @param map
+	 * @return
+	 */
+	public int getFailUploadCount(Map<String,Object> map){
+		map.put(CherryConstants.IBATIS_SQL_ID, "BINOLSSPRM73.getFailUploadCount");
+		return baseServiceImpl.getSum(map);
+	}
+
+	/**
+	 * 获取失败导入总数
+	 * @param map
+	 * @return
+     */
+	public List<String> getFailUploadList(Map<String,Object> map){
+		map.put(CherryConstants.IBATIS_SQL_ID, "BINOLSSPRM73.getFailUploadList");
+		return baseServiceImpl.getList(map);
+	}
+
+	/**
+	 * 导出execl获取所有失败数据
+	 * @param map
+	 * @return
+     */
+	public List<String> getFailUploadTotalList(Map<String,Object> map){
+		map.put(CherryConstants.IBATIS_SQL_ID, "BINOLSSPRM73.getFailUploadTotalList");
+		return baseServiceImpl.getList(map);
+	}
+
+	/**
+	 * 获取电子券产品明细表的产品数据
+	 * @param map
+	 * @return
+     */
+	public List<Map<String,Object>> getPrtForCouponProductDetail(Map<String,Object> map){
+		map.put(CherryConstants.IBATIS_SQL_ID, "BINOLSSPRM73.getPrtForCouponProductDetail");
+		return baseServiceImpl.getList(map);
+	}
+
+	/**
+	 * 获取电子券产品明细表的导入产品数据
+	 * @param map
+	 * @return
+     */
+	public List<Map<String,Object>> getImpPrtForCouponProductDetail(Map<String,Object> map){
+		map.put(CherryConstants.IBATIS_SQL_ID, "BINOLSSPRM73.getImpPrtForCouponProductDetail");
+		return baseServiceImpl.getList(map);
+	}
+
+	/**
+	 * 获取电子券产品明细表的产品分类数据
+	 * @param map
+	 * @return
+     */
+	public List<Map<String,Object>> getCateForCouponProductDetail(Map<String,Object> map){
+		map.put(CherryConstants.IBATIS_SQL_ID, "BINOLSSPRM73.getCateForCouponProductDetail");
+		return baseServiceImpl.getList(map);
+	}
+
+	/**
+	 *
+	 * 删除电子券产品明细数据
+	 *
+	 * @param map
+	 * 			删除条件
+	 *
+	 */
+	public int delCouponProductDetail(Map<String, Object> map) {
+		map.put(CherryConstants.IBATIS_SQL_ID, "BINOLSSPRM73.delCouponProductDetail");
+		return baseServiceImpl.remove(map);
+	}
+
+	/**
+	 *
+	 * 删除电子券导入产品明细
+	 *
+	 * @param map
+	 * 			删除条件
+	 *
+	 */
+	public int delImpCouponProductDetail(Map<String, Object> map) {
+		map.put(CherryConstants.IBATIS_SQL_ID, "BINOLSSPRM73.delImpCouponProductDetail");
+		return baseServiceImpl.remove(map);
+	}
+
+	/**
+	 *
+	 * 删除电子券导入会员明细
+	 *
+	 * @param map
+	 * 			删除条件
+	 *
+	 */
+	public int delImpCouponMemberDetail(Map<String, Object> map) {
+		map.put(CherryConstants.IBATIS_SQL_ID, "BINOLSSPRM73.delImpCouponMemberDetailNode");
+		return baseServiceImpl.remove(map);
+	}
+
+
+	/**
+	 * 新增电子券产品明细表
+	 * @param list
+	 */
+	public void addCouponProductDetail(List<Map<String, Object>> list) {
+		baseServiceImpl.saveAll(list, "BINOLSSPRM73.addCouponProductDetail");
+	}
+
+
+
+	public List<Map<String,Object>> getCounterList(Map<String,Object> map){
+		map.put(CherryConstants.IBATIS_SQL_ID, "BINOLSSPRM73.getCounterList");
+		return baseServiceImpl.getList(map);
+	}
+
+	public int delCounter(Map<String,Object> map){
+		map.put(CherryConstants.IBATIS_SQL_ID, "BINOLSSPRM73.delCounter");
+		return baseServiceImpl.remove(map);
+	}
+
+	public int updateCounterDetail(Map<String,Object> map){
+		map.put(CherryConstants.IBATIS_SQL_ID, "BINOLSSPRM73.updateCounterDetail");
+		return baseServiceImpl.remove(map);
+	}
+
+	public int updateProductDetail(Map<String,Object> map){
+		map.put(CherryConstants.IBATIS_SQL_ID, "BINOLSSPRM73.updateProductDetail");
+		return baseServiceImpl.remove(map);
+	}
+
+	public int updateMemberDetail(Map<String,Object> map){
+		map.put(CherryConstants.IBATIS_SQL_ID, "BINOLSSPRM73.updateMemberDetail");
+		return baseServiceImpl.remove(map);
+	}
+
+	/**
+	 * 更新柜台明细的IsTemp
+	 * @param map
+	 * @return
+     */
+	public int updateCounterDetailByIsTemp(Map<String,Object> map){
+		map.put(CherryConstants.IBATIS_SQL_ID, "BINOLSSPRM73.updateCounterDetailByIsTemp");
+		return baseServiceImpl.remove(map);
+	}
+
+	/**
+	 * 更新产品明细的IsTemp
+	 * @param map
+	 * @return
+     */
+	public int updateProductDetailByIsTemp(Map<String,Object> map){
+		map.put(CherryConstants.IBATIS_SQL_ID, "BINOLSSPRM73.updateProductDetailByIsTemp");
+		return baseServiceImpl.remove(map);
+	}
+
+	/**
+	 * 更新对象明细的IsTemp
+	 * @param map
+	 * @return
+     */
+	public int updateMemberDetailByIsTemp(Map<String,Object> map){
+		map.put(CherryConstants.IBATIS_SQL_ID, "BINOLSSPRM73.updateMemberDetailByIsTemp");
+		return baseServiceImpl.remove(map);
+	}
+
+	public List<Map<String,Object>> getExeclUploadMemberList(Map<String,Object> map){
+		map.put(CherryConstants.IBATIS_SQL_ID, "BINOLSSPRM73.getExeclUploadMemberList");
+		return baseServiceImpl.getList(map);
+	}
+
+	public int delCounterList(List<String> counterList,Map<String,Object> param){
+		if(counterList != null && counterList.size() > 0){
+			List<Map<String,Object>> resultList=new ArrayList<Map<String, Object>>();
+			for(String organizationID:counterList){
+				Map<String,Object> map=new HashMap<String, Object>();
+				map.putAll(param);
+				map.put("organizationID",organizationID);
+				resultList.add(map);
+			}
+			return baseServiceImpl.remove(resultList,"BINOLSSPRM73.delCounterList");
+		}else{
+			return baseServiceImpl.remove(param,"BINOLSSPRM73.delCounterList");
+		}
+	}
+
+	public void insertCounterChannel(List<String> counterList,Map<String,Object> param){
+			List<Map<String,Object>> resultList=new ArrayList<Map<String, Object>>();
+			for(int i=0;i<counterList.size();i++){
+				Map<String,Object> map=new HashMap<String, Object>();
+				map.putAll(param);
+				map.put("organizationID", ConvertUtil.getString(counterList.get(i)));
+				resultList.add(map);
+			}
+			baseServiceImpl.saveAll(resultList,"BINOLSSPRM73.insertCounterChannel");
+	}
+
+	public int getMemberDetailIsTempCount(Map<String,Object> map){
+		map.put(CherryConstants.IBATIS_SQL_ID,"BINOLSSPRM73.getMemberDetailIsTempCount");
+		return baseServiceImpl.getSum(map);
+	}
+
+	public int getCounterDetailIsTempCount(Map<String,Object> map){
+		map.put(CherryConstants.IBATIS_SQL_ID,"BINOLSSPRM73.getCounterDetailIsTempCount");
+		return baseServiceImpl.getSum(map);
+	}
+
+	public int getProductDetailIsTempCount(Map<String,Object> map){
+		map.put(CherryConstants.IBATIS_SQL_ID,"BINOLSSPRM73.getProductDetailIsTempCount");
+		return baseServiceImpl.getSum(map);
+	}
+
+	public String getCouponCondition(Map<String,Object> map){
+		map.put(CherryConstants.IBATIS_SQL_ID,"BINOLSSPRM73.getCouponCondition");
+		return (String) baseServiceImpl.get(map);
+	}
+
+	public void deleteCounterDetailTemp(Map<String,Object> map){
+		map.put(CherryConstants.IBATIS_SQL_ID,"BINOLSSPRM73.deleteCounterDetailTemp");
+		baseServiceImpl.remove(map);
+	}
+
+	public void deleteProductDetailTemp(Map<String,Object> map){
+		map.put(CherryConstants.IBATIS_SQL_ID,"BINOLSSPRM73.deleteProductDetailTemp");
+		baseServiceImpl.remove(map);
+	}
+
+	public void deleteMemberDetailTemp(Map<String,Object> map){
+		map.put(CherryConstants.IBATIS_SQL_ID,"BINOLSSPRM73.deleteMemberDetailTemp");
+		baseServiceImpl.remove(map);
+	}
+
+	public void deleteCounterDetailForSame(Map<String,Object> map){
+		map.put(CherryConstants.IBATIS_SQL_ID,"BINOLSSPRM73.deleteCounterDetailForSame");
+		baseServiceImpl.remove(map);
+	}
+
+	public void deleteProductDetailForSame(Map<String,Object> map){
+		map.put(CherryConstants.IBATIS_SQL_ID,"BINOLSSPRM73.deleteProductDetailForSame");
+		baseServiceImpl.remove(map);
+	}
+
+	public void deleteMemberDetailForSame(Map<String,Object> map){
+		map.put(CherryConstants.IBATIS_SQL_ID,"BINOLSSPRM73.deleteMemberDetailForSame");
+		baseServiceImpl.remove(map);
+	}
+
+	public void insertCounterOrigin(Map<String,Object> map){
+		map.put(CherryConstants.IBATIS_SQL_ID,"BINOLSSPRM73.insertCounterOrigin");
+		baseServiceImpl.save(map);
+	}
+
+	public void insertProductOrigin(Map<String,Object> map){
+		map.put(CherryConstants.IBATIS_SQL_ID,"BINOLSSPRM73.insertProductOrigin");
+		baseServiceImpl.save(map);
+	}
+
+	public void insertMemberOrigin(Map<String,Object> map){
+		map.put(CherryConstants.IBATIS_SQL_ID,"BINOLSSPRM73.insertMemberOrigin");
+		baseServiceImpl.save(map);
+	}
+
+	public void deleteCounterTempDataByRuleCode(Map<String,Object> map){
+		map.put(CherryConstants.IBATIS_SQL_ID,"BINOLSSPRM73.deleteCounterTempDataByRuleCode");
+		baseServiceImpl.remove(map);
+	}
+
+	public void deleteProductTempDataByRuleCode(Map<String,Object> map){
+		map.put(CherryConstants.IBATIS_SQL_ID,"BINOLSSPRM73.deleteProductTempDataByRuleCode");
+		baseServiceImpl.remove(map);
+	}
+
+	public void deleteMemberTempDataByRuleCode(Map<String,Object> map){
+		map.put(CherryConstants.IBATIS_SQL_ID,"BINOLSSPRM73.deleteMemberTempDataByRuleCode");
+		baseServiceImpl.remove(map);
+	}
+
+	public List<String> getMemberOriginListByMobile(Map<String,Object> map){
+		map.put(CherryConstants.IBATIS_SQL_ID,"BINOLSSPRM73.getMemberOriginListByMobile");
+		return baseServiceImpl.getList(map);
+	}
+
+	public List<Integer> getProductOriginListByProductId(Map<String,Object> map){
+		map.put(CherryConstants.IBATIS_SQL_ID,"BINOLSSPRM73.getProductOriginListByProductId");
+		return baseServiceImpl.getList(map);
+	}
+
+	public List<String> getCounterOriginListByCounterCode(Map<String,Object> map){
+		map.put(CherryConstants.IBATIS_SQL_ID,"BINOLSSPRM73.getCounterOriginListByCounterCode");
+		return baseServiceImpl.getList(map);
+	}
+
+	/**
+	 * 取得会员券活动
+	 *
+	 * @param couponList 检索条件
+	 */
+	public List<Map<String, Object>> getRuleListByCouponNo(List<Map<String, Object>> couponList) {
+		Map<String,Object> map = new HashMap<String,Object>();
+		map.put("couponList",couponList);
+		map.put(CherryConstants.IBATIS_SQL_ID, "BINOLSSPRM73.getRuleListByCouponNo");
 		return baseServiceImpl.getList(map);
 	}
 }

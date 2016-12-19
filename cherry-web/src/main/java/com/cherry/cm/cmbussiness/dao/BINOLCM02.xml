@@ -2546,7 +2546,7 @@
 	<!-- 会员活动信息查询sql -->
 	<sql id="MemCampaignListQuery">
 		<![CDATA[
-			SELECT 
+			SELECT
 				CampaignName AS campaignName,
 				CampaignCode AS campaignCode,
 				CampaignType AS campaignType
@@ -2561,7 +2561,7 @@
 			<isNotEmpty property="campaignKw">
 				(CampaignName LIKE '%'+#campaignKw#+'%' OR CampaignCode LIKE '%'+#campaignKw#+'%') AND
 			</isNotEmpty>
-		<![CDATA[	
+		<![CDATA[
 				CampaignTypeFlag = '1' AND
 				State NOT IN ('0','3')
 		]]>
@@ -2572,6 +2572,49 @@
 				ValidFlag = '1'
 			</isEmpty>
 	</sql>
+
+	<sql id="MemCampaignListQuery2">
+		<![CDATA[
+			SELECT
+				CampaignName AS campaignName,
+				CampaignCode AS campaignCode,
+				CampaignType AS campaignType
+			FROM
+				Campaign.BIN_Campaign
+			WHERE
+	       		BIN_OrganizationInfoID = #organizationInfoId# AND
+		]]>
+		<isNotEmpty property="brandInfoId">
+			BIN_BrandInfoID = #brandInfoId# AND
+		</isNotEmpty>
+		<isNotEmpty property="campaignKw">
+			(CampaignName LIKE '%'+#campaignKw#+'%' OR CampaignCode LIKE '%'+#campaignKw#+'%') AND
+		</isNotEmpty>
+		<![CDATA[
+				CampaignTypeFlag = '1' AND
+				State NOT IN ('0','3')
+		]]>
+		<isNotEmpty property="param" prepend="AND">
+			<isEqual property="param" compareValue="1">
+				ValidFlag = #param#
+				AND CampaignFromDate &lt;= GETDATE()
+				AND CampaignToDate &gt;= GETDATE()
+			</isEqual>
+			<isEqual property="param" compareValue="0">
+				ValidFlag = #param# OR (
+				    CampaignFromDate &gt;= GETDATE()
+					OR CampaignToDate  &lt;= GETDATE()
+				)
+
+			</isEqual>
+		</isNotEmpty>
+		<isEmpty property="param" prepend="AND">
+			ValidFlag = '1'
+			AND CampaignFromDate &lt;= GETDATE()
+			AND CampaignToDate &gt;= GETDATE()
+		</isEmpty>
+	</sql>
+
 	<!-- 查询会员活动信息总数 -->
     <select id="getMemCampaignCount" parameterClass="java.util.HashMap" resultClass="java.lang.Integer">
      	<![CDATA[
@@ -2588,6 +2631,80 @@
 		<include refid="BINOLCM02.MemCampaignListQuery" />
     	<include refid="BINOLCMINC99.pagefooter" />
     </select>
+
+	<!-- 会员活动信息查询sql -->
+	<sql id="couponRuleQuery">
+		<![CDATA[
+			SELECT
+				RuleName AS campaignName,
+				RuleCode AS campaignCode,
+				'DZQHD' AS campaignType
+			FROM
+				Promotion.BIN_PromotionCouponRule
+			WHERE
+	       		BIN_OrganizationInfoID = #organizationInfoId# AND
+		]]>
+		<isNotEmpty property="brandInfoId">
+			BIN_BrandInfoID = #brandInfoId# AND
+		</isNotEmpty>
+		<isNotEmpty property="campaignKw">
+			(RuleName LIKE '%'+#campaignKw#+'%' OR RuleCode LIKE '%'+#campaignKw#+'%') AND
+		</isNotEmpty>
+		<![CDATA[
+				Status = '1'
+		]]>
+		<isNotEmpty property="param" prepend="AND">
+		<![CDATA[
+			ValidFlag = #param#
+		]]>
+		</isNotEmpty>
+		<isEmpty property="param" prepend="AND">
+		<![CDATA[
+			ValidFlag = '1'
+		]]>
+		</isEmpty>
+		<isEqual property="conditionType" compareValue="2">
+			<isNotEmpty property="ruleCode">
+			<![CDATA[
+			AND RuleCode <> #ruleCode#
+			]]>
+			</isNotEmpty>
+		</isEqual>
+	</sql>
+
+	<!-- 查询会员活动信息总数JH -->
+	<select id="getMemCampaignCount2" parameterClass="java.util.HashMap" resultClass="java.lang.Integer">
+		<![CDATA[
+			SELECT COUNT(1) AS count FROM (
+		]]>
+		<include refid="BINOLCM02.MemCampaignListQuery2" />
+		<![CDATA[
+			) SORT_T1
+		]]>
+	</select>
+	<!-- 查询会员活动信息ListJH-->
+	<select id="getMemCampaignList2" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+		<include refid="BINOLCMINC99.pageheader" />
+		<include refid="BINOLCM02.MemCampaignListQuery2" />
+		<include refid="BINOLCMINC99.pagefooter" />
+	</select>
+
+	<!-- 查询会员活动信息总数 -->
+	<select id="getCouponRuleCount" parameterClass="java.util.HashMap" resultClass="java.lang.Integer">
+		<![CDATA[
+			SELECT COUNT(1) AS count FROM (
+		]]>
+		<include refid="BINOLCM02.couponRuleQuery" />
+		<![CDATA[
+			) SORT_T1
+		]]>
+	</select>
+	<!-- 查询会员活动信息List-->
+	<select id="getCouponRuleList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+		<include refid="BINOLCMINC99.pageheader" />
+		<include refid="BINOLCM02.couponRuleQuery" />
+		<include refid="BINOLCMINC99.pagefooter" />
+	</select>
     
     <!-- 促销活动信息查询sql -->
 	<sql id="PrmCampaignListQuery">
@@ -2628,6 +2745,63 @@
 		<include refid="BINOLCM02.PrmCampaignListQuery" />
     	<include refid="BINOLCMINC99.pagefooter" />
     </select>
+
+	<!-- 促销活动信息查询sql -->
+	<sql id="PrmCampaignListQuery2">
+		<![CDATA[
+			SELECT
+				B.ActivityName AS campaignName,
+				B.ActivityCode AS campaignCode,
+				'CXHD' AS campaignType
+			FROM
+				Promotion.BIN_PromotionActivity B
+				LEFT JOIN Promotion.BIN_PromotionRule A
+				ON B.ActivityCode = A.RuleCode
+			WHERE
+				B.BIN_BrandInfoID = #brandInfoId#
+				AND (B.TemplateFlag IS NULL OR B.TemplateFlag='0' OR B.TemplateFlag ='')
+		]]>
+		<isNotEmpty property="campaignKw" prepend="AND">
+			(B.ActivityName LIKE '%'+#campaignKw#+'%' OR B.ActivityCode LIKE '%'+#campaignKw#+'%')
+		</isNotEmpty>
+		<isNotEmpty property="param" prepend="AND">
+			<isEqual property="param" compareValue="1">
+				B.ValidFlag = #param#
+				AND (B.Status = '1' OR B.Status IS NULL)
+				AND A.StartTime &lt;= GETDATE()
+				AND A.EndTime &gt;= GETDATE()
+			</isEqual>
+			<isEqual property="param" compareValue="0">
+				B.ValidFlag = #param# OR (
+					B.Status = '0'
+					OR  A.StartTime &gt;= GETDATE()
+					OR A.EndTime &lt;= GETDATE()
+				)
+			</isEqual>
+		</isNotEmpty>
+		<isEmpty property="param" prepend="AND">
+			B.ValidFlag = '1'
+			AND (B.Status = '1' OR B.Status IS NULL)
+			AND A.StartTime &lt;= GETDATE()
+			AND A.EndTime &gt;= GETDATE()
+		</isEmpty>
+	</sql>
+	<!-- 查询促销活动信息总数 -->
+	<select id="getPrmCampaignCount2" parameterClass="java.util.HashMap" resultClass="java.lang.Integer">
+		<![CDATA[
+			SELECT COUNT(1) AS count FROM (
+		]]>
+		<include refid="BINOLCM02.PrmCampaignListQuery2" />
+		<![CDATA[
+			) SORT_T1
+		]]>
+	</select>
+	<!-- 查询促销活动信息List-->
+	<select id="getPrmCampaignList2" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+		<include refid="BINOLCMINC99.pageheader" />
+		<include refid="BINOLCM02.PrmCampaignListQuery2" />
+		<include refid="BINOLCMINC99.pagefooter" />
+	</select>
     
     <!-- 取得所有部门信息List -->
     <select id="getAllOrgList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">

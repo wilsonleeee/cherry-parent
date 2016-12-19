@@ -1003,7 +1003,12 @@ BINOLSSPRM74.prototype = {
 			var memberPhone_param=$("#memberPhone_param").val();
 			if(memberPhone_param){
 				$("#mobileNo").empty();
-				$("#mobileNo").append(memberPhone_param);
+				var myspan = document.getElementById('mobileNo');
+				if(myspan.tagName == 'SPAN'){
+					$("#mobileNo").text(memberPhone_param);
+				}else{
+					$("#mobileNo").val(memberPhone_param);
+				}
 			}
 			//已经存在优惠券的情况下再添加券(同一种类的券只能添加一张)
 //			var couponLength=$("#coupon_table input:checkbox[checked='checked']").length;
@@ -1485,15 +1490,15 @@ BINOLSSPRM74.prototype = {
 		}
 	},
 	"checkCouponTo":function(){
-		var memberCode=$("#memberCode").html();
+		var memberCode=$("#memberPhone_param").val();
 		var mobileNo;
-		if(memberCode == "VBC000000001" || memberCode == null || memberCode == "" || memberCode == undefined){
-			mobileNo=$("#mobileNo input").val();
+		if(memberCode == null || memberCode == "" || memberCode == undefined ){//非会员情况
+			mobileNo=$("#mobileNo").val();
 		}else{
-			mobileNo=$("#mobileNo").html();
+			mobileNo=$("#memberPhone_param").val();
 		}
-		
-		
+
+
 		var reg = /^0?1[3|4|5|7|8][0-9]\d{8}$/;
 		 if (!reg.test(mobileNo)) {
 //			 $("#dzq2").hide();
@@ -1594,19 +1599,23 @@ BINOLSSPRM74.prototype = {
                     var $ZGQArr=coupon_map.ZGQArr;
                     //校验是否存在多张同一类型的券
                     var flag=0;
+				 	var DJQorZKQFlag=0;
                     $("#promotion_table #coupon_table tr").each(function(){
                     	var couponType_old=$(this).find("td:hidden input[name='couponType']").val();
                     	var checkFlag_old=$(this).find("input[type='checkbox']").is(":checked");
                     	if(couponType == couponType_old && checkFlag_old){
                     		flag=1;
-                    		return false;
                     	}
+						if((couponType_old == '1'|| couponType_old == '5') && checkFlag_old && (couponType == '1'|| couponType == '5')){
+							DJQorZKQFlag=1;
+						}
                     });
-                    if(flag == 1){
+				 	//新增逻辑代金券与折扣券不能同时使用
+                    if(flag == 1 || DJQorZKQFlag == 1){
                     	BINOLSSPRM74.showErrorMessage("同一类型的券您只能使用一张");
         				return false;
                     }
-                    
+
                 	if(couponType == 3){
                 		var flag1=0;
                         //检验添加为资格券类型时，有没有对应的活动可以勾选

@@ -288,6 +288,12 @@ public class CouponConstains {
 	
 	/** 会员导入sheet名 */
 	public final static String MEMBER_SHEET_NAME = "会员数据";
+
+	/***/
+	public final static String COUNTER_SHEET_NAME_2 = "柜台数据";
+
+	/***/
+	public final static String PRODUCT_SHEET_NAME = "产品数据";
 	
 	/** 单次导入上限 */
 	public final static int UPLOAD_MAX_COUNT = 20000;
@@ -297,9 +303,18 @@ public class CouponConstains {
 	
 	/** 购买门店：导入 */
 	public final static String COUNTERKBN_1 = "1";
+
+	/** 发券对象：请选择 */
+	public final static String MEMBERKBN_0 = "0";
 	
 	/** 发券对象：导入 */
 	public final static String MEMBERKBN_1 = "1";
+
+	/** 发券对象 等级 */
+	public final static String MEMBERKBN_2 = "2";
+
+	/** 产品类型：导入 */
+	public final static String PRODUCTKBN_1 = "3";
 	
 	/** 导入模式：新增 */
 	public final static String UPMODE_1 = "1";
@@ -312,6 +327,12 @@ public class CouponConstains {
 	
 	/** 条件类型：使用门槛 */
 	public final static String CONDITIONTYPE_2 = "2";
+
+	/** 条件类型：白名单 */
+	public final static String FILTERTYPE_1 = "1";
+
+	/** 条件类型：黑名单 */
+	public final static String FILTERTYPE_2 = "2";
 	
 	/** 券类型：代金券 */
 	public final static String COUPONTYPE_1 = "1";
@@ -321,7 +342,21 @@ public class CouponConstains {
 	public final static String COUPONTYPE_3 = "3";
 	/** 券类型：折扣券 */
 	public final static String COUPONTYPE_5 = "5";
-	
+
+	/** 券使用门槛是否相同 */
+	public final static String USECOND_MODE = "mode";
+	/** 券使用门槛是否相同：相同 */
+	public final static String USECOND_MODE_1 = "1";
+	/** 券使用门槛是否相同：不同 */
+	public final static String USECOND_MODE_2 = "2";
+
+	/** 券使用门槛是否相同 */
+	public final static String USECOND_ISSAME_FLAG = "isSameFlag";
+	/** 券使用门槛是否相同：不相同 */
+	public final static String USECOND_ISSAME_FLAG_0 = "0";
+	/** 券使用门槛是否相同：相同 */
+	public final static String USECOND_ISSAME_FLAG_1 = "1";
+
 	/** 接口类型 ：查询*/
 	public final static int IF_TYPE_1 = 1;
 	
@@ -355,6 +390,31 @@ public class CouponConstains {
 		private int key;
 		private String content;
 	}
-	
+
+	/** 电子券导入失败操作区分 1柜台 2产品 3会员  */
+	public static final String Fail_OperateType_1 = "1";
+
+	public static final String Fail_OperateType_2 = "2";
+
+	public static final String Fail_OperateType_3 = "3";
+
+	/** 电子券导入失败resultCode -1 */
+	public static final String Fail_Flag = "-1";
+
+	public static final String RESULT_CODE = "resultCode";
+
+	public static final String RESULT_MESSAGE = "resultMsg";
+
+	public static final String SAMEUSECONTENTNO ="-1";
+
+	/**  使用门槛模式 1为单一模式 2为多种模式 */
+	public static final String MODE_1 = "1";
+
+	/** 明细表数据区分 1 正式 2 临时 3 使用门槛临时数据 */
+	public static final String ISTEMP_1 = "1";
+
+	public static final String ISTEMP_2 = "2";
+
+	public static final String ISTEMP_3 = "3";
 
 }

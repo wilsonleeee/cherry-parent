@@ -22,7 +22,8 @@
         		|| url.indexOf("BINBAT167_init.action")!=-1
 				|| url.indexOf("BINBAT168_init.action")!=-1
         		|| url.indexOf("BINBECTSMG09_init.action")!=-1 || url.indexOf("BINBECTSMG10_init.action")!=-1
-        		|| url.indexOf("BINBESSPRM08_init.action")!=-1) {
+        		|| url.indexOf("BINBESSPRM08_init.action")!=-1
+				|| url.indexOf("BINBAT173_init.action")!=-1) {
         	url = url + "?" + $('#batchListForm').serialize();
         	window.open(url,"","height=800,width=1000,scrollbars=yes,childModel=1");
         } else if(url.indexOf("BINBEMBVIS02_init.action")!= -1) {

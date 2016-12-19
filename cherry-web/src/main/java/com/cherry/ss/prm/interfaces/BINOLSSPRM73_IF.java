@@ -12,11 +12,11 @@
  */	
 package com.cherry.ss.prm.interfaces;
 
-import java.util.List;
-import java.util.Map;
-
 import com.cherry.ss.prm.dto.CouponRuleDTO;
 import com.cherry.ss.prm.dto.ResultDTO;
+
+import java.util.List;
+import java.util.Map;
 
 /**
  * 优惠券规则IF
@@ -146,7 +146,7 @@ public interface BINOLSSPRM73_IF {
 	 * @return
 	 */
 	public void condSetting(Map<String, Object> map, int brandInfoId);
-	
+
 	/**
 	 * 设置内容等条件
 	 * 
@@ -154,6 +154,14 @@ public interface BINOLSSPRM73_IF {
 	 * @return
 	 */
 	public void contentSetting(Map<String, Object> map, int brandInfoId);
+
+	/**
+	 * 设置内容等条件
+	 *
+	 * @param map
+	 * @return
+	 */
+	public void contentSetting2(Map<String, Object> map, int brandInfoId);
 	/**
 	 * 批量生成与会员绑定优惠券时，获取的相关信息
 	 * @param map
@@ -164,4 +172,163 @@ public interface BINOLSSPRM73_IF {
 	
 	public List<Map<String, Object>> getChannelList(Map<String, Object> map) throws Exception;
 
+	/**
+	 * 券规则设置导入柜台通用
+	 * @param map
+	 * @return
+	 * @throws Exception
+     */
+	public Map<String,Object> tran_importCounterExecl(Map<String, Object> map) throws Exception;
+
+	/**
+	 * 券规则设置导入产品通用
+	 * @param map
+	 * @return
+	 * @throws Exception
+     */
+	public Map<String,Object> tran_importProductExecl(Map<String, Object> map) throws Exception;
+
+	/**
+	 * 券规则设置导入会员通用
+	 * @param map
+	 * @return
+	 * @throws Exception
+	 */
+	public Map<String,Object> tran_importMemberExecl(Map<String, Object> map) throws Exception;
+
+	/**
+	 * 获取失败导入总数
+	 * @param map
+	 * @return
+     */
+	public int getFailUploadCount(Map<String,Object> map);
+
+	/**
+	 * 获取导入失败List
+	 * @param map
+	 * @return
+	 * @throws Exception
+     */
+	public List<Map<String,Object>> getFailUploadList(Map<String,Object> map) throws Exception;
+
+//	/**
+//	 * 获取导入失败产品List
+//	 * @param map
+//	 * @return
+//	 * @throws Exception
+//	 */
+//	public List<Map<String,Object>> getFailUploadProductList(Map<String,Object> map) throws Exception;
+//
+//	/**
+//	 * 获取导入失败会员List
+//	 * @param map
+//	 * @return
+//	 * @throws Exception
+//	 */
+//	public List<Map<String,Object>> getFailUploadMemberList(Map<String,Object> map) throws Exception;
+
+	/**
+	 * 获取电子券产品明细表数据
+	 * @param map
+	 * @return
+	 */
+	public List<Map<String,Object>> getPrtForCouponProductDetail(Map<String,Object> map);
+
+	/**
+	 * 获取电子券产品明细表导入的数据(有2先取2,无2取1)
+	 * @param map
+	 * @return
+	 */
+	public List<Map<String,Object>> getImpPrtForCouponProductDetail(Map<String,Object> map);
+
+	/**
+	 * 获取电子券产品明细表数据
+	 * @param map
+	 * @return
+	 */
+	public List<Map<String,Object>> getCateForCouponProductDetail(Map<String,Object> map);
+	/**
+	 * 获取柜台列表（黑名单/白名单）(发送门槛/使用门槛)
+	 * @param map
+	 * @return
+	 * @throws Exception
+     */
+	public List<Map<String,Object>> getCounterList(Map<String,Object> map) throws Exception ;
+
+	/**
+	 * 删除柜台列表（黑名单/白名单）(发送门槛/使用门槛)
+	 * @param map
+	 * @return
+	 * @throws Exception
+     */
+	public int delCounter(Map<String,Object> map) throws Exception ;
+
+	/**
+	 * 获取会员导入列表List
+	 * @param map
+	 * @return
+	 * @throws Exception
+     */
+	public List<Map<String,Object>> getExeclUploadMemberList(Map<String,Object> map) throws Exception;
+
+	/**
+	 *
+	 * 删除电子券产品明细数据
+	 *
+	 * @param map
+	 * 			删除条件
+	 *
+	 */
+	public int delCouponProductDetail(Map<String, Object> map);
+
+	/**
+	 *
+	 * 删除电子券导入产品明细数据
+	 *
+	 * @param map
+	 * 			删除条件
+	 *
+	 */
+	public int tran_delImpCouponProductDetail(Map<String, Object> map);
+
+	/**
+	 * 删除电子券导入会员明细
+	 * @param map
+	 * 删除条件
+	 */
+	public int tran_delImpCouponMemberDetail(Map<String, Object> map);
+
+	/**
+	 * 新增电子券产品明细表
+	 * @param list
+	 */
+	public void addCouponProductDetail(List<Map<String, Object>> list);
+
+	public void setMemberList(List<Map<String,Object>> levelList,Map<String,Object> sendCond,String ruleCode);
+
+	public byte[] exportExcel(Map<String, Object> map) throws Exception;
+
+	/**
+	 * 根据ruleCode清除明细表中isTemp = 2的临时数据
+	 * @param ruleCode
+     */
+	public void deleteTempDataByRuleCode(String ruleCode);
+
+	public int removeCntLi(Map<String,Object> param);
+
+	public List<Map<String,Object>> seachChannelWay(Map<String,Object> param);
+
+	/**
+	 * 使用门槛-确定后处理导入数据的问题
+	 * @param param
+	 * @return
+     */
+	public String tran_confirmUseCond(Map<String,Object> param);
+
+	/**
+	 * 使用门槛-取消后处理导入数据的问题
+	 * @param param
+	 * @return
+     */
+	public String tran_cancelUseCond(Map<String,Object> param);
 }

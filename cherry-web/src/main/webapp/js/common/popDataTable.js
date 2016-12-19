@@ -3913,3 +3913,107 @@ function popCampObjList(url, param, value, callback) {
 		callback: searchInitCallback
 	});
 }
+
+function popDataTableOfCampaignList2(url, param, value, callback, valueArr){
+	if($("#searchCampaignDialog").length == 0) {
+		$("body").append('<div style="display:none" id="searchCampaignDialog"></div>');
+	} else {
+		$("#searchCampaignDialog").empty();
+	}
+	var searchInitCallback = function(msg) {
+		$("#searchCampaignDialog").html(msg);
+		var dialogSetting = {
+			dialogInit: "#searchCampaignDialog",
+			text: msg,
+			width: 	600,
+			height: 400,
+			title: 	$("#searchCampaignDialog").find("#searchCampaignTitle").text(),
+			confirm: $("#searchCampaignDialog").find("#dialogConfirm").text(),
+			cancel: $("#searchCampaignDialog").find("#dialogCancel").text(),
+			confirmEvent: function(){
+				if(typeof(callback) == "function") {
+					callback("searchCampaignDataTable");
+				}
+				removeDialog("#searchCampaignDialog");
+			},
+			cancelEvent: function(){removeDialog("#searchCampaignDialog");}
+		};
+		openDialog(dialogSetting);
+
+		if(oTableArr[77]) {
+			oTableArr[77] = null;
+		}
+		var searchUrl = $("#searchCampaignListUrl").attr("href")+"?"+getSerializeToken();
+		if(param) {
+			searchUrl += "&" + param;
+		}
+		var tableSetting = {
+			// 表格ID
+			tableId : '#searchCampaignDataTable',
+			// 一页显示页数
+			iDisplayLength:5,
+			// 数据URL
+			url : searchUrl,
+			// 表格默认排序
+			aaSorting : [[ 2, "desc" ]],
+			// 表格列属性设置
+			aoColumns : [  { "sName": "campaignCode", "sWidth": "5%", "bSortable": false},
+				{ "sName": "campaignName", "sWidth": "40%"},
+				{ "sName": "campaignCode", "sWidth": "40%"},
+				{ "sName": "campaignType", "sWidth": "15%"}],
+			index:77,
+			colVisFlag:false,
+			fnDrawCallback : function() {
+				if (valueArr) {
+					for (var j in valueArr) {
+						$('#searchCampaignDataTable').find(':input').each(function() {
+							if($(this).val() == valueArr[j]) {
+								$(this).prop('checked', true);
+							}
+						});
+					}
+				} else if(value) {
+					$('#searchCampaignDataTable').find(':input').each(function() {
+						if($(this).val() == value) {
+							$(this).prop('checked', true);
+							return false;
+						}
+					});
+				}
+				// 全选
+				var $ckAll = $('#camp_checkAll');
+				if ($ckAll.length == 1) {
+					$ckAll.prop("checked",false);
+					var $ck = $("#searchCampaignDataBody").find("input[name='campaignCode']");
+					if ($ck.length > 0) {
+						$ckAll.bind('click', function() {
+							if ($(this).is(":checked")) {
+								$ck.prop("checked",true);
+							} else {
+								$ck.prop("checked",false);
+							}
+						});
+						$ck.bind('click', function() {
+							if ($("#searchCampaignDataBody").find("input[name='campaignCode']:not(:checked)").length == 0) {
+								$ckAll.prop("checked",true);
+							} else {
+								$ckAll.prop("checked",false);
+							}
+						});
+					}
+				}
+			}
+		};
+		// 调用获取表格函数
+		getTable(tableSetting);
+	};
+	var p = null;
+	if (param && param.indexOf("param2") >= 0) {
+		p = param;
+	}
+	cherryAjaxRequest({
+		url: url,
+		param: p,
+		callback: searchInitCallback
+	});
+}

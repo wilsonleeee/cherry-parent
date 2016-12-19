@@ -1895,9 +1895,83 @@ public class CherryConstants {
 	/** 会员等级状态：无效*/
 	public static final String LEVELSTATUS_3 = "3";
 
+	/** 产品选择类型: 请选择 */
+	public static final String productKbn_all = "0";
+
+	/** 产品选择类型: 选择分类 */
+	public static final String productKbn_selType = "1";
+
+	/** 产品选择类型: 选择产品 */
+	public static final String productKbn_selPrt = "2";
+
+	/** 产品选择类型: 导入产品 */
+	public static final String productKbn_impPrt = "3";
+
+	/** 门槛条件类别 */
+	public static final String conditionType= "conditionType";
+
+	/** 门槛条件类别:  发送门槛 */
+	public static final String conditionType_s = "1";
+
+	/** 门槛条件类别:  使用门槛 */
+	public static final String conditionType_u = "2";
+
+	/** 电子券 过滤类型 */
+	public static final String filterType = "filterType";
+
+	/** 过滤类型: 白名单 */
+	public static final String filterType_w = "1";
+
+	/** 过滤类型: 黑名单 */
+	public static final String filterType_b = "2";
+
+	/** 产品对象类型: 产品 */
+	public static final String prtObjType_prt = "1";
+
+	/** 产品对象类型: 产品 */
+	public static final String prtObjType_type = "2";
+
+	/** 发送门槛的默认contentNo */
+	public static final String sendCond_defContentNo = "0";
+
+	/** 柜台选择类型: 请选择 */
+	public static final String counterKbn_all = "0";
+
+	/** 柜台选择类型: 导入门店 */
+	public static final String counterKbn_impType = "1";
+
+	/** 柜台选择类型: 按渠道指定柜台 */
+	public static final String counterKbn_channel2Counter = "2";
+
+	/** 柜台选择类型: 按渠道*/
+	public static final String counterKbn_channel = "3";
+
+	/** 卡包使用门槛相同的contentNo值 */
+	public static final String useCond_9DefContentNo = "-1";
+
+	/** 对象选择类型: 导入会员 */
+	public static final String memberKbn_impMem = "1";
+
+	/** 电子券明细数据 是否临时数据 1: 正式 */
+	public static final String coupouDetailIsTemp = "isTemp";
+
+	/** 电子券明细数据 是否临时数据 1: 正式 */
+	public static final String coupouDetailIsTemp_1 = "1";
+
+	/** 电子券明细数据 是否临时数据 2: 临时 */
+	public static final String coupouDetailIsTemp_2 = "2";
+
+	/** 电子券明细数据 是否临时数据 3: 使用门槛导入 */
+	public static final String coupouDetailIsTemp_3 = "3";
+
+	/** 电子券使用门槛时间  指定日期 */
+	public static final String useTimeType_0 = "0";
+	/** 电子券使用门槛时间  参考发券日期 */
+	public static final String useTimeType_1 = "1";
+
 	/** 权限类型等级定义 */
 	public static enum PRIVILEGETYPE {
-		
+
 		// 只包括管辖范围
 		PRIVILEGETYPE0(0, 1),
 		// 包括管辖和关注范围
@@ -1906,7 +1980,7 @@ public class CherryConstants {
 		PRIVILEGETYPE2(2, 2),
 		// 包括管辖和关注范围(所属部门除外)
 		PRIVILEGETYPE3(3, 3);
-		
+
 		public static int getGradeByType(int type) {
 			
 			PRIVILEGETYPE[] privilegeTypes = PRIVILEGETYPE.values();
@@ -2658,5 +2732,4 @@ public class CherryConstants {
 	//MF天猫加密密钥
 	public static final String TMALLENCRYPT="Zloft2";
 
-	
 }

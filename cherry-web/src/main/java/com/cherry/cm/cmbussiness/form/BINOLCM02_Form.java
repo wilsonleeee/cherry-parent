@@ -258,6 +258,26 @@ public class BINOLCM02_Form extends DataTable_BaseForm{
 	/**自由盘点的标志*/
 	private String freeCount;
 
+	private String ruleCode;
+
+	private String conditionType;
+
+	public String getConditionType() {
+		return conditionType;
+	}
+
+	public void setConditionType(String conditionType) {
+		this.conditionType = conditionType;
+	}
+
+	public String getRuleCode() {
+		return ruleCode;
+	}
+
+	public void setRuleCode(String ruleCode) {
+		this.ruleCode = ruleCode;
+	}
+
 	public List<Map<String, Object>> getPopProductInfoTwoList() {
 		return popProductInfoTwoList;
 	}

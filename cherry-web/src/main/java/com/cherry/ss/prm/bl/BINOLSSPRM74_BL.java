@@ -978,7 +978,7 @@ public class BINOLSSPRM74_BL implements BINOLSSPRM74_IF {
 			main_map.put("MP", form.getMemberPhone());
 			main_map.put("originalAmount", amount);//折前金额
 			main_map.put("totalQuantity", totalQuantity);//商品总数量
-			main_map.put("totalAmount", 0);//应收总金额
+			main_map.put("TotalAmount", 0);//应收总金额
 			main_map.put("discountAmount", -amount);//总优惠金额
 			//代物券暂时没有与积分挂钩默认写入0
 			main_map.put("computedPoint", 0);
@@ -1013,12 +1013,14 @@ public class BINOLSSPRM74_BL implements BINOLSSPRM74_IF {
 			String MemberPhone = ConvertUtil.getString(main_map.get("MP"));
 			String bpCode = ConvertUtil.getString(main_map.get("BP"));
 			//代物券核券操作
-			for (Map<String, Object> coupon : coupon_list) {
-				coupon.put("TradeNoIF", TN);
-				coupon.put("MemberCode", MemberCode);
-				coupon.put("MemberPhone", MemberPhone);
-				coupon.put("bpCode", bpCode);
-				this.updateProCoupon(coupon);
+			if(coupon_list != null && coupon_list.size() > 0){
+				for (Map<String, Object> coupon : coupon_list) {
+					coupon.put("TradeNoIF", TN);
+					coupon.put("MemberCode", MemberCode);
+					coupon.put("MemberPhone", MemberPhone);
+					coupon.put("bpCode", bpCode);
+					this.updateProCoupon(coupon);
+				}
 			}
 		}
 	}

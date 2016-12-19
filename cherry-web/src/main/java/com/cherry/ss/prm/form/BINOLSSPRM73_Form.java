@@ -12,13 +12,14 @@
  */	
 package com.cherry.ss.prm.form;
 
+import com.cherry.cm.form.DataTable_BaseForm;
+import com.cherry.ss.prm.dto.CouponRuleDTO;
+import com.cherry.ss.prm.dto.FailUploadDataDTO;
+
 import java.io.File;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-
-import com.cherry.cm.form.DataTable_BaseForm;
-import com.cherry.ss.prm.dto.CouponRuleDTO;
 
 /**
  * 优惠券规则一览Form
@@ -81,7 +82,91 @@ public class BINOLSSPRM73_Form extends DataTable_BaseForm{
 	private String batchMode;
 	
 	private List<Map<String, Object>> levelList;
-	
+
+	/** exec导入type */
+	private int execLoadType;
+
+	/** 子券No */
+	private int contentNo;
+
+	/** 过滤类型 黑白名单*/
+	private String filterType;
+
+	/** 目标div */
+	private String targetDiv;
+
+	/** 失败导入DTO */
+	private FailUploadDataDTO failUploadDataDTO;
+
+	/** 产品对象类型 */
+	private String prtObjId;
+
+	/** 产品对象ID */
+	private String prtObjType;
+
+	/** 导入失败list */
+	private List<Map<String,Object>> failList;
+
+	/** 会员手机号码 */
+	private String mobile;
+
+	public String getMobile() {
+		return mobile;
+	}
+
+	public void setMobile(String mobile) {
+		this.mobile = mobile;
+	}
+
+	public List<Map<String, Object>> getFailList() {
+		return failList;
+	}
+
+	public void setFailList(List<Map<String, Object>> failList) {
+		this.failList = failList;
+	}
+
+	public String getPrtObjId() { return prtObjId;	}
+
+	public void setPrtObjId(String prtObjId) {this.prtObjId = prtObjId;}
+
+	public String getPrtObjType() {return prtObjType;}
+	private String organizationID;
+
+	public void setPrtObjType(String prtObjType) {
+		this.prtObjType = prtObjType;
+	}
+	public FailUploadDataDTO getFailUploadDataDTO() {
+		return failUploadDataDTO;
+	}
+
+	public void setFailUploadDataDTO(FailUploadDataDTO failUploadDataDTO) {
+		this.failUploadDataDTO = failUploadDataDTO;
+	}
+
+	public int getContentNo() {
+		return contentNo;
+	}
+
+	public void setContentNo(int contentNo) {
+		this.contentNo = contentNo;
+	}
+
+	public String getTargetDiv() {
+		return targetDiv;
+	}
+
+	public void setTargetDiv(String targetDiv) {
+		this.targetDiv = targetDiv;
+	}
+
+	public int getExecLoadType() {
+		return execLoadType;
+	}
+
+	public void setExecLoadType(int execLoadType) {
+		this.execLoadType = execLoadType;
+	}
 	public int getBatchCount() {
 		return batchCount;
 	}
@@ -238,5 +323,17 @@ public class BINOLSSPRM73_Form extends DataTable_BaseForm{
 	}
 	public void setMemberList(List<Map<String, Object>> memberList) {
 		this.memberList = memberList;
+	}
+	public String getFilterType() {
+		return filterType;
+	}
+	public void setFilterType(String filterType) {
+		this.filterType = filterType;
+	}
+	public String getOrganizationID() {
+		return organizationID;
+	}
+	public void setOrganizationID(String organizationID) {
+		this.organizationID = organizationID;
 	}
 }

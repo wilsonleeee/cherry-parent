@@ -61,19 +61,28 @@
 	<![CDATA[
 		SELECT
 			A.CounterCode AS counterCode,
-			B.DepartName AS counterName
+			B.DepartName AS counterName,
+			A.BIN_OrganizationID AS organizationID
 		FROM 
 			Promotion.BIN_CouponCounterDetail A WITH(NOLOCK) LEFT JOIN
 			Basis.BIN_Organization B WITH(NOLOCK)
 			ON (A.BIN_OrganizationID = B.BIN_OrganizationID)
 		WHERE
-			A.RuleCode = #ruleCode#
+			A.RuleCode = #ruleCode# AND
+			A.FilterType = #filterType#
 		]]>
 		<isNotEmpty prepend="AND" property="counterKey">
 		<![CDATA[(A.CounterCode LIKE '%'+#counterKey#+'%' OR B.DepartName LIKE '%'+#counterKey#+'%')]]>
 		</isNotEmpty>
+		<isNotEmpty prepend="AND" property="contentNo">
+			<![CDATA[ A.ContentNo=#contentNo# ]]>
+		</isNotEmpty>
+		<isNotEmpty prepend="AND" property="isTemp">
+			<![CDATA[ A.IsTemp=#isTemp# ]]>
+		</isNotEmpty>
 		<![CDATA[
 		AND A.ConditionType = #conditionType#
+		AND A.IsTemp = #isTemp#
 		AND A.ValidFlag = '1']]>
 	</sql>
 	
@@ -136,7 +145,8 @@
 			ValidMode AS validMode,
 			isGive AS isGive,
 			ValidFlag AS validFlag,
-			CouponFlag AS couponFlag
+			CouponFlag AS couponFlag,
+			ContentNoMax AS maxContentNo
 		FROM Promotion.BIN_PromotionCouponRule
 		WHERE
 			RuleCode = #ruleCode#
@@ -257,6 +267,7 @@
 		           ValidMode = #validMode#,
 		           isGive = #isGive#,
 		           CouponFlag = #couponFlag#,
+		           ContentNoMax = #maxContentNo#,
 		]]>	
 		    <include refid="BINOLCMINC99.updateSql" />	
 		<![CDATA[			
@@ -446,10 +457,106 @@
 				Promotion.BIN_CouponCounterDetail						
 			WHERE					
 				RuleCode = #ruleCode# AND
-				ConditionType = #conditionType#
-		]]>
+				ConditionType = #conditionType# AND
+				FilterType = #filterType# AND
+				ContentNo=#contentNo# AND
+				IsTemp=#isTemp#
+				]]>
+				<isNotEmpty prepend="AND" property="organizationID">
+					<![CDATA[ BIN_OrganizationID=#organizationID# ]]>
+				</isNotEmpty>
     </delete>
-    
+
+	<!-- 更改电子券门店明细表 -->
+    <update id="updateCounterDetail" parameterClass="java.util.HashMap">
+		UPDATE
+			Promotion.BIN_CouponCounterDetail
+		SET
+			IsTemp='1'
+		WHERE
+			RuleCode = #ruleCode# AND
+			ConditionType = #conditionType# AND
+			FilterType = #filterType# AND
+			ContentNo=#contentNo# AND
+			IsTemp=#isTemp#
+	</update>
+
+	<!-- 更改电子券产品明细表 -->
+	<update id="updateProductDetail" parameterClass="java.util.HashMap">
+		UPDATE
+		Promotion.BIN_CouponProductDetail
+		SET
+		IsTemp='1'
+		WHERE
+		RuleCode = #ruleCode# AND
+		ConditionType = #conditionType# AND
+		FilterType = #filterType# AND
+		ContentNo=#contentNo# AND
+		IsTemp=#isTemp#
+	</update>
+
+
+	<!-- 更改电子券会员明细表 -->
+	<update id="updateMemberDetail" parameterClass="java.util.HashMap">
+		<![CDATA[
+			UPDATE
+				Promotion.BIN_CouponMemeberDetail
+			SET
+				IsTemp='1'
+			WHERE
+				RuleCode = #ruleCode# AND
+				ConditionType = #conditionType# AND
+				FilterType = #filterType# AND
+				ContentNo=#contentNo# AND
+				IsTemp=#isTemp#
+		]]>
+	</update>
+
+	<!-- 更改电子券门店明细表 -->
+    <update id="updateCounterDetailByIsTemp" parameterClass="java.util.HashMap">
+		UPDATE
+			Promotion.BIN_CouponCounterDetail
+		SET
+			IsTemp= #newIsTemp#
+		WHERE
+			RuleCode = #ruleCode# AND
+			ConditionType = #conditionType# AND
+			FilterType = #filterType# AND
+			ContentNo=#contentNo# AND
+			IsTemp=#oldIsTemp#
+	</update>
+
+	<!-- 更改电子券产品明细表 -->
+	<update id="updateProductDetailByIsTemp" parameterClass="java.util.HashMap">
+		UPDATE
+		Promotion.BIN_CouponProductDetail
+		SET
+		IsTemp= #newIsTemp#
+		WHERE
+		RuleCode = #ruleCode# AND
+		ConditionType = #conditionType# AND
+		FilterType = #filterType# AND
+		ContentNo=#contentNo# AND
+		IsTemp=#oldIsTemp#
+	</update>
+
+
+	<!-- 更改电子券会员明细表 -->
+	<update id="updateMemberDetailByIsTemp" parameterClass="java.util.HashMap">
+		<![CDATA[
+			UPDATE
+				Promotion.BIN_CouponMemeberDetail
+			SET
+				IsTemp= #newIsTemp#
+			WHERE
+				RuleCode = #ruleCode# AND
+				ConditionType = #conditionType# AND
+				FilterType = #filterType# AND
+				ContentNo=#contentNo# AND
+				IsTemp=#oldIsTemp#
+		]]>
+	</update>
+
     <!-- 取得等级列表  -->
     <select id="getLevelList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
        	<![CDATA[
@@ -573,7 +680,20 @@
 				BIN_BrandInfoID = #brandInfoId#
 		]]>	
     </select>
-    
+
+	<!-- 查询优惠券活动信息 -->
+	<select id="getCouponActivityInfo" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+		<![CDATA[
+			SELECT
+				RuleName AS campName
+			FROM
+				promotion.BIN_PromotionCouponRule
+			WHERE
+				RuleCode = #campaignCode# AND
+				BIN_BrandInfoID = #brandInfoId#
+		]]>
+	</select>
+
     <!-- 配置数据库品牌信息 -->
 	<resultMap id="BINOLSSPRM73.ConfBrandList" class="java.util.HashMap">
 		<result property="orgCode" column="OrgCode"/>							<!-- 组织Code -->
@@ -690,29 +810,92 @@
 				RuleCode = #ruleCode# AND
 				CounterCode = #counterCode# AND
 				ConditionType = #conditionType# AND
-				ValidFlag = '1'
-		]]>										
+				FilterType = #filterType# AND
+				ValidFlag = '1' AND
+				IsTemp = '1'
+		]]>
+		<isNotEmpty property="contentNo" prepend="AND">
+			ContentNo = #contentNo#
+		</isNotEmpty>
     </select>
+
+
+	<!-- 取得产品名单  -->
+	<select id="getCouponProductList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+		<![CDATA[
+			SELECT
+				PrtObjId AS prtVendorId,
+				PrtObjNum AS proNum
+			FROM
+				Promotion.BIN_CouponProductDetail
+			WHERE
+				RuleCode = #ruleCode# AND
+				ConditionType = #conditionType# AND
+				FilterType = #filterType# AND
+				PrtObjType = '1' AND
+				ValidFlag = '1' AND
+				IsTemp = '1'
+		]]>
+		<isNotEmpty property="contentNo" prepend="AND">
+			ContentNo = #contentNo#
+		</isNotEmpty>
+	</select>
+	<!-- 取得产品分类名单  -->
+	<select id="getCouponProductCateList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+		<![CDATA[
+			SELECT
+				PrtObjId AS cateValId,
+				PrtObjNum AS cateNum
+			FROM
+				Promotion.BIN_CouponProductDetail
+			WHERE
+				RuleCode = #ruleCode# AND
+				ConditionType = #conditionType# AND
+				FilterType = #filterType# AND
+				PrtObjType = '2' AND
+				ValidFlag = '1' AND
+				IsTemp = '1'
+		]]>
+		<isNotEmpty property="contentNo" prepend="AND">
+			ContentNo = #contentNo#
+		</isNotEmpty>
+	</select>
+
+	<!-- 取得产品ID名单  -->
+	<select id="getCouponProductIdList" parameterClass="java.util.HashMap" resultClass="java.lang.Integer">
+		<![CDATA[
+			SELECT
+				PrtObjId
+			FROM
+				Promotion.BIN_CouponProductDetail
+			WHERE
+				RuleCode = #ruleCode# AND
+				ConditionType = #conditionType# AND
+				FilterType = #filterType# AND
+				PrtObjType = '1' AND
+				ValidFlag = '1' AND
+				IsTemp = '1'
+		]]>
+		<isNotEmpty property="contentNo" prepend="AND">
+			ContentNo = #contentNo#
+		</isNotEmpty>
+	</select>
     
     <!-- 取得会员总数  -->
     <select id="getMemCount" parameterClass="java.util.HashMap" resultClass="java.lang.Integer">
     	<![CDATA[
-			SELECT
-				COUNT(1)
-			FROM
-				Promotion.BIN_CouponMemeberDetail
-			WHERE
-				RuleCode = #ruleCode# AND
-		]]>	
-		<isEmpty property="bpCode">
-			<![CDATA[(MemCode = #memCode# OR Mobile = #mobile#) AND]]>	
-		</isEmpty>
-		<isNotEmpty property="bpCode">
-			<![CDATA[(BPCode = #bpCode# OR Mobile = #mobile#) AND]]>
-		</isNotEmpty>
-		<![CDATA[
-				ValidFlag = '1'
-		]]>										
+		SELECT
+			COUNT(1)
+		FROM
+			Promotion.BIN_CouponMemeberDetail
+		WHERE
+			RuleCode = #ruleCode# AND
+			FilterType = #filterType# AND
+			ConditionType = #conditionType# AND
+			(MemCode = #memCode# OR Mobile = #mobile#) AND
+			ValidFlag = '1' AND
+			IsTemp = '1'
+		]]>
     </select>
     
     <!-- 取得活动发券总数  -->
@@ -748,12 +931,28 @@
 				ValidFlag = '1'
 		]]>										
     </select>
+
+	<!-- 取得会员券活动  -->
+	<select id="getRuleListByCouponNo" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+		<![CDATA[
+		SELECT
+			RuleCode AS maincode,
+			CouponType AS ruleType
+		FROM
+			[Promotion].[BIN_MemberCoupon]
+		where
+		CouponNo in
+		]]>
+		<iterate conjunction="," open="(" close=")" property="couponList">
+			#couponList[].couponCode#
+		</iterate>
+	</select>
     
     <!-- 查询产品分类信息 -->
 	<select id ="selPrtCateList" parameterClass="java.util.HashMap" resultClass ="java.util.HashMap">
 	<![CDATA[
 		SELECT 
-		  B.BIN_PrtCatPropValueID AS prtCateId	      
+		  B.BIN_PrtCatPropValueID AS prtCateId
 		FROM 
 		  Basis.BIN_ProductVendor A,
 		  Basis.BIN_PrtCategory B
@@ -773,6 +972,22 @@
 		WHERE
 		  LevelCode = #levelCode#
 	]]>
+	</select>
+
+	<!-- 查询等级name -->
+	<select id ="getLevelNameList" parameterClass="java.util.HashMap" resultClass ="java.util.HashMap">
+		<![CDATA[
+		SELECT
+		  BIN_MemberLevelID AS levelId,
+		  LevelName AS levelName
+		FROM
+		  Members.BIN_MemberLevel
+		WHERE
+		  BIN_MemberLevelID in
+	]]>
+	<iterate conjunction="," open="(" close=")" property="levelArr">
+		#levelArr[]#
+	</iterate>
 	</select>
 	
 	<!-- 取得券类型 -->
@@ -816,7 +1031,7 @@
 		]]>
 				<include refid="BINOLCMINC99.insertValueSql" />		
 		<![CDATA[							
-			)	
+			)
 			select SCOPE_IDENTITY() as value				
     	]]>
     	</selectKey>   
@@ -894,7 +1109,8 @@
 			'Q'+CONVERT(VARCHAR(20),B.BIN_ChannelID) AS channelId,
 			B.ChannelName AS name,
 			'D'+CONVERT(VARCHAR(20),A.BIN_OrganizationID) AS memCounterId,
-			A.CounterNameIF AS counterName
+			A.CounterNameIF AS counterName,
+			A.CounterCode AS counterCode
 		FROM
 			Basis.BIN_CounterInfo A with(NOLOCK)
 			JOIN Basis.BIN_Channel B with(NOLOCK)
@@ -907,12 +1123,846 @@
     
     <select id="getCounterInfoByCode" parameterClass="java.util.HashMap" resultClass ="java.util.HashMap">
     	SELECT top 1
-    		A.BIN_ChannelID as channelId,
-    		A.BIN_OrganizationID as organizationId
+    		A.BIN_ChannelID as channelId
     	FROM
     		Basis.BIN_CounterInfo A with(NOLOCK)
     	WHERE
     		A.CounterCode = #counterCode#
     </select>
-    
+
+	<select id="getCounterList" parameterClass="java.util.HashMap" resultClass ="java.util.HashMap">
+		<include refid="BINOLSSPRM73.CounterQuery" />
+	</select>
+
+	<delete id="delCounter" parameterClass="java.util.HashMap">
+		<![CDATA[
+		DELETE
+			Promotion.BIN_CouponCounterDetail
+		WHERE
+			RuleCode = #ruleCode# AND
+			FilterType = #filterType# AND
+		    ConditionType = #conditionType#
+		  ]]>
+		<isNotEmpty prepend="AND" property="organizationID">
+			<![CDATA[
+				BIN_OrganizationID = #organizationID#
+			]]>
+		</isNotEmpty>
+	</delete>
+
+	<delete id="delCounterList" parameterClass="java.util.HashMap">
+		<![CDATA[
+		DELETE
+			Promotion.BIN_CouponCounterDetail
+		WHERE
+			RuleCode = #ruleCode# AND
+			FilterType = #filterType# AND
+		    ConditionType = #conditionType# ]]>
+		<isNotEmpty prepend="AND" property="organizationID">
+			<![CDATA[
+				BIN_OrganizationID = #organizationID#
+			]]>
+		</isNotEmpty>
+	</delete>
+
+	<select id="getBrandCode" parameterClass="java.util.HashMap" resultClass="java.lang.String">
+		SELECT TOP 1
+			BrandCode AS brandCode
+		FROM
+			Basis.BIN_BrandInfo
+		WHERE
+			BIN_OrganizationInfoID = #organizationInfoId#
+			AND BIN_BrandInfoID = #brandInfoId#
+	</select>
+
+	<!-- 删除规则柜台 -->
+	<delete id="deleteUploadCounter" parameterClass="java.util.HashMap">
+		DELETE FROM
+			Promotion.BIN_CouponCounterDetail
+		WHERE
+    		RuleCode = #ruleCode#
+			AND ConditionType = #conditionType#
+			AND FilterType = #filterType#
+		<isNotEmpty property="contentNo" prepend="AND">
+			ContentNo = #contentNo#
+		</isNotEmpty>
+	</delete>
+
+	<!-- 插入导入柜台 -->
+	<insert id="insertUploadCounter" parameterClass="java.util.HashMap">
+			INSERT INTO
+ 				Promotion.BIN_CouponCounterDetail (
+ 					RuleCode,
+ 					BIN_OrganizationID,
+ 					CounterCode,
+ 					ConditionType,
+ 					FilterType,
+				<isNotEmpty property="contentNo">
+					ContentNo,
+				</isNotEmpty>
+					IsTemp,
+			<include refid="BINOLCMINC99.insertKeySql"/>
+    			) VALUES (
+    				#ruleCode#,
+    				#organizationId#,
+    				#counterCode#,
+    				#conditionType#,
+    				#filterType#,
+				<isNotEmpty property="contentNo">
+					#contentNo#,
+				</isNotEmpty>
+					#isTemp#,
+			<include refid="BINOLCMINC99.insertValueSql"/>
+   				)
+	</insert>
+
+	<!-- 插入导入柜台 -->
+	<insert id="insertUploadMember" parameterClass="java.util.HashMap">
+		INSERT INTO
+		Promotion.BIN_CouponMemeberDetail (
+		RuleCode,
+		FilterType,
+		<isNotEmpty property="contentNo">
+			ContentNo,
+		</isNotEmpty>
+		MemCode,
+		Mobile,
+		ConditionType,
+		IsTemp,
+		<include refid="BINOLCMINC99.insertKeySql"/>
+		) VALUES (
+		#ruleCode#,
+		#filterType#,
+		<isNotEmpty property="contentNo">
+			#contentNo#,
+		</isNotEmpty>
+		#memberCode#,
+		#mobile#,
+		#conditionType#,
+		#isTemp#,
+		<include refid="BINOLCMINC99.insertValueSql"/>
+		)
+	</insert>
+
+	<select id="getExeclUploadMemberList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+		SELECT
+			Mobile AS mobile,
+			MemCode AS memberCode
+		FROM
+			Promotion.BIN_CouponMemeberDetail
+		WHERE
+			RuleCode = #ruleCode#
+			AND FilterType = #filterType#
+			AND ContentNo = #contentNo#
+			AND ConditionType = #conditionType#
+			AND IsTemp = #isTemp#
+	</select>
+
+	<!--  -->
+	<delete id="deleteUploadMember" parameterClass="java.util.HashMap">
+		DELETE FROM
+		Promotion.BIN_CouponMemeberDetail
+		WHERE
+		RuleCode = #ruleCode#
+		AND ConditionType = #conditionType#
+		AND FilterType = #filterType#
+		<isNotEmpty property="contentNo" prepend="AND">
+			ContentNo = #contentNo#
+		</isNotEmpty>
+	</delete>
+
+	<!--  -->
+	<delete id="deleteUploadProduct" parameterClass="java.util.HashMap">
+		DELETE FROM
+			Promotion.BIN_CouponProductDetail
+		WHERE
+			RuleCode = #ruleCode#
+			AND ConditionType = #conditionType#
+			AND FilterType = #filterType#
+		<isNotEmpty property="contentNo" prepend="AND">
+			ContentNo = #contentNo#
+		</isNotEmpty>
+	</delete>
+
+	<insert id="insertUploadProduct" parameterClass="java.util.HashMap">
+		INSERT INTO
+		Promotion.BIN_CouponProductDetail (
+		RuleCode,
+		ConditionType,
+		FilterType,
+		PrtObjType,
+		PrtObjId,
+		PrtObjNum,
+		<isNotEmpty property="contentNo">
+			ContentNo,
+		</isNotEmpty>
+		IsTemp,
+		<include refid="BINOLCMINC99.insertKeySql"/>
+		) VALUES (
+		#ruleCode#,
+		#conditionType#,
+		#filterType#,
+		'1',
+		#productVenderID#,
+		#productNumber#,
+		<isNotEmpty property="contentNo">
+			#contentNo#,
+		</isNotEmpty>
+		#isTemp#,
+		<include refid="BINOLCMINC99.insertValueSql"/>
+		)
+	</insert>
+
+	<select id="getProductVenderID" parameterClass="java.util.HashMap" resultClass="java.lang.Integer">
+		SELECT
+			B.BIN_ProductVendorID
+		FROM
+			Basis.BIN_Product A WITH(NOLOCK)
+		JOIN
+			Basis.BIN_ProductVendor B
+			ON(A.BIN_ProductID=B.BIN_ProductID AND B.ValidFlag=1)
+		WHERE
+			A.UnitCode = #unitCode#
+	</select>
+
+	<insert id="insertFailDataList" parameterClass="com.cherry.ss.prm.dto.FailUploadDataDTO">
+		INSERT INTO
+		Promotion.BIN_CouponUploadFaliTemp (
+		RuleCode,
+		FilterType,
+		ConditionType,
+		OperateType,
+		OperateFlag,
+		FailJson,
+		<isNotEmpty property="contentNo">
+			ContentNo,
+		</isNotEmpty>
+		ValidFlag,
+		CreateTime
+		) VALUES (
+		#ruleCode#,
+		#filterType#,
+		#conditionType#,
+		#operateType#,
+		#operateFlag#,
+		#failJson#,
+		<isNotEmpty property="contentNo">
+			#contentNo#,
+		</isNotEmpty>
+		#validFlag#,
+		GETDATE()
+		)
+	</insert>
+
+	<sql id="failUploadCountSql">
+		SELECT
+			FailJson AS failJson
+		FROM
+			Promotion.BIN_CouponUploadFaliTemp
+		WHERE
+			RuleCode = #ruleCode#
+			AND FilterType = #filterType#
+			AND ConditionType = #conditionType#
+			AND OperateType = #operateType#
+			AND OperateFlag = #operateFlag#
+		<isNotEmpty property="contentNo">
+			AND ContentNo = #contentNo#
+		</isNotEmpty>
+	</sql>
+
+	<select id="getFailUploadTotalList" parameterClass="java.util.HashMap" resultClass="java.lang.String">
+		<include refid="BINOLSSPRM73.failUploadCountSql"/>
+	</select>
+
+	<select id="getFailUploadCount" parameterClass="java.util.HashMap" resultClass="java.lang.Integer">
+		<![CDATA[
+			SELECT	COUNT(1) AS count FROM (
+		]]>
+		<include refid="BINOLSSPRM73.failUploadCountSql" />
+		<![CDATA[
+			)SORT_T1
+		]]>
+	</select>
+
+	<select id="getFailUploadList" parameterClass="java.util.HashMap" resultClass="java.lang.String">
+		<![CDATA[
+		SELECT
+			failJson
+		FROM
+			(
+				SELECT
+					ROW_NUMBER() OVER(ORDER BY failJson) AS RowNumber,
+					failJson
+				FROM (]]>
+				<include refid="BINOLSSPRM73.failUploadCountSql" />
+				<![CDATA[)SORT_T1
+			)SORT_T2
+		WHERE
+			RowNumber BETWEEN  #START# AND #END#
+		]]>
+	</select>
+
+	<!-- 获取电子券产品明细表的产品数据 -->
+	<select id="getPrtForCouponProductDetail" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+	<![CDATA[
+		SELECT
+			RuleCode AS ruleCode,
+			ConditionType AS conditionType,
+			FilterType AS filterType,
+			PrtObjType AS prtObjType,
+			PrtObjId AS prtObjId,
+			PrtObjNum AS prtObjNum,
+			ContentNo AS contentNo,
+			P.UnitCode AS unitCode,
+			P.NameTotal AS nameTotal,
+			PV.BarCode AS barCode
+
+		FROM Promotion.BIN_CouponProductDetail PCPD WITH(NOLOCK)
+		JOIN Basis.BIN_ProductVendor  PV  WITH(NOLOCK) ON PCPD.PrtObjId = PV.BIN_ProductVendorID
+		JOIN Basis.BIN_Product P WITH(NOLOCK) ON PV.BIN_ProductID = P.BIN_ProductID
+		WHERE
+		 	PCPD.RuleCode = #ruleCode#
+		AND PCPD.ConditionType = #conditionType#
+		AND PCPD.FilterType = #filterType#
+		AND PCPD.ContentNo = #contentNo#
+		]]>
+	</select>
+
+	<!-- 获取电子券产品明细表的导入产品数据 -->
+	<select id="getImpPrtForCouponProductDetail" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+	<![CDATA[
+		SELECT
+			RuleCode AS ruleCode,
+			ConditionType AS conditionType,
+			FilterType AS filterType,
+			PrtObjType AS prtObjType,
+			PrtObjId AS prtObjId,
+			PrtObjNum AS prtObjNum,
+			ContentNo AS contentNo,
+			P.UnitCode AS unitCode,
+			P.NameTotal AS nameTotal,
+			PV.BarCode AS barCode
+
+		FROM Promotion.BIN_CouponProductDetail PCPD WITH(NOLOCK)
+		JOIN Basis.BIN_ProductVendor  PV  WITH(NOLOCK) ON PCPD.PrtObjId = PV.BIN_ProductVendorID
+		JOIN Basis.BIN_Product P WITH(NOLOCK) ON PV.BIN_ProductID = P.BIN_ProductID
+		WHERE
+		 	PCPD.RuleCode = #ruleCode#
+		AND PCPD.ConditionType = #conditionType#
+		AND PCPD.FilterType = #filterType#
+		AND PCPD.ContentNo = #contentNo#
+		]]>
+		<isNotEmpty property="isTemp" prepend="AND">
+			PCPD.IsTemp = #isTemp#
+		</isNotEmpty>
+	</select>
+
+	<!-- 获取电子券产品明细表的分类数据 -->
+	<select id="getCateForCouponProductDetail" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+	<![CDATA[
+		SELECT
+			RuleCode AS ruleCode,
+			ConditionType AS conditionType,
+			FilterType AS filterType,
+			PrtObjType AS prtObjType,
+			PrtObjId AS prtObjId,
+			PrtObjNum AS prtObjNum,
+			ContentNo AS contentNo,
+			PCPV.PropValueChinese as cateValName,
+			PCPV.PropValueCherry as cateVal
+		FROM Promotion.BIN_CouponProductDetail PCPD WITH(NOLOCK)
+		JOIN Basis.BIN_PrtCatPropValue PCPV ON PCPD.PrtObjId = PCPV.BIN_PrtCatPropValueID
+
+		WHERE
+		    PCPD.RuleCode = #ruleCode#
+		AND PCPD.ConditionType = #conditionType#
+		AND PCPD.FilterType = #filterType#
+		AND PCPD.PrtObjType = #prtObjType#
+		AND PCPD.ContentNo = #contentNo#
+		]]>
+	</select>
+
+	<!-- 删除电子券产品明细 -->
+	<delete id="delCouponProductDetail" parameterClass="java.util.HashMap">
+		<![CDATA[
+			DELETE FROM
+				Promotion.BIN_CouponProductDetail
+			WHERE
+				RuleCode = #ruleCode#
+			AND ConditionType = #conditionType#
+			AND FilterType = #filterType#
+		]]>
+			<isNotEmpty property="prtObjType" prepend="AND">
+				PrtObjType = #prtObjType#
+			</isNotEmpty>
+			<isNotEmpty property="prtObjId" prepend="AND">
+				PrtObjId = #prtObjId#
+			</isNotEmpty>
+		    AND ContentNo = #contentNo#
+
+	</delete>
+
+	<!-- 删除电子券导入产品明细 -->
+	<delete id="delImpCouponProductDetail" parameterClass="java.util.HashMap">
+		<![CDATA[
+			DELETE FROM
+				Promotion.BIN_CouponProductDetail
+			WHERE
+				RuleCode = #ruleCode#
+			AND ConditionType = #conditionType#
+			AND FilterType = #filterType#
+		]]>
+			<isNotEmpty property="prtObjType" prepend="AND">
+				PrtObjType = #prtObjType#
+			</isNotEmpty>
+			<isNotEmpty property="prtObjId" prepend="AND">
+				PrtObjId = #prtObjId#
+			</isNotEmpty>
+		    AND ContentNo = #contentNo#
+			<isNotEmpty property="isTemp" prepend="AND">
+				IsTemp = #isTemp#
+			</isNotEmpty>
+
+	</delete>
+
+
+	<!-- 新增电子券产品明细表 -->
+	<insert id="addCouponProductDetail" parameterClass="java.util.HashMap">
+		<![CDATA[
+			INSERT INTO
+ 				Promotion.BIN_CouponProductDetail (
+ 					RuleCode,
+ 					ConditionType,
+ 					FilterType,
+ 					PrtObjType,
+ 					PrtObjId,
+ 					PrtObjNum,
+ 					ContentNo,
+ 					IsTemp,
+
+   		]]>
+		<include refid="BINOLCMINC99.insertKeySql"/>
+		<![CDATA[
+    			) VALUES (
+    				#ruleCode#,
+    				#conditionType#,
+    				#filterType#,
+    				#prtObjType#,
+    				#prtObjId#,
+    				#prtObjNum#,
+    				#contentNo#,
+    				'1',
+	    ]]>
+		<include refid="BINOLCMINC99.insertValueSql"/>
+		<![CDATA[
+   				)
+    	]]>
+	</insert>
+
+	<insert id="insertCounterChannel" parameterClass="java.util.HashMap">
+		<![CDATA[
+   				insert Promotion.BIN_CouponCounterDetail (RuleCode,BIN_OrganizationID,CounterCode,ConditionType,FilterType,ContentNo,IsTemp,UpdateTime,UpdatedBy,UpdatePGM,CreateTime,CreatedBy,CreatePGM
+   				,ModifyCount,ValidFlag)
+   				(
+					select
+						#ruleCode# as RuleCode,
+						BIN_OrganizationID as BIN_OrganizationID,
+						DepartCode as CounterCode,
+						#conditionType# as ConditionType,
+						#filterType# as FilterType,
+						#contentNo# as ContentNo,
+						#isTemp# as IsTemp,
+						GETDATE() as UpdateTime,
+						GETDATE() as UpdatedBy,
+						'BINOLSSPRM73' as UpdatePGM,
+						GETDATE() as CreateTime,
+						'BINOLSSPRM73' as CreatedBy,
+						'BINOLSSPRM73' as CreatePGM,
+						'0' as ModifyCount,
+						'1' as ValidFlag
+					from
+						Basis.BIN_Organization
+					where
+						BIN_OrganizationID=#organizationID#
+				)
+    	]]>
+	</insert>
+
+	<select id="getMemberDetailIsTempCount" parameterClass="java.util.HashMap" resultClass="java.lang.Integer">
+		SELECT
+			COUNT(1) AS count
+		FROM
+			Promotion.BIN_CouponMemeberDetail
+		WHERE
+			RuleCode = #ruleCode#
+			AND ConditionType = #conditionType#
+			AND FilterType = #filterType#
+			AND ContentNo = #contentNo#
+			AND IsTemp = #isTemp#
+	</select>
+
+	<select id="getMemberDetailIsTempList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+		SELECT
+			MemCode AS memCode,
+			Mobile AS Mobile
+		FROM
+			Promotion.BIN_CouponMemeberDetail
+		WHERE
+			RuleCode = #ruleCode#
+			AND ConditionType = #conditionType#
+			AND FilterType = #filterType#
+			AND ContentNo = #contentNo#
+			AND IsTemp = #isTemp#
+	</select>
+	
+	<select id="getCounterDetailIsTempCount" parameterClass="java.util.HashMap" resultClass="java.lang.Integer">
+		SELECT
+			COUNT(1) AS count
+		FROM
+			Promotion.BIN_CouponCounterDetail
+		WHERE
+			RuleCode = #ruleCode#
+			AND ConditionType = #conditionType#
+			AND FilterType = #filterType#
+			AND ContentNo = #contentNo#
+			AND IsTemp = #isTemp#
+	</select>
+
+	<select id="getProductDetailIsTempCount" parameterClass="java.util.HashMap" resultClass="java.lang.Integer">
+		SELECT
+			COUNT(1) AS count
+		FROM
+			Promotion.BIN_CouponProductDetail
+		WHERE
+			RuleCode = #ruleCode#
+			AND ConditionType = #conditionType#
+			AND FilterType = #filterType#
+			AND ContentNo = #contentNo#
+			AND IsTemp = #isTemp#
+	</select>
+
+	<select id="getCounterDetailIstempList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+		SELECT
+			CounterCode AS counterCode
+		FROM
+			Promotion.BIN_CouponCounterDetail
+		WHERE
+			RuleCode = #ruleCode#
+			AND ConditionType = #conditionType#
+			AND FilterType = #filterType#
+			AND ContentNo = #contentNo#
+			AND IsTemp = #isTemp#
+	</select>
+
+	<delete id="deleteCounterDetailTemp" parameterClass="java.util.HashMap">
+		DELETE FROM
+			Promotion.BIN_CouponCounterDetail
+		WHERE
+			RuleCode = #ruleCode#
+			AND ConditionType = #conditionType#
+			AND FilterType = #filterType#
+			AND ContentNo = #contentNo#
+			AND IsTemp = #isTemp#
+	</delete>
+
+	<delete id="deleteProductDetailTemp" parameterClass="java.util.HashMap">
+		DELETE FROM
+			Promotion.BIN_CouponProductDetail
+		WHERE
+			RuleCode = #ruleCode#
+			AND ConditionType = #conditionType#
+			AND FilterType = #filterType#
+			AND ContentNo = #contentNo#
+			AND IsTemp = #isTemp#
+	</delete>
+
+	<delete id="deleteMemberDetailTemp" parameterClass="java.util.HashMap">
+		DELETE FROM
+			Promotion.BIN_CouponMemeberDetail
+		WHERE
+			RuleCode = #ruleCode#
+			AND ConditionType = #conditionType#
+			AND FilterType = #filterType#
+			AND ContentNo = #contentNo#
+			AND IsTemp = #isTemp#
+	</delete>
+
+	<delete id="deleteCounterDetailForSame" parameterClass="java.util.HashMap">
+		DELETE FROM
+			Promotion.BIN_CouponCounterDetail
+		WHERE
+			RuleCode = #ruleCode#
+		AND ConditionType = #conditionType#
+		AND ContentNo = #contentNo#
+	</delete>
+
+	<delete id="deleteProductDetailForSame" parameterClass="java.util.HashMap">
+		DELETE FROM
+			Promotion.BIN_CouponProductDetail
+		WHERE
+			RuleCode = #ruleCode#
+		AND ConditionType = #conditionType#
+		AND ContentNo = #contentNo#
+	</delete>
+
+	<delete id="deleteMemberDetailForSame" parameterClass="java.util.HashMap">
+		DELETE FROM
+			Promotion.BIN_CouponMemeberDetail
+		WHERE
+			RuleCode = #ruleCode#
+		AND ConditionType = #conditionType#
+		AND ContentNo = #contentNo#
+	</delete>
+
+	<select id="getCouponCondition" parameterClass="java.util.HashMap" resultClass="java.lang.String" remapResults="true">
+		SELECT
+			<isEqual property="conditionType" compareValue="1">
+				SendCond
+			</isEqual>
+			<isEqual property="conditionType" compareValue="2">
+				UseCond
+			</isEqual>
+		FROM
+			Promotion.BIN_PromotionCouponRule
+		WHERE
+			RuleCode = #ruleCode#
+	</select>
+	
+	<insert id="insertCounterOrigin" parameterClass="java.util.HashMap">
+		insert into
+			Promotion.BIN_CouponCounterDetail
+			(
+				[RuleCode],
+				[BIN_OrganizationID],
+				[CounterCode],
+				[ConditionType],
+				[ValidFlag],
+				[CreateTime],
+				[CreatedBy],
+				[CreatePGM],
+				[UpdateTime],
+				[UpdatedBy],
+				[UpdatePGM],
+				[ModifyCount],
+				[FilterType],
+				[ContentNo],
+				[IsTemp]
+			)
+			(
+				SELECT
+					[RuleCode],
+					[BIN_OrganizationID],
+					[CounterCode],
+					[ConditionType],
+					[ValidFlag],
+					[CreateTime],
+					[CreatedBy],
+					[CreatePGM],
+					[UpdateTime],
+					[UpdatedBy],
+					[UpdatePGM],
+					[ModifyCount],
+					[FilterType],
+					[ContentNo],
+					#isTemp#
+				FROM
+					Promotion.BIN_CouponCounterDetail
+				WHERE
+					RuleCode = #ruleCode#
+					AND ConditionType = #conditionType#
+					AND FilterType = #filterType#
+					AND ContentNo = #contentNo#
+					AND IsTemp = #isTempOld#
+			)
+
+	</insert>
+
+	<insert id="insertProductOrigin" parameterClass="java.util.HashMap">
+		insert into
+			Promotion.BIN_CouponProductDetail
+			(
+				[RuleCode],
+				[ConditionType],
+				[FilterType],
+				[PrtObjType],
+				[PrtObjId],
+				[ContentNo],
+				[ValidFlag],
+				[CreateTime],
+				[CreatedBy],
+				[CreatePGM],
+				[UpdateTime],
+				[UpdatedBy],
+				[UpdatePGM],
+				[ModifyCount],
+				[PrtObjNum],
+				[IsTemp]
+			)
+			(
+				SELECT
+					[RuleCode],
+					[ConditionType],
+					[FilterType],
+					[PrtObjType],
+					[PrtObjId],
+					[ContentNo],
+					[ValidFlag],
+					[CreateTime],
+					[CreatedBy],
+					[CreatePGM],
+					[UpdateTime],
+					[UpdatedBy],
+					[UpdatePGM],
+					[ModifyCount],
+					[PrtObjNum],
+					#isTemp#
+				FROM
+					Promotion.BIN_CouponProductDetail
+				WHERE
+					RuleCode = #ruleCode#
+					AND ConditionType = #conditionType#
+					AND FilterType = #filterType#
+					AND ContentNo = #contentNo#
+					AND IsTemp = #isTempOld#
+			)
+
+	</insert>
+
+	<insert id="insertMemberOrigin" parameterClass="java.util.HashMap">
+		insert into
+			Promotion.BIN_CouponMemeberDetail
+			(
+				[RuleCode],
+				[MemCode],
+				[Mobile],
+				[ConditionType],
+				[ValidFlag],
+				[CreateTime],
+				[CreatedBy],
+				[CreatePGM],
+				[UpdateTime],
+				[UpdatedBy],
+				[UpdatePGM],
+				[ModifyCount],
+				[FilterType],
+				[ContentNo],
+				[IsTemp]
+			)
+			(
+				SELECT
+					[RuleCode],
+					[MemCode],
+					[Mobile],
+					[ConditionType],
+					[ValidFlag],
+					[CreateTime],
+					[CreatedBy],
+					[CreatePGM],
+					[UpdateTime],
+					[UpdatedBy],
+					[UpdatePGM],
+					[ModifyCount],
+					[FilterType],
+					[ContentNo],
+					#isTemp#
+				FROM
+					Promotion.BIN_CouponMemeberDetail
+				WHERE
+				    RuleCode = #ruleCode#
+					AND ConditionType = #conditionType#
+					AND FilterType = #filterType#
+					AND ContentNo = #contentNo#
+					AND IsTemp = #isTempOld#
+			)
+	</insert>
+
+	<delete id="delImpCouponMemberDetailNode" parameterClass="java.util.HashMap">
+		DELETE FROM
+			Promotion.BIN_CouponMemeberDetail
+		WHERE
+			RuleCode = #ruleCode#
+			AND ConditionType = #conditionType#
+			AND FilterType = #filterType#
+			AND ContentNo = #contentNo#
+			AND IsTemp = #isTemp#
+			AND Mobile = #mobile#
+	</delete>
+
+	<delete id="deleteCounterTempDataByRuleCode" parameterClass="java.util.HashMap">
+		DELETE FROM
+			Promotion.BIN_CouponCounterDetail
+		WHERE
+			RuleCode = #ruleCode#
+		<isNotEmpty property="isTempArr" prepend="AND">
+			IsTemp IN
+			<iterate conjunction="," open="(" close=")" property="isTempArr">
+				#isTempArr[]#
+			</iterate>
+		</isNotEmpty>
+	</delete>
+
+	<delete id="deleteProductTempDataByRuleCode" parameterClass="java.util.HashMap">
+		DELETE FROM
+			Promotion.BIN_CouponProductDetail
+		WHERE
+			RuleCode = #ruleCode#
+		<isNotEmpty property="isTempArr" prepend="AND">
+			IsTemp IN
+			<iterate conjunction="," open="(" close=")" property="isTempArr">
+				#isTempArr[]#
+			</iterate>
+		</isNotEmpty>
+	</delete>
+
+	<delete id="deleteMemberTempDataByRuleCode" parameterClass="java.util.HashMap">
+		DELETE FROM
+			Promotion.BIN_CouponMemeberDetail
+		WHERE
+			RuleCode = #ruleCode#
+		<isNotEmpty property="isTempArr" prepend="AND">
+			IsTemp IN
+			<iterate conjunction="," open="(" close=")" property="isTempArr">
+				#isTempArr[]#
+			</iterate>
+		</isNotEmpty>
+	</delete>
+
+	<select id="getMemberOriginListByMobile" parameterClass="java.util.HashMap" resultClass="java.lang.String">
+		SELECT
+			Mobile AS mobile
+		FROM
+			Promotion.BIN_CouponMemeberDetail
+		WHERE
+			RuleCode = #ruleCode#
+			AND ConditionType = #conditionType#
+			AND FilterType = #filterType#
+			AND ContentNo = #contentNo#
+			AND IsTemp = #isTemp#
+	</select>
+
+	<select id="getProductOriginListByProductId" parameterClass="java.util.HashMap" resultClass="java.lang.Integer">
+		SELECT
+			PrtObjId AS productId
+		FROM
+			Promotion.BIN_CouponProductDetail
+		WHERE
+			RuleCode = #ruleCode#
+			AND ConditionType = #conditionType#
+			AND FilterType = #filterType#
+			AND ContentNo = #contentNo#
+			AND IsTemp = #isTemp#
+	</select>
+
+	<select id="getCounterOriginListByCounterCode" parameterClass="java.util.HashMap" resultClass="java.lang.String">
+		SELECT
+			CounterCode AS counterCode
+		FROM
+			Promotion.BIN_CouponCounterDetail
+		WHERE
+			RuleCode = #ruleCode#
+			AND ConditionType = #conditionType#
+			AND FilterType = #filterType#
+			AND ContentNo = #contentNo#
+			AND IsTemp = #isTemp#
+	</select>
 </sqlMap>

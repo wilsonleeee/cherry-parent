@@ -1211,4 +1211,44 @@ public class CherryBatchConstants {
 	public static final String SYS_CONFIG_COSTPRICE_1 = "1";
 
 	/**============================================系统配置项 End  ==========================================*/
+
+	/**============================================电子券 Start  ==========================================*/
+
+	/***/
+	public static final String KBN_0 = "0";
+
+	/** 券类型 券包 */
+	public static final String COUPONTYPE_9 = "9";
+
+	/** 门槛类型 1:发送门槛 2:使用门槛 */
+	public static final String CONDITIONTYPE_1 = "1";
+
+	public static final String CONDITIONTYPE_2 = "2";
+
+	/** 门店类型 1:导入柜台 2渠道选择 */
+	public static final String COUNTERKBN_1 = "1";
+
+	public static final String COUNTERKBN_2 = "2";
+
+	/** 黑白名单 1:白名单 */
+	public static final String FILTERTYPE_1 = "1";
+
+	/** 产品类型 2:产品选择 1:分类选择 */
+	public static final String PRODUCTTYPE_2 = "2";
+
+	public static final String PRODUCTTYPE_1 = "1";
+
+	/** 产品OBJ类型 1:产品 2:分类 3:导入 */
+	public static final String PRTOBJTYPE_1 = "1";
+
+	public static final String PRTOBJTYPE_2 = "2";
+
+	public static final String PRTOBJTYPE_3 = "3";
+
+	/** 会员类型 1:导入 2:会员等级 */
+	public static final String MEMBERKBN_1 = "1";
+
+	public static final String MEMBERKBN_2 = "2";
+
+	/**============================================电子券 End  ============================================*/
 }

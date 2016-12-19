@@ -7,6 +7,7 @@ import java.util.Map;
 
 import javax.annotation.Resource;
 
+import com.cherry.ss.prm.core.CouponConstains;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.InitializingBean;
@@ -69,9 +70,7 @@ public class CouponEngine implements InitializingBean{
 	/**
 	 * 刷新单个规则文件
 	 * 
-	 * @param orgCode
 	 * 			组织代码
-	 * @param brandCode
 	 * 			品牌代码
 	 * @throws Exception 
 	 * 
@@ -229,6 +228,21 @@ public class CouponEngine implements InitializingBean{
 			String sendCond = String.valueOf(ruleMap.get("sendCond"));
 			if (!CherryChecker.isNullOrEmpty(sendCond)) {
 				Map<String, Object> sendCondInfo = (Map<String, Object>) JSONUtil.deserialize(sendCond);
+				if(null != sendCondInfo){
+					Map<String, Object> map = new HashMap<String, Object>();
+					map.put("ruleCode", ruleCode);
+					map.put("conditionType", CouponConstains.CONDITIONTYPE_1);
+					map.put("filterType", CouponConstains.FILTERTYPE_1);
+					// 产品白名单
+					List<Map<String, Object>> proList = binOLSSPRM73_Service.getCouponProductList(map);
+					if(null != proList){
+						sendCondInfo.put("proList",proList);
+					}else{
+						// 产品分类
+						List<Map<String, Object>> proTypeList = binOLSSPRM73_Service.getCouponProductCateList(map);
+						sendCondInfo.put("proTypeList",proTypeList);
+					}
+				}
 				couponEngineDTO.setSendCondInfo(sendCondInfo);
 			}
 		} catch (Exception e) {
