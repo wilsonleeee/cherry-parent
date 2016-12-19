@@ -44,6 +44,8 @@ import com.googlecode.jsonplugin.JSONException;
 import com.googlecode.jsonplugin.JSONUtil;
 import com.mongodb.BasicDBObject;
 import com.mongodb.DBObject;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * 
@@ -56,12 +58,12 @@ public class BINBEIFPRO03_BL {
 
 
 	/** 每批次(页)处理数量 2000 */
-	private final int BATCH_SIZE = 2000;
+	private final int BATCH_SIZE = 1500;
 
 	/** BATCH LOGGER */
 	private static CherryBatchLogger logger = new CherryBatchLogger(
 			BINBEIFPRO03_BL.class);
-	
+	private static final Logger loger = LoggerFactory.getLogger(BINBEIFPRO03_BL.class);
 	@Resource
 	private BINBEIFPRO03_Service binbeifpro03Service;
 
@@ -135,35 +137,14 @@ public class BINBEIFPRO03_BL {
 //				totalCount += couProductList.size();
 				// 更新接口数据库
 			int result = updIFDatabase(map);
+			loger.info("柜台产品下发结果："+result);
 //				// 柜台产品数据少于一页，跳出循环
 //				if (couProductList.size() < CherryBatchConstants.DATE_SIZE) {
 //					break;
 //				}
 			if(result > 0){
 				if(failCount == 0){
-					/*
-					try {
-						// Batch暂不发送MQ
-						// 发送MQ
-						// Step5: 调用MQHelper接口进行数据发送
-						Map<String,Object> MQMap = getPrtNoticeMqMap(map, MessageConstants.MSG_SPRT_DPRT);
-						if(MQMap.isEmpty()){
-							throw new Exception("柜台产品实时下发通知组装异常");
-						}
-						
-						//设定MQInfoDTO
-						MQInfoDTO mqDTO = setMQInfoDTO(MQMap,map);
-						mqDTO.setMsgQueueName("cherryToPosCMD");
-						//调用共通发送MQ消息
-						binOLMQCOM01_BL.sendMQMsg(mqDTO,false);
 
-					} catch (Exception e) {
-//						logger.outLog(e.getMessage(), CherryBatchConstants.LOGGER_ERROR);
-						logger.outExceptionLog(e);
-						binbeifpro03Service.manualRollback();
-						binbeifpro03Service.ifManualRollback();
-					}
-					*/
 				}else {
 					try{
 						fReason = "部分柜台产品下发失败，详细日志文件。";
@@ -556,7 +537,9 @@ public class BINBEIFPRO03_BL {
 			}
 
 			List<Map<String, Object>> prtSoluDetailByVersionList = binbeifpro03Service.getPrtSoluDetailByVersionList(map);
-			List<Map<String, Object>> prtUpdList = new ArrayList<Map<String, Object>>();
+			loger.info("需要下发的柜台产品明细数量为：prtSoluDetailByVersionList.size="+ (null==prtSoluDetailByVersionList?0:prtSoluDetailByVersionList.size()));
+			List<Map<String,Object>> prtUpdList = new ArrayList<Map<String,Object>>();
+
 			if (!CherryBatchUtil.isBlankList(prtSoluDetailByVersionList)) {
 				for (int i = 0;i<prtSoluDetailByVersionList.size();i++) {
 					// 保存接口产品方案柜台关系表
@@ -589,11 +572,16 @@ public class BINBEIFPRO03_BL {
 						batchExceptionDTO.setException(e);
 						throw new CherryBatchException(batchExceptionDTO);
 					}
-					if(i>0 && i%BATCH_SIZE==0 || i == prtSoluDetailByVersionList.size()-1) {
+					if((i>0 && i%BATCH_SIZE==0) || i == prtSoluDetailByVersionList.size()-1) {
+						Map<String,Object> delMap = new HashMap<String,Object>();
+						delMap.put("prtUpdList", prtUpdList);
+						loger.info("柜台产品下发，开始处理i="+i+",prtUpdList.size="+prtUpdList.size());
 						// 删除产品方案柜台接口表(根据brand、prtSolutionCode、产品厂商ID)
-						binbeifpro03Service.delIFPrtSoluSCS(prtUpdList);
+						binbeifpro03Service.delIFPrtSoluSCS(delMap);
+						loger.info("柜台产品下发，已删除到i="+i);
 						// 插入产品方案明细接口表
 						binbeifpro03Service.addIFPrtSoluSCS(prtUpdList);
+						loger.info("柜台产品下发，已插入到i="+i);
 						prtUpdList = new ArrayList<Map<String, Object>>();
 					}
 				}

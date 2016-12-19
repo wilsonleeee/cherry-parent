@@ -12,14 +12,14 @@
  */
 package com.cherry.ia.pro.service;
 
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-
 import com.cherry.cm.core.CherryBatchConstants;
 import com.cherry.cm.core.CherryConstants;
 import com.cherry.cm.service.BaseService;
 import com.cherry.cm.util.ConvertUtil;
+
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 /**
  * 
@@ -177,7 +177,7 @@ public class BINBEIFPRO03_Service extends BaseService {
 	 * @param mapList
 	 * @return
 	 */
-	public void delIFPrtSoluSCS(List<Map<String, Object>> mapList){
+	public void delIFPrtSoluSCS(List mapList){
 		ifServiceImpl.deleteAll(mapList, "BINBEIFPRO03.delIFPrtSoluSCS");
 	}
 	

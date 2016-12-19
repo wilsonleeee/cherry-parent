@@ -56,6 +56,7 @@ public class ProductLogic implements IWebservice {
 
 				logger.info("*******************柜台产品Batch下发处理开始***********************");
 				flg = binbeifpro03BL.tran_batchCouProducts(map);
+				logger.info("-------柜台产品Batch下发处理:flg="+flg);
 				if(flg == CherryBatchConstants.BATCH_SUCCESS) {
 					// 备份产品下发数据/MQ下发
 					flagMapMQ = binbeifpro03BL.tran_batchCntProductsMQSend(map);
