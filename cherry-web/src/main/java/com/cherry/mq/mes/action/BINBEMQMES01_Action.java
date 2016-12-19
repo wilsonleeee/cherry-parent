@@ -93,14 +93,14 @@ public class BINBEMQMES01_Action {
 			try {
 				// 更新会员最近购买日期
 				binBEMQMES99_BL.updMemberLastSaleDate(map);
-			} catch (Exception e) {
+			} catch (Throwable e) {
 				logger.error("******************************更新会员最近购买日期失败***************************");
 				logger.error(e.getMessage(), e);
 			}
 			try {
 				// 无主会员首次销售更新会员发卡柜台和入会时间
 				binBEMQMES99_BL.updMemCounter(map);
-			} catch (Exception e) {
+			} catch (Throwable e) {
 				logger.error("******************************无主会员首次销售更新会员发卡柜台和入会时间失败***************************");
 				logger.error(e.getMessage(), e);
 			}
@@ -121,14 +121,14 @@ public class BINBEMQMES01_Action {
 						binBEMQMES99_BL.sendRuleMQ(map);
 					}
 				}
-			} catch (Exception e) {
+			} catch (Throwable e) {
 				logger.error("******************************发送规则处理失败***************************");
 				logger.error(e.getMessage(),e);
 			}
 			try {
 				// 需要实时推送的消息发送到实时推送消息的MQ处理
 				binBEMQMES99_BL.publish(map);
-			} catch (Exception e) {
+			} catch (Throwable e) {
 				logger.error("******************************发送实时推送消息的MQ处理失败***************************");
 				logger.error(e.getMessage(),e);
 			}
@@ -146,14 +146,14 @@ public class BINBEMQMES01_Action {
 					// 发送刷新索引MQ消息
 					binBEMQMES99_BL.sendIRMQMsg(map);
 				}
-			} catch (Exception e) {
+			} catch (Throwable e) {
 				logger.error("******************************发送刷新索引MQ消息失败***************************");
 				logger.error(e.getMessage(), e);
 			}
 			try{
 				// 实时生成会员单据
 				binBEMQMES99_BL.makeOrder(map);
-			} catch (Exception e) {
+			} catch (Throwable e) {
 				logger.error("******************************实时生成会员单据失败***************************");
 				logger.error(e.getMessage(), e);
 			}
@@ -181,13 +181,13 @@ public class BINBEMQMES01_Action {
 					transRepeaterManager.doRepeate(brandCode,"NS",map);
 
 				}
-			} catch (Exception e) {
+			} catch (Throwable e) {
 				logger.error("******************************发送经销商额度变更MQ消息失败***************************");
 				logger.error(e.getMessage(), e);
 			}
 
+		}catch(Throwable e) {
 
-		}catch(Exception e) {
 			String addMongoDBFlag = ConvertUtil.getString(map.get("addMongoDBFlag"));
 			if("1".equals(addMongoDBFlag)) {
 				// 删除MQ消息接收失败但已经写入到MongoDB的数据
@@ -218,10 +218,10 @@ public class BINBEMQMES01_Action {
 			CustomerContextHolder.clearCustomerDataSourceType();
 		}
 	}
-
+	
 	/**
      * 接收消息（监控类）
-     *
+     * 
      * @param msg
      * @throws Exception
      */

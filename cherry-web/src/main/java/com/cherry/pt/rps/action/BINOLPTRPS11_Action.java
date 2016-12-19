@@ -205,7 +205,7 @@ public class BINOLPTRPS11_Action extends BaseAction implements
 	 * </p>
 	 * 
 	 * 
-	 * @param 无
+	 * @param
 	 * @return
 	 * 
 	 */
@@ -482,7 +482,7 @@ public class BINOLPTRPS11_Action extends BaseAction implements
 	/**
 	 * 验证提交的参数
 	 * 
-	 * @param 无
+	 * @param
 	 * @return boolean
 	 * 			验证结果
 	 * 

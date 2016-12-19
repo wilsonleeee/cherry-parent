@@ -686,7 +686,7 @@ public class SynchroESOrderInfoLogic implements SynchroESOrderInfo_IF{
      * @param newDetailList
      * @param prtprmBomList 
      * @param detailItem
-     * @param erpOrder
+     * @param
      */
     private void addNewPrtPrmBom(List<Map<String,Object>> newDetailList,List<Map<String,Object>> prtprmBomList,Map<String,Object> detailItem,Map<String,Object> mainDataMap){
     	
@@ -1420,7 +1420,7 @@ public class SynchroESOrderInfoLogic implements SynchroESOrderInfo_IF{
     
     /**
      * 插入电商订单明细
-     * @param paramMap
+     * @param
      * @param detailList
      * @return
      * @throws Exception
@@ -1480,7 +1480,7 @@ public class SynchroESOrderInfoLogic implements SynchroESOrderInfo_IF{
     
     /**
      * 插入电商支付方式表
-     * @param paramMap
+     * @param
      * @param payDetailList
      * @return
      */
@@ -1552,6 +1552,7 @@ public class SynchroESOrderInfoLogic implements SynchroESOrderInfo_IF{
     
     /**
      * 是否需要发送销售/积分兑换MQ
+     * 老状态为''或者1,新状态为2\3\4时为true
      * @param oldBillState
      * @param billState
      * @return
@@ -2498,7 +2499,7 @@ public class SynchroESOrderInfoLogic implements SynchroESOrderInfo_IF{
     }
     /**
      * 取促销品厂商ID、ExPoint
-     * @param map
+     * @param
      * @param param (BIN_BrandInfoID,BIN_OrganizationID,BarCode,UnitCode,TradeDateTime)
      * @throws CherryMQException
      */
