@@ -77,7 +77,7 @@ public class BINBAT148_BL {
 	/**
 	 * batch处理
 	 * 
-	 * @param 无
+	 * @param
 	 * 
 	 * @return Map
 	 * @throws CherryBatchException
@@ -127,19 +127,20 @@ public class BINBAT148_BL {
 		// =========== Step1: 取得标准柜台特价产品接口表中的柜台信息(A、生成对应的特价产品方案主表数据 B、生成柜台与特价产品方案的关联表数据)
 		List<Map<String, Object>> cntIFList = null;
 		try{
-			// 获取标准IF柜台特价产品中柜台号数据
+			// 获取标准IF柜台特价产品中柜台号数据-----获取接口表中的柜台信息(去重)
 			cntIFList = binBAT148_Service.getCntByIFOffers(paraMap);
 			
 			if (CherryBatchUtil.isBlankList(cntIFList)) {
 				return;
 			}else{
-				// 查询新后台的柜台信息
+				// 查询新后台的柜台信息 ----新后台全部柜台信息
 				List<Map<String, Object>> cntByCherryBrandMapList = binBAT148_Service.getCounterByCherryBrand(paraMap);
+				// key-value对(CounterCode-CounterName)
 				Map<String, Object> cntByCherryBrandMap = new HashMap<String, Object>();
 				for(Map<String, Object> counterInfo : cntByCherryBrandMapList){
 					cntByCherryBrandMap.put(ConvertUtil.getString(counterInfo.get("CounterCode")), counterInfo.get("CounterNameIF"));
 				}
-				Set<String> cntInfoSet = cntByCherryBrandMap.keySet();
+//				Set<String> cntInfoSet = cntByCherryBrandMap.keySet();
 				for(int i = 0;i< cntIFList.size(); i++){
 					Map<String, Object> cntIFMap = cntIFList.get(i);
 					String counterCodeByIF = ConvertUtil.getString(cntIFMap.get("CounterCode"));
@@ -246,6 +247,7 @@ public class BINBAT148_BL {
 				Map<String, Object> paraMap2 = new HashMap<String, Object>();
 				paraMap2.putAll(paraMap);
 				paraMap2.put("batchSize", UPDATE_SIZE);
+				// 接口表对相同产品相同柜台有更新的数据
 				List<Map<String, Object>> standardProductByOffersList = binBAT148_Service.getStandardProductByOffersList(paraMap2);
 				if (CherryBatchUtil.isBlankList(standardProductByOffersList)) {
 					break;
@@ -274,7 +276,6 @@ public class BINBAT148_BL {
 					
 					List<Map<String, Object>> cntPrtList = groupCntPrtMap.getValue();
 					for (Map<String, Object> cntPrtMap : cntPrtList) {
-						
 						String cntCodeByIF = ConvertUtil.getString(cntPrtMap.get("CounterCode")); // 柜台号
 						String IFProductId = ConvertUtil.getString(cntPrtMap.get("IFProductId")); // 产品唯一性标识
 						//cntPrtMap.putAll(paraMap);

@@ -140,46 +140,43 @@
     </update>
     <update id="updIFOffersBySync2" parameterClass="java.util.HashMap">
 	 <![CDATA[
-		  UPDATE 
-		  	A
-		  SET 
+		UPDATE
+			A
+		SET
 			A.SynchFlag = '2',
 			A.SynchTime = GETDATE()
-	  FROM 
-	      IF_Offers A 
-		  WHERE
-		  	  A.SynchFlag = '1' AND
-		  	  A.BrandCode = #BrandCode# AND
-	 		  A.CounterCode = #CounterCode# AND
-	 		  A.IFProductId = #IFProductId#	
-		]]>
+		FROM
+			IF_Offers A
+		WHERE
+			A.IdentityID = #IdentityID# AND
+			A.SynchFlag = '1'
+	]]>
     </update>
     <update id="updIFOffersBySync3" parameterClass="java.util.HashMap">
-	 <![CDATA[
-		  UPDATE 
-		  	A
-		  SET 
+	<![CDATA[
+		UPDATE
+			A
+		SET
 			A.SynchFlag = '3',
 			A.SynchTime = GETDATE()
-	  FROM 
-	      IF_Offers A 
-		  WHERE
-		  	  A.SynchFlag = '1' AND
-		  	  A.BrandCode = #BrandCode# AND
-	 		  A.CounterCode = #CounterCode# AND
-	 		  A.IFProductId = #IFProductId#	
-		]]>
+		FROM
+			IF_Offers A
+		WHERE
+			A.IdentityID = #IdentityID# AND
+			A.SynchFlag = '1'
+	]]>
     </update>
 
-	<!-- 获取指定写入时间的柜台特价产品数据 -->
+	<!-- 获取最近写入的柜台特价产品数据 -->
 	<select id="getStandardProductByOffersList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
-		SELECT 
+		<![CDATA[
+		SELECT
 		 	TOP (#batchSize#)
+		 	A.IdentityID,
 			A.BrandCode,
 			A.CounterCode,
 			A.StartDate,
 			A.EndDate,
-						
 			A.IFProductId,
 			A.UnitCode,
 			A.BarCode,
@@ -190,16 +187,17 @@
 		FROM
 			[dbo].[IF_Offers] A WITH(NOLOCK)
 		WHERE
-			EXISTS  (
-				SELECT * FROM [dbo].[IF_Offers] 
+			NOT EXISTS  (
+				SELECT 1 FROM [dbo].[IF_Offers] B
 				WHERE 
-					BrandCode = A.BrandCode 
-					AND IFProductId = A.IFProductId 
-					AND CounterCode = A.CounterCode 
-					AND PuttingTime &lt; A.PuttingTime
+					B.BrandCode = A.BrandCode
+					AND B.IFProductId = A.IFProductId
+					AND B.CounterCode = A.CounterCode
+					AND B.PuttingTime > A.PuttingTime
 			)
 			AND A.BrandCode = #brandCode#
 			AND A.SynchFlag ='1'
+		]]>
 	</select>
 	
    	<!--查询产品信息 -->
