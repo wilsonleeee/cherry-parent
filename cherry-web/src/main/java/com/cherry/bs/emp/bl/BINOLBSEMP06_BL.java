@@ -755,6 +755,8 @@ public class BINOLBSEMP06_BL implements BINOLBSEMP06_IF {
 			String mobilePhone = ConvertUtil.getString(baInfo.get("mobilePhone"));
 			baInfoMap.put("mobilePhone", CherrySecret.encryptData(brandCode_key,mobilePhone));
 		}
+		// 身份证号码
+		baInfoMap.put("identityCard", baInfo.get("identityCard"));
 		// 入职日期
 		baInfoMap.put("commtDate", baInfo.get("commtDate"));
 		// 离职日期
