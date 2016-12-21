@@ -450,6 +450,7 @@ public class BINCPMEACT04_BL {
 				Calendar busCal = DateUtil.getCalendar(sysBusDate);
 				// 业务年
 				int busYear = busCal.get(Calendar.YEAR);
+				LinkedList<Map<String, Object>> removeList = new LinkedList<Map<String, Object>>();
 				for (Map<String, Object> order : orderList) {
 					Calendar busCal2 = DateUtil.getCalendar(sysBusDate);
 					Calendar calA = null;
@@ -461,7 +462,7 @@ public class BINCPMEACT04_BL {
 							calA = DateUtil.getCalendar(busYear, birthMonth, birthDay);
 						} else {
 							String memCode = ConvertUtil.getString(order.get("memCode"));
-							orderList.remove(order);
+							removeList.add(order);
 							logger.outLog("警告：会员【" + memCode + "】 生日信息不完整，被剔除", CherryBatchConstants.LOGGER_DEBUG);
 							continue;
 						}
@@ -473,7 +474,7 @@ public class BINCPMEACT04_BL {
 							calA = DateUtil.getCalendar(busYear, birthMonth, 1);
 						} else {
 							String memCode = ConvertUtil.getString(order.get("memCode"));
-							orderList.remove(order);
+							removeList.add(order);
 							logger.outLog("警告：会员【" + memCode + "】 生日信息不完整，被剔除", CherryBatchConstants.LOGGER_DEBUG);
 							continue;
 						}
@@ -485,7 +486,7 @@ public class BINCPMEACT04_BL {
 							calA = DateUtil.getCalendar(joinDate);
 						} else {
 							String memCode = ConvertUtil.getString(order.get("memCode"));
-							orderList.remove(order);
+							removeList.add(order);
 							logger.outLog("警告：会员【" + memCode + "】 入会时间信息不完整，被剔除", CherryBatchConstants.LOGGER_DEBUG);
 							continue;
 						}
@@ -497,7 +498,7 @@ public class BINCPMEACT04_BL {
 							calA = DateUtil.getCalendar(joinDate.substring(0, 8) + "01");
 						} else {
 							String memCode = ConvertUtil.getString(order.get("memCode"));
-							orderList.remove(order);
+							removeList.add(order);
 							logger.outLog("警告：会员【" + memCode + "】 入会时间信息不完整，被剔除", CherryBatchConstants.LOGGER_DEBUG);
 							continue;
 						}
@@ -513,7 +514,7 @@ public class BINCPMEACT04_BL {
 							calA = DateUtil.getCalendar(levelAdjustDay.substring(0, 10));
 						} else {
 							String memCode = ConvertUtil.getString(order.get("memCode"));
-							orderList.remove(order);
+							removeList.add(order);
 							logger.outLog("警告：会员【" + memCode + "】 升级时间信息不完整，被剔除", CherryBatchConstants.LOGGER_DEBUG);
 							continue;
 						}
@@ -528,7 +529,7 @@ public class BINCPMEACT04_BL {
 							calA = DateUtil.getCalendar(firstSaleDate.substring(0, 10));
 						} else {
 							String memCode = ConvertUtil.getString(order.get("memCode"));
-							orderList.remove(order);
+							removeList.add(order);
 							logger.outLog("====警告：会员【" + memCode + "】 首次购买日期信息不完整，被剔除=====");
 							continue;
 						}
@@ -579,7 +580,7 @@ public class BINCPMEACT04_BL {
 
 						if (busCal.compareTo(calA) > 0) {
 							String memCode = ConvertUtil.getString(order.get("memCode"));
-							orderList.remove(order);
+							removeList.add(order);
 							logger.outLog("警告：会员【" + memCode + "】领用截止日期小于当前业务日期，被剔除",
 									CherryBatchConstants.LOGGER_DEBUG);
 						} else {
@@ -588,6 +589,7 @@ public class BINCPMEACT04_BL {
 						}
 					}
 				}
+				orderList.removeAll(removeList);
 			}
 		}
 	}
@@ -823,7 +825,8 @@ public class BINCPMEACT04_BL {
 
 	private void setCntGot(Map<String, Object> subCamp, List<Map<String, Object>> orderList) throws Exception {
 		String couponType = CherryBatchUtil.getString(subCamp.get("couponType"));
-		if (!CherryBatchUtil.isBlankList(orderList)) { 
+		if (!CherryBatchUtil.isBlankList(orderList)) {
+			LinkedList<Map<String, Object>> removeList = new LinkedList<Map<String, Object>>();
 			String gotCounter = CherryBatchUtil.getString(subCamp.get("gotCounter"));
 			// 领取柜台：任意柜台
 			if ("1".equals(gotCounter) || "1".equals(couponType)|| "3".equals(couponType)) {// 导入coupon活动||最大coupon数
@@ -834,7 +837,7 @@ public class BINCPMEACT04_BL {
 				for (Map<String, Object> mem : orderList) {
 					String counterCode = ConvertUtil.getString(mem.get("counterCode"));
 					if ("".equals(counterCode.trim())) {
-						orderList.remove(mem);
+						removeList.add(mem);
 						String memCode = ConvertUtil.getString(mem.get("memCode"));
 						logger.outLog("会员【" + memCode + "】发卡柜台为空!", CherryBatchConstants.LOGGER_DEBUG);
 					}
@@ -847,7 +850,7 @@ public class BINCPMEACT04_BL {
 				for (Map<String, Object> mem : orderList) {
 					String firstSaleCounterCode = ConvertUtil.getString(mem.get("firstSaleCounterCode"));
 					if ("".equals(firstSaleCounterCode.trim())) {
-						orderList.remove(mem);
+						removeList.add(mem);
 						String memCode = ConvertUtil.getString(mem.get("memCode"));
 						logger.outLog("会员【" + memCode + "】首次购买柜台为空!", CherryBatchConstants.LOGGER_DEBUG);
 					} else {
@@ -855,6 +858,7 @@ public class BINCPMEACT04_BL {
 					}
 				}
 			}
+			orderList.removeAll(removeList);
 		}
 	}
 
