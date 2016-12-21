@@ -158,32 +158,15 @@ public class BINBEMQMES01_Action {
 				logger.error(e.getMessage(), e);
 			}
 
-			//经销商额度变更
-			try {
-				// 组织代码
-				String orgCode = (String)map.get("orgCode");
+			// 业务类型
+			String tradeType =  ConvertUtil.getString(map.get("tradeType"));
+
+			if( tradeType.equals("NS")) {
 				// 品牌代码
 				String brandCode = (String)map.get("brandCode");
-				// 业务类型
-				//String tradeType = MessageConstants.MESSAGE_TYPE_GTED;
-				// 业务类型
-				String tradeType =  ConvertUtil.getString(map.get("tradeType"));
-				// 是否算积分字段
-				String ispoint = ConvertUtil.getString(map.get("isPoint"));
-				// 总金额字段
-				double totalamount = Double.valueOf(ConvertUtil.getString(map.get("totalAmount")));
-				// 取得刷新索引处理器
-				//CherryMessageHandler_IF cherryMessageHandler = binBEMQMES98_BL.getMessageHandler(orgCode, brandCode, tradeType);
-				// 存在刷新索引处理器的场合
-				if( tradeType.equals("NS") && !(ispoint != null && "0".equals(ispoint.trim())) && totalamount !=0 ) {
 
-					// 发送经销商额度变更MQ消息
-					transRepeaterManager.doRepeate(brandCode,"NS",map);
-
-				}
-			} catch (Throwable e) {
-				logger.error("******************************发送经销商额度变更MQ消息失败***************************");
-				logger.error(e.getMessage(), e);
+				// 发送经销商额度变更MQ消息
+				transRepeaterManager.doRepeate(brandCode, "NS", map);
 			}
 
 		}catch(Throwable e) {
