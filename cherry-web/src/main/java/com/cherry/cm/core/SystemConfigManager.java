@@ -36,8 +36,10 @@ public class SystemConfigManager implements InitializingBean {
                         //到各个品牌数据库中去查询品牌的信息,补全两个ID
                         CustomerContextHolder.setCustomerDataSourceType(dto.getDataSourceName());
                         SystemConfigDTO tmp = (SystemConfigDTO) baseServiceImpl.get(dto, "SystemInitialize.getBrandInfo");
-                        dto.setOrganizationInfoID(tmp.getOrganizationInfoID());
-                        dto.setBrandInfoID(tmp.getBrandInfoID());
+                        if(null!=tmp) {
+                            dto.setOrganizationInfoID(tmp.getOrganizationInfoID());
+                            dto.setBrandInfoID(tmp.getBrandInfoID());
+                        }
                     }finally {
                         CustomerContextHolder.clearCustomerDataSourceType();
                     }
