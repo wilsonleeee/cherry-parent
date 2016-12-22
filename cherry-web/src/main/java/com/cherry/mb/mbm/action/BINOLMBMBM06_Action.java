@@ -601,6 +601,8 @@ public class BINOLMBMBM06_Action extends BaseAction implements ModelDriven<BINOL
 				// 通过会员卡号查询会员信息
 				Map<String, Object> memberInfoMap = binOLMBMBM11_BL.getMemberInfoByMemCode(map);
 				if(memberInfoMap != null) {
+					// 不管是否是"资料缺失会员"，只要卡号存在都不允许换卡
+					/*
 					Object memInfoRegFlg = memberInfoMap.get("memInfoRegFlg");
 					if(memInfoRegFlg != null && "1".equals(memInfoRegFlg.toString())) {
 						String memberInfoId = String.valueOf(memberInfoMap.get("memberInfoId"));
@@ -619,6 +621,9 @@ public class BINOLMBMBM06_Action extends BaseAction implements ModelDriven<BINOL
 						this.addFieldError("memCode", getText("EMB00015"));
 						isCheck = false;
 					}
+					*/
+					this.addFieldError("memCode", getText("EMB00015"));
+					isCheck = false;
 				}
 				if(isCheck) {
 					// 根据系统配置项判断在换卡时是否将手机号关联更改为卡号
