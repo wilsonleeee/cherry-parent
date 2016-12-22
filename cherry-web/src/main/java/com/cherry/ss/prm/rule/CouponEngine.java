@@ -7,6 +7,7 @@ import java.util.Map;
 
 import javax.annotation.Resource;
 
+import com.cherry.cm.util.ConvertUtil;
 import com.cherry.ss.prm.core.CouponConstains;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -200,7 +201,7 @@ public class CouponEngine implements InitializingBean{
 		couponEngineDTO.setVersion(Integer.parseInt(String.valueOf(ruleMap.get("modifyCount"))));;
 		try {
 			// 使用券时间JSON
-			String useTimeJson = String.valueOf(ruleMap.get("useTimeJson"));
+			String useTimeJson = ConvertUtil.getString(ruleMap.get("useTimeJson"));
 			if (!CherryChecker.isNullOrEmpty(useTimeJson)) {
 				Map<String, Object> useTimeInfo = (Map<String, Object>) JSONUtil.deserialize(useTimeJson);
 				couponEngineDTO.setUseTimeInfo(useTimeInfo);
@@ -211,7 +212,7 @@ public class CouponEngine implements InitializingBean{
 		}
 		try {
 			// 券内容
-			String content = String.valueOf(ruleMap.get("content"));
+			String content = ConvertUtil.getString(ruleMap.get("content"));
 			int couponNum = 1;
 			if (!CherryChecker.isNullOrEmpty(content)) {
 				List<Map<String, Object>> contentList = (List<Map<String, Object>>) JSONUtil.deserialize(content);
@@ -225,7 +226,7 @@ public class CouponEngine implements InitializingBean{
 		}
 		try {
 			// 发券门槛JSON
-			String sendCond = String.valueOf(ruleMap.get("sendCond"));
+			String sendCond = ConvertUtil.getString(ruleMap.get("sendCond"));
 			if (!CherryChecker.isNullOrEmpty(sendCond)) {
 				Map<String, Object> sendCondInfo = (Map<String, Object>) JSONUtil.deserialize(sendCond);
 				if(null != sendCondInfo){
@@ -251,7 +252,7 @@ public class CouponEngine implements InitializingBean{
 		}
 		try {
 			// 使用门槛JSON
-			String useCond = String.valueOf(ruleMap.get("useCond"));
+			String useCond = ConvertUtil.getString(ruleMap.get("useCond"));
 			if (!CherryChecker.isNullOrEmpty(useCond)) {
 				Map<String, Object> useCondInfo = (Map<String, Object>) JSONUtil.deserialize(useCond);
 				couponEngineDTO.setUseCondInfo(useCondInfo);

@@ -3026,9 +3026,9 @@ public class BINOLSSPRM73_BL implements BINOLSSPRM73_IF{
 	 */
 	private void saveCouponCounterDetail(CouponRuleDTO couponRule,String sendContent_ex) throws JSONException,Exception {
 		//发送门槛
-		String sendCondCnt = "".equals(couponRule.getSendCondCnt())?"{}":couponRule.getSendCondCnt();
-		String sendCond = "".equals(couponRule.getSendCond())?"{}":couponRule.getSendCond();
-		sendContent_ex = "".equals(sendContent_ex)?"{}":sendContent_ex;
+		String sendCondCnt = CherryUtil.isEmpty(couponRule.getSendCondCnt())?"{}":couponRule.getSendCondCnt();
+		String sendCond = CherryUtil.isEmpty(couponRule.getSendCond())?"{}":couponRule.getSendCond();
+		sendContent_ex = CherryUtil.isEmpty(sendContent_ex)?"{}":sendContent_ex;
 		Map<String, Object> sendCondCntMap = (Map<String, Object> )JSONUtil.deserialize(sendCondCnt);
 		Map<String, Object> sendCondMap = (Map<String, Object> )JSONUtil.deserialize(sendCond);
 		String counterKbn_w=ConvertUtil.getString(sendCondCntMap.get("counterKbn_w"));
@@ -3135,8 +3135,8 @@ public class BINOLSSPRM73_BL implements BINOLSSPRM73_IF{
 	 */
 	private void saveCouponMemberDetail(CouponRuleDTO couponRule,String sendContent_ex) throws JSONException,Exception {
 		//发送门槛
-		String sendCond = "".equals(couponRule.getSendCond())?"{}":couponRule.getSendCond();
-		sendContent_ex = "".equals(sendContent_ex)?"{}":sendContent_ex;
+		String sendCond = CherryUtil.isEmpty(couponRule.getSendCond())?"{}":couponRule.getSendCond();
+		sendContent_ex = CherryUtil.isEmpty(sendContent_ex)?"{}":sendContent_ex;
 		Map<String, Object> sendCondMap = (Map<String, Object> )JSONUtil.deserialize(sendCond);
 		Map<String, Object> sendCondMap_ex = (Map<String, Object> )JSONUtil.deserialize(sendContent_ex);
 		String memberKbn_w=ConvertUtil.getString(sendCondMap.get("memberKbn_w"));
