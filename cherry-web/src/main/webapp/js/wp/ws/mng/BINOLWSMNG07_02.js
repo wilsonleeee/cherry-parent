@@ -290,6 +290,7 @@ BINOLWSMNG07_02.prototype = {
 				if($(this).find("#quantityArr").val()==""){
 					var gainCount = 0-parseInt($(this).find("#bookCountArr").val());
 					$(this).find("#gainCountArr").val(String(gainCount));
+					$(this).find("#checkQuantityArr").val('0');
 					$(this).find("#htArr").val("1");
 				}
 			});
