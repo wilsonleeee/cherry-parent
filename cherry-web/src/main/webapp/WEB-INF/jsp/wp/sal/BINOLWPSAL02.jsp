@@ -1,7 +1,7 @@
 <%@ page language="java" contentType="text/html; charset=utf-8" pageEncoding="utf-8"%>
 <%@ taglib prefix="s" uri="/struts-tags" %>
 <%@ taglib prefix="cherry" uri="/cherry-tags"%>
-<script type="text/javascript" src="/${CHERRY_CONTEXT_PATH}/js/wp/sal/BINOLWPSAL02.js?_v=20161107"></script>
+<script type="text/javascript" src="/${CHERRY_CONTEXT_PATH}/js/wp/sal/BINOLWPSAL02.js?_v=20161222"></script>
 <script type="text/javascript" src="/${CHERRY_CONTEXT_PATH}/js/wp/sal/BINOLWPSAL03.js?_v=20160315"></script>
 <script type="text/javascript" src="/${CHERRY_CONTEXT_PATH}/js/wp/sal/BINOLWPSAL13.js?_v=20160315"></script>
 <s:i18n name="i18n.wp.BINOLWPSAL02">

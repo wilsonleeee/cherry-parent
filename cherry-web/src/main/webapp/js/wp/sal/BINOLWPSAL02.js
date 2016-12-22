@@ -3629,7 +3629,7 @@ BINOLWPSAL02_GLOBAL.prototype = {
 		var saleType = $("#saleType").val();
 		if($('#promotionData >ul').length > 0){
 			$.each($('#promotionData >ul'), function(i){
-				if(!!$(this).find("#ckPromotion").attr("checked")){
+				if($(this).find("#ckPromotion").is(":checked")){
 					if($(this).find("#activityClassify").val() == "DHHD"){
 						isDHActivity = true;
 						return false;
