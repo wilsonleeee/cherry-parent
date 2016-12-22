@@ -1124,6 +1124,9 @@ public class BINOLCM33_BL {
 			String notSaleDays = (String)map.get("notSaleDaysRange");
 			if(notSaleDays != null && !"".equals(notSaleDays)) {
 				map.put("notSaleDaysTemp", Integer.parseInt(notSaleDays));
+				map.put("firstSaleTimeLimit",
+						DateUtil.addDateByDays(
+								DateUtil.DATE_PATTERN, sysDate.substring(0, 10), -Integer.parseInt(notSaleDays)));
 				firstSaleDayFlag = "1";
 			}
 			if (!CherryChecker.isNullOrEmpty(map.get("firstSaleTimeRangeJson"))) {

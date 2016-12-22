@@ -888,7 +888,8 @@
 				<![CDATA[F.FirstSaleDate is not null]]>
 			</isNotEmpty>
 			<isNotEmpty prepend="AND" property="notSaleDaysTemp">
-				<![CDATA[
+				<isNotEmpty property="firstSaleTimeLimit">
+					<![CDATA[
 					 NOT EXISTS(
 						SELECT 1
 						FROM
@@ -896,17 +897,35 @@
 							join Members.BIN_MemberExtInfo y WITH(NOLOCK) on x.BIN_MemberInfoID = y.BIN_MemberInfoID
 						WHERE
 							x.SaleDate <= convert(varchar(30),dateadd(day,#notSaleDaysTemp#,y.FirstSaleDate),23) AND
-							x.SaleTime <> y.FirstSaleDate AND 
+							x.SaleDate >= convert(varchar(30),dateadd(day,1,y.FirstSaleDate),23) AND
 							x.SaleType <> 'SR' AND
 							x.Amount > 0 AND
 							A.BIN_MemberInfoID = x.BIN_MemberInfoID
 					)
-				]]>
-				<isNotEmpty prepend="AND" property="notSaleSysDate">
-				<![CDATA[
-					 convert(date,F.FirstSaleDate) <= dateadd(day,#notSaleDaysNeg#,#notSaleSysDate#)
+					AND convert(date,F.FirstSaleDate) <= convert(date,#firstSaleTimeLimit#)
 				]]>
 				</isNotEmpty>
+				<isEmpty property="firstSaleTimeLimit">
+					<![CDATA[
+						 NOT EXISTS(
+							SELECT 1
+							FROM
+								Sale.BIN_SaleRecord x WITH(NOLOCK)
+								join Members.BIN_MemberExtInfo y WITH(NOLOCK) on x.BIN_MemberInfoID = y.BIN_MemberInfoID
+							WHERE
+								x.SaleDate <= convert(varchar(30),dateadd(day,#notSaleDaysTemp#,y.FirstSaleDate),23) AND
+								x.SaleTime <> y.FirstSaleDate AND
+								x.SaleType <> 'SR' AND
+								x.Amount > 0 AND
+								A.BIN_MemberInfoID = x.BIN_MemberInfoID
+						)
+					]]>
+					<isNotEmpty prepend="AND" property="notSaleSysDate">
+					<![CDATA[
+						 convert(date,F.FirstSaleDate) <= dateadd(day,#notSaleDaysNeg#,#notSaleSysDate#)
+					]]>
+					</isNotEmpty>
+				</isEmpty>
 			</isNotEmpty>
 			<isNotEmpty prepend="AND" property="firstSaleTimeRangeList" open="(" close=")">
 				<iterate property="firstSaleTimeRangeList" open="(" close=")" conjunction="OR">
@@ -2920,7 +2939,8 @@
 				<![CDATA[F.FirstSaleDate is not null]]>
 			</isNotEmpty>
 			<isNotEmpty prepend="AND" property="notSaleDaysTemp">
-				<![CDATA[
+				<isNotEmpty property="firstSaleTimeLimit">
+					<![CDATA[
 					 NOT EXISTS(
 						SELECT 1
 						FROM
@@ -2928,17 +2948,35 @@
 							join Members.BIN_MemberExtInfo y WITH(NOLOCK) on x.BIN_MemberInfoID = y.BIN_MemberInfoID
 						WHERE
 							x.SaleDate <= convert(varchar(30),dateadd(day,#notSaleDaysTemp#,y.FirstSaleDate),23) AND
-							x.SaleTime <> y.FirstSaleDate AND 
+							x.SaleDate >= convert(varchar(30),dateadd(day,1,y.FirstSaleDate),23) AND
 							x.SaleType <> 'SR' AND
 							x.Amount > 0 AND
 							A.BIN_MemberInfoID = x.BIN_MemberInfoID
 					)
+					AND convert(date,F.FirstSaleDate) <= convert(date,#firstSaleTimeLimit#)
 				]]>
-				<isNotEmpty prepend="AND" property="notSaleSysDate">
-					<![CDATA[
-						 convert(date,F.FirstSaleDate) <= dateadd(day,#notSaleDaysNeg#,#notSaleSysDate#)
-					]]>
 				</isNotEmpty>
+				<isEmpty property="firstSaleTimeLimit">
+					<![CDATA[
+						 NOT EXISTS(
+							SELECT 1
+							FROM
+								Sale.BIN_SaleRecord x WITH(NOLOCK)
+								join Members.BIN_MemberExtInfo y WITH(NOLOCK) on x.BIN_MemberInfoID = y.BIN_MemberInfoID
+							WHERE
+								x.SaleDate <= convert(varchar(30),dateadd(day,#notSaleDaysTemp#,y.FirstSaleDate),23) AND
+								x.SaleTime <> y.FirstSaleDate AND
+								x.SaleType <> 'SR' AND
+								x.Amount > 0 AND
+								A.BIN_MemberInfoID = x.BIN_MemberInfoID
+						)
+					]]>
+					<isNotEmpty prepend="AND" property="notSaleSysDate">
+						<![CDATA[
+							 convert(date,F.FirstSaleDate) <= dateadd(day,#notSaleDaysNeg#,#notSaleSysDate#)
+						]]>
+					</isNotEmpty>
+				</isEmpty>
 			</isNotEmpty>
 
 			<isNotEmpty prepend="AND" property="firstSaleTimeRangeList" open="(" close=")">
