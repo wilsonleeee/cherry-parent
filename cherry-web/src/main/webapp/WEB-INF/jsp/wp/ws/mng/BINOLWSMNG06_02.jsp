@@ -365,7 +365,7 @@
 <div id="errmessage" style="display:none">
     <input type="hidden" id="errmsg_EST00006" value='<s:text name="EST00006"/>'/>
     <input type="hidden" id="errmsg_EST00007" value='<s:text name="EST00007"/>'/>
-    <input type="hidden" id="errmsg_EST00008" value='<s:text name="EST00008"/>'/>
+    <input type="hidden" id="errmsg_EST00008" value='<s:text name="EST00008"/>'/><!--有无效的数据行，请补充完整或删除该行。-->
     <input type="hidden" id="errmsg_EST00009" value='<s:text name="EST00009"/>'/>
     <input type="hidden" id="errmsg_EST00013" value='<s:text name="EST00013"/>'/>
     <input type="hidden" id="errmsg_EST00015" value='<s:text name="EST00015"/>'/>

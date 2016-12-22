@@ -339,6 +339,7 @@ BINOLWSMNG06_02.prototype = {
 			return false;
 		}
 		var flag = true;
+		var productNullFlag = false;
 		var count = 0;
 		var addType = $("#addType").val();
 		// 检查有无空行
@@ -355,8 +356,18 @@ BINOLWSMNG06_02.prototype = {
 				} else {
 					$(this).removeClass('errTRbgColor');
 				}
+			} else {
+				productNullFlag = true;
+				$(this).attr("class", "errTRbgColor");
 			}
 		});
+		// 存在无效产品信息
+		if(productNullFlag) {
+			// 有无效的数据行，请补充完整或删除该行。
+			$('#errorDiv2 #errorSpan2').html($('#errmsg_EST00008').val());
+			$('#errorDiv2').show();
+			return false;
+		}
 		if (!flag && addType != "all") {
 			// 有空行存在，全盘允许不输入。
 			$('#errorDiv2 #errorSpan2').html($('#errmsg_EST00008').val());
