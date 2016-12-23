@@ -279,7 +279,16 @@ public class BINOLMBTIF01_BL implements BINOLMBTIF01_IF {
 					taobaoNick = taobao_nick;
 				}
 				map.put("hisTaobaoNick", taobaoNick);
+				String memberMode = TmallKeys.getMemberModel(brandCode);
+				// 会员模式：通用版本
+				boolean isCommMem = "1".equals(memberMode);
+				if (isCommMem) {
+					map.put("UPNICKNAME", "1");
+				}
 				int result = binOLMBTIF01_Service.updateUnbindInfo(map);
+				if (isCommMem) {
+					map.remove("UPNICKNAME");
+				}
 				if (result == 0) {
 					rst.setBind_code("E01");
 					logger.error(MTM00007 + mixMobile);
