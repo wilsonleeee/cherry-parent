@@ -39,6 +39,7 @@ public class BINBEIFPRO03_FN implements FunctionProvider{
 				result= ConvertUtil.getInt(resMap.get("flag"));
 			}
 			binbeifpro03BL.outMessage();
+			transientVars.put("JobCode","BAT081");
 			binbeifpro03BL.tran_programEnd(transientVars);
 			ps.setInt("result", result);
 		} catch (CherryBatchException e) {

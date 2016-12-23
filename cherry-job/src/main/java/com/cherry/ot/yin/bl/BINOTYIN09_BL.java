@@ -130,21 +130,22 @@ public class BINOTYIN09_BL {
 			List<Map<String, Object>> itemList = binOTYIN09_Service.getItemListForOT(paraMap);
 			if (CherryBatchUtil.isBlankList(itemList)) {
 				break;
-			} else {
-				try {
-					// 备份产品接口表产品数据
-					binOTYIN09_Service.backupItems(itemList);
-					binOTYIN09_Service.manualCommit();
-				} catch (Exception e) {
-					binOTYIN09_Service.manualRollback();
-					BatchLoggerDTO batchLoggerDTO = new BatchLoggerDTO();
-					batchLoggerDTO.setCode("EOT00012");
-					batchLoggerDTO.setLevel(CherryBatchConstants.LOGGER_ERROR);
-					logger.BatchLogger(batchLoggerDTO, e);
-					// 备份失败后，跳转至下一批次(页)
-					continue;
-				}
 			}
+//			else {
+//				try {
+//					// 备份产品接口表产品数据
+//					binOTYIN09_Service.backupItems(itemList);
+//					binOTYIN09_Service.manualCommit();
+//				} catch (Exception e) {
+//					binOTYIN09_Service.manualRollback();
+//					BatchLoggerDTO batchLoggerDTO = new BatchLoggerDTO();
+//					batchLoggerDTO.setCode("EOT00012");
+//					batchLoggerDTO.setLevel(CherryBatchConstants.LOGGER_ERROR);
+//					logger.BatchLogger(batchLoggerDTO, e);
+//					// 备份失败后，跳转至下一批次(页)
+//					continue;
+//				}
+//			}
 			
 			 // 当前批次最后一个产品的ItemCode赋给bathLastItemCode，用于当前任务下一批次(页)产品数据的筛选条件
 			 bathLastItemCode = CherryBatchUtil.getString(itemList.get(itemList.size()- 1).get("ItemCode"));
