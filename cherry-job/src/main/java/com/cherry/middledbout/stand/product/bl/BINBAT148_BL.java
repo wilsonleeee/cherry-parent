@@ -12,24 +12,20 @@
  */
 package com.cherry.middledbout.stand.product.bl;
 
+import com.cherry.cm.batcmbussiness.interfaces.BINBECM01_IF;
+import com.cherry.cm.cmbussiness.bl.BINOLCM15_BL;
+import com.cherry.cm.core.*;
+import com.cherry.cm.util.CherryBatchUtil;
+import com.cherry.cm.util.ConvertUtil;
+import com.cherry.middledbout.stand.product.service.BINBAT148_Service;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import javax.annotation.Resource;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
-
-import javax.annotation.Resource;
-
-import com.cherry.cm.batcmbussiness.interfaces.BINBECM01_IF;
-import com.cherry.cm.cmbussiness.bl.BINOLCM15_BL;
-import com.cherry.cm.core.BatchExceptionDTO;
-import com.cherry.cm.core.BatchLoggerDTO;
-import com.cherry.cm.core.CherryBatchConstants;
-import com.cherry.cm.core.CherryBatchException;
-import com.cherry.cm.core.CherryBatchLogger;
-import com.cherry.cm.util.CherryBatchUtil;
-import com.cherry.cm.util.ConvertUtil;
-import com.cherry.middledbout.stand.product.service.BINBAT148_Service;
 
 
 /**
@@ -40,7 +36,7 @@ import com.cherry.middledbout.stand.product.service.BINBAT148_Service;
  *
  */
 public class BINBAT148_BL {
-	
+	private static Logger loger = LoggerFactory.getLogger(BINBAT148_BL.class.getName());
 	/** 打印当前类的日志信息 **/
 	private static CherryBatchLogger logger = new CherryBatchLogger(BINBAT148_BL.class);
 	/** 每批次(页)处理数量 1000 */
@@ -190,6 +186,7 @@ public class BINBAT148_BL {
 						batchLoggerDTO.setLevel(CherryBatchConstants.LOGGER_ERROR);
 						logger.BatchLogger(batchLoggerDTO, e);
 						flag = CherryBatchConstants.BATCH_WARNING;
+						throw e;
 					}
 					
 					// =========== Step1.B 生成柜台与特价产品方案的关联表数据
@@ -207,6 +204,7 @@ public class BINBAT148_BL {
 						batchLoggerDTO.setLevel(CherryBatchConstants.LOGGER_ERROR);
 						logger.BatchLogger(batchLoggerDTO, e);
 						flag = CherryBatchConstants.BATCH_WARNING;
+						throw e;
 					}
 					if ((i>0 && i%UPDATE_SIZE==0) || i>= cntIFList.size()-1) {
 						binBAT148_Service.manualCommit();
@@ -215,6 +213,7 @@ public class BINBAT148_BL {
 			}
 			
 		}catch(Exception e){
+			loger.error("",e);
 			binBAT148_Service.manualRollback();
 			flag = CherryBatchConstants.BATCH_ERROR;
 			// 处理柜台对应的柜台号及特价产品方案失败。
