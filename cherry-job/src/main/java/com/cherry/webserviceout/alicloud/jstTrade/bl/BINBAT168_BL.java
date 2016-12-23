@@ -289,11 +289,13 @@ public class BINBAT168_BL {
                     return null;
                 }
                 //验证退款单对应产品信息是否存在
-                Map<String, Object> prtInfo = binbat168_Service.getPrtInfo(refundDetailMap);
+                Map<String, Object> prtInfo = binbat168_Service.getPrtInfo(originalOrder);
                 if (MapUtils.isEmpty(prtInfo)) {
                     updateESOrderState("2", "查询不到产品信息" , ConvertUtil.getString(refundDetailMap.get("ESOrderMainID")));
                     return null;
                 }
+                //退款单的部分数据和原单一致
+                mapOriginalOrderToRefund(originalOrder,refundDetailMap);
 
                 double actualAmount = Double.valueOf(ConvertUtil.getString(originalOrder.get("actualAmount")));
                 double refundAmount = Double.valueOf(ConvertUtil.getString(refundDetailMap.get("actualAmount")));
@@ -345,6 +347,15 @@ public class BINBAT168_BL {
             }
         }
         return resultMap;
+    }
+
+    private void mapOriginalOrderToRefund(Map<String, Object> originalOrder, Map<String, Object> refundDetailMap) {
+        refundDetailMap.put("price",originalOrder.get("price"));
+        refundDetailMap.put("memo",originalOrder.get("memo"));
+        refundDetailMap.put("discountRate",originalOrder.get("discountRate"));
+        refundDetailMap.put("activityCode",originalOrder.get("activityCode"));
+        refundDetailMap.put("activityMainCode",originalOrder.get("activityMainCode"));
+        refundDetailMap.put("originalCode",originalOrder.get("originalCode"));
     }
 
     /**
@@ -414,7 +425,7 @@ public class BINBAT168_BL {
         mainData.put("TotalAmount", totalAmount);
         mainData.put("TradeType", MessageConstants.BUSINESS_TYPE_NS);
         mainData.put("SubType", "");
-        mainData.put("RelevantNo", "");
+        mainData.put("RelevantNo", orderMainMap.get("relevanceBillCode"));
         mainData.put("Reason", orderMainMap.get("Comments"));
         String orderDate = ConvertUtil.getString(orderMainMap.get("billCreateTime"));
         mainData.put("TradeDate", orderDate == null ? null: orderDate.substring(0, 10));

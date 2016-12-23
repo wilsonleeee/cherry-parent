@@ -35,6 +35,17 @@ public class TmallKeyDTO {
 	/**会员模式*/
 	private String memberModel;
 
+	/**开卡柜台和开卡BA*/
+	private String extJson;
+
+	public String getExtJson() {
+		return extJson;
+	}
+
+	public void setExtJson(String extJson) {
+		this.extJson = extJson;
+	}
+
 	public String getBrandName() {
 		return brandName;
 	}

@@ -822,5 +822,54 @@ public class BINOLCM02_Service extends BaseService{
 		map.put(CherryConstants.IBATIS_SQL_ID, "BINOLCM02.getCampObjCount");
 		return baseServiceImpl.getSum(map);
 	}
-	
+
+	/**
+	 * 根据天猫加密手机号索取会员信息
+	 *
+	 * @param map
+	 * 			查询参数
+	 * @return 持卡信息
+	 *
+	 *
+	 */
+	public Map<String, Object> getMemberInfoByMixMobile(Map<String, Object> map) {
+		map.put(CherryConstants.IBATIS_SQL_ID,
+				"BINOLCM02.getMemberInfoByMixMobile");
+		return (Map<String, Object>) baseServiceImpl.get(map);
+	}
+
+	/**
+	 *
+	 * 更新会员加密手机号
+	 *
+	 * @param map 更新条件
+	 * @return 更新件数
+	 */
+	public int updateMemMixMobile(Map<String, Object> map){
+		map.put(CherryConstants.IBATIS_SQL_ID, "BINOLCM02.updateMemMixMobile");
+		return baseServiceImpl.update(map);
+	}
+
+	/**
+	 * 插入会员信息合并记录表
+	 *
+	 * @param map
+	 * 			会员合并信息
+	 */
+	public void addMemberMergeInfo(Map<String, Object> map){
+		map.put(CherryConstants.IBATIS_SQL_ID, "BINOLCM02.addMemberMergeInfo");
+		baseServiceImpl.save(map);
+	}
+
+	/**
+	 * 插入会员信息合并历史表
+	 *
+	 * @param map
+	 * 			会员合并信息
+	 */
+	public void addMemberMergeHistory(Map<String, Object> map){
+		map.put(CherryConstants.IBATIS_SQL_ID, "BINOLCM02.addMemberMergeHistory");
+		baseServiceImpl.save(map);
+	}
+
 }

@@ -3034,4 +3034,95 @@
 		<![CDATA[SELECT COUNT(1) FROM (]]><include refid="BINOLCM02.queryCampObjList" /><![CDATA[) T]]>
 	</select>
 
+	<!-- 根据天猫加密手机号获取会员信息-->
+	<select id="getMemberInfoByMixMobile" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+		<![CDATA[
+		SELECT TOP 1
+				A.BIN_MemberInfoID AS memberInfoId,
+				A.MobilePhone AS mobilePhone,
+				A.MemInfoRegFlg AS memInfoRegFlg,
+				A.Nickname AS nickName,
+				B.MemCode AS memberCode
+		FROM
+				Members.BIN_MemberInfo A
+		LEFT JOIN Members.BIN_MemCardInfo B ON A.BIN_MemberInfoID = B.BIN_MemberInfoID
+		WHERE
+				A.TmallMixMobile = #mix_mobile# AND
+				B.CardValidFlag = '1'
+		]]>
+	</select>
+
+	<!--更新会员加密手机号 -->
+	<update id="updateMemMixMobile" parameterClass="java.util.HashMap">
+		<![CDATA[
+			UPDATE
+				Members.BIN_MemberInfo
+			SET
+				TmallMixMobile = #mix_mobile#,
+		]]>
+		<include refid="BINOLCMINC99.updateSql" />
+		<![CDATA[
+			WHERE
+				BIN_MemberInfoID = #memberInfoId#
+		]]>
+	</update>
+
+	<!-- 插入会员信息合并记录表  -->
+	<insert id="addMemberMergeInfo" parameterClass="java.util.HashMap">
+		<![CDATA[
+		INSERT INTO Members.BIN_MemberMergeInfo(
+			BIN_OrganizationInfoID,
+			BIN_BrandInfoID,
+			DeleteMemInfoID,
+			DeleteMemCode,
+			RetainMemInfoID,
+			RetainMemCode,
+		]]>
+		<include refid="BINOLCMINC99.insertKeySql" />
+		<![CDATA[
+		)VALUES(
+			#organizationInfoId#,
+			#brandInfoId#,
+			#memberInfoId#,
+			#memberCode#,
+			#retainMemInfoId#,
+			#retainMemCode#,
+		]]>
+		<include refid="BINOLCMINC99.insertValueSql" />
+		<![CDATA[
+		)
+		]]>
+	</insert>
+
+	<!-- 插入会员信息合并历史表  -->
+	<insert id="addMemberMergeHistory" parameterClass="java.util.HashMap">
+		<![CDATA[
+		INSERT INTO Members.BIN_MemberMergeHistory(
+			BIN_OrganizationInfoID,
+			BIN_BrandInfoID,
+			DeleteMemInfoID,
+			DeleteMemCode,
+			RetainMemInfoID,
+			RetainMemCode,
+			MergeFlag,
+			ErrorMsg,
+		]]>
+		<include refid="BINOLCMINC99.insertKeySql" />
+		<![CDATA[
+		)VALUES(
+			#organizationInfoId#,
+			#brandInfoId#,
+			#deleteMemInfoId#,
+			#deleteMemCode#,
+			#retainMemInfoId#,
+			#retainMemCode#,
+			#mergeFlag#,
+			#errorMsg#,
+		]]>
+		<include refid="BINOLCMINC99.insertValueSql" />
+		<![CDATA[
+		)
+		]]>
+	</insert>
+
 </sqlMap>

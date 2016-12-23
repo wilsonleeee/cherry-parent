@@ -106,7 +106,18 @@ public class TmallKeys implements InitializingBean{
 		}
 		return null;
 	}
-	
+
+	public static String getExtJson(String brandCode) {
+		if (null != keyList && !CherryChecker.isNullOrEmpty(brandCode)) {
+			for (TmallKeyDTO tmallKey : keyList) {
+				if (brandCode.trim().equals(tmallKey.getBrandCode())) {
+					return tmallKey.getExtJson();
+				}
+			}
+		}
+		return null;
+	}
+
 	/**
 	 * <p>
 	 * 加载所有key

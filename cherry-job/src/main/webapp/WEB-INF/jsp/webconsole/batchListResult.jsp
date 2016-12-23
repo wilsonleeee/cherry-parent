@@ -21,6 +21,10 @@
         		|| url.indexOf("BINBAT166_init.action")!=-1
         		|| url.indexOf("BINBAT167_init.action")!=-1
 				|| url.indexOf("BINBAT168_init.action")!=-1
+				|| url.indexOf("BINBEMBTIF09_init.action")!=-1
+				|| url.indexOf("BINBEMBTIF10_init.action")!=-1
+				|| url.indexOf("BINBEMBTIF11_init.action")!=-1
+				|| url.indexOf("BINBEMBTIF12_init.action")!=-1
         		|| url.indexOf("BINBECTSMG09_init.action")!=-1 || url.indexOf("BINBECTSMG10_init.action")!=-1
         		|| url.indexOf("BINBESSPRM08_init.action")!=-1
 				|| url.indexOf("BINBAT173_init.action")!=-1) {

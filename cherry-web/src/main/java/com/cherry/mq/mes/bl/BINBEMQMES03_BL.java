@@ -215,7 +215,7 @@ public class BINBEMQMES03_BL implements AnalyzeMemberMessage_IF {
 							memberDetailMap.put("messageId", memInfoMap.get("messageId"));
 							//会员通，添加相应参数
 							binOLCM02_BL.addTmallMixMobile(memberDetailMap,"memMobile",2);				
-							// 更新会员信息表
+							// 更新会员信息表q
 							binBEMQMES03_Service.updMemberInfo(memberDetailMap);
 							
 							Map<String, Object> paramMap = new HashMap<String, Object>();
@@ -351,6 +351,8 @@ public class BINBEMQMES03_BL implements AnalyzeMemberMessage_IF {
 					memberDetailMap.put("memValidFlag", "0");
 					binBEMQMES03_Service.updMemValidFlag(memberDetailMap);
         		}
+				//添加天猫加密手机号到会员信息表(巧迪会员通)
+				binOLCM02_BL.addMixMobile(map,"memMobile");
 			} else {
 				Map<String, Object> curMemCodeMap = new HashMap<String, Object>();
 				curMemCodeMap.put("memberInfoID", memberDetailMap.get("memberInfoID"));

@@ -61,7 +61,7 @@ public class BINBEMBTIF01_Service extends BaseService{
 	}
 	
 	/**
-	 * 取得需要手机加密的会员信息List
+	 * 取得添加天猫加密手机号的会员信息List
 	 * 
 	 * @param map
 	 * 			查询参数
@@ -69,12 +69,72 @@ public class BINBEMBTIF01_Service extends BaseService{
 	 * 			需要手机加密的会员信息List
 	 * 
 	 */
+	public List<Map<String, Object>> getAddMixMobileMemList(Map<String, Object> map) {
+		map.put(CherryConstants.IBATIS_SQL_ID,
+				"BINBEMBTIF01.getAddMixMobileMemList");
+		return (List<Map<String, Object>>) baseServiceImpl.getList(map);
+	}
+
+	/**
+	 * 取得需要手机加密的会员信息List
+	 *
+	 * @param map
+	 * 			查询参数
+	 * @return List
+	 * 			需要手机加密的会员信息List
+	 *
+	 */
 	public List<Map<String, Object>> getMemPhoneList(Map<String, Object> map) {
 		map.put(CherryConstants.IBATIS_SQL_ID,
 				"BINBEMBTIF01.getMemPhoneList");
 		return (List<Map<String, Object>>) baseServiceImpl.getList(map);
 	}
-	
+
+	/**
+	 * 取得要更新明文手机号的会员信息List
+	 *
+	 * @param map
+	 * 			查询参数
+	 * @return List
+	 * 			要更新明文手机号的会员信息List
+	 *
+	 */
+	public List<Map<String, Object>> getUpdatedMemList(Map<String, Object> map) {
+		map.put(CherryConstants.IBATIS_SQL_ID,
+				"BINBEMBTIF01.getUpdatedMemList");
+		return (List<Map<String, Object>>) baseServiceImpl.getList(map);
+	}
+
+	/**
+	 * 取得要转成正式会员的线上会员信息List
+	 *
+	 * @param map
+	 * 			查询参数
+	 * @return List
+	 * 			要转成正式会员的线上会员信息List
+	 *
+	 */
+	public List<Map<String, Object>> getRegMemList(Map<String, Object> map) {
+		map.put(CherryConstants.IBATIS_SQL_ID,
+				"BINBEMBTIF01.getRegMemList");
+		return (List<Map<String, Object>>) baseServiceImpl.getList(map);
+	}
+
+	/**
+	 * 取得要合并的会员信息List
+	 *
+	 * @param map
+	 * 			查询参数
+	 * @return List
+	 * 			要合并的会员信息List
+	 *
+	 */
+	public List<Map<String, Object>> getMergedMemberList(Map<String, Object> map) {
+		map.put(CherryConstants.IBATIS_SQL_ID,
+				"BINBEMBTIF01.getMergedMemberList");
+		return (List<Map<String, Object>>) baseServiceImpl.getList(map);
+	}
+
 	/**
 	 * 取得历史注册的新会员信息List
 	 * 
@@ -280,7 +340,19 @@ public class BINBEMBTIF01_Service extends BaseService{
 		map.put(CherryConstants.IBATIS_SQL_ID, "BINBEMBTIF01.updateMemMixMobile");
 		return baseServiceImpl.update(map);
 	}
-	
+
+	/**
+	 *
+	 * 更新会员明文手机号
+	 *
+	 * @param map 更新条件
+	 * @return 更新件数
+	 */
+	public int updateExpressMobile(Map<String, Object> map){
+		map.put(CherryConstants.IBATIS_SQL_ID, "BINBEMBTIF01.updateExpressMobile");
+		return baseServiceImpl.update(map);
+	}
+
 	/**
 	 * 
 	 * 更新新会员注册表
@@ -292,7 +364,19 @@ public class BINBEMBTIF01_Service extends BaseService{
 		map.put(CherryConstants.IBATIS_SQL_ID, "BINBEMBTIF01.updateMemRegister");
 		return baseServiceImpl.update(map);
 	}
-	
+
+	/**
+	 *
+	 * 更新新会员注册表
+	 *
+	 * @param map 更新条件
+	 * @return 更新件数
+	 */
+	public int updateMemRegisterInfo(Map<String, Object> map){
+		map.put(CherryConstants.IBATIS_SQL_ID, "BINBEMBTIF01.updateMemRegisterInfo");
+		return baseServiceImpl.update(map);
+	}
+
 	/**
 	 * 
 	 * 更新注册会员绑定时间
@@ -343,7 +427,7 @@ public class BINBEMBTIF01_Service extends BaseService{
 	/**
 	 * 取得天猫加密秘钥
 	 * 
-	 * @param map 
+	 * @param
 	 *
 	 * @return String
 	 * 
@@ -376,7 +460,29 @@ public class BINBEMBTIF01_Service extends BaseService{
 		map.put(CherryConstants.IBATIS_SQL_ID, "BINBEMBTIF01.addTmallMemMergeInfo");
 		baseServiceImpl.save(map);
 	}
-	
+
+	/**
+	 * 插入会员信息合并记录表
+	 *
+	 * @param map
+	 * 			会员合并信息
+	 */
+	public void addMemberMergeInfo(Map<String, Object> map){
+		map.put(CherryConstants.IBATIS_SQL_ID, "BINBEMBTIF01.addMemberMergeInfo");
+		baseServiceImpl.save(map);
+	}
+
+	/**
+	 * 插入会员信息合并历史表
+	 *
+	 * @param map
+	 * 			会员合并信息
+	 */
+	public void addMemberMergeHistory(Map<String, Object> map){
+		map.put(CherryConstants.IBATIS_SQL_ID, "BINBEMBTIF01.addMemberMergeHistory");
+		baseServiceImpl.save(map);
+	}
+
 	/**
 	 * 
 	 * 更新天猫会员合并表
@@ -403,7 +509,22 @@ public class BINBEMBTIF01_Service extends BaseService{
 				"BINBEMBTIF01.getNewMemberInfo");
 		return (Map<String, Object>) baseServiceImpl.get(map);
 	}
-	
+
+	/**
+	 * 取得会员信息
+	 *
+	 * @param map
+	 * 			查询参数
+	 * @return List
+	 * 			会员信息
+	 *
+	 */
+	public Map<String, Object> getMemberInfoByIdAndMemCode(Map<String, Object> map) {
+		map.put(CherryConstants.IBATIS_SQL_ID,
+				"BINBEMBTIF01.getMemberInfoByIdAndMemCode");
+		return (Map<String, Object>) baseServiceImpl.get(map);
+	}
+
 	/**
 	 * 取得假登陆会员积分信息
 	 * 
@@ -418,7 +539,110 @@ public class BINBEMBTIF01_Service extends BaseService{
 				"BINBEMBTIF01.getPrePointInfo");
 		return (Map<String, Object>) baseServiceImpl.get(map);
 	}
-	
+
+	/**
+	 * 根据卡号获得持卡信息
+	 *
+	 * @param map
+	 * 			查询参数
+	 * @return 持卡信息
+	 *
+	 *
+	 */
+	public Map<String, Object> getMemCardInfo(Map<String, Object> map) {
+		map.put(CherryConstants.IBATIS_SQL_ID,
+				"BINBEMBTIF01.getMemCardInfo");
+		return (Map<String, Object>) baseServiceImpl.get(map);
+	}
+
+	/**
+	 * 获取组织ID
+	 *
+	 * @param map
+	 * 			查询参数
+	 * @return 持卡信息
+	 *
+	 *
+	 */
+	public Map<String, Object> getOrganizationId(Map<String, Object> map) {
+		map.put(CherryConstants.IBATIS_SQL_ID,
+				"BINBEMBTIF01.getOrganizationId");
+		return (Map<String, Object>) baseServiceImpl.get(map);
+	}
+	/**
+	 * 获取会员ID
+	 *
+	 * @param map
+	 * 			查询参数
+	 * @return 会员ID
+	 *
+	 *
+	 */
+	public Map<String, Object> getEmpId(Map<String, Object> map) {
+		map.put(CherryConstants.IBATIS_SQL_ID,
+				"BINBEMBTIF01.getEmpId");
+		return (Map<String, Object>) baseServiceImpl.get(map);
+	}
+	/**
+	 * 根据会员ID和卡号获得合并信息
+	 *
+	 * @param map
+	 * 			查询参数
+	 * @return 持卡信息
+	 *
+	 *
+	 */
+	public Map<String, Object> getMemMergeInfoByIdAndMemCode(Map<String, Object> map) {
+		map.put(CherryConstants.IBATIS_SQL_ID,
+				"BINBEMBTIF01.getMemMergeInfoByIdAndMemCode");
+		return (Map<String, Object>) baseServiceImpl.get(map);
+	}
+
+	/**
+	 * 查询会员的合并历史记录
+	 *
+	 * @param map
+	 * 			查询参数
+	 * @return 持卡信息
+	 *
+	 *
+	 */
+	public Map<String, Object> getMemMergeHistory(Map<String, Object> map) {
+		map.put(CherryConstants.IBATIS_SQL_ID,
+				"BINBEMBTIF01.getMemMergeHistory");
+		return (Map<String, Object>) baseServiceImpl.get(map);
+	}
+
+	/**
+	 * 获取会员最早的销售时间
+	 *
+	 * @param map
+	 * 			查询参数
+	 * @return 持卡信息
+	 *
+	 *
+	 */
+	public Map<String, Object> getEarliestSaleTime(Map<String, Object> map) {
+		map.put(CherryConstants.IBATIS_SQL_ID,
+				"BINBEMBTIF01.getEarliestSaleTime");
+		return (Map<String, Object>) baseServiceImpl.get(map);
+	}
+
+	/**
+	 * 根据天猫加密手机号索取会员信息
+	 *
+	 * @param map
+	 * 			查询参数
+	 * @return 持卡信息
+	 *
+	 *
+	 */
+	public Map<String, Object> getMemberInfoByMixMobile(Map<String, Object> map) {
+		map.put(CherryConstants.IBATIS_SQL_ID,
+				"BINBEMBTIF01.getMemberInfoByMixMobile");
+		return (Map<String, Object>) baseServiceImpl.get(map);
+	}
+
 	/**
 	 * 删除假登陆会员信息
 	 * @param map
@@ -427,7 +651,34 @@ public class BINBEMBTIF01_Service extends BaseService{
 		map.put(CherryConstants.IBATIS_SQL_ID, "BINBEMBTIF01.delPreMemberInfo");
 		return baseServiceImpl.remove(map);
 	}
-	
+
+	/**
+	 * 删除会员信息
+	 * @param map
+	 */
+	public int deleteMemberInfo(Map map){
+		map.put(CherryConstants.IBATIS_SQL_ID, "BINBEMBTIF01.deleteMemberInfo");
+		return baseServiceImpl.remove(map);
+	}
+
+	/**
+	 * 删除会员持卡信息
+	 * @param map
+	 */
+	public int deleteMemCardInfo(Map map){
+		map.put(CherryConstants.IBATIS_SQL_ID, "BINBEMBTIF01.deleteMemCardInfo");
+		return baseServiceImpl.remove(map);
+	}
+
+	/**
+	 * 删除会员合并信息
+	 * @param map
+	 */
+	public int deleteMemberMergeInfo(Map map){
+		map.put(CherryConstants.IBATIS_SQL_ID, "BINBEMBTIF01.deleteMemberMergeInfo");
+		return baseServiceImpl.remove(map);
+	}
+
 	/**
 	 * 删除假登陆会员卡信息
 	 * @param map
@@ -550,6 +801,87 @@ public class BINBEMBTIF01_Service extends BaseService{
 		map.put(CherryConstants.IBATIS_SQL_ID, "BINBEMBTIF01.updateMemMergeResult");
 		return baseServiceImpl.update(map);
 	}
+
+	/**
+	 *
+	 * 更新会员信息表
+	 *
+	 * @param map 更新条件
+	 * @return 更新件数
+	 */
+	public int updateMemberInfo(Map<String, Object> map){
+		map.put(CherryConstants.IBATIS_SQL_ID, "BINBEMBTIF01.updateMemberInfo");
+		return baseServiceImpl.update(map);
+	}
+	/**
+	 *
+	 * 更新会员持卡表
+	 *
+	 * @param map 更新条件
+	 * @return 更新件数
+	 */
+	public int updateMemCardInfo(Map<String, Object> map){
+		map.put(CherryConstants.IBATIS_SQL_ID, "BINBEMBTIF01.updateMemCardInfo");
+		return baseServiceImpl.update(map);
+	}
+	/**
+	 *
+	 * 更新电商订单主表
+	 *
+	 * @param map 更新条件
+	 * @return 更新件数
+	 */
+	public int updateESOrderMain(Map<String, Object> map){
+		map.put(CherryConstants.IBATIS_SQL_ID, "BINBEMBTIF01.updateESOrderMain");
+		return baseServiceImpl.update(map);
+	}
+	/**
+	 *
+	 * 更新销售主表
+	 *
+	 * @param map 更新条件
+	 * @return 更新件数
+	 */
+	public int updateSaleMaster(Map<String, Object> map){
+		map.put(CherryConstants.IBATIS_SQL_ID, "BINBEMBTIF01.updateSaleMaster");
+		return baseServiceImpl.update(map);
+	}
+	/**
+	 *
+	 * 更新会员使用明细表
+	 *
+	 * @param map 更新条件
+	 * @return 更新件数
+	 */
+	public int updateMemUsedDetail(Map<String, Object> map){
+		map.put(CherryConstants.IBATIS_SQL_ID, "BINBEMBTIF01.updateMemUsedDetail");
+		return baseServiceImpl.update(map);
+	}
+
+	/**
+	 *
+	 * 更新会员积分表
+	 *
+	 * @param map 更新条件
+	 * @return 更新件数
+	 */
+	public int updateMemberPoint(Map<String, Object> map){
+		map.put(CherryConstants.IBATIS_SQL_ID, "BINBEMBTIF01.updateMemberPoint");
+		return baseServiceImpl.update(map);
+	}
+
+	/**
+	 *
+	 * 更新会员积分变化主表
+	 *
+	 * @param map 更新条件
+	 * @return 更新件数
+	 */
+	public int updatePointChange(Map<String, Object> map){
+		map.put(CherryConstants.IBATIS_SQL_ID, "BINBEMBTIF01.updatePointChange");
+		return baseServiceImpl.update(map);
+	}
+
 	/**
 	 * 查询会员产生的最早业务时间
 	 * @param map

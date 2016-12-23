@@ -20,6 +20,7 @@ import java.util.Map;
 
 import javax.annotation.Resource;
 
+import com.cherry.cm.core.*;
 import org.apache.commons.codec.digest.DigestUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
@@ -27,10 +28,6 @@ import org.slf4j.LoggerFactory;
 
 import com.cherry.cm.cmbussiness.service.BINOLCM02_Service;
 import com.cherry.cm.cmbussiness.service.BINOLCM05_Service;
-import com.cherry.cm.core.CherryChecker;
-import com.cherry.cm.core.CherryConstants;
-import com.cherry.cm.core.CherrySecret;
-import com.cherry.cm.core.CodeTable;
 import com.cherry.cm.util.ConvertUtil;
 import com.cherry.cp.common.CampConstants;
 import com.cherry.mb.mbm.service.BINOLMBMBM11_Service;
@@ -1894,7 +1891,64 @@ public class BINOLCM02_BL {
 			}
 		}		
 	}
-	
+
+	/**
+	 * 线下添加天猫加密手机号共同程序(巧迪会员通)
+	 * @param map
+	 *
+	 */
+	public void addMixMobile(Map map,String mobilePhone){
+		Map<String, Object> paMap = new HashMap<String, Object>();
+		//兼容参数
+		paMap.put("organizationInfoId",map.get("organizationInfoId") == null ? map.get("organizationInfoID") : map.get("organizationInfoId"));
+		paMap.put("brandInfoId",map.get("brandInfoId") == null ? map.get("brandInfoID") : map.get("brandInfoId"));
+		paMap.put("memberInfoId",map.get("memberInfoId") == null ? map.get("memberInfoID") : map.get("memberInfoId"));
+		paMap.put("memberCode",map.get("newMemcode") == null ? map.get("memberCode") : map.get("newMemcode"));
+		paMap.put("memberCode",paMap.get("memberCode") == null ? map.get("memCode") : paMap.get("memberCode"));
+		paMap.put(CherryConstants.CREATEDBY,map.get("createdBy"));
+		paMap.put(CherryConstants.CREATEPGM,map.get("createPGM"));
+		paMap.put(CherryConstants.UPDATEDBY,map.get("updatedBy"));
+		paMap.put(CherryConstants.UPDATEPGM,map.get("updatePGM"));
+
+		String  memberModel= TmallKeys.getMemberModel((String) map.get("brandCode"));
+		//判断是否是会员通模式
+		if ("1".equals(memberModel)) {
+			try {
+				String mobile = CherrySecret.decryptData(ConvertUtil.getString(map.get("brandCode")), (String) map.get(mobilePhone));
+				if (!CherryChecker.isNullOrEmpty(mobile)) {
+					TmallKeyDTO tmallKey = TmallKeys.getTmallKeyBybrandCode((String) map.get("brandCode"));
+					if (null == tmallKey) {
+						return;
+					}
+					String mixMobile = DigestUtils.md5Hex(DigestUtils.md5Hex("tmall" + mobile + tmallKey.getMixKey()));
+					//用天猫加密手机号查询会员信息表
+					Map<String, Object> paramMap = new HashMap<String, Object>();
+					paramMap.put("mix_mobile", mixMobile);
+					Map<String, Object> newMemberInfo = binOLCM02_Service.getMemberInfoByMixMobile(paramMap);
+
+					if (newMemberInfo != null && !newMemberInfo.isEmpty()) {
+						//如果有线下会员的手机号与之重复
+						if ("0".equals(ConvertUtil.getString(newMemberInfo.get("memInfoRegFlg")))) {
+							//并插入一条异常信息到会员信息合并历史表，mergeFlag设为3
+							addMemberMergeHistory(paMap, newMemberInfo);
+							//如果有线上会员的天猫加密手机号与之重复
+						} else if ("1".equals(ConvertUtil.getString(newMemberInfo.get("memInfoRegFlg")))
+								&& !CherryChecker.isNullOrEmpty(newMemberInfo.get("nickName"))) {
+							//并插入一条合并信息到会员信息合并记录表
+							addMemberMergeInfo(paMap, newMemberInfo);
+						}
+
+					} else {
+						paramMap.put("memberInfoId",paMap.get("memberInfoId"));
+						binOLCM02_Service.updateMemMixMobile(paramMap);
+					}
+				}
+			}catch(Exception e){
+				logger.error("手机号天猫加密失败:" + e, e);
+			}
+		}
+	}
+
 	private void addTmallMixMobileToMap(Map map,String mobilePhone) {	
 		try {
 			String mobile = CherrySecret.decryptData(ConvertUtil.getString(map.get("brandCode")),(String)map.get(mobilePhone));
@@ -1905,7 +1959,26 @@ public class BINOLCM02_BL {
 		}				
 	}
 
-	
+	private void addMemberMergeInfo(Map<String, Object> map, Map<String, Object> newMemberInfo) {
+		Map<String, Object> paramMap = new HashMap<String, Object>();
+		paramMap.putAll(map);
+		paramMap.put("memberInfoId",newMemberInfo.get("memberInfoId"));
+		paramMap.put("memberCode",newMemberInfo.get("memberCode"));
+		paramMap.put("retainMemInfoId",map.get("memberInfoId"));
+		paramMap.put("retainMemCode",map.get("memberCode"));
+		binOLCM02_Service.addMemberMergeInfo(paramMap);
+	}
+
+	private void addMemberMergeHistory(Map<String, Object> map, Map<String, Object> newMemberInfo) {
+		Map<String, Object> paramMap = new HashMap<String, Object>();
+		paramMap.putAll(map);
+		paramMap.put("deleteMemInfoId",map.get("memberInfoId"));
+		paramMap.put("deleteMemCode",map.get("memberCode"));
+		paramMap.put("retainMemInfoId",newMemberInfo.get("memberInfoId"));
+		paramMap.put("retainMemCode",newMemberInfo.get("memberCode"));
+		paramMap.put("mergeFlag","3");
+		binOLCM02_Service.addMemberMergeHistory(paramMap);
+	}
 	/**
 	 * 查询品牌List
 	 * @param map

@@ -323,6 +323,8 @@ public class BINOLMBMBM11_BL {
 				map.put("memberInfoId", memId);
 				// 添加会员持卡信息
 				binOLMBMBM11_Service.addMemCardInfo(map);
+				//添加天猫加密手机号到会员信息表(巧迪会员通)
+				binOLCM02_BL.addMixMobile(map,"mobilePhone");
 				memberId = ConvertUtil.getString(memId);
 			} catch (Exception e) {
 				logger.error("插入会员数据或会员持卡信息时失败,相关参数为：" + map.toString(), e);
