@@ -249,10 +249,20 @@ public class WebserviceEntrance implements ApplicationContextAware{
 			paramMap.put("OrgCode", brandMap.get("orgCode"));
 			paramMap.put("BrandCode", brandCode);
 
-			TradeConfig tc = getTradeConfig(tradeType);
-			Class<?> c = Class.forName(tc.getClassName());
-			Method m = c.getMethod(tc.getMethodName(), Map.class);
-			retMap = (Map<String, Object>) m.invoke(applicationContext.getBean(tc.getBeanName()), paramMap);
+			transaction = Cat.newTransaction("WebService", "invoke");
+			try {
+				TradeConfig tc = getTradeConfig(tradeType);
+				Class<?> c = Class.forName(tc.getClassName());
+				Method m = c.getMethod(tc.getMethodName(), Map.class);
+				retMap = (Map<String, Object>) m.invoke(applicationContext.getBean(tc.getBeanName()), paramMap);
+				transaction.setStatus(Transaction.SUCCESS);
+			}catch (Exception t){
+			transaction.setStatus(t);
+			Cat.logError(t);
+			throw t;
+		}finally {
+			transaction.complete();
+		}
 			return getEncryptReturnString(AESKEY, retMap);
 		} catch (Exception ex) {
 			if (ex instanceof BadPaddingException) {
