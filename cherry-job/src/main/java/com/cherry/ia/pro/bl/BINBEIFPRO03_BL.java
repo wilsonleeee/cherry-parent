@@ -786,6 +786,8 @@ public class BINBEIFPRO03_BL {
 		mainData.put("SubType", subType);
 		// 表版本号
 		mainData.put("TVersion", map.get("newTVersion"));
+		//操作者
+		mainData.put("EmployeeId", ConvertUtil.getString(map.get("EmployeeId")));
 		
 		//一直向前增长的系统时间
 		mainData.put("Time", binbeifpro03Service.getForwardSYSDate());
