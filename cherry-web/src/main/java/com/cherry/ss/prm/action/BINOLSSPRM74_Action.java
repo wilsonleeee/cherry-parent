@@ -247,7 +247,9 @@ public class BINOLSSPRM74_Action extends BaseAction implements ModelDriven<BINOL
 				if(couponCheck_list.size() > 0){
 					Map<String,Object> check_map=new HashMap<String, Object>();
 					check_map.put("Main_map", main_map);
-					check_map.put("cart_map", shoppingcart_list);
+					//拆分后的CartList
+					List<Map<String,Object>> convert_cart=binOLSSPRM74_IF.convertCart_unit(shoppingcart_list);
+					check_map.put("cart_map", convert_cart);
 					check_map.put("coupon_list", couponCheck_list);
 					check_map.put("Rule_list", rule_coupon_input);
 					Map<String, Object> couponCheck_map=coupon_IF.checkCoupon(check_map);
@@ -325,6 +327,8 @@ public class BINOLSSPRM74_Action extends BaseAction implements ModelDriven<BINOL
 			transaction.complete();
 		}
 	}
+
+	/*
 	public static void main(String[] args) throws Exception {
 //		生成测试的购物车数据
 		Map<String,Object> jiahua_input=new HashMap<String, Object>();
@@ -381,6 +385,7 @@ public class BINOLSSPRM74_Action extends BaseAction implements ModelDriven<BINOL
 //		String mima2=dp.decrypt("1b5c6c8275859804569423336efe475dd6492908f09a2d582d007ab441cf285eb07263193aac1f3be60b7bea628e166159c1839823d9daf758a7a84e2501ace367fe7eeb6dfbba4f3ccdf69c4568e9b6848f3f054b48da4366a77d71718d9adee14b6285446c080f8fae680041e1230d92791378888b533b8a0d37202bcbb1ff3fc7548e82d179260f28e7ccc7ad2857a6668392376baffc42296fdaaac42a5349223d4d25557e63206379accdbdbf37bb601e12ffd7a7b0337e957497e3e6c1b7bd9b8778eaac783ea72f5b133a2fde575e94655306cbdf43bfe470ac67ab5ce4e651fe1d659e78eae5d536cc823e78048f7a8d354afa16bb6c4cf81f027b3c1f92ec8c7a1a1dd4c11ca1e6a1b4c47ac2225c6a4cb8d4cd1efd33d7b018a36ab458aa93800e131c003c510adb88f0fcb830530a2340ad390cf610f821cf34f254c220b9a443b1e17a09da2f05edf653bd781b774ac76740edc1fbe04abedfc15d0c49df45b62207cb5f4565c7df1474eaf30fa689ab99262238f36ba542720d2a976237887097e96ecb7353e598838c25fb3707333ff3fb1b09ed219c73c2ea058d01b3bb6d111e");
 //		Map<String,Object> map_json=ConvertUtil.json2Map(mima2);
 	}
+	*/
 	/**
 	 * 单据录入
 	 * @throws Exception 

@@ -190,8 +190,11 @@ public class CouponConstains {
 	public final static String IF_ERROR_SEND_ERROR_CODE = "WSESP0126";
 	
 	/** 接口错误提示：券的使用场景不正确 */
-	public final static String IF_ERROR_COUPON_ERROR = "券的使用场景不正确，请于代物券页面使用";
-	
+	public final static String IF_ERROR_COUPON_ERROR_1 = "券的使用场景不正确，请于代物券页面使用";
+
+	/** 接口错误提示：券的使用场景不正确 */
+	public final static String IF_ERROR_COUPON_ERROR_2 = "券的使用场景不正确，请于代金券页面使用";
+
 	public final static String IF_ERROR_COUPON_ERROR_CODE = "WSESP0127";
 	
 	/** 接口错误提示： 该券已使用，您不能重复使用 */

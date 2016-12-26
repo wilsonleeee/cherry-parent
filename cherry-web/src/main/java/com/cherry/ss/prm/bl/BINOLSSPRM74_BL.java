@@ -1024,4 +1024,18 @@ public class BINOLSSPRM74_BL implements BINOLSSPRM74_IF {
 			}
 		}
 	}
+
+	@Override
+	public List<Map<String, Object>> convertCart_unit(List<Map<String, Object>> cartList) {
+		//拆单操作
+		List<Map<String, Object>> insertRule=new ArrayList<Map<String,Object>>();
+		for(Map<String,Object> rule:cartList){
+			int quantity=Integer.parseInt("".equals(ConvertUtil.getString(rule.get("quantity")))?"1":ConvertUtil.getString(rule.get("quantity")));
+			for(int i=0;i<quantity;i++){
+				rule.put("quantity", 1);
+				insertRule.add(rule);
+			}
+		}
+		return insertRule;
+	}
 }

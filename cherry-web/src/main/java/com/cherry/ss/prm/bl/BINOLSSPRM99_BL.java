@@ -334,9 +334,12 @@ public class BINOLSSPRM99_BL implements Coupon_IF {
 			return getResult(CouponConstains.IF_ERROR_NOTEXIST_COUPON_CODE, CouponConstains.IF_ERROR_NOTEXIST_COUPON);
 		} else {
 			boolean isDwqCoupon = CouponConstains.COUPONTYPE_2.equals(coupon.get("couponType"));
-			if (isDwq && !isDwqCoupon || !isDwq && isDwqCoupon) {
+			if (isDwq && !isDwqCoupon) {
 				// 券的使用场景不正确
-				return getResult(CouponConstains.IF_ERROR_COUPON_ERROR_CODE, CouponConstains.IF_ERROR_COUPON_ERROR);
+				return getResult(CouponConstains.IF_ERROR_COUPON_ERROR_CODE, CouponConstains.IF_ERROR_COUPON_ERROR_1);
+			}else if(!isDwq && isDwqCoupon){
+				// 券的使用场景不正确
+				return getResult(CouponConstains.IF_ERROR_COUPON_ERROR_CODE, CouponConstains.IF_ERROR_COUPON_ERROR_2);
 			}
 		}
 		// 组织代码
