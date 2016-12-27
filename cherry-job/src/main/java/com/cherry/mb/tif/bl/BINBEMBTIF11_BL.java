@@ -252,9 +252,9 @@ public class BINBEMBTIF11_BL {
 		String businessTime;
 		//取得最早的销售时间
 		Map<String,Object> earliestSaleTimeMap = binBEMBTIF01_Service.getEarliestSaleTime(paramMap);
-		if (earliestSaleTimeMap == null && map.get("tmallBindTime") != null){
+		if ((earliestSaleTimeMap == null || earliestSaleTimeMap.get("saleTime") == null)&& map.get("tmallBindTime") != null){
 			businessTime = ConvertUtil.getString(map.get("tmallBindTime"));
-		}else if (earliestSaleTimeMap == null && map.get("tmallBindTime") == null){
+		}else if ((earliestSaleTimeMap == null || earliestSaleTimeMap.get("saleTime") == null) && map.get("tmallBindTime") == null){
 			return binBEMBTIF01_Service.getSYSDateTime();
 		}else if (earliestSaleTimeMap != null && map.get("tmallBindTime") == null){
 			businessTime =  ConvertUtil.getString(earliestSaleTimeMap.get("saleTime"));

@@ -216,6 +216,7 @@ public class BINBEMBTIF10_BL {
 		Map<String, Object> extMap = ConvertUtil.json2Map(TmallKeys.getExtJson((String)memberInfo.get("brandCode")));
 		memberInfo.put("baCodeBelong",extMap.get("baCodeBelong"));
 		memberInfo.put("counterCodeBelong",extMap.get("counterCodeBelong"));
+		memberInfo.put("memName",memberInfo.get("nickname") == null ? null : CherryBatchUtil.mixStrsub(ConvertUtil.getString(memberInfo.get("nickname")),39));
 		String joinDate = memberInfo.get("tmallBindTime") == null ? binBEMBTIF01_Service.getSYSDate().substring(0,10)
 				: ConvertUtil.getString(memberInfo.get("tmallBindTime")).substring(0,10);
 		memberInfo.put("joinDate",joinDate);
@@ -248,9 +249,9 @@ public class BINBEMBTIF10_BL {
 		String businessTime;
 		//取得最早的销售时间
 		Map<String,Object> earliestSaleTimeMap = binBEMBTIF01_Service.getEarliestSaleTime(paramMap);
-		if (earliestSaleTimeMap == null && map.get("tmallBindTime") != null){
+		if ((earliestSaleTimeMap == null || earliestSaleTimeMap.get("saleTime") == null)&& map.get("tmallBindTime") != null){
 			businessTime = ConvertUtil.getString(map.get("tmallBindTime"));
-		}else if (earliestSaleTimeMap == null && map.get("tmallBindTime") == null){
+		}else if ((earliestSaleTimeMap == null || earliestSaleTimeMap.get("saleTime") == null) && map.get("tmallBindTime") == null){
 			return binBEMBTIF01_Service.getSYSDateTime();
 		}else if (earliestSaleTimeMap != null && map.get("tmallBindTime") == null){
 			businessTime =  ConvertUtil.getString(earliestSaleTimeMap.get("saleTime"));
