@@ -1,43 +1,31 @@
 package com.cherry.webserviceout.kingdee;
 
-import java.net.URLEncoder;
-import java.text.SimpleDateFormat;
-import java.util.Calendar;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Random;
-
-import javax.annotation.Resource;
-import javax.ws.rs.core.MultivaluedMap;
-
+import com.cherry.cm.cmbussiness.bl.BINOLCM27_BL;
+import com.sun.jersey.api.client.WebResource;
+import com.sun.jersey.core.util.MultivaluedMapImpl;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.cherry.cm.cmbussiness.bl.BINOLCM27_BL;
-import com.cherry.cm.core.CherryChecker;
-import com.cherry.cm.core.CherryMD5Coder;
-import com.cherry.cm.util.CherryUtil;
-import com.cherry.cm.util.ConvertUtil;
-import com.cherry.cm.util.DateUtil;
-import com.cherry.webservice.common.WebserviceDataSource;
-import com.googlecode.jsonplugin.JSONUtil;
-import com.sun.jersey.api.client.WebResource;
-import com.sun.jersey.core.util.MultivaluedMapImpl;
+import javax.annotation.Resource;
+import javax.ws.rs.core.MultivaluedMap;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Random;
 
 /**
  * 韩束WS接口
  * @author jijw
  *
+ * 韩束品牌已经结束服务，不再使用
  */
 public class WebServiceKingdee {
 
 	/** 系统配置项 共通BL */
 	@Resource(name="binOLCM27_BL")
 	private BINOLCM27_BL binOLCM27_BL;
-	
-	@Resource(name = "webserviceDataSource")
-	private WebserviceDataSource webserviceDataSource;
+
+//	@Resource(name = "webserviceDataSource")
+//	private WebserviceDataSource webserviceDataSource;
 	
 	private static Logger logger = LoggerFactory.getLogger(WebServiceKingdee.class.getName());
 	
@@ -101,67 +89,67 @@ public class WebServiceKingdee {
     @SuppressWarnings("unchecked")
 	public Map<String,Object> getServerUrl(Map<String,Object> paraMap) throws Exception
     {
-    	Map<String, Object> selMap = new HashMap<String, Object>();
-    	Map<String, Object> resultMap = new HashMap<String, Object>();
-    	selMap.putAll(paraMap);
-		
-//		String brandInfoID = ConvertUtil.getString((selMap.get("organizationInfoId")));
-//		String organizationInfoID = ConvertUtil.getString(selMap.get("brandInfoId"));
-    	
-		// 业务类型
-    	selMap.put("ESCode", "kingdee");
-		selMap.put("tradeCode", "getKISServerUrl");
-		
-    	// 取得第三方WS配置信息
-    	Map<String, Object> wsConfigMap = webserviceDataSource.getWSConfig(selMap);
-    	
-    	String ServerUrlStr = ConvertUtil.getString(wsConfigMap.get("URL"));
-    	// 扩展配置{"EID":549616,"AccSecret":"4vHUmAAqSEW5MtH4YF8gThE4kSqJFGNT7w3qvKJd","AccKey":"1406008060"}
-    	String extJson =  ConvertUtil.getString(wsConfigMap.get("ExtJson"));
-    	Map<String, Object> extMap = (Map<String, Object>) JSONUtil.deserialize(extJson);
-    	paraMap.putAll(extMap);
-    	
-    	// 企业号
-//        String eID = this.EID;
-        String eID = ConvertUtil.getString(extMap.get("EID"));
-        
-        // AccSecret是Kis平台分配的
-//        String accSecret = this.AccSecret;
-        String accSecret = ConvertUtil.getString(extMap.get("AccSecret"));
-        
-        // 请求接口ID
-//        String accKey = this.AccKey;
-        String accKey = ConvertUtil.getString(extMap.get("AccKey"));
-        
-        // 时间
-		SimpleDateFormat sf = new SimpleDateFormat(DateUtil.DATETIME_PATTERN);
-    	Calendar ca = Calendar.getInstance();
-        String timestamp = sf.format(ca.getTime());
-        String timestampEnc = URLEncoder.encode(timestamp, "UTF-8");
-        
-        // 请求端的状态值（16位随机字符串含大小写字母和数字）
-        String state = getRandomCharAndNumr(16);
-        String sign = eID + accSecret + timestamp + state;
-        
-        String url = ServerUrlStr;
-        url += "?EID=" + eID + "&Sign=" + CherryMD5Coder.encryptMD5(sign) + "&Timestamp=" + timestampEnc + "&State=" + state + "&AccKey=" + accKey;
-        
-        try {
-        	String resultStr =  doGet(url);
-        	resultMap = CherryUtil.json2Map(resultStr);
-        	
-        	if(null != resultMap && !resultMap.isEmpty()){
-        		this.serverUrlStr = ConvertUtil.getString(resultMap.get("ServerUrl"));
-        	}else{
-        		resultMap.put("Result", "WSE0041");
-        		resultMap.put("ErrMsg", "WebService返回异常(获取KIS的 ServerUrl)");
-        	}
-        	
-        	return resultMap;
-        }catch(Exception e){
-        	logger.error("getServerUrl WS方法调用失败");
-        	logger.error("Webservice ERROR",e);
-        }
+//    	Map<String, Object> selMap = new HashMap<String, Object>();
+//    	Map<String, Object> resultMap = new HashMap<String, Object>();
+//    	selMap.putAll(paraMap);
+//
+////		String brandInfoID = ConvertUtil.getString((selMap.get("organizationInfoId")));
+////		String organizationInfoID = ConvertUtil.getString(selMap.get("brandInfoId"));
+//
+//		// 业务类型
+//    	selMap.put("ESCode", "kingdee");
+//		selMap.put("tradeCode", "getKISServerUrl");
+//
+//    	// 取得第三方WS配置信息
+//    	Map<String, Object> wsConfigMap = webserviceDataSource.getWSConfig(selMap);
+//
+//    	String ServerUrlStr = ConvertUtil.getString(wsConfigMap.get("URL"));
+//    	// 扩展配置{"EID":549616,"AccSecret":"4vHUmAAqSEW5MtH4YF8gThE4kSqJFGNT7w3qvKJd","AccKey":"1406008060"}
+//    	String extJson =  ConvertUtil.getString(wsConfigMap.get("ExtJson"));
+//    	Map<String, Object> extMap = (Map<String, Object>) JSONUtil.deserialize(extJson);
+//    	paraMap.putAll(extMap);
+//
+//    	// 企业号
+////        String eID = this.EID;
+//        String eID = ConvertUtil.getString(extMap.get("EID"));
+//
+//        // AccSecret是Kis平台分配的
+////        String accSecret = this.AccSecret;
+//        String accSecret = ConvertUtil.getString(extMap.get("AccSecret"));
+//
+//        // 请求接口ID
+////        String accKey = this.AccKey;
+//        String accKey = ConvertUtil.getString(extMap.get("AccKey"));
+//
+//        // 时间
+//		SimpleDateFormat sf = new SimpleDateFormat(DateUtil.DATETIME_PATTERN);
+//    	Calendar ca = Calendar.getInstance();
+//        String timestamp = sf.format(ca.getTime());
+//        String timestampEnc = URLEncoder.encode(timestamp, "UTF-8");
+//
+//        // 请求端的状态值（16位随机字符串含大小写字母和数字）
+//        String state = getRandomCharAndNumr(16);
+//        String sign = eID + accSecret + timestamp + state;
+//
+//        String url = ServerUrlStr;
+//        url += "?EID=" + eID + "&Sign=" + CherryMD5Coder.encryptMD5(sign) + "&Timestamp=" + timestampEnc + "&State=" + state + "&AccKey=" + accKey;
+//
+//        try {
+//        	String resultStr =  doGet(url);
+//        	resultMap = CherryUtil.json2Map(resultStr);
+//
+//        	if(null != resultMap && !resultMap.isEmpty()){
+//        		this.serverUrlStr = ConvertUtil.getString(resultMap.get("ServerUrl"));
+//        	}else{
+//        		resultMap.put("Result", "WSE0041");
+//        		resultMap.put("ErrMsg", "WebService返回异常(获取KIS的 ServerUrl)");
+//        	}
+//
+//        	return resultMap;
+//        }catch(Exception e){
+//        	logger.error("getServerUrl WS方法调用失败");
+//        	logger.error("Webservice ERROR",e);
+//        }
         return null;
     }
     
@@ -177,140 +165,140 @@ public class WebServiceKingdee {
      */
     @SuppressWarnings("unchecked")
 	public Map<String,Object> accessServerResult(Map<String,Object> paraMap) throws Exception {
-    	
+//
     	Map<String, Object> resultMap = new HashMap<String, Object>();
-    	
-    	// 【获取KIS的 ServerUrl】
-    	Map<String, Object> serverUrlMap = getServerUrl(paraMap);
-    	
-    	// serverUrl(通过GetServer方法获取)
-    	String serverUrl = ConvertUtil.getString(serverUrlMap.get("ServerUrl"));
-    	serverUrl = String.format("http://%s/Webapi/Router", serverUrl);
-    	
-    	// 业务类型代号(新后台电商接口表)
-    	String tradeCode = ConvertUtil.getString(paraMap.get("tradeCode"));
-    	
-    	// 取得第三方WS配置信息
-    	paraMap.put("ESCode", "kingdee");
-    	Map<String, Object> wsConfigMap = webserviceDataSource.getWSConfig(paraMap);
-    	// 扩展配置
-    	String extJson =  ConvertUtil.getString(wsConfigMap.get("ExtJson"));
-    	Map<String, Object> extMap = (Map<String, Object>) JSONUtil.deserialize(extJson);
-    	
-    	// eId企业号
-    	String eId = ConvertUtil.getString(paraMap.get("EID"));
-    	
-    	// 业务API名称 method
-    	String method = ConvertUtil.getString(extMap.get("Method"));
-    	paraMap.put("kisMethod", method);
-    	
-    	// 应用CODE
-    	String appNum = ConvertUtil.getString(paraMap.get("aPPnum"));
-    	// 名称由来说明：kis+应用Code+路由名称+类名+方法名
-        method = "kis." + appNum + ".uequery.KISPDAStockController." + method;//调用服务方法名
-        
-        // 时间戳
-		SimpleDateFormat sf = new SimpleDateFormat(DateUtil.DATETIME_PATTERN);
-    	Calendar ca = Calendar.getInstance();
-        String timestamp = sf.format(ca.getTime());
-        String timestampEnc = URLEncoder.encode(timestamp, "UTF-8");
-    	
-    	// API协议版本，目前值为:1.0
-    	String ver = ConvertUtil.getString(paraMap.get("Ver"));
-    	
-    	// 来源标识
-    	String fromTag = ConvertUtil.getString(paraMap.get("FromTag"));
-    	
-    	// 是否返回新的Json数据格式(Y为返回新的Json数据格式，N为继续使用旧的Json数据格式，默认为N)
-    	String isNewJson = ConvertUtil.getString(paraMap.get("IsNewJson"));
-    	if(CherryChecker.isNullOrEmpty(isNewJson)){
-    		isNewJson = "Y";
-    	}
-    	
-    	// CustData数据是否加密，Y为加密，N为不加密，默认为N
-    	String isEncrypt = ConvertUtil.getString(paraMap.get("IsEncrypt"));
-    	if(CherryChecker.isNullOrEmpty(isEncrypt)){
-    		isEncrypt = "N";
-    	}
-    	
-    	// appSecret
-    	String appSecret = ConvertUtil.getString(serverUrlMap.get("AppSecret"));
-    	// 请求端的状态值（16位随机字符串含大小写字母和数字）
-    	String state = getRandomCharAndNumr(16);
-//    	String state = "2EAEC2";
-    	// 签名
-        String sign = CherryMD5Coder.encryptMD5(eId + appSecret + method + timestamp + state).toUpperCase();
-    	
-        // CustData数据包参数-ProductID
-        String productId = ConvertUtil.getString(paraMap.get("ProductID"));
-        if(CherryChecker.isNullOrEmpty(productId)){
-        	productId = "";
-        }
-    	
-    	// CustData数据包参数-AccountDB帐套 (根据具体业务需要是否必填，比如帐务平台此处帐套为必填项)
-    	String accountDB = ConvertUtil.getString(paraMap.get("AccountDB"));
-    	if(CherryChecker.isNullOrEmpty(accountDB)){
-    		accountDB = "";
-    	}
-    	
-    	// CustData数据包参数-UserID
-    	String userid = ConvertUtil.getString(paraMap.get("UserID"));
-    	if(CherryChecker.isNullOrEmpty(userid)){
-    		userid = "";
-    	}
-    	
-    	// CustData数据包参数-PassWord
-    	String pwd = ConvertUtil.getString(paraMap.get("PassWord"));
-    	if(CherryChecker.isNullOrEmpty(pwd)){
-    		pwd = "";
-    	}
-    	
-    	// CustData数据包参数-CurrentPage 当前页
-    	String currentPage = ConvertUtil.getString(paraMap.get("CurrentPage"));
-    	if(CherryChecker.isNullOrEmpty(currentPage)){
-    		currentPage = "";
-    	}
-    	
-    	// CustData数据包参数-ItemsOfPage 每页多少条记录
-    	String itemsOfPage = ConvertUtil.getString(paraMap.get("ItemsOfPage"));
-    	if(CherryChecker.isNullOrEmpty(itemsOfPage)){
-    		itemsOfPage = "";
-    	}
-    	
-    		
-    	// CustData数据包参数-Data 业务端Json数据包，业务数据参数请参考具体业务API说明(即Method参数对应的API名称
-    	String p_dataJson = ConvertUtil.getString(paraMap.get("p_dataJson"));
-    	if(CherryChecker.isNullOrEmpty(p_dataJson)){
-    		p_dataJson = "\"\"";
-    	}
-        
-        serverUrl += "?EID=" + eId + "&Method=" + method + "&Timestamp=" + timestampEnc + "&Ver=" + ver  + "&FromTag=" + fromTag;
-        serverUrl += "&IsNewJson=" + isNewJson + "&Sign=" + sign + "&State=" + state + "&CustData=";
-      
-        String custData = "{\"ProductID\":\""+ productId  +"\",\"AccountDB\":\"" + accountDB + "\",\"UserID\":\"" + userid + "\",\"PassWord\":\"" + pwd + "\",\"CurrentPage\":\""+ currentPage + "\",\"ItemsOfPage\":\""+itemsOfPage +"\",\"Data\":" + p_dataJson + "}";
-     
-        custData = URLEncoder.encode(custData, "UTF-8");
-        try {
-            serverUrl += custData;
-            String resultStr = doGet(serverUrl);
-        	resultMap = CherryUtil.json2Map(resultStr);
-        	
-        	if(null != resultMap && !resultMap.isEmpty()){
-        		String result = ConvertUtil.getString(resultMap.get("Result"));
-        		String errMsg = ConvertUtil.getString(resultMap.get("ErrMsg"));
-        		if(!WebServiceKingdee.Result_200.equals(result)){
-        			logger.error("Kingdee ErrorCode: " + result);
-        			logger.error("Kingdee ErrMsg: " + errMsg );
-        		}
-        	}else{
-        		resultMap.put("Result", "WSE0041");
-        		resultMap.put("ErrMsg", "WebService返回异常(调用业务接口【"+ tradeCode +"】)");
-        	}
-        	
-        }catch(Exception e){
-        	logger.error("getServerResult WS方法调用失败");
-        	logger.error("Webservice ERROR",e);
-        }
+//
+//    	// 【获取KIS的 ServerUrl】
+//    	Map<String, Object> serverUrlMap = getServerUrl(paraMap);
+//
+//    	// serverUrl(通过GetServer方法获取)
+//    	String serverUrl = ConvertUtil.getString(serverUrlMap.get("ServerUrl"));
+//    	serverUrl = String.format("http://%s/Webapi/Router", serverUrl);
+//
+//    	// 业务类型代号(新后台电商接口表)
+//    	String tradeCode = ConvertUtil.getString(paraMap.get("tradeCode"));
+//
+//    	// 取得第三方WS配置信息
+//    	paraMap.put("ESCode", "kingdee");
+//    	Map<String, Object> wsConfigMap = webserviceDataSource.getWSConfig(paraMap);
+//    	// 扩展配置
+//    	String extJson =  ConvertUtil.getString(wsConfigMap.get("ExtJson"));
+//    	Map<String, Object> extMap = (Map<String, Object>) JSONUtil.deserialize(extJson);
+//
+//    	// eId企业号
+//    	String eId = ConvertUtil.getString(paraMap.get("EID"));
+//
+//    	// 业务API名称 method
+//    	String method = ConvertUtil.getString(extMap.get("Method"));
+//    	paraMap.put("kisMethod", method);
+//
+//    	// 应用CODE
+//    	String appNum = ConvertUtil.getString(paraMap.get("aPPnum"));
+//    	// 名称由来说明：kis+应用Code+路由名称+类名+方法名
+//        method = "kis." + appNum + ".uequery.KISPDAStockController." + method;//调用服务方法名
+//
+//        // 时间戳
+//		SimpleDateFormat sf = new SimpleDateFormat(DateUtil.DATETIME_PATTERN);
+//    	Calendar ca = Calendar.getInstance();
+//        String timestamp = sf.format(ca.getTime());
+//        String timestampEnc = URLEncoder.encode(timestamp, "UTF-8");
+//
+//    	// API协议版本，目前值为:1.0
+//    	String ver = ConvertUtil.getString(paraMap.get("Ver"));
+//
+//    	// 来源标识
+//    	String fromTag = ConvertUtil.getString(paraMap.get("FromTag"));
+//
+//    	// 是否返回新的Json数据格式(Y为返回新的Json数据格式，N为继续使用旧的Json数据格式，默认为N)
+//    	String isNewJson = ConvertUtil.getString(paraMap.get("IsNewJson"));
+//    	if(CherryChecker.isNullOrEmpty(isNewJson)){
+//    		isNewJson = "Y";
+//    	}
+//
+//    	// CustData数据是否加密，Y为加密，N为不加密，默认为N
+//    	String isEncrypt = ConvertUtil.getString(paraMap.get("IsEncrypt"));
+//    	if(CherryChecker.isNullOrEmpty(isEncrypt)){
+//    		isEncrypt = "N";
+//    	}
+//
+//    	// appSecret
+//    	String appSecret = ConvertUtil.getString(serverUrlMap.get("AppSecret"));
+//    	// 请求端的状态值（16位随机字符串含大小写字母和数字）
+//    	String state = getRandomCharAndNumr(16);
+////    	String state = "2EAEC2";
+//    	// 签名
+//        String sign = CherryMD5Coder.encryptMD5(eId + appSecret + method + timestamp + state).toUpperCase();
+//
+//        // CustData数据包参数-ProductID
+//        String productId = ConvertUtil.getString(paraMap.get("ProductID"));
+//        if(CherryChecker.isNullOrEmpty(productId)){
+//        	productId = "";
+//        }
+//
+//    	// CustData数据包参数-AccountDB帐套 (根据具体业务需要是否必填，比如帐务平台此处帐套为必填项)
+//    	String accountDB = ConvertUtil.getString(paraMap.get("AccountDB"));
+//    	if(CherryChecker.isNullOrEmpty(accountDB)){
+//    		accountDB = "";
+//    	}
+//
+//    	// CustData数据包参数-UserID
+//    	String userid = ConvertUtil.getString(paraMap.get("UserID"));
+//    	if(CherryChecker.isNullOrEmpty(userid)){
+//    		userid = "";
+//    	}
+//
+//    	// CustData数据包参数-PassWord
+//    	String pwd = ConvertUtil.getString(paraMap.get("PassWord"));
+//    	if(CherryChecker.isNullOrEmpty(pwd)){
+//    		pwd = "";
+//    	}
+//
+//    	// CustData数据包参数-CurrentPage 当前页
+//    	String currentPage = ConvertUtil.getString(paraMap.get("CurrentPage"));
+//    	if(CherryChecker.isNullOrEmpty(currentPage)){
+//    		currentPage = "";
+//    	}
+//
+//    	// CustData数据包参数-ItemsOfPage 每页多少条记录
+//    	String itemsOfPage = ConvertUtil.getString(paraMap.get("ItemsOfPage"));
+//    	if(CherryChecker.isNullOrEmpty(itemsOfPage)){
+//    		itemsOfPage = "";
+//    	}
+//
+//
+//    	// CustData数据包参数-Data 业务端Json数据包，业务数据参数请参考具体业务API说明(即Method参数对应的API名称
+//    	String p_dataJson = ConvertUtil.getString(paraMap.get("p_dataJson"));
+//    	if(CherryChecker.isNullOrEmpty(p_dataJson)){
+//    		p_dataJson = "\"\"";
+//    	}
+//
+//        serverUrl += "?EID=" + eId + "&Method=" + method + "&Timestamp=" + timestampEnc + "&Ver=" + ver  + "&FromTag=" + fromTag;
+//        serverUrl += "&IsNewJson=" + isNewJson + "&Sign=" + sign + "&State=" + state + "&CustData=";
+//
+//        String custData = "{\"ProductID\":\""+ productId  +"\",\"AccountDB\":\"" + accountDB + "\",\"UserID\":\"" + userid + "\",\"PassWord\":\"" + pwd + "\",\"CurrentPage\":\""+ currentPage + "\",\"ItemsOfPage\":\""+itemsOfPage +"\",\"Data\":" + p_dataJson + "}";
+//
+//        custData = URLEncoder.encode(custData, "UTF-8");
+//        try {
+//            serverUrl += custData;
+//            String resultStr = doGet(serverUrl);
+//        	resultMap = CherryUtil.json2Map(resultStr);
+//
+//        	if(null != resultMap && !resultMap.isEmpty()){
+//        		String result = ConvertUtil.getString(resultMap.get("Result"));
+//        		String errMsg = ConvertUtil.getString(resultMap.get("ErrMsg"));
+//        		if(!WebServiceKingdee.Result_200.equals(result)){
+//        			logger.error("Kingdee ErrorCode: " + result);
+//        			logger.error("Kingdee ErrMsg: " + errMsg );
+//        		}
+//        	}else{
+//        		resultMap.put("Result", "WSE0041");
+//        		resultMap.put("ErrMsg", "WebService返回异常(调用业务接口【"+ tradeCode +"】)");
+//        	}
+//
+//        }catch(Exception e){
+//        	logger.error("getServerResult WS方法调用失败");
+//        	logger.error("Webservice ERROR",e);
+//        }
         return resultMap;
     }
     

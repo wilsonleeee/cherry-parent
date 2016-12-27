@@ -10,17 +10,12 @@ import javax.ws.rs.Path;
 import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.Context;
 
+import com.cherry.cm.core.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.cherry.cm.core.CherryAESCoder;
-import com.cherry.cm.core.CherryConstants;
-import com.cherry.cm.core.CustomerContextHolder;
-import com.cherry.cm.core.DESPlus;
-import com.cherry.cm.core.JsclPBKDF2WithHMACSHA256;
 import com.cherry.cm.util.CherryUtil;
 import com.cherry.webservice.auth.service.UserAuthService;
-import com.cherry.webservice.common.WebserviceDataSource;
 
 @Path("/auth")
 public class UserAuthResource {
@@ -29,9 +24,6 @@ public class UserAuthResource {
 	
 	@Resource
 	private UserAuthService userAuthService;
-	
-	@Resource(name = "webserviceDataSource")
-	private WebserviceDataSource webserviceDataSource;
 	
 	/**
 	 * 查询会员基本信息目前珀莱雅已经在使用，不可擅动，其它的接口将以新的结构提供，请见WebserviceEntrance类
@@ -61,7 +53,7 @@ public class UserAuthResource {
 				return CherryUtil.map2Json(retMap);
 			}
 			String brandCode = (String)userInfoMap.get("brandCode");
-			String AESKEY = webserviceDataSource.getAESKey(brandCode);
+			String AESKEY = SystemConfigManager.getAesKey(brandCode);
 			if(AESKEY == null || "".equals(AESKEY)) {
 				retMap.put("ERRORCODE", "WSE9996");
 				retMap.put("ERRORMSG", "未能取得品牌"+brandCode+"的AES密钥");

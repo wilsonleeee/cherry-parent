@@ -1,22 +1,14 @@
 package com.cherry.webservice.common;
 
+import com.cherry.cm.core.*;
+import com.cherry.cm.util.CherryUtil;
+
 import java.util.HashMap;
 import java.util.Map;
-
-import javax.annotation.Resource;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-import com.cherry.cm.core.CherryAESCoder;
-import com.cherry.cm.core.CherryChecker;
-import com.cherry.cm.util.CherryUtil;
 
 public class WebserviceBase {
 
 //	private static Logger logger = LoggerFactory.getLogger(WebserviceBase.class.getName());
-	@Resource(name = "webserviceDataSource")
-	private WebserviceDataSource webserviceDataSource;
 
 	protected boolean parseParam(String brandCode, String paramData,Map<String, Object> paramMap) throws Exception {
 		
@@ -33,33 +25,27 @@ public class WebserviceBase {
 		}
 		
 		
-		// 设置数据源 		
-		if(!webserviceDataSource.setBrandDataSource(brandCode)){
+		// 设置数据源
+		SystemConfigDTO systemConfigDTO = SystemConfigManager.getSystemConfig(brandCode);
+		if(null==systemConfigDTO){
 			paramMap.put("ERRORCODE", "E0002");
 			paramMap.put("ERRORMSG", "参数brandCode错误");
 			return false;
 		}
-		
+		CustomerContextHolder.setCustomerDataSourceType(systemConfigDTO.getDataSourceName());
 		//查询AES密钥
-		String AESKEY = webserviceDataSource.getAESKey(brandCode);
+		String AESKEY = systemConfigDTO.getAesKey();
 		if(CherryChecker.isNullOrEmpty(AESKEY)){
 			paramMap.put("ERRORCODE", "E0005");
 			paramMap.put("ERRORMSG", "未能取得品牌"+brandCode+"的AES密钥");
 			return false;
 		}
-		
-		//查询到组织ID品牌ID
-		Map<String,Object> brandMap = new HashMap<String,Object>();
-		brandMap.put("brandCode", brandCode);		
-		webserviceDataSource.getBrandInfo(brandMap);
-		
+
 		//AES解密,将解密后的JSON字符串转换成Map		
 		paramData = CherryAESCoder.decrypt(paramData, AESKEY);		
 		paramMap.putAll(CherryUtil.json2Map(paramData));
-		int orgID = Integer.parseInt(brandMap.get("organizationInfoID").toString());
-		int brandID = Integer.parseInt(brandMap.get("brandInfoID").toString());
-		paramMap.put("BIN_OrganizationInfoID", orgID);
-		paramMap.put("BIN_BrandInfoID", brandID);
+		paramMap.put("BIN_OrganizationInfoID", systemConfigDTO.getOrganizationInfoID());
+		paramMap.put("BIN_BrandInfoID", systemConfigDTO.getBrandInfoID());
 		return true;
 	}
 	
@@ -67,8 +53,9 @@ public class WebserviceBase {
 //		return CherryUtil.map2Json(retMap);
 //	}
 	
-	protected String getEncryptReturnString (String brandCode,Map<String, Object> retMap) throws Exception{		
-		String AESKey = webserviceDataSource.getAESKey(brandCode);
+	protected String getEncryptReturnString (String brandCode,Map<String, Object> retMap) throws Exception{
+		SystemConfigDTO systemConfigDTO = SystemConfigManager.getSystemConfig(brandCode);
+		String AESKey = systemConfigDTO.getAesKey();
 		if(retMap.containsKey("ERRORCODE")){
 			// 业务中报错，直接返回报错信息
 			return CherryUtil.map2Json(retMap);

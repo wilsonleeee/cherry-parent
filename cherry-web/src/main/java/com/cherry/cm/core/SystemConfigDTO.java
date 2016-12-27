@@ -8,7 +8,13 @@ public class SystemConfigDTO {
     private String brandCode;
     private int organizationInfoID;
     private int brandInfoID;
+    //新后台品牌数据库数据源名称
     private String dataSourceName;
+    //老后台品牌数据库数据源名称
+    private String oldDataSourceName;
+    //接口数据库数据源名称
+    private String tpifDataSourceName;
+
     private String aesKey;
     //TODO:duibaAppKey,duibaAppSecret暂时放在品牌数据源配置信息里
     private String duibaAppKey;
@@ -76,5 +82,21 @@ public class SystemConfigDTO {
 
     public void setDuibaAppSecret(String duibaAppSecret) {
         this.duibaAppSecret = duibaAppSecret;
+    }
+
+    public String getOldDataSourceName() {
+        return oldDataSourceName;
+    }
+
+    public void setOldDataSourceName(String oldDataSourceName) {
+        this.oldDataSourceName = oldDataSourceName;
+    }
+
+    public String getTpifDataSourceName() {
+        return tpifDataSourceName;
+    }
+
+    public void setTpifDataSourceName(String tpifDataSourceName) {
+        this.tpifDataSourceName = tpifDataSourceName;
     }
 }

@@ -1,36 +1,21 @@
 package com.cherry.webservice.common;
 
-import java.lang.reflect.Method;
-import java.text.SimpleDateFormat;
-import java.util.Calendar;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
-
-import javax.annotation.Resource;
-import javax.servlet.http.HttpServletRequest;
-import javax.ws.rs.FormParam;
-import javax.ws.rs.GET;
-import javax.ws.rs.POST;
-import javax.ws.rs.Path;
-import javax.ws.rs.QueryParam;
-import javax.ws.rs.core.Context;
-
+import com.cherry.cm.core.*;
+import com.cherry.cm.util.CherryUtil;
+import com.cherry.cm.util.ConvertUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.BeansException;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.ApplicationContextAware;
 
-
-import com.cherry.cm.core.CherryAESCoder;
-import com.cherry.cm.core.CherryChecker;
-import com.cherry.cm.core.CustomerContextHolder;
-import com.cherry.cm.core.PropertiesUtil;
-import com.cherry.cm.core.SpringBeanManager;
-import com.cherry.cm.util.CherryUtil;
-import com.cherry.cm.util.ConvertUtil;
-import com.cherry.cm.util.DateUtil;
+import javax.servlet.http.HttpServletRequest;
+import javax.ws.rs.*;
+import javax.ws.rs.core.Context;
+import java.lang.reflect.Method;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 @Path("/cherryws")
 public class WebserviceEntrance implements ApplicationContextAware{
@@ -38,10 +23,7 @@ public class WebserviceEntrance implements ApplicationContextAware{
 	private static Logger logger = LoggerFactory.getLogger(WebserviceEntrance.class.getName());
 	
 	private static ApplicationContext applicationContext; 
-	
-	@Resource(name = "webserviceDataSource")
-	private WebserviceDataSource webserviceDataSource;
-	
+
 	private static ConcurrentHashMap<String,TradeConfig> tradeConfigMap;	
 	
 	private static HashMap<String,ThirdPartyConfig> thirdPartyConfigMap = new HashMap<String, ThirdPartyConfig>();;
@@ -96,59 +78,63 @@ public class WebserviceEntrance implements ApplicationContextAware{
 			}
 
 			// 设置数据源
-			if (!webserviceDataSource.setBrandDataSource(brandCode)) {
+			SystemConfigDTO systemConfigDTO = SystemConfigManager.getSystemConfig(brandCode);
+			if (null==systemConfigDTO) {
 				retMap.put("ERRORCODE", "WSE9998");
 				retMap.put("ERRORMSG", "参数brandCode错误。brandCode=" + brandCode);
 				retString = CherryUtil.map2Json(retMap);
 				logger.error(retString);
 				return retString;
 			}
-
+			// 将获取的数据源名设定到线程本地变量contextHolder中（新后台品牌数据库）
+			CustomerContextHolder.setCustomerDataSourceType(systemConfigDTO.getDataSourceName());
+			// 将获取的数据源名设定到线程本地变量contextHolder中（老后台品牌数据库）
+			CustomerWitContextHolder.setCustomerWitDataSourceType(systemConfigDTO.getOldDataSourceName());
 			// 查询AES密钥
-			String AESKEY = "";
-			if ("true".equals(PropertiesUtil.pps.getProperty("WS_SafeModel_Flag", "false"))) {
-				// 如果开启了动态密钥模式
-				if (CherryChecker.isNullOrEmpty(appID)) {
-					retMap.put("ERRORCODE", "WSE9993");
-					retMap.put("ERRORMSG", "参数appID错误。appID=" + paramData);
-					retString = CherryUtil.map2Json(retMap);
-					logger.error(retString);
-					return retString;
-				}
-				// 检查appID是否存在，不存在则尝试刷新一次
-				if (null == thirdPartyConfigMap || !thirdPartyConfigMap.containsKey(appID)) {
-					thirdPartyConfigMap = webserviceDataSource.getThirdPartyConfigList();
-				}
-				if (!thirdPartyConfigMap.containsKey(appID)) {
-					retMap.put("ERRORCODE", "WSE9990");
-					retMap.put("ERRORMSG", "无效的AppID");
-					retString = CherryUtil.map2Json(retMap);
-					logger.error(retString);
-					return retString;
-				}
-				ThirdPartyConfig config = thirdPartyConfigMap.get(appID);
-				String oldKey = config.getDynamicAESKey();
-				String expireTime = config.getAesKeyExpireTime();
-				Calendar calendar = Calendar.getInstance();
-				SimpleDateFormat format = new SimpleDateFormat(DateUtil.DATETIME_PATTERN);
-				String nowtime = format.format(calendar.getTime());
-				if (expireTime.compareTo(nowtime) < 0) {
-					// 密钥过期 重新从数据库中获取一次，刷新AES的动作是在Cherry中完成的，Batch这边只有主动获取
-					thirdPartyConfigMap = webserviceDataSource.getThirdPartyConfigList();
-					config = thirdPartyConfigMap.get(appID);
-					if (oldKey.equals(config.getDynamicAESKey())) {
-						// 如果重新取出的Key仍然和上一次的key相同，则说明系统没有刷新过，报错处理
-						retMap.put("ERRORCODE", "WSE9995");
-						retMap.put("ERRORMSG", "密钥无效或已过期");
-						retString = CherryUtil.map2Json(retMap);
-						logger.error(retString);
-						return retString;
-					}
-				}
-				AESKEY = config.getDynamicAESKey();
-			} else {
-				AESKEY = webserviceDataSource.getAESKey(brandCode);
-			}
+			String AESKEY = systemConfigDTO.getAesKey();
+//			if ("true".equals(PropertiesUtil.pps.getProperty("WS_SafeModel_Flag", "false"))) {
+//				// 如果开启了动态密钥模式
+//				if (CherryChecker.isNullOrEmpty(appID)) {
+//					retMap.put("ERRORCODE", "WSE9993");
+//					retMap.put("ERRORMSG", "参数appID错误。appID=" + paramData);
+//					retString = CherryUtil.map2Json(retMap);
+//					logger.error(retString);
+//					return retString;
+//				}
+//				// 检查appID是否存在，不存在则尝试刷新一次
+//				if (null == thirdPartyConfigMap || !thirdPartyConfigMap.containsKey(appID)) {
+//					thirdPartyConfigMap = webserviceDataSource.getThirdPartyConfigList();
+//				}
+//				if (!thirdPartyConfigMap.containsKey(appID)) {
+//					retMap.put("ERRORCODE", "WSE9990");
+//					retMap.put("ERRORMSG", "无效的AppID");
+//					retString = CherryUtil.map2Json(retMap);
+//					logger.error(retString);
+//					return retString;
+//				}
+//				ThirdPartyConfig config = thirdPartyConfigMap.get(appID);
+//				String oldKey = config.getDynamicAESKey();
+//				String expireTime = config.getAesKeyExpireTime();
+//				Calendar calendar = Calendar.getInstance();
+//				SimpleDateFormat format = new SimpleDateFormat(DateUtil.DATETIME_PATTERN);
+//				String nowtime = format.format(calendar.getTime());
+//				if (expireTime.compareTo(nowtime) < 0) {
+//					// 密钥过期 重新从数据库中获取一次，刷新AES的动作是在Cherry中完成的，Batch这边只有主动获取
+//					thirdPartyConfigMap = webserviceDataSource.getThirdPartyConfigList();
+//					config = thirdPartyConfigMap.get(appID);
+//					if (oldKey.equals(config.getDynamicAESKey())) {
+//						// 如果重新取出的Key仍然和上一次的key相同，则说明系统没有刷新过，报错处理
+//						retMap.put("ERRORCODE", "WSE9995");
+//						retMap.put("ERRORMSG", "密钥无效或已过期");
+//						retString = CherryUtil.map2Json(retMap);
+//						logger.error(retString);
+//						return retString;
+//					}
+//				}
+//				AESKEY = config.getDynamicAESKey();
+//			} else {
+//				AESKEY = webserviceDataSource.getAESKey(brandCode);
+//			}
 			if (CherryChecker.isNullOrEmpty(AESKEY)) {
 				retMap.put("ERRORCODE", "WSE9996");
 				retMap.put("ERRORMSG", "品牌" + brandCode + "的密钥缺失");
@@ -156,11 +142,6 @@ public class WebserviceEntrance implements ApplicationContextAware{
 				logger.error(retString);
 				return retString;
 			}
-
-			// 查询到组织ID品牌ID
-			Map<String, Object> brandMap = new HashMap<String, Object>();
-			brandMap.put("brandCode", brandCode);
-			webserviceDataSource.getBrandInfo(brandMap);
 
 			// 密文参数
 			String origianParamData = paramData;
@@ -194,14 +175,11 @@ public class WebserviceEntrance implements ApplicationContextAware{
 				return retString;
 			}
 
-			int orgID = Integer.parseInt(brandMap.get("organizationInfoID").toString());
-			int brandID = Integer.parseInt(brandMap.get("brandInfoID").toString());
-			String orgCode = brandMap.get("orgCode").toString();
-			paramMap.put("BIN_OrganizationInfoID", orgID);
-			paramMap.put("OrganizationCode", orgCode);
-			paramMap.put("BIN_BrandInfoID", brandID);
-			paramMap.put("OrgCode", brandMap.get("orgCode"));
-			paramMap.put("BrandCode", brandCode);
+			paramMap.put("BIN_OrganizationInfoID", systemConfigDTO.getOrganizationInfoID());
+			paramMap.put("OrganizationCode", systemConfigDTO.getOrgCode());
+			paramMap.put("BIN_BrandInfoID", systemConfigDTO.getBrandInfoID());
+			paramMap.put("OrgCode", systemConfigDTO.getOrgCode());
+			paramMap.put("BrandCode", systemConfigDTO.getBrandCode());
 			paramMap.put("OriginParamData", origianParamData);
 
 			// java 反射的方式，效率低，多品牌对应困难，要逐步废除，转由配置bean的方式
@@ -230,6 +208,7 @@ public class WebserviceEntrance implements ApplicationContextAware{
 		} finally {
 			// 清除数据源ThreadLocal变量
 			CustomerContextHolder.clearCustomerDataSourceType();
+			CustomerWitContextHolder.clearCustomerWitDataSourceType();
 		}
 	}
 	
@@ -351,28 +330,23 @@ public class WebserviceEntrance implements ApplicationContextAware{
 		}
 
 		// 设置数据源
-		if (!webserviceDataSource.setBrandDataSource(brandCode)) {
+		SystemConfigDTO systemConfigDTO = SystemConfigManager.getSystemConfig(brandCode);
+		if (null==systemConfigDTO) {
 			retMap.put("ERRORCODE", "WSE9998");
 			retMap.put("ERRORMSG", "参数brandCode错误。brandCode=" + brandCode);
 			retString = CherryUtil.map2Json(retMap);
 			logger.error(retString);
 			return retString;
 		}
-		
-		// 查询到组织ID品牌ID
-		Map<String, Object> brandMap = new HashMap<String, Object>();
-		brandMap.put("brandCode", brandCode);
-		webserviceDataSource.getBrandInfo(brandMap);
+		// 将获取的数据源名设定到线程本地变量contextHolder中（新后台品牌数据库）
+		CustomerContextHolder.setCustomerDataSourceType(systemConfigDTO.getDataSourceName());
 		
 		Map<String, Object> paramMap = new HashMap<String, Object>();
-		int orgID = Integer.parseInt(brandMap.get("organizationInfoID").toString());
-		int brandID = Integer.parseInt(brandMap.get("brandInfoID").toString());
-		String orgCode = brandMap.get("orgCode").toString();
-		paramMap.put("BIN_OrganizationInfoID", orgID);
-		paramMap.put("OrganizationCode", orgCode);
-		paramMap.put("BIN_BrandInfoID", brandID);
-		paramMap.put("OrgCode", brandMap.get("orgCode"));
-		paramMap.put("BrandCode", brandCode);
+		paramMap.put("BIN_OrganizationInfoID", systemConfigDTO.getOrganizationInfoID());
+		paramMap.put("OrganizationCode", systemConfigDTO.getOrgCode());
+		paramMap.put("BIN_BrandInfoID", systemConfigDTO.getBrandInfoID());
+		paramMap.put("OrgCode", systemConfigDTO.getOrgCode());
+		paramMap.put("BrandCode", systemConfigDTO.getBrandCode());
 		paramMap.put("MobilePhone", mobilephone);
 		paramMap.put("ButtonNumber", buttonNumber);
 		

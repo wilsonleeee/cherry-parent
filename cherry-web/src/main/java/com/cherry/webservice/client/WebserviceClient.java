@@ -1,10 +1,13 @@
 package com.cherry.webservice.client;
 
-import java.util.HashMap;
-import java.util.Map;
-
-import javax.ws.rs.core.MultivaluedMap;
-
+import com.cherry.cm.core.*;
+import com.cherry.cm.util.CherryUtil;
+import com.sun.jersey.api.client.Client;
+import com.sun.jersey.api.client.WebResource;
+import com.sun.jersey.api.client.config.ClientConfig;
+import com.sun.jersey.client.apache4.ApacheHttpClient4;
+import com.sun.jersey.client.apache4.config.DefaultApacheHttpClient4Config;
+import com.sun.jersey.core.util.MultivaluedMapImpl;
 import org.apache.http.impl.conn.PoolingHttpClientConnectionManager;
 import org.apache.http.params.HttpConnectionParams;
 import org.apache.http.params.HttpParams;
@@ -12,18 +15,9 @@ import org.apache.http.params.SyncBasicHttpParams;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.cherry.cm.core.CherryAESCoder;
-import com.cherry.cm.core.CherryChecker;
-import com.cherry.cm.core.PropertiesUtil;
-import com.cherry.cm.core.SpringBeanManager;
-import com.cherry.cm.util.CherryUtil;
-import com.cherry.webservice.common.WebserviceDataSource;
-import com.sun.jersey.api.client.Client;
-import com.sun.jersey.api.client.WebResource;
-import com.sun.jersey.api.client.config.ClientConfig;
-import com.sun.jersey.client.apache4.ApacheHttpClient4;
-import com.sun.jersey.client.apache4.config.DefaultApacheHttpClient4Config;
-import com.sun.jersey.core.util.MultivaluedMapImpl;
+import javax.ws.rs.core.MultivaluedMap;
+import java.util.HashMap;
+import java.util.Map;
 
 public class WebserviceClient {
 	
@@ -100,9 +94,9 @@ public class WebserviceClient {
     			retMap.put("ERRORMSG", "参数brandCode错误。brandCode=" + brandCode);
     			return retMap;
     		}
-    		WebserviceDataSource webserviceDataSource = (WebserviceDataSource)SpringBeanManager.getBean("webserviceDataSource");
+			SystemConfigDTO systemConfigDTO = SystemConfigManager.getSystemConfig(brandCode);
     		// 查询AES密钥
-    		String AESKEY = webserviceDataSource.getAESKey(brandCode);
+    		String AESKEY = systemConfigDTO.getAesKey();
     		if (CherryChecker.isNullOrEmpty(AESKEY)) {
     			Map<String, Object> retMap = new HashMap<String, Object>();
     			retMap.put("ERRORCODE", "WSE9996");

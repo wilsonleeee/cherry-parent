@@ -12,27 +12,22 @@
  */
 package com.cherry.pt.jcs.bl;
 
-import java.net.URLEncoder;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-
-import javax.annotation.Resource;
-
 import com.cherry.cm.cmbussiness.bl.BINOLCM05_BL;
-import com.cherry.cm.core.CherryAESCoder;
-import com.cherry.cm.core.CherryChecker;
-import com.cherry.cm.core.CherryConstants;
-import com.cherry.cm.core.CherryException;
+import com.cherry.cm.core.*;
 import com.cherry.cm.util.ConvertUtil;
 import com.cherry.mo.common.interfaces.BINOLMOCOM01_IF;
 import com.cherry.pt.jcs.interfaces.BINOLPTJCS42_IF;
 import com.cherry.pt.jcs.service.BINOLPTJCS42_Service;
 import com.cherry.ss.common.base.SsBaseBussinessLogic;
-import com.cherry.webservice.common.WebserviceDataSource;
 import com.googlecode.jsonplugin.JSONException;
 import com.googlecode.jsonplugin.JSONUtil;
+
+import javax.annotation.Resource;
+import java.net.URLEncoder;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 /**
  * 
@@ -43,9 +38,6 @@ import com.googlecode.jsonplugin.JSONUtil;
  */
 public class BINOLPTJCS42_BL  extends SsBaseBussinessLogic implements BINOLPTJCS42_IF{
 
-    @Resource(name = "webserviceDataSource")
-    private WebserviceDataSource webserviceDataSource;
-    
     @Resource(name="binOLCM05_BL")
     private BINOLCM05_BL binOLCM05_BL;
     
@@ -139,7 +131,7 @@ public class BINOLPTJCS42_BL  extends SsBaseBussinessLogic implements BINOLPTJCS
         List<Map<String,Object>> allResellerList = binOLPTJCS42_Service.getAllResellerList(paramMap);
         
         //查询AES密钥
-        String aesKey = webserviceDataSource.getAESKey(brandCode);
+        String aesKey = SystemConfigManager.getAesKey(brandCode);
         if(CherryChecker.isNullOrEmpty(aesKey)){
             throw new CherryException("ECM00106");
         }
