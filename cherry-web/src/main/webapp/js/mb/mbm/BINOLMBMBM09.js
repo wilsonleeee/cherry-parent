@@ -104,6 +104,7 @@ BINOLMBMBM09.prototype = {
 		if(!$('#memberCherryForm').valid()) {
 			return false;
 		}
+		binolmbmbm09.setJsonParam("#memberCherryForm");
 		var url = $("#memSaleListUrl").attr("href");
 		var params= $("#memberCherryForm").serialize();
 		if(params != null && params != "") {
