@@ -160,8 +160,9 @@ public class BINOLWPSAL03_BL implements BINOLWPSAL03_IF{
 				totalAmountValue = 0.00;
 				isOffset = true;
 			}
-			
-			if("DHHD".equals(billClassify)){
+
+			// TODO: 2016/12/19 积分兑换活动原来走的PX积分兑换的MQ，现在云POS统一调整为走NS销售的MQ
+			/*if("DHHD".equals(billClassify)){//积分兑换活动
 				//定义主表数据Map
 				Map<String,Object> mainData = new HashMap<String,Object>();
 				mainData.put("BrandCode", userInfo.getBrandCode());
@@ -320,7 +321,7 @@ public class BINOLWPSAL03_BL implements BINOLWPSAL03_IF{
 				}else{
 					return CherryConstants.WP_ERROR_STATUS;
 				}
-			}else{
+			}else{*/
 				//定义主表数据Map
 				Map<String,Object> mainData = new HashMap<String,Object>();
 				mainData.put("BrandCode", userInfo.getBrandCode());
@@ -620,7 +621,7 @@ public class BINOLWPSAL03_BL implements BINOLWPSAL03_IF{
 				}else{
 					return CherryConstants.WP_ERROR_STATUS;
 				}
-			}
+			//}
 		}else{
 			return CherryConstants.WP_ERROR_STATUS;
 		}

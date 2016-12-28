@@ -373,7 +373,11 @@ public class BINOLWPMBM01_Action extends BaseAction implements ModelDriven<BINOL
 		map.put(CherryConstants.BRAND_CODE, userInfo.getBrandCode());
 		// 取得会员信息
 		memberInfoMap = binOLMBMBM06_BL.getMemberInfo(map);
-		
+
+		//得到云POS配置项会员修改时是否允许修改生日
+		String isAllowUpdate = binOLCM14_BL.getWebposConfigValue("9053",ConvertUtil.getString(map.get(CherryConstants.ORGANIZATIONINFOID)),ConvertUtil.getString(map.get(CherryConstants.BRANDINFOID)));
+		memberInfoMap.put("isAllowUpdate",isAllowUpdate);
+
 		// 取得会员扩展信息List
 		extendPropertyList = (List)memberInfoMap.get("memPagerList");
 		
@@ -1589,13 +1593,17 @@ public class BINOLWPMBM01_Action extends BaseAction implements ModelDriven<BINOL
 				this.addFieldError("email", getText("ECM00069"));
 			}
 		}
-		// 生日必须入力验证
-		if(CherryChecker.isNullOrEmpty(form.getBirth())) {
-			this.addFieldError("birth", getText("ECM00009",new String[]{getText("PMB00051")}));
-		} else {
-			// 生日日期格式验证
-			if(!CherryChecker.checkDate(form.getBirth())) {
-				this.addFieldError("birth", getText("ECM00022",new String[]{getText("PMB00051")}));
+
+		//只有会员修改时允许修改会员生日，才对会员生日进行校验
+		if(form.getIsAllowUpdate().equals("1")){
+			// 生日必须入力验证
+			if(CherryChecker.isNullOrEmpty(form.getBirth())) {
+				this.addFieldError("birth", getText("ECM00009",new String[]{getText("PMB00051")}));
+			} else {
+				// 生日日期格式验证
+				if(!CherryChecker.checkDate(form.getBirth())) {
+					this.addFieldError("birth", getText("ECM00022",new String[]{getText("PMB00051")}));
+				}
 			}
 		}
 		// 性别必须入力验证

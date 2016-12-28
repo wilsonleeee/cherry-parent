@@ -1180,4 +1180,22 @@
 			)
 		]]>
     </insert>
+
+	<!-- 获取会员当前总积分和对应销售所得积分，用于计算退货时积分是否足够 -->
+	<select id="getSaleMemPointInfo" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+		<![CDATA[
+			SELECT
+				PC.BIN_MemberInfoID,
+				ISNULL(MP.TotalPoint,0) TotalPoint,
+				ISNULL(PC.Point,0) PointGet
+			FROM
+				Members.BIN_PointChange PC WITH(NOLOCK)
+			LEFT JOIN
+				Members.BIN_MemberPoint MP WITH(NOLOCK)
+			ON
+				PC.BIN_MemberInfoID = MP.BIN_MemberInfoID AND PC.ValidFlag = 1 AND MP.ValidFlag = 1
+			WHERE
+				TradeNoIF = #billCode#
+		]]>
+	</select>
 </sqlMap>

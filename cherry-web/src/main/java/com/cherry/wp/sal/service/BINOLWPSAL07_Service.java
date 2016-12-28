@@ -155,6 +155,14 @@ public class BINOLWPSAL07_Service extends BaseService{
         return baseServiceImpl.getList(paramMap);
 	}
 
+	/** 获取会员当前总积分和对应销售所得积分，用于计算退货时积分是否足够 **/
+	public Map<String,Object> getSaleMemPointInfo(Map<String, Object> map){
+		Map<String, Object> paramMap = new HashMap<String, Object>();
+		paramMap.putAll(map);
+		paramMap.put(CherryConstants.IBATIS_SQL_ID, "BINOLWPSAL07.getSaleMemPointInfo");
+		return (Map<String,Object>)baseServiceImpl.get(paramMap);
+	}
+
 //	public void getAllBillsToWebPos(Map<String, Object> map){
 //		Map<String, Object> paramMap = new HashMap<String, Object>();
 //        paramMap.putAll(map);

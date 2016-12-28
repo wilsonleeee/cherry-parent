@@ -386,8 +386,9 @@ public class BINOLWPSAL07_BL implements BINOLWPSAL07_IF{
 				}
 			}
 		}
-		
-		if("PS".equals(saleType)){
+
+		// TODO: 2016/12/19 积分兑换活动原来走的PX积分兑换的MQ，现在云POS统一调整为走NS销售的MQ
+		/*if("PS".equals(saleType)){//积分兑换活动
 			//定义主表数据Map
 			Map<String,Object> mainData = new HashMap<String,Object>();
 			mainData.put("BrandCode", brandCode);
@@ -558,7 +559,7 @@ public class BINOLWPSAL07_BL implements BINOLWPSAL07_IF{
 			}else{
 				return false;
 			}
-		}else{
+		}else{*/
 			//定义主表数据Map
 			Map<String,Object> mainData = new HashMap<String,Object>();
 			mainData.put("BrandCode", brandCode);
@@ -885,7 +886,7 @@ public class BINOLWPSAL07_BL implements BINOLWPSAL07_IF{
 			}else{
 				return false;
 			}
-		}
+		//}
 	}
 	
 	private String saveSrBill(Map<String,Object> map)
@@ -1360,5 +1361,10 @@ public class BINOLWPSAL07_BL implements BINOLWPSAL07_IF{
 	@Override
 	public List<Map<String, Object>> getPaymentTypeList(Map<String, Object> map) {
 		return binOLWPSAL07_Service.getPaymentTypeList(map);
+	}
+
+	/** 获取会员当前总积分和对应销售所得积分，用于计算退货时积分是否足够 **/
+	public Map<String,Object> getSaleMemPointInfo(Map<String, Object> map){
+		return binOLWPSAL07_Service.getSaleMemPointInfo(map);
 	}
 }

@@ -40,8 +40,14 @@ if(counterInfo != null) {
 	</span>
 	</div>
 	<div class="left"><span class="">&nbsp;|&nbsp;</span></div>
-	<%-- 消息提示 --%>
-    <jsp:include page="/WEB-INF/jsp/common/headerMessage.jsp" flush="true" />
+    <s:if test='#session.counterInfo == null '><!-- 岗位不为门店岗位的场合 -->
+        <%-- 消息提示 --%>
+        <jsp:include page="/WEB-INF/jsp/common/headerMessage.jsp" flush="true" />
+    </s:if>
+    <s:else><!-- 岗位为门店岗位的场合 -->
+        <%-- 消息提示 --%>
+        <jsp:include page="/WEB-INF/jsp/common/headerMessage2.jsp" flush="true" />
+    </s:else>
     <div class="left"><span class="right">&nbsp;|&nbsp;</span></div>
     <div class="left">
     <span>

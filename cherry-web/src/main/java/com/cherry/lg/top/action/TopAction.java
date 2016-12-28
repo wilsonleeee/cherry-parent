@@ -20,6 +20,7 @@ import java.util.Map;
 
 import javax.annotation.Resource;
 
+import com.cherry.cm.cmbeans.CounterInfo;
 import com.cherry.cm.cmbeans.OnlineUserList;
 import com.cherry.cm.cmbeans.UserInfo;
 import com.cherry.cm.cmbussiness.bl.BINOLCM10_BL;
@@ -31,6 +32,7 @@ import com.cherry.cm.gadget.interfaces.GadgetIf;
 import com.cherry.cm.util.CherryUtil;
 import com.cherry.cm.util.ConvertUtil;
 import com.cherry.cm.util.FileUtil;
+import com.cherry.lg.top.bl.Top_BL;
 import com.cherry.lg.top.form.Top_Form;
 import com.cherry.mo.common.bl.BINOLMOCOM01_BL;
 import com.cherry.mo.common.interfaces.BINOLMOCOM01_IF;
@@ -58,6 +60,9 @@ public  class TopAction extends BaseAction implements ModelDriven<Top_Form>{
     
     /** 下载文件名 */
     private String downloadFileName;
+
+    @Resource
+    private Top_BL top_bl;
     
     public String getDownloadFileName() throws UnsupportedEncodingException {
     	//转码下载文件名 Content-Disposition
@@ -278,6 +283,44 @@ public  class TopAction extends BaseAction implements ModelDriven<Top_Form>{
         form.setITotalDisplayRecords(count);
         form.setITotalRecords(count);
         return "popMsgList_1";
+    }
+
+    public String getMsgList2Init() throws Exception{
+
+
+
+        return SUCCESS;
+    }
+
+    /**
+     * 获取柜台通知消息列表设入弹出框中
+     *
+     * @return
+     * @throws Exception
+     */
+    public String getMsgList2() throws Exception {
+
+        CounterInfo counterInfo = (CounterInfo)session.get(CherryConstants.SESSION_CHERRY_COUNTERINFO);
+
+        Map<String,Object> map = new HashMap<String,Object>();
+        // form参数设置到paramMap中
+        ConvertUtil.setForm(form, map);
+
+        map.put("organizationId", counterInfo.getOrganizationId());
+
+        List<Map<String,Object>> msgList;
+
+        int count = top_bl.getMsgList2Count(map);
+
+        if(count != 0){
+            msgList = top_bl.getMsgList2(map);
+            form.setMsgList(msgList);
+        }
+
+        // form表单设置
+        form.setITotalDisplayRecords(count);
+        form.setITotalRecords(count);
+        return SUCCESS;
     }
     
     /**

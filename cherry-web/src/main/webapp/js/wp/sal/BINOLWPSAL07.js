@@ -212,6 +212,7 @@ BINOLWPSAL07_GLOBAL.prototype = {
 	},
 	
 	"returnsBillDialog":function(){
+
 		// 是否可以退货判断
 		var flag = true;
 		// 云POS是否允许对未上传数据退货
@@ -233,16 +234,43 @@ BINOLWPSAL07_GLOBAL.prototype = {
 			});
 			return;
 		};
-		// 获取主页面原有销售状态
-		var originalSaleType = $("#saleType").val();
-		$("#originalSaleType").val(originalSaleType);
-		$("#saleType").val("SR");
+
 		// 获取退货金额
 		var totalAmountVal = 0.00;
 		var totalAmount = $("#dgCheckedTotalAmount").val();
 		if(totalAmount != undefined && totalAmount != ""){
 			totalAmountVal = Number(totalAmount).toFixed(2);
 		}
+
+		//是否允许会员退货后积分为负
+		var isPermitMemPointNegative = $("#isPermitMemPointNegative").val();
+		if(isPermitMemPointNegative == "N"){
+			//退货后积分为负数，不允许退货
+			var totalPoint = $("#totalPoint").val();//会员总积分
+			var pointGet = $("#pointGet").val();//会员销售时所获得的积分
+			var payAmount = $("#payAmount2").text();//销售实付金额
+
+			if(payAmount != undefined && payAmount != "" && payAmount != 0){
+
+				//所需扣减积分
+				var toDelPoint = Number(totalAmountVal*pointGet/payAmount).toFixed(2);
+				if( totalPoint - toDelPoint < 0 ){
+					BINOLWPSAL07.showMessageDialog({
+						message:"退货后积分为负数，不允许退货！",
+						type:"MESSAGE"
+					});
+					return;
+				}
+
+			}
+
+		}
+
+		// 获取主页面原有销售状态
+		var originalSaleType = $("#saleType").val();
+		$("#originalSaleType").val(originalSaleType);
+		$("#saleType").val("SR");
+
 		
 		var dialogSetting = {
 			dialogInit: "#returnBill_dialog",
@@ -399,6 +427,32 @@ BINOLWPSAL07_GLOBAL.prototype = {
 			});
 			return;
 		}
+
+		//是否允许会员退货后积分为负
+		var isPermitMemPointNegative = $("#isPermitMemPointNegative").val();
+		if(isPermitMemPointNegative == "N"){
+
+			//退货后积分为负数，不允许退货
+			var totalPoint = $("#totalPoint").val();//会员总积分
+			var pointGet = $("#pointGet").val();//会员销售时所获得的积分
+			var payAmount = $("#payAmount2").text();//销售实付金额
+
+			if(payAmount != undefined && payAmount != "" && payAmount != 0){
+
+				//所需扣减积分
+				var toDelPoint = Number(totalAmount*pointGet/payAmount).toFixed(2);
+				if( totalPoint - toDelPoint < 0 ){
+					BINOLWPSAL07.showMessageDialog({
+						message:"退货后积分为负数，不允许退货！",
+						type:"MESSAGE"
+					});
+					return;
+				}
+
+			}
+
+		}
+
 		// 计算应退服务次数
 		var serviceList = new Array();
 		if($("#getServiceBillDetailbody >tr").length>0){

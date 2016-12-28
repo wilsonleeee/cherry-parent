@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sqlMap PUBLIC "-//iBATIS.com//DTD SQL Map 2.0//EN" "http://ibatis.apache.org/dtd/sql-map-2.dtd">
+<sqlMap namespace="Top">
+
+    <sql id="getMsgList2Sql">
+        <![CDATA[
+            SELECT
+                CM.BIN_CounterMessageID,
+                CM.PublishDate,
+                CM.MessageTitle,
+                CM.MessageBody,
+                CM.MessageType
+            FROM
+                Monitor.BIN_CounterMessage CM
+            JOIN
+                Monitor.BIN_CounterMessageForbidden CMF
+            ON
+                CM.BIN_CounterMessageID = CMF.BIN_CounterMessageID
+                AND CM.ValidFlag = 1 AND CMF.ValidFlag = 1
+                AND CM.Status = 1 AND CMF.ControlFlag = 1
+            WHERE
+                CMF.BIN_OrganizationID = #organizationId#
+        ]]>
+    </sql>
+
+    <!-- 取得柜台消息列表 -->
+    <select id="getMsgList2" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+        <include refid="BINOLCMINC99.pageheader" />
+        <include refid="Top.getMsgList2Sql"/>
+        <include refid="BINOLCMINC99.pagefooter" />
+    </select>
+
+    <select id="getMsgList2Count" parameterClass="java.util.HashMap" resultClass="java.lang.Integer">
+        <![CDATA[
+			SELECT COUNT(SORT_T1.BIN_CounterMessageID) AS count FROM (
+		]]>
+        <include refid="Top.getMsgList2Sql" />
+        <![CDATA[
+			)SORT_T1
+		]]>
+    </select>
+
+</sqlMap>

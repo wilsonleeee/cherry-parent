@@ -2,6 +2,7 @@ package com.cherry.webservice.client;
 
 import com.cherry.cm.core.*;
 import com.cherry.cm.util.CherryUtil;
+import com.cherry.cm.util.ConvertUtil;
 import com.sun.jersey.api.client.Client;
 import com.sun.jersey.api.client.WebResource;
 import com.sun.jersey.api.client.config.ClientConfig;
@@ -130,6 +131,65 @@ public class WebserviceClient {
     		}
     		return retMap;
     	} catch (Exception e) {
+			logger.error("Webservice ERROR",e);
+			Map<String, Object> retMap = new HashMap<String, Object>();
+			retMap.put("ERRORCODE", "WSE9999");
+			retMap.put("ERRORMSG", "处理过程中发生未知异常");
+			return retMap;
+		} catch (Throwable t) {
+			logger.error("Webservice ERROR",t);
+			Map<String, Object> retMap = new HashMap<String, Object>();
+			retMap.put("ERRORCODE", "WSE9999");
+			retMap.put("ERRORMSG", "处理过程中发生未知异常");
+			return retMap;
+		}
+	}
+
+	/**
+	 * 访问WebService(访问Pekonws的WebService)
+	 * @param  param  访问WebService的参数
+	 * @param  webServiceUrl webservice访问地址
+	 * @return WebService的返回内容
+	 * @throws Exception
+	 */
+	public static Map<String, Object> accessPekonWebService(Map<String, Object> param,String webServiceUrl) throws Exception{
+		try {
+			// 品牌代码
+			String brandCode = (String)param.get("brandCode");
+			SystemConfigDTO systemConfigDTO = SystemConfigManager.getSystemConfig(brandCode);
+			if (null==systemConfigDTO) {
+				Map<String, Object> retMap = new HashMap<String, Object>();
+				retMap.put("ERRORCODE", "WSE9998");
+				retMap.put("ERRORMSG", "参数brandCode错误。brandCode=" + brandCode);
+				return retMap;
+			}
+			// 查询AES密钥
+			String AESKEY = systemConfigDTO.getAesKey();
+			if (CherryChecker.isNullOrEmpty(AESKEY)) {
+				Map<String, Object> retMap = new HashMap<String, Object>();
+				retMap.put("ERRORCODE", "WSE9996");
+				retMap.put("ERRORMSG", "品牌" + brandCode + "的密钥缺失");
+				return retMap;
+			}
+//    		WebResource webResource = getWebResource(PropertiesUtil.pps.getProperty("PeknonWebServiceUrl"));
+			WebResource webResource = getWebResource(webServiceUrl);
+			//对传递的参数进行加密
+			MultivaluedMap<String, String> queryParams = new MultivaluedMapImpl();
+			queryParams.add("brandCode", brandCode);
+			queryParams.add("appID", ConvertUtil.getString(param.get("appID")));
+			queryParams.add("paramData", CherryAESCoder.encrypt(CherryUtil.map2Json(param),AESKEY));
+			String result = webResource.queryParams(queryParams).get(String.class);
+			Map<String, Object> retMap = CherryUtil.json2Map(result);
+			if(retMap.get("ERRORCODE").toString().equals("0")){
+				//执行成功
+				if(retMap.containsKey("ResultContent")){
+					// 返回结果为多条数据的
+					String encryptResult = CherryAESCoder.decrypt(retMap.get("ResultContent").toString(),AESKEY);
+					retMap.put("ResultContent", CherryUtil.json2Map(encryptResult));
+				}
+			}
+			return retMap;
+		} catch (Exception e) {
 			logger.error("Webservice ERROR",e);
 			Map<String, Object> retMap = new HashMap<String, Object>();
 			retMap.put("ERRORCODE", "WSE9999");

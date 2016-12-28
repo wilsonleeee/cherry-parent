@@ -6,6 +6,8 @@ import java.util.Map;
 
 import javax.annotation.Resource;
 
+import com.cherry.cm.core.PropertiesUtil;
+import com.cherry.webservice.client.WebserviceClient;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -53,7 +55,7 @@ public class BINOLWPSAL02_Action extends BaseAction implements ModelDriven<BINOL
 	private String nowDate;
 
 	private String birthFormat;
-	
+
 	public String getBirthFormat() {
 		return birthFormat;
 	}
@@ -131,6 +133,7 @@ public class BINOLWPSAL02_Action extends BaseAction implements ModelDriven<BINOL
 				map.put(CherryConstants.ORGANIZATIONINFOID, userInfo.getBIN_OrganizationInfoID());
 				map.put(CherryConstants.BRANDINFOID, userInfo.getBIN_BrandInfoID());
 				map.put(CherryConstants.BRAND_CODE, userInfo.getBrandCode());
+
 				map.put("memberInfoId", memberInfoId);
 				map.put("searchStr", searchStr);
 				Map<String, Object> resultMap = binOLWPSAL02_IF.getMemberInfo(map);
@@ -147,7 +150,7 @@ public class BINOLWPSAL02_Action extends BaseAction implements ModelDriven<BINOL
 							memberInfo.put("orderCounterCode", "");
 						}
 						if(memberInfo != null && !memberInfo.isEmpty()){
-							// 获取会员信息成功的情况
+
 							ConvertUtil.setResponseByAjax(response, memberInfo);
 						}else{
 							// 返回会员信息出现为空的情况
@@ -184,7 +187,40 @@ public class BINOLWPSAL02_Action extends BaseAction implements ModelDriven<BINOL
 			 }
 		}
 	}
-	
+	public void searchCounterLimit() throws Exception{
+		try{
+
+			// 用户信息
+			UserInfo userInfo = (UserInfo) session
+					.get(CherryConstants.SESSION_USERINFO);
+			Map<String, Object> map = new HashMap<String, Object>();
+			map.put(CherryConstants.ORGANIZATIONINFOID, userInfo.getBIN_OrganizationInfoID());
+			map.put(CherryConstants.BRANDINFOID, userInfo.getBIN_BrandInfoID());
+			map.put(CherryConstants.BRAND_CODE, userInfo.getBrandCode());
+
+			Map<String,Object> retMap = new HashMap<String,Object>();
+			retMap.put("CurrentPoint","234");
+			retMap.put("PlanStatus","1");
+			retMap.put("MinWarningPoint","3000");
+
+			// 返回空的情况
+			ConvertUtil.setResponseByAjax(response, CherryUtil.map2Json(retMap));
+
+		}catch(Exception e){
+			logger.error(e.getMessage(), e);
+			// 自定义异常的场合
+			if(e instanceof CherryException){
+				CherryException temp = (CherryException)e;
+				this.addActionError(temp.getErrMessage());
+				ConvertUtil.setResponseByAjax(response, "");
+			 }else{
+				//系统发生异常，请联系管理人员。
+				this.addActionError(getText("ECM00036"));
+				ConvertUtil.setResponseByAjax(response, "");
+			 }
+		}
+	}
+
 	public void returnsGoods() throws Exception{
 		try{
 			String billCode = "";
@@ -248,6 +284,12 @@ public class BINOLWPSAL02_Action extends BaseAction implements ModelDriven<BINOL
 			nowDate = DateUtil.coverTime2YMD(binOLWPCM01_IF.getSYSDate(), "yyyy-MM-dd");
 		}
 		businessBeginDate = calcuBusinessBeginDate(parMap);
+		form.setCounterCode(counterInfo.getCounterCode());
+
+		//得到系统配置项  积分兑换活动是否限定产品
+		String isLimitProduct = binOLCM14_BL.getWebposConfigValue("9055",organizationInfoId,brandInfoId);
+		form.setIsLimitProduct(isLimitProduct);
+
 		//获取当前柜台的联系电话
 		String counterPhone=binOLWPSAL02_IF.getCounterPhone(parMap);
 		if(null == counterPhone || "".equals(counterPhone)){
@@ -395,12 +437,20 @@ public class BINOLWPSAL02_Action extends BaseAction implements ModelDriven<BINOL
 			isMemberSaleFlag = "Y";
 		}
 		form.setIsMemberSaleFlag(isMemberSaleFlag);
+
+		//是否执行积分计划配置项
+		String isExecuteLimitPlan = binOLCM14_BL.getConfigValue("1396", organizationInfoId, brandInfoId);
+		if (ConvertUtil.isBlank(isExecuteLimitPlan)){
+			isExecuteLimitPlan = "0";
+		}
+		form.setIsExecuteLimitPlan(isExecuteLimitPlan);
+
 		//云POS直接打印模版
-				String printBrandType=binOLCM14_BL.getWebposConfigValue("9035", organizationInfoId, brandInfoId);
-				if(null == printBrandType || "".equals(printBrandType)){
-					printBrandType = "NZDM";
-				}
-				form.setPrintBrandType(printBrandType);
+		String printBrandType=binOLCM14_BL.getWebposConfigValue("9035", organizationInfoId, brandInfoId);
+		if(null == printBrandType || "".equals(printBrandType)){
+			printBrandType = "NZDM";
+		}
+		form.setPrintBrandType(printBrandType);
 		
 		//云POS直接打印模版
 		String stockSaleType=binOLCM14_BL.getWebposConfigValue("9036", organizationInfoId, brandInfoId);
@@ -426,8 +476,28 @@ public class BINOLWPSAL02_Action extends BaseAction implements ModelDriven<BINOL
 		//会员卡号校验规则
 		String memCodeRule=binOLCM14_BL.getConfigValue("1070", organizationInfoId, brandInfoId);
 		form.setMemCodeRule(memCodeRule);
+
+		//附带柜台的积分额度信息
+		Map<String,Object> pekonParamMap = new HashMap<String,Object>();
+		String url = PropertiesUtil.pps.getProperty("PekonWebServiceUrl");
+		String appID = "witpos";
+		String tradeType = "GetCounterCurrentPoint";
+		String brandCode = userInfo.getBrandCode();//"AVENE";//
 		// 获取柜台号
 		String counterCode = ConvertUtil.getString(counterInfo.getCounterCode());
+
+		pekonParamMap.put("appID",appID);
+		pekonParamMap.put("TradeType",tradeType);
+		pekonParamMap.put("brandCode",brandCode);
+		pekonParamMap.put("CounterCode",counterCode);
+
+		Map<String,Object> retMap = WebserviceClient.accessPekonWebService(pekonParamMap,url);
+		// 获取会员信息成功的情况
+		if( retMap != null && retMap.get("ResultContent") != null){
+			//CurrentPoint,PlanStatus,MinWarningPoint
+			form.setPointLimitInfo((Map<String,Object>)retMap.get("ResultContent"));
+
+		}
 		// 获取柜台名称
 		String counterName = ConvertUtil.getString(counterInfo.getCounterName());
 		if(null != counterCode && !"".equals(counterCode)){

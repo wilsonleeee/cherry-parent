@@ -452,6 +452,23 @@ public class BINOLWPSAL07_Action extends BaseAction implements ModelDriven<BINOL
 			}*/
 			// 显示单据明细
 			form.setBillDetailList(resultList);
+
+			String isPermitMemPointNegative = binOLCM14_BL.getWebposConfigValue("9052", organizationInfoId, brandInfoId);
+			form.setIsPermitMemPointNegative(isPermitMemPointNegative);
+			if("N".equals(isPermitMemPointNegative)){
+
+				//获取会员当前总积分和对应销售所得积分，用于计算退货时积分是否足够
+				Map<String,Object> saleMemPointInfoMap = binOLWPSAL07_IF.getSaleMemPointInfo(map);
+				if(saleMemPointInfoMap != null && saleMemPointInfoMap.size() > 0){
+					//会员当前总积分
+					String totalPoint = ConvertUtil.getString(saleMemPointInfoMap.get("TotalPoint"));
+					form.setTotalPoint(totalPoint);
+					//对应销售所得积分
+					String pointGet = ConvertUtil.getString(saleMemPointInfoMap.get("PointGet"));
+					form.setPointGet(pointGet);
+				}
+			}
+
 			//获取该单据的主信息   允许补登对货时间为（销售时间~当前系统时间）
 			Map<String, Object> billMap = binOLWPSAL07_IF.getFinishedBillMap(map);
 			if(billMap != null){

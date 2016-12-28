@@ -54,6 +54,7 @@
       <s:hidden name="memType" value="%{memberInfoMap.memType}"></s:hidden>
       <s:hidden name="initTotalAmount" value="%{memberInfoMap.initTotalAmount}"></s:hidden>
       <s:hidden name="channelCode" value="%{memberInfoMap.channelCode}"></s:hidden>
+		<s:hidden name="isAllowUpdate" value="%{memberInfoMap.isAllowUpdate}"></s:hidden>
 	  <div class="section">
       	<div class="section-header">
           <strong>
@@ -95,7 +96,16 @@
             </tr>
             <tr> 
 			  <th><s:text name="binolmbmbm06_memberBirthDay"></s:text><span class="highlight"><s:text name="global.page.required"></s:text></span></th>
-			  <td><span><s:textfield name="birth" value="%{memberInfoMap.birth}" cssClass="date"></s:textfield></span></td>
+			  <td>
+				  <span>
+					  <s:if test='memberInfoMap.isAllowUpdate=="1"'>
+						  <s:textfield name="birth" value="%{memberInfoMap.birth}" cssClass="date"></s:textfield>
+					  </s:if>
+					  <s:else>
+						  <s:property value="%{memberInfoMap.birth}"/>
+					  </s:else>
+				  </span>
+			  </td>
 			  <th><s:text name="binolmbmbm06_email"></s:text></th>
 			  <td><span><s:textfield name="email" value="%{memberInfoMap.email}" maxlength="60" cssClass="text"></s:textfield></span></td> 
             </tr>
@@ -345,29 +355,55 @@
 
 <script type="text/javascript">
 $(function() {
-	$('#birth').cherryDate({yearRange: 'c-100:c'});
-	
-	// 表单验证初期化
-	cherryValidate({
-		formId: 'saveForm',
-		rules: {
-			memCode: {required: true,maxlength: 20},
-			memName: {required: true,maxlength: 30},
-			mobilePhone: {phoneTelValid: "#telephone",maxlength: 20},
-			telephone: {telValid: true,maxlength: 20},
-			birth: {required: true,dateValid: true},
-			email: {emailValid: true,maxlength: 60},
-			gender: {required: true},
-			referrer: {maxlength: 20},
-			identityCard: {maxlength: 18},
-			blogId: {maxlength: 30},
-			messageId: {maxlength: 30},
-			memo1: {maxlength: 512},
-			memo2: {maxlength: 512},
-			address: {maxlength: 100},
-			postcode: {zipValid:true,maxlength: 10}
-		}
-	});
+
+	//表示需要修改会员生日
+	if($("#isAllowUpdate").val()==1){
+		$('#birth').cherryDate({yearRange: 'c-100:c'});
+		// 表单验证初期化
+		cherryValidate({
+			formId: 'saveForm',
+			rules: {
+				memCode: {required: true,maxlength: 20},
+				memName: {required: true,maxlength: 30},
+				mobilePhone: {phoneTelValid: "#telephone",maxlength: 20},
+				telephone: {telValid: true,maxlength: 20},
+				birth: {required: true,dateValid: true},
+				email: {emailValid: true,maxlength: 60},
+				gender: {required: true},
+				referrer: {maxlength: 20},
+				identityCard: {maxlength: 18},
+				blogId: {maxlength: 30},
+				messageId: {maxlength: 30},
+				memo1: {maxlength: 512},
+				memo2: {maxlength: 512},
+				address: {maxlength: 100},
+				postcode: {zipValid:true,maxlength: 10}
+			}
+		});
+	}else{
+		// 表单验证初期化
+		cherryValidate({
+			formId: 'saveForm',
+			rules: {
+				memCode: {required: true,maxlength: 20},
+				memName: {required: true,maxlength: 30},
+				mobilePhone: {phoneTelValid: "#telephone",maxlength: 20},
+				telephone: {telValid: true,maxlength: 20},
+				email: {emailValid: true,maxlength: 60},
+				gender: {required: true},
+				referrer: {maxlength: 20},
+				identityCard: {maxlength: 18},
+				blogId: {maxlength: 30},
+				messageId: {maxlength: 30},
+				memo1: {maxlength: 512},
+				memo2: {maxlength: 512},
+				address: {maxlength: 100},
+				postcode: {zipValid:true,maxlength: 10}
+			}
+		});
+	}
+
+
 	
 	// 省份选择
 	$("#province").click(function(){

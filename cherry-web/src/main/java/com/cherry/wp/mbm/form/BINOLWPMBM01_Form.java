@@ -251,6 +251,11 @@ public class BINOLWPMBM01_Form extends DataTable_BaseForm {
 
 	/**生日是否为必填*/
 	private String birthFlag;
+
+
+	/**生日是否允许修改*/
+	private String isAllowUpdate;
+
 	public String getCardMobileSyn() {
 		return cardMobileSyn;
 	}
@@ -858,5 +863,12 @@ public class BINOLWPMBM01_Form extends DataTable_BaseForm {
 	public void setBirthFlag(String birthFlag) {
 		this.birthFlag = birthFlag;
 	}
-    
+
+	public String getIsAllowUpdate() {
+		return isAllowUpdate;
+	}
+
+	public void setIsAllowUpdate(String isAllowUpdate) {
+		this.isAllowUpdate = isAllowUpdate;
+	}
 }

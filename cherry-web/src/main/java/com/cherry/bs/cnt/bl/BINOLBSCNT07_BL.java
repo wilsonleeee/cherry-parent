@@ -169,6 +169,6 @@ public class BINOLBSCNT07_BL {
      * @return String
      */
     public String getSYSDate(){
-        return binolbscnt07Service.getSYSDate();
+        return binolbscnt07Service.getDateYMD();
     }
 }

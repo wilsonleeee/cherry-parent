@@ -28,4 +28,6 @@ public interface BINOLWPSAL07_IF {
 	public List<Map<String, Object>> tran_getBillDetailSavings(Map<String, Object> map) throws Exception;
 
 	public List<Map<String, Object>> getPaymentTypeList(Map<String, Object> map);
+	/** 获取会员当前总积分和对应销售所得积分，用于计算退货时积分是否足够 **/
+	public Map<String,Object> getSaleMemPointInfo(Map<String, Object> map);
 }

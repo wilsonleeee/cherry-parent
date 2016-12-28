@@ -3037,8 +3037,18 @@ public class MemberInfoLogic implements MemberInfo_IF {
 						return resultMap;
 					}
 					detailMap.put("paperQuestionId",paperQuestionMap.get("BIN_PaperQuestionID"));
-					//将选择题的字母转成20位的二进制字符串
-					if ("1".equals(paperQuestionMap.get("QuestionType")) || "2".equals(paperQuestionMap.get("QuestionType"))){
+					//单选题直接将问题的文本存进数据库，为了和现在的会员新增，修改保持一致。比较坑
+					if("1".equals(paperQuestionMap.get("QuestionType"))){
+						for(int j = 65; j <= 84; j++) {
+							char ca = (char)j;
+							String tempValue = String.valueOf(ca);
+							String value = (String)paperQuestionMap.get("option"+ca);
+							if(tempValue.equals(ConvertUtil.getString(detailMap.get("Answer")))) {
+								detailMap.put("answer",value);
+								break;
+							}
+						}
+					}else if ("1".equals(paperQuestionMap.get("QuestionType")) || "2".equals(paperQuestionMap.get("QuestionType"))){//将多选题的字母转成20位的二进制字符串
 						detailMap.put("answer",ConvertUtil.letterToBinary((String)detailMap.get("Answer")));
 					}else {
 						detailMap.put("answer",detailMap.get("Answer"));
@@ -3078,8 +3088,19 @@ public class MemberInfoLogic implements MemberInfo_IF {
 							detailMap.put("BIN_PaperAnswerDetailID",answerMap.get("BIN_PaperAnswerDetailID"));
 						}
 					}
-					//将选择题的字母转成20位的二进制字符串
-					if ("1".equals(paperQuestionMap.get("QuestionType")) || "2".equals(paperQuestionMap.get("QuestionType"))){
+
+					//单选题直接将问题的文本存进数据库，为了和现在的会员新增，修改保持一致。比较坑
+					if("1".equals(paperQuestionMap.get("QuestionType"))){
+							for(int j = 65; j <= 84; j++) {
+								char ca = (char)j;
+								String tempValue = String.valueOf(ca);
+								String value = (String)paperQuestionMap.get("option"+ca);
+								if(tempValue.equals(ConvertUtil.getString(detailMap.get("Answer")))) {
+									detailMap.put("answer",value);
+									break;
+								}
+							}
+					}else if ("2".equals(paperQuestionMap.get("QuestionType"))){//将多选题的字母转成20位的二进制字符串
 						detailMap.put("answer",ConvertUtil.letterToBinary((String)detailMap.get("Answer")));
 					}else {
 						detailMap.put("answer",detailMap.get("Answer"));

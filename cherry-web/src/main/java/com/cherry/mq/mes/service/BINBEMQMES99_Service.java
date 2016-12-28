@@ -135,6 +135,16 @@ public class BINBEMQMES99_Service extends BaseService{
 		map.put(CherryConstants.IBATIS_SQL_ID, "BINBEMQMES99.getCounterPointPlan");
 		return (HashMap)baseServiceImpl.get(map);
 	}
+
+	/**
+	 * 根据单据号查询销售业务数据主表信息
+	 * @param map
+	 * @return
+	 */
+	public HashMap getSaleRecordByBillCode (Map map){
+		map.put(CherryConstants.IBATIS_SQL_ID, "BINBEMQMES99.getSaleRecordByBillCode");
+		return (HashMap)baseServiceImpl.get(map);
+	}
 	
 	/**
 	 * 查询会员信息

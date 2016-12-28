@@ -344,6 +344,22 @@ public class BINBEDRCOM03_Service extends BaseService{
     }
 
 	/**
+	 * 通过子活动码取得会员活动内容
+	 *
+	 * @param mainCode
+	 * 			子活动码
+	 * @return
+	 * 		会员活动内容
+	 */
+	public Map<String, Object> getCampaignInfoByMainCode(String mainCode) {
+		Map<String, Object> paramMap = new HashMap<String, Object>();
+		paramMap.put("mainCode", mainCode);
+		paramMap.put(CherryConstants.IBATIS_SQL_ID, "BINBEDRCOM03.getCampaignInfoByMainCode");
+		return (Map<String, Object>) baseServiceImpl.get(paramMap);
+	}
+
+
+	/**
 	 * 取得规则刷新通知表记录数
 	 *
 	 * @param brandInfoId

@@ -27,6 +27,7 @@ import com.dianping.cat.Cat;
 import com.dianping.cat.message.Transaction;
 import javax.annotation.Resource;
 
+import com.sun.org.apache.xpath.internal.operations.Bool;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -3398,6 +3399,7 @@ public class BINBEDRCOM03_BL implements BINBEDRCOM03_IF{
 				if (null != gpInfo && !gpInfo.isEmpty()) {
 					isNoZkprt = "1".equals(gpInfo.get("zkPrt"));
 				}
+				Map<String, Boolean> campaignMap = new HashMap<String, Boolean>();
 				for (int i = 0; i < changeDetailList.size(); i++) {
 					PointChangeDetailDTO pointChangeDetail = changeDetailList.get(i);
 					// 促销品/产品类别 
@@ -3413,38 +3415,51 @@ public class BINBEDRCOM03_BL implements BINBEDRCOM03_IF{
 					// 积分兑礼
 					if ((DroolsConstants.TYPE_CODE_DHCP.equals(prmPrtCateCd) || DroolsConstants.TYPE_CODE_DHMY.equals(prmPrtCateCd))
 							&& !"1".equals(pointChangeDetail.getDetailFlag())) {
-						PointChangeDetailDTO newPointChangeDTO = new PointChangeDetailDTO();
-						ConvertUtil.convertDTO(newPointChangeDTO, pointChangeDetail, false);
-						// 兑换所需积分
-						double exPoint = newPointChangeDTO.getExPoint();
-						// 数量
-						double quantity = newPointChangeDTO.getQuantity();
-						// 积分值
-						double point = DoubleUtil.mul(exPoint, quantity);
-						if (!isReturn) {
-							point = DoubleUtil.sub(0, DoubleUtil.mul(exPoint, quantity));
+						String mainCode = pointChangeDetail.getActMainCode();
+						// 活动是否有预约阶段
+						boolean isOrder = false;
+						if (campaignMap.containsKey(mainCode)) {
+							isOrder = campaignMap.get(mainCode);
+						} else {
+							// 通过子活动码判断该活动是否有预约阶段
+							isOrder = isOrderCampaign(mainCode);
+							campaignMap.put(mainCode, isOrder);
 						}
-						newPointChangeDTO.setPoint(point);
-						// 兑换积分
-						newPointChangeDTO.setPointType(DroolsConstants.POINTTYPE6);
-						// 积分有效期(月)
-						newPointChangeDTO.setValidMonths(0);
-						// 匹配的规则代号
-						newPointChangeDTO.setSubCampaignCode(null);
-						// 匹配的规则ID
-						newPointChangeDTO.setSubCampaignId(null);
-						// 主规则ID
-						newPointChangeDTO.setMainRuleId(null);
-						// 组合规则ID
-						newPointChangeDTO.setCombRuleId(null);
-						// 积分兑换
-						newPointChangeDTO.setReason(DroolsConstants.POINT_REASON_1);
-						exPointList.add(newPointChangeDTO);
-						changePoint = DoubleUtil.add(changePoint, point);
-						if (0 == detailPoint) {
-							changeDetailList.remove(i);
-							i--;
-							continue;
+						// 无预约阶段时的积分兑换才计算积分
+						if (!isOrder) {
+							PointChangeDetailDTO newPointChangeDTO = new PointChangeDetailDTO();
+							ConvertUtil.convertDTO(newPointChangeDTO, pointChangeDetail, false);
+							// 兑换所需积分
+							double exPoint = newPointChangeDTO.getExPoint();
+							// 数量
+							double quantity = newPointChangeDTO.getQuantity();
+							// 积分值
+							double point = DoubleUtil.mul(exPoint, quantity);
+							if (!isReturn) {
+								point = DoubleUtil.sub(0, DoubleUtil.mul(exPoint, quantity));
+							}
+							newPointChangeDTO.setPoint(point);
+							// 兑换积分
+							newPointChangeDTO.setPointType(DroolsConstants.POINTTYPE6);
+							// 积分有效期(月)
+							newPointChangeDTO.setValidMonths(0);
+							// 匹配的规则代号
+							newPointChangeDTO.setSubCampaignCode(null);
+							// 匹配的规则ID
+							newPointChangeDTO.setSubCampaignId(null);
+							// 主规则ID
+							newPointChangeDTO.setMainRuleId(null);
+							// 组合规则ID
+							newPointChangeDTO.setCombRuleId(null);
+							// 积分兑换
+							newPointChangeDTO.setReason(DroolsConstants.POINT_REASON_1);
+							exPointList.add(newPointChangeDTO);
+							changePoint = DoubleUtil.add(changePoint, point);
+							if (0 == detailPoint) {
+								changeDetailList.remove(i);
+								i--;
+								continue;
+							}
 						}
 					}
 					if (isNoZkprt && !"1".equals(pointChangeDetail.getDetailFlag()) 
@@ -3551,6 +3566,25 @@ public class BINBEDRCOM03_BL implements BINBEDRCOM03_IF{
 			}
 		}
 		return null;
+	}
+
+	/**
+	 * 通过子活动码判断该活动是否有预约阶段
+	 *
+	 * @param mainCode
+	 * 			子活动码
+	 * @return
+	 * 		true: 有 false:没有
+	 */
+	private boolean isOrderCampaign(String mainCode) {
+		if (!CherryChecker.isNullOrEmpty(mainCode)) {
+			// 通过子活动码取得会员活动内容
+			Map<String, Object> campaignInfo = binbedrcom03_Service.getCampaignInfoByMainCode(mainCode);
+			if (null != campaignInfo && !campaignInfo.isEmpty()) {
+				return !CherryChecker.isNullOrEmpty(campaignInfo.get("orderFromDate"));
+			}
+		}
+		return false;
 	}
 	
 	/**

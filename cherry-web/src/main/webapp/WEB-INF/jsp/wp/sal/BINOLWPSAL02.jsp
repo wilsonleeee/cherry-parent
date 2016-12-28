@@ -97,6 +97,8 @@
 		<a id="saleUrl" href="${s_saleUrl}"></a>
 		<s:url id="productSearchUrl" value="/common/BINOLCM02_popPrtDialog" />
 		<a id="productUrl" href="${productSearchUrl}"></a>
+		<s:url id="searchCounterLimitUrl" value="/wp/BINOLWPSAL02_searchCounterLimit" />
+		<a id="searchCounterLimitUrl" href="${searchCounterLimitUrl}"></a>
 	</div>
 	<div id="div_main">
 		<s:if test="hasActionErrors()">
@@ -109,6 +111,9 @@
 			<input type="hidden" id="promotionDetailTitle" value='<s:text name="wpsal02.promotionDetailTitle"/>'/>
 			<input type="hidden" id="promotionCodeTitle" value='<s:text name="wpsal02.promotionCodeTitle"/>'/>
 			<input type="hidden" id="promotionNameTitle" value='<s:text name="wpsal02.promotionNameTitle"/>'/>
+			<input type="hidden" id="limitPlanText1" value='<s:text name="wpsal02.limitPlanText_part1"/>'/>
+			<input type="hidden" id="limitPlanText2" value='<s:text name="wpsal02.limitPlanText_part2"/>'/>
+			<input type="hidden" id="limitPlanText3" value='<s:text name="wpsal02.limitPlanText_part3"/>'/>
 			<div id="messagePageDiv" class="crm_top clearfix">
 				<div>
 			        <span class="icon_order"></span>
@@ -207,12 +212,19 @@
 			    <input type="hidden" id="baChooseModel" name="baChooseModel" value="<s:property value='baChooseModel'/>"/>
 			    <input type="hidden" id="isCA" name="isCA" value="<s:property value='isCA'/>"/>
 			    <input type="hidden" id="isMemberSaleFlag" name="isMemberSaleFlag" value="<s:property value='isMemberSaleFlag'/>"/>
+			    <input type="hidden" id="isExecuteLimitPlan" name="isExecuteLimitPlan" value="<s:property value='isExecuteLimitPlan'/>"/>
 			    <input type="hidden" id="printBrandType" name="printBrandType" value="<s:property value='printBrandType'/>"/>
 			    <input type="hidden" id="stockSaleType" name="stockSaleType" value="<s:property value='stockSaleType'/>"/>
 			    <input type="hidden" id="birthFlag" name="birthFlag" value="<s:property value='birthFlag'/>"/>
 			    <input type="hidden" id="isBuyFlag" name="isBuyFlag" value="<s:property value='isBuyFlag'/>"/>
 			    <input type="hidden" id="memCodeRule" name="memCodeRule" value="<s:property value='memCodeRule'/>"/>
 			    <input type="hidden" id="mobilePhoneQ" name="mobilePhoneQ" value="<s:property value='mobilePhoneQ'/>"/>
+			    <input type="hidden" id="currentPoint" name="currentPoint" value="<s:property value='%{pointLimitInfo.CurrentPoint}'/>"/>
+			    <s:hidden name="currentPoint" value="%{pointLimitInfo.CurrentPoint}"/>
+			    <s:hidden name="planStatus" value="%{pointLimitInfo.PlanStatus}"/>
+				<s:hidden name="minWarningPoint" value="%{pointLimitInfo.MinWarningPoint}"/>
+				<input type="hidden" id="isLimitProduct" name="isLimitProduct" value="<s:property value='isLimitProduct'/>"/>
+
 			    <div id="leftPageDiv" class="wp_left">
 			    <form id="mainForm" method="post" class="inline" >
 			    	<input type="hidden" id="billClassify" name="billClassify" value=""/>
@@ -398,6 +410,15 @@
 			<button id="btnMessageConfirm" class="close" type="button">
 	    		<span class="ui-icon icon-confirm"></span>
 	            <span class="button-text"><s:text name="wpsal02.confirm"/></span>
+			</button>
+		</p>
+	</div>
+	<div id="messageDialogDiv2" class="hide ui-dialog-content ui-widget-content" style="display: none; width: auto; min-height: 200px;">
+		<p id="messageContent2" class="message hide" style="margin:40px auto 30px;"><span id="messageContentSpan2"></span></p>
+		<p class="center">
+			<button id="btnMessageConfirm2" class="close" type="button">
+				<span class="ui-icon icon-confirm"></span>
+				<span class="button-text"><s:text name="wpsal02.confirm"/></span>
 			</button>
 		</p>
 	</div>

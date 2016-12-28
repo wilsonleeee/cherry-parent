@@ -37,7 +37,7 @@ public class TransMqCreater_GTED implements TransMqCreater_IF {
 
             String ispoint = ConvertUtil.getString(tempMap.get("isPoint"));
             // 总金额字段
-            double totalamount = Double.valueOf(ConvertUtil.getString(tempMap.get("totalAmount")));
+            double totalamount = Double.valueOf(ConvertUtil.getString(tempMap.get("pay_amount")));
             if (!"0".equals(ispoint.trim()) && totalamount != 0) {
                 //源消息体组装
                 Map<String, Object> gtedMap = new HashMap<String, Object>();
@@ -52,13 +52,13 @@ public class TransMqCreater_GTED implements TransMqCreater_IF {
                 }
                 gtedMap.put("TradeTime", tempMap.get("tradeDateTime"));
                 gtedMap.put("DepartCode", tempMap.get("counterCode"));
-                gtedMap.put("Amount", tempMap.get("totalAmount"));
+                gtedMap.put("Amount", tempMap.get("pay_amount"));
 
                 // Double.valueOf(ConvertUtil.getString(map.get("totalAmount")))
                 if (gtedMap.get("SubType").equals("2")) {
-                    gtedMap.put("PointChange", CherryUtil.div(Double.valueOf(ConvertUtil.getString(tempMap.get("totalAmount"))), 1, 0));
+                    gtedMap.put("PointChange", CherryUtil.div(Double.valueOf(ConvertUtil.getString(tempMap.get("pay_amount"))), 1, 0));
                 } else {
-                    gtedMap.put("PointChange", -1 * CherryUtil.div(Double.valueOf(ConvertUtil.getString(tempMap.get("totalAmount"))), 1, 0));
+                    gtedMap.put("PointChange", -1 * CherryUtil.div(Double.valueOf(ConvertUtil.getString(tempMap.get("pay_amount"))), 1, 0));
                 }
                 if (tempMap.get("memberCode").equals("000000000")) {
                     gtedMap.put("MemberCode", "");

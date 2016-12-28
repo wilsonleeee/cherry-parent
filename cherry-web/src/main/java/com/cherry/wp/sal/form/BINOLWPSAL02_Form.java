@@ -64,6 +64,8 @@ public class BINOLWPSAL02_Form extends DataTable_BaseForm{
     private String isCA;
     /** 云POS是否允许不入会销售*/
     private String isMemberSaleFlag;
+	/** 是否执行积分计划配置 **/
+	private String isExecuteLimitPlan;
     /** 柜台电话*/
     private String counterPhone;
     /** 柜台地址*/
@@ -80,6 +82,19 @@ public class BINOLWPSAL02_Form extends DataTable_BaseForm{
     private String isBuyFlag;
     /**从会员查询中带过来的会员号*/
     private String mobilePhoneQ;
+
+	/**积分兑换活动是否限定产品*/
+	private String isLimitProduct;
+
+	public String getIsLimitProduct() {
+		return isLimitProduct;
+	}
+
+	public void setIsLimitProduct(String isLimitProduct) {
+		this.isLimitProduct = isLimitProduct;
+	}
+
+	private Map<String,Object> pointLimitInfo;
 	public String getPageType() {
 		return pageType;
 	}
@@ -312,7 +327,13 @@ public class BINOLWPSAL02_Form extends DataTable_BaseForm{
 		this.isMemberSaleFlag = isMemberSaleFlag;
 	}
 
+	public String getIsExecuteLimitPlan() {
+		return isExecuteLimitPlan;
+	}
 
+	public void setIsExecuteLimitPlan(String isExecuteLimitPlan) {
+		this.isExecuteLimitPlan = isExecuteLimitPlan;
+	}
 
 	public String getCounterPhone() {
 		return counterPhone;
@@ -407,6 +428,13 @@ public class BINOLWPSAL02_Form extends DataTable_BaseForm{
 	public void setMobilePhoneQ(String mobilePhoneQ) {
 		this.mobilePhoneQ = mobilePhoneQ;
 	}
-	
+
+	public Map<String, Object> getPointLimitInfo() {
+		return pointLimitInfo;
+	}
+
+	public void setPointLimitInfo(Map<String, Object> pointLimitInfo) {
+		this.pointLimitInfo = pointLimitInfo;
+	}
 	
 }

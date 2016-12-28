@@ -99,6 +99,12 @@ public class BINOLWPSAL07_Form extends DataTable_BaseForm {
 	private String returnbussinessDateEnd;
 	//补登退货时间
 	private String returnbussinessDate;
+	//会员当前总积分
+	private String totalPoint;
+	//会员销售所得积分
+	private String pointGet;
+	//会员退货时是否允许会员积分为负
+	private String isPermitMemPointNegative;
 	
 	public String getDgCounterCode() {
 		return dgCounterCode;
@@ -459,6 +465,28 @@ public class BINOLWPSAL07_Form extends DataTable_BaseForm {
 	public void setReturnbussinessDate(String returnbussinessDate) {
 		this.returnbussinessDate = returnbussinessDate;
 	}
-	
-	
+
+	public String getTotalPoint() {
+		return totalPoint;
+	}
+
+	public void setTotalPoint(String totalPoint) {
+		this.totalPoint = totalPoint;
+	}
+
+	public String getPointGet() {
+		return pointGet;
+	}
+
+	public void setPointGet(String pointGet) {
+		this.pointGet = pointGet;
+	}
+
+	public String getIsPermitMemPointNegative() {
+		return isPermitMemPointNegative;
+	}
+
+	public void setIsPermitMemPointNegative(String isPermitMemPointNegative) {
+		this.isPermitMemPointNegative = isPermitMemPointNegative;
+	}
 }

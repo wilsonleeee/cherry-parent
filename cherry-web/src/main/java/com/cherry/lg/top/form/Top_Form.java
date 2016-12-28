@@ -38,6 +38,8 @@ public class Top_Form extends DataTable_BaseForm{
     /**消息ID*/
     private String messageID;
 
+    private String counterMessageId;
+
     public List<Map<String, Object>> getOnlineUserInfoList() {
         return onlineUserInfoList;
     }
@@ -68,5 +70,13 @@ public class Top_Form extends DataTable_BaseForm{
 
     public void setMessageID(String messageID) {
         this.messageID = messageID;
+    }
+
+    public String getCounterMessageId() {
+        return counterMessageId;
+    }
+
+    public void setCounterMessageId(String counterMessageId) {
+        this.counterMessageId = counterMessageId;
     }
 }

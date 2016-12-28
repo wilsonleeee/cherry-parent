@@ -4,6 +4,9 @@
 <div class="hide">
 	<input name="returnbussinessDateStart" id="returnbussinessDateStart" value='<s:property value="returnbussinessDateStart"/>'/>
 	<input name="returnbussinessDateEnd" id="returnbussinessDateEnd" value='<s:property value="returnbussinessDateEnd"/>'/>
+	<s:hidden name="isPermitMemPointNegative" value="%{isPermitMemPointNegative}"/>
+	<s:hidden name="totalPoint" value="%{TotalPoint}"/>
+	<s:hidden name="pointGet" value="%{PointGet}"/>
 </div>
 
 <s:if test="billDetailList!=null">
@@ -209,7 +212,7 @@
 	<s:iterator value="paymentTypeList" id="paymentType">
 		<tr>
 			<td><s:property value="value"/></td>
-			<td><s:property value="payAmount"/></td>
+			<td><span id="payAmount2"><s:property value="payAmount"/></span></td>
 			<td><s:property value="payAmount2"/></td>
 		</tr>
 	</s:iterator>

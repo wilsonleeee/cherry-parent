@@ -94,6 +94,7 @@ public class BINBEDRPOI01_Service extends BaseService{
 				Map<String, Object> srMap = new HashMap<String, Object>();
 				// 取得销售业务数据主表信息
 				PointChangeDTO pointChange = new PointChangeDTO();
+				boolean hasAct = false;
 				for (Map<String, Object> productInfo : products) {
 					// 数量
 					double quantity = 0;
@@ -208,31 +209,33 @@ public class BINBEDRPOI01_Service extends BaseService{
 							srMap.put(billCodeSR, actMap);
 						}
 						srFlag = true;
-					} else {
-						// 活动代号
-						String mainCode = (String) productInfo.get("actMainCode");
-						if (CherryChecker.isNullOrEmpty(mainCode, true)) {
+					}
+					// 活动代号
+					String mainCode = (String) productInfo.get("actMainCode");
+					if (CherryChecker.isNullOrEmpty(mainCode, true)) {
+						// 柜台活动代号
+						String countActCode = (String) productInfo.get("countActCode");
+						if (!CherryChecker.isNullOrEmpty(countActCode, true)) {
+							Map<String, Object> codeMap = new HashMap<String, Object>();
 							// 柜台活动代号
-							String countActCode = (String) productInfo.get("countActCode");
-							if (!CherryChecker.isNullOrEmpty(countActCode, true)) {
-								Map<String, Object> codeMap = new HashMap<String, Object>();
-								// 柜台活动代号
-								codeMap.put("countActCode", countActCode);
-								// 品牌ID
-								codeMap.put("brandInfoId", campBaseDTO.getBrandInfoId());
-								// 组织ID
-								codeMap.put("organizationInfoId", campBaseDTO.getOrganizationInfoId());
-								// 取得活动代号
-								mainCode = getActMainCode(codeMap);
-							}
-						}
-						if (!CherryChecker.isNullOrEmpty(mainCode, true)) {
-							pointChangeDetail.setActMainCode(mainCode);
-							// 参与了促销活动
-							pointChange.setHasAct("1");
+							codeMap.put("countActCode", countActCode);
+							// 品牌ID
+							codeMap.put("brandInfoId", campBaseDTO.getBrandInfoId());
+							// 组织ID
+							codeMap.put("organizationInfoId", campBaseDTO.getOrganizationInfoId());
+							// 取得活动代号
+							mainCode = getActMainCode(codeMap);
 						}
 					}
+					if (!CherryChecker.isNullOrEmpty(mainCode, true)) {
+						pointChangeDetail.setActMainCode(mainCode);
+						hasAct = true;
+					}
 					pointChangeDeatailList.add(pointChangeDetail);
+				}
+				if (hasAct) {
+					// 参与了促销活动
+					pointChange.setHasAct("1");
 				}
 				if (srFlag) {
 					// 包含了关联的退货单
