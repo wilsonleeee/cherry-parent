@@ -697,7 +697,7 @@ public class BINBEIFPRO03_BL {
 	
 	/**
 	 * 设置柜台产品接口表的状态值
-	 * @param map
+	 * @param productMap
 	 */
 	private void getPrtSoluSCSStatus(Map<String, Object> productMap){
 
@@ -919,6 +919,14 @@ public class BINBEIFPRO03_BL {
 		}else{
 			map.put("priceDate", businessDate);
 		}
+
+		String sysdateTime = binbeifpro03Service.getSYSDateTime();
+		// BatchCD 来自VSS$/01.Cherry/02.设计文档/01.概要设计/00.各种一览/【新设】CherryBatch一览.xlsx
+		map.put("JobCode", "BAT081");
+
+		// 程序【开始运行时间】
+		map.put("RunStartTime", sysdateTime);
+
 		// 取得更新共通信息map
 		comMap = getComMap(map);
 		// 启用日时

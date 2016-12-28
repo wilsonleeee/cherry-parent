@@ -999,6 +999,14 @@ public class BINBEIFPRO04_BL {
 		}else{
 			map.put("priceDate", businessDate);
 		}
+
+
+		// BatchCD 来自VSS$/01.Cherry/02.设计文档/01.概要设计/00.各种一览/【新设】CherryBatch一览.xlsx
+		map.put("JobCode", "BAT095");
+
+		// 程序【开始运行时间】
+		map.put("RunStartTime", sysdateTime);
+
 		// 取得更新共通信息map
 		comMap = getComMap(map);
 		// 启用日时
@@ -1011,12 +1019,6 @@ public class BINBEIFPRO04_BL {
 		comMap.put("enable_time", enable_time);
 		// 物理删除接口数据库某品牌的产品信息
 //		binbeifpro04_Service.delIFProduct(comMap);
-		
-		// BatchCD 来自VSS$/01.Cherry/02.设计文档/01.概要设计/00.各种一览/【新设】CherryBatch一览.xlsx
-		map.put("JobCode", "BAT095");
-		
-		// 程序【开始运行时间】
-		map.put("RunStartTime", sysdateTime);
 	}
 
 	private Map<String, Object> getComMap(Map<String, Object> map) {
