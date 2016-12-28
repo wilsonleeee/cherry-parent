@@ -4441,6 +4441,8 @@ function getMemCommonSearchJson(id) {
 	});
 	if(joinDateRanges.length > 0) {
 		$id.find("#joinDateRangeJson").val(JSON.stringify(joinDateRanges));
+	} else {
+		$id.find("#joinDateRangeJson").val("");
 	}
 
 	var memPointRanges = [];
@@ -4457,6 +4459,8 @@ function getMemCommonSearchJson(id) {
 	});
 	if(memPointRanges.length > 0) {
 		$id.find("#memPointRangeJson").val(JSON.stringify(memPointRanges));
+	} else {
+		$id.find("#memPointRangeJson").val("");
 	}
 
 	var changablePointRanges = [];
@@ -4473,6 +4477,8 @@ function getMemCommonSearchJson(id) {
 	});
 	if(changablePointRanges.length > 0) {
 		$id.find("#changablePointRangeJson").val(JSON.stringify(changablePointRanges));
+	} else {
+		$id.find("#changablePointRangeJson").val("");
 	}
 
 	var lastSaleTimeRanges = [];
@@ -4489,6 +4495,8 @@ function getMemCommonSearchJson(id) {
 	});
 	if(lastSaleTimeRanges.length > 0) {
 		$id.find("#lastSaleTimeRangeJson").val(JSON.stringify(lastSaleTimeRanges));
+	} else {
+		$id.find("#lastSaleTimeRangeJson").val("");
 	}
 
 	var firstSaleTimeRanges = [];
@@ -4505,6 +4513,8 @@ function getMemCommonSearchJson(id) {
 	});
 	if(firstSaleTimeRanges.length > 0) {
 		$id.find("#firstSaleTimeRangeJson").val(JSON.stringify(firstSaleTimeRanges));
+	} else {
+		$id.find("#firstSaleTimeRangeJson").val("");
 	}
 	return $id.find(":input").serializeForm2Json(false, "joinDateStart,joinDateEnd,memberPointStart,memberPointEnd,changablePointStart,changablePointEnd,lastSaleDateStart,lastSaleDateEnd,firstStartDay,firstEndDay");
 }

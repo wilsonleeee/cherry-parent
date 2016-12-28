@@ -1573,6 +1573,8 @@ POPMEMSEARCH.prototype = {
 			});
 			if(joinDateRanges.length > 0) {
 				$obj.find("#joinDateRangeJson").val(JSON.stringify(joinDateRanges));
+			} else {
+				$obj.find("#joinDateRangeJson").val("");
 			}
 
 			var memPointRanges = [];
@@ -1589,6 +1591,8 @@ POPMEMSEARCH.prototype = {
 			});
 			if(memPointRanges.length > 0) {
 				$obj.find("#memPointRangeJson").val(JSON.stringify(memPointRanges));
+			} else {
+				$obj.find("#memPointRangeJson").val("");
 			}
 
 			var changablePointRanges = [];
@@ -1605,6 +1609,8 @@ POPMEMSEARCH.prototype = {
 			});
 			if(changablePointRanges.length > 0) {
 				$obj.find("#changablePointRangeJson").val(JSON.stringify(changablePointRanges));
+			} else {
+				$obj.find("#changablePointRangeJson").val("");
 			}
 
 			var lastSaleTimeRanges = [];
@@ -1621,6 +1627,8 @@ POPMEMSEARCH.prototype = {
 			});
 			if(lastSaleTimeRanges.length > 0) {
 				$obj.find("#lastSaleTimeRangeJson").val(JSON.stringify(lastSaleTimeRanges));
+			} else {
+				$obj.find("#lastSaleTimeRangeJson").val("");
 			}
 
 			var firstSaleTimeRanges = [];
@@ -1637,6 +1645,8 @@ POPMEMSEARCH.prototype = {
 			});
 			if(firstSaleTimeRanges.length > 0) {
 				$obj.find("#firstSaleTimeRangeJson").val(JSON.stringify(firstSaleTimeRanges));
+			} else {
+				$obj.find("#firstSaleTimeRangeJson").val("");
 			}
 		}
 }
