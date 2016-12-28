@@ -49,7 +49,9 @@ BINOLWPSAL10_GLOBAL.prototype = {
 		html += '<td><span id="spanBarCode">'+ couponOrderInfo.mainCode + promotionCodeTitle +'</span><input id="barCode" name="barCode" type="hidden" value="'+ couponOrderInfo.mainCode +'"/></td>';
 		html += '<td><span id="spanProductName">'+ couponOrderInfo.activityName + promotionNameTitle +'</span><input id="productNameArr" name="productNameArr" type="hidden" value="'+ couponOrderInfo.activityName +'"/></td>';
 		html += '<td></td>';
-		html += '<td><input id="memberPrice" name="memberPrice" type="hidden"/></td>';
+		if($("#useMemberPrice").val() == "Y"){
+			html += '<td><input id="memberPrice" name="memberPrice" type="hidden"/></td>';
+		}
 		if("Y" == isPlatinumPrice){
 			html += '<td><input id="platinumPrice" name="platinumPrice" type="hidden"/></td>';
 		}
@@ -171,7 +173,9 @@ BINOLWPSAL10_GLOBAL.prototype = {
 		html += '<td><span id="spanBarCode">'+ productInfo.barCode +'</span><input id="barCode" name="barCode" type="hidden" value="'+ productInfo.barCode +'"/></td>';
 		html += '<td><span id="spanProductName">'+ productInfo.productName +'</span><input id="productNameArr" name="productNameArr" type="hidden" value="'+ productInfo.productName +'"/></td>';
 		html += '<td><span id="spanPrice">'+ oldPrice +'</span><input id="pricePay" name="pricePay" type="hidden" value="'+ oldPrice +'"/></td>';
-		html += '<td><span id="spanMemberPrice"></span><input id="memberPrice" name="memberPrice" type="hidden"/></td>';
+		if($("#useMemberPrice").val() == "Y"){
+			html += '<td><span id="spanMemberPrice"></span><input id="memberPrice" name="memberPrice" type="hidden"/></td>';
+		}
 		if("Y" == isPlatinumPrice){
 			html += '<td><span id="spanPlatinumPrice"></span><input id="platinumPrice" name="platinumPrice" type="hidden"/></td>';
 		}
