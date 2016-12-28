@@ -862,23 +862,7 @@ public class BINBEMQMES99_BL {
 		String tradeType = ConvertUtil.getString(productMsgMap.get("tradeType"));
 		// 子类型[不区分大小写]
 		String subType = ConvertUtil.getString(productMsgMap.get("subType")).toUpperCase();
-//		for (int i=0;i<productDetailList.size();i++){
-//			HashMap prmDetailMap = (HashMap)productDetailList.get(i);
-//			// 查询是否为促销品
-//			HashMap resultMap = binBEMQMES99_Service.selIsPromotionProduct(prmDetailMap);
-//			if(resultMap.get("count")!=null&&Integer.parseInt(String.valueOf(resultMap.get("count")))==0){
-//				HashMap resultMapPrtBarCode = binBEMQMES99_Service.selPrmProductPrtBarCodeInfo(prmDetailMap);
-//				 if(resultMapPrtBarCode!=null)//促销品信息unitcode或barcode存在变更
-//					resultMap.put("count", "1");
-//			}
-//			// 取得促销品件数
-//			int count = Integer.parseInt(String.valueOf(resultMap.get("count")));
-//			if (count>0){
-//				prmDetailMap.put("isPromotion", "1");
-//			}else{
-//				prmDetailMap.put("isPromotion", "0");
-//			}
-//		}
+
 		HashMap prmMsgMap = (HashMap)ConvertUtil.byteClone(productMsgMap);
 		// 产品总数量
 		int prtTotalQuantity =0;
@@ -893,12 +877,12 @@ public class BINBEMQMES99_BL {
 		if(null != prmDetailList && prmDetailList.size()>0) {
 			for (int i=0;i<prmDetailList.size();i++){
 				HashMap prmDetailMap = (HashMap)prmDetailList.get(i);
-				String stockType = (String.valueOf(prmDetailMap.get("stockType")));
+				String stockType = ConvertUtil.getString(prmDetailMap.get("stockType"));
 	
-				String isPromotion = (String)prmDetailMap.get("isPromotion");
+				String isPromotion = ConvertUtil.getString(prmDetailMap.get("isPromotion"));
 				int prmQuantity = 0;
-				if (prmDetailMap.get("quantity")!=null && !"".equals(prmDetailMap.get("quantity"))){
-					prmQuantity = Integer.parseInt((String)prmDetailMap.get("quantity"));
+				if (!"".equals(ConvertUtil.getString(prmDetailMap.get("quantity")))){
+					prmQuantity = ConvertUtil.getInt(prmDetailMap.get("quantity"));
 					// 出库的话需要将数量改成负数
 					if (MessageConstants.STOCK_TYPE_OUT.equals(stockType)){
 						prmQuantity=prmQuantity*getPosiOrNega(productMsgMap,prmDetailMap);
@@ -908,8 +892,8 @@ public class BINBEMQMES99_BL {
 				}
 				
 				BigDecimal prmAmount = new BigDecimal(0);
-				if (prmDetailMap.get("price")!=null && !"".equals(prmDetailMap.get("price"))){
-					prmAmount = new BigDecimal(Double.parseDouble((String)prmDetailMap.get("price")));
+				if (!"".equals(ConvertUtil.getString(prmDetailMap.get("price")))){
+					prmAmount = new BigDecimal(ConvertUtil.getDouble(prmDetailMap.get("price")));
 				}
 				// 该商品是正常产品
 				if ("0".equals(isPromotion)){
@@ -922,27 +906,6 @@ public class BINBEMQMES99_BL {
 					i--;
 					continue;
 				}else{
-				    //在写原始单据前不过滤，在操作入出库表和库存表前做过滤； 
-	//                //把促销品分类的值转成大写，判断该促销品的分类是否是"CXLP"，如果是，就正常处理，如果不是就过滤掉；
-	//                String promotionCateCD = ConvertUtil.getString(prmDetailMap.get("PromotionCateCD")).toUpperCase();
-	//                if(!MessageConstants.PROMOTIONCATECD_CXLP.equals(promotionCateCD)){
-	//                    if (prmDetailMap.get("unitcode")!=null && prmDetailMap.get("unitcode").equals(MessageConstants.TZZK_UNITCODE)){
-	//                        // 如果是套装折扣
-	//                        prmDetailList.remove(i);
-	//                        i--;
-	//                        continue;
-	//                    }
-	//                    boolean flag = prmDetailMap.get("isStock")!=null&&prmDetailMap.get("isStock").equals(MessageConstants.Stock_IS_NO)?true:false;
-	//                    if(flag){
-	//                        // 不需要管理库存
-	//                        prmDetailList.remove(i);
-	//                        i--;
-	//                        continue;
-	//                    }
-	//                    prmDetailList.remove(i);
-	//                    i--;
-	//                    continue;
-	//                }
 					// 促销品总个数
 					prmTotalQuantity +=prmQuantity;
 					// 促销品总金额
@@ -1061,12 +1024,12 @@ public class BINBEMQMES99_BL {
 	 * @return -1 or 1
 	 */
 	public int getPosiOrNega(Map map,Map detailMap) throws Exception{
-		String tradeType = String.valueOf(map.get("tradeType"));
-		String stockType = String.valueOf(detailMap.get("stockType"));
-		if(!stockType.equals("null")&&!stockType.equals("")){
+		String tradeType = ConvertUtil.getString(map.get("tradeType"));
+		String stockType = ConvertUtil.getString(detailMap.get("stockType"));
+		if(!"".equals(stockType)){
 			if(tradeType.equals(MessageConstants.MSG_TRADETYPE_SALE)){
 				//销售
-				if (MessageConstants.SR_TYPE_SALE.equals(((String)map.get("saleSRtype")))){
+				if (MessageConstants.SR_TYPE_SALE.equals(ConvertUtil.getString(map.get("saleSRtype")))){
 					if(stockType.equals(MessageConstants.STOCK_TYPE_OUT)){
 						//出库
 						return 1;
