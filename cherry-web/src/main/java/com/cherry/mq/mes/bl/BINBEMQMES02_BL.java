@@ -4524,9 +4524,9 @@ public class BINBEMQMES02_BL implements AnalyzeMessage_IF{
         if(isOpenSysConfig.equals("1")){//启用
             HashMap pointPlanMap =  binBEMQMES99_Service.getCounterPointPlan(map);//判断是否有正在进行的柜台积分计划
             if(pointPlanMap!=null){//需要算积分
-                map.put("isPoint","");
+                map.put("pointFlag","0");
             }else{
-                map.put("isPoint","0");//不需要算积分
+                map.put("pointFlag","1");//不需要算积分
             }
 
             //关联退货的时候以关联的销售单为准，销售单算积分退货也算积分，销售单不算积分退货也不算积分
@@ -4535,7 +4535,7 @@ public class BINBEMQMES02_BL implements AnalyzeMessage_IF{
                     if(!CherryChecker.isNullOrEmpty(map.get("relevantNo"))){
                         HashMap saleRecordMap =  binBEMQMES99_Service.getSaleRecordByBillCode(map);//得到退货关联的销售单信息
                         if(null!=saleRecordMap){
-                            map.put("isPoint",ConvertUtil.getString(saleRecordMap.get("IsPoint")));
+                            map.put("pointFlag",ConvertUtil.getString(saleRecordMap.get("PointFlag")));
                         }
                     }
 

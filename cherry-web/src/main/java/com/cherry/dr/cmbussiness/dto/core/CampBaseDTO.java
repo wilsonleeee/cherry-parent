@@ -100,9 +100,12 @@ public class CampBaseDTO extends BasisInfoDTO {
 	/** 单次购买消费金额 */
 	private double amount;
 
+	/** 是否计算积分 */
+	private String pointFlag;
+
 	/** 入会日期 */
 	private String joinDate;
-	
+
 	/** 入会时间 */
 	private String joinTime;
 	
@@ -754,5 +757,13 @@ public class CampBaseDTO extends BasisInfoDTO {
 
 	public void setWechatBindTime(String wechatBindTime) {
 		this.wechatBindTime = wechatBindTime;
+	}
+
+	public String getPointFlag() {
+		return pointFlag;
+	}
+
+	public void setPointFlag(String pointFlag) {
+		this.pointFlag = pointFlag;
 	}
 }

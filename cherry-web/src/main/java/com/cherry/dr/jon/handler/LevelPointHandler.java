@@ -275,46 +275,48 @@ public class LevelPointHandler implements RuleHandler_IF, BaseHandler_IF{
 					transaction.complete();
 				}
 			} else if (1 == execFlag) {
-				// 是否进行历史积分调整处理判断
-				binbedrpoi03BL.beforExec(campBaseDTO);
-				// 需要进行历史积分调整处理
-				if ("1".equals(campBaseDTO.getExtArgs().get("POI03_EXEC_KBN"))) {
-					campBaseDTO.getExtArgs().remove("POI03_EXEC_KBN");
-					// 关联退货(延时上传)
-					if (DroolsConstants.SALESRTYPE_2.equals(map.get("saleSRtype"))) {
-						// 关联单号
-						String relevantNo = (String) map.get("relevantNo");
-						if (CherryChecker.isNullOrEmpty(relevantNo) || relevantNo.indexOf("SR") == 0) {
-							// 关联退货单的关联单号不正确
-							String errMsg = DroolsMessageUtil.getMessage(
-									DroolsMessageUtil.EDR00013, null);
-							throw new CherryMQException(errMsg);
+				if (!"1".equals(campBaseDTO.getPointFlag())) {
+					// 是否进行历史积分调整处理判断
+					binbedrpoi03BL.beforExec(campBaseDTO);
+					// 需要进行历史积分调整处理
+					if ("1".equals(campBaseDTO.getExtArgs().get("POI03_EXEC_KBN"))) {
+						campBaseDTO.getExtArgs().remove("POI03_EXEC_KBN");
+						// 关联退货(延时上传)
+						if (DroolsConstants.SALESRTYPE_2.equals(map.get("saleSRtype"))) {
+							// 关联单号
+							String relevantNo = (String) map.get("relevantNo");
+							if (CherryChecker.isNullOrEmpty(relevantNo) || relevantNo.indexOf("SR") == 0) {
+								// 关联退货单的关联单号不正确
+								String errMsg = DroolsMessageUtil.getMessage(
+										DroolsMessageUtil.EDR00013, null);
+								throw new CherryMQException(errMsg);
+							}
+							// 取得关联单据信息
+							Map<String, Object> relevantSaleMap = binbedrcom01BL.getRelevantSaleInfo(map);
+							if (null != relevantSaleMap && !relevantSaleMap.isEmpty()) {
+								// 原单单据类型
+								campBaseDTO.setTradeType((String) relevantSaleMap.get("saleType"));
+								// 原单销售时间
+								campBaseDTO.setTicketDate((String) relevantSaleMap.get("ticketDate"));
+								campBaseDTO.setBillId(relevantNo);
+							}
 						}
-						// 取得关联单据信息
-						Map<String, Object> relevantSaleMap = binbedrcom01BL.getRelevantSaleInfo(map);
-						if (null != relevantSaleMap && !relevantSaleMap.isEmpty()) {
-							// 原单单据类型
-							campBaseDTO.setTradeType((String) relevantSaleMap.get("saleType"));
-							// 原单销售时间
-							campBaseDTO.setTicketDate((String) relevantSaleMap.get("ticketDate"));
-							campBaseDTO.setBillId(relevantNo);
+						campBaseDTO.setReCalcFlg(DroolsConstants.RECALCFLG_1);
+						// 设置条件：等级信息，购买产品等
+						binbedrcom01BL.conditionSetting(campBaseDTO);
+						campBaseDTO.setReCalcFlg(DroolsConstants.RECALCFLG_0);
+						// 执行积分计算前的设置
+						befPointExec(campBaseDTO);
+						// 单据修改次数
+						int billModifyCounts = 0;
+						Object modifyCountsObj = map.get("billModifyCounts");
+						if (null != modifyCountsObj) {
+							billModifyCounts = Integer.parseInt(modifyCountsObj.toString().trim());
 						}
+						campBaseDTO.getExtArgs().put("BILL_MODIFYCOUNTS", billModifyCounts);
+						// 历史积分调整处理
+						binbedrpoi03BL.ruleExec(campBaseDTO);
 					}
-					campBaseDTO.setReCalcFlg(DroolsConstants.RECALCFLG_1);
-					// 设置条件：等级信息，购买产品等
-					binbedrcom01BL.conditionSetting(campBaseDTO);
-					campBaseDTO.setReCalcFlg(DroolsConstants.RECALCFLG_0);
-					// 执行积分计算前的设置
-					befPointExec(campBaseDTO);
-					// 单据修改次数
-					int billModifyCounts = 0;
-					Object modifyCountsObj = map.get("billModifyCounts");
-					if (null != modifyCountsObj) {
-						billModifyCounts = Integer.parseInt(modifyCountsObj.toString().trim());
-					}
-					campBaseDTO.getExtArgs().put("BILL_MODIFYCOUNTS", billModifyCounts);
-					// 历史积分调整处理
-					binbedrpoi03BL.ruleExec(campBaseDTO);
 				}
 			}
 			Transaction pointTransaction = Cat.newTransaction("LevelPointHandler", "sendPointMQ");
@@ -809,6 +811,10 @@ public class LevelPointHandler implements RuleHandler_IF, BaseHandler_IF{
 			}
 		}
 		if (null != campRuleExecPT1) {
+			// 不算积分
+			if ("1".equals(campBaseDTO.getPointFlag())) {
+				return;
+			}
 			String initialTime = (String) campBaseDTO.getExtArgs().get("INITIALTIME");
 			// 重算的时候
 			if (campBaseDTO.getReCalcFlg() == DroolsConstants.RECALCFLG_1

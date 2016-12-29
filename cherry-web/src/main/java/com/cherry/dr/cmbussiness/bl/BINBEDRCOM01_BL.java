@@ -1149,6 +1149,7 @@ public class BINBEDRCOM01_BL implements BINBEDRCOM01_IF{
 				double amount = Double.parseDouble(totalAmount.toString());
 				campBaseDTO.setAmount(amount);
 			}
+			campBaseDTO.setPointFlag((String) saleRecordInfo.get("pointFlag"));
 		}
 		// 单据号
 		campBaseDTO.setBillId((String) map.get("tradeNoIF"));

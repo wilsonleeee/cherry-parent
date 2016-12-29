@@ -1915,6 +1915,8 @@ public class BINBEDRHAN01_BL implements CherryMessageHandler_IF {
 					// 根据生日修改履历重新设置生日
 					resetBirth(campBaseDTO, reCalcInfo);
 				}
+				// 是否计算积分
+				campBaseDTO.setPointFlag((String) map.get("pointFlag"));
 				// 会员卡号
 				campBaseDTO.setMemCode((String)map.get("memberCode"));
 				// 单次购买消费金额
@@ -1954,6 +1956,8 @@ public class BINBEDRHAN01_BL implements CherryMessageHandler_IF {
 						campBaseDTO.getExtArgs().put("PREBILL", prebill);
 					}
 				}
+				// 是否计算积分
+				campBaseDTO.setPointFlag((String) map.get("pointFlag"));
 				// 会员卡号
 				campBaseDTO.setMemCode((String)map.get("memberCode"));
 				// 单次购买消费金额

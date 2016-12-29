@@ -27,7 +27,6 @@ import com.dianping.cat.Cat;
 import com.dianping.cat.message.Transaction;
 import javax.annotation.Resource;
 
-import com.sun.org.apache.xpath.internal.operations.Bool;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
