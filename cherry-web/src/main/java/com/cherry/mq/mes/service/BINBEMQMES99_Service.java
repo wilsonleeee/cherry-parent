@@ -861,4 +861,16 @@ public class BINBEMQMES99_Service extends BaseService{
 		map.put(CherryConstants.IBATIS_SQL_ID, "BINBEMQMES99.relieveFrozen");
 		return baseServiceImpl.update(map);
 	}
+
+	/**
+	 * 获取电商接口信息
+	 * @param map
+	 * @return
+     */
+	public Map<String, Object> getESInterfaceInfoByTradeCode(Map<String, Object> map) {
+		Map<String, Object> paramMap = new HashMap<String, Object>();
+		paramMap.putAll(map);
+		paramMap.put(CherryConstants.IBATIS_SQL_ID, "BINBEMQMES99.getESInterfaceInfoByTradeCode");
+		return (Map<String, Object>)baseServiceImpl.get(paramMap);
+	}
 }

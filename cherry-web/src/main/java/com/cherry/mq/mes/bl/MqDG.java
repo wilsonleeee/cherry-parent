@@ -782,7 +782,27 @@ public class MqDG implements MqReceiver_IF {
 		wsMap.put("OrderStatus", "DG".equals(subType) ? "0" : "1");
 		// 调用微商城接口
 		logger.info("********************执行推送订单至微商城WS处理,"+ wsMap.get("CounterCode")+wsMap.get("BaCode")+ wsMap.get("OrderSn")+wsMap.get("OrderStatus") +"***************************");
-		Map<String, Object> resultMap = WebserviceClient.accessWeshopWebService(wsMap);
+
+		// webService接口URL
+		Map<String, Object> paramMap = new HashMap<String, Object>();
+		paramMap.put("brandInfoID",map.get("brandInfoID"));
+		paramMap.put("organizationInfoID",map.get("organizationInfoID"));
+		paramMap.put("ESCode","Weshop");
+		paramMap.put("TradeCode","UpdateOrderStatus");
+		Map<String, Object> esInterfaceInfo = binBEMQMES99_Service.getESInterfaceInfoByTradeCode(paramMap);
+		String url = null;
+		String aesKey = null;
+		if(null == esInterfaceInfo || esInterfaceInfo.isEmpty()) {
+			MessageUtil.addMessageWarning(map,"推送订单至微商城WS处理【UpdateOrderStatus】未在ESInterfaceInfo表中配置接口信息");
+		} else {
+			url = ConvertUtil.getString(esInterfaceInfo.get("URL"));
+			Map<String, Object> aesMap = ConvertUtil.json2Map(ConvertUtil.getString(esInterfaceInfo.get("ExtJson")));
+			if(null != aesMap && !aesMap.isEmpty()) {
+				aesKey = ConvertUtil.getString(aesMap.get("WeshopAESKEY"));
+			}
+		}
+		// 调用webService接口
+		Map<String, Object> resultMap = WebserviceClient.accessWeshopWebService(wsMap,url,aesKey);
 		String errCode = ConvertUtil.getString(resultMap.get("ERRORCODE"));
 		String errMsg = ConvertUtil.getString(resultMap.get("ERRORMSG"));
 		if (!"0".equals(errCode)) {

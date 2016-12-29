@@ -254,6 +254,64 @@ public class WebserviceClient {
 			return retMap;
 		}
 	}
+
+	/**
+	 * 微商城订单提货后更新微商城状态webService接口
+	 * @param param
+	 * @return
+	 * @throws Exception
+	 */
+	public static Map<String, Object> accessWeshopWebService(Map<String, Object> param, String url, String aesKey) throws Exception{
+		try {
+			String AESKEY = PropertiesUtil.pps.getProperty("WeshopAESKEY");
+			if(!CherryChecker.isNullOrEmpty(aesKey)) {
+				AESKEY = aesKey;
+			}
+
+			String webResourceUrl = PropertiesUtil.pps.getProperty("WeshopWebServiceUrl");
+			if(!CherryChecker.isNullOrEmpty(url)) {
+				webResourceUrl = url;
+			}
+
+			WebResource webResource = getWebResource(webResourceUrl);
+			//对传递的参数进行加密
+			MultivaluedMap<String, String> queryParams = new MultivaluedMapImpl();
+			queryParams.add("paramData", CherryAESCoder.encrypt(CherryUtil.map2Json(param),AESKEY));
+			//TODO:临时措施，内部访问webservice时不使用动态密钥的形式。
+			queryParams.add("a", "index");
+			String result = webResource.queryParams(queryParams).get(String.class);
+			Map<String, Object> retMap = CherryUtil.json2Map(result);
+			if(retMap.get("ERRORCODE").toString().equals("0")){
+				//执行成功
+				if(retMap.containsKey("ResultContent")){
+					// 返回结果为多条数据的
+					String encryptResult = CherryAESCoder.decrypt(retMap.get("ResultContent").toString(),AESKEY);
+					retMap.put("ResultContent", CherryUtil.json2ArryList(encryptResult));
+				}else if(retMap.containsKey("ResultString")){
+					// 返回结果为字符串的
+					String encryptResult = CherryAESCoder.decrypt(retMap.get("ResultString").toString(),AESKEY);
+					retMap.put("ResultString", encryptResult);
+				}else if(retMap.containsKey("ResultMap")){
+					// 返回结果为Map的
+					String encryptResult = CherryAESCoder.decrypt(retMap.get("ResultMap").toString(),AESKEY);
+					retMap.put("ResultMap", CherryUtil.json2Map(encryptResult));
+				}
+			}
+			return retMap;
+		} catch (Exception e) {
+			logger.error("Webservice ERROR",e);
+			Map<String, Object> retMap = new HashMap<String, Object>();
+			retMap.put("ERRORCODE", "WSE9999");
+			retMap.put("ERRORMSG", "处理过程中发生未知异常");
+			return retMap;
+		} catch (Throwable t) {
+			logger.error("Webservice ERROR",t);
+			Map<String, Object> retMap = new HashMap<String, Object>();
+			retMap.put("ERRORCODE", "WSE9999");
+			retMap.put("ERRORMSG", "处理过程中发生未知异常");
+			return retMap;
+		}
+	}
     
     /**
      * 访问WebService(访问微信接口的WebService)
