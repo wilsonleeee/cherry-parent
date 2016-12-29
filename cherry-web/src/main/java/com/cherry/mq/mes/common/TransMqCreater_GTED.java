@@ -37,7 +37,8 @@ public class TransMqCreater_GTED implements TransMqCreater_IF {
 
             String pointFlag = ConvertUtil.getString(tempMap.get("pointFlag"));
             // 总金额字段
-            double totalamount = Double.valueOf(ConvertUtil.getString(tempMap.get("pay_amount")));
+            String pay_amount=ConvertUtil.getString(tempMap.get("pay_amount"));
+            double totalamount = Double.valueOf("".equals(pay_amount)?"0.00":pay_amount);
             if (!"1".equals(pointFlag.trim()) && totalamount != 0) {
                 //源消息体组装
                 Map<String, Object> gtedMap = new HashMap<String, Object>();
