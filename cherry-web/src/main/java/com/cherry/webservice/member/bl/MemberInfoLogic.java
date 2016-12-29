@@ -217,7 +217,17 @@ public class MemberInfoLogic implements MemberInfo_IF {
 			retMap.put("ERRORMSG", "未查询到符合条件的会员。");
 			return retMap;
 		} else if (memList.size() == 1) {
-			Map tmp = (Map) memList.get(0);	
+			Map tmp = (Map) memList.get(0);
+
+			// 增加“是否包含假登录会员”标识，若不包含假登录会员，则判断当前会员是否为假登录会员
+			String isNotIncMemReg = ConvertUtil.getString(paramMap.get("IsNotIncMemReg")); // ""表示包含假登录会员；1-不包含假登录会员
+			int memInfoRegFlg = ConvertUtil.getInt(tmp.get("memInfoRegFlg")); // "是否为假登录"标识. 0:会员信息登记齐  1：会员情报缺失会员（假登记会员）
+			if("1".equals(isNotIncMemReg) && (memInfoRegFlg == 1) ) {
+				retMap.put("ERRORCODE", "WSE0009");
+				retMap.put("ERRORMSG", "未查询到符合条件的会员。");
+				return retMap;
+			}
+
 			Map ret = new HashMap<String,Object>();
 			ret.put("MemberID", tmp.get("BIN_MemberInfoID"));
 			ret.put("MemberPassword", tmp.get("MemberPassword"));
