@@ -4529,17 +4529,17 @@ public class BINBEMQMES02_BL implements AnalyzeMessage_IF{
                 map.put("pointFlag","1");//不需要算积分
             }
 
-            //关联退货的时候以关联的销售单为准，销售单算积分退货也算积分，销售单不算积分退货也不算积分
-            if(!CherryChecker.isNullOrEmpty(map.get("saleSRtype"))){
-                if((ConvertUtil.getString(map.get("saleSRtype"))).equals("2")){//表示关联退货
-                    if(!CherryChecker.isNullOrEmpty(map.get("relevantNo"))){
-                        HashMap saleRecordMap =  binBEMQMES99_Service.getSaleRecordByBillCode(map);//得到退货关联的销售单信息
-                        if(null!=saleRecordMap){
-                            map.put("pointFlag",ConvertUtil.getString(saleRecordMap.get("PointFlag")));
-                        }
+        }
+        //关联退货的时候以关联的销售单为准，销售单算积分退货也算积分，销售单不算积分退货也不算积分
+        if(!CherryChecker.isNullOrEmpty(map.get("saleSRtype"))){
+            if((ConvertUtil.getString(map.get("saleSRtype"))).equals("2")){//表示关联退货
+                if(!CherryChecker.isNullOrEmpty(map.get("relevantNo"))){
+                    HashMap saleRecordMap =  binBEMQMES99_Service.getSaleRecordByBillCode(map);//得到退货关联的销售单信息
+                    if(null!=saleRecordMap){
+                        map.put("pointFlag",ConvertUtil.getString(saleRecordMap.get("PointFlag")));
                     }
-
                 }
+
             }
         }
 
