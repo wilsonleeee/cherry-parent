@@ -233,8 +233,12 @@ public class BINOLPTJCS01_Action extends BaseAction implements
 		Map<String, Object> map = new HashMap<String, Object>();
 		// 分类ID
 		map.put(ProductConstants.PROPID, form.getPropId());
+		//显示停用或者启用分类选项值的区分
+		map.put(ProductConstants.SHOWDISABLED, form.getShowDisabled());
 		// 取得分类信息
 		category = binolptjcs01IF.getCategoryInfo(map);
+		category.put(ProductConstants.SHOWDISABLED,form.getShowDisabled());//用于页面控制
+
 		// 取得分类选项值List
 		categoryValList = binolptjcs01IF.getCateValList(map);
 		return SUCCESS;
@@ -265,6 +269,8 @@ public class BINOLPTJCS01_Action extends BaseAction implements
 		map.put(ProductConstants.PROPID, form.getPropId());
 		// 分类选项值信息
 		map.put(ProductConstants.JSON, form.getJson());
+		//显示停用或者启用分类选项值的区分
+		map.put(ProductConstants.SHOWDISABLED, form.getShowDisabled());
 		// 产品分类选项值表单验证
 		if (!validateSaveVal(map)) {
 			return CherryConstants.GLOBAL_ACCTION_RESULT;
@@ -280,6 +286,39 @@ public class BINOLPTJCS01_Action extends BaseAction implements
 		categoryValList = binolptjcs01IF.getCateValList(map);
 		return SUCCESS;
 	}
+
+
+	/**
+	 * 停用或者启用分类选项值
+	 *
+	 * @return
+	 */
+	public String changeFlagVal() throws Exception {
+		Map<String, Object> map = getParamsMap();
+		// 分类ID
+		map.put(ProductConstants.PROPID, form.getPropId());
+		// 分类选项值信息
+		map.put(ProductConstants.JSON, form.getJson());
+		//显示停用或者启用分类选项值的区分
+		map.put(ProductConstants.SHOWDISABLED, form.getShowDisabled());
+		//停用启用操作区分
+		map.put(ProductConstants.VALIDFLAG, form.getValidFlag());
+		// 产品分类选项值表单验证
+		if (!validateChangeFlagVal(map)) {
+			return CherryConstants.GLOBAL_ACCTION_RESULT;
+		}
+		try {
+			// 停用或者启用分类选项值
+			binolptjcs01IF.tran_changeFlagVal(map);
+		} catch (Exception e) {
+			this.addActionError(getText("ECM00089"));
+			return CherryConstants.GLOBAL_ACCTION_RESULT;
+		}
+		// 取得分类选项值List
+		categoryValList = binolptjcs01IF.getCateValList(map);
+		return SUCCESS;
+	}
+
 
 	/**
 	 * 编辑分类选项值
@@ -518,6 +557,47 @@ public class BINOLPTJCS01_Action extends BaseAction implements
 					validResult = false;
 				}
 			}
+		}
+		return validResult;
+	}
+
+
+	/**
+	 * 分类选项值停用验证
+	 *
+	 * @param map
+	 * @return
+	 * @throws Exception
+	 */
+	@SuppressWarnings("unchecked")
+	private boolean validateChangeFlagVal(Map<String, Object> map) throws Exception {
+		Map<String, Object> paramsMap = new HashMap<String, Object>();
+		// 品牌ID
+		paramsMap.put(CherryConstants.BRANDINFOID, map.get(CherryConstants.BRANDINFOID));
+		// 分类ID
+		paramsMap.put(ProductConstants.PROPID, map.get(ProductConstants.PROPID));
+		// 验证结果
+		boolean validResult = true;
+		// 产品分类验证
+		String json = ConvertUtil.getString(map.get(ProductConstants.JSON));
+		if (!CherryChecker.isNullOrEmpty(json)) {
+			// 产品分类属性值Map
+			Map<String, String> propVal = (Map<String, String>) JSONUtil.deserialize(json);
+			// 分类选项值原ID
+			int oldPropValId = CherryUtil.obj2int(propVal.get(ProductConstants.PROPVALID));
+			map.put(ProductConstants.PROPVALID,oldPropValId);
+
+			if (!CherryChecker.isNullOrEmpty(oldPropValId)) {
+				if(ConvertUtil.getString(map.get(ProductConstants.VALIDFLAG)).equals("0")) {//停用分类的时候才会去判断
+					int num = binolptjcs01IF.getProductEnableNum(map);
+					if (num > 0) {
+						// 必须验证
+						this.addFieldError("productError", "该分类下存在未停用的产品");
+						validResult = false;
+					}
+				}
+			}
+
 		}
 		return validResult;
 	}

@@ -13,6 +13,8 @@
 package com.cherry.pt.jcs.form;
 
 
+import com.cherry.cm.form.DataTable_BaseForm;
+
 /**
  * 
  * 产品分类维护Form
@@ -22,7 +24,7 @@ package com.cherry.pt.jcs.form;
  * @author lipc
  * @version 1.0 2011.04.11
  */
-public class BINOLPTJCS01_Form {
+public class BINOLPTJCS01_Form extends DataTable_BaseForm {
 	/** 所属品牌ID */
     private String brandInfoId;
     
@@ -40,6 +42,12 @@ public class BINOLPTJCS01_Form {
     
     /** 顺序移动 */
     private String[] moveSeq;
+
+	/**显示停用或者启用分类选项值的区分 1表示停用 0或者空表示启用  */
+	private String showDisabled;
+
+	/** 有效标识 0表示无效 1表示有效 */
+	private String validFlag;
     
 	public String getBrandInfoId() {
 		return brandInfoId;
@@ -87,5 +95,21 @@ public class BINOLPTJCS01_Form {
 
 	public void setOptFlag(int optFlag) {
 		this.optFlag = optFlag;
+	}
+
+	public String getValidFlag() {
+		return validFlag;
+	}
+
+	public void setValidFlag(String validFlag) {
+		this.validFlag = validFlag;
+	}
+
+	public String getShowDisabled() {
+		return showDisabled;
+	}
+
+	public void setShowDisabled(String showDisabled) {
+		this.showDisabled = showDisabled;
 	}
 }

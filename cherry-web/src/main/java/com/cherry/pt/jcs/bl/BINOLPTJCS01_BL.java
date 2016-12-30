@@ -173,6 +173,26 @@ public class BINOLPTJCS01_BL implements BINOLPTJCS01_IF {
 	}
 
 	/**
+	 * 停用或者启用分类选项值
+	 *
+	 * @param map
+	 *
+	 * @return
+	 */
+	@Override
+	public void tran_changeFlagVal(Map<String, Object> map) throws Exception {
+		//设置共通参数
+		addUpdMap(map);
+		// 取得产品分类选项值info
+		String json = ConvertUtil.getString(map.get(ProductConstants.JSON));
+		// 产品分类选项值List
+		Map<String, Object> propValMap = (Map<String, Object>) JSONUtil.deserialize(json);
+		int propValId = CherryUtil.obj2int(propValMap.get(ProductConstants.PROPVALID));
+		map.put("propValId",propValId);
+		binOLPTJCS01_Service.changeFlagVal(map);
+	}
+
+	/**
 	 * 取得品牌下不重复的分类属性值
 	 * 
 	 * @param map
@@ -311,5 +331,16 @@ public class BINOLPTJCS01_BL implements BINOLPTJCS01_IF {
 	@Override
 	public List<Map<String, Object>> getCateValList(Map<String, Object> map) {
 		return binOLPTJCS01_Service.getCateValList(map);
+	}
+
+
+	/**
+	 * 查询某一分类选项值下的有效的产品数量
+	 *
+	 * @param map
+	 */
+	@Override
+	public  int getProductEnableNum(Map<String, Object> map){
+		return binOLPTJCS01_Service.getProductEnableNum(map);
 	}
 }

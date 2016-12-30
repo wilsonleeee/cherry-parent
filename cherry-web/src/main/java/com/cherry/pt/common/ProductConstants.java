@@ -95,6 +95,13 @@ public class ProductConstants {
 	public static final String PRICEENDDATE = "priceEndDate";
 	// 分类ID
 	public static final String PROPID = "propId";
+
+	// 显示停用或者启用分类选项值的区分
+	public static final String SHOWDISABLED = "showDisabled";
+
+	// 有效区分
+	public static final String VALIDFLAG = "validFlag";
+
 	// 分类1ID
 	public static final String PROPID_1 = "propId1";
 	// 分类2ID

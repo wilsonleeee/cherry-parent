@@ -115,4 +115,23 @@ public interface BINOLPTJCS01_IF extends ICherryInterface{
 	 * @return
 	 */
 	public void tran_saveVal(Map<String, Object> map)throws Exception;
+
+
+	/**
+	 * 停用或者启用分类选项值
+	 *
+	 * @param map
+	 *
+	 * @return
+	 */
+	public void tran_changeFlagVal(Map<String, Object> map)throws Exception;
+
+
+
+	/**
+	 * 查询某一分类选项值下的有效的产品数量
+	 *
+	 * @param map
+	 */
+	public  int getProductEnableNum(Map<String, Object> map)throws Exception;
 }

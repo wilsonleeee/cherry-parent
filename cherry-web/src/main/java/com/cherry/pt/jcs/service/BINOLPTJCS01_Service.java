@@ -184,6 +184,27 @@ public class BINOLPTJCS01_Service extends BaseService {
 		map.put(CherryConstants.IBATIS_SQL_ID, "BINOLPTJCS01.updPropVal");
 		baseServiceImpl.update(map);
 	}
+
+	/**
+	 * 查询某一分类选项值下的有效的产品数量
+	 *
+	 * @param map
+	 */
+	public  int getProductEnableNum(Map<String, Object> map) {
+		map.put(CherryConstants.IBATIS_SQL_ID, "BINOLPTJCS01.getProductEnableNum");
+		return CherryUtil.obj2int(baseServiceImpl.get(map));
+	}
+
+
+	/**
+	 * 停用或者启用分类选项值
+	 *
+	 * @param map
+	 */
+	public void changeFlagVal(Map<String, Object> map) {
+		map.put(CherryConstants.IBATIS_SQL_ID, "BINOLPTJCS01.changeFlagVal");
+		baseServiceImpl.update(map);
+	}
 	
 	/**
 	 * 更新分类绑定

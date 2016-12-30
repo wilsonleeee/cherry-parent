@@ -142,7 +142,6 @@
 	</update>
 	<!-- 取得分类选项值List -->
 	<select id="getCateValList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
-		<![CDATA[
 			SELECT
 				BIN_PrtCatPropValueID AS propValId,
 				PropValueCherry AS propValueCherry,
@@ -152,10 +151,14 @@
 				Basis.BIN_PrtCatPropValue
 			WHERE
 				BIN_PrtCatPropertyID = #propId#
-				AND ValidFlag ='1'
+				<isEmpty property="showDisabled">
+					AND ValidFlag ='1'
+				</isEmpty>
+				<isNotEmpty property="showDisabled">
+					AND ValidFlag = #showDisabled#
+				</isNotEmpty>
 			ORDER BY
 				PropValueCherry
-		]]>
     </select>
 	<!-- 根据属性值,品牌查询分类属性值ID -->
 	<select id="getCateValId" parameterClass="java.util.HashMap" resultClass="java.lang.String">
@@ -308,5 +311,31 @@
 		WHERE
 			EXISTS ( select 1 from Basis.BIN_PrtCategory where BIN_PrtCatPropValueID = #propValId# and BIN_ProductID = A.BIN_ProductID)		
 		AND A.BIN_BrandInfoID = #brandInfoId#						
+	</update>
+
+
+	<!-- 查询某一分类选项值下的有效的产品数量 -->
+	<select id="getProductEnableNum" parameterClass="java.util.HashMap" resultClass="java.lang.String">
+			select
+				count(1)
+			from
+				Basis.BIN_PrtCategory A
+			WHERE EXISTS (
+				select 1 from Basis.BIN_Product B
+				where B.BIN_ProductID  = A.BIN_ProductID
+				AND B.ValidFlag = 1
+			)
+			AND A.BIN_PrtCatPropValueID = #propValId#
+	</select>
+
+	<!-- 停用或者启用分类选项值  -->
+	<update id="changeFlagVal" parameterClass="java.util.HashMap">
+		UPDATE
+			BIN_PrtCatPropValue
+		SET
+			ValidFlag = #validFlag#,
+		<include refid="BINOLCMINC99.updateSql" />
+		WHERE
+			BIN_PrtCatPropValueID = #propValId#
 	</update>
 </sqlMap>
