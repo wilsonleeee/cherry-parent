@@ -183,12 +183,6 @@ public class BINOLPTJCS01_BL implements BINOLPTJCS01_IF {
 	public void tran_changeFlagVal(Map<String, Object> map) throws Exception {
 		//设置共通参数
 		addUpdMap(map);
-		// 取得产品分类选项值info
-		String json = ConvertUtil.getString(map.get(ProductConstants.JSON));
-		// 产品分类选项值List
-		Map<String, Object> propValMap = (Map<String, Object>) JSONUtil.deserialize(json);
-		int propValId = CherryUtil.obj2int(propValMap.get(ProductConstants.PROPVALID));
-		map.put("propValId",propValId);
 		binOLPTJCS01_Service.changeFlagVal(map);
 	}
 

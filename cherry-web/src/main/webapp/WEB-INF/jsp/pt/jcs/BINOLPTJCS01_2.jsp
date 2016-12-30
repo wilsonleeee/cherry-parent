@@ -3,7 +3,7 @@
 <%@ taglib prefix="s" uri="/struts-tags" %> 
 <%@ taglib prefix="cherry" uri="/cherry-tags"%>
 <jsp:include page="/WEB-INF/jsp/common/popHead.ieCssRepair.jsp" flush="true"></jsp:include>
-<script type="text/javascript" src="/Cherry/js/pt/jcs/BINOLPTJCS01.js"></script>
+<script type="text/javascript" src="/Cherry/js/pt/jcs/BINOLPTJCS01.js?version=2011612301446"></script>
 <script>
 window.onbeforeunload = function(){
 	if (window.opener) {
@@ -27,9 +27,11 @@ $(function(){
 </s:else>
 <%-- 产品分类属性保存URL --%>
 <s:url id="save_Url" action="BINOLPTJCS01_saveVal"><s:param name="brandInfoId"><s:property value="brandInfoId"/></s:param></s:url>
+<%--显示停用和非停用URL--%>
+<s:url id="showDisabled_Url" action="BINOLPTJCS01_set"><s:param name="brandInfoId"><s:property value="brandInfoId"/></s:param></s:url>
 <%-- 产品分类ID --%>
 <%-- ========================= 产品分类属性值一览 ============================= --%>
-<input type="hidden" name="propId" id ="propId" value='<s:property value="category.propId"/>'/>
+
 <s:i18n name="i18n.pt.BINOLPTJCS01">
 <div class="main clearfix" style="min-width: 680px;">
 	<div class="panel ui-corner-all">
@@ -51,6 +53,15 @@ $(function(){
 		        		<span class="ui-icon icon-ttl-section-search-result"></span>
 		        		<s:property value="propName"/><s:text name="JCS01.cateVals_list"/>
 		        	</strong>
+					<!--仅显示停用类别-->
+					<s:if test='(category.showDisabled != null && "0"== category.showDisabled)'>
+						<input id="checkbox" class="checkbox" style="margin-left: 58%;" type="checkbox" checked="checked" onclick="BINOLPTJCS01.showDisabledOrNot(this)">
+					</s:if>
+					<s:else>
+						<input id="checkbox" class="checkbox" style="margin-left: 58%;" type="checkbox" onclick="BINOLPTJCS01.showDisabledOrNot(this)">
+					</s:else>
+
+					<span><s:text name="JCS01.showDisabledOnly"/></span>
 		        	<%-- 分类属性值添加 --%>
 		        	<cherry:show domId="BINOLPTJCS0104">
 			       	<a href="#" class="add right" id="add" onclick="BINOLPTJCS01.addLine('#dataTable','#newLine');">
@@ -60,7 +71,7 @@ $(function(){
 				 	</cherry:show>
 		        </div>
 	        	<div class="section-content">
-		        	<cherry:form id="mainForm" csrftoken="false">
+		        	<cherry:form id="mainForm" csrftoken="false" action="">
 		        		<table cellpadding="0" cellspacing="0" border="0" class="jquery_table" width="100%;">
 				            <thead>
 				              <tr>              
@@ -80,6 +91,8 @@ $(function(){
 					            <jsp:include page="/WEB-INF/jsp/pt/jcs/BINOLPTJCS01_3.jsp" flush="true"/>
 				            </tbody>
 	          			</table>
+						<s:hidden name="showDisabled" id="showDisabled"></s:hidden>
+						<input type="hidden" name="propId" id ="propId" value='<s:property value="category.propId"/>'/>
 		        	</cherry:form>
 	        	</div>
 	        </div>
@@ -106,4 +119,10 @@ $(function(){
 	</table>
 </div>
 <div id="actionResultDisplay"></div>
+	<div style="display: none;">
+<div id="dialogConfirm"><s:text name="global.page.ok" /></div>
+<div class="hide" id="dialogInit"></div>
+<div id="disableTitle"><s:text name="JCS01.disableCategoryTitle" /></div>
+<div id="disableMessage"><p class="message"><span><s:text name="JCS01.disableCategoryMessage" /></span></p></div>
+	</div>
 </s:i18n>    

@@ -303,6 +303,9 @@ public class BINOLPTJCS01_Action extends BaseAction implements
 		map.put(ProductConstants.SHOWDISABLED, form.getShowDisabled());
 		//停用启用操作区分
 		map.put(ProductConstants.VALIDFLAG, form.getValidFlag());
+		//分类选项值ID
+		map.put(ProductConstants.PROPVALID,form.getPropValId());
+
 		// 产品分类选项值表单验证
 		if (!validateChangeFlagVal(map)) {
 			return CherryConstants.GLOBAL_ACCTION_RESULT;
@@ -578,15 +581,8 @@ public class BINOLPTJCS01_Action extends BaseAction implements
 		paramsMap.put(ProductConstants.PROPID, map.get(ProductConstants.PROPID));
 		// 验证结果
 		boolean validResult = true;
-		// 产品分类验证
-		String json = ConvertUtil.getString(map.get(ProductConstants.JSON));
-		if (!CherryChecker.isNullOrEmpty(json)) {
-			// 产品分类属性值Map
-			Map<String, String> propVal = (Map<String, String>) JSONUtil.deserialize(json);
 			// 分类选项值原ID
-			int oldPropValId = CherryUtil.obj2int(propVal.get(ProductConstants.PROPVALID));
-			map.put(ProductConstants.PROPVALID,oldPropValId);
-
+			int oldPropValId = CherryUtil.obj2int(map.get(ProductConstants.PROPVALID));
 			if (!CherryChecker.isNullOrEmpty(oldPropValId)) {
 				if(ConvertUtil.getString(map.get(ProductConstants.VALIDFLAG)).equals("0")) {//停用分类的时候才会去判断
 					int num = binolptjcs01IF.getProductEnableNum(map);
@@ -597,8 +593,6 @@ public class BINOLPTJCS01_Action extends BaseAction implements
 					}
 				}
 			}
-
-		}
 		return validResult;
 	}
 }

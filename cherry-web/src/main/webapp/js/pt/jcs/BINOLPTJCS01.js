@@ -88,6 +88,60 @@ BINOLPTJCS01.prototype = {
 		var num = "<td>" + lineId + "</td>";
 		ajaxRequest(url,param,function(msg){$line.html(num + msg);});
 	},
+
+	//仅显示停用类别或者显示非停用类别
+	"showDisabledOrNot":function(obj){
+		var $obj = $(obj);
+		var showDisabled = 1;
+		if($obj.attr("checked")){
+			//这里需要传递showDisabled的属性,
+			showDisabled = 0;
+		}
+		$("#showDisabled").val(showDisabled);
+		//这里应该将form提交
+		$("#mainForm").submit();
+	},
+	//停用&启用
+	"changeFlag":function(obj,url,validFlag,propValId){
+		//根据checkbox状态来断定showDisabled和validFlag
+		var $checkbox = $("#checkbox");
+		var showDisabled = 1;
+		if($checkbox.attr("checked")){
+			showDisabled = 0;
+		}
+		var $line = $(obj).parent().parent();
+		var json = this.toJSON($line);
+		var param = "json=" + json;
+		//要传递showDisabled和validFlag
+		param +="&showDisabled=" +showDisabled+ "&validFlag=" +validFlag+"&propValId="+propValId;
+		param += "&" + $("#propId").serialize();
+		var divId = "#dataTable";
+		var title = $('#disableTitle').text();
+		var text = $('#disableMessage').html();
+		cherryAjaxRequest({
+			url: url,
+			param: param,
+			callback: function(msg) {
+				// 返回无错误
+				if(msg.indexOf('id="actionResultDiv"') == -1
+					&& msg.indexOf('id="fieldErrorDiv"') == -1){
+					$(divId).html(msg);
+				}else if(msg.indexOf('id="fieldErrorDiv"') > -1){
+					//在这里弹框显示 该分类下存在未停用的产品
+					var dialogSetting = {
+						dialogInit: "#dialogInit",
+						text: text,
+						width: 	500,
+						height: 300,
+						title: 	title,
+						confirm: $("#dialogConfirm").text(),
+						confirmEvent: function(){removeDialog("#dialogInit");}
+					};
+					openDialog(dialogSetting);
+				}
+			}
+		});
+	},
 	// 配置分类
 	"setting" : function (url){
 		var param = $("#brandInfoId").serialize()+ "&csrftoken=" +$('#csrftoken').val();
