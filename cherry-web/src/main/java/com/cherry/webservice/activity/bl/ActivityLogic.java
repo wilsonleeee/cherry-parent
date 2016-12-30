@@ -110,6 +110,14 @@ public class ActivityLogic implements Activity_IF {
 				}
 			}
 		}
+		// 单据明细
+		List<Map<String, Object>> prtList = (List<Map<String, Object>>) map.get("DetailList");
+		if(null == prtList || prtList.isEmpty()){
+			retMap.put("ERRORCODE", 36);
+			retMap.put("ERRORMSG", "DetailList参数不存在或者为空");
+			logger.error(">>>>>>>>>>>>>>>>>DetailList参数不存在或者为空>>>>>>>>>>>>>>>>>>>>>>");
+			return retMap;
+		}
 		String memCode = ConvertUtil.getString(map.get("MemberCode"));
 		float totalPoint = 0;
 		float expoint = 0;
