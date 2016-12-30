@@ -596,8 +596,8 @@ public class BINOLPTRPS13_Action extends BaseAction implements
 		map.put("originalDataSource", form.getOriginalDataSource());
 		//订单编号
 		map.put("pickupStatus", form.getPickupStatus());
-		
-		
+		//会员ID
+		map.put("memberInofId",form.getMemberInfoId());
 		// 查询参数MAP取得:销售商品及连带销售
 		getProPrm(map);
 		

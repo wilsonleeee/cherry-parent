@@ -191,6 +191,48 @@ BINOLPTRPS13.prototype={
 			var value = $("#campaignCode").val();
 			popDataTableOfCampaignList(url, null, value, callback);
 		},
+	// 会员信息弹出框
+	"popMemberList": function(url) {
+		/*var callback = function(info) {
+			var tableId = 33;
+			var $checkedRadio = $("#"+tableId).find(":input[checked]");
+			alert("$checkedRadio is "+$checkedRadio+"???"+$checkedRadio.val());
+			if($checkedRadio.length > 0) {
+				$("#memberInfoId").val($checkedRadio.val());
+				var html = $checkedRadio.parent().next().text();
+				//用于导出会员名称的查询条件
+				$("#memName").val(html);
+				alert("html is:"+html);
+				html += '<span class="close" style="margin: 0 10px 2px 5px;" onclick="binolptrps13.delMemberHtml(this);"><span class="ui-icon ui-icon-close" style="background-position: -80px -129px;"></span></span>';
+				$("#memberCardDiv").html(html);
+			}
+		}*/
+		var callback = function(info){
+			$("#memberInfoId").val(info.memberInfoId);
+			$("#memCode").val( info.memCode);
+		}
+		var afterOkCallback=function(op){
+			var html =$("#memCode").val();
+			html += '<span class="close" style="margin: 0 10px 2px 5px;" onclick="binolptrps13.delMemberHtml(this);"><span class="ui-icon ui-icon-close" style="background-position: -80px -129px;"></span></span>';
+			$("#memberCardDiv").html(html);
+		}
+		var value = $("#memberInfoId").val();
+		var that = this;
+		// 产品弹出框属性设置
+		var option = {
+			targetId: "databody",//目标区ID
+			checkType : "radio",// 选择框类型
+			mode : 2, // 模式
+			brandInfoId : $("#brandInfoId").val(),// 品牌ID
+			getHtmlFun:callback,// 目标区追加数据行function
+			bindFlag:false,
+			exchangeHtml:afterOkCallback
+		};
+		// 调用会员弹出框共通
+		popAjaxMemDialog(option);
+	},
+
+
 		// 删除选择的活动
 		"delCampaignHtml": function(object) {
 			$("#campaignMode").val("");
@@ -198,6 +240,14 @@ BINOLPTRPS13.prototype={
 			$("#campaignName").val("");
 			$("#campaignDiv").empty();
 		},
+	// 删除选择会员
+	"delMemberHtml": function(object) {
+		$("#memberInfoId").val("");
+		$("#memCode").val("");
+		$("#memName").val("");
+		$("#mobilePhone").val("");
+		$("#memberCardDiv").empty();
+	},
 		// 导出信息
 		"exportCsv" : function() {
 			if($(".dataTables_empty:visible").length==0) {

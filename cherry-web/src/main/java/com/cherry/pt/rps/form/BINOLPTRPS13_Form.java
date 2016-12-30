@@ -131,8 +131,9 @@ public class BINOLPTRPS13_Form extends BINOLCM13_Form {
 	private String originalDataSource;
 	/** 订单状态**/
 	private String pickupStatus;
-	
-	
+	/**会员ID*/
+	private String memberInfoId;
+
 	public String getInvoiceFlag() {
 		return invoiceFlag;
 	}
@@ -387,6 +388,12 @@ public class BINOLPTRPS13_Form extends BINOLCM13_Form {
 	public void setPickupStatus(String pickupStatus) {
 		this.pickupStatus = pickupStatus;
 	}
-	
 
+	public String getMemberInfoId() {
+		return memberInfoId;
+	}
+
+	public void setMemberInfoId(String memberInfoId) {
+		this.memberInfoId = memberInfoId;
+	}
 }

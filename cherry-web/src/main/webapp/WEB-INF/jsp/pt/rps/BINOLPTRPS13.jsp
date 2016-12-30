@@ -4,7 +4,7 @@
 <link rel="stylesheet" href="/Cherry/css/cherry/combobox.css" type="text/css">
 <script type="text/javascript" src="/Cherry/js/common/departBar.js"></script>
 <script type="text/javascript" src="/Cherry/js/common/cherryDate.js"></script>
-<script type="text/javascript" src="/Cherry/js/pt/rps/BINOLPTRPS13.js"></script>
+<script type="text/javascript" src="/Cherry/js/pt/rps/BINOLPTRPS13.js?version=201612301149"></script>
 <script type="text/javascript" src="/Cherry/js/lib/jquery-ui-i18n.js"></script>
 <script type="text/javascript" src="/Cherry/js/common/popDataTable.js"></script>
 <script type="text/javascript">
@@ -198,7 +198,17 @@
 		              <%-- 会员卡号 --%>
 		              <th><s:text name="RPS13_memCode" /></th>
 		              <td>
-		                <span><s:textfield name="memCode" cssClass="text"/></span>
+		                <%--<span><s:textfield name="memCode" cssClass="text"/></span>--%>
+							<s:hidden name="memberInfoId"></s:hidden>
+							<s:hidden name="memCode"></s:hidden>
+							<s:hidden name="memName"></s:hidden>
+							<s:hidden name="mobilePhone"></s:hidden>
+							<span id="memberCardDiv" style="line-height: 18px;"></span>
+							<s:url action="BINOLCM02_initMemberDialog" namespace="/common" id="searchMemberDialogUrl"></s:url>
+							<a class="add" onclick="binolptrps13.popMemberList('${searchMemberDialogUrl}');return false;">
+								<span class="ui-icon icon-search"></span>
+								<span class="button-text"><s:text name="global.page.Popselect" /></span>
+							</a>
 		              </td>
 		              <%-- 单据类型 --%>
 		              <th><s:text name="RPS13_ticketType" /></th>
