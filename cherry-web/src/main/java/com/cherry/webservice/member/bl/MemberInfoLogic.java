@@ -32,27 +32,27 @@ import java.util.*;
 public class MemberInfoLogic implements MemberInfo_IF {
 
 	private static Logger logger = LoggerFactory.getLogger(MemberInfoLogic.class.getName());
-	
+
 	@Resource(name = "binOLMQCOM01_BL")
 	private BINOLMQCOM01_IF binOLMQCOM01_BL;
-	
+
 	/**
 	 * 获取对应员工的信息
 	 */
 	@Resource(name="binOLBSEMP02_BL")
 	private BINOLBSEMP02_BL binolbsemp02BL;
-	
+
 	/** 取得各种业务类型的单据流水号 */
 	@Resource(name = "binOLCM03_BL")
 	private BINOLCM03_BL binOLCM03_BL;
-	
+
 	@Resource(name = "memberInfoService")
 	private MemberInfoService memberInfoService;
-	
+
 	/** 会员添加画面BL **/
 	@Resource
 	private BINOLMBMBM11_BL binOLMBMBM11_BL;
-	
+
 	/** 会员资料修改画面BL **/
 	@Resource
 	private BINOLMBMBM06_BL binOLMBMBM06_BL;
@@ -63,7 +63,7 @@ public class MemberInfoLogic implements MemberInfo_IF {
 	/** 会员属性调整BL */
 	@Resource
 	private BINOLMBMBM03_BL binOLMBMBM03_BL;
-	
+
 	/** 标准区域共通BL */
 	@Resource
 	private BINOLCM08_BL binOLCM08_BL;
@@ -71,7 +71,7 @@ public class MemberInfoLogic implements MemberInfo_IF {
 	/** 会员详细画面BL */
 	@Resource
 	private BINOLMBMBM02_BL binOLMBMBM02_BL;
-	
+
 	@SuppressWarnings("unchecked")
 	@Override
 	public Map getMemberInfo(Map paramMap) {
@@ -90,7 +90,7 @@ public class MemberInfoLogic implements MemberInfo_IF {
 			retMap.put("ERRORMSG", "参数ConditionType异常。ConditionType="+conditionType);
 			return retMap;
 		}
-		
+
 		if(CherryChecker.isNullOrEmpty(paramMap.get("Condition"))){
 			retMap.put("ERRORCODE", "WSE9993");
 			retMap.put("ERRORMSG", "参数Condition异常。Condition为空。");
@@ -109,7 +109,7 @@ public class MemberInfoLogic implements MemberInfo_IF {
 			}
 		}
 
-		
+
 		if("MessageID".equals(conditionType)){
 			//若微信ID做为查询条件，先查询绑定关系表中是否有记录，若有则转换为会员ID查询
 			Map<String, Object> params = new HashMap<String, Object>();
@@ -123,7 +123,7 @@ public class MemberInfoLogic implements MemberInfo_IF {
 				paramMap.put("Condition", relation.get(0).get("MemberInfoID"));
 			}
 		}
-		
+
 		List<Map<String, Object>> memList = memberInfoService.getMemberInfo(paramMap);
 		if (memList == null || memList.size() == 0) {
 			retMap.put("ERRORCODE", "WSE0001");
@@ -160,7 +160,7 @@ public class MemberInfoLogic implements MemberInfo_IF {
 		retMap.put("ResultMap", memberInfoService.getMemberPoint(paramMap));
 		return retMap;
 	}
-	
+
 	/*
 	 * (non-Javadoc) 检查微信ID是否已经对应着一个会员，如果未对应或对应多个，则报错
 	 * 
@@ -209,6 +209,9 @@ public class MemberInfoLogic implements MemberInfo_IF {
 			retMap.put("ERRORMSG", "参数MobilePhone是必须的");
 			return retMap;
 		}
+
+		String isNotIncMemReg = ConvertUtil.getString(paramMap.get("IsNotIncMemReg")); // ""表示包含假登录会员；1-不包含假登录会员
+
 		//检索会员信息
 		int memID = 0;
 		List memList = memberInfoService.getMemberInfoOAuth(paramMap);
@@ -220,11 +223,10 @@ public class MemberInfoLogic implements MemberInfo_IF {
 			Map tmp = (Map) memList.get(0);
 
 			// 增加“是否包含假登录会员”标识，若不包含假登录会员，则判断当前会员是否为假登录会员
-			String isNotIncMemReg = ConvertUtil.getString(paramMap.get("IsNotIncMemReg")); // ""表示包含假登录会员；1-不包含假登录会员
-			int memInfoRegFlg = ConvertUtil.getInt(tmp.get("memInfoRegFlg")); // "是否为假登录"标识. 0:会员信息登记齐  1：会员情报缺失会员（假登记会员）
+			int memInfoRegFlg = ConvertUtil.getInt(tmp.get("MemInfoRegFlg")); // "是否为假登录"标识. 0:会员信息登记齐  1：会员情报缺失会员（假登记会员）
 			if("1".equals(isNotIncMemReg) && (memInfoRegFlg == 1) ) {
-				retMap.put("ERRORCODE", "WSE0009");
-				retMap.put("ERRORMSG", "未查询到符合条件的会员。");
+				retMap.put("ERRORCODE", "WSE0117");
+				retMap.put("ERRORMSG", "该会员为假登录会员。");
 				return retMap;
 			}
 
@@ -234,21 +236,48 @@ public class MemberInfoLogic implements MemberInfo_IF {
 			ret.put("CouponCode", tmp.get("CouponCode"));
 			memID = Integer.parseInt(tmp.get("BIN_MemberInfoID").toString());
 			retMap.put("ResultMap", ret);
-			
+
 		} else {
-			retMap.put("ERRORCODE", "WSE0010");
-			retMap.put("ERRORMSG", "查询到多个会员。");
-			return retMap;
+
+			if("1".equals(isNotIncMemReg)) {
+				Map<String,Object> memInfo = null ;
+				int memRegedCount = 0 ;
+				for (Object memInfoObj : memList) { // 获取正式会员的数量
+					Map<String,Object> temp = (Map<String,Object>)memInfoObj;
+					int memInfoRegFlg = ConvertUtil.getInt(temp.get("MemInfoRegFlg"));
+					if(memInfoRegFlg == 0) {
+						memRegedCount ++ ;
+						memInfo = temp ;
+					}
+				}
+				if(memRegedCount == 1) { // 若正式会员数量为1，返回该会员
+					Map ret = new HashMap<String,Object>();
+					ret.put("MemberID", memInfo.get("BIN_MemberInfoID"));
+					ret.put("MemberPassword", memInfo.get("MemberPassword"));
+					ret.put("CouponCode", memInfo.get("CouponCode"));
+					memID = Integer.parseInt(memInfo.get("BIN_MemberInfoID").toString());
+					retMap.put("ResultMap", ret);
+				} else {
+					retMap.put("ERRORCODE", "WSE0010");
+					retMap.put("ERRORMSG", "查询到多个会员。");
+					return retMap;
+				}
+			} else {
+				retMap.put("ERRORCODE", "WSE0010");
+				retMap.put("ERRORMSG", "查询到多个会员。");
+				return retMap;
+			}
+
 		}
-		
-		
+
+
 		MQInfoDTO mqInfoDTO = new MQInfoDTO();
 		// 品牌代码
 		mqInfoDTO.setBrandCode(paramMap.get("BrandCode").toString());
-		
+
 		String billType = CherryConstants.MESSAGE_TYPE_ES;
-		
-		String billCode = binOLCM03_BL.getTicketNumber(Integer.parseInt(ConvertUtil.getString(paramMap.get("BIN_OrganizationInfoID"))), 
+
+		String billCode = binOLCM03_BL.getTicketNumber(Integer.parseInt(ConvertUtil.getString(paramMap.get("BIN_OrganizationInfoID"))),
 				Integer.parseInt(ConvertUtil.getString(paramMap.get("BIN_BrandInfoID"))), "", billType);
 		// 业务类型
 		mqInfoDTO.setBillType(billType);
@@ -256,7 +285,7 @@ public class MemberInfoLogic implements MemberInfo_IF {
 		mqInfoDTO.setBillCode(billCode);
 		// 消息发送队列名
 		mqInfoDTO.setMsgQueueName(CherryConstants.CHERRYEVENTSCHEDULEMSGQUEUE);
-		
+
 		// 设定消息内容
 		Map<String,Object> msgDataMap = new HashMap<String,Object>();
 		// 设定消息版本号
@@ -283,16 +312,16 @@ public class MemberInfoLogic implements MemberInfo_IF {
 		mainData.put("EventDate", memberInfoService.getSYSDate());
 		// 数据来源
 		mainData.put("Sourse", "Mulberry");
-		
+
 		dataLine.put("MainData", mainData);
-		
+
 		msgDataMap.put("DataLine", dataLine);
-		
+
 		mqInfoDTO.setMsgDataMap(msgDataMap);
 		binOLMQCOM01_BL.sendMQMsg(mqInfoDTO, false);
 		return retMap;
 	}
-	
+
 	@Override
 	public Map tran_BindWechat(Map paramMap) throws Exception {
 		// 检查参数
@@ -329,7 +358,7 @@ public class MemberInfoLogic implements MemberInfo_IF {
 		}
 		//验证coupon
 		String messageID = paramMap.get("MessageID").toString();
-		String mobilePhone = paramMap.get("MobilePhone").toString(); 
+		String mobilePhone = paramMap.get("MobilePhone").toString();
 		String couponCode = paramMap.get("CouponCode").toString();
 //		String memberCode = paramMap.get("MemberCode").toString();
 		String memberCode = "";
@@ -348,7 +377,7 @@ public class MemberInfoLogic implements MemberInfo_IF {
 				retMap.put("ERRORMSG", "验证码已过期");
 				return retMap;
 			}
-			
+
 			//验证会员是否已绑定微信（不允许绑定多个微信）
 			tmpMap.clear();
 			tmpMap.put("BIN_OrganizationInfoID", paramMap.get("BIN_OrganizationInfoID"));
@@ -365,26 +394,60 @@ public class MemberInfoLogic implements MemberInfo_IF {
 				return retMap;
 			}
 			List<Map<String,Object>> memList = memberInfoService.getMemberInfo(tmpMap);//根据卡号查询
+			String isNotIncMemReg = ConvertUtil.getString(paramMap.get("IsNotIncMemReg")); // ""表示包含假登录会员；1-不包含假登录会员
+			Map<String,Object> memInfo = null ;
 			if(memList == null || memList.isEmpty()) {
 				retMap.put("ERRORCODE", "WSE0001");
 				retMap.put("ERRORMSG", "未找到指定的会员");
 				return retMap;
 			} else if(memList.size() > 1) {
-				retMap.put("ERRORCODE", "WSE0010");
-				retMap.put("ERRORMSG", "查询到多个会员");
-				return retMap;
+				if("1".equals(isNotIncMemReg)) {
+					int memRegedCount = 0 ;
+					for (Object memInfoObj : memList) { // 获取正式会员的数量
+						Map<String, Object> temp = (Map<String, Object>) memInfoObj;
+						int memInfoRegFlg = ConvertUtil.getInt(temp.get("MemInfoRegFlg"));
+						if (memInfoRegFlg == 0) {
+							memRegedCount ++ ;
+							memInfo = temp;
+						}
+					}
+					if(memRegedCount == 1) { // 若仅仅包含一条真会员记录，则绑定该会员
+						String _messageID = ConvertUtil.getString(memInfo.get("MessageID"));
+						if(!CherryChecker.isNullOrEmpty(_messageID) && !_messageID.equals(messageID)) {
+							retMap.put("ERRORCODE", "WSE0030");
+							retMap.put("ERRORMSG", "该会员已绑定其他微信");
+							return retMap;
+						}
+					} else { // 否则返回错误
+						retMap.put("ERRORCODE", "WSE0010");
+						retMap.put("ERRORMSG", "查询到多个会员");
+						return retMap;
+					}
+				} else { // 老逻辑，查询到多条记录直接返回错误
+					retMap.put("ERRORCODE", "WSE0010");
+					retMap.put("ERRORMSG", "查询到多个会员");
+					return retMap;
+				}
 			} else {
-				String _messageID = ConvertUtil.getString(memList.get(0).get("MessageID"));
+				memInfo = memList.get(0);
+				// 增加“是否包含假登录会员”标识，若不包含假登录会员，则判断当前会员是否为假登录会员
+				int memInfoRegFlg = ConvertUtil.getInt(memInfo.get("MemInfoRegFlg")); // "是否为假登录"标识. 0:会员信息登记齐  1：会员情报缺失会员（假登记会员）
+				if("1".equals(isNotIncMemReg) && (memInfoRegFlg == 1) ) { // 若为新逻辑判断该会员是否为假登录会员，若是返回错误
+					retMap.put("ERRORCODE", "WSE0117");
+					retMap.put("ERRORMSG", "该会员为假登录会员。");
+					return retMap;
+				}
+
+				String _messageID = ConvertUtil.getString(memInfo.get("MessageID"));
 				if(!CherryChecker.isNullOrEmpty(_messageID) && !_messageID.equals(messageID)) {
 					retMap.put("ERRORCODE", "WSE0030");
 					retMap.put("ERRORMSG", "该会员已绑定其他微信");
 					return retMap;
 				}
 			}
-			
-			memberID=String.valueOf(memList.get(0).get("MemberID"));
-			memberCode = String.valueOf(memList.get(0).get("MemberCode"));
-			
+			memberID=String.valueOf(memInfo.get("MemberID"));
+			memberCode = String.valueOf(memInfo.get("MemberCode"));
+
 			//验证码检测通过
 			tmpMap.clear();
 			tmpMap.put("MessageID", messageID);
@@ -395,7 +458,7 @@ public class MemberInfoLogic implements MemberInfo_IF {
 			if (cnt != 1) {
 				throw new Exception();
 			}
-			
+
 			// 添加会员微信绑定履历
 			Map<String, Object> memBindRecordMap = new HashMap<String, Object>();
 			memBindRecordMap.put("organizationInfoId", paramMap.get("BIN_OrganizationInfoID"));
@@ -410,15 +473,15 @@ public class MemberInfoLogic implements MemberInfo_IF {
 			memBindRecordMap.put("updatedBy", "WeChat");
 			memBindRecordMap.put("updatePGM", "MemberInfoLogic");
 			memberInfoService.addMemBindRecord(memBindRecordMap);
-			
+
 			// TODO:会员资料修改履历,会员激活，同步激活状态到第三方
 			MQInfoDTO mqInfoDTO = new MQInfoDTO();
 			// 品牌代码
 			mqInfoDTO.setBrandCode(paramMap.get("BrandCode").toString());
-			
+
 			String billType = CherryConstants.MESSAGE_TYPE_MA;
-			
-			String billCode = binOLCM03_BL.getTicketNumber(Integer.parseInt(ConvertUtil.getString(paramMap.get("BIN_OrganizationInfoID"))), 
+
+			String billCode = binOLCM03_BL.getTicketNumber(Integer.parseInt(ConvertUtil.getString(paramMap.get("BIN_OrganizationInfoID"))),
 					Integer.parseInt(ConvertUtil.getString(paramMap.get("BIN_BrandInfoID"))), "", billType);
 			// 业务类型
 			mqInfoDTO.setBillType(billType);
@@ -430,7 +493,7 @@ public class MemberInfoLogic implements MemberInfo_IF {
 			mqInfoDTO.setOrganizationInfoId(Integer.parseInt(ConvertUtil.getString(paramMap.get("BIN_OrganizationInfoID"))));
 			// 消息发送队列名
 			mqInfoDTO.setMsgQueueName(CherryConstants.CHERRYTOPOSMSGQUEUE);
-			
+
 			// 设定消息内容
 			Map<String,Object> msgDataMap = new HashMap<String,Object>();
 			// 设定消息版本号
@@ -480,21 +543,21 @@ public class MemberInfoLogic implements MemberInfo_IF {
 				binOLMQCOM01_BL.sendMQMsg(mqInfoDTO);
 			} catch (Exception e) {
 				logger.error(e.getMessage(),e);
-			}	
-			
+			}
+
 			//发送会员资料MQ消息
 			try {
 				this.sendMemberMQ(paramMap);
 			} catch(Exception e) {
 				logger.error(e.getMessage(), e);
 			}
-			
+
 			try {
 				this.sendPtMsg(paramMap);
 			} catch (Exception e) {
 				logger.error(e.getMessage(),e);
 			}
-			
+
 			Map<String, Object> infoMap = new HashMap<String, Object>();
 			infoMap.put("MemberID", memberID);
 			infoMap.put("MemberCode", memberCode);
@@ -505,7 +568,7 @@ public class MemberInfoLogic implements MemberInfo_IF {
 		}
 		return retMap;
 	}
-	
+
 	public void sendPtMsg(Map paramMap) throws Exception {
 		String rewardPointsJson = ConvertUtil.getString(paramMap.get("RewardPoints"));
 		if(!CherryChecker.isNullOrEmpty(rewardPointsJson, true)){//若存在奖励积分的参数，则需积分维护
@@ -536,7 +599,7 @@ public class MemberInfoLogic implements MemberInfo_IF {
 				int brandId = Integer.parseInt(ConvertUtil.getString(paramMap.get("BIN_BrandInfoID")));
 				int orgId = Integer.parseInt(ConvertUtil.getString(paramMap.get("BIN_OrganizationInfoID")));
 				String brandCode = ConvertUtil.getString(paramMap.get("BrandCode"));
-				String orgCode = ConvertUtil.getString(paramMap.get("OrganizationCode")); 
+				String orgCode = ConvertUtil.getString(paramMap.get("OrganizationCode"));
 				String billType = CherryConstants.MESSAGE_TYPE_PT;
 				String billCode = binOLCM03_BL.getTicketNumber(orgId, brandId, "", billType);
 				String ticketDateStr = ConvertUtil.getString(paramMap.get("BindTime"));
@@ -615,14 +678,14 @@ public class MemberInfoLogic implements MemberInfo_IF {
 			}
 		}
 	}
-	
+
 	//发送会员资料MQ消息
 	public void sendMemberMQ(Map paramMap) throws Exception {
 		Map<String, Object> map = new HashMap<String, Object>();
 		List<Map<String, Object>> retList = memberInfoService.getMemberInfoOAuth(paramMap);
 		if(null == retList || retList.isEmpty()) {
 			logger.error("会员信息不存在，发送会员资料失败！");
-			return;			
+			return;
 		}
 		//会员信息
 		Map<String, Object> memMap = new HashMap<String, Object>();
@@ -655,7 +718,7 @@ public class MemberInfoLogic implements MemberInfo_IF {
 				String countyName = ConvertUtil.getString(memAddressInfo.get("countyName"));
 				String address = ConvertUtil.getString(memAddressInfo.get("addressLine1"));
 				String postcode = ConvertUtil.getString(memAddressInfo.get("zipCode"));
-				
+
 				//地址信息
 				map.put("provinceId", provinceId);
 				map.put("provinceName", provinceName);
@@ -670,37 +733,37 @@ public class MemberInfoLogic implements MemberInfo_IF {
 			String birthYear = ConvertUtil.getString(memInfo.get("birthYear"));
 			String birthDay = ConvertUtil.getString(memInfo.get("birthDay"));
 			String email = ConvertUtil.getString(memInfo.get("email"));
-			
+
 			String joinDate = ConvertUtil.getString(memInfo.get("joinDate"));
 			String employeeCode = ConvertUtil.getString(memInfo.get("employeeCode"));//发卡BA
 			String organizationCode = ConvertUtil.getString(memInfo.get("counterCode"));//发卡柜台
 			String referrer = ConvertUtil.getString(memInfo.get("referrer"));
-			
+
 			String isReceiveMsg = ConvertUtil.getString(memInfo.get("isReceiveMsg"));
 			String testType = ConvertUtil.getString(memInfo.get("testType"));
 			String version = ConvertUtil.getString(memInfo.get("version"));
 			String memo1 = ConvertUtil.getString(memInfo.get("memo1"));
 			String memberPassword = ConvertUtil.getString(memInfo.get("memberPassword"));
-			
+
 			String active = ConvertUtil.getString(memInfo.get("active"));
 			String activeDate = ConvertUtil.getString(memInfo.get("activeDate"));
 			String activeChannel = ConvertUtil.getString(memInfo.get("activeChannel"));
 			String messageId = ConvertUtil.getString(memInfo.get("messageId"));
 			String wechatBindTime = ConvertUtil.getString(memInfo.get("wechatBindTime"));
 			String memInfoRegFlg = ConvertUtil.getString(memInfo.get("memInfoRegFlg"));
-			
+
 			map.put("brandCode", brandCode);
 			map.put("orgCode", orgCode);
 			map.put("organizationInfoId", organizationInfoId);
 			map.put("brandInfoId", brandInfoId);
 			map.put("subType", subType);
-			
+
 			map.put("memCode", memCode);
 			map.put("memName", memName);
 			map.put("telephone", telephone);
 			map.put("mobilePhone", mobilePhone);
 			map.put("gender", gender);
-			
+
 			map.put("birth", birth);
 			map.put("birthYear", birthYear);
 			map.put("birthDay", birthDay);
@@ -710,25 +773,25 @@ public class MemberInfoLogic implements MemberInfo_IF {
 			map.put("employeeCode", employeeCode);//发卡BA
 			map.put("organizationCode", organizationCode);//发卡柜台
 			map.put("referrer", referrer);//推荐会员卡号
-			
+
 			map.put("isReceiveMsg", isReceiveMsg);
 			map.put("testType", testType);
 			map.put("version", version);
 			map.put("memo1", memo1);
 			map.put("memberPassword", memberPassword);
-			
+
 			map.put("active", active);
 			map.put("activeDate", activeDate);
 			map.put("activeChannel", activeChannel);
-			
+
 			map.put("messageId", messageId);
 			map.put("wechatBindTime", wechatBindTime);
 			map.put("memInfoRegFlg", memInfoRegFlg);
-			
+
 			binOLMBMBM11_BL.sendMemberMQ(map);
 		}
 	}
-	
+
 	@Override
 	public Map tran_BindWechatNoAuth(Map paramMap) throws Exception{
 		// 检查参数
@@ -769,7 +832,7 @@ public class MemberInfoLogic implements MemberInfo_IF {
 				return retMap;
 			}
 		}
-		
+
 		if(count == 3){
 			retMap.put("ERRORCODE", "WSE9993");
 			retMap.put("ERRORMSG", "参数错误，MemberName、MemberCode、MobilePhone至少需要一个！");
@@ -791,7 +854,7 @@ public class MemberInfoLogic implements MemberInfo_IF {
 		tmpMap.put("BIN_MemberInfoID", retList.get(0).get("BIN_MemberInfoID"));
 		tmpMap.put("BindTime", bindTime);
 		memberInfoService.bindWechat(tmpMap);
-		
+
 		// 添加会员微信绑定履历
 		Map<String, Object> memBindRecordMap = new HashMap<String, Object>();
 		memBindRecordMap.put("organizationInfoId", paramMap.get("BIN_OrganizationInfoID"));
@@ -836,7 +899,7 @@ public class MemberInfoLogic implements MemberInfo_IF {
 				memberInfoService.addMemBindRelation(memBindRelationMap);
 			}
 		}
-		
+
 		//发送会员资料MQ消息
 		try {
 			this.sendMemberMQ(paramMap);
@@ -882,7 +945,7 @@ public class MemberInfoLogic implements MemberInfo_IF {
 				int brandId = Integer.parseInt(ConvertUtil.getString(paramMap.get("BIN_BrandInfoID")));
 				int orgId = Integer.parseInt(ConvertUtil.getString(paramMap.get("BIN_OrganizationInfoID")));
 				String brandCode = ConvertUtil.getString(paramMap.get("BrandCode"));
-				String orgCode = ConvertUtil.getString(paramMap.get("OrganizationCode")); 
+				String orgCode = ConvertUtil.getString(paramMap.get("OrganizationCode"));
 				String billType = CherryConstants.MESSAGE_TYPE_PT;
 				String billCode = binOLCM03_BL.getTicketNumber(orgId, brandId, "", billType);
 				String ticketDateStr = bindTime;
@@ -965,12 +1028,12 @@ public class MemberInfoLogic implements MemberInfo_IF {
 		//返回绑定的信息
 		Map<String, Object> infoMap = new HashMap<String, Object>();
 		infoMap.put("MemberID", retList.get(0).get("BIN_MemberInfoID"));
-		infoMap.put("MemberCode", retList.get(0).get("MemCode"));	
-		infoMap.put("Point", point);	
+		infoMap.put("MemberCode", retList.get(0).get("MemCode"));
+		infoMap.put("Point", point);
 		retMap.put("ResultMap", infoMap);
 		return retMap;
 	}
-	
+
 	@Override
 	public Map getPointChange(Map paramMap) {
 		// 检查参数
@@ -980,7 +1043,7 @@ public class MemberInfoLogic implements MemberInfo_IF {
 			retMap.put("ERRORMSG", "参数MemberID是必须的");
 			return retMap;
 		}
-		
+
 		Map<String, Object> searchMap = new HashMap<String, Object>();
 		searchMap.put("memberId", paramMap.get("MemberID"));
 		String startPage = (String)paramMap.get("StartPage");
@@ -997,7 +1060,7 @@ public class MemberInfoLogic implements MemberInfo_IF {
 		searchMap.put("SORT_ID", sort);
 		searchMap.put("START", start);
 		searchMap.put("END", end);
-		
+
 		int count = memberInfoService.getPointChangeCount(searchMap);
 		retMap.put("ResultTotalCNT", count);
 		if(count > 0) {
@@ -1092,7 +1155,7 @@ public class MemberInfoLogic implements MemberInfo_IF {
 				return retMap;
 			}
 		}
-		
+
 		String cherryclear = CherryConstants.CHERRY_CLEAR.toLowerCase();
 		String counterCode = (String)map.get("CounterCode");
 		if(counterCode != null && counterCode.toLowerCase().equals(cherryclear)) {
@@ -1117,7 +1180,7 @@ public class MemberInfoLogic implements MemberInfo_IF {
 				return retMap;
 			}
 		}
-		
+
 		String employeeCode = (String)map.get("EmployeeCode");
 		if(employeeCode != null && employeeCode.toLowerCase().equals(cherryclear)) {
 			paramMap.put("employeeCode", cherryclear);
@@ -1135,11 +1198,11 @@ public class MemberInfoLogic implements MemberInfo_IF {
 				return retMap;
 			}
 		}
-		
+
 		String provinceCode = (String)map.get("ProvinceCode");
 		String cityCode = (String)map.get("CityCode");
 		String countyCode = (String)map.get("CountyCode");
-		if((provinceCode != null && !"".equals(provinceCode)) 
+		if((provinceCode != null && !"".equals(provinceCode))
 				|| (cityCode != null && !"".equals(cityCode))
 				|| (countyCode != null && !"".equals(countyCode))) {
 			if(provinceCode != null && provinceCode.toLowerCase().equals(cherryclear)) {
@@ -1287,7 +1350,7 @@ public class MemberInfoLogic implements MemberInfo_IF {
 				return retMap;
 			}
 		}
-		
+
 		// 推荐会员
 		String recommenderMember = (String)map.get("RecommenderMember");
 		if(recommenderMember != null && recommenderMember.toLowerCase().equals(cherryclear)) {
@@ -1307,7 +1370,7 @@ public class MemberInfoLogic implements MemberInfo_IF {
 				return retMap;
 			}
 		}
-		
+
 		String name = (String)map.get("Name");
 		if(name != null && name.toLowerCase().equals(cherryclear)) {
 			paramMap.put("memName", cherryclear);
@@ -1473,67 +1536,67 @@ public class MemberInfoLogic implements MemberInfo_IF {
 			paramMap.put("memberPassword", memberPassword);
 		}
 		paramMap.put("synMemMode", "1");
-		
+
 		//入会途径
-        String channelCode = (String)map.get("JoinChannel");
-        if(channelCode != null && channelCode.toLowerCase().equals(cherryclear)) {
-            paramMap.put("channelCode", cherryclear);
-        } else {
-            paramMap.put("channelCode", channelCode);
-        }
-        
-        //数据来源分类1
-        String dataSource1 = (String)map.get("DataSource1");
-        if(dataSource1 != null && dataSource1.toLowerCase().equals(cherryclear)) {
-            paramMap.put("dataSource1", cherryclear);
-        } else {
-            paramMap.put("dataSource1", dataSource1);
-        }
-        //数据来源分类2
-        String dataSource2 = (String)map.get("DataSource2");
-        if(dataSource2 != null && dataSource2.toLowerCase().equals(cherryclear)) {
-            paramMap.put("dataSource2", cherryclear);
-        } else {
-            paramMap.put("dataSource2", dataSource2);
-        }
-        //数据来源分类3
-        String dataSource3 = (String)map.get("DataSource3");
-        if(dataSource3 != null && dataSource3.toLowerCase().equals(cherryclear)) {
-            paramMap.put("dataSource3", cherryclear);
-        } else {
-            paramMap.put("dataSource3", dataSource3);
-        }
-        //会员备注信息3
-        String memo3 = (String)map.get("Memo3");
-        if(memo3 != null && memo3.toLowerCase().equals(cherryclear)) {
-            paramMap.put("memo3", cherryclear);
-        } else {
-            paramMap.put("memo3", memo3);
-        }
-        //是否立即生成入会礼，99：立即生成入会礼，其他不生成
-        String BeMemGift = ConvertUtil.getString(map.get("BeMemGift"));
-        if("99".equals(BeMemGift)){
-        	paramMap.put("importMode", BeMemGift);	
-        }else{
-        	paramMap.put("importMode", "1");
-        }
-        //职业
-        String profession = (String)map.get("Profession");
-        if(profession != null && profession.toLowerCase().equals(cherryclear)) {
-            paramMap.put("profession", cherryclear);
-        } else {
-            paramMap.put("profession", profession);
-        }
-        //兴趣爱好
-        String interests = (String)map.get("Interests");
-        if(interests != null && interests.toLowerCase().equals(cherryclear)) {
-            paramMap.put("interests", cherryclear);
-        } else {
-            paramMap.put("interests", interests);
-        }
+		String channelCode = (String)map.get("JoinChannel");
+		if(channelCode != null && channelCode.toLowerCase().equals(cherryclear)) {
+			paramMap.put("channelCode", cherryclear);
+		} else {
+			paramMap.put("channelCode", channelCode);
+		}
+
+		//数据来源分类1
+		String dataSource1 = (String)map.get("DataSource1");
+		if(dataSource1 != null && dataSource1.toLowerCase().equals(cherryclear)) {
+			paramMap.put("dataSource1", cherryclear);
+		} else {
+			paramMap.put("dataSource1", dataSource1);
+		}
+		//数据来源分类2
+		String dataSource2 = (String)map.get("DataSource2");
+		if(dataSource2 != null && dataSource2.toLowerCase().equals(cherryclear)) {
+			paramMap.put("dataSource2", cherryclear);
+		} else {
+			paramMap.put("dataSource2", dataSource2);
+		}
+		//数据来源分类3
+		String dataSource3 = (String)map.get("DataSource3");
+		if(dataSource3 != null && dataSource3.toLowerCase().equals(cherryclear)) {
+			paramMap.put("dataSource3", cherryclear);
+		} else {
+			paramMap.put("dataSource3", dataSource3);
+		}
+		//会员备注信息3
+		String memo3 = (String)map.get("Memo3");
+		if(memo3 != null && memo3.toLowerCase().equals(cherryclear)) {
+			paramMap.put("memo3", cherryclear);
+		} else {
+			paramMap.put("memo3", memo3);
+		}
+		//是否立即生成入会礼，99：立即生成入会礼，其他不生成
+		String BeMemGift = ConvertUtil.getString(map.get("BeMemGift"));
+		if("99".equals(BeMemGift)){
+			paramMap.put("importMode", BeMemGift);
+		}else{
+			paramMap.put("importMode", "1");
+		}
+		//职业
+		String profession = (String)map.get("Profession");
+		if(profession != null && profession.toLowerCase().equals(cherryclear)) {
+			paramMap.put("profession", cherryclear);
+		} else {
+			paramMap.put("profession", profession);
+		}
+		//兴趣爱好
+		String interests = (String)map.get("Interests");
+		if(interests != null && interests.toLowerCase().equals(cherryclear)) {
+			paramMap.put("interests", cherryclear);
+		} else {
+			paramMap.put("interests", interests);
+		}
 		if("0".equals(subType)) {
 			try {
-				
+
 				binOLMBMBM11_BL.tran_addMemberInfo(paramMap);
 			} catch (Exception e) {
 				logger.error(e.getMessage(), e);
@@ -1556,7 +1619,7 @@ public class MemberInfoLogic implements MemberInfo_IF {
 
 	@Override
 	public Map modifyMemberPoint(Map map) {
-		
+
 		Map<String, Object> retMap = new HashMap<String, Object>();
 		Map<String, Object> paramMap = new HashMap<String, Object>();
 		paramMap.put(CherryConstants.ORGANIZATIONINFOID, map.get("BIN_OrganizationInfoID"));
@@ -1578,7 +1641,7 @@ public class MemberInfoLogic implements MemberInfo_IF {
 			retMap.put("ERRORMSG", "未找到指定的会员");
 			return retMap;
 		}
-		
+
 		String counterCode = (String)map.get("CounterCode");
 		if(counterCode != null && !"".equals(counterCode)) {
 			paramMap.put("organizationCode", counterCode);
@@ -1590,7 +1653,7 @@ public class MemberInfoLogic implements MemberInfo_IF {
 			}
 		}
 		paramMap.put("CounterCode", counterCode);
-		
+
 		String employeeCode = (String)map.get("EmployeeCode");
 		if(employeeCode != null && !"".equals(employeeCode)) {
 			paramMap.put("employeeCode", employeeCode);
@@ -1612,7 +1675,7 @@ public class MemberInfoLogic implements MemberInfo_IF {
 			paramMap.put("memberClubId", clubId);
 		}
 		paramMap.put("EmployeeCode", employeeCode);
-		
+
 		paramMap.put("pointType", map.get("MaintType"));
 		paramMap.put("ModifyPoint", map.get("MaintPoint"));
 		paramMap.put("BusinessTime", map.get("BusinessTime"));
@@ -1634,7 +1697,7 @@ public class MemberInfoLogic implements MemberInfo_IF {
 
 	@Override
 	public Map getMemSaleRecord(Map map) {
-		
+
 		Map<String, Object> retMap = new HashMap<String, Object>();
 		Map<String, Object> paramMap = new HashMap<String, Object>();
 		paramMap.put(CherryConstants.ORGANIZATIONINFOID, map.get("BIN_OrganizationInfoID"));
@@ -1668,7 +1731,7 @@ public class MemberInfoLogic implements MemberInfo_IF {
 					memSaleRecordDetailList.add(memSaleRecordDetailMap);
 					_memSaleRecordMap.put("BillCode", billCode);
 					_memSaleRecordMap.put("SaleType", memSaleRecordMap.get("SaleType"));
-                    _memSaleRecordMap.put("BillState", memSaleRecordMap.get("BillState"));
+					_memSaleRecordMap.put("BillState", memSaleRecordMap.get("BillState"));
 					_memSaleRecordMap.put("SaleTime", memSaleRecordMap.get("SaleTime"));
 					_memSaleRecordMap.put("CounterCode", memSaleRecordMap.get("CounterCode"));
 					_memSaleRecordMap.put("CounterName", memSaleRecordMap.get("CounterName"));
@@ -1691,7 +1754,7 @@ public class MemberInfoLogic implements MemberInfo_IF {
 
 	@Override
 	public Map GetMemCouponCodes(Map map) {
-		
+
 		Map<String, Object> retMap = new HashMap<String, Object>();
 		Map<String, Object> paramMap = new HashMap<String, Object>();
 		paramMap.put(CherryConstants.ORGANIZATIONINFOID, map.get("BIN_OrganizationInfoID"));
@@ -1742,7 +1805,7 @@ public class MemberInfoLogic implements MemberInfo_IF {
 		memBindRecordMap.put("updatedBy", "WeChat");
 		memBindRecordMap.put("updatePGM", "MemberInfoLogic");
 		memberInfoService.addMemBindRecord(memBindRecordMap);
-		
+
 		//更新会员微信绑定关系
 		String wechatSeviceCode = ConvertUtil.getString(map.get("OriginalWechatCode"));
 		if(!CherryChecker.isNullOrEmpty(wechatSeviceCode, true)){
@@ -1756,7 +1819,7 @@ public class MemberInfoLogic implements MemberInfo_IF {
 			memBindRelationMap.put("updatePGM", "MemberInfoLogic");
 			memberInfoService.updateMemBindRelation(memBindRelationMap);
 		}
-		
+
 		return retMap;
 	}
 
@@ -1807,7 +1870,7 @@ public class MemberInfoLogic implements MemberInfo_IF {
 				paramMap.put("couponId", couponMap.get("couponId"));
 				paramMap.put("expiredTime", expiredTime);
 				memberInfoService.extendCouponExpiredTime(paramMap);
-				
+
 				Map<String, Object> ret = new HashMap<String, Object>();
 				ret.put("MemberID", tmp.get("BIN_MemberInfoID"));
 				ret.put("CouponCode", couponMap.get("couponCode"));
@@ -1825,7 +1888,7 @@ public class MemberInfoLogic implements MemberInfo_IF {
 			return retMap;
 		}
 	}
-	
+
 	/**
 	 * 根据秒钟添加日期
 	 * @param dateTime
@@ -1836,8 +1899,8 @@ public class MemberInfoLogic implements MemberInfo_IF {
 		try{
 			SimpleDateFormat spf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
 			Date date = spf.parse(dateTime);
-			Calendar cal = Calendar.getInstance(); 
-			cal.setTime(date); 
+			Calendar cal = Calendar.getInstance();
+			cal.setTime(date);
 			cal.add(Calendar.SECOND, second);
 			String strDate = spf.format(cal.getTime());
 			return strDate;
@@ -1845,7 +1908,7 @@ public class MemberInfoLogic implements MemberInfo_IF {
 			return "";
 		}
 	}
-	
+
 	@SuppressWarnings("unchecked")
 	@Override
 	public Map getMemberPassword(Map paramMap) throws Exception {
@@ -1865,13 +1928,13 @@ public class MemberInfoLogic implements MemberInfo_IF {
 			retMap.put("ERRORMSG", "参数ConditionType异常。ConditionType="+conditionType);
 			return retMap;
 		}
-		
+
 		if(CherryChecker.isNullOrEmpty(paramMap.get("Condition"))){
 			retMap.put("ERRORCODE", "WSE9993");
 			retMap.put("ERRORMSG", "参数Condition异常。Condition="+conditionType);
 			return retMap;
 		}
-		
+
 		//如果查询条件是手机号，则进行加密处理后再查询（目前仅个别品牌手机号是加密的）
 		if(conditionType.equals("MobilePhone")){
 			try {
@@ -1884,7 +1947,7 @@ public class MemberInfoLogic implements MemberInfo_IF {
 				return retMap;
 			}
 		}
-		
+
 		List<Map<String, Object>> memList = memberInfoService.getMemberPassword(paramMap);
 		if (memList == null || memList.size() == 0) {
 			retMap.put("ERRORCODE", "WSE0001");
@@ -1896,10 +1959,10 @@ public class MemberInfoLogic implements MemberInfo_IF {
 			Map<String, Object> memMap = (Map<String, Object>) memList.get(0);
 			String memberPassword = ConvertUtil.getString(memMap.get("MemberPassword"));
 			if(CherryChecker.isNullOrEmpty(memberPassword, true)){
-				 //会员密码为空，需要创建新密码
+				//会员密码为空，需要创建新密码
 				if("Y".equalsIgnoreCase(ConvertUtil.getString(paramMap.get("CreateFlag")))){
 					//生成6位随机密码
-					memberPassword = MemberPassword.encrypt(paramMap.get("BrandCode").toString(),CherryUtil.generateSalt(6)); 
+					memberPassword = MemberPassword.encrypt(paramMap.get("BrandCode").toString(),CherryUtil.generateSalt(6));
 					paramMap.put("MemberPassword", memberPassword);
 					paramMap.put("BIN_MemberInfoID", memMap.get("MemberID"));
 					//修改会员密码
@@ -1907,9 +1970,9 @@ public class MemberInfoLogic implements MemberInfo_IF {
 				}
 			}
 			//需要推送密码
-			if("Y".equalsIgnoreCase(ConvertUtil.getString(paramMap.get("SendMsgFlag"))) 
+			if("Y".equalsIgnoreCase(ConvertUtil.getString(paramMap.get("SendMsgFlag")))
 					&& !CherryChecker.isNullOrEmpty(memberPassword, true)){
-				try{					
+				try{
 					String brandCode = ConvertUtil.getString(paramMap.get("BrandCode"));
 					int organizationInfoId = ConvertUtil.getInt(paramMap.get("BIN_OrganizationInfoID"));
 					int brandInfoId = ConvertUtil.getInt(paramMap.get("BIN_BrandInfoID"));
@@ -1962,9 +2025,9 @@ public class MemberInfoLogic implements MemberInfo_IF {
 					logger.error(e.getMessage(), e);
 				}
 			}
-		 	Map<String, Object> resultMap = new HashMap<String, Object>();
-		 	resultMap.put("MemberPassword", memberPassword);
-		 	retMap.put("ResultMap", resultMap);
+			Map<String, Object> resultMap = new HashMap<String, Object>();
+			resultMap.put("MemberPassword", memberPassword);
+			retMap.put("ResultMap", resultMap);
 		}
 		return retMap;
 	}
@@ -2028,7 +2091,7 @@ public class MemberInfoLogic implements MemberInfo_IF {
 		String referrerId = null;
 		String authFlag = (String)paramMap.get("AuthFlag");
 		String couponCode = (String)paramMap.get("CouponCode");
-		
+
 		if(CherryChecker.isNullOrEmpty(bindTime, true)){
 			bindTime = memberInfoService.getSYSDateTime();
 		}
@@ -2086,7 +2149,7 @@ public class MemberInfoLogic implements MemberInfo_IF {
 				return retMap;
 			}
 		}
-		
+
 		if(!CherryChecker.isNullOrEmpty(referee)) {//如果填写了推荐人
 			Map<String, Object> params = new HashMap<String, Object>();
 			params.put("BIN_BrandInfoID", brandInfoId);
@@ -2134,7 +2197,7 @@ public class MemberInfoLogic implements MemberInfo_IF {
 				return retMap;
 			}
 		}
-		
+
 		//检查手机号是否已存在
 		Map<String, Object> mobileMap = new HashMap<String, Object>();
 		mobileMap.put("BIN_BrandInfoID", brandInfoId);
@@ -2147,7 +2210,7 @@ public class MemberInfoLogic implements MemberInfo_IF {
 			retMap.put("ERRORMSG", "手机号已存在");
 			return retMap;
 		}
-		
+
 		//检查会员是否被注册
 		Map<String, Object> params = new HashMap<String, Object>();
 		params.put("brandInfoId", brandInfoId);
@@ -2256,7 +2319,7 @@ public class MemberInfoLogic implements MemberInfo_IF {
 			memberAddMap.put("activeChannel", "Wechat");
 			//添加会员
 			binOLMBMBM11_BL.tran_addMemberInfo(memberAddMap);
-			
+
 			Map<String, Object> _params = new HashMap<String, Object>();
 			_params.put("BIN_BrandInfoID", brandInfoId);
 			_params.put("BIN_OrganizationInfoID", organizationInfoId);
@@ -2431,7 +2494,7 @@ public class MemberInfoLogic implements MemberInfo_IF {
 		retMap.put("ResultMap", infoMap);
 		return retMap;
 	}
-	
+
 	@Override
 	public Map getMemberSaleInfo(Map paramMap) {
 		// 检查参数
@@ -2441,7 +2504,7 @@ public class MemberInfoLogic implements MemberInfo_IF {
 			retMap.put("ERRORMSG", "参数MemberID是必须的");
 			return retMap;
 		}
-		
+
 		Map<String, Object> resultMap = memberInfoService.selMemSaleInfo(paramMap);
 		retMap.put("ResultMap", resultMap);
 		return retMap;
@@ -2475,7 +2538,7 @@ public class MemberInfoLogic implements MemberInfo_IF {
 		memberInfoMap.put("orgCode", map.get("OrgCode"));
 		memberInfoMap.put("brandInfoId", map.get("BIN_BrandInfoID"));
 		memberInfoMap.put("brandCode", map.get("BrandCode"));
-		
+
 		// 作成者
 		memberInfoMap.put(CherryConstants.CREATEDBY, "cherryws");
 		// 作成程序名
@@ -2484,7 +2547,7 @@ public class MemberInfoLogic implements MemberInfo_IF {
 		memberInfoMap.put(CherryConstants.UPDATEDBY, "cherryws");
 		// 更新程序名
 		memberInfoMap.put(CherryConstants.UPDATEPGM, "MemberInfoLogic");
-		
+
 		try {
 			binOLMBMBM06_BL.tran_updMemMobile(memberInfoMap);
 		} catch (Exception e) {
@@ -2540,14 +2603,14 @@ public class MemberInfoLogic implements MemberInfo_IF {
 		paramMap.put(CherryConstants.UPDATEPGM, "MemberInfoLogic");
 
 		memberInfoService.updateMemActive(paramMap);
-		
+
 		MQInfoDTO mqInfoDTO = new MQInfoDTO();
 		// 品牌代码
 		mqInfoDTO.setBrandCode(map.get("BrandCode").toString());
-		
+
 		String billType = CherryConstants.MESSAGE_TYPE_MA;
-		
-		String billCode = binOLCM03_BL.getTicketNumber(Integer.parseInt(ConvertUtil.getString(map.get("BIN_OrganizationInfoID"))), 
+
+		String billCode = binOLCM03_BL.getTicketNumber(Integer.parseInt(ConvertUtil.getString(map.get("BIN_OrganizationInfoID"))),
 				Integer.parseInt(ConvertUtil.getString(map.get("BIN_BrandInfoID"))), "", billType);
 		// 业务类型
 		mqInfoDTO.setBillType(billType);
@@ -2559,7 +2622,7 @@ public class MemberInfoLogic implements MemberInfo_IF {
 		mqInfoDTO.setOrganizationInfoId(Integer.parseInt(ConvertUtil.getString(map.get("BIN_OrganizationInfoID"))));
 		// 消息发送队列名
 		mqInfoDTO.setMsgQueueName(CherryConstants.CHERRYTOPOSMSGQUEUE);
-		
+
 		// 设定消息内容
 		Map<String,Object> msgDataMap = new HashMap<String,Object>();
 		// 设定消息版本号
@@ -2607,8 +2670,8 @@ public class MemberInfoLogic implements MemberInfo_IF {
 			binOLMQCOM01_BL.sendMQMsg(mqInfoDTO);
 		} catch (Exception e) {
 			logger.error(e.getMessage(),e);
-		}			
-	
+		}
+
 		return retMap;
 	}
 
@@ -2632,7 +2695,7 @@ public class MemberInfoLogic implements MemberInfo_IF {
 			retMap.put("ERRORMSG", "会员不存在");
 			return retMap;
 		}
-		
+
 		Map<String, Object> searchMap = new HashMap<String, Object>();
 		searchMap.put("memberInfoId", memberInfoMap.get("memberInfoId"));
 		String startPage = (String)map.get("StartPage");
@@ -2649,11 +2712,11 @@ public class MemberInfoLogic implements MemberInfo_IF {
 		searchMap.put("SORT_ID", sort);
 		searchMap.put("START", start);
 		searchMap.put("END", end);
-		
+
 		searchMap.put("saleDateStart", map.get("SaleDateStart"));
 		searchMap.put("saleDateEnd", map.get("SaleDateEnd"));
 		searchMap.put("saleType", map.get("SaleType"));
-		
+
 		int count = memberInfoService.selMemSaleCount(searchMap);
 		retMap.put("ResultTotalCNT", count);
 		if(count > 0) {
@@ -2876,28 +2939,28 @@ public class MemberInfoLogic implements MemberInfo_IF {
 		memBindRecordMap.put("updatedBy", "WeChat");
 		memBindRecordMap.put("updatePGM", "MemberInfoLogic");
 		memberInfoService.addMemBindRecord(memBindRecordMap);
-		
+
 		//发送会员资料MQ消息
 		try {
 			this.sendMemberMQ(paramMap);
 		} catch(Exception e) {
 			logger.error(e.getMessage(), e);
 		}
-		
+
 		try {
 			this.sendPtMsg(paramMap);
 		} catch (Exception e) {
 			logger.error(e.getMessage(),e);
 		}
-		
+
 		retMap.put("ERRORCODE", "0");
 		retMap.put("ERRORMSG", "执行成功");
 		return retMap;
 	}
-	
+
 	/**
 	 * 注册潜在会员
-	 * 
+	 *
 	 * @param paramMap
 	 * @return
 	 * @throws Exception
@@ -2959,7 +3022,7 @@ public class MemberInfoLogic implements MemberInfo_IF {
 				retMap.put("ERRORCODE", "WSE0031");
 				retMap.put("ERRORMSG", "参数ExpiryTime格式不正确");
 				return retMap;
-			}	
+			}
 		}
 		if(!CherryChecker.isNullOrEmpty(benefitsDetail)) {
 			if(benefitsDetail.length() > 1000) {
@@ -2989,7 +3052,7 @@ public class MemberInfoLogic implements MemberInfo_IF {
 				memberInfoService.addPotentialMemInfo(paramMap);
 			}
 		}
-		
+
 		retMap.put("ERRORCODE", "0");
 		return retMap;
 	}
@@ -3101,15 +3164,15 @@ public class MemberInfoLogic implements MemberInfo_IF {
 
 					//单选题直接将问题的文本存进数据库，为了和现在的会员新增，修改保持一致。比较坑
 					if("1".equals(paperQuestionMap.get("QuestionType"))){
-							for(int j = 65; j <= 84; j++) {
-								char ca = (char)j;
-								String tempValue = String.valueOf(ca);
-								String value = (String)paperQuestionMap.get("option"+ca);
-								if(tempValue.equals(ConvertUtil.getString(detailMap.get("Answer")))) {
-									detailMap.put("answer",value);
-									break;
-								}
+						for(int j = 65; j <= 84; j++) {
+							char ca = (char)j;
+							String tempValue = String.valueOf(ca);
+							String value = (String)paperQuestionMap.get("option"+ca);
+							if(tempValue.equals(ConvertUtil.getString(detailMap.get("Answer")))) {
+								detailMap.put("answer",value);
+								break;
 							}
+						}
 					}else if ("2".equals(paperQuestionMap.get("QuestionType"))){//将多选题的字母转成20位的二进制字符串
 						detailMap.put("answer",ConvertUtil.letterToBinary((String)detailMap.get("Answer")));
 					}else {
