@@ -90,9 +90,9 @@ public class BINCPMEACT02_BL {
 			}
 			
 			// 预约单为空或预约单少于一页，跳出循环
-			if (orderList.size() < CherryBatchConstants.DATE_SIZE) {
-				break;
-			}
+//			if (orderList.size() < CherryBatchConstants.DATE_SIZE) {
+//				break;
+//			}
 		}
 		logger.outLog("====操作预约单据总数：" + totalCount + " 条====");
 		return flag;
