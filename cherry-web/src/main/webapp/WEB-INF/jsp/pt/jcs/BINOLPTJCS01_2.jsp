@@ -119,10 +119,15 @@ $(function(){
 	</table>
 </div>
 <div id="actionResultDisplay"></div>
-	<div style="display: none;">
+	<div style="display: none;" id="div_main">
 <div id="dialogConfirm"><s:text name="global.page.ok" /></div>
+<div id="dialogCancel"><s:text name="global.page.dialogCancel" /></div>
 <div class="hide" id="dialogInit"></div>
+<div class="hide" id="dialogHint"></div>
 <div id="disableTitle"><s:text name="JCS01.disableCategoryTitle" /></div>
+<div id="enableTitle"><s:text name="JCS01.enableCategoryTitle" /></div>
 <div id="disableMessage"><p class="message"><span><s:text name="JCS01.disableCategoryMessage" /></span></p></div>
+<div id="disableHint"><p class="message"><span><s:text name="JCS01.disableCategoryHint" /></span></p></div>
+<div id="enableHint"><p class="message"><span><s:text name="JCS01.enableCategoryHint" /></span></p></div>
 	</div>
 </s:i18n>    

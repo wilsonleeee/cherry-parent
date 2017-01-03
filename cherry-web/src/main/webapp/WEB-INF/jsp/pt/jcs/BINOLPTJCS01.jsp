@@ -1,7 +1,7 @@
 <%@ page language="java" contentType="text/html; charset=utf-8" pageEncoding="utf-8"%>
 <%@ taglib prefix="s" uri="/struts-tags" %> 
 <%@ taglib prefix="cherry" uri="/cherry-tags"%>
-<script type="text/javascript" src="/Cherry/js/pt/jcs/BINOLPTJCS01.js"></script>
+<script type="text/javascript" src="/Cherry/js/pt/jcs/BINOLPTJCS01.js?version=201701031100"></script>
 <%-- 产品类别一览URL --%>
 <s:url id="search_Url" action="BINOLPTJCS01_search"/>
 <%-- 产品类别保存URL --%>

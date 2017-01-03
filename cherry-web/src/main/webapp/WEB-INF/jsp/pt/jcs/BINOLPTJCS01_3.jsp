@@ -19,7 +19,7 @@
 				<%--<a href="#" onclick="BINOLPTJCS01.edit('${edit_url}','${propValId}','${status.index + 1}',1);return false;"><s:text name="global.page.edit"/></a>--%>
 				<!--这里根据目前查询的状态显示出 停用&编辑  或者启用-->
 
-				<s:if test='(category.showDisabled != null && "0"== category.showDisabled)'>
+				<s:if test='(showDisabled != null && "0"== showDisabled)'>
 					<!-- 启用 -->
 					<a href="" class="add" onclick="BINOLPTJCS01.changeFlag(this,'${changeFlag_Url}',1,'${propValId}');return false;">
 						<span class="ui-icon icon-enable"></span>
