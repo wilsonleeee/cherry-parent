@@ -755,16 +755,21 @@ TEMP002_GLOBAL.prototype = {
 							checkedFlag = 1;
 						}
 					}else {
-						for(var j in childNodes){
-							if(childNodes[j].checked != true){
-								checkedFlag = 0;
-								break;
-							}
-							if(j == childNodes.length - 1){
-								checkedFlag = 1;
-							}
+						//for(var j in childNodes){
+						//	if(childNodes[j].checked != true){
+						//		checkedFlag = 0;
+						//		break;
+						//	}
+						//	if(j == childNodes.length - 1){
+						//		checkedFlag = 1;
+						//	}
+						//}
+						//nodesList = TEMP002.getTreeNodes(childNodes, nodesList, checkNodes, checkedFlag);
+						if (!checkedFlag && node.getCheckStatus().half != true){
+							nodesList = TEMP002.getTreeNodes(childNodes, nodesList, checkNodes, 1);
+						} else {
+							nodesList = TEMP002.getTreeNodes(childNodes, nodesList, checkNodes, checkedFlag);
 						}
-						nodesList = TEMP002.getTreeNodes(childNodes, nodesList, checkNodes, checkedFlag);
 					}
 				}
 				if(nodes[i].getParentNode() == null){
