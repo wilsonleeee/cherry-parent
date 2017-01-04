@@ -471,6 +471,12 @@ public class BINOLWPSAL03_Action extends BaseAction implements ModelDriven<BINOL
 	
 	public void collect() throws Exception{
 		try{
+			//做销售单格式校验 如不是WN开头的直接返回错误
+			String billCode=form.getBillCode();
+			if(!billCode.contains(CherryConstants.WP_BILLPREFIX_WN)){
+				ConvertUtil.setResponseByAjax(response, "SALEDETAILERROR");
+				return;
+			}
 			// 用户信息
 			UserInfo userInfo = (UserInfo) session
 					.get(CherryConstants.SESSION_USERINFO);

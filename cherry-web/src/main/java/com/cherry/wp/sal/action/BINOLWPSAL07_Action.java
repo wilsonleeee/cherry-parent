@@ -541,6 +541,11 @@ public class BINOLWPSAL07_Action extends BaseAction implements ModelDriven<BINOL
 			// 生成退货单据号
 			String srBillCode = binOLCM03_BL.getTicketNumber(ConvertUtil.getString(userInfo.getBIN_OrganizationInfoID()), 
 					ConvertUtil.getString(userInfo.getBIN_BrandInfoID()), ConvertUtil.getString(userInfo.getBIN_UserID()), CherryConstants.WP_BILLPREFIX_WR);
+			if(!srBillCode.contains(CherryConstants.WP_BILLPREFIX_WR)){
+				ConvertUtil.setResponseByAjax(response, "ERROR");
+				return;
+			}
+
 			String brandInfoId = ConvertUtil.getString(userInfo.getBIN_BrandInfoID());
 			String organizationInfoId = ConvertUtil.getString(userInfo.getBIN_OrganizationInfoID());
 			// 云POS是否支持新储值卡支付
@@ -811,6 +816,10 @@ public class BINOLWPSAL07_Action extends BaseAction implements ModelDriven<BINOL
 			// 生成退货单据号
 			String srBillCode = binOLCM03_BL.getTicketNumber(ConvertUtil.getString(userInfo.getBIN_OrganizationInfoID()), 
 					ConvertUtil.getString(userInfo.getBIN_BrandInfoID()), ConvertUtil.getString(userInfo.getBIN_UserID()), CherryConstants.WP_BILLPREFIX_WR);
+			if(!srBillCode.contains(CherryConstants.WP_BILLPREFIX_WR)){
+				ConvertUtil.setResponseByAjax(response, "ERROR");
+				return;
+			}
 			// 云POS是否支持新储值卡支付
 			String NEW_CZK_PAY = binOLCM14_BL.getWebposConfigValue("9022", ConvertUtil.getString(userInfo.getBIN_OrganizationInfoID()), ConvertUtil.getString(userInfo.getBIN_BrandInfoID()));
 			String brandCode = ConvertUtil.getString(userInfo.getBrandCode());

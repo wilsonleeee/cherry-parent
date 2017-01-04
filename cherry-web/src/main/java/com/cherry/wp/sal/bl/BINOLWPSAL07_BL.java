@@ -420,7 +420,7 @@ public class BINOLWPSAL07_BL implements BINOLWPSAL07_IF{
 				parMap.put(CherryConstants.ORGANIZATIONINFOID, map.get("organizationInfoId"));
 				parMap.put("billCode", map.get("billCode"));
 				//获取明细数据
-				billSrDetailList = binOLWPSAL07_Service.getSrBillDetailByCode(parMap);
+				billSrDetailList = binOLWPSAL07_Service.getBillDetailListByCode(parMap);
 			}else{
 				//获取明细数据
 				String srDetailStr = ConvertUtil.getString(map.get("srDetailStr"));
@@ -621,7 +621,8 @@ public class BINOLWPSAL07_BL implements BINOLWPSAL07_IF{
 				parMap.put(CherryConstants.ORGANIZATIONINFOID, map.get("organizationInfoId"));
 				parMap.put("billCode", map.get("billCode"));
 				//获取明细数据
-				billSrDetailList = binOLWPSAL07_Service.getSrBillDetailByCode(parMap);
+//				billSrDetailList = binOLWPSAL07_Service.getSrBillDetailByCode(parMap);
+				billSrDetailList = binOLWPSAL07_Service.getBillDetailListByCode(map);
 			}else{
 				//获取明细数据
 				String srDetailStr = ConvertUtil.getString(map.get("srDetailStr"));
