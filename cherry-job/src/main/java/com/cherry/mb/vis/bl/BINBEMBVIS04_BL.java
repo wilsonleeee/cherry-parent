@@ -8,10 +8,7 @@ import java.util.Map;
 import javax.annotation.Resource;
 
 import com.cherry.cm.cmbussiness.bl.BINOLCM33_BL;
-import com.cherry.cm.core.BatchLoggerDTO;
-import com.cherry.cm.core.CherryBatchConstants;
-import com.cherry.cm.core.CherryBatchLogger;
-import com.cherry.cm.core.CherryConstants;
+import com.cherry.cm.core.*;
 import com.cherry.cm.util.CherryBatchUtil;
 import com.cherry.cm.util.CherryUtil;
 import com.cherry.cm.util.DateUtil;
@@ -267,7 +264,18 @@ public class BINBEMBVIS04_BL {
 							visitObjMap.put(CherryBatchConstants.UPDATEDBY, CherryBatchConstants.UPDATE_NAME);
 							// 更新程序名
 							visitObjMap.put(CherryBatchConstants.UPDATEPGM, "BINBEMBVIS04");
-							
+							// 最后购买的单据
+							String lastBillCode = (String) visitObjMap.get("lastBillCode");
+							// 取得单据详细信息
+							Map<String, Object> billInfo = binBEMBVIS04_Service.getBillInfoByCode(lastBillCode);
+							if (null != billInfo && !billInfo.isEmpty()) {
+								String employeeCode = (String) billInfo.get("employeeCode");
+								if (!CherryChecker.isNullOrEmpty(employeeCode)) {
+									// BA已最后一次购买BA为准
+									visitObjMap.put("employeeCode", employeeCode);
+									visitObjMap.put("binEmployeeId", billInfo.get("binEmployeeId"));
+								}
+							}
 						}
 						binBEMBVIS04_Service.insertVisitTask(visitObjList);
 						// 产品数据少于一页，跳出循环
