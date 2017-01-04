@@ -73,7 +73,7 @@ public class BINBAT134_BL {
 	/**
 	 * 发货退库单的batch处理
 	 * 
-	 * @param 无
+	 * @param
 	 * 
 	 * @return Map
 	 * @throws CherryBatchException
@@ -121,7 +121,7 @@ public class BINBAT134_BL {
 	
 	/**
 	 * 标准发货单业务处理逻辑
-	 * @param docEntryList
+	 * @param
 	 * @throws CherryBatchException
 	 * @throws Exception
 	 */
@@ -282,9 +282,14 @@ public class BINBAT134_BL {
 		mainData[6] = CherryBatchUtil.getString(mainMap.get("TotalAmount"));
 		//单据类型
 		mainData[7] = "KS";
-		//子类型 SD:发货单；RJ:退库单； 
-		mainData[8]="SD";
-		
+		String subType = "SD";
+		String billStatus = CherryBatchUtil.getString(mainMap.get("BillStatus"));
+		if(!"".equals(billStatus) && "N".equals(billStatus)){
+			//如果是拒绝发货的话
+			subType = "2";
+		}
+		//子类型 SD:发货单；RJ:退库单；2：订货拒绝;
+		mainData[8] = subType;
 		//关联单号		
 		if("".equals(CherryBatchUtil.getString(mainMap.get("RelateBillCode")))){
 			mainData[9]=null;
@@ -476,7 +481,7 @@ public class BINBAT134_BL {
 	}
 	/**
 	 * 预先验证该明细数据是否可以被插入至新后台（验证产品是否存在）
-	 * @param map
+	 * @param
 	 * @return
 	 */
 	private Map<String,Object> checkExistsPrt(Map<String,Object> detailMap){
