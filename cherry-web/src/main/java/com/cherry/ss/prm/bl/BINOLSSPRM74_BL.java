@@ -502,14 +502,22 @@ public class BINOLSSPRM74_BL implements BINOLSSPRM74_IF {
 	@Override
 	public void checkMain(Map<String, Object> param) {
 		//删除主表数据
-		int delcnt = binOLSSPRM74_Service.delmain_all(param);
-		logger.info("从BIN_GetIntelligentResultMain表删除数据条数："+delcnt);
+//		int delcnt = binOLSSPRM74_Service.delmain_all(param);
+//		logger.info("从BIN_GetIntelligentResultMain表删除数据条数："+delcnt);
+		//获取main单据对应的明细
+		param.put("tradeNoIF",param.get("TN"));
+		Map<String,Object> main_info=binOLSSPRM74_Service.getMainByTradeNo(param);
 		//获取Cart单据对应的明细
 		List<Map<String,Object>> cart_list=binOLSSPRM74_Service.getCartDetailByTradeNo(param);
 		//获取Rule单据对应的明细
 		List<Map<String,Object>> rule_list=binOLSSPRM74_Service.getRuleDetailByTradeNo(param);
 		//获取Coupon单据对于的明细
 		List<Map<String,Object>> coupon_list=binOLSSPRM74_Service.getCouponDetailByTradeNo(param);
+		if(main_info != null ){
+			int delcnt = binOLSSPRM74_Service.delmain_all(main_info);
+			logger.info("从BIN_GetIntelligentResultMain表删除数据条数："+delcnt);
+		}
+
 		if(cart_list != null && cart_list.size() > 0){
 			binOLSSPRM74_Service.deleteCartDetail(cart_list);
 			logger.info("从BIN_IntelligentResultShoppingCart表删除数据条数："+cart_list.size());
