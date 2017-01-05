@@ -170,6 +170,7 @@ public class BINOLWPSAL07_BL implements BINOLWPSAL07_IF{
 		paramMap.put(CherryConstants.UPDATEPGM, "BINOLWPSAL07");
 
 		// 插入退单单据信息
+		List<Map<String,Object>> billSrDetailList = binOLWPSAL07_Service.getBillDetailListByCode(map);
 		int saleId = binOLWPSAL07_Service.insertSrBill(paramMap);
 		if(saleId >0){
 			paramMap.put("saleId", saleId);
@@ -188,7 +189,7 @@ public class BINOLWPSAL07_BL implements BINOLWPSAL07_IF{
 			// 更新销售单据信息
 			binOLWPSAL07_Service.updateSaleBillInfo(parMap);
 			// 发送MQ
-			boolean sendFlag = sendSrBillMQ(paramMap);
+			boolean sendFlag = sendSrBillMQ(paramMap,billSrDetailList);
 			if(sendFlag){
 				return ConvertUtil.getString(saleId);
 			}else{
@@ -319,7 +320,7 @@ public class BINOLWPSAL07_BL implements BINOLWPSAL07_IF{
 		paramMap.putAll(map);
 		int saleId =Integer.parseInt(saveSrBill(paramMap)) ;
 		if(saleId >0){
-			boolean sendFlag = sendSrBillMQ(parMap);
+			boolean sendFlag = sendSrBillMQ(parMap,billSrDetailList);
 			if(sendFlag){
 				return ConvertUtil.getString(saleId);
 			}else{
@@ -331,7 +332,7 @@ public class BINOLWPSAL07_BL implements BINOLWPSAL07_IF{
 		}
 	}
 	
-	private boolean sendSrBillMQ(Map<String,Object> map) throws Exception{
+	private boolean sendSrBillMQ(Map<String,Object> map,List<Map<String,Object>> billSrDetailList) throws Exception{
 		String sysDateTime = binOLWPSAL07_Service.getSYSDate();
 		String sysTime = sysDateTime.substring((sysDateTime.indexOf(" ") + 1), sysDateTime.lastIndexOf("."));
 		String brandInfoId = ConvertUtil.getString(map.get("brandInfoId"));
@@ -613,7 +614,7 @@ public class BINOLWPSAL07_BL implements BINOLWPSAL07_IF{
 	        
 	        // 定义明细数据List
 			List<String[]> detailDataList = new ArrayList<String[]>();
-			List<Map<String, Object>> billSrDetailList = new ArrayList<Map<String, Object>>();
+//			List<Map<String, Object>> billSrDetailList = new ArrayList<Map<String, Object>>();
 			String resturnsFlag = ConvertUtil.getString(map.get("returnsFlag"));
 			if("BILL".equals(resturnsFlag)){
 				Map<String, Object> parMap = new HashMap<String, Object>();
@@ -622,11 +623,11 @@ public class BINOLWPSAL07_BL implements BINOLWPSAL07_IF{
 				parMap.put("billCode", map.get("billCode"));
 				//获取明细数据
 //				billSrDetailList = binOLWPSAL07_Service.getSrBillDetailByCode(parMap);
-				billSrDetailList = binOLWPSAL07_Service.getBillDetailListByCode(map);
+//				billSrDetailList = binOLWPSAL07_Service.getBillDetailListByCode(map);
 			}else{
 				//获取明细数据
-				String srDetailStr = ConvertUtil.getString(map.get("srDetailStr"));
-				billSrDetailList = ConvertUtil.json2List(srDetailStr);
+//				String srDetailStr = ConvertUtil.getString(map.get("srDetailStr"));
+//				billSrDetailList = ConvertUtil.json2List(srDetailStr);
 			}
 			if (null != billSrDetailList && !billSrDetailList.isEmpty()){
 				for(Map<String,Object> billSrDetail : billSrDetailList){
