@@ -21,6 +21,7 @@ import java.util.Map;
 
 import javax.annotation.Resource;
 
+import com.cherry.cm.cmbussiness.bl.BINOLCM14_BL;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -81,6 +82,9 @@ public class MqDG implements MqReceiver_IF {
 	
 	@Resource(name="mqDG_Service")
 	private MqDG_Service mqDG_Service;
+
+	@Resource(name="binOLCM14_BL")
+	private BINOLCM14_BL binOLCM14_BL;
 	
 	@Override
 	public void tran_execute(Map<String, Object> map) throws Exception {
@@ -113,8 +117,12 @@ public class MqDG implements MqReceiver_IF {
         String pickupMode = ConvertUtil.getString(map.get("pickupMode"));
 		if("1".equals(pickupMode)) {
 			// 微商城模式
-			// 更新订单状态
-			this.transferWebService(map);
+			String configValue = binOLCM14_BL.getConfigValue("1398", ConvertUtil.getString(map.get("organizationInfoID")),
+					ConvertUtil.getString(map.get("brandInfoID")));
+			if(!"0".equals(configValue)) {
+				// 更新订单状态
+				this.transferWebService(map);
+			}
 			// 更新电商订单主表信息
 			this.updateESOrderMainInfo(map);
 			
