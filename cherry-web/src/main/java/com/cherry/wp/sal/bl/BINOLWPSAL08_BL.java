@@ -302,15 +302,17 @@ public class BINOLWPSAL08_BL extends BaseAction implements BINOLWPSAL08_IF{
 				for(Map<String, Object> m:campaignProduct){
 			        Map<String, Object> pramMap = new HashMap<String, Object>(); 
 			        pramMap.put("inventoryInfoID", inInventoryInfoID);
+					pramMap.put("BIN_DepotInfoID", inInventoryInfoID);
 					String BIN_PromotionProductVendorID = ConvertUtil.getString(m.get("productVendorId"));
 					pramMap.put("promotionProductVendorID", BIN_PromotionProductVendorID);
+					pramMap.put("BIN_ProductVendorID", BIN_PromotionProductVendorID);
 					pramMap.put("FrozenFlag", "2");
 					String proType = ConvertUtil.getString(m.get("proType"));
 					int stock = 0;
 					if(proType.equals("P")){
 						stock = binOLSSCM01_BL.getPrmStock(pramMap);
 					}else {
-						binOLCM20_BL.getProductStock(pramMap);
+						stock = binOLCM20_BL.getProductStock(pramMap);
 					}
 					m.put("stock", stock);
 				}
@@ -323,15 +325,17 @@ public class BINOLWPSAL08_BL extends BaseAction implements BINOLWPSAL08_IF{
 				for(Map<String, Object> m:promotionProduct){
 			        Map<String, Object> pramMap = new HashMap<String, Object>(); 
 			        pramMap.put("inventoryInfoID", inInventoryInfoID);
+					pramMap.put("BIN_DepotInfoID", inInventoryInfoID);
 					String BIN_PromotionProductVendorID = ConvertUtil.getString(m.get("productVendorId"));
 					pramMap.put("promotionProductVendorID", BIN_PromotionProductVendorID);
+					pramMap.put("BIN_ProductVendorID", BIN_PromotionProductVendorID);
 					pramMap.put("FrozenFlag", "2");
 					String proType = ConvertUtil.getString(m.get("proType"));
 					int stock = 0;
 					if(proType.equals("P")){
 						stock = binOLSSCM01_BL.getPrmStock(pramMap);
 					}else {
-						binOLCM20_BL.getProductStock(pramMap);
+						stock = binOLCM20_BL.getProductStock(pramMap);
 					}
 					m.put("stock", stock);
 				}
