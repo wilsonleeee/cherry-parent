@@ -363,15 +363,18 @@ ModelDriven<BINOLPTJCS14_Form>{
 			boolean isPrtIss = binOLCM14_BL.isConfigOpen("1295", String.valueOf(map.get("organizationInfoId")), String.valueOf(map.get("brandInfoId")));
 			if(isPrtIss){
 				// 产品实时下发
-//				resultMap = binolptjcs04_IF.tran_issuedPrt(map);
+				//resultMap = binolptjcs04_IF.tran_issuedPrt(map);
 				
 				//通过WebService进行产品实时下发
 				resultMap = binolptjcs04_IF.tran_issuedPrtByWS(map);
+			} else {
+				resultMap.put("result", "2"); // 品牌的系统配置项不支持产品下发功能，请联系管理员！
+				logger.error("********* BINOLPTJCS04品牌的系统配置项不支持产品下发功能，请联系管理员！*********");
 			}
 			
 //			String result = ConvertUtil.getString(resultMap.get("result"));
 //			if("0".equals(result)){
-			resultMap = binOLPTJCS17_IF.tran_issuedCntPrt(map);
+			//resultMap = binOLPTJCS17_IF.tran_issuedCntPrt(map);
 //			}
 			
 			ConvertUtil.setResponseByAjax(response, resultMap);
@@ -404,14 +407,17 @@ ModelDriven<BINOLPTJCS14_Form>{
 			if(isPrtIss){
 				// 产品实时下发
 //				resultMap = binolptjcs04_IF.tran_issuedPrt(map);
-				
+				map.put("cntIssuedPrtMode","YT");
 				//通过WebService进行产品实时下发
 				resultMap = binolptjcs04_IF.tran_issuedPrtByWS(map);
+			} else {
+				resultMap.put("result", "2"); // 品牌的系统配置项不支持产品下发功能，请联系管理员！
+				logger.error("********* BINOLPTJCS04品牌的系统配置项不支持产品下发功能，请联系管理员！*********");
 			}
 			
 //			String result = ConvertUtil.getString(resultMap.get("result"));
 //			if("0".equals(result)){
-			resultMap = binOLPTJCS17_IF.tran_issuedCntPrtYT(map);
+			//resultMap = binOLPTJCS17_IF.tran_issuedCntPrtYT(map);
 //			}
 			
 			ConvertUtil.setResponseByAjax(response, resultMap);

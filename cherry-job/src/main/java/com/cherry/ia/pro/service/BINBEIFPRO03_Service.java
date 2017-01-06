@@ -345,6 +345,17 @@ public class BINBEIFPRO03_Service extends BaseService {
 		parameterMap.put(CherryConstants.IBATIS_SQL_ID, "BINBEIFPRO03.getPrtForPrtSoluDetailDiff");
 		return baseServiceImpl.getList(parameterMap);
 	}
+	/**
+	 * 取得产品方案明细表的产品与以前配置的差异List
+	 * @param map
+	 * @return
+	 */
+	public List getPrtForPrtSoluDetailDiffYT(Map<String, Object> map) {
+		Map<String, Object> parameterMap = new HashMap<String, Object>();
+		parameterMap.putAll(map);
+		parameterMap.put(CherryConstants.IBATIS_SQL_ID, "BINBEIFPRO03.getPrtForPrtSoluDetailDiffYT");
+		return baseServiceImpl.getList(parameterMap);
+	}
 	
 	/**
 	 * merge产品方案明细表  

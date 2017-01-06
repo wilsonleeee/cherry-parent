@@ -114,6 +114,7 @@ public class BINBEIFPRO03_BL {
 	 */
 	public int tran_batchCouProducts(Map<String, Object> map)
 			throws JSONException, Exception {
+		loger.info("###############柜台产品Batch下发模式==="+map.get("cntIssuedPrtMode")+"##########");
 		// 初始化
 		init(map);
 		
@@ -136,7 +137,14 @@ public class BINBEIFPRO03_BL {
 				// 统计总条数
 //				totalCount += couProductList.size();
 				// 更新接口数据库
-			int result = updIFDatabase(map);
+			String cntIssuedPrtMode = ConvertUtil.getString(map.get("cntIssuedPrtMode"));
+			int result = 0;
+			if (ConvertUtil.isBlank(cntIssuedPrtMode)) {
+				result = updIFDatabase(map);
+			} else if (!ConvertUtil.isBlank(cntIssuedPrtMode) && "YT".equals(cntIssuedPrtMode)) {
+				result = updIFDatabaseYT(map);
+			}
+
 			loger.info("柜台产品下发结果："+result);
 //				// 柜台产品数据少于一页，跳出循环
 //				if (couProductList.size() < CherryBatchConstants.DATE_SIZE) {
@@ -596,6 +604,174 @@ public class BINBEIFPRO03_BL {
 			logger.outLog(e.getMessage(), CherryBatchConstants.LOGGER_ERROR);
 		}
 		
+		return result;
+	}
+
+
+	/**
+	 * 更新接口数据库
+	 *
+	 * @param map
+	 */
+	private int updIFDatabaseYT(Map<String, Object> map) {
+
+		// 定义新后台数据是否有写入接口表
+		int result = 0;
+
+		try {
+			// Step1.1  取得新后台产品方案柜台关联数据版本号version大于tVersion的list(新增/修改/停用/启用等)
+			List<Map<String, Object>> prtSoluCouList = binbeifpro03Service.getPrtSoluCouList(map);
+			if (!CherryBatchUtil.isBlankList(prtSoluCouList)) {
+				result++;
+				for (Map<String, Object> prtSoluCouItemMap : prtSoluCouList) {
+
+					try {
+						prtSoluCouItemMap.putAll(map);
+
+						// 设置产品方案柜台接口表的状态值
+						getPrtSoluCntSCSStatus(prtSoluCouItemMap);
+
+						// 删除产品方案柜台接口表(根据brand、prtSolutionCode、counter)
+						binbeifpro03Service.delIFPrtSoluWithCounter(prtSoluCouItemMap);
+
+						// 插入柜台产品接口表
+						//					productMap.put(CherryConstants.UNITCODE, "444444444444444444444444444444444444444444ssssssssssssssssssssssssssss");
+						binbeifpro03Service.addIFPrtSoluWithCounter(prtSoluCouItemMap);
+
+						// 插入件数加一
+						insertCount += 1;
+					} catch (Exception e) {
+						failCount += 1;
+						// 插入柜台产品接口表(WITPOSA_product_with_counter)时发生异常。品牌Code:{0}，柜台Code:{1}，产品ID:{2}({3})，产品编码：{4}，产品条码：{5}。
+						BatchExceptionDTO batchExceptionDTO = new BatchExceptionDTO();
+						batchExceptionDTO.setBatchName(this.getClass());
+						batchExceptionDTO.setErrorCode("EIF00018");
+						batchExceptionDTO.setErrorLevel(CherryBatchConstants.LOGGER_ERROR);
+						// 品牌Code
+						batchExceptionDTO.addErrorParam(CherryBatchUtil.getString(comMap.get("BrandCode")));
+						// 柜台Code
+						batchExceptionDTO.addErrorParam(CherryBatchUtil.getString(prtSoluCouItemMap.get("DepartCode")));
+						// 方案Code
+						batchExceptionDTO.addErrorParam(CherryBatchUtil.getString(prtSoluCouItemMap.get("SolutionCode")));
+
+						batchExceptionDTO.setException(e);
+						throw new CherryBatchException(batchExceptionDTO);
+					}
+					// 保存Brand数据库不同柜台不同产品表
+//					saveCouPro(map);
+					// 事务提交
+//				binbeifpro03Service.ifManualCommit();
+				}
+			}
+
+			// Step1.2 取得新后台产品方案明细表数据版本号version大于tVersion的list(新增/修改/停用/启用等)
+
+			// 取得系统配置项产品方案添加模式
+			/*String config = binOLCM14_BL.getConfigValue("1288", String.valueOf(map.get("organizationInfoId")), String.valueOf(map.get("brandInfoId")));
+			map.put("soluAddModeConf", config);
+			if(ProductConstants.SOLU_ADD_MODE_CONFIG_2.equals(config)
+					|| ProductConstants.SOLU_ADD_MODE_CONFIG_3.equals(config)){*/
+
+				// Step1.2.1取得系统配置项产品方案添加模式,为颖通模式时，检查方案明细添加的分类是否有动态添加减少产品的变动情况
+				// 所有产品价格方案
+				List<Map<String, Object>> prtPriceSolutionList = binbeifpro03Service.getPrtPriceSolutionList(map);
+				if (!CherryBatchUtil.isBlankList(prtPriceSolutionList)) {
+					for(Map<String, Object> soluMap : prtPriceSolutionList){
+						map.put("productPriceSolutionID", soluMap.get("solutionID"));
+						// 取得当前产品方案明细表的产品与以前配置的差异List
+						List<Map<String, Object>> prtForPrtSoluDetailDiff = binbeifpro03Service.getPrtForPrtSoluDetailDiffYT(map);
+						if (!CherryBatchUtil.isBlankList(prtForPrtSoluDetailDiff)) {
+							for(Map<String, Object> diffMap : prtForPrtSoluDetailDiff){
+								// 将差异更新到产品方案明细表
+								diffMap.putAll(map);
+								String modifyFlag = (String)diffMap.get("modifyFlag"); // modifyFlag  add 增加的柜台 、sub减少的柜台
+
+								// 取得当前方案及增加的产品,merge到产品方案明细表 validFlag = 1,version = tversion +1,isCate =1
+								if("add".equals(modifyFlag)){
+									diffMap.put("ValidFlag", CherryConstants.VALIDFLAG_ENABLE);
+									diffMap.put("productId", diffMap.get("prtPD"));
+									// 1: 插入产品方案明细表
+									binbeifpro03Service.mergeProductPriceSolutionDetail(diffMap);
+
+								}
+								// 取得当前方案明细减少的产品,merge到产品方案部门关系表 validFlag = 0,version = tversion +1
+								else if ("sub".equals(modifyFlag)){
+
+									diffMap.put("ValidFlag", CherryConstants.VALIDFLAG_DISABLE);
+									diffMap.put("productId", diffMap.get("prtPDH"));
+									// 1: 将方案明细表的产品数据无效掉
+									binbeifpro03Service.updPrtSoluDetail(diffMap);
+								}
+							}
+
+						}
+					}
+				}
+
+				// Step1.2.2 颖通模式时，方案价格根据当前标准产品当前业务日期的价格
+				binbeifpro03Service.mergePPSDPrice(map);
+			//}
+
+			List<Map<String, Object>> prtSoluDetailByVersionList = binbeifpro03Service.getPrtSoluDetailByVersionList(map);
+			loger.info("需要下发的柜台产品明细数量为：prtSoluDetailByVersionList.size="+ (null==prtSoluDetailByVersionList?0:prtSoluDetailByVersionList.size()));
+			List<Map<String,Object>> prtUpdList = new ArrayList<Map<String,Object>>();
+
+			if (!CherryBatchUtil.isBlankList(prtSoluDetailByVersionList)) {
+				for (int i = 0;i<prtSoluDetailByVersionList.size();i++) {
+					// 保存接口产品方案柜台关系表
+//					for (Map<String, Object> prtSoluDetailItemMap : prtSoluDetailByVersionList) {
+					result++;
+					Map<String, Object> prtSoluDetailItemMap = prtSoluDetailByVersionList.get(i);
+					try{
+						prtSoluDetailItemMap.putAll(map);
+						// 设置产品方案柜台接口表的状态值
+						getPrtSoluSCSStatus(prtSoluDetailItemMap);
+						/*// 删除产品方案柜台接口表(根据brand、prtSolutionCode、产品厂商ID)
+						binbeifpro03Service.delIFPrtSoluSCS(prtSoluDetailItemMap);
+						// 插入产品方案明细接口表
+						binbeifpro03Service.addIFPrtSoluSCS(prtSoluDetailItemMap);*/
+						prtUpdList.add(prtSoluDetailItemMap);
+					} catch(Exception e){
+
+						// 插入柜台产品接口表(WITPOSA_product_with_counter)时发生异常。品牌Code:{0}，柜台Code:{1}，产品ID:{2}({3})，产品编码：{4}，产品条码：{5}。
+						BatchExceptionDTO batchExceptionDTO = new BatchExceptionDTO();
+						batchExceptionDTO.setBatchName(this.getClass());
+						batchExceptionDTO.setErrorCode("EIF00019");
+						batchExceptionDTO.setErrorLevel(CherryBatchConstants.LOGGER_ERROR);
+						// 品牌Code
+						batchExceptionDTO.addErrorParam(CherryBatchUtil.getString(comMap.get("BrandCode")));
+						batchExceptionDTO.addErrorParam(CherryBatchUtil.getString(prtSoluDetailItemMap.get("SolutionCode")));
+						batchExceptionDTO.addErrorParam(CherryBatchUtil.getString(prtSoluDetailItemMap.get("BIN_ProductVendorID")));
+						batchExceptionDTO.addErrorParam(CherryBatchUtil.getString(prtSoluDetailItemMap.get("UnitCode")));
+						batchExceptionDTO.addErrorParam(CherryBatchUtil.getString(prtSoluDetailItemMap.get("BarCode")));
+
+						batchExceptionDTO.setException(e);
+						throw new CherryBatchException(batchExceptionDTO);
+					}
+					if((i>0 && i%BATCH_SIZE==0) || i == prtSoluDetailByVersionList.size()-1) {
+						Map<String,Object> delMap = new HashMap<String,Object>();
+						delMap.put("prtUpdList", prtUpdList);
+						loger.info("柜台产品下发，开始处理i="+i+",prtUpdList.size="+prtUpdList.size());
+						// 删除产品方案柜台接口表(根据brand、prtSolutionCode、产品厂商ID)
+						binbeifpro03Service.delIFPrtSoluSCS(delMap);
+						loger.info("柜台产品下发，已删除到i="+i);
+						// 插入产品方案明细接口表
+						binbeifpro03Service.addIFPrtSoluSCS(prtUpdList);
+						loger.info("柜台产品下发，已插入到i="+i);
+						prtUpdList = new ArrayList<Map<String, Object>>();
+					}
+				}
+			}
+//			}
+		} catch (Exception e) {
+			// 失败件数加一
+			failCount += 1;
+			// 事务回滚
+//				binbeifpro03Service.ifManualRollback();
+			flag = CherryBatchConstants.BATCH_WARNING;
+			logger.outLog(e.getMessage(), CherryBatchConstants.LOGGER_ERROR);
+		}
+
 		return result;
 	}
 

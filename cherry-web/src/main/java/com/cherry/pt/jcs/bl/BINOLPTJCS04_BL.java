@@ -1003,6 +1003,8 @@ public class BINOLPTJCS04_BL implements BINOLPTJCS04_IF {
 			paramMap.put("brandCode", map.get("brandCode"));
 			paramMap.put("programFlag", "0");
 			paramMap.put("EmployeeId", map.get("EmployeeId"));
+			// 柜台产品下发模式
+			paramMap.put("cntIssuedPrtMode", map.get("cntIssuedPrtMode"));
 			
 			//通过调用WebService进行产品实时下发
 			resultMap = WebserviceClient.accessBatchWebService(paramMap);

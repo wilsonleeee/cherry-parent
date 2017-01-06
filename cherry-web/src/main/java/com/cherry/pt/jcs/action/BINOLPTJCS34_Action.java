@@ -39,10 +39,7 @@ import com.cherry.cm.util.FileUtil;
 import com.cherry.mo.common.interfaces.BINOLMOCOM01_IF;
 import com.cherry.pt.common.ProductConstants;
 import com.cherry.pt.jcs.form.BINOLPTJCS24_Form;
-import com.cherry.pt.jcs.interfaces.BINOLPTJCS17_IF;
-import com.cherry.pt.jcs.interfaces.BINOLPTJCS19_IF;
-import com.cherry.pt.jcs.interfaces.BINOLPTJCS21_IF;
-import com.cherry.pt.jcs.interfaces.BINOLPTJCS34_IF;
+import com.cherry.pt.jcs.interfaces.*;
 import com.googlecode.jsonplugin.JSONException;
 import com.opensymphony.workflow.WorkflowException;
 import com.opensymphony.xwork2.ModelDriven;
@@ -90,6 +87,9 @@ public class BINOLPTJCS34_Action extends BaseAction implements
 	/** 系统配置项 共通BL */
 	@Resource(name="binOLCM14_BL")
 	private BINOLCM14_BL binOLCM14_BL;
+
+	@Resource(name="binOLPTJCS04_IF")
+	private BINOLPTJCS04_IF binolptjcs04_IF;
 
 	/** 产品List */
 	private List<Map<String, Object>> proList;
@@ -582,10 +582,19 @@ public class BINOLPTJCS34_Action extends BaseAction implements
 		// 实时下发
 		try{
 			// 柜台产品下发
-			resultMap = binOLPTJCS17_IF.tran_issuedCntPrt(map);
+			/*resultMap = binOLPTJCS17_IF.tran_issuedCntPrt(map);
 			String result = ConvertUtil.getString(resultMap.get("result"));
 			// 产品实时下发	
-			resultMap = binOLPTJCS34_IF.tran_issuedPrt(map);
+			resultMap = binOLPTJCS34_IF.tran_issuedPrt(map);*/
+
+			// 品牌是否支持产品下发
+			boolean isPrtIss = binOLCM14_BL.isConfigOpen("1295", String.valueOf(map.get("organizationInfoId")), String.valueOf(map.get("brandInfoId")));
+			if(!isPrtIss){
+				resultMap.put("result", "2"); // 品牌的系统配置项不支持产品下发功能，请联系管理员！
+				//logger.error("********* BINOLPTJCS04品牌的系统配置项不支持产品下发功能，请联系管理员！*********");
+			} else {
+				resultMap = binolptjcs04_IF.tran_issuedPrtByWS(map);
+			}
 			ConvertUtil.setResponseByAjax(response, resultMap);
 		} catch(Exception e){
 			resultMap.put("result", "1");
