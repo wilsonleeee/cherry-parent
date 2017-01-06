@@ -515,6 +515,7 @@ public class BINBESSPRM08_BL implements CherryMessageHandler_IF {
 	 * @return String 券类型(接口用)
 	 */
 	private String getType(String couponType) {
+		couponType=couponType.trim();
 		// 代金券
 		if ("1".equals(couponType) || "5".equals(couponType)) {
 			return "DJQ";
@@ -525,8 +526,9 @@ public class BINBESSPRM08_BL implements CherryMessageHandler_IF {
 		} else if ("3".equals(couponType)) {
 			return "ZGQ";
 			// 积分抵用券
-		} else {
-			return "JFDY";
+		}else {
+//			return "JFDY";
+			return couponType;
 		}
 	}
 	
@@ -647,21 +649,6 @@ public class BINBESSPRM08_BL implements CherryMessageHandler_IF {
 				detail.setZCP_SEND_FLAG("X");
 				//实际发送时间
 				detail.setZCPSDATE(DateUtil.coverString2Date(ConvertUtil.getString(couponInfo.get("createTime"))));
-				//状态调整日期
-				detail.setZCPUDATE(DateUtil.coverString2Date(ConvertUtil.getString(couponInfo.get("finshTime"))));
-				//外部单据号
-				detail.setWB_ORDER_ID(ConvertUtil.getString(couponInfo.get("relatedNoB")));
-				logger.info("券状态推送----->>WB_ORDER_ID="+ConvertUtil.getString(couponInfo.get("relatedNoB")));
-				//单据日期
-				detail.setPO_DATE_SOLD(DateUtil.coverString2Date(ConvertUtil.getString(couponInfo.get("finshTime"))));
-				// 销售组织
-				detail.setZVKORG(Config.VKORG);
-				//分销渠道 固定为线下42
-				detail.setZVTWEG("42");
-				// 门店编码
-				detail.setZMD_ID(ConvertUtil.getString(couponInfo.get("counterCode")));
-				// 负责BA
-				detail.setEMPID(ConvertUtil.getString(couponInfo.get("employeeCode")));
 				// 使用状态
 				String useFlag = null;
 				// 已使用
@@ -678,6 +665,22 @@ public class BINBESSPRM08_BL implements CherryMessageHandler_IF {
 				}
 				// 使用状态
 				detail.setZCP_USE_FLAG(useFlag);
+				//状态调整日期
+				detail.setZCPUDATE(DateUtil.coverString2Date(ConvertUtil.getString(couponInfo.get("finshTime"))));
+				//外部单据号
+				detail.setWB_ORDER_ID(ConvertUtil.getString(couponInfo.get("relatedNoB")));
+				logger.info("券状态推送----->>WB_ORDER_ID="+ConvertUtil.getString(couponInfo.get("relatedNoB")));
+				//单据日期
+				detail.setPO_DATE_SOLD(DateUtil.coverString2Date(ConvertUtil.getString(couponInfo.get("finshTime"))));
+				// 销售组织
+				detail.setZVKORG(Config.VKORG);
+				//分销渠道 固定为线下42
+				detail.setZVTWEG("42");
+				// 门店编码
+				detail.setZMD_ID(ConvertUtil.getString(couponInfo.get("counterCode")));
+				// 负责BA
+				detail.setEMPID(ConvertUtil.getString(couponInfo.get("employeeCode")));
+
 				details[i] = detail;
 			}
 			return details;
