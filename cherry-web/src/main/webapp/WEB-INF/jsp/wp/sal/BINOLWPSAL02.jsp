@@ -145,7 +145,7 @@
 			</div>
 			<div id="buttonPageDiv" class="wp_navbuttonbox">
 				<cherry:show domId="BINOLWPSAL02COL">
-					<button id="btnCollect" class="btn_top" type="button" disabled="disabled" onclick="BINOLWPSAL02.initMatchRule_CloudPos();return false;">
+					<button id="btnCollect" class="btn_top" type="button" disabled="disabled" onclick="BINOLWPSAL02.executeLimitPlanDialog();return false;">
 						<s:text name="wpsal02.collect"/>
 					</button>
 				</cherry:show>
