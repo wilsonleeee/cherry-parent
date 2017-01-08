@@ -438,7 +438,7 @@ public class BINOLWPSAL02_Action extends BaseAction implements ModelDriven<BINOL
 		}
 		form.setIsMemberSaleFlag(isMemberSaleFlag);
 
-		//是否执行积分计划配置项
+		//是否启用柜台积分计划配置项
 		String isExecuteLimitPlan = binOLCM14_BL.getConfigValue("1396", organizationInfoId, brandInfoId);
 		if (ConvertUtil.isBlank(isExecuteLimitPlan)){
 			isExecuteLimitPlan = "0";
@@ -477,27 +477,31 @@ public class BINOLWPSAL02_Action extends BaseAction implements ModelDriven<BINOL
 		String memCodeRule=binOLCM14_BL.getConfigValue("1070", organizationInfoId, brandInfoId);
 		form.setMemCodeRule(memCodeRule);
 
-		//附带柜台的积分额度信息
-		Map<String,Object> pekonParamMap = new HashMap<String,Object>();
-		String url = PropertiesUtil.pps.getProperty("PekonWebServiceUrl");
-		String appID = "witpos";
-		String tradeType = "GetCounterCurrentPoint";
-		String brandCode = userInfo.getBrandCode();//"AVENE";//
 		// 获取柜台号
 		String counterCode = ConvertUtil.getString(counterInfo.getCounterCode());
 
-		pekonParamMap.put("appID",appID);
-		pekonParamMap.put("TradeType",tradeType);
-		pekonParamMap.put("brandCode",brandCode);
-		pekonParamMap.put("CounterCode",counterCode);
+		if("1".equals(isExecuteLimitPlan)){
+			//如果是否启用柜台积分计划配置项为"1"（是）,则获取柜台的积分额度信息
+			Map<String,Object> pekonParamMap = new HashMap<String,Object>();
+			String url = PropertiesUtil.pps.getProperty("PekonWebServiceUrl");
+			String appID = PropertiesUtil.pps.getProperty("PekonWebServiceAppId");
+			String tradeType = "GetCounterCurrentPoint";
+			String brandCode = userInfo.getBrandCode();//"AVENE";//
 
-		Map<String,Object> retMap = WebserviceClient.accessPekonWebService(pekonParamMap,url);
-		// 获取会员信息成功的情况
-		if( retMap != null && retMap.get("ResultContent") != null){
-			//CurrentPoint,PlanStatus,MinWarningPoint
-			form.setPointLimitInfo((Map<String,Object>)retMap.get("ResultContent"));
+			pekonParamMap.put("appID",appID);
+			pekonParamMap.put("TradeType",tradeType);
+			pekonParamMap.put("brandCode",brandCode);
+			pekonParamMap.put("CounterCode",counterCode);
 
+			Map<String,Object> retMap = WebserviceClient.accessPekonWebService(pekonParamMap,url);
+			// 获取会员信息成功的情况
+			if( retMap != null && retMap.get("ResultContent") != null){
+				//CurrentPoint,PlanStatus,MinWarningPoint
+				form.setPointLimitInfo((Map<String,Object>)retMap.get("ResultContent"));
+
+			}
 		}
+
 		// 获取柜台名称
 		String counterName = ConvertUtil.getString(counterInfo.getCounterName());
 		if(null != counterCode && !"".equals(counterCode)){
