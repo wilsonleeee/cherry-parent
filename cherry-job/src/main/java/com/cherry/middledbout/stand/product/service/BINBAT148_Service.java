@@ -145,4 +145,16 @@ public class BINBAT148_Service extends BaseService {
 		map.put(CherryConstants.IBATIS_SQL_ID, "BINBAT148.updIFOffersBySync3");
 		return tpifServiceImpl.update(map);
 	}
+
+	/**
+	 * 更新柜台特价产品的同步状态（SynchFlag 3：异常
+	 * 2：正常）
+	 * @param map
+	 * @return
+	 *
+	 * */
+	public int updateSynchFlagForSameBCPLessID(Map<String,Object> map){
+		map.put(CherryConstants.IBATIS_SQL_ID, "BINBAT148.updateSynchFlagForSameBCPLessID");
+		return tpifServiceImpl.update(map);
+	}
 }

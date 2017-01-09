@@ -36,13 +36,12 @@ import java.util.Map;
  *
  */
 public class BINBAT148_BL {
+	/**打印当前类的日志信息*/
 	private static Logger loger = LoggerFactory.getLogger(BINBAT148_BL.class.getName());
 	/** 打印当前类的日志信息 **/
 	private static CherryBatchLogger logger = new CherryBatchLogger(BINBAT148_BL.class);
 	/** 每批次(页)处理数量 1000 */
 	private final int BATCH_SIZE = 1000;
-	/** 销售主数据每次导出数量:2000条 */
-	private final int UPDATE_SIZE = 2000;
 	/** BATCH处理标志 */
 	private int flag = CherryBatchConstants.BATCH_SUCCESS;
 	/** JOB执行相关共通 IF */
@@ -53,7 +52,7 @@ public class BINBAT148_BL {
 	/** 各类编号取号共通BL */
 	@Resource(name="binOLCM15_BL")
 	private BINOLCM15_BL binOLCM15_BL;
-	private Map<String, Object> comMap;
+
 	/** 处理总条数 */
 	private int totalCount = 0;
 	/** 插入条数 */
@@ -83,8 +82,10 @@ public class BINBAT148_BL {
 		
 		// 初始化 
 		try{
-			init(paraMap);
+			paraMap = init(paraMap);
 		}catch(Exception e){
+			//打印出错信息
+			loger.error(e.getMessage(),e);
 			// 初始化失败
 			BatchExceptionDTO batchExceptionDTO = new BatchExceptionDTO();
 			batchExceptionDTO.setBatchName(this.getClass());
@@ -122,13 +123,28 @@ public class BINBAT148_BL {
 		
 		// =========== Step1: 取得标准柜台特价产品接口表中的柜台信息(A、生成对应的特价产品方案主表数据 B、生成柜台与特价产品方案的关联表数据)
 		List<Map<String, Object>> cntIFList = null;
+		// =========== Step2.A 更新标准接口表柜台特价产品数据从[synchFlag=null]更新为[synchFlag=1]
+		try {
+			binBAT148_Service.updIFOffersBySync1(paraMap);
+			binBAT148_Service.tpifManualCommit();
+
+		} catch (Exception e) {
+			loger.error(e.getMessage(),e);
+			flag = CherryBatchConstants.BATCH_ERROR;
+			// 处理柜台对应的柜台号及特价产品方案失败。
+			logger.outLog(" 处理柜台对应的柜台号及特价产品方案失败。" , CherryBatchConstants.LOGGER_ERROR);
+			logger.outExceptionLog(e);
+			throw e;
+
+		}
 		try{
+
 			// 获取标准IF柜台特价产品中柜台号数据-----获取接口表中的柜台信息(去重)
 			cntIFList = binBAT148_Service.getCntByIFOffers(paraMap);
 			
 			if (CherryBatchUtil.isBlankList(cntIFList)) {
 				return;
-			}else{
+			}
 				// 查询新后台的柜台信息 ----新后台全部柜台信息
 				List<Map<String, Object>> cntByCherryBrandMapList = binBAT148_Service.getCounterByCherryBrand(paraMap);
 				// key-value对(CounterCode-CounterName)
@@ -156,6 +172,7 @@ public class BINBAT148_BL {
 						faildList.add("柜台编号(" + counterCodeByIF + ")");
 						specialOfferSoluName = counterCodeByIF + "默认特价产品方案(" + counterCodeByIF + ")"; 
 						logger.outLog("柜台信息不存在，柜台编号(" + counterCodeByIF + ")" , CherryBatchConstants.LOGGER_ERROR);
+						loger.warn("柜台信息不存在，柜台编号(" + counterCodeByIF + ")" );
 						flag = CherryBatchConstants.BATCH_WARNING;
 					}
 				
@@ -177,6 +194,7 @@ public class BINBAT148_BL {
 							}
 						}
 					} catch(Exception e){
+						loger.error(e.getMessage(),e);
 						faildList.add("柜台编号(" + counterCodeByIF + ")");
 						// 【柜台特价方案导入（标准接口）】处理特价产品方案主表失败。特价产品方案编码：{0}！
 						BatchLoggerDTO batchLoggerDTO = new BatchLoggerDTO();
@@ -197,6 +215,7 @@ public class BINBAT148_BL {
 						
 					}catch(Exception e){
 						// EOT00157=【柜台特价方案导入（标准接口）】处理特价产品方案与部门关联表失败。特价产品方案编码：({0})，柜台编码：({1})。
+						loger.error(e.getMessage(),e);
 						BatchLoggerDTO batchLoggerDTO = new BatchLoggerDTO();
 						batchLoggerDTO.setCode("EOT00157");
 						batchLoggerDTO.addParam(CherryBatchUtil.getString(prtSolutionMap.get(counterCodeByIF)));
@@ -206,35 +225,23 @@ public class BINBAT148_BL {
 						flag = CherryBatchConstants.BATCH_WARNING;
 						throw e;
 					}
-					if ((i>0 && i%UPDATE_SIZE==0) || i>= cntIFList.size()-1) {
+					if ((i>0 && i%BATCH_SIZE==0) || i>= cntIFList.size()-1) {
 						binBAT148_Service.manualCommit();
 					}
 				}
-			}
 			
 		}catch(Exception e){
-			loger.error("",e);
-			binBAT148_Service.manualRollback();
+			loger.error(e.getMessage(),e);
+			/*binBAT148_Service.manualRollback();*/
 			flag = CherryBatchConstants.BATCH_ERROR;
 			// 处理柜台对应的柜台号及特价产品方案失败。
 			logger.outLog(" 处理柜台对应的柜台号及特价产品方案失败。" , CherryBatchConstants.LOGGER_ERROR);
 			logger.outExceptionLog(e);
+			throw e;
 		}
 		
 		// =========== Step2: 处理特价产品方案明细
 		try{
-			
-			// =========== Step2.A 更新标准接口表柜台特价产品数据从[synchFlag=null]更新为[synchFlag=1] 		
-			try {
-				binBAT148_Service.updIFOffersBySync1(paraMap);
-				binBAT148_Service.tpifManualCommit();
-			} catch (Exception e) {
-				flag = CherryBatchConstants.BATCH_ERROR;
-				// 处理柜台对应的柜台号及特价产品方案失败。
-				logger.outLog(" 处理柜台对应的柜台号及特价产品方案失败。" , CherryBatchConstants.LOGGER_ERROR);
-				logger.outExceptionLog(e);
-				throw e;
-			}
 			// 取得标准接口表的柜台特价产品数据
 			
 			// 上一批次(页)最后一条PuttingTime
@@ -245,7 +252,7 @@ public class BINBAT148_BL {
 				// 查询接口柜台特价产品列表
 				Map<String, Object> paraMap2 = new HashMap<String, Object>();
 				paraMap2.putAll(paraMap);
-				paraMap2.put("batchSize", UPDATE_SIZE);
+				paraMap2.put("batchSize", BATCH_SIZE);
 				// 接口表对相同产品相同柜台有更新的数据
 				List<Map<String, Object>> standardProductByOffersList = binBAT148_Service.getStandardProductByOffersList(paraMap2);
 				if (CherryBatchUtil.isBlankList(standardProductByOffersList)) {
@@ -285,9 +292,13 @@ public class BINBAT148_BL {
 						if(oldPrtId == 0){
 							faildList.add("产品编号(" + IFProductId + ")");
 							logger.outLog("产品信息不存在，IFProductId(" + IFProductId + ")" , CherryBatchConstants.LOGGER_ERROR);
+							loger.warn("产品信息不存在，IFProductId(" + IFProductId + ")");
 							flag = CherryBatchConstants.BATCH_WARNING;
 							failCount++;
-							binBAT148_Service.updIFOffersBySync3(cntPrtMap);
+							//binBAT148_Service.updIFOffersBySync3(cntPrtMap);
+							//更新为失败
+							cntPrtMap.put("SynchFlag","3");
+							updateSynchFlagForSameBCPLessID(cntPrtMap);
 						}else{
 							
 							// =========== Step2.C --写入柜台对应的默认特价产品方案明细
@@ -297,13 +308,19 @@ public class BINBAT148_BL {
 							try{
 								Map<String, Object> mergeResultMap = binBAT148_Service.mergeProductSpecialOfferSoluDetail(cntPrtMap);
 								
-								binBAT148_Service.updIFOffersBySync2(cntPrtMap);
+								//binBAT148_Service.updIFOffersBySync2(cntPrtMap);
+								//更新为成功
+								cntPrtMap.put("SynchFlag","2");
+								updateSynchFlagForSameBCPLessID(cntPrtMap);
 							}catch(Exception ex){
+								loger.error(ex.getMessage(),ex);
 								faildList.add("产品编号(" + IFProductId + ")");
 								flag = CherryBatchConstants.BATCH_WARNING;
 								failCount++;								
-								binBAT148_Service.updIFOffersBySync3(cntPrtMap);
-								
+								//binBAT148_Service.updIFOffersBySync3(cntPrtMap);
+								//更新为失败
+								cntPrtMap.put("SynchFlag","3");
+								updateSynchFlagForSameBCPLessID(cntPrtMap);
 								// EOT00158=【柜台特价方案导入（标准接口）】处理写入特价产品方案明细表失败。特价产品方案编码：({0})，柜台编码：({1})，IFProductID：({2})。	
 								BatchLoggerDTO batchLoggerDTO = new BatchLoggerDTO();
 								batchLoggerDTO.setCode("EOT00158");
@@ -332,20 +349,35 @@ public class BINBAT148_BL {
 			}
 			
 		}catch(Exception e){
-			binBAT148_Service.manualRollback();
-			binBAT148_Service.tpifManualRollback();
 			flag = CherryBatchConstants.BATCH_ERROR;
 			// 处理特价产品方案明细失败
 			logger.outLog("处理特价产品方案明细失败。" , CherryBatchConstants.LOGGER_ERROR);
 			logger.outExceptionLog(e);
+			throw e;
 		}
 	}
-	
+
+	/**
+	 * 将同品牌同柜台同产品冗余的数据进行更新
+	 * @param paramMap
+	 * 参数的格式{
+	 *     BrandCode
+	 *     CounterCode
+	 *     IFProductId
+	 *     IdentityID 冗余数据中最新一条数据的id
+	 *	   SynchFlag  剩余的冗余数据需要更新成的状态  2成功   3失败
+	 * }
+     */
+	private void updateSynchFlagForSameBCPLessID(Map<String,Object> paramMap){
+		binBAT148_Service.updateSynchFlagForSameBCPLessID(paramMap);
+	}
 	/**
 	 * init
 	 * @param map
 	 */
-	private void init(Map<String, Object> map) throws CherryBatchException, Exception{
+	private Map<String,Object> init(Map<String, Object> map) throws CherryBatchException, Exception{
+
+		Map comMap = new HashMap<String,Object>();
 		comMap = getComMap(map);
 		
 		// BatchCD 来自VSS$/01.Cherry/02.设计文档/01.概要设计/00.各种一览/【新设】CherryBatch一览.xlsx
@@ -382,6 +414,7 @@ public class BINBAT148_BL {
 		comMap.put("pdTVersion", pdTVersion);
 		
 		map.putAll(comMap);
+		return map;
 	}
 	
 	/**
@@ -390,9 +423,6 @@ public class BINBAT148_BL {
 	 * @throws Exception
 	 */
 	private void programEnd(Map<String,Object> paraMap) throws Exception{
-		
-		paraMap.putAll(comMap);
-		
 		/*
 		String targetDataStartTime = ConvertUtil.getString(paraMap.get("TargetDataStartTime"));
 		if(!CherryBatchUtil.isBlankString(targetDataStartTime)){

@@ -9,7 +9,7 @@
 		FROM IF_Offers WITH(NOLOCK)
 		WHERE
 			BrandCode = #brandCode#
-			AND SynchFlag IS NULL
+			AND SynchFlag = '1'
 	</select>
 	
 	<!--查询新后台的柜台信息 -->
@@ -167,6 +167,24 @@
 	]]>
     </update>
 
+	<!--将同品牌同柜台同产品冗余的数据进行更新-->
+	<update id="updateSynchFlagForSameBCPLessID" parameterClass="java.util.HashMap">
+		<![CDATA[
+		UPDATE
+			A
+		SET
+			A.SynchFlag = #SynchFlag#,
+			A.SynchTime = GETDATE()
+		FROM
+			IF_Offers A
+		WHERE
+			A.BrandCode = #BrandCode# AND
+			A.CounterCode = #CounterCode#  AND
+			A.IFProductId = #IFProductId# AND
+			A.IdentityID <= #IdentityID# AND
+			A.SynchFlag = '1'
+	]]>
+	</update>
 	<!-- 获取最近写入的柜台特价产品数据 -->
 	<select id="getStandardProductByOffersList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
 		<![CDATA[
@@ -183,7 +201,8 @@
 			A.ProductName,
 			A.SalePrice,
 			A.MemPrice,
-			A.MemPrice2
+			A.MemPrice2,
+			A.IdentityID
 		FROM
 			[dbo].[IF_Offers] A WITH(NOLOCK)
 		WHERE
@@ -193,7 +212,8 @@
 					B.BrandCode = A.BrandCode
 					AND B.IFProductId = A.IFProductId
 					AND B.CounterCode = A.CounterCode
-					AND B.PuttingTime > A.PuttingTime
+					AND B.IdentityID > A.IdentityID
+					AND B.SynchFlag = '1'
 			)
 			AND A.BrandCode = #brandCode#
 			AND A.SynchFlag ='1'
