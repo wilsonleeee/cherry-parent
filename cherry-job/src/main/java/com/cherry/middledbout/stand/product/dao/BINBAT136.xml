@@ -2,14 +2,14 @@
 <!DOCTYPE sqlMap PUBLIC "-//iBATIS.com//DTD SQL Map 2.0//EN" "http://ibatis.apache.org/dtd/sql-map-2.dtd">
 <sqlMap namespace="BINBAT136">
 	
-	<!-- 获取标准IF柜台产品中柜台号数据 -->
+	<!-- 获取标准IF柜台产品中柜台号数据(synchFlag=1) -->
 	<select id="getCntByIFProductByCounter" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
 		SELECT
 			DISTINCT CounterCode
 		FROM IF_ProductByCounter WITH(NOLOCK)
 		WHERE
 			BrandCode = #brandCode#
-			AND SynchFlag IS NULL
+			AND SynchFlag = '1'
 	</select>
 	
 	<!--查询新后台的柜台信息 -->
@@ -150,8 +150,11 @@
 		FROM
 			dbo.IF_ProductByCounter A
 		WHERE
-			A.IdentityID = #IdentityID# AND
-			A.SynchFlag = '1'
+			A.IdentityID <= #IdentityID# AND
+			A.SynchFlag = '1' AND
+			A.BrandCode = #BrandCode# AND
+			A.CounterCode = #CounterCode# AND
+			A.IFProductId = #IFProductId#
 	]]>
     </update>
     
@@ -167,8 +170,12 @@
 		FROM
 			dbo.IF_ProductByCounter A
 		WHERE
-			A.IdentityID = #IdentityID# AND
-			A.SynchFlag = '1'
+			A.IdentityID <= #IdentityID# AND
+			A.SynchFlag = '1' AND
+			A.BrandCode = #BrandCode# AND
+			A.CounterCode = #CounterCode# AND
+			A.IFProductId = #IFProductId#
+
 		]]>
     </update>
 
@@ -195,10 +202,12 @@
 			NOT EXISTS  (
 				SELECT 1 FROM [dbo].[IF_ProductByCounter] B
 				WHERE 
-					B.BrandCode = A.BrandCode
+					B.BrandCode = #brandCode#
+					AND B.SynchFlag ='1'
+					AND B.BrandCode = A.BrandCode
 					AND B.IFProductId = A.IFProductId
 					AND B.CounterCode = A.CounterCode
-					AND B.PuttingTime > A.PuttingTime
+					AND (B.IdentityID > A.IdentityID)
 			)
 			AND A.BrandCode = #brandCode#
 			AND A.SynchFlag ='1'
