@@ -753,6 +753,7 @@ public class BINBEIFPRO03_BL {
 						delMap.put("prtUpdList", prtUpdList);
 						loger.info("柜台产品下发，开始处理i="+i+",prtUpdList.size="+prtUpdList.size());
 						// 删除产品方案柜台接口表(根据brand、prtSolutionCode、产品厂商ID)
+						delMap.put("brandCode",prtSoluDetailItemMap.get("brandCode"));
 						binbeifpro03Service.delIFPrtSoluSCS(delMap);
 						loger.info("柜台产品下发，已删除到i="+i);
 						// 插入产品方案明细接口表
