@@ -1165,5 +1165,34 @@
 		
 		OUTPUT inserted.BIN_ProductPriceSolutionDetailID;
    	</select>
+
+
+	<!-- 更新产品方案明细表的产品价格为最新的产品方案价格  -->
+	<select id="mergePPSDPriceYT" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+		MERGE  Basis.BIN_ProductPriceSolutionDetail AS TGT
+		USING (
+			SELECT
+				PPS.BIN_ProductPriceSolutionID,
+				PPSD.BIN_ProductID,
+				CONVERT(Decimal(16,2),(CASE WHEN PPS.isSynchProductPrice = '1' OR PPSD.SalePrice IS NULL  THEN PP.SalePrice
+				ELSE PPSD.SalePrice END
+				)) AS salePrice,
+				CONVERT(Decimal(16,2),(CASE WHEN PPS.isSynchProductPrice = '1' OR PPSD.MemPrice IS NULL THEN PP.MemPrice
+				ELSE PPSD.MemPrice END
+				)) AS  memPrice
+			FROM Basis.BIN_ProductPriceSolutionDetail PPSD
+			JOIN Basis.BIN_ProductPriceSolution PPS ON PPSD.BIN_ProductPriceSolutionID = PPS.BIN_ProductPriceSolutionID
+			LEFT JOIN Basis.BIN_ProductPrice PP WITH(NOLOCK) ON
+				(PP.BIN_ProductID = PPSD.BIN_ProductID  AND PP.Type = '2' <![CDATA[AND PP.EndDate >= #priceDate# AND PP.StartDate <= #priceDate#]]>)
+			WHERE
+				PPS.BIN_OrganizationInfoID = #organizationInfoId#
+				AND PPS.BIN_BrandInfoID = #brandInfoId#
+		) AS SRC
+		ON TGT.BIN_ProductPriceSolutionID = SRC.BIN_ProductPriceSolutionID AND TGT.BIN_ProductID = SRC.BIN_ProductID
+		WHEN MATCHED AND (<![CDATA[TGT.SalePrice <> SRC.salePrice OR TGT.MemPrice <> SRC.memPrice]]>) THEN
+		UPDATE SET SalePrice = SRC.salePrice,MemPrice = SRC.memPrice,Version = #tVersion# + 1,
+		<include refid="BINOLCMINC99.updateSql" />
+		OUTPUT inserted.BIN_ProductPriceSolutionDetailID;
+	</select>
     
 </sqlMap>

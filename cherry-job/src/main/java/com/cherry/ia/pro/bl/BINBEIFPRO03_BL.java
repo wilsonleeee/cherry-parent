@@ -709,7 +709,7 @@ public class BINBEIFPRO03_BL {
 				}
 
 				// Step1.2.2 颖通模式时，方案价格根据当前标准产品当前业务日期的价格
-				binbeifpro03Service.mergePPSDPrice(map);
+				binbeifpro03Service.mergePPSDPriceYT(map);
 			//}
 
 			List<Map<String, Object>> prtSoluDetailByVersionList = binbeifpro03Service.getPrtSoluDetailByVersionList(map);

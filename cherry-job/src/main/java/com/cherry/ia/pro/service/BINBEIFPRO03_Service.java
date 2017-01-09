@@ -386,4 +386,13 @@ public class BINBEIFPRO03_Service extends BaseService {
 		map.put(CherryConstants.IBATIS_SQL_ID, "BINBEIFPRO03.mergePPSDPrice");
 		return baseServiceImpl.getList(map);
 	}
+	/**
+	 *  更新产品方案明细表的产品价格为最新的产品方案价格
+	 * @param map
+	 * @return
+	 */
+	public List mergePPSDPriceYT(Map<String, Object> map){
+		map.put(CherryConstants.IBATIS_SQL_ID, "BINBEIFPRO03.mergePPSDPriceYT");
+		return baseServiceImpl.getList(map);
+	}
 }
