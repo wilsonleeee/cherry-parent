@@ -723,7 +723,7 @@ public class BINBEIFPRO03_BL {
 					result++;
 					Map<String, Object> prtSoluDetailItemMap = prtSoluDetailByVersionList.get(i);
 					try{
-						prtSoluDetailItemMap.putAll(map);
+						//prtSoluDetailItemMap.putAll(map);
 						// 设置产品方案柜台接口表的状态值
 						getPrtSoluSCSStatus(prtSoluDetailItemMap);
 						/*// 删除产品方案柜台接口表(根据brand、prtSolutionCode、产品厂商ID)
