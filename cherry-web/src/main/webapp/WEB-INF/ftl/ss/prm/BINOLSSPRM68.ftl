@@ -65,6 +65,11 @@
 								{'CodeKey':'RANDOM','Value':'quantityType_RANDOM2'}]/>
 								
 <#assign quantityTypeListALL = [{'CodeKey':'ALL','Value':'quantityType_ALL'}]/>
+
+<#assign basePriceList = [{'CodeKey':'0','Value':'basePrice_0'},
+	{'CodeKey':'1','Value':'basePrice_1'},
+	{'CodeKey':'2','Value':'basePrice_2'}]/>
+
 <div class="main container clearfix" id="div_main">
 	<div class="panel ui-corner-all">
 		<@pageTitle/>

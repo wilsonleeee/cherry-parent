@@ -261,9 +261,9 @@ public class BINOLSSPRM68_BL {
 	 *            内容
 	 * @return
 	 */
-	public String packJson(String vsn, String cptb, String type, String json) {
+	public String packJson(String vsn, String cptb, String type,String basePrice, String json) {
 		String prefix = "{\"Version\":\"" + vsn + "\",\"Compatible\":\"" + cptb
-				+ "\",\"Type\":\"" + type + "\",\"Content\":";
+				+ "\",\"Type\":\"" + type + "\",\"BasePrice\":\"" + basePrice + "\",\"Content\":";
 		String suffix = "}";
 		json = json.replace("\"[", "[").replace("]\"", "]");
 		return prefix + json + suffix;

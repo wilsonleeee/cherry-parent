@@ -366,6 +366,7 @@ public class BINOLSSPRM68_Action extends BaseAction{
 		if(null != ruleCondJson && !"".equals(ruleCondJson)){
 			try {
 				Map<String, Object> conMap = (Map<String, Object>)JSONUtil.deserialize(ruleCondJson);
+				pageTemp.put("basePrice", conMap.get("BasePrice"));
 				pageTemp.put("conMap", conMap.get("Content"));
 			} catch (JSONException e) {
 				logger.error(e.getMessage(),e);
@@ -497,11 +498,11 @@ public class BINOLSSPRM68_Action extends BaseAction{
 			String ruleCondJson = pageD.get("ruleCondJson");
 			String ruleResultJson = pageD.get("ruleResultJson");
 			if(null != ruleCondJson && !"".equals(ruleCondJson)){
-				ruleCondJson = prm68_BL.packJson("RV.01.0001","1","1",ruleCondJson);
+				ruleCondJson = prm68_BL.packJson("RV.01.0001","1","1",pageD.get("basePrice"),ruleCondJson);
 				pageD.put("ruleCondJson",ruleCondJson);
 			}
 			if(null != ruleResultJson && !"".equals(ruleResultJson)){
-				ruleResultJson = prm68_BL.packJson("RV.01.0001","1","2",ruleResultJson);
+				ruleResultJson = prm68_BL.packJson("RV.01.0001","1","2",pageD.get("basePrice"),ruleResultJson);
 				pageD.put("ruleResultJson",ruleResultJson);
 			}
 			//促销规则购买条件验证
