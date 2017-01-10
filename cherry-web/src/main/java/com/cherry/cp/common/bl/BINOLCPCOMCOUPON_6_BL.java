@@ -41,9 +41,9 @@ public class BINOLCPCOMCOUPON_6_BL{
 	protected static final Logger logger = LoggerFactory
 			.getLogger(BINOLCPCOMCOUPON_6_BL.class);
 
-	public static final int bitCount = 11;// 2的11次方的大质数
+	public static final int bitCount = 10;// 2的10次方的大质数
 	
-	public static final int bitCountQ = 10;// 2的10次方的大质数
+	public static final int bitCountQ = 9;// 2的9次方的大质数
 	
 	public static final int length = 6;// coupon位数
 	public static final int defSeqNum = 2;
