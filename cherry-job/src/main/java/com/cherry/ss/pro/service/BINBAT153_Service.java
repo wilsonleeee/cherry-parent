@@ -121,13 +121,12 @@ public class BINBAT153_Service extends BaseService {
 
 	/**
 	 * 	插入产品入出库批次数据
-	 * @param map
+	 * @param list
 	 * @return
 	 * 
 	 * */
-	public void insertProBat(Map<String, Object> map) {
-		map.put(CherryBatchConstants.IBATIS_SQL_ID,"BINBAT153.insertProBat");
-		tpifServiceImpl.save(map);
+	public void insertProBat(List<Map<String, Object>> list) {
+		tpifServiceImpl.saveAll(list,"BINBAT153.insertProBat");
 		
 	}
 
@@ -140,7 +139,7 @@ public class BINBAT153_Service extends BaseService {
 	public int updIFProBat(Map<String, Object> map) {
 		map.put(CherryConstants.IBATIS_SQL_ID, "BINBAT153.updIFProBat");
 		return baseServiceImpl.update(map);
-		
+
 	}
 	
 	/**

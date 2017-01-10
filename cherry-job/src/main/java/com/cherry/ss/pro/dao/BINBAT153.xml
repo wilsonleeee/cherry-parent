@@ -24,7 +24,7 @@
 		  FROM 
 			 Inventory.BIN_ProductBatchInOut A WITH(NOLOCK)
 		  WHERE not exists ( SELECT
-			DISTINCT B.BIN_ProductBatchInOutID 	
+						1
 		  FROM 
 			 Inventory.BIN_ProductBatchInOutDetail B WITH(NOLOCK)
 		  WHERE A.BIN_ProductBatchInOutID =B.BIN_ProductBatchInOutID 
@@ -42,8 +42,8 @@
 	<select id="getListByBillCodeForOT" parameterClass="java.util.HashMap" resultClass="java.lang.String">
       <![CDATA[
 		SELECT
-			RelevanceNo 
-		FROM 
+			1
+		FROM
 			dbo.IF_ProductBatchInOut(NOLOCK)
 		WHERE
 			RelevanceNo=#RelevanceNo#
@@ -86,73 +86,20 @@
 	  A
 	  SET 
 		A.SynchFlag = #synchFlag_New#,
-		<isNotEmpty property="updateTime">
-			A.UpdateTime=#updateTime#,
-		</isNotEmpty>
-		<isEmpty property="updateTime">
-			A.UpdateTime=GETDATE(),
-		</isEmpty>
-		<![CDATA[
+		A.UpdateTime=GETDATE(),
 			A.UpdatedBy=#updatedBy#,
 			A.UpdatePGM=#updatePGM#,
 			A.ModifyCount=A.ModifyCount+1
 	  FROM 
 	      Inventory.BIN_ProductBatchInOut A
-	  WHERE not exists ( SELECT
-			    DISTINCT B.BIN_ProductBatchInOutID 	
-		  FROM 
-			    Inventory.BIN_ProductBatchInOutDetail B WITH(NOLOCK)
-		  WHERE A.BIN_ProductBatchInOutID =B.BIN_ProductBatchInOutID 
-		  AND   B.ValidFlag = '1'
-		  AND  B.CostPrice IS NULL)
+	  WHERE not exists ( SELECT    1	  FROM 	    Inventory.BIN_ProductBatchInOutDetail B WITH(NOLOCK)
+	  WHERE A.BIN_ProductBatchInOutID =B.BIN_ProductBatchInOutID 	  AND   B.ValidFlag = '1'	  AND  B.CostPrice IS NULL)
 	  AND      A.ValidFlag = '1'
-	  AND      A.SynchFlag IS NULL     
-		]]>
-	  	<isNotEmpty property="billCodeListOfNullSynArr" prepend="AND">
-	  		A.BIN_ProductBatchInOutID  IN
-			<iterate property="billCodeListOfNullSynArr" open="(" close=")" conjunction=",">
-				#billCodeListOfNullSynArr[]#
-			</iterate>
-	  	</isNotEmpty>
+	  AND      A.SynchFlag IS NULL
 	  AND A.BIN_OrganizationInfoID = #organizationInfoId#
 	  AND A.BIN_BrandInfoID = #brandInfoId#
     </update>
-	
-	   <!-- 更新入出库批次明细表的同步状态 （由NULL改为1）-->
-    <update id="updDetailProBatBySynNull" parameterClass="java.util.HashMap">
-	  UPDATE 
-	  A
-	  SET 
-		A.SynchFlag = #synchFlag_New#,
-		<isNotEmpty property="updateTime">
-			A.UpdateTime=#updateTime#,
-		</isNotEmpty>
-		<isEmpty property="updateTime">
-			A.UpdateTime=GETDATE(),
-		</isEmpty>
-		<![CDATA[
-			A.UpdatedBy=#updatedBy#,
-			A.UpdatePGM=#updatePGM#,
-			A.ModifyCount=A.ModifyCount+1
-	  FROM 
-	      Inventory.BIN_ProductBatchInOutDetail A
-	  WHERE not exists ( SELECT
-			DISTINCT B.BIN_ProductBatchInOutID 	
-		  FROM 
-			 Inventory.BIN_ProductBatchInOutDetail B WITH(NOLOCK)
-		  WHERE  A.BIN_ProductBatchInOutID =B.BIN_ProductBatchInOutID 
-		  AND    B.ValidFlag = '1'
-		  AND    B.CostPrice IS NULL)
-		  AND    A.ValidFlag = '1'
-		  AND    A.SynchFlag IS NULL     
-		]]>
-	  	<isNotEmpty property="billCodeListOfNullSynArr" prepend="AND">
-	  		A.BIN_ProductBatchInOutID  IN
-			<iterate property="billCodeListOfNullSynArr" open="(" close=")" conjunction=",">
-				#billCodeListOfNullSynArr[]#
-			</iterate>
-	  	</isNotEmpty>
-    </update>
+
     
     
     <!-- 取得指定同步状态为空的产品入出库批次IDList （主数据） -->
@@ -168,13 +115,13 @@
 		  FROM 
 			 Inventory.BIN_ProductBatchInOut A WITH(NOLOCK)
 		  WHERE not exists ( SELECT
-			DISTINCT B.BIN_ProductBatchInOutID 	
+					1
 		  FROM 
 			 Inventory.BIN_ProductBatchInOutDetail B WITH(NOLOCK)
 		  WHERE A.BIN_ProductBatchInOutID =B.BIN_ProductBatchInOutID 
 		  AND  B.ValidFlag = '1'
 		  AND B.CostPrice IS NULL)
-		  AND	 A.SynchFlag IS NULL
+		  AND	 A.SynchFlag = #synchFlag_New#
 		  AND A.ValidFlag = '1'
 		  AND A.BIN_OrganizationInfoID = #organizationInfoId#
 		  AND A.BIN_BrandInfoID = #brandInfoId#
@@ -186,6 +133,7 @@
     <select id="getProBatList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
 	  <![CDATA[
 		  SELECT
+		  	  TOP (#updateSize#)
 		      A.BIN_ProductBatchInOutID,
 			  A.RelevanceNo,
 			  A.TradeNoIF, 
@@ -222,14 +170,7 @@
 		  ON  D.BIN_OrganizationIDOut=H.BIN_OrganizationID	
 		  LEFT JOIN Basis.BIN_Organization I
 		  ON  F.BIN_OrganizationID=I.BIN_OrganizationID	
-		  WHERE not exists ( SELECT
-			DISTINCT B.BIN_ProductBatchInOutID 	
-		  FROM 
-			 Inventory.BIN_ProductBatchInOutDetail B WITH(NOLOCK)
-		  WHERE A.BIN_ProductBatchInOutID =B.BIN_ProductBatchInOutID 
-		  AND   B.ValidFlag = '1'
-		  AND   B.CostPrice IS NULL)
-		  AND   (A.SynchFlag = '1' OR A.SynchFlag = '3')
+		  WHERE   A.SynchFlag = '1'
 		  AND   A.ValidFlag = '1'
 		  AND   A.BIN_OrganizationInfoID = #organizationInfoId#
 		  AND   A.BIN_BrandInfoID = #brandInfoId#
@@ -290,26 +231,16 @@
 	  A
 	  SET 
 		A.SynchFlag = #synchFlag_New#,
-		<isNotEmpty property="updateTime">
-			A.UpdateTime=#updateTime#,
-		</isNotEmpty>
-		<isEmpty property="updateTime">
-			A.UpdateTime=GETDATE(),
-		</isEmpty>
-		<![CDATA[
-			A.UpdatedBy=#updatedBy#,
-			A.UpdatePGM=#updatePGM#,
-			A.ModifyCount=A.ModifyCount+1
+		A.UpdateTime=GETDATE(),
+		A.UpdatedBy=#updatedBy#,
+		A.UpdatePGM=#updatePGM#,
+		A.ModifyCount=A.ModifyCount+1
 	  FROM 
 	      Inventory.BIN_ProductBatchInOut A
-	  WHERE
-	      A.ValidFlag = '1'
-	  AND A.BIN_OrganizationInfoID = #organizationInfoId#
-	  AND A.BIN_BrandInfoID = #brandInfoId#
-	  ]]>
-	  <isNotEmpty property="BIN_ProductBatchInOutID"  prepend="AND" >
-			A.BIN_ProductBatchInOutID=#BIN_ProductBatchInOutID#
-		</isNotEmpty>
+	  WHERE A.BIN_ProductBatchInOutID IN
+		<iterate property="proBatList" open="(" close=")" conjunction=",">
+			#proBatList[].BIN_ProductBatchInOutID#
+		</iterate>
     </update>
     
     
@@ -345,6 +276,7 @@
 	  <![CDATA[
 		  SELECT
 		      A.BIN_ProductInOutDetailID,
+		      A.BIN_ProductBatchInOutID,
 		      A.StockType,
 			  A.RelevanceNo,
 			  A.DetailNo ,
@@ -358,7 +290,10 @@
 			  A.Comments,
 			  A.ChangeCount,
 			  Y.Quantity  BookQuantity,
-			  A.CreateTime
+			  A.CreateTime,
+			  (SELECT D.TradeNoIF
+			  FROM Inventory.BIN_ProductBatchInOut D WHERE D.BIN_ProductBatchInOutID =
+			  A.BIN_ProductBatchInOutID)  TradeNoIF
 		  FROM 
 			  Inventory.BIN_ProductBatchInOutDetail A WITH(NOLOCK)
 		  LEFT JOIN Basis.BIN_ProductVendor PV ON A.BIN_ProductVendorID = PV.BIN_ProductVendorID
@@ -368,12 +303,15 @@
 		  LEFT JOIN Inventory.BIN_ProductStockTaking X ON A.RelevanceNo=X.StockTakingNoIF
 		  LEFT JOIN Inventory.BIN_ProductTakingDetail Y ON X.BIN_ProductStockTakingID=Y.BIN_ProductTakingID AND A.BIN_ProductVendorID=Y.BIN_ProductVendorID AND A.BIN_InventoryInfoID=Y.BIN_InventoryInfoID AND A.BIN_LogicInventoryInfoID=Y.BIN_LogicInventoryInfoID	
 		  WHERE
-			  (A.SynchFlag = '1' OR A.SynchFlag = '3')
-		  AND A.ValidFlag = '1'
-		]]>	
-		<isNotEmpty property="BIN_ProductBatchInOutID"  prepend="AND" >
-			A.BIN_ProductBatchInOutID=#BIN_ProductBatchInOutID#
+		  	A.ValidFlag = '1'
+		]]>
+		<isNotEmpty property="proBatList" prepend="AND">
+			A.BIN_ProductBatchInOutID IN
+			<iterate property="proBatList" open="(" close=")" conjunction=",">
+				#proBatList[].BIN_ProductBatchInOutID#
+			</iterate>
 		</isNotEmpty>
+
     </select>
     
      <!-- 插入入出库批次明细表接口表 -->
@@ -426,13 +364,6 @@
 	  A
 	  SET 
 		A.SynchFlag = #synchFlag_New#,
-		<isNotEmpty property="updateTime">
-			A.UpdateTime=#updateTime#,
-		</isNotEmpty>
-		<isEmpty property="updateTime">
-			A.UpdateTime=GETDATE(),
-		</isEmpty>
-		<![CDATA[
 			A.UpdatedBy=#updatedBy#,
 			A.UpdatePGM=#updatePGM#,
 			A.ModifyCount=A.ModifyCount+1
@@ -440,7 +371,6 @@
 	      Inventory.BIN_ProductBatchInOutDetail A
 	  WHERE
 	      A.ValidFlag = '1'
-		]]>
 	 	<isNotEmpty property="BIN_ProductBatchInOutID"  prepend="AND" >
 			A.BIN_ProductBatchInOutID=#BIN_ProductBatchInOutID#
 		</isNotEmpty>
