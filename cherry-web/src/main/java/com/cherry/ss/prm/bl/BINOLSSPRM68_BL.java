@@ -100,11 +100,13 @@ public class BINOLSSPRM68_BL {
 	 * @throws JSONException
 	 */
 	@SuppressWarnings("unchecked")
-	public String getPlaceJson(Map<String, String> palceMap,
+	public String[] getPlaceJson(Map<String, String> palceMap,
 			Map<String, Object> map) throws JSONException {
+		String[] resArr = new String[2];
+		resArr[0] = "[]";
+		resArr[1] = "[]";
 		// 活动树的所有节点
 		List<Map<String, Object>> nodeList = null;
-		String res = "[]";
 		String palceJson = palceMap.get(CampConstants.PLACE_JSON);
 		if(null != palceJson && !"".equals(palceJson)){
 			String locationType = palceMap.get("locationType");
@@ -115,27 +117,56 @@ public class BINOLSSPRM68_BL {
 				if (CampConstants.LOTION_TYPE_0.equals(locationType)
 						|| CampConstants.LOTION_TYPE_5.equals(locationType)) {
 					nodeList = checkedNodes;
+					resArr[0] = JSONUtil.serialize(nodeList);
+					resArr[1] = "[\"ALL\"]";
 				} else if (!"".equals(locationType)) {
 					Map<String, Object> params = new HashMap<String, Object>(map);
 					params.put(CampConstants.LOCATION_TYPE, locationType);
 					// 加载柜台
 					params.put(CampConstants.LOADING_CNT, 1);
 					nodeList = poi01_BL.getActiveLocation(params);
-				}
-				if (null != nodeList) {
-					// 设置节点选中状态
-					if (null != checkedNodes) {
-						for (int i = 0; i < checkedNodes.size(); i++) {
-							Map<String, Object> checkedNode = checkedNodes.get(i);
-							ActUtil.setNodes(nodeList, checkedNode);
+					resArr[0] = JSONUtil.serialize(nodeList);
+					String opt = ConvertUtil.getString(map.get("OPT_KBN"));
+					if(!"1".equals(opt) && (CampConstants.LOTION_TYPE_2.equals(locationType)
+							|| CampConstants.LOTION_TYPE_4.equals(locationType)
+							|| CampConstants.LOTION_TYPE_8.equals(locationType)
+							|| CampConstants.LOTION_TYPE_10.equals(locationType)
+							)){
+						int step = ConvertUtil.getInt(map.get("step"));
+						List<String> checkedList = null;
+						if(step == 1){
+							params.put("activeID",map.get("activeID"));
+							params.put("basePropName","baseProp_counter");
+							checkedList = prm68Ser.getProRulePlaceList(params);
+							if(null != checkedList && !checkedList.isEmpty()){
+								resArr[1] = JSONUtil.serialize(checkedList);
+							}
+						}else{
+							checkedList = new LinkedList<String>();
+							for(Map<String, Object> checked : checkedNodes) {
+								boolean halfCheck = (boolean)checked.get("half");
+								if(!halfCheck){
+									checkedList.add(ConvertUtil.getString(checked.get("id")));
+								}
+							}
+							resArr[1] = JSONUtil.serialize(checkedList);
 						}
+					}else{
+						List<String> checkedList = new LinkedList<String>();
+						for(Map<String, Object> checked : checkedNodes) {
+							boolean halfCheck = (boolean)checked.get("half");
+							if(!halfCheck){
+								checkedList.add(ConvertUtil.getString(checked.get("id")));
+							}
+						}
+						resArr[1] = JSONUtil.serialize(checkedList);
 					}
-					res = JSONUtil.serialize(nodeList);
 				}
 			}
 		}
-		return res;
+		return resArr;
 	}
+
 	/**
 	 * 保存促销规则
 	 *
@@ -550,7 +581,7 @@ public class BINOLSSPRM68_BL {
 			for (Map<String,Object> userMap :userAuthorityPlaceList){
 				userAuthorityMap.put(userMap.get("code"),userMap.get("name"));
 			}
-			List<Object> activePlaceList = getProRulePlaceList(parMap,locationType);
+			List<String> activePlaceList = getProRulePlaceList(parMap,locationType);
 //			if(CampConstants.LOTION_TYPE_2.equals(locationType)
 //					||CampConstants.LOTION_TYPE_4.equals(locationType)
 //					||CampConstants.LOTION_TYPE_5.equals(locationType)
@@ -596,7 +627,7 @@ public class BINOLSSPRM68_BL {
 	 * @param locationType
      * @return
      */
-	public List<Object> getProRulePlaceList(Map<String,Object> map,String locationType){
+	public List<String> getProRulePlaceList(Map<String,Object> map,String locationType){
 		if(CampConstants.LOTION_TYPE_2.equals(locationType)
 				||CampConstants.LOTION_TYPE_4.equals(locationType)
 				||CampConstants.LOTION_TYPE_5.equals(locationType)

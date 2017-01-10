@@ -220,7 +220,7 @@ public class BINOLSSPRM68_Service extends BaseService {
 	 * @param map
 	 * @return
      */
-	public List<Object> getProRulePlaceList(Map<String, Object> map){
+	public List<String> getProRulePlaceList(Map<String, Object> map){
 		map.put(CherryConstants.IBATIS_SQL_ID, "BINOLSSPRM68.getProRulePlaceList");
 		return baseServiceImpl.getList(map);
 	}

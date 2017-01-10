@@ -141,6 +141,7 @@ public class BINOLSSPRM68_Action extends BaseAction{
 				}
 			}
 			pageNo += step;
+			comMap.put("step",step);
 			// 获取下一页展示信息
 			initPage(comMap,pageNo);
 		} catch (Exception e) {
@@ -183,6 +184,7 @@ public class BINOLSSPRM68_Action extends BaseAction{
 			pageB.put("startTime",pageA.get("startTime"));
 			pageB.put("endTime",pageA.get("endTime"));
 			pageB.put("locationType",pageA.get("locationType"));
+			pageB.put("ruleID",pageA.get("ruleID"));
 			pageB.put(CampConstants.PLACE_JSON,pageA.get(CampConstants.PLACE_JSON));
 			pageC.put("searchCode",pageA.get("searchCode"));
 			pageC.put("memberType",pageA.get("memberType"));
@@ -291,7 +293,7 @@ public class BINOLSSPRM68_Action extends BaseAction{
 								.deserialize(palceJson);
 						List<Map<String, Object>> newList = new LinkedList<Map<String, Object>>();
 						for(Map<String, Object> palce : palceList){
-							Object p = palce.get("isParent");
+							Object p = palce.get("half");
 							if(null == p || !(Boolean)p){
 								newList.add(palce);
 							}
@@ -300,8 +302,9 @@ public class BINOLSSPRM68_Action extends BaseAction{
 					}
 
 				}else{
-					String placeJson = prm68_BL.getPlaceJson(pageB, map);
-					pageTemp.put(CampConstants.PLACE_JSON, placeJson);
+					String[] placeJson = prm68_BL.getPlaceJson(pageB, map);
+					pageTemp.put(CampConstants.PLACE_JSON, placeJson[0]);
+					pageTemp.put("checkedJson", placeJson[1]);
 				}
 			} catch (JSONException e) {
 				logger.error(e.getMessage(),e);

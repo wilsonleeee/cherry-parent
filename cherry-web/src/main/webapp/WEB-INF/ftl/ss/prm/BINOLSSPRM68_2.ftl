@@ -7,7 +7,7 @@ $(document).ready(function() {
 	PRM68_2.calEventBind();
 	PRM68_2.initTime();
 	// 活动范围树初始化
-	CHERRYTREE.loadTree('${pageTemp.placeJson!}',0);
+	CHERRYTREE.loadTree2('${pageTemp.placeJson!}',0,'${pageTemp.checkedJson!}');
 });
 </script>
 <div class="box4">

@@ -64,6 +64,46 @@ cherryTree.prototype = {
 			that.trees[index].checkAllNodes(true);
 		}
 	},
+	// 加载树节点
+	"loadTree2" : function(nodes,index,checkedNodes) {
+		var that = this;
+		var treeNodes = null;
+		var checked = null;
+		//绑定区域、柜台、渠道
+		that.bindingInput(index);
+		if(typeof(nodes) != "object"){
+			treeNodes = eval("(" + nodes + ")");
+		}else{
+			treeNodes = nodes;
+		}
+		if(typeof(checkedNodes) != "object"){
+			checked = eval("(" + checkedNodes + ")");
+		}
+		that.trees[index] = $.fn.zTree.init($("#tree_" + index),that.setting,treeNodes);
+		if(!isEmpty(checked)){
+			var treeObj = that.trees[index];
+			var k=checked.length;
+			if(k == 1 && checked=='ALL'){
+				treeObj.checkAllNodes(true);
+			}else{
+				var nodes = treeObj.transformToArray(treeObj.getNodes());
+				for (var i=0, l=nodes.length; i < l; i++) {
+					var node = nodes[i];
+					var isMatch = false;
+					for(var j=0; j < k; j++){
+						if(node.id == checked[j]){
+							isMatch = true;
+							break;
+						}
+					}
+					if(isMatch){
+						treeObj.checkNode(node, true, true);
+					}
+				}
+			}
+		}
+
+	},
 	//下拉框绑定区域、柜台、渠道
 	"bindingInput": function(index){
 		var $selectVal = $("#locationType_"+index).val();

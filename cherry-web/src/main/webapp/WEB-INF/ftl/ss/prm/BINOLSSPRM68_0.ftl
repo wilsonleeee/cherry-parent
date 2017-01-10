@@ -93,9 +93,22 @@
                        		 <ul id="morePlace" class="hide">
 						</#if>
                         <li class="left" style="width:25%;white-space: nowrap;list-style-type:none;">
-								<span style="margin:5px 0px;width:210px;">
-								${placeMap.name}
-								</span>
+
+							<#if !placeMap.half && !(placeMap.isParent!false)>
+								<#if placeMap.level=0>
+									<span style="color:#FF3030;white-space: nowrap;margin:5px 0px;width:210px;">${(placeMap.name)!?html}</span>
+								</#if>
+								<#if placeMap.level=1>
+									<span style="color:#FF7F24;white-space: nowrap;margin:5px 0px;width:210px;">${(placeMap.name)!?html}</span>
+								</#if>
+								<#if placeMap.level=2>
+									<span style="color:#4876FF;white-space: nowrap;margin:5px 0px;width:210px;">${(placeMap.name)!?html}</span>
+								</#if>
+								<#if placeMap.level=3>
+									<span style="color:#32CD32;white-space: nowrap;margin:5px 0px;width:210px;">${(placeMap.name)!?html}</span>
+								</#if>
+
+							</#if>
                         </li>
 					<#if (placeMap_index+1 == placeMap.size())||(placeMap_index == 11)>
                     	</ul>
