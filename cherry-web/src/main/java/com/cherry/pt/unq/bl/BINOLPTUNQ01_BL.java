@@ -29,6 +29,8 @@ import com.cherry.cm.core.CherryConstants;
 import com.cherry.cm.core.PropertiesUtil;
 import com.cherry.cm.util.ConvertUtil;
 
+import com.cherry.cp.common.bl.BINOLCPCOMCOUPON_10_1_BL;
+import com.cherry.cp.common.bl.BINOLCPCOMCOUPON_6_BL;
 import com.cherry.mo.common.interfaces.BINOLMOCOM01_IF;
 import com.cherry.cp.common.CampConstants;
 import com.cherry.cp.common.bl.BINOLCPCOMCOUPON_15_BL;
@@ -54,9 +56,15 @@ public class BINOLPTUNQ01_BL implements BINOLPTUNQ01_IF,Serializable, BINOLCM37_
 	
 	@Resource
 	private BINOLPTUNQ01_Service binOLPTUNQ01_Service;		
-	
+
 	@Resource(name="binolcpcomcoupon15bl")
 	private transient BINOLCPCOMCOUPON_15_BL binolcpcomcoupon15bl;
+
+	@Resource(name="binolcpcomcoupon10_1_bl")
+	private transient BINOLCPCOMCOUPON_10_1_BL binolcpcomcoupon10_1_bl;
+
+	@Resource(name="binolcpcomcoupon6bl")
+	private transient BINOLCPCOMCOUPON_6_BL binolcpcomcoupon6bl;
 	
 	/** 系统配置项 共通BL */
 	@Resource(name="binOLCM14_BL")
@@ -244,37 +252,41 @@ public class BINOLPTUNQ01_BL implements BINOLPTUNQ01_IF,Serializable, BINOLCM37_
 		
 		List<String> xmList = null; // 定义箱码List j
 		List<String> pointUnqCodeList = null; // 定义箱码List 
-		List<String> relUniqueCodeList = null; // 定义箱码List 
-		
+		List<String> relUniqueCodeList = null; // 定义箱码List
+
+		String organizationInfoId = ConvertUtil.getString(map.get("organizationInfoId"));
+		String brandInfoId = ConvertUtil.getString(map.get("brandInfoId"));
+		// 随机码长度
+		String codeLen = binOLCM14_BL.getConfigValue("1399", organizationInfoId, brandInfoId);
 		// 生成箱码
 		if("1".equals(needBoxCode)){
 			// 系统配置项【唯一码维护】生成箱码规则 1:通用规则 2:家化规则  
-			String genXMConf = binOLCM14_BL.getConfigValue("1359", String.valueOf(map.get("organizationInfoId")), String.valueOf(map.get("brandInfoId")));
+			String genXMConf = binOLCM14_BL.getConfigValue("1359", organizationInfoId, brandInfoId);
 			if("2".equals(genXMConf)){
-				xmList = genXM_TY(map, boxCount, xmList);
+				xmList = genXM_TY(map, boxCount, xmList, codeLen);
 			}else{
 				// 通用规则
-				xmList = genXM_TY(map, boxCount, xmList);
+				xmList = genXM_TY(map, boxCount, xmList, codeLen);
 			}
 		}
 		
 		// 生成积分唯一码  。系统配置项【唯一码维护】生成积分唯一码规则  1:通用规则 2:家化规则  
-		String pointUnqCodeConf = binOLCM14_BL.getConfigValue("1357", String.valueOf(map.get("organizationInfoId")), String.valueOf(map.get("brandInfoId")));
+		String pointUnqCodeConf = binOLCM14_BL.getConfigValue("1357", organizationInfoId, brandInfoId);
 		if("2".equals(pointUnqCodeConf)){
-			pointUnqCodeList = genPointUnqCode_TY(map, generateCount,pointUnqCodeList);
+			pointUnqCodeList = genPointUnqCode_TY(map, generateCount,pointUnqCodeList, codeLen);
 		}else{
 			// 通用规则
-			pointUnqCodeList = genPointUnqCode_TY(map, generateCount,pointUnqCodeList);
+			pointUnqCodeList = genPointUnqCode_TY(map, generateCount,pointUnqCodeList, codeLen);
 		}
 		
 		// 生成关联唯一码
 		if("2".equals(generateType)){
 			// 系统配置项【唯一码维护】生成关联唯一码规则 1:通用规则 2:家化规则  
-			String genXMConf = binOLCM14_BL.getConfigValue("1358", String.valueOf(map.get("organizationInfoId")), String.valueOf(map.get("brandInfoId")));
+			String genXMConf = binOLCM14_BL.getConfigValue("1358", organizationInfoId, brandInfoId);
 			if("2".equals(genXMConf)){
-				relUniqueCodeList = genRelUnqCode_TY(map, generateCount,relUniqueCodeList);
+				relUniqueCodeList = genRelUnqCode_TY(map, generateCount,relUniqueCodeList, codeLen);
 			}else{
-				relUniqueCodeList = genRelUnqCode_TY(map, generateCount,relUniqueCodeList);
+				relUniqueCodeList = genRelUnqCode_TY(map, generateCount,relUniqueCodeList, codeLen);
 			}
 		}
 		
@@ -323,17 +335,26 @@ public class BINOLPTUNQ01_BL implements BINOLPTUNQ01_IF,Serializable, BINOLCM37_
 	 * @param map
 	 * @param generateCount
 	 * @param relUniqueCodeList
+	 * @param codeLen : 随机码长度
 	 * @return
 	 * @throws Exception
 	 */
-	private List<String> genRelUnqCode_TY(Map<String, Object> map,Long generateCount, List<String> relUniqueCodeList) throws Exception {
+	private List<String> genRelUnqCode_TY(Map<String, Object> map,Long generateCount, List<String> relUniqueCodeList, String codeLen) throws Exception {
 		Map<String,Object> relUniqueCodeParam = new HashMap<String, Object>();
 		relUniqueCodeParam.put("organizationInfoId", map.get("organizationInfoId"));
 		relUniqueCodeParam.put("brandInfoId", map.get("brandInfoId"));
-		relUniqueCodeParam.put(CampConstants.CAMP_CODE,"RelUniqueCode"); // 固定值，用于取随机数
+		relUniqueCodeParam.put(CampConstants.CAMP_CODE,"RelUniqueCode"); // 15位随机数据的固定值，用于取随机数
 		relUniqueCodeParam.put("couponCount", generateCount); // 需要获取的箱码数量
 		try {
-			relUniqueCodeList = binolcpcomcoupon15bl.generateCoupon(relUniqueCodeParam);
+			if("6".equals(codeLen)) {
+				relUniqueCodeParam.put(CampConstants.CAMP_CODE,"RelUniqueCode"+codeLen); // 非15位随机数据的固定值，用于取随机数
+				relUniqueCodeList = binolcpcomcoupon6bl.generateCoupon(relUniqueCodeParam);
+			} else if("10".equals(codeLen)){
+				relUniqueCodeParam.put(CampConstants.CAMP_CODE,"RelUniqueCode"+codeLen); // 非15位随机数据的固定值，用于取随机数
+				relUniqueCodeList = binolcpcomcoupon10_1_bl.generateCoupon(relUniqueCodeParam);
+			} else {
+				relUniqueCodeList = binolcpcomcoupon15bl.generateCoupon(relUniqueCodeParam);
+			}
 		} catch (Exception e) {
 			throw e;
 		}
@@ -345,17 +366,27 @@ public class BINOLPTUNQ01_BL implements BINOLPTUNQ01_IF,Serializable, BINOLCM37_
 	 * @param map
 	 * @param generateCount
 	 * @param pointUnqCodeList
+	 * @param codeLen : 随机码长度
 	 * @return
 	 * @throws Exception
 	 */
-	private List<String> genPointUnqCode_TY(Map<String, Object> map,Long generateCount, List<String> pointUnqCodeList) throws Exception {
+	private List<String> genPointUnqCode_TY(Map<String, Object> map,Long generateCount, List<String> pointUnqCodeList, String codeLen) throws Exception {
 		Map<String,Object> pointUnqCodeParam = new HashMap<String, Object>();
 		pointUnqCodeParam.put("organizationInfoId", map.get("organizationInfoId"));
 		pointUnqCodeParam.put("brandInfoId", map.get("brandInfoId"));
-		pointUnqCodeParam.put(CampConstants.CAMP_CODE,"PointUnqCode"); // 固定值，用于取随机数
+		pointUnqCodeParam.put(CampConstants.CAMP_CODE,"PointUnqCode"); // 15位随机数据的固定值，用于取随机数
 		pointUnqCodeParam.put("couponCount", generateCount); // 需要获取的[积分唯一码]数量
 		try {
-			pointUnqCodeList = binolcpcomcoupon15bl.generateCoupon(pointUnqCodeParam);
+			if("6".equals(codeLen)) {
+				pointUnqCodeParam.put(CampConstants.CAMP_CODE,"PointUnqCode"+codeLen); // 非15位随机数据的固定值，用于取随机数
+				pointUnqCodeList = binolcpcomcoupon6bl.generateCoupon(pointUnqCodeParam);
+			} else if("10".equals(codeLen)){
+				pointUnqCodeParam.put(CampConstants.CAMP_CODE,"PointUnqCode"+codeLen); // 非15位随机数据的固定值，用于取随机数
+				pointUnqCodeList = binolcpcomcoupon10_1_bl.generateCoupon(pointUnqCodeParam);
+			} else {
+				pointUnqCodeList = binolcpcomcoupon15bl.generateCoupon(pointUnqCodeParam);
+			}
+
 		} catch (Exception e) {
 			throw e;
 		}
@@ -367,17 +398,27 @@ public class BINOLPTUNQ01_BL implements BINOLPTUNQ01_IF,Serializable, BINOLCM37_
 	 * @param map
 	 * @param boxCount
 	 * @param xmList
+	 * @param codeLen : 随机码长度
 	 * @return
 	 * @throws Exception
 	 */
-	private List<String> genXM_TY(Map<String, Object> map, Integer boxCount,List<String> xmList) throws Exception {
+	private List<String> genXM_TY(Map<String, Object> map, Integer boxCount,List<String> xmList, String codeLen) throws Exception {
 		Map<String,Object> xmParam = new HashMap<String, Object>();
 		xmParam.put("organizationInfoId", map.get("organizationInfoId"));
 		xmParam.put("brandInfoId", map.get("brandInfoId"));
-		xmParam.put(CampConstants.CAMP_CODE,"BoxCode"); // 固定值，用于取随机数
+		xmParam.put(CampConstants.CAMP_CODE,"BoxCode"); // 15位随机数据的固定值，用于取随机数
 		xmParam.put("couponCount", boxCount); // 需要获取的箱码数量
 		try {
-			xmList = binolcpcomcoupon15bl.generateCoupon(xmParam);
+			if("6".equals(codeLen)) {
+				xmParam.put(CampConstants.CAMP_CODE,"BoxCode"+codeLen); // 非15位随机数据的固定值，用于取随机数
+				xmList = binolcpcomcoupon6bl.generateCoupon(xmParam);
+			} else if("10".equals(codeLen)){
+				xmParam.put(CampConstants.CAMP_CODE,"BoxCode"+codeLen); // 非15位随机数据的固定值，用于取随机数
+				xmList = binolcpcomcoupon10_1_bl.generateCoupon(xmParam);
+			} else {
+				xmList = binolcpcomcoupon15bl.generateCoupon(xmParam);
+			}
+
 		} catch (Exception e) {
 			throw e;
 		}
