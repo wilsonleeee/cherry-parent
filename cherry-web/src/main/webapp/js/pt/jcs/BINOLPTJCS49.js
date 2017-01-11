@@ -4,6 +4,39 @@ function BINOLPTJCS49(){
 };
 
 BINOLPTJCS49.prototype={
+	// 对象JSON化
+	"toJSON" : function(obj) {
+		var JSON = [];
+		var propValArr = [];
+		$(obj).find(':input').each(
+			function() {
+				$this = $(this);
+				if (($this.attr("type") == "radio" && this.checked)
+					|| $this.attr("type") != "radio") {
+					if ($.trim($this.val()) != '') {
+						var name = $this.attr("name");
+						if (name.indexOf("_") != -1) {
+							name = name.split("_")[0];
+						}
+
+						if(name == 'propValId'){
+							propValArr.push('"'+encodeURIComponent($.trim($this.val())
+									.replace(/\\/g, '\\\\').replace(
+										/"/g, '\\"')) + '"');
+						}
+						JSON.push('"'
+							+ encodeURIComponent(name)
+							+ '":"'
+							+ encodeURIComponent($.trim($this.val())
+								.replace(/\\/g, '\\\\').replace(
+									/"/g, '\\"')) + '"');
+
+					}
+				}
+			});
+		JSON.push('"propValArr":[' + propValArr.toString()+']');
+		return "{" + JSON.toString() + "}";
+	},
 	"doClose" : function(){
 		window.close();
 	},
@@ -521,7 +554,7 @@ BINOLPTJCS49.prototype={
 			$("#cateVisibleBtn").text(text1);
 		}
 	}
-		
+
 };
 
 
@@ -539,7 +572,7 @@ BINOLPTJCS49_cate.prototype={
    		// 产品分类
    		var param  = "cateInfo=" + BINOLPTJCS49.toJSONArr($("#cateInfo").find(".detail").children().children());
 //   		alert("分类值: "+param);
-   		
+
 		var url = $("#addCate_Url").attr("href");
 		param += "&productPriceSolutionID="+ $("#productPriceSolutionID").val();
 		param += "&csrftoken="+parentTokenVal();

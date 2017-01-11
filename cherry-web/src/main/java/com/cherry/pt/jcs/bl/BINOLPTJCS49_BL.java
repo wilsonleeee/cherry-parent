@@ -305,7 +305,7 @@ public class BINOLPTJCS49_BL extends SsBaseBussinessLogic implements BINOLPTJCS4
 			}
 		}
 		
-		List<Map<String, Object>> prtForPrtSoluDetailDiff = binOLPTJCS49_Service.getPrtForPrtSoluDetailDiffTY(map);
+		List<Map<String, Object>> prtForPrtSoluDetailDiff = binOLPTJCS49_Service.getPrtForPrtSoluDetailDiffYT(map);
 		if (!CherryUtil.isBlankList(prtForPrtSoluDetailDiff)) {
 			for(Map<String, Object> diffMap : prtForPrtSoluDetailDiff){
 				// 将差异更新到产品方案明细表

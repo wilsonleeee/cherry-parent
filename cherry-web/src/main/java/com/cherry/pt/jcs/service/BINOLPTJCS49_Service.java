@@ -60,10 +60,10 @@ public class BINOLPTJCS49_Service extends BaseService{
 	 * @param map
 	 * @return
 	 */
-	public List getPrtForPrtSoluDetailDiffTY(Map<String, Object> map) {
+	public List getPrtForPrtSoluDetailDiffYT(Map<String, Object> map) {
 		Map<String, Object> parameterMap = new HashMap<String, Object>();
 		parameterMap.putAll(map);
-		parameterMap.put(CherryConstants.IBATIS_SQL_ID, "BINOLPTJCS49.getPrtForPrtSoluDetailDiffTY");
+		parameterMap.put(CherryConstants.IBATIS_SQL_ID, "BINOLPTJCS49.getPrtForPrtSoluDetailDiffYT");
 		return baseServiceImpl.getList(parameterMap);
 	}
 	
