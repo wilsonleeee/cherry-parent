@@ -367,8 +367,10 @@ $(function() {
     <div id="dialogCancel"><s:text name="global.page.cancle" /></div>
     <div id="dialogClose"><s:text name="global.page.close" /></div>
 	<div id="disableTitle"><s:text name="solu_delPrt" /></div>
+	<div id="disableTitleCate"><s:text name="solu_delPrtCate" /></div>
 	<div id="enableTitle"><s:text name="counter.enableTitle" /></div>
 	<div id="disableMessage"><p class="message"><span><s:text name="solu_disableMessage" /></span></p></div>
+	<div id="disableMessageCate"><p class="message"><span><s:text name="solu_disableMessageCate" /></span></p></div>
 </div> 
 </s:i18n>
 <jsp:include page="/WEB-INF/jsp/common/dataTable_i18n.jsp" flush="true" />
