@@ -2,84 +2,6 @@
 <!DOCTYPE sqlMap PUBLIC "-//iBATIS.com//DTD SQL Map 2.0//EN" "http://ibatis.apache.org/dtd/sql-map-2.dtd">
 <sqlMap namespace="BINBAT153">
 
-	<!-- 取得没有成本的单据号List  -->
-    <select id="getBillCodeOfNullCostPrice" parameterClass="java.util.HashMap" resultClass="java.lang.String">
-	  <![CDATA[
-		  SELECT
-			DISTINCT A.BIN_ProductBatchInOutID 	
-		  FROM 
-			 Inventory.BIN_ProductBatchInOutDetail A WITH(NOLOCK)
-		  WHERE
-			  A.ValidFlag = '1'
-		  AND CostPrice IS NULL
-		]]>
-    </select>
-	<!-- 取得指定同步状态为空同步异常（3）的List（主数据） -->
-    <select id="getBillCodeOfSy3" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
-	  <![CDATA[
-		  SELECT
-			  A.RelevanceNo,
-			  A.TradeNoIF,
-			  A.BIN_ProductBatchInOutID	
-		  FROM 
-			 Inventory.BIN_ProductBatchInOut A WITH(NOLOCK)
-		  WHERE not exists ( SELECT
-						1
-		  FROM 
-			 Inventory.BIN_ProductBatchInOutDetail B WITH(NOLOCK)
-		  WHERE A.BIN_ProductBatchInOutID =B.BIN_ProductBatchInOutID 
-		  AND   B.ValidFlag = '1'
-		  AND   B.CostPrice IS NULL)
-		  AND   A.SynchFlag = #synchFlag#
-		  AND   A.ValidFlag = '1'
-		  AND   A.BIN_OrganizationInfoID = #organizationInfoId#
-		  AND   A.BIN_BrandInfoID = #brandInfoId#
-		]]>
-	   	
-    </select>
-	
-		<!-- 根据产品入出库批次主表中同步状态为同步异常（3）billCode查询接口表的单据号List -->
-	<select id="getListByBillCodeForOT" parameterClass="java.util.HashMap" resultClass="java.lang.String">
-      <![CDATA[
-		SELECT
-			1
-		FROM
-			dbo.IF_ProductBatchInOut(NOLOCK)
-		WHERE
-			RelevanceNo=#RelevanceNo#
-		AND TradeNoIF=#TradeNoIF#
-	  ]]>
-    </select>
-	
-	
-	 <!-- 更新入出库批次主表的同步状态 -->
-    <update id="updProBatBySync" parameterClass="java.util.HashMap">
-	  UPDATE 
-	  A
-	  SET 
-		A.SynchFlag = #synchFlag_New#,
-		<isNotEmpty property="updateTime">
-			A.UpdateTime=#updateTime#,
-		</isNotEmpty>
-		<isEmpty property="updateTime">
-			A.UpdateTime=GETDATE(),
-		</isEmpty>
-		<![CDATA[
-			A.UpdatedBy=#updatedBy#,
-			A.UpdatePGM=#updatePGM#,
-			A.ModifyCount=A.ModifyCount+1
-	  FROM 
-	        Inventory.BIN_ProductBatchInOut A
-	  WHERE
-	        A.ValidFlag = '1'
-	  AND	A.RelevanceNo=#RelevanceNo#
-	  AND   A.TradeNoIF=#TradeNoIF#
-	]]>
-
-    </update>
-	
-	
-	
    <!-- 更新入出库批次主表的同步状态 （由NULL改为1）-->
     <update id="updProBatBySynNull" parameterClass="java.util.HashMap">
 	  UPDATE  
@@ -98,38 +20,10 @@
 	  AND      A.SynchFlag IS NULL
 	  AND A.BIN_OrganizationInfoID = #organizationInfoId#
 	  AND A.BIN_BrandInfoID = #brandInfoId#
+	  AND   A.TradeType NOT IN ('AR','LG')
     </update>
 
-    
-    
-    <!-- 取得指定同步状态为空的产品入出库批次IDList （主数据） -->
-    <select id="getBillCodeListOfNullSyn" parameterClass="java.util.HashMap" resultClass="java.lang.String">
-	  <![CDATA[
-		  SELECT
-		  ]]>
-	  <isNotEmpty property="upCount">
-	  	TOP(#upCount#) 
-	  </isNotEmpty>
-	   <![CDATA[
-			  A.BIN_ProductBatchInOutID 	
-		  FROM 
-			 Inventory.BIN_ProductBatchInOut A WITH(NOLOCK)
-		  WHERE not exists ( SELECT
-					1
-		  FROM 
-			 Inventory.BIN_ProductBatchInOutDetail B WITH(NOLOCK)
-		  WHERE A.BIN_ProductBatchInOutID =B.BIN_ProductBatchInOutID 
-		  AND  B.ValidFlag = '1'
-		  AND B.CostPrice IS NULL)
-		  AND	 A.SynchFlag = #synchFlag_New#
-		  AND A.ValidFlag = '1'
-		  AND A.BIN_OrganizationInfoID = #organizationInfoId#
-		  AND A.BIN_BrandInfoID = #brandInfoId#
-		]]>
-   	
-    </select>
-    
-     <!-- 取得指定同步状态为同步中或者同步异常的数据list （主数据） (类型为LG和AR的除外)-->
+     <!-- 取得指定同步状态为同步中的数据list （主数据） (类型为LG和AR的除外)-->
     <select id="getProBatList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
 	  <![CDATA[
 		  SELECT
@@ -242,36 +136,8 @@
 			#proBatList[].BIN_ProductBatchInOutID#
 		</iterate>
     </update>
-    
-    
-    	 <!-- 更新入出库批次主表（明细）的同步状态（有三改为二） -->
-    <update id="updProBatDeatilBySync" parameterClass="java.util.HashMap">
-	  UPDATE 
-	  A
-	  SET 
-		A.SynchFlag = #synchFlag_New#,
-		<isNotEmpty property="updateTime">
-			A.UpdateTime=#updateTime#,
-		</isNotEmpty>
-		<isEmpty property="updateTime">
-			A.UpdateTime=GETDATE(),
-		</isEmpty>
-		<![CDATA[
-			A.UpdatedBy=#updatedBy#,
-			A.UpdatePGM=#updatePGM#,
-			A.ModifyCount=A.ModifyCount+1
-	  FROM 
-	        Inventory.BIN_ProductBatchInOutDetail  A
-	  WHERE
-	        A.ValidFlag = '1'	
-		]]>
-	    <isNotEmpty property="BIN_ProductBatchInOutID"  prepend="AND" >
-			A.BIN_ProductBatchInOutID=#BIN_ProductBatchInOutID#
-		</isNotEmpty>
 
-    </update>
-    
-    <!-- 取得指定同步状态为同步中或者同步异常的数据号List （明细数据） -->
+    <!-- 取得指定同步状态为同步中数据List （明细数据） -->
     <select id="getBatDetailListNew" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
 	  <![CDATA[
 		  SELECT
@@ -291,11 +157,10 @@
 			  A.ChangeCount,
 			  Y.Quantity  BookQuantity,
 			  A.CreateTime,
-			  (SELECT D.TradeNoIF
-			  FROM Inventory.BIN_ProductBatchInOut D WHERE D.BIN_ProductBatchInOutID =
-			  A.BIN_ProductBatchInOutID)  TradeNoIF
+			  D.TradeNoIF
 		  FROM 
 			  Inventory.BIN_ProductBatchInOutDetail A WITH(NOLOCK)
+		  LEFT JOIN Inventory.BIN_ProductBatchInOut D ON   D.BIN_ProductBatchInOutID = A.BIN_ProductBatchInOutID
 		  LEFT JOIN Basis.BIN_ProductVendor PV ON A.BIN_ProductVendorID = PV.BIN_ProductVendorID
 		  LEFT JOIN Basis.BIN_Product P ON PV.BIN_ProductID = P.BIN_ProductID 
 		  LEFT JOIN BASIS.BIN_InventoryInfo B ON A.BIN_InventoryInfoID=B.BIN_InventoryInfoID
@@ -356,24 +221,4 @@
 		)
 	]]>
    	</insert>
-    
-    
-     	<!-- 修改成功插入到接口表的入出库批次数据的同步状态  -->
-    <update id="updIFProBatDetailNew" parameterClass="java.util.HashMap">
-	  UPDATE 
-	  A
-	  SET 
-		A.SynchFlag = #synchFlag_New#,
-			A.UpdatedBy=#updatedBy#,
-			A.UpdatePGM=#updatePGM#,
-			A.ModifyCount=A.ModifyCount+1
-	  FROM 
-	      Inventory.BIN_ProductBatchInOutDetail A
-	  WHERE
-	      A.ValidFlag = '1'
-	 	<isNotEmpty property="BIN_ProductBatchInOutID"  prepend="AND" >
-			A.BIN_ProductBatchInOutID=#BIN_ProductBatchInOutID#
-		</isNotEmpty>
-    </update>
-    
 </sqlMap>

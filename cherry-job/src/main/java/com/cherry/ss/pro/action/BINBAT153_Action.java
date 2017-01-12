@@ -49,6 +49,9 @@ public class BINBAT153_Action extends BaseAction {
 	/** 品牌ID */
 	private int brandInfoId;
 
+	/** JOB执行锁*/
+	private static int execFlag = 0;
+
 	public int getBrandInfoId() {
 		return brandInfoId;
 	}
@@ -76,32 +79,47 @@ public class BINBAT153_Action extends BaseAction {
 		// 设置batch处理标志
 		int flg = CherryBatchConstants.BATCH_SUCCESS;
 		try {
-			Map<String, Object> map = new HashMap<String, Object>();
-			UserInfo userInfo = (UserInfo) session.get(CherryBatchConstants.SESSION_USERINFO);
-			// 所属组织
-			map.put(CherryBatchConstants.BRANDINFOID, brandInfoId);
-			map.put(CherryBatchConstants.ORGANIZATIONINFOID, userInfo.getBIN_OrganizationInfoID());
-			flg = binBAT153_BL.tran_batchbat153(map);
+			if (0 == execFlag) {
+				// 锁定
+				execFlag = 1;
+				Map<String, Object> map = new HashMap<String, Object>();
+				UserInfo userInfo = (UserInfo) session.get(CherryBatchConstants.SESSION_USERINFO);
+				// 所属组织
+				map.put(CherryBatchConstants.BRANDINFOID, brandInfoId);
+				map.put(CherryBatchConstants.ORGANIZATIONINFOID, userInfo.getBIN_OrganizationInfoID());
+				flg = binBAT153_BL.tran_batchbat153(map);
+				// 释放锁
+				execFlag = 0;
+			}
 		} catch (CherryBatchException cbx) {
 			flg = CherryBatchConstants.BATCH_WARNING;
 			logger.info("=============WARN MSG================");
 			logger.info(cbx.getMessage());
 			logger.info("=====================================");
+			// 释放锁
+			execFlag = 0;
 		} catch (Exception e) {
 			flg = CherryBatchConstants.BATCH_ERROR;
 			logger.error("=============ERROR MSG===============");
 			logger.error(e.getMessage(),e);
 			logger.error("=====================================");
+			// 释放锁
+			execFlag = 0;
 		} finally {
-			if (flg == CherryBatchConstants.BATCH_SUCCESS) {
-				this.addActionMessage("产品入出库批次成本导出（标准接口）处理正常终了");
-				logger.info("******************************产品入出库批次成本导出（标准接口）处理正常终了***************************");
-			} else if (flg == CherryBatchConstants.BATCH_WARNING) {
-				this.addActionError("产品入出库批次成本导出（标准接口）处理警告终了");
-				logger.info("******************************产品入出库批次成本导出（标准接口）处理警告终了***************************");
-			} else if (flg == CherryBatchConstants.BATCH_ERROR) {
-				this.addActionError("产品入出库批次成本导出（标准接口）处理异常终了");
-				logger.info("******************************产品入出库批次成本导出（标准接口）处理异常终了***************************");
+			if (execFlag == 1) {
+				this.addActionMessage("产品入出库批次成本导出处理中（标准接口），请稍后。。。");
+				logger.info("******************************产品入出库批次成本导出处理中（标准接口）处理中，请稍后。。。***************************");
+			}else{
+				if (flg == CherryBatchConstants.BATCH_SUCCESS) {
+					this.addActionMessage("产品入出库批次成本导出（标准接口）处理正常终了");
+					logger.info("******************************产品入出库批次成本导出（标准接口）处理正常终了***************************");
+				} else if (flg == CherryBatchConstants.BATCH_WARNING) {
+					this.addActionError("产品入出库批次成本导出（标准接口）处理警告终了");
+					logger.info("******************************产品入出库批次成本导出（标准接口）处理警告终了***************************");
+				} else if (flg == CherryBatchConstants.BATCH_ERROR) {
+					this.addActionError("产品入出库批次成本导出（标准接口）处理异常终了");
+					logger.info("******************************产品入出库批次成本导出（标准接口）处理异常终了***************************");
+				}
 			}
 		}
 		return "DOBATCHRESULT";

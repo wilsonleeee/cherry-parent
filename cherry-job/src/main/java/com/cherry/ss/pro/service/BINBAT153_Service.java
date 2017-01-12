@@ -31,50 +31,6 @@ import com.cherry.cm.service.BaseService;
 public class BINBAT153_Service extends BaseService {
 
 	/**
-	 * 取出产品入出库批次明细表中没有成本的单据号List
-	 * 
-	 * @param map
-	 * @return
-	 */
-	public List getBillCodeOfNullCostPrice(Map<String, Object> map){
-		map.put(CherryConstants.IBATIS_SQL_ID, "BINBAT153.getBillCodeOfNullCostPrice");
-		return baseServiceImpl.getList(map);
-	}
-	
-	/**
-	 * 取得同步状态为3产品入出库批次数据集合（主数据）
-	 * 
-	 * @param map
-	 * @return
-	 */
-	public List<Map<String, Object>> getBillCodeOfSy3(Map<String, Object> map) {
-		map.put(CherryConstants.IBATIS_SQL_ID, "BINBAT153.getBillCodeOfSy3");
-		return baseServiceImpl.getList(map);
-	}
-	
-	/**
-	 * 根据产品入出库批次主表中同步状态为同步异常（3）billCode查询接口表的单据号List
-	 * @param map
-	 * @return
-	 */
-	public List<String> getListByBillCodeForOT(Map<String, Object> map) {
-		map.put(CherryConstants.IBATIS_SQL_ID, "BINBAT153.getListByBillCodeForOT");
-		return tpifServiceImpl.getList(map);
-	}
-
-	/**
-	 * 更新入出库批次主表的同步状态
-	 * @param map
-	 * @return
-	 * 
-	 * */
-	public int updProBatBySync(Map<String,Object> map){
-		map.put(CherryConstants.IBATIS_SQL_ID, "BINBAT153.updProBatBySync");
-		return baseServiceImpl.update(map);
-	}
-	
-
-	/**
 	 * 更新入出库批次主表的同步状态(从null改为1)
 	 * @param map
 	 * @return
@@ -83,29 +39,6 @@ public class BINBAT153_Service extends BaseService {
 	public int updProBatBySynNull(Map<String,Object> map){
 		map.put(CherryConstants.IBATIS_SQL_ID, "BINBAT153.updProBatBySynNull");
 		return baseServiceImpl.update(map);
-	}
-
-	/**
-	 * 更新入出库批次明细表的同步状态(从null改为1)
-	 * @param map
-	 * @return
-	 * 
-	 * */
-	public int updDetailProBatBySynNull(Map<String, Object> map) {
-		map.put(CherryConstants.IBATIS_SQL_ID, "BINBAT153.updDetailProBatBySynNull");
-		return baseServiceImpl.update(map);
-		
-	}
-
-	/**
-	 * 取得同步状态为null的入出库批次数据（主表）
-	 * @param map
-	 * @return
-	 * 
-	 * */
-	public List<String> getBillCodeListOfNullSyn(Map<String, Object> map) {
-		map.put(CherryConstants.IBATIS_SQL_ID, "BINBAT153.getBillCodeListOfNullSyn");
-		return baseServiceImpl.getList(map);
 	}
 
 	/**
@@ -141,20 +74,10 @@ public class BINBAT153_Service extends BaseService {
 		return baseServiceImpl.update(map);
 
 	}
-	
-	/**
-	 * 更新入出库批次主表的同步状态
-	 * @param map
-	 * @return
-	 * 
-	 * */
-	public int updProBatDeatilBySync(Map<String,Object> map){
-		map.put(CherryConstants.IBATIS_SQL_ID, "BINBAT153.updProBatDeatilBySync");
-		return baseServiceImpl.update(map);
-	}
+
 
 	/**
-	 * 取得需要导入入出库批次明细数据（同步状态为同步中和同步异常的）
+	 * 取得需要导入入出库批次明细数据（在所取得主数据之内）
 	 * @param map
 	 * @return
 	 * 
@@ -165,7 +88,7 @@ public class BINBAT153_Service extends BaseService {
 	}
 
 	/**
-	 * 	插入产品入出库批次数据(明细)
+	 * 	插入产品入出库批次明细数据
 	 * @param list
 	 * @return
 	 * 
@@ -174,16 +97,5 @@ public class BINBAT153_Service extends BaseService {
 		tpifServiceImpl.saveAll(list, "BINBAT153.insertProBatDetailNew");
 	}
 
-	/**
-	 * 	修改产品入出库批次数据(明细数据)同步状态
-	 * @param map
-	 * @return
-	 * 
-	 * */
-	public int updIFProBatDetailNew(Map<String, Object> map) {
-		map.put(CherryConstants.IBATIS_SQL_ID, "BINBAT153.updIFProBatDetailNew");
-		return baseServiceImpl.update(map);
-		
-	}
 }
 
