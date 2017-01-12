@@ -668,11 +668,10 @@ public class BINBEIFPRO03_BL {
 			// Step1.2 取得新后台产品方案明细表数据版本号version大于tVersion的list(新增/修改/停用/启用等)
 
 			// 取得系统配置项产品方案添加模式
-			/*String config = binOLCM14_BL.getConfigValue("1288", String.valueOf(map.get("organizationInfoId")), String.valueOf(map.get("brandInfoId")));
+			String config = binOLCM14_BL.getConfigValue("1288", String.valueOf(map.get("organizationInfoId")), String.valueOf(map.get("brandInfoId")));
 			map.put("soluAddModeConf", config);
 			if(ProductConstants.SOLU_ADD_MODE_CONFIG_2.equals(config)
-					|| ProductConstants.SOLU_ADD_MODE_CONFIG_3.equals(config)){*/
-
+					|| ProductConstants.SOLU_ADD_MODE_CONFIG_3.equals(config)){
 				// Step1.2.1取得系统配置项产品方案添加模式,为颖通模式时，检查方案明细添加的分类是否有动态添加减少产品的变动情况
 				// 所有产品价格方案
 				List<Map<String, Object>> prtPriceSolutionList = binbeifpro03Service.getPrtPriceSolutionList(map);
@@ -711,7 +710,7 @@ public class BINBEIFPRO03_BL {
 
 				// Step1.2.2 颖通模式时，方案价格根据当前标准产品当前业务日期的价格
 				binbeifpro03Service.mergePPSDPriceYT(map);
-			//}
+			}
 
 			List<Map<String, Object>> prtSoluDetailByVersionList = binbeifpro03Service.getPrtSoluDetailByVersionList(map);
 			loger.info("需要下发的柜台产品明细数量为：prtSoluDetailByVersionList.size="+ (null==prtSoluDetailByVersionList?0:prtSoluDetailByVersionList.size()));
