@@ -1015,8 +1015,8 @@
 	</sql>
 	<!-- 取得产品方案明细表的产品与以前配置的差异List -->
 	<select id="getPrtForPrtSoluDetailDiffYT" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
-		;WITH PD AS (
-			<!-- 产品方案中产品分类对应的产品  -->
+		<!--;WITH PD AS (
+			&lt;!&ndash; 产品方案中产品分类对应的产品  &ndash;&gt;
 			SELECT
 			DISTINCT P.BIN_ProductID
 			FROM Basis.BIN_Product P WITH(NOLOCK)
@@ -1045,7 +1045,116 @@
 			FROM ( <include refid="BINBEIFPRO03.productCategoryQuery" /> ) PC2
 			)  t3
 			WHERE t2.gcount = t3.gcount
-		)
+		)-->
+		<isEqual property="soluAddModeConf" compareValue="2">
+			;WITH PD AS (
+			<!-- 产品方案中产品分类对应的产品 -->
+			SELECT
+			DISTINCT P.BIN_ProductID
+			FROM Basis.BIN_Product P WITH(NOLOCK)
+			JOIN Basis.BIN_PrtCategory PC WITH(NOLOCK) ON PC.BIN_ProductID = P.BIN_ProductID
+			WHERE
+			P.BIN_OrganizationInfoID = #organizationInfoId#
+			AND P.BIN_BrandInfoID = #brandInfoId#
+			AND P.ValidFlag = 1
+			AND EXISTS (
+			SELECT 1
+			FROM Basis.BIN_ProductPriceSolutionCateDetail cateDetail WITH(NOLOCK)
+			JOIN Basis.BIN_ProductPriceSolution PPS WITH(NOLOCK) ON cateDetail.BIN_ProductPriceSolutionID = PPS.BIN_ProductPriceSolutionID
+			WHERE
+			PPS.BIN_OrganizationInfoID = #organizationInfoId#
+			AND PPS.BIN_BrandInfoID = #brandInfoId#
+			AND PPS.BIN_ProductPriceSolutionID = #productPriceSolutionID# AND cateDetail.BIN_PrtCatPropValueID = PC.BIN_PrtCatPropValueID
+			)
+			)
+		</isEqual>
+		<isEqual property="soluAddModeConf" compareValue="3">
+			;WITH PC AS (
+			<!-- 大分类 -->
+			SELECT
+			distinct PC.BIN_ProductID,'LargeCate' AS CateType
+			FROM Basis.BIN_Product P WITH(NOLOCK)
+			JOIN Basis.BIN_PrtCategory PC WITH(NOLOCK) ON PC.BIN_ProductID = P.BIN_ProductID
+			JOIN Basis.BIN_PrtCatPropValue PCPV WITH(NOLOCK) ON PCPV.BIN_PrtCatPropValueID = PC.BIN_PrtCatPropValueID
+			JOIN Basis.BIN_PrtCatProperty PCP WITH(NOLOCK) ON PCP.BIN_PrtCatPropertyID = PCPV.BIN_PrtCatPropertyID
+
+			WHERE
+			P.BIN_OrganizationInfoID = #organizationInfoId#
+			AND P.BIN_BrandInfoID = #brandInfoId#
+			AND P.ValidFlag = 1
+			AND PCP.TeminalFlag = '1'
+			AND EXISTS (
+			SELECT 1
+			FROM Basis.BIN_ProductPriceSolutionCateDetail cateDetail WITH(NOLOCK)
+			JOIN Basis.BIN_ProductPriceSolution PPS WITH(NOLOCK) ON cateDetail.BIN_ProductPriceSolutionID = PPS.BIN_ProductPriceSolutionID
+			WHERE
+			PPS.BIN_OrganizationInfoID = #organizationInfoId#
+			AND PPS.BIN_BrandInfoID = #brandInfoId#
+			AND PPS.BIN_ProductPriceSolutionID = #productPriceSolutionID# AND cateDetail.BIN_PrtCatPropValueID = PC.BIN_PrtCatPropValueID
+			)
+			UNION
+			<!-- 中分类 -->
+			SELECT
+			distinct PC.BIN_ProductID,'MediumCate' AS CateType
+			FROM Basis.BIN_Product P WITH(NOLOCK)
+			JOIN Basis.BIN_PrtCategory PC WITH(NOLOCK) ON PC.BIN_ProductID = P.BIN_ProductID
+			JOIN Basis.BIN_PrtCatPropValue PCPV WITH(NOLOCK) ON PCPV.BIN_PrtCatPropValueID = PC.BIN_PrtCatPropValueID
+			JOIN Basis.BIN_PrtCatProperty PCP WITH(NOLOCK) ON PCP.BIN_PrtCatPropertyID = PCPV.BIN_PrtCatPropertyID
+
+			WHERE
+			P.BIN_OrganizationInfoID = #organizationInfoId#
+			AND P.BIN_BrandInfoID = #brandInfoId#
+			AND P.ValidFlag = 1
+			AND PCP.TeminalFlag = '3'
+			AND EXISTS (
+			SELECT 1
+			FROM Basis.BIN_ProductPriceSolutionCateDetail cateDetail WITH(NOLOCK)
+			JOIN Basis.BIN_ProductPriceSolution PPS WITH(NOLOCK) ON cateDetail.BIN_ProductPriceSolutionID = PPS.BIN_ProductPriceSolutionID
+			WHERE
+			PPS.BIN_OrganizationInfoID = #organizationInfoId#
+			AND PPS.BIN_BrandInfoID = #brandInfoId#
+			AND PPS.BIN_ProductPriceSolutionID = #productPriceSolutionID# AND cateDetail.BIN_PrtCatPropValueID = PC.BIN_PrtCatPropValueID
+			)
+			UNION
+			<!-- 小分类 -->
+			SELECT
+			distinct PC.BIN_ProductID,'SmallCate' AS CateType
+			FROM Basis.BIN_Product P WITH(NOLOCK)
+			JOIN Basis.BIN_PrtCategory PC WITH(NOLOCK) ON PC.BIN_ProductID = P.BIN_ProductID
+			JOIN Basis.BIN_PrtCatPropValue PCPV WITH(NOLOCK) ON PCPV.BIN_PrtCatPropValueID = PC.BIN_PrtCatPropValueID
+			JOIN Basis.BIN_PrtCatProperty PCP WITH(NOLOCK) ON PCP.BIN_PrtCatPropertyID = PCPV.BIN_PrtCatPropertyID
+
+			WHERE
+			P.BIN_OrganizationInfoID = #organizationInfoId#
+			AND P.BIN_BrandInfoID = #brandInfoId#
+			AND P.ValidFlag = 1
+			AND PCP.TeminalFlag = '2'
+			AND EXISTS (
+			SELECT 1
+			FROM Basis.BIN_ProductPriceSolutionCateDetail cateDetail WITH(NOLOCK)
+			JOIN Basis.BIN_ProductPriceSolution PPS WITH(NOLOCK) ON cateDetail.BIN_ProductPriceSolutionID = PPS.BIN_ProductPriceSolutionID
+			WHERE
+			PPS.BIN_OrganizationInfoID = #organizationInfoId#
+			AND PPS.BIN_BrandInfoID = #brandInfoId#
+			AND PPS.BIN_ProductPriceSolutionID = #productPriceSolutionID# AND cateDetail.BIN_PrtCatPropValueID = PC.BIN_PrtCatPropValueID
+			)
+			),
+			t2 AS (
+			SELECT BIN_ProductID,
+			COUNT(DISTINCT CateType) gcount
+			FROM PC
+			GROUP BY BIN_ProductID
+			)
+			,t3 AS (
+			SELECT COUNT(DISTINCT CateType) gcount
+			FROM PC
+			)
+			,PD AS (
+			SELECT t2.BIN_ProductID
+			FROM t2, t3
+			WHERE t2.gcount = t3.gcount
+			)
+		</isEqual>
 		,PDH AS (
 			<!-- 产品方案中的通过产品分类添加的产品 -->
 			SELECT PPSD.BIN_ProductID,PPS.IsSynchProductPrice,PPSD.SalePrice,PPSD.MemPrice
