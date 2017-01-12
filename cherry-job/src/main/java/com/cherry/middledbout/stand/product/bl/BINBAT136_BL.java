@@ -22,11 +22,8 @@ import javax.annotation.Resource;
 
 import com.cherry.cm.batcmbussiness.interfaces.BINBECM01_IF;
 import com.cherry.cm.cmbussiness.bl.BINOLCM15_BL;
-import com.cherry.cm.core.BatchExceptionDTO;
-import com.cherry.cm.core.BatchLoggerDTO;
 import com.cherry.cm.core.CherryBatchConstants;
 import com.cherry.cm.core.CherryBatchException;
-import com.cherry.cm.core.CherryBatchLogger;
 import com.cherry.cm.util.CherryBatchUtil;
 import com.cherry.cm.util.ConvertUtil;
 import com.cherry.middledbout.stand.product.service.BINBAT136_Service;
@@ -43,8 +40,6 @@ import org.slf4j.LoggerFactory;
  */
 public class BINBAT136_BL {
 
-	/** 打印当前类的日志信息 **/
-	private static CherryBatchLogger logger = new CherryBatchLogger(BINBAT136_BL.class);
 
 	private static Logger loger = LoggerFactory.getLogger(BINBAT136_BL.class);
 
@@ -94,24 +89,23 @@ public class BINBAT136_BL {
 			init(paraMap);
 		}catch(Exception e){
 			// 初始化失败
-			BatchExceptionDTO batchExceptionDTO = new BatchExceptionDTO();
-			batchExceptionDTO.setBatchName(this.getClass());
-			batchExceptionDTO.setErrorCode("ECM00005");
-			batchExceptionDTO.setErrorLevel(CherryBatchConstants.LOGGER_ERROR);
-			batchExceptionDTO.setException(e);
 			flag = CherryBatchConstants.BATCH_ERROR;
-			loger.error(e.getMessage(),e);
-			throw new CherryBatchException(batchExceptionDTO);
+			loger.error("柜台产品导入(标准接口)初始化失败"+e.getMessage(),e);
+			throw e;
 		}
 
-		// 处理符合条件的柜台产品信息数据
-		handleNormalData(paraMap);
-
-		// 日志
-		outMessage();
-
-		// 程序结束时，处理Job共通(更新Job控制表 、插入Job运行履历表)
-		programEnd(paraMap);
+		try{
+			// 处理符合条件的柜台产品信息数据
+			handleNormalData(paraMap);
+		}catch(Exception e){
+			loger.error(e.getMessage(),e);
+			throw e;
+		}finally {
+			// 日志
+			outMessage();
+			// 程序结束时，处理Job共通(更新Job控制表 、插入Job运行履历表)
+			programEnd(paraMap);
+		}
 
 
 		return flag;
@@ -131,7 +125,6 @@ public class BINBAT136_BL {
 		Map<String, Object> prtSolutionMap = new HashMap<String, Object>();
 
 		// =========== Step1: 处理产品方案主表以及柜台与产品方案的关联表数据
-
 		// =========== Step1.A 更新标准接口表柜台产品数据从[synchFlag=null]更新为[synchFlag=1]
 		try {
 			binBAT136_Service.updIFProductByCounterBySync1(paraMap);
@@ -139,9 +132,7 @@ public class BINBAT136_BL {
 
 		} catch (Exception e) {
 			flag = CherryBatchConstants.BATCH_ERROR;
-			logger.outLog("更新标准接口表柜台产品数据从[synchFlag=null]更新为[synchFlag=1]" , CherryBatchConstants.LOGGER_ERROR);
-			loger.error("更新标准接口表柜台产品数据从[synchFlag=null]更新为[synchFlag=1]",e);
-			logger.outExceptionLog(e);
+			loger.error("更新标准接口表柜台产品数据从[synchFlag=null]更新为[synchFlag=1]"+e.getMessage(),e);
 			throw e;
 		}
 
@@ -155,11 +146,16 @@ public class BINBAT136_BL {
 
 			// =========== Step1.C  查询新后台的柜台信息
 			List<Map<String, Object>> cntByCherryBrandMapList = binBAT136_Service.getCounterByCherryBrand(paraMap);
+			if (CherryBatchUtil.isBlankList(cntByCherryBrandMapList)) {
+				flag = CherryBatchConstants.BATCH_ERROR;
+				loger.error("新后台没有柜台，请添加柜台以后再操作！");
+				return;
+			}
+
 			Map<String, Object> cntByCherryBrandMap = new HashMap<String, Object>();
 			for(Map<String, Object> counterInfo : cntByCherryBrandMapList){
 				cntByCherryBrandMap.put(ConvertUtil.getString(counterInfo.get("CounterCode")), counterInfo.get("CounterNameIF"));
 			}
-			Set<String> cntInfoSet = cntByCherryBrandMap.keySet();
 
 			for(int i = 0;i< cntIFList.size(); i++){
 			Map<String, Object> cntIFMap = cntIFList.get(i);
@@ -169,13 +165,12 @@ public class BINBAT136_BL {
 			// =========== Step1.D 生成对应的产品方案主表数据
 
 			String solutionName = null; // 拼接产品方案名称(柜台名称 + "默认产品方案" + "(柜台号)")
-			if(cntInfoSet != null && cntInfoSet.contains(counterCodeByIF)){
+			if( cntByCherryBrandMap.containsKey(counterCodeByIF)){
 				// 拼接产品方案名称(柜台名称 + "默认产品方案" + "(柜台号)")
 				solutionName =  ConvertUtil.getString(cntByCherryBrandMap.get(counterCodeByIF)) + "默认产品方案(" + counterCodeByIF + ")";
 
 			}else{
 				solutionName = counterCodeByIF + "默认产品方案(" + counterCodeByIF + ")";
-				logger.outLog("柜台信息不存在，柜台编号(" + counterCodeByIF + ")" , CherryBatchConstants.LOGGER_ERROR);
 				loger.error("柜台信息不存在，柜台编号(" + counterCodeByIF + ")");
 				flag = CherryBatchConstants.BATCH_WARNING;
 				faildList.add("柜台编号(" + counterCodeByIF + ")");
@@ -193,20 +188,13 @@ public class BINBAT136_BL {
 					String newProductPriceSolutionID = ConvertUtil.getString(newPrtSoluMap.get("BIN_ProductPriceSolutionID"));
 
 					cntIFMap.put("BIN_SolutionId", newProductPriceSolutionID);
-
 					if(!prtSolutionMap.containsKey(newSolutionCode)){
 						prtSolutionMap.put(newSolutionCode, newProductPriceSolutionID);
 					}
 				}
 
 			} catch(Exception e){
-				// 【柜台方案导入（标准接口）】处理产品方案主表失败。产品方案编码：{0}！
-				BatchLoggerDTO batchLoggerDTO = new BatchLoggerDTO();
-				batchLoggerDTO.setCode("EOT00114");
-				batchLoggerDTO.addParam(counterCodeByIF);
-				batchLoggerDTO.setLevel(CherryBatchConstants.LOGGER_ERROR);
-				logger.BatchLogger(batchLoggerDTO, e);
-				loger.error(e.getMessage(),e);
+				loger.error("【柜台方案导入（标准接口）】处理产品方案主表失败。产品方案编码("+counterCodeByIF+")"+e.getMessage(),e);
 				flag = CherryBatchConstants.BATCH_WARNING;
 				throw e;
 			}
@@ -216,14 +204,7 @@ public class BINBAT136_BL {
 				// 更新产品方案与部门关联表
 				binBAT136_Service.mergePrtSoluDepartRelation(cntIFMap);
 			}catch(Exception e){
-				// EOT00115=【柜台方案导入（标准接口）】处理产品方案与部门关联表失败。产品方案编码：({0})，柜台编码：({1})。
-				BatchLoggerDTO batchLoggerDTO = new BatchLoggerDTO();
-				batchLoggerDTO.setCode("EOT00115");
-				batchLoggerDTO.addParam(counterCodeByIF);
-				batchLoggerDTO.addParam(counterCodeByIF);
-				batchLoggerDTO.setLevel(CherryBatchConstants.LOGGER_ERROR);
-				logger.BatchLogger(batchLoggerDTO, e);
-				loger.error(e.getMessage(),e);
+				loger.error("【柜台方案导入（标准接口）】处理产品方案与部门关联表失败。产品方案编码("+counterCodeByIF+")"+e.getMessage(),e);
 				flag = CherryBatchConstants.BATCH_WARNING;
 				faildList.add("柜台编号(" + counterCodeByIF + ")");
 				throw e;
@@ -238,9 +219,7 @@ public class BINBAT136_BL {
 		}catch(Exception e){
 			flag = CherryBatchConstants.BATCH_ERROR;
 			// 处理柜台对应的柜台号及产品方案失败。
-			logger.outLog(" 处理柜台对应的柜台号及产品方案失败。" , CherryBatchConstants.LOGGER_ERROR);
-			loger.error(e.getMessage(),e);
-			logger.outExceptionLog(e);
+			loger.error("处理柜台对应的柜台号及产品方案失败"+e.getMessage(),e);
 			throw e;
 		}
 
@@ -252,6 +231,9 @@ public class BINBAT136_BL {
 				paraMap2.putAll(paraMap);
 				paraMap2.put("batchSize", BATCH_SIZE);
 				List<Map<String, Object>> standardProductByCounterList = binBAT136_Service.getStandardProductByCounterList(paraMap2);
+				// 统计总条数
+				totalCount += standardProductByCounterList.size();
+
 				if (CherryBatchUtil.isBlankList(standardProductByCounterList)) {
 					break;
 				}
@@ -290,14 +272,12 @@ public class BINBAT136_BL {
 						// 查询产品在新后台是否存在
 						int oldPrtId = binBAT136_Service.searchProductId(cntPrtMap);
 						if(oldPrtId == 0){
-							faildList.add("产品编号(" + IFProductId + ")");
-							logger.outLog("产品信息不存在，IFProductId(" + IFProductId + ")" , CherryBatchConstants.LOGGER_ERROR);
 							loger.error("产品信息不存在，IFProductId(" + IFProductId + ")");
+							faildList.add("产品编号(" + IFProductId + ")");
 							flag = CherryBatchConstants.BATCH_WARNING;
 							failCount++;
 							binBAT136_Service.updIFProductByCounterBySync3(cntPrtMap);
 						}else{
-
 							// =========== Step2.C --写入柜台对应的默认产品方案明细
 							cntPrtMap.put("BIN_ProductID", oldPrtId);
 							cntPrtMap.put("BIN_ProductPriceSolutionID", prtSolutionMap.get(cntCodeByIF)); // 产品方案主表ID
@@ -306,20 +286,12 @@ public class BINBAT136_BL {
 								Map<String, Object> mergeResultMap = binBAT136_Service.mergeProductPriceSolutionDetail(cntPrtMap);
 								binBAT136_Service.updIFProductByCounterBySync2(cntPrtMap);
 							}catch(Exception ex){
+								loger.error("【柜台方案导入（标准接口）】处理写入产品方案明细表失败。产品方案编码：("+cntCodeByIF+")，柜台编码：("+cntCodeByIF+")，IFProductID：("+IFProductId+")"+ex.getMessage(),ex);
 								faildList.add("产品编号(" + IFProductId + ")");
 								flag = CherryBatchConstants.BATCH_WARNING;
 								failCount++;
 								binBAT136_Service.updIFProductByCounterBySync3(cntPrtMap);
 
-								// EOT00116=【柜台方案导入（标准接口）】处理写入产品方案明细表失败。产品方案编码：({0})，柜台编码：({1})，IFProductID：({2})。
-								BatchLoggerDTO batchLoggerDTO = new BatchLoggerDTO();
-								batchLoggerDTO.setCode("EOT00116");
-								batchLoggerDTO.addParam(cntCodeByIF);
-								batchLoggerDTO.addParam(cntCodeByIF);
-								batchLoggerDTO.addParam(IFProductId);
-								batchLoggerDTO.setLevel(CherryBatchConstants.LOGGER_ERROR);
-								logger.BatchLogger(batchLoggerDTO, ex);
-								loger.error(ex.getMessage(),ex);
 							}
 						}
 					}
@@ -327,8 +299,7 @@ public class BINBAT136_BL {
 				}
 				binBAT136_Service.manualCommit();
 				binBAT136_Service.tpifManualCommit();
-				// 统计总条数
-				totalCount += standardProductByCounterList.size();
+
 				// 接口产品列表为空或产品数据少于一批次(页)处理数量，跳出循环
 				if (standardProductByCounterList.size() < BATCH_SIZE) {
 					 break;
@@ -338,9 +309,7 @@ public class BINBAT136_BL {
 		}catch(Exception e){
 			flag = CherryBatchConstants.BATCH_ERROR;
 			// 处理产品方案明细失败
-			logger.outLog("处理产品方案明细失败。" , CherryBatchConstants.LOGGER_ERROR);
-			logger.outExceptionLog(e);
-			loger.error(e.getMessage(),e);
+			loger.error("处理产品方案明细失败。"+e.getMessage(),e);
 			throw e;
 		}
 	}
@@ -423,53 +392,12 @@ public class BINBAT136_BL {
 	 * @throws CherryBatchException
 	 */
 	private void outMessage() throws CherryBatchException {
-		// 总件数
-		BatchLoggerDTO batchLoggerDTO1 = new BatchLoggerDTO();
-		batchLoggerDTO1.setCode("IIF00001");
-		batchLoggerDTO1.setLevel(CherryBatchConstants.LOGGER_INFO);
-		batchLoggerDTO1.addParam(String.valueOf(totalCount));
-		// 成功总件数
-		BatchLoggerDTO batchLoggerDTO2 = new BatchLoggerDTO();
-		batchLoggerDTO2.setCode("IIF00002");
-		batchLoggerDTO2.setLevel(CherryBatchConstants.LOGGER_INFO);
-		batchLoggerDTO2.addParam(String.valueOf(totalCount - failCount));
-		// 插入件数
-		BatchLoggerDTO batchLoggerDTO3 = new BatchLoggerDTO();
-		batchLoggerDTO3.setCode("IIF00003");
-		batchLoggerDTO3.setLevel(CherryBatchConstants.LOGGER_INFO);
-		batchLoggerDTO3.addParam(String.valueOf(insertCount));
-		// 更新件数
-		BatchLoggerDTO batchLoggerDTO4 = new BatchLoggerDTO();
-		batchLoggerDTO4.setCode("IIF00004");
-		batchLoggerDTO4.setLevel(CherryBatchConstants.LOGGER_INFO);
-		batchLoggerDTO4.addParam(String.valueOf(updateCount));
-		// 失败件数
-		BatchLoggerDTO batchLoggerDTO5 = new BatchLoggerDTO();
-		batchLoggerDTO5.setCode("IIF00005");
-		batchLoggerDTO5.setLevel(CherryBatchConstants.LOGGER_INFO);
-		batchLoggerDTO5.addParam(String.valueOf(failCount));
-		// 处理总件数
-		logger.BatchLogger(batchLoggerDTO1);
-		// 成功总件数
-		logger.BatchLogger(batchLoggerDTO2);
-		// 插入件数
-		logger.BatchLogger(batchLoggerDTO3);
-		// 更新件数
-		logger.BatchLogger(batchLoggerDTO4);
-		// 失败件数
-		logger.BatchLogger(batchLoggerDTO5);
-
-
+		loger.info("处理总件数:"+totalCount);
+		loger.info("成功总件数:"+(totalCount-failCount));
+		loger.info("失败总件数:"+failCount);
 		// 失败
 		if(!CherryBatchUtil.isBlankList(faildList)){
-			BatchLoggerDTO batchLoggerDTO6 = new BatchLoggerDTO();
-			batchLoggerDTO6.setCode("EOT00100");
-			batchLoggerDTO6.setLevel(CherryBatchConstants.LOGGER_INFO);
-			batchLoggerDTO6.addParam(faildList.toString());
-			logger.BatchLogger(batchLoggerDTO6);
-
 			fReason = "柜台产品导入部分数据处理失败，具体见log日志";
-
 		}
 
 	}

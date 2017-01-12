@@ -20,47 +20,50 @@
 		</isNotEmpty>		
 	 </dynamic>
     </select>
-    
-    <!-- 更新标准发货单接口表的SynchFlag字段 -->
-    <update id="updateSynchFlag" parameterClass="java.util.HashMap">
+
+	<!-- 更新标准发货单接口表的synchFlag字段从[synchFlag=1]变为[synchFlag=2 || synchFlag=3] -->
+	<update id="updateSynchFlagOneToOther" parameterClass="java.util.HashMap">
+		UPDATE
+			dbo.IF_Delivery
+		SET
+			SynchFlag = #synchFlag#,
+			<isNotEmpty property="synchMsg">
+				SynchMsg = #synchMsg#,
+			</isNotEmpty>
+			SynchTime=GETDATE()
+		WHERE
+			BrandCode = #BrandCode# AND
+			BillCode=#BillCode#
+	</update>
+
+    <!-- 更新标准发货单接口表的synchFlag字段从[synchFlag=null]变为[synchFlag=1] -->
+    <update id="updateSynchFlagNullToOne" parameterClass="java.util.HashMap">
 	  UPDATE 
 		dbo.IF_Delivery
 	  SET 
-		SynchFlag = #synchFlag_New#,
-		<isNotEmpty property="synchMsg">
-		SynchMsg = #synchMsg#,
-		</isNotEmpty>
+		SynchFlag ='1',
 		SynchTime=GETDATE()
-	  <dynamic prepend="WHERE">
-	  	<isEmpty property="synchFlag_Old" prepend="AND">
-	  		SynchFlag IS NULL
-	  	</isEmpty>
-	  	<isNotEmpty property="synchFlag_Old" prepend="AND">
-	  		SynchFlag=#synchFlag_Old#
-	  	</isNotEmpty>
-	  	<isNotEmpty property="brandCode" prepend="AND">
-		 	BrandCode = #brandCode#
-	  	</isNotEmpty>
-	  	<isNotEmpty property="billCode"  prepend="AND">
-	  	 	BillCode=#billCode#
-	  	</isNotEmpty>
-	  </dynamic>
+	  WHERE
+		BrandCode = #brandCode# AND
+		SynchFlag IS NULL
     </update>
     <!-- 更新标准发货单接口明细表的SynchMsg字段 -->
 	<update id="updateDetailSynchMsg" parameterClass="java.util.HashMap">
 		UPDATE
 			dbo.IF_DeliveryDetail
 		SET
-			SynchMsg = #detailSynchMsg#
+			SynchMsg = #detailSynchMsg#,
+			SynchTime=GETDATE()
 		WHERE
-			BrandCode = #brandCode#
-			AND BillCode = #billCode#
-			AND UnitCode = #unitCode#
-			AND BarCode = #barCode#
+			BrandCode = #BrandCode#
+			AND BillCode = #BillCode#
+			AND UnitCode = #UnitCode#
+			AND BarCode = #BarCode#
 	</update>
     <!-- 取得标准发货单接口表数据 (主数据)-->
     <select id="getExportTransList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
 		SELECT
+			TOP (#batchSize#)
 			A.BrandCode,
 		    A.BillCode,
 		    CONVERT(varchar(100), A.BusinessDate, 23) AS TradeDate,
@@ -77,14 +80,9 @@
 		    A.PuttingTime
 		FROM 
 		  	dbo.IF_Delivery A WITH(NOLOCK)
-		<dynamic prepend="WHERE">
-		  	<isNotEmpty property="synchFlag" prepend="AND">
-			 A.SynchFlag = #synchFlag#
-		  	</isNotEmpty>
-		  	<isNotEmpty property="brandCode" prepend="AND">
-			 A.BrandCode = #brandCode#
-		  	</isNotEmpty>	  	
-		</dynamic>
+		where
+			A.SynchFlag=#synchFlag# AND
+			A.BrandCode=#brandCode#
     </select>
     
     
@@ -102,7 +100,10 @@
 		    A.PuttingTime
 		FROM 
 		  	dbo.IF_DeliveryDetail A WITH(NOLOCK)		
-		  	where A.BillCode=#BillCode#
+		where
+			A.BillCode=#BillCode# AND
+			A.BrandCode=#BrandCode#
+
     </select>
    
     
@@ -229,11 +230,11 @@
 			Basis.BIN_Product A,
 			Basis.BIN_ProductVendor B
 		WHERE
-			A.UnitCode = #unitcode# AND
+			A.UnitCode = #UnitCode# AND
 			A.BIN_ProductID = B.BIN_ProductID AND
-			B.BarCode = #barcode# AND
-			A.BIN_BrandInfoID = #brandInfoID# AND
-			A.BIN_OrganizationInfoID = #organizationInfoID#
+			B.BarCode = #BarCode# AND
+			A.BIN_BrandInfoID = #brandInfoId# AND
+			A.BIN_OrganizationInfoID = #organizationInfoId#
 	</select>
 		<!-- 查询barcode变更后的产品信息 -->
 	<select id="selPrtBarCode" parameterClass="java.util.HashMap" resultClass ="java.util.HashMap">
@@ -245,8 +246,8 @@
          FROM 
                Basis.BIN_PrtBarCode A
          WHERE 
-               A.OldBarCode=#barcode# AND 
-               A.OldUnitCode=#unitcode# AND 
+               A.OldBarCode=#BarCode# AND
+               A.OldUnitCode=#UnitCode# AND
                A.StartTime<=#tradeDateTime# AND (
                A.ClosingTime is null or
                A.ClosingTime>=#tradeDateTime#) AND
@@ -263,8 +264,8 @@
             FROM 
                 Basis.BIN_PrtBarCode A
             WHERE 
-                A.OldBarCode = #barcode#
-                AND A.OldUnitCode = #unitcode#
+                A.OldBarCode = #BarCode#
+                AND A.OldUnitCode = #UnitCode#
                 AND A.ValidFlag ='1'
                 AND DATEDIFF(SECOND, A.StartTime, #tradeDateTime#) >= 0
             ORDER BY
@@ -289,8 +290,8 @@
 			LEFT JOIN Basis.BIN_Channel B ON A.BIN_ChannelID = B.BIN_ChannelID
 		WHERE
 			ORG.DepartCode = #counterCode# AND
-			ORG.BIN_BrandInfoID = #brandInfoID# AND		    
-			ORG.BIN_OrganizationInfoID = #organizationInfoID#
+			ORG.BIN_BrandInfoID = #brandInfoId# AND
+			ORG.BIN_OrganizationInfoID = #organizationInfoId#
 	]]> 
 	</select>
 </sqlMap>

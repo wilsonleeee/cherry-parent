@@ -33,22 +33,33 @@ public class BINBAT134_Service extends BaseService {
 	}
 	
 	/**
-	 * 更新标准发货单接口表的synchFlag字段
+	 * 更新标准发货单接口表的synchFlag字段从[synchFlag=1]变为[synchFlag=2 || synchFlag=3]
 	 * @param map
 	 * @return
 	 */
-	public int updateSynchFlag(Map<String,Object> map){
-		map.put(CherryConstants.IBATIS_SQL_ID, "BINBAT134.updateSynchFlag");
+	public int updateSynchFlagOneToOther(Map<String,Object> map){
+		map.put(CherryConstants.IBATIS_SQL_ID, "BINBAT134.updateSynchFlagOneToOther");
 		return tpifServiceImpl.update(map);
 	}
+
+	/**
+	 * 更新标准发货单接口表的synchFlag字段从[synchFlag=null]变为[synchFlag=1]
+	 * @param map
+	 * @return
+	 */
+	public int updateSynchFlagNullToOne(Map<String,Object> map){
+		map.put(CherryConstants.IBATIS_SQL_ID, "BINBAT134.updateSynchFlagNullToOne");
+		return tpifServiceImpl.update(map);
+	}
+
+
 	/**
 	 * 更新标准发货单接口明细表的SynchMsg字段
 	 * @param map
 	 * @return
 	 */
-	public int updateDetailSynchMsg(Map<String,Object> map){
-		map.put(CherryConstants.IBATIS_SQL_ID, "BINBAT134.updateDetailSynchMsg");
-		return tpifServiceImpl.update(map);
+	public void updateDetailSynchMsg(List<Map<String,Object>> list){
+		 tpifServiceImpl.updateAll(list,"BINBAT134.updateDetailSynchMsg");
 	}
 	/**
 	 * 取得标准发货单接口表数据(主数据)
@@ -149,13 +160,8 @@ public class BINBAT134_Service extends BaseService {
 	 * @return
 	 */
 	public Map<String,Object> selProductInfo(Map<String,Object> map){
-		Map<String,Object> paramMap = new HashMap<String, Object>();
-		paramMap.put("barcode", map.get("BarCode"));
-		paramMap.put("unitcode", map.get("UnitCode"));
-		paramMap.put("brandInfoID", map.get("brandInfoId"));
-		paramMap.put("organizationInfoID", map.get("organizationInfoId"));
-		paramMap.put(CherryConstants.IBATIS_SQL_ID, "BINBAT134.selProductInfo");
-		return (Map<String,Object>)baseServiceImpl.get(paramMap);
+		map.put(CherryConstants.IBATIS_SQL_ID, "BINBAT134.selProductInfo");
+		return (Map<String,Object>)baseServiceImpl.get(map);
 	}
 	/**
 	 * 查询barcode变更后的产品信息
@@ -163,12 +169,8 @@ public class BINBAT134_Service extends BaseService {
 	 * @return
 	 */
 	public Map<String,Object> selPrtBarCode(Map<String,Object> map){
-		Map<String,Object> paramMap = new HashMap<String, Object>();
-		paramMap.put("barcode", map.get("BarCode"));
-		paramMap.put("unitcode", map.get("UnitCode"));
-		paramMap.put("tradeDateTime", map.get("tradeDateTime"));
-		paramMap.put(CherryConstants.IBATIS_SQL_ID, "BINBAT134.selPrtBarCode");
-		return (Map<String,Object>)baseServiceImpl.get(paramMap);
+		map.put(CherryConstants.IBATIS_SQL_ID, "BINBAT134.selPrtBarCode");
+		return (Map<String,Object>)baseServiceImpl.get(map);
 	}
 	/**
      * 查询barcode变更后的产品信息（按tradeDateTime与StartTime最接近的升序）
@@ -176,12 +178,8 @@ public class BINBAT134_Service extends BaseService {
      * @return
      */
     public List<Map<String,Object>> selPrtBarCodeList(Map<String,Object> map){
-    	Map<String,Object> paramMap = new HashMap<String, Object>();
-    	paramMap.put("barcode", map.get("BarCode"));
-    	paramMap.put("unitcode", map.get("UnitCode"));
-    	paramMap.put("tradeDateTime", map.get("tradeDateTime"));
-    	paramMap.put(CherryConstants.IBATIS_SQL_ID, "BINBAT134.selPrtBarCodeList");
-        return (List<Map<String,Object>>)baseServiceImpl.getList(paramMap);
+		map.put(CherryConstants.IBATIS_SQL_ID, "BINBAT134.selPrtBarCodeList");
+        return (List<Map<String,Object>>)baseServiceImpl.getList(map);
     }
     /**
      * 查询柜台部门信息
@@ -189,11 +187,7 @@ public class BINBAT134_Service extends BaseService {
      * @return
      */
     public Map<String,Object> selCounterDepartmentInfo (Map<String,Object> map){
-    	Map<String,Object> paramMap = new HashMap<String, Object>();
-    	paramMap.put("counterCode", map.get("counterCode"));
-    	paramMap.put("brandInfoID", map.get("brandInfoId"));
-    	paramMap.put("organizationInfoID", map.get("organizationInfoId"));
-    	paramMap.put(CherryConstants.IBATIS_SQL_ID, "BINBAT134.selCounterDepartmentInfo");
-        return (Map<String,Object>)baseServiceImpl.get(paramMap);
+		map.put(CherryConstants.IBATIS_SQL_ID, "BINBAT134.selCounterDepartmentInfo");
+        return (Map<String,Object>)baseServiceImpl.get(map);
     }
 }

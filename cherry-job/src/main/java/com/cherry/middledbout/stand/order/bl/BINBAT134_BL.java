@@ -8,16 +8,14 @@ import java.util.Map;
 import javax.annotation.Resource;
 
 import com.cherry.cm.batcmbussiness.interfaces.BINBECM01_IF;
-import com.cherry.cm.core.BatchLoggerDTO;
-import com.cherry.cm.core.CherryBatchConstants;
-import com.cherry.cm.core.CherryBatchException;
-import com.cherry.cm.core.CherryBatchLogger;
-import com.cherry.cm.core.CherryConstants;
+import com.cherry.cm.core.*;
 import com.cherry.cm.util.CherryBatchUtil;
 import com.cherry.cm.util.ConvertUtil;
 import com.cherry.middledbout.stand.order.service.BINBAT134_Service;
 import com.cherry.mq.mes.common.MessageConstants;
 import com.mqhelper.interfaces.MQHelper_IF;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 
 /**
@@ -29,7 +27,9 @@ import com.mqhelper.interfaces.MQHelper_IF;
  */
 public class BINBAT134_BL {
 
-	private static CherryBatchLogger logger = new CherryBatchLogger(BINBAT134_BL.class);	
+
+	private static Logger loger = LoggerFactory.getLogger(BINBAT134_BL.class);
+
 	@Resource
 	private BINBAT134_Service bINBAT134_Service;
 	
@@ -39,15 +39,18 @@ public class BINBAT134_BL {
 	
 	/** BATCH处理标志 */
 	private int flag = CherryBatchConstants.BATCH_SUCCESS;
-	
-	/** 销售主数据每次导出数量:2000条 */
-	private final int UPDATE_SIZE = 1000;
+
+	/** 每批次(页)处理数量 1000 */
+	private final int BATCH_SIZE = 1000;
 	
 	/** 发货单接口表同步状态:1 同步中 */
 	private final String synchFlag_1 = "1";
 	
 	/** 发货单接口表同步状态:2 同步完成 */
 	private final String synchFlag_2 = "2";
+
+	/** 发货单接口表同步状态:3 同步完成 */
+	private final String synchFlag_3 = "3";
 	
 	private Map<String, Object> comMap;
 	
@@ -58,10 +61,8 @@ public class BINBAT134_BL {
 	/**MQHelper模块接口*/
 	@Resource
 	private MQHelper_IF mqHelperImpl;
-	
-	/** 发货接口表分组，用于拼装MQ */
-	List<List<Map<String,Object>>> retList = new ArrayList<List<Map<String,Object>>>();
-	
+
+
 	/** 失败的单据号集合 */
 	List<String> falidBillCodeList = new ArrayList<String>();
 	
@@ -78,44 +79,34 @@ public class BINBAT134_BL {
 	 * @return Map
 	 * @throws CherryBatchException
 	 */
-	public int tran_batch(Map<String, Object> map)
-			throws CherryBatchException,Exception {
-		// 初始化
-		comMap = getComMap(map);
-		map.put("JobCode", "BAT134");
-		comMap.put("JobCode", "BAT134");
-		// 程序【开始运行时间】
-		String runStartTime = bINBAT134_Service.getSYSDateTime();
-		// 作成日时
-		map.put("RunStartTime", runStartTime);
-		comMap.put("RunStartTime",runStartTime);
-		while (true) {
-				
-			// 取得标准发货单接口表中条件[synchFlag is null ]的单据号集合
-			Map<String, Object> trxStatusNullMap = new HashMap<String, Object>();
-			trxStatusNullMap.putAll(comMap);
-			trxStatusNullMap.put("upCount", UPDATE_SIZE);
-			trxStatusNullMap.put("falidBillCodeList", falidBillCodeList);
-			List<String> billCodeList = bINBAT134_Service.getBillCodeList(trxStatusNullMap);
-			
-			if (CherryBatchUtil.isBlankList(billCodeList)) {
-				break;
-			}
-			
-			// 统计总条数(单据数量[1个发货单据具有一条或多条物理数据]，此处只统计发货单据数)
-			totalCount += billCodeList.size();
-			
-			// 业务处理(1、更新单据状态，2、取得新后台发货单信息，3、发送MQ及插入MQ_Log日志等)
-			updExpTrans();
-			
-			// 发货单据数少于一页，跳出循环
-			if (billCodeList.size() < UPDATE_SIZE) {
-				break;
-			}
+	public int tran_batch(Map<String, Object> map)throws CherryBatchException,Exception {
 
+		// 初始化
+		try {
+			comMap = getComMap(map);
+			map.put("JobCode", "BAT134");
+			// 程序【开始运行时间】
+			String runStartTime = bINBAT134_Service.getSYSDateTime();
+			map.put("RunStartTime", runStartTime);
+		}catch(Exception e){
+			// 初始化失败
+			flag = CherryBatchConstants.BATCH_ERROR;
+			loger.error("发货单导入【标准接口】初始化失败"+e.getMessage(),e);
+			throw new Exception(e);
 		}
-		outMessage();
-		programEnd(map);
+
+		try{
+			// 业务处理(1、更新单据状态，2、取得新后台发货单信息（SynchFlag=1），3、发送MQ及插入MQ_Log日志等)
+			updExpTrans();
+		}catch(Exception e){
+			loger.error(e.getMessage(),e);
+			throw e;
+		}finally {
+			// 日志
+			outMessage();
+			// 程序结束时，处理Job共通(更新Job控制表 、插入Job运行履历表)
+			programEnd(map);
+		}
 		return flag;
 	}
 	
@@ -125,116 +116,139 @@ public class BINBAT134_BL {
 	 * @throws CherryBatchException
 	 * @throws Exception
 	 */
-	private void updExpTrans() throws CherryBatchException {
+	private void updExpTrans() throws CherryBatchException,Exception {
 		
 		Map<String,Object> paraMap = new HashMap<String, Object>();
 		paraMap.clear();
 		paraMap.putAll(comMap);
-		
-		// Step1: 更新标准发货单接口表的数据从[SynchFlag=null ]更新为[SynchFlag=1]
-		paraMap.put("synchFlag_Old", "");
-		paraMap.put("synchFlag_New", synchFlag_1);
-		bINBAT134_Service.updateSynchFlag(paraMap);
-		
-		
-		// Step2: 取得标准发货单接口表物理数据(主数据)
-		paraMap.put("synchFlag", synchFlag_1);
-		List<Map<String,Object>> exportTransList = bINBAT134_Service.getExportTransList(paraMap);
-		for(Map<String,Object> mainMap : exportTransList){
-			try {
-				
-				//Step3:取得标准发货单接口表数据（单据明细）
-				List<Map<String,Object>> exportTransListDeatils = bINBAT134_Service.getExportTransListdeatils(mainMap);
-				//根据预先判断是否可发送MQ的标志
-				String flag = "2";
-				//存储预先失败的明细数据
-				List<Map<String,Object>> faildDetailList = new ArrayList<Map<String,Object>>();
-				//预先验证该明细数据是否可以被插入至新后台（验证产品是否存在）
-				for (Map<String, Object> detailMap : exportTransListDeatils) {
-					detailMap.put("tradeDateTime",mainMap.get("TradeDate")+" "+mainMap.get("TradeTime"));
-					//柜台号
-					detailMap.put("counterCode",mainMap.get("InDepartCode"));
-					detailMap.put("organizationInfoId",comMap.get("organizationInfoId"));
-					detailMap.put("brandInfoId",comMap.get("brandInfoId"));
-					//预先验证此产品是否在新后台存在
-					Map<String,Object> existsPrtMap = checkExistsPrt(detailMap);
-					if(null == existsPrtMap || existsPrtMap.isEmpty()){
-						flag = "0";
-						faildDetailList.add(detailMap);
-					}else if("1".equals(existsPrtMap.get("counterFlag"))){
-						flag = "1";
-					}
-				}
-				try{
-					Map<String, Object> updateMap = new HashMap<String, Object>();
-					updateMap.putAll(comMap);
-					updateMap.put("billCode", mainMap.get("BillCode"));
-					if("0".equals(flag) || "1".equals(flag)){
-						//更新接口表表数据表示该单据因产品问题无法插入至新后台，并同时更新同步字段为失败
-						updateMap.put("synchFlag_New", "3");
-						if("0".equals(flag)){
-							try {
-								for (Map<String, Object> faildDetailMap : faildDetailList) {
-									updateMap.put("detailSynchMsg", "厂商编码为\""+faildDetailMap.get("UnitCode")+"\"产品条码为\""+faildDetailMap.get("BarCode")+"\""+MessageConstants.MSG_ERROR_09);
-									updateMap.put("unitCode", faildDetailMap.get("UnitCode"));
-									updateMap.put("barCode", faildDetailMap.get("BarCode"));
-									bINBAT134_Service.updateDetailSynchMsg(updateMap);
-									//事务提交
-									bINBAT134_Service.tpifManualCommit();
-								}
-							} catch (Exception e) {
-								//事物回滚
-								bINBAT134_Service.tpifManualCommit();
-							}
-							updateMap.put("synchMsg", "该主单下的明细数据所对应的产品或促销品不存在，详细请查看明细错误信息");
-						}else{
-							updateMap.put("synchMsg", "柜台号为\""+mainMap.get("InDepartCode")+"\""+MessageConstants.MSG_ERROR_06);
-						}
-					}else{
-						// 拼装MQ
-						Map<String,Object> propSendMQMap = assemblingData(mainMap, exportTransListDeatils);
-						//Step4: 调用MQHelper接口进行数据发送
-						mqHelperImpl.sendData(propSendMQMap, "posToCherryMsgQueue");
-						bINBAT134_Service.witManualCommit();
-						updateMap.put("synchFlag_New", synchFlag_2);
-					}
-					
-					try{
-						// Step5: 发货单接口表数据从[synchFlag=1]更新为[synchFlag=2 || synchFlag=3]
-						updateMap.put("synchFlag_Old", synchFlag_1);
-						bINBAT134_Service.updateSynchFlag(updateMap);
+
+		try {
+			// Step1: 更新标准发货单接口表的数据从[SynchFlag=null ]更新为[SynchFlag=1]
+			bINBAT134_Service.updateSynchFlagNullToOne(paraMap);
+			bINBAT134_Service.tpifManualCommit();
+		} catch (Exception e) {
+			flag = CherryBatchConstants.BATCH_ERROR;
+			loger.error("更新标准发货单接口表的数据从[SynchFlag=null ]更新为[SynchFlag=1]",e);
+			throw e;
+		}
+
+
+		while(true) {
+			// Step2: 取得标准发货单接口表物理数据(主数据[SynchFlag=1])
+			paraMap.put("synchFlag", synchFlag_1);
+			paraMap.put("batchSize", BATCH_SIZE);
+			List<Map<String,Object>> exportTransList = bINBAT134_Service.getExportTransList(paraMap);
+
+			// 统计总条数
+			totalCount += exportTransList.size();
+			if (CherryBatchUtil.isBlankList(exportTransList)) {
+				break;
+			}
+			for (Map<String, Object> mainMap : exportTransList) {
+				try {
+					mainMap.putAll(comMap);
+
+					//Step3:取得标准发货单接口表数据（单据明细）
+					List<Map<String, Object>> exportTransListDeatils = bINBAT134_Service.getExportTransListdeatils(mainMap);
+					//如果明细数据不存在，仅更新接口主表
+					if (CherryBatchUtil.isBlankList(exportTransListDeatils)) {
+						mainMap.put("synchFlag",synchFlag_3);
+						mainMap.put("synchMsg", "该单明细数据不存在。");
+						bINBAT134_Service.updateSynchFlagOneToOther(mainMap);
 						//事务提交
 						bINBAT134_Service.tpifManualCommit();
-						
-					}catch(Exception ex){
-						// 标准接口数据源回滚
-						bINBAT134_Service.tpifManualRollback();
+						failCount ++;
+						flag = CherryBatchConstants.BATCH_ERROR;
+						continue;
 					}
-				} catch (Exception e) {
-					//MQ_Log表中事物回滚
-					bINBAT134_Service.witManualRollback();
-					throw e;
-				}
-				
-			} catch(Exception ex){
+					//根据预先判断是否可发送MQ的标志
+					String sendMQflag = "2";
+					//存储预先失败的明细数据
+					List<Map<String, Object>> faildDetailList = new ArrayList<Map<String, Object>>();
 
-				failCount += 1;
-				falidBillCodeList.add(mainMap.get("BillCode").toString());
-				flag = CherryBatchConstants.BATCH_WARNING;
-				
-				// 错误日志
-				BatchLoggerDTO batchLoggerDTO1 = new BatchLoggerDTO();
-				batchLoggerDTO1.setCode("EOT00107");
-				batchLoggerDTO1.setLevel(CherryBatchConstants.LOGGER_ERROR);
-                //组织ID：
-				batchLoggerDTO1.addParam(CherryBatchUtil.getString(paraMap.get(CherryBatchConstants.ORGANIZATIONINFOID)));
-                //品牌ID：
-				batchLoggerDTO1.addParam(CherryBatchUtil.getString(paraMap.get(CherryBatchConstants.BRANDINFOID)));
-                //接口单据号
-				batchLoggerDTO1.addParam(mainMap.get("BillCode").toString());
-				logger.BatchLogger(batchLoggerDTO1);
-				CherryBatchLogger cherryBatchLogger = new CherryBatchLogger(this.getClass());
-				cherryBatchLogger.BatchLogger(batchLoggerDTO1, ex);
+					mainMap.put("counterCode", mainMap.get("InDepartCode"));//柜台号
+					//预先验证该主数据是否可以被插入至新后台（验证收货部门是否存在）
+					Map<String, Object> existsCounterMap = checkExistsCounter(mainMap);
+					if(null == existsCounterMap || existsCounterMap.isEmpty()){
+						sendMQflag = "1";
+					}
+
+					//预先验证该明细数据是否可以被插入至新后台（验证产品是否存在）
+					for (Map<String, Object> detailMap : exportTransListDeatils) {
+						detailMap.put("tradeDateTime", mainMap.get("TradeDate") + " " + mainMap.get("TradeTime"));
+						//柜台号
+						detailMap.put("counterCode", mainMap.get("InDepartCode"));
+						detailMap.put("organizationInfoId", comMap.get("organizationInfoId"));
+						detailMap.put("brandInfoId", comMap.get("brandInfoId"));
+						//预先验证此产品是否在新后台存在
+						Map<String, Object> existsPrtMap = checkExistsPrt(detailMap);
+						if (null == existsPrtMap || existsPrtMap.isEmpty()) {
+							sendMQflag = "0";
+							detailMap.putAll(comMap);
+							detailMap.put("detailSynchMsg", MessageConstants.MSG_ERROR_09);
+							faildDetailList.add(detailMap);
+						}
+					}
+
+					//如果收货部门不存在，仅更新接口主表
+					if ("1".equals(sendMQflag)) {
+						mainMap.put("synchFlag",synchFlag_3);
+						mainMap.put("synchMsg", "柜台号为\"" + mainMap.get("InDepartCode") + "\"" + MessageConstants.MSG_ERROR_06);
+						bINBAT134_Service.updateSynchFlagOneToOther(mainMap);
+						//事务提交
+						bINBAT134_Service.tpifManualCommit();
+						failCount ++;
+						flag = CherryBatchConstants.BATCH_ERROR;
+						continue;
+					}
+
+					//如果产品不存在，更新接口主表+明细表
+					if("0".equals(sendMQflag)){
+
+						bINBAT134_Service.updateDetailSynchMsg(faildDetailList);//更改明细数据
+
+						mainMap.put("synchFlag",synchFlag_3);
+						mainMap.put("synchMsg", "该主单下的明细数据所对应的产品不存在，详细请查看明细错误信息");
+						bINBAT134_Service.updateSynchFlagOneToOther(mainMap);
+						//事务提交
+						bINBAT134_Service.tpifManualCommit();
+						failCount ++;
+						flag = CherryBatchConstants.BATCH_ERROR;
+						continue;
+
+					}
+					// 拼装MQ,写入日志表，发送
+					// 先处理MQ，再提交接口库的事务，理由：
+					// ①如果处理MQ出异常，则全部回滚，下次导入时会再处理该数据；
+					// ②如果处理MQ正常，接口事务提交出错，下次导入时，该数据会被再次处理，被后台的重复MQ过滤逻辑排除掉；
+					//相反，如果先提交接口事务，再处理MQ，则有以下隐患：
+					//①接口表数据已经被标记为处理成功，MQ处理失败，则以后的导入都不会再处理该数据，该数据就被遗漏了
+					Map<String, Object> propSendMQMap = assemblingData(mainMap, exportTransListDeatils);
+					//Step4: 调用MQHelper接口进行数据发送
+					mqHelperImpl.sendData(propSendMQMap, "posToCherryMsgQueue");
+					mainMap.put("synchFlag", synchFlag_2);
+					bINBAT134_Service.updateSynchFlagOneToOther(mainMap);
+					//事务提交
+					bINBAT134_Service.witManualCommit();
+					bINBAT134_Service.tpifManualCommit();
+
+
+				} catch (Exception ex) {
+					loger.error("发货单单号为：" + mainMap.get("BillCode") + "往新后台同步数据失败！"+ex.getMessage(),ex);
+					mainMap.put("synchFlag", synchFlag_3);
+					//更新为失败
+					bINBAT134_Service.updateSynchFlagOneToOther(mainMap);
+					//事务提交
+					bINBAT134_Service.tpifManualCommit();
+					falidBillCodeList.add(mainMap.get("BillCode").toString());
+					failCount ++;
+					flag = CherryBatchConstants.BATCH_WARNING;
+				}
+			}
+
+			// 接口产品列表为空或产品数据少于一批次(页)处理数量，跳出循环
+			if (exportTransList.size() < BATCH_SIZE) {
+				break;
 			}
 		}
 	}
@@ -335,7 +349,7 @@ public class BINBAT134_BL {
 			// 修改次数
 			temp[1] = null;
 			// 员工code
-			temp[2] = "DEALER";
+			temp[2] = CherryBatchUtil.getString(mainMap.get("OperatorCode"));
 			// 入出库区分
 			temp[3] = null;
 			// 产品条码
@@ -447,36 +461,13 @@ public class BINBAT134_BL {
 	 * @throws CherryBatchException
 	 */
 	private void outMessage() throws CherryBatchException {
-		// 总件数
-		BatchLoggerDTO batchLoggerDTO1 = new BatchLoggerDTO();
-		batchLoggerDTO1.setCode("IIF00001");
-		batchLoggerDTO1.setLevel(CherryBatchConstants.LOGGER_INFO);
-		batchLoggerDTO1.addParam(String.valueOf(totalCount));
-		// 成功总件数
-		BatchLoggerDTO batchLoggerDTO2 = new BatchLoggerDTO();
-		batchLoggerDTO2.setCode("IIF00002");
-		batchLoggerDTO2.setLevel(CherryBatchConstants.LOGGER_INFO);
-		batchLoggerDTO2.addParam(String.valueOf(totalCount - failCount));
-		// 失败件数
-		BatchLoggerDTO batchLoggerDTO5 = new BatchLoggerDTO();
-		batchLoggerDTO5.setCode("IIF00005");
-		batchLoggerDTO5.setLevel(CherryBatchConstants.LOGGER_INFO);
-		batchLoggerDTO5.addParam(String.valueOf(failCount));
-		// 处理总件数
-		logger.BatchLogger(batchLoggerDTO1);
-		// 成功总件数
-		logger.BatchLogger(batchLoggerDTO2);
-		// 失败件数
-		logger.BatchLogger(batchLoggerDTO5);
+		loger.info("处理总件数:"+totalCount);
+		loger.info("成功总件数:"+(totalCount-failCount));
+		loger.info("失败总件数:"+failCount);
 		
 		// 失败docEntry集合
 		if(!CherryBatchUtil.isBlankList(falidBillCodeList)){
-			BatchLoggerDTO batchLoggerDTO6 = new BatchLoggerDTO();
-			batchLoggerDTO6.setCode("EOT00108");
-			batchLoggerDTO6.setLevel(CherryBatchConstants.LOGGER_INFO);
-			batchLoggerDTO6.addParam(falidBillCodeList.toString());
 			fReason="标准接口发货单导入程序处理单据失败，具体查看Log日志";
-			logger.BatchLogger(batchLoggerDTO6);
 		}
 	}
 	/**
@@ -485,58 +476,34 @@ public class BINBAT134_BL {
 	 * @return
 	 */
 	private Map<String,Object> checkExistsPrt(Map<String,Object> detailMap){
-		Map<String,Object> resultMap = new HashMap<String, Object>();
-		// 取得部门信息
-		resultMap = bINBAT134_Service.selCounterDepartmentInfo(detailMap);
-		if(null != resultMap && !resultMap.isEmpty()){
-			//优先查询此产品是否为促销品
-			detailMap.put("organizationID", resultMap.get("organizationID"));
-			resultMap = bINBAT134_Service.selPrmProductInfo(detailMap);
-			if (resultMap == null || resultMap.get("promotionProductVendorID") == null) {
-				resultMap = bINBAT134_Service.selPrmProductPrtBarCodeInfo(detailMap);
-				if(null == resultMap || resultMap.isEmpty()){
-					//在促销产品条码对应关系表里找不到，放开时间条件再找一次，还是找不到的接下来查产品
-					try {
-						List<Map<String,Object>> prmPrtBarCodeList = bINBAT134_Service.selPrmPrtBarCodeList(detailMap);
-						if (!CherryBatchUtil.isBlankList(prmPrtBarCodeList)) {
-							//取tradeDateTime与StartTime最接近的第一条
-							Map<String,Object> temp = new HashMap<String, Object>();
-							temp.put("promotionProductVendorID", prmPrtBarCodeList.get(0).get("promotionProductVendorID"));
-							//查询促销产品信息  根据促销产品厂商ID，不区分有效状态
-							List list = bINBAT134_Service.selPrmByPrmVenID(temp);
-							if(list!=null&&!list.isEmpty()){
-								resultMap = (HashMap)list.get(0);
-							}
-						}
-					} catch (Exception e) {
-						e.printStackTrace();
-					}
-				}
-			}
+		// 不再过滤无效的产品
+		Map<String,Object> resultMap = bINBAT134_Service.selProductInfo(detailMap);
+		// 若没有找到则再去查询产品条码对应关系表中的产品数据
+		if (null == resultMap || resultMap.isEmpty()){
+			// 查找对应的产品条码对应关系表【业务时间在起止时间内】
+			resultMap = bINBAT134_Service.selPrtBarCode(detailMap);
+			// 在产品条码对应关系表里找不到，放开时间条件再找一次
 			if(null == resultMap || resultMap.isEmpty()){
-				//如促销品未查到则再次查询此产品是否为产品
-				// 不再过滤无效的产品
-				resultMap = bINBAT134_Service.selProductInfo(detailMap);
-				// 若没有找到则再去查询产品条码对应关系表中的产品数据
-				if (null == resultMap || "".equals(ConvertUtil.getString(resultMap.get("productVendorID")))){
-					// 查找对应的产品条码对应关系表【业务时间在起止时间内】
-					resultMap = bINBAT134_Service.selPrtBarCode(detailMap);
-					// 在产品条码对应关系表里找不到，放开时间条件再找一次
-					if(null == resultMap || resultMap.isEmpty()){
-						List<Map<String,Object>> prtBarCodeList = bINBAT134_Service.selPrtBarCodeList(detailMap);
-						if(null != prtBarCodeList && prtBarCodeList.size()>0){
-							//取tradeDateTime与StartTime最接近的第一条
-							resultMap = new HashMap<String, Object>();
-							resultMap.put("productVendorID", prtBarCodeList.get(0).get("productVendorID"));
-						}
-					}
+				List<Map<String,Object>> prtBarCodeList = bINBAT134_Service.selPrtBarCodeList(detailMap);
+				if(null != prtBarCodeList && prtBarCodeList.size()>0){
+					//取tradeDateTime与StartTime最接近的第一条
+					resultMap = new HashMap<String, Object>();
+					resultMap.put("productVendorID", prtBarCodeList.get(0).get("productVendorID"));
 				}
 			}
-		}else{
-			//该标识表示为部门代号不存在
-			resultMap = new HashMap<String, Object>();
-			resultMap.put("counterFlag", "1");
 		}
+		return resultMap;
+	}
+
+
+	/**
+	 * 预先验证该主数据是否可以被插入至新后台（验证收货部门是否存在）
+	 * @param
+	 * @return
+	 */
+	private Map<String,Object> checkExistsCounter(Map<String,Object> detailMap) {
+		// 取得部门信息
+		Map<String, Object> resultMap = bINBAT134_Service.selCounterDepartmentInfo(detailMap);
 		return resultMap;
 	}
 }
