@@ -4,18 +4,18 @@
  		<strong><@s.text name="ruleContent" /><@s.text name="setting" /></strong>
 	</div>
 	<div class="box4-content">
+        <div class="box2 box2-active">
+            <div class="box2-header clearfix">
+                <strong class="left active"><span class="ui-icon icon-buy"></span><@s.text name="basePriceInfo" /><@s.text name="setting" /></strong>
+            </div>
+            <div style="padding:1em;" class="box2-content clearfix">
+                <label><@s.text name="basePriceInfo" /></label>
+                <select name="pageD.basePrice">
+				<@getOptionList list=basePriceList val=pageTemp.basePrice!'0'/>
+                </select>
+            </div>
+        </div>
 		<#if pageTemp.exRangesFlag == '1'>
-		<div class="box2 box2-active">
-			<div class="box2-header clearfix">
-				<strong class="left active"><span class="ui-icon icon-buy"></span><@s.text name="basePriceInfo" /><@s.text name="setting" /></strong>
-			</div>
-			<div style="padding:1em;" class="box2-content clearfix">
-				<label><@s.text name="basePriceInfo" /></label>
-				<select name="pageD.basePrice">
-					<@getOptionList list=basePriceList val=pageTemp.basePrice!'0'/>
-				</select>
-			</div>
-		</div>
 		<div class="box2 box2-active">
 			<div class="box2-header clearfix"><strong class="left active"><span class="ui-icon icon-buy"></span><@s.text name="exRanges" /></strong></div>
 			<div style="padding:1em;" class="box2-content clearfix">
