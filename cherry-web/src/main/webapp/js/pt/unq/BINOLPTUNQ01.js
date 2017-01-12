@@ -173,8 +173,8 @@ BINOLPTUNQ01.prototype = {
 
 			if(msgJson.errorCode == "0"){
 
-				var ht = $("#operateSuccessId").clone();
-				$("#dialogGenCodeInitDIV").html('').append(ht);
+				//var ht = $("#operateSuccessId").clone();
+				$("#dialogGenCodeInitDIV").html('').append('<p id="operateSuccessId" class="success"><span>'+'操作成功!计划生成['+msgJson.GenerateCount+'],实际生成['+msgJson.ActualGenerateCount+']'+'</span></p>');
 				
 				// 刷新一览
 				BINOLPTUNQ01.search();
@@ -195,7 +195,10 @@ BINOLPTUNQ01.prototype = {
 					callback: cback
 				});
 				
-			}else{
+			} else if(msgJson.errorCode == "2"){
+				// 随机码已取满,当前操作失败,请联系管理员!
+				$("#dialogGenCodeInitDIV").html('').append('<p class="message"><span>'+msgJson.errorMsg+'</span>');
+			} else{
 				// 显示结果信息
 				var ht= $("#operateFaildId").clone();
 				$("#dialogGenCodeInitDIV").html('').append(ht);

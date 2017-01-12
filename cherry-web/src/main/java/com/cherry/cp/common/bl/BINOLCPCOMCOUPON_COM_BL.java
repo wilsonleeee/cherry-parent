@@ -66,6 +66,16 @@ public class BINOLCPCOMCOUPON_COM_BL{
 	}
 
 	/**
+	 * 获取序列号以及大质数
+	 * @param map
+	 * @return
+	 * @throws Exception
+     */
+	public Map<String, Object> getCouponInfo(Map<String, Object> map) throws Exception {
+		return ser.getCouponInfo(map);
+	}
+
+	/**
 	 * 求最小公约数
 	 */
 	public long gcd(long a, long b) {

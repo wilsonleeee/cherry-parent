@@ -4,7 +4,7 @@
 <script type="text/javascript" src="/Cherry/js/common/cherryDate.js"></script>
 <script type="text/javascript" src="/Cherry/js/bs/common/BINOLBSCOM03.js"></script>
 <script type="text/javascript" src="/Cherry/js/lib/jquery-ui-i18n.js"></script>
-<script type="text/javascript" src="/Cherry/js/pt/unq/BINOLPTUNQ01.js"></script>
+<script type="text/javascript" src="/Cherry/js/pt/unq/BINOLPTUNQ01.js?v=20170111"></script>
 <script type="text/javascript">
 $(function() {
 	productBinding({elementId:"nameTotal",showNum:20,targetShow:"nameTotal",targetId:"prtVendorId"});//产品名称
@@ -332,8 +332,8 @@ window.onbeforeunload = function(){
      <div style="display: none;">
        	<div id="dialogConfirmIss"><s:text name="global.page.goOn" /></div>
        	<div id="dialogCancelIss"><s:text name="global.page.cancle" /></div>
-	    <p id="operateSuccessId" class="success"><span><s:text name="global.page.operateSuccess"/></span>
-	    <p id="operateFaildId" class="message"><span><s:text name="global.page.operateFaild"/></span>
+	    <p id="operateSuccessId" class="success"><span><s:text name="global.page.operateSuccess"/></span></p>
+	    <p id="operateFaildId" class="message"><span><s:text name="global.page.operateFaild"/></span></p>
      
 		<div id="deleteTitle14"><s:text name="PTUNQ.deleteTitle" /></div>			
 		<div id="deleteMessage14"><p class="message"><span><s:text name="PTUNQ.deleteText" /></span></p></div>

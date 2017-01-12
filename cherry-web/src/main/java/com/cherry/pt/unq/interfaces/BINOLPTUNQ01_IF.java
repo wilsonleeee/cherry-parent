@@ -75,7 +75,7 @@ public interface BINOLPTUNQ01_IF{
 	 * @return
 	 * @throws Exception
 	 */
-	public String tran_GenerateUnqCode(Map<String,Object> map ) throws Exception;
+	public Map<String, Object> tran_GenerateUnqCode(Map<String,Object> map ) throws Exception;
 	
 	/**
 	 * 取得批次号

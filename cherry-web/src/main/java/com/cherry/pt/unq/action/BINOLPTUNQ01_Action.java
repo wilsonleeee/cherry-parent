@@ -21,6 +21,7 @@ import java.util.Map;
 
 import javax.annotation.Resource;
 
+import com.cherry.cm.core.CherryException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -354,12 +355,20 @@ public class BINOLPTUNQ01_Action extends BaseAction implements ModelDriven<BINOL
 		try{
 			map.put("productVendorID", map.get("prtVendorId"));
 //			binOlCNBAS12_IF.tran_delCounterMallAct(map);
-			binOLPTUNQ01_BL.tran_GenerateUnqCode(map);
+			resultMap = binOLPTUNQ01_BL.tran_GenerateUnqCode(map);
 			resultMap.put("errorCode", "0");
 			resultMap.put("successMsg", getText("ECM000120"));
 		}catch(Exception e){
-			resultMap.put("errorCode", "1");
-			resultMap.put("errorMsg",  e.getMessage());
+
+			if(e instanceof CherryException) {
+				CherryException temp = (CherryException)e;
+				resultMap.put("errorCode", "2");
+				resultMap.put("errorMsg", getText(temp.getErrCode()));
+			} else {
+				resultMap.put("errorCode", "1");
+				resultMap.put("errorMsg",  e.getMessage());
+			}
+
 		}
 		
 		ConvertUtil.setResponseByAjax(response, resultMap);
@@ -370,7 +379,7 @@ public class BINOLPTUNQ01_Action extends BaseAction implements ModelDriven<BINOL
 	/**
 	 * 验证提交的参数
 	 * 
-	 * @param 无
+	 * @param
 	 * @return boolean 验证结果
 	 * @throws Exception
 	 * 

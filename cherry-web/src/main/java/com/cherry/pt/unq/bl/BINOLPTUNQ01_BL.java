@@ -26,16 +26,20 @@ import com.cherry.cm.cmbussiness.bl.BINOLCM14_BL;
 import com.cherry.cm.cmbussiness.bl.BINOLCM37_BL;
 import com.cherry.cm.cmbussiness.interfaces.BINOLCM37_IF;
 import com.cherry.cm.core.CherryConstants;
+import com.cherry.cm.core.CherryException;
 import com.cherry.cm.core.PropertiesUtil;
 import com.cherry.cm.util.ConvertUtil;
 
 import com.cherry.cp.common.bl.BINOLCPCOMCOUPON_10_1_BL;
 import com.cherry.cp.common.bl.BINOLCPCOMCOUPON_6_BL;
+import com.cherry.cp.common.bl.BINOLCPCOMCOUPON_APPLY_BL;
 import com.cherry.mo.common.interfaces.BINOLMOCOM01_IF;
 import com.cherry.cp.common.CampConstants;
 import com.cherry.cp.common.bl.BINOLCPCOMCOUPON_15_BL;
 import com.cherry.pt.unq.interfaces.BINOLPTUNQ01_IF;
 import com.cherry.pt.unq.service.BINOLPTUNQ01_Service;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * 唯一码生成 BL
@@ -46,6 +50,8 @@ import com.cherry.pt.unq.service.BINOLPTUNQ01_Service;
 public class BINOLPTUNQ01_BL implements BINOLPTUNQ01_IF,Serializable, BINOLCM37_IF{
 	
 	private static final long serialVersionUID = -2037649602403418998L;
+
+	private static Logger logger = LoggerFactory.getLogger(BINOLPTUNQ01_BL.class.getName());
 
 	@Resource
 	private transient BINOLMOCOM01_IF binOLMOCOM01_BL;
@@ -58,17 +64,17 @@ public class BINOLPTUNQ01_BL implements BINOLPTUNQ01_IF,Serializable, BINOLCM37_
 	private BINOLPTUNQ01_Service binOLPTUNQ01_Service;		
 
 	@Resource(name="binolcpcomcoupon15bl")
-	private transient BINOLCPCOMCOUPON_15_BL binolcpcomcoupon15bl;
+	private BINOLCPCOMCOUPON_15_BL binolcpcomcoupon15bl;
 
 	@Resource(name="binolcpcomcoupon10_1_bl")
-	private transient BINOLCPCOMCOUPON_10_1_BL binolcpcomcoupon10_1_bl;
+	private BINOLCPCOMCOUPON_10_1_BL binolcpcomcoupon10_1_bl;
 
-	@Resource(name="binolcpcomcoupon6bl")
-	private transient BINOLCPCOMCOUPON_6_BL binolcpcomcoupon6bl;
+	@Resource(name="binolcpcomcoupon_apply_bl")
+	private BINOLCPCOMCOUPON_APPLY_BL binolcpcomcoupon_apply_bl;
 	
 	/** 系统配置项 共通BL */
 	@Resource(name="binOLCM14_BL")
-	private transient BINOLCM14_BL binOLCM14_BL;
+	private BINOLCM14_BL binOLCM14_BL;
 	
 	/** 
 	 * 查询唯一码生成总数
@@ -214,7 +220,7 @@ public class BINOLPTUNQ01_BL implements BINOLPTUNQ01_IF,Serializable, BINOLCM37_
 	 * @return
 	 * @throws Exception
 	 */
-	public String tran_GenerateUnqCode(Map<String,Object> map ) throws Exception{
+	public Map<String, Object> tran_GenerateUnqCode(Map<String,Object> map ) throws Exception{
 		
 		Integer spec = ConvertUtil.getInt(map.get("spec")); // 规格
 		Integer boxCount = ConvertUtil.getInt(map.get("boxCount")); // 箱数
@@ -228,9 +234,7 @@ public class BINOLPTUNQ01_BL implements BINOLPTUNQ01_IF,Serializable, BINOLCM37_
 		map.put("prtUniqueCodeBatchID", prtUniqueCodeBatchID);
 		
 		// 生成明细
-		genCodingTY(map);
-		
-		return null;
+		return genCodingTY(map);
 	}
 	
 	/**
@@ -239,8 +243,8 @@ public class BINOLPTUNQ01_BL implements BINOLPTUNQ01_IF,Serializable, BINOLCM37_
 	 * @throws Exception 
 	 */
 	@SuppressWarnings("unused")
-	private void genCodingTY(Map<String,Object> map) throws Exception{
-		
+	private Map<String, Object> genCodingTY(Map<String,Object> map) throws Exception{
+		Map<String, Object> resultMap = new HashMap<String, Object>();
 		String generateType = ConvertUtil.getString(map.get("generateType")); // 生成方式
 		String needBoxCode = ConvertUtil.getString(map.get("needBoxCode")); // 是否需要箱码
 //		String defaultActivationStatus = ConvertUtil.getString(map.get("defaultActivationStatus")); // 是否需要箱码
@@ -289,7 +293,7 @@ public class BINOLPTUNQ01_BL implements BINOLPTUNQ01_IF,Serializable, BINOLCM37_
 				relUniqueCodeList = genRelUnqCode_TY(map, generateCount,relUniqueCodeList, codeLen);
 			}
 		}
-		
+
 		// ************************************************ 批量写入DB start  ******************************************************
 		
 		final int batchSize = 2000; // 每次批处理条数
@@ -300,7 +304,15 @@ public class BINOLPTUNQ01_BL implements BINOLPTUNQ01_IF,Serializable, BINOLCM37_
 		commonParam.put("prtUniqueCodeBatchID", map.get("prtUniqueCodeBatchID")); // 唯一码批次ID 
 		commonParam.put("productVendorID", map.get("productVendorID")); // 产品ID
 		commonParam.put("activationStatus", map.get("defaultActivationStatus")); // 激活状态
-		
+
+		if(null == pointUnqCodeList || pointUnqCodeList.isEmpty()) {
+			throw new CherryException("ECM000124");
+		}
+		// 实际生成条数
+		resultMap.put("ActualGenerateCount",pointUnqCodeList.size());
+		// 预计生成条数
+		resultMap.put("GenerateCount",generateCount);
+
 		for(int i = 0; i < pointUnqCodeList.size(); i++){
 			Map<String,Object> addPUCDParam = new HashMap<String, Object>(); 
 			addPUCDParam.putAll(commonParam);
@@ -325,6 +337,8 @@ public class BINOLPTUNQ01_BL implements BINOLPTUNQ01_IF,Serializable, BINOLCM37_
 				}
 			}
 		}
+
+		return resultMap;
 		
 		// ************************************************ 批量写入DB end  ******************************************************
 		
@@ -348,7 +362,7 @@ public class BINOLPTUNQ01_BL implements BINOLPTUNQ01_IF,Serializable, BINOLCM37_
 		try {
 			if("6".equals(codeLen)) {
 				relUniqueCodeParam.put(CampConstants.CAMP_CODE,"RelUniqueCode"+codeLen); // 非15位随机数据的固定值，用于取随机数
-				relUniqueCodeList = binolcpcomcoupon6bl.generateCoupon(relUniqueCodeParam);
+				relUniqueCodeList = binolcpcomcoupon_apply_bl.generateRandomCode6(relUniqueCodeParam);
 			} else if("10".equals(codeLen)){
 				relUniqueCodeParam.put(CampConstants.CAMP_CODE,"RelUniqueCode"+codeLen); // 非15位随机数据的固定值，用于取随机数
 				relUniqueCodeList = binolcpcomcoupon10_1_bl.generateCoupon(relUniqueCodeParam);
@@ -356,6 +370,7 @@ public class BINOLPTUNQ01_BL implements BINOLPTUNQ01_IF,Serializable, BINOLCM37_
 				relUniqueCodeList = binolcpcomcoupon15bl.generateCoupon(relUniqueCodeParam);
 			}
 		} catch (Exception e) {
+			logger.error("生成关联码的随机码程序发生异常!"+e.getMessage(),e);
 			throw e;
 		}
 		return relUniqueCodeList;
@@ -379,7 +394,7 @@ public class BINOLPTUNQ01_BL implements BINOLPTUNQ01_IF,Serializable, BINOLCM37_
 		try {
 			if("6".equals(codeLen)) {
 				pointUnqCodeParam.put(CampConstants.CAMP_CODE,"PointUnqCode"+codeLen); // 非15位随机数据的固定值，用于取随机数
-				pointUnqCodeList = binolcpcomcoupon6bl.generateCoupon(pointUnqCodeParam);
+				pointUnqCodeList = binolcpcomcoupon_apply_bl.generateRandomCode6(pointUnqCodeParam);
 			} else if("10".equals(codeLen)){
 				pointUnqCodeParam.put(CampConstants.CAMP_CODE,"PointUnqCode"+codeLen); // 非15位随机数据的固定值，用于取随机数
 				pointUnqCodeList = binolcpcomcoupon10_1_bl.generateCoupon(pointUnqCodeParam);
@@ -388,6 +403,7 @@ public class BINOLPTUNQ01_BL implements BINOLPTUNQ01_IF,Serializable, BINOLCM37_
 			}
 
 		} catch (Exception e) {
+			logger.error("生成唯一码的随机码程序发生异常!"+e.getMessage(),e);
 			throw e;
 		}
 		return pointUnqCodeList;
@@ -411,7 +427,7 @@ public class BINOLPTUNQ01_BL implements BINOLPTUNQ01_IF,Serializable, BINOLCM37_
 		try {
 			if("6".equals(codeLen)) {
 				xmParam.put(CampConstants.CAMP_CODE,"BoxCode"+codeLen); // 非15位随机数据的固定值，用于取随机数
-				xmList = binolcpcomcoupon6bl.generateCoupon(xmParam);
+				xmList = binolcpcomcoupon_apply_bl.generateRandomCode6(xmParam);
 			} else if("10".equals(codeLen)){
 				xmParam.put(CampConstants.CAMP_CODE,"BoxCode"+codeLen); // 非15位随机数据的固定值，用于取随机数
 				xmList = binolcpcomcoupon10_1_bl.generateCoupon(xmParam);
@@ -420,6 +436,7 @@ public class BINOLPTUNQ01_BL implements BINOLPTUNQ01_IF,Serializable, BINOLCM37_
 			}
 
 		} catch (Exception e) {
+			logger.error("生成箱码的随机码程序发生异常!"+e.getMessage(),e);
 			throw e;
 		}
 		return xmList;
