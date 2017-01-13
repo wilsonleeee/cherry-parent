@@ -12,6 +12,7 @@
  */
 package com.cherry.pt.jcs.interfaces;
 
+import java.util.List;
 import java.util.Map;
 
 import com.cherry.cm.core.ICherryInterface;
@@ -44,4 +45,30 @@ public interface BINOLPTJCS07_IF extends ICherryInterface{
 	 * @param map
 	 */
 	public void updPrtBarCode(Map<String, Object> map);
+
+	/**
+	 * 取得新添加的产品条码
+	 *
+	 * @param barCode
+	 * @param allList
+	 * @return
+	 */
+	public List<Map<String, Object>> getAddCodeList(
+			List<Map<String, Object>> barCode, List<Map<String, Object>> allList);
+
+	/**
+	 * 取得更新产品条码
+	 *
+	 * @param barCode
+	 * @return
+	 */
+	public List<Map<String, Object>> getUpdCodeList(
+			List<Map<String, Object>> barCode);
+
+	/**
+	 *  查询该barCode在同一编码的所有产品中是否被使用过
+	 * @param barCodeMap
+	 * @return
+	 */
+	public Map<String, Object> getbarCodeUsedRecord(Map<String,Object> barCodeMap);
 }

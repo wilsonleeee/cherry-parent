@@ -214,7 +214,7 @@ public class BINOLPTJCS07_Action extends BaseAction implements
 	 * </p>
 	 * 
 	 * 
-	 * @param 无
+	 * @param
 	 * @return String 跳转页面
 	 * 
 	 */
@@ -308,7 +308,7 @@ public class BINOLPTJCS07_Action extends BaseAction implements
 	 * </p>
 	 * 
 	 * 
-	 * @param 无
+	 * @param
 	 * @return String 跳转页面
 	 * 
 	 */
@@ -455,7 +455,7 @@ public class BINOLPTJCS07_Action extends BaseAction implements
 	/**
 	 * 验证提交的参数
 	 * 
-	 * @param 无
+	 * @param
 	 * @return boolean 验证结果
 	 * @throws Exception
 	 * 
@@ -464,7 +464,6 @@ public class BINOLPTJCS07_Action extends BaseAction implements
 	private boolean validateForm() throws Exception {
 		// 验证结果
 		boolean isCorrect = true;
-		
 		// 用户信息
 		UserInfo userInfo = (UserInfo) session.get(CherryConstants.SESSION_USERINFO);
 		
@@ -495,16 +494,6 @@ public class BINOLPTJCS07_Action extends BaseAction implements
 				paramsMap.put(CherryConstants.BRANDINFOID, form.getBrandInfoId());
 				paramsMap.put(CherryConstants.UNITCODE, form.getUnitCode().trim());
 				paramsMap.put("productId", form.getProductId());
-				// 产品ID
-//				int productId = binOLPTJCS03_IF.getProductId(paramsMap);
-//				// ********* 2011-9-13 产品与促销品unitCode唯一对应开始 *********//
-//				// 取得促销品ID
-//				int promotionId = binOLPTJCS03_IF.getPromotionId(paramsMap);
-//				if ((productId != 0 && productId != form.getProductId()) || promotionId !=0) {
-//					this.addFieldError(CherryConstants.UNITCODE, getText(
-//							"ECM00032", new String[] { getText("PSS00001") }));
-//					isCorrect = false;
-//				}
 //				// ********* 2011-9-13 产品与促销品unitCode唯一对应结束 *********//
 				
 				// ********* 2012-11-16  产品与促销品barcode唯一对应(WITPOSQA-6808) start U1BN（N≠1） *********//
@@ -595,7 +584,9 @@ public class BINOLPTJCS07_Action extends BaseAction implements
 					}
 				}
 			}
-			
+			// 对存在的barCode进行更新，或者插入新的barCode 进行验证TODO
+			//主要是针对一码多品的情况
+			isCorrect = validatUpdAndInsBrcdeWheExistInHisTory(barCode,allList);
 			// ********* 2012-8-16 产品与促销品barcode唯一对应(WITPOSQA-6808) start *********//
 			Map<String, Object> paramsMap = new HashMap<String, Object>();
 			paramsMap.put(CherryConstants.BRANDINFOID, form.getBrandInfoId());
@@ -982,5 +973,70 @@ public class BINOLPTJCS07_Action extends BaseAction implements
 			}
 		}
 		return isCorrect;
+	}
+
+	/**
+	 * @param barCodeList 这次传输的barcode
+	 * @param allList
+	 * @descpription
+	 * @return boolean 是否通过验证，主要针对一码多品的情况
+	 * 主要是对更新的条码和插入的条码进行验证，验证规则如下：
+	 * ①更新的产品需要验证该编码下别的条码是否已经使用过该条码
+	 * ②插入的产品需要验证该编码下所有的条码是否使用过该条码
+	 */
+	private boolean validatUpdAndInsBrcdeWheExistInHisTory(List<Map<String,Object>> barCodeList,List<Map<String,Object>> allList){
+		boolean flag = true;
+		int index = 0;
+		// 新添加的产品条码List
+		List<Map<String, Object>> addCodeList = binolptjcs07_IF.getAddCodeList(barCodeList, allList);
+		// 更新的产品条码
+		List<Map<String, Object>> updCodeList = binolptjcs07_IF.getUpdCodeList(barCodeList);
+		//对更新的产品进行验证
+		for(Map<String,Object> code:updCodeList){
+			code.put("unitCode",form.getUnitCode());
+			Map<String,Object> resultMap = binolptjcs07_IF.getbarCodeUsedRecord(code);
+			if(resultMap != null){
+				//如果一旦能够找到，返回false
+				String usedBarCode = ConvertUtil.getString(code.get("barCode"));
+				//这里需要找出code在AllList中的下标
+				index = findIndexInAllList(code, allList);
+				this.addFieldError(CherryConstants.BARCODE
+						+ CherryConstants.UNLINE + index, getText("ECM001010",new String[]{usedBarCode}));
+				flag = false;
+			}
+		}
+		index = allList.size();
+		//对添加的产品进行验证
+		for(Map<String,Object> code:addCodeList){
+			code.put("unitCode",form.getUnitCode());
+			Map<String,Object> resultMap = binolptjcs07_IF.getbarCodeUsedRecord(code);
+			if(resultMap !=null){
+				//如果一旦能够找到，返回false
+				String usedBarCode = ConvertUtil.getString(code.get("barCode"));
+				this.addFieldError(CherryConstants.BARCODE
+						+ CherryConstants.UNLINE + index, getText("ECM001010",new String[]{usedBarCode}));
+				flag = false;
+			}
+			index++;
+		}
+		return flag;
+	}
+
+	/***
+	 *
+	 * @param updatedOrAddMap
+	 * @param allList
+	 * @description 找出需要更新或者插入的条码在AllList中的下标
+     * @return
+     */
+	private int findIndexInAllList(Map<String,Object> updatedOrAddMap,List<Map<String,Object>> allList){
+		int index = 0;
+		for(index = 0; index < allList.size();index++){
+			Map<String,Object> iterotorMap = allList.get(index);
+			if(ConvertUtil.getString(updatedOrAddMap.get("oldBarCode")).equals(ConvertUtil.getString(iterotorMap.get("barCode")))){
+				break;
+			}
+		}
+		return index;
 	}
 }

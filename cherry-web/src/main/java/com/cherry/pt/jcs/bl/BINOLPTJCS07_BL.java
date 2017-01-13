@@ -249,7 +249,7 @@ public class BINOLPTJCS07_BL implements BINOLPTJCS07_IF {
 	 * @param allList
 	 * @return
 	 */
-	private List<Map<String, Object>> getAddCodeList(
+	public List<Map<String, Object>> getAddCodeList(
 			List<Map<String, Object>> barCode, List<Map<String, Object>> allList) {
 		// 产品条码信息添加操作List
 		List<Map<String, Object>> list = new ArrayList<Map<String, Object>>();
@@ -283,10 +283,9 @@ public class BINOLPTJCS07_BL implements BINOLPTJCS07_IF {
 	 * 取得更新产品条码
 	 * 
 	 * @param barCode
-	 * @param allList
 	 * @return
 	 */
-	private List<Map<String, Object>> getUpdCodeList(
+	public List<Map<String, Object>> getUpdCodeList(
 			List<Map<String, Object>> barCode) {
 		List<Map<String, Object>> list = new ArrayList<Map<String, Object>>();
 		for (Map<String, Object> code : barCode) {
@@ -311,7 +310,6 @@ public class BINOLPTJCS07_BL implements BINOLPTJCS07_IF {
 	 * 取得删除的产品条码
 	 * 
 	 * @param barCode
-	 * @param allList
 	 * @return
 	 */
 	private List<Map<String, Object>> getDelCodeList(
@@ -635,5 +633,14 @@ public class BINOLPTJCS07_BL implements BINOLPTJCS07_IF {
 		}
 		
 		binOLPTJCS07_Service.updPrtBarCode(map);
+	}
+
+	/**
+	 *  查询该barCode在同一编码的所有产品中是否被使用过
+	 * @param barCodeMap
+	 * @return
+     */
+	public Map<String, Object> getbarCodeUsedRecord(Map<String,Object> barCodeMap){
+		return binOLPTJCS07_Service.getbarCodeUsedRecord(barCodeMap);
 	}
 }

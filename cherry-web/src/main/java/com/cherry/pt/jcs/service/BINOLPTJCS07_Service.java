@@ -151,4 +151,14 @@ public class BINOLPTJCS07_Service extends BaseService {
 		map.put(CherryConstants.IBATIS_SQL_ID,"BINOLPTJCS07.updateClosingTime");
 		baseServiceImpl.update(map);
 	}
+
+	/**
+	 *  查询该barCode在同一编码的所有产品中是否被使用过
+	 * @param map
+	 * @return
+	 */
+	public Map<String, Object> getbarCodeUsedRecord(Map<String,Object> map){
+		map.put(CherryConstants.IBATIS_SQL_ID,"BINOLPTJCS07.getbarCodeUsedRecord");
+		return (Map<String, Object>) baseServiceImpl.get(map);
+	}
 }
