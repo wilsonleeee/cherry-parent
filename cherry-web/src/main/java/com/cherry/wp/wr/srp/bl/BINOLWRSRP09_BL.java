@@ -52,6 +52,10 @@ public class BINOLWRSRP09_BL implements BINOLWRSRP09_IF {
 
 			/*毛利额=销售金额-成本（如果成本字段为空，则以0对待）*/
 			BigDecimal grossProfitAmount = amount.subtract(totalCostPrice);
+			BigDecimal isZero = new BigDecimal("0");
+			if (totalCostPrice.compareTo(isZero)==0){
+				grossProfitAmount=  new BigDecimal("0");
+			}
 			saleCountInfo.put("grossProfitAmount",grossProfitAmount);
 
 			/*毛利率=毛利额/销售额*/
