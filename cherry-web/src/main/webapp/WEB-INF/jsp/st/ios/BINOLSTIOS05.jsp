@@ -6,7 +6,7 @@
 <%@ page import="java.text.SimpleDateFormat" %>
 <link rel="stylesheet" href="/Cherry/css/cherry/combobox.css" type="text/css">
 <script type="text/javascript" src="/Cherry/js/common/cherry.js?version=201612011416"></script>
-<script type="text/javascript" src="/Cherry/js/st/ios/BINOLSTIOS05.js?version=201612131944"></script>
+<script type="text/javascript" src="/Cherry/js/st/ios/BINOLSTIOS05.js?version=201701132038"></script>
 <script type="text/javascript">
        if(refreshSessionTimerID == null){
 	       	refreshSessionTimerID = setInterval("refreshCherrySession($('#s_refreshAjax').html())", 30*60*1000);

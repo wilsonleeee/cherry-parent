@@ -132,6 +132,25 @@ BINOLSTIOS05.prototype = {
 				$detail.find("#hasproductflagArr").val("1");
 				$detail.find("#dataTd5").html(stocks[productVendorID]);
 				$detail.find("#bookCountArr").val(stocks[productVendorID]);
+				//added by
+				if($("#BatchStockTakingTrue").prop("checked") == true){
+					// 跳到批次文本框
+					var $batchNoArrInputText = $detail.find("#batchNoArr");
+					// 获取焦点
+					$batchNoArrInputText.select();
+				} else {
+					//跳到数量文本框
+					var $quantityInputText =  $detail.find("#quantityArr");
+					//选中一个产品后后默认数量1
+					var quantity = $quantityInputText.val();
+					if(quantity == ""){
+						$quantityInputText.val("1");
+					}
+					//计算盘差（防止先输入数量后输入产品）
+					BINOLSTIOS05.changeCount($quantityInputText);
+					// 获取焦点
+					$quantityInputText.select();
+				}
 			}
 		};
 		
@@ -803,24 +822,6 @@ BINOLSTIOS05.prototype = {
 //			if(!BINOLSTIOS05.blindFlag){
 			BINOLSTIOS05.getPrtStock($dataTd,info.prtVendorId);
 //			}
-			if($("#BatchStockTakingTrue").prop("checked") == true){
-				// 跳到批次文本框
-				var $batchNoArrInputText = $dataTd.find("#batchNoArr");
-				// 获取焦点
-				$batchNoArrInputText.select();
-			} else {
-				//跳到数量文本框
-				var $quantityInputText =  $dataTd.find("#quantityArr");
-				//选中一个产品后后默认数量1
-				var quantity = $quantityInputText.val();
-				if(quantity == ""){
-					$quantityInputText.val("1");
-				}
-				//计算盘差（防止先输入数量后输入产品）
-				BINOLSTIOS05.changeCount($quantityInputText);
-				// 获取焦点
-				$quantityInputText.select();
-			}
 		}
 	},
 	
