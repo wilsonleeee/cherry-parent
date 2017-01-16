@@ -27,6 +27,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.annotation.Resource;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -188,17 +189,18 @@ public class BINBEMBTIF09_BL {
 	 * @return
      */
 	private String syncTmall(Map<String, Object> map) {
+		Map<String, Object> paramMap = new HashMap<String, Object>();
+		paramMap.putAll(map);
 		//获取的明文手机号
 		String mobileNew = "";
-
-		TmallKeyDTO tmallKey = TmallKeys.getTmallKeyBybrandCode((String) map.get("brandCode"));
+		TmallKeyDTO tmallKey = TmallKeys.getTmallKeyBybrandCode((String) paramMap.get("brandCode"));
 		if (null == tmallKey) {
 			return null;
 		}
 		// 会员ID
-		Object memberIdObj = map.get("memberInfoId");
+		Object memberIdObj = paramMap.get("memberInfoId");
 		// 取得会员信息
-		Map<String, Object> member = getMemberInfo(map);
+		Map<String, Object> member = getMemberInfo(paramMap);
 		TmallMeiCrmMemberSyncRequest req =
 				new TmallMeiCrmMemberSyncRequest();
 		// 明文手机号
@@ -208,7 +210,7 @@ public class BINBEMBTIF09_BL {
 			if (CherryChecker.isNullOrEmpty(nick)) {
 				String nickName = (String) member.get("tNickName");
 				if (CherryChecker.isNullOrEmpty(nickName)) {
-					Map<String, Object> registInfo = binOLCM31_Service.getMemRegisInfo(map);
+					Map<String, Object> registInfo = binOLCM31_Service.getMemRegisInfo(paramMap);
 					String mixNick = null;
 					if (null != registInfo && !registInfo.isEmpty()) {
 						mixNick = (String) registInfo.get("mixNick");
@@ -235,18 +237,18 @@ public class BINBEMBTIF09_BL {
 		long version = System.currentTimeMillis();
 		req.setVersion(version);
 		req.setExtend("");
-		map.put("syncVersion", version);
+		paramMap.put("syncVersion", version);
 		// 程序名
-		String pgmName = (String) map.get("PgmName");
+		String pgmName = (String) paramMap.get("PgmName");
 		if (null == pgmName) {
 			pgmName = "BINBEMBTIF09";
 		}
-		map.put("point", member.get("point"));
-		map.put("level", member.get("level"));
-		map.put("createdBy", pgmName);
-		map.put("createPGM", pgmName);
-		map.put("updatedBy", pgmName);
-		map.put("updatePGM", pgmName);
+		paramMap.put("point", member.get("point"));
+		paramMap.put("level", member.get("level"));
+		paramMap.put("createdBy", pgmName);
+		paramMap.put("createPGM", pgmName);
+		paramMap.put("updatedBy", pgmName);
+		paramMap.put("updatePGM", pgmName);
 		StringBuilder builder = null;
 		// 同步处理
 		for (int i = 0; i < 4; i++) {
@@ -261,10 +263,10 @@ public class BINBEMBTIF09_BL {
 							String nick = (String) extraMap.get("nick");
 							mobileNew = (String) extraMap.get("mobile");
 							if (!CherryChecker.isNullOrEmpty(nick)) {
-								map.put("taobao_nick", nick);
+								paramMap.put("taobao_nick", nick);
 							}
 							if (!CherryChecker.isNullOrEmpty(mobileNew)) {
-								map.put("mobileNew", mobileNew);
+								paramMap.put("mobileNew", mobileNew);
 							}
 						} catch (Exception e) {
 							logger.error("*********************************天猫同步返回结果转换Map失败！" + extraInfo);
@@ -273,15 +275,15 @@ public class BINBEMBTIF09_BL {
 					if (body.length() > 800) {
 						body = body.substring(0, 800);
 					}
-					map.put("resultMsg", body);
+					paramMap.put("resultMsg", body);
 					// 成功
-					map.put("syncResult", 0);
-					map.put("tmallSyncFlg", 1);
+					paramMap.put("syncResult", 0);
+					paramMap.put("tmallSyncFlg", 1);
 				} else {
 					// 失败
-					map.put("syncResult", 1);
-					map.put("errorCode", response.getErrorCode());
-					map.put("tmallSyncFlg", 2);
+					paramMap.put("syncResult", 1);
+					paramMap.put("errorCode", response.getErrorCode());
+					paramMap.put("tmallSyncFlg", 2);
 					builder = emptyBuilder(builder);
 					// 异常原因
 					builder.append("会员ID：").append(memberIdObj)
@@ -293,9 +295,9 @@ public class BINBEMBTIF09_BL {
 					logger.error(builder.toString());
 				}
 				// 插入天猫会员同步表
-				binOLCM31_Service.addTmallMemSyncInfo(map);
+				binOLCM31_Service.addTmallMemSyncInfo(paramMap);
 				// 更新会员同步信息
-				binOLCM31_Service.updateMemSyncInfo(map);
+				binOLCM31_Service.updateMemSyncInfo(paramMap);
 				break;
 			} catch (Exception e) {
 				builder = emptyBuilder(builder);
@@ -306,13 +308,13 @@ public class BINBEMBTIF09_BL {
 				logger.error(builder.toString(),e);
 				if (i == 3) {
 					// 异常
-					map.put("syncResult", 1);
-					map.put("errorCode", "SYSERROR");
-					map.put("tmallSyncFlg", 2);
+					paramMap.put("syncResult", 1);
+					paramMap.put("errorCode", "SYSERROR");
+					paramMap.put("tmallSyncFlg", 2);
 					// 插入天猫会员同步表
-					binOLCM31_Service.addTmallMemSyncInfo(map);
+					binOLCM31_Service.addTmallMemSyncInfo(paramMap);
 					// 更新会员同步信息
-					binOLCM31_Service.updateMemSyncInfo(map);
+					binOLCM31_Service.updateMemSyncInfo(paramMap);
 					break;
 				}
 			}

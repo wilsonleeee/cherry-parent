@@ -148,49 +148,68 @@ public class BINBEMBTIF11_BL {
 			try {
 				Map<String, Object> deleteMemberInfo = getDeleteMemberInfo(memMergeInfo);
 				Map<String, Object> retainMemberInfo = getRetainMemberInfo(memMergeInfo);
+				memMergeInfo.putAll(deleteMemberInfo);
+				addReteinMemberInfo(retainMemberInfo,memMergeInfo);
 				//如果合并的两条会员的卡号有改动,记录合并异常
 				if (deleteMemberInfo == null || retainMemberInfo == null){
 					memMergeInfo.put("mergeFlag","2");
 					memMergeInfo.put("errorMsg","合并的会员信息不存在");
 					binBEMBTIF01_Service.addMemberMergeHistory(memMergeInfo);
 					binBEMBTIF01_Service.deleteMemberMergeInfo(memMergeInfo);
-				}else{
-					commParamsForUp(deleteMemberInfo);
-					//合并会员信息表：更新线上会员的相关字段到线下会员
-					deleteMemberInfo.put("memberInfoId",memMergeInfo.get("retainMemInfoId"));
-					binBEMBTIF01_Service.updateMemberInfo(deleteMemberInfo);
-					//更新会员注册信息表的BIN_MemberInfoID字段为线下会员ID
-					binBEMBTIF01_Service.updateMemRegisterInfo(deleteMemberInfo);
-
-					//更新线下会员的信息到电商订单主表的BIN_MemberInfoID，MemberCode
-					deleteMemberInfo.put("memberInfoId",memMergeInfo.get("deleteMemInfoId"));
-					deleteMemberInfo.put("memberCode",memMergeInfo.get("deleteMemCode"));
-					deleteMemberInfo.put("newMemCode",memMergeInfo.get("retainMemCode"));
-					deleteMemberInfo.put("newMemInfoId",memMergeInfo.get("retainMemInfoId"));
-					binBEMBTIF01_Service.updateESOrderMain(deleteMemberInfo);
-					//更新线下会员的信息到销售主表的BIN_MemberInfoID，MemberCode
-					binBEMBTIF01_Service.updateSaleMaster(deleteMemberInfo);
-					//更新BIN_MemUsedDetail表的MemCode，BIN_MemberInfoID
-					binBEMBTIF01_Service.updateMemUsedDetail(deleteMemberInfo);
-					//更新线下会员的BIN_MemberInfoID到会员积分表
-					//binBEMBTIF01_Service.updateMemberPoint(deleteMemberInfo);
-					//更新线下会员的BIN_MemberInfoID到会员积分变化主表
-					binBEMBTIF01_Service.updatePointChange(deleteMemberInfo);
-					//发重算MQ，重算积分
-					memMergeInfo.put("memberInfoId",memMergeInfo.get("retainMemInfoId"));
-					memMergeInfo.put("memberCode",memMergeInfo.get("retainMemCode"));
-					memMergeInfo.put("tmallBindTime",deleteMemberInfo.get("tmallBindTime"));
-					sendReCalcMsg(memMergeInfo);
-					//删除线上会员的会员信息表纪录
-					binBEMBTIF01_Service.deleteMemberInfo(deleteMemberInfo);
-					//删除线上会员对应的持卡表
-					binBEMBTIF01_Service.deleteMemCardInfo(deleteMemberInfo);
-
-					//处理成功后,删除会员合并信息表记录,添加到会员合并信息表
-					memMergeInfo.put("mergeFlag","1");
+					continue;
+				}
+				//判断要合并的两条会员的天猫加密手机号是否相同,不相同,
+				if (!CherryBatchChecker.isNullOrEmpty(deleteMemberInfo.get("tmallMixMobile")) && !deleteMemberInfo.get("tmallMixMobile").equals(retainMemberInfo.get("tmallMixMobile"))){
+					memMergeInfo.put("mergeFlag","2");
+					memMergeInfo.put("errorMsg","合并会员的天猫加密手机号不相同");
 					binBEMBTIF01_Service.addMemberMergeHistory(memMergeInfo);
 					binBEMBTIF01_Service.deleteMemberMergeInfo(memMergeInfo);
+					continue;
 				}
+				//判断要合并的两条会员的绑定状态是否都是绑定的,如果都是绑定的,记录合并异常
+				if (!CherryBatchChecker.isNullOrEmpty(deleteMemberInfo.get("tmallBindTime")) && !CherryBatchChecker.isNullOrEmpty(retainMemberInfo.get("tmallBindTime"))){
+					memMergeInfo.put("mergeFlag","2");
+					memMergeInfo.put("errorMsg","合并会员的绑定状态都是绑定的");
+					binBEMBTIF01_Service.addMemberMergeHistory(memMergeInfo);
+					binBEMBTIF01_Service.deleteMemberMergeInfo(memMergeInfo);
+					continue;
+				}
+
+				commParamsForUp(deleteMemberInfo);
+				//合并会员信息表：更新线上会员的相关字段到线下会员
+				deleteMemberInfo.put("memberInfoId",memMergeInfo.get("retainMemInfoId"));
+				binBEMBTIF01_Service.updateMemberInfo(deleteMemberInfo);
+				//更新会员注册信息表的BIN_MemberInfoID字段为线下会员ID
+				binBEMBTIF01_Service.updateMemRegisterInfo(deleteMemberInfo);
+
+				//更新线下会员的信息到电商订单主表的BIN_MemberInfoID，MemberCode
+				deleteMemberInfo.put("memberInfoId",memMergeInfo.get("deleteMemInfoId"));
+				deleteMemberInfo.put("memberCode",memMergeInfo.get("deleteMemCode"));
+				deleteMemberInfo.put("newMemCode",memMergeInfo.get("retainMemCode"));
+				deleteMemberInfo.put("newMemInfoId",memMergeInfo.get("retainMemInfoId"));
+				binBEMBTIF01_Service.updateESOrderMain(deleteMemberInfo);
+				//更新线下会员的信息到销售主表的BIN_MemberInfoID，MemberCode
+				binBEMBTIF01_Service.updateSaleMaster(deleteMemberInfo);
+				//更新BIN_MemUsedDetail表的MemCode，BIN_MemberInfoID
+				binBEMBTIF01_Service.updateMemUsedDetail(deleteMemberInfo);
+				//更新线下会员的BIN_MemberInfoID到会员积分表
+				//binBEMBTIF01_Service.updateMemberPoint(deleteMemberInfo);
+				//更新线下会员的BIN_MemberInfoID到会员积分变化主表
+				binBEMBTIF01_Service.updatePointChange(deleteMemberInfo);
+				//发重算MQ，重算积分
+				memMergeInfo.put("memberInfoId",memMergeInfo.get("retainMemInfoId"));
+				memMergeInfo.put("memberCode",memMergeInfo.get("retainMemCode"));
+				memMergeInfo.put("tmallBindTime",deleteMemberInfo.get("tmallBindTime"));
+				sendReCalcMsg(memMergeInfo);
+				//删除线上会员的会员信息表纪录
+				binBEMBTIF01_Service.deleteMemberInfo(deleteMemberInfo);
+				//删除线上会员对应的持卡表
+				binBEMBTIF01_Service.deleteMemCardInfo(deleteMemberInfo);
+
+				//处理成功后,删除会员合并信息表记录,添加到会员合并信息表
+				memMergeInfo.put("mergeFlag","1");
+				binBEMBTIF01_Service.addMemberMergeHistory(memMergeInfo);
+				binBEMBTIF01_Service.deleteMemberMergeInfo(memMergeInfo);
 
 			}catch (Exception e) {
 				// 失败件数加一
@@ -214,6 +233,16 @@ public class BINBEMBTIF11_BL {
 			}
 		}
 	}
+
+	private void addReteinMemberInfo(Map<String, Object> retainMemberInfo, Map<String, Object> memMergeInfo) {
+			memMergeInfo.put("retainTaobaoNick",retainMemberInfo.get("taobaoNick"));
+			memMergeInfo.put("retainTmallMixMobile",retainMemberInfo.get("tmallMixMobile"));
+			memMergeInfo.put("retainTmallBindTime",retainMemberInfo.get("tmallBindTime"));
+			memMergeInfo.put("retainMobilePhone",retainMemberInfo.get("mobilePhone"));
+			memMergeInfo.put("retainJoinDate",retainMemberInfo.get("joinDate"));
+			memMergeInfo.put("retainMemInfoRegFlg",retainMemberInfo.get("memInfoRegFlg"));
+	}
+
 
 	private Map<String,Object> getDeleteMemberInfo(Map<String, Object> memMergeInfo) {
 		Map<String,Object> paramMap = new HashMap<String, Object>();
