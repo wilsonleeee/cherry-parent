@@ -201,6 +201,18 @@ public class BINBECTSMG05_Service extends BaseService{
 		paramMap.put(CherryConstants.IBATIS_SQL_ID, "BINBECTSMG05.getPointChangeMemberList");
         return baseServiceImpl.getList(paramMap);
     }
+
+	/**
+	 * 获取因被推荐会员首单购买而积分变化的推荐会员信息
+	 * @param map
+	 * @return
+     */
+	public List<Map<String,Object>> getReferrerMemberInfoByMemberId(Map<String, Object> map){
+		Map<String, Object> paramMap = new HashMap<String, Object>();
+		paramMap.putAll(map);
+		paramMap.put(CherryConstants.IBATIS_SQL_ID, "BINBECTSMG05.getReferrerMemberInfoByMemberId");
+		return baseServiceImpl.getList(paramMap);
+	}
     
     /**
      * 根据批次号查询资料变更会员总数

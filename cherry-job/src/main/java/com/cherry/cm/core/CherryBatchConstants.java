@@ -696,6 +696,12 @@ public class CherryBatchConstants {
 	
 	/** 登陆密码替换表达式 */
 	public static final String LONGIN_PASSWORD = "<#LONGIN_PASSWORD#>" ;
+
+	/** 推荐人卡号表达式 */
+	public static final String REFERRER_CODE = "<#REFERRER_CODE#>";
+
+	/** 推荐人名字表达式 */
+	public static final String REFERRER_NAME = "<#REFERRER_NAME#>";
 	
 	/** 会员密码查询失败时回复的默认信息内容 */
 	public static final String NMP_DEFAULT_MESSAGE = "您好，未能获取到您的密码信息，可能您没有设置过密码" ;

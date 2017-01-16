@@ -42,6 +42,8 @@ import com.dianping.cat.Cat;
 import com.dianping.cat.message.Transaction;
 import com.mongodb.BasicDBObject;
 import com.mongodb.DBObject;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class BINBECTSMG05_BL implements CherryMessageHandler_IF{
 	
@@ -92,17 +94,20 @@ public class BINBECTSMG05_BL implements CherryMessageHandler_IF{
 	
 	@Resource
 	private BINOLCM03_BL binOLCM03_BL;
-	
+
+	private Logger logger = LoggerFactory.getLogger(BINBECTSMG05_BL.class.getClass());
+
 	/**
 	 * 接收MQ消息处理
 	 * 
-	 * @param msg MQ消息
+	 * @param map MQ消息
 	 * @throws Exception 
 	 */
 	@Override
     public void handleMessage(Map<String, Object> map) throws Exception {
 		Transaction transaction = Cat.newTransaction("message", "BINBECTSMG05_BL");
 		int result = CherryBatchConstants.BATCH_SUCCESS;
+
 		try{
 			if(checkEventParam(map)){
 				// 获取参数
@@ -2054,6 +2059,9 @@ public class BINBECTSMG05_BL implements CherryMessageHandler_IF{
 			}else if("100".equals(eventType)){
 				// 系统触发事件
 				customerList = binBECTCOM01.getReceiverCode(eventId, map);
+			}else if ("20".equals(eventType)){
+				// 推荐会员奖励积分短信
+				customerList = binBECTSMG05_Service.getReferrerMemberInfoByMemberId(map);
 			}else{
 				// 不支持的触发事件类型
 				customerList = binBECTSMG05_Service.getMemInfoByMobile(map);
@@ -2145,6 +2153,9 @@ public class BINBECTSMG05_BL implements CherryMessageHandler_IF{
 				// 系统触发事件
 				List<Map<String, Object>> customerList = binBECTCOM01.getReceiverCode(eventId, map);
 				customerNum = customerList.size();
+			}else if("20".equals(eventType)){
+				//推荐会员积分短信
+				customerNum = 1;
 			}else{
 				// 不支持的触发事件类型
 				customerNum = 0;

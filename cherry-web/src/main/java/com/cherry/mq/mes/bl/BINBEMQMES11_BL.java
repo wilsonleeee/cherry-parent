@@ -14,6 +14,7 @@ import com.cherry.cm.cmbussiness.bl.BINOLCM14_BL;
 import com.cherry.cm.cmbussiness.interfaces.BINOLCM31_IF;
 import com.cherry.cm.core.CherryChecker;
 import com.cherry.cm.core.CherryConstants;
+import com.cherry.cm.util.ConvertUtil;
 import com.cherry.cm.util.DateUtil;
 import com.cherry.dr.cmbussiness.dto.core.CampBaseDTO;
 import com.cherry.dr.cmbussiness.dto.core.PointChangeDTO;
@@ -42,6 +43,10 @@ public class BINBEMQMES11_BL implements CherryMessageHandler_IF{
 	/** 会员初始数据采集信息接收处理BL */
 	@Resource
 	private BINBEMQMES08_BL binBEMQMES08_BL;
+
+	/** 会员消息数据接收处理BL **/
+	@Resource
+	private BINBEMQMES03_BL binBEMQMES03_BL;
 	
 	@Resource
 	private BINOLCM31_IF binOLCM31_BL;
@@ -96,6 +101,8 @@ public class BINBEMQMES11_BL implements CherryMessageHandler_IF{
     	String maintainType = (String) map.get("maintainType");
     	// 积分兑换预约,积分兑换预约取消
     	String relevantNo = (String) map.get("relevantNo");
+		//是否会员首单销售 为true时即为是
+		String memberFirstSale = ConvertUtil.getString(map.get("memberFirstSale"));
     	if (!CherryChecker.isNullOrEmpty(relevantNo, true) && 
     			("5".equals(maintainType) || "7".equals(maintainType))) {
     		Map<String, Object> detailMap = (Map<String, Object>) detailList.get(0);
@@ -617,6 +624,7 @@ public class BINBEMQMES11_BL implements CherryMessageHandler_IF{
     				// 发送MQ重算消息进行实时重算
     				binBEMQMES08_BL.sendReCalcMsg(detailMap);
     			}
+
     		}
     		if (flag) {
     			// 官网导入
@@ -1171,6 +1179,27 @@ public class BINBEMQMES11_BL implements CherryMessageHandler_IF{
 				}
     		}
     	}
+
+		if (memberFirstSale.equals("true")){
+			Map<String, Object> detailMap = (Map<String, Object>) detailList.get(0);
+			this.setInsertInfoMapKey(detailMap);
+			// 组织ID
+			int organizationInfoId = Integer.parseInt(map.get("organizationInfoID").toString());
+			// 品牌ID
+			int brandInfoId = Integer.parseInt(map.get("brandInfoID").toString());
+			// 老会员推荐新会员销售需要发送沟通MQ
+			if(binOLCM14_BL.isConfigOpen("1401", String.valueOf(organizationInfoId),
+					String.valueOf(brandInfoId))) {
+				map.put("eventType", "20");
+				map.put("eventId", detailMap.get("memberIdCurrent"));
+				map.put("eventDate",sysDate);
+				map.put("sourse", "BINOLMBMBM11");
+				map.put("organizationInfoID", organizationInfoId);
+				map.put("brandInfoID", brandInfoId);
+				// 发送会员入会沟通事件MQ消息
+				binBEMQMES03_BL.sendGTMQ(map);
+			}
+		}
 		//信息插入到MogoDB
 		DBObject dbObject = new BasicDBObject();
 		// 组织代号

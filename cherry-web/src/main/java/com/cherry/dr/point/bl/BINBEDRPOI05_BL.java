@@ -207,6 +207,9 @@ public class BINBEDRPOI05_BL implements CampRuleExec_IF{
 						// 会员俱乐部ID
 						detailMap.put("MemberClubId", campBaseDTO.getMemberClubId());
 					}
+					//当前会员id
+					detailMap.put("MemberIdCurrent", campBaseDTO.getMemberInfoId());
+
 					//修改的积分
 					detailMap.put("ModifyPoint", point);
 					detailMap.put("BusinessTime", ticketDateStr);
@@ -274,6 +277,8 @@ public class BINBEDRPOI05_BL implements CampRuleExec_IF{
 					mainData.put("RelevantNo", billId);
 					// 柜台号
 					mainData.put("CounterCode", ConvertUtil.getString(campBaseDTO.getCounterCode()));
+					// 会员首单销售标记标记
+					mainData.put("MemberFirstSale", true);
 					dataLine.put("MainData", mainData);
 					//积分明细
 					dataLine.put("DetailDataDTOList", detailDataList);

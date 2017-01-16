@@ -56,6 +56,7 @@ public class BINBECTSMG03_BL implements CherryMessageHandler_IF {
 	@SuppressWarnings("unchecked")
 	public void handleMessage(Map<String, Object> map) throws Exception {
 		Transaction transaction = Cat.newTransaction("message","BINBECTSMG03_BL");
+
 		try{
 			if(!CherryChecker.isNullOrEmpty(map.get("memberMap"), true)){
 				String messageContents = ConvertUtil.getString(map.get("messageContents"));

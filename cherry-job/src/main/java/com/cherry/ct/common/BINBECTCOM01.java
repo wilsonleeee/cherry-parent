@@ -81,6 +81,10 @@ public class BINBECTCOM01 {
 		String upLevelAmount = ConvertUtil.getString(map.get("upLevelAmount"));
 		String getToTime = ConvertUtil.getString(map.get("getToTime"));
 		String getFromTime = ConvertUtil.getString(map.get("getFromTime"));
+		// 推荐人卡号
+		String referrerCode = ConvertUtil.getString(map.get("referrerCode"));
+		// 推荐人名字
+		String referrerName = ConvertUtil.getString(map.get("referrerName"));
 		// 获取待替换的用户属性
 		String employeeCode = ConvertUtil.getString(map.get("employeeCode"));
 		String employeeName = ConvertUtil.getString(map.get("employeeName"));
@@ -614,6 +618,26 @@ public class BINBECTCOM01 {
 				return "";
 			}
 		}
+		// 推荐人姓名
+		if(template.contains(CherryBatchConstants.REFERRER_CODE)){
+			if (!"".equals(referrerCode)){
+				template = template.replaceAll(CherryBatchConstants.REFERRER_CODE,referrerCode);
+				addParam(needParams, params, CherryBatchConstants.REFERRER_CODE, referrerCode);
+			}else {
+				// 推荐人姓名空的情况下返回模板替换结果为NUP，表示模板替换失败，没有找到可以替换的推荐人姓名
+				return "";
+			}
+		}
+		// 推荐人名字
+		if(template.contains(CherryBatchConstants.REFERRER_NAME)){
+			if (!"".equals(referrerName)){
+				template = template.replaceAll(CherryBatchConstants.REFERRER_NAME,referrerName);
+				addParam(needParams, params, CherryBatchConstants.REFERRER_NAME, referrerName);
+			}else {
+				// 推荐人卡号空的情况下返回模板替换结果为NUP，表示模板替换失败，没有找到可以替换的推荐人卡号
+				return "";
+			}
+		}
 		return template;
 	}
 	
@@ -1117,8 +1141,8 @@ public class BINBECTCOM01 {
 	
 	/**
 	 * 根据秒钟添加日期
-	 * @param date
-	 * @param formatType
+	 * @param dateTime
+	 * @param second
 	 * @return
 	 */
 	public String addDateSecond (String dateTime,int second){

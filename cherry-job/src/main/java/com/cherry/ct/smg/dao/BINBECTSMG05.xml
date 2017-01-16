@@ -405,6 +405,36 @@
 		</dynamic>
     </select>
     
+	<select id="getReferrerMemberInfoByMemberId" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+		<![CDATA[
+			SELECT
+				TA.Name AS referrerName,
+				TD.MemCode AS referrerCode,
+				TB.Name AS memName,
+				TE.MemCode AS memCode,
+				TA.MobilePhone AS mobilePhone,
+				TC.TotalPoint AS totalPoint,
+				TA.BIN_MemberInfoID AS memId,
+				TA.IsReceiveMsg As receiveMsgFlg,
+				1 as customerType
+			FROM
+				Members.BIN_MemberInfo TA WITH(NOLOCK)
+				JOIN Members.BIN_MemberInfo TB WITH(NOLOCK)
+				ON (TA.BIN_MemberInfoID = TB.ReferrerID AND TB.ReferrerID IS NOT NULL)
+				JOIN Members.BIN_MemberPoint TC WITH(NOLOCK)
+				ON(TA.BIN_MemberInfoID = TC.BIN_MemberInfoID)
+				JOIN Members.BIN_MemCardInfo TD WITH(NOLOCK)
+				ON (TA.BIN_MemberInfoID = TD.BIN_MemberInfoID AND TD.ValidFlag = '1' )
+				JOIN Members.BIN_MemCardInfo TE WITH(NOLOCK)
+				ON (TB.BIN_MemberInfoID = TE.BIN_MemberInfoID AND TE.ValidFlag = '1')
+			WHERE
+				TB.ValidFlag = '1'
+				AND	TB.BIN_MemberInfoID = #eventId#
+				AND TB.BIN_BrandInfoID = #brandInfoId#
+				AND TB.BIN_OrganizationInfoID = #organizationInfoId#
+		]]>
+	</select>
+	
     <!-- 通过批次号查询资料变更会员 -->
 	<sql id="getChangeInfoMemberQuery">
 		<![CDATA[

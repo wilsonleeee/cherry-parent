@@ -486,6 +486,8 @@ BINOLCTPLN02_GLOBAL.prototype = {
 			templateUse = "GTSH";
 		}else if(eventType=="90"){
 			templateUse = "YHMM";
+		}else if(eventType=="20"){
+			templateUse = "HYTJ";
 		}
 		
 		var param = "templateUse=" + templateUse + "&messageType=" + messageType +"&smsChannel=" + smsChannel
