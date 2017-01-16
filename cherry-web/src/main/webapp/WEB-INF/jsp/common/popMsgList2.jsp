@@ -2,7 +2,7 @@
 <%@ taglib prefix="s" uri="/struts-tags" %>
 <%@ taglib prefix="cherry" uri="/cherry-tags"%>
 <%@ include file="/WEB-INF/jsp/common/head.inc.jsp" %>
-<script type="text/javascript" src="/Cherry/js/common/popMsgList2.js"></script>
+<script type="text/javascript" src="/Cherry/js/common/popMsgList2.js?version=201701161019"></script>
 <div id="msgListTitle" class="hide"><s:text name="header.message" /></div>
 <div class="main container clearfix">
     <div class="panel ui-corner-all">

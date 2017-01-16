@@ -31,7 +31,7 @@ PopMsgList2.prototype = {
 				// 一页显示页数
 				iDisplayLength:10,
 				// 排序
-				//aaSorting:[[1, "desc"]],
+				aaSorting:[[1, "desc"]],
 				aiExclude :[0, 1],
 				//index : index,
 				//colVisFlag: false,
