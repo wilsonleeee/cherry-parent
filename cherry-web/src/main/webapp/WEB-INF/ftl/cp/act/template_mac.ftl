@@ -236,21 +236,12 @@
 		    	<div style="margin-top:0px;" class="relation clearfix EN_SAME">
 					<span class="left" style="margin-left:5px;">
 						<@s.text name="cp.actPlaceType" />
-						<#if enEditFlag>
 						<select id="locationType_${camp_index}" name="locationType" onchange="CHERRYTREE.changeType(this,${camp_index});" style="margin-left:10px;width:120px;">
 							<option value=""><@s.text name="global.page.select"/></option>
 							<#list application.CodeTable.getCodes("1156") as code>
 								<option <#if code.CodeKey==camp.locationType!>selected="true"</#if> value="${code.CodeKey!?html}">${code.Value!?html}</option>
 						  	</#list>
 						</select>
-						<#else>
-						<select id="locationType_${camp_index}" name="locationType" disabled="disabled" style="margin-left:10px;width:120px;">
-							<#list application.CodeTable.getCodes("1156") as code>
-								<option <#if code.CodeKey==camp.locationType!>selected="true"</#if> value="${code.CodeKey!?html}">${code.Value!?html}</option>
-						  	</#list>
-						</select>
-						<input type="hidden" name="locationType" value="${camp.locationType!}" />
-						</#if>
 					</span>
 					<span id="importDiv_${camp_index}" class="left <#if (camp.locationType)!?html != "5">hide</#if>" style="margin-left:10px;">
 						<a href="/Cherry/download/柜台信息模板.xls"><@s.text name="cp.downModel" /></a>
