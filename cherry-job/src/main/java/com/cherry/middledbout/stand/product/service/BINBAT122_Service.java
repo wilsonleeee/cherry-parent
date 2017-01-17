@@ -41,37 +41,7 @@ public class BINBAT122_Service extends BaseService {
 		map.put(CherryConstants.IBATIS_SQL_ID, "BINBAT122.getStandardProductList");
 		return tpifServiceImpl.getList(map);
 	}
-	
-	/**
-	 * 取得失败的产品接口表数据
-	 * 
-	 * @param map
-	 * @return
-	 */
-	public List getJobRunFaildHistoryList(Map<String, Object> map){
-		map.put(CherryConstants.IBATIS_SQL_ID, "BINBAT122.getJobRunFaildHistoryList");
-		return baseServiceImpl.getList(map);
-	}
-	
-	/**
-	 * 取得失败的产品接口表数据
-	 * 
-	 * @param map
-	 * @return
-	 */
-	public List getFaildProductList(Map<String, Object> map){
-		map.put(CherryConstants.IBATIS_SQL_ID, "BINBAT122.getFaildProductList");
-		return tpifServiceImpl.getList(map);
-	}
-	
-	/**
-	 * 备注标准产品接口数据到履历表
-	 * @param map
-	 */
-	public void backupItems(List<Map<String, Object>> list) {
-		baseServiceImpl.saveAll(list, "BINBAT122.backupItems");
-	}
-	
+
 	/**
 	 * 查询产品ID
 	 * @param map
@@ -113,14 +83,14 @@ public class BINBAT122_Service extends BaseService {
 	 * @return
 	 */
 	@SuppressWarnings("unchecked")
-	public Map<String, Object> getProductVendorInfo(Map<String, Object> map) {
+	public List<Map<String, Object>> getProductVendorInfo(Map<String, Object> map) {
 		map.put(CherryConstants.IBATIS_SQL_ID, "BINBAT122.getProductVendorInfo");
-		return (Map<String, Object>)baseServiceImpl.get(map);
+		return baseServiceImpl.getList(map);
 	}
 	
 	/**
 	 * 删除无效的产品数据
-	 * @param Map
+	 * @param map
 	 * 
 	 * @return List
 	 * 
@@ -183,7 +153,7 @@ public class BINBAT122_Service extends BaseService {
 	/**
 	 * 删除无效的产品厂商数据
 	 * 
-	 * @param Map
+	 * @param map
 	 * 
 	 * 
 	 * @return List
@@ -193,14 +163,7 @@ public class BINBAT122_Service extends BaseService {
 		map.put(CherryConstants.IBATIS_SQL_ID,"BINBEKDPRO01.delInvalidProVendors");
 		baseServiceImpl.update(map);
 	}
-	
-	/**
-	 * 备份产品下发数据备份履历表
-	 * @param map
-	 */
-	public void backProductImpKingdee(List<Map<String, Object>> list) {
-		baseServiceImpl.saveAll(list,"BINBEKDPRO01.backProductImpKingdee");
-	}
+
 	/**
 	 * 更新产品厂商
 	 * @param map
@@ -359,5 +322,23 @@ public class BINBAT122_Service extends BaseService {
 	public List getCatPropValInfo(Map<String, Object> map){
 		map.put(CherryConstants.IBATIS_SQL_ID, "BINBAT122.getCatPropValInfo");
 		return baseServiceImpl.getList(map);
+	}
+
+	/**
+	 * 将产品接口表中SynchFlag为NULL的更新为1
+	 * @param map
+     */
+	public void updateIFSynchFlagFromNullToOne(Map<String,Object> map){
+		map.put(CherryConstants.IBATIS_SQL_ID, "BINBAT122.updateIFSynchFlagFromNullToOne");
+		tpifServiceImpl.update(map);
+	}
+
+	/**
+	 * 将产品接口表中SynchFlag从1更新为2或者3
+	 * @param map
+	 */
+	public void updateIFSynchFlagFromOneToAnother(Map<String,Object> map){
+		map.put(CherryConstants.IBATIS_SQL_ID, "BINBAT122.updateIFSynchFlagFromOneToAnother");
+		tpifServiceImpl.update(map);
 	}
 }

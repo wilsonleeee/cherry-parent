@@ -5,6 +5,7 @@
 	<!-- 查询电商接口表配置 -->
 	<select id="getStandardProductList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
 		SELECT TOP (#batchSize#)
+			A.IdentifyID,
 			BrandCode,
 			IFProductId,
 			Mode,
@@ -24,14 +25,14 @@
 			ValidFlag,
 			StockFlag,
 			isExchanged,
-			
+
 			SaleFlag,
 			StockTakingFlag,
 			OrderFlag,
 			ReturnFlag,
 			Spec,
 			Color,
-			
+
 			ClassCode1,
 			ClassName1,
 			ClassCode2,
@@ -47,194 +48,27 @@
 			SynchFlag,
 			SynchMsg,
 			SynchTime
-			
+
 		FROM
-			IF_Product
+			IF_Product A
 		WHERE
 			BrandCode = #brandCode#
-			<isNotEmpty property="TargetDataStartTime" prepend="AND">
-				<!-- 通过Job控制表控制程序整体处理数据的数量  -->
-				(PuttingTime BETWEEN #TargetDataStartTime# AND #TargetDataEndTime#)
-			</isNotEmpty>
-		    <isNotEmpty property="bathLastIFProductId" prepend="AND">
-		        IFProductId > #bathLastIFProductId#
-		    </isNotEmpty>
-			ORDER BY PuttingTime,IFProductId
+			AND A.SynchFlag = '1'
+		    AND
+		    NOT EXISTS
+		     (
+		    SELECT
+		    	1
+		    FROM
+		    	IF_Product B
+		    WHERE
+		    	A.BrandCode = B.BrandCode
+		    AND  A.IFProductId = B.IFProductId
+		    AND B.SynchFlag = '1'
+		    AND B.IdentifyID > A.IdentifyID
+		    )
 	</select>
-	
-    <!-- 取得失败的产品信息数据 -->
-    <select id="getJobRunFaildHistoryList" parameterClass="java.util.HashMap" resultClass="java.lang.String">
-		SELECT TOP (#batchSize#)
-			JFH.UnionIndex
-		FROM 
-			Tools.BIN_JobRunFaildHistory JFH WITH(NOLOCK)
-		WHERE 				
-			JFH.BIN_OrganizationInfoID = #organizationInfoId# 
-		AND JFH.BIN_BrandInfoID = #brandInfoId# 
-		AND JFH.JobCode = #JobCode#
-		<isNotEmpty property="bathLastIFProductId" prepend="AND">
-	    	JFH.UnionIndex > #bathLastIFProductId#
-		</isNotEmpty>
-		ORDER BY JFH.UnionIndex
-	</select>
-	
-	
-    <!-- 取得失败的产品信息数据 -->
-    <select id="getFaildProductList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
-    
-		SELECT
-			IP.BrandCode,
-			IP.IFProductId,
-			IP.Mode,
-			IP.Grade,
-			IP.SecQty,
-			IP.DisplayQty,
-			IP.OriginalBrand,
-			IP.UnitCode,
-			IP.BarCode,
-			IP.ProductNameCN,
-			IP.SalePrice,
-			IP.CostPrice,
-			IP.MemPrice,
-			IP.MemPrice2,
-			IP.TagPrice,
-			IP.DistributionPrice,
-			IP.ValidFlag,
-			IP.StockFlag,
-			IP.isExchanged,
-			
-			IP.SaleFlag,
-			IP.StockTakingFlag,
-			IP.OrderFlag,
-			IP.ReturnFlag,
-			IP.Spec,
-			IP.Color,
-			
-			IP.ClassCode1,
-			IP.ClassName1,
-			IP.ClassCode2,
-			IP.ClassName2,
-			IP.ClassCode3,
-			IP.ClassName3,
-			IP.ClassCode4,
-			IP.ClassName4,
-			IP.ClassCode5,
-			IP.ClassName5,
 
-			IP.PuttingTime,
-			IP.SynchFlag,
-			IP.SynchMsg,
-			IP.SynchTime
-			
-		FROM
-			IF_Product IP
-		WHERE
-			IP.BrandCode = #brandCode#
-			<isNotEmpty property="jobRunFaildHistoryList" prepend="AND">
-			IFProductId IN
-			<iterate property="jobRunFaildHistoryList" open="(" close=")" conjunction=",">
-				#jobRunFaildHistoryList[]#
-			</iterate>	
-			</isNotEmpty>
-		ORDER BY PuttingTime,IFProductId
-    </select>
-	
-	<!-- 备注标准产品接口数据到履历表  -->
-	<insert id="backupItems" parameterClass="java.util.HashMap">
-		INSERT INTO Interfaces.BIN_StandardProductImportHis
-			(
-				BrandCode,
-				IFProductId,
-				Mode,
-				Grade,
-				SecQty,
-				DisplayQty,
-				OriginalBrand,
-				UnitCode,
-				BarCode,
-				ProductNameCN,
-				SalePrice,
-				CostPrice,
-				MemPrice,
-				MemPrice2,
-				TagPrice,
-				DistributionPrice,
-				ValidFlag,
-				StockFlag,
-				isExchanged,
-				
-				SaleFlag,
-				StockTakingFlag,
-				OrderFlag,
-				ReturnFlag,
-				Spec,
-				Color,
-				
-				ClassCode1,
-				ClassName1,
-				ClassCode2,
-				ClassName2,
-				ClassCode3,
-				ClassName3,
-				ClassCode4,
-				ClassName4,
-				ClassCode5,
-				ClassName5,
-	
-				PuttingTime,
-				SynchFlag,
-				SynchMsg,
-				SynchTime,
-				BackupDate
-			)
-			VALUES
-			(
-				#BrandCode#,
-				#IFProductId#,
-				#Mode#,
-				#Grade#,
-				#SecQty#,
-				#DisplayQty#,
-				#OriginalBrand#,
-				#UnitCode#,
-				#BarCode#,
-				#ProductNameCN#,
-				#SalePrice#,
-				#CostPrice#,
-				#MemPrice#,
-				#MemPrice2#,
-				#TagPrice#,
-				#DistributionPrice#,
-				#ValidFlag#,
-				#StockFlag#,
-				#isExchanged#,
-				
-				#SaleFlag#,
-				#StockTakingFlag#,
-				#OrderFlag#,
-				#ReturnFlag#,
-				#Spec#,
-				#Color#,
-				 
-				#ClassCode1#,
-				#ClassName1#,
-				#ClassCode2#,
-				#ClassName2#,
-				#ClassCode3#,
-				#ClassName3#,
-				#ClassCode4#,
-				#ClassName4#,
-				#ClassCode5#,
-				#ClassName5#,
-				 
-				#PuttingTime#,
-				#SynchFlag#,
-				#SynchMsg#,
-				#SynchTime#,
-				GETDATE()
-			)
-	</insert>
-	
    	<!--查询产品信息 -->
 	<select id="searchProductId" parameterClass="java.util.HashMap" resultClass="java.lang.Integer">
 		<![CDATA[
@@ -510,7 +344,7 @@
 		]]>
     </update>
     
-	<!--伦理删除无效的产品厂商数据 -->
+	<!--删除无效的产品厂商数据 -->
 	<update id="delInvalidProVendors" parameterClass="java.util.HashMap">
 		<![CDATA[
 			UPDATE	
@@ -851,6 +685,44 @@
 		<![CDATA[ ) ]]>
     </insert>
 
+	<update id="updateIFSynchFlagFromNullToOne" parameterClass="java.util.HashMap" >
+		 <![CDATA[
+		  UPDATE
+		  	A
+		  SET
+			A.SynchFlag = '1',
+			A.SynchTime = GETDATE()
+		  FROM
+		      IF_Product A
+		  WHERE
+			A.BrandCode = #brandCode#
+			AND A.SynchFlag IS NULL
+		]]>
+
+	</update>
+
+	<update id="updateIFSynchFlagFromOneToAnother" parameterClass="java.util.HashMap" >
+		<![CDATA[
+		  UPDATE
+		  	A
+		  SET
+			A.SynchFlag = #synchFlag#,
+			]]>
+			<isNotEmpty property="synchMsg">
+			A.SynchMsg = #synchMsg#,
+			</isNotEmpty>
+		<![CDATA[
+			A.SynchTime = GETDATE()
+		  FROM
+		      IF_Product A
+		  WHERE
+			A.BrandCode = #brandCode#
+			AND A.IFProductId = #IFProductId#
+			AND A.IdentifyID <= #IdentifyID#
+			AND A.SynchFlag = '1'
+		]]>
+
+	</update>
 	<!-- ################################################## 更新产品分类 start  ######################################################################## -->
 
 
