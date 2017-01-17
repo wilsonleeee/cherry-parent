@@ -34,7 +34,7 @@ import java.util.Map;
 public class BINOLWPSAL03_Action extends BaseAction implements ModelDriven<BINOLWPSAL03_Form>{
 
 	/**
-	 * 
+	 *
 	 */
 	static{
 		SavingscardWebServiceUrl = PropertiesUtil.pps.getProperty("SavingscardWebServiceUrl");
@@ -43,52 +43,55 @@ public class BINOLWPSAL03_Action extends BaseAction implements ModelDriven<BINOL
 	private static String SavingscardWebServiceUrl;
 	private static String SavingscardAppID;
 	private static final long serialVersionUID = 1L;
-	
+
 	private BINOLWPSAL03_Form form = new BINOLWPSAL03_Form();
-	
+
 	/**异常日志*/
 	private static final Logger logger = LoggerFactory.getLogger(BINOLWPSAL03_Action.class);
-	
+
 	/** 系统配置项 共通BL */
 	@Resource
 	private BINOLCM14_BL binOLCM14_BL;
-	
+
 	@Resource
 	private BINOLCM27_BL binOLCM27_BL;
-	
+
 	/**查询服务卡信息*/
 	@Resource
 	private BINOLWPSAL13_BL binOLWPSAL13_BL;
-	
+
 	/**查询储值卡退货信息*/
 	@Resource(name="binOLWPSAL07_BL")
 	private BINOLWPSAL07_IF binOLWPSAL07_IF;
-	
+
 	/**查询门店销售支付方式配置*/
 	@Resource
 	private BINOLMOPOS01_BL binOLMOPOS01_BL;
-	
+
 	/**查询调用Penkonws接口的密钥信息*/
 	@Resource(name="thirdPartyConfig")
 	private ThirdPartyConfig thirdPartyConfig;
 
 	@Resource
 	private CodeTable code;
-	
+
 	@Resource(name = "aliPayBL")
 	private AlipayIf aliPayIF;
-	
+
 	@Resource(name = "weChatPayBL")
 	private WeChatPayIf weChatPayIF;
-	
+
 	@Resource(name="binOLWPSAL03_BL")
 	private BINOLWPSAL03_IF binOLWPSAL03_IF;
-	
+
 	private String cardCode;
 	// 云POS是否支持新储值卡支付
 	private String NEW_CZK_PAY;
 	// 云POS是否允许去掉现金支付
 	private String isCA;
+
+	// 云POS储值卡服务卡消费时是否取消验证
+	private String isIngnoreConfirm ;
 	// 服务卡信息Map
 	private Map<String, Object> consumptionCodeMap;
 	private List<Map<String, Object>> serverList;
@@ -118,6 +121,10 @@ public class BINOLWPSAL03_Action extends BaseAction implements ModelDriven<BINOL
 			NEW_CZK_PAY = binOLCM14_BL.getWebposConfigValue("9022", ConvertUtil.getString(organizationInfoId), ConvertUtil.getString(brandInfoId));
 			isCA = binOLCM14_BL.getWebposConfigValue("9030", ConvertUtil.getString(organizationInfoId), ConvertUtil.getString(brandInfoId));
 			form.setPointRatio(pointRatio);
+
+			// 云POS储值卡服务卡消费时是否取消验证
+			isIngnoreConfirm = binOLCM14_BL.getWebposConfigValue("9056", organizationInfoId, brandInfoId);
+
 			// 获取Cookie值
 			/*Map<String, Object> paymentMap = getPaymentCookies();
 			String creditCardPayment = ConvertUtil.getString(paymentMap.get("creditCardPayment"));
@@ -134,7 +141,7 @@ public class BINOLWPSAL03_Action extends BaseAction implements ModelDriven<BINOL
 			form.setPointsPayment(pointsPayment);*/
 			List<Map<String, Object>> pmList = getPaymentCookies();
 			form.setPaymentList(pmList);
-			
+
 			String totalAmount = ConvertUtil.getString(form.getTotalAmount());
 			if(CherryUtil.string2double(totalAmount) < 0){
 				totalAmount = "0.00";
@@ -166,9 +173,9 @@ public class BINOLWPSAL03_Action extends BaseAction implements ModelDriven<BINOL
 					}
 					if(CherryUtil.string2double(totalAmount) > cashAmount){
 						// 除掉现金还需要退款的金额
-						BigDecimal totalAmount_big = new BigDecimal(totalAmount);  
-				        BigDecimal cashAmount_big = new BigDecimal(Double.toString(cashAmount));  
-				        double surplusAmount = totalAmount_big.subtract(cashAmount_big).doubleValue();
+						BigDecimal totalAmount_big = new BigDecimal(totalAmount);
+						BigDecimal cashAmount_big = new BigDecimal(Double.toString(cashAmount));
+						double surplusAmount = totalAmount_big.subtract(cashAmount_big).doubleValue();
 						if(null!=form.getPaymentList() && !form.getPaymentList().isEmpty()){
 							for(Map<String, Object> m : form.getPaymentList()){
 								boolean b= false;
@@ -460,15 +467,15 @@ public class BINOLWPSAL03_Action extends BaseAction implements ModelDriven<BINOL
 				CherryException temp = (CherryException)e;
 				this.addActionError(temp.getErrMessage());
 				return CherryConstants.GLOBAL_ACCTION_RESULT_PAGE;
-			 }else{
+			}else{
 				//系统发生异常，请联系管理人员。
 				this.addActionError(getText("ECM00036"));
 				return CherryConstants.GLOBAL_ACCTION_RESULT_PAGE;
-			 }
+			}
 		}
 		return SUCCESS;
 	}
-	
+
 	public void collect() throws Exception{
 		try{
 			//做销售单格式校验 如不是WN开头的直接返回错误
@@ -513,11 +520,11 @@ public class BINOLWPSAL03_Action extends BaseAction implements ModelDriven<BINOL
 						}
 					}
 					if(df.format(totalAmount).equals(df.format(allAmount))){
-					//获取微信核销CouponUrl地址
-					String weChatCouponUrl = binOLCM14_BL.getWebposConfigValue("9032", Integer.toString(userInfo.getBIN_OrganizationInfoID()), Integer.toString( userInfo.getBIN_BrandInfoID()));
-					String weChatState = binOLCM14_BL.getWebposConfigValue("9034", Integer.toString(userInfo.getBIN_OrganizationInfoID()), Integer.toString( userInfo.getBIN_BrandInfoID()));
-					logger.info("weChatCouponUrl:"+weChatCouponUrl+"====weChatState:"+weChatState);		
-					if(!"".equals(weChatCouponUrl) && !"".equals(weChatState)){
+						//获取微信核销CouponUrl地址
+						String weChatCouponUrl = binOLCM14_BL.getWebposConfigValue("9032", Integer.toString(userInfo.getBIN_OrganizationInfoID()), Integer.toString( userInfo.getBIN_BrandInfoID()));
+						String weChatState = binOLCM14_BL.getWebposConfigValue("9034", Integer.toString(userInfo.getBIN_OrganizationInfoID()), Integer.toString( userInfo.getBIN_BrandInfoID()));
+						logger.info("weChatCouponUrl:"+weChatCouponUrl+"====weChatState:"+weChatState);
+						if(!"".equals(weChatCouponUrl) && !"".equals(weChatState)){
 							logger.info("微信核券开始");
 							int flag=0;
 							for(Map<String,Object> detail :saleDetailList){
@@ -546,13 +553,16 @@ public class BINOLWPSAL03_Action extends BaseAction implements ModelDriven<BINOL
 							}
 							logger.info("微信核券正常结束");
 						}
-					if(df.format(totalAmount).equals(df.format(allAmount))){
-						// 收款
-						String result = binOLWPSAL03_IF.tran_collect(form, userInfo);
-						if(!result.equals(CherryConstants.WP_ERROR_STATUS)){
-							ConvertUtil.setResponseByAjax(response, result);
-						}else{
-							ConvertUtil.setResponseByAjax(response, "ERROR");
+						if(df.format(totalAmount).equals(df.format(allAmount))){
+							// 收款
+							String result = binOLWPSAL03_IF.tran_collect(form, userInfo);
+							if(!result.equals(CherryConstants.WP_ERROR_STATUS)){
+								ConvertUtil.setResponseByAjax(response, result);
+							}else{
+								ConvertUtil.setResponseByAjax(response, "ERROR");
+							}
+						}else {
+							ConvertUtil.setResponseByAjax(response, "SALEDETAILERROR");
 						}
 					}else {
 						ConvertUtil.setResponseByAjax(response, "SALEDETAILERROR");
@@ -560,9 +570,6 @@ public class BINOLWPSAL03_Action extends BaseAction implements ModelDriven<BINOL
 				}else {
 					ConvertUtil.setResponseByAjax(response, "SALEDETAILERROR");
 				}
-			}else {
-				ConvertUtil.setResponseByAjax(response, "SALEDETAILERROR");
-			}
 			}
 		}catch(Exception e){
 			logger.error(e.getMessage(), e);
@@ -571,11 +578,11 @@ public class BINOLWPSAL03_Action extends BaseAction implements ModelDriven<BINOL
 				CherryException temp = (CherryException)e;
 				this.addActionError(temp.getErrMessage());
 				ConvertUtil.setResponseByAjax(response, "ERROR");
-			 }else{
+			}else{
 				//系统发生异常，请联系管理人员。
 				this.addActionError(getText("ECM00036"));
 				ConvertUtil.setResponseByAjax(response, "ERROR");
-			 }
+			}
 		}
 	}
 	/**
@@ -609,14 +616,14 @@ public class BINOLWPSAL03_Action extends BaseAction implements ModelDriven<BINOL
 				CherryException temp = (CherryException)e;
 				this.addActionError(temp.getErrMessage());
 				ConvertUtil.setResponseByAjax(response, "ERROR");
-			 }else{
+			}else{
 				//系统发生异常，请联系管理人员。
 				this.addActionError(getText("ECM00036"));
 				ConvertUtil.setResponseByAjax(response, "ERROR");
-			 }
+			}
 		}
 	}
-	
+
 	public void getPaymentSize() throws Exception{
 		try{
 			UserInfo userInfo = (UserInfo) session.get(CherryConstants.SESSION_USERINFO);
@@ -637,11 +644,11 @@ public class BINOLWPSAL03_Action extends BaseAction implements ModelDriven<BINOL
 				CherryException temp = (CherryException)e;
 				this.addActionError(temp.getErrMessage());
 				ConvertUtil.setResponseByAjax(response, "ERROR");
-			 }else{
+			}else{
 				//系统发生异常，请联系管理人员。
 				this.addActionError(getText("ECM00036"));
 				ConvertUtil.setResponseByAjax(response, "ERROR");
-			 }
+			}
 		}
 	}
 	public void paymentInit() throws Exception{
@@ -656,11 +663,11 @@ public class BINOLWPSAL03_Action extends BaseAction implements ModelDriven<BINOL
 				CherryException temp = (CherryException)e;
 				this.addActionError(temp.getErrMessage());
 				ConvertUtil.setResponseByAjax(response, "ERROR");
-			 }else{
+			}else{
 				//系统发生异常，请联系管理人员。
 				this.addActionError(getText("ECM00036"));
 				ConvertUtil.setResponseByAjax(response, "ERROR");
-			 }
+			}
 		}
 	}
 
@@ -732,14 +739,14 @@ public class BINOLWPSAL03_Action extends BaseAction implements ModelDriven<BINOL
 				CherryException temp = (CherryException)e;
 				this.addActionError(temp.getErrMessage());
 				ConvertUtil.setResponseByAjax(response, "ERROR");
-			 }else{
+			}else{
 				//系统发生异常，请联系管理人员。
 				this.addActionError(getText("ECM00036"));
 				ConvertUtil.setResponseByAjax(response, "ERROR");
-			 }
+			}
 		}
 	}
-	
+
 	public void webPayment() throws Exception{
 		try{
 			// 用户信息
@@ -756,10 +763,13 @@ public class BINOLWPSAL03_Action extends BaseAction implements ModelDriven<BINOL
 			String alipay = ConvertUtil.getString(form.getAliPay());
 			String wechatPay = ConvertUtil.getString(form.getWechatPay());
 			String version = binOLCM14_BL.getWebposConfigValue("9029", ConvertUtil.getString(organizationInfoId), ConvertUtil.getString(brandInfoId));
+
+			// 云POS储值卡服务卡消费时是否取消验证
+			isIngnoreConfirm = binOLCM14_BL.getWebposConfigValue("9056", organizationInfoId, brandInfoId);
 			if("".equals(billCode)){
 				// 单据号为空的情况
 				ConvertUtil.setResponseByAjax(response, "BN");
-			}else if("".equals(authCode)){
+			}else if("N".equals(isIngnoreConfirm) && "".equals(authCode)){
 				// 扫描码为空的情况
 				ConvertUtil.setResponseByAjax(response, "AN");
 			}else if("".equals(alipay) && "".equals(wechatPay) && "N".equals(NEW_CZK_PAY)){
@@ -786,7 +796,7 @@ public class BINOLWPSAL03_Action extends BaseAction implements ModelDriven<BINOL
 							Map<String, Object> allConfigMap = new HashMap<String, Object>();
 							// 定义单个柜台收款账户存放Map
 							Map<String, Object> counterConfigMap = new HashMap<String, Object>();
-							
+
 							// 从配置列表中获取配置项
 							for(Map<String,Object> configMap : configList){
 								String payCounter = ConvertUtil.getString(configMap.get("counterCode"));
@@ -944,7 +954,7 @@ public class BINOLWPSAL03_Action extends BaseAction implements ModelDriven<BINOL
 						}else{
 							// 没有给指定柜台配置收款账户信息的情况
 							ConvertUtil.setResponseByAjax(response, "NAP");
-						}					
+						}
 					}else{
 						// 没有获取到支付宝配置的情况
 						ConvertUtil.setResponseByAjax(response, "NC");
@@ -963,7 +973,7 @@ public class BINOLWPSAL03_Action extends BaseAction implements ModelDriven<BINOL
 						Map<String, Object> allConfigMap = new HashMap<String, Object>();
 						// 定义单个柜台收款账户存放Map
 						Map<String, Object> counterConfigMap = new HashMap<String, Object>();
-						
+
 						// 从配置列表中获取配置项
 						for(Map<String,Object> configMap : configList){
 							String payCounter = ConvertUtil.getString(configMap.get("counterCode"));
@@ -1061,82 +1071,84 @@ public class BINOLWPSAL03_Action extends BaseAction implements ModelDriven<BINOL
 						ConvertUtil.setResponseByAjax(response, "NWP");
 					}
 				}else if("Y".equals(NEW_CZK_PAY) || "CZK".equals(payType)){
-						// 验证码或密码
-						String verificationCode = ConvertUtil.getString(form.getVerificationCode());
-						// 储值卡金额
-						String cashCard = ConvertUtil.getString(form.getCashCard());
-						
-						String json = ConvertUtil.getString(form.getServiceJsonList());
-						List<Map<String, Object>> jsonList = new ArrayList<Map<String,Object>>();
-						if(!"".equals(json)){
-							jsonList = ConvertUtil.json2List(json);
-						}
-						if("".equals(cashCard) && "".equals(json)){
-							// 支付金额为空的情况
-							ConvertUtil.setResponseByAjax(response, "TN");
+					// 验证码或密码
+					String verificationCode = ConvertUtil.getString(form.getVerificationCode());
+					// 储值卡金额
+					String cashCard = ConvertUtil.getString(form.getCashCard());
+
+					String json = ConvertUtil.getString(form.getServiceJsonList());
+					List<Map<String, Object>> jsonList = new ArrayList<Map<String,Object>>();
+					if(!"".equals(json)){
+						jsonList = ConvertUtil.json2List(json);
+					}
+					if("".equals(cashCard) && "".equals(json)){
+						// 支付金额为空的情况
+						ConvertUtil.setResponseByAjax(response, "TN");
+						return;
+					}
+					String VerificationType = ConvertUtil.getString(form.getVerificationType());
+					VerificationType = "Y".equals(isIngnoreConfirm) ? "4" : VerificationType ;
+
+					CounterInfo counterInfo = (CounterInfo) session.get(CherryConstants.SESSION_CHERRY_COUNTERINFO);
+					Map<String, Object> data = new HashMap<String, Object>();
+					if(VerificationType.equals("2") || VerificationType.equals("3") ){
+						if("".equals(verificationCode)){
+							// 验证码为空
+							ConvertUtil.setResponseByAjax(response, "VN");
 							return;
+						}else {
+							data.put("VerificationCode", verificationCode);
 						}
-						String VerificationType = ConvertUtil.getString(form.getVerificationType());
-						CounterInfo counterInfo = (CounterInfo) session.get(CherryConstants.SESSION_CHERRY_COUNTERINFO);
-						Map<String, Object> data = new HashMap<String, Object>();
-						if(VerificationType.equals("2") || VerificationType.equals("3") ){
-							if("".equals(verificationCode)){
-								// 验证码为空
-								ConvertUtil.setResponseByAjax(response, "VN");
-								return;
-							}else {
-								data.put("VerificationCode", verificationCode);
-							}
-						}else if (VerificationType.equals("1")) {
-							data.put("Password", verificationCode);
-						}
-						data.put("TradeType", "SavingsCardTrade");
-						data.put("CardCode", authCode);
-						data.put("VerificationType", VerificationType);
-						data.put("TransactionType", "US");
-						data.put("BillCode", billCode);
-						data.put("RelevantCode", billCode);
-						data.put("CounterCode", ConvertUtil.getString(counterInfo.getCounterCode()));
-						data.put("EmployeeCode", userInfo.getEmployeeCode());
-						data.put("TradeAmount", cashCard);
-						data.put("ServiceDetail", jsonList);
-						data.put("Memo", form.getComments());
-						MultivaluedMap<String, String> queryParams = new MultivaluedMapImpl();
-						queryParams.add("brandCode", brandCode);
-						queryParams.add("appID", SavingscardAppID + "_" + brandCode);
-						queryParams.add("paramData", CherryAESCoder.encrypt(CherryUtil.map2Json(data), thirdPartyConfig.getDynamicAESKey(SavingscardAppID,brandCode)));
-						WebResource wr= binOLCM27_BL.getWebResource(SavingscardWebServiceUrl);
-						String result_card=wr.queryParams(queryParams).get(String.class);
-						Map<String,Object> result_card1=ConvertUtil.json2Map(result_card);
-						String ERRORCODE = result_card1.get("ERRORCODE").toString();
-						if(ERRORCODE.equals("0")){
+					}else if (VerificationType.equals("1")) {
+						data.put("Password", verificationCode);
+					}
+					data.put("TradeType", "SavingsCardTrade");
+					data.put("CardCode", authCode);
+					data.put("VerificationType", VerificationType);
+					data.put("TransactionType", "US");
+					data.put("BillCode", billCode);
+					data.put("RelevantCode", billCode);
+					data.put("CounterCode", ConvertUtil.getString(counterInfo.getCounterCode()));
+					data.put("EmployeeCode", userInfo.getEmployeeCode());
+					data.put("TradeAmount", cashCard);
+					data.put("ServiceDetail", jsonList);
+					data.put("Memo", form.getComments());
+					MultivaluedMap<String, String> queryParams = new MultivaluedMapImpl();
+					queryParams.add("brandCode", brandCode);
+					queryParams.add("appID", SavingscardAppID + "_" + brandCode);
+					queryParams.add("paramData", CherryAESCoder.encrypt(CherryUtil.map2Json(data), thirdPartyConfig.getDynamicAESKey(SavingscardAppID,brandCode)));
+					WebResource wr= binOLCM27_BL.getWebResource(SavingscardWebServiceUrl);
+					String result_card=wr.queryParams(queryParams).get(String.class);
+					Map<String,Object> result_card1=ConvertUtil.json2Map(result_card);
+					String ERRORCODE = result_card1.get("ERRORCODE").toString();
+					if(ERRORCODE.equals("0")){
 							/*String ResultContent = result_card1.get("ResultContent").toString();
 							String s = CherryAESCoder.decrypt(ResultContent, SavingscardAESKEY);
 							Map<String, Object> consumptionCodeMap = ConvertUtil.json2Map(s);*/
-							//确认成功之后把挂单主表中的支付状态更新为已经支付
-							Map<String,Object> param=new HashMap<String, Object>();
-							param.put(CherryConstants.ORGANIZATIONINFOID, userInfo.getBIN_OrganizationInfoID());
-							param.put(CherryConstants.BRANDINFOID, userInfo.getBIN_BrandInfoID());
-							param.put("billCode", billCode);
-							try{
-								binOLWPSAL03_IF.updateHangBillCollectState(param);
-							}catch(Exception e){
-								logger.error("更新挂单主表支付状态发生异常，单据号："+billCode+e.getMessage(), e);
-							}
-							ConvertUtil.setResponseByAjax(response, "SUCCESS");
-						}else if(ERRORCODE.equals("STE0014")){
-							ConvertUtil.setResponseByAjax(response, "STE0014");
-						}else if(ERRORCODE.equals("STE0015")){
-							ConvertUtil.setResponseByAjax(response, "STE0015");
-						}else if(ERRORCODE.equals("STE0016")){
-							ConvertUtil.setResponseByAjax(response, "STE0016");
-						}else if(ERRORCODE.equals("STE0017")){
-							ConvertUtil.setResponseByAjax(response, "STE0017");
-						}else {
-							// 记录日志
-							logger.info("储值卡支付WebService调用结果："+ ConvertUtil.getString(result_card1.get("ERRORMSG")));
-							ConvertUtil.setResponseByAjax(response, "ERROR");
+						//确认成功之后把挂单主表中的支付状态更新为已经支付
+						Map<String,Object> param=new HashMap<String, Object>();
+						param.put(CherryConstants.ORGANIZATIONINFOID, userInfo.getBIN_OrganizationInfoID());
+						param.put(CherryConstants.BRANDINFOID, userInfo.getBIN_BrandInfoID());
+						param.put("billCode", billCode);
+						try{
+							binOLWPSAL03_IF.updateHangBillCollectState(param);
+						}catch(Exception e){
+							logger.error("更新挂单主表支付状态发生异常，单据号："+billCode+e.getMessage(), e);
 						}
+						ConvertUtil.setResponseByAjax(response, "SUCCESS");
+					}else if(ERRORCODE.equals("STE0014")){
+						ConvertUtil.setResponseByAjax(response, "STE0014");
+					}else if(ERRORCODE.equals("STE0015")){
+						ConvertUtil.setResponseByAjax(response, "STE0015");
+					}else if(ERRORCODE.equals("STE0016")){
+						ConvertUtil.setResponseByAjax(response, "STE0016");
+					}else if(ERRORCODE.equals("STE0017")){
+						ConvertUtil.setResponseByAjax(response, "STE0017");
+					}else {
+						// 记录日志
+						logger.info("储值卡支付WebService调用结果："+ ConvertUtil.getString(result_card1.get("ERRORMSG")));
+						ConvertUtil.setResponseByAjax(response, "ERROR");
+					}
 				}else{
 					// 支付类型为非支付宝和微信支付时
 					ConvertUtil.setResponseByAjax(response, "LC");
@@ -1150,14 +1162,14 @@ public class BINOLWPSAL03_Action extends BaseAction implements ModelDriven<BINOL
 				CherryException temp = (CherryException)e;
 				this.addActionError(temp.getErrMessage());
 				ConvertUtil.setResponseByAjax(response, "PROCESSING");
-			 }else{
+			}else{
 				//系统发生异常，请联系管理人员。
 				this.addActionError(getText("ECM00036"));
 				ConvertUtil.setResponseByAjax(response, "PROCESSING");
-			 }
+			}
 		}
 	}
-	
+
 	// 从Cookie中获取柜台的支付方式设置
 	private List<Map<String, Object>> getPaymentCookies() throws Exception{
 		UserInfo userInfo = (UserInfo) session.get(CherryConstants.SESSION_USERINFO);
@@ -1229,7 +1241,7 @@ public class BINOLWPSAL03_Action extends BaseAction implements ModelDriven<BINOL
 		paymentMap.put("pointsPayment", pointsPayment);*/
 		return paymentList;
 	}
-	
+
 	// 获取支付宝支付支付结果
 	private String getAliPayResult(List<Map<String, Object>> returnList) throws Exception{
 		String result;
@@ -1277,7 +1289,7 @@ public class BINOLWPSAL03_Action extends BaseAction implements ModelDriven<BINOL
 			return "PROCESSING";
 		}
 	}
-	
+
 	// 获取微信支付支付结果
 	private String getWechatPayResult(List<Map<String, Object>> returnList){
 		String result;
@@ -1411,4 +1423,11 @@ public class BINOLWPSAL03_Action extends BaseAction implements ModelDriven<BINOL
 		this.isCA = isCA;
 	}
 
+	public String getIsIngnoreConfirm() {
+		return isIngnoreConfirm;
+	}
+
+	public void setIsIngnoreConfirm(String isIngnoreConfirm) {
+		this.isIngnoreConfirm = isIngnoreConfirm;
+	}
 }

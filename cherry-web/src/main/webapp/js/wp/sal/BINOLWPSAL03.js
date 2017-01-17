@@ -4,7 +4,7 @@ var BINOLWPSAL03_GLOBAL = function() {
 };
 
 BINOLWPSAL03_GLOBAL.prototype = {
-	
+
 	// 更改现金值时触发的方法
 	"changeCashValue":function(obj){
 		var $this = $(obj);
@@ -23,7 +23,7 @@ BINOLWPSAL03_GLOBAL.prototype = {
 		}
 		BINOLWPSAL03.calcuGiveChangeValue();
 	},
-	
+
 	// 现金值变化时触发的方法
 	"keyUpChangeCashValue":function(obj){
 		var $this = $(obj);
@@ -39,9 +39,9 @@ BINOLWPSAL03_GLOBAL.prototype = {
 			}
 		}else{
 			BINOLWPSAL03.calcuGiveChangeValue();
-		}		
+		}
 	},
-	
+
 	// 更改卡类支付值时触发的方法
 	"changeCardValue":function(obj){
 		var $this = $(obj);
@@ -71,7 +71,7 @@ BINOLWPSAL03_GLOBAL.prototype = {
 		}
 		BINOLWPSAL03.calcuGiveChangeValue();
 	},
-	
+
 	// 卡类支付值变化时触发的方法
 	"keyUpChangeCardValue":function(obj){
 		var $this = $(obj);
@@ -100,7 +100,7 @@ BINOLWPSAL03_GLOBAL.prototype = {
 			BINOLWPSAL03.calcuGiveChangeValue();
 		}
 	},
-	
+
 	// 更改积分支付值时触发的方法
 	"changePointValue":function(obj){
 		var $this = $(obj);
@@ -145,7 +145,7 @@ BINOLWPSAL03_GLOBAL.prototype = {
 		}
 		BINOLWPSAL03.calcuGiveChangeValue();
 	},
-	
+
 	// 更改积分支付值时触发的方法
 	"keyUpChangePointValue":function(obj){
 		var $this = $(obj);
@@ -190,13 +190,13 @@ BINOLWPSAL03_GLOBAL.prototype = {
 		}
 		BINOLWPSAL03.calcuGiveChangeValue();
 	},
-	
+
 	// 计算找零金额
 	"calcuGiveChangeValue":function(){
 		var saleType = $("#saleType").val();
 		var receivableValue = $("#receivable").val().toString();
 		var cashValue = $("#cash").val().toString();
-		
+
 		var resultValue = 0;
 		$.each($("#payTbody >tr"),function(){
 			var payCodeId = $(this).attr("id");
@@ -220,58 +220,58 @@ BINOLWPSAL03_GLOBAL.prototype = {
 			$("#giveChange").val(giveChangeValue);
 			$("#spanGiveChange").text(giveChangeValue);
 		}
-		
+
 		/*var cashValue = $("#cash").val().toString();
-		var creditCardValue = $("#creditCard").val().toString();
-		var bankCardValue = $("#bankCard").val().toString();
-		var cashCardValue = $("#cashCard").val().toString();
-		var aliPayValue = $("#aliPay").val().toString();
-		var wechatPayValue = $("#wechatPay").val().toString();
-		var exchangeCashValue = $("#exchangeCash").val().toString();
-		// 处理空数据
-		if(receivableValue == undefined || receivableValue == "" || receivableValue == "-" || Number(receivableValue) < 0){
-			receivableValue = "0.00";
-		}
-		if(cashValue == undefined || cashValue == "" || cashValue == "-"){
-			cashValue = "0.00";
-		}
-		if(creditCardValue == undefined || creditCardValue == "" || creditCardValue == "-"){
-			creditCardValue = "0.00";
-		}
-		if(bankCardValue == undefined || bankCardValue == "" || bankCardValue == "-"){
-			bankCardValue = "0.00";
-		}
-		if(cashCardValue == undefined || cashCardValue == "" || cashCardValue == "-"){
-			cashCardValue = "0.00";
-		}
-		if(aliPayValue == undefined || aliPayValue == "" || aliPayValue == "-"){
-			aliPayValue = "0.00";
-		}
-		if(wechatPayValue == undefined || wechatPayValue == "" || wechatPayValue == "-"){
-			wechatPayValue = "0.00";
-		}
-		if(exchangeCashValue == undefined || exchangeCashValue == "" || exchangeCashValue == "-"){
-			exchangeCashValue = "0.00";
-		}
-		
-		var resultValue = (Number(cashValue) + Number(creditCardValue) + Number(bankCardValue) + Number(cashCardValue) + Number(aliPayValue) + Number(wechatPayValue) + Number(exchangeCashValue)) - (Number(receivableValue));
-		if(resultValue < 0){
-			$("#giveChange").val("0.00");
-			$("#spanGiveChange").text("0.00");
-			if(saleType == "SR"){
-				var newCash = Number(cashValue) - (resultValue);
-				$("#cash").val(newCash.toFixed(2));
-			}
-		}else{
-			var giveChangeValue = resultValue.toFixed(2);
-			$("#giveChange").val(giveChangeValue);
-			$("#spanGiveChange").text(giveChangeValue);
-		}*/
+		 var creditCardValue = $("#creditCard").val().toString();
+		 var bankCardValue = $("#bankCard").val().toString();
+		 var cashCardValue = $("#cashCard").val().toString();
+		 var aliPayValue = $("#aliPay").val().toString();
+		 var wechatPayValue = $("#wechatPay").val().toString();
+		 var exchangeCashValue = $("#exchangeCash").val().toString();
+		 // 处理空数据
+		 if(receivableValue == undefined || receivableValue == "" || receivableValue == "-" || Number(receivableValue) < 0){
+		 receivableValue = "0.00";
+		 }
+		 if(cashValue == undefined || cashValue == "" || cashValue == "-"){
+		 cashValue = "0.00";
+		 }
+		 if(creditCardValue == undefined || creditCardValue == "" || creditCardValue == "-"){
+		 creditCardValue = "0.00";
+		 }
+		 if(bankCardValue == undefined || bankCardValue == "" || bankCardValue == "-"){
+		 bankCardValue = "0.00";
+		 }
+		 if(cashCardValue == undefined || cashCardValue == "" || cashCardValue == "-"){
+		 cashCardValue = "0.00";
+		 }
+		 if(aliPayValue == undefined || aliPayValue == "" || aliPayValue == "-"){
+		 aliPayValue = "0.00";
+		 }
+		 if(wechatPayValue == undefined || wechatPayValue == "" || wechatPayValue == "-"){
+		 wechatPayValue = "0.00";
+		 }
+		 if(exchangeCashValue == undefined || exchangeCashValue == "" || exchangeCashValue == "-"){
+		 exchangeCashValue = "0.00";
+		 }
+
+		 var resultValue = (Number(cashValue) + Number(creditCardValue) + Number(bankCardValue) + Number(cashCardValue) + Number(aliPayValue) + Number(wechatPayValue) + Number(exchangeCashValue)) - (Number(receivableValue));
+		 if(resultValue < 0){
+		 $("#giveChange").val("0.00");
+		 $("#spanGiveChange").text("0.00");
+		 if(saleType == "SR"){
+		 var newCash = Number(cashValue) - (resultValue);
+		 $("#cash").val(newCash.toFixed(2));
+		 }
+		 }else{
+		 var giveChangeValue = resultValue.toFixed(2);
+		 $("#giveChange").val(giveChangeValue);
+		 $("#spanGiveChange").text(giveChangeValue);
+		 }*/
 	},
-	
+
 	// 计算除现金外其它支付方式的收款金额与应收金额的差额
 	"calcuExceedValue":function(){
-		
+
 		var receivableValue = $("#receivable").val().toString();
 		if(receivableValue == undefined || receivableValue == "" || receivableValue == "-" || Number(receivableValue) < 0){
 			receivableValue = "0.00";
@@ -288,41 +288,41 @@ BINOLWPSAL03_GLOBAL.prototype = {
 		});
 		resultValue-=Number(receivableValue);
 		return resultValue.toFixed(2);
-		
+
 		/*var receivableValue = $("#receivable").val().toString();
-		var creditCardValue = $("#creditCard").val().toString();
-		var bankCardValue = $("#bankCard").val().toString();
-		var cashCardValue = $("#cashCard").val().toString();
-		var aliPayValue = $("#aliPay").val().toString();
-		var wechatPayValue = $("#wechatPay").val().toString();
-		var exchangeCashValue = $("#exchangeCash").val().toString();
-		// 处理空数据
-		if(receivableValue == undefined || receivableValue == "" || receivableValue == "-" || Number(receivableValue) < 0){
-			receivableValue = "0.00";
-		}
-		if(creditCardValue == undefined || creditCardValue == "" || creditCardValue == "-"){
-			creditCardValue = "0.00";
-		}
-		if(bankCardValue == undefined || bankCardValue == "" || bankCardValue == "-"){
-			bankCardValue = "0.00";
-		}
-		if(cashCardValue == undefined || cashCardValue == "" || cashCardValue == "-"){
-			cashCardValue = "0.00";
-		}
-		if(aliPayValue == undefined || aliPayValue == "" || aliPayValue == "-"){
-			aliPayValue = "0.00";
-		}
-		if(wechatPayValue == undefined || wechatPayValue == "" || wechatPayValue == "-"){
-			wechatPayValue = "0.00";
-		}
-		if(exchangeCashValue == undefined || exchangeCashValue == "" || exchangeCashValue == "-"){
-			exchangeCashValue = "0.00";
-		}
-		
-		var resultValue = (Number(creditCardValue) + Number(bankCardValue) + Number(cashCardValue) + Number(aliPayValue) + Number(wechatPayValue) + Number(exchangeCashValue)) - (Number(receivableValue));
-		return resultValue.toFixed(2);*/
+		 var creditCardValue = $("#creditCard").val().toString();
+		 var bankCardValue = $("#bankCard").val().toString();
+		 var cashCardValue = $("#cashCard").val().toString();
+		 var aliPayValue = $("#aliPay").val().toString();
+		 var wechatPayValue = $("#wechatPay").val().toString();
+		 var exchangeCashValue = $("#exchangeCash").val().toString();
+		 // 处理空数据
+		 if(receivableValue == undefined || receivableValue == "" || receivableValue == "-" || Number(receivableValue) < 0){
+		 receivableValue = "0.00";
+		 }
+		 if(creditCardValue == undefined || creditCardValue == "" || creditCardValue == "-"){
+		 creditCardValue = "0.00";
+		 }
+		 if(bankCardValue == undefined || bankCardValue == "" || bankCardValue == "-"){
+		 bankCardValue = "0.00";
+		 }
+		 if(cashCardValue == undefined || cashCardValue == "" || cashCardValue == "-"){
+		 cashCardValue = "0.00";
+		 }
+		 if(aliPayValue == undefined || aliPayValue == "" || aliPayValue == "-"){
+		 aliPayValue = "0.00";
+		 }
+		 if(wechatPayValue == undefined || wechatPayValue == "" || wechatPayValue == "-"){
+		 wechatPayValue = "0.00";
+		 }
+		 if(exchangeCashValue == undefined || exchangeCashValue == "" || exchangeCashValue == "-"){
+		 exchangeCashValue = "0.00";
+		 }
+
+		 var resultValue = (Number(creditCardValue) + Number(bankCardValue) + Number(cashCardValue) + Number(aliPayValue) + Number(wechatPayValue) + Number(exchangeCashValue)) - (Number(receivableValue));
+		 return resultValue.toFixed(2);*/
 	},
-	
+
 	// 计算收款金额与应收金额的差额
 	"calcuRealPayValue":function(){
 		var receivableValue = $("#receivable").val().toString();
@@ -342,43 +342,43 @@ BINOLWPSAL03_GLOBAL.prototype = {
 		resultValue-=Number(receivableValue);
 		return resultValue.toFixed(2);
 		/*
-		var cashValue = $("#cash").val().toString();
-		var creditCardValue = $("#creditCard").val().toString();
-		var bankCardValue = $("#bankCard").val().toString();
-		var cashCardValue = $("#cashCard").val().toString();
-		var aliPayValue = $("#aliPay").val().toString();
-		var wechatPayValue = $("#wechatPay").val().toString();
-		var exchangeCashValue = $("#exchangeCash").val().toString();
-		// 处理空数据
-		if(receivableValue == undefined || receivableValue == "" || receivableValue == "-" || Number(receivableValue) < 0){
-			receivableValue = "0.00";
-		}
-		if(cashValue == undefined || cashValue == "" || cashValue == "-"){
-			cashValue = "0.00";
-		}
-		if(creditCardValue == undefined || creditCardValue == "" || creditCardValue == "-"){
-			creditCardValue = "0.00";
-		}
-		if(bankCardValue == undefined || bankCardValue == "" || bankCardValue == "-"){
-			bankCardValue = "0.00";
-		}
-		if(cashCardValue == undefined || cashCardValue == "" || cashCardValue == "-"){
-			cashCardValue = "0.00";
-		}
-		if(aliPayValue == undefined || aliPayValue == "" || aliPayValue == "-"){
-			aliPayValue = "0.00";
-		}
-		if(wechatPayValue == undefined || wechatPayValue == "" || wechatPayValue == "-"){
-			wechatPayValue = "0.00";
-		}
-		if(exchangeCashValue == undefined || exchangeCashValue == "" || exchangeCashValue == "-"){
-			exchangeCashValue = "0.00";
-		}
-		
-		var resultValue = (Number(cashValue) + Number(creditCardValue) + Number(bankCardValue) + Number(cashCardValue) + Number(aliPayValue) + Number(wechatPayValue) + Number(exchangeCashValue)) - (Number(receivableValue));
-		return resultValue.toFixed(2);*/
+		 var cashValue = $("#cash").val().toString();
+		 var creditCardValue = $("#creditCard").val().toString();
+		 var bankCardValue = $("#bankCard").val().toString();
+		 var cashCardValue = $("#cashCard").val().toString();
+		 var aliPayValue = $("#aliPay").val().toString();
+		 var wechatPayValue = $("#wechatPay").val().toString();
+		 var exchangeCashValue = $("#exchangeCash").val().toString();
+		 // 处理空数据
+		 if(receivableValue == undefined || receivableValue == "" || receivableValue == "-" || Number(receivableValue) < 0){
+		 receivableValue = "0.00";
+		 }
+		 if(cashValue == undefined || cashValue == "" || cashValue == "-"){
+		 cashValue = "0.00";
+		 }
+		 if(creditCardValue == undefined || creditCardValue == "" || creditCardValue == "-"){
+		 creditCardValue = "0.00";
+		 }
+		 if(bankCardValue == undefined || bankCardValue == "" || bankCardValue == "-"){
+		 bankCardValue = "0.00";
+		 }
+		 if(cashCardValue == undefined || cashCardValue == "" || cashCardValue == "-"){
+		 cashCardValue = "0.00";
+		 }
+		 if(aliPayValue == undefined || aliPayValue == "" || aliPayValue == "-"){
+		 aliPayValue = "0.00";
+		 }
+		 if(wechatPayValue == undefined || wechatPayValue == "" || wechatPayValue == "-"){
+		 wechatPayValue = "0.00";
+		 }
+		 if(exchangeCashValue == undefined || exchangeCashValue == "" || exchangeCashValue == "-"){
+		 exchangeCashValue = "0.00";
+		 }
+
+		 var resultValue = (Number(cashValue) + Number(creditCardValue) + Number(bankCardValue) + Number(cashCardValue) + Number(aliPayValue) + Number(wechatPayValue) + Number(exchangeCashValue)) - (Number(receivableValue));
+		 return resultValue.toFixed(2);*/
 	},
-	
+
 	// 计算积分抵扣金额
 	"calcuPointExchangeValue":function(value){
 		var pointRatio = $("#dgPointRatio").val().toString();
@@ -396,7 +396,7 @@ BINOLWPSAL03_GLOBAL.prototype = {
 			$("#spanExchangeCash").text("");
 		}
 	},
-	
+
 	"returnsBillCollect":function (){
 		var $form = $('#billInfoForm');
 		var billCode = $("#dgCheckedBillCode").val();
@@ -446,7 +446,7 @@ BINOLWPSAL03_GLOBAL.prototype = {
 			}
 		});
 	},
-	
+
 	"returnsGoodsCollect":function (){
 		var $form = $('#billInfoForm');
 		var billCode = $("#dgCheckedBillCode").val();
@@ -495,14 +495,14 @@ BINOLWPSAL03_GLOBAL.prototype = {
 			}
 		});
 	},
-	
+
 	"showReturnResult":function(data){
 		if(Number(data) > 0){
 			var autoPrintBill = $("#autoPrintBill").val();
 			// 支付成功的情况
 			BINOLWPSAL02.showMessageDialog({
-				message:"退货成功", 
-				type:"SUCCESS", 
+				message:"退货成功",
+				type:"SUCCESS",
 				focusEvent:function(){
 					BINOLWPSAL03.refreshTable();
 					// 打印小票
@@ -517,8 +517,8 @@ BINOLWPSAL03_GLOBAL.prototype = {
 		}else if(data == "LC"){
 			// 非支付宝和微信支付的情况
 			BINOLWPSAL02.showMessageDialog({
-				message:"退款失败，非支付宝或微信支付方式", 
-				type:"MESSAGE", 
+				message:"退款失败，非支付宝或微信支付方式",
+				type:"MESSAGE",
 				focusEvent:function(){
 					BINOLWPSAL03.refreshTable();
 				}
@@ -526,8 +526,8 @@ BINOLWPSAL03_GLOBAL.prototype = {
 		}else if(data == "FA"){
 			// 单据号为空的情况
 			BINOLWPSAL02.showMessageDialog({
-				message:"退款失败，连接支付宝接口失败", 
-				type:"MESSAGE", 
+				message:"退款失败，连接支付宝接口失败",
+				type:"MESSAGE",
 				focusEvent:function(){
 					BINOLWPSAL03.webPaymentCancel();
 				}
@@ -535,8 +535,8 @@ BINOLWPSAL03_GLOBAL.prototype = {
 		}else if(data == "FC"){
 			// 单据号为空的情况
 			BINOLWPSAL02.showMessageDialog({
-				message:"退款失败，连接微信支付接口失败", 
-				type:"MESSAGE", 
+				message:"退款失败，连接微信支付接口失败",
+				type:"MESSAGE",
 				focusEvent:function(){
 					BINOLWPSAL03.webPaymentCancel();
 				}
@@ -544,8 +544,8 @@ BINOLWPSAL03_GLOBAL.prototype = {
 		}else if(data == "NR"){
 			// 单据号为空的情况
 			BINOLWPSAL02.showMessageDialog({
-				message:"退款失败，支付接口连接超时", 
-				type:"MESSAGE", 
+				message:"退款失败，支付接口连接超时",
+				type:"MESSAGE",
 				focusEvent:function(){
 					BINOLWPSAL03.webPaymentCancel();
 				}
@@ -553,8 +553,8 @@ BINOLWPSAL03_GLOBAL.prototype = {
 		}else if(data == "FWP"){
 			// 单据号为空的情况
 			BINOLWPSAL02.showMessageDialog({
-				message:"退款失败，等待买家付款不允许退款", 
-				type:"MESSAGE", 
+				message:"退款失败，等待买家付款不允许退款",
+				type:"MESSAGE",
 				focusEvent:function(){
 					BINOLWPSAL03.webPaymentCancel();
 				}
@@ -562,8 +562,8 @@ BINOLWPSAL03_GLOBAL.prototype = {
 		}else if(data == "FTC"){
 			// 单据号为空的情况
 			BINOLWPSAL02.showMessageDialog({
-				message:"退款失败，交易关闭不允许退款", 
-				type:"MESSAGE", 
+				message:"退款失败，交易关闭不允许退款",
+				type:"MESSAGE",
 				focusEvent:function(){
 					BINOLWPSAL03.webPaymentCancel();
 				}
@@ -571,8 +571,8 @@ BINOLWPSAL03_GLOBAL.prototype = {
 		}else if(data == "FTP"){
 			// 单据号为空的情况
 			BINOLWPSAL02.showMessageDialog({
-				message:"退款失败，等待卖家收款不允许退款", 
-				type:"MESSAGE", 
+				message:"退款失败，等待卖家收款不允许退款",
+				type:"MESSAGE",
 				focusEvent:function(){
 					BINOLWPSAL03.webPaymentCancel();
 				}
@@ -580,8 +580,8 @@ BINOLWPSAL03_GLOBAL.prototype = {
 		}else if(data == "FTF"){
 			// 单据号为空的情况
 			BINOLWPSAL02.showMessageDialog({
-				message:"退款失败，交易结束不允许退款", 
-				type:"MESSAGE", 
+				message:"退款失败，交易结束不允许退款",
+				type:"MESSAGE",
 				focusEvent:function(){
 					BINOLWPSAL03.webPaymentCancel();
 				}
@@ -589,8 +589,8 @@ BINOLWPSAL03_GLOBAL.prototype = {
 		}else if(data == "RFI"){
 			// 单据号为空的情况
 			BINOLWPSAL02.showMessageDialog({
-				message:"退款失败，退款金额大于支付金额", 
-				type:"MESSAGE", 
+				message:"退款失败，退款金额大于支付金额",
+				type:"MESSAGE",
 				focusEvent:function(){
 					BINOLWPSAL03.webPaymentCancel();
 				}
@@ -598,8 +598,8 @@ BINOLWPSAL03_GLOBAL.prototype = {
 		}else if(data == "FAIL"){
 			// 单据号为空的情况
 			BINOLWPSAL02.showMessageDialog({
-				message:"退款失败，支付响应失败", 
-				type:"MESSAGE", 
+				message:"退款失败，支付响应失败",
+				type:"MESSAGE",
 				focusEvent:function(){
 					BINOLWPSAL03.webPaymentCancel();
 				}
@@ -607,8 +607,8 @@ BINOLWPSAL03_GLOBAL.prototype = {
 		}else if(data == "BN"){
 			// 单据号为空的情况
 			BINOLWPSAL02.showMessageDialog({
-				message:"退款失败，退款单据号为空", 
-				type:"MESSAGE", 
+				message:"退款失败，退款单据号为空",
+				type:"MESSAGE",
 				focusEvent:function(){
 					BINOLWPSAL03.webPaymentCancel();
 				}
@@ -616,8 +616,8 @@ BINOLWPSAL03_GLOBAL.prototype = {
 		}else if(data == "TN"){
 			// 支付金额为空的情况
 			BINOLWPSAL02.showMessageDialog({
-				message:"退款失败，没有输入通过支付宝或微信支付退款的金额", 
-				type:"MESSAGE", 
+				message:"退款失败，没有输入通过支付宝或微信支付退款的金额",
+				type:"MESSAGE",
 				focusEvent:function(){
 					BINOLWPSAL03.webPaymentCancel();
 				}
@@ -625,8 +625,8 @@ BINOLWPSAL03_GLOBAL.prototype = {
 		}else if(data == "NC"){
 			// 单据号为空的情况
 			BINOLWPSAL02.showMessageDialog({
-				message:"退款失败，没有获取到支付宝接口配置", 
-				type:"MESSAGE", 
+				message:"退款失败，没有获取到支付宝接口配置",
+				type:"MESSAGE",
 				focusEvent:function(){
 					BINOLWPSAL03.webPaymentCancel();
 				}
@@ -634,8 +634,8 @@ BINOLWPSAL03_GLOBAL.prototype = {
 		}else if(data == "NAP"){
 			// 没有给柜台配置收款账户信息的情况
 			BINOLWPSAL02.showMessageDialog({
-				message:"退款失败，柜台没有配置支付宝收款账户信息", 
-				type:"MESSAGE", 
+				message:"退款失败，柜台没有配置支付宝收款账户信息",
+				type:"MESSAGE",
 				focusEvent:function(){
 					BINOLWPSAL03.webPaymentCancel();
 				}
@@ -643,8 +643,8 @@ BINOLWPSAL03_GLOBAL.prototype = {
 		}else if(data == "NWP"){
 			// 没有给柜台配置收款账户信息的情况
 			BINOLWPSAL02.showMessageDialog({
-				message:"退款失败，柜台没有配置微信支付收款账户信息", 
-				type:"MESSAGE", 
+				message:"退款失败，柜台没有配置微信支付收款账户信息",
+				type:"MESSAGE",
 				focusEvent:function(){
 					BINOLWPSAL03.webPaymentCancel();
 				}
@@ -652,8 +652,8 @@ BINOLWPSAL03_GLOBAL.prototype = {
 		}else if(data == "IFERROR"){
 			// 出现未知异常被错误捕获的情况
 			BINOLWPSAL02.showMessageDialog({
-				message:"支付宝或微信支付退款失败", 
-				type:"MESSAGE", 
+				message:"支付宝或微信支付退款失败",
+				type:"MESSAGE",
 				focusEvent:function(){
 					BINOLWPSAL03.webPaymentCancel();
 				}
@@ -661,8 +661,8 @@ BINOLWPSAL03_GLOBAL.prototype = {
 		}else if(data == "ERROR"){
 			// 出现未知异常被错误捕获的情况
 			BINOLWPSAL02.showMessageDialog({
-				message:"退货失败", 
-				type:"MESSAGE", 
+				message:"退货失败",
+				type:"MESSAGE",
 				focusEvent:function(){
 					BINOLWPSAL03.webPaymentCancel();
 				}
@@ -670,8 +670,8 @@ BINOLWPSAL03_GLOBAL.prototype = {
 		}else if(data == "STE0001"){
 			// 没有给柜台配置收款账户信息的情况
 			BINOLWPSAL02.showMessageDialog({
-				message:"退款失败，储值卡号为空", 
-				type:"MESSAGE", 
+				message:"退款失败，储值卡号为空",
+				type:"MESSAGE",
 				focusEvent:function(){
 					BINOLWPSAL03.webPaymentCancel();
 				}
@@ -679,8 +679,8 @@ BINOLWPSAL03_GLOBAL.prototype = {
 		}else if(data == "STE0012"){
 			// 没有给柜台配置收款账户信息的情况
 			BINOLWPSAL02.showMessageDialog({
-				message:"退款失败，交易金额格式不正确", 
-				type:"MESSAGE", 
+				message:"退款失败，交易金额格式不正确",
+				type:"MESSAGE",
 				focusEvent:function(){
 					BINOLWPSAL03.webPaymentCancel();
 				}
@@ -688,8 +688,8 @@ BINOLWPSAL03_GLOBAL.prototype = {
 		}else if(data == "STE0013"){
 			// 没有给柜台配置收款账户信息的情况
 			BINOLWPSAL02.showMessageDialog({
-				message:"退款失败，服务明细参数中存在不合法的数据", 
-				type:"MESSAGE", 
+				message:"退款失败，服务明细参数中存在不合法的数据",
+				type:"MESSAGE",
 				focusEvent:function(){
 					BINOLWPSAL03.webPaymentCancel();
 				}
@@ -697,8 +697,8 @@ BINOLWPSAL03_GLOBAL.prototype = {
 		}else if(data == "STE0015"){
 			// 没有给柜台配置收款账户信息的情况
 			BINOLWPSAL02.showMessageDialog({
-				message:"退款失败，没有查询到有效的储值卡信息", 
-				type:"MESSAGE", 
+				message:"退款失败，没有查询到有效的储值卡信息",
+				type:"MESSAGE",
 				focusEvent:function(){
 					BINOLWPSAL03.webPaymentCancel();
 				}
@@ -706,8 +706,8 @@ BINOLWPSAL03_GLOBAL.prototype = {
 		}else if(data == "STE0018"){
 			// 没有给柜台配置收款账户信息的情况
 			BINOLWPSAL02.showMessageDialog({
-				message:"退款失败，不允许重复交易", 
-				type:"MESSAGE", 
+				message:"退款失败，不允许重复交易",
+				type:"MESSAGE",
 				focusEvent:function(){
 					BINOLWPSAL03.webPaymentCancel();
 				}
@@ -715,15 +715,15 @@ BINOLWPSAL03_GLOBAL.prototype = {
 		}else{
 			// 未定义的返回结果，一般为支付宝和微信支付第三方接口返回的异常信息
 			BINOLWPSAL02.showMessageDialog({
-				message:"退货失败", 
-				type:"MESSAGE", 
+				message:"退货失败",
+				type:"MESSAGE",
 				focusEvent:function(){
 					BINOLWPSAL03.webPaymentCancel();
 				}
 			});
 		}
 	},
-	
+
 	"refreshTable":function(){
 		$("#getBillsPageDiv").show();
 		$("#getBillDetailPageDiv").hide();
@@ -731,7 +731,7 @@ BINOLWPSAL03_GLOBAL.prototype = {
 		if(oTableArr[3] != null)
 			oTableArr[3].fnDraw();
 	},
-	
+
 	"confirm":function(){
 		var spanReceivable=Number($("#spanReceivable").html());
 //		//校验是否为负金额销售
@@ -749,14 +749,14 @@ BINOLWPSAL03_GLOBAL.prototype = {
 		var realPayValue = BINOLWPSAL03.calcuRealPayValue();
 		var NEW_CZK_PAY = $("#NEW_CZK_PAY").val();
 		if(realPayValue >= 0){
-			
+
 			var aliPay = $("#payTbody >tr input[name='PT']").val();
 			var wechatPay = $("#payTbody >tr input[name='WEPAY']").val();
 			var cashCard = $("#payTbody >tr input[name='CZK']").val();
 			/*var aliPay = $("#aliPay").val();
-			var wechatPay = $("#wechatPay").val();
-			var cashCard = $("#cashCard").val();*/
-			
+			 var wechatPay = $("#wechatPay").val();
+			 var cashCard = $("#cashCard").val();*/
+
 			var serviceJsonList="";
 			if($("#serviceTb tr").length>0){
 				var serviceList = new Array();
@@ -775,25 +775,25 @@ BINOLWPSAL03_GLOBAL.prototype = {
 					serviceJsonList=serviceList;
 				}
 			}
-			if(NEW_CZK_PAY=="N" && aliPay != null && aliPay != undefined && aliPay != "" 
+			if(NEW_CZK_PAY=="N" && aliPay != null && aliPay != undefined && aliPay != ""
 				&& wechatPay != null && wechatPay != undefined && wechatPay != ""){
 				// 显示提示信息
 				BINOLWPSAL02.showMessageDialog({
-					message:"支付宝支付和微信支付不能同时使用，请选择其中一种进行支付！", 
+					message:"支付宝支付和微信支付不能同时使用，请选择其中一种进行支付！",
 					type:"MESSAGE",
 					focusEvent:function(){
 						/*$("#wechatPay").select();*/
 						$("#WEPAY").find("input").select();
 					}
 				});
-			}else if(NEW_CZK_PAY=="Y" && 
-					((aliPay != null && aliPay != undefined && aliPay != "" && wechatPay != null && wechatPay != undefined && wechatPay != "") ||
-						(aliPay != null && aliPay != undefined && aliPay != "" && cashCard != null && cashCard != undefined && cashCard != "") ||
-							(wechatPay != null && wechatPay != undefined && wechatPay != "" && cashCard != null && cashCard != undefined && cashCard != ""))){
+			}else if(NEW_CZK_PAY=="Y" &&
+				((aliPay != null && aliPay != undefined && aliPay != "" && wechatPay != null && wechatPay != undefined && wechatPay != "") ||
+				(aliPay != null && aliPay != undefined && aliPay != "" && cashCard != null && cashCard != undefined && cashCard != "") ||
+				(wechatPay != null && wechatPay != undefined && wechatPay != "" && cashCard != null && cashCard != undefined && cashCard != ""))){
 				// 显示提示信息
 				BINOLWPSAL02.showMessageDialog({
-					message:"支付宝支付.微信支付.储值卡支付不能同时使用，请选择其中一种进行支付！", 
-					type:"MESSAGE", 
+					message:"支付宝支付.微信支付.储值卡支付不能同时使用，请选择其中一种进行支付！",
+					type:"MESSAGE",
 					focusEvent:function(){
 						/*$("#wechatPay").select();*/
 						$("#WEPAY").find("input").select();
@@ -812,7 +812,7 @@ BINOLWPSAL03_GLOBAL.prototype = {
 						}else if(wechatPay != null && wechatPay != undefined && wechatPay != "" && Number(wechatPay) > 0){
 							payType = "WT";
 						}else if((cashCard != null && cashCard != undefined
-								&& cashCard != "" && Number(cashCard) > 0 && NEW_CZK_PAY=="Y") || serviceJsonList!="") {
+							&& cashCard != "" && Number(cashCard) > 0 && NEW_CZK_PAY=="Y") || serviceJsonList!="") {
 							payType = "CZK";
 						}else{
 							payType = "LC";
@@ -839,14 +839,24 @@ BINOLWPSAL03_GLOBAL.prototype = {
 							$("#verificationCode2").hide();
 							$("#verificationCode2").attr("disabled","disabled");
 						}
-						$("#collectPageDiv").hide();
-						$("#setPaymentPageDiv").hide();
-						$("#webPaymentPageDiv").show();
-						$("#fg").hide();
-						$("#FWK").show();
-						$("#webPayCode").focus();
-						if($("#memberCode").val()!=""){
-							$("#cardCode").val($("#memberCode").val());
+
+						var isIngnoreConfirm = $("#isIngnoreConfirm").val();
+						var spanMemberCode = $("#spanMemberCode").text();
+						if(spanMemberCode != "" && isIngnoreConfirm == 'Y') {
+							if($("#memberCode").val()!=""){
+								$("#cardCode").val($("#memberCode").val());
+							}
+							BINOLWPSAL03.webPaymentConfirm();
+						} else {
+							$("#collectPageDiv").hide();
+							$("#setPaymentPageDiv").hide();
+							$("#webPaymentPageDiv").show();
+							$("#fg").hide();
+							$("#FWK").show();
+							$("#webPayCode").focus();
+							if($("#memberCode").val()!=""){
+								$("#cardCode").val($("#memberCode").val());
+							}
 						}
 					}else{
 						$("#fg").show();
@@ -885,8 +895,8 @@ BINOLWPSAL03_GLOBAL.prototype = {
 		}else{
 			// 显示提示信息
 			BINOLWPSAL02.showMessageDialog({
-				message:"收款金额不足", 
-				type:"MESSAGE", 
+				message:"收款金额不足",
+				type:"MESSAGE",
 				focusEvent:function(){
 					if($("#isCA").val()=="Y" && $("#defaultPay")!=undefined){
 						// 默认输入框获得焦点
@@ -898,7 +908,7 @@ BINOLWPSAL03_GLOBAL.prototype = {
 			});
 		}
 	},
-	
+
 	"cancel":function(){
 		//清空之前的列表增加逻辑：购物车中实价改为最原始购物车数据
 		BINOLWPSAL02.removePromotionList();
@@ -924,7 +934,7 @@ BINOLWPSAL03_GLOBAL.prototype = {
 //				// 最后一个可见的文本框获得焦点
 //				$('#databody >tr').find("input:text:visible:last").select();
 //			}
-			
+
 			// 添加一个空行
 			BINOLWPSAL02.addNewLine();
 			// 可见文本框回车事件解绑
@@ -953,7 +963,7 @@ BINOLWPSAL03_GLOBAL.prototype = {
 			$('#returnBill_dialog').html("");
 		}
 	},
-	
+
 	"billSubmit":function(){
 		var printDetailJson = $('#saleDetailList').val();
 //		var baName = $("#baCode option:selected").text();
@@ -1013,11 +1023,11 @@ BINOLWPSAL03_GLOBAL.prototype = {
 		});
 		paymentJsonList=JSON.stringify(paymentJsonList);
 		params+="&paymentJsonList="+paymentJsonList;
-		
+
 		var dgSaleUrl = $("#dgSaleUrl").attr("href");
 		var param = "counterCode=" + counterCode;
-		
-		if(dgSaleUrl != undefined && dgSaleUrl != null && dgSaleUrl != "" 
+
+		if(dgSaleUrl != undefined && dgSaleUrl != null && dgSaleUrl != ""
 			&& counterCode != undefined && counterCode != null && counterCode != ""){
 			var billCode = $("#billCode").val();
 			cherryAjaxRequest({
@@ -1038,8 +1048,8 @@ BINOLWPSAL03_GLOBAL.prototype = {
 								$("#webpos_main").html(data1);
 								// 显示提示信息
 								BINOLWPSAL02.showMessageDialog({
-									message:"销售单已录入成功", 
-									type:"SUCCESS", 
+									message:"销售单已录入成功",
+									type:"SUCCESS",
 									focusEvent:function(){
 										if(baChooseModel == "2"){
 											// 最后一行第一个可见的文本框获得焦点
@@ -1047,7 +1057,7 @@ BINOLWPSAL03_GLOBAL.prototype = {
 										}else{
 											$("#baName").focus();
 										}
-										
+
 										// 获取配置确定是否需要打印小票
 										if(autoPrintBill == "Y"){
 											// 打印小票，参数0：销售，1：补打小票，2：退货
@@ -1071,7 +1081,7 @@ BINOLWPSAL03_GLOBAL.prototype = {
 													$("#memberCodePrint").html('<font size="2px">会员号：'+memberCode+'</font>');
 												}
 												$("#billCodePrint").html('<font size="2px">流水号：'+billCode+'</font>');
-												
+
 												// 确认后，购物车被清空
 												var json = eval('('+printDetailJson+')');
 												for (var one in json){
@@ -1125,17 +1135,17 @@ BINOLWPSAL03_GLOBAL.prototype = {
 													sumAmountPrint = parseFloat(sumAmountPrint) + parseFloat(payAmount);
 													originalAmountPrint = parseFloat(originalAmountPrint) + parseFloat(priceUnitArr) * parseFloat(quantity);
 													discountAmountPrint = parseFloat(discountAmountPrint) + parseFloat(discountRateArr) * parseFloat(quantity);
-													
+
 												}
 												//服务电话
 												$("#counterPhonePrint").html("服务电话："+counterPhone);
-												
+
 												// 填充合计内容
 												$("#sumQuantityPrint").html('<font size="2px">'+sumQuantityPrint+'</font>');//总数量
 												$("#originalAmountPrint").html('<font size="2px">应收：'+originalAmountPrint.toFixed(2)+'</font>');//应收
 												$("#discountAmountPrint").html('<font size="2px">折扣：'+discountAmountPrint.toFixed(2)+'</font>');//折扣
 												$("#sumAmountPrint").html('<font size="2px">总金额：'+sumAmountPrint.toFixed(2)+'</font>');//总金额
-												
+
 												//会员积分
 												spanTotalPoint=spanTotalPoint+originalAmountPrint;
 												if(memberCode == undefined || '' == memberCode) {
@@ -1143,7 +1153,7 @@ BINOLWPSAL03_GLOBAL.prototype = {
 												}else{
 													$("#memberIntegralPrint").html('<font size="2px">会员积分：'+spanTotalPoint.toFixed(2)+'</font>');
 												}
-												
+
 												// 填充整单数据内容
 												$("#roundingAmountPrint").html('<font size="2px">'+removeZero.toFixed(2)+'</font>');
 												// 支付方式,取支付List做迭代
@@ -1156,7 +1166,7 @@ BINOLWPSAL03_GLOBAL.prototype = {
 													if(storePayCodeValue !='' ){
 														printActualPay += parseFloat(storePayCodeValue);
 														$("#payChangePrintTr").before('<tr><td width="30%" height="10" class="left" style="border:solid 0px black"><font size="2px">'+storePayCodeName+'：</font></td>'
-																+'<td width="48" height="10" class="center" style="border:solid 0px black"><font size="2px">'+parseFloat(storePayCodeValue).toFixed(2)+'</font></td></tr>');
+															+'<td width="48" height="10" class="center" style="border:solid 0px black"><font size="2px">'+parseFloat(storePayCodeValue).toFixed(2)+'</font></td></tr>');
 													}
 												}
 												$("#payAmountPrint").html('<font size="2px">'+printActualPay.toFixed(2)+'</font>');//实付（客户通过支付方式一共给的钱）
@@ -1171,27 +1181,27 @@ BINOLWPSAL03_GLOBAL.prototype = {
 													$("#printTable2").remove();
 													$("#printTable3 tr:gt(2)").remove();
 												}
-												
+
 												/**
 												 * SET_PRINT_PAGESIZE(intOrient,intPageWidth,intPageHeight,strPageName);
 												 *	参数说明：
 												 *	intOrient：打印方向及纸张类型
-												 *	    1---纵向打印，固定纸张； 
-												    2---横向打印，固定纸张；  
-												    3---纵向打印，宽度固定，高度按打印内容的高度自适应(见样例18)；
-												    0---方向不定，由操作者自行选择或按打印机缺省设置。
-												intPageWidth：
-												    纸张宽，单位为0.1mm 譬如该参数值为45，则表示4.5mm,计量精度是0.1mm。
-												intPageHeight：
-												    固定纸张时该参数是纸张高；高度自适应时该参数是纸张底边的空白高，计量单位与纸张宽一样。
-												strPageName：
-												    纸张类型名， intPageWidth等于零时本参数才有效，具体名称参见操作系统打印服务属性中的格式定义。
-												    关键字“CreateCustomPage”会在系统内建立一个名称为“LodopCustomPage”自定义纸张类型。
-												 * 
-												 * 
-												 * 
+												 *	    1---纵向打印，固定纸张；
+												 2---横向打印，固定纸张；
+												 3---纵向打印，宽度固定，高度按打印内容的高度自适应(见样例18)；
+												 0---方向不定，由操作者自行选择或按打印机缺省设置。
+												 intPageWidth：
+												 纸张宽，单位为0.1mm 譬如该参数值为45，则表示4.5mm,计量精度是0.1mm。
+												 intPageHeight：
+												 固定纸张时该参数是纸张高；高度自适应时该参数是纸张底边的空白高，计量单位与纸张宽一样。
+												 strPageName：
+												 纸张类型名， intPageWidth等于零时本参数才有效，具体名称参见操作系统打印服务属性中的格式定义。
+												 关键字“CreateCustomPage”会在系统内建立一个名称为“LodopCustomPage”自定义纸张类型。
+												 *
+												 *
+												 *
 												 * */
-												LODOP=getLodop();  
+												LODOP=getLodop();
 												LODOP.PRINT_INIT("销售小票");
 												// 3:纵向；800：纸张宽度；10：纸张底边的空白高（0.1mm）；
 												LODOP.SET_PRINT_PAGESIZE(3,800,10,"");
@@ -1214,9 +1224,9 @@ BINOLWPSAL03_GLOBAL.prototype = {
 												 * intHeight：高度，可用百分比
 												 * strHtml：页面
 												 */
-											LODOP.ADD_PRINT_HTM(1,0,"100%","100%",$("#salePrintForm").html());
+												LODOP.ADD_PRINT_HTM(1,0,"100%","100%",$("#salePrintForm").html());
 												// 打印
-											LODOP.PRINT();
+												LODOP.PRINT();
 												// 设计
 //											LODOP.PRINT_DESIGN();
 												// 预览
@@ -1238,7 +1248,7 @@ BINOLWPSAL03_GLOBAL.prototype = {
 													$("#memberCodePrint_AVON").html('<font size="2px">会员号：'+memberCode+'</font>');
 												}
 												$("#billCodePrint_AVON").html('<font size="2px">流水号：'+billCode+'</font>');
-												
+
 												// 确认后，购物车被清空
 												var json = eval('('+printDetailJson+')');
 												for (var one in json){
@@ -1281,7 +1291,7 @@ BINOLWPSAL03_GLOBAL.prototype = {
 													sumAmountPrint = parseFloat(sumAmountPrint) + parseFloat(payAmount);
 													originalAmountPrint = parseFloat(originalAmountPrint) + parseFloat(priceUnitArr) * parseFloat(quantity);
 													discountAmountPrint = parseFloat(discountAmountPrint) + parseFloat(discountRateArr) * parseFloat(quantity);
-													
+
 												}
 												//服务电话
 												$("#counterPhonePrint_AVON").html("电话："+counterPhone);
@@ -1290,7 +1300,7 @@ BINOLWPSAL03_GLOBAL.prototype = {
 												// 填充合计内容
 												$("#sumQuantityPrint_AVON").html('<font size="2px">'+sumQuantityPrint+'</font>');//总数量
 												$("#originalAmountPrint_AVON").html('<font size="2px">'+originalAmountPrint.toFixed(2)+'</font>');//应收
-												
+
 												//会员积分
 												spanTotalPoint=spanTotalPoint+originalAmountPrint;
 												if(memberCode == undefined || '' == memberCode) {
@@ -1298,7 +1308,7 @@ BINOLWPSAL03_GLOBAL.prototype = {
 												}else{
 													$("#memberIntegralPrint_AVON").html('<font size="2px">会员积分：'+spanTotalPoint.toFixed(2)+'</font>');
 												}
-												
+
 												// 填充整单数据内容
 												$("#roundingAmountPrint_AVON").html('<font size="2px">'+removeZero.toFixed(2)+'</font>');
 												// 支付方式,取支付List做迭代
@@ -1311,7 +1321,7 @@ BINOLWPSAL03_GLOBAL.prototype = {
 													if(storePayCodeValue !='' ){
 														printActualPay += parseFloat(storePayCodeValue);
 														$("#payChangePrintTr_AVON").before('<tr><td width="30%" height="10" class="left" style="border:solid 0px black"><font size="2px">'+storePayCodeName+'：</font></td>'
-																+'<td width="48" height="10" class="center" style="border:solid 0px black"><font size="2px">'+parseFloat(storePayCodeValue).toFixed(2)+'</font></td></tr>');
+															+'<td width="48" height="10" class="center" style="border:solid 0px black"><font size="2px">'+parseFloat(storePayCodeValue).toFixed(2)+'</font></td></tr>');
 													}
 												}
 												$("#payAmountPrint_AVON").html('<font size="2px">'+printActualPay.toFixed(2)+'</font>');//实付（客户通过支付方式一共给的钱）
@@ -1320,22 +1330,22 @@ BINOLWPSAL03_GLOBAL.prototype = {
 												 * SET_PRINT_PAGESIZE(intOrient,intPageWidth,intPageHeight,strPageName);
 												 *	参数说明：
 												 *	intOrient：打印方向及纸张类型
-												 *	    1---纵向打印，固定纸张； 
-												    2---横向打印，固定纸张；  
-												    3---纵向打印，宽度固定，高度按打印内容的高度自适应(见样例18)；
-												    0---方向不定，由操作者自行选择或按打印机缺省设置。
-												intPageWidth：
-												    纸张宽，单位为0.1mm 譬如该参数值为45，则表示4.5mm,计量精度是0.1mm。
-												intPageHeight：
-												    固定纸张时该参数是纸张高；高度自适应时该参数是纸张底边的空白高，计量单位与纸张宽一样。
-												strPageName：
-												    纸张类型名， intPageWidth等于零时本参数才有效，具体名称参见操作系统打印服务属性中的格式定义。
-												    关键字“CreateCustomPage”会在系统内建立一个名称为“LodopCustomPage”自定义纸张类型。
-												 * 
-												 * 
-												 * 
+												 *	    1---纵向打印，固定纸张；
+												 2---横向打印，固定纸张；
+												 3---纵向打印，宽度固定，高度按打印内容的高度自适应(见样例18)；
+												 0---方向不定，由操作者自行选择或按打印机缺省设置。
+												 intPageWidth：
+												 纸张宽，单位为0.1mm 譬如该参数值为45，则表示4.5mm,计量精度是0.1mm。
+												 intPageHeight：
+												 固定纸张时该参数是纸张高；高度自适应时该参数是纸张底边的空白高，计量单位与纸张宽一样。
+												 strPageName：
+												 纸张类型名， intPageWidth等于零时本参数才有效，具体名称参见操作系统打印服务属性中的格式定义。
+												 关键字“CreateCustomPage”会在系统内建立一个名称为“LodopCustomPage”自定义纸张类型。
+												 *
+												 *
+												 *
 												 * */
-												LODOP=getLodop();  
+												LODOP=getLodop();
 												LODOP.PRINT_INIT("销售小票");
 												// 3:纵向；800：纸张宽度；10：纸张底边的空白高（0.1mm）；
 												LODOP.SET_PRINT_PAGESIZE(3,800,10,"");
@@ -1358,33 +1368,33 @@ BINOLWPSAL03_GLOBAL.prototype = {
 												 * intHeight：高度，可用百分比
 												 * strHtml：页面
 												 */
-											LODOP.ADD_PRINT_HTM(1,0,"100%","100%",$("#salePrintForm_AVON").html());
+												LODOP.ADD_PRINT_HTM(1,0,"100%","100%",$("#salePrintForm_AVON").html());
 												// 打印
-											LODOP.PRINT();
+												LODOP.PRINT();
 												// 设计
 //											LODOP.PRINT_DESIGN();
 												// 预览
 //												LODOP.PREVIEW();
-											
+
 											}
 										}
 									}
 								});
-								
-								
-	//								$("#messageBoxDiv").show();
-	//								$("#messageBoxDiv").animate({left:'600px'},1500,function(){
-	//									$("#messageBoxDiv").hide();
-	//									$("#messageBoxDiv").animate({left:'0px'});
-	//								});
+
+
+								//								$("#messageBoxDiv").show();
+								//								$("#messageBoxDiv").animate({left:'600px'},1500,function(){
+								//									$("#messageBoxDiv").hide();
+								//									$("#messageBoxDiv").animate({left:'0px'});
+								//								});
 							}
 						});
 					}else{
 						if(data=="SALEDETAILERROR"){
 							// 显示提示信息
 							BINOLWPSAL02.showMessageDialog({
-								message:"销售数据检查发现异常，请尝试重新选择产品", 
-								type:"MESSAGE", 
+								message:"销售数据检查发现异常，请尝试重新选择产品",
+								type:"MESSAGE",
 								focusEvent:function(){
 									// 最后一行第一个可见的文本框获得焦点
 									BINOLWPSAL02.firstInputSelect();
@@ -1393,8 +1403,8 @@ BINOLWPSAL03_GLOBAL.prototype = {
 						}else if(data=="WECHATERROR"){
 							// 显示提示信息
 							BINOLWPSAL02.showMessageDialog({
-								message:"微信卡券核销失败，请稍后再试", 
-								type:"MESSAGE", 
+								message:"微信卡券核销失败，请稍后再试",
+								type:"MESSAGE",
 								focusEvent:function(){
 									// 最后一行第一个可见的文本框获得焦点
 									BINOLWPSAL02.firstInputSelect();
@@ -1413,8 +1423,8 @@ BINOLWPSAL03_GLOBAL.prototype = {
 						}else {
 							// 显示提示信息
 							BINOLWPSAL02.showMessageDialog({
-								message:"收款失败", 
-								type:"MESSAGE", 
+								message:"收款失败",
+								type:"MESSAGE",
 								focusEvent:function(){
 									// 最后一行第一个可见的文本框获得焦点
 									BINOLWPSAL02.firstInputSelect();
@@ -1427,8 +1437,8 @@ BINOLWPSAL03_GLOBAL.prototype = {
 		}else{
 			// 显示提示信息
 			BINOLWPSAL02.showMessageDialog({
-				message:"页面加载失败，请重新尝试", 
-				type:"MESSAGE", 
+				message:"页面加载失败，请重新尝试",
+				type:"MESSAGE",
 				focusEvent:function(){
 					// 最后一行第一个可见的文本框获得焦点
 					BINOLWPSAL02.firstInputSelect();
@@ -1442,12 +1452,12 @@ BINOLWPSAL03_GLOBAL.prototype = {
 		// 清空弹出框内容
 		$('#dialogInit').html("");
 	},
-	
+
 	"setPayment":function(){
 		/*$("#collectPageDiv").hide();
-		$("#setPaymentPageDiv").show();`
-		$("#webPaymentPageDiv").hide();*/
-		
+		 $("#setPaymentPageDiv").show();`
+		 $("#webPaymentPageDiv").hide();*/
+
 		var setPaymentUrl = $("#dgPaymentInitUrl").attr("href");
 		cherryAjaxRequest({
 			url: setPaymentUrl,
@@ -1468,47 +1478,47 @@ BINOLWPSAL03_GLOBAL.prototype = {
 						$("#webPaymentPageDiv").hide();
 					}else {
 						BINOLWPSAL02.showMessageDialog({
-							message:"没有可选的支付方式！", 
+							message:"没有可选的支付方式！",
 							type:"MESSAGE",
 							focusEvent:function(){
 							}
 						});
 					}
 					/*if(payment.creditCardPayment == "CR"){
-						$("#ckCreditCard").attr("checked","true");
-					}else{
-						$("#ckCreditCard").removeAttr("checked");
-					}
-					if(payment.bankCardPayment == "BC"){
-						$("#ckBankCard").attr("checked","true");
-					}else{
-						$("#ckBankCard").removeAttr("checked");
-					}
-					if(payment.cashCardPayment == "CZK"){
-						$("#ckCashCard").attr("checked","true");
-					}else{
-						$("#ckCashCard").removeAttr("checked");
-					}
-					if(payment.aliPayment == "AL"){
-						$("#ckAliPay").attr("checked","true");
-					}else{
-						$("#ckAliPay").removeAttr("checked");
-					}
-					if(payment.wechatPayment == "WT"){
-						$("#ckWechatPay").attr("checked","true");
-					}else{
-						$("#ckWechatPay").removeAttr("checked");
-					}
-					if(payment.pointsPayment == "EX"){
-						$("#ckPoints").attr("checked","true");
-					}else{
-						$("#ckPoints").removeAttr("checked");
-					}*/
+					 $("#ckCreditCard").attr("checked","true");
+					 }else{
+					 $("#ckCreditCard").removeAttr("checked");
+					 }
+					 if(payment.bankCardPayment == "BC"){
+					 $("#ckBankCard").attr("checked","true");
+					 }else{
+					 $("#ckBankCard").removeAttr("checked");
+					 }
+					 if(payment.cashCardPayment == "CZK"){
+					 $("#ckCashCard").attr("checked","true");
+					 }else{
+					 $("#ckCashCard").removeAttr("checked");
+					 }
+					 if(payment.aliPayment == "AL"){
+					 $("#ckAliPay").attr("checked","true");
+					 }else{
+					 $("#ckAliPay").removeAttr("checked");
+					 }
+					 if(payment.wechatPayment == "WT"){
+					 $("#ckWechatPay").attr("checked","true");
+					 }else{
+					 $("#ckWechatPay").removeAttr("checked");
+					 }
+					 if(payment.pointsPayment == "EX"){
+					 $("#ckPoints").attr("checked","true");
+					 }else{
+					 $("#ckPoints").removeAttr("checked");
+					 }*/
 				}
 			}
 		});
 	},
-	
+
 	"checkBoxTextClick":function(obj){
 		var $this = $(obj).parent().find(":checkbox");
 		if(!!$this.attr("checked")){
@@ -1517,7 +1527,7 @@ BINOLWPSAL03_GLOBAL.prototype = {
 			$this.attr("checked","true");
 		}
 	},
-	
+
 	"setPaymentConfirm":function(){
 		var paymentList = new Array();
 		$.each($("#setPaymentPageDiv").find("p"),function(i){
@@ -1530,26 +1540,26 @@ BINOLWPSAL03_GLOBAL.prototype = {
 			}
 		});
 		/*var creditCardPayment = $("#ckCreditCard").val();
-		var bankCardPayment = $("#ckBankCard").val();
-		var cashCardPayment = $("#ckCashCard").val();
-		var aliPayment = $("#ckAliPay").val();
-		var wechatPayment = $("#ckWechatPay").val();
-		var pointsPayment = $("#ckPoints").val();
-		if(!$("#ckCreditCard").attr("checked")){
-			creditCardPayment = "";
-		}
-		if(!$("#ckBankCard").attr("checked")){
-			bankCardPayment = "";
-		}
-		if(!$("#ckCashCard").attr("checked")){
-			cashCardPayment = "";
-		}
-		if(!$("#ckAliPay").attr("checked")){
-			aliPayment = "";
-		}
-		if(!$("#ckWechatPay").attr("checked")){
-			wechatPayment = "";
-		}*/
+		 var bankCardPayment = $("#ckBankCard").val();
+		 var cashCardPayment = $("#ckCashCard").val();
+		 var aliPayment = $("#ckAliPay").val();
+		 var wechatPayment = $("#ckWechatPay").val();
+		 var pointsPayment = $("#ckPoints").val();
+		 if(!$("#ckCreditCard").attr("checked")){
+		 creditCardPayment = "";
+		 }
+		 if(!$("#ckBankCard").attr("checked")){
+		 bankCardPayment = "";
+		 }
+		 if(!$("#ckCashCard").attr("checked")){
+		 cashCardPayment = "";
+		 }
+		 if(!$("#ckAliPay").attr("checked")){
+		 aliPayment = "";
+		 }
+		 if(!$("#ckWechatPay").attr("checked")){
+		 wechatPayment = "";
+		 }*/
 //		if(!$("#ckPoints").attr("checked")){
 //			pointsPayment = "";
 //		}
@@ -1557,11 +1567,11 @@ BINOLWPSAL03_GLOBAL.prototype = {
 		var setPaymentUrl = $("#dgSetPaymentUrl").attr("href");
 		var params = "paymentJsonList="+paymentList;
 		/*var params = "creditCardPayment=" + creditCardPayment 
-					+ "&bankCardPayment=" + bankCardPayment 
-					+ "&cashCardPayment=" + cashCardPayment 
-					+ "&aliPayment=" + aliPayment 
-					+ "&wechatPayment=" + wechatPayment 
-					+ "&pointsPayment=" + pointsPayment;*/
+		 + "&bankCardPayment=" + bankCardPayment
+		 + "&cashCardPayment=" + cashCardPayment
+		 + "&aliPayment=" + aliPayment
+		 + "&wechatPayment=" + wechatPayment
+		 + "&pointsPayment=" + pointsPayment;*/
 		cherryAjaxRequest({
 			url: setPaymentUrl,
 			param: params,
@@ -1617,44 +1627,44 @@ BINOLWPSAL03_GLOBAL.prototype = {
 					if(!"Y"==isCA){
 						$("#trCash").show();
 					}
-					
+
 					/*if(creditCardPayment == "CR"){
-						$("#trCreditCard").show();
-					}else{
-						$("#trCreditCard").hide();
-					}
-					if(bankCardPayment == "BC"){
-						$("#trBankCard").show();
-					}else{
-						$("#trBankCard").hide();
-					}
-					if(cashCardPayment == "CZK"){
-						$("#trCashCard").show();
-						var NEW_CZK_PAY = $("#NEW_CZK_PAY").val();
-						if(NEW_CZK_PAY!="N"){
-							$("#serverPay").show();
-						}
-					}else{
-						$("#trCashCard").hide();
-						$("#serverPay").hide();
-						var NEW_CZK_PAY = $("#NEW_CZK_PAY").val();
-						if(NEW_CZK_PAY!="N"){
-							$("#choice1").show();
-							$("#choice2").hide();
-							$("#serverList").addClass("hide");
-							$("#serviceTb").find("input").val("");
-						}
-					}
-					if(aliPayment == "AL"){
-						$("#trAliPay").show();
-					}else{
-						$("#trAliPay").hide();
-					}
-					if(wechatPayment == "WT"){
-						$("#trWechatPay").show();
-					}else{
-						$("#trWechatPay").hide();
-					}*/
+					 $("#trCreditCard").show();
+					 }else{
+					 $("#trCreditCard").hide();
+					 }
+					 if(bankCardPayment == "BC"){
+					 $("#trBankCard").show();
+					 }else{
+					 $("#trBankCard").hide();
+					 }
+					 if(cashCardPayment == "CZK"){
+					 $("#trCashCard").show();
+					 var NEW_CZK_PAY = $("#NEW_CZK_PAY").val();
+					 if(NEW_CZK_PAY!="N"){
+					 $("#serverPay").show();
+					 }
+					 }else{
+					 $("#trCashCard").hide();
+					 $("#serverPay").hide();
+					 var NEW_CZK_PAY = $("#NEW_CZK_PAY").val();
+					 if(NEW_CZK_PAY!="N"){
+					 $("#choice1").show();
+					 $("#choice2").hide();
+					 $("#serverList").addClass("hide");
+					 $("#serviceTb").find("input").val("");
+					 }
+					 }
+					 if(aliPayment == "AL"){
+					 $("#trAliPay").show();
+					 }else{
+					 $("#trAliPay").hide();
+					 }
+					 if(wechatPayment == "WT"){
+					 $("#trWechatPay").show();
+					 }else{
+					 $("#trWechatPay").hide();
+					 }*/
 //					if(pointsPayment == "EX"){
 //						$("#trPoint").show();
 //					}else{
@@ -1663,8 +1673,8 @@ BINOLWPSAL03_GLOBAL.prototype = {
 				}else{
 					// 显示提示信息
 					BINOLWPSAL02.showMessageDialog({
-						message:"支付方式设置失败", 
-						type:"MESSAGE", 
+						message:"支付方式设置失败",
+						type:"MESSAGE",
 						focusEvent:function(){
 							$("#cash").focus();
 						}
@@ -1676,7 +1686,7 @@ BINOLWPSAL03_GLOBAL.prototype = {
 			}
 		});
 	},
-	
+
 	"setPaymentCancel":function(){
 		$("#collectPageDiv").show();
 		$("#setPaymentPageDiv").hide();
@@ -1688,7 +1698,7 @@ BINOLWPSAL03_GLOBAL.prototype = {
 			$("#cash").select();
 		}
 	},
-	
+
 	"webPaymentConfirm":function(){
 		// 储值卡号
 		var cardCode = $("#cardCode").val();
@@ -1712,14 +1722,14 @@ BINOLWPSAL03_GLOBAL.prototype = {
 				serviceJsonList=serviceList;
 			}
 		}
-		
+
 		$("#btnWebPaymentConfirm").attr("disabled",true);
 		var aliPay = $("#payTbody >tr input[name='PT']").val();
 		var wechatPay = $("#payTbody >tr input[name='WEPAY']").val();
 		var cashCard = $("#payTbody >tr input[name='CZK']").val();
 		/*var aliPay = $("#aliPay").val();
-		var wechatPay = $("#wechatPay").val();
-		var cashCard = $("#cashCard").val();*/
+		 var wechatPay = $("#wechatPay").val();
+		 var cashCard = $("#cashCard").val();*/
 		var saleType = $("#saleType").val();
 		var payAmount = "";
 		var payType = "";
@@ -1747,8 +1757,8 @@ BINOLWPSAL03_GLOBAL.prototype = {
 			authCode = cardCode;
 		}
 		var webPaymentUrl = $("#dgWebPaymentUrl").attr("href");
-		var params = "billCode=" + billCode + "&counterCode=" + counterCode + "&baCode=" + baCode + 
-				"&aliPay=" + aliPay + "&wechatPay=" + wechatPay + "&authCode=" + authCode + "&payType=" + payType;
+		var params = "billCode=" + billCode + "&counterCode=" + counterCode + "&baCode=" + baCode +
+			"&aliPay=" + aliPay + "&wechatPay=" + wechatPay + "&authCode=" + authCode + "&payType=" + payType;
 		if(payType=="CZK" && NEW_CZK_PAY=="Y"){
 			// 储值卡验证码
 			var verificationType = $("#verificationType").val();
@@ -1758,7 +1768,7 @@ BINOLWPSAL03_GLOBAL.prototype = {
 			}else {
 				verificationCode = $("#verificationCode").val();
 			}
-			params+="&cashCard=" + cashCard + "&verificationCode=" + verificationCode 
+			params+="&cashCard=" + cashCard + "&verificationCode=" + verificationCode
 				+ "&verificationType=" + verificationType + "&serviceJsonList=" + serviceJsonList ;
 		}
 		params += "&"+getSerializeToken();
@@ -1790,12 +1800,12 @@ BINOLWPSAL03_GLOBAL.prototype = {
 		if(memberLevel){
 			params_main += "&memberLevel="+memberLevel;
 		}
-		
+
 		var giveChange=$("#giveChange").val();
 		if(giveChange){
 			params_main += "&giveChange="+giveChange;
 		}
-		
+
 		var comments=$("#comments").val();
 		if(comments){
 			params_main += "&comments="+comments;
@@ -1808,8 +1818,8 @@ BINOLWPSAL03_GLOBAL.prototype = {
 				if(data != "SUCCESS"){
 					// 显示提示信息
 					BINOLWPSAL02.showMessageDialog({
-						message:"网络支付前挂单失败，请稍后再试", 
-						type:"MESSAGE", 
+						message:"网络支付前挂单失败，请稍后再试",
+						type:"MESSAGE",
 						focusEvent:function(){
 							// 最后一行第一个可见的文本框获得焦点
 							BINOLWPSAL02.firstInputSelect();
@@ -1827,8 +1837,8 @@ BINOLWPSAL03_GLOBAL.prototype = {
 							if(data == "SUCCESS"){
 								// 支付成功的情况
 								BINOLWPSAL02.showMessageDialog({
-									message:"支付已完成", 
-									type:"SUCCESS", 
+									message:"支付已完成",
+									type:"SUCCESS",
 									focusEvent:function(){
 										$("#verificationCode2").val("");
 										$("#verificationCode").val("");
@@ -1841,8 +1851,8 @@ BINOLWPSAL03_GLOBAL.prototype = {
 							}else if(data == "FA"){
 								// 单据号为空的情况
 								BINOLWPSAL02.showMessageDialog({
-									message:"连接支付宝接口失败", 
-									type:"MESSAGE", 
+									message:"连接支付宝接口失败",
+									type:"MESSAGE",
 									focusEvent:function(){
 										BINOLWPSAL03.webPaymentCancel();
 									}
@@ -1850,8 +1860,8 @@ BINOLWPSAL03_GLOBAL.prototype = {
 							}else if(data == "FC"){
 								// 单据号为空的情况
 								BINOLWPSAL02.showMessageDialog({
-									message:"连接微信支付接口失败", 
-									type:"MESSAGE", 
+									message:"连接微信支付接口失败",
+									type:"MESSAGE",
 									focusEvent:function(){
 										BINOLWPSAL03.webPaymentCancel();
 									}
@@ -1859,8 +1869,8 @@ BINOLWPSAL03_GLOBAL.prototype = {
 							}else if(data == "NR"){
 								// 单据号为空的情况
 								BINOLWPSAL02.showMessageDialog({
-									message:"连接超时，请通过查单确认支付结果", 
-									type:"MESSAGE", 
+									message:"连接超时，请通过查单确认支付结果",
+									type:"MESSAGE",
 									focusEvent:function(){
 										// 自动跳转至查单页面
 										var dialogSetting = {
@@ -1876,13 +1886,13 @@ BINOLWPSAL03_GLOBAL.prototype = {
 											}
 										};
 										openDialog(dialogSetting);
-										
+
 										var billTime = $("#businessDate").val();
 										var memberCode = $("#memberCode").val();
 										var memberName = $("#memberName").val();
 										var payResultUrl = $("#dgPayResultUrl").attr("href");
 										var params = "payType=" + payType + "&payBillCode=" + billCode + "&payBillTime=" + billTime + "&payMemberCode=" + memberCode +
-										 		"&payMemberName=" + memberName + "&payAmount=" + payAmount + "&payCounterCode=" + counterCode;
+											"&payMemberName=" + memberName + "&payAmount=" + payAmount + "&payCounterCode=" + counterCode;
 										cherryAjaxRequest({
 											url: payResultUrl,
 											param: params,
@@ -1895,8 +1905,8 @@ BINOLWPSAL03_GLOBAL.prototype = {
 							}else if(data == "PROCESSING"){
 								// 单据号为空的情况
 								BINOLWPSAL02.showMessageDialog({
-									message:"支付处理中，请通过查单确认支付结果", 
-									type:"MESSAGE", 
+									message:"支付处理中，请通过查单确认支付结果",
+									type:"MESSAGE",
 									focusEvent:function(){
 										// 自动跳转至查单页面
 										var dialogSetting = {
@@ -1918,14 +1928,14 @@ BINOLWPSAL03_GLOBAL.prototype = {
 													closeCherryDialog('dialogInit', $('#returnBill_dialog').html());
 												}else if(payState=="WAIT"){
 													BINOLWPSAL02.showMessageDialog({
-														message:"请耐心等待支付结果", 
+														message:"请耐心等待支付结果",
 														type:"MESSAGE"
 													});
 												}
 												/*// 移除弹出窗口
-												removeDialog("#payResultDialogInit");
-												// 退回收款页面
-												BINOLWPSAL03.webPaymentCancel();*/
+												 removeDialog("#payResultDialogInit");
+												 // 退回收款页面
+												 BINOLWPSAL03.webPaymentCancel();*/
 											}
 										};
 										openDialog(dialogSetting);
@@ -1935,7 +1945,7 @@ BINOLWPSAL03_GLOBAL.prototype = {
 										var memberName = $("#memberName").val();
 										var payResultUrl = $("#dgPayResultUrl").attr("href");
 										var params = "payType=" + payType + "&payBillCode=" + billCode + "&payBillTime=" + billTime + "&payMemberCode=" + memberCode +
-										 		"&payMemberName=" + memberName + "&payAmount=" + payAmount + "&payCounterCode=" + counterCode;
+											"&payMemberName=" + memberName + "&payAmount=" + payAmount + "&payCounterCode=" + counterCode;
 										cherryAjaxRequest({
 											url: payResultUrl,
 											param: params,
@@ -1948,8 +1958,8 @@ BINOLWPSAL03_GLOBAL.prototype = {
 							}else if(data == "FAIL"){
 								// 单据号为空的情况
 								BINOLWPSAL02.showMessageDialog({
-									message:"支付响应失败", 
-									type:"MESSAGE", 
+									message:"支付响应失败",
+									type:"MESSAGE",
 									focusEvent:function(){
 										BINOLWPSAL03.webPaymentCancel();
 									}
@@ -1957,8 +1967,8 @@ BINOLWPSAL03_GLOBAL.prototype = {
 							}else if(data == "BN"){
 								// 单据号为空的情况
 								BINOLWPSAL02.showMessageDialog({
-									message:"单据号为空", 
-									type:"MESSAGE", 
+									message:"单据号为空",
+									type:"MESSAGE",
 									focusEvent:function(){
 										BINOLWPSAL03.webPaymentCancel();
 									}
@@ -1966,8 +1976,8 @@ BINOLWPSAL03_GLOBAL.prototype = {
 							}else if(data == "AN"){
 								// 扫描码为空的情况
 								BINOLWPSAL02.showMessageDialog({
-									message:"请扫描或输入支付码", 
-									type:"MESSAGE", 
+									message:"请扫描或输入支付码",
+									type:"MESSAGE",
 									focusEvent:function(){
 										$("#webPayCode").focus();
 									}
@@ -1981,8 +1991,8 @@ BINOLWPSAL03_GLOBAL.prototype = {
 									MSG = "请输入需要通过支付宝或微信支付的金额";
 								}
 								BINOLWPSAL02.showMessageDialog({
-									message:MSG, 
-									type:"MESSAGE", 
+									message:MSG,
+									type:"MESSAGE",
 									focusEvent:function(){
 										BINOLWPSAL03.webPaymentCancel();
 									}
@@ -1991,7 +2001,7 @@ BINOLWPSAL03_GLOBAL.prototype = {
 								// 验证码为空的情况
 								BINOLWPSAL02.showMessageDialog({
 									message : "请输入验证码或支付码",
-									type : "MESSAGE", 
+									type : "MESSAGE",
 									focusEvent:function(){
 										$("#verificationCode").focus();
 									}
@@ -2000,7 +2010,7 @@ BINOLWPSAL03_GLOBAL.prototype = {
 								// 验证码为空的情况
 								BINOLWPSAL02.showMessageDialog({
 									message : "储值卡不是激活状态！ ",
-									type : "MESSAGE", 
+									type : "MESSAGE",
 									focusEvent:function(){
 										$("#verificationCode").focus();
 									}
@@ -2009,7 +2019,7 @@ BINOLWPSAL03_GLOBAL.prototype = {
 								// 验证码为空的情况
 								BINOLWPSAL02.showMessageDialog({
 									message : "没有查询到有效的储值卡信息！ ",
-									type : "MESSAGE", 
+									type : "MESSAGE",
 									focusEvent:function(){
 										$("#verificationCode").focus();
 									}
@@ -2018,7 +2028,7 @@ BINOLWPSAL03_GLOBAL.prototype = {
 								// 验证码为空的情况
 								BINOLWPSAL02.showMessageDialog({
 									message : "余额不足！ ",
-									type : "MESSAGE", 
+									type : "MESSAGE",
 									focusEvent:function(){
 										$("#verificationCode").focus();
 									}
@@ -2027,7 +2037,7 @@ BINOLWPSAL03_GLOBAL.prototype = {
 								// 验证码为空的情况
 								BINOLWPSAL02.showMessageDialog({
 									message : "身份校验失败！",
-									type : "MESSAGE", 
+									type : "MESSAGE",
 									focusEvent:function(){
 										$("#verificationCode").focus();
 									}
@@ -2035,8 +2045,8 @@ BINOLWPSAL03_GLOBAL.prototype = {
 							}else if(data == "NC"){
 								// 没有获取到支付宝配置的情况
 								BINOLWPSAL02.showMessageDialog({
-									message:"没有获取到支付宝配置信息", 
-									type:"MESSAGE", 
+									message:"没有获取到支付宝配置信息",
+									type:"MESSAGE",
 									focusEvent:function(){
 										BINOLWPSAL03.webPaymentCancel();
 									}
@@ -2044,8 +2054,8 @@ BINOLWPSAL03_GLOBAL.prototype = {
 							}else if(data == "NAP"){
 								// 没有给柜台配置收款账户信息的情况
 								BINOLWPSAL02.showMessageDialog({
-									message:"柜台没有配置支付宝收款账户信息", 
-									type:"MESSAGE", 
+									message:"柜台没有配置支付宝收款账户信息",
+									type:"MESSAGE",
 									focusEvent:function(){
 										BINOLWPSAL03.webPaymentCancel();
 									}
@@ -2053,8 +2063,8 @@ BINOLWPSAL03_GLOBAL.prototype = {
 							}else if(data == "NWP"){
 								// 没有给柜台配置收款账户信息的情况
 								BINOLWPSAL02.showMessageDialog({
-									message:"柜台没有配置微信支付收款账户信息", 
-									type:"MESSAGE", 
+									message:"柜台没有配置微信支付收款账户信息",
+									type:"MESSAGE",
 									focusEvent:function(){
 										BINOLWPSAL03.webPaymentCancel();
 									}
@@ -2062,8 +2072,8 @@ BINOLWPSAL03_GLOBAL.prototype = {
 							}else if(data == "ERROR"){
 								// 出现未知异常被错误捕获的情况
 								BINOLWPSAL02.showMessageDialog({
-									message:"支付出现异常", 
-									type:"MESSAGE", 
+									message:"支付出现异常",
+									type:"MESSAGE",
 									focusEvent:function(){
 										BINOLWPSAL03.webPaymentCancel();
 									}
@@ -2071,8 +2081,8 @@ BINOLWPSAL03_GLOBAL.prototype = {
 							}else{
 								// 未定义的返回结果，一般为支付宝和微信支付第三方接口返回的异常信息
 								BINOLWPSAL02.showMessageDialog({
-									message:"支付失败", 
-									type:"MESSAGE", 
+									message:"支付失败",
+									type:"MESSAGE",
 									focusEvent:function(){
 										BINOLWPSAL03.webPaymentCancel();
 									}
@@ -2084,38 +2094,38 @@ BINOLWPSAL03_GLOBAL.prototype = {
 								if(payType == "AL"|| payType == "WT" || payType == "CZK"){
 									// 网络连接不稳定的情况
 									BINOLWPSAL02.showMessageDialog({
-										message:"网络连接不稳定，请通过查单确认支付结果", 
-										type:"MESSAGE", 
+										message:"网络连接不稳定，请通过查单确认支付结果",
+										type:"MESSAGE",
 										focusEvent:function(){
 											// 自动跳转至查单页面
 											var dialogSetting = {
-													dialogInit: "#payResultDialogInit",
-													width: 1000,
-													height: 400,
-													title: $("#getPayResultDialogTitle").text(),
-													closeEvent:function(){
-														var payState = $("#payStateDiv").text();
-														if(payState=="ERROR"){
-															// 关闭弹出窗口
-															closeCherryDialog('payResultDialogInit',WPCOM_dialogBody);
-															// 退回收款页面
-															BINOLWPSAL03.webPaymentCancel();
-														}else if(payState=="SUCCESS"){
-															BINOLWPSAL03.billSubmit();
-															// 关闭弹出窗口
-															closeCherryDialog('payResultDialogInit',WPCOM_dialogBody);
-															closeCherryDialog('dialogInit', $('#returnBill_dialog').html());
-														}else if(payState=="WAIT"){
-															BINOLWPSAL02.showMessageDialog({
-																message:"请耐心等待支付结果", 
-																type:"MESSAGE"
-															});
-														}
-														/*// 移除弹出窗口
-													removeDialog("#payResultDialogInit");
-													// 退回收款页面
-													BINOLWPSAL03.webPaymentCancel();*/
+												dialogInit: "#payResultDialogInit",
+												width: 1000,
+												height: 400,
+												title: $("#getPayResultDialogTitle").text(),
+												closeEvent:function(){
+													var payState = $("#payStateDiv").text();
+													if(payState=="ERROR"){
+														// 关闭弹出窗口
+														closeCherryDialog('payResultDialogInit',WPCOM_dialogBody);
+														// 退回收款页面
+														BINOLWPSAL03.webPaymentCancel();
+													}else if(payState=="SUCCESS"){
+														BINOLWPSAL03.billSubmit();
+														// 关闭弹出窗口
+														closeCherryDialog('payResultDialogInit',WPCOM_dialogBody);
+														closeCherryDialog('dialogInit', $('#returnBill_dialog').html());
+													}else if(payState=="WAIT"){
+														BINOLWPSAL02.showMessageDialog({
+															message:"请耐心等待支付结果",
+															type:"MESSAGE"
+														});
 													}
+													/*// 移除弹出窗口
+													 removeDialog("#payResultDialogInit");
+													 // 退回收款页面
+													 BINOLWPSAL03.webPaymentCancel();*/
+												}
 											};
 											openDialog(dialogSetting);
 											$("#payResultDialogInit").parents("div").find(".ui-dialog-titlebar-close.ui-corner-all").hide();
@@ -2124,7 +2134,7 @@ BINOLWPSAL03_GLOBAL.prototype = {
 											var memberName = $("#memberName").val();
 											var payResultUrl = $("#dgPayResultUrl").attr("href");
 											var params = "payType=" + payType + "&payBillCode=" + billCode + "&payBillTime=" + billTime + "&payMemberCode=" + memberCode +
-											"&payMemberName=" + memberName + "&payAmount=" + payAmount + "&payCounterCode=" + counterCode;
+												"&payMemberName=" + memberName + "&payAmount=" + payAmount + "&payCounterCode=" + counterCode;
 											cherryAjaxRequest({
 												url: payResultUrl,
 												param: params,
@@ -2135,15 +2145,15 @@ BINOLWPSAL03_GLOBAL.prototype = {
 											});
 										}
 									});
-									
+
 								}
-					　　　　}
+							}
 						}
 					});
 				}
 			}
 		});
-		
+
 	},
 	// 验证方式下拉框
 	"verificationType" : function(){
@@ -2198,27 +2208,27 @@ BINOLWPSAL03_GLOBAL.prototype = {
 				if(data!="0"){
 					if(data=="SVE0010"){
 						BINOLWPSAL02.showMessageDialog({
-							message:"没有查询到有效的储值卡信息！", 
+							message:"没有查询到有效的储值卡信息！",
 							type:"MESSAGE"
 						});
 					}else if("SVE0005"==data){
 						BINOLWPSAL02.showMessageDialog({
-							message:"验证码用途不正确！", 
+							message:"验证码用途不正确！",
 							type:"MESSAGE"
 						});
 					}else if("SVE0006"==data){
 						BINOLWPSAL02.showMessageDialog({
-							message:"验证码短信发送失败", 
+							message:"验证码短信发送失败",
 							type:"MESSAGE"
 						});
 					}else if("SVE0007"==data){
 						BINOLWPSAL02.showMessageDialog({
-							message:"生成验证码失败", 
+							message:"生成验证码失败",
 							type:"MESSAGE"
 						});
 					}else{
 						BINOLWPSAL02.showMessageDialog({
-							message:"未定义错误！ERRORCODE="+data, 
+							message:"未定义错误！ERRORCODE="+data,
 							type:"MESSAGE"
 						});
 					}
@@ -2237,7 +2247,7 @@ BINOLWPSAL03_GLOBAL.prototype = {
 			}
 		}
 	},
-	
+
 	"webPaymentCancel":function(){
 		$("#collectPageDiv").show();
 		$("#setPaymentPageDiv").hide();
@@ -2252,21 +2262,21 @@ BINOLWPSAL03_GLOBAL.prototype = {
 		$("#btnConfirm").removeAttr("disabled");
 	},
 	"toDecimal2":function(x){
-		var f = parseFloat(x);  
-        if (isNaN(f)) {  
-            return false;  
-        }  
-        var f = Math.round(x*100)/100;  
-        var s = f.toString();  
-        var rs = s.indexOf('.');  
-        if (rs < 0) {  
-            rs = s.length;  
-            s += '.';  
-        }  
-        while (s.length <= rs + 1) {  
-            s += '00';  
-        }  
-        return s;
+		var f = parseFloat(x);
+		if (isNaN(f)) {
+			return false;
+		}
+		var f = Math.round(x*100)/100;
+		var s = f.toString();
+		var rs = s.indexOf('.');
+		if (rs < 0) {
+			rs = s.length;
+			s += '.';
+		}
+		while (s.length <= rs + 1) {
+			s += '00';
+		}
+		return s;
 	}
 };
 
@@ -2275,23 +2285,23 @@ var BINOLWPSAL03 = new BINOLWPSAL03_GLOBAL();
 $(document).ready(function(){
 	// 收款页面可见文本框绑定回车事件
 	$("#collectPageDiv").find("input:text:visible")
-	.bind("keydown", function (e) {
-		var key = e.which;
-		if (key == 13) {
-			e.preventDefault();
-			BINOLWPSAL03.confirm();
-		}
-	});
+		.bind("keydown", function (e) {
+			var key = e.which;
+			if (key == 13) {
+				e.preventDefault();
+				BINOLWPSAL03.confirm();
+			}
+		});
 	// 支付扫描输入框绑定回车事件
 	$("#webPaymentPageDiv").find("input:text")
-	.bind("keydown", function (e) {
-		var key = e.which;
-		if (key == 13) {
-			e.preventDefault();
-			BINOLWPSAL03.webPaymentConfirm();
-		}
-	});
-	
+		.bind("keydown", function (e) {
+			var key = e.which;
+			if (key == 13) {
+				e.preventDefault();
+				BINOLWPSAL03.webPaymentConfirm();
+			}
+		});
+
 	var saleType = $("#saleType").val();
 	if(saleType == "SR"){
 		$("#ui-dialog-title-dialogInit").text($("#collectTitleSR").val());
@@ -2314,7 +2324,7 @@ $(document).ready(function(){
 		// 非关联退货禁止使用支付宝和微信支付退款
 		if(saleType == "SR"){
 			/*$("#aliPay").attr("disabled",true);
-			$("#wechatPay").attr("disabled",true);*/
+			 $("#wechatPay").attr("disabled",true);*/
 			$("#PT").find("input").attr("disabled",true);
 			$("#WEPAY").find("input").attr("disabled",true);
 		}
@@ -2331,14 +2341,14 @@ $(document).ready(function(){
 					$(this).find("input").attr("readonly","readonly");
 				}
 			});
-			
+
 			/*$("#cash").attr("readonly","readonly");
-			$("#creditCard").attr("readonly","readonly");
-			$("#bankCard").attr("readonly","readonly");
-			$("#cashCard").attr("readonly","readonly");
-			$("#aliPay").attr("readonly","readonly");
-			$("#wechatPay").attr("readonly","readonly");
-			$("#pointValue").attr("readonly","readonly");*/
+			 $("#creditCard").attr("readonly","readonly");
+			 $("#bankCard").attr("readonly","readonly");
+			 $("#cashCard").attr("readonly","readonly");
+			 $("#aliPay").attr("readonly","readonly");
+			 $("#wechatPay").attr("readonly","readonly");
+			 $("#pointValue").attr("readonly","readonly");*/
 		}else{
 			// 退货情况下禁用空值输入框，防止修改
 			$.each($("#payTbody >tr:visible"),function(){
@@ -2351,33 +2361,33 @@ $(document).ready(function(){
 				}
 			});
 			/*var cash = $("#cash").val();
-			if(cash == null || cash == undefined || cash == ""){
-				$("#cash").attr("readonly","readonly");
-			}
-			var creditCard = $("#creditCard").val();
-			if(creditCard == null || creditCard == undefined || creditCard == ""){
-				$("#creditCard").attr("readonly","readonly");
-			}
-			var bankCard = $("#bankCard").val();
-			if(bankCard == null || bankCard == undefined || bankCard == ""){
-				$("#bankCard").attr("readonly","readonly");
-			}
-			var cashCard = $("#cashCard").val();
-			if(cashCard == null || cashCard == undefined || cashCard == ""){
-				$("#cashCard").attr("readonly","readonly");
-			}
-			var aliPay = $("#aliPay").val();
-			if(aliPay == null || aliPay == undefined || aliPay == ""){
-				$("#aliPay").attr("readonly","readonly");
-			}
-			var wechatPay = $("#wechatPay").val();
-			if(wechatPay == null || wechatPay == undefined || wechatPay == ""){
-				$("#wechatPay").attr("readonly","readonly");
-			}
-			var pointValue = $("#pointValue").val();
-			if(pointValue == null || pointValue == undefined || pointValue == ""){
-				$("#pointValue").attr("readonly","readonly");
-			}*/
+			 if(cash == null || cash == undefined || cash == ""){
+			 $("#cash").attr("readonly","readonly");
+			 }
+			 var creditCard = $("#creditCard").val();
+			 if(creditCard == null || creditCard == undefined || creditCard == ""){
+			 $("#creditCard").attr("readonly","readonly");
+			 }
+			 var bankCard = $("#bankCard").val();
+			 if(bankCard == null || bankCard == undefined || bankCard == ""){
+			 $("#bankCard").attr("readonly","readonly");
+			 }
+			 var cashCard = $("#cashCard").val();
+			 if(cashCard == null || cashCard == undefined || cashCard == ""){
+			 $("#cashCard").attr("readonly","readonly");
+			 }
+			 var aliPay = $("#aliPay").val();
+			 if(aliPay == null || aliPay == undefined || aliPay == ""){
+			 $("#aliPay").attr("readonly","readonly");
+			 }
+			 var wechatPay = $("#wechatPay").val();
+			 if(wechatPay == null || wechatPay == undefined || wechatPay == ""){
+			 $("#wechatPay").attr("readonly","readonly");
+			 }
+			 var pointValue = $("#pointValue").val();
+			 if(pointValue == null || pointValue == undefined || pointValue == ""){
+			 $("#pointValue").attr("readonly","readonly");
+			 }*/
 		}
 		// 给弹出框窗体全局变量赋值
 		WPCOM_dialogBody = $('#returnBill_dialog').html();
