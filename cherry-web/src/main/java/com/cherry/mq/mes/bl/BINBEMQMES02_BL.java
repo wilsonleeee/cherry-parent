@@ -1962,16 +1962,14 @@ public class BINBEMQMES02_BL implements AnalyzeMessage_IF{
 	 * @param map
 	 */
 	public void analyzeProductOrderData(Map<String, Object> map)throws Exception {
-		List detailDataList = (List) map.get("detailDataDTOList");	
+		List<Map<String, Object>> detailDataList = (List<Map<String, Object>>) map.get("detailDataDTOList");
 		int suggestedTotalQuantity = 0;
 		// 循环明细数据List,给明细suggestedQuantity赋值，并计算其总和
 		for (int i = 0; i < detailDataList.size(); i++) {
-			HashMap detailDataDTOMap = (HashMap) detailDataList.get(i);
+			Map<String, Object> detailDataDTOMap = detailDataList.get(i);
 			// 给明细suggestedQuantity赋值   //为了保持与其他格式一致，所以把suggestedQuantity的值保存在discount中
-			if(detailDataDTOMap.get("discount")!=null&&!detailDataDTOMap.get("discount").equals("")){
-				detailDataDTOMap.put("suggestedQuantity", detailDataDTOMap.get("discount"));
-				suggestedTotalQuantity  += Integer.parseInt(detailDataDTOMap.get("suggestedQuantity").toString());
-		    }
+            // 最新版本已经对订货类型的数据进行了特殊处理,不再将suggestedQuantity的值保存在discount中
+            suggestedTotalQuantity  += ConvertUtil.getInt(detailDataDTOMap.get("suggestedQuantity"));
 		}
 		map.put("suggestedTotalQuantity", suggestedTotalQuantity);
 		map.put("cherry_tradeType", MessageConstants.BUSINESS_TYPE_OD);
@@ -2005,7 +2003,7 @@ public class BINBEMQMES02_BL implements AnalyzeMessage_IF{
 		newMap.put("OrderType", map.get("subType"));
 		newMap.put("BIN_OrganizationID",map.get("organizationID"));
 		newMap.put("BIN_InventoryInfoID",map.get("inventoryInfoID"));//订货仓库
-		newMap.put("BIN_LogicInventoryInfoID",((Map)detailDataList.get(0)).get("logicInventoryInfoID"));//	订货逻辑仓库
+		newMap.put("BIN_LogicInventoryInfoID",detailDataList.get(0).get("logicInventoryInfoID"));//	订货逻辑仓库
 	    newMap.put("BIN_OrganizationIDAccept",deportMap1.get("BIN_OrganizationID"));
 	    newMap.put("BIN_InventoryInfoIDAccept",deportMap1.get("BIN_DepotInfoID"));//接受订货的仓库ID
 		newMap.put("BIN_EmployeeID",map.get("employeeID"));
@@ -2039,20 +2037,20 @@ public class BINBEMQMES02_BL implements AnalyzeMessage_IF{
 		//设定接收的逻辑仓库
 //		List<Map<String,Object>> list2 = binOLCM18_BL.getLogicDepotByBusinessType(newMapLog);
 		List<Map<String,Object>> list2 = binOLCM18_BL.getLogicDepotByBusiness(newMapLog);
-		Map deportMap2 = null;
-		int BIN_LogicInventoryInfoID=0;
-		if(list2!=null&&list2.size()>0) {
-			deportMap2 = (Map) list2.get(0);
-		}
-		
-		if(deportMap2==null||deportMap2.get("BIN_LogicInventoryInfoID")==null){
+        Map<String,Object> deportMap2 = null;
+        int BIN_LogicInventoryInfoID = 0;
+        if (list2 != null && list2.size() > 0) {
+            deportMap2 = list2.get(0);
+        }
+
+        if (deportMap2 == null || deportMap2.get("BIN_LogicInventoryInfoID") == null) {
 //			MessageUtil.addMessageWarning(map,"订货业务，调用BINOLCM18_BL共通代码getLogicDepotByBusinessType未查到接收的逻辑仓库。"+
 //				    "涉及主要参数："+"品牌ID为\""+newMapLog.get("BrandInfoID")+"\",业务类型为\""+CherryConstants.OPERATE_OD+ "\",终端、后台区分为\""+newMapLog.get("Type")+"\"");
-		
-		}else{	
-			BIN_LogicInventoryInfoID = Integer.parseInt(String.valueOf(deportMap2.get("BIN_LogicInventoryInfoID")));
-		}
-		//接受订货的逻辑仓库ID
+
+        } else {
+            BIN_LogicInventoryInfoID = Integer.parseInt(String.valueOf(deportMap2.get("BIN_LogicInventoryInfoID")));
+        }
+        //接受订货的逻辑仓库ID
 	    newMap.put("BIN_LogicInventoryInfoIDAccept", BIN_LogicInventoryInfoID);
 		List<Map<String,Object>> list = new ArrayList<Map<String,Object>> ();
 		//newMap.put("detailList", list);
@@ -2965,8 +2963,8 @@ public class BINBEMQMES02_BL implements AnalyzeMessage_IF{
      * 拼接产品退库申请数据
      * @param map
      * @param proReturnRequestList
-     * @param osID
-     * @param actionID
+     * @param //osID
+     * @param //actionID
      * @return
      * @throws CherryMQException
      * @throws Exception
@@ -4038,8 +4036,8 @@ public class BINBEMQMES02_BL implements AnalyzeMessage_IF{
 	 * 插入产品入出库表,入出库明细表
 	 * @param detailDataList
 	 * @param map
-	 * @param organizationInfoID
-	 * @param brandInfoID
+	 * @param //organizationInfoID
+	 * @param //brandInfoID
 	 */
 	private void addProductStockInfo (List detailDataList,Map map){
 		
@@ -4138,8 +4136,8 @@ public class BINBEMQMES02_BL implements AnalyzeMessage_IF{
      * 插入产品入出库表,入出库明细表(新消息体Type=0007)
      * @param detailDataList
      * @param map
-     * @param organizationInfoID
-     * @param brandInfoID
+     * @param //organizationInfoID
+     * @param //brandInfoID
      * @throws Exception 
      */
     private void addProductStockInfoForSale(List detailDataList,Map map) throws Exception{
@@ -4346,7 +4344,7 @@ public class BINBEMQMES02_BL implements AnalyzeMessage_IF{
     /**
      * 将产品入出库批次信息写入入出库批次主从表，并处理产品批次库存表（入库、出库）。
      * @param detailDataList
-     * @param mainData
+     * @param //mainData
      */
     private void handleProductInOutBatchForSale(List<Map<String,Object>> detailDataList, Map map){
     	
@@ -5517,7 +5515,7 @@ public class BINBEMQMES02_BL implements AnalyzeMessage_IF{
 	
     /**
      * 设置促销/会员活动相关的值
-     * @param dataMap
+     * @param //dataMap
      * @throws CherryMQException
      */
     private void setCampaignValue(Map<String,Object> campaignDataMap) throws CherryMQException{
