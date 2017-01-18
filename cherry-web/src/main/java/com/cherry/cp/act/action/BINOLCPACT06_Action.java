@@ -175,7 +175,17 @@ public class BINOLCPACT06_Action extends BaseAction implements ModelDriven<BINOL
 		init();
 		return "BINOLCPACT06_3";
 	}
-	
+
+	/**
+	 * 活动单据一览初始化
+	 * @return 成功画面
+	 * @throws Exception
+	 */
+	public String initOrderDispatch()throws Exception{
+		init();
+		return "BINOLCPACT06_6";
+	}
+
 	/**
 	 * 查询给定状态的单据
 	 * @return
@@ -183,6 +193,15 @@ public class BINOLCPACT06_Action extends BaseAction implements ModelDriven<BINOL
 	 */
 	public String searchRun() throws Exception{
 		return search();
+	}
+
+	/**
+	 * 查询预约单据
+	 * @return
+	 * @throws Exception
+	 */
+	public String searchDispatchList() throws Exception{
+		return dispatchSearch();
 	}
 	
 	/**
@@ -229,6 +248,25 @@ public class BINOLCPACT06_Action extends BaseAction implements ModelDriven<BINOL
 		}
 		return CherryConstants.GLOBAL_ACCTION_RESULT;
 	}
+
+	/**
+	 * 操作单据状态-红地球
+	 * @throws Exception
+	 */
+	public void optionRun2() throws Exception{
+		int errorCode = 0;
+		Map<String,Object> comMap = getComMap();
+		Map<String,Object> map = new HashMap<String,Object>();
+		//单据号
+		map.put("billNo",form.getTradeNoIF());
+		map.put("expressCode",form.getExpressCode());
+		map.put("expressNo",form.getExpressNo());
+		map.put("state",form.getState());
+		errorCode = bl.tran_updOrder2(map,comMap);
+		//ajax返回查询条件
+		ConvertUtil.setResponseByAjax(response, errorCode);
+	}
+
 	/**
 	 * 取得条件参数
 	 * @throws Exception
@@ -302,6 +340,50 @@ public class BINOLCPACT06_Action extends BaseAction implements ModelDriven<BINOL
 		}
 		return SUCCESS;
 	}
+
+
+	/**
+	 * 预约单据结果一览查询
+	 * @return
+	 * @throws Exception
+	 */
+	public String dispatchSearch() throws Exception{
+		// 验证提交的参数
+		if (!validateForm()) {
+			return CherryConstants.GLOBAL_ACCTION_RESULT;
+		}
+		Map<String,Object> map = getComMap();
+		//活动编码
+		map.put("campaignCode", form.getCampaignCode());
+		//单据号
+		map.put("tradeNoIF",form.getTradeNoIF());
+		//会员卡号
+		map.put("memCode",form.getMemCode());
+		//领用柜台
+//		map.put("counterGot",form.getCounterGot());
+		//预约柜台
+		map.put("counterOrder", form.getCounterOrder());
+		//会员手机
+		map.put("mobile",form.getMobile());
+		//活动预约状态
+		map.put("state",form.getState());
+		//测试区分
+		map.put("testType",form.getTestType());
+		//下发区分
+		map.put("sendFlag",form.getSendFlag());
+		//会员所属柜台
+//		map.put("counterBelong",form.getCounterBelong());
+		ConvertUtil.setForm(form, map);
+		CherryUtil.trimMap(map);
+		int count = bl.getOrderCount(map);
+		if(count>0){
+			List<Map<String,Object>> campDispatchOrderList = bl.getCampOrderList(map);
+			form.setCampDispatchOrderList(campDispatchOrderList);
+			form.setITotalDisplayRecords(count);
+			form.setITotalRecords(count);
+		}
+		return SUCCESS;
+	}
 	/***
 	 * 获得活动结果详细信息
 	 * @return
@@ -316,7 +398,22 @@ public class BINOLCPACT06_Action extends BaseAction implements ModelDriven<BINOL
 		prtList = bl.getPrtInfoList(prtMap);
 		return "BINOLCPACT06_2";
 	}
-	
+
+	/***
+	 * 获得活动结果详细信息
+	 * @return
+	 * @throws Exception
+	 */
+	public String getDispatchDetail()throws Exception{
+		Map<String,Object> prtMap = new HashMap<String, Object>();
+		prtMap.put("campOrderId", form.getCampOrderId());
+		//活动明细详细信息
+		campDetailMap = bl.getCampDetailMap(prtMap);
+		//活动礼品详细信息
+		prtList = bl.getPrtInfoList(prtMap);
+		return "BINOLCPACT06_8";
+	}
+
 	/***
 	 * 批量更新活动单据初始化
 	 * @return
@@ -618,21 +715,32 @@ public class BINOLCPACT06_Action extends BaseAction implements ModelDriven<BINOL
 	/**
 	 * 验证提交的参数
 	 * 
-	 * @param 无
 	 * @return boolean
 	 * 			验证结果
 	 * 
 	 */
 	private boolean validateForm() {
 		boolean isCorrect = true;
+		boolean isCorrect_send = true;
 		// 开始日期
 		String startDate = form.getStartDate();
 		// 结束日期
 		String endDate = form.getEndDate();
+		//发货开始日期
+		String startSendDate = form.getSendStartDate();
+		//发货截止日期
+		String endSendDate = form.getEndDate();
 		//开始日期验证
 		if (startDate != null && !"".equals(startDate)) {
 			// 日期格式验证
 			if(!CherryChecker.checkDate(startDate)) {
+				this.addActionError(getText("ECM00008", new String[]{getText("PCM00001")}));
+				isCorrect = false;
+			}
+		}
+		if (startSendDate != null && !"".equals(startSendDate)) {
+			// 日期格式验证
+			if(!CherryChecker.checkDate(startSendDate)) {
 				this.addActionError(getText("ECM00008", new String[]{getText("PCM00001")}));
 				isCorrect = false;
 			}
@@ -645,7 +753,14 @@ public class BINOLCPACT06_Action extends BaseAction implements ModelDriven<BINOL
 				isCorrect = false;
 			}
 		}
-		if (isCorrect && startDate != null && !"".equals(startDate)&& 
+		if (endSendDate != null && !"".equals(endSendDate)) {
+			// 日期格式验证
+			if(!CherryChecker.checkDate(endSendDate)) {
+				this.addActionError(getText("ECM00008", new String[]{getText("PCM00002")}));
+				isCorrect = false;
+			}
+		}
+		if (isCorrect && startDate != null && !"".equals(startDate)&&
 				endDate != null && !"".equals(endDate)) {
 			// 开始日期在结束日期之后
 			if(CherryChecker.compareDate(startDate, endDate) > 0) {
@@ -653,7 +768,15 @@ public class BINOLCPACT06_Action extends BaseAction implements ModelDriven<BINOL
 				isCorrect = false;
 			}
 		}
-	    return isCorrect;
+		if (isCorrect_send && startSendDate != null && !"".equals(startSendDate)&&
+				endSendDate != null && !"".equals(endSendDate)) {
+			// 开始日期在结束日期之后
+			if(CherryChecker.compareDate(startSendDate, endSendDate) > 0) {
+				this.addActionError(getText("ECM00019"));
+				isCorrect_send = false;
+			}
+		}
+	    return isCorrect&&isCorrect_send;
 	}
 	
 	/**

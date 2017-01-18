@@ -447,7 +447,7 @@ public class BINOLCPACT06_BL {
 		}
 		paramMap.put("sucessCount", sucessCount);
 		paramMap.put("failureCount", failureCount);
-		
+
 		// 发送沟通MQ
 		int r = com05IF.sendGTMQ(comMap, batchNo, billState);
 		if( r > result){
@@ -460,6 +460,36 @@ public class BINOLCPACT06_BL {
 			} catch (Exception e) {
 				logger.error(e.getMessage(),e);
 			}
+		}
+		return result;
+	}
+	/**
+	 * 单据批量操作（更新）
+	 * @param paramMap
+	 * @param comMap
+	 * @return
+	 */
+	public int tran_updOrder2(Map<String, Object> paramMap, Map<String, Object> comMap){
+		int result = CherryConstants.SUCCESS;
+		String orgId = ConvertUtil.getString(comMap.get(CherryConstants.ORGANIZATIONINFOID));
+		String brandId = ConvertUtil.getString(comMap.get(CherryConstants.BRANDINFOID));
+		String billNo = ConvertUtil.getString(paramMap.get(CampConstants.BILL_NO));
+		String batchNo = cm03bl.getTicketNumber(orgId, brandId, "", "OP");
+		comMap.put(CampConstants.BATCHNO, batchNo);
+		paramMap.putAll(comMap);
+		try {
+			ser.updCampOrder(paramMap);
+			ser.updCampOrderHis(paramMap);
+			// 发送活动单据MQ-->POS
+			com05IF.sendPOSMQ(comMap, billNo);
+			// 发送沟通MQ
+			int r = com05IF.sendGTMQ(comMap, batchNo, "AR");
+			if( r > result){
+				result = r;
+			}
+		} catch (Exception e) {
+			result = 9999;
+			logger.error(e.getMessage(),e);
 		}
 		return result;
 	}

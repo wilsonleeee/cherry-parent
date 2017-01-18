@@ -12,15 +12,6 @@
  */
 package com.cherry.webservice.member.bl;
 
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-
-import javax.annotation.Resource;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import com.cherry.cm.cmbussiness.bl.BINOLCM14_BL;
 import com.cherry.cm.core.CherryChecker;
 import com.cherry.cm.util.CherryUtil;
@@ -30,6 +21,13 @@ import com.cherry.dr.cmbussiness.interfaces.BINBEDRCOM01_IF;
 import com.cherry.dr.cmbussiness.interfaces.CampRuleExec_IF;
 import com.cherry.webservice.common.IWebservice;
 import com.cherry.webservice.member.service.MemberNextAmountService;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import javax.annotation.Resource;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 /**
  * 
@@ -121,7 +119,11 @@ public class MemberNextAmountLogic implements IWebservice{
 			int isLowestLevel = lowestLevel(curLevel, levelList);
 			if(isLowestLevel != 0) {
 				Map<String,Object> resultContent = new HashMap<String, Object>();
-				double balance = 200.00;
+//				double balance = 200.00;
+				String balance = binOLCM14_BL.getConfigValue("1400", orgId, brandId);
+				if (CherryChecker.isNullOrEmpty(balance)){
+					balance = "200";
+				}
 				resultContent.put("Balance", balance);
 				resultContent.put("CurLevelCode", curLevelCode);
 				resultContent.put("CurLevelName", curLevelName);

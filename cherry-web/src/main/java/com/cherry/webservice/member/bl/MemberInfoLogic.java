@@ -6,9 +6,7 @@ import com.cherry.cm.activemq.interfaces.BINOLMQCOM01_IF;
 import com.cherry.cm.cmbussiness.bl.BINOLCM03_BL;
 import com.cherry.cm.cmbussiness.bl.BINOLCM08_BL;
 import com.cherry.cm.cmbussiness.bl.BINOLCM14_BL;
-import com.cherry.cm.core.CherryChecker;
-import com.cherry.cm.core.CherryConstants;
-import com.cherry.cm.core.CherrySecret;
+import com.cherry.cm.core.*;
 import com.cherry.cm.util.CherryUtil;
 import com.cherry.cm.util.ConvertUtil;
 import com.cherry.cm.util.DateUtil;
@@ -135,6 +133,12 @@ public class MemberInfoLogic implements MemberInfo_IF {
 					tmp = memList.get(i);
 					tmp.put("MobilePhone", CherrySecret.decryptData(brandCode, (String)tmp.get("MobilePhone")));
 					tmp.put("Email", CherrySecret.decryptData(brandCode, (String)tmp.get("Email")));
+
+					Object isDimensionCode = paramMap.get("IsDimensionCode");
+					if(isDimensionCode != null && "2".equals(String.valueOf(isDimensionCode))) {
+						Map<String,Object> returnMap = generateDimensionCode((String)tmp.get("MemberCode"));
+						tmp.putAll(returnMap);
+					}
 				}
 			} catch (Exception e) {
 				logger.error(e.getMessage(), e);
@@ -145,6 +149,35 @@ public class MemberInfoLogic implements MemberInfo_IF {
 			retMap.put("ResultContent", memList);
 		}
 		return retMap;
+	}
+
+	/**
+	 * 生成二维码
+	 */
+	private Map<String,Object>  generateDimensionCode(String memCode) throws Exception {
+		Map<String,Object> returnMap = new HashMap<String, Object>();
+		int memCodeLength = memCode.length();
+		String strMemCodeLength = memCodeLength < 10 ? "0" + memCodeLength : String.valueOf(memCodeLength);
+		String strCurrentTimeSeconds = String.valueOf(System.currentTimeMillis()/1000);
+		SimpleDateFormat sf = new SimpleDateFormat("yyMMddHHmmss");
+		String strCurrentTime = sf.format(new Date());
+
+		StringBuffer oneDimensionCode = new StringBuffer();
+		String encrptData = CherryUtil.generateOneDimesionEncrptData(memCode,strCurrentTime);
+		String compressTimestamp = CherryUtil.compressOneDimesion(strCurrentTime);
+		String compressMemCodeLength = CherryUtil.compressOneDimesion(strMemCodeLength);
+		oneDimensionCode.append(encrptData).append(compressMemCodeLength).append(memCode).append(compressTimestamp);
+		logger.info("oneDimensionCode: " + oneDimensionCode.toString() + " memCode：" + memCode + " currentTimeSeconds: " + strCurrentTime );
+
+		StringBuffer twoDimensionCode  = new StringBuffer();
+		twoDimensionCode.append("{\"C\":\"").append(memCode).append("\",\"T\":\"").append(strCurrentTimeSeconds).append("\"}");
+		DESPlusNew desPlus = new DESPlusNew();
+		String encryptTwoDimensionCode = desPlus.encrypt(twoDimensionCode.toString());
+
+		returnMap.put("OneDimensionCode",oneDimensionCode.toString());
+		returnMap.put("TwoDimensionCode",encryptTwoDimensionCode);
+		return returnMap;
+
 	}
 
 	@Override

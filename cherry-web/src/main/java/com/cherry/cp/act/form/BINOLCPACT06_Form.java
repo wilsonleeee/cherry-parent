@@ -2,6 +2,9 @@ package com.cherry.cp.act.form;
 
 import com.cherry.cm.form.DataTable_BaseForm;
 
+import java.util.List;
+import java.util.Map;
+
 public class BINOLCPACT06_Form extends DataTable_BaseForm{
 	 /** 单据号*/
 	 private String tradeNoIF;
@@ -66,7 +69,16 @@ public class BINOLCPACT06_Form extends DataTable_BaseForm{
 	 private String counterType;
 	 /**会员所属柜台**/
 	 private String counterBelong;
-	 
+	/**发货开始时间**/
+	 private String sendStartDate;
+	/**发货截止时间**/
+	private String sendEndDate;
+	private String expressCode;
+	private String expressNo;
+
+	/**订货单据List**/
+	private List<Map<String,Object>> campDispatchOrderList;
+
 	public String getTradeNoIF() {
 		return tradeNoIF;
 	}
@@ -241,8 +253,32 @@ public class BINOLCPACT06_Form extends DataTable_BaseForm{
 	}
 	public void setBatchToTime(String batchToTime) {
 		this.batchToTime = batchToTime;
-	}	
-	
+	}
+
+	public String getSendStartDate() {
+		return sendStartDate;
+	}
+
+	public void setSendStartDate(String sendStartDate) {
+		this.sendStartDate = sendStartDate;
+	}
+
+	public String getSendEndDate() {
+		return sendEndDate;
+	}
+
+	public void setSendEndDate(String sendEndDate) {
+		this.sendEndDate = sendEndDate;
+	}
+
+	public List<Map<String, Object>> getCampDispatchOrderList() {
+		return campDispatchOrderList;
+	}
+
+	public void setCampDispatchOrderList(List<Map<String, Object>> campDispatchOrderList) {
+		this.campDispatchOrderList = campDispatchOrderList;
+	}
+
 	/** 改变领用日期参考类型*/
 	private String referFromType;
 	
@@ -327,5 +363,20 @@ public class BINOLCPACT06_Form extends DataTable_BaseForm{
 	public void setCounterBelong(String counterBelong) {
 		this.counterBelong = counterBelong;
 	}
-	
+
+	public String getExpressCode() {
+		return expressCode;
+	}
+
+	public void setExpressCode(String expressCode) {
+		this.expressCode = expressCode;
+	}
+
+	public String getExpressNo() {
+		return expressNo;
+	}
+
+	public void setExpressNo(String expressNo) {
+		this.expressNo = expressNo;
+	}
 }

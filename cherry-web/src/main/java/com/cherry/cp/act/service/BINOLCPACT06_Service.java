@@ -174,4 +174,24 @@ public class BINOLCPACT06_Service extends BaseService{
 		parameterMap.put(CherryConstants.IBATIS_SQL_ID, "BINOLCPACT06.updResCounter");
 		return baseServiceImpl.update(parameterMap);
 	}
+
+	/**
+	 * 会员预约柜台作为领用柜台
+	 * @param map
+	 * @return
+	 */
+	public int updCampOrder(Map<String, Object> map) {
+		map.put(CherryConstants.IBATIS_SQL_ID, "BINOLCPACT06.updCampOrder");
+		return baseServiceImpl.update(map);
+	}
+
+	/**
+	 * 会员预约柜台作为领用柜台
+	 * @param map
+	 * @return
+	 */
+	public int updCampOrderHis(Map<String, Object> map) {
+		map.put(CherryConstants.IBATIS_SQL_ID, "BINOLCPACT06.updCampOrderHis");
+		return baseServiceImpl.update(map);
+	}
 }

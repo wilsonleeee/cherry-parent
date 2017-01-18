@@ -51,12 +51,19 @@
 	                    		<s:param name="state">RV</s:param>
 	                    		<s:param name="newState">AR</s:param>
 	                    	</s:url>
+							<s:url action="BINOLCPACT06_initOrderDispatch" id="initOrderDispatchUrl">
+							</s:url>
 	                    	<s:if test="menuMap.stock == 1">
 	                    	<li>
-	                    	<cherry:show domId="CPACT01SHIP">
-				       		 	<a dir="${actBatchStockUrl}" id="topMenu"><s:text name="ACT04_actStock" /></a>
-				       		</cherry:show>
+								<cherry:show domId="CPACT01SHIP">
+									<a dir="${actBatchStockUrl}" id="topMenu"><s:text name="ACT04_actStock" /></a>
+								</cherry:show>
 	                    	</li>
+							<li>
+								<cherry:show domId="CPACT02SHIP">
+									<a dir="${initOrderDispatchUrl}" id="topMenu"><s:text name="ACT04_actStock2" /></a>
+								</cherry:show>
+							</li>
 	                    	</s:if>
 	                    	<s:if test='campaignInfo.campaignStockFromDate == null || "".equals(campaignInfo.campaignStockFromDate)'>
 		                    	<s:url action="BINOLCPACT06_initRun" id="actBatchCAUrl">
