@@ -159,7 +159,9 @@ public class BINBEMBTIF11_BL {
 					continue;
 				}
 				//判断要合并的两条会员的天猫加密手机号是否相同,不相同,
-				if (!CherryBatchChecker.isNullOrEmpty(deleteMemberInfo.get("tmallMixMobile")) && !deleteMemberInfo.get("tmallMixMobile").equals(retainMemberInfo.get("tmallMixMobile"))){
+				if (!CherryBatchChecker.isNullOrEmpty(deleteMemberInfo.get("tmallMixMobile")) &&
+						!CherryBatchChecker.isNullOrEmpty(retainMemberInfo.get("tmallMixMobile")) &&
+						!deleteMemberInfo.get("tmallMixMobile").equals(retainMemberInfo.get("tmallMixMobile"))){
 					memMergeInfo.put("mergeFlag","2");
 					memMergeInfo.put("errorMsg","合并会员的天猫加密手机号不相同");
 					binBEMBTIF01_Service.addMemberMergeHistory(memMergeInfo);
