@@ -35,56 +35,8 @@
 			)
 		)
     </update>
-    
-    
-	<!--更新方案中销售日期在业务日期前后1天内的产品的版本号 -->
-	<update id="updSoluDetailVerByPrtSellDate" parameterClass="java.util.HashMap">
-		UPDATE PPSD
-		SET PPSD.Version = #pdTVersion#+1
-		FROM Basis.BIN_ProductPriceSolutionDetail PPSD
-		JOIN Basis.BIN_ProductPriceSolution PPS ON PPS.BIN_ProductPriceSolutionID = PPSD.BIN_ProductPriceSolutionID
-		WHERE
-			PPS.BIN_BrandInfoID = #brandInfoId#
-		AND 
-		(
-			<!-- 销售日期在业务日期前后1天内的产品 -->
-		    EXISTS(
-				SELECT 1
-				FROM Basis.BIN_Product 
-				WHERE 
-					BIN_BrandInfoID = #brandInfoId#
-				AND
-				(   SellStartDate = DATEADD(day,1,#priceDate#) 
-				OR  SellStartDate = DATEADD(day,0,#priceDate#) 
-				OR  SellStartDate = DATEADD(day,-1,#priceDate#) 
-				OR  SellEndDate = DATEADD(day,1,#priceDate#) 	
-				OR  SellEndDate = DATEADD(day,0,#priceDate#) 
-				OR  SellEndDate = DATEADD(day,-1,#priceDate#)
-				)
-				AND PPSD.BIN_ProductID = BIN_ProductID
-		    )
-		)
-    </update>
-    
-	<!--更新销售日期在业务日期前后1天内的产品的版本号 -->
-	<update id="updVerByPrtSellDate" parameterClass="java.util.HashMap">
-	<![CDATA[
-		UPDATE
-			Basis.BIN_Product
-		SET 
-			Version = #tVersion#+1
-		WHERE
-			BIN_BrandInfoID = #brandInfoId#
-		AND 
-		(   SellStartDate = DATEADD(day,1,#priceDate#) 
-		OR  SellStartDate = DATEADD(day,0,#priceDate#) 
-		OR  SellStartDate = DATEADD(day,-1,#priceDate#) 
-		OR  SellEndDate = DATEADD(day,1,#priceDate#) 	
-		OR  SellEndDate = DATEADD(day,0,#priceDate#) 
-		OR  SellEndDate = DATEADD(day,-1,#priceDate#)
-		) 
-	]]>
-    </update>
+
+
 	<!--更新价格生效日期在业务日期前后1天内的产品的版本号 -->
 	<update id="updVerByPriceSaleDate" parameterClass="java.util.HashMap">
 	<![CDATA[
@@ -216,25 +168,7 @@
 		]]>
 		<include refid="BINBECMINC99.pagefooter" />		
     </select>
-    
-    <!-- 取得商品与非商品对应关系 -->
-	<select id="getFGoodsList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
-		SELECT 
-			GFR.BIN_ProductVendorID,
-			GFR.BIN_FProductVendorID,
-			GFR.Version,
-			GFR.ValidFlag
-		FROM Basis.BIN_GoodsFGoodsRel GFR WITH(NOLOCK) 
-		JOIN Basis.BIN_ProductVendor PV2 WITH(NOLOCK) ON PV2.BIN_ProductVendorID = GFR.BIN_FProductVendorID 
-		JOIN Basis.BIN_Product P2 WITH(NOLOCK) ON P2.BIN_ProductID = Pv2.BIN_ProductID 
-		WHERE
-			GFR.BIN_BrandInfoID = #brandInfoId#
-		AND	GFR.Version > #tVersion#
-		<![CDATA[
-		AND P2.ValidFlag <> 2  
-		]]>
-	</select>
-    
+
 	<!--查询产品分类(下发)信息list -->
 	<select id="getCateList" parameterClass="java.lang.Integer" resultClass="java.util.HashMap">
 		<![CDATA[
@@ -401,111 +335,7 @@
 		OUTPUT $$action AS actionResult,inserted.brand AS brand,inserted.ProductId AS ProductId,inserted.unitcode AS unitcode ,inserted.barcode  AS barcode;
 	]]>
 	</select>
-    
-	<!-- 更新商品与非商品对应关系表  -->
-	<select id="mergeWITPOSA_Product2FProduct" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
-	<![CDATA[	
-		IF OBJECT_ID('dbo.WITPOSA_Product2FProduct') IS NOT NULL
-		MERGE dbo.WITPOSA_Product2FProduct AS TGT
-		    USING (select #brandCode# as brand,
-		    			  #BIN_ProductVendorID# as proVendorId,
-						  #BIN_FProductVendorID# as fProVendorId
-		    ) AS SRC
-		     ON (
-		        TGT.brand_abbr = SRC.brand
-		        AND TGT.ProductId = SRC.proVendorId
-		        AND TGT.FProductId = SRC.fProVendorId
-		        )
-		        
-		WHEN MATCHED THEN	
-		    UPDATE SET 
-				version = #Version#,
-				ValidFlag = #ValidFlag#,
-				modified = GETDATE()
-				
-		WHEN NOT MATCHED THEN 
-			INSERT(	
-				brand_abbr,
-				ProductId,
-				FProductId,
-				version,
-				ValidFlag,
-				created,
-				modified
-			)VALUES(
-				#brandCode#,
-				#BIN_ProductVendorID#,
-				#BIN_FProductVendorID#,
-				#Version#,
-				#ValidFlag#,
-				GETDATE(),
-				GETDATE()
-			)
-		OUTPUT $$action AS actionResult,inserted.brand_abbr AS brand,inserted.ProductId AS proVendorId,inserted.FProductId AS fProVendorId;
-	]]>
-	</select>
-    
-	<!-- 插入产品接口数据库 -->
-	<insert id="addProduct" parameterClass="java.util.HashMap">
-		<![CDATA[
-			INSERT INTO dbo.Product_SCS(	
-				brand,
-				barcode,
-				unitcode,
-				chinesename,
-				lclassCode,
-				lclassname,
-				mclasscode,
-				mclassname,
-				bclasscode,
-				bclassname,
-				price,
-				discount_price,
-				status,
-				Mode,
-				cost,
-				maxprice,
-				minprice,
-				pxEnable,
-				useup_period,
-				IsStock,
-				version,
-				ProductId,
-				Spec,
-				Module,
-				created,
-				modified
-				
-			)VALUES(
-				#brandCode#,
-				#barCode#,
-				#unitCode#,
-				#nameTotal#,
-				#lCode#,
-				#lName#,
-				#mCode#,
-				#mName#,
-				#bCode#,
-				#bName#,
-				#price#,
-				#discount#,
-				#prtscs_status#,
-				#mode#,
-				#cost#,
-				#maxPrice#,
-				#minPrice#,
-				#pxEnable#,
-				#useDay#,
-				#IsStock#,
-				#Version#,
-				#prtVendorId#,
-				#Spec#,
-				#ModuleCode#,
-				GETDATE(),
-				GETDATE()
-			)
-		]]>				
-    </insert>
+
 	<!-- 插入ProductSetting -->
 	<insert id="addProductSetting" parameterClass="java.util.HashMap">
 		<![CDATA[
@@ -600,20 +430,6 @@
 				BIN_BrandInfoID = #brandInfoId#
 		]]>	
     </select>
-    <!-- 删除接口数据库产品信息  -->
-    <delete id="delIFProduct" parameterClass="java.util.HashMap">
-    	<![CDATA[delete from dbo.Product_SCS where brand = #brandCode#]]>	
-    </delete>
-    <!-- 删除接口数据库产品信息  -->
-    <delete id="delIFProductInfo" parameterClass="java.util.HashMap">
-    	<![CDATA[
-    		delete from 
-    			dbo.Product_SCS 
-    		where 
-    			brand = #brandCode#
-   			and ProductId = #prtVendorId#
-		]]>	
-    </delete>
 	<!-- 查询编码条码变更数据  -->
     <select id="getBarCodeModify" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
        <![CDATA[

@@ -66,13 +66,14 @@ public class BINBEIFPRO04_Action extends BaseAction {
 		this.organizationInfoId = organizationInfoId;
 	}
 
+
 	/**
 	 * <p>
 	 * 画面初期显示
 	 * </p>
 	 * 
 	 * 
-	 * @param 无
+	 * @param
 	 * @return String
 	 * 
 	 */
@@ -80,21 +81,20 @@ public class BINBEIFPRO04_Action extends BaseAction {
 		logger.info("****************************** 产品下发(实时)处理开始***************************");
 		// 设置batch处理标志
 		int flg = CherryBatchConstants.BATCH_SUCCESS;
-		try {
-			Map<String, Object> map = new HashMap<String, Object>();
-			// 登陆用户信息
-			UserInfo userInfo = (UserInfo) session.get(CherryBatchConstants.SESSION_USERINFO);
-			// 所属组织
-			map.put(CherryBatchConstants.ORGANIZATIONINFOID, userInfo.getBIN_OrganizationInfoID());
+		Map<String, Object> map = new HashMap<String, Object>();
+		// 登陆用户信息
+		UserInfo userInfo = (UserInfo) session.get(CherryBatchConstants.SESSION_USERINFO);
+		// 所属组织
+		map.put(CherryBatchConstants.ORGANIZATIONINFOID, userInfo.getBIN_OrganizationInfoID());
 
-			map.put(CherryBatchConstants.BRANDINFOID, brandInfoId);
-			map.put(CherryBatchConstants.BRAND_CODE, userInfo.getBrandCode());
-			
-			// Job运行履历表的运行方式
-			map.put("RunType", "MT");
-			// Job运行履历表的运行方式
-			map.put("language", userInfo.getLanguage());
-//			map.put(CherryBatchConstants.ORGANIZATIONINFOID, organizationInfoId);
+		map.put(CherryBatchConstants.BRANDINFOID, brandInfoId);
+		map.put(CherryBatchConstants.BRAND_CODE, userInfo.getBrandCode());
+
+		// Job运行履历表的运行方式
+		map.put("RunType", "MT");
+		// Job运行履历表的运行方式
+		map.put("language", userInfo.getLanguage());
+		try {
 			Map<String,Object> flagMap = binbeifpro04_BL.tran_batchProducts(map);
 			// 发送MQ
 			String isSendMQ = ConvertUtil.getString(map.get("IsSendMQ"));
@@ -106,8 +106,6 @@ public class BINBEIFPRO04_Action extends BaseAction {
 			}
 			flg=ConvertUtil.getInt(flagMap.get("flag"));
 
-			binbeifpro04_BL.outMessage();
-			binbeifpro04_BL.tran_programEnd(map);
 		} catch (CherryBatchException cbx) {
 			flg = CherryBatchConstants.BATCH_WARNING;
 			logger.error("=============WARN MSG================");
@@ -125,6 +123,10 @@ public class BINBEIFPRO04_Action extends BaseAction {
 			logger.error("=====================================");
 		}
 		finally {
+			//打印结束Message
+			binbeifpro04_BL.outMessage();
+			//插入Job运行履历表
+			binbeifpro04_BL.tran_programEnd(map);
 			if (flg == CherryBatchConstants.BATCH_SUCCESS) {
 				this.addActionMessage("产品下发(实时)处理正常终了");
 				logger.info("******************************产品下发(实时)处理正常终了***************************");
