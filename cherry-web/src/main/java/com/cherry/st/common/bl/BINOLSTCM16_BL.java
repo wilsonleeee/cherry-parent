@@ -369,24 +369,24 @@ public class BINOLSTCM16_BL implements BINOLSTCM16_IF{
         
         if(CherryConstants.OS_BILLTYPE_BG.equals(tradeType)){
             //调入确认
-            //取得产品调出单主表的单据号作为调入单的关联单号
-            int productAllocationOutID = CherryUtil.obj2int(praMap.get("BIN_ProductAllocationOutID"));
-            mainData = getProductAllocationOutMainData(productAllocationOutID,null);
+            //取得产品调入单主表的单据号作为产品入出库的关联单号
+            int productAllocationInID = CherryUtil.obj2int(praMap.get("BIN_ProductAllocationInID"));
+            mainData = getProductAllocationInMainData(productAllocationInID,null);
             //调入部门
             organizationID = CherryUtil.obj2int(mainData.get("BIN_OrganizationIDIn"));
-            relevanceNo = ConvertUtil.getString(mainData.get("AllocationOutNoIF"));
+            relevanceNo = ConvertUtil.getString(mainData.get("AllocationInNoIF"));
             //取得产品调入单据明细表
             billID = CherryUtil.obj2int(praMap.get("BIN_ProductAllocationInID"));
             detailList = getProductAllocationInDetailData(billID,null);
             stockType = CherryConstants.STOCK_TYPE_IN;
         }else if(CherryConstants.OS_BILLTYPE_LG.equals(tradeType)){
             //调出确认
-            //取得产品调拨单主表的单据号作为调出单的关联单号
-            int productAllocationID = CherryUtil.obj2int(praMap.get("BIN_ProductAllocationID"));
-            mainData = getProductAllocationMainData(productAllocationID,null);
+            //取得产品调出单的单据号作为产品入出库记录的关联单号
+            int productAllocationOutID = CherryUtil.obj2int(praMap.get("BIN_ProductAllocationOutID"));
+            mainData = getProductAllocationOutMainData(productAllocationOutID,null);
             //调出部门
             organizationID = CherryUtil.obj2int(mainData.get("BIN_OrganizationIDOut"));
-            relevanceNo = ConvertUtil.getString(mainData.get("AllocationNoIF"));
+            relevanceNo = ConvertUtil.getString(mainData.get("AllocationOutNoIF"));
             //取得产品调出单据明细表
             billID = CherryUtil.obj2int(praMap.get("BIN_ProductAllocationOutID"));
             detailList = getProductAllocationOutDetailData(billID,null);
