@@ -266,13 +266,13 @@ BINOLWSMNG06_02.prototype = {
 			}
 		}
 		//删除没有选择产品的行
-		if(addType == "all"){
+		//if(addType == "all"){
 			$.each($('#databody >tr'), function(i){
 				if($(this).find("#productVendorIDArr").val()==""){
 					$(this).remove();
 				}
 			});
-		}
+		//}
 		if(checkFlag){
 			binOLWSMNG06_02.submit("");
 		}
@@ -348,7 +348,7 @@ BINOLWSMNG06_02.prototype = {
 			if($(this).find("#productVendorIDArr").val()!=""){
 				count += 1;
 				var quantityArr = $this.find(":input[id='quantityArr']").val();
-				if (quantityArr == "") {
+				if (quantityArr == "" || quantityArr == "0") {
 					flag = false;
 					if(addType != "all"){
 						$(this).attr("class", "errTRbgColor");
@@ -356,18 +356,19 @@ BINOLWSMNG06_02.prototype = {
 				} else {
 					$(this).removeClass('errTRbgColor');
 				}
-			} else {
-				productNullFlag = true;
-				$(this).attr("class", "errTRbgColor");
 			}
+			//else {
+			//	productNullFlag = true;
+			//	$(this).attr("class", "errTRbgColor");
+			//}
 		});
 		// 存在无效产品信息
-		if(productNullFlag) {
-			// 有无效的数据行，请补充完整或删除该行。
-			$('#errorDiv2 #errorSpan2').html($('#errmsg_EST00008').val());
-			$('#errorDiv2').show();
-			return false;
-		}
+		//if(productNullFlag) {
+		//	// 有无效的数据行，请补充完整或删除该行。
+		//	$('#errorDiv2 #errorSpan2').html($('#errmsg_EST00008').val());
+		//	$('#errorDiv2').show();
+		//	return false;
+		//}
 		if (!flag && addType != "all") {
 			// 有空行存在，全盘允许不输入。
 			$('#errorDiv2 #errorSpan2').html($('#errmsg_EST00008').val());
@@ -474,15 +475,15 @@ BINOLWSMNG06_02.prototype = {
 		// 设置全选状态
 		$('#allSelect').prop("checked",false);
 		
-		//盘点允许添加多条空白行
+		//已有空行不新增一行
 		var addNewLineFlag = true;
-//		$.each($('#databody >tr'), function(i){
-//			if($(this).find("[name='unitCodeBinding']").is(":visible")){
-//				addNewLineFlag = false;
-//				$(this).find("[name='unitCodeBinding']").focus();
-//				return;
-//			}
-//		});
+		$.each($('#databody >tr'), function(i){
+			if($(this).find("[name='unitCodeBinding']").is(":visible")){
+				addNewLineFlag = false;
+				$(this).find("[name='unitCodeBinding']").focus();
+				return;
+			}
+		});
 		
 		if(addNewLineFlag){
 			var nextIndex = parseInt($("#rowNumber").val())+1;

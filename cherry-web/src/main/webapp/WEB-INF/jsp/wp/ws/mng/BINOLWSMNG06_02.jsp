@@ -5,7 +5,7 @@
 <%@ taglib prefix="cherry" uri="/cherry-tags"%>
 <jsp:include page="/WEB-INF/jsp/common/popHead.ieCssRepair.jsp" flush="true"></jsp:include>
 <script type="text/javascript" src="/Cherry/js/common/popOSDialog.js"></script>
-<script type="text/javascript" src="/Cherry/js/wp/ws/mng/BINOLWSMNG06_02.js?v=20161226"></script>
+<script type="text/javascript" src="/Cherry/js/wp/ws/mng/BINOLWSMNG06_02.js?v=20170119"></script>
 <s:i18n name="i18n.wp.BINOLWSMNG06">
 <div class="main container clearfix">
 	<div class="hide">
