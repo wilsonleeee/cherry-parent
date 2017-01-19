@@ -21,6 +21,7 @@ import java.util.regex.Pattern;
 
 import javax.annotation.Resource;
 
+import com.cherry.cm.core.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -32,12 +33,6 @@ import com.cherry.cm.cmbussiness.bl.BINOLCM05_BL;
 import com.cherry.cm.cmbussiness.bl.BINOLCM08_BL;
 import com.cherry.cm.cmbussiness.bl.BINOLCM14_BL;
 import com.cherry.cm.cmbussiness.bl.BINOLCM15_BL;
-import com.cherry.cm.core.BaseAction;
-import com.cherry.cm.core.CherryChecker;
-import com.cherry.cm.core.CherryConstants;
-import com.cherry.cm.core.CherryException;
-import com.cherry.cm.core.CodeTable;
-import com.cherry.cm.core.JsclPBKDF2WithHMACSHA256;
 import com.cherry.cm.util.Bean2Map;
 import com.cherry.cm.util.ConvertUtil;
 import com.googlecode.jsonplugin.JSONUtil;
@@ -173,7 +168,7 @@ public class BINOLBSEMP04_Action extends BaseAction implements
 	 * </p>
 	 * 
 	 * 
-	 * @param 无
+	 * @param
 	 * @return String 跳转页面
 	 * 
 	 */
@@ -240,7 +235,7 @@ public class BINOLBSEMP04_Action extends BaseAction implements
 			provinceList = binOLCM08_BL.getProvinceList(map);
 			// 查询假日
 			holidays = binolcm00BL.getHolidays(map);
-			
+			// 员工代号编码自动生成
 			if(binOLCM14_BL.isConfigOpen("1008", String.valueOf(userInfo.getBIN_OrganizationInfoID()),String.valueOf(userInfo.getBIN_BrandInfoID()))) {
 				Map codeMap = code.getCode("1120","1");
 				map.put("type", "1");
@@ -301,7 +296,7 @@ public class BINOLBSEMP04_Action extends BaseAction implements
 		resultMap.put("orgList", binolbsemp04BL.getOrgList(map));
 		// 取得岗位类别信息List
 		resultMap.put("positionCategoryList", binolbsemp04BL.getPositionCategoryList(map));
-		
+		// 是否自动生成员工号
 		if(binOLCM14_BL.isConfigOpen("1008", String.valueOf(userInfo.getBIN_OrganizationInfoID()),form.getBrandInfoId())) {
 			Map codeMap = code.getCode("1120","1");
 			map.put("type", "1");
@@ -349,7 +344,7 @@ public class BINOLBSEMP04_Action extends BaseAction implements
 	 * </p>
 	 * 
 	 * 
-	 * @param 无
+	 * @param
 	 * @return String 跳转页面
 	 * @throws Exception
 	 * 
@@ -386,10 +381,14 @@ public class BINOLBSEMP04_Action extends BaseAction implements
 		return CherryConstants.GLOBAL_ACCTION_RESULT_BODY;
 	}
 
+	/**
+	 * 校验保存时的参数
+	 * @throws Exception
+     */
 	public void validateSave() throws Exception {
 		
 		UserInfo userInfo = (UserInfo) session.get(CherryConstants.SESSION_USERINFO);
-		
+
 		//取得岗位信息
 		Map<String,Object> valiMap = new HashMap<String,Object>();
 		valiMap.put("positionCategoryId", form.getPositionCategoryId()); // 岗位ID
@@ -623,7 +622,9 @@ public class BINOLBSEMP04_Action extends BaseAction implements
 		String organizationInfoId = ConvertUtil.getString(userInfo.getBIN_OrganizationInfoID());
 		// 品牌ID
 		String brandInfoId = ConvertUtil.getString(form.getBrandInfoId());
-		
+		// 取得品牌ID对应的品牌CODE【加密解密参数】
+		String brandCode = binOLCM05_BL.getBrandCode(ConvertUtil.getInt(form.getBrandInfoId()));
+
 		// 联系电话入力验证
 		if (!CherryChecker.isNullOrEmpty(form.getPhone())
 				&& !CherryChecker.isTelValid(form.getPhone())) {
@@ -649,14 +650,14 @@ public class BINOLBSEMP04_Action extends BaseAction implements
 			} else {
 				//BA的场合，做以下校验
 				if(CherryConstants.CATRGORY_CODE_BA.equals(categoryCode)) {
-					Map<String, Object> map = new HashMap<String, Object>();
+					Map<String, Object> mobileParam = new HashMap<String, Object>();
 					// 所属组织ID
-					map.put(CherryConstants.ORGANIZATIONINFOID, organizationInfoId);
+					mobileParam.put(CherryConstants.ORGANIZATIONINFOID, organizationInfoId);
 					// 品牌ID
-					map.put(CherryConstants.BRANDINFOID, brandInfoId);
-					map.put("mobilePhone", form.getMobilePhone());
+					mobileParam.put(CherryConstants.BRANDINFOID, brandInfoId);
+					mobileParam.put("mobilePhone", CherrySecret.encryptData(brandCode, form.getMobilePhone()));
 					// 验证手机是否唯一
-					List<String> empIdList = binolbsemp04BL.getEmployeeIdByMobile(map);
+					List<String> empIdList = binolbsemp04BL.getEmployeeIdByMobile(mobileParam);
 					if (empIdList != null && !empIdList.isEmpty()) {
 						this.addFieldError("mobilePhone", getText("ECM00032",
 								new String[] { getText("PBS00070") }));
@@ -708,13 +709,14 @@ public class BINOLBSEMP04_Action extends BaseAction implements
 					identityCardParam.put(CherryConstants.ORGANIZATIONINFOID, organizationInfoId);
 					// 品牌ID
 					identityCardParam.put(CherryConstants.BRANDINFOID, brandInfoId);
-					identityCardParam.put("identityCard", form.getIdentityCard());
+					identityCardParam.put("identityCard", CherrySecret.encryptData(brandCode, form.getIdentityCard()));
 					// 验证身份证是否唯一
-					List<String> employeeCodeList = binolbsemp04BL.validateIdentityCard(identityCardParam);		
-					if (employeeCodeList.size() != 0) {
+					List<String> employeeCodeList = binolbsemp04BL.validateIdentityCard(identityCardParam);
+					if (employeeCodeList != null && !employeeCodeList.isEmpty()) {
 						this.addFieldError("identityCard", getText("ECM00032",
 								new String[] { getText("PBS00101") }));
 					}
+
 				}
 			}
 		}
