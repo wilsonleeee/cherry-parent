@@ -144,7 +144,7 @@ public class BINOLSSPRM68_BL {
 						}else{
 							checkedList = new LinkedList<String>();
 							for(Map<String, Object> checked : checkedNodes) {
-								boolean halfCheck = (boolean)checked.get("half");
+								boolean halfCheck = (Boolean) checked.get("half");
 								if(!halfCheck){
 									checkedList.add(ConvertUtil.getString(checked.get("id")));
 								}
@@ -154,7 +154,7 @@ public class BINOLSSPRM68_BL {
 					}else{
 						List<String> checkedList = new LinkedList<String>();
 						for(Map<String, Object> checked : checkedNodes) {
-							boolean halfCheck = (boolean)checked.get("half");
+							boolean halfCheck = (Boolean)checked.get("half");
 							if(!halfCheck){
 								checkedList.add(ConvertUtil.getString(checked.get("id")));
 							}
