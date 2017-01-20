@@ -212,16 +212,30 @@
 	</select>
 	
 	
-	<!-- 根据批次库存id修改对应的总成本价 -->
+	<!-- 修改入出库批次主表的总成本价（TotalCostPrice为空的记录） -->
 	<update id="updateTotalCostPrice" parameterClass="java.util.HashMap">
 		update
-			Inventory.BIN_ProductBatchInOut
-		set
-			TotalCostPrice = #TotalCostPrice#,
-			UpdateTime = GETDATE(),
-			ModifyCount = ModifyCount+1
-		where 		
-			BIN_ProductBatchInOutID = #BIN_ProductBatchInOutID#
+			A
+		set A.TotalCostPrice=B.TotalCostPrice,A.UpdateTime=GETDATE(),A.ModifyCount=A.ModifyCount+1
+		from (
+			 select
+				BIN_ProductBatchInOutID,TotalCostPrice,UpdateTime,ModifyCount
+			 from  Inventory.BIN_ProductBatchInOut
+				where TotalCostPrice is null
+		 ) A
+		inner join
+		(select
+				 BIN_ProductBatchInOutID,SUM(CostPrice*Quantity) AS TotalCostPrice
+			from
+			Inventory.BIN_ProductBatchInOutDetail D
+			where
+				exists(select 1 from Inventory.BIN_ProductBatchInOut C where
+				C.BIN_ProductBatchInOutID= D.BIN_ProductBatchInOutID
+				and C.TotalCostPrice is null)
+			group by BIN_ProductBatchInOutID
+			having COUNT(BIN_ProductVendorID)= COUNT(CostPrice)
+		) B
+		on A.BIN_ProductBatchInOutID= B.BIN_ProductBatchInOutID
 	</update>
 	
 	<!-- 根据入出库明细id修改对应的成本价 -->
@@ -243,10 +257,39 @@
 			BIN_ProductInOutDetailID = #BIN_ProductInOutDetailID#
 	]]>
 	</update>
-	
-	<!--查询产品入出库批次表的数据（即明细中有成本价为空，且是出库类型的数据）  -->
-	<select id="getProBatchInOutList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
-		select 
+
+
+	<!--查询产品入出库批次表的接收退库和调入数据（即明细中有成本价为空，且是入库类型的数据）（AR+BG） -->
+	<select id="getProBatchInOutListARBG" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+		select
+			TOP (#batchSize#)
+			A.BIN_OrganizationInfoID,
+			A.BIN_BrandInfoID,
+			A.BIN_ProductBatchInOutID,
+			A.RelevanceNo,
+			A.TradeType,
+			A.StockType,
+			A.StockInOutTime
+		from
+			Inventory.BIN_ProductBatchInOut A
+		where
+			EXISTS (
+				select 1
+				from
+				Inventory.BIN_ProductBatchInOutDetail B
+				where A.BIN_ProductBatchInOutID=B.BIN_ProductBatchInOutID
+				and B.StockType = #StockType# and B.CostPrice is null
+			)
+		and A.BIN_OrganizationInfoID = #organizationInfoId#
+		and A.BIN_BrandInfoID = #brandInfoId#
+		and (A.TradeType = 'AR' or A.TradeType = 'BG')
+		order by A.StockInOutTime
+	</select>
+
+	<!--查询产品入出库批次表的退货数据（即明细中有成本价为空，且是入库类型的数据）SR  -->
+	<select id="getProBatchInOutListSR" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+		select
+			TOP (#batchSize#)
 			A.BIN_OrganizationInfoID,
 			A.BIN_BrandInfoID,
 			A.BIN_ProductBatchInOutID,
@@ -255,25 +298,81 @@
 			A.StockType,
 			B.BillCodePre,
 			A.StockInOutTime
-			
-		from 
+		from
 			Inventory.BIN_ProductBatchInOut A
-			LEFT JOIN Sale.BIN_SaleRecord B
-			ON A.RelevanceNo = B.BillCode
-		where 
-			A.BIN_ProductBatchInOutID  in(
-			select 
-				distinct BIN_ProductBatchInOutID
-			from 
-				Inventory.BIN_ProductBatchInOutDetail
-			where 
-				StockType = #StockType# and CostPrice is null
+		LEFT JOIN
+			(select BillCode,BillCodePre from Sale.BIN_SaleRecord) B
+		ON A.RelevanceNo = B.BillCode
+		where
+			EXISTS (
+				select 1
+				from
+				Inventory.BIN_ProductBatchInOutDetail C
+				where
+				A.BIN_ProductBatchInOutID=C.BIN_ProductBatchInOutID
+				and C.StockType = #StockType# and C.CostPrice is null
 			)
-			and A.BIN_OrganizationInfoID = #organizationInfoId#
-			and A.BIN_BrandInfoID = #brandInfoId#
-		order by A.StockInOutTime		
+		and A.BIN_OrganizationInfoID = #organizationInfoId#
+		and A.BIN_BrandInfoID = #brandInfoId#
+		and A.TradeType = 'SR'
+		order by A.StockInOutTime
 	</select>
-	
+
+	<!--查询产品入出库批次表的除接收退库，调入，退货以外的入库数据（即明细中有成本价为空，且是入库类型的数据） -->
+	<select id="getProBatchInOutListByOther" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+		select
+			TOP (#batchSize#)
+			A.BIN_OrganizationInfoID,
+			A.BIN_BrandInfoID,
+			A.BIN_ProductBatchInOutID,
+			A.RelevanceNo,
+			A.TradeType,
+			A.StockType,
+			A.StockInOutTime
+		from
+			Inventory.BIN_ProductBatchInOut A
+		where
+		EXISTS (
+			select 1
+			from
+			Inventory.BIN_ProductBatchInOutDetail C
+			where
+			A.BIN_ProductBatchInOutID=C.BIN_ProductBatchInOutID
+			and C.StockType = #StockType# and C.CostPrice is null
+		)
+		and A.BIN_OrganizationInfoID = #organizationInfoId#
+		and A.BIN_BrandInfoID = #brandInfoId#
+		and (A.TradeType != 'AR' and A.TradeType != 'BG'and A.TradeType != 'SR')
+		order by A.StockInOutTime
+	</select>
+
+	<!--查询产品入出库批次表的出库数据（即明细中有成本价为空，且是出库类型的数据） -->
+	<select id="getProBatchInOutList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+		select
+			TOP (#batchSize#)
+			A.BIN_OrganizationInfoID,
+			A.BIN_BrandInfoID,
+			A.BIN_ProductBatchInOutID,
+			A.RelevanceNo,
+			A.TradeType,
+			A.StockType,
+			A.StockInOutTime
+		from
+			Inventory.BIN_ProductBatchInOut A
+		where
+			EXISTS (
+				select 1
+				from
+				Inventory.BIN_ProductBatchInOutDetail C
+				where
+				A.BIN_ProductBatchInOutID=C.BIN_ProductBatchInOutID
+				and C.StockType = #StockType# and C.CostPrice is null
+			)
+		and A.BIN_OrganizationInfoID = #organizationInfoId#
+		and A.BIN_BrandInfoID = #brandInfoId#
+		order by A.StockInOutTime
+	</select>
+
 	
 	<!--根据产品入出库批次表ID 查询产品入出库批次记录明细表数据  -->
 	<select id="getProBatchInOutDetailList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
@@ -293,20 +392,13 @@
 				
 	</select>
 	
-	<!--  根据明细ID删除产品入出库批次记录明细表 -->
+	<!--  删除原单明细时，根据自增长ID去删除，以提高效率 -->
 	<delete id="deleteProBatchInOutDetail" parameterClass="java.util.HashMap" >
 		delete from 
 			Inventory.BIN_ProductBatchInOutDetail 
 		where BIN_ProductInOutDetailID = #BIN_ProductInOutDetailID#
 	</delete>
-	
-	
-	<!--  根据产品入出库批次ID删除对应的产品入出库批次记录明细 -->
-	<delete id="deleteProBatchInOutDetailByMainId" parameterClass="java.util.HashMap" >
-		delete from 
-			Inventory.BIN_ProductBatchInOutDetail 
-		where BIN_ProductBatchInOutID = #BIN_ProductBatchInOutID#
-	</delete>
+
 
 	<!-- 修改产品批次库存表库存数 -->
 	<update id="updateProNewBatchStock" parameterClass="java.util.HashMap">
@@ -334,7 +426,7 @@
 	
 	
 	
-	<!-- 插入产品入出库批次记录明细表 -->
+	<!-- 批量插入产品入出库批次记录明细表 -->
 	<insert id="insertProBatchInOutDetail" parameterClass="java.util.HashMap">
 		<isEqual property="isNewFlag" compareValue ="1"><!-- 表示拆分后的新数据 -->			
 			INSERT INTO Inventory.BIN_ProductBatchInOutDetail

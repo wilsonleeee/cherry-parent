@@ -36,6 +36,9 @@ public class BINBAT152_Action extends BaseAction {
 	private static final long serialVersionUID = -8319887739391732152L;
 	private static Logger logger = LoggerFactory.getLogger(BINBAT152_Action.class.getName());
 
+	/** JOB执行锁*/
+	private static int execFlag = 0;
+
 	/** 品牌Id */
 	private String brandInfoId;
 
@@ -77,37 +80,58 @@ public class BINBAT152_Action extends BaseAction {
 		// 设置batch处理标志
 		int flg = CherryBatchConstants.BATCH_SUCCESS;
 		try {
-			Map<String, Object> map = new HashMap<String, Object>();
-			// 登陆用户信息
-			UserInfo userInfo = (UserInfo) session
-					.get(CherryBatchConstants.SESSION_USERINFO);
-			// 所属组织
-			map.put(CherryBatchConstants.ORGANIZATIONINFOID,
-					userInfo.getBIN_OrganizationInfoID());
-			// 品牌Id
-			map.put(CherryBatchConstants.BRANDINFOID, brandInfoId);
-			//品牌Code
-			map.put(CherryBatchConstants.BRAND_CODE, brandCode);
-			// Job运行履历表的运行方式
-			map.put("RunType", "MT");
+			// 已有其他线程正在执行该JOBs
+			if (0 == execFlag) {
+				// 锁定
+				execFlag = 1;
+				Map<String, Object> map = new HashMap<String, Object>();
+				// 登陆用户信息
+				UserInfo userInfo = (UserInfo) session
+						.get(CherryBatchConstants.SESSION_USERINFO);
+				// 所属组织
+				map.put(CherryBatchConstants.ORGANIZATIONINFOID,
+						userInfo.getBIN_OrganizationInfoID());
+				// 品牌Id
+				map.put(CherryBatchConstants.BRANDINFOID, brandInfoId);
+				//品牌Code
+				map.put(CherryBatchConstants.BRAND_CODE, brandCode);
+				// Job运行履历表的运行方式
+				map.put("RunType", "MT");
 
-			flg = binbat152_BL.tran_binbat152(map);
+				flg = binbat152_BL.tran_binbat152(map);
+
+				// 释放锁
+				execFlag = 0;
+			}
 		} catch (CherryBatchException cbx) {
-			logger.error(cbx.getMessage(),cbx);
 			flg = CherryBatchConstants.BATCH_WARNING;
+			logger.info("=============WARN MSG================");
+			logger.error(cbx.getMessage(),cbx);
+			logger.info("=============WARN MSG================");
+			// 释放锁
+			execFlag = 0;
 		} catch (Exception e) {
-			logger.error(e.getMessage(),e);
 			flg = CherryBatchConstants.BATCH_ERROR;
+			logger.error("=============ERROR MSG===============");
+			logger.error(e.getMessage(),e);
+			logger.error("=============ERROR MSG===============");
+			// 释放锁
+			execFlag = 0;
 		} finally {
-			if (flg == CherryBatchConstants.BATCH_SUCCESS) {
-				this.addActionMessage("补录产品入出库成本(标准接口)处理正常结束");
-				logger.info("******************************补录产品入出库成本(标准接口)处理正常结束***************************");
-			} else if (flg == CherryBatchConstants.BATCH_WARNING) {
-				this.addActionError("补录产品入出库成本(标准接口)处理警告结束");
-				logger.info("******************************补录产品入出库成本(标准接口)处理警告结束***************************");
-			} else if (flg == CherryBatchConstants.BATCH_ERROR) {
-				this.addActionError("补录产品入出库成本(标准接口)处理异常结束");
-				logger.info("******************************补录产品入出库成本(标准接口)处理异常结束***************************");
+			if (execFlag == 1) {
+				this.addActionMessage("补录产品入出库成本(标准接口)处理中，请稍后。。。");
+				logger.info("******************************补录产品入出库成本(标准接口)处理中，请稍后。。。***************************");
+			} else {
+				if (flg == CherryBatchConstants.BATCH_SUCCESS) {
+					this.addActionMessage("补录产品入出库成本(标准接口)处理正常结束");
+					logger.info("******************************补录产品入出库成本(标准接口)处理正常结束***************************");
+				} else if (flg == CherryBatchConstants.BATCH_WARNING) {
+					this.addActionError("补录产品入出库成本(标准接口)处理警告结束");
+					logger.info("******************************补录产品入出库成本(标准接口)处理警告结束***************************");
+				} else if (flg == CherryBatchConstants.BATCH_ERROR) {
+					this.addActionError("补录产品入出库成本(标准接口)处理异常结束");
+					logger.info("******************************补录产品入出库成本(标准接口)处理异常结束***************************");
+				}
 			}
 		}
 		return "DOBATCHRESULT";

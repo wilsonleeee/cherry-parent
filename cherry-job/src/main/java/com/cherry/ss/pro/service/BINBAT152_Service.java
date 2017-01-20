@@ -13,13 +13,13 @@
 
 package com.cherry.ss.pro.service;
 
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-
 import com.cherry.cm.core.CherryBatchConstants;
 import com.cherry.cm.core.CherryConstants;
 import com.cherry.cm.service.BaseService;
+
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 /**
  * 补录产品入出库成本(标准接口)Service
@@ -30,8 +30,47 @@ import com.cherry.cm.service.BaseService;
  * 
  */
 public class BINBAT152_Service extends BaseService {
-	
-	
+
+
+	/**
+	 *
+	 * 查询产品入出库批次表的接收退库和调入数据（即明细中有成本价为空，且是入库类型的数据）（AR+BG）
+	 * @param map
+	 * @return
+	 */
+	public List<Map<String, Object>> getProBatchInOutListARBG (Map<String, Object> map) {
+		Map<String,Object> paramMap = new HashMap<String, Object>();
+		paramMap.putAll(map);
+		paramMap.put(CherryBatchConstants.IBATIS_SQL_ID,"BINBAT152.getProBatchInOutListARBG");
+		return baseServiceImpl.getList(paramMap);
+	}
+
+	/**
+	 *
+	 * 查询产品入出库批次表的退货数据（即明细中有成本价为空，且是入库类型的数据）SR
+	 * @param map
+	 * @return
+	 */
+	public List<Map<String, Object>> getProBatchInOutListSR (Map<String, Object> map) {
+		Map<String,Object> paramMap = new HashMap<String, Object>();
+		paramMap.putAll(map);
+		paramMap.put(CherryBatchConstants.IBATIS_SQL_ID,"BINBAT152.getProBatchInOutListSR");
+		return baseServiceImpl.getList(paramMap);
+	}
+
+	/**
+	 *
+	 * 查询产品入出库批次表的除接收退库，调入，退货以外的入库数据（即明细中有成本价为空，且是入库类型的数据）
+	 * @param map
+	 * @return
+	 */
+	public List<Map<String, Object>> getProBatchInOutListByOther (Map<String, Object> map) {
+		Map<String,Object> paramMap = new HashMap<String, Object>();
+		paramMap.putAll(map);
+		paramMap.put(CherryBatchConstants.IBATIS_SQL_ID,"BINBAT152.getProBatchInOutList");
+		return baseServiceImpl.getList(paramMap);
+	}
+
 	/**
 	 * 
 	 * 查询产品入出库批次表的数据（即明细中有成本价为空，且是出库类型的数据）
@@ -44,7 +83,8 @@ public class BINBAT152_Service extends BaseService {
 		paramMap.put(CherryBatchConstants.IBATIS_SQL_ID,"BINBAT152.getProBatchInOutList");
 		return baseServiceImpl.getList(paramMap);
 	}
-	
+
+
 	
 	/**
 	 * 根据产品入出库批次表ID 查询产品入出库批次记录明细表数据
@@ -74,43 +114,24 @@ public class BINBAT152_Service extends BaseService {
 	}
 
 	/**
-	 * 插入产品入出库批次记录明细表
+	 * 批量插入产品入出库批次记录明细表
 	 * 
-	 * @param map
+	 * @param list
 	 * @return
 	 */
-	public void insertProBatchInOutDetail(Map<String, Object> map) {
-		Map<String,Object> paramMap = new HashMap<String, Object>();
-		paramMap.putAll(map);
-		paramMap.put(CherryBatchConstants.IBATIS_SQL_ID,"BINBAT152.insertProBatchInOutDetail");
-		 baseServiceImpl.save(paramMap);
+	public void insertProBatchInOutDetail(List<Map<String, Object>> list) {
+		baseServiceImpl.saveAll(list,"BINBAT152.insertProBatchInOutDetail");
 	}
 	
-	/**
-	 *根据明细ID删除产品入出库批次记录明细表
-	 * 
-	 * @param map
-	 * @return
-	 */
-	public void deleteProBatchInOutDetail(Map<String, Object> map) {
-		Map<String,Object> paramMap = new HashMap<String, Object>();
-		paramMap.putAll(map);
-		paramMap.put(CherryBatchConstants.IBATIS_SQL_ID,"BINBAT152.deleteProBatchInOutDetail");
-		 baseServiceImpl.update(paramMap);
-	}
-	
+
 	
 	/**
-	 * 根据产品入出库批次ID删除对应的产品入出库批次记录明细
-	 * 
-	 * @param map
+	 * 删除原单明细时，根据自增长ID去删除，以提高效率
+	 * @param list
 	 * @return
 	 */
-	public void deleteProBatchInOutDetailByMainId(Map<String, Object> map) {
-		Map<String,Object> paramMap = new HashMap<String, Object>();
-		paramMap.putAll(map);
-		paramMap.put(CherryBatchConstants.IBATIS_SQL_ID,"BINBAT152.deleteProBatchInOutDetailByMainId");
-		 baseServiceImpl.update(paramMap);
+	public void deleteProBatchInOutDetail(List<Map<String, Object>> list) {
+		 baseServiceImpl.deleteAll(list,"BINBAT152.deleteProBatchInOutDetail");
 	}
 	
 	/**
@@ -139,34 +160,7 @@ public class BINBAT152_Service extends BaseService {
 		paramMap.put(CherryBatchConstants.IBATIS_SQL_ID,"BINBAT152.updateRelSrResidualQuantity");
 		return baseServiceImpl.update(paramMap);
 	}
-	
-	
-	/**
-	 * 根据批次库存id得到对应的批次库存明细中成本价为空的数量
-	 * 
-	 * @param map
-	 * @return
-	 */
-	public int getCostPriceIsNullAmount (Map<String, Object> map) {
-		Map<String,Object> paramMap = new HashMap<String, Object>();
-		paramMap.putAll(map);
-		paramMap.put(CherryBatchConstants.IBATIS_SQL_ID,"BINBAT152.getCostPriceIsNullAmount");
-		return (Integer)baseServiceImpl.get(paramMap);
-	}
-	
-	
-	/**
-	 * 根据批次库存id得到对应的总成本价
-	 * 
-	 * @param map
-	 * @return
-	 */
-	public Map<String, Object>  getTotalCostPrice (Map<String, Object> map) {
-		Map<String,Object> paramMap = new HashMap<String, Object>();
-		paramMap.putAll(map);
-		paramMap.put(CherryBatchConstants.IBATIS_SQL_ID,"BINBAT152.getTotalCostPrice");
-		return (Map<String, Object>)baseServiceImpl.get(paramMap);
-	}
+
 	
 	
 	/**
@@ -184,14 +178,13 @@ public class BINBAT152_Service extends BaseService {
 	
 	
 	/**
-	 * 根据批次库存id修改对应的总成本价
+	 * 修改入出库批次主表的总成本价（TotalCostPrice为空的记录）
 	 * 
-	 * @param map
+	 * @param
 	 * @return
 	 */
-	public void updateTotalCostPrice (Map<String, Object> map) {
+	public void updateTotalCostPrice () {
 		Map<String,Object> paramMap = new HashMap<String, Object>();
-		paramMap.putAll(map);
 		paramMap.put(CherryBatchConstants.IBATIS_SQL_ID,"BINBAT152.updateTotalCostPrice");
 		 baseServiceImpl.update(paramMap);
 	}
@@ -270,130 +263,4 @@ public class BINBAT152_Service extends BaseService {
     	return baseServiceImpl.getList(parameterMap);
     }
 
-	/******* 单据入出库各产品的总成本写入原始交易单据明细  *********/
-
-	/**
-	 * 根据发货单单号，取得发货单相关成本信息。
-	 * @param map
-	 * @return
-	 */
-	public List<Map<String, Object>> getProductInfoListByDeliverNum(Map<String, Object> map) {
-		Map<String, Object> parameterMap = new HashMap<String, Object>();
-		parameterMap.putAll(map);
-		parameterMap.put(CherryConstants.IBATIS_SQL_ID, "BINBAT152.getProductInfoListByDeliverNum");
-		return baseServiceImpl.getList(parameterMap);
-	}
-
-	/**
-	 * 修改发货单明细表中的总成本
-	 * @param map
-	 * @return
-	 */
-	public int updateProductDeliverDetail(Map<String, Object> map) {
-		Map<String, Object> parameterMap = new HashMap<String, Object>();
-		parameterMap.putAll(map);
-		parameterMap.put(CherryConstants.IBATIS_SQL_ID, "BINBAT152.updateProductDeliverDetail");
-		return baseServiceImpl.update(parameterMap);
-
-	}
-
-	/**
-	 * 根据退库单单号，取得退库单相关成本信息。
-	 * @param map
-	 * @return
-	 */
-	public List<Map<String, Object>> getCostPriceByRR(Map<String, Object> map) {
-		Map<String, Object> parameterMap = new HashMap<String, Object>();
-		parameterMap.putAll(map);
-		parameterMap.put(CherryConstants.IBATIS_SQL_ID, "BINBAT152.getCostPriceByRR");
-		return baseServiceImpl.getList(parameterMap);
-	}
-
-	/**
-	 * 修改退库单明细表中的总成本
-	 * @param map
-	 * @return
-	 */
-	public int updateProductReturnDetail(Map<String, Object> map) {
-		Map<String, Object> parameterMap = new HashMap<String, Object>();
-		parameterMap.putAll(map);
-		parameterMap.put(CherryConstants.IBATIS_SQL_ID, "BINBAT152.updateProductReturnDetail");
-		return baseServiceImpl.update(parameterMap);
-
-	}
-
-	/**
-	 * 根据盘点单单号，取得发货单相关成本信息。
-	 * @param map
-	 * @return
-	 */
-	public List<Map<String, Object>> getProductInfoListByStockTakingNum(Map<String, Object> map) {
-		Map<String, Object> parameterMap = new HashMap<String, Object>();
-		parameterMap.putAll(map);
-		parameterMap.put(CherryConstants.IBATIS_SQL_ID, "BINBAT152.getProductInfoListByStockTakingNum");
-		return baseServiceImpl.getList(parameterMap);
-	}
-
-	/**
-	 * 修改盘点单明细表中的总成本
-	 * @param map
-	 * @return
-	 */
-	public int updateProductStockTakingDetail(Map<String, Object> map) {
-		Map<String, Object> parameterMap = new HashMap<String, Object>();
-		parameterMap.putAll(map);
-		parameterMap.put(CherryConstants.IBATIS_SQL_ID, "BINBAT152.updateProductStockTakingDetail");
-		return baseServiceImpl.update(parameterMap);
-
-	}
-
-	/**
-	 * 根据调出单单号，取得调出单相关成本信息。
-	 * @param map
-	 * @return
-	 */
-	public List<Map<String, Object>> getProductInfoListByAllocationOutIDNum(Map<String, Object> map) {
-		Map<String, Object> parameterMap = new HashMap<String, Object>();
-		parameterMap.putAll(map);
-		parameterMap.put(CherryConstants.IBATIS_SQL_ID, "BINBAT152.getProductInfoListByAllocationOutIDNum");
-		return baseServiceImpl.getList(parameterMap);
-	}
-
-	/**
-	 * 修改调出单明细表中的总成本
-	 * @param map
-	 * @return
-	 */
-	public int updateProductAllocationOutDetail(Map<String, Object> map) {
-		Map<String, Object> parameterMap = new HashMap<String, Object>();
-		parameterMap.putAll(map);
-		parameterMap.put(CherryConstants.IBATIS_SQL_ID, "BINBAT152.updateProductAllocationOutDetail");
-		return baseServiceImpl.update(parameterMap);
-
-	}
-
-	/**
-	 * 根据调入单单号，取得调入单相关成本信息。
-	 * @param map
-	 * @return
-	 */
-	public List<Map<String, Object>> getProductInfoListByAllocationInIDNum(Map<String, Object> map) {
-		Map<String, Object> parameterMap = new HashMap<String, Object>();
-		parameterMap.putAll(map);
-		parameterMap.put(CherryConstants.IBATIS_SQL_ID, "BINBAT152.getProductInfoListByAllocationInIDNum");
-		return baseServiceImpl.getList(parameterMap);
-	}
-
-	/**
-	 * 修改调入单明细表中的总成本
-	 * @param map
-	 * @return
-	 */
-	public int updateProductAllocationInDetail(Map<String, Object> map) {
-		Map<String, Object> parameterMap = new HashMap<String, Object>();
-		parameterMap.putAll(map);
-		parameterMap.put(CherryConstants.IBATIS_SQL_ID, "BINBAT152.updateProductAllocationInDetail");
-		return baseServiceImpl.update(parameterMap);
-
-	}
 }
