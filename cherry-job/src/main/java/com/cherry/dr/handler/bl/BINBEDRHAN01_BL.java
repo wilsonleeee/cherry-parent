@@ -771,6 +771,12 @@ public class BINBEDRHAN01_BL implements CherryMessageHandler_IF {
 		if(memberInfoMap == null) {
 			return;
 		}
+		// 会员卡号
+		String memCard = (String) memberInfoMap.get("memCode");
+		// 临时会员
+		if ("P5910302663".equals(memCard)) {
+			return;
+		}
 		int oldLevel = 0;
 		if (isTmall || adjustFlag) {
 			// 重算前等级
@@ -802,8 +808,6 @@ public class BINBEDRHAN01_BL implements CherryMessageHandler_IF {
 			}
 		}
 		CampBaseDTO campBaseDTO = new CampBaseDTO();
-		// 会员卡号
-		String memCard = (String)memberInfoMap.get("memCode");
 		// 会员卡号
 		campBaseDTO.setMemCode(memCard);
 		// 等级状态

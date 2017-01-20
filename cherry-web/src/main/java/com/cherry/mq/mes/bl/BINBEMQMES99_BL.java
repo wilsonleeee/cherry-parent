@@ -1307,7 +1307,8 @@ public class BINBEMQMES99_BL {
 		    	List<String> memCodeList = new ArrayList<String>();
 		    	String memberCode = (String)map.get("memberCode");
 				// 非会员
-				if (MessageConstants.ON_MEMBER_CARD.equals(memberCode)) {
+				if (MessageConstants.ON_MEMBER_CARD.equals(memberCode) ||
+						"P5910302663".equals(memberCode)) {
 					return;
 				}
 		    	memCodeList.add(memberCode);
@@ -1429,6 +1430,12 @@ public class BINBEMQMES99_BL {
 		    	if ("2".equals(billMode)) {
 		    		return;
 		    	}
+				String memberCode = (String) map.get("memberCode");
+				// 非会员
+				if (MessageConstants.ON_MEMBER_CARD.equals(memberCode) ||
+						"P5910302663".equals(memberCode)) {
+					return;
+				}
 		    	if(map.get("memberInfoID") != null) {
 		    		memberInfoId = map.get("memberInfoID").toString();
 		    	}
