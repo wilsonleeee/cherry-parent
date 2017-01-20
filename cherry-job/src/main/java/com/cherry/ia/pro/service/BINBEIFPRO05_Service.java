@@ -71,25 +71,22 @@ public class BINBEIFPRO05_Service extends BaseService {
 	/**
 	 * 插入特价产品接口数据库(WITPOSA_Product_SpecialOfferSolu)
 	 * 
-	 * @param Map
+	 * @param list
 	 * 
 	 * @return int
 	 */
-	public void addIFPrtSoluWithCounter(Map<String, Object> map) {
-		map.put(CherryBatchConstants.IBATIS_SQL_ID,"BINBEIFPRO05.addIFPrtSoluWithCounter");
-		ifServiceImpl.save(map);
+	public void addIFPrtSoluWithCounter(List<Map<String, Object>> list) {
+		ifServiceImpl.saveAll(list,"BINBEIFPRO05.addIFPrtSoluWithCounter");
 	}
 	
 	/**
 	 * 插入特价产品方案明细接口表
 	 * 
-	 * @param Map
-	 * 
-	 * @return int
+	 * @param list
+	 *
 	 */
-	public void addIFPrtSoluSCS(Map<String, Object> map) {
-		map.put(CherryConstants.IBATIS_SQL_ID,"BINBEIFPRO05.addIFPrtSoluSCS");
-		ifServiceImpl.save(map);
+	public void addIFPrtSoluSCS(List<Map<String, Object>> list) {
+		ifServiceImpl.saveAll(list,"BINBEIFPRO05.addIFPrtSoluSCS");
 	}
 	
 	
@@ -98,23 +95,21 @@ public class BINBEIFPRO05_Service extends BaseService {
 	/**
 	 * 物理删除特价产品方案柜台接口表
 	 * 
-	 * @param map
+	 * @param list
 	 * @return
 	 */
-	public int delIFPrtSoluWithCounter(Map<String, Object> map){
-		map.put(CherryConstants.IBATIS_SQL_ID, "BINBEIFPRO05.delIFPrtSoluWithCounter");
-		return ifServiceImpl.remove(map);
+	public void delIFPrtSoluWithCounter(List<Map<String, Object>> list){
+		ifServiceImpl.deleteAll(list,"BINBEIFPRO05.delIFPrtSoluWithCounter");
 	}
 	
 	/**
 	 * 物理删除特价产品方案明细接口表
 	 * 
-	 * @param map
+	 * @param list
 	 * @return
 	 */
-	public int delIFPrtSoluSCS(Map<String, Object> map){
-		map.put(CherryConstants.IBATIS_SQL_ID, "BINBEIFPRO05.delIFPrtSoluSCS");
-		return ifServiceImpl.remove(map);
+	public void delIFPrtSoluSCS(List<Map<String, Object>> list){
+		ifServiceImpl.deleteAll(list,"BINBEIFPRO05.delIFPrtSoluSCS");
 	}
 	
 	/**
