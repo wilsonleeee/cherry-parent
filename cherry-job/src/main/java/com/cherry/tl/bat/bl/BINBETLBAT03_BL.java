@@ -57,10 +57,16 @@ public class BINBETLBAT03_BL {
 
 			// 取得更新前业务日期
 			String busDateBef = binBETLBAT03_Service.getBussinessDate(map);
-			
+			//取得当前时间(年月日)
+			String controlDate = binBETLBAT03_Service.getDateYMD();
 			
 			//判断执行Batch的品牌有没有设定过业务日期
 			if(binBETLBAT03_Service.getBussinessDate(map)!=null){
+
+				//表示当前业务日期和当前系统日期都是今天，此时不允许更新业务日期（业务日期当前不能当天）
+				if(busDateBef.equals(controlDate)){
+					return flag;
+				}
 				
 				// 取得更新前更新次数
 				if(binBETLBAT03_Service.getModifyCount(map)!=null){
@@ -77,9 +83,7 @@ public class BINBETLBAT03_BL {
 				binBETLBAT03_Service.updateBussinessDate(map);
 				
 			}else{
-				
-				//取得当前时间(年月日)
-				String controlDate = binBETLBAT03_Service.getDateYMD();
+
 				map.put("controlDate", controlDate);
 				//取得当前时间
 				String createTime = binBETLBAT03_Service.getSYSDateConf();
