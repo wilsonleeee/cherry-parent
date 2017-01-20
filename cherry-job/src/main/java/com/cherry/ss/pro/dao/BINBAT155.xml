@@ -59,15 +59,15 @@
 			FROM Inventory.BIN_ProductReturn A WITH (NOLOCK)
 			JOIN Inventory.BIN_ProductReturnDetail B WITH (NOLOCK)
 				ON (A.BIN_ProductReturnID = B.BIN_ProductReturnID)
+			JOIN (  select RelevanceNo,BIN_ProductVendorID,SUM (Quantity*CostPrice) TotalCostPrice,SUM(Quantity*CostPrice)/SUM (Quantity) AverageCost
+					  FROM Inventory.BIN_ProductBatchInOutDetail
+					  where StockType='1'
+					  group by RelevanceNo,BIN_ProductVendorID)	E
+	            ON (A.ReturnNoIF = E.RelevanceNo  AND B.BIN_ProductVendorID=E.BIN_ProductVendorID and E.TotalCostPrice is not  null)
 			LEFT JOIN Basis.BIN_ProductVendor C WITH (NOLOCK)
 				ON (B.BIN_ProductVendorID = C.BIN_ProductVendorID)
 			LEFT JOIN Basis.BIN_Product D WITH (NOLOCK)
 				ON (C.BIN_ProductID = D.BIN_ProductID)
-			LEFT JOIN (  select RelevanceNo,BIN_ProductVendorID,SUM (Quantity*CostPrice) TotalCostPrice,SUM(Quantity*CostPrice)/SUM (Quantity) AverageCost
-					  FROM Inventory.BIN_ProductBatchInOutDetail
-					  where StockType='1'
-					  group by RelevanceNo,BIN_ProductVendorID)	E
-	            ON (A.ReturnNo = E.RelevanceNo  AND B.BIN_ProductVendorID=E.BIN_ProductVendorID)		
 			WHERE A.BIN_BrandInfoID = #brandInfoId#
 			AND A.BIN_OrganizationInfoID = #organizationInfoId#
 			AND A.ValidFlag = '1'
@@ -122,6 +122,37 @@
 				#billNoIFList[]#
 			</iterate>
 	  	</isNotEmpty>
+	</update>
+
+	<!-- SynchFlag状态更新(null改为1) -->
+	<update id="updateSynchFlagNullToOne" parameterClass="java.util.HashMap">
+		UPDATE
+			<isNotEmpty property="batchSize">
+				TOP(#batchSize#)
+			</isNotEmpty>
+			Inventory.BIN_ProductReturn
+		SET
+			SynchFlag = '1'
+		FROM
+			Inventory.BIN_ProductReturn A WITH(NOLOCK)
+		WHERE
+			A.ValidFlag ='1'
+			AND A.BIN_BrandInfoID = #brandInfoId#
+			AND A.BIN_OrganizationInfoID = #organizationInfoId#
+			AND A.SynchFlag IS NULL
+			AND exists(
+				select 1 from Inventory.BIN_ProductBatchInOut B
+				where B.RelevanceNo=A.ReturnNoIF and B.TotalCostPrice is not null and B.TradeType='RR'
+			)
+			AND EXISTS (
+		<include refid="BINBECMINC99.getBillByTestModStandList" />
+		 AND A.BIN_OrganizationID = C99.BIN_OrganizationID )
+		<isNotEmpty property="billNoIFList" prepend="AND">
+			A.ReturnNoIF IN
+			<iterate property="billNoIFList" open="(" close=")" conjunction=",">
+				#billNoIFList[]#
+			</iterate>
+		</isNotEmpty>
 	</update>
 	
 	<!-- 取得指定导出状态的订单号List -->

@@ -67,6 +67,20 @@ public class BINBAT155_Service extends BaseService {
 		paramMap.put(CherryBatchConstants.IBATIS_SQL_ID,"BINBAT155.updateSynchFlag");
 		return baseServiceImpl.update(paramMap);
 	}
+
+
+	/**
+	 * 状态更新 SynchFlag状态更新(null改为1)
+	 *
+	 * @param map
+	 * @return
+	 */
+	public int updateSynchFlagNullToOne(Map<String, Object> map) {
+		Map<String,Object> paramMap = new HashMap<String, Object>();
+		paramMap.putAll(map);
+		paramMap.put(CherryBatchConstants.IBATIS_SQL_ID,"BINBAT155.updateSynchFlagNullToOne");
+		return baseServiceImpl.update(paramMap);
+	}
 	
 	/**
 	 * 取得指定导出状态的订单号List

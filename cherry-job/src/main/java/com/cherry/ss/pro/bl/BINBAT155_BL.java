@@ -288,9 +288,9 @@ public class BINBAT155_BL {
 		updateMap.putAll(map);
 		if (identifyId == 1) {
 			// 导出状态由可导出（SynchFlag：null）设置为导出处理中（SynchFlag：1）
-			updateMap.put("synchFlag_Old", null);
-			updateMap.put("synchFlag_New", SYNCH_FLAG_1);
-			return binbat155_Service.updateSynchFlag(updateMap);
+			//updateMap.put("synchFlag_Old", null);
+			//updateMap.put("synchFlag_New", SYNCH_FLAG_1);
+			return binbat155_Service.updateSynchFlagNullToOne(updateMap);
 		} else if (identifyId == 2) {
 			// 导出状态由导出处理中（SynchFlag：1）设置为导出完成（SynchFlag：2）
 			updateMap.put("synchFlag_Old", SYNCH_FLAG_1);
