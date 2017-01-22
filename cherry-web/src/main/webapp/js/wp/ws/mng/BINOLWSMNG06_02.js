@@ -348,7 +348,7 @@ BINOLWSMNG06_02.prototype = {
 			if($(this).find("#productVendorIDArr").val()!=""){
 				count += 1;
 				var quantityArr = $this.find(":input[id='quantityArr']").val();
-				if (quantityArr == "" || quantityArr == "0") {
+				if (quantityArr == "") {
 					flag = false;
 					if(addType != "all"){
 						$(this).attr("class", "errTRbgColor");
