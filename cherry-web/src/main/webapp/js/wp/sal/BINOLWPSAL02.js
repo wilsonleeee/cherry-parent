@@ -1654,7 +1654,6 @@ BINOLWPSAL02_GLOBAL.prototype = {
 
 		//柜台积分计划
 		//获取云POS是否开启积分计划配置项，没有开启的情况下自动跳转到收款
-
 		var isExecuteLimitPlan = $('#isExecuteLimitPlan').val();
 		var dialogPopFlag = false;
 		if(isExecuteLimitPlan == '1'){
@@ -1711,8 +1710,9 @@ BINOLWPSAL02_GLOBAL.prototype = {
 		//-----------------------------------------------------------------------
 
 		//获取云POS是否开启智能促销的配置项，没有开启智能促销的情况下自动跳转到收款
+		var saleType=$('#saleType').val();
 		var smartPromotion=$('#smartPromotion').val();
-		if(smartPromotion == 'N'){
+		if(smartPromotion == 'N' && saleType == 'NS'){
 			//获取云POS负库存销售时，是否给于提示并且继续销售配置项
 			var stockSaleType=$('#stockSaleType').val();
 			if(stockSaleType == 'Y'){
@@ -1748,91 +1748,97 @@ BINOLWPSAL02_GLOBAL.prototype = {
 			return;
 		}
 
-		// 将销售明细列表转换成Json字符串
-		BINOLWPSAL02.getSaleDetailList();
-		// 删除空行
-		BINOLWPSAL02.deleteEmptyRow();
-		BINOLWPSAL02.getSaleDetailList_promotion();
-		//添加一个空行
-		BINOLWPSAL02.addNewLine();
-		var saleDetailList=$('#saleDetailList').val();
-		var baCode=$('#baCode').val();
-		var memberCode=$('#memberCode').val();
-		var totalDiscountRate = $("#mainForm #totalDiscountRate").val();
-		var memberLevel=$("#memberLevel").val();
-		var params="saleDetailList="+saleDetailList+"&baCode="+baCode+"&memberCode="+memberCode+"&memberLevel="+memberLevel;
-		var initMatchRuleUrl=$("#initMatchRule").attr("href");
-		var MatchRuleUrl=$('#getMatchRule').attr("href");
-		var resultflag;
-		cherryAjaxRequest({
-			url: MatchRuleUrl,
-			param: params,
-			callback: function(data) {
-				//智能促销去除最低折扣率限制
-				$("#minDiscount").removeAttr("value");
-				if(data == null || data == "" || data == undefined){
-					BINOLWPSAL02.collect();
-					return;
+		if(saleType == 'NS'){
+			// 将销售明细列表转换成Json字符串
+			BINOLWPSAL02.getSaleDetailList();
+			// 删除空行
+			BINOLWPSAL02.deleteEmptyRow();
+			BINOLWPSAL02.getSaleDetailList_promotion();
+			//添加一个空行
+			BINOLWPSAL02.addNewLine();
+			var saleDetailList=$('#saleDetailList').val();
+			var baCode=$('#baCode').val();
+			var memberCode=$('#memberCode').val();
+			var totalDiscountRate = $("#mainForm #totalDiscountRate").val();
+			var memberLevel=$("#memberLevel").val();
+			var params="saleDetailList="+saleDetailList+"&baCode="+baCode+"&memberCode="+memberCode+"&memberLevel="+memberLevel;
+			var initMatchRuleUrl=$("#initMatchRule").attr("href");
+			var MatchRuleUrl=$('#getMatchRule').attr("href");
+			var resultflag;
+			cherryAjaxRequest({
+				url: MatchRuleUrl,
+				param: params,
+				callback: function(data) {
+					//智能促销去除最低折扣率限制
+					$("#minDiscount").removeAttr("value");
+					if(data == null || data == "" || data == undefined){
+						BINOLWPSAL02.collect();
+						return;
+					}
+					var param_map = eval("("+data+")");
+					//标识后端有没有对应的规则返回，没有的话直接跳转收款
+					resultflag=param_map.resultflag;
+					if(resultflag == "0"){
+						BINOLWPSAL02.collect();
+						return;
+					}else{
+						// 删除销售单据中的打折明细行
+						$("#btnCollect").attr("class","btn_top_disable");
+						$("#btnCollect").attr("disabled","disabled");
+						$("#btnDiscount").attr("class","btn_top_disable");
+						$("#btnDiscount").attr("disabled","disabled");
+						$("#btnHangBills").attr("class","btn_top_disable");
+						$("#btnHangBills").attr("disabled","disabled");
+						BINOLWPSAL02.deleteDiscountRow();
+						var dialogSetting = {
+							dialogInit: "#dialogInit",
+							width: 500,
+							height: 350,
+							title: $("#initMatchRule_CloudPos").text(),
+							closeEvent:function(){
+								//清空之前的促销列表,替换为之前报错的html信息
+								BINOLWPSAL02.removePromotionList();
+								// 最后一个文本框获得焦点
+								BINOLWPSAL02.lastInputSelect();
+								// 可见文本框回车事件解绑
+								$("#collectPageDiv").find("input:text:visible").unbind();
+								// 关闭弹出窗口
+								removeDialog("#dialogInit");
+								// 解除退货和补登按钮禁用
+								$("#btnReturnsGoods").removeAttr("disabled");
+								$("#btnReturnsGoods").attr("class","btn_top");
+								$("#btnAddHistoryBill").removeAttr("disabled");
+								$("#btnAddHistoryBill").attr("class","btn_top");
+								// 解除清空购物车禁用
+								$("#btnEmptyShoppingCart").removeAttr("disabled");
+								$("#btnEmptyShoppingCart").attr("class","btn_top");
+								//解除收款按钮禁用
+								$("#btnCollect").removeAttr("disabled");
+								$("#btnCollect").attr("class","btn_top");
+								$("#btnCollect").removeAttr("disabled");
+								//解除挂单/提单
+								$("#btnHangBills").removeAttr("disabled");
+								$("#btnHangBills").attr("class","btn_top");
+								$("#btnHangBills").removeAttr("disabled");
+							}
+						};
+						openDialog(dialogSetting);
+						cherryAjaxRequest({
+							url: initMatchRuleUrl,
+							param: params,
+							callback: function(data) {
+								$("#dialogInit").html(data);
+								BINOLWPSAL08_1.appendNewRow();
+							}
+						});
+					}
 				}
-				var param_map = eval("("+data+")");
-				//标识后端有没有对应的规则返回，没有的话直接跳转收款
-				resultflag=param_map.resultflag;
-				if(resultflag == "0"){
-					BINOLWPSAL02.collect();
-					return;
-				}else{
-					// 删除销售单据中的打折明细行
-					$("#btnCollect").attr("class","btn_top_disable");
-					$("#btnCollect").attr("disabled","disabled");
-					$("#btnDiscount").attr("class","btn_top_disable");
-					$("#btnDiscount").attr("disabled","disabled");
-					$("#btnHangBills").attr("class","btn_top_disable");
-					$("#btnHangBills").attr("disabled","disabled");
-					BINOLWPSAL02.deleteDiscountRow();
-					var dialogSetting = {
-						dialogInit: "#dialogInit",
-						width: 500,
-						height: 350,
-						title: $("#initMatchRule_CloudPos").text(),
-						closeEvent:function(){
-							//清空之前的促销列表,替换为之前报错的html信息
-							BINOLWPSAL02.removePromotionList();
-							// 最后一个文本框获得焦点
-							BINOLWPSAL02.lastInputSelect();
-							// 可见文本框回车事件解绑
-							$("#collectPageDiv").find("input:text:visible").unbind();
-							// 关闭弹出窗口
-							removeDialog("#dialogInit");
-							// 解除退货和补登按钮禁用
-							$("#btnReturnsGoods").removeAttr("disabled");
-							$("#btnReturnsGoods").attr("class","btn_top");
-							$("#btnAddHistoryBill").removeAttr("disabled");
-							$("#btnAddHistoryBill").attr("class","btn_top");
-							// 解除清空购物车禁用
-							$("#btnEmptyShoppingCart").removeAttr("disabled");
-							$("#btnEmptyShoppingCart").attr("class","btn_top");
-							//解除收款按钮禁用
-							$("#btnCollect").removeAttr("disabled");
-							$("#btnCollect").attr("class","btn_top");
-							$("#btnCollect").removeAttr("disabled");
-							//解除挂单/提单
-							$("#btnHangBills").removeAttr("disabled");
-							$("#btnHangBills").attr("class","btn_top");
-							$("#btnHangBills").removeAttr("disabled");
-						}
-					};
-					openDialog(dialogSetting);
-					cherryAjaxRequest({
-						url: initMatchRuleUrl,
-						param: params,
-						callback: function(data) {
-							$("#dialogInit").html(data);
-							BINOLWPSAL08_1.appendNewRow();
-						}
-					});
-				}
-			}
-		});
+			});
+		}else{
+			BINOLWPSAL02.collect();
+		}
+
+
 
 	},
 	"removePromotionList":function(){
@@ -1872,6 +1878,7 @@ BINOLWPSAL02_GLOBAL.prototype = {
 	"collect":function(){
 		var baChooseModel = $("#baChooseModel").val();
 		var dgOpenedState = $("#dgOpenedState").val();
+		var saleType=$("#saleType").val();
 		if(dgOpenedState != "Y"){
 			if(!$('#mainForm').valid()) {
 				// 显示提示信息
@@ -1900,7 +1907,7 @@ BINOLWPSAL02_GLOBAL.prototype = {
 			}
 			
 			// 判断页面上的数量是否大于库存
-			if($("#stockType").val() == "N" && $("#stockSaleType").val() == "N"){
+			if($("#stockType").val() == "N" && $("#stockSaleType").val() == "N" && saleType == "NS"){
 				if($('#databody >tr').length > 0){
 					var checkSocketFlag = true;
 					$.each($('#databody >tr'), function(i){
@@ -1932,7 +1939,7 @@ BINOLWPSAL02_GLOBAL.prototype = {
 			}
 			
 			// 判断折扣是否在系统设置允许的范围内
-			if($('#databody >tr').length > 0){
+			if($('#databody >tr').length > 0 && saleType == "NS"){
 				var checkDiscountFlag = true;
 				var minDiscount = $("#minDiscount").val();
 				$.each($('#databody >tr'), function(i){

@@ -56,6 +56,13 @@ public class BINOLWPSAL03_BL implements BINOLWPSAL03_IF{
 	@Override
 	public String tran_collect(BINOLWPSAL03_Form form, UserInfo userInfo)
 			throws Exception {
+		String billCode=form.getBillCode();
+		String businessType="";
+		if(billCode.contains(CherryConstants.WP_BILLPREFIX_WN)){
+			businessType= CherryConstants.WP_SALETYPE_NS;
+		}else{
+			businessType= CherryConstants.WP_SALETYPE_SR;
+		}
 		String organizationInfoId = ConvertUtil.getString(userInfo.getBIN_OrganizationInfoID());
 		String brandInfoId = ConvertUtil.getString(userInfo.getBIN_BrandInfoID());
 		
@@ -93,7 +100,7 @@ public class BINOLWPSAL03_BL implements BINOLWPSAL03_IF{
 		String saleSrType = CherryConstants.WP_SALESRTYPE_3;
 		String stockType = "1";
 		String saleType = ConvertUtil.getString(form.getSaleType());
-		if(saleType.equals(CherryConstants.WP_SALETYPE_SR)){
+		if(saleType.equals(CherryConstants.WP_SALETYPE_SR) && billCode.contains(CherryConstants.WP_BILLPREFIX_WR)){
 			saleSrType = CherryConstants.WP_SALESRTYPE_1;
 			stockType = "0";
 		}
