@@ -616,10 +616,10 @@ public class BINBAT152_BL {
             mainData.put("StockTakingNoIF", mainData.get("RelevanceNo"));
         }// 业务类型为调拨时（调出确认），插入到入出库批次表后，将想要成本计算出来更新到产品调出单据明细表中
         else if (CherryConstants.BUSINESS_TYPE_LG.equals(tradeType)) {
-            mainData.put("AllocationNoIF", mainData.get("RelevanceNo"));
+            mainData.put("AllocationOutNoIF", mainData.get("RelevanceNo"));
         }// 业务类型为调拨时（调入确认），插入到入出库批次表后，将想要成本计算出来更新到产品调入单据明细表中
         else if (CherryConstants.BUSINESS_TYPE_BG.equals(tradeType)) {
-            mainData.put("AllocationOutNoIF", mainData.get("RelevanceNo"));
+            mainData.put("AllocationInNoIF", mainData.get("RelevanceNo"));
         } else {
             return;
         }
