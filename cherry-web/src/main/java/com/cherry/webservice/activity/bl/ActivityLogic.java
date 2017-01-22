@@ -420,6 +420,7 @@ public class ActivityLogic implements Activity_IF {
 		String handlePoints = ConvertUtil.getString(map.get("HandlePoints"));
 		if ("".equals(handlePoints)) {
 			handlePoints = "1";
+			map.put("HandlePoints",handlePoints);
 		}
 		// if(!"SV".equals(subType)){
 		// retMap.put("ERRORCODE", 4);
@@ -721,6 +722,7 @@ public class ActivityLogic implements Activity_IF {
 		comMap.put(CherryConstants.ORGANIZATIONINFOID, orgId);
 		comMap.put(CampConstants.BATCHNO, batchNo);
 		comMap.put("employeeCode", map.get("BAcode"));
+		comMap.put(CherryConstants.BUSINESS_DATE, service.getBusDate(comMap));
 		comMap.put(CherryConstants.ORG_CODE, map.get("OrgCode"));
 		comMap.put(CherryConstants.BRAND_CODE, map.get("BrandCode"));
 		comMap.put(CherryConstants.CREATEDBY, "WS");
