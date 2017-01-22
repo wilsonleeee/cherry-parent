@@ -349,7 +349,7 @@ public class BINBAT134_BL {
 			// 修改次数
 			temp[1] = null;
 			// 员工code
-			temp[2] = CherryBatchUtil.getString(mainMap.get("OperatorCode"));
+			temp[2] = "DEALER";//使用默认的员工代号，不从接口库里面读取
 			// 入出库区分
 			temp[3] = null;
 			// 产品条码
