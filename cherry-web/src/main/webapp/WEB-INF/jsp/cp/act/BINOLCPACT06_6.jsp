@@ -24,14 +24,14 @@ $('#endDate').cherryDate({
 $('#sendStartDate').cherryDate({
 	holidayObj: holidays,
 	beforeShow: function(input){
-		var value = $('#endDate').val();
+		var value = $('#sendEndDate').val();
 		return [value,'maxDate'];
 	}
 });
 $('#sendEndDate').cherryDate({
 	holidayObj: holidays,
 	beforeShow: function(input){
-		var value = $('#startDate').val();
+		var value = $('#sendStartDate').val();
 		return [value,'minDate'];
 	}
 });

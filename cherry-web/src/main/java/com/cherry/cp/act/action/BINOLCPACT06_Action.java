@@ -374,6 +374,8 @@ public class BINOLCPACT06_Action extends BaseAction implements ModelDriven<BINOL
 		//会员所属柜台
 //		map.put("counterBelong",form.getCounterBelong());
 		ConvertUtil.setForm(form, map);
+		map.put("sendStartDate",form.getSendStartDate());
+		map.put("sendEndDate",form.getSendEndDate());
 		CherryUtil.trimMap(map);
 		int count = bl.getOrderCount(map);
 		if(count>0){
@@ -729,7 +731,7 @@ public class BINOLCPACT06_Action extends BaseAction implements ModelDriven<BINOL
 		//发货开始日期
 		String startSendDate = form.getSendStartDate();
 		//发货截止日期
-		String endSendDate = form.getEndDate();
+		String endSendDate = form.getSendEndDate();
 		//开始日期验证
 		if (startDate != null && !"".equals(startDate)) {
 			// 日期格式验证
