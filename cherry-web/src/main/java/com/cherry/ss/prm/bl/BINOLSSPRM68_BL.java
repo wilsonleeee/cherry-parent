@@ -614,6 +614,7 @@ public class BINOLSSPRM68_BL {
 					Map<String,Object> userRetMap = new HashMap<String,Object>();
 					userRetMap.put("code",obj);
 					userRetMap.put("name",userAuthorityMap.get(obj));
+					userRetMap.put("level",0);
 					resultList.add(userRetMap);
 				}
 			}
