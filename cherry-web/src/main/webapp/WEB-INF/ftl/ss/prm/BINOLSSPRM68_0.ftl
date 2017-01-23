@@ -94,7 +94,7 @@
 						</#if>
                         <li class="left" style="width:25%;white-space: nowrap;list-style-type:none;">
 
-							<#if !placeMap.half && !(placeMap.isParent!false)>
+							<#if !placeMap.half!false && !(placeMap.isParent!false)>
 								<#if placeMap.level=0>
 									<span style="color:#FF3030;white-space: nowrap;margin:5px 0px;width:210px;">${(placeMap.name)!?html}</span>
 								</#if>
