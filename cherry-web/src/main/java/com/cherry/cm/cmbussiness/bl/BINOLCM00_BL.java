@@ -89,7 +89,7 @@ public class BINOLCM00_BL {
 	/**
 	 * 取得部门类型List
 	 * 
-	 * @param Map
+	 * @param map
 	 *            查询条件
 	 * 
 	 * @return List 部门类型List
@@ -101,7 +101,7 @@ public class BINOLCM00_BL {
 	/**
 	 * 取得权限部门List
 	 * 
-	 * @param Map
+	 * @param map
 	 *            查询条件
 	 * 
 	 * @return List 部门List
@@ -113,7 +113,7 @@ public class BINOLCM00_BL {
 	/**
 	 * 取得部门List
 	 * 
-	 * @param Map
+	 * @param map
 	 *            查询条件
 	 * 
 	 * @return List 部门List
@@ -125,7 +125,7 @@ public class BINOLCM00_BL {
 	/**
 	 * 取得实体仓库List
 	 * 
-	 * @param Map
+	 * @param map
 	 *            查询条件
 	 * 
 	 * @return List 实体仓库List
@@ -137,7 +137,7 @@ public class BINOLCM00_BL {
 	/**
 	 * 查询假日
 	 * 
-	 * @param Map
+	 * @param map
 	 * @return String
 	 * @exception JSONException
 	 * 
@@ -155,7 +155,7 @@ public class BINOLCM00_BL {
 	 * 
 	 * @param orgInfoId
 	 *            组织ID
-	 * @param cal
+	 * @param date
 	 *            日期
 	 * @return String
 	 */
@@ -253,6 +253,7 @@ public class BINOLCM00_BL {
 		// 取得开始日期的前一天
 		String startDate1 = DateUtil.addDateByDays(CherryConstants.DATE_PATTERN,
 				startDate, -1);
+		String twoMonthBeforeCutDay = "2010-01-01";
 		// 取得月度库存截止日期
 		Map<String, Object> map1 = getCutOfDate(flag,orgInfoId, startDate1);
 		Map<String, Object> map2 = getCutOfDate(flag,orgInfoId, endDate);
@@ -276,6 +277,8 @@ public class BINOLCM00_BL {
 				}
 				// 月度库存统计日期
 				map.put("cutOfDate", cutOfDate1);
+				//计算月度库存统计日期的前两个月的日期
+				twoMonthBeforeCutDay = DateUtil.addDateByMonth(CherryConstants.DATE_PATTERN,cutOfDate1,-2);
 			} else {
 				// 以期末未集结点flag2为-1
 				map.put("flagB", 1);
@@ -292,6 +295,8 @@ public class BINOLCM00_BL {
 				}
 				// 月度库存统计日期
 				map.put("cutOfDate", cutOfDate2);
+				//计算月度库存统计日期的前两个月的日期
+				twoMonthBeforeCutDay = DateUtil.addDateByMonth(CherryConstants.DATE_PATTERN,cutOfDate2,-2);
 			}
 		} else {
 			// ***************************2012-04-27 lipc NEWWITPOS-1328对应开始 *************************** //
@@ -310,12 +315,13 @@ public class BINOLCM00_BL {
 		map.put("startDate", startDate);
 		// 截止日期
 		map.put("endDate", endDate);
+		//月度库存统计日期的前两个月的日期
+		map.put("twoMonthBeforeCutDay",twoMonthBeforeCutDay);
 	}
-	
 	/**
 	 * 取得权限柜台(包含测试柜台)List
 	 * 
-	 * @param Map
+	 * @param map
 	 *            查询条件
 	 * 
 	 * @return List 部门List
@@ -327,7 +333,7 @@ public class BINOLCM00_BL {
 	/**
 	 * 取得权限柜台(不包含测试柜台)List
 	 * 
-	 * @param Map
+	 * @param map
 	 *            查询条件
 	 * 
 	 * @return List 部门List

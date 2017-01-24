@@ -295,24 +295,24 @@
 			A1.BIN_InventoryInfoID,
 			A1.BIN_ProductVendorID,
 			0 AS hQuantity,
-			 CASE WHEN A1.StockType = '0' and H.StockInOutDate >= CONVERT(date,#startDate#)
+			SUM(CONVERT(BIGINT,CASE WHEN A1.StockType = '0' and H.StockInOutDate >= CONVERT(date,#startDate#)
 		           AND H.StockInOutDate <= CONVERT(date,#endDate#)
-			THEN ISNULL(A1.Quantity,0) else 0 end AS inQuantity,
-		    CASE WHEN A1.StockType = '1' and H.StockInOutDate >= CONVERT(date,#startDate#)
+			THEN ISNULL(A1.Quantity,0) else 0 end)) AS inQuantity,
+		    SUM(CASE WHEN A1.StockType = '1' and H.StockInOutDate >= CONVERT(date,#startDate#)
 		           AND H.StockInOutDate <= CONVERT(date,#endDate#)
-			THEN ISNULL(A1.Quantity,0) else 0 end AS outQuantity,
-		    CASE WHEN A1.StockType = '0' and H.StockInOutDate <= CONVERT(date,#cutOfDate#)
+			THEN ISNULL(A1.Quantity,0) else 0 end) AS outQuantity,
+		    SUM(CONVERT(BIGINT,CASE WHEN A1.StockType = '0' and H.StockInOutDate <= CONVERT(date,#cutOfDate#)
 				AND H.ValidFlag = '1' AND H.CloseFlag = '0'
-			THEN ISNULL(A1.Quantity,0) else 0 end AS hDinQuantity,
-		    CASE WHEN A1.StockType = '1' and H.StockInOutDate <= CONVERT(date,#cutOfDate#)
+			THEN ISNULL(A1.Quantity,0) else 0 end)) AS hDinQuantity,
+		    SUM(CONVERT(BIGINT,CASE WHEN A1.StockType = '1' and H.StockInOutDate <= CONVERT(date,#cutOfDate#)
 				AND H.ValidFlag = '1' AND H.CloseFlag = '0'
-			THEN ISNULL(A1.Quantity,0) else 0 end AS hDoutQuantity,
-			CASE WHEN A1.StockType = '0' and H.StockInOutDate > CONVERT(date,#date1#)
+			THEN ISNULL(A1.Quantity,0) else 0 end)) AS hDoutQuantity,
+			SUM(CONVERT(BIGINT,CASE WHEN A1.StockType = '0' and H.StockInOutDate > CONVERT(date,#date1#)
 		           AND H.StockInOutDate <= CONVERT(date,#date2#)
-			THEN ISNULL(A1.Quantity,0) else 0 end AS hinQuantity,
-		    CASE WHEN A1.StockType = '1' and H.StockInOutDate > CONVERT(date,#date1#)
+			THEN ISNULL(A1.Quantity,0) else 0 end)) AS hinQuantity,
+		    SUM(CONVERT(BIGINT,CASE WHEN A1.StockType = '1' and H.StockInOutDate > CONVERT(date,#date1#)
 		           AND H.StockInOutDate <= CONVERT(date,#date2#)
-			THEN ISNULL(A1.Quantity,0) else 0 end AS houtQuantity 
+			THEN ISNULL(A1.Quantity,0) else 0 end)) AS houtQuantity
 		FROM
 			Inventory.BIN_ProductInOut H WITH(NOLOCK,index = dta_index_BIN_ProductInOut_6_1597352855__K22_1_15_20)
 			JOIN Inventory.BIN_ProductInOutDetail A1 WITH(NOLOCK)
@@ -321,7 +321,9 @@
 			JOIN T99
 			ON(A1.BIN_InventoryInfoID = T99.BIN_InventoryInfoID)
 		WHERE
-			 H.ValidFlag = '1'
+			 H.ValidFlag = '1' AND
+			 H.StockInOutDate > CONVERT(DATE, #twoMonthBeforeCutDay#) AND
+			 H.StockInOutDate <= CONVERT(DATE, #endDate#)
 		]]>
 		<isNotEmpty property="prtVendorId" prepend="AND">
 			A1.BIN_ProductVendorID = #prtVendorId#
@@ -332,7 +334,11 @@
 		<isNotEmpty property="lgcInventoryId" prepend="AND">
 			A1.BIN_LogicInventoryInfoID = #lgcInventoryId#
 		</isNotEmpty>
-	</sql>	
+		<![CDATA[
+			GROUP BY A1.BIN_InventoryInfoID,
+			A1.BIN_ProductVendorID
+		]]>
+	</sql>
 	<!-- 库存记录查询sql文  -->
 	<sql id="ProStockSQL">
 		<![CDATA[
@@ -387,11 +393,22 @@
 				+ (CONVERT(BIGINT,T0.hinQuantity) - CONVERT(BIGINT,T0.houtQuantity)) * #flag# + (CONVERT(BIGINT,T0.inQuantity) - CONVERT(BIGINT,T0.outQuantity))) AS endQuantity
 			]]>		
 		</isEmpty>
-		<![CDATA[ FROM( ]]>
+		<![CDATA[ FROM( SELECT
+							CASE WHEN  kk_1.BIN_InventoryInfoID IS NULL then kk_2.BIN_InventoryInfoID else kk_1.BIN_InventoryInfoID end as BIN_InventoryInfoID,
+							CASE WHEN  kk_1.BIN_ProductVendorID IS NULL then kk_2.BIN_ProductVendorID else kk_1.BIN_ProductVendorID end as BIN_ProductVendorID,
+							ISNULL(kk_1.hQuantity,0)+ISNULL(kk_2.hQuantity,0) AS hQuantity,
+							ISNULL(kk_1.inQuantity,0)+ISNULL(kk_2.inQuantity,0) AS inQuantity,
+							ISNULL(kk_1.outQuantity,0)+ISNULL(kk_2.outQuantity,0) AS outQuantity,
+							ISNULL(kk_1.hDinQuantity,0)+ISNULL(kk_2.hDinQuantity,0) AS hDinQuantity,
+							ISNULL(kk_1.hDoutQuantity,0)+ISNULL(kk_2.hDoutQuantity,0) AS hDoutQuantity,
+							ISNULL(kk_1.hinQuantity,0)+ISNULL(kk_2.hinQuantity,0) AS hinQuantity,
+							ISNULL(kk_1.houtQuantity,0)+ISNULL(kk_2.houtQuantity,0) AS houtQuantity
+		 FROM(]]>
+
 			<include refid="BINOLPTRPS11.ProStockHistorySQL" />
-			<![CDATA[ UNION ALL ]]>
+			<![CDATA[) kk_1 FULL JOIN (]]>
 			<include refid="BINOLPTRPS11.ProStockInOutSQL" />
-		<![CDATA[ ) T0
+		<![CDATA[ )kk_2 ON kk_1.BIN_InventoryInfoID = kk_2.BIN_InventoryInfoID AND kk_1.BIN_ProductVendorID = kk_2.BIN_ProductVendorID ) T0
 				JOIN Basis.BIN_ProductVendor D WITH(NOLOCK)
 				ON(T0.BIN_ProductVendorID = D.BIN_ProductVendorID
 				]]>
