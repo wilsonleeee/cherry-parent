@@ -94,13 +94,12 @@ public class BINBEIFPRO03_Service extends BaseService {
 	/**
 	 * 插入柜台产品接口数据库(WITPOSA_product_with_counter)
 	 * 
-	 * @param map
+	 * @param list
 	 * 
 	 * @return int
 	 */
-	public void addIFPrtSoluWithCounter(Map<String, Object> map) {
-		map.put(CherryBatchConstants.IBATIS_SQL_ID,"BINBEIFPRO03.addIFPrtSoluWithCounter");
-		ifServiceImpl.save(map);
+	public void addIFPrtSoluWithCounter(List<Map<String, Object>> list) {
+		ifServiceImpl.saveAll(list,"BINBEIFPRO03.addIFPrtSoluWithCounter");
 	}
 	
 	/**
@@ -151,12 +150,11 @@ public class BINBEIFPRO03_Service extends BaseService {
 	/**
 	 * 物理删除产品方案柜台接口表
 	 * 
-	 * @param map
+	 * @param list
 	 * @return
 	 */
-	public int delIFPrtSoluWithCounter(Map<String, Object> map){
-		map.put(CherryConstants.IBATIS_SQL_ID, "BINBEIFPRO03.delIFPrtSoluWithCounter");
-		return ifServiceImpl.remove(map);
+	public void delIFPrtSoluWithCounter(List<Map<String, Object>> list){
+		ifServiceImpl.deleteAll(list,"BINBEIFPRO03.delIFPrtSoluWithCounter");
 	}
 	
 	/**

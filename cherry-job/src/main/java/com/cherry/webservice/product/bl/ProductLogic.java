@@ -53,22 +53,6 @@ public class ProductLogic implements IWebservice {
 				// 备份产品下发数据/MQ下发
 				Map<String, Object> flagMapMQ = binbeifpro04_BL.tran_batchProductsMQSend(map);
 				resMap.putAll(flagMapMQ);
-
-				logger.info("*******************柜台产品Batch下发处理开始***********************");
-				flg = binbeifpro03BL.tran_batchCouProducts(map);
-				logger.info("-------柜台产品Batch下发处理:flg="+flg);
-				if(flg == CherryBatchConstants.BATCH_SUCCESS) {
-					// 备份产品下发数据/MQ下发
-					flagMapMQ = binbeifpro03BL.tran_batchCntProductsMQSend(map);
-					resMap.putAll(flagMapMQ);
-					flg=ConvertUtil.getInt(resMap.get("flag"));
-					// 柜台产品下发失败的场合，返回错误代码
-					if (flg == CherryBatchConstants.BATCH_WARNING || flg == CherryBatchConstants.BATCH_ERROR) {
-						resMap.put("ERRORCODE", -1);
-					}
-				} else {
-					resMap.put("ERRORCODE", -1);
-				}
 			} else {
 				resMap.put("ERRORCODE", -1);
 			}

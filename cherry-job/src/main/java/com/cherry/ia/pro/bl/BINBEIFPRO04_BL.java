@@ -76,7 +76,9 @@ public class BINBEIFPRO04_BL {
 	@Resource(name="binOLMQCOM01_BL")
     private BINOLMQCOM01_IF binOLMQCOM01_BL;
 
-	
+	@Resource
+	private BINBEIFPRO03_BL binbeifpro03BL;
+
 	/** JOB执行相关共通 IF */
 	@Resource(name="binbecm01_IF")
 	private BINBECM01_IF binbecm01_IF;
@@ -115,7 +117,8 @@ public class BINBEIFPRO04_BL {
 			throws CherryBatchException, CherryException,Exception {
 
 		Map<String,Object> resMap=new HashMap<String, Object>();
-
+		Map<String,Object> cloneMapForCounterProduct = new HashMap<String,Object>();
+		cloneMapForCounterProduct.putAll(map);
 		try {
 			// 备份产品下发数据
 			map.remove("validFlagVal");
@@ -139,7 +142,10 @@ public class BINBEIFPRO04_BL {
 			mqDTO.setMsgQueueName("cherryToPosCMD");
 			//调用共通发送MQ消息
 			binOLMQCOM01_BL.sendMQMsg(mqDTO,false);
-
+			//在这里需要处理柜台产品实时下发
+			flag = binbeifpro03BL.tran_batchCouProducts(cloneMapForCounterProduct);
+			//如果实时柜台产品实时下发有异常的话，不会进行到MQ的发送
+			resMap = binbeifpro03BL.tran_batchCntProductsMQSend(cloneMapForCounterProduct);
 		} catch (Exception e) {
 			loger.error("产品下发失败",e);
 			throw e;
