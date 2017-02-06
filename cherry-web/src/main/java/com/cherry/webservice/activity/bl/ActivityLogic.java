@@ -1466,4 +1466,79 @@ public class ActivityLogic implements Activity_IF {
 		}
 		return retMap;
 	}
+
+	/**
+	 * 会员优惠券信息查询（微商城）
+	 * @param map
+	 * @return map
+     */
+	@Override
+	public Map<String, Object> tran_getCouponInfo(Map<String, Object> map) {
+		Map<String, Object> retMap = new HashMap<String, Object>();
+		map = CherryUtil.remEmptyVal(map);
+		String orgId = ConvertUtil.getString(map.get("BIN_OrganizationInfoID"));
+		String brandId = ConvertUtil.getString(map.get("BIN_BrandInfoID"));
+		String state = ConvertUtil.getString(map.get("State"));
+		String memCode = ConvertUtil.getString(map.get("MemCode"));
+		String counterCodeGet = ConvertUtil.getString(map.get("CounterCodeGet"));
+		// 会员卡号，必填
+		if ("".equals(memCode)||memCode==null){
+			retMap.put("ERRORCODE", "WSE0003");
+			retMap.put("ERRORMSG", "memCode不能为空");
+			logger.error("memCode不能为空");
+			return retMap;
+		}
+		// 会员卡号转为memberInfoID
+		int memberInfoId = ConvertUtil.getInt(service.getMemberInfoIdByMemCode(memCode));
+		if (memberInfoId==0) {
+			retMap.put("ERRORCODE", "WSE0003");
+			retMap.put("ERRORMSG", "memCode不存在");
+			logger.error("memCode不存在");
+			return retMap;
+		}
+		map.put("memberInfoId",memberInfoId);
+		// 预约领取柜台，必填
+		if ("".equals(counterCodeGet)||counterCodeGet==null){
+			retMap.put("ERRORCODE", "WSE0004");
+			retMap.put("ERRORMSG", "counterCodeGet不能为空");
+			logger.error("counterCodeGet不能为空");
+			return retMap;
+		}
+		// 活动状态
+		if (!"".equals(state) && state.indexOf("_") > -1) {
+			String[] stateArr = state.split("_");
+			map.put("StateArr", stateArr);
+			map.remove("State");
+		}
+		// 分页查询
+		int startPage = ConvertUtil.getInt(map.get("StartPage"));
+		int pageSize = ConvertUtil.getInt(map.get("PageSize"));
+		int defSize = ConvertUtil.getInt(cm14bl.getConfigValue("1289", orgId, brandId));
+		if(startPage < 1) {
+			startPage = 1;
+		}
+		if (pageSize > defSize) {
+			pageSize = defSize;
+			retMap.put("WARNCODE", "1");
+			retMap.put("WARNMSG", "警告：返回的结果size=" + pageSize + "大于" + defSize);
+		} else if (pageSize < 1){
+			pageSize = 10;
+		}
+		int start = (startPage - 1) * pageSize + 1;
+		int end = start + pageSize - 1;
+		String sort = "BillNo DESC";
+		map.put("SORT_ID", sort);
+		map.put("START", start);
+		map.put("END", end);
+		int count = service.getOrderCountForMicroMart(map);
+		retMap.put("ResultTotalCNT", count);
+		if (count > 0){
+			retMap.put("ResultContent", service.getOrderListForMicroMart(map));
+		} else {
+			//查不到数据则打印map
+			logger.error(map.toString());
+			retMap.put("ResultContent", new ArrayList<Map<String, Object>>());
+		}
+		return retMap;
+	}
 }

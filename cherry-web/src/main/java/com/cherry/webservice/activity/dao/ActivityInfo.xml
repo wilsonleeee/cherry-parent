@@ -856,4 +856,68 @@
 			CampaignCode = #CampaignCode#
 		]]>
     </update>
+
+	<sql id="getOrderListForMicroMart_SQL">
+		<![CDATA[
+		SELECT DISTINCT
+			A.TradeNoIF AS BillNo,
+			A.CouponCode AS CouponCode,
+			A.State AS State,
+			convert(varchar(30),A.GetFromTime,120) AS GetFromTime,
+			convert(varchar(30),A.GetToTime,120) AS GetToTime,
+			B.MainCode AS MainCode
+		FROM
+			Campaign.BIN_CampaignOrder A WITH(NOLOCK)
+			JOIN Campaign.BIN_CampaignOrderDetail B WITH(NOLOCK)
+			ON (A.BIN_MemberInfoID = #memberInfoId# AND A.BIN_CampaignOrderID=B.BIN_CampaignOrderID)
+		WHERE
+			A.CounterGot IN (#CounterCodeGet#,'ALL')
+		]]>
+		<isNotEmpty property="BillNo" prepend="AND">
+		<![CDATA[
+			A.TradeNoIF = #BillNo#
+		]]>
+		</isNotEmpty>
+		<isNotEmpty property="StateArr" prepend="AND">
+			<![CDATA[A.State IN]]>
+			<iterate conjunction="," open="(" close=")" property="StateArr">
+				<![CDATA[#StateArr[]#]]>
+			</iterate>
+		</isNotEmpty>
+		<isNotEmpty property="OrderFromDate" prepend="AND">
+		<![CDATA[
+			A.CampaignOrderTime >= #OrderFromDate#
+		]]>
+		</isNotEmpty>
+		<isNotEmpty property="OrderToDate" prepend="AND">
+		<![CDATA[
+			A.CampaignOrderTime <= #OrderToDate#
+		]]>
+		</isNotEmpty>
+	</sql>
+
+	<select id="getOrderCountForMicroMart" parameterClass="java.util.HashMap" resultClass="java.lang.Integer">
+		<![CDATA[
+			SELECT	COUNT(SORT_T1.BillNo) AS count FROM (
+		]]>
+		<include refid="ActivityInfo.getOrderListForMicroMart_SQL" />
+		<![CDATA[
+			)SORT_T1
+		]]>
+	</select>
+
+	<select id="getOrderListForMicroMart" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+		<include refid="BINOLCMINC99.pageheader" />
+		<include refid="ActivityInfo.getOrderListForMicroMart_SQL" />
+		<include refid="BINOLCMINC99.pagefooter" />
+	</select>
+
+	<select id="getMemberInfoIdByMemCode" parameterClass="java.lang.String" resultClass="java.lang.Integer">
+		SELECT TOP 1
+			BIN_MemberInfoID
+		FROM
+			Members.BIN_MemCardInfo WITH(NOLOCK)
+		WHERE
+			MemCode = #memCode#
+	</select>
 </sqlMap>

@@ -6,6 +6,7 @@ import java.util.Map;
 
 import com.cherry.cm.core.CherryConstants;
 import com.cherry.cm.service.BaseService;
+import com.cherry.cm.util.ConvertUtil;
 
 public class ActivityService extends BaseService{
 	
@@ -183,7 +184,7 @@ public class ActivityService extends BaseService{
 	
 	/**
 	 * 更新活动礼品库存
-	 * @param map
+	 * @param list
 	 * @return
 	 */
 	public void updCampaignStock(List<Map<String,Object>> list){
@@ -208,5 +209,29 @@ public class ActivityService extends BaseService{
 	public int updateOrderInfo(Map<String,Object> map){
 		map.put(CherryConstants.IBATIS_SQL_ID, "ActivityInfo.updateOrderInfo");
 		return baseServiceImpl.update(map);
+	}
+
+	/**
+	 * 取得会员优惠券信息Int(微商城)
+	 * @param map
+	 * @return
+     */
+	public int getOrderCountForMicroMart(Map<String,Object> map){
+		map.put(CherryConstants.IBATIS_SQL_ID, "ActivityInfo.getOrderCountForMicroMart");
+		return baseServiceImpl.getSum(map);
+	}
+
+	/**
+	 * 取得会员优惠券信息List(微商城)
+	 * @param map
+	 * @return
+     */
+	public List<Map<String,Object>> getOrderListForMicroMart(Map<String,Object> map){
+		map.put(CherryConstants.IBATIS_SQL_ID, "ActivityInfo.getOrderListForMicroMart");
+		return baseServiceImpl.getList(map);
+	}
+
+	public int getMemberInfoIdByMemCode(String memCode){
+		return ConvertUtil.getInt(baseServiceImpl.get(memCode,"ActivityInfo.getMemberInfoIdByMemCode"));
 	}
 }

@@ -32,4 +32,6 @@ public interface Activity_IF {
 	public Map<String,Object> getCouponList(Map<String,Object> map);
 	
 	public Map<String,Object> tran_updateOrderInfo(Map<String,Object> map);
+
+	public Map<String,Object> tran_getCouponInfo(Map<String,Object> map);
 }
