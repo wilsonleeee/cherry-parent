@@ -161,14 +161,32 @@ public class BINBAT134_BL {
 						flag = CherryBatchConstants.BATCH_ERROR;
 						continue;
 					}
+
+
+					if(CherryBatchUtil.getString(mainMap.get("BillStatus")).equals("Y")) {//表示正常发货
+						//验证一下发货部门是不是柜台，如果是这单就置为失败
+						mainMap.put("departCode", mainMap.get("OutDepartCode"));
+						Map<String, Object> departMap = bINBAT134_Service.checkExistsCounter(mainMap);
+						if (null != departMap && !departMap.isEmpty()) {
+							mainMap.put("synchFlag", synchFlag_3);
+							mainMap.put("synchMsg", "发货部门不能为柜台");
+							bINBAT134_Service.updateSynchFlagOneToOther(mainMap);
+							//事务提交
+							bINBAT134_Service.tpifManualCommit();
+							failCount++;
+							flag = CherryBatchConstants.BATCH_ERROR;
+							continue;
+						}
+					}
+
 					//根据预先判断是否可发送MQ的标志
 					String sendMQflag = "2";
 					//存储预先失败的明细数据
 					List<Map<String, Object>> faildDetailList = new ArrayList<Map<String, Object>>();
 
-					mainMap.put("counterCode", mainMap.get("InDepartCode"));//柜台号
 					//预先验证该主数据是否可以被插入至新后台（验证收货部门是否存在）
-					Map<String, Object> existsCounterMap = checkExistsCounter(mainMap);
+					mainMap.put("counterCode", mainMap.get("InDepartCode"));
+					Map<String, Object> existsCounterMap = selCounterDepartmentInfo(mainMap);
 					if(null == existsCounterMap || existsCounterMap.isEmpty()){
 						sendMQflag = "1";
 					}
@@ -501,7 +519,7 @@ public class BINBAT134_BL {
 	 * @param
 	 * @return
 	 */
-	private Map<String,Object> checkExistsCounter(Map<String,Object> detailMap) {
+	private Map<String,Object> selCounterDepartmentInfo(Map<String,Object> detailMap) {
 		// 取得部门信息
 		Map<String, Object> resultMap = bINBAT134_Service.selCounterDepartmentInfo(detailMap);
 		return resultMap;

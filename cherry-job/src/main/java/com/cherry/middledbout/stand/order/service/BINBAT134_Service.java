@@ -190,4 +190,15 @@ public class BINBAT134_Service extends BaseService {
 		map.put(CherryConstants.IBATIS_SQL_ID, "BINBAT134.selCounterDepartmentInfo");
         return (Map<String,Object>)baseServiceImpl.get(map);
     }
+
+
+	/**
+	 * 验证发货部门是不是柜台
+	 * @param map
+	 * @return
+	 */
+	public Map<String,Object> checkExistsCounter (Map<String,Object> map){
+		map.put(CherryConstants.IBATIS_SQL_ID, "BINBAT134.checkExistsCounter");
+		return (Map<String,Object>)baseServiceImpl.get(map);
+	}
 }
