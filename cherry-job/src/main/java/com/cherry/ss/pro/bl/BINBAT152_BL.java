@@ -112,7 +112,7 @@ public class BINBAT152_BL {
         ////////////////////////////////// 第二步：只处理 退货（整单退和部分退,空退） 入库业务  ///////////////////////////////////////////////////
         doSR(map);
 
-        ///////////////////////////////////第三步：只处理成本价为空且除接收退库：AR 和 调入:BG  以及退货    以外的入库数据  ////////////////////////
+        ///////////////////////////////////第三步：只处理成本价为空且除接收退库：AR 和 调入确认:BG  以及退货    以外的入库数据  ////////////////////////
         doOtherInstock(map);
 
         ////////////////////////////////// 第四步： 以下是出库逻辑  ///////////////////////////////////////////////////
@@ -194,10 +194,10 @@ public class BINBAT152_BL {
         binbat152_Service.deleteProBatchInOutDetail(lgProductBatchDetail);
         for (Map<String, Object> lgProductBatchMap : proBatchInOutList) {
 
-            lgProductBatchMap.put("CreatedBy", "BINBAT152");
-            lgProductBatchMap.put("CreatePGM", CherryBatchConstants.UPDATE_NAME);
-            lgProductBatchMap.put("UpdatedBy", "BINBAT152");
-            lgProductBatchMap.put("UpdatePGM", CherryBatchConstants.UPDATE_NAME);
+            lgProductBatchMap.put("CreatedBy",CherryBatchConstants.UPDATE_NAME );
+            lgProductBatchMap.put("CreatePGM","BINBAT152");
+            lgProductBatchMap.put("UpdatedBy", CherryBatchConstants.UPDATE_NAME);
+            lgProductBatchMap.put("UpdatePGM","BINBAT152");
 
             lgProductBatchMap.put("isNewFlag", "1");//表示新数据
 
@@ -293,10 +293,10 @@ public class BINBAT152_BL {
                                     if(amount>0) {
                                         proBatchInOutDetail.put("BIN_OrganizationInfoID", proBatchInOut.get("BIN_OrganizationInfoID"));
                                         proBatchInOutDetail.put("BIN_BrandInfoID", proBatchInOut.get("BIN_BrandInfoID"));
-                                        proBatchInOutDetail.put("CreatedBy", "BINBAT152");
-                                        proBatchInOutDetail.put("CreatePGM", CherryBatchConstants.UPDATE_NAME);
-                                        proBatchInOutDetail.put("UpdatedBy", "BINBAT152");
-                                        proBatchInOutDetail.put("UpdatePGM", CherryBatchConstants.UPDATE_NAME);
+                                        proBatchInOutDetail.put("CreatedBy",CherryBatchConstants.UPDATE_NAME );
+                                        proBatchInOutDetail.put("CreatePGM","BINBAT152");
+                                        proBatchInOutDetail.put("UpdatedBy", CherryBatchConstants.UPDATE_NAME);
+                                        proBatchInOutDetail.put("UpdatePGM","BINBAT152");
                                         proBatchInOutDetail.put("isNewFlag", "1");//区分是否是新数据的
                                         proBatchInOutDetail.put("BIN_ProductBatchStockID", proNewBatchStock.get("BIN_ProductBatchStockID"));
                                         proBatchInOutDetail.put("CostPrice", proNewBatchStock.get("CostPrice"));
@@ -342,18 +342,17 @@ public class BINBAT152_BL {
 
                     proBatchInOutDetail.put("BIN_OrganizationInfoID", proBatchInOut.get("BIN_OrganizationInfoID"));
                     proBatchInOutDetail.put("BIN_BrandInfoID", proBatchInOut.get("BIN_BrandInfoID"));
-                    // 取得产品库存表指定仓库产品的首末次信息
-                    proBatchInOutDetail.put("stockInTimeSorting", "DESC"); // 排序方式
+                    // 取得产品批次库存表指定仓库产品的末次信息
                     Map<String, Object> topProductNewBatchStockMap = binbat152_Service.getProductNewBatchStock(proBatchInOutDetail);
 
                     proBatchInOutDetail.put("CostPrice",
                             (null != topProductNewBatchStockMap && !topProductNewBatchStockMap.isEmpty())
                                     ? topProductNewBatchStockMap.get("CostPrice") : null); // 成本价
 
-                    proBatchInOutDetail.put("CreatedBy", "BINBAT152");
-                    proBatchInOutDetail.put("CreatePGM", CherryBatchConstants.UPDATE_NAME);
-                    proBatchInOutDetail.put("UpdatedBy", "BINBAT152");
-                    proBatchInOutDetail.put("UpdatePGM", CherryBatchConstants.UPDATE_NAME);
+                    proBatchInOutDetail.put("CreatedBy",CherryBatchConstants.UPDATE_NAME );
+                    proBatchInOutDetail.put("CreatePGM","BINBAT152");
+                    proBatchInOutDetail.put("UpdatedBy", CherryBatchConstants.UPDATE_NAME);
+                    proBatchInOutDetail.put("UpdatePGM","BINBAT152");
 
                     // 插入【产品批次库存表】
                     proBatchInOutDetail.put("InQuantity", proBatchInOutDetail.get("Quantity")); // 入库数量
@@ -388,7 +387,7 @@ public class BINBAT152_BL {
         // 系统配置项[初始盘盈时的入库成本价使用的价格]:'':不处理; 'DistributionPrice':配送价;'StandardCost':结算价;
         String priceConfig = binOLCM14_BL.getConfigValue("1395", String.valueOf(map.get("organizationInfoId")), String.valueOf(map.get("brandInfoId")));
 
-        //step：1    查询产品入出库批次表的除接收退库，调入，退货以外的入库数据（即明细中有成本价为空，且是入库类型的数据）
+        //step：1    查询产品入出库批次表的除接收退库，调入确认，退货以外的入库数据（即明细中有成本价为空，且是入库类型的数据）
         List<Map<String, Object>> proBatchInOutList2 = binbat152_Service.getProBatchInOutListByOther(map);
         totalCount += proBatchInOutList2.size();//处理总条数，主数据条数
         if (CherryBatchUtil.isBlankList(proBatchInOutList2)) {
@@ -397,9 +396,9 @@ public class BINBAT152_BL {
         loger.info("待处理的其他入库数据）。主数据行数:" + proBatchInOutList2.size());
         int currCNT = 1;
         for (Map<String, Object> proBatchInOut : proBatchInOutList2) {
-            loger.info("当前处理除接收退库，调入，退货以外的入库数据条数:" + currCNT);
+            loger.info("当前处理除接收退库，调入确认，退货以外的入库数据条数:" + currCNT);
             String tradeType = ConvertUtil.getString(proBatchInOut.get("TradeType")); // 业务类型
-            //只处理除 接收退库：AR 和 调入:BG 以及退货 以外的其他入库业务
+            //只处理除 接收退库：AR 和 调入确认:BG 以及退货 以外的其他入库业务
             if (!CherryConstants.BUSINESS_TYPE_AR.equals(tradeType) && !CherryConstants.BUSINESS_TYPE_BG.equals(tradeType) && !CherryConstants.BUSINESS_TYPE_SR.equals(tradeType)) {
 
                 //step：2  根据产品入出库批次表ID 查询产品入出库批次记录明细表数据
@@ -420,8 +419,7 @@ public class BINBAT152_BL {
                         if (CherryConstants.BUSINESS_TYPE_CA.equals(tradeType)) {
                             // 盘点(盘盈)
                             String costPriceCA = null;
-                            // 取得产品库存表指定仓库产品的首末次信息
-                            proBatchInOutDetail.put("stockInTimeSorting", "DESC"); // 排序方式
+                            // 取得产品批次库存表指定仓库产品的末次信息
                             Map<String, Object> topProductNewBatchStockMap = binbat152_Service.getProductNewBatchStock(proBatchInOutDetail);
                             if (null != topProductNewBatchStockMap && !topProductNewBatchStockMap.isEmpty()) {
                                 costPriceCA = ConvertUtil.getString(topProductNewBatchStockMap.get("CostPrice"));
@@ -441,10 +439,10 @@ public class BINBAT152_BL {
                             proBatchInOutDetail.put("CostPrice", proBatchInOutDetail.get("Price")); // 成本价
                         }
 
-                        proBatchInOutDetail.put("CreatedBy", "BINBAT152");
-                        proBatchInOutDetail.put("CreatePGM", CherryBatchConstants.UPDATE_NAME);
-                        proBatchInOutDetail.put("UpdatedBy", "BINBAT152");
-                        proBatchInOutDetail.put("UpdatePGM", CherryBatchConstants.UPDATE_NAME);
+                        proBatchInOutDetail.put("CreatedBy",CherryBatchConstants.UPDATE_NAME );
+                        proBatchInOutDetail.put("CreatePGM","BINBAT152");
+                        proBatchInOutDetail.put("UpdatedBy", CherryBatchConstants.UPDATE_NAME);
+                        proBatchInOutDetail.put("UpdatePGM","BINBAT152");
 
                         // 插入【产品批次库存表】
                         proBatchInOutDetail.put("InQuantity", proBatchInOutDetail.get("Quantity")); // 入库数量

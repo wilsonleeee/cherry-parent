@@ -237,8 +237,7 @@ public class BINOLSTCM01_BL implements BINOLSTCM01_IF {
     				if(CherryConstants.BUSINESS_TYPE_CA.equals(tradeType)){
 
 						String costPriceCA = null;
-						// 取得产品库存表指定仓库产品的首末次信息
-						productInOutDetail.put("stockInTimeSorting", "DESC"); // 排序方式
+						// 取得产品批次库存表指定仓库产品的末次信息
 						Map<String,Object> topProductNewBatchStockMap = binOLSTCM01_Service.getProductNewBatchStock(productInOutDetail);
 
 						if(null != topProductNewBatchStockMap && !topProductNewBatchStockMap.isEmpty()){
@@ -272,8 +271,7 @@ public class BINOLSTCM01_BL implements BINOLSTCM01_IF {
     					// 空退(空退的情况下以最近的批次作为成本价格。)
     					if(ConvertUtil.isBlank(stockInOut_SRrelevantNo)){
     						
-    						// 取得产品库存表指定仓库产品的首末次信息
-    						productInOutDetail.put("stockInTimeSorting", "DESC"); // 排序方式
+    						// 取得产品批次库存表指定仓库产品的末次信息
     						Map<String,Object> topProductNewBatchStockMap = binOLSTCM01_Service.getProductNewBatchStock(productInOutDetail);
     						
         					if(null != topProductNewBatchStockMap && !topProductNewBatchStockMap.isEmpty()){
