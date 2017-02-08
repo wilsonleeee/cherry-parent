@@ -70,6 +70,9 @@ public class MemberInfoLogic implements MemberInfo_IF {
 	@Resource
 	private BINOLMBMBM02_BL binOLMBMBM02_BL;
 
+	@Resource(name="CodeTable")
+	private CodeTable codeTable;
+
 	@SuppressWarnings("unchecked")
 	@Override
 	public Map getMemberInfo(Map paramMap) {
@@ -1098,6 +1101,37 @@ public class MemberInfoLogic implements MemberInfo_IF {
 		retMap.put("ResultTotalCNT", count);
 		if(count > 0) {
 			List<Map<String, Object>> retList = memberInfoService.getPointChange(searchMap);
+			if (null != retList && !retList.isEmpty()) {
+				// 组织代码
+				String orgCode = ConvertUtil.getString(paramMap.get("OrgCode"));
+				// 品牌代码
+				String brandCode = ConvertUtil.getString(paramMap.get("BrandCode"));
+				if (!CherryChecker.isNullOrEmpty(orgCode)
+						&& !CherryChecker.isNullOrEmpty(brandCode)) {
+					Map<String, String> nameMap = new HashMap<String, String>();
+					for (Map<String, Object> retInfo : retList) {
+						List<Map<String, Object>> detailList = (List<Map<String, Object>>) retInfo.get("DetailList");
+						if (null != detailList) {
+							for (Map<String, Object> detailInfo : detailList) {
+								// 明细中的积分类型
+								String pointType = ConvertUtil.getString(detailInfo.get("pointType"));
+								if (!CherryChecker.isNullOrEmpty(pointType)) {
+									// 积分类型名称
+									String pointTypeName = null;
+									if (nameMap.containsKey(pointType)) {
+										pointTypeName = nameMap.get(pointType);
+									} else {
+										// 积分类型名称
+										pointTypeName = codeTable.getValueByKey("1214", pointType, orgCode, brandCode);
+										nameMap.put(pointType, pointTypeName);
+									}
+									detailInfo.put("pointTypeName", pointTypeName);
+								}
+							}
+						}
+					}
+				}
+			}
 			retMap.put("ResultContent", retList);
 		}
 		return retMap;
