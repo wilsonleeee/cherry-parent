@@ -61,7 +61,7 @@ public class BINOLDUIBA01_Action extends BaseAction {
 		CreditConsumeResult result=new CreditConsumeResult();
 		try {
 			String duiBaAppKey = request.getParameter("appKey");
-			SystemConfigDTO configDTO = SystemConfigManager.getSystemConfigByDuibaAppkey(duiBaAppKey);
+			BrandInfoDTO configDTO = SystemConfigManager.getBrandInfoByDuibaAppkey(duiBaAppKey);
 			Map<String,Object> searchMap = new HashMap<String, Object>();
 			if(configDTO!=null){
 				SystemConfigManager.setBrandDataSource(configDTO.getBrandCode());
@@ -200,7 +200,7 @@ public class BINOLDUIBA01_Action extends BaseAction {
 
 		try {
 
-			SystemConfigDTO configDTO = SystemConfigManager.getSystemConfig(brandCode);
+			BrandInfoDTO configDTO = SystemConfigManager.getBrandInfo(brandCode);
 
 			String organizationInfoId = ConvertUtil.getString(configDTO.getOrganizationInfoID());
 			String brandInfoId = ConvertUtil.getString(configDTO.getBrandInfoID());
@@ -299,7 +299,7 @@ public class BINOLDUIBA01_Action extends BaseAction {
 		response.setContentType("text/html;charset=utf-8");
 		String orderNum = "";
 		try {
-			SystemConfigDTO configDTO = SystemConfigManager.getSystemConfigByDuibaAppkey(request.getParameter("appKey"));
+			BrandInfoDTO configDTO = SystemConfigManager.getBrandInfoByDuibaAppkey(request.getParameter("appKey"));
 			Map<String, Object> map = new HashMap<String, Object>();
 			CreditTool tool = new CreditTool(configDTO.getDuibaAppKey(), configDTO.getDuibaAppSecret());
 

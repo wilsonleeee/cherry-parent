@@ -3,7 +3,7 @@ package com.cherry.cm.core;
 /**
  * Created by dingyongchang on 2016/12/15.
  */
-public class SystemConfigDTO {
+public class BrandInfoDTO {
     private String orgCode;
     private String brandCode;
     private int organizationInfoID;

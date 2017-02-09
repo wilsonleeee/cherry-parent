@@ -26,15 +26,15 @@ public class WebserviceBase {
 		
 		
 		// 设置数据源
-		SystemConfigDTO systemConfigDTO = SystemConfigManager.getSystemConfig(brandCode);
-		if(null==systemConfigDTO){
+		BrandInfoDTO brandInfoDTO = SystemConfigManager.getBrandInfo(brandCode);
+		if(null== brandInfoDTO){
 			paramMap.put("ERRORCODE", "E0002");
 			paramMap.put("ERRORMSG", "参数brandCode错误");
 			return false;
 		}
-		CustomerContextHolder.setCustomerDataSourceType(systemConfigDTO.getDataSourceName());
+		CustomerContextHolder.setCustomerDataSourceType(brandInfoDTO.getDataSourceName());
 		//查询AES密钥
-		String AESKEY = systemConfigDTO.getAesKey();
+		String AESKEY = brandInfoDTO.getAesKey();
 		if(CherryChecker.isNullOrEmpty(AESKEY)){
 			paramMap.put("ERRORCODE", "E0005");
 			paramMap.put("ERRORMSG", "未能取得品牌"+brandCode+"的AES密钥");
@@ -44,8 +44,8 @@ public class WebserviceBase {
 		//AES解密,将解密后的JSON字符串转换成Map		
 		paramData = CherryAESCoder.decrypt(paramData, AESKEY);		
 		paramMap.putAll(CherryUtil.json2Map(paramData));
-		paramMap.put("BIN_OrganizationInfoID", systemConfigDTO.getOrganizationInfoID());
-		paramMap.put("BIN_BrandInfoID", systemConfigDTO.getBrandInfoID());
+		paramMap.put("BIN_OrganizationInfoID", brandInfoDTO.getOrganizationInfoID());
+		paramMap.put("BIN_BrandInfoID", brandInfoDTO.getBrandInfoID());
 		return true;
 	}
 	
@@ -54,8 +54,8 @@ public class WebserviceBase {
 //	}
 	
 	protected String getEncryptReturnString (String brandCode,Map<String, Object> retMap) throws Exception{
-		SystemConfigDTO systemConfigDTO = SystemConfigManager.getSystemConfig(brandCode);
-		String AESKey = systemConfigDTO.getAesKey();
+		BrandInfoDTO brandInfoDTO = SystemConfigManager.getBrandInfo(brandCode);
+		String AESKey = brandInfoDTO.getAesKey();
 		if(retMap.containsKey("ERRORCODE")){
 			// 业务中报错，直接返回报错信息
 			return CherryUtil.map2Json(retMap);

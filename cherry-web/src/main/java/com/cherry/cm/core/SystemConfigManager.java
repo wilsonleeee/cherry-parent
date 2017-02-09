@@ -18,7 +18,7 @@ import java.util.Map;
 public class SystemConfigManager implements InitializingBean {
     protected static final Logger logger = LoggerFactory.getLogger(SystemConfigManager.class);
 
-    private static List<SystemConfigDTO> brandList = new ArrayList<SystemConfigDTO>();
+    private static List<BrandInfoDTO> brandList = new ArrayList<BrandInfoDTO>();
     @Resource
     private BaseConfServiceImpl baseConfServiceImpl;
 
@@ -29,13 +29,13 @@ public class SystemConfigManager implements InitializingBean {
         try {
             Map<String, Object> paramMap = new HashMap<String, Object>();
             paramMap.put("ibatis_sql_id", "SystemInitialize.getBrandDataSourceConfigList");
-            List<SystemConfigDTO> list = baseConfServiceImpl.getList(paramMap);
+            List<BrandInfoDTO> list = baseConfServiceImpl.getList(paramMap);
             if(null!=list) {
-                for (SystemConfigDTO dto : list) {
+                for (BrandInfoDTO dto : list) {
                     try {
                         //到各个品牌数据库中去查询品牌的信息,补全两个ID
                         CustomerContextHolder.setCustomerDataSourceType(dto.getDataSourceName());
-                        SystemConfigDTO tmp = (SystemConfigDTO) baseServiceImpl.get(dto, "SystemInitialize.getBrandInfo");
+                        BrandInfoDTO tmp = (BrandInfoDTO) baseServiceImpl.get(dto, "SystemInitialize.getBrandInfo");
                         if(null!=tmp) {
                             dto.setOrganizationInfoID(tmp.getOrganizationInfoID());
                             dto.setBrandInfoID(tmp.getBrandInfoID());
@@ -53,7 +53,7 @@ public class SystemConfigManager implements InitializingBean {
     }
 
     public static boolean setBrandDataSource(String brandCode){
-        SystemConfigDTO dto = getSystemConfig(brandCode);
+        BrandInfoDTO dto = getBrandInfo(brandCode);
         if(null==dto){
             logger.error("setBrandDataSource未查找到对应的品牌的配置信息:"+brandCode);
             return false;
@@ -66,8 +66,8 @@ public class SystemConfigManager implements InitializingBean {
         CustomerContextHolder.clearCustomerDataSourceType();
     }
 
-    public static SystemConfigDTO getSystemConfig(String brandCode){
-        for (SystemConfigDTO dto : brandList) {
+    public static BrandInfoDTO getBrandInfo(String brandCode){
+        for (BrandInfoDTO dto : brandList) {
             if(dto.getBrandCode().equals(brandCode)) {
                 return dto;
             }
@@ -77,7 +77,7 @@ public class SystemConfigManager implements InitializingBean {
     }
 
     public static int getOrganizationInfoID(String brandCode) throws Exception{
-        SystemConfigDTO dto = getSystemConfig(brandCode);
+        BrandInfoDTO dto = getBrandInfo(brandCode);
         if(null==dto){
             throw new Exception("未查找到对应的品牌的配置信息:"+brandCode);
         }
@@ -85,7 +85,7 @@ public class SystemConfigManager implements InitializingBean {
     }
 
     public static String getOrgCode(String brandCode) throws Exception{
-        SystemConfigDTO dto = getSystemConfig(brandCode);
+        BrandInfoDTO dto = getBrandInfo(brandCode);
         if(null==dto){
             throw new Exception("未查找到对应的品牌的配置信息:"+brandCode);
         }
@@ -93,20 +93,20 @@ public class SystemConfigManager implements InitializingBean {
     }
 
     public static String getAesKey(String brandCode) {
-        SystemConfigDTO dto = getSystemConfig(brandCode);
+        BrandInfoDTO dto = getBrandInfo(brandCode);
         return dto.getAesKey();
     }
 
     public static int getBrandInfoID(String brandCode) throws Exception{
-        SystemConfigDTO dto = getSystemConfig(brandCode);
+        BrandInfoDTO dto = getBrandInfo(brandCode);
         if(null==dto){
             throw new Exception("未查找到对应的品牌的配置信息:"+brandCode);
         }
         return dto.getBrandInfoID();
     }
 
-    public static SystemConfigDTO getSystemConfigByDuibaAppkey(String duibaAppkey){
-        for (SystemConfigDTO dto : brandList) {
+    public static BrandInfoDTO getBrandInfoByDuibaAppkey(String duibaAppkey){
+        for (BrandInfoDTO dto : brandList) {
             if(duibaAppkey.equals(dto.getDuibaAppKey())) {
                 return dto;
             }

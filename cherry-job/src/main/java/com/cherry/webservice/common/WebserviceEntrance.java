@@ -78,8 +78,8 @@ public class WebserviceEntrance implements ApplicationContextAware{
 			}
 
 			// 设置数据源
-			SystemConfigDTO systemConfigDTO = SystemConfigManager.getSystemConfig(brandCode);
-			if (null==systemConfigDTO) {
+			BrandInfoDTO brandInfoDTO = SystemConfigManager.getBrandInfo(brandCode);
+			if (null==brandInfoDTO) {
 				retMap.put("ERRORCODE", "WSE9998");
 				retMap.put("ERRORMSG", "参数brandCode错误。brandCode=" + brandCode);
 				retString = CherryUtil.map2Json(retMap);
@@ -87,11 +87,11 @@ public class WebserviceEntrance implements ApplicationContextAware{
 				return retString;
 			}
 			// 将获取的数据源名设定到线程本地变量contextHolder中（新后台品牌数据库）
-			CustomerContextHolder.setCustomerDataSourceType(systemConfigDTO.getDataSourceName());
+			CustomerContextHolder.setCustomerDataSourceType(brandInfoDTO.getDataSourceName());
 			// 将获取的数据源名设定到线程本地变量contextHolder中（老后台品牌数据库）
-			CustomerWitContextHolder.setCustomerWitDataSourceType(systemConfigDTO.getOldDataSourceName());
+			CustomerWitContextHolder.setCustomerWitDataSourceType(brandInfoDTO.getOldDataSourceName());
 			// 查询AES密钥
-			String AESKEY = systemConfigDTO.getAesKey();
+			String AESKEY = brandInfoDTO.getAesKey();
 //			if ("true".equals(PropertiesUtil.pps.getProperty("WS_SafeModel_Flag", "false"))) {
 //				// 如果开启了动态密钥模式
 //				if (CherryChecker.isNullOrEmpty(appID)) {
@@ -175,11 +175,11 @@ public class WebserviceEntrance implements ApplicationContextAware{
 				return retString;
 			}
 
-			paramMap.put("BIN_OrganizationInfoID", systemConfigDTO.getOrganizationInfoID());
-			paramMap.put("OrganizationCode", systemConfigDTO.getOrgCode());
-			paramMap.put("BIN_BrandInfoID", systemConfigDTO.getBrandInfoID());
-			paramMap.put("OrgCode", systemConfigDTO.getOrgCode());
-			paramMap.put("BrandCode", systemConfigDTO.getBrandCode());
+			paramMap.put("BIN_OrganizationInfoID", brandInfoDTO.getOrganizationInfoID());
+			paramMap.put("OrganizationCode", brandInfoDTO.getOrgCode());
+			paramMap.put("BIN_BrandInfoID", brandInfoDTO.getBrandInfoID());
+			paramMap.put("OrgCode", brandInfoDTO.getOrgCode());
+			paramMap.put("BrandCode", brandInfoDTO.getBrandCode());
 			paramMap.put("OriginParamData", origianParamData);
 
 			// java 反射的方式，效率低，多品牌对应困难，要逐步废除，转由配置bean的方式
@@ -330,8 +330,8 @@ public class WebserviceEntrance implements ApplicationContextAware{
 		}
 
 		// 设置数据源
-		SystemConfigDTO systemConfigDTO = SystemConfigManager.getSystemConfig(brandCode);
-		if (null==systemConfigDTO) {
+		BrandInfoDTO brandInfoDTO = SystemConfigManager.getBrandInfo(brandCode);
+		if (null==brandInfoDTO) {
 			retMap.put("ERRORCODE", "WSE9998");
 			retMap.put("ERRORMSG", "参数brandCode错误。brandCode=" + brandCode);
 			retString = CherryUtil.map2Json(retMap);
@@ -339,14 +339,14 @@ public class WebserviceEntrance implements ApplicationContextAware{
 			return retString;
 		}
 		// 将获取的数据源名设定到线程本地变量contextHolder中（新后台品牌数据库）
-		CustomerContextHolder.setCustomerDataSourceType(systemConfigDTO.getDataSourceName());
+		CustomerContextHolder.setCustomerDataSourceType(brandInfoDTO.getDataSourceName());
 		
 		Map<String, Object> paramMap = new HashMap<String, Object>();
-		paramMap.put("BIN_OrganizationInfoID", systemConfigDTO.getOrganizationInfoID());
-		paramMap.put("OrganizationCode", systemConfigDTO.getOrgCode());
-		paramMap.put("BIN_BrandInfoID", systemConfigDTO.getBrandInfoID());
-		paramMap.put("OrgCode", systemConfigDTO.getOrgCode());
-		paramMap.put("BrandCode", systemConfigDTO.getBrandCode());
+		paramMap.put("BIN_OrganizationInfoID", brandInfoDTO.getOrganizationInfoID());
+		paramMap.put("OrganizationCode", brandInfoDTO.getOrgCode());
+		paramMap.put("BIN_BrandInfoID", brandInfoDTO.getBrandInfoID());
+		paramMap.put("OrgCode", brandInfoDTO.getOrgCode());
+		paramMap.put("BrandCode", brandInfoDTO.getBrandCode());
 		paramMap.put("MobilePhone", mobilephone);
 		paramMap.put("ButtonNumber", buttonNumber);
 		

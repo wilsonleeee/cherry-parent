@@ -142,8 +142,8 @@ public class WebserviceEntrance implements ApplicationContextAware {
             }
 
             // 设置数据源
-            SystemConfigDTO systemConfigDTO = SystemConfigManager.getSystemConfig(brandCode);
-            if (null == systemConfigDTO) {
+            BrandInfoDTO brandInfoDTO = SystemConfigManager.getBrandInfo(brandCode);
+            if (null == brandInfoDTO) {
                 retMap.put("ERRORCODE", "WSE9998");
                 retMap.put("ERRORMSG", "参数brandCode错误。brandCode=" + brandCode);
                 retString = CherryUtil.map2Json(retMap);
@@ -152,7 +152,7 @@ public class WebserviceEntrance implements ApplicationContextAware {
             }
             SystemConfigManager.setBrandDataSource(brandCode);
             // 查询AES密钥
-            String AESKEY = systemConfigDTO.getAesKey();
+            String AESKEY = brandInfoDTO.getAesKey();
             if (CherryChecker.isNullOrEmpty(AESKEY)) {
                 retMap.put("ERRORCODE", "WSE9996");
                 retMap.put("ERRORMSG", "品牌" + brandCode + "的密钥缺失");
@@ -189,10 +189,10 @@ public class WebserviceEntrance implements ApplicationContextAware {
                 logger.error(retString);
                 return retString;
             }
-            paramMap.put("BIN_OrganizationInfoID", systemConfigDTO.getOrganizationInfoID());
-            paramMap.put("OrganizationCode", systemConfigDTO.getOrgCode());
-            paramMap.put("BIN_BrandInfoID", systemConfigDTO.getBrandInfoID());
-            paramMap.put("OrgCode", systemConfigDTO.getOrgCode());
+            paramMap.put("BIN_OrganizationInfoID", brandInfoDTO.getOrganizationInfoID());
+            paramMap.put("OrganizationCode", brandInfoDTO.getOrgCode());
+            paramMap.put("BIN_BrandInfoID", brandInfoDTO.getBrandInfoID());
+            paramMap.put("OrgCode", brandInfoDTO.getOrgCode());
             paramMap.put("BrandCode", brandCode);
 
             transaction = Cat.newTransaction("WebService", "invoke");

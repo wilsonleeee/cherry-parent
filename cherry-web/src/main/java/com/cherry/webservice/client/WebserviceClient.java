@@ -95,9 +95,9 @@ public class WebserviceClient {
     			retMap.put("ERRORMSG", "参数brandCode错误。brandCode=" + brandCode);
     			return retMap;
     		}
-			SystemConfigDTO systemConfigDTO = SystemConfigManager.getSystemConfig(brandCode);
+			BrandInfoDTO brandInfoDTO = SystemConfigManager.getBrandInfo(brandCode);
     		// 查询AES密钥
-    		String AESKEY = systemConfigDTO.getAesKey();
+    		String AESKEY = brandInfoDTO.getAesKey();
     		if (CherryChecker.isNullOrEmpty(AESKEY)) {
     			Map<String, Object> retMap = new HashMap<String, Object>();
     			retMap.put("ERRORCODE", "WSE9996");
@@ -156,15 +156,15 @@ public class WebserviceClient {
 		try {
 			// 品牌代码
 			String brandCode = (String)param.get("brandCode");
-			SystemConfigDTO systemConfigDTO = SystemConfigManager.getSystemConfig(brandCode);
-			if (null==systemConfigDTO) {
+			BrandInfoDTO brandInfoDTO = SystemConfigManager.getBrandInfo(brandCode);
+			if (null== brandInfoDTO) {
 				Map<String, Object> retMap = new HashMap<String, Object>();
 				retMap.put("ERRORCODE", "WSE9998");
 				retMap.put("ERRORMSG", "参数brandCode错误。brandCode=" + brandCode);
 				return retMap;
 			}
 			// 查询AES密钥
-			String AESKEY = systemConfigDTO.getAesKey();
+			String AESKEY = brandInfoDTO.getAesKey();
 			if (CherryChecker.isNullOrEmpty(AESKEY)) {
 				Map<String, Object> retMap = new HashMap<String, Object>();
 				retMap.put("ERRORCODE", "WSE9996");

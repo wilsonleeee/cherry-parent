@@ -104,7 +104,7 @@ public class BINOLSSPRM74_Action extends BaseAction implements ModelDriven<BINOL
 			String brandCode=form.getBrandCode();
 //			Map<String,Object> dataSource_map=new HashMap<String, Object>();
 //			dataSource_map.put("brandCode", brandCode);
-			SystemConfigDTO sysDTO = SystemConfigManager.getSystemConfig(brandCode);
+			BrandInfoDTO sysDTO = SystemConfigManager.getBrandInfo(brandCode);
 			//Map<String,Object> datasource=binOLSSPRM74_IF.getDateSourceName(dataSource_map);
 			if(sysDTO == null){
 				result_map.put("resultCode", "-7777");
@@ -437,7 +437,7 @@ public class BINOLSSPRM74_Action extends BaseAction implements ModelDriven<BINOL
 			dataSource_map.put("brandCode", brandCode);
 //			Map<String,Object> dataSource_map=new HashMap<String, Object>();
 //			dataSource_map.put("brandCode", brandCode);
-			SystemConfigDTO sysDTO = SystemConfigManager.getSystemConfig(brandCode);
+			BrandInfoDTO sysDTO = SystemConfigManager.getBrandInfo(brandCode);
 			//Map<String,Object> datasource=binOLSSPRM74_IF.getDateSourceName(dataSource_map);
 			if(sysDTO == null){
 				result_map.put("resultCode", "-7777");
