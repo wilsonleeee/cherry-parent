@@ -1339,6 +1339,149 @@ function productBinding(options){
 	}).data("flag",true);
 }
 
+/**
+ *  支持扫描机输入产品条码进行模糊查询
+ *  @param Object:options
+ * 				String:options.elementId 元素ID,要绑定下拉框的元素ID
+ * 				String:options.showNum 参数可选，下拉最大的显示个数，默认是50
+ *              String:options.targetId 参数可选，选中下拉列表中的某个值时，需要保存的目标值ID，默认为prtVendorId
+ *              String:options.targetShow 参数可选，选中下拉列表中的某个值时，显示在text框上的值，默认为nameTotal
+ *              options.afterSelectFun 参数可选，选择产品后需要执行的方法（如判断重复、查询库存），targetDetail=true时调用。
+ *              String:option.proType 参数可选，默认为产品，值为prm时表示促销品
+ */
+function scanMachineProductBinding(options) {
+	var csrftoken = '';
+	if($("#csrftokenCode").length > 0) {
+		csrftoken = $("#csrftokenCode").serialize();
+		if(!csrftoken) {
+			csrftoken = $('#csrftokenCode',window.opener.document).serialize();
+		}
+	} else {
+		csrftoken = $('#csrftoken').serialize();
+		if(!csrftoken) {
+			csrftoken = $('#csrftoken',window.opener.document).serialize();
+		}
+	}
+	var keycode = [13,37,38,39,40,16,17,9,27,123,18,20,93,91,144];
+	var flag = false;
+	var eventFlag = false;
+	var trigerFlag = 1;
+	// 是否扫码枪区分
+	var scanMachineFlag = false;
+	var strPath = window.document.location.pathname;
+	var postPath = strPath.substring(0, strPath.substr(1).indexOf('/') + 1);
+	var url = postPath+"/common/BINOLCM21_getProductInfo.action"+"?"+csrftoken;
+	var targetId = options.targetId ? options.targetId : "prtVendorId";
+	var targetShow = options.targetShow ? options.targetShow : "nameTotal";
+	if(options.proType == "prm"){
+		url = postPath+"/common/BINOLCM21_getPrmProductInfo.action"+"?"+csrftoken;
+	}
+
+	$('#'+options.elementId).autocompleteCherry(url,{
+		extraParams:{
+			productInfoStr: function() { return $('#'+options.elementId).val();},
+			//默认是最多显示50条
+			number:options.showNum ? options.showNum : 50,
+			validFlag : function() {
+				if(options.validFlag){
+					var $validFlag = $('input[name='+options.validFlag+']:checked').val();
+					if (!$validFlag){//如果是下拉框，则取下拉框中的值
+						$validFlag=  $('#'+options.validFlag).val();
+					}
+					return $validFlag;
+				} else {
+					return 1;
+				}
+			}
+		},
+		loadingClass: "ac_loading",
+		minChars:1,
+		matchContains:1,
+		matchContains: true,
+		scroll: false,
+		cacheLength: 0,
+		width:300,
+		max:options.showNum ? options.showNum : 50,
+		formatItem: function(row, i, max) {
+			if (max == 1) {
+				// 为适用扫描枪扫描输入方式，在匹配结果为1的情况下自动执行afterSelectFun方法
+				if (!eventFlag) {
+					var productObj = {};
+					productObj.elementId = options.elementId;
+					productObj.productName = row[0];
+					productObj.unitCode = row[1];
+					productObj.barCode = row[2];
+					productObj.prtVendorId = row[3];
+					productObj.productId = row[4];
+					productObj.price = row[5];
+					productObj.memPrice = row[6];
+					productObj.standardCost = row[7];
+					productObj.orderPrice = row[8];
+					productObj.IsExchanged = row[9];
+					productObj.platinumPrice = row[13];
+					productObj.tagPrice = row[14];
+					// 选择产品后执行方法
+					if ($.isFunction(options.afterSelectFun)) {
+						options.afterSelectFun.call(this, productObj);
+					}
+					// 更改事件状态防止重复输入
+					eventFlag = true;
+					// 延时0.5秒后解除状态(自动完成插件击键后激活autoComplete的延迟时间默认远程为400毫秒 本地为10毫秒，解除状态需要在激活autoComplete之后，若设置了delay参数，setTimeout时间需要做相应的调整 )
+					var refresh = function () {
+						eventFlag = false;
+					}
+					setTimeout(refresh, 500);
+					return null;
+				}
+			} else {
+				return escapeHTMLHandle(row[1]) + "-" + escapeHTMLHandle(row[2]) + " [" + escapeHTMLHandle(row[0]) + "]";
+			}
+		}
+	}).result(function(event, data, formatted){
+		$('#'+options.elementId).data("scanMachineFlag",scanMachineFlag == undefined ? false : scanMachineFlag);
+		if (!eventFlag) {
+			var obj = {};
+			obj.elementId = options.elementId;
+			obj.productName = data[0];
+			obj.unitCode = data[1];
+			obj.barCode = data[2];
+			obj.prtVendorId = data[3];
+			obj.productId = data[4];
+			obj.price = data[5];
+			obj.memPrice = data[6];
+			obj.standardCost = data[7];
+			obj.orderPrice = data[8];
+			obj.IsExchanged = data[9];
+			obj.platinumPrice = data[13];
+			obj.tagPrice = data[14];
+			//选择产品后执行方法
+			if ($.isFunction(options.afterSelectFun)) {
+				options.afterSelectFun.call(this, obj);
+			}
+		} else {
+			$('#' + options.elementId).val("");
+		}
+	}).bind("keydown",function(event){
+		//对于同一个框，该事件只能被触发一次
+		if(trigerFlag == 2 && scanMachineFlag){
+			//如果第二次触发的话,将其内容置成空
+			$('#'+options.elementId).val("");
+			trigerFlag = 3;
+		}
+		// 回车事件
+		if(event.keyCode == '13') {
+			$('#'+options.elementId).data("scanMachineFlag",scanMachineFlag == undefined ? false : scanMachineFlag);
+			trigerFlag = 2;
+		}
+	}).bind("keyup",function(event){
+		scanMachineFlag = true;
+		var refreshScanMachineFlag = function () {
+			scanMachineFlag = false;
+		}
+		setTimeout(refreshScanMachineFlag, 100);
+	});
+}
+
 
 /**
  * 在产品的text框上绑定下拉框选项（浓妆淡抹订货商城）

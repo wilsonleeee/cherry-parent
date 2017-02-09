@@ -31,7 +31,7 @@ if(cherry_brandcss != null && !"".equals(cherry_brandcss)) {
 <script type="text/javascript" src="/${CHERRY_CONTEXT_PATH}/js/lib/jquery.form.min.js"></script>
 <script type="text/javascript" src="/${CHERRY_CONTEXT_PATH}/js/common/commonAjax.js"></script>
 
-<script type="text/javascript" src="/${CHERRY_CONTEXT_PATH}/js/common/cherry.js?_v=20161116"></script>
+<script type="text/javascript" src="/${CHERRY_CONTEXT_PATH}/js/common/cherry.js?v=20170207"></script>
 <script type="text/javascript" src="/${CHERRY_CONTEXT_PATH}/js/lib/json2.js"></script>
 <script type="text/javascript" src="/${CHERRY_CONTEXT_PATH}/js/lib/jquery.jeditable.js"></script>
 <script type="text/javascript" src="/${CHERRY_CONTEXT_PATH}/js/lib/jquery.cluetip.js"></script>

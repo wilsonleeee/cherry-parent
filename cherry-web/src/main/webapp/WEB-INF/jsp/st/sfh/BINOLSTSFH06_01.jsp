@@ -19,6 +19,10 @@
                   <th class="tableheader" width="15%" onclick="STSFH06_sortTable('_blankBarArr');">
                   <div class="DataTables_sort_wrapper"><s:text name="lblbarcode"/><span id="_blankBarArr" class="css_right ui-icon ui-icon-carat-2-n-s"></span></div></th>
                   <th class="tableheader" width="18%"><s:text name="lblproname"/></th>
+                  <th class="tableheader" width="15%" onclick="STSFH06_sortTable('_quantityuArr');">
+                        <div class="DataTables_sort_wrapper"><s:text name="lbloutcount"/><span id="_quantityuArr" class="css_right ui-icon ui-icon-carat-2-n-s"></span></div>
+                  </th>
+                  <th class="tableheader" width="10%"><div style="line-height:13px;"><s:text name="lblmoney"/><s:text name="lblmoneyu"/></div></th>
                   <th class="tableheader" width="5%"><s:text name="SFH06_ReferencePrice"/></th>
                   <th class="tableheader" width="5%"><s:text name="SFH06_costPrice"/></th><%--成本价 --%>
                   <th class="tableheader" width="5%"><s:text name="SFH06_totalCostPrice"/></th><%--总成本价 --%>
@@ -30,9 +34,6 @@
                   <th class="tableheader" width="5%"><s:text name="lblNowCount"/></th> 
                   <!-- 收货方库存 --> 
                   <th class="tableheader" width="5%"><s:text name="SFH06_ReceiveStock"/></th>                
-                  <th class="tableheader" width="15%" onclick="STSFH06_sortTable('_quantityuArr');">
-                  <div class="DataTables_sort_wrapper"><s:text name="lbloutcount"/><span id="_quantityuArr" class="css_right ui-icon ui-icon-carat-2-n-s"></span></div></th>
-                  <th class="tableheader" width="10%"><div style="line-height:13px;"><s:text name="lblmoney"/><s:text name="lblmoneyu"/></div></th>
                   <th class="tableheader" width="20%"><s:text name="lblreason"/></th>
                   <th style="display:none">
                 </tr>
@@ -43,10 +44,31 @@
                         <td class="center" id="dataTd0"><input type="checkbox" id="chkbox" onclick="BINOLSTSFH06.changechkbox(this);"/></td>
                         <td id="dataTd1" style="white-space:nowrap"><s:property value='UnitCode' /><input type="hidden" id="unitCodeArr" value="<s:property value='UnitCode'/>"/></td>
                         <s:if test='"1".equals(configVal)'>
-                        	<td class="center" id="dataTd12"><input type="text" name="erpCodeArr" maxlength="50"  id="erpCodeArr" value=""  size="25"></input></td>
+                        	<td class="center" id="dataTd12"><input type="text" name="erpCodeArr" maxlength="50"  id="erpCodeArr" value=""  size="25"/></td>
                         </s:if>
                         <td id="dataTd2"><s:property value='BarCode' /><input type="hidden" id="barCodeArr" value="<s:property value='BarCode'/>"/></td>
                         <td id="dataTd3"><s:property value='prodcutName' /></td>
+                        <td class="center" id="dataTd7"><s:textfield cssClass="text-number" cssStyle="width:120px;" name="quantityuArr" id="quantityuArr" size="10" maxlength="9" onkeyup="STSFH06_calcuAmount(this)" onchange="STSFH06_calcuAmount(this)"  value="%{Quantity}"/>
+                        </td>
+                        <td id="money" style="text-align:right;">
+                            <s:if test="sysConfigUsePrice.equals('MemPrice')">
+                                <s:if test="null != MemAmount"><s:text name="format.price"><s:param value="MemAmount"></s:param></s:text></s:if>
+                                <s:else>0.00</s:else>
+                            </s:if>
+                            <s:elseif test="sysConfigUsePrice.equals('StandardCost')">
+                                <s:if test="null != StandardCostAmount"><s:text name="format.price"><s:param value="StandardCostAmount"></s:param></s:text></s:if>
+                                <s:else>0.00</s:else>
+                            </s:elseif>
+                            <!-- 采购价暂时未予支持 -->
+                                <%-- <s:elseif test="sysConfigUsePrice.equals('OrderPrice')">
+                                    <s:if test="null != Amount"><s:text name="format.price"><s:param value="OrderAmount"></s:param></s:text></s:if>
+                                    <s:else>0.00</s:else>
+                                </s:elseif> --%>
+                            <s:else>
+                                <s:if test="null != Amount"><s:text name="format.price"><s:param value="Amount"></s:param></s:text></s:if>
+                                <s:else>0.00</s:else>
+                            </s:else>
+                        </td>
                         <!-- 执行价是否取会员价 -->
                         <s:if test="sysConfigUsePrice.equals('MemPrice')">
                             <td id="" style="text-align:right;"><s:text name="format.price"><s:param value="MemPrice"></s:param></s:text></td>
@@ -141,27 +163,6 @@
                         <td id="nowCount" style="text-align:right;"><s:text name="format.number"><s:param value='StockQuantity'/></s:text></td>
                         <!-- 收货方库存 -->
                         <td id="receiveStock" style="text-align:right;"><s:text name="format.number"><s:param value='receiveStockQuantity'/></s:text></td>
-                        <td class="center" id="dataTd7"><s:textfield name="format.number"  cssClass="text-number" cssStyle="width:120px;" name="quantityuArr" id="quantityuArr" cssClass="text-number" size="10" maxlength="9" onkeyup="STSFH06_calcuAmount(this)" onchange="STSFH06_calcuAmount(this)"  value="%{Quantity}"/>
-                        </td>
-		                <td id="money" style="text-align:right;">
-                            <s:if test="sysConfigUsePrice.equals('MemPrice')">
-                                <s:if test="null != MemAmount"><s:text name="format.price"><s:param value="MemAmount"></s:param></s:text></s:if>
-                                <s:else>0.00</s:else>
-                            </s:if>
-                            <s:elseif test="sysConfigUsePrice.equals('StandardCost')">
-                            	<s:if test="null != StandardCostAmount"><s:text name="format.price"><s:param value="StandardCostAmount"></s:param></s:text></s:if>
-                                <s:else>0.00</s:else>
-                            </s:elseif>
-                            <!-- 采购价暂时未予支持 -->
-                            <%-- <s:elseif test="sysConfigUsePrice.equals('OrderPrice')">
-                            	<s:if test="null != Amount"><s:text name="format.price"><s:param value="OrderAmount"></s:param></s:text></s:if>
-                                <s:else>0.00</s:else>
-                            </s:elseif> --%>
-                            <s:else>
-                                <s:if test="null != Amount"><s:text name="format.price"><s:param value="Amount"></s:param></s:text></s:if>
-                                <s:else>0.00</s:else>
-                            </s:else>
-                        </td>
 		                <td class="center" id="dataTd10"><input type="text" name="reasonArr" maxlength="200"  id="reasonArr" value=""  size="25"></input></td>
                         <td style="display:none" id="dataTd11">
                             <input type="hidden"  name="prtVendorId" value="<s:property value='BIN_ProductVendorID'/>">
