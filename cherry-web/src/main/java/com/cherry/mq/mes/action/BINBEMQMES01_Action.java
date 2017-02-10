@@ -20,10 +20,7 @@ import com.cherry.cm.util.ConvertUtil;
 import com.cherry.dr.cmbussiness.interfaces.RuleHandler_IF;
 import com.cherry.mq.mes.bl.BINBEMQMES98_BL;
 import com.cherry.mq.mes.bl.BINBEMQMES99_BL;
-import com.cherry.mq.mes.common.CherryMQException;
-import com.cherry.mq.mes.common.Message2Bean;
-import com.cherry.mq.mes.common.MessageConstants;
-import com.cherry.mq.mes.common.MessageUtil;
+import com.cherry.mq.mes.common.*;
 import com.cherry.mq.mes.interfaces.CherryMessageHandler_IF;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -49,6 +46,9 @@ public class BINBEMQMES01_Action {
 
 	@Resource(name="transRepeaterManager")
 	private TransRepeaterManager transRepeaterManager;
+
+	@Resource(name="multiThreadController")
+	private MultiThreadController multiThreadController;
 
 	private static final Logger logger = LoggerFactory.getLogger(BINBEMQMES01_Action.class);
 
@@ -83,92 +83,31 @@ public class BINBEMQMES01_Action {
 			}
 			// 动态设定数据源
 			binBEMQMES99_BL.setMesDataSource(map);
-			if(isOldMsg) {
-				// 分析老消息体格式的消息结构数据
-				binBEMQMES99_BL.tran_analyzeMessage(mainDataDTO, map);
-			} else {
-				// 分析新消息体格式【即JSON格式】的消息结构数据
-				binBEMQMES99_BL.tran_analyzeMessage(map);
+			// 获取对象锁的key
+			String lockKey = multiThreadController.getLockKey(map);
+			// 对象锁
+			Object lock = null;
+			if (!ConvertUtil.isBlank(lockKey)){
+				// 当对象锁的key不为空时,通过此key获取对象锁
+				lock = multiThreadController.getLockObj(lockKey);
 			}
-			try {
-				// 更新会员最近购买日期
-				binBEMQMES99_BL.updMemberLastSaleDate(map);
-			} catch (Throwable e) {
-				logger.error("******************************更新会员最近购买日期失败***************************");
-				logger.error(e.getMessage(), e);
-			}
-			try {
-				// 无主会员首次销售更新会员发卡柜台和入会时间
-				binBEMQMES99_BL.updMemCounter(map);
-			} catch (Throwable e) {
-				logger.error("******************************无主会员首次销售更新会员发卡柜台和入会时间失败***************************");
-				logger.error(e.getMessage(), e);
-			}
-			try {
-				// 组织代码
-				String orgCode = (String)map.get("orgCode");
-				// 品牌代码
-				String brandCode = (String)map.get("brandCode");
-				// 业务类型
-				String tradeType = (String)map.get("tradeType");
-				if (!CherryChecker.isNullOrEmpty(orgCode) && !CherryChecker.isNullOrEmpty(brandCode)
-						&& !CherryChecker.isNullOrEmpty(tradeType)) {
-					// 取得处理器
-					RuleHandler_IF ruleHandlerIF = binBEMQMES98_BL.getHandler(orgCode, brandCode, tradeType);
-					// 存在处理器的场合
-					if (null != ruleHandlerIF) {
-						// 将消息发送到规则处理的MQ队列里
-						binBEMQMES99_BL.sendRuleMQ(map);
+			if (lock != null){
+				// 存在对象锁时,业务处理加锁
+				synchronized (lock) {
+					try {
+						// 业务处理
+						businessExec(map, mainDataDTO, isOldMsg);
+					} catch (Exception e) {
+						throw e;
+					} finally {
+						// 执行完业务处理删除对象锁
+						multiThreadController.removeLock(lockKey);
 					}
 				}
-			} catch (Throwable e) {
-				logger.error("******************************发送规则处理失败***************************");
-				logger.error(e.getMessage(),e);
+			} else {
+				// 不带锁的业务处理
+				businessExec(map, mainDataDTO, isOldMsg);
 			}
-			try {
-				// 需要实时推送的消息发送到实时推送消息的MQ处理
-				binBEMQMES99_BL.publish(map);
-			} catch (Throwable e) {
-				logger.error("******************************发送实时推送消息的MQ处理失败***************************");
-				logger.error(e.getMessage(),e);
-			}
-			try {
-				// 组织代码
-				String orgCode = (String)map.get("orgCode");
-				// 品牌代码
-				String brandCode = (String)map.get("brandCode");
-				// 业务类型
-				String tradeType = MessageConstants.MESSAGE_TYPE_IR;
-				// 取得刷新索引处理器
-				CherryMessageHandler_IF cherryMessageHandler = binBEMQMES98_BL.getMessageHandler(orgCode, brandCode, tradeType);
-				// 存在刷新索引处理器的场合
-				if(cherryMessageHandler != null) {
-					// 发送刷新索引MQ消息
-					binBEMQMES99_BL.sendIRMQMsg(map);
-				}
-			} catch (Throwable e) {
-				logger.error("******************************发送刷新索引MQ消息失败***************************");
-				logger.error(e.getMessage(), e);
-			}
-			try{
-				// 实时生成会员单据
-				binBEMQMES99_BL.makeOrder(map);
-			} catch (Throwable e) {
-				logger.error("******************************实时生成会员单据失败***************************");
-				logger.error(e.getMessage(), e);
-			}
-
-			// 业务类型
-			String tradeType =  ConvertUtil.getString(map.get("tradeType"));
-
-			if( tradeType.equals("NS")) {
-				// 品牌代码
-				String brandCode = (String)map.get("brandCode");
-
-				// 发送经销商额度变更MQ消息
-				transRepeaterManager.doRepeate(brandCode, "NS", map);
-			}
-
 		}catch(Throwable e) {
 
 			String addMongoDBFlag = ConvertUtil.getString(map.get("addMongoDBFlag"));
@@ -201,7 +140,95 @@ public class BINBEMQMES01_Action {
 			CustomerContextHolder.clearCustomerDataSourceType();
 		}
 	}
-	
+
+	private void businessExec(Map<String, Object> map, Object mainDataDTO, boolean isOldMsg) throws Exception{
+		if(isOldMsg) {
+			// 分析老消息体格式的消息结构数据
+			binBEMQMES99_BL.tran_analyzeMessage(mainDataDTO, map);
+		} else {
+			// 分析新消息体格式【即JSON格式】的消息结构数据
+			binBEMQMES99_BL.tran_analyzeMessage(map);
+		}
+		try {
+			// 更新会员最近购买日期
+			binBEMQMES99_BL.updMemberLastSaleDate(map);
+		} catch (Throwable e) {
+			logger.error("******************************更新会员最近购买日期失败***************************");
+			logger.error(e.getMessage(), e);
+		}
+		try {
+			// 无主会员首次销售更新会员发卡柜台和入会时间
+			binBEMQMES99_BL.updMemCounter(map);
+		} catch (Throwable e) {
+			logger.error("******************************无主会员首次销售更新会员发卡柜台和入会时间失败***************************");
+			logger.error(e.getMessage(), e);
+		}
+		try {
+			// 组织代码
+			String orgCode = (String)map.get("orgCode");
+			// 品牌代码
+			String brandCode = (String)map.get("brandCode");
+			// 业务类型
+			String tradeType = (String)map.get("tradeType");
+			if (!CherryChecker.isNullOrEmpty(orgCode) && !CherryChecker.isNullOrEmpty(brandCode)
+					&& !CherryChecker.isNullOrEmpty(tradeType)) {
+				// 取得处理器
+				RuleHandler_IF ruleHandlerIF = binBEMQMES98_BL.getHandler(orgCode, brandCode, tradeType);
+				// 存在处理器的场合
+				if (null != ruleHandlerIF) {
+					// 将消息发送到规则处理的MQ队列里
+					binBEMQMES99_BL.sendRuleMQ(map);
+				}
+			}
+		} catch (Throwable e) {
+			logger.error("******************************发送规则处理失败***************************");
+			logger.error(e.getMessage(),e);
+		}
+		try {
+			// 需要实时推送的消息发送到实时推送消息的MQ处理
+			binBEMQMES99_BL.publish(map);
+		} catch (Throwable e) {
+			logger.error("******************************发送实时推送消息的MQ处理失败***************************");
+			logger.error(e.getMessage(),e);
+		}
+		try {
+			// 组织代码
+			String orgCode = (String)map.get("orgCode");
+			// 品牌代码
+			String brandCode = (String)map.get("brandCode");
+			// 业务类型
+			String tradeType = MessageConstants.MESSAGE_TYPE_IR;
+			// 取得刷新索引处理器
+			CherryMessageHandler_IF cherryMessageHandler = binBEMQMES98_BL.getMessageHandler(orgCode, brandCode, tradeType);
+			// 存在刷新索引处理器的场合
+			if(cherryMessageHandler != null) {
+				// 发送刷新索引MQ消息
+				binBEMQMES99_BL.sendIRMQMsg(map);
+			}
+		} catch (Throwable e) {
+			logger.error("******************************发送刷新索引MQ消息失败***************************");
+			logger.error(e.getMessage(), e);
+		}
+		try{
+			// 实时生成会员单据
+			binBEMQMES99_BL.makeOrder(map);
+		} catch (Throwable e) {
+			logger.error("******************************实时生成会员单据失败***************************");
+			logger.error(e.getMessage(), e);
+		}
+
+			// 业务类型
+			String tradeType =  ConvertUtil.getString(map.get("tradeType"));
+
+			if( tradeType.equals("NS")) {
+				// 品牌代码
+				String brandCode = (String)map.get("brandCode");
+
+			// 发送经销商额度变更MQ消息
+			transRepeaterManager.doRepeate(brandCode, "NS", map);
+		}
+	}
+
 	/**
      * 接收消息（监控类）
      * 

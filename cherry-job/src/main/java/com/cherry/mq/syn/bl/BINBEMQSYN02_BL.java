@@ -188,15 +188,15 @@ public class BINBEMQSYN02_BL {
 							}
 							// 不是重复数据的场合
 							if(binBEMQMES99_BL.judgeIfIsRepeatData(mainDataMap)) {
-								String jMSXGroupID = (String)wMQLogMap.get("jMSXGroupID");
-								if(jMSXGroupID == null || "".equals(jMSXGroupID)) {
-									jMSXGroupID = (String)map.get("brandCode");
-								}
+//								String jMSXGroupID = (String)wMQLogMap.get("jMSXGroupID");
+//								if(jMSXGroupID == null || "".equals(jMSXGroupID)) {
+//									jMSXGroupID = (String)map.get("brandCode");
+//								}
 								String msgQueName = (String)wMQLogMap.get("msgQueueName");
 								if(null==msgQueName||"".equals(msgQueName)){
 									msgQueName="posToCherryMsgQueue";
 								}
-								messageSender.sendGroupMessage(originalMsg, msgQueName, jMSXGroupID);
+								messageSender.sendGroupMessage(originalMsg, msgQueName, "NOGROUP");
 								// 重新做接收消息件数加一
 								receMqCount++;
 							} else {

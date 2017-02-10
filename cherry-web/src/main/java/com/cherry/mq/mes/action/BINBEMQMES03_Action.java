@@ -17,6 +17,7 @@ import java.util.Map;
 
 import javax.annotation.Resource;
 
+import com.cherry.mq.mes.common.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -24,11 +25,6 @@ import com.cherry.cm.core.CustomerContextHolder;
 import com.cherry.cm.core.SpringBeanManager;
 import com.cherry.cm.util.ConvertUtil;
 import com.cherry.mq.mes.bl.BINBEMQMES99_BL;
-import com.cherry.mq.mes.common.CherryMQException;
-import com.cherry.mq.mes.common.CherryMqMsgReceiverImpl;
-import com.cherry.mq.mes.common.MessageConstants;
-import com.cherry.mq.mes.common.MessageUtil;
-import com.cherry.mq.mes.common.MqDataSource;
 import com.cherry.mq.mes.interfaces.MqReceiver_IF;
 import com.cherry.mq.mes.service.BINBEMQMES99_Service;
 import com.mongodb.BasicDBObject;
@@ -55,10 +51,13 @@ public class BINBEMQMES03_Action {
 	
 	@Resource(name="binBEMQMES99_Service")
 	private BINBEMQMES99_Service binBEMQMES99_Service;
+
+	@Resource(name="multiThreadController")
+	private MultiThreadController multiThreadController;
 	
 	/**
 	 * 处理终端发送到新后台的MQ消息
-	 * @param msg
+	 * @param map
 	 * @throws Exception
 	 */
 	public void receiveMessage(Map<String, Object> map) throws Exception {
@@ -124,24 +123,30 @@ public class BINBEMQMES03_Action {
 				// 业务类型必填
 				MessageUtil.addMessageWarning(map,String.format(MessageConstants.MSG_ERROR_74, "TradeType"));
 			}
-			
-			// 校验成功后进入相应的处理消息的类
-			// 根据业务类型取得相应的处理类
-			// 业务类型的实现类名采用约定模式，一经约定不再更改
-			Object ob = SpringBeanManager.getBean("mq"+tradeType);
-			if(null == ob) {
-				// 没有此业务类型
-				MessageUtil.addMessageWarning(map, MessageConstants.MSG_ERROR_27);
-			} else {
-				((MqReceiver_IF) ob).tran_execute(map);
-				
-				if(!"1".equals(ConvertUtil.getString(map.get("isInsertMongoDBBusLog")))) {
-					// 在业务处理BL中未插入MongonDB，则在共通中需补上
-					//写入MQ收发日志表
-					this.addMessageLog(map);
-			        // 插入MongoDB
-			        this.addMongoDBBusLog(map);
+
+			//
+			String lockKey = multiThreadController.getLockKey(map);
+			// 对象锁
+			Object lock = null;
+			if (!ConvertUtil.isBlank(lockKey)){
+				// 当对象锁的key不为空时,通过此key获取对象锁
+				lock = multiThreadController.getLockObj(lockKey);
+			}
+			if (lock != null){
+				// 存在对象锁时,业务处理加锁
+				synchronized (lock){
+					try {
+						businessExec(map,tradeType);
+					}catch (Exception e){
+						throw e;
+					}finally {
+						// 执行完业务处理删除对象锁
+						multiThreadController.removeLock(lockKey);
+					}
 				}
+			} else {
+				// 不带锁的业务处理
+				businessExec(map,tradeType);
 			}
 		
 		} catch(Exception e) {
@@ -167,7 +172,28 @@ public class BINBEMQMES03_Action {
 		}
 		
 	}
-	
+
+	private void businessExec(Map<String,Object> map ,String tradeType) throws Exception{
+		// 校验成功后进入相应的处理消息的类
+		// 根据业务类型取得相应的处理类
+		// 业务类型的实现类名采用约定模式，一经约定不再更改
+		Object ob = SpringBeanManager.getBean("mq"+tradeType);
+		if(null == ob) {
+			// 没有此业务类型
+			MessageUtil.addMessageWarning(map, MessageConstants.MSG_ERROR_27);
+		} else {
+			((MqReceiver_IF) ob).tran_execute(map);
+
+			if(!"1".equals(ConvertUtil.getString(map.get("isInsertMongoDBBusLog")))) {
+				// 在业务处理BL中未插入MongonDB，则在共通中需补上
+				//写入MQ收发日志表
+				this.addMessageLog(map);
+				// 插入MongoDB
+				this.addMongoDBBusLog(map);
+			}
+		}
+	}
+
 	/**
 	 * 接收数据写入MQ收发日志表
 	 * @param map

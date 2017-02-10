@@ -2732,4 +2732,8 @@ public class CherryConstants {
 	//MF天猫加密密钥
 	public static final String TMALLENCRYPT="Zloft2";
 
+	public static final String UNMEMBERCODE = "000000000";
+
+	public static final String TEMP_MEMBERCODE = "P5910302663";
+
 }
