@@ -337,7 +337,7 @@ public class BINBAT152_BL {
                 binbat152_Service.insertProBatchInOutDetail(proBatchInOutDetailList);
 
             } else {
-                // 空退(空退的情况下以最近的批次作为成本价格。)
+                // 空退(空退的情况下以最近的批次作为成本价格，如果最近的批次不存在就取产品的配送价作为成本价)
                 for (Map<String, Object> proBatchInOutDetail : proBatchInOutDetailList) {
 
                     proBatchInOutDetail.put("BIN_OrganizationInfoID", proBatchInOut.get("BIN_OrganizationInfoID"));
@@ -345,9 +345,21 @@ public class BINBAT152_BL {
                     // 取得产品批次库存表指定仓库产品的末次信息
                     Map<String, Object> topProductNewBatchStockMap = binbat152_Service.getProductNewBatchStock(proBatchInOutDetail);
 
-                    proBatchInOutDetail.put("CostPrice",
-                            (null != topProductNewBatchStockMap && !topProductNewBatchStockMap.isEmpty())
-                                    ? topProductNewBatchStockMap.get("CostPrice") : null); // 成本价
+                    if(null != topProductNewBatchStockMap && !topProductNewBatchStockMap.isEmpty()){
+                        proBatchInOutDetail.put("CostPrice", topProductNewBatchStockMap.get("CostPrice"));
+                    } else{
+                        // 根据产品厂商ID及入出库日期取得产品的价格相关信息
+                        Map<String,Object> productPrice = binbat152_Service.getProductPriceByID(proBatchInOutDetail);
+                        if(null != productPrice && !productPrice.isEmpty()) {
+                            // 取配送价格
+                            String distributionPrice = ConvertUtil.getString(productPrice.get("DistributionPrice"));
+                            proBatchInOutDetail.put("CostPrice", !"".equals(distributionPrice) ? distributionPrice : null);
+                        } else {
+                            proBatchInOutDetail.put("CostPrice", null);
+                        }
+
+
+                    }
 
                     proBatchInOutDetail.put("CreatedBy",CherryBatchConstants.UPDATE_NAME );
                     proBatchInOutDetail.put("CreatePGM","BINBAT152");
@@ -424,7 +436,7 @@ public class BINBAT152_BL {
                             if (null != topProductNewBatchStockMap && !topProductNewBatchStockMap.isEmpty()) {
                                 costPriceCA = ConvertUtil.getString(topProductNewBatchStockMap.get("CostPrice"));
                             } else {
-                                // 根据产品厂商ID及入出库日期取得产品的价格想着信息
+                                // 根据产品厂商ID及入出库日期取得产品的价格相关信息
                                 Map<String, Object> productPrice = binbat152_Service.getProductPriceByID(proBatchInOutDetail);
                                 if (!"".equals(priceConfig) && null != productPrice && !productPrice.isEmpty()) {
                                     // 取指定价格

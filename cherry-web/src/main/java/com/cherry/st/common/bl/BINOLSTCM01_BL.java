@@ -248,7 +248,7 @@ public class BINOLSTCM01_BL implements BINOLSTCM01_IF {
 							 * 系统配置项[初始盘盈时的入库成本价使用的价格]:'':不处理; 'DistributionPrice':配送价;'StandardCost':结算价;
 							 */
 							String priceConfig = binOLCM14_BL.getConfigValue("1395", organizationInfoId, brandInfoId);
-							// 根据产品厂商ID及入出库日期取得产品的价格想着信息
+							// 根据产品厂商ID及入出库日期取得产品的价格相关信息
 							Map<String,Object> productPrice = binOLSTCM01_Service.getProductPriceByID(productInOutDetail);
 							if(!"".equals(priceConfig) && null != productPrice && !productPrice.isEmpty()) {
 								// 取指定价格
@@ -268,7 +268,7 @@ public class BINOLSTCM01_BL implements BINOLSTCM01_IF {
     				else if (CherryConstants.BUSINESS_TYPE_SR.equals(tradeType)){
     					String stockInOut_SRrelevantNo = ConvertUtil.getString(newMainData.get("stockInOut_SrRelevantNo"));
     					
-    					// 空退(空退的情况下以最近的批次作为成本价格。)
+    					// 空退(空退的情况下以最近的批次作为成本价格，如果最近的批次不存在就取产品的配送价作为成本价)
     					if(ConvertUtil.isBlank(stockInOut_SRrelevantNo)){
     						
     						// 取得产品批次库存表指定仓库产品的末次信息
@@ -277,9 +277,18 @@ public class BINOLSTCM01_BL implements BINOLSTCM01_IF {
         					if(null != topProductNewBatchStockMap && !topProductNewBatchStockMap.isEmpty()){
         						productInOutDetail.put("CostPrice", topProductNewBatchStockMap.get("CostPrice"));
         					} else{
-        						productInOutDetail.put("CostPrice", null);
-        						
-        						succDetailCP = false;
+								// 根据产品厂商ID及入出库日期取得产品的价格相关信息
+								Map<String,Object> productPrice = binOLSTCM01_Service.getProductPriceByID(productInOutDetail);
+								if(null != productPrice && !productPrice.isEmpty()) {
+									// 取配送价格
+									String distributionPrice = ConvertUtil.getString(productPrice.get("DistributionPrice"));
+									productInOutDetail.put("CostPrice", !"".equals(distributionPrice) ? distributionPrice : null);
+								} else {
+									productInOutDetail.put("CostPrice", null);
+									succDetailCP = false;
+								}
+
+
         					}
     						
     					} 
