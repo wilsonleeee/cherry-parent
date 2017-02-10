@@ -91,6 +91,7 @@ public class BINOLPTRPS13_BL implements BINOLPTRPS13_IF, BINOLCM37_IF {
 			{ "comment", "RPS13_comments", "20", "", "" }, // 备注--以明细备注为主，无明细备注取主单备注
 			{ "billModel", "RPS14_billModel", "20", "", "1326" }, // 单据模式
 			{ "dataSource", "RPS14_dataSource", "20", "", "" }, // 原始数据来源
+			{ "createTime", "RPS13_createTime", "20", "", "" }, // 原始数据来源
 	};
 	
 	//获取销售记录数量
