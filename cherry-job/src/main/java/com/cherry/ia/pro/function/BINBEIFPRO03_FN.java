@@ -32,7 +32,7 @@ public class BINBEIFPRO03_FN implements FunctionProvider{
 		try {
 			Map<String, Object> resMap = new HashMap<String, Object>();
 			int result = binbeifpro03BL.tran_batchCouProducts(transientVars);
-			if(result == CherryBatchConstants.BATCH_SUCCESS) {
+			if(result == CherryBatchConstants.BATCH_SUCCESS && Boolean.parseBoolean(transientVars.get("IsSendMQ").toString())) {
 				// 备份产品下发数据/MQ下发
 				Map<String, Object> flagMapMQ = binbeifpro03BL.tran_batchCntProductsMQSend(transientVars);
 				resMap.putAll(flagMapMQ);

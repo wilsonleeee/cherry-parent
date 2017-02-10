@@ -63,7 +63,7 @@ public class BINBEIFPRO03_Action extends BaseAction {
 	 * 
 	 * @param 无
 	 * @return String
-	 * 
+	 *
 	 */
 	public String binbeifpro03Exec() throws Exception {
 		logger.info("******************************BINBEIFPRO03处理开始***************************");
@@ -79,7 +79,7 @@ public class BINBEIFPRO03_Action extends BaseAction {
 			map.put(CherryBatchConstants.ORGANIZATIONINFOID, userInfo.getBIN_OrganizationInfoID());
 			map.put("userID", userInfo.getBIN_UserID());
 			flg = binbeifpro03BL.tran_batchCouProducts(map);
-			if(flg == CherryBatchConstants.BATCH_SUCCESS) {
+			if(flg == CherryBatchConstants.BATCH_SUCCESS && Boolean.parseBoolean(map.get("IsSendMQ").toString())) {
 				// 备份产品下发数据/MQ下发
 				Map<String, Object> flagMapMQ = binbeifpro03BL.tran_batchCntProductsMQSend(map);
 				resMap.putAll(flagMapMQ);

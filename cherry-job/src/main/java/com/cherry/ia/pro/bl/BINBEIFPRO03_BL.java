@@ -124,11 +124,7 @@ public class BINBEIFPRO03_BL {
 		} else if (!ConvertUtil.isBlank(cntIssuedPrtMode) && "YT".equals(cntIssuedPrtMode)) {
 			sendMqOrNot = updIFDatabaseYT(map);
 		}
-		if(!sendMqOrNot){
-			//如果不需要发送MQ
-			fReason = "部分柜台产品下发失败，详细日志文件。";
-			throw new Exception("产品下发失败,MQ下发操作禁止");
-		}
+		map.put("IsSendMQ",sendMqOrNot);
 		return flag;
 	}
 
@@ -182,17 +178,17 @@ public class BINBEIFPRO03_BL {
 	 * Step2 : 将差异更新到部门产品表及部门产品价格
 	 * Step3 : 删除方案对应的履历数据，并将最新的方案配置信息插入到履历表
 	 * @param map
-	 * @throws JSONException 
+	 * @throws JSONException
 	 */
 	@SuppressWarnings("unchecked")
 	private void updPrtSoluCityChannelDiff(Map<String, Object> map) throws JSONException,Exception{
 		// 取得产品方案配置信息List(UpdateTime升序,包括区域、城市、指定柜台等)
 		List<Map<String, Object>> dpcdList = binbeifpro03Service.getDPConfigDetailList(map);
-		
+
 		if (!CherryBatchUtil.isBlankList(dpcdList)) {
-			
+
 			for(Map<String, Object> itemMap : dpcdList){
-				
+
 				String placeType = (String)itemMap.get("PlaceType");
 				if(placeType.equals(ProductConstants.LOTION_TYPE_REGION)){
 					itemMap.put("city", 1);
@@ -205,94 +201,94 @@ public class BINBEIFPRO03_BL {
 						|| placeType.equals("7")){
 					itemMap.put("counter", 1);
 				}
-				
+
 				itemMap.putAll(map);
 				// String productPriceSolutionID = (String)itemMap.get("productPriceSolutionID");
-				
+
 				// Step1 : 取得方案配置的区域或渠道实际的的柜台与以前配置的差异(区域城市/渠道)List
 				List<Map<String, Object>> cntForPrtSoluCityChannelDiff = binbeifpro03Service.getCntForPrtSoluCityChannelDiff(itemMap);
 				if (!CherryBatchUtil.isBlankList(cntForPrtSoluCityChannelDiff)) {
-					
+
 					for(Map<String, Object> diffMap : cntForPrtSoluCityChannelDiff){
-						
+
 						// Step2 : 将差异更新到部门产品表及部门产品价格
 						diffMap.putAll(map);
 						diffMap.put("productPriceSolutionID", diffMap.get("BIN_SolutionId"));
 						String modifyFlag = (String)diffMap.get("modifyFlag"); // modifyFlag  add 增加的柜台 、sub减少的柜台
 						// 取得当前方案对应的产品及增加的柜台,merge到部门产品表及价格表 validFlag = 1,version = tversion +1
 						if("add".equals(modifyFlag)){
-							
+
 							diffMap.put("CounterCode", diffMap.get("CntPD"));
 							// 1: 插入产品部门表
 							diffMap.put("ValidFlag", CherryBatchConstants.VALIDFLAG_ENABLE);
 							binbeifpro03Service.mergePrtSoluDepartRelation(diffMap);
-							
+
 						}
 						// 取得当前方案对应的产品及增加的柜台,merge到部门产品表及价格表 validFlag = 0,version = tversion +1
 						else if ("sub".equals(modifyFlag)){
-							
+
 							diffMap.put("CounterCode", diffMap.get("CntPDH"));
-									
+
 							// 1：将方案与原柜台关联的数据无效掉
 							diffMap.put("psdValidFlag", CherryConstants.VALIDFLAG_DISABLE);
 							binbeifpro03Service.updPrtSoluDepartRelation(diffMap);
 						}
-						
+
 					}
-					
+
 					// Step3 : 更新产品方案配置履历表
 					updPrtSoluWithDepartHis(itemMap);
 				}
-				
+
 			}
-			
+
 		}
 	}
-	
+
 	/**
 	 * 更新产品方案配置履历表
-	 * 
+	 *
 	 * 删除方案对应的履历数据，并将最新的方案配置信息插入到履历表
-	 * 
+	 *
      * @param map
      * praMap参数说明：productPriceSolutionID （方案ID）,
      * praMap参数说明：placeType（地点类型）,
      * praMap参数说明：SaveJson（地点集合）,
      * praMap参数说明：组织ID,品牌ID等共通信息,
-	 * @throws JSONException,Exception 
+	 * @throws JSONException,Exception
 	 */
 	@SuppressWarnings("unchecked")
 	public void updPrtSoluWithDepartHis(Map<String,Object> map) throws JSONException,Exception{
-		
+
 		//  更新产品方案配置履历表(后加的，为了解决区域)
-	
+
 		// 删除方案配置履历表中指定的方案
 		binbeifpro03Service.delPrtSoluWithDepartHis(map);
-		
+
 		Map<String, Object> hisMap = new HashMap<String, Object>();
 		hisMap.putAll(map);
-		
+
 		// 地点类型
 		String placeType = (String)map.get("PlaceType");
 		hisMap.put("placeType", placeType);
 		// 地点集合
 		String saveJson = (String)map.get("SaveJson");
 		List<Long> saveJsonList = (List<Long>) JSONUtil.deserialize(saveJson);
-		
+
 		String placeTypeFlag = "counter"; // 区别方案分配地点类型属性柜台类还是区域城市/渠道类（用于ibatis查询时动态生成SQL）
 		if(placeType.equals(ProductConstants.LOTION_TYPE_REGION_COUNTER)
 				|| placeType.equals(ProductConstants.LOTION_TYPE_CHANNELS_COUNTER)
 				|| placeType.equals(ProductConstants.LOTION_TYPE_IMPORT_COUNTER)
 				|| placeType.equals("7")) {
-			
+
 			placeTypeFlag = "counter";
 			hisMap.put("placeTypeFlag", placeTypeFlag);
 			hisMap.put("place", 0);
 			binbeifpro03Service.mergePrtSoluWithDepartHis(hisMap);
-		} 
+		}
 		else if (placeType.equals(ProductConstants.LOTION_TYPE_REGION)
 				|| placeType.equals(ProductConstants.LOTION_TYPE_CHANNELS)) {
-			
+
 			placeTypeFlag = "CityOrChannel";
 			if(placeType.equals(ProductConstants.LOTION_TYPE_REGION)){
 				hisMap.put("city", 1);
@@ -306,14 +302,14 @@ public class BINBEIFPRO03_BL {
 				binbeifpro03Service.mergePrtSoluWithDepartHis(hisMap);
 			}
 		}
-		
+
 		// Step5: END
-			
+
 	}
 
 	/**
 	 * 更新接口数据库
-	 * 
+	 *
 	 * @param map
 	 */
 	private boolean updIFDatabase(Map<String, Object> map) throws Exception{
@@ -345,48 +341,6 @@ public class BINBEIFPRO03_BL {
 			}
 
 			// Step1.2 取得新后台产品方案明细表数据版本号version大于tVersion的list(新增/修改/停用/启用等)
-
-			// 取得系统配置项产品方案添加模式
-			String config = binOLCM14_BL.getConfigValue("1288", String.valueOf(map.get("organizationInfoId")), String.valueOf(map.get("brandInfoId")));
-			map.put("soluAddModeConf", config);
-			if(ProductConstants.SOLU_ADD_MODE_CONFIG_2.equals(config) 
-					|| ProductConstants.SOLU_ADD_MODE_CONFIG_3.equals(config)){
-				// Step1.2.1取得系统配置项产品方案添加模式,为颖通模式时，检查方案明细添加的分类是否有动态添加减少产品的变动情况
-				// 所有产品价格方案
-				List<Map<String, Object>> prtPriceSolutionList = binbeifpro03Service.getPrtPriceSolutionList(map);
-				if (!CherryBatchUtil.isBlankList(prtPriceSolutionList)) {
-					for(Map<String, Object> soluMap : prtPriceSolutionList){
-						map.put("productPriceSolutionID", soluMap.get("solutionID"));
-						// 取得当前产品方案明细表的产品与以前配置的差异List
-						List<Map<String, Object>> prtForPrtSoluDetailDiff = binbeifpro03Service.getPrtForPrtSoluDetailDiff(map);
-						if (!CherryBatchUtil.isBlankList(prtForPrtSoluDetailDiff)) {
-							for(Map<String, Object> diffMap : prtForPrtSoluDetailDiff){
-								// 将差异更新到产品方案明细表
-								diffMap.putAll(map);
-								String modifyFlag = (String)diffMap.get("modifyFlag"); // modifyFlag  add 增加的柜台 、sub减少的柜台
-								// 取得当前方案及增加的产品,merge到产品方案明细表 validFlag = 1,version = tversion +1,isCate =1
-								if("add".equals(modifyFlag)){
-									diffMap.put("ValidFlag", CherryConstants.VALIDFLAG_ENABLE);
-									diffMap.put("productId", diffMap.get("prtPD"));
-									// 1: 插入产品方案明细表
-									binbeifpro03Service.mergeProductPriceSolutionDetail(diffMap);
-									
-								}
-								// 取得当前方案明细减少的产品,merge到产品方案部门关系表 validFlag = 0,version = tversion +1
-								else if ("sub".equals(modifyFlag)){
-									diffMap.put("ValidFlag", CherryConstants.VALIDFLAG_DISABLE);
-									diffMap.put("productId", diffMap.get("prtPDH"));
-									// 1: 将方案明细表的产品数据无效掉
-									binbeifpro03Service.updPrtSoluDetail(diffMap);
-								}
-							}
-						}
-					}
-				}
-				// Step1.2.2 颖通模式时，方案价格根据当前标准产品当前业务日期的价格
-				binbeifpro03Service.mergePPSDPrice(map);
-			}
-
 			List<Map<String, Object>> prtSoluDetailByVersionList = binbeifpro03Service.getPrtSoluDetailByVersionList(map);
 			loger.info("需要下发的柜台产品明细数量为：prtSoluDetailByVersionList.size="+ (null==prtSoluDetailByVersionList?0:prtSoluDetailByVersionList.size()));
 			List<Map<String,Object>> prtUpdList = new ArrayList<Map<String,Object>>();
@@ -455,52 +409,6 @@ public class BINBEIFPRO03_BL {
 		}
 
 			// Step1.2 取得新后台产品方案明细表数据版本号version大于tVersion的list(新增/修改/停用/启用等)
-
-			// 取得系统配置项产品方案添加模式
-			String config = binOLCM14_BL.getConfigValue("1288", String.valueOf(map.get("organizationInfoId")), String.valueOf(map.get("brandInfoId")));
-			map.put("soluAddModeConf", config);
-			if(ProductConstants.SOLU_ADD_MODE_CONFIG_2.equals(config)
-					|| ProductConstants.SOLU_ADD_MODE_CONFIG_3.equals(config)){
-				// Step1.2.1取得系统配置项产品方案添加模式,为颖通模式时，检查方案明细添加的分类是否有动态添加减少产品的变动情况
-				// 所有产品价格方案
-				List<Map<String, Object>> prtPriceSolutionList = binbeifpro03Service.getPrtPriceSolutionList(map);
-				if (!CherryBatchUtil.isBlankList(prtPriceSolutionList)) {
-					for(Map<String, Object> soluMap : prtPriceSolutionList){
-						map.put("productPriceSolutionID", soluMap.get("solutionID"));
-						// 取得当前产品方案明细表的产品与以前配置的差异List
-						List<Map<String, Object>> prtForPrtSoluDetailDiff = binbeifpro03Service.getPrtForPrtSoluDetailDiffYT(map);
-						if (!CherryBatchUtil.isBlankList(prtForPrtSoluDetailDiff)) {
-							for(Map<String, Object> diffMap : prtForPrtSoluDetailDiff){
-								// 将差异更新到产品方案明细表
-								diffMap.putAll(map);
-								String modifyFlag = (String)diffMap.get("modifyFlag"); // modifyFlag  add 增加的柜台 、sub减少的柜台
-
-								// 取得当前方案及增加的产品,merge到产品方案明细表 validFlag = 1,version = tversion +1,isCate =1
-								if("add".equals(modifyFlag)){
-									diffMap.put("ValidFlag", CherryConstants.VALIDFLAG_ENABLE);
-									diffMap.put("productId", diffMap.get("prtPD"));
-									// 1: 插入产品方案明细表
-									binbeifpro03Service.mergeProductPriceSolutionDetail(diffMap);
-
-								}
-								// 取得当前方案明细减少的产品,merge到产品方案部门关系表 validFlag = 0,version = tversion +1
-								else if ("sub".equals(modifyFlag)){
-
-									diffMap.put("ValidFlag", CherryConstants.VALIDFLAG_DISABLE);
-									diffMap.put("productId", diffMap.get("prtPDH"));
-									// 1: 将方案明细表的产品数据无效掉
-									binbeifpro03Service.updPrtSoluDetail(diffMap);
-								}
-							}
-
-						}
-					}
-				}
-
-				// Step1.2.2 颖通模式时，方案价格根据当前标准产品当前业务日期的价格
-				binbeifpro03Service.mergePPSDPriceYT(map);
-			}
-
 			List<Map<String, Object>> prtSoluDetailByVersionList = binbeifpro03Service.getPrtSoluDetailByVersionList(map);
 			loger.info("需要下发的柜台产品明细数量为：prtSoluDetailByVersionList.size="+ (null==prtSoluDetailByVersionList?0:prtSoluDetailByVersionList.size()));
 			List<Map<String,Object>> prtUpdList = new ArrayList<Map<String,Object>>();

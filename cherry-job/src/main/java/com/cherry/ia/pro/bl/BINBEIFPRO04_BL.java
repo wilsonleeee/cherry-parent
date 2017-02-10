@@ -23,14 +23,7 @@ import com.cherry.cm.activemq.interfaces.BINOLMQCOM01_IF;
 import com.cherry.cm.batcmbussiness.interfaces.BINBECM01_IF;
 import com.cherry.cm.cmbussiness.bl.BINOLCM03_BL;
 import com.cherry.cm.cmbussiness.bl.BINOLCM15_BL;
-import com.cherry.cm.core.BatchExceptionDTO;
-import com.cherry.cm.core.BatchLoggerDTO;
-import com.cherry.cm.core.CherryBatchConstants;
-import com.cherry.cm.core.CherryBatchException;
-import com.cherry.cm.core.CherryBatchLogger;
-import com.cherry.cm.core.CherryConstants;
-import com.cherry.cm.core.CherryException;
-import com.cherry.cm.core.CodeTable;
+import com.cherry.cm.core.*;
 import com.cherry.cm.util.CherryBatchUtil;
 import com.cherry.cm.util.ConvertUtil;
 import com.cherry.cm.util.DateUtil;
@@ -45,9 +38,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * 
+ *
  *产品下发(实时)BL
- * 
+ *
  * @author jijw
  * @version 1.0 2014/8/15
  */
@@ -62,17 +55,17 @@ public class BINBEIFPRO04_BL {
 
 	@Resource
 	private BINBEIFPRO01_Service binbeifpro01Service;
-	
+
 	/** 各类编号取号共通BL */
 	@Resource(name="binOLCM15_BL")
 	private BINOLCM15_BL binOLCM15_BL;
-	
+
 	@Resource(name="binOLCM03_BL")
 	private BINOLCM03_BL binOLCM03_BL;
-	
+
  	@Resource(name = "CodeTable")
     private CodeTable codeTable;
-	
+
 	@Resource(name="binOLMQCOM01_BL")
     private BINOLMQCOM01_IF binOLMQCOM01_BL;
 
@@ -88,7 +81,7 @@ public class BINBEIFPRO04_BL {
 
 	/** 处理总条数 */
 	private int totalCount = 0;
-	
+
 	/** 产品功能开启时间处理总条数 */
 	private int prtFunTotalCount = 0;
 	/** 插入条数 */
@@ -144,8 +137,10 @@ public class BINBEIFPRO04_BL {
 			binOLMQCOM01_BL.sendMQMsg(mqDTO,false);
 			//在这里需要处理柜台产品实时下发
 			flag = binbeifpro03BL.tran_batchCouProducts(cloneMapForCounterProduct);
-			//如果实时柜台产品实时下发有异常的话，不会进行到MQ的发送
-			resMap = binbeifpro03BL.tran_batchCntProductsMQSend(cloneMapForCounterProduct);
+			if(Boolean.parseBoolean(cloneMapForCounterProduct.get("IsSendMQ").toString())){
+				//如果实时柜台产品实时下发有异常的话，不会进行到MQ的发送
+				resMap = binbeifpro03BL.tran_batchCntProductsMQSend(cloneMapForCounterProduct);
+			}
 		} catch (Exception e) {
 			loger.error("产品下发失败",e);
 			throw e;
