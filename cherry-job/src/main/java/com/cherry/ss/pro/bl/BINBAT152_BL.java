@@ -192,7 +192,7 @@ public class BINBAT152_BL {
         }
         //删除原单明细时，根据自增长ID去删除，以提高效率
         binbat152_Service.deleteProBatchInOutDetail(lgProductBatchDetail);
-        for (Map<String, Object> lgProductBatchMap : proBatchInOutList) {
+        /*for (Map<String, Object> lgProductBatchMap : proBatchInOutList) {
 
             lgProductBatchMap.put("CreatedBy",CherryBatchConstants.UPDATE_NAME );
             lgProductBatchMap.put("CreatePGM","BINBAT152");
@@ -226,7 +226,90 @@ public class BINBAT152_BL {
 
         }
         //批量插入产品入出库批次记录明细表
-        binbat152_Service.insertProBatchInOutDetail(proBatchInOutList);
+        binbat152_Service.insertProBatchInOutDetail(proBatchInOutList);*/
+
+        // 定义存放拆分后明细的集合
+        List<Map<String, Object>> newBatchInOutDetailList = new ArrayList<Map<String, Object>>();
+
+        //每个产品入出库批次对应的明细序号
+        int detailNo = 0;
+        for (Map<String, Object> proBatchInOutDetail : lgProductBatchDetail) {
+
+            String costPrice = ConvertUtil.getString(proBatchInOutDetail.get("CostPrice")); // 明细成本价
+            //成本价为空才会进行处理
+            if (CherryBatchUtil.isBlankString(costPrice)) {
+                int quantity = ConvertUtil.getInt(proBatchInOutDetail.get("Quantity"));//明细数量
+                int stockQuantity = 0;//表示产品的库存数量
+
+                for (Map<String, Object> proNewBatchStock : proBatchInOutList) {
+                    //表示同一产品
+                    if((ConvertUtil.getInt(proBatchInOutDetail.get("BIN_ProductVendorID")) == ConvertUtil.getInt(proNewBatchStock.get("BIN_ProductVendorID")))
+                        && !CherryChecker.isNullOrEmpty(proNewBatchStock.get("CostPrice"))){
+                        if(!CherryChecker.isNullOrEmpty(proNewBatchStock.get("Quantity"))){
+                            stockQuantity += ConvertUtil.getInt(proNewBatchStock.get("Quantity"));
+                        }
+                    }
+                }
+
+                //表示库存不足，因此不处理
+                if (stockQuantity < quantity) {
+                    proBatchInOutDetail.put("isNewFlag", "0");//区分是否是新数据的
+                    proBatchInOutDetail.put("DetailNo", ++detailNo);//明细序号
+                    newBatchInOutDetailList.add(proBatchInOutDetail);
+                } else {//剩余库存数满足
+                    for (Map<String, Object> proNewBatchStock : proBatchInOutList) {
+                        //表示同一产品
+                        if (ConvertUtil.getInt(proBatchInOutDetail.get("BIN_ProductVendorID")) == ConvertUtil.getInt(proNewBatchStock.get("BIN_ProductVendorID"))) {
+                            int amount = ConvertUtil.getInt(proNewBatchStock.get("Quantity"));//库存数量
+                            if (quantity == 0) {
+                                break;
+                            }
+
+                            //剩余可扣减库存数量大于0
+                            if (amount > 0) {
+                                Map<String, Object> tempMap = new HashMap<String, Object>();
+                                tempMap.putAll(proBatchInOutDetail);
+                                tempMap.put("BIN_OrganizationInfoID", proBatchInOut.get("BIN_OrganizationInfoID"));
+                                tempMap.put("BIN_BrandInfoID", proBatchInOut.get("BIN_BrandInfoID"));
+                                tempMap.put("CreatedBy", CherryBatchConstants.UPDATE_NAME);
+                                tempMap.put("CreatePGM", "BINBAT152");
+                                tempMap.put("UpdatedBy", CherryBatchConstants.UPDATE_NAME);
+                                tempMap.put("UpdatePGM", "BINBAT152");
+                                tempMap.put("isNewFlag", "1");//区分是否是新数据的
+                                tempMap.put("BIN_ProductBatchStockID", proNewBatchStock.get("BIN_ProductBatchStockID"));
+                                tempMap.put("CostPrice", proNewBatchStock.get("CostPrice"));
+                                tempMap.put("DetailNo", ++detailNo);//明细序号
+                                tempMap.put("TradeNoIF", proBatchInOutDetail.get("RelevanceNo"));
+
+                                if (amount < quantity) {//表示库存数小于明细
+                                    quantity = quantity - amount;
+                                    tempMap.put("Quantity", amount);
+                                    tempMap.put("InQuantity", amount);
+                                    tempMap.put("StockQuantity", amount);
+
+                                } else {
+                                    tempMap.put("Quantity", quantity);
+                                    tempMap.put("InQuantity", quantity);
+                                    tempMap.put("StockQuantity", quantity);
+                                    quantity = 0;
+                                }
+                                int productBatchStockID = 0;//产品批次库存ID
+                                productBatchStockID = binbat152_Service.insertProductNewBatchStock(tempMap);//插入【产品批次库存表(新建)】并返回批次库存表ID
+                                tempMap.put("BIN_ProductBatchStockID", productBatchStockID != 0 ? productBatchStockID : null); // 产品库存批次ID
+
+                                newBatchInOutDetailList.add(tempMap);//将拆分后新的明细数据放入集合之中
+                            }
+                        }
+                    }
+                }
+            } else {
+                proBatchInOutDetail.put("isNewFlag", "0");//区分是否是新数据的
+                proBatchInOutDetail.put("DetailNo", ++detailNo);//明细序号
+                newBatchInOutDetailList.add(proBatchInOutDetail);
+            }
+        }
+        //批量插入产品入出库批次记录明细表
+        binbat152_Service.insertProBatchInOutDetail(newBatchInOutDetailList);
     }
 
     /**
@@ -259,6 +342,10 @@ public class BINBAT152_BL {
 
                 //每个产品入出库批次对应的明细序号
                 int detailNo = 0;
+
+                // 定义存放拆分后明细的集合
+                List<Map<String, Object>> newBatchInOutDetailList = new ArrayList<Map<String, Object>>();
+
                 for (Map<String, Object> proBatchInOutDetail : proBatchInOutDetailList) {
 
                     String costPrice = ConvertUtil.getString(proBatchInOutDetail.get("CostPrice")); // 明细成本价
@@ -270,10 +357,8 @@ public class BINBAT152_BL {
 
                         //关联退货可能存在出库时根据库存拆成多个单子的情况，此处也需要如此处理
                         if (!CherryBatchUtil.isBlankList(saleProductBatchInOutDetail)) {
-
                             int quantity = ConvertUtil.getInt(proBatchInOutDetail.get("Quantity"));//明细数量
                             int stockQuantity = 0;//表示产品的库存数量
-
                             for (Map<String, Object> proNewBatchStock : saleProductBatchInOutDetail) {
                                 stockQuantity += ConvertUtil.getInt(proNewBatchStock.get("RelSrResidualQuantity"));
                             }
@@ -282,6 +367,7 @@ public class BINBAT152_BL {
                             if (stockQuantity < quantity) {
                                 proBatchInOutDetail.put("isNewFlag", "0");//区分是否是新数据的
                                 proBatchInOutDetail.put("DetailNo", ++detailNo);//明细序号
+                                newBatchInOutDetailList.add(proBatchInOutDetail);
                             } else {//剩余库存数满足
                                 for (Map<String, Object> proNewBatchStock : saleProductBatchInOutDetail) {
                                     int amount = ConvertUtil.getInt(proNewBatchStock.get("RelSrResidualQuantity"));//库存数量
@@ -291,50 +377,56 @@ public class BINBAT152_BL {
 
                                     //剩余可扣减库存数量大于0
                                     if(amount>0) {
-                                        proBatchInOutDetail.put("BIN_OrganizationInfoID", proBatchInOut.get("BIN_OrganizationInfoID"));
-                                        proBatchInOutDetail.put("BIN_BrandInfoID", proBatchInOut.get("BIN_BrandInfoID"));
-                                        proBatchInOutDetail.put("CreatedBy",CherryBatchConstants.UPDATE_NAME );
-                                        proBatchInOutDetail.put("CreatePGM","BINBAT152");
-                                        proBatchInOutDetail.put("UpdatedBy", CherryBatchConstants.UPDATE_NAME);
-                                        proBatchInOutDetail.put("UpdatePGM","BINBAT152");
-                                        proBatchInOutDetail.put("isNewFlag", "1");//区分是否是新数据的
-                                        proBatchInOutDetail.put("BIN_ProductBatchStockID", proNewBatchStock.get("BIN_ProductBatchStockID"));
-                                        proBatchInOutDetail.put("CostPrice", proNewBatchStock.get("CostPrice"));
-                                        proBatchInOutDetail.put("DetailNo", ++detailNo);//明细序号
-                                        proBatchInOutDetail.put("TradeNoIF", proBatchInOutDetail.get("RelevanceNo"));
+                                        Map<String, Object> tempMap =new HashMap<String, Object>();
+                                        tempMap.putAll(proBatchInOutDetail);
+                                        tempMap.put("BIN_OrganizationInfoID", proBatchInOut.get("BIN_OrganizationInfoID"));
+                                        tempMap.put("BIN_BrandInfoID", proBatchInOut.get("BIN_BrandInfoID"));
+                                        tempMap.put("CreatedBy",CherryBatchConstants.UPDATE_NAME );
+                                        tempMap.put("CreatePGM","BINBAT152");
+                                        tempMap.put("UpdatedBy", CherryBatchConstants.UPDATE_NAME);
+                                        tempMap.put("UpdatePGM","BINBAT152");
+                                        tempMap.put("isNewFlag", "1");//区分是否是新数据的
+                                        tempMap.put("BIN_ProductBatchStockID", proNewBatchStock.get("BIN_ProductBatchStockID"));
+                                        tempMap.put("CostPrice", proNewBatchStock.get("CostPrice"));
+                                        tempMap.put("DetailNo", ++detailNo);//明细序号
+                                        tempMap.put("TradeNoIF", proBatchInOutDetail.get("RelevanceNo"));
 
                                         if (amount < quantity) {//表示库存数小于明细
                                             quantity = quantity - amount;
-                                            proBatchInOutDetail.put("Quantity", amount);
-                                            proBatchInOutDetail.put("InQuantity", amount);
-                                            proBatchInOutDetail.put("StockQuantity", amount);
+                                            tempMap.put("Quantity", amount);
+                                            tempMap.put("InQuantity", amount);
+                                            tempMap.put("StockQuantity", amount);
                                             proNewBatchStock.put("Quantity", amount);
 
                                         } else {
-                                            proBatchInOutDetail.put("Quantity", quantity);
-                                            proBatchInOutDetail.put("InQuantity", quantity);
-                                            proBatchInOutDetail.put("StockQuantity", quantity);
+                                            tempMap.put("Quantity", quantity);
+                                            tempMap.put("InQuantity", quantity);
+                                            tempMap.put("StockQuantity", quantity);
                                             proNewBatchStock.put("Quantity", quantity);
                                             quantity = 0;
                                         }
                                         int productBatchStockID = 0;//产品批次库存ID
-                                        productBatchStockID = binbat152_Service.insertProductNewBatchStock(proBatchInOutDetail);//插入【产品批次库存表(新建)】并返回批次库存表ID
-                                        proBatchInOutDetail.put("BIN_ProductBatchStockID", productBatchStockID != 0 ? productBatchStockID : null); // 产品库存批次ID
+                                        productBatchStockID = binbat152_Service.insertProductNewBatchStock(tempMap);//插入【产品批次库存表(新建)】并返回批次库存表ID
+                                        tempMap.put("BIN_ProductBatchStockID", productBatchStockID != 0 ? productBatchStockID : null); // 产品库存批次ID
                                         binbat152_Service.updateRelSrResidualQuantity(proNewBatchStock);//修改关联退货后的剩余数量
+
+                                        newBatchInOutDetailList.add(tempMap);//将拆分后新的明细数据放入集合之中
                                     }
                                 }
                             }
                         } else {
                             proBatchInOutDetail.put("isNewFlag", "0");//区分是否是新数据的
                             proBatchInOutDetail.put("DetailNo", ++detailNo);//明细序号
+                            newBatchInOutDetailList.add(proBatchInOutDetail);
                         }
                     } else {
                         proBatchInOutDetail.put("isNewFlag", "0");//区分是否是新数据的
                         proBatchInOutDetail.put("DetailNo", ++detailNo);//明细序号
+                        newBatchInOutDetailList.add(proBatchInOutDetail);
                     }
                 }
                 //批量插入产品入出库批次记录明细表
-                binbat152_Service.insertProBatchInOutDetail(proBatchInOutDetailList);
+                binbat152_Service.insertProBatchInOutDetail(newBatchInOutDetailList);
 
             } else {
                 // 空退(空退的情况下以最近的批次作为成本价格，如果最近的批次不存在就取产品的配送价作为成本价)
