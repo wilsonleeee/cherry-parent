@@ -565,9 +565,11 @@ BINOLWSMNG07_02.prototype = {
 		$("#showCheckbox").removeClass("hide");
 		
 		$.each($('#databody').find('tr'), function(n){
+			$(this).find("#chkbox").removeClass("hide");
 			$(this).find("#quantityArr").removeClass("hide");
 			$(this).find("[name='commentsArr']").removeClass("hide");
-			
+
+			$(this).find("#hideNo").addClass("hide");
 			$(this).find("#hideQuantiyArr").addClass("hide");
 			$(this).find("#hideReason").addClass("hide");
 		});

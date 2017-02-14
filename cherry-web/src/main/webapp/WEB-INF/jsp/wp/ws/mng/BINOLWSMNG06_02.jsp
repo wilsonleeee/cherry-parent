@@ -161,8 +161,9 @@
 	                                <s:iterator value="takingDetailList" status="status">
 	                                    <tr id="dataRow<s:property value='#status.index+1'/>" class="<s:if test='#status.odd'>odd</s:if><s:else>even</s:else>">
                                             <td id="dataTd1" class="center">
-                                                <s:if test='operateType.equals("2") && !addType.equals("all")'>
-	                                               <input id="chkbox" type="checkbox" onclick="binOLWSMNG06_02.changechkbox(this);">
+                                                <s:if test='operateType.equals("2") && addType==null'>
+                                                    <input id="chkbox" class="hide" type="checkbox" onclick="binOLWSMNG06_02.changechkbox(this);">
+                                                    <span id="hideNo"><s:property value="#status.index+1"/></span>
                                                 </s:if>
                                                 <s:else>
                                                     <span><s:property value="#status.index+1"/></span>
@@ -237,15 +238,9 @@
 	                                            </s:else>
 	                                        </td>
 	                                        <td style="display:none" id="dataTd10">
-	                                             <%--
-	                                            <input type="hidden" id="priceUnitArr<s:property value='#status.index+1'/>" name="priceUnitArr" value="<s:property value='Price'/>"/>
-	                                            <input type="hidden"  id="productVendorIDArr" name="productVendorIDArr" value="<s:property value='BIN_ProductVendorID'/>"/>
-	                                             --%>
-	                                            <%--<input type="hidden" name="prtVendorId" value="<s:property value='BIN_ProductVendorID'/>"/>--%>
 	                                            <input type="hidden" name="bookCountArr" id="bookCountArr" value="<s:property value='StockQuantity'/>"></input>
 	                                            <input type="hidden" name="gainCountArr" id="gainCountArr" value="<s:property value='GainQuantity'/>"></input>
 	                                            <input type="hidden" name="productVendorIDArr" id="productVendorIDArr" value="<s:property value='BIN_ProductVendorID'/>"></input>
-	                                            <%--<input type="hidden" name="hasproductflagArr" id="hasproductflagArr" value="0"></input>--%>
 	                                            <input type="hidden" name="priceArr" id="priceArr" value="<s:property value='Price'/>"></input>
 	                                            <input type="hidden" name="htArr" id="htArr" value="<s:property value='HandleType'/>"></input>
 	                                        </td>

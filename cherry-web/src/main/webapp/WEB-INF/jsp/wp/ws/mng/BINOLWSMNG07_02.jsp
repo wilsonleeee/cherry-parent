@@ -192,8 +192,9 @@
 	                                    <tr id="dataRow<s:property value='#status.index+1'/>" class="<s:if test='#status.odd'>odd</s:if><s:else>even</s:else>">
                                             <td id="dataTd1" class="center">
                                             	<!-- 可编辑且非全盘  可对明细做删除操作 -->
-                                                <s:if test='operateType.equals("2") && !addType.equals("all")'>
-	                                               <input id="chkbox" type="checkbox" onclick="binOLWSMNG07_02.changechkbox(this);">
+                                                <s:if test='operateType.equals("2") && addType==null'>
+                                                    <input id="chkbox" class="hide" type="checkbox" onclick="binOLWSMNG07_02.changechkbox(this);">
+                                                    <span id="hideNo"><s:property value="#status.index+1"/></span>
                                                 </s:if>
                                                 <s:else>
                                                     <span><s:property value="#status.index+1"/></span>
