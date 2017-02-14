@@ -123,7 +123,7 @@
                     <tr>
                         <s:if test='operateType.equals("newBill")'>
                         <th><s:text name="SFH01_ExpectDeliverDate"/></th>
-                        <td><s:textfield name="expectDeliverDate" cssClass="date"/></td>
+                        <td><s:textfield name="expectDeliverDate" cssClass="date" readOnly="readOnly"/></td>
                         <th><s:text name="SFH01_orderType"/></th>
                         <td>
                             <s:select name="orderType" list='#application.CodeTable.getCodes("1168")' listKey="CodeKey" listValue="Value" headerKey="" cssStyle="width:150px;"/>
@@ -132,7 +132,7 @@
                         <s:else>
                         <s:if test='operateType.equals("2")'>
                         <th><s:text name="SFH01_ExpectDeliverDate"/></th>
-                        <td><s:textfield name="expectDeliverDate" cssClass="date" value="%{productOrderMainData.ExpectDeliverDate}"/></td>
+                        <td><s:textfield name="expectDeliverDate" cssClass="date" value="%{productOrderMainData.ExpectDeliverDate}" readOnly="readOnly"/></td>
                         <th><s:text name="SFH01_orderType"/></th>
                         <td>
                             <s:select name="orderType" list='#application.CodeTable.getCodes("1168")' listKey="CodeKey" listValue="Value" headerKey="" cssStyle="width:150px;" value="%{productOrderMainData.OrderType}"/>
