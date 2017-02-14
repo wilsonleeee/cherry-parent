@@ -343,4 +343,31 @@ public class WebserviceClient {
 		}
 	}
 
+	/**
+	 * POST 访问WebService(访问微信接口的WebService)
+	 * @param url
+	 * @param params
+	 * @return
+	 * @throws Exception
+	 */
+	public static Map<String, Object> accessWeChatWebServicePost(String url, String params) throws Exception{
+		try {
+			WebResource webResource = getWebResource(url);
+			String result = webResource.accept("application/json")
+					.type("application/json").post(String.class, params);
+			return CherryUtil.json2Map(result);
+		} catch (Exception e) {
+			logger.error("Webservice ERROR",e);
+			Map<String, Object> retMap = new HashMap<String, Object>();
+			retMap.put("errcode", "WSE9999");
+			retMap.put("errmsg", "处理过程中发生未知异常");
+			return retMap;
+		} catch (Throwable t) {
+			logger.error("Webservice ERROR",t);
+			Map<String, Object> retMap = new HashMap<String, Object>();
+			retMap.put("errcode", "WSE9999");
+			retMap.put("errmsg", "处理过程中发生未知异常");
+			return retMap;
+		}
+	}
 }

@@ -1,11 +1,13 @@
 package com.cherry.mq.mes.bl;
 
+import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
 
 import javax.annotation.Resource;
 import javax.xml.namespace.QName;
 
+import com.cherry.cm.util.DateUtil;
 import org.apache.axis.client.Call;
 import org.apache.axis.client.Service;
 import org.slf4j.Logger;
@@ -52,29 +54,129 @@ public class BINBEMQMES15_BL implements CherryMessageHandler_IF {
 				String messageId = (String)memInfo.get("messageId");
 				// 绑定过微信的会员才能发送模板消息
 				if(messageId != null && !"".equals(messageId)) {
-					Map<String, String> param = new HashMap<String, String>();
-					param.put("openID", messageId);
-					Map<String, Object> data = new HashMap<String, Object>();
-					data.put("MemberCode", ConvertUtil.getString(map.get("memberCode")));
-					data.put("MemName", ConvertUtil.getString(map.get("memName")));
-					data.put("PointType", ConvertUtil.getString(map.get("pointType")));
-					data.put("NewPoint", ConvertUtil.getString(map.get("newPoint")));
-					data.put("ChangeTime", ConvertUtil.getString(map.get("changeTime")));
-					data.put("CounterName", ConvertUtil.getString(map.get("counterName")));
-					data.put("TotalPoint", ConvertUtil.getString(map.get("totalPoint")));
-					data.put("SaleType", ConvertUtil.getString(map.get("saleType")));
-					data.put("SaleAmount", ConvertUtil.getString(map.get("saleAmount")));
-					param.put("data", CherryUtil.obj2Json(data));
-					Map<String, Object> resultMap = WebserviceClient.accessWeChatWebService(weChatTempWebServiceUrl, param);
-					String errcode = ConvertUtil.getString(resultMap.get("errcode"));
-					if(errcode != null && !"0".equals(errcode)) {
-						logger.error("weChatTempWebServiceUrl error: "+resultMap);
+					boolean isNewMode = false;
+					if (weChatTempWebServiceUrl.toLowerCase().indexOf("mode=new") > 0) {
+						int urlEnd = weChatTempWebServiceUrl.indexOf("?");
+						StringBuilder builder = new StringBuilder();
+						if (urlEnd > 0) {
+							builder.append(weChatTempWebServiceUrl.substring(0, urlEnd));
+						}
+						String[] params = weChatTempWebServiceUrl.substring(urlEnd + 1).split("&");
+						boolean isFirst = true;
+						for (String param : params) {
+							if ("mode=new".equalsIgnoreCase(param)) {
+								isNewMode = true;
+								continue;
+							}
+							if (isFirst) {
+								builder.append("?");
+								isFirst = false;
+							} else {
+								builder.append("&");
+							}
+							builder.append(param);
+						}
+						isNewMode = true;
+						weChatTempWebServiceUrl = builder.toString();
+					}
+					if (isNewMode) {
+						// 发送新格式的微信消息
+						sendNewWxMsg(messageId, weChatTempWebServiceUrl, map);
+					} else {
+						// 发送老格式的微信消息
+						sendOldWxMsg(messageId, weChatTempWebServiceUrl, map);
 					}
 				}
 			}
 		}
 	}
-	
+
+	private void sendNewWxMsg(String messageId, String weChatTempWebServiceUrl, Map<String, Object> map) throws Exception {
+		Map<String, Object> param = new HashMap<String, Object>();
+		// 用户微信号
+		param.put("openId", messageId);
+		Map<String, Object> data = new HashMap<String, Object>();
+		// 会员姓名
+		data.put("name", ConvertUtil.getString(map.get("memName")));
+		// 交易时间
+		data.put("time", ConvertUtil.getString(map.get("changeTime")));
+		// 交易类型
+		String saleType = ConvertUtil.getString(map.get("saleType"));
+		// 当前时间
+		String nowTime = DateUtil.date2String(new Date(),"yyyy-MM-dd");
+		// 积分兑换
+		if ("PX".equalsIgnoreCase(saleType)) {
+			// 模板类型
+			param.put("templateId", "2");
+			if ("1".equals(map.get("pointType"))) {
+				// 类型
+				data.put("type", "增加");
+			} else {
+				data.put("type", "减少");
+			}
+			// 增加积分
+			data.put("Point", ConvertUtil.getString(map.get("newPoint")));
+			// 柜台名称
+			String from = "积分兑换";
+			String counterName = ConvertUtil.getString(map.get("counterName"));
+			if (!"".equals(counterName)) {
+				from = from + "，兑换门店" + counterName;
+			}
+			data.put("From", from);
+		} else {
+			// 模板类型
+			param.put("templateId", "1");
+			// 交易柜台名称
+			data.put("org", ConvertUtil.getString(map.get("counterName")));
+			//交易金额
+			double amount = 0;
+			if (null != map.get("saleAmount")) {
+				amount = Double.parseDouble(String.valueOf(map.get("saleAmount")));
+			}
+			// 类型
+			if ("NS".equalsIgnoreCase(saleType)) {
+				data.put("type", "销售");
+				data.put("money", amount);
+			} else {
+				data.put("type", "退货");
+				data.put("money", -amount);
+			}
+			// 增加积分
+			data.put("point", ConvertUtil.getString(map.get("newPoint")));
+		}
+		// 当前时间
+		data.put("nowTime", nowTime);
+		// 当前积分
+		data.put("totalPoint", ConvertUtil.getString(map.get("totalPoint")));
+		param.put("templateParam", data);
+		Map<String, Object> resultMap = WebserviceClient.accessWeChatWebServicePost(weChatTempWebServiceUrl, CherryUtil.obj2Json(param));
+		String errcode = ConvertUtil.getString(resultMap.get("errcode"));
+		if(!"".equals(errcode) && !"0".equals(errcode)) {
+			logger.error("*********************** new weChatTempWebServiceUrl error: "+resultMap);
+		}
+	}
+
+	private void sendOldWxMsg(String messageId, String weChatTempWebServiceUrl, Map<String, Object> map) throws Exception {
+		Map<String, String> param = new HashMap<String, String>();
+		param.put("openID", messageId);
+		Map<String, Object> data = new HashMap<String, Object>();
+		data.put("MemberCode", ConvertUtil.getString(map.get("memberCode")));
+		data.put("MemName", ConvertUtil.getString(map.get("memName")));
+		data.put("PointType", ConvertUtil.getString(map.get("pointType")));
+		data.put("NewPoint", ConvertUtil.getString(map.get("newPoint")));
+		data.put("ChangeTime", ConvertUtil.getString(map.get("changeTime")));
+		data.put("CounterName", ConvertUtil.getString(map.get("counterName")));
+		data.put("TotalPoint", ConvertUtil.getString(map.get("totalPoint")));
+		data.put("SaleType", ConvertUtil.getString(map.get("saleType")));
+		data.put("SaleAmount", ConvertUtil.getString(map.get("saleAmount")));
+		param.put("data", CherryUtil.obj2Json(data));
+		Map<String, Object> resultMap = WebserviceClient.accessWeChatWebService(weChatTempWebServiceUrl, param);
+		String errcode = ConvertUtil.getString(resultMap.get("errcode"));
+		if(!"".equals(errcode) && !"0".equals(errcode)) {
+			logger.error("weChatTempWebServiceUrl error: "+resultMap);
+		}
+	}
+
 	public void sendWeChatTempMsgByOther(Map<String, Object> map) {
 		try {
 			String endPoint="http://www.wetherm.com/Api/WXOA.asmx";
