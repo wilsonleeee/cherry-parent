@@ -571,7 +571,7 @@ public class BINOLSSPRM74_Action extends BaseAction implements ModelDriven<BINOL
 			logger.info("发券页面初始化开始");
 			Map<String,Object> result_map=new HashMap<String, Object>();
 			String brandCode=form.getBrandCode();
-			SystemConfigDTO sysDTO = SystemConfigManager.getSystemConfig(brandCode);
+			BrandInfoDTO sysDTO = SystemConfigManager.getBrandInfo(brandCode);
 			//Map<String,Object> datasource=binOLSSPRM74_IF.getDateSourceName(dataSource_map);
 			if(sysDTO == null){
 				result_map.put("resultCode", "-7777");
