@@ -201,6 +201,15 @@ public class BINOLMBMBM06_Form {
 	/** 俱乐部发卡日期 */
 	private String joinTimeClub;
 
+	/** 回访方式 **/
+	private String returnVisit;
+
+	/** 收入 **/
+	private String income;
+
+	/** 肤质 **/
+	private String skinType;
+
 	public String getMemberInfoId() {
 		return memberInfoId;
 	}
@@ -671,5 +680,29 @@ public class BINOLMBMBM06_Form {
 
 	public void setReferrerClub(String referrerClub) {
 		this.referrerClub = referrerClub;
+	}
+
+	public String getReturnVisit() {
+		return returnVisit;
+	}
+
+	public void setReturnVisit(String returnVisit) {
+		this.returnVisit = returnVisit;
+	}
+
+	public String getIncome() {
+		return income;
+	}
+
+	public void setIncome(String income) {
+		this.income = income;
+	}
+
+	public String getSkinType() {
+		return skinType;
+	}
+
+	public void setSkinType(String skinType) {
+		this.skinType = skinType;
 	}
 }

@@ -149,6 +149,27 @@ public class BINBEMQMES03_Service extends BaseService{
 	}
 	
 	/**
+	 * 更新会员扩展信息表
+	 * @param map
+	 * @return
+	 */
+	public int updMemberExtInfo(Map map){
+		map.put(CherryConstants.IBATIS_SQL_ID, "BINBEMQMES03.updMemberExtInfo");
+		return baseServiceImpl.update(map);
+	}
+
+	/**
+	 * 插入会员扩展信息表
+	 * @param map
+	 */
+	public void insertMemberExtInfo(Map map){
+		Map<String, Object> parameterMap = new HashMap<String, Object>();
+		parameterMap.putAll(map);
+		parameterMap.put(CherryConstants.IBATIS_SQL_ID, "BINBEMQMES03.insertMemberExtInfo");
+		baseServiceImpl.save(parameterMap);
+	}
+
+	/**
 	 * 更新会员信息表
 	 * @param map
 	 * @return

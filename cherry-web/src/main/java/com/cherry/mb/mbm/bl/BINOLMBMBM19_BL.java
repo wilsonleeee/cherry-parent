@@ -1,5 +1,23 @@
 package com.cherry.mb.mbm.bl;
 
+import com.cherry.cm.cmbussiness.bl.BINOLCM03_BL;
+import com.cherry.cm.cmbussiness.bl.BINOLCM08_BL;
+import com.cherry.cm.cmbussiness.bl.BINOLCM14_BL;
+import com.cherry.cm.core.*;
+import com.cherry.cm.util.ConvertUtil;
+import com.cherry.cm.util.PropertiesUtil;
+import com.cherry.mb.common.MembersConstants;
+import com.cherry.mb.mbm.service.BINOLMBMBM11_Service;
+import com.cherry.mb.mbm.service.BINOLMBMBM19_Service;
+import com.site.lookup.util.StringUtils;
+import jxl.Sheet;
+import jxl.Workbook;
+import jxl.WorkbookSettings;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.util.CollectionUtils;
+
+import javax.annotation.Resource;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.InputStream;
@@ -7,29 +25,6 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-
-import javax.annotation.Resource;
-
-import jxl.Sheet;
-import jxl.Workbook;
-import jxl.WorkbookSettings;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-import com.cherry.cm.cmbussiness.bl.BINOLCM03_BL;
-import com.cherry.cm.cmbussiness.bl.BINOLCM08_BL;
-import com.cherry.cm.cmbussiness.bl.BINOLCM14_BL;
-import com.cherry.cm.core.CherryChecker;
-import com.cherry.cm.core.CherryConstants;
-import com.cherry.cm.core.CherryException;
-import com.cherry.cm.core.CherrySecret;
-import com.cherry.cm.core.CodeTable;
-import com.cherry.cm.util.ConvertUtil;
-import com.cherry.cm.util.PropertiesUtil;
-import com.cherry.mb.common.MembersConstants;
-import com.cherry.mb.mbm.service.BINOLMBMBM11_Service;
-import com.cherry.mb.mbm.service.BINOLMBMBM19_Service;
 
 public class BINOLMBMBM19_BL {
 	/** 会员档案导入Service */
@@ -233,6 +228,18 @@ public class BINOLMBMBM19_BL {
 				// 会员入会途径字段
 				String channelCode = dateSheet.getCell(23, r).getContents().trim();
 				memInfoMap.put("channelCode", channelCode);
+				// 会员回访方式
+				String returnVisit = dateSheet.getCell(24, r).getContents().trim();
+				memInfoMap.put("returnVisit", returnVisit);
+				// 会员肤质
+				String skinType = dateSheet.getCell(25, r).getContents().trim();
+				memInfoMap.put("skinType", skinType);
+				// 会员入会途径字段
+				String profession = dateSheet.getCell(26, r).getContents().trim();
+				memInfoMap.put("profession", profession);
+				// 会员收入
+				String income = dateSheet.getCell(27, r).getContents().trim();
+				memInfoMap.put("income", income);
 				memInfoMap.putAll(map);
 				// 整行数据为空，程序认为sheet内有效行读取结束
 				if (CherryChecker.isNullOrEmpty(memCode)
@@ -254,7 +261,11 @@ public class BINOLMBMBM19_BL {
 						&& CherryChecker.isNullOrEmpty(memLevel)
 						&& CherryChecker.isNullOrEmpty(creditRating)
 						&& CherryChecker.isNullOrEmpty(referrer)
-						&& CherryChecker.isNullOrEmpty(isReceiveMsg)) {
+						&& CherryChecker.isNullOrEmpty(isReceiveMsg)
+						&& CherryChecker.isNullOrEmpty(returnVisit)
+						&& CherryChecker.isNullOrEmpty(skinType)
+						&& CherryChecker.isNullOrEmpty(profession)
+						&& CherryChecker.isNullOrEmpty(income)) {
 					break;
 				} 
 			}else{//更新会员cells顺序
@@ -300,6 +311,18 @@ public class BINOLMBMBM19_BL {
 				// 会员入会途径字段
 				String channelCode = dateSheet.getCell(20, r).getContents().trim();
 				memInfoMap.put("channelCode", channelCode);
+				// 会员回访方式
+				String returnVisit = dateSheet.getCell(21, r).getContents().trim();
+				memInfoMap.put("returnVisit", returnVisit);
+				// 会员肤质
+				String skinType = dateSheet.getCell(22, r).getContents().trim();
+				memInfoMap.put("skinType", skinType);
+				// 会员入会途径字段
+				String profession = dateSheet.getCell(23, r).getContents().trim();
+				memInfoMap.put("profession", profession);
+				// 会员收入
+				String income = dateSheet.getCell(24, r).getContents().trim();
+				memInfoMap.put("income", income);
 				memInfoMap.putAll(map);
 				// 整行数据为空，程序认为sheet内有效行读取结束
 				if (CherryChecker.isNullOrEmpty(memCode)
@@ -319,7 +342,11 @@ public class BINOLMBMBM19_BL {
 						&& CherryChecker.isNullOrEmpty(referrer)
 						&& CherryChecker.isNullOrEmpty(creditRating)
 						&& CherryChecker.isNullOrEmpty(isReceiveMsg)
-						&& CherryChecker.isNullOrEmpty(memo1)) {
+						&& CherryChecker.isNullOrEmpty(memo1)
+						&& CherryChecker.isNullOrEmpty(returnVisit)
+						&& CherryChecker.isNullOrEmpty(skinType)
+						&& CherryChecker.isNullOrEmpty(profession)
+						&& CherryChecker.isNullOrEmpty(income)) {
 					break;
 				} 
 			}
@@ -442,6 +469,15 @@ public class BINOLMBMBM19_BL {
 			List<Map<String, Object>> codeList = codeTable.getCodes("1301");
 			// 信用等级CODE值
 			List<Map<String, Object>> codeList2 = codeTable.getCodes("1317");
+			//会员回访方式
+			List<Map<String, Object>> codeList3 = codeTable.getCodes("1423");
+			//肤质
+			List<Map<String, Object>> codeList4 = codeTable.getCodes("1424");
+			//职业
+			List<Map<String, Object>> codeList5 = codeTable.getCodes("1236");
+			//收入
+			List<Map<String, Object>> codeList6 = codeTable.getCodes("1425");
+
 			for (Map<String, Object> sucMap : list) {
 				try {
 					sucMap.putAll(map);
@@ -640,6 +676,67 @@ public class BINOLMBMBM19_BL {
 							}
 						}
 					}
+
+					//会员回访方式
+					String returnVisit = ConvertUtil.getString(sucMap.get("returnVisit"));
+					if(returnVisit != null && !"".equals(returnVisit)) {
+						if(codeList3 != null && !codeList3.isEmpty()) {
+							for(int i = 0; i < codeList3.size(); i++) {
+								String codeKey = (String)codeList3.get(i).get("CodeKey");
+								String value = (String)codeList3.get(i).get("Value");
+								if(returnVisit.equals(value)) {
+									sucMap.put("returnVisit", codeKey);
+									break;
+								}
+							}
+						}
+					}
+
+					//肤质
+					String skinType = ConvertUtil.getString(sucMap.get("skinType"));
+					if(skinType != null && !"".equals(skinType)) {
+						if(codeList4 != null && !codeList4.isEmpty()) {
+							for(int i = 0; i < codeList4.size(); i++) {
+								String codeKey = (String)codeList4.get(i).get("CodeKey");
+								String value = (String)codeList4.get(i).get("Value");
+								if(skinType.equals(value)) {
+									sucMap.put("skinType", codeKey);
+									break;
+								}
+							}
+						}
+					}
+
+					//职业
+					String profession = ConvertUtil.getString(sucMap.get("profession"));
+					if(profession != null && !"".equals(profession)) {
+						if(codeList5 != null && !codeList5.isEmpty()) {
+							for(int i = 0; i < codeList5.size(); i++) {
+								String codeKey = (String)codeList5.get(i).get("CodeKey");
+								String value = (String)codeList5.get(i).get("Value");
+								if(profession.equals(value)) {
+									sucMap.put("profession", codeKey);
+									break;
+								}
+							}
+						}
+					}
+
+					//收入
+					String income = ConvertUtil.getString(sucMap.get("income"));
+					if(income != null && !"".equals(income)) {
+						if(codeList6 != null && !codeList6.isEmpty()) {
+							for(int i = 0; i < codeList6.size(); i++) {
+								String codeKey = (String)codeList6.get(i).get("CodeKey");
+								String value = (String)codeList6.get(i).get("Value");
+								if(income.equals(value)) {
+									sucMap.put("income", codeKey);
+									break;
+								}
+							}
+						}
+					}
+
 					//导入会员（新增）
 					if("1".equals(sucMap.get("importType"))){
 						// ------------- 取得会员等级Id ---------------- //
@@ -925,6 +1022,8 @@ public class BINOLMBMBM19_BL {
 							binOLMBMBM19_Service.updateMemImportDetail(sucMap);
 						}
 					}
+
+
 				} catch (Exception e) {
 					//导入失败，系统发生异常信息！
 					sucMap.put("importResults",PropertiesUtil.getText("MBM00036"));
@@ -1705,6 +1804,91 @@ public class BINOLMBMBM19_BL {
 						}
 					}
 				}
+
+				// ------------- 会员回访方式 ---------------- //
+				String returnVisit = ConvertUtil.getString(totalMap.get("returnVisit"));
+				if(!StringUtils.isEmpty(returnVisit)) {
+					returnVisit = returnVisit.trim();
+					List codes = codeTable.getCodes("1423");
+					if(!CollectionUtils.isEmpty(codes)) {
+						boolean isExist = false ;
+						for (int j = 0; j < codes.size(); j++) {
+							Map<String,String> code = (Map<String,String>)codes.get(j);
+							if(code.containsValue(returnVisit)) {
+								isExist = true ;
+								break;
+							}
+						}
+						if(!isExist) {
+							totalMap.put("returnVisitError", true);
+							resultFlag = true;
+						}
+					}
+				}
+
+				// ------------- 肤质 ---------------- //
+				String skinType = ConvertUtil.getString(totalMap.get("skinType"));
+				if(!StringUtils.isEmpty(skinType)) {
+					skinType = skinType.trim();
+					List codes = codeTable.getCodes("1424");
+					if(!CollectionUtils.isEmpty(codes)) {
+						boolean isExist = false ;
+						for (int j = 0; j < codes.size(); j++) {
+							Map<String,String> code = (Map<String,String>)codes.get(j);
+							if(code.containsValue(skinType)) {
+								isExist = true ;
+								break;
+							}
+						}
+						if(!isExist) {
+							totalMap.put("skinTypeError", true);
+							resultFlag = true;
+						}
+					}
+				}
+
+				// ------------- 职业 ---------------- //
+				String profession = ConvertUtil.getString(totalMap.get("profession"));
+				if(!StringUtils.isEmpty(profession)) {
+					profession = profession.trim();
+					List codes = codeTable.getCodes("1236");
+					if(!CollectionUtils.isEmpty(codes)) {
+						boolean isExist = false ;
+						for (int j = 0; j < codes.size(); j++) {
+							Map<String,String> code = (Map<String,String>)codes.get(j);
+							if(code.containsValue(profession)) {
+								isExist = true ;
+								break;
+							}
+						}
+						if(!isExist) {
+							totalMap.put("professionError", true);
+							resultFlag = true;
+						}
+					}
+				}
+
+				// ------------- 收入 ---------------- //
+				String income = ConvertUtil.getString(totalMap.get("income"));
+				if(!StringUtils.isEmpty(income)) {
+					income = income.trim();
+					List codes = codeTable.getCodes("1425");
+					if(!CollectionUtils.isEmpty(codes)) {
+						boolean isExist = false ;
+						for (int j = 0; j < codes.size(); j++) {
+							Map<String,String> code = (Map<String,String>)codes.get(j);
+							if(code.containsValue(income)) {
+								isExist = true ;
+								break;
+							}
+						}
+						if(!isExist) {
+							totalMap.put("incomeError", true);
+							resultFlag = true;
+						}
+					}
+				}
+
 				if (resultFlag) {// 失败处理
 					totalMap.put("sendFlag", 0);
 					totalMap.put("resultFlag", 0);
@@ -1722,7 +1906,7 @@ public class BINOLMBMBM19_BL {
 	/**
 	 * 取得错误消息list
 	 * 
-	 * @param error
+	 * @param tempMap
 	 * @return
 	 * @throws Exception
 	 */
@@ -1887,12 +2071,28 @@ public class BINOLMBMBM19_BL {
 			// 会员备注长度错误
 			importResults.append(PropertiesUtil.getText("MBM00050"));
 		}
+		if (tempMap.get("returnVisitError") != null) {
+			// 回访方式不是有效值
+			importResults.append(PropertiesUtil.getText("MBM00080"));
+		}
+		if (tempMap.get("skinTypeError") != null) {
+			// 肤质不是有效值
+			importResults.append(PropertiesUtil.getText("MBM00081"));
+		}
+		if (tempMap.get("professionError") != null) {
+			// 职业不是有效值
+			importResults.append(PropertiesUtil.getText("MBM00082"));
+		}
+		if (tempMap.get("incomeError") != null) {
+			// 收入不是有效值
+			importResults.append(PropertiesUtil.getText("MBM00083"));
+		}
 		return ConvertUtil.getString(importResults);
 	}
 	/**
 	 * 根据key取得相应的名称
 	 * 
-	 * @param key 指定key
+	 * @param keyNameCity 指定key
 	 * @param list 指定一组数据List
 	 * @return 名称
 	 */

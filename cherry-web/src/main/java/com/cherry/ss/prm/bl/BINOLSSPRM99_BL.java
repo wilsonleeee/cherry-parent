@@ -242,20 +242,22 @@ public class BINOLSSPRM99_BL implements Coupon_IF {
 		List<Map<String, Object>> detailList = (List<Map<String, Object>>) map.get("cart_map");
 		if (null != detailList) {
 			billInfo.setDetailList((List<Map<String, Object>>) ConvertUtil.byteClone(detailList));
+			// 订单总金额
+			double totalAmount = 0;
+			for (Map<String, Object> detail : detailList) {
+				// 销售价格
+				double salePrice = Double.parseDouble(String.valueOf(detail.get("salePrice")));
+				// 数量
+				double quantity = Double.parseDouble(String.valueOf(detail.get("quantity")));
+				totalAmount = DoubleUtil.add(totalAmount, DoubleUtil.mul(salePrice, quantity));
+			}
+			billInfo.setTotalAmount(totalAmount);
+			// 整单实付金额
 			if (!CherryChecker.isNullOrEmpty(mainMap.get("TotalAmount"))) {
 				double amount = Double.parseDouble(String.valueOf(mainMap.get("TotalAmount")));
 				billInfo.setAmount(amount);
 				billInfo.setActualAmount(amount);
 			} else {
-				// 订单总金额
-				double totalAmount = 0;
-				for (Map<String, Object> detail : detailList) {
-					// 销售价格
-					double salePrice = Double.parseDouble(String.valueOf(detail.get("salePrice")));
-					// 数量
-					double quantity = Double.parseDouble(String.valueOf(detail.get("quantity")));
-					totalAmount = DoubleUtil.add(totalAmount, DoubleUtil.mul(salePrice, quantity));
-				}
 				billInfo.setAmount(totalAmount);
 				billInfo.setActualAmount(totalAmount);
 			}
@@ -284,6 +286,18 @@ public class BINOLSSPRM99_BL implements Coupon_IF {
 			if (null == couponList || couponList.isEmpty()) {
 				// 没有上传优惠券信息
 				return getResult(CouponConstains.IF_ERROR_NO_COUPON_CODE, CouponConstains.IF_ERROR_NO_COUPON);
+			}else{
+				// 当前销售单已参加的活动合并
+				if(null == campainList){
+					campainList = new ArrayList<Map<String, Object>>();
+				}
+				for(Map<String,Object> couponAct : couponList){
+					Map<String,Object> act = new HashMap<String,Object>();
+					act.put("ruleType",couponAct.get("couponType"));
+					act.put("maincode",couponAct.get("ActivityMainCode"));
+					campainList.add(act);
+				}
+
 			}
 			CouponCombDTO couponComb = new CouponCombDTO();
 			couponComb.setBillInfo(billInfo);
@@ -432,18 +446,6 @@ public class BINOLSSPRM99_BL implements Coupon_IF {
 		CouponBaseInfo baseInfo = couponInfo.getCouponBaseInfo();
 		couponComb.setCouponInfo(couponInfo);
 		ResultDTO result = null;
-		// 当前销售单已参加的活动合并
-		if(null == couponComb.getActList()){
-			couponComb.setActList(new ArrayList<Map<String, Object>>());
-		}
-		if(null != couponComb.getCouponList()){
-			for(Map<String,Object> couponAct : couponComb.getCouponList()){
-				Map<String,Object> act = new HashMap<String,Object>();
-				act.put("ruleType",couponAct.get("couponType"));
-				act.put("maincode",couponAct.get("ActivityMainCode"));
-				couponComb.getActList().add(act);
-			}
-		}
 		if (isDwq) {
 			result = rule_IF.checkDwqUseParams(couponComb);
 		} else {
@@ -853,7 +855,7 @@ public class BINOLSSPRM99_BL implements Coupon_IF {
 		return 0;
 	}
 	
-	public Map<String,Object> check_createCoupon(BillInfo billInfo) throws Exception{
+	private Map<String,Object> check_createCoupon(BillInfo billInfo) throws Exception{
 		Map<String,Object> result_map=new HashMap<String,Object>();
 		//校验是不是该单已经发过券有重复操作
 		String billCode=billInfo.getBillCode();

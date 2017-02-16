@@ -248,7 +248,8 @@ ModelDriven<BINOLCPACT01_Form>{
 		 // 更新者
         map.put(CherryConstants.UPDATEDBY, userInfo.getLoginName());
 		// 作成程序名
-        map.put(CherryConstants.UPDATEPGM, "BINOLCPACT01");	
+        map.put(CherryConstants.UPDATEPGM, "BINOLCPACT01");
+		map.put("optTime",binOLCPACT01_BL.getSysTime());
 		return map;
 	}
 	@Override

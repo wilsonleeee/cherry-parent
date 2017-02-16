@@ -109,8 +109,16 @@ $(document).ready(function() {
       	  </tr>
       	  <tr>
       	  	<th><s:text name="binolmbmbm11_initTotalAmount"></s:text></th>
-		    <td colspan="3"><span><s:textfield name="initTotalAmount" cssClass="text"></s:textfield></span></td>
+		    <td><span><s:textfield name="initTotalAmount" cssClass="text"></s:textfield></span></td>
+		    <th><s:text name="binolmbmbm11_returnVisit"></s:text></th>
+		    <td><span><s:select list='#application.CodeTable.getCodes("1423")' listKey="CodeKey" listValue="Value" name="returnVisit" headerKey="" headerValue="%{#select_default}"></s:select></span></td>
       	  </tr>
+		  <tr>
+			<th><s:text name="binolmbmbm11_income"></s:text></th>
+			<td><span><s:select list='#application.CodeTable.getCodes("1425")' listKey="CodeKey" listValue="Value" name="income" headerKey="" headerValue="%{#select_default}"></s:select></span></td>
+			<th><s:text name="binolmbmbm11_skinType"></s:text></th>
+			<td><span><s:select list='#application.CodeTable.getCodes("1424")' listKey="CodeKey" listValue="Value" name="skinType" headerKey="" headerValue="%{#select_default}"></s:select></span></td>
+		  </tr>
       	</table>
       	
       	<table class="detail" cellpadding="0" cellspacing="0">
@@ -151,7 +159,7 @@ $(document).ready(function() {
 		  <tr>
       	    <th><s:text name="binolmbmbm11_connectTime"></s:text></th>
 			<td colspan="3"><span><s:checkboxlist list='#application.CodeTable.getCodes("1237")' listKey="CodeKey" listValue="Value" name="connectTime" ></s:checkboxlist></span></td>
-      	  </tr>
+		  </tr>
 		  <s:if test='%{#application.CodeTable.getCodes("1204") != null && !#application.CodeTable.getCodes("1204").isEmpty()}'>
 		  <tr>
 			<th><s:text name="binolmbmbm11_memType"></s:text></th>

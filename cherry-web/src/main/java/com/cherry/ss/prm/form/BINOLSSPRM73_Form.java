@@ -109,6 +109,8 @@ public class BINOLSSPRM73_Form extends DataTable_BaseForm{
 
 	/** 会员手机号码 */
 	private String mobile;
+	/** 清空选项 */
+	private String emptyType;
 
 	public String getMobile() {
 		return mobile;
@@ -335,5 +337,13 @@ public class BINOLSSPRM73_Form extends DataTable_BaseForm{
 	}
 	public void setOrganizationID(String organizationID) {
 		this.organizationID = organizationID;
+	}
+
+	public String getEmptyType() {
+		return emptyType;
+	}
+
+	public void setEmptyType(String emptyType) {
+		this.emptyType = emptyType;
 	}
 }

@@ -579,6 +579,21 @@
 			ORDER BY ValidFlag DESC
 		]]>
     </select>
+
+	<!-- 取得员工信息 -->
+	<select id="getComEmployeeInfoById" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+		<![CDATA[
+			SELECT TOP 1
+				EmployeeCode AS employeeCode
+			FROM
+				Basis.BIN_Employee WITH(nolock)
+			WHERE
+				BIN_OrganizationInfoID = #organizationInfoId# AND
+				BIN_BrandInfoID = #brandInfoId# AND
+				BIN_EmployeeID = #employeeId#
+			ORDER BY ValidFlag DESC
+		]]>
+	</select>
     
     <!-- 插入会员积分表  -->
 	<insert id="addComMemberPointInfo" parameterClass="java.util.HashMap">
@@ -2142,4 +2157,149 @@
     			GETDATE()
     		)
     </insert>
+
+	<!-- 查询当前生效的会员完整度规则 -->
+	<select id="getMemCompleteRule" parameterClass="java.util.HashMap" resultClass ="java.util.HashMap">
+		<![CDATA[
+		SELECT TOP 1
+			RuleCondition,
+			ExceptPoint
+		FROM
+			Members.BIN_CompleteDegreeRule
+		WHERE
+				BIN_OrganizationInfoID = #organizationInfoId# AND
+				BIN_BrandInfoID = #brandInfoId# AND
+				#sysTime# BETWEEN StartTime AND EndTime AND
+				ValidFlag = '1'
+	]]>
+	</select>
+
+	<!-- 查询当前生效的会员完整度规则 -->
+	<select id="getCompleteDegreeOccu" parameterClass="java.util.HashMap" resultClass ="java.lang.String">
+		<![CDATA[
+		SELECT TOP 1
+			isNULL(occu.AwardPoint,'') as awardPoint
+		FROM
+			Members.BIN_CompleteDegreeOccu occu
+		JOIN
+			(
+			SELECT
+				a.BIN_MemberInfoID
+			FROM
+				Members.BIN_MemberInfo a
+			LEFT JOIN
+				Members.BIN_MemCardInfo b
+			ON
+				a.BIN_MemberInfoID=b.BIN_MemberInfoID
+			WHERE
+				a.BIN_OrganizationInfoID=#organizationInfoId# AND
+				a.BIN_BrandInfoID= #brandInfoId# AND
+				b.MemCode=#memCode# AND
+				a.ValidFlag='1' AND
+				b.ValidFlag='1' AND
+				b.CardValidFlag='1'
+			) info
+		on
+			info.BIN_MemberInfoID=occu.BIN_MemberInfoID
+	]]>
+	</select>
+
+	<!-- 查询当前生效的会员完整度规则 -->
+	<select id="getMemInfo" parameterClass="java.util.HashMap" resultClass ="java.util.HashMap">
+		<![CDATA[
+		SELECT	TOP 1
+				A.BIN_MemberInfoID AS MemberID,
+				B.MemCode AS MemberCode,
+				A.Name AS memName,
+				A.Nickname AS nickname,
+				A.ReferrerID AS referrer,
+				A.MobilePhone AS mobilePhone,
+				A.Telephone AS telephone,
+				A.BirthYear AS birthYear,
+				I.RegionCode AS provinceId,
+				J.RegionCode AS cityId,
+				A.Gender AS gender,
+				G.AddressLine1 AS address,
+				A.Email AS email,
+				A.TencentQQ AS tencentQQ,
+				A.Memo1 AS memo1,
+				L.ReturnVisit AS returnVisit,
+				L.SkinType AS skinType,
+				A.Profession AS profession,
+				L.Income AS income,
+				A.MaritalStatus AS maritalStatus,
+				A.ConnectTime AS connectTime,
+				A.IsReceiveMsg AS isReceiveMsg
+			FROM Members.BIN_MemCardInfo B WITH(NOLOCK) JOIN
+				Members.BIN_MemberInfo A WITH(NOLOCK) ON (B.MemCode = #memCode# AND  B.BIN_MemberInfoID = A.BIN_MemberInfoID)
+				LEFT JOIN Members.BIN_MemberAddress F WITH(NOLOCK) ON A.BIN_MemberInfoID = F.BIN_MemberInfoID
+				LEFT JOIN Basis.BIN_AddressInfo G WITH(NOLOCK) ON F.BIN_AddressInfoID = G.BIN_AddressInfoID
+				LEFT JOIN Basis.BIN_StandardRegion H WITH(NOLOCK) ON G.StandardCity = H.BIN_RegionID
+				LEFT JOIN Basis.BIN_StandardRegion I WITH(NOLOCK) ON G.StandardProvince = I.BIN_RegionID
+				LEFT JOIN Basis.BIN_StandardRegion J WITH(NOLOCK) ON G.StandardCounty = J.BIN_RegionID
+				LEFT JOIN members.BIN_MemberExtInfo L on A.BIN_MemberInfoID = L.BIN_MemberInfoID
+	]]>
+	</select>
+
+
+	<select id="getMemInfoId" parameterClass="java.util.HashMap" resultClass ="java.util.HashMap">
+		<![CDATA[
+		SELECT top 1
+			BIN_MemberInfoID AS memberInfoID
+		FROM
+			MEMBERS.BIN_MemCardInfo
+		WHERE
+			MemCode=#memCode# and
+			ValidFlag='1'
+	]]>
+	</select>
+
+	<insert id="updateCompleteByMemcode" parameterClass="java.util.HashMap">
+		MERGE Members.BIN_CompleteDegreeOccu AS BK
+		USING(
+		SELECT
+		#organizationInfoId# AS BIN_OrganizationInfoID,
+		#brandInfoId# AS BIN_BrandInfoID,
+		#memberInfoID# AS BIN_MemberInfoID
+		) AS SRC
+		ON(
+		BK.BIN_MemberInfoID=SRC.BIN_MemberInfoID AND
+		BK.BIN_OrganizationInfoID=SRC.BIN_OrganizationInfoID AND
+		BK.BIN_BrandInfoID=SRC.BIN_BrandInfoID
+		)
+		WHEN MATCHED THEN
+		UPDATE SET
+		<isNotEmpty property="percent">
+			TotalPercent=#percent#,
+		</isNotEmpty>
+		<isNotEmpty property="point">
+			TotalPoint=CASE WHEN TotalPoint IS NULL OR TotalPoint = '' THEN 0 else TotalPoint END  + #point#,
+		</isNotEmpty>
+		<isNotEmpty property="awardPoint">
+			AwardPoint=#awardPoint#,
+		</isNotEmpty>
+		<include refid="BINOLCMINC99.updateSql" />
+		WHEN NOT MATCHED THEN
+		INSERT(
+		BIN_OrganizationInfoID,
+		BIN_BrandInfoID,
+		BIN_MemberInfoID,
+		TotalPercent,
+		AwardPoint,
+		TotalPoint,
+		<include refid="BINOLCMINC99.insertKeySql" />
+		)
+		VALUES
+		(
+		#organizationInfoId#,
+		#brandInfoId#,
+		#memberInfoID#,
+		#percent#,
+		#awardPoint#,
+		#point#,
+		<include refid="BINOLCMINC99.insertValueSql" />
+		);
+	</insert>
+
+
 </sqlMap>

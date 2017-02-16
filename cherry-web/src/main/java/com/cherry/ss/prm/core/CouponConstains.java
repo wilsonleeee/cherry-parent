@@ -362,7 +362,15 @@ public class CouponConstains {
 
 	/** 接口类型 ：查询*/
 	public final static int IF_TYPE_1 = 1;
-	
+	/** 优惠券黑名单清空的类型-1为柜台 */
+	public final static String COUPON_EMPTYTYPE_1="1";
+
+	/** 优惠券黑名单清空的类型-1为产品 */
+	public final static String COUPON_EMPTYTYPE_2="2";
+
+	/** 优惠券黑名单清空的类型-1为会员 */
+	public final static String COUPON_EMPTYTYPE_3="3";
+
 	/**  */
 	public static enum ERRMSG {
 		errmsg1(RESULT_COUPON_NO_ERR, RESULT_COUPON_NO_ERRMSG),

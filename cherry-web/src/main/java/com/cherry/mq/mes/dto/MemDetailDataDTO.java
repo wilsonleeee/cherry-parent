@@ -97,6 +97,24 @@ public class MemDetailDataDTO {
 	/**天猫账号*/
 	private String TmallAccount;
 
+	/** 微信账号 **/
+	private String WechatAccount ;
+
+	/** 职业 **/
+	private String Profession ;
+
+	/** 连接时间 **/
+	private String ConnectTime ;
+
+	/** 收入 **/
+	private String Income ;
+
+	/** 回访方式 **/
+	private String ReturnVisit ;
+
+	/** 肤质 **/
+	private String SkinType;
+
 	public String getMemberCode() {
 		return MemberCode;
 	}
@@ -361,4 +379,51 @@ public class MemDetailDataDTO {
         TmallAccount = tmallAccount;
     }
 
+	public String getWechatAccount() {
+		return WechatAccount;
+	}
+
+	public void setWechatAccount(String wechatAccount) {
+		WechatAccount = wechatAccount;
+	}
+
+	public String getProfession() {
+		return Profession;
+	}
+
+	public void setProfession(String profession) {
+		Profession = profession;
+	}
+
+	public String getConnectTime() {
+		return ConnectTime;
+	}
+
+	public void setConnectTime(String connectTime) {
+		ConnectTime = connectTime;
+	}
+
+	public String getIncome() {
+		return Income;
+	}
+
+	public void setIncome(String income) {
+		Income = income;
+	}
+
+	public String getReturnVisit() {
+		return ReturnVisit;
+	}
+
+	public void setReturnVisit(String returnVisit) {
+		ReturnVisit = returnVisit;
+	}
+
+	public String getSkinType() {
+		return SkinType;
+	}
+
+	public void setSkinType(String skinType) {
+		SkinType = skinType;
+	}
 }

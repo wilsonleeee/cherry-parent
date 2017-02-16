@@ -996,7 +996,6 @@ BINOLSSPRM7302.prototype = {
 						html += '<input name="name" class="hide" value="'+channelList[i].name+'"/>';
 						html += '</li>';
 					}
-					console.log(html);
 					if(type == 0){
 						$("#cnt_s_w_commonDiv").empty();
 						$("#cnt_s_w_commonDiv").append(html);
@@ -1085,7 +1084,6 @@ BINOLSSPRM7302.prototype = {
 		$(".useCondType").show();
 		$content.append($(tempId).html());
 		//$content.find('#contentNoFinal').val(maxContentNoCopy);
-		//alert($(".contentNoToAdd").find('#contentNoFinal').val("u"));
 	},
 	"delCoupon":function(obj) {
 		$(obj).parent().remove();
@@ -1161,7 +1159,6 @@ BINOLSSPRM7302.prototype = {
 	},
 	//产品导入页面弹出框
 	"popProductLoadDialog":function(conditionType,filterType,contentNo){
-		//alert(111);
 		var dialogId = 'productDivDialog';
 		var $dialog = $("#" + dialogId);
 		if($dialog.length == 0) {
@@ -1183,12 +1180,10 @@ BINOLSSPRM7302.prototype = {
 
 		var contentNoVal = (conditionType == '1' ? 0 : contentNo);
 		param += '&contentNo=' + contentNoVal;
-		//alert(param);
 		cherryAjaxRequest({
 			url: url,
 			param:param,
 			callback: function(msg){
-				//alert(msg);
 				$dialog.html(msg);
 				// 弹出验证框
 				var dialogSetting = {
@@ -1530,7 +1525,6 @@ BINOLSSPRM7302.prototype = {
 							var value = $(this).val();
 							if((/^(\+|-)?\d+$/.test( value ))&&value>0){
 							}else{
-								//alert("数量中请输入正整数！");
 								$(this).val(1);
 								//return false;
 							}
@@ -1538,7 +1532,6 @@ BINOLSSPRM7302.prototype = {
 					})
 				}
 
-				//alert("选择产品后的操作");
 				//if($("#"+proShowDiv).find("tr").length > 0) {
 				//	$parent.find("#"+proTable).show();
 				//} else {
@@ -1589,7 +1582,6 @@ BINOLSSPRM7302.prototype = {
 			click : function(){
 				//$('#'+ contentDiv).find('#'+proTypeShowDiv).show();
 				//$('#'+ contentDiv).children().not('#'+proTypeShowDiv).hide();
-				//alert("选择分类后的操作");
 				//$barCodes.not(":first").remove();
 				//if($("#"+proTypeShowDiv).find("tr").length > 0) {
 				//	$parent.find("#"+proTypeTable).show();
@@ -1617,7 +1609,6 @@ BINOLSSPRM7302.prototype = {
 			url: url,
 			param:param,
 			callback: function(msg){
-				//alert(msg);
 				if (msg) {
 					var map = JSON.parse(msg);
 					var list = map.couponProductDetail;
@@ -1662,7 +1653,6 @@ BINOLSSPRM7302.prototype = {
 									var value = $(this).val();
 									if((/^(\+|-)?\d+$/.test( value ))&&value>0){
 									}else{
-										//alert("数量中请输入正整数！");
 										$(this).val(1);
 										//return false;
 									}
@@ -1707,7 +1697,6 @@ BINOLSSPRM7302.prototype = {
 		}
 
 		var productKbn = $("#"+obj).val();
-		//alert(productKbn);
 		if (productKbn == '0') {
 			// 请选择
 			prt_s_w_ShowDiv = (conditionType == '1') ? "prt_s_w_allDIV" : "prt_u_w_allDIV";
@@ -1842,7 +1831,6 @@ BINOLSSPRM7302.prototype = {
 			binolssprm7302.changePrtSpanDiv(conditionType,filterType,obj);
 		}
 
-		//alert(obj);
 
 	},
 	// 切换 产品框
@@ -2118,7 +2106,6 @@ BINOLSSPRM7302.prototype = {
 			url: url,
 			param: param,
 			callback: function (msg) {
-				//alert(msg);
 				if (msg) {
 					var map = JSON.parse(msg);
 				}
@@ -2190,10 +2177,8 @@ BINOLSSPRM7302.prototype = {
 			url: url,
 			param:param,
 			callback: function(msg){
-				//alert(msg);
 				if (msg) {
 					var map = JSON.parse(msg);
-					console.log(map);
 				}
 			}
 		});
@@ -2218,10 +2203,8 @@ BINOLSSPRM7302.prototype = {
 			url: url,
 			param:param,
 			callback: function(msg){
-				//alert(msg);
 				if (msg) {
 					var map = JSON.parse(msg);
-					console.log(map);
 				}
 			}
 		});
@@ -2441,9 +2424,7 @@ BINOLSSPRM7302.prototype = {
 		//获取用券产品白名单
 		var prt_u_w=new Array();
 		var prt_u_w_productKbn=$("#prt_u_w_productKbn").val();
-		if(prt_u_w_productKbn == 0){//请选择情况
-			return;
-		}else if(prt_u_w_productKbn == 1){//分类选择情况
+		if(prt_u_w_productKbn == 1){//分类选择情况
 			$("#prt_u_w_typeDIV li").each(function(){
 				if($(this).find("input[type='checkbox']").is(":checked")){
 					var prt_type=new Object();
@@ -2457,7 +2438,6 @@ BINOLSSPRM7302.prototype = {
 			});
 		}else if(prt_u_w_productKbn == 2 || prt_u_w_productKbn == 3){//产品选择和导入的情况
 			$("#prt_u_w_selPrtDIV li").each(function(){
-				if($(this).find("input[type='checkbox']").is(":checked")){
 					var prt_w=new Object();
 					prt_w.prtVendorId=$(this).find("input[name='prtVendorId']").val();
 					prt_w.prtVendId=$(this).find("input[name='prtVendId']").val();
@@ -2467,14 +2447,12 @@ BINOLSSPRM7302.prototype = {
 					prt_w.nameTotal=$(this).find("input[name='nameTotal']").val();
 					prt_w.proNum=$(this).find("input[name='proNum']").val();
 					prt_u_w.push(prt_w);
-				}
 			});
 		}
 		map.prtList_w=prt_u_w;
 		//获取用券产品黑名单
 		var prt_u_b=new Array();
 		$("#prt_u_b_impPrtDIV li").each(function(){
-			if($(this).find("input[type='checkbox']").is(":checked")){
 				var prt_b=new Object();
 				prt_b.prtObjId=$(this).find("input[name='prtObjId']").val();
 				prt_b.unitCode=$(this).find("input[name='unitCode']").val();
@@ -2482,7 +2460,6 @@ BINOLSSPRM7302.prototype = {
 				prt_b.nameTotal=$(this).find("input[name='nameTotal']").val();
 				prt_b.proNum=$(this).find("input[name='proNum']").val();
 				prt_u_b.push(prt_b);
-			}
 		});
 		map.prtList_b=prt_u_b;
 	},
@@ -2593,6 +2570,45 @@ BINOLSSPRM7302.prototype = {
 		}else{
 			$nextDiv.show("slow");
 		}
+	},
+	/*
+	 *黑名单中增加清除逻辑，
+	 *emptyType用来标识清除哪一项：1为柜台，2为产品，3为会员
+	 */
+	"emptySelect":function(conditionType,emptyType,obj){
+
+		var url=$("#emptySelectUrl").attr("href");
+		var params="ruleCode=" + $('#ruleCode').val() + "&conditionType=" + conditionType+"&emptyType="+emptyType;
+		if(conditionType == 1){
+			params += "&contentNo=0";
+		}else{
+			params += "&contentNo="+$("#useContionDiv input[name='contentNo']").val();
+		}
+		cherryAjaxRequest({
+			url: url,
+			param:params,
+			callback: function(msg){
+				if( msg == "ERROR"){
+					return;
+				}else{
+					if(emptyType == 1){
+						if(conditionType == 1){
+							$("#cnt_s_b_div").empty();
+						}else{
+							$("#cnt_u_b_div").empty();
+						}
+					}else if(emptyType == 2){
+						if(conditionType == 1){
+							$("#prt_s_b_impPrtDIV").empty();
+						}else{
+							$("#prt_u_b_impPrtDIV").empty();
+						}
+					}else if(emptyType == 3){
+						$("#sendMemberBlackDiv .memberInput").empty();
+					}
+				}
+			}
+		});
 	}
 };
 
@@ -2681,7 +2697,6 @@ $(function(){
 			$(".useCondButton").show();
 			$(".useCondButtonAll").hide();
 		}
-		//alert(this.checked?"勾上了":"取消了勾选");
 	});
 
 	if ($('#couponFlag option:selected') .val()!='9'){

@@ -371,6 +371,8 @@ public class BINOLCPACT06_Action extends BaseAction implements ModelDriven<BINOL
 		map.put("testType",form.getTestType());
 		//下发区分
 		map.put("sendFlag",form.getSendFlag());
+		map.put("sendStartDate",form.getSendStartDate());
+		map.put("sendEndDate",form.getSendEndDate());
 		//会员所属柜台
 //		map.put("counterBelong",form.getCounterBelong());
 		ConvertUtil.setForm(form, map);

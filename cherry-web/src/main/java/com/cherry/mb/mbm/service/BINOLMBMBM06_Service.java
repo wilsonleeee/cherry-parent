@@ -180,6 +180,19 @@ public class BINOLMBMBM06_Service extends BaseService {
 		}
 		return baseServiceImpl.update(parameterMap);
 	}
+
+	/**
+	 * 更新会员扩展信息
+	 *
+	 * @param map 更新条件
+	 * @return 更新件数
+	 */
+	public int updMemberExtInfoMain(Map<String, Object> map) {
+		Map<String, Object> parameterMap = new HashMap<String, Object>();
+		parameterMap.putAll(map);
+		parameterMap.put(CherryConstants.IBATIS_SQL_ID, "BINOLMBMBM06.updMemberExtInfoMain");
+		return baseServiceImpl.update(parameterMap);
+	}
 	
 	/**
 	 * 根据员工ID查询BA卡号

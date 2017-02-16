@@ -12,15 +12,6 @@
  */
 package com.cherry.mb.mbm.action;
 
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-
-import javax.annotation.Resource;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import com.cherry.cm.cmbeans.UserInfo;
 import com.cherry.cm.cmbussiness.bl.BINOLCM05_BL;
 import com.cherry.cm.cmbussiness.bl.BINOLCM08_BL;
@@ -38,6 +29,13 @@ import com.cherry.mb.mbm.form.BINOLMBMBM06_Form;
 import com.cherry.mb.mbm.service.BINOLMBMBM11_Service;
 import com.googlecode.jsonplugin.JSONUtil;
 import com.opensymphony.xwork2.ModelDriven;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import javax.annotation.Resource;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 /**
  * 会员资料修改画面Action
@@ -209,7 +207,7 @@ public class BINOLMBMBM06_Action extends BaseAction implements ModelDriven<BINOL
 	 * </p>
 	 * 
 	 * 
-	 * @param 无
+	 * @param
 	 * @return String 是否接收短信
 	 * @throws Exception 
 	 * 
@@ -292,6 +290,7 @@ public class BINOLMBMBM06_Action extends BaseAction implements ModelDriven<BINOL
 			map.put("modifyEmployee", userInfo.getEmployeeCode());
 			// 更新会员基本信息
 			binOLMBMBM06_BL.tran_updMemberInfo(map);
+
 			this.addActionMessage(getText("ICM00001"));
 		} catch (Exception e) {
 			logger.error(e.getMessage(), e);
@@ -309,7 +308,7 @@ public class BINOLMBMBM06_Action extends BaseAction implements ModelDriven<BINOL
 	/**
    	 * 验证提交的参数
    	 * 
-   	 * @param 无
+   	 * @param
    	 * @return boolean 验证结果
    	 * @throws Exception
    	 * 

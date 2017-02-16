@@ -1661,6 +1661,27 @@ public class MemberInfoLogic implements MemberInfo_IF {
 		} else {
 			paramMap.put("interests", interests);
 		}
+		//收入
+		String income = (String)map.get("Income");
+		if(income != null && income.toLowerCase().equals(cherryclear)) {
+			paramMap.put("income", cherryclear);
+		} else {
+			paramMap.put("income", income);
+		}
+		//回访方式
+		String returnVisit = (String)map.get("ReturnVisit");
+		if(returnVisit != null && returnVisit.toLowerCase().equals(cherryclear)) {
+			paramMap.put("returnVisit", cherryclear);
+		} else {
+			paramMap.put("returnVisit", returnVisit);
+		}
+		//肤质
+		String skinType = (String)map.get("SkinType");
+		if(skinType != null && skinType.toLowerCase().equals(cherryclear)) {
+			paramMap.put("skinType", cherryclear);
+		} else {
+			paramMap.put("skinType", skinType);
+		}
 		if("0".equals(subType)) {
 			try {
 

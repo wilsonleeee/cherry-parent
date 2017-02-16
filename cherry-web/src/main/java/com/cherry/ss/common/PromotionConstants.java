@@ -145,4 +145,67 @@ public class PromotionConstants {
 	public static final String EX_POINT ="exPoint";
 	
 	public static final String QUANTITY = "quantity";
+
+	/** ajax 返回code */
+	public static final String RESULT_CODE = "resultCode";
+
+	/** ajax 返回result */
+	public static final String RESULT_MESSAGE = "resultMsg";
+
+	/** ajax返回 成功件数 */
+	public static final String RESULT_SUCCESS_COUNT = "successCount";
+
+	/** ajax返回 失败件数 */
+	public static final String RESULT_FAIL_COUNT = "failCount";
+
+	/** 导入批次号 */
+	public static final String SEARCH_CODE = "searchCode";
+
+	/** ajax 返回导入全部成功 */
+	public static final String RESULT_CODE_0 = "0";
+
+	/** ajax 返回导入有失败件数 */
+	public static final String RESULT_CODE_1 = "1";
+
+	/** ajax 返回导入出错*/
+	public static final String RESULT_CODE_2 = "-1";
+
+	/** 会员数据 */
+	public static final String MEMBER_SHEET_NAME = "会员数据";
+
+	/** 产品数据 */
+	public static final String PRODUCT_SHEET_NAME = "产品数据";
+
+	/** 导入模式 1为增量 2为覆盖 */
+	public static final String UPMODE_1 = "1";
+
+	/** 导入类型 1为柜台 2为产品 3为会员 */
+	public static final String Fail_OperateType_1 = "1";
+
+	public static final String Fail_OperateType_2 = "2";
+
+	public static final String Fail_OperateType_3 = "3";
+
+	/** 黑白名单 1白名单 2黑名单 */
+	public static final String FILTERTYPE_1 = "1";
+
+	public static final String FILTERTYPE_2 = "2";
+
+	public static final String YES = "是";
+	/** 比较值 */
+	public static final String EQ = "等于";
+
+	public static final String NE = "不等于";
+
+	public static final String LE = "小于等于";
+
+	public static final String GT = "大于";
+
+	public static final String GE = "大于等于";
+
+	public static final String LT = "小于";
+
+	public static final String QUANTITY_Shop = "数量";
+
+	public static final String AMOUNT_Shop = "金额";
 }

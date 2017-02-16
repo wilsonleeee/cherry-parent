@@ -147,6 +147,15 @@ public class BINOLMBMBM11_Form {
 	/** 入会途径 **/
 	private String channelCode;
 
+	/** 回访方式 **/
+	private String returnVisit;
+
+	/** 收入 **/
+	private String income;
+
+	/** 肤质 **/
+	private String skinType;
+
 	public String getMemberInfoId() {
 		return memberInfoId;
 	}
@@ -473,5 +482,29 @@ public class BINOLMBMBM11_Form {
 
 	public void setTencentQQ(String tencentQQ) {
 		this.tencentQQ = tencentQQ;
+	}
+
+	public String getReturnVisit() {
+		return returnVisit;
+	}
+
+	public void setReturnVisit(String returnVisit) {
+		this.returnVisit = returnVisit;
+	}
+
+	public String getIncome() {
+		return income;
+	}
+
+	public void setIncome(String income) {
+		this.income = income;
+	}
+
+	public String getSkinType() {
+		return skinType;
+	}
+
+	public void setSkinType(String skinType) {
+		this.skinType = skinType;
 	}
 }

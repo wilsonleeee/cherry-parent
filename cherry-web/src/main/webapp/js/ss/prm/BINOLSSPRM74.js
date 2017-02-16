@@ -529,9 +529,9 @@ BINOLSSPRM74.prototype = {
 			return id;
 		},
 		"collect":function(){
-			BINOLSSPRM74.changeStateButton(0);
+			//BINOLSSPRM74.changeStateButton(0);
 			if(submitable==false){
-				BINOLSSPRM74.changeStateButton(1);
+				//BINOLSSPRM74.changeStateButton(1);
 				return;
 			}else{
 				submitable=false;
@@ -707,7 +707,7 @@ BINOLSSPRM74.prototype = {
 				//timeout: 3000,
 				type :'post',
 				success: function(data) {
-				    BINOLSSPRM74.changeStateButton(1);
+				    //BINOLSSPRM74.changeStateButton(1);
 					if(data == null || data == "" || data == undefined || data == "ERROR"){
 						return;
 					}
@@ -1799,6 +1799,51 @@ BINOLSSPRM74.prototype = {
 		 }
 	},
 	"openPointWindow":function(obj){
+		//新增逻辑： 如果存在该活动为需要资格券活动时，优先校验资格券
+		var ZGQFlag_check=$(obj).parents("tr").find("input[name='ZGQFlag']").val();
+		var maincode_check=$(obj).parents("tr").find("input[name='maincode']").val();
+		var ZGQcheck=1;
+		var ZGQCount=0;
+		if(ZGQFlag_check == 1){
+			//需要资格券的情况进行校验
+			$("#promotion_table #coupon_table tr").each(function(){
+				var $obj=$(this);
+				var $couponType=$obj.find("td:hidden input[name='couponType']").val();
+				var $ZGQArr=$obj.find("td:hidden input[name='ZGQArr']").val();
+				var $checked=$obj.find("input[type='checkbox']").is(":checked");
+				if($checked && $couponType == 3){
+					var ZGQArr=$ZGQArr.split(",");
+					for(var i=0;i<ZGQArr.length;i++){
+						if(maincode_check == ZGQArr[i]){
+							ZGQcheck=0;
+						}
+						//校验是否一张资格券对应了多个活动的情况
+						$("#promotion_table #rule_table tr").each(function(){
+							var $$this=$(this);
+							var $$checked=$$this.find("input[type='checkbox']").is(":checked");
+							var $$ZGQFlag=$$this.find("td:hidden input[name='ZGQFlag']").val();
+							var $$maincode=$$this.find("td:hidden input[name='maincode']").val();
+							if($$ZGQFlag == 1 && $$checked && ZGQArr[i] == $$maincode){
+								ZGQCount += 1;
+							}
+						});
+					}
+				}
+			});
+			if(ZGQcheck == 1){
+				$(obj).removeAttr("checked");
+				$(obj).parents("tr").find("input[name='checkFlag']").val("0");
+				BINOLSSPRM74.showErrorMessage("请选择对应的资格券再参加活动");
+				return false;
+			}
+			if(ZGQCount > 1){
+				$(obj).removeAttr("checked");
+				$(obj).parents("tr").find("input[name='checkFlag']").val("0");
+				BINOLSSPRM74.showErrorMessage("您已经参与了对应资格券的活动");
+				return false;
+			}
+		}
+
 		var $this=$(obj);
 		var $that=$this.parents("tr");
 		if($this.is(":checked")){

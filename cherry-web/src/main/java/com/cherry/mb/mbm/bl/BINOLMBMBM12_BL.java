@@ -313,6 +313,27 @@ public class BINOLMBMBM12_BL implements BINOLCM37_IF {
 					if(newValue != null && !"".equals(newValue)) {
 						memInfoRecordDetailMap.put("newValue", codeTable.getVal("1301", newValue));
 					}
+				}else if("31".equals(modifyField)) { // 肤质
+					if(oldValue != null && !"".equals(oldValue)) {
+						memInfoRecordDetailMap.put("oldValue", codeTable.getVal("1424", oldValue));
+					}
+					if(newValue != null && !"".equals(newValue)) {
+						memInfoRecordDetailMap.put("newValue", codeTable.getVal("1424", newValue));
+					}
+				}else if("32".equals(modifyField)) { // 回访方式
+					if(oldValue != null && !"".equals(oldValue)) {
+						memInfoRecordDetailMap.put("oldValue", codeTable.getVal("1423", oldValue));
+					}
+					if(newValue != null && !"".equals(newValue)) {
+						memInfoRecordDetailMap.put("newValue", codeTable.getVal("1423", newValue));
+					}
+				}else if("33".equals(modifyField)) { // 收入
+					if(oldValue != null && !"".equals(oldValue)) {
+						memInfoRecordDetailMap.put("oldValue", codeTable.getVal("1425", oldValue));
+					}
+					if(newValue != null && !"".equals(newValue)) {
+						memInfoRecordDetailMap.put("newValue", codeTable.getVal("1425", newValue));
+					}
 				}
 			}
 		}

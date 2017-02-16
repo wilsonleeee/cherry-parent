@@ -235,6 +235,26 @@ public class BINOLCM09_Service extends BaseService{
 		map.put(CherryBatchConstants.IBATIS_SQL_ID, "BINOLCM09.getAllCntList");
 		return baseServiceImpl.getList(map);
 	}
+
+	/**
+	 * 取得用户权限柜台
+	 * @param map
+	 * @return
+	 */
+	public List<Map<String, Object>> getAllValidCntList(Map<String, Object> map){
+		map.put(CherryBatchConstants.IBATIS_SQL_ID, "BINOLCM09.getAllValidCntList");
+		return baseServiceImpl.getList(map);
+	}
+
+	/**
+	 * 取得柜台黑名单
+	 * @param map
+	 * @return
+	 */
+	public List<Map<String, Object>> getBlackCntList(Map<String, Object> map){
+		map.put(CherryBatchConstants.IBATIS_SQL_ID, "BINOLCM09.getBlackCntList");
+		return baseServiceImpl.getList(map);
+	}
 	/**
 	 * 
 	 * 删除活动下发历史

@@ -22,6 +22,8 @@ import javax.annotation.Resource;
 import com.cherry.cm.core.CherryChecker;
 import com.cherry.cm.core.CherryConstants;
 import com.cherry.cm.service.BaseService;
+import com.cherry.cm.util.CherryUtil;
+import com.cherry.cm.util.ConvertUtil;
 import com.cherry.dr.cmbussiness.dto.core.CampBaseDTO;
 import com.cherry.dr.cmbussiness.dto.core.PointChangeDTO;
 import com.cherry.dr.cmbussiness.dto.core.PointChangeDetailDTO;
@@ -475,6 +477,19 @@ public class BINOLCM31_Service extends BaseService{
 	 */
 	public Map<String, Object> getComEmployeeInfo(Map<String, Object> map){
 		map.put(CherryConstants.IBATIS_SQL_ID, "BINOLCM31.getComEmployeeInfo");
+		return (Map<String, Object>) baseServiceImpl.get(map);
+	}
+	/**
+	 * 取得员工信息
+	 *
+	 * @param map
+	 * 			参数集合
+	 * @return Map
+	 * 			员工信息
+	 * 			employeeId : 员工ID
+	 */
+	public Map<String, Object> getComEmployeeInfoById(Map<String, Object> map){
+		map.put(CherryConstants.IBATIS_SQL_ID, "BINOLCM31.getComEmployeeInfoById");
 		return (Map<String, Object>) baseServiceImpl.get(map);
 	}
 	
@@ -1324,4 +1339,40 @@ public class BINOLCM31_Service extends BaseService{
 		map.put(CherryConstants.IBATIS_SQL_ID, "BINOLCM31.insertTempAdjustMember");
 		baseServiceImpl.save(map);
 	}
+
+	/**
+	 * 获取当前生效的
+	 * @param map
+	 * @return
+     */
+	public Map<String, Object> getMemCompleteRule(Map<String, Object> map) {
+		map.put(CherryConstants.IBATIS_SQL_ID, "BINOLCM31.getMemCompleteRule");
+		return (Map<String, Object>) baseServiceImpl.get(map);
+	}
+
+	/**
+	 * 通过会员号获取当前会员下已经占位过的属性
+	 * @param map
+	 * @return
+	 */
+	public String getCompleteDegreeOccu(Map<String, Object> map) {
+		map.put(CherryConstants.IBATIS_SQL_ID, "BINOLCM31.getCompleteDegreeOccu");
+		return ConvertUtil.getString(baseServiceImpl.get(map)) ;
+	}
+
+	public Map<String, Object> getMemInfo(Map<String, Object> map) {
+		map.put(CherryConstants.IBATIS_SQL_ID, "BINOLCM31.getMemInfo");
+		return (Map<String, Object>) baseServiceImpl.get(map);
+	}
+
+	public Map<String, Object> getMemInfoId(Map<String, Object> map) {
+		map.put(CherryConstants.IBATIS_SQL_ID, "BINOLCM31.getMemInfoId");
+		return (Map<String, Object>) baseServiceImpl.get(map);
+	}
+
+	public void updateCompleteByMemcode(Map<String, Object> map) {
+		map.put(CherryConstants.IBATIS_SQL_ID, "BINOLCM31.updateCompleteByMemcode");
+		baseServiceImpl.save(map);
+	}
+
 }

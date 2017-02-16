@@ -49,12 +49,19 @@ BINOLMBMBM12.prototype = {
     },
     // 导出会员修改履历信息
 	"exportExcel" : function() {
+		var that = this;
         if($(".dataTables_empty:visible").length==0) {
-        	//alert(oTableArr[0].fnSettings().sAjaxSource)
-    		var url = $("#exportUrl").attr("href");
-            var param = $("#memInfoRecordForm").serialize();
-            url = url + "?" + param;
-            document.location.href = url;
+			if (!$('#memInfoRecordForm').valid()) {
+				return false;
+			}
+			var url = $("#exportUrl").attr("href");
+			var param = $("#memInfoRecordForm").serialize();
+			url = url + "?" + param;
+			//锁住父页面
+			that.needUnlock=false;
+			document.location.href = url;
+			//开启父页面
+			that.needUnlock=true;
         }
     }
 };

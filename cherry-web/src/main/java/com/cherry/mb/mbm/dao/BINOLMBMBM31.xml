@@ -1,0 +1,171 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sqlMap PUBLIC "-//iBATIS.com//DTD SQL Map 2.0//EN" "http://ibatis.apache.org/dtd/sql-map-2.dtd">
+<sqlMap namespace="BINOLMBMBM31">
+    <sql id="ruleQuery">
+        <![CDATA[
+			SELECT
+				A.BIN_CompleteDegreeRuleID AS completeDegreeRuleID,
+				A.RuleName AS ruleName,
+				CONVERT(varchar(30),A.StartTime,23) AS startTime,
+				CONVERT(varchar(30),A.EndTime,23) AS endTime,
+				A.TotalPoint AS totalPoint,
+				A.ExceptPoint AS exceptPoint,
+				A.RuleCondition AS ruleCondition,
+				A.Memo AS memo,
+				CASE WHEN GETDATE() between A.StartTime and A.EndTime THEN '1'
+				WHEN A.StartTime > GETDATE() THEN '2'
+				ELSE
+				'0' END AS isValid
+			FROM
+				Members.BIN_CompleteDegreeRule  A
+			WHERE
+				A.ValidFlag = '1' AND
+				A.BIN_OrganizationInfoID = #organizationInfoId# AND
+				A.BIN_BrandInfoID = #brandInfoId#
+		]]>
+        <isNotEmpty prepend = "AND" property = "ruleName">
+            A.RuleName LIKE '%' + #ruleName# + '%'
+        </isNotEmpty>
+        <isNotEmpty prepend="AND" property="startTime">
+            A.StartTime >= #startTime#+ + ' 00:00:00'
+        </isNotEmpty>
+        <isNotEmpty prepend="AND" property="endTime">
+            <![CDATA[A.EndTime <= #endTime#+ ' 23:59:59']]>
+        </isNotEmpty>
+        <isNotEmpty prepend="AND" property="completeDegreeRuleID">
+            <![CDATA[A.BIN_CompleteDegreeRuleID = #completeDegreeRuleID#]]>
+        </isNotEmpty>
+        <isNotEmpty prepend="AND" property="exceptCompleteDegreeRuleID">
+            <![CDATA[A.BIN_CompleteDegreeRuleID not in (#exceptCompleteDegreeRuleID#)]]>
+        </isNotEmpty>
+    </sql>
+
+    <!-- 取得总数  -->
+    <select id="getRuleCount" parameterClass="java.util.HashMap" resultClass="java.lang.Integer">
+        <![CDATA[
+			SELECT	COUNT(SORT_T1.completeDegreeRuleID) AS count FROM (
+		]]>
+        <include refid="BINOLMBMBM31.ruleQuery" />
+        <![CDATA[
+			)SORT_T1
+		]]>
+    </select>
+
+    <select id="getRuleList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+        <include refid="BINOLCMINC99.pageheader" />
+        <include refid="BINOLMBMBM31.ruleQuery" />
+        <include refid="BINOLCMINC99.pagefooter" />
+    </select>
+
+    <select id="searchMemberAttrList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+        <![CDATA[
+			SELECT
+                MemInfoKey AS memInfoKey,
+                MemInfoValue AS memInfoValue
+            FROM
+                Members.BIN_CompleteDegreeAttr
+            WHERE
+                BIN_OrganizationInfoID=#organizationInfoId# AND
+                BIN_BrandInfoID =#brandInfoId# AND
+                ValidFlag='1'
+                ORDER BY BIN_CompleteDegreeAttrID
+		]]>
+    </select>
+
+    <select id="getRuleListWithoutPage" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+        <include refid="BINOLMBMBM31.ruleQuery" />
+    </select>
+
+    <insert id="saveMemCompleteRule"  parameterClass="java.util.HashMap">
+        <![CDATA[
+			INSERT INTO Members.BIN_CompleteDegreeRule
+           (
+           BIN_OrganizationInfoID
+		   ,BIN_BrandInfoID
+           ,RuleName
+           , StartTime
+           , EndTime
+           , TotalPoint
+           , ExceptPoint
+           , RuleCondition
+           , Memo
+           , RunFlag
+           , MaxMemIdExecuted
+           , MaxMemIdNeedExecute,
+          ]]>
+            <include refid="BINOLCMINC99.insertKeySql" />
+            <![CDATA[
+            ) VALUES
+           (
+           #organizationInfoId#
+           ,#brandInfoId#
+           ,#ruleNameSave#
+           ,#startTimeSave#+ ' 00:00:00'
+           ,#endTimeSave#+ ' 23:59:59'
+           ,#totalPointSave#
+           ,#exceptPoint#
+           ,#ruleJsonSave#
+           ,#memoSave#
+           ,'0'
+           ,'0'
+           ,'0',
+           ]]>
+            <include refid="BINOLCMINC99.insertValueSql" />
+            <![CDATA[
+           )
+		]]>
+    </insert>
+
+    <update id="updateMemCompleteRule" parameterClass="java.util.HashMap">
+        <![CDATA[
+            UPDATE
+                Members.BIN_CompleteDegreeRule
+            SET
+              ]]>
+          <isEqual property="updateAll" compareValue="1">
+              <![CDATA[
+                RuleName=#ruleNameSave# ,
+                StartTime=#startTimeSave# + ' 00:00:00',
+                EndTime=#endTimeSave#+ ' 23:59:59',
+                TotalPoint=#totalPointSave#,
+                ExceptPoint=#exceptPoint#,
+                RuleCondition=#ruleJsonSave#,
+                memo=#memoSave#,
+            ]]>
+          </isEqual>
+        <isNotEqual property="updateAll" compareValue="1">
+            <![CDATA[
+                EndTime=#endTimeSave#+ ' 23:59:59',
+            ]]>
+        </isNotEqual>
+            <include refid="BINOLCMINC99.updateSql" />
+            <![CDATA[
+            WHERE
+                BIN_OrganizationInfoID=#organizationInfoId# and
+                BIN_BrandInfoID=#brandInfoId# and
+                BIN_CompleteDegreeRuleID=#completeDegreeRuleID#
+
+        ]]>
+    </update>
+
+    <delete id="deleteRule" parameterClass="java.util.HashMap">
+        <![CDATA[
+	        DELETE FROM
+	            Members.BIN_CompleteDegreeRule
+	        WHERE
+	            BIN_CompleteDegreeRuleID = #completeDegreeRuleID#
+	    ]]>
+    </delete>
+
+    <update id="updateRuleEndTime" parameterClass="java.util.HashMap">
+        <![CDATA[
+	        UPDATE
+	            Members.BIN_CompleteDegreeRule
+	        SET
+	            EndTime=GETDATE()
+	        WHERE
+	            BIN_CompleteDegreeRuleID = #completeDegreeRuleID#
+	    ]]>
+    </update>
+
+</sqlMap>

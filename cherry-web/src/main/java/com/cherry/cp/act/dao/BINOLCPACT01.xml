@@ -188,12 +188,12 @@
  	  <update id="stopCampaign" parameterClass="java.util.HashMap">
  	  <![CDATA[
  	 	UPDATE
- 	 		Campaign.BIN_Campaign 
+ 	 		Campaign.BIN_Campaign
  	 	SET
- 	 		ValidFlag = #validFlag#,
- 	 		State = CASE WHEN #validFlag# = '1' THEN 0 ELSE 2 END,
+ 	 		CampaignToDate = #optTime#,
+ 	 		State = '2',
  	 		]]>
-				<include refid="BINOLCMINC99.updateSql" />		
+		    <include refid="BINOLCMINC99.updateSql" />
 			<![CDATA[	
  	 	WHERE
  	 		BIN_CampaignID = #campaignId#
@@ -205,8 +205,7 @@
  	 	UPDATE
  	 		Campaign.BIN_CampaignRule
  	 	SET
- 	 		ValidFlag = #validFlag#,
- 	 		State = CASE WHEN #validFlag# = '1' THEN 0 ELSE 2 END,
+ 	 		State = '2',
  	 		]]>
 			<include refid="BINOLCMINC99.updateSql" />		
 		<![CDATA[WHERE]]>
@@ -217,6 +216,45 @@
 		<![CDATA[BIN_CampaignID = #campaignId#]]>																				
 		</isNotEmpty>
  	 </update>
+	<!-- 伦理删除会员活动 -->
+	<update id="updSubCampaignTime" parameterClass="java.util.HashMap">
+		<![CDATA[
+ 	 	update B set b.BasePropValue2= #optTime#
+		from
+		Campaign.BIN_CampaignRule A
+		join Campaign.BIN_CamRuleCondition B
+		on(A.BIN_CampaignRuleID = B.BIN_CampaignRuleID)
+		join Campaign.BIN_CampaignBaseProp C
+		on(b.BIN_CampaignBasePropID = c.BIN_CampaignBasePropID
+			and c.PropertyName in('baseProp_obtain_time','baseProp_rese_time'))
+ 	 	WHERE
+ 	 	]]>
+		<isNotEmpty property="subCampaignId">
+			<![CDATA[A.BIN_CampaignRuleID = #subCampaignId#]]>
+		</isNotEmpty>
+		<isNotEmpty property="campaignId">
+			<![CDATA[A.BIN_CampaignID = #campaignId#]]>
+		</isNotEmpty>
+	</update>
+	<!-- 伦理删除会员活动 -->
+	<update id="updCampaignHisTime" parameterClass="java.util.HashMap">
+		<![CDATA[
+ 	 	UPDATE A set
+ 	 	A.ActivityToDate = #optTime#
+ 	 	FROM
+ 	 		[Promotion].[BIN_ActivityTransHis] A
+			join Campaign.BIN_CampaignRule B
+			on(B.SubCampaignCode = A.MainCode)
+			where
+ 	 	]]>
+		<isNotEmpty property="subCampaignId">
+			<![CDATA[B.BIN_CampaignRuleID = #subCampaignId#]]>
+		</isNotEmpty>
+		<isNotEmpty property="campaignId">
+			<![CDATA[B.BIN_CampaignID = #campaignId#]]>
+		</isNotEmpty>
+		<![CDATA[and A.ActivityType = '1']]>
+	</update>
 	<!-- 伦理删除会员活动规则 -->
 	<update id="stopSubCampaignPrmRule" parameterClass="java.util.HashMap">
 		<![CDATA[

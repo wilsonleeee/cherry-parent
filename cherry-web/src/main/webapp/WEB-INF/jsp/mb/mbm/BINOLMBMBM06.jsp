@@ -152,8 +152,16 @@ $(document).ready(function() {
             </tr>
             <tr>
             	<th><s:text name="binolmbmbm06_initTotalAmount"></s:text></th>
-		      	<td colspan="3"><span><s:textfield name="initTotalAmount" cssClass="text" value="%{memberInfoMap.initTotalAmount}"></s:textfield></span></td>
+		      	<td><span><s:textfield name="initTotalAmount" cssClass="text" value="%{memberInfoMap.initTotalAmount}"></s:textfield></span></td>
+				<th><s:text name="binolmbmbm06_returnVisit"></s:text></th>
+				<td><span><s:select list='#application.CodeTable.getCodes("1423")' listKey="CodeKey" listValue="Value" name="returnVisit" headerKey="" headerValue="%{#select_default}" value="%{memberInfoMap.returnVisit}"></s:select></span></td>
             </tr>
+		    <tr>
+			  <th><s:text name="binolmbmbm06_income"></s:text></th>
+			  <td><span><s:select list='#application.CodeTable.getCodes("1425")' listKey="CodeKey" listValue="Value" name="income" headerKey="" headerValue="%{#select_default}" value="%{memberInfoMap.income}"></s:select></span></td>
+			  <th><s:text name="binolmbmbm06_skinType"></s:text></th>
+			  <td><span><s:select list='#application.CodeTable.getCodes("1424")' listKey="CodeKey" listValue="Value" name="skinType" headerKey="" headerValue="%{#select_default}" value="%{memberInfoMap.skinType}"></s:select></span></td>
+		    </tr>
           </table>
           <table class="detail" cellpadding="0" cellspacing="0">
             <tr>
@@ -213,7 +221,7 @@ $(document).ready(function() {
 			<tr>
       	      <th><s:text name="binolmbmbm06_connectTime"></s:text></th>
 			  <td colspan="3"><span><s:checkboxlist list='#application.CodeTable.getCodes("1237")' listKey="CodeKey" listValue="Value" name="connectTime" value="%{memberInfoMap.connectTime}"></s:checkboxlist></span></td>
-      	    </tr>
+			</tr>
 			<s:if test='%{#application.CodeTable.getCodes("1204") != null && !#application.CodeTable.getCodes("1204").isEmpty()}'>
 			<tr>
 			  <th><s:text name="binolmbmbm06_memType"></s:text></th>
@@ -323,8 +331,18 @@ $(document).ready(function() {
               <th><s:text name="binolmbmbm06_tencentQQ"></s:text></th>
 		      <td><span><s:textfield name="tencentQQ" cssClass="text" value="%{memberInfoMap.tencentQQ}" maxlength="20"></s:textfield></span></td>
               <th><s:text name="binolmbmbm06_initTotalAmount"></s:text></th>
-		      <td colspan="3"><span><s:textfield name="initTotalAmount" cssClass="text" value="%{memberInfoMap.initTotalAmount}"></s:textfield></span></td>
+		      <td><span><s:textfield name="initTotalAmount" cssClass="text" value="%{memberInfoMap.initTotalAmount}"></s:textfield></span></td>
             </tr>
+		    <tr>
+			  <th><s:text name="binolmbmbm06_returnVisit"></s:text></th>
+			  <td><span><s:select list='#application.CodeTable.getCodes("1423")' listKey="CodeKey" listValue="Value" name="returnVisit" headerKey="" headerValue="%{#select_default}" value="%{memberInfoMap.returnVisit}"></s:select></span></td>
+			  <th><s:text name="binolmbmbm06_income"></s:text></th>
+			  <td><span><s:select list='#application.CodeTable.getCodes("1425")' listKey="CodeKey" listValue="Value" name="income" headerKey="" headerValue="%{#select_default}" value="%{memberInfoMap.income}"></s:select></span></td>
+			</tr>
+			  <tr>
+			  <th><s:text name="binolmbmbm06_skinType"></s:text></th>
+			  <td colspan="3"><span><s:select list='#application.CodeTable.getCodes("1424")' listKey="CodeKey" listValue="Value" name="skinType" headerKey="" headerValue="%{#select_default}" value="%{memberInfoMap.skinType}"></s:select></span></td>
+			  </tr>
           </table>
           <table class="detail" cellpadding="0" cellspacing="0">
             <tr>

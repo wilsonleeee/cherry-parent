@@ -33,6 +33,7 @@ import com.cherry.ss.prm.rule.CouponEngine;
 import com.googlecode.jsonplugin.JSONException;
 import com.googlecode.jsonplugin.JSONUtil;
 import com.opensymphony.xwork2.ModelDriven;
+import org.apache.axis.transport.jms.MapUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.util.StringUtils;
@@ -1951,6 +1952,22 @@ public class BINOLSSPRM73_Action extends BaseAction implements ModelDriven<BINOL
 		Map<String,Object> result_map=MapBuilder.newInstance().put("channelList",channelList).build();
 		ConvertUtil.setResponseByAjax(response,result_map);
 	}
+
+	/**
+	 *删除对应黑名的值
+	 * 发送门槛中有2的删除2，使用门槛中有3的删除3
+     */
+	public void emptySelect()  throws Exception{
+		try {
+			Map<String,Object> param= MapBuilder.newInstance().put("ruleCode",form.getRuleCode()).put("conditionType",form.getConditionType()).put("emptyType",form.getEmptyType()).put("filterType",CherryConstants.filterType_b).put("contentNo",form.getContentNo()).build();
+			binOLSSPRM73_BL.handleEmptySelect(param);
+			ConvertUtil.setResponseByAjax(response,0);
+		} catch (Exception e) {
+			e.printStackTrace();
+			ConvertUtil.setResponseByAjax(response,"ERROR");
+		}
+	}
+
 
 	/**
 	 * 取得session的信息

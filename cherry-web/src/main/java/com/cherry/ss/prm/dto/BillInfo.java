@@ -28,9 +28,11 @@ public class BillInfo {
 	private String levelCode;
 	/** 会员等级 */
 	private int levelId;
-	/** 整单金额 */
+	/** 整单可占位剩余金额 */
 	private double amount;
-	/** 实付金额 */
+	/** 整单未优惠前总金额 */
+	private double totalAmount;
+	/** 整单实付金额 */
 	private double actualAmount;
 	/** 订单是否用券 */
 	private boolean isUseCoupon;
@@ -157,5 +159,12 @@ public class BillInfo {
 	public void setBpCode(String bpCode) {
 		this.bpCode = bpCode;
 	}
-	
+
+	public double getTotalAmount() {
+		return totalAmount;
+	}
+
+	public void setTotalAmount(double totalAmount) {
+		this.totalAmount = totalAmount;
+	}
 }

@@ -24,7 +24,11 @@ import com.cherry.cm.core.CherryConstants;
  * @version 1.0 2010.08.06
  */
 @SuppressWarnings("unchecked")
-public class ActIndexAction extends BaseAction{
+public class
+
+
+
+ActIndexAction extends BaseAction{
 	
 	public String actindex(){
 		//request.getSession().getAttribute("", "");

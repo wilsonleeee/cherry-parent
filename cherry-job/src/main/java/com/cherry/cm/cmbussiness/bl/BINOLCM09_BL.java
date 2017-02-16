@@ -1,18 +1,5 @@
 package com.cherry.cm.cmbussiness.bl;
 
-import java.io.PrintWriter;
-import java.io.StringWriter;
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-
-import javax.annotation.Resource;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import com.cherry.cm.cmbussiness.service.BINOLCM09_Service;
 import com.cherry.cm.core.BatchLoggerDTO;
 import com.cherry.cm.core.CherryBatchConstants;
@@ -21,6 +8,13 @@ import com.cherry.cm.core.CherryBatchLogger;
 import com.cherry.cm.util.CherryBatchUtil;
 import com.cherry.cm.util.ConvertUtil;
 import com.cherry.cm.util.DateUtil;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import javax.annotation.Resource;
+import java.io.PrintWriter;
+import java.io.StringWriter;
+import java.util.*;
 
 @SuppressWarnings("unchecked")
 public class BINOLCM09_BL {
@@ -379,6 +373,26 @@ public class BINOLCM09_BL {
 					}
 				}
 			}
+			if (null != cntList && cntList.size() > 0){
+				List<Map<String,Object>>blackCntList = ser.getBlackCntList(map);
+				if (null != blackCntList && blackCntList.size() > 0){
+					//如果为全部柜台，则将全部柜台取出
+					if (ConvertUtil.getString(cntList.get(0).get("counterID")).equals("ALL")){
+						cntList=ser.getAllValidCntList(map);
+					}
+					for (int i = 0; i < cntList.size(); i++){
+						String counterID = ConvertUtil.getString(cntList.get(i).get("counterID"));
+						for (int j = 0; j < blackCntList.size(); j++){
+							String blackCntId = ConvertUtil.getString(blackCntList.get(j).get("counterCode"));
+							if (counterID.equals(blackCntId)){
+								cntList.remove(i);
+								i--;
+								break;
+							}
+						}
+					}
+				}
+			}
 		}
 		return cntList;
 	}
@@ -434,7 +448,7 @@ public class BINOLCM09_BL {
 	/**
 	 * 取得一组单据号
 	 * 
-	 * @param actConResultList
+	 * @param ticketNumbers
 	 */
 	private List<String> getTicketNumberList(Map<String, Object> ticketNumbers) {
 		if (null != ticketNumbers && !ticketNumbers.isEmpty()) {

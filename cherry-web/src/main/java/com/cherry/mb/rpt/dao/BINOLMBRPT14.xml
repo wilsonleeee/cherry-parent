@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sqlMap PUBLIC "-//iBATIS.com//DTD SQL Map 2.0//EN" "http://ibatis.apache.org/dtd/sql-map-2.dtd">
+<sqlMap namespace="BINOLMBRPT14">
+    <sql id="memberCompleteInfoQuery">
+        <![CDATA[
+			SELECT A.MobilePhone AS mobilePhone ,
+			        A.Name AS memberName,
+			        ISNULL(B.TotalPercent,0)  AS totalPercent,
+			        A.BIN_MemberInfoID AS BIN_MemberInfoID
+			FROM
+			      Members.BIN_MemberInfo A
+            LEFT JOIN Members.BIN_CompleteDegreeOccu B
+            ON A.BIN_MemberInfoID=B.BIN_MemberInfoID
+            WHERE
+               A.BIN_OrganizationInfoID = #organizationInfoId# AND
+               A.BIN_BrandInfoID = #brandInfoId# AND
+               A.MemInfoRegFlg='0'
+		]]>
+        <isNotEmpty prepend = "AND" property = "mobilePhone">
+            A.MobilePhone =#mobilePhone#
+        </isNotEmpty>
+        <isNotEmpty prepend="AND" property="completeStart">
+            ISNULL(B.TotalPercent,0)>=#completeStart#
+        </isNotEmpty>
+        <isNotEmpty prepend="AND" property="completeEnd">
+            <![CDATA[ISNULL(B.TotalPercent,0) <= #completeEnd#]]>
+        </isNotEmpty>
+    </sql>
+
+    <!-- 取得总数  -->
+    <select id="searchMemberCompleteCount" parameterClass="java.util.HashMap" resultClass="java.lang.Integer">
+        <![CDATA[
+			SELECT	COUNT(SORT_T1.BIN_MemberInfoID) AS count FROM (
+		]]>
+        <include refid="BINOLMBRPT14.memberCompleteInfoQuery" />
+        <![CDATA[
+			)SORT_T1
+		]]>
+    </select>
+
+    <select id="searchMemberCompleteList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+        <include refid="BINOLCMINC99.pageheader" />
+        <include refid="BINOLMBRPT14.memberCompleteInfoQuery" />
+        <include refid="BINOLCMINC99.pagefooter" />
+    </select>
+
+</sqlMap>

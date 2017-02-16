@@ -743,7 +743,15 @@ public class CherryConstants {
 	
 	/** 分页 排序字段(字符)*/
 	public static final String SORT_ID = "SORT_ID" ;
-	
+
+	/** 导入模式 增量模式*/
+	public static final String upMode_1 = "1" ;
+
+	/** 导入模式 覆盖模式*/
+	public static final String upMode_2 = "2" ;
+	/** 失败导出excel 柜台*/
+	public static final String Fail_OperateType_1 = "1" ;
+
 	//=============================================业务单据数据同步区分====================//
 	/** 业务单据数据同步区分  可同步 */
 	public static final String BILL_SYNCHFLAG_1 = "1";
@@ -2290,7 +2298,10 @@ public class CherryConstants {
 		MEMINFOFIELD_23("23", "connectTime", "string"),
 		MEMINFOFIELD_24("24", "memType", "string"),
 		MEMINFOFIELD_27("27", "initTotalAmount", "number"),
-		MEMINFOFIELD_28("28", "channelCode", "string");//,
+		MEMINFOFIELD_28("28", "channelCode", "string"),//,
+		MEMINFOFIELD_31("31", "skinType", "string"),
+		MEMINFOFIELD_32("32", "returnVisit", "string"),
+		MEMINFOFIELD_33("33", "income", "string");
 		// 需要添加CODE值"1242"对应的KEY
 //		MEMINFOFIELD_29("29", "nickname", "string"),
 //		MEMINFOFIELD_30("30", "creditRating", "string");
@@ -2640,7 +2651,14 @@ public class CherryConstants {
 	public static final String COUNTER_LEVEL_B = "B";
 	/**  柜台级别 C */
 	public static final String COUNTER_LEVEL_C = "C";
-	
+
+	/**  柜台白名单标识 */
+	public static final String COUNTER_RULE_WHITE_1 = "1";
+
+	/**  柜台黑名单标识 */
+	public static final String COUNTER_RULE_WHITE_2 = "2";
+
+
 	/**  柜台状态 0：营业中,1：筹备中,2：停业中,3：装修中,4：关店 */
 	public static final String COUNTER_STATUS = "status";
 	/**  柜台状态   0：营业中 */

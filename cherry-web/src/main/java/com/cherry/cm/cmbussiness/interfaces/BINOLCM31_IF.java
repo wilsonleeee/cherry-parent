@@ -183,6 +183,17 @@ public interface BINOLCM31_IF {
 	 * 			employeeId : 员工ID
 	 */
     public Map<String, Object> getComEmployeeInfo(Map<String, Object> map);
+
+	/**
+	 * 取得员工信息
+	 *
+	 * @param map
+	 * 			参数集合
+	 * @return Map
+	 * 			员工信息
+	 * 			employeeId : 员工ID
+	 */
+    public Map<String, Object> getComEmployeeInfoById(Map<String, Object> map);
     
     /**
 	 * 取得会员卡号
@@ -892,4 +903,86 @@ public interface BINOLCM31_IF {
 	 * 			天猫默认等级
 	 */
 	public int getTmallDefaultLevel(Map<String, Object> map);
+
+	/**
+	 * 获取当前系统中会员完善度所涉及到生效规则的Key,已知会员信息避免重复查询时调用
+	 * @return
+	 */
+	public List<String> getMemCompleteRuleKey(String organizationInfoId,String brandInfoId);
+
+	/**
+	 * 根据当前规则计算会员信息完整度方法
+	 * @param memInfo  根据getMemCompleteRuleKey方法返回的key值，所对应的会员信息Map
+	 * @return
+	 */
+	public int calMemCompletePercent(String organizationInfoId,String brandInfoId,Map<String,Object> memInfo);
+
+	/**
+	 * 根据当前规则计算赠送积分
+	 * @param organizationInfoId
+	 * @param brandInfoId
+	 * @param new_memInfo
+	 * @param memberCode
+	 * @return
+	 */
+	public Map<String,Object> calMemCompletePoint(String organizationInfoId,String brandInfoId,Map<String,Object> new_memInfo,String memberCode);
+
+	/**
+	 * 根据会员卡号更新会员完整度信息
+	 * @param organizationInfoId
+	 * @param brandInfoId
+	 * @param memberCode
+	 * @return
+	 */
+	public void updateCompletePercentByMemcode(String organizationInfoId,String brandInfoId,String memberCode,int percent);
+
+	/**
+	 * 根据会员卡号更新会员赠送积分信息
+	 * @param organizationInfoId
+	 * @param brandInfoId
+	 * @param memberCode
+	 * @return
+	 */
+	public void updateCompletePointByMemcode(String organizationInfoId,String brandInfoId,String memberCode,int point,String awardPoint);
+
+	/**
+	 * 获取当前规则
+	 * @param organizationInfoId
+	 * @param brandInfoId
+	 * @return
+	 */
+	public Map<String,Object> getMemCompleteRule(String organizationInfoId,String brandInfoId);
+
+	/**
+	 * 这个是根据规则返回对应会员属性的方法batch使用
+	 * @param organizationInfoId
+	 * @param brandInfoId
+	 * @param memCode
+	 * @return
+	 */
+	public Map<String,Object> getMemInfoByCompleteRule(String organizationInfoId,String brandInfoId,String memCode,Map<String,Object> ruleInfo_map);
+
+	/**
+	 * 获取当前系统中会员完善度所涉及到生效规则的Key,已知会员信息避免重复查询时调用batch使用
+	 * @return
+	 */
+	public List<String> getMemCompleteRuleKey(String organizationInfoId,String brandInfoId,Map<String,Object> ruleInfo_map);
+
+	/**
+	 * 根据当前规则计算会员信息完整度方法batch使用
+	 * @param memInfo  根据getMemCompleteRuleKey方法返回的key值，所对应的会员信息Map
+	 * @return
+	 */
+	public int calMemCompletePercent(String organizationInfoId,String brandInfoId,Map<String,Object> memInfo,Map<String,Object> ruleInfo_map);
+
+	/**
+	 * 根据当前规则计算赠送积分batch使用
+	 * @param organizationInfoId
+	 * @param brandInfoId
+	 * @param new_memInfo
+	 * @param memberCode
+	 * @param ruleInfo_map
+	 * @return
+	 */
+	public Map<String,Object> calMemCompletePoint(String organizationInfoId,String brandInfoId,Map<String,Object> new_memInfo,String memberCode,Map<String,Object> ruleInfo_map);
 }

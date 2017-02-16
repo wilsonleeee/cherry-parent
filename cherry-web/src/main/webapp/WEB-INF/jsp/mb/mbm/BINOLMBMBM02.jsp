@@ -95,8 +95,16 @@
             </tr>  
             <tr>
             	<th><s:text name="binolmbmbm02_email"></s:text></th>
-				<td colspan="3"><span><s:property value="memberInfoMap.email"/></span></td>
+				<td><span><s:property value="memberInfoMap.email"/></span></td>
+				<th><s:text name="binolmbmbm02_returnVisit"></s:text></th>
+				<td><span><s:property value='#application.CodeTable.getVal("1423", memberInfoMap.returnVisit)' /></span></td>
             </tr>
+		    <tr>
+			  <th><s:text name="binolmbmbm02_income"></s:text></th>
+			  <td><span><s:property value='#application.CodeTable.getVal("1425", memberInfoMap.income)' /></span></td>
+			  <th><s:text name="binolmbmbm02_skinType"></s:text></th>
+			  <td><span><s:property value='#application.CodeTable.getVal("1424", memberInfoMap.skinType)' /></span></td>
+		    </tr>
           </table>
           <table class="detail" cellpadding="0" cellspacing="0">
             <tr>
@@ -191,8 +199,8 @@
             <tr>
               <th><s:text name="binolmbmbm02_connectTime"></s:text></th>
 			  <td colspan="3"><span><s:property value="memberInfoMap.connectTimeValue" /></span></td>
-            </tr> 
-            <s:if test='%{#application.CodeTable.getCodes("1204") != null && !#application.CodeTable.getCodes("1204").isEmpty()}'> 
+            </tr>
+			  <s:if test='%{#application.CodeTable.getCodes("1204") != null && !#application.CodeTable.getCodes("1204").isEmpty()}'>
 			<tr>
 			  <th><s:text name="binolmbmbm02_memType"></s:text></th>
 			  <td colspan="3"><span><s:property value='#application.CodeTable.getVal("1204", memberInfoMap.memType)' /></span></td>
@@ -267,9 +275,16 @@
             </tr>
             <tr>
               <th><s:text name="binolmbmbm02_email"></s:text></th>
-			  <td colspan="3"><span><s:property value="memberInfoMap.email"/></span></td>
-			 
-            </tr>  
+			  <td><span><s:property value="memberInfoMap.email"/></span></td>
+			  <th><s:text name="binolmbmbm02_returnVisit"></s:text></th>
+			  <td><span><s:property value='#application.CodeTable.getVal("1423", memberInfoMap.returnVisit)' /></span></td>
+			</tr>
+		    <tr>
+			  <th><s:text name="binolmbmbm02_income"></s:text></th>
+			  <td><span><s:property value='#application.CodeTable.getVal("1425", memberInfoMap.income)' /></span></td>
+			  <th><s:text name="binolmbmbm02_skinType"></s:text></th>
+			  <td><span><s:property value='#application.CodeTable.getVal("1424", memberInfoMap.skinType)' /></span></td>
+		    </tr>
           </table>
           <table class="detail" cellpadding="0" cellspacing="0">
             <tr>

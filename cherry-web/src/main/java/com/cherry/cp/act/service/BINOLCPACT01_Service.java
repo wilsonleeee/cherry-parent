@@ -78,6 +78,27 @@ public class BINOLCPACT01_Service {
 	public List<Map<String,Object>> getSubCampName(Map<String,Object> map){
 		return baseServiceImpl.getList(map, "BINOLCPACT01.getSubCampName");
 	}
+
+	/**
+	 * 伦理删除主题活动
+	 * @param map
+	 * @return
+	 */
+	public int updSubCampaignTime (Map<String, Object> map){
+		map.put(CherryConstants.IBATIS_SQL_ID, "BINOLCPACT01.updSubCampaignTime");
+		return baseServiceImpl.update(map);
+	}
+
+	/**
+	 * 伦理删除主题活动
+	 * @param map
+	 * @return
+	 */
+	public int updCampaignHisTime (Map<String, Object> map){
+		map.put(CherryConstants.IBATIS_SQL_ID, "BINOLCPACT01.updCampaignHisTime");
+		return baseServiceImpl.update(map);
+	}
+
 	/**
 	 * 伦理删除主题活动
 	 * @param map
@@ -105,5 +126,9 @@ public class BINOLCPACT01_Service {
 	public int stopSubCampaignPrmRule (Map<String, Object> map){
 		map.put(CherryConstants.IBATIS_SQL_ID, "BINOLCPACT01.stopSubCampaignPrmRule");
 		return baseServiceImpl.update(map);
+	}
+
+	public String getSysTime(){
+		return baseServiceImpl.getSYSDateTime();
 	}
 }

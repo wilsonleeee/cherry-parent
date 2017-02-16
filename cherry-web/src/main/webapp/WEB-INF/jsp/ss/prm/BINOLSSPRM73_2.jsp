@@ -83,6 +83,7 @@ input.date {
 <s:url action="BINOLSSPRM73_productExeclLoad" namespace="/ss" id="popProductUploadUrl"></s:url>
 <s:url action="BINOLSSPRM73_getCNTList" namespace="/ss" id="getCNTList"></s:url>
 <s:url action="BINOLSSPRM73_delCNT" namespace="/ss" id="delCNT"></s:url>
+<s:url action="BINOLSSPRM73_emptySelect" namespace="/ss" id="emptySelect"></s:url>
 <s:url action="BINOLSSPRM73_channelDialog" namespace="/ss" id="popChannelDialogUrl"></s:url>
 
 <s:url action="BINOLSSPRM73_confirmUseCond" namespace="/ss" id="confirmUseCondUrl"></s:url>
@@ -127,6 +128,7 @@ input.date {
 	<!-- <span id="popProductUpload" style="display:none">${popProductUploadUrl}</span> -->
 	<a id="getCNTListUrl" href="${getCNTList}"></a>
 	<a id="delCNTUrl" href="${delCNT}"></a>
+	<a id="emptySelectUrl" href="${emptySelect}"></a>
 	<span id="popUpload" style="display: none">${popUploadUrl}</span>
 	<a id="readCouponPrtDetailUrl" href="${readCouponPrtDetailUrl}"></a>
 
@@ -197,7 +199,7 @@ input.date {
 							</span>
 							</strong>
 						</div>
-						<div class="box2-content clearfix" style="height:100px; width: 65%">
+						<div class="box2-content clearfix" style="height:100px; width: 65%;overflow:auto;">
 							<!-- 产品在此处展示 -->
 							<div id="proContent" class="proContent z-tbody">
 							</div>
@@ -455,6 +457,9 @@ input.date {
 									<div class="box2-header clearfix" >
 										<strong class="left active"><span class="ui-icon icon-flag"></span>排除柜台</strong>
 										<div class="right">
+											<a class="add" onClick="binolssprm7302.emptySelect('1','1',this);return false;">
+												<span class="ui-icon icon-delete"></span><span class="button-text">清空</span>
+											</a>
 											<a class="add" onClick="binolssprm7302.popCounterLoadDialog('1','2','0');return false;">
 												<span class="ui-icon icon-add"></span><span class="button-text">导入排除柜台</span>
 											</a>
@@ -595,6 +600,9 @@ input.date {
 									<div class="box2-header clearfix" >
 										<strong class="left active"><span class="ui-icon icon-flag"></span>排除产品</strong>
 										<div class="right">
+											<a class="add" onClick="binolssprm7302.emptySelect('1','2',this);return false;">
+												<span class="ui-icon icon-delete"></span><span class="button-text">清空</span>
+											</a>
 											<a class="add" onClick="binolssprm7302.popProductLoadDialog('1','2');return false;">
 												<span class="ui-icon icon-add"></span><span class="button-text">导入排除产品</span>
 											</a>
@@ -752,6 +760,9 @@ input.date {
 									<div class="box2-header clearfix" >
 										<strong class="left active"><span class="ui-icon icon-flag"></span>排除对象</strong>
 										<div class="right">
+											<a class="add" onClick="binolssprm7302.emptySelect('1','3',this);return false;">
+												<span class="ui-icon icon-delete"></span><span class="button-text">清空</span>
+											</a>
 											<a class="add" onclick="binolssprm7302.popMemberLoadDialog('1','2',0,this);return false">
 												<span class="ui-icon icon-add"></span><span class="button-text">导入排除对象</span>
 											</a>
@@ -870,7 +881,7 @@ input.date {
 									<input type="text" name ="zkValue2" id="zkValue2" class="number zkCoupon" maxlength="3" value="<s:property value='#contentInfo.zkValue2'/>" /> %
 									折扣数量上限&nbsp;
 									<input type="text" name ="zkNumLimt" class="number" maxlength="3" value="<s:property value='#contentInfo.zkNumLimt'/>"/>个  </br>
-									<div class="box2 box2-active" style="display:inline;height:100px;">
+									<div class="box2 box2-active" style="display:inline;height:100px;overflow:auto;">
 										<div class="box2-header clearfix" style="display:inline" >
 											<strong class="active" style="width:70px;"><span class="ui-icon icon-flag"></span>产品范围
 											<span>

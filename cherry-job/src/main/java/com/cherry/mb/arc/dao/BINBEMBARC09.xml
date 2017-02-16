@@ -1,0 +1,97 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sqlMap PUBLIC "-//iBATIS.com//DTD SQL Map 2.0//EN" "http://ibatis.apache.org/dtd/sql-map-2.dtd">
+<sqlMap namespace="BINBEMBARC09">
+
+    <!-- 取得需要同步的会员信息List -->
+    <select id="getMemCompleteRuleSyncList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+        <![CDATA[
+		SELECT TOP $COUNT$
+				A.BIN_MemberInfoID AS memberInfoId,
+                B.MemCode AS memCode
+		FROM
+				Members.BIN_MemberInfo A
+				LEFT JOIN
+				Members.BIN_MemCardInfo B ON A.BIN_MemberInfoID=B.BIN_MemberInfoID AND A.ValidFlag = '1' AND B.CardValidFlag = '1'
+		WHERE
+		        A.MemInfoRegFlg='0' AND
+		        A.JoinDate>=#minJoinDate#
+		]]>
+        <isNotEmpty prepend = "AND" property="maxMemIdExecuted">
+            A.BIN_MemberInfoID > #maxMemIdExecuted#
+		</isNotEmpty>
+        <isNotEmpty prepend = "AND" property="batchMaxId">
+        <![CDATA[ A.BIN_MemberInfoID<= #batchMaxId#]]>
+        </isNotEmpty>
+        <![CDATA[
+		ORDER BY A.BIN_MemberInfoID
+		]]>
+    </select>
+
+    <!-- 查询当前生效的会员完整度规则是否已执行过 -->
+    <select id="getMemCompleteRuleValid" parameterClass="java.util.HashMap" resultClass ="java.util.HashMap">
+        <![CDATA[
+		SELECT TOP 1
+			RuleCondition,
+			ExceptPoint,
+			BIN_CompleteDegreeRuleID,
+			MaxMemIdExecuted AS maxMemIdExecuted,
+			BatchMaxId AS batchMaxId
+		FROM
+			Members.BIN_CompleteDegreeRule
+		WHERE
+				BIN_OrganizationInfoID = #organizationInfoId# AND
+				BIN_BrandInfoID = #brandInfoId# AND
+				#sysTime# BETWEEN StartTime AND EndTime AND
+				ValidFlag = '1' AND RunFlag='0'
+	]]>
+    </select>
+
+    <!--更新会员规则 -->
+    <update id="updateMemRuleFlag" parameterClass="java.util.HashMap">
+        <![CDATA[
+			UPDATE
+				Members.BIN_CompleteDegreeRule
+			SET
+	      		RunFlag = '1'
+			WHERE
+				BIN_CompleteDegreeRuleID = #BIN_CompleteDegreeRuleID#
+		]]>
+    </update>
+
+    <!--获取需执行规则的最大值的会员id-->
+    <select id="getMemIdMax" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+        <![CDATA[
+		SELECT TOP 1
+				A.BIN_MemberInfoID AS maxMemIdNeedExecute
+		FROM
+				Members.BIN_MemberInfo A
+		WHERE
+		        A.JoinDate>=#minJoinDate#
+		ORDER BY A.BIN_MemberInfoID DESC
+		]]>
+    </select>
+
+    <!--更新会员规则表中的字段 -->
+    <update id="updateMemRuleMaxNeedMemId" parameterClass="java.util.HashMap">
+        <![CDATA[
+			UPDATE
+				Members.BIN_CompleteDegreeRule
+			SET
+	      		MaxMemIdNeedExecute = #maxMemIdNeedExecute#
+			WHERE
+				BIN_CompleteDegreeRuleID = #BIN_CompleteDegreeRuleID#
+		]]>
+    </update>
+
+    <!--更新会员规则表中的字段 -->
+    <update id="updateMemRuleMemId" parameterClass="java.util.HashMap">
+        <![CDATA[
+			UPDATE
+				Members.BIN_CompleteDegreeRule
+			SET
+	      		MaxMemIdExecuted = #maxMemIdExecuted#
+			WHERE
+				BIN_CompleteDegreeRuleID = #BIN_CompleteDegreeRuleID#
+		]]>
+    </update>
+</sqlMap>

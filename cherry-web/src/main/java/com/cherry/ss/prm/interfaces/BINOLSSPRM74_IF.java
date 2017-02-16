@@ -195,4 +195,6 @@ public interface BINOLSSPRM74_IF extends ICherryInterface {
 	public  void tran_collectPro(BINOLSSPRM74_Form form) throws Exception;
 
 	public List<Map<String,Object>> convertCart_unit (List<Map<String,Object>> cartList);
+
+	public void convert2YHQPlaceHolder(List<Map<String,Object>> cartList,List<String> YHQReplaceHolderList);
 }

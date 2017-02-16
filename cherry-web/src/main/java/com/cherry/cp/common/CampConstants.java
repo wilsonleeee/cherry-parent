@@ -231,6 +231,9 @@ public class CampConstants {
 	public static final String PLACE_JSON = "placeJson";
 
 	/** 活动地点JSON */
+	public static final String PLACE_JSON_b = "placeJson_b";
+
+	/** 活动地点JSON */
 	public static final String SAVE_JSON = "saveJson";
 
 	/** 地点类型 */

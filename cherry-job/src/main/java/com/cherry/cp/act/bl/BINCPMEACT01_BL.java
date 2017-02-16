@@ -1,9 +1,8 @@
 package com.cherry.cp.act.bl;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
+import java.util.*;
 
 import javax.annotation.Resource;
 
@@ -16,6 +15,7 @@ import com.cherry.cm.core.CherryBatchLogger;
 import com.cherry.cm.core.CherryChecker;
 import com.cherry.cm.util.CherryBatchUtil;
 import com.cherry.cm.util.ConvertUtil;
+import com.cherry.cm.util.DateUtil;
 import com.cherry.cp.act.service.BINCPMEACT01_Service;
 
 /**
@@ -148,7 +148,12 @@ public class BINCPMEACT01_BL {
 		priceFlag = cm14_bl.getConfigValue("1285",orgInfoId,brandInfoId);
 		// 取得日结状态确定的业务日期
 		busDate = bincpmeact01_Service.getBusDate(map);
+		String sysdateTime = bincpmeact01_Service.getSYSDateTime();
+		String sysHHSSMM = DateUtil.getSpecificDate(sysdateTime,DateUtil.TIME_PATTERN );
+
+		map.put("optTime", sysdateTime);
 		map.put("busDate", busDate);
+		map.put("busDateTime", busDate + " " + sysHHSSMM);
 		commMap = new HashMap<String, Object>(map);
 		commMap.put(CherryBatchConstants.CREATEDBY, "BATCH");
 		commMap.put(CherryBatchConstants.UPDATEDBY, "BATCH");
@@ -173,6 +178,10 @@ public class BINCPMEACT01_BL {
 						ConvertUtil.getString(act.get("subjectName")).replaceAll("\n", "").replaceAll("\r", "").replaceAll("\t", ""));
 				act.put(CherryBatchConstants.BRAND_CODE, 
 						commMap.get(CherryBatchConstants.BRAND_CODE));
+				String endTime = ConvertUtil.getString(act.get(key_endTime));
+				if(endTime.length() <= 10){
+					act.put(key_endTime,endTime + " 23:59:59");
+				}
 				// 活动设置者
 				int userId = Integer.parseInt(act.get(CherryBatchConstants.USERID).toString());
 				// 活动设置者被停用
@@ -345,12 +354,12 @@ public class BINCPMEACT01_BL {
 		getCntActList(addCntActList, delCntActList,updCntActList);
 		// 取得新增/删除的活动
 		getActList(addCntActList, delCntActList);
-		// ========删除停用的柜台活动（接口表）==========
+		// =======停用的柜台活动（接口表）==========
 		if (null != delCntActList && delCntActList.size() > 0) {
 			for (Map<String, Object> act : delCntActList) {
 				act.putAll(commMap);
 			}
-			// 删除柜台活动（接口表）
+			// 停用柜台活动（接口表）
 			bincpmeact01_Service.clearActivityCouter(delCntActList);
 			DO_TRANSACTION_IF = true;
 			// 无效下发历史
@@ -392,11 +401,11 @@ public class BINCPMEACT01_BL {
 	 */
 	private void optionActivity() {
 		if (null != delActList && delActList.size() > 0) {
-			// 删除的会员活动追加共通信息
+			// 停用会员活动追加共通信息
 			for (Map<String, Object> act : delActList) {
 				act.putAll(commMap);
 			}
-			// 删除会员活动
+			// 停用会员活动
 			bincpmeact01_Service.clearActivityAssociate(delActList);
 			DO_TRANSACTION_IF = true;
 		}

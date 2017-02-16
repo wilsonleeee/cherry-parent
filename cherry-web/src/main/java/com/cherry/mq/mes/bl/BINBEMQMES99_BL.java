@@ -12,63 +12,39 @@
  */
 package com.cherry.mq.mes.bl;
 
+import com.cherry.cm.activemq.MessageSender;
+import com.cherry.cm.activemq.dto.MQInfoDTO;
+import com.cherry.cm.activemq.interfaces.BINOLMQCOM01_IF;
+import com.cherry.cm.cmbussiness.bl.*;
+import com.cherry.cm.cmbussiness.interfaces.BINOLCM31_IF;
+import com.cherry.cm.core.CherryChecker;
+import com.cherry.cm.core.CherryConstants;
+import com.cherry.cm.core.CustomerContextHolder;
+import com.cherry.cm.mongo.MongoDB;
+import com.cherry.cm.util.CherryUtil;
+import com.cherry.cm.util.ConvertUtil;
+import com.cherry.cp.common.interfaces.BINOLCPCOM05_IF;
+import com.cherry.mq.mes.common.CherryMQException;
+import com.cherry.mq.mes.common.CherryMessageReceiverImpl;
+import com.cherry.mq.mes.common.MessageConstants;
+import com.cherry.mq.mes.common.MessageUtil;
+import com.cherry.mq.mes.dto.*;
+import com.cherry.mq.mes.interfaces.*;
+import com.cherry.mq.mes.service.BINBEMQMES99_Service;
+import com.cherry.webservice.activity.bl.ActivityLogic;
+import com.googlecode.jsonplugin.JSONUtil;
+import com.mongodb.BasicDBObject;
+import com.mongodb.DBObject;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import javax.annotation.Resource;
 import java.math.BigDecimal;
 import java.text.DecimalFormat;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-
-import javax.annotation.Resource;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-import com.cherry.cm.activemq.MessageSender;
-import com.cherry.cm.activemq.dto.MQInfoDTO;
-import com.cherry.cm.activemq.interfaces.BINOLMQCOM01_IF;
-import com.cherry.cm.cmbussiness.bl.BINOLCM03_BL;
-import com.cherry.cm.cmbussiness.bl.BINOLCM04_BL;
-import com.cherry.cm.cmbussiness.bl.BINOLCM14_BL;
-import com.cherry.cm.cmbussiness.bl.BINOLCM36_BL;
-import com.cherry.cm.cmbussiness.bl.BINOLCM98_BL;
-import com.cherry.cm.cmbussiness.interfaces.BINOLCM31_IF;
-import com.cherry.cm.core.CherryChecker;
-import com.cherry.cm.core.CherryConstants;
-import com.cherry.cm.core.CustomerContextHolder;
-import com.cherry.cm.core.TmallKeyDTO;
-import com.cherry.cm.core.TmallKeys;
-import com.cherry.cm.mongo.MongoDB;
-import com.cherry.cm.util.CherryUtil;
-import com.cherry.cm.util.ConvertUtil;
-import com.cherry.cm.util.SignTool;
-import com.cherry.cp.common.interfaces.BINOLCPCOM05_IF;
-import com.cherry.mq.mes.common.CherryMQException;
-import com.cherry.mq.mes.common.CherryMessageReceiverImpl;
-import com.cherry.mq.mes.common.MessageConstants;
-import com.cherry.mq.mes.common.MessageUtil;
-import com.cherry.mq.mes.dto.MachMainDataDTO;
-import com.cherry.mq.mes.dto.MemMainDataDTO;
-import com.cherry.mq.mes.dto.MonMainDataDTO;
-import com.cherry.mq.mes.dto.QueMainDataDTO;
-import com.cherry.mq.mes.dto.RivalSaleMainDataDTO;
-import com.cherry.mq.mes.dto.SalMainDataDTO;
-import com.cherry.mq.mes.dto.SaleReturnMainDataDTO;
-import com.cherry.mq.mes.interfaces.AnalyzeMemberInitDataMessage_IF;
-import com.cherry.mq.mes.interfaces.AnalyzeMemberMessage_IF;
-import com.cherry.mq.mes.interfaces.AnalyzeMessage_IF;
-import com.cherry.mq.mes.interfaces.AnalyzeMonitorMessage_IF;
-import com.cherry.mq.mes.interfaces.AnalyzeQuestionMessage_IF;
-import com.cherry.mq.mes.interfaces.AnalyzeRivalSaleMessage_IF;
-import com.cherry.mq.mes.interfaces.BINBEMQMES10_IF;
-import com.cherry.mq.mes.interfaces.CherryMessageHandler_IF;
-import com.cherry.mq.mes.service.BINBEMQMES99_Service;
-import com.cherry.webservice.activity.bl.ActivityLogic;
-import com.googlecode.jsonplugin.JSONUtil;
-import com.mongodb.BasicDBObject;
-import com.mongodb.DBObject;
-import com.taobao.api.request.TmallMeiCrmMemberSyncRequest;
-import com.taobao.api.response.TmallMeiCrmMemberSyncResponse;
 
 /**
  * MQ业务数据接收共通
@@ -2292,6 +2268,15 @@ public class BINBEMQMES99_BL {
 		detailDataMap.put("WechatBindTime", ConvertUtil.getString(map.get("wechatBindTime")));
 		// 会员信息登记区分
 		detailDataMap.put("MemInfoRegFlg", ConvertUtil.getString(map.get("memInfoRegFlg")));
+		// 职业
+		detailDataMap.put("profession", ConvertUtil.getString(map.get("profession")));
+		// 收入
+		detailDataMap.put("income", ConvertUtil.getString(map.get("income")));
+		// 回访方式
+		detailDataMap.put("returnVisit", ConvertUtil.getString(map.get("returnVisit")));
+		// 肤质
+		detailDataMap.put("skinType", ConvertUtil.getString(map.get("skinType")));
+
 		detailDataList.add(detailDataMap);
 		dataLine.put("DetailDataDTOList", detailDataList);
 		msgDataMap.put("DataLine", dataLine);

@@ -141,6 +141,8 @@ public class BINOLSSPRM74_Action extends BaseAction implements ModelDriven<BINOL
 			Map<String,Object> main_map=(Map<String,Object>)convert_map.get("main_map");
 			main_map.put("brandCode", brandCode);
 			main_map.put("BC", brandCode);
+			main_map.put("organizationInfoID",sysDTO.getOrganizationInfoID());
+			main_map.put("brandInfoID",sysDTO.getBrandInfoID());
 			String organizationID=ConvertUtil.getString(main_map.get("organizationID"));
 			List<Map<String,Object>> cart_list=(List<Map<String,Object>>) convert_map.get("cart_list");
 			if(null==cart_list || cart_list.size()==0){
@@ -243,6 +245,8 @@ public class BINOLSSPRM74_Action extends BaseAction implements ModelDriven<BINOL
 			Map<String,Object> coupon_map=new HashMap<String, Object>();
 			List<Map<String,Object>> rule_coupon_input =binOLSSPRM74_IF.checkRule(rule_list_input);
 			String resultCode="0";
+			//优惠券占位List
+			List<String> YHQReplaceHolderList=new ArrayList<String>();
 			if(couponCheck_list != null){
 				if(couponCheck_list.size() > 0){
 					Map<String,Object> check_map=new HashMap<String, Object>();
@@ -267,6 +271,12 @@ public class BINOLSSPRM74_Action extends BaseAction implements ModelDriven<BINOL
 						Map<String,Object> content=coupon_map=(Map<String,Object>)couponCheck_map.get("Content");
 						List<Map<String,Object>> checked_coupon=(List<Map<String,Object>>)content.get("checked_coupon");
 						List<Map<String,Object>> checked_cart=(List<Map<String,Object>>)content.get("checked_cart");
+						for(Map<String,Object> cart_info:checked_cart){
+							String maincode=ConvertUtil.getString(cart_info.get("maincode"));
+							if(!CherryChecker.isNullOrEmpty(maincode)){
+								YHQReplaceHolderList.add(maincode);
+							}
+						}
 						cart_list=checked_cart;
 						coupon_list=checked_coupon;
 					}
@@ -300,6 +310,8 @@ public class BINOLSSPRM74_Action extends BaseAction implements ModelDriven<BINOL
 			if(coupon_list !=null && coupon_list.size() >0){
 				param_map.put("coupon_map", coupon_list.get(0));
 			}
+			//对优惠券占位的数据进行标识
+			binOLSSPRM74_IF.convert2YHQPlaceHolder(computedCart,YHQReplaceHolderList);
 			param_map.put("coupon_list", result_coupon);
 			param_map.put("rule_list", rule_list);
 			param_map.put("rule_id",coupon_id+rule_id.toString());
@@ -559,17 +571,16 @@ public class BINOLSSPRM74_Action extends BaseAction implements ModelDriven<BINOL
 			logger.info("发券页面初始化开始");
 			Map<String,Object> result_map=new HashMap<String, Object>();
 			String brandCode=form.getBrandCode();
-			Map<String,Object> dataSource_map=new HashMap<String, Object>();
-			dataSource_map.put("brandCode", brandCode);
-			Map<String,Object> datasource=binOLSSPRM74_IF.getDateSourceName(dataSource_map);
-			if(datasource == null){
+			SystemConfigDTO sysDTO = SystemConfigManager.getSystemConfig(brandCode);
+			//Map<String,Object> datasource=binOLSSPRM74_IF.getDateSourceName(dataSource_map);
+			if(sysDTO == null){
 				result_map.put("resultCode", "-7777");
 				result_map.put("resultMessage", "输入的品牌代码有误");
 				form.setResult_map(result_map);
 				transaction.addData("输入的品牌代码有误");
 				return SUCCESS;
 			}
-			String datasourceName=ConvertUtil.getString(datasource.get("dataSourceName"));
+			String datasourceName=sysDTO.getDataSourceName();
 			form.setDatasourceName(datasourceName);
 			session.put(CherryConstants.CHERRY_SECURITY_CONTEXT_KEY,datasourceName);
 			// 对登录账户做一系列的检查,通过则返回账户ID，不通过则会抛出多种错误信息

@@ -201,6 +201,18 @@ public class BINOLMBMBM11_Service extends BaseService {
 		paramMap.put(CherryConstants.IBATIS_SQL_ID, "BINOLMBMBM11.addMemberExtInfo");
 		baseServiceImpl.save(paramMap);
 	}
+
+	/**
+	 * 添加会员扩展信息肤质回访方式收入
+	 *
+	 * @param map 添加内容
+	 */
+	public void addMemberExtInfoMain(Map<String, Object> map) {
+		Map<String, Object> paramMap = new HashMap<String, Object>();
+		paramMap.putAll(map);
+		paramMap.put(CherryConstants.IBATIS_SQL_ID, "BINOLMBMBM11.addMemberExtInfoMain");
+		baseServiceImpl.save(paramMap);
+	}
 	
 	/**
 	 * 会员手机号唯一验证

@@ -1,0 +1,732 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sqlMap PUBLIC "-//iBATIS.com//DTD SQL Map 2.0//EN" "http://ibatis.apache.org/dtd/sql-map-2.dtd">
+<sqlMap namespace="BINOLSSPRM84">
+	<!-- 促销活动查询结果 -->	
+	<sql id="mainActiveListTable">
+		<![CDATA[
+		SELECT
+			A.BIN_PromotionActivityID AS activeID,
+			A.ActivityCode AS activityCode,
+			A.ValidFlag AS validFlag,
+			A.ActivityName AS activityName,
+			A.BIN_BrandInfoID AS brandInfoId,
+			A.ActivitySetBy,
+			A.SendFlag,
+			isnull(A.Status,1) AS status,
+			B.BIN_PromotionActivityRuleID,
+			C.BasePropValue1 AS startTime,
+			C.BasePropValue2 AS endTime,
+			E.GroupName AS groupName,
+			RU.RuleCode,
+			us.ValidFlag AS userValidFlag,
+			em.EmployeeName AS createUserName
+		FROM
+			Promotion.BIN_PromotionActivity A
+			LEFT JOIN Privilege.BIN_User us	WITH(NOLOCK) ON(A.ActivitySetBy = us.BIN_UserID)
+			JOIN Promotion.BIN_PromotionActivityRule B
+			ON(A.BIN_PromotionActivityID = B.BIN_PromotionActivityID)
+			JOIN Promotion.BIN_PromotionRuleCondition C
+			ON(B.BIN_PromotionActivityRuleID = C.BIN_PromotionActivityRuleID
+				AND C.ValidFlag = '1')
+			JOIN Promotion.BIN_PromotionBaseProp D
+			ON(C.BIN_PromotionBasePropID = D.BIN_PromotionBasePropID
+				AND D.PropertyName = 'baseProp_time')
+			LEFT JOIN Promotion.BIN_PromotionActGrp E
+			ON(A.BIN_PromotionActGrpID = E.BIN_PromotionActGrpID) 
+			LEFT JOIN Basis.BIN_Employee em
+			ON (us.BIN_EmployeeID = em.BIN_EmployeeID)
+			LEFT JOIN Promotion.BIN_PromotionRule RU
+			ON(A.ActivityCode = RU.RuleCode AND A.BIN_BrandInfoID = RU.BIN_BrandInfoID)
+		]]>
+		<isNotEmpty property="prmProductId">
+   		<![CDATA[
+   			JOIN Promotion.BIN_PromotionRuleResult F
+			ON(B.BIN_PromotionActivityRuleID = F.BIN_PromotionActivityRuleID
+				AND F.BIN_ProductVendorID = #prmProductId#
+				AND F.SaleType = #prtType#
+				AND F.ValidFlag = '1')
+   		]]>
+   		</isNotEmpty>
+		<dynamic prepend="WHERE">
+			<isNotEmpty property="brandInfoID" prepend="AND">
+    			<![CDATA[A.BIN_BrandInfoID = #brandInfoID#]]>
+    		</isNotEmpty>
+			<isNotEmpty property="activityCode" prepend="AND">
+    			<![CDATA[A.ActivityCode = #activityCode#]]>
+    		</isNotEmpty>
+    		<isEmpty property="actValidFlag" prepend="AND">
+				<![CDATA[A.ValidFlag = '1']]>
+			</isEmpty>
+			<isNotEmpty property="searchPrmActiveName" prepend="AND">
+				<![CDATA[(A.ActivityName like  '%' + #searchPrmActiveName# + '%')]]>
+			</isNotEmpty>
+			<isEqual property="actState" compareValue="not_start" prepend="AND">
+				<![CDATA[left(C.BasePropValue1,10) > #sysTime#]]>	
+			</isEqual>
+			<isEqual property="actState" compareValue="in_progress" prepend="AND">
+				<![CDATA[left(C.BasePropValue1,10) <= #sysTime# AND left(C.BasePropValue2,10) >= #sysTime#]]>	
+			</isEqual>
+			<isEqual property="actState" compareValue="past_due" prepend="AND">
+				<![CDATA[left(C.BasePropValue2,10) < #sysTime# ]]>	
+ 			</isEqual>
+ 			<isEqual property="actState" compareValue="template" prepend="AND">
+				<![CDATA[A.TemplateFlag = '1']]>	
+ 			</isEqual>
+ 			<isNotEqual property="actState" compareValue="template" prepend="AND">
+				<![CDATA[(A.TemplateFlag IS NULL OR A.TemplateFlag='0' OR A.TemplateFlag ='')]]>
+ 			</isNotEqual>
+ 			<isNotEmpty property="searchPrmStartDate" prepend="AND">
+   				<![CDATA[(
+	   				(
+	   				left(C.BasePropValue1,10) >= #searchPrmStartDate# AND
+	   				left(C.BasePropValue1,10) <= #searchPrmEndDate#
+	   				) OR
+	   				(
+	   				left(C.BasePropValue2,10) >= #searchPrmStartDate# AND
+	   				left(C.BasePropValue2,10) <= #searchPrmEndDate#
+	   				) OR
+	   				(
+	   				left(C.BasePropValue1,10) >= #searchPrmStartDate# AND
+	   				left(C.BasePropValue2,10) <= #searchPrmEndDate#
+	   				) OR
+	   				(
+	   				left(C.BasePropValue1,10) <= #searchPrmStartDate# AND
+	   				left(C.BasePropValue2,10) >= #searchPrmEndDate#
+	   				)
+   				)
+   				]]>
+   			</isNotEmpty>
+			<isNotEmpty property="activeType" prepend="AND">
+    			<![CDATA[E.ActivityType = #activeType#]]>
+    		</isNotEmpty>
+			<isNotEmpty property="groupCode" prepend="AND">
+    			<![CDATA[E.GroupCode = #groupCode#]]>
+    		</isNotEmpty>
+    		<isNotEmpty property="cntCode" prepend="AND">
+    			<![CDATA[
+    			EXISTS (
+				select 1 from
+					Promotion.BIN_PromotionRuleCondition C2
+					JOIN Promotion.BIN_PromotionBaseProp D2
+					ON(C2.BIN_PromotionBasePropID = D2.BIN_PromotionBasePropID)
+					where
+						B.BIN_PromotionActivityRuleID = C2.BIN_PromotionActivityRuleID AND 
+						C2.ValidFlag = '1'
+						AND (
+							(C2.BasePropValue1 ='all' AND D2.PropertyName = 'baseProp_city') OR
+							(C2.BasePropValue1 = #cntCode# AND D2.PropertyName = 'baseProp_counter')
+				]]>
+				<isNotEmpty property="cityId" prepend="OR">
+				<![CDATA[(C2.BasePropValue1 =#cityId# AND D2.PropertyName = 'baseProp_city')]]>
+				</isNotEmpty>
+				<isNotEmpty property="channelId" prepend="OR">
+				<![CDATA[(C2.BasePropValue1 = #channelId# AND D2.PropertyName = 'baseProp_channal')]]>
+				</isNotEmpty>
+				<![CDATA[
+						)
+				)
+    			]]>
+				<![CDATA[
+				and not EXISTS (select 1 from Promotion.BIN_CampaignCounterBlack where RuleCode = A.ActivityCode and CounterCode = #cntCode# and ValidFlag = '1')
+				]]>
+    		</isNotEmpty>
+    		<isEqual property="privilegeFlag" compareValue="1" prepend="AND"><![CDATA[
+				(
+					EXISTS (
+						SELECT 1
+						FROM promotion.BIN_ActivityTransHis AT WITH(NOLOCK)
+						JOIN (
+							SELECT
+								BIN_OrganizationID
+							FROM
+								Privilege.BIN_DepartPrivilege WITH(NOLOCK)
+							WHERE
+								BIN_UserID = #userId#
+				        	 	AND (BusinessType = 'A' OR BusinessType = '1')
+								AND DepartType = '4'
+							UNION ALL
+							select -8888
+						) A99
+						ON (A99	.BIN_OrganizationID = AT.BIN_OrganizationID)
+						WHERE AT.MainCode = A.ActivityCode
+					)
+					or A.ActivitySetBy = #userId#
+				)]]>
+			</isEqual>
+		</dynamic>
+	</sql>
+	<!-- 取得促销活动总数 -->
+	<select id="getActiveCount" parameterClass="java.util.HashMap" resultClass="java.lang.Integer">
+     	<![CDATA[
+			SELECT	COUNT(SORT_T1.activeID) AS count FROM (
+		]]>	
+		<include refid="BINOLSSPRM84.mainActiveListTable" />
+		<![CDATA[	
+			)SORT_T1
+		]]>		
+     </select>
+     
+     <!-- 取得促销活动信息 -->
+     <select id="getActiveList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+     	<include refid="BINOLCMINC99.pageheader" />
+		<include refid="BINOLSSPRM84.mainActiveListTable" />
+    	<include refid="BINOLCMINC99.pagefooter" />
+     </select>
+
+     <!-- 促销产品模糊查询 -->
+     <select id="getPrmPrtInfoList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+     	<![CDATA[
+	     	 SELECT
+	     	 	TOP $INDSEARCH_COUNT$
+	    	 	A.BIN_PromotionProductID AS bin_PromotionProductID,
+	   			A.UnitCode AS unitCode,
+	   			B.BarCode AS barCode
+	   			]]>
+    			<dynamic>
+					<isNotEmpty property="language">
+						<isEqual property="language" compareValue="zh_CN">										
+						,A.NameTotal AS nameTotal
+						</isEqual>
+						<isEqual property="language" compareValue="en_US">										
+						,A.NameForeign AS nameTotal
+						</isEqual>								
+					</isNotEmpty>
+					<isEmpty property="language">
+						,A.NameTotal AS nameTotal
+					</isEmpty>
+				</dynamic>
+    			<![CDATA[	
+	    	 FROM
+	    	 	Basis.BIN_PromotionProduct A,
+				Basis.BIN_PromotionProductVendor B
+			 WHERE
+			 	A.BIN_PromotionProductID = B.BIN_PromotionProductID AND 
+			 	A.UnitCode <> #TZZK_UNIT_CODE# AND
+	    		A.ValidFlag = '1' AND 
+	    		B.ValidFlag = '1' AND
+	    		(
+	    			A.unitCode Like '%' + #searchPrmProduct# + '%' OR
+	    			B.barCode Like '%' + #searchPrmProduct# + '%' OR
+	    			A.nameTotal Like '%' + #searchPrmProduct# + '%' OR
+	    			A.nameForeign Like '%' + #searchPrmProduct# + '%'
+	    		)AND
+	    		A.BIN_OrganizationInfoID = #bin_OrganizationInfoID# 
+	    		]]>
+	    		<dynamic>
+		    		<isNotEmpty property="brandInfoID" prepend="AND">
+		    			A.BIN_BrandInfoID = #brandInfoID#	
+		    		</isNotEmpty>
+	    		</dynamic>
+	    		<![CDATA[	
+    	]]>	
+     </select>
+     
+     <!-- 促销柜台模糊查询 -->
+     <select id="getPrmCounterInfoList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+     	<![CDATA[
+     	 SELECT 
+     	 	TOP $INDSEARCH_COUNT$
+   	 		ci.CounterCode AS counterCode
+   	 		]]>
+    			<dynamic>
+					<isNotEmpty property="language">
+						<isEqual property="language" compareValue="zh_CN">										
+						,oz.DepartName AS departName
+						</isEqual>
+						<isEqual property="language" compareValue="en_US">										
+						,oz.NameForeign AS departName
+						</isEqual>								
+					</isNotEmpty>
+					<isEmpty property="language">
+						,oz.DepartName AS departName
+					</isEmpty>
+				</dynamic>
+    		<![CDATA[
+     	 FROM
+    	 	Basis.BIN_CounterInfo ci
+			JOIN Basis.BIN_Organization oz
+			ON (ci.BIN_OrganizationID = oz.BIN_OrganizationID)
+			JOIN (
+			]]>
+			<include refid="BINOLCMINC99.departPrivilegeSql" />
+			<![CDATA[
+			) dp
+			ON (oz.BIN_OrganizationID = dp.BIN_OrganizationID)	
+		 WHERE
+			ci.BIN_BrandInfoID = #brandInfoID#	AND
+			(ci.CounterCode Like '%' + #searchPrmLocation# + '%' OR
+			oz.DepartName Like '%' + #searchPrmLocation# + '%' OR
+			oz.NameForeign Like '%' + #searchPrmLocation# + '%') AND
+			ci.ValidFlag = '1' AND
+			oz.ValidFlag = '1' 
+			]]>
+     </select>
+     
+     <!-- 促销城市模糊查询 -->
+     <select id="getPrmCityInfoList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+     	<![CDATA[
+     		SELECT 
+     			DISTINCT
+     			TOP $INDSEARCH_COUNT$
+     			br.BIN_RegionID AS regionID
+     			]]>
+    			<dynamic>
+					<isNotEmpty property="language">
+						<isEqual property="language" compareValue="zh_CN">										
+						,br.RegionNameChinese AS cityName
+						</isEqual>
+						<isEqual property="language" compareValue="en_US">										
+						,br.RegionNameForeign AS cityName
+						</isEqual>								
+					</isNotEmpty>
+					<isEmpty property="language">
+						,br.RegionNameChinese AS cityName
+					</isEmpty>
+				</dynamic>
+				<![CDATA[
+			FROM
+				Basis.BIN_CounterInfo ci
+				JOIN Basis.BIN_Organization oz
+				ON (ci.BIN_OrganizationID = oz.BIN_OrganizationID)
+				JOIN (
+				]]>
+						<include refid="BINOLCMINC99.departPrivilegeSql" />
+				<![CDATA[
+				) dp
+				ON(oz.BIN_OrganizationID=dp.BIN_OrganizationID),	
+				Basis.BIN_Region brd, 
+				Basis.BIN_Region br
+			WHERE
+				brd.NodeID.IsDescendantOf(br.NodeID)=1 AND
+				ci.BIN_RegionID = brd.BIN_RegionID AND
+				br.ValidFlag = '1' AND
+				brd.ValidFlag = '1' AND
+				(
+					br.RegionNameChinese Like '%' + #searchPrmLocation# + '%' OR
+					br.RegionNameForeign Like '%' + #searchPrmLocation# + '%' 
+				)AND
+				ci.BIN_OrganizationInfoID = #bin_OrganizationInfoID# AND
+				ci.BIN_BrandInfoID = #brandInfoID# AND
+				ci.ValidFlag = '1' AND
+				oz.ValidFlag = '1' 
+			]]>
+     </select>
+     
+     <!-- 促销渠道模糊查询 -->
+     <select id="getPrmChannelInfoList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+     	<![CDATA[
+     		SELECT 
+     			DISTINCT
+     			TOP $INDSEARCH_COUNT$
+     			bc.BIN_ChannelID AS channelID
+     			]]>
+    			<dynamic>
+					<isNotEmpty property="language">
+						<isEqual property="language" compareValue="zh_CN">										
+						,bc.ChannelName AS channelName
+						</isEqual>
+						<isEqual property="language" compareValue="en_US">										
+						,bc.ChannelNameForeign AS channelName
+						</isEqual>								
+					</isNotEmpty>
+					<isEmpty property="language">
+						,bc.ChannelName AS channelName
+					</isEmpty>
+				</dynamic>
+				<![CDATA[
+			FROM
+				Basis.BIN_CounterInfo ci
+				JOIN Basis.BIN_Organization oz
+				ON (ci.BIN_OrganizationID = oz.BIN_OrganizationID)
+				JOIN (
+				]]>
+						<include refid="BINOLCMINC99.departPrivilegeSql" />
+				<![CDATA[
+				) dp
+				ON oz.BIN_OrganizationID=dp.BIN_OrganizationID,	
+				Basis.BIN_Channel bc 
+			WHERE
+				bc.ValidFlag = '1' AND
+				bc.BIN_ChannelID = ci.BIN_ChannelID AND
+				ci.BIN_BrandInfoID = #brandInfoID#	AND
+				(
+					bc.ChannelName Like '%' + #searchPrmLocation# + '%' OR
+					bc.ChannelNameForeign Like '%' + #searchPrmLocation# + '%' 
+				) AND
+				ci.ValidFlag = '1' AND
+				oz.ValidFlag = '1' 
+			]]>
+     </select>
+     
+     <!-- 促销活动名查询 -->
+     <select id="getPrmNameInfoList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+     	<![CDATA[
+     		SELECT 
+     			DISTINCT
+     			TOP $INDSEARCH_COUNT$
+     			A.ActivityCode AS activityCode,
+     			A.ActivityName AS activityName
+     		FROM
+     			Promotion.BIN_PromotionActivity A
+     		WHERE
+     			A.ActivityName Like '%' + #searchPrmActiveName# + '%' AND
+     			A.ValidFlag = '1'
+     	]]>
+     </select>
+	 
+	   <!-- 促销主活动名查询 -->
+     <select id="getPrmGrpNameInfoList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+     	<![CDATA[
+     		SELECT 
+     			DISTINCT
+     			TOP $number$
+     			A.BIN_PromotionActGrpID AS groupId,
+     			A.GroupName AS groupName,
+     			A.GroupCode AS groupCode
+     		FROM
+     			Promotion.BIN_PromotionActGrp A
+     		WHERE
+     			A.BIN_OrganizationInfoID = #bin_OrganizationInfoID#
+     			AND (A.GroupName Like '%' + #paramInfoStr# + '%' OR A.GroupCode Like '%' + #paramInfoStr# + '%')
+     			AND A.ValidFlag = '1'
+     	]]>
+   		<dynamic>
+    		<isNotEmpty property="brandInfoID" prepend="AND">
+    			A.BIN_BrandInfoID = #brandInfoID#	
+    		</isNotEmpty>
+   		</dynamic>
+     </select>
+     
+     
+     <!-- 查询品牌Code -->
+     <select id="getBrandCode" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+     	SELECT
+     		A.BrandCode AS actBrandCode
+     	FROM
+     		Basis.BIN_BrandInfo A
+     	WHERE
+     		A.BIN_BrandInfoID = #actBrandInfoID# AND 
+     		A.BIN_OrganizationInfoID = #actOrganizationInfoID# AND
+     		A.ValidFlag = '1'
+     </select>
+     
+     <!-- 查询促销活动表 -->
+     <select id="getActiveInfoList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+     	SELECT
+     		A.BIN_PromotionActivityID AS activeID,
+     		A.ActivityCode AS mainCode,
+     		A.BIN_PromotionActGrpID AS mainClassID,
+     		A.ActivityName AS mainName,
+     		A.Times AS maxReceiveQty,
+     		A.ChangeableFlag AS mainModify,
+     		A.BIN_BrandInfoID AS actBrandInfoID,
+     		A.BIN_OrganizationInfoID AS actOrganizationInfoID
+     	FROM
+     		Promotion.BIN_PromotionActivity A
+     	WHERE 
+     		A.ValidFlag = '1'
+     		and (A.TemplateFlag IS NULL OR A.TemplateFlag='0' OR A.TemplateFlag ='')
+     		<dynamic>
+     			<isNotEmpty property="bin_OrganizationInfoID" prepend="AND">
+    			A.BIN_OrganizationInfoID = #bin_OrganizationInfoID#
+				</isNotEmpty>
+	    		<isNotEmpty property="brandInfoID" prepend="AND">
+	    			A.BIN_BrandInfoID = #brandInfoID#	
+	    		</isNotEmpty>
+	    		<isNotEmpty property="activeID" prepend="AND">
+	    			A.BIN_PromotionActivityID = #activeID#	
+	    		</isNotEmpty>
+    		</dynamic>
+     </select>
+     
+     <!-- 取得促销产品信息 -->
+     <select id="getPromotionPrtInfo" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+     	SELECT 
+     		A.NameTotal AS nameTotal,
+     		B.SalePrice AS salePrice
+     	FROM
+     		Basis.BIN_PromotionProduct A LEFT JOIN  Basis.BIN_PromotionPrice B on A.BIN_PromotionProductID = B.BIN_PromotionProductID AND B.ValidFlag ='1',
+     		Basis.BIN_PromotionProductVendor C
+     	WHERE
+     		A.UnitCode = #promotionPrtUnitcode# AND
+     		C.BarCode = #promotionPrtCode# AND
+     		A.BIN_PromotionProductID = C.BIN_PromotionProductID AND
+     		A.ValidFlag = '1' AND
+     		C.ValidFlag = '1'
+     </select>
+     
+     
+     <!-- 取得促销活动条件结果信息 -->
+     <select id="getActConResultList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+     	<![CDATA[
+			SELECT
+				A.ValidFlag AS status,
+				A.ActivityCode AS mainCode,
+			    C.BasePropValue1 AS startTime,
+     			C.BasePropValue2 AS endTime,
+     			E.BasePropValue1 AS counterID,
+     			F.BasePropValue1 AS cityID,
+     			G.BasePropValue1 AS channelID,
+     			C.ConditionGrpID AS conditionGrpID,
+     			D.PromotionPrtUnitcode AS promotionPrtCode,
+     			D.Price AS price,
+     			D.Quantity AS activityQty
+     		FROM
+     			Promotion.BIN_PromotionActivity A,
+     			Promotion.BIN_PromotionActivityRule B,
+     			Promotion.BIN_PromotionRuleCondition C
+     			LEFT JOIN Promotion.BIN_PromotionRuleCondition E
+     			 on (C.BIN_PromotionActivityRuleID = E.BIN_PromotionActivityRuleID AND
+     				C.ConditionGrpID = E.ConditionGrpID AND
+     				E.BIN_PromotionBasePropID = #baseProp_counter# AND
+     				E.ValidFlag = '1') 
+     			LEFT JOIN Promotion.BIN_PromotionRuleCondition F
+     			 on (C.BIN_PromotionActivityRuleID = F.BIN_PromotionActivityRuleID AND
+     				C.ConditionGrpID = F.ConditionGrpID AND
+     				F.BIN_PromotionBasePropID = #baseProp_city# AND
+     				F.ValidFlag = '1')
+     			LEFT JOIN Promotion.BIN_PromotionRuleCondition G
+     			 on (C.BIN_PromotionActivityRuleID = G.BIN_PromotionActivityRuleID AND
+     				C.ConditionGrpID = G.ConditionGrpID AND
+     				G.BIN_PromotionBasePropID = #baseProp_channal# AND
+     				G.ValidFlag = '1'),
+     			Promotion.BIN_PromotionRuleResult D
+     		WHERE
+     			A.BIN_PromotionActivityID = #activeID# AND
+     			A.BIN_PromotionActivityID = B.BIN_PromotionActivityID AND
+     			B.BIN_PromotionActivityRuleID = C.BIN_PromotionActivityRuleID AND
+     			B.BIN_PromotionActivityRuleID = D.BIN_PromotionActivityRuleID AND
+     			A.ValidFlag = '1' AND 
+     			B.ValidFlag = '1' AND 
+     			C.ValidFlag = '1' AND 
+     			D.ValidFlag = '1' AND
+     			A.BIN_OrganizationInfoID = #bin_OrganizationInfoID# AND
+     			C.BIN_PromotionBasePropID =  #baseProp_time#
+     			]]>
+    		<dynamic>
+	    		<isNotEmpty property="brandInfoID" prepend="AND">
+	    			A.BIN_BrandInfoID = #brandInfoID#	
+	    		</isNotEmpty>
+    		</dynamic>
+    		ORDER BY
+    		    conditionGrpID
+    			<![CDATA[
+     		]]>
+     </select>
+     
+	 <!-- 根据区域市查询柜台 -->
+	 <select id="getCounterByIdCity" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+	 	<![CDATA[
+		SELECT 
+			ci.CounterCode AS counterID
+	 	FROM
+			Basis.BIN_CounterInfo ci
+			JOIN Basis.BIN_Organization oz
+			ON (ci.BIN_OrganizationID = oz.BIN_OrganizationID)
+			JOIN (
+			]]>
+					<include refid="BINOLCMINC99.departPrivilegeSql" />
+			<![CDATA[
+			) dp
+			ON oz.BIN_OrganizationID=dp.BIN_OrganizationID	
+			JOIN Basis.BIN_Region B
+			ON (ci.BIN_RegionID = B.BIN_RegionID)
+	 	WHERE 
+			ci.BIN_OrganizationInfoID = #bin_OrganizationInfoID# AND
+			ci.BIN_BrandInfoID = #brandInfoID# AND
+			(B.RegionType = '2' OR B.RegionType = '3') AND
+			B.BIN_RegionID = #cityID# ANDAND
+			ci.ValidFlag = '1' AND
+			oz.ValidFlag = '1' 
+			B.ValidFlag = '1' 
+		]]>
+	 </select>
+	 
+	 <!-- 根据渠道查询柜台 -->
+	 <select id="getCounterInfo" parameterClass="java.lang.Integer" resultClass="java.util.HashMap">
+	 	<![CDATA[
+		SELECT
+			A.CounterCode AS cntCode,
+			CONVERT(nvarchar,A.BIN_ChannelID) AS channelId,
+			CONVERT(nvarchar,B.BIN_CityID) AS cityId
+		FROM
+			Basis.BIN_CounterInfo A
+			JOIN Basis.BIN_Organization B
+			ON(A.BIN_OrganizationID = B.BIN_OrganizationID)
+		WHERE
+			A.BIN_OrganizationID = #prmCounterId#
+		]]>
+	 </select>
+	 
+	 <!-- 根据渠道查询柜台 -->
+	 <select id="getCounterByIdChannel" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+	 	<![CDATA[
+		SELECT 
+	 		ci.CounterCode AS counterID
+	 	FROM
+	 		Basis.BIN_CounterInfo ci
+			JOIN Basis.BIN_Organization oz
+			ON (ci.BIN_OrganizationID = oz.BIN_OrganizationID)
+			JOIN (
+			]]>
+					<include refid="BINOLCMINC99.departPrivilegeSql" />
+			<![CDATA[
+			) dp
+			ON oz.BIN_OrganizationID=dp.BIN_OrganizationID	
+	 		JOIN Basis.BIN_Channel B
+			ON (ci.BIN_ChannelID = B.BIN_ChannelID)
+	 	WHERE
+	 		ci.BIN_OrganizationInfoID = #bin_OrganizationInfoID# AND
+	 		ci.BIN_BrandInfoID = #brandInfoID# AND
+	 		B.BIN_ChannelID = #channelID# AND AND
+			ci.ValidFlag = '1' AND
+			oz.ValidFlag = '1' 
+	 		B.ValidFlag = '1' 
+			]]>
+	 </select>
+	 
+	 <!-- 取得促销活动结果 -->
+     <select id="getActiveResultList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+     	 <![CDATA[
+     		SELECT
+				C.PromotionPrtCode AS promotionPrtCode,
+				C.PromotionPrtUnitcode AS promotionPrtUnitcode,
+				C.Price AS price,
+				C.Quantity AS quantity
+     		FROM
+     			Promotion.BIN_PromotionActivity A,
+     			Promotion.BIN_PromotionActivityRule B,
+     			Promotion.BIN_PromotionRuleResult C
+     		WHERE
+     			A.BIN_PromotionActivityID = #activeID# AND
+     			A.BIN_PromotionActivityID = B.BIN_PromotionActivityID AND
+     			B.BIN_PromotionActivityRuleID = C.BIN_PromotionActivityRuleID AND
+     			A.ValidFlag = '1' AND 
+     			B.ValidFlag = '1' AND 
+     			C.ValidFlag = '1' AND 
+     			A.BIN_OrganizationInfoID = #bin_OrganizationInfoID#
+     			]]>
+    		<dynamic>
+	    		<isNotEmpty property="brandInfoID" prepend="AND">
+	    			A.BIN_BrandInfoID = #brandInfoID#	
+	    		</isNotEmpty>
+    		</dynamic>
+    			<![CDATA[
+     	 ]]>
+     </select>
+     
+     <!-- 插入brand数据库活动关联表 -->
+	 <insert id="addActivityAssociateTable_CHY" parameterClass="java.util.HashMap">
+   		INSERT INTO ActivityAssociateTable_SCS
+		(				
+			Brand,
+			MainCode,
+			MainName,
+			MaxReceiveQty,
+			MainClassID,
+			MainModify
+		)				
+		VALUES				
+		(				
+			#brandCode#,
+			#mainCode#,
+			#mainName#,
+			#maxReceiveQty#,
+			#mainClassID#,
+			#mainModify#
+		)				
+    </insert>
+    
+    <!-- 插入brand数据库促销表 -->
+    <insert id="addPromotionTable_CHY" parameterClass="java.util.HashMap">
+    	INSERT PromotionTable_SCS
+    	(
+	    	Brand,
+			PromotionPrtCode,
+			PromotionPrtPrice,
+			PromotionPrtBClassName,
+			PromotionPrtBClassCode,
+			PromotionPrtMClassName,
+			PromotionPrtMClassCode,
+			PromotionPrtLClassName,
+			PromotionPrtLClassCode,
+			PromotionPrtBarcode,
+			PromotionPrtUnitcode,
+			PromotionPrtStock,
+			CHYFlag
+    	)
+    	VALUES
+    	(
+    		#brandCode#,
+    		#nameTotal#,
+    		#salePrice#,
+    		#promotionClassName#,
+    		#promotionClassCode#,
+    		#promotionClassName#,
+    		#promotionClassCode#,
+    		#promotionClassName#,
+    		#promotionClassCode#,
+    		#promotionPrtCode#,
+    		#promotionPrtCode#,
+    		#promotionPrtStock#,
+    		'1'
+    	)
+    </insert>
+    
+    <!-- 插入brand数据库活动表 -->
+    <insert id="addActivityTable_CHY" parameterClass="java.util.HashMap">
+    	INSERT ActivityTable_SCS
+    	(
+			Brand,
+			ActivityCode,
+			ActivityName,
+			StartTime,
+			EndTime,
+			Barcode,
+			Price,
+			ActCounter,
+			Status,
+			MainCode,
+			ActivityQty,
+			CHYFlag
+    	)
+    	VALUES
+    	(
+    		#brandCode#,
+    		#activeCode#,
+    		#activityName#,
+    		#startTime#,
+    		#endTime#,
+    		#promotionPrtCode#,
+    		#price#,
+    		#counterID#,
+    		#status#,
+    		#mainCode#,
+    		#activityQty#,
+    		'1'
+    	)
+    </insert>
+    <select id="getActivityInfo" parameterClass="java.lang.String" resultClass="java.util.HashMap">
+	 	<![CDATA[
+		SELECT
+			A.ActivityCode AS mainCode,
+			B.BrandCode AS brandCode
+		FROM
+			Promotion.BIN_PromotionActivity A
+			JOIN Basis.BIN_BrandInfo B
+			ON(A.BIN_BrandInfoID = B.BIN_BrandInfoID)
+		WHERE
+			A.BIN_PromotionActivityID = #activeID#
+		]]>
+	 </select>
+	 <update id="checkActive1">
+	 <![CDATA[
+	 UPDATE Promotion.BIN_PromotionActivity SET Status = '1' WHERE ActivityCode = #activityCode# AND BIN_BrandInfoID = #brandInfoId#
+	 ]]>
+	 </update>
+	 <update id="checkActive2">
+	 <![CDATA[
+	 UPDATE Promotion.BIN_PromotionRule SET Status = '1' WHERE RuleCode = #activityCode# AND BIN_BrandInfoID = #brandInfoId#
+	 ]]>
+	 </update>
+</sqlMap>

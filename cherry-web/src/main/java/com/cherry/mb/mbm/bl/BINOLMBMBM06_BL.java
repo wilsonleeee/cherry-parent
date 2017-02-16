@@ -12,16 +12,6 @@
  */
 package com.cherry.mb.mbm.bl;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-
-import javax.annotation.Resource;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import com.cherry.cm.cmbussiness.bl.BINOLCM02_BL;
 import com.cherry.cm.cmbussiness.bl.BINOLCM14_BL;
 import com.cherry.cm.cmbussiness.bl.BINOLCM27_BL;
@@ -32,7 +22,9 @@ import com.cherry.cm.core.CherryChecker;
 import com.cherry.cm.core.CherryConstants;
 import com.cherry.cm.core.CherryException;
 import com.cherry.cm.core.CherrySecret;
+import com.cherry.cm.util.CherryUtil;
 import com.cherry.cm.util.ConvertUtil;
+import com.cherry.cm.util.DateUtil;
 import com.cherry.cp.common.interfaces.BINOLCPCOM05_IF;
 import com.cherry.dr.cmbussiness.interfaces.CampRuleExec_IF;
 import com.cherry.mb.mbm.service.BINOLMBMBM02_Service;
@@ -42,6 +34,13 @@ import com.cherry.mo.common.MonitorConstants;
 import com.cherry.mq.mes.bl.BINBEMQMES03_BL;
 import com.cherry.mq.mes.bl.BINBEMQMES98_BL;
 import com.cherry.mq.mes.service.BINBEMQMES03_Service;
+import com.site.lookup.util.StringUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.util.CollectionUtils;
+
+import javax.annotation.Resource;
+import java.util.*;
 
 /**
  * 会员资料修改画面BL
@@ -310,7 +309,12 @@ public class BINOLMBMBM06_BL {
 		String synMemMode = (String)map.get("synMemMode");
 		// 取得更新前会员信息
 		Map<String, Object> oldMemInfo = binOLCM36_BL.getMemberInfo(map);
-		
+
+		// 添加会员入会时间，完善度程序需要
+		if(!CollectionUtils.isEmpty(oldMemInfo)) {
+			map.put("joinDate", oldMemInfo.get("joinDate"));
+		}
+
 		String birth = (String)map.get("birth");
 		if(birth != null && !birth.isEmpty()) {
 			if(cherryclear.equals(birth)){
@@ -545,6 +549,13 @@ public class BINOLMBMBM06_BL {
 				}
 			}
 		}
+		//更新会员信息扩展表信息
+		int updateCount =binOLMBMBM06_Service.updMemberExtInfoMain(map);
+		if(updateCount == 0) {
+			// 添加会员扩展信息
+			binOLMBMBM11_Service.addMemberExtInfoMain(map);
+		}
+
 		// 初始累计金额变更的场合，更新初始累计金额
 		if(initTotalAmountFlag) {
 			// 更新会员扩展信息
@@ -599,6 +610,13 @@ public class BINOLMBMBM06_BL {
 				// 在新增和更新会员的时候下发会员资料肯定是非假登录的
 				map.put("memInfoRegFlg", "0");
 			}
+
+			// 会员完善度信息填充
+			map.put("income", map.get("income") == null ? "" : map.get("income"));
+			map.put("returnVisit", map.get("returnVisit") == null ? "" : map.get("returnVisit"));
+			map.put("skinType", map.get("skinType") == null ? "" : map.get("skinType"));
+			map.put("profession", map.get("profession") == null ? "" : map.get("profession"));
+
 			// MQ形式和老后台同步会员信息的场合
 			if(synMemMode != null && "1".equals(synMemMode)) {
 				Map<String, Object> paramMap = new HashMap<String, Object>();
@@ -695,7 +713,17 @@ public class BINOLMBMBM06_BL {
 				binOLMBMBM11_BL.sendRuleMQ(map);
 			}
 		}
-		
+
+		// 获取系统配置最小完善度处理时间
+		String minJoinDate = binOLCM14_BL.getConfigValue("1402", ConvertUtil.getString(map.get(CherryConstants.ORGANIZATIONINFOID)), ConvertUtil.getString(map.get(CherryConstants.BRANDINFOID)));
+
+		if(!StringUtils.isEmpty(minJoinDate)) { // 若未开启最小入会时间直接跳过完善度功能
+			String joinDate = String.valueOf(map.get("joinDate")); // 会员入会时间
+			if (joinDate != null && DateUtil.compareDate(joinDate, minJoinDate) >= 0) {
+				// 更新会员完整度
+				updMemberInfoComplete(map);
+			}
+		}
 		binOLMBMBM06_Service.manualCommit();
 		
 		try {
@@ -715,6 +743,63 @@ public class BINOLMBMBM06_BL {
 			logger.error(e.getMessage(), e);
 		}
 		
+	}
+
+	/**
+	 * 跟新会员完整度
+	 *
+	 */
+	public void updMemberInfoComplete(Map<String, Object> map) throws Exception {
+		// 组织id
+		String organizationInfoId = ConvertUtil.getString(map.get(CherryConstants.ORGANIZATIONINFOID));
+		// 品牌id
+		String brandInfoId = ConvertUtil.getString(map.get(CherryConstants.BRANDINFOID));
+		// 会员卡号
+		String memCode = ConvertUtil.getString(map.get("memCode"));
+
+		List<String> keys = binOLCM31_BL.getMemCompleteRuleKey(organizationInfoId,brandInfoId);
+		if(CollectionUtils.isEmpty(keys)) { // 若不存在规则直接跳过完善度功能
+			return ;
+		}
+
+		// 获取所有规则设置属性的值
+		Map<String,Object> params = new HashMap<String, Object>();
+		for (String key : keys) {
+			params.put(key, map.get(key));
+		}
+
+		// 获取会员最新百分比并更新会员百分比信息
+		int percent = binOLCM31_BL.calMemCompletePercent(organizationInfoId, brandInfoId, params);
+		binOLCM31_BL.updateCompletePercentByMemcode(organizationInfoId, brandInfoId, memCode , percent);
+
+		// 获取会员最新积分并更新会员积分信息
+		Map<String,Object> pointResult = binOLCM31_BL.calMemCompletePoint(organizationInfoId, brandInfoId, params, memCode);
+		binOLCM31_BL.updateCompletePointByMemcode(organizationInfoId, brandInfoId, memCode, ConvertUtil.getInt(pointResult.get("pointTotal")), ConvertUtil.getString(pointResult.get("awardPoint")));
+
+		int pointTotal = ConvertUtil.getInt(pointResult.get("pointTotal"));
+		if(pointTotal != 0) { // 赠送积分不为0发送MQ同步会员积分
+			map.put("ModifyPoint", pointTotal);
+			binOLCM31_BL.sendPointsMQ(getPointMQParam(map));
+		}
+
+	}
+
+	// 获取发送积分MQ参数
+	private Map<String,Object> getPointMQParam(Map<String,Object> params) {
+		Map<String,Object> returnMap = new HashMap<String, Object>();
+		returnMap.putAll(params);
+		returnMap.put("MemberCode",params.get("memCode"));
+		returnMap.put("BusinessTime", CherryUtil.getSysDateTime(DateUtil.DATETIME_PATTERN));
+
+		returnMap.put("Reason","会员积分完善度积分修改");
+
+		Map<String, Object> comEmployeeInfo = binOLCM31_BL.getComEmployeeInfoById(params);
+		if(!CollectionUtils.isEmpty(comEmployeeInfo)) {
+			returnMap.put("EmployeeCode",comEmployeeInfo.get("employeeCode"));
+		}
+		returnMap.put("pointType","2"); // 1-总值维护，2-差值维护
+		returnMap.put("MaintainType","1");
+		return returnMap;
 	}
 	
 	/**
@@ -886,6 +971,9 @@ public class BINOLMBMBM06_BL {
 		memInfoRecordMap.put("zipCode", map.get("postcode"));
 		memInfoRecordMap.put("initTotalAmount", map.get("initTotalAmount"));
 		memInfoRecordMap.put("channelCode", map.get("channelCode"));
+		memInfoRecordMap.put("skinType", map.get("skinType"));
+		memInfoRecordMap.put("returnVisit", map.get("returnVisit"));
+		memInfoRecordMap.put("income", map.get("income"));
 		// 添加会员信息修改履历
 		binOLCM36_BL.addMemberInfoRecord(memInfoRecordMap);
 	}
@@ -979,6 +1067,14 @@ public class BINOLMBMBM06_BL {
 		detailMap.put("TestMemFlag", map.get("testType"));
 		// 版本号
 		detailMap.put("Version", map.get("version"));
+		// 职业
+		detailMap.put("profession", map.get("profession"));
+		// 收入
+		detailMap.put("income", map.get("income"));
+		// 回访方式
+		detailMap.put("returnVisit", map.get("returnVisit"));
+		// 肤质
+		detailMap.put("skinType", map.get("skinType"));
 		detailList.add(detailMap);
 		// 会员信息
 		memberInfoMap.put("DetailList", detailList);

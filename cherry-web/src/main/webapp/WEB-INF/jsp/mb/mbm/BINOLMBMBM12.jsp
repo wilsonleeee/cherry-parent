@@ -3,7 +3,7 @@
 <%@ taglib prefix="cherry" uri="/cherry-tags"%>
 <script type="text/javascript" src="/Cherry/js/lib/jquery-ui-i18n.js"></script>
 <script type="text/javascript" src="/Cherry/js/common/cherryDate.js"></script>
-<script type="text/javascript" src="/Cherry/js/mb/mbm/BINOLMBMBM12.js"></script>
+<script type="text/javascript" src="/Cherry/js/mb/mbm/BINOLMBMBM12.js?v=20170211"></script>
 
 <s:i18n name="i18n.mb.BINOLMBMBM12">
 <s:text name="global.page.select" id="select_default"/>

@@ -76,6 +76,9 @@
 					<div class="box2-header clearfix" >
 						<strong class="left active"><span class="ui-icon icon-flag"></span>排除柜台</strong>
 						<div class="right">
+							<a class="add" onClick="binolssprm7302.emptySelect('2','1',this);return false;">
+								<span class="ui-icon icon-delete"></span><span class="button-text">清空</span>
+							</a>
 							<a class="add" onClick="binolssprm7302.popCounterLoadDialog('2','2',<s:property value='contentNo'/>);return false;">
 								<span class="ui-icon icon-add"></span><span class="button-text">导入排除柜台</span>
 							</a>
@@ -235,6 +238,9 @@
 					<div class="box2-header clearfix" >
 						<strong class="left active"><span class="ui-icon icon-flag"></span>排除产品</strong>
 						<div class="right">
+							<a class="add" onClick="binolssprm7302.emptySelect('2','2',this);return false;">
+								<span class="ui-icon icon-delete"></span><span class="button-text">清空</span>
+							</a>
 							<!-- <input type="button" value="导入排除产品" onclick="binolssprm7302.popProductLoadDialog('1','2');"/> -->
 							<a class="add" onClick="binolssprm7302.popProductLoadDialog('2','2',<s:property value='contentNo'/>);return false;">
 								<span class="ui-icon icon-add"></span><span class="button-text">导入排除产品</span>

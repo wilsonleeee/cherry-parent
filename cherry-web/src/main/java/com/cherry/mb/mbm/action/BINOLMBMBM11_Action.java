@@ -12,15 +12,6 @@
  */
 package com.cherry.mb.mbm.action;
 
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-
-import javax.annotation.Resource;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import com.cherry.cm.cmbeans.UserInfo;
 import com.cherry.cm.cmbussiness.bl.BINOLCM08_BL;
 import com.cherry.cm.cmbussiness.bl.BINOLCM14_BL;
@@ -31,12 +22,20 @@ import com.cherry.cm.core.CherryException;
 import com.cherry.cm.util.Bean2Map;
 import com.cherry.cm.util.CherryUtil;
 import com.cherry.cm.util.ConvertUtil;
+import com.cherry.mb.mbm.bl.BINOLMBMBM06_BL;
 import com.cherry.mb.mbm.bl.BINOLMBMBM09_BL;
 import com.cherry.mb.mbm.bl.BINOLMBMBM11_BL;
 import com.cherry.mb.mbm.form.BINOLMBMBM11_Form;
 import com.cherry.mb.mbm.service.BINOLMBMBM11_Service;
 import com.cherry.mq.mes.bl.BINBEMQMES03_BL;
 import com.opensymphony.xwork2.ModelDriven;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import javax.annotation.Resource;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 /**
  * 添加会员画面Action
@@ -73,6 +72,8 @@ public class BINOLMBMBM11_Action extends BaseAction implements ModelDriven<BINOL
 	/** 会员添加画面Service **/
 	@Resource
 	private BINOLMBMBM11_Service binOLMBMBM11_Service;
+
+
 	
 	/**
 	 * 添加会员画面初期处理
@@ -147,6 +148,7 @@ public class BINOLMBMBM11_Action extends BaseAction implements ModelDriven<BINOL
 			map.put("modifyEmployee", userInfo.getEmployeeCode());
 			// 添加会员信息
 			binOLMBMBM11_BL.tran_addMemberInfo(map);
+
 			this.addActionMessage(getText("ICM00001"));
 		} catch(Exception e){
 			logger.error(e.getMessage(), e);

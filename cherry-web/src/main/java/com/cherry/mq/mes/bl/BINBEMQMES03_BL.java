@@ -12,27 +12,11 @@
  */
 package com.cherry.mq.mes.bl;
 
-import java.text.SimpleDateFormat;
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-
-import javax.annotation.Resource;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import com.cherry.cm.activemq.dto.MQInfoDTO;
 import com.cherry.cm.activemq.dto.UdiskBindDetailDTO;
 import com.cherry.cm.activemq.dto.UdiskBindMainDTO;
 import com.cherry.cm.activemq.interfaces.BINOLMQCOM01_IF;
-import com.cherry.cm.cmbussiness.bl.BINOLCM02_BL;
-import com.cherry.cm.cmbussiness.bl.BINOLCM03_BL;
-import com.cherry.cm.cmbussiness.bl.BINOLCM08_BL;
-import com.cherry.cm.cmbussiness.bl.BINOLCM14_BL;
-import com.cherry.cm.cmbussiness.bl.BINOLCM36_BL;
+import com.cherry.cm.cmbussiness.bl.*;
 import com.cherry.cm.cmbussiness.interfaces.BINOLCM31_IF;
 import com.cherry.cm.core.CherryChecker;
 import com.cherry.cm.core.CherryConstants;
@@ -54,6 +38,14 @@ import com.cherry.mq.mes.service.BINBEMQMES03_Service;
 import com.cherry.mq.mes.service.BINBEMQMES99_Service;
 import com.mongodb.BasicDBObject;
 import com.mongodb.DBObject;
+import com.site.lookup.util.StringUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.util.CollectionUtils;
+
+import javax.annotation.Resource;
+import java.text.SimpleDateFormat;
+import java.util.*;
 
 /**
  * 会员消息数据接收处理BL
@@ -105,6 +97,9 @@ public class BINBEMQMES03_BL implements AnalyzeMemberMessage_IF {
 	
 	@Resource
 	private BINOLCM02_BL binOLCM02_BL;
+
+	@Resource
+	private BINOLCM31_IF binOLCM31_BL;
 	
 	private static final Logger logger = LoggerFactory.getLogger(BINBEMQMES03_BL.class);
 
@@ -143,6 +138,7 @@ public class BINBEMQMES03_BL implements AnalyzeMemberMessage_IF {
 			memInfoRecordMap.put("memberInfoId", memberDetailMap.get("memberInfoID"));
 			// 取得更新前会员信息
 			oldMemInfo = binOLCM36_BL.getMemberInfo(memInfoRecordMap);
+			memberDetailMap.put("joinDate",oldMemInfo.get("joinDate")); // 设置会员入会时间，会员完善度使用
 		}
 		// 入会时间调整准则
 		String jnDateKbn = binOLCM14_BL.getConfigValue("1076", map.get("organizationInfoID").toString(), map.get("brandInfoID").toString());
@@ -215,9 +211,11 @@ public class BINBEMQMES03_BL implements AnalyzeMemberMessage_IF {
 							memberDetailMap.put("messageId", memInfoMap.get("messageId"));
 							//会员通，添加相应参数
 							binOLCM02_BL.addTmallMixMobile(memberDetailMap,"memMobile",2);				
-							// 更新会员信息表q
+							// 更新会员信息表
 							binBEMQMES03_Service.updMemberInfo(memberDetailMap);
-							
+							//更新会员扩展信息表
+							binBEMQMES03_Service.updMemberExtInfo(memberDetailMap);
+							this.updMemberExtInfo(memberDetailMap);
 							Map<String, Object> paramMap = new HashMap<String, Object>();
 							paramMap.putAll(memberDetailMap);
 							paramMap.put("memberInfoID", memInfoMap.get("newMemberInfoID"));
@@ -238,6 +236,8 @@ public class BINBEMQMES03_BL implements AnalyzeMemberMessage_IF {
 								binOLCM02_BL.addTmallMixMobile(memInfoMap,"memMobile",2);
 								// 更新会员信息表
 								binBEMQMES03_Service.updMemberInfo(memInfoMap);
+								//更新会员扩展信息表
+								this.updMemberExtInfo(memInfoMap);
 								newMemInfoMap.putAll(memInfoMap);
 							}
 						}
@@ -259,6 +259,8 @@ public class BINBEMQMES03_BL implements AnalyzeMemberMessage_IF {
 							binOLCM02_BL.addTmallMixMobile(memberDetailMap,"memMobile",2);
 							// 更新会员信息表
 							binBEMQMES03_Service.updMemberInfo(memberDetailMap);
+							//更新会员扩展信息表
+							this.updMemberExtInfo(memberDetailMap);
 							
 							Map<String, Object> paramMap = new HashMap<String, Object>();
 							paramMap.putAll(memberDetailMap);
@@ -285,6 +287,8 @@ public class BINBEMQMES03_BL implements AnalyzeMemberMessage_IF {
 					binOLCM02_BL.addTmallMixMobile(memberDetailMap,"memMobile",2);
 					// 更新会员信息表
 					binBEMQMES03_Service.updMemberInfo(memberDetailMap);
+					//更新会员扩展信息表
+					this.updMemberExtInfo(memberDetailMap);
 					// 需要下发会员等级
 					map.put("isMBRuleExec", "1");
 					isAddRecord = true;
@@ -342,6 +346,8 @@ public class BINBEMQMES03_BL implements AnalyzeMemberMessage_IF {
 				this.setMemberAddress(memberDetailMap);
 				// 插入会员持卡信息表
 				binBEMQMES03_Service.addMemberCardInfo(memberDetailMap);
+				//更新会员扩展信息表
+				this.updMemberExtInfo(memberDetailMap);
 				// 删除卡号的场合
         		if (MessageConstants.MEM_TYPE_DEL_MEMBER.equals(subType)) {
         			// 将卡号设置成无效
@@ -397,6 +403,10 @@ public class BINBEMQMES03_BL implements AnalyzeMemberMessage_IF {
 					binOLCM02_BL.addTmallMixMobile(memberDetailMap,"memMobile",2);
     				// 更新会员信息表
     				binBEMQMES03_Service.updMemberInfo(memberDetailMap);
+
+					//更新会员扩展信息表
+					this.updMemberExtInfo(memberDetailMap);
+
     				if (isNoReg) {
     					memberDetailMap.remove("OrigUpFlg");
 						// 是否以首单销售时间作为入会时间
@@ -2156,8 +2166,97 @@ public class BINBEMQMES03_BL implements AnalyzeMemberMessage_IF {
 		// 更新会员卡信息
 		binBEMQMES03_Service.updMemberCardInfo(memMap);
 	}
-	
-    /**
+
+	/**
+	 * 更新会员扩展信息表信息，如果没有则新增
+	 *
+	 * @param memMap 会员信息
+	 * @throws Exception
+	 */
+	public void updMemberExtInfo(Map<String, Object> memMap) throws Exception {
+
+		//更新会员信息扩展表信息
+		int updateCount =binBEMQMES03_Service.updMemberExtInfo(memMap);
+		if(updateCount == 0) {
+			// 添加会员扩展信息
+			binBEMQMES03_Service.insertMemberExtInfo(memMap);
+		}
+
+		// 更改会员完善度
+		String minJoinDate = binOLCM14_BL.getConfigValue("1402", ConvertUtil.getString(memMap.get("organizationInfoID")),ConvertUtil.getString(memMap.get("brandInfoID")));
+
+		if(!StringUtils.isEmpty(minJoinDate)) { // 若未开启最小入会时间直接跳过完善度功能
+			String joinDate = ConvertUtil.getString(memMap.get("memGranddate")); // 会员入会时间
+			joinDate = StringUtils.isEmpty(joinDate) ? ConvertUtil.getString(memMap.get("joinDate")) : joinDate;
+			if (joinDate != null && DateUtil.compareDate(joinDate, minJoinDate) >= 0) {
+				// 更新会员完善度
+				updMemberInfoComplete(memMap);
+			}
+		}
+	}
+
+	/**
+	 * 更新会员完善度
+	 *
+	 */
+	public void updMemberInfoComplete(Map<String, Object> map) throws Exception {
+		// 组织id
+		String organizationInfoId = ConvertUtil.getString(map.get("organizationInfoID"));
+		// 品牌id
+		String brandInfoId = ConvertUtil.getString(map.get("brandInfoID"));
+		// 会员卡号
+		String memCode = ConvertUtil.getString(map.get("memberCode"));
+
+		List<String> keys = binOLCM31_BL.getMemCompleteRuleKey(organizationInfoId,brandInfoId);
+		if(CollectionUtils.isEmpty(keys)) { // 若不存在规则直接跳过完善度功能
+			return ;
+		}
+
+		// 获取所有规则设置属性的值
+		Map<String,Object> params = new HashMap<String, Object>();
+		for (String key : keys) {
+			params.put(key, map.get(key));
+		}
+
+		// 获取会员最新百分比并更新会员百分比信息
+		int percent = binOLCM31_BL.calMemCompletePercent(organizationInfoId, brandInfoId, params);
+		binOLCM31_BL.updateCompletePercentByMemcode(organizationInfoId, brandInfoId, memCode , percent);
+
+		// 获取会员最新积分并更新会员积分信息
+		Map<String,Object> pointResult = binOLCM31_BL.calMemCompletePoint(organizationInfoId, brandInfoId, params, memCode);
+		binOLCM31_BL.updateCompletePointByMemcode(organizationInfoId, brandInfoId, memCode, ConvertUtil.getInt(pointResult.get("pointTotal")), ConvertUtil.getString(pointResult.get("awardPoint")));
+
+		int pointTotal = ConvertUtil.getInt(pointResult.get("pointTotal"));
+		if(pointTotal != 0) { // 赠送积分不为0发送MQ同步会员积分
+			map.put("ModifyPoint", pointTotal);
+			binOLCM31_BL.sendPointsMQ(getPointMQParam(map));
+		}
+
+	}
+
+	// 获取发送积分MQ参数
+	private Map<String,Object> getPointMQParam(Map<String,Object> params) {
+		logger.debug("BINBEMQMES03_BL getPointMQParam params -- >" + params.toString());
+		params.put("employeeId",params.get("employeeID"));
+		params.put("organizationInfoId",params.get("organizationInfoID"));
+		params.put("brandInfoId",params.get("brandInfoID"));
+		Map<String,Object> returnMap = new HashMap<String, Object>();
+		returnMap.putAll(params);
+		returnMap.put("MemberCode",params.get("memberCode"));
+		returnMap.put("BusinessTime", CherryUtil.getSysDateTime(DateUtil.DATETIME_PATTERN));
+		returnMap.put("Reason","会员积分完善度积分修改");
+
+		Map<String, Object> comEmployeeInfo = binOLCM31_BL.getComEmployeeInfoById(params);
+		if(!CollectionUtils.isEmpty(comEmployeeInfo)) {
+			returnMap.put("EmployeeCode",comEmployeeInfo.get("employeeCode"));
+		}
+		returnMap.put("pointType","2"); // 1-总值维护，2-差值维护
+		returnMap.put("MaintainType","1");
+		logger.debug("BINBEMQMES03_BL getPointMQParam returnMap -- >" + returnMap.toString());
+		return returnMap;
+	}
+
+	/**
      * 对会员回访数据带问卷进行处理
      * @throws CherryMQException 
      */

@@ -38,7 +38,7 @@
 		SELECT
 			T1.BIN_CampaignRuleID,
 			CASE WHEN T2.BasePropValue1 IS NOT NULL THEN left(T2.BasePropValue1,10) ELSE left(T1.BasePropValue1,10) END AS startTime,
-			CASE WHEN T2.BasePropValue2 IS NOT NULL THEN left(T2.BasePropValue2,10)+' 23:59:59' ELSE left(T1.BasePropValue2,10)+' 23:59:59' END AS endTime
+			CASE WHEN T2.BasePropValue2 IS NOT NULL THEN left(T2.BasePropValue2,10) ELSE left(T1.BasePropValue2,10) END AS endTime
 		FROM
 		(SELECT
 			A.BIN_CampaignRuleID,
@@ -135,8 +135,8 @@
 		<![CDATA[
 		) T
 		ON(A.BIN_CampaignRuleID = T.BIN_CampaignRuleID
-			AND T.startTime <= #busDate# 
-			AND T.endTime >= #busDate#) LEFT JOIN
+			AND T.startTime <= #busDateTime#
+			AND T.endTime >= #busDateTime#) LEFT JOIN
 			Members.BIN_MemberClub Z
 			ON(B.BIN_MemberClubID = Z.BIN_MemberClubID)
 		WHERE
@@ -172,7 +172,7 @@
 			B.BIN_OrganizationInfoID = #organizationInfoId#
 			AND B.BIN_BrandInfoID = #brandInfoId#
 			AND B.SendFlag = '0'
-			AND (T.endTime >= #busDate# OR A.State IN('0','1'))
+			AND (T.endTime >= #busDateTime# OR A.State IN('0','1'))
 			AND A.ValidFlag='1'
      	]]>		
      </select>
@@ -267,20 +267,22 @@
 	]]>
 	</update>
 	<!-- 删除活动信息主表(接口表)数据 -->
-	<delete id="clearActivitySubject" parameterClass="java.util.HashMap">
+	<update id="clearActivitySubject" parameterClass="java.util.HashMap">
 		<![CDATA[  
-			DELETE FROM dbo.ActivityAssociateSubject_SCS
+			update dbo.ActivityAssociateSubject_SCS set activity_end_date = #optTime#
 			WHERE 
 				Brand = #brandCode#
 				AND subject_code = #subjectCode#
 				AND data_source = '1'
 		]]>
-	</delete>
+	</update>
 	<!-- 清空活动关联表(接口表)数据 -->
-	<delete id="clearActivityAssociate" parameterClass="java.util.HashMap">
+	<update id="clearActivityAssociate" parameterClass="java.util.HashMap">
 		<![CDATA[  
-		DELETE 
+		update
 			A
+		SET
+			A.activity_end_date = #optTime#
 		FROM 
 			dbo.ActivityAssociateTable_SCS  A
 			JOIN dbo.ActivityAssociateSubject_SCS B
@@ -291,18 +293,18 @@
 			A.Brand = #brandCode#
 			AND A.MainCode = #mainCode#
 		]]>
-	</delete>
+	</update>
 	<!-- 删除活动表(接口表)数据 -->
-	<delete id="clearActivityCouter" parameterClass="java.util.HashMap">
+	<update id="clearActivityCouter" parameterClass="java.util.HashMap">
 		<![CDATA[  
-			DELETE FROM dbo.ActivityTable_SCS
+			update dbo.ActivityTable_SCS set EndTime = #optTime#
 			WHERE 
 				Brand = #brandCode# 
 				AND MainCode = #mainCode#
 				AND ActivityCode = #activeCode#
 				AND CHYFlag = '1'
 		]]>
-	</delete>
+	</update>
 	<!-- 逻辑删除活动下发历史 -->
 	<update id="setActivityHisDisabled" parameterClass="java.util.HashMap">
 	<![CDATA[ 
@@ -310,13 +312,11 @@
 		Promotion.BIN_ActivityTransHis
 	SET
 		ValidFlag = '0',
-	]]>
-	<include refid="BINBECMINC99.updateSql" />	
-	<![CDATA[	
+		ActivityToDate = #optTime#
 	WHERE
-		BIN_BrandInfoID = #brandInfoId#
+		CountActCode = #activeCode#
 		AND ActivityType = '1'
-		AND CountActCode = #activeCode#
+		AND ValidFlag = '1'
 	]]>
 	</update>
 	<!-- 更新ActivityTable_SCS -->

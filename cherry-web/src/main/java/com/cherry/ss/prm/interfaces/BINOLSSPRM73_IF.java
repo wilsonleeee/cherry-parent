@@ -63,7 +63,6 @@ public interface BINOLSSPRM73_IF {
 	/**
 	 * 保存优惠券规则
 	 * 
-	 * @param map
 	 * @return 无
 	 * @throws Exception 
 	 */
@@ -331,4 +330,6 @@ public interface BINOLSSPRM73_IF {
 	 * @return
      */
 	public String tran_cancelUseCond(Map<String,Object> param);
+
+	public void handleEmptySelect(Map<String,Object> param);
 }

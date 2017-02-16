@@ -103,6 +103,8 @@ public class BINOLCPACT01_BL {
 	public void tran_stopCampaign (Map<String, Object> map) throws Exception{
 		binOLCPACT01_Service.stopCampaign(map);
 		binOLCPACT01_Service.stopSubCampaign(map);
+		binOLCPACT01_Service.updSubCampaignTime(map);
+//		binOLCPACT01_Service.updCampaignHisTime(map);
 		binOLCPACT01_Service.stopSubCampaignPrmRule(map);
 	}
 	/**
@@ -112,6 +114,12 @@ public class BINOLCPACT01_BL {
 	 */
 	public void tran_stopSubCampaign (Map<String, Object> map) throws Exception{
 		binOLCPACT01_Service.stopSubCampaign(map);
+		binOLCPACT01_Service.updSubCampaignTime(map);
+//		binOLCPACT01_Service.updCampaignHisTime(map);
 		binOLCPACT01_Service.stopSubCampaignPrmRule(map);
+	}
+
+	public String getSysTime(){
+		return binOLCPACT01_Service.getSysTime();
 	}
 }

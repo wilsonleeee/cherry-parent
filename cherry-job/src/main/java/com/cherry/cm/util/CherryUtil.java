@@ -119,6 +119,35 @@ public class CherryUtil {
 
 	/**
 	 * 去除Map中的空值
+	 *
+	 * @param map
+	 *            转换前的Map
+	 * @return Map 转换后的Map
+	 */
+	public static Map<String, Object> remEmptyVal(Map<String, Object> map) {
+		if (null != map && !map.isEmpty()) {
+			Map<String, Object> goalMap = new HashMap<String, Object>();
+			for (String key : map.keySet()) {
+				Object value = map.get(key);
+				if(value instanceof ArrayList) {
+					List _value = (List)value;
+					if(_value != null && !_value.isEmpty()) {
+						goalMap.put(key, value);
+					}
+				} else {
+					// 值不为空时放入新的Map中
+					if (null != value && !"".equals(value)) {
+						goalMap.put(key, value);
+					}
+				}
+			}
+			return goalMap;
+		}
+		return null;
+	}
+
+	/**
+	 * 去除Map中的空值
 	 * 
 	 * @param Map
 	 *            转换前的Map

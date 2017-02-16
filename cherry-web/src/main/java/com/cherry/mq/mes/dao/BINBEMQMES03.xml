@@ -80,6 +80,7 @@
 				BindFlag,				
 				IsSameMobile,				
 				SourceFlag,
+				Profession,
 				]]>
 				    <include refid="BINBEMQMES03.insertMemberInfoKeySql" />
 					<include refid="BINOLCMINC99.insertKeySql" />
@@ -130,6 +131,7 @@
 				#bindFlag#,				
 				#isSameMobile#,			
 				#sourceFlag#,
+				#profession#,
 				]]>
 				    <include refid="BINBEMQMES03.insertMemberInfoValueSql" />
 					<include refid="BINOLCMINC99.insertValueSql" />
@@ -503,6 +505,9 @@
         <isNotEmpty property="firstUpTime">
             FirstUpTime = #firstUpTime#,
         </isNotEmpty>
+		<isNotEmpty property="profession">
+			Profession = #profession#,
+		</isNotEmpty>
         <isNotEmpty property="OrigUpFlg">
         	OrigJoinDate = #origJoinDate#,
         	OrigEmployeeID = #origEmployeeId#,
@@ -516,7 +521,50 @@
 			BIN_MemberInfoID = #memberInfoID#
 	]]>
 	</update>
-	
+
+	<!-- 更新会员扩展信息表 -->
+	<update id="updMemberExtInfo" parameterClass="java.util.HashMap">
+		<![CDATA[
+		UPDATE
+			Members.BIN_MemberExtInfo
+		SET
+		    SkinType = #skinType#,
+		    ReturnVisit = #returnVisit#,
+		    Income = #income#,
+	]]>
+		<include refid="BINOLCMINC99.updateSql" />
+		<![CDATA[
+		WHERE
+			BIN_MemberInfoID = #memberInfoID#
+	]]>
+	</update>
+
+	<!-- 添加会员扩展信息 -->
+	<insert id="insertMemberExtInfo" parameterClass="java.util.HashMap">
+		<![CDATA[
+    		INSERT INTO Members.BIN_MemberExtInfo
+			(
+				BIN_MemberInfoID,
+				SkinType,
+				ReturnVisit,
+				Income,
+		]]>
+		<include refid="BINOLCMINC99.insertKeySql" />
+		<![CDATA[
+			)
+			VALUES
+			(
+				#memberInfoID#,
+				#skinType#,
+				#returnVisit#,
+				#income#,
+		]]>
+		<include refid="BINOLCMINC99.insertValueSql" />
+		<![CDATA[
+			)
+    	]]>
+	</insert>
+
 	<!-- 更新会员等级 -->
 	<update id="updMemLevelInfo" parameterClass="java.util.HashMap">
 	<![CDATA[
@@ -1333,13 +1381,18 @@
 			D.StandardCity AS cityID,
 			D.StandardProvince AS provinceID,
 			D.StandardCounty AS countyID,
-			D.ZipCode AS memPostcode
+			D.ZipCode AS memPostcode,
+			A.Profession AS profession,
+			M.Income AS Income,
+			M.ReturnVisit AS ReturnVisit,
+			M.SkinType AS SkinType
 		FROM
 			Members.BIN_MemberInfo A
 			JOIN Members.BIN_MemCardInfo B ON A.BIN_MemberInfoID = B.BIN_MemberInfoID AND B.ValidFlag = '1' 
 			LEFT JOIN Members.BIN_MemberAddress C 
 				JOIN Basis.BIN_AddressInfo D ON C.BIN_AddressInfoID = D.BIN_AddressInfoID AND D.ValidFlag = '1'
 			ON C.BIN_MemberInfoID = A.BIN_MemberInfoID AND C.ValidFlag = '1'
+			LEFT JOIN Members.BIN_MemberExtInfo M WITH(NOLOCK) ON A.BIN_MemberInfoID = M.BIN_MemberInfoID
 		WHERE
 			A.BIN_OrganizationInfoID = #organizationInfoID# AND
 			A.BIN_BrandInfoID = #brandInfoID# AND

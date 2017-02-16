@@ -708,7 +708,26 @@ public class Message2Bean {
                 break;
             case 32:
                 memDetailDataDTO.setMemCounty(detailDataStrArr[i]);
-                break;    
+                break;
+			case 33:
+				memDetailDataDTO.setWechatAccount(detailDataStrArr[i]);
+				break;
+			case 34:
+				memDetailDataDTO.setProfession(detailDataStrArr[i]);
+				break;
+			case 35:
+				memDetailDataDTO.setConnectTime(detailDataStrArr[i]);
+				break;
+			case 36:
+				memDetailDataDTO.setIncome(detailDataStrArr[i]);
+				break;
+			case 37:
+				memDetailDataDTO.setReturnVisit(detailDataStrArr[i]);
+				break;
+			case 38:
+				memDetailDataDTO.setSkinType(detailDataStrArr[i]);
+				break;
+
 			}
 		}
 		detailDataDTOList.add(memDetailDataDTO);

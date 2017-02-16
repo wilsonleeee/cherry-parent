@@ -109,7 +109,7 @@ public class BINCPMEACT01_Service extends BaseService{
 	 * @param list
 	 */
 	public void clearActivityAssociate(List<Map<String, Object>> list){
-		ifServiceImpl.deleteAll(list, "BINCPMEACT01.clearActivityAssociate");
+		ifServiceImpl.updateAll(list, "BINCPMEACT01.clearActivityAssociate");
 	}
 	
 	/**
@@ -117,7 +117,7 @@ public class BINCPMEACT01_Service extends BaseService{
 	 * @param list
 	 */
 	public void clearActivityCouter(List<Map<String, Object>> list){
-		ifServiceImpl.deleteAll(list, "BINCPMEACT01.clearActivityCouter");
+		ifServiceImpl.updateAll(list, "BINCPMEACT01.clearActivityCouter");
 	}
 	
 	/**

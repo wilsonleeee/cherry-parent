@@ -1417,12 +1417,14 @@ public class BINOLSSPRM73_BL implements BINOLSSPRM73_IF{
 				if (count == 0){
 					//无临时数据,需要查询上次导入时候的正式数据
 					if (filterType.equals(CouponConstains.FILTERTYPE_1)){
-						//白名单
-						String counterKbn = ConvertUtil.getString(conditionMap.get("counterKbn_w"));
-						if (counterKbn.equals(CouponConstains.COUNTERKBN_1)) {
-							//为导入柜台
-							//对数据保存备份isTemp=1的数据
-							originList = setCounterOriginList(map,null,CouponConstains.ISTEMP_1);
+						if (conditionMap!=null){
+							//白名单
+							String counterKbn = ConvertUtil.getString(conditionMap.get("counterKbn_w"));
+							if (counterKbn.equals(CouponConstains.COUNTERKBN_1)) {
+								//为导入柜台
+								//对数据保存备份isTemp=1的数据
+								originList = setCounterOriginList(map,null,CouponConstains.ISTEMP_1);
+							}
 						}
 					} else {
 						//黑名单
@@ -1454,31 +1456,36 @@ public class BINOLSSPRM73_BL implements BINOLSSPRM73_IF{
 					if (count==0){
 						//isTemp=2的数据不存在则需要查询上次导入时候的正式数据
 						if (filterType.equals(CouponConstains.FILTERTYPE_1)){
-							//白名单
-							List<Map<String,Object>> conditionList = (List<Map<String,Object>>) conditionMap.get("useInfo");
-							String mode = ConvertUtil.getString(conditionMap.get("mode"));
-							Map<String,Object> useCondInfo = new HashMap<String,Object>();
-							if (mode.equals(CouponConstains.MODE_1)){
-								//单一模式
-								useCondInfo = conditionList.get(0);
-								String counterKbn = ConvertUtil.getString(useCondInfo.get("counterKbn_w"));
-								if(counterKbn.equals(CouponConstains.COUNTERKBN_1)){
-									//取临时数据
-									originList = setCounterOriginList(map,CouponConstains.ISTEMP_3,CouponConstains.ISTEMP_1);
-								}
-							}else {
-								//多子券模式
-								//复合模式取到对应的子券contentNo
-								for(Map<String,Object> contentNoMap : conditionList){
-									int _contentNo = ConvertUtil.getInt(contentNoMap.get("contentNo"));
-									if (contentNo==_contentNo){
-										useCondInfo = contentNoMap;
+							if (conditionMap!=null){
+								//白名单
+								List<Map<String,Object>> conditionList = (List<Map<String,Object>>) conditionMap.get("useInfo");
+								String mode = ConvertUtil.getString(conditionMap.get("mode"));
+								Map<String,Object> useCondInfo = new HashMap<String,Object>();
+								// 防止条件为空
+								if (conditionList!=null && conditionList.size()>0){
+									if (mode.equals(CouponConstains.MODE_1)){
+										//单一模式
+										useCondInfo = conditionList.get(0);
 										String counterKbn = ConvertUtil.getString(useCondInfo.get("counterKbn_w"));
 										if(counterKbn.equals(CouponConstains.COUNTERKBN_1)){
 											//取临时数据
 											originList = setCounterOriginList(map,CouponConstains.ISTEMP_3,CouponConstains.ISTEMP_1);
 										}
-										break;
+									}else {
+										//多子券模式
+										//复合模式取到对应的子券contentNo
+										for(Map<String,Object> contentNoMap : conditionList){
+											int _contentNo = ConvertUtil.getInt(contentNoMap.get("contentNo"));
+											if (contentNo==_contentNo){
+												useCondInfo = contentNoMap;
+												String counterKbn = ConvertUtil.getString(useCondInfo.get("counterKbn_w"));
+												if(counterKbn.equals(CouponConstains.COUNTERKBN_1)){
+													//取临时数据
+													originList = setCounterOriginList(map,CouponConstains.ISTEMP_3,CouponConstains.ISTEMP_1);
+												}
+												break;
+											}
+										}
 									}
 								}
 							}
@@ -1732,11 +1739,13 @@ public class BINOLSSPRM73_BL implements BINOLSSPRM73_IF{
 				if (count == 0){
 					//无临时数据,需要查询上次导入时候的正式数据
 					if (filterType.equals(CouponConstains.FILTERTYPE_1)){
-						//白名单
-						String productKbn = ConvertUtil.getString(conditionMap.get("productKbn_w"));
-						if (productKbn.equals(CouponConstains.PRODUCTKBN_1)){
-							//上次保存为导入产品
-							originList = setProductOriginList(map,null,CouponConstains.ISTEMP_1);
+						if (conditionMap!=null){
+							//白名单
+							String productKbn = ConvertUtil.getString(conditionMap.get("productKbn_w"));
+							if (productKbn.equals(CouponConstains.PRODUCTKBN_1)){
+								//上次保存为导入产品
+								originList = setProductOriginList(map,null,CouponConstains.ISTEMP_1);
+							}
 						}
 					}else {
 						//黑名单
@@ -1768,33 +1777,38 @@ public class BINOLSSPRM73_BL implements BINOLSSPRM73_IF{
 					if (count==0){
 						//isTemp=2的数据不存在则需要查询上次导入时候的正式数据
 						if (filterType.equals(CouponConstains.FILTERTYPE_1)){
-							//白名单
-							List<Map<String,Object>> conditionList = (List<Map<String,Object>>) conditionMap.get("useInfo");
-							String mode = ConvertUtil.getString(conditionMap.get("mode"));
-							Map<String,Object> useCondInfo = new HashMap<String,Object>();
-							if (mode.equals(CouponConstains.MODE_1)){
-								//单一模式
-								useCondInfo = conditionList.get(0);
-								String productKbn = ConvertUtil.getString(useCondInfo.get("productKbn_w"));
-								if (productKbn.equals(CouponConstains.PRODUCTKBN_1)){
-									//为导入产品
-									//取临时数据
-									originList = setProductOriginList(map,CouponConstains.ISTEMP_3,CouponConstains.ISTEMP_1);
-								}
-							}else {
-								//多子券模式
-								//复合模式取到对应的子券contentNo
-								for(Map<String,Object> contentNoMap : conditionList){
-									int _contentNo = ConvertUtil.getInt(contentNoMap.get("contentNo"));
-									if (contentNo==_contentNo){
-										useCondInfo = contentNoMap;
+							if (conditionMap!=null){
+								//白名单
+								List<Map<String,Object>> conditionList = (List<Map<String,Object>>) conditionMap.get("useInfo");
+								String mode = ConvertUtil.getString(conditionMap.get("mode"));
+								Map<String,Object> useCondInfo = new HashMap<String,Object>();
+								// 防止条件为空
+								if (conditionList!=null && conditionList.size()>0){
+									if (mode.equals(CouponConstains.MODE_1)){
+										//单一模式
+										useCondInfo = conditionList.get(0);
 										String productKbn = ConvertUtil.getString(useCondInfo.get("productKbn_w"));
 										if (productKbn.equals(CouponConstains.PRODUCTKBN_1)){
 											//为导入产品
 											//取临时数据
 											originList = setProductOriginList(map,CouponConstains.ISTEMP_3,CouponConstains.ISTEMP_1);
 										}
-										break;
+									}else {
+										//多子券模式
+										//复合模式取到对应的子券contentNo
+										for(Map<String,Object> contentNoMap : conditionList){
+											int _contentNo = ConvertUtil.getInt(contentNoMap.get("contentNo"));
+											if (contentNo==_contentNo){
+												useCondInfo = contentNoMap;
+												String productKbn = ConvertUtil.getString(useCondInfo.get("productKbn_w"));
+												if (productKbn.equals(CouponConstains.PRODUCTKBN_1)){
+													//为导入产品
+													//取临时数据
+													originList = setProductOriginList(map,CouponConstains.ISTEMP_3,CouponConstains.ISTEMP_1);
+												}
+												break;
+											}
+										}
 									}
 								}
 							}
@@ -2250,14 +2264,16 @@ public class BINOLSSPRM73_BL implements BINOLSSPRM73_IF{
 				if (count == 0){
 					//无临时数据,需要查询上次导入时候的正式数据
 					if (filterType.equals(CouponConstains.FILTERTYPE_1)){
-						//白名单
-						String memberKbn = ConvertUtil.getString(conditionMap.get("memberKbn_w"));
-						if(memberKbn.equals(CouponConstains.MEMBERKBN_1)){
-							//为导入会员
-							//对数据保存备份isTemp=1的数据
-							originList = setMemberOriginList(map,null,CouponConstains.ISTEMP_1);
+						if (conditionMap!=null){
+							//白名单
+							String memberKbn = ConvertUtil.getString(conditionMap.get("memberKbn_w"));
+							if(memberKbn.equals(CouponConstains.MEMBERKBN_1)){
+								//为导入会员
+								//对数据保存备份isTemp=1的数据
+								originList = setMemberOriginList(map,null,CouponConstains.ISTEMP_1);
+							}
+							//非导入会员不处理
 						}
-						//非导入会员不处理
 					} else {
 						//黑名单
 						//对数据保存备份isTemp=1的数据
@@ -2288,32 +2304,36 @@ public class BINOLSSPRM73_BL implements BINOLSSPRM73_IF{
 					if (count==0){
 						//isTemp=2的数据不存在则需要查询上次导入时候的正式数据
 						if (filterType.equals(CouponConstains.FILTERTYPE_1)){
-							//白名单
-							List<Map<String,Object>> conditionList = (List<Map<String,Object>>) conditionMap.get("useInfo");
-							String mode = ConvertUtil.getString(conditionMap.get("mode"));
-							Map<String,Object> useCondInfo = new HashMap<String,Object>();
-							if (mode.equals(CouponConstains.MODE_1)){
-								//单一模式
-								useCondInfo = conditionList.get(0);
-								String memberKbn = ConvertUtil.getString(useCondInfo.get("memberKbn_w"));
-								if(memberKbn.equals(CouponConstains.MEMBERKBN_1)){
-									//取临时数据
-									originList = setMemberOriginList(map,CouponConstains.ISTEMP_3,CouponConstains.ISTEMP_1);
-								}
-								//非导入会员不作处理
-							} else {
-								//多子券模式
-								//复合模式取到对应的子券contentNo
-								for(Map<String,Object> contentNoMap : conditionList){
-									int _contentNo = ConvertUtil.getInt(contentNoMap.get("contentNo"));
-									if (contentNo==_contentNo){
-										useCondInfo = contentNoMap;
+							if (conditionMap!=null){
+								//白名单
+								List<Map<String,Object>> conditionList = (List<Map<String,Object>>) conditionMap.get("useInfo");
+								String mode = ConvertUtil.getString(conditionMap.get("mode"));
+								Map<String,Object> useCondInfo = new HashMap<String,Object>();
+								if (conditionList!=null && conditionList.size()>0){
+									if (mode.equals(CouponConstains.MODE_1)){
+										//单一模式
+										useCondInfo = conditionList.get(0);
 										String memberKbn = ConvertUtil.getString(useCondInfo.get("memberKbn_w"));
 										if(memberKbn.equals(CouponConstains.MEMBERKBN_1)){
 											//取临时数据
 											originList = setMemberOriginList(map,CouponConstains.ISTEMP_3,CouponConstains.ISTEMP_1);
 										}
-										break;
+										//非导入会员不作处理
+									} else {
+										//多子券模式
+										//复合模式取到对应的子券contentNo
+										for(Map<String,Object> contentNoMap : conditionList){
+											int _contentNo = ConvertUtil.getInt(contentNoMap.get("contentNo"));
+											if (contentNo==_contentNo){
+												useCondInfo = contentNoMap;
+												String memberKbn = ConvertUtil.getString(useCondInfo.get("memberKbn_w"));
+												if(memberKbn.equals(CouponConstains.MEMBERKBN_1)){
+													//取临时数据
+													originList = setMemberOriginList(map,CouponConstains.ISTEMP_3,CouponConstains.ISTEMP_1);
+												}
+												break;
+											}
+										}
 									}
 								}
 							}
@@ -3135,8 +3155,8 @@ public class BINOLSSPRM73_BL implements BINOLSSPRM73_IF{
 	 */
 	private void saveCouponMemberDetail(CouponRuleDTO couponRule,String sendContent_ex) throws JSONException,Exception {
 		//发送门槛
-		String sendCond = CherryUtil.isEmpty(couponRule.getSendCond())?"{}":couponRule.getSendCond();
-		sendContent_ex = CherryUtil.isEmpty(sendContent_ex)?"{}":sendContent_ex;
+		String sendCond = CherryChecker.isNullOrEmpty(couponRule.getSendCond())?"{}":couponRule.getSendCond();
+		sendContent_ex = CherryChecker.isNullOrEmpty(sendContent_ex)?"{}":sendContent_ex;
 		Map<String, Object> sendCondMap = (Map<String, Object> )JSONUtil.deserialize(sendCond);
 		Map<String, Object> sendCondMap_ex = (Map<String, Object> )JSONUtil.deserialize(sendContent_ex);
 		String memberKbn_w=ConvertUtil.getString(sendCondMap.get("memberKbn_w"));
@@ -3358,22 +3378,22 @@ public class BINOLSSPRM73_BL implements BINOLSSPRM73_IF{
 				}
 			}
 		}
-		if(null != useCondInfo){
-			Map<String, Object> map = new HashMap<String, Object>();
-			map.put("contentNo", useCondInfo.get("contentNo"));
-			map.put("ruleCode", couponRule.getRuleCode());
-			map.put("conditionType", CouponConstains.CONDITIONTYPE_2);
-			map.put("filterType", CouponConstains.FILTERTYPE_1);
-			// 产品白名单
-			List<Map<String, Object>> proList = binOLSSPRM73_Service.getCouponProductList(map);
-			if(null != proList){
-				useCondInfo.put("proList",proList);
-			}else{
-				// 产品分类
-				List<Map<String, Object>> proTypeList = binOLSSPRM73_Service.getCouponProductCateList(map);
-				useCondInfo.put("proTypeList",proTypeList);
-			}
-		}
+//		if(null != useCondInfo){
+//			Map<String, Object> map = new HashMap<String, Object>();
+//			map.put("contentNo", useCondInfo.get("contentNo"));
+//			map.put("ruleCode", couponRule.getRuleCode());
+//			map.put("conditionType", CouponConstains.CONDITIONTYPE_2);
+//			map.put("filterType", CouponConstains.FILTERTYPE_1);
+//			// 产品白名单
+//			List<Map<String, Object>> proList = binOLSSPRM73_Service.getCouponProductList(map);
+//			if(null != proList){
+//				useCondInfo.put("proList",proList);
+//			}else{
+//				// 产品分类
+//				List<Map<String, Object>> proTypeList = binOLSSPRM73_Service.getCouponProductCateList(map);
+//				useCondInfo.put("proTypeList",proTypeList);
+//			}
+//		}
 		return useCondInfo;
 	}
 
@@ -3623,13 +3643,19 @@ public class BINOLSSPRM73_BL implements BINOLSSPRM73_IF{
 		}
 		//产品
 		if(CherryConstants.productKbn_impPrt.equals(productKbn_b)){
-			//导入时存在2的情况下，删除1的数据，并且更新2的数据为1
-			param.put(CherryConstants.coupouDetailIsTemp,CherryConstants.coupouDetailIsTemp_2);
-			if(binOLSSPRM73_Service.getProductDetailIsTempCount(param) > 0){
+			List<Map<String,Object>> prtList_b= (List<Map<String,Object>>)useContent.get("prtList_b");
+			if(CherryChecker.isNullOrEmpty(prtList_b) || prtList_b.size() == 0){
 				param.put(CherryConstants.coupouDetailIsTemp,CherryConstants.coupouDetailIsTemp_1);
 				binOLSSPRM73_Service.deleteProductDetailTemp(param);
+			}else{
+				//导入时存在2的情况下，删除1的数据，并且更新2的数据为1
 				param.put(CherryConstants.coupouDetailIsTemp,CherryConstants.coupouDetailIsTemp_2);
-				binOLSSPRM73_Service.updateProductDetail(param);
+				if(binOLSSPRM73_Service.getProductDetailIsTempCount(param) > 0){
+					param.put(CherryConstants.coupouDetailIsTemp,CherryConstants.coupouDetailIsTemp_1);
+					binOLSSPRM73_Service.deleteProductDetailTemp(param);
+					param.put(CherryConstants.coupouDetailIsTemp,CherryConstants.coupouDetailIsTemp_2);
+					binOLSSPRM73_Service.updateProductDetail(param);
+				}
 			}
 		}
 	}
@@ -4010,6 +4036,37 @@ public class BINOLSSPRM73_BL implements BINOLSSPRM73_IF{
 			logger.error("使用门槛DIV 取消操作失败：" + e.getMessage(),e);
 		}
 		return result;
+	}
+
+	@Override
+	public void handleEmptySelect(Map<String, Object> param) {
+		String emptyType=ConvertUtil.getString(param.get("emptyType"));
+		String conditionType=ConvertUtil.getString(param.get("conditionType"));
+		if(CouponConstains.COUPON_EMPTYTYPE_1.equals(emptyType)){//柜台
+			if(CherryConstants.conditionType_s.equals(conditionType)){//发送门槛有2的删除2
+				param.put(CherryConstants.coupouDetailIsTemp,CherryConstants.coupouDetailIsTemp_2);
+				binOLSSPRM73_Service.delCounterDetail(param);
+			}else{
+				param.put(CherryConstants.coupouDetailIsTemp,CherryConstants.coupouDetailIsTemp_3);
+				binOLSSPRM73_Service.delCounterDetail(param);
+			}
+		}else if(CouponConstains.COUPON_EMPTYTYPE_2.equals(emptyType)){//产品
+			if(CherryConstants.conditionType_s.equals(conditionType)){
+				param.put(CherryConstants.coupouDetailIsTemp,CherryConstants.coupouDetailIsTemp_2);
+				binOLSSPRM73_Service.delImpCouponProductDetail(param);
+			}else{
+				param.put(CherryConstants.coupouDetailIsTemp,CherryConstants.coupouDetailIsTemp_3);
+				binOLSSPRM73_Service.delImpCouponProductDetail(param);
+			}
+		}else if(CouponConstains.COUPON_EMPTYTYPE_3.equals(emptyType)){//对象
+			if(CherryConstants.conditionType_s.equals(conditionType)){
+				param.put(CherryConstants.coupouDetailIsTemp,CherryConstants.coupouDetailIsTemp_2);
+				binOLSSPRM73_Service.deleteMemberDetailTemp(param);
+			}else{
+				param.put(CherryConstants.coupouDetailIsTemp,CherryConstants.coupouDetailIsTemp_3);
+				binOLSSPRM73_Service.deleteMemberDetailTemp(param);
+			}
+		}
 	}
 
 }

@@ -1,11 +1,5 @@
 package com.cherry.mb.mbm.bl;
 
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-
-import javax.annotation.Resource;
-
 import com.cherry.cm.cmbussiness.bl.BINOLCM37_BL;
 import com.cherry.cm.cmbussiness.interfaces.BINOLCM37_IF;
 import com.cherry.cm.core.CherryChecker;
@@ -16,6 +10,11 @@ import com.cherry.cm.util.CherryUtil;
 import com.cherry.cm.util.ConvertUtil;
 import com.cherry.mb.mbm.service.BINOLMBMBM18_Service;
 import com.cherry.mo.common.bl.BINOLMOCOM01_BL;
+
+import javax.annotation.Resource;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 public class BINOLMBMBM18_BL implements BINOLCM37_IF{
 	/** 会员导入一览Service */
@@ -203,6 +202,10 @@ public class BINOLMBMBM18_BL implements BINOLCM37_IF{
         		{"MemAgeGetMethod", binOLCM37_BL.getResourceValue("BINOLMBMBM18", language, "binolmbmbm18_ageGetMethod"), "20", "", ""},
         		{"MemMail", binOLCM37_BL.getResourceValue("BINOLMBMBM18", language, "binolmbmbm18_eMail"), "20", "", ""},
         		{"Memo1", binOLCM37_BL.getResourceValue("BINOLMBMBM18", language, "binolmbmbm18_memo1"), "60", "", ""},
+        		{"ReturnVisit", binOLCM37_BL.getResourceValue("BINOLMBMBM18", language, "binolmbmbm18_returnVisit"), "40", "", ""},
+        		{"SkinType", binOLCM37_BL.getResourceValue("BINOLMBMBM18", language, "binolmbmbm18_skinType"), "40", "", ""},
+        		{"Profession", binOLCM37_BL.getResourceValue("BINOLMBMBM18", language, "binolmbmbm18_profession"), "40", "", ""},
+        		{"Income", binOLCM37_BL.getResourceValue("BINOLMBMBM18", language, "binolmbmbm18_income"), "40", "", ""},
         		{"ResultFlag", binOLCM37_BL.getResourceValue("BINOLMBMBM18", language, "binolmbmbm18_resultFlag"), "10", "", "1250"},
         		{"ImportResults", binOLCM37_BL.getResourceValue("BINOLMBMBM18", language, "binolmbmbm18_common"), "100", "", ""}};
         // 更新模式会员导出（Excel标题）
@@ -224,6 +227,10 @@ public class BINOLMBMBM18_BL implements BINOLCM37_IF{
         		{"MemPostcode", binOLCM37_BL.getResourceValue("BINOLMBMBM18", language, "binolmbmbm18_postcode"), "20", "", ""},
         		{"MemMail", binOLCM37_BL.getResourceValue("BINOLMBMBM18", language, "binolmbmbm18_eMail"), "20", "", ""},
         		{"Memo1", binOLCM37_BL.getResourceValue("BINOLMBMBM18", language, "binolmbmbm18_memo1"), "60", "", ""},
+				{"ReturnVisit", binOLCM37_BL.getResourceValue("BINOLMBMBM18", language, "binolmbmbm18_returnVisit"), "40", "", ""},
+				{"SkinType", binOLCM37_BL.getResourceValue("BINOLMBMBM18", language, "binolmbmbm18_skinType"), "40", "", ""},
+				{"Profession", binOLCM37_BL.getResourceValue("BINOLMBMBM18", language, "binolmbmbm18_profession"), "40", "", ""},
+				{"Income", binOLCM37_BL.getResourceValue("BINOLMBMBM18", language, "binolmbmbm18_income"), "40", "", ""},
         		{"ResultFlag", binOLCM37_BL.getResourceValue("BINOLMBMBM18", language, "binolmbmbm18_resultFlag"), "10", "", "1250"},
         		{"ImportResults", binOLCM37_BL.getResourceValue("BINOLMBMBM18", language, "binolmbmbm18_common"), "100", "", ""}};
         if("1".equals(conditionMap.get("impType"))){

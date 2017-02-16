@@ -13,6 +13,7 @@
 package com.cherry.ss.prm.bl;
 
 
+import com.cherry.cm.core.CherryChecker;
 import com.cherry.cm.util.CherryUtil;
 import com.cherry.cm.util.ConvertUtil;
 import com.cherry.ss.prm.form.BINOLSSPRM74_Form;
@@ -62,14 +63,22 @@ public class BINOLSSPRM74_BL implements BINOLSSPRM74_IF {
 		String MP=ConvertUtil.getString(main_map.get("MP"));
 		//会员等级
 		String ML=ConvertUtil.getString(main_map.get("ML"));
+		//会员等级转换为对应的等级ID
+		String memberLevelID="";
+		if(!CherryChecker.isNullOrEmpty(ML)){
+			Map<String,Object> memberInfo= this.convertMemberList(main_map);
+			memberLevelID=ConvertUtil.getString(memberInfo.get("memberLevelID"));
+		}
 		//柜台ID
 		String organizationID=ConvertUtil.getString(main_map.get("organizationID"));
 		//会员积分
 		double MPOINT=Double.parseDouble("".equals(ConvertUtil.getString(main_map.get("MPOINT")))?"0":ConvertUtil.getString(main_map.get("MPOINT")));
+		logger.info("促销引擎积分会员手机号："+MP+"积分："+MPOINT);
 		//购物车信息
 		List<SaleMainEntity> main_input=new ArrayList<SaleMainEntity>();
 		List<SaleDetailEntity> detail_input=new ArrayList<SaleDetailEntity>();
-		SaleMainEntity main=new SaleMainEntity(MC, TD, TT,"", organizationID, 100,ML,MPOINT);
+		//逻辑变动，传入的会员卡号传值变为手机号2017-01-05
+		SaleMainEntity main=new SaleMainEntity(MP, TD, TT,"", organizationID, 100,memberLevelID,MPOINT);
 		main_input.add(main);
 		double sum=0;
 		for(int i=1;i<=cart_list.size();i++){
@@ -329,6 +338,7 @@ public class BINOLSSPRM74_BL implements BINOLSSPRM74_IF {
 		ZSAL_MEMINFO[] arr=JahwaWebServiceProxy.getMemberList(main_map);
 		if(arr != null && arr[0].getZCCUR_POINT() != null ){
 			point=Double.parseDouble(arr[0].getZCCUR_POINT().toString());
+			logger.info("CRM积分会员接口手机号："+MP+"积分："+point);
 		}
 	}
 	main_map.put("MPOINT", point);
@@ -414,15 +424,18 @@ public class BINOLSSPRM74_BL implements BINOLSSPRM74_IF {
 		//拆单操作
 		List<Map<String, Object>> insertRule=new ArrayList<Map<String,Object>>();
 		for(Map<String,Object> rule:ruleAll_list){
-			int quantity=Integer.parseInt("".equals(ConvertUtil.getString(rule.get("quantity")))?"1":ConvertUtil.getString(rule.get("quantity")));
-			double price=Double.parseDouble("".equals(ConvertUtil.getString(rule.get("price")))?"0":ConvertUtil.getString(rule.get("price")));
-			double salePrice=Double.parseDouble("".equals(ConvertUtil.getString(rule.get("salePrice")))?"0":ConvertUtil.getString(rule.get("salePrice")));
-			for(int i=0;i<quantity;i++){
-				rule.put("TN", TN);
-				rule.put("quantity", 1);
-				rule.put("price", price/quantity);
-				rule.put("salePrice", salePrice/quantity);
-				insertRule.add(rule);
+			String type = ConvertUtil.getString(rule.get("type"));
+			if(type.equals("N")||type.equals("P")){
+				int quantity=Integer.parseInt("".equals(ConvertUtil.getString(rule.get("quantity")))?"1":ConvertUtil.getString(rule.get("quantity")));
+				double price=Double.parseDouble("".equals(ConvertUtil.getString(rule.get("price")))?"0":ConvertUtil.getString(rule.get("price")));
+				double salePrice=Double.parseDouble("".equals(ConvertUtil.getString(rule.get("salePrice")))?"0":ConvertUtil.getString(rule.get("salePrice")));
+				for(int i=0;i<quantity;i++){
+					rule.put("TN", TN);
+					rule.put("quantity", 1);
+					rule.put("price", price/quantity);
+					rule.put("salePrice", salePrice/quantity);
+					insertRule.add(rule);
+				}
 			}
 		}
 		binOLSSPRM74_Service.insertRule(insertRule);
@@ -922,9 +935,14 @@ public class BINOLSSPRM74_BL implements BINOLSSPRM74_IF {
 				String memberPhone = form.getMemberPhone().trim();
 				main_map.put("MP", memberPhone);
 			}
+			//拆分后的CartList
+			List<Map<String,Object>> convert_cart=this.convertCart_unit(cartConvert);
+			for(Map<String,Object> coupon_info:coupon_list){
+				coupon_info.put("couponCode",coupon_info.get("CouponCode"));
+			}
 			Map<String, Object> coupon_input = new HashMap<String, Object>();
 			coupon_input.put("Main_map", main_map);
-			coupon_input.put("cart_map", cartConvert);
+			coupon_input.put("cart_map", convert_cart);
 			coupon_input.put("completedRule", result_rule);
 			coupon_input.put("completedCoupon", coupon_list);
 			List<Map<String, Object>> couponResult = coupon_IF.getCouponRuleList(coupon_input);
@@ -1040,10 +1058,30 @@ public class BINOLSSPRM74_BL implements BINOLSSPRM74_IF {
 		for(Map<String,Object> rule:cartList){
 			int quantity=Integer.parseInt("".equals(ConvertUtil.getString(rule.get("quantity")))?"1":ConvertUtil.getString(rule.get("quantity")));
 			for(int i=0;i<quantity;i++){
-				rule.put("quantity", 1);
-				insertRule.add(rule);
+				Map<String,Object> item = new HashMap<String,Object>(rule);
+				item.put("quantity", 1);
+				insertRule.add(item);
 			}
 		}
 		return insertRule;
 	}
+
+	@Override
+	public void convert2YHQPlaceHolder(List<Map<String, Object>> cartList, List<String> YHQReplaceHolderList) {
+		if(!CherryChecker.isNullOrEmpty(YHQReplaceHolderList) && YHQReplaceHolderList.size() >0){
+			for(String YHQMaincode:YHQReplaceHolderList){
+				for(Map<String,Object> cartInfo:cartList){
+					String maincode=ConvertUtil.getString(cartInfo.get("maincode"));
+					if(YHQMaincode.equals(maincode)){
+						cartInfo.put("ruleType","YHQ");
+					}
+				}
+			}
+		}
+	}
+
+	private Map<String,Object> convertMemberList(Map<String,Object> param){
+		return binOLSSPRM74_Service.getMemberLevel(param);
+	}
+
 }
