@@ -77,70 +77,7 @@ public class WebserviceClient {
 			}
 		}
 	}
-	
-	/**
-	 * 访问WebService(访问Batch的WebService)
-	 * 
-	 * @param param 访问WebService的参数
-	 * @return WebService的返回内容
-	 * @throws Exception 
-	 */
-	public static Map<String, Object> accessBatchWebService(Map<String, Object> param) throws Exception{
-		try {
-			// 品牌代码
-			String brandCode = (String)param.get("brandCode");
-			if (CherryChecker.isNullOrEmpty(brandCode)) {
-				Map<String, Object> retMap = new HashMap<String, Object>();
-				retMap.put("ERRORCODE", "WSE9998");
-				retMap.put("ERRORMSG", "参数brandCode错误。brandCode=" + brandCode);
-				return retMap;
-			}
-			// 查询AES密钥
-			String AESKEY = SystemConfigManager.getAesKey(brandCode);
-			if (CherryChecker.isNullOrEmpty(AESKEY)) {
-				Map<String, Object> retMap = new HashMap<String, Object>();
-				retMap.put("ERRORCODE", "WSE9996");
-				retMap.put("ERRORMSG", "品牌" + brandCode + "的密钥缺失");
-				return retMap;
-			}
-			WebResource webResource = getWebResource(PropertiesUtil.pps.getProperty("BatchWebServiceUrl"));
-			//对传递的参数进行加密
-			MultivaluedMap<String, String> queryParams = new MultivaluedMapImpl();
-			queryParams.add("brandCode", brandCode);
-			queryParams.add("paramData", CherryAESCoder.encrypt(CherryUtil.map2Json(param),AESKEY));
-			String result = webResource.queryParams(queryParams).get(String.class);	
-			Map<String, Object> retMap = CherryUtil.json2Map(result);
-			if(retMap.get("ERRORCODE").toString().equals("0")){
-				//执行成功
-				if(retMap.containsKey("ResultContent")){
-					// 返回结果为多条数据的
-					String encryptResult = CherryAESCoder.decrypt(retMap.get("ResultContent").toString(),AESKEY);
-					retMap.put("ResultContent", CherryUtil.json2ArryList(encryptResult));
-				}else if(retMap.containsKey("ResultString")){
-					// 返回结果为字符串的 
-					String encryptResult = CherryAESCoder.decrypt(retMap.get("ResultString").toString(),AESKEY);
-					retMap.put("ResultString", encryptResult);
-				}else if(retMap.containsKey("ResultMap")){
-					// 返回结果为Map的
-					String encryptResult = CherryAESCoder.decrypt(retMap.get("ResultMap").toString(),AESKEY);
-					retMap.put("ResultMap", CherryUtil.json2Map(encryptResult));
-				}
-			}
-			return retMap;
-		} catch (Exception e) {
-			logger.error("Webservice ERROR",e);
-			Map<String, Object> retMap = new HashMap<String, Object>();
-			retMap.put("ERRORCODE", "WSE9999");
-			retMap.put("ERRORMSG", "处理过程中发生未知异常");
-			return retMap;
-		} catch (Throwable t) {
-			logger.error("Webservice ERROR",t);
-			Map<String, Object> retMap = new HashMap<String, Object>();
-			retMap.put("ERRORCODE", "WSE9999");
-			retMap.put("ERRORMSG", "处理过程中发生未知异常");
-			return retMap;
-		}
-	}
+
 	
 	/**
 	 * 访问WebService(访问Pekonws的WebService)
@@ -167,7 +104,6 @@ public class WebserviceClient {
     			retMap.put("ERRORMSG", "品牌" + brandCode + "的密钥缺失");
     			return retMap;
     		}
-//    		WebResource webResource = getWebResource(PropertiesUtil.pps.getProperty("PeknonWebServiceUrl"));
     		WebResource webResource = getWebResource(webServiceUrl);
     		//对传递的参数进行加密
     		MultivaluedMap<String, String> queryParams = new MultivaluedMapImpl();
@@ -225,7 +161,7 @@ public class WebserviceClient {
     			retMap.put("ERRORMSG", "品牌" + brandCode + "的密钥缺失");
     			return retMap;
     		}
-    		WebResource webResource = getWebResource(PropertiesUtil.pps.getProperty("CherryWebServiceUrl"));
+    		WebResource webResource = getWebResource(SystemConfigManager.getWebserviceConfigDTO("cherryws").getWebserviceURL());
     		//对传递的参数进行加密
     		MultivaluedMap<String, String> queryParams = new MultivaluedMapImpl();
     		queryParams.add("brandCode", brandCode);

@@ -1,5 +1,6 @@
 package com.cherry.cm.core;
 
+import com.cherry.cm.util.CherryUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.InitializingBean;
@@ -9,16 +10,21 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * 系统的一些全局配置放置在这里，以减少SQL查询，提高效率
- * 比如每个发布的系统内的品牌的基本信息（组织代号，品牌代号，数据源等等）
+ * （1）每个发布的系统内的品牌的基本信息（组织代号，品牌代号，数据源等等）
+ * （2）全局的系统配置
+ * （3）
  * Created by dingyongchang on 2016/12/15.
  */
 public class SystemConfigManager implements InitializingBean {
     protected static final Logger logger = LoggerFactory.getLogger(SystemConfigManager.class);
 
     private static List<BrandInfoDTO> brandList = new ArrayList<BrandInfoDTO>();
+
+    private static ConcurrentHashMap<String,WebserviceConfigDTO> webserviceConfigAll = new ConcurrentHashMap<String,WebserviceConfigDTO>();
     @Resource
     private BaseConfServiceImpl baseConfServiceImpl;
 
@@ -27,6 +33,7 @@ public class SystemConfigManager implements InitializingBean {
 
     public  void afterPropertiesSet() throws Exception {
         try {
+            //获取各品牌基本信息
             Map<String, Object> paramMap = new HashMap<String, Object>();
             paramMap.put("ibatis_sql_id", "SystemInitialize.getBrandDataSourceConfigList");
             List<BrandInfoDTO> list = baseConfServiceImpl.getList(paramMap);
@@ -46,6 +53,23 @@ public class SystemConfigManager implements InitializingBean {
                 }
                 brandList.addAll(list);
             }
+
+            //获取webservice配置信息
+            paramMap.put("ibatis_sql_id", "SystemInitialize.getWebserviceConfigList");
+            List<WebserviceConfigDTO> wslist = baseConfServiceImpl.getList(paramMap);
+            if(null!=wslist) {
+                for (WebserviceConfigDTO dto : wslist) {
+                    if(!CherryUtil.isEmpty(dto.getExtensionConfig())){
+                        try {
+                            dto.setExtensionConfigMap(CherryUtil.json2Map(dto.getExtensionConfig()));
+                        }catch (Exception ex){
+                            logger.error("系统初始化，将webservice配置信息从JSON转换成map时发生异常："+dto.getExtensionConfig(), ex);
+                        }
+                    }
+                    webserviceConfigAll.put(dto.getBrandCode()+"_"+dto.getWebserviceIdentifier(),dto);
+                }
+            }
+
         } catch (Exception e) {
             logger.error("系统初始化，读取系统配置信息出现异常：", e);
             throw e;
@@ -113,5 +137,9 @@ public class SystemConfigManager implements InitializingBean {
         }
         logger.error("未查找到对应的品牌的配置信息duibaAppkey:"+duibaAppkey);
         return null;
+    }
+
+    public static WebserviceConfigDTO getWebserviceConfigDTO(String webserviceIdentifier){
+        return webserviceConfigAll.get("-9999_"+webserviceIdentifier);
     }
 }

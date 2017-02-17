@@ -15,7 +15,6 @@ package com.cherry.ot.yin.bl;
 import com.cherry.cm.batcmbussiness.interfaces.BINBECM01_IF;
 import com.cherry.cm.cmbussiness.bl.BINOLCM14_BL;
 import com.cherry.cm.cmbussiness.bl.BINOLCM15_BL;
-import com.cherry.cm.cmbussiness.bl.BINOLCM27_BL;
 import com.cherry.cm.core.*;
 import com.cherry.cm.util.CherryBatchUtil;
 import com.cherry.cm.util.ConvertUtil;
@@ -63,11 +62,7 @@ public class BINOTYIN14_BL {
 	/** 系统配置项 共通BL */
 	@Resource(name="binOLCM14_BL")
 	private BINOLCM14_BL binOLCM14_BL;
-	
-	/** 系统配置项 共通BL */
-	@Resource(name="binOLCM27_BL")
-	private BINOLCM27_BL binOLCM27_BL;
-	
+
 	@Resource(name="counterSynchro")
 	private CounterSynchro_IF counterSynchro;
 	

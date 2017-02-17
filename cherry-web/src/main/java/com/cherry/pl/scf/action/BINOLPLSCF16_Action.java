@@ -12,10 +12,6 @@
  */
 package com.cherry.pl.scf.action;
 
-import java.util.Map;
-
-import javax.annotation.Resource;
-
 import com.cherry.cm.cmbeans.UserInfo;
 import com.cherry.cm.cmbussiness.bl.BINOLCM27_BL;
 import com.cherry.cm.core.BaseAction;
@@ -23,6 +19,9 @@ import com.cherry.cm.core.CherryConstants;
 import com.cherry.cm.util.Bean2Map;
 import com.cherry.pl.scf.form.BINOLPLSCF16_Form;
 import com.opensymphony.xwork2.ModelDriven;
+
+import javax.annotation.Resource;
+import java.util.Map;
 
 /**
  * 会员索引管理画面Action
@@ -65,7 +64,7 @@ public class BINOLPLSCF16_Action extends BaseAction implements ModelDriven<BINOL
 			map.put(CherryConstants.BRAND_CODE, userInfo.getBrandCode());
 		}
 		// 添加会员索引数据
-		binOLCM27_BL.accessCherryWebService(CherryConstants.WS_MEMINFO, CherryConstants.WS_TYPE_POST, map);
+		//binOLCM27_BL.accessCherryWebService(CherryConstants.WS_MEMINFO, CherryConstants.WS_TYPE_POST, map);
 	}
 	
 	/**
@@ -87,7 +86,7 @@ public class BINOLPLSCF16_Action extends BaseAction implements ModelDriven<BINOL
 			map.put(CherryConstants.BRAND_CODE, userInfo.getBrandCode());
 		}
 		// 添加销售索引数据
-		binOLCM27_BL.accessCherryWebService(CherryConstants.WS_MEMSALEINFO, CherryConstants.WS_TYPE_POST, map);
+		//binOLCM27_BL.accessCherryWebService(CherryConstants.WS_MEMSALEINFO, CherryConstants.WS_TYPE_POST, map);
 	}
 	
 	/**
@@ -109,7 +108,7 @@ public class BINOLPLSCF16_Action extends BaseAction implements ModelDriven<BINOL
 			map.put(CherryConstants.BRAND_CODE, userInfo.getBrandCode());
 		}
 		// 更新全部会员索引数据
-		binOLCM27_BL.accessCherryWebService(CherryConstants.WS_MEMINFO, CherryConstants.WS_TYPE_PUT, map);
+		//binOLCM27_BL.accessCherryWebService(CherryConstants.WS_MEMINFO, CherryConstants.WS_TYPE_PUT, map);
 	}
 	
 	/**
@@ -131,7 +130,7 @@ public class BINOLPLSCF16_Action extends BaseAction implements ModelDriven<BINOL
 			map.put(CherryConstants.BRAND_CODE, userInfo.getBrandCode());
 		}
 		// 更新全部会员销售数据
-		binOLCM27_BL.accessCherryWebService(CherryConstants.WS_MEMSALEINFO, CherryConstants.WS_TYPE_PUT, map);
+		//binOLCM27_BL.accessCherryWebService(CherryConstants.WS_MEMSALEINFO, CherryConstants.WS_TYPE_PUT, map);
 	}
 	
 	/**  */

@@ -1,26 +1,9 @@
 package com.cherry.wp.sal.action;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-
-import javax.annotation.Resource;
-import javax.ws.rs.core.MultivaluedMap;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import com.cherry.cm.cmbeans.CounterInfo;
 import com.cherry.cm.cmbeans.UserInfo;
 import com.cherry.cm.cmbussiness.bl.BINOLCM27_BL;
-import com.cherry.cm.core.BaseAction;
-import com.cherry.cm.core.CherryAESCoder;
-import com.cherry.cm.core.CherryConstants;
-import com.cherry.cm.core.CherryException;
-import com.cherry.cm.core.CodeTable;
-import com.cherry.cm.core.PropertiesUtil;
-import com.cherry.cm.core.ThirdPartyConfig;
+import com.cherry.cm.core.*;
 import com.cherry.cm.util.CherryUtil;
 import com.cherry.cm.util.ConvertUtil;
 import com.cherry.mb.svc.interfaces.BINOLMBSVC02_IF;
@@ -30,6 +13,15 @@ import com.cherry.wp.sal.interfaces.BINOLWPSAL02_IF;
 import com.opensymphony.xwork2.ModelDriven;
 import com.sun.jersey.api.client.WebResource;
 import com.sun.jersey.core.util.MultivaluedMapImpl;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import javax.annotation.Resource;
+import javax.ws.rs.core.MultivaluedMap;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 public class BINOLWPSAL13_Action extends BaseAction implements ModelDriven<BINOLWPSAL13_Form> {
 
@@ -37,8 +29,9 @@ public class BINOLWPSAL13_Action extends BaseAction implements ModelDriven<BINOL
 	 * 
 	 */
 	static{
-		SavingscardWebServiceUrl = PropertiesUtil.pps.getProperty("SavingscardWebServiceUrl");
-		SavingscardAppID =PropertiesUtil.pps.getProperty("SavingscardAppID");
+		WebserviceConfigDTO wsconfigDTO = SystemConfigManager.getWebserviceConfigDTO("pekonws");
+		SavingscardWebServiceUrl = wsconfigDTO.getWebserviceURL();//PropertiesUtil.pps.getProperty("SavingscardWebServiceUrl");
+		SavingscardAppID = wsconfigDTO.getAppID();//PropertiesUtil.pps.getProperty("SavingscardAppID");
 	}
 	private static String SavingscardWebServiceUrl;
 	private static String SavingscardAppID;

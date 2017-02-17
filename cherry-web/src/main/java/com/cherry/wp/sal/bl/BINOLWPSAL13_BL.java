@@ -1,31 +1,28 @@
 package com.cherry.wp.sal.bl;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-
-import javax.annotation.Resource;
-import javax.ws.rs.core.MultivaluedMap;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import com.cherry.cm.cmbussiness.bl.BINOLCM27_BL;
-import com.cherry.cm.core.CherryAESCoder;
-import com.cherry.cm.core.PropertiesUtil;
-import com.cherry.cm.core.ThirdPartyConfig;
+import com.cherry.cm.core.*;
 import com.cherry.cm.util.CherryUtil;
 import com.cherry.cm.util.ConvertUtil;
 import com.cherry.wp.sal.action.BINOLWPSAL13_Action;
 import com.cherry.wp.sal.service.BINOLWPSAL13_Service;
 import com.sun.jersey.api.client.WebResource;
 import com.sun.jersey.core.util.MultivaluedMapImpl;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import javax.annotation.Resource;
+import javax.ws.rs.core.MultivaluedMap;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 public class BINOLWPSAL13_BL {
 	static{
-		SavingscardWebServiceUrl = PropertiesUtil.pps.getProperty("SavingscardWebServiceUrl");
-		SavingscardAppID =PropertiesUtil.pps.getProperty("SavingscardAppID");
+		WebserviceConfigDTO wsconfigDTO = SystemConfigManager.getWebserviceConfigDTO("pekonws");
+		SavingscardWebServiceUrl = wsconfigDTO.getWebserviceURL();//PropertiesUtil.pps.getProperty("SavingscardWebServiceUrl");
+		SavingscardAppID = wsconfigDTO.getAppID();//PropertiesUtil.pps.getProperty("SavingscardAppID");
 	}
 	private static String SavingscardWebServiceUrl;
 	private static String SavingscardAppID;

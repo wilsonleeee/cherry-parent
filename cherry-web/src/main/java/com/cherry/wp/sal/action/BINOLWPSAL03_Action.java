@@ -37,8 +37,9 @@ public class BINOLWPSAL03_Action extends BaseAction implements ModelDriven<BINOL
 	 *
 	 */
 	static{
-		SavingscardWebServiceUrl = PropertiesUtil.pps.getProperty("SavingscardWebServiceUrl");
-		SavingscardAppID =PropertiesUtil.pps.getProperty("SavingscardAppID");
+		WebserviceConfigDTO wsconfigDTO = SystemConfigManager.getWebserviceConfigDTO("pekonws");
+		SavingscardWebServiceUrl = wsconfigDTO.getWebserviceURL();//PropertiesUtil.pps.getProperty("SavingscardWebServiceUrl");
+		SavingscardAppID = wsconfigDTO.getAppID();//PropertiesUtil.pps.getProperty("SavingscardAppID");
 	}
 	private static String SavingscardWebServiceUrl;
 	private static String SavingscardAppID;

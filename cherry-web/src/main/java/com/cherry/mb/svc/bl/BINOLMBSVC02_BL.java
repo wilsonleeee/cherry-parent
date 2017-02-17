@@ -1,23 +1,9 @@
 package com.cherry.mb.svc.bl;
 
-import java.io.File;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-
-import javax.annotation.Resource;
-import javax.ws.rs.core.MultivaluedMap;
-
 import com.cherry.cm.cmbussiness.bl.BINOLCM14_BL;
 import com.cherry.cm.cmbussiness.bl.BINOLCM27_BL;
 import com.cherry.cm.cmbussiness.bl.BINOLCM37_BL;
-import com.cherry.cm.core.CherryAESCoder;
-import com.cherry.cm.core.CherryChecker;
-import com.cherry.cm.core.CherryConstants;
-import com.cherry.cm.core.CodeTable;
-import com.cherry.cm.core.PropertiesUtil;
-import com.cherry.cm.core.ThirdPartyConfig;
+import com.cherry.cm.core.*;
 import com.cherry.cm.util.CherryUtil;
 import com.cherry.cm.util.ConvertUtil;
 import com.cherry.mb.svc.interfaces.BINOLMBSVC02_1_IF;
@@ -26,12 +12,21 @@ import com.cherry.mb.svc.service.BINOLMBSVC02_Service;
 import com.sun.jersey.api.client.WebResource;
 import com.sun.jersey.core.util.MultivaluedMapImpl;
 
+import javax.annotation.Resource;
+import javax.ws.rs.core.MultivaluedMap;
+import java.io.File;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
 
 public class BINOLMBSVC02_BL implements BINOLMBSVC02_IF {
 	
 	static{
-		SavingscardWebServiceUrl = PropertiesUtil.pps.getProperty("SavingscardWebServiceUrl");
-		SavingscardAppID =PropertiesUtil.pps.getProperty("SavingscardAppID");
+		WebserviceConfigDTO wsconfigDTO = SystemConfigManager.getWebserviceConfigDTO("pekonws");
+		SavingscardWebServiceUrl = wsconfigDTO.getWebserviceURL();//PropertiesUtil.pps.getProperty("SavingscardWebServiceUrl");
+		SavingscardAppID = wsconfigDTO.getAppID();//PropertiesUtil.pps.getProperty("SavingscardAppID");
 	}
 	@Resource
 	private BINOLMBSVC02_Service binOLMBSVC02_Service;

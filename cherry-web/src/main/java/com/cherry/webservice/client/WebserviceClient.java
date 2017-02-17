@@ -104,7 +104,8 @@ public class WebserviceClient {
     			retMap.put("ERRORMSG", "品牌" + brandCode + "的密钥缺失");
     			return retMap;
     		}
-    		WebResource webResource = getWebResource(PropertiesUtil.pps.getProperty("BatchWebServiceUrl"));
+
+    		WebResource webResource = getWebResource(SystemConfigManager.getWebserviceConfigDTO("cherrybatchws").getWebserviceURL());
     		//对传递的参数进行加密
     		MultivaluedMap<String, String> queryParams = new MultivaluedMapImpl();
     		queryParams.add("brandCode", brandCode);
@@ -214,8 +215,9 @@ public class WebserviceClient {
     public static Map<String, Object> accessWeshopWebService(Map<String, Object> param) throws Exception{
     	try {
     		//http://weixin2.digitalwebon.cn:7802/weshop/index.php
-    		String AESKEY = PropertiesUtil.pps.getProperty("WeshopAESKEY");
-    		WebResource webResource = getWebResource(PropertiesUtil.pps.getProperty("WeshopWebServiceUrl"));
+			WebserviceConfigDTO wsdto = SystemConfigManager.getWebserviceConfigDTO("weshopws");
+    		String AESKEY = wsdto.getSecretKey();//PropertiesUtil.pps.getProperty("WeshopAESKEY");
+    		WebResource webResource = getWebResource(wsdto.getWebserviceURL());
     		//对传递的参数进行加密
     		MultivaluedMap<String, String> queryParams = new MultivaluedMapImpl();
     		queryParams.add("paramData", CherryAESCoder.encrypt(CherryUtil.map2Json(param),AESKEY));
@@ -263,12 +265,13 @@ public class WebserviceClient {
 	 */
 	public static Map<String, Object> accessWeshopWebService(Map<String, Object> param, String url, String aesKey) throws Exception{
 		try {
-			String AESKEY = PropertiesUtil.pps.getProperty("WeshopAESKEY");
+			WebserviceConfigDTO wsdto = SystemConfigManager.getWebserviceConfigDTO("weshopws");
+			String AESKEY = wsdto.getSecretKey();
 			if(!CherryChecker.isNullOrEmpty(aesKey)) {
 				AESKEY = aesKey;
 			}
 
-			String webResourceUrl = PropertiesUtil.pps.getProperty("WeshopWebServiceUrl");
+			String webResourceUrl = wsdto.getWebserviceURL();
 			if(!CherryChecker.isNullOrEmpty(url)) {
 				webResourceUrl = url;
 			}

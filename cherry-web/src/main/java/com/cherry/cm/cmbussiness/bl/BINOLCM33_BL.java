@@ -12,18 +12,6 @@
  */
 package com.cherry.cm.cmbussiness.bl;
 
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-
-import javax.annotation.Resource;
-
-import com.googlecode.jsonplugin.JSONUtil;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import com.cherry.cm.cmbussiness.service.BINOLCM33_Service;
 import com.cherry.cm.core.CherryChecker;
 import com.cherry.cm.core.CherryConstants;
@@ -31,6 +19,12 @@ import com.cherry.cm.core.CherrySecret;
 import com.cherry.cm.util.CherryUtil;
 import com.cherry.cm.util.ConvertUtil;
 import com.cherry.cm.util.DateUtil;
+import com.googlecode.jsonplugin.JSONUtil;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import javax.annotation.Resource;
+import java.util.*;
 
 /**
  * 会员检索画面共通BL
@@ -1205,26 +1199,26 @@ public class BINOLCM33_BL {
 			this.setCondition(paramMap);
 			String orgId = paramMap.get(CherryConstants.ORGANIZATIONINFOID).toString();
 			String brandId = paramMap.get(CherryConstants.BRANDINFOID).toString();
-			// 使用LUCENE索引查询的场合
+			// 使用LUCENE索引查询的场合 已经不再使用
 			if(binOLCM14_BL.isConfigOpen("1071", orgId, brandId)) {
-				logger.debug("Lucene search");
-				// 查询会员信息
-				resultMap = binOLCM27_BL.accessCherryWebService(CherryConstants.WS_MEMINFO, CherryConstants.WS_TYPE_GET, paramMap);
-				if(resultMap != null) {
-					List<Map<String, Object>> memberInfoList = (List)resultMap.get("list");
-					if(memberInfoList != null && !memberInfoList.isEmpty()) {
-						// 查询会员等级信息List
-						List<Map<String, Object>> memLevelInfoList = binOLCM33_Service.getMemberLevelInfoList(paramMap);
-						if(memLevelInfoList != null && !memLevelInfoList.isEmpty()) {
-							for(Map<String, Object> memberInfo : memberInfoList) {
-								String memLevelId = (String)memberInfo.get("memLevelId");
-								if(memLevelId != null && !"".equals(memLevelId)) {
-									memberInfo.put("levelName", getMemLevelName(memLevelId, memLevelInfoList));
-								}
-							}
-						}
-					}
-				}
+//				logger.debug("Lucene search");
+//				// 查询会员信息
+//				resultMap = binOLCM27_BL.accessCherryWebService(CherryConstants.WS_MEMINFO, CherryConstants.WS_TYPE_GET, paramMap);
+//				if(resultMap != null) {
+//					List<Map<String, Object>> memberInfoList = (List)resultMap.get("list");
+//					if(memberInfoList != null && !memberInfoList.isEmpty()) {
+//						// 查询会员等级信息List
+//						List<Map<String, Object>> memLevelInfoList = binOLCM33_Service.getMemberLevelInfoList(paramMap);
+//						if(memLevelInfoList != null && !memLevelInfoList.isEmpty()) {
+//							for(Map<String, Object> memberInfo : memberInfoList) {
+//								String memLevelId = (String)memberInfo.get("memLevelId");
+//								if(memLevelId != null && !"".equals(memLevelId)) {
+//									memberInfo.put("levelName", getMemLevelName(memLevelId, memLevelInfoList));
+//								}
+//							}
+//						}
+//					}
+//				}
 			} else {// 使用数据库查询的场合
 				logger.debug("Database search");
 				int count = 0;
@@ -1480,7 +1474,7 @@ public class BINOLCM33_BL {
 		// 会员搜索条件设定
 		this.setCondition(paramMap);
 		// 查询会员信息
-		Map<String, Object> resultMap = binOLCM27_BL.accessCherryWebService(CherryConstants.WS_MEMINFO, CherryConstants.WS_TYPE_GET, paramMap);
+		Map<String, Object> resultMap = null;//binOLCM27_BL.accessCherryWebService(CherryConstants.WS_MEMINFO, CherryConstants.WS_TYPE_GET, paramMap);
 		if(resultMap != null) {
 			List<Map<String, Object>> memberInfoList = (List)resultMap.get("list");
 			if(memberInfoList != null && !memberInfoList.isEmpty()) {
@@ -1508,7 +1502,7 @@ public class BINOLCM33_BL {
 	public Map<String, Object> searchMemSaleByLuceneList(Map<String, Object> map) {
 		
 		// 查询会员销售信息
-		Map<String, Object> resultMap = binOLCM27_BL.accessCherryWebService(CherryConstants.WS_MEMSALEINFO, CherryConstants.WS_TYPE_GET, map);
+		Map<String, Object> resultMap = null; //binOLCM27_BL.accessCherryWebService(CherryConstants.WS_MEMSALEINFO, CherryConstants.WS_TYPE_GET, map);
 		if(resultMap != null) {
 			List<Map<String, Object>> memSaleList = (List)resultMap.get("list");
 			if(memSaleList != null && !memSaleList.isEmpty()) {

@@ -1,28 +1,24 @@
 package com.cherry.mb.svc.bl;
 
+import com.cherry.cm.cmbussiness.bl.BINOLCM27_BL;
+import com.cherry.cm.core.*;
+import com.cherry.cm.util.CherryUtil;
+import com.cherry.cm.util.ConvertUtil;
+import com.cherry.mb.svc.interfaces.BINOLMBSVC03_IF;
+import com.sun.jersey.api.client.WebResource;
+import com.sun.jersey.core.util.MultivaluedMapImpl;
+
+import javax.annotation.Resource;
+import javax.ws.rs.core.MultivaluedMap;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import javax.annotation.Resource;
-import javax.ws.rs.core.MultivaluedMap;
-
-
-
-import com.cherry.cm.cmbussiness.bl.BINOLCM27_BL;
-import com.cherry.cm.core.CherryAESCoder;
-import com.cherry.cm.core.PropertiesUtil;
-import com.cherry.cm.core.ThirdPartyConfig;
-import com.sun.jersey.api.client.WebResource;
-import com.sun.jersey.core.util.MultivaluedMapImpl;
-import com.cherry.cm.util.CherryUtil;
-import com.cherry.cm.util.ConvertUtil;
-import com.cherry.mb.svc.interfaces.BINOLMBSVC03_IF;
-
 public class BINOLMBSVC03_BL implements BINOLMBSVC03_IF{
 	static{
-		SavingscardWebServiceUrl = PropertiesUtil.pps.getProperty("SavingscardWebServiceUrl");
-		SavingscardAppID =PropertiesUtil.pps.getProperty("SavingscardAppID");
+		WebserviceConfigDTO wsconfigDTO = SystemConfigManager.getWebserviceConfigDTO("pekonws");
+		SavingscardWebServiceUrl = wsconfigDTO.getWebserviceURL();//PropertiesUtil.pps.getProperty("SavingscardWebServiceUrl");
+		SavingscardAppID = wsconfigDTO.getAppID();//PropertiesUtil.pps.getProperty("SavingscardAppID");
 	}
 	private static String SavingscardWebServiceUrl;
 	private static String SavingscardAppID;

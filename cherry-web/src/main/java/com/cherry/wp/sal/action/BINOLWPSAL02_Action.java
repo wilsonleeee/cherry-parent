@@ -1,30 +1,25 @@
 package com.cherry.wp.sal.action;
 
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-
-import javax.annotation.Resource;
-
-import com.cherry.cm.core.PropertiesUtil;
-import com.cherry.webservice.client.WebserviceClient;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import com.cherry.cm.cmbeans.CounterInfo;
 import com.cherry.cm.cmbeans.UserInfo;
 import com.cherry.cm.cmbussiness.bl.BINOLCM03_BL;
 import com.cherry.cm.cmbussiness.bl.BINOLCM14_BL;
-import com.cherry.cm.core.BaseAction;
-import com.cherry.cm.core.CherryConstants;
-import com.cherry.cm.core.CherryException;
+import com.cherry.cm.core.*;
 import com.cherry.cm.util.CherryUtil;
 import com.cherry.cm.util.ConvertUtil;
 import com.cherry.cm.util.DateUtil;
+import com.cherry.webservice.client.WebserviceClient;
 import com.cherry.wp.common.interfaces.BINOLWPCM01_IF;
 import com.cherry.wp.sal.form.BINOLWPSAL02_Form;
 import com.cherry.wp.sal.interfaces.BINOLWPSAL02_IF;
 import com.opensymphony.xwork2.ModelDriven;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import javax.annotation.Resource;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 public class BINOLWPSAL02_Action extends BaseAction implements ModelDriven<BINOLWPSAL02_Form>{
 	/**
@@ -483,8 +478,9 @@ public class BINOLWPSAL02_Action extends BaseAction implements ModelDriven<BINOL
 		if("1".equals(isExecuteLimitPlan)){
 			//如果是否启用柜台积分计划配置项为"1"（是）,则获取柜台的积分额度信息
 			Map<String,Object> pekonParamMap = new HashMap<String,Object>();
-			String url = PropertiesUtil.pps.getProperty("PekonWebServiceUrl");
-			String appID = PropertiesUtil.pps.getProperty("PekonWebServiceAppId");
+			WebserviceConfigDTO wsconfigDTO = SystemConfigManager.getWebserviceConfigDTO("pekonws");
+			String url = wsconfigDTO.getWebserviceURL();
+			String appID = wsconfigDTO.getAppID();
 			String tradeType = "GetCounterCurrentPoint";
 			String brandCode = userInfo.getBrandCode();//"AVENE";//
 

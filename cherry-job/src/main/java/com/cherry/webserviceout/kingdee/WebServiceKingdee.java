@@ -1,13 +1,8 @@
 package com.cherry.webserviceout.kingdee;
 
-import com.cherry.cm.cmbussiness.bl.BINOLCM27_BL;
-import com.sun.jersey.api.client.WebResource;
-import com.sun.jersey.core.util.MultivaluedMapImpl;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.annotation.Resource;
-import javax.ws.rs.core.MultivaluedMap;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Random;
@@ -19,10 +14,6 @@ import java.util.Random;
  * 韩束品牌已经结束服务，不再使用
  */
 public class WebServiceKingdee {
-
-	/** 系统配置项 共通BL */
-	@Resource(name="binOLCM27_BL")
-	private BINOLCM27_BL binOLCM27_BL;
 
 //	@Resource(name = "webserviceDataSource")
 //	private WebserviceDataSource webserviceDataSource;
@@ -310,17 +301,17 @@ public class WebServiceKingdee {
     public String doGet(String url)
     {
     	String result = null;
-        try
-        {
-            String serviceAddress = url;
-            WebResource webResource = binOLCM27_BL.getWebResource(serviceAddress);
-            MultivaluedMap<String, String> queryParams = new MultivaluedMapImpl();
-            result = webResource.queryParams(queryParams).get(String.class);
-        }
-        catch(Exception e)
-        {
-           logger.error(e.getMessage(),e);
-        }
+//        try
+//        {
+//            String serviceAddress = url;
+//            WebResource webResource = binOLCM27_BL.getWebResource(serviceAddress);
+//            MultivaluedMap<String, String> queryParams = new MultivaluedMapImpl();
+//            result = webResource.queryParams(queryParams).get(String.class);
+//        }
+//        catch(Exception e)
+//        {
+//           logger.error(e.getMessage(),e);
+//        }
         
         return result;
     }

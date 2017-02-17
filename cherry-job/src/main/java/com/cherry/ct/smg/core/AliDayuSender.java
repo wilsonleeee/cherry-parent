@@ -12,18 +12,15 @@
  */
 package com.cherry.ct.smg.core;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-import com.cherry.cm.core.CherryBatchConstants;
-import com.cherry.cm.core.CherryChecker;
-import com.cherry.cm.core.PropertiesUtil;
+import com.cherry.cm.core.*;
 import com.cherry.ct.smg.dto.SendResult;
 import com.cherry.ct.smg.interfaces.SmsNeedTempCodeSender;
 import com.taobao.api.DefaultTaobaoClient;
 import com.taobao.api.TaobaoClient;
 import com.taobao.api.request.AlibabaAliqinFcSmsNumSendRequest;
 import com.taobao.api.response.AlibabaAliqinFcSmsNumSendResponse;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * 阿里大鱼短信供应商
@@ -53,9 +50,10 @@ public class AliDayuSender implements SmsNeedTempCodeSender{
 	private static TaobaoClient createTaobaoClient() {
 		if (null == client) {
 			try {
-				client = new DefaultTaobaoClient(PropertiesUtil.pps.getProperty("DayuUrl"),
-				PropertiesUtil.pps.getProperty("DayuAppkey"), 
-				PropertiesUtil.pps.getProperty("DayuSecret"));
+				WebserviceConfigDTO dto = SystemConfigManager.getWebserviceConfigDTO("dayuduanxin");
+				client = new DefaultTaobaoClient(dto.getWebserviceURL(),
+						dto.getAppID(),
+						dto.getAppSecret());
 			} catch (Exception e) {
 				logger.error("创建短信客户端失败：" + e.getMessage(),e);
 			}
@@ -69,7 +67,7 @@ public class AliDayuSender implements SmsNeedTempCodeSender{
 	 * @param phones 手机号码，多个号码英文逗号分隔
 	 * @param signName 短信签名
 	 * @param templateCode 模板编号
-	 * @param Params 模板里的内容
+	 * @param params 模板里的内容
 	 * 
 	 * @return SendResult 短信发送结果
 	 * 
