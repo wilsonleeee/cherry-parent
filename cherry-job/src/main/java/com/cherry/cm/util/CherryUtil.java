@@ -106,6 +106,23 @@ public class CherryUtil {
 	}
 
 	/**
+	 * 检测指定对象是否为null或者空字符串 如果对象为null或空字符串则返回true，否则返回false
+	 *
+	 * @param value
+	 *            待检测的对象
+	 * @param trim
+	 *            可选参数，是否对要检查的string先做trim处理
+	 * @return
+	 */
+	public static boolean isEmpty(String value, boolean... trim) {
+		if(trim.length > 0 && trim[0] == true){
+			return value == null || value.trim().length() == 0;
+		}else{
+			return value == null || value.length() == 0;
+		}
+	}
+
+	/**
 	 * 取得系统的当前时间，并以指定的格式返回字符串
 	 * 
 	 * @param format

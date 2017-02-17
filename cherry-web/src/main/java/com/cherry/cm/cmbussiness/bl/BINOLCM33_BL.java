@@ -39,11 +39,7 @@ public class BINOLCM33_BL {
 	/** 会员检索画面共通Service **/
 	@Resource
 	private BINOLCM33_Service binOLCM33_Service;
-	
-	/** 访问WebService共通BL **/
-	@Resource
-	private BINOLCM27_BL binOLCM27_BL;
-	
+
 	/** 系统配置项 共通BL */
 	@Resource
 	private BINOLCM14_BL binOLCM14_BL;

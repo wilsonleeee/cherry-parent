@@ -13,14 +13,12 @@
 package com.cherry.pl.scf.action;
 
 import com.cherry.cm.cmbeans.UserInfo;
-import com.cherry.cm.cmbussiness.bl.BINOLCM27_BL;
 import com.cherry.cm.core.BaseAction;
 import com.cherry.cm.core.CherryConstants;
 import com.cherry.cm.util.Bean2Map;
 import com.cherry.pl.scf.form.BINOLPLSCF16_Form;
 import com.opensymphony.xwork2.ModelDriven;
 
-import javax.annotation.Resource;
 import java.util.Map;
 
 /**
@@ -32,11 +30,7 @@ import java.util.Map;
 public class BINOLPLSCF16_Action extends BaseAction implements ModelDriven<BINOLPLSCF16_Form> {
 
 	private static final long serialVersionUID = 17422651204023418L;
-	
-	/** 访问WebService共通BL **/
-	@Resource
-	private BINOLCM27_BL binOLCM27_BL;
-	
+
 	/**
 	 * 会员索引管理画面初期化
 	 */

@@ -13,24 +13,19 @@
 
 package com.cherry.bs.cnt.bl;
 
+import com.cherry.bs.cnt.service.BINOLBSCNT04_Service;
+import com.cherry.bs.cnt.service.BINOLBSCNT05_Service;
+import com.cherry.cm.cmbussiness.bl.BINOLCM14_BL;
+import com.cherry.cm.cmbussiness.bl.BINOLCM15_BL;
+import com.cherry.cm.core.CherryConstants;
+import com.cherry.cm.util.ConvertUtil;
+import com.cherry.synchro.bs.bl.CounterSynchro;
+
+import javax.annotation.Resource;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-
-import javax.annotation.Resource;
-
-import com.cherry.bs.cnt.service.BINOLBSCNT04_Service;
-import com.cherry.bs.cnt.service.BINOLBSCNT05_Service;
-import com.cherry.bs.common.bl.BINOLBSCOM01_BL;
-import com.cherry.cm.activemq.interfaces.BINOLMQCOM01_IF;
-import com.cherry.cm.cmbussiness.bl.BINOLCM14_BL;
-import com.cherry.cm.cmbussiness.bl.BINOLCM15_BL;
-import com.cherry.cm.cmbussiness.bl.BINOLCM27_BL;
-import com.cherry.cm.core.CherryConstants;
-import com.cherry.cm.util.ConvertUtil;
-import com.cherry.pt.jcs.service.BINOLPTJCS04_Service;
-import com.cherry.synchro.bs.bl.CounterSynchro;
 
 /**
  * 
@@ -51,21 +46,7 @@ public class BINOLBSCNT05_BL {
 	/** 创建柜台画面Service */
 	@Resource
 	private BINOLBSCNT04_Service binOLBSCNT04_Service;
-	
-	@Resource
-	private BINOLPTJCS04_Service binOLPTJCS04_Service;
-	
-	@Resource
-	private BINOLBSCOM01_BL binOLBSCOM01_BL;
-	
-	/** 发送MQ消息共通处理 IF */
-	@Resource
-	private BINOLMQCOM01_IF binOLMQCOM01_BL;
-	
-	/**WebService 共通BL*/
-	@Resource
-	private BINOLCM27_BL binOLCM27_BL;
-	
+
 	/** 系统配置项 共通BL */
 	@Resource
 	private BINOLCM14_BL binOLCM14_BL;

@@ -13,18 +13,6 @@
 
 package com.cherry.bs.cnt.bl;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-
-import javax.annotation.Resource;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.cache.annotation.CacheEvict;
-
 import com.cherry.bs.cnt.service.BINOLBSCNT03_Service;
 import com.cherry.bs.cnt.service.BINOLBSCNT04_Service;
 import com.cherry.bs.common.bl.BINOLBSCOM01_BL;
@@ -38,17 +26,21 @@ import com.cherry.cm.activemq.interfaces.BINOLMQCOM01_IF;
 import com.cherry.cm.cmbeans.UserInfo;
 import com.cherry.cm.cmbussiness.bl.BINOLCM03_BL;
 import com.cherry.cm.cmbussiness.bl.BINOLCM14_BL;
-import com.cherry.cm.cmbussiness.bl.BINOLCM27_BL;
 import com.cherry.cm.core.CherryConstants;
 import com.cherry.cm.core.CherryException;
 import com.cherry.cm.mongo.MongoDB;
-import com.cherry.cm.util.CherryUtil;
 import com.cherry.cm.util.ConvertUtil;
 import com.cherry.cm.util.DateUtil;
 import com.cherry.synchro.bs.interfaces.CounterSynchro_IF;
 import com.googlecode.jsonplugin.JSONUtil;
 import com.mongodb.BasicDBObject;
 import com.mongodb.DBObject;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.cache.annotation.CacheEvict;
+
+import javax.annotation.Resource;
+import java.util.*;
 
 /**
  * 
@@ -97,11 +89,7 @@ public class BINOLBSCNT03_BL {
 	
 	@Resource(name="binOLBSCOM01_BL")
 	private BINOLBSCOM01_BL binOLBSCOM01_BL;
-	
-	/** WebService共通BL */
-	@Resource(name="binOLCM27_BL")
-	private BINOLCM27_BL binOLCM27_BL;
-	
+
 	/** MongoDB 用户关注管辖部门履历表 **/
 	public static final String MGO_DEPART_PRIVILEGE_LOG_NAME = "MGO_DepartPrivilegeLog";
 	
