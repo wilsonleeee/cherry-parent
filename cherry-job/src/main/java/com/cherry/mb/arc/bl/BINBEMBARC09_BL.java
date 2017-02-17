@@ -72,7 +72,7 @@ public class BINBEMBARC09_BL {
         map.put("sysTime",CherryUtil.getSysDateTime(DateUtil.DATETIME_PATTERN));
         //如果当前时间不存在未执行的规则，则返回
         Map<String,Object> ruleMap = binBEMBARC09_Service.getMemCompleteRuleValid(map);
-        if (StringUtils.isEmpty(ruleMap)){
+        if (ruleMap == null || ruleMap.isEmpty()){
             logger.info("完善度规则未开始");
             return flag;
         }
@@ -86,6 +86,10 @@ public class BINBEMBARC09_BL {
         String brandInfoId = ConvertUtil.getString(map.get("brandInfoId"));
         //根据系统配置项的入会时间确定会员
         String minJoinDate = binOLCM14_BL.getConfigValue("1402", organizationInfoId, brandInfoId);
+        if (StringUtils.isEmpty(minJoinDate)){
+            logger.info("完善度规则未配置入会时间限定");
+            return flag;
+        }
         map.put("minJoinDate",minJoinDate);
         Map<String,Object> ruleInfo_map = binOLCM31_BL.getMemCompleteRule(organizationInfoId,brandInfoId);
         Map<String,Object> memIdMaxMap = binBEMBARC09_Service.getMemIdMax(map);

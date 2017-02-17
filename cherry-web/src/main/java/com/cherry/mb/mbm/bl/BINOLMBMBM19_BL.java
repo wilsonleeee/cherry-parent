@@ -4,6 +4,7 @@ import com.cherry.cm.cmbussiness.bl.BINOLCM03_BL;
 import com.cherry.cm.cmbussiness.bl.BINOLCM08_BL;
 import com.cherry.cm.cmbussiness.bl.BINOLCM14_BL;
 import com.cherry.cm.core.*;
+import com.cherry.cm.util.CherryUtil;
 import com.cherry.cm.util.ConvertUtil;
 import com.cherry.cm.util.PropertiesUtil;
 import com.cherry.mb.common.MembersConstants;
@@ -787,7 +788,10 @@ public class BINOLMBMBM19_BL {
 							sucMap.put("errorFlag", "error");
 							binOLMBMBM19_Service.updateMemImportDetail(sucMap);
 						}else{
-							Map<String, Object> addMap = addMemberFlag(sucMap);
+							Map<String, Object> tempAddMap = new HashMap<String, Object>();
+							tempAddMap.putAll(sucMap);
+							tempAddMap = CherryUtil.removeEmptyVal(tempAddMap);
+							Map<String, Object> addMap = addMemberFlag(tempAddMap);
 							// -------------  会员新增异常处理 ---------------- //
 							String addFlag = ConvertUtil.getString(addMap
 									.get("addFlag"));
@@ -992,7 +996,10 @@ public class BINOLMBMBM19_BL {
 								int memberInfoId = ConvertUtil.getInt(memberInfoMap.get("memberInfoId"));
 								if(memberInfoId> 0 ){
 									sucMap.put("memberInfoId", memberInfoId);
-									Map<String, Object> updMap = updateMemberFlag(sucMap);
+									Map<String, Object> tempEditMap = new HashMap<String, Object>();
+									tempEditMap.putAll(sucMap);
+									tempEditMap = CherryUtil.removeEmptyVal(tempEditMap);
+									Map<String, Object> updMap = updateMemberFlag(tempEditMap);
 									// -------------  会员更新异常处理 ---------------- //
 									String updFlag = ConvertUtil.getString(updMap
 											.get("updFlag"));

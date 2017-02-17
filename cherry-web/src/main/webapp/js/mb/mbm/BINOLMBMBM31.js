@@ -153,7 +153,7 @@ BINOLMBMBM31.prototype = {
        BINOLMBMBM31_code++;
     },
     "isPositiveNum":function(s) {//是否为大于等于0的正整数
-        var re = /^[1-9]\d*|0$/ ;
+        var re = /^(0|[1-9]\d*)$/ ;
         return re.test(s)
     },
     "savePaper" : function (){
