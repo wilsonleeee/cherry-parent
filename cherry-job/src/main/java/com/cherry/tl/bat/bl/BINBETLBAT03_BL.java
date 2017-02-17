@@ -12,14 +12,13 @@
  */
 package com.cherry.tl.bat.bl;
 
-import java.util.Map;
-
-import javax.annotation.Resource;
-
 import com.cherry.cm.core.BatchLoggerDTO;
 import com.cherry.cm.core.CherryBatchConstants;
 import com.cherry.cm.core.CherryBatchLogger;
 import com.cherry.tl.bat.service.BINBETLBAT03_Service;
+
+import javax.annotation.Resource;
+import java.util.Map;
 
 /**
  * 
@@ -64,9 +63,9 @@ public class BINBETLBAT03_BL {
 			if(binBETLBAT03_Service.getBussinessDate(map)!=null){
 
 				//表示当前业务日期和当前系统日期都是今天，此时不允许更新业务日期（业务日期当前不能当天）
-				if(busDateBef.equals(controlDate)){
-					return flag;
-				}
+//				if(busDateBef.equals(controlDate)){
+//					return flag;
+//				}
 				
 				// 取得更新前更新次数
 				if(binBETLBAT03_Service.getModifyCount(map)!=null){
