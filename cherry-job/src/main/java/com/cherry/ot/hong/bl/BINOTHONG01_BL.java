@@ -26,6 +26,7 @@ import java.util.Map;
 import javax.annotation.Resource;
 import javax.ws.rs.core.MultivaluedMap;
 
+import com.cherry.cm.core.*;
 import org.apache.axis.encoding.Base64;
 
 import com.cherry.cm.batcmbussiness.interfaces.BINBECM01_IF;
@@ -34,15 +35,6 @@ import com.cherry.cm.cmbussiness.bl.BINOLCM14_BL;
 import com.cherry.cm.cmbussiness.bl.BINOLCM15_BL;
 import com.cherry.cm.cmbussiness.bl.BINOLCM18_BL;
 import com.cherry.cm.cmbussiness.bl.BINOLCM60_BL;
-import com.cherry.cm.core.BatchExceptionDTO;
-import com.cherry.cm.core.BatchLoggerDTO;
-import com.cherry.cm.core.CherryBatchConstants;
-import com.cherry.cm.core.CherryBatchException;
-import com.cherry.cm.core.CherryBatchLogger;
-import com.cherry.cm.core.CherryBatchSecret;
-import com.cherry.cm.core.CherryConstants;
-import com.cherry.cm.core.CherryMD5Coder;
-import com.cherry.cm.core.PropertiesUtil;
 import com.cherry.cm.util.CherryBatchUtil;
 import com.cherry.cm.util.CherryUtil;
 import com.cherry.cm.util.ConvertUtil;
@@ -57,6 +49,8 @@ import com.cherry.webservice.sale.bl.SaleInfoLogic;
 import com.cherry.webservice.sale.service.SaleInfoService;
 import com.sun.jersey.api.client.WebResource;
 import com.sun.jersey.core.util.MultivaluedMapImpl;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * 
@@ -69,6 +63,8 @@ import com.sun.jersey.core.util.MultivaluedMapImpl;
 public class BINOTHONG01_BL implements BINOTHONG01_IF{
 
     private static CherryBatchLogger logger = new CherryBatchLogger(BINOTHONG01_BL.class);
+
+	private static Logger loggerNew = LoggerFactory.getLogger(BINOTHONG01_BL.class.getName());
     
     @Resource(name="saleInfoLogic")
     private SaleInfoLogic saleInfoLogic;
@@ -151,7 +147,7 @@ public class BINOTHONG01_BL implements BINOTHONG01_IF{
 	}
     /**
      * 查询该订单收货人的会员信息
-     * @param paramMap
+     * @param
      * @return Map:该订单的会员信息【收货人不是会员时生成会员信息，注：生成会员有两种方式，通过系统配置项1321来控制】
      * @throws Exception 
      */
@@ -1075,6 +1071,29 @@ public class BINOTHONG01_BL implements BINOTHONG01_IF{
             int timeStep = CherryUtil.obj2int(orderMainIFInfo.get("TimeStep"));
             String endTime = DateUtil.addDateByMinutes(DateUtil.DATETIME_PATTERN,startTime, timeStep);
             String sysDateTime = CherryUtil.getSysDateTime(DateUtil.DATETIME_PATTERN);
+
+			// 接口信息表中的配置信息
+			String extJsonString = ConvertUtil.getString(orderMainIFInfo.get("ExtJson"));
+			Map<String, Object> extJsonMap = null;
+			Object cutOffTime = null;
+			Object excludeShop = null;
+			if(!"".equals(extJsonString)) {
+				try {
+					extJsonMap = CherryUtil.json2Map(extJsonString);
+				} catch (Exception e) {
+					loggerNew.error("解析Tools.ESInterfaceInfo表中的ExtJson字段出现异常!");
+					return null;
+				}
+			}
+			if(null != extJsonMap && !extJsonMap.isEmpty()) {
+				cutOffTime = extJsonMap.get("CutOffTime");
+				if(!CherryChecker.checkDate(ConvertUtil.getString(cutOffTime),DateUtil.DATETIME_PATTERN)) {
+					loggerNew.error("ExtJson中的CutOffTime字段的格式应为yyyy-MM-dd hh:mm:ss");
+					return null;
+				}
+				excludeShop = extJsonMap.get("ExcludeShop");
+			}
+
             if(DateUtil.compareDate(endTime,sysDateTime )>0){
                 //控制截止时间不能超过当前服务器时间-1
                 endTime = DateUtil.addDateByMinutes(DateUtil.DATETIME_PATTERN, sysDateTime, -1);
@@ -1148,6 +1167,8 @@ public class BINOTHONG01_BL implements BINOTHONG01_IF{
             String format = "json";
             
             Map<String,Object> wsParam = new HashMap<String,Object>();
+			wsParam.put("cutOffTime",cutOffTime);
+			wsParam.put("excludeShop",excludeShop);
             wsParam.put("BIN_OrganizationInfoID", organizationInfoID);
             wsParam.put("BIN_BrandInfoID", brandInfoID);
             wsParam.put("BrandCode", paramMap.get(CherryBatchConstants.BRAND_CODE));
@@ -1174,7 +1195,7 @@ public class BINOTHONG01_BL implements BINOTHONG01_IF{
     
     /**
      * 分页调WebService取订单主数据
-     * @param paramMap
+     * @param
      * @return
      * @throws Exception
      */
@@ -1192,6 +1213,14 @@ public class BINOTHONG01_BL implements BINOTHONG01_IF{
         String endTime = ConvertUtil.getString(wsParam.get("endTime"));
         int pageNo = CherryUtil.obj2int(wsParam.get("pageNo"));
         int pageSize = CherryUtil.obj2int(wsParam.get("pageSize"));
+		// 需要忽略的订单下单时间的截止时间
+		String cutOffTime = ConvertUtil.getString(wsParam.get("cutOffTime"));
+		String excludeShop = ConvertUtil.getString(wsParam.get("excludeShop"));
+		// 需要忽略的订单的下单店铺名
+		String[] excludeShopList = {};
+		if(!"".equals(excludeShop)) {
+			excludeShopList = excludeShop.split(",");
+		}
         //取订单主数据
         WebResource webResource = WebserviceClient.getWebResource(url);
         MultivaluedMap<String, String> queryParams = new MultivaluedMapImpl();
@@ -1277,13 +1306,28 @@ public class BINOTHONG01_BL implements BINOTHONG01_IF{
                             erpOrder.put("BrandCode", wsParam.get("BrandCode"));
                             //下单时间
                             String orderDate = ConvertUtil.getString(erpOrder.get("orderDate"));
-                            SimpleDateFormat sdf = new SimpleDateFormat(CherryConstants.DATE_PATTERN_24_HOURS);
+							// 下单店铺
+							String shopName = ConvertUtil.getString(erpOrder.get("shopName"));
+							boolean excludeShopFlag = false;
+							for (int index = 0; index < excludeShopList.length; index++) {
+								if (shopName.equals(excludeShopList[index])) {
+									excludeShopFlag = true;
+									break;
+								}
+							}
+							SimpleDateFormat sdf = new SimpleDateFormat(CherryConstants.DATE_PATTERN_24_HOURS);
                             Date orderDateTime = sdf.parse(orderDate);
                             if(DateUtil.compareDate(sdf.format(orderDateTime), "2014-10-01 00:00:00") < 0){
                                 //不处理2014年10月01日前的数据
                                 continue;
                             }
-                            orderDetailParam.put("TradeDateTime", orderDate);
+							// 指定店铺(未指定则认为所有店铺都需要排除),在指定截止时间(未指定时间,则不舍弃数据)之后的数据直接舍弃
+							if ((excludeShopList.length == 0 || excludeShopFlag)
+									&& !"".equals(cutOffTime)
+									&& DateUtil.compareDate(sdf.format(orderDateTime), cutOffTime) > 0) {
+								continue;
+							}
+							orderDetailParam.put("TradeDateTime", orderDate);
                             String orderNumber = ConvertUtil.getString(erpOrder.get("orderNumber"));
                             // 拼接获取订单明细的URL
                             billCodes.append("\"").append(orderNumber).append("\" ");
@@ -1999,7 +2043,7 @@ public class BINOTHONG01_BL implements BINOTHONG01_IF{
     
     /**
      * 转换销售MQ需要的数据
-     * @param dataMap
+     * @param
      * @return
      * @throws ParseException 
      */
@@ -2164,7 +2208,7 @@ public class BINOTHONG01_BL implements BINOTHONG01_IF{
     
     /**
      * 转换销售MQ需要的数据
-     * @param dataMap
+     * @param
      * @return
      * @throws ParseException 
      */
@@ -2822,7 +2866,7 @@ public class BINOTHONG01_BL implements BINOTHONG01_IF{
     
     /**
      * 设置sign（取nick、method、format、timestamp各自的BASE64加起来的MD5值）
-     * @param queryParams
+     * @param
      * @throws Exception
      */
     private String getSign(String nick,String method,String format,String timestamp) throws Exception{
