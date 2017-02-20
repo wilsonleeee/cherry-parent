@@ -2174,6 +2174,8 @@ public class BINBEMQMES03_BL implements AnalyzeMemberMessage_IF {
 	 * @throws Exception
 	 */
 	public void updMemberExtInfo(Map<String, Object> memMap) throws Exception {
+		//pos发送MQ消息，key值映射
+		convertToDegreeeAttr(memMap);
 
 		//更新会员信息扩展表信息
 		int updateCount =binBEMQMES03_Service.updMemberExtInfo(memMap);
@@ -2193,6 +2195,20 @@ public class BINBEMQMES03_BL implements AnalyzeMemberMessage_IF {
 				updMemberInfoComplete(memMap);
 			}
 		}
+	}
+
+	/**
+	 * pos发送MQ消息，key值映射
+	 * @param map
+     */
+	private void convertToDegreeeAttr(Map<String,Object> map) {
+		map.put("mobilePhone", map.get("memMobile"));
+		map.put("telephone", map.get("memPhone"));
+		map.put("provinceId", map.get("provinceID"));
+		map.put("cityId", map.get("cityID"));
+		map.put("gender", map.get("genderCode"));
+		map.put("address", map.get("memAddress"));
+		map.put("email", map.get("memMail"));
 	}
 
 	/**

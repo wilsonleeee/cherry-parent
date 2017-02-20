@@ -190,7 +190,14 @@ public class BINOLMBMBM06_Service extends BaseService {
 	public int updMemberExtInfoMain(Map<String, Object> map) {
 		Map<String, Object> parameterMap = new HashMap<String, Object>();
 		parameterMap.putAll(map);
-		parameterMap.put(CherryConstants.IBATIS_SQL_ID, "BINOLMBMBM06.updMemberExtInfoMain");
+		//批量更新模式
+		String synMemMode = (String)map.get("synMemMode");
+		if(synMemMode != null && "1".equals(synMemMode)){//批量更新模式
+			parameterMap.put(CherryConstants.IBATIS_SQL_ID, "BINOLMBMBM06.batchUpdMemberExtInfoMain");
+		}else{
+			parameterMap.put(CherryConstants.IBATIS_SQL_ID, "BINOLMBMBM06.updMemberExtInfoMain");
+		}
+//		parameterMap.put(CherryConstants.IBATIS_SQL_ID, "BINOLMBMBM06.updMemberExtInfoMain");
 		return baseServiceImpl.update(parameterMap);
 	}
 	

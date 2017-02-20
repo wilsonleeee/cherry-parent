@@ -12,26 +12,24 @@
  */
 package com.cherry.mb.arc.bl;
 
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-
-import javax.annotation.Resource;
-
 import com.cherry.cm.cmbussiness.bl.BINOLCM14_BL;
+import com.cherry.cm.cmbussiness.interfaces.BINOLCM31_IF;
+import com.cherry.cm.core.BatchLoggerDTO;
+import com.cherry.cm.core.CherryBatchConstants;
+import com.cherry.cm.core.CherryBatchLogger;
+import com.cherry.cm.util.CherryBatchUtil;
 import com.cherry.cm.util.CherryUtil;
 import com.cherry.cm.util.ConvertUtil;
 import com.cherry.cm.util.DateUtil;
 import com.cherry.mb.arc.service.BINBEMBARC09_Service;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import com.cherry.cm.cmbussiness.interfaces.BINOLCM31_IF;
-import com.cherry.cm.core.BatchLoggerDTO;
-import com.cherry.cm.core.CherryBatchConstants;
-import com.cherry.cm.core.CherryBatchLogger;
-import com.cherry.cm.util.CherryBatchUtil;
 import org.springframework.util.StringUtils;
+
+import javax.annotation.Resource;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 /**
  * 计算会员完善度处理BL

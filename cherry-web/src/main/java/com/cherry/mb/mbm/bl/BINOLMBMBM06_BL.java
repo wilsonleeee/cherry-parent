@@ -611,12 +611,6 @@ public class BINOLMBMBM06_BL {
 				map.put("memInfoRegFlg", "0");
 			}
 
-			// 会员完善度信息填充
-			map.put("income", map.get("income") == null ? "" : map.get("income"));
-			map.put("returnVisit", map.get("returnVisit") == null ? "" : map.get("returnVisit"));
-			map.put("skinType", map.get("skinType") == null ? "" : map.get("skinType"));
-			map.put("profession", map.get("profession") == null ? "" : map.get("profession"));
-
 			// MQ形式和老后台同步会员信息的场合
 			if(synMemMode != null && "1".equals(synMemMode)) {
 				Map<String, Object> paramMap = new HashMap<String, Object>();
@@ -1241,6 +1235,26 @@ public class BINOLMBMBM06_BL {
 			map.put("channelCode", oldMemInfo.get("channelCode"));
 		}else if(cherryclear.equals(map.get("channelCode"))){
 			map.put("channelCode", CherryConstants.BLANK);
+		}
+		if(CherryChecker.isNullOrEmpty(map.get("returnVisit"))){
+			map.put("returnVisit", oldMemInfo.get("returnVisit"));
+		}else if(cherryclear.equals(map.get("returnVisit"))){
+			map.put("returnVisit", CherryConstants.BLANK);
+		}
+		if(CherryChecker.isNullOrEmpty(map.get("skinType"))){
+			map.put("skinType", oldMemInfo.get("skinType"));
+		}else if(cherryclear.equals(map.get("skinType"))){
+			map.put("skinType", CherryConstants.BLANK);
+		}
+		if(CherryChecker.isNullOrEmpty(map.get("profession"))){
+			map.put("profession", oldMemInfo.get("profession"));
+		}else if(cherryclear.equals(map.get("profession"))){
+			map.put("profession", CherryConstants.BLANK);
+		}
+		if(CherryChecker.isNullOrEmpty(map.get("income"))){
+			map.put("income", oldMemInfo.get("income"));
+		}else if(cherryclear.equals(map.get("income"))){
+			map.put("income", CherryConstants.BLANK);
 		}
 	}
 	

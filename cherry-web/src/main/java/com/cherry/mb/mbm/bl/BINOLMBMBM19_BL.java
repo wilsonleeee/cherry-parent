@@ -679,13 +679,13 @@ public class BINOLMBMBM19_BL {
 					}
 
 					//会员回访方式
-					String returnVisit = ConvertUtil.getString(sucMap.get("returnVisit"));
-					if(returnVisit != null && !"".equals(returnVisit)) {
+					String _returnVisit = ConvertUtil.getString(sucMap.get("returnVisit"));
+					if(_returnVisit != null && !"".equals(_returnVisit)) {
 						if(codeList3 != null && !codeList3.isEmpty()) {
 							for(int i = 0; i < codeList3.size(); i++) {
 								String codeKey = (String)codeList3.get(i).get("CodeKey");
 								String value = (String)codeList3.get(i).get("Value");
-								if(returnVisit.equals(value)) {
+								if(_returnVisit.equals(value)) {
 									sucMap.put("returnVisit", codeKey);
 									break;
 								}
@@ -694,13 +694,13 @@ public class BINOLMBMBM19_BL {
 					}
 
 					//肤质
-					String skinType = ConvertUtil.getString(sucMap.get("skinType"));
-					if(skinType != null && !"".equals(skinType)) {
+					String _skinType = ConvertUtil.getString(sucMap.get("skinType"));
+					if(_skinType != null && !"".equals(_skinType)) {
 						if(codeList4 != null && !codeList4.isEmpty()) {
 							for(int i = 0; i < codeList4.size(); i++) {
 								String codeKey = (String)codeList4.get(i).get("CodeKey");
 								String value = (String)codeList4.get(i).get("Value");
-								if(skinType.equals(value)) {
+								if(_skinType.equals(value)) {
 									sucMap.put("skinType", codeKey);
 									break;
 								}
@@ -709,13 +709,13 @@ public class BINOLMBMBM19_BL {
 					}
 
 					//职业
-					String profession = ConvertUtil.getString(sucMap.get("profession"));
-					if(profession != null && !"".equals(profession)) {
+					String _profession = ConvertUtil.getString(sucMap.get("profession"));
+					if(_profession != null && !"".equals(_profession)) {
 						if(codeList5 != null && !codeList5.isEmpty()) {
 							for(int i = 0; i < codeList5.size(); i++) {
 								String codeKey = (String)codeList5.get(i).get("CodeKey");
 								String value = (String)codeList5.get(i).get("Value");
-								if(profession.equals(value)) {
+								if(_profession.equals(value)) {
 									sucMap.put("profession", codeKey);
 									break;
 								}
@@ -724,13 +724,13 @@ public class BINOLMBMBM19_BL {
 					}
 
 					//收入
-					String income = ConvertUtil.getString(sucMap.get("income"));
-					if(income != null && !"".equals(income)) {
+					String _income = ConvertUtil.getString(sucMap.get("income"));
+					if(_income != null && !"".equals(_income)) {
 						if(codeList6 != null && !codeList6.isEmpty()) {
 							for(int i = 0; i < codeList6.size(); i++) {
 								String codeKey = (String)codeList6.get(i).get("CodeKey");
 								String value = (String)codeList6.get(i).get("Value");
-								if(income.equals(value)) {
+								if(_income.equals(value)) {
 									sucMap.put("income", codeKey);
 									break;
 								}
@@ -949,6 +949,30 @@ public class BINOLMBMBM19_BL {
 							sucMap.put("creditRating","");
 						}else if(creditRating.toLowerCase().equals(cherryclear)){
 							sucMap.put("creditRating", cherryclear);
+						}
+						String returnVisit = ConvertUtil.getString(sucMap.get("returnVisit"));
+						if(CherryChecker.isNullOrEmpty(returnVisit)){//会员回访方式
+							sucMap.put("returnVisit","");
+						}else if(returnVisit.toLowerCase().equals(cherryclear)){
+							sucMap.put("returnVisit", cherryclear);
+						}
+						String skinType = ConvertUtil.getString(sucMap.get("skinType"));
+						if(CherryChecker.isNullOrEmpty(skinType)){//会员信用等级字段
+							sucMap.put("skinType","");
+						}else if(skinType.toLowerCase().equals(cherryclear)){
+							sucMap.put("skinType", cherryclear);
+						}
+						String profession = ConvertUtil.getString(sucMap.get("profession"));
+						if(CherryChecker.isNullOrEmpty(profession)){//会员信用等级字段
+							sucMap.put("profession","");
+						}else if(profession.toLowerCase().equals(cherryclear)){
+							sucMap.put("profession", cherryclear);
+						}
+						String income = ConvertUtil.getString(sucMap.get("income"));
+						if(CherryChecker.isNullOrEmpty(income)){//会员信用等级字段
+							sucMap.put("income","");
+						}else if(income.toLowerCase().equals(cherryclear)){
+							sucMap.put("income", cherryclear);
 						}
 						sucMap.put("memCode", sucMap.get("memberCode"));
 						sucMap.put("memCodeOld", sucMap.get("memberCode"));
