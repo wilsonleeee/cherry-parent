@@ -1,12 +1,5 @@
 package com.cherry.mq.syn.bl;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-
-import javax.annotation.Resource;
-
 import com.cherry.cm.activemq.MessageSender;
 import com.cherry.cm.core.BatchLoggerDTO;
 import com.cherry.cm.core.CherryBatchConstants;
@@ -22,6 +15,14 @@ import com.cherry.mq.syn.service.BINBEMQSYN02_Service;
 import com.mongodb.BasicDBList;
 import com.mongodb.BasicDBObject;
 import com.mongodb.DBObject;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import javax.annotation.Resource;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 /**
  * MQ同步batch处理BL
@@ -42,7 +43,8 @@ public class BINBEMQSYN02_BL {
 	/** ActiveMQ消息发送类 */
 	@Resource
 	private MessageSender messageSender;
-	
+
+	private static Logger logger = LoggerFactory.getLogger(BINBEMQSYN02_BL.class.getName());
 	/**
 	 * MQ接收同步处理
 	 * 
@@ -70,6 +72,7 @@ public class BINBEMQSYN02_BL {
 			batchLoggerDTO.setCode("EMQ00037");
 			batchLoggerDTO.setLevel(CherryBatchConstants.LOGGER_ERROR);
 			cherryBatchLogger.BatchLogger(batchLoggerDTO,e);
+			logger.error("MQ同步异常：",e);
 		}
 		
 		map.put("sendOrRecePOS", CherryBatchConstants.SEND);
@@ -82,6 +85,7 @@ public class BINBEMQSYN02_BL {
 			binBEMQSYN02_Service.manualCommit();
 			binBEMQSYN02_Service.witManualCommit();
 		} catch (Exception e) {
+			logger.error("MQ同步异常：",e);
 			flag = CherryBatchConstants.BATCH_WARNING;
 			BatchLoggerDTO batchLoggerDTO = new BatchLoggerDTO();
 			// 把MQ日志更新成待处理状态时发生错误
@@ -106,6 +110,7 @@ public class BINBEMQSYN02_BL {
 					binBEMQSYN02_Service.deleteWitposMQLogS(cherryMQLogList);
 					binBEMQSYN02_Service.witManualCommit();
 				} catch (Exception e) {
+					logger.error("MQ同步异常：",e);
 					flag = CherryBatchConstants.BATCH_WARNING;
 					BatchLoggerDTO batchLoggerDTO = new BatchLoggerDTO();
 					// 删除MQ日志信息时发生错误
@@ -120,6 +125,7 @@ public class BINBEMQSYN02_BL {
 					binBEMQSYN02_Service.deleteCherryMQLogR(cherryMQLogList);
 					binBEMQSYN02_Service.manualCommit();
 				} catch (Exception e) {
+					logger.error("MQ同步异常：",e);
 					flag = CherryBatchConstants.BATCH_WARNING;
 					BatchLoggerDTO batchLoggerDTO = new BatchLoggerDTO();
 					// 删除MQ日志信息时发生错误
@@ -216,6 +222,7 @@ public class BINBEMQSYN02_BL {
 								continue;
 							}
 						} catch (Exception e) {
+							logger.error("MQ同步异常：",e);
 							BatchLoggerDTO batchLoggerDTO = new BatchLoggerDTO();
 							// 重新发送接收失败的MQ消息处理时发生异常
 							batchLoggerDTO.setCode("EMQ00010");
@@ -253,6 +260,7 @@ public class BINBEMQSYN02_BL {
 						binBEMQSYN02_Service.deleteWitposMQLogR(delWitMqLogList);
 						binBEMQSYN02_Service.witManualCommit();
 					} catch (Exception e) {
+						logger.error("MQ同步异常：",e);
 						flag = CherryBatchConstants.BATCH_WARNING;
 						BatchLoggerDTO batchLoggerDTO = new BatchLoggerDTO();
 						// 删除MQ日志信息时发生错误
@@ -268,6 +276,7 @@ public class BINBEMQSYN02_BL {
 					binBEMQSYN02_Service.updateWitReceiveFlag(witposMQLogList);
 					binBEMQSYN02_Service.witManualCommit();
 				} catch (Exception e) {
+					logger.error("MQ同步异常：",e);
 					flag = CherryBatchConstants.BATCH_WARNING;
 					BatchLoggerDTO batchLoggerDTO = new BatchLoggerDTO();
 					// 把POS品牌接收失败的MQ日志更新成未比对状态时发生错误
@@ -337,6 +346,7 @@ public class BINBEMQSYN02_BL {
 			binBEMQSYN02_Service.witManualCommit();
 			binBEMQSYN02_Service.manualCommit();
 		} catch (Exception e) {
+			logger.error("MQ同步异常：",e);
 			flag = CherryBatchConstants.BATCH_WARNING;
 			BatchLoggerDTO batchLoggerDTO = new BatchLoggerDTO();
 			// 把MQ日志更新成待处理状态时发生错误
@@ -360,6 +370,7 @@ public class BINBEMQSYN02_BL {
 					binBEMQSYN02_Service.deleteCherryMQLogS(witMQLogList);
 					binBEMQSYN02_Service.manualCommit();
 				} catch (Exception e) {
+					logger.error("MQ同步异常：",e);
 					flag = CherryBatchConstants.BATCH_WARNING;
 					BatchLoggerDTO batchLoggerDTO = new BatchLoggerDTO();
 					// 删除MQ日志信息时发生错误
@@ -373,6 +384,7 @@ public class BINBEMQSYN02_BL {
 					binBEMQSYN02_Service.deleteWitposMQLogR(witMQLogList);
 					binBEMQSYN02_Service.witManualCommit();
 				} catch (Exception e) {
+					logger.error("MQ同步异常：",e);
 					flag = CherryBatchConstants.BATCH_WARNING;
 					BatchLoggerDTO batchLoggerDTO = new BatchLoggerDTO();
 					// 删除MQ日志信息时发生错误
@@ -420,6 +432,7 @@ public class BINBEMQSYN02_BL {
 							// 成功件数加一
 							receMqCount++;
 						} catch (Exception e) {
+							logger.error("MQ同步异常：",e);
 							BatchLoggerDTO batchLoggerDTO = new BatchLoggerDTO();
 							// 重新发送接收失败的MQ消息处理时发生异常
 							batchLoggerDTO.setCode("EMQ00014");
@@ -454,6 +467,7 @@ public class BINBEMQSYN02_BL {
 					binBEMQSYN02_Service.updateCherryReceiveFlag(cherryMQLogList);
 					binBEMQSYN02_Service.manualCommit();
 				} catch (Exception e) {
+					logger.error("MQ同步异常：",e);
 					flag = CherryBatchConstants.BATCH_WARNING;
 					BatchLoggerDTO batchLoggerDTO = new BatchLoggerDTO();
 					// 把Cherry接收失败的MQ日志更新成未比对状态时发生错误

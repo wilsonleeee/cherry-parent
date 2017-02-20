@@ -13,20 +13,18 @@
 
 package com.cherry.mq.syn.action;
 
-import java.util.HashMap;
-import java.util.Map;
-
-import javax.annotation.Resource;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import com.cherry.cm.cmbeans.UserInfo;
 import com.cherry.cm.core.BaseAction;
 import com.cherry.cm.core.CherryBatchConstants;
 import com.cherry.cm.core.CherryBatchException;
 import com.cherry.mq.syn.bl.BINBEMQSYN01_BL;
 import com.cherry.mq.syn.bl.BINBEMQSYN02_BL;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import javax.annotation.Resource;
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * MQ接收同步BATCH处理
@@ -70,8 +68,10 @@ public class BINBEMQSYN01_Action extends BaseAction {
 			flg = binBEMQSYN02_BL.tran_receFailMQLogHandle(map);
 		} catch (CherryBatchException cbx) {
 			flg = CherryBatchConstants.BATCH_WARNING;
+			logger.error("MQ同步警告终了：",cbx);
 		} catch (Exception e) {
 			flg = CherryBatchConstants.BATCH_ERROR;
+			logger.error("MQ同步警告终了：",e);
 		} finally {
 			if(flg == CherryBatchConstants.BATCH_SUCCESS) {
 				this.addActionMessage("MQ接收同步BATCH处理正常终了");
