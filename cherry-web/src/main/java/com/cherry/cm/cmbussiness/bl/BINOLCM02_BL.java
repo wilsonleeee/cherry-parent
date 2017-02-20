@@ -423,9 +423,9 @@ public class BINOLCM02_BL {
 				// 有效区分
 				popProductInfoTemp.put("validFlag", popProductInfo.get("validFlag"));
 				
-				
+				String nameTotal = ConvertUtil.getString(popProductInfo.get("nameTotal"));
 				// 产品名称
-				popProductInfoTemp.put("nameTotal", popProductInfo.get("nameTotal"));
+				popProductInfoTemp.put("nameTotal", nameTotal.replaceAll("\"",""));
 				// 产品价格
 				Object salePrice = popProductInfo.get("salePrice");
 				if(salePrice != null) {
