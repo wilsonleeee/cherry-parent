@@ -162,6 +162,19 @@ $(document).ready(function() {
 				type = "minDate";
 			}
 			CAMPAIGN_TEMPLATE.initDate(date1, date2, type);
+
+			var type1 = "maxDate";
+			var date3;
+			var date4;
+			if (0 == id.indexOf("saleFromDate_")) {
+				date3 = "#" + id;
+				date4 = "#saleToDate_" + id.replace("saleFromDate_", "");
+			} else if (0 == id.indexOf("saleToDate_")) {
+				date3 = "#" + id;
+				date4 = "#saleFromDate_" + id.replace("saleToDate_", "");
+				type1 = "minDate";
+			}
+			CAMPAIGN_TEMPLATE.initDate(date3, date4, type1);
 		}
 	});
 	var rules = CAMPAIGN_TEMPLATE.getTempRules("#mainForm");

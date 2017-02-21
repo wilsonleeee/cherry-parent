@@ -157,7 +157,9 @@ public class BINBEDRCOM03_Service extends BaseService{
      * 			单次
      */
     public int getTicketNum(Map<String, Object> map) {
-    	// 单次
+		// 无需考虑退货的单号
+		String notSrBill = (String) map.get("notSrBill");
+		// 单次
     	int TicketNum = 0;
     	// 取得一段时间内的购买信息
     	List<Map<String, Object>> billCodeList = getBillCodeList(map);
@@ -170,8 +172,9 @@ public class BINBEDRCOM03_Service extends BaseService{
     			if ("SR".equals(billCodeInfo.get("saleType"))) {
     				// 关联单号
     				String billCodePre = (String) billCodeInfo.get("billCodePre");
-    				if (!CherryChecker.isNullOrEmpty(billCodePre, true)) {
-    					// 金额
+					if (!CherryChecker.isNullOrEmpty(billCodePre, true) &&
+							(null == notSrBill || !billCodePre.equals(notSrBill))) {
+						// 金额
     					double amount = Double.parseDouble(billCodeInfo.get("amount").toString());
     					// 累计退货金额
     					double totalAmount = 0;
@@ -409,5 +412,47 @@ public class BINBEDRCOM03_Service extends BaseService{
 		paramMap.put("brandInfoId", brandInfoId);
 		paramMap.put(CherryConstants.IBATIS_SQL_ID, "BINBEDRCOM03.delRuleRefresh");
 		return baseServiceImpl.remove(paramMap);
+	}
+
+	/**
+	 * 取得子活动信息
+	 *
+	 * @param campaignId 主活动ID
+	 * @return 子活动信息
+	 */
+	public Map<String, Object> getRuleInfoByCampaignId(int campaignId) {
+		Map<String, Object> map = new HashMap<String, Object>();
+		map.put("campaignId", campaignId);
+		map.put(CherryConstants.IBATIS_SQL_ID, "BINBEDRCOM03.getRuleInfoByCampaignId");
+		return (Map<String, Object>) baseServiceImpl.get(map);
+	}
+
+	/**
+	 * 验证是否匹配指定的规则
+	 *
+	 * @param map 主活动ID
+	 * @return 匹配结果
+	 */
+	public boolean isRuleExecBefore(Map<String, Object> map) {
+		map.put(CherryConstants.IBATIS_SQL_ID, "BINBEDRCOM03.getRuleExecInfo");
+		Map<String, Object> ruleExecInfo = (Map<String, Object>) baseServiceImpl.get(map);
+		return null != ruleExecInfo && !ruleExecInfo.isEmpty();
+	}
+
+	/**
+	 * 取得一段时间内会员的购买信息
+	 *
+	 * @param memberInfoId  会员ID
+	 * @param saleStartTime 销售开始时间
+	 * @param saleEndTime   销售结束时间
+	 * @return 一段时间内会员的购买信息
+	 */
+	public List<Map<String, Object>> getMemSaleDetailList(int memberInfoId, String saleStartTime, String saleEndTime) {
+		Map<String, Object> map = new HashMap<String, Object>();
+		map.put("memberInfoId", memberInfoId);
+		map.put("saleStartTime", saleStartTime);
+		map.put("saleEndTime", saleEndTime);
+		map.put(CherryConstants.IBATIS_SQL_ID, "BINBEDRCOM03.getMemSaleDetailList");
+		return (List<Map<String, Object>>) baseServiceImpl.getList(map);
 	}
 }

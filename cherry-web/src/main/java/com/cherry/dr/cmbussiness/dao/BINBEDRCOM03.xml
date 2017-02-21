@@ -230,7 +230,8 @@
 			 	SaleTime >= CONVERT(DATETIME,#fromDate#,121) AND
 				ISNULL(Amount, 0) > 0 AND
 				(BillModel IS NULL OR  BillModel IN ('0','1','3','4')) AND
-				(IsPoint IS NULL OR IsPoint <> '0')
+				(IsPoint IS NULL OR IsPoint <> '0') AND
+				(PointFlag IS NULL OR PointFlag <> '1')
 		UNION
 			SELECT 
 				BillCode AS billCode,
@@ -553,4 +554,68 @@
 				BIN_BrandInfoID = #brandInfoId#
 		]]>
 	</delete>
+
+	<!-- 取得子活动信息 -->
+	<select id="getRuleInfoByCampaignId" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+		<![CDATA[
+
+			SELECT TOP 1
+				BIN_CampaignRuleID AS campaignRuleId
+			FROM
+				Campaign.BIN_CampaignRule
+			WHERE
+				BIN_CampaignID = #campaignId# AND
+				ValidFlag = '1'
+
+		]]>
+	</select>
+
+	<!-- 取得匹配指定规则的记录 -->
+	<select id="getRuleExecInfo" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+		<![CDATA[
+
+			SELECT TOP 1
+				A.BIN_PointChangeID AS pointChangeId
+			FROM
+				Members.BIN_PointChange A WITH(NOLOCK) JOIN
+				Members.BIN_PointChangeDetail B WITH(NOLOCK)
+			ON(A.BIN_MemberInfoID = #memberInfoId# AND
+			A.ValidFlag = '1' AND
+			A.BIN_PointChangeID = B.BIN_PointChangeID AND
+			(B.MainRuleID = #campaignRuleId# OR B.SubCampaignID = #campaignRuleId#)
+			)
+
+		]]>
+	</select>
+
+	<!-- 取得一段时间内会员的购买信息 -->
+	<select id="getMemSaleDetailList" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+		<![CDATA[
+			SELECT
+				A.BillCode AS billCode,
+				CONVERT(VARCHAR, A.SaleTime, 120) AS saleTime,
+				B.BIN_ProductVendorID AS prtVendorId
+			FROM
+				Sale.BIN_SaleRecord A WITH(NOLOCK) JOIN
+				Sale.BIN_SaleRecordDetail B WITH(NOLOCK)
+			ON(
+				A.BIN_MemberInfoID = #memberInfoId# AND
+	]]>
+		<isNotEmpty property="saleStartTime">
+			<![CDATA[A.SaleTime >= CONVERT(DATETIME,#saleStartTime#,121) AND]]>
+		</isNotEmpty>
+		<isNotEmpty property="saleEndTime">
+			<![CDATA[A.SaleTime < CONVERT(DATETIME,#saleEndTime#,121) AND]]>
+		</isNotEmpty>
+		<![CDATA[
+			 	A.SaleType IN ('NS', 'PX') AND
+				(A.BillModel IS NULL OR  A.BillModel IN ('0','1','3','4')) AND
+				(A.IsPoint IS NULL OR A.IsPoint <> '0') AND
+				(A.PointFlag IS NULL OR A.PointFlag <> '1') AND
+				A.BIN_SaleRecordID = B.BIN_SaleRecordID AND
+				B.SaleType = 'N'
+			  )
+		ORDER BY A.saleTime, A.BillCode
+		]]>
+	</select>
 </sqlMap>

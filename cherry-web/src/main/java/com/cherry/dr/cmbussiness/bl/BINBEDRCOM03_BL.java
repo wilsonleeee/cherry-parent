@@ -12,42 +12,24 @@
  */
 package com.cherry.dr.cmbussiness.bl;
 
-import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Method;
-import java.util.ArrayList;
-import java.util.Calendar;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-
-import com.dianping.cat.Cat;
-import com.dianping.cat.message.Transaction;
-import javax.annotation.Resource;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import com.cherry.cm.cmbussiness.interfaces.BINOLCM31_IF;
 import com.cherry.cm.core.CherryChecker;
 import com.cherry.cm.util.ConvertUtil;
-import com.cherry.dr.cmbussiness.dto.core.CampBaseDTO;
-import com.cherry.dr.cmbussiness.dto.core.PointChangeDTO;
-import com.cherry.dr.cmbussiness.dto.core.PointChangeDetailDTO;
-import com.cherry.dr.cmbussiness.dto.core.PointDTO;
-import com.cherry.dr.cmbussiness.dto.core.RuleFilterDTO;
-import com.cherry.dr.cmbussiness.dto.core.RuleResultDTO;
+import com.cherry.dr.cmbussiness.dto.core.*;
 import com.cherry.dr.cmbussiness.interfaces.BINBEDRCOM01_IF;
 import com.cherry.dr.cmbussiness.interfaces.BINBEDRCOM03_IF;
 import com.cherry.dr.cmbussiness.service.BINBEDRCOM03_Service;
-import com.cherry.dr.cmbussiness.util.DateUtil;
-import com.cherry.dr.cmbussiness.util.DoubleUtil;
-import com.cherry.dr.cmbussiness.util.DroolsConstants;
-import com.cherry.dr.cmbussiness.util.DroolsMessageUtil;
-import com.cherry.dr.cmbussiness.util.RuleFilterUtil;
+import com.cherry.dr.cmbussiness.util.*;
 import com.cherry.mq.mes.common.CherryMQException;
+import com.dianping.cat.Cat;
+import com.dianping.cat.message.Transaction;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import javax.annotation.Resource;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
+import java.util.*;
 
 /**
  * 规则执行前共通处理 BL
@@ -73,7 +55,7 @@ public class BINBEDRCOM03_BL implements BINBEDRCOM03_IF{
 	 * 验证特定日期
 	 * 
 	 * 
-	 * @param filter
+	 * @param c
 	 *            验证对象
 	 * @throws Exception 
 	 * 
@@ -101,6 +83,8 @@ public class BINBEDRCOM03_BL implements BINBEDRCOM03_IF{
 				String firstBillDate = (String) params.get("firstBillDate");
 				// 获取特定日期的活动开始日
 				boolean dateFlag = false;
+				// 不需要考虑关联退货对冲的单据
+				String notSrBill = null;
 				// 首次购买
 				if ("5".equals(firstBillDate)) {
 					// 首单购买时间
@@ -117,6 +101,102 @@ public class BINBEDRCOM03_BL implements BINBEDRCOM03_IF{
 						c.setRuleFromDate(fromDate);
 						dateFlag = true;
 					}
+					// 首次购买指定商品
+				} else if ("7".equals(firstBillDate)) {
+					// 产品关系或
+					boolean isOr = "0".equals(params.get("proCond"));
+					// 规则中设置的产品范围
+					List<Map<String, Object>> filterProducts = (List<Map<String, Object>>) params.get("productList");
+					if (null == filterProducts || filterProducts.isEmpty()) {
+						return false;
+					}
+					// 单次区分
+					String firstBillSel = (String) params.get("firstBillSel");
+					// 指定单次或者仅限首单,进行规则匹配校验(最多只会匹配一次)
+					if (("3".equals(firstBillSel) || "0".equals(firstBillSel))
+							&& null != ruleId) {
+						// 规则ID
+						int campaignId = Integer.parseInt(String.valueOf(ruleId));
+						// 子规则内容
+						Map<String, Object> campaignRuleInfo = binbedrcom03_Service.getRuleInfoByCampaignId(campaignId);
+						if (null != campaignRuleInfo && !campaignRuleInfo.isEmpty()) {
+							// 会员ID
+							campaignRuleInfo.put("memberInfoId", c.getMemberInfoId());
+							// 之前已经匹配过规则,本次将不再匹配
+							if (binbedrcom03_Service.isRuleExecBefore(campaignRuleInfo)) {
+								return false;
+							}
+						}
+					}
+					// 验证指定的购买时间范围内是否购买过指定的产品
+					// 销售开始时间
+					String saleStartTime = (String) params.get("saleStartTime");
+					// 销售结束时间
+					String saleEndTime = (String) params.get("saleEndTime");
+					if (!CherryChecker.isNullOrEmpty(saleEndTime)) {
+						saleEndTime = DateUtil.addDateByDays(DateUtil.DATE_PATTERN, saleEndTime, 1);
+					}
+					// 取得一段时间内会员的购买信息
+					List<Map<String, Object>> saleDetailList = binbedrcom03_Service.getMemSaleDetailList(c.getMemberInfoId(), saleStartTime, saleEndTime);
+					if (null == saleDetailList || saleDetailList.isEmpty()) {
+						return false;
+					}
+					Map<String, Object> firstBillInfo = null;
+					// 关系:或
+					if (isOr) {
+						for (Map<String, Object> saleDetailInfo : saleDetailList) {
+							// 销售单明细中的产品
+							String prtVendorId = String.valueOf(saleDetailInfo.get("prtVendorId"));
+							boolean isBreak = false;
+							for (Map<String, Object> productInfo : filterProducts) {
+								String proId = String.valueOf(productInfo.get("proId"));
+								if (prtVendorId.equals(proId)) {
+									firstBillInfo = saleDetailInfo;
+									isBreak = true;
+									break;
+								}
+							}
+							if (isBreak) {
+								break;
+							}
+						}
+						//关系:并且
+					} else {
+						// 将销售明细LIST转换为主从嵌套结构
+						List<Map<String, Object>> mainDetailList = convertSales2MainDetailList(saleDetailList);
+						for (Map<String, Object> mainInfo : mainDetailList) {
+							List<Map<String, Object>> detailList = (List<Map<String, Object>>) mainInfo.get("detailList");
+							if (detailList.size() < filterProducts.size()) {
+								continue;
+							}
+							boolean isMatch = false;
+							for (Map<String, Object> productInfo : filterProducts) {
+								isMatch = false;
+								String proId = String.valueOf(productInfo.get("proId"));
+								for (Map<String, Object> detailInfo : detailList) {
+									// 销售单明细中的产品
+									String prtVendorId = String.valueOf(detailInfo.get("prtVendorId"));
+									if (prtVendorId.equals(proId)) {
+										isMatch = true;
+										break;
+									}
+								}
+								if (!isMatch) {
+									break;
+								}
+							}
+							if (isMatch) {
+								firstBillInfo = mainInfo;
+								break;
+							}
+						}
+					}
+					if (null == firstBillInfo || firstBillInfo.isEmpty()) {
+						return false;
+					}
+					dateFlag = true ;
+					c.setRuleFromDate(String.valueOf(firstBillInfo.get("saleTime")));
+					notSrBill = (String) firstBillInfo.get("billCode");
 				} else {
 					// 获取特定日期的活动开始日
 					dateFlag = RuleFilterUtil.isFromDate02(c, params);
@@ -125,6 +205,21 @@ public class BINBEDRCOM03_BL implements BINBEDRCOM03_IF{
 					RuleFilterUtil.Log(c, ruleId, false, DroolsMessageUtil.PDR00012);
 					return false;
 				}
+//				 //是否包含特定产品
+//				boolean containProductsFlag = false;
+//				if ("7".equals(firstBillDate)) {
+//					String proCond = ConvertUtil.getString(params.get("proCond"));
+//					if("0".equals(proCond)) {
+//						// 获取特定日期的活动开始日
+//						containProductsFlag = RuleFilterUtil.checkProducts(c, params);
+//					} else {
+//						containProductsFlag = RuleFilterUtil.checkContainAllProducts(c, params);
+//					}
+//				}
+//				if (!containProductsFlag) {
+//					RuleFilterUtil.Log(c, ruleId, false, DroolsMessageUtil.PDR00014);
+//					return false;
+//				}
 				Map<String, Object> firstMap = new HashMap<String, Object>();
 				// 单次区分
 				firstMap.put("firstBillSel", params.get("firstBillSel"));
@@ -132,6 +227,9 @@ public class BINBEDRCOM03_BL implements BINBEDRCOM03_IF{
 				firstMap.put("billTime", params.get("billTime"));
 				// 开始日期
 				firstMap.put("fromDate", c.getRuleFromDate());
+				if (null != notSrBill) {
+					firstMap.put("notSrBill", notSrBill);
+				}
 				// 验证是否属于选择的单次范围
 				boolean isFirstBill = checkFirstBill(c, firstMap);
 				if (!isFirstBill) {
@@ -143,13 +241,46 @@ public class BINBEDRCOM03_BL implements BINBEDRCOM03_IF{
 		RuleFilterUtil.Log(c, ruleId, false, DroolsMessageUtil.PDR00012);
 		return false;
 	}
-	
+
+	/**
+	 * 将销售明细LIST转换为主从嵌套结构
+	 *
+	 * @param saleDetailList 验证对象
+	 * @return List
+	 * 转换后的LIST
+	 */
+	private List<Map<String, Object>> convertSales2MainDetailList(List<Map<String, Object>> saleDetailList) {
+		// 先把销售的LIST 转为 主从的嵌套结构
+		List<Map<String, Object>> saleList = new ArrayList<Map<String, Object>>();
+		for (Map<String, Object> saleDetailInfo : saleDetailList) {
+			// 购买产品明细List
+			List<Map<String, Object>> detailList = null;
+			boolean isNew = true;
+			if (!saleList.isEmpty()) {
+				Map<String, Object> lastInfo = saleList.get(saleList.size() - 1);
+				// 如果单号相同,合并
+				if (lastInfo.get("billCode").equals(saleDetailInfo.get("billCode"))) {
+					detailList = (List<Map<String, Object>>) lastInfo.get("detailList");
+					isNew = false;
+				}
+			}
+			if (isNew) {
+				detailList = new ArrayList<Map<String, Object>>();
+				saleDetailInfo.put("detailList", detailList);
+				saleList.add(saleDetailInfo);
+			}
+			Map<String, Object> detailInfo = new HashMap<String, Object>();
+			detailInfo.put("prtVendorId", saleDetailInfo.get("prtVendorId"));
+			detailList.add(detailInfo);
+		}
+		return saleList;
+	}
 	/**
 	 * 
 	 * 验证特定产品
 	 * 
 	 * 
-	 * @param filter
+	 * @param c
 	 *            验证对象
 	 * @throws Exception 
 	 * 
@@ -791,7 +922,7 @@ public class BINBEDRCOM03_BL implements BINBEDRCOM03_IF{
 	 * 验证是否属于选择的单次范围
 	 * 
 	 * 
-	 * @param filter
+	 * @param c
 	 *            验证对象
 	 * @throws Exception 
 	 * 
@@ -801,6 +932,8 @@ public class BINBEDRCOM03_BL implements BINBEDRCOM03_IF{
 		String fromDate = (String) params.get("fromDate");
 		// 单次区分
 		String firstBillSel = (String) params.get("firstBillSel");
+		// 无需考虑退货的单号
+		String notSrBill = (String) params.get("notSrBill");
 		if (!CherryChecker.isNullOrEmpty(fromDate, true) && 
 				!CherryChecker.isNullOrEmpty(firstBillSel, true)) {
 			Map<String, Object> searchMap = new HashMap<String, Object>();
@@ -818,6 +951,9 @@ public class BINBEDRCOM03_BL implements BINBEDRCOM03_IF{
 			searchMap.put("billId", c.getBillId());
 			if (c.getMemberClubId() != 0) {
 				searchMap.put("memberClubId", c.getMemberClubId());
+			}
+			if (notSrBill != null) {
+				searchMap.put("notSrBill", notSrBill);
 			}
 			// 取得单次
 			int ticketNum = binbedrcom03_Service.getTicketNum(searchMap);
@@ -856,7 +992,7 @@ public class BINBEDRCOM03_BL implements BINBEDRCOM03_IF{
 	 * 验证会员生日
 	 * 
 	 * 
-	 * @param filter
+	 * @param c
 	 *            验证对象
 	 * @throws Exception 
 	 * 
@@ -921,7 +1057,7 @@ public class BINBEDRCOM03_BL implements BINBEDRCOM03_IF{
 	 * 验证促销活动
 	 * 
 	 * 
-	 * @param filter
+	 * @param c
 	 *            验证对象
 	 * @throws Exception 
 	 * 
@@ -1286,7 +1422,7 @@ public class BINBEDRCOM03_BL implements BINBEDRCOM03_IF{
 	 * 
 	 * @param c
 	 *            验证对象
-	 * @param params
+	 * @param ruleId
 	 *            验证参数
 	 * @return boolean 验证结果
 	 * @throws Exception 
@@ -1397,7 +1533,7 @@ public class BINBEDRCOM03_BL implements BINBEDRCOM03_IF{
 	 * 执行条件验证
 	 * 
 	 * 
-	 * @param c
+	 * @param oc
 	 *            验证对象
 	 * @param allFilters
 	 *            规则条件集合
@@ -2403,7 +2539,7 @@ public class BINBEDRCOM03_BL implements BINBEDRCOM03_IF{
 	 * 计算积分失效处理日期
 	 * 
 	 * 
-	 * @param ticketDate
+	 * @param changeDate
 	 *            	单据日期
 	 * @param toDay
 	 *            	截止日期
@@ -2535,7 +2671,7 @@ public class BINBEDRCOM03_BL implements BINBEDRCOM03_IF{
 	 *            验证对象
 	 * @param allFilters
 	 *            规则条件集合
-	 * @param priorityInfo
+	 * @param priorityList
 	 *            优先级信息
 	 * @param campType
 	 *          会员活动类型
@@ -4127,8 +4263,6 @@ public class BINBEDRCOM03_BL implements BINBEDRCOM03_IF{
 	 * 
 	 * @param changeDetailList
 	 *            积分明细
-	 * @param double
-	 *            总积分值
 	 * 
 	 */
 	private double calcTotalPoint(List<PointChangeDetailDTO> changeDetailList) {
@@ -4152,7 +4286,7 @@ public class BINBEDRCOM03_BL implements BINBEDRCOM03_IF{
 	 *            验证对象
 	 * @param allFilters
 	 *            规则条件集合
-	 * @param priorityInfo
+	 * @param priorityList
 	 *            优先级信息
 	 * @param campType
 	 *          会员活动类型
@@ -4636,7 +4770,7 @@ public class BINBEDRCOM03_BL implements BINBEDRCOM03_IF{
 	 * 计算积分失效处理日期
 	 * 
 	 * 
-	 * @param ticketDate
+	 * @param changeDate
 	 *            	单据日期
 	 * @param toDay
 	 *            	截止日期
@@ -5052,7 +5186,7 @@ public class BINBEDRCOM03_BL implements BINBEDRCOM03_IF{
 	 * 
 	 * @param dealDate
 	 *            	积分失效处理日期
-	 * @param ticketDate
+	 * @param changeDate
 	 *            	单据日期
 	 * @param toDay
 	 *            	截止日期
@@ -5256,7 +5390,7 @@ public class BINBEDRCOM03_BL implements BINBEDRCOM03_IF{
 	 * 执行规则处理
 	 * 
 	 * 
-	 * @param c
+	 * @param oc
 	 *            验证对象
 	 * @param allFilters
 	 *            规则条件集合

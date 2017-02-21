@@ -748,6 +748,9 @@ function selectProduct(){
 			var selectedProName = selectedProInfoArr.nameTotal;
 			// 产品id
 			var selectedProId = selectedProInfoArr.proId;
+
+			var selectedUnitCode = selectedProInfoArr.unitCode;
+			var selectedBarCode = selectedProInfoArr.barCode;
 		}
 		for(var j=0;j<hasProArr.length;j++){
 			var hasProInfoArr = hasProArr[j];
@@ -779,6 +782,8 @@ function selectProduct(){
 			}else{
 				inputHtml = '<input type="hidden" name="proId" value="' + selectedProId + '" />' +
 						'<input type="hidden" name="nameTotal" value="' + selectedProName + '" />' +
+						'<input type="hidden" name="unitCode" value="' + selectedUnitCode + '" />' +
+						'<input type="hidden" name="barCode" value="' + selectedBarCode + '" />' +
 			           '<span style="margin:0px 5px;">' + selectedProName + '</span>';
 			}
 			var span = '<span class="span_BASE000001">' + inputHtml + '<span class="close" onclick="CAMPAIGN_TEMPLATE_delete(this);return false;"><span class="ui-icon ui-icon-close"></span></span>' +

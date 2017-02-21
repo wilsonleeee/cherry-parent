@@ -495,6 +495,12 @@ public class PointCreateRule extends CreateRule{
 				lhsParams.put("bindDay", "1");
 			}
 		}
+		if ("7".equals(tempMap.get("firstBillDate"))) {
+			lhsParams.put("saleStartTime", tempMap.get("saleStartTime"));
+			lhsParams.put("saleEndTime", tempMap.get("saleEndTime"));
+			lhsParams.put("proCond", tempMap.get("proCond"));
+			lhsParams.put("productList", tempMap.get("productList"));
+		}
 		// 选择单次
 		String firstBillSel = (String) tempMap.get("firstBillSel");
 		lhsParams.put("firstBillSel", firstBillSel);

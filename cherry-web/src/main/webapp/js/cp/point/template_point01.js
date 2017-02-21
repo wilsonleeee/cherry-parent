@@ -158,6 +158,36 @@ TEMP002_GLOBAL.prototype = {
 				m = eval("CAMPAIGN_TEMPLATE.BUS_INFO('" + id + "', m)");
 				return m.toString();
 			},
+
+			/*
+			 * 特定时间 销售时间范围产品
+			 */
+			"BUS000019_INFO" : function (id){
+				var m = [];
+				var n = [];
+				var $id = $("#" + id);
+				$id.find(':input').not($(":input", "[id^='BASE']")).filter(function() {
+					return $(this).parents("[id^='BUS']").first().attr("id") == id;
+				}).not($(":input", "#prtSel_" + id)).each(function(){
+					if (!$(this).is(":radio") || $(this).is(":radio[checked]")) {
+						m.push('"'+ this.name +'":"'+
+							$.trim(this.value.replace(/\\/g,'\\\\').replace(/"/g,'\\"'))+'"');
+					}
+				});
+				if($("#firstBillDate").val() == "7") {
+					$("#prtSel_" + id).find(".span_BASE000001").each(function (){
+					var p = [];
+					$(this).find(':input').each(function (){
+						p.push('"'+ this.name +'":"'+
+							$.trim(this.value.replace(/\\/g,'\\\\').replace(/"/g,'\\"'))+'"');
+					});
+					n.push("{" + p.toString() + "}");
+				});
+				}
+				m.push('"productList":[' + n.toString() + "]");
+				m = eval("CAMPAIGN_TEMPLATE.BUS_INFO('" + id + "', m)");
+				return m.toString();
+			},
 			
 			/*
 			 * 促销活动信息
@@ -858,26 +888,44 @@ TEMP002_GLOBAL.prototype = {
 				$("#appointDate").hide();
 				$("#appointDay").hide();
 				$("#bindDaySpan").hide();
+				$("#saleDaySpan").hide();
+				$("#saleProductSpecify").hide();
 			}else if(vl == "4"){
 				$("#appointDate").show();
 				$("#appointDay").hide();
 				$("#appointMonth").hide();
 				$("#bindDaySpan").hide();
+				$("#saleDaySpan").hide();
+				$("#saleProductSpecify").hide();
 			}else if(vl == "3"){
 				$("#appointDay").show();
 				$("#appointMonth").hide();
 				$("#appointDate").hide();
 				$("#bindDaySpan").hide();
+				$("#saleDaySpan").hide();
+				$("#saleProductSpecify").hide();
 			}else if(vl == "6"){
 				$("#bindDaySpan").show();
 				$("#appointMonth").hide();
 				$("#appointDate").hide();
 				$("#appointDay").hide();
+				$("#saleDaySpan").hide();
+				$("#saleProductSpecify").hide();
+			}else if(vl == "7"){
+				$("#saleDaySpan").show();
+				$("#saleProductSpecify").show();
+				$("#bindDaySpan").hide();
+				$("#appointMonth").hide();
+				$("#appointDate").hide();
+				$("#appointDay").hide();
 			}else{
+				$("#saleDaySpan").hide();
 				$("#appointMonth").hide();
 				$("#appointDate").hide();
 				$("#appointDay").hide();
 				$("#bindDaySpan").hide();
+				$("#saleProductSpecify").hide();
+
 			}
 		},
 		
@@ -960,6 +1008,19 @@ TEMP002_GLOBAL.prototype = {
 				// 弹出信息框
 				CAMPAIGN_TEMPLATE.openProPopup(obj,diagType, TEMP002.selPrtIndex);
 				},
+
+	"showTableForSale" : function (obj, diagType, index){
+		// 取索引值
+		TEMP002.selPrtIndex = $("input[name='selPrtIndex']", $(obj).parents(".box4-content")).val();
+		if(diagType == null){
+			diagType = 0;
+		}
+		if(index != null){
+			TEMP002.selPrtIndex = TEMP002.selPrtIndex + '_' + index;
+		}
+		// 弹出信息框
+		CAMPAIGN_TEMPLATE.openProPopup(obj,diagType, TEMP002.selPrtIndex);
+	},
 		// 选择活动弹出框
 		"popActivityList": function(url, object) {
 			var callback = function(tableId) {

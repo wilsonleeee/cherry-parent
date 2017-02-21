@@ -12,27 +12,16 @@
  */
 package com.cherry.dr.cmbussiness.util;
 
-import java.lang.reflect.Method;
-import java.util.ArrayList;
-import java.util.Calendar;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import com.cherry.cm.core.CherryChecker;
 import com.cherry.cm.core.CherryConstants;
 import com.cherry.cm.util.ConvertUtil;
-import com.cherry.dr.cmbussiness.dto.core.CampBaseDTO;
-import com.cherry.dr.cmbussiness.dto.core.PointChangeDTO;
-import com.cherry.dr.cmbussiness.dto.core.PointChangeDetailDTO;
-import com.cherry.dr.cmbussiness.dto.core.PointDTO;
-import com.cherry.dr.cmbussiness.dto.core.RuleFilterDTO;
-import com.cherry.dr.cmbussiness.dto.core.RuleResultDTO;
+import com.cherry.dr.cmbussiness.dto.core.*;
 import com.googlecode.jsonplugin.JSONUtil;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import java.lang.reflect.Method;
+import java.util.*;
 
 /**
  * 过滤器共通验证方法
@@ -49,7 +38,7 @@ public class RuleFilterUtil {
 	 * 执行条件验证
 	 * 
 	 * 
-	 * @param c
+	 * @param oc
 	 *            验证对象
 	 * @param allFilters
 	 *            规则条件集合
@@ -406,6 +395,19 @@ public class RuleFilterUtil {
 				}
 			}
 		}
+//		else if ("7".equals(firstBillDate)) { // 销售时间范围
+//			// 销售开始时间
+//			String saleStartTime = (String) params.get("saleStartTime");
+//			// 销售结束时间
+//			String saleEndTime = (String) params.get("saleEndTime");
+//			// 在开始日和结束日之间
+//			if (!CherryChecker.isNullOrEmpty(saleStartTime) &&
+//					DateUtil.compareDate(ticketDateStr, saleStartTime) >= 0 &&
+//					!CherryChecker.isNullOrEmpty(saleEndTime) &&
+//					DateUtil.compareDate(ticketDateStr, saleEndTime) <= 0) {
+//				fromDate = DateUtil.suffixDate(saleStartTime, 0);
+//			}
+//		}
 		if (null == fromDate) {
 			return false;
 		}
@@ -420,8 +422,6 @@ public class RuleFilterUtil {
 	 * 
 	 * @param c
 	 *            验证对象
-	 * @param params
-	 *            参数集合
 	 *            
 	 * @return boolean 验证结果
 	 * @throws Exception 
@@ -591,9 +591,9 @@ public class RuleFilterUtil {
 	 * 验证购买产品(是否包含指定产品)
 	 * 
 	 * 
-	 * @param camp
+	 * @param c
 	 *            验证对象
-	 * @param filter
+	 * @param params
 	 *            验证条件
 	 * @return boolean 验证结果
 	 * 
@@ -621,15 +621,49 @@ public class RuleFilterUtil {
 		}
 		return false;
 	}
+
+	/**
+	 *
+	 * 验证购买产品(是否包含所有指定产品)
+	 *
+	 *
+	 * @param c
+	 *            验证对象
+	 * @param params
+	 *            验证条件
+	 * @return boolean 验证结果
+	 *
+	 */
+	public static boolean checkContainAllProducts(CampBaseDTO c, Map<String, Object> params) {
+		// 规则设定产品列表
+		List<Map<String, Object>> filterProducts = (List<Map<String, Object>>) params.get("productList");
+		if (filterProducts != null && c.getBuyInfo() != null && c.getBuyInfo().get("saleDetailList") != null) {
+			// 订单中产品列表
+			List<Map<String, Object>> prtList = (List<Map<String, Object>>) c.getBuyInfo().get("saleDetailList");
+
+			Set<String> productSet = new HashSet<String>();
+			Set<String> prtSet = new HashSet<String>();
+
+			for (Map<String, Object> product : filterProducts) {
+				productSet.add(ConvertUtil.getString(product.get("proId")));
+			}
+
+			for (Map<String, Object> prt : prtList) {
+				prtSet.add(ConvertUtil.getString(prt.get("prtVendorId")));
+			}
+			return prtSet.containsAll(productSet) ;
+		}
+		return false;
+	}
 	
 	/**
 	 * 
 	 * 验证会员卡号
 	 * 
 	 * 
-	 * @param camp
+	 * @param c
 	 *            验证对象
-	 * @param filter
+	 * @param params
 	 *            验证条件
 	 * @return boolean 验证结果
 	 * 
@@ -667,9 +701,9 @@ public class RuleFilterUtil {
 	 * 验证会员卡号(正则表达式)
 	 * 
 	 * 
-	 * @param camp
+	 * @param c
 	 *            验证对象
-	 * @param filter
+	 * @param params
 	 *            验证条件
 	 * @return boolean 验证结果
 	 * 
@@ -2777,8 +2811,8 @@ public class RuleFilterUtil {
 	 * 通过等级代号查询对应的等级ID
 	 * 
 	 * 
-	 * @param levelId
-	 *          	等级ID
+	 * @param levelCode
+	 *          	等级编码
 	 * @param levelList
 	 *          	等级列表       
 	 * @return String 

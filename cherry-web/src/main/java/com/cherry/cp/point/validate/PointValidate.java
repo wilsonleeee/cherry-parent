@@ -1,15 +1,18 @@
 package com.cherry.cp.point.validate;
 
-import java.util.Date;
-import java.util.List;
-import java.util.Map;
-
 import com.cherry.cm.core.CherryChecker;
+import com.cherry.cm.util.ConvertUtil;
 import com.cherry.cm.util.PropertiesUtil;
 import com.cherry.cp.common.dto.ActionErrorDTO;
 import com.cherry.cp.common.dto.CampaignDTO;
 import com.cherry.cp.common.validate.BaseValidate;
 import com.cherry.dr.cmbussiness.util.DateUtil;
+import com.dianping.zebra.util.StringUtils;
+import org.springframework.util.CollectionUtils;
+
+import java.util.Date;
+import java.util.List;
+import java.util.Map;
 
 public class PointValidate extends BaseValidate{
 	
@@ -25,7 +28,7 @@ public class PointValidate extends BaseValidate{
 	/**
 	 * 赠送积分模板
 	 * 
-	 * @param Map
+	 * @param map
 	 *            模板提交的参数
 	 * @return boolean 验证结果
 	 * 
@@ -600,7 +603,7 @@ public class PointValidate extends BaseValidate{
 	/**
 	 * 首单模板
 	 * 
-	 * @param Map
+	 * @param map
 	 *            模板提交的参数
 	 * @return boolean 验证结果
 	 * 
@@ -638,6 +641,23 @@ public class PointValidate extends BaseValidate{
 				// 指定时间段
 			} else if ("4".equals(firstBillDate)) {
 				
+			} else if ("7".equals(firstBillDate)) {
+				if(CherryChecker.isNullOrEmpty(map.get("saleStartTime"),true) || CherryChecker.isNullOrEmpty(map.get("saleEndTime"),true)){
+					actionErrorList.add(new ActionErrorDTO(1, "saleEndTime", "ECM00009", new String[] { PropertiesUtil.getText("PMB00091") })) ;
+					isCorrect = false;
+				}
+				// 特定产品
+				List<Map<String, Object>> camTempsValidates = ConvertUtil.json2List(ConvertUtil.getString(baseMap.get("camTempsValidate")));
+				if(!CollectionUtils.isEmpty(camTempsValidates)) {
+					Map<String, Object> combTemps = camTempsValidates.get(0);
+					List<Map<String, Object>> productList = (List<Map<String, Object>>) combTemps.get("productList");
+					if(null == productList||productList.size()==0) {
+						actionErrorList.add(new ActionErrorDTO(1, "proCond", "ECM00009", new String[] { PropertiesUtil.getText("PMB00092") })) ;
+						isCorrect = false;
+					}
+				}
+
+
 			}
 			// 选择单次
 			String firstBillSel = (String) map.get("firstBillSel");
@@ -657,11 +677,12 @@ public class PointValidate extends BaseValidate{
 			}
 		}
 	}
+
 	
 	/**
 	 * 单次购买模板
 	 * 
-	 * @param Map
+	 * @param map
 	 *            模板提交的参数
 	 * @return boolean 验证结果
 	 * 
@@ -713,7 +734,7 @@ public class PointValidate extends BaseValidate{
 	/**
 	 * 购买产品模板
 	 * 
-	 * @param Map
+	 * @param map
 	 *            模板提交的参数
 	 * @return boolean 验证结果
 	 * 
@@ -740,7 +761,7 @@ public class PointValidate extends BaseValidate{
 	/**
 	 * 会员日模板
 	 * 
-	 * @param Map
+	 * @param map
 	 *            模板提交的参数
 	 * @return boolean 验证结果
 	 * 
@@ -778,7 +799,7 @@ public class PointValidate extends BaseValidate{
 	/**
 	 * 介绍人模板
 	 * 
-	 * @param Map
+	 * @param map
 	 *            模板提交的参数
 	 * @return boolean 验证结果
 	 * 
@@ -794,7 +815,7 @@ public class PointValidate extends BaseValidate{
 	/**
 	 * 退货模板
 	 * 
-	 * @param Map
+	 * @param map
 	 *            模板提交的参数
 	 * @return boolean 验证结果
 	 * 
@@ -827,7 +848,7 @@ public class PointValidate extends BaseValidate{
 	/**
 	 * 积分清零模板
 	 * 
-	 * @param Map
+	 * @param map
 	 *            模板提交的参数
 	 * @return boolean 验证结果
 	 * 
@@ -893,7 +914,7 @@ public class PointValidate extends BaseValidate{
 	/**
 	 * 升级积分模板
 	 * 
-	 * @param Map
+	 * @param map
 	 *            模板提交的参数
 	 * @return boolean 验证结果
 	 * 
@@ -920,7 +941,7 @@ public class PointValidate extends BaseValidate{
 	/**
 	 * 升级积分赠与模板
 	 * 
-	 * @param Map
+	 * @param map
 	 *            模板提交的参数
 	 * @return boolean 验证结果
 	 * 
@@ -940,7 +961,7 @@ public class PointValidate extends BaseValidate{
 	/**
 	 * 购买产品积分上限模块 
 	 * 
-	 * @param Map
+	 * @param map
 	 *            模板提交的参数
 	 * @return boolean 验证结果
 	 * 

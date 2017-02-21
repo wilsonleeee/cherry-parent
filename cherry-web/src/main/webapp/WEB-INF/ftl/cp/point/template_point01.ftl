@@ -986,6 +986,7 @@
         <input type="hidden" name="groupCode" value="${(camTemp.groupCode)!?html}"/>
         <input type="hidden" name="RULE_TEMP_FLAG" value="1"/>
         <input type="hidden" name="ruleId" value="${(camTemp.ruleId)!?html}"/>
+        <input type="hidden" name="selPrtIndex" value="${camTemp.tempCode}_${index}"/>
         <table class="detail" >
         	<tr>	
         		<th><@s.text name="cp.firstTime" /></th>
@@ -1030,6 +1031,11 @@
 							<#-- 包含绑定当天  -->
 							<span><input type="checkbox" name="bindDay" id="bindDay_${index}" <#if "1" == (camTemp.bindDay)!>checked="checked"</#if> value="1"/><label for="bindDay_${index}"><@s.text name="cp.isbindDay" /></label></span>
 					</span>
+					<span <#if "7" != (camTemp.firstBillDate)!> class="hide" </#if> id="saleDaySpan">
+						<input type="text" class="date" id="saleFromDate_${camTemp.tempCode}_${index}" name="saleStartTime" value="${(camTemp.saleStartTime)!?html}"/>
+						<@s.text name="cp.to" />
+						<input type="text" class="date" id="saleToDate_${camTemp.tempCode}_${index}" name="saleEndTime" value="${(camTemp.saleEndTime)!?html}"/>
+					</span>
 					</p>
         		</td>
         		<#-- 选择单次  -->
@@ -1059,6 +1065,43 @@
 						</span>
 	    		</td>
         	</tr>
+			<tr id="saleProductSpecify"  <#if "7" != (camTemp.firstBillDate)!> class="hide" </#if> >
+				<th><@s.text name="cp.yanqiPrtSelTxt" /></th>
+				<td>
+					<p>
+						<span>
+									<a class="add left " onClick="TEMP002.showTableForSale(this);" id="prtselbtn">
+										<span class="ui-icon icon-add"></span>
+										<span class="button-text"><@s.text name="cp.prtSel" /></span>
+									</a>
+									&nbsp;&nbsp;<@s.text name="cp.prtCondTxt" />
+									<@s.select list='#application.CodeTable.getCodes("1287")' listKey="CodeKey" listValue="Value"
+									value="${(camTemp.proCond)!?html}"  name="proCond"/>
+									</span>
+
+					</p>
+
+				<p>
+				<span id="prtSel_${camTemp.tempCode}_${index}" class="showPro_${(camTemp.tempCode)!?html}_${index}">
+						<#if (camTemp.productList?? && camTemp.productList?size > 0) >
+							<#list camTemp.productList as productList>
+								<span class="span_BASE000001">
+									<input type="hidden" name="unitCode" value="${(productList.unitCode)!?html}" />
+									<input type="hidden" name="barCode" value="${(productList.barCode)!?html}" />
+									<input type="hidden" name="nameTotal" value="${(productList.nameTotal)!?html}" />
+									<input type="hidden" name="proId" value="${(productList.proId)!?html}" />
+									<span style="margin:0px 5px;">${(productList.nameTotal)!?html}</span>
+									<span class="close" onclick="CAMPAIGN_TEMPLATE_delete(this);return false;">
+											<span class="ui-icon ui-icon-close"></span></span>
+										</span>
+							</#list>
+						</#if>
+					</span>
+						</p>
+				</td>
+				<th></th>
+				<td></td>
+			</tr>
         	<#list camTemp.combTemps as combTemp>
 		        <@template index=index + "_" + combTemp_index camTemp=combTemp/>
 			</#list>
@@ -1082,8 +1125,9 @@
 			<#elseif "4" == (camTemp.firstBillDate)!>${(camTemp.billStartTime)!?html}<@s.text name="cp.to" />${(camTemp.billEndTime)!?html}
 			<#-- 日  -->
 			<#elseif "3" == (camTemp.firstBillDate)!>${(camTemp.billStartMonth)!?html}<@s.text name="cp.month" />${(camTemp.billStartDay)!?html}<@s.text name="cp.dayTime" />
-			<#elseif "6" == (camTemp.firstBillDate)!><@s.text name="cp.bindAfter" /> ${(camTemp.bindDayLimit)!?html} <@s.text name="cp.day" /> 
+			<#elseif "6" == (camTemp.firstBillDate)!><@s.text name="cp.bindAfter" /> ${(camTemp.bindDayLimit)!?html} <@s.text name="cp.day" />
 			<#if "1" == (camTemp.bindDay)!> (<@s.text name="cp.isbindDay" />) </#if>
+			<#elseif "7" == (camTemp.firstBillDate)!>${(camTemp.saleStartTime)!?html}<@s.text name="cp.to" />${(camTemp.saleEndTime)!?html}
 			</#if>
 		</label>
 		</p>
@@ -1100,6 +1144,26 @@
 			</#if>
 			
 		</p>
+		<#if "7" == (camTemp.firstBillDate)!>
+            <p>
+			<#-- 特定产品  -->
+                <label><@s.text name="cp.SpecPrt" /></label>
+				<#if (camTemp.productList?? && camTemp.productList?size > 0) >
+					<#list camTemp.productList as productList>
+                        <span class="span_BASE000001">
+		          			<span class="bg_title">
+		          			${(productList.nameTotal)!?html}
+		          			</span>
+		          		</span>
+					</#list>
+				</#if>
+            </p>
+            <p>
+                <label><@s.text name="cp.productCondTxt" /></label>
+                <label class="gray">${application.CodeTable.getVal("1287", '${(camTemp.proCond)!"0"}')}</label>
+            </p>
+		</#if>
+
         <#list camTemp.combTemps as combTemp>
 	        <@template index=index + "_" + combTemp_index camTemp=combTemp/>
 		</#list>
