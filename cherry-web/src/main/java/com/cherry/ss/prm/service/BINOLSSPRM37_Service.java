@@ -169,4 +169,11 @@ public class BINOLSSPRM37_Service extends BaseService{
 		map.put(CherryConstants.IBATIS_SQL_ID, "BINOLSSPRM37.delCampain");
 		baseServiceImpl.update(map);
 	}
+
+	public String getActivityCode (String activeId){
+		Map<String,Object> map = new HashMap<String, Object>();
+		map.put("activeId",activeId);
+		map.put(CherryConstants.IBATIS_SQL_ID, "BINOLSSPRM37.getActivityCode");
+		return (String)baseServiceImpl.get(map);
+	}
 }

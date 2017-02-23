@@ -5,23 +5,28 @@ BINOLSSPRM68.prototype={
 			var $form = $('#mainForm');
 			var $step = $('#step');
 			$step.val(step);
-			this.toNextBefore(pageNo,step);
-			$form.submit();
+			var res = this.toNextBefore(pageNo,step);
+			if(res){
+				$form.submit();
+			}
 		},
 		// 页面跳转下一步前处理
 		"toNextBefore":function(pageNo,step){
 			if(step == 1){
 				if(pageNo == 1){
-					PRM68_1.nextBefore();
+					return PRM68_1.nextBefore();
 				}else if(pageNo == 2){
-					PRM68_2.nextBefore();
+					return PRM68_2.nextBefore();
 				}else if(pageNo == 3){
-					PRM68_3.nextBefore();
+					return PRM68_3.nextBefore();
 				}else if(pageNo == 4){
-					PRM68_4.nextBefore();
+					return PRM68_4.nextBefore();
 				}else if(pageNo == 4){
-					PRM68_5.nextBefore();
+					return PRM68_5.nextBefore();
 				}
+				return true;
+			}else{
+				return true;
 			}
 		},
 		// 切换逻辑关系

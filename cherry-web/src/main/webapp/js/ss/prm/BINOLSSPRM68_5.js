@@ -1,6 +1,7 @@
 function BINOLSSPRM68_5(){};
 BINOLSSPRM68_5.prototype={
 		"nextBefore":function(){
+			return true;
 		}
 }
 var PRM68_5 = new BINOLSSPRM68_5();

@@ -228,7 +228,9 @@ public class BINOLSSPRM37_Action extends BaseAction implements ModelDriven<BINOL
 	 * @throws Exception
 	 */
 	public void stopPrmActive () throws Exception {
-		binOLSSPRM37_BL.tran_stopPrmActive(form.getActiveID(),form.getSendFlag());
+		Map<String, Object> map  = this.getSessionInfo();
+		String couponFlag = ConvertUtil.getString(map.get("couponFlag"));
+		binOLSSPRM37_BL.tran_stopPrmActive(form.getActiveID(),couponFlag);
 	}
 	
 	
@@ -449,7 +451,15 @@ public class BINOLSSPRM37_Action extends BaseAction implements ModelDriven<BINOL
 			// 去除空格
 			form.setDescriptionDtl(form.getDescriptionDtl().trim());
 		}
-	
+//		//
+//		int reslut = binOLSSPRM13_BL.validLinkMainCode(map);
+//		if(reslut == 1){
+//			this.addFieldError("linkMainCode", "关联活动码不能为空");
+//		}else if(reslut == 2){
+//			this.addFieldError("systemCode", "第三方券平台不能为空");
+//		}else if(reslut >= 3){
+//			this.addFieldError("linkMainCode", "关联活动码已经被关联");
+//		}
 	}
 	
 	/**
@@ -473,6 +483,10 @@ public class BINOLSSPRM37_Action extends BaseAction implements ModelDriven<BINOL
 		map.put(CherryConstants.SESSION_LANGUAGE, userInfo.getLanguage());
 		map.put("userID", userInfo.getBIN_UserID());
 		map.put(CherryConstants.BRAND_CODE, userInfo.getBrandCode());
+		String couponFlag = binOLCM14_BL.getConfigValue("1403",
+				ConvertUtil.getString(map.get(CherryConstants.ORGANIZATIONINFOID)),
+				ConvertUtil.getString(map.get(CherryConstants.BRANDINFOID)));
+		map.put("couponFlag", couponFlag);
 		return CherryUtil.removeEmptyVal(map);
 	}
 	

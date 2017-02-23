@@ -19,27 +19,33 @@ import java.util.List;
 import java.util.Map;
 
 import javax.annotation.Resource;
+import javax.ws.rs.core.MultivaluedMap;
 
 import com.cherry.cm.cmbussiness.bl.BINOLCM03_BL;
 import com.cherry.cm.cmbussiness.bl.BINOLCM05_BL;
 import com.cherry.cm.cmbussiness.bl.BINOLCM14_BL;
 import com.cherry.cm.cmbussiness.bl.BINOLCM89_BL;
-import com.cherry.cm.core.CherryConstants;
-import com.cherry.cm.core.CherryException;
-import com.cherry.cm.core.CodeTable;
+import com.cherry.cm.core.*;
 import com.cherry.cm.mongo.MongoDB;
 import com.cherry.cm.util.CherryUtil;
 import com.cherry.cm.util.ConvertUtil;
 import com.cherry.cm.util.DateUtil;
 import com.cherry.ss.common.PromotionConstants;
 import com.cherry.ss.prm.service.BINOLSSPRM13_Service;
+import com.cherry.webservice.client.WebserviceClient;
 import com.googlecode.jsonplugin.JSONException;
 import com.googlecode.jsonplugin.JSONUtil;
 import com.mongodb.BasicDBObject;
 import com.mongodb.DBObject;
+import com.sun.jersey.api.client.WebResource;
+import com.sun.jersey.core.util.MultivaluedMapImpl;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 @SuppressWarnings("unchecked")
 public class BINOLSSPRM13_BL {
+
+	private static Logger logger = LoggerFactory.getLogger(BINOLSSPRM13_BL.class.getName());
 
 	@Resource(name="binOLSSPRM13_Service")
 	private BINOLSSPRM13_Service binOLSSPRM13_Service;
@@ -279,7 +285,7 @@ public class BINOLSSPRM13_BL {
 				map.put("actEndTime", endTime);
 			}
 		}
-		
+
 		map.put("conditionList",conditionList);
 	}
 	
@@ -724,5 +730,100 @@ public class BINOLSSPRM13_BL {
 		map.put(CherryConstants.BRANDINFOID, brandInfoId);
 		map.put("activityName", name);
 		return binOLSSPRM13_Service.getActIdByName(map);
+	}
+
+
+	/**
+	 * 活动关联推送到券平台
+	 * @param map
+	 */
+	private void linkActivity(Map<String, Object> map) throws Exception {
+		String couponFlag = ConvertUtil.getString(map.get("couponFlag"));
+		String otherPlatformCode = ConvertUtil.getString(map.get("systemCode"));
+		if("1".equals(couponFlag) && !"".equals(otherPlatformCode)){
+			WebserviceConfigDTO wsconfigDTO = SystemConfigManager.getWebserviceConfigDTO("couponws");
+			if(null == wsconfigDTO){
+				logger.error("券平台WS访问配置内容为null");
+				return;
+			}
+			// 券平台接口url
+			String url = wsconfigDTO.getWebserviceURL();
+			// 券平台接口appId
+			String appId = wsconfigDTO.getAppID();
+			// 券平台接口AESKEY
+			String aesKey = wsconfigDTO.getSecretKey();
+
+			WebResource webResource = WebserviceClient.getWebResource(url);
+			//对传递的参数进行加密
+			MultivaluedMap<String, String> queryParams = new MultivaluedMapImpl();
+			queryParams.add("appId", appId);
+			queryParams.add("method", "LinkActivity");
+			queryParams.add("ts", ConvertUtil.getString(System.currentTimeMillis() / 1000));
+			Map<String,Object> params = new HashMap<String, Object>();
+			params.put("otherPlatformCode",map.get("systemCode"));
+			params.put("otherCode",map.get("linkMainCode"));
+			params.put("pekonCode",map.get("activityCode"));
+			params.put("pekonName",map.get("prmActiveName"));
+			params.put("fromTime",map.get("minTime"));
+			params.put("toTime",map.get("maxTime"));
+			String paramStr = CherryUtil.map2Json(params);
+//			logger.info("券平台访问appId={},aesKey={}",appId,aesKey);
+//			logger.info("券平台访问url={},params={}",url,paramStr);
+			queryParams.add("params", CherryAESCoder.encrypt(paramStr,aesKey));
+			String result = webResource.queryParams(queryParams).get(String.class);
+			// 券平台返回结果
+			Map<String, Object> retMap = CherryUtil.json2Map(result);
+			if(null == retMap){
+				logger.error("券平台无返回结果");
+			}else{
+				String code = ConvertUtil.getString(retMap.get("code"));
+				if("0".equals(code)){
+					logger.info("调用券平台LinkActiviy成功");
+				}else{
+					logger.error("调用券平台LinkActiviy失败，错误码:{}",code);
+				}
+			}
+		}
+	}
+
+	public int validLinkMainCode(Map map){
+		int result = 0;
+		String couponFlag = ConvertUtil.getString(map.get("couponFlag"));
+		String systemCode = ConvertUtil.getString(map.get("systemCode"));
+		String linkMainCode = ConvertUtil.getString(map.get("linkMainCode"));
+		if("1".equals(couponFlag)){
+			if(!"".equals(systemCode) && "".equals(linkMainCode)){
+				result = 1;
+			}else if("".equals(systemCode) && !"".equals(linkMainCode)){
+				result = 2;
+			}else if(!"".equals(systemCode) && !"".equals(linkMainCode)){
+				int opt = ConvertUtil.getInt(map.get("OPT_KBN"));
+				if(opt == 0){
+					String showType = ConvertUtil.getString(map.get("showType"));
+					if("edit".equals(showType)){
+						opt = 2;
+					}else{
+						opt = 1;
+					}
+				}
+				// 验证 systemCode&&linkMainCode是否已经存在
+				List<String> list = binOLSSPRM13_Service.getActivityCodeList(systemCode,linkMainCode);
+				if(null != list && list.size() > 0){
+					if(opt == 1 || opt == 3){// 新增,复制
+						if(list.size() > 0){
+							result = 3;
+						}
+					}else if(opt == 2){// 编辑
+						String activityCode = ConvertUtil.getString(map.get("activityCode"));
+						if (list.size() > 1){
+							result = 4;
+						}else if(list.size() == 1 && !list.contains(activityCode)){
+							result = 5;
+						}
+					}
+				}
+			}
+		}
+		return result;
 	}
 }

@@ -27,6 +27,14 @@
 				  <th><s:text name="terminalChange"/></th>
 				  <td><s:property value="#application.CodeTable.getVal('1040',map.mainModify)"/></td>
 			  	</tr>
+				<%--<s:if test='"1".equals(map.couponFlag)'>--%>
+					<%--<tr>--%>
+						<%--<th><s:text name="systemCode"/></th>--%>
+						<%--<td><s:property value="#application.CodeTable.getVal('1426',map.systemCode)"/></td>--%>
+						<%--<th><s:text name="linkMainCode"/></th>--%>
+						<%--<td><s:property value='map.linkMainCode'/></td>--%>
+					<%--</tr>--%>
+				<%--</s:if>--%>
 			  	<tr>
 				  	<th><s:text name="prmActiveGrp"/></th>
 				  	<td colspan="3">

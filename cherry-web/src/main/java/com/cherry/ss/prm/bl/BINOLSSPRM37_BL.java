@@ -18,23 +18,28 @@ import java.util.List;
 import java.util.Map;
 
 import javax.annotation.Resource;
+import javax.ws.rs.core.MultivaluedMap;
 
 import com.cherry.cm.cmbussiness.bl.BINOLCM14_BL;
 import com.cherry.cm.cmbussiness.bl.BINOLCM89_BL;
-import com.cherry.cm.core.CherryConstants;
-import com.cherry.cm.core.CherryException;
-import com.cherry.cm.core.CodeTable;
+import com.cherry.cm.core.*;
 import com.cherry.cm.mongo.MongoDB;
+import com.cherry.cm.util.CherryUtil;
 import com.cherry.cm.util.ConvertUtil;
 import com.cherry.cp.point.service.BINOLCPPOI01_Service;
 import com.cherry.pt.common.ProductConstants;
 import com.cherry.ss.common.PromotionConstants;
 import com.cherry.ss.prm.service.BINOLSSPRM13_Service;
 import com.cherry.ss.prm.service.BINOLSSPRM37_Service;
+import com.cherry.webservice.client.WebserviceClient;
 import com.googlecode.jsonplugin.JSONException;
 import com.googlecode.jsonplugin.JSONUtil;
 import com.mongodb.BasicDBObject;
 import com.mongodb.DBObject;
+import com.sun.jersey.api.client.WebResource;
+import com.sun.jersey.core.util.MultivaluedMapImpl;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * 促销活动编辑_BL
@@ -43,6 +48,8 @@ import com.mongodb.DBObject;
  */
 @SuppressWarnings("unchecked")
 public class BINOLSSPRM37_BL {
+
+	private static Logger logger = LoggerFactory.getLogger(BINOLSSPRM37_BL.class.getName());
 	
 	@Resource
 	private BINOLCM89_BL binOLCM89_BL;
@@ -550,7 +557,7 @@ public class BINOLSSPRM37_BL {
 	 * @param map
 	 * @throws Exception 
 	 */
-	public void tran_stopPrmActive (String activeId,String sendFlag) throws Exception{
+	public void tran_stopPrmActive (String activeId,String couponFlag) throws Exception{
 		Map<String,Object> p = new HashMap<String, Object>();
 		p.put("activeID", activeId);
 		int count = binOLSSPRM37_Service.getActivityTransHisCount(p);
@@ -563,8 +570,52 @@ public class BINOLSSPRM37_BL {
 		}
 		// 无效会员主题活动表
 		binOLSSPRM37_Service.delCampain(p);
+		if("1".equals(couponFlag)){
+			String activityCode = binOLSSPRM37_Service.getActivityCode(activeId);
+			delLinkActivity(activityCode);
+		}
 	}
 
+	private void delLinkActivity(String activityCode) throws Exception {
+		WebserviceConfigDTO wsconfigDTO = SystemConfigManager.getWebserviceConfigDTO("couponws");
+		if(null == wsconfigDTO){
+			logger.error("券平台WS访问配置内容为null");
+			return;
+		}
+		// 券平台接口url
+		String url = wsconfigDTO.getWebserviceURL();
+		// 券平台接口appId
+		String appId = wsconfigDTO.getAppID();
+		// 券平台接口AESKEY
+		String aesKey = wsconfigDTO.getSecretKey();
+
+		WebResource webResource = WebserviceClient.getWebResource(url);
+		//对传递的参数进行加密
+		MultivaluedMap<String, String> queryParams = new MultivaluedMapImpl();
+		queryParams.add("appId", appId);
+		queryParams.add("method", "LinkActivity");
+		queryParams.add("ts", ConvertUtil.getString(System.currentTimeMillis() / 1000));
+		Map<String,Object> params = new HashMap<String, Object>();
+		params.put("pekonCode",activityCode);
+		params.put("deleteFlag","1");
+		String paramStr = CherryUtil.map2Json(params);
+//			logger.info("券平台访问appId={},aesKey={}",appId,aesKey);
+//			logger.info("券平台访问url={},params={}",url,paramStr);
+		queryParams.add("params", CherryAESCoder.encrypt(paramStr,aesKey));
+		String result = webResource.queryParams(queryParams).get(String.class);
+		// 券平台返回结果
+		Map<String, Object> retMap = CherryUtil.json2Map(result);
+		if(null == retMap){
+			logger.error("券平台无返回结果");
+		}else{
+			String code = ConvertUtil.getString(retMap.get("code"));
+			if("0".equals(code)){
+				logger.info("调用券平台LinkActiviy成功");
+			}else{
+				logger.error("调用券平台LinkActiviy失败，错误码:{}",code);
+			}
+		}
+	}
 	/**
 	 * 向mongoDB中删除规则drl数据
 	 * @param map

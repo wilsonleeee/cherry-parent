@@ -1,6 +1,7 @@
 function BINOLSSPRM68_3(){};
 BINOLSSPRM68_3.prototype={
 		"nextBefore":function(){
+			return true;
 		},
 		// 活动对象类型
 		"changeMebType":function(_this,index){

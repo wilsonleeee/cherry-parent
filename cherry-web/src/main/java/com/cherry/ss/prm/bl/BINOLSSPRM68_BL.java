@@ -15,14 +15,13 @@ package com.cherry.ss.prm.bl;
 import java.util.*;
 
 import javax.annotation.Resource;
+import javax.ws.rs.core.MultivaluedMap;
 
 import com.cherry.cm.cmbussiness.bl.BINOLCM03_BL;
 import com.cherry.cm.cmbussiness.bl.BINOLCM05_BL;
 import com.cherry.cm.cmbussiness.bl.BINOLCM14_BL;
 import com.cherry.cm.cmbussiness.bl.BINOLCM89_BL;
-import com.cherry.cm.core.CherryConstants;
-import com.cherry.cm.core.CherryException;
-import com.cherry.cm.core.CodeTable;
+import com.cherry.cm.core.*;
 import com.cherry.cm.util.CherryUtil;
 import com.cherry.cm.util.ConvertUtil;
 import com.cherry.cp.act.util.ActUtil;
@@ -32,8 +31,13 @@ import com.cherry.ss.common.PromotionConstants;
 import com.cherry.ss.prm.service.BINOLSSPRM13_Service;
 import com.cherry.ss.prm.service.BINOLSSPRM37_Service;
 import com.cherry.ss.prm.service.BINOLSSPRM68_Service;
+import com.cherry.webservice.client.WebserviceClient;
 import com.googlecode.jsonplugin.JSONException;
 import com.googlecode.jsonplugin.JSONUtil;
+import com.sun.jersey.api.client.WebResource;
+import com.sun.jersey.core.util.MultivaluedMapImpl;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * 
@@ -43,6 +47,8 @@ import com.googlecode.jsonplugin.JSONUtil;
  * @version 1.0 2013.10.17
  */
 public class BINOLSSPRM68_BL {
+
+	private static Logger logger = LoggerFactory.getLogger(BINOLSSPRM68_BL.class.getName());
 
 	@Resource(name = "binOLCPPOI01_BL")
 	private BINOLCPPOI01_BL poi01_BL;
@@ -176,10 +182,132 @@ public class BINOLSSPRM68_BL {
 	public void tran_saveRule(Map<String, Object> map) throws Exception {
 		saveRule(map);
 		String templateFlag = ConvertUtil.getString(map.get("templateFlag"));
-		if(!"1".equals(templateFlag)){
+		// 第三方copoun校验平台代码
+		String systemCode = ConvertUtil.getString(map.get("systemCode"));
+		if(!"1".equals(templateFlag) && "".equals(systemCode)){
 			saveCampRule(map);
 		}
+		doLinkActivity(map);
 	}
+
+	private void doLinkActivity(Map<String, Object> map) throws Exception{
+		String oldSystemCode = ConvertUtil.getString(map.get("oldSystemCode"));
+		String couponFlag = ConvertUtil.getString(map.get("couponFlag"));
+		String otherPlatformCode = ConvertUtil.getString(map.get("systemCode"));
+		if("1".equals(couponFlag)){
+			WebserviceConfigDTO wsconfigDTO = null;
+			if(!"".equals(otherPlatformCode) || !"".equals(oldSystemCode)){
+				wsconfigDTO = SystemConfigManager.getWebserviceConfigDTO("couponws");
+				if(null == wsconfigDTO){
+					logger.error("券平台WS访问配置内容为null");
+					throw new Exception("券平台WS访问配置内容获取失败");
+				}
+			}
+			//
+			if(!"".equals(otherPlatformCode)){
+				// 关联活动
+				linkActivity(map,wsconfigDTO);
+			}else{
+				int opt = ConvertUtil.getInt(map.get("OPT_KBN"));
+				if(!"".equals(oldSystemCode) && opt == 2){ // 编辑操作 && 老券平台代码不为空 && 新券平台代码为空
+					String activityCode = ConvertUtil.getString(map.get("activityCode"));
+					// 取消关联
+					delLinkActivity(activityCode,wsconfigDTO);
+				}
+			}
+		}
+	}
+
+	/**
+	 * 活动关联推送到券平台
+	 * @param map
+     */
+	private void linkActivity(Map<String, Object> map,WebserviceConfigDTO wsconfigDTO) throws Exception {
+		// 券平台接口url
+		String url = wsconfigDTO.getWebserviceURL();
+		// 券平台接口appId
+		String appId = wsconfigDTO.getAppID();
+		// 券平台接口AESKEY
+		String aesKey = wsconfigDTO.getSecretKey();
+		WebResource webResource = WebserviceClient.getWebResource(url);
+		//对传递的参数进行加密
+		MultivaluedMap<String, String> queryParams = new MultivaluedMapImpl();
+		queryParams.add("appId", appId);
+		queryParams.add("method", "LinkActivity");
+		queryParams.add("ts", ConvertUtil.getString(System.currentTimeMillis() / 1000));
+		Map<String,Object> params = new HashMap<String, Object>();
+		params.put("otherPlatformCode",map.get("systemCode"));
+		params.put("otherCode",map.get("linkMainCode"));
+		params.put("pekonCode",map.get("activityCode"));
+		params.put("pekonName",map.get("prmActiveName"));
+		params.put("fromTime",map.get("startTime"));
+		params.put("toTime",map.get("endTime"));
+		String paramStr = CherryUtil.map2Json(params);
+//			logger.info("券平台访问appId={},aesKey={}",appId,aesKey);
+//			logger.info("券平台访问url={},params={}",url,paramStr);
+		queryParams.add("params", CherryAESCoder.encrypt(paramStr,aesKey));
+		String result = webResource.queryParams(queryParams).get(String.class);
+		// 券平台返回结果
+		Map<String, Object> retMap = CherryUtil.json2Map(result);
+		if(null == retMap){
+			logger.error("券平台无返回结果");
+			throw new Exception("券平台无返回结果");
+		}else{
+			String code = ConvertUtil.getString(retMap.get("code"));
+			if("0".equals(code)){
+				logger.info("调用券平台LinkActiviy成功");
+			}else{
+				logger.error("调用券平台LinkActiviy失败，错误码:{}",code);
+				throw new Exception("调用券平台LinkActiviy失败错误码:" + code);
+			}
+		}
+
+	}
+
+	/**
+	 * 取消券活动关联
+	 * @param activityCode
+	 * @param wsconfigDTO
+	 * @throws Exception
+     */
+	private void delLinkActivity(String activityCode,WebserviceConfigDTO wsconfigDTO) throws Exception {
+		// 券平台接口url
+		String url = wsconfigDTO.getWebserviceURL();
+		// 券平台接口appId
+		String appId = wsconfigDTO.getAppID();
+		// 券平台接口AESKEY
+		String aesKey = wsconfigDTO.getSecretKey();
+
+		WebResource webResource = WebserviceClient.getWebResource(url);
+		//对传递的参数进行加密
+		MultivaluedMap<String, String> queryParams = new MultivaluedMapImpl();
+		queryParams.add("appId", appId);
+		queryParams.add("method", "LinkActivity");
+		queryParams.add("ts", ConvertUtil.getString(System.currentTimeMillis() / 1000));
+		Map<String,Object> params = new HashMap<String, Object>();
+		params.put("pekonCode",activityCode);
+		params.put("deleteFlag","1");
+		String paramStr = CherryUtil.map2Json(params);
+//			logger.info("券平台访问appId={},aesKey={}",appId,aesKey);
+//			logger.info("券平台访问url={},params={}",url,paramStr);
+		queryParams.add("params", CherryAESCoder.encrypt(paramStr,aesKey));
+		String result = webResource.queryParams(queryParams).get(String.class);
+		// 券平台返回结果
+		Map<String, Object> retMap = CherryUtil.json2Map(result);
+		if(null == retMap){
+			logger.error("调用券平台取消券活动关联无返回结果");
+			throw new Exception("调用券平台取消券活动关联无返回结果");
+		}else{
+			String code = ConvertUtil.getString(retMap.get("code"));
+			if("0".equals(code)){
+				logger.info("调用券平台取消券活动关联成功");
+			}else{
+				logger.error("调用券平台取消券活动关联失败，错误码:{}",code);
+				throw new Exception("调用券平台取消券活动关联失败，错误码:" + code);
+			}
+		}
+	}
+
 	/**
 	 * 保存促销规则
 	 *

@@ -469,6 +469,10 @@ public class BINOLSSPRM13_Action extends BaseAction implements ModelDriven<BINOL
 		map.put("userID", userInfo.getBIN_UserID());
 		map.put("userName", userInfo.getLoginName());
 		map.put(CherryConstants.BRAND_CODE, userInfo.getBrandCode());
+		String couponFlag = binOLCM14_BL.getConfigValue("1403",
+				ConvertUtil.getString(map.get(CherryConstants.ORGANIZATIONINFOID)),
+				ConvertUtil.getString(map.get(CherryConstants.BRANDINFOID)));
+		map.put("couponFlag", couponFlag);
 		return CherryUtil.removeEmptyVal(map);
 	}	
 	/**

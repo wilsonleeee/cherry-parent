@@ -21,6 +21,7 @@
                         <input type="hidden" name="pageA.sendFlag" value="${pageA.sendFlag!}"/>
 						<input type="hidden" name="pageA.updTime" value="${pageA.updTime!}"/>
 						<input type="hidden" name="pageA.modCount" value="${pageA.modCount!}"/>
+                       <input type="hidden" name="pageA.couponFlag" value="${pageTemp.couponFlag!}"/>
                    </td>
                    <th><@s.text name="brandName" /><span class="highlight">*</span></th>
                    <td>
@@ -63,9 +64,15 @@
 				  <td><@getRadioList list=useCouponList name="pageA.useCoupon" val=(pageA.useCoupon)!'1'/></td>
 				  <th><div><@s.text name="subCampValid" /></div></th>
 				  <td>
-				  	<select name="pageA.subCampValid" style="width:187px;">
+				  	<select id="subCampValid" name="pageA.subCampValid" style="width:187px;"
+							<#if (pageTemp.couponFlag?exists && pageTemp.couponFlag == '1')
+									&& (pageA.systemCode?exists && pageA.systemCode != '')>disabled="disabled"</#if> >
 						<@getOptionList list=application.CodeTable.getCodes("1230") val=(pageA.subCampValid)!'0'/>
 					</select>
+				  <#if (pageTemp.couponFlag?exists && pageTemp.couponFlag == '1')
+				  		&& (pageA.systemCode?exists && pageA.systemCode != '')>
+				   		<input type="hidden" name="pageA.subCampValid" value="2"/>
+				   </#if>
 				  </td>
 			  	</tr>
 			  	<tr>
@@ -78,8 +85,8 @@
 			  	<tr>
 				  <th><div><@s.text name="isMust" /></div></th>
 				  <td><@getRadioList list=isMustList name="pageA.isMust" val=(pageA.isMust)!'0'/></td>
-				  <th rowspan="2"><@s.text name="descriptionDtl" /></th>
-				  <td rowspan="2">
+				  <th rowspan="<#if pageTemp.couponFlag == '1'>3<#else>2</#if>"><@s.text name="descriptionDtl" /></th>
+				  <td rowspan="<#if pageTemp.couponFlag == '1'>3<#else>2</#if>">
 				  	<textarea name="pageA.descriptionDtl" maxlength="100" style="height: 50px;padding:0px;">${pageA.descriptionDtl!}</textarea>
 				  </td>
 			  	</tr>
@@ -87,6 +94,21 @@
 				  <th><@s.text name="enMessage" /></th>
 				  <td><@getRadioList list=enMessageList name="pageA.enMessage" val=(pageA.enMessage)!'0'/></td>
 			  	</tr>
+				<#if pageTemp.couponFlag == '1'>
+                <tr>
+                    <th><@s.text name="systemCode" /></th>
+                    <td>
+						<span>
+							<select id="systemCode" name="pageA.systemCode" style="width:120px;" onchange="PRM68_1.setSubCampValid(this);">
+								<option value=""></option>
+								<@getOptionList list=application.CodeTable.getCodes("1426") val=(pageA.systemCode)!''/>
+							</select>
+						<@s.text name="linkMainCode" />：<input id="linkMainCode" class="text" name="pageA.linkMainCode" style="width: 140px;" value="${pageA.linkMainCode!}"/>
+						</span>
+						<input type="hidden" name="pageA.oldSystemCode" value="${pageA.systemCode!}"/>
+					</td>
+                </tr>
+				</#if>
    			</tbody>
    		</table>
 	</div>

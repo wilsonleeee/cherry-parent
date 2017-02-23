@@ -330,4 +330,16 @@ public class BINOLSSPRM13_Service extends BaseService{
 		map.put(CherryConstants.IBATIS_SQL_ID, "BINOLSSPRM13.getActIdByName");
 		return baseServiceImpl.getList(map);
 	}
+
+	/**
+	 * 查询第三方接口对应的第三方活动码数量
+	 * @return
+	 */
+	public List<String> getActivityCodeList (String systemCode,String linkMainCode){
+		Map<String, Object> param = new HashMap<String, Object>();
+		param.put("systemCode", systemCode);
+		param.put("linkMainCode", linkMainCode);
+		param.put(CherryConstants.IBATIS_SQL_ID, "BINOLSSPRM13.getActivityCodeList");
+		return (List<String>) baseServiceImpl.getList(param);
+	}
 }

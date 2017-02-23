@@ -111,7 +111,11 @@ public class BINOLSSPRM68_Action extends BaseAction{
 		String exRangesFlag = binOLCM14_BL.getConfigValue("1368", 
 				ConvertUtil.getString(comMap.get(CherryConstants.ORGANIZATIONINFOID)), 
 				ConvertUtil.getString(comMap.get(CherryConstants.BRANDINFOID)));
+		String couponFlag = binOLCM14_BL.getConfigValue("1403",
+				ConvertUtil.getString(comMap.get(CherryConstants.ORGANIZATIONINFOID)),
+				ConvertUtil.getString(comMap.get(CherryConstants.BRANDINFOID)));
 		pageTemp.put("exRangesFlag", exRangesFlag);
+		pageTemp.put("couponFlag", couponFlag);
 		try {
 			// 首次进入页面，初始化session
 			if(step == 0){
@@ -476,6 +480,18 @@ public class BINOLSSPRM68_Action extends BaseAction{
 			}
 			if(!CherryChecker.isNullOrEmpty(pageA.get("maxExecCount")) && !CherryChecker.isNumeric(pageA.get("maxExecCount"))){//最大匹配次数格式错误
 				this.addFieldError("pageA.maxExecCount", getText("ECM00045",new String[]{getText("ESS00069"),"0"}));
+				result = false;
+			}
+			//
+			int reslut = binOLSSPRM13_BL.validLinkMainCode(pageA);
+			if(reslut == 1){
+				this.addFieldError("pageA.linkMainCode", "关联活动码不能为空");
+				result = false;
+			}else if(reslut == 2){
+				this.addFieldError("pageA.systemCode", "第三方券平台不能为空");
+				result = false;
+			}else if(reslut >= 3){
+				this.addFieldError("pageA.linkMainCode", "关联活动码已经被关联");
 				result = false;
 			}
 		}else if(pageNo == 2){

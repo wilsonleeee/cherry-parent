@@ -63,6 +63,22 @@
 			  	  <th><s:text name="terminalChange"/><span class="highlight">*</span></th>
 				  <td><s:select name="mainModify" list='#application.CodeTable.getCodes("1040")' cssStyle="width:185px;" listKey="CodeKey" listValue="Value" value="%{map.mainModify}"/></td>	
 			  	</tr>
+				<%--<s:if test='"1".equals(map.couponFlag)'>--%>
+					<%--<tr>--%>
+						<%--<th><s:text name="systemCode"/></th>--%>
+						<%--<td>--%>
+						<%--<span>--%>
+							<%--<s:select name="systemCode" list='#application.CodeTable.getCodes("1426")' cssStyle="width:185px;"--%>
+									  <%--listKey="CodeKey" listValue="Value" value="%{map.systemCode}" headerKey="" headerValue=""/>--%>
+						<%--</span>--%>
+						<%--</td>--%>
+						<%--<th><s:text name="linkMainCode"/></th>--%>
+						<%--<td>--%>
+						<%--<span><input id="linkMainCode" class="text" name="linkMainCode" style="width: 140px;" value="<s:property value='map.linkMainCode'/>"/>--%>
+						<%--</span>--%>
+						<%--</td>--%>
+					<%--</tr>--%>
+				<%--</s:if>--%>
    			</tbody>
    		</table>
 	</div>

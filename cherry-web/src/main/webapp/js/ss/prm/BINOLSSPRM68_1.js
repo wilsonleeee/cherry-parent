@@ -50,11 +50,31 @@ BINOLSSPRM68_1.prototype={
 			});
 		},
 		"nextBefore":function(){
-			
+			//var $systemCode = $('#systemCode');
+			//var $linkMainCode = $('#linkMainCode');
+			//if($systemCode.length > 0 && $systemCode.val() != '' && $linkMainCode.val() == ''){
+			//	alert('关联活动码不能为空');
+			//	return false;
+			//}
+			return true;
 		},
 		"changeBrand":function(_this){
 			var url = $('#BINOLSSPRM13Url').html()+"?pageA.brandInfoId="+$(_this).val()+"&"+getParentToken();
 			window.location.href = url;
+		},
+		"setSubCampValid" : function(_this){
+			var $this = $(_this);
+			var $subCampValid = $('#subCampValid');
+			if($this.val() == ""){
+				$subCampValid.prop("disabled",false);
+				$subCampValid.next().remove();
+			}else {
+				$subCampValid.val('2');
+				$subCampValid.prop("disabled",true);
+				$subCampValid.parent().append('<input name="pageA.subCampValid" type="hidden" value="2"/>')
+			}
+
+
 		}
 }
 var PRM68_1 = new BINOLSSPRM68_1();

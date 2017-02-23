@@ -115,7 +115,27 @@ public class BINOLSSPRM13_Form extends DataTable_BaseForm {
 	private String factionID;
 	
 	private String templateFlag;
-	
+
+	private String systemCode;
+
+	private String linkMainCode;
+
+	public String getSystemCode() {
+		return systemCode;
+	}
+
+	public void setSystemCode(String systemCode) {
+		this.systemCode = systemCode;
+	}
+
+	public String getLinkMainCode() {
+		return linkMainCode;
+	}
+
+	public void setLinkMainCode(String linkMainCode) {
+		this.linkMainCode = linkMainCode;
+	}
+
 	public String getFactionID() {
 		return factionID;
 	}

@@ -81,8 +81,8 @@ public class ActTemplateInit extends TemplateInit {
 	 */
 	public void BASE000053_init(Map<String, Object> paramMap,
 			Map<String, Object> tempMap) throws JSONException {
-		int orgId = ConvertUtil.getInt(paramMap.get(CherryConstants.ORGANIZATIONINFOID));
-		int brandId = ConvertUtil.getInt(paramMap.get(CherryConstants.BRANDINFOID));
+		String orgId = ConvertUtil.getString(paramMap.get(CherryConstants.ORGANIZATIONINFOID));
+		String brandId = ConvertUtil.getString(paramMap.get(CherryConstants.BRANDINFOID));
 		// 活动列表List
 		List<Map<String, Object>> campList = ActUtil.getCampList(paramMap);
 		CampaignDTO dto = (CampaignDTO) paramMap.get(CampConstants.CAMP_INFO);
@@ -99,6 +99,8 @@ public class ActTemplateInit extends TemplateInit {
 		}else{
 			tempMap.put("topLimitFlag", 0);
 		}
+		String couponFlag = binOLCM14_BL.getConfigValue("1403",orgId,brandId);
+		tempMap.put("couponFlag", couponFlag);
 		// 运费虚拟产品
 //		try {
 //			binOLCM15_BL.getPrmInfoYF(orgId, brandId);

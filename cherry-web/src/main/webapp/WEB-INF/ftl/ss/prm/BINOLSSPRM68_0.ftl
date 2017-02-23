@@ -51,6 +51,14 @@
 				  	<tr>
 					  <th><@s.text name="zgqFlag" /></th><td><@getValue list=zgqFlagList key=page.zgqFlag!'0'/></td>
 				  	</tr>
+					<#if pageTemp.couponFlag == '1'>
+                    <tr>
+                        <th><@s.text name="systemCode" /></th>
+                        <td><@getValue list=application.CodeTable.getCodes("1426") key=(pageA.systemCode)!''/></td>
+                        <th><@s.text name="linkMainCode" /></th>
+                        <td>${pageA.linkMainCode!}</td>
+                    </tr>
+					</#if>
 	   			</tbody>
 	   		</table>
      	</div>

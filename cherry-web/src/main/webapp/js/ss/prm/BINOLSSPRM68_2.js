@@ -62,6 +62,7 @@ BINOLSSPRM68_2.prototype={
 				$("#placeJson_0").val(JSON.stringify(checkedNodes));
 				$("#saveJson_0").val(JSON.stringify(leafNodes));
 			}
+			return true;
 		}
 		
 }

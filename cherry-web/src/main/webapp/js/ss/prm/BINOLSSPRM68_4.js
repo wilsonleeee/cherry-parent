@@ -505,6 +505,7 @@ BINOLSSPRM68_4.prototype={
 			}
 			$ruleResultJson.val("{"+that.Obj2JSON($params).toString() + "}");
 			//alert($ruleResultJson.val());
+			return true;
 		},
 		"showRewardQty":function(_this){
 			var $this = $(_this);
