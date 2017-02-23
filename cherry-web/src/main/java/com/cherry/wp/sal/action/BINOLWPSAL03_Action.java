@@ -31,18 +31,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-public class BINOLWPSAL03_Action extends BaseAction implements ModelDriven<BINOLWPSAL03_Form>{
+public class BINOLWPSAL03_Action extends BaseAction implements ModelDriven<BINOLWPSAL03_Form> {
 
-	/**
-	 *
-	 */
-	static{
-		WebserviceConfigDTO wsconfigDTO = SystemConfigManager.getWebserviceConfigDTO("pekonws");
-		SavingscardWebServiceUrl = wsconfigDTO.getWebserviceURL();//PropertiesUtil.pps.getProperty("SavingscardWebServiceUrl");
-		SavingscardAppID = wsconfigDTO.getAppID();//PropertiesUtil.pps.getProperty("SavingscardAppID");
-	}
-	private static String SavingscardWebServiceUrl;
-	private static String SavingscardAppID;
 	private static final long serialVersionUID = 1L;
 
 	private BINOLWPSAL03_Form form = new BINOLWPSAL03_Form();
@@ -1110,11 +1100,12 @@ public class BINOLWPSAL03_Action extends BaseAction implements ModelDriven<BINOL
 					data.put("TradeAmount", cashCard);
 					data.put("ServiceDetail", jsonList);
 					data.put("Memo", form.getComments());
+					WebserviceConfigDTO wsconfigDTO = SystemConfigManager.getWebserviceConfigDTO(brandCode,"pekonws");
 					MultivaluedMap<String, String> queryParams = new MultivaluedMapImpl();
 					queryParams.add("brandCode", brandCode);
-					queryParams.add("appID", SavingscardAppID + "_" + brandCode);
-					queryParams.add("paramData", CherryAESCoder.encrypt(CherryUtil.map2Json(data), thirdPartyConfig.getDynamicAESKey(SavingscardAppID,brandCode)));
-					WebResource wr= binOLCM27_BL.getWebResource(SavingscardWebServiceUrl);
+					queryParams.add("appID", wsconfigDTO.getAppID());
+					queryParams.add("paramData", CherryAESCoder.encrypt(CherryUtil.map2Json(data), thirdPartyConfig.getDynamicAESKey(wsconfigDTO.getAppID(),brandCode)));
+					WebResource wr= binOLCM27_BL.getWebResource(wsconfigDTO.getWebserviceURL());
 					String result_card=wr.queryParams(queryParams).get(String.class);
 					Map<String,Object> result_card1=ConvertUtil.json2Map(result_card);
 					String ERRORCODE = result_card1.get("ERRORCODE").toString();
@@ -1358,12 +1349,15 @@ public class BINOLWPSAL03_Action extends BaseAction implements ModelDriven<BINOL
 		// 登陆用户信息
 		UserInfo userInfo = (UserInfo) session.get(CherryConstants.SESSION_USERINFO);
 		String brandCode = ConvertUtil.getString(userInfo.getBrandCode());
+
+		WebserviceConfigDTO wsconfigDTO = SystemConfigManager.getWebserviceConfigDTO(brandCode,"pekonws");
+
 		// 活动查询
 		MultivaluedMap<String, String> queryParams = new MultivaluedMapImpl();
 		queryParams.add("brandCode", brandCode);
-		queryParams.add("appID", SavingscardAppID + "_" + brandCode);
-		queryParams.add("paramData", CherryAESCoder.encrypt(CherryUtil.map2Json(data), thirdPartyConfig.getDynamicAESKey(SavingscardAppID,brandCode)));
-		WebResource wr= binOLCM27_BL.getWebResource(SavingscardWebServiceUrl);
+		queryParams.add("appID", wsconfigDTO.getAppID());
+		queryParams.add("paramData", CherryAESCoder.encrypt(CherryUtil.map2Json(data), thirdPartyConfig.getDynamicAESKey(wsconfigDTO.getAppID(),brandCode)));
+		WebResource wr= binOLCM27_BL.getWebResource(wsconfigDTO.getWebserviceURL());
 		String r_validateCode=wr.queryParams(queryParams).get(String.class);
 		Map<String,Object> r_validateCode1=ConvertUtil.json2Map(r_validateCode);
 		String ERRORCODE = r_validateCode1.get("ERRORCODE").toString();

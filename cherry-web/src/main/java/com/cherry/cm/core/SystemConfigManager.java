@@ -142,4 +142,11 @@ public class SystemConfigManager implements InitializingBean {
     public static WebserviceConfigDTO getWebserviceConfigDTO(String webserviceIdentifier){
         return webserviceConfigAll.get("-9999_"+webserviceIdentifier);
     }
+
+    public static WebserviceConfigDTO getWebserviceConfigDTO(String brandCode,String webserviceIdentifier){
+        if(webserviceConfigAll.containsKey(brandCode+"_"+webserviceIdentifier)){
+            return webserviceConfigAll.get(brandCode+"_"+webserviceIdentifier);
+        }
+        return webserviceConfigAll.get("-9999_"+webserviceIdentifier);
+    }
 }

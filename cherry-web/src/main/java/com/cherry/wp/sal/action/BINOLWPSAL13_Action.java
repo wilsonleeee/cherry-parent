@@ -25,17 +25,6 @@ import java.util.Map;
 
 public class BINOLWPSAL13_Action extends BaseAction implements ModelDriven<BINOLWPSAL13_Form> {
 
-	/**
-	 * 
-	 */
-	static{
-		WebserviceConfigDTO wsconfigDTO = SystemConfigManager.getWebserviceConfigDTO("pekonws");
-		SavingscardWebServiceUrl = wsconfigDTO.getWebserviceURL();//PropertiesUtil.pps.getProperty("SavingscardWebServiceUrl");
-		SavingscardAppID = wsconfigDTO.getAppID();//PropertiesUtil.pps.getProperty("SavingscardAppID");
-	}
-	private static String SavingscardWebServiceUrl;
-	private static String SavingscardAppID;
-	
 	private static final long serialVersionUID = 1L;
 	@Resource
 	private BINOLWPSAL13_BL binOLWPSAL13_BL;
@@ -250,7 +239,8 @@ public class BINOLWPSAL13_Action extends BaseAction implements ModelDriven<BINOL
 			if("0".equals(ERRORCODE)){
 				logger.error("充值成功！ERRORCODE值为"+ERRORCODE);
 				String j = rmap.get("ResultContent").toString();
-				String ResultContent = CherryAESCoder.decrypt(j, thirdPartyConfig.getDynamicAESKey(SavingscardAppID,brandCode));
+				WebserviceConfigDTO wsconfigDTO = SystemConfigManager.getWebserviceConfigDTO(brandCode,"pekonws");
+				String ResultContent = CherryAESCoder.decrypt(j, wsconfigDTO.getSecretKey());
 				Map<String, Object> m = ConvertUtil.json2Map(ResultContent);
 				ConvertUtil.setResponseByAjax(response, "SUCCESS");
 			}else if("SRE0013".equals(ERRORCODE)){
@@ -353,11 +343,12 @@ public class BINOLWPSAL13_Action extends BaseAction implements ModelDriven<BINOL
 			m.put("memberCode", form.getMemCode());
 		}
 		String brandCode = ConvertUtil.getString(userInfo.getBrandCode());
+		WebserviceConfigDTO wsconfigDTO = SystemConfigManager.getWebserviceConfigDTO(brandCode,"pekonws");
 		MultivaluedMap<String, String> queryParams = new MultivaluedMapImpl();
 		queryParams.add("brandCode", brandCode);
-		queryParams.add("appID", SavingscardAppID + "_" + brandCode);
-		queryParams.add("paramData", CherryAESCoder.encrypt(CherryUtil.map2Json(data), thirdPartyConfig.getDynamicAESKey(SavingscardAppID,brandCode)));
-		WebResource wr= binOLCM27_BL.getWebResource(SavingscardWebServiceUrl);
+		queryParams.add("appID", wsconfigDTO.getAppID());
+		queryParams.add("paramData", CherryAESCoder.encrypt(CherryUtil.map2Json(data), wsconfigDTO.getSecretKey()));
+		WebResource wr= binOLCM27_BL.getWebResource(wsconfigDTO.getWebserviceURL());
 		String result_card= "";
 		try {
 			result_card=wr.queryParams(queryParams).get(String.class);
@@ -370,7 +361,7 @@ public class BINOLWPSAL13_Action extends BaseAction implements ModelDriven<BINOL
 		String ERRORCODE = result_card1.get("ERRORCODE").toString();
 		if(ERRORCODE.equals("0")){
 			String ResultContent = result_card1.get("ResultContent").toString();
-			String s = CherryAESCoder.decrypt(ResultContent, thirdPartyConfig.getDynamicAESKey(SavingscardAppID,brandCode));
+			String s = CherryAESCoder.decrypt(ResultContent, wsconfigDTO.getSecretKey());
 			if(null!=s && !"".equals(s) && !"null".equals(s)){
 				form.setServerList(code.getCodesByGrade("1338"));
 				List<Map<String, Object>> r_List = ConvertUtil.json2List(s);

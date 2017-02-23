@@ -1,6 +1,5 @@
 package com.cherry.mb.svc.bl;
 
-import com.cherry.cm.cmbussiness.bl.BINOLCM14_BL;
 import com.cherry.cm.cmbussiness.bl.BINOLCM27_BL;
 import com.cherry.cm.cmbussiness.bl.BINOLCM37_BL;
 import com.cherry.cm.core.*;
@@ -22,33 +21,21 @@ import java.util.Map;
 
 
 public class BINOLMBSVC02_BL implements BINOLMBSVC02_IF {
-	
-	static{
-		WebserviceConfigDTO wsconfigDTO = SystemConfigManager.getWebserviceConfigDTO("pekonws");
-		SavingscardWebServiceUrl = wsconfigDTO.getWebserviceURL();//PropertiesUtil.pps.getProperty("SavingscardWebServiceUrl");
-		SavingscardAppID = wsconfigDTO.getAppID();//PropertiesUtil.pps.getProperty("SavingscardAppID");
-	}
+
 	@Resource
 	private BINOLMBSVC02_Service binOLMBSVC02_Service;
 	
 	/** 导出共通BL **/
 	@Resource
 	private BINOLCM37_BL binOLCM37_BL;
-	@Resource(name="thirdPartyConfig")
-	private ThirdPartyConfig thirdPartyConfig;
-	
-	/** 系统配置项 共通BL */
-	@Resource
-	private BINOLCM14_BL binOLCM14_BL;
-	
+
 	@Resource(name ="binOLMBSVC02_1_IF")  
 	private BINOLMBSVC02_1_IF binOLMBSVC02_1_IF;
 	
 	@Resource
 	private CodeTable code;
 	
-	private static String SavingscardWebServiceUrl;
-	private static String SavingscardAppID;
+
 	@Resource
 	private BINOLCM27_BL bINOLCM27_BL;
 	
@@ -320,16 +307,17 @@ public class BINOLMBSVC02_BL implements BINOLMBSVC02_IF {
 		Map<String,Object> data=new HashMap<String, Object>();
 		data.put("TradeType", "SavingsCardAddCard");
 		data.put("CardList", card_map.get("CardList"));
+		WebserviceConfigDTO wsconfigDTO = SystemConfigManager.getWebserviceConfigDTO(brandCode,"pekonws");
 		MultivaluedMap<String, String> queryParams = new MultivaluedMapImpl();
 		queryParams.add("brandCode", brandCode);
-		queryParams.add("appID", SavingscardAppID + "_" + brandCode);
-		queryParams.add("paramData", CherryAESCoder.encrypt(CherryUtil.map2Json(data), thirdPartyConfig.getDynamicAESKey(SavingscardAppID,brandCode)));
-		WebResource wr= bINOLCM27_BL.getWebResource(SavingscardWebServiceUrl);
+		queryParams.add("appID", wsconfigDTO.getAppID());
+		queryParams.add("paramData", CherryAESCoder.encrypt(CherryUtil.map2Json(data), wsconfigDTO.getSecretKey()));
+		WebResource wr= bINOLCM27_BL.getWebResource(wsconfigDTO.getWebserviceURL());
 		String  result_card=wr.queryParams(queryParams).get(String.class);
 		Map<String,Object> result_card1=ConvertUtil.json2Map(result_card);
 		String resultContent=ConvertUtil.getString(result_card1.get("ResultContent"));
 		if(!"".equals(resultContent)){
-			List<Map<String,Object>> ResultContent_list=CherryUtil.json2ArryList(CherryAESCoder.decrypt(resultContent, thirdPartyConfig.getDynamicAESKey(SavingscardAppID,brandCode)));
+			List<Map<String,Object>> ResultContent_list=CherryUtil.json2ArryList(CherryAESCoder.decrypt(resultContent, wsconfigDTO.getSecretKey()));
 			result_card1.put("resultContent_list", ResultContent_list);
 		}
 		return result_card1;
@@ -377,11 +365,12 @@ public class BINOLMBSVC02_BL implements BINOLMBSVC02_IF {
 		data.put("CardCode", map.get("cardCode"));
 		data.put("CounterCode", map.get("counterCode"));
 		data.put("UsesType", 5);
+		WebserviceConfigDTO wsconfigDTO = SystemConfigManager.getWebserviceConfigDTO(brandCode,"pekonws");
 		MultivaluedMap<String, String> queryParams = new MultivaluedMapImpl();
 		queryParams.add("brandCode", brandCode);
-		queryParams.add("appID", SavingscardAppID + "_" + brandCode);
-		queryParams.add("paramData", CherryAESCoder.encrypt(CherryUtil.map2Json(data), thirdPartyConfig.getDynamicAESKey(SavingscardAppID,brandCode)));
-		WebResource wr= bINOLCM27_BL.getWebResource(SavingscardWebServiceUrl);
+		queryParams.add("appID", wsconfigDTO.getAppID());
+		queryParams.add("paramData", CherryAESCoder.encrypt(CherryUtil.map2Json(data), wsconfigDTO.getSecretKey()));
+		WebResource wr= bINOLCM27_BL.getWebResource(wsconfigDTO.getWebserviceURL());
 		String  result_json = wr.queryParams(queryParams).get(String.class);
 		Map<String,Object> result_map = ConvertUtil.json2Map(result_json);
 		return getResultMapMessage(result_map);
@@ -413,11 +402,12 @@ public class BINOLMBSVC02_BL implements BINOLMBSVC02_IF {
 		}else{
 			data.put("NewPassword", map.get("newPassword"));
 		}
+		WebserviceConfigDTO wsconfigDTO = SystemConfigManager.getWebserviceConfigDTO(brandCode,"pekonws");
 		MultivaluedMap<String, String> queryParams = new MultivaluedMapImpl();
 		queryParams.add("brandCode", brandCode);
-		queryParams.add("appID", SavingscardAppID + "_" + brandCode);
-		queryParams.add("paramData", CherryAESCoder.encrypt(CherryUtil.map2Json(data), thirdPartyConfig.getDynamicAESKey(SavingscardAppID,brandCode)));
-		WebResource wr= bINOLCM27_BL.getWebResource(SavingscardWebServiceUrl);
+		queryParams.add("appID", wsconfigDTO.getAppID());
+		queryParams.add("paramData", CherryAESCoder.encrypt(CherryUtil.map2Json(data), wsconfigDTO.getSecretKey()));
+		WebResource wr= bINOLCM27_BL.getWebResource(wsconfigDTO.getWebserviceURL());
 		String  result_json=wr.queryParams(queryParams).get(String.class);
 		Map<String,Object> result_map=ConvertUtil.json2Map(result_json);
 		return result_map;
@@ -453,11 +443,12 @@ public class BINOLMBSVC02_BL implements BINOLMBSVC02_IF {
 		data.put("CardCode", map.get("cardCode"));
 		data.put("Password", map.get("newPassword"));
 		data.put("CounterCode", map.get("counterCode"));
+		WebserviceConfigDTO wsconfigDTO = SystemConfigManager.getWebserviceConfigDTO(brandCode,"pekonws");
 		MultivaluedMap<String, String> queryParams = new MultivaluedMapImpl();
 		queryParams.add("brandCode", brandCode);
-		queryParams.add("appID", SavingscardAppID + "_" + brandCode);
-		queryParams.add("paramData", CherryAESCoder.encrypt(CherryUtil.map2Json(data), thirdPartyConfig.getDynamicAESKey(SavingscardAppID,brandCode)));
-		WebResource wr= bINOLCM27_BL.getWebResource(SavingscardWebServiceUrl);
+		queryParams.add("appID", wsconfigDTO.getAppID());
+		queryParams.add("paramData", CherryAESCoder.encrypt(CherryUtil.map2Json(data), wsconfigDTO.getSecretKey()));
+		WebResource wr= bINOLCM27_BL.getWebResource(wsconfigDTO.getWebserviceURL());
 		String  result_json=wr.queryParams(queryParams).get(String.class);
 		Map<String,Object> result_map=ConvertUtil.json2Map(result_json);
 		return result_map;

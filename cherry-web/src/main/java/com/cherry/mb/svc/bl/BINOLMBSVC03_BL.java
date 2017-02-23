@@ -15,17 +15,9 @@ import java.util.List;
 import java.util.Map;
 
 public class BINOLMBSVC03_BL implements BINOLMBSVC03_IF{
-	static{
-		WebserviceConfigDTO wsconfigDTO = SystemConfigManager.getWebserviceConfigDTO("pekonws");
-		SavingscardWebServiceUrl = wsconfigDTO.getWebserviceURL();//PropertiesUtil.pps.getProperty("SavingscardWebServiceUrl");
-		SavingscardAppID = wsconfigDTO.getAppID();//PropertiesUtil.pps.getProperty("SavingscardAppID");
-	}
-	private static String SavingscardWebServiceUrl;
-	private static String SavingscardAppID;
+
 	@Resource
 	private BINOLCM27_BL bINOLCM27_BL;
-	@Resource(name="thirdPartyConfig")
-	private ThirdPartyConfig thirdPartyConfig;
 	
 	@SuppressWarnings("unchecked")
 	@Override
@@ -36,18 +28,16 @@ public class BINOLMBSVC03_BL implements BINOLMBSVC03_IF{
 		// 柜台号
 		data.put("CounterCode", ConvertUtil.getString(map.get("counterCode")));
 		data.put("TradeType", "GetSavingsCardInfo");
-		MultivaluedMap<String, String> queryParams = new MultivaluedMapImpl();
-		queryParams.add("brandCode", brandCode);
-		queryParams.add("appID", SavingscardAppID + "_" + brandCode);
-		queryParams.add("paramData", CherryAESCoder.encrypt(CherryUtil.map2Json(data), thirdPartyConfig.getDynamicAESKey(SavingscardAppID,brandCode)));
-		WebResource wr= bINOLCM27_BL.getWebResource(SavingscardWebServiceUrl);
-		String  result_card=wr.queryParams(queryParams).get(String.class);
+
+		WebserviceConfigDTO wsconfigDTO = SystemConfigManager.getWebserviceConfigDTO(brandCode,"pekonws");
+		String  result_card=accessSavingscardWS(brandCode,data,wsconfigDTO);
+
 		Map<String,Object> result_card1=ConvertUtil.json2Map(result_card);
 		String errorCode=ConvertUtil.getString(result_card1.get("ERRORCODE"));
 		Map<String,Object> cardInfo_map=new HashMap<String, Object>();
 		if("0".equals(errorCode)){
 			String resultContent=ConvertUtil.getString(result_card1.get("ResultContent"));
-			List<Map<String,Object>> cardInfo_list=CherryUtil.json2ArryList(CherryAESCoder.decrypt(resultContent, thirdPartyConfig.getDynamicAESKey(SavingscardAppID, brandCode)));
+			List<Map<String,Object>> cardInfo_list=CherryUtil.json2ArryList(CherryAESCoder.decrypt(resultContent, wsconfigDTO.getSecretKey()));
 			if(null != cardInfo_list && !cardInfo_list.isEmpty()) {
 				cardInfo_map=(Map<String,Object>)cardInfo_list.get(0);
 				result_card1.put("ResultContent", cardInfo_map);
@@ -67,17 +57,15 @@ public class BINOLMBSVC03_BL implements BINOLMBSVC03_IF{
 		Map<String,Object> data=new HashMap<String, Object>();
 		data.put("CardType", ConvertUtil.getString(map.get("cardType")));
 		data.put("TradeType", "GetSavingsCardDiscount");
-		MultivaluedMap<String, String> queryParams = new MultivaluedMapImpl();
-		queryParams.add("brandCode", brandCode);
-		queryParams.add("appID", SavingscardAppID + "_" + brandCode);
-		queryParams.add("paramData", CherryAESCoder.encrypt(CherryUtil.map2Json(data), thirdPartyConfig.getDynamicAESKey(SavingscardAppID,brandCode)));
-		WebResource wr= bINOLCM27_BL.getWebResource(SavingscardWebServiceUrl);
-		String  result_card=wr.queryParams(queryParams).get(String.class);
+
+		WebserviceConfigDTO wsconfigDTO = SystemConfigManager.getWebserviceConfigDTO(brandCode,"pekonws");
+		String  result_card=accessSavingscardWS(brandCode,data,wsconfigDTO);
+
 		Map<String,Object> result_card1=ConvertUtil.json2Map(result_card);
 		String errorCode=ConvertUtil.getString(result_card1.get("ERRORCODE"));
 		if("0".equals(errorCode)){
 			String resultContent=ConvertUtil.getString(result_card1.get("ResultContent"));
-			List<Map<String,Object>> discount_list=CherryUtil.json2ArryList(CherryAESCoder.decrypt(resultContent, thirdPartyConfig.getDynamicAESKey(SavingscardAppID,brandCode)));
+			List<Map<String,Object>> discount_list=CherryUtil.json2ArryList(CherryAESCoder.decrypt(resultContent, wsconfigDTO.getSecretKey()));
 			result_card1.put("ResultContent", discount_list);
 		}
 		return result_card1;
@@ -101,17 +89,15 @@ public class BINOLMBSVC03_BL implements BINOLMBSVC03_IF{
 		if("2".equals(cardType) || "3".equals(cardType)){
 			data.put("ServiceDetail", map.get("service_list"));
 		}
-		MultivaluedMap<String, String> queryParams = new MultivaluedMapImpl();
-		queryParams.add("brandCode",  brandCode);
-		queryParams.add("appID", SavingscardAppID + "_" + brandCode);
-		queryParams.add("paramData", CherryAESCoder.encrypt(CherryUtil.map2Json(data), thirdPartyConfig.getDynamicAESKey(SavingscardAppID,brandCode)));
-		WebResource wr= bINOLCM27_BL.getWebResource(SavingscardWebServiceUrl);
-		String  result_card=wr.queryParams(queryParams).get(String.class);
+
+		WebserviceConfigDTO wsconfigDTO = SystemConfigManager.getWebserviceConfigDTO(brandCode,"pekonws");
+		String  result_card=accessSavingscardWS(brandCode,data,wsconfigDTO);
+
 		Map<String,Object> result_card1=ConvertUtil.json2Map(result_card);
 			if("0".equals(ConvertUtil.getString(result_card1.get("ERRORCODE")))){
 				String resultContent=ConvertUtil.getString(result_card1.get("ResultContent"));
 				String ERRORCODE=ConvertUtil.getString(result_card1.get("ERRORCODE"));
-				Map<String,Object> result_list=CherryUtil.json2Map(CherryAESCoder.decrypt(resultContent, thirdPartyConfig.getDynamicAESKey(SavingscardAppID,brandCode)));
+				Map<String,Object> result_list=CherryUtil.json2Map(CherryAESCoder.decrypt(resultContent, wsconfigDTO.getSecretKey()));
 				result_list.put("ERRORCODE", ERRORCODE);
 				return result_list;
 			}
@@ -119,6 +105,14 @@ public class BINOLMBSVC03_BL implements BINOLMBSVC03_IF{
 	}
 
 
-
+	private String accessSavingscardWS(String brandCode,Map<String,Object> data,WebserviceConfigDTO wsconfigDTO) throws Exception{
+		MultivaluedMap<String, String> queryParams = new MultivaluedMapImpl();
+		queryParams.add("brandCode", brandCode);
+		queryParams.add("appID", wsconfigDTO.getAppID());
+		queryParams.add("paramData", CherryAESCoder.encrypt(CherryUtil.map2Json(data), wsconfigDTO.getSecretKey()));
+		WebResource wr= bINOLCM27_BL.getWebResource(wsconfigDTO.getWebserviceURL());
+		String  result=wr.queryParams(queryParams).get(String.class);
+		return result;
+	}
 
 }

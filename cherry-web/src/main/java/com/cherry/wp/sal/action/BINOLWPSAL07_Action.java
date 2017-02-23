@@ -30,19 +30,10 @@ import java.util.List;
 import java.util.Map;
 
 public class BINOLWPSAL07_Action extends BaseAction implements ModelDriven<BINOLWPSAL07_Form> {
-	/**
-	 * 
-	 */
-	static{
-		WebserviceConfigDTO wsconfigDTO = SystemConfigManager.getWebserviceConfigDTO("pekonws");
-		SavingscardWebServiceUrl = wsconfigDTO.getWebserviceURL();//PropertiesUtil.pps.getProperty("SavingscardWebServiceUrl");
-		SavingscardAppID = wsconfigDTO.getAppID();//PropertiesUtil.pps.getProperty("SavingscardAppID");
-	}
+
 	@Resource
 	private CodeTable code;
-	
-	private static String SavingscardWebServiceUrl;
-	private static String SavingscardAppID;
+
 	private static final long serialVersionUID = 1L;
 	private List<Map<String, Object>> serverList;
 	// 储值卡退货信息List
@@ -715,12 +706,10 @@ public class BINOLWPSAL07_Action extends BaseAction implements ModelDriven<BINOL
 						if(null!=jsonList && jsonList.size()>0){
 							data.put("ServiceDetail", jsonList);
 						}
-						MultivaluedMap<String, String> queryParams = new MultivaluedMapImpl();
-						queryParams.add("brandCode", brandCode);
-						queryParams.add("appID", SavingscardAppID + "_" + brandCode);
-						queryParams.add("paramData", CherryAESCoder.encrypt(CherryUtil.map2Json(data), thirdPartyConfig.getDynamicAESKey(SavingscardAppID,brandCode)));
-						WebResource wr= binOLCM27_BL.getWebResource(SavingscardWebServiceUrl);
-						String result_card=wr.queryParams(queryParams).get(String.class);
+
+						WebserviceConfigDTO wsconfigDTO = SystemConfigManager.getWebserviceConfigDTO(brandCode,"pekonws");
+						String  result_card=accessSavingscardWS(brandCode,data,wsconfigDTO);
+
 						Map<String,Object> result_card1=ConvertUtil.json2Map(result_card);
 						String ERRORCODE = result_card1.get("ERRORCODE").toString();
 						if(ERRORCODE.equals("0")){
@@ -978,12 +967,10 @@ public class BINOLWPSAL07_Action extends BaseAction implements ModelDriven<BINOL
 						if(jsonList!=null && jsonList.size()>0){
 							data.put("ServiceDetail", jsonList);
 						}
-						MultivaluedMap<String, String> queryParams = new MultivaluedMapImpl();
-						queryParams.add("brandCode", brandCode);
-						queryParams.add("appID", SavingscardAppID + "_" + brandCode);
-						queryParams.add("paramData", CherryAESCoder.encrypt(CherryUtil.map2Json(data), thirdPartyConfig.getDynamicAESKey(SavingscardAppID,brandCode)));
-						WebResource wr= binOLCM27_BL.getWebResource(SavingscardWebServiceUrl);
-						String result_card=wr.queryParams(queryParams).get(String.class);
+
+						WebserviceConfigDTO wsconfigDTO = SystemConfigManager.getWebserviceConfigDTO(brandCode,"pekonws");
+						String  result_card=accessSavingscardWS(brandCode,data,wsconfigDTO);
+
 						Map<String,Object> result_card1=ConvertUtil.json2Map(result_card);
 						String ERRORCODE = result_card1.get("ERRORCODE").toString();
 						if(ERRORCODE.equals("0")){
@@ -1426,5 +1413,14 @@ public class BINOLWPSAL07_Action extends BaseAction implements ModelDriven<BINOL
 	public void setIsPlatinumPrice(String isPlatinumPrice) {
 		this.isPlatinumPrice = isPlatinumPrice;
 	}
-	
+
+	private String accessSavingscardWS(String brandCode,Map<String,Object> data,WebserviceConfigDTO wsconfigDTO) throws Exception{
+		MultivaluedMap<String, String> queryParams = new MultivaluedMapImpl();
+		queryParams.add("brandCode", brandCode);
+		queryParams.add("appID", wsconfigDTO.getAppID());
+		queryParams.add("paramData", CherryAESCoder.encrypt(CherryUtil.map2Json(data), wsconfigDTO.getSecretKey()));
+		WebResource wr= binOLCM27_BL.getWebResource(wsconfigDTO.getWebserviceURL());
+		String  result=wr.queryParams(queryParams).get(String.class);
+		return result;
+	}
 }
