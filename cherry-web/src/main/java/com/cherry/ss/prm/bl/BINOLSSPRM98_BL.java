@@ -83,9 +83,12 @@ public class BINOLSSPRM98_BL implements Rule_IF{
 		// 券类型
 		String couponType = (String) contentInfo.get("couponType");
 		int zwFlag = flag;
-		// 资格券
-		if (CouponConstains.COUPONTYPE_3.equals(couponType)) {
-			zwFlag = 1;
+		// 占位情况
+		if (zwFlag == 2) {
+			// 资格券||实付金额
+			if(CouponConstains.COUPONTYPE_3.equals(couponType) || !"1".equals(useCondInfo.get("amountCondition"))){
+				zwFlag = 1;
+			}
 		}
 		if (null != useCondInfo && !useCondInfo.isEmpty()) {
 			if (!checkCounter(useCondInfo, billInfo.getCounterCode(), ruleCode, CouponConstains.CONDITIONTYPE_2)) {
