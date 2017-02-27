@@ -191,6 +191,8 @@ public class BINOLSSPRM68_BL {
 	}
 
 	private void doLinkActivity(Map<String, Object> map) throws Exception{
+		String activityCode2 = ConvertUtil.getString(map.get("activityCode"));
+		logger.info("===================activityCode={}",activityCode2);
 		String oldSystemCode = ConvertUtil.getString(map.get("oldSystemCode"));
 		String couponFlag = ConvertUtil.getString(map.get("couponFlag"));
 		String otherPlatformCode = ConvertUtil.getString(map.get("systemCode"));
@@ -244,7 +246,7 @@ public class BINOLSSPRM68_BL {
 		params.put("toTime",map.get("endTime"));
 		String paramStr = CherryUtil.map2Json(params);
 //			logger.info("券平台访问appId={},aesKey={}",appId,aesKey);
-//			logger.info("券平台访问url={},params={}",url,paramStr);
+			logger.info("LinkActivity券平台访问url={},params={}",url,paramStr);
 		queryParams.add("params", CherryAESCoder.encrypt(paramStr,aesKey));
 		String result = webResource.queryParams(queryParams).get(String.class);
 		// 券平台返回结果
@@ -289,7 +291,7 @@ public class BINOLSSPRM68_BL {
 		params.put("deleteFlag","1");
 		String paramStr = CherryUtil.map2Json(params);
 //			logger.info("券平台访问appId={},aesKey={}",appId,aesKey);
-//			logger.info("券平台访问url={},params={}",url,paramStr);
+			logger.info("delActivity券平台访问url={},params={}",url,paramStr);
 		queryParams.add("params", CherryAESCoder.encrypt(paramStr,aesKey));
 		String result = webResource.queryParams(queryParams).get(String.class);
 		// 券平台返回结果
