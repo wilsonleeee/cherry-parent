@@ -5,8 +5,8 @@
 <jsp:include page="/WEB-INF/jsp/common/popHead.ieCssRepair.jsp" flush="true"></jsp:include>
 <script type="text/javascript" src="/Cherry/js/common/cherryDate.js"></script>
 <script type="text/javascript" src="/Cherry/js/lib/jquery-ui-i18n.js"></script>
-<script type="text/javascript" src="/Cherry/js/pt/jcs/BINOLPTJCS00.js"></script>
-<script type="text/javascript" src="/Cherry/js/pt/jcs/BINOLPTJCS03.js"></script>
+<script type="text/javascript" src="/Cherry/js/pt/jcs/BINOLPTJCS00.js?version=2017022701"></script>
+<script type="text/javascript" src="/Cherry/js/pt/jcs/BINOLPTJCS03.js?version=2017022701"></script>
 <!-- 语言 -->
 <s:set id="language" value="#session.language" />
 <%-- 保存 --%>

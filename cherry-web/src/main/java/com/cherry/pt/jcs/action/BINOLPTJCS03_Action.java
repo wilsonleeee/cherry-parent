@@ -568,7 +568,12 @@ public class BINOLPTJCS03_Action extends BaseAction implements
 			this.addFieldError(CherryConstants.NAMETOTAL, getText("ECM00009",
 					new String[] { getText("PSS00002") }));
 			isCorrect = false;
-		} 
+		} else if (CherryChecker.hasIllegalChar(form.getNameTotal())) {
+			// 中文名称含有非法字符半角：分号;逗号,单双引号'"斜杠/\问号?验证
+			this.addFieldError(CherryConstants.NAMETOTAL, getText("ECM00110",
+					new String[] { getText("PSS00002") }));
+			isCorrect = false;
+		}
 //		else if (CherryUtil.mixStrLength(form.getNameTotal()) > 40) {
 //			// 中文名称不能超过40位验证
 //			this.addFieldError(CherryConstants.NAMETOTAL, getText("ECM00100",

@@ -236,6 +236,11 @@ BINOLPTJCS00.prototype = {
 	},
 	// 产品保存
 	"doSave" : function(url) {
+
+		//产品名称(中文名)有错误信息不让提交
+		if("" != $("#nameTotalTip").html()) {
+			return false;
+		};
 		
 		// 表单验证
 		if (!$('#mainForm').valid()) {

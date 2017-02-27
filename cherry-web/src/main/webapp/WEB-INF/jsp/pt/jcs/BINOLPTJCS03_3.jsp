@@ -47,7 +47,7 @@
       </s:if>
       <tr>
       	<th><label><s:text name="JCS03_nameTotal"/><span class="highlight"><s:text name="global.page.required"/></span></label></th><%-- 中文名 --%>
-      	<td><span><s:textfield name="nameTotal" cssClass="text textOth" onkeyup="return isMaxByteLen(this)" tabindex="3"/></span></td>
+      	<td><span><s:textfield id="nameTotal" name="nameTotal" cssClass="text textOth" onkeyup="return isMaxByteLen(this)" tabindex="3"/></span ><span id="nameTotalTip" class="highlight"></span></td>
       	<th><label><s:text name="JCS03_nameForeign"/></label></th><%-- 英文名 --%>
         <td><span><s:textfield name="nameForeign" cssClass="text textOth" maxlength="100" onkeyup="return isMaxByteLen(this)" tabindex="4"/></span></td>
       </tr> 

@@ -49,8 +49,8 @@ public class ActivemqStatusAction extends BaseAction{
 //	        } 
 //	        Set<ObjectInstance> set = mbsc.queryMBeans(null, null);  
 //	        for (Iterator<ObjectInstance> it = set.iterator(); it.hasNext();) {  
-//	            ObjectInstance oi = (ObjectInstance) it.next();  
-//	            System.out.println("\t" + oi.getObjectName());  
+//	            ObjectInstance oi = (ObjectInstance) it.next();
+//	            System.out.println("\t" + oi.getObjectName());
 //	        }  
 	           
 	        ObjectName mbeanName = new ObjectName(PropertiesUtil.pps.getProperty("activemqObjectName"));  

@@ -670,4 +670,21 @@ public class CherryChecker {
 		}
 		return value.matches(bankCardRule);
 	}
+
+	/**
+	 * 检测指定字符串是否包含如下非法字符   半角：分号;  逗号,  单双引号'"  斜杠/\  问号?
+	 *
+	 * @param value 待验证的字符串
+	 *
+	 * @return 如果字符串含有非法字符返回true，否则返回false
+     */
+	public static boolean hasIllegalChar(String value) {
+		if (value == null || "".equals(value)) {
+			return true;
+		}
+		if (value.matches("^[^;,'\"/?\\\\]+$")) {
+			return false;
+		}
+		return true;
+	}
 }

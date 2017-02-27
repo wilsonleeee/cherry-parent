@@ -50,3 +50,20 @@ $(function(){
 	}
 });
 
+$(function() {
+	//产品名称(中文名)前台正则校验
+	$("#nameTotal").bind("keyup blur",function() {
+		//清空span标签错误信息
+		$("#nameTotalTip").html("");
+		var nameTotal = $(this).val();
+		if($.trim(nameTotal).length != 0) {
+			//不能含有半角：分号;    逗号,    单双引号'"      斜杠/\      问号?
+			var re = /^[^;,'"/?\\]+$/;
+			if (!re.test(nameTotal)) {
+				//span标签显示错误信息
+				$("#nameTotalTip").html("含有非法字符/\\',;\"?");
+			}
+		}
+	});
+});
+
