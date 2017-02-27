@@ -196,6 +196,11 @@ public class BINOLSSPRM68_BL {
 		String oldSystemCode = ConvertUtil.getString(map.get("oldSystemCode"));
 		String couponFlag = ConvertUtil.getString(map.get("couponFlag"));
 		String otherPlatformCode = ConvertUtil.getString(map.get("systemCode"));
+		int opt2 = ConvertUtil.getInt(map.get("OPT_KBN"));
+		logger.info("===================oldSystemCode={}",oldSystemCode);
+		logger.info("===================otherPlatformCode={}",otherPlatformCode);
+		logger.info("===================opt={}",opt2);
+		logger.info("===================couponFlag={}",couponFlag);
 		if("1".equals(couponFlag)){
 			WebserviceConfigDTO wsconfigDTO = null;
 			if(!"".equals(otherPlatformCode) || !"".equals(oldSystemCode)){
