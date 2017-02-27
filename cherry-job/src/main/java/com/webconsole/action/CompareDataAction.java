@@ -1,6 +1,7 @@
 package com.webconsole.action;
 
 import com.cherry.cm.core.*;
+import com.cherry.cm.core.SystemConfigManager;
 import com.cherry.cm.util.ConvertUtil;
 import com.googlecode.jsonplugin.JSONUtil;
 import com.webconsole.bl.CompareDataBL;
@@ -8,7 +9,10 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.annotation.Resource;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 /**
  * 用于比对新老后台销售数据的Action
@@ -43,9 +47,9 @@ public class CompareDataAction extends BaseAction{
             }
 
             // 根据brandCode设置数据源
-            SystemConfigDTO systemConfigDTO = SystemConfigManager.getSystemConfig(brandCode);
+            BrandInfoDTO brandInfoDTO = SystemConfigManager.getBrandInfo(brandCode);
             //判断是否正确取得brandCode的数据源
-            if (null == systemConfigDTO) {
+            if (null == brandInfoDTO) {
                 resultMap.put("brandCode", "Please input the correct brandCode!");
                 logger.error("Wrong brandCode!");
                 //封装成JSON格式返回
@@ -54,7 +58,7 @@ public class CompareDataAction extends BaseAction{
             }
 
             // 将获取的数据源名设定到线程本地变量contextHolder中（新后台品牌数据库）
-            CustomerContextHolder.setCustomerDataSourceType(systemConfigDTO.getDataSourceName());
+            CustomerContextHolder.setCustomerDataSourceType(brandInfoDTO.getDataSourceName());
             //将brandCode传入封装查询Map
             map.put(CherryBatchConstants.BRAND_CODE, brandCode);
             //查询取得封装了异常数据的List
