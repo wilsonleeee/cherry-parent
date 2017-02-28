@@ -39,6 +39,7 @@ import com.opensymphony.xwork2.ModelDriven;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.util.CollectionUtils;
+import org.springframework.util.StringUtils;
 
 import javax.annotation.Resource;
 import java.io.ByteArrayInputStream;
@@ -1023,16 +1024,18 @@ public class BINOLSSPRM68_Action extends BaseAction implements ModelDriven<BINOL
 		}else{//奖励中的产品明细时
 			ruleList = ConvertUtil.getString(prodcutPageData.get("ruleResultJson"));
 		}
-		Map<String,Object> ruleCondJson = (Map<String,Object>) JSONUtil.deserialize(ruleList);
-		Map<String,Object> contentMap =(Map<String,Object>)ruleCondJson.get("Content");
-		// 产品列表
-		List<Map<String,Object>> logicObjArrList = (List<Map<String,Object>>)contentMap.get("logicObjArr");
-		int productPageSize=0;
-		if(!CollectionUtils.isEmpty(logicObjArrList)) {
-			for (Map<String, Object> logicObjArrMap : logicObjArrList) {
-				List<Map<String, Object>> logicObjList = (List<Map<String, Object>>) logicObjArrMap.get("logicObjArr");
-				if (!CollectionUtils.isEmpty(logicObjList)) {
-					productPageSize = productPageSize + logicObjList.size();
+		int productPageSize = 0;
+		if(!StringUtils.isEmpty(ruleList)) {
+			Map<String, Object> ruleCondJson = (Map<String, Object>) JSONUtil.deserialize(ruleList);
+			Map<String, Object> contentMap = (Map<String, Object>) ruleCondJson.get("Content");
+			// 产品列表
+			List<Map<String, Object>> logicObjArrList = (List<Map<String, Object>>) contentMap.get("logicObjArr");
+			if (!CollectionUtils.isEmpty(logicObjArrList)) {
+				for (Map<String, Object> logicObjArrMap : logicObjArrList) {
+					List<Map<String, Object>> logicObjList = (List<Map<String, Object>>) logicObjArrMap.get("logicObjArr");
+					if (!CollectionUtils.isEmpty(logicObjList)) {
+						productPageSize = productPageSize + logicObjList.size();
+					}
 				}
 			}
 		}
