@@ -210,6 +210,7 @@ public class BINOLSSPRM68_Action extends BaseAction implements ModelDriven<BINOL
 			if(null != sendFlag){
 				pageA.put("sendFlag", sendFlag);
 			}
+			pageA.put("oldSystemCode",pageA.get("systemCode"));
 			pageB.put("startTime",pageA.get("startTime"));
 			pageB.put("endTime",pageA.get("endTime"));
 			pageB.put("locationType",pageA.get("locationType"));
