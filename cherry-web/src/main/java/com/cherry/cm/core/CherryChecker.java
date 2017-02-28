@@ -12,6 +12,8 @@
  */
 package com.cherry.cm.core;
 
+import com.cherry.cm.util.DateUtil;
+
 import java.lang.reflect.Method;
 import java.net.MalformedURLException;
 import java.net.URL;
@@ -20,8 +22,6 @@ import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
 import java.util.Date;
-
-import com.cherry.cm.util.DateUtil;
 
 /**
  * 共通检查类
@@ -110,6 +110,16 @@ public class CherryChecker {
 			return true;
 		}
 		return false;
+	}
+
+	/**
+	 * 检测指定字符串是否全由正数(不包括0)组成 如果字符串全由正数组成则返回true，否则返回false
+	 *
+	 * @param value
+	 * @return
+	 */
+	public static boolean isPositiveNumeric(String value) {
+		return isNumeric(value) ? !value.startsWith("0") : false ;
 	}
 	
 	/**

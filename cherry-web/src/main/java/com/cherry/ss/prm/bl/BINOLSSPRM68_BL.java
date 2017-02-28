@@ -428,6 +428,8 @@ public class BINOLSSPRM68_BL {
 
 		// 产品失败 列表
 		List<Map<String, Object>> productFailList = new LinkedList<Map<String, Object>>();
+		// excel中重复记录
+		Set<String> dupProduct = new HashSet<String>();
 
 		// 循环获取每一行数据
 		for (int r = 2; r < sheetLength; r++) {
@@ -463,9 +465,16 @@ public class BINOLSSPRM68_BL {
 			}
 
 			//判断导入数据是否重复存在。1.execl中数据重复 2.增量模式下用户页面已选择与excel数据重复
-			if (productCollectionMap.containsKey(unitCode) || (upMode.equals(CherryConstants.upMode_1) && productImportedSet.contains(unitCode))) {
+			boolean dupInExcel = dupProduct.contains(unitCode); // excel中重复数据
+			boolean dupInProCollect = productCollectionMap.containsKey(unitCode); // 产品集合中是否存在重复数据
+			boolean dupInPage = upMode.equals(CherryConstants.upMode_1) && productImportedSet.contains(unitCode); // 增量模式下excel中是否包含页面已选择数据
+			if (dupInExcel || dupInProCollect || dupInPage) {
 				productMap.put("errorMsg", "导入产品中已经存在相同数据");
 				productFailList.add(productMap);
+				if(dupInProCollect) {
+					productCollectionMap.remove(unitCode);
+					dupProduct.add(unitCode);
+				}
 				continue;
 			}
 
@@ -475,13 +484,11 @@ public class BINOLSSPRM68_BL {
 
 			Map<String, Object> productInfo = prm68Ser.getProductInfo(productMap);
 			if (productInfo == null) {
-				productMap.put("errorMsg", "产品编码不存在!");
+				productMap.put("errorMsg", "产品不存在。");
 				productFailList.add(productMap);
 				continue;
 			} else {
-				if (StringUtils.isEmpty(productName)) {
-					productMap.put("productName", productInfo.get("productName"));
-				}
+				productMap.put("productName", productInfo.get("productName"));
 			}
 			productCollectionMap.put(unitCode, productMap);
 		}
@@ -576,6 +583,8 @@ public class BINOLSSPRM68_BL {
 
 		// 产品失败列表
 		List<Map<String, Object>> productFailList = new LinkedList<Map<String, Object>>();
+		// excel中重复记录
+		Set<String> dupProduct = new HashSet<String>();
 
         // 循环获取每一行数据
         for (int r = 2; r < sheetLength; r++) {
@@ -611,9 +620,16 @@ public class BINOLSSPRM68_BL {
 			}
 
 			//判断导入数据是否重复存在。1.execl中数据重复 2.增量模式下用户页面已选择与excel数据重复
-			if (productCollectionMap.containsKey(unitCode) || (upMode.equals(CherryConstants.upMode_1) && productImportedSet.contains(unitCode))) {
+			boolean dupInExcel = dupProduct.contains(unitCode); // excel中重复数据
+			boolean dupInProCollect = productCollectionMap.containsKey(unitCode); // 产品集合中是否存在重复数据
+			boolean dupInPage = upMode.equals(CherryConstants.upMode_1) && productImportedSet.contains(unitCode); // 增量模式下excel中是否包含页面已选择数据
+			if (dupInExcel || dupInProCollect || dupInPage) {
 				productMap.put("errorMsg", "导入产品中已经存在相同数据");
 				productFailList.add(productMap);
+				if(dupInProCollect) {
+					productCollectionMap.remove(unitCode);
+					dupProduct.add(unitCode);
+				}
 				continue;
 			}
 
@@ -622,13 +638,11 @@ public class BINOLSSPRM68_BL {
 			productMap.put("organizationInfoId", organizationInfoId);
 			Map<String, Object> productInfo = prm68Ser.getProductInfo(productMap);
 			if (productInfo == null) {
-				productMap.put("errorMsg", "产品编码不存在!");
+				productMap.put("errorMsg", "产品不存在。");
 				productFailList.add(productMap);
 				continue;
 			} else {
-				if (StringUtils.isEmpty(productName)) {
-					productMap.put("productName", productInfo.get("productName"));
-				}
+				productMap.put("productName", productInfo.get("productName"));
 			}
 			productCollectionMap.put(unitCode, productMap);
 		}
@@ -724,6 +738,8 @@ public class BINOLSSPRM68_BL {
 
         // 产品失败 列表
         List<Map<String, Object>> productFailList = new LinkedList<Map<String, Object>>();
+		// excel中重复记录
+		Set<String> dupProduct = new HashSet<String>();
 
         // 循环获取每一行数据
         for (int r = 2; r < sheetLength; r++) {
@@ -766,25 +782,30 @@ public class BINOLSSPRM68_BL {
                 continue;
             }
 
-            //判断导入数据是否重复存在。1.execl中数据重复 2.增量模式下用户页面已选择与excel数据重复
-            if (productCollectionMap.containsKey(unitCode) || (upMode.equals(CherryConstants.upMode_1) && productImportedSet.contains(unitCode))) {
-                productMap.put("errorMsg", "导入产品中已经存在相同数据");
-                productFailList.add(productMap);
-                continue;
-            }
+            //判断导入数据是否重复存在。1.execl中数据重复(删除产品集合列表中已存在的产品) 2.增量模式下用户页面已选择与excel数据重复
+			boolean dupInExcel = dupProduct.contains(unitCode); // excel中重复数据
+			boolean dupInProCollect = productCollectionMap.containsKey(unitCode); // 产品集合中是否存在重复数据
+			boolean dupInPage = upMode.equals(CherryConstants.upMode_1) && productImportedSet.contains(unitCode); // 增量模式下excel中是否包含页面已选择数据
+			if (dupInExcel || dupInProCollect || dupInPage) {
+				productMap.put("errorMsg", "导入产品中已经存在相同数据");
+				productFailList.add(productMap);
+				if(dupInProCollect) {
+					productCollectionMap.remove(unitCode);
+					dupProduct.add(unitCode);
+				}
+				continue;
+			}
 
             //判断产品是否真实存在
             productMap.put("brandInfoId", brandInfoId);
             productMap.put("organizationInfoId", organizationInfoId);
             Map<String, Object> productInfo = prm68Ser.getProductInfo(productMap);
             if (productInfo == null) {
-                productMap.put("errorMsg", "产品编码不存在!");
+                productMap.put("errorMsg", "产品不存在。");
                 productFailList.add(productMap);
                 continue;
             } else {
-                if (StringUtils.isEmpty(productName)) {
-                    productMap.put("productName", productInfo.get("productName"));
-                }
+				productMap.put("productName", productInfo.get("productName"));
             }
             productCollectionMap.put(unitCode, productMap);
         }
@@ -816,8 +837,12 @@ public class BINOLSSPRM68_BL {
 		return resultMap;
 	}
 
-
-
+	/**
+	 * 非整单导入
+	 * @param map
+	 * @return
+	 * @throws Exception
+     */
 	public Map<String, Object> tran_importShopProductExecl(Map<String, Object> map) throws Exception {
 
 		Sheet dataSheet = getDataSheet(map, PromotionConstants.PRODUCT_SHEET_NAME);
@@ -1175,7 +1200,7 @@ public class BINOLSSPRM68_BL {
         //判断数量
         if (CherryChecker.isNullOrEmpty(productNum)) {
             errorMsg += "产品数量为空。";
-        } else if (!CherryChecker.isNumeric(productNum)) {
+        } else if (!CherryChecker.isPositiveNumeric(productNum)) {
             errorMsg += "产品数量必须为正整数。";
         }
 
