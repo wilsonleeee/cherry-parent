@@ -63,6 +63,28 @@ public class BINOLSSPRM68_Form extends DataTable_BaseForm{
     /**原产品界面该产品类型的总共数量*/
     private  int productPageSize;
 
+    /**规则条件*/
+    private int productPageSizeALL;
+
+    /**页面原值*/
+    private String excelProductALL;
+
+    public int getProductPageSizeALL() {
+        return productPageSizeALL;
+    }
+
+    public void setProductPageSizeALL(int productPageSizeALL) {
+        this.productPageSizeALL = productPageSizeALL;
+    }
+
+    public String getExcelProductALL() {
+        return excelProductALL;
+    }
+
+    public void setExcelProductALL(String excelProductALL) {
+        this.excelProductALL = excelProductALL;
+    }
+
     public int getProductPageSize() {
         return productPageSize;
     }

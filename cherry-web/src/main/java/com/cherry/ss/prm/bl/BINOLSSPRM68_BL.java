@@ -396,16 +396,32 @@ public class BINOLSSPRM68_BL {
         // 页面已选择的数据总和
         int productPageSize = ConvertUtil.getInt(map.get("productPageSize"));
 
+		String excelProductALL = ConvertUtil.getString(map.get("excelProductALL"));
+
 		// 已导入的产品
 		List<Map<String, Object>> productImportedList = null;
+
+		List<Map<String, Object>> productImportedALLList = null;
+		//原数据大小
+		int productImportedListSize = 0;
 		// 页面选择产品编码集合用于增量模式下判别重复
 		Set<String> productImportedSet = new HashSet<String>();
 		if (!CherryChecker.isNullOrEmpty(productAwardList)) { // 增量模式
 			productImportedList = (List<Map<String, Object>>) JSONUtil.deserialize(productAwardList);
+			productImportedALLList = (List<Map<String, Object>>) JSONUtil.deserialize(excelProductALL);
 //			productImportedList = (List<Map<String, Object>>) temp.get("productJson");
 			if (!CollectionUtils.isEmpty(productImportedList)) {
 				for (Map<String, Object> product : productImportedList) {
 					productImportedSet.add(ConvertUtil.getString(product.get("unitCode")));
+				}
+
+			}
+			if (!CollectionUtils.isEmpty(productImportedALLList)) {
+				for (Map<String, Object> product : productImportedALLList) {
+					productImportedSet.add(ConvertUtil.getString(product.get("unitCode")));
+				}
+				if (upMode.equals(CherryConstants.upMode_1)){
+					productImportedListSize = productImportedALLList.size();
 				}
 			}
 		}
@@ -478,7 +494,7 @@ public class BINOLSSPRM68_BL {
             productList.addAll(productImportedList); // 添加已选择商品列表
         }
         // 是否超出产品导入上限
-        if ((productList.size() + productPageSize) > CouponConstains.PRODUCT_UPLOAD_MAX_COUNT) {
+        if ((productList.size()+productImportedListSize + productPageSize) > CouponConstains.PRODUCT_UPLOAD_MAX_COUNT) {
             throw new CherryException("ESS01005", new String[]{String.valueOf(CouponConstains.PRODUCT_UPLOAD_MAX_COUNT)});
         }
 
@@ -524,21 +540,38 @@ public class BINOLSSPRM68_BL {
         String searchCode = ConvertUtil.getString(map.get("searchCode"));// 导入批次号
         String upMode = ConvertUtil.getString(map.get("upMode")); // 导入模式
         String productAwardList = ConvertUtil.getString(map.get("excelProductAward"));// 页面数据
+
+		String excelProductALL = ConvertUtil.getString(map.get("excelProductALL"));
         // 页面已选择的数据总和
         int productPageSize = ConvertUtil.getInt(map.get("productPageSize"));
+		//已导入的数据大小
+		int productImportedListSize = 0;
 
 		// 页面已存在的产品
 		List<Map<String, Object>> productImportedList = null;
+		List<Map<String, Object>> productImportedALLList = null;
 		// 页面选择产品编码集合用于增量模式下判别重复
 		Set<String> productImportedSet = new HashSet<String>();
 		if (!CherryChecker.isNullOrEmpty(productAwardList)) { // 增量模式
 			productImportedList = (List<Map<String, Object>>) JSONUtil.deserialize(productAwardList);
-//			productImportedList = (List<Map<String, Object>>) temp.get("productJson");
+			productImportedALLList = (List<Map<String, Object>>) JSONUtil.deserialize(excelProductALL);
+
 			if (!CollectionUtils.isEmpty(productImportedList)) {
 				for (Map<String, Object> product : productImportedList) {
 					productImportedSet.add(ConvertUtil.getString(product.get("unitCode")));
 				}
+
 			}
+			if (!CollectionUtils.isEmpty(productImportedALLList)) {
+				for (Map<String, Object> product : productImportedALLList) {
+					productImportedSet.add(ConvertUtil.getString(product.get("unitCode")));
+				}
+				if (upMode.equals(CherryConstants.upMode_1)){
+					productImportedListSize = productImportedALLList.size();
+				}
+			}
+
+
 		}
 
 		// 产品失败列表
@@ -609,7 +642,7 @@ public class BINOLSSPRM68_BL {
             productList.addAll(productImportedList); // 添加已选择商品列表
         }
         // 是否超出产品导入上限
-        if ((productList.size() + productPageSize) > CouponConstains.PRODUCT_UPLOAD_MAX_COUNT) {
+        if ((productList.size()+productImportedListSize + productPageSize) > CouponConstains.PRODUCT_UPLOAD_MAX_COUNT) {
             throw new CherryException("ESS01005", new String[]{String.valueOf(CouponConstains.PRODUCT_UPLOAD_MAX_COUNT)});
         }
 
@@ -662,18 +695,31 @@ public class BINOLSSPRM68_BL {
         // 页面已选择的数据总和
         int productPageSize = ConvertUtil.getInt(map.get("productPageSize"));
 
+		String excelProductALL = ConvertUtil.getString(map.get("excelProductALL"));
+
         // 已导入的产品
         List<Map<String, Object>> productImportedList = null;
+		List<Map<String, Object>> productImportedALLList = null;
         // 页面选择产品编码集合用于增量模式下判别重复
         Set<String> productImportedSet = new HashSet<String>();
+		int productImportedListSize = 0;
         if (!CherryChecker.isNullOrEmpty(productAwardList)) {
 			productImportedList = (List<Map<String, Object>>) JSONUtil.deserialize(productAwardList);
+			productImportedALLList = (List<Map<String, Object>>) JSONUtil.deserialize(excelProductALL);
 //            productImportedList = (List<Map<String, Object>>) temp.get("productJson");
             if (!CollectionUtils.isEmpty(productImportedList)) {
                 for (Map<String, Object> product : productImportedList) {
                     productImportedSet.add(ConvertUtil.getString(product.get("unitCode")));
                 }
             }
+			if (!CollectionUtils.isEmpty(productImportedALLList)) {
+				for (Map<String, Object> product : productImportedALLList) {
+					productImportedSet.add(ConvertUtil.getString(product.get("unitCode")));
+				}
+			}
+			if (upMode.equals(CherryConstants.upMode_1)){
+				productImportedListSize = productImportedALLList.size();
+			}
         }
 
         // 产品失败 列表
@@ -752,7 +798,7 @@ public class BINOLSSPRM68_BL {
             productList.addAll(productImportedList); // 添加已选择商品列表
         }
         // 是否超出产品导入上限
-        if ((productList.size() + productPageSize) > CouponConstains.PRODUCT_UPLOAD_MAX_COUNT) {
+        if ((productList.size()+productImportedListSize + productPageSize) > CouponConstains.PRODUCT_UPLOAD_MAX_COUNT) {
             throw new CherryException("ESS01005", new String[]{String.valueOf(CouponConstains.PRODUCT_UPLOAD_MAX_COUNT)});
         }
         // 导入失败产品入库
@@ -805,13 +851,26 @@ public class BINOLSSPRM68_BL {
 		//导入模式
 		String upMode = ConvertUtil.getString(map.get("upMode"));
 		String excelProductShoppingList = ConvertUtil.getString(map.get("excelProductShopping"));
+		String excelProductALL = ConvertUtil.getString(map.get("excelProductALL"));
 		//已导入的产品
 		List<Map<String,Object>> productImportList = new ArrayList<Map<String,Object>>();
+		List<Map<String,Object>> productImportPageList = new ArrayList<Map<String,Object>>();
+		int productImportListSize = 0;
 		if (upMode.equals(CherryConstants.upMode_1)){
 			if(!CherryChecker.isNullOrEmpty(excelProductShoppingList)){
 				productImportList = (List<Map<String,Object>>) JSONUtil.deserialize(excelProductShoppingList);
-//				productImportList = (List<Map<String,Object>>) ruleCondProductMap.get("ruleCondProduct");
+				productImportListSize += productImportList.size();
+//				productImportList = (List<Map<String,Object>>) ruleCondProductMap.get(" ");
 				for (Map<String,Object> productImportMap:productImportList){
+					String unitCode = ConvertUtil.getString(productImportMap.get("unitCode"));
+					dupProduct.add(unitCode);
+				}
+			}
+			if(!CherryChecker.isNullOrEmpty(excelProductALL)){
+				productImportPageList = (List<Map<String,Object>>) JSONUtil.deserialize(excelProductALL);
+				productImportListSize += productImportPageList.size();
+//				productImportList = (List<Map<String,Object>>) ruleCondProductMap.get(" ");
+				for (Map<String,Object> productImportMap:productImportPageList){
 					String unitCode = ConvertUtil.getString(productImportMap.get("unitCode"));
 					dupProduct.add(unitCode);
 				}
@@ -857,8 +916,7 @@ public class BINOLSSPRM68_BL {
 			productMap.put("rangeOpt","EQUAL");
 
 			if (CherryChecker.isNullOrEmpty(unitCode)){
-				productMap.put("errorMsg","产品编码为空");
-				isError = true;
+				productMap.put("errorMsg","厂商编码为空");
 			}
 
 			//判断产品是否真实存在
@@ -866,12 +924,13 @@ public class BINOLSSPRM68_BL {
 			productMap.put("organizationInfoId",organizationInfoId);
 			Map<String, Object> productVenderInfo = prm68Ser.getProductInfo(productMap);
 			if(CollectionUtils.isEmpty(productVenderInfo)){
-				productMap.put("errorMsg","数据有误，产品编码不存在");
+				productMap.put("errorMsg","数据有误，厂商编码不存在");
 			}else {
 				barCode=ConvertUtil.getString(productVenderInfo.get("barCode"));
 				productName=ConvertUtil.getString(productVenderInfo.get("productName"));
-				productMap.put("barCode", barCode);
 				productMap.put("productName", productName);
+				productMap.put("barCode", barCode);
+				productMap.put("prtVendorId", ConvertUtil.getString(productVenderInfo.get("prtVendorId")));
 			}
 
 			if (CherryChecker.isNullOrEmpty(quantityOrAmount)){
@@ -917,12 +976,14 @@ public class BINOLSSPRM68_BL {
 
 				}
 			}
-			productMap.put(unitCode, "校验重复数据");
-			productMap.put("propValue", compareValue);
-			if (dupProduct.contains(unitCode)){
-				dupProductDelete.add(unitCode);
+			if(!StringUtils.isEmpty(unitCode)){
+				productMap.put(unitCode, "校验重复数据");
+				productMap.put("propValue", compareValue);
+				if (dupProduct.contains(unitCode)){
+					dupProductDelete.add(unitCode);
+				}
+				dupProduct.add(unitCode);
 			}
-			dupProduct.add(unitCode);
 			shopProducAllList.add(productMap);
 		}
 		int successCount=0;
@@ -944,12 +1005,12 @@ public class BINOLSSPRM68_BL {
 			}
 		}
 
-		successCount+=shopProducSuccessListFinal.size();
+		successCount=shopProducSuccessListFinal.size();
 		productImportList.addAll(shopProducSuccessListFinal);
 
 
 		// 产品导入上限
-		if ((productImportList.size()+productPageSize) > CouponConstains.PRODUCT_UPLOAD_MAX_COUNT) {
+		if ((successCount+productPageSize+productImportListSize) > CouponConstains.PRODUCT_UPLOAD_MAX_COUNT) {
 			throw new CherryException("ESS01005",new String[]{String.valueOf(CouponConstains.PRODUCT_UPLOAD_MAX_COUNT)});
 		}
 		int failCount = shopProductFailList.size();

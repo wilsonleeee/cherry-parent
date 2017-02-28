@@ -656,12 +656,15 @@ BINOLSSPRM68_4.prototype={
 			$dialog.empty();
 		}
 		var execLoadType;
-
+		var typeAmount=0;//用以加减行数量
+		var shopAmount=0;//购物车总共的数量
+		var awardAmount=0;//奖励的总共数量
 		if(type=="award"){
 			execLoadType =$('#rewardType').val();
 		}else if (type=="shoppingCart"){
 			execLoadType="shoppingCart";
 		}
+
 		// 规则条件处理
 		var $ruleCondBoxInfo = $(_this).parent().parent().find('.box2-content_AND');
 		if ($ruleCondBoxInfo.length==0){
@@ -677,16 +680,51 @@ BINOLSSPRM68_4.prototype={
 					($(this).is(':radio') || $(this).is(':checkbox')) && !$(this).is(':checked')) {
 					return true;
 				}
-				var rst = '"'+name+'":"'+$(this).val()+'"';
-				arr.push(rst);
+				if (name=="rangeVal"){
+					var rst = '"'+name+'":"'+$(this).val()+'"';
+					arr.push(rst);
+				}
 			});
 			p.push("{" + arr.toString() + "}");
+			typeAmount=typeAmount+1;
 		});
-		total.push('"ruleCondProduct":' +'['+p.toString()+']')
+		total.push('"ruleCondProduct":' +'['+p.toString()+']');
 		var ruleCondProduct = "{" + total.toString() + "}";
-		PRM68_4.nextBefore();
+
+		// 规则条件处理
+		var $condType = $('#condType');
+		var $ruleCondBoxInfo = $('#ruleCondBoxInfo').children();
+		if($condType.val() == '2'){
+			var $ruleConditionBox = $ruleCondBoxInfo.last();
+			// 条件组合框
+			var $ruleBoxs = $ruleConditionBox.children('.box2');
+			$ruleBoxs.find('li').each(function(){
+				shopAmount = shopAmount+1;
+			});
+		}
+		// 规则结果处理
+		var $ruleReslutDiv = $('#ruleReslutDiv');
+		// 奖励模块
+		var $resultBoxs = $ruleReslutDiv.children('div.REWARDBOX');
+		if($resultBoxs.length > 0){
+			$resultBoxs.each(function(){
+				var $this = $(this);
+				// 组合框
+				var $box2s = $this.find('div.box2');
+				$box2s.find('li').each(function(){
+					awardAmount = awardAmount+1;
+				});
+
+			});
+		}
+		var productPageSize=0;
+		if (execLoadType=="shoppingCart"){
+			productPageSize = shopAmount-typeAmount;
+		}else{
+			productPageSize = awardAmount-typeAmount;
+		}
 		var url = '/Cherry/ss/BINOLSSPRM68_execlLoadInit';
-		var param="execLoadType="+execLoadType+"&ruleCondProduct="+ruleCondProduct;
+		var param="execLoadType="+execLoadType+"&ruleCondProduct="+ruleCondProduct+"&productPageSizeALL="+productPageSize;
 
 		cherryAjaxRequest({
 			url: url,
@@ -887,8 +925,8 @@ BINOLSSPRM68_4.prototype={
 				var $thisParent = $(_this).parent();
 				var $target = $thisParent.next().find('ul');
 				var upMode=$("#productUpMode").val();
+				var html='';
 				for(var i=0;i<excelProductShopList.length;i++){
-					var html='';
 					this.index ++;
 					var htmlCondition;
 					htmlCondition ='<span id="rangeVal_'+this.index+'" onclick="PRM68_4.popConDialog(this);" class="RANGEVAL">';

@@ -584,7 +584,8 @@ public class BINOLSSPRM68_Action extends BaseAction implements ModelDriven<BINOL
 			map.put("upExcel",form.getUpExcel());
 			map.put("execLoadType",execLoadType);
 			map.put("searchCode",searchCode);
-			map.put("productPageSize",form.getProductPageSize());//页面上已存在数据
+			map.put("productPageSize",form.getProductPageSize());//页面上已存在数据大小
+			map.put("excelProductALL",form.getExcelProductALL());//页面上已存在数据
 			if(execLoadType.equals("shoppingCart")){//非整单导入
 				map.put("excelProductShopping",form.getExcelProductShopping());
 				resultMap = prm68_BL.tran_importShopProductExecl(map);
@@ -990,56 +991,31 @@ public class BINOLSSPRM68_Action extends BaseAction implements ModelDriven<BINOL
 		int productImportListSize = 0;
 		for (Map<String,Object> productImportMap:productImportList) {
 			String unitCode = "";
-			String rangeText = ConvertUtil.getString(productImportMap.get("rangeText"));
+			String barCode = "";
+			String rangeText = ConvertUtil.getString(productImportMap.get("rangeVal"));
 			if (!rangeText.equals("")) {
 				//当第一次导入时对页面上的数据进行处理，转换为导入后的格式
-				int startIndex = rangeText.indexOf(":") + 1;
-				int ednIndex = rangeText.indexOf(",");
-				if (startIndex!=0&&ednIndex!=-1){
-					unitCode = rangeText.substring(startIndex, ednIndex);
-					productImportMap.put("unitCode", unitCode);
-					int barStartIndex = rangeText.indexOf("BC:") + 3;
-					int barEndIndex = rangeText.indexOf(")");
-					String barCode = rangeText.substring(barStartIndex, barEndIndex);
-					productImportMap.put("barCode", barCode);
-					if (execLoadType.equals("shoppingCart")) {
-						productImportMap.put("rangeOpt", "EQUAL");
-					}
+				int startIndex = rangeText.indexOf("+");
+				if (startIndex!=-1){
+					String[] arry = rangeText.split("'+'");
+					unitCode = arry[0];
+					barCode = arry[1];
+				}else{
+					String[] arry = rangeText.split(" ");
+					unitCode = arry[0];
+					barCode = arry[1];
 				}
+				productImportMap.put("unitCode", unitCode);
+				productImportMap.put("barCode", barCode);
 			}
 			productImportListSize=productImportListSize+1;
 		}
 //		Map<String,Object> productMap = new HashMap<String, Object>();
 //		productMap.put("ruleCondProduct",productImportList);
 		String productString = CherryUtil.list2Json(productImportList);
-		if (execLoadType.equals("shoppingCart")){//非整单条件
-			form.setExcelProductShopping(productString);
-		}else{//奖励产品
-			form.setExcelProductAward(productString);
-		}
-		Map<String,Object> prodcutPageData=(Map<String,Object>)session.get(SESSION_KEY + "D");
-		String ruleList = "";
-		if (execLoadType.equals("shoppingCart")) {//购物车中的产品明细时
-			ruleList = ConvertUtil.getString(prodcutPageData.get("ruleCondJson"));
-		}else{//奖励中的产品明细时
-			ruleList = ConvertUtil.getString(prodcutPageData.get("ruleResultJson"));
-		}
-		int productPageSize = 0;
-		if(!StringUtils.isEmpty(ruleList)) {
-			Map<String, Object> ruleCondJson = (Map<String, Object>) JSONUtil.deserialize(ruleList);
-			Map<String, Object> contentMap = (Map<String, Object>) ruleCondJson.get("Content");
-			// 产品列表
-			List<Map<String, Object>> logicObjArrList = (List<Map<String, Object>>) contentMap.get("logicObjArr");
-			if (!CollectionUtils.isEmpty(logicObjArrList)) {
-				for (Map<String, Object> logicObjArrMap : logicObjArrList) {
-					List<Map<String, Object>> logicObjList = (List<Map<String, Object>>) logicObjArrMap.get("logicObjArr");
-					if (!CollectionUtils.isEmpty(logicObjList)) {
-						productPageSize = productPageSize + logicObjList.size();
-					}
-				}
-			}
-		}
-		form.setProductPageSize(productPageSize-productImportListSize);
+		form.setExcelProductALL(productString);
+		int productPageSizeALL = ConvertUtil.getInt(form.getProductPageSizeALL());
+		form.setProductPageSize(productPageSizeALL);
 		return "productDialog";
 	}
 	

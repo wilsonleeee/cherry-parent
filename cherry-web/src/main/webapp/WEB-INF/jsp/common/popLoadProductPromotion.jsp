@@ -14,6 +14,8 @@
             <input type="hidden" id="excelProductAward" name="excelProductAward" value="<s:property value='%{excelProductAward}'/>"/>
             <!-- 原产品界面该产品类型的总共数量 -->
             <input type="hidden" id="productPageSize" name="productPageSize" value="<s:property value='%{productPageSize}'/>"/>
+            <!-- 页面原值 -->
+            <input type="hidden" id="excelProductALL" name="excelProductALL" value="<s:property value='%{excelProductALL}'/>"/>
         </form>
     </div>
     <!-- 错误提示DIV -->
