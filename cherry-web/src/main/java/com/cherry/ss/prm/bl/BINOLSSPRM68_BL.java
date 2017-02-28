@@ -612,7 +612,7 @@ public class BINOLSSPRM68_BL {
 			}
 
 			// 必填选项基本校验，包括字段非空验证，类型验证
-			String errMsg = validateBase(unitCode, barCode);
+			String errMsg = validateBase4SepecialPrice(unitCode, barCode, specialPrice);
 			if (!StringUtils.isEmpty(errMsg)) {
 				productMap.put("errorMsg", errMsg);
 				productFailList.add(productMap);
