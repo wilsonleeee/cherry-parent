@@ -10,7 +10,7 @@
         <li><s:property value="#fail.unitCode"/></li>
         <li><s:property value="#fail.barCode"/></li>
         <li><s:property value="#fail.productName"/></li>
-        <li><s:property value="#fail.quantity"/></li>
+        <li><s:property value="#fail.productNum"/></li>
         <li><s:property value='#fail.errorMsg' /></li>
     </ul>
 </s:iterator>
