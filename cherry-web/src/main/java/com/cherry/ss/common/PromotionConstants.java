@@ -191,6 +191,13 @@ public class PromotionConstants {
 
 	public static final String FILTERTYPE_2 = "2";
 
+	/**
+	 * excel文件加载类型
+	 */
+	public static final String EXECLOADTYPE_1 = "shoppingCart";
+	public static final String EXECLOADTYPE_2 = "GIFT";
+	public static final String EXECLOADTYPE_3 = "DPZK";
+	public static final String EXECLOADTYPE_4 = "DPTJ";
 	public static final String YES = "是";
 	/** 比较值 */
 	public static final String EQ = "等于";

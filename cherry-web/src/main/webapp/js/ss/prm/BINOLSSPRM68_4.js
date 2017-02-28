@@ -275,6 +275,12 @@ BINOLSSPRM68_4.prototype={
 				$target.append('<div class="LOGICBTN">' + html + '</div>');
 			}
 			$target.append(srcHtml);
+			var rewardType = $('#rewardType').val();
+			if (rewardType == 'GIFT' || rewardType == 'DPZK' || rewardType == 'DPTJ'){
+				$('#productImportRewardType').show();
+			}else{
+				$('#productImportRewardType').hide();
+			}
 		},
 		// 删除奖励组合框
 		"delRewardBox":function(_this){
@@ -639,7 +645,314 @@ BINOLSSPRM68_4.prototype={
 			$this.focus();
 			$that.val('');
 			$that.prop("disabled",true);
+		},
+	//产品弹出页面弹出框
+	"popProductDialog":function(_this,type){
+		var dialogId = 'popProductDialog';
+		var $dialog = $("#" + dialogId);
+		if($dialog.length == 0) {
+			$("body").append('<div style="display:none" id="'+dialogId+'"></div>');
+		} else {
+			$dialog.empty();
 		}
+		var execLoadType;
+
+		if(type=="award"){
+			execLoadType =$('#rewardType').val();
+		}else if (type=="shoppingCart"){
+			execLoadType="shoppingCart";
+		}
+		// 规则条件处理
+		var $ruleCondBoxInfo = $(_this).parent().parent().find('.box2-content_AND');
+		if ($ruleCondBoxInfo.length==0){
+			$ruleCondBoxInfo = $(_this).parent().parent().find('.box2-content_OR');
+		}
+		var arr = [];
+		var p=[];
+		var total=[];
+		$ruleCondBoxInfo.find('li').each(function(){
+			$(this).find(':input').each(function(){
+				var name = $(this).attr("name");
+				if (!name || $(this).is(":disabled") ||
+					($(this).is(':radio') || $(this).is(':checkbox')) && !$(this).is(':checked')) {
+					return true;
+				}
+				var rst = '"'+name+'":"'+$(this).val()+'"';
+				arr.push(rst);
+			});
+			p.push("{" + arr.toString() + "}");
+		});
+		total.push('"ruleCondProduct":' +'['+p.toString()+']')
+		var ruleCondProduct = "{" + total.toString() + "}";
+		PRM68_4.nextBefore();
+		var url = '/Cherry/ss/BINOLSSPRM68_execlLoadInit';
+		var param="execLoadType="+execLoadType+"&ruleCondProduct="+ruleCondProduct;
+
+		cherryAjaxRequest({
+			url: url,
+			param:param,
+			callback: function(msg){
+				$dialog.html(msg);
+				// 弹出验证框
+				var dialogSetting = {
+					dialogInit: "#" + dialogId,
+					text: msg,
+					width: 	800,
+					height: 400,
+					title: "产品导入",
+					confirm:"确定",
+					closeEvent: function(){
+						removeDialog("#" + dialogId);
+					},
+					confirmEvent:function(){
+						if (type=="shoppingCart"){ //非整单
+							PRM68_4.popShopProductConfirm(_this);
+						} else if(execLoadType == "GIFT") { // 赠品
+							PRM68_4.popGiftConfirm(_this);
+						} else if(execLoadType == "DPZK") { // 单品折扣
+							PRM68_4.popDpzkfirm(_this);
+						} else if(execLoadType == "DPTJ") { // 单品特价
+							PRM68_4.popDptjConfirm(_this);
+						}
+
+						removeDialog("#" + dialogId);
+					}
+				};
+				openDialog(dialogSetting);
+				$(".ui-dialog-titlebar-close.ui-corner-all").hide();
+			}
+		});
+	},
+	// 赠品确认回调函数
+	"popGiftConfirm":function(_this){
+		var excelProductAward=$("#excelProductAward").val();
+		var searchCode=$("#searchCode").val();
+		if (searchCode!=""){
+			if (excelProductAward!="") {
+				var excelProductAwardList = eval("(" + excelProductAward + ")");
+				var html = '';
+				var upMode=$("#productUpMode").val();
+				var $thisParent = $(_this).parent();
+				var $target = $thisParent.next().find('ul');
+				for (var i = 0; i < excelProductAwardList.length; i++) {
+					this.index++;
+					var htmlCondition;
+					htmlCondition = '<span id="rangeVal_' + this.index + '" onclick="PRM68_4.popConDialog(this);" class="RANGEVAL">';
+					htmlCondition += '<div class="tag"><input type="hidden" name="prtVendorId" value="' + excelProductAwardList[i].prtVendorId + '"/>';
+					htmlCondition += '<span style="margin:0 5px;">' + excelProductAwardList[i].productName + '(UC:' + excelProductAwardList[i].unitCode + ',BC:' + excelProductAwardList[i].barCode + ')</span>';
+					htmlCondition += '<input type="hidden" value="' + excelProductAwardList[i].productName + '(UC:' + excelProductAwardList[i].unitCode + ',BC:' + excelProductAwardList[i].barCode + ')" name="rangeText">';
+					htmlCondition += '<input type="hidden" value="' + excelProductAwardList[i].unitCode + '+' + excelProductAwardList[i].barCode + '" name="rangeVal">';
+					htmlCondition += '</div></span>';
+					htmlCondition += '<span id="ranges_1" class="RANGES" onclick=""></span>';
+					htmlCondition += '<input name="ranges" value="" type="hidden">';
+
+					html += '<li class="sortsubbox" style="margin-bottom:10px;">';
+					html += '<select name="rangeType" style="margin:0px;width:95px;"  value="' + excelProductAwardList[i].rangeType + '" onchange="PRM68_4.changeRangeType(this);">' +
+						'<option  value="ALL" >任意产品</option>';
+					html += '<option  value="PRODUCT"  selected="selected">特定产品</option><option  value="RANGE">产品范围</option>';
+					html += '<option  value="PRICERANGE">单价范围</option>';
+					html += '<option  value="BCLASS">产品大类</option>';
+					html += '<option  value="MCLASS">产品中类</option>';
+					html += '<option  value="LCLASS">产品小类</option>';
+					html += '<option  value="UNITCODE">厂商编码</option>';
+					html += '<option  value="BARCODE">产品条码</option>';
+					html += '<option  value="ZD">整单产品</option></select>';
+					html += '<select name="rangeOpt" style="margin:0px;width:60px;" disabled="true" onchange="PRM68_4.changeRangeOpt(this);"> ' +
+						'<option value="EQUAL">等于</option>' +
+						'</select>';
+					html += htmlCondition;
+					html += '<input value="' + excelProductAwardList[i].productNum + '" name="quantity" style="margin-bottom:0px;" class="number">件';
+					html += '<a href="#" class="right" onclick="$(this).parent().remove();return false;" role="button"><span class="ui-icon icon-delete-big">close</span></a>';
+				}
+				if (upMode=='2'){
+					$target.html("");
+				}
+				$target.append(html);
+			}
+		}
+	},
+	"popDpzkfirm":function(_this){
+		var excelProductAward=$("#excelProductAward").val();
+		var searchCode=$("#searchCode").val();
+		if (searchCode!=""){
+			if (excelProductAward!="") {
+				var excelProductAwardList = eval("(" + excelProductAward + ")");
+				var html = '';
+				var $thisParent = $(_this).parent();
+				var $target = $thisParent.next().find('ul');
+				var upMode=$("#productUpMode").val();
+				for (var i = 0; i < excelProductAwardList.length; i++) {
+					this.index++;
+					var htmlCondition;
+
+					htmlCondition = '<span id="rangeVal_' + this.index + '" onclick="PRM68_4.popConDialog(this);" class="RANGEVAL">';
+					htmlCondition += '<div class="tag"><input type="hidden" name="prtVendorId" value="' + excelProductAwardList[i].prtVendorId + '"/>';
+					htmlCondition += '<span style="margin:0 5px;">' + excelProductAwardList[i].productName + '(UC:' + excelProductAwardList[i].unitCode + ',BC:' + excelProductAwardList[i].barCode + ')</span>';
+					htmlCondition += '<input type="hidden" value="' + excelProductAwardList[i].productName + '(UC:' + excelProductAwardList[i].unitCode + ',BC:' + excelProductAwardList[i].barCode + ')" name="rangeText">';
+					htmlCondition += '<input type="hidden" value="' + excelProductAwardList[i].unitCode + '+' + excelProductAwardList[i].barCode + '" name="rangeVal">';
+					htmlCondition += '</div></span>';
+					htmlCondition += '<span id="ranges_1" class="RANGES" onclick=""></span>';
+					htmlCondition += '<input name="ranges" value="" type="hidden">';
+
+					html += '<li class="sortsubbox" style="margin-bottom:10px;">';
+					html += '<select name="rangeType" style="margin:0px;width:95px;"  value="' + excelProductAwardList[i].rangeType + '" onchange="PRM68_4.changeRangeType(this);">' +
+						'<option  value="ALL" >任意产品</option>';
+					html += '<option  value="PRODUCT"  selected="selected">特定产品</option><option  value="RANGE">产品范围</option>';
+					html += '<option  value="PRICERANGE">单价范围</option>';
+					html += '<option  value="BCLASS">产品大类</option>';
+					html += '<option  value="MCLASS">产品中类</option>';
+					html += '<option  value="LCLASS">产品小类</option>';
+					html += '<option  value="UNITCODE">厂商编码</option>';
+					html += '<option  value="BARCODE">产品条码</option>';
+					html += '<option  value="ZD">整单产品</option></select>';
+					html += '<select name="rangeOpt" style="margin:0px;width:60px;" disabled="true" onchange="PRM68_4.changeRangeOpt(this);"> ' +
+						'<option value="EQUAL">等于</option>' +
+						'</select>';
+					html += htmlCondition;
+					html += '<span style="margin-left:5px;">折扣件数范围（';
+					html += '<input class="number" value="' + excelProductAwardList[i].discountNumGtEq + '" name="minQuantity" style="margin:0px;">-';
+					html += '<input class="number" value="' + excelProductAwardList[i].discountNumLtEq + '" name="maxQuantity" style="margin:0px;">）</span>';
+					html += '<span style="display: none;">(<select name="quantityType" style="margin:0px;width:80px;">';
+					html += '<option value="ALL">全部</option><option value="RANDOM">随机一件</option><option value="MIN">价格最低</option>';
+					html += '<option value="MAX">价格最高</option></select>)</span>';
+					html += '<input  value="' + excelProductAwardList[i].discountNum + '" name="rewardVal" style="margin-bottom:0px;" class="number">折';
+					html += '<a href="#" class="right" onclick="$(this).parent().remove();return false;" role="button"><span class="ui-icon icon-delete-big">close</span></a>';
+				}
+			}
+			if (upMode=='2'){
+				$target.html("");
+			}
+			$target.append(html);
+			//$target.html("").append(html);
+		}
+
+	},
+	// 单品特价确认回调函数
+	"popDptjConfirm":function(_this){
+		var excelProductAward=$("#excelProductAward").val();
+		var searchCode=$("#searchCode").val();
+		if (searchCode!=""){
+			if (excelProductAward!="") {
+				var excelProductAwardList = eval("(" + excelProductAward + ")");
+				var html = '';
+				var $thisParent = $(_this).parent();
+				var $target = $thisParent.next().find('ul');
+				var upMode=$("#productUpMode").val();
+				for (var i = 0; i < excelProductAwardList.length; i++) {
+					this.index++;
+					var htmlCondition;
+
+					htmlCondition = '<span id="rangeVal_' + this.index + '" onclick="PRM68_4.popConDialog(this);" class="RANGEVAL">';
+					htmlCondition += '<div class="tag"><input type="hidden" name="prtVendorId" value="' + excelProductAwardList[i].prtVendorId + '"/>';
+					htmlCondition += '<span style="margin:0 5px;">' + excelProductAwardList[i].productName + '(UC:' + excelProductAwardList[i].unitCode + ',BC:' + excelProductAwardList[i].barCode + ')</span>';
+					htmlCondition += '<input type="hidden" value="' + excelProductAwardList[i].productName + '(UC:' + excelProductAwardList[i].unitCode + ',BC:' + excelProductAwardList[i].barCode + ')" name="rangeText">';
+					htmlCondition += '<input type="hidden" value="' + excelProductAwardList[i].unitCode + '+' + excelProductAwardList[i].barCode + '" name="rangeVal">';
+					htmlCondition += '</div></span>';
+					htmlCondition += '<span id="ranges_1" class="RANGES" onclick=""></span>';
+					htmlCondition += '<input name="ranges" value="" type="hidden">';
+
+					html += '<li class="sortsubbox" style="margin-bottom:10px;">';
+					html += '<select name="rangeType" style="margin:0px;width:95px;"  value="' + excelProductAwardList[i].rangeType + '" onchange="PRM68_4.changeRangeType(this);">' +
+						'<option  value="ALL" >任意产品</option>';
+					html += '<option  value="PRODUCT"  selected="selected">特定产品</option><option  value="RANGE">产品范围</option>';
+					html += '<option  value="PRICERANGE">单价范围</option>';
+					html += '<option  value="BCLASS">产品大类</option>';
+					html += '<option  value="MCLASS">产品中类</option>';
+					html += '<option  value="LCLASS">产品小类</option>';
+					html += '<option  value="UNITCODE">厂商编码</option>';
+					html += '<option  value="BARCODE">产品条码</option>';
+					html += '<option  value="ZD">整单产品</option></select>';
+					html += '<select name="rangeOpt" style="margin:0px;width:60px;" disabled="true" onchange="PRM68_4.changeRangeOpt(this);"> ' +
+						'<option value="EQUAL">等于</option>' +
+						'</select>';
+					html += htmlCondition;
+					html += '件<input  value="' + excelProductAwardList[i].specialPrice + '" name="rewardVal" style="margin-bottom:0px;" class="number">元';
+					html += '<a href="#" class="right" onclick="$(this).parent().remove();return false;" role="button"><span class="ui-icon icon-delete-big">close</span></a>';
+				}
+			}
+			if (upMode=='2'){
+				$target.html("");
+			}
+			$target.append(html);
+			//$target.html("").append(html);
+		}
+	},
+	/*导入时只导入产品范围以及特定产品*/
+	"popShopProductConfirm":function(_this){
+		var excelProductShop=$("#excelProductShopping").val();
+		var searchCode=$("#searchCode").val();
+		if (searchCode!=""){
+			if (excelProductShop!=""){
+				var excelProductShopList=eval("("+excelProductShop+")");
+				var $thisParent = $(_this).parent();
+				var $target = $thisParent.next().find('ul');
+				var upMode=$("#productUpMode").val();
+				for(var i=0;i<excelProductShopList.length;i++){
+					var html='';
+					this.index ++;
+					var htmlCondition;
+					htmlCondition ='<span id="rangeVal_'+this.index+'" onclick="PRM68_4.popConDialog(this);" class="RANGEVAL">';
+					htmlCondition+='<div class="tag"><input type="hidden" name="prtVendorId" value="'+excelProductShopList[i].prtVendorId+'"/>';
+					htmlCondition+='<span style="margin:0 5px;">'+excelProductShopList[i].productName+'(UC:'+excelProductShopList[i].unitCode +',BC:'+ excelProductShopList[i].barCode+')</span>';
+					htmlCondition+='<input type="hidden" value="'+excelProductShopList[i].productName+'(UC:'+excelProductShopList[i].unitCode +',BC:'+ excelProductShopList[i].barCode+')" name="rangeText">';
+					htmlCondition+='<input type="hidden" value="'+ excelProductShopList[i].unitCode + '+' + excelProductShopList[i].barCode +'" name="rangeVal">';
+					htmlCondition+='</div></span>';
+					htmlCondition+='<span id="ranges_1" class="RANGES" onclick=""></span>';
+					htmlCondition+='<input name="ranges" value="" type="hidden">';
+
+					html+= '<li class="sortsubbox" style="margin-bottom:10px;">';
+					html+= '<select name="rangeType" style="margin:0px;width:95px;"  value="'+excelProductShopList[i].rangeType+'" onchange="PRM68_4.changeRangeType(this);">'+
+						'<option  value="ALL" >任意产品</option>' ;
+					html+='<option  value="PRODUCT"  selected="selected">特定产品</option><option  value="RANGE">产品范围</option>';
+					html+='<option  value="PRICERANGE">单价范围</option>';
+					html+='<option  value="BCLASS">产品大类</option>';
+					html+='<option  value="MCLASS">产品中类</option>';
+					html+='<option  value="LCLASS">产品小类</option>';
+					html+='<option  value="UNITCODE">厂商编码</option>';
+					html+='<option  value="BARCODE">产品条码</option>';
+					html+='<option  value="ZD">整单产品</option></select>';
+					html+= '<select name="rangeOpt" style="margin:0px;width:60px;" disabled="true" onchange="PRM68_4.changeRangeOpt(this);"> ' +
+						'<option value="EQUAL">等于</option>' +
+						'</select>';
+					html+=htmlCondition;
+					html+= '<select name="propName" style="margin:0px;width:60px;">';
+					if ("QUANTITY"==excelProductShopList[i].propName){
+						html+='<option value="QUANTITY" selected="selected">数量</option><option value="AMOUNT">金额</option></select>';
+					}else if ("AMOUNT"==excelProductShopList[i].propName){
+						html+='<option value="QUANTITY" >数量</option><option value="AMOUNT" selected="selected">金额</option></select>';
+					}
+					html+= '<select name="propOpt" style="margin:0px;width:80px;" >';
+					if ("EQ"==excelProductShopList[i].propOpt){
+						html+='<option  value="EQ"  selected="selected">等于</option><option value="NE">不等于</option><option value="GT">大于</option>';
+						html+='<option value="GE">大于等于</option><option value="LT">小于</option><option value="LE">小于等于</option>';
+					}else if ("NE"==excelProductShopList[i].propOpt){
+						html+='<option  value="EQ"  >等于</option><option value="NE" selected="selected">不等于</option><option value="GT">大于</option>';
+						html+='<option value="GE">大于等于</option><option value="LT">小于</option><option value="LE">小于等于</option>';
+					}else if ("GT"==excelProductShopList[i].propOpt){
+						html+='<option  value="EQ" >等于</option><option value="NE">不等于</option><option value="GT"  selected="selected">大于</option>';
+						html+='<option value="GE">大于等于</option><option value="LT">小于</option><option value="LE">小于等于</option>';
+					}else if ("GE"==excelProductShopList[i].propOpt){
+						html+='<option  value="EQ"  >等于</option><option value="NE">不等于</option><option value="GT">大于</option>';
+						html+='<option value="GE" selected="selected">大于等于</option><option value="LT">小于</option><option value="LE">小于等于</option>';
+					}else if ("LT"==excelProductShopList[i].propOpt){
+						html+='<option  value="EQ"  >等于</option><option value="NE">不等于</option><option value="GT">大于</option>';
+						html+='<option value="GE">大于等于</option><option value="LT" selected="selected">小于</option><option value="LE">小于等于</option>';
+					}else if ("LE"==excelProductShopList[i].propOpt){
+						html+='<option  value="EQ" >等于</option><option value="NE">不等于</option><option value="GT">大于</option>';
+						html+='<option value="GE">大于等于</option><option value="LT">小于</option><option value="LE"  selected="selected">小于等于</option>';
+					}
+
+					html+='<input type="text" value="'+excelProductShopList[i].propValue+'" name="propValue" style="margin:0px;width:70px;" class="text">';
+					html+='<a href="#" class="right" onclick="$(this).parent().remove();return false;" role="button"><span class="ui-icon icon-delete-big">close</span></a>';
+				}
+			}
+			if (upMode=='2'){
+				$target.html("");
+			}
+			$target.append(html);
+			//$target.html("").append(html);
+		}
+	}
 }
 var PRM68_4 = new BINOLSSPRM68_4();
 $(document).ready(function() {

@@ -253,7 +253,7 @@
     <div class="sortbox_subhead_${logicOpt} clearfix">
         <span><span class="ui-icon icon-ttl-section-list"></span><@s.text name="box${logicOpt}" /></span>
         <span class="prompt_text"><@s.text name="boxTip${logicOpt}" /></span>
-        
+        <a class="add right" onclick="PRM68_4.popProductDialog(this,'shoppingCart');return false;"><span class="ui-icon icon-add"></span><span class="button-text"><@s.text name="productImport" /></span></a>
         <a class="delete right" onclick="PRM68_4.delBox(this);return false;"><span class="ui-icon icon-delete"></span><span class="button-text"><@s.text name="deleteBox" /></span></a>
     	<a class="add right" onclick="PRM68_4.addItem(this,0);"><span class="ui-icon icon-add"></span><span class="button-text"><@s.text name="addCondition" /></span></a>
     </div>
@@ -443,7 +443,8 @@
     <div class="sortbox_subhead_${logicOpt} clearfix">
         <span><span class="ui-icon icon-ttl-section-list"></span><@s.text name="box${logicOpt}" /></span>
         <span class="prompt_text"><@s.text name="box2Tip${logicOpt}" /></span>
-        
+        <a class="add right" id="productImportRewardType"
+		   onclick="PRM68_4.popProductDialog(this,'award');return false;"><span class="ui-icon icon-add"></span><span class="button-text"><@s.text name="productImport" /></span></a>
         <a class="delete right" onclick="PRM68_4.delRewardBox(this);return false;"><span class="ui-icon icon-delete"></span><span class="button-text"><@s.text name="deleteBox" /></span></a>
     	<a class="add right" onclick="PRM68_4.addItem(this,1);"><span class="ui-icon icon-add"></span><span class="button-text"><@s.text name="addResult" /></span></a>
     </div>

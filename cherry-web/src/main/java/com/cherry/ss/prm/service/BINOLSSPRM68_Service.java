@@ -12,12 +12,12 @@
  */
 package com.cherry.ss.prm.service;
 
-import java.util.List;
-import java.util.Map;
-
 import com.cherry.cm.core.CherryConstants;
 import com.cherry.cm.service.BaseService;
 import com.cherry.cm.util.ConvertUtil;
+
+import java.util.List;
+import java.util.Map;
 
 /**
  * 
@@ -27,6 +27,35 @@ import com.cherry.cm.util.ConvertUtil;
  * @version 1.0 2013.10.17
  */
 public class BINOLSSPRM68_Service extends BaseService {
+
+	/**
+	 * 插入失败数据
+	 * @param faillist
+	 */
+	public void insertFailDataList(List<Map<String,Object>> faillist){
+		baseServiceImpl.saveAll(faillist,"BINOLSSPRM68.insertFailDataList");
+	}
+
+	/**
+	 * 获得产品信息
+	 * @param map
+	 * @return
+     */
+	public Map<String,Object> getProductInfo(Map<String,Object> map){
+		map.put(CherryConstants.IBATIS_SQL_ID,"BINOLSSPRM68.getProductInfo");
+		return (Map<String, Object>) baseServiceImpl.get(map);
+	}
+
+	/**
+	 * 获取品牌Code
+	 * @param map
+	 * @return
+	 */
+	public String getBrandCode(Map<String,Object> map){
+		map.put(CherryConstants.IBATIS_SQL_ID, "BINOLSSPRM68.getBrandCode");
+		return (String) baseServiceImpl.get(map);
+	}
+
 	/**
 	 * 删除促销活动规则
 	 * @param map
@@ -87,7 +116,30 @@ public class BINOLSSPRM68_Service extends BaseService {
 		map.put(CherryConstants.IBATIS_SQL_ID, "BINOLSSPRM68.getActRuleInfo");
 		return (Map<String, Object>) baseServiceImpl.get(map);
 	}
-	
+
+	/**
+	 * 获取导入失败总数
+	 * @param map
+	 * @return
+	 */
+	public int getFailUploadCount(Map<String,Object> map){
+		map.put(CherryConstants.IBATIS_SQL_ID,"BINOLSSPRM68.getFailUploadCount");
+		return baseServiceImpl.getSum(map);
+	}
+
+	/**
+	 * 获取产品导入失败数据
+	 * @param map
+	 * @return
+     */
+	public List<String> getFailUploadList(Map<String,Object> map){
+		map.put(CherryConstants.IBATIS_SQL_ID,"BINOLSSPRM68.getFailUploadList");
+		return baseServiceImpl.getList(map);
+	}
+	public List<String> getFailUploadTotalList(Map<String,Object> map){
+		map.put(CherryConstants.IBATIS_SQL_ID,"BINOLSSPRM68.getFailUploadTotalList");
+		return baseServiceImpl.getList(map);
+	}
 	/**
 	 * 新增促销活动规则
 	 * @param map

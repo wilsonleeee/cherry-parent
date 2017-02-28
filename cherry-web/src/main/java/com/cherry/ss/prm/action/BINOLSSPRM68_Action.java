@@ -13,14 +13,8 @@
 
 package com.cherry.ss.prm.action;
 
-import java.util.*;
-
-import javax.annotation.Resource;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import com.cherry.cm.cmbeans.UserInfo;
+import com.cherry.cm.cmbussiness.bl.BINOLCM03_BL;
 import com.cherry.cm.cmbussiness.bl.BINOLCM05_BL;
 import com.cherry.cm.cmbussiness.bl.BINOLCM14_BL;
 import com.cherry.cm.cmbussiness.bl.BINOLCM39_BL;
@@ -28,79 +22,109 @@ import com.cherry.cm.core.BaseAction;
 import com.cherry.cm.core.CherryChecker;
 import com.cherry.cm.core.CherryConstants;
 import com.cherry.cm.core.CherryException;
+import com.cherry.cm.util.CherryUtil;
 import com.cherry.cm.util.ConvertUtil;
 import com.cherry.cm.util.DateUtil;
+import com.cherry.cm.util.FileUtil;
 import com.cherry.cp.common.CampConstants;
 import com.cherry.cp.common.interfaces.BINOLCPCOM03_IF;
+import com.cherry.mo.common.bl.BINOLMOCOM01_BL;
+import com.cherry.ss.common.PromotionConstants;
 import com.cherry.ss.prm.bl.BINOLSSPRM13_BL;
 import com.cherry.ss.prm.bl.BINOLSSPRM68_BL;
+import com.cherry.ss.prm.form.BINOLSSPRM68_Form;
 import com.googlecode.jsonplugin.JSONException;
 import com.googlecode.jsonplugin.JSONUtil;
+import com.opensymphony.xwork2.ModelDriven;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.util.CollectionUtils;
+
+import javax.annotation.Resource;
+import java.io.ByteArrayInputStream;
+import java.io.InputStream;
+import java.io.UnsupportedEncodingException;
+import java.util.*;
 
 /**
  * 智能促销
  * @author lipc
  * @version 1.0 2013.10.10
  */
-public class BINOLSSPRM68_Action extends BaseAction{
-	
+public class BINOLSSPRM68_Action extends BaseAction implements ModelDriven<BINOLSSPRM68_Form> {
+
 	private static final Logger logger = LoggerFactory.getLogger(BINOLSSPRM68_Action.class);
-	
+
 	private static final long serialVersionUID = -4155552754712330635L;
-	
+
 	private static final String SESSION_KEY = "PRM_RULE_PAGE";
-	
+
+	private BINOLSSPRM68_Form form = new BINOLSSPRM68_Form();
+
 	@Resource
 	private BINOLCM14_BL binOLCM14_BL;
-	
+
 	@Resource
 	private BINOLSSPRM13_BL binOLSSPRM13_BL;
-	
+
 	@Resource(name="binOLSSPRM68_BL")
 	private BINOLSSPRM68_BL prm68_BL;
-	
+
 	@Resource(name="binOLCM05_BL")
 	private BINOLCM05_BL binOLCM05_BL;
-	
+
+	@Resource
+	private BINOLMOCOM01_BL binOLMOCOM01_BL;
+
+	@Resource
+	private BINOLCM03_BL binOLCM03_BL;
+
 	/** 共通BL */
 	@Resource
 	private BINOLCM05_BL binolcm05_BL;
-	
+
 	@Resource
 	protected BINOLCPCOM03_IF binolcpcom03IF;
-	
+
 	/** 会员检索条件转换共通BL **/
 	@Resource
 	private BINOLCM39_BL binOLCM39_BL;
-	
+
 	private String sendFlag;
-	
+
 	private String csrftoken;
-	
+
 	private int pageNo;
-	
+
 	private int step;
-	
+
 	private String opt;
-	
+
 	private String activeID;
-	
+
 	private int templateFlag;
-	
+
 	private Map<String,Object> pageTemp;
-	
+
 	private Map<String,String> pageA;
-	
+
 	private Map<String,String> pageB;
-	
+
 	private Map<String,String> pageC;
-	
+
 	private Map<String,String> pageD;
+
+	/** Excel输入流 */
+	private InputStream excelStream;
+
+	/** 下载文件名 */
+	private String downloadFileName;
 
 	/**
 	 * 页面初始化
+	 *
 	 * @return
-	 * @throws Exception 
+	 * @throws Exception
 	 */
 	public String init(){
 		// 默认第一页
@@ -108,8 +132,8 @@ public class BINOLSSPRM68_Action extends BaseAction{
 		Map<String,Object> comMap = getComMap();
 		pageTemp = new HashMap<String, Object>();
 		// 促销活动是否开启排除指定产品范围
-		String exRangesFlag = binOLCM14_BL.getConfigValue("1368", 
-				ConvertUtil.getString(comMap.get(CherryConstants.ORGANIZATIONINFOID)), 
+		String exRangesFlag = binOLCM14_BL.getConfigValue("1368",
+				ConvertUtil.getString(comMap.get(CherryConstants.ORGANIZATIONINFOID)),
 				ConvertUtil.getString(comMap.get(CherryConstants.BRANDINFOID)));
 		String couponFlag = binOLCM14_BL.getConfigValue("1403",
 				ConvertUtil.getString(comMap.get(CherryConstants.ORGANIZATIONINFOID)),
@@ -119,7 +143,7 @@ public class BINOLSSPRM68_Action extends BaseAction{
 		try {
 			// 首次进入页面，初始化session
 			if(step == 0){
-				initSession(comMap,opt);	
+				initSession(comMap,opt);
 			}
 			if(null == pageA){
 				pageA = (Map<String,String>)session.get(SESSION_KEY + "A");
@@ -194,7 +218,7 @@ public class BINOLSSPRM68_Action extends BaseAction{
 			pageC.put("memberType",pageA.get("memberType"));
 			pageC.put("memberJson",pageA.get("memberJson"));
 			pageC.put("memberCount",pageA.get("memberCount"));
-			
+
 			pageD.put("execFlag",pageA.get("execFlag"));
 			pageD.put("ruleCondJson",pageA.get("ruleCondJson"));
 			pageD.put("ruleResultJson",pageA.get("ruleResultJson"));
@@ -207,7 +231,7 @@ public class BINOLSSPRM68_Action extends BaseAction{
 		session.put(SESSION_KEY + "C", pageC);
 		session.put(SESSION_KEY + "D", pageD);
 	}
-	
+
 	/**
 	 * 加载下一页面信息
 	 * @param PageNo
@@ -236,6 +260,7 @@ public class BINOLSSPRM68_Action extends BaseAction{
 	
 	/**
 	 * 基础信息页初始化
+	 *
 	 * @param map
 	 */
 	private void initPageA(Map<String,Object> map){
@@ -244,9 +269,10 @@ public class BINOLSSPRM68_Action extends BaseAction{
 
 		pageTemp.put("prmActGrpList", prm68_BL.getActiveGrpList(map));
 	}
-	
+
 	/**
 	 * 时间地点页初始化
+	 *
 	 * @param map
 	 * @param pageNo
 	 */
@@ -314,7 +340,7 @@ public class BINOLSSPRM68_Action extends BaseAction{
 				logger.error(e.getMessage(),e);
 			}
 	}
-	
+
 	/**
 	 * 基础信息页初始化
 	 * @param map
@@ -347,7 +373,7 @@ public class BINOLSSPRM68_Action extends BaseAction{
 		}
 		if(!"".equals(memberJson)&& ("1".equals(memberType) || "2".equals(memberType))){
 			Map<String,Object> p = ConvertUtil.json2Map(memberJson);
-			p.put(CherryConstants.SESSION_CHERRY_LANGUAGE, 
+			p.put(CherryConstants.SESSION_CHERRY_LANGUAGE,
 					map.get(CherryConstants.SESSION_LANGUAGE));
  			conInfo = binOLCM39_BL.conditionDisplay(p);
 		}
@@ -394,10 +420,12 @@ public class BINOLSSPRM68_Action extends BaseAction{
 			}
 		}
 	}
+
 	/**
 	 * 保存页面信息
+	 *
 	 * @param PageNo
-	 * @throws Exception 
+	 * @throws Exception
 	 */
 	@SuppressWarnings("unchecked")
 	private void savePage(Map<String,Object> map,int PageNo) throws Exception{
@@ -423,7 +451,7 @@ public class BINOLSSPRM68_Action extends BaseAction{
 			prm68_BL.tran_saveRule(map);
 		}
 	}
-	
+
 	/**
 	 * 数据验证
 	 * @param map
@@ -446,8 +474,8 @@ public class BINOLSSPRM68_Action extends BaseAction{
 					result= false;
 				}
 			}
-			String validFlag = binOLCM14_BL.getConfigValue("1284", 
-					ConvertUtil.getString(map.get(CherryConstants.ORGANIZATIONINFOID)), 
+			String validFlag = binOLCM14_BL.getConfigValue("1284",
+					ConvertUtil.getString(map.get(CherryConstants.ORGANIZATIONINFOID)),
 					ConvertUtil.getString(map.get(CherryConstants.BRANDINFOID)));
 			if("1".equals(validFlag)){
 				// 规则名称重复校验
@@ -455,7 +483,7 @@ public class BINOLSSPRM68_Action extends BaseAction{
 				if(null != idList && idList.size() > 0){
 					int oldActId = ConvertUtil.getInt(pageA.get("activeID"));
 					if(idList.size() > 1 || !CampConstants.OPT_KBN2.equals(pageA.get(CampConstants.OPT_KBN)) || idList.get(0) != oldActId){
-						// 活动名已存在 
+						// 活动名已存在
 						this.addFieldError("pageA.prmActiveName", getText("ECM00032",new String[]{getText("ESS00065")}));
 						result = false;
 					}
@@ -529,9 +557,56 @@ public class BINOLSSPRM68_Action extends BaseAction{
 			//促销规则奖励内容验证
 			result = this.checkRuleResult(ruleResultJson, result);
 		}
-		return result;	
+		return result;
 	}
-	
+
+
+	/**
+	 * 赠送礼品excel导入
+	 * @throws Exception
+     */
+	public void importProductExeclUpload() throws Exception{
+		Map<String, Object> resultMap = new HashMap<String, Object>();
+		try {
+			// 参数MAP
+			Map<String, Object> map = new HashMap<String, Object>();
+
+			String execLoadType = form.getExecLoadType();//产品导入区分
+			UserInfo userInfo = (UserInfo) session.get(CherryConstants.SESSION_USERINFO);
+			// 取得所属组织
+			map.put(CherryConstants.ORGANIZATIONINFOID, userInfo.getBIN_OrganizationInfoID());
+			map.put(CherryConstants.BRANDINFOID, userInfo.getBIN_BrandInfoID());
+			int orgId = ConvertUtil.getInt(userInfo.getBIN_OrganizationInfoID());
+			int brandId = ConvertUtil.getInt(userInfo.getBIN_BrandInfoID());
+			String searchCode = binOLCM03_BL.getTicketNumber(orgId, brandId, "", "EC");
+			map.put("upMode",form.getUpMode()); // 导入模式 1-新增 2-覆盖
+			map.put("upExcel",form.getUpExcel());
+			map.put("execLoadType",execLoadType);
+			map.put("searchCode",searchCode);
+			map.put("productPageSize",form.getProductPageSize());//页面上已存在数据
+			if(execLoadType.equals("shoppingCart")){//非整单导入
+				map.put("excelProductShopping",form.getExcelProductShopping());
+				resultMap = prm68_BL.tran_importShopProductExecl(map);
+			} else if(execLoadType.equals("GIFT")){//奖励结果导入
+				map.put("excelProductAward",form.getExcelProductAward());
+				resultMap = prm68_BL.tran_importPresentExecl(map);
+			} else if(execLoadType.equals("DPZK")){//折扣结果导入
+				map.put("excelProductAward",form.getExcelProductAward());
+				resultMap = prm68_BL.tran_importDisCountExecl(map);
+			} else if(execLoadType.equals("DPTJ")){//特价结果导入
+				map.put("excelProductAward",form.getExcelProductAward());
+				resultMap = prm68_BL.tran_importProductSepcialExecl(map);
+			}
+
+		}catch (Exception e){
+			logger.error(e.getMessage(),e);
+			resultMap.put(PromotionConstants.RESULT_CODE,PromotionConstants.RESULT_CODE_2);
+			resultMap.put(PromotionConstants.RESULT_MESSAGE,e.getMessage());
+		}finally {
+			ConvertUtil.setResponseByAjax(response,resultMap);
+		}
+	}
+
 	/**
 	 * 校验购买条件格式
 	 * @param ruleCondJson
@@ -550,13 +625,13 @@ public class BINOLSSPRM68_Action extends BaseAction{
 					String propName = ConvertUtil.getString(contentMap.get("propName"));
 					String propValue = ConvertUtil.getString(contentMap.get("propValue"));
 					if("SUMAMOUNT".equals(propName)){//总金额
-						if(!CherryChecker.isFloatValid(propValue, 10, 2) 
+						if(!CherryChecker.isFloatValid(propValue, 10, 2)
 								|| ConvertUtil.getFloat(propValue) < 0){
 							this.addFieldError("pageD.propValue", getText("ESS00093",new String[]{getText("ESS00075"),getText("ESS00077")}));
 							return false;
 						}
 					}else if("SUMQUANTITY".equals(propName)){//总数量
-						if(!CherryChecker.isNumeric(propValue) 
+						if(!CherryChecker.isNumeric(propValue)
 								|| ConvertUtil.getInt(propValue) == 0){
 							this.addFieldError("pageD.propValue", getText("ESS00070", new String[]{getText("ESS00076"),getText("ESS00078")}));
 							return false;
@@ -575,7 +650,7 @@ public class BINOLSSPRM68_Action extends BaseAction{
 								return false;
 							}else{
 								for(Map<String, Object> logicObjMap2 : logicObjArr2){
-									String propValue = ConvertUtil.getString(logicObjMap2.get("propValue"));//属性值 
+									String propValue = ConvertUtil.getString(logicObjMap2.get("propValue"));//属性值
 									String rangeVal = ConvertUtil.getString(logicObjMap2.get("rangeVal"));//产品范围值
 									String rangeType = ConvertUtil.getString(logicObjMap2.get("rangeType"));//范围类型
 									String propName = ConvertUtil.getString(logicObjMap2.get("propName"));//属性名
@@ -606,12 +681,12 @@ public class BINOLSSPRM68_Action extends BaseAction{
 											return false;
 										}
 									}
-									if("QUANTITY".equals(propName) && 
-											(!CherryChecker.isNumeric(propValue) 
+									if("QUANTITY".equals(propName) &&
+											(!CherryChecker.isNumeric(propValue)
 													|| ConvertUtil.getInt(propValue) == 0)){//数量值
 										this.addFieldError("pageD.propValue", getText("ESS00070", new String[]{getText("ESS00075"), getText("ESS00078")}));
-										return false; 
-									}else if("AMOUNT".equals(propName) && 
+										return false;
+									}else if("AMOUNT".equals(propName) &&
 											!CherryChecker.isFloatValid(propValue, 10, 2)){//金额值
 										this.addFieldError("pageD.propValue", getText("ESS00070", new String[]{getText("ESS00075"), getText("ESS00077")}));
 										return false;
@@ -629,7 +704,7 @@ public class BINOLSSPRM68_Action extends BaseAction{
 		}
 		return result;
 	}
-	
+
 	/**
 	 * 校验奖励内容格式
 	 * @param ruleResultJson
@@ -647,7 +722,7 @@ public class BINOLSSPRM68_Action extends BaseAction{
 					for(Map<String, Object> logicObjMap1 : logicObjArr1){
 						String rewardType = ConvertUtil.getString(logicObjMap1.get("rewardType"));//奖励类型
 						String rewardVal = ConvertUtil.getString(logicObjMap1.get("rewardVal"));//奖励值
-						
+
 						String rewardType1 = "JJHG_ZDYH_YHTZ_ZDMS";//金额奖励类型
 						String rewardType2 = "GIFT_DPZK_DPTJ_DNZK_JJHG_DPYH";//存在组合的类型
 						String rewardType3 = "ZDZK_TZZK";// 折扣奖励类型
@@ -682,10 +757,10 @@ public class BINOLSSPRM68_Action extends BaseAction{
 										return false;
 									}else{
 										for(Map<String, Object> logicObjMap3 : logicObjArr3){
-											String quantity = ConvertUtil.getString(logicObjMap3.get("quantity"));//产品数值 
-											String rangeVal = ConvertUtil.getString(logicObjMap3.get("rangeVal"));//产品范围值 
+											String quantity = ConvertUtil.getString(logicObjMap3.get("quantity"));//产品数值
+											String rangeVal = ConvertUtil.getString(logicObjMap3.get("rangeVal"));//产品范围值
 											String rangeType = ConvertUtil.getString(logicObjMap3.get("rangeType"));//产品范围类型
-											String rewardVal3 = ConvertUtil.getString(logicObjMap3.get("rewardVal"));//奖励值 
+											String rewardVal3 = ConvertUtil.getString(logicObjMap3.get("rewardVal"));//奖励值
 											String rangeOpt = ConvertUtil.getString(logicObjMap3.get("rangeOpt"));//产品范围操作
 											String ranges = ConvertUtil.getString(logicObjMap3.get("ranges"));//产品范围
 											if((!"RANGE".equals(rangeType) && !"ALL".equals(rangeType) && !"ZD".equals(rangeType) && CherryChecker.isNullOrEmpty(rangeVal, true))){//产品范围不能为空
@@ -739,7 +814,7 @@ public class BINOLSSPRM68_Action extends BaseAction{
 														return false;
 													}
 												}
-											} 
+											}
 										}
 									}
 								}
@@ -747,7 +822,7 @@ public class BINOLSSPRM68_Action extends BaseAction{
 						}
 					}
 				}
-			
+
 			} catch (Exception e) {
 				logger.error(e.getMessage(),e);
 				this.addFieldError("pageD",getText("ESS00087", new String[]{getText("ESS00076")}));
@@ -756,7 +831,7 @@ public class BINOLSSPRM68_Action extends BaseAction{
 		}
 		return result;
 	}
-	
+
 	/**
 	 * 产品厂商编码或条码有效性校验
 	 * @param type
@@ -793,7 +868,7 @@ public class BINOLSSPRM68_Action extends BaseAction{
 		}
 		return true;
 	}
-	
+
 	/**
 	 * 取得共通MAP
 	 * @return
@@ -814,7 +889,156 @@ public class BINOLSSPRM68_Action extends BaseAction{
 		map.put("bussiDate", bussiDate);
 		return map;
 	}
-	
+
+	/**
+	 * 查找导入失败的产品
+	 * @throws Exception
+	 */
+	public String searchFailUpload() throws Exception{
+		// 参数MAP
+		Map<String, Object> map = new HashMap<String, Object>();
+		// 活动编码
+		map.put("searchCode", form.getSearchCode());
+
+		String execLoadType = prm68_BL.execLoadTypeChange(ConvertUtil.getString(form.getExecLoadType()));
+
+		// Excel表格加载模板类型
+		map.put("execLoadType", execLoadType);
+
+		// 操作区分
+		map.put("operateType", "2");
+
+		// dataTable上传的参数设置到map
+		map.put("START", form.getIDisplayStart() + 1);
+		map.put("END", form.getIDisplayStart() + form.getIDisplayLength());
+		int count = prm68_BL.getFailUploadCount(map);
+		if (count != 0) {
+			form.setFailList(prm68_BL.getFailUploadList(map));
+		}
+		// form表单设置
+		form.setITotalDisplayRecords(count);
+		form.setITotalRecords(count);
+		if (form.getExecLoadType().equals(PromotionConstants.EXECLOADTYPE_1)) {
+			return "popLoadProductPromotion_2";
+		} else if (form.getExecLoadType().equals(PromotionConstants.EXECLOADTYPE_2)) {
+			return "popLoadProductPromotion_1";
+		} else if (form.getExecLoadType().equals(PromotionConstants.EXECLOADTYPE_3)) {
+			return "popLoadProductPromotion_3";
+		} else  {
+			return "popLoadProductPromotion_4";
+		}
+	}
+
+
+
+
+
+	/**
+	 *产品导入失败数据导出
+	 * @return
+	 * @throws JSONException
+	 */
+	public String export() throws JSONException{
+		// 参数MAP
+		Map<String, Object> map = new HashMap<String, Object>();
+		// 用户信息
+		/*UserInfo userInfo = (UserInfo) session.get(CherryConstants.SESSION_USERINFO);*/
+		// 活动编码
+		map.put("searchCode", form.getSearchCode());
+		String execLoadType = prm68_BL.execLoadTypeChange(ConvertUtil.getString(form.getExecLoadType()));
+		// Excel表格加载模板类型
+		map.put("execLoadType",execLoadType);
+
+		// 语言类型
+		map.put(CherryConstants.SESSION_LANGUAGE, session
+				.get(CherryConstants.SESSION_LANGUAGE));
+		try{
+			String language = ConvertUtil.getString(session.get(CherryConstants.SESSION_LANGUAGE));
+			if(PromotionConstants.EXECLOADTYPE_1.equals(form.getExecLoadType())){
+				downloadFileName = binOLMOCOM01_BL.getResourceValue("BINOLSSPRM68", language, "downloadFileNameForShop");
+			}else if(PromotionConstants.EXECLOADTYPE_2.equals(form.getExecLoadType())){
+				downloadFileName = binOLMOCOM01_BL.getResourceValue("BINOLSSPRM68", language, "downloadFileNameForGift");
+			}else if (PromotionConstants.EXECLOADTYPE_3.equals(form.getExecLoadType())){
+				downloadFileName = binOLMOCOM01_BL.getResourceValue("BINOLSSPRM68", language, "downloadFileNameForDPZK");
+			}else if (PromotionConstants.EXECLOADTYPE_4.equals(form.getExecLoadType())){
+				downloadFileName = binOLMOCOM01_BL.getResourceValue("BINOLSSPRM68", language, "downloadFileNameForDPTJ");
+			}
+			setExcelStream(new ByteArrayInputStream(prm68_BL.exportExcel(map)));
+		}catch (Exception e){
+			this.addActionError(getText("EMO00022"));
+			e.printStackTrace();
+			return CherryConstants.GLOBAL_ACCTION_RESULT;
+		}
+		return "BINOLSSPRM68_excel";
+	}
+
+
+	/**
+	 *
+	 * 优惠券导入加载
+	 * @return
+	 */
+	public String execlLoadInit() throws Exception {
+		//execl导入类型
+		String execLoadType = ConvertUtil.getString(form.getExecLoadType());
+		//页面产品数据
+		String ruleCondProduct = ConvertUtil.getString(form.getRuleCondProduct());
+		List<Map<String,Object>> productImportList = new ArrayList<Map<String,Object>>();
+		Map<String,Object> ruleCondProductMap = (Map<String,Object>) JSONUtil.deserialize(ruleCondProduct);
+		productImportList = (List<Map<String,Object>>) ruleCondProductMap.get("ruleCondProduct");
+		int productImportListSize = 0;
+		for (Map<String,Object> productImportMap:productImportList) {
+			String unitCode = "";
+			String rangeText = ConvertUtil.getString(productImportMap.get("rangeText"));
+			if (!rangeText.equals("")) {
+				//当第一次导入时对页面上的数据进行处理，转换为导入后的格式
+				int startIndex = rangeText.indexOf(":") + 1;
+				int ednIndex = rangeText.indexOf(",");
+				if (startIndex!=0&&ednIndex!=-1){
+					unitCode = rangeText.substring(startIndex, ednIndex);
+					productImportMap.put("unitCode", unitCode);
+					int barStartIndex = rangeText.indexOf("BC:") + 3;
+					int barEndIndex = rangeText.indexOf(")");
+					String barCode = rangeText.substring(barStartIndex, barEndIndex);
+					productImportMap.put("barCode", barCode);
+					if (execLoadType.equals("shoppingCart")) {
+						productImportMap.put("rangeOpt", "EQUAL");
+					}
+				}
+			}
+			productImportListSize=productImportListSize+1;
+		}
+//		Map<String,Object> productMap = new HashMap<String, Object>();
+//		productMap.put("ruleCondProduct",productImportList);
+		String productString = CherryUtil.list2Json(productImportList);
+		if (execLoadType.equals("shoppingCart")){//非整单条件
+			form.setExcelProductShopping(productString);
+		}else{//奖励产品
+			form.setExcelProductAward(productString);
+		}
+		Map<String,Object> prodcutPageData=(Map<String,Object>)session.get(SESSION_KEY + "D");
+		String ruleList = "";
+		if (execLoadType.equals("shoppingCart")) {//购物车中的产品明细时
+			ruleList = ConvertUtil.getString(prodcutPageData.get("ruleCondJson"));
+		}else{//奖励中的产品明细时
+			ruleList = ConvertUtil.getString(prodcutPageData.get("ruleResultJson"));
+		}
+		Map<String,Object> ruleCondJson = (Map<String,Object>) JSONUtil.deserialize(ruleList);
+		Map<String,Object> contentMap =(Map<String,Object>)ruleCondJson.get("Content");
+		// 产品列表
+		List<Map<String,Object>> logicObjArrList = (List<Map<String,Object>>)contentMap.get("logicObjArr");
+		int productPageSize=0;
+		if(!CollectionUtils.isEmpty(logicObjArrList)) {
+			for (Map<String, Object> logicObjArrMap : logicObjArrList) {
+				List<Map<String, Object>> logicObjList = (List<Map<String, Object>>) logicObjArrMap.get("logicObjArr");
+				if (!CollectionUtils.isEmpty(logicObjList)) {
+					productPageSize = productPageSize + logicObjList.size();
+				}
+			}
+		}
+		form.setProductPageSize(productPageSize-productImportListSize);
+		return "productDialog";
+	}
 	
 	public String getCsrftoken() {
 		return csrftoken;
@@ -909,4 +1133,25 @@ public class BINOLSSPRM68_Action extends BaseAction{
 	public void setTemplateFlag(int templateFlag) {
 		this.templateFlag = templateFlag;
 	}
+
+	public BINOLSSPRM68_Form getModel() {
+		return form;
+	}
+
+	public InputStream getExcelStream() {
+		return excelStream;
+	}
+
+	public void setExcelStream(InputStream excelStream) {
+		this.excelStream = excelStream;
+	}
+
+	public String getDownloadFileName() throws UnsupportedEncodingException {
+		return FileUtil.encodeFileName(request,downloadFileName);
+	}
+
+	public void setDownloadFileName(String downloadFileName) {
+		this.downloadFileName = downloadFileName;
+	}
+
 }

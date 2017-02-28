@@ -555,6 +555,20 @@ public class CherryUtil {
 		return list;
 	}
 
+	/**
+	 * list对象转json
+	 * @param list
+	 * @return
+     */
+	public static String list2Json(List list) {
+		try {
+			return objectMapper.writeValueAsString(list);
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+		return "";
+	}
+
 
 	/**
 	 * 遍历maps将key做如下处理：如果第二个字母是大写则不处理，否则将首字母转为小写

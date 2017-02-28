@@ -30,20 +30,20 @@ BINOLSSPRM68.prototype={
 			}
 		},
 		// 切换逻辑关系
-		"changeLogicOpt": function(_this){
-			var $this = $(_this);
-			var $target = $this.parent().parent();
-			var $logicOpt = $target.prev('div').find(':input[name="logicOpt"]');
-			var $buttons = $target.children('.LOGICBTN').find('button');
-			if($this.prop('class') == 'button_OR'){
-				$buttons.prop('class','button_AND');
-				$buttons.find('.text').text($('#logicOpt_text_AND').text());
-				$logicOpt.val('AND');
-			}else{
-				$buttons.prop('class','button_OR');
-				$buttons.find('.text').text($('#logicOpt_text_OR').text());
-				$logicOpt.val('OR');
-			}
+		"changeLogicOpt": function(_this){//暂时只支持并且，不支持或故而先注释掉。
+			//var $this = $(_this);
+			//var $target = $this.parent().parent();
+			//var $logicOpt = $target.prev('div').find(':input[name="logicOpt"]');
+			//var $buttons = $target.children('.LOGICBTN').find('button');
+			//if($this.prop('class') == 'button_OR'){
+			//	$buttons.prop('class','button_AND');
+			//	$buttons.find('.text').text($('#logicOpt_text_AND').text());
+			//	$logicOpt.val('AND');
+			//}else{
+			//	$buttons.prop('class','button_OR');
+			//	$buttons.find('.text').text($('#logicOpt_text_OR').text());
+			//	$logicOpt.val('OR');
+			//}
 		},
 		"getActGrpInfo": function(_this){
 //			var value = $(_this).val();

@@ -21,6 +21,57 @@
 	<delete id="delPrmActRuleCate">
 	<![CDATA[DELETE FROM Promotion.BIN_PromotionRuleCate WHERE RuleCode = #activityCode# AND BIN_BrandInfoID=#brandInfoId#]]>
 	</delete>
+
+	<!-- 失败列表插入 -->
+	<insert id="insertFailDataList" parameterClass="java.util.HashMap">
+		INSERT INTO
+		Promotion.BIN_CampaignUploadFaliTemp (
+		SearchCode,
+		FilterType,
+		OperateType,
+		FailJson,
+		ValidFlag,
+		CreateTime
+		) VALUES (
+		#searchCode#,
+		#filterType#,
+		'2',
+		#failJson#,
+		'1',
+		GETDATE()
+		)
+	</insert>
+
+	<!-- 根据产品条码查询产品信息-->
+	<select id="getProductInfo" parameterClass="java.util.HashMap" resultClass="java.util.HashMap">
+		SELECT
+		#brandCode# AS brandCode,
+		#unitCode# AS unitCode,
+		A.NameTotal AS productName,
+		B.BarCode AS barCode,
+		B.BIN_ProductVendorID AS prtVendorId
+		FROM
+		Basis.BIN_Product A WITH(NOLOCK)
+		JOIN
+		Basis.BIN_ProductVendor B
+		ON(A.BIN_ProductID=B.BIN_ProductID AND B.ValidFlag=1)
+		WHERE
+		A.UnitCode = #unitCode#
+		AND A.BIN_OrganizationInfoID = #organizationInfoId#
+		AND A.BIN_BrandInfoID = #brandInfoId#
+	</select>
+
+	<!-- 获取品牌编码 -->
+	<select id="getBrandCode" parameterClass="java.util.HashMap" resultClass="java.lang.String">
+		SELECT TOP 1
+		BrandCode AS brandCode
+		FROM
+		Basis.BIN_BrandInfo
+		WHERE
+		BIN_OrganizationInfoID = #organizationInfoId#
+		AND BIN_BrandInfoID = #brandInfoId#
+	</select>
+
 	<!-- 新增促销规则表 -->
 	<insert id="addActRuleInfo" parameterClass="java.util.HashMap">
 		<![CDATA[
@@ -548,5 +599,45 @@
 			A.ValidFlag = 1
 			AND A.PropertyName=#basePropName#
 			AND C.BIN_PromotionActivityID=#activeID#
+	</select>
+	<sql id="getFailUploadSql">
+		SELECT
+		FailJson
+		FROM
+		Promotion.BIN_CampaignUploadFaliTemp
+		WHERE
+		SearchCode = #searchCode#
+		AND FilterType = #execLoadType#
+	</sql>
+	<select id="getFailUploadCount" parameterClass="java.util.HashMap" resultClass="java.lang.Integer">
+		<![CDATA[
+			SELECT	COUNT(1) AS count FROM (
+		]]>
+		<include refid="BINOLSSPRM68.getFailUploadSql" />
+		<![CDATA[
+			)SORT_T1
+		]]>
+	</select>
+<!--获取导入失败的数据-->
+	<select id="getFailUploadList" parameterClass="java.util.HashMap" resultClass="java.lang.String">
+		<![CDATA[
+		SELECT
+			FailJson
+		FROM
+			(
+				SELECT
+					ROW_NUMBER() OVER(ORDER BY failJson) AS RowNumber,
+					FailJson
+				FROM (]]>
+		<include refid="BINOLSSPRM68.getFailUploadSql" />
+		<![CDATA[)SORT_T1
+			)SORT_T2
+		WHERE
+			RowNumber BETWEEN  #START# AND #END#
+		]]>
+	</select>
+
+	<select id="getFailUploadTotalList" parameterClass="java.util.HashMap" resultClass="java.lang.String">
+		<include refid="BINOLSSPRM68.getFailUploadSql"/>
 	</select>
 </sqlMap>

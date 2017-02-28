@@ -300,7 +300,10 @@ public class CouponConstains {
 	
 	/** 单次导入上限 */
 	public final static int UPLOAD_MAX_COUNT = 20000;
-	
+
+	/** 促销规则设定产品导入上限 **/
+	public final static int PRODUCT_UPLOAD_MAX_COUNT = 50;
+
 	/** 错误提示最多行数 */
 	public final static int ERRORMSG_MAX_NUM = 10;
 	
