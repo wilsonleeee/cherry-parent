@@ -655,14 +655,23 @@ BINOLSSPRM68_4.prototype={
 		} else {
 			$dialog.empty();
 		}
+		var html;
 		var execLoadType;
 		var typeAmount=0;//用以加减行数量
 		var shopAmount=0;//购物车总共的数量
 		var awardAmount=0;//奖励的总共数量
 		if(type=="award"){
 			execLoadType =$('#rewardType').val();
+			if(execLoadType=="GIFT") {
+				html="赠送礼品产品导入";
+			}else if(execLoadType=="DPZK") {
+				html="单品折扣产品导入";
+			}else if(execLoadType=="DPTJ") {
+				html="单品特价产品导入";
+			}
 		}else if (type=="shoppingCart"){
 			execLoadType="shoppingCart";
+			html="非整单条件产品导入";
 		}
 
 		// 规则条件处理
@@ -737,7 +746,7 @@ BINOLSSPRM68_4.prototype={
 					text: msg,
 					width: 	800,
 					height: 400,
-					title: "产品导入",
+					title: html,
 					confirm:"确定",
 					closeEvent: function(){
 						removeDialog("#" + dialogId);
