@@ -176,6 +176,13 @@ public class PromotionConstants {
 	/** 产品数据 */
 	public static final String PRODUCT_SHEET_NAME = "产品数据";
 
+	/** 赠送礼品数据 */
+	public static final String PRECENT_PRODUCT_SHEET_NAME = "赠送礼品数据";
+	/** 单品特价数据 */
+	public static final String SPECIAL_PRODUCT_SHEET_NAME = "单品特价数据";
+	/** 单品折扣数据 */
+	public static final String DISCOUNT_PRODUCT_SHEET_NAME = "单品折扣数据";
+
 	/** 导入模式 1为增量 2为覆盖 */
 	public static final String UPMODE_1 = "1";
 

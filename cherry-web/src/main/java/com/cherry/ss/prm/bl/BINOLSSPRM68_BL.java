@@ -374,7 +374,7 @@ public class BINOLSSPRM68_BL {
 		//删除上次错误信息（多次导入时）
 //		deleteOldFailInfo(map);
 		Map<String, Object> resultMap = new HashMap<String, Object>();
-		Sheet dataSheet = getDataSheet(map, PromotionConstants.PRODUCT_SHEET_NAME);
+		Sheet dataSheet = getDataSheet(map, PromotionConstants.PRECENT_PRODUCT_SHEET_NAME);
 		// 产品sheet不存在
 		if (null == dataSheet) {
 			throw new CherryException("EBS00030",new String[]{PromotionConstants.PRODUCT_SHEET_NAME});
@@ -382,7 +382,7 @@ public class BINOLSSPRM68_BL {
 		int sheetLength = dataSheet.getRows();
 
 		// excel产品列表集合
-		Map<String, Map<String, Object>> productCollectionMap = new HashMap<String, Map<String, Object>>();
+		Map<String, Map<String, Object>> excelProductCollectionMap = new HashMap<String, Map<String, Object>>();
 
         String execLoadType = ConvertUtil.getString(map.get("execLoadType"));
         int brandInfoId = ConvertUtil.getInt(map.get("brandInfoId"));
@@ -408,7 +408,7 @@ public class BINOLSSPRM68_BL {
 		Set<String> productImportedSet = new HashSet<String>();
 		if (!CherryChecker.isNullOrEmpty(productAwardList)) { // 增量模式
 			productImportedList = (List<Map<String, Object>>) JSONUtil.deserialize(productAwardList);
-//			productImportedList = (List<Map<String, Object>>) temp.get("productJson");
+			productImportedALLList = (List<Map<String, Object>>) JSONUtil.deserialize(excelProductALL);
 			if (!CollectionUtils.isEmpty(productImportedList)) {
 				for (Map<String, Object> product : productImportedList) {
 					productImportedSet.add(ConvertUtil.getString(product.get("unitCode")));
@@ -467,13 +467,13 @@ public class BINOLSSPRM68_BL {
 
 			//判断导入数据是否重复存在。1.execl中数据重复 2.增量模式下用户页面已选择与excel数据重复
 			boolean dupInExcel = dupProduct.contains(unitCode); // excel中重复数据
-			boolean dupInProCollect = productCollectionMap.containsKey(unitCode); // 产品集合中是否存在重复数据
+			boolean dupInProCollect = excelProductCollectionMap.containsKey(unitCode); // 产品集合中是否存在重复数据
 			boolean dupInPage = upMode.equals(CherryConstants.upMode_1) && productImportedSet.contains(unitCode); // 增量模式下excel中是否包含页面已选择数据
 			if (dupInExcel || dupInProCollect || dupInPage) {
 				productMap.put("errorMsg", "导入产品中已经存在相同数据");
 				productFailList.add(productMap);
 				if(dupInProCollect) {
-					productCollectionMap.remove(unitCode);
+					productFailList.add(excelProductCollectionMap.remove(unitCode));
 					dupProduct.add(unitCode);
 				}
 				continue;
@@ -491,12 +491,12 @@ public class BINOLSSPRM68_BL {
 			} else {
 				productMap.put("productName", productInfo.get("productName"));
 			}
-			productCollectionMap.put(unitCode, productMap);
+			excelProductCollectionMap.put(unitCode, productMap);
 		}
 
         List<Map<String, Object>> productList = new LinkedList<Map<String, Object>>();
-        if (!CollectionUtils.isEmpty(productCollectionMap)) {
-            productList.addAll(productCollectionMap.values()); // excel导入商品列表
+        if (!CollectionUtils.isEmpty(excelProductCollectionMap)) {
+            productList.addAll(excelProductCollectionMap.values()); // excel导入商品列表
         }
         if (!CollectionUtils.isEmpty(productImportedList) && CherryConstants.upMode_1.equals(upMode)) { // 若为增量模式
             productList.addAll(productImportedList); // 添加已选择商品列表
@@ -516,7 +516,7 @@ public class BINOLSSPRM68_BL {
 		resultMap.put("productJson", productList);
 		resultMap.put("resultCode", (productFailList.size() > 0 ? 1 : 0));
 		resultMap.put("failCount", productFailList.size());
-		resultMap.put("successCount", productCollectionMap.size());
+		resultMap.put("successCount", excelProductCollectionMap.size());
 		resultMap.put("searchCode", searchCode);
 		return resultMap;
 	}
@@ -532,7 +532,7 @@ public class BINOLSSPRM68_BL {
 		//删除上次错误信息（多次导入时）
 //		deleteOldFailInfo(map);
 		Map<String, Object> resultMap = new HashMap<String, Object>();
-		Sheet dataSheet = getDataSheet(map, PromotionConstants.PRODUCT_SHEET_NAME);
+		Sheet dataSheet = getDataSheet(map, PromotionConstants.SPECIAL_PRODUCT_SHEET_NAME);
 		// 产品sheet不存在
 		if (null == dataSheet) {
 			throw new CherryException("EBS00030",new String[]{PromotionConstants.PRODUCT_SHEET_NAME});
@@ -540,7 +540,7 @@ public class BINOLSSPRM68_BL {
 		int sheetLength = dataSheet.getRows();
 
 		// excel产品列表集合
-		Map<String, Map<String, Object>> productCollectionMap = new HashMap<String, Map<String, Object>>();
+		Map<String, Map<String, Object>> excelProductCollectionMap = new HashMap<String, Map<String, Object>>();
 
         String execLoadType = ConvertUtil.getString(map.get("execLoadType"));
         int brandInfoId = ConvertUtil.getInt(map.get("brandInfoId"));
@@ -562,8 +562,6 @@ public class BINOLSSPRM68_BL {
 		Set<String> productImportedSet = new HashSet<String>();
 		if (!CherryChecker.isNullOrEmpty(productAwardList)) { // 增量模式
 			productImportedList = (List<Map<String, Object>>) JSONUtil.deserialize(productAwardList);
-
-
 			if (!CollectionUtils.isEmpty(productImportedList)) {
 				for (Map<String, Object> product : productImportedList) {
 					productImportedSet.add(ConvertUtil.getString(product.get("unitCode")));
@@ -625,13 +623,13 @@ public class BINOLSSPRM68_BL {
 
 			//判断导入数据是否重复存在。1.execl中数据重复 2.增量模式下用户页面已选择与excel数据重复
 			boolean dupInExcel = dupProduct.contains(unitCode); // excel中重复数据
-			boolean dupInProCollect = productCollectionMap.containsKey(unitCode); // 产品集合中是否存在重复数据
+			boolean dupInProCollect = excelProductCollectionMap.containsKey(unitCode); // 产品集合中是否存在重复数据
 			boolean dupInPage = upMode.equals(CherryConstants.upMode_1) && productImportedSet.contains(unitCode); // 增量模式下excel中是否包含页面已选择数据
 			if (dupInExcel || dupInProCollect || dupInPage) {
 				productMap.put("errorMsg", "导入产品中已经存在相同数据");
 				productFailList.add(productMap);
 				if(dupInProCollect) {
-					productCollectionMap.remove(unitCode);
+					productFailList.add(excelProductCollectionMap.remove(unitCode));
 					dupProduct.add(unitCode);
 				}
 				continue;
@@ -648,13 +646,13 @@ public class BINOLSSPRM68_BL {
 			} else {
 				productMap.put("productName", productInfo.get("productName"));
 			}
-			productCollectionMap.put(unitCode, productMap);
+			excelProductCollectionMap.put(unitCode, productMap);
 		}
 
         // 页面已存在记录集合加上excel导入集合汇总列表
         List<Map<String, Object>> productList = new LinkedList<Map<String, Object>>();
-        if (!CollectionUtils.isEmpty(productCollectionMap)) {
-            productList.addAll(productCollectionMap.values()); // excel导入商品列表
+        if (!CollectionUtils.isEmpty(excelProductCollectionMap)) {
+            productList.addAll(excelProductCollectionMap.values()); // excel导入商品列表
         }
         if (!CollectionUtils.isEmpty(productImportedList) && CherryConstants.upMode_1.equals(upMode)) { // 若为增量模式
             productList.addAll(productImportedList); // 添加已选择商品列表
@@ -674,7 +672,7 @@ public class BINOLSSPRM68_BL {
         resultMap.put("productJson", productList);
         resultMap.put("resultCode", (productFailList.size() > 0 ? 1 : 0));
         resultMap.put("failCount", productFailList.size());
-        resultMap.put("successCount", productCollectionMap.size());
+        resultMap.put("successCount", excelProductCollectionMap.size());
         resultMap.put("searchCode", searchCode);
         return resultMap;
     }
@@ -691,7 +689,7 @@ public class BINOLSSPRM68_BL {
         //删除上次错误信息（多次导入时）
 //		deleteOldFailInfo(map);
         Map<String, Object> resultMap = new HashMap<String, Object>();
-        Sheet dataSheet = getDataSheet(map, PromotionConstants.PRODUCT_SHEET_NAME);
+        Sheet dataSheet = getDataSheet(map, PromotionConstants.DISCOUNT_PRODUCT_SHEET_NAME);
         // 产品sheet不存在
         if (null == dataSheet) {
             throw new CherryException("EBS00030", new String[]{PromotionConstants.PRODUCT_SHEET_NAME});
@@ -699,7 +697,7 @@ public class BINOLSSPRM68_BL {
         int sheetLength = dataSheet.getRows();
 
         // excel产品列表集合
-        Map<String, Map<String, Object>> productCollectionMap = new HashMap<String, Map<String, Object>>();
+        Map<String, Map<String, Object>> excelProductCollectionMap = new HashMap<String, Map<String, Object>>();
 
         String execLoadType = ConvertUtil.getString(map.get("execLoadType"));
         int brandInfoId = ConvertUtil.getInt(map.get("brandInfoId"));
@@ -723,8 +721,7 @@ public class BINOLSSPRM68_BL {
 		int productImportedListSize = 0;
         if (!CherryChecker.isNullOrEmpty(productAwardList)) {
 			productImportedList = (List<Map<String, Object>>) JSONUtil.deserialize(productAwardList);
-
-//            productImportedList = (List<Map<String, Object>>) temp.get("productJson");
+			productImportedALLList = (List<Map<String, Object>>) JSONUtil.deserialize(excelProductALL);
             if (!CollectionUtils.isEmpty(productImportedList)) {
                 for (Map<String, Object> product : productImportedList) {
                     productImportedSet.add(ConvertUtil.getString(product.get("unitCode")));
@@ -792,13 +789,13 @@ public class BINOLSSPRM68_BL {
 
             //判断导入数据是否重复存在。1.execl中数据重复(删除产品集合列表中已存在的产品) 2.增量模式下用户页面已选择与excel数据重复
 			boolean dupInExcel = dupProduct.contains(unitCode); // excel中重复数据
-			boolean dupInProCollect = productCollectionMap.containsKey(unitCode); // 产品集合中是否存在重复数据
+			boolean dupInProCollect = excelProductCollectionMap.containsKey(unitCode); // 产品集合中是否存在重复数据
 			boolean dupInPage = upMode.equals(CherryConstants.upMode_1) && productImportedSet.contains(unitCode); // 增量模式下excel中是否包含页面已选择数据
 			if (dupInExcel || dupInProCollect || dupInPage) {
 				productMap.put("errorMsg", "导入产品中已经存在相同数据");
 				productFailList.add(productMap);
 				if(dupInProCollect) {
-					productCollectionMap.remove(unitCode);
+					productFailList.add(excelProductCollectionMap.remove(unitCode));
 					dupProduct.add(unitCode);
 				}
 				continue;
@@ -815,13 +812,13 @@ public class BINOLSSPRM68_BL {
             } else {
 				productMap.put("productName", productInfo.get("productName"));
             }
-            productCollectionMap.put(unitCode, productMap);
+            excelProductCollectionMap.put(unitCode, productMap);
         }
 
         // 页面已存在记录集合加上excel导入集合汇总列表
         List<Map<String, Object>> productList = new LinkedList<Map<String, Object>>();
-        if (!CollectionUtils.isEmpty(productCollectionMap)) {
-            productList.addAll(productCollectionMap.values()); // excel导入商品列表
+        if (!CollectionUtils.isEmpty(excelProductCollectionMap)) {
+            productList.addAll(excelProductCollectionMap.values()); // excel导入商品列表
         }
         if (!CollectionUtils.isEmpty(productImportedList) && CherryConstants.upMode_1.equals(upMode)) { // 若为增量模式
             productList.addAll(productImportedList); // 添加已选择商品列表
@@ -840,7 +837,7 @@ public class BINOLSSPRM68_BL {
 		resultMap.put("productJson", productList);
 		resultMap.put("resultCode", (productFailList.size() > 0 ? 1 : 0));
 		resultMap.put("failCount", productFailList.size());
-		resultMap.put("successCount", productCollectionMap.size());
+		resultMap.put("successCount", excelProductCollectionMap.size());
 		resultMap.put("searchCode", searchCode);
 		return resultMap;
 	}
@@ -893,7 +890,6 @@ public class BINOLSSPRM68_BL {
 			if(!CherryChecker.isNullOrEmpty(excelProductShoppingList)){
 				productImportList = (List<Map<String,Object>>) JSONUtil.deserialize(excelProductShoppingList);
 				productImportListSize += productImportList.size();
-//				productImportList = (List<Map<String,Object>>) ruleCondProductMap.get(" ");
 				for (Map<String,Object> productImportMap:productImportList){
 					String unitCode = ConvertUtil.getString(productImportMap.get("unitCode"));
 					dupProduct.add(unitCode);
@@ -902,7 +898,6 @@ public class BINOLSSPRM68_BL {
 			if(!CherryChecker.isNullOrEmpty(excelProductALL)){
 				productImportPageList = (List<Map<String,Object>>) JSONUtil.deserialize(excelProductALL);
 				productImportListSize += productImportPageList.size();
-//				productImportList = (List<Map<String,Object>>) ruleCondProductMap.get(" ");
 				for (Map<String,Object> productImportMap:productImportPageList){
 					String unitCode = ConvertUtil.getString(productImportMap.get("unitCode"));
 					dupProduct.add(unitCode);
@@ -949,7 +944,7 @@ public class BINOLSSPRM68_BL {
 			productMap.put("rangeOpt","EQUAL");
 
 			if (CherryChecker.isNullOrEmpty(unitCode)){
-				productMap.put("errorMsg","厂商编码为空");
+				productMap.put("errorMsg","厂商编码为空。");
 			}
 
 			//判断产品是否真实存在
@@ -957,7 +952,7 @@ public class BINOLSSPRM68_BL {
 			productMap.put("organizationInfoId",organizationInfoId);
 			Map<String, Object> productVenderInfo = prm68Ser.getProductInfo(productMap);
 			if(CollectionUtils.isEmpty(productVenderInfo)){
-				productMap.put("errorMsg","数据有误，厂商编码不存在");
+				productMap.put("errorMsg","产品不存在。");
 			}else {
 				barCode=ConvertUtil.getString(productVenderInfo.get("barCode"));
 				productName=ConvertUtil.getString(productVenderInfo.get("productName"));
@@ -967,14 +962,14 @@ public class BINOLSSPRM68_BL {
 			}
 
 			if (CherryChecker.isNullOrEmpty(quantityOrAmount)){
-				productMap.put("errorMsg","数量或金额为空");
+				productMap.put("errorMsg","数量或金额为空。");
 			}
 			if (PromotionConstants.QUANTITY_Shop.equals(quantityOrAmount)){
 				productMap.put("propName","QUANTITY");
 			}else if (PromotionConstants.AMOUNT_Shop.equals(quantityOrAmount)){
 				productMap.put("propName","AMOUNT");
 			}else{
-				productMap.put("errorMsg","数量金额字段输入值有误");
+				productMap.put("errorMsg","数量金额字段输入值有误。");
 			}
 			if(PromotionConstants.EQ.equals(compareCondition)){
 				productMap.put("propOpt","EQ");
@@ -989,23 +984,23 @@ public class BINOLSSPRM68_BL {
 			}else if(PromotionConstants.LT.equals(compareCondition)){
 				productMap.put("propOpt","LT");
 			}else{
-				productMap.put("errorMsg","比较条件出错");
+				productMap.put("errorMsg","比较条件出错。");
 			}
 
 			if (CherryChecker.isNullOrEmpty(compareValue)){
-				productMap.put("errorMsg","比较值为空");
+				productMap.put("errorMsg","比较值为空。");
 			}
 			if (PromotionConstants.QUANTITY_Shop.equals(quantityOrAmount)){
 				if (!CherryChecker.isNumeric(compareValue)){
-					productMap.put("errorMsg","购买条件的数量必须为大于0的整数");
+					productMap.put("errorMsg","购买条件的数量必须为大于0的整数。");
 				}else{
 					if (ConvertUtil.getDouble(compareValue)<=0){
-						productMap.put("errorMsg","购买条件的数量必须为大于0的整数");
+						productMap.put("errorMsg","购买条件的数量必须为大于0的整数。");
 					}
 				}
 			}else if (PromotionConstants.AMOUNT_Shop.equals(quantityOrAmount)){
 				if (!CherryChecker.isFloatValid(compareValue,6,3)){
-					productMap.put("errorMsg","比较值必须为正数");
+					productMap.put("errorMsg","比较值必须为正数。");
 
 				}
 			}
@@ -1023,7 +1018,7 @@ public class BINOLSSPRM68_BL {
 		for(Map<String,Object> shopProducSuccessMap:shopProducAllList){
 			for (String unitCodeStr : dupProductDelete){
 				if (shopProducSuccessMap.containsKey(unitCodeStr)){
-					shopProducSuccessMap.put("errorMsg","特定产品中已经存在相同数据");
+					shopProducSuccessMap.put("errorMsg","特定产品中已经存在相同数据。");
 					break;
 				}
 			}
@@ -1128,7 +1123,7 @@ public class BINOLSSPRM68_BL {
 
         // 判断品牌代码
         if (CherryChecker.isNullOrEmpty(unitCode)) {
-            errorMsg += "产商编码为空。";
+            errorMsg += "厂商编码为空。";
         }
         //判断产品编码
         if (CherryChecker.isNullOrEmpty(barCode)) {
@@ -1169,20 +1164,20 @@ public class BINOLSSPRM68_BL {
         //折扣数量大于等于
         if (CherryChecker.isNullOrEmpty(grantEqualThan)) {
             errorMsg += "折扣数量大于等于为空。";
-        } else if (!CherryChecker.isNumeric(grantEqualThan)) {
+        } else if (!CherryChecker.isPositiveNumeric(grantEqualThan)) {
             errorMsg += "折扣数量大于等于必须为正整数。";
         }
 
         //折扣数量小于等于
         if (CherryChecker.isNullOrEmpty(lessEqualThan)) {
             errorMsg += "折扣数量小于等于为空。";
-        } else if (!CherryChecker.isNumeric(lessEqualThan)) {
+        } else if (!CherryChecker.isPositiveNumeric(lessEqualThan)) {
             errorMsg += "折扣数量小于等于必须为正整数。";
         }
 
         // "折扣数量大于等于" 必须大于等于1 并且小于等于 "折扣数量小于等于"
-        if(ConvertUtil.getInt(grantEqualThan) <= 1 || ConvertUtil.getInt(grantEqualThan) > ConvertUtil.getInt(lessEqualThan)) {
-            errorMsg += "折扣数量大于等于对应值必须大于1并且小于等于折扣数量小于等于对应值。";
+        if(ConvertUtil.getInt(grantEqualThan) > ConvertUtil.getInt(lessEqualThan)) {
+            errorMsg += "折扣数量大于等于对应值必须小于等于折扣数量小于等于对应值。";
         }
 
         //折扣数量大于等于
