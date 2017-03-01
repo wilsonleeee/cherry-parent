@@ -470,10 +470,12 @@ public class BINOLSSPRM68_BL {
 			boolean dupInProCollect = excelProductCollectionMap.containsKey(unitCode); // 产品集合中是否存在重复数据
 			boolean dupInPage = upMode.equals(CherryConstants.upMode_1) && productImportedSet.contains(unitCode); // 增量模式下excel中是否包含页面已选择数据
 			if (dupInExcel || dupInProCollect || dupInPage) {
-				productMap.put("errorMsg", "导入产品中已经存在相同数据");
+				productMap.put("errorMsg", "特定产品中已经存在相同数据。");
 				productFailList.add(productMap);
 				if(dupInProCollect) {
-					productFailList.add(excelProductCollectionMap.remove(unitCode));
+					Map<String,Object> dupTemp = excelProductCollectionMap.remove(unitCode);
+					dupTemp.put("errorMsg", "特定产品中已经存在相同数据。");
+					productFailList.add(dupTemp);
 					dupProduct.add(unitCode);
 				}
 				continue;
@@ -626,10 +628,12 @@ public class BINOLSSPRM68_BL {
 			boolean dupInProCollect = excelProductCollectionMap.containsKey(unitCode); // 产品集合中是否存在重复数据
 			boolean dupInPage = upMode.equals(CherryConstants.upMode_1) && productImportedSet.contains(unitCode); // 增量模式下excel中是否包含页面已选择数据
 			if (dupInExcel || dupInProCollect || dupInPage) {
-				productMap.put("errorMsg", "导入产品中已经存在相同数据");
+				productMap.put("errorMsg", "特定产品中已经存在相同数据。");
 				productFailList.add(productMap);
 				if(dupInProCollect) {
-					productFailList.add(excelProductCollectionMap.remove(unitCode));
+					Map<String,Object> dupTemp = excelProductCollectionMap.remove(unitCode);
+					dupTemp.put("errorMsg", "特定产品中已经存在相同数据。");
+					productFailList.add(dupTemp);
 					dupProduct.add(unitCode);
 				}
 				continue;
@@ -792,10 +796,12 @@ public class BINOLSSPRM68_BL {
 			boolean dupInProCollect = excelProductCollectionMap.containsKey(unitCode); // 产品集合中是否存在重复数据
 			boolean dupInPage = upMode.equals(CherryConstants.upMode_1) && productImportedSet.contains(unitCode); // 增量模式下excel中是否包含页面已选择数据
 			if (dupInExcel || dupInProCollect || dupInPage) {
-				productMap.put("errorMsg", "导入产品中已经存在相同数据");
+				productMap.put("errorMsg", "特定产品中已经存在相同数据。");
 				productFailList.add(productMap);
 				if(dupInProCollect) {
-					productFailList.add(excelProductCollectionMap.remove(unitCode));
+					Map<String,Object> dupTemp = excelProductCollectionMap.remove(unitCode);
+					dupTemp.put("errorMsg", "特定产品中已经存在相同数据。");
+					productFailList.add(dupTemp);
 					dupProduct.add(unitCode);
 				}
 				continue;
