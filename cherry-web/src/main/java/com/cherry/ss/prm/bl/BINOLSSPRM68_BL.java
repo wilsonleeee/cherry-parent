@@ -70,7 +70,7 @@ public class BINOLSSPRM68_BL {
 
 	@Resource(name = "binOLCM05_BL")
 	private BINOLCM05_BL binOLCM05_BL;
-	
+
 	@Resource
 	private BINOLCM14_BL binOLCM14_BL;
 
@@ -377,7 +377,7 @@ public class BINOLSSPRM68_BL {
 		Sheet dataSheet = getDataSheet(map, PromotionConstants.PRECENT_PRODUCT_SHEET_NAME);
 		// 产品sheet不存在
 		if (null == dataSheet) {
-			throw new CherryException("EBS00030",new String[]{PromotionConstants.PRODUCT_SHEET_NAME});
+			throw new CherryException("EBS00030",new String[]{PromotionConstants.PRECENT_PRODUCT_SHEET_NAME});
 		}
 		int sheetLength = dataSheet.getRows();
 
@@ -475,6 +475,7 @@ public class BINOLSSPRM68_BL {
 				if(dupInProCollect) {
 					Map<String,Object> dupTemp = excelProductCollectionMap.remove(unitCode);
 					dupTemp.put("errorMsg", "特定产品中已经存在相同数据。");
+					dupTemp.put("productName",productMap.get("productName"));
 					productFailList.add(dupTemp);
 					dupProduct.add(unitCode);
 				}
@@ -537,7 +538,7 @@ public class BINOLSSPRM68_BL {
 		Sheet dataSheet = getDataSheet(map, PromotionConstants.SPECIAL_PRODUCT_SHEET_NAME);
 		// 产品sheet不存在
 		if (null == dataSheet) {
-			throw new CherryException("EBS00030",new String[]{PromotionConstants.PRODUCT_SHEET_NAME});
+			throw new CherryException("EBS00030",new String[]{PromotionConstants.SPECIAL_PRODUCT_SHEET_NAME});
 		}
 		int sheetLength = dataSheet.getRows();
 
@@ -633,6 +634,7 @@ public class BINOLSSPRM68_BL {
 				if(dupInProCollect) {
 					Map<String,Object> dupTemp = excelProductCollectionMap.remove(unitCode);
 					dupTemp.put("errorMsg", "特定产品中已经存在相同数据。");
+					dupTemp.put("productName",productMap.get("productName"));
 					productFailList.add(dupTemp);
 					dupProduct.add(unitCode);
 				}
@@ -696,7 +698,7 @@ public class BINOLSSPRM68_BL {
         Sheet dataSheet = getDataSheet(map, PromotionConstants.DISCOUNT_PRODUCT_SHEET_NAME);
         // 产品sheet不存在
         if (null == dataSheet) {
-            throw new CherryException("EBS00030", new String[]{PromotionConstants.PRODUCT_SHEET_NAME});
+            throw new CherryException("EBS00030", new String[]{PromotionConstants.DISCOUNT_PRODUCT_SHEET_NAME});
         }
         int sheetLength = dataSheet.getRows();
 
@@ -801,6 +803,7 @@ public class BINOLSSPRM68_BL {
 				if(dupInProCollect) {
 					Map<String,Object> dupTemp = excelProductCollectionMap.remove(unitCode);
 					dupTemp.put("errorMsg", "特定产品中已经存在相同数据。");
+					dupTemp.put("productName",productMap.get("productName"));
 					productFailList.add(dupTemp);
 					dupProduct.add(unitCode);
 				}
@@ -860,7 +863,7 @@ public class BINOLSSPRM68_BL {
 		// 柜台数据sheet不存在
 		if (null == dataSheet) {
 			throw new CherryException("EBS00030",
-					new String[]{CherryConstants.COUNTER_SHEET_NAME});
+					new String[]{PromotionConstants.PRODUCT_SHEET_NAME});
 		}
 		int sheetLength = dataSheet.getRows();
 
@@ -911,170 +914,180 @@ public class BINOLSSPRM68_BL {
 			}
 		}
 
+//		try{
+			for (int r = 2; r < sheetLength; r++) {
+				Map<String, Object> productMap = new HashMap<String, Object>();
+				//产品编码
+				String unitCode = dataSheet.getCell(0, r).getContents().trim();
+				//产品条码
+				String barCode = dataSheet.getCell(1, r).getContents().trim();
+				//产品名称
+				String productName = dataSheet.getCell(2, r).getContents().trim();
+				//产品数量
+				String quantityOrAmount = dataSheet.getCell(3, r).getContents().trim();
+				//比较条件
+				String compareCondition = dataSheet.getCell(4, r).getContents().trim();
+				//比较值
+				String compareValue = dataSheet.getCell(5, r).getContents().trim();
 
-		for (int r = 2; r < sheetLength; r++) {
-			Map<String, Object> productMap = new HashMap<String, Object>();
-			//产品编码
-			String unitCode = dataSheet.getCell(0, r).getContents().trim();
-			//产品条码
-			String barCode = dataSheet.getCell(1, r).getContents().trim();
-			//产品名称
-			String productName = dataSheet.getCell(2, r).getContents().trim();
-			//产品数量
-			String quantityOrAmount = dataSheet.getCell(3, r).getContents().trim();
-			//比较条件
-			String compareCondition = dataSheet.getCell(4, r).getContents().trim();
-			//比较值
-			String compareValue = dataSheet.getCell(5, r).getContents().trim();
+				//该条数据是否有误
+				boolean isError = false;
 
-			//该条数据是否有误
-			boolean isError = false;
-
-			if (CherryChecker.isNullOrEmpty(unitCode)
-					&& CherryChecker.isNullOrEmpty(barCode)
-					&& CherryChecker.isNullOrEmpty(productName)
-					&& CherryChecker.isNullOrEmpty(quantityOrAmount)
-					&& CherryChecker.isNullOrEmpty(compareCondition)
-					&& CherryChecker.isNullOrEmpty(compareValue)) {
-				break;
-			}
-
-			productMap.put("unitCode", unitCode);
-			productMap.put("barCode", barCode);
-			productMap.put("productName", productName);
-			productMap.put("quantityOrAmount", quantityOrAmount);
-			productMap.put("compareCondition", compareCondition);
-			productMap.put("compareValue", compareValue);
-			productMap.put("rangeType","PRODUCT");
-			//rangeOpt 当为特定产品时写死为EQUAL
-			productMap.put("rangeOpt","EQUAL");
-
-			if (CherryChecker.isNullOrEmpty(unitCode)){
-				productMap.put("errorMsg","厂商编码为空。");
-			}
-
-			//判断产品是否真实存在
-			productMap.put("brandInfoId",brandInfoId);
-			productMap.put("organizationInfoId",organizationInfoId);
-			Map<String, Object> productVenderInfo = prm68Ser.getProductInfo(productMap);
-			if(CollectionUtils.isEmpty(productVenderInfo)){
-				productMap.put("errorMsg","产品不存在。");
-			}else {
-				barCode=ConvertUtil.getString(productVenderInfo.get("barCode"));
-				productName=ConvertUtil.getString(productVenderInfo.get("productName"));
-				productMap.put("productName", productName);
-				productMap.put("barCode", barCode);
-				productMap.put("prtVendorId", ConvertUtil.getString(productVenderInfo.get("prtVendorId")));
-			}
-
-			if (CherryChecker.isNullOrEmpty(quantityOrAmount)){
-				productMap.put("errorMsg","数量或金额为空。");
-			}
-			if (PromotionConstants.QUANTITY_Shop.equals(quantityOrAmount)){
-				productMap.put("propName","QUANTITY");
-			}else if (PromotionConstants.AMOUNT_Shop.equals(quantityOrAmount)){
-				productMap.put("propName","AMOUNT");
-			}else{
-				productMap.put("errorMsg","数量金额字段输入值有误。");
-			}
-			if(PromotionConstants.EQ.equals(compareCondition)){
-				productMap.put("propOpt","EQ");
-			}else if(PromotionConstants.NE.equals(compareCondition)){
-				productMap.put("propOpt","NE");
-			}else if(PromotionConstants.LE.equals(compareCondition)){
-				productMap.put("propOpt","LE");
-			}else if(PromotionConstants.GT.equals(compareCondition)){
-				productMap.put("propOpt","GT");
-			}else if(PromotionConstants.GE.equals(compareCondition)){
-				productMap.put("propOpt","GE");
-			}else if(PromotionConstants.LT.equals(compareCondition)){
-				productMap.put("propOpt","LT");
-			}else{
-				productMap.put("errorMsg","比较条件出错。");
-			}
-
-			if (CherryChecker.isNullOrEmpty(compareValue)){
-				productMap.put("errorMsg","比较值为空。");
-			}
-			if (PromotionConstants.QUANTITY_Shop.equals(quantityOrAmount)){
-				if (!CherryChecker.isNumeric(compareValue)){
-					productMap.put("errorMsg","购买条件的数量必须为大于0的整数。");
-				}else{
-					if (ConvertUtil.getDouble(compareValue)<=0){
-						productMap.put("errorMsg","购买条件的数量必须为大于0的整数。");
-					}
-				}
-			}else if (PromotionConstants.AMOUNT_Shop.equals(quantityOrAmount)){
-				if (!CherryChecker.isFloatValid(compareValue,6,3)){
-					productMap.put("errorMsg","比较值必须为正数。");
-
-				}
-			}
-			if(!StringUtils.isEmpty(unitCode)){
-				productMap.put(unitCode, "校验重复数据");
-				productMap.put("propValue", compareValue);
-				if (dupProduct.contains(unitCode)){
-					dupProductDelete.add(unitCode);
-				}
-				dupProduct.add(unitCode);
-			}
-			shopProducAllList.add(productMap);
-		}
-		int successCount=0;
-		for(Map<String,Object> shopProducSuccessMap:shopProducAllList){
-			for (String unitCodeStr : dupProductDelete){
-				if (shopProducSuccessMap.containsKey(unitCodeStr)){
-					shopProducSuccessMap.put("errorMsg","特定产品中已经存在相同数据。");
+				if (CherryChecker.isNullOrEmpty(unitCode)
+						&& CherryChecker.isNullOrEmpty(barCode)
+						&& CherryChecker.isNullOrEmpty(productName)
+						&& CherryChecker.isNullOrEmpty(quantityOrAmount)
+						&& CherryChecker.isNullOrEmpty(compareCondition)
+						&& CherryChecker.isNullOrEmpty(compareValue)) {
 					break;
 				}
+
+				productMap.put("unitCode", unitCode);
+				productMap.put("barCode", barCode);
+				productMap.put("productName", productName);
+				productMap.put("quantityOrAmount", quantityOrAmount);
+				productMap.put("compareCondition", compareCondition);
+				productMap.put("compareValue", compareValue);
+				productMap.put("rangeType","PRODUCT");
+				//rangeOpt 当为特定产品时写死为EQUAL
+				productMap.put("rangeOpt","EQUAL");
+
+				if (CherryChecker.isNullOrEmpty(unitCode)){
+					productMap.put("errorMsg","厂商编码为空。");
+				}
+				if (CherryChecker.isNullOrEmpty(barCode)){
+					productMap.put("errorMsg","产品条码为空。");
+				}
+				if (!StringUtils.isEmpty(unitCode)&&!StringUtils.isEmpty(barCode)){
+					//判断产品是否真实存在
+					productMap.put("brandInfoId",brandInfoId);
+					productMap.put("organizationInfoId",organizationInfoId);
+					Map<String, Object> productVenderInfo = prm68Ser.getProductInfo(productMap);
+					if(CollectionUtils.isEmpty(productVenderInfo)){
+						productMap.put("errorMsg","产品不存在。");
+					}else {
+						barCode=ConvertUtil.getString(productVenderInfo.get("barCode"));
+						productName=ConvertUtil.getString(productVenderInfo.get("productName"));
+						productMap.put("productName", productName);
+						productMap.put("barCode", barCode);
+						productMap.put("prtVendorId", ConvertUtil.getString(productVenderInfo.get("prtVendorId")));
+					}
+				}
+
+
+				if (CherryChecker.isNullOrEmpty(quantityOrAmount)){
+					productMap.put("errorMsg","数量或金额为空。");
+				}
+				if (PromotionConstants.QUANTITY_Shop.equals(quantityOrAmount)){
+					productMap.put("propName","QUANTITY");
+				}else if (PromotionConstants.AMOUNT_Shop.equals(quantityOrAmount)){
+					productMap.put("propName","AMOUNT");
+				}else{
+					productMap.put("errorMsg","数量金额字段输入值有误。");
+				}
+				if(PromotionConstants.EQ.equals(compareCondition)){
+					productMap.put("propOpt","EQ");
+				}else if(PromotionConstants.NE.equals(compareCondition)){
+					productMap.put("propOpt","NE");
+				}else if(PromotionConstants.LE.equals(compareCondition)){
+					productMap.put("propOpt","LE");
+				}else if(PromotionConstants.GT.equals(compareCondition)){
+					productMap.put("propOpt","GT");
+				}else if(PromotionConstants.GE.equals(compareCondition)){
+					productMap.put("propOpt","GE");
+				}else if(PromotionConstants.LT.equals(compareCondition)){
+					productMap.put("propOpt","LT");
+				}else{
+					productMap.put("errorMsg","比较条件出错。");
+				}
+
+				if (CherryChecker.isNullOrEmpty(compareValue)){
+					productMap.put("errorMsg","比较值为空。");
+				}
+				if (PromotionConstants.QUANTITY_Shop.equals(quantityOrAmount)){
+					if (!CherryChecker.isNumeric(compareValue)){
+						productMap.put("errorMsg","购买条件的数量必须为大于0的整数。");
+					}else{
+						if (ConvertUtil.getDouble(compareValue)<=0){
+							productMap.put("errorMsg","购买条件的数量必须为大于0的整数。");
+						}
+					}
+				}else if (PromotionConstants.AMOUNT_Shop.equals(quantityOrAmount)){
+					if (!CherryChecker.isFloatValid(compareValue,6,3)){
+						productMap.put("errorMsg","比较值必须为正数。");
+
+					}
+				}
+				if(!StringUtils.isEmpty(unitCode)){
+					productMap.put(unitCode, "校验重复数据");
+					productMap.put("propValue", compareValue);
+					if (dupProduct.contains(unitCode)){
+						dupProductDelete.add(unitCode);
+					}
+					dupProduct.add(unitCode);
+				}
+				shopProducAllList.add(productMap);
 			}
-		}
-		List<Map<String,Object>> shopProducSuccessListFinal = new ArrayList<Map<String,Object>>();
-		for (Map<String,Object> shopProducMap:shopProducAllList){
-			String isSuccess=ConvertUtil.getString(shopProducMap.get("errorMsg"));
-			if(!isSuccess.equals("")) {
-				shopProductFailList.add(shopProducMap);
-			}else {
-				shopProducSuccessListFinal.add(shopProducMap);
+			int successCount=0;
+			for(Map<String,Object> shopProducSuccessMap:shopProducAllList){
+				for (String unitCodeStr : dupProductDelete){
+					if (shopProducSuccessMap.containsKey(unitCodeStr)){
+						shopProducSuccessMap.put("errorMsg","特定产品中已经存在相同数据。");
+						break;
+					}
+				}
 			}
-		}
-
-		successCount=shopProducSuccessListFinal.size();
-		productImportList.addAll(shopProducSuccessListFinal);
-
-
-		// 产品导入上限
-		if ((successCount+productPageSize+productImportListSize) > CouponConstains.PRODUCT_UPLOAD_MAX_COUNT) {
-			throw new CherryException("ESS01005",new String[]{String.valueOf(CouponConstains.PRODUCT_UPLOAD_MAX_COUNT)});
-		}
-		int failCount = shopProductFailList.size();
-		List<Map<String, Object>> failDataList = null;
-		int resultCode = 0;
-		if (failCount > 0) {
-			resultCode = 1;
-			List<Map<String,Object>> shopProducFailListFinal = new ArrayList<Map<String,Object>>();
-			for(Map<String,Object> shopProductFailMap:shopProductFailList){
-				Map<String,Object> tempMap =new HashMap<String, Object>();
-				tempMap.put("unitCode",ConvertUtil.getString(shopProductFailMap.get("unitCode")));
-				tempMap.put("barCode",ConvertUtil.getString(shopProductFailMap.get("barCode")));
-				tempMap.put("productName",ConvertUtil.getString(shopProductFailMap.get("productName")));
-				tempMap.put("quantityOrAmount",ConvertUtil.getString(shopProductFailMap.get("quantityOrAmount")));
-				tempMap.put("compareCondition",ConvertUtil.getString(shopProductFailMap.get("compareCondition")));
-				tempMap.put("compareValue",ConvertUtil.getString(shopProductFailMap.get("compareValue")));
-				tempMap.put("errorMsg",ConvertUtil.getString(shopProductFailMap.get("errorMsg")));
-				shopProducFailListFinal.add(tempMap);
+			List<Map<String,Object>> shopProducSuccessListFinal = new ArrayList<Map<String,Object>>();
+			for (Map<String,Object> shopProducMap:shopProducAllList){
+				String isSuccess=ConvertUtil.getString(shopProducMap.get("errorMsg"));
+				if(!isSuccess.equals("")) {
+					shopProductFailList.add(shopProducMap);
+				}else {
+					shopProducSuccessListFinal.add(shopProducMap);
+				}
 			}
-			failDataList=setFailList(shopProducFailListFinal,execLoadTypeChange(execLoadType), searchCode);
-			prm68Ser.insertFailDataList(failDataList);
-		}
 
-        shopProducInfoMap.put("productJson", productImportList);
-        // 结果代号
-        shopProducInfoMap.put("resultCode", resultCode);
-        shopProducInfoMap.put("failCount", failCount);
-        shopProducInfoMap.put("successCount", successCount);
-        shopProducInfoMap.put("searchCode", searchCode);
-        return shopProducInfoMap;
+			successCount=shopProducSuccessListFinal.size();
+			productImportList.addAll(shopProducSuccessListFinal);
+
+
+			// 产品导入上限
+			if ((successCount+productPageSize+productImportListSize) > CouponConstains.PRODUCT_UPLOAD_MAX_COUNT) {
+				throw new CherryException("ESS01005",new String[]{String.valueOf(CouponConstains.PRODUCT_UPLOAD_MAX_COUNT)});
+			}
+			int failCount = shopProductFailList.size();
+			List<Map<String, Object>> failDataList = null;
+			int resultCode = 0;
+			if (failCount > 0) {
+				resultCode = 1;
+				List<Map<String,Object>> shopProducFailListFinal = new ArrayList<Map<String,Object>>();
+				for(Map<String,Object> shopProductFailMap:shopProductFailList){
+					Map<String,Object> tempMap =new HashMap<String, Object>();
+					tempMap.put("unitCode",ConvertUtil.getString(shopProductFailMap.get("unitCode")));
+					tempMap.put("barCode",ConvertUtil.getString(shopProductFailMap.get("barCode")));
+					tempMap.put("productName",ConvertUtil.getString(shopProductFailMap.get("productName")));
+					tempMap.put("quantityOrAmount",ConvertUtil.getString(shopProductFailMap.get("quantityOrAmount")));
+					tempMap.put("compareCondition",ConvertUtil.getString(shopProductFailMap.get("compareCondition")));
+					tempMap.put("compareValue",ConvertUtil.getString(shopProductFailMap.get("compareValue")));
+					tempMap.put("errorMsg",ConvertUtil.getString(shopProductFailMap.get("errorMsg")));
+					shopProducFailListFinal.add(tempMap);
+				}
+				failDataList=setFailList(shopProducFailListFinal,execLoadTypeChange(execLoadType), searchCode);
+				prm68Ser.insertFailDataList(failDataList);
+			}
+
+			shopProducInfoMap.put("productJson", productImportList);
+			// 结果代号
+			shopProducInfoMap.put("resultCode", resultCode);
+			shopProducInfoMap.put("failCount", failCount);
+			shopProducInfoMap.put("successCount", successCount);
+			shopProducInfoMap.put("searchCode", searchCode);
+			return shopProducInfoMap;
+//		}catch (Exception e){
+//			throw new CherryException("EBS00030",
+//					new String[]{PromotionConstants.PRODUCT_SHEET_NAME});
+//		}
+
     }
 
 
@@ -1150,8 +1163,8 @@ public class BINOLSSPRM68_BL {
         //判断数量
         if (CherryChecker.isNullOrEmpty(specialPrice)) {
             errorMsg += "特价为空。";
-        } else if (!CherryChecker.isNumeric(specialPrice)) {
-            errorMsg += "特价必须为正整数。";
+        } else if (!CherryChecker.isPositiveDecimal(specialPrice,10,2)) {
+            errorMsg += "特价必须为大于等于0的数值，整数部分不能超过10位，小数部分不能超过2位。";
         }
 
         return errorMsg;
@@ -1342,7 +1355,7 @@ public class BINOLSSPRM68_BL {
 
 	/**
 	 * 规则条件结果JSON处理
-	 * 
+	 *
 	 * @param vsn
 	 *            版本
 	 * @param cptb
@@ -1403,7 +1416,7 @@ public class BINOLSSPRM68_BL {
 		Map<String,Object> resTemp = ConvertUtil.json2Map(ruleResultJson);
 		Map<String,Object> resContent = (Map<String,Object>)resTemp.get("Content");
 		List<Map<String,Object>> resList = (List<Map<String,Object>>)resContent.get("logicObjArr");
-		
+
 		for(Map<String,Object> item : resList){
 			String rewardType = ConvertUtil.getString(item.get("rewardType"));
 			cateList.add(rewardType);
@@ -1417,7 +1430,7 @@ public class BINOLSSPRM68_BL {
 		resContent.putAll(prmInfo);
 		map.put("ruleResultJson",JSONUtil.serialize(resTemp));
 	}
-	
+
 	/**
 	 * 保存规则分类
 	 * @param map
@@ -1444,7 +1457,7 @@ public class BINOLSSPRM68_BL {
 	}
 	/**
 	 * 插入促销活动规则条件明细表
-	 * 
+	 *
 	 * @param map
 	 * @throws JSONException
 	 */
@@ -1509,7 +1522,7 @@ public class BINOLSSPRM68_BL {
 
 	/**
 	 * 插入促销活动规则条件明细表
-	 * 
+	 *
 	 * @param map
 	 * @throws JSONException
 	 */
@@ -1538,7 +1551,7 @@ public class BINOLSSPRM68_BL {
 
 	/**
 	 * 设置条件LIST
-	 * 
+	 *
 	 * @param conList
 	 * @param json
 	 * @param valA
@@ -1570,7 +1583,7 @@ public class BINOLSSPRM68_BL {
 			}else if(type.equals(PromotionConstants.LOTION_TYPE_ORGANIZATION)){
 				propId = ConvertUtil.getInt(propMap
 						.get(PromotionConstants.BASE_PROP_ORGANIZATION));
-			} 
+			}
 			else if (type
 					.equals(PromotionConstants.LOTION_TYPE_IMPORT_COUNTER)
 					|| type.equals(PromotionConstants.LOTION_TYPE_CHANNELS_COUNTER)
@@ -1603,7 +1616,7 @@ public class BINOLSSPRM68_BL {
 			}
 		}
 	}
-	
+
 	/**
 	 * 判断促销键是否存在
 	 * @param map
@@ -1662,12 +1675,12 @@ public class BINOLSSPRM68_BL {
 		List<Map<String,Object>> failList = new LinkedList<Map<String,Object>>();
 		for(String item :list){
 			Map<String,Object> failMap = ConvertUtil.json2Map(item);
-
 			failList.add(failMap);
 		}
 		String execLoadType = ConvertUtil.getString(map.get("execLoadType"));
 		execLoadType = execLoadTypeExchange(execLoadType);
 		BINOLMOCOM01_IF.ExcelParam ep = new BINOLMOCOM01_IF.ExcelParam();
+		String language = ConvertUtil.getString(map.get(CherryConstants.SESSION_LANGUAGE));
 //		通过execLoadType的值区分购物车设置还是奖励结果设置
 		if (execLoadType.equals(PromotionConstants.EXECLOADTYPE_1)){
 			String[][] array = {
@@ -1680,7 +1693,8 @@ public class BINOLSSPRM68_BL {
 					{"errorMsg","errorMsg", "20", "", "" }
 			};
 			ep.setArray(array);
-			ep.setSheetLabel("sheetNameForProduct");
+			ep.setSheetLabel("sheetNameForShoppingCart");
+			ep.setSearchCondition(binOLMOCOM01_BL.getResourceValue("BINOLSSPRM68", language, "ShopImportTitle"));
 		}else if (execLoadType.equals(PromotionConstants.EXECLOADTYPE_2)){
 //			赠送礼品
 			String[][] array = {
@@ -1691,7 +1705,8 @@ public class BINOLSSPRM68_BL {
 					{ "errorMsg", "errorMsg", "20", "", "" },
 			};
 			ep.setArray(array);
-			ep.setSheetLabel("sheetNameForProduct");
+			ep.setSheetLabel("sheetNameForGift");
+			ep.setSearchCondition(binOLMOCOM01_BL.getResourceValue("BINOLSSPRM68", language, "GiftImportTitle"));
 		}else if (execLoadType.equals(PromotionConstants.EXECLOADTYPE_3)){
 			//单品折扣
 			String[][] array = {
@@ -1704,7 +1719,8 @@ public class BINOLSSPRM68_BL {
 					{ "errorMsg", "errorMsg", "20", "", "" },
 			};
 			ep.setArray(array);
-			ep.setSheetLabel("sheetNameForProduct");
+			ep.setSheetLabel("sheetNameForDPZK");
+			ep.setSearchCondition(binOLMOCOM01_BL.getResourceValue("BINOLSSPRM68", language, "DPZKImportTitle"));
 		}else if (execLoadType.equals(PromotionConstants.EXECLOADTYPE_4)){
 			//单品特价
 			String[][] array = {
@@ -1715,9 +1731,9 @@ public class BINOLSSPRM68_BL {
 					{ "errorMsg", "errorMsg", "20", "", "" },
 			};
 			ep.setArray(array);
-			ep.setSheetLabel("sheetNameForProduct");
+			ep.setSheetLabel("sheetNameForDPTJ");
+			ep.setSearchCondition(binOLMOCOM01_BL.getResourceValue("BINOLSSPRM68", language, "DPTJImportTitle"));
 		}
-
 		ep.setMap(map);
 		ep.setBaseName("BINOLSSPRM68");
 		ep.setDataList(failList);

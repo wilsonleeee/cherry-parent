@@ -60,10 +60,10 @@ BINOLSSPRM68_load.prototype = {
                     // {"searchCode":"EC010031612050000037","resultCode":0,"successCount":3}
                     var tips = '<span>导入成功的数量: <span class="green">' + map.successCount + '</span></span> ';
                     tips += '<span>导入失败的数量: <span class="red">'  + map.failCount + '</span></span> ';
-                    $errorMessage.append(tips);
+                    $errorMessage.empty().append(tips);
                     $errorMessage.show();
                 }else {
-                    $errorMessage.append(map.resultMsg);
+                    $errorMessage.empty().append(map.resultMsg);
                     $errorMessage.show();
                 }
                 if(resultCode >0){

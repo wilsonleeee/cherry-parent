@@ -121,7 +121,17 @@ public class CherryChecker {
 	public static boolean isPositiveNumeric(String value) {
 		return isNumeric(value) ? !value.startsWith("0") : false ;
 	}
-	
+
+	/**
+	 * 检测指定字符串是否符合浮点数，而且整数位数不大于传入参数len1，小数位数不大于传入参数len2，排除为负数
+	 *
+	 * @param value
+	 * @return
+	 */
+	public static boolean isPositiveDecimal(String value, int len1, int len2) {
+		return isDecimal(value,len1,len2) ? !value.startsWith("-") : false ;
+	}
+
 	/**
 	 * 检测指定字符串是否全由正数和负数组成 如果字符串全由正数和负数组成则返回true，否则返回false
 	 * 

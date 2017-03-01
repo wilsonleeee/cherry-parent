@@ -601,6 +601,9 @@ public class BINOLSSPRM68_Action extends BaseAction implements ModelDriven<BINOL
 				resultMap = prm68_BL.tran_importProductSepcialExecl(map);
 			}
 
+		}catch (ArrayIndexOutOfBoundsException e){
+			resultMap.put(PromotionConstants.RESULT_CODE,PromotionConstants.RESULT_CODE_2);
+			resultMap.put(PromotionConstants.RESULT_MESSAGE,getText("EBS00103"));
 		}catch (Exception e){
 			logger.error(e.getMessage(),e);
 			resultMap.put(PromotionConstants.RESULT_CODE,PromotionConstants.RESULT_CODE_2);
