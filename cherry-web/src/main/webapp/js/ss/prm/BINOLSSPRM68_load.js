@@ -28,6 +28,7 @@ BINOLSSPRM68_load.prototype = {
         var execLoadType = $("#productLoadDialog #execLoadType").val();
         var excelProductShopping = $("#productLoadDialog #excelProductShopping").val();
         var excelProductAward = $("#productLoadDialog #excelProductAward").val();
+        var excelProductALL = $("#productLoadDialog #excelProductALL").val();
         $ajaxLoading.ajaxStart(function(){$(this).show();});
         $.ajaxFileUpload({
             url:url,
@@ -38,7 +39,8 @@ BINOLSSPRM68_load.prototype = {
                 'execLoadType':execLoadType,
                 'searchCode':searchCode,
                 'excelProductShopping':excelProductShopping,
-                'excelProductAward':excelProductAward
+                'excelProductAward':excelProductAward,
+                'excelProductALL' :excelProductALL
             },
             fileElementId:productUpExcelId,
             //服务端直接响应html文本

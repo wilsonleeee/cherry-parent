@@ -408,14 +408,15 @@ public class BINOLSSPRM68_BL {
 		Set<String> productImportedSet = new HashSet<String>();
 		if (!CherryChecker.isNullOrEmpty(productAwardList)) { // 增量模式
 			productImportedList = (List<Map<String, Object>>) JSONUtil.deserialize(productAwardList);
-			productImportedALLList = (List<Map<String, Object>>) JSONUtil.deserialize(excelProductALL);
 //			productImportedList = (List<Map<String, Object>>) temp.get("productJson");
 			if (!CollectionUtils.isEmpty(productImportedList)) {
 				for (Map<String, Object> product : productImportedList) {
 					productImportedSet.add(ConvertUtil.getString(product.get("unitCode")));
 				}
-
 			}
+		}
+		if (!CherryChecker.isNullOrEmpty(excelProductALL)) {
+			productImportedALLList = (List<Map<String, Object>>) JSONUtil.deserialize(excelProductALL);
 			if (!CollectionUtils.isEmpty(productImportedALLList)) {
 				for (Map<String, Object> product : productImportedALLList) {
 					productImportedSet.add(ConvertUtil.getString(product.get("unitCode")));
@@ -561,7 +562,7 @@ public class BINOLSSPRM68_BL {
 		Set<String> productImportedSet = new HashSet<String>();
 		if (!CherryChecker.isNullOrEmpty(productAwardList)) { // 增量模式
 			productImportedList = (List<Map<String, Object>>) JSONUtil.deserialize(productAwardList);
-			productImportedALLList = (List<Map<String, Object>>) JSONUtil.deserialize(excelProductALL);
+
 
 			if (!CollectionUtils.isEmpty(productImportedList)) {
 				for (Map<String, Object> product : productImportedList) {
@@ -569,6 +570,9 @@ public class BINOLSSPRM68_BL {
 				}
 
 			}
+		}
+		if (!CherryChecker.isNullOrEmpty(excelProductALL)) {
+			productImportedALLList = (List<Map<String, Object>>) JSONUtil.deserialize(excelProductALL);
 			if (!CollectionUtils.isEmpty(productImportedALLList)) {
 				for (Map<String, Object> product : productImportedALLList) {
 					productImportedSet.add(ConvertUtil.getString(product.get("unitCode")));
@@ -577,9 +581,9 @@ public class BINOLSSPRM68_BL {
 					productImportedListSize = productImportedALLList.size();
 				}
 			}
-
-
 		}
+
+
 
 		// 产品失败列表
 		List<Map<String, Object>> productFailList = new LinkedList<Map<String, Object>>();
@@ -719,13 +723,16 @@ public class BINOLSSPRM68_BL {
 		int productImportedListSize = 0;
         if (!CherryChecker.isNullOrEmpty(productAwardList)) {
 			productImportedList = (List<Map<String, Object>>) JSONUtil.deserialize(productAwardList);
-			productImportedALLList = (List<Map<String, Object>>) JSONUtil.deserialize(excelProductALL);
+
 //            productImportedList = (List<Map<String, Object>>) temp.get("productJson");
             if (!CollectionUtils.isEmpty(productImportedList)) {
                 for (Map<String, Object> product : productImportedList) {
                     productImportedSet.add(ConvertUtil.getString(product.get("unitCode")));
                 }
             }
+        }
+		if (!CherryChecker.isNullOrEmpty(excelProductALL)) {
+			productImportedALLList = (List<Map<String, Object>>) JSONUtil.deserialize(excelProductALL);
 			if (!CollectionUtils.isEmpty(productImportedALLList)) {
 				for (Map<String, Object> product : productImportedALLList) {
 					productImportedSet.add(ConvertUtil.getString(product.get("unitCode")));
@@ -734,7 +741,8 @@ public class BINOLSSPRM68_BL {
 			if (upMode.equals(CherryConstants.upMode_1)){
 				productImportedListSize = productImportedALLList.size();
 			}
-        }
+		}
+
 
         // 产品失败 列表
         List<Map<String, Object>> productFailList = new LinkedList<Map<String, Object>>();
