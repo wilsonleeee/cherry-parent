@@ -105,7 +105,7 @@
 							</select>
 						<@s.text name="linkMainCode" />：<input id="linkMainCode" class="text" name="pageA.linkMainCode" style="width: 140px;" value="${pageA.linkMainCode!}"/>
 						</span>
-						<input type="hidden" name="pageA.oldSystemCode" value="${pageA.systemCode!}"/>
+						<input type="hidden" name="pageA.oldSystemCode" value="${pageA.oldSystemCode!}"/>
 					</td>
                 </tr>
 				</#if>
