@@ -1220,8 +1220,8 @@ public class BINOLSSPRM68_BL {
         //折扣数量大于等于
         if (CherryChecker.isNullOrEmpty(discount)) {
             errorMsg += "折扣等于为空。";
-        } else if (!CherryChecker.isDecimal(discount,1,2)) {
-            errorMsg += "折扣位最多保留两个小数。";
+        } else if (!CherryChecker.isDecimal(discount,2,2) || Double.valueOf(discount) > 10) {
+            errorMsg += "奖励内容的折扣必须在0~10范围内,最多保留两个小数。";
         }
 
         return errorMsg;
