@@ -29,6 +29,8 @@ BINOLSSPRM68_load.prototype = {
         var excelProductShopping = $("#productLoadDialog #excelProductShopping").val();
         var excelProductAward = $("#productLoadDialog #excelProductAward").val();
         var excelProductALL = $("#productLoadDialog #excelProductALL").val();
+        var productPageSize = $("#productLoadDialog #productPageSize").val();
+
         $ajaxLoading.ajaxStart(function(){$(this).show();});
         $.ajaxFileUpload({
             url:url,
@@ -40,7 +42,8 @@ BINOLSSPRM68_load.prototype = {
                 'searchCode':searchCode,
                 'excelProductShopping':excelProductShopping,
                 'excelProductAward':excelProductAward,
-                'excelProductALL' :excelProductALL
+                'excelProductALL' :excelProductALL,
+                'productPageSize' :productPageSize
             },
             fileElementId:productUpExcelId,
             //服务端直接响应html文本
@@ -200,8 +203,10 @@ BINOLSSPRM68_load.prototype = {
     },
     "export":function(){
         var url =$("#exportExecl").attr("href");
+        var execLoadType = $("#productLoadDialog #execLoadType").val();
+        var searchCode = $("#productLoadDialog #searchCode").val();
         //	var csrftoken = parentTokenVal();
-        var params = $("#conditionForm").serialize();
+        var params = "execLoadType="+execLoadType+"&searchCode="+searchCode;
         url = url + "?" + params;
         window.open(url,"_self");
     },
