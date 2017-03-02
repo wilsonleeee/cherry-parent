@@ -50,13 +50,15 @@ BINOLSSPRM68_load.prototype = {
             dataType: 'html',
             success: function (msg){
                 var map = JSON.parse(msg);
-                //TODO
                 //var productJson = map.productJson;
 
                 $ajaxLoading.ajaxComplete(function(){$(this).hide();});
                 var resultCode = map.resultCode;
                 var searchCode = map.searchCode;
                 if (resultCode == '0' || resultCode == '1') {
+                    if (upMode=='2'){
+                        PRM68_4.upModelFinal=false;
+                    }
                     $("#searchCode").val(searchCode) ;
                     $("#excelProductShopping").val(JSON2.stringify(map.productJson));
                     $("#excelProductAward").val(JSON2.stringify(map.productJson));

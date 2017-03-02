@@ -1,5 +1,6 @@
 function BINOLSSPRM68_4(){};
 BINOLSSPRM68_4.prototype={
+		"upModelFinal":true,
 		"index":1000000,
 		// 添加组合框
 		"addBox":function(type){
@@ -742,7 +743,7 @@ BINOLSSPRM68_4.prototype={
 		}
 		var url = '/Cherry/ss/BINOLSSPRM68_execlLoadInit';
 		var param="execLoadType="+execLoadType+"&ruleCondProduct="+ruleCondProduct+"&productPageSizeALL="+productPageSize;
-
+		PRM68_4.upModelFinal=true;
 		cherryAjaxRequest({
 			url: url,
 			param:param,
@@ -786,7 +787,7 @@ BINOLSSPRM68_4.prototype={
 			if (excelProductAward!="") {
 				var excelProductAwardList = eval("(" + excelProductAward + ")");
 				var html = '';
-				var upMode=$("#productUpMode").val();
+				var upMode=PRM68_4.upModelFinal;
 				var $thisParent = $(_this).parent();
 				var $target = $thisParent.next().find('ul');
 				for (var i = 0; i < excelProductAwardList.length; i++) {
@@ -819,7 +820,7 @@ BINOLSSPRM68_4.prototype={
 					html += '<input value="' + excelProductAwardList[i].productNum + '" name="quantity" style="margin-bottom:0px;" class="number">件';
 					html += '<a href="#" class="right" onclick="$(this).parent().remove();return false;" role="button"><span class="ui-icon icon-delete-big">close</span></a>';
 				}
-				if (upMode=='2'){
+				if (!upMode){
 					$target.html("");
 				}
 				$target.append(html);
@@ -835,7 +836,7 @@ BINOLSSPRM68_4.prototype={
 				var html = '';
 				var $thisParent = $(_this).parent();
 				var $target = $thisParent.next().find('ul');
-				var upMode=$("#productUpMode").val();
+				var upMode=PRM68_4.upModelFinal;
 				for (var i = 0; i < excelProductAwardList.length; i++) {
 					this.index++;
 					var htmlCondition;
@@ -874,7 +875,7 @@ BINOLSSPRM68_4.prototype={
 					html += '<a href="#" class="right" onclick="$(this).parent().remove();return false;" role="button"><span class="ui-icon icon-delete-big">close</span></a>';
 				}
 			}
-			if (upMode=='2'){
+			if (!upMode){
 				$target.html("");
 			}
 			$target.append(html);
@@ -892,7 +893,7 @@ BINOLSSPRM68_4.prototype={
 				var html = '';
 				var $thisParent = $(_this).parent();
 				var $target = $thisParent.next().find('ul');
-				var upMode=$("#productUpMode").val();
+				var upMode=PRM68_4.upModelFinal;
 				for (var i = 0; i < excelProductAwardList.length; i++) {
 					this.index++;
 					var htmlCondition;
@@ -925,7 +926,7 @@ BINOLSSPRM68_4.prototype={
 					html += '<a href="#" class="right" onclick="$(this).parent().remove();return false;" role="button"><span class="ui-icon icon-delete-big">close</span></a>';
 				}
 			}
-			if (upMode=='2'){
+			if (!upMode){
 				$target.html("");
 			}
 			$target.append(html);
@@ -941,7 +942,7 @@ BINOLSSPRM68_4.prototype={
 				var excelProductShopList=eval("("+excelProductShop+")");
 				var $thisParent = $(_this).parent();
 				var $target = $thisParent.next().find('ul');
-				var upMode=$("#productUpMode").val();
+				var upMode=PRM68_4.upModelFinal;
 				var html='';
 				for(var i=0;i<excelProductShopList.length;i++){
 					this.index ++;
@@ -1001,7 +1002,7 @@ BINOLSSPRM68_4.prototype={
 					html+='<a href="#" class="right" onclick="$(this).parent().remove();return false;" role="button"><span class="ui-icon icon-delete-big">close</span></a>';
 				}
 			}
-			if (upMode=='2'){
+			if (!upMode){
 				$target.html("");
 			}
 			$target.append(html);
