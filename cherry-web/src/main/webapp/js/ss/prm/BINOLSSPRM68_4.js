@@ -444,6 +444,14 @@ BINOLSSPRM68_4.prototype={
 							var $ranges = $li.find('.RANGES');
 							var rangesJson = that.Obj2JSONArr($ranges.find('.tag'));
 							$li.find(':input[name="ranges"]').val(rangesJson);
+							if('DPZK' === rewardType){// 单品折扣
+								var $minQuantity = $li.find('input[name="minQuantity"]');
+								var $maxQuantity = $li.find('input[name="maxQuantity"]');
+								if(!isEmpty($minQuantity.val()) || !isEmpty($maxQuantity.val())){
+									var $quantityType = $li.find('select[name="quantityType"]');
+									$quantityType.val('RANDOM');
+								}
+							}
 						});
 						// 过滤NOSUBMIT
 						$logicObjArr2.val(that.Obj2JSONArr($items,1));
